@@ -145,7 +145,7 @@ public class CorruptedVillagerEntity extends Zombie {
         scaledFor = key;
         float ratio = getHealth() / getMaxHealth();
         // full scaling to Character Level 150, then gentler up to 999 (about 4x health, 2.8x damage)
-        double lvA = Math.min(level, 150) / 150.0, lvB = Math.max(0, level - 150) / 849.0;
+        double lvA = Math.min(level, 150) / 150.0, lvB = Math.max(0, Math.min(level, 999) - 150) / 849.0;
         double hp = lvA * 1.5 + lvB * 1.5 + (party - 1) * 0.35;
         double dmg = lvA * 0.9 + lvB * 0.9 + (party - 1) * 0.15;
         set(Attributes.MAX_HEALTH, HP_ID, hp, AttributeModifier.Operation.MULTIPLY_BASE);

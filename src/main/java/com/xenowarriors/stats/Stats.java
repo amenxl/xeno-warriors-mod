@@ -30,11 +30,11 @@ public final class Stats {
     private static final UUID SPEED_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e11");
     private static final UUID HEALTH_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e12");
     /** Character Level = Speed + Attack + Defense levels (each up to 50), so 0-150. */
-    public static final int MAX_CHARACTER_LEVEL = Stat.MAX_LEVEL * 3;   // 999
+    public static final int MAX_CHARACTER_LEVEL = 88888;
 
     public static int characterLevel(ServerPlayer player) {
         return player.getCapability(ModCapabilities.PLAYER_CHARACTER)
-                .map(d -> d.statLevel[0] + d.statLevel[1] + d.statLevel[2]).orElse(0);
+                .map(d -> fromStats(d.statLevel[0] + d.statLevel[1] + d.statLevel[2])).orElse(0);
     }
 
     /** How far toward the next level (average of the three stats' XP bars, 0..1). */
@@ -53,8 +53,15 @@ public final class Stats {
     }
 
     /** +1 heart (2 health) for every 10 Character Levels. */
+    /** All three stats maxed is exactly Character Level 88,888 (otherwise it's just the three levels added up). */
+    public static int fromStats(int sum) {
+        int top = Stat.MAX_LEVEL * 3;
+        return sum >= top ? MAX_CHARACTER_LEVEL : Math.min(MAX_CHARACTER_LEVEL, sum);
+    }
+
+    /** +1 heart every 10 levels up to level 1,000, then +1 heart every 1,000 levels (about 188 at the cap). */
     public static int bonusHearts(int level) {
-        return level / 10;
+        return level <= 1000 ? level / 10 : 100 + (level - 1000) / 1000;
     }
 
     private static void applyHealth(ServerPlayer player) {
@@ -123,7 +130,7 @@ public final class Stats {
         int lv = d.statLevel[Stat.SPEED.ordinal()];
         if (lv > 0) {
             speed.addTransientModifier(new AttributeModifier(SPEED_ID, "Xeno Warriors running level",
-                    Stat.effective(lv) * Stat.SPEED.bonusPerLevel, AttributeModifier.Operation.MULTIPLY_BASE));
+                    Stat.SPEED.bonus(lv), AttributeModifier.Operation.MULTIPLY_BASE));
         }
     }
 
@@ -174,11 +181,11 @@ public final class Stats {
         float amount = event.getAmount();
 
         if (source instanceof ServerPlayer attacker && attacker != target) {
-            amount *= 1F + Stat.effective(level(attacker, Stat.ATTACK)) * Stat.ATTACK.bonusPerLevel;
+            amount *= 1F + Stat.ATTACK.bonus(level(attacker, Stat.ATTACK));
             addXp(attacker, Stat.ATTACK, Math.min(amount, target.getHealth()));
         }
         if (target instanceof ServerPlayer defender && source instanceof LivingEntity && source != defender) {
-            amount *= Math.max(0.25F, 1F - Stat.effective(level(defender, Stat.DEFENSE)) * Stat.DEFENSE.bonusPerLevel);
+            amount *= 1F - Stat.DEFENSE.bonus(level(defender, Stat.DEFENSE));
             addXp(defender, Stat.DEFENSE, amount);
         }
         event.setAmount(amount);

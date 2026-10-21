@@ -11,8 +11,8 @@ public enum Stat {
     ATTACK(20F, 10F, 0.02F),     // xp = damage dealt
     DEFENSE(15F, 8F, 0.01F);     // xp = damage taken from enemies
 
-    /** Each stat goes to 333, so Character Level (all three added up) reaches 999. */
-    public static final int MAX_LEVEL = 333;
+    /** Each stat goes to 29,630; with all three maxed you're Character Level 88,888 (the cap). */
+    public static final int MAX_LEVEL = 29630;
     private static final int FULL = 50;
 
     /**
@@ -20,7 +20,19 @@ public enum Stat {
      * getting stronger without speed/damage running away.
      */
     public static float effective(int level) {
-        return Math.min(level, FULL) + 2F * (float) Math.sqrt(Math.max(0, level - FULL));
+        float e = Math.min(level, FULL) + 2F * (float) Math.sqrt(Math.max(0, Math.min(level, 333) - FULL));
+        if (level > 333) e += 25F * (float) Math.log(1 + (level - 333) / 333.0);   // slow, steady growth to the top
+        return e;
+    }
+
+    /** The bonus this stat gives at a level (speed and damage fractions, damage-taken reduction), capped. */
+    public float bonus(int level) {
+        float b = effective(level) * bonusPerLevel;
+        return switch (this) {
+            case SPEED -> Math.min(1.5F, b);       // up to +150% speed
+            case ATTACK -> Math.min(5F, b);        // up to +500% damage
+            case DEFENSE -> Math.min(0.75F, b);    // up to 75% less damage taken
+        };
     }
 
     private final float base, perLevel;
