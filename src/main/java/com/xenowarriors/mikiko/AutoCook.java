@@ -56,8 +56,9 @@ public final class AutoCook {
             // cooked food joins any stack of the same food he already has (or takes the raw item's slot)
             raw.shrink(1);
             if (raw.isEmpty()) inv.items.set(i, ItemStack.EMPTY);
+            ItemStack kind = cooked.copy();             // add() empties the stack it's given
             if (!inv.add(cooked)) p.drop(cooked, false);
-            stackUp(inv, cooked);
+            stackUp(inv, kind);
             inv.setChanged();
             p.serverLevel().sendParticles(ParticleTypes.SMALL_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 6, 0.25, 0.3, 0.25, 0.01);
             p.serverLevel().sendParticles(ParticleTypes.SMOKE, p.getX(), p.getY() + 1.2, p.getZ(), 3, 0.2, 0.2, 0.2, 0.01);

@@ -35,8 +35,6 @@ import net.minecraft.world.phys.Vec3;
  * close. At half health it becomes enraged - faster, more bolts, more souls.
  */
 public class CSoulBossEntity extends Monster {
-    private final ServerBossEvent bossBar = (ServerBossEvent) new ServerBossEvent(Component.literal("Soul of Darkness"),
-            BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10).setDarkenScreen(true);
     private int boltCooldown = 60, summonCooldown = 160, shriekCooldown = 100, meleeCooldown;
     private boolean enraged;
 
@@ -76,11 +74,9 @@ public class CSoulBossEntity extends Monster {
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
-        bossBar.setProgress(getHealth() / getMaxHealth());
         ServerLevel level = (ServerLevel) level();
         if (!enraged && getHealth() < getMaxHealth() * 0.5F) {
             enraged = true;
-            bossBar.setColor(BossEvent.BossBarColor.RED);
             playSound(SoundEvents.WITHER_SPAWN, 2F, 1.4F);
             level.sendParticles(CorruptedFx.BLACK, getX(), getY() + 2, getZ(), 40, 1.2, 1.2, 1.2, 0.1);
             getAttribute(Attributes.FLYING_SPEED).setBaseValue(0.75);
@@ -177,13 +173,11 @@ public class CSoulBossEntity extends Monster {
     @Override
     public void startSeenByPlayer(ServerPlayer player) {
         super.startSeenByPlayer(player);
-        bossBar.addPlayer(player);
     }
 
     @Override
     public void stopSeenByPlayer(ServerPlayer player) {
         super.stopSeenByPlayer(player);
-        bossBar.removePlayer(player);
     }
 
     @Override
