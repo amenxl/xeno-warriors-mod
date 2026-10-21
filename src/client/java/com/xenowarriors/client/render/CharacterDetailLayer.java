@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.client.ClientCharacterData;
 import com.xenowarriors.client.ClientSkillState;
+import com.xenowarriors.client.FlightTracker;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -52,7 +53,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         if (model.hasWings()) {
             boolean preview = ClientCharacterData.isPreviewing();
-            boolean flying = player.getAbilities().flying || player.isFallFlying();
+            boolean flying = FlightTracker.isFlying(player);
             boolean falling = !player.onGround() && !player.isInWater() && player.fallDistance > 1.5F;
             boolean kishi = ClientSkillState.isCastingKishi(player.getUUID());
             model.setupWings(preview || flying || falling || kishi, flying || falling, ageInTicks);

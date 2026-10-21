@@ -25,7 +25,7 @@ Kishi's numbers (size, length, slowness, damage) are at the top of `KishiDomeEnt
 - `/xeno reset <player>`: clear someone's character so the screen shows again (ops only).
 
 ## Easiest way: one click (Windows)
-Double-click **BUILD-MOD.bat**. It finds Java on your computer (or tells you where to get it), builds the mod, and puts `xenowarriors-0.3.0.jar` in the folder above this one, then opens that folder for you. The first time takes a few minutes because it downloads Minecraft and Fabric.
+Double-click **BUILD-MOD.bat**. It finds Java on your computer (or tells you where to get it), builds the mod, and puts `xenowarriors-0.3.1.jar` in the folder above this one, then opens that folder for you. The first time takes a few minutes because it downloads Minecraft and Fabric.
 
 Then drop the jar into the `mods` folder of a **Fabric 1.20.1** profile together with **Fabric API for 1.20.1** (https://modrinth.com/mod/fabric-api).
 
@@ -34,7 +34,7 @@ Then drop the jar into the `mods` folder of a **Fabric 1.20.1** profile together
 2. Open a terminal (Command Prompt or PowerShell on Windows) in this folder.
 3. Run one of these:
    - `gradlew runClient` launches Minecraft with the mod so you can test it.
-   - `gradlew build` makes the mod file at `build/libs/xenowarriors-0.3.0.jar`.
+   - `gradlew build` makes the mod file at `build/libs/xenowarriors-0.3.1.jar`.
    (On Mac/Linux use `./gradlew` instead of `gradlew`.)
    The first run downloads Minecraft, Fabric and Gradle, so it takes a few minutes.
 4. To play with it normally: install **Fabric Loader** for 1.20.1 (https://fabricmc.net/use/installer), then put the jar **and Fabric API for 1.20.1** (https://modrinth.com/mod/fabric-api) into your `.minecraft/mods` folder. The Modrinth App can do this for you: make a 1.20.1 Fabric profile, add Fabric API, then add the jar.

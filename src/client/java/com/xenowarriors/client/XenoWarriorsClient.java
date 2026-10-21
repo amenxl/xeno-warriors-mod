@@ -61,10 +61,12 @@ public class XenoWarriorsClient implements ClientModInitializer {
             pendingSelectScreen = false;
             ClientCharacterData.clear();
             ClientSkillState.clear();
+            FlightTracker.clear();
         });
     }
 
     private static void onClientTick(Minecraft mc) {
+        WindEffects.tick(mc);
         // skill keys
         for (int slot = 0; slot < ModKeyMappings.SKILLS.length; slot++) {
             while (ModKeyMappings.SKILLS[slot].consumeClick()) {
