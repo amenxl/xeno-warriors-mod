@@ -68,19 +68,28 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
         if (type == CharacterType.RHALIX) {
-            if (com.xenowarriors.client.RhalixWingsClient.hyped(p, 0F) > 0.5F) return (p.tickCount / 40) % 2 == 0 ? "grin" : "excited";
-            if (com.xenowarriors.client.RhalixWingsClient.sadVibe(p, 0F) > 0.5F) return "sad";
+            if (com.xenowarriors.client.RhalixWingsClient.hyped(p, 0F) > 0.5F) {
+                String[] h = {"headbang", "grin", "sing", "excited", "headbang", "wink"};
+                return h[(p.tickCount / 20) % h.length];
+            }
+            if (com.xenowarriors.client.RhalixWingsClient.sadVibe(p, 0F) > 0.5F) {
+                String[] l = {"sad", "melancholy", "sad", "melancholy", "crying"};
+                return l[(p.tickCount / 60) % l.length];
+            }
             if (com.xenowarriors.client.RhalixWingsClient.chill(p, 0F) > 0.5F) {
-                String[] c = {"calm", "smug", "hum", "calm"};
-                return c[(p.tickCount / 60) % c.length];
+                String[] c = {"calm", "smug", "whistle", "hum", "calm"};
+                return c[(p.tickCount / 50) % c.length];
             }
             if (com.xenowarriors.client.RhalixWingsClient.smoking(p, 0F) > 0.5F) {
                 float st = com.xenowarriors.client.RhalixWingsClient.smokeTime(p, p.tickCount);
                 return st >= 56 && st < 84 ? "hum" : "calm";      // eyes closed, breathing out
             }
             if (com.xenowarriors.client.RhalixWingsClient.gravityDance(p, 0F) > 0.5F) {
-                String[] g = {"smug", "grin", "cool", "excited"};
-                return g[(p.tickCount / 45) % g.length];
+                // glitching out during the stutter-snaps, otherwise smug and loving it
+                float gt = com.xenowarriors.client.RhalixWingsClient.gravityTime(p, p.tickCount) % 160F;
+                if (gt >= 40F && gt < 66F) return "glitch";
+                String[] g = {"smug", "grin", "cool", "wink", "excited"};
+                return g[(p.tickCount / 40) % g.length];
             }
             if (FlightTracker.isFlying(p)) mood = "smug";          // right at home in the air
             else if (p.isSprinting()) mood = "focused";

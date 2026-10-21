@@ -532,27 +532,43 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(p, 0F);
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
         if (bi != null && (int) bi[0] == BI_HOLD && bi[1] < 25 && (s.still - BLADE_IDLE_AFTER) % BLADE_CYCLE < 80) return "smug";
-        if (s.hype > 0.5F) return (p.tickCount / 40) % 2 == 0 ? "excited" : "grin";
+        if (s.hype > 0.5F) {
+            String[] h = {"headbang", "excited", "sing", "grin", "headbang", "tongue"};
+            return h[((p.tickCount - s.hypeStart) / 20) % h.length];
+        }
         if (s.discAnim != null && s.discW > 0.5F) {
             switch (s.discAnim) {
                 case "shadow_box" -> {
                     int rt = (p.tickCount - s.discStart) % 200;
-                    if (rt >= 146 && rt < 190) return "shout";            // yelling with rage
-                    return (rt / 30) % 2 == 0 ? "fierce" : "focused";
+                    if (rt >= 146 && rt < 190) return "rage";             // yelling with rage
+                    String[] b = {"fierce", "concentrate", "focused", "fierce", "grin"};
+                    return b[(rt / 28) % b.length];
                 }
                 case "sad_dance" -> {
-                    return "sad";
+                    int st = (p.tickCount - s.discStart) % 160;
+                    if (st >= 50 && st < 100) return "crying";           // hand on his heart
+                    return (st / 40) % 2 == 0 ? "sad" : "melancholy";
                 }
                 case "chill_vibe" -> {
-                    String[] c = {"calm", "hum", "happy", "calm"};
-                    return c[(p.tickCount / 60) % c.length];
+                    String[] c = {"calm", "hum", "whistle", "happy", "sing", "calm"};
+                    return c[(p.tickCount / 50) % c.length];
                 }
                 default -> { }
             }
         }
         if (s.groove > 0.5F) {
-            String[] g = {"excited", "grin", "cool", "excited", "smug"};
-            return g[(p.tickCount / 50) % g.length];
+            // faces follow the breakdance: hyped toprock, concentrating on footwork, dizzy from the headspin, cool freeze
+            int t = (p.tickCount - s.grooveStart) % 320;
+            if (t < 80) {
+                String[] g = {"wink", "grin", "tongue", "excited"};
+                return g[(t / 20) % g.length];
+            }
+            if (t < 100) return "excited";
+            if (t < 180) return (t / 25) % 2 == 0 ? "concentrate" : "cool";
+            if (t < 240) return (t / 20) % 2 == 0 ? "grin" : "headbang";
+            if (t < 290) return "dizzy";
+            if (t < 306) return "cool";
+            return "wink";
         }
         if (s.alert > 0.5F) {
             // eyes darting with each look around
@@ -565,10 +581,16 @@ public final class MikikoAnimations {
             if (t < 100) return "surprised";
             return "glance_l";
         }
-        if (s.robot > 0.5F) return "robot";
+        if (s.robot > 0.5F) {
+            String[] r = {"robot", "robot_l", "robot", "robot_r"};
+            return r[(p.tickCount / 10) % r.length];          // screen eyes flicking on the beat
+        }
         if (s.pet > 0.5F) return "happy";
         if (p.tickCount - s.absorbStart < 30) return "smug";
-        if (s.vibe > 0.5F) return "happy";
+        if (s.vibe > 0.5F) {
+            String[] v = {"happy", "sing", "hum", "happy", "whistle"};
+            return v[(p.tickCount / 45) % v.length];
+        }
         if (s.run > 0.5F) return "focused";
         if (s.fire > 0.5F) return "happy";
         if (s.sit > 0.9F) {

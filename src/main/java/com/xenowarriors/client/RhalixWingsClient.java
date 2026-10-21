@@ -92,6 +92,10 @@ public final class RhalixWingsClient {
         }
     }
 
+    public static float gravityTime(Player p, float age) {
+        return danceTime(p, age);
+    }
+
     private static float danceTime(Player p, float age) {
         float[] d = DANCE.get(p.getId());
         return d == null ? 0F : age - d[4];
