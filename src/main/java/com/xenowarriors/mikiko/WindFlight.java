@@ -3,6 +3,7 @@ package com.xenowarriors.mikiko;
 import com.xenowarriors.XenoWarriors;
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.character.ModCapabilities;
+import com.xenowarriors.character.RhalixFlight;
 import com.xenowarriors.stats.Stat;
 import com.xenowarriors.stats.Stats;
 import net.minecraft.ChatFormatting;
@@ -29,8 +30,50 @@ public final class WindFlight {
         return ModCapabilities.getType(p) == CharacterType.MIKIKO && Stats.characterLevel(p) >= LEVEL;
     }
 
+    /**
+     * Going to another dimension (portals, /tp, the Hekublade) gives you a fresh player on your side that forgets it can
+     * fly, while the server still thinks it can - so the flight never got sent again. Re-send it after a dimension
+     * change or respawn (once right away and once a moment later, after everything settles).
+     */
+    private static final java.util.Map<java.util.UUID, Integer> RESYNC = new java.util.HashMap<>();
+
+    @SubscribeEvent
+    public static void onChangeDimension(net.minecraftforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) resync(p);
+    }
+
+    @SubscribeEvent
+    public static void onRespawn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) resync(p);
+    }
+
+    @SubscribeEvent
+    public static void onLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) resync(p);
+    }
+
+    private static void resync(ServerPlayer p) {
+        RESYNC.put(p.getUUID(), 10);
+        grantIfAble(p);
+    }
+
+    private static void grantIfAble(ServerPlayer p) {
+        if (p.isCreative() || p.isSpectator()) return;
+        if (canFly(p) || RhalixFlight.canFly(p)) p.getAbilities().mayfly = true;
+        p.onUpdateAbilities();
+    }
+
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer sp && RESYNC.containsKey(sp.getUUID())) {
+            int left = RESYNC.get(sp.getUUID()) - 1;
+            if (left <= 0) {
+                RESYNC.remove(sp.getUUID());
+                grantIfAble(sp);
+            } else {
+                RESYNC.put(sp.getUUID(), left);
+            }
+        }
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 5 != 0) return;
         if (p.isCreative() || p.isSpectator()) return;
         var abilities = p.getAbilities();
