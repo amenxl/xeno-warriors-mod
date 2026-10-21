@@ -6,7 +6,8 @@
   "refmap": "xenowarriors.refmap.json",
   "mixins": [],
   "client": [
-    "AbstractClientPlayerMixin"
+    "AbstractClientPlayerMixin",
+    "HumanoidModelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -63,15 +63,27 @@ public class DetailModel {
 
     /** Show/hide the wings and flap them (big flaps in the air, a slow sway otherwise). */
     public void setupWings(boolean visible, boolean flapping, float ageInTicks) {
+        setupWings(visible, flapping, ageInTicks, 0F);
+    }
+
+    /**
+     * @param spread 0..1 - opens the wings out flat and wide (Kishi cast in the air), replacing the
+     *               flap with a slow, heavy beat.
+     */
+    public void setupWings(boolean visible, boolean flapping, float ageInTicks, float spread) {
         if (!hasWings()) return;
         rightWing.visible = visible;
         leftWing.visible = visible;
         float flap = flapping ? (float) Math.sin(ageInTicks * 0.35F) * 0.28F : (float) Math.sin(ageInTicks * 0.08F) * 0.05F;
         float sweep = flapping ? (float) Math.cos(ageInTicks * 0.35F) * 0.12F : 0F;
+        float slow = (float) Math.sin(ageInTicks * 0.15F) * 0.06F;
+        flap += (slow - flap) * spread;
+        sweep *= 1F - spread;
         rightWing.zRot = rightWingZ + flap;
         leftWing.zRot = leftWingZ - flap;
-        rightWing.yRot = rightWingY + sweep;
-        leftWing.yRot = leftWingY - sweep;
+        // rest pose sweeps the wings back; spreading swings them out to the sides
+        rightWing.yRot = (rightWingY + sweep) * (1F - spread);
+        leftWing.yRot = (leftWingY - sweep) * (1F - spread);
     }
 
     /** Loads the detail model for a character, or returns null if it has none. */

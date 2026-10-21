@@ -1,6 +1,8 @@
 package com.xenowarriors.skill.rhalix;
 
 import com.xenowarriors.entity.KishiDomeEntity;
+import com.xenowarriors.network.KishiCastPacket;
+import com.xenowarriors.network.ModNetwork;
 import com.xenowarriors.skill.Skill;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +46,7 @@ public class KishiSkill implements Skill {
             return false;
         }
         if (dome.raiseLevel()) {
+            playCastAnimation(player);
             int level = dome.getGravityLevel();
             player.level().playSound(null, dome.getX(), dome.getY(), dome.getZ(),
                     SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 1.2F, 0.5F + 0.15F * level);
@@ -66,6 +69,7 @@ public class KishiSkill implements Skill {
         KishiDomeEntity dome = KishiDomeEntity.create(player.level(), player, target);
         player.level().addFreshEntity(dome);
         ACTIVE.put(player.getUUID(), dome);
+        playCastAnimation(player);
 
         player.level().playSound(null, target.x, target.y, target.z,
                 SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.5F, 0.6F);
@@ -73,6 +77,13 @@ public class KishiSkill implements Skill {
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.7F, 0.5F);
         player.displayClientMessage(Component.translatable("message.xenowarriors.kishi.cast"), true);
         return true;
+    }
+
+    /** Tells everyone nearby to play Rhalix's cast pose (the flying one if he's in the air). */
+    private static void playCastAnimation(ServerPlayer player) {
+        boolean airborne = player.getAbilities().flying || player.isFallFlying()
+                || (!player.onGround() && !player.isInWater() && !player.onClimbable());
+        ModNetwork.sendToTrackingAndSelf(new KishiCastPacket(player.getId(), airborne), player);
     }
 
     /** The mob/player being aimed at, or else the block being looked at. */

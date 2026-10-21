@@ -12,6 +12,10 @@ public final class ClientSkillState {
     private static final int[] COOLDOWN_TOTAL = new int[5];
     private static final Map<UUID, Long> KISHI_SEEN = new HashMap<>();
     private static final Map<UUID, Integer> KISHI_LEVEL = new HashMap<>();
+    private static final Map<Integer, KishiCast> KISHI_CASTS = new HashMap<>();
+
+    /** When a player started their Kishi cast animation (in their own tick count) and whether they were in the air. */
+    public record KishiCast(int startTick, boolean airborne) {}
 
     private ClientSkillState() {}
 
@@ -52,7 +56,27 @@ public final class ClientSkillState {
         return isCastingKishi(player) ? KISHI_LEVEL.getOrDefault(player, 1) : 0;
     }
 
+    public static void startKishiCast(int entityId, boolean airborne) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        net.minecraft.world.entity.Entity e = mc.level.getEntity(entityId);
+        if (e != null) KISHI_CASTS.put(entityId, new KishiCast(e.tickCount, airborne));
+    }
+
+    /** The Kishi cast a player is in the middle of, or null. */
+    public static KishiCast kishiCast(net.minecraft.world.entity.Entity e) {
+        KishiCast cast = KISHI_CASTS.get(e.getId());
+        if (cast == null) return null;
+        int age = e.tickCount - cast.startTick();
+        if (age < 0 || age > com.xenowarriors.client.KishiCastAnimation.DURATION) {
+            KISHI_CASTS.remove(e.getId());
+            return null;
+        }
+        return cast;
+    }
+
     public static void clear() {
+        KISHI_CASTS.clear();
         for (int i = 0; i < 5; i++) {
             COOLDOWN_END[i] = 0;
             COOLDOWN_TOTAL[i] = 0;
