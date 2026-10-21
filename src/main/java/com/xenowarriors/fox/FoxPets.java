@@ -97,6 +97,11 @@ public final class FoxPets {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve();
     }
 
+    /** How many foxes this player has. */
+    public static int count(Player p) {
+        return pets(p).size();
+    }
+
     private static ListTag pets(Player p) {
         return cap(p).map(c -> c.pets).orElseGet(ListTag::new);
     }
@@ -530,7 +535,13 @@ public final class FoxPets {
     public static void onJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide || !(event.getEntity() instanceof Fox fox)) return;
         UUID ownerId = ownerOf(fox);
-        if (ownerId == null) return;
+        if (ownerId == null) {
+            // wild: drawn to Mikiko
+            if (fox.goalSelector.getAvailableGoals().stream().noneMatch(w -> w.getGoal() instanceof FoxAttractGoal)) {
+                fox.goalSelector.addGoal(2, new FoxAttractGoal(fox));
+            }
+            return;
+        }
         MinecraftServer server = fox.getServer();
         ServerPlayer owner = server == null ? null : server.getPlayerList().getPlayer(ownerId);
         if (owner != null) {
@@ -838,6 +849,10 @@ public final class FoxPets {
     // ---------------------------------------------------------------- the whistle
 
     public static void whistle(ServerPlayer p) {
+        if (ModCapabilities.getType(p) == CharacterType.RHALIX) {
+            com.xenowarriors.wing.WingPets.whistle(p);      // Rhalix's winged companions answer it too
+            return;
+        }
         if (ModCapabilities.getType(p) != CharacterType.MIKIKO) {
             say(p, "Only Mikiko's foxes answer this whistle.");
             return;

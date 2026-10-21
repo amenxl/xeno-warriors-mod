@@ -174,6 +174,7 @@ public final class XenoCommands {
                     + " / " + Stat.MAX_LEVEL));
         }
         if (type == CharacterType.RHALIX) say(ctx, gray("Wings: " + (RhalixWings.out(p) ? "out" : "put away")));
+        if (type == CharacterType.RHALIX) say(ctx, gray("Winged companions: " + com.xenowarriors.wing.WingPets.count(p) + " / " + com.xenowarriors.wing.WingPets.MAX));
         if (type == CharacterType.MIKIKO) say(ctx, gray("Foxes: " + FoxPets.describe(p).size() + " / " + FoxPets.MAX_FOXES));
         return 1;
     }

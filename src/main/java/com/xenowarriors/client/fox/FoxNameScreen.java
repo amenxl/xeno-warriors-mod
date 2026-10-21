@@ -17,9 +17,15 @@ public class FoxNameScreen extends Screen {
     private final String current;
     private final boolean justTamed;
     private EditBox box;
+    private final String what;
 
     public FoxNameScreen(UUID fox, String current, boolean justTamed) {
-        super(Component.literal("Name your fox"));
+        this(fox, current, justTamed, "fox");
+    }
+
+    public FoxNameScreen(UUID fox, String current, boolean justTamed, String what) {
+        super(Component.literal("Name your " + what));
+        this.what = what;
         this.fox = fox;
         this.current = current;
         this.justTamed = justTamed;
@@ -59,7 +65,7 @@ public class FoxNameScreen extends Screen {
         int cx = width / 2, cy = height / 2;
         g.fill(cx - 92, cy - 46, cx + 92, cy + 46, 0xC0101018);
         g.fill(cx - 92, cy - 46, cx + 92, cy - 44, 0xFFFF8A2A);
-        g.drawCenteredString(font, justTamed ? "Your new fox! What's its name?" : "Name your fox", cx, cy - 34, 0xFFB060);
+        g.drawCenteredString(font, justTamed ? "Your new " + what + "! What's its name?" : "Name your " + what, cx, cy - 34, 0xFFB060);
         super.render(g, mouseX, mouseY, partialTick);
     }
 

@@ -8,7 +8,8 @@
     "FoxAccessor",
     "FoxHoldMixin",
     "FoxRideMixin",
-    "TemplatePoolAccessor"
+    "TemplatePoolAccessor",
+    "BatAccessor"
   ],
   "client": [
     "AbstractClientPlayerMixin",

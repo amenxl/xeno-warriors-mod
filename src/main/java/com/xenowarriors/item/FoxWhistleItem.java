@@ -38,6 +38,7 @@ public class FoxWhistleItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.literal("Calls Mikiko's foxes to his side").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("...and Rhalix's winged companions").withStyle(ChatFormatting.LIGHT_PURPLE));
         tooltip.add(Component.literal("Brings back foxes that have fallen").withStyle(ChatFormatting.GRAY));
     }
 }

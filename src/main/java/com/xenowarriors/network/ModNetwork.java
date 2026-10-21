@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "16";
+    private static final String VERSION = "17";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -170,6 +170,11 @@ public final class ModNetwork {
                 .encoder(TornPacket::encode)
                 .decoder(TornPacket::decode)
                 .consumerMainThread(TornPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(OpenNamePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenNamePacket::encode)
+                .decoder(OpenNamePacket::decode)
+                .consumerMainThread(OpenNamePacket::handle)
                 .add();
     }
 

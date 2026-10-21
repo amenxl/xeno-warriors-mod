@@ -21,6 +21,9 @@ public record RenameFoxPacket(UUID fox, String name) {
 
     public static void handle(RenameFoxPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer p = ctx.get().getSender();
-        if (p != null) FoxPets.rename(p, msg.fox, msg.name);
+        if (p != null) {
+            FoxPets.rename(p, msg.fox, msg.name);
+            com.xenowarriors.wing.WingPets.rename(p, msg.fox, msg.name);   // (or one of Rhalix's winged companions)
+        }
     }
 }
