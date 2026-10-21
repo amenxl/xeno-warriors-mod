@@ -51,8 +51,8 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
             pose.mulPose(Axis.XP.rotationDegrees(u * 720F));     // two full flips
             pose.mulPose(Axis.ZP.rotationDegrees(45F));
         } else {
-            pose.translate(0F, 0.36F, 0.24F);                    // across his back
-            pose.mulPose(Axis.ZP.rotationDegrees(225F));         // hilt up over his right shoulder
+            pose.translate(0F, 0.42F, 0.26F);                    // across his back
+            pose.mulPose(Axis.ZP.rotationDegrees(-45F));         // lying sideways (horizontal) across his back
         }
         pose.scale(1.1F, 1.1F, 1.1F);
         mc.getItemRenderer().renderStatic(MikikoAnimations.bladeStack(), ItemDisplayContext.NONE, light,
