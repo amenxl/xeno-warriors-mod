@@ -140,6 +140,14 @@ public final class FoxPets {
         ItemStack stack = p.getItemInHand(event.getHand());
         UUID owner = ownerOf(fox);
         if (owner == null) {
+            if (event.getHand() == InteractionHand.MAIN_HAND && !isRabbit(stack)) {
+                // tell them what it takes
+                if (ModCapabilities.getType(p) == CharacterType.MIKIKO) {
+                    say(p, "To tame a fox, feed it rabbit (raw or cooked).");
+                } else if (ModCapabilities.getType(p) != CharacterType.NONE) {
+                    say(p, "Only Mikiko can tame foxes (with rabbit, raw or cooked).");
+                }
+            }
             if (!isRabbit(stack) || ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
             consume(event);
             tryTame(p, fox, stack);

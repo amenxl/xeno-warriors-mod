@@ -23,7 +23,8 @@
     "LivingEntityPoofMixin",
     "FoxRendererMixin",
     "FoxHeldItemLayerMixin",
-    "LivingEntityRendererSoulMixin"
+    "LivingEntityRendererSoulMixin",
+    "compat.DragonMineZRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

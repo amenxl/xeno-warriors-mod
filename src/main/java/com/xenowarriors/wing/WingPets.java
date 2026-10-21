@@ -117,6 +117,17 @@ public final class WingPets {
         p.displayClientMessage(Component.literal(text).withStyle(ChatFormatting.LIGHT_PURPLE), true);
     }
 
+    private static String aName(Entity e) {
+        return e instanceof Bat ? "a bat" : e instanceof Parrot ? "a parrot" : e instanceof Chicken ? "a chicken" : "a bee";
+    }
+
+    /** What each winged animal can be tamed with (matches food()). */
+    private static String foodName(Entity e) {
+        if (e instanceof Bat) return "sweet berries, glow berries, a melon slice or an apple";
+        if (e instanceof Parrot || e instanceof Chicken) return "seeds";
+        return "a flower";
+    }
+
     private static String defaultName(Entity e) {
         return e instanceof Bat ? "Bat" : e instanceof Parrot ? "Parrot" : e instanceof Chicken ? "Chicken" : "Bee";
     }
@@ -131,6 +142,10 @@ public final class WingPets {
         UUID owner = ownerOf(mob);
         boolean rhalix = ModCapabilities.getType(p) == CharacterType.RHALIX;
         if (owner == null) {
+            if (event.getHand() == InteractionHand.MAIN_HAND && !food(mob, stack) && !(mob instanceof Parrot pt && pt.isTame())
+                    && ModCapabilities.getType(p) != CharacterType.NONE) {
+                say(p, (rhalix ? "To tame " : "Only Rhalix can tame ") + aName(mob) + ", feed it " + foodName(mob) + ".");
+            }
             if (!rhalix || !food(mob, stack) || mob instanceof Parrot parrot && parrot.isTame()) return;
             consume(event);
             tryTame(p, mob, stack);
