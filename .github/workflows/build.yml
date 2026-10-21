@@ -24,7 +24,8 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew build --no-daemon
+          set -o pipefail
+          ./gradlew build --no-daemon 2>&1 | tee build.log || { grep -E "error:|\.java:[0-9]+: error" -A2 build.log | head -60 | sed 's/^/::error::/'; exit 1; }
 
       - name: Find the mod jar
         id: jar
