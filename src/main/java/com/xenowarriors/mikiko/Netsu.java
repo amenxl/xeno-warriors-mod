@@ -33,6 +33,12 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Netsu {
     public static final int DURATION = 10 * 20;
+    /** Each Defense level keeps the fire going 0.3 seconds longer (25 seconds at Defense 50). */
+    public static final int TICKS_PER_DEFENSE = 6;
+
+    public static int duration(ServerPlayer p) {
+        return DURATION + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.DEFENSE) * TICKS_PER_DEFENSE;
+    }
     public static final float SPEED_BONUS = 0.9F;          // +90% movement speed
     public static final float SELF_DAMAGE = 0.5F;          // every second
     public static final float TOUCH_DAMAGE = 2F;
@@ -70,16 +76,17 @@ public final class Netsu {
     }
 
     public static void start(ServerPlayer p) {
-        END.put(p.getUUID(), p.level().getGameTime() + DURATION);
+        int duration = duration(p);
+        END.put(p.getUUID(), p.level().getGameTime() + duration);
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) {
             speed.removeModifier(SPEED_ID);
             speed.addTransientModifier(new AttributeModifier(SPEED_ID, "Netsu", SPEED_BONUS, AttributeModifier.Operation.MULTIPLY_BASE));
         }
         boost(p, true);
-        p.displayClientMessage(Component.literal("Netsu! +40% attack, +25% attack speed, +6 armor, 25% less damage taken")
+        p.displayClientMessage(Component.literal("Netsu for " + duration / 20 + "s! +40% attack, +25% attack speed, +6 armor, 25% less damage taken")
                 .withStyle(net.minecraft.ChatFormatting.GOLD), true);
-        ModNetwork.sendToTrackingAndSelf(new NetsuPacket(p.getId(), DURATION), p);
+        ModNetwork.sendToTrackingAndSelf(new NetsuPacket(p.getId(), duration), p);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.2F, 0.7F);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1F, 0.6F);
     }
