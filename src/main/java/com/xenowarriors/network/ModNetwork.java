@@ -236,6 +236,11 @@ public final class ModNetwork {
                 .decoder(BladeSwingPacket::decode)
                 .consumerMainThread(BladeSwingPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(MiningLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(MiningLevelPacket::encode)
+                .decoder(MiningLevelPacket::decode)
+                .consumerMainThread(MiningLevelPacket::handle)
+                .add();
     }
 
     public static void sendToServer(Object msg) {

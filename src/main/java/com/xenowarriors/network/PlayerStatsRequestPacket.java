@@ -46,7 +46,12 @@ public record PlayerStatsRequestPacket() {
         PlayerStatsPacket.Me me = new PlayerStatsPacket.Me(xp[0], xp[1], xp[2],
                 (int) Math.round(com.xenowarriors.karma.KarmaSensing.radius(uses)), com.xenowarriors.karma.KarmaSensing.duration(uses) / 20,
                 uses, d == null ? 0 : d.sealed.size(), com.xenowarriors.mikiko.HekubladeRealm.inRealm(sender),
-                com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(sender), pets, d == null ? 0 : d.flightTicks / 1200);
+                com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(sender), pets, d == null ? 0 : d.flightTicks / 1200,
+                com.xenowarriors.stats.Mining.level(sender), com.xenowarriors.stats.Mining.progress(sender),
+                d == null ? 1 : d.bladeLevel, com.xenowarriors.mikiko.BladeLevel.progress(sender),
+                d == null ? 0 : Math.max(0, d.realmTicks < 0 ? com.xenowarriors.mikiko.BladeLevel.maxTicks(d.bladeLevel) : d.realmTicks),
+                d == null ? 0 : com.xenowarriors.mikiko.BladeLevel.maxTicks(d.bladeLevel),
+                d == null ? 0 : (int) Math.max(0, d.realmCooldownUntil - sender.server.overworld().getGameTime()));
         ModNetwork.sendToPlayer(new PlayerStatsPacket(list, me), sender);
     }
 }

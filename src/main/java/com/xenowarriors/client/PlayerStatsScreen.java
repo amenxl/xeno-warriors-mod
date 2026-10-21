@@ -144,8 +144,15 @@ public class PlayerStatsScreen extends Screen {
         if (self == null || me == null) return;
         CharacterType type = typeOf(self);
         int color = type.getColor() | 0xFF000000;
+        // shrink the card to fit short windows
+        int content = type == CharacterType.MIKIKO ? 200 : 140;
+        float scale = Math.min(1F, (height - 58 - 28) / (float) content);
+        g.pose().pushPose();
+        g.pose().translate(width / 2F, 28, 0);
+        g.pose().scale(scale, scale, 1);
+        g.pose().translate(-width / 2F, -28, 0);
         int x = (width - W) / 2, y = 28;
-        g.fill(x, y, x + W, height - 58, 0xC0101018);
+        g.fill(x, y, x + W, y + content, 0xC0101018);
         g.fill(x, y, x + W, y + 1, color);
         Component warrior = type == CharacterType.NONE ? Component.literal("No warrior") : type.getDisplayName();
         g.drawString(font, warrior, x + 8, y + 6, color);
@@ -156,7 +163,8 @@ public class PlayerStatsScreen extends Screen {
         statRow(g, x + 8, by, "Speed", self.speed(), me.speedXp(), 0x55DDFF);
         statRow(g, x + 8, by + 14, "Attack", self.attack(), me.attackXp(), 0xFF7744);
         statRow(g, x + 8, by + 28, "Defense", self.defense(), me.defenseXp(), 0x88DD66);
-        int ly = by + 48;
+        statRow(g, x + 8, by + 42, "Mining", me.mining(), me.miningXp(), 0xE0C070);
+        int ly = by + 60;
         line(g, x + 8, ly, "Karma", Math.round(self.karma()) + " / 100", 0xC77DFF);
         line(g, x + 8, ly + 12, "Health", Math.round(self.health()) + " / " + Math.round(self.maxHealth()), 0xFF6060);
         line(g, x + 8, ly + 24, "Karma Sensing", me.senseRange() + " blocks, " + me.senseSeconds() + "s  ("
@@ -166,15 +174,24 @@ public class PlayerStatsScreen extends Screen {
             line(g, x + 8, ly + 48, "Wind flight", self.level() >= 50 ? "Unlocked (" + me.flightMinutes() + " min flown)"
                     : "Unlocks at Character Level 50", 0xDDEEFF);
             line(g, x + 8, ly + 60, "Sealed in the Hekublade", String.valueOf(me.sealed()), 0xFF5A3A);
+            statRow(g, x + 8, ly + 74, "Hekublade", me.bladeLevel(), me.bladeXp(), 0xFF7A1A);
+            String time = me.cooldownLeft() > 0 ? "Locked out for " + com.xenowarriors.mikiko.BladeLevel.fmt(me.cooldownLeft())
+                    : com.xenowarriors.mikiko.BladeLevel.fmt(me.realmLeft()) + " / " + com.xenowarriors.mikiko.BladeLevel.fmt(me.realmMax());
+            line(g, x + 8, ly + 88, "Time inside", time, me.cooldownLeft() > 0 ? 0xFF5A5A : 0xFFC080);
         } else if (type == CharacterType.RHALIX) {
             line(g, x + 8, ly + 36, "Winged companions", String.valueOf(me.pets()), 0xC77DFF);
         }
+        g.pose().popPose();
         if (me.prisoner()) {
             g.drawCenteredString(font, "You're sealed inside a Hekublade.", width / 2, height - 70, 0xFF5A3A);
         }
     }
 
     private void statRow(GuiGraphics g, int x, int y, String name, int level, float xp, int color) {
+        statRow(g, x, y, name, level, xp, color, Stat.MAX_LEVEL);
+    }
+
+    private void statRow(GuiGraphics g, int x, int y, String name, int level, float xp, int color, int max) {
         g.drawString(font, name, x, y, 0xDDDDDD);
         g.drawString(font, "Lv " + level, x + 52, y, 0xFFFFFF);
         int bx = x + 90, w = 150;

@@ -73,6 +73,18 @@ public final class Parties {
         return null;
     }
 
+    /** Online party members of this player, including them (just them if not in a party). */
+    public static List<ServerPlayer> members(ServerPlayer p) {
+        Party party = BY_PLAYER.get(p.getUUID());
+        if (party == null) return List.of(p);
+        List<ServerPlayer> out = new ArrayList<>();
+        for (UUID id : party.members) {
+            ServerPlayer m = p.server.getPlayerList().getPlayer(id);
+            if (m != null) out.add(m);
+        }
+        return out;
+    }
+
     public static boolean inParty(Player p) {
         return BY_PLAYER.containsKey(p.getUUID());
     }

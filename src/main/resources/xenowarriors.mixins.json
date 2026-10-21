@@ -22,7 +22,8 @@
     "ItemInHandLayerMixin",
     "LivingEntityPoofMixin",
     "FoxRendererMixin",
-    "FoxHeldItemLayerMixin"
+    "FoxHeldItemLayerMixin",
+    "LivingEntityRendererSoulMixin"
   ],
   "injectors": {
     "defaultRequire": 1

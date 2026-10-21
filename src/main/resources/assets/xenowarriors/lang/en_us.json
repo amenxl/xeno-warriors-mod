@@ -158,5 +158,7 @@
   "key.xenowarriors.stats_menu": "Player Levels & Stats",
   "entity.xenowarriors.c_soul": "C-Soul",
   "entity.xenowarriors.soul_bolt": "Soul Bolt",
-  "item.xenowarriors.c_soul_spawn_egg": "C-Soul Spawn Egg"
+  "item.xenowarriors.c_soul_spawn_egg": "C-Soul Spawn Egg",
+  "effect.xenowarriors.blade_bound": "Inside the Hekublade",
+  "effect.xenowarriors.blade_exhausted": "Hekublade Exhaustion"
 }

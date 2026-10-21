@@ -37,6 +37,28 @@ public final class Netsu {
     public static final float SELF_DAMAGE = 0.5F;          // every second
     public static final float TOUCH_DAMAGE = 2F;
     private static final UUID SPEED_ID = UUID.fromString("2b9f6a3e-4c1d-4f7b-8e2a-9d3c5b1a7e44");
+    /** Netsu also burns hotter in a fight: more damage, faster swings, tougher skin. */
+    public static final float ATTACK_BONUS = 0.4F, ATTACK_SPEED_BONUS = 0.25F, ARMOR_BONUS = 6F, DAMAGE_TAKEN = 0.75F;
+    private static final UUID[] BOOST_IDS = {
+            UUID.fromString("2b9f6a3e-4c1d-4f7b-8e2a-9d3c5b1a7e45"),
+            UUID.fromString("2b9f6a3e-4c1d-4f7b-8e2a-9d3c5b1a7e46"),
+            UUID.fromString("2b9f6a3e-4c1d-4f7b-8e2a-9d3c5b1a7e47"),
+            UUID.fromString("2b9f6a3e-4c1d-4f7b-8e2a-9d3c5b1a7e48")};
+
+    private static void boost(ServerPlayer p, boolean on) {
+        Object[][] mods = {
+                {Attributes.ATTACK_DAMAGE, ATTACK_BONUS, AttributeModifier.Operation.MULTIPLY_BASE},
+                {Attributes.ATTACK_SPEED, ATTACK_SPEED_BONUS, AttributeModifier.Operation.MULTIPLY_BASE},
+                {Attributes.ARMOR, ARMOR_BONUS, AttributeModifier.Operation.ADDITION},
+                {Attributes.KNOCKBACK_RESISTANCE, 0.4F, AttributeModifier.Operation.ADDITION}};
+        for (int i = 0; i < mods.length; i++) {
+            AttributeInstance inst = p.getAttribute((net.minecraft.world.entity.ai.attributes.Attribute) mods[i][0]);
+            if (inst == null) continue;
+            inst.removeModifier(BOOST_IDS[i]);
+            if (on) inst.addTransientModifier(new AttributeModifier(BOOST_IDS[i], "Netsu", (float) mods[i][1],
+                    (AttributeModifier.Operation) mods[i][2]));
+        }
+    }
     private static final Map<UUID, Long> END = new HashMap<>();
     private static final Map<Integer, Long> TOUCH_COOLDOWN = new HashMap<>();
 
@@ -54,6 +76,9 @@ public final class Netsu {
             speed.removeModifier(SPEED_ID);
             speed.addTransientModifier(new AttributeModifier(SPEED_ID, "Netsu", SPEED_BONUS, AttributeModifier.Operation.MULTIPLY_BASE));
         }
+        boost(p, true);
+        p.displayClientMessage(Component.literal("Netsu! +40% attack, +25% attack speed, +6 armor, 25% less damage taken")
+                .withStyle(net.minecraft.ChatFormatting.GOLD), true);
         ModNetwork.sendToTrackingAndSelf(new NetsuPacket(p.getId(), DURATION), p);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.2F, 0.7F);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1F, 0.6F);
@@ -63,6 +88,7 @@ public final class Netsu {
         END.remove(p.getUUID());
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(SPEED_ID);
+        boost(p, false);
         p.clearFire();
         ModNetwork.sendToTrackingAndSelf(new NetsuPacket(p.getId(), 0), p);
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.8F, 1F);
@@ -99,6 +125,10 @@ public final class Netsu {
     public static void onHurt(LivingHurtEvent event) {
         if (event.getSource().getEntity() instanceof ServerPlayer p && event.getSource().getDirectEntity() == p && active(p)) {
             event.getEntity().setSecondsOnFire(5);
+        }
+        // and it hardens him: 25% less damage from anything but Netsu's own burn
+        if (event.getEntity() instanceof ServerPlayer self && active(self) && !event.getSource().is(ModDamageTypes.NETSU)) {
+            event.setAmount(event.getAmount() * DAMAGE_TAKEN);
         }
     }
 

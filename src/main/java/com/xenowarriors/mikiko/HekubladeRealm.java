@@ -109,6 +109,18 @@ public final class HekubladeRealm {
         if (realm == null) return;
         PlayerCharacter c = cap(p).orElse(null);
         if (c == null) return;
+        long now = p.server.overworld().getGameTime();
+        if (now < c.realmCooldownUntil) {
+            p.displayClientMessage(Component.literal("The Hekublade won't take you back yet (" + BladeLevel.fmt((int) (c.realmCooldownUntil - now))
+                    + ")").withStyle(ChatFormatting.RED), true);
+            return;
+        }
+        int max = BladeLevel.maxTicks(c.bladeLevel);
+        if (c.realmTicks < 0 || c.realmTicks > max) c.realmTicks = max;
+        if (c.realmTicks < 200) {
+            p.displayClientMessage(Component.literal("You need to rest outside the blade a little longer.").withStyle(ChatFormatting.RED), true);
+            return;
+        }
         CompoundTag ret = new CompoundTag();
         ret.putString("dim", p.level().dimension().location().toString());
         ret.putDouble("x", p.getX());
@@ -119,10 +131,13 @@ public final class HekubladeRealm {
 
         BlockPos center = center(p.getUUID());
         if (!realm.getBlockState(center.below()).is(Blocks.SEA_LANTERN)) buildPlatform(realm, center);
+        BlockPos house = center.offset(0, 0, -24);
+        if (!realm.getBlockState(house).is(Blocks.DARK_OAK_PLANKS)) buildHouse(realm, house);
         burst(p.serverLevel(), p.getX(), p.getY() + 1, p.getZ());
         p.teleportTo(realm, center.getX() + 0.5, center.getY() + 1, center.getZ() + 3.5, 180F, 0F);
         p.fallDistance = 0;
         showSealed(p, realm, center, c);
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(com.xenowarriors.ModEffects.BLADE_BOUND.get(), c.realmTicks, 0, false, false, true));
         realm.playSound(null, center, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.5F, 0.6F);
         realm.playSound(null, center, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1F, 0.7F);
         int n = c.sealed.size();
@@ -131,6 +146,7 @@ public final class HekubladeRealm {
     }
 
     public static void leave(ServerPlayer p) {
+        p.removeEffect(com.xenowarriors.ModEffects.BLADE_BOUND.get());
         ServerLevel realm = p.server.getLevel(KEY);
         if (realm != null) clearSealed(realm, p.getUUID());
         CompoundTag ret = cap(p).map(c -> c.bladeReturn).orElse(new CompoundTag());
@@ -303,9 +319,15 @@ public final class HekubladeRealm {
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
         if (p.tickCount % BREAKOUT_INTERVAL == 0 && p.tickCount > 0) breakouts(p);
+        if (p.tickCount % 20 == 0) timeLimit(p);
         if (p.tickCount % 5 != 0 || !inRealm(p)) return;
         UUID captor = cap(p).map(d -> d.prisonerOf).orElse(null);
         BlockPos c = center(captor != null ? captor : p.getUUID());
+        // the blade is Mikiko's own world: inside it he heals fast (2 hearts a second)
+        if (captor == null && ModCapabilities.getType(p) == CharacterType.MIKIKO && p.getHealth() < p.getMaxHealth()) {
+            p.heal(1F);
+            if (p.tickCount % 20 == 0) p.serverLevel().sendParticles(ParticleTypes.HEART, p.getX(), p.getY() + 2, p.getZ(), 1, 0.3, 0.2, 0.3, 0);
+        }
         if (p.getY() < c.getY() - 25) {
             p.teleportTo(c.getX() + 0.5, c.getY() + 1, c.getZ() + 0.5);
             p.fallDistance = 0;
@@ -379,6 +401,7 @@ public final class HekubladeRealm {
         ret.putDouble("y", victim.getY());
         ret.putDouble("z", victim.getZ());
         vc.prisonerOf = mikiko.getUUID();
+        BladeLevel.addXp(mikiko, 40F);
         vc.prisonReturn = ret;
         victim.setHealth(victim.getMaxHealth());
         victim.clearFire();
@@ -484,6 +507,94 @@ public final class HekubladeRealm {
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
         freePlayer(prisoner);
+    }
+
+    /** Mikiko's time inside the blade runs down while he's in, and refills while he's out. */
+    private static void timeLimit(ServerPlayer p) {
+        if (ModCapabilities.getType(p) != CharacterType.MIKIKO || isPrisoner(p)) return;
+        PlayerCharacter c = cap(p).orElse(null);
+        if (c == null) return;
+        int max = BladeLevel.maxTicks(c.bladeLevel);
+        if (c.realmTicks < 0) c.realmTicks = max;
+        long now = p.server.overworld().getGameTime();
+        var bound = com.xenowarriors.ModEffects.BLADE_BOUND.get();
+        var tired = com.xenowarriors.ModEffects.BLADE_EXHAUSTED.get();
+        if (inRealm(p)) {
+            c.realmTicks -= 20;
+            var fx = p.getEffect(bound);
+            if (fx == null || Math.abs(fx.getDuration() - c.realmTicks) > 40) {
+                p.removeEffect(bound);
+                p.addEffect(new net.minecraft.world.effect.MobEffectInstance(bound, Math.max(1, c.realmTicks), 0, false, false, true));
+            }
+            if (c.realmTicks == 600 || c.realmTicks == 200) {
+                p.displayClientMessage(Component.literal("The Hekublade is pushing you out... " + c.realmTicks / 20 + "s left")
+                        .withStyle(ChatFormatting.RED), true);
+                p.playNotifySound(SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 0.5F);
+            }
+            if (c.realmTicks <= 0) {
+                c.realmTicks = 0;
+                int cd = BladeLevel.cooldownTicks(c.bladeLevel);
+                c.realmCooldownUntil = now + cd;
+                leave(p);
+                p.addEffect(new net.minecraft.world.effect.MobEffectInstance(tired, cd, 0, false, false, true));
+                p.sendSystemMessage(Component.literal("You stayed too long - the Hekublade threw you out. You can go back in "
+                        + BladeLevel.fmt(cd) + " from now.").withStyle(ChatFormatting.RED));
+            }
+        } else {
+            if (c.realmTicks < max) c.realmTicks = Math.min(max, c.realmTicks + 20);
+            if (now < c.realmCooldownUntil && !p.hasEffect(tired)) {
+                p.addEffect(new net.minecraft.world.effect.MobEffectInstance(tired, (int) (c.realmCooldownUntil - now), 0, false, false, true));
+            }
+            if (p.hasEffect(bound)) p.removeEffect(bound);
+        }
+    }
+
+    /** A little dark-oak house on Mikiko's floor with empty chests for him to keep things in. */
+    private static void buildHouse(ServerLevel l, BlockPos h) {
+        BlockState planks = Blocks.DARK_OAK_PLANKS.defaultBlockState(),
+                log = Blocks.DARK_OAK_LOG.defaultBlockState(),
+                pane = Blocks.LIGHT_BLUE_STAINED_GLASS_PANE.defaultBlockState(),
+                slab = Blocks.DARK_OAK_SLAB.defaultBlockState(),
+                air = Blocks.AIR.defaultBlockState();
+        int x0 = h.getX(), y0 = h.getY(), z0 = h.getZ();
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                set(l, x0 + dx, y0, z0 + dz, planks);                                 // floor
+                boolean edge = Math.abs(dx) == 3 || Math.abs(dz) == 3;
+                boolean corner = Math.abs(dx) == 3 && Math.abs(dz) == 3;
+                for (int y = 1; y <= 3; y++) {
+                    BlockState st = !edge ? air : corner ? log : planks;
+                    if (edge && !corner && y == 2 && (dx == 0 || dz == 0 || Math.abs(dx) == 1 && dz == -3)) st = pane;
+                    set(l, x0 + dx, y0 + y, z0 + dz, st);
+                }
+                set(l, x0 + dx, y0 + 4, z0 + dz, planks);                             // ceiling
+            }
+        }
+        for (int dx = -4; dx <= 4; dx++) {
+            for (int dz = -4; dz <= 4; dz++) {
+                if (Math.abs(dx) == 4 || Math.abs(dz) == 4) set(l, x0 + dx, y0 + 4, z0 + dz, slab);   // eaves
+                if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) set(l, x0 + dx, y0 + 5, z0 + dz, slab);   // roof cap
+            }
+        }
+        set(l, x0, y0 + 4, z0, Blocks.SHROOMLIGHT.defaultBlockState());                 // a warm light inside
+        // the door faces the middle of the floor (south)
+        var door = Blocks.DARK_OAK_DOOR.defaultBlockState().setValue(net.minecraft.world.level.block.DoorBlock.FACING, net.minecraft.core.Direction.SOUTH);
+        set(l, x0, y0 + 1, z0 + 3, door.setValue(net.minecraft.world.level.block.DoorBlock.HALF,
+                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
+        set(l, x0, y0 + 2, z0 + 3, door.setValue(net.minecraft.world.level.block.DoorBlock.HALF,
+                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+        // empty chests along the back wall and one side
+        var chest = Blocks.CHEST.defaultBlockState();
+        var south = net.minecraft.core.Direction.SOUTH;
+        var east = net.minecraft.core.Direction.EAST;
+        set(l, x0 - 2, y0 + 1, z0 - 2, chest.setValue(net.minecraft.world.level.block.ChestBlock.FACING, south));
+        set(l, x0, y0 + 1, z0 - 2, chest.setValue(net.minecraft.world.level.block.ChestBlock.FACING, south));
+        set(l, x0 + 2, y0 + 1, z0 - 2, chest.setValue(net.minecraft.world.level.block.ChestBlock.FACING, south));
+        set(l, x0 - 2, y0 + 1, z0, chest.setValue(net.minecraft.world.level.block.ChestBlock.FACING, east));
+        set(l, x0 - 2, y0 + 1, z0 + 1, Blocks.BARREL.defaultBlockState());
+        set(l, x0 + 2, y0 + 1, z0, Blocks.CRAFTING_TABLE.defaultBlockState());
+        set(l, x0 + 2, y0 + 1, z0 + 1, Blocks.LANTERN.defaultBlockState());
+        set(l, x0, y0, z0, planks);   // marks the house as built
     }
 
     private static void burst(ServerLevel level, double x, double y, double z) {

@@ -34,6 +34,15 @@ public class PlayerCharacter {
     public int nextSealId;
     /** If this player is sealed inside a Mikiko's Hekublade: whose, and where to put them back. */
     public java.util.UUID prisonerOf;
+    /** Mining skill: level (0-50) and progress, from breaking blocks. */
+    public int miningLevel;
+    /** The Hekublade's own level (1-50) and progress; higher = longer stays inside it. */
+    public int bladeLevel = 1;
+    public float bladeXp;
+    /** Ticks of time left inside the blade (refills while outside), and when he may go back in after being pushed out. */
+    public int realmTicks = -1;
+    public long realmCooldownUntil;
+    public float miningXp;
     public CompoundTag prisonReturn = new CompoundTag();
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
@@ -55,6 +64,12 @@ public class PlayerCharacter {
         this.bladeReturn = other.bladeReturn.copy();
         this.nextSealId = other.nextSealId;
         this.prisonerOf = other.prisonerOf;
+        this.miningLevel = other.miningLevel;
+        this.bladeLevel = other.bladeLevel;
+        this.bladeXp = other.bladeXp;
+        this.realmTicks = other.realmTicks;
+        this.realmCooldownUntil = other.realmCooldownUntil;
+        this.miningXp = other.miningXp;
         this.prisonReturn = other.prisonReturn.copy();
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
@@ -74,6 +89,12 @@ public class PlayerCharacter {
         tag.putInt("next_seal_id", nextSealId);
         if (prisonerOf != null) tag.putUUID("prisoner_of", prisonerOf);
         tag.put("prison_return", prisonReturn.copy());
+        tag.putInt("mining_level", miningLevel);
+        tag.putInt("blade_level", bladeLevel);
+        tag.putFloat("blade_xp", bladeXp);
+        tag.putInt("realm_ticks", realmTicks);
+        tag.putLong("realm_cooldown", realmCooldownUntil);
+        tag.putFloat("mining_xp", miningXp);
         tag.put("pets", pets.copy());
         tag.put("wing_pets", wingPets.copy());
         tag.put("back_fox", backFox.copy());
@@ -92,6 +113,12 @@ public class PlayerCharacter {
         this.nextSealId = tag.getInt("next_seal_id");
         this.prisonerOf = tag.hasUUID("prisoner_of") ? tag.getUUID("prisoner_of") : null;
         this.prisonReturn = tag.getCompound("prison_return");
+        this.miningLevel = tag.getInt("mining_level");
+        this.bladeLevel = Math.max(1, tag.getInt("blade_level"));
+        this.bladeXp = tag.getFloat("blade_xp");
+        this.realmTicks = tag.contains("realm_ticks") ? tag.getInt("realm_ticks") : -1;
+        this.realmCooldownUntil = tag.getLong("realm_cooldown");
+        this.miningXp = tag.getFloat("mining_xp");
         this.pets = tag.getList("pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.wingPets = tag.getList("wing_pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");

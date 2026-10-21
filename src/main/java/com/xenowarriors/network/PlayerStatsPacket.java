@@ -15,7 +15,8 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
 
     /** Extra detail about yourself for the "My Warrior" tab. */
     public record Me(float speedXp, float attackXp, float defenseXp, int senseRange, int senseSeconds, int senseUses,
-                     int sealed, boolean inRealm, boolean prisoner, int pets, int flightMinutes) {}
+                     int sealed, boolean inRealm, boolean prisoner, int pets, int flightMinutes, int mining, float miningXp,
+                     int bladeLevel, float bladeXp, int realmLeft, int realmMax, int cooldownLeft) {}
 
     public static void encode(PlayerStatsPacket m, FriendlyByteBuf buf) {
         buf.writeCollection(m.players, (b, e) -> {
@@ -43,13 +44,21 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
         buf.writeBoolean(me.prisoner());
         buf.writeVarInt(me.pets());
         buf.writeVarInt(me.flightMinutes());
+        buf.writeVarInt(me.mining());
+        buf.writeFloat(me.miningXp());
+        buf.writeVarInt(me.bladeLevel());
+        buf.writeFloat(me.bladeXp());
+        buf.writeVarInt(me.realmLeft());
+        buf.writeVarInt(me.realmMax());
+        buf.writeVarInt(me.cooldownLeft());
     }
 
     public static PlayerStatsPacket decode(FriendlyByteBuf buf) {
         List<Entry> list = buf.readList(b -> new Entry(b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt(),
                 b.readVarInt(), b.readVarInt(), b.readFloat(), b.readFloat(), b.readFloat(), b.readBoolean(), b.readBoolean()));
         Me me = new Me(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt());
+                buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readFloat(),
+                buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
         return new PlayerStatsPacket(list, me);
     }
 
