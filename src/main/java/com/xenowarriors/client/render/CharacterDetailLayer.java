@@ -76,7 +76,27 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         int t = p.tickCount + p.getId() * 37;
         if (t % 97 < 3 || (t % 233 >= 8 && t % 233 < 11)) return "blink";   // blinks every few seconds, sometimes twice
-        return null;
+        return idleFace(p);
+    }
+
+    /**
+     * Neutral faces so they don't stare straight ahead all the time: glancing around, looking up, thinking,
+     * calm, humming to themselves - about half the time it's just the normal face.
+     */
+    private static String idleFace(AbstractClientPlayer p) {
+        int seg = (p.tickCount + p.getId() * 53) / 70;
+        long h = (seg * 2654435761L) ^ (p.getId() * 40503L);
+        int pick = (int) Math.floorMod(h >>> 5, 20);
+        boolean still = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.05;
+        return switch (pick) {
+            case 10, 11 -> "glance_l";
+            case 12, 13 -> "glance_r";
+            case 14 -> "look_up";
+            case 15 -> still ? "thinking" : null;
+            case 16, 17 -> "calm";
+            case 18 -> still ? "hum" : null;
+            default -> null;
+        };
     }
 
     /** 0 = fine, 1 = hurt (half health or less), 2 = badly hurt (a quarter or less). */
@@ -88,19 +108,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     private static final java.util.Set<String> OWN_MOUTH = java.util.Set.of("sleep", "snore", "eat", "eat2", "shout", "hurt", "yawn", "panic");
 
-    /** 0 = not talking, 1-3 = how wide the mouth is open (louder = wider, flapping between syllables). */
+    /** 0 = not talking, otherwise the mouth shape (1-5) following the voice. */
     private static int talkingMouth(AbstractClientPlayer p, String expr) {
         if (expr != null && OWN_MOUTH.contains(expr)) return 0;
-        boolean self = p == net.minecraft.client.Minecraft.getInstance().player;
-        float level = Math.max(com.xenowarriors.voice.VoiceLevels.level(p.getUUID()),
-                self ? com.xenowarriors.voice.VoiceLevels.level(com.xenowarriors.voice.VoiceLevels.LOCAL) : 0F);
-        if (level < 0.04F) return 0;
-        int open = level < 0.22F ? 1 : level < 0.5F ? 2 : 3;
-        // flap: every few ticks the mouth closes a step, so it moves like real speech
-        int phase = (p.tickCount + p.getId()) % 5;
-        if (phase == 0) open = Math.max(0, open - 2);
-        else if (phase == 3) open = Math.max(1, open - 1);
-        return open;
+        int mouth = com.xenowarriors.voice.VoiceLevels.mouth(p.getUUID());
+        if (p == net.minecraft.client.Minecraft.getInstance().player) {
+            mouth = Math.max(mouth, com.xenowarriors.voice.VoiceLevels.mouth(com.xenowarriors.voice.VoiceLevels.LOCAL));
+        }
+        return mouth;
     }
 
     @Override
@@ -147,6 +162,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     com.xenowarriors.XenoWarriors.id(base + "_damage" + damage + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);
             model.root.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
                     com.xenowarriors.XenoWarriors.id(base + "_details_damage" + damage + ".png"))), packedLight, overlay);
+            // 3D: bandages and torn, hanging cloth
+            BattleDamageModel.get().render(parent, poseStack, buffers, packedLight, overlay, damage,
+                    type == CharacterType.MIKIKO ? 0x3A3440 : 0x7A3AA8);
         }
 
         if (model.faceRoot != null) {

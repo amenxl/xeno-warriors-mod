@@ -464,7 +464,12 @@ public final class MikikoAnimations {
                 return beat < 2 ? "scared" : beat < 4 ? "panic" : "dizzy";
             }
             if (clumsy > 0.15F) return "focused";       // concentrating hard, getting there
-            return s.fast > 0.5F ? "grin" : "happy";   // a natural now
+            // a natural now: his mood drifts around while he flies instead of grinning the whole time
+            String[] moods = s.fast > 0.5F ? new String[]{"grin", "excited", "cool", "happy", "focused"}
+                    : new String[]{"happy", "calm", "cool", "glance_l", "glance_r", "hum", "smug"};
+            int seg = (p.tickCount + p.getId() * 41) / 110;
+            int pick = Math.floorMod(seg * 2654435761L >>> 7, moods.length);
+            return moods[(int) pick];
         }
         float[] bi = bladeIdle(p, 0F);
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";

@@ -202,6 +202,63 @@ public final class FoxPets {
         sendSkin(fox);
     }
 
+    // ---------------------------------------------------------------- riding along when he flies
+
+    /**
+     * When Mikiko takes off, his closest fox leaps up onto his head (and a second one curls up on his back) so
+     * they can keep up; a moment after he lands they hop back down.
+     */
+    private static void rideAlong(ServerPlayer p, State s) {
+        boolean flying = p.getAbilities().flying || p.isFallFlying();
+        s.flyTicks = flying ? s.flyTicks + 1 : 0;
+        s.groundTicks = !flying && p.onGround() ? s.groundTicks + 1 : 0;
+        Fox head = s.headFox == null ? null : findLoaded(p, s.headFox);
+        if (head != null && head.getVehicle() != p) {
+            head = null;
+            s.headFox = null;
+        }
+        if (s.flyTicks == 5 && head == null && ModCapabilities.getType(p) == CharacterType.MIKIKO) {
+            java.util.List<Fox> foxes = p.serverLevel().getEntitiesOfClass(Fox.class, p.getBoundingBox().inflate(32),
+                    f -> isOwnedBy(f, p) && f.isAlive() && !f.isPassenger());
+            foxes.sort(java.util.Comparator.comparingDouble(f -> f.distanceToSqr(p)));
+            if (!foxes.isEmpty()) {
+                Fox f = foxes.get(0);
+                wake(f);
+                f.setTarget(null);
+                f.getNavigation().stop();
+                if (f.startRiding(p, true)) {
+                    ((FoxAccessor) f).xenowarriors$setSitting(true);
+                    s.headFox = f.getUUID();
+                    p.serverLevel().sendParticles(ParticleTypes.CLOUD, f.getX(), f.getY(), f.getZ(), 6, 0.2, 0.1, 0.2, 0.02);
+                    f.playSound(SoundEvents.FOX_AMBIENT, 1F, 1.5F);
+                }
+                if (foxes.size() > 1 && cap(p).map(c -> c.backFox.isEmpty()).orElse(false)) {
+                    putOnBack(p, foxes.get(1));
+                    s.autoBack = true;
+                }
+            }
+        }
+        if (s.groundTicks == 15) {
+            if (head != null) {
+                head.stopRiding();
+                ((FoxAccessor) head).xenowarriors$setSitting(false);
+                FoxFollowOwnerGoal.teleportNear(head, p);
+                head.fallDistance = 0;
+                s.headFox = null;
+            }
+            if (s.autoBack) {
+                putDown(p);
+                s.autoBack = false;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
+        // tamed foxes always land on their feet
+        if (event.getEntity() instanceof Fox fox && ownerOf(fox) != null) event.setCanceled(true);
+    }
+
     // ---------------------------------------------------------------- eating
 
     private static final java.util.Set<UUID> OPEN_BAGS = new java.util.HashSet<>();
@@ -510,6 +567,9 @@ public final class FoxPets {
         int still, threshold = roll(), playUntil;
         final Map<UUID, Vec3> lastPos = new HashMap<>();
         final Map<UUID, Long> lastNear = new HashMap<>();
+        int flyTicks, groundTicks;
+        UUID headFox;
+        boolean autoBack;
     }
 
     private static final Map<UUID, State> STATES = new HashMap<>();
@@ -549,6 +609,8 @@ public final class FoxPets {
                 s.still = 0; s.playUntil = 0; s.threshold = roll();
             }
         }
+
+        rideAlong(p, s);
 
         if (p.tickCount % 20 != 0) return;
         for (Tag t : pets) {

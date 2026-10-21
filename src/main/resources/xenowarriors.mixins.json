@@ -6,7 +6,8 @@
   "refmap": "xenowarriors.refmap.json",
   "mixins": [
     "FoxAccessor",
-    "FoxHoldMixin"
+    "FoxHoldMixin",
+    "FoxRideMixin"
   ],
   "client": [
     "AbstractClientPlayerMixin",
