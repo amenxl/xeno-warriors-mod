@@ -18,6 +18,22 @@ public final class ClientSkillState {
     public record SkillAnim(int anim, int startTick, boolean airborne) {}
 
     private static float karma = 100F, maxKarma = 100F;
+    private static final Map<Integer, float[]> SQUISH = new HashMap<>();   // entity id -> {amount, game time}
+
+    /** Gravity Compress tells us each tick how hard its target is being squished. */
+    public static void markSquish(int entityId, float amount) {
+        SQUISH.put(entityId, new float[]{amount, now()});
+    }
+
+    public static float squish(int entityId) {
+        float[] s = SQUISH.get(entityId);
+        if (s == null) return 0F;
+        if (now() - (long) s[1] > 2) {
+            SQUISH.remove(entityId);
+            return 0F;
+        }
+        return s[0];
+    }
 
     private ClientSkillState() {}
 
@@ -89,6 +105,7 @@ public final class ClientSkillState {
         karma = 100F;
         maxKarma = 100F;
         ANIMS.clear();
+        SQUISH.clear();
         for (int i = 0; i < 5; i++) {
             COOLDOWN_END[i] = 0;
             COOLDOWN_TOTAL[i] = 0;

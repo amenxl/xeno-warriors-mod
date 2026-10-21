@@ -32,7 +32,7 @@ public final class ClientEvents {
         // skill keys
         for (int slot = 0; slot < ModKeyMappings.SKILLS.length; slot++) {
             while (ModKeyMappings.SKILLS[slot].consumeClick()) {
-                if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE) {
+                if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active()) {
                     ModNetwork.sendToServer(new UseSkillPacket(slot));
                 }
             }
@@ -43,6 +43,27 @@ public final class ClientEvents {
             pendingSelectScreen = false;
             mc.setScreen(new CharacterSelectScreen());
         }
+    }
+
+    private static final java.util.Set<Integer> SQUISHED = new java.util.HashSet<>();
+
+    /** Gravity Compress squashes its target flat and makes it shake. */
+    @SubscribeEvent
+    public static void onRenderLivingPre(net.minecraftforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
+        net.minecraft.world.entity.LivingEntity e = event.getEntity();
+        float s = ClientSkillState.squish(e.getId());
+        if (s <= 0F) return;
+        float t = e.tickCount + event.getPartialTick();
+        var pose = event.getPoseStack();
+        pose.pushPose();
+        pose.translate(Math.sin(t * 5.1) * 0.035 * s, 0, Math.cos(t * 4.3) * 0.035 * s);
+        pose.scale(1F + 0.14F * s, 1F - 0.24F * s, 1F + 0.14F * s);
+        SQUISHED.add(e.getId());
+    }
+
+    @SubscribeEvent
+    public static void onRenderLivingPost(net.minecraftforge.client.event.RenderLivingEvent.Post<?, ?> event) {
+        if (SQUISHED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
     }
 
     @SubscribeEvent

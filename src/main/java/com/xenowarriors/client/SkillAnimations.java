@@ -13,17 +13,30 @@ import net.minecraft.world.entity.LivingEntity;
  * Kishi on the ground: right arm raised overhead and slammed down toward the target, wide braced stance.
  * Earth Wave: lifts his right knee high, arms rising out to the sides, then stomps down hard
  * (the wave leaves at the moment his foot hits the ground).
+ * Gravity Compress: both hands reach out at the target and slowly squeeze together, trembling.
+ * Bang: finger-gun - right arm snaps up to aim, with a kick of recoil on every shot.
+ * Gravity Barrage (ultimate): arms flung wide as he rises, then his hand aimed down at the
+ * targets with a recoil on every volley, arms spread as he descends.
  */
 public final class SkillAnimations {
     public static final int KISHI_DURATION = 32;
     public static final int STOMP_DURATION = 22;
+    public static final int COMPRESS_DURATION = 60;
+    public static final int BANG_DURATION = 14;
+    public static final int BARRAGE_DURATION = com.xenowarriors.entity.GravityBarrageEntity.END;
     /** Tick the stomping foot hits the ground - the Earth Wave entity waits this long before moving. */
     public static final int STOMP_IMPACT = com.xenowarriors.entity.EarthWaveEntity.IMPACT;
 
     private SkillAnimations() {}
 
     public static int duration(int anim) {
-        return anim == SkillAnimPacket.STOMP ? STOMP_DURATION : KISHI_DURATION;
+        return switch (anim) {
+            case SkillAnimPacket.STOMP -> STOMP_DURATION;
+            case SkillAnimPacket.COMPRESS -> COMPRESS_DURATION;
+            case SkillAnimPacket.BANG -> BANG_DURATION;
+            case SkillAnimPacket.BARRAGE -> BARRAGE_DURATION;
+            default -> KISHI_DURATION;
+        };
     }
 
     /** Called after the vanilla pose is set up, before sleeves/pants copy the arms and legs. */
@@ -31,8 +44,13 @@ public final class SkillAnimations {
         ClientSkillState.SkillAnim anim = ClientSkillState.currentAnim(entity);
         if (anim == null || entity.isPassenger() || entity.isVisuallySwimming()) return;
         float t = ageInTicks - anim.startTick();
-        if (anim.anim() == SkillAnimPacket.STOMP) stomp(model, t);
-        else kishi(model, t, anim.airborne());
+        switch (anim.anim()) {
+            case SkillAnimPacket.STOMP -> stomp(model, t);
+            case SkillAnimPacket.COMPRESS -> compress(model, t);
+            case SkillAnimPacket.BANG -> bang(model, t);
+            case SkillAnimPacket.BARRAGE -> barrage(model, t);
+            default -> kishi(model, t, anim.airborne());
+        }
     }
 
     private static void kishi(HumanoidModel<?> model, float t, boolean airborne) {
@@ -78,11 +96,63 @@ public final class SkillAnimations {
         model.head.xRot += shake * w;
     }
 
-    /** 0..1 - how far the wings should be spread for the flying Kishi cast. */
+    private static void compress(HumanoidModel<?> model, float t) {
+        float w = weight(t, COMPRESS_DURATION, 4F, 50F);
+        if (w <= 0F) return;
+        float aimX = model.head.xRot - (float) Math.PI / 2F + 0.05F;
+        float aimY = model.head.yRot;
+        float squeeze = smooth((t - 6F) / 24F);
+        float spread = lerp(0.45F, 0.06F, squeeze);
+        float tremble = t > 10F ? (float) Math.sin(t * 2.6F) * 0.035F * squeeze : 0F;
+        pose(model.rightArm, w, aimX + tremble, aimY + spread, 0F);
+        pose(model.leftArm, w, aimX - tremble, aimY - spread, 0F);
+        float brace = smooth(t / 6F);
+        pose(model.rightLeg, w, -0.2F * brace, 0F, 0.1F * brace);
+        pose(model.leftLeg, w, 0.25F * brace, 0F, -0.1F * brace);
+    }
+
+    private static void bang(HumanoidModel<?> model, float t) {
+        float w = weight(t, BANG_DURATION, 1F, 8F);
+        if (w <= 0F) return;
+        float aimX = model.head.xRot - (float) Math.PI / 2F;
+        float aimY = model.head.yRot - 0.05F;
+        float recoil = t > 0.5F ? (float) Math.exp(-(t - 0.5F) * 0.7F) * 0.5F : t * 1F;
+        pose(model.rightArm, w, aimX - recoil, aimY, 0F);
+        pose(model.leftArm, w * 0.5F, 0.15F, 0F, -0.15F);
+    }
+
+    private static void barrage(HumanoidModel<?> model, float t) {
+        float w = weight(t, BARRAGE_DURATION, 3F, 140F);
+        if (w <= 0F) return;
+        float aimX = model.head.xRot - (float) Math.PI / 2F + 0.1F;
+        float aimY = model.head.yRot;
+        float aimBlend = smooth((t - 24F) / 12F) * (1F - smooth((t - 108F) / 8F));
+        // recoil right as each volley flies
+        float recoil = 0F;
+        int v = com.xenowarriors.entity.GravityBarrageEntity.volley(t);
+        if (v >= 0) {
+            float c = t - com.xenowarriors.entity.GravityBarrageEntity.BARRAGE - v * com.xenowarriors.entity.GravityBarrageEntity.VOLLEY_EVERY;
+            recoil = c < 3F ? c / 3F * 0.35F : c < 6F ? 0.35F - (c - 3F) / 3F * 0.75F : -0.4F * (float) Math.exp(-(c - 6F) * 0.5F);
+        }
+        float rx = lerp(-0.45F, aimX + recoil, aimBlend), ry = lerp(0F, aimY, aimBlend), rz = lerp(1.35F, 0F, aimBlend);
+        float descend = smooth((t - 110F) / 10F);
+        pose(model.rightArm, w, lerp(rx, 0.15F, descend), lerp(ry, 0F, descend), lerp(rz, 0.9F, descend));
+        pose(model.leftArm, w, lerp(lerp(-0.45F, -0.2F, aimBlend), 0.15F, descend), 0F, lerp(lerp(-1.35F, -1.05F, aimBlend), -0.9F, descend));
+        pose(model.rightLeg, w, lerp(0.25F, 0.05F, descend), 0F, 0.05F);
+        pose(model.leftLeg, w, lerp(-0.4F, 0.05F, descend), 0F, -0.05F);
+    }
+
+    /** 0..1 - how far the wings should be spread (flying Kishi cast, ultimate). */
     public static float wingSpread(LivingEntity entity, float ageInTicks) {
         ClientSkillState.SkillAnim anim = ClientSkillState.currentAnim(entity);
-        if (anim == null || anim.anim() != SkillAnimPacket.KISHI || !anim.airborne()) return 0F;
-        return weight(ageInTicks - anim.startTick(), KISHI_DURATION, 4F, 23F);
+        if (anim == null) return 0F;
+        float t = ageInTicks - anim.startTick();
+        if (anim.anim() == SkillAnimPacket.BARRAGE) {
+            if (t < 0F || t > 140F) return 0F;
+            return Math.min(smooth(t / 6F), 1F - smooth((t - 128F) / 10F));
+        }
+        if (anim.anim() != SkillAnimPacket.KISHI || !anim.airborne()) return 0F;
+        return weight(t, KISHI_DURATION, 4F, 23F);
     }
 
     private static float weight(float t, float duration, float in, float outStart) {

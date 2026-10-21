@@ -12,10 +12,24 @@ import net.minecraftforge.fml.common.Mod;
 public final class SkillEvents {
     private SkillEvents() {}
 
-    /** Kishi: nobody can jump inside the gravity dome. */
+    /** Rhalix can't be hurt while his ultimate cutscene plays. */
+    public static final String ULT_UNTIL = "xenowarriors_ult_until";
+
+    @SubscribeEvent
+    public static void onAttacked(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        LivingEntity e = event.getEntity();
+        if (e.getPersistentData().getLong(ULT_UNTIL) >= e.level().getGameTime()) event.setCanceled(true);
+    }
+
+    /** Kishi / gravity skills: nobody can jump inside a gravity dome or while rooted. */
     @SubscribeEvent
     public static void onJump(LivingEvent.LivingJumpEvent event) {
         LivingEntity entity = event.getEntity();
+        if (Rooting.isRooted(entity)) {
+            Vec3 v = entity.getDeltaMovement();
+            entity.setDeltaMovement(0, Math.min(v.y, 0), 0);
+            return;
+        }
         for (KishiDomeEntity dome : entity.level().getEntitiesOfClass(KishiDomeEntity.class,
                 entity.getBoundingBox().inflate(KishiDomeEntity.RADIUS + 1, KishiDomeEntity.HEIGHT, KishiDomeEntity.RADIUS + 1))) {
             if (dome.affects(entity)) {

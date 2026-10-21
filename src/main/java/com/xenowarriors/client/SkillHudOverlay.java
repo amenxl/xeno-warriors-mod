@@ -36,8 +36,11 @@ public class SkillHudOverlay implements IGuiOverlay {
             g.fill(x, top, x + SIZE, top + SIZE, 0xCC0E0E14);
 
             if (skill != null) {
+                String shortKey = "skill.xenowarriors." + skill.getId() + ".short";
                 String name = skill.getName().getString();
-                String shortName = name.length() <= 2 ? name : name.substring(0, 2);
+                String shortName = net.minecraft.client.resources.language.I18n.exists(shortKey)
+                        ? net.minecraft.client.resources.language.I18n.get(shortKey)
+                        : name.length() <= 2 ? name : name.substring(0, 2);
                 g.drawCenteredString(font, shortName, x + SIZE / 2, top + 4, 0xFFFFFF);
 
                 // not enough Karma: tint the slot blue and show the cost in red

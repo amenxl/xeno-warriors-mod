@@ -1,7 +1,10 @@
 package com.xenowarriors.client;
 
 import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.client.render.EarthBulletRenderer;
 import com.xenowarriors.client.render.EarthWaveRenderer;
+import com.xenowarriors.client.render.GravityBarrageRenderer;
+import com.xenowarriors.client.render.GravityCompressRenderer;
 import com.xenowarriors.client.render.KishiDomeRenderer;
 import com.xenowarriors.client.render.CharacterDetailLayer;
 import com.xenowarriors.entity.ModEntities;
@@ -22,6 +25,9 @@ public final class ClientModEvents {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.KISHI_DOME.get(), KishiDomeRenderer::new);
         event.registerEntityRenderer(ModEntities.EARTH_WAVE.get(), EarthWaveRenderer::new);
+        event.registerEntityRenderer(ModEntities.GRAVITY_COMPRESS.get(), GravityCompressRenderer::new);
+        event.registerEntityRenderer(ModEntities.EARTH_BULLET.get(), EarthBulletRenderer::new);
+        event.registerEntityRenderer(ModEntities.GRAVITY_BARRAGE.get(), GravityBarrageRenderer::new);
     }
 
     @SubscribeEvent
@@ -32,6 +38,7 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("skills", new SkillHudOverlay());
+        event.registerAboveAll("cutscene", new UltimateCutscene.Overlay());
     }
 
     @SubscribeEvent

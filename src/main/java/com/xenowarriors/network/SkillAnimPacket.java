@@ -12,6 +12,9 @@ import java.util.function.Supplier;
 public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
     public static final int KISHI = 0;
     public static final int STOMP = 1;
+    public static final int COMPRESS = 2;
+    public static final int BANG = 3;
+    public static final int BARRAGE = 4;
 
     public static void encode(SkillAnimPacket msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.entityId);
