@@ -60,6 +60,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             model.setupWings(preview || flying || falling || kishi || spread > 0F, flying || falling, ageInTicks, spread);
         }
 
+        // hood up (SR hoodie): the hair tucks under it, only the front bangs show
+        if (model.hair != null) {
+            model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
+                    instanceof com.xenowarriors.item.SrHoodieItem);
+        }
+
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(type.getDetailTexture()));
         model.root.render(poseStack, buffer, packedLight, overlay);

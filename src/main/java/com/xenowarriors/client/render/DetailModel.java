@@ -27,6 +27,8 @@ import java.util.Map;
 public class DetailModel {
     public final ModelPart root;
     public final ModelPart head, body, rightArm, leftArm, rightLeg, leftLeg;
+    /** Hair and goggles (hidden under the SR hood), and the front bangs that stay visible. May be null. */
+    public final ModelPart hair, bangs;
     /** null for characters without wings */
     public final ModelPart rightWing, leftWing;
     /** High-res face (its own texture, 4x the pixels of a normal face); null if the character has none. */
@@ -41,6 +43,8 @@ public class DetailModel {
         this.leftArm = root.getChild("left_arm");
         this.rightLeg = root.getChild("right_leg");
         this.leftLeg = root.getChild("left_leg");
+        this.hair = childOrNull(head, "hair");
+        this.bangs = childOrNull(head, "bangs");
         this.rightWing = childOrNull(body, "right_wing");
         this.leftWing = childOrNull(body, "left_wing");
         this.rightWingZ = rightWing != null ? rightWing.zRot : 0;
