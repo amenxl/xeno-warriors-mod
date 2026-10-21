@@ -54,6 +54,7 @@ public final class ChargePose {
                 continue;
             }
             if (on && !(p == mc.player && mc.options.getCameraType().isFirstPerson())) aura(mc, p, (int) w[1]);
+            if (on) motionFx(mc, p, ClientCharacterData.get(p) == CharacterType.MIKIKO);
         }
     }
 
@@ -91,6 +92,33 @@ public final class ChargePose {
         if (w <= 0F) return;
         float e = w * w * (3 - 2 * w);
         float shake = Mth.sin(age * 2.7F) * 0.035F + Mth.sin(age * 4.1F) * 0.02F;
+        double speed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
+        boolean attacking = m.attackTime > 0F || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p);
+        if (attacking) {
+            // charging and attacking: the strike plays as normal, thrown with the whole body behind it
+            m.body.xRot = Mth.lerp(e, m.body.xRot, m.body.xRot + 0.18F);
+            m.head.xRot = Mth.lerp(e, m.head.xRot, m.head.xRot - 0.1F);
+            m.hat.copyFrom(m.head);
+            return;
+        }
+        if (speed > 0.08) {
+            // charging and running: leaning hard into it, arms swept back, aura streaming behind
+            float run = Mth.clamp((float) (speed - 0.08) / 0.15F, 0F, 1F) * e;
+            float pump = Mth.sin(age * 0.9F) * 0.15F;
+            m.body.xRot = Mth.lerp(run, m.body.xRot, 0.5F);
+            m.head.xRot = Mth.lerp(run, m.head.xRot, -0.35F);
+            m.rightArm.xRot = Mth.lerp(run, m.rightArm.xRot, 1.25F + pump);
+            m.rightArm.zRot = Mth.lerp(run, m.rightArm.zRot, 0.25F);
+            m.leftArm.xRot = Mth.lerp(run, m.leftArm.xRot, 1.25F - pump);
+            m.leftArm.zRot = Mth.lerp(run, m.leftArm.zRot, -0.25F);
+            m.rightArm.yRot = Mth.lerp(run, m.rightArm.yRot, 0F);
+            m.leftArm.yRot = Mth.lerp(run, m.leftArm.yRot, 0F);
+            // legs keep their running stride, pushed back under the lean
+            m.rightLeg.z = Mth.lerp(run, m.rightLeg.z, 2.5F);
+            m.leftLeg.z = Mth.lerp(run, m.leftLeg.z, 2.5F);
+            m.hat.copyFrom(m.head);
+            return;
+        }
         float yell = 0.5F + 0.5F * Mth.sin(age * 0.18F);           // throws his head back now and then
         m.rightArm.xRot = Mth.lerp(e, m.rightArm.xRot, 0.25F + shake);
         m.rightArm.yRot = Mth.lerp(e, m.rightArm.yRot, 0F);
@@ -105,5 +133,27 @@ public final class ChargePose {
         m.body.xRot = Mth.lerp(e, m.body.xRot, 0.12F + shake * 0.5F);
         m.head.xRot = Mth.lerp(e, m.head.xRot, -0.15F - 0.35F * yell);
         m.hat.copyFrom(m.head);
+    }
+
+    /** A burst of aura where a charged strike lands, and a trail while charging on the run. */
+    private static void motionFx(Minecraft mc, AbstractClientPlayer p, boolean mikiko) {
+        var r = p.getRandom();
+        Vector3f c = mikiko ? new Vector3f(1F, 0.45F, 0.1F) : new Vector3f(0.75F, 0.35F, 1F);
+        double speed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
+        if (speed > 0.08) {
+            for (int i = 0; i < 3; i++) {
+                mc.level.addParticle(new DustParticleOptions(c, 1.2F), p.xo + (r.nextDouble() - 0.5) * 0.6,
+                        p.getY() + r.nextDouble() * 1.8, p.zo + (r.nextDouble() - 0.5) * 0.6, 0, 0.02, 0);
+            }
+        }
+        if (p.swinging && p.swingTime == 1) {
+            float yaw = p.getYRot() * Mth.DEG_TO_RAD;
+            double fx = p.getX() - Mth.sin(yaw) * 1.3, fz = p.getZ() + Mth.cos(yaw) * 1.3;
+            for (int i = 0; i < 14; i++) {
+                mc.level.addParticle(new DustParticleOptions(c, 1.5F), fx, p.getY() + 1.3, fz,
+                        (r.nextDouble() - 0.5) * 0.6, (r.nextDouble() - 0.5) * 0.4, (r.nextDouble() - 0.5) * 0.6);
+            }
+            mc.level.addParticle(mikiko ? ParticleTypes.FLAME : ParticleTypes.WITCH, fx, p.getY() + 1.3, fz, 0, 0.05, 0);
+        }
     }
 }
