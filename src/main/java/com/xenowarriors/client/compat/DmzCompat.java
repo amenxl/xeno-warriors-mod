@@ -14,7 +14,7 @@ public final class DmzCompat {
     private static Boolean loaded;
     private static boolean broken;
     private static Capability<?> cap;
-    private static Method getStatus, isChargingKi, isActionCharging, isAuraActive;
+    private static Method getStatus, isChargingKi, isActionCharging, isAuraActive, isTailVisible, getCharacter, getRaceName;
 
     private DmzCompat() {}
 
@@ -31,6 +31,11 @@ public final class DmzCompat {
                 isChargingKi = status.getMethod("isChargingKi");
                 isActionCharging = status.getMethod("isActionCharging");
                 isAuraActive = status.getMethod("isAuraActive");
+                try { isTailVisible = status.getMethod("isTailVisible"); } catch (NoSuchMethodException ignored) {}
+                try {
+                    getCharacter = data.getMethod("getCharacter");
+                    getRaceName = getCharacter.getReturnType().getMethod("getRaceName");
+                } catch (NoSuchMethodException ignored) {}
             } catch (Throwable t) {
                 broken = true;
                 return false;
@@ -62,6 +67,24 @@ public final class DmzCompat {
     /** Powering up: charging Ki (or charging a DragonMineZ attack). */
     public static boolean charging(Player p) {
         return ready() && (flag(p, isChargingKi) || flag(p, isActionCharging));
+    }
+
+    /** DragonMineZ race id ("saiyan", "human"...), or null. */
+    public static String race(Player p) {
+        if (!ready() || getCharacter == null || getRaceName == null) return null;
+        try {
+            Object data = p.getCapability(cap).resolve().orElse(null);
+            if (data == null) return null;
+            Object r = getRaceName.invoke(getCharacter.invoke(data));
+            return r == null ? null : r.toString().toLowerCase();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** A Saiyan with their tail out. */
+    public static boolean tail(Player p) {
+        return isTailVisible != null && "saiyan".equals(race(p)) && flag(p, isTailVisible);
     }
 
     public static boolean aura(Player p) {

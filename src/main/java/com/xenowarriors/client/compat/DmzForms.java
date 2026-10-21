@@ -133,9 +133,20 @@ public final class DmzForms {
 
     /** This Xeno Warriors player is in a form DragonMineZ should draw (Oozaru, giant forms...). */
     public static boolean dmzDraws(Player p) {
-        if (!ours(p)) return false;
+        if (!ours(p) || giantFox(p)) return false;
         Form f = info(p);
         return f != null && f.dmz();
+    }
+
+    /** Mikiko as an Oozaru becomes a giant fox instead of a great ape (drawn by GiantFox). */
+    public static boolean giantFox(Player p) {
+        if (!(p instanceof AbstractClientPlayer cp) || ClientCharacterData.get(cp) != CharacterType.MIKIKO) return false;
+        String f = form(p);
+        return "oozaru".equals(f) || "goldenoozaru".equals(f);
+    }
+
+    public static boolean goldenFox(Player p) {
+        return "goldenoozaru".equals(form(p));
     }
 
     /** Hair color for the current form (RGB), or -1 to keep their own. */
@@ -175,7 +186,7 @@ public final class DmzForms {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused() || !ready()) return;
         for (AbstractClientPlayer p : mc.level.players()) {
-            if (!ours(p) || dmzDraws(p)) continue;
+            if (!ours(p) || dmzDraws(p) || giantFox(p)) continue;
             int c = auraColor(p);
             if (c < 0 || (p == mc.player && mc.options.getCameraType().isFirstPerson())) continue;
             boolean strong = DmzCompat.aura(p) || DmzCompat.charging(p);

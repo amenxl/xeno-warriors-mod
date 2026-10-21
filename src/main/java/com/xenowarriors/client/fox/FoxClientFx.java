@@ -74,6 +74,11 @@ public final class FoxClientFx {
     }
 
     /** The texture for a pet fox wearing a skin (null = vanilla red/snow). */
+    /** Show this (client-only) fox in a given skin. */
+    public static void forceSkin(int id, int skin) {
+        PREVIEW.put(id, skin);
+    }
+
     public static ResourceLocation texture(Fox fox) {
         Integer skin = PREVIEW.getOrDefault(fox.getId(), SKINS.get(fox.getId()));
         if (skin == null || skin <= 0) return null;

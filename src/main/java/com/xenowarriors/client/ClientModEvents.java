@@ -53,6 +53,8 @@ public final class ClientModEvents {
     public static void registerLayerDefs(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(com.xenowarriors.client.corrupted.CorruptedSoulModel.LAYER,
                 com.xenowarriors.client.corrupted.CorruptedSoulModel::create);
+        event.registerLayerDefinition(com.xenowarriors.client.compat.FoxTailLayer.LAYER,
+                com.xenowarriors.client.compat.FoxTailLayer::create);
         event.registerLayerDefinition(com.xenowarriors.client.corrupted.CSoulModel.LAYER,
                 com.xenowarriors.client.corrupted.CSoulModel::create);
     }
@@ -126,6 +128,7 @@ public final class ClientModEvents {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
                 renderer.addLayer(new CharacterDetailLayer(renderer));
+                renderer.addLayer(new com.xenowarriors.client.compat.FoxTailLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.render.CharacterArmorLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.fox.FoxBackLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));
