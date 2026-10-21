@@ -11,7 +11,9 @@
     "CameraMixin",
     "HumanoidArmorLayerMixin",
     "MinecraftGlowMixin",
-    "EntityTeamColorMixin"
+    "EntityTeamColorMixin",
+    "ElytraLayerMixin",
+    "ItemInHandLayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

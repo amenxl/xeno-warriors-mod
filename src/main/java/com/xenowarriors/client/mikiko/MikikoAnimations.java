@@ -40,12 +40,15 @@ import java.util.Set;
  *  - fighting: flashy sword slashes (any sword or the Hekublade); bare-handed 6-hit combos -
  *    2 punches, a kick, then 3 slashes with the Hekublade summoned for the moment - in 5 random
  *    variants; flying versions of everything
- *  - idle: looks around at the scenery, and after a while sits down cross-legged, bored, and
+ *  - idle: looks around at the scenery, and after a while sits on the floor with his legs out, bored, and
  *    spins a little fire in his palm until it goes out
  *  - poisoned and standing still: down on one knee, hand on the ground, trying to get up
  *  - double jump: press jump in mid-air for a wind-powered front flip
- *  - flying: hovers loosely with a bob; speeds into a superhero lean, banking into turns
+ *  - flying: clueless at first - flailing arms, paddling legs, wobbling all over - and the more he flies
+ *    (total, saved) the steadier he gets, until he hovers loosely and speeds along in a superhero lean
  *  - eating: holds the food up to his mouth with both hands and chews
+ *  - holding the Hekublade while idle: flips it up spinning and catches it, and now and then slings it on
+ *    his back, then later draws it again
  *  - walking: after 15 seconds of walking he relaxes into a stroll with his hands behind his head
  *  - running: leans into the sprint, fists pumping hard, long strides
  *  - sleeping: curled on his side, head sunk in the pillow, one arm stretched out, little z's floating up
@@ -220,7 +223,8 @@ public final class MikikoAnimations {
         s.vibeTicks = vibing ? s.vibeTicks + 1 : 0;
         s.vibeO = s.vibe;
         s.vibe = approach(s.vibe, vibing ? 1F : 0F, 0.08F);
-        s.sit = approach(s.sit, !poisoned && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
+        boolean holdingBlade = Hekublade.isBlade(p.getMainHandItem());
+        s.sit = approach(s.sit, !poisoned && !holdingBlade && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
                 s.still == 0 ? 0.3F : 0.06F);
         s.look = approach(s.look, !poisoned && !vibing && s.still >= LOOK_AROUND_AFTER && s.sit < 0.5F ? 1F : 0F, 0.08F);
         boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing;
@@ -335,6 +339,56 @@ public final class MikikoAnimations {
         return p.getMainHandItem().isEmpty() && now < s.bladeUntil && s.comboStep > 3;
     }
 
+    // ---------------- Hekublade idle: toss & catch, sling it on his back, draw it again ----------------
+    public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4;
+    private static final int BLADE_IDLE_AFTER = 60, BLADE_CYCLE = 240;
+
+    /** {phase, ticks into that phase} while he's idly holding the Hekublade, or null. */
+    public static float[] bladeIdle(Player p, float partial) {
+        State s = STATES.get(p.getId());
+        if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()) return null;
+        float c = (s.still - BLADE_IDLE_AFTER + partial) % BLADE_CYCLE;
+        if (c < 34) return new float[]{BI_TOSS, c};
+        if (c < 120) return new float[]{BI_HOLD, c - 34};
+        if (c < 136) return new float[]{BI_SHEATHE, c - 120};
+        if (c < 196) return new float[]{BI_BACK, c - 136};
+        if (c < 212) return new float[]{BI_DRAW, c - 196};
+        return new float[]{BI_HOLD, c - 212};
+    }
+
+    /** The blade is in the air or on his back right now (so the hand shouldn't draw it). */
+    public static boolean bladeAwayFromHand(net.minecraft.world.entity.LivingEntity e) {
+        if (!(e instanceof Player p)) return false;
+        float[] bi = bladeIdle(p, 0F);
+        if (bi == null) return false;
+        int ph = (int) bi[0];
+        return (ph == BI_TOSS && bi[1] >= 6 && bi[1] < 30) || ph == BI_BACK || (ph == BI_SHEATHE && bi[1] >= 8) || (ph == BI_DRAW && bi[1] < 8);
+    }
+
+    private static void bladeIdlePose(HumanoidModel<?> model, int phase, float t) {
+        switch (phase) {
+            case BI_TOSS -> {
+                // flick it up, arm up waiting, catch and bring it down
+                float flick = smooth(t / 6F), down = smooth((t - 30F) / 4F);
+                float x = Mth.lerp(down, Mth.lerp(flick, -0.9F, -1.9F), -0.5F);
+                set(model.rightArm, x, -0.1F, 0.15F, smooth(t / 3F) * (1F - smooth((t - 32F) / 2F)) + down * 0F);
+                if (t >= 6 && t < 30) model.head.xRot -= 0.45F * smooth((t - 6F) / 6F) * (1F - smooth((t - 24F) / 6F));   // watching it
+            }
+            case BI_SHEATHE, BI_DRAW -> {
+                // reach back over his right shoulder, then bring the arm down
+                float reach = smooth(t / 8F) * (1F - smooth((t - 8F) / 8F));
+                set(model.rightArm, -2.75F, -0.6F, 0.35F, reach);
+            }
+            default -> { }
+        }
+    }
+
+    /** Is he in the middle of an attack move? (for his fierce face) */
+    public static boolean attacking(Player p) {
+        State s = STATES.get(p.getId());
+        return s != null && s.move != null;
+    }
+
     /** Whether to draw the summoned Hekublade in his empty hand (combo slashes). */
     public static boolean showSummonedBlade(AbstractClientPlayer p) {
         State s = STATES.get(p.getId());
@@ -373,13 +427,15 @@ public final class MikikoAnimations {
         float run = Mth.lerp(partial, s.runO, s.run);
         if (run > 0F) runPose(model, run, player, partial);
         float fly = Mth.lerp(partial, s.flyO, s.fly);
-        if (fly > 0F) flyPose(model, fly, Mth.lerp(partial, s.fastO, s.fast), ageInTicks);
+        if (fly > 0F) flyPose(model, fly, Mth.lerp(partial, s.fastO, s.fast), ageInTicks, clumsiness(player));
         float jump = (ageInTicks - s.jumpStart) / JUMP_DURATION;
         if (jump >= 0F && jump <= 1F) jumpPose(model, jump);
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
         float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
         if (vibe > 0F) vibePose(model, vibe, sit, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
+        float[] bi = bladeIdle(player, partial);
+        if (bi != null && s.move == null) bladeIdlePose(model, (int) bi[0], bi[1]);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
         if (player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
             eatPose(model, player.getTicksUsingItem() + partial, ageInTicks);
@@ -407,7 +463,13 @@ public final class MikikoAnimations {
         twist(model, Mth.lerp(amount, model.body.yRot, t[12]));
     }
 
-    private static void flyPose(HumanoidModel<?> model, float fly, float fast, float age) {
+    /** 1 = has no idea how to fly, 0 = a natural. Eases off as his total flying time grows. */
+    private static float clumsiness(Player p) {
+        float skill = ClientSkillState.flightSkill(p.getId());
+        return 1F - skill * skill * (3F - 2F * skill);
+    }
+
+    private static void flyPose(HumanoidModel<?> model, float fly, float fast, float age, float clumsy) {
         float bob = Mth.sin(age * 0.12F);
         // hovering: arms loose and out, one knee bent, swaying
         float[] hover = {-0.15F + bob * 0.05F, 0F, 0.4F, -0.15F - bob * 0.05F, 0F, -0.4F,
@@ -422,7 +484,18 @@ public final class MikikoAnimations {
         set(model.rightLeg, t[6], t[7], t[8], fly);
         set(model.leftLeg, t[9], t[10], t[11], fly);
         // keep looking ahead while the body leans forward
-        model.head.xRot -= 1.0F * fast * fly;
+        model.head.xRot -= 1.0F * fast * fly * (1F - clumsy);
+        if (clumsy > 0.01F) {
+            // no idea what he's doing: arms windmilling, legs paddling like he's swimming, looking around in a panic
+            float w = fly * clumsy;
+            float mill = age * 0.55F;
+            set(model.rightArm, -1.6F + Mth.sin(mill) * 1.5F, 0F, 1.0F + Mth.cos(mill) * 0.5F, w);
+            set(model.leftArm, -1.6F + Mth.sin(mill + 2.6F) * 1.5F, 0F, -1.0F - Mth.cos(mill + 2.6F) * 0.5F, w);
+            set(model.rightLeg, Mth.sin(age * 0.7F) * 0.9F, 0F, 0.12F, w);
+            set(model.leftLeg, -Mth.sin(age * 0.7F) * 0.9F, 0F, -0.12F, w);
+            model.head.xRot += Mth.sin(age * 0.21F) * 0.35F * w;
+            model.head.yRot += Mth.sin(age * 0.13F) * 0.5F * w;
+        }
     }
 
     /** Asleep on his side: knees drawn up, one arm reaching out past the pillow, head nestled in, slow breathing. */
@@ -514,12 +587,11 @@ public final class MikikoAnimations {
     }
 
     private static void sitPose(HumanoidModel<?> model, float s, float fire, float age) {
-        // cross-legged: thighs forward, crossed over each other
-        set(model.rightLeg, -1.45F, -0.68F, 0.1F, s);
-        set(model.leftLeg, -1.45F, 0.68F, -0.1F, s);
-        // elbows resting on knees, slouched and bored
-        set(model.rightArm, -0.8F, -0.3F, 0.1F, s);
-        set(model.leftArm, -0.8F, 0.3F, -0.1F, s);
+        // sitting on the floor with his legs stretched out, leaning back on his hands, bored
+        set(model.rightLeg, -1.5F, 0.08F, 0.06F, s);
+        set(model.leftLeg, -1.5F, -0.08F, -0.06F, s);
+        set(model.rightArm, 0.55F, 0F, 0.3F, s);
+        set(model.leftArm, 0.55F, 0F, -0.3F, s);
         model.head.xRot += 0.22F * s;
         model.head.zRot += 0.1F * s * Mth.sin(age * 0.03F);
         if (fire > 0F) {
@@ -605,9 +677,14 @@ public final class MikikoAnimations {
         if (fly > 0F) {
             float fast = Mth.lerp(partial, s.fastO, s.fast);
             float attacking = s.move != null ? 0.35F : 1F;
+            float clumsy = clumsiness(p);
             out[0] += Mth.sin(age * 0.12F) * 0.05F * fly * (1F - fast);
-            out[3] += 65F * fast * fly * attacking;
+            out[3] += 65F * fast * fly * attacking * (1F - 0.75F * clumsy);
             out[4] += Mth.lerp(partial, s.rollO, s.roll) * fly * attacking;
+            // wobbling and tipping all over the place while he's still learning
+            out[4] += (Mth.sin(age * 0.17F) * 22F + Mth.sin(age * 0.41F) * 8F) * clumsy * fly;
+            out[3] += (Mth.sin(age * 0.11F) * 16F) * clumsy * fly;
+            out[0] += Mth.sin(age * 0.23F) * 0.12F * clumsy * fly;
         }
         var skill = ClientSkillState.currentAnim(p);
         if (skill != null && skill.anim() == com.xenowarriors.network.SkillAnimPacket.KITSUNE) {
@@ -640,7 +717,7 @@ public final class MikikoAnimations {
         }
         float sit = Mth.lerp(partial, s.sitO, s.sit);
         out[0] -= 0.66F * sit;
-        out[3] += 6F * sit;
+        out[3] -= 10F * sit;      // leaning back on his hands
         float poison = Mth.lerp(partial, s.poisonO, s.poison);
         if (poison > 0F) {
             float rise = riseAttempt(s.still + partial);

@@ -34,6 +34,24 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
     }
 
+    /**
+     * Which face to show: sleeping/snoring (Mikiko), hurt when hit, shouting while using a skill, fierce while
+     * attacking, sick when poisoned or weakened, a blink now and then - otherwise the normal face (null).
+     */
+    private static String expression(AbstractClientPlayer p, CharacterType type) {
+        if (p.isSleeping()) {
+            if (type != CharacterType.MIKIKO) return "blink";
+            return (p.tickCount % 40) < 22 ? "snore" : "sleep";   // snores in time with the z's
+        }
+        if (p.hurtTime > 0) return "hurt";
+        if (ClientSkillState.currentAnim(p) != null) return "shout";
+        if (p.swinging || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)) return "fierce";
+        if (ClientSkillState.feelingSick(p)) return "sick";
+        int t = p.tickCount + p.getId() * 37;
+        if (t % 97 < 3 || (t % 233 >= 8 && t % 233 < 11)) return "blink";   // blinks every few seconds, sometimes twice
+        return null;
+    }
+
     @Override
     public void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight, AbstractClientPlayer player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
@@ -72,13 +90,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         if (model.faceRoot != null) {
             model.faceHead.copyFrom(parent.head);
-            var faceTexture = type.getFaceTexture();
-            if (player.isSleeping() && type == CharacterType.MIKIKO) {
-                // breathe in (mouth closed) / snore out (mouth open, snot bubble) in time with the z's
-                boolean snore = (player.tickCount % 40) < 22;
-                faceTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_face_"
-                        + (snore ? "snore" : "sleep") + ".png");
-            }
+            String expr = expression(player, type);
+            var faceTexture = expr == null ? type.getFaceTexture()
+                    : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);
         }

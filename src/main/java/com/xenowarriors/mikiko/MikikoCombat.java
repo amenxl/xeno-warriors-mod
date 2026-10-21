@@ -31,7 +31,7 @@ public final class MikikoCombat {
     private static final float[] DAMAGE = {3F, 3F, 4.5F, 6F, 6F, 7F};
 
     private static final Map<UUID, int[]> COMBO = new HashMap<>();   // {step, last hit tick}
-    private static final Map<UUID, Boolean> POISONED = new HashMap<>();
+    private static final Map<UUID, Integer> STATUS = new HashMap<>();
 
     private MikikoCombat() {}
 
@@ -66,16 +66,36 @@ public final class MikikoCombat {
         if (step == COMBO_LENGTH - 1) target.push(dir.x * 0.8, 0.35, dir.z * 0.8);  // finisher
     }
 
-    /** Tell nearby players when a Mikiko is poisoned, for his struggling-on-the-ground animation. */
+    /** Count up Mikiko's time in the air, and share it so everyone sees how well he flies. */
+    @SubscribeEvent
+    public static void onFlightTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
+        if (ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
+        p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+            if ((p.getAbilities().flying || p.isFallFlying()) && d.flightTicks < 1_000_000) d.flightTicks++;
+            if (p.tickCount % 40 == 0) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.FlightSkillPacket(p.getId(), d.flightTicks), p);
+        });
+    }
+
+    /** Mikiko always lands on his feet - no fall damage. */
+    @SubscribeEvent
+    public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player p && ModCapabilities.getType(p) == CharacterType.MIKIKO) {
+            event.setDamageMultiplier(0F);
+        }
+    }
+
+    /** Tell nearby players when a character is poisoned/weakened (poison pose, sick face). */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || player.tickCount % 10 != 0) return;
-        if (ModCapabilities.getType(player) != CharacterType.MIKIKO) return;
-        boolean poisoned = player.hasEffect(MobEffects.POISON);
-        Boolean before = POISONED.put(player.getUUID(), poisoned);
-        // send on change, and every 2s while poisoned so players who walk up see it too
-        if (before == null || before != poisoned || (poisoned && player.tickCount % 40 == 0)) {
-            ModNetwork.sendToTrackingAndSelf(new PoisonStatePacket(player.getId(), poisoned), player);
+        if (ModCapabilities.getType(player) == CharacterType.NONE) return;
+        int flags = (player.hasEffect(MobEffects.POISON) ? PoisonStatePacket.POISON : 0)
+                | (player.hasEffect(MobEffects.WEAKNESS) ? PoisonStatePacket.WEAKNESS : 0);
+        Integer before = STATUS.put(player.getUUID(), flags);
+        // send on change, and every 2s while affected so players who walk up see it too
+        if (before == null || before != flags || (flags != 0 && player.tickCount % 40 == 0)) {
+            ModNetwork.sendToTrackingAndSelf(new PoisonStatePacket(player.getId(), flags), player);
         }
     }
 }

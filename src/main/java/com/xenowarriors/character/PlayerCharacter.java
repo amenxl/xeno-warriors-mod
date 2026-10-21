@@ -13,6 +13,8 @@ public class PlayerCharacter {
     /** Level-up stats (see stats/Stats): level and progress toward the next level for each. */
     public final int[] statLevel = new int[3];
     public final float[] statXp = new float[3];
+    /** Total ticks Mikiko has spent flying (his flying gets better with practice). */
+    public int flightTicks;
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -27,6 +29,7 @@ public class PlayerCharacter {
         this.type = other.type;
         System.arraycopy(other.statLevel, 0, statLevel, 0, 3);
         System.arraycopy(other.statXp, 0, statXp, 0, 3);
+        this.flightTicks = other.flightTicks;
     }
 
     public CompoundTag save() {
@@ -34,12 +37,14 @@ public class PlayerCharacter {
         tag.putString("character", type.getId());
         tag.putFloat("karma", karma);
         tag.putIntArray("stat_levels", statLevel.clone());
+        tag.putInt("flight_ticks", flightTicks);
         for (int i = 0; i < 3; i++) tag.putFloat("stat_xp_" + i, statXp[i]);
         return tag;
     }
 
     public void load(CompoundTag tag) {
         this.type = CharacterType.byId(tag.getString("character"));
+        this.flightTicks = tag.getInt("flight_ticks");
         int[] lv = tag.getIntArray("stat_levels");
         for (int i = 0; i < 3; i++) {
             statLevel[i] = i < lv.length ? lv[i] : 0;

@@ -18,7 +18,8 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * Draws the Hekublade: the sword itself, plus its 8 crystals drawn separately so they can move.
- * Every so often the crystals drift slowly around the X (half a turn, back into the same pattern).
+ * Every so often the crystals swing slowly around the X - around the blade's axis, through the front
+ * and back of the guard - half a turn, back into the same pattern.
  */
 public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
     public static final ResourceLocation BASE = XenoWarriors.id("item/hekublade_base");
@@ -53,15 +54,12 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
 
         float time = mc.level != null ? mc.level.getGameTime() + mc.getFrameTime() : Util.getMillis() / 50F;
         float turn = turn(time);
+        // the crystals swing around the blade's own axis (through the front and back of the guard), so
+        // they circle the X without ever passing through the blade
         for (int i = 0; i < 8; i++) {
-            float baseAng = (float) Math.atan2(OFFSETS[i][1], OFFSETS[i][0]);
-            float ang = baseAng + turn;
-            // slide in front of the blade while passing over it (the blade runs along 45 and 225 degrees)
-            float overBlade = Math.max(0F, Mth.cos(2F * (ang - ((float) Math.PI) / 4F)));
-            float lift = turn != 0F ? (float) Math.pow(overBlade, 6) * 1.25F : 0F;
             pose.pushPose();
-            pose.translate(GUARD / 16F, GUARD / 16F, (8F + lift) / 16F);
-            pose.mulPose(Axis.ZP.rotation(turn));
+            pose.translate(GUARD / 16F, GUARD / 16F, 8F / 16F);
+            pose.mulPose(Axis.of(new org.joml.Vector3f(0.70710677F, 0.70710677F, 0F)).rotation(-turn));
             pose.translate(-GUARD / 16F, -GUARD / 16F, -8F / 16F);
             items.renderModelLists(mc.getModelManager().getModel(CRYSTALS[i]), stack, light, overlay, pose, vc);
             pose.popPose();

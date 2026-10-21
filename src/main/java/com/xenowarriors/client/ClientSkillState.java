@@ -47,6 +47,32 @@ public final class ClientSkillState {
         return end != null && now() < end;
     }
 
+    private static final Map<Integer, Integer> STATUS = new HashMap<>();   // entity id -> poison/weakness flags
+
+    public static void setStatus(int entityId, int flags) {
+        if (flags == 0) STATUS.remove(entityId);
+        else STATUS.put(entityId, flags);
+    }
+
+    /** Poisoned or weakened (exact for your own player, from the server for others). */
+    public static boolean feelingSick(net.minecraft.world.entity.player.Player p) {
+        if (p == Minecraft.getInstance().player) {
+            return p.hasEffect(net.minecraft.world.effect.MobEffects.POISON) || p.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);
+        }
+        return STATUS.getOrDefault(p.getId(), 0) != 0;
+    }
+
+    private static final Map<Integer, Integer> FLIGHT = new HashMap<>();   // entity id -> total flight ticks
+
+    public static void setFlightSkill(int entityId, int ticks) {
+        FLIGHT.put(entityId, ticks);
+    }
+
+    /** 0 = no idea how to fly, 1 = a natural (reached after about 10 minutes of total flying). */
+    public static float flightSkill(int entityId) {
+        return Math.min(1F, FLIGHT.getOrDefault(entityId, 0) / 12000F);
+    }
+
     private ClientSkillState() {}
 
     public static void setKarma(float value, float max) {
@@ -118,6 +144,7 @@ public final class ClientSkillState {
         maxKarma = 100F;
         ANIMS.clear();
         NETSU.clear();
+        STATUS.clear();
         SQUISH.clear();
         for (int i = 0; i < 5; i++) {
             COOLDOWN_END[i] = 0;

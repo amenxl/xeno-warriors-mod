@@ -8,18 +8,23 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Server -> clients: whether a Mikiko player is poisoned (other players' effects aren't normally sent). */
-public record PoisonStatePacket(int entityId, boolean poisoned) {
+/** Server -> clients: whether a character is poisoned / weakened (other players' effects aren't normally sent). */
+public record PoisonStatePacket(int entityId, int flags) {
+    public static final int POISON = 1, WEAKNESS = 2;
+
     public static void encode(PoisonStatePacket msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.entityId);
-        buf.writeBoolean(msg.poisoned);
+        buf.writeVarInt(msg.flags);
     }
 
     public static PoisonStatePacket decode(FriendlyByteBuf buf) {
-        return new PoisonStatePacket(buf.readVarInt(), buf.readBoolean());
+        return new PoisonStatePacket(buf.readVarInt(), buf.readVarInt());
     }
 
     public static void handle(PoisonStatePacket msg, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MikikoAnimations.setPoisoned(msg.entityId, msg.poisoned));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            MikikoAnimations.setPoisoned(msg.entityId, (msg.flags & POISON) != 0);
+            com.xenowarriors.client.ClientSkillState.setStatus(msg.entityId, msg.flags);
+        });
     }
 }
