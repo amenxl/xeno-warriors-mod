@@ -55,8 +55,49 @@ public final class CorruptedAnimals {
     public static boolean canPossess(net.minecraft.world.entity.monster.Monster m) {
         return !isCorrupted(m) && !(m instanceof CorruptedSoulEntity) && !(m instanceof CSoulBossEntity)
                 && !(m instanceof CorruptedVillagerEntity) && !(m instanceof net.minecraft.world.entity.boss.wither.WitherBoss)
-                && !(m instanceof net.minecraft.world.entity.monster.warden.Warden) && !m.hasCustomName()
+                && !(m instanceof net.minecraft.world.entity.monster.warden.Warden)
+                && (!m.hasCustomName() || !vanilla(m))           // other mods' enemies often come with names
+                && m.getMaxHealth() <= MAX_HOST_HEALTH                  // not giant bosses
                 && !m.getPersistentData().contains("xw_sealed");
+    }
+
+    /** Souls won't take bodies tougher than this (keeps them off big bosses, e.g. DragonMineZ saga bosses). */
+    public static final float MAX_HOST_HEALTH = 400F;
+
+    private static boolean vanilla(LivingEntity e) {
+        return "minecraft".equals(net.minecraft.world.entity.EntityType.getKey(e.getType()).getNamespace());
+    }
+
+    /**
+     * Other mods' people and creatures that aren't monsters or animals (DragonMineZ's Namekians and warriors, modded
+     * villagers): the soul takes the body as it is, rather than turning it into a vanilla-looking possessed person.
+     */
+    public static boolean canPossessOther(net.minecraft.world.entity.PathfinderMob m) {
+        return !vanilla(m) && !(m instanceof net.minecraft.world.entity.monster.Monster) && !(m instanceof Animal)
+                && !(m instanceof TamableAnimal) && !isCorrupted(m) && m.getMaxHealth() <= MAX_HOST_HEALTH
+                && m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) != null
+                && !m.getPersistentData().contains("xw_sealed") && !m.getPersistentData().contains("xw_owner");
+    }
+
+    public static boolean corruptOther(net.minecraft.world.entity.PathfinderMob m) {
+        if (!canPossessOther(m)) return false;
+        m.getPersistentData().putBoolean(TAG, true);
+        m.setPersistenceRequired();
+        boost(m, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, HP_ID, 0.6);
+        boost(m, net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, SPD_ID, 0.15);
+        m.setHealth(m.getMaxHealth());
+        addHuntGoals(m);
+        ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> m), new CorruptionPacket(m.getId(), true));
+        m.playSound(SoundEvents.WITHER_AMBIENT, 0.5F, 1.5F);
+        return true;
+    }
+
+    private static void addHuntGoals(net.minecraft.world.entity.PathfinderMob m) {
+        m.goalSelector.removeAllGoals(g -> g instanceof PanicGoal || g instanceof TemptGoal);
+        if (m.goalSelector.getAvailableGoals().stream().noneMatch(w -> w.getGoal() instanceof CorruptedAttackGoal)) {
+            m.goalSelector.addGoal(1, new CorruptedAttackGoal(m));
+            m.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(m, Player.class, true));
+        }
     }
 
     /** A possessed monster: tougher, harder-hitting and faster, glowing purple. */
@@ -81,8 +122,13 @@ public final class CorruptedAnimals {
                 net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE));
     }
 
-    private static void cleanseMonster(net.minecraft.world.entity.monster.Monster m) {
+    private static void cleanseMonster(net.minecraft.world.entity.Mob m) {
         m.getPersistentData().remove(TAG);
+        if (!(m instanceof net.minecraft.world.entity.monster.Monster)) {
+            m.goalSelector.removeAllGoals(g -> g instanceof CorruptedAttackGoal);
+            m.targetSelector.removeAllGoals(g -> g instanceof NearestAttackableTargetGoal<?>);
+            m.setTarget(null);
+        }
         for (var pair : new Object[][]{{net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, HP_ID},
                 {net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, DMG_ID},
                 {net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, SPD_ID}}) {
@@ -134,6 +180,8 @@ public final class CorruptedAnimals {
     @SubscribeEvent
     public static void onJoin(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide && event.getEntity() instanceof Animal a && isCorrupted(a)) addGoals(a);
+        else if (!event.getLevel().isClientSide && event.getEntity() instanceof net.minecraft.world.entity.PathfinderMob m
+                && !(m instanceof net.minecraft.world.entity.monster.Monster) && isCorrupted(m)) addHuntGoals(m);
     }
 
     @SubscribeEvent
@@ -147,10 +195,10 @@ public final class CorruptedAnimals {
     public static void onTick(LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof net.minecraft.world.entity.Mob a) || a.level().isClientSide || a.tickCount % 20 != 0
                 || !isCorrupted(a)) return;
-        if (!(a instanceof Animal) && !(a instanceof net.minecraft.world.entity.monster.Monster)) return;
+        if (!(a instanceof net.minecraft.world.entity.PathfinderMob)) return;
         if (a.level().isDay() && a.level().canSeeSky(a.blockPosition())) {
             if (a instanceof Animal an) cleanse(an);
-            else cleanseMonster((net.minecraft.world.entity.monster.Monster) a);
+            else cleanseMonster(a);
             return;
         }
         if (a.level() instanceof ServerLevel server) {
@@ -169,9 +217,9 @@ public final class CorruptedAnimals {
 
     /** Animals have no attack strength of their own, so the soul's strength scales with the body's size. */
     static class CorruptedAttackGoal extends MeleeAttackGoal {
-        private final Animal animal;
+        private final net.minecraft.world.entity.PathfinderMob animal;
 
-        CorruptedAttackGoal(Animal animal) {
+        CorruptedAttackGoal(net.minecraft.world.entity.PathfinderMob animal) {
             super(animal, 1.35, true);
             this.animal = animal;
         }
