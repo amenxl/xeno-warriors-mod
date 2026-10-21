@@ -9,12 +9,12 @@ import net.minecraft.client.renderer.entity.layers.EyesLayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 
-public class CorruptedSoulRenderer extends MobRenderer<CorruptedSoulEntity, CorruptedSoulModel> {
+public class CorruptedSoulRenderer extends MobRenderer<CorruptedSoulEntity, CorruptedSoulModel<CorruptedSoulEntity>> {
     private static final ResourceLocation TEX = XenoWarriors.id("textures/entity/corrupted/corrupted_soul.png");
     private static final RenderType EYES = RenderType.eyes(XenoWarriors.id("textures/entity/corrupted/corrupted_soul_eyes.png"));
 
     public CorruptedSoulRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx, new CorruptedSoulModel(ctx.bakeLayer(CorruptedSoulModel.LAYER)), 0.2F);
+        super(ctx, new CorruptedSoulModel<>(ctx.bakeLayer(CorruptedSoulModel.LAYER)), 0.2F);
         addLayer(new EyesLayer<>(this) {
             @Override
             public RenderType renderType() {

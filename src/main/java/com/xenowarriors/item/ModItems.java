@@ -100,6 +100,9 @@ public final class ModItems {
     public static final RegistryObject<Item> CORRUPTED_VILLAGER_SPAWN_EGG = ITEMS.register("corrupted_villager_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_VILLAGER,
                     0x3B2A4A, 0xB04CFF, new Item.Properties()));
+    public static final RegistryObject<Item> C_SOUL_SPAWN_EGG = ITEMS.register("c_soul_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.C_SOUL,
+                    0x0A0010, 0xFF3060, new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_SOUL_SPAWN_EGG = ITEMS.register("corrupted_soul_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL,
                     0x14081F, 0xD77BFF, new Item.Properties()));

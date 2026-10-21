@@ -1,7 +1,6 @@
 package com.xenowarriors.client.corrupted;
 
 import com.xenowarriors.XenoWarriors;
-import com.xenowarriors.corrupted.CorruptedSoulEntity;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -14,7 +13,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 
 /** A hollow-eyed head trailing a wispy three-part tail. */
-public class CorruptedSoulModel extends HierarchicalModel<CorruptedSoulEntity> {
+public class CorruptedSoulModel<T extends net.minecraft.world.entity.Mob> extends HierarchicalModel<T> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(XenoWarriors.id("corrupted_soul"), "main");
     private final ModelPart root, head, tail1, tail2, tail3;
 
@@ -47,7 +46,7 @@ public class CorruptedSoulModel extends HierarchicalModel<CorruptedSoulEntity> {
     }
 
     @Override
-    public void setupAnim(CorruptedSoulEntity e, float limbSwing, float limbSwingAmount, float age, float yaw, float pitch) {
+    public void setupAnim(T e, float limbSwing, float limbSwingAmount, float age, float yaw, float pitch) {
         head.yRot = yaw * Mth.DEG_TO_RAD;
         head.xRot = pitch * Mth.DEG_TO_RAD;
         head.y = 14 + Mth.sin(age * 0.15F) * 1.5F;

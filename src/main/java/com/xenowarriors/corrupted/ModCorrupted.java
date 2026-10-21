@@ -27,6 +27,14 @@ public final class ModCorrupted {
             "corrupted_soul", () -> EntityType.Builder.<CorruptedSoulEntity>of(CorruptedSoulEntity::new, MobCategory.MONSTER)
                     .sized(0.6F, 0.8F).fireImmune().clientTrackingRange(8).build("corrupted_soul"));
 
+    public static final RegistryObject<EntityType<CSoulBossEntity>> C_SOUL = ModEntities.ENTITY_TYPES.register(
+            "c_soul", () -> EntityType.Builder.<CSoulBossEntity>of(CSoulBossEntity::new, MobCategory.MONSTER)
+                    .sized(2.2F, 3.0F).fireImmune().clientTrackingRange(12).build("c_soul"));
+
+    public static final RegistryObject<EntityType<SoulBoltEntity>> SOUL_BOLT = ModEntities.ENTITY_TYPES.register(
+            "soul_bolt", () -> EntityType.Builder.<SoulBoltEntity>of(SoulBoltEntity::new, MobCategory.MISC)
+                    .sized(0.4F, 0.4F).clientTrackingRange(8).updateInterval(1).build("soul_bolt"));
+
     private ModCorrupted() {}
 
     /** Called from the mod constructor so the entries are registered before ENTITY_TYPES fires. */
@@ -36,6 +44,7 @@ public final class ModCorrupted {
     public static void attributes(EntityAttributeCreationEvent event) {
         event.put(CORRUPTED_VILLAGER.get(), CorruptedVillagerEntity.createAttributes().build());
         event.put(CORRUPTED_SOUL.get(), CorruptedSoulEntity.createAttributes().build());
+        event.put(C_SOUL.get(), CSoulBossEntity.createAttributes().build());
     }
 
     /** Only out at night (natural spawns need the open sky and darkness); spawners/eggs work anywhere. */
@@ -48,6 +57,8 @@ public final class ModCorrupted {
     @SubscribeEvent
     public static void spawnPlacements(SpawnPlacementRegisterEvent event) {
         event.register(CORRUPTED_VILLAGER.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                ModCorrupted::nightOnly, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        event.register(C_SOUL.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 ModCorrupted::nightOnly, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(CORRUPTED_SOUL.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 ModCorrupted::nightOnly, SpawnPlacementRegisterEvent.Operation.REPLACE);

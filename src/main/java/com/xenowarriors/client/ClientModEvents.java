@@ -38,12 +38,18 @@ public final class ClientModEvents {
                 com.xenowarriors.client.corrupted.CorruptedVillagerRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get(),
                 com.xenowarriors.client.corrupted.CorruptedSoulRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.C_SOUL.get(),
+                com.xenowarriors.client.corrupted.CSoulRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.SOUL_BOLT.get(),
+                com.xenowarriors.client.corrupted.SoulBoltRenderer::new);
     }
 
     @SubscribeEvent
     public static void registerLayerDefs(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(com.xenowarriors.client.corrupted.CorruptedSoulModel.LAYER,
                 com.xenowarriors.client.corrupted.CorruptedSoulModel::create);
+        event.registerLayerDefinition(com.xenowarriors.client.corrupted.CSoulModel.LAYER,
+                com.xenowarriors.client.corrupted.CSoulModel::create);
     }
 
     @SubscribeEvent
