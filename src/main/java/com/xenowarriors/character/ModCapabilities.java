@@ -31,19 +31,22 @@ public final class ModCapabilities {
     @SubscribeEvent
     public static void onAttach(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof Player) {
-            Provider provider = new Provider();
-            event.addCapability(XenoWarriors.id("character"), provider);
-            event.addListener(provider::invalidate);
+            // (no invalidate listener: an invalidated LazyOptional can never come back, and then the data couldn't
+            //  be copied over to the respawned player - the warrior, stats, foxes etc. would all be lost on death)
+            event.addCapability(XenoWarriors.id("character"), new Provider());
         }
     }
 
-    /** Keep the chosen character after death and when returning from the End. */
+    /** Keep the chosen character (and stats, pets, ...) after death and when returning from the End. */
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         Player original = event.getOriginal();
         original.reviveCaps();
         original.getCapability(PLAYER_CHARACTER).ifPresent(old ->
-                event.getEntity().getCapability(PLAYER_CHARACTER).ifPresent(fresh -> fresh.copyFrom(old)));
+                event.getEntity().getCapability(PLAYER_CHARACTER).ifPresent(fresh -> {
+                    fresh.copyFrom(old);
+                    if (!event.isWasDeath()) fresh.setKarma(old.getKarma());   // through the End portal: keep Karma too
+                }));
         original.invalidateCaps();
     }
 
