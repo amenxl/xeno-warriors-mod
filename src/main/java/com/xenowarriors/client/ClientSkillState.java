@@ -17,7 +17,17 @@ public final class ClientSkillState {
     /** When a player started their Kishi cast animation (in their own tick count) and whether they were in the air. */
     public record KishiCast(int startTick, boolean airborne) {}
 
+    private static float karma = 100F, maxKarma = 100F;
+
     private ClientSkillState() {}
+
+    public static void setKarma(float value, float max) {
+        karma = value;
+        maxKarma = max;
+    }
+
+    public static float karma() { return karma; }
+    public static float maxKarma() { return maxKarma; }
 
     private static long now() {
         Minecraft mc = Minecraft.getInstance();
@@ -76,6 +86,8 @@ public final class ClientSkillState {
     }
 
     public static void clear() {
+        karma = 100F;
+        maxKarma = 100F;
         KISHI_CASTS.clear();
         for (int i = 0; i < 5; i++) {
             COOLDOWN_END[i] = 0;

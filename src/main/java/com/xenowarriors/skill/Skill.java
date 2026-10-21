@@ -10,6 +10,11 @@ public interface Skill {
 
     int getCooldownTicks();
 
+    /** Karma it takes to use the skill. Cooldowns still apply on top of this. */
+    default int getKarmaCost() {
+        return 20;
+    }
+
     /**
      * Called every time the key is pressed, even during cooldown, before {@link #use}.
      * Return true if the press was used up here (for example, powering up a skill that's already active).

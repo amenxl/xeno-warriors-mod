@@ -31,5 +31,8 @@
   "message.xenowarriors.kishi.max": "Kishi is already at max gravity",
   "death.attack.xenowarriors.kishi": "%1$s was crushed by %2$s's Kishi",
   "death.attack.xenowarriors.kishi.item": "%1$s was crushed by %2$s's Kishi",
-  "death.attack.xenowarriors.kishi.player": "%1$s was crushed by %2$s's Kishi"
+  "death.attack.xenowarriors.kishi.player": "%1$s was crushed by %2$s's Kishi",
+  "hud.xenowarriors.karma": "Karma %s / %s",
+  "message.xenowarriors.no_karma": "Not enough Karma (needs %s, you have %s) — crouch and stand still to focus",
+  "item.xenowarriors.karma_potion": "Karma Potion"
 }

@@ -1,6 +1,7 @@
 package com.xenowarriors.skill.rhalix;
 
 import com.xenowarriors.entity.KishiDomeEntity;
+import com.xenowarriors.karma.Karma;
 import com.xenowarriors.network.KishiCastPacket;
 import com.xenowarriors.network.ModNetwork;
 import com.xenowarriors.skill.Skill;
@@ -29,6 +30,9 @@ import java.util.UUID;
 public class KishiSkill implements Skill {
     public static final double RANGE = 20.0;
     private static final int COOLDOWN = 15 * 20;
+    /** Karma to make the dome; making the gravity heavier costs more on top. */
+    public static final int KARMA_COST = 30;
+    public static final int HEAVIER_KARMA_COST = 15;
 
     private static final Map<UUID, KishiDomeEntity> ACTIVE = new HashMap<>();
 
@@ -39,12 +43,20 @@ public class KishiSkill implements Skill {
     public int getCooldownTicks() { return COOLDOWN; }
 
     @Override
+    public int getKarmaCost() { return KARMA_COST; }
+
+    @Override
     public boolean tryRecast(ServerPlayer player) {
         KishiDomeEntity dome = ACTIVE.get(player.getUUID());
         if (dome == null || dome.isRemoved()) {
             ACTIVE.remove(player.getUUID());
             return false;
         }
+        if (dome.getGravityLevel() >= KishiDomeEntity.MAX_LEVEL) {
+            player.displayClientMessage(Component.translatable("message.xenowarriors.kishi.max"), true);
+            return true;
+        }
+        if (!Karma.trySpend(player, HEAVIER_KARMA_COST)) return true;
         if (dome.raiseLevel()) {
             playCastAnimation(player);
             int level = dome.getGravityLevel();

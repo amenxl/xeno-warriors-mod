@@ -40,6 +40,16 @@ public class SkillHudOverlay implements IGuiOverlay {
                 String shortName = name.length() <= 2 ? name : name.substring(0, 2);
                 g.drawCenteredString(font, shortName, x + SIZE / 2, top + 4, 0xFFFFFF);
 
+                // not enough Karma: tint the slot blue and show the cost in red
+                boolean canAfford = mc.player.isCreative() || ClientSkillState.karma() >= skill.getKarmaCost();
+                if (!canAfford) g.fill(x, top, x + SIZE, top + SIZE, 0x66203A8A);
+                String cost = String.valueOf(skill.getKarmaCost());
+                g.pose().pushPose();
+                g.pose().translate(x + 1.5F, top + SIZE - 6, 0);
+                g.pose().scale(0.6F, 0.6F, 1F);
+                g.drawString(font, cost, 0, 0, canAfford ? 0x7FD8FF : 0xFF5555);
+                g.pose().popPose();
+
                 // cooldown shade + seconds left
                 float cd = ClientSkillState.cooldownFraction(slot);
                 if (cd > 0) {
@@ -60,11 +70,29 @@ public class SkillHudOverlay implements IGuiOverlay {
             g.pose().popPose();
         }
 
+        // Karma bar across the top of the skill slots
+        int barLeft = left - 1, barRight = left + SkillManager.SLOTS * (SIZE + GAP) - GAP + 1;
+        int barTop = top - 9, barBottom = top - 4;
+        float karma = ClientSkillState.karma(), max = Math.max(1F, ClientSkillState.maxKarma());
+        int fill = Math.round((barRight - barLeft - 2) * Math.min(1F, karma / max));
+        g.fill(barLeft, barTop, barRight, barBottom, 0xFF0A0A12);
+        g.fill(barLeft + 1, barTop + 1, barRight - 1, barBottom - 1, 0xFF1B2140);
+        if (fill > 0) {
+            g.fill(barLeft + 1, barTop + 1, barLeft + 1 + fill, barBottom - 1, 0xFF3FA9FF);
+            g.fill(barLeft + 1, barTop + 1, barLeft + 1 + fill, barTop + 2, 0xFFA8E2FF);
+        }
+        String label = Component.translatable("hud.xenowarriors.karma", Math.round(karma), Math.round(max)).getString();
+        g.pose().pushPose();
+        g.pose().translate(barLeft, barTop - 7, 0);
+        g.pose().scale(0.75F, 0.75F, 1F);
+        g.drawString(font, label, 0, 0, 0x9FD8FF);
+        g.pose().popPose();
+
         // Kishi gravity level while the dome is up
         int kishi = ClientSkillState.kishiLevel(mc.player.getUUID());
         if (kishi > 0) {
             g.drawString(font, Component.translatable("hud.xenowarriors.kishi_level", kishi),
-                    left, top - 12, 0xD9C8FF);
+                    left, barTop - 18, 0xD9C8FF);
         }
     }
 }

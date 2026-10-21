@@ -2,6 +2,7 @@ package com.xenowarriors.skill;
 
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.character.ModCapabilities;
+import com.xenowarriors.karma.Karma;
 import com.xenowarriors.network.ModNetwork;
 import com.xenowarriors.network.SkillCooldownPacket;
 import com.xenowarriors.skill.rhalix.KishiSkill;
@@ -51,7 +52,13 @@ public final class SkillManager {
                         skill.getName(), (remaining + 19) / 20), true);
                 return;
             }
+            int cost = skill.getKarmaCost();
+            if (!Karma.has(player, cost)) {
+                Karma.notEnough(player, cost);
+                return;
+            }
             if (skill.use(player)) {
+                if (!player.isCreative()) Karma.add(player, -cost);
                 int cooldown = skill.getCooldownTicks();
                 data.cooldownEnd[slot] = now(player) + cooldown;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(slot, cooldown, cooldown), player);
