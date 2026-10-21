@@ -32,6 +32,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
     private final Map<CharacterType, Map<EquipmentSlot, DetailModel>> models = new EnumMap<>(CharacterType.class);
     private final Map<CharacterType, DetailModel> hoodies = new EnumMap<>(CharacterType.class);
+    private final Map<CharacterType, DetailModel> hoodieTrims = new EnumMap<>(CharacterType.class);
 
     public CharacterArmorLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
@@ -45,6 +46,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             models.put(type, bySlot);
             DetailModel hoodie = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_hoodie.json");
             if (hoodie != null) hoodies.put(type, hoodie);
+            DetailModel trim = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_hoodie_trim.json");
+            if (trim != null) hoodieTrims.put(type, trim);
         }
     }
 
@@ -86,9 +89,16 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             m.leftArm.copyFrom(parent.leftArm);
             m.rightLeg.copyFrom(parent.rightLeg);
             m.leftLeg.copyFrom(parent.leftLeg);
-            float[] c = hoodie ? new float[]{1F, 1F, 1F} : tint(stack, armor);
+            float[] c = tint(stack, armor);   // the hoodie's dye comes through here too (it's dyeable like leather)
             VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
             m.root.render(pose, vc, light, overlay, c[0], c[1], c[2], 1F);
+            if (hoodie && hoodieTrims.get(type) != null) {
+                DetailModel t = hoodieTrims.get(type);
+                t.body.copyFrom(parent.body);
+                t.rightArm.copyFrom(parent.rightArm);
+                t.leftArm.copyFrom(parent.leftArm);
+                t.root.render(pose, vc, light, overlay, 1F, 1F, 1F, 1F);
+            }
             if (stack.hasFoil()) {
                 m.root.render(pose, buffers.getBuffer(RenderType.armorEntityGlint()), light, overlay, 1F, 1F, 1F, 1F);
             }

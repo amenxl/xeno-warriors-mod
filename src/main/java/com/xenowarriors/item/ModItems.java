@@ -27,7 +27,7 @@ public final class ModItems {
             event.accept(KARMA_POTION);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
-            event.accept(KARMA_HOODIE);
+            for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));
         }
     }
 }

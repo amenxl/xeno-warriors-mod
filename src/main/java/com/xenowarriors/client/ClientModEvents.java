@@ -38,6 +38,14 @@ public final class ClientModEvents {
         event.register(ModKeyMappings.KARMA_SENSE);
     }
 
+    /** The hoodie's item icon shows its dye color (the trim layer stays as is). */
+    @SubscribeEvent
+    public static void registerItemColors(net.minecraftforge.client.event.RegisterColorHandlersEvent.Item event) {
+        event.register((stack, layer) -> layer == 0
+                        ? ((com.xenowarriors.item.KarmaHoodieItem) stack.getItem()).getColor(stack) | 0xFF000000 : -1,
+                com.xenowarriors.item.ModItems.KARMA_HOODIE.get());
+    }
+
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("skills", new SkillHudOverlay());

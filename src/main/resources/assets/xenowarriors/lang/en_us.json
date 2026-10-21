@@ -79,5 +79,6 @@
   "message.xenowarriors.karma_sense.traced": "Someone is trying to trace your Karma...",
   "item.xenowarriors.karma_hoodie": "Karma-Reducing Hoodie",
   "item.xenowarriors.karma_hoodie.desc1": "Hides your Karma from Karma Sensing",
-  "item.xenowarriors.karma_hoodie.desc2": "Your Karma recovers half as fast"
+  "item.xenowarriors.karma_hoodie.desc2": "Your Karma recovers half as fast",
+  "item.xenowarriors.karma_hoodie.desc3": "Dye it any color, like leather armor"
 }

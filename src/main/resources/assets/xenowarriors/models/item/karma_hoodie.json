@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "xenowarriors:item/karma_hoodie"
+    "layer0": "xenowarriors:item/karma_hoodie",
+    "layer1": "xenowarriors:item/karma_hoodie_overlay"
   }
 }
