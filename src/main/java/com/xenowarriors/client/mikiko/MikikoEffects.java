@@ -227,9 +227,7 @@ final class MikikoEffects {
     static void blade(ClientLevel level, Player p, boolean summon) {
         Vec3 hand = rightHand(p);
         if (summon) {
-            startSummon(p, true);
-            level.playLocalSound(p.getX(), p.getY() + 1, p.getZ(), com.xenowarriors.ModSounds.HEKUBLADE_SUMMON.get(),
-                    net.minecraft.sounds.SoundSource.PLAYERS, 0.45F, 1.25F, false);
+            startSummon(p, true);      // (no summoning sound here - that's only for summoning it with G)
         } else {
             for (int i = 0; i < 8; i++) MikikoAnimations.particle(level, ParticleTypes.SMOKE, hand, rand(p, 0.05));
             for (int i = 0; i < 5; i++) MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, hand, rand(p, 0.04));
