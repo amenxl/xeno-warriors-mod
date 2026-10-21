@@ -61,7 +61,7 @@ public final class Karma {
 
     public static void sync(ServerPlayer player, PlayerCharacter data) {
         data.lastSyncedKarma = data.getKarma();
-        ModNetwork.sendToPlayer(new KarmaSyncPacket(data.getKarma(), MAX), player);
+        ModNetwork.sendToPlayer(new KarmaSyncPacket(data.getKarma(), data.karmaMax), player);
     }
 
     @SubscribeEvent
@@ -71,14 +71,14 @@ public final class Karma {
             if (data.getType() == CharacterType.NONE || !player.isAlive()) return;
             boolean focusing = player.isShiftKeyDown() && player.onGround()
                     && player.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4;
-            if (data.getKarma() < MAX) {
+            if (data.getKarma() < data.karmaMax) {
                 float rate = (focusing ? FOCUS_REGEN : REGEN) / 20F;
                 if (com.xenowarriors.item.HoodieItem.wearing(player)) rate *= 0.5F;   // it suppresses your Karma
                 data.setKarma(data.getKarma() + rate);
             }
             // send to the HUD when it has changed by a whole point, or right away the first time
             if (data.lastSyncedKarma < 0 || Math.abs(data.getKarma() - data.lastSyncedKarma) >= 1F
-                    || (data.getKarma() >= MAX && data.lastSyncedKarma < MAX)) {
+                    || (data.getKarma() >= data.karmaMax && data.lastSyncedKarma < data.karmaMax)) {
                 sync(player, data);
             }
         });
@@ -90,7 +90,7 @@ public final class Karma {
         if (event.getEntity() instanceof ServerPlayer player && !event.wakeImmediately()
                 && player.level().isDay()) {
             player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
-                data.setKarma(MAX);
+                data.setKarma(data.karmaMax);
                 sync(player, data);
             });
         }

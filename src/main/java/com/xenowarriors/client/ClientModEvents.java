@@ -65,6 +65,7 @@ public final class ClientModEvents {
         event.register(ModKeyMappings.LOCK_ON);
         event.register(ModKeyMappings.KARMA_SENSE);
         event.register(ModKeyMappings.STATS_MENU);
+        event.register(ModKeyMappings.FOX_KING);
     }
 
     /** The hoodie's item icon shows its dye color (the trim layer stays as is). */

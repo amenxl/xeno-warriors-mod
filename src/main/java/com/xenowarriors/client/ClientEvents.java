@@ -49,6 +49,11 @@ public final class ClientEvents {
         }
 
         while (ModKeyMappings.LOCK_ON.consumeClick()) LockOn.toggle();
+        while (ModKeyMappings.FOX_KING.consumeClick()) {
+            if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && !UltimateCutscene.active()) {
+                ModNetwork.sendToServer(new com.xenowarriors.network.FoxKingTogglePacket());
+            }
+        }
         while (ModKeyMappings.STATS_MENU.consumeClick()) {
             if (mc.player != null && mc.screen == null) PlayerStatsScreen.open();
         }

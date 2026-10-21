@@ -50,8 +50,11 @@ public class PlayerCharacter {
     public CharacterType getType() { return type; }
     public void setType(CharacterType type) { this.type = type; }
 
+    /** Current Karma cap (Fox King mode raises it by half). Not saved. */
+    public float karmaMax = Karma.MAX;
+
     public float getKarma() { return karma; }
-    public void setKarma(float value) { this.karma = Math.max(0F, Math.min(Karma.MAX, value)); }
+    public void setKarma(float value) { this.karma = Math.max(0F, Math.min(karmaMax, value)); }
 
     /** Keeps the character after death; Karma comes back full on respawn. */
     public void copyFrom(PlayerCharacter other) {

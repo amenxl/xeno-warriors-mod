@@ -24,6 +24,7 @@ public final class ModKeyMappings {
     /** Sense the Karma of everything nearby. */
     public static final KeyMapping KARMA_SENSE = key("karma_sense", GLFW.GLFW_KEY_K);
     public static final KeyMapping STATS_MENU = key("stats_menu", GLFW.GLFW_KEY_M);
+    public static final KeyMapping FOX_KING = key("fox_king", GLFW.GLFW_KEY_N);
 
     /** Mikiko: summon / put away the Hekublade. */
     public static final KeyMapping SUMMON_BLADE = key("summon_blade", GLFW.GLFW_KEY_G);

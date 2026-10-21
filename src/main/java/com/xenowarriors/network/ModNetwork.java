@@ -241,6 +241,16 @@ public final class ModNetwork {
                 .decoder(MiningLevelPacket::decode)
                 .consumerMainThread(MiningLevelPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(FoxKingPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FoxKingPacket::encode)
+                .decoder(FoxKingPacket::decode)
+                .consumerMainThread(FoxKingPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(FoxKingTogglePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(FoxKingTogglePacket::encode)
+                .decoder(FoxKingTogglePacket::decode)
+                .consumerMainThread(FoxKingTogglePacket::handle)
+                .add();
     }
 
     public static void sendToServer(Object msg) {

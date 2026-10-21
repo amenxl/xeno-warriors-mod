@@ -25,6 +25,9 @@ import java.util.Map;
  */
 public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private final Map<CharacterType, DetailModel> models = new EnumMap<>(CharacterType.class);
+    private static final net.minecraft.resources.ResourceLocation FOX_KING_TEX =
+            com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_foxking_details.png");
+    private final DetailModel foxKing = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_foxking.json");
 
     public CharacterDetailLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
@@ -179,6 +182,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         DetailModel model = models.get(type);
+        boolean king = type == CharacterType.MIKIKO && foxKing != null && com.xenowarriors.client.mikiko.FoxKingClient.active(player);
+        if (king) model = foxKing;
         if (model == null) return;
 
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
@@ -223,6 +228,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         int torn = ClientCharacterData.isPreviewing() ? 0 : TORN.getOrDefault(player.getUUID(), 0);
         var detailTex = torn > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_details_torn" + torn + ".png")
                 : type.getDetailTexture();
+        if (king) detailTex = FOX_KING_TEX;      // its own atlas (the torn/damaged detail sheets are for the normal look)
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         model.root.render(poseStack, buffer, packedLight, overlay);
         if (torn > 0) {
@@ -238,7 +244,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             String base = "textures/entity/character/" + type.getId();
             parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
                     com.xenowarriors.XenoWarriors.id(base + "_damage" + damage + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);
-            model.root.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
+            if (!king) model.root.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
                     com.xenowarriors.XenoWarriors.id(base + "_details_damage" + damage + ".png"))), packedLight, overlay);
             // 3D: bandages and torn, hanging cloth
             BattleDamageModel.get().render(parent, poseStack, buffers, packedLight, overlay, damage,

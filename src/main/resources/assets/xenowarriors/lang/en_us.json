@@ -160,5 +160,6 @@
   "entity.xenowarriors.soul_bolt": "Soul Bolt",
   "item.xenowarriors.c_soul_spawn_egg": "Soul of Darkness Spawn Egg",
   "effect.xenowarriors.blade_bound": "Inside the Hekublade",
-  "effect.xenowarriors.blade_exhausted": "Hekublade Exhaustion"
+  "effect.xenowarriors.blade_exhausted": "Hekublade Exhaustion",
+  "key.xenowarriors.fox_king": "Fox King Mode (Mikiko)"
 }
