@@ -29,6 +29,7 @@ public final class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         WindEffects.tick(mc);
         limitRhalixFlight(mc);
+        sleepCamera(mc);
 
         // skill keys
         for (int slot = 0; slot < ModKeyMappings.SKILLS.length; slot++) {
@@ -88,6 +89,21 @@ public final class ClientEvents {
     private static boolean warnedCeiling;
 
     /** Rhalix's wings only take him so high: no rising past the cap, and a gentle push back down above it. */
+    private static net.minecraft.client.CameraType cameraBeforeSleep;
+
+    /** Going to bed switches to third person (so you can see the sleeping animation), and back on waking up. */
+    private static void sleepCamera(Minecraft mc) {
+        var p = mc.player;
+        boolean sleeping = p != null && p.isSleeping() && ClientCharacterData.getLocal() != CharacterType.NONE;
+        if (sleeping && cameraBeforeSleep == null) {
+            cameraBeforeSleep = mc.options.getCameraType();
+            mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+        } else if (!sleeping && cameraBeforeSleep != null) {
+            mc.options.setCameraType(cameraBeforeSleep);
+            cameraBeforeSleep = null;
+        }
+    }
+
     private static void limitRhalixFlight(Minecraft mc) {
         var p = mc.player;
         if (p == null || !p.getAbilities().flying || !com.xenowarriors.character.RhalixFlight.canFly(p)

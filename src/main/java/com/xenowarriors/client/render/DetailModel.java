@@ -51,6 +51,65 @@ public class DetailModel {
         this.leftWingZ = leftWing != null ? leftWing.zRot : 0;
         this.rightWingY = rightWing != null ? rightWing.yRot : 0;
         this.leftWingY = leftWing != null ? leftWing.yRot : 0;
+        if (hair != null) collectStrands(hair);
+        if (bangs != null) collectStrands(bangs);
+    }
+
+    // ---------------------------------------------------------------- hair blowing in the wind
+
+    /** One hair strand / dread / lock: it pivots at its root on the head. */
+    private record Strand(ModelPart part, org.joml.Quaternionf base, org.joml.Vector3f back, org.joml.Vector3f side, float phase) {}
+
+    private final java.util.List<Strand> strands = new java.util.ArrayList<>();
+    private boolean hairMoved;
+
+    private void collectStrands(ModelPart group) {
+        int[] i = {0};
+        group.getAllParts().forEach(p -> {
+            if (p == group) return;
+            var base = new org.joml.Quaternionf().rotationZYX(p.zRot, p.yRot, p.xRot);
+            var dir = base.transform(new org.joml.Vector3f(0F, -1F, 0F));        // the way the strand points
+            var back = new org.joml.Vector3f(dir).cross(0F, 0F, 1F);           // swing it toward the back
+            var side = new org.joml.Vector3f(dir).cross(1F, 0F, 0F);           // and side to side
+            if (back.lengthSquared() < 1.0E-4F) back.set(1F, 0F, 0F);
+            if (side.lengthSquared() < 1.0E-4F) side.set(0F, 0F, 1F);
+            strands.add(new Strand(p, base, back.normalize(), side.normalize(), i[0]++ * 0.7F));
+        });
+    }
+
+    /**
+     * Blows the hair back and makes it flutter.
+     * @param stream  how far back it's pushed (radians) - more running, most flying
+     * @param flutter how much it flaps around
+     */
+    public void animateHair(float stream, float flutter, float age) {
+        if (strands.isEmpty()) return;
+        if (stream < 0.002F && flutter < 0.002F) {
+            if (hairMoved) {
+                for (Strand s : strands) setRot(s.part, s.base);
+                hairMoved = false;
+            }
+            return;
+        }
+        hairMoved = true;
+        var delta = new org.joml.Quaternionf();
+        var tmp = new org.joml.Quaternionf();
+        for (Strand s : strands) {
+            float a = stream + (float) Math.sin(age * 0.55F + s.phase) * flutter;
+            float b = (float) Math.sin(age * 0.43F + s.phase * 1.7F) * flutter * 0.6F;
+            delta.rotationAxis(a, s.back).mul(tmp.rotationAxis(b, s.side));
+            setRot(s.part, delta.mul(s.base, tmp));
+        }
+    }
+
+    /** Sets a part's angles from a rotation (the same Z-Y-X order the game uses). */
+    private static void setRot(ModelPart p, org.joml.Quaternionf q) {
+        var m = new org.joml.Matrix3f().set(q);
+        // JOML is column-major: mCR. Row 2 col 0 = m02, etc.
+        float sy = Math.max(-1F, Math.min(1F, -m.m02));
+        p.yRot = (float) Math.asin(sy);
+        p.xRot = (float) Math.atan2(m.m12, m.m22);
+        p.zRot = (float) Math.atan2(m.m01, m.m00);
     }
 
     private static ModelPart childOrNull(ModelPart part, String name) {

@@ -497,6 +497,15 @@ public final class MikikoAnimations {
     }
 
     /** Is he in the middle of an attack move? (for his fierce face) */
+    /** Busy with his own air moves (double-jump flip, hero landing, an attack, flying) - skip the normal jump pose. */
+    public static boolean busyInAir(Player p, float age) {
+        State s = STATES.get(p.getId());
+        if (s == null) return false;
+        float jump = (age - s.jumpStart) / JUMP_DURATION;
+        float land = age - s.landStart;
+        return s.move != null || (jump >= 0F && jump <= 1F) || (land >= 0F && land <= LAND_DURATION) || s.fly > 0.2F;
+    }
+
     public static boolean attacking(Player p) {
         State s = STATES.get(p.getId());
         return s != null && s.move != null;

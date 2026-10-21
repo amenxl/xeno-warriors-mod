@@ -103,6 +103,25 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         };
     }
 
+    private static final java.util.Map<Integer, float[]> HAIR = new java.util.HashMap<>();
+
+    /** which = 0: how far the hair is blown back, 1: how much it flutters (smoothed so it eases in and out). */
+    private static float hairStream(AbstractClientPlayer p, int which) {
+        float[] h = HAIR.computeIfAbsent(p.getId(), k -> new float[3]);
+        if (which == 0) {
+            double dx = p.getX() - p.xo, dz = p.getZ() - p.zo;
+            float speed = (float) Math.min(1.0, Math.sqrt(dx * dx + dz * dz) / 0.4);
+            boolean flying = FlightTracker.isFlying(p) || p.isFallFlying();
+            boolean air = !p.onGround() && !p.isInWater();
+            float stream = speed * (flying ? 0.65F : p.isSprinting() ? 0.38F : 0.14F) + (air && !flying ? 0.08F : 0F);
+            float flutter = (flying ? 0.15F : p.isSprinting() ? 0.1F : 0.035F) * Math.min(1F, speed * 1.4F) + (air ? 0.03F : 0F);
+            h[0] += (stream - h[0]) * 0.12F;
+            h[1] += (flutter - h[1]) * 0.12F;
+            return h[0];
+        }
+        return h[1];
+    }
+
     private static final java.util.Map<java.util.UUID, Integer> TORN = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static void setTorn(java.util.UUID player, int torn) {
@@ -160,6 +179,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
                     instanceof com.xenowarriors.item.SrHoodieItem);
         }
+
+        // hair streaming back and fluttering when running or flying
+        model.animateHair(hairStream(player, 0), hairStream(player, 1), ageInTicks);
 
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off
