@@ -83,6 +83,12 @@ public final class WindFlight {
                 abilities.mayfly = true;
                 p.onUpdateAbilities();
             }
+            // faster with more Speed, with Netsu burning, in Fox King mode
+            float speed = 0.05F * com.xenowarriors.stats.FlightBoost.factor(p);
+            if (Math.abs(abilities.getFlyingSpeed() - speed) > 0.002F) {
+                abilities.setFlyingSpeed(speed);
+                p.onUpdateAbilities();
+            }
             if (!granted) {
                 p.getPersistentData().putBoolean(GRANTED, true);
                 p.sendSystemMessage(Component.literal("After a lot of thought and consideration, why not use my wing to fly?")
@@ -96,6 +102,7 @@ public final class WindFlight {
             if (ModCapabilities.getType(p) != CharacterType.RHALIX) {
                 abilities.mayfly = false;
                 abilities.flying = false;
+                abilities.setFlyingSpeed(0.05F);
                 p.onUpdateAbilities();
             }
         }

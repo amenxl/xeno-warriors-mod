@@ -70,7 +70,8 @@ public final class RhalixFlight {
             c[0] = p.getX();
             c[1] = p.getZ();
             c[2] = abilities.flying && moved > 0.9 ? Math.min(SPEED_UP_TICKS, c[2] + 5) : Math.max(0, c[2] - 15);
-            float speed = BASE_SPEED + (TOP_SPEED - BASE_SPEED) * (float) (c[2] / SPEED_UP_TICKS);
+            float speed = (BASE_SPEED + (TOP_SPEED - BASE_SPEED) * (float) (c[2] / SPEED_UP_TICKS))
+                    * com.xenowarriors.stats.FlightBoost.factor(p);
             if (Math.abs(abilities.getFlyingSpeed() - speed) > 0.002F) {
                 abilities.setFlyingSpeed(speed);
                 p.onUpdateAbilities();
