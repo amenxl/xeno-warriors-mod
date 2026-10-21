@@ -38,6 +38,7 @@ public final class BladeAbsorb {
         ServerPlayer p = absorber(victim, event.getSource());
         if (p == null) return;
         ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> victim), new AbsorbPacket(victim.getId(), p.getId()));
+        HekubladeRealm.seal(p, victim);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

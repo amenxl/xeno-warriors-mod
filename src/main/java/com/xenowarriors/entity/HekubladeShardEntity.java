@@ -34,7 +34,7 @@ import org.joml.Vector3f;
 public class HekubladeShardEntity extends Projectile {
     public static final int HOVER_LIFE = 160;          // auto-fires after 8 seconds
     public static final float SPEED = 2.6F, DAMAGE = 5F;
-    private static final int FLIGHT_LIFE = 40;
+    private static final int FLIGHT_LIFE = 70;
 
     private static final EntityDataAccessor<Integer> OWNER_ID = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> SLOT = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.INT);
@@ -114,7 +114,7 @@ public class HekubladeShardEntity extends Projectile {
                     level().addParticle(new DustParticleOptions(new Vector3f(1F, 0.97F, 0.92F), 0.6F), getX(), getY(), getZ(), 0, 0, 0);
                 }
             } else if (tickCount > HOVER_LIFE) {
-                fire(owner instanceof Player p ? com.xenowarriors.skill.SkillTargeting.aimed((net.minecraft.server.level.ServerPlayer) p, 40, 10) : null);
+                fire(owner instanceof net.minecraft.server.level.ServerPlayer p ? com.xenowarriors.skill.SkillTargeting.homing(p, 40) : null);
             }
             return;
         }
@@ -124,12 +124,29 @@ public class HekubladeShardEntity extends Projectile {
             return;
         }
         Entity target = level().getEntity(entityData.get(TARGET));
-        if (target != null && target.isAlive()) {
-            Vec3 want = target.getBoundingBox().getCenter().subtract(position()).normalize().scale(SPEED);
-            setDeltaMovement(getDeltaMovement().lerp(want, 0.25).normalize().scale(SPEED));
+        if ((target == null || !target.isAlive()) && !level().isClientSide && entityData.get(TARGET) != -1) {
+            // its target fell before it arrived: swing round to the nearest other enemy
+            target = retarget();
+            entityData.set(TARGET, target == null ? -1 : target.getId());
+        }
+        boolean homing = target != null && target.isAlive();
+        if (homing) {
+            Vec3 aim = target.getBoundingBox().getCenter();
+            double dist = aim.distanceTo(position());
+            // lead the target: aim where it will be when the blade gets there
+            aim = aim.add(target.getDeltaMovement().multiply(1, 0.3, 1).scale(Math.min(dist / SPEED, 10)));
+            Vec3 want = aim.subtract(position()).normalize().scale(SPEED);
+            double turn = dist < 3 ? 1.0 : 0.45;
+            setDeltaMovement(getDeltaMovement().lerp(want, turn).normalize().scale(SPEED));
         }
         if (!level().isClientSide) {
             HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+            // while chasing a live target the blade cuts straight through walls in its way
+            if (homing && hit.getType() == HitResult.Type.BLOCK) {
+                var box = getBoundingBox().expandTowards(getDeltaMovement()).inflate(0.5);
+                hit = target.getBoundingBox().intersects(box) ? new EntityHitResult(target) : HitResult.class.cast(
+                        net.minecraft.world.phys.BlockHitResult.miss(position(), net.minecraft.core.Direction.UP, blockPosition()));
+            }
             if (hit.getType() != HitResult.Type.MISS) {
                 onHit(hit);
                 return;
@@ -139,6 +156,14 @@ public class HekubladeShardEntity extends Projectile {
             level().addParticle(new DustParticleOptions(new Vector3f(1F, 0.5F, 0.1F), 0.8F), getX(), getY(), getZ(), 0, 0, 0);
         }
         setPos(position().add(getDeltaMovement()));
+    }
+
+    private LivingEntity retarget() {
+        Entity owner = getOwner();
+        if (!(owner instanceof net.minecraft.server.level.ServerPlayer p)) return null;
+        return com.xenowarriors.skill.SkillTargeting.around(p, position(), 14, 8, 8).stream()
+                .filter(e -> e instanceof net.minecraft.world.entity.monster.Enemy || e == p.getLastHurtMob())
+                .findFirst().orElse(null);
     }
 
     private void summonBurst() {

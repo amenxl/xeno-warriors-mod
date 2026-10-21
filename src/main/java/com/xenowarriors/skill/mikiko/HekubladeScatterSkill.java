@@ -45,7 +45,7 @@ public class HekubladeScatterSkill implements Skill {
             return false;
         }
         HekubladeShardEntity next = blades.remove(0);
-        next.fire(SkillTargeting.aimed(player, 40, 8));
+        next.fire(SkillTargeting.homing(player, 40));
         ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), SkillAnimPacket.BANG, false), player);
         return true;
     }

@@ -57,6 +57,7 @@ public final class XenoCommands {
                     {"/xeno info [player]", "character, karma and stat levels"},
                     {"/xeno wings", "Rhalix: take out / put away your wings"},
                     {"/xeno blade", "Mikiko: summon / put away the Hekublade"},
+                    {"/xeno blade realm", "Mikiko: enter / leave the world inside the Hekublade"},
                     {"/xeno foxes", "Mikiko: list your foxes"},
                     {"/xeno fox call", "call your foxes (like the whistle)"},
                     {"/xeno fox release <name>", "let a fox go back to the wild"},
@@ -91,7 +92,15 @@ public final class XenoCommands {
             return 1;
         }));
 
-        root.then(Commands.literal("blade").executes(ctx -> {
+        root.then(Commands.literal("blade").then(Commands.literal("realm").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            if (ModCapabilities.getType(p) != CharacterType.MIKIKO) {
+                ctx.getSource().sendFailure(Component.literal("Only Mikiko can enter the Hekublade."));
+                return 0;
+            }
+            com.xenowarriors.mikiko.HekubladeRealm.toggle(p);
+            return 1;
+        })).executes(ctx -> {
             ServerPlayer p = ctx.getSource().getPlayerOrException();
             if (ModCapabilities.getType(p) != CharacterType.MIKIKO) {
                 ctx.getSource().sendFailure(Component.literal("Only Mikiko can summon the Hekublade."));

@@ -60,6 +60,22 @@ public final class SkillTargeting {
         return best;
     }
 
+    /**
+     * For homing attacks: what you're aiming at, else anything roughly in front of you, else the nearest
+     * hostile around you. Null only if there's truly nothing to hit.
+     */
+    public static LivingEntity homing(ServerPlayer player, double range) {
+        LivingEntity t = aimed(player, range, 12);
+        if (t == null) t = aimed(player, range, 35);
+        if (t == null) {
+            t = around(player, player.position(), range * 0.5, 8, 16).stream()
+                    .filter(e -> e instanceof net.minecraft.world.entity.monster.Enemy)
+                    .filter(e -> hasLineOfSight(player, player.getEyePosition(), e.getBoundingBox().getCenter()))
+                    .findFirst().orElse(null);
+        }
+        return t;
+    }
+
     /** Everything a skill could hit around a point, nearest first. */
     public static List<LivingEntity> around(ServerPlayer player, Vec3 center, double radius, double height, int max) {
         AABB box = new AABB(center.x - radius, center.y - height, center.z - radius, center.x + radius, center.y + height, center.z + radius);

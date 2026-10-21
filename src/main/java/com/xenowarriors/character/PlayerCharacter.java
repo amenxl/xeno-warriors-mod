@@ -27,6 +27,11 @@ public class PlayerCharacter {
     public int flightTicks;
     /** How many times they've used Karma Sensing (range and duration grow with practice). */
     public int senseUses;
+    /** Everything Mikiko has sealed inside the Hekublade: {id, type, name, data, time}. */
+    public net.minecraft.nbt.ListTag sealed = new net.minecraft.nbt.ListTag();
+    /** Where to send him back to when he leaves the Hekublade realm {dim, x, y, z, yaw}. */
+    public CompoundTag bladeReturn = new CompoundTag();
+    public int nextSealId;
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -43,6 +48,9 @@ public class PlayerCharacter {
         System.arraycopy(other.statXp, 0, statXp, 0, 3);
         this.flightTicks = other.flightTicks;
         this.senseUses = other.senseUses;
+        this.sealed = other.sealed.copy();
+        this.bladeReturn = other.bladeReturn.copy();
+        this.nextSealId = other.nextSealId;
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
         this.backFox = other.backFox.copy();
@@ -56,6 +64,9 @@ public class PlayerCharacter {
         tag.putIntArray("stat_levels", statLevel.clone());
         tag.putInt("flight_ticks", flightTicks);
         tag.putInt("sense_uses", senseUses);
+        tag.put("sealed", sealed.copy());
+        tag.put("blade_return", bladeReturn.copy());
+        tag.putInt("next_seal_id", nextSealId);
         tag.put("pets", pets.copy());
         tag.put("wing_pets", wingPets.copy());
         tag.put("back_fox", backFox.copy());
@@ -69,6 +80,9 @@ public class PlayerCharacter {
         this.type = CharacterType.byId(tag.getString("character"));
         this.flightTicks = tag.getInt("flight_ticks");
         this.senseUses = tag.getInt("sense_uses");
+        this.sealed = tag.getList("sealed", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        this.bladeReturn = tag.getCompound("blade_return");
+        this.nextSealId = tag.getInt("next_seal_id");
         this.pets = tag.getList("pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.wingPets = tag.getList("wing_pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");
