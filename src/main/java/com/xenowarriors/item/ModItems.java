@@ -91,6 +91,11 @@ public final class ModItems {
             () -> new net.minecraft.world.item.RecordItem(2, com.xenowarriors.ModSounds.MAXS_CHILL_DAY,
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 1413));
 
+    /** Music disc: "Crown for Heroine". */
+    public static final RegistryObject<Item> MUSIC_DISC_CROWN_FOR_HEROINE = ITEMS.register("music_disc_crown_for_heroine",
+            () -> new net.minecraft.world.item.RecordItem(8, com.xenowarriors.ModSounds.CROWN_FOR_HEROINE,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 516));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
@@ -112,6 +117,7 @@ public final class ModItems {
             event.accept(MUSIC_DISC_VIRTUAL_GRIND);
             event.accept(MUSIC_DISC_CORRUPTED_PULSE);
             event.accept(MUSIC_DISC_MAXS_CHILL_DAY);
+            event.accept(MUSIC_DISC_CROWN_FOR_HEROINE);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));

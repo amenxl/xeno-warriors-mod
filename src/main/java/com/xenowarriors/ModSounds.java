@@ -65,5 +65,9 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> MAXS_CHILL_DAY = SOUNDS.register("music_disc.maxs_chill_day",
             () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.maxs_chill_day")));
 
+    /** Music disc: "Crown for Heroine". */
+    public static final RegistryObject<SoundEvent> CROWN_FOR_HEROINE = SOUNDS.register("music_disc.crown_for_heroine",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.crown_for_heroine")));
+
     private ModSounds() {}
 }

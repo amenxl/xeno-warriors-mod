@@ -108,5 +108,13 @@
         "stream": true
       }
     ]
+  },
+  "music_disc.crown_for_heroine": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/crown_for_heroine",
+        "stream": true
+      }
+    ]
   }
 }
