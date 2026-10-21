@@ -112,6 +112,17 @@ public final class BattleDamageModel {
         root.render(poseStack, vc, light, overlay, cr, cg, cb, 1F);
     }
 
+    /** Just the torn, hanging strips of cloth (ripped clothes), no bandages. */
+    public void renderCloth(HumanoidModel<?> pose, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay,
+                            int level, int clothColor) {
+        if (level <= 0) return;
+        ModelPart[] src = {pose.head, pose.body, pose.rightArm, pose.leftArm, pose.rightLeg, pose.leftLeg};
+        for (int i = 0; i < 6; i++) parts[i].copyFrom(src[i]);
+        show(level, false);
+        float cr = (clothColor >> 16 & 255) / 255F, cg = (clothColor >> 8 & 255) / 255F, cb = (clothColor & 255) / 255F;
+        root.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light, overlay, cr, cg, cb, 1F);
+    }
+
     private void show(int level, boolean bandages) {
         for (int i = 0; i < 6; i++) {
             for (int l = 0; l < 2; l++) {

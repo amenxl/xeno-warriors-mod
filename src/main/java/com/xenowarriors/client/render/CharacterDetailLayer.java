@@ -103,6 +103,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         };
     }
 
+    private static final java.util.Map<java.util.UUID, Integer> TORN = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static void setTorn(java.util.UUID player, int torn) {
+        if (torn <= 0) TORN.remove(player);
+        else TORN.put(player, torn);
+    }
+
     /** 0 = fine, 1 = hurt (half health or less), 2 = badly hurt (a quarter or less). */
     private static int damageLevel(AbstractClientPlayer p) {
         if (!p.isAlive() || p.isCreative()) return 0;
@@ -155,8 +162,18 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
 
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
-        VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(type.getDetailTexture()));
+        // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off
+        int torn = ClientCharacterData.isPreviewing() ? 0 : TORN.getOrDefault(player.getUUID(), 0);
+        var detailTex = torn > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_details_torn" + torn + ".png")
+                : type.getDetailTexture();
+        VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         model.root.render(poseStack, buffer, packedLight, overlay);
+        if (torn > 0) {
+            parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(
+                    "textures/entity/character/" + type.getId() + "_torn" + torn + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);
+            BattleDamageModel.get().renderCloth(parent, poseStack, buffers, packedLight, overlay, Math.min(2, torn),
+                    type == CharacterType.MIKIKO ? 0x3A3440 : 0x7A3AA8);
+        }
 
         // battle damage: scratches, grime and torn clothes as they get hurt
         int damage = damageLevel(player);
