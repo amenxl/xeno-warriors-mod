@@ -8,6 +8,7 @@ import com.xenowarriors.mixin.FoxAccessor;
 import com.xenowarriors.network.BackFoxPacket;
 import com.xenowarriors.network.FoxLevelPacket;
 import com.xenowarriors.network.FoxSyncPacket;
+import com.xenowarriors.network.FoxStatsPacket;
 import com.xenowarriors.network.ModNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -145,8 +146,9 @@ public final class FoxPets {
                 if (!p.getAbilities().instabuild) stack.shrink(1);
                 fox.playSound(SoundEvents.FOX_EAT, 1F, 1F);
                 p.serverLevel().sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.8, fox.getZ(), 2, 0.2, 0.1, 0.2, 0);
+            } else {
+                showStats(p, fox);   // plain right-click: the fox's stat card
             }
-            // plain right-click: the client opens the naming screen
         }
     }
 
@@ -182,6 +184,7 @@ public final class FoxPets {
         rec.putInt("level", 1);
         rec.putFloat("xp", 0);
         rec.putInt("gen", 0);
+        rec.putLong("tamed", p.level().getGameTime());
         cap(p).ifPresent(c -> c.pets.add(rec));
         addGoals(fox);
         applyLevel(fox, 1);
@@ -192,6 +195,20 @@ public final class FoxPets {
         level.playSound(null, fox.blockPosition(), SoundEvents.FOX_AMBIENT, SoundSource.NEUTRAL, 1F, 1.3F);
         say(p, "The fox trusts you now!");
         sync(p, id, "Fox");
+    }
+
+    // ---------------------------------------------------------------- stat card
+
+    private static void showStats(ServerPlayer p, Fox fox) {
+        CompoundTag rec = record(p, fox.getUUID());
+        if (rec == null) return;
+        int level = rec.getInt("level");
+        long days = rec.contains("tamed") ? Math.max(0, (p.level().getGameTime() - rec.getLong("tamed")) / 24000L) : -1;
+        ModNetwork.sendToPlayer(new FoxStatsPacket(fox.getId(), fox.getUUID(), rec.getString("name"), level,
+                rec.getFloat("xp"), level >= FoxLevels.MAX ? 0 : FoxLevels.xpFor(level), fox.getHealth(), fox.getMaxHealth(),
+                (float) fox.getAttributeValue(Attributes.ATTACK_DAMAGE), (float) fox.getAttributeValue(Attributes.MOVEMENT_SPEED),
+                rec.getInt("kills"), (int) days, "snow".equals(fox.saveWithoutId(new CompoundTag()).getString("Type"))), p);
+        fox.playSound(SoundEvents.FOX_AMBIENT, 0.6F, 1.3F);
     }
 
     // ---------------------------------------------------------------- naming
@@ -315,6 +332,10 @@ public final class FoxPets {
         LivingEntity dead = event.getEntity();
         if (dead.level().isClientSide) return;
         if (event.getSource().getEntity() instanceof Fox killer && ownerOf(killer) != null) {
+            if (owner(killer) instanceof ServerPlayer kp) {
+                CompoundTag krec = record(kp, killer.getUUID());
+                if (krec != null) krec.putInt("kills", krec.getInt("kills") + 1);
+            }
             addXp(killer, 6F + dead.getMaxHealth() / 2F);
         }
         if (dead instanceof Fox fox && owner(fox) instanceof ServerPlayer p) {

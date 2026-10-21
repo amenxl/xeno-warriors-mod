@@ -4,7 +4,6 @@ import com.xenowarriors.XenoWarriors;
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.client.ClientCharacterData;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.item.ItemStack;
@@ -56,10 +55,7 @@ public final class FoxClient {
         ItemStack stack = event.getItemStack();
         boolean rabbit = stack.is(Items.RABBIT) || stack.is(Items.COOKED_RABBIT);
         if (MINE.containsKey(fox.getUUID())) {
-            if (event.getHand() == InteractionHand.MAIN_HAND && !event.getEntity().isShiftKeyDown()
-                    && !(rabbit && fox.getHealth() < fox.getMaxHealth())) {
-                Minecraft.getInstance().setScreen(new FoxNameScreen(fox.getUUID(), MINE.get(fox.getUUID()), false));
-            }
+            // (a plain right-click shows the stat card - the server sends the numbers)
         } else if (!(rabbit && ClientCharacterData.get(event.getEntity()) == CharacterType.MIKIKO
                 && fox.getCustomName() == null)) {
             return;
