@@ -35,6 +35,8 @@ public final class Netsu {
     public static final int DURATION = 10 * 20;
     /** Each Defense level keeps the fire going 0.3 seconds longer (25 seconds at Defense 50). */
     public static final int TICKS_PER_DEFENSE = 6;
+    /** At this Defense level Netsu no longer drains health at all. */
+    public static final int NO_DRAIN_DEFENSE = 100;
 
     public static int duration(ServerPlayer p) {
         return DURATION + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.DEFENSE) * TICKS_PER_DEFENSE;
@@ -115,7 +117,9 @@ public final class Netsu {
         p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, false, false, false));
         p.setRemainingFireTicks(Math.max(p.getRemainingFireTicks(), 10));
         // the fire slowly eats at his health (no hits, no flinching) - it never takes his last half-heart
-        if (!p.isCreative() && p.getHealth() > 1F) p.setHealth(Math.max(1F, p.getHealth() - SELF_DAMAGE / 20F));
+        // a tougher body handles the heat: the drain shrinks with Defense and stops entirely at Defense 100
+        float drain = SELF_DAMAGE / 20F * Math.max(0F, 1F - com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.DEFENSE) / (float) NO_DRAIN_DEFENSE);
+        if (drain > 0F && !p.isCreative() && p.getHealth() > 1F) p.setHealth(Math.max(1F, p.getHealth() - drain));
         // anyone touching him catches fire
         for (LivingEntity e : p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(0.35),
                 e -> SkillTargeting.canTarget(p, e))) {
