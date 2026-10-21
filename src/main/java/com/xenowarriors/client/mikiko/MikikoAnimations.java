@@ -46,6 +46,8 @@ import java.util.Set;
  *  - double jump: press jump in mid-air for a wind-powered front flip
  *  - flying: hovers loosely with a bob; speeds into a superhero lean, banking into turns
  *  - eating: holds the food up to his mouth with both hands and chews
+ *  - walking: after 15 seconds of walking he relaxes into a stroll with his hands behind his head
+ *  - running: leans into the sprint, fists pumping hard, long strides
  * Attack animations only play on a fully charged swing (after the attack cooldown); spam-clicking
  * just does the normal weak swing and doesn't move the combo along.
  */
@@ -67,6 +69,7 @@ public final class MikikoAnimations {
     private static final int SIT_AFTER = 600;
     private static final int FIRE_CYCLE = 260;
     private static final int JUMP_DURATION = 12;
+    private static final int STROLL_AFTER = 15 * 20;
     private static boolean lastJumpDown;
 
     private static final Map<Integer, State> STATES = new HashMap<>();
@@ -89,6 +92,8 @@ public final class MikikoAnimations {
         int still;
         float sit, sitO, look, lookO, poison, poisonO, fire, fireO;
         float fly, flyO, fast, fastO, roll, rollO;
+        float stroll, strollO, run, runO;
+        int walkTicks, stopTicks;
         int jumpStart = -100;
         boolean doubleJumped;
         int airTicks;
@@ -146,6 +151,18 @@ public final class MikikoAnimations {
         s.fast = approach(s.fast, flying ? (float) Mth.clamp((speed - 0.1) / 0.45, 0, 1) : 0F, 0.08F);
         float turn = Mth.wrapDegrees(p.yBodyRot - p.yBodyRotO);
         s.roll = s.roll + (Mth.clamp(turn * 2.5F, -30F, 30F) * s.fast - s.roll) * 0.2F;
+
+        // walking / running
+        double groundSpeed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
+        boolean walking = p.onGround() && groundSpeed > 0.02 && !p.isSprinting() && !p.isCrouching()
+                && !p.isPassenger() && !p.isSwimming() && !p.isUsingItem();
+        if (walking) { s.walkTicks++; s.stopTicks = 0; }
+        else if (++s.stopTicks > 10 || p.isSprinting() || !p.onGround()) s.walkTicks = 0;   // short pauses are fine
+        boolean running = p.isSprinting() && p.onGround() && !p.isSwimming() && !p.isPassenger();
+        s.strollO = s.stroll;
+        s.runO = s.run;
+        s.stroll = approach(s.stroll, walking && s.walkTicks >= STROLL_AFTER && s.move == null ? 1F : 0F, 0.06F);
+        s.run = approach(s.run, running ? 1F : 0F, 0.15F);
 
         // a new swing of the main hand?
         boolean swingStart = p.swinging && p.swingingArm == InteractionHand.MAIN_HAND
@@ -328,6 +345,10 @@ public final class MikikoAnimations {
             model.head.yRot += l[0] * look;
             model.head.xRot += l[1] * look;
         }
+        float stroll = Mth.lerp(partial, s.strollO, s.stroll);
+        if (stroll > 0F) strollPose(model, stroll, player, partial, ageInTicks);
+        float run = Mth.lerp(partial, s.runO, s.run);
+        if (run > 0F) runPose(model, run, player, partial);
         float fly = Mth.lerp(partial, s.flyO, s.fly);
         if (fly > 0F) flyPose(model, fly, Mth.lerp(partial, s.fastO, s.fast), ageInTicks);
         float jump = (ageInTicks - s.jumpStart) / JUMP_DURATION;
@@ -377,6 +398,29 @@ public final class MikikoAnimations {
         set(model.leftLeg, t[9], t[10], t[11], fly);
         // keep looking ahead while the body leans forward
         model.head.xRot -= 1.0F * fast * fly;
+    }
+
+    /** Relaxed stroll: hands laced behind his head, elbows out, head bobbing along. Legs keep walking. */
+    private static void strollPose(HumanoidModel<?> model, float w, Player p, float partial, float age) {
+        float step = p.walkAnimation.position(partial) * 0.6662F;
+        float sway = Mth.sin(step) * 0.05F;
+        set(model.rightArm, -2.75F + sway, 0.35F, 0.62F, w);
+        set(model.leftArm, -2.75F - sway, -0.35F, -0.62F, w);
+        model.head.zRot += Mth.sin(step) * 0.05F * w;
+        model.head.xRot -= 0.08F * w;     // chin up, easygoing
+    }
+
+    /** Sprint: fists pumping hard against the legs, long strides (the lean is in bodyMotion). */
+    private static void runPose(HumanoidModel<?> model, float w, Player p, float partial) {
+        float step = p.walkAnimation.position(partial) * 0.6662F;
+        float amt = Math.min(1F, p.walkAnimation.speed(partial) * 1.2F);
+        float swing = Mth.cos(step) * amt;
+        // elbows bent (arms forward-ish) and pumping opposite to the legs
+        set(model.rightArm, -0.55F + swing * 1.25F, 0.12F, 0.1F, w);
+        set(model.leftArm, -0.55F - swing * 1.25F, -0.12F, -0.1F, w);
+        set(model.rightLeg, -swing * 1.35F - 0.15F, 0F, 0.02F, w);
+        set(model.leftLeg, swing * 1.35F - 0.15F, 0F, -0.02F, w);
+        model.head.xRot -= 0.3F * w;      // eyes forward while leaning in
     }
 
     /** Both hands bring the food up to his mouth; little chewing bobs. */
@@ -492,6 +536,12 @@ public final class MikikoAnimations {
             out[0] += Mth.sin(age * 0.12F) * 0.05F * fly * (1F - fast);
             out[3] += 65F * fast * fly * attacking;
             out[4] += Mth.lerp(partial, s.rollO, s.roll) * fly * attacking;
+        }
+        float run = Mth.lerp(partial, s.runO, s.run);
+        if (run > 0F) {
+            float step = p.walkAnimation.position(partial) * 0.6662F;
+            out[3] += 15F * run;                                           // lean into the sprint
+            out[0] += Math.abs(Mth.sin(step)) * 0.06F * run;                // bounce with each stride
         }
         float jump = (age - s.jumpStart) / JUMP_DURATION;
         if (jump >= 0F && jump <= 1F) {
