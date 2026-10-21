@@ -1,0 +1,30 @@
+package com.xenowarriors.network;
+
+import com.xenowarriors.client.ClientSkillState;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+/** Server -> clients: a player just used a skill, so play its body animation. */
+public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
+    public static final int KISHI = 0;
+    public static final int STOMP = 1;
+
+    public static void encode(SkillAnimPacket msg, FriendlyByteBuf buf) {
+        buf.writeVarInt(msg.entityId);
+        buf.writeVarInt(msg.anim);
+        buf.writeBoolean(msg.airborne);
+    }
+
+    public static SkillAnimPacket decode(FriendlyByteBuf buf) {
+        return new SkillAnimPacket(buf.readVarInt(), buf.readVarInt(), buf.readBoolean());
+    }
+
+    public static void handle(SkillAnimPacket msg, Supplier<NetworkEvent.Context> ctx) {
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                ClientSkillState.startAnim(msg.entityId, msg.anim, msg.airborne));
+    }
+}

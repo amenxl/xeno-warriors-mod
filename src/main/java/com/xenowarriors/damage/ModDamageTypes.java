@@ -13,7 +13,15 @@ public final class ModDamageTypes {
     public static final ResourceKey<DamageType> KISHI =
             ResourceKey.create(Registries.DAMAGE_TYPE, XenoWarriors.id("kishi"));
 
+    public static final ResourceKey<DamageType> EARTH_WAVE =
+            ResourceKey.create(Registries.DAMAGE_TYPE, XenoWarriors.id("earth_wave"));
+
     private ModDamageTypes() {}
+
+    public static DamageSource earthWave(Level level, Entity wave, Entity owner) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(EARTH_WAVE),
+                wave, owner);
+    }
 
     public static DamageSource kishi(Level level, Entity dome, Entity owner) {
         return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(KISHI),

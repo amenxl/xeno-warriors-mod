@@ -1,6 +1,6 @@
 package com.xenowarriors.mixin;
 
-import com.xenowarriors.client.KishiCastAnimation;
+import com.xenowarriors.client.SkillAnimations;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Adds the Kishi cast pose on top of the normal player animation. This runs at the end of
+ * Adds skill poses (Kishi cast, Earth Wave stomp) on top of the normal player animation. This runs at the end of
  * HumanoidModel.setupAnim, so PlayerModel still copies the pose onto the sleeves and pants
  * afterwards, and armor and the 3D details copy it from the player model.
  */
@@ -19,11 +19,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class HumanoidModelMixin {
 
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
-    private void xenowarriors$kishiPose(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+    private void xenowarriors$skillPose(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                                         float netHeadYaw, float headPitch, CallbackInfo ci) {
         Object self = this;
         if (self instanceof PlayerModel<?> && entity instanceof Player) {
-            KishiCastAnimation.apply((HumanoidModel<?>) self, entity, ageInTicks);
+            SkillAnimations.apply((HumanoidModel<?>) self, entity, ageInTicks);
         }
     }
 }

@@ -56,7 +56,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             boolean flying = FlightTracker.isFlying(player);
             boolean falling = !player.onGround() && !player.isInWater() && player.fallDistance > 1.5F;
             boolean kishi = ClientSkillState.isCastingKishi(player.getUUID());
-            float spread = com.xenowarriors.client.KishiCastAnimation.wingSpread(player, ageInTicks);
+            float spread = com.xenowarriors.client.SkillAnimations.wingSpread(player, ageInTicks);
             model.setupWings(preview || flying || falling || kishi || spread > 0F, flying || falling, ageInTicks, spread);
         }
 

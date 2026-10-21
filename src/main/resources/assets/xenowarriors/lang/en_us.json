@@ -34,5 +34,12 @@
   "death.attack.xenowarriors.kishi.player": "%1$s was crushed by %2$s's Kishi",
   "hud.xenowarriors.karma": "Karma %s / %s",
   "message.xenowarriors.no_karma": "Not enough Karma (needs %s, you have %s) — crouch and stand still to focus",
-  "item.xenowarriors.karma_potion": "Karma Potion"
+  "item.xenowarriors.karma_potion": "Karma Potion",
+  "skill.xenowarriors.earth_wave": "Earth Wave",
+  "entity.xenowarriors.earth_wave": "Earth Wave",
+  "message.xenowarriors.earth_wave.cast": "Earth Wave!",
+  "message.xenowarriors.earth_wave.ground": "You need to be standing on the ground to stomp",
+  "death.attack.xenowarriors.earth_wave": "%1$s was swept away by %2$s's Earth Wave",
+  "death.attack.xenowarriors.earth_wave.item": "%1$s was swept away by %2$s's Earth Wave",
+  "death.attack.xenowarriors.earth_wave.player": "%1$s was swept away by %2$s's Earth Wave"
 }

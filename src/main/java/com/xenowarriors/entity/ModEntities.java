@@ -20,5 +20,14 @@ public final class ModEntities {
                     .updateInterval(20)
                     .build("kishi_dome"));
 
+    public static final RegistryObject<EntityType<EarthWaveEntity>> EARTH_WAVE = ENTITY_TYPES.register("earth_wave",
+            () -> EntityType.Builder.<EarthWaveEntity>of(EarthWaveEntity::new, MobCategory.MISC)
+                    .sized(1F, 1F)
+                    .noSummon()
+                    .fireImmune()
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .build("earth_wave"));
+
     private ModEntities() {}
 }

@@ -5,6 +5,7 @@ import com.xenowarriors.character.ModCapabilities;
 import com.xenowarriors.karma.Karma;
 import com.xenowarriors.network.ModNetwork;
 import com.xenowarriors.network.SkillCooldownPacket;
+import com.xenowarriors.skill.rhalix.EarthWaveSkill;
 import com.xenowarriors.skill.rhalix.KishiSkill;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +22,7 @@ public final class SkillManager {
 
     static {
         SKILLS.put(CharacterType.MIKIKO, new Skill[]{null, null, null, null, null});
-        SKILLS.put(CharacterType.RHALIX, new Skill[]{new KishiSkill(), null, null, null, null});
+        SKILLS.put(CharacterType.RHALIX, new Skill[]{new KishiSkill(), new EarthWaveSkill(), null, null, null});
     }
 
     private SkillManager() {}

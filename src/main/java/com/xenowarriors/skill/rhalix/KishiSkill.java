@@ -2,7 +2,7 @@ package com.xenowarriors.skill.rhalix;
 
 import com.xenowarriors.entity.KishiDomeEntity;
 import com.xenowarriors.karma.Karma;
-import com.xenowarriors.network.KishiCastPacket;
+import com.xenowarriors.network.SkillAnimPacket;
 import com.xenowarriors.network.ModNetwork;
 import com.xenowarriors.skill.Skill;
 import net.minecraft.network.chat.Component;
@@ -95,7 +95,7 @@ public class KishiSkill implements Skill {
     private static void playCastAnimation(ServerPlayer player) {
         boolean airborne = player.getAbilities().flying || player.isFallFlying()
                 || (!player.onGround() && !player.isInWater() && !player.onClimbable());
-        ModNetwork.sendToTrackingAndSelf(new KishiCastPacket(player.getId(), airborne), player);
+        ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), SkillAnimPacket.KISHI, airborne), player);
     }
 
     /** The mob/player being aimed at, or else the block being looked at. */

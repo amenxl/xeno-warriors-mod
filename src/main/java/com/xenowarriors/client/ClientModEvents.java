@@ -1,6 +1,7 @@
 package com.xenowarriors.client;
 
 import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.client.render.EarthWaveRenderer;
 import com.xenowarriors.client.render.KishiDomeRenderer;
 import com.xenowarriors.client.render.CharacterDetailLayer;
 import com.xenowarriors.entity.ModEntities;
@@ -20,6 +21,7 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.KISHI_DOME.get(), KishiDomeRenderer::new);
+        event.registerEntityRenderer(ModEntities.EARTH_WAVE.get(), EarthWaveRenderer::new);
     }
 
     @SubscribeEvent
