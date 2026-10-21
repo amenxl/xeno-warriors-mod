@@ -70,7 +70,7 @@ public final class Stats {
     }
 
     public static void syncLevel(ServerPlayer player) {
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.CharacterLevelPacket(characterLevel(player), progress(player)), player);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.CharacterLevelPacket(characterLevel(player), progress(player), level(player, Stat.SPEED)), player);
     }
     private static final Map<UUID, double[]> LAST_POS = new HashMap<>();
 

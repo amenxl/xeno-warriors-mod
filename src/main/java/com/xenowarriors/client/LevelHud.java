@@ -13,9 +13,17 @@ public class LevelHud implements IGuiOverlay {
     private static int level;
     private static float progress;
 
-    public static void set(int lv, float p) {
+    private static int speed;
+
+    public static void set(int lv, float p, int spd) {
         level = lv;
         progress = p;
+        speed = spd;
+    }
+
+    /** Your own Speed stat level (0-50). */
+    public static int speed() {
+        return speed;
     }
 
     @Override

@@ -346,7 +346,9 @@ public final class MikikoAnimations {
         float yaw = p.getYRot() * ((float) Math.PI / 180F);
         Vec3 v = p.getDeltaMovement();
         double fwd = p.input.forwardImpulse > 0 ? 0.28 : 0.08;
-        p.setDeltaMovement(v.x * 0.6 - Mth.sin(yaw) * fwd, 0.62, v.z * 0.6 + Mth.cos(yaw) * fwd);
+        // the second jump goes higher the more Speed he has: about 2 blocks at Speed 0, about 5.5 at Speed 50
+        double up = 0.62 + com.xenowarriors.client.LevelHud.speed() * 0.008;
+        p.setDeltaMovement(v.x * 0.6 - Mth.sin(yaw) * fwd, up, v.z * 0.6 + Mth.cos(yaw) * fwd);
         p.fallDistance = 0F;
         com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.DoubleJumpPacket());
         sound(level, p, net.minecraft.sounds.SoundEvents.ENDER_DRAGON_FLAP, 0.35F, 1.7F);

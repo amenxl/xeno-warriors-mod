@@ -9,17 +9,18 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /** Server -> player: your Character Level (and how close the next one is). */
-public record CharacterLevelPacket(int level, float progress) {
+public record CharacterLevelPacket(int level, float progress, int speed) {
     public static void encode(CharacterLevelPacket m, FriendlyByteBuf buf) {
         buf.writeVarInt(m.level);
         buf.writeFloat(m.progress);
+        buf.writeVarInt(m.speed);
     }
 
     public static CharacterLevelPacket decode(FriendlyByteBuf buf) {
-        return new CharacterLevelPacket(buf.readVarInt(), buf.readFloat());
+        return new CharacterLevelPacket(buf.readVarInt(), buf.readFloat(), buf.readVarInt());
     }
 
     public static void handle(CharacterLevelPacket m, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> LevelHud.set(m.level, m.progress));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> LevelHud.set(m.level, m.progress, m.speed));
     }
 }
