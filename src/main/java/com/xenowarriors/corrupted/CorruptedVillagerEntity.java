@@ -124,7 +124,7 @@ public class CorruptedVillagerEntity extends Zombie {
         if (wasVillager && tickCount % 20 == 0 && level().isDay() && level().canSeeSky(blockPosition())) {
             Villager freed = convertTo(EntityType.VILLAGER, false);
             if (freed != null && level() instanceof ServerLevel server) {
-                server.sendParticles(ParticleTypes.SOUL, freed.getX(), freed.getY() + 1.2, freed.getZ(), 20, 0.3, 0.5, 0.3, 0.05);
+                server.sendParticles(CorruptedFx.BLACK, freed.getX(), freed.getY() + 1.2, freed.getZ(), 20, 0.3, 0.5, 0.3, 0.05);
                 server.playSound(null, freed.blockPosition(), SoundEvents.ZOMBIE_VILLAGER_CONVERTED, getSoundSource(), 1F, 1F);
             }
         }

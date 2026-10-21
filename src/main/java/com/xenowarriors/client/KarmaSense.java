@@ -61,8 +61,15 @@ public final class KarmaSense {
         return (until != null && now < until) || (tracked != null && now < tracked);
     }
 
+    /** Sensed through a Karma-reducing hoodie: just a faint grey trace. */
+    public static boolean faint(Entity e) {
+        Integer lv = LEVELS.get(e.getId());
+        return lv != null && lv < 0;
+    }
+
     public static int color(Entity e) {
         Minecraft mc = Minecraft.getInstance();
+        if (faint(e)) return 0x6E6A7E;
         Long tracked = TRACKED.get(e.getId());
         if (tracked != null && mc.level != null && mc.level.getGameTime() < tracked) return 0xFF7A1A;
         if (e instanceof Enemy) return 0xFF3A3A;
@@ -108,7 +115,9 @@ public final class KarmaSense {
         for (Map.Entry<Integer, Integer> en : LEVELS.entrySet()) {
             Entity e = mc.level.getEntity(en.getKey());
             if (e == null || !e.isAlive() || e.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) > 96 * 96) continue;
-            float power = Math.min(1F, en.getValue() / 150F);
+            boolean faint = en.getValue() < 0;
+            if (faint && mc.level.random.nextInt(3) != 0) continue;     // thin and flickering
+            float power = faint ? 0.05F : Math.min(1F, en.getValue() / 150F);
             int c = color(e);
             var dust = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255F,
                     ((c >> 8) & 255) / 255F, (c & 255) / 255F), 0.6F + power * 1.4F);
@@ -138,7 +147,7 @@ public final class KarmaSense {
         pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
         float s = 0.03F;
         pose.scale(-s, -s, s);
-        String text = "Lv " + lv;
+        String text = lv < 0 ? "Lv ?" : "Lv " + lv;
         float x = -mc.font.width(text) / 2F;
         int col = 0xFF000000 | color(e);
         mc.font.drawInBatch(text, x, 0, col, false, pose.last().pose(), event.getMultiBufferSource(),

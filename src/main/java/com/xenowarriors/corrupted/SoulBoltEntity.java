@@ -31,7 +31,7 @@ public class SoulBoltEntity extends AbstractHurtingProjectile {
 
     @Override
     protected ParticleOptions getTrailParticle() {
-        return ParticleTypes.SOUL_FIRE_FLAME;
+        return CorruptedFx.DARK;
     }
 
     @Override
@@ -62,7 +62,7 @@ public class SoulBoltEntity extends AbstractHurtingProjectile {
     protected void onHit(HitResult result) {
         super.onHit(result);
         if (level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.SOUL, getX(), getY(), getZ(), 10, 0.3, 0.3, 0.3, 0.05);
+            server.sendParticles(CorruptedFx.BLACK, getX(), getY(), getZ(), 10, 0.3, 0.3, 0.3, 0.05);
             server.playSound(null, blockPosition(), SoundEvents.SOUL_ESCAPE, getSoundSource(), 1F, 0.7F);
             discard();
         }

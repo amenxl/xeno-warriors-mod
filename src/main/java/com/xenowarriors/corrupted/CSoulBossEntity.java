@@ -82,7 +82,7 @@ public class CSoulBossEntity extends Monster {
             enraged = true;
             bossBar.setColor(BossEvent.BossBarColor.RED);
             playSound(SoundEvents.WITHER_SPAWN, 2F, 1.4F);
-            level.sendParticles(ParticleTypes.SCULK_SOUL, getX(), getY() + 2, getZ(), 40, 1.2, 1.2, 1.2, 0.1);
+            level.sendParticles(CorruptedFx.BLACK, getX(), getY() + 2, getZ(), 40, 1.2, 1.2, 1.2, 0.1);
             getAttribute(Attributes.FLYING_SPEED).setBaseValue(0.75);
         }
         LivingEntity target = getTarget();
@@ -124,7 +124,7 @@ public class CSoulBossEntity extends Monster {
                 soul.moveTo(getX() + random.nextGaussian() * 2, getY() + 1, getZ() + random.nextGaussian() * 2, random.nextFloat() * 360, 0);
                 soul.setTarget(target);
                 level.addFreshEntity(soul);
-                level.sendParticles(ParticleTypes.SOUL, soul.getX(), soul.getY(), soul.getZ(), 10, 0.3, 0.3, 0.3, 0.05);
+                level.sendParticles(CorruptedFx.BLACK, soul.getX(), soul.getY(), soul.getZ(), 10, 0.3, 0.3, 0.3, 0.05);
             }
             if (count > 0) playSound(SoundEvents.EVOKER_PREPARE_SUMMON, 1.5F, 0.6F);
             summonCooldown = enraged ? 180 : 260;
@@ -139,7 +139,7 @@ public class CSoulBossEntity extends Monster {
     private void shriek(ServerLevel level) {
         playSound(SoundEvents.WARDEN_SONIC_BOOM, 2F, 1.3F);
         level.sendParticles(ParticleTypes.SONIC_BOOM, getX(), getY() + getBbHeight() * 0.5, getZ(), 1, 0, 0, 0, 0);
-        level.sendParticles(ParticleTypes.SOUL, getX(), getY() + 1, getZ(), 40, 2.5, 1, 2.5, 0.1);
+        level.sendParticles(CorruptedFx.BLACK, getX(), getY() + 1, getZ(), 40, 2.5, 1, 2.5, 0.1);
         for (Player p : level.getEntitiesOfClass(Player.class, getBoundingBox().inflate(7))) {
             if (p.isCreative() || p.isSpectator()) continue;
             Vec3 push = p.position().subtract(position()).normalize();
@@ -158,7 +158,7 @@ public class CSoulBossEntity extends Monster {
                 level().addParticle(ParticleTypes.WITCH, getRandomX(1.0), getY() + random.nextDouble() * getBbHeight(), getRandomZ(1.0), 0, 0, 0);
             }
             if (random.nextInt(3) == 0) {
-                level().addParticle(ParticleTypes.SOUL_FIRE_FLAME, getRandomX(1.2), getY() + random.nextDouble() * 1.5, getRandomZ(1.2), 0, 0.03, 0);
+                level().addParticle(CorruptedFx.DARK, getRandomX(1.2), getY() + random.nextDouble() * 1.5, getRandomZ(1.2), 0, 0.03, 0);
             }
         }
     }

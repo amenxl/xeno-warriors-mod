@@ -62,7 +62,7 @@ public class FoxFollowOwnerGoal extends Goal {
         if (d > 20 * 20 && owner.onGround()) {
             teleportNear(fox, owner);
         } else {
-            fox.getNavigation().moveTo(owner, d > 10 * 10 ? 1.55 : 1.25);
+            fox.getNavigation().moveTo(owner, d > 10 * 10 ? 1.25 : 1.0);
         }
     }
 

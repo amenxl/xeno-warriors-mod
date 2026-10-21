@@ -65,6 +65,19 @@ public final class KarmaSensing {
     private KarmaSensing() {}
 
     public static void use(ServerPlayer player) {
+        use(player, true);
+    }
+
+    /** A threat: something hostile, or anything that's hunting you. */
+    private static boolean threat(LivingEntity e, ServerPlayer player) {
+        return e instanceof net.minecraft.world.entity.monster.Enemy
+                || (e instanceof net.minecraft.world.entity.Mob m && m.getTarget() == player);
+    }
+
+    /**
+     * @param friendly false = the "players and threats only" setting: skip animals, villagers and other harmless life
+     */
+    public static void use(ServerPlayer player, boolean friendly) {
         if (ModCapabilities.getType(player) == CharacterType.NONE || player.isSpectator()) return;
         long now = player.level().getGameTime();
         long ready = READY_AT.getOrDefault(player.getUUID(), 0L);
@@ -94,9 +107,11 @@ public final class KarmaSensing {
 
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
-                        && !(e instanceof Player p && (p.isSpectator() || HoodieItem.wearing(p))));
+                        && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses(player) < MASTERY)))
+                        && (friendly || e instanceof Player || threat(e, player)));
         int[] ids = found.stream().mapToInt(LivingEntity::getId).toArray();
-        int[] levels = found.stream().mapToInt(KarmaSensing::power).toArray();
+        // a fully mastered sense can feel people through a Karma-reducing hoodie - but only faintly, no level (-1)
+        int[] levels = found.stream().mapToInt(e -> e instanceof Player p && HoodieItem.wearing(p) ? -1 : power(e)).toArray();
         ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS), player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);

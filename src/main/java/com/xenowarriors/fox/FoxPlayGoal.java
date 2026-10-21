@@ -75,7 +75,7 @@ public class FoxPlayGoal extends Goal {
         if (time % 4 == 0) {
             double lead = angle + dir * 0.6;
             fox.getNavigation().moveTo(owner.getX() + Math.cos(lead) * radius, owner.getY(),
-                    owner.getZ() + Math.sin(lead) * radius, 1.4);
+                    owner.getZ() + Math.sin(lead) * radius, 1.1);
         }
         if (r.nextInt(240) == 0) dir = -dir;   // spin around the other way now and then
         if (fox.onGround() && r.nextInt(12) == 0) fox.getJumpControl().jump();

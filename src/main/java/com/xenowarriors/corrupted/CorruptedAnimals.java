@@ -92,7 +92,7 @@ public final class CorruptedAnimals {
         if (m.getHealth() > m.getMaxHealth()) m.setHealth(m.getMaxHealth());
         ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> m), new CorruptionPacket(m.getId(), false));
         if (m.level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.SOUL, m.getX(), m.getY() + m.getBbHeight(), m.getZ(), 14, 0.3, 0.3, 0.3, 0.06);
+            server.sendParticles(CorruptedFx.BLACK, m.getX(), m.getY() + m.getBbHeight(), m.getZ(), 14, 0.3, 0.3, 0.3, 0.06);
         }
         m.playSound(SoundEvents.SOUL_ESCAPE, 1F, 1F);
     }
@@ -115,7 +115,7 @@ public final class CorruptedAnimals {
         a.setTarget(null);
         sync(a, false);
         if (a.level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.SOUL, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 14, 0.3, 0.3, 0.3, 0.06);
+            server.sendParticles(CorruptedFx.BLACK, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 14, 0.3, 0.3, 0.3, 0.06);
         }
         a.playSound(SoundEvents.SOUL_ESCAPE, 1F, 1F);
     }
@@ -154,7 +154,7 @@ public final class CorruptedAnimals {
             return;
         }
         if (a.level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, a.getX(), a.getY() + a.getBbHeight() * 0.8, a.getZ(), 2, 0.2, 0.15, 0.2, 0.01);
+            server.sendParticles(CorruptedFx.DARK, a.getX(), a.getY() + a.getBbHeight() * 0.8, a.getZ(), 2, 0.2, 0.15, 0.2, 0.01);
         }
     }
 
@@ -162,7 +162,7 @@ public final class CorruptedAnimals {
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof net.minecraft.world.entity.Mob a && isCorrupted(a) && a.level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.SOUL, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 16, 0.3, 0.4, 0.3, 0.05);
+            server.sendParticles(CorruptedFx.BLACK, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 16, 0.3, 0.4, 0.3, 0.05);
             net.minecraft.world.entity.ExperienceOrb.award(server, a.position(), 5);
         }
     }

@@ -97,7 +97,14 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             float[] c = sr ? new float[]{1F, 1F, 1F} : tint(stack, armor);
             // Mikiko: no armor on his left arm, so his shoulder plate shows
             m.leftArm.visible = type != CharacterType.MIKIKO;   // Mikiko: nothing on his left arm (armor or hoodies), so his shoulder plate shows   // the hoodie's dye comes through here too (it's dyeable like leather)
-            VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+            ResourceLocation tex = texture;
+            if ((hoodie || sr) && stack.isDamageableItem() && stack.getMaxDamage() > 0) {
+                // hoodies get scuffed below half durability and ripped up below a quarter
+                float worn = stack.getDamageValue() / (float) stack.getMaxDamage();
+                if (worn >= 0.75F) tex = XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor_torn.png");
+                else if (worn >= 0.5F) tex = XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor_worn.png");
+            }
+            VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(tex));
             m.root.render(pose, vc, light, overlay, c[0], c[1], c[2], 1F);
             if (hoodie && hoodieTrims.get(type) != null) {
                 DetailModel t = hoodieTrims.get(type);

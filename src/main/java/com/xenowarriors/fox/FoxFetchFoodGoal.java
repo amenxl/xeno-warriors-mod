@@ -70,7 +70,7 @@ public class FoxFetchFoodGoal extends Goal {
         time++;
         fox.getLookControl().setLookAt(target, 30F, 30F);
         if (fox.distanceToSqr(target) > 1.4 * 1.4) {
-            if (time % 8 == 1) fox.getNavigation().moveTo(target, 1.3);
+            if (time % 8 == 1) fox.getNavigation().moveTo(target, 1.05);
             return;
         }
         // got it: into the bag

@@ -23,6 +23,6 @@ public final class FoxLevels {
 
     /** Extra speed (fraction of base) at this level. */
     public static double speed(int level) {
-        return (level - 1) * 0.006;
+        return (level - 1) * 0.003;
     }
 }

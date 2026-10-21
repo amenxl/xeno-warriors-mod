@@ -25,7 +25,7 @@ public class CorruptedSoulRenderer extends MobRenderer<CorruptedSoulEntity, Corr
 
     @Override
     protected int getBlockLightLevel(CorruptedSoulEntity entity, BlockPos pos) {
-        return 12;
+        return Math.max(4, super.getBlockLightLevel(entity, pos));   // dark: it doesn't glow, only its eyes do
     }
 
     @Override

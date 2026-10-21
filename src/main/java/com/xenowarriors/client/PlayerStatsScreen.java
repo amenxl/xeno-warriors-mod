@@ -24,7 +24,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, realm, plea;
+    private Button tabPlayers, tabMe, tabSettings, realm, plea, senseFriendly;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -48,6 +48,11 @@ public class PlayerStatsScreen extends Screen {
         int x = (width - W) / 2;
         tabPlayers = addRenderableWidget(Button.builder(Component.literal("Warriors"), b -> setTab(0)).bounds(x, 6, 70, 16).build());
         tabMe = addRenderableWidget(Button.builder(Component.literal("My Warrior"), b -> setTab(1)).bounds(x + 74, 6, 70, 16).build());
+        tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(2)).bounds(x + 148, 6, 70, 16).build());
+        senseFriendly = addRenderableWidget(Button.builder(Component.empty(), b -> {
+            ClientSettings.setSenseFriendly(!ClientSettings.senseFriendly());
+            updateButtons();
+        }).bounds(width / 2 - 110, 60, 220, 20).build());
         realm = addRenderableWidget(Button.builder(Component.literal("Enter the Hekublade"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade realm");
             onClose();
@@ -68,6 +73,9 @@ public class PlayerStatsScreen extends Screen {
         if (realm == null) return;
         tabPlayers.active = tab != 0;
         tabMe.active = tab != 1;
+        tabSettings.active = tab != 2;
+        senseFriendly.visible = tab == 2;
+        senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF (players & threats only)")));
         boolean mikiko = ClientCharacterData.getLocal() == CharacterType.MIKIKO;
         boolean prisoner = me != null && me.prisoner();
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
@@ -99,7 +107,11 @@ public class PlayerStatsScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBackground(g);
-        if (players.isEmpty()) {
+        if (tab == 2) {
+            g.drawCenteredString(font, "Settings", width / 2, 40, 0xFFFFFF);
+            g.drawCenteredString(font, "Off: Karma Sensing ignores animals, villagers and other harmless life,", width / 2, 88, 0x999999);
+            g.drawCenteredString(font, "and only shows other players and anything that's a threat.", width / 2, 100, 0x999999);
+        } else if (players.isEmpty()) {
             g.drawCenteredString(font, "Loading...", width / 2, 50, 0xAAAAAA);
         } else if (tab == 0) {
             renderPlayers(g);

@@ -54,7 +54,7 @@ public final class ClientEvents {
         }
         while (ModKeyMappings.KARMA_SENSE.consumeClick()) {
             if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active()) {
-                ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket());
+                ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(ClientSettings.senseFriendly()));
             }
         }
         while (ModKeyMappings.SUMMON_BLADE.consumeClick()) {

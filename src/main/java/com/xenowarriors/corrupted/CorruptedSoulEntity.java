@@ -80,7 +80,7 @@ public class CorruptedSoulEntity extends Monster {
                 level().addParticle(ParticleTypes.WITCH, getRandomX(0.4), getY() + random.nextDouble() * 0.8, getRandomZ(0.4), 0, 0, 0);
             }
             if (random.nextInt(6) == 0) {
-                level().addParticle(ParticleTypes.SOUL, getRandomX(0.3), getY() + 0.3, getRandomZ(0.3), 0, 0.02, 0);
+                level().addParticle(CorruptedFx.BLACK, getRandomX(0.3), getY() + 0.3, getRandomZ(0.3), 0, 0.02, 0);
             }
             return;
         }
@@ -91,7 +91,7 @@ public class CorruptedSoulEntity extends Monster {
 
     void vanish() {
         if (level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.SOUL, getX(), getY() + 0.4, getZ(), 15, 0.3, 0.3, 0.3, 0.05);
+            server.sendParticles(CorruptedFx.BLACK, getX(), getY() + 0.4, getZ(), 15, 0.3, 0.3, 0.3, 0.05);
             server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 0.4, getZ(), 6, 0.2, 0.2, 0.2, 0.01);
         }
         playSound(SoundEvents.SOUL_ESCAPE, 1F, 0.8F);
@@ -190,7 +190,7 @@ public class CorruptedSoulEntity extends Monster {
                 }
                 if (took) {
                     if (soul.level() instanceof ServerLevel server) {
-                        server.sendParticles(ParticleTypes.SCULK_SOUL, host.getX(), host.getY() + host.getBbHeight() * 0.6, host.getZ(),
+                        server.sendParticles(CorruptedFx.BLACK, host.getX(), host.getY() + host.getBbHeight() * 0.6, host.getZ(),
                                 12, 0.3, 0.3, 0.3, 0.02);
                     }
                     soul.playSound(SoundEvents.SCULK_SHRIEKER_SHRIEK, 0.6F, 1.6F);
