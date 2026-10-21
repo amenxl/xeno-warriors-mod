@@ -123,7 +123,10 @@ public final class LockOn {
             return;
         }
         unseen = visible(mc.player, target) ? 0 : unseen + 1;
-        if (unseen > LOST_SIGHT_TICKS) release(true);
+        if (unseen > LOST_SIGHT_TICKS) {
+            release(true);
+            return;      // (target is gone now - this was the crash)
+        }
         shownHealth = Mth.lerp(0.25F, shownHealth, target.getHealth());
     }
 
@@ -152,8 +155,10 @@ public final class LockOn {
     /** Spinning red brackets around the locked target. */
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
+        LivingEntity target = LockOn.target;
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || target == null) return;
         Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
         Camera cam = event.getCamera();
         float partial = event.getPartialTick();
         Vec3 pos = target.getPosition(partial).add(0, target.getBbHeight() * 0.55, 0).subtract(cam.getPosition());

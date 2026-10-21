@@ -103,6 +103,15 @@ public final class ClientEvents {
         }
     }
 
+    /** Netsu: Mikiko is wreathed in his own flames - no burning overlay covering his screen. */
+    @SubscribeEvent
+    public static void onScreenEffect(net.minecraftforge.client.event.RenderBlockScreenEffectEvent event) {
+        if (event.getOverlayType() == net.minecraftforge.client.event.RenderBlockScreenEffectEvent.OverlayType.FIRE
+                && ClientSkillState.netsuActive(event.getPlayer().getId())) {
+            event.setCanceled(true);
+        }
+    }
+
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         pendingSelectScreen = false;
