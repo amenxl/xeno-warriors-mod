@@ -39,11 +39,15 @@ public final class SkillAnimations {
         };
     }
 
-    /** Called after the vanilla pose is set up, before sleeves/pants copy the arms and legs. */
-    public static void apply(HumanoidModel<?> model, LivingEntity entity, float ageInTicks) {
+    /**
+     * Called after the vanilla pose is set up, before sleeves/pants copy the arms and legs.
+     * Returns true if a skill pose was applied (so other animations stay out of the way).
+     */
+    public static boolean apply(HumanoidModel<?> model, LivingEntity entity, float ageInTicks) {
         ClientSkillState.SkillAnim anim = ClientSkillState.currentAnim(entity);
-        if (anim == null || entity.isPassenger() || entity.isVisuallySwimming()) return;
+        if (anim == null || entity.isPassenger() || entity.isVisuallySwimming()) return false;
         float t = ageInTicks - anim.startTick();
+        if (t < 0F) return false;
         switch (anim.anim()) {
             case SkillAnimPacket.STOMP -> stomp(model, t);
             case SkillAnimPacket.COMPRESS -> compress(model, t);
@@ -51,6 +55,7 @@ public final class SkillAnimations {
             case SkillAnimPacket.BARRAGE -> barrage(model, t);
             default -> kishi(model, t, anim.airborne());
         }
+        return true;
     }
 
     private static void kishi(HumanoidModel<?> model, float t, boolean airborne) {

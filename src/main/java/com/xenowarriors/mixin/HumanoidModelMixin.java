@@ -23,7 +23,9 @@ public abstract class HumanoidModelMixin {
                                         float netHeadYaw, float headPitch, CallbackInfo ci) {
         Object self = this;
         if (self instanceof PlayerModel<?> && entity instanceof Player) {
-            SkillAnimations.apply((HumanoidModel<?>) self, entity, ageInTicks);
+            if (!SkillAnimations.apply((HumanoidModel<?>) self, entity, ageInTicks)) {
+                com.xenowarriors.client.mikiko.MikikoAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+            }
         }
     }
 }

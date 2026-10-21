@@ -33,6 +33,7 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {
         for (KeyMapping key : ModKeyMappings.SKILLS) event.register(key);
+        event.register(ModKeyMappings.SUMMON_BLADE);
     }
 
     @SubscribeEvent
@@ -47,6 +48,7 @@ public final class ClientModEvents {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
                 renderer.addLayer(new CharacterDetailLayer(renderer));
+                renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));
             }
         }
     }

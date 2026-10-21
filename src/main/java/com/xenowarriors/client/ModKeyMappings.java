@@ -5,7 +5,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import org.lwjgl.glfw.GLFW;
 
-/** Skill keys. Players can change these in Options > Controls > Key Binds > Xeno Warriors. */
+/** Skill keys (and Mikiko's summon key). Players can change these in Options > Controls > Key Binds > Xeno Warriors. */
 public final class ModKeyMappings {
     public static final String CATEGORY = "key.categories.xenowarriors";
 
@@ -16,6 +16,9 @@ public final class ModKeyMappings {
             key("skill_4", GLFW.GLFW_KEY_V),
             key("ultimate", GLFW.GLFW_KEY_R),
     };
+
+    /** Mikiko: summon / put away the Hekublade. */
+    public static final KeyMapping SUMMON_BLADE = key("summon_blade", GLFW.GLFW_KEY_G);
 
     private ModKeyMappings() {}
 

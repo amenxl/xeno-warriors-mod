@@ -38,6 +38,12 @@ public final class ClientEvents {
             }
         }
 
+        while (ModKeyMappings.SUMMON_BLADE.consumeClick()) {
+            if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && !UltimateCutscene.active()) {
+                ModNetwork.sendToServer(new com.xenowarriors.network.SummonBladePacket());
+            }
+        }
+
         if (!pendingSelectScreen) return;
         if (mc.player != null && mc.level != null && mc.screen == null) {
             pendingSelectScreen = false;
