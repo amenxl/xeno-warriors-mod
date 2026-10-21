@@ -119,16 +119,27 @@ public final class KarmaSense {
             if (faint && mc.level.random.nextInt(3) != 0) continue;     // thin and flickering
             float power = faint ? 0.05F : Math.min(1F, en.getValue() / 150F);
             int c = color(e);
-            var dust = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255F,
+            net.minecraft.core.particles.DustParticleOptions dust = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255F,
                     ((c >> 8) & 255) / 255F, (c & 255) / 255F), 0.6F + power * 1.4F);
-            double radius = e.getBbWidth() * 0.6 + 0.3 + power * 2.2;
-            int count = 2 + Math.round(power * 10);
+            // stronger than you? the aura swells to show it: up to ~4 extra blocks wide and a towering column
+            float threat = faint ? 0F : Math.max(0F, en.getValue() / (float) Math.max(10, com.xenowarriors.client.LevelHud.level()) - 1F);
+            float swell = Math.min(1F, threat / 2F);                 // full size at 3x your level
+            double radius = e.getBbWidth() * 0.6 + 0.3 + power * 2.2 + swell * 4.0;
+            double height = e.getBbHeight() + power * 1.5 + swell * 5.0;
+            int count = 2 + Math.round(power * 10) + Math.round(swell * 22);
+            if (swell > 0F) dust = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255F,
+                    ((c >> 8) & 255) / 255F, (c & 255) / 255F), Math.min(4F, 0.6F + power * 1.4F + swell * 1.6F));
             var r = mc.level.random;
             for (int i = 0; i < count; i++) {
                 double a = r.nextDouble() * Math.PI * 2;
                 double rr = radius * (0.6 + r.nextDouble() * 0.4);
-                mc.level.addParticle(dust, e.getX() + Math.cos(a) * rr, e.getY() + r.nextDouble() * (e.getBbHeight() + power * 1.5),
-                        e.getZ() + Math.sin(a) * rr, 0, 0.02 + power * 0.04, 0);
+                mc.level.addParticle(dust, e.getX() + Math.cos(a) * rr, e.getY() + r.nextDouble() * height,
+                        e.getZ() + Math.sin(a) * rr, 0, 0.02 + power * 0.04 + swell * 0.12, 0);
+            }
+            // a pillar of energy over something truly dangerous
+            if (swell > 0.5F && r.nextInt(2) == 0) {
+                mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.END_ROD, e.getX() + (r.nextDouble() - 0.5) * radius,
+                        e.getY() + r.nextDouble() * height, e.getZ() + (r.nextDouble() - 0.5) * radius, 0, 0.15, 0);
             }
         }
     }

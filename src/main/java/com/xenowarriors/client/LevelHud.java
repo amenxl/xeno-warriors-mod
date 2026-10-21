@@ -21,6 +21,11 @@ public class LevelHud implements IGuiOverlay {
         speed = spd;
     }
 
+    /** Your own Character Level. */
+    public static int level() {
+        return Math.max(1, level);
+    }
+
     /** Your own Speed stat level (0-50). */
     public static int speed() {
         return speed;
