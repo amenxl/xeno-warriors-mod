@@ -155,10 +155,10 @@ public final class DmzForms {
 
     // ---------------------------------------------------------------- size and aura
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
-        if (!ours(p)) return;
+        if (event.isCanceled() || !ours(p)) return;
         Form f = info(p);
         float s = f == null || f.dmz() ? 1F : f.scale();
         event.getPoseStack().pushPose();
