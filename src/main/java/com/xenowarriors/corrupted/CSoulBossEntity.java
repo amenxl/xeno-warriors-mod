@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
  * close. At half health it becomes enraged - faster, more bolts, more souls.
  */
 public class CSoulBossEntity extends Monster {
-    private final ServerBossEvent bossBar = (ServerBossEvent) new ServerBossEvent(Component.literal("C-Soul"),
+    private final ServerBossEvent bossBar = (ServerBossEvent) new ServerBossEvent(Component.literal("Soul of Darkness"),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10).setDarkenScreen(true);
     private int boltCooldown = 60, summonCooldown = 160, shriekCooldown = 100, meleeCooldown;
     private boolean enraged;
