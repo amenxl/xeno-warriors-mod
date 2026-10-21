@@ -96,7 +96,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             m.leftLeg.copyFrom(parent.leftLeg);
             float[] c = sr ? new float[]{1F, 1F, 1F} : tint(stack, armor);
             // Mikiko: no armor on his left arm, so his shoulder plate shows
-            m.leftArm.visible = !(type == CharacterType.MIKIKO && !hoodie && !sr);   // the hoodie's dye comes through here too (it's dyeable like leather)
+            m.leftArm.visible = type != CharacterType.MIKIKO;   // Mikiko: nothing on his left arm (armor or hoodies), so his shoulder plate shows   // the hoodie's dye comes through here too (it's dyeable like leather)
             VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
             m.root.render(pose, vc, light, overlay, c[0], c[1], c[2], 1F);
             if (hoodie && hoodieTrims.get(type) != null) {
@@ -104,7 +104,9 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                 t.body.copyFrom(parent.body);
                 t.rightArm.copyFrom(parent.rightArm);
                 t.leftArm.copyFrom(parent.leftArm);
+                t.leftArm.visible = type != CharacterType.MIKIKO;
                 t.root.render(pose, vc, light, overlay, 1F, 1F, 1F, 1F);
+                t.leftArm.visible = true;
             }
             if (stack.hasFoil()) {
                 m.root.render(pose, buffers.getBuffer(RenderType.armorEntityGlint()), light, overlay, 1F, 1F, 1F, 1F);
