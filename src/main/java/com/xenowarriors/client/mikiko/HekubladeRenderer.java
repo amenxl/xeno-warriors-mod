@@ -34,6 +34,46 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
     private static final int CYCLE = 240, MOVE = 90;
     private static HekubladeRenderer instance;
 
+    // ---- the crystals glow after an enemy is sealed into the blade
+    private static final java.util.Map<Integer, Long> GLOW = new java.util.HashMap<>();
+    private static final int GLOW_TIME = 90;
+    /** Who's holding the blade being drawn right now (null = you, e.g. first person). */
+    public static net.minecraft.world.entity.Entity current;
+
+    public static void glow(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) GLOW.put(entityId, mc.level.getGameTime());
+    }
+
+    private static float glowFor(net.minecraft.world.entity.Entity e, float time) {
+        if (e == null) return 0F;
+        Long start = GLOW.get(e.getId());
+        if (start == null) return 0F;
+        float t = time - start;
+        if (t < 0F || t > GLOW_TIME) {
+            if (t > GLOW_TIME) GLOW.remove(e.getId());
+            return 0F;
+        }
+        float in = Mth.clamp(t / 4F, 0F, 1F), out = Mth.clamp((GLOW_TIME - t) / 45F, 0F, 1F);
+        return Math.min(in, out) * (0.8F + 0.2F * Mth.sin(t * 0.5F));
+    }
+
+    private static final net.minecraft.util.RandomSource RAND = net.minecraft.util.RandomSource.create();
+
+    /** An extra additive pass over a crystal so it shines, tinted warm red-white, faded by the glow amount. */
+    private static void drawGlow(BakedModel model, PoseStack pose, VertexConsumer vc, float glow) {
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) quads(model, dir, pose, vc, glow);
+        quads(model, null, pose, vc, glow);
+    }
+
+    private static void quads(BakedModel model, net.minecraft.core.Direction dir, PoseStack pose, VertexConsumer vc, float glow) {
+        RAND.setSeed(42L);
+        for (var q : model.getQuads(null, dir, RAND)) {
+            vc.putBulkData(pose.last(), q, glow, glow * 0.55F, glow * 0.4F, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT,
+                    net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+        }
+    }
+
     public HekubladeRenderer() {
         super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
     }
@@ -54,6 +94,10 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
 
         float time = mc.level != null ? mc.level.getGameTime() + mc.getFrameTime() : Util.getMillis() / 50F;
         float turn = turn(time);
+        float glow = glowFor(current != null ? current : mc.player, time);
+        int crystalLight = glow > 0.05F ? net.minecraft.client.renderer.LightTexture.FULL_BRIGHT : light;
+        VertexConsumer glowVc = glow > 0.05F ? buffers.getBuffer(net.minecraft.client.renderer.RenderType.eyes(
+                net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)) : null;
         // the crystals swing around the blade's own axis (through the front and back of the guard), so
         // they circle the X without ever passing through the blade
         for (int i = 0; i < 8; i++) {
@@ -61,7 +105,9 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
             pose.translate(GUARD / 16F, GUARD / 16F, 8F / 16F);
             pose.mulPose(Axis.of(new org.joml.Vector3f(0.70710677F, 0.70710677F, 0F)).rotation(-turn));
             pose.translate(-GUARD / 16F, -GUARD / 16F, -8F / 16F);
-            items.renderModelLists(mc.getModelManager().getModel(CRYSTALS[i]), stack, light, overlay, pose, vc);
+            BakedModel crystal = mc.getModelManager().getModel(CRYSTALS[i]);
+            items.renderModelLists(crystal, stack, crystalLight, overlay, pose, vc);
+            if (glowVc != null) drawGlow(crystal, pose, glowVc, glow);
             pose.popPose();
         }
     }

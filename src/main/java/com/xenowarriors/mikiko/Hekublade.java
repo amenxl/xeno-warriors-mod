@@ -33,6 +33,22 @@ import net.minecraftforge.fml.common.Mod;
 public final class Hekublade {
     private Hekublade() {}
 
+    /** The Hekublade only very rarely sets what it hits on fire. */
+    public static final float FIRE_CHANCE = 0.04F;
+
+    /** Rolls the (rare) chance to set the target alight; a burst of flame when it does. */
+    public static boolean rollFire(net.minecraft.world.entity.LivingEntity target, int seconds) {
+        if (target.getRandom().nextFloat() >= FIRE_CHANCE) return false;
+        target.setSecondsOnFire(seconds);
+        if (target.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            server.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, target.getX(), target.getY() + target.getBbHeight() * 0.6,
+                    target.getZ(), 16, 0.3, 0.35, 0.3, 0.05);
+            server.playSound(null, target.blockPosition(), net.minecraft.sounds.SoundEvents.FIRECHARGE_USE,
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.3F);
+        }
+        return true;
+    }
+
     public static boolean isBlade(ItemStack stack) {
         return !stack.isEmpty() && stack.is(ModItems.HEKUBLADE.get());
     }

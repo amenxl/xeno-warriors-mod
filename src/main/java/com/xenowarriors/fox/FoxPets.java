@@ -263,6 +263,53 @@ public final class FoxPets {
 
     private static final java.util.Set<UUID> OPEN_BAGS = new java.util.HashSet<>();
 
+    /** Puts an item into a fox's bag (merging stacks). Returns what didn't fit. */
+    public static ItemStack addToBag(Fox fox, ItemStack stack) {
+        if (stack.isEmpty() || OPEN_BAGS.contains(fox.getUUID()) || !(owner(fox) instanceof ServerPlayer p)) return stack;
+        CompoundTag rec = record(p, fox.getUUID());
+        if (rec == null) return stack;
+        int slots = FoxSkins.bagSlots(rec.getInt("level"));
+        net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(27, ItemStack.EMPTY);
+        net.minecraft.world.ContainerHelper.loadAllItems(rec.getCompound("inv"), items);
+        ItemStack left = stack.copy();
+        for (int i = 0; i < slots && !left.isEmpty(); i++) {
+            ItemStack in = items.get(i);
+            if (!in.isEmpty() && ItemStack.isSameItemSameTags(in, left) && in.getCount() < in.getMaxStackSize()) {
+                int move = Math.min(left.getCount(), in.getMaxStackSize() - in.getCount());
+                in.grow(move);
+                left.shrink(move);
+            }
+        }
+        for (int i = 0; i < slots && !left.isEmpty(); i++) {
+            if (items.get(i).isEmpty()) {
+                items.set(i, left.copy());
+                left = ItemStack.EMPTY;
+            }
+        }
+        CompoundTag inv = new CompoundTag();
+        net.minecraft.world.ContainerHelper.saveAllItems(inv, items);
+        rec.put("inv", inv);
+        return left;
+    }
+
+    public static boolean bagHasRoom(Fox fox, ItemStack stack) {
+        return addToBagSimulated(fox, stack);
+    }
+
+    private static boolean addToBagSimulated(Fox fox, ItemStack stack) {
+        if (OPEN_BAGS.contains(fox.getUUID()) || !(owner(fox) instanceof ServerPlayer p)) return false;
+        CompoundTag rec = record(p, fox.getUUID());
+        if (rec == null) return false;
+        int slots = FoxSkins.bagSlots(rec.getInt("level"));
+        net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(27, ItemStack.EMPTY);
+        net.minecraft.world.ContainerHelper.loadAllItems(rec.getCompound("inv"), items);
+        for (int i = 0; i < slots; i++) {
+            ItemStack in = items.get(i);
+            if (in.isEmpty() || (ItemStack.isSameItemSameTags(in, stack) && in.getCount() < in.getMaxStackSize())) return true;
+        }
+        return false;
+    }
+
     public static void bagClosed(UUID fox) {
         OPEN_BAGS.remove(fox);
     }
@@ -476,6 +523,7 @@ public final class FoxPets {
         fox.goalSelector.addGoal(2, new FoxPlayGoal(fox));
         fox.goalSelector.addGoal(3, new FoxFollowOwnerGoal(fox));
         fox.goalSelector.addGoal(4, new FoxRestGoal(fox));
+        fox.goalSelector.addGoal(3, new FoxFetchFoodGoal(fox));
     }
 
     @SubscribeEvent

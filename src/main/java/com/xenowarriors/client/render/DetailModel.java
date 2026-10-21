@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.xenowarriors.XenoWarriors;
 import com.xenowarriors.character.CharacterType;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.util.Mth;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -57,23 +58,55 @@ public class DetailModel {
 
     // ---------------------------------------------------------------- hair blowing in the wind
 
-    /** One hair strand / dread / lock: it pivots at its root on the head. */
-    private record Strand(ModelPart part, org.joml.Quaternionf base, org.joml.Vector3f back, org.joml.Vector3f side, float phase) {}
+    /**
+     * One hair strand / dread / lock. All the stacked pieces of a strand share the same root and angle, so they're
+     * grouped and the maths is done once per strand, not once per piece.
+     */
+    private static final class Strand {
+        final java.util.List<ModelPart> parts = new java.util.ArrayList<>();
+        final org.joml.Quaternionf base;
+        final org.joml.Vector3f back, side;
+        final float baseX, baseY, baseZ, phase;
+
+        Strand(ModelPart first, org.joml.Quaternionf base, org.joml.Vector3f back, org.joml.Vector3f side, float phase) {
+            parts.add(first);
+            this.base = base;
+            this.back = back;
+            this.side = side;
+            this.baseX = first.xRot;
+            this.baseY = first.yRot;
+            this.baseZ = first.zRot;
+            this.phase = phase;
+        }
+    }
 
     private final java.util.List<Strand> strands = new java.util.ArrayList<>();
     private boolean hairMoved;
+    private float lastStream = -1F, lastFlutter = -1F, lastAge = -1F;
+    // scratch objects, reused every frame (no garbage)
+    private static final org.joml.Quaternionf DELTA = new org.joml.Quaternionf(), TMP = new org.joml.Quaternionf(),
+            OUT = new org.joml.Quaternionf();
 
     private void collectStrands(ModelPart group) {
-        int[] i = {0};
+        java.util.Map<String, Strand> byRoot = new java.util.HashMap<>();
         group.getAllParts().forEach(p -> {
             if (p == group) return;
+            String key = Math.round(p.x * 100) + "," + Math.round(p.y * 100) + "," + Math.round(p.z * 100) + ","
+                    + Math.round(p.xRot * 1000) + "," + Math.round(p.yRot * 1000) + "," + Math.round(p.zRot * 1000);
+            Strand existing = byRoot.get(key);
+            if (existing != null) {
+                existing.parts.add(p);
+                return;
+            }
             var base = new org.joml.Quaternionf().rotationZYX(p.zRot, p.yRot, p.xRot);
             var dir = base.transform(new org.joml.Vector3f(0F, -1F, 0F));        // the way the strand points
             var back = new org.joml.Vector3f(dir).cross(0F, 0F, 1F);           // swing it toward the back
             var side = new org.joml.Vector3f(dir).cross(1F, 0F, 0F);           // and side to side
             if (back.lengthSquared() < 1.0E-4F) back.set(1F, 0F, 0F);
             if (side.lengthSquared() < 1.0E-4F) side.set(0F, 0F, 1F);
-            strands.add(new Strand(p, base, back.normalize(), side.normalize(), i[0]++ * 0.7F));
+            Strand st = new Strand(p, base, back.normalize(), side.normalize(), strands.size() * 0.7F);
+            strands.add(st);
+            byRoot.put(key, st);
         });
     }
 
@@ -84,33 +117,38 @@ public class DetailModel {
      */
     public void animateHair(float stream, float flutter, float age) {
         if (strands.isEmpty()) return;
-        if (stream < 0.002F && flutter < 0.002F) {
+        if (stream < 0.004F && flutter < 0.004F) {
             if (hairMoved) {
-                for (Strand s : strands) setRot(s.part, s.base);
+                for (Strand s : strands) for (ModelPart p : s.parts) { p.xRot = s.baseX; p.yRot = s.baseY; p.zRot = s.baseZ; }
                 hairMoved = false;
             }
             return;
         }
+        // same frame as last time (e.g. the armor/shadow passes): nothing changed
+        if (hairMoved && age == lastAge && stream == lastStream && flutter == lastFlutter) return;
+        lastAge = age;
+        lastStream = stream;
+        lastFlutter = flutter;
         hairMoved = true;
-        var delta = new org.joml.Quaternionf();
-        var tmp = new org.joml.Quaternionf();
         for (Strand s : strands) {
-            float a = stream + (float) Math.sin(age * 0.55F + s.phase) * flutter;
-            float b = (float) Math.sin(age * 0.43F + s.phase * 1.7F) * flutter * 0.6F;
-            delta.rotationAxis(a, s.back).mul(tmp.rotationAxis(b, s.side));
-            setRot(s.part, delta.mul(s.base, tmp));
+            float a = stream + Mth.sin(age * 0.55F + s.phase) * flutter;
+            float b = Mth.sin(age * 0.43F + s.phase * 1.7F) * flutter * 0.6F;
+            DELTA.rotationAxis(a, s.back).mul(TMP.rotationAxis(b, s.side));
+            DELTA.mul(s.base, OUT);
+            // quaternion -> Z-Y-X angles (the order the game uses), straight from the components
+            float x = OUT.x, y = OUT.y, z = OUT.z, w = OUT.w;
+            float sy = Mth.clamp(2F * (w * y - x * z), -1F, 1F);
+            float yRot = (float) Math.asin(sy);
+            float xRot = (float) Mth.atan2(2F * (w * x + y * z), 1F - 2F * (x * x + y * y));
+            float zRot = (float) Mth.atan2(2F * (w * z + x * y), 1F - 2F * (y * y + z * z));
+            for (ModelPart p : s.parts) {
+                p.xRot = xRot;
+                p.yRot = yRot;
+                p.zRot = zRot;
+            }
         }
     }
 
-    /** Sets a part's angles from a rotation (the same Z-Y-X order the game uses). */
-    private static void setRot(ModelPart p, org.joml.Quaternionf q) {
-        var m = new org.joml.Matrix3f().set(q);
-        // JOML is column-major: mCR. Row 2 col 0 = m02, etc.
-        float sy = Math.max(-1F, Math.min(1F, -m.m02));
-        p.yRot = (float) Math.asin(sy);
-        p.xRot = (float) Math.atan2(m.m12, m.m22);
-        p.zRot = (float) Math.atan2(m.m01, m.m00);
-    }
 
     private static ModelPart childOrNull(ModelPart part, String name) {
         try {

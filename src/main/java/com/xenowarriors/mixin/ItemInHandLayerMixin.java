@@ -19,6 +19,16 @@ public abstract class ItemInHandLayerMixin {
     @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$hideTossedBlade(LivingEntity entity, ItemStack stack, ItemDisplayContext context, HumanoidArm arm,
                                               PoseStack pose, MultiBufferSource buffers, int light, CallbackInfo ci) {
-        if (arm == entity.getMainArm() && (MikikoAnimations.bladeAwayFromHand(entity) || MikikoAnimations.swordShouldered(entity))) ci.cancel();
+        if (arm == entity.getMainArm() && (MikikoAnimations.bladeAwayFromHand(entity) || MikikoAnimations.swordShouldered(entity))) {
+            ci.cancel();
+            return;
+        }
+        com.xenowarriors.client.mikiko.HekubladeRenderer.current = entity;     // so its crystals know whose blade it is
+    }
+
+    @Inject(method = "renderArmWithItem", at = @At("RETURN"))
+    private void xenowarriors$doneArm(LivingEntity entity, ItemStack stack, ItemDisplayContext context, HumanoidArm arm,
+                                      PoseStack pose, MultiBufferSource buffers, int light, CallbackInfo ci) {
+        com.xenowarriors.client.mikiko.HekubladeRenderer.current = null;
     }
 }

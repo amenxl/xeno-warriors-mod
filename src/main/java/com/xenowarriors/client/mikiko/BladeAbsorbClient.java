@@ -55,6 +55,7 @@ public final class BladeAbsorbClient {
         if (mc.level == null) return;
         ACTIVE.put(victim, new Absorb(killer, mc.level.getGameTime()));
         MikikoAnimations.onAbsorb(killer);
+        HekubladeRenderer.glow(killer);           // the crystals light up as it's sealed inside
         Entity e = mc.level.getEntity(victim);
         if (e != null) {
             mc.level.playLocalSound(e.getX(), e.getY(), e.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2F, 0.8F, false);

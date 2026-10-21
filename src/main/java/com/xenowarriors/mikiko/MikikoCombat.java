@@ -57,9 +57,9 @@ public final class MikikoCombat {
         Vec3 dir = target.position().subtract(player.position()).normalize();
         if (step == 2) target.push(dir.x * 0.5, 0.25, dir.z * 0.5);          // the kick
         if (step >= 3) {
-            target.setSecondsOnFire(2);                                         // Hekublade slashes burn
-            if (player.level() instanceof ServerLevel server) {
-                server.sendParticles(ParticleTypes.FLAME, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
+            boolean lit = com.xenowarriors.mikiko.Hekublade.rollFire(target, 2);   // only very rarely sets them alight
+            if (!lit && player.level() instanceof ServerLevel server) {
+                server.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
                         8, 0.25, 0.3, 0.25, 0.04);
             }
         }

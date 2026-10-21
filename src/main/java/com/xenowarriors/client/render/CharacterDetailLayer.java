@@ -200,7 +200,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
 
         // hair streaming back and fluttering when running or flying
-        model.animateHair(hairStream(player, 0), hairStream(player, 1), ageInTicks);
+        // (far away you can't see it anyway: skip the work)
+        boolean nearCam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()
+                .distanceToSqr(player.position()) < 32 * 32;
+        if (nearCam) model.animateHair(hairStream(player, 0), hairStream(player, 1), ageInTicks);
+        else model.animateHair(0F, 0F, ageInTicks);
 
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off

@@ -29,10 +29,9 @@ public class HekubladeItem extends SwordItem {
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        target.setSecondsOnFire(3);
-        if (target.level() instanceof ServerLevel server) {
-            server.sendParticles(ParticleTypes.FLAME, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
-                    10, 0.25, 0.3, 0.25, 0.04);
+        if (!com.xenowarriors.mikiko.Hekublade.rollFire(target, 3) && target.level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
+                    6, 0.25, 0.3, 0.25, 0.2);
         }
         return true;
     }

@@ -160,7 +160,7 @@ public class HekubladeShardEntity extends Projectile {
         if (result.getEntity() instanceof LivingEntity target) {
             target.invulnerableTime = 0;
             target.hurt(ModDamageTypes.source(level(), ModDamageTypes.HEKUBLADE_SCATTER, this, getOwner()), DAMAGE);
-            target.setSecondsOnFire(2);
+            com.xenowarriors.mikiko.Hekublade.rollFire(target, 2);
         }
         shatter(result.getLocation());
     }
