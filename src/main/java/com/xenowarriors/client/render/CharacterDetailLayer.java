@@ -49,6 +49,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
         if (p.hurtTime > 0) return "hurt";
         if (ClientSkillState.currentAnim(p) != null) return "shout";
+        if (com.xenowarriors.client.ChargePose.weight(p) > 0.5F) {
+            return (p.tickCount / 20) % 3 == 0 ? "concentrate" : "shout";   // gritting, then yelling as it builds
+        }
         if (p.swinging || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)) return "fierce";
         if (p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT
                 || p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.DRINK) {
@@ -141,7 +144,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             boolean flying = FlightTracker.isFlying(p) || p.isFallFlying();
             boolean air = !p.onGround() && !p.isInWater();
             float stream = speed * (flying ? 0.65F : p.isSprinting() ? 0.38F : 0.14F) + (air && !flying ? 0.08F : 0F);
+            float charge = com.xenowarriors.client.ChargePose.weight(p);
+            if (charge > 0F) stream = Math.max(stream, 0.3F * charge);          // the aura lifts it
             float flutter = (flying ? 0.15F : p.isSprinting() ? 0.1F : 0.035F) * Math.min(1F, speed * 1.4F) + (air ? 0.03F : 0F);
+            if (charge > 0F) flutter = Math.max(flutter, 0.14F * charge);
             h[0] += (stream - h[0]) * 0.12F;
             h[1] += (flutter - h[1]) * 0.12F;
             return h[0];
