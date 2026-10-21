@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "19";
+    private static final String VERSION = "20";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -195,6 +195,41 @@ public final class ModNetwork {
                 .encoder(FlightHeightPacket::encode)
                 .decoder(FlightHeightPacket::decode)
                 .consumerMainThread(FlightHeightPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(CharacterLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CharacterLevelPacket::encode)
+                .decoder(CharacterLevelPacket::decode)
+                .consumerMainThread(CharacterLevelPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(CorruptionPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CorruptionPacket::encode)
+                .decoder(CorruptionPacket::decode)
+                .consumerMainThread(CorruptionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(OpenWingPetPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenWingPetPacket::encode)
+                .decoder(OpenWingPetPacket::decode)
+                .consumerMainThread(OpenWingPetPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(WingPetActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(WingPetActionPacket::encode)
+                .decoder(WingPetActionPacket::decode)
+                .consumerMainThread(WingPetActionPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(WingSkinPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WingSkinPacket::encode)
+                .decoder(WingSkinPacket::decode)
+                .consumerMainThread(WingSkinPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(PlayerStatsRequestPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(PlayerStatsRequestPacket::encode)
+                .decoder(PlayerStatsRequestPacket::decode)
+                .consumerMainThread(PlayerStatsRequestPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(PlayerStatsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(PlayerStatsPacket::encode)
+                .decoder(PlayerStatsPacket::decode)
+                .consumerMainThread(PlayerStatsPacket::handle)
                 .add();
     }
 

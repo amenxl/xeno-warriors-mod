@@ -97,6 +97,13 @@ public final class ModItems {
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 516));
 
     // ---------------------------------------------------------------- the mod's own creative tab
+    public static final RegistryObject<Item> CORRUPTED_VILLAGER_SPAWN_EGG = ITEMS.register("corrupted_villager_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_VILLAGER,
+                    0x3B2A4A, 0xB04CFF, new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_SOUL_SPAWN_EGG = ITEMS.register("corrupted_soul_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL,
+                    0x14081F, 0xD77BFF, new Item.Properties()));
+
     public static final DeferredRegister<net.minecraft.world.item.CreativeModeTab> TABS =
             DeferredRegister.create(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, XenoWarriors.MOD_ID);
 

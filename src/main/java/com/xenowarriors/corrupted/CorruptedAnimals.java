@@ -1,0 +1,143 @@
+package com.xenowarriors.corrupted;
+
+import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.network.CorruptionPacket;
+import com.xenowarriors.network.ModNetwork;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
+
+/**
+ * Animals possessed by a corrupted soul: they stop fleeing and hunt players, take on a purple glow and
+ * leak soul fire. At sunrise (under the open sky) the soul is burned out and the animal is itself again.
+ */
+@Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public final class CorruptedAnimals {
+    public static final String TAG = "xw_corrupted";
+
+    private CorruptedAnimals() {}
+
+    public static boolean isCorrupted(LivingEntity e) {
+        return e.getPersistentData().getBoolean(TAG);
+    }
+
+    public static boolean canPossess(Animal a) {
+        if (isCorrupted(a) || a.isBaby()) return false;
+        if (a instanceof TamableAnimal t && t.isTame()) return false;
+        var data = a.getPersistentData();
+        return !data.hasUUID("xw_owner") && !data.hasUUID("xw_wing_owner") && !a.hasCustomName();
+    }
+
+    public static boolean corrupt(Animal a) {
+        if (!canPossess(a)) return false;
+        a.getPersistentData().putBoolean(TAG, true);
+        a.setPersistenceRequired();
+        addGoals(a);
+        sync(a, true);
+        a.playSound(SoundEvents.WITHER_AMBIENT, 0.4F, 1.8F);
+        return true;
+    }
+
+    public static void cleanse(Animal a) {
+        a.getPersistentData().remove(TAG);
+        a.goalSelector.removeAllGoals(g -> g instanceof CorruptedAttackGoal);
+        a.targetSelector.removeAllGoals(g -> g instanceof NearestAttackableTargetGoal<?>);
+        a.goalSelector.addGoal(1, new PanicGoal(a, 1.4));
+        a.setTarget(null);
+        sync(a, false);
+        if (a.level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.SOUL, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 14, 0.3, 0.3, 0.3, 0.06);
+        }
+        a.playSound(SoundEvents.SOUL_ESCAPE, 1F, 1F);
+    }
+
+    private static void addGoals(Animal a) {
+        a.goalSelector.removeAllGoals(g -> g instanceof PanicGoal || g instanceof TemptGoal || g instanceof BreedGoal
+                || g instanceof FollowParentGoal);
+        a.goalSelector.addGoal(1, new CorruptedAttackGoal(a));
+        a.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(a, Player.class, true));
+    }
+
+    private static void sync(Animal a, boolean on) {
+        ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> a), new CorruptionPacket(a.getId(), on));
+    }
+
+    @SubscribeEvent
+    public static void onJoin(EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide && event.getEntity() instanceof Animal a && isCorrupted(a)) addGoals(a);
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getTarget() instanceof Animal a && isCorrupted(a) && event.getEntity() instanceof ServerPlayer sp) {
+            ModNetwork.sendToPlayer(new CorruptionPacket(a.getId(), true), sp);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onTick(LivingEvent.LivingTickEvent event) {
+        if (!(event.getEntity() instanceof Animal a) || a.level().isClientSide || a.tickCount % 20 != 0 || !isCorrupted(a)) return;
+        if (a.level().isDay() && a.level().canSeeSky(a.blockPosition())) {
+            cleanse(a);
+            return;
+        }
+        if (a.level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, a.getX(), a.getY() + a.getBbHeight() * 0.8, a.getZ(), 2, 0.2, 0.15, 0.2, 0.01);
+        }
+    }
+
+    /** Freeing a possessed animal gives a little extra XP. */
+    @SubscribeEvent
+    public static void onDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof Animal a && isCorrupted(a) && a.level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.SOUL, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 16, 0.3, 0.4, 0.3, 0.05);
+            net.minecraft.world.entity.ExperienceOrb.award(server, a.position(), 5);
+        }
+    }
+
+    /** Animals have no attack strength of their own, so the soul's strength scales with the body's size. */
+    static class CorruptedAttackGoal extends MeleeAttackGoal {
+        private final Animal animal;
+
+        CorruptedAttackGoal(Animal animal) {
+            super(animal, 1.35, true);
+            this.animal = animal;
+        }
+
+        @Override
+        protected void checkAndPerformAttack(LivingEntity target, double distSqr) {
+            if (distSqr <= getAttackReachSqr(target) && isTimeToAttack()) {
+                resetAttackCooldown();
+                animal.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                float damage = Math.min(7F, 2F + animal.getMaxHealth() / 6F);
+                if (target.hurt(animal.damageSources().mobAttack(animal), damage)) {
+                    double dx = target.getX() - animal.getX(), dz = target.getZ() - animal.getZ();
+                    double len = Math.max(0.01, Math.sqrt(dx * dx + dz * dz));
+                    target.push(dx / len * 0.3, 0.15, dz / len * 0.3);
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static void unused(TickEvent e) {}
+}

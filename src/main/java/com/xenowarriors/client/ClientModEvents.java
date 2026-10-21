@@ -34,6 +34,16 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.HEKUBLADE_SHARD.get(), HekubladeShardRenderer::new);
         event.registerEntityRenderer(ModEntities.FIRE_BLITZ.get(), FireBlitzRenderer::new);
         event.registerEntityRenderer(ModEntities.BLAZING_WIND.get(), BlazingWindRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_VILLAGER.get(),
+                com.xenowarriors.client.corrupted.CorruptedVillagerRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get(),
+                com.xenowarriors.client.corrupted.CorruptedSoulRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerLayerDefs(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(com.xenowarriors.client.corrupted.CorruptedSoulModel.LAYER,
+                com.xenowarriors.client.corrupted.CorruptedSoulModel::create);
     }
 
     @SubscribeEvent
@@ -43,6 +53,7 @@ public final class ClientModEvents {
         event.register(ModKeyMappings.TOGGLE_WINGS);
         event.register(ModKeyMappings.LOCK_ON);
         event.register(ModKeyMappings.KARMA_SENSE);
+        event.register(ModKeyMappings.STATS_MENU);
     }
 
     /** The hoodie's item icon shows its dye color (the trim layer stays as is). */
@@ -68,6 +79,7 @@ public final class ClientModEvents {
         event.registerAboveAll("lock_on", new LockOn.Overlay());
         event.registerAboveAll("karma_sense", new KarmaSense.Overlay());
         event.registerAboveAll("party", new com.xenowarriors.client.party.PartyHud());
+        event.registerAboveAll("character_level", new LevelHud());
     }
 
     @SubscribeEvent
@@ -83,6 +95,19 @@ public final class ClientModEvents {
             fr.addLayer(new com.xenowarriors.client.fox.FoxArmorLayer(fr, event.getEntityModels()));
             fr.addLayer(new com.xenowarriors.client.fox.FoxSwordLayer(fr));
         }
+        for (net.minecraft.world.entity.EntityType<?> type : java.util.List.of(net.minecraft.world.entity.EntityType.BAT,
+                net.minecraft.world.entity.EntityType.PARROT, net.minecraft.world.entity.EntityType.CHICKEN,
+                net.minecraft.world.entity.EntityType.BEE)) {
+            addWingSkin(event.getRenderer(type));
+        }
+        // possessed animals: every animal renderer gets the corruption wash
+        for (net.minecraft.world.entity.EntityType<?> type : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValues()) {
+            if (type.getCategory() != net.minecraft.world.entity.MobCategory.CREATURE
+                    && type.getCategory() != net.minecraft.world.entity.MobCategory.WATER_CREATURE
+                    && type.getCategory() != net.minecraft.world.entity.MobCategory.AXOLOTLS
+                    && type.getCategory() != net.minecraft.world.entity.MobCategory.MISC) continue;
+            addTint(event.getRenderer(type));
+        }
         for (String skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
@@ -91,6 +116,20 @@ public final class ClientModEvents {
                 renderer.addLayer(new com.xenowarriors.client.fox.FoxBackLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));
             }
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void addTint(net.minecraft.client.renderer.entity.EntityRenderer<?> r) {
+        if (r instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer lr) {
+            lr.addLayer(new com.xenowarriors.client.corrupted.CorruptionTintLayer(lr, false));
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void addWingSkin(net.minecraft.client.renderer.entity.EntityRenderer<?> r) {
+        if (r instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer lr) {
+            lr.addLayer(new com.xenowarriors.client.wing.WingSkinLayer(lr));
         }
     }
 }

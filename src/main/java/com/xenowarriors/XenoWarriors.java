@@ -19,6 +19,7 @@ public class XenoWarriors {
     public XenoWarriors() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(ModCapabilities::register);
+        com.xenowarriors.corrupted.ModCorrupted.init();
         ModEntities.ENTITY_TYPES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);

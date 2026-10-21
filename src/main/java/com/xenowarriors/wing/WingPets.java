@@ -58,7 +58,11 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class WingPets {
     public static final int MAX = 2;
-    private static final String OWNER = "xw_wing_owner", GEN = "xw_wing_gen";
+    private static final String OWNER = "xw_wing_owner", GEN = "xw_wing_gen", SKIN = "xw_wing_skin";
+    /** Looks a companion can wear (colors live in the client's WingSkinLayer). */
+    public static final String[] SKINS = {"Classic", "Shadow", "Rose", "Frost", "Ember", "Golden", "Void"};
+    public static final int BAG_SLOTS = 18;
+    private static final int EAT_COOLDOWN = 60;
 
     private WingPets() {}
 
@@ -139,7 +143,7 @@ public final class WingPets {
                 p.serverLevel().sendParticles(ParticleTypes.HEART, mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 2, 0.2, 0.1, 0.2, 0);
             } else {
                 CompoundTag rec = record(p, mob.getUUID());
-                if (rec != null) ModNetwork.sendToPlayer(new OpenNamePacket(mob.getUUID(), rec.getString("name"), false), p);
+                if (rec != null) openMenu(p, mob, rec);
             }
         }
     }
@@ -179,6 +183,7 @@ public final class WingPets {
         mob.getPersistentData().putInt(GEN, rec.getInt("gen"));
         mob.setPersistenceRequired();
         mob.setCustomName(Component.literal(rec.getString("name")).withStyle(ChatFormatting.LIGHT_PURPLE));
+        mob.getPersistentData().putInt(SKIN, rec.getInt("skin"));
         if (mob instanceof Parrot parrot && !parrot.isTame()) parrot.tame(p);
         if (mob instanceof Bee bee) {
             bee.stopBeingAngry();
@@ -238,6 +243,7 @@ public final class WingPets {
                 ((BatAccessor) bat).xenowarriors$setTargetPosition(target);
             }
             if (p.tickCount % 20 == 0) {
+                eatFromBag(p, mob, rec);
                 if (mob.distanceToSqr(p) > 24 * 24 && (p.onGround() || mob instanceof Bat || mob instanceof Bee)) teleportNear(mob, p);
                 if (p.tickCount % 100 == 0) snapshot(mob, rec);
             }
@@ -339,6 +345,107 @@ public final class WingPets {
         level.sendParticles(ParticleTypes.HEART, mob.getX(), mob.getY() + 0.8, mob.getZ(), 3, 0.3, 0.2, 0.3, 0);
         snapshot(mob, rec);
         return true;
+    }
+
+    // ---------------------------------------------------------------- the companion menu, bag, skins, eating
+
+    private static void openMenu(ServerPlayer p, Mob mob, CompoundTag rec) {
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenWingPetPacket(mob.getUUID(), mob.getId(), rec.getString("name"),
+                rec.getInt("skin"), mob.getHealth(), mob.getMaxHealth(), defaultName(mob)), p);
+    }
+
+    public static void action(ServerPlayer p, UUID id, int action, int arg) {
+        CompoundTag rec = record(p, id);
+        Mob mob = rec == null ? null : findLoaded(p, id);
+        if (mob == null) return;
+        if (action == com.xenowarriors.network.WingPetActionPacket.BAG) {
+            openBag(p, mob, rec);
+        } else if (action == com.xenowarriors.network.WingPetActionPacket.SKIN) {
+            int skin = Math.floorMod(arg, SKINS.length);
+            rec.putInt("skin", skin);
+            mob.getPersistentData().putInt(SKIN, skin);
+            syncSkin(mob);
+            p.serverLevel().sendParticles(ParticleTypes.END_ROD, mob.getX(), mob.getY() + mob.getBbHeight() * 0.5, mob.getZ(),
+                    8, 0.25, 0.25, 0.25, 0.02);
+        }
+    }
+
+    private static net.minecraft.world.SimpleContainer bag(CompoundTag rec) {
+        net.minecraft.world.SimpleContainer c = new net.minecraft.world.SimpleContainer(BAG_SLOTS);
+        ListTag list = rec.getList("inv", Tag.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag t = list.getCompound(i);
+            int slot = t.getByte("Slot") & 255;
+            if (slot < BAG_SLOTS) c.setItem(slot, ItemStack.of(t));
+        }
+        return c;
+    }
+
+    private static void saveBag(CompoundTag rec, net.minecraft.world.Container c) {
+        ListTag list = new ListTag();
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack s = c.getItem(i);
+            if (s.isEmpty()) continue;
+            CompoundTag t = s.save(new CompoundTag());
+            t.putByte("Slot", (byte) i);
+            list.add(t);
+        }
+        rec.put("inv", list);
+    }
+
+    private static void openBag(ServerPlayer p, Mob mob, CompoundTag rec) {
+        net.minecraft.world.SimpleContainer c = bag(rec);
+        c.addListener(changed -> saveBag(rec, changed));
+        p.openMenu(new net.minecraft.world.SimpleMenuProvider((id, inv, pl) -> new net.minecraft.world.inventory.ChestMenu(
+                net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, c, 2) {
+            @Override
+            public boolean stillValid(Player player) {
+                return mob.isAlive() && player.distanceToSqr(mob) < 64;
+            }
+
+            @Override
+            public void removed(Player player) {
+                super.removed(player);
+                saveBag(rec, c);
+            }
+        }, Component.literal(rec.getString("name") + "'s Bag")));
+        p.serverLevel().playSound(null, mob.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 0.6F, 1.3F);
+    }
+
+    /** When a companion is hurt it snacks on food from its bag (its favourite food, or anything edible). */
+    private static void eatFromBag(ServerPlayer p, Mob mob, CompoundTag rec) {
+        if (mob.getHealth() >= mob.getMaxHealth() * 0.6F || !rec.contains("inv")) return;
+        long now = p.serverLevel().getGameTime();
+        if (now - rec.getLong("ate") < EAT_COOLDOWN) return;
+        net.minecraft.world.SimpleContainer c = bag(rec);
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack s = c.getItem(i);
+            if (s.isEmpty() || !(food(mob, s) || s.isEdible())) continue;
+            float heal = s.isEdible() && s.getFoodProperties(mob) != null ? Math.max(2, s.getFoodProperties(mob).getNutrition()) : 4F;
+            s.shrink(1);
+            saveBag(rec, c);
+            rec.putLong("ate", now);
+            mob.heal(heal);
+            ServerLevel level = p.serverLevel();
+            level.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, s.isEmpty() ? new ItemStack(Items.APPLE) : s),
+                    mob.getX(), mob.getY() + mob.getBbHeight() * 0.7, mob.getZ(), 6, 0.15, 0.1, 0.15, 0.05);
+            level.sendParticles(ParticleTypes.HEART, mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 1, 0.2, 0.1, 0.2, 0);
+            level.playSound(null, mob.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.NEUTRAL, 0.6F, 1.4F);
+            return;
+        }
+    }
+
+    private static void syncSkin(Mob mob) {
+        ModNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> mob),
+                new com.xenowarriors.network.WingSkinPacket(mob.getId(), mob.getPersistentData().getInt(SKIN)));
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(net.minecraftforge.event.entity.player.PlayerEvent.StartTracking event) {
+        Entity e = event.getTarget();
+        if (winged(e) && ownerOf(e) != null && e.getPersistentData().getInt(SKIN) != 0 && event.getEntity() instanceof ServerPlayer sp) {
+            ModNetwork.sendToPlayer(new com.xenowarriors.network.WingSkinPacket(e.getId(), e.getPersistentData().getInt(SKIN)), sp);
+        }
     }
 
     public static int count(Player p) {

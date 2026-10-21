@@ -15,7 +15,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Mikiko masters his wind at Speed level 50: from then on he can fly in survival (double-tap jump), riding
+ * Mikiko masters his wind at Character Level 50: from then on he can fly in survival (double-tap jump), riding
  * the wind. (His double jump turns into flight.)
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -26,7 +26,7 @@ public final class WindFlight {
     private WindFlight() {}
 
     public static boolean canFly(ServerPlayer p) {
-        return ModCapabilities.getType(p) == CharacterType.MIKIKO && Stats.level(p, Stat.SPEED) >= LEVEL;
+        return ModCapabilities.getType(p) == CharacterType.MIKIKO && Stats.characterLevel(p) >= LEVEL;
     }
 
     @SubscribeEvent

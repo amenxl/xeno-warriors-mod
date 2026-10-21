@@ -28,6 +28,50 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Stats {
     private static final UUID SPEED_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e11");
+    private static final UUID HEALTH_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e12");
+    /** Character Level = Speed + Attack + Defense levels (each up to 50), so 0-150. */
+    public static final int MAX_CHARACTER_LEVEL = 150;
+
+    public static int characterLevel(ServerPlayer player) {
+        return player.getCapability(ModCapabilities.PLAYER_CHARACTER)
+                .map(d -> d.statLevel[0] + d.statLevel[1] + d.statLevel[2]).orElse(0);
+    }
+
+    /** How far toward the next level (average of the three stats' XP bars, 0..1). */
+    private static float progress(ServerPlayer player) {
+        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
+            float sum = 0;
+            int n = 0;
+            for (Stat s : Stat.values()) {
+                int i = s.ordinal();
+                if (d.statLevel[i] >= Stat.MAX_LEVEL) continue;
+                sum += Math.min(1F, d.statXp[i] / s.needed(d.statLevel[i]));
+                n++;
+            }
+            return n == 0 ? 1F : sum / n;
+        }).orElse(0F);
+    }
+
+    /** +1 heart (2 health) for every 10 Character Levels. */
+    public static int bonusHearts(int level) {
+        return level / 10;
+    }
+
+    private static void applyHealth(ServerPlayer player) {
+        AttributeInstance hp = player.getAttribute(Attributes.MAX_HEALTH);
+        if (hp == null) return;
+        hp.removeModifier(HEALTH_ID);
+        int hearts = bonusHearts(characterLevel(player));
+        if (hearts > 0) {
+            hp.addPermanentModifier(new AttributeModifier(HEALTH_ID, "Xeno Warriors character level", hearts * 2.0,
+                    AttributeModifier.Operation.ADDITION));
+        }
+        if (player.getHealth() > player.getMaxHealth()) player.setHealth(player.getMaxHealth());
+    }
+
+    public static void syncLevel(ServerPlayer player) {
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.CharacterLevelPacket(characterLevel(player), progress(player)), player);
+    }
     private static final Map<UUID, double[]> LAST_POS = new HashMap<>();
 
     private Stats() {}
@@ -39,6 +83,7 @@ public final class Stats {
     /** Adds XP and handles level ups (with a notification). */
     public static void addXp(ServerPlayer player, Stat stat, float amount) {
         if (amount <= 0 || player.isCreative() || player.isSpectator()) return;
+        int before = characterLevel(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
             int i = stat.ordinal();
             if (d.statLevel[i] >= Stat.MAX_LEVEL) return;
@@ -57,6 +102,18 @@ public final class Stats {
                 if (stat == Stat.SPEED) applySpeed(player, d);
             }
         });
+        int after = characterLevel(player);
+        if (after != before) {
+            applyHealth(player);
+            syncLevel(player);
+            if (bonusHearts(after) > bonusHearts(before)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Character Level " + after + "! +1 max heart")
+                        .withStyle(net.minecraft.ChatFormatting.GOLD));
+                player.heal(2F);
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_LEVELUP,
+                        SoundSource.PLAYERS, 0.8F, 1.0F);
+            }
+        }
     }
 
     private static void applySpeed(ServerPlayer player, PlayerCharacter d) {
@@ -72,6 +129,8 @@ public final class Stats {
 
     public static void reapply(ServerPlayer player) {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> applySpeed(player, d));
+        applyHealth(player);
+        syncLevel(player);
     }
 
     @SubscribeEvent
@@ -93,6 +152,7 @@ public final class Stats {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
+        if (p.tickCount % 40 == 0) syncLevel(p);
         double[] last = LAST_POS.get(p.getUUID());
         LAST_POS.put(p.getUUID(), new double[]{p.getX(), p.getZ()});
         if (last == null || !p.isSprinting() || !p.onGround() || p.isPassenger()) return;

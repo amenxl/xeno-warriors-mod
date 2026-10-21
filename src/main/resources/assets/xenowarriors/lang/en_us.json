@@ -150,5 +150,10 @@
   "item.xenowarriors.music_disc_maxs_chill_day.desc": "Max's Chill Day",
   "item.xenowarriors.music_disc_crown_for_heroine": "Crown for Heroine",
   "item.xenowarriors.music_disc_crown_for_heroine.desc": "Crown for Heroine",
-  "itemGroup.xenowarriors": "Xeno Warriors"
+  "itemGroup.xenowarriors": "Xeno Warriors",
+  "entity.xenowarriors.corrupted_villager": "Possessed Villager",
+  "entity.xenowarriors.corrupted_soul": "Corrupted Soul",
+  "item.xenowarriors.corrupted_villager_spawn_egg": "Possessed Villager Spawn Egg",
+  "item.xenowarriors.corrupted_soul_spawn_egg": "Corrupted Soul Spawn Egg",
+  "key.xenowarriors.stats_menu": "Player Levels & Stats"
 }

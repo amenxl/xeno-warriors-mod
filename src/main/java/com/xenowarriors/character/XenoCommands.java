@@ -228,6 +228,8 @@ public final class XenoCommands {
         say(ctx, gold(p.getName().getString() + " - ").append(type.getDisplayName().copy()
                 .withStyle(s -> s.withColor(type.getColor() & 0xFFFFFF))));
         if (type == CharacterType.NONE) return 1;
+        say(ctx, gray("Character Level: " + Stats.characterLevel(p) + " / " + Stats.MAX_CHARACTER_LEVEL
+                + "  (+" + Stats.bonusHearts(Stats.characterLevel(p)) + " hearts)"));
         say(ctx, gray("Karma: " + Math.round(Karma.get(p)) + " / " + Math.round(Karma.MAX)));
         for (Stat st : Stat.values()) {
             say(ctx, gray(Character.toUpperCase(st.id().charAt(0)) + st.id().substring(1) + ": Lv " + Stats.level(p, st)

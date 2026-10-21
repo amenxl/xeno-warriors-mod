@@ -59,6 +59,20 @@ public final class Parties {
         return p != null && p == BY_PLAYER.get(b.getUUID());
     }
 
+    public static boolean sameParty(UUID a, UUID b) {
+        Party p = BY_PLAYER.get(a);
+        return p != null && p == BY_PLAYER.get(b);
+    }
+
+    /** Who owns this pet: Mikiko's foxes, Rhalix's winged pets, or any vanilla tamed animal. */
+    public static UUID petOwner(net.minecraft.world.entity.Entity e) {
+        var data = e.getPersistentData();
+        if (data.hasUUID("xw_owner")) return data.getUUID("xw_owner");
+        if (data.hasUUID("xw_wing_owner")) return data.getUUID("xw_wing_owner");
+        if (e instanceof net.minecraft.world.entity.OwnableEntity o) return o.getOwnerUUID();
+        return null;
+    }
+
     public static boolean inParty(Player p) {
         return BY_PLAYER.containsKey(p.getUUID());
     }
@@ -216,6 +230,14 @@ public final class Parties {
         if (event.getEntity() instanceof Player victim && event.getSource().getEntity() instanceof Player attacker
                 && victim != attacker && sameParty(victim, attacker) && !Duels.dueling(victim, attacker)) {
             event.setCanceled(true);
+            return;
+        }
+        // you can't hurt your own pets or your party members' pets
+        if (!(event.getEntity() instanceof Player) && event.getSource().getEntity() instanceof Player attacker) {
+            UUID owner = petOwner(event.getEntity());
+            if (owner != null && (owner.equals(attacker.getUUID()) || sameParty(owner, attacker.getUUID()))) {
+                event.setCanceled(true);
+            }
         }
     }
 
