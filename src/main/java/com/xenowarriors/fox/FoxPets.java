@@ -529,6 +529,7 @@ public final class FoxPets {
         fox.goalSelector.addGoal(3, new FoxFollowOwnerGoal(fox));
         fox.goalSelector.addGoal(4, new FoxRestGoal(fox));
         fox.goalSelector.addGoal(3, new FoxFetchFoodGoal(fox));
+        fox.goalSelector.addGoal(1, new FoxPounceGoal(fox));
     }
 
     @SubscribeEvent

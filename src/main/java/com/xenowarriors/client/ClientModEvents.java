@@ -89,6 +89,7 @@ public final class ClientModEvents {
     }
 
     @SubscribeEvent
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void addLayers(EntityRenderersEvent.AddLayers event) {
         net.minecraft.client.renderer.entity.EntityRenderer<?> foxRenderer = event.getRenderer(net.minecraft.world.entity.EntityType.FOX);
         if (foxRenderer instanceof net.minecraft.client.renderer.entity.FoxRenderer fr) {
@@ -98,7 +99,7 @@ public final class ClientModEvents {
         for (net.minecraft.world.entity.EntityType<?> type : java.util.List.of(net.minecraft.world.entity.EntityType.BAT,
                 net.minecraft.world.entity.EntityType.PARROT, net.minecraft.world.entity.EntityType.CHICKEN,
                 net.minecraft.world.entity.EntityType.BEE)) {
-            addWingSkin(event.getRenderer(type));
+            addWingSkin(event.getRenderer((net.minecraft.world.entity.EntityType) type));
         }
         // possessed animals: every animal renderer gets the corruption wash
         for (net.minecraft.world.entity.EntityType<?> type : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValues()) {
@@ -106,7 +107,7 @@ public final class ClientModEvents {
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.WATER_CREATURE
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.AXOLOTLS
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.MISC) continue;
-            addTint(event.getRenderer(type));
+            addTint(event.getRenderer((net.minecraft.world.entity.EntityType) type));
         }
         for (String skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);
