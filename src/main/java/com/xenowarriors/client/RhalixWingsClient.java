@@ -36,6 +36,23 @@ public final class RhalixWingsClient {
 
     private static final Map<UUID, State> STATES = new HashMap<>();
     private static final Map<Integer, float[]> HOVER = new HashMap<>();   // id -> {now, before}
+    /** Dancing to music: id -> {gravity dance, before, sad vibe, before, start tick, still ticks}. */
+    private static final Map<Integer, float[]> DANCE = new HashMap<>();
+
+    public static float gravityDance(Player p, float partial) {
+        float[] d = DANCE.get(p.getId());
+        return d == null ? 0F : Mth.lerp(partial, d[1], d[0]);
+    }
+
+    public static float sadVibe(Player p, float partial) {
+        float[] d = DANCE.get(p.getId());
+        return d == null ? 0F : Mth.lerp(partial, d[3], d[2]);
+    }
+
+    private static float danceTime(Player p, float age) {
+        float[] d = DANCE.get(p.getId());
+        return d == null ? 0F : age - d[4];
+    }
 
     private RhalixWingsClient() {}
 
@@ -110,6 +127,17 @@ public final class RhalixWingsClient {
                 tuck -= 0.3F * r;
             }
         }
+        // dancing: wings opening and beating along with the music
+        float dance = gravityDance(p, partial);
+        if (dance > 0F) {
+            spread = Math.max(spread, dance * (0.35F + 0.3F * Mth.sin(age * 0.2F)));
+            flap += Mth.sin(age * 0.4F) * 0.2F * dance;
+        }
+        float sadW = sadVibe(p, partial);
+        if (sadW > 0F) {
+            tuck += 0.25F * sadW;                    // drooping, folded in close
+            flap -= 0.08F * sadW;
+        }
         if (animOut) {
             // spread wide as they come out, then one big beat, then settle
             float open = smooth((t - 18F) / 8F) * (1F - smooth((t - 38F) / 10F));
@@ -135,12 +163,38 @@ public final class RhalixWingsClient {
         float partial = Mth.clamp(age - p.tickCount, 0F, 1F);
         float hover = hover(p, partial);
         if (hover > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "hover_idle", age, true, hover);
+        float sad = sadVibe(p, partial);
+        if (sad > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "sad_vibe", age, true, sad);
+        float dance = gravityDance(p, partial);
+        if (dance > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "gravity_dance", danceTime(p, age), true, dance);
         State s = STATES.get(p.getUUID());
         if (s == null || !s.animate) return;
         float t = time(s, partial);
         String name = s.out ? "wings_out_stretch" : "wings_in";
         float len = GeoAnims.length(GeoAnims.RHALIX, name);
         if (t <= len) GeoAnims.apply(model, GeoAnims.RHALIX, name, t, false, GeoAnims.envelope(t, len, 4F));
+    }
+
+    private static final java.util.Set<Integer> LIFTED = new java.util.HashSet<>();
+
+    /** Gravity dance: he floats a little off the ground, bobbing, and every so often spins all the way round. */
+    @SubscribeEvent
+    public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        Player p = event.getEntity();
+        float w = gravityDance(p, event.getPartialTick());
+        if (w <= 0F) return;
+        float age = p.tickCount + event.getPartialTick();
+        float t = danceTime(p, age) % 160F;
+        var pose = event.getPoseStack();
+        pose.pushPose();
+        LIFTED.add(p.getId());
+        pose.translate(0, (0.25F + 0.08F * Mth.sin(age * 0.15F)) * w, 0);
+        if (t >= 110F && t < 120F) pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(smooth((t - 110F) / 10F) * 360F));
+    }
+
+    @SubscribeEvent
+    public static void onRenderPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
+        if (LIFTED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
     }
 
     @SubscribeEvent
@@ -158,6 +212,18 @@ public final class RhalixWingsClient {
                 HOVER.remove(p.getId());
                 continue;
             }
+            // dancing to "Gravity Glitch Duel", sadly vibing to "Lunar Ascendence" (when he's standing about)
+            float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[6]);
+            boolean stillNow = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging;
+            d[5] = stillNow ? d[5] + 1 : 0;
+            boolean standing = d[5] >= 10 && !FlightTracker.isFlying(p);
+            boolean gravity = standing && DiscTracker.near(p, DiscTracker.GRAVITY);
+            boolean lunar = standing && !gravity && DiscTracker.near(p, DiscTracker.LUNAR);
+            if (gravity && d[0] <= 0F) d[4] = p.tickCount;
+            d[1] = d[0];
+            d[0] += Mth.clamp((gravity ? 1F : 0F) - d[0], -0.1F, 0.1F);
+            d[3] = d[2];
+            d[2] += Mth.clamp((lunar ? 1F : 0F) - d[2], -0.06F, 0.06F);
             // hovering = flying but hardly moving sideways
             boolean flying = FlightTracker.isFlying(p);
             double moved = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo);

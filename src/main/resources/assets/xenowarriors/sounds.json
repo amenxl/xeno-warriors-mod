@@ -28,5 +28,37 @@
         "stream": true
       }
     ]
+  },
+  "music_disc.the_sky_rebellion_is_approaching": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/the_sky_rebellion_is_approaching",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.its_time_to_get_groovy": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/its_time_to_get_groovy",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.gravity_glitch_duel": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/gravity_glitch_duel",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.lunar_ascendence": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/lunar_ascendence",
+        "stream": true
+      }
+    ]
   }
 }

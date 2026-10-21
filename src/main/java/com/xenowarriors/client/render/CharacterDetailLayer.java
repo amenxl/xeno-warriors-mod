@@ -68,6 +68,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
         if (type == CharacterType.RHALIX) {
+            if (com.xenowarriors.client.RhalixWingsClient.sadVibe(p, 0F) > 0.5F) return "sad";
+            if (com.xenowarriors.client.RhalixWingsClient.gravityDance(p, 0F) > 0.5F) {
+                String[] g = {"smug", "grin", "cool", "excited"};
+                return g[(p.tickCount / 45) % g.length];
+            }
             if (FlightTracker.isFlying(p)) mood = "smug";          // right at home in the air
             else if (p.isSprinting()) mood = "focused";
         }

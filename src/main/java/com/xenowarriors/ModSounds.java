@@ -25,5 +25,21 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> STEP_INTO_THIS_NEW_WORLD = SOUNDS.register("music_disc.step_into_this_new_world",
             () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.step_into_this_new_world")));
 
+    /** Music disc: "The Sky Rebellion is Approaching!". */
+    public static final RegistryObject<SoundEvent> THE_SKY_REBELLION = SOUNDS.register("music_disc.the_sky_rebellion_is_approaching",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.the_sky_rebellion_is_approaching")));
+
+    /** Music disc: "It's Time to Get Groovy". */
+    public static final RegistryObject<SoundEvent> GET_GROOVY = SOUNDS.register("music_disc.its_time_to_get_groovy",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.its_time_to_get_groovy")));
+
+    /** Music disc: "Gravity Glitch Duel". */
+    public static final RegistryObject<SoundEvent> GRAVITY_GLITCH_DUEL = SOUNDS.register("music_disc.gravity_glitch_duel",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.gravity_glitch_duel")));
+
+    /** Music disc: "Lunar Ascendence". */
+    public static final RegistryObject<SoundEvent> LUNAR_ASCENDENCE = SOUNDS.register("music_disc.lunar_ascendence",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.lunar_ascendence")));
+
     private ModSounds() {}
 }
