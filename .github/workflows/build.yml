@@ -4,6 +4,7 @@ name: Build mod jar
 # It builds the mod and puts the .jar on the repo's Releases page under "Latest build".
 on:
   push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
