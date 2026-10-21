@@ -1,4 +1,4 @@
-package com.xenowarriors.client.mixin;
+package com.xenowarriors.mixin;
 
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.client.ClientCharacterData;

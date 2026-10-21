@@ -1,17 +1,17 @@
-# Xeno Warriors Recarnet – Minecraft Mod (Fabric 1.20.1)
+# Xeno Warriors Recarnet – Minecraft Mod (Forge 1.20.1)
 
-Version 0.3.0: character selection, detailed 3D models for Mikiko and Rhalix, and Rhalix's skill 1 (Kishi).
+Version 0.3.1: character selection, detailed 3D models with HD faces for Mikiko and Rhalix, Rhalix's wings and Kishi, and Mikiko's flying wind.
 
 ## What's in this version
 - **Character selection screen.** The first time a player joins a world, they pick Mikiko or Rhalix. Each card shows a 3D preview of the player as that character.
-- **Detailed 3D models in-game.** Hair, goggles, jackets, coats, straps, boots and more, built from the official art. They move with the head, arms and legs.
+- **Detailed 3D models in-game.** Hair, goggles, jackets, coats, straps, boots and more, built from the official art, plus high-res faces. They move with the head, arms and legs.
 - **Rhalix's wings.** Black feathered wings come out and flap while he's flying, gliding, falling, or casting Kishi, and fold away when he lands.
+- **Mikiko's wind.** Gusts of wind swirl around Mikiko while he flies.
 - **Saving.** The choice is saved, survives death, and other players see your character in multiplayer.
 
 ## Skills
 Default keys (change them in Options > Controls > Key Binds > Xeno Warriors):
 Skill 1 = Z, Skill 2 = X, Skill 3 = C, Skill 4 = V, Ultimate = R.
-The skill bar in the bottom-right corner shows each skill and its cooldown.
 
 | Character | Slot | Skill | What it does |
 |---|---|---|---|
@@ -24,25 +24,14 @@ Kishi's numbers (size, length, slowness, damage) are at the top of `KishiDomeEnt
 - `/xeno set <player> mikiko|rhalix`: set someone's character (ops only).
 - `/xeno reset <player>`: clear someone's character so the screen shows again (ops only).
 
-## Easiest way: one click (Windows)
-Double-click **BUILD-MOD.bat**. It finds Java on your computer (or tells you where to get it), builds the mod, and puts `xenowarriors-0.3.1.jar` in the folder above this one, then opens that folder for you. The first time takes a few minutes because it downloads Minecraft and Fabric.
+## Getting the mod file
+- **From GitHub:** every push builds the mod automatically. Download `xenowarriors-0.3.1.jar` from the repo's **Releases** page ("Latest build").
+- **One click on Windows:** double-click **BUILD-MOD.bat**. It finds Java, builds the mod, and puts the jar in the folder above this one.
+- **Manually:** install Java 17, then run `gradlew build` in this folder. The jar is in `build/libs/`.
 
-Then drop the jar into the `mods` folder of a **Fabric 1.20.1** profile together with **Fabric API for 1.20.1** (https://modrinth.com/mod/fabric-api).
-
-## How to build it (manually)
-1. Install **Java 17** (JDK), for example from https://adoptium.net (Temurin 17).
-2. Open a terminal (Command Prompt or PowerShell on Windows) in this folder.
-3. Run one of these:
-   - `gradlew runClient` launches Minecraft with the mod so you can test it.
-   - `gradlew build` makes the mod file at `build/libs/xenowarriors-0.3.1.jar`.
-   (On Mac/Linux use `./gradlew` instead of `gradlew`.)
-   The first run downloads Minecraft, Fabric and Gradle, so it takes a few minutes.
-4. To play with it normally: install **Fabric Loader** for 1.20.1 (https://fabricmc.net/use/installer), then put the jar **and Fabric API for 1.20.1** (https://modrinth.com/mod/fabric-api) into your `.minecraft/mods` folder. The Modrinth App can do this for you: make a 1.20.1 Fabric profile, add Fabric API, then add the jar.
-
-You can also open this folder in IntelliJ IDEA (with the Minecraft Development plugin), which sets everything up for you.
+Then drop the jar into the `mods` folder of a **Forge 1.20.1** profile (Forge 47.x). In the Modrinth App: make a 1.20.1 profile with the Forge loader and drag the jar in.
 
 ## Where things are
-- `src/main/java/...`: game logic that runs on the server (characters, skills, Kishi).
-- `src/client/java/...`: things only the player's game needs (screen, HUD, keys, models).
-- `src/main/resources/assets/xenowarriors/textures/entity/character/`: skins (`mikiko.png`, `rhalix.png`, normal 64x64 skins) and detail textures.
+- `src/main/java/com/xenowarriors/`: all the code. `client/` is what only the player's game needs (screen, HUD, keys, models, wind).
+- `src/main/resources/assets/xenowarriors/textures/entity/character/`: skins, detail textures, and HD faces.
 - `src/main/resources/assets/xenowarriors/models/detail/`: the 3D detail models, generated from the Blockbench files.

@@ -2,6 +2,7 @@ package com.xenowarriors.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
+import net.minecraftforge.client.settings.KeyConflictContext;
 import org.lwjgl.glfw.GLFW;
 
 /** Skill keys. Players can change these in Options > Controls > Key Binds > Xeno Warriors. */
@@ -19,6 +20,7 @@ public final class ModKeyMappings {
     private ModKeyMappings() {}
 
     private static KeyMapping key(String name, int defaultKey) {
-        return new KeyMapping("key.xenowarriors." + name, InputConstants.Type.KEYSYM, defaultKey, CATEGORY);
+        return new KeyMapping("key.xenowarriors." + name, KeyConflictContext.IN_GAME,
+                InputConstants.Type.KEYSYM, defaultKey, CATEGORY);
     }
 }

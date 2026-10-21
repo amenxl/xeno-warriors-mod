@@ -1,11 +1,11 @@
 package com.xenowarriors.entity;
 
+import com.xenowarriors.client.ClientSkillState;
 import com.xenowarriors.damage.ModDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -20,16 +20,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkHooks;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
 /**
  * Rhalix's Kishi: a heavy gravity dome slammed down around a target.
- * Everything inside (except Rhalix) is slowed, can't jump or fly, gets pulled to the
+ * Everything inside (except Rhalix) is slowed, can't jump, gets pulled to the
  * ground, and takes damage that grows the longer it stays inside.
  */
 public class KishiDomeEntity extends Entity {
@@ -38,14 +40,11 @@ public class KishiDomeEntity extends Entity {
     public static final float HEIGHT = 5.0F;
     public static final int DURATION = 160;           // 8 seconds
     public static final int MAX_LEVEL = 3;
-    /** Slowness amplifier per gravity level. */
+    /** Slowness amplifier per gravity level (3 = -60%, 4 = -75%, 6 = can barely move). */
     private static final int[] SLOWNESS = {3, 4, 6};
     /** Damage every second = BASE[level] + RAMP[level] * seconds spent inside. */
     private static final float[] DAMAGE_BASE = {1.5F, 2.0F, 2.5F};
     private static final float[] DAMAGE_RAMP = {0.25F, 0.5F, 0.75F};
-
-    /** Set by the client entrypoint so the dome can tell the HUD/wings about itself (no-op on servers). */
-    public static BiConsumer<UUID, Integer> clientHook = (owner, level) -> {};
 
     private static final EntityDataAccessor<Integer> GRAVITY_LEVEL =
             SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.INT);
@@ -60,7 +59,7 @@ public class KishiDomeEntity extends Entity {
     }
 
     public static KishiDomeEntity create(Level level, Player owner, Vec3 pos) {
-        KishiDomeEntity dome = new KishiDomeEntity(ModEntities.KISHI_DOME, level);
+        KishiDomeEntity dome = new KishiDomeEntity(ModEntities.KISHI_DOME.get(), level);
         dome.setPos(pos);
         dome.entityData.set(OWNER, Optional.of(owner.getUUID()));
         return dome;
@@ -123,7 +122,7 @@ public class KishiDomeEntity extends Entity {
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, SLOWNESS[level - 1],
                     false, false, true));
 
-            // pulled to the ground, no flying, no jumping
+            // pulled to the ground, no flying
             if (target instanceof Player player) {
                 if (player.getAbilities().flying) {
                     player.getAbilities().flying = false;
@@ -151,7 +150,7 @@ public class KishiDomeEntity extends Entity {
 
     private void clientTick() {
         int level = getGravityLevel();
-        clientHook.accept(getOwnerId(), level);
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSkillState.markKishi(getOwnerId(), level));
 
         // particles pressing down inside the dome
         for (int i = 0; i < 2 + level * 2; i++) {
@@ -183,6 +182,6 @@ public class KishiDomeEntity extends Entity {
 
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return new ClientboundAddEntityPacket(this);
+        return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

@@ -3,26 +3,25 @@ package com.xenowarriors.client;
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.skill.Skill;
 import com.xenowarriors.skill.SkillManager;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /** The 5 skill slots in the bottom-right corner, with key labels and cooldowns. */
-public class SkillHudOverlay implements HudRenderCallback {
+public class SkillHudOverlay implements IGuiOverlay {
     private static final int SIZE = 22;
     private static final int GAP = 3;
 
     @Override
-    public void onHudRender(GuiGraphics g, float tickDelta) {
+    public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui || mc.player.isSpectator()) return;
         CharacterType type = ClientCharacterData.getLocal();
         if (type == CharacterType.NONE) return;
 
-        int width = g.guiWidth();
-        int height = g.guiHeight();
         Font font = mc.font;
         int left = width - SkillManager.SLOTS * (SIZE + GAP) - 4;
         int top = height - SIZE - 6;
@@ -41,6 +40,7 @@ public class SkillHudOverlay implements HudRenderCallback {
                 String shortName = name.length() <= 2 ? name : name.substring(0, 2);
                 g.drawCenteredString(font, shortName, x + SIZE / 2, top + 4, 0xFFFFFF);
 
+                // cooldown shade + seconds left
                 float cd = ClientSkillState.cooldownFraction(slot);
                 if (cd > 0) {
                     int shade = Math.round(SIZE * cd);
@@ -50,6 +50,7 @@ public class SkillHudOverlay implements HudRenderCallback {
                 }
             }
 
+            // key label in the bottom corner
             String key = ModKeyMappings.SKILLS[slot].getTranslatedKeyMessage().getString();
             if (key.length() > 3) key = key.substring(0, 3);
             g.pose().pushPose();
@@ -59,9 +60,11 @@ public class SkillHudOverlay implements HudRenderCallback {
             g.pose().popPose();
         }
 
+        // Kishi gravity level while the dome is up
         int kishi = ClientSkillState.kishiLevel(mc.player.getUUID());
         if (kishi > 0) {
-            g.drawString(font, Component.translatable("hud.xenowarriors.kishi_level", kishi), left, top - 12, 0xD9C8FF);
+            g.drawString(font, Component.translatable("hud.xenowarriors.kishi_level", kishi),
+                    left, top - 12, 0xD9C8FF);
         }
     }
 }

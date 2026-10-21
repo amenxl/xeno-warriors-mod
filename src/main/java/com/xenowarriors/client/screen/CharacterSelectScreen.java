@@ -3,9 +3,7 @@ package com.xenowarriors.client.screen;
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.client.ClientCharacterData;
 import com.xenowarriors.network.ModNetwork;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.FriendlyByteBuf;
+import com.xenowarriors.network.SelectCharacterPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -51,9 +49,7 @@ public class CharacterSelectScreen extends Screen {
     }
 
     private void choose(CharacterType type) {
-        FriendlyByteBuf buf = PacketByteBufs.create();
-        buf.writeEnum(type);
-        ClientPlayNetworking.send(ModNetwork.SELECT_CHARACTER, buf);
+        ModNetwork.sendToServer(new SelectCharacterPacket(type));
         onClose();
     }
 

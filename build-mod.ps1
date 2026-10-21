@@ -62,5 +62,5 @@ $dest = Join-Path (Split-Path $PSScriptRoot -Parent) $jar.Name
 Copy-Item $jar.FullName $dest -Force
 Write-Host ""
 Write-Host "Done! Your mod file is: $dest" -ForegroundColor Green
-Write-Host "Drop it into the mods folder of a Fabric 1.20.1 profile, together with Fabric API for 1.20.1."
+Write-Host "Drop it into the mods folder of a Forge 1.20.1 profile."
 Start-Process explorer.exe "/select,`"$dest`""

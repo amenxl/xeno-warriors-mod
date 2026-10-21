@@ -1,9 +1,9 @@
 package com.xenowarriors.skill;
 
-import com.xenowarriors.character.CharacterHolder;
 import com.xenowarriors.character.CharacterType;
-import com.xenowarriors.character.PlayerCharacter;
+import com.xenowarriors.character.ModCapabilities;
 import com.xenowarriors.network.ModNetwork;
+import com.xenowarriors.network.SkillCooldownPacket;
 import com.xenowarriors.skill.rhalix.KishiSkill;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +15,7 @@ public final class SkillManager {
     public static final int SLOTS = 5;
     public static final int ULTIMATE_SLOT = 4;
 
-    /** Each character's skills by slot (0-3 = skills 1-4, 4 = ultimate). null = not made yet. */
+    /** Each character's skills by slot (index 0-3 = skills 1-4, index 4 = ultimate). null = not made yet. */
     private static final Map<CharacterType, Skill[]> SKILLS = new EnumMap<>(CharacterType.class);
 
     static {
@@ -36,32 +36,35 @@ public final class SkillManager {
 
     public static void useSkill(ServerPlayer player, int slot) {
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
-        PlayerCharacter data = CharacterHolder.get(player);
-        Skill skill = get(data.getType(), slot);
+        CharacterType type = ModCapabilities.getType(player);
+        Skill skill = get(type, slot);
         if (skill == null) {
             player.displayClientMessage(Component.translatable("message.xenowarriors.skill_locked"), true);
             return;
         }
         if (skill.tryRecast(player)) return;
 
-        long remaining = data.cooldownEnd[slot] - now(player);
-        if (remaining > 0) {
-            player.displayClientMessage(Component.translatable("message.xenowarriors.cooldown",
-                    skill.getName(), (remaining + 19) / 20), true);
-            return;
-        }
-        if (skill.use(player)) {
-            int cooldown = skill.getCooldownTicks();
-            data.cooldownEnd[slot] = now(player) + cooldown;
-            ModNetwork.sendCooldown(player, slot, cooldown, cooldown);
-        }
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
+            long remaining = data.cooldownEnd[slot] - now(player);
+            if (remaining > 0) {
+                player.displayClientMessage(Component.translatable("message.xenowarriors.cooldown",
+                        skill.getName(), (remaining + 19) / 20), true);
+                return;
+            }
+            if (skill.use(player)) {
+                int cooldown = skill.getCooldownTicks();
+                data.cooldownEnd[slot] = now(player) + cooldown;
+                ModNetwork.sendToPlayer(new SkillCooldownPacket(slot, cooldown, cooldown), player);
+            }
+        });
     }
 
     public static void resetCooldowns(ServerPlayer player) {
-        PlayerCharacter data = CharacterHolder.get(player);
-        for (int i = 0; i < SLOTS; i++) {
-            data.cooldownEnd[i] = 0;
-            ModNetwork.sendCooldown(player, i, 0, 0);
-        }
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
+            for (int i = 0; i < SLOTS; i++) {
+                data.cooldownEnd[i] = 0;
+                ModNetwork.sendToPlayer(new SkillCooldownPacket(i, 0, 0), player);
+            }
+        });
     }
 }

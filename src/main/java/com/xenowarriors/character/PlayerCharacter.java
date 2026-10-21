@@ -2,7 +2,7 @@ package com.xenowarriors.character;
 
 import net.minecraft.nbt.CompoundTag;
 
-/** Per-player data: which character they picked, plus skill cooldowns. */
+/** Per-player data: which character they picked. Skills/Karma data will go here later. */
 public class PlayerCharacter {
     private CharacterType type = CharacterType.NONE;
     /** Game time when each skill slot's cooldown ends (not saved; resets on relog). */
