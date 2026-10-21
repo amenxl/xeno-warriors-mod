@@ -72,7 +72,9 @@ public final class Karma {
             boolean focusing = player.isShiftKeyDown() && player.onGround()
                     && player.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4;
             if (data.getKarma() < MAX) {
-                data.setKarma(data.getKarma() + (focusing ? FOCUS_REGEN : REGEN) / 20F);
+                float rate = (focusing ? FOCUS_REGEN : REGEN) / 20F;
+                if (com.xenowarriors.item.KarmaHoodieItem.wearing(player)) rate *= 0.5F;   // it suppresses your Karma
+                data.setKarma(data.getKarma() + rate);
             }
             // send to the HUD when it has changed by a whole point, or right away the first time
             if (data.lastSyncedKarma < 0 || Math.abs(data.getKarma() - data.lastSyncedKarma) >= 1F

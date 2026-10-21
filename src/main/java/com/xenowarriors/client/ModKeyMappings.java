@@ -9,13 +9,20 @@ import org.lwjgl.glfw.GLFW;
 public final class ModKeyMappings {
     public static final String CATEGORY = "key.categories.xenowarriors";
 
+    // (renamed from skill_1.. so the new default keys apply - Z is lock-on now)
     public static final KeyMapping[] SKILLS = {
-            key("skill_1", GLFW.GLFW_KEY_Z),
-            key("skill_2", GLFW.GLFW_KEY_X),
-            key("skill_3", GLFW.GLFW_KEY_C),
-            key("skill_4", GLFW.GLFW_KEY_V),
-            key("ultimate", GLFW.GLFW_KEY_R),
+            key("skill1", GLFW.GLFW_KEY_X),
+            key("skill2", GLFW.GLFW_KEY_C),
+            key("skill3", GLFW.GLFW_KEY_V),
+            key("skill4", GLFW.GLFW_KEY_B),
+            key("ultimate_skill", GLFW.GLFW_KEY_R),
     };
+
+    /** Lock on to the target you're facing (press again to let go). */
+    public static final KeyMapping LOCK_ON = key("lock_on", GLFW.GLFW_KEY_Z);
+
+    /** Sense the Karma of everything nearby. */
+    public static final KeyMapping KARMA_SENSE = key("karma_sense", GLFW.GLFW_KEY_K);
 
     /** Mikiko: summon / put away the Hekublade. */
     public static final KeyMapping SUMMON_BLADE = key("summon_blade", GLFW.GLFW_KEY_G);

@@ -17,11 +17,17 @@ public final class ModItems {
     public static final RegistryObject<Item> HEKUBLADE = ITEMS.register("hekublade",
             () -> new HekubladeItem(new Item.Properties().stacksTo(1).fireResistant()));
 
+    public static final RegistryObject<Item> KARMA_HOODIE = ITEMS.register("karma_hoodie",
+            () -> new KarmaHoodieItem(new Item.Properties()));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.FOOD_AND_DRINKS) {
             event.accept(KARMA_POTION);
+        }
+        if (event.getTabKey() == CreativeModeTabs.COMBAT) {
+            event.accept(KARMA_HOODIE);
         }
     }
 }

@@ -10,6 +10,9 @@ public class PlayerCharacter {
     public final long[] cooldownEnd = new long[5];
     /** Karma - the energy every skill runs on. Starts full. */
     private float karma = Karma.MAX;
+    /** Level-up stats (see stats/Stats): level and progress toward the next level for each. */
+    public final int[] statLevel = new int[3];
+    public final float[] statXp = new float[3];
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -20,17 +23,28 @@ public class PlayerCharacter {
     public void setKarma(float value) { this.karma = Math.max(0F, Math.min(Karma.MAX, value)); }
 
     /** Keeps the character after death; Karma comes back full on respawn. */
-    public void copyFrom(PlayerCharacter other) { this.type = other.type; }
+    public void copyFrom(PlayerCharacter other) {
+        this.type = other.type;
+        System.arraycopy(other.statLevel, 0, statLevel, 0, 3);
+        System.arraycopy(other.statXp, 0, statXp, 0, 3);
+    }
 
     public CompoundTag save() {
         CompoundTag tag = new CompoundTag();
         tag.putString("character", type.getId());
         tag.putFloat("karma", karma);
+        tag.putIntArray("stat_levels", statLevel.clone());
+        for (int i = 0; i < 3; i++) tag.putFloat("stat_xp_" + i, statXp[i]);
         return tag;
     }
 
     public void load(CompoundTag tag) {
         this.type = CharacterType.byId(tag.getString("character"));
+        int[] lv = tag.getIntArray("stat_levels");
+        for (int i = 0; i < 3; i++) {
+            statLevel[i] = i < lv.length ? lv[i] : 0;
+            statXp[i] = tag.getFloat("stat_xp_" + i);
+        }
         this.karma = tag.contains("karma") ? Math.max(0F, Math.min(Karma.MAX, tag.getFloat("karma"))) : Karma.MAX;
     }
 }

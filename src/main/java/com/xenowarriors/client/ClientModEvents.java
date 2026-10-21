@@ -34,12 +34,17 @@ public final class ClientModEvents {
     public static void registerKeys(RegisterKeyMappingsEvent event) {
         for (KeyMapping key : ModKeyMappings.SKILLS) event.register(key);
         event.register(ModKeyMappings.SUMMON_BLADE);
+        event.register(ModKeyMappings.LOCK_ON);
+        event.register(ModKeyMappings.KARMA_SENSE);
     }
 
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("skills", new SkillHudOverlay());
         event.registerAboveAll("cutscene", new UltimateCutscene.Overlay());
+        event.registerAboveAll("stat_toasts", new StatToasts());
+        event.registerAboveAll("lock_on", new LockOn.Overlay());
+        event.registerAboveAll("karma_sense", new KarmaSense.Overlay());
     }
 
     @SubscribeEvent

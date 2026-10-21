@@ -9,7 +9,9 @@
     "AbstractClientPlayerMixin",
     "HumanoidModelMixin",
     "CameraMixin",
-    "HumanoidArmorLayerMixin"
+    "HumanoidArmorLayerMixin",
+    "MinecraftGlowMixin",
+    "EntityTeamColorMixin"
   ],
   "injectors": {
     "defaultRequire": 1
