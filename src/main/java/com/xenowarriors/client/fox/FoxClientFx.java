@@ -130,6 +130,18 @@ public final class FoxClientFx {
         } else if (moving < 0.2F && ownerNear) {
             head.zRot += Mth.sin(age * 0.07F + fox.getId()) * 0.12F;
         }
+        // a sword in its mouth: head held up proudly, and a big sideways slash when it attacks
+        if (fox.getMainHandItem().getItem() instanceof net.minecraft.world.item.SwordItem) {
+            float swing = model.attackTime;
+            if (swing > 0F) {
+                float slash = Mth.sin(swing * Mth.PI);
+                head.yRot += Mth.sin(swing * Mth.PI * 2F) * 0.9F;
+                head.zRot += slash * 0.35F;
+                head.xRot += slash * 0.25F;
+            } else {
+                head.xRot -= 0.12F;
+            }
+        }
         // level-up and greeting: tail straight up, swishing
         long[] f = FX.get(fox.getId());
         if (f != null && f[0] != FoxFxPacket.RUN_AWAY) {

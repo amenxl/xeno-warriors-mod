@@ -143,6 +143,8 @@ public final class FoxPets {
             if (event.getHand() != InteractionHand.MAIN_HAND) return;
             if (p.isShiftKeyDown()) {
                 putOnBack(p, fox);
+            } else if (stack.getItem() instanceof net.minecraft.world.item.SwordItem) {
+                giveSword(p, fox, stack, event.getHand());
             } else if (isRabbit(stack) && fox.getHealth() < fox.getMaxHealth()) {
                 fox.heal(6F);
                 if (!p.getAbilities().instabuild) stack.shrink(1);
@@ -200,6 +202,24 @@ public final class FoxPets {
         sendSkin(fox);
     }
 
+    // ---------------------------------------------------------------- swords
+
+    /** Mikiko hands his fox a sword; it holds it in its mouth (whatever it had before comes back to him). */
+    private static void giveSword(ServerPlayer p, Fox fox, ItemStack stack, InteractionHand hand) {
+        ItemStack old = fox.getMainHandItem().copy();
+        ItemStack sword = p.getAbilities().instabuild ? stack.copyWithCount(1) : stack.split(1);
+        fox.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, sword);
+        fox.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0F);
+        if (!old.isEmpty() && !p.getAbilities().instabuild) {
+            if (p.getItemInHand(hand).isEmpty()) p.setItemInHand(hand, old);
+            else if (!p.getInventory().add(old)) p.drop(old, false);
+        }
+        wake(fox);
+        fox.playSound(SoundEvents.ARMOR_EQUIP_IRON, 1F, 1.3F);
+        p.serverLevel().sendParticles(ParticleTypes.CRIT, fox.getX(), fox.getY() + 0.5, fox.getZ(), 10, 0.25, 0.2, 0.25, 0.1);
+        say(p, fox.getMainHandItem().getHoverName().getString() + " - " + record(p, fox.getUUID()).getString("name") + " is ready to fight!");
+    }
+
     // ---------------------------------------------------------------- stat card
 
     private static void showStats(ServerPlayer p, Fox fox) {
@@ -211,7 +231,8 @@ public final class FoxPets {
                 rec.getFloat("xp"), level >= FoxLevels.MAX ? 0 : FoxLevels.xpFor(level), fox.getHealth(), fox.getMaxHealth(),
                 (float) fox.getAttributeValue(Attributes.ATTACK_DAMAGE), (float) fox.getAttributeValue(Attributes.MOVEMENT_SPEED),
                 rec.getInt("kills"), (int) days, "snow".equals(fox.saveWithoutId(new CompoundTag()).getString("Type")),
-                rec.getInt("skin")), p);
+                rec.getInt("skin"), fox.getMainHandItem().getItem() instanceof net.minecraft.world.item.SwordItem
+                        ? fox.getMainHandItem().getHoverName().getString() : ""), p);
         fox.playSound(SoundEvents.FOX_AMBIENT, 0.6F, 1.3F);
     }
 
@@ -319,7 +340,18 @@ public final class FoxPets {
         LivingEntity victim = event.getEntity();
         if (victim.level().isClientSide) return;
         Entity src = event.getSource().getEntity();
-        if (src instanceof Fox fox && ownerOf(fox) != null) addXp(fox, event.getAmount() * 3F);
+        if (src instanceof Fox fox && ownerOf(fox) != null) {
+            addXp(fox, event.getAmount() * 3F);
+            ItemStack sword = fox.getMainHandItem();
+            if (sword.getItem() instanceof net.minecraft.world.item.SwordItem && fox.level() instanceof ServerLevel lvl) {
+                // a slash with the blade in its mouth
+                double yaw = Math.toRadians(fox.getYRot());
+                lvl.sendParticles(ParticleTypes.SWEEP_ATTACK, fox.getX() - Math.sin(yaw) * 0.8, fox.getY() + 0.45,
+                        fox.getZ() + Math.cos(yaw) * 0.8, 1, 0, 0, 0, 0);
+                lvl.playSound(null, fox.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.NEUTRAL, 0.7F, 1.3F);
+                sword.hurtAndBreak(1, fox, f -> f.broadcastBreakEvent(net.minecraft.world.entity.EquipmentSlot.MAINHAND));
+            }
+        }
         if (victim instanceof Fox fox && ownerOf(fox) != null) addXp(fox, event.getAmount() * 1.5F);
         // foxes join in on whatever Mikiko is fighting
         if (src instanceof ServerPlayer p && !pets(p).isEmpty() && !(victim instanceof Player) && !isOwnedBy(victim, p)
@@ -414,6 +446,18 @@ public final class FoxPets {
             Vec3 last = s.lastPos.put(fox.getUUID(), fox.position());
             if (last != null && last.distanceTo(fox.position()) > 3 && fox.distanceTo(p) < 16) addXp(fox, 1F);
             if (p.tickCount % 100 == 0) snapshot(fox, rec);
+            // armed with a sword: it goes after monsters near him on its own
+            if (fox.getMainHandItem().getItem() instanceof net.minecraft.world.item.SwordItem
+                    && (fox.getTarget() == null || !fox.getTarget().isAlive())) {
+                net.minecraft.world.entity.monster.Monster enemy = p.serverLevel().getNearestEntity(
+                        net.minecraft.world.entity.monster.Monster.class,
+                        net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat().range(12), fox,
+                        p.getX(), p.getY(), p.getZ(), p.getBoundingBox().inflate(12, 4, 12));
+                if (enemy != null && !(enemy instanceof net.minecraft.world.entity.monster.Creeper)) {
+                    wake(fox);
+                    fox.setTarget(enemy);
+                }
+            }
             // happy to see him again after a while apart: a little hop and spin
             double d = fox.distanceTo(p);
             Long seen = s.lastNear.get(fox.getUUID());
@@ -617,7 +661,11 @@ public final class FoxPets {
         CompoundTag data = rec.getCompound("data").copy();
         if (!data.isEmpty()) {
             data.remove("UUID");          // a brand new body (any old copy is gone for good)
-            data.remove("HandItems");     // whatever it had in its mouth already dropped
+            // whatever it had in its mouth already dropped - except its sword, which it keeps
+            ListTag hands = data.getList("HandItems", Tag.TAG_COMPOUND);
+            if (hands.isEmpty() || !(ItemStack.of(hands.getCompound(0)).getItem() instanceof net.minecraft.world.item.SwordItem)) {
+                data.remove("HandItems");
+            }
             data.remove("Passengers");
             data.remove("ActiveEffects");
             fox.load(data);

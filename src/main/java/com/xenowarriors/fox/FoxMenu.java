@@ -17,7 +17,8 @@ import net.minecraft.world.item.ItemStack;
  * depending on its level, above the player's inventory.
  */
 public class FoxMenu extends AbstractContainerMenu {
-    public static final EquipmentSlot[] ARMOR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST};
+    public static final EquipmentSlot[] ARMOR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.MAINHAND};
+    public static final int GEAR = 3;
     public final int rows;
     public final int foxId;
     private final Container storage, armor;
@@ -31,11 +32,12 @@ public class FoxMenu extends AbstractContainerMenu {
         this.rows = rows;
         this.foxId = fox == null ? -1 : fox.getId();
         storage.startOpen(inv.player);
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < GEAR; i++) {
             final EquipmentSlot slot = ARMOR[i];
             Slot armorSlot = new Slot(armor, i, 8, 18 + i * 18) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
+                    if (slot == EquipmentSlot.MAINHAND) return stack.getItem() instanceof net.minecraft.world.item.SwordItem;
                     return stack.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot;
                 }
 
@@ -44,15 +46,17 @@ public class FoxMenu extends AbstractContainerMenu {
                     return 1;
                 }
             };
-            armorSlot.setBackground(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS,
-                    i == 0 ? net.minecraft.world.inventory.InventoryMenu.EMPTY_ARMOR_SLOT_HELMET
-                            : net.minecraft.world.inventory.InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE);
+            if (i < 2) {
+                armorSlot.setBackground(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS,
+                        i == 0 ? net.minecraft.world.inventory.InventoryMenu.EMPTY_ARMOR_SLOT_HELMET
+                                : net.minecraft.world.inventory.InventoryMenu.EMPTY_ARMOR_SLOT_CHESTPLATE);
+            }
             addSlot(armorSlot);
         }
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < 9; c++) addSlot(new Slot(storage, c + r * 9, 30 + c * 18, 18 + r * 18));
         }
-        int py = 18 + Math.max(rows, 2) * 18 + 14;
+        int py = 18 + Math.max(rows, GEAR) * 18 + 14;
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 9; c++) addSlot(new Slot(inv, c + r * 9 + 9, 30 + c * 18, py + r * 18));
         }
@@ -62,7 +66,7 @@ public class FoxMenu extends AbstractContainerMenu {
     public static FoxMenu fromNetwork(int id, Inventory inv, FriendlyByteBuf buf) {
         int foxId = buf.readVarInt(), rows = buf.readVarInt();
         Fox fox = inv.player.level().getEntity(foxId) instanceof Fox f ? f : null;
-        return new FoxMenu(id, inv, new SimpleContainer(rows * 9), new SimpleContainer(2), fox, rows);
+        return new FoxMenu(id, inv, new SimpleContainer(rows * 9), new SimpleContainer(GEAR), fox, rows);
     }
 
     public Fox fox() {
@@ -79,15 +83,15 @@ public class FoxMenu extends AbstractContainerMenu {
         Slot slot = slots.get(index);
         if (!slot.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = slot.getItem(), copy = stack.copy();
-        int foxEnd = 2 + rows * 9;
+        int foxEnd = GEAR + rows * 9;
         if (index < foxEnd) {
             if (!moveItemStackTo(stack, foxEnd, slots.size(), true)) return ItemStack.EMPTY;
         } else {
             boolean moved = false;
-            for (int i = 0; i < 2 && !moved; i++) {
+            for (int i = 0; i < GEAR && !moved; i++) {
                 if (slots.get(i).mayPlace(stack) && !slots.get(i).hasItem()) moved = moveItemStackTo(stack, i, i + 1, false);
             }
-            if (!moved && !moveItemStackTo(stack, 2, foxEnd, false)) return ItemStack.EMPTY;
+            if (!moved && !moveItemStackTo(stack, GEAR, foxEnd, false)) return ItemStack.EMPTY;
         }
         if (stack.isEmpty()) slot.set(ItemStack.EMPTY);
         else slot.setChanged();
@@ -105,15 +109,15 @@ public class FoxMenu extends AbstractContainerMenu {
         private final Fox fox;
 
         public ArmorContainer(Fox fox) {
-            super(2);
+            super(GEAR);
             this.fox = fox;
-            for (int i = 0; i < 2; i++) super.setItem(i, fox.getItemBySlot(ARMOR[i]).copy());
+            for (int i = 0; i < GEAR; i++) super.setItem(i, fox.getItemBySlot(ARMOR[i]).copy());
         }
 
         @Override
         public void setChanged() {
             super.setChanged();
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < GEAR; i++) {
                 fox.setItemSlot(ARMOR[i], getItem(i).copy());
                 fox.setDropChance(ARMOR[i], 0F);     // it keeps its armor even if it runs away
             }

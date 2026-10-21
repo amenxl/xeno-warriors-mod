@@ -96,7 +96,7 @@ public class FoxStatsScreen extends Screen {
         row(g, tx, ly + 24, "» Speed", Math.round(s.speed() / 0.3F * 100F) + "%", 0xFF5CE1E6);
         row(g, tx, ly + 36, "☠ Defeated", String.valueOf(s.kills()), 0xFFB0A0FF);
         if (s.days() >= 0) row(g, tx, ly + 48, "☀ Together", s.days() == 1 ? "1 day" : s.days() + " days", 0xFFFFE070);
-        row(g, tx, ly + 60, "Bag", com.xenowarriors.fox.FoxSkins.bagSlots(s.level()) + " slots", 0xFFC0A080);
+        row(g, tx, ly + 60, "Weapon", s.weapon().isEmpty() ? "-" : s.weapon(), 0xFFE0E0F0);
 
         var sk = com.xenowarriors.fox.FoxSkins.get(skin);
         boolean unlocked = com.xenowarriors.fox.FoxSkins.unlocked(skin, s.level());
