@@ -48,7 +48,10 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class HekubladeRealm {
     public static final ResourceKey<Level> KEY = ResourceKey.create(Registries.DIMENSION, XenoWarriors.id("hekublade"));
-    public static final int MAX_SEALED = 120, MAX_SHOWN = 60, Y = 100, RADIUS = 22;
+    public static final int MAX_SEALED = 120, MAX_SHOWN = 60, Y = 2, RADIUS = 40;
+    /** Each try at freeing a sealed soul only works 1 time in 100. */
+    public static final float FREE_CHANCE = 0.01F;
+    private static final java.util.Map<UUID, Long> LAST_TRY = new java.util.HashMap<>();
     private static final String SEALED_TAG = "xw_sealed", SEALED_ID = "xw_sealed_id";
 
     private HekubladeRealm() {}
@@ -110,7 +113,7 @@ public final class HekubladeRealm {
         c.bladeReturn = ret;
 
         BlockPos center = center(p.getUUID());
-        if (realm.getBlockState(center).isAir()) buildPlatform(realm, center);
+        if (!realm.getBlockState(center.below()).is(Blocks.SEA_LANTERN)) buildPlatform(realm, center);
         burst(p.serverLevel(), p.getX(), p.getY() + 1, p.getZ());
         p.teleportTo(realm, center.getX() + 0.5, center.getY() + 1, center.getZ() + 3.5, 180F, 0F);
         p.fallDistance = 0;
@@ -227,7 +230,20 @@ public final class HekubladeRealm {
         if (event.getLevel().isClientSide || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND
                 || !(event.getEntity() instanceof ServerPlayer p)) return;
         if (!p.getUUID().equals(target.getPersistentData().getUUID(SEALED_TAG))) return;
-        free(p, target);
+        long now = p.level().getGameTime();
+        Long last = LAST_TRY.get(p.getUUID());
+        if (last != null && now - last < 20) return;
+        LAST_TRY.put(p.getUUID(), now);
+        if (p.getRandom().nextFloat() < FREE_CHANCE) {
+            free(p, target);
+        } else {
+            ServerLevel realm = (ServerLevel) target.level();
+            realm.sendParticles(new DustParticleOptions(new Vector3f(0.55F, 0.4F, 1F), 1F), target.getX(),
+                    target.getY() + target.getBbHeight() * 0.5, target.getZ(), 10, 0.3, 0.4, 0.3, 0);
+            realm.playSound(null, target.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 0.6F);
+            p.displayClientMessage(Component.literal("The blade's hold on " + target.getCustomName().getString()
+                    + " won't break... (1% chance each try)").withStyle(ChatFormatting.GRAY), true);
+        }
     }
 
     private static void free(ServerPlayer p, Entity display) {
@@ -286,7 +302,7 @@ public final class HekubladeRealm {
             p.setDeltaMovement(0, 0, 0);
         }
         if (p.tickCount % 20 == 0) {
-            p.serverLevel().sendParticles(new DustParticleOptions(new Vector3f(1F, 0.45F, 0.1F), 1F), p.getX(), p.getY() + 1, p.getZ(),
+            p.serverLevel().sendParticles(new DustParticleOptions(new Vector3f(0.45F, 0.9F, 1F), 0.8F), p.getX(), p.getY() + 3, p.getZ(),
                     4, 6, 2, 6, 0);
         }
     }
@@ -313,47 +329,15 @@ public final class HekubladeRealm {
     }
 
     private static void buildPlatform(ServerLevel l, BlockPos c) {
-        BlockState floor = Blocks.POLISHED_BLACKSTONE.defaultBlockState(),
-                tile = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(),
-                glow = Blocks.SHROOMLIGHT.defaultBlockState(),
-                orange = Blocks.ORANGE_STAINED_GLASS.defaultBlockState(),
-                red = Blocks.RED_STAINED_GLASS.defaultBlockState(),
-                white = Blocks.WHITE_STAINED_GLASS.defaultBlockState(),
-                under = Blocks.BLACKSTONE.defaultBlockState();
-        int cx = c.getX(), cy = c.getY(), cz = c.getZ();
+        // the floor itself is the endless dark glass the world generates; scatter faint glowing points beneath it
+        // like the stars reflected in the picture, and mark this spot as built
+        BlockState star = Blocks.SEA_LANTERN.defaultBlockState();
+        java.util.Random r = new java.util.Random(c.asLong());
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
-                double d = Math.sqrt(dx * dx + dz * dz);
-                if (d > RADIUS + 0.5) continue;
-                int ri = (int) Math.round(d);
-                BlockState top;
-                if (ri == 4 || ri == 9 || ri == 14 || ri == 19) {
-                    set(l, cx + dx, cy - 1, cz + dz, glow);         // glowing rings under orange glass
-                    top = orange;
-                } else if (ri <= 1) {
-                    top = Blocks.CRYING_OBSIDIAN.defaultBlockState();
-                } else {
-                    top = (dx + dz) % 3 == 0 ? tile : floor;
-                    set(l, cx + dx, cy - 1, cz + dz, under);
-                }
-                set(l, cx + dx, cy, cz + dz, top);
-                // a ragged underside so it looks like a crystal floating in the dark
-                int depth = (int) ((RADIUS - d) * 0.35) + ((dx * 7 + dz * 13) & 1);
-                for (int k = 2; k <= depth + 1; k++) set(l, cx + dx, cy - k, cz + dz, under);
+                if (r.nextInt(70) == 0) set(l, c.getX() + dx, c.getY() - 1, c.getZ() + dz, star);
             }
         }
-        // crystal spires around the edge: red, orange and white, like the blade's crystals
-        BlockState[] cols = {red, orange, white};
-        for (int i = 0; i < 10; i++) {
-            double a = i / 10.0 * Math.PI * 2;
-            int px = cx + (int) Math.round(Math.cos(a) * (RADIUS - 1)), pz = cz + (int) Math.round(Math.sin(a) * (RADIUS - 1));
-            int h = 5 + (i * 3) % 5;
-            for (int k = 1; k <= h; k++) set(l, px, cy + k, pz, cols[i % 3]);
-            set(l, px, cy + h + 1, pz, glow);
-            set(l, px, cy + h + 2, pz, Blocks.AMETHYST_CLUSTER.defaultBlockState());
-        }
-        // the blade's heart in the middle
-        for (int k = 1; k <= 3; k++) set(l, cx, cy + k + 6, cz, k == 2 ? glow : orange);
-        set(l, cx, cy + 10, cz, white);
+        set(l, c.getX(), c.getY() - 1, c.getZ(), star);
     }
 }

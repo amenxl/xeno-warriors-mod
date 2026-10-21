@@ -45,6 +45,11 @@ public final class ClientModEvents {
     }
 
     @SubscribeEvent
+    public static void registerSkies(net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent event) {
+        event.register(HekubladeSky.ID, new HekubladeSky());
+    }
+
+    @SubscribeEvent
     public static void registerLayerDefs(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(com.xenowarriors.client.corrupted.CorruptedSoulModel.LAYER,
                 com.xenowarriors.client.corrupted.CorruptedSoulModel::create);
