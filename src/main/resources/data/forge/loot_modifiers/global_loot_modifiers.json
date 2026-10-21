@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "entries": [
+    "xenowarriors:village_plains_discs",
+    "xenowarriors:village_desert_discs",
+    "xenowarriors:village_savanna_discs",
+    "xenowarriors:village_snowy_discs",
+    "xenowarriors:village_taiga_discs"
+  ]
+}

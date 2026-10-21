@@ -22,6 +22,7 @@ public class XenoWarriors {
         ModEntities.ENTITY_TYPES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
+        com.xenowarriors.world.AddDiscLootModifier.SERIALIZERS.register(modBus);
         com.xenowarriors.fox.ModMenus.MENUS.register(modBus);
         ModSounds.SOUNDS.register(modBus);
         modBus.addListener(ModItems::addToTabs);
