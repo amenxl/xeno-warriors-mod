@@ -48,11 +48,17 @@ mixin {
 }
 
 repositories {
+    flatDir { dir 'libs' }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    // GeckoLib: keyframe animations for Mikiko (required); mclib is the math library it ships inside itself
+    implementation fg.deobf("blank:geckolib-forge-1.20.1:4.8.4")
+    compileOnly files('libs/mclib-20.jar')
+    // Simple Voice Chat API (optional: mouths move while people talk)
+    compileOnly files('libs/voicechat-api-2.6.24.jar')
 }
 
 tasks.named('processResources', ProcessResources).configure {

@@ -83,6 +83,10 @@ public final class MikikoAnimations {
     private static final int VIBE_SIT_AFTER = 20 * 20;
     private static final float BEAT = 11.4F;                 // ticks per beat (~105 BPM)
     private static final java.util.List<net.minecraft.client.resources.sounds.SoundInstance> MALL = new java.util.ArrayList<>();
+    private static final java.util.List<net.minecraft.client.resources.sounds.SoundInstance> CAT = new java.util.ArrayList<>();
+    /** GeckoLib idle animations he cycles through while standing around (replaces the old look-around). */
+    private static final String[] IDLES = {"idle_stretch", "idle_scratch", "idle_kick_dirt"};
+    private static final int IDLE_CYCLE = 240;
     private static boolean lastJumpDown;
 
     private static final Map<Integer, State> STATES = new HashMap<>();
@@ -107,7 +111,8 @@ public final class MikikoAnimations {
         float fly, flyO, fast, fastO, roll, rollO;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
-        float vibe, vibeO;
+        float vibe, vibeO, robot, robotO;
+        int absorbStart = -1000, absorbUntil = -1000;
         boolean offhandShown;
         int vibeTicks;
         int jumpStart = -100;
@@ -245,15 +250,18 @@ public final class MikikoAnimations {
         s.poisonO = s.poison;
         s.fireO = s.fire;
         s.poison = approach(s.poison, poisoned && s.still >= 10 ? 1F : 0F, 0.12F);
-        boolean vibing = !poisoned && s.still >= 10 && mallNear(p);
+        boolean robotDance = !poisoned && s.still >= 10 && discNear(p, CAT);
+        s.robotO = s.robot;
+        s.robot = approach(s.robot, robotDance ? 1F : 0F, 0.12F);
+        boolean vibing = !poisoned && !robotDance && s.still >= 10 && mallNear(p);
         s.vibeTicks = vibing ? s.vibeTicks + 1 : 0;
         s.vibeO = s.vibe;
         s.vibe = approach(s.vibe, vibing ? 1F : 0F, 0.08F);
         boolean holdingBlade = Hekublade.isBlade(p.getMainHandItem());
-        s.sit = approach(s.sit, !poisoned && !holdingBlade && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
+        s.sit = approach(s.sit, !poisoned && !holdingBlade && !robotDance && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
                 s.still == 0 ? 0.3F : 0.06F);
-        s.look = approach(s.look, !poisoned && !vibing && s.still >= LOOK_AROUND_AFTER && s.sit < 0.5F ? 1F : 0F, 0.08F);
-        boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing;
+        s.look = 0F;   // (the old look-around idle is gone: GeckoLib idles play instead, see apply)
+        boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing && !robotDance;
         s.fire = approach(s.fire, fire ? 1F : 0F, fire ? 0.12F : 0.2F);
         if (s.sit > 0.95F && !vibing) {
             int c = (s.still - SIT_AFTER) % FIRE_CYCLE;
@@ -362,7 +370,7 @@ public final class MikikoAnimations {
     }
 
     private static boolean bladeVisible(AbstractClientPlayer p, State s, int now) {
-        return p.getMainHandItem().isEmpty() && now < s.bladeUntil && s.comboStep > 3;
+        return p.getMainHandItem().isEmpty() && (now < s.bladeUntil && s.comboStep > 3 || now < s.absorbUntil);
     }
 
     // ---------------- crossed swords: normal sword + summoned Hekublade in the other hand ----------------
@@ -456,6 +464,8 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(p, 0F);
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
         if (bi != null && (int) bi[0] == BI_HOLD && bi[1] < 25 && (s.still - BLADE_IDLE_AFTER) % BLADE_CYCLE < 80) return "smug";
+        if (s.robot > 0.5F) return "robot";
+        if (p.tickCount - s.absorbStart < 30) return "smug";
         if (s.vibe > 0.5F) return "happy";
         if (s.run > 0.5F) return "focused";
         if (s.fire > 0.5F) return "happy";
@@ -502,10 +512,14 @@ public final class MikikoAnimations {
         float poison = Mth.lerp(partial, s.poisonO, s.poison);
         float fire = Mth.lerp(partial, s.fireO, s.fire);
 
-        if (look > 0F) {
-            float[] l = lookOffset(player.getId(), s.still + partial);
-            model.head.yRot += l[0] * look;
-            model.head.xRot += l[1] * look;
+        // standing around: now and then a GeckoLib idle (a big stretch, scratching his head, kicking the dirt)
+        float robot = Mth.lerp(partial, s.robotO, s.robot);
+        if (s.still >= LOOK_AROUND_AFTER && sit < 0.5F && poison <= 0F && s.vibe <= 0F && robot <= 0F && s.move == null
+                && !Hekublade.isBlade(player.getMainHandItem()) && crossX(player, partial) <= 0F && !player.isUsingItem()) {
+            int since = s.still - LOOK_AROUND_AFTER;
+            String idle = IDLES[Math.floorMod(since / IDLE_CYCLE + player.getId(), IDLES.length)];
+            float t = since % IDLE_CYCLE + partial, len = GeoAnims.length(idle);
+            if (t <= len) GeoAnims.apply(model, idle, t, false, GeoAnims.envelope(t, len, 6F) * (1F - sit * 2F));
         }
         float stroll = Mth.lerp(partial, s.strollO, s.stroll);
         if (stroll > 0F) strollPose(model, stroll, player, partial, ageInTicks);
@@ -521,6 +535,8 @@ public final class MikikoAnimations {
         float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
         if (vibe > 0F) vibePose(model, vibe, sit, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
+        // "cat" on a jukebox: the robot
+        if (robot > 0F) GeoAnims.apply(model, "robot_dance", ageInTicks, true, robot);
         float x = crossX(player, partial);
         if (x > 0F && s.move == null) {
             // both arms forward, wrists crossed, so the two blades make an X
@@ -531,6 +547,11 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(player, partial);
         if (bi != null && s.move == null) bladeIdlePose(model, (int) bi[0], bi[1]);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
+        // sealing a defeated mob into the Hekublade: the blade raised up
+        float absorbT = ageInTicks - s.absorbStart, absorbLen = GeoAnims.length("absorb");
+        if (s.move == null && absorbT >= 0F && absorbT <= absorbLen) {
+            GeoAnims.apply(model, "absorb", absorbT, false, GeoAnims.envelope(absorbT, absorbLen, 3F));
+        }
         if (player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
             eatPose(model, player.getTicksUsingItem() + partial, ageInTicks);
         }
@@ -614,10 +635,29 @@ public final class MikikoAnimations {
         return false;
     }
 
+    private static boolean discNear(Player p, java.util.List<net.minecraft.client.resources.sounds.SoundInstance> list) {
+        var sounds = Minecraft.getInstance().getSoundManager();
+        list.removeIf(s -> !sounds.isActive(s));
+        for (var s : list) {
+            if (p.distanceToSqr(s.getX(), s.getY(), s.getZ()) < 20 * 20) return true;
+        }
+        return false;
+    }
+
+    /** A defeated mob is being pulled into his Hekublade. */
+    public static void onAbsorb(int playerId) {
+        State s = STATES.get(playerId);
+        Minecraft mc = Minecraft.getInstance();
+        if (s == null || mc.level == null || !(mc.level.getEntity(playerId) instanceof Player p)) return;
+        s.absorbStart = p.tickCount;
+        s.absorbUntil = p.tickCount + 22;
+    }
+
     @SubscribeEvent
     public static void onSound(net.minecraftforge.client.event.sound.PlaySoundEvent event) {
         var sound = event.getSound();
         if (sound != null && sound.getLocation().getPath().equals("music_disc.mall")) MALL.add(sound);
+        if (sound != null && sound.getLocation().getPath().equals("music_disc.cat")) CAT.add(sound);
     }
 
     /** Vibing to the song: head nods on the beat, a little shoulder bounce and sway, loose arms (taps his knees when sitting). */
@@ -815,6 +855,11 @@ public final class MikikoAnimations {
             float beat = age / BEAT * (float) Math.PI * 2F;
             out[0] += Math.max(0F, Mth.sin(beat)) * 0.045F * vibe;          // bounce on the beat
             out[4] += Mth.sin(beat * 0.5F) * 4F * vibe;                      // sway side to side
+        }
+        float robot = Mth.lerp(partial, s.robotO, s.robot);
+        if (robot > 0F) {
+            // stiff little up-down pops on each beat
+            out[0] += ((int) (age / 10F) % 2 == 0 ? 0.03F : -0.02F) * robot;
         }
         float run = Mth.lerp(partial, s.runO, s.run);
         if (run > 0F) {

@@ -15,7 +15,8 @@
     "MinecraftGlowMixin",
     "EntityTeamColorMixin",
     "ElytraLayerMixin",
-    "ItemInHandLayerMixin"
+    "ItemInHandLayerMixin",
+    "LivingEntityPoofMixin"
   ],
   "injectors": {
     "defaultRequire": 1

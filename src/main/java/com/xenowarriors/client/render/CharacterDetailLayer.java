@@ -67,12 +67,29 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean blink = bt % 97 < 3 || (bt % 233 >= 8 && bt % 233 < 11);
         if (mood != null) {
             // moods with open eyes still blink now and then
-            boolean eyesOpen = !mood.equals("happy") && !mood.equals("yawn");
+            boolean eyesOpen = !mood.equals("happy") && !mood.equals("yawn") && !mood.equals("robot");
             return blink && eyesOpen ? "blink" : mood;
         }
         int t = p.tickCount + p.getId() * 37;
         if (t % 97 < 3 || (t % 233 >= 8 && t % 233 < 11)) return "blink";   // blinks every few seconds, sometimes twice
         return null;
+    }
+
+    private static final java.util.Set<String> OWN_MOUTH = java.util.Set.of("sleep", "snore", "eat", "eat2", "shout", "hurt", "yawn", "panic");
+
+    /** 0 = not talking, 1-3 = how wide the mouth is open (louder = wider, flapping between syllables). */
+    private static int talkingMouth(AbstractClientPlayer p, String expr) {
+        if (expr != null && OWN_MOUTH.contains(expr)) return 0;
+        boolean self = p == net.minecraft.client.Minecraft.getInstance().player;
+        float level = Math.max(com.xenowarriors.voice.VoiceLevels.level(p.getUUID()),
+                self ? com.xenowarriors.voice.VoiceLevels.level(com.xenowarriors.voice.VoiceLevels.LOCAL) : 0F);
+        if (level < 0.04F) return 0;
+        int open = level < 0.22F ? 1 : level < 0.5F ? 2 : 3;
+        // flap: every few ticks the mouth closes a step, so it moves like real speech
+        int phase = (p.tickCount + p.getId()) % 5;
+        if (phase == 0) open = Math.max(0, open - 2);
+        else if (phase == 3) open = Math.max(1, open - 1);
+        return open;
     }
 
     @Override
@@ -118,6 +135,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);
+
+            // talking in voice chat: an animated mouth drawn over the face
+            int mouth = talkingMouth(player, expr);
+            if (mouth > 0) {
+                var mouthTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_mouth_" + mouth + ".png");
+                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(mouthTexture)), packedLight, overlay);
+            }
         }
     }
 }
