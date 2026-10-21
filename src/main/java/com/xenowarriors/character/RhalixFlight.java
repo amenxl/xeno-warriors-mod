@@ -17,7 +17,10 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RhalixFlight {
-    public static final double MAX_HEIGHT = 24;
+    /** Starting flight height (blocks above the ground); each level he gains (any stat) lets him go one block higher. */
+    public static final double BASE_HEIGHT = 20, MAX_LIMIT = 200;
+    /** The limit as last told by the server (client side). */
+    public static double clientMax = BASE_HEIGHT;
     private static final String GRANTED = "xenowarriors_granted_flight";
 
     private RhalixFlight() {}
@@ -26,12 +29,20 @@ public final class RhalixFlight {
         return ModCapabilities.getType(p) == CharacterType.RHALIX && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p);
     }
 
-    /** Blocks between the player's feet and the ground/water below (MAX_HEIGHT + 16 if there's nothing in range). */
+    /** How high he can fly: 20 blocks to start, +1 for every level he's gained in Speed, Attack and Defense. */
+    public static double maxHeight(Player p) {
+        if (p.level().isClientSide) return clientMax;
+        int levels = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.statLevel[0] + d.statLevel[1] + d.statLevel[2]).orElse(0);
+        return Math.min(MAX_LIMIT, BASE_HEIGHT + levels);
+    }
+
+    /** Blocks between the player's feet and the ground/water below (limit + 16 if there's nothing in range). */
     public static double heightAboveGround(Player p) {
+        double range = maxHeight(p) + 16;
         Vec3 from = p.position();
-        Vec3 to = from.subtract(0, MAX_HEIGHT + 16, 0);
+        Vec3 to = from.subtract(0, range, 0);
         var hit = p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, p));
-        return hit.getType() == HitResult.Type.MISS ? MAX_HEIGHT + 16 : from.y - hit.getLocation().y;
+        return hit.getType() == HitResult.Type.MISS ? range : from.y - hit.getLocation().y;
     }
 
     @SubscribeEvent
@@ -46,7 +57,10 @@ public final class RhalixFlight {
                 p.onUpdateAbilities();
             }
             // way past the limit (lag or a modified client): drop out of flight
-            if (abilities.flying && heightAboveGround(p) > MAX_HEIGHT + 8) {
+            if (p.tickCount % 40 == 0) {
+                com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.FlightHeightPacket((float) maxHeight(p)), p);
+            }
+            if (abilities.flying && heightAboveGround(p) > maxHeight(p) + 8) {
                 abilities.flying = false;
                 p.onUpdateAbilities();
             }

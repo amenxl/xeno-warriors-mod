@@ -112,12 +112,13 @@ public final class ClientEvents {
             return;
         }
         double h = com.xenowarriors.character.RhalixFlight.heightAboveGround(p);
-        double max = com.xenowarriors.character.RhalixFlight.MAX_HEIGHT;
+        double max = com.xenowarriors.character.RhalixFlight.maxHeight(p);
         if (h >= max) {
             var v = p.getDeltaMovement();
             p.setDeltaMovement(v.x, Math.min(v.y, h > max + 0.5 ? -0.12 : 0), v.z);
             if (!warnedCeiling) {
-                p.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.xenowarriors.flight_ceiling"), true);
+                p.displayClientMessage(net.minecraft.network.chat.Component.literal("You can only fly " + Math.round(max)
+                        + " blocks high for now - level up to fly higher!").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
                 warnedCeiling = true;
             }
         } else if (h < max - 3) {
