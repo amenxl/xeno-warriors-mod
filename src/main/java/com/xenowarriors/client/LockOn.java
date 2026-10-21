@@ -44,7 +44,8 @@ public final class LockOn {
     private static final double FLY_RANGE = 64, FLY_KEEP_RANGE = 80;
 
     private static boolean flying(net.minecraft.world.entity.player.Player p) {
-        return p.getAbilities().flying || p.isFallFlying() || FlightTracker.isFlying(p);
+        return p.getAbilities().flying || p.isFallFlying()
+                || (p instanceof net.minecraft.client.player.AbstractClientPlayer cp && FlightTracker.isFlying(cp));
     }
 
     private static double range(net.minecraft.world.entity.player.Player p) {
