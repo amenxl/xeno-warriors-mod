@@ -96,6 +96,20 @@ public final class RhalixWingsClient {
         return danceTime(p, age);
     }
 
+    private static final Map<Integer, float[]> SUPER = new HashMap<>();      // id -> {now, before}
+
+    /** 0..1: flying forward fast enough for the Superman pose. */
+    public static float superman(Player p, float partial) {
+        float[] s = SUPER.get(p.getId());
+        return s == null ? 0F : Mth.lerp(partial, s[1], s[0]);
+    }
+
+    private static void lerp(net.minecraft.client.model.geom.ModelPart part, float x, float y, float z, float w) {
+        part.xRot = Mth.lerp(w, part.xRot, x);
+        part.yRot = Mth.lerp(w, part.yRot, y);
+        part.zRot = Mth.lerp(w, part.zRot, z);
+    }
+
     private static float danceTime(Player p, float age) {
         float[] d = DANCE.get(p.getId());
         return d == null ? 0F : age - d[4];
@@ -212,6 +226,16 @@ public final class RhalixWingsClient {
         float partial = Mth.clamp(age - p.tickCount, 0F, 1F);
         float hover = hover(p, partial);
         if (hover > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "hover_idle", age, true, hover);
+        float zoom = superman(p, partial);
+        if (zoom > 0F) {
+            // Superman: right fist punched out ahead, left arm swept back at his side, legs together streaming behind
+            float flutter = Mth.sin(age * 0.6F) * 0.06F;
+            lerp(model.rightArm, -3.05F, -0.05F, 0.12F, zoom);
+            lerp(model.leftArm, 0.25F, 0F, -0.12F, zoom);
+            lerp(model.rightLeg, 0.08F + flutter, 0F, 0.04F, zoom);
+            lerp(model.leftLeg, 0.12F - flutter, 0F, -0.04F, zoom);
+            model.head.xRot = Mth.lerp(zoom, model.head.xRot, -1.15F);       // still looking ahead, not at the ground
+        }
         float sad = sadVibe(p, partial);
         if (sad > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "sad_vibe", age, true, sad);
         float dance = gravityDance(p, partial);
@@ -241,8 +265,22 @@ public final class RhalixWingsClient {
         Player p = event.getEntity();
         float w = gravityDance(p, event.getPartialTick());
         float hw = hyped(p, event.getPartialTick());
-        if (w <= 0F && hw <= 0F) return;
+        float sw = ClientCharacterData.get(p) == CharacterType.RHALIX ? superman(p, event.getPartialTick()) : 0F;
+        if (w <= 0F && hw <= 0F && sw <= 0F) return;
         float age = p.tickCount + event.getPartialTick();
+        if (sw > 0F) {
+            // whole body tipped forward into the flight, pivoting around his middle
+            var sp = event.getPoseStack();
+            sp.pushPose();
+            LIFTED.add(p.getId());
+            float yaw = Mth.rotLerp(event.getPartialTick(), p.yBodyRotO, p.yBodyRot);
+            sp.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-yaw));
+            sp.translate(0, 0.9, 0);
+            sp.mulPose(com.mojang.math.Axis.XP.rotationDegrees(72F * sw));
+            sp.translate(0, -0.9, 0);
+            sp.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yaw));
+            return;
+        }
         if (hw > 0F) {
             // jumping on every beat
             var hp = event.getPoseStack();
@@ -308,6 +346,18 @@ public final class RhalixWingsClient {
             boolean flying = FlightTracker.isFlying(p);
             double moved = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo);
             float target = flying && moved < 0.12 ? 1F : 0F;
+            float[] sup = SUPER.computeIfAbsent(p.getId(), k -> new float[2]);
+            sup[1] = sup[0];
+            float want = flying ? Mth.clamp((float) (moved - 0.25) / 0.35F, 0F, 1F) : 0F;
+            sup[0] += Mth.clamp(want - sup[0], -0.1F, 0.08F);
+            if (sup[0] > 0.6F && moved > 0.9 && p.tickCount % 2 == 0) {
+                // wind streaks peeling off him at speed
+                float yaw = p.yBodyRot * Mth.DEG_TO_RAD;
+                for (int i = -1; i <= 1; i += 2) {
+                    Vec3 tip = p.position().add(0, 1.1, 0).add(new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw)).scale(0.9 * i));
+                    mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.CLOUD, tip.x, tip.y, tip.z, 0, 0, 0);
+                }
+            }
             float[] h = HOVER.computeIfAbsent(p.getId(), k -> new float[2]);
             h[1] = h[0];
             h[0] += Mth.clamp(target - h[0], -0.08F, 0.08F);

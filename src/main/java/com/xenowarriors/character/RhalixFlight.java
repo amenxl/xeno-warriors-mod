@@ -21,6 +21,10 @@ public final class RhalixFlight {
     public static final double BASE_HEIGHT = 20, MAX_LIMIT = 200;
     /** The limit as last told by the server (client side). */
     public static double clientMax = BASE_HEIGHT;
+    /** Flying speed: normal at first, building up the longer he keeps flying forward (about 10 seconds to top speed). */
+    private static final float BASE_SPEED = 0.05F, TOP_SPEED = 0.135F;
+    private static final int SPEED_UP_TICKS = 200;
+    private static final java.util.Map<java.util.UUID, double[]> CRUISE = new java.util.HashMap<>();   // {x, z, ticks}
     private static final String GRANTED = "xenowarriors_granted_flight";
 
     private RhalixFlight() {}
@@ -60,6 +64,17 @@ public final class RhalixFlight {
             if (p.tickCount % 40 == 0) {
                 com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.FlightHeightPacket((float) maxHeight(p)), p);
             }
+            // gaining speed while flying forward
+            double[] c = CRUISE.computeIfAbsent(p.getUUID(), k -> new double[]{p.getX(), p.getZ(), 0});
+            double moved = Math.hypot(p.getX() - c[0], p.getZ() - c[1]);
+            c[0] = p.getX();
+            c[1] = p.getZ();
+            c[2] = abilities.flying && moved > 0.9 ? Math.min(SPEED_UP_TICKS, c[2] + 5) : Math.max(0, c[2] - 15);
+            float speed = BASE_SPEED + (TOP_SPEED - BASE_SPEED) * (float) (c[2] / SPEED_UP_TICKS);
+            if (Math.abs(abilities.getFlyingSpeed() - speed) > 0.002F) {
+                abilities.setFlyingSpeed(speed);
+                p.onUpdateAbilities();
+            }
             if (abilities.flying && heightAboveGround(p) > maxHeight(p) + 8) {
                 abilities.flying = false;
                 p.onUpdateAbilities();
@@ -68,6 +83,8 @@ public final class RhalixFlight {
             // switched away from Rhalix: take the flight back
             abilities.mayfly = false;
             abilities.flying = false;
+            abilities.setFlyingSpeed(BASE_SPEED);
+            CRUISE.remove(p.getUUID());
             p.getPersistentData().remove(GRANTED);
             p.onUpdateAbilities();
         } else if (granted) {
