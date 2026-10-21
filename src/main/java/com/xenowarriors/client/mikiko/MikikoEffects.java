@@ -98,7 +98,44 @@ final class MikikoEffects {
     private static final java.util.Map<Integer, int[]> XL = new java.util.HashMap<>();   // id -> {show tick, quick}
     private static final int XL_LIFE = 28;
 
+    // ---- little z's floating up while he sleeps ----
+    private static final java.util.List<int[]> ZZZ = new java.util.ArrayList<>();   // {entity id, start tick, size}
+
+    static void snore(Player p) {
+        ZZZ.add(new int[]{p.getId(), p.tickCount, ZZZ.size() % 3});
+    }
+
+    private static void renderZzz(net.minecraftforge.client.event.RenderLevelStageEvent event) {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level == null) { ZZZ.clear(); return; }
+        var cam = event.getCamera();
+        var buffers = mc.renderBuffers().bufferSource();
+        var it = ZZZ.iterator();
+        while (it.hasNext()) {
+            int[] z = it.next();
+            if (!(mc.level.getEntity(z[0]) instanceof Player p)) { it.remove(); continue; }
+            float age = p.tickCount + event.getPartialTick() - z[1];
+            if (age > 50 || age < 0) { if (age > 50) it.remove(); continue; }
+            float fade = Mth.clamp((50 - age) / 15F, 0F, 1F) * Mth.clamp(age / 5F, 0F, 1F);
+            Vec3 at = p.position().add(0, 0.6 + age * 0.018, 0).add(Mth.sin(age * 0.15F) * 0.15, 0, age * 0.006)
+                    .subtract(cam.getPosition());
+            float scale = 0.012F + z[2] * 0.004F + age * 0.0002F;
+            var pose = event.getPoseStack();
+            pose.pushPose();
+            pose.translate(at.x, at.y, at.z);
+            pose.mulPose(cam.rotation());
+            pose.scale(-scale, -scale, scale);
+            int alpha = Math.max(8, Math.round(fade * 255)) << 24;
+            var txt = net.minecraft.network.chat.Component.literal(z[2] == 2 ? "Z" : "z").getVisualOrderText();
+            mc.font.drawInBatch8xOutline(txt, -mc.font.width("z") / 2F, -4, 0xFFFFFF | alpha, 0x7FA8FF | alpha,
+                    pose.last().pose(), buffers, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT);
+            pose.popPose();
+        }
+        buffers.endBatch();
+    }
+
     static void renderXl(net.minecraftforge.client.event.RenderLevelStageEvent event) {
+        if (!ZZZ.isEmpty()) renderZzz(event);
         if (XL.isEmpty()) return;
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.level == null) { XL.clear(); return; }

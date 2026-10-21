@@ -72,7 +72,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         if (model.faceRoot != null) {
             model.faceHead.copyFrom(parent.head);
-            VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(type.getFaceTexture()));
+            var faceTexture = type.getFaceTexture();
+            if (player.isSleeping() && type == CharacterType.MIKIKO) {
+                faceTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_face_sleep.png");
+            }
+            VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);
         }
     }

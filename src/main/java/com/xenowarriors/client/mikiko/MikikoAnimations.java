@@ -48,6 +48,7 @@ import java.util.Set;
  *  - eating: holds the food up to his mouth with both hands and chews
  *  - walking: after 15 seconds of walking he relaxes into a stroll with his hands behind his head
  *  - running: leans into the sprint, fists pumping hard, long strides
+ *  - sleeping: curled on his side, head sunk in the pillow, one arm stretched out, little z's floating up
  *  - "mall" on a nearby jukebox while he stands still: vibes to it - nodding on the beat, bouncing,
  *    swaying - and after a while sits down cross-legged, still nodding along
  * Attack animations only play on a fully charged swing (after the attack cooldown); spam-clicking
@@ -138,6 +139,9 @@ public final class MikikoAnimations {
         }
         STATES.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         MikikoEffects.tickSummons(mc.level);
+        for (AbstractClientPlayer p : mc.level.players()) {
+            if (isMikiko(p) && p.isSleeping() && p.tickCount % 40 == 0) MikikoEffects.snore(p);
+        }
     }
 
     private static void tick(ClientLevel level, AbstractClientPlayer p, State s) {
@@ -346,6 +350,10 @@ public final class MikikoAnimations {
         State s = STATES.get(player.getId());
         if (s == null) return;
         float partial = Mth.clamp(ageInTicks - player.tickCount, 0F, 1F);
+        if (player.isSleeping()) {
+            sleepPose(model, ageInTicks);
+            return;
+        }
 
         float sit = Mth.lerp(partial, s.sitO, s.sit);
         float look = Mth.lerp(partial, s.lookO, s.look);
@@ -412,6 +420,18 @@ public final class MikikoAnimations {
         set(model.leftLeg, t[9], t[10], t[11], fly);
         // keep looking ahead while the body leans forward
         model.head.xRot -= 1.0F * fast * fly;
+    }
+
+    /** Asleep on his side: knees drawn up, one arm reaching out past the pillow, head nestled in, slow breathing. */
+    private static void sleepPose(HumanoidModel<?> model, float age) {
+        float breathe = Mth.sin(age * 0.08F) * 0.03F;
+        model.head.xRot = 0.2F;
+        model.head.yRot = 0F;
+        model.head.zRot = 0.3F;
+        set(model.rightArm, -1.55F + breathe, 0.35F, 0.1F, 1F);       // stretched out in front
+        set(model.leftArm, -0.9F - breathe, -0.25F, -0.15F, 1F);      // resting, bent
+        set(model.rightLeg, -0.75F, 0.1F, 0.05F, 1F);                 // curled
+        set(model.leftLeg, -0.45F, -0.1F, -0.05F, 1F);
     }
 
     /** Is a jukebox playing "mall" close by? */
@@ -625,6 +645,18 @@ public final class MikikoAnimations {
     @SubscribeEvent
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !isMikiko(p)) return;
+        if (p.isSleeping()) {
+            // roll from lying on his back onto his side (the pillow side), around the length of his body
+            net.minecraft.core.Direction bed = p.getBedOrientation();
+            if (bed == null) return;
+            PoseStack pose = event.getPoseStack();
+            pose.pushPose();
+            TRANSFORMED.add(p.getId());
+            pose.translate(0, 0.15, 0);
+            pose.mulPose(Axis.of(new org.joml.Vector3f(bed.getStepX(), 0, bed.getStepZ())).rotationDegrees(75F));
+            pose.translate(0, -0.15, 0);
+            return;
+        }
         float[] m = bodyMotion(p, event.getPartialTick());
         if (m == null) return;
         PoseStack pose = event.getPoseStack();
