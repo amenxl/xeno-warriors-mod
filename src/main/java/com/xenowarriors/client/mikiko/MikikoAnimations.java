@@ -446,11 +446,10 @@ public final class MikikoAnimations {
                 set(model.rightArm, x, -0.1F, 0.15F, smooth(t / 3F) * (1F - smooth((t - 32F) / 2F)) + down * 0F);
                 if (t >= 6 && t < 30) model.head.xRot -= 0.45F * smooth((t - 6F) / 6F) * (1F - smooth((t - 24F) / 6F));   // watching it
             }
-            case BI_SHEATHE, BI_DRAW -> {
-                // reach back over his right shoulder, then bring the arm down
-                float reach = smooth(t / 8F) * (1F - smooth((t - 8F) / 8F));
-                set(model.rightArm, -2.75F, -0.6F, 0.35F, reach);
-            }
+            // with the sword lying across his back he keeps his right hand on its hilt, at his hip
+            case BI_SHEATHE -> set(model.rightArm, 0.5F, 0F, 0.55F, smooth(t / 8F));
+            case BI_BACK -> set(model.rightArm, 0.5F, 0F, 0.55F, 1F);
+            case BI_DRAW -> set(model.rightArm, 0.5F, 0F, 0.55F, 1F - smooth(t / 8F));
             default -> { }
         }
     }

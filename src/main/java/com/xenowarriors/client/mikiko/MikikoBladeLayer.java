@@ -72,7 +72,7 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
             pose.mulPose(Axis.XP.rotationDegrees(u * 720F));     // two full flips
             pose.mulPose(Axis.ZP.rotationDegrees(45F));
         } else {
-            pose.translate(0F, 0.42F, 0.26F);                    // across his back
+            pose.translate(0.05F, 0.58F, 0.3F);                  // across his lower back, hilt in his right hand
             pose.mulPose(Axis.ZP.rotationDegrees(-45F));         // lying sideways (horizontal) across his back
         }
         pose.scale(1.1F, 1.1F, 1.1F);

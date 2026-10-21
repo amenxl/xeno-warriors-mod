@@ -37,7 +37,8 @@ public class FoxMenu extends AbstractContainerMenu {
             Slot armorSlot = new Slot(armor, i, 8, 18 + i * 18) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    if (slot == EquipmentSlot.MAINHAND) return stack.getItem() instanceof net.minecraft.world.item.SwordItem;
+                    if (slot == EquipmentSlot.MAINHAND) return stack.getItem() instanceof net.minecraft.world.item.SwordItem
+                            && !com.xenowarriors.mikiko.Hekublade.isBlade(stack);    // the Hekublade stays with Mikiko
                     return stack.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot;
                 }
 
@@ -54,7 +55,12 @@ public class FoxMenu extends AbstractContainerMenu {
             addSlot(armorSlot);
         }
         for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < 9; c++) addSlot(new Slot(storage, c + r * 9, 30 + c * 18, 18 + r * 18));
+            for (int c = 0; c < 9; c++) addSlot(new Slot(storage, c + r * 9, 30 + c * 18, 18 + r * 18) {
+                @Override
+                public boolean mayPlace(ItemStack stack) {
+                    return !com.xenowarriors.mikiko.Hekublade.isBlade(stack);
+                }
+            });
         }
         int py = 18 + Math.max(rows, GEAR) * 18 + 14;
         for (int r = 0; r < 3; r++) {

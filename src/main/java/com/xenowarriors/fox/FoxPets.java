@@ -143,7 +143,7 @@ public final class FoxPets {
             if (event.getHand() != InteractionHand.MAIN_HAND) return;
             if (p.isShiftKeyDown()) {
                 putOnBack(p, fox);
-            } else if (stack.getItem() instanceof net.minecraft.world.item.SwordItem) {
+            } else if (stack.getItem() instanceof net.minecraft.world.item.SwordItem && !com.xenowarriors.mikiko.Hekublade.isBlade(stack)) {
                 giveSword(p, fox, stack, event.getHand());
             } else if (isRabbit(stack) && fox.getHealth() < fox.getMaxHealth()) {
                 fox.heal(6F);
