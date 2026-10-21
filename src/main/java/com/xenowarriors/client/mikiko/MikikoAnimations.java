@@ -45,6 +45,9 @@ import java.util.Set;
  *  - poisoned and standing still: down on one knee, hand on the ground, trying to get up
  *  - double jump: press jump in mid-air for a wind-powered front flip
  *  - flying: hovers loosely with a bob; speeds into a superhero lean, banking into turns
+ *  - eating: holds the food up to his mouth with both hands and chews
+ * Attack animations only play on a fully charged swing (after the attack cooldown); spam-clicking
+ * just does the normal weak swing and doesn't move the combo along.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
@@ -89,6 +92,8 @@ public final class MikikoAnimations {
         int jumpStart = -100;
         boolean doubleJumped;
         int airTicks;
+        float strengthLastTick = 1F;   // your own attack charge as of last tick
+        int lastSwingStart = -1000;    // other players: when they last swung
     }
 
     public static void setPoisoned(int entityId, boolean poisoned) {
@@ -147,7 +152,9 @@ public final class MikikoAnimations {
                 && (!s.lastSwinging || p.swingTime < s.lastSwingTime);
         s.lastSwinging = p.swinging;
         s.lastSwingTime = p.swingTime;
-        if (swingStart && !mining(p)) startAttack(p, s, now);
+        if (swingStart && !mining(p) && charged(p, s, now)) startAttack(p, s, now);
+        if (swingStart) s.lastSwingStart = now;
+        if (p == Minecraft.getInstance().player) s.strengthLastTick = p.getAttackStrengthScale(0F);
 
         // strike effects
         if (s.move != null) {
@@ -241,6 +248,18 @@ public final class MikikoAnimations {
         return p.pick(4.5, 1F, false).getType() == HitResult.Type.BLOCK;
     }
 
+    /** Was this swing fully charged? Exact for your own player; for others, judged from the time since their last swing. */
+    private static boolean charged(AbstractClientPlayer p, State s, int now) {
+        if (p == Minecraft.getInstance().player) return s.strengthLastTick >= 0.9F;
+        double speed = 4.0;
+        for (var mod : p.getMainHandItem().getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND)
+                .get(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED)) {
+            if (mod.getOperation() == net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION) speed += mod.getAmount();
+        }
+        double delay = 20.0 / Math.max(0.1, speed);
+        return now - s.lastSwingStart >= delay * 0.9;
+    }
+
     private static void startAttack(AbstractClientPlayer p, State s, int now) {
         ItemStack held = p.getMainHandItem();
         boolean flying = FlightTracker.isFlying(p) || p.isFallFlying();
@@ -316,6 +335,9 @@ public final class MikikoAnimations {
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
+        if (player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
+            eatPose(model, player.getTicksUsingItem() + partial, ageInTicks);
+        }
     }
 
     private static void movePose(HumanoidModel<?> model, Move m, float p) {
@@ -355,6 +377,15 @@ public final class MikikoAnimations {
         set(model.leftLeg, t[9], t[10], t[11], fly);
         // keep looking ahead while the body leans forward
         model.head.xRot -= 1.0F * fast * fly;
+    }
+
+    /** Both hands bring the food up to his mouth; little chewing bobs. */
+    private static void eatPose(HumanoidModel<?> model, float using, float age) {
+        float w = smooth(using / 4F);
+        float chew = Mth.sin(age * 1.7F) * 0.07F;
+        set(model.rightArm, -1.5F + chew, -0.5F, 0.05F, w);
+        set(model.leftArm, -1.5F + chew, 0.5F, -0.05F, w);
+        model.head.xRot = Mth.lerp(w, model.head.xRot, 0.12F + chew * 0.6F);
     }
 
     private static void jumpPose(HumanoidModel<?> model, float p) {

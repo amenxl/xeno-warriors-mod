@@ -41,6 +41,8 @@ public final class MikikoCombat {
         if (ModCapabilities.getType(player) != CharacterType.MIKIKO || !player.getMainHandItem().isEmpty()) return;
         if (!event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)) return;
 
+        // only fully charged punches count toward the combo (spam-clicking does normal weak hits)
+        if (event.getAmount() < 0.85F) return;
         int now = player.tickCount;
         int[] c = COMBO.computeIfAbsent(player.getUUID(), k -> new int[]{0, -1000});
         if (now - c[1] > COMBO_TIMEOUT) c[0] = 0;
