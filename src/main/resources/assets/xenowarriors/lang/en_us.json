@@ -120,5 +120,6 @@
   "death.attack.xenowarriors.blazing_wind": "%1$s was swallowed by %2$s's Blazing Wind",
   "death.attack.xenowarriors.blazing_wind.item": "%1$s was swallowed by %2$s's Blazing Wind",
   "death.attack.xenowarriors.blazing_wind.player": "%1$s was swallowed by %2$s's Blazing Wind",
-  "item.xenowarriors.fox_whistle": "Fox Whistle"
+  "item.xenowarriors.fox_whistle": "Fox Whistle",
+  "key.xenowarriors.toggle_wings": "Take Out / Put Away Wings (Rhalix)"
 }

@@ -27,6 +27,9 @@ public final class ModKeyMappings {
     /** Mikiko: summon / put away the Hekublade. */
     public static final KeyMapping SUMMON_BLADE = key("summon_blade", GLFW.GLFW_KEY_G);
 
+    /** Rhalix: take out / put away his wings. */
+    public static final KeyMapping TOGGLE_WINGS = key("toggle_wings", GLFW.GLFW_KEY_H);
+
     private ModKeyMappings() {}
 
     private static KeyMapping key(String name, int defaultKey) {

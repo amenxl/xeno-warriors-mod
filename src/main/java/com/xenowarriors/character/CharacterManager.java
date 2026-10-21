@@ -24,6 +24,7 @@ public final class CharacterManager {
     public static void setCharacter(ServerPlayer player, CharacterType type) {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> data.setType(type));
         syncToTrackingAndSelf(player);
+        RhalixWings.sync(player, false);
         SkillManager.resetCooldowns(player);
         if (type != CharacterType.NONE) {
             player.sendSystemMessage(Component.translatable("message.xenowarriors.chosen", type.getDisplayName())

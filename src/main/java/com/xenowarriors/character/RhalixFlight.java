@@ -23,7 +23,7 @@ public final class RhalixFlight {
     private RhalixFlight() {}
 
     public static boolean canFly(Player p) {
-        return ModCapabilities.getType(p) == CharacterType.RHALIX && !p.isCreative() && !p.isSpectator();
+        return ModCapabilities.getType(p) == CharacterType.RHALIX && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p);
     }
 
     /** Blocks between the player's feet and the ground/water below (MAX_HEIGHT + 16 if there's nothing in range). */

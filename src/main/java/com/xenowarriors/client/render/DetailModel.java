@@ -90,6 +90,31 @@ public class DetailModel {
         leftWing.yRot = (leftWingY - sweep) * (1F - spread);
     }
 
+    /**
+     * Full wing pose.
+     * @param grow   0..1 how far out the wings are (they grow from his back when taken out)
+     * @param flap   up/down beat (radians, + = up)
+     * @param tuck   0..1 extra fold back along his back (resting on the ground)
+     * @param sweep  forward/back swing of the beat
+     * @param spread 0..1 opened out flat and wide
+     */
+    public void poseWings(boolean visible, float grow, float flap, float tuck, float sweep, float spread) {
+        if (!hasWings()) return;
+        boolean show = visible && grow > 0.01F;
+        rightWing.visible = show;
+        leftWing.visible = show;
+        float g = Math.max(0.01F, grow);
+        for (ModelPart w : new ModelPart[]{rightWing, leftWing}) {
+            w.xScale = g;
+            w.yScale = g;
+            w.zScale = g;
+        }
+        rightWing.zRot = rightWingZ + flap;
+        leftWing.zRot = leftWingZ - flap;
+        rightWing.yRot = (rightWingY * (1F + tuck) + sweep) * (1F - spread);
+        leftWing.yRot = (leftWingY * (1F + tuck) - sweep) * (1F - spread);
+    }
+
     /** Loads the detail model for a character, or returns null if it has none. */
     public static DetailModel load(CharacterType type) {
         return loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + type.getId() + ".json");

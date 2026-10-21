@@ -26,14 +26,24 @@ public final class GeoAnims {
 
     private GeoAnims() {}
 
+    public static final ResourceLocation RHALIX = XenoWarriors.id("animations/rhalix.animation.json");
+
     public static Animation get(String name) {
-        BakedAnimations baked = GeckoLibCache.getBakedAnimations().get(FILE);
+        return get(FILE, name);
+    }
+
+    public static Animation get(ResourceLocation file, String name) {
+        BakedAnimations baked = GeckoLibCache.getBakedAnimations().get(file);
         return baked == null ? null : baked.getAnimation(name);
     }
 
     /** Length in ticks (0 if the animation is missing). */
     public static float length(String name) {
-        Animation a = get(name);
+        return length(FILE, name);
+    }
+
+    public static float length(ResourceLocation file, String name) {
+        Animation a = get(file, name);
         return a == null ? 0F : (float) a.length();
     }
 
@@ -45,7 +55,11 @@ public final class GeoAnims {
 
     /** Poses the model at time t (ticks). Returns false if the animation isn't loaded. */
     public static boolean apply(HumanoidModel<?> model, String name, float t, boolean loop, float weight) {
-        Animation anim = get(name);
+        return apply(model, FILE, name, t, loop, weight);
+    }
+
+    public static boolean apply(HumanoidModel<?> model, ResourceLocation file, String name, float t, boolean loop, float weight) {
+        Animation anim = get(file, name);
         if (anim == null || weight <= 0F) return false;
         double len = anim.length();
         double time = loop && len > 0 ? t % len : Math.min(t, len);

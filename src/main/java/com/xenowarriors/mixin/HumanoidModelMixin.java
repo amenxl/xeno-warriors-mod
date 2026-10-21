@@ -25,6 +25,7 @@ public abstract class HumanoidModelMixin {
         if (self instanceof PlayerModel<?> && entity instanceof Player) {
             if (!SkillAnimations.apply((HumanoidModel<?>) self, entity, ageInTicks)) {
                 com.xenowarriors.client.mikiko.MikikoAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.RhalixWingsClient.applyBody((HumanoidModel<?>) self, (Player) entity, ageInTicks);
             }
         }
     }

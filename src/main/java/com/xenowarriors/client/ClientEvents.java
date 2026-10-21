@@ -51,6 +51,12 @@ public final class ClientEvents {
             }
         }
 
+        while (ModKeyMappings.TOGGLE_WINGS.consumeClick()) {
+            if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.RHALIX && !UltimateCutscene.active()) {
+                ModNetwork.sendToServer(new com.xenowarriors.network.ToggleWingsPacket());
+            }
+        }
+
         if (!pendingSelectScreen) return;
         if (mc.player != null && mc.level != null && mc.screen == null) {
             pendingSelectScreen = false;

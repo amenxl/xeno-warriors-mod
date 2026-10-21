@@ -15,6 +15,8 @@ public class PlayerCharacter {
     public final float[] statXp = new float[3];
     /** Mikiko's foxes: one compound per fox {uuid, name, level, xp, variant, gen, dead}. */
     public net.minecraft.nbt.ListTag pets = new net.minecraft.nbt.ListTag();
+    /** Rhalix: are his wings out (true) or put away (false)? */
+    public boolean wingsOut = true;
     /** The fox riding on his back (saved entity data), or empty. */
     public CompoundTag backFox = new CompoundTag();
     /** Total ticks Mikiko has spent flying (his flying gets better with practice). */
@@ -36,6 +38,7 @@ public class PlayerCharacter {
         this.flightTicks = other.flightTicks;
         this.pets = other.pets.copy();
         this.backFox = other.backFox.copy();
+        this.wingsOut = other.wingsOut;
     }
 
     public CompoundTag save() {
@@ -46,6 +49,7 @@ public class PlayerCharacter {
         tag.putInt("flight_ticks", flightTicks);
         tag.put("pets", pets.copy());
         tag.put("back_fox", backFox.copy());
+        tag.putBoolean("wings_in", !wingsOut);
         for (int i = 0; i < 3; i++) tag.putFloat("stat_xp_" + i, statXp[i]);
         return tag;
     }
@@ -55,6 +59,7 @@ public class PlayerCharacter {
         this.flightTicks = tag.getInt("flight_ticks");
         this.pets = tag.getList("pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");
+        this.wingsOut = !tag.getBoolean("wings_in");
         int[] lv = tag.getIntArray("stat_levels");
         for (int i = 0; i < 3; i++) {
             statLevel[i] = i < lv.length ? lv[i] : 0;

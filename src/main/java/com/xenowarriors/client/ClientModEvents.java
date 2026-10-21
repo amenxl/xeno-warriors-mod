@@ -40,6 +40,7 @@ public final class ClientModEvents {
     public static void registerKeys(RegisterKeyMappingsEvent event) {
         for (KeyMapping key : ModKeyMappings.SKILLS) event.register(key);
         event.register(ModKeyMappings.SUMMON_BLADE);
+        event.register(ModKeyMappings.TOGGLE_WINGS);
         event.register(ModKeyMappings.LOCK_ON);
         event.register(ModKeyMappings.KARMA_SENSE);
     }
