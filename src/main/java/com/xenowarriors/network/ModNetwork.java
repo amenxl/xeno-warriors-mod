@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "10";
+    private static final String VERSION = "11";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -105,6 +105,26 @@ public final class ModNetwork {
                 .encoder(FlightSkillPacket::encode)
                 .decoder(FlightSkillPacket::decode)
                 .consumerMainThread(FlightSkillPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(FoxSyncPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FoxSyncPacket::encode)
+                .decoder(FoxSyncPacket::decode)
+                .consumerMainThread(FoxSyncPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(RenameFoxPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(RenameFoxPacket::encode)
+                .decoder(RenameFoxPacket::decode)
+                .consumerMainThread(RenameFoxPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(BackFoxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(BackFoxPacket::encode)
+                .decoder(BackFoxPacket::decode)
+                .consumerMainThread(BackFoxPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(FoxLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FoxLevelPacket::encode)
+                .decoder(FoxLevelPacket::decode)
+                .consumerMainThread(FoxLevelPacket::handle)
                 .add();
     }
 

@@ -23,11 +23,17 @@ public final class ModItems {
     public static final RegistryObject<Item> SR_HOODIE = ITEMS.register("sr_hoodie",
             () -> new SrHoodieItem(new Item.Properties()));
 
+    public static final RegistryObject<Item> FOX_WHISTLE = ITEMS.register("fox_whistle",
+            () -> new FoxWhistleItem(new Item.Properties().stacksTo(1)));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.FOOD_AND_DRINKS) {
             event.accept(KARMA_POTION);
+        }
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(FOX_WHISTLE);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));

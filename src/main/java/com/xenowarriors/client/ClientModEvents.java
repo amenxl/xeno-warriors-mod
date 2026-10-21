@@ -75,6 +75,7 @@ public final class ClientModEvents {
             if (renderer != null) {
                 renderer.addLayer(new CharacterDetailLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.render.CharacterArmorLayer(renderer));
+                renderer.addLayer(new com.xenowarriors.client.fox.FoxBackLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));
             }
         }

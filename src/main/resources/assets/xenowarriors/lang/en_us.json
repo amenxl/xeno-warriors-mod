@@ -119,5 +119,6 @@
   "death.attack.xenowarriors.fire_blitz.player": "%1$s was blown up by %2$s's Fire Blitz",
   "death.attack.xenowarriors.blazing_wind": "%1$s was swallowed by %2$s's Blazing Wind",
   "death.attack.xenowarriors.blazing_wind.item": "%1$s was swallowed by %2$s's Blazing Wind",
-  "death.attack.xenowarriors.blazing_wind.player": "%1$s was swallowed by %2$s's Blazing Wind"
+  "death.attack.xenowarriors.blazing_wind.player": "%1$s was swallowed by %2$s's Blazing Wind",
+  "item.xenowarriors.fox_whistle": "Fox Whistle"
 }
