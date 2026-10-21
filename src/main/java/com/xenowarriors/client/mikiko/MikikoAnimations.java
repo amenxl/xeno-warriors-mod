@@ -831,6 +831,13 @@ public final class MikikoAnimations {
         return new float[]{(r.nextFloat() - 0.5F) * 2.2F, (r.nextFloat() - 0.6F) * 0.5F};
     }
 
+    /** The badly-hurt pose with a sword: drawn lying across his shoulders behind his head instead of in his hand. */
+    public static boolean swordShouldered(net.minecraft.world.entity.LivingEntity e) {
+        if (!(e instanceof Player p)) return false;
+        State s = STATES.get(p.getId());
+        return s != null && s.swordTired > 0.5F && p.getMainHandItem().getItem() instanceof SwordItem;
+    }
+
     /** 30% health or less. */
     public static boolean lowHealth(Player p) {
         return p.isAlive() && !p.isCreative() && p.getHealth() <= p.getMaxHealth() * 0.3F;
@@ -873,7 +880,8 @@ public final class MikikoAnimations {
      */
     private static void swordTiredPose(HumanoidModel<?> m, float w, float age, boolean still) {
         float breath = Mth.sin(age * 0.3F);
-        set(m.rightArm, -2.75F + breath * 0.04F, -0.35F, -0.3F, w);
+        // right hand reaching up and back to hold the sword lying across his shoulders behind his head
+        set(m.rightArm, -3.75F + breath * 0.04F, 0F, 0.12F, w);
         if (still) {
             set(m.leftArm, 0.06F + breath * 0.03F, 0F, -0.04F, w);
             m.body.xRot = Mth.lerp(w, m.body.xRot, 0.12F);

@@ -108,16 +108,21 @@ public class FoxMenu extends AbstractContainerMenu {
     /** The fox's worn armor, read and written straight on the fox (server side). */
     public static class ArmorContainer extends SimpleContainer {
         private final Fox fox;
+        private boolean loading;
 
         public ArmorContainer(Fox fox) {
             super(GEAR);
             this.fox = fox;
+            // fill in what it's wearing without writing back halfway (that used to wipe the later slots)
+            loading = true;
             for (int i = 0; i < GEAR; i++) super.setItem(i, fox.getItemBySlot(ARMOR[i]).copy());
+            loading = false;
         }
 
         @Override
         public void setChanged() {
             super.setChanged();
+            if (loading) return;
             for (int i = 0; i < GEAR; i++) {
                 fox.setItemSlot(ARMOR[i], getItem(i).copy());
                 fox.setDropChance(ARMOR[i], 0F);     // it keeps its armor even if it runs away

@@ -33,6 +33,17 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
             itemRenderer.renderItem(player, MikikoAnimations.bladeStack(), ItemDisplayContext.THIRD_PERSON_LEFT_HAND, true, pose, buffers, light);
             pose.popPose();
         }
+        if (MikikoAnimations.swordShouldered(player)) {
+            // hurt and tired: the sword lies horizontally across his shoulders, behind his head (clear of it)
+            pose.pushPose();
+            getParentModel().body.translateAndRotate(pose);
+            pose.translate(-0.08F, -0.34F, 0.42F);
+            pose.mulPose(Axis.ZP.rotationDegrees(-45F));
+            pose.scale(1.05F, 1.05F, 1.05F);
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(player.getMainHandItem(), ItemDisplayContext.NONE,
+                    light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, pose, buffers, player.level(), player.getId());
+            pose.popPose();
+        }
         float[] bi = MikikoAnimations.bladeIdle(player, partialTick);
         if (bi != null) renderIdleBlade(pose, buffers, light, player, (int) bi[0], bi[1]);
         if (!MikikoAnimations.showSummonedBlade(player)) return;
