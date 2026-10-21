@@ -482,6 +482,11 @@ public final class MikikoAnimations {
     }
 
     @SubscribeEvent
+    public static void onRenderLevel(net.minecraftforge.client.event.RenderLevelStageEvent event) {
+        if (event.getStage() == net.minecraftforge.client.event.RenderLevelStageEvent.Stage.AFTER_PARTICLES) MikikoEffects.renderXl(event);
+    }
+
+    @SubscribeEvent
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !isMikiko(p)) return;
         float[] m = bodyMotion(p, event.getPartialTick());

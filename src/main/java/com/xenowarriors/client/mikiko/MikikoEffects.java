@@ -91,6 +91,49 @@ final class MikikoEffects {
     /** quick = the short version used when the blade flashes in mid-combo. */
     static void startSummon(Player p, boolean quick) {
         SUMMONS.put(p.getId(), new int[]{p.tickCount, quick ? 5 : 11});
+        XL.put(p.getId(), new int[]{p.tickCount + (quick ? 5 : 11), quick ? 1 : 0});
+    }
+
+    // ---- the little "XL" (AmenXL Mikiko) that pops up over his hand as the blade forms ----
+    private static final java.util.Map<Integer, int[]> XL = new java.util.HashMap<>();   // id -> {show tick, quick}
+    private static final int XL_LIFE = 28;
+
+    static void renderXl(net.minecraftforge.client.event.RenderLevelStageEvent event) {
+        if (XL.isEmpty()) return;
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level == null) { XL.clear(); return; }
+        float partial = event.getPartialTick();
+        var cam = event.getCamera();
+        var buffers = mc.renderBuffers().bufferSource();
+        var font = mc.font;
+        var it = XL.entrySet().iterator();
+        while (it.hasNext()) {
+            var e = it.next();
+            if (!(mc.level.getEntity(e.getKey()) instanceof Player p)) { it.remove(); continue; }
+            float age = p.tickCount + partial - e.getValue()[0];
+            if (age > XL_LIFE) { it.remove(); continue; }
+            if (age < 0) continue;
+            boolean quick = e.getValue()[1] == 1;
+            float pop = age < 4 ? 1.6F - 0.6F * (age / 4F) : 1F;                  // pops in big, settles
+            float fade = Mth.clamp((XL_LIFE - age) / 10F, 0F, 1F);
+            Vec3 at = rightHand(p).add(0, 0.38 + age * 0.016, 0).subtract(cam.getPosition());
+            float scale = (quick ? 0.014F : 0.02F) * pop;
+            var pose = event.getPoseStack();
+            pose.pushPose();
+            pose.translate(at.x, at.y, at.z);
+            pose.mulPose(cam.rotation());
+            pose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(Mth.sin(age * 0.5F) * 4F));
+            pose.scale(-scale, -scale, scale);
+            int alpha = Math.max(8, Math.round(fade * 255)) << 24;
+            float w = font.width("XL");
+            var x = net.minecraft.network.chat.Component.literal("X").withStyle(s -> s.withBold(true)).getVisualOrderText();
+            var l = net.minecraft.network.chat.Component.literal("L").withStyle(s -> s.withBold(true)).getVisualOrderText();
+            int light = net.minecraft.client.renderer.LightTexture.FULL_BRIGHT;
+            font.drawInBatch8xOutline(x, -w / 2F, -4, 0xE81E1E | alpha, 0xFFF4E8 | alpha, pose.last().pose(), buffers, light);
+            font.drawInBatch8xOutline(l, -w / 2F + font.width("X") + 1, -4, 0xFF8A12 | alpha, 0xFFF4E8 | alpha, pose.last().pose(), buffers, light);
+            pose.popPose();
+        }
+        buffers.endBatch();
     }
 
     static void tickSummons(ClientLevel level) {
