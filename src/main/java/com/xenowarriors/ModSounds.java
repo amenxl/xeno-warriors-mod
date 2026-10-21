@@ -53,5 +53,17 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> SKYBOUND_PURSUIT = SOUNDS.register("music_disc.skybound_pursuit",
             () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.skybound_pursuit")));
 
+    /** Music disc: "Virtual Grind". */
+    public static final RegistryObject<SoundEvent> VIRTUAL_GRIND = SOUNDS.register("music_disc.virtual_grind",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.virtual_grind")));
+
+    /** Music disc: "Corrupted Pulse". */
+    public static final RegistryObject<SoundEvent> CORRUPTED_PULSE = SOUNDS.register("music_disc.corrupted_pulse",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.corrupted_pulse")));
+
+    /** Music disc: "Max's Chill Day". */
+    public static final RegistryObject<SoundEvent> MAXS_CHILL_DAY = SOUNDS.register("music_disc.maxs_chill_day",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.maxs_chill_day")));
+
     private ModSounds() {}
 }

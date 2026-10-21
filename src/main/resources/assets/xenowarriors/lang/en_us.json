@@ -141,5 +141,11 @@
   "item.xenowarriors.music_disc_mimicry_eye_catcher": "Mimicry Eye Catcher",
   "item.xenowarriors.music_disc_mimicry_eye_catcher.desc": "Mimicry Eye Catcher",
   "item.xenowarriors.music_disc_skybound_pursuit": "SkyBound Pursuit",
-  "item.xenowarriors.music_disc_skybound_pursuit.desc": "SkyBound Pursuit"
+  "item.xenowarriors.music_disc_skybound_pursuit.desc": "SkyBound Pursuit",
+  "item.xenowarriors.music_disc_virtual_grind": "Virtual Grind",
+  "item.xenowarriors.music_disc_virtual_grind.desc": "Virtual Grind",
+  "item.xenowarriors.music_disc_corrupted_pulse": "Corrupted Pulse",
+  "item.xenowarriors.music_disc_corrupted_pulse.desc": "Corrupted Pulse",
+  "item.xenowarriors.music_disc_maxs_chill_day": "Max's Chill Day",
+  "item.xenowarriors.music_disc_maxs_chill_day.desc": "Max's Chill Day"
 }

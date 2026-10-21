@@ -76,6 +76,21 @@ public final class ModItems {
             () -> new net.minecraft.world.item.RecordItem(14, com.xenowarriors.ModSounds.SKYBOUND_PURSUIT,
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 2546));
 
+    /** Music disc: "Virtual Grind". */
+    public static final RegistryObject<Item> MUSIC_DISC_VIRTUAL_GRIND = ITEMS.register("music_disc_virtual_grind",
+            () -> new net.minecraft.world.item.RecordItem(10, com.xenowarriors.ModSounds.VIRTUAL_GRIND,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 1807));
+
+    /** Music disc: "Corrupted Pulse". */
+    public static final RegistryObject<Item> MUSIC_DISC_CORRUPTED_PULSE = ITEMS.register("music_disc_corrupted_pulse",
+            () -> new net.minecraft.world.item.RecordItem(5, com.xenowarriors.ModSounds.CORRUPTED_PULSE,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 2923));
+
+    /** Music disc: "Max's Chill Day". */
+    public static final RegistryObject<Item> MUSIC_DISC_MAXS_CHILL_DAY = ITEMS.register("music_disc_maxs_chill_day",
+            () -> new net.minecraft.world.item.RecordItem(2, com.xenowarriors.ModSounds.MAXS_CHILL_DAY,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 1413));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
@@ -94,6 +109,9 @@ public final class ModItems {
             event.accept(MUSIC_DISC_SMOKE_BREAK);
             event.accept(MUSIC_DISC_MIMICRY_EYE_CATCHER);
             event.accept(MUSIC_DISC_SKYBOUND_PURSUIT);
+            event.accept(MUSIC_DISC_VIRTUAL_GRIND);
+            event.accept(MUSIC_DISC_CORRUPTED_PULSE);
+            event.accept(MUSIC_DISC_MAXS_CHILL_DAY);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));

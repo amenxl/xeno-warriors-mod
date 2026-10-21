@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "xenowarriors:item/music_disc_maxs_chill_day"
+  }
+}

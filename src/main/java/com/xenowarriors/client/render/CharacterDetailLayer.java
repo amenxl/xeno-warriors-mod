@@ -70,6 +70,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (type == CharacterType.RHALIX) {
             if (com.xenowarriors.client.RhalixWingsClient.hyped(p, 0F) > 0.5F) return (p.tickCount / 40) % 2 == 0 ? "grin" : "excited";
             if (com.xenowarriors.client.RhalixWingsClient.sadVibe(p, 0F) > 0.5F) return "sad";
+            if (com.xenowarriors.client.RhalixWingsClient.chill(p, 0F) > 0.5F) {
+                String[] c = {"calm", "smug", "hum", "calm"};
+                return c[(p.tickCount / 60) % c.length];
+            }
             if (com.xenowarriors.client.RhalixWingsClient.smoking(p, 0F) > 0.5F) {
                 float st = com.xenowarriors.client.RhalixWingsClient.smokeTime(p, p.tickCount);
                 return st >= 56 && st < 84 ? "hum" : "calm";      // eyes closed, breathing out

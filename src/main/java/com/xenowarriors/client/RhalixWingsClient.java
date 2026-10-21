@@ -49,6 +49,11 @@ public final class RhalixWingsClient {
         return d == null ? 0F : Mth.lerp(partial, d[3], d[2]);
     }
 
+    public static float chill(Player p, float partial) {
+        float[] d = DANCE.get(p.getId());
+        return d == null || d.length < 15 ? 0F : Mth.lerp(partial, d[13], d[12]);
+    }
+
     public static float hyped(Player p, float partial) {
         float[] d = DANCE.get(p.getId());
         return d == null || d.length < 12 ? 0F : Mth.lerp(partial, d[10], d[9]);
@@ -207,6 +212,11 @@ public final class RhalixWingsClient {
         if (sad > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "sad_vibe", age, true, sad);
         float dance = gravityDance(p, partial);
         if (dance > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "gravity_dance", danceTime(p, age), true, dance);
+        float chillW = chill(p, partial);
+        if (chillW > 0F) {
+            float[] d = DANCE.get(p.getId());
+            GeoAnims.apply(model, GeoAnims.RHALIX, "chill_vibe", age - d[14], true, chillW);
+        }
         float hype = hyped(p, partial);
         if (hype > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "hype", hypeTime(p, age), true, hype);
         float smoke = smoking(p, partial);
@@ -266,7 +276,7 @@ public final class RhalixWingsClient {
                 continue;
             }
             // dancing to "Gravity Glitch Duel", sadly vibing to "Lunar Ascendence" (when he's standing about)
-            float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[12]);
+            float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[15]);
             boolean stillNow = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging;
             d[5] = stillNow ? d[5] + 1 : 0;
             boolean standing = d[5] >= 10 && !FlightTracker.isFlying(p);
@@ -281,6 +291,10 @@ public final class RhalixWingsClient {
             d[7] = d[6];
             d[6] += Mth.clamp((smoke ? 1F : 0F) - d[6], -0.08F, 0.08F);
             if (d[6] > 0.5F) smokeParticles(mc, p, (p.tickCount - d[8]) % 120F);
+            boolean chill = standing && !gravity && !lunar && !smoke && !hyped && DiscTracker.near(p, DiscTracker.CHILL);
+            if (chill && d[12] <= 0F) d[14] = p.tickCount;
+            d[13] = d[12];
+            d[12] += Mth.clamp((chill ? 1F : 0F) - d[12], -0.1F, 0.1F);
             if (gravity && d[0] <= 0F) d[4] = p.tickCount;
             d[1] = d[0];
             d[0] += Mth.clamp((gravity ? 1F : 0F) - d[0], -0.1F, 0.1F);

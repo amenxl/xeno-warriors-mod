@@ -84,5 +84,29 @@
         "stream": true
       }
     ]
+  },
+  "music_disc.virtual_grind": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/virtual_grind",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.corrupted_pulse": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/corrupted_pulse",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.maxs_chill_day": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/maxs_chill_day",
+        "stream": true
+      }
+    ]
   }
 }

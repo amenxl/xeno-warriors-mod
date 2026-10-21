@@ -23,6 +23,9 @@ public final class DiscTracker {
     public static final String SMOKE = "music_disc.smoke_break";
     public static final String MIMICRY = "music_disc.mimicry_eye_catcher";
     public static final String SKYBOUND = "music_disc.skybound_pursuit";
+    public static final String VIRTUAL_GRIND = "music_disc.virtual_grind";
+    public static final String CORRUPTED_PULSE = "music_disc.corrupted_pulse";
+    public static final String CHILL = "music_disc.maxs_chill_day";
 
     /** Jump height for the hyped "SkyBound Pursuit" dance: a hop on every beat (10 ticks). */
     public static float hypeLift(float t) {

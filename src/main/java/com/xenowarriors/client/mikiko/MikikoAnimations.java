@@ -111,6 +111,9 @@ public final class MikikoAnimations {
         float fly, flyO, fast, fastO, roll, rollO;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
+        String discAnim;
+        float discW, discWO;
+        int discStart;
         float groove, grooveO, alert, alertO, hype, hypeO;
         int grooveStart, alertStart, hypeStart;
         float vibe, vibeO, robot, robotO, pet, petO, tired, tiredO, swordTired, swordTiredO;
@@ -264,6 +267,34 @@ public final class MikikoAnimations {
         s.hypeO = s.hype;
         s.hype = approach(s.hype, hyped ? 1F : 0F, 0.15F);
         groovy |= hyped;     // (counts as dancing for everything else: no sitting, idles, vibing...)
+        // more songs: shadow boxing (with a rage yell), a sad slow dance, chill vibing
+        String want = null;
+        if (!poisoned && !groovy && s.still >= 10) {
+            if (com.xenowarriors.client.DiscTracker.near(p, com.xenowarriors.client.DiscTracker.VIRTUAL_GRIND)) want = "shadow_box";
+            else if (com.xenowarriors.client.DiscTracker.near(p, com.xenowarriors.client.DiscTracker.CORRUPTED_PULSE)) want = "sad_dance";
+            else if (com.xenowarriors.client.DiscTracker.near(p, com.xenowarriors.client.DiscTracker.CHILL)) want = "chill_vibe";
+        }
+        if (want != null && !want.equals(s.discAnim)) {
+            s.discAnim = want;
+            s.discStart = p.tickCount;
+            s.discW = 0F;
+        }
+        s.discWO = s.discW;
+        s.discW = approach(s.discW, want != null ? 1F : 0F, 0.1F);
+        if (want == null && s.discW <= 0F) s.discAnim = null;
+        if ("shadow_box".equals(s.discAnim) && s.discW > 0.5F) {
+            int rt = (p.tickCount - s.discStart) % 200;
+            if (rt >= 150 && rt < 186 && rt % 4 == 0) {
+                // yelling with rage: steam and sparks flaring off him
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.ANGRY_VILLAGER, p.getX(), p.getY() + 2.1, p.getZ(), 0, 0, 0);
+                for (int i = 0; i < 3; i++) {
+                    double a = RANDOM.nextDouble() * Math.PI * 2;
+                    level.addParticle(net.minecraft.core.particles.ParticleTypes.FLAME, p.getX() + Math.cos(a) * 0.5, p.getY() + 0.3,
+                            p.getZ() + Math.sin(a) * 0.5, 0, 0.06, 0);
+                }
+            }
+        }
+        groovy |= want != null;
         // "Mimicry Eye Catcher": on alert, guard up, looking all around
         boolean alert = !poisoned && !groovy && s.still >= 10
                 && com.xenowarriors.client.DiscTracker.near(p, com.xenowarriors.client.DiscTracker.MIMICRY);
@@ -502,6 +533,23 @@ public final class MikikoAnimations {
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
         if (bi != null && (int) bi[0] == BI_HOLD && bi[1] < 25 && (s.still - BLADE_IDLE_AFTER) % BLADE_CYCLE < 80) return "smug";
         if (s.hype > 0.5F) return (p.tickCount / 40) % 2 == 0 ? "excited" : "grin";
+        if (s.discAnim != null && s.discW > 0.5F) {
+            switch (s.discAnim) {
+                case "shadow_box" -> {
+                    int rt = (p.tickCount - s.discStart) % 200;
+                    if (rt >= 146 && rt < 190) return "shout";            // yelling with rage
+                    return (rt / 30) % 2 == 0 ? "fierce" : "focused";
+                }
+                case "sad_dance" -> {
+                    return "sad";
+                }
+                case "chill_vibe" -> {
+                    String[] c = {"calm", "hum", "happy", "calm"};
+                    return c[(p.tickCount / 60) % c.length];
+                }
+                default -> { }
+            }
+        }
         if (s.groove > 0.5F) {
             String[] g = {"excited", "grin", "cool", "excited", "smug"};
             return g[(p.tickCount / 50) % g.length];
@@ -622,6 +670,8 @@ public final class MikikoAnimations {
         if (robot > 0F) GeoAnims.apply(model, "robot_dance", ageInTicks, true, robot);
         float groove = Mth.lerp(partial, s.grooveO, s.groove);
         if (groove > 0F) GeoAnims.apply(model, "breakdance", ageInTicks - s.grooveStart, true, groove);
+        float discW = Mth.lerp(partial, s.discWO, s.discW);
+        if (s.discAnim != null && discW > 0F && s.move == null) GeoAnims.apply(model, s.discAnim, ageInTicks - s.discStart, true, discW);
         float hypeW = Mth.lerp(partial, s.hypeO, s.hype);
         if (hypeW > 0F) GeoAnims.apply(model, "hype", ageInTicks - s.hypeStart, true, hypeW);
         float alertW = Mth.lerp(partial, s.alertO, s.alert);
