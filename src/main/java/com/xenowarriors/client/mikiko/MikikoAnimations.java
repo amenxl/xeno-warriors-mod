@@ -923,7 +923,7 @@ public final class MikikoAnimations {
     }
 
     @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
-    public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+    public static void onDivePre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         float d = event.isCanceled() ? 0F : dive(event.getEntity(), event.getPartialTick());
         if (d <= 0F) return;
         var pose = event.getPoseStack();
@@ -938,7 +938,7 @@ public final class MikikoAnimations {
     }
 
     @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
-    public static void onRenderPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
+    public static void onDivePost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
         if (DIVING.remove(event.getEntity().getId())) event.getPoseStack().popPose();
     }
 
