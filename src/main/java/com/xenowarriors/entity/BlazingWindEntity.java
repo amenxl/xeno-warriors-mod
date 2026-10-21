@@ -40,7 +40,7 @@ import java.util.UUID;
 public class BlazingWindEntity extends Entity {
     public static final int SEND = 44, MOVE = 54, BURST = 260, END = 275, CUTSCENE_END = 104;
     public static final float SPEED = 0.22F, MAX_HEIGHT = 16F, MAX_RADIUS = 4.2F;
-    public static final double PULL_RADIUS = 15, HURT_RADIUS = 4.8;
+    public static final double PULL_RADIUS = 26, HURT_RADIUS = 4.8;
     public static final float DAMAGE = 2.5F, BURST_DAMAGE = 5F;
 
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.OPTIONAL_UUID);
@@ -155,9 +155,9 @@ public class BlazingWindEntity extends Entity {
                 if (dist > PULL_RADIUS || dist < 1.0E-3) continue;
                 Vec3 in = to.scale(1 / dist);
                 Vec3 swirl = new Vec3(-in.z, 0, in.x);
-                double pull = 0.06 + 0.1 * (1 - dist / PULL_RADIUS);
-                double lift = dist < r + 1.5 ? 0.09 : 0;
-                Vec3 v = e.getDeltaMovement().add(in.scale(pull)).add(swirl.scale(dist < r + 2 ? 0.14 : 0.05));
+                double pull = 0.2 + 0.35 * (1 - dist / PULL_RADIUS);     // a strong, hungry vortex
+                double lift = dist < r + 1.5 ? 0.16 : 0;
+                Vec3 v = e.getDeltaMovement().add(in.scale(pull)).add(swirl.scale(dist < r + 2 ? 0.2 : 0.08));
                 double top = getY() + h * 0.7;
                 v = new Vec3(v.x * 0.9, e.getY() > top ? Math.min(v.y, 0) : Math.max(v.y, lift > 0 ? lift : v.y), v.z * 0.9);
                 e.setDeltaMovement(v);
