@@ -29,7 +29,8 @@ import java.util.List;
 
 /**
  * More /xeno commands:
- *   help, info [player], wings, blade, foxes, fox call|heal|release|setlevel, karma, stat, cooldowns
+ *   help, info [player], wings, blade [realm|plea|answer], foxking, sealed, foxes, fox call|heal|release|setlevel,
+ *   party, duel, giveup, karma, stat, level, skill, bladelevel, karmasense, cooldowns
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class XenoCommands {
@@ -58,6 +59,10 @@ public final class XenoCommands {
                     {"/xeno wings", "Rhalix: take out / put away your wings"},
                     {"/xeno blade", "Mikiko: summon / put away the Hekublade"},
                     {"/xeno blade realm", "Mikiko: enter / leave the world inside the Hekublade"},
+                    {"/xeno blade plea", "sealed in a Hekublade: ask to be freed"},
+                    {"/xeno blade answer <player> yes|no", "Mikiko: free a sealed player, or not"},
+                    {"/xeno sealed", "Mikiko: who's sealed in your Hekublade"},
+                    {"/xeno foxking", "Mikiko: Fox King mode (same as N)"},
                     {"/xeno foxes", "Mikiko: list your foxes"},
                     {"/xeno fox call", "call your foxes (like the whistle)"},
                     {"/xeno fox release <name>", "let a fox go back to the wild"},
@@ -67,7 +72,11 @@ public final class XenoCommands {
                     {"/xeno duel challenge <player>|accept|decline|forfeit", "PvP battles"},
                     {"/xeno giveup", "when downed: stop waiting for a revive"},
                     {"/xeno karma set|add <amount> [players]", "change Karma (op)"},
-                    {"/xeno stat <speed|attack|defense> <level> [players]", "set a stat level (op)"},
+                    {"/xeno stat <speed|attack|defense> <level> [players]", "set a stat level, up to " + Stat.MAX_LEVEL + " (op)"},
+                    {"/xeno level <level> [players]", "set Character Level, up to " + Stats.MAX_CHARACTER_LEVEL + " (op)"},
+                    {"/xeno skill <mining|crafting|smelting> <level> [players]", "set a skill level (op)"},
+                    {"/xeno bladelevel <level> [players]", "set the Hekublade's level (op)"},
+                    {"/xeno karmasense <uses> [players]", "set Karma Sensing practice (op)"},
                     {"/xeno cooldowns [players]", "reset skill cooldowns (op)"},
                     {"/xeno set <players> <character>", "set a character (op)"},
                     {"/xeno reset <players>", "clear a character (op)"},
@@ -160,11 +169,11 @@ public final class XenoCommands {
                                         .executes(ctx -> foxLevel(ctx, StringArgumentType.getString(ctx, "name")))))));
 
         root.then(Commands.literal("karma").requires(s -> s.hasPermission(2))
-                .then(Commands.literal("set").then(Commands.argument("amount", FloatArgumentType.floatArg(0, Karma.MAX))
+                .then(Commands.literal("set").then(Commands.argument("amount", FloatArgumentType.floatArg(0, Karma.MAX * 1.5F))
                         .executes(ctx -> karma(ctx, List.of(ctx.getSource().getPlayerOrException()), true))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), true)))))
-                .then(Commands.literal("add").then(Commands.argument("amount", FloatArgumentType.floatArg(-Karma.MAX, Karma.MAX))
+                .then(Commands.literal("add").then(Commands.argument("amount", FloatArgumentType.floatArg(-Karma.MAX * 1.5F, Karma.MAX * 1.5F))
                         .executes(ctx -> karma(ctx, List.of(ctx.getSource().getPlayerOrException()), false))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), false))))));
@@ -235,6 +244,58 @@ public final class XenoCommands {
         }
         root.then(stat);
 
+        root.then(Commands.literal("level").requires(s -> s.hasPermission(2))
+                .then(Commands.argument("level", IntegerArgumentType.integer(0, Stats.MAX_CHARACTER_LEVEL))
+                        .executes(ctx -> setLevel(ctx, List.of(ctx.getSource().getPlayerOrException())))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> setLevel(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
+
+        var skill = Commands.literal("skill").requires(s -> s.hasPermission(2));
+        for (String sk : new String[]{"mining", "crafting", "smelting"}) {
+            int max = sk.equals("mining") ? com.xenowarriors.stats.Mining.MAX_LEVEL : com.xenowarriors.stats.Crafting.MAX_LEVEL;
+            skill.then(Commands.literal(sk).then(Commands.argument("level", IntegerArgumentType.integer(0, max))
+                    .executes(ctx -> setSkill(ctx, sk, List.of(ctx.getSource().getPlayerOrException())))
+                    .then(Commands.argument("targets", EntityArgument.players())
+                            .executes(ctx -> setSkill(ctx, sk, EntityArgument.getPlayers(ctx, "targets"))))));
+        }
+        root.then(skill);
+
+        root.then(Commands.literal("bladelevel").requires(s -> s.hasPermission(2))
+                .then(Commands.argument("level", IntegerArgumentType.integer(1, com.xenowarriors.mikiko.BladeLevel.MAX))
+                        .executes(ctx -> setBlade(ctx, List.of(ctx.getSource().getPlayerOrException())))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> setBlade(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
+
+        root.then(Commands.literal("karmasense").requires(s -> s.hasPermission(2))
+                .then(Commands.argument("uses", IntegerArgumentType.integer(0, 100000))
+                        .executes(ctx -> setSense(ctx, List.of(ctx.getSource().getPlayerOrException())))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> setSense(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
+
+        root.then(Commands.literal("foxking").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            if (ModCapabilities.getType(p) != CharacterType.MIKIKO) {
+                ctx.getSource().sendFailure(Component.literal("Only Mikiko has Fox King mode."));
+                return 0;
+            }
+            com.xenowarriors.mikiko.FoxKing.toggle(p);
+            return 1;
+        }));
+
+        root.then(Commands.literal("sealed").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            var list = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.sealed).orElse(new net.minecraft.nbt.ListTag());
+            if (list.isEmpty()) {
+                say(ctx, gray("Nothing is sealed in your Hekublade."));
+                return 0;
+            }
+            java.util.Map<String, Integer> counts = new java.util.TreeMap<>();
+            for (int i = 0; i < list.size(); i++) counts.merge(list.getCompound(i).getString("name"), 1, Integer::sum);
+            say(ctx, gold("Sealed in your Hekublade (" + list.size() + "):"));
+            counts.forEach((name, n) -> say(ctx, gray("  " + name + (n > 1 ? " x" + n : ""))));
+            return list.size();
+        }));
+
         root.then(Commands.literal("cooldowns").requires(s -> s.hasPermission(2))
                 .executes(ctx -> cooldowns(ctx, List.of(ctx.getSource().getPlayerOrException())))
                 .then(Commands.argument("targets", EntityArgument.players())
@@ -262,6 +323,13 @@ public final class XenoCommands {
         if (type == CharacterType.RHALIX) say(ctx, gray("Wings: " + (RhalixWings.out(p) ? "out" : "put away")));
         if (type == CharacterType.RHALIX) say(ctx, gray("Winged companions: " + com.xenowarriors.wing.WingPets.count(p) + " / " + com.xenowarriors.wing.WingPets.MAX));
         if (type == CharacterType.MIKIKO) say(ctx, gray("Foxes: " + FoxPets.describe(p).size() + " / " + FoxPets.MAX_FOXES));
+        p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+            say(ctx, gray("Mining: Lv " + d.miningLevel + "   Crafting: Lv " + d.craftLevel + "   Smelting: Lv " + d.smeltLevel));
+            if (type == CharacterType.MIKIKO) {
+                say(ctx, gray("Hekublade: Lv " + d.bladeLevel + " / " + com.xenowarriors.mikiko.BladeLevel.MAX + "   sealed: " + d.sealed.size()));
+                say(ctx, gray("Fox King: " + (com.xenowarriors.mikiko.FoxKing.active(p) ? "active" : "ready (N)")));
+            }
+        });
         return 1;
     }
 
@@ -282,6 +350,61 @@ public final class XenoCommands {
         for (ServerPlayer p : players) {
             Karma.add(p, set ? amount - Karma.get(p) : amount);
             ctx.getSource().sendSuccess(() -> gold(p.getName().getString() + "'s Karma is now " + Math.round(Karma.get(p))), true);
+        }
+        return players.size();
+    }
+
+    /** Spread a Character Level evenly over the three stats (the cap = all three maxed). */
+    private static int setLevel(CommandContext<CommandSourceStack> ctx, Collection<ServerPlayer> players) {
+        int level = IntegerArgumentType.getInteger(ctx, "level");
+        int each = level >= Stats.MAX_CHARACTER_LEVEL ? Stat.MAX_LEVEL : level / 3, extra = level >= Stats.MAX_CHARACTER_LEVEL ? 0 : level % 3;
+        for (ServerPlayer p : players) {
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+                for (int i = 0; i < 3; i++) {
+                    d.statLevel[i] = Math.min(Stat.MAX_LEVEL, each + (i < extra ? 1 : 0));
+                    d.statXp[i] = 0;
+                }
+            });
+            Stats.reapply(p);
+            ctx.getSource().sendSuccess(() -> gold(p.getName().getString() + " is now Character Level " + Stats.characterLevel(p)), true);
+        }
+        return players.size();
+    }
+
+    private static int setSkill(CommandContext<CommandSourceStack> ctx, String skill, Collection<ServerPlayer> players) {
+        int level = IntegerArgumentType.getInteger(ctx, "level");
+        for (ServerPlayer p : players) {
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+                switch (skill) {
+                    case "mining" -> { d.miningLevel = level; d.miningXp = 0; }
+                    case "crafting" -> { d.craftLevel = level; d.craftXp = 0; }
+                    default -> { d.smeltLevel = level; d.smeltXp = 0; }
+                }
+            });
+            if (skill.equals("mining")) com.xenowarriors.stats.Mining.sync(p);
+            ctx.getSource().sendSuccess(() -> gold(p.getName().getString() + "'s " + skill + " is now level " + level), true);
+        }
+        return players.size();
+    }
+
+    private static int setBlade(CommandContext<CommandSourceStack> ctx, Collection<ServerPlayer> players) {
+        int level = IntegerArgumentType.getInteger(ctx, "level");
+        for (ServerPlayer p : players) {
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+                d.bladeLevel = level;
+                d.bladeXp = 0;
+                d.realmTicks = com.xenowarriors.mikiko.BladeLevel.maxTicks(level);
+            });
+            ctx.getSource().sendSuccess(() -> gold(p.getName().getString() + "'s Hekublade is now level " + level), true);
+        }
+        return players.size();
+    }
+
+    private static int setSense(CommandContext<CommandSourceStack> ctx, Collection<ServerPlayer> players) {
+        int uses = IntegerArgumentType.getInteger(ctx, "uses");
+        for (ServerPlayer p : players) {
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.senseUses = uses);
+            ctx.getSource().sendSuccess(() -> gold(p.getName().getString() + "'s Karma Sensing practice is now " + uses), true);
         }
         return players.size();
     }
