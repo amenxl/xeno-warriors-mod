@@ -40,7 +40,7 @@ public final class Netsu {
         return DURATION + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.DEFENSE) * TICKS_PER_DEFENSE;
     }
     public static final float SPEED_BONUS = 0.9F;          // +90% movement speed
-    public static final float SELF_DAMAGE = 0.5F;          // every second
+    public static final float SELF_DAMAGE = 0.5F;          // health drained per second
     public static final float TOUCH_DAMAGE = 2F;
     private static final UUID SPEED_ID = UUID.fromString("2b9f6a3e-4c1d-4f7b-8e2a-9d3c5b1a7e44");
     /** Netsu also burns hotter in a fight: more damage, faster swings, tougher skin. */
@@ -114,7 +114,8 @@ public final class Netsu {
         // burning (visually) without normal fire damage - Netsu's own cost is the slow self-damage below
         p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, false, false, false));
         p.setRemainingFireTicks(Math.max(p.getRemainingFireTicks(), 10));
-        if (now % 20 == 0) p.hurt(ModDamageTypes.source(p.level(), ModDamageTypes.NETSU, null, null), SELF_DAMAGE);
+        // the fire slowly eats at his health (no hits, no flinching) - it never takes his last half-heart
+        if (!p.isCreative() && p.getHealth() > 1F) p.setHealth(Math.max(1F, p.getHealth() - SELF_DAMAGE / 20F));
         // anyone touching him catches fire
         for (LivingEntity e : p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(0.35),
                 e -> SkillTargeting.canTarget(p, e))) {
