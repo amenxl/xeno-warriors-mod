@@ -26,7 +26,8 @@
     "LivingEntityRendererSoulMixin",
     "compat.DragonMineZRendererMixin",
     "compat.DragonMineZFirstPersonMixin",
-    "compat.DragonMineZHandMixin"
+    "compat.DragonMineZHandMixin",
+    "compat.DragonMineZAttackMixin"
   ],
   "injectors": {
     "defaultRequire": 1
