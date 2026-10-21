@@ -39,7 +39,7 @@ public final class Netsu {
     public static final int NO_DRAIN_DEFENSE = 100;
 
     public static int duration(ServerPlayer p) {
-        return DURATION + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.DEFENSE) * TICKS_PER_DEFENSE;
+        return Math.min(60 * 20, DURATION + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.DEFENSE) * TICKS_PER_DEFENSE);   // up to a minute
     }
     public static final float SPEED_BONUS = 0.9F;          // +90% movement speed
     public static final float SELF_DAMAGE = 0.5F;          // health drained per second
