@@ -105,63 +105,6 @@ public final class FoxClientFx {
         }
     }
 
-    /** Called after the fox model is posed. */
-    public static void animate(FoxModel<?> model, Fox fox, float limbSwing, float limbAmount, float age) {
-        if (!isPet(fox) || fox.isSleeping()) return;
-        ModelPart[] p = parts(model);
-        if (p == null) return;
-        ModelPart head = p[0], tail = p[6];
-        boolean playing = fox.isInterested();
-        Minecraft mc = Minecraft.getInstance();
-        boolean ownerNear = mc.player != null && fox.distanceToSqr(mc.player) < 8 * 8;
-        float moving = Mth.clamp(limbAmount * 2F, 0F, 1F);
-        // tail wag: fast and wide while playing, happy wag near people, a small sway when trotting
-        float speed = playing ? 0.32F : ownerNear ? 0.16F : 0.1F;
-        float amp = playing ? 0.22F : ownerNear ? 0.12F : 0.05F;
-        amp *= 1F - 0.6F * moving;
-        wag(tail, Mth.sin(age * speed + fox.getId()) * amp);
-        tail.xRot -= (playing ? 0.1F : 0.04F) * (1F - moving);      // tail held up a little when happy
-        if (playing) {
-            // bouncy: head bobbing with the hops, ears perked
-            head.y -= Math.abs(Mth.sin(age * 0.6F)) * 0.8F;
-            head.xRot -= 0.15F;
-        } else if (fox.isSitting()) {
-            // sitting beside him: slow curious head tilts
-            head.zRot += Mth.sin(age * 0.05F + fox.getId()) * 0.22F;
-        } else if (moving < 0.2F && ownerNear) {
-            head.zRot += Mth.sin(age * 0.07F + fox.getId()) * 0.12F;
-        }
-        // a sword in its mouth: head held up proudly, and a big sideways slash when it attacks
-        if (fox.getMainHandItem().getItem() instanceof net.minecraft.world.item.SwordItem) {
-            float swing = model.attackTime;
-            if (swing > 0F) {
-                float slash = Mth.sin(swing * Mth.PI);
-                head.yRot += Mth.sin(swing * Mth.PI * 2F) * 0.9F;
-                head.zRot += slash * 0.35F;
-                head.xRot += slash * 0.25F;
-            } else {
-                head.xRot -= 0.12F;
-            }
-        }
-        // level-up and greeting: tail straight up, swishing
-        long[] f = FX.get(fox.getId());
-        if (f != null && f[0] != FoxFxPacket.RUN_AWAY) {
-            tail.xRot -= 0.2F;
-            wag(tail, Mth.sin(age * 0.45F) * 0.18F);
-        }
-    }
-
-    /**
-     * Swings the tail side to side around the middle of its base. (The tail's pivot sits off to one side of
-     * the tail, so rotating it alone would swing the base away from the body - this keeps it attached.)
-     */
-    private static void wag(ModelPart tail, float angle) {
-        tail.zRot += angle;
-        // base centre of the tail box in its own space is (4, 0, 1.5): move the part so that point stays put
-        tail.x += 4F * (1F - Mth.cos(angle));
-        tail.y -= 4F * Mth.sin(angle);
-    }
-
     // ------------------------------------------------------------ one-off moves
 
     @SubscribeEvent

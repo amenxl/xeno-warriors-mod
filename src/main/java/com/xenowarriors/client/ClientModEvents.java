@@ -80,6 +80,7 @@ public final class ClientModEvents {
         net.minecraft.client.renderer.entity.EntityRenderer<?> foxRenderer = event.getRenderer(net.minecraft.world.entity.EntityType.FOX);
         if (foxRenderer instanceof net.minecraft.client.renderer.entity.FoxRenderer fr) {
             fr.addLayer(new com.xenowarriors.client.fox.FoxArmorLayer(fr, event.getEntityModels()));
+            fr.addLayer(new com.xenowarriors.client.fox.FoxSwordLayer(fr));
         }
         for (String skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);

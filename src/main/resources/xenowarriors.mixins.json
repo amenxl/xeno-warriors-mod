@@ -19,8 +19,8 @@
     "ElytraLayerMixin",
     "ItemInHandLayerMixin",
     "LivingEntityPoofMixin",
-    "FoxModelMixin",
-    "FoxRendererMixin"
+    "FoxRendererMixin",
+    "FoxHeldItemLayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
