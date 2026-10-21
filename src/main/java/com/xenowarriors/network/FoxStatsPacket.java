@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 /** Server -> owner: open the stat card for one of your foxes. */
 public record FoxStatsPacket(int entityId, UUID fox, String name, int level, float xp, int xpNeeded, float health,
-                             float maxHealth, float attack, float speed, int kills, int days, boolean snow) {
+                             float maxHealth, float attack, float speed, int kills, int days, boolean snow, int skin) {
     public static void encode(FoxStatsPacket m, FriendlyByteBuf buf) {
         buf.writeVarInt(m.entityId);
         buf.writeUUID(m.fox);
@@ -26,12 +26,13 @@ public record FoxStatsPacket(int entityId, UUID fox, String name, int level, flo
         buf.writeVarInt(m.kills);
         buf.writeVarInt(m.days + 1);
         buf.writeBoolean(m.snow);
+        buf.writeVarInt(m.skin);
     }
 
     public static FoxStatsPacket decode(FriendlyByteBuf buf) {
         return new FoxStatsPacket(buf.readVarInt(), buf.readUUID(), buf.readUtf(), buf.readVarInt(), buf.readFloat(),
                 buf.readVarInt(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(),
-                buf.readVarInt() - 1, buf.readBoolean());
+                buf.readVarInt() - 1, buf.readBoolean(), buf.readVarInt());
     }
 
     public static void handle(FoxStatsPacket msg, Supplier<NetworkEvent.Context> ctx) {

@@ -9,6 +9,8 @@ import com.xenowarriors.network.BackFoxPacket;
 import com.xenowarriors.network.FoxLevelPacket;
 import com.xenowarriors.network.FoxSyncPacket;
 import com.xenowarriors.network.FoxStatsPacket;
+import com.xenowarriors.network.FoxSkinPacket;
+import com.xenowarriors.network.FoxFxPacket;
 import com.xenowarriors.network.ModNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -195,6 +197,7 @@ public final class FoxPets {
         level.playSound(null, fox.blockPosition(), SoundEvents.FOX_AMBIENT, SoundSource.NEUTRAL, 1F, 1.3F);
         say(p, "The fox trusts you now!");
         sync(p, id, "Fox");
+        sendSkin(fox);
     }
 
     // ---------------------------------------------------------------- stat card
@@ -207,7 +210,8 @@ public final class FoxPets {
         ModNetwork.sendToPlayer(new FoxStatsPacket(fox.getId(), fox.getUUID(), rec.getString("name"), level,
                 rec.getFloat("xp"), level >= FoxLevels.MAX ? 0 : FoxLevels.xpFor(level), fox.getHealth(), fox.getMaxHealth(),
                 (float) fox.getAttributeValue(Attributes.ATTACK_DAMAGE), (float) fox.getAttributeValue(Attributes.MOVEMENT_SPEED),
-                rec.getInt("kills"), (int) days, "snow".equals(fox.saveWithoutId(new CompoundTag()).getString("Type"))), p);
+                rec.getInt("kills"), (int) days, "snow".equals(fox.saveWithoutId(new CompoundTag()).getString("Type")),
+                rec.getInt("skin")), p);
         fox.playSound(SoundEvents.FOX_AMBIENT, 0.6F, 1.3F);
     }
 
@@ -269,6 +273,7 @@ public final class FoxPets {
         lvl.sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.9, fox.getZ(), 3, 0.2, 0.1, 0.2, 0);
         lvl.playSound(null, fox.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.5F, 1.6F);
         ModNetwork.sendToPlayer(new FoxLevelPacket(rec.getString("name"), level), p);
+        fx(fox, FoxFxPacket.LEVEL_UP);
     }
 
     // ---------------------------------------------------------------- goals, joining the world
@@ -278,6 +283,7 @@ public final class FoxPets {
         if (has) return;
         fox.goalSelector.addGoal(2, new FoxPlayGoal(fox));
         fox.goalSelector.addGoal(3, new FoxFollowOwnerGoal(fox));
+        fox.goalSelector.addGoal(4, new FoxRestGoal(fox));
     }
 
     @SubscribeEvent
@@ -343,8 +349,9 @@ public final class FoxPets {
             if (rec != null) {
                 snapshot(fox, rec);
                 rec.putBoolean("dead", true);
-                p.sendSystemMessage(Component.literal(rec.getString("name") + " has fallen... Use a Fox Whistle to call them back.")
+                p.sendSystemMessage(Component.literal(rec.getString("name") + " ran away! Use the Fox Whistle to call them back.")
                         .withStyle(ChatFormatting.GOLD));
+                fx(fox, FoxFxPacket.RUN_AWAY);
             }
         }
         if (dead instanceof ServerPlayer p) putDown(p);   // the fox on his back hops off
@@ -356,6 +363,7 @@ public final class FoxPets {
         double x, y, z;
         int still, threshold = roll(), playUntil;
         final Map<UUID, Vec3> lastPos = new HashMap<>();
+        final Map<UUID, Long> lastNear = new HashMap<>();
     }
 
     private static final Map<UUID, State> STATES = new HashMap<>();
@@ -365,6 +373,12 @@ public final class FoxPets {
     }
 
     /** Whether this player has stood still long enough that the foxes want to play. */
+    /** Ticks this player has been standing still (0 when moving). */
+    public static int stillTicks(Player p) {
+        State s = STATES.get(p.getUUID());
+        return s == null ? 0 : s.still;
+    }
+
     public static boolean isPlaying(Player p) {
         State s = STATES.get(p.getUUID());
         return s != null && s.playUntil > 0;
@@ -400,6 +414,15 @@ public final class FoxPets {
             Vec3 last = s.lastPos.put(fox.getUUID(), fox.position());
             if (last != null && last.distanceTo(fox.position()) > 3 && fox.distanceTo(p) < 16) addXp(fox, 1F);
             if (p.tickCount % 100 == 0) snapshot(fox, rec);
+            // happy to see him again after a while apart: a little hop and spin
+            double d = fox.distanceTo(p);
+            Long seen = s.lastNear.get(fox.getUUID());
+            if (d < 8 && (seen == null || p.tickCount - seen > 900) && seen != null) {
+                fx(fox, FoxFxPacket.GREET);
+                p.serverLevel().sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.9, fox.getZ(), 3, 0.2, 0.1, 0.2, 0);
+                fox.playSound(SoundEvents.FOX_AMBIENT, 1F, 1.4F);
+            }
+            if (d < 16) s.lastNear.put(fox.getUUID(), (long) p.tickCount);
         }
     }
 
@@ -465,11 +488,76 @@ public final class FoxPets {
         applyLevel(fox, rec.getInt("level"));
         updateName(fox, rec);
         addGoals(fox);
+        fox.getPersistentData().putInt(SKIN, rec.getInt("skin"));
+        for (var slot : FoxMenu.ARMOR) fox.setDropChance(slot, 0F);
+    }
+
+    // ---------------------------------------------------------------- skins, bag, effects
+
+    private static final String SKIN = "xw_skin";
+
+    public static int skinOf(Fox fox) {
+        return fox.getPersistentData().getInt(SKIN);
+    }
+
+    private static void sendSkin(Fox fox) {
+        ModNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> fox),
+                new FoxSkinPacket(fox.getId(), skinOf(fox)));
+    }
+
+    private static void fx(Fox fox, int kind) {
+        ModNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> fox),
+                new FoxFxPacket(fox.getId(), kind));
+    }
+
+    public static void setSkin(ServerPlayer p, UUID foxId, int skin) {
+        CompoundTag rec = record(p, foxId);
+        if (rec == null || !FoxSkins.unlocked(skin, rec.getInt("level"))) return;
+        rec.putInt("skin", skin);
+        Fox fox = findLoaded(p, foxId);
+        if (fox != null) {
+            fox.getPersistentData().putInt(SKIN, skin);
+            sendSkin(fox);
+            p.serverLevel().sendParticles(ParticleTypes.HAPPY_VILLAGER, fox.getX(), fox.getY() + 0.5, fox.getZ(), 10, 0.3, 0.3, 0.3, 0);
+            fox.playSound(SoundEvents.ARMOR_EQUIP_LEATHER, 0.8F, 1.3F);
+        }
+    }
+
+    /** Opens the fox's bag: its armor and the items it carries for him. */
+    public static void openBag(ServerPlayer p, UUID foxId) {
+        CompoundTag rec = record(p, foxId);
+        Fox fox = findLoaded(p, foxId);
+        if (rec == null || fox == null || fox.distanceTo(p) > 10) return;
+        int slots = FoxSkins.bagSlots(rec.getInt("level")), rows = slots / 9;
+        net.minecraft.world.SimpleContainer storage = new net.minecraft.world.SimpleContainer(slots) {
+            @Override
+            public void setChanged() {
+                super.setChanged();
+                net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
+                for (int i = 0; i < getContainerSize(); i++) items.set(i, getItem(i));
+                CompoundTag inv = new CompoundTag();
+                net.minecraft.world.ContainerHelper.saveAllItems(inv, items);
+                rec.put("inv", inv);
+            }
+        };
+        net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(27, ItemStack.EMPTY);
+        net.minecraft.world.ContainerHelper.loadAllItems(rec.getCompound("inv"), items);
+        for (int i = 0; i < slots; i++) storage.setItem(i, items.get(i));
+        FoxMenu.ArmorContainer armor = new FoxMenu.ArmorContainer(fox);
+        Component title = Component.literal(rec.getString("name") + "'s Bag");
+        net.minecraftforge.network.NetworkHooks.openScreen(p, new net.minecraft.world.SimpleMenuProvider(
+                (id, inv, pl) -> new FoxMenu(id, inv, storage, armor, fox, rows), title), buf -> {
+            buf.writeVarInt(fox.getId());
+            buf.writeVarInt(rows);
+        });
+        fox.playSound(SoundEvents.BUNDLE_DROP_CONTENTS, 0.6F, 1.2F);
     }
 
     public static int backVariant(Player p) {
         CompoundTag tag = cap(p).map(c -> c.backFox).orElse(null);
         if (tag == null || tag.isEmpty()) return -1;
+        int skin = tag.getCompound("ForgeData").getInt(SKIN);
+        if (skin > 0) return 10 + skin;
         return "snow".equals(tag.getString("Type")) ? 1 : 0;
     }
 
@@ -598,6 +686,9 @@ public final class FoxPets {
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer) {
             ModNetwork.sendToPlayer(new BackFoxPacket(target.getUUID(), backVariant(target)), viewer);
+        }
+        if (event.getTarget() instanceof Fox fox && ownerOf(fox) != null && event.getEntity() instanceof ServerPlayer viewer) {
+            ModNetwork.sendToPlayer(new FoxSkinPacket(fox.getId(), skinOf(fox)), viewer);
         }
     }
 }

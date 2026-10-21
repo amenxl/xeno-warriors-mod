@@ -16,7 +16,9 @@
     "EntityTeamColorMixin",
     "ElytraLayerMixin",
     "ItemInHandLayerMixin",
-    "LivingEntityPoofMixin"
+    "LivingEntityPoofMixin",
+    "FoxModelMixin",
+    "FoxRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

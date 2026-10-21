@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "13";
+    private static final String VERSION = "14";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -135,6 +135,26 @@ public final class ModNetwork {
                 .encoder(FoxStatsPacket::encode)
                 .decoder(FoxStatsPacket::decode)
                 .consumerMainThread(FoxStatsPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(FoxSkinPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FoxSkinPacket::encode)
+                .decoder(FoxSkinPacket::decode)
+                .consumerMainThread(FoxSkinPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(FoxFxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FoxFxPacket::encode)
+                .decoder(FoxFxPacket::decode)
+                .consumerMainThread(FoxFxPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(SetFoxSkinPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(SetFoxSkinPacket::encode)
+                .decoder(SetFoxSkinPacket::decode)
+                .consumerMainThread(SetFoxSkinPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(OpenFoxBagPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(OpenFoxBagPacket::encode)
+                .decoder(OpenFoxBagPacket::decode)
+                .consumerMainThread(OpenFoxBagPacket::handle)
                 .add();
     }
 

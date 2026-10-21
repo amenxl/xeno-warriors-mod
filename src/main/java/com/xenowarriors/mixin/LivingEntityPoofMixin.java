@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LivingEntityPoofMixin {
     @Inject(method = "makePoofParticles", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$noPoof(CallbackInfo ci) {
-        if (BladeAbsorbClient.isAbsorbing(((LivingEntity) (Object) this).getId())) ci.cancel();
+        int id = ((LivingEntity) (Object) this).getId();
+        if (BladeAbsorbClient.isAbsorbing(id) || com.xenowarriors.client.fox.FoxClientFx.runningAway(id)) ci.cancel();
     }
 }

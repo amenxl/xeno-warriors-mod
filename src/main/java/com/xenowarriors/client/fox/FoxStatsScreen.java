@@ -12,13 +12,15 @@ import net.minecraft.world.entity.LivingEntity;
 
 /** A card for one of Mikiko's foxes: a live picture of it, its name, level and XP, and its stats. */
 public class FoxStatsScreen extends Screen {
-    private static final int W = 230, H = 150;
+    private static final int W = 230, H = 178;
     private static final int ORANGE = 0xFFFF8A2A, SNOW = 0xFFDDE8F2;
     private final FoxStatsPacket s;
+    private int skin;
 
     private FoxStatsScreen(FoxStatsPacket stats) {
         super(Component.literal(stats.name()));
         this.s = stats;
+        this.skin = stats.skin();
     }
 
     public static void open(FoxStatsPacket stats) {
@@ -31,9 +33,33 @@ public class FoxStatsScreen extends Screen {
     @Override
     protected void init() {
         int x = left(), y = top();
+        addRenderableWidget(Button.builder(Component.literal("Bag"), b ->
+                com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.OpenFoxBagPacket(s.fox())))
+                .bounds(x + 8, y + H - 26, 76, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Rename"),
                 b -> minecraft.setScreen(new FoxNameScreen(s.fox(), s.name(), false))).bounds(x + 92, y + H - 26, 64, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Close"), b -> onClose()).bounds(x + 160, y + H - 26, 62, 20).build());
+        // skin picker: < Skin >
+        addRenderableWidget(Button.builder(Component.literal("<"), b -> pickSkin(-1)).bounds(x + 92, y + 124, 16, 16).build());
+        addRenderableWidget(Button.builder(Component.literal(">"), b -> pickSkin(1)).bounds(x + W - 24, y + 124, 16, 16).build());
+    }
+
+    private void pickSkin(int dir) {
+        int n = com.xenowarriors.fox.FoxSkins.ALL.length;
+        skin = Math.floorMod(skin + dir, n);
+        if (com.xenowarriors.fox.FoxSkins.unlocked(skin, s.level())) {
+            com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.SetFoxSkinPacket(s.fox(), skin));
+            FoxClientFx.setSkin(s.entityId(), skin);
+            FoxClientFx.preview(s.entityId(), -1);
+        } else {
+            FoxClientFx.preview(s.entityId(), skin);   // locked: just a peek
+        }
+    }
+
+    @Override
+    public void removed() {
+        FoxClientFx.preview(s.entityId(), -1);
+        super.removed();
     }
 
     @Override
@@ -43,7 +69,7 @@ public class FoxStatsScreen extends Screen {
         int accent = s.snow() ? SNOW : ORANGE;
         g.fill(x, y, x + W, y + H, 0xE0101018);
         g.fill(x, y, x + W, y + 2, accent);
-        g.fill(x + 6, y + 8, x + 84, y + H - 8, 0x18FFFFFF);
+        g.fill(x + 6, y + 8, x + 84, y + H - 32, 0x18FFFFFF);
 
         // the fox itself, looking at your mouse
         if (minecraft.level != null && minecraft.level.getEntity(s.entityId()) instanceof LivingEntity fox) {
@@ -70,6 +96,14 @@ public class FoxStatsScreen extends Screen {
         row(g, tx, ly + 24, "» Speed", Math.round(s.speed() / 0.3F * 100F) + "%", 0xFF5CE1E6);
         row(g, tx, ly + 36, "☠ Defeated", String.valueOf(s.kills()), 0xFFB0A0FF);
         if (s.days() >= 0) row(g, tx, ly + 48, "☀ Together", s.days() == 1 ? "1 day" : s.days() + " days", 0xFFFFE070);
+        row(g, tx, ly + 60, "Bag", com.xenowarriors.fox.FoxSkins.bagSlots(s.level()) + " slots", 0xFFC0A080);
+
+        var sk = com.xenowarriors.fox.FoxSkins.get(skin);
+        boolean unlocked = com.xenowarriors.fox.FoxSkins.unlocked(skin, s.level());
+        int cx = (x + 108 + x + W - 24) / 2;
+        g.drawCenteredString(font, "Skin: " + sk.name(), cx, y + 125, unlocked ? 0xFFFFFF : 0x808088);
+        g.drawCenteredString(font, unlocked ? "Wearing" : "Unlocks at Lv " + sk.level(), cx, y + 137,
+                unlocked ? 0x7CD65A : 0xFF6A5A);
         super.render(g, mouseX, mouseY, partialTick);
     }
 

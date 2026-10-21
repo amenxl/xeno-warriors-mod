@@ -57,7 +57,10 @@ public class FoxBackLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
         float breathe = 1F + 0.02F * (float) Math.sin(age * 0.08F);
         pose.scale(0.62F, 0.62F * breathe, 0.62F);
         pose.translate(0.0F, -1.5F, -0.2F);
-        model.renderToBuffer(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURES[Math.min(variant, 1)])),
+        ResourceLocation tex = variant >= 10
+                ? com.xenowarriors.XenoWarriors.id("textures/entity/fox/" + com.xenowarriors.fox.FoxSkins.get(variant - 10).id() + "_sleep.png")
+                : TEXTURES[Math.min(variant, 1)];
+        model.renderToBuffer(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(tex)),
                 light, OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, 1F);
         pose.popPose();
     }
