@@ -45,6 +45,7 @@ public final class SkillManager {
     }
 
     public static void useSkill(ServerPlayer player, int slot) {
+        if (com.xenowarriors.party.Duels.isKnockedOut(player)) return;      // can't do anything while knocked out
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
         CharacterType type = ModCapabilities.getType(player);
         Skill skill = get(type, slot);

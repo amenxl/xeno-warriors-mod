@@ -62,6 +62,8 @@ public final class XenoCommands {
                     {"/xeno fox release <name>", "let a fox go back to the wild"},
                     {"/xeno fox heal", "heal your foxes (op)"},
                     {"/xeno fox setlevel <level> [name]", "set fox levels (op)"},
+                    {"/xeno party invite|accept|decline|leave|kick|list", "parties (or right-click a player)"},
+                    {"/xeno duel challenge <player>|accept|decline|forfeit", "PvP battles"},
                     {"/xeno karma set|add <amount> [players]", "change Karma (op)"},
                     {"/xeno stat <speed|attack|defense> <level> [players]", "set a stat level (op)"},
                     {"/xeno cooldowns [players]", "reset skill cooldowns (op)"},
@@ -145,6 +147,53 @@ public final class XenoCommands {
                         .executes(ctx -> karma(ctx, List.of(ctx.getSource().getPlayerOrException()), false))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), false))))));
+
+        root.then(Commands.literal("party")
+                .then(Commands.literal("invite").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
+                    com.xenowarriors.party.Parties.invite(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"));
+                    return 1;
+                })))
+                .then(Commands.literal("accept").executes(ctx -> {
+                    com.xenowarriors.party.Parties.accept(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("decline").executes(ctx -> {
+                    com.xenowarriors.party.Parties.decline(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("leave").executes(ctx -> {
+                    com.xenowarriors.party.Parties.leave(ctx.getSource().getPlayerOrException(), true);
+                    return 1;
+                }))
+                .then(Commands.literal("kick").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
+                    com.xenowarriors.party.Parties.kick(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"));
+                    return 1;
+                })))
+                .then(Commands.literal("list").executes(ctx -> {
+                    var lines = com.xenowarriors.party.Parties.describe(ctx.getSource().getPlayerOrException());
+                    if (lines.isEmpty()) say(ctx, gray("You're not in a party. Right-click a player to invite them."));
+                    else say(ctx, gold("Your party:"));
+                    for (Component l : lines) say(ctx, l);
+                    return lines.size();
+                })));
+
+        root.then(Commands.literal("duel")
+                .then(Commands.literal("challenge").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
+                    com.xenowarriors.party.Duels.request(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"));
+                    return 1;
+                })))
+                .then(Commands.literal("accept").executes(ctx -> {
+                    com.xenowarriors.party.Duels.accept(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("decline").executes(ctx -> {
+                    com.xenowarriors.party.Duels.decline(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("forfeit").executes(ctx -> {
+                    com.xenowarriors.party.Duels.forfeit(ctx.getSource().getPlayerOrException());
+                    return 1;
+                })));
 
         var stat = Commands.literal("stat").requires(s -> s.hasPermission(2));
         for (Stat st : Stat.values()) {

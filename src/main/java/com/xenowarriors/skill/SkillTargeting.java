@@ -25,6 +25,9 @@ public final class SkillTargeting {
         if (e instanceof TamableAnimal pet && owner.getUUID().equals(pet.getOwnerUUID())) return false;
         if (com.xenowarriors.fox.FoxPets.isOwnedBy(e, owner)) return false;   // Mikiko's own foxes
         if (com.xenowarriors.wing.WingPets.isOwnedBy(e, owner)) return false;  // Rhalix's winged companions
+        if (e instanceof Player other && com.xenowarriors.party.Parties.sameParty(owner, other)
+                && !com.xenowarriors.party.Duels.dueling(owner, other)) return false;   // party members
+        if (e instanceof Player down && com.xenowarriors.party.Duels.isKnockedOut(down)) return false;
         return true;
     }
 

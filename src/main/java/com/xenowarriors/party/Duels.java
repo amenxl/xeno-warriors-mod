@@ -1,0 +1,306 @@
+package com.xenowarriors.party;
+
+import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.network.KnockoutPacket;
+import com.xenowarriors.network.ModNetwork;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * PvP battles: right-click a player and request a battle; once they accept, a 3-2-1 countdown and then fight.
+ * Nobody dies: dropping to 0 health knocks you out - you lie there dazed for 5 seconds (can't move, can't be
+ * hit) and then get back up with half your health. The battle ends when someone is knocked out, walks off
+ * (more than 48 blocks apart), logs out, or after 5 minutes.
+ */
+@Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public final class Duels {
+    private static final int REQUEST_TICKS = 30 * 20, COUNTDOWN = 60, MAX_TICKS = 5 * 60 * 20, KO_TICKS = 100;
+    private static final double MAX_DISTANCE = 48;
+
+    private static final class Duel {
+        final UUID a, b;
+        int ticks;
+
+        Duel(UUID a, UUID b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        UUID other(UUID id) {
+            return id.equals(a) ? b : a;
+        }
+
+        boolean fighting() {
+            return ticks >= COUNTDOWN;
+        }
+    }
+
+    private record Request(UUID from, long expires) {}
+
+    private static final Map<UUID, Duel> ACTIVE = new HashMap<>();
+    private static final Map<UUID, Request> REQUESTS = new HashMap<>();
+    private static final Map<UUID, Integer> KNOCKED = new HashMap<>();
+
+    private Duels() {}
+
+    private static MutableComponent msg(String text) {
+        return Component.literal(text).withStyle(ChatFormatting.GOLD);
+    }
+
+    public static boolean dueling(Player a, Player b) {
+        Duel d = ACTIVE.get(a.getUUID());
+        return d != null && d.other(a.getUUID()).equals(b.getUUID()) && d.fighting();
+    }
+
+    public static boolean inDuel(Player p) {
+        return ACTIVE.containsKey(p.getUUID());
+    }
+
+    public static boolean isKnockedOut(Player p) {
+        return KNOCKED.containsKey(p.getUUID());
+    }
+
+    private static void title(ServerPlayer p, String title, ChatFormatting color, String sub) {
+        p.connection.send(new ClientboundSetTitlesAnimationPacket(0, 30, 8));
+        p.connection.send(new ClientboundSetTitleTextPacket(Component.literal(title).withStyle(color, ChatFormatting.BOLD)));
+        p.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(sub == null ? "" : sub)));
+    }
+
+    // ---------------------------------------------------------------- requests
+
+    public static void request(ServerPlayer from, ServerPlayer to) {
+        if (from == to) return;
+        if (inDuel(from) || inDuel(to)) {
+            from.sendSystemMessage(msg((inDuel(from) ? "You're" : to.getName().getString() + " is") + " already in a battle."));
+            return;
+        }
+        if (from.isCreative() || to.isCreative()) {
+            from.sendSystemMessage(msg("Battles are for survival mode."));
+            return;
+        }
+        REQUESTS.put(to.getUUID(), new Request(from.getUUID(), from.level().getGameTime() + REQUEST_TICKS));
+        from.sendSystemMessage(msg("You challenged " + to.getName().getString() + " to a PvP battle!"));
+        to.sendSystemMessage(msg(from.getName().getString() + " challenges you to a PvP battle! ")
+                .append(Parties.button("[Accept]", "/xeno duel accept", ChatFormatting.GREEN))
+                .append(Component.literal(" "))
+                .append(Parties.button("[Decline]", "/xeno duel decline", ChatFormatting.RED)));
+        to.level().playSound(null, to.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.PLAYERS, 0.4F, 1.6F);
+    }
+
+    public static void accept(ServerPlayer p) {
+        Request req = REQUESTS.remove(p.getUUID());
+        MinecraftServer server = p.getServer();
+        ServerPlayer from = req == null || server == null ? null : server.getPlayerList().getPlayer(req.from);
+        if (req == null || from == null || p.level().getGameTime() > req.expires) {
+            p.sendSystemMessage(msg("You don't have a battle request (or it ran out)."));
+            return;
+        }
+        if (inDuel(from) || inDuel(p) || from.level() != p.level() || from.distanceTo(p) > MAX_DISTANCE) {
+            p.sendSystemMessage(msg("That battle can't start right now."));
+            return;
+        }
+        Duel d = new Duel(from.getUUID(), p.getUUID());
+        ACTIVE.put(d.a, d);
+        ACTIVE.put(d.b, d);
+        for (ServerPlayer s : new ServerPlayer[]{from, p}) {
+            s.sendSystemMessage(msg("Battle: " + from.getName().getString() + " vs " + p.getName().getString() + "!"));
+        }
+    }
+
+    public static void decline(ServerPlayer p) {
+        Request req = REQUESTS.remove(p.getUUID());
+        if (req == null) return;
+        p.sendSystemMessage(msg("Battle declined."));
+        ServerPlayer from = p.getServer() == null ? null : p.getServer().getPlayerList().getPlayer(req.from);
+        if (from != null) from.sendSystemMessage(msg(p.getName().getString() + " declined your battle."));
+    }
+
+    public static void forfeit(ServerPlayer p) {
+        Duel d = ACTIVE.get(p.getUUID());
+        if (d == null) return;
+        end(p.getServer(), d, d.other(p.getUUID()), p.getName().getString() + " gave up.");
+    }
+
+    private static void end(MinecraftServer server, Duel d, UUID winner, String why) {
+        ACTIVE.remove(d.a);
+        ACTIVE.remove(d.b);
+        if (server == null) return;
+        for (UUID id : new UUID[]{d.a, d.b}) {
+            ServerPlayer s = server.getPlayerList().getPlayer(id);
+            if (s == null) continue;
+            if (winner == null) {
+                title(s, "DRAW", ChatFormatting.YELLOW, why);
+            } else if (winner.equals(id)) {
+                title(s, "VICTORY!", ChatFormatting.GOLD, why);
+                s.level().playSound(null, s.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1F, 1F);
+            } else {
+                title(s, "DEFEAT", ChatFormatting.RED, why);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- knock-outs instead of dying
+
+    private static void knockOut(ServerPlayer p) {
+        p.setHealth(1F);
+        KNOCKED.put(p.getUUID(), KO_TICKS);
+        p.removeAllEffects();
+        p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, KO_TICKS + 5, 10, false, false));
+        p.addEffect(new MobEffectInstance(MobEffects.JUMP, KO_TICKS + 5, 250, false, false));     // can't jump
+        p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, KO_TICKS + 5, 10, false, false));
+        p.clearFire();
+        if (p.getAbilities().flying) {
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+        }
+        p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.5, p.getZ(), 14, 0.4, 0.3, 0.4, 0.03);
+        p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, 1F, 0.6F);
+        p.level().playSound(null, p.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.35F, 1.6F);
+        ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), KO_TICKS), p);
+        Duel d = ACTIVE.get(p.getUUID());
+        if (d != null) {
+            ServerPlayer winner = p.getServer() == null ? null : p.getServer().getPlayerList().getPlayer(d.other(p.getUUID()));
+            end(p.getServer(), d, d.other(p.getUUID()), p.getName().getString() + " was knocked out!");
+            if (winner != null) title(p, "KNOCKED OUT", ChatFormatting.RED, winner.getName().getString() + " wins the battle");
+        }
+    }
+
+    private static void getUp(ServerPlayer p) {
+        KNOCKED.remove(p.getUUID());
+        p.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        p.removeEffect(MobEffects.JUMP);
+        p.removeEffect(MobEffects.WEAKNESS);
+        p.setHealth(Math.max(6F, p.getMaxHealth() * 0.5F));
+        p.serverLevel().sendParticles(ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 1, p.getZ(), 10, 0.4, 0.5, 0.4, 0);
+        p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_BREATH, SoundSource.PLAYERS, 1F, 1F);
+        ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onAttack(LivingAttackEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        if (isKnockedOut(p)) {
+            event.setCanceled(true);           // no hitting someone who's down
+            return;
+        }
+        // during the countdown the two can't hurt each other yet
+        Duel d = ACTIVE.get(p.getUUID());
+        if (d != null && !d.fighting() && event.getSource().getEntity() instanceof Player att && d.other(p.getUUID()).equals(att.getUUID())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onDamage(LivingDamageEvent event) {
+        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p)) return;
+        Duel d = ACTIVE.get(p.getUUID());
+        if (d == null || !d.fighting() || event.getAmount() < p.getHealth()) return;
+        event.setCanceled(true);
+        knockOut(p);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p && ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
+            event.setCanceled(true);
+            knockOut(p);
+        }
+    }
+
+    // ---------------------------------------------------------------- ticking
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        MinecraftServer server = event.getServer();
+        long now = server.overworld().getGameTime();
+        REQUESTS.values().removeIf(r -> now > r.expires);
+        // knock-outs wearing off
+        Iterator<Map.Entry<UUID, Integer>> it = KNOCKED.entrySet().iterator();
+        java.util.List<ServerPlayer> rising = new java.util.ArrayList<>();
+        while (it.hasNext()) {
+            var e = it.next();
+            ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
+            if (p == null) {
+                it.remove();
+                continue;
+            }
+            int left = e.getValue() - 1;
+            e.setValue(left);
+            if (left % 10 == 0) {
+                p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 0.4, p.getZ(), 4, 0.4, 0.1, 0.4, 0.02);
+            }
+            if (left <= 0) rising.add(p);
+        }
+        for (ServerPlayer p : rising) getUp(p);
+        // battles: countdown, distance, time limit
+        java.util.Set<Duel> seen = new java.util.HashSet<>();
+        for (Duel d : new java.util.ArrayList<>(ACTIVE.values())) {
+            if (!seen.add(d)) continue;
+            ServerPlayer a = server.getPlayerList().getPlayer(d.a), b = server.getPlayerList().getPlayer(d.b);
+            if (a == null || b == null) {
+                end(server, d, a == null ? d.b : d.a, "The other player left.");
+                continue;
+            }
+            d.ticks++;
+            if (d.ticks <= COUNTDOWN && (COUNTDOWN - d.ticks) % 20 == 0) {
+                int n = (COUNTDOWN - d.ticks) / 20;
+                for (ServerPlayer s : new ServerPlayer[]{a, b}) {
+                    if (n > 0) {
+                        title(s, String.valueOf(n), ChatFormatting.YELLOW, "Get ready...");
+                        s.level().playSound(null, s.blockPosition(), SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 1F, 1F);
+                    } else {
+                        title(s, "FIGHT!", ChatFormatting.RED, s == a ? "vs " + b.getName().getString() : "vs " + a.getName().getString());
+                        s.level().playSound(null, s.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 1F, 1.2F);
+                    }
+                }
+            }
+            if (a.level() != b.level() || a.distanceTo(b) > MAX_DISTANCE) {
+                end(server, d, null, "You moved too far apart.");
+            } else if (d.ticks > MAX_TICKS + COUNTDOWN) {
+                end(server, d, null, "Time's up!");
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        UUID id = event.getEntity().getUUID();
+        KNOCKED.remove(id);
+        REQUESTS.remove(id);
+        Duel d = ACTIVE.get(id);
+        if (d != null) end(event.getEntity().getServer(), d, d.other(id), event.getEntity().getName().getString() + " left.");
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer && isKnockedOut(target)) {
+            ModNetwork.sendToPlayer(new KnockoutPacket(target.getUUID(), KNOCKED.get(target.getUUID())), viewer);
+        }
+    }
+}

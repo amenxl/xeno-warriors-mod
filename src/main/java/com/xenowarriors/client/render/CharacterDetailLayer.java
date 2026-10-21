@@ -43,6 +43,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             if (type != CharacterType.MIKIKO) return "blink";
             return (p.tickCount % 40) < 22 ? "snore" : "sleep";   // snores in time with the z's
         }
+        if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
         if (p.hurtTime > 0) return "hurt";
         if (ClientSkillState.currentAnim(p) != null) return "shout";
         if (p.swinging || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)) return "fierce";
