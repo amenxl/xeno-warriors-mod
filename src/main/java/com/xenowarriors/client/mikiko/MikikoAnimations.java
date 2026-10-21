@@ -49,6 +49,8 @@ import java.util.Set;
  *  - eating: holds the food up to his mouth with both hands and chews
  *  - holding the Hekublade while idle: flips it up spinning and catches it, and now and then slings it on
  *    his back, then later draws it again
+ *  - holding a normal sword while idle: now and then summons the Hekublade into his other hand and
+ *    crosses the two blades in an X
  *  - walking: after 15 seconds of walking he relaxes into a stroll with his hands behind his head
  *  - running: leans into the sprint, fists pumping hard, long strides
  *  - sleeping: curled on his side, head sunk in the pillow, one arm stretched out, little z's floating up
@@ -104,6 +106,7 @@ public final class MikikoAnimations {
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
         float vibe, vibeO;
+        boolean offhandShown;
         int vibeTicks;
         int jumpStart = -100;
         boolean doubleJumped;
@@ -196,6 +199,12 @@ public final class MikikoAnimations {
             float pNow = (now - s.moveStart) / (float) s.move.duration;
             if (pPrev < STRIKE && pNow >= STRIKE) MikikoEffects.strike(level, p, s.move, bladeKind(p, s));
             if (pNow > 1F) s.move = null;
+        }
+
+        boolean off = offhandBlade(p);
+        if (off != s.offhandShown) {
+            MikikoEffects.blade(level, p, off);
+            s.offhandShown = off;
         }
 
         // summoned blade flashes in and out
@@ -339,6 +348,30 @@ public final class MikikoAnimations {
         return p.getMainHandItem().isEmpty() && now < s.bladeUntil && s.comboStep > 3;
     }
 
+    // ---------------- crossed swords: normal sword + summoned Hekublade in the other hand ----------------
+    private static final int CROSS_AFTER = 60, CROSS_CYCLE = 260, CROSS_IN = 16, CROSS_HOLD = 100, CROSS_OUT = 116;
+
+    /** 0..1 how far into the crossed-swords pose he is (0 when not doing it). */
+    public static float crossX(Player p, float partial) {
+        State s = STATES.get(p.getId());
+        ItemStack main = p.getMainHandItem();
+        if (s == null || s.move != null || p.isSleeping() || !(main.getItem() instanceof SwordItem) || Hekublade.isBlade(main)
+                || !p.getOffhandItem().isEmpty() || s.still < CROSS_AFTER) return 0F;
+        float c = (s.still - CROSS_AFTER + partial) % CROSS_CYCLE;
+        if (c < CROSS_IN) return smooth(c / CROSS_IN);
+        if (c < CROSS_HOLD) return 1F;
+        if (c < CROSS_OUT) return 1F - smooth((c - CROSS_HOLD) / (CROSS_OUT - CROSS_HOLD));
+        return 0F;
+    }
+
+    /** Is the summoned Hekublade in his off hand right now (for the crossed-swords pose)? */
+    public static boolean offhandBlade(Player p) {
+        State s = STATES.get(p.getId());
+        if (s == null || crossX(p, 0F) <= 0F) return false;
+        float c = (s.still - CROSS_AFTER) % CROSS_CYCLE;
+        return c >= 4 && c < CROSS_OUT - 4;
+    }
+
     // ---------------- Hekublade idle: toss & catch, sling it on his back, draw it again ----------------
     public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4;
     private static final int BLADE_IDLE_AFTER = 60, BLADE_CYCLE = 240;
@@ -458,6 +491,13 @@ public final class MikikoAnimations {
         float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
         if (vibe > 0F) vibePose(model, vibe, sit, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
+        float x = crossX(player, partial);
+        if (x > 0F && s.move == null) {
+            // both arms forward, wrists crossed, so the two blades make an X
+            float breathe = Mth.sin(ageInTicks * 0.1F) * 0.03F;
+            set(model.rightArm, -1.5F + breathe, 0.55F, 0.1F, x);
+            set(model.leftArm, -1.5F - breathe, -0.55F, -0.1F, x);
+        }
         float[] bi = bladeIdle(player, partial);
         if (bi != null && s.move == null) bladeIdlePose(model, (int) bi[0], bi[1]);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);

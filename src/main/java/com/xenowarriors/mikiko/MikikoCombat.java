@@ -77,6 +77,15 @@ public final class MikikoCombat {
         });
     }
 
+    /** Fire is his element - flames and burning only do 40% damage to him. */
+    @SubscribeEvent
+    public static void onFireHurt(LivingHurtEvent event) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player p && ModCapabilities.getType(p) == CharacterType.MIKIKO
+                && event.getSource().is(net.minecraft.tags.DamageTypeTags.IS_FIRE)) {
+            event.setAmount(event.getAmount() * 0.4F);
+        }
+    }
+
     /** Mikiko always lands on his feet - no fall damage. */
     @SubscribeEvent
     public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent event) {

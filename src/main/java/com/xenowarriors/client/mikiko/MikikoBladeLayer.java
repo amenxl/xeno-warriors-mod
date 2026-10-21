@@ -23,6 +23,16 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, float limbSwing,
                        float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+        if (MikikoAnimations.offhandBlade(player)) {
+            // the Hekublade in his off hand, crossed with his sword
+            pose.pushPose();
+            getParentModel().translateToHand(HumanoidArm.LEFT, pose);
+            pose.mulPose(Axis.XP.rotationDegrees(-90F));
+            pose.mulPose(Axis.YP.rotationDegrees(180F));
+            pose.translate(-1F / 16F, 0.125F, -0.625F);
+            itemRenderer.renderItem(player, MikikoAnimations.bladeStack(), ItemDisplayContext.THIRD_PERSON_LEFT_HAND, true, pose, buffers, light);
+            pose.popPose();
+        }
         float[] bi = MikikoAnimations.bladeIdle(player, partialTick);
         if (bi != null) renderIdleBlade(pose, buffers, light, player, (int) bi[0], bi[1]);
         if (!MikikoAnimations.showSummonedBlade(player)) return;
