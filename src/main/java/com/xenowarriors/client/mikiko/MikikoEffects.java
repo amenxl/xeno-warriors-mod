@@ -262,6 +262,24 @@ final class MikikoEffects {
         if (r.nextInt(4) == 0) MikikoAnimations.particle(level, ParticleTypes.LAVA, p.position().add(0, 1, 0), Vec3.ZERO);
     }
 
+    /** A thud, a ring of dust rolling out and bits of the ground kicked up as he lands. */
+    static void heroLanding(ClientLevel level, Player p) {
+        var below = level.getBlockState(p.blockPosition().below());
+        for (int i = 0; i < 18; i++) {
+            double a = i / 18.0 * Math.PI * 2;
+            Vec3 dir = new Vec3(Math.cos(a), 0, Math.sin(a));
+            MikikoAnimations.particle(level, ParticleTypes.POOF, p.position().add(dir.scale(0.4)).add(0, 0.05, 0), dir.scale(0.12));
+        }
+        if (!below.isAir()) {
+            for (int i = 0; i < 16; i++) {
+                MikikoAnimations.particle(level, new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, below),
+                        p.position().add(0, 0.1, 0), rand(p, 0.25).add(0, 0.15, 0));
+            }
+        }
+        MikikoAnimations.sound(level, p, SoundEvents.GENERIC_SMALL_FALL, 1F, 0.6F);
+        MikikoAnimations.sound(level, p, SoundEvents.ANVIL_LAND, 0.15F, 1.6F);
+    }
+
     // ---- idle fire trick ----
 
     static void fireStart(ClientLevel level, Player p) {

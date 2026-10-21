@@ -51,6 +51,8 @@ import java.util.Set;
  *    his back, then later draws it again
  *  - holding a normal sword while idle: now and then summons the Hekublade into his other hand and
  *    crosses the two blades in an X
+ *  - landing from a big fall: drops into a low three-point crouch - one knee down, a hand planted on the
+ *    ground, the other arm out - then stands back up
  *  - walking: after 15 seconds of walking he relaxes into a stroll with his hands behind his head
  *  - running: leans into the sprint, fists pumping hard, long strides
  *  - sleeping: curled on his side, head sunk in the pillow, one arm stretched out, little z's floating up
@@ -111,6 +113,8 @@ public final class MikikoAnimations {
         int jumpStart = -100;
         boolean doubleJumped;
         int airTicks;
+        double peakY = Double.NaN;
+        int landStart = -100;
         float strengthLastTick = 1F;   // your own attack charge as of last tick
         int lastSwingStart = -1000;    // other players: when they last swung
     }
@@ -157,6 +161,19 @@ public final class MikikoAnimations {
         int now = p.tickCount;
 
         // double jump (your own player) and flight
+        // big falls end in a hero landing
+        boolean flyingNow = FlightTracker.isFlying(p) || p.isFallFlying() || p.getAbilities().flying;
+        if (!p.onGround() && !p.isInWater() && !flyingNow) {
+            s.peakY = Double.isNaN(s.peakY) ? p.getY() : Math.max(s.peakY, p.getY());
+        } else if (p.onGround() && !Double.isNaN(s.peakY)) {
+            if (s.peakY - p.getY() >= 6 && !p.isInWater()) {
+                s.landStart = now;
+                MikikoEffects.heroLanding(level, p);
+            }
+            s.peakY = Double.NaN;
+        } else if (flyingNow || p.isInWater()) {
+            s.peakY = Double.NaN;
+        }
         s.airTicks = p.onGround() ? 0 : s.airTicks + 1;
         if (p.onGround() || p.isInWater() || p.onClimbable()) s.doubleJumped = false;
         if (p == Minecraft.getInstance().player) tryDoubleJump(level, (net.minecraft.client.player.LocalPlayer) p, s, now);
@@ -497,6 +514,8 @@ public final class MikikoAnimations {
         if (fly > 0F) flyPose(model, fly, Mth.lerp(partial, s.fastO, s.fast), ageInTicks, clumsiness(player));
         float jump = (ageInTicks - s.jumpStart) / JUMP_DURATION;
         if (jump >= 0F && jump <= 1F) jumpPose(model, jump);
+        float land = ageInTicks - s.landStart;
+        if (land >= 0F && land <= LAND_DURATION) landPose(model, landWeight(land));
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
         float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
         if (vibe > 0F) vibePose(model, vibe, sit, ageInTicks);
@@ -651,6 +670,24 @@ public final class MikikoAnimations {
         model.head.xRot = Mth.lerp(w, model.head.xRot, 0.12F + chew * 0.6F);
     }
 
+    private static final int LAND_DURATION = 34;
+
+    /** Slams into the crouch instantly, holds it, then rises. */
+    private static float landWeight(float t) {
+        return Math.min(smooth(t / 1.5F), 1F - smooth((t - 20F) / (LAND_DURATION - 20F)));
+    }
+
+    /** Three-point landing: left knee down behind, right foot planted forward, left hand flat on the ground,
+     * right arm flung out to the side (the low crouch and lean are in bodyMotion). */
+    private static void landPose(HumanoidModel<?> model, float w) {
+        if (w <= 0F) return;
+        set(model.rightLeg, -1.35F, 0.1F, 0.1F, w);
+        set(model.leftLeg, 0.95F, -0.1F, -0.05F, w);
+        set(model.leftArm, -0.65F, 0.25F, -0.15F, w);
+        set(model.rightArm, -0.55F, 0F, 1.15F, w);
+        model.head.xRot -= 0.35F * w;            // eyes up, looking ahead
+    }
+
     private static void jumpPose(HumanoidModel<?> model, float p) {
         float w = smooth(p / 0.12F) * (1F - smooth((p - 0.75F) / 0.25F));
         // tucked tight for the flip
@@ -783,6 +820,12 @@ public final class MikikoAnimations {
             float step = p.walkAnimation.position(partial) * 0.6662F;
             out[3] += 15F * run;                                           // lean into the sprint
             out[0] += Math.abs(Mth.sin(step)) * 0.06F * run;                // bounce with each stride
+        }
+        float land = age - s.landStart;
+        if (land >= 0F && land <= LAND_DURATION) {
+            float w = landWeight(land);
+            out[0] -= 0.52F * w;      // down low
+            out[3] += 22F * w;        // leaning over his planted hand
         }
         float jump = (age - s.jumpStart) / JUMP_DURATION;
         if (jump >= 0F && jump <= 1F) {
