@@ -125,6 +125,8 @@ public final class MikikoAnimations {
         int airTicks;
         double peakY = Double.NaN;
         int landStart = -100;
+        /** Long fall: diving head-first with arms spread (0..1). */
+        float dive, diveO;
         float strengthLastTick = 1F;   // your own attack charge as of last tick
         int lastSwingStart = -1000;    // other players: when they last swung
     }
@@ -176,7 +178,7 @@ public final class MikikoAnimations {
         if (!p.onGround() && !p.isInWater() && !flyingNow) {
             s.peakY = Double.isNaN(s.peakY) ? p.getY() : Math.max(s.peakY, p.getY());
         } else if (p.onGround() && !Double.isNaN(s.peakY)) {
-            if (s.peakY - p.getY() >= 6 && !p.isInWater()) {
+            if (s.peakY - p.getY() >= HERO_LANDING_FALL && !p.isInWater()) {
                 s.landStart = now;
                 MikikoEffects.heroLanding(level, p);
             }
@@ -185,6 +187,11 @@ public final class MikikoAnimations {
             s.peakY = Double.NaN;
         }
         s.airTicks = p.onGround() ? 0 : s.airTicks + 1;
+        // a long fall: he tips over into a dive, arms spread wide
+        boolean diving = !p.onGround() && !flyingNow && !p.isInWater() && !p.onClimbable() && !Double.isNaN(s.peakY)
+                && s.peakY - p.getY() > DIVE_AFTER && p.getY() - p.yo < -0.45;
+        s.diveO = s.dive;
+        s.dive = approach(s.dive, diving ? 1F : 0F, diving ? 0.06F : 0.25F);
         if (p.onGround() || p.isInWater() || p.onClimbable()) s.doubleJumped = false;
         if (p == Minecraft.getInstance().player) tryDoubleJump(level, (net.minecraft.client.player.LocalPlayer) p, s, now);
         // other players' flight is guessed from air time, so wait a bit longer to not mistake a big jump for flying
@@ -611,7 +618,7 @@ public final class MikikoAnimations {
         if (s == null) return false;
         float jump = (age - s.jumpStart) / JUMP_DURATION;
         float land = age - s.landStart;
-        return s.move != null || (jump >= 0F && jump <= 1F) || (land >= 0F && land <= LAND_DURATION) || s.fly > 0.2F;
+        return s.move != null || (jump >= 0F && jump <= 1F) || (land >= 0F && land <= LAND_DURATION) || s.fly > 0.2F || s.dive > 0.2F;
     }
 
     public static boolean attacking(Player p) {
@@ -667,6 +674,8 @@ public final class MikikoAnimations {
         if (jump >= 0F && jump <= 1F) jumpPose(model, jump);
         float land = ageInTicks - s.landStart;
         if (land >= 0F && land <= LAND_DURATION) landPose(model, landWeight(land));
+        float dive = Mth.lerp(partial, s.diveO, s.dive);
+        if (dive > 0F) divePose(model, smooth(dive), ageInTicks);
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
         if (fire > 0F && sit > 0.5F) {
             // the toss at the end of the fire trick: arm thrown up, watching the fireball go
@@ -894,6 +903,46 @@ public final class MikikoAnimations {
     }
 
     private static final int LAND_DURATION = 34;
+    /** Fall at least this far for the three-point hero landing; this far (and falling fast) to start diving. */
+    private static final double HERO_LANDING_FALL = 14, DIVE_AFTER = 10;
+
+    /** How far into the dive (0..1) - also tips his whole body over (see onRenderPre). */
+    public static float dive(Player p, float partial) {
+        State s = STATES.get(p.getId());
+        return s == null ? 0F : Mth.lerp(partial, s.diveO, s.dive);
+    }
+
+    /** Diving: arms flung out wide, legs together trailing behind, looking down at the ground rushing up. */
+    private static void divePose(HumanoidModel<?> m, float w, float age) {
+        float flutter = Mth.sin(age * 1.3F) * 0.05F;
+        set(m.rightArm, -0.35F + flutter, 0F, 1.45F, w);
+        set(m.leftArm, -0.35F - flutter, 0F, -1.45F, w);
+        set(m.rightLeg, 0.25F, 0F, 0.08F - flutter, w);
+        set(m.leftLeg, 0.25F, 0F, -0.08F + flutter, w);
+        m.head.xRot = Mth.lerp(w, m.head.xRot, -0.6F);   // body is tipped forward, so this looks down
+    }
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        float d = event.isCanceled() ? 0F : dive(event.getEntity(), event.getPartialTick());
+        if (d <= 0F) return;
+        var pose = event.getPoseStack();
+        pose.pushPose();
+        DIVING.add(event.getEntity().getId());
+        float yaw = Mth.rotLerp(event.getPartialTick(), event.getEntity().yBodyRotO, event.getEntity().yBodyRot);
+        pose.translate(0, 1.0, 0);
+        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-yaw));
+        pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(75F * smooth(d)));     // head-first
+        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yaw));
+        pose.translate(0, -1.0, 0);
+    }
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onRenderPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
+        if (DIVING.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+    }
+
+    private static final java.util.Set<Integer> DIVING = new java.util.HashSet<>();
 
     /** Slams into the crouch instantly, holds it, then rises. */
     private static float landWeight(float t) {
