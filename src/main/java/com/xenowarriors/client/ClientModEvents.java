@@ -117,6 +117,7 @@ public final class ClientModEvents {
             if (type.getCategory() != net.minecraft.world.entity.MobCategory.CREATURE
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.WATER_CREATURE
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.AXOLOTLS
+                    && type.getCategory() != net.minecraft.world.entity.MobCategory.MONSTER
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.MISC) continue;
             addTint(event.getRenderer((net.minecraft.world.entity.EntityType) type));
         }

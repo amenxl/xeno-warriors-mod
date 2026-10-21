@@ -145,7 +145,8 @@ public class CorruptedSoulEntity extends Monster {
             LivingEntity target = soul.getTarget();
             if (target != null && soul.distanceToSqr(target) < 36) return false;
             List<Mob> bodies = soul.level().getEntitiesOfClass(Mob.class, soul.getBoundingBox().inflate(16),
-                    m -> m.isAlive() && ((m instanceof Animal a && CorruptedAnimals.canPossess(a)) || m instanceof Villager));
+                    m -> m.isAlive() && ((m instanceof Animal a && CorruptedAnimals.canPossess(a)) || m instanceof Villager
+                            || (m instanceof Monster mon && m != soul && CorruptedAnimals.canPossess(mon))));
             host = null;
             double best = Double.MAX_VALUE;
             for (Mob m : bodies) {
@@ -161,7 +162,7 @@ public class CorruptedSoulEntity extends Monster {
         @Override
         public boolean canContinueToUse() {
             return host != null && host.isAlive() && soul.distanceToSqr(host) < 400
-                    && !(host instanceof Animal a && CorruptedAnimals.isCorrupted(a));
+                    && !CorruptedAnimals.isCorrupted(host);
         }
 
         @Override
@@ -177,6 +178,8 @@ public class CorruptedSoulEntity extends Monster {
                 boolean took = false;
                 if (host instanceof Animal a) {
                     took = CorruptedAnimals.corrupt(a);
+                } else if (host instanceof Monster mon) {
+                    took = CorruptedAnimals.corrupt(mon);
                 } else if (host instanceof Villager v) {
                     CorruptedVillagerEntity cv = v.convertTo(ModCorrupted.CORRUPTED_VILLAGER.get(), false);
                     if (cv != null) {

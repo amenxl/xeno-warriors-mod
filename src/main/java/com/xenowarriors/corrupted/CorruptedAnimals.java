@@ -47,6 +47,56 @@ public final class CorruptedAnimals {
         return !data.hasUUID("xw_owner") && !data.hasUUID("xw_wing_owner") && !a.hasCustomName();
     }
 
+    private static final java.util.UUID HP_ID = java.util.UUID.fromString("b7a3c2e1-4d5f-4a6b-9c8d-1e2f3a4b5c61"),
+            DMG_ID = java.util.UUID.fromString("b7a3c2e1-4d5f-4a6b-9c8d-1e2f3a4b5c62"),
+            SPD_ID = java.util.UUID.fromString("b7a3c2e1-4d5f-4a6b-9c8d-1e2f3a4b5c63");
+
+    /** Ordinary hostile mobs can be possessed too (not the corrupted themselves, and not bosses). */
+    public static boolean canPossess(net.minecraft.world.entity.monster.Monster m) {
+        return !isCorrupted(m) && !(m instanceof CorruptedSoulEntity) && !(m instanceof CSoulBossEntity)
+                && !(m instanceof CorruptedVillagerEntity) && !(m instanceof net.minecraft.world.entity.boss.wither.WitherBoss)
+                && !(m instanceof net.minecraft.world.entity.monster.warden.Warden) && !m.hasCustomName()
+                && !m.getPersistentData().contains("xw_sealed");
+    }
+
+    /** A possessed monster: tougher, harder-hitting and faster, glowing purple. */
+    public static boolean corrupt(net.minecraft.world.entity.monster.Monster m) {
+        if (!canPossess(m)) return false;
+        m.getPersistentData().putBoolean(TAG, true);
+        m.setPersistenceRequired();
+        boost(m, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, HP_ID, 0.6);
+        boost(m, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, DMG_ID, 0.5);
+        boost(m, net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, SPD_ID, 0.15);
+        m.setHealth(m.getMaxHealth());
+        ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> m), new CorruptionPacket(m.getId(), true));
+        m.playSound(SoundEvents.WITHER_AMBIENT, 0.5F, 1.5F);
+        return true;
+    }
+
+    private static void boost(LivingEntity e, net.minecraft.world.entity.ai.attributes.Attribute attr, java.util.UUID id, double amount) {
+        var inst = e.getAttribute(attr);
+        if (inst == null) return;
+        inst.removeModifier(id);
+        inst.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(id, "Corrupted soul", amount,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE));
+    }
+
+    private static void cleanseMonster(net.minecraft.world.entity.monster.Monster m) {
+        m.getPersistentData().remove(TAG);
+        for (var pair : new Object[][]{{net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, HP_ID},
+                {net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, DMG_ID},
+                {net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, SPD_ID}}) {
+            var inst = m.getAttribute((net.minecraft.world.entity.ai.attributes.Attribute) pair[0]);
+            if (inst != null) inst.removeModifier((java.util.UUID) pair[1]);
+        }
+        if (m.getHealth() > m.getMaxHealth()) m.setHealth(m.getMaxHealth());
+        ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> m), new CorruptionPacket(m.getId(), false));
+        if (m.level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.SOUL, m.getX(), m.getY() + m.getBbHeight(), m.getZ(), 14, 0.3, 0.3, 0.3, 0.06);
+        }
+        m.playSound(SoundEvents.SOUL_ESCAPE, 1F, 1F);
+    }
+
     public static boolean corrupt(Animal a) {
         if (!canPossess(a)) return false;
         a.getPersistentData().putBoolean(TAG, true);
@@ -88,16 +138,19 @@ public final class CorruptedAnimals {
 
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
-        if (event.getTarget() instanceof Animal a && isCorrupted(a) && event.getEntity() instanceof ServerPlayer sp) {
+        if (event.getTarget() instanceof LivingEntity a && isCorrupted(a) && event.getEntity() instanceof ServerPlayer sp) {
             ModNetwork.sendToPlayer(new CorruptionPacket(a.getId(), true), sp);
         }
     }
 
     @SubscribeEvent
     public static void onTick(LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Animal a) || a.level().isClientSide || a.tickCount % 20 != 0 || !isCorrupted(a)) return;
+        if (!(event.getEntity() instanceof net.minecraft.world.entity.Mob a) || a.level().isClientSide || a.tickCount % 20 != 0
+                || !isCorrupted(a)) return;
+        if (!(a instanceof Animal) && !(a instanceof net.minecraft.world.entity.monster.Monster)) return;
         if (a.level().isDay() && a.level().canSeeSky(a.blockPosition())) {
-            cleanse(a);
+            if (a instanceof Animal an) cleanse(an);
+            else cleanseMonster((net.minecraft.world.entity.monster.Monster) a);
             return;
         }
         if (a.level() instanceof ServerLevel server) {
@@ -108,7 +161,7 @@ public final class CorruptedAnimals {
     /** Freeing a possessed animal gives a little extra XP. */
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity() instanceof Animal a && isCorrupted(a) && a.level() instanceof ServerLevel server) {
+        if (event.getEntity() instanceof net.minecraft.world.entity.Mob a && isCorrupted(a) && a.level() instanceof ServerLevel server) {
             server.sendParticles(ParticleTypes.SOUL, a.getX(), a.getY() + a.getBbHeight(), a.getZ(), 16, 0.3, 0.4, 0.3, 0.05);
             net.minecraft.world.entity.ExperienceOrb.award(server, a.position(), 5);
         }
