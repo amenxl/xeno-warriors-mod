@@ -597,6 +597,24 @@ public final class HekubladeRealm {
         set(l, x0, y0, z0, planks);   // marks the house as built
     }
 
+    /** The floor of the blade can't be broken - not by hand, tools or explosions. */
+    @SubscribeEvent
+    public static void onBreakFloor(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+        if (event.getLevel() instanceof Level l && l.dimension() == KEY && event.getPos().getY() <= Y) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void onExplode(net.minecraftforge.event.level.ExplosionEvent.Detonate event) {
+        if (event.getLevel().dimension() == KEY) event.getAffectedBlocks().removeIf(pos -> pos.getY() <= Y);
+    }
+
+    @SubscribeEvent
+    public static void onBreakSpeed(net.minecraftforge.event.entity.player.PlayerEvent.BreakSpeed event) {
+        if (event.getEntity().level().dimension() == KEY && event.getPosition().map(pos -> pos.getY() <= Y).orElse(false)) {
+            event.setCanceled(true);   // no crack animation on the floor either
+        }
+    }
+
     private static void burst(ServerLevel level, double x, double y, double z) {
         level.sendParticles(new DustParticleOptions(new Vector3f(0.95F, 0.12F, 0.1F), 1.4F), x, y, z, 25, 0.5, 0.8, 0.5, 0);
         level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.55F, 0.08F), 1.4F), x, y, z, 25, 0.5, 0.8, 0.5, 0);
