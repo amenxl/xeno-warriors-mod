@@ -32,6 +32,9 @@ public class PlayerCharacter {
     /** Where to send him back to when he leaves the Hekublade realm {dim, x, y, z, yaw}. */
     public CompoundTag bladeReturn = new CompoundTag();
     public int nextSealId;
+    /** If this player is sealed inside a Mikiko's Hekublade: whose, and where to put them back. */
+    public java.util.UUID prisonerOf;
+    public CompoundTag prisonReturn = new CompoundTag();
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -51,6 +54,8 @@ public class PlayerCharacter {
         this.sealed = other.sealed.copy();
         this.bladeReturn = other.bladeReturn.copy();
         this.nextSealId = other.nextSealId;
+        this.prisonerOf = other.prisonerOf;
+        this.prisonReturn = other.prisonReturn.copy();
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
         this.backFox = other.backFox.copy();
@@ -67,6 +72,8 @@ public class PlayerCharacter {
         tag.put("sealed", sealed.copy());
         tag.put("blade_return", bladeReturn.copy());
         tag.putInt("next_seal_id", nextSealId);
+        if (prisonerOf != null) tag.putUUID("prisoner_of", prisonerOf);
+        tag.put("prison_return", prisonReturn.copy());
         tag.put("pets", pets.copy());
         tag.put("wing_pets", wingPets.copy());
         tag.put("back_fox", backFox.copy());
@@ -83,6 +90,8 @@ public class PlayerCharacter {
         this.sealed = tag.getList("sealed", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.bladeReturn = tag.getCompound("blade_return");
         this.nextSealId = tag.getInt("next_seal_id");
+        this.prisonerOf = tag.hasUUID("prisoner_of") ? tag.getUUID("prisoner_of") : null;
+        this.prisonReturn = tag.getCompound("prison_return");
         this.pets = tag.getList("pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.wingPets = tag.getList("wing_pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");

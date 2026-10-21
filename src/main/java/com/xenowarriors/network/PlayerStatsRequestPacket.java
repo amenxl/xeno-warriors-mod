@@ -33,6 +33,20 @@ public record PlayerStatsRequestPacket() {
         // you first, then your party, then everyone else by level
         list.sort((a, b) -> a.self() != b.self() ? (a.self() ? -1 : 1)
                 : a.party() != b.party() ? (a.party() ? -1 : 1) : Integer.compare(b.level(), a.level()));
-        ModNetwork.sendToPlayer(new PlayerStatsPacket(list), sender);
+        var d = sender.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve().orElse(null);
+        float[] xp = new float[3];
+        if (d != null) {
+            for (com.xenowarriors.stats.Stat s : com.xenowarriors.stats.Stat.values()) {
+                int i = s.ordinal();
+                xp[i] = d.statLevel[i] >= com.xenowarriors.stats.Stat.MAX_LEVEL ? 1F : Math.min(1F, d.statXp[i] / s.needed(d.statLevel[i]));
+            }
+        }
+        int uses = com.xenowarriors.karma.KarmaSensing.uses(sender);
+        int pets = d == null ? 0 : d.pets.size() + d.wingPets.size();
+        PlayerStatsPacket.Me me = new PlayerStatsPacket.Me(xp[0], xp[1], xp[2],
+                (int) Math.round(com.xenowarriors.karma.KarmaSensing.radius(uses)), com.xenowarriors.karma.KarmaSensing.duration(uses) / 20,
+                uses, d == null ? 0 : d.sealed.size(), com.xenowarriors.mikiko.HekubladeRealm.inRealm(sender),
+                com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(sender), pets, d == null ? 0 : d.flightTicks / 1200);
+        ModNetwork.sendToPlayer(new PlayerStatsPacket(list, me), sender);
     }
 }

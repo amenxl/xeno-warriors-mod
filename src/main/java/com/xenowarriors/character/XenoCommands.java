@@ -92,7 +92,18 @@ public final class XenoCommands {
             return 1;
         }));
 
-        root.then(Commands.literal("blade").then(Commands.literal("realm").executes(ctx -> {
+        root.then(Commands.literal("blade").then(Commands.literal("plea").executes(ctx -> {
+            com.xenowarriors.mikiko.HekubladeRealm.plea(ctx.getSource().getPlayerOrException());
+            return 1;
+        })).then(Commands.literal("answer").then(Commands.argument("player", EntityArgument.player())
+                .then(Commands.literal("yes").executes(ctx -> {
+                    com.xenowarriors.mikiko.HekubladeRealm.answer(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"), true);
+                    return 1;
+                }))
+                .then(Commands.literal("no").executes(ctx -> {
+                    com.xenowarriors.mikiko.HekubladeRealm.answer(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"), false);
+                    return 1;
+                })))).then(Commands.literal("realm").executes(ctx -> {
             ServerPlayer p = ctx.getSource().getPlayerOrException();
             if (ModCapabilities.getType(p) != CharacterType.MIKIKO) {
                 ctx.getSource().sendFailure(Component.literal("Only Mikiko can enter the Hekublade."));

@@ -49,9 +49,10 @@ import java.util.UUID;
 public final class HekubladeRealm {
     public static final ResourceKey<Level> KEY = ResourceKey.create(Registries.DIMENSION, XenoWarriors.id("hekublade"));
     public static final int MAX_SEALED = 120, MAX_SHOWN = 60, Y = 2, RADIUS = 40;
-    /** Each try at freeing a sealed soul only works 1 time in 100. */
-    public static final float FREE_CHANCE = 0.01F;
-    private static final java.util.Map<UUID, Long> LAST_TRY = new java.util.HashMap<>();
+    /** Every few minutes, each sealed soul has a 1 in 100 chance of breaking out on its own. */
+    public static final float BREAKOUT_CHANCE = 0.01F;
+    public static final int BREAKOUT_INTERVAL = 5 * 60 * 20;
+    private static final java.util.Map<UUID, Long> LAST_PLEA = new java.util.HashMap<>();
     private static final String SEALED_TAG = "xw_sealed", SEALED_ID = "xw_sealed_id";
 
     private HekubladeRealm() {}
@@ -95,6 +96,10 @@ public final class HekubladeRealm {
 
     public static void toggle(ServerPlayer p) {
         if (ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
+        if (isPrisoner(p)) {
+            p.displayClientMessage(Component.literal("You're sealed in someone else's blade - ask them to free you."), true);
+            return;
+        }
         if (inRealm(p)) leave(p);
         else enter(p);
     }
@@ -230,20 +235,7 @@ public final class HekubladeRealm {
         if (event.getLevel().isClientSide || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND
                 || !(event.getEntity() instanceof ServerPlayer p)) return;
         if (!p.getUUID().equals(target.getPersistentData().getUUID(SEALED_TAG))) return;
-        long now = p.level().getGameTime();
-        Long last = LAST_TRY.get(p.getUUID());
-        if (last != null && now - last < 20) return;
-        LAST_TRY.put(p.getUUID(), now);
-        if (p.getRandom().nextFloat() < FREE_CHANCE) {
-            free(p, target);
-        } else {
-            ServerLevel realm = (ServerLevel) target.level();
-            realm.sendParticles(new DustParticleOptions(new Vector3f(0.55F, 0.4F, 1F), 1F), target.getX(),
-                    target.getY() + target.getBbHeight() * 0.5, target.getZ(), 10, 0.3, 0.4, 0.3, 0);
-            realm.playSound(null, target.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 0.6F);
-            p.displayClientMessage(Component.literal("The blade's hold on " + target.getCustomName().getString()
-                    + " won't break... (1% chance each try)").withStyle(ChatFormatting.GRAY), true);
-        }
+        free(p, target);
     }
 
     private static void free(ServerPlayer p, Entity display) {
@@ -267,12 +259,22 @@ public final class HekubladeRealm {
         display.discard();
         if (rec == null) return;
 
-        // it comes back out where Mikiko entered the blade
-        ServerLevel dest = returnLevel(p, c.bladeReturn);
+        release(p, c, rec, true);
+    }
+
+    /** Put a sealed creature back into the world: where Mikiko entered the blade, or right beside him. */
+    private static void release(ServerPlayer p, PlayerCharacter c, CompoundTag rec, boolean freedByHim) {
+        boolean nearHim = !freedByHim || !inRealm(p);
+        ServerLevel dest = nearHim ? (inRealm(p) ? returnLevel(p, c.bladeReturn) : p.serverLevel()) : returnLevel(p, c.bladeReturn);
         Mob mob = create(dest, rec);
         if (mob == null) return;
         double x, y, z;
-        if (c.bladeReturn.contains("x") && dest.dimension().location().toString().equals(c.bladeReturn.getString("dim"))) {
+        if (nearHim && !inRealm(p)) {
+            double a = p.getRandom().nextDouble() * Math.PI * 2;
+            x = p.getX() + Math.cos(a) * 3;
+            y = p.getY();
+            z = p.getZ() + Math.sin(a) * 3;
+        } else if (c.bladeReturn.contains("x") && dest.dimension().location().toString().equals(c.bladeReturn.getString("dim"))) {
             double a = p.getRandom().nextDouble() * Math.PI * 2;
             x = c.bladeReturn.getDouble("x") + Math.cos(a) * 2.5;
             y = c.bladeReturn.getDouble("y");
@@ -286,16 +288,24 @@ public final class HekubladeRealm {
         mob.moveTo(x, y, z, p.getRandom().nextFloat() * 360F, 0);
         dest.addFreshEntity(mob);
         burst(dest, x, y + 1, z);
-        p.displayClientMessage(Component.literal(rec.getString("name") + " has been freed from the Hekublade.")
-                .withStyle(ChatFormatting.GOLD), true);
+        if (freedByHim) {
+            p.displayClientMessage(Component.literal(rec.getString("name") + " has been freed from the Hekublade.")
+                    .withStyle(ChatFormatting.GOLD), true);
+        } else {
+            p.sendSystemMessage(Component.literal(rec.getString("name") + " broke out of the Hekublade!").withStyle(ChatFormatting.RED));
+            dest.playSound(null, x, y, z, SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 1F, 0.6F);
+        }
     }
 
     // ---------------------------------------------------------------- safety net, entering with the blade
 
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 5 != 0 || !inRealm(p)) return;
-        BlockPos c = center(p.getUUID());
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
+        if (p.tickCount % BREAKOUT_INTERVAL == 0 && p.tickCount > 0) breakouts(p);
+        if (p.tickCount % 5 != 0 || !inRealm(p)) return;
+        UUID captor = cap(p).map(d -> d.prisonerOf).orElse(null);
+        BlockPos c = center(captor != null ? captor : p.getUUID());
         if (p.getY() < c.getY() - 25) {
             p.teleportTo(c.getX() + 0.5, c.getY() + 1, c.getZ() + 0.5);
             p.fallDistance = 0;
@@ -314,6 +324,166 @@ public final class HekubladeRealm {
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
         toggle(p);
+    }
+
+    /** Every few minutes each sealed soul gets a 1% chance to break free on its own. */
+    private static void breakouts(ServerPlayer p) {
+        PlayerCharacter c = cap(p).orElse(null);
+        if (c == null || c.sealed.isEmpty() || ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
+        for (int i = c.sealed.size() - 1; i >= 0; i--) {
+            if (p.getRandom().nextFloat() >= BREAKOUT_CHANCE) continue;
+            CompoundTag rec = c.sealed.getCompound(i);
+            c.sealed.remove(i);
+            if (inRealm(p)) {
+                // the frozen copy on the floor vanishes too
+                ServerLevel realm = p.serverLevel();
+                int id = rec.getInt("id");
+                for (Entity e : realm.getEntitiesOfClass(Entity.class, new AABB(center(p.getUUID())).inflate(RADIUS + 16, 40, RADIUS + 16),
+                        e -> e.getPersistentData().hasUUID(SEALED_TAG) && e.getPersistentData().getInt(SEALED_ID) == id
+                                && p.getUUID().equals(e.getPersistentData().getUUID(SEALED_TAG)))) {
+                    e.discard();
+                }
+            }
+            release(p, c, rec, false);
+        }
+    }
+
+    // ---------------------------------------------------------------- players sealed in the blade
+
+    public static boolean isPrisoner(ServerPlayer p) {
+        return cap(p).map(d -> d.prisonerOf != null).orElse(false);
+    }
+
+    /** Mikiko defeats a player: instead of dying, they're sealed inside his Hekublade. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPlayerDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer victim)) return;
+        PlayerCharacter vc = cap(victim).orElse(null);
+        if (vc == null) return;
+        if (vc.prisonerOf != null) {
+            // dying inside (or being refused) lets them go - they respawn as normal
+            vc.prisonerOf = null;
+            vc.prisonReturn = new CompoundTag();
+            return;
+        }
+        if (!(event.getSource().getEntity() instanceof ServerPlayer mikiko) || mikiko == victim || victim.isCreative()
+                || ModCapabilities.getType(mikiko) != CharacterType.MIKIKO || inRealm(victim)) return;
+        if (event.getSource().is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)
+                || event.getSource().is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD)) return;
+        ServerLevel realm = victim.server.getLevel(KEY);
+        if (realm == null) return;
+        event.setCanceled(true);
+        CompoundTag ret = new CompoundTag();
+        ret.putString("dim", victim.level().dimension().location().toString());
+        ret.putDouble("x", victim.getX());
+        ret.putDouble("y", victim.getY());
+        ret.putDouble("z", victim.getZ());
+        vc.prisonerOf = mikiko.getUUID();
+        vc.prisonReturn = ret;
+        victim.setHealth(victim.getMaxHealth());
+        victim.clearFire();
+        victim.removeAllEffects();
+        burst(victim.serverLevel(), victim.getX(), victim.getY() + 1, victim.getZ());
+        BlockPos center = center(mikiko.getUUID());
+        if (!realm.getBlockState(center.below()).is(Blocks.SEA_LANTERN)) buildPlatform(realm, center);
+        double a = victim.getRandom().nextDouble() * Math.PI * 2;
+        victim.teleportTo(realm, center.getX() + 0.5 + Math.cos(a) * 8, center.getY() + 1, center.getZ() + 0.5 + Math.sin(a) * 8,
+                victim.getYRot(), 0F);
+        victim.fallDistance = 0;
+        mikiko.sendSystemMessage(Component.literal("You sealed " + victim.getGameProfile().getName() + " inside the Hekublade.")
+                .withStyle(ChatFormatting.GOLD));
+        victim.sendSystemMessage(Component.literal("You've been sealed inside " + mikiko.getGameProfile().getName() + "'s Hekublade. ")
+                .withStyle(ChatFormatting.GOLD)
+                .append(Component.literal("[Ask to be freed]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withUnderlined(true)
+                        .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND,
+                                "/xeno blade plea")))));
+    }
+
+    /** A sealed player begs their Mikiko to let them out. */
+    public static void plea(ServerPlayer prisoner) {
+        UUID captorId = cap(prisoner).map(d -> d.prisonerOf).orElse(null);
+        if (captorId == null) {
+            prisoner.displayClientMessage(Component.literal("You're not sealed in a Hekublade."), true);
+            return;
+        }
+        long now = prisoner.level().getGameTime();
+        Long last = LAST_PLEA.get(prisoner.getUUID());
+        if (last != null && now - last < 600) {
+            prisoner.displayClientMessage(Component.literal("Wait a little before asking again (" + (600 - (now - last) + 19) / 20 + "s)."), true);
+            return;
+        }
+        ServerPlayer mikiko = prisoner.server.getPlayerList().getPlayer(captorId);
+        if (mikiko == null) {
+            prisoner.displayClientMessage(Component.literal("Your captor isn't here to hear you...").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        LAST_PLEA.put(prisoner.getUUID(), now);
+        String name = prisoner.getGameProfile().getName();
+        mikiko.sendSystemMessage(Component.literal(name + " is begging to be freed from your Hekublade. ").withStyle(ChatFormatting.GOLD)
+                .append(button("[Yes]", ChatFormatting.GREEN, "/xeno blade answer " + name + " yes"))
+                .append(Component.literal(" "))
+                .append(button("[No]", ChatFormatting.RED, "/xeno blade answer " + name + " no")));
+        mikiko.playNotifySound(SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 1.2F);
+        prisoner.displayClientMessage(Component.literal("You call out to " + mikiko.getGameProfile().getName() + "...")
+                .withStyle(ChatFormatting.GOLD), true);
+    }
+
+    private static Component button(String text, ChatFormatting color, String command) {
+        return Component.literal(text).withStyle(s -> s.withColor(color).withBold(true)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, command)));
+    }
+
+    /** Mikiko's answer: yes frees them, no and they die (and respawn as normal). */
+    public static void answer(ServerPlayer mikiko, ServerPlayer prisoner, boolean yes) {
+        if (!mikiko.getUUID().equals(cap(prisoner).map(d -> d.prisonerOf).orElse(null))) {
+            mikiko.displayClientMessage(Component.literal(prisoner.getGameProfile().getName() + " isn't sealed in your blade."), true);
+            return;
+        }
+        if (yes) {
+            freePlayer(prisoner);
+            mikiko.displayClientMessage(Component.literal("You freed " + prisoner.getGameProfile().getName() + ".").withStyle(ChatFormatting.GOLD), true);
+        } else {
+            prisoner.sendSystemMessage(Component.literal(mikiko.getGameProfile().getName() + " refused. The blade consumes you...")
+                    .withStyle(ChatFormatting.DARK_RED));
+            mikiko.displayClientMessage(Component.literal("You refused " + prisoner.getGameProfile().getName() + ".").withStyle(ChatFormatting.RED), true);
+            prisoner.kill();
+        }
+    }
+
+    private static void freePlayer(ServerPlayer prisoner) {
+        PlayerCharacter c = cap(prisoner).orElse(null);
+        if (c == null) return;
+        CompoundTag ret = c.prisonReturn;
+        c.prisonerOf = null;
+        c.prisonReturn = new CompoundTag();
+        burst(prisoner.serverLevel(), prisoner.getX(), prisoner.getY() + 1, prisoner.getZ());
+        ServerLevel dest = returnLevel(prisoner, ret);
+        double x, y, z;
+        if (ret.contains("x") && dest.dimension().location().toString().equals(ret.getString("dim"))) {
+            x = ret.getDouble("x");
+            y = ret.getDouble("y");
+            z = ret.getDouble("z");
+        } else {
+            BlockPos s = dest.getSharedSpawnPos();
+            x = s.getX() + 0.5;
+            y = s.getY();
+            z = s.getZ() + 0.5;
+        }
+        prisoner.teleportTo(dest, x, y, z, prisoner.getYRot(), 0F);
+        prisoner.fallDistance = 0;
+        burst(dest, x, y + 1, z);
+        prisoner.sendSystemMessage(Component.literal("You've been freed from the Hekublade.").withStyle(ChatFormatting.GOLD));
+    }
+
+    /** Mikiko can also just right-click a sealed player to let them go. */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onInteractPlayer(PlayerInteractEvent.EntityInteract event) {
+        if (event.getLevel().isClientSide || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND
+                || !(event.getEntity() instanceof ServerPlayer mikiko) || !(event.getTarget() instanceof ServerPlayer prisoner)) return;
+        if (!inRealm(mikiko) || !mikiko.getUUID().equals(cap(prisoner).map(d -> d.prisonerOf).orElse(null))) return;
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        freePlayer(prisoner);
     }
 
     private static void burst(ServerLevel level, double x, double y, double z) {
