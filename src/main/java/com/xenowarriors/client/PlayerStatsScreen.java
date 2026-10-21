@@ -157,7 +157,7 @@ public class PlayerStatsScreen extends Screen {
         CharacterType type = typeOf(self);
         int color = type.getColor() | 0xFF000000;
         // shrink the card to fit short windows
-        int content = type == CharacterType.MIKIKO ? 200 : 140;
+        int content = type == CharacterType.MIKIKO ? 265 : 185;
         float scale = Math.min(1F, (height - 58 - 28) / (float) content);
         g.pose().pushPose();
         g.pose().translate(width / 2F, 28, 0);
@@ -176,7 +176,9 @@ public class PlayerStatsScreen extends Screen {
         statRow(g, x + 8, by + 14, "Attack", self.attack(), me.attackXp(), 0xFF7744);
         statRow(g, x + 8, by + 28, "Defense", self.defense(), me.defenseXp(), 0x88DD66);
         statRow(g, x + 8, by + 42, "Mining", me.mining(), me.miningXp(), 0xE0C070);
-        int ly = by + 60;
+        statRow(g, x + 8, by + 56, "Crafting", me.craft(), me.craftXp(), 0xC08A50);
+        statRow(g, x + 8, by + 70, "Smelting", me.smelt(), me.smeltXp(), 0xFF8A3A);
+        int ly = by + 88;
         line(g, x + 8, ly, "Karma", Math.round(self.karma()) + " / 100", 0xC77DFF);
         line(g, x + 8, ly + 12, "Health", Math.round(self.health()) + " / " + Math.round(self.maxHealth()), 0xFF6060);
         line(g, x + 8, ly + 24, "Karma Sensing", me.senseRange() + " blocks, " + me.senseSeconds() + "s  ("

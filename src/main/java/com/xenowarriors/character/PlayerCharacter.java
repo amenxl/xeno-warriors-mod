@@ -43,6 +43,9 @@ public class PlayerCharacter {
     public int realmTicks = -1;
     public long realmCooldownUntil;
     public float miningXp;
+    /** Crafting and smelting skills (0-50 each). */
+    public int craftLevel, smeltLevel;
+    public float craftXp, smeltXp;
     public CompoundTag prisonReturn = new CompoundTag();
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
@@ -73,6 +76,10 @@ public class PlayerCharacter {
         this.realmTicks = other.realmTicks;
         this.realmCooldownUntil = other.realmCooldownUntil;
         this.miningXp = other.miningXp;
+        this.craftLevel = other.craftLevel;
+        this.craftXp = other.craftXp;
+        this.smeltLevel = other.smeltLevel;
+        this.smeltXp = other.smeltXp;
         this.prisonReturn = other.prisonReturn.copy();
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
@@ -98,6 +105,10 @@ public class PlayerCharacter {
         tag.putInt("realm_ticks", realmTicks);
         tag.putLong("realm_cooldown", realmCooldownUntil);
         tag.putFloat("mining_xp", miningXp);
+        tag.putInt("craft_level", craftLevel);
+        tag.putFloat("craft_xp", craftXp);
+        tag.putInt("smelt_level", smeltLevel);
+        tag.putFloat("smelt_xp", smeltXp);
         tag.put("pets", pets.copy());
         tag.put("wing_pets", wingPets.copy());
         tag.put("back_fox", backFox.copy());
@@ -122,6 +133,10 @@ public class PlayerCharacter {
         this.realmTicks = tag.contains("realm_ticks") ? tag.getInt("realm_ticks") : -1;
         this.realmCooldownUntil = tag.getLong("realm_cooldown");
         this.miningXp = tag.getFloat("mining_xp");
+        this.craftLevel = tag.getInt("craft_level");
+        this.craftXp = tag.getFloat("craft_xp");
+        this.smeltLevel = tag.getInt("smelt_level");
+        this.smeltXp = tag.getFloat("smelt_xp");
         this.pets = tag.getList("pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.wingPets = tag.getList("wing_pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");

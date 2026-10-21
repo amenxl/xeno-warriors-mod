@@ -16,7 +16,8 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
     /** Extra detail about yourself for the "My Warrior" tab. */
     public record Me(float speedXp, float attackXp, float defenseXp, int senseRange, int senseSeconds, int senseUses,
                      int sealed, boolean inRealm, boolean prisoner, int pets, int flightMinutes, int mining, float miningXp,
-                     int bladeLevel, float bladeXp, int realmLeft, int realmMax, int cooldownLeft) {}
+                     int bladeLevel, float bladeXp, int realmLeft, int realmMax, int cooldownLeft,
+                     int craft, float craftXp, int smelt, float smeltXp) {}
 
     public static void encode(PlayerStatsPacket m, FriendlyByteBuf buf) {
         buf.writeCollection(m.players, (b, e) -> {
@@ -51,6 +52,10 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
         buf.writeVarInt(me.realmLeft());
         buf.writeVarInt(me.realmMax());
         buf.writeVarInt(me.cooldownLeft());
+        buf.writeVarInt(me.craft());
+        buf.writeFloat(me.craftXp());
+        buf.writeVarInt(me.smelt());
+        buf.writeFloat(me.smeltXp());
     }
 
     public static PlayerStatsPacket decode(FriendlyByteBuf buf) {
@@ -58,7 +63,8 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
                 b.readVarInt(), b.readVarInt(), b.readFloat(), b.readFloat(), b.readFloat(), b.readBoolean(), b.readBoolean()));
         Me me = new Me(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                 buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readFloat(),
-                buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+                buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
+                buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat());
         return new PlayerStatsPacket(list, me);
     }
 
