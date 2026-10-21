@@ -40,6 +40,20 @@ import org.joml.Matrix4f;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LockOn {
     private static final double RANGE = 28, KEEP_RANGE = 36, CONE = 32;
+    /** In the air you can see (and lock on to) much further. */
+    private static final double FLY_RANGE = 64, FLY_KEEP_RANGE = 80;
+
+    private static boolean flying(net.minecraft.world.entity.player.Player p) {
+        return p.getAbilities().flying || p.isFallFlying() || FlightTracker.isFlying(p);
+    }
+
+    private static double range(net.minecraft.world.entity.player.Player p) {
+        return flying(p) ? FLY_RANGE : RANGE;
+    }
+
+    private static double keepRange(net.minecraft.world.entity.player.Player p) {
+        return flying(p) ? FLY_KEEP_RANGE : KEEP_RANGE;
+    }
     private static final int LOST_SIGHT_TICKS = 60;
     private static final float TURN_PER_TICK = 0.45F;
 
@@ -84,6 +98,7 @@ public final class LockOn {
         double cos = Math.cos(Math.toRadians(CONE));
         LivingEntity best = null;
         double bestScore = Double.MAX_VALUE;
+        double RANGE = range(player);
         AABB box = player.getBoundingBox().inflate(RANGE);
         for (LivingEntity e : player.level().getEntitiesOfClass(LivingEntity.class, box, LockOn::lockable)) {
             if (e == player) continue;
@@ -118,7 +133,7 @@ public final class LockOn {
         if (event.phase != TickEvent.Phase.END || target == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null || target.level() != mc.level || !lockable(target) || target.isRemoved()
-                || mc.player.isDeadOrDying() || target.distanceTo(mc.player) > KEEP_RANGE) {
+                || mc.player.isDeadOrDying() || target.distanceTo(mc.player) > keepRange(mc.player)) {
             release(false);
             return;
         }
