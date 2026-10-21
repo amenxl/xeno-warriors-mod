@@ -231,6 +231,11 @@ public final class ModNetwork {
                 .decoder(PlayerStatsPacket::decode)
                 .consumerMainThread(PlayerStatsPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(BladeSwingPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(BladeSwingPacket::encode)
+                .decoder(BladeSwingPacket::decode)
+                .consumerMainThread(BladeSwingPacket::handle)
+                .add();
     }
 
     public static void sendToServer(Object msg) {

@@ -23,6 +23,14 @@ public final class ClientEvents {
     }
 
     /** Wait until the world has finished loading before showing the screen. */
+    /** Swinging the Hekublade at the air still cuts whatever's close in front (the server checks the arc). */
+    @SubscribeEvent
+    public static void onLeftClickEmpty(net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickEmpty event) {
+        if (com.xenowarriors.mikiko.Hekublade.isBlade(event.getEntity().getMainHandItem())) {
+            ModNetwork.sendToServer(new com.xenowarriors.network.BladeSwingPacket());
+        }
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
