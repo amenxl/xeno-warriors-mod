@@ -27,7 +27,13 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KarmaSense {
     private static final Map<Integer, Long> SENSED = new HashMap<>();   // entity id -> game time it stops glowing
+    private static final Map<Integer, Long> TRACKED = new HashMap<>();  // Fire Blitz targets (orange outline)
     private static long pulseStart = -1000;
+
+    public static void track(int id, int duration) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) TRACKED.put(id, mc.level.getGameTime() + duration);
+    }
 
     private KarmaSense() {}
 
@@ -43,10 +49,15 @@ public final class KarmaSense {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return false;
         Long until = SENSED.get(e.getId());
-        return until != null && mc.level.getGameTime() < until;
+        Long tracked = TRACKED.get(e.getId());
+        long now = mc.level.getGameTime();
+        return (until != null && now < until) || (tracked != null && now < tracked);
     }
 
     public static int color(Entity e) {
+        Minecraft mc = Minecraft.getInstance();
+        Long tracked = TRACKED.get(e.getId());
+        if (tracked != null && mc.level != null && mc.level.getGameTime() < tracked) return 0xFF7A1A;
         if (e instanceof Enemy) return 0xFF3A3A;
         if (e instanceof Player) return 0xB45CFF;
         if (e instanceof Animal) return 0x5CFF7A;
@@ -59,10 +70,12 @@ public final class KarmaSense {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
             SENSED.clear();
+            TRACKED.clear();
             return;
         }
         long now = mc.level.getGameTime();
         SENSED.values().removeIf(until -> until < now);
+        TRACKED.values().removeIf(until -> until < now);
         // a ring of light rolling outward for the first second
         long age = now - pulseStart;
         if (mc.player != null && age >= 0 && age < 20) {

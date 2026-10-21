@@ -24,6 +24,8 @@ public final class SkillAnimations {
     public static final int COMPRESS_DURATION = 60;
     public static final int BANG_DURATION = 14;
     public static final int BARRAGE_DURATION = com.xenowarriors.entity.GravityBarrageEntity.END;
+    public static final int SCATTER_DURATION = 26, KITSUNE_DURATION = 44, NETSU_DURATION = 24, BLITZ_DURATION = 16;
+    public static final int BLAZING_DURATION = com.xenowarriors.entity.BlazingWindEntity.CUTSCENE_END;
     /** Tick the stomping foot hits the ground - the Earth Wave entity waits this long before moving. */
     public static final int STOMP_IMPACT = com.xenowarriors.entity.EarthWaveEntity.IMPACT;
 
@@ -35,6 +37,11 @@ public final class SkillAnimations {
             case SkillAnimPacket.COMPRESS -> COMPRESS_DURATION;
             case SkillAnimPacket.BANG -> BANG_DURATION;
             case SkillAnimPacket.BARRAGE -> BARRAGE_DURATION;
+            case SkillAnimPacket.SCATTER -> SCATTER_DURATION;
+            case SkillAnimPacket.KITSUNE -> KITSUNE_DURATION;
+            case SkillAnimPacket.NETSU -> NETSU_DURATION;
+            case SkillAnimPacket.BLITZ -> BLITZ_DURATION;
+            case SkillAnimPacket.BLAZING -> BLAZING_DURATION;
             default -> KISHI_DURATION;
         };
     }
@@ -53,6 +60,11 @@ public final class SkillAnimations {
             case SkillAnimPacket.COMPRESS -> compress(model, t);
             case SkillAnimPacket.BANG -> bang(model, t);
             case SkillAnimPacket.BARRAGE -> barrage(model, t);
+            case SkillAnimPacket.SCATTER -> scatter(model, t);
+            case SkillAnimPacket.KITSUNE -> kitsune(model, t);
+            case SkillAnimPacket.NETSU -> netsu(model, t);
+            case SkillAnimPacket.BLITZ -> blitz(model, t);
+            case SkillAnimPacket.BLAZING -> blazing(model, t);
             default -> kishi(model, t, anim.airborne());
         }
         return true;
@@ -145,6 +157,77 @@ public final class SkillAnimations {
         pose(model.leftArm, w, lerp(lerp(-0.45F, -0.2F, aimBlend), 0.15F, descend), 0F, lerp(lerp(-1.35F, -1.05F, aimBlend), -0.9F, descend));
         pose(model.rightLeg, w, lerp(0.25F, 0.05F, descend), 0F, 0.05F);
         pose(model.leftLeg, w, lerp(-0.4F, 0.05F, descend), 0F, -0.05F);
+    }
+
+    // ---------------- Mikiko's skills ----------------
+
+    /** Hekublade Scatter: sweeps his arm out and points (the blades appear around him). */
+    private static void scatter(HumanoidModel<?> model, float t) {
+        float w = weight(t, SCATTER_DURATION, 2F, 18F);
+        if (w <= 0F) return;
+        float sweep = smooth(t / 8F);
+        float aimX = model.head.xRot - (float) Math.PI / 2F;
+        pose(model.rightArm, w, lerp(-0.4F, aimX, sweep), lerp(-1.2F, model.head.yRot, sweep), lerp(1.1F, 0F, sweep));
+        pose(model.leftArm, w, -0.35F, 0F, -0.5F);
+    }
+
+    /** Kitsune Attack: crouch, blur forward, then hold the finishing pose - low, one hand to the ground,
+     * other fist flung out behind (the whole-body crouch is in MikikoAnimations). */
+    private static void kitsune(HumanoidModel<?> model, float t) {
+        float w = weight(t, KITSUNE_DURATION, 2F, 36F);
+        if (w <= 0F) return;
+        float dash = smooth((t - 2F) / 2F) * (1F - smooth((t - 6F) / 2F));
+        float fin = smooth((t - 6F) / 3F);
+        // dash: arms swept back
+        float[] dashPose = {0.9F, 0F, 0.25F, 0.9F, 0F, -0.25F, -0.6F, 0.4F};
+        // finish: right fist out and up behind, left hand down to the ground, legs in a deep lunge
+        float[] finPose = {-1.9F, 0.5F, 1.25F, -0.55F, 0.2F, -0.15F, 0.85F, -1.35F};
+        float[] t2 = new float[8];
+        for (int i = 0; i < 8; i++) t2[i] = lerp(dashPose[i] * dash, finPose[i], fin);
+        pose(model.rightArm, w, t2[0], t2[1], t2[2]);
+        pose(model.leftArm, w, t2[3], t2[4], t2[5]);
+        pose(model.rightLeg, w, t2[6], 0F, 0.12F);
+        pose(model.leftLeg, w, t2[7], 0F, -0.08F);
+        model.head.xRot = lerp(model.head.xRot, model.head.xRot - 0.25F * fin, w);
+    }
+
+    /** Netsu: clenched fist raised up in front of him as the flames take him. */
+    private static void netsu(HumanoidModel<?> model, float t) {
+        float w = weight(t, NETSU_DURATION, 3F, 16F);
+        if (w <= 0F) return;
+        float shake = t > 3F && t < 14F ? (float) Math.sin(t * 3F) * 0.04F : 0F;
+        pose(model.rightArm, w, -2.1F + shake, -0.35F, 0.15F);
+        pose(model.leftArm, w, -0.2F, 0F, -0.35F);
+        pose(model.rightLeg, w, -0.15F, 0F, 0.1F);
+        pose(model.leftLeg, w, 0.2F, 0F, -0.1F);
+    }
+
+    /** Fire Blitz: fire cupped in both hands at his chest, then thrown overhand. */
+    private static void blitz(HumanoidModel<?> model, float t) {
+        float w = weight(t, BLITZ_DURATION, 2F, 11F);
+        if (w <= 0F) return;
+        float throwT = smooth((t - 5F) / 3F);
+        float aimX = model.head.xRot - (float) Math.PI / 2F;
+        pose(model.rightArm, w, lerp(lerp(-1.1F, -2.8F, smooth((t - 3F) / 2F)), aimX + 0.2F, throwT), lerp(-0.45F, model.head.yRot, throwT), 0F);
+        pose(model.leftArm, w, lerp(-1.1F, -0.3F, throwT), lerp(0.45F, 0F, throwT), lerp(0F, -0.3F, throwT));
+    }
+
+    /** Blazing Wind: arms rise as the wind gathers, circle to spin the tornado up, then both palms thrust forward. */
+    private static void blazing(HumanoidModel<?> model, float t) {
+        float w = weight(t, BLAZING_DURATION, 4F, 92F);
+        if (w <= 0F) return;
+        float rise = smooth(t / 16F);
+        float spin = smooth((t - 16F) / 6F) * (1F - smooth((t - 40F) / 4F));
+        float thrust = smooth((t - 42F) / 4F);
+        float circ = (float) Math.sin(t * 0.45F);
+        float aimX = model.head.xRot - (float) Math.PI / 2F;
+        float rx = lerp(lerp(lerp(0F, -2.8F, rise), -1.9F + circ * 0.5F, spin), aimX, thrust);
+        float lx = lerp(lerp(lerp(0F, -2.8F, rise), -1.9F - circ * 0.5F, spin), aimX, thrust);
+        float rz = lerp(lerp(0.2F, 0.75F, rise), 0.12F, Math.max(spin, thrust));
+        pose(model.rightArm, w, rx, lerp(0F, -0.3F, thrust), rz);
+        pose(model.leftArm, w, lx, lerp(0F, 0.3F, thrust), -rz);
+        pose(model.rightLeg, w, lerp(0F, -0.35F, thrust), 0F, 0.12F);
+        pose(model.leftLeg, w, lerp(0F, 0.4F, thrust), 0F, -0.12F);
     }
 
     /** 0..1 - how far the wings should be spread (flying Kishi cast, ultimate). */

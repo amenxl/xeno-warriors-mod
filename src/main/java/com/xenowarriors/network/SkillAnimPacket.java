@@ -15,6 +15,11 @@ public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
     public static final int COMPRESS = 2;
     public static final int BANG = 3;
     public static final int BARRAGE = 4;
+    public static final int SCATTER = 5;
+    public static final int KITSUNE = 6;
+    public static final int NETSU = 7;
+    public static final int BLITZ = 8;
+    public static final int BLAZING = 9;
 
     public static void encode(SkillAnimPacket msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.entityId);

@@ -23,6 +23,20 @@ public final class ModDamageTypes {
     public static final ResourceKey<DamageType> GRAVITY_BARRAGE =
             ResourceKey.create(Registries.DAMAGE_TYPE, XenoWarriors.id("gravity_barrage"));
 
+    public static final ResourceKey<DamageType> HEKUBLADE_SCATTER = key("hekublade_scatter");
+    public static final ResourceKey<DamageType> KITSUNE = key("kitsune");
+    public static final ResourceKey<DamageType> NETSU = key("netsu");
+    public static final ResourceKey<DamageType> FIRE_BLITZ = key("fire_blitz");
+    public static final ResourceKey<DamageType> BLAZING_WIND = key("blazing_wind");
+
+    private static ResourceKey<DamageType> key(String id) {
+        return ResourceKey.create(Registries.DAMAGE_TYPE, XenoWarriors.id(id));
+    }
+
+    public static DamageSource source(Level level, ResourceKey<DamageType> key, Entity direct, Entity owner) {
+        return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(key), direct, owner);
+    }
+
     private ModDamageTypes() {}
 
     private static DamageSource of(Level level, ResourceKey<DamageType> key, Entity direct, Entity owner) {

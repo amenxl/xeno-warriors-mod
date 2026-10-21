@@ -1,7 +1,10 @@
 package com.xenowarriors.client;
 
 import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.client.render.BlazingWindRenderer;
 import com.xenowarriors.client.render.EarthBulletRenderer;
+import com.xenowarriors.client.render.FireBlitzRenderer;
+import com.xenowarriors.client.render.HekubladeShardRenderer;
 import com.xenowarriors.client.render.EarthWaveRenderer;
 import com.xenowarriors.client.render.GravityBarrageRenderer;
 import com.xenowarriors.client.render.GravityCompressRenderer;
@@ -28,6 +31,9 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.GRAVITY_COMPRESS.get(), GravityCompressRenderer::new);
         event.registerEntityRenderer(ModEntities.EARTH_BULLET.get(), EarthBulletRenderer::new);
         event.registerEntityRenderer(ModEntities.GRAVITY_BARRAGE.get(), GravityBarrageRenderer::new);
+        event.registerEntityRenderer(ModEntities.HEKUBLADE_SHARD.get(), HekubladeShardRenderer::new);
+        event.registerEntityRenderer(ModEntities.FIRE_BLITZ.get(), FireBlitzRenderer::new);
+        event.registerEntityRenderer(ModEntities.BLAZING_WIND.get(), BlazingWindRenderer::new);
     }
 
     @SubscribeEvent

@@ -57,5 +57,34 @@ public final class ModEntities {
                     .updateInterval(1)
                     .build("gravity_barrage"));
 
+    public static final RegistryObject<EntityType<HekubladeShardEntity>> HEKUBLADE_SHARD = ENTITY_TYPES.register("hekublade_shard",
+            () -> EntityType.Builder.<HekubladeShardEntity>of(HekubladeShardEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .noSummon()
+                    .fireImmune()
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build("hekublade_shard"));
+
+    public static final RegistryObject<EntityType<FireBlitzEntity>> FIRE_BLITZ = ENTITY_TYPES.register("fire_blitz",
+            () -> EntityType.Builder.<FireBlitzEntity>of(FireBlitzEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .noSummon()
+                    .fireImmune()
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build("fire_blitz"));
+
+    public static final RegistryObject<EntityType<BlazingWindEntity>> BLAZING_WIND = ENTITY_TYPES.register("blazing_wind",
+            () -> EntityType.Builder.<BlazingWindEntity>of(BlazingWindEntity::new, MobCategory.MISC)
+                    .sized(2F, 4F)
+                    .noSummon()
+                    .fireImmune()
+                    .clientTrackingRange(12)
+                    .updateInterval(1)
+                    .build("blazing_wind"));
+
     private ModEntities() {}
 }

@@ -74,7 +74,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             model.faceHead.copyFrom(parent.head);
             var faceTexture = type.getFaceTexture();
             if (player.isSleeping() && type == CharacterType.MIKIKO) {
-                faceTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_face_sleep.png");
+                // breathe in (mouth closed) / snore out (mouth open, snot bubble) in time with the z's
+                boolean snore = (player.tickCount % 40) < 22;
+                faceTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_face_"
+                        + (snore ? "snore" : "sleep") + ".png");
             }
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);

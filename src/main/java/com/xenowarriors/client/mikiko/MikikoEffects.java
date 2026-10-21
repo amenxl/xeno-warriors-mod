@@ -249,6 +249,19 @@ final class MikikoEffects {
         MikikoAnimations.particle(level, ParticleTypes.SWEEP_ATTACK, feet.add(0, 0.1, 0), Vec3.ZERO);
     }
 
+    /** Netsu: flames pouring off his whole body, a trail when he moves, sparks drifting up. */
+    static void netsuAura(ClientLevel level, Player p) {
+        var r = p.getRandom();
+        for (int i = 0; i < 4; i++) {
+            Vec3 at = p.position().add((r.nextDouble() - 0.5) * 0.8, r.nextDouble() * 1.9, (r.nextDouble() - 0.5) * 0.8);
+            MikikoAnimations.particle(level, i % 2 == 0 ? ParticleTypes.FLAME : ParticleTypes.SMALL_FLAME, at, new Vec3(0, 0.04 + r.nextDouble() * 0.04, 0));
+        }
+        if (p.getDeltaMovement().horizontalDistanceSqr() > 0.01 || Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) > 0.05) {
+            for (int i = 0; i < 3; i++) MikikoAnimations.particle(level, ParticleTypes.FLAME, p.position().add(0, 0.1 + i * 0.4, 0), Vec3.ZERO);
+        }
+        if (r.nextInt(4) == 0) MikikoAnimations.particle(level, ParticleTypes.LAVA, p.position().add(0, 1, 0), Vec3.ZERO);
+    }
+
     // ---- idle fire trick ----
 
     static void fireStart(ClientLevel level, Player p) {

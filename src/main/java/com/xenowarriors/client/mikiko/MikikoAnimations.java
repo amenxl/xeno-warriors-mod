@@ -140,6 +140,9 @@ public final class MikikoAnimations {
         STATES.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         MikikoEffects.tickSummons(mc.level);
         for (AbstractClientPlayer p : mc.level.players()) {
+            if (ClientSkillState.netsuActive(p.getId())) MikikoEffects.netsuAura(mc.level, p);
+        }
+        for (AbstractClientPlayer p : mc.level.players()) {
             if (isMikiko(p) && p.isSleeping() && p.tickCount % 40 == 0) MikikoEffects.snore(p);
         }
     }
@@ -605,6 +608,18 @@ public final class MikikoAnimations {
             out[0] += Mth.sin(age * 0.12F) * 0.05F * fly * (1F - fast);
             out[3] += 65F * fast * fly * attacking;
             out[4] += Mth.lerp(partial, s.rollO, s.roll) * fly * attacking;
+        }
+        var skill = ClientSkillState.currentAnim(p);
+        if (skill != null && skill.anim() == com.xenowarriors.network.SkillAnimPacket.KITSUNE) {
+            float t = age - skill.startTick();
+            float crouch = smooth(t / 3F) * (1F - smooth((t - 36F) / 8F));
+            float fin = smooth((t - 6F) / 3F) * (1F - smooth((t - 36F) / 8F));
+            out[0] -= 0.25F * crouch + 0.2F * fin;     // low to the ground
+            out[3] += 14F * crouch + 14F * fin;        // leaning in
+        }
+        if (skill != null && skill.anim() == com.xenowarriors.network.SkillAnimPacket.BLAZING) {
+            float t = age - skill.startTick();
+            out[3] -= 8F * smooth((t - 42F) / 4F) * (1F - smooth((t - 90F) / 10F));   // braced back as he pushes
         }
         float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
         if (vibe > 0F) {

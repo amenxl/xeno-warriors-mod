@@ -35,6 +35,18 @@ public final class ClientSkillState {
         return s[0];
     }
 
+    private static final Map<Integer, Long> NETSU = new HashMap<>();   // entity id -> game time it ends
+
+    public static void setNetsu(int entityId, int ticks) {
+        if (ticks <= 0) NETSU.remove(entityId);
+        else NETSU.put(entityId, now() + ticks);
+    }
+
+    public static boolean netsuActive(int entityId) {
+        Long end = NETSU.get(entityId);
+        return end != null && now() < end;
+    }
+
     private ClientSkillState() {}
 
     public static void setKarma(float value, float max) {
@@ -105,6 +117,7 @@ public final class ClientSkillState {
         karma = 100F;
         maxKarma = 100F;
         ANIMS.clear();
+        NETSU.clear();
         SQUISH.clear();
         for (int i = 0; i < 5; i++) {
             COOLDOWN_END[i] = 0;

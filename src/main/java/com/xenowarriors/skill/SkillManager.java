@@ -5,6 +5,11 @@ import com.xenowarriors.character.ModCapabilities;
 import com.xenowarriors.karma.Karma;
 import com.xenowarriors.network.ModNetwork;
 import com.xenowarriors.network.SkillCooldownPacket;
+import com.xenowarriors.skill.mikiko.BlazingWindSkill;
+import com.xenowarriors.skill.mikiko.FireBlitzSkill;
+import com.xenowarriors.skill.mikiko.HekubladeScatterSkill;
+import com.xenowarriors.skill.mikiko.KitsuneSkill;
+import com.xenowarriors.skill.mikiko.NetsuSkill;
 import com.xenowarriors.skill.rhalix.BangSkill;
 import com.xenowarriors.skill.rhalix.EarthWaveSkill;
 import com.xenowarriors.skill.rhalix.GravityBarrageSkill;
@@ -24,7 +29,7 @@ public final class SkillManager {
     private static final Map<CharacterType, Skill[]> SKILLS = new EnumMap<>(CharacterType.class);
 
     static {
-        SKILLS.put(CharacterType.MIKIKO, new Skill[]{null, null, null, null, null});
+        SKILLS.put(CharacterType.MIKIKO, new Skill[]{new HekubladeScatterSkill(), new KitsuneSkill(), new NetsuSkill(), new FireBlitzSkill(), new BlazingWindSkill()});
         SKILLS.put(CharacterType.RHALIX, new Skill[]{new KishiSkill(), new EarthWaveSkill(), new GravityCompressSkill(), new BangSkill(), new GravityBarrageSkill()});
     }
 
