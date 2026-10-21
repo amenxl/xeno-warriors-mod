@@ -121,5 +121,9 @@
   "death.attack.xenowarriors.blazing_wind.item": "%1$s was swallowed by %2$s's Blazing Wind",
   "death.attack.xenowarriors.blazing_wind.player": "%1$s was swallowed by %2$s's Blazing Wind",
   "item.xenowarriors.fox_whistle": "Fox Whistle",
-  "key.xenowarriors.toggle_wings": "Take Out / Put Away Wings (Rhalix)"
+  "key.xenowarriors.toggle_wings": "Take Out / Put Away Wings (Rhalix)",
+  "item.xenowarriors.music_disc_zack_eyecatcher": "Zack Eyecatcher",
+  "item.xenowarriors.music_disc_zack_eyecatcher.desc": "Zack Eyecatcher",
+  "item.xenowarriors.music_disc_thinking_of_you": "Thinking of You",
+  "item.xenowarriors.music_disc_thinking_of_you.desc": "Thinking of You"
 }

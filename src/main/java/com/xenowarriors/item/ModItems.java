@@ -26,6 +26,16 @@ public final class ModItems {
     public static final RegistryObject<Item> FOX_WHISTLE = ITEMS.register("fox_whistle",
             () -> new FoxWhistleItem(new Item.Properties().stacksTo(1)));
 
+    /** Music disc: "Zack Eyecatcher" (42.5 seconds). */
+    public static final RegistryObject<Item> MUSIC_DISC_ZACK_EYECATCHER = ITEMS.register("music_disc_zack_eyecatcher",
+            () -> new net.minecraft.world.item.RecordItem(11, com.xenowarriors.ModSounds.ZACK_EYECATCHER,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 850));
+
+    /** Music disc: "Thinking of You" (3:15). */
+    public static final RegistryObject<Item> MUSIC_DISC_THINKING_OF_YOU = ITEMS.register("music_disc_thinking_of_you",
+            () -> new net.minecraft.world.item.RecordItem(4, com.xenowarriors.ModSounds.THINKING_OF_YOU,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 3902));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
@@ -34,6 +44,8 @@ public final class ModItems {
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(FOX_WHISTLE);
+            event.accept(MUSIC_DISC_ZACK_EYECATCHER);
+            event.accept(MUSIC_DISC_THINKING_OF_YOU);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));

@@ -593,7 +593,12 @@ public final class MikikoAnimations {
         }
         float[] bi = bladeIdle(player, partial);
         if (bi != null && s.move == null) bladeIdlePose(model, (int) bi[0], bi[1]);
-        if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
+        if (s.move != null) {
+            // in fast flight his whole body is tipped forward; the attack poses are made for standing, so turn the arms
+            // by that lean too (otherwise his arm swings back toward his feet)
+            float flyLean = 65F * Mth.lerp(partial, s.fastO, s.fast) * fly * 0.35F;
+            movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration, fly > 0.05F ? flyLean : -1F);
+        }
         float tired = Mth.lerp(partial, s.tiredO, s.tired);
         if (tired > 0F) tiredPose(model, tired, ageInTicks);
         float swordTired = Mth.lerp(partial, s.swordTiredO, s.swordTired);
@@ -609,6 +614,11 @@ public final class MikikoAnimations {
     }
 
     private static void movePose(HumanoidModel<?> model, Move m, float p) {
+        movePose(model, m, p, -1F);
+    }
+
+    /** @param flyLean degrees his body is leaned forward by flight (negative = not flying) */
+    private static void movePose(HumanoidModel<?> model, Move m, float p, float flyLean) {
         if (p < 0F || p > 1F) return;
         float wind = smooth(p / 0.28F);
         float strike = smooth((p - 0.26F) / 0.16F);
@@ -621,6 +631,11 @@ public final class MikikoAnimations {
             float pitch = model.head.xRot * strike;
             if (m == Move.JAB_L || m == Move.AIR_PUNCH_L || m == Move.UPPERCUT_L) t[3] += pitch;
             else t[0] += pitch;
+        }
+        if (flyLean >= 0F && m != Move.AIR_FLIP_SLASH && m != Move.AIR_SPIN_KICK) {
+            float lean = (flyLean + m.body(p, strike)[3]) * Mth.DEG_TO_RAD;
+            t[0] = Math.max(-3.2F, t[0] - lean);
+            t[3] = Math.max(-3.2F, t[3] - lean);
         }
         set(model.rightArm, t[0], t[1], t[2], amount);
         set(model.leftArm, t[3], t[4], t[5], amount);

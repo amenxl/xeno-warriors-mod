@@ -13,5 +13,13 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> HEKUBLADE_SUMMON = SOUNDS.register("hekublade_summon",
             () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("hekublade_summon")));
 
+    /** Music disc: "Zack Eyecatcher". */
+    public static final RegistryObject<SoundEvent> ZACK_EYECATCHER = SOUNDS.register("music_disc.zack_eyecatcher",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.zack_eyecatcher")));
+
+    /** Music disc: "Thinking of You". */
+    public static final RegistryObject<SoundEvent> THINKING_OF_YOU = SOUNDS.register("music_disc.thinking_of_you",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.thinking_of_you")));
+
     private ModSounds() {}
 }

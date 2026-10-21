@@ -1,6 +1,24 @@
 {
   "hekublade_summon": {
-    "sounds": ["xenowarriors:hekublade_summon"],
+    "sounds": [
+      "xenowarriors:hekublade_summon"
+    ],
     "subtitle": "subtitles.xenowarriors.hekublade_summon"
+  },
+  "music_disc.zack_eyecatcher": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/zack_eyecatcher",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.thinking_of_you": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/thinking_of_you",
+        "stream": true
+      }
+    ]
   }
 }
