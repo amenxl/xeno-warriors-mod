@@ -28,6 +28,7 @@ public final class ClientEvents {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
         WindEffects.tick(mc);
+        limitRhalixFlight(mc);
 
         // skill keys
         for (int slot = 0; slot < ModKeyMappings.SKILLS.length; slot++) {
@@ -76,6 +77,30 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void onRenderLivingPost(net.minecraftforge.client.event.RenderLivingEvent.Post<?, ?> event) {
         if (SQUISHED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+    }
+
+    private static boolean warnedCeiling;
+
+    /** Rhalix's wings only take him so high: no rising past the cap, and a gentle push back down above it. */
+    private static void limitRhalixFlight(Minecraft mc) {
+        var p = mc.player;
+        if (p == null || !p.getAbilities().flying || !com.xenowarriors.character.RhalixFlight.canFly(p)
+                || UltimateCutscene.active()) {
+            warnedCeiling = false;
+            return;
+        }
+        double h = com.xenowarriors.character.RhalixFlight.heightAboveGround(p);
+        double max = com.xenowarriors.character.RhalixFlight.MAX_HEIGHT;
+        if (h >= max) {
+            var v = p.getDeltaMovement();
+            p.setDeltaMovement(v.x, Math.min(v.y, h > max + 0.5 ? -0.12 : 0), v.z);
+            if (!warnedCeiling) {
+                p.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.xenowarriors.flight_ceiling"), true);
+                warnedCeiling = true;
+            }
+        } else if (h < max - 3) {
+            warnedCeiling = false;
+        }
     }
 
     @SubscribeEvent

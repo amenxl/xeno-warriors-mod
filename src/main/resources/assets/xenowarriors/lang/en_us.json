@@ -83,5 +83,6 @@
   "item.xenowarriors.karma_hoodie.desc3": "Dye it any color, like leather armor",
   "item.xenowarriors.sr_hoodie": "SR Hoodie",
   "item.xenowarriors.sr_hoodie.desc": "Hood up. The eye is watching.",
-  "subtitles.xenowarriors.hekublade_summon": "Hekublade summoned"
+  "subtitles.xenowarriors.hekublade_summon": "Hekublade summoned",
+  "message.xenowarriors.flight_ceiling": "Your wings can't take you any higher"
 }
