@@ -1,7 +1,6 @@
 package com.xenowarriors.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.xenowarriors.entity.GravityBarrageEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -20,6 +19,9 @@ import static com.xenowarriors.entity.GravityBarrageEntity.*;
  * Gravity Barrage visuals: a gravity sphere around each target, earth rocks tearing out of the
  * ground and orbiting them, all firing in at once each volley, rocks buried in the ground that
  * glow and shake right before they burst.
+ *
+ * Note: always ask for the glow buffer right before drawing with it - drawing the rocks switches the
+ * buffer source to block layers, which closes any glow buffer fetched earlier (that was the crash).
  */
 public class GravityBarrageRenderer extends EntityRenderer<GravityBarrageEntity> {
     private static final float ORBIT = 2.3F;
@@ -39,7 +41,6 @@ public class GravityBarrageRenderer extends EntityRenderer<GravityBarrageEntity>
         float age = e.tickCount + partialTick;
         Level level = e.level();
         double ex = Mth.lerp(partialTick, e.xOld, e.getX()), ey = Mth.lerp(partialTick, e.yOld, e.getY()), ez = Mth.lerp(partialTick, e.zOld, e.getZ());
-        VertexConsumer glow = FxDraw.glow(buffers);
 
         int[] ids = e.targetIds();
         for (int ti = 0; ti < ids.length; ti++) {
@@ -61,16 +62,16 @@ public class GravityBarrageRenderer extends EntityRenderer<GravityBarrageEntity>
                 float rad = (Math.max(t.getBbWidth(), hgt) * 0.6F + 0.45F) * (1.6F - 0.6F * in) * (1F + 0.18F * pulse);
                 pose.pushPose();
                 pose.translate(tx - ex, cy - ey, tz - ez);
-                FxDraw.sphere(pose, glow, rad, 0.62F + 0.3F * pulse, 0.3F, 1F, (0.38F + 0.4F * pulse) * in * out, age, -0.9F);
+                FxDraw.sphere(pose, FxDraw.glow(buffers), rad, 0.62F + 0.3F * pulse, 0.3F, 1F, (0.38F + 0.4F * pulse) * in * out, age, -0.9F);
                 pose.mulPose(Axis.YP.rotationDegrees(age * 12 + ti * 40));
                 pose.mulPose(Axis.XP.rotationDegrees(70));
-                FxDraw.ring(pose, glow, rad * 1.1F, 0.08F, 1F, 0.8F, 1F, 0.7F * in * out);
+                FxDraw.ring(pose, FxDraw.glow(buffers), rad * 1.1F, 0.08F, 1F, 0.8F, 1F, 0.7F * in * out);
                 pose.popPose();
                 // pressure ring on the ground
                 pose.pushPose();
                 pose.translate(tx - ex, ty - ey + 0.03, tz - ez);
-                FxDraw.disc(pose, glow, ORBIT * 1.05F, ORBIT * 1.2F, 0.7F, 0.4F, 1F, 0.6F * in * out, 0.6F * in * out);
-                FxDraw.disc(pose, glow, 0F, ORBIT * 1.05F, 0.2F, 0.05F, 0.35F, 0.35F * in * out, 0.05F * in * out);
+                FxDraw.disc(pose, FxDraw.glow(buffers), ORBIT * 1.05F, ORBIT * 1.2F, 0.7F, 0.4F, 1F, 0.6F * in * out, 0.6F * in * out);
+                FxDraw.disc(pose, FxDraw.glow(buffers), 0F, ORBIT * 1.05F, 0.2F, 0.05F, 0.35F, 0.35F * in * out, 0.05F * in * out);
                 pose.popPose();
             }
 
@@ -108,7 +109,7 @@ public class GravityBarrageRenderer extends EntityRenderer<GravityBarrageEntity>
                     if (streak) {
                         pose.pushPose();
                         pose.translate(rx - ex, ry - ey, rz - ez);
-                        FxDraw.beam(pose, glow, Mth.cos(ang) * 1.8F, 0, Mth.sin(ang) * 1.8F, 0.18F, 0.85F, 0.6F, 1F, 0.6F);
+                        FxDraw.beam(pose, FxDraw.glow(buffers), Mth.cos(ang) * 1.8F, 0, Mth.sin(ang) * 1.8F, 0.18F, 0.85F, 0.6F, 1F, 0.6F);
                         pose.popPose();
                     }
                 }
@@ -126,7 +127,7 @@ public class GravityBarrageRenderer extends EntityRenderer<GravityBarrageEntity>
                         0.55F, seed, (seed % 360));
                 pose.pushPose();
                 pose.translate(r[0] - ex, r[1] - ey + 0.02, r[2] - ez);
-                FxDraw.disc(pose, glow, 0F, 0.6F + 0.4F * charge, 0.75F, 0.35F + 0.4F * charge, 1F, 0.25F + 0.6F * charge, 0F);
+                FxDraw.disc(pose, FxDraw.glow(buffers), 0F, 0.6F + 0.4F * charge, 0.75F, 0.35F + 0.4F * charge, 1F, 0.25F + 0.6F * charge, 0F);
                 pose.popPose();
             }
         }
