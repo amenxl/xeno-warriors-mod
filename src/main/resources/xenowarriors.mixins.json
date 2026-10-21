@@ -24,7 +24,9 @@
     "FoxRendererMixin",
     "FoxHeldItemLayerMixin",
     "LivingEntityRendererSoulMixin",
-    "compat.DragonMineZRendererMixin"
+    "compat.DragonMineZRendererMixin",
+    "compat.DragonMineZFirstPersonMixin",
+    "compat.DragonMineZHandMixin"
   ],
   "injectors": {
     "defaultRequire": 1
