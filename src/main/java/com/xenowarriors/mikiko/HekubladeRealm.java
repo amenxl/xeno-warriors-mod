@@ -49,8 +49,8 @@ import java.util.UUID;
 public final class HekubladeRealm {
     public static final ResourceKey<Level> KEY = ResourceKey.create(Registries.DIMENSION, XenoWarriors.id("hekublade"));
     public static final int MAX_SEALED = 120, MAX_SHOWN = 60, Y = 2, RADIUS = 40;
-    /** Every few minutes, each sealed soul has a 1 in 100 chance of breaking out on its own. */
-    public static final float BREAKOUT_CHANCE = 0.01F;
+    /** Every 5 minutes, each sealed soul has a 1 in 10,000 chance of breaking out on its own - it almost never happens. */
+    public static final float BREAKOUT_CHANCE = 0.0001F;
     public static final int BREAKOUT_INTERVAL = 5 * 60 * 20;
     private static final java.util.Map<UUID, Long> LAST_PLEA = new java.util.HashMap<>();
     private static final String SEALED_TAG = "xw_sealed", SEALED_ID = "xw_sealed_id";
@@ -348,7 +348,7 @@ public final class HekubladeRealm {
         toggle(p);
     }
 
-    /** Every few minutes each sealed soul gets a 1% chance to break free on its own. */
+    /** Every 5 minutes each sealed soul gets a 1 in 10,000 chance to break free on its own. */
     private static void breakouts(ServerPlayer p) {
         PlayerCharacter c = cap(p).orElse(null);
         if (c == null || c.sealed.isEmpty() || ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
