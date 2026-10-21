@@ -1,0 +1,71 @@
+package com.xenowarriors.client.render;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.xenowarriors.character.CharacterType;
+import com.xenowarriors.client.ClientCharacterData;
+import com.xenowarriors.client.ClientSkillState;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+
+import java.util.EnumMap;
+import java.util.Map;
+
+/**
+ * Draws each character's 3D details on top of the player model. The detail bones copy the
+ * player model's pose every frame, so hair follows the head, sleeves follow the arms, etc.
+ * Rhalix's wings come out when he's in the air (flying, gliding, falling) or casting Kishi,
+ * like in the show, and are always shown on the selection screen.
+ */
+public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+    private final Map<CharacterType, DetailModel> models = new EnumMap<>(CharacterType.class);
+
+    public CharacterDetailLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
+        super(parent);
+        for (CharacterType type : CharacterType.PLAYABLE) {
+            DetailModel model = DetailModel.load(type);
+            if (model != null) models.put(type, model);
+        }
+    }
+
+    @Override
+    public void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight, AbstractClientPlayer player,
+                       float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
+                       float netHeadYaw, float headPitch) {
+        if (player.isInvisible()) return;
+        CharacterType type = ClientCharacterData.get(player);
+        DetailModel model = models.get(type);
+        if (model == null) return;
+
+        PlayerModel<AbstractClientPlayer> parent = getParentModel();
+        model.head.copyFrom(parent.head);
+        model.body.copyFrom(parent.body);
+        model.rightArm.copyFrom(parent.rightArm);
+        model.leftArm.copyFrom(parent.leftArm);
+        model.rightLeg.copyFrom(parent.rightLeg);
+        model.leftLeg.copyFrom(parent.leftLeg);
+
+        if (model.hasWings()) {
+            boolean preview = ClientCharacterData.isPreviewing();
+            boolean flying = player.getAbilities().flying || player.isFallFlying();
+            boolean falling = !player.onGround() && !player.isInWater() && player.fallDistance > 1.5F;
+            boolean kishi = ClientSkillState.isCastingKishi(player.getUUID());
+            model.setupWings(preview || flying || falling || kishi, flying || falling, ageInTicks);
+        }
+
+        int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
+        VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(type.getDetailTexture()));
+        model.root.render(poseStack, buffer, packedLight, overlay);
+
+        if (model.faceRoot != null) {
+            model.faceHead.copyFrom(parent.head);
+            VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(type.getFaceTexture()));
+            model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);
+        }
+    }
+}
