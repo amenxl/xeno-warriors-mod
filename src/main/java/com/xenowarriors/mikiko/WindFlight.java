@@ -42,8 +42,9 @@ public final class WindFlight {
             }
             if (!granted) {
                 p.getPersistentData().putBoolean(GRANTED, true);
-                p.sendSystemMessage(Component.literal("Your wind answers you now - Mikiko can fly! Double-tap jump to take off.")
+                p.sendSystemMessage(Component.literal("After a lot of thought and consideration, why not use my wing to fly?")
                         .withStyle(ChatFormatting.AQUA));
+                p.sendSystemMessage(Component.literal("(Double-tap jump to take off.)").withStyle(ChatFormatting.GRAY));
                 p.level().playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1F, 1.4F);
             }
         } else if (granted) {
