@@ -168,8 +168,8 @@ public class PlayerStatsScreen extends Screen {
         g.fill(x, y, x + W, y + 1, color);
         Component warrior = type == CharacterType.NONE ? Component.literal("No warrior") : type.getDisplayName();
         g.drawString(font, warrior, x + 8, y + 6, color);
-        g.drawString(font, "Character Level " + Math.max(1, self.level()) + " / 150", x + 8, y + 18, 0xFFD966);
-        g.drawString(font, "+" + self.level() / 10 + " bonus hearts  (next at Lv " + Math.min(150, (self.level() / 10 + 1) * 10) + ")",
+        g.drawString(font, "Character Level " + Math.max(1, self.level()) + " / " + com.xenowarriors.stats.Stats.MAX_CHARACTER_LEVEL, x + 8, y + 18, 0xFFD966);
+        g.drawString(font, "+" + self.level() / 10 + " bonus hearts  (next at Lv " + Math.min(com.xenowarriors.stats.Stats.MAX_CHARACTER_LEVEL, (self.level() / 10 + 1) * 10) + ")",
                 x + 150, y + 18, 0xFF8080);
         int by = y + 34;
         statRow(g, x + 8, by, "Speed", self.speed(), me.speedXp(), 0x55DDFF);

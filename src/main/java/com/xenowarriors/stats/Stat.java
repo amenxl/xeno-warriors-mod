@@ -11,7 +11,17 @@ public enum Stat {
     ATTACK(20F, 10F, 0.02F),     // xp = damage dealt
     DEFENSE(15F, 8F, 0.01F);     // xp = damage taken from enemies
 
-    public static final int MAX_LEVEL = 50;
+    /** Each stat goes to 333, so Character Level (all three added up) reaches 999. */
+    public static final int MAX_LEVEL = 333;
+    private static final int FULL = 50;
+
+    /**
+     * How much a level actually counts: fully up to 50, then tapering (level 333 counts like ~84), so high levels keep
+     * getting stronger without speed/damage running away.
+     */
+    public static float effective(int level) {
+        return Math.min(level, FULL) + 2F * (float) Math.sqrt(Math.max(0, level - FULL));
+    }
 
     private final float base, perLevel;
     public final float bonusPerLevel;

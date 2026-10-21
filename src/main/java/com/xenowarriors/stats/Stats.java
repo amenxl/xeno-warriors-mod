@@ -30,7 +30,7 @@ public final class Stats {
     private static final UUID SPEED_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e11");
     private static final UUID HEALTH_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e12");
     /** Character Level = Speed + Attack + Defense levels (each up to 50), so 0-150. */
-    public static final int MAX_CHARACTER_LEVEL = 150;
+    public static final int MAX_CHARACTER_LEVEL = Stat.MAX_LEVEL * 3;   // 999
 
     public static int characterLevel(ServerPlayer player) {
         return player.getCapability(ModCapabilities.PLAYER_CHARACTER)
@@ -123,7 +123,7 @@ public final class Stats {
         int lv = d.statLevel[Stat.SPEED.ordinal()];
         if (lv > 0) {
             speed.addTransientModifier(new AttributeModifier(SPEED_ID, "Xeno Warriors running level",
-                    lv * Stat.SPEED.bonusPerLevel, AttributeModifier.Operation.MULTIPLY_BASE));
+                    Stat.effective(lv) * Stat.SPEED.bonusPerLevel, AttributeModifier.Operation.MULTIPLY_BASE));
         }
     }
 
@@ -174,11 +174,11 @@ public final class Stats {
         float amount = event.getAmount();
 
         if (source instanceof ServerPlayer attacker && attacker != target) {
-            amount *= 1F + level(attacker, Stat.ATTACK) * Stat.ATTACK.bonusPerLevel;
+            amount *= 1F + Stat.effective(level(attacker, Stat.ATTACK)) * Stat.ATTACK.bonusPerLevel;
             addXp(attacker, Stat.ATTACK, Math.min(amount, target.getHealth()));
         }
         if (target instanceof ServerPlayer defender && source instanceof LivingEntity && source != defender) {
-            amount *= 1F - level(defender, Stat.DEFENSE) * Stat.DEFENSE.bonusPerLevel;
+            amount *= Math.max(0.25F, 1F - Stat.effective(level(defender, Stat.DEFENSE)) * Stat.DEFENSE.bonusPerLevel);
             addXp(defender, Stat.DEFENSE, amount);
         }
         event.setAmount(amount);

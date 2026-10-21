@@ -61,9 +61,9 @@ public class StatToasts implements IGuiOverlay {
             Component title = Component.translatable("stat.xenowarriors.levelup",
                     Component.translatable("stat.xenowarriors." + stat.id()), level);
             String bonus = switch (stat) {
-                case SPEED -> "+" + Math.round(level * stat.bonusPerLevel * 100) + "% speed";
-                case ATTACK -> "+" + Math.round(level * stat.bonusPerLevel * 100) + "% damage";
-                case DEFENSE -> "-" + Math.round(level * stat.bonusPerLevel * 100) + "% damage taken";
+                case SPEED -> "+" + Math.round(Stat.effective(level) * stat.bonusPerLevel * 100) + "% speed";
+                case ATTACK -> "+" + Math.round(Stat.effective(level) * stat.bonusPerLevel * 100) + "% damage";
+                case DEFENSE -> "-" + Math.round(Math.min(0.75F, Stat.effective(level) * stat.bonusPerLevel) * 100) + "% damage taken";
             };
             int w = Math.max(font.width(title), font.width(bonus)) + 30;
             int x = width - 6 - Math.round(w * slide);

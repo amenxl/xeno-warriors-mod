@@ -44,7 +44,7 @@ public class LevelHud implements IGuiOverlay {
         g.fill(x, y, x + w, y + 20, 0xC0101018);
         g.fill(x, y, x + w, y + 1, color);
         g.drawCenteredString(font, "Lv " + lv, x + w / 2, y + 4, 0xFFFFFF);
-        float p = level >= 150 ? 1F : Mth.clamp(progress, 0F, 1F);
+        float p = level >= com.xenowarriors.stats.Stats.MAX_CHARACTER_LEVEL ? 1F : Mth.clamp(progress, 0F, 1F);
         g.fill(x + 3, y + 15, x + w - 3, y + 17, 0xFF2A2A34);
         g.fill(x + 3, y + 15, x + 3 + Math.round((w - 6) * p), y + 17, color);
     }
