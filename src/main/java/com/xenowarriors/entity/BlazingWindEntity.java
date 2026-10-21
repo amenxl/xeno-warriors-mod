@@ -138,12 +138,12 @@ public class BlazingWindEntity extends Entity {
         setPos(c.x, groundY, c.z);
 
         float h = height(tickCount), r = radius(tickCount);
-        if (tickCount % 8 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 3F, 0.5F);
-        if (tickCount % 20 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.5F, 0.6F);
-        if (tickCount % 30 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.5F, 0.4F);
+        if (tickCount % 16 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 0.5F, 0.5F);
+        if (tickCount % 20 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.35F, 0.6F);
+        if (tickCount % 30 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.35F, 0.4F);
         if (tickCount == SEND) {
-            server.playSound(null, getX(), getY(), getZ(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 1F, 1.6F);
-            server.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1F, 0.6F);
+            server.playSound(null, getX(), getY(), getZ(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.35F, 1.6F);
+            server.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.45F, 0.6F);
         }
 
         // drag everyone nearby in, lift and spin them, burn whoever is inside
@@ -172,7 +172,7 @@ public class BlazingWindEntity extends Entity {
         }
         // the tornado bursts apart and flings everyone out
         if (tickCount == BURST) {
-            server.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.5F, 0.5F);
+            server.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.6F, 0.5F);
             server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 2, getZ(), 1, 0, 0, 0, 0);
             server.sendParticles(ParticleTypes.FLAME, getX(), getY() + 3, getZ(), 120, 3, 3, 3, 0.3);
             for (LivingEntity e : server.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(8, h, 8),
