@@ -102,6 +102,7 @@ public class FoxMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         storage.stopOpen(player);
+        if (fox != null && !player.level().isClientSide) FoxPets.bagClosed(fox.getUUID());
     }
 
     /** The fox's worn armor, read and written straight on the fox (server side). */

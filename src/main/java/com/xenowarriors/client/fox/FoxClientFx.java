@@ -42,7 +42,8 @@ public final class FoxClientFx {
     private FoxClientFx() {}
 
     public static void setSkin(int id, int skin) {
-        SKINS.put(id, skin);
+        if (skin < 0) SKINS.remove(id);     // released back to the wild
+        else SKINS.put(id, skin);
     }
 
     public static boolean isPet(Fox fox) {
@@ -115,11 +116,11 @@ public final class FoxClientFx {
         boolean ownerNear = mc.player != null && fox.distanceToSqr(mc.player) < 8 * 8;
         float moving = Mth.clamp(limbAmount * 2F, 0F, 1F);
         // tail wag: fast and wide while playing, happy wag near people, a small sway when trotting
-        float speed = playing ? 0.95F : ownerNear ? 0.5F : 0.3F;
-        float amp = playing ? 0.55F : ownerNear ? 0.32F : 0.15F;
-        amp *= 1F - 0.5F * moving;
-        tail.zRot += Mth.sin(age * speed + fox.getId()) * amp;
-        tail.xRot -= (playing ? 0.25F : 0.1F) * (1F - moving);      // tail held up when happy
+        float speed = playing ? 0.32F : ownerNear ? 0.16F : 0.1F;
+        float amp = playing ? 0.22F : ownerNear ? 0.12F : 0.05F;
+        amp *= 1F - 0.6F * moving;
+        wag(tail, Mth.sin(age * speed + fox.getId()) * amp);
+        tail.xRot -= (playing ? 0.1F : 0.04F) * (1F - moving);      // tail held up a little when happy
         if (playing) {
             // bouncy: head bobbing with the hops, ears perked
             head.y -= Math.abs(Mth.sin(age * 0.6F)) * 0.8F;
@@ -145,9 +146,20 @@ public final class FoxClientFx {
         // level-up and greeting: tail straight up, swishing
         long[] f = FX.get(fox.getId());
         if (f != null && f[0] != FoxFxPacket.RUN_AWAY) {
-            tail.xRot -= 0.5F;
-            tail.zRot += Mth.sin(age * 1.4F) * 0.4F;
+            tail.xRot -= 0.2F;
+            wag(tail, Mth.sin(age * 0.45F) * 0.18F);
         }
+    }
+
+    /**
+     * Swings the tail side to side around the middle of its base. (The tail's pivot sits off to one side of
+     * the tail, so rotating it alone would swing the base away from the body - this keeps it attached.)
+     */
+    private static void wag(ModelPart tail, float angle) {
+        tail.zRot += angle;
+        // base centre of the tail box in its own space is (4, 0, 1.5): move the part so that point stays put
+        tail.x += 4F * (1F - Mth.cos(angle));
+        tail.y -= 4F * Mth.sin(angle);
     }
 
     // ------------------------------------------------------------ one-off moves

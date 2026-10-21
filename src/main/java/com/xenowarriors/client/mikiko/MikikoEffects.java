@@ -282,6 +282,70 @@ final class MikikoEffects {
 
     // ---- idle fire trick ----
 
+    private static final DustParticleOptions FIRE_GLOW = new DustParticleOptions(new Vector3f(1F, 0.5F, 0.1F), 0.9F);
+    private static final DustParticleOptions FIRE_CORE = new DustParticleOptions(new Vector3f(1F, 0.92F, 0.6F), 0.6F);
+
+    /**
+     * Mikiko's fire trick while sitting (t = 0..160 ticks): sparks spiral in and gather in his palm, a flame
+     * ignites with a soft glow and twists up into a little fire spiral, then he tosses it into the air where it
+     * bursts into a ring of sparks and a puff of smoke.
+     */
+    static void fireShow(ClientLevel level, Player p, int t) {
+        Vec3 palm = MikikoAnimations.seatedPalm(p).add(0, 0.22, 0);
+        var r = p.getRandom();
+        if (t < 20) {
+            // sparks spiraling inward
+            double k = 1.0 - t / 20.0;
+            for (int i = 0; i < 2; i++) {
+                double a = t * 0.55 + i * Math.PI;
+                Vec3 at = palm.add(Math.cos(a) * 0.45 * k, 0.12 * k, Math.sin(a) * 0.45 * k);
+                MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, at, palm.subtract(at).scale(0.12));
+            }
+            if (t == 19) {
+                for (int i = 0; i < 10; i++) MikikoAnimations.particle(level, ParticleTypes.FLAME, palm, rand(p, 0.04).add(0, 0.03, 0));
+                MikikoAnimations.particle(level, ParticleTypes.FLASH, palm, Vec3.ZERO);
+                MikikoAnimations.sound(level, p, SoundEvents.FIRECHARGE_USE, 0.3F, 1.7F);
+            }
+        } else if (t < 120) {
+            int u = t - 20;
+            // bright core with a warm glow around it
+            MikikoAnimations.particle(level, FIRE_CORE, palm.add(rand(p, 0.03)), new Vec3(0, 0.005, 0));
+            if (t % 2 == 0) MikikoAnimations.particle(level, ParticleTypes.FLAME, palm, new Vec3(0, 0.012, 0));
+            if (t % 3 == 0) MikikoAnimations.particle(level, FIRE_GLOW, palm.add(rand(p, 0.1)), new Vec3(0, 0.01, 0));
+            // a two-strand fire spiral twisting up from the flame, growing taller
+            double height = Math.min(0.55, u * 0.012);
+            for (int i = 0; i < 2; i++) {
+                double h = ((u * 0.035) + i * 0.5) % 1.0 * height;
+                double a = u * 0.5 + i * Math.PI + h * 8;
+                double rad = 0.07 + h * 0.22;
+                MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, palm.add(Math.cos(a) * rad, h, Math.sin(a) * rad), Vec3.ZERO);
+            }
+            // the odd ember popping out
+            if (r.nextInt(14) == 0) MikikoAnimations.particle(level, ParticleTypes.LAVA, palm, Vec3.ZERO);
+            if (u % 25 == 0) MikikoAnimations.sound(level, p, SoundEvents.FIRE_AMBIENT, 0.25F, 1.3F);
+        } else if (t < 150) {
+            // tossed up...
+            float u = (t - 120) / 24F;
+            Vec3 ball = palm.add(0.0, Math.min(1F, u) * 1.1 - Math.max(0F, u - 1F) * 0.3, 0.0);
+            if (t < 144) {
+                MikikoAnimations.particle(level, ParticleTypes.FLAME, ball, new Vec3(0, -0.01, 0));
+                MikikoAnimations.particle(level, FIRE_GLOW, ball.add(rand(p, 0.05)), Vec3.ZERO);
+                if (t == 121) MikikoAnimations.sound(level, p, SoundEvents.BLAZE_SHOOT, 0.2F, 1.8F);
+            }
+            if (t == 144) {
+                // ...and it bursts into a ring of sparks
+                for (int i = 0; i < 18; i++) {
+                    double a = i / 18.0 * Math.PI * 2;
+                    MikikoAnimations.particle(level, i % 3 == 0 ? FIRE_CORE : ParticleTypes.FLAME, ball,
+                            new Vec3(Math.cos(a) * 0.09, 0.02 + r.nextDouble() * 0.03, Math.sin(a) * 0.09));
+                }
+                MikikoAnimations.sound(level, p, SoundEvents.FIREWORK_ROCKET_BLAST, 0.35F, 1.6F);
+            }
+        } else if (t == 150) {
+            fireOut(level, p);
+        }
+    }
+
     static void fireStart(ClientLevel level, Player p) {
         Vec3 palm = MikikoAnimations.seatedPalm(p);
         for (int i = 0; i < 6; i++) MikikoAnimations.particle(level, ParticleTypes.FLAME, palm, rand(p, 0.03).add(0, 0.03, 0));

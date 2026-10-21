@@ -202,6 +202,120 @@ public final class FoxPets {
         sendSkin(fox);
     }
 
+    // ---------------------------------------------------------------- eating
+
+    private static final java.util.Set<UUID> OPEN_BAGS = new java.util.HashSet<>();
+
+    public static void bagClosed(UUID fox) {
+        OPEN_BAGS.remove(fox);
+    }
+
+    /** A hurt fox snacks on food from its bag (one bite every few seconds until it's healed up). */
+    private static void eatFromBag(Fox fox, CompoundTag rec) {
+        if (fox.getHealth() >= fox.getMaxHealth() - 0.5F || OPEN_BAGS.contains(fox.getUUID()) || !rec.contains("inv")) return;
+        net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(27, ItemStack.EMPTY);
+        net.minecraft.world.ContainerHelper.loadAllItems(rec.getCompound("inv"), items);
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack food = items.get(i);
+            var props = food.getFoodProperties(fox);
+            if (food.isEmpty() || props == null) continue;
+            ItemStack eaten = food.copyWithCount(1);
+            food.shrink(1);
+            CompoundTag inv = new CompoundTag();
+            net.minecraft.world.ContainerHelper.saveAllItems(inv, items);
+            rec.put("inv", inv);
+            fox.heal(Math.max(2F, props.getNutrition() * 1.5F));
+            for (var effect : props.getEffects()) {
+                if (effect.getFirst() != null && fox.getRandom().nextFloat() < effect.getSecond()) fox.addEffect(new net.minecraft.world.effect.MobEffectInstance(effect.getFirst()));
+            }
+            if (fox.level() instanceof ServerLevel lvl) {
+                double yaw = Math.toRadians(fox.getYRot());
+                lvl.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, eaten),
+                        fox.getX() - Math.sin(yaw) * 0.5, fox.getY() + 0.4, fox.getZ() + Math.cos(yaw) * 0.5, 8, 0.1, 0.08, 0.1, 0.05);
+                lvl.sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.9, fox.getZ(), 1, 0.1, 0.1, 0.1, 0);
+            }
+            fox.playSound(SoundEvents.FOX_EAT, 1F, 1F);
+            return;
+        }
+    }
+
+    // ---------------------------------------------------------------- commands
+
+    public static java.util.List<Component> describe(ServerPlayer p) {
+        java.util.List<Component> out = new java.util.ArrayList<>();
+        for (Tag t : pets(p)) {
+            CompoundTag rec = (CompoundTag) t;
+            String status = rec.getBoolean("dead") ? "ran away" : rec.getBoolean("back") ? "on your back"
+                    : rec.hasUUID("uuid") && findLoaded(p, rec.getUUID("uuid")) != null ? "nearby" : "far away";
+            out.add(Component.literal(" - " + rec.getString("name")).withStyle(ChatFormatting.GOLD)
+                    .append(Component.literal("  Lv " + rec.getInt("level") + "  " + FoxSkins.get(rec.getInt("skin")).name()
+                            + " skin  (" + status + ")").withStyle(ChatFormatting.GRAY)));
+        }
+        return out;
+    }
+
+    private static java.util.List<CompoundTag> matching(ServerPlayer p, String name) {
+        java.util.List<CompoundTag> out = new java.util.ArrayList<>();
+        for (Tag t : pets(p)) {
+            CompoundTag rec = (CompoundTag) t;
+            if (name == null || rec.getString("name").equalsIgnoreCase(name)) out.add(rec);
+        }
+        return out;
+    }
+
+    /** Sets the level of your foxes (all of them, or just the one with this name). Returns how many changed. */
+    public static int setLevel(ServerPlayer p, int level, String name) {
+        int n = 0;
+        for (CompoundTag rec : matching(p, name)) {
+            rec.putInt("level", Math.max(1, Math.min(FoxLevels.MAX, level)));
+            rec.putFloat("xp", 0);
+            Fox fox = rec.hasUUID("uuid") ? findLoaded(p, rec.getUUID("uuid")) : null;
+            if (fox != null) {
+                applyLevel(fox, rec.getInt("level"));
+                fox.setHealth(fox.getMaxHealth());
+                updateName(fox, rec);
+            }
+            n++;
+        }
+        return n;
+    }
+
+    public static int heal(ServerPlayer p) {
+        int n = 0;
+        for (CompoundTag rec : matching(p, null)) {
+            Fox fox = rec.hasUUID("uuid") ? findLoaded(p, rec.getUUID("uuid")) : null;
+            if (fox == null) continue;
+            fox.setHealth(fox.getMaxHealth());
+            fox.clearFire();
+            p.serverLevel().sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.8, fox.getZ(), 4, 0.3, 0.2, 0.3, 0);
+            n++;
+        }
+        return n;
+    }
+
+    /** Lets a fox go back to the wild (frees up one of the 2 places). */
+    public static boolean release(ServerPlayer p, String name) {
+        java.util.List<CompoundTag> found = matching(p, name);
+        if (found.isEmpty()) return false;
+        CompoundTag rec = found.get(0);
+        if (rec.getBoolean("back")) putDown(p);
+        Fox fox = rec.hasUUID("uuid") ? findLoaded(p, rec.getUUID("uuid")) : null;
+        pets(p).remove(rec);
+        if (fox != null) {
+            fox.getPersistentData().remove(OWNER);
+            fox.getPersistentData().remove(GEN);
+            fox.getPersistentData().remove(SKIN);
+            fox.setCustomName(null);
+            fox.goalSelector.removeAllGoals(g -> g instanceof FoxFollowOwnerGoal || g instanceof FoxPlayGoal || g instanceof FoxRestGoal);
+            applyLevel(fox, 1);
+            ModNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> fox),
+                    new FoxSkinPacket(fox.getId(), -1));
+            p.serverLevel().sendParticles(ParticleTypes.HAPPY_VILLAGER, fox.getX(), fox.getY() + 0.5, fox.getZ(), 10, 0.3, 0.3, 0.3, 0);
+        }
+        sync(p, null, null);
+        return true;
+    }
+
     // ---------------------------------------------------------------- swords
 
     /** Mikiko hands his fox a sword; it holds it in its mouth (whatever it had before comes back to him). */
@@ -446,6 +560,7 @@ public final class FoxPets {
             Vec3 last = s.lastPos.put(fox.getUUID(), fox.position());
             if (last != null && last.distanceTo(fox.position()) > 3 && fox.distanceTo(p) < 16) addXp(fox, 1F);
             if (p.tickCount % 100 == 0) snapshot(fox, rec);
+            if (p.tickCount % 60 == 0) eatFromBag(fox, rec);
             // armed with a sword: it goes after monsters near him on its own
             if (fox.getMainHandItem().getItem() instanceof net.minecraft.world.item.SwordItem
                     && (fox.getTarget() == null || !fox.getTarget().isAlive())) {
@@ -589,6 +704,7 @@ public final class FoxPets {
         for (int i = 0; i < slots; i++) storage.setItem(i, items.get(i));
         FoxMenu.ArmorContainer armor = new FoxMenu.ArmorContainer(fox);
         Component title = Component.literal(rec.getString("name") + "'s Bag");
+        OPEN_BAGS.add(fox.getUUID());
         net.minecraftforge.network.NetworkHooks.openScreen(p, new net.minecraft.world.SimpleMenuProvider(
                 (id, inv, pl) -> new FoxMenu(id, inv, storage, armor, fox, rows), title), buf -> {
             buf.writeVarInt(fox.getId());

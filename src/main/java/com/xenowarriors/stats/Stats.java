@@ -70,7 +70,7 @@ public final class Stats {
         }
     }
 
-    private static void reapply(ServerPlayer player) {
+    public static void reapply(ServerPlayer player) {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> applySpeed(player, d));
     }
 

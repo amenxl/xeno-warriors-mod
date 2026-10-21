@@ -5,6 +5,8 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.entity.player.Player;
 
+import net.minecraft.world.phys.Vec3;
+
 import java.util.EnumSet;
 
 /**
@@ -14,7 +16,7 @@ import java.util.EnumSet;
 public class FoxRestGoal extends Goal {
     private final Fox fox;
     private Player owner;
-    private boolean sleep;
+    private boolean sleep, petted;
     private int time;
 
     public FoxRestGoal(Fox fox) {
@@ -31,6 +33,10 @@ public class FoxRestGoal extends Goal {
             sleep = true;
         } else if (FoxPets.stillTicks(p) >= 200 && !FoxPets.isPlaying(p) && d < 6 * 6) {
             sleep = false;
+            petted = false;
+        } else if (wantsPets(p) && d < 10 * 10) {
+            sleep = false;
+            petted = true;
         } else {
             return false;
         }
@@ -41,7 +47,8 @@ public class FoxRestGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         if (owner == null || !owner.isAlive() || owner.level() != fox.level() || fox.getTarget() != null) return false;
-        return sleep ? owner.isSleeping() : FoxPets.stillTicks(owner) > 0 && !FoxPets.isPlaying(owner) && fox.distanceToSqr(owner) < 8 * 8;
+        if (sleep) return owner.isSleeping();
+        return FoxPets.stillTicks(owner) > 0 && !FoxPets.isPlaying(owner) && fox.distanceToSqr(owner) < 10 * 10;
     }
 
     @Override
@@ -53,6 +60,29 @@ public class FoxRestGoal extends Goal {
     public void stop() {
         FoxPets.wake(fox);
         owner = null;
+    }
+
+    /** Mikiko has sat down on the floor, and this is the fox closest to him. */
+    private boolean wantsPets(Player p) {
+        if (com.xenowarriors.character.ModCapabilities.getType(p) != com.xenowarriors.character.CharacterType.MIKIKO) return false;
+        if (FoxPets.stillTicks(p) < 600 || FoxPets.isPlaying(p) || p.isSleeping()) return false;
+        Fox closest = null;
+        double best = Double.MAX_VALUE;
+        for (Fox f : p.level().getEntitiesOfClass(Fox.class, p.getBoundingBox().inflate(10), f -> FoxPets.isOwnedBy(f, p))) {
+            double d = f.distanceToSqr(p);
+            if (d < best) {
+                best = d;
+                closest = f;
+            }
+        }
+        return closest == fox;
+    }
+
+    private static Vec3 petSpot(Player p) {
+        float yaw = p.yBodyRot * ((float) Math.PI / 180F);
+        Vec3 fwd = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+        Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        return p.position().add(right.scale(0.85)).add(fwd.scale(0.15));
     }
 
     @Override
@@ -67,9 +97,30 @@ public class FoxRestGoal extends Goal {
                 if (!fox.isSleeping()) a.xenowarriors$setSleeping(true);
             }
         } else {
-            fox.getNavigation().stop();
+            // Mikiko sitting on the floor: the nearest fox trots up to his side to be petted
+            if (!petted && wantsPets(owner)) petted = true;
+            if (petted) {
+                Vec3 spot = petSpot(owner);
+                if (fox.position().distanceToSqr(spot) > 0.3 * 0.3 && time < 200) {
+                    if (fox.isSitting()) a.xenowarriors$setSitting(false);
+                    double d2 = fox.position().distanceToSqr(spot);
+                    if (d2 > 1.5 * 1.5) {
+                        if (time % 8 == 1) fox.getNavigation().moveTo(spot.x, spot.y, spot.z, 0.9);
+                    } else {
+                        fox.getNavigation().stop();
+                        fox.getMoveControl().setWantedPosition(spot.x, spot.y, spot.z, 0.6);   // the last step, exactly
+                    }
+                    return;
+                }
+                fox.getNavigation().stop();
+                fox.setYRot(owner.yBodyRot);
+                fox.setYBodyRot(owner.yBodyRot);
+                fox.setYHeadRot(owner.yBodyRot - 50F);
+            } else {
+                fox.getNavigation().stop();
+            }
             if (!fox.isSitting()) a.xenowarriors$setSitting(true);
-            if (time % 80 < 30) fox.getLookControl().setLookAt(owner, 20F, 20F);
+            if (!petted && time % 80 < 30) fox.getLookControl().setLookAt(owner, 20F, 20F);
         }
     }
 }

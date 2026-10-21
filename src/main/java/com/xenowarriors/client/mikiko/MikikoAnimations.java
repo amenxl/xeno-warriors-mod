@@ -77,7 +77,7 @@ public final class MikikoAnimations {
     // idle timing (ticks standing still)
     private static final int LOOK_AROUND_AFTER = 80;
     private static final int SIT_AFTER = 600;
-    private static final int FIRE_CYCLE = 260;
+    private static final int FIRE_CYCLE = 1100;     // the fire trick only now and then (~55 s)
     private static final int JUMP_DURATION = 12;
     private static final int STROLL_AFTER = 15 * 20;
     private static final int VIBE_SIT_AFTER = 20 * 20;
@@ -111,7 +111,7 @@ public final class MikikoAnimations {
         float fly, flyO, fast, fastO, roll, rollO;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
-        float vibe, vibeO, robot, robotO;
+        float vibe, vibeO, robot, robotO, pet, petO;
         int absorbStart = -1000, absorbUntil = -1000;
         boolean offhandShown;
         int vibeTicks;
@@ -262,12 +262,17 @@ public final class MikikoAnimations {
                 s.still == 0 ? 0.3F : 0.06F);
         s.look = 0F;   // (the old look-around idle is gone: GeckoLib idles play instead, see apply)
         boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing && !robotDance;
+        // a pet fox sitting at his side: he pets it
+        net.minecraft.world.entity.animal.Fox petted = s.sit > 0.9F && !fire && !vibing ? petFox(p) : null;
+        s.petO = s.pet;
+        s.pet = approach(s.pet, petted != null ? 1F : 0F, 0.08F);
+        if (petted != null && s.pet > 0.9F && p.tickCount % 35 == 0) {
+            level.addParticle(net.minecraft.core.particles.ParticleTypes.HEART, petted.getX(), petted.getY() + 0.8, petted.getZ(), 0, 0.02, 0);
+        }
         s.fire = approach(s.fire, fire ? 1F : 0F, fire ? 0.12F : 0.2F);
         if (s.sit > 0.95F && !vibing) {
             int c = (s.still - SIT_AFTER) % FIRE_CYCLE;
-            if (c == 46) MikikoEffects.fireStart(level, p);
-            if (c >= 46 && c < 156) MikikoEffects.fireSpin(level, p, c - 46);
-            if (c == 156) MikikoEffects.fireOut(level, p);
+            if (c >= 40 && c < 200) MikikoEffects.fireShow(level, p, c - 40);
         }
     }
 
@@ -308,7 +313,7 @@ public final class MikikoAnimations {
 
     private static boolean fireActive(int still) {
         int c = (still - SIT_AFTER) % FIRE_CYCLE;
-        return still >= SIT_AFTER && c >= 40 && c < 160;
+        return still >= SIT_AFTER && c >= 34 && c < 196;
     }
 
     private static float approach(float v, float target, float speed) {
@@ -465,6 +470,7 @@ public final class MikikoAnimations {
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
         if (bi != null && (int) bi[0] == BI_HOLD && bi[1] < 25 && (s.still - BLADE_IDLE_AFTER) % BLADE_CYCLE < 80) return "smug";
         if (s.robot > 0.5F) return "robot";
+        if (s.pet > 0.5F) return "happy";
         if (p.tickCount - s.absorbStart < 30) return "smug";
         if (s.vibe > 0.5F) return "happy";
         if (s.run > 0.5F) return "focused";
@@ -532,6 +538,25 @@ public final class MikikoAnimations {
         float land = ageInTicks - s.landStart;
         if (land >= 0F && land <= LAND_DURATION) landPose(model, landWeight(land));
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
+        if (fire > 0F && sit > 0.5F) {
+            // the toss at the end of the fire trick: arm thrown up, watching the fireball go
+            float ft = (s.still - SIT_AFTER) % FIRE_CYCLE - 40 + partial;
+            float toss = smooth((ft - 118F) / 6F) * (1F - smooth((ft - 146F) / 8F));
+            float gather = smooth(ft / 4F) * (1F - smooth((ft - 20F) / 6F));
+            set(model.rightArm, -2.4F, 0.2F, -0.1F, toss * fire);
+            model.head.xRot = Mth.lerp(toss * fire, model.head.xRot, -0.45F);
+            // snapping his fingers to call it: the other hand comes up too
+            set(model.leftArm, -1.0F, -0.5F, 0.1F, gather * fire);
+        }
+        float pet = Mth.lerp(partial, s.petO, s.pet);
+        if (pet > 0F) {
+            // reaching down to his side, stroking the fox, looking over at it
+            float stroke = Mth.sin(ageInTicks * 0.2F);
+            set(model.rightArm, -0.35F + stroke * 0.22F, 0.1F, 0.95F + stroke * 0.06F, pet);
+            model.head.yRot = Mth.lerp(pet, model.head.yRot, 0.65F);
+            model.head.xRot = Mth.lerp(pet, model.head.xRot, 0.35F);
+            model.head.zRot += Mth.sin(ageInTicks * 0.05F) * 0.06F * pet;
+        }
         float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
         if (vibe > 0F) vibePose(model, vibe, sit, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
@@ -935,6 +960,29 @@ public final class MikikoAnimations {
     }
 
     /** World position of his right palm while sitting (for the fire trick). */
+    /** Where a fox sits to be petted: right at his side. */
+    static Vec3 petSpot(Player p) {
+        float yaw = p.yBodyRot * ((float) Math.PI / 180F);
+        Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
+        Vec3 right = new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw));
+        return p.position().add(right.scale(0.85)).add(fwd.scale(0.15));
+    }
+
+    private static net.minecraft.world.entity.animal.Fox petFox(Player p) {
+        Vec3 spot = petSpot(p);
+        net.minecraft.world.entity.animal.Fox best = null;
+        double bestD = 0.9 * 0.9;
+        for (var f : p.level().getEntitiesOfClass(net.minecraft.world.entity.animal.Fox.class, p.getBoundingBox().inflate(2.5),
+                com.xenowarriors.client.fox.FoxClientFx::isPet)) {
+            double d = f.position().distanceToSqr(spot);
+            if (d < bestD) {
+                bestD = d;
+                best = f;
+            }
+        }
+        return best;
+    }
+
     static Vec3 seatedPalm(Player p) {
         float yaw = p.yBodyRot * ((float) Math.PI / 180F);
         Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));

@@ -56,8 +56,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         var pos = p.blockPosition();
         boolean snowing = p.level().isRaining() && p.level().canSeeSky(pos) && p.level().getBiome(pos).value().coldEnoughToSnow(pos);
         if (p.getTicksFrozen() > 0 || snowing) return "freezing";
-        boolean still = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.05;
-        if (still && p.level().isRainingAt(pos.above())) return "annoyed";
+        if (p.level().isRainingAt(pos.above()) && !p.isUnderWater()) {
+            // caught in the rain: soaked, drops running down the face (two frames so they drip)
+            int bt = p.tickCount + p.getId() * 37;
+            if (bt % 97 < 3) return "blink";
+            return (bt / 9) % 2 == 0 ? "rain" : "rain2";
+        }
         String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
         if (type == CharacterType.RHALIX) {
             if (FlightTracker.isFlying(p)) mood = "smug";          // right at home in the air
@@ -73,6 +77,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         int t = p.tickCount + p.getId() * 37;
         if (t % 97 < 3 || (t % 233 >= 8 && t % 233 < 11)) return "blink";   // blinks every few seconds, sometimes twice
         return null;
+    }
+
+    /** 0 = fine, 1 = hurt (half health or less), 2 = badly hurt (a quarter or less). */
+    private static int damageLevel(AbstractClientPlayer p) {
+        if (!p.isAlive() || p.isCreative()) return 0;
+        float hp = p.getHealth() / Math.max(1F, p.getMaxHealth());
+        return hp <= 0.25F ? 2 : hp <= 0.5F ? 1 : 0;
     }
 
     private static final java.util.Set<String> OWN_MOUTH = java.util.Set.of("sleep", "snore", "eat", "eat2", "shout", "hurt", "yawn", "panic");
@@ -128,6 +139,16 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(type.getDetailTexture()));
         model.root.render(poseStack, buffer, packedLight, overlay);
 
+        // battle damage: scratches, grime and torn clothes as they get hurt
+        int damage = damageLevel(player);
+        if (damage > 0 && !ClientCharacterData.isPreviewing()) {
+            String base = "textures/entity/character/" + type.getId();
+            parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
+                    com.xenowarriors.XenoWarriors.id(base + "_damage" + damage + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);
+            model.root.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
+                    com.xenowarriors.XenoWarriors.id(base + "_details_damage" + damage + ".png"))), packedLight, overlay);
+        }
+
         if (model.faceRoot != null) {
             model.faceHead.copyFrom(parent.head);
             String expr = expression(player, type);
@@ -135,6 +156,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);
+
+            if (damage > 0 && !ClientCharacterData.isPreviewing()) {
+                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.XenoWarriors.id(
+                        "textures/entity/character/" + type.getId() + "_face_damage" + damage + ".png"))), packedLight, overlay);
+            }
 
             // talking in voice chat: an animated mouth drawn over the face
             int mouth = talkingMouth(player, expr);
