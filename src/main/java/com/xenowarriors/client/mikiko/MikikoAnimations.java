@@ -391,7 +391,8 @@ public final class MikikoAnimations {
 
     // ---------------- Hekublade idle: toss & catch, sling it on his back, draw it again ----------------
     public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4;
-    private static final int BLADE_IDLE_AFTER = 60, BLADE_CYCLE = 240;
+    private static final int BLADE_IDLE_AFTER = 60, BACK_TIME = 20 * 20;           // on his back for 20 seconds
+    private static final int BLADE_CYCLE = 136 + BACK_TIME + 16 + 28;
 
     /** {phase, ticks into that phase} while he's idly holding the Hekublade, or null. */
     public static float[] bladeIdle(Player p, float partial) {
@@ -401,9 +402,9 @@ public final class MikikoAnimations {
         if (c < 34) return new float[]{BI_TOSS, c};
         if (c < 120) return new float[]{BI_HOLD, c - 34};
         if (c < 136) return new float[]{BI_SHEATHE, c - 120};
-        if (c < 196) return new float[]{BI_BACK, c - 136};
-        if (c < 212) return new float[]{BI_DRAW, c - 196};
-        return new float[]{BI_HOLD, c - 212};
+        if (c < 136 + BACK_TIME) return new float[]{BI_BACK, c - 136};
+        if (c < 152 + BACK_TIME) return new float[]{BI_DRAW, c - 136 - BACK_TIME};
+        return new float[]{BI_HOLD, c - 152 - BACK_TIME};
     }
 
     /** The blade is in the air or on his back right now (so the hand shouldn't draw it). */
