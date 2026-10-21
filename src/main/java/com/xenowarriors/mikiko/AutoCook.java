@@ -25,6 +25,22 @@ public final class AutoCook {
 
     private AutoCook() {}
 
+    /** Merge partial stacks of this food together so it doesn't spread over many slots. */
+    private static void stackUp(Inventory inv, ItemStack like) {
+        for (int a = 0; a < inv.items.size(); a++) {
+            ItemStack into = inv.items.get(a);
+            if (into.isEmpty() || !ItemStack.isSameItemSameTags(into, like) || into.getCount() >= into.getMaxStackSize()) continue;
+            for (int b = a + 1; b < inv.items.size() && into.getCount() < into.getMaxStackSize(); b++) {
+                ItemStack from = inv.items.get(b);
+                if (from.isEmpty() || !ItemStack.isSameItemSameTags(from, into)) continue;
+                int move = Math.min(from.getCount(), into.getMaxStackSize() - into.getCount());
+                into.grow(move);
+                from.shrink(move);
+                if (from.isEmpty()) inv.items.set(b, ItemStack.EMPTY);
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % INTERVAL != 0) return;
@@ -37,12 +53,11 @@ public final class AutoCook {
             if (recipe.isEmpty()) continue;
             ItemStack cooked = recipe.get().getResultItem(p.level().registryAccess()).copy();
             if (cooked.isEmpty() || !cooked.isEdible()) continue;   // only food (not ores, sand...)
-            if (raw.getCount() == 1) {
-                inv.items.set(i, cooked);
-            } else {
-                raw.shrink(1);
-                if (!inv.add(cooked)) p.drop(cooked, false);
-            }
+            // cooked food joins any stack of the same food he already has (or takes the raw item's slot)
+            raw.shrink(1);
+            if (raw.isEmpty()) inv.items.set(i, ItemStack.EMPTY);
+            if (!inv.add(cooked)) p.drop(cooked, false);
+            stackUp(inv, cooked);
             inv.setChanged();
             p.serverLevel().sendParticles(ParticleTypes.SMALL_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 6, 0.25, 0.3, 0.25, 0.01);
             p.serverLevel().sendParticles(ParticleTypes.SMOKE, p.getX(), p.getY() + 1.2, p.getZ(), 3, 0.2, 0.2, 0.2, 0.01);
