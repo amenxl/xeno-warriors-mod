@@ -149,5 +149,6 @@
   "item.xenowarriors.music_disc_maxs_chill_day": "Max's Chill Day",
   "item.xenowarriors.music_disc_maxs_chill_day.desc": "Max's Chill Day",
   "item.xenowarriors.music_disc_crown_for_heroine": "Crown for Heroine",
-  "item.xenowarriors.music_disc_crown_for_heroine.desc": "Crown for Heroine"
+  "item.xenowarriors.music_disc_crown_for_heroine.desc": "Crown for Heroine",
+  "itemGroup.xenowarriors": "Xeno Warriors"
 }

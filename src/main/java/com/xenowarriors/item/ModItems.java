@@ -96,6 +96,31 @@ public final class ModItems {
             () -> new net.minecraft.world.item.RecordItem(8, com.xenowarriors.ModSounds.CROWN_FOR_HEROINE,
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 516));
 
+    // ---------------------------------------------------------------- the mod's own creative tab
+    public static final DeferredRegister<net.minecraft.world.item.CreativeModeTab> TABS =
+            DeferredRegister.create(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, XenoWarriors.MOD_ID);
+
+    /**
+     * "Xeno Warriors": every item from this mod, filled in automatically from the item list (so anything new
+     * shows up here by itself), with all the Karma hoodie colors.
+     */
+    public static final RegistryObject<net.minecraft.world.item.CreativeModeTab> TAB = TABS.register("xenowarriors",
+            () -> net.minecraft.world.item.CreativeModeTab.builder()
+                    .title(net.minecraft.network.chat.Component.translatable("itemGroup.xenowarriors"))
+                    .icon(() -> new net.minecraft.world.item.ItemStack(HEKUBLADE.get()))
+                    .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
+                    .displayItems((params, out) -> {
+                        for (RegistryObject<Item> entry : ITEMS.getEntries()) {
+                            Item item = entry.get();
+                            if (item == KARMA_HOODIE.get()) {
+                                for (int color : KarmaHoodieItem.PRESETS) out.accept(KarmaHoodieItem.colored(item, color));
+                            } else {
+                                out.accept(item);
+                            }
+                        }
+                    })
+                    .build());
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
