@@ -228,6 +228,10 @@ public final class XenoCommands {
         say(ctx, gold(p.getName().getString() + " - ").append(type.getDisplayName().copy()
                 .withStyle(s -> s.withColor(type.getColor() & 0xFFFFFF))));
         if (type == CharacterType.NONE) return 1;
+        say(ctx, gray("Karma Sensing: " + Math.round(com.xenowarriors.karma.KarmaSensing.radius(com.xenowarriors.karma.KarmaSensing.uses(p)))
+                + " blocks, " + com.xenowarriors.karma.KarmaSensing.duration(com.xenowarriors.karma.KarmaSensing.uses(p)) / 20 + "s ("
+                + Math.min(com.xenowarriors.karma.KarmaSensing.uses(p), com.xenowarriors.karma.KarmaSensing.MASTERY) + "/"
+                + com.xenowarriors.karma.KarmaSensing.MASTERY + " practice)"));
         say(ctx, gray("Character Level: " + Stats.characterLevel(p) + " / " + Stats.MAX_CHARACTER_LEVEL
                 + "  (+" + Stats.bonusHearts(Stats.characterLevel(p)) + " hearts)"));
         say(ctx, gray("Karma: " + Math.round(Karma.get(p)) + " / " + Math.round(Karma.MAX)));

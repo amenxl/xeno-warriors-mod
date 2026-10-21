@@ -25,6 +25,8 @@ public class PlayerCharacter {
     public CompoundTag backFox = new CompoundTag();
     /** Total ticks Mikiko has spent flying (his flying gets better with practice). */
     public int flightTicks;
+    /** How many times they've used Karma Sensing (range and duration grow with practice). */
+    public int senseUses;
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -40,6 +42,7 @@ public class PlayerCharacter {
         System.arraycopy(other.statLevel, 0, statLevel, 0, 3);
         System.arraycopy(other.statXp, 0, statXp, 0, 3);
         this.flightTicks = other.flightTicks;
+        this.senseUses = other.senseUses;
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
         this.backFox = other.backFox.copy();
@@ -52,6 +55,7 @@ public class PlayerCharacter {
         tag.putFloat("karma", karma);
         tag.putIntArray("stat_levels", statLevel.clone());
         tag.putInt("flight_ticks", flightTicks);
+        tag.putInt("sense_uses", senseUses);
         tag.put("pets", pets.copy());
         tag.put("wing_pets", wingPets.copy());
         tag.put("back_fox", backFox.copy());
@@ -64,6 +68,7 @@ public class PlayerCharacter {
     public void load(CompoundTag tag) {
         this.type = CharacterType.byId(tag.getString("character"));
         this.flightTicks = tag.getInt("flight_ticks");
+        this.senseUses = tag.getInt("sense_uses");
         this.pets = tag.getList("pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.wingPets = tag.getList("wing_pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");

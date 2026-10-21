@@ -59,7 +59,11 @@ public final class KarmaSense {
         Long tracked = TRACKED.get(e.getId());
         if (tracked != null && mc.level != null && mc.level.getGameTime() < tracked) return 0xFF7A1A;
         if (e instanceof Enemy) return 0xFF3A3A;
-        if (e instanceof Player) return 0xB45CFF;
+        if (e instanceof Player p) {
+            // each warrior's Karma has its own color: Mikiko's burns orange-red
+            if (ClientCharacterData.get(p) == com.xenowarriors.character.CharacterType.MIKIKO) return 0xFF4A1A;
+            return 0xB45CFF;
+        }
         if (e instanceof Animal) return 0x5CFF7A;
         return 0xFFC94A;
     }
@@ -99,8 +103,9 @@ public final class KarmaSense {
             float a = Mth.sin(Mth.clamp(age / 24F, 0F, 1F) * (float) Math.PI) * 0.45F;
             int alpha = Math.round(a * 255);
             int edge = Math.max(8, width / 10);
+            int tint = ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.MIKIKO ? 0xFF4A1A : 0x8A3CFF;
             for (int i = 0; i < edge; i += 2) {
-                int col = (Math.round(alpha * (1F - i / (float) edge)) << 24) | 0x8A3CFF;
+                int col = (Math.round(alpha * (1F - i / (float) edge)) << 24) | tint;
                 g.fill(i, i, width - i, i + 2, col);
                 g.fill(i, height - i - 2, width - i, height - i, col);
                 g.fill(i, i, i + 2, height - i, col);

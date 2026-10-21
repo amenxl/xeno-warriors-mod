@@ -29,6 +29,22 @@ public final class KarmaSensing {
     public static final int COOLDOWN = 20 * 20;
     public static final int DURATION = 10 * 20;
     public static final double RADIUS = 48;
+    /** Practice: after this many uses Karma Sensing is fully mastered (range 120 blocks, 30 seconds). */
+    public static final int MASTERY = 100;
+    public static final double MAX_RADIUS = 120;
+    public static final int MAX_DURATION = 30 * 20;
+
+    public static int uses(ServerPlayer p) {
+        return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.senseUses).orElse(0);
+    }
+
+    public static double radius(int uses) {
+        return RADIUS + (MAX_RADIUS - RADIUS) * Math.min(uses, MASTERY) / MASTERY;
+    }
+
+    public static int duration(int uses) {
+        return DURATION + (MAX_DURATION - DURATION) * Math.min(uses, MASTERY) / MASTERY;
+    }
     private static final Map<UUID, Long> READY_AT = new HashMap<>();
 
     private KarmaSensing() {}
@@ -43,6 +59,19 @@ public final class KarmaSensing {
         }
         if (!Karma.trySpend(player, COST)) return;
         READY_AT.put(player.getUUID(), now + COOLDOWN);
+        int uses = uses(player);
+        final double RADIUS = radius(uses);
+        final int DURATION = duration(uses);
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+            if (d.senseUses < 1_000_000) d.senseUses++;
+        });
+        int after = uses + 1;
+        if (after <= MASTERY && after % 10 == 0) {
+            player.sendSystemMessage(Component.literal(after == MASTERY
+                    ? "Karma Sensing mastered! Range " + Math.round(radius(after)) + " blocks, " + duration(after) / 20 + " seconds."
+                    : "Your Karma Sensing grows stronger: range " + Math.round(radius(after)) + " blocks, " + duration(after) / 20 + " seconds.")
+                    .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+        }
 
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
