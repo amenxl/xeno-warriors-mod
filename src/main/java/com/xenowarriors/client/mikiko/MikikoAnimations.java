@@ -111,7 +111,7 @@ public final class MikikoAnimations {
         float fly, flyO, fast, fastO, roll, rollO;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
-        float vibe, vibeO, robot, robotO, pet, petO;
+        float vibe, vibeO, robot, robotO, pet, petO, tired, tiredO, swordTired, swordTiredO;
         int absorbStart = -1000, absorbUntil = -1000;
         boolean offhandShown;
         int vibeTicks;
@@ -258,7 +258,14 @@ public final class MikikoAnimations {
         s.vibeO = s.vibe;
         s.vibe = approach(s.vibe, vibing ? 1F : 0F, 0.08F);
         boolean holdingBlade = Hekublade.isBlade(p.getMainHandItem());
-        s.sit = approach(s.sit, !poisoned && !holdingBlade && !robotDance && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
+        // badly hurt: hands on his knees catching his breath, or a sword slung over his shoulder
+        boolean low = lowHealth(p);
+        boolean anySword = p.getMainHandItem().getItem() instanceof SwordItem;
+        s.tiredO = s.tired;
+        s.tired = approach(s.tired, low && !anySword && s.still >= 10 && !poisoned && !p.isUsingItem() ? 1F : 0F, 0.08F);
+        s.swordTiredO = s.swordTired;
+        s.swordTired = approach(s.swordTired, low && anySword && s.move == null && !p.isUsingItem() && s.fly < 0.5F ? 1F : 0F, 0.1F);
+        s.sit = approach(s.sit, !poisoned && !holdingBlade && !robotDance && !low && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
                 s.still == 0 ? 0.3F : 0.06F);
         s.look = 0F;   // (the old look-around idle is gone: GeckoLib idles play instead, see apply)
         boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing && !robotDance;
@@ -386,7 +393,7 @@ public final class MikikoAnimations {
         State s = STATES.get(p.getId());
         ItemStack main = p.getMainHandItem();
         if (s == null || s.move != null || p.isSleeping() || !(main.getItem() instanceof SwordItem) || Hekublade.isBlade(main)
-                || !p.getOffhandItem().isEmpty() || s.still < CROSS_AFTER) return 0F;
+                || !p.getOffhandItem().isEmpty() || s.still < CROSS_AFTER || lowHealth(p)) return 0F;
         float c = (s.still - CROSS_AFTER + partial) % CROSS_CYCLE;
         if (c < CROSS_IN) return smooth(c / CROSS_IN);
         if (c < CROSS_HOLD) return 1F;
@@ -410,7 +417,8 @@ public final class MikikoAnimations {
     /** {phase, ticks into that phase} while he's idly holding the Hekublade, or null. */
     public static float[] bladeIdle(Player p, float partial) {
         State s = STATES.get(p.getId());
-        if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()) return null;
+        if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()
+                || lowHealth(p)) return null;
         float c = (s.still - BLADE_IDLE_AFTER + partial) % BLADE_CYCLE;
         if (c < 34) return new float[]{BI_TOSS, c};
         if (c < 120) return new float[]{BI_HOLD, c - 34};
@@ -526,6 +534,7 @@ public final class MikikoAnimations {
         // standing around: now and then a GeckoLib idle (a big stretch, scratching his head, kicking the dirt)
         float robot = Mth.lerp(partial, s.robotO, s.robot);
         if (s.still >= LOOK_AROUND_AFTER && sit < 0.5F && poison <= 0F && s.vibe <= 0F && robot <= 0F && s.move == null
+                && s.tired <= 0F && s.swordTired <= 0F
                 && !Hekublade.isBlade(player.getMainHandItem()) && crossX(player, partial) <= 0F && !player.isUsingItem()) {
             int since = s.still - LOOK_AROUND_AFTER;
             String idle = IDLES[Math.floorMod(since / IDLE_CYCLE + player.getId(), IDLES.length)];
@@ -577,6 +586,10 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(player, partial);
         if (bi != null && s.move == null) bladeIdlePose(model, (int) bi[0], bi[1]);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
+        float tired = Mth.lerp(partial, s.tiredO, s.tired);
+        if (tired > 0F) tiredPose(model, tired, ageInTicks);
+        float swordTired = Mth.lerp(partial, s.swordTiredO, s.swordTired);
+        if (swordTired > 0F && s.move == null) swordTiredPose(model, swordTired, ageInTicks, s.still > 0);
         // sealing a defeated mob into the Hekublade: the blade raised up
         float absorbT = ageInTicks - s.absorbStart, absorbLen = GeoAnims.length("absorb");
         if (s.move == null && absorbT >= 0F && absorbT <= absorbLen) {
@@ -816,6 +829,57 @@ public final class MikikoAnimations {
         if (seg < 0) return new float[]{0, 0};
         Random r = new Random(id * 9781L + seg * 6271L);
         return new float[]{(r.nextFloat() - 0.5F) * 2.2F, (r.nextFloat() - 0.6F) * 0.5F};
+    }
+
+    /** 30% health or less. */
+    public static boolean lowHealth(Player p) {
+        return p.isAlive() && !p.isCreative() && p.getHealth() <= p.getMaxHealth() * 0.3F;
+    }
+
+    /** Is he worn out right now (hands on knees, or sword over his shoulder)? For his exhausted face. */
+    public static boolean exhausted(Player p) {
+        State s = STATES.get(p.getId());
+        return s != null && (s.tired > 0.5F || s.swordTired > 0.5F);
+    }
+
+    /**
+     * Badly hurt and standing still: bent over with his hands on his knees, legs apart, head up,
+     * shoulders heaving as he pants.
+     */
+    private static void tiredPose(HumanoidModel<?> m, float w, float age) {
+        float breath = Mth.sin(age * 0.32F);
+        // bent forward at the hips (like a crouch, with the shoulders and head moved to match)
+        m.body.xRot = Mth.lerp(w, m.body.xRot, 0.5F + breath * 0.03F);
+        m.body.y = Mth.lerp(w, m.body.y, 3.2F + breath * 0.15F);
+        m.head.y = Mth.lerp(w, m.head.y, 4.2F + breath * 0.2F);
+        m.rightArm.y = Mth.lerp(w, m.rightArm.y, 5.2F + breath * 0.2F);
+        m.leftArm.y = Mth.lerp(w, m.leftArm.y, 5.2F + breath * 0.2F);
+        m.rightLeg.z = Mth.lerp(w, m.rightLeg.z, 4.0F);
+        m.leftLeg.z = Mth.lerp(w, m.leftLeg.z, 4.0F);
+        m.rightLeg.y = Mth.lerp(w, m.rightLeg.y, 12.2F);
+        m.leftLeg.y = Mth.lerp(w, m.leftLeg.y, 12.2F);
+        // legs apart, hands braced on his knees
+        set(m.rightLeg, -0.05F, 0.05F, 0.2F, w);
+        set(m.leftLeg, -0.05F, -0.05F, -0.2F, w);
+        set(m.rightArm, -0.32F, 0.05F, -0.12F, w);
+        set(m.leftArm, -0.32F, -0.05F, 0.12F, w);
+        // looking up ahead, head bobbing with each breath
+        set(m.head, -0.45F + breath * 0.06F, m.head.yRot * 0.3F, 0F, w);
+    }
+
+    /**
+     * Badly hurt with a sword: resting it over his right shoulder (blade hanging down behind him), the other arm
+     * hanging limp, head drooping to the side.
+     */
+    private static void swordTiredPose(HumanoidModel<?> m, float w, float age, boolean still) {
+        float breath = Mth.sin(age * 0.3F);
+        set(m.rightArm, -2.75F + breath * 0.04F, -0.35F, -0.3F, w);
+        if (still) {
+            set(m.leftArm, 0.06F + breath * 0.03F, 0F, -0.04F, w);
+            m.body.xRot = Mth.lerp(w, m.body.xRot, 0.12F);
+            m.head.zRot = Mth.lerp(w, m.head.zRot, 0.22F);
+            m.head.xRot = Mth.lerp(w, m.head.xRot, 0.2F + breath * 0.04F);
+        }
     }
 
     private static void set(ModelPart part, float x, float y, float z, float w) {
