@@ -64,6 +64,7 @@ public final class XenoCommands {
                     {"/xeno fox setlevel <level> [name]", "set fox levels (op)"},
                     {"/xeno party invite|accept|decline|leave|kick|list", "parties (or right-click a player)"},
                     {"/xeno duel challenge <player>|accept|decline|forfeit", "PvP battles"},
+                    {"/xeno giveup", "when downed: stop waiting for a revive"},
                     {"/xeno karma set|add <amount> [players]", "change Karma (op)"},
                     {"/xeno stat <speed|attack|defense> <level> [players]", "set a stat level (op)"},
                     {"/xeno cooldowns [players]", "reset skill cooldowns (op)"},
@@ -176,6 +177,16 @@ public final class XenoCommands {
                     for (Component l : lines) say(ctx, l);
                     return lines.size();
                 })));
+
+        root.then(Commands.literal("giveup").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            if (!com.xenowarriors.party.Duels.isDowned(p)) {
+                ctx.getSource().sendFailure(Component.literal("You're not downed."));
+                return 0;
+            }
+            com.xenowarriors.party.Duels.bleedOut(p);
+            return 1;
+        }));
 
         root.then(Commands.literal("duel")
                 .then(Commands.literal("challenge").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {

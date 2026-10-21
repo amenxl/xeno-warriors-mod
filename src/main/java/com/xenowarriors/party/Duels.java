@@ -66,6 +66,12 @@ public final class Duels {
     private static final Map<UUID, Request> REQUESTS = new HashMap<>();
     private static final Map<UUID, Integer> KNOCKED = new HashMap<>();
 
+    // ---- downed (in a party, beaten by something other than a battle): 30 s for a party member to revive you
+    private static final int DOWNED_TICKS = 30 * 20, REVIVE_TICKS = 60;
+    private static final float REVIVE_KARMA = 50F;
+    private static final Map<UUID, Integer> DOWNED = new HashMap<>();
+    private static final Map<UUID, Integer> REVIVING = new HashMap<>();    // downed player -> revive progress
+
     private Duels() {}
 
     private static MutableComponent msg(String text) {
@@ -81,8 +87,74 @@ public final class Duels {
         return ACTIVE.containsKey(p.getUUID());
     }
 
+    /** Knocked out in a battle, or downed waiting for a revive. */
     public static boolean isKnockedOut(Player p) {
-        return KNOCKED.containsKey(p.getUUID());
+        return KNOCKED.containsKey(p.getUUID()) || DOWNED.containsKey(p.getUUID());
+    }
+
+    public static boolean isDowned(Player p) {
+        return DOWNED.containsKey(p.getUUID());
+    }
+
+    private static void disable(ServerPlayer p, int ticks) {
+        p.removeAllEffects();
+        p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ticks + 5, 10, false, false));
+        p.addEffect(new MobEffectInstance(MobEffects.JUMP, ticks + 5, 250, false, false));     // can't jump
+        p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks + 5, 10, false, false));
+        p.clearFire();
+        if (p.getAbilities().flying) {
+            p.getAbilities().flying = false;
+            p.onUpdateAbilities();
+        }
+    }
+
+    private static void enable(ServerPlayer p) {
+        p.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        p.removeEffect(MobEffects.JUMP);
+        p.removeEffect(MobEffects.WEAKNESS);
+    }
+
+    /** Down instead of dead: 30 seconds for a party member to come and revive them. */
+    private static void down(ServerPlayer p) {
+        p.setHealth(1F);
+        DOWNED.put(p.getUUID(), DOWNED_TICKS);
+        REVIVING.remove(p.getUUID());
+        disable(p, DOWNED_TICKS);
+        p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.5, p.getZ(), 14, 0.4, 0.3, 0.4, 0.03);
+        p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 1F, 0.6F);
+        ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), DOWNED_TICKS), p);
+        title(p, "DOWNED", ChatFormatting.RED, "Hang on - a party member can revive you");
+        if (p.getServer() != null) {
+            for (ServerPlayer other : p.getServer().getPlayerList().getPlayers()) {
+                if (other != p && Parties.sameParty(p, other)) {
+                    other.sendSystemMessage(msg(p.getName().getString() + " is down! Crouch next to them to revive (costs "
+                            + Math.round(REVIVE_KARMA) + " Karma)."));
+                }
+            }
+        }
+    }
+
+    private static void revive(ServerPlayer p, ServerPlayer by) {
+        DOWNED.remove(p.getUUID());
+        REVIVING.remove(p.getUUID());
+        enable(p);
+        p.setHealth(Math.max(6F, p.getMaxHealth() * 0.4F));
+        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 2, false, true));
+        p.serverLevel().sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1, p.getZ(), 30, 0.4, 0.6, 0.4, 0.2);
+        p.level().playSound(null, p.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.6F, 1.4F);
+        ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
+        title(p, "REVIVED", ChatFormatting.GREEN, "by " + by.getName().getString());
+        by.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
+    }
+
+    /** Ran out of time (or gave up): they die for real. */
+    public static void bleedOut(ServerPlayer p) {
+        if (!DOWNED.containsKey(p.getUUID())) return;
+        DOWNED.remove(p.getUUID());
+        REVIVING.remove(p.getUUID());
+        enable(p);
+        ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
+        p.kill();
     }
 
     private static void title(ServerPlayer p, String title, ChatFormatting color, String sub) {
@@ -215,20 +287,39 @@ public final class Duels {
         }
     }
 
+    private static boolean unstoppable(net.minecraft.world.damagesource.DamageSource s) {
+        return s.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL) || s.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD);
+    }
+
+    private static boolean hasTotem(Player p) {
+        return p.getMainHandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING) || p.getOffhandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING);
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDamage(LivingDamageEvent event) {
-        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p)) return;
+        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p) || event.getAmount() < p.getHealth()) return;
         Duel d = ACTIVE.get(p.getUUID());
-        if (d == null || !d.fighting() || event.getAmount() < p.getHealth()) return;
-        event.setCanceled(true);
-        knockOut(p);
+        if (d != null && d.fighting()) {
+            event.setCanceled(true);
+            knockOut(p);
+            return;
+        }
+        // in a party: go down instead of dying, so someone can revive you
+        if (Parties.inParty(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()) {
+            event.setCanceled(true);
+            down(p);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p && ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        if (ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
             event.setCanceled(true);
             knockOut(p);
+        } else if (Parties.inParty(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p)) {
+            event.setCanceled(true);
+            down(p);
         }
     }
 
@@ -258,6 +349,7 @@ public final class Duels {
             if (left <= 0) rising.add(p);
         }
         for (ServerPlayer p : rising) getUp(p);
+        tickDowned(server);
         // battles: countdown, distance, time limit
         java.util.Set<Duel> seen = new java.util.HashSet<>();
         for (Duel d : new java.util.ArrayList<>(ACTIVE.values())) {
@@ -288,9 +380,68 @@ public final class Duels {
         }
     }
 
+    /** Downed players' timers, party members reviving them, and mobs leaving them alone. */
+    private static void tickDowned(MinecraftServer server) {
+        java.util.List<ServerPlayer> dying = new java.util.ArrayList<>();
+        java.util.List<ServerPlayer[]> revived = new java.util.ArrayList<>();
+        for (var e : DOWNED.entrySet()) {
+            ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
+            if (p == null) continue;
+            int left = e.getValue() - 1;
+            e.setValue(left);
+            if (left <= 0) {
+                dying.add(p);
+                continue;
+            }
+            // a party member crouching right next to them fills the revive bar
+            ServerPlayer helper = null;
+            for (ServerPlayer other : server.getPlayerList().getPlayers()) {
+                if (other != p && other.isAlive() && !isKnockedOut(other) && other.level() == p.level() && other.isShiftKeyDown()
+                        && other.distanceTo(p) < 2.6 && Parties.sameParty(p, other)) {
+                    helper = other;
+                    break;
+                }
+            }
+            int progress = helper == null ? 0 : REVIVING.getOrDefault(p.getUUID(), 0) + 1;
+            if (helper != null && progress == 1 && !com.xenowarriors.karma.Karma.has(helper, REVIVE_KARMA)) {
+                helper.displayClientMessage(msg("You need " + Math.round(REVIVE_KARMA) + " Karma to revive someone."), true);
+                progress = 0;
+            }
+            REVIVING.put(p.getUUID(), progress);
+            if (helper != null && progress > 0) {
+                if (progress % 5 == 0) {
+                    int bars = Math.round(progress / (float) REVIVE_TICKS * 10);
+                    helper.displayClientMessage(msg("Reviving " + p.getName().getString() + "  ")
+                            .append(Component.literal("\u25AE".repeat(bars)).withStyle(ChatFormatting.GREEN))
+                            .append(Component.literal("\u25AF".repeat(10 - bars)).withStyle(ChatFormatting.DARK_GRAY)), true);
+                    p.serverLevel().sendParticles(ParticleTypes.HEART, p.getX(), p.getY() + 0.4, p.getZ(), 1, 0.3, 0.1, 0.3, 0);
+                }
+                if (progress >= REVIVE_TICKS && com.xenowarriors.karma.Karma.trySpend(helper, REVIVE_KARMA)) {
+                    revived.add(new ServerPlayer[]{p, helper});
+                    continue;
+                }
+            }
+            if (left % 10 == 0) {
+                p.displayClientMessage(Component.literal("DOWNED - " + (left / 20) + "s left. A party member can revive you.")
+                        .withStyle(ChatFormatting.RED), true);
+                // mobs lose interest in someone who's down
+                for (net.minecraft.world.entity.Mob mob : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                        p.getBoundingBox().inflate(32), m -> m.getTarget() == p)) {
+                    mob.setTarget(null);
+                }
+            }
+        }
+        for (ServerPlayer[] r : revived) revive(r[0], r[1]);
+        for (ServerPlayer p : dying) {
+            p.sendSystemMessage(msg("Nobody reached you in time..."));
+            bleedOut(p);
+        }
+    }
+
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
+        if (DOWNED.containsKey(id) && event.getEntity() instanceof ServerPlayer sp) bleedOut(sp);
         KNOCKED.remove(id);
         REQUESTS.remove(id);
         Duel d = ACTIVE.get(id);
@@ -300,7 +451,8 @@ public final class Duels {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer && isKnockedOut(target)) {
-            ModNetwork.sendToPlayer(new KnockoutPacket(target.getUUID(), KNOCKED.get(target.getUUID())), viewer);
+            int left = KNOCKED.containsKey(target.getUUID()) ? KNOCKED.get(target.getUUID()) : DOWNED.get(target.getUUID());
+            ModNetwork.sendToPlayer(new KnockoutPacket(target.getUUID(), left), viewer);
         }
     }
 }
