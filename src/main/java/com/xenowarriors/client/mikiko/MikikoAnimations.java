@@ -43,6 +43,8 @@ import java.util.Set;
  *  - idle: looks around at the scenery, and after a while sits down cross-legged, bored, and
  *    spins a little fire in his palm until it goes out
  *  - poisoned and standing still: down on one knee, hand on the ground, trying to get up
+ *  - double jump: press jump in mid-air for a wind-powered front flip
+ *  - flying: hovers loosely with a bob; speeds into a superhero lean, banking into turns
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
@@ -61,6 +63,8 @@ public final class MikikoAnimations {
     private static final int LOOK_AROUND_AFTER = 80;
     private static final int SIT_AFTER = 600;
     private static final int FIRE_CYCLE = 260;
+    private static final int JUMP_DURATION = 12;
+    private static boolean lastJumpDown;
 
     private static final Map<Integer, State> STATES = new HashMap<>();
     private static final Set<Integer> POISONED = new HashSet<>();
@@ -81,6 +85,10 @@ public final class MikikoAnimations {
         int lastSwingTime;
         int still;
         float sit, sitO, look, lookO, poison, poisonO, fire, fireO;
+        float fly, flyO, fast, fastO, roll, rollO;
+        int jumpStart = -100;
+        boolean doubleJumped;
+        int airTicks;
     }
 
     public static void setPoisoned(int entityId, boolean poisoned) {
@@ -116,6 +124,22 @@ public final class MikikoAnimations {
 
     private static void tick(ClientLevel level, AbstractClientPlayer p, State s) {
         int now = p.tickCount;
+
+        // double jump (your own player) and flight
+        s.airTicks = p.onGround() ? 0 : s.airTicks + 1;
+        if (p.onGround() || p.isInWater() || p.onClimbable()) s.doubleJumped = false;
+        if (p == Minecraft.getInstance().player) tryDoubleJump(level, (net.minecraft.client.player.LocalPlayer) p, s, now);
+        // other players' flight is guessed from air time, so wait a bit longer to not mistake a big jump for flying
+        boolean flying = FlightTracker.isFlying(p) && !p.isFallFlying() && !p.onGround()
+                && (p == Minecraft.getInstance().player || s.airTicks > 28);
+        double speed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
+        s.flyO = s.fly;
+        s.fastO = s.fast;
+        s.rollO = s.roll;
+        s.fly = approach(s.fly, flying ? 1F : 0F, 0.12F);
+        s.fast = approach(s.fast, flying ? (float) Mth.clamp((speed - 0.1) / 0.45, 0, 1) : 0F, 0.08F);
+        float turn = Mth.wrapDegrees(p.yBodyRot - p.yBodyRotO);
+        s.roll = s.roll + (Mth.clamp(turn * 2.5F, -30F, 30F) * s.fast - s.roll) * 0.2F;
 
         // a new swing of the main hand?
         boolean swingStart = p.swinging && p.swingingArm == InteractionHand.MAIN_HAND
@@ -163,6 +187,35 @@ public final class MikikoAnimations {
             if (c >= 46 && c < 156) MikikoEffects.fireSpin(level, p, c - 46);
             if (c == 156) MikikoEffects.fireOut(level, p);
         }
+    }
+
+    private static void tryDoubleJump(ClientLevel level, net.minecraft.client.player.LocalPlayer p, State s, int now) {
+        Minecraft mc = Minecraft.getInstance();
+        boolean down = mc.options.keyJump.isDown();
+        boolean pressed = down && !lastJumpDown;
+        lastJumpDown = down;
+        if (!pressed || s.doubleJumped || s.airTicks < 2 || p.onGround() || p.getAbilities().flying || p.getAbilities().mayfly
+                || p.isFallFlying() || p.isInWater() || p.isInLava() || p.onClimbable() || p.isPassenger()
+                || com.xenowarriors.client.UltimateCutscene.active() || mc.screen != null) return;
+        s.doubleJumped = true;
+        float yaw = p.getYRot() * ((float) Math.PI / 180F);
+        Vec3 v = p.getDeltaMovement();
+        double fwd = p.input.forwardImpulse > 0 ? 0.28 : 0.08;
+        p.setDeltaMovement(v.x * 0.6 - Mth.sin(yaw) * fwd, 0.62, v.z * 0.6 + Mth.cos(yaw) * fwd);
+        p.fallDistance = 0F;
+        com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.DoubleJumpPacket());
+        sound(level, p, net.minecraft.sounds.SoundEvents.ENDER_DRAGON_FLAP, 0.35F, 1.7F);
+        s.jumpStart = now;
+        MikikoEffects.doubleJump(level, p);
+    }
+
+    /** Another player's double jump (from the server). */
+    public static void onDoubleJump(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || !(mc.level.getEntity(entityId) instanceof AbstractClientPlayer p)) return;
+        State s = STATES.computeIfAbsent(entityId, k -> new State());
+        s.jumpStart = p.tickCount;
+        MikikoEffects.doubleJump(mc.level, p);
     }
 
     private static boolean fireActive(int still) {
@@ -249,6 +302,10 @@ public final class MikikoAnimations {
             model.head.yRot += l[0] * look;
             model.head.xRot += l[1] * look;
         }
+        float fly = Mth.lerp(partial, s.flyO, s.fly);
+        if (fly > 0F) flyPose(model, fly, Mth.lerp(partial, s.fastO, s.fast), ageInTicks);
+        float jump = (ageInTicks - s.jumpStart) / JUMP_DURATION;
+        if (jump >= 0F && jump <= 1F) jumpPose(model, jump);
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
@@ -273,6 +330,33 @@ public final class MikikoAnimations {
         set(model.rightLeg, t[6], t[7], t[8], amount);
         set(model.leftLeg, t[9], t[10], t[11], amount);
         twist(model, Mth.lerp(amount, model.body.yRot, t[12]));
+    }
+
+    private static void flyPose(HumanoidModel<?> model, float fly, float fast, float age) {
+        float bob = Mth.sin(age * 0.12F);
+        // hovering: arms loose and out, one knee bent, swaying
+        float[] hover = {-0.15F + bob * 0.05F, 0F, 0.4F, -0.15F - bob * 0.05F, 0F, -0.4F,
+                0.1F + bob * 0.06F, 0F, 0.06F, -0.45F - bob * 0.06F, 0F, -0.06F};
+        // fast: superhero lean - right fist ahead, left arm swept back, legs trailing and fluttering
+        float flutter = Mth.sin(age * 0.5F) * 0.1F;
+        float[] dash = {-3.0F, -0.1F, 0.15F, 0.3F, 0F, -0.12F, 0.15F + flutter, 0F, 0.05F, 0.05F - flutter, 0F, -0.05F};
+        float[] t = new float[12];
+        for (int i = 0; i < 12; i++) t[i] = Mth.lerp(fast, hover[i], dash[i]);
+        set(model.rightArm, t[0], t[1], t[2], fly);
+        set(model.leftArm, t[3], t[4], t[5], fly);
+        set(model.rightLeg, t[6], t[7], t[8], fly);
+        set(model.leftLeg, t[9], t[10], t[11], fly);
+        // keep looking ahead while the body leans forward
+        model.head.xRot -= 1.0F * fast * fly;
+    }
+
+    private static void jumpPose(HumanoidModel<?> model, float p) {
+        float w = smooth(p / 0.12F) * (1F - smooth((p - 0.75F) / 0.25F));
+        // tucked tight for the flip
+        set(model.rightLeg, -1.75F, 0F, 0.12F, w);
+        set(model.leftLeg, -1.55F, 0F, -0.12F, w);
+        set(model.rightArm, -0.9F, 0F, 0.35F, w);
+        set(model.leftArm, -0.9F, 0F, -0.35F, w);
     }
 
     private static void sitPose(HumanoidModel<?> model, float s, float fire, float age) {
@@ -362,6 +446,19 @@ public final class MikikoAnimations {
                 float fade = 1F - smooth((pr - 0.8F) / 0.2F);
                 for (int i = 0; i < 5; i++) out[i] += (i == 2 || (i == 3 && s.move == Move.AIR_FLIP_SLASH)) ? b[i] : b[i] * fade;
             }
+        }
+        float fly = Mth.lerp(partial, s.flyO, s.fly);
+        if (fly > 0F) {
+            float fast = Mth.lerp(partial, s.fastO, s.fast);
+            float attacking = s.move != null ? 0.35F : 1F;
+            out[0] += Mth.sin(age * 0.12F) * 0.05F * fly * (1F - fast);
+            out[3] += 65F * fast * fly * attacking;
+            out[4] += Mth.lerp(partial, s.rollO, s.roll) * fly * attacking;
+        }
+        float jump = (age - s.jumpStart) / JUMP_DURATION;
+        if (jump >= 0F && jump <= 1F) {
+            float x = Mth.clamp((jump - 0.05F) / 0.75F, 0F, 1F);
+            out[3] += 360F * x * x * (3F - 2F * x);
         }
         float sit = Mth.lerp(partial, s.sitO, s.sit);
         out[0] -= 0.66F * sit;

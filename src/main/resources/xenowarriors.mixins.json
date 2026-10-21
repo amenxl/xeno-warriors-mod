@@ -8,7 +8,8 @@
   "client": [
     "AbstractClientPlayerMixin",
     "HumanoidModelMixin",
-    "CameraMixin"
+    "CameraMixin",
+    "HumanoidArmorLayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

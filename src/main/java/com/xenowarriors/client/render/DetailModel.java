@@ -88,7 +88,11 @@ public class DetailModel {
 
     /** Loads the detail model for a character, or returns null if it has none. */
     public static DetailModel load(CharacterType type) {
-        String path = "/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + type.getId() + ".json";
+        return loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + type.getId() + ".json");
+    }
+
+    /** Loads any model file in the same format (e.g. a character's armor pieces); null if missing. */
+    public static DetailModel loadPath(String path) {
         try (InputStream in = DetailModel.class.getResourceAsStream(path)) {
             if (in == null) return null;
             JsonObject json = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -117,7 +121,7 @@ public class DetailModel {
             }
             return model;
         } catch (Exception e) {
-            XenoWarriors.LOGGER.error("Could not load detail model for {}", type.getId(), e);
+            XenoWarriors.LOGGER.error("Could not load model {}", path, e);
             return null;
         }
     }

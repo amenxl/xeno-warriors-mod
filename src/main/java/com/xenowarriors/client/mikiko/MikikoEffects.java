@@ -97,6 +97,18 @@ final class MikikoEffects {
         }
     }
 
+    /** A burst of wind (and a few embers) under his feet as he kicks off the air. */
+    static void doubleJump(ClientLevel level, Player p) {
+        Vec3 feet = p.position();
+        for (int i = 0; i < 16; i++) {
+            double a = i / 16.0 * Math.PI * 2;
+            Vec3 dir = new Vec3(Math.cos(a), 0, Math.sin(a));
+            MikikoAnimations.particle(level, ParticleTypes.CLOUD, feet.add(dir.scale(0.3)), dir.scale(0.18).add(0, -0.03, 0));
+        }
+        for (int i = 0; i < 5; i++) MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, feet, rand(p, 0.08));
+        MikikoAnimations.particle(level, ParticleTypes.SWEEP_ATTACK, feet.add(0, 0.1, 0), Vec3.ZERO);
+    }
+
     // ---- idle fire trick ----
 
     static void fireStart(ClientLevel level, Player p) {
