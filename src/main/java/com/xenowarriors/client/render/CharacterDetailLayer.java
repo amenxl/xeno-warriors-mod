@@ -237,6 +237,20 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (king) detailTex = FOX_KING_TEX;      // its own atlas (the torn/damaged detail sheets are for the normal look)
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         model.root.render(poseStack, buffer, packedLight, overlay);
+        // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
+        int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
+        if (formHair >= 0 && model.hair != null) {
+            String atlas = king ? "mikiko_foxking" : type.getId();
+            VertexConsumer hairBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(
+                    "textures/entity/character/" + atlas + "_details_hairmask.png")));
+            float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
+            poseStack.pushPose();
+            model.root.translateAndRotate(poseStack);
+            model.head.translateAndRotate(poseStack);
+            model.hair.render(poseStack, hairBuf, packedLight, overlay, hr, hg, hb, 1F);
+            if (model.bangs != null) model.bangs.render(poseStack, hairBuf, packedLight, overlay, hr, hg, hb, 1F);
+            poseStack.popPose();
+        }
         if (torn > 0) {
             parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(
                     "textures/entity/character/" + type.getId() + "_torn" + torn + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);

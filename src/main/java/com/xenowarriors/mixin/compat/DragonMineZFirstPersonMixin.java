@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class DragonMineZFirstPersonMixin {
     @Inject(method = "shouldRenderFirstPerson", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void xenowarriors$normalHands(Player player, CallbackInfoReturnable<Boolean> cir) {
-        if (player instanceof AbstractClientPlayer p && ClientCharacterData.get(p) != CharacterType.NONE) cir.setReturnValue(false);
+        if (player instanceof AbstractClientPlayer p && ClientCharacterData.get(p) != CharacterType.NONE
+                && !com.xenowarriors.client.compat.DmzForms.dmzDraws(p)) cir.setReturnValue(false);
     }
 }

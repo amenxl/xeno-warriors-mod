@@ -40,7 +40,7 @@ public abstract class DragonMineZHandMixin {
 
     @org.spongepowered.asm.mixin.Unique
     private static PlayerRenderer xenowarriors$vanilla(AbstractClientPlayer player) {
-        if (ClientCharacterData.get(player) == CharacterType.NONE) return null;
+        if (ClientCharacterData.get(player) == CharacterType.NONE || com.xenowarriors.client.compat.DmzForms.dmzDraws(player)) return null;
         return Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer pr ? pr : null;
     }
 }

@@ -21,7 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class DragonMineZRendererMixin {
     @org.spongepowered.asm.mixin.Unique
     private static boolean xenowarriors$ours(Player player) {
-        return player instanceof AbstractClientPlayer p && ClientCharacterData.get(p) != CharacterType.NONE;
+        return player instanceof AbstractClientPlayer p && ClientCharacterData.get(p) != CharacterType.NONE
+                && !com.xenowarriors.client.compat.DmzForms.dmzDraws(p);    // Oozaru etc.: DragonMineZ draws those
     }
 
     @Inject(method = "getRenderer", at = @At("HEAD"), cancellable = true, remap = false, require = 0)

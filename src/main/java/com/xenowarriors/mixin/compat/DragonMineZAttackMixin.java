@@ -22,7 +22,7 @@ public abstract class DragonMineZAttackMixin {
     @Inject(method = "getCurrentAttack", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void xenowarriors$ourAttacks(Player player, int combo, CallbackInfoReturnable<Object> cir) {
         if (player != null && player.level().isClientSide && player instanceof AbstractClientPlayer p
-                && ClientCharacterData.get(p) != CharacterType.NONE) {
+                && ClientCharacterData.get(p) != CharacterType.NONE && !com.xenowarriors.client.compat.DmzForms.dmzDraws(p)) {
             cir.setReturnValue(null);
         }
     }
