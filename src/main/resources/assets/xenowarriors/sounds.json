@@ -20,5 +20,13 @@
         "stream": true
       }
     ]
+  },
+  "music_disc.step_into_this_new_world": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/step_into_this_new_world",
+        "stream": true
+      }
+    ]
   }
 }

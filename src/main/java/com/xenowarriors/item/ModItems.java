@@ -36,6 +36,11 @@ public final class ModItems {
             () -> new net.minecraft.world.item.RecordItem(4, com.xenowarriors.ModSounds.THINKING_OF_YOU,
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 3902));
 
+    /** Music disc: "Step Into This New World, Recarnet!" (2:44). */
+    public static final RegistryObject<Item> MUSIC_DISC_STEP_INTO_THIS_NEW_WORLD = ITEMS.register("music_disc_step_into_this_new_world",
+            () -> new net.minecraft.world.item.RecordItem(15, com.xenowarriors.ModSounds.STEP_INTO_THIS_NEW_WORLD,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC), 3289));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
@@ -46,6 +51,7 @@ public final class ModItems {
             event.accept(FOX_WHISTLE);
             event.accept(MUSIC_DISC_ZACK_EYECATCHER);
             event.accept(MUSIC_DISC_THINKING_OF_YOU);
+            event.accept(MUSIC_DISC_STEP_INTO_THIS_NEW_WORLD);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));

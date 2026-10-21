@@ -21,5 +21,9 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> THINKING_OF_YOU = SOUNDS.register("music_disc.thinking_of_you",
             () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.thinking_of_you")));
 
+    /** Music disc: "Step Into This New World, Recarnet!" (the theme). */
+    public static final RegistryObject<SoundEvent> STEP_INTO_THIS_NEW_WORLD = SOUNDS.register("music_disc.step_into_this_new_world",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.step_into_this_new_world")));
+
     private ModSounds() {}
 }
