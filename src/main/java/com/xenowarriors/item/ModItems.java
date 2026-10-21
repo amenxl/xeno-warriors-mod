@@ -61,6 +61,21 @@ public final class ModItems {
             () -> new net.minecraft.world.item.RecordItem(6, com.xenowarriors.ModSounds.LUNAR_ASCENDENCE,
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 3306));
 
+    /** Music disc: "Smoke Break". */
+    public static final RegistryObject<Item> MUSIC_DISC_SMOKE_BREAK = ITEMS.register("music_disc_smoke_break",
+            () -> new net.minecraft.world.item.RecordItem(3, com.xenowarriors.ModSounds.SMOKE_BREAK,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 458));
+
+    /** Music disc: "Mimicry Eye Catcher". */
+    public static final RegistryObject<Item> MUSIC_DISC_MIMICRY_EYE_CATCHER = ITEMS.register("music_disc_mimicry_eye_catcher",
+            () -> new net.minecraft.world.item.RecordItem(7, com.xenowarriors.ModSounds.MIMICRY_EYE_CATCHER,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 308));
+
+    /** Music disc: "SkyBound Pursuit". */
+    public static final RegistryObject<Item> MUSIC_DISC_SKYBOUND_PURSUIT = ITEMS.register("music_disc_skybound_pursuit",
+            () -> new net.minecraft.world.item.RecordItem(14, com.xenowarriors.ModSounds.SKYBOUND_PURSUIT,
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 2546));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
@@ -76,6 +91,9 @@ public final class ModItems {
             event.accept(MUSIC_DISC_GET_GROOVY);
             event.accept(MUSIC_DISC_GRAVITY_GLITCH_DUEL);
             event.accept(MUSIC_DISC_LUNAR_ASCENDENCE);
+            event.accept(MUSIC_DISC_SMOKE_BREAK);
+            event.accept(MUSIC_DISC_MIMICRY_EYE_CATCHER);
+            event.accept(MUSIC_DISC_SKYBOUND_PURSUIT);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));

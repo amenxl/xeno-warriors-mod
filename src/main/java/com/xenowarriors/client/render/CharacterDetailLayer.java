@@ -68,7 +68,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
         if (type == CharacterType.RHALIX) {
+            if (com.xenowarriors.client.RhalixWingsClient.hyped(p, 0F) > 0.5F) return (p.tickCount / 40) % 2 == 0 ? "grin" : "excited";
             if (com.xenowarriors.client.RhalixWingsClient.sadVibe(p, 0F) > 0.5F) return "sad";
+            if (com.xenowarriors.client.RhalixWingsClient.smoking(p, 0F) > 0.5F) {
+                float st = com.xenowarriors.client.RhalixWingsClient.smokeTime(p, p.tickCount);
+                return st >= 56 && st < 84 ? "hum" : "calm";      // eyes closed, breathing out
+            }
             if (com.xenowarriors.client.RhalixWingsClient.gravityDance(p, 0F) > 0.5F) {
                 String[] g = {"smug", "grin", "cool", "excited"};
                 return g[(p.tickCount / 45) % g.length];
@@ -183,6 +188,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (model.hair != null) {
             model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
                     instanceof com.xenowarriors.item.SrHoodieItem);
+        }
+
+        // Rhalix's cigarette while he's on his smoke break
+        if (type == CharacterType.RHALIX && com.xenowarriors.client.RhalixWingsClient.smoking(player, partialTick) > 0.3F) {
+            Cigarette.render(parent.rightArm, poseStack, buffers, packedLight);
         }
 
         // hair streaming back and fluttering when running or flying

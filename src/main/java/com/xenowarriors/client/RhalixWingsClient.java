@@ -36,7 +36,7 @@ public final class RhalixWingsClient {
 
     private static final Map<UUID, State> STATES = new HashMap<>();
     private static final Map<Integer, float[]> HOVER = new HashMap<>();   // id -> {now, before}
-    /** Dancing to music: id -> {gravity dance, before, sad vibe, before, start tick, still ticks}. */
+    /** Dancing to music: id -> {gravity dance, before, sad vibe, before, start tick, still ticks, smoke, before, smoke start}. */
     private static final Map<Integer, float[]> DANCE = new HashMap<>();
 
     public static float gravityDance(Player p, float partial) {
@@ -47,6 +47,44 @@ public final class RhalixWingsClient {
     public static float sadVibe(Player p, float partial) {
         float[] d = DANCE.get(p.getId());
         return d == null ? 0F : Mth.lerp(partial, d[3], d[2]);
+    }
+
+    public static float hyped(Player p, float partial) {
+        float[] d = DANCE.get(p.getId());
+        return d == null || d.length < 12 ? 0F : Mth.lerp(partial, d[10], d[9]);
+    }
+
+    private static float hypeTime(Player p, float age) {
+        float[] d = DANCE.get(p.getId());
+        return d == null || d.length < 12 ? 0F : age - d[11];
+    }
+
+    public static float smoking(Player p, float partial) {
+        float[] d = DANCE.get(p.getId());
+        return d == null ? 0F : Mth.lerp(partial, d[7], d[6]);
+    }
+
+    /** Where in the 6-second smoke loop he is (ticks), or -1. */
+    public static float smokeTime(Player p, float age) {
+        float[] d = DANCE.get(p.getId());
+        return d == null || d[6] <= 0F ? -1F : (age - d[8]) % 120F;
+    }
+
+    /** A thin wisp off the tip, and a long breath of smoke after each drag. */
+    private static void smokeParticles(Minecraft mc, Player p, float t) {
+        float yaw = p.yBodyRot * Mth.DEG_TO_RAD;
+        Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
+        Vec3 right = new Vec3(-fwd.z, 0, fwd.x).scale(-1);
+        boolean drag = t >= 32 && t < 52;
+        Vec3 mouth = p.position().add(0, 1.5, 0).add(fwd.scale(0.3));
+        Vec3 tip = drag ? mouth.add(fwd.scale(0.15)).add(right.scale(0.05))
+                : p.position().add(0, 0.95, 0).add(fwd.scale(0.3)).add(right.scale(0.38));
+        if (p.tickCount % 6 == 0) mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, tip.x, tip.y + 0.05, tip.z, 0, 0.015, 0);
+        if (t >= 56 && t < 84 && p.tickCount % 2 == 0) {
+            Vec3 v = fwd.scale(0.04).add(0, 0.02, 0);
+            mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE, mouth.x, mouth.y, mouth.z, v.x * 0.5, 0.008, v.z * 0.5);
+            mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE, mouth.x, mouth.y, mouth.z, v.x, v.y, v.z);
+        }
     }
 
     private static float danceTime(Player p, float age) {
@@ -133,6 +171,8 @@ public final class RhalixWingsClient {
             spread = Math.max(spread, dance * (0.35F + 0.3F * Mth.sin(age * 0.2F)));
             flap += Mth.sin(age * 0.4F) * 0.2F * dance;
         }
+        float hypeWing = hyped(p, partial);
+        if (hypeWing > 0F) flap += Mth.sin(age * 0.63F) * 0.35F * hypeWing;     // flapping with each jump
         float sadW = sadVibe(p, partial);
         if (sadW > 0F) {
             tuck += 0.25F * sadW;                    // drooping, folded in close
@@ -167,6 +207,10 @@ public final class RhalixWingsClient {
         if (sad > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "sad_vibe", age, true, sad);
         float dance = gravityDance(p, partial);
         if (dance > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "gravity_dance", danceTime(p, age), true, dance);
+        float hype = hyped(p, partial);
+        if (hype > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "hype", hypeTime(p, age), true, hype);
+        float smoke = smoking(p, partial);
+        if (smoke > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "smoke_break", smokeTime(p, age), true, smoke);
         State s = STATES.get(p.getUUID());
         if (s == null || !s.animate) return;
         float t = time(s, partial);
@@ -182,8 +226,17 @@ public final class RhalixWingsClient {
     public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         float w = gravityDance(p, event.getPartialTick());
-        if (w <= 0F) return;
+        float hw = hyped(p, event.getPartialTick());
+        if (w <= 0F && hw <= 0F) return;
         float age = p.tickCount + event.getPartialTick();
+        if (hw > 0F) {
+            // jumping on every beat
+            var hp = event.getPoseStack();
+            hp.pushPose();
+            LIFTED.add(p.getId());
+            hp.translate(0, DiscTracker.hypeLift(hypeTime(p, age)) * hw, 0);
+            return;
+        }
         float t = danceTime(p, age) % 160F;
         var pose = event.getPoseStack();
         pose.pushPose();
@@ -213,12 +266,21 @@ public final class RhalixWingsClient {
                 continue;
             }
             // dancing to "Gravity Glitch Duel", sadly vibing to "Lunar Ascendence" (when he's standing about)
-            float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[6]);
+            float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[12]);
             boolean stillNow = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging;
             d[5] = stillNow ? d[5] + 1 : 0;
             boolean standing = d[5] >= 10 && !FlightTracker.isFlying(p);
-            boolean gravity = standing && DiscTracker.near(p, DiscTracker.GRAVITY);
-            boolean lunar = standing && !gravity && DiscTracker.near(p, DiscTracker.LUNAR);
+            boolean hyped = standing && DiscTracker.near(p, DiscTracker.SKYBOUND);
+            if (hyped && d[9] <= 0F) d[11] = p.tickCount;
+            d[10] = d[9];
+            d[9] += Mth.clamp((hyped ? 1F : 0F) - d[9], -0.15F, 0.15F);
+            boolean gravity = standing && !hyped && DiscTracker.near(p, DiscTracker.GRAVITY);
+            boolean lunar = standing && !gravity && !hyped && DiscTracker.near(p, DiscTracker.LUNAR);
+            boolean smoke = standing && !gravity && !lunar && !hyped && DiscTracker.near(p, DiscTracker.SMOKE);
+            if (smoke && d[6] <= 0F) d[8] = p.tickCount;
+            d[7] = d[6];
+            d[6] += Mth.clamp((smoke ? 1F : 0F) - d[6], -0.08F, 0.08F);
+            if (d[6] > 0.5F) smokeParticles(mc, p, (p.tickCount - d[8]) % 120F);
             if (gravity && d[0] <= 0F) d[4] = p.tickCount;
             d[1] = d[0];
             d[0] += Mth.clamp((gravity ? 1F : 0F) - d[0], -0.1F, 0.1F);

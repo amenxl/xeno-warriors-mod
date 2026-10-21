@@ -111,8 +111,8 @@ public final class MikikoAnimations {
         float fly, flyO, fast, fastO, roll, rollO;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
-        float groove, grooveO;
-        int grooveStart;
+        float groove, grooveO, alert, alertO, hype, hypeO;
+        int grooveStart, alertStart, hypeStart;
         float vibe, vibeO, robot, robotO, pet, petO, tired, tiredO, swordTired, swordTiredO;
         int absorbStart = -1000, absorbUntil = -1000;
         boolean offhandShown;
@@ -257,10 +257,23 @@ public final class MikikoAnimations {
         if (groovy && s.groove <= 0F) s.grooveStart = p.tickCount;
         s.grooveO = s.groove;
         s.groove = approach(s.groove, groovy ? 1F : 0F, 0.1F);
-        boolean robotDance = !poisoned && !groovy && s.still >= 10 && discNear(p, CAT);
+        // "SkyBound Pursuit": jumping around, hyped
+        boolean hyped = !poisoned && !groovy && s.still >= 10
+                && com.xenowarriors.client.DiscTracker.near(p, com.xenowarriors.client.DiscTracker.SKYBOUND);
+        if (hyped && s.hype <= 0F) s.hypeStart = p.tickCount;
+        s.hypeO = s.hype;
+        s.hype = approach(s.hype, hyped ? 1F : 0F, 0.15F);
+        groovy |= hyped;     // (counts as dancing for everything else: no sitting, idles, vibing...)
+        // "Mimicry Eye Catcher": on alert, guard up, looking all around
+        boolean alert = !poisoned && !groovy && s.still >= 10
+                && com.xenowarriors.client.DiscTracker.near(p, com.xenowarriors.client.DiscTracker.MIMICRY);
+        if (alert && s.alert <= 0F) s.alertStart = p.tickCount;
+        s.alertO = s.alert;
+        s.alert = approach(s.alert, alert ? 1F : 0F, 0.15F);
+        boolean robotDance = !poisoned && !groovy && !alert && s.still >= 10 && discNear(p, CAT);
         s.robotO = s.robot;
         s.robot = approach(s.robot, robotDance ? 1F : 0F, 0.12F);
-        boolean vibing = !poisoned && !robotDance && !groovy && s.still >= 10 && mallNear(p);
+        boolean vibing = !poisoned && !robotDance && !groovy && !alert && s.still >= 10 && mallNear(p);
         s.vibeTicks = vibing ? s.vibeTicks + 1 : 0;
         s.vibeO = s.vibe;
         s.vibe = approach(s.vibe, vibing ? 1F : 0F, 0.08F);
@@ -272,7 +285,7 @@ public final class MikikoAnimations {
         s.tired = approach(s.tired, low && !anySword && s.still >= 10 && !poisoned && !p.isUsingItem() ? 1F : 0F, 0.08F);
         s.swordTiredO = s.swordTired;
         s.swordTired = approach(s.swordTired, low && anySword && s.move == null && !p.isUsingItem() && s.fly < 0.5F ? 1F : 0F, 0.1F);
-        s.sit = approach(s.sit, !poisoned && !holdingBlade && !robotDance && !groovy && !low && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
+        s.sit = approach(s.sit, !poisoned && !holdingBlade && !robotDance && !groovy && !alert && !low && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
                 s.still == 0 ? 0.3F : 0.06F);
         s.look = 0F;   // (the old look-around idle is gone: GeckoLib idles play instead, see apply)
         boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing && !robotDance && !groovy;
@@ -488,9 +501,21 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(p, 0F);
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
         if (bi != null && (int) bi[0] == BI_HOLD && bi[1] < 25 && (s.still - BLADE_IDLE_AFTER) % BLADE_CYCLE < 80) return "smug";
+        if (s.hype > 0.5F) return (p.tickCount / 40) % 2 == 0 ? "excited" : "grin";
         if (s.groove > 0.5F) {
             String[] g = {"excited", "grin", "cool", "excited", "smug"};
             return g[(p.tickCount / 50) % g.length];
+        }
+        if (s.alert > 0.5F) {
+            // eyes darting with each look around
+            float t = (p.tickCount - s.alertStart) % 120;
+            if (t < 15) return "focused";
+            if (t < 32) return "glance_r";
+            if (t < 52) return "glance_l";
+            if (t < 68) return "look_up";
+            if (t < 84) return "glance_r";
+            if (t < 100) return "surprised";
+            return "glance_l";
         }
         if (s.robot > 0.5F) return "robot";
         if (s.pet > 0.5F) return "happy";
@@ -553,7 +578,7 @@ public final class MikikoAnimations {
         // standing around: now and then a GeckoLib idle (a big stretch, scratching his head, kicking the dirt)
         float robot = Mth.lerp(partial, s.robotO, s.robot);
         if (s.still >= LOOK_AROUND_AFTER && sit < 0.5F && poison <= 0F && s.vibe <= 0F && robot <= 0F && s.move == null
-                && s.tired <= 0F && s.swordTired <= 0F && s.groove <= 0F
+                && s.tired <= 0F && s.swordTired <= 0F && s.groove <= 0F && s.alert <= 0F
                 && !Hekublade.isBlade(player.getMainHandItem()) && crossX(player, partial) <= 0F && !player.isUsingItem()) {
             int since = s.still - LOOK_AROUND_AFTER;
             String idle = IDLES[Math.floorMod(since / IDLE_CYCLE + player.getId(), IDLES.length)];
@@ -597,6 +622,10 @@ public final class MikikoAnimations {
         if (robot > 0F) GeoAnims.apply(model, "robot_dance", ageInTicks, true, robot);
         float groove = Mth.lerp(partial, s.grooveO, s.groove);
         if (groove > 0F) GeoAnims.apply(model, "breakdance", ageInTicks - s.grooveStart, true, groove);
+        float hypeW = Mth.lerp(partial, s.hypeO, s.hype);
+        if (hypeW > 0F) GeoAnims.apply(model, "hype", ageInTicks - s.hypeStart, true, hypeW);
+        float alertW = Mth.lerp(partial, s.alertO, s.alert);
+        if (alertW > 0F && s.move == null) GeoAnims.apply(model, "alert", ageInTicks - s.alertStart, true, alertW);
         float x = crossX(player, partial);
         if (x > 0F && s.move == null) {
             // both arms forward, wrists crossed, so the two blades make an X
@@ -1042,6 +1071,10 @@ public final class MikikoAnimations {
             float[] b = breakdanceBody((age - s.grooveStart) % 320F);
             for (int i = 0; i < 5; i++) out[i] += b[i] * groove;
         }
+        float hypeB = Mth.lerp(partial, s.hypeO, s.hype);
+        if (hypeB > 0F) out[0] += com.xenowarriors.client.DiscTracker.hypeLift(age - s.hypeStart) * hypeB;
+        float alertB = Mth.lerp(partial, s.alertO, s.alert);
+        if (alertB > 0F) out[0] -= 0.12F * alertB;      // crouched low, ready
         float robot = Mth.lerp(partial, s.robotO, s.robot);
         if (robot > 0F) {
             // stiff little up-down pops on each beat

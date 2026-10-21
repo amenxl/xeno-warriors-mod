@@ -41,5 +41,17 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> LUNAR_ASCENDENCE = SOUNDS.register("music_disc.lunar_ascendence",
             () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.lunar_ascendence")));
 
+    /** Music disc: "Smoke Break". */
+    public static final RegistryObject<SoundEvent> SMOKE_BREAK = SOUNDS.register("music_disc.smoke_break",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.smoke_break")));
+
+    /** Music disc: "Mimicry Eye Catcher". */
+    public static final RegistryObject<SoundEvent> MIMICRY_EYE_CATCHER = SOUNDS.register("music_disc.mimicry_eye_catcher",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.mimicry_eye_catcher")));
+
+    /** Music disc: "SkyBound Pursuit". */
+    public static final RegistryObject<SoundEvent> SKYBOUND_PURSUIT = SOUNDS.register("music_disc.skybound_pursuit",
+            () -> SoundEvent.createVariableRangeEvent(XenoWarriors.id("music_disc.skybound_pursuit")));
+
     private ModSounds() {}
 }

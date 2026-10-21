@@ -20,6 +20,14 @@ public final class DiscTracker {
     public static final String GROOVY = "music_disc.its_time_to_get_groovy";
     public static final String GRAVITY = "music_disc.gravity_glitch_duel";
     public static final String LUNAR = "music_disc.lunar_ascendence";
+    public static final String SMOKE = "music_disc.smoke_break";
+    public static final String MIMICRY = "music_disc.mimicry_eye_catcher";
+    public static final String SKYBOUND = "music_disc.skybound_pursuit";
+
+    /** Jump height for the hyped "SkyBound Pursuit" dance: a hop on every beat (10 ticks). */
+    public static float hypeLift(float t) {
+        return Math.abs((float) Math.sin(t * Math.PI / 10.0)) * 0.42F;
+    }
     private static final Map<String, List<SoundInstance>> PLAYING = new HashMap<>();
 
     private DiscTracker() {}

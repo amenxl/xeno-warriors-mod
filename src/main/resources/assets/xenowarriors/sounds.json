@@ -60,5 +60,29 @@
         "stream": true
       }
     ]
+  },
+  "music_disc.smoke_break": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/smoke_break",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.mimicry_eye_catcher": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/mimicry_eye_catcher",
+        "stream": true
+      }
+    ]
+  },
+  "music_disc.skybound_pursuit": {
+    "sounds": [
+      {
+        "name": "xenowarriors:music/skybound_pursuit",
+        "stream": true
+      }
+    ]
   }
 }
