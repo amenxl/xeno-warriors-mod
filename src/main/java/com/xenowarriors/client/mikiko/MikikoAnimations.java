@@ -120,6 +120,7 @@ public final class MikikoAnimations {
             tick(mc.level, p, STATES.computeIfAbsent(p.getId(), k -> new State()));
         }
         STATES.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+        MikikoEffects.tickSummons(mc.level);
     }
 
     private static void tick(ClientLevel level, AbstractClientPlayer p, State s) {
@@ -207,6 +208,12 @@ public final class MikikoAnimations {
         sound(level, p, net.minecraft.sounds.SoundEvents.ENDER_DRAGON_FLAP, 0.35F, 1.7F);
         s.jumpStart = now;
         MikikoEffects.doubleJump(level, p);
+    }
+
+    /** Hekublade summon effect (from the server when Mikiko presses the summon key). */
+    public static void summonFx(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.getEntity(entityId) instanceof AbstractClientPlayer p) MikikoEffects.startSummon(p, false);
     }
 
     /** Another player's double jump (from the server). */

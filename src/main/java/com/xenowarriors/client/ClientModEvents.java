@@ -46,6 +46,13 @@ public final class ClientModEvents {
                 com.xenowarriors.item.ModItems.KARMA_HOODIE.get());
     }
 
+    /** Extra Hekublade models (the sword and each crystal, drawn separately so the crystals can move). */
+    @SubscribeEvent
+    public static void registerModels(net.minecraftforge.client.event.ModelEvent.RegisterAdditional event) {
+        event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.BASE);
+        for (var rl : com.xenowarriors.client.mikiko.HekubladeRenderer.CRYSTALS) event.register(rl);
+    }
+
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("skills", new SkillHudOverlay());

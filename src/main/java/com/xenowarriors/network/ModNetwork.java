@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "7";
+    private static final String VERSION = "8";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -85,6 +85,11 @@ public final class ModNetwork {
                 .encoder(KarmaSensedPacket::encode)
                 .decoder(KarmaSensedPacket::decode)
                 .consumerMainThread(KarmaSensedPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(HekubladeFxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(HekubladeFxPacket::encode)
+                .decoder(HekubladeFxPacket::decode)
+                .consumerMainThread(HekubladeFxPacket::handle)
                 .add();
     }
 

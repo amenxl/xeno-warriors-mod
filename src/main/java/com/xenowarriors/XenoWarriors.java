@@ -21,6 +21,7 @@ public class XenoWarriors {
         modBus.addListener(ModCapabilities::register);
         ModEntities.ENTITY_TYPES.register(modBus);
         ModItems.ITEMS.register(modBus);
+        ModSounds.SOUNDS.register(modBus);
         modBus.addListener(ModItems::addToTabs);
         ModNetwork.register();
     }

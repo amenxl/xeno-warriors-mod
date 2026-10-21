@@ -76,13 +76,8 @@ public final class Hekublade {
         ServerLevel level = player.serverLevel();
         double x = player.getX(), y = player.getY() + 1.1, z = player.getZ();
         if (summon) {
-            level.playSound(null, x, y, z, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8F, 1.2F);
-            level.playSound(null, x, y, z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 1.4F);
-            for (int i = 0; i < 16; i++) {
-                double a = i / 16.0 * Math.PI * 2;
-                level.sendParticles(ParticleTypes.FLAME, x + Math.cos(a) * 0.8, y + i * 0.04, z + Math.sin(a) * 0.8, 1,
-                        -Math.cos(a) * 0.05, 0.02, -Math.sin(a) * 0.05, 0.02);
-            }
+            level.playSound(null, x, y, z, com.xenowarriors.ModSounds.HEKUBLADE_SUMMON.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.HekubladeFxPacket(player.getId()), player);
         } else {
             level.playSound(null, x, y, z, SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.5F, 1.6F);
             level.sendParticles(ParticleTypes.SMOKE, x, y, z, 10, 0.3, 0.3, 0.3, 0.02);

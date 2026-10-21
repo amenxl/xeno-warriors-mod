@@ -1,6 +1,8 @@
 package com.xenowarriors.client.mikiko;
 
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.particles.DustParticleOptions;
+import org.joml.Vector3f;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -79,17 +81,75 @@ final class MikikoEffects {
         }
     }
 
-    /** The Hekublade bursting into his hand in a swirl of fire, or vanishing in smoke. */
-    static void blade(ClientLevel level, Player p, boolean summon) {
-        float yaw = p.yBodyRot * ((float) Math.PI / 180F);
-        Vec3 hand = p.position().add(0, 0.9, 0).add(new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw)).scale(0.4));
-        if (summon) {
-            for (int i = 0; i < 14; i++) {
-                double a = i / 14.0 * Math.PI * 2;
-                Vec3 o = new Vec3(Math.cos(a) * 0.4, i * 0.05, Math.sin(a) * 0.4);
-                MikikoAnimations.particle(level, ParticleTypes.FLAME, hand.add(o), o.scale(-0.1));
+    // ---- Hekublade summon: red, orange and white light spiralling up into his hand, then a burst ----
+    private static final DustParticleOptions RED = new DustParticleOptions(new Vector3f(0.95F, 0.12F, 0.1F), 1.1F);
+    private static final DustParticleOptions ORANGE = new DustParticleOptions(new Vector3f(1.0F, 0.55F, 0.08F), 1.1F);
+    private static final DustParticleOptions WHITE = new DustParticleOptions(new Vector3f(1.0F, 0.97F, 0.92F), 0.9F);
+    private static final DustParticleOptions[] STRANDS = {RED, ORANGE, WHITE};
+    private static final java.util.Map<Integer, int[]> SUMMONS = new java.util.HashMap<>();   // id -> {start tick, length}
+
+    /** quick = the short version used when the blade flashes in mid-combo. */
+    static void startSummon(Player p, boolean quick) {
+        SUMMONS.put(p.getId(), new int[]{p.tickCount, quick ? 5 : 11});
+    }
+
+    static void tickSummons(ClientLevel level) {
+        var it = SUMMONS.entrySet().iterator();
+        while (it.hasNext()) {
+            var e = it.next();
+            if (!(level.getEntity(e.getKey()) instanceof Player p)) { it.remove(); continue; }
+            int len = e.getValue()[1];
+            int t = p.tickCount - e.getValue()[0];
+            if (t > len) { it.remove(); continue; }
+            Vec3 hand = rightHand(p);
+            if (t < len) {
+                // three strands coiling up from his feet and tightening onto his hand
+                float k = t / (float) len;
+                for (int sub = 0; sub < 3; sub++) {
+                    float kk = k + sub / (3F * len);
+                    double radius = 1.05 * (1 - kk) + 0.08;
+                    for (int s = 0; s < 3; s++) {
+                        double a = kk * Math.PI * 3.2 + s * Math.PI * 2 / 3;
+                        Vec3 c = p.position().add(0, 0.1 + kk * (hand.y - p.getY() - 0.1), 0);
+                        Vec3 at = new Vec3(c.x + Math.cos(a) * radius, c.y, c.z + Math.sin(a) * radius).lerp(hand, kk * kk * 0.6);
+                        MikikoAnimations.particle(level, STRANDS[s], at, Vec3.ZERO);
+                    }
+                }
+                if (t % 2 == 0) MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, hand, rand(p, 0.04));
+            } else {
+                // the blade forms: white flash, red/orange burst, sparks and a ring rolling outward
+                for (int i = 0; i < 26; i++) {
+                    Vec3 v = rand(p, 1).normalize().scale(0.12 + p.getRandom().nextDouble() * 0.18);
+                    MikikoAnimations.particle(level, STRANDS[i % 3], hand.add(v.scale(2)), v);
+                }
+                for (int i = 0; i < 10; i++) MikikoAnimations.particle(level, ParticleTypes.END_ROD, hand, rand(p, 0.16));
+                for (int i = 0; i < 8; i++) MikikoAnimations.particle(level, ParticleTypes.FLAME, hand, rand(p, 0.09));
+                MikikoAnimations.particle(level, ParticleTypes.FLASH, hand, Vec3.ZERO);
+                if (len > 6) {
+                    for (int i = 0; i < 24; i++) {
+                        double a = i / 24.0 * Math.PI * 2;
+                        MikikoAnimations.particle(level, ParticleTypes.END_ROD, p.position().add(0, 0.1, 0),
+                                new Vec3(Math.cos(a) * 0.22, 0.01, Math.sin(a) * 0.22));
+                    }
+                }
             }
-            MikikoAnimations.sound(level, p, SoundEvents.FIRECHARGE_USE, 0.45F, 1.6F);
+        }
+    }
+
+    private static Vec3 rightHand(Player p) {
+        float yaw = p.yBodyRot * ((float) Math.PI / 180F);
+        Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
+        Vec3 right = new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw));
+        return p.position().add(0, 0.95, 0).add(right.scale(0.38)).add(fwd.scale(0.2));
+    }
+
+    /** The Hekublade flashing into his hand mid-combo, or vanishing in smoke. */
+    static void blade(ClientLevel level, Player p, boolean summon) {
+        Vec3 hand = rightHand(p);
+        if (summon) {
+            startSummon(p, true);
+            level.playLocalSound(p.getX(), p.getY() + 1, p.getZ(), com.xenowarriors.ModSounds.HEKUBLADE_SUMMON.get(),
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.45F, 1.25F, false);
         } else {
             for (int i = 0; i < 8; i++) MikikoAnimations.particle(level, ParticleTypes.SMOKE, hand, rand(p, 0.05));
             for (int i = 0; i < 5; i++) MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, hand, rand(p, 0.04));
