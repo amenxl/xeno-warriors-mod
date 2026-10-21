@@ -48,6 +48,8 @@ import java.util.Set;
  *  - eating: holds the food up to his mouth with both hands and chews
  *  - walking: after 15 seconds of walking he relaxes into a stroll with his hands behind his head
  *  - running: leans into the sprint, fists pumping hard, long strides
+ *  - "mall" on a nearby jukebox while he stands still: vibes to it - nodding on the beat, bouncing,
+ *    swaying - and after a while sits down cross-legged, still nodding along
  * Attack animations only play on a fully charged swing (after the attack cooldown); spam-clicking
  * just does the normal weak swing and doesn't move the combo along.
  */
@@ -70,6 +72,9 @@ public final class MikikoAnimations {
     private static final int FIRE_CYCLE = 260;
     private static final int JUMP_DURATION = 12;
     private static final int STROLL_AFTER = 15 * 20;
+    private static final int VIBE_SIT_AFTER = 20 * 20;
+    private static final float BEAT = 11.4F;                 // ticks per beat (~105 BPM)
+    private static final java.util.List<net.minecraft.client.resources.sounds.SoundInstance> MALL = new java.util.ArrayList<>();
     private static boolean lastJumpDown;
 
     private static final Map<Integer, State> STATES = new HashMap<>();
@@ -94,6 +99,8 @@ public final class MikikoAnimations {
         float fly, flyO, fast, fastO, roll, rollO;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
+        float vibe, vibeO;
+        int vibeTicks;
         int jumpStart = -100;
         boolean doubleJumped;
         int airTicks;
@@ -202,11 +209,16 @@ public final class MikikoAnimations {
         s.poisonO = s.poison;
         s.fireO = s.fire;
         s.poison = approach(s.poison, poisoned && s.still >= 10 ? 1F : 0F, 0.12F);
-        s.sit = approach(s.sit, !poisoned && s.still >= SIT_AFTER ? 1F : 0F, s.still == 0 ? 0.3F : 0.06F);
-        s.look = approach(s.look, !poisoned && s.still >= LOOK_AROUND_AFTER && s.sit < 0.5F ? 1F : 0F, 0.08F);
-        boolean fire = s.sit > 0.95F && fireActive(s.still);
+        boolean vibing = !poisoned && s.still >= 10 && mallNear(p);
+        s.vibeTicks = vibing ? s.vibeTicks + 1 : 0;
+        s.vibeO = s.vibe;
+        s.vibe = approach(s.vibe, vibing ? 1F : 0F, 0.08F);
+        s.sit = approach(s.sit, !poisoned && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
+                s.still == 0 ? 0.3F : 0.06F);
+        s.look = approach(s.look, !poisoned && !vibing && s.still >= LOOK_AROUND_AFTER && s.sit < 0.5F ? 1F : 0F, 0.08F);
+        boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing;
         s.fire = approach(s.fire, fire ? 1F : 0F, fire ? 0.12F : 0.2F);
-        if (s.sit > 0.95F) {
+        if (s.sit > 0.95F && !vibing) {
             int c = (s.still - SIT_AFTER) % FIRE_CYCLE;
             if (c == 46) MikikoEffects.fireStart(level, p);
             if (c >= 46 && c < 156) MikikoEffects.fireSpin(level, p, c - 46);
@@ -354,6 +366,8 @@ public final class MikikoAnimations {
         float jump = (ageInTicks - s.jumpStart) / JUMP_DURATION;
         if (jump >= 0F && jump <= 1F) jumpPose(model, jump);
         if (sit > 0F) sitPose(model, sit, fire, ageInTicks);
+        float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
+        if (vibe > 0F) vibePose(model, vibe, sit, ageInTicks);
         if (poison > 0F) poisonPose(model, poison, s.still + partial, ageInTicks);
         if (s.move != null) movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration);
         if (player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
@@ -398,6 +412,41 @@ public final class MikikoAnimations {
         set(model.leftLeg, t[9], t[10], t[11], fly);
         // keep looking ahead while the body leans forward
         model.head.xRot -= 1.0F * fast * fly;
+    }
+
+    /** Is a jukebox playing "mall" close by? */
+    private static boolean mallNear(Player p) {
+        var sounds = Minecraft.getInstance().getSoundManager();
+        MALL.removeIf(s -> !sounds.isActive(s));
+        for (var s : MALL) {
+            if (p.distanceToSqr(s.getX(), s.getY(), s.getZ()) < 20 * 20) return true;
+        }
+        return false;
+    }
+
+    @SubscribeEvent
+    public static void onSound(net.minecraftforge.client.event.sound.PlaySoundEvent event) {
+        var sound = event.getSound();
+        if (sound != null && sound.getLocation().getPath().equals("music_disc.mall")) MALL.add(sound);
+    }
+
+    /** Vibing to the song: head nods on the beat, a little shoulder bounce and sway, loose arms (taps his knees when sitting). */
+    private static void vibePose(HumanoidModel<?> model, float w, float sit, float age) {
+        float beat = age / BEAT * (float) Math.PI * 2F;
+        float nod = Math.max(0F, Mth.sin(beat)) * 0.28F;
+        model.head.xRot += nod * w;
+        model.head.zRot += Mth.sin(beat * 0.5F) * 0.1F * w;
+        float bob = Mth.sin(beat) * 0.12F;
+        float standing = w * (1F - sit);
+        set(model.rightArm, -0.35F + bob, 0.1F, 0.18F + Mth.sin(beat * 0.5F) * 0.08F, standing);
+        set(model.leftArm, -0.35F - bob, -0.1F, -0.18F + Mth.sin(beat * 0.5F) * 0.08F, standing);
+        set(model.rightLeg, Mth.sin(beat * 0.5F) * 0.06F, 0F, 0.05F, standing * 0.6F);
+        set(model.leftLeg, -Mth.sin(beat * 0.5F) * 0.06F, 0F, -0.05F, standing * 0.6F);
+        if (sit > 0F) {
+            // tapping his knees along with the beat
+            model.rightArm.xRot += Math.max(0F, Mth.sin(beat)) * 0.18F * sit * w;
+            model.leftArm.xRot += Math.max(0F, Mth.sin(beat + (float) Math.PI)) * 0.18F * sit * w;
+        }
     }
 
     /** Relaxed stroll: hands laced behind his head, elbows out, head bobbing along. Legs keep walking. */
@@ -536,6 +585,12 @@ public final class MikikoAnimations {
             out[0] += Mth.sin(age * 0.12F) * 0.05F * fly * (1F - fast);
             out[3] += 65F * fast * fly * attacking;
             out[4] += Mth.lerp(partial, s.rollO, s.roll) * fly * attacking;
+        }
+        float vibe = Mth.lerp(partial, s.vibeO, s.vibe);
+        if (vibe > 0F) {
+            float beat = age / BEAT * (float) Math.PI * 2F;
+            out[0] += Math.max(0F, Mth.sin(beat)) * 0.045F * vibe;          // bounce on the beat
+            out[4] += Mth.sin(beat * 0.5F) * 4F * vibe;                      // sway side to side
         }
         float run = Mth.lerp(partial, s.runO, s.run);
         if (run > 0F) {
