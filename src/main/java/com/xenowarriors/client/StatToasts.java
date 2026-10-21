@@ -20,7 +20,15 @@ public class StatToasts implements IGuiOverlay {
     private static final String[] ICONS = {"»", "⚔", "⛨"};
     private static final List<long[]> TOASTS = new ArrayList<>();   // {stat, level, start ms}
 
+    private static long lastLevelUp = -100000;
+
+    /** A stat levelled up in the last 3 seconds (for the sparkly-eyed face). */
+    public static boolean justLeveledUp() {
+        return Util.getMillis() - lastLevelUp < 3000;
+    }
+
     public static void add(int stat, int level) {
+        lastLevelUp = Util.getMillis();
         TOASTS.removeIf(t -> t[0] == stat);
         TOASTS.add(new long[]{stat, level, Util.getMillis()});
     }

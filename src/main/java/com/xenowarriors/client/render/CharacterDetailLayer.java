@@ -52,6 +52,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         if (p.getHealth() <= p.getMaxHealth() * 0.3F && p.isAlive()) return "strained";
         if (ClientSkillState.feelingSick(p)) return "sick";
+        if (p == net.minecraft.client.Minecraft.getInstance().player && com.xenowarriors.client.StatToasts.justLeveledUp()) return "sparkle";
+        var pos = p.blockPosition();
+        boolean snowing = p.level().isRaining() && p.level().canSeeSky(pos) && p.level().getBiome(pos).value().coldEnoughToSnow(pos);
+        if (p.getTicksFrozen() > 0 || snowing) return "freezing";
+        boolean still = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.05;
+        if (still && p.level().isRainingAt(pos.above())) return "annoyed";
         String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
         if (type == CharacterType.RHALIX) {
             if (FlightTracker.isFlying(p)) mood = "smug";          // right at home in the air

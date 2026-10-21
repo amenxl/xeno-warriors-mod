@@ -426,8 +426,14 @@ public final class MikikoAnimations {
         State s = STATES.get(p.getId());
         if (s == null) return null;
         if (s.fly > 0.5F) {
-            if (clumsiness(p) > 0.45F) return "scared";
-            return s.fast > 0.5F ? "focused" : "happy";
+            float clumsy = clumsiness(p);
+            if (clumsy > 0.45F) {
+                // having a really hard time: scared, then full panic (tears!), then dizzy from tumbling
+                int beat = (p.tickCount / 20) % 5;
+                return beat < 2 ? "scared" : beat < 4 ? "panic" : "dizzy";
+            }
+            if (clumsy > 0.15F) return "focused";       // concentrating hard, getting there
+            return s.fast > 0.5F ? "grin" : "happy";   // a natural now
         }
         float[] bi = bladeIdle(p, 0F);
         if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
@@ -435,7 +441,11 @@ public final class MikikoAnimations {
         if (s.vibe > 0.5F) return "happy";
         if (s.run > 0.5F) return "focused";
         if (s.fire > 0.5F) return "happy";
-        if (s.sit > 0.9F) return (s.still % 300) >= 100 && (s.still % 300) < 135 ? "yawn" : "bored";
+        if (s.sit > 0.9F) {
+            if ((s.still % 300) >= 100 && (s.still % 300) < 135) return "yawn";
+            long time = p.level().getDayTime() % 24000L;
+            return time > 13000 && time < 23000 ? "sleepy" : "bored";   // nodding off at night
+        }
         if (s.stroll > 0.5F) return "happy";
         return null;
     }
