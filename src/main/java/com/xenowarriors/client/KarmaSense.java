@@ -29,6 +29,8 @@ public final class KarmaSense {
     private static final Map<Integer, Long> SENSED = new HashMap<>();   // entity id -> game time it stops glowing
     private static final Map<Integer, Long> TRACKED = new HashMap<>();  // Fire Blitz targets (orange outline)
     private static long pulseStart = -1000;
+    private static final Map<Integer, Integer> LEVELS = new HashMap<>();  // entity id -> how strong it is (1-150)
+    private static boolean showLevels;
 
     public static void track(int id, int duration) {
         Minecraft mc = Minecraft.getInstance();
@@ -37,11 +39,16 @@ public final class KarmaSense {
 
     private KarmaSense() {}
 
-    public static void sensed(int[] ids, int duration) {
+    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         long until = mc.level.getGameTime() + duration;
-        for (int id : ids) SENSED.put(id, until);
+        LEVELS.clear();
+        for (int i = 0; i < ids.length; i++) {
+            SENSED.put(ids[i], until);
+            if (i < levels.length) LEVELS.put(ids[i], levels[i]);
+        }
+        showLevels = readLevels;
         pulseStart = mc.level.getGameTime();
     }
 
@@ -79,6 +86,8 @@ public final class KarmaSense {
         }
         long now = mc.level.getGameTime();
         SENSED.values().removeIf(until -> until < now);
+        LEVELS.keySet().removeIf(id -> !SENSED.containsKey(id));
+        if (now % 3 == 0) auras(mc);
         TRACKED.values().removeIf(until -> until < now);
         // a ring of light rolling outward for the first second
         long age = now - pulseStart;
@@ -90,6 +99,51 @@ public final class KarmaSense {
                         mc.player.getZ() + Math.sin(a) * r, 0, 0.01, 0);
             }
         }
+    }
+
+    /**
+     * Each sensed thing gives off an aura of its Karma color - the stronger it is, the bigger and denser the aura.
+     */
+    private static void auras(Minecraft mc) {
+        for (Map.Entry<Integer, Integer> en : LEVELS.entrySet()) {
+            Entity e = mc.level.getEntity(en.getKey());
+            if (e == null || !e.isAlive() || e.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) > 96 * 96) continue;
+            float power = Math.min(1F, en.getValue() / 150F);
+            int c = color(e);
+            var dust = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255F,
+                    ((c >> 8) & 255) / 255F, (c & 255) / 255F), 0.6F + power * 1.4F);
+            double radius = e.getBbWidth() * 0.6 + 0.3 + power * 2.2;
+            int count = 2 + Math.round(power * 10);
+            var r = mc.level.random;
+            for (int i = 0; i < count; i++) {
+                double a = r.nextDouble() * Math.PI * 2;
+                double rr = radius * (0.6 + r.nextDouble() * 0.4);
+                mc.level.addParticle(dust, e.getX() + Math.cos(a) * rr, e.getY() + r.nextDouble() * (e.getBbHeight() + power * 1.5),
+                        e.getZ() + Math.sin(a) * rr, 0, 0.02 + power * 0.04, 0);
+            }
+        }
+    }
+
+    /** At higher Karma Sensing, "Lv N" floats over everything sensed, visible through walls. */
+    @SubscribeEvent
+    public static void onRenderLiving(net.minecraftforge.client.event.RenderLivingEvent.Post<?, ?> event) {
+        if (!showLevels) return;
+        net.minecraft.world.entity.LivingEntity e = event.getEntity();
+        Integer lv = LEVELS.get(e.getId());
+        if (lv == null || !isSensed(e)) return;
+        Minecraft mc = Minecraft.getInstance();
+        var pose = event.getPoseStack();
+        pose.pushPose();
+        pose.translate(0, e.getBbHeight() + (e instanceof Player || e.hasCustomName() ? 0.85 : 0.5), 0);
+        pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+        float s = 0.03F;
+        pose.scale(-s, -s, s);
+        String text = "Lv " + lv;
+        float x = -mc.font.width(text) / 2F;
+        int col = 0xFF000000 | color(e);
+        mc.font.drawInBatch(text, x, 0, col, false, pose.last().pose(), event.getMultiBufferSource(),
+                net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0x60000000, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT);
+        pose.popPose();
     }
 
     /** Purple pulse around the edges of the screen when you sense. */

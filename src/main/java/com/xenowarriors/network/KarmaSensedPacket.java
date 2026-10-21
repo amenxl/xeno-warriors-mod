@@ -9,17 +9,19 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /** Server -> client: the entities you sensed, and for how long they glow. */
-public record KarmaSensedPacket(int[] ids, int duration) {
+public record KarmaSensedPacket(int[] ids, int[] levels, int duration, boolean showLevels) {
     public static void encode(KarmaSensedPacket msg, FriendlyByteBuf buf) {
         buf.writeVarIntArray(msg.ids);
+        buf.writeVarIntArray(msg.levels);
         buf.writeVarInt(msg.duration);
+        buf.writeBoolean(msg.showLevels);
     }
 
     public static KarmaSensedPacket decode(FriendlyByteBuf buf) {
-        return new KarmaSensedPacket(buf.readVarIntArray(), buf.readVarInt());
+        return new KarmaSensedPacket(buf.readVarIntArray(), buf.readVarIntArray(), buf.readVarInt(), buf.readBoolean());
     }
 
     public static void handle(KarmaSensedPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> KarmaSense.sensed(msg.ids, msg.duration));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> KarmaSense.sensed(msg.ids, msg.levels, msg.duration, msg.showLevels));
     }
 }

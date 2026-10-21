@@ -34,6 +34,21 @@ public final class KarmaSensing {
     public static final double MAX_RADIUS = 120;
     public static final int MAX_DURATION = 30 * 20;
 
+    /** At this much practice Karma Sensing also reads how strong (what level) everything is. */
+    public static final int READ_LEVELS = 50;
+
+    /**
+     * How strong something is, on the same 1-150 scale as Character Level: a player's Character Level, or for
+     * anything else a rating from its health, attack and armor (a zombie is about 9, an iron golem 40, the Warden 150).
+     */
+    public static int power(LivingEntity e) {
+        if (e instanceof ServerPlayer p) return Math.max(1, com.xenowarriors.stats.Stats.characterLevel(p));
+        double atk = e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
+                ? e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) : 0;
+        double score = (e.getMaxHealth() + atk * 4 + e.getArmorValue() * 2) / 4.0;
+        return (int) Math.max(1, Math.min(150, Math.round(score)));
+    }
+
     public static int uses(ServerPlayer p) {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.senseUses).orElse(0);
     }
@@ -66,6 +81,10 @@ public final class KarmaSensing {
             if (d.senseUses < 1_000_000) d.senseUses++;
         });
         int after = uses + 1;
+        if (after == READ_LEVELS) {
+            player.sendSystemMessage(Component.literal("Your Karma Sensing is sharp enough to read levels now - sensed players and enemies show theirs.")
+                    .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+        }
         if (after <= MASTERY && after % 10 == 0) {
             player.sendSystemMessage(Component.literal(after == MASTERY
                     ? "Karma Sensing mastered! Range " + Math.round(radius(after)) + " blocks, " + duration(after) / 20 + " seconds."
@@ -77,7 +96,8 @@ public final class KarmaSensing {
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
                         && !(e instanceof Player p && (p.isSpectator() || HoodieItem.wearing(p))));
         int[] ids = found.stream().mapToInt(LivingEntity::getId).toArray();
-        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, DURATION), player);
+        int[] levels = found.stream().mapToInt(KarmaSensing::power).toArray();
+        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS), player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
         player.displayClientMessage(Component.translatable("message.xenowarriors.karma_sense.found", ids.length), true);
