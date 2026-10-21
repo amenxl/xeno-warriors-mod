@@ -206,7 +206,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         // Rhalix's cigarette while he's on his smoke break
         if (type == CharacterType.RHALIX && com.xenowarriors.client.RhalixWingsClient.smoking(player, partialTick) > 0.3F) {
-            Cigarette.render(parent.rightArm, poseStack, buffers, packedLight);
+            float st = com.xenowarriors.client.RhalixWingsClient.smokeTime(player, ageInTicks);
+            if (st >= 34F && st < 52F) Cigarette.renderInMouth(parent.head, poseStack, buffers, packedLight);   // taking a drag
+            else Cigarette.render(parent.rightArm, poseStack, buffers, packedLight);
         }
 
         // hair streaming back and fluttering when running or flying

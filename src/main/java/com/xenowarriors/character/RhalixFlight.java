@@ -79,7 +79,7 @@ public final class RhalixFlight {
                 abilities.flying = false;
                 p.onUpdateAbilities();
             }
-        } else if (granted && !p.isCreative() && !p.isSpectator()) {
+        } else if (granted && !p.isCreative() && !p.isSpectator() && !com.xenowarriors.mikiko.WindFlight.canFly(p)) {
             // switched away from Rhalix: take the flight back
             abilities.mayfly = false;
             abilities.flying = false;

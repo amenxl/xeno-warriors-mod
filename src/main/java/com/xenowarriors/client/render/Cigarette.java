@@ -31,6 +31,21 @@ public final class Cigarette {
         tip = root.getChild("tip");
     }
 
+    /** Between his lips, sticking out a little to one side (during a drag). */
+    public static void renderInMouth(ModelPart head, PoseStack pose, MultiBufferSource buffers, int light) {
+        if (body == null) build();
+        pose.pushPose();
+        head.translateAndRotate(pose);
+        // move the hand-held cigarette (which sits around (-1, 9.7, -2.3) in arm space) to the mouth, angled slightly
+        pose.translate(1.2F / 16F, -1.8F / 16F, -4.4F / 16F);
+        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-12F));
+        pose.translate(1F / 16F, -9.7F / 16F, 1.0F / 16F);
+        var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        body.render(pose, vc, light, OverlayTexture.NO_OVERLAY);
+        tip.render(pose, vc, 0xF000F0, OverlayTexture.NO_OVERLAY);
+        pose.popPose();
+    }
+
     public static void render(ModelPart arm, PoseStack pose, MultiBufferSource buffers, int light) {
         if (body == null) build();
         pose.pushPose();
