@@ -73,6 +73,8 @@ public final class XenoCommands {
                     {"/xeno giveup", "when downed: stop waiting for a revive"},
                     {"/xeno karma set|add <amount> [players]", "change Karma (op)"},
                     {"/xeno stat <speed|attack|defense> <level> [players]", "set a stat level, up to " + Stat.MAX_LEVEL + " (op)"},
+                    {"/xeno stat <mining|crafting|smelting> <level> [players]", "set a skill, up to 50 (op)"},
+                    {"/xeno stat hekublade <level> | karmasense <uses> | level <level>", "the other stats (op)"},
                     {"/xeno level <level> [players]", "set Character Level, up to " + Stats.MAX_CHARACTER_LEVEL + " (op)"},
                     {"/xeno skill <mining|crafting|smelting> <level> [players]", "set a skill level (op)"},
                     {"/xeno bladelevel <level> [players]", "set the Hekublade's level (op)"},
@@ -242,6 +244,26 @@ public final class XenoCommands {
                     .then(Commands.argument("targets", EntityArgument.players())
                             .executes(ctx -> setStat(ctx, st, EntityArgument.getPlayers(ctx, "targets"))))));
         }
+        // the other stats live under /xeno stat too
+        for (String sk : new String[]{"mining", "crafting", "smelting"}) {
+            int max = sk.equals("mining") ? com.xenowarriors.stats.Mining.MAX_LEVEL : com.xenowarriors.stats.Crafting.MAX_LEVEL;
+            stat.then(Commands.literal(sk).then(Commands.argument("level", IntegerArgumentType.integer(0, max))
+                    .executes(ctx -> setSkill(ctx, sk, List.of(ctx.getSource().getPlayerOrException())))
+                    .then(Commands.argument("targets", EntityArgument.players())
+                            .executes(ctx -> setSkill(ctx, sk, EntityArgument.getPlayers(ctx, "targets"))))));
+        }
+        stat.then(Commands.literal("hekublade").then(Commands.argument("level", IntegerArgumentType.integer(1, com.xenowarriors.mikiko.BladeLevel.MAX))
+                .executes(ctx -> setBlade(ctx, List.of(ctx.getSource().getPlayerOrException())))
+                .then(Commands.argument("targets", EntityArgument.players())
+                        .executes(ctx -> setBlade(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
+        stat.then(Commands.literal("karmasense").then(Commands.argument("uses", IntegerArgumentType.integer(0, 100000))
+                .executes(ctx -> setSense(ctx, List.of(ctx.getSource().getPlayerOrException())))
+                .then(Commands.argument("targets", EntityArgument.players())
+                        .executes(ctx -> setSense(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
+        stat.then(Commands.literal("level").then(Commands.argument("level", IntegerArgumentType.integer(0, Stats.MAX_CHARACTER_LEVEL))
+                .executes(ctx -> setLevel(ctx, List.of(ctx.getSource().getPlayerOrException())))
+                .then(Commands.argument("targets", EntityArgument.players())
+                        .executes(ctx -> setLevel(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
         root.then(stat);
 
         root.then(Commands.literal("level").requires(s -> s.hasPermission(2))
