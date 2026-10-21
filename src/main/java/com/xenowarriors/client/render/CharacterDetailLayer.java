@@ -46,7 +46,24 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (p.hurtTime > 0) return "hurt";
         if (ClientSkillState.currentAnim(p) != null) return "shout";
         if (p.swinging || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)) return "fierce";
+        if (p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT
+                || p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.DRINK) {
+            return (p.getTicksUsingItem() / 4) % 2 == 0 ? "eat" : "eat2";      // munching
+        }
+        if (p.getHealth() <= p.getMaxHealth() * 0.3F && p.isAlive()) return "strained";
         if (ClientSkillState.feelingSick(p)) return "sick";
+        String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
+        if (type == CharacterType.RHALIX) {
+            if (FlightTracker.isFlying(p)) mood = "smug";          // right at home in the air
+            else if (p.isSprinting()) mood = "focused";
+        }
+        int bt = p.tickCount + p.getId() * 37;
+        boolean blink = bt % 97 < 3 || (bt % 233 >= 8 && bt % 233 < 11);
+        if (mood != null) {
+            // moods with open eyes still blink now and then
+            boolean eyesOpen = !mood.equals("happy") && !mood.equals("yawn");
+            return blink && eyesOpen ? "blink" : mood;
+        }
         int t = p.tickCount + p.getId() * 37;
         if (t % 97 < 3 || (t % 233 >= 8 && t % 233 < 11)) return "blink";   // blinks every few seconds, sometimes twice
         return null;

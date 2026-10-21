@@ -383,6 +383,30 @@ public final class MikikoAnimations {
         }
     }
 
+    /**
+     * Mikiko's face for what he's doing right now, or null for his normal face:
+     * scared while he still can't fly, focused flying fast or sprinting, happy vibing / strolling / playing with
+     * fire / hovering once he's got the hang of it, surprised watching his tossed blade, smug after the catch,
+     * bored sitting around with the odd big yawn.
+     */
+    public static String mood(Player p) {
+        State s = STATES.get(p.getId());
+        if (s == null) return null;
+        if (s.fly > 0.5F) {
+            if (clumsiness(p) > 0.45F) return "scared";
+            return s.fast > 0.5F ? "focused" : "happy";
+        }
+        float[] bi = bladeIdle(p, 0F);
+        if (bi != null && (int) bi[0] == BI_TOSS && bi[1] >= 6) return bi[1] < 30 ? "surprised" : "smug";
+        if (bi != null && (int) bi[0] == BI_HOLD && bi[1] < 25 && (s.still - BLADE_IDLE_AFTER) % BLADE_CYCLE < 80) return "smug";
+        if (s.vibe > 0.5F) return "happy";
+        if (s.run > 0.5F) return "focused";
+        if (s.fire > 0.5F) return "happy";
+        if (s.sit > 0.9F) return (s.still % 300) >= 100 && (s.still % 300) < 135 ? "yawn" : "bored";
+        if (s.stroll > 0.5F) return "happy";
+        return null;
+    }
+
     /** Is he in the middle of an attack move? (for his fierce face) */
     public static boolean attacking(Player p) {
         State s = STATES.get(p.getId());
