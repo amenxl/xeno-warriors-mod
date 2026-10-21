@@ -2,7 +2,7 @@ package com.xenowarriors.karma;
 
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.character.ModCapabilities;
-import com.xenowarriors.item.KarmaHoodieItem;
+import com.xenowarriors.item.HoodieItem;
 import com.xenowarriors.network.KarmaSensedPacket;
 import com.xenowarriors.network.ModNetwork;
 import net.minecraft.network.chat.Component;
@@ -46,7 +46,7 @@ public final class KarmaSensing {
 
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
-                        && !(e instanceof Player p && (p.isSpectator() || KarmaHoodieItem.wearing(p))));
+                        && !(e instanceof Player p && (p.isSpectator() || HoodieItem.wearing(p))));
         int[] ids = found.stream().mapToInt(LivingEntity::getId).toArray();
         ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, DURATION), player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);

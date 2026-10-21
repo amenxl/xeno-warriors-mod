@@ -33,6 +33,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     private final Map<CharacterType, Map<EquipmentSlot, DetailModel>> models = new EnumMap<>(CharacterType.class);
     private final Map<CharacterType, DetailModel> hoodies = new EnumMap<>(CharacterType.class);
     private final Map<CharacterType, DetailModel> hoodieTrims = new EnumMap<>(CharacterType.class);
+    private final Map<CharacterType, DetailModel> srHoodies = new EnumMap<>(CharacterType.class);
 
     public CharacterArmorLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
@@ -48,6 +49,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             if (hoodie != null) hoodies.put(type, hoodie);
             DetailModel trim = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_hoodie_trim.json");
             if (trim != null) hoodieTrims.put(type, trim);
+            DetailModel sr = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_sr_hoodie.json");
+            if (sr != null) srHoodies.put(type, sr);
         }
     }
 
@@ -80,8 +83,10 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             ItemStack stack = player.getItemBySlot(slot);
             if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) continue;
             DetailModel m = bySlot.get(slot);
+            boolean sr = stack.getItem() instanceof com.xenowarriors.item.SrHoodieItem;
             boolean hoodie = stack.getItem() instanceof com.xenowarriors.item.KarmaHoodieItem;
             if (hoodie) m = hoodies.get(type);
+            if (sr) m = srHoodies.get(type);
             if (m == null) continue;
             m.head.copyFrom(parent.head);
             m.body.copyFrom(parent.body);
@@ -89,7 +94,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             m.leftArm.copyFrom(parent.leftArm);
             m.rightLeg.copyFrom(parent.rightLeg);
             m.leftLeg.copyFrom(parent.leftLeg);
-            float[] c = tint(stack, armor);   // the hoodie's dye comes through here too (it's dyeable like leather)
+            float[] c = sr ? new float[]{1F, 1F, 1F} : tint(stack, armor);   // the hoodie's dye comes through here too (it's dyeable like leather)
             VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
             m.root.render(pose, vc, light, overlay, c[0], c[1], c[2], 1F);
             if (hoodie && hoodieTrims.get(type) != null) {

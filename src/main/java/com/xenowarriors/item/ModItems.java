@@ -20,6 +20,9 @@ public final class ModItems {
     public static final RegistryObject<Item> KARMA_HOODIE = ITEMS.register("karma_hoodie",
             () -> new KarmaHoodieItem(new Item.Properties()));
 
+    public static final RegistryObject<Item> SR_HOODIE = ITEMS.register("sr_hoodie",
+            () -> new SrHoodieItem(new Item.Properties()));
+
     private ModItems() {}
 
     public static void addToTabs(BuildCreativeModeTabContentsEvent event) {
@@ -28,6 +31,7 @@ public final class ModItems {
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));
+            event.accept(SR_HOODIE);
         }
     }
 }
