@@ -76,7 +76,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             // caught in the rain: soaked, drops running down the face (two frames so they drip)
             int bt = p.tickCount + p.getId() * 37;
             if (bt % 97 < 3) return "blink";
-            return (bt / 9) % 2 == 0 ? "rain" : "rain2";
+            int f = (bt / 7) % 3;                       // the water running down the face
+            return f == 0 ? "rain" : f == 1 ? "rain2" : "rain3";
         }
         String mood = type == CharacterType.MIKIKO ? com.xenowarriors.client.mikiko.MikikoAnimations.mood(p) : null;
         if (type == CharacterType.RHALIX) {
