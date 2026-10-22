@@ -67,6 +67,12 @@ public class DetailModel {
         final org.joml.Quaternionf base;
         final org.joml.Vector3f back, side;
         final float baseX, baseY, baseZ, phase;
+        /** Super Saiyan styles (index 1, 2, 3): the strand's pose and how much longer it gets; null if it isn't hair. */
+        org.joml.Quaternionf[] style;
+        final float[] scale = {1F, 1F, 1F, 1F};
+        /** SSJ3: how far the root moves back so the long hair falls from the back of the head */
+        float back3;
+        final float pivotZ;
 
         Strand(ModelPart first, org.joml.Quaternionf base, org.joml.Vector3f back, org.joml.Vector3f side, float phase) {
             parts.add(first);
@@ -77,6 +83,7 @@ public class DetailModel {
             this.baseY = first.yRot;
             this.baseZ = first.zRot;
             this.phase = phase;
+            this.pivotZ = first.z;
         }
     }
 
@@ -107,7 +114,54 @@ public class DetailModel {
             Strand st = new Strand(p, base, back.normalize(), side.normalize(), strands.size() * 0.7F);
             strands.add(st);
             byRoot.put(key, st);
+            if (p.y < -5F) styleStrand(st, p.x, p.y, p.z, dir);    // hair on the head (not a cigarette or toothpick)
         });
+        pickBang();
+    }
+
+    /** Works out where the strand points in each Super Saiyan style. */
+    private static void styleStrand(Strand st, float x, float y, float z, org.joml.Vector3f dir) {
+        // model space: -Y is up, -Z is the face; the head is centred on (0, -4, 0)
+        var out = new org.joml.Vector3f(x, 0F, z);
+        if (out.length() < 0.6F) out.set(0F, 0F, 1F);
+        out.normalize();
+        st.style = new org.joml.Quaternionf[4];
+        // SSJ: big spikes standing up and fanning outward, swept a little back
+        st.style[1] = towards(st.base, dir, new org.joml.Vector3f(out).mul(0.8F).add(0F, -1F, 0.35F));
+        st.scale[1] = 1.12F;
+        // SSJ2: stiffer, sharper and more upright
+        st.style[2] = towards(st.base, dir, new org.joml.Vector3f(out).mul(0.5F).add(0F, -1F, 0.15F));
+        st.scale[2] = 1.25F;
+        // SSJ3: the front stays spiked up, everything else grows long and flows down the back
+        if (z < -2.5F) {
+            st.style[3] = towards(st.base, dir, new org.joml.Vector3f(out).mul(0.45F).add(0F, -1F, 0.1F));
+            st.scale[3] = 1.3F;
+        } else {
+            st.style[3] = towards(st.base, dir, new org.joml.Vector3f(out.x * 0.22F, 1F, 0.1F + out.z * 0.08F));
+            st.scale[3] = 3.2F;
+            st.back3 = Math.max(0F, 4.3F - z);
+        }
+    }
+
+    private static org.joml.Quaternionf towards(org.joml.Quaternionf base, org.joml.Vector3f from, org.joml.Vector3f to) {
+        return new org.joml.Quaternionf().rotationTo(from, to.normalize()).mul(base);
+    }
+
+    /** SSJ2's single bang: the front-most lock hangs down over the forehead. */
+    private void pickBang() {
+        Strand best = null;
+        float bestScore = Float.MAX_VALUE;
+        for (Strand st : strands) {
+            if (st.style == null) continue;
+            ModelPart p = st.parts.get(0);
+            if (p.z > -3.5F) continue;
+            float score = p.z + Math.abs(p.x + 0.8F) * 0.4F;
+            if (score < bestScore) { bestScore = score; best = st; }
+        }
+        if (best == null) return;
+        var dir = best.base.transform(new org.joml.Vector3f(0F, -1F, 0F));
+        best.style[2] = towards(best.base, dir, new org.joml.Vector3f(0.15F, 1F, -0.45F));
+        best.scale[2] = 1.15F;
     }
 
     /**
@@ -116,25 +170,56 @@ public class DetailModel {
      * @param flutter how much it flaps around
      */
     public void animateHair(float stream, float flutter, float age) {
+        animateHair(stream, flutter, age, 0, 0F);
+    }
+
+    private int lastStyle;
+    private float lastWeight = -1F;
+    private static final org.joml.Quaternionf STYLED = new org.joml.Quaternionf();
+
+    /**
+     * @param style  0 normal, 1 Super Saiyan, 2 Super Saiyan 2, 3 Super Saiyan 3
+     * @param weight 0..1 how far into that style the hair is (it rises when transforming)
+     */
+    public void animateHair(float stream, float flutter, float age, int style, float weight) {
         if (strands.isEmpty()) return;
-        if (stream < 0.004F && flutter < 0.004F) {
+        boolean styling = style > 0 && style < 4 && weight > 0.004F;
+        if (!styling && stream < 0.004F && flutter < 0.004F) {
             if (hairMoved) {
-                for (Strand s : strands) for (ModelPart p : s.parts) { p.xRot = s.baseX; p.yRot = s.baseY; p.zRot = s.baseZ; }
+                for (Strand s : strands) for (ModelPart p : s.parts) {
+                    p.xRot = s.baseX; p.yRot = s.baseY; p.zRot = s.baseZ; p.yScale = 1F; p.z = s.pivotZ;
+                }
                 hairMoved = false;
             }
             return;
         }
         // same frame as last time (e.g. the armor/shadow passes): nothing changed
-        if (hairMoved && age == lastAge && stream == lastStream && flutter == lastFlutter) return;
+        if (hairMoved && age == lastAge && stream == lastStream && flutter == lastFlutter
+                && style == lastStyle && weight == lastWeight) return;
         lastAge = age;
         lastStream = stream;
         lastFlutter = flutter;
+        lastStyle = style;
+        lastWeight = weight;
         hairMoved = true;
+        if (styling) {
+            // spiked hair is stiff: the wind barely moves it (long SSJ3 hair still sways)
+            float stiff = style == 3 ? 0.4F : 0.75F;
+            stream *= 1F - stiff * weight;
+            flutter *= 1F - stiff * 0.6F * weight;
+        }
         for (Strand s : strands) {
+            org.joml.Quaternionf base = s.base;
+            float scale = 1F, pz = s.pivotZ;
+            if (styling && s.style != null) {
+                if (style == 3) pz += s.back3 * weight;
+                base = STYLED.set(s.base).slerp(s.style[style], weight);
+                scale = 1F + (s.scale[style] - 1F) * weight;
+            }
             float a = stream + Mth.sin(age * 0.55F + s.phase) * flutter;
             float b = Mth.sin(age * 0.43F + s.phase * 1.7F) * flutter * 0.6F;
             DELTA.rotationAxis(a, s.back).mul(TMP.rotationAxis(b, s.side));
-            DELTA.mul(s.base, OUT);
+            DELTA.mul(base, OUT);
             // quaternion -> Z-Y-X angles (the order the game uses), straight from the components
             float x = OUT.x, y = OUT.y, z = OUT.z, w = OUT.w;
             float sy = Mth.clamp(2F * (w * y - x * z), -1F, 1F);
@@ -145,6 +230,8 @@ public class DetailModel {
                 p.xRot = xRot;
                 p.yRot = yRot;
                 p.zRot = zRot;
+                p.yScale = scale;
+                p.z = pz;
             }
         }
     }

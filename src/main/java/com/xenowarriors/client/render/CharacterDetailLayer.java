@@ -156,6 +156,30 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return h[1];
     }
 
+    /** per player: {style weight 0..1, last age, style shown} - the hair rises when transforming and falls back after */
+    private static final java.util.Map<Integer, float[]> SSJ = new java.util.HashMap<>();
+
+    private static float hairStyleWeight(AbstractClientPlayer p, int style, float age) {
+        float[] s = SSJ.computeIfAbsent(p.getId(), k -> new float[]{0F, age, 0F});
+        float dt = net.minecraft.util.Mth.clamp(age - s[1], 0F, 5F);
+        s[1] = age;
+        if (style > 0 && style != (int) s[2] && s[0] > 0.05F) {
+            s[0] = Math.max(0F, s[0] - dt * 0.15F);          // changing style: settle first, then rise into the new one
+            if (s[0] <= 0.05F) s[2] = style;
+        } else {
+            if (style > 0) s[2] = style;
+            float target = style > 0 ? 1F : 0F;
+            s[0] = Mth.clamp(s[0] + Math.signum(target - s[0]) * dt * (style > 0 ? 0.12F : 0.08F), 0F, 1F);
+        }
+        if (s[0] <= 0F && style == 0) s[2] = 0F;
+        return s[0];
+    }
+
+    private static int lastStyle(AbstractClientPlayer p) {
+        float[] s = SSJ.get(p.getId());
+        return s == null ? 0 : (int) s[2];
+    }
+
     private static final java.util.Map<java.util.UUID, Integer> TORN = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static void setTorn(java.util.UUID player, int torn) {
@@ -227,8 +251,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // (far away you can't see it anyway: skip the work)
         boolean nearCam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()
                 .distanceToSqr(player.position()) < 32 * 32;
-        if (nearCam) model.animateHair(hairStream(player, 0), hairStream(player, 1), ageInTicks);
-        else model.animateHair(0F, 0F, ageInTicks);
+        int ssj = com.xenowarriors.client.compat.DmzForms.hairStyle(player);
+        float ssjWeight = hairStyleWeight(player, ssj, ageInTicks);
+        int shownStyle = lastStyle(player);
+        if (nearCam) model.animateHair(hairStream(player, 0), hairStream(player, 1), ageInTicks, shownStyle, ssjWeight);
+        else model.animateHair(0F, 0F, ageInTicks, shownStyle, ssjWeight);
 
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off

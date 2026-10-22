@@ -149,6 +149,19 @@ public final class DmzForms {
         return "goldenoozaru".equals(form(p));
     }
 
+    /** Hair style for the current form: 0 their own, 1 Super Saiyan spikes, 2 Super Saiyan 2, 3 Super Saiyan 3. */
+    public static int hairStyle(Player p) {
+        String f = form(p);
+        if (f == null) return 0;
+        return switch (f) {
+            case "supersaiyan", "supersaiyangrade2", "supersaiyangrade3", "supersaiyanmastered",
+                    "ikari", "ssjhybrid", "ssjfullpower" -> 1;
+            case "supersaiyan2" -> 2;
+            case "supersaiyan3" -> 3;
+            default -> 0;
+        };
+    }
+
     /** Hair color for the current form (RGB), or -1 to keep their own. */
     public static int hairColor(Player p) {
         Form f = info(p);
