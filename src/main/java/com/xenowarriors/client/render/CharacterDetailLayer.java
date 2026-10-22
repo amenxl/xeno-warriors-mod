@@ -251,11 +251,15 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // (far away you can't see it anyway: skip the work)
         boolean nearCam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()
                 .distanceToSqr(player.position()) < 32 * 32;
+        float windS = nearCam ? hairStream(player, 0) : 0F, windF = nearCam ? hairStream(player, 1) : 0F;
+        if (model.coatBack != null) {
+            model.animateCoat(parent.rightLeg.xRot, parent.leftLeg.xRot, windS * 0.9F, windF * 1.3F, ageInTicks,
+                    player.isPassenger() || parent.riding);
+        }
         int ssj = com.xenowarriors.client.compat.DmzForms.hairStyle(player);
         float ssjWeight = hairStyleWeight(player, ssj, ageInTicks);
         int shownStyle = lastStyle(player);
-        if (nearCam) model.animateHair(hairStream(player, 0), hairStream(player, 1), ageInTicks, shownStyle, ssjWeight);
-        else model.animateHair(0F, 0F, ageInTicks, shownStyle, ssjWeight);
+        model.animateHair(windS, windF, ageInTicks, shownStyle, ssjWeight);
 
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off

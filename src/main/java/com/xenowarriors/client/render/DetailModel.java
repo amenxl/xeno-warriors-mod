@@ -30,6 +30,8 @@ public class DetailModel {
     public final ModelPart head, body, rightArm, leftArm, rightLeg, leftLeg;
     /** Hair and goggles (hidden under the SR hood), and the front bangs that stay visible. May be null. */
     public final ModelPart hair, bangs;
+    /** Rhalix's coat tails (front flaps, sides, back) - null for characters without them. */
+    public final ModelPart coatBack, coatFrontR, coatFrontL, coatSideR, coatSideL;
     /** null for characters without wings */
     public final ModelPart rightWing, leftWing;
     /** High-res face (its own texture, 4x the pixels of a normal face); null if the character has none. */
@@ -46,6 +48,11 @@ public class DetailModel {
         this.leftLeg = root.getChild("left_leg");
         this.hair = childOrNull(head, "hair");
         this.bangs = childOrNull(head, "bangs");
+        this.coatBack = childOrNull(body, "coat_back");
+        this.coatFrontR = childOrNull(body, "coat_front_r");
+        this.coatFrontL = childOrNull(body, "coat_front_l");
+        this.coatSideR = childOrNull(body, "coat_side_r");
+        this.coatSideL = childOrNull(body, "coat_side_l");
         this.rightWing = childOrNull(body, "right_wing");
         this.leftWing = childOrNull(body, "left_wing");
         this.rightWingZ = rightWing != null ? rightWing.zRot : 0;
@@ -236,6 +243,34 @@ public class DetailModel {
         }
     }
 
+
+    /**
+     * The coat tails swing with the legs (pushed ahead of a leg stepping forward, out of the way of one kicking back,
+     * so the legs never poke through) and stream back and flap when he runs or flies.
+     * @param stream how far the wind pushes them back (radians), flutter how much they flap
+     */
+    public void animateCoat(float rightLeg, float leftLeg, float stream, float flutter, float age, boolean sitting) {
+        if (coatBack == null) return;
+        float fr = Math.min(0F, rightLeg), fl = Math.min(0F, leftLeg);           // legs forward (negative = forward)
+        float br = Math.max(0F, rightLeg), bl = Math.max(0F, leftLeg);           // legs back
+        float f1 = Mth.sin(age * 0.6F) * flutter, f2 = Mth.sin(age * 0.6F + 1.7F) * flutter, f3 = Mth.sin(age * 0.47F + 0.9F) * flutter;
+        // front flaps ride on the thigh in front of them, a touch further so the knee stays behind the cloth
+        if (coatFrontR != null) { coatFrontR.xRot = fr * 1.08F - 0.04F + stream * 0.35F + f1 * 0.6F; coatFrontR.zRot = 0.03F; }
+        if (coatFrontL != null) { coatFrontL.xRot = fl * 1.08F - 0.04F + stream * 0.35F + f2 * 0.6F; coatFrontL.zRot = -0.03F; }
+        // sides follow their leg either way, flared out a little to clear the hips
+        if (coatSideR != null) {
+            coatSideR.xRot = rightLeg * 0.6F + stream * 0.6F + f2 * 0.5F;
+            coatSideR.zRot = 0.1F + Math.abs(rightLeg) * 0.12F + stream * 0.15F;
+        }
+        if (coatSideL != null) {
+            coatSideL.xRot = leftLeg * 0.6F + stream * 0.6F + f1 * 0.5F;
+            coatSideL.zRot = -0.1F - Math.abs(leftLeg) * 0.12F - stream * 0.15F;
+        }
+        // the back hangs from the shoulders: kicked out by whichever leg swings back, blown back by the wind
+        float back = Math.max(br, bl) * 0.5F + 0.03F + stream + f3 * 0.8F;
+        if (sitting) back = Math.max(back, 0.35F);
+        coatBack.xRot = back;
+    }
 
     private static ModelPart childOrNull(ModelPart part, String name) {
         try {
