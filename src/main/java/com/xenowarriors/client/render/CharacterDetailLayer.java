@@ -273,6 +273,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         model.leftArm.copyFrom(parent.leftArm);
         model.rightLeg.copyFrom(parent.rightLeg);
         model.leftLeg.copyFrom(parent.leftLeg);
+        // elbows and knees bend with the player's
+        com.xenowarriors.client.LimbBend.copy(parent.rightArm, model.rightArm);
+        com.xenowarriors.client.LimbBend.copy(parent.leftArm, model.leftArm);
+        com.xenowarriors.client.LimbBend.copy(parent.rightLeg, model.rightLeg);
+        com.xenowarriors.client.LimbBend.copy(parent.leftLeg, model.leftLeg);
 
         if (model.hasWings()) {
             boolean preview = ClientCharacterData.isPreviewing();
@@ -342,6 +347,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             poseStack.pushPose();
             model.root.translateAndRotate(poseStack);
             parent.rightArm.translateAndRotate(poseStack);
+            com.xenowarriors.client.LimbBend.toForearm(parent.rightArm, poseStack);
             poseStack.translate(-1F / 16F, 10.2F / 16F, -0.5F / 16F);           // between his fingers
             poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(90F));    // pointing ahead
             for (var sp : model.mouthStick) {

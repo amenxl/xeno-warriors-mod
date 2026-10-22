@@ -50,6 +50,7 @@ public final class Cigarette {
         if (body == null) build();
         pose.pushPose();
         arm.translateAndRotate(pose);
+        com.xenowarriors.client.LimbBend.toForearm(arm, pose);
         var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         body.render(pose, vc, light, OverlayTexture.NO_OVERLAY);
         tip.render(pose, vc, 0xF000F0, OverlayTexture.NO_OVERLAY);    // the ember glows

@@ -279,6 +279,14 @@ public class DetailModel {
         coatBack.xRot = back;
     }
 
+    /** Bends this model's elbows and knees like the player model's (see LimbBend). */
+    public void copyBends(net.minecraft.client.model.HumanoidModel<?> parent) {
+        com.xenowarriors.client.LimbBend.copy(parent.rightArm, rightArm);
+        com.xenowarriors.client.LimbBend.copy(parent.leftArm, leftArm);
+        com.xenowarriors.client.LimbBend.copy(parent.rightLeg, rightLeg);
+        com.xenowarriors.client.LimbBend.copy(parent.leftLeg, leftLeg);
+    }
+
     private static ModelPart childOrNull(ModelPart part, String name) {
         try {
             return part.getChild(name);
@@ -357,6 +365,11 @@ public class DetailModel {
             for (Map.Entry<String, JsonElement> bone : json.getAsJsonObject("bones").entrySet()) {
                 JsonObject b = bone.getValue().getAsJsonObject();
                 float[] p = floats(b.getAsJsonArray("pivot"));
+                float split = com.xenowarriors.client.LimbBend.splitY(bone.getKey());
+                if (split > 0F) {
+                    limb(rootDef, bone.getKey(), b, p, split);
+                    continue;
+                }
                 PartDefinition part = rootDef.addOrReplaceChild(bone.getKey(), cubes(b), PartPose.offset(p[0], p[1], p[2]));
                 children(part, b);
             }
@@ -378,6 +391,46 @@ public class DetailModel {
         } catch (Exception e) {
             XenoWarriors.LOGGER.error("Could not load model {}", path, e);
             return null;
+        }
+    }
+
+    /**
+     * An arm or leg split at the elbow / knee: everything below goes in a child part that bends (see LimbBend).
+     * A cube crossing the joint is cut in two at a whole pixel, with the lower half's texture shifted to match.
+     */
+    private static void limb(PartDefinition root, String name, JsonObject b, float[] p, float split) {
+        CubeListBuilder upper = CubeListBuilder.create(), lower = CubeListBuilder.create();
+        for (JsonElement el : b.getAsJsonArray("cubes")) {
+            JsonObject c = el.getAsJsonObject();
+            float[] uv = floats(c.getAsJsonArray("uv"));
+            float[] f = floats(c.getAsJsonArray("from"));
+            float[] sz = floats(c.getAsJsonArray("size"));
+            int u = (int) uv[0], v = (int) uv[1];
+            float top = f[1], bottom = f[1] + sz[1];
+            if (bottom <= split + 0.6F && (top + bottom) / 2F < split) {
+                upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2]);
+            } else if (top >= split - 0.6F) {
+                lower.texOffs(u, v).addBox(f[0], f[1] - split, f[2], sz[0], sz[1], sz[2]);
+            } else {
+                int h1 = Math.max(1, Math.round(split - top));            // whole pixels, so the texture lines up
+                if (h1 >= sz[1] - 0.5F) {
+                    upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2]);
+                    continue;
+                }
+                upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], h1, sz[2]);
+                lower.texOffs(u, v + h1).addBox(f[0], top + h1 - split, f[2], sz[0], sz[1] - h1, sz[2]);
+            }
+        }
+        PartDefinition up = root.addOrReplaceChild(name, upper, PartPose.offset(p[0], p[1], p[2]));
+        PartDefinition low = up.addOrReplaceChild(com.xenowarriors.client.LimbBend.LOWER, lower, PartPose.offset(0F, split, 0F));
+        for (JsonElement el : b.getAsJsonArray("children")) {
+            JsonObject c = el.getAsJsonObject();
+            float[] cp = floats(c.getAsJsonArray("pivot"));
+            float[] r = floats(c.getAsJsonArray("rot"));
+            boolean below = cp[1] >= split;
+            PartDefinition part = (below ? low : up).addOrReplaceChild(c.get("name").getAsString(), cubes(c),
+                    PartPose.offsetAndRotation(cp[0], below ? cp[1] - split : cp[1], cp[2], r[0], r[1], r[2]));
+            children(part, c);
         }
     }
 

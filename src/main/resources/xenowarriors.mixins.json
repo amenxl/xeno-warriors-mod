@@ -16,6 +16,8 @@
   "client": [
     "AbstractClientPlayerMixin",
     "HumanoidModelMixin",
+    "PlayerModelBendMixin",
+    "PlayerRendererHandMixin",
     "CameraMixin",
     "HumanoidArmorLayerMixin",
     "MinecraftGlowMixin",
