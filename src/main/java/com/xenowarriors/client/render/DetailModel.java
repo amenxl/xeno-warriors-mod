@@ -101,10 +101,17 @@ public class DetailModel {
     private static final org.joml.Quaternionf DELTA = new org.joml.Quaternionf(), TMP = new org.joml.Quaternionf(),
             OUT = new org.joml.Quaternionf();
 
+    /** The stick in Rhalix's mouth (low pieces in the hair group, by his mouth); empty for others. */
+    public final java.util.List<ModelPart> mouthStick = new java.util.ArrayList<>();
+
     private void collectStrands(ModelPart group) {
         java.util.Map<String, Strand> byRoot = new java.util.HashMap<>();
         group.getAllParts().forEach(p -> {
             if (p == group) return;
+            if (p.y > -5F && p.z < -3.5F) {      // not hair: the stick in his mouth (doesn't blow in the wind)
+                mouthStick.add(p);
+                return;
+            }
             String key = Math.round(p.x * 100) + "," + Math.round(p.y * 100) + "," + Math.round(p.z * 100) + ","
                     + Math.round(p.xRot * 1000) + "," + Math.round(p.yRot * 1000) + "," + Math.round(p.zRot * 1000);
             Strand existing = byRoot.get(key);

@@ -41,6 +41,13 @@ public final class RhalixCombatAnim {
     private static final String[] SWORD_IDLES = {"rh_sw_inspect", "rh_sw_inspect", "rh_sw_sharpen", "rh_sw_inspect",
             "rh_sw_practice", "rh_sw_inspect", "rh_sw_inspect", "rh_sw_sharpen"};
     private static final int SWORD_IDLE_AFTER = 60;
+    /** In the air: nothing but kicks, arms folded across his chest. */
+    private static final String[][] AIR_COMBOS = {
+            {"rh_front_kick_right", "rh_gut_kick_left", "rh_roundhouse_left", "rh_low_kick_right", "rh_axe_kick_right"},
+            {"rh_roundhouse_left", "rh_front_kick_right", "rh_low_kick_right", "rh_gut_kick_left", "rh_spin_back_kick"},
+            {"rh_gut_kick_left", "rh_low_kick_right", "rh_front_kick_right", "rh_roundhouse_left", "rh_spin_back_kick"},
+    };
+    private static final int STICK_AFTER = 100, STICK_EVERY = 360;
     private static final int COMBO_TIMEOUT = 30;
     private static final Random RANDOM = new Random();
 
@@ -48,7 +55,8 @@ public final class RhalixCombatAnim {
         boolean lastSwinging;
         int lastSwingTime, lastSwingStart = -100, lastAttack = -100, step, variant = -1;
         String move;
-        int moveStart, still, clock;
+        int moveStart, still, clock, calm;
+        boolean air;
         float strength, idle, idleO;
         boolean sword;
     }
@@ -102,16 +110,26 @@ public final class RhalixCombatAnim {
             s.idleO = s.idle;
             s.idle = Mth.clamp(s.idle + (idling ? 0.08F : -0.2F), 0F, 1F);
             if (idling) s.clock++;
+            boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround()
+                    && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
+                    && p.getMainHandItem().isEmpty() && s.move == null && !RhalixWingsClient.busy(p) && !RhalixHungerClient.hungry(p);
+            int stickT = s.calm >= STICK_AFTER ? (s.calm - STICK_AFTER) % STICK_EVERY : -1;
+            float stickLen = GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle");
+            if (calm) s.calm++;
+            else if (stickT < 0 || stickT >= stickLen) s.calm = 0;      // (finishes putting the stick back first)
+            else s.calm++;
             else if (s.idle <= 0F) s.clock = 0;          // (keeps its place while fading out)
             if (s.idle > 0.5F && "rh_sw_sharpen".equals(idleAnim(s, 0F)[0]) && now % 7 == 0 && sharpenStroke(s)) sparks(mc, p);
             if (start && p.getMainHandItem().isEmpty() && charged && !(mc.hitResult != null && p == mc.player
                     && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK)) {
-                if (now - s.lastAttack > COMBO_TIMEOUT || s.step >= 5 || s.variant < 0 || s.sword) {
+                boolean air = FlightTracker.isFlying(p);
+                if (now - s.lastAttack > COMBO_TIMEOUT || s.step >= 5 || s.variant < 0 || s.sword || air != s.air) {
                     s.step = 0;
-                    s.variant = RANDOM.nextInt(COMBOS.length);
+                    s.variant = RANDOM.nextInt(air ? AIR_COMBOS.length : COMBOS.length);
                 }
                 s.sword = false;
-                s.move = COMBOS[s.variant][s.step++];
+                s.air = air;
+                s.move = (air ? AIR_COMBOS : COMBOS)[s.variant][s.step++];
                 s.moveStart = now;
                 s.lastAttack = now;
             }
@@ -162,10 +180,36 @@ public final class RhalixCombatAnim {
         return s != null && s.idle > 0.3F && s.move == null && isSword(p) && "rh_sw_sharpen".equals(idleAnim(s, 0F)[0]);
     }
 
+    /** Ticks into the stick fidget, or -1. */
+    private static float stickTime(State s, float partial) {
+        if (s.calm < STICK_AFTER) return -1F;
+        float t = (s.calm - STICK_AFTER) % STICK_EVERY + partial;
+        return t <= GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle") ? t : -1F;
+    }
+
+    /** Where the stick is: 0 in his mouth, 1 in his hand, 2 in his pocket. */
+    public static int stickState(Player p, float partial) {
+        State s = STATES.get(p.getId());
+        if (s == null) return 0;
+        float t = stickTime(s, partial) / 20F;
+        if (t < 0F) return 0;
+        if (t < 0.8F) return 0;
+        if (t < 1.5F) return 1;
+        if (t < 2.6F) return 2;
+        if (t < 4.4F) return 1;
+        return 0;
+    }
+
     public static void apply(HumanoidModel<?> m, Player p, float age) {
         State s = STATES.get(p.getId());
         if (s == null || !rhalix(p)) return;
         float partial = age - p.tickCount;
+        float st = s.move == null ? stickTime(s, Mth.clamp(partial, 0F, 1F)) : -1F;
+        if (st >= 0F) {
+            GeoAnims.apply(m, GeoAnims.RHALIX, "rh_stick_idle", st, false,
+                    GeoAnims.envelope(st, GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle"), 4F));
+            m.hat.copyFrom(m.head);
+        }
         float idle = Mth.lerp(partial, s.idleO, s.idle);
         if (s.move == null && idle > 0F && isSword(p)) {
             Object[] ia = idleAnim(s, partial);
@@ -177,7 +221,17 @@ public final class RhalixCombatAnim {
         float t = age - s.moveStart;                                  // ticks, like GeoAnims expects
         float len = GeoAnims.length(GeoAnims.RHALIX, s.move);
         if (t < 0 || t > len) return;
-        GeoAnims.apply(m, GeoAnims.RHALIX, s.move, t, false, GeoAnims.envelope(t, len, 1.5F));
+        float w = GeoAnims.envelope(t, len, 1.5F);
+        GeoAnims.apply(m, GeoAnims.RHALIX, s.move, t, false, w);
+        if (s.air) {
+            // arms folded across his chest while his legs do the work
+            m.rightArm.xRot = Mth.lerp(w, m.rightArm.xRot, -0.95F);
+            m.rightArm.yRot = Mth.lerp(w, m.rightArm.yRot, -0.62F);
+            m.rightArm.zRot = Mth.lerp(w, m.rightArm.zRot, 0.12F);
+            m.leftArm.xRot = Mth.lerp(w, m.leftArm.xRot, -1.05F);
+            m.leftArm.yRot = Mth.lerp(w, m.leftArm.yRot, 0.62F);
+            m.leftArm.zRot = Mth.lerp(w, m.leftArm.zRot, -0.12F);
+        }
         m.hat.copyFrom(m.head);
     }
 }

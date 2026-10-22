@@ -287,7 +287,26 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                 : type.getDetailTexture();
         if (king) detailTex = FOX_KING_TEX;      // its own atlas (the torn/damaged detail sheets are for the normal look)
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
+        // Rhalix's mouth stick: in his hand or pocket during his fidget
+        int stick = type == CharacterType.RHALIX && !model.mouthStick.isEmpty()
+                ? com.xenowarriors.client.RhalixCombatAnim.stickState(player, partialTick) : 0;
+        if (stick != 0) for (var sp : model.mouthStick) sp.visible = false;
         model.root.render(poseStack, buffer, packedLight, overlay);
+        if (stick != 0) for (var sp : model.mouthStick) sp.visible = true;
+        if (stick == 1) {
+            poseStack.pushPose();
+            model.root.translateAndRotate(poseStack);
+            parent.rightArm.translateAndRotate(poseStack);
+            poseStack.translate(-1F / 16F, 10.2F / 16F, -0.5F / 16F);           // between his fingers
+            poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(90F));    // pointing ahead
+            for (var sp : model.mouthStick) {
+                float x = sp.x, y = sp.y, z = sp.z;
+                sp.x = 0F; sp.y = 0F; sp.z = 0F;
+                sp.render(poseStack, buffer, packedLight, overlay);
+                sp.x = x; sp.y = y; sp.z = z;
+            }
+            poseStack.popPose();
+        }
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
         if (formHair >= 0 && model.hair != null) {

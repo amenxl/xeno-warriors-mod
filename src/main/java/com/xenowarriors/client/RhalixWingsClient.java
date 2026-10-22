@@ -228,10 +228,10 @@ public final class RhalixWingsClient {
         if (hover > 0F) GeoAnims.apply(model, GeoAnims.RHALIX, "hover_idle", age, true, hover);
         float zoom = superman(p, partial);
         if (zoom > 0F) {
-            // Superman: right fist punched out ahead, left arm swept back at his side, legs together streaming behind
-            float flutter = Mth.sin(age * 0.6F) * 0.06F;
-            lerp(model.rightArm, -3.05F, -0.05F, 0.12F, zoom);
-            lerp(model.leftArm, 0.25F, 0F, -0.12F, zoom);
+            // Superman: both arms straight back along his sides, legs together streaming behind
+            float flutter = Mth.sin(age * 0.6F) * 0.06F, sway = Mth.sin(age * 0.45F) * 0.03F;
+            lerp(model.rightArm, 0.14F + sway, 0F, 0.1F, zoom);
+            lerp(model.leftArm, 0.14F - sway, 0F, -0.1F, zoom);
             lerp(model.rightLeg, 0.08F + flutter, 0F, 0.04F, zoom);
             lerp(model.leftLeg, 0.12F - flutter, 0F, -0.04F, zoom);
             model.head.xRot = Mth.lerp(zoom, model.head.xRot, -1.15F);       // still looking ahead, not at the ground
