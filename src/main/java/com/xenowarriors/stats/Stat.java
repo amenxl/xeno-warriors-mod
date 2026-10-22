@@ -11,8 +11,8 @@ public enum Stat {
     ATTACK(20F, 10F, 0.02F),     // xp = damage dealt
     DEFENSE(15F, 8F, 0.01F);     // xp = damage taken from enemies
 
-    /** Each stat goes to 29,630; with all three maxed you're Character Level 88,888 (the cap). */
-    public static final int MAX_LEVEL = 29630;
+    /** Every stat and skill goes to 30,000; with Speed, Attack and Defense all maxed you're Character Level 88,888. */
+    public static final int MAX_LEVEL = 30000;
     private static final int FULL = 50;
 
     /**

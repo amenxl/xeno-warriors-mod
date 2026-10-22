@@ -24,7 +24,7 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class BladeLevel {
-    public static final int MAX = 50;
+    public static final int MAX = com.xenowarriors.stats.Stat.MAX_LEVEL;
 
     private BladeLevel() {}
 
@@ -34,12 +34,12 @@ public final class BladeLevel {
 
     /** Time he can spend inside: 1.5 minutes at level 1, +15 seconds a level (about 14 minutes at 50). */
     public static int maxTicks(int level) {
-        return (90 + (level - 1) * 15) * 20;
+        return Math.round(90 + (com.xenowarriors.stats.Stat.effective(level) - 1) * 15) * 20;   // tapers past 50
     }
 
     /** Wait after being pushed out: 3 minutes, 2 seconds less per level (down to about 1.4 minutes). */
     public static int cooldownTicks(int level) {
-        return Math.max(60, 180 - (level - 1) * 2) * 20;
+        return Math.max(60, Math.round(180 - (com.xenowarriors.stats.Stat.effective(level) - 1) * 2)) * 20;
     }
 
     public static int level(ServerPlayer p) {

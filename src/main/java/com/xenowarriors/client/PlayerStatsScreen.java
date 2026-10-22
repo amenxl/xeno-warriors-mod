@@ -271,14 +271,14 @@ public class PlayerStatsScreen extends Screen {
         // stats and skills
         small(g, "STATS", x + PAD, cy, SECTION);
         cy += 10;
-        int labelW = font.width("Hekublade") + 6, lvColW = font.width("Lv 29,630") + 6, pctW = font.width("MAX") + 4;
+        int labelW = font.width("Hekublade") + 6, lvColW = font.width("Lv 30,000") + 6, pctW = font.width("MAX") + 4;
         int barX = x + PAD + labelW + lvColW, barW = right - pctW - 4 - barX;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Speed", self.speed(), me.speedXp(), Stat.MAX_LEVEL, 0x55DDFF); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Attack", self.attack(), me.attackXp(), Stat.MAX_LEVEL, 0xFF7744); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Defense", self.defense(), me.defenseXp(), Stat.MAX_LEVEL, 0x88DD66); cy += 12;
-        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Mining", me.mining(), me.miningXp(), 50, 0xE0C070); cy += 12;
-        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Crafting", me.craft(), me.craftXp(), 50, 0xC08A50); cy += 12;
-        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Smelting", me.smelt(), me.smeltXp(), 50, 0xFF8A3A); cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Mining", me.mining(), me.miningXp(), Stat.MAX_LEVEL, 0xE0C070); cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Crafting", me.craft(), me.craftXp(), Stat.MAX_LEVEL, 0xC08A50); cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Smelting", me.smelt(), me.smeltXp(), Stat.MAX_LEVEL, 0xFF8A3A); cy += 12;
         if (mikiko) {
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Hekublade", me.bladeLevel(), me.bladeXp(), BladeLevel.MAX, 0xFF7A1A);
             cy += 12;

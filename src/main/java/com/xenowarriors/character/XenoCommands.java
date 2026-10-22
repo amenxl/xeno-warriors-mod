@@ -73,7 +73,7 @@ public final class XenoCommands {
                     {"/xeno giveup", "when downed: stop waiting for a revive"},
                     {"/xeno karma set|add <amount> [players]", "change Karma (op)"},
                     {"/xeno stat <speed|attack|defense> <level> [players]", "set a stat level, up to " + Stat.MAX_LEVEL + " (op)"},
-                    {"/xeno stat <mining|crafting|smelting> <level> [players]", "set a skill, up to 50 (op)"},
+                    {"/xeno stat <mining|crafting|smelting> <level> [players]", "set a skill, up to " + Stat.MAX_LEVEL + " (op)"},
                     {"/xeno stat hekublade <level> | karmasense <uses> | level <level>", "the other stats (op)"},
                     {"/xeno level <level> [players]", "set Character Level, up to " + Stats.MAX_CHARACTER_LEVEL + " (op)"},
                     {"/xeno skill <mining|crafting|smelting> <level> [players]", "set a skill level (op)"},

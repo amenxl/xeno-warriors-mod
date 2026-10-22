@@ -32,11 +32,16 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Crafting {
-    public static final int MAX_LEVEL = 50;
+    public static final int MAX_LEVEL = Stat.MAX_LEVEL;
     public static final float DOUBLE_PER_LEVEL = 0.01F, SMELT_SPEED_PER_LEVEL = 0.03F;
     public static final String FURNACE_OWNER = "xw_smelter";
 
     private Crafting() {}
+
+    /** 1% per level to 50, tapering after; never more than 100%. */
+    public static float doubleChance(int level) {
+        return Math.min(1F, Stat.effective(level) * DOUBLE_PER_LEVEL);
+    }
 
     public static float needed(int level) {
         return 30F + level * 15F;
@@ -76,7 +81,7 @@ public final class Crafting {
             d.craftLevel++;
             up = true;
         }
-        if (up) levelUp(p, "Crafting level " + d.craftLevel + "! " + Math.round(d.craftLevel * DOUBLE_PER_LEVEL * 100)
+        if (up) levelUp(p, "Crafting level " + d.craftLevel + "! " + Math.round(doubleChance(d.craftLevel) * 100)
                 + "% chance to craft double.");
     }
 
@@ -91,7 +96,7 @@ public final class Crafting {
             up = true;
         }
         if (up) levelUp(p, "Smelting level " + d.smeltLevel + "! Your furnaces cook "
-                + Math.round(d.smeltLevel * SMELT_SPEED_PER_LEVEL * 100) + "% faster.");
+                + Math.round(Stat.effective(d.smeltLevel) * SMELT_SPEED_PER_LEVEL * 100) + "% faster.");
     }
 
     private static void levelUp(ServerPlayer p, String text) {
@@ -111,7 +116,7 @@ public final class Crafting {
             if (!s.isEmpty()) kinds.add(s.getItem());
         }
         if (kinds.size() < 2) return;     // single-ingredient recipes never double (no item loops)
-        if (p.getRandom().nextFloat() < craftLevel(p) * DOUBLE_PER_LEVEL) {
+        if (p.getRandom().nextFloat() < doubleChance(craftLevel(p))) {
             ItemStack extra = result.copy();
             if (!p.getInventory().add(extra)) p.drop(extra, false);
             p.displayClientMessage(Component.literal("Crafted double!").withStyle(ChatFormatting.YELLOW), true);
@@ -146,6 +151,6 @@ public final class Crafting {
         } else {
             level = f.getPersistentData().getInt("xw_smelt_level");
         }
-        return level * SMELT_SPEED_PER_LEVEL;
+        return Stat.effective(level) * SMELT_SPEED_PER_LEVEL;
     }
 }

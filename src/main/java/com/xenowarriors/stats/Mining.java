@@ -24,7 +24,7 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Mining {
-    public static final int MAX_LEVEL = 50;
+    public static final int MAX_LEVEL = Stat.MAX_LEVEL;
     public static final float PER_LEVEL = 0.04F, HAND_PER_LEVEL = 0.05F;
     private static int clientLevel;
     private static float clientProgress;
@@ -46,7 +46,8 @@ public final class Mining {
     }
 
     public static float multiplier(int level, boolean bareHand) {
-        return (1F + level * PER_LEVEL) * (bareHand ? 1F + level * HAND_PER_LEVEL : 1F);
+        float e = Stat.effective(level);     // full value to 50, then tapering
+        return (1F + e * PER_LEVEL) * (bareHand ? 1F + e * HAND_PER_LEVEL : 1F);
     }
 
     public static void setClient(int level, float progress) {

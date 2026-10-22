@@ -55,8 +55,9 @@ public final class Stats {
     /** +1 heart (2 health) for every 10 Character Levels. */
     /** All three stats maxed is exactly Character Level 88,888 (otherwise it's just the three levels added up). */
     public static int fromStats(int sum) {
-        int top = Stat.MAX_LEVEL * 3;
-        return sum >= top ? MAX_CHARACTER_LEVEL : Math.min(MAX_CHARACTER_LEVEL, sum);
+        int top = Stat.MAX_LEVEL * 3;     // 90,000 stat levels = Character Level 88,888
+        if (sum >= top) return MAX_CHARACTER_LEVEL;
+        return (int) Math.min(MAX_CHARACTER_LEVEL - 1, Math.round(sum * (double) MAX_CHARACTER_LEVEL / top));
     }
 
     /** +1 heart every 10 levels up to level 1,000, then +1 heart every 1,000 levels (about 188 at the cap). */
