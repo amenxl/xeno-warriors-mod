@@ -14,7 +14,7 @@ public final class DmzCompat {
     private static Boolean loaded;
     private static boolean broken;
     private static Capability<?> cap;
-    private static Method getStatus, isChargingKi, isActionCharging, isAuraActive, isTailVisible, getCharacter, getRaceName;
+    private static Method getStatus, isChargingKi, isActionCharging, isAuraActive, isTailVisible, isBlocking, getCharacter, getRaceName;
 
     private DmzCompat() {}
 
@@ -32,6 +32,7 @@ public final class DmzCompat {
                 isActionCharging = status.getMethod("isActionCharging");
                 isAuraActive = status.getMethod("isAuraActive");
                 try { isTailVisible = status.getMethod("isTailVisible"); } catch (NoSuchMethodException ignored) {}
+                try { isBlocking = status.getMethod("isBlocking"); } catch (NoSuchMethodException ignored) {}
                 try {
                     getCharacter = data.getMethod("getCharacter");
                     getRaceName = getCharacter.getReturnType().getMethod("getRaceName");
@@ -85,6 +86,11 @@ public final class DmzCompat {
     /** A Saiyan with their tail out. */
     public static boolean tail(Player p) {
         return isTailVisible != null && "saiyan".equals(race(p)) && flag(p, isTailVisible);
+    }
+
+    /** Blocking with DragonMineZ's guard. */
+    public static boolean blocking(Player p) {
+        return isBlocking != null && flag(p, isBlocking);
     }
 
     public static boolean aura(Player p) {

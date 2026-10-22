@@ -86,7 +86,7 @@ public class CorruptedVillagerEntity extends Zombie {
 
     @Override
     protected boolean isSunSensitive() {
-        return !wasVillager;
+        return false;      // possessed bodies don't burn in the sun
     }
 
     @Override

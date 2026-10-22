@@ -84,9 +84,47 @@ public class CorruptedSoulEntity extends Monster {
             }
             return;
         }
-        if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition())) {
-            vanish();
+        if (sinking > 0) {
+            sinkTick();
+        } else if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition())) {
+            sinking = 1;          // daylight: it flees down into the ground before it fades away
+            playSound(SoundEvents.SOUL_ESCAPE, 1F, 0.6F);
         }
+    }
+
+    private int sinking;
+    private double groundY = Double.NaN;
+
+    /** Drifts down and sinks into the ground, trailing dark wisps, then disappears once it's under. */
+    private void sinkTick() {
+        sinking++;
+        setTarget(null);
+        getNavigation().stop();
+        noPhysics = true;
+        if (Double.isNaN(groundY)) {
+            var hit = level().clip(new net.minecraft.world.level.ClipContext(position(), position().subtract(0, 40, 0),
+                    net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, this));
+            groundY = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? getY() - 40 : hit.getLocation().y;
+        }
+        double speed = getY() > groundY + 1.0 ? 0.18 : 0.06;          // dive to the ground, then sink slowly into it
+        setDeltaMovement(0, -speed, 0);
+        setPos(getX(), getY() - speed, getZ());
+        if (level() instanceof ServerLevel server && sinking % 2 == 0) {
+            server.sendParticles(CorruptedFx.BLACK, getX(), Math.max(getY(), groundY) + 0.1, getZ(), 3, 0.25, 0.05, 0.25, 0.01);
+            if (getY() < groundY + 0.5) server.sendParticles(ParticleTypes.SQUID_INK, getX(), groundY + 0.05, getZ(), 2, 0.2, 0.0, 0.2, 0.01);
+        }
+        if (getY() + getBbHeight() < groundY - 0.3 || sinking > 200) {
+            if (level() instanceof ServerLevel server) {
+                server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), groundY + 0.1, getZ(), 6, 0.2, 0.05, 0.2, 0.01);
+            }
+            discard();
+        }
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        if (sinking > 0 && source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)) return true;   // (it's meant to be in the ground)
+        return super.isInvulnerableTo(source);
     }
 
     void vanish() {

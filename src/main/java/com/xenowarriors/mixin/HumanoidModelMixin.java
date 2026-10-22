@@ -18,6 +18,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(HumanoidModel.class)
 public abstract class HumanoidModelMixin {
 
+    /** The game never resets the head's/body's roll, so tilts added by our animations would pile up frame after
+     *  frame (the head slowly spinning round). Start every frame from upright. */
+    @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("HEAD"))
+    private void xenowarriors$resetRoll(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
+                                        float netHeadYaw, float headPitch, CallbackInfo ci) {
+        if ((Object) this instanceof PlayerModel<?> && entity instanceof Player) {
+            HumanoidModel<?> m = (HumanoidModel<?>) (Object) this;
+            m.head.zRot = 0F;
+            m.hat.zRot = 0F;
+            m.body.zRot = 0F;
+        }
+    }
+
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
     private void xenowarriors$skillPose(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                                         float netHeadYaw, float headPitch, CallbackInfo ci) {
@@ -36,6 +49,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.ChargePose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.ClimbPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.SurfPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.BlockPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
             }
         }
     }
