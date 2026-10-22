@@ -52,7 +52,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (com.xenowarriors.client.ChargePose.weight(p) > 0.5F) {
             return (p.tickCount / 20) % 3 == 0 ? "concentrate" : "shout";   // gritting, then yelling as it builds
         }
-        if (p.swinging || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)) return "fierce";
+        if (p.swinging || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)
+                || com.xenowarriors.client.RhalixCombatAnim.attacking(p)) return "fierce";
         if (p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT
                 || p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.DRINK) {
             return (p.getTicksUsingItem() / 4) % 2 == 0 ? "eat" : "eat2";      // munching
