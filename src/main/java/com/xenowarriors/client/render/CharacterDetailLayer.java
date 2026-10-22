@@ -169,7 +169,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         } else {
             if (style > 0) s[2] = style;
             float target = style > 0 ? 1F : 0F;
-            s[0] = Mth.clamp(s[0] + Math.signum(target - s[0]) * dt * (style > 0 ? 0.12F : 0.08F), 0F, 1F);
+            s[0] = net.minecraft.util.Mth.clamp(s[0] + Math.signum(target - s[0]) * dt * (style > 0 ? 0.12F : 0.08F), 0F, 1F);
         }
         if (s[0] <= 0F && style == 0) s[2] = 0F;
         return s[0];
