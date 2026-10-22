@@ -247,6 +247,21 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             else Cigarette.render(parent.rightArm, poseStack, buffers, packedLight);
         }
 
+        // Rhalix sharpening his sword: a whetstone in his other hand
+        if (type == CharacterType.RHALIX && com.xenowarriors.client.RhalixCombatAnim.sharpening(player)) {
+            poseStack.pushPose();
+            parent.translateToHand(net.minecraft.world.entity.HumanoidArm.LEFT, poseStack);
+            poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90F));
+            poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180F));
+            poseStack.translate(-1F / 16F, 0.125F, -0.625F);
+            poseStack.scale(0.6F, 0.6F, 0.6F);
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(player,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FLINT),
+                    net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_LEFT_HAND, true, poseStack, buffers,
+                    player.level(), packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, player.getId());
+            poseStack.popPose();
+        }
+
         // hair streaming back and fluttering when running or flying
         // (far away you can't see it anyway: skip the work)
         boolean nearCam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()

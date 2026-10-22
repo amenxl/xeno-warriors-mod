@@ -302,6 +302,12 @@ public final class RhalixWingsClient {
         if (LIFTED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
     }
 
+    /** Dancing, vibing or on a smoke break right now (so other idles stay out of the way). */
+    public static boolean busy(Player p) {
+        float[] d = DANCE.get(p.getId());
+        return d != null && (d[0] > 0F || d[2] > 0F || d[6] > 0F || d[9] > 0F || d[12] > 0F);
+    }
+
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
