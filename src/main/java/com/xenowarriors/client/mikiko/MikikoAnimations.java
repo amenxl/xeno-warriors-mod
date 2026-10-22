@@ -109,6 +109,7 @@ public final class MikikoAnimations {
         int still;
         float sit, sitO, look, lookO, poison, poisonO, fire, fireO;
         float fly, flyO, fast, fastO, roll, rollO;
+        int barrelStart = -1000, nextBarrel = 60, barrelDir = 1;
         float stroll, strollO, run, runO;
         int walkTicks, stopTicks;
         String discAnim;
@@ -205,6 +206,14 @@ public final class MikikoAnimations {
         s.fast = approach(s.fast, flying ? (float) Mth.clamp((speed - 0.1) / 0.45, 0, 1) : 0F, 0.08F);
         float turn = Mth.wrapDegrees(p.yBodyRot - p.yBodyRotO);
         s.roll = s.roll + (Mth.clamp(turn * 2.5F, -30F, 30F) * s.fast - s.roll) * 0.2F;
+        // dashing flat out: every few seconds a barrel roll
+        if (s.fast > 0.8F) {
+            if (--s.nextBarrel <= 0) {
+                s.barrelStart = p.tickCount;
+                s.barrelDir = p.getRandom().nextBoolean() ? 1 : -1;
+                s.nextBarrel = BARREL_TIME + 50 + p.getRandom().nextInt(90);
+            }
+        } else s.nextBarrel = Math.max(s.nextBarrel, 25);
 
         // walking / running
         double groundSpeed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
@@ -777,14 +786,16 @@ public final class MikikoAnimations {
         return 1F - skill * skill * (3F - 2F * skill);
     }
 
+    private static final int BARREL_TIME = 14;
+
     private static void flyPose(HumanoidModel<?> model, float fly, float fast, float age, float clumsy) {
         float bob = Mth.sin(age * 0.12F);
         // hovering: arms loose and out, one knee bent, swaying
         float[] hover = {-0.15F + bob * 0.05F, 0F, 0.4F, -0.15F - bob * 0.05F, 0F, -0.4F,
                 0.1F + bob * 0.06F, 0F, 0.06F, -0.45F - bob * 0.06F, 0F, -0.06F};
-        // fast: superhero lean - right fist ahead, left arm swept back, legs trailing and fluttering
-        float flutter = Mth.sin(age * 0.5F) * 0.1F;
-        float[] dash = {-3.0F, -0.1F, 0.15F, 0.3F, 0F, -0.12F, 0.15F + flutter, 0F, 0.05F, 0.05F - flutter, 0F, -0.05F};
+        // fast: dashing forward with both arms straight down at his sides (swept back a little), legs together trailing
+        float flutter = Mth.sin(age * 0.5F) * 0.08F, arm = Mth.sin(age * 0.37F) * 0.03F;
+        float[] dash = {0.32F + arm, 0F, 0.1F, 0.32F - arm, 0F, -0.1F, 0.12F + flutter, 0F, 0.03F, 0.12F - flutter, 0F, -0.03F};
         float[] t = new float[12];
         for (int i = 0; i < 12; i++) t[i] = Mth.lerp(fast, hover[i], dash[i]);
         set(model.rightArm, t[0], t[1], t[2], fly);
@@ -1177,7 +1188,7 @@ public final class MikikoAnimations {
     private static float[] bodyMotion(AbstractClientPlayer p, float partial) {
         State s = STATES.get(p.getId());
         if (s == null) return null;
-        float[] out = new float[5];
+        float[] out = new float[6];
         float age = p.tickCount + partial;
         if (s.move != null) {
             float pr = (age - s.moveStart) / s.move.duration;
@@ -1196,6 +1207,9 @@ public final class MikikoAnimations {
             out[0] += Mth.sin(age * 0.12F) * 0.05F * fly * (1F - fast);
             out[3] += 65F * fast * fly * attacking * (1F - 0.75F * clumsy);
             out[4] += Mth.lerp(partial, s.rollO, s.roll) * fly * attacking;
+            // barrel roll: a full spin around the way he's flying
+            float br = (age - s.barrelStart) / BARREL_TIME;
+            if (br > 0F && br < 1F && s.move == null) out[5] += 360F * s.barrelDir * br * br * (3F - 2F * br) * fly;
             // wobbling and tipping all over the place while he's still learning
             out[4] += (Mth.sin(age * 0.17F) * 22F + Mth.sin(age * 0.41F) * 8F) * clumsy * fly;
             out[3] += (Mth.sin(age * 0.11F) * 16F) * clumsy * fly;
@@ -1296,6 +1310,7 @@ public final class MikikoAnimations {
         pose.translate(0, 0.9, 0);
         pose.mulPose(Axis.YP.rotationDegrees(m[2]));
         pose.mulPose(Axis.XP.rotationDegrees(m[3]));
+        pose.mulPose(Axis.YP.rotationDegrees(m[5]));      // barrel roll (around his body's length, the way he's flying)
         pose.mulPose(Axis.ZP.rotationDegrees(m[4]));
         pose.translate(0, -0.9, 0);
         pose.mulPose(Axis.YP.rotationDegrees(yaw));
