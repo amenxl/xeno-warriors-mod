@@ -64,8 +64,10 @@ public class SkillHudOverlay implements IGuiOverlay {
             }
 
             // key label in the bottom corner
-            String key = ModKeyMappings.SKILLS[slot].getTranslatedKeyMessage().getString();
+            var km = ModKeyMappings.SKILLS[slot];
+            String key = km.getKey().getDisplayName().getString();
             if (key.length() > 3) key = key.substring(0, 3);
+            if (km.getKeyModifier() == net.minecraftforge.client.settings.KeyModifier.CONTROL) key = "^" + key;
             g.pose().pushPose();
             g.pose().translate(x + SIZE - 1 - font.width(key) * 0.6F, top + SIZE - 6, 0);
             g.pose().scale(0.6F, 0.6F, 1F);

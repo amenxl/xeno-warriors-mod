@@ -470,13 +470,15 @@ public final class MikikoAnimations {
     }
 
     // ---------------- Hekublade idle: toss & catch, sling it on his back, draw it again ----------------
-    public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4;
+    public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4, BI_RUN = 5;
     private static final int BLADE_IDLE_AFTER = 60, BACK_TIME = 20 * 20;           // on his back for 20 seconds
     private static final int BLADE_CYCLE = 136 + BACK_TIME + 16 + 28;
 
     /** {phase, ticks into that phase} while he's idly holding the Hekublade, or null. */
     public static float[] bladeIdle(Player p, float partial) {
         State s = STATES.get(p.getId());
+        // running with it: slung on his back, both arms free to pump
+        if (s != null && s.move == null && s.run > 0.35F && Hekublade.isBlade(p.getMainHandItem())) return new float[]{BI_RUN, 0F};
         if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()
                 || lowHealth(p)) return null;
         float c = (s.still - BLADE_IDLE_AFTER + partial) % BLADE_CYCLE;
@@ -494,7 +496,7 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(p, 0F);
         if (bi == null) return false;
         int ph = (int) bi[0];
-        return (ph == BI_TOSS && bi[1] >= 6 && bi[1] < 30) || ph == BI_BACK || (ph == BI_SHEATHE && bi[1] >= 8) || (ph == BI_DRAW && bi[1] < 8);
+        return (ph == BI_TOSS && bi[1] >= 6 && bi[1] < 30) || ph == BI_BACK || ph == BI_RUN || (ph == BI_SHEATHE && bi[1] >= 8) || (ph == BI_DRAW && bi[1] < 8);
     }
 
     private static void bladeIdlePose(HumanoidModel<?> model, int phase, float t) {
@@ -880,17 +882,45 @@ public final class MikikoAnimations {
         model.head.xRot -= 0.08F * w;     // chin up, easygoing
     }
 
-    /** Sprint: fists pumping hard against the legs, long strides (the lean is in bodyMotion). */
+    /**
+     * Sprint: an athletic anime run - high knees, a hard back kick, fists pumping across his body with bent elbows,
+     * shoulders twisting against the hips. Really fast (a high Speed stat), he tips into a ninja run with both arms
+     * swept straight back.
+     */
     private static void runPose(HumanoidModel<?> model, float w, Player p, float partial) {
         float step = p.walkAnimation.position(partial) * 0.6662F;
-        float amt = Math.min(1F, p.walkAnimation.speed(partial) * 1.2F);
-        float swing = Mth.cos(step) * amt;
-        // elbows bent (arms forward-ish) and pumping opposite to the legs
-        set(model.rightArm, -0.55F + swing * 1.25F, 0.12F, 0.1F, w);
-        set(model.leftArm, -0.55F - swing * 1.25F, -0.12F, -0.1F, w);
-        set(model.rightLeg, -swing * 1.35F - 0.15F, 0F, 0.02F, w);
-        set(model.leftLeg, swing * 1.35F - 0.15F, 0F, -0.02F, w);
-        model.head.xRot -= 0.3F * w;      // eyes forward while leaning in
+        float amt = Math.min(1F, p.walkAnimation.speed(partial) * 1.25F);
+        float c = Mth.cos(step), sn = Mth.sin(step);
+        // legs: the knee drives up high in front, the trailing leg kicks back less (no knees, so it's lopsided)
+        float rl = c > 0 ? -c * 1.55F : -c * 1.0F, ll = c < 0 ? c * 1.55F : c * 1.0F;
+        set(model.rightLeg, (rl - 0.2F) * amt - 0.1F, 0F, 0.04F, w);
+        set(model.leftLeg, (ll - 0.2F) * amt - 0.1F, 0F, -0.04F, w);
+        // shoulders twist against the legs, the head stays facing forward
+        float tw = c * 0.16F * amt;     // right shoulder comes forward with the right fist
+        twist(model, Mth.lerp(w, model.body.yRot, tw));
+        model.head.yRot -= tw * w;
+        // arms: elbows bent (held forward), each fist punching forward and slightly across, then driving back
+        float ra = -c > 0 ? -c * 1.3F : -c * 0.9F, la = c > 0 ? c * 1.3F : c * 0.9F;   // opposite to the legs
+        set(model.rightArm, -0.6F - ra * amt, 0.12F + Math.max(0F, ra) * 0.35F, 0.12F + Math.max(0F, -ra) * 0.1F, w);
+        set(model.leftArm, -0.6F - la * amt, -0.12F - Math.max(0F, la) * 0.35F, -0.12F - Math.max(0F, -la) * 0.1F, w);
+        // a little bob of the head with every stride, eyes forward while leaning in
+        model.head.xRot -= (0.32F + Math.abs(sn) * 0.05F) * w;
+
+        // ninja run when he's really moving
+        double v = Math.sqrt(p.getDeltaMovement().horizontalDistanceSqr());
+        float ninja = w * Mth.clamp((float) (v - 0.42) / 0.2F, 0F, 1F);
+        if (ninja > 0F) {
+            float sway = Mth.sin(step * 2F) * 0.04F;
+            set(model.rightArm, 1.25F + sway, 0.1F, 0.25F, ninja);
+            set(model.leftArm, 1.25F - sway, -0.1F, -0.25F, ninja);
+            model.head.xRot -= 0.15F * ninja;
+        }
+    }
+
+    /** 0..1 how much he's in the ninja run (also leans his body further, see bodyMotion). */
+    private static float ninjaRun(Player p) {
+        double v = Math.sqrt(p.getDeltaMovement().horizontalDistanceSqr());
+        return Mth.clamp((float) (v - 0.42) / 0.2F, 0F, 1F);
     }
 
     /** Both hands bring the food up to his mouth; little chewing bobs. */
@@ -1206,8 +1236,8 @@ public final class MikikoAnimations {
         float run = Mth.lerp(partial, s.runO, s.run);
         if (run > 0F) {
             float step = p.walkAnimation.position(partial) * 0.6662F;
-            out[3] += 15F * run;                                           // lean into the sprint
-            out[0] += Math.abs(Mth.sin(step)) * 0.06F * run;                // bounce with each stride
+            out[3] += (18F + 14F * ninjaRun(p)) * run;                     // lean into the sprint (more in the ninja run)
+            out[0] += Math.abs(Mth.sin(step)) * 0.08F * run - 0.04F * run;  // low, bouncing with each stride
         }
         float land = age - s.landStart;
         if (land >= 0F && land <= LAND_DURATION) {

@@ -9,13 +9,13 @@ import org.lwjgl.glfw.GLFW;
 public final class ModKeyMappings {
     public static final String CATEGORY = "key.categories.xenowarriors";
 
-    // (renamed from skill_1.. so the new default keys apply - Z is lock-on now)
+    // Left Control + 1-5 (renamed again so the new default keys replace the old saved ones)
     public static final KeyMapping[] SKILLS = {
-            key("skill1", GLFW.GLFW_KEY_X),
-            key("skill2", GLFW.GLFW_KEY_C),
-            key("skill3", GLFW.GLFW_KEY_V),
-            key("skill4", GLFW.GLFW_KEY_B),
-            key("ultimate_skill", GLFW.GLFW_KEY_R),
+            ctrlKey("skill_ctrl1", GLFW.GLFW_KEY_1),
+            ctrlKey("skill_ctrl2", GLFW.GLFW_KEY_2),
+            ctrlKey("skill_ctrl3", GLFW.GLFW_KEY_3),
+            ctrlKey("skill_ctrl4", GLFW.GLFW_KEY_4),
+            ctrlKey("ultimate_ctrl5", GLFW.GLFW_KEY_5),
     };
 
     /** Lock on to the target you're facing (press again to let go). */
@@ -33,6 +33,19 @@ public final class ModKeyMappings {
     public static final KeyMapping TOGGLE_WINGS = key("toggle_wings", GLFW.GLFW_KEY_H);
 
     private ModKeyMappings() {}
+
+    private static KeyMapping ctrlKey(String name, int defaultKey) {
+        return new KeyMapping("key.xenowarriors." + name, KeyConflictContext.IN_GAME,
+                net.minecraftforge.client.settings.KeyModifier.CONTROL, InputConstants.Type.KEYSYM, defaultKey, CATEGORY);
+    }
+
+    /** Holding Control (so 1-5 use skills instead of picking a hotbar slot). */
+    public static boolean ctrlHeld() {
+        long w = net.minecraft.client.Minecraft.getInstance().getWindow().getWindow();
+        if (!InputConstants.isKeyDown(w, GLFW.GLFW_KEY_LEFT_CONTROL) && !InputConstants.isKeyDown(w, GLFW.GLFW_KEY_RIGHT_CONTROL)) return false;
+        for (KeyMapping k : SKILLS) if (k.isDown()) return true;    // only when a skill number is pressed
+        return false;
+    }
 
     private static KeyMapping key(String name, int defaultKey) {
         return new KeyMapping("key.xenowarriors." + name, KeyConflictContext.IN_GAME,

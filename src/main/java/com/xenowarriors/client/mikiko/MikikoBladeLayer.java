@@ -68,7 +68,7 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
     /** The Hekublade spinning up through the air above his hand, or slung diagonally across his back. */
     private void renderIdleBlade(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, int phase, float t) {
         boolean toss = phase == MikikoAnimations.BI_TOSS && t >= 6 && t < 30;
-        boolean back = phase == MikikoAnimations.BI_BACK || (phase == MikikoAnimations.BI_SHEATHE && t >= 8)
+        boolean back = phase == MikikoAnimations.BI_BACK || phase == MikikoAnimations.BI_RUN || (phase == MikikoAnimations.BI_SHEATHE && t >= 8)
                 || (phase == MikikoAnimations.BI_DRAW && t < 8);
         if (!toss && !back) return;
         var mc = net.minecraft.client.Minecraft.getInstance();

@@ -161,5 +161,10 @@
   "item.xenowarriors.c_soul_spawn_egg": "Soul of Darkness Spawn Egg",
   "effect.xenowarriors.blade_bound": "Inside the Hekublade",
   "effect.xenowarriors.blade_exhausted": "Hekublade Exhaustion",
-  "key.xenowarriors.fox_king": "Fox King Mode (Mikiko)"
+  "key.xenowarriors.fox_king": "Fox King Mode (Mikiko)",
+  "key.xenowarriors.skill_ctrl1": "Skill 1",
+  "key.xenowarriors.skill_ctrl2": "Skill 2",
+  "key.xenowarriors.skill_ctrl3": "Skill 3",
+  "key.xenowarriors.skill_ctrl4": "Skill 4",
+  "key.xenowarriors.ultimate_ctrl5": "Ultimate"
 }

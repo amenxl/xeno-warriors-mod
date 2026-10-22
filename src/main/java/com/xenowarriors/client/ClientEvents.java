@@ -31,15 +31,24 @@ public final class ClientEvents {
         }
     }
 
+    private static int slotBeforeKeys = -1;
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+        if (event.phase == TickEvent.Phase.START) {
+            slotBeforeKeys = mc.player != null ? mc.player.getInventory().selected : -1;
+            return;
+        }
         WindEffects.tick(mc);
         limitRhalixFlight(mc);
         sleepCamera(mc);
 
-        // skill keys
+        // skill keys (Ctrl + 1-5): holding Control, the number keys don't change the hotbar slot
+        if (mc.player != null && slotBeforeKeys >= 0 && ClientCharacterData.getLocal() != CharacterType.NONE
+                && ModKeyMappings.ctrlHeld() && mc.player.getInventory().selected != slotBeforeKeys) {
+            mc.player.getInventory().selected = slotBeforeKeys;
+        }
         for (int slot = 0; slot < ModKeyMappings.SKILLS.length; slot++) {
             while (ModKeyMappings.SKILLS[slot].consumeClick()) {
                 if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active()) {
