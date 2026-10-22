@@ -110,6 +110,7 @@ public final class RhalixCombatAnim {
             s.idleO = s.idle;
             s.idle = Mth.clamp(s.idle + (idling ? 0.08F : -0.2F), 0F, 1F);
             if (idling) s.clock++;
+            else if (s.idle <= 0F) s.clock = 0;          // (keeps its place while fading out)
             boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround()
                     && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
                     && p.getMainHandItem().isEmpty() && s.move == null && !RhalixWingsClient.busy(p) && !RhalixHungerClient.hungry(p);
@@ -118,7 +119,6 @@ public final class RhalixCombatAnim {
             if (calm) s.calm++;
             else if (stickT < 0 || stickT >= stickLen) s.calm = 0;      // (finishes putting the stick back first)
             else s.calm++;
-            else if (s.idle <= 0F) s.clock = 0;          // (keeps its place while fading out)
             if (s.idle > 0.5F && "rh_sw_sharpen".equals(idleAnim(s, 0F)[0]) && now % 7 == 0 && sharpenStroke(s)) sparks(mc, p);
             if (start && p.getMainHandItem().isEmpty() && charged && !(mc.hitResult != null && p == mc.player
                     && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK)) {
