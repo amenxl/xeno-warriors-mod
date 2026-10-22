@@ -416,6 +416,11 @@ public final class MikikoAnimations {
     }
 
     private static void startAttack(AbstractClientPlayer p, State s, int now) {
+        if (com.xenowarriors.client.SurfPose.surfing(p)) {            // on the Hekublade: board moves instead
+            com.xenowarriors.client.SurfPose.startAttack(p, now);
+            s.lastAttack = now;
+            return;
+        }
         ItemStack held = p.getMainHandItem();
         boolean flying = FlightTracker.isFlying(p) || p.isFallFlying();
         Move move;
