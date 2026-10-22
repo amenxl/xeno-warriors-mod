@@ -58,6 +58,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                 || p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.DRINK) {
             return (p.getTicksUsingItem() / 4) % 2 == 0 ? "eat" : "eat2";      // munching
         }
+        if (type == CharacterType.RHALIX) {
+            String hungry = com.xenowarriors.client.RhalixHungerClient.face(p);
+            if (hungry != null) return hungry;
+        }
         if (type == CharacterType.MIKIKO && com.xenowarriors.client.mikiko.MikikoAnimations.exhausted(p)) {
             // worn out: droopy eyes, sweat, panting
             return (p.tickCount / 7) % 2 == 0 ? "exhausted" : "exhausted2";

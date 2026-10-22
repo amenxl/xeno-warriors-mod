@@ -29,8 +29,56 @@ public final class RhalixFlight {
 
     private RhalixFlight() {}
 
+    /** Three hunger bars (6 points) or less: too weak to keep his wings going. */
+    public static final int HUNGRY_FOOD = 6;
+
     public static boolean canFly(Player p) {
-        return ModCapabilities.getType(p) == CharacterType.RHALIX && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p);
+        return ModCapabilities.getType(p) == CharacterType.RHALIX && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p)
+                && !starving(p);
+    }
+
+    public static boolean starving(Player p) {
+        return p.getFoodData().getFoodLevel() <= HUNGRY_FOOD && !p.isCreative() && !p.isSpectator();
+    }
+
+    private static final java.util.Map<java.util.UUID, int[]> HUNGER = new java.util.HashMap<>();   // {hungry 0/1, next growl tick}
+
+    /** Starving: he drops out of the sky, his stomach growls (and keeps growling now and then until he eats). */
+    private static void hunger(ServerPlayer p) {
+        boolean rhalix = ModCapabilities.getType(p) == CharacterType.RHALIX;
+        boolean hungry = rhalix && starving(p);
+        int[] h = HUNGER.computeIfAbsent(p.getUUID(), k -> new int[]{0, 0});
+        boolean was = h[0] == 1;
+        if (hungry != was) {
+            h[0] = hungry ? 1 : 0;
+            boolean growl = false;
+            if (hungry) {
+                var ab = p.getAbilities();
+                if (ab.flying) {
+                    ab.flying = false;
+                    p.onUpdateAbilities();
+                    p.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.xenowarriors.rhalix.too_hungry_fall"), true);
+                } else {
+                    p.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.xenowarriors.rhalix.too_hungry"), true);
+                }
+                growl = true;
+                h[1] = p.tickCount + 300 + p.getRandom().nextInt(400);
+            }
+            if (growl) playGrowl(p);
+            com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.RhalixHungerPacket(p.getId(), hungry, growl), p);
+        } else if (hungry && p.tickCount >= h[1]) {
+            h[1] = p.tickCount + 300 + p.getRandom().nextInt(400);
+            playGrowl(p);
+            com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.RhalixHungerPacket(p.getId(), true, true), p);
+        } else if (hungry && p.tickCount % 100 == 0) {
+            // keep players who just came near up to date
+            com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.RhalixHungerPacket(p.getId(), true, false), p);
+        }
+    }
+
+    private static void playGrowl(ServerPlayer p) {
+        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), com.xenowarriors.ModSounds.STOMACH_GROWL.get(),
+                net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F + p.getRandom().nextFloat() * 0.2F);
     }
 
     /** How high he can fly: 20 blocks to start, +1 for every level he's gained in Speed, Attack and Defense. */
@@ -52,6 +100,7 @@ public final class RhalixFlight {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 5 != 0) return;
+        hunger(p);
         var abilities = p.getAbilities();
         boolean granted = p.getPersistentData().getBoolean(GRANTED);
         if (canFly(p)) {

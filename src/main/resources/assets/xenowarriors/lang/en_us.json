@@ -166,5 +166,8 @@
   "key.xenowarriors.skill_ctrl2": "Skill 2",
   "key.xenowarriors.skill_ctrl3": "Skill 3",
   "key.xenowarriors.skill_ctrl4": "Skill 4",
-  "key.xenowarriors.ultimate_ctrl5": "Ultimate"
+  "key.xenowarriors.ultimate_ctrl5": "Ultimate",
+  "subtitles.xenowarriors.stomach_growl": "Stomach growls",
+  "message.xenowarriors.rhalix.too_hungry": "Rhalix is too hungry to fly...",
+  "message.xenowarriors.rhalix.too_hungry_fall": "*grrrumble* Too hungry to keep flying!"
 }

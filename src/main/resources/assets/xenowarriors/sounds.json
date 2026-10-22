@@ -116,5 +116,11 @@
         "stream": true
       }
     ]
+  },
+  "stomach_growl": {
+    "sounds": [
+      "xenowarriors:stomach_growl"
+    ],
+    "subtitle": "subtitles.xenowarriors.stomach_growl"
   }
 }

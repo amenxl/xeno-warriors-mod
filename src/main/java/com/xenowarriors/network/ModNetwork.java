@@ -56,6 +56,11 @@ public final class ModNetwork {
                 .decoder(SummonBladePacket::decode)
                 .consumerMainThread(SummonBladePacket::handle)
                 .add();
+        CHANNEL.messageBuilder(RhalixHungerPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(RhalixHungerPacket::encode)
+                .decoder(RhalixHungerPacket::decode)
+                .consumerMainThread(RhalixHungerPacket::handle)
+                .add();
         CHANNEL.messageBuilder(PoisonStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(PoisonStatePacket::encode)
                 .decoder(PoisonStatePacket::decode)
