@@ -266,8 +266,8 @@ public class DetailModel {
             coatSideL.xRot = leftLeg * 0.6F + stream * 0.6F + f1 * 0.5F;
             coatSideL.zRot = -0.1F - Math.abs(leftLeg) * 0.12F - stream * 0.15F;
         }
-        // the back hangs from the shoulders: kicked out by whichever leg swings back, blown back by the wind
-        float back = Math.max(br, bl) * 0.5F + 0.03F + stream + f3 * 0.8F;
+        // the back tail hangs from the waist: kicked out by whichever leg swings back, blown back by the wind
+        float back = Math.max(br, bl) * 1.05F + 0.04F + stream * 1.3F + f3 * 1.1F;
         if (sitting) back = Math.max(back, 0.35F);
         coatBack.xRot = back;
     }
