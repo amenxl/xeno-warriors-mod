@@ -19,6 +19,10 @@ public class XenoWarriors {
     public XenoWarriors() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(ModCapabilities::register);
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist == net.minecraftforge.api.distmarker.Dist.CLIENT
+                && net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) {
+            com.xenowarriors.client.compat.epicfight.EpicFightCompat.init(modBus);
+        }
         com.xenowarriors.corrupted.ModCorrupted.init();
         ModEntities.ENTITY_TYPES.register(modBus);
         ModItems.ITEMS.register(modBus);

@@ -43,4 +43,14 @@ public final class ClientSettings {
         props().setProperty("sense_friendly", String.valueOf(on));
         save();
     }
+
+    /** With Epic Fight: let it animate everything in battle mode (off = only its attacks, dodges and skills). */
+    public static boolean efWholeBattleMode() {
+        return "true".equals(props().getProperty("ef_whole_battle_mode", "false"));
+    }
+
+    public static void setEfWholeBattleMode(boolean on) {
+        props().setProperty("ef_whole_battle_mode", String.valueOf(on));
+        save();
+    }
 }

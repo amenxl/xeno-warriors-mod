@@ -29,12 +29,41 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_foxking_details.png");
     private final DetailModel foxKing = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_foxking.json");
 
+    /** The most recently made layer (both player renderers load the same models) - for Epic Fight's renderer. */
+    private static CharacterDetailLayer instance;
+
     public CharacterDetailLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
+        instance = this;
         for (CharacterType type : CharacterType.PLAYABLE) {
             DetailModel model = DetailModel.load(type);
             if (model != null) models.put(type, model);
         }
+    }
+
+    /** The detail model this player shows right now (Fox King Mikiko has his own), or null. */
+    public static DetailModel detailModel(AbstractClientPlayer p) {
+        if (instance == null) return null;
+        CharacterType type = ClientCharacterData.get(p);
+        if (isFoxKing(p, type)) return instance.foxKing;
+        return instance.models.get(type);
+    }
+
+    private static boolean isFoxKing(AbstractClientPlayer p, CharacterType type) {
+        return type == CharacterType.MIKIKO && instance != null && instance.foxKing != null
+                && com.xenowarriors.client.mikiko.FoxKingClient.active(p);
+    }
+
+    public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
+        CharacterType type = ClientCharacterData.get(p);
+        return isFoxKing(p, type) ? FOX_KING_TEX : type.getDetailTexture();
+    }
+
+    public static net.minecraft.resources.ResourceLocation faceTexture(AbstractClientPlayer p) {
+        CharacterType type = ClientCharacterData.get(p);
+        String expr = expression(p, type);
+        return expr == null ? type.getFaceTexture()
+                : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
     }
 
     /**
