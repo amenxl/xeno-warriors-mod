@@ -69,6 +69,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (p.getHealth() <= p.getMaxHealth() * 0.3F && p.isAlive()) return "strained";
         if (ClientSkillState.feelingSick(p)) return "sick";
         if (p == net.minecraft.client.Minecraft.getInstance().player && com.xenowarriors.client.StatToasts.justLeveledUp()) return "sparkle";
+        int around = com.xenowarriors.client.Surroundings.of(p);
+        if (around == com.xenowarriors.client.Surroundings.ENEMIES) {
+            // enemies close by: eyes narrowed, ready to fight
+            int rt = (p.tickCount + p.getId() * 29) % 160;
+            if (rt < 3) return "blink";
+            if (type == CharacterType.RHALIX) return rt < 120 ? "focused" : "smug";        // cocky about it
+            return rt < 110 ? "focused" : "concentrate";
+        }
         var pos = p.blockPosition();
         boolean snowing = p.level().isRaining() && p.level().canSeeSky(pos) && p.level().getBiome(pos).value().coldEnoughToSnow(pos);
         if (p.getTicksFrozen() > 0 || snowing) return "freezing";
@@ -106,6 +114,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             }
             if (FlightTracker.isFlying(p)) mood = "smug";          // right at home in the air
             else if (p.isSprinting()) mood = "focused";
+        }
+        if (mood == null && around == com.xenowarriors.client.Surroundings.PEOPLE && type == CharacterType.MIKIKO) {
+            String[] h = {"happy", "grin", "happy", "excited", "happy", "wink"};        // glad to have company
+            mood = h[((p.tickCount + p.getId() * 41) / 60) % h.length];
+        } else if (mood == null && around != com.xenowarriors.client.Surroundings.NONE) {
+            String[] c = {"calm", "hum", "calm", "cool", "whistle", "calm"};           // nothing to worry about: chilling
+            mood = c[((p.tickCount + p.getId() * 41) / 70) % c.length];
         }
         int bt = p.tickCount + p.getId() * 37;
         boolean blink = bt % 97 < 3 || (bt % 233 >= 8 && bt % 233 < 11);

@@ -433,7 +433,11 @@ public final class MikikoAnimations {
             s.moveBlade = move.blade;
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
         } else if (held.getItem() instanceof SwordItem) {
-            if (RANDOM.nextFloat() < 0.15F) move = Move.BLADE_SPIN;
+            if (Hekublade.isBlade(held) && RANDOM.nextFloat() < 0.25F) {
+                // with the Hekublade he now and then throws a kick into the mix
+                Move[] kicks = {Move.KICK_FRONT, Move.KICK_ROUNDHOUSE, Move.KICK_SIDE, Move.KICK_SPIN};
+                do move = kicks[RANDOM.nextInt(kicks.length)]; while (move == s.lastSword);
+            } else if (RANDOM.nextFloat() < 0.15F) move = Move.BLADE_SPIN;
             else {
                 do move = SWORD[RANDOM.nextInt(SWORD.length)]; while (move == s.lastSword);
             }
