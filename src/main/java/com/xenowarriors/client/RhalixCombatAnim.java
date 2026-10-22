@@ -81,17 +81,17 @@ public final class RhalixCombatAnim {
             }
             if (start) s.lastSwingStart = now;
             if (p == mc.player) s.strength = p.getAttackStrengthScale(0F);
-            if (s.move != null && now - s.moveStart > GeoAnims.length(GeoAnims.RHALIX, s.move) * 20F + 1) s.move = null;
+            if (s.move != null && now - s.moveStart > GeoAnims.length(GeoAnims.RHALIX, s.move) + 1) s.move = null;   // (length is in ticks)
         }
     }
 
     public static void apply(HumanoidModel<?> m, Player p, float age) {
         State s = STATES.get(p.getId());
         if (s == null || s.move == null || !rhalix(p)) return;
-        float t = (age - s.moveStart) / 20F;
+        float t = age - s.moveStart;                                  // ticks, like GeoAnims expects
         float len = GeoAnims.length(GeoAnims.RHALIX, s.move);
         if (t < 0 || t > len) return;
-        GeoAnims.apply(m, GeoAnims.RHALIX, s.move, t, false, 1F);
+        GeoAnims.apply(m, GeoAnims.RHALIX, s.move, t, false, GeoAnims.envelope(t, len, 1.5F));
         m.hat.copyFrom(m.head);
     }
 }
