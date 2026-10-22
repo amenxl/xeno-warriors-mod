@@ -31,7 +31,7 @@ public final class SkillEvents {
             return;
         }
         for (KishiDomeEntity dome : entity.level().getEntitiesOfClass(KishiDomeEntity.class,
-                entity.getBoundingBox().inflate(KishiDomeEntity.RADIUS + 1, KishiDomeEntity.HEIGHT, KishiDomeEntity.RADIUS + 1))) {
+                entity.getBoundingBox().inflate(KishiDomeEntity.MAX_RADIUS + 1, KishiDomeEntity.MAX_HEIGHT, KishiDomeEntity.MAX_RADIUS + 1))) {
             if (dome.affects(entity)) {
                 Vec3 v = entity.getDeltaMovement();
                 entity.setDeltaMovement(v.x, Math.min(v.y, 0), v.z);

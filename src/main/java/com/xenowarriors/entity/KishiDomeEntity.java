@@ -40,6 +40,10 @@ public class KishiDomeEntity extends Entity {
     public static final float HEIGHT = 5.0F;
     public static final int DURATION = 160;           // 8 seconds
     public static final int MAX_LEVEL = 3;
+    /** Every extra gravity level widens (and raises) the domain: 6, 9, then 12 blocks wide. */
+    public static final float RADIUS_PER_LEVEL = 1.5F, HEIGHT_PER_LEVEL = 1.0F;
+    public static final float MAX_RADIUS = RADIUS + RADIUS_PER_LEVEL * (MAX_LEVEL - 1);
+    public static final float MAX_HEIGHT = HEIGHT + HEIGHT_PER_LEVEL * (MAX_LEVEL - 1);
     /** Slowness amplifier per gravity level (3 = -60%, 4 = -75%, 6 = can barely move). */
     private static final int[] SLOWNESS = {3, 4, 6};
     /** Damage every second = BASE[level] + RAMP[level] * seconds spent inside. */
@@ -73,6 +77,22 @@ public class KishiDomeEntity extends Entity {
 
     public int getGravityLevel() { return entityData.get(GRAVITY_LEVEL); }
 
+    public float radius() { return RADIUS + RADIUS_PER_LEVEL * (getGravityLevel() - 1); }
+
+    public float height() { return HEIGHT + HEIGHT_PER_LEVEL * (getGravityLevel() - 1); }
+
+    // client: the drawn size grows smoothly to the new level's size
+    private float shownRadius = RADIUS, shownRadiusO = RADIUS, shownHeight = HEIGHT, shownHeightO = HEIGHT;
+
+    public float shownRadius(float partial) { return net.minecraft.util.Mth.lerp(partial, shownRadiusO, shownRadius); }
+
+    public float shownHeight(float partial) { return net.minecraft.util.Mth.lerp(partial, shownHeightO, shownHeight); }
+
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return new AABB(getX() - MAX_RADIUS, getY() - 1, getZ() - MAX_RADIUS, getX() + MAX_RADIUS, getY() + MAX_HEIGHT, getZ() + MAX_RADIUS);
+    }
+
     public UUID getOwnerId() { return entityData.get(OWNER).orElse(null); }
 
     /** Make the gravity heavier. Returns false if already at max. */
@@ -86,7 +106,8 @@ public class KishiDomeEntity extends Entity {
     public boolean isInside(Entity e) {
         double dx = e.getX() - getX();
         double dz = e.getZ() - getZ();
-        return dx * dx + dz * dz <= RADIUS * RADIUS && e.getY() >= getY() - 1 && e.getY() <= getY() + HEIGHT;
+        float r = radius();
+        return dx * dx + dz * dz <= r * r && e.getY() >= getY() - 1 && e.getY() <= getY() + height();
     }
 
     /** Whether the dome should affect this entity. Rhalix himself is never affected. */
@@ -112,8 +133,8 @@ public class KishiDomeEntity extends Entity {
         }
 
         int level = getGravityLevel();
-        AABB area = new AABB(getX() - RADIUS, getY() - 1, getZ() - RADIUS,
-                getX() + RADIUS, getY() + HEIGHT, getZ() + RADIUS);
+        float r = radius();
+        AABB area = new AABB(getX() - r, getY() - 1, getZ() - r, getX() + r, getY() + height(), getZ() + r);
 
         for (LivingEntity target : level().getEntitiesOfClass(LivingEntity.class, area, this::affects)) {
             int ticks = ticksInside.merge(target.getId(), 1, Integer::sum);
@@ -150,10 +171,23 @@ public class KishiDomeEntity extends Entity {
 
     private void clientTick() {
         int level = getGravityLevel();
+        shownRadiusO = shownRadius;
+        shownHeightO = shownHeight;
+        shownRadius += (radius() - shownRadius) * 0.25F;
+        shownHeight += (height() - shownHeight) * 0.25F;
+        float RADIUS = shownRadius, HEIGHT = shownHeight;
+        if (Math.abs(radius() - shownRadius) > 0.3F && tickCount % 2 == 0) {
+            // the edge pushing outward: a ring of dust on the ground
+            for (int i = 0; i < 24; i++) {
+                double angle = i / 24.0 * Math.PI * 2;
+                level().addParticle(ParticleTypes.POOF, getX() + Math.cos(angle) * RADIUS, getY() + 0.1,
+                        getZ() + Math.sin(angle) * RADIUS, Math.cos(angle) * 0.15, 0.02, Math.sin(angle) * 0.15);
+            }
+        }
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSkillState.markKishi(getOwnerId(), level));
 
         // particles pressing down inside the dome
-        for (int i = 0; i < 2 + level * 2; i++) {
+        for (int i = 0; i < (2 + level * 2) * (RADIUS * RADIUS / 9F); i++) {
             double angle = random.nextDouble() * Math.PI * 2;
             double dist = Math.sqrt(random.nextDouble()) * RADIUS;
             level().addParticle(ParticleTypes.END_ROD,

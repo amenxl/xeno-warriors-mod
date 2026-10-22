@@ -38,8 +38,8 @@ public class KishiDomeRenderer extends EntityRenderer<KishiDomeEntity> {
         float alpha = fadeIn * fadeOut;
         if (alpha <= 0) return;
 
-        float r = KishiDomeEntity.RADIUS;
-        float h = KishiDomeEntity.HEIGHT;
+        float r = dome.shownRadius(partialTick);
+        float h = dome.shownHeight(partialTick);
         // the dome slams down from above when cast
         float bottom = (1F - fadeIn) * h;
         // color goes from white-lavender towards purple as gravity gets heavier
