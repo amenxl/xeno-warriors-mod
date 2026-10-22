@@ -45,6 +45,11 @@ public class HekubladeScatterSkill implements Skill {
             return false;
         }
         HekubladeShardEntity next = blades.remove(0);
+        if (!player.onGround() && !player.getAbilities().flying && !player.isPassenger() && !player.isInWater()) {
+            // in mid-jump: he lands on the blade and rides it
+            next.surf(player);
+            return true;
+        }
         next.fire(SkillTargeting.homing(player, 40));
         ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), SkillAnimPacket.BANG, false), player);
         return true;

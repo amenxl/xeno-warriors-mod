@@ -40,6 +40,10 @@ public class HekubladeShardEntity extends Projectile {
     private static final EntityDataAccessor<Integer> SLOT = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> FIRED = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> TARGET = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> SURF = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Blade-surfing: launch speed, how fast it slows, when it starts to sink, and when it gives out. */
+    public static final double SURF_SPEED = 1.3, SURF_DRAG = 0.985, SURF_SINK_BELOW = 0.6, SURF_END_BELOW = 0.18;
+    private static final int SURF_LIFE = 20 * 20;
 
     private int firedAt = -1;
 
@@ -63,9 +67,79 @@ public class HekubladeShardEntity extends Projectile {
         entityData.define(SLOT, 0);
         entityData.define(FIRED, false);
         entityData.define(TARGET, -1);
+        entityData.define(SURF, false);
     }
 
     public boolean fired() { return entityData.get(FIRED); }
+    public boolean surfing() { return entityData.get(SURF); }
+
+    /**
+     * Mikiko leaps on and rides it: the blade shoots off level in the direction he's facing, carrying him like a
+     * hoverboard. It goes straight (no homing), slowly loses speed, starts to sink, and finally drops him.
+     */
+    public void surf(Player rider) {
+        float yaw = rider.getYRot() * Mth.DEG_TO_RAD;
+        float pitch = Mth.clamp(rider.getXRot(), -15F, 15F) * Mth.DEG_TO_RAD;     // mostly level, a slight climb or dive
+        Vec3 dir = new Vec3(-Mth.sin(yaw) * Mth.cos(pitch), -Mth.sin(pitch), Mth.cos(yaw) * Mth.cos(pitch));
+        setPos(rider.getX(), rider.getY() - 0.4, rider.getZ());
+        setDeltaMovement(dir.scale(SURF_SPEED));
+        entityData.set(FIRED, true);
+        entityData.set(SURF, true);
+        entityData.set(TARGET, -1);
+        firedAt = tickCount;
+        rider.startRiding(this, true);
+        level().playSound(null, getX(), getY(), getZ(), SoundEvents.TRIDENT_RIPTIDE_1, SoundSource.PLAYERS, 1F, 1.3F);
+    }
+
+    @Override
+    public double getPassengersRidingOffset() {
+        return 0.5;      // feet planted on the flat of the blade
+    }
+
+    @Override
+    protected boolean canAddPassenger(Entity passenger) {
+        return surfing() && getPassengers().isEmpty();
+    }
+
+    private void endSurf() {
+        ejectPassengers();
+        if (!level().isClientSide) shatter(position());
+    }
+
+    private void surfTick() {
+        Vec3 v = getDeltaMovement();
+        double flat = Math.sqrt(v.x * v.x + v.z * v.z);
+        // loses momentum; once it's slow it starts to sink, then gives out
+        double vy = v.y * 0.9;
+        if (flat < SURF_SINK_BELOW) vy -= 0.035 * (1 - flat / SURF_SINK_BELOW) + 0.01;
+        v = new Vec3(v.x * SURF_DRAG, vy, v.z * SURF_DRAG);
+        setDeltaMovement(v);
+        if (!level().isClientSide) {
+            if (getPassengers().isEmpty() && tickCount - firedAt > 5 || flat < SURF_END_BELOW || tickCount - firedAt > SURF_LIFE) {
+                endSurf();
+                return;
+            }
+            // runs through anyone in its path (keeps going), stops dead at a wall or the ground
+            for (Entity e : level().getEntities(this, getBoundingBox().expandTowards(v).inflate(0.6), this::canHitEntity)) {
+                if (hasPassenger(e) || e == getOwner()) continue;
+                if (e instanceof LivingEntity target && target.invulnerableTime <= 10) {
+                    target.hurt(ModDamageTypes.source(level(), ModDamageTypes.HEKUBLADE_SCATTER, this, getOwner()), DAMAGE);
+                    target.push(v.x * 0.6, 0.3, v.z * 0.6);
+                    com.xenowarriors.mikiko.Hekublade.rollFire(target, 2);
+                }
+            }
+            var block = level().clip(new net.minecraft.world.level.ClipContext(position(), position().add(v),
+                    net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, this));
+            if (block.getType() != HitResult.Type.MISS) {
+                endSurf();
+                return;
+            }
+        } else {
+            level().addParticle(ParticleTypes.FLAME, getX(), getY(), getZ(), 0, 0, 0);
+            level().addParticle(new DustParticleOptions(new Vector3f(1F, 0.97F, 0.92F), 0.8F), getX() - v.x, getY(), getZ() - v.z, 0, 0, 0);
+        }
+        setPos(position().add(v));
+    }
     public int slot() { return entityData.get(SLOT); }
     public Entity ownerEntity() { return level().getEntity(entityData.get(OWNER_ID)); }
 
@@ -119,6 +193,10 @@ public class HekubladeShardEntity extends Projectile {
             return;
         }
         if (firedAt < 0) firedAt = tickCount;
+        if (surfing()) {
+            surfTick();
+            return;
+        }
         if (tickCount - firedAt > FLIGHT_LIFE) {
             if (!level().isClientSide) discard();
             return;
@@ -177,7 +255,7 @@ public class HekubladeShardEntity extends Projectile {
 
     @Override
     protected boolean canHitEntity(Entity e) {
-        return fired() && super.canHitEntity(e) && e instanceof LivingEntity && !(e instanceof Player p && (p.isCreative() || p.isSpectator()));
+        return fired() && super.canHitEntity(e) && !hasPassenger(e) && e instanceof LivingEntity && !(e instanceof Player p && (p.isCreative() || p.isSpectator()));
     }
 
     @Override
