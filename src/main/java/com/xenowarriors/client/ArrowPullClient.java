@@ -69,7 +69,8 @@ public final class ArrowPullClient {
         float yank = sm((t - YANK + 2) / 3F) * (1F - sm((t - YANK - 3) / 6F));
         float grip = t > 8 && t < YANK ? Mth.sin(t * 1.7F) * 0.03F : 0F;     // working it loose
         // the spot: 0 = left shoulder, 1 = chest/side, 2 = left thigh
-        float[][] spots = {{-1.6F, -0.65F, 0.05F, -1.6F},     // (low enough not to pass through his head or collar) {-1.0F, -0.85F, 0F, -1.3F}, {-0.35F, -0.45F, 0.15F, -0.5F}};
+        // (the shoulder reach stays low enough not to pass through the head or collar)
+        float[][] spots = {{-1.6F, -0.65F, 0.05F, -1.6F}, {-1.0F, -0.85F, 0F, -1.3F}, {-0.35F, -0.45F, 0.15F, -0.5F}};
         float[] sp = spots[s[2]];
         m.rightArm.xRot = Mth.lerp(reach, m.rightArm.xRot, sp[0] + grip);
         m.rightArm.yRot = Mth.lerp(reach, m.rightArm.yRot, sp[1]);
