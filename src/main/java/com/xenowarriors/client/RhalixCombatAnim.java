@@ -97,6 +97,9 @@ public final class RhalixCombatAnim {
                 charged = true;
             }
             boolean sword = isSword(p);
+            // in the air: the floaty aerial combo (launch, juggle, slam), on top of his own moves
+            if (start && charged && p == mc.player && mc.player != null && com.xenowarriors.client.mikiko.AerialCombo.applies(mc.player))
+                com.xenowarriors.client.mikiko.AerialCombo.swing(mc.player);
             if (com.xenowarriors.client.compat.DmzCompat.blocking(p)) start = false;   // strikes from the guard: BlockPose
             if (start && sword && charged && !(p == mc.player && mc.hitResult != null
                     && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK)) {

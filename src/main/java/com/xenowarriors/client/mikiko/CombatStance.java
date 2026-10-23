@@ -132,14 +132,15 @@ public final class CombatStance {
         m.leftArm.x = Mth.lerp(arms, m.leftArm.x, bc * 5F);
         // left fist up by his face (snapping out in a jab when he shows he's ready)
         float jab = fl;
-        m.leftArm.xRot = Mth.lerp(arms, m.leftArm.xRot, Mth.lerp(jab, -1.35F, -1.62F) + bounce * 0.04F);
-        m.leftArm.yRot = Mth.lerp(arms, m.leftArm.yRot, Mth.lerp(jab, 0.35F, 0.05F));
-        m.leftArm.zRot = Mth.lerp(arms, m.leftArm.zRot, Mth.lerp(jab, -0.3F, -0.05F));
+        // (upper arm raised well forward, elbow only half bent, so the forearm doesn't fold into the upper arm)
+        m.leftArm.xRot = Mth.lerp(arms, m.leftArm.xRot, Mth.lerp(jab, -1.75F, -1.62F) + bounce * 0.04F);
+        m.leftArm.yRot = Mth.lerp(arms, m.leftArm.yRot, Mth.lerp(jab, 0.2F, 0.05F));
+        m.leftArm.zRot = Mth.lerp(arms, m.leftArm.zRot, Mth.lerp(jab, -0.22F, -0.05F));
         // right hand down at his side, resting by his hip
         m.rightArm.xRot = Mth.lerp(arms, m.rightArm.xRot, 0.1F - bounce * 0.03F);
         m.rightArm.yRot = Mth.lerp(arms, m.rightArm.yRot, 0F);
         m.rightArm.zRot = Mth.lerp(arms, m.rightArm.zRot, 0.32F);
-        LimbBend.extraElbows(p, -1.0F * arms, Mth.lerp(jab, -1.75F, -0.2F) * arms);
+        LimbBend.extraElbows(p, -1.0F * arms, Mth.lerp(jab, -1.15F, -0.2F) * arms);
     }
 
     private static void blade(HumanoidModel<?> m, Player p, float age, float e, float legs, float arms, float fl) {

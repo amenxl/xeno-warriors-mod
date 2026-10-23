@@ -37,9 +37,13 @@ public final class AerialCombo {
 
     private AerialCombo() {}
 
-    /** Mikiko, Hekublade in hand, off the ground. */
+    /** Mikiko or Rhalix off the ground, fighting with bare hands, the Hekublade (or for Rhalix, a sword). */
     public static boolean applies(LocalPlayer p) {
-        return ClientCharacterData.getLocal() == CharacterType.MIKIKO && Hekublade.isBlade(p.getMainHandItem())
+        CharacterType type = ClientCharacterData.getLocal();
+        var held = p.getMainHandItem();
+        boolean weapon = held.isEmpty() || Hekublade.isBlade(held)
+                || (type == CharacterType.RHALIX && held.getItem() instanceof net.minecraft.world.item.SwordItem);
+        return (type == CharacterType.MIKIKO || type == CharacterType.RHALIX) && weapon
                 && !p.onGround() && !p.isInWater() && !p.isPassenger() && !p.isFallFlying();
     }
 

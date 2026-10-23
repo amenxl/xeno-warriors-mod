@@ -467,6 +467,17 @@ public final class MikikoAnimations {
                 s.variant = RANDOM.nextInt(COMBOS.length);
             }
             move = COMBOS[s.variant][s.comboStep++];
+            // bare-handed in the air: the same floaty aerial combo (launch, juggle, slam) as with the blade
+            if (p instanceof net.minecraft.client.player.LocalPlayer alp && held.isEmpty() && AerialCombo.applies(alp)) {
+                AerialCombo.swing(alp);
+                s.moveBlade = false;
+                s.hop = false;
+                if (flying) move = move.inAir();
+                s.move = move;
+                s.moveStart = now;
+                s.lastAttack = now;
+                return;
+            }
             if (p instanceof net.minecraft.client.player.LocalPlayer lp) {
                 // the Hekublade only comes out now and then, on the last couple of hits, for someone just out of fist
                 // range (its slash reaches them); otherwise it stays punches and kicks

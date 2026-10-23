@@ -32,7 +32,10 @@ public final class AerialComboServer {
     private AerialComboServer() {}
 
     public static void hit(ServerPlayer p, int targetId, int step, boolean last, boolean doHit) {
-        if (p.isSpectator() || ModCapabilities.getType(p) != CharacterType.MIKIKO || !Hekublade.isBlade(p.getMainHandItem())) return;
+        CharacterType type = ModCapabilities.getType(p);
+        var held = p.getMainHandItem();
+        if (p.isSpectator() || (type != CharacterType.MIKIKO && type != CharacterType.RHALIX)) return;
+        if (!(held.isEmpty() || Hekublade.isBlade(held) || (type == CharacterType.RHALIX && held.getItem() instanceof net.minecraft.world.item.SwordItem))) return;
         if (!(p.level().getEntity(targetId) instanceof LivingEntity t) || !t.isAlive() || t == p) return;
         if (p.distanceTo(t) > 8.0) return;
         if (doHit) {
