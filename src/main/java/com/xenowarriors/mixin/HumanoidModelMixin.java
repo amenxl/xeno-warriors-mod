@@ -46,6 +46,7 @@ public abstract class HumanoidModelMixin {
                 }
                 com.xenowarriors.client.JumpAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.party.PartyClient.applyPose((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.FoxRun.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.ChargePose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.ClimbPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.SurfPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

@@ -1408,6 +1408,7 @@ public final class MikikoAnimations {
             pose.translate(0, -0.15, 0);
             return;
         }
+        if (com.xenowarriors.client.FoxRun.weight(p) > 0F) return;      // on all fours: FoxRun tips him over itself
         float[] m = bodyMotion(p, event.getPartialTick());
         if (m == null) return;
         PoseStack pose = event.getPoseStack();

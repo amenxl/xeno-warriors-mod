@@ -24,6 +24,8 @@ import net.minecraft.world.item.ItemStack;
 public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
     public static final ResourceLocation BASE = XenoWarriors.id("item/hekublade_base");
     public static final ResourceLocation[] CRYSTALS = new ResourceLocation[8];
+    /** Mikiko's outfits carry the blade's look from that time: Origins 2's broadsword, Season 3's hooked blade. */
+    public static final ResourceLocation ORIGINS_2 = XenoWarriors.id("item/hekublade_origins2"), SEASON_3 = XenoWarriors.id("item/hekublade_s3");
     static {
         for (int i = 0; i < 8; i++) CRYSTALS[i] = XenoWarriors.id("item/hekublade_crystal_" + i);
     }
@@ -89,6 +91,13 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
         Minecraft mc = Minecraft.getInstance();
         ItemRenderer items = mc.getItemRenderer();
         VertexConsumer vc = ItemRenderer.getFoilBufferDirect(buffers, Sheets.cutoutBlockSheet(), true, stack.hasFoil());
+        net.minecraft.world.entity.Entity holder = current != null ? current : mc.player;
+        int outfit = holder instanceof net.minecraft.world.entity.player.Player hp ? com.xenowarriors.client.ClientCharacterData.outfit(hp) : 0;
+        if (outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 || outfit >= com.xenowarriors.client.ClientCharacterData.SEASON_3) {
+            BakedModel alt = mc.getModelManager().getModel(outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 ? ORIGINS_2 : SEASON_3);
+            items.renderModelLists(alt, stack, light, overlay, pose, vc);
+            return;
+        }
         BakedModel base = mc.getModelManager().getModel(BASE);
         items.renderModelLists(base, stack, light, overlay, pose, vc);
 

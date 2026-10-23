@@ -26,6 +26,13 @@ import net.minecraft.util.Mth;
 public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     public static final ModelLayerLocation LAYER = new ModelLayerLocation(XenoWarriors.id("fox_tail"), "main");
     private static final ResourceLocation TEX = XenoWarriors.id("textures/entity/character/fox_tail.png");
+    private static final ResourceLocation RED = XenoWarriors.id("textures/entity/character/fox_tail_red.png");
+
+    /** Origins outfits: young Mikiko still had his red fox tail out. */
+    public static boolean outfitTail(AbstractClientPlayer p) {
+        int o = ClientCharacterData.outfit(p);
+        return o == ClientCharacterData.ORIGINS_1 || o == ClientCharacterData.ORIGINS_2;
+    }
     private final ModelPart tail, mid, tip;
 
     public FoxTailLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent, EntityModelSet models) {
@@ -50,10 +57,14 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer p, float limbSwing, float limbSwingAmount,
                        float partialTick, float age, float yaw, float pitch) {
-        if (p.isInvisible() || ClientCharacterData.get(p) != CharacterType.MIKIKO || !DmzCompat.tail(p) || DmzForms.giantFox(p)) return;
+        if (p.isInvisible() || ClientCharacterData.get(p) != CharacterType.MIKIKO) return;
+        boolean outfit = outfitTail(p);
+        if (!outfit && !(DmzCompat.tail(p) && !DmzForms.giantFox(p))) return;
+        if (DmzForms.giantFox(p)) return;
+        float run = com.xenowarriors.client.FoxRun.weight(p);
         // sticks out behind and sways - livelier when he runs
         float sway = Mth.sin(age * 0.12F) * 0.25F + Mth.sin(limbSwing * 0.6F) * 0.3F * limbSwingAmount;
-        tail.xRot = 0.95F + limbSwingAmount * 0.4F + Mth.sin(age * 0.07F) * 0.06F;
+        tail.xRot = 0.95F + limbSwingAmount * 0.4F + Mth.sin(age * 0.07F) * 0.06F + run * 0.5F;   // streams out behind on all fours
         tail.yRot = sway;
         tail.zRot = 0F;
         mid.xRot = -0.25F + Mth.sin(age * 0.09F + 0.6F) * 0.08F;
@@ -62,7 +73,7 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
         tip.yRot = sway * 0.4F;
         pose.pushPose();
         getParentModel().body.translateAndRotate(pose);
-        tail.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEX)), light, LivingEntityRenderer.getOverlayCoords(p, 0F));
+        tail.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(outfit ? RED : TEX)), light, LivingEntityRenderer.getOverlayCoords(p, 0F));
         pose.popPose();
     }
 }

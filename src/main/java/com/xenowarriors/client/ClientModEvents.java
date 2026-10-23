@@ -82,6 +82,8 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerModels(net.minecraftforge.client.event.ModelEvent.RegisterAdditional event) {
         event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.BASE);
+        event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.ORIGINS_2);
+        event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.SEASON_3);
         for (var rl : com.xenowarriors.client.mikiko.HekubladeRenderer.CRYSTALS) event.register(rl);
     }
 

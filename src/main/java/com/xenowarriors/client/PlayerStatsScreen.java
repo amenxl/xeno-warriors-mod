@@ -23,7 +23,7 @@ import java.util.List;
  * whole card shrinks on small windows.
  */
 public class PlayerStatsScreen extends Screen {
-    private static final boolean OUTFITS_READY = false;
+    private static final boolean OUTFITS_READY = true;
 
     private static final int ROW = 30, PAD = 8;
     private static final int BG = 0xD0101018, BG_SELF = 0xD01C1C2A, SECTION = 0xFF8C8CA0, LABEL = 0xFFA0A0B0;
