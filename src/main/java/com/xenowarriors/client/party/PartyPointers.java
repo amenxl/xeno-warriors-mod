@@ -44,7 +44,11 @@ public class PartyPointers implements IGuiOverlay {
             double lz = v.x * look.x() + v.y * look.y() + v.z * look.z();
             boolean down = m.knockedOut();
             int color = down ? ((time / 6) % 2 == 0 ? 0xFF4040 : 0xFFB0B0) : 0x7CFFB0;
-            String label = m.name() + "  " + Math.round(dist) + "m" + (down ? "  DOWN" : "");
+            var types = com.xenowarriors.character.CharacterType.values();
+            var type = types[Mth.clamp(m.type(), 0, types.length - 1)];
+            String who = type == com.xenowarriors.character.CharacterType.NONE ? m.name()
+                    : m.name() + " (" + type.name().charAt(0) + type.name().substring(1).toLowerCase() + ")";
+            String label = who + "  " + Math.round(dist) + "m" + (down ? "  DOWN" : "");
             double nx = lz > 0.05 ? (lx / lz) / (tanY * aspect) : 0, ny = lz > 0.05 ? (ly / lz) / tanY : 0;
             if (lz > 0.05 && Math.abs(nx) < 0.95 && Math.abs(ny) < 0.92) {
                 // on screen: a marker over them
