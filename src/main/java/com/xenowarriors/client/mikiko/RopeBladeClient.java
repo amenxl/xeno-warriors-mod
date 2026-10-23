@@ -187,7 +187,18 @@ public final class RopeBladeClient {
         }
         // the rope from his finger to the ring on the pommel
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE));
-        rope(pose, vc, hand, bladeAt, 0.022F, light, lt >= 0F ? 0.12F : 0.03F, p.tickCount + pt);
+        Vector3f lag = new Vector3f();
+        float whip = 0F;
+        if (lt >= 0F) {
+            float t = Mth.clamp(lt / LASH_T, 0F, 1F);
+            whip = 0.35F * (1F - t);                                     // the snap travelling down it, settling
+        } else {
+            // swinging round: the rope bows back against the direction of travel
+            float th = sw > 0.3F ? (p.tickCount + pt) * 1.4F : it * 0.55F;
+            float amount = sw > 0.3F ? 0.22F : 0.14F;
+            lag = new Vector3f(0, Mth.sin(th), -Mth.cos(th)).mul(amount);
+        }
+        rope(pose, vc, hand, bladeAt, 0.022F, light, lag, whip, p.tickCount + pt);
         // the blade itself, pommel at the rope's end, pointing on along it
         pose.pushPose();
         pose.translate(bladeAt.x, bladeAt.y, bladeAt.z);
@@ -203,15 +214,24 @@ public final class RopeBladeClient {
         pose.popPose();
     }
 
-    /** A rope (square tube) from a to b, with a little sway in the middle. */
-    private static void rope(PoseStack pose, VertexConsumer vc, Vector3f a, Vector3f b, float w, int light, float sway, float time) {
-        int segs = 8;
+    /**
+     * A rope (square tube) from a to b that behaves like rope: it trails behind the way the blade is swinging (lag),
+     * sags in the middle, and when lashed out a whip wave runs along it and dies away at the blade end.
+     */
+    private static void rope(PoseStack pose, VertexConsumer vc, Vector3f a, Vector3f b, float w, int light, Vector3f lag, float whip, float time) {
+        int segs = 12;
         Vector3f prev = new Vector3f(a);
         Vector3f d = new Vector3f(b).sub(a);
         Vector3f side = new Vector3f(d).cross(Math.abs(d.x) < 0.9F ? new Vector3f(1, 0, 0) : new Vector3f(0, 0, 1)).normalize();
+        Vector3f up = new Vector3f(side).cross(d).normalize();
+        float len = d.length();
         for (int i = 1; i <= segs; i++) {
             float t = i / (float) segs;
-            Vector3f cur = new Vector3f(a).lerp(b, t).add(new Vector3f(side).mul(Mth.sin(t * (float) Math.PI) * sway * Mth.sin(time * 0.6F + t * 4F)));
+            float belly = Mth.sin(t * (float) Math.PI);                     // most give in the middle
+            Vector3f cur = new Vector3f(a).lerp(b, t)
+                    .add(new Vector3f(lag).mul(belly * (0.6F + 0.4F * t)))   // trails behind the swing
+                    .add(new Vector3f(up).mul(-belly * 0.05F * len))       // a little slack
+                    .add(new Vector3f(side).mul(whip * belly * (1F - t * 0.6F) * Mth.sin(t * 9F - time * 1.3F)));   // whip wave
             tube(pose, vc, prev, cur, w, light, (i - 1) / (float) segs, t);
             prev = cur;
         }
