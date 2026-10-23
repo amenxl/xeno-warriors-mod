@@ -11,7 +11,8 @@
     "TemplatePoolAccessor",
     "BatAccessor",
     "FurnaceAccessor",
-    "FurnaceSpeedMixin"
+    "FurnaceSpeedMixin",
+    "compat.DragonMineZQuestBiomeMixin"
   ],
   "client": [
     "AbstractClientPlayerMixin",
