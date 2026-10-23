@@ -70,6 +70,8 @@ public final class MikikoAnimations {
             {Move.UPPERCUT_L, Move.JAB_R, Move.KNEE_FLYING, Move.BLADE_SPIN, Move.BLADE_UP, Move.BLADE_THRUST},
             {Move.JAB_R, Move.UPPERCUT_L, Move.KICK_SIDE, Move.BLADE_H, Move.BLADE_SPIN, Move.BLADE_DOWN},
     };
+    private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
+    private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
     private static final Move[] SWORD = {Move.BLADE_H, Move.BLADE_DOWN, Move.BLADE_UP, Move.BLADE_THRUST};
     private static final int COMBO_TIMEOUT = 30;
     private static final int BLADE_LINGER = 14;
@@ -452,9 +454,20 @@ public final class MikikoAnimations {
                 s.variant = RANDOM.nextInt(COMBOS.length);
             }
             move = COMBOS[s.variant][s.comboStep++];
+            if (p instanceof net.minecraft.client.player.LocalPlayer lp) {
+                // the Hekublade only comes out for someone just out of fist range (its slash reaches them);
+                // up close it stays punches and kicks
+                net.minecraft.world.entity.LivingEntity far = flying ? null : BladeReach.farTarget(lp);
+                if (far != null) {
+                    if (!move.blade) move = COMBO_BLADE[RANDOM.nextInt(COMBO_BLADE.length)];
+                    BladeReach.strike(far);
+                } else if (move.blade) {
+                    move = COMBO_FISTS[(s.comboStep + s.variant) % COMBO_FISTS.length];
+                }
+            }
             s.moveBlade = move.blade;
             // the first two hits: a skip forward into the punch, dashing in on them
-            s.hop = s.comboStep <= 2 && !flying && p.onGround() && !p.isCrouching();
+            s.hop = s.comboStep <= 2 && !move.blade && !flying && p.onGround() && !p.isCrouching();
             if (s.hop && p instanceof net.minecraft.client.player.LocalPlayer lp) {
                 float yaw = lp.getYRot() * Mth.DEG_TO_RAD;
                 net.minecraft.world.phys.Vec3 v = lp.getDeltaMovement();
