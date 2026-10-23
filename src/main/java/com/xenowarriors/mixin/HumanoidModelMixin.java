@@ -40,6 +40,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.mikiko.MikikoAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.RhalixWingsClient.applyBody((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.RhalixCombatAnim.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.RhalixCombatAnim.foldArms((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 if (com.xenowarriors.client.ClientCharacterData.get((net.minecraft.client.player.AbstractClientPlayer) entity)
                         == com.xenowarriors.character.CharacterType.RHALIX) {
                     com.xenowarriors.client.RhalixHungerClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

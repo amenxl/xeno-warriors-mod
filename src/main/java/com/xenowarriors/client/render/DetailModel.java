@@ -305,21 +305,29 @@ public class DetailModel {
      * @param stream how far the wind pushes them back (radians), flutter how much they flap
      */
     public void animateCoat(float rightLeg, float leftLeg, float stream, float flutter, float age, boolean sitting) {
+        animateCoat(rightLeg, leftLeg, 0F, 0F, stream, flutter, age, sitting);
+    }
+
+    /** As above, also clearing legs kicked out to the side (rightOut / leftOut = how far each leg swings outward). */
+    public void animateCoat(float rightLeg, float leftLeg, float rightOut, float leftOut, float stream, float flutter, float age, boolean sitting) {
         if (coatBack == null) return;
+        float ro = Math.max(0F, rightOut), lo = Math.max(0F, leftOut);
         float fr = Math.min(0F, rightLeg), fl = Math.min(0F, leftLeg);           // legs forward (negative = forward)
         float br = Math.max(0F, rightLeg), bl = Math.max(0F, leftLeg);           // legs back
         float f1 = Mth.sin(age * 0.6F) * flutter, f2 = Mth.sin(age * 0.6F + 1.7F) * flutter, f3 = Mth.sin(age * 0.47F + 0.9F) * flutter;
         // front flaps ride on the thigh in front of them, a touch further so the knee stays behind the cloth
-        if (coatFrontR != null) { coatFrontR.xRot = fr * 1.08F - 0.04F + stream * 0.35F + f1 * 0.6F; coatFrontR.zRot = 0.03F; }
-        if (coatFrontL != null) { coatFrontL.xRot = fl * 1.08F - 0.04F + stream * 0.35F + f2 * 0.6F; coatFrontL.zRot = -0.03F; }
+        // (high kicks: the flap lifts further still so the boot and shin stay under it)
+        float hr = Math.max(0F, -rightLeg - 1F) * 0.25F, hl = Math.max(0F, -leftLeg - 1F) * 0.25F;
+        if (coatFrontR != null) { coatFrontR.xRot = fr * 1.08F - hr - 0.04F + stream * 0.35F + f1 * 0.6F; coatFrontR.zRot = 0.03F + ro * 1.05F; }
+        if (coatFrontL != null) { coatFrontL.xRot = fl * 1.08F - hl - 0.04F + stream * 0.35F + f2 * 0.6F; coatFrontL.zRot = -0.03F - lo * 1.05F; }
         // sides follow their leg either way, flared out a little to clear the hips
         if (coatSideR != null) {
             coatSideR.xRot = rightLeg * 0.6F + stream * 0.6F + f2 * 0.5F;
-            coatSideR.zRot = 0.1F + Math.abs(rightLeg) * 0.12F + stream * 0.15F;
+            coatSideR.zRot = 0.1F + Math.abs(rightLeg) * 0.12F + stream * 0.15F + ro * 1.15F;     // side kicks: out of the way
         }
         if (coatSideL != null) {
             coatSideL.xRot = leftLeg * 0.6F + stream * 0.6F + f1 * 0.5F;
-            coatSideL.zRot = -0.1F - Math.abs(leftLeg) * 0.12F - stream * 0.15F;
+            coatSideL.zRot = -0.1F - Math.abs(leftLeg) * 0.12F - stream * 0.15F - lo * 1.15F;
         }
         // the back tail hangs from the waist: kicked out by whichever leg swings back, blown back by the wind
         float back = Math.max(br, bl) * 1.05F + 0.04F + stream * 1.3F + f3 * 1.1F;

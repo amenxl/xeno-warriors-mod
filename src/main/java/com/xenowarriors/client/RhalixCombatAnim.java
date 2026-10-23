@@ -60,6 +60,7 @@ public final class RhalixCombatAnim {
         float strength, idle, idleO;
         boolean sword;
         float scale = 1F;           // attack playback stretch (Epic Fight battle mode)
+        float fold, foldO;          // arms folded across his chest (flying / fighting in the air)
     }
 
     private static final Map<Integer, State> STATES = new HashMap<>();
@@ -135,7 +136,7 @@ public final class RhalixCombatAnim {
             if (s.idle > 0.5F && "rh_sw_sharpen".equals(idleAnim(s, 0F)[0]) && now % 7 == 0 && sharpenStroke(s)) sparks(mc, p);
             if (start && p.getMainHandItem().isEmpty() && charged && !(mc.hitResult != null && p == mc.player
                     && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK)) {
-                boolean air = FlightTracker.isFlying(p);
+                boolean air = FlightTracker.isFlying(p) || !p.onGround();      // flying or jumping: kicks only
                 if (now - s.lastAttack > COMBO_TIMEOUT || s.step >= 5 || s.variant < 0 || s.sword || air != s.air) {
                     s.step = 0;
                     s.variant = RANDOM.nextInt(air ? AIR_COMBOS.length : COMBOS.length);
@@ -148,6 +149,11 @@ public final class RhalixCombatAnim {
                 s.lastAttack = now;
             }
             if (start) s.lastSwingStart = now;
+            // arms folded whenever he's flying, and all through an aerial combo
+            boolean airFight = s.air && !s.sword && now - s.lastAttack <= COMBO_TIMEOUT && !p.onGround();
+            boolean fold = (FlightTracker.isFlying(p) && !sword && !p.isUsingItem()) || airFight;
+            s.foldO = s.fold;
+            s.fold = Mth.clamp(s.fold + (fold ? 0.2F : -0.15F), 0F, 1F);
             if (p == mc.player) s.strength = p.getAttackStrengthScale(0F);
             if (s.move != null && now - s.moveStart > GeoAnims.length(GeoAnims.RHALIX, s.move) * s.scale + 1) s.move = null;   // (length is in ticks)
         }
@@ -253,15 +259,22 @@ public final class RhalixCombatAnim {
         if (t < 0 || t > len) return;
         float w = GeoAnims.envelope(t, len, 1.5F);
         GeoAnims.apply(m, GeoAnims.RHALIX, s.move, t, false, w);
-        if (s.air) {
-            // arms folded across his chest while his legs do the work
-            m.rightArm.xRot = Mth.lerp(w, m.rightArm.xRot, -0.95F);
-            m.rightArm.yRot = Mth.lerp(w, m.rightArm.yRot, -0.62F);
-            m.rightArm.zRot = Mth.lerp(w, m.rightArm.zRot, 0.12F);
-            m.leftArm.xRot = Mth.lerp(w, m.leftArm.xRot, -1.05F);
-            m.leftArm.yRot = Mth.lerp(w, m.leftArm.yRot, 0.62F);
-            m.leftArm.zRot = Mth.lerp(w, m.leftArm.zRot, -0.12F);
-        }
         m.hat.copyFrom(m.head);
+    }
+
+    /** Flying (any speed) and fighting in the air: arms folded across his chest, his legs do the work. */
+    public static void foldArms(HumanoidModel<?> m, Player p, float age) {
+        State s = STATES.get(p.getId());
+        if (s == null || !rhalix(p)) return;
+        float w = Mth.lerp(Mth.clamp(age - p.tickCount, 0F, 1F), s.foldO, s.fold);
+        if (w <= 0F) return;
+        w = w * w * (3F - 2F * w);
+        float breathe = Mth.sin(age * 0.08F) * 0.02F;
+        m.rightArm.xRot = Mth.lerp(w, m.rightArm.xRot, -0.95F + breathe);
+        m.rightArm.yRot = Mth.lerp(w, m.rightArm.yRot, -0.62F);
+        m.rightArm.zRot = Mth.lerp(w, m.rightArm.zRot, 0.12F);
+        m.leftArm.xRot = Mth.lerp(w, m.leftArm.xRot, -1.05F + breathe);
+        m.leftArm.yRot = Mth.lerp(w, m.leftArm.yRot, 0.62F);
+        m.leftArm.zRot = Mth.lerp(w, m.leftArm.zRot, -0.12F);
     }
 }

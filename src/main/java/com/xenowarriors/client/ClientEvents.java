@@ -148,7 +148,7 @@ public final class ClientEvents {
         double max = com.xenowarriors.character.RhalixFlight.maxHeight(p);
         if (h >= max) {
             var v = p.getDeltaMovement();
-            p.setDeltaMovement(v.x, Math.min(v.y, h > max + 0.5 ? -0.12 : 0), v.z);
+            p.setDeltaMovement(v.x, Math.min(v.y, 0), v.z);       // can't climb any higher (but never knocked down)
             if (!warnedCeiling) {
                 p.displayClientMessage(net.minecraft.network.chat.Component.literal("You can only fly " + Math.round(max)
                         + " blocks high for now - level up to fly higher!").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);

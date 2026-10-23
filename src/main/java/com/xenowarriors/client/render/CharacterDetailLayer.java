@@ -406,7 +406,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                 .distanceToSqr(player.position()) < 32 * 32;
         float windS = nearCam ? hairStream(player, 0) : 0F, windF = nearCam ? hairStream(player, 1) : 0F;
         if (model.coatBack != null) {
-            model.animateCoat(parent.rightLeg.xRot, parent.leftLeg.xRot, windS * 0.9F, windF * 1.3F, ageInTicks,
+            model.animateCoat(parent.rightLeg.xRot, parent.leftLeg.xRot, parent.rightLeg.zRot, -parent.leftLeg.zRot, windS * 0.9F, windF * 1.3F, ageInTicks,
                     player.isPassenger() || parent.riding);
         }
         int ssj = com.xenowarriors.client.compat.DmzForms.hairStyle(player);

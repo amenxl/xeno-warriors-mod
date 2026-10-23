@@ -125,10 +125,7 @@ public final class RhalixFlight {
                 abilities.setFlyingSpeed(speed);
                 p.onUpdateAbilities();
             }
-            if (abilities.flying && heightAboveGround(p) > maxHeight(p) + 8) {
-                abilities.flying = false;
-                p.onUpdateAbilities();
-            }
+            // (past the limit he just can't climb any higher - see the client's limitRhalixFlight; he's never dropped)
         } else if (granted && !p.isCreative() && !p.isSpectator() && !com.xenowarriors.mikiko.WindFlight.canFly(p)) {
             // switched away from Rhalix: take the flight back
             abilities.mayfly = false;
