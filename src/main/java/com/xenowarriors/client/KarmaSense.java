@@ -60,7 +60,7 @@ public final class KarmaSense {
         return lv != null && lv >= 0 && com.xenowarriors.client.LevelHud.level() > lv;
     }
 
-    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor) {
+    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor, boolean first) {
         STATS.clear();
         for (int i = 0; i < ids.length && i < damage.length && i < armor.length; i++) STATS.put(ids[i], new int[]{damage[i], armor[i]});
         SOULS.clear();
@@ -74,7 +74,7 @@ public final class KarmaSense {
             if (i < levels.length) LEVELS.put(ids[i], levels[i]);
         }
         showLevels = readLevels;
-        pulseStart = mc.level.getGameTime();
+        if (first) pulseStart = mc.level.getGameTime();          // (not again on each refresh while focusing)
     }
 
     /** Karma Sensing is showing things right now. */

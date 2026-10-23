@@ -24,6 +24,7 @@ import java.util.UUID;
  * living thing's Karma nearby - they glow through walls for you for a few seconds. People wearing a
  * Karma-reducing hoodie can't be sensed, and characters you sense feel someone tracing their Karma.
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.xenowarriors.XenoWarriors.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
 public final class KarmaSensing {
     public static final float COST = 15F;
     public static final int COOLDOWN = 20 * 20;
@@ -81,7 +82,16 @@ public final class KarmaSensing {
                 || (e instanceof net.minecraft.world.entity.Mob m && m.getTarget() == player);
     }
 
+    // ------------------------------------------------------------------ holding the key: focusing
+
+    /** Holding it: drains Focus (Karma) while the reach widens; the longer you hold, the more you practice. */
+    public static final float HOLD_DRAIN = 10F;            // Karma per second
+    public static final float MAX_GROW = 2.5F;             // up to 2.5x the range
+    private static final Map<UUID, Object[]> HOLDING = new HashMap<>();   // {start tick, friendly}
+
     /**
+     * Pressed the key: one sense right away (as before). Keep holding to focus - the range keeps widening and it
+     * keeps sensing until you let go or run out of Focus.
      * @param friendly false = the "players and threats only" setting: skip animals, villagers and other harmless life
      */
     public static void use(ServerPlayer player, boolean friendly) {
@@ -94,9 +104,50 @@ public final class KarmaSensing {
         }
         if (!Karma.trySpend(player, COST)) return;
         READY_AT.put(player.getUUID(), now + COOLDOWN);
+        practice(player);
         int uses = uses(player);
-        final double RADIUS = radius(uses);
-        final int DURATION = duration(uses);
+        scan(player, radius(uses), duration(uses), friendly, true);
+        HOLDING.put(player.getUUID(), new Object[]{player.tickCount, friendly});
+        ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.KarmaFocusPacket(player.getId(), true), player);
+    }
+
+    /** Let go of the key (or out of Focus). */
+    public static void release(ServerPlayer player) {
+        if (HOLDING.remove(player.getUUID()) == null) return;
+        READY_AT.put(player.getUUID(), player.level().getGameTime() + COOLDOWN);     // cooldown counts from letting go
+        ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.KarmaFocusPacket(player.getId(), false), player);
+    }
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
+        Object[] h = HOLDING.get(p.getUUID());
+        if (h == null) return;
+        if (!p.isAlive() || p.isSpectator()) { release(p); return; }
+        int held = p.tickCount - (Integer) h[0];
+        if (held <= 0) return;
+        if (held % 10 == 0) {
+            if (!Karma.trySpend(p, HOLD_DRAIN / 2F)) {
+                p.displayClientMessage(Component.literal("Out of focus...").withStyle(net.minecraft.ChatFormatting.GRAY), true);
+                release(p);
+                return;
+            }
+        }
+        if (held % 40 == 0) practice(p);                                   // holding it is practice too
+        if (held % 20 == 0) {
+            int uses = uses(p);
+            float grow = Math.min(MAX_GROW, 1F + held / 20F * 0.2F);         // +20% range a second
+            scan(p, radius(uses) * grow, duration(uses), (Boolean) h[1], false);
+        }
+    }
+
+    public static boolean holding(ServerPlayer p) {
+        return HOLDING.containsKey(p.getUUID());
+    }
+
+    /** One more use's worth of practice (with the milestone messages). */
+    private static void practice(ServerPlayer player) {
+        int uses = uses(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
             if (d.senseUses < 1_000_000) d.senseUses++;
         });
@@ -111,10 +162,13 @@ public final class KarmaSensing {
                     : "Your Karma Sensing grows stronger: range " + Math.round(radius(after)) + " blocks, " + duration(after) / 20 + " seconds.")
                     .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
         }
+    }
 
+    private static void scan(ServerPlayer player, double RADIUS, int DURATION, boolean friendly, boolean first) {
+        int uses = uses(player);
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
-                        && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses(player) < MASTERY)))
+                        && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses < MASTERY)))
                         && (friendly || e instanceof Player || threat(e, player) || corrupted(e)));
         int[] ids = found.stream().mapToInt(LivingEntity::getId).toArray();
         // a fully mastered sense can feel people through a Karma-reducing hoodie - but only faintly, no level (-1)
@@ -125,11 +179,14 @@ public final class KarmaSensing {
         int[] damage = found.stream().mapToInt(e -> e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
                 ? (int) Math.round(e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 10) : 0).toArray();
         int[] armor = found.stream().mapToInt(LivingEntity::getArmorValue).toArray();
-        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS, souls, damage, armor), player);
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
-        player.displayClientMessage(Component.translatable("message.xenowarriors.karma_sense.found", ids.length), true);
-
+        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS, souls, damage, armor, first, (float) RADIUS), player);
+        if (first) {
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
+        }
+        player.displayClientMessage(Component.literal(first ? "" : "Focusing: " + Math.round(RADIUS) + " blocks - ")
+                .append(Component.translatable("message.xenowarriors.karma_sense.found", ids.length)), true);
+        if (!first) return;
         // "I think someone is trying to trace my karma"
         for (LivingEntity e : found) {
             if (e instanceof ServerPlayer other && ModCapabilities.getType(other) != CharacterType.NONE) {

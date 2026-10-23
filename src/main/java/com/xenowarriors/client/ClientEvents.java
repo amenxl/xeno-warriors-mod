@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ClientEvents {
+    private static boolean senseHeld;     // the Karma Sensing key, last tick
     private static boolean pendingSelectScreen = false;
 
     private ClientEvents() {}
@@ -66,11 +67,13 @@ public final class ClientEvents {
         while (ModKeyMappings.STATS_MENU.consumeClick()) {
             if (mc.player != null && mc.screen == null) PlayerStatsScreen.open();
         }
-        while (ModKeyMappings.KARMA_SENSE.consumeClick()) {
-            if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active()) {
-                ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(ClientSettings.senseFriendly()));
-            }
-        }
+        // Karma Sensing: press to sense; keep holding to focus (wider and wider, until you let go or run out of Focus)
+        while (ModKeyMappings.KARMA_SENSE.consumeClick()) {}
+        boolean senseDown = mc.player != null && mc.screen == null && ModKeyMappings.KARMA_SENSE.isDown()
+                && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active();
+        if (senseDown && !senseHeld) ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(ClientSettings.senseFriendly(), true));
+        else if (!senseDown && senseHeld) ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(false, false));
+        senseHeld = senseDown;
         while (ModKeyMappings.SUMMON_BLADE.consumeClick()) { }      // (tap vs hold: BladeChannelClient)
         if (!UltimateCutscene.active()) com.xenowarriors.client.mikiko.BladeChannelClient.keyTick(mc);
 

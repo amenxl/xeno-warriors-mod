@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "29";
+    private static final String VERSION = "30";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -275,6 +275,11 @@ public final class ModNetwork {
                 .encoder(BladeChannelStatePacket::encode)
                 .decoder(BladeChannelStatePacket::decode)
                 .consumerMainThread(BladeChannelStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(KarmaFocusPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(KarmaFocusPacket::encode)
+                .decoder(KarmaFocusPacket::decode)
+                .consumerMainThread(KarmaFocusPacket::handle)
                 .add();
         CHANNEL.messageBuilder(AerialComboPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(AerialComboPacket::encode)

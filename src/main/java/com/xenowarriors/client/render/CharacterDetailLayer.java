@@ -130,6 +130,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
         if (p.hurtTime > 0) return "hurt";
+        if (com.xenowarriors.client.KarmaFocusClient.weight(p) > 0.4F) return "sense";      // eyes closed, sensing Karma
         if (ClientSkillState.currentAnim(p) != null) return "shout";
         String efFace = com.xenowarriors.client.AttackHooks.externalFace.apply(p);
         if (efFace != null) return efFace;
@@ -353,7 +354,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             boolean flying = FlightTracker.isFlying(player);
             boolean falling = !player.onGround() && !player.isInWater() && player.fallDistance > 1.5F;
             boolean kishi = ClientSkillState.isCastingKishi(player.getUUID());
-            float spread = com.xenowarriors.client.SkillAnimations.wingSpread(player, ageInTicks);
+            float spread = Math.max(com.xenowarriors.client.SkillAnimations.wingSpread(player, ageInTicks),
+                    com.xenowarriors.client.KarmaFocusClient.wingSpread(player));       // spread wide while floating, sensing
             com.xenowarriors.client.RhalixWingsClient.pose(model, player, preview, flying, falling, kishi, spread, ageInTicks);
         }
 

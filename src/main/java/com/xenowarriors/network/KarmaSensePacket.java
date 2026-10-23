@@ -7,18 +7,21 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Client -> server: pressed the Karma Sensing key. */
-public record KarmaSensePacket(boolean friendly) {
+/** Client -> server: pressed (start) / let go of the Karma Sensing key. */
+public record KarmaSensePacket(boolean friendly, boolean start) {
     public static void encode(KarmaSensePacket msg, FriendlyByteBuf buf) {
         buf.writeBoolean(msg.friendly);
+        buf.writeBoolean(msg.start);
     }
 
     public static KarmaSensePacket decode(FriendlyByteBuf buf) {
-        return new KarmaSensePacket(buf.readBoolean());
+        return new KarmaSensePacket(buf.readBoolean(), buf.readBoolean());
     }
 
     public static void handle(KarmaSensePacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
-        if (player != null) KarmaSensing.use(player, msg.friendly);
+        if (player == null) return;
+        if (msg.start) KarmaSensing.use(player, msg.friendly);
+        else KarmaSensing.release(player);
     }
 }

@@ -46,7 +46,7 @@ public final class CombatStance {
         if (com.xenowarriors.client.ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.compat.DmzCompat.charging(p)
                 || com.xenowarriors.client.compat.DmzCompat.blocking(p) || com.xenowarriors.client.SurfPose.surfing(p)) return NONE;
         if (p instanceof AbstractClientPlayer cp && com.xenowarriors.client.FlightTracker.isFlying(cp)) return NONE;
-        if (Surroundings.of(p) != Surroundings.ENEMIES) return NONE;
+        if (Surroundings.of(p) != Surroundings.ENEMIES || com.xenowarriors.client.KarmaFocusClient.focusing(p)) return NONE;
         if (p.getMainHandItem().isEmpty()) return FISTS;
         if (Hekublade.isBlade(p.getMainHandItem())) return SWORD;
         return NONE;
