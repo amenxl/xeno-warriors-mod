@@ -121,7 +121,11 @@ public final class KarmaSensing {
         int[] levels = found.stream().mapToInt(e -> e instanceof Player p && HoodieItem.wearing(p) ? -1 : power(e)).toArray();
         // anything with a corrupted soul in it (hidden ones too) feels like the soul itself
         int[] souls = found.stream().filter(KarmaSensing::corrupted).mapToInt(LivingEntity::getId).toArray();
-        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS, souls), player);
+        // their stats (shown to you if you're the stronger one): attack damage x10, defense
+        int[] damage = found.stream().mapToInt(e -> e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
+                ? (int) Math.round(e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 10) : 0).toArray();
+        int[] armor = found.stream().mapToInt(LivingEntity::getArmorValue).toArray();
+        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS, souls, damage, armor), player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
         player.displayClientMessage(Component.translatable("message.xenowarriors.karma_sense.found", ids.length), true);

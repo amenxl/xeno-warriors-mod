@@ -46,7 +46,23 @@ public final class KarmaSense {
         return SOULS.contains(e.getId()) && isSensed(e);
     }
 
-    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls) {
+    private static final Map<Integer, int[]> STATS = new HashMap<>();     // entity id -> {attack x10, defense}
+
+    /** How strong a sensed thing is (its level), or 0 if unknown / hidden. */
+    public static int level(int id) {
+        Integer lv = LEVELS.get(id);
+        return lv == null ? 0 : Math.max(0, lv);
+    }
+
+    /** You're stronger than it: you can read its stats. */
+    public static boolean outclass(Entity e) {
+        Integer lv = LEVELS.get(e.getId());
+        return lv != null && lv >= 0 && com.xenowarriors.client.LevelHud.level() > lv;
+    }
+
+    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor) {
+        STATS.clear();
+        for (int i = 0; i < ids.length && i < damage.length && i < armor.length; i++) STATS.put(ids[i], new int[]{damage[i], armor[i]});
         SOULS.clear();
         for (int id : souls) SOULS.add(id);
         Minecraft mc = Minecraft.getInstance();
@@ -109,6 +125,7 @@ public final class KarmaSense {
         long now = mc.level.getGameTime();
         SENSED.values().removeIf(until -> until < now);
         LEVELS.keySet().removeIf(id -> !SENSED.containsKey(id));
+        STATS.keySet().removeIf(id -> !SENSED.containsKey(id));
         if (now % 3 == 0) auras(mc);
         TRACKED.values().removeIf(until -> until < now);
         // a ring of light rolling outward for the first second
@@ -132,7 +149,9 @@ public final class KarmaSense {
             if (e == null || !e.isAlive() || e.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) > 96 * 96) continue;
             boolean faint = en.getValue() < 0;
             if (faint && mc.level.random.nextInt(3) != 0) continue;     // thin and flickering
-            float power = faint ? 0.05F : Math.min(1F, en.getValue() / 150F);
+            // the size shows how strong it is next to you: weaker things give off a small aura, equals a medium one
+            float ratio = faint ? 0F : en.getValue() / (float) Math.max(1, com.xenowarriors.client.LevelHud.level());
+            float power = faint ? 0.05F : Mth.clamp(0.08F + ratio * 0.45F, 0.08F, 1F);
             int c = color(e);
             net.minecraft.core.particles.DustParticleOptions dust = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255F,
                     ((c >> 8) & 255) / 255F, (c & 255) / 255F), 0.6F + power * 1.4F);
@@ -162,10 +181,11 @@ public final class KarmaSense {
     /** At higher Karma Sensing, "Lv N" floats over everything sensed, visible through walls. */
     @SubscribeEvent
     public static void onRenderLiving(net.minecraftforge.client.event.RenderLivingEvent.Post<?, ?> event) {
-        if (!showLevels) return;
         net.minecraft.world.entity.LivingEntity e = event.getEntity();
         Integer lv = LEVELS.get(e.getId());
         if (lv == null || !isSensed(e)) return;
+        boolean stats = outclass(e) && STATS.containsKey(e.getId());
+        if (!showLevels && !stats) return;
         Minecraft mc = Minecraft.getInstance();
         var pose = event.getPoseStack();
         pose.pushPose();
@@ -173,12 +193,37 @@ public final class KarmaSense {
         pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
         float s = 0.03F;
         pose.scale(-s, -s, s);
-        String text = lv < 0 ? "Lv ?" : "Lv " + lv;
-        float x = -mc.font.width(text) / 2F;
         int col = 0xFF000000 | color(e);
-        mc.font.drawInBatch(text, x, 0, col, false, pose.last().pose(), event.getMultiBufferSource(),
-                net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0x60000000, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT);
+        float y = 0;
+        if (stats) {
+            // stronger than them: their stats laid bare (above the level)
+            int[] st = STATS.get(e.getId());
+            String hp = "\u2764 " + fmt(e.getHealth()) + "/" + fmt(e.getMaxHealth());
+            String atk = "ATK " + fmt(st[0] / 10F);
+            String def = "DEF " + st[1];
+            String line = hp + "   " + atk + "   " + def;
+            float lx = -mc.font.width(line) / 2F;
+            var buf = event.getMultiBufferSource();
+            var mat = pose.last().pose();
+            var mode = net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH;
+            int light = net.minecraft.client.renderer.LightTexture.FULL_BRIGHT;
+            mc.font.drawInBatch(hp, lx, -10, 0xFFFF5A5A, false, mat, buf, mode, 0x60000000, light);
+            lx += mc.font.width(hp + "   ");
+            mc.font.drawInBatch(atk, lx, -10, 0xFFFFB04A, false, mat, buf, mode, 0x60000000, light);
+            lx += mc.font.width(atk + "   ");
+            mc.font.drawInBatch(def, lx, -10, 0xFF7AB8FF, false, mat, buf, mode, 0x60000000, light);
+        }
+        if (showLevels || stats) {
+            String text = lv < 0 ? "Lv ?" : "Lv " + lv;
+            float x = -mc.font.width(text) / 2F;
+            mc.font.drawInBatch(text, x, y, col, false, pose.last().pose(), event.getMultiBufferSource(),
+                    net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0x60000000, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT);
+        }
         pose.popPose();
+    }
+
+    private static String fmt(float v) {
+        return v == Math.floor(v) ? String.valueOf((int) v) : String.format(java.util.Locale.ROOT, "%.1f", v);
     }
 
     /** Purple pulse around the edges of the screen when you sense. */
