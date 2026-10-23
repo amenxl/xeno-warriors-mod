@@ -114,6 +114,7 @@ public final class ClientModEvents {
         event.registerAboveAll("lock_on", new LockOn.Overlay());
         event.registerAboveAll("karma_sense", new KarmaSense.Overlay());
         event.registerAboveAll("party", new com.xenowarriors.client.party.PartyHud());
+        event.registerAboveAll("party_pointers", new com.xenowarriors.client.party.PartyPointers());
         event.registerAboveAll("character_level", new LevelHud());
     }
 

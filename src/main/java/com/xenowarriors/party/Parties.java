@@ -222,7 +222,7 @@ public final class Parties {
             if (m == null) continue;
             list.add(new PartySyncPacket.Member(id, m.getName().getString(), m.getHealth(), m.getMaxHealth(),
                     Karma.get(m), Karma.MAX, ModCapabilities.getType(m).ordinal(), Duels.isKnockedOut(m),
-                    id.equals(party.leader)));
+                    id.equals(party.leader), m.getX(), m.getY(), m.getZ(), m.level().dimension().location().toString()));
         }
         for (UUID id : party.members) {
             ServerPlayer m = server.getPlayerList().getPlayer(id);
