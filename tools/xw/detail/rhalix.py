@@ -17,7 +17,7 @@ def build():
     # ---------------- hair: long straight purple locks, pink highlights on top, a few black strands
     PH, P1, P2, P3, PK = '#d06ae8', '#a63fdc', '#8a2cc4', '#6a1f9e', '#1c1622'
     import os
-    STYLE = os.environ.get('HAIR_STYLE', 'A')     # A: black tips; B: black tips + black under-layer; C: purple fading to black
+    STYLE = os.environ.get('HAIR_STYLE', 'C')     # A: black tips; B: black tips + black under-layer; C: purple fading to black
     BK = '#18141c'
     def tip(c, under=False):
         # his hair is purple, only the bottom part black
