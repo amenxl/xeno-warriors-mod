@@ -73,7 +73,8 @@ public final class Karma {
                     && player.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4;
             // Sky Helmet: +100 max Karma (on top of Fox King's bonus)
             float max = (com.xenowarriors.mikiko.FoxKing.active(player) ? MAX * (1 + com.xenowarriors.mikiko.FoxKing.KARMA_MAX_BONUS) : MAX)
-                    + (com.xenowarriors.sky.SkyArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.HEAD) ? 100F : 0F);
+                    + (com.xenowarriors.sky.SkyArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.HEAD) ? 100F : 0F)
+                    + (com.xenowarriors.sky.CorruptedArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.HEAD) ? 50F : 0F);
             if (data.karmaMax != max) {
                 data.karmaMax = max;
                 if (data.getKarma() > max) data.setKarma(max);

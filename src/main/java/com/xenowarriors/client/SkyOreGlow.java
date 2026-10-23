@@ -19,13 +19,14 @@ import net.minecraftforge.fml.common.Mod;
 /** Sky Ore picked up by Karma Sensing: outlined in sky blue, seen through the rock, while the sense lasts. */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class SkyOreGlow {
-    private static long[] positions = new long[0];
+    private static long[] positions = new long[0], corrupted = new long[0];
     private static long until;
 
     private SkyOreGlow() {}
 
-    public static void set(long[] pos, int duration) {
+    public static void set(long[] pos, long[] dark, int duration) {
         positions = pos;
+        corrupted = dark;
         var level = Minecraft.getInstance().level;
         until = level == null ? 0 : level.getGameTime() + duration;
     }
@@ -34,7 +35,7 @@ public final class SkyOreGlow {
     public static void onRender(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || positions.length == 0 || mc.level.getGameTime() > until) return;
+        if (mc.level == null || positions.length + corrupted.length == 0 || mc.level.getGameTime() > until) return;
         Vec3 cam = event.getCamera().getPosition();
         PoseStack pose = event.getPoseStack();
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
@@ -44,6 +45,10 @@ public final class SkyOreGlow {
         for (long l : positions) {
             BlockPos p = BlockPos.of(l);
             LevelRenderer.renderLineBox(pose, vc, new AABB(p).move(-cam.x, -cam.y, -cam.z).inflate(0.002), 0.55F, 0.85F, 1F, pulse);
+        }
+        for (long l : corrupted) {        // Corrupted Ore glows purple
+            BlockPos p = BlockPos.of(l);
+            LevelRenderer.renderLineBox(pose, vc, new AABB(p).move(-cam.x, -cam.y, -cam.z).inflate(0.002), 0.62F, 0.2F, 0.95F, pulse);
         }
         buffers.endBatch(RenderType.lines());
         RenderSystem.enableDepthTest();

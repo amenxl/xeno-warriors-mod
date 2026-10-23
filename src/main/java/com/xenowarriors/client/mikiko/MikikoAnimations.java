@@ -409,6 +409,12 @@ public final class MikikoAnimations {
         MikikoEffects.doubleJump(level, p);
     }
 
+    /** He's used his double jump in this jump, at least `ticks` ago (so a third jump doesn't fire on the same press). */
+    public static boolean doubleJumpedBefore(Player p, int ticks) {
+        State s = STATES.get(p.getId());
+        return s != null && s.doubleJumped && p.tickCount - s.jumpStart >= ticks;
+    }
+
     /** Hekublade summon effect (from the server when Mikiko presses the summon key). */
     public static void summonFx(int entityId) {
         Minecraft mc = Minecraft.getInstance();

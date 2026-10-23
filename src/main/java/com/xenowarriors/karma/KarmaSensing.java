@@ -74,7 +74,8 @@ public final class KarmaSensing {
     public static boolean corrupted(LivingEntity e) {
         return e instanceof com.xenowarriors.corrupted.CorruptedSoulEntity || e instanceof com.xenowarriors.corrupted.CSoulBossEntity
                 || e instanceof com.xenowarriors.npc.DarkPossessedEntity
-                || com.xenowarriors.mikiko.SoulExtract.hasSoul(e);
+                || com.xenowarriors.mikiko.SoulExtract.hasSoul(e)
+                || com.xenowarriors.sky.CorruptedArmorItem.wearingAny(e);      // corrupted armor reads like a corrupted soul
     }
 
     private static boolean threat(LivingEntity e, ServerPlayer player) {
@@ -148,6 +149,8 @@ public final class KarmaSensing {
     /** Sky Ore nearby glows for you too (up to 64 blocks away), outlined through the rock. */
     private static void traceSkyOre(ServerPlayer p, double radius, int duration) {
         var ore = com.xenowarriors.sky.ModBlocks.SKY_ORE.get();
+        var dark = com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get();
+        java.util.List<Long> darkFound = new java.util.ArrayList<>();
         var level = p.serverLevel();
         java.util.List<Long> found = new java.util.ArrayList<>();
         int r = (int) radius, cx = p.blockPosition().getX() >> 4, cz = p.blockPosition().getZ() >> 4, cr = (r >> 4) + 1;
@@ -157,16 +160,21 @@ public final class KarmaSensing {
             var sections = chunk.getSections();
             for (int i = 0; i < sections.length && found.size() < 96; i++) {
                 var sec = sections[i];
-                if (sec == null || sec.hasOnlyAir() || !sec.maybeHas(s -> s.is(ore))) continue;
+                if (sec == null || sec.hasOnlyAir() || !sec.maybeHas(s -> s.is(ore) || s.is(dark))) continue;
                 int baseY = level.getSectionYFromSectionIndex(i) << 4;
                 for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
-                    if (!sec.getBlockState(x, y, z).is(ore)) continue;
+                    var st = sec.getBlockState(x, y, z);
+                    boolean sky = st.is(ore), corrupt = st.is(dark);
+                    if (!sky && !corrupt) continue;
                     var pos = new net.minecraft.core.BlockPos(((cx + dx) << 4) + x, baseY + y, ((cz + dz) << 4) + z);
-                    if (pos.distSqr(p.blockPosition()) <= radius * radius && found.size() < 96) found.add(pos.asLong());
+                    if (pos.distSqr(p.blockPosition()) > radius * radius) continue;
+                    if (sky && found.size() < 96) found.add(pos.asLong());
+                    if (corrupt && darkFound.size() < 96) darkFound.add(pos.asLong());
                 }
             }
         }
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.SkyOreSensedPacket(found.stream().mapToLong(Long::longValue).toArray(), duration), p);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.SkyOreSensedPacket(found.stream().mapToLong(Long::longValue).toArray(),
+                darkFound.stream().mapToLong(Long::longValue).toArray(), duration), p);
     }
 
     /** One more use's worth of practice (with the milestone messages). */

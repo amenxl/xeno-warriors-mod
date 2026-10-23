@@ -19,5 +19,10 @@ public final class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(4.5F, 6F).requiresCorrectToolForDrops()
                     .sound(SoundType.AMETHYST).lightLevel(s -> 5), UniformInt.of(3, 7)));
 
+    /** Corrupted Ore: deep underground, veined with corrupted-soul purple; Karma Sensing traces it (it glows purple). */
+    public static final RegistryObject<Block> CORRUPTED_ORE = BLOCKS.register("corrupted_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.5F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.DEEPSLATE).lightLevel(s -> 3), UniformInt.of(2, 5)));
+
     private ModBlocks() {}
 }

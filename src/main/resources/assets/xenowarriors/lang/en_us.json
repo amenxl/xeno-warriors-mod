@@ -188,5 +188,11 @@
   "item.xenowarriors.sky_helmet": "Sky Helmet",
   "item.xenowarriors.sky_chestplate": "Sky Chestplate",
   "item.xenowarriors.sky_leggings": "Sky Leggings",
-  "item.xenowarriors.sky_boots": "Sky Boots"
+  "item.xenowarriors.sky_boots": "Sky Boots",
+  "block.xenowarriors.corrupted_ore": "Corrupted Ore",
+  "item.xenowarriors.corrupted_shard": "Corrupted Shard",
+  "item.xenowarriors.corrupted_helmet": "Corrupted Helmet",
+  "item.xenowarriors.corrupted_chestplate": "Corrupted Chestplate",
+  "item.xenowarriors.corrupted_leggings": "Corrupted Leggings",
+  "item.xenowarriors.corrupted_boots": "Corrupted Boots"
 }

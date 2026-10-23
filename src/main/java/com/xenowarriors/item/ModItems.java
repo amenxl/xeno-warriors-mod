@@ -34,6 +34,17 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> SKY_BOOTS = ITEMS.register("sky_boots",
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_SHARD = ITEMS.register("corrupted_shard", () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_ORE = ITEMS.register("corrupted_ore",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_HELMET = ITEMS.register("corrupted_helmet",
+            () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_CHESTPLATE = ITEMS.register("corrupted_chestplate",
+            () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_LEGGINGS = ITEMS.register("corrupted_leggings",
+            () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_BOOTS = ITEMS.register("corrupted_boots",
+            () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
     public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> BRIEFCASE = ITEMS.register("briefcase", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKYLANDER_SPAWN_EGG = ITEMS.register("skylander_spawn_egg",
