@@ -64,11 +64,11 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
     private static final Move[][] COMBOS = {
-            {Move.JAB_R, Move.JAB_L, Move.KICK_FRONT, Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN},
-            {Move.HOOK_R, Move.UPPERCUT_L, Move.KICK_ROUNDHOUSE, Move.BLADE_DOWN, Move.BLADE_H, Move.BLADE_SPIN},
-            {Move.JAB_L, Move.HOOK_R, Move.KICK_SPIN, Move.BLADE_UP, Move.BLADE_THRUST, Move.BLADE_DOWN},
-            {Move.UPPERCUT_L, Move.JAB_R, Move.KNEE_FLYING, Move.BLADE_SPIN, Move.BLADE_UP, Move.BLADE_THRUST},
-            {Move.JAB_R, Move.UPPERCUT_L, Move.KICK_SIDE, Move.BLADE_H, Move.BLADE_SPIN, Move.BLADE_DOWN},
+            {Move.JAB_R, Move.JAB_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_DOWN},
+            {Move.HOOK_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_SPIN},
+            {Move.JAB_L, Move.HOOK_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_DOWN},
+            {Move.UPPERCUT_L, Move.JAB_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_THRUST},
+            {Move.JAB_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_DOWN},
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
     private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
@@ -468,10 +468,15 @@ public final class MikikoAnimations {
             s.moveBlade = move.blade;
             // the first two hits: a skip forward into the punch, dashing in on them
             s.hop = s.comboStep <= 2 && !move.blade && !flying && p.onGround() && !p.isCrouching();
-            if (s.hop && p instanceof net.minecraft.client.player.LocalPlayer lp) {
+            boolean ground = !flying && p.onGround() && !p.isCrouching();
+            if (p instanceof net.minecraft.client.player.LocalPlayer lp && ground && (s.hop || move == Move.LUNGE_PUNCH_R
+                    || move == Move.LUNGE_PUNCH_L || move == Move.FLIP_KICK)) {
+                // dashing in: a skip (hits 1-2), a long lunge step (3-4), springing up into the flip (5)
+                double fwd = move == Move.FLIP_KICK ? 0.28 : s.hop ? 0.42 : 0.38;
+                double up = move == Move.FLIP_KICK ? 0.48 : s.hop ? 0.2 : 0.08;
                 float yaw = lp.getYRot() * Mth.DEG_TO_RAD;
                 net.minecraft.world.phys.Vec3 v = lp.getDeltaMovement();
-                lp.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * 0.42, 0.2, v.z * 0.3 + Mth.cos(yaw) * 0.42);
+                lp.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * fwd, up, v.z * 0.3 + Mth.cos(yaw) * fwd);
             }
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
         } else if (held.getItem() instanceof SwordItem) {

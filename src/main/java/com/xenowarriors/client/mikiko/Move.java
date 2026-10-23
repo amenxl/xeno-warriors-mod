@@ -19,6 +19,18 @@ public enum Move {
     UPPERCUT_L(8, Kind.PUNCH, false,
             p(-1.75F, -0.5F, 0F, 0.2F, 0F, -0.2F, -0.25F, 0, 0.08F, 0.25F, 0, -0.08F, 0.3F),
             p(-1.6F, -0.6F, -0.1F, -2.3F, 0.25F, 0F, -0.2F, 0, 0.08F, 0.2F, 0, -0.08F, -0.3F)),
+    /** Dashing in: a long step forward, low, the right fist driven straight through (combo hit 3). */
+    LUNGE_PUNCH_R(9, Kind.PUNCH, false,
+            p(-0.45F, 0.35F, 0.15F, -1.45F, 0.3F, -0.1F, 0.45F, 0, 0.1F, -0.55F, 0, -0.1F, -0.45F),
+            p(-1.62F, 0F, 0F, 0.35F, 0F, -0.25F, 0.7F, 0, 0.12F, -0.85F, 0, -0.1F, 0.55F)),
+    /** ...then the left, stepping through again (combo hit 4). */
+    LUNGE_PUNCH_L(9, Kind.PUNCH, false,
+            p(-1.45F, -0.3F, 0.1F, -0.45F, -0.35F, -0.15F, -0.55F, 0, 0.1F, 0.45F, 0, -0.1F, 0.45F),
+            p(0.35F, 0F, 0.25F, -1.62F, 0F, 0F, -0.85F, 0, 0.1F, 0.7F, 0, -0.12F, -0.55F)),
+    /** Springing up into a forward somersault and bringing a heel crashing down (combo hit 5). */
+    FLIP_KICK(13, Kind.KICK, false,
+            p(-2.7F, 0F, 0.3F, -2.7F, 0F, -0.3F, -1.3F, 0, 0.05F, -1.3F, 0, -0.05F, 0F),
+            p(-0.3F, 0F, 1.1F, -0.3F, 0F, -1.1F, -2.1F, 0, 0.05F, 0.45F, 0, -0.05F, 0F)),
     // ---- kicks ----
     KICK_FRONT(9, Kind.KICK, false,
             p(-0.4F, 0F, 0.5F, -0.4F, 0F, -0.5F, -0.9F, 0, 0F, 0.1F, 0, 0F, 0F),
@@ -91,9 +103,9 @@ public enum Move {
     /** The same move done while flying. */
     public Move inAir() {
         return switch (this) {
-            case JAB_R, HOOK_R -> AIR_PUNCH_R;
-            case JAB_L, UPPERCUT_L -> AIR_PUNCH_L;
-            case KICK_FRONT, KICK_ROUNDHOUSE, KICK_SPIN, KICK_SIDE, KNEE_FLYING -> AIR_SPIN_KICK;
+            case JAB_R, HOOK_R, LUNGE_PUNCH_R -> AIR_PUNCH_R;
+            case JAB_L, UPPERCUT_L, LUNGE_PUNCH_L -> AIR_PUNCH_L;
+            case KICK_FRONT, KICK_ROUNDHOUSE, KICK_SPIN, KICK_SIDE, KNEE_FLYING, FLIP_KICK -> AIR_SPIN_KICK;
             case BLADE_DOWN, BLADE_THRUST -> AIR_LUNGE_SLASH;
             case BLADE_SPIN, BLADE_UP -> AIR_FLIP_SLASH;
             default -> this;
@@ -109,6 +121,8 @@ public enum Move {
         return switch (this) {
             case JAB_R, JAB_L, HOOK_R -> new float[]{0, 0.15F * s * (1 - p), 0, 4 * s, 0};
             case UPPERCUT_L -> new float[]{0.15F * arc, 0, 0, -8 * s, 0};
+            case LUNGE_PUNCH_R, LUNGE_PUNCH_L -> new float[]{-0.12F * s * (1 - fadeOut(p)), 0.2F * s * (1 - fadeOut(p)), 0, 16 * s * (1 - fadeOut(p)), 0};
+            case FLIP_KICK -> new float[]{0.55F * arc, 0.15F * s, 0, 360 * spin(p), 0};
             case KICK_FRONT -> new float[]{0, 0, 0, -12 * s, 0};
             case KICK_ROUNDHOUSE -> new float[]{0.05F * arc, 0, -70 * arc, 0, -10 * s};
             case KICK_SPIN, AIR_SPIN_KICK -> new float[]{this == KICK_SPIN ? 0.3F * arc : 0, 0, -360 * spin(p), 0, 0};
