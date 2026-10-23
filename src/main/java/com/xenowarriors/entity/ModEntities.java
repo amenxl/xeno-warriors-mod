@@ -48,6 +48,11 @@ public final class ModEntities {
                     .setShouldReceiveVelocityUpdates(true)
                     .build("earth_bullet"));
 
+    public static final RegistryObject<EntityType<TeamUltEntity>> TEAM_ULT = ENTITY_TYPES.register("team_ult",
+            () -> EntityType.Builder.<TeamUltEntity>of(TeamUltEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F).noSummon().fireImmune().clientTrackingRange(10).updateInterval(1)
+                    .build("team_ult"));
+
     public static final RegistryObject<EntityType<GravityBarrageEntity>> GRAVITY_BARRAGE = ENTITY_TYPES.register("gravity_barrage",
             () -> EntityType.Builder.<GravityBarrageEntity>of(GravityBarrageEntity::new, MobCategory.MISC)
                     .sized(1F, 1F)

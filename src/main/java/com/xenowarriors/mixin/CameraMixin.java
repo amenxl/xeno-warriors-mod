@@ -23,6 +23,7 @@ public abstract class CameraMixin {
     private void xenowarriors$cutsceneCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
                                              float partialTick, CallbackInfo ci) {
         double[] cam = UltimateCutscene.camera(partialTick);
+        if (cam == null) cam = com.xenowarriors.client.TeamUltCutscene.camera(partialTick);
         if (cam == null) return;
         this.detached = true;
         setRotation((float) cam[3], (float) cam[4]);

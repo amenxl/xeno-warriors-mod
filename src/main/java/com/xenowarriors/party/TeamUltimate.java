@@ -43,7 +43,6 @@ public final class TeamUltimate {
     private static final double RANGE = 12;
     private record Request(UUID from, UUID to, long expires) {}
     private static final Map<UUID, Request> PENDING = new HashMap<>();          // by the one being asked
-    private static final List<Run> RUNS = new ArrayList<>();
 
     private TeamUltimate() {}
 
@@ -126,25 +125,18 @@ public final class TeamUltimate {
 
     // ------------------------------------------------------------------ the move
 
-    private static final class Run {
-        final ServerPlayer rhalix, mikiko;
-        final Vec3 at;
-        int t;
-        Run(ServerPlayer r, ServerPlayer m, Vec3 at) { rhalix = r; mikiko = m; this.at = at; }
-    }
-
     private static void start(ServerPlayer rhalix, ServerPlayer mikiko) {
         Vec3 at = target(rhalix, mikiko);
-        KishiDomeEntity dome = KishiDomeEntity.create(rhalix.level(), rhalix, at);
-        dome.raiseLevel();
-        dome.raiseLevel();
-        rhalix.level().addFreshEntity(dome);
-        ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(rhalix.getId(), SkillAnimPacket.KISHI, !rhalix.onGround()), rhalix);
-        rhalix.level().playSound(null, at.x, at.y, at.z, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 2F, 0.5F);
-        rhalix.level().playSound(null, at.x, at.y, at.z, SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1F, 0.4F);
+        // stand the dome on the ground under the target point
+
+        {
+            net.minecraft.core.BlockPos.MutableBlockPos bp = net.minecraft.core.BlockPos.containing(at).mutable();
+            for (int i = 0; i < 12 && rhalix.level().getBlockState(bp.below()).getCollisionShape(rhalix.level(), bp.below()).isEmpty(); i++) bp.move(0, -1, 0);
+            at = new Vec3(at.x, bp.getY(), at.z);
+        }
+        rhalix.level().addFreshEntity(com.xenowarriors.entity.TeamUltEntity.create(rhalix, mikiko, at));
         for (ServerPlayer s : new ServerPlayer[]{rhalix, mikiko})
             s.displayClientMessage(Component.literal("GRAVITY FOX FIRE!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
-        RUNS.add(new Run(rhalix, mikiko, at));
     }
 
     /** The biggest group of enemies near them, or where Rhalix is looking. */
@@ -170,63 +162,5 @@ public final class TeamUltimate {
         return src.level().getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != a && e != b && !(e instanceof Player)
                 && Parties.petOwner(e) == null && (e instanceof Enemy || com.xenowarriors.karma.KarmaSensing.corrupted(e)
                 || (e instanceof Mob m && m.getTarget() instanceof Player t && Parties.sameParty(t, a))));
-    }
-
-    @SubscribeEvent
-    public static void onTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        long t0 = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().overworld().getGameTime(); PENDING.values().removeIf(r -> false && t0 < 0);
-        RUNS.removeIf(TeamUltimate::step);
-    }
-
-    /** One tick of the move; true when it's over. */
-    private static boolean step(Run r) {
-        r.t++;
-        if (!r.mikiko.isAlive() || !r.rhalix.isAlive() || r.mikiko.level() != r.rhalix.level()) return true;
-        ServerLevel level = r.rhalix.serverLevel();
-        double radius = KishiDomeEntity.MAX_RADIUS;
-        List<LivingEntity> inside = enemies(r.rhalix, new AABB(r.at, r.at).inflate(radius, KishiDomeEntity.MAX_HEIGHT, radius), r.rhalix, r.mikiko);
-        // pinned: dragged into the dome and held down
-        for (LivingEntity e : inside) {
-            Vec3 pull = r.at.subtract(e.position()).multiply(0.06, 0, 0.06);
-            e.setDeltaMovement(e.getDeltaMovement().multiply(0.3, 1, 0.3).add(pull.x, -0.2, pull.z));
-            e.hurtMarked = true;
-        }
-        if (r.t == 20) {
-            ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(r.mikiko.getId(), SkillAnimPacket.BLITZ, !r.mikiko.onGround()), r.mikiko);
-            level.playSound(null, r.mikiko.getX(), r.mikiko.getY(), r.mikiko.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.5F, 0.7F);
-        }
-        // the fox fire storm through the dome
-        if (r.t >= 22 && r.t <= 82) {
-            for (int i = 0; i < 6; i++) {
-                double a = level.random.nextDouble() * Math.PI * 2, d = level.random.nextDouble() * radius;
-                level.sendParticles(ParticleTypes.FLAME, r.at.x + Math.cos(a) * d, r.at.y + level.random.nextDouble() * 3, r.at.z + Math.sin(a) * d, 2, 0.1, 0.2, 0.1, 0.03);
-                level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, r.at.x + Math.cos(a + 1) * d, r.at.y + 0.2, r.at.z + Math.sin(a + 1) * d, 1, 0.1, 0.4, 0.1, 0.05);
-            }
-            if (r.t % 6 == 0) {
-                level.playSound(null, r.at.x, r.at.y, r.at.z, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8F, 0.8F + level.random.nextFloat() * 0.4F);
-                for (LivingEntity e : inside) {
-                    e.invulnerableTime = 0;
-                    e.hurt(ModDamageTypes.source(level, ModDamageTypes.FIRE_BLITZ, r.mikiko, r.mikiko), 3F);
-                    e.setSecondsOnFire(4);
-                    level.sendParticles(ParticleTypes.LAVA, e.getX(), e.getY() + 1, e.getZ(), 2, 0.2, 0.3, 0.2, 0);
-                }
-            }
-        }
-        // the finale: everything in the dome goes up in one blast
-        if (r.t == 90) {
-            level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, r.at.x, r.at.y + 1, r.at.z, 1, 0, 0, 0, 0);
-            level.sendParticles(ParticleTypes.FLAME, r.at.x, r.at.y + 1, r.at.z, 120, radius * 0.5, 1.5, radius * 0.5, 0.15);
-            level.playSound(null, r.at.x, r.at.y, r.at.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2F, 0.7F);
-            for (LivingEntity e : inside) {
-                e.invulnerableTime = 0;
-                e.hurt(ModDamageTypes.source(level, ModDamageTypes.FIRE_BLITZ, r.mikiko, r.mikiko), 14F);
-                Vec3 out = e.position().subtract(r.at).normalize();
-                e.setDeltaMovement(out.x * 0.8, 0.6, out.z * 0.8);
-                e.hurtMarked = true;
-            }
-            return true;
-        }
-        return false;
     }
 }

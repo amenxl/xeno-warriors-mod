@@ -31,6 +31,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.GRAVITY_COMPRESS.get(), GravityCompressRenderer::new);
         event.registerEntityRenderer(ModEntities.EARTH_BULLET.get(), EarthBulletRenderer::new);
         event.registerEntityRenderer(ModEntities.GRAVITY_BARRAGE.get(), GravityBarrageRenderer::new);
+        event.registerEntityRenderer(ModEntities.TEAM_ULT.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(ModEntities.HEKUBLADE_SHARD.get(), HekubladeShardRenderer::new);
         event.registerEntityRenderer(ModEntities.THROWN_HEKUBLADE.get(), com.xenowarriors.client.render.ThrownHekubladeRenderer::new);
         event.registerEntityRenderer(ModEntities.FIRE_BLITZ.get(), FireBlitzRenderer::new);
@@ -105,6 +106,7 @@ public final class ClientModEvents {
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("skills", new SkillHudOverlay());
         event.registerAboveAll("cutscene", new UltimateCutscene.Overlay());
+        event.registerAboveAll("team_cutscene", new TeamUltCutscene.Overlay());
         event.registerAboveAll("stat_toasts", new StatToasts());
         event.registerAboveAll("lock_on", new LockOn.Overlay());
         event.registerAboveAll("karma_sense", new KarmaSense.Overlay());

@@ -42,6 +42,7 @@ public final class SkillAnimations {
             case SkillAnimPacket.NETSU -> NETSU_DURATION;
             case SkillAnimPacket.BLITZ -> BLITZ_DURATION;
             case SkillAnimPacket.BLAZING -> BLAZING_DURATION;
+            case SkillAnimPacket.TEAM_RHALIX, SkillAnimPacket.TEAM_MIKIKO -> com.xenowarriors.entity.TeamUltEntity.END;
             default -> KISHI_DURATION;
         };
     }
@@ -65,6 +66,8 @@ public final class SkillAnimations {
             case SkillAnimPacket.NETSU -> netsu(model, t);
             case SkillAnimPacket.BLITZ -> blitz(model, t);
             case SkillAnimPacket.BLAZING -> blazing(model, t);
+            case SkillAnimPacket.TEAM_RHALIX -> teamRhalix(model, t);
+            case SkillAnimPacket.TEAM_MIKIKO -> teamMikiko(model, t);
             default -> kishi(model, t, anim.airborne());
         }
         return true;
@@ -241,6 +244,65 @@ public final class SkillAnimations {
         }
         if (anim.anim() != SkillAnimPacket.KISHI || !anim.airborne()) return 0F;
         return weight(t, KISHI_DURATION, 4F, 23F);
+    }
+
+    // ---------------------------------------------------------------- Gravity Fox Fire (team ultimate)
+
+    /** Blends between keyframes: {tick, rightArm xyz, leftArm xyz, rightLeg xyz, leftLeg xyz, body xRot}. */
+    private static void keyframes(HumanoidModel<?> m, float t, float[][] keys, float w) {
+        int i = 0;
+        while (i < keys.length - 2 && t >= keys[i + 1][0]) i++;
+        float[] a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
+        float f = b[0] == a[0] ? 1F : smooth((t - a[0]) / (b[0] - a[0]));
+        float[] k = new float[a.length];
+        for (int j = 1; j < a.length; j++) k[j] = lerp(a[j], b[j], f);
+        pose(m.rightArm, w, k[1], k[2], k[3]);
+        pose(m.leftArm, w, k[4], k[5], k[6]);
+        pose(m.rightLeg, w, k[7], k[8], k[9]);
+        pose(m.leftLeg, w, k[10], k[11], k[12]);
+        m.body.xRot = lerp(m.body.xRot, k[13], w);
+    }
+
+    /** Rhalix: rises arms flung wide, raises both hands overhead and slams the dome down, holds it with both hands
+     * out (straining), floats down and ends arms folded, back to back with Mikiko. */
+    private static void teamRhalix(HumanoidModel<?> m, float t) {
+        float w = weight(t, com.xenowarriors.entity.TeamUltEntity.END, 3F, 100F);
+        if (w <= 0F) return;
+        float shake = t > 30 && t < 82 ? (float) Math.sin(t * 2.1F) * 0.04F : 0F;
+        float[][] keys = {
+                {0, 0.2F, 0, 0.3F, 0.2F, 0, -0.3F, 0.15F, 0, 0.08F, 0.1F, 0, -0.08F, 0},
+                {10, -0.2F, 0, 1.35F, -0.2F, 0, -1.35F, 0.3F, 0, 0.1F, 0.2F, 0, -0.1F, 0},          // arms wide as he rises
+                {15, -3.0F, -0.15F, 0.2F, -3.0F, 0.15F, -0.2F, 0.1F, 0, 0.05F, 0.3F, 0, -0.05F, -0.1F},   // both hands overhead
+                {20, -0.7F, -0.1F, 0.1F, -0.7F, 0.1F, -0.1F, -0.4F, 0, 0.05F, 0.4F, 0, -0.05F, 0.35F}, // SLAM down
+                {30, -1.55F, -0.25F, 0, -1.55F, 0.25F, 0, 0.15F, 0, 0.08F, 0.25F, 0, -0.08F, 0.1F},    // hands out at the dome
+                {82, -1.55F, -0.3F, 0, -1.55F, 0.3F, 0, 0.15F, 0, 0.08F, 0.25F, 0, -0.08F, 0.1F},
+                {92, -0.3F, 0, 0.9F, -0.3F, 0, -0.9F, 0.1F, 0, 0.1F, 0.1F, 0, -0.1F, 0},             // floating down
+                {98, -1.05F, -0.75F, 0.15F, -1.05F, 0.75F, -0.15F, 0, 0, 0.12F, 0, 0, -0.12F, 0},       // arms folded
+                {104, -1.05F, -0.75F, 0.15F, -1.05F, 0.75F, -0.15F, 0, 0, 0.12F, 0, 0, -0.12F, 0}};
+        keyframes(m, t, keys, w);
+        m.rightArm.xRot += shake * w;
+        m.leftArm.xRot -= shake * w;
+        if (t >= 98) m.head.xRot = lerp(m.head.xRot, -0.1F, w);
+    }
+
+    /** Mikiko: crouched gathering fox fire, leaps blade raised, spins on the dome with the blade held high, dives
+     * blade-first, slams it into the ground, then rests it on his shoulder back to back with Rhalix. */
+    private static void teamMikiko(HumanoidModel<?> m, float t) {
+        float w = weight(t, com.xenowarriors.entity.TeamUltEntity.END, 3F, 100F);
+        if (w <= 0F) return;
+        float[][] keys = {
+                {0, 0.4F, 0.2F, 0.35F, -0.6F, 0.2F, -0.3F, -0.5F, 0, 0.15F, 0.5F, 0, -0.15F, 0.45F},     // crouched, blade low behind
+                {22, 0.5F, 0.2F, 0.4F, -0.7F, 0.2F, -0.35F, -0.6F, 0, 0.15F, 0.55F, 0, -0.15F, 0.5F},
+                {26, -2.8F, 0, 0.15F, 0.6F, 0, -0.5F, -0.9F, 0, 0.1F, 0.45F, 0, -0.1F, -0.15F},          // leap, blade up
+                {32, -3.05F, 0, 0.05F, -0.1F, 0, -1.45F, 0.1F, 0, 0.25F, -0.1F, 0, -0.25F, 0},            // spinning on top
+                {78, -3.05F, 0, 0.05F, -0.1F, 0, -1.45F, 0.1F, 0, 0.25F, -0.1F, 0, -0.25F, 0},
+                {80, -3.1F, 0.1F, 0, -3.1F, -0.1F, 0, 0, 0, 0.02F, 0, 0, -0.02F, 0},                     // diving, blade first
+                {86, -3.1F, 0.1F, 0, -3.1F, -0.1F, 0, 0, 0, 0.02F, 0, 0, -0.02F, 0},
+                {88, -0.5F, 0, 0.1F, -0.5F, 0.3F, -0.2F, -0.7F, 0, 0.15F, 0.6F, 0, -0.15F, 0.55F},        // blade slammed in
+                {94, -0.5F, 0, 0.1F, -0.5F, 0.3F, -0.2F, -0.7F, 0, 0.15F, 0.6F, 0, -0.15F, 0.55F},
+                {99, -2.3F, -0.4F, 0.2F, 0.15F, 0, -0.55F, 0, 0, 0.12F, 0, 0, -0.12F, 0},               // blade on shoulder, hand on hip
+                {104, -2.3F, -0.4F, 0.2F, 0.15F, 0, -0.55F, 0, 0, 0.12F, 0, 0, -0.12F, 0}};
+        keyframes(m, t, keys, w);
     }
 
     private static float weight(float t, float duration, float in, float outStart) {
