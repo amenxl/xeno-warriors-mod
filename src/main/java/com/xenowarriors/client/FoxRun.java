@@ -31,7 +31,7 @@ public final class FoxRun {
     private FoxRun() {}
 
     private static boolean wants(AbstractClientPlayer p) {
-        return ClientCharacterData.outfit(p) == ClientCharacterData.ORIGINS_1 && p.isSprinting() && !p.isPassenger()
+        return ClientCharacterData.mikikoOutfit(p) == ClientCharacterData.ORIGINS_1 && p.isSprinting() && !p.isPassenger()
                 && !p.isSwimming() && !p.isInWater() && !p.isFallFlying() && !p.isUsingItem() && !p.getAbilities().flying
                 && !FlightTracker.isFlying(p) && !Busy.busy(p) && !com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p);
     }

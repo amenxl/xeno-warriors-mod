@@ -30,7 +30,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     private final DetailModel foxKing = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_foxking.json");
 
     /** Mikiko's other outfits (index = outfit number; 0 = his normal look, the type's own model). */
-    private final DetailModel[] outfits = new DetailModel[ClientCharacterData.OUTFIT_KEYS.length];
+    private final Map<CharacterType, DetailModel[]> outfits = new EnumMap<>(CharacterType.class);
 
     /** The most recently made layer (both player renderers load the same models) - for Epic Fight's renderer. */
     private static CharacterDetailLayer instance;
@@ -42,9 +42,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             DetailModel model = DetailModel.load(type);
             if (model != null) models.put(type, model);
         }
-        for (int i = 1; i < outfits.length; i++) {
-            outfits[i] = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_"
-                    + ClientCharacterData.OUTFIT_KEYS[i] + ".json");
+        for (CharacterType type : CharacterType.PLAYABLE) {
+            String[] keys = type.outfitKeys();
+            DetailModel[] arr = new DetailModel[keys.length];
+            for (int i = 1; i < keys.length; i++) {
+                arr[i] = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + type.getId()
+                        + "_" + keys[i] + ".json");
+            }
+            outfits.put(type, arr);
         }
     }
 
@@ -53,8 +58,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (instance == null) return null;
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return instance.foxKing;
-        int o = ClientCharacterData.outfit(p);
-        if (o > 0 && instance.outfits[o] != null) return instance.outfits[o];
+        DetailModel om = instance.outfitModel(p, type);
+        if (om != null) return om;
         return instance.models.get(type);
     }
 
@@ -65,10 +70,16 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return "/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + name + ".json";
     }
 
+    private DetailModel outfitModel(AbstractClientPlayer p, CharacterType type) {
+        int o = ClientCharacterData.outfit(p);
+        DetailModel[] arr = outfits.get(type);
+        return o > 0 && arr != null && o < arr.length ? arr[o] : null;
+    }
+
     /** "mikiko_origins1"... for an outfit, else the type's id. */
     public static String outfitName(AbstractClientPlayer p, CharacterType type) {
         int o = ClientCharacterData.outfit(p);
-        return o > 0 ? type.getId() + "_" + ClientCharacterData.OUTFIT_KEYS[o] : type.getId();
+        return o > 0 ? type.getId() + "_" + type.outfitKeys()[o] : type.getId();
     }
 
     private static boolean isFoxKing(AbstractClientPlayer p, CharacterType type) {
@@ -296,7 +307,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean king = type == CharacterType.MIKIKO && foxKing != null && com.xenowarriors.client.mikiko.FoxKingClient.active(player);
         if (king) model = foxKing;
         int outfit = king ? 0 : ClientCharacterData.outfit(player);
-        if (outfit > 0 && outfits[outfit] != null) model = outfits[outfit];
+        DetailModel om = outfit > 0 ? outfitModel(player, type) : null;
+        if (om != null) model = om;
+        else outfit = 0;
         if (model == null) return;
 
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
@@ -333,6 +346,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             if (st >= 34F && st < 52F) Cigarette.renderInMouth(parent.head, poseStack, buffers, packedLight);   // taking a drag
             else Cigarette.render(parent.rightArm, poseStack, buffers, packedLight);
         }
+
+        // Rhalix's Origins outfits: the book he summons and reads
+        if (type == CharacterType.RHALIX) com.xenowarriors.client.RhalixBookIdle.render(player, poseStack, buffers, packedLight, partialTick);
 
         // Rhalix sharpening his sword: a whetstone in his other hand
         if (type == CharacterType.RHALIX && com.xenowarriors.client.RhalixCombatAnim.sharpening(player)) {

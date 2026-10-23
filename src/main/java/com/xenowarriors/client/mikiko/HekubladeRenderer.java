@@ -92,7 +92,7 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
         ItemRenderer items = mc.getItemRenderer();
         VertexConsumer vc = ItemRenderer.getFoilBufferDirect(buffers, Sheets.cutoutBlockSheet(), true, stack.hasFoil());
         net.minecraft.world.entity.Entity holder = current != null ? current : mc.player;
-        int outfit = holder instanceof net.minecraft.world.entity.player.Player hp ? com.xenowarriors.client.ClientCharacterData.outfit(hp) : 0;
+        int outfit = holder instanceof net.minecraft.world.entity.player.Player hp ? com.xenowarriors.client.ClientCharacterData.mikikoOutfit(hp) : 0;
         if (outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 || outfit >= com.xenowarriors.client.ClientCharacterData.SEASON_3) {
             BakedModel alt = mc.getModelManager().getModel(outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 ? ORIGINS_2 : SEASON_3);
             items.renderModelLists(alt, stack, light, overlay, pose, vc);

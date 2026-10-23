@@ -30,6 +30,23 @@ public enum CharacterType {
         this.faceTexture = XenoWarriors.id("textures/entity/character/" + id + "_face.png");
     }
 
+    /** Outfits: display names and texture/model suffixes ("" = the normal look). */
+    public String[] outfitNames() {
+        return switch (this) {
+            case MIKIKO -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3", "Recarnet Season 3 (Variant 2)"};
+            case RHALIX -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3"};
+            default -> new String[]{"Default"};
+        };
+    }
+
+    public String[] outfitKeys() {
+        return switch (this) {
+            case MIKIKO -> new String[]{"", "origins1", "origins2", "s3", "s3b"};
+            case RHALIX -> new String[]{"", "origins1", "origins2", "s3"};
+            default -> new String[]{""};
+        };
+    }
+
     public String getId() { return id; }
     public int getColor() { return color; }
     public ResourceLocation getSkin() { return skin; }

@@ -30,7 +30,7 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
 
     /** Origins outfits: young Mikiko still had his red fox tail out. */
     public static boolean outfitTail(AbstractClientPlayer p) {
-        int o = ClientCharacterData.outfit(p);
+        int o = ClientCharacterData.mikikoOutfit(p);
         return o == ClientCharacterData.ORIGINS_1 || o == ClientCharacterData.ORIGINS_2;
     }
     private final ModelPart tail, mid, tip;

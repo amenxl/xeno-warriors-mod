@@ -19,7 +19,7 @@ public abstract class AbstractClientPlayerMixin {
         if (type != CharacterType.NONE) {
             int o = ClientCharacterData.outfit((AbstractClientPlayer) (Object) this);
             cir.setReturnValue(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"
-                    + ClientCharacterData.OUTFIT_KEYS[o] + ".png") : type.getSkin());
+                    + type.outfitKeys()[o] + ".png") : type.getSkin());
         }
     }
 

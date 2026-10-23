@@ -80,7 +80,7 @@ public class PlayerStatsScreen extends Screen {
         }).bounds(width / 2 - bw / 2, 104, bw, 20).build());
         outfit = addRenderableWidget(Button.builder(Component.empty(), b -> {
             if (minecraft.player == null) return;
-            int next = (ClientCharacterData.outfit(minecraft.player) + 1) % ClientCharacterData.OUTFIT_NAMES.length;
+            int next = (ClientCharacterData.outfit(minecraft.player) + 1) % ClientCharacterData.get(minecraft.player).outfitKeys().length;
             ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(next));
             ClientCharacterData.setOutfit(minecraft.player.getUUID(), next);     // show it right away
             updateButtons();
@@ -113,9 +113,9 @@ public class PlayerStatsScreen extends Screen {
         efBattle.setMessage(Component.literal("Always battle mode: " + (ClientSettings.efAlwaysBattle() ? "ON" : "OFF")));
         efMode.setMessage(Component.literal("Battle mode moves: " + (ClientSettings.efWholeBattleMode() ? "Epic Fight's" : "Xeno Warriors'")));
         boolean mikiko = ClientCharacterData.getLocal() == CharacterType.MIKIKO;
-        outfit.visible = tab == 2 && mikiko && OUTFITS_READY;
+        outfit.visible = tab == 2 && ClientCharacterData.getLocal() != CharacterType.NONE && OUTFITS_READY;
         if (minecraft != null && minecraft.player != null)
-            outfit.setMessage(Component.literal("Outfit: " + ClientCharacterData.OUTFIT_NAMES[ClientCharacterData.outfit(minecraft.player)]));
+            outfit.setMessage(Component.literal("Outfit: " + ClientCharacterData.get(minecraft.player).outfitNames()[ClientCharacterData.outfit(minecraft.player)]));
         boolean prisoner = me != null && me.prisoner();
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
         realm.setMessage(Component.literal(me != null && me.inRealm() ? "Leave the Hekublade" : "Enter the Hekublade"));

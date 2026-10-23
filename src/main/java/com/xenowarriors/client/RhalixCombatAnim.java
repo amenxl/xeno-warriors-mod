@@ -121,7 +121,8 @@ public final class RhalixCombatAnim {
             else if (s.idle <= 0F) s.clock = 0;          // (keeps its place while fading out)
             boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p)
                     && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
-                    && p.getMainHandItem().isEmpty() && s.move == null && !RhalixWingsClient.busy(p) && !RhalixHungerClient.hungry(p);
+                    && p.getMainHandItem().isEmpty() && s.move == null && !RhalixWingsClient.busy(p) && !RhalixHungerClient.hungry(p)
+                    && !RhalixBookIdle.hasBook(p);     // (his Origins outfits read a book instead)
             int stickT = s.calm >= STICK_AFTER ? (s.calm - STICK_AFTER) % STICK_EVERY : -1;
             float stickLen = GeoAnims.length(GeoAnims.RHALIX, fidget(s, p));
             if (calm) s.calm++;
