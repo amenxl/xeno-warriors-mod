@@ -29,6 +29,9 @@ public final class ModKeyMappings {
     /** Mikiko: summon / put away the Hekublade. */
     public static final KeyMapping SUMMON_BLADE = key("summon_blade", GLFW.GLFW_KEY_G);
 
+    /** Pull your hood up / push it back down (hooded outfits and the Karma-Reducing Hoodie). */
+    public static final KeyMapping TOGGLE_HOOD = key("toggle_hood", GLFW.GLFW_KEY_J);
+
     /** Rhalix: take out / put away his wings. */
     public static final KeyMapping TOGGLE_WINGS = key("toggle_wings", GLFW.GLFW_KEY_H);
 

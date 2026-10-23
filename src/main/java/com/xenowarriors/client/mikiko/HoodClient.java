@@ -45,13 +45,32 @@ public final class HoodClient {
                 && ClientCharacterData.get(p) != com.xenowarriors.character.CharacterType.NONE;
     }
 
-    private static boolean hooded(Player p) {
+    /** Put up / down by hand (the hood key): {up, was it raining then}. Holds until pressed again or the weather turns. */
+    private static final Map<Integer, boolean[]> MANUAL = new HashMap<>();
+
+    public static void setManual(int id, boolean up) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || !(mc.level.getEntity(id) instanceof Player p)) return;
+        MANUAL.put(id, new boolean[]{up, raining(p)});
+    }
+
+    private static boolean raining(Player p) {
+        return p.level().isRainingAt(p.blockPosition().above()) && !p.isUnderWater();
+    }
+
+    public static boolean hooded(Player p) {
         return hasHood(p) || karmaHoodie(p);
     }
 
-    private static boolean wantsUp(Player p) {
-        var pos = p.blockPosition();
-        return hooded(p) && p.level().isRainingAt(pos.above()) && !p.isUnderWater();
+    public static boolean wantsUp(Player p) {
+        if (!hooded(p)) return false;
+        boolean rain = raining(p);
+        boolean[] m = MANUAL.get(p.getId());
+        if (m != null) {
+            if (m[1] == rain) return m[0];
+            MANUAL.remove(p.getId());              // the weather changed: back to pulling it up for rain
+        }
+        return rain;
     }
 
     @SubscribeEvent
@@ -59,6 +78,7 @@ public final class HoodClient {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STATE.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+        MANUAL.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         for (AbstractClientPlayer p : mc.level.players()) {
             if (!hooded(p)) { STATE.remove(p.getId()); continue; }
             int[] s = STATE.computeIfAbsent(p.getId(), k -> new int[]{wantsUp(p) ? 1 : 0, PULL * 4});

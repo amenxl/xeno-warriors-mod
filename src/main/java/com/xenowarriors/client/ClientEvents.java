@@ -74,6 +74,11 @@ public final class ClientEvents {
         while (ModKeyMappings.SUMMON_BLADE.consumeClick()) { }      // (tap vs hold: BladeChannelClient)
         if (!UltimateCutscene.active()) com.xenowarriors.client.mikiko.BladeChannelClient.keyTick(mc);
 
+        while (ModKeyMappings.TOGGLE_HOOD.consumeClick()) {
+            if (mc.player != null && com.xenowarriors.client.mikiko.HoodClient.hooded(mc.player))
+                com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.HoodTogglePacket(
+                        !com.xenowarriors.client.mikiko.HoodClient.wantsUp(mc.player)));
+        }
         while (ModKeyMappings.TOGGLE_WINGS.consumeClick()) {
             if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.RHALIX && !UltimateCutscene.active()) {
                 ModNetwork.sendToServer(new com.xenowarriors.network.ToggleWingsPacket());

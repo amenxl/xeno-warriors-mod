@@ -61,6 +61,7 @@
   "death.attack.xenowarriors.gravity_barrage.item": "%1$s was buried by %2$s's Gravity Barrage",
   "death.attack.xenowarriors.gravity_barrage.player": "%1$s was buried by %2$s's Gravity Barrage",
   "key.xenowarriors.summon_blade": "Summon Hekublade (Mikiko)",
+  "key.xenowarriors.toggle_hood": "Hood Up / Down",
   "item.xenowarriors.hekublade": "Hekublade",
   "message.xenowarriors.hekublade.full": "No room to summon the Hekublade",
   "key.xenowarriors.skill1": "Skill 1",
