@@ -84,7 +84,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     private static boolean isFoxKing(AbstractClientPlayer p, CharacterType type) {
         return type == CharacterType.MIKIKO && instance != null && instance.foxKing != null
-                && com.xenowarriors.client.mikiko.FoxKingClient.active(p);
+                && com.xenowarriors.client.mikiko.FoxKingClient.active(p) && ClientCharacterData.outfit(p) == 0;   // (outfits keep their own look)
     }
 
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
@@ -304,7 +304,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         DetailModel model = models.get(type);
-        boolean king = type == CharacterType.MIKIKO && foxKing != null && com.xenowarriors.client.mikiko.FoxKingClient.active(player);
+        boolean king = isFoxKing(player, type);
         if (king) model = foxKing;
         int outfit = king ? 0 : ClientCharacterData.outfit(player);
         DetailModel om = outfit > 0 ? outfitModel(player, type) : null;

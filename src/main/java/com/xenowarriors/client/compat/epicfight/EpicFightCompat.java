@@ -118,10 +118,19 @@ public final class EpicFightCompat {
                 || anim instanceof yesman.epicfight.api.animation.types.DashAttackAnimation;
     }
 
-    /** Bare hands or a sword: what Mikiko and Rhalix have their own attack animations for. */
+    /**
+     * Uses Mikiko's and Rhalix's own moves: bare hands, the Hekublade, or anything Epic Fight has no weapon moves for.
+     * Every Epic Fight weapon (its swords, longswords, tachis, axes, spears, daggers...) plays Epic Fight's own animations.
+     */
     public static boolean ownWeapon(net.minecraft.world.entity.player.Player p) {
         var stack = p.getMainHandItem();
-        return stack.isEmpty() || stack.getItem() instanceof net.minecraft.world.item.SwordItem;
+        if (stack.isEmpty() || stack.getItem() instanceof com.xenowarriors.item.HekubladeItem) return true;
+        try {
+            var cap = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(stack);
+            return cap == null || cap.isEmpty() || cap == yesman.epicfight.world.capabilities.item.CapabilityItem.EMPTY;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private static yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch(net.minecraft.world.entity.player.Player p) {
