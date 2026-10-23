@@ -145,6 +145,12 @@ public final class RhalixCombatAnim {
                 s.air = air;
                 s.move = (air ? AIR_COMBOS : COMBOS)[s.variant][s.step++];
                 s.moveStart = now;
+                // on the ground he steps into his punches like Mikiko does (stopping at a locked-on target)
+                if (!air && p == mc.player && mc.player != null && !p.isCrouching() && p.onGround()
+                        && (s.move.contains("jab") || s.move.contains("uppercut"))) {
+                    boolean first = s.step <= 2;
+                    com.xenowarriors.client.mikiko.DashGuard.dash(mc.player, first ? 0.4 : 0.34, first ? 0.18 : 0.08);
+                }
                 s.scale = external ? AttackHooks.timeScale(p, GeoAnims.length(GeoAnims.RHALIX, s.move), 0.42F) : 1F;
                 s.lastAttack = now;
             }
