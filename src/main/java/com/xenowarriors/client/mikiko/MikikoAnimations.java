@@ -64,11 +64,11 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
     private static final Move[][] COMBOS = {
-            {Move.JAB_R, Move.JAB_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_DOWN},
-            {Move.HOOK_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_SPIN},
-            {Move.JAB_L, Move.HOOK_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_DOWN},
-            {Move.UPPERCUT_L, Move.JAB_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_THRUST},
-            {Move.JAB_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.BLADE_DOWN},
+            {Move.JAB_R, Move.JAB_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_ROUNDHOUSE},
+            {Move.HOOK_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_SPIN},
+            {Move.JAB_L, Move.HOOK_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_ROUNDHOUSE},
+            {Move.UPPERCUT_L, Move.JAB_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_SIDE},
+            {Move.JAB_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_ROUNDHOUSE},
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
     private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
@@ -451,16 +451,18 @@ public final class MikikoAnimations {
         ItemStack held = p.getMainHandItem();
         boolean flying = FlightTracker.isFlying(p) || p.isFallFlying();
         Move move;
-        if (held.isEmpty()) {
+        if (fistCombo(held)) {
             if (now - s.lastAttack > COMBO_TIMEOUT || s.comboStep >= COMBOS[0].length || s.variant < 0) {
                 s.comboStep = 0;
                 s.variant = RANDOM.nextInt(COMBOS.length);
             }
             move = COMBOS[s.variant][s.comboStep++];
             if (p instanceof net.minecraft.client.player.LocalPlayer lp) {
-                // the Hekublade only comes out for someone just out of fist range (its slash reaches them);
-                // up close it stays punches and kicks
-                net.minecraft.world.entity.LivingEntity far = flying ? null : BladeReach.farTarget(lp);
+                // the Hekublade only comes out now and then, on the last couple of hits, for someone just out of fist
+                // range (its slash reaches them); otherwise it stays punches and kicks
+                boolean lastHits = s.comboStep >= COMBOS[0].length - 1;
+                net.minecraft.world.entity.LivingEntity far = flying || !held.isEmpty() || !lastHits || RANDOM.nextFloat() >= 0.45F
+                        ? null : BladeReach.farTarget(lp);
                 if (far != null) {
                     if (!move.blade) move = COMBO_BLADE[RANDOM.nextInt(COMBO_BLADE.length)];
                     BladeReach.strike(far);
@@ -505,6 +507,13 @@ public final class MikikoAnimations {
         s.move = move;
         s.moveStart = now;
         s.lastAttack = now;
+    }
+
+    /** Bare hands, or holding something with no attack of its own (a block, food, a stick...): the fist combo. */
+    private static boolean fistCombo(ItemStack held) {
+        var it = held.getItem();
+        return held.isEmpty() || !(it instanceof SwordItem || it instanceof net.minecraft.world.item.TieredItem
+                || it instanceof net.minecraft.world.item.TridentItem || it instanceof net.minecraft.world.item.ProjectileWeaponItem);
     }
 
     /** 0 = fist, 1 = normal sword, 2 = Hekublade (held or summoned). */

@@ -14,9 +14,25 @@ public class SkylanderRenderer extends NpcRenderer<SkylanderEntity> {
         super(ctx, new Model(ctx.bakeLayer(ModelLayers.PLAYER)), SkylanderEntity::look, e -> false);
     }
 
+    /** 0 = hovering, 1 = flying flat out. */
+    static float speed(SkylanderEntity e) {
+        return (float) Math.min(1.0, e.getDeltaMovement().horizontalDistance() / 0.25);
+    }
+
     @Override
     protected void prepare(SkylanderEntity e, DetailModel m, float age) {
-        m.setupWings(!e.wingless(), e.flying(), age, 0F);
+        if (!e.flying()) {
+            m.setupWings(!e.wingless(), false, age, 0F);
+            return;
+        }
+        double vy = e.getDeltaMovement().y;
+        if (vy < -0.06) {
+            m.setupWings(true, false, age, 1F);                                   // gliding down: wings spread wide and still
+        } else {
+            // beating: faster and harder climbing or hovering, slower cruising
+            float rate = vy > 0.04 ? 1.6F : 1.25F - 0.35F * speed(e);
+            m.setupWings(true, true, age * rate, 0F);
+        }
     }
 
     @Override
@@ -27,15 +43,23 @@ public class SkylanderRenderer extends NpcRenderer<SkylanderEntity> {
     @Override
     protected void setupRotations(SkylanderEntity e, PoseStack pose, float bob, float yaw, float partialTick) {
         super.setupRotations(e, pose, bob, yaw, partialTick);
-        if (e.flying()) {
-            // leaning into the flight, gently bobbing
-            float speed = (float) Math.min(1.0, e.getDeltaMovement().horizontalDistance() * 5.0);
-            pose.translate(0, Mth.sin(bob * 0.1F) * 0.06F, 0);
-            pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(35F * speed));
-        }
+        if (!e.flying()) return;
+        float sp = speed(e);
+        double vy = e.getDeltaMovement().y;
+        // rising and falling with each wingbeat while hovering; smoother when cruising
+        pose.translate(0, Mth.sin(bob * 0.35F * 1.25F) * 0.09F * (1F - sp * 0.6F), 0);
+        // pitched forward into the flight (flat out at speed, nose down when gliding down)
+        float pitch = 70F * sp + (vy < -0.06 ? 15F : 0F) - (vy > 0.06 ? 10F : 0F);
+        // banking into turns
+        float turn = Mth.wrapDegrees(e.yBodyRot - e.yBodyRotO);
+        float roll = Mth.clamp(turn * 4F, -30F, 30F) * sp;
+        pose.translate(0, 0.9F, 0);
+        pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(pitch));
+        pose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(roll));
+        pose.translate(0, -0.9F, 0);
     }
 
-    /** Flying: legs trail behind, arms out; wingless: head hung low, slow drooping walk. */
+    /** Flying: hovering upright with legs dangling, or stretched out flat with arms swept back; wingless: head hung. */
     static class Model extends PlayerModel<SkylanderEntity> {
         Model(net.minecraft.client.model.geom.ModelPart root) { super(root, false); }
 
@@ -43,13 +67,24 @@ public class SkylanderRenderer extends NpcRenderer<SkylanderEntity> {
         public void setupAnim(SkylanderEntity e, float limbSwing, float limbSwingAmount, float age, float yaw, float pitch) {
             super.setupAnim(e, limbSwing, limbSwingAmount, age, yaw, pitch);
             if (e.flying()) {
-                float s = Mth.sin(age * 0.12F);
-                rightLeg.xRot = 0.25F + s * 0.08F;
-                leftLeg.xRot = 0.15F - s * 0.08F;
-                rightArm.xRot = 0.2F; leftArm.xRot = 0.2F;
-                rightArm.zRot = 0.35F + s * 0.05F;
-                leftArm.zRot = -0.35F - s * 0.05F;
-                head.xRot -= 0.3F;
+                float sp = speed(e);
+                float beat = Mth.sin(age * 0.35F * 1.25F);
+                // hover: legs hanging and swaying a little behind the wingbeat, arms loose and out
+                float hrl = 0.12F + beat * 0.08F, hll = -0.05F - beat * 0.08F;
+                float hra = -0.15F + beat * 0.06F, hza = 0.45F + beat * 0.08F;
+                // cruising: stretched out, legs together trailing, arms swept back along the body
+                float flutter = Mth.sin(age * 0.5F) * 0.06F;
+                rightLeg.xRot = Mth.lerp(sp, hrl, 0.15F + flutter);
+                leftLeg.xRot = Mth.lerp(sp, hll, 0.15F - flutter);
+                rightLeg.zRot = Mth.lerp(sp, 0.06F, 0.02F);
+                leftLeg.zRot = Mth.lerp(sp, -0.06F, -0.02F);
+                rightLeg.yRot = 0; leftLeg.yRot = 0;
+                rightArm.xRot = Mth.lerp(sp, hra, 0.35F);
+                leftArm.xRot = Mth.lerp(sp, hra, 0.35F);
+                rightArm.zRot = Mth.lerp(sp, hza, 0.12F);
+                leftArm.zRot = Mth.lerp(sp, -hza, -0.12F);
+                rightArm.yRot = 0; leftArm.yRot = 0;
+                head.xRot -= 1.05F * sp;                                  // still looking where they're going
             } else if (e.wingless()) {
                 head.xRot = 0.55F;
                 rightArm.xRot *= 0.4F; leftArm.xRot *= 0.4F;

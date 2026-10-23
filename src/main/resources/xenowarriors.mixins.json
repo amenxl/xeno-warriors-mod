@@ -35,7 +35,8 @@
     "compat.DragonMineZHandMixin",
     "compat.DragonMineZAttackMixin",
     "compat.DragonMineZKiSenseMixin",
-    "compat.DragonMineZKiSenseBPMixin"
+    "compat.DragonMineZKiSenseBPMixin",
+    "compat.EpicFightTargetOutlineMixin"
   ],
   "injectors": {
     "defaultRequire": 1

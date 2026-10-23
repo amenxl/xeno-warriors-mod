@@ -36,7 +36,8 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
         WorldGenLevel level = ctx.level();
         RandomSource r = ctx.random();
         BlockPos origin = ctx.origin();
-        int top = Math.min(level.getMaxBuildHeight() - 20, 170 + r.nextInt(51));
+        // (above 192, where water springs can't form: nothing pours off them)
+        int top = Math.min(level.getMaxBuildHeight() - 30, 198 + r.nextInt(40));
         int radius = 6 + r.nextInt(7);
         BlockPos c = new BlockPos(origin.getX(), top, origin.getZ());
         // a lumpy outline: radius wobbles around the edge
@@ -53,9 +54,10 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
                 int depth = 1 + (int) (Math.pow(f, 0.7) * radius * 1.1) + r.nextInt(2);
                 int surfaceBump = f > 0.4 && r.nextInt(6) == 0 ? 1 : 0;
                 for (int y = surfaceBump; y >= -depth; y--) {
+                    // (no stone or plain dirt inside: springs of water or lava can't form in it)
                     BlockState s = y == surfaceBump ? Blocks.GRASS_BLOCK.defaultBlockState()
-                            : y > surfaceBump - 3 ? Blocks.DIRT.defaultBlockState()
-                            : r.nextInt(12) == 0 ? Blocks.COBBLESTONE.defaultBlockState() : Blocks.STONE.defaultBlockState();
+                            : y > surfaceBump - 3 ? Blocks.COARSE_DIRT.defaultBlockState()
+                            : r.nextInt(5) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState();
                     setBlock(level, c.offset(dx, y, dz), s);
                 }
                 BlockPos above = c.offset(dx, surfaceBump + 1, dz);
@@ -64,10 +66,14 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
                     setBlock(level, above, (r.nextBoolean() ? Blocks.DANDELION : Blocks.POPPY).defaultBlockState());
             }
         }
+        // a little home now and then, with a chest of whatever its owner left behind
+        boolean house = radius >= 8 && r.nextFloat() < 0.6F;
+        if (house) house(level, c.above(), r);
         // a tree or two
         int trees = radius >= 9 ? 1 + r.nextInt(2) : r.nextInt(2);
         for (int t = 0; t < trees; t++) {
             int tx = r.nextInt(radius) - radius / 2, tz = r.nextInt(radius) - radius / 2;
+            if (house && Math.abs(tx) <= 4 && Math.abs(tz) <= 4) continue;       // not through the house
             BlockPos base = c.offset(tx, 1, tz);
             while (!level.getBlockState(base.below()).is(Blocks.GRASS_BLOCK) && base.getY() > top - 2) base = base.below();
             if (!level.getBlockState(base.below()).is(Blocks.GRASS_BLOCK)) continue;
@@ -86,6 +92,43 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         return true;
+    }
+
+    /** A 5x5 cottage: plank walls on log corners, a door gap, windows, a stepped roof, a bed and a chest. */
+    private void house(WorldGenLevel level, BlockPos floor, RandomSource r) {
+        BlockState planks = Blocks.SPRUCE_PLANKS.defaultBlockState(), log = Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState();
+        BlockState glass = Blocks.GLASS_PANE.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        // floor (also fills any dips under it)
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+            setBlock(level, floor.offset(dx, -1, dz), planks);
+            for (int y = -2; y >= -4; y--) if (level.isEmptyBlock(floor.offset(dx, y, dz))) setBlock(level, floor.offset(dx, y, dz), Blocks.COBBLESTONE.defaultBlockState());
+        }
+        for (int y = 0; y <= 2; y++) {
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+                boolean edge = Math.abs(dx) == 2 || Math.abs(dz) == 2, corner = Math.abs(dx) == 2 && Math.abs(dz) == 2;
+                BlockPos p = floor.offset(dx, y, dz);
+                if (!edge) setBlock(level, p, air);
+                else if (corner) setBlock(level, p, log);
+                else if (dz == -2 && dx == 0 && y < 2) setBlock(level, p, air);                     // doorway (north)
+                else if (y == 1 && (dx == 0 || dz == 0)) setBlock(level, p, glass);                // windows
+                else setBlock(level, p, planks);
+            }
+        }
+        // roof: a flat layer of slabs over a plank ceiling
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
+            if (Math.abs(dx) <= 2 && Math.abs(dz) <= 2) setBlock(level, floor.offset(dx, 3, dz), planks);
+            setBlock(level, floor.offset(dx, Math.abs(dx) <= 2 && Math.abs(dz) <= 2 ? 4 : 3, dz), Blocks.SPRUCE_SLAB.defaultBlockState());
+        }
+        // inside: a chest, a lantern, a crafting table
+        BlockPos chest = floor.offset(1, 0, 1);
+        setBlock(level, chest, Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, net.minecraft.core.Direction.NORTH));
+        net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity.setLootTable(level, r, chest,
+                new net.minecraft.resources.ResourceLocation(r.nextBoolean() ? "minecraft:chests/village/village_plains_house" : "minecraft:chests/simple_dungeon"));
+        setBlock(level, floor.offset(-1, 0, 1), Blocks.CRAFTING_TABLE.defaultBlockState());
+        setBlock(level, floor.offset(0, 2, 0), Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true));
+        // clear in front of the door
+        setBlock(level, floor.offset(0, 0, -3), air);
+        setBlock(level, floor.offset(0, 1, -3), air);
     }
 
     private void tree(WorldGenLevel level, BlockPos base, RandomSource r) {
