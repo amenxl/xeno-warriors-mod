@@ -145,6 +145,30 @@ public final class KarmaSensing {
         return HOLDING.containsKey(p.getUUID());
     }
 
+    /** Sky Ore nearby glows for you too (up to 64 blocks away), outlined through the rock. */
+    private static void traceSkyOre(ServerPlayer p, double radius, int duration) {
+        var ore = com.xenowarriors.sky.ModBlocks.SKY_ORE.get();
+        var level = p.serverLevel();
+        java.util.List<Long> found = new java.util.ArrayList<>();
+        int r = (int) radius, cx = p.blockPosition().getX() >> 4, cz = p.blockPosition().getZ() >> 4, cr = (r >> 4) + 1;
+        for (int dx = -cr; dx <= cr && found.size() < 96; dx++) for (int dz = -cr; dz <= cr && found.size() < 96; dz++) {
+            var chunk = level.getChunkSource().getChunkNow(cx + dx, cz + dz);
+            if (chunk == null) continue;
+            var sections = chunk.getSections();
+            for (int i = 0; i < sections.length && found.size() < 96; i++) {
+                var sec = sections[i];
+                if (sec == null || sec.hasOnlyAir() || !sec.maybeHas(s -> s.is(ore))) continue;
+                int baseY = level.getSectionYFromSectionIndex(i) << 4;
+                for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
+                    if (!sec.getBlockState(x, y, z).is(ore)) continue;
+                    var pos = new net.minecraft.core.BlockPos(((cx + dx) << 4) + x, baseY + y, ((cz + dz) << 4) + z);
+                    if (pos.distSqr(p.blockPosition()) <= radius * radius && found.size() < 96) found.add(pos.asLong());
+                }
+            }
+        }
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.SkyOreSensedPacket(found.stream().mapToLong(Long::longValue).toArray(), duration), p);
+    }
+
     /** One more use's worth of practice (with the milestone messages). */
     private static void practice(ServerPlayer player) {
         int uses = uses(player);
@@ -200,6 +224,7 @@ public final class KarmaSensing {
         }
         player.displayClientMessage(Component.literal(first ? "" : "Focusing: " + Math.round(RADIUS) + " blocks - ")
                 .append(Component.translatable("message.xenowarriors.karma_sense.found", ids.length)), true);
+        traceSkyOre(player, Math.min(RADIUS, 64), DURATION);
         if (!first) return;
         // "I think someone is trying to trace my karma"
         for (LivingEntity e : found) {

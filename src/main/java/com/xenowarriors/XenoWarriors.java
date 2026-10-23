@@ -28,6 +28,7 @@ public class XenoWarriors {
         com.xenowarriors.npc.ModNpcs.init();
         ModEntities.ENTITY_TYPES.register(modBus);
         com.xenowarriors.world.SkyIslandFeature.FEATURES.register(modBus);
+        com.xenowarriors.sky.ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
         com.xenowarriors.world.AddDiscLootModifier.SERIALIZERS.register(modBus);

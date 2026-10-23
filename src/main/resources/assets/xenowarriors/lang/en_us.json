@@ -182,5 +182,11 @@
   "entity.xenowarriors.npc_thrown": "Thrown Item",
   "entity.xenowarriors.ki_blast": "Ki Blast",
   "item.xenowarriors.skylander_spawn_egg": "Skylander Spawn Egg",
-  "item.xenowarriors.dark_possessed_spawn_egg": "Possessed Spawn Egg"
+  "item.xenowarriors.dark_possessed_spawn_egg": "Possessed Spawn Egg",
+  "block.xenowarriors.sky_ore": "Sky Ore",
+  "item.xenowarriors.sky_crystal": "Sky Crystal",
+  "item.xenowarriors.sky_helmet": "Sky Helmet",
+  "item.xenowarriors.sky_chestplate": "Sky Chestplate",
+  "item.xenowarriors.sky_leggings": "Sky Leggings",
+  "item.xenowarriors.sky_boots": "Sky Boots"
 }

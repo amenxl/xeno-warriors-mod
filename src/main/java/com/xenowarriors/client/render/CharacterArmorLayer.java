@@ -34,6 +34,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     private final Map<CharacterType, DetailModel> hoodies = new EnumMap<>(CharacterType.class);
     private final Map<CharacterType, DetailModel> hoodieTrims = new EnumMap<>(CharacterType.class);
     private final Map<CharacterType, DetailModel> srHoodies = new EnumMap<>(CharacterType.class);
+    private final Map<CharacterType, Map<EquipmentSlot, DetailModel>> skyModels = new EnumMap<>(CharacterType.class);
+    private static final ResourceLocation SKY_TEX = XenoWarriors.id("textures/entity/character/sky_armor.png");
 
     public CharacterArmorLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
@@ -49,6 +51,12 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             if (hoodie != null) hoodies.put(type, hoodie);
             DetailModel trim = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_hoodie_trim.json");
             if (trim != null) hoodieTrims.put(type, trim);
+            Map<EquipmentSlot, DetailModel> sky = new EnumMap<>(EquipmentSlot.class);
+            for (EquipmentSlot slot : SLOTS) {
+                DetailModel m = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_sky_" + slotName(slot) + ".json");
+                if (m != null) sky.put(slot, m);
+            }
+            skyModels.put(type, sky);
             DetailModel sr = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_sr_hoodie.json");
             if (sr != null) srHoodies.put(type, sr);
         }
@@ -139,6 +147,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             boolean hoodie = stack.getItem() instanceof com.xenowarriors.item.KarmaHoodieItem;
             if (hoodie) m = hoodies.get(type);
             if (sr) m = srHoodies.get(type);
+            boolean skyArmor = stack.getItem() instanceof com.xenowarriors.sky.SkyArmorItem;     // its own 3D set and texture
+            if (skyArmor && skyModels.get(type) != null) m = skyModels.get(type).get(slot);
             if (m == null) continue;
             m.head.copyFrom(parent.head);
             m.body.copyFrom(parent.body);
@@ -152,10 +162,10 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                 if (m.hoodUp != null) m.hoodUp.visible = up;
                 if (m.hoodDown != null) m.hoodDown.visible = !up;
             }
-            float[] c = sr ? new float[]{1F, 1F, 1F} : tint(stack, armor);
+            float[] c = sr || skyArmor ? new float[]{1F, 1F, 1F} : tint(stack, armor);
             // Mikiko: no armor on his left arm, so his shoulder plate shows
             m.leftArm.visible = type != CharacterType.MIKIKO;   // Mikiko: nothing on his left arm (armor or hoodies), so his shoulder plate shows   // the hoodie's dye comes through here too (it's dyeable like leather)
-            ResourceLocation tex = texture;
+            ResourceLocation tex = skyArmor ? SKY_TEX : texture;
             if ((hoodie || sr) && stack.isDamageableItem() && stack.getMaxDamage() > 0) {
                 // hoodies get scuffed below half durability and ripped up below a quarter
                 float worn = stack.getDamageValue() / (float) stack.getMaxDamage();

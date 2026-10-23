@@ -57,6 +57,7 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
                     // (no stone or plain dirt inside: springs of water or lava can't form in it)
                     BlockState s = y == surfaceBump ? Blocks.GRASS_BLOCK.defaultBlockState()
                             : y > surfaceBump - 3 ? Blocks.COARSE_DIRT.defaultBlockState()
+                            : r.nextInt(28) == 0 ? com.xenowarriors.sky.ModBlocks.SKY_ORE.get().defaultBlockState()       // Sky Ore, only up here
                             : r.nextInt(5) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState();
                     setBlock(level, c.offset(dx, y, dz), s);
                 }

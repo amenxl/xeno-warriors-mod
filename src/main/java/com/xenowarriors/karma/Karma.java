@@ -71,9 +71,20 @@ public final class Karma {
             if (data.getType() == CharacterType.NONE || !player.isAlive()) return;
             boolean focusing = player.isShiftKeyDown() && player.onGround()
                     && player.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4;
+            // Sky Helmet: +100 max Karma (on top of Fox King's bonus)
+            float max = (com.xenowarriors.mikiko.FoxKing.active(player) ? MAX * (1 + com.xenowarriors.mikiko.FoxKing.KARMA_MAX_BONUS) : MAX)
+                    + (com.xenowarriors.sky.SkyArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.HEAD) ? 100F : 0F);
+            if (data.karmaMax != max) {
+                data.karmaMax = max;
+                if (data.getKarma() > max) data.setKarma(max);
+                sync(player, data);
+            }
             if (data.getKarma() < data.karmaMax) {
                 float rate = (focusing ? FOCUS_REGEN : REGEN) / 20F;
                 if (com.xenowarriors.item.HoodieItem.wearing(player)) rate *= 0.5F;   // it suppresses your Karma
+                // Sky Leggings: walking slowly brings Karma back
+                if (com.xenowarriors.sky.SkyArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.LEGS) && player.onGround()
+                        && Math.abs(player.getX() - player.xo) + Math.abs(player.getZ() - player.zo) > 0.03) rate += 1.5F / 20F;
                 data.setKarma(data.getKarma() + rate);
             }
             // send to the HUD when it has changed by a whole point, or right away the first time

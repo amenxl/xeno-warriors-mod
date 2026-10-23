@@ -12,7 +12,9 @@
     "BatAccessor",
     "FurnaceAccessor",
     "FurnaceSpeedMixin",
-    "compat.DragonMineZQuestBiomeMixin"
+    "compat.DragonMineZQuestBiomeMixin",
+    "PlayerSkyWalkMixin",
+    "ServerGamePacketListenerAccessor"
   ],
   "client": [
     "AbstractClientPlayerMixin",

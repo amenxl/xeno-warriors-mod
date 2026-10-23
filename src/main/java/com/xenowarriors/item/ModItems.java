@@ -23,6 +23,17 @@ public final class ModItems {
 
     public static final RegistryObject<Item> HUMAN_SPAWN_EGG = ITEMS.register("human_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.HUMAN, 0xE8C8A8, 0x2A2A44, new Item.Properties()));
+    public static final RegistryObject<Item> SKY_CRYSTAL = ITEMS.register("sky_crystal", () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> SKY_ORE = ITEMS.register("sky_ore",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.SKY_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> SKY_HELMET = ITEMS.register("sky_helmet",
+            () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
+    public static final RegistryObject<Item> SKY_CHESTPLATE = ITEMS.register("sky_chestplate",
+            () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));
+    public static final RegistryObject<Item> SKY_LEGGINGS = ITEMS.register("sky_leggings",
+            () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
+    public static final RegistryObject<Item> SKY_BOOTS = ITEMS.register("sky_boots",
+            () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
     public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> BRIEFCASE = ITEMS.register("briefcase", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKYLANDER_SPAWN_EGG = ITEMS.register("skylander_spawn_egg",
