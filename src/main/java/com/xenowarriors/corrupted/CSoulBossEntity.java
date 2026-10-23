@@ -82,13 +82,24 @@ public class CSoulBossEntity extends Monster {
             getAttribute(Attributes.FLYING_SPEED).setBaseValue(0.75);
         }
         LivingEntity target = getTarget();
-        if (target == null || !target.isAlive()) return;
+        int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, net.minecraft.util.Mth.floor(getX()),
+                net.minecraft.util.Mth.floor(getZ()));
+        if (target == null || !target.isAlive()) {
+            // nothing to hunt: settles at one height instead of drifting ever upward
+            if (getY() > ground + 6) setDeltaMovement(getDeltaMovement().multiply(1, 0.5, 1).add(0, -0.05, 0));
+            return;
+        }
         getLookControl().setLookAt(target, 30F, 30F);
 
         // hover above the target, slowly circling
         double a = tickCount * (enraged ? 0.05 : 0.03);
         double r = distanceTo(target) < 6 ? 7 : 5;
-        Vec3 want = target.position().add(Math.cos(a) * r, 4.5, Math.sin(a) * r);
+        // over something that can fly it keeps above it; over someone who can't, it stays low enough to be hit
+        boolean targetFlies = (target instanceof Player tp && (tp.getAbilities().flying || tp.getAbilities().mayfly)) || target.isNoGravity()
+                || target.isFallFlying();
+        double lift = targetFlies ? 3.5 : 0.8;
+        Vec3 want = target.position().add(Math.cos(a) * r, lift, Math.sin(a) * r);
+        if (!targetFlies) want = new Vec3(want.x, Math.min(want.y, Math.max(ground, target.getY()) + 1.2), want.z);
         moveControl.setWantedPosition(want.x, want.y, want.z, enraged ? 1.4 : 1.0);
 
         double dist = distanceToSqr(target);

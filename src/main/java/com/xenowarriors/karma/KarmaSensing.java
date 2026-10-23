@@ -174,12 +174,12 @@ public final class KarmaSensing {
         return chunks * 16.0;
     }
 
-    private static void scan(ServerPlayer player, double RADIUS, int DURATION, boolean friendly, boolean first) {
+    private static void scan(ServerPlayer player, double wanted, int DURATION, boolean friendly, boolean first) {
         int uses = uses(player);
         // never further than you can see; reaching past that, your sense is strong enough to read everyone's stats
         double limit = viewLimit(player);
-        boolean overflow = RADIUS > limit;
-        RADIUS = Math.min(RADIUS, limit);
+        boolean overflow = wanted > limit;
+        final double RADIUS = Math.min(wanted, limit);
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
                         && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses < MASTERY)))
