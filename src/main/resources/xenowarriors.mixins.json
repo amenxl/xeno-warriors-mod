@@ -33,7 +33,8 @@
     "compat.DragonMineZRendererMixin",
     "compat.DragonMineZFirstPersonMixin",
     "compat.DragonMineZHandMixin",
-    "compat.DragonMineZAttackMixin"
+    "compat.DragonMineZAttackMixin",
+    "compat.DragonMineZKiSenseMixin"
   ],
   "injectors": {
     "defaultRequire": 1

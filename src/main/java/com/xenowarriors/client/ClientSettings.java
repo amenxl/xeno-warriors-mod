@@ -54,6 +54,16 @@ public final class ClientSettings {
         save();
     }
 
+    /** Mikiko's and Rhalix's heads taper to an anime-style chin (a trial; off = the plain square head). */
+    public static boolean animeJaw() {
+        return !"false".equals(props().getProperty("anime_jaw", "true"));
+    }
+
+    public static void setAnimeJaw(boolean on) {
+        props().setProperty("anime_jaw", String.valueOf(on));
+        save();
+    }
+
     /** With Epic Fight: always stay in battle mode (its mode key can't switch it off; only this setting can). */
     public static boolean efAlwaysBattle() {
         return !"false".equals(props().getProperty("ef_always_battle", "true"));

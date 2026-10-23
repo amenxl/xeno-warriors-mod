@@ -52,6 +52,11 @@ public final class KarmaSense {
         pulseStart = mc.level.getGameTime();
     }
 
+    /** Karma Sensing is showing things right now. */
+    public static boolean active() {
+        return !SENSED.isEmpty();
+    }
+
     public static boolean isSensed(Entity e) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return false;

@@ -31,7 +31,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -76,11 +76,15 @@ public class PlayerStatsScreen extends Screen {
         efMode = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfWholeBattleMode(!ClientSettings.efWholeBattleMode());
             updateButtons();
-        }).bounds(bx, SET_TOP + 98, bw, 20).build());
+        }).bounds(bx, SET_TOP + 144, bw, 20).build());
         efBattle = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
-        }).bounds(bx, SET_TOP + 122, bw, 20).build());
+        }).bounds(bx, SET_TOP + 168, bw, 20).build());
+        headShape = addRenderableWidget(Button.builder(Component.empty(), b -> {
+            ClientSettings.setAnimeJaw(!ClientSettings.animeJaw());
+            updateButtons();
+        }).bounds(bx, SET_TOP + 98, bw, 20).build());
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
         for (int i = 0; i < MAX_OUTFITS; i++) {
@@ -156,6 +160,8 @@ public class PlayerStatsScreen extends Screen {
         tabSettings.active = tab != 3;
         senseFriendly.visible = tab == 3;
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
+        headShape.visible = tab == 3;
+        headShape.setMessage(Component.literal("Head shape: " + (ClientSettings.animeJaw() ? "Anime jaw" : "Classic")));
         efMode.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
         efBattle.visible = efMode.visible;
         efBattle.setMessage(Component.literal("Always battle mode: " + (ClientSettings.efAlwaysBattle() ? "ON" : "OFF")));
@@ -397,7 +403,7 @@ public class PlayerStatsScreen extends Screen {
     private void renderSettings(GuiGraphics g) {
         int w = cardW(), x = cardX(), y = SET_TOP;
         boolean ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
-        int h = ef ? 150 : 84;
+        int h = ef ? 196 : 130;
         g.fill(x, y, x + w, y + h, BG);
         g.fill(x, y, x + w, y + 1, 0xFF8C8CA0);
         g.drawCenteredString(font, "Settings", width / 2, y + 6, 0xFFFFFF);
@@ -412,9 +418,11 @@ public class PlayerStatsScreen extends Screen {
             i += line.length();
             if (i >= help.length()) break;
         }
+        g.fill(x + PAD, y + 82, x + w - PAD, y + 83, 0x30FFFFFF);
+        small(g, "LOOK", x + PAD, y + 86, SECTION);
         if (ef) {
-            g.fill(x + PAD, y + 82, x + w - PAD, y + 83, 0x30FFFFFF);
-            small(g, "EPIC FIGHT", x + PAD, y + 86, SECTION);
+            g.fill(x + PAD, y + 128, x + w - PAD, y + 129, 0x30FFFFFF);
+            small(g, "EPIC FIGHT", x + PAD, y + 132, SECTION);
         }
     }
 

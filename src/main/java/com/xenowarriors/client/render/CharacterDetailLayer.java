@@ -413,6 +413,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                 : type.getDetailTexture();
         if (king) detailTex = FOX_KING_TEX;
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
+        if (!noHead && HeadShape.active(player)) HeadShape.drawHead(parent.head, poseStack, buffers, player, packedLight, overlay);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
         int stick = type == CharacterType.RHALIX && !model.mouthStick.isEmpty()
@@ -475,10 +476,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             var faceTexture = expr == null ? type.getFaceTexture()
                     : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
-            model.faceRoot.render(poseStack, faceBuffer, packedLight, overlay);
+            renderFace(model, parent, player, poseStack, faceBuffer, packedLight, overlay);
 
             if (damage > 0 && !ClientCharacterData.isPreviewing()) {
-                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.XenoWarriors.id(
+                renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.XenoWarriors.id(
                         "textures/entity/character/" + type.getId() + "_face_damage" + damage + ".png"))), packedLight, overlay);
             }
 
@@ -486,8 +487,15 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             int mouth = talkingMouth(player, expr);
             if (mouth > 0) {
                 var mouthTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_mouth_" + mouth + ".png");
-                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(mouthTexture)), packedLight, overlay);
+                renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(mouthTexture)), packedLight, overlay);
             }
         }
+    }
+
+    /** The face (or a layer over it) on the plain head, or over the anime-jaw head when that's on. */
+    private static void renderFace(DetailModel model, PlayerModel<AbstractClientPlayer> parent, AbstractClientPlayer player, PoseStack pose,
+                                   VertexConsumer vc, int light, int overlay) {
+        if (HeadShape.active(player)) HeadShape.drawFace(parent.head, pose, vc, light, overlay);
+        else model.faceRoot.render(pose, vc, light, overlay);
     }
 }
