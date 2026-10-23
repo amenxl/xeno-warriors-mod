@@ -1105,7 +1105,7 @@ public final class MikikoAnimations {
         model.head.xRot = Mth.lerp(w, model.head.xRot, 0.12F + chew * 0.6F);
     }
 
-    private static final int LAND_DURATION = 34;
+    private static final int LAND_DURATION = 18;     // (was 34: back up quicker)
     /** Fall at least this far for the three-point hero landing; this far (and falling fast) to start diving. */
     private static final double HERO_LANDING_FALL = 14, DIVE_AFTER = 10;
 
@@ -1150,7 +1150,7 @@ public final class MikikoAnimations {
 
     /** Slams into the crouch instantly, holds it, then rises. */
     private static float landWeight(float t) {
-        return Math.min(smooth(t / 1.5F), 1F - smooth((t - 20F) / (LAND_DURATION - 20F)));
+        return Math.min(smooth(t / 1.5F), 1F - smooth((t - 9F) / (LAND_DURATION - 9F)));
     }
 
     /** Three-point landing: left knee down behind, right foot planted forward, left hand flat on the ground,
