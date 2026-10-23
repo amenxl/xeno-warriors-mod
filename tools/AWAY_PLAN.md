@@ -8,7 +8,7 @@ Generator tools live in tools/xw (if the container was reset: `mkdir -p /home/cl
 User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Poses for Chars/, manga/, Heku/, S3 script .docx, episodes).
 
 ## Queue (rough priority)
-1. ~~Rhalix hair~~ done (A in game; switch to B/C if user picks)
+1. ~~Rhalix hair~~ done — user picked C (in game since 0.89.1)
 2. ~~Skylander wing variants~~ done
 3. ~~Sky Crystal + Corrupted tools~~ done (tools/sprites/tool_sprites.py)
 4. ~~Island Skylanders, bigger islands, house/chest defense~~ done
@@ -26,3 +26,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Fri 05:30 — plan set up, folder access granted, tools backed up.
 - Fri 06:10 — 0.88.0: Rhalix hair black only at the tips (options A/B/C sent, A in game; rhalix.py HAIR_STYLE env), Skylander wing variety (size/tint/spread per UUID, guardians big golden).
 - Fri 11:20 — 0.89.0: Sky/Corrupted tool sets (effects: sky +35% vs airborne & faster digging above y150; corrupted lifesteal/wither & faster below y0). Islands bigger (r 7-16, centered in chunk), island Skylanders circle/land on their own island, attack anyone entering their house or breaking/opening near home.
+- Fri 15:50 — user picked hair C → 0.89.1; sent wing variant sheet. (Device file tools disconnected: jar not copied to Documents.)
