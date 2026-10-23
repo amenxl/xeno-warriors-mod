@@ -420,6 +420,7 @@ public class DetailModel {
                 upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], h1, sz[2]);
                 float y0 = top + h1 - split;
                 lower.texOffs(u, v + h1).addBox(f[0], y0, f[2], sz[0], sz[1] - h1, sz[2]);
+                lower.texOffs(u, v).addBox(f[0], y0 + sz[1] - h1, f[2], sz[0], 0.02F, sz[2]);   // its real underside
                 if (h1 >= 2 && sz[1] - h1 >= 2F) {
                     // joint piece across the cut, a hair thinner: fills the gap when the elbow / knee bends
                     lower.texOffs(u, v + h1 - 2).addBox(f[0], y0 - 2F, f[2], sz[0], 4F, sz[2],

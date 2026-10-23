@@ -71,11 +71,21 @@ public final class LimbBend {
         // straight, it fills the wedge that opens on the outside of the elbow / knee when it bends
         upper.addOrReplaceChild(LOWER, CubeListBuilder.create()
                         .texOffs(u, v + 6).addBox(x, 0F, z, w, 6F, d, def)
-                        .texOffs(u, v + 4).addBox(x, -2F, z, w, 4F, d, def.extend(-0.06F)),
+                        .texOffs(u, v + 4).addBox(x, -2F, z, w, 4F, d, def.extend(-0.06F))
+                        // the palm / sole: a paper-thin cap whose underside uses the limb's real bottom texture
+                        // (the lower box's own underside would show a strip of the arm's side instead)
+                        .texOffs(u, v).addBox(x, 6F, z, w, 0.02F, d, def),
                 PartPose.offset(0F, y + 6F, 0F));
     }
 
     // ------------------------------------------------------------------ bending
+
+    private static final java.util.Map<Integer, float[]> EXTRA = new java.util.HashMap<>();
+
+    /** Extra knee bend asked for by an animation this frame (relaxed standing...), used once. */
+    public static void extraKnees(net.minecraft.world.entity.Entity e, float right, float left) {
+        EXTRA.put(e.getId(), new float[]{right, left});
+    }
 
     private static ModelPart lower(ModelPart limb) {
         return limb.hasChild(LOWER) ? limb.getChild(LOWER) : null;
@@ -112,6 +122,11 @@ public final class LimbBend {
         float er = bends ? elbow(m.rightArm.xRot) : 0F, el = bends ? elbow(m.leftArm.xRot) : 0F;
         float kr = bends ? knee(m.rightLeg.xRot, m.leftLeg.xRot, m.riding) : 0F;
         float kl = bends ? knee(m.leftLeg.xRot, m.rightLeg.xRot, m.riding) : 0F;
+        float[] extra = EXTRA.remove(entity.getId());
+        if (bends && extra != null) {
+            kr += extra[0];
+            kl += extra[1];
+        }
         if (bends && m.crouching) {
             kr += 0.3F;
             kl += 0.3F;

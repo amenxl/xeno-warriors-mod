@@ -59,6 +59,11 @@ public final class LockOn {
     private static final float TURN_PER_TICK = 0.45F;
 
     private static LivingEntity target;
+    /** Another mod's lock-on (Epic Fight's) driving ours: its target is our target, and it turns the camera. */
+    public static java.util.function.Supplier<LivingEntity> externalTarget = () -> null;
+    /** Hands the lock-on key to that mod when it's in charge (Epic Fight battle mode); false = we handle it. */
+    public static java.util.function.BooleanSupplier externalToggle = () -> false;
+    private static boolean external;
     private static int unseen;
     private static int lockedAt;
     private static float shownHealth = -1;
@@ -72,6 +77,10 @@ public final class LockOn {
     public static void toggle() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
+        if (externalToggle.getAsBoolean()) {             // one lock-on: Epic Fight's, which ours follows
+            if (target != null && !external) release(false);
+            return;
+        }
         if (target != null) {
             release(true);
             return;
@@ -131,8 +140,25 @@ public final class LockOn {
 
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || target == null) return;
+        if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+        LivingEntity ext = mc.player == null ? null : externalTarget.get();
+        if (ext != null) {
+            if (target != ext) {
+                target = ext;
+                lockedAt = mc.player.tickCount;
+                shownHealth = ext.getHealth();
+            }
+            external = true;
+            shownHealth = Mth.lerp(0.25F, shownHealth, target.getHealth());
+            return;
+        }
+        if (external) {                                  // the other lock-on let go
+            external = false;
+            target = null;
+            return;
+        }
+        if (target == null) return;
         if (mc.player == null || mc.level == null || target.level() != mc.level || !lockable(target) || target.isRemoved()
                 || mc.player.isDeadOrDying() || target.distanceTo(mc.player) > keepRange(mc.player)) {
             release(false);
@@ -149,7 +175,7 @@ public final class LockOn {
     /** Turn the view toward the target every frame, smoothly. */
     @SubscribeEvent
     public static void onRenderTick(TickEvent.RenderTickEvent event) {
-        if (event.phase != TickEvent.Phase.START || target == null) return;
+        if (event.phase != TickEvent.Phase.START || target == null || external) return;   // (Epic Fight turns the camera)
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.isPaused() || UltimateCutscene.active()) return;

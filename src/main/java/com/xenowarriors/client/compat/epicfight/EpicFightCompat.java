@@ -33,6 +33,27 @@ public final class EpicFightCompat {
         MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, EpicFightCompat::onRenderPlayer);
         MinecraftForge.EVENT_BUS.addListener(EpicFightCompat::onClientTick);
         com.xenowarriors.client.AttackHooks.externalAttack = p -> STARTED.remove(p.getId()) != null;
+        // one lock-on: in battle mode the lock-on key uses Epic Fight's (camera, target switching), and ours - the
+        // reticle, target health, skills aiming at it - follows whatever it's locked on to, from either key
+        com.xenowarriors.client.LockOn.externalToggle = () -> {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            var patch = mc.player == null ? null : patch(mc.player);
+            if (patch == null || !patch.isEpicFightMode()) return false;
+            try {
+                yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance().toggleLockOn();
+                return true;
+            } catch (Throwable t) {
+                return false;
+            }
+        };
+        com.xenowarriors.client.LockOn.externalTarget = () -> {
+            try {
+                var api = yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance();
+                return api != null && api.isLockingOnTarget() ? api.getFocusingEntity() : null;
+            } catch (Throwable t) {
+                return null;
+            }
+        };
         com.xenowarriors.client.AttackHooks.externalBusy = p -> {
             var patch = patch(p);
             return patch != null && patch.isEpicFightMode()

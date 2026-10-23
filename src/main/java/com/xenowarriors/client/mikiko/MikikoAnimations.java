@@ -684,8 +684,13 @@ public final class MikikoAnimations {
         float poison = Mth.lerp(partial, s.poisonO, s.poison);
         float fire = Mth.lerp(partial, s.fireO, s.fire);
 
-        // standing around: now and then a GeckoLib idle (a big stretch, scratching his head, kicking the dirt)
         float robot = Mth.lerp(partial, s.robotO, s.robot);
+        // standing around: never ramrod straight - he shifts his weight from leg to leg, knee loose
+        if (s.still >= 12 && poison <= 0F && s.move == null && s.vibe <= 0F && robot <= 0F && s.groove <= 0F && !player.isCrouching()) {
+            float sw = smooth((s.still - 12 + partial) / 16F) * (1F - Math.min(1F, sit * 2F));
+            if (sw > 0F) standShift(model, player, s.still + partial + player.getId() * 37, sw);
+        }
+        // standing around: now and then a GeckoLib idle (a big stretch, scratching his head, kicking the dirt)
         if (s.still >= LOOK_AROUND_AFTER && sit < 0.5F && poison <= 0F && s.vibe <= 0F && robot <= 0F && s.move == null
                 && s.tired <= 0F && s.swordTired <= 0F && s.groove <= 0F && s.alert <= 0F
                 && !Hekublade.isBlade(player.getMainHandItem()) && crossX(player, partial) <= 0F && !player.isUsingItem()) {
@@ -951,6 +956,42 @@ public final class MikikoAnimations {
     private static float ninjaRun(Player p) {
         double v = Math.sqrt(p.getDeltaMovement().horizontalDistanceSqr());
         return Mth.clamp((float) (v - 0.42) / 0.2F, 0F, 1F);
+    }
+
+    /**
+     * Relaxed standing, cycling every few seconds: weight on the left leg with the right knee loose and its foot
+     * turned out, a wide easy stance, weight on the right leg, and now and then a heel tapping.
+     */
+    private static void standShift(HumanoidModel<?> m, Player p, float t, float w) {
+        final float SEG = 110F;
+        int seg = (int) Math.floor(t / SEG);
+        float in = (t - seg * SEG) / SEG;
+        float blend = smooth(in / 0.18F);                                  // ease from the last stance into this one
+        float[] cur = stance(Math.floorMod(seg, 4), t), prev = stance(Math.floorMod(seg - 1, 4), t);
+        float[] st = new float[cur.length];
+        for (int i = 0; i < st.length; i++) st[i] = Mth.lerp(blend, prev[i], cur[i]);
+        m.rightLeg.xRot = Mth.lerp(w, m.rightLeg.xRot, st[0]);
+        m.rightLeg.yRot = Mth.lerp(w, m.rightLeg.yRot, st[1]);
+        m.rightLeg.zRot = Mth.lerp(w, m.rightLeg.zRot, st[2]);
+        m.leftLeg.xRot = Mth.lerp(w, m.leftLeg.xRot, st[3]);
+        m.leftLeg.yRot = Mth.lerp(w, m.leftLeg.yRot, st[4]);
+        m.leftLeg.zRot = Mth.lerp(w, m.leftLeg.zRot, st[5]);
+        m.body.zRot += st[6] * w;                                          // hips/shoulders tilting with the weight
+        m.head.zRot -= st[6] * 0.5F * w;
+        com.xenowarriors.client.LimbBend.extraKnees(p, st[7] * w, st[8] * w);
+    }
+
+    /** {rLeg x,y,z, lLeg x,y,z, body tilt, right knee, left knee} */
+    private static float[] stance(int i, float t) {
+        return switch (i) {
+            case 0 -> new float[]{-0.12F, 0.32F, 0.14F, 0.04F, 0F, -0.03F, -0.05F, 0.38F, 0F};   // weight left, right knee loose
+            case 1 -> new float[]{0F, 0.12F, 0.13F, 0F, -0.12F, -0.13F, 0F, 0.06F, 0.06F};      // wide, easy stance
+            case 2 -> new float[]{0.04F, 0F, 0.03F, -0.12F, -0.32F, -0.14F, 0.05F, 0F, 0.38F};  // weight right, left knee loose
+            default -> {                                                                         // tapping the right heel
+                float tap = Math.max(0F, Mth.sin(t * 0.55F)) * 0.25F;
+                yield new float[]{-0.1F - tap * 0.3F, 0.25F, 0.1F, 0.03F, 0F, -0.03F, -0.04F, 0.3F + tap, 0F};
+            }
+        };
     }
 
     /** Both hands bring the food up to his mouth; little chewing bobs. */
