@@ -29,7 +29,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabSettings, realm, plea, senseFriendly, efMode;
+    private Button tabPlayers, tabMe, tabSettings, realm, plea, senseFriendly, efMode, efBattle;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -72,6 +72,10 @@ public class PlayerStatsScreen extends Screen {
             ClientSettings.setEfWholeBattleMode(!ClientSettings.efWholeBattleMode());
             updateButtons();
         }).bounds(width / 2 - bw / 2, 80, bw, 20).build());
+        efBattle = addRenderableWidget(Button.builder(Component.empty(), b -> {
+            ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
+            updateButtons();
+        }).bounds(width / 2 - bw / 2, 104, bw, 20).build());
         realm = addRenderableWidget(Button.builder(Component.literal("Enter the Hekublade"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade realm");
             onClose();
@@ -96,6 +100,8 @@ public class PlayerStatsScreen extends Screen {
         senseFriendly.visible = tab == 2;
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
         efMode.visible = tab == 2 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
+        efBattle.visible = efMode.visible;
+        efBattle.setMessage(Component.literal("Always battle mode: " + (ClientSettings.efAlwaysBattle() ? "ON" : "OFF")));
         efMode.setMessage(Component.literal("Battle mode moves: " + (ClientSettings.efWholeBattleMode() ? "Epic Fight's" : "Xeno Warriors'")));
         boolean mikiko = ClientCharacterData.getLocal() == CharacterType.MIKIKO;
         boolean prisoner = me != null && me.prisoner();
@@ -319,7 +325,7 @@ public class PlayerStatsScreen extends Screen {
 
     private void renderSettings(GuiGraphics g) {
         int w = cardW(), x = cardX(), y = 30;
-        int ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 24 : 0;     // room for the Epic Fight button
+        int ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 48 : 0;     // room for the Epic Fight buttons
         g.fill(x, y, x + w, y + 84 + ef, BG);
         g.drawCenteredString(font, "Settings", width / 2, y + 6, 0xFFFFFF);
         String[] help = {"Off: Karma Sensing only shows other players", "and anything that's a threat."};

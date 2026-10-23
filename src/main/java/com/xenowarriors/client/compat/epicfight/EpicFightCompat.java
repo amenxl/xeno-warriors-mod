@@ -118,6 +118,16 @@ public final class EpicFightCompat {
             LAST.clear();
             return;
         }
+        // always in battle mode (Epic Fight's mode key would switch to mining mode: it switches straight back)
+        var me = net.minecraft.client.Minecraft.getInstance().player;
+        if (me != null && me.tickCount % 5 == 0 && ClientSettings.efAlwaysBattle()) {
+            var mine = patch(me);
+            if (mine != null && !mine.isEpicFightMode()) {
+                try {
+                    mine.toEpicFightMode(true);
+                } catch (Throwable ignored) {}
+            }
+        }
         for (AbstractClientPlayer p : level.players()) {
             if (ClientCharacterData.get(p) == CharacterType.NONE) continue;
             var patch = patch(p);

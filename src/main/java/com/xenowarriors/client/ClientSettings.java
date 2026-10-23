@@ -53,4 +53,14 @@ public final class ClientSettings {
         props().setProperty("ef_whole_battle_mode", String.valueOf(on));
         save();
     }
+
+    /** With Epic Fight: always stay in battle mode (its mode key can't switch it off; only this setting can). */
+    public static boolean efAlwaysBattle() {
+        return !"false".equals(props().getProperty("ef_always_battle", "true"));
+    }
+
+    public static void setEfAlwaysBattle(boolean on) {
+        props().setProperty("ef_always_battle", String.valueOf(on));
+        save();
+    }
 }
