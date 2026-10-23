@@ -19,7 +19,8 @@ public abstract class ItemInHandLayerMixin {
     @Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$hideTossedBlade(LivingEntity entity, ItemStack stack, ItemDisplayContext context, HumanoidArm arm,
                                               PoseStack pose, MultiBufferSource buffers, int light, CallbackInfo ci) {
-        if (arm == entity.getMainArm() && (MikikoAnimations.bladeAwayFromHand(entity) || MikikoAnimations.swordShouldered(entity))) {
+        if (arm == entity.getMainArm() && (MikikoAnimations.bladeAwayFromHand(entity) || MikikoAnimations.swordShouldered(entity)
+                || com.xenowarriors.client.mikiko.RopeBladeClient.handFree(entity))) {
             ci.cancel();
             return;
         }

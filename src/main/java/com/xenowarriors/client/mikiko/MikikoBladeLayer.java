@@ -53,6 +53,7 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
                     light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, pose, buffers, player.level(), player.getId());
             pose.popPose();
         }
+        RopeBladeClient.render(getParentModel(), player, pose, buffers, light, partialTick);     // out on its rope
         float[] bi = MikikoAnimations.bladeIdle(player, partialTick);
         if (bi != null) renderIdleBlade(pose, buffers, light, player, (int) bi[0], bi[1]);
         if (!MikikoAnimations.showSummonedBlade(player)) return;

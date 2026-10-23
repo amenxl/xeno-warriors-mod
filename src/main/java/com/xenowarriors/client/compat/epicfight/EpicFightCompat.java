@@ -151,6 +151,12 @@ public final class EpicFightCompat {
     private static boolean finalComboHit(net.minecraft.world.entity.player.Player p,
                                          yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch, Object anim) {
         if (ClientCharacterData.get(p) != CharacterType.MIKIKO || !p.getMainHandItem().is(com.xenowarriors.item.ModItems.METAL_POLE.get())) return false;
+        return lastOfCombo(p, patch, anim);
+    }
+
+    /** This attack is the last hit of the held weapon's Epic Fight combo (before its dash and air attacks). */
+    private static boolean lastOfCombo(net.minecraft.world.entity.player.Player p,
+                                       yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch, Object anim) {
         try {
             var cap = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(p.getMainHandItem());
             var list = cap.getAutoAttackMotion(patch);
@@ -227,6 +233,10 @@ public final class EpicFightCompat {
             boolean fresh = last == null || last[0] != anim || time + 0.01F < (float) last[1];
             if (fresh && basicAttack(anim) && p == net.minecraft.client.Minecraft.getInstance().player && finalComboHit(p, patch, anim)) {
                 com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.PoleGustPacket());   // Metal Pole gust
+            }
+            if (fresh && basicAttack(anim) && p == net.minecraft.client.Minecraft.getInstance().player
+                    && com.xenowarriors.client.mikiko.RopeBladeClient.eligible(p) && lastOfCombo(p, patch, anim)) {
+                com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.RopeLashPacket());    // Season 3 rope lash
             }
             if (fresh && basicAttack(anim) && ownWeapon(p)) {
                 STARTED.put(p.getId(), p.tickCount);

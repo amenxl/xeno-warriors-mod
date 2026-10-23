@@ -509,7 +509,7 @@ public final class MikikoAnimations {
     }
 
     // ---------------- Hekublade idle: toss & catch, sling it on his back, draw it again ----------------
-    public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4, BI_RUN = 5;
+    public static final int BI_TOSS = 0, BI_SHEATHE = 1, BI_BACK = 2, BI_DRAW = 3, BI_HOLD = 4, BI_RUN = 5, BI_SPIN = 6;
     private static final int BLADE_IDLE_AFTER = 60, BACK_TIME = 20 * 20;           // on his back for 20 seconds
     private static final int BLADE_CYCLE = 136 + BACK_TIME + 16 + 28;
 
@@ -524,6 +524,7 @@ public final class MikikoAnimations {
         if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()
                 || lowHealth(p)) return null;
         float c = (s.still - BLADE_IDLE_AFTER + partial) % BLADE_CYCLE;
+        if (c < 120 && RopeBladeClient.seasonThree(p)) return new float[]{BI_SPIN, c};     // Season 3: twirls it on its string
         if (c < 34) return new float[]{BI_TOSS, c};
         if (c < 120) return new float[]{BI_HOLD, c - 34};
         if (c < 136) return new float[]{BI_SHEATHE, c - 120};
@@ -538,7 +539,7 @@ public final class MikikoAnimations {
         float[] bi = bladeIdle(p, 0F);
         if (bi == null) return false;
         int ph = (int) bi[0];
-        return (ph == BI_TOSS && bi[1] >= 6 && bi[1] < 30) || ph == BI_BACK || ph == BI_RUN || (ph == BI_SHEATHE && bi[1] >= 8) || (ph == BI_DRAW && bi[1] < 8);
+        return (ph == BI_TOSS && bi[1] >= 6 && bi[1] < 30) || ph == BI_SPIN || ph == BI_BACK || ph == BI_RUN || (ph == BI_SHEATHE && bi[1] >= 8) || (ph == BI_DRAW && bi[1] < 8);
     }
 
     private static void bladeIdlePose(HumanoidModel<?> model, int phase, float t) {

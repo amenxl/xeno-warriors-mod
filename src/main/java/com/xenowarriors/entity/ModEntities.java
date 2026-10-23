@@ -67,6 +67,15 @@ public final class ModEntities {
                     .setShouldReceiveVelocityUpdates(true)
                     .build("hekublade_shard"));
 
+    public static final RegistryObject<EntityType<ThrownHekubladeEntity>> THROWN_HEKUBLADE = ENTITY_TYPES.register("thrown_hekublade",
+            () -> EntityType.Builder.<ThrownHekubladeEntity>of(ThrownHekubladeEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 0.6F)
+                    .noSummon()
+                    .fireImmune()
+                    .clientTrackingRange(10)
+                    .updateInterval(1)
+                    .build("thrown_hekublade"));
+
     public static final RegistryObject<EntityType<FireBlitzEntity>> FIRE_BLITZ = ENTITY_TYPES.register("fire_blitz",
             () -> EntityType.Builder.<FireBlitzEntity>of(FireBlitzEntity::new, MobCategory.MISC)
                     .sized(0.5F, 0.5F)

@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "23";
+    private static final String VERSION = "24";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -275,6 +275,21 @@ public final class ModNetwork {
                 .encoder(BladeChannelStatePacket::encode)
                 .decoder(BladeChannelStatePacket::decode)
                 .consumerMainThread(BladeChannelStatePacket::handle)
+                .add();
+        CHANNEL.messageBuilder(RopeThrowPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(RopeThrowPacket::encode)
+                .decoder(RopeThrowPacket::decode)
+                .consumerMainThread(RopeThrowPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(RopeLashPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(RopeLashPacket::encode)
+                .decoder(RopeLashPacket::decode)
+                .consumerMainThread(RopeLashPacket::handle)
+                .add();
+        CHANNEL.messageBuilder(RopeFxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(RopeFxPacket::encode)
+                .decoder(RopeFxPacket::decode)
+                .consumerMainThread(RopeFxPacket::handle)
                 .add();
     }
 

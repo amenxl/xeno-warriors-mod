@@ -55,6 +55,7 @@ public final class Hekublade {
 
     public static void toggle(ServerPlayer player) {
         if (ModCapabilities.getType(player) != CharacterType.MIKIKO || player.isSpectator()) return;
+        if (RopeBlade.blockSummon(player)) return;                        // thrown and still on its way back
         if (removeAll(player.getInventory()) > 0) {
             effects(player, false);
             return;
