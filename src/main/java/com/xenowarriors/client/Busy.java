@@ -17,6 +17,7 @@ public final class Busy {
                 || SurfPose.surfing(p)
                 || ClientSkillState.currentAnim(p) != null
                 || AttackHooks.externalBusy.test(p)
+                || com.xenowarriors.client.mikiko.CombatStance.wanted(p) != com.xenowarriors.client.mikiko.CombatStance.NONE   // on guard
                 || (efWeapon(p) && !DiscTracker.anyNear(p));
     }
 

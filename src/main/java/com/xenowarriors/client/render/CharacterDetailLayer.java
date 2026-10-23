@@ -159,6 +159,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         if (ClientSkillState.feelingSick(p)) return "sick";
         if (p == net.minecraft.client.Minecraft.getInstance().player && com.xenowarriors.client.StatToasts.justLeveledUp()) return "sparkle";
+        String thunder = com.xenowarriors.client.ThunderFaces.face(p, type);
+        if (thunder != null) return thunder;
         String stance = com.xenowarriors.client.AttackHooks.externalStanceFace.apply(p);
         if (stance != null) return stance;
         int around = com.xenowarriors.client.Surroundings.of(p);

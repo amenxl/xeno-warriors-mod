@@ -105,6 +105,7 @@ public final class MikikoAnimations {
         Move move;
         int moveStart;
         boolean moveBlade;          // is the summoned blade used for this move
+        boolean hop;                // the opening punches: hopping forward into them
         int comboStep, variant = -1, lastAttack = -1000;
         Move lastSword;
         int bladeUntil = -1;        // summoned blade stays out until this tick
@@ -452,8 +453,16 @@ public final class MikikoAnimations {
             }
             move = COMBOS[s.variant][s.comboStep++];
             s.moveBlade = move.blade;
+            // the first two hits: a skip forward into the punch, dashing in on them
+            s.hop = s.comboStep <= 2 && !flying && p.onGround() && !p.isCrouching();
+            if (s.hop && p instanceof net.minecraft.client.player.LocalPlayer lp) {
+                float yaw = lp.getYRot() * Mth.DEG_TO_RAD;
+                net.minecraft.world.phys.Vec3 v = lp.getDeltaMovement();
+                lp.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * 0.42, 0.2, v.z * 0.3 + Mth.cos(yaw) * 0.42);
+            }
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
         } else if (held.getItem() instanceof SwordItem) {
+            s.hop = false;
             if (Hekublade.isBlade(held) && RANDOM.nextFloat() < 0.25F) {
                 // with the Hekublade he now and then throws a kick into the mix
                 Move[] kicks = {Move.KICK_FRONT, Move.KICK_ROUNDHOUSE, Move.KICK_SIDE, Move.KICK_SPIN};
@@ -790,7 +799,9 @@ public final class MikikoAnimations {
             // in fast flight his whole body is tipped forward; the attack poses are made for standing, so turn the arms
             // by that lean too (otherwise his arm swings back toward his feet)
             float flyLean = 65F * Mth.lerp(partial, s.fastO, s.fast) * fly * 0.35F;
-            movePose(model, s.move, (ageInTicks - s.moveStart) / (s.move.duration * s.moveScale), fly > 0.05F ? flyLean : -1F);
+            float mp = (ageInTicks - s.moveStart) / (s.move.duration * s.moveScale);
+            movePose(model, s.move, mp, fly > 0.05F ? flyLean : -1F);
+            if (s.hop && fly <= 0.05F) hopPose(model, player, mp);
         }
         float tired = Mth.lerp(partial, s.tiredO, s.tired);
         if (tired > 0F) tiredPose(model, tired, ageInTicks);
@@ -804,6 +815,24 @@ public final class MikikoAnimations {
         if (player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
             eatPose(model, player.getTicksUsingItem() + partial, ageInTicks);
         }
+    }
+
+    /**
+     * Skipping in on the opening punches: leaning into it, the leading knee driven up and the back leg trailing as he
+     * hops forward, landing back into his stance as the punch finishes.
+     */
+    private static void hopPose(HumanoidModel<?> model, Player player, float p) {
+        if (p < 0F || p > 1F) return;
+        float air = Mth.sin(Mth.clamp(p / 0.75F, 0F, 1F) * (float) Math.PI);
+        float lean = smooth(p / 0.3F) * (1F - smooth((p - 0.7F) / 0.3F));
+        model.body.xRot += 0.3F * lean;
+        model.head.xRot -= 0.2F * lean;
+        model.rightLeg.xRot = Mth.lerp(air, model.rightLeg.xRot, -0.75F);
+        model.leftLeg.xRot = Mth.lerp(air, model.leftLeg.xRot, 0.55F);
+        model.rightLeg.z += 1.2F * lean;
+        model.leftLeg.z += 1.2F * lean;
+        com.xenowarriors.client.LimbBend.extraKnees(player, 1.0F * air, 0.35F * air);
+        model.hat.copyFrom(model.head);
     }
 
     private static void movePose(HumanoidModel<?> model, Move m, float p) {
