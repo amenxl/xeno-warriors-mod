@@ -19,7 +19,7 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class FistTempo {
     private static final UUID ID = UUID.fromString("7c1f3a52-9d4e-4b8a-a6e1-2f5d8c0b3e71");
-    public static final double FIST_SPEED_CHANGE = -2.2;
+    public static final double FIST_SPEED_CHANGE = -2.6;     // 1.4: about the pace of Epic Fight combos
 
     private FistTempo() {}
 
