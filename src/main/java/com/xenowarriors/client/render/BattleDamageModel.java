@@ -61,14 +61,17 @@ public final class BattleDamageModel {
                 .texOffs(36, 16).addBox(-4.45F, 9F, -1F, 0F, 4F, 2F), PartPose.ZERO);
         // right arm: forearm bandage (1), torn sleeve flap (2)
         PartDefinition ra = r.addOrReplaceChild("right_arm", CubeListBuilder.create(), PartPose.ZERO);
-        ra.addOrReplaceChild("w1", CubeListBuilder.create().texOffs(32, 0).addBox(-3F, 5F, -2F, 4F, 3F, 4F, wrap), PartPose.ZERO);
+        // (pieces below the elbow / knee hang off the bending lower half, so they stay put when it bends)
+        PartDefinition raLow = ra.addOrReplaceChild(LOWER, CubeListBuilder.create(), PartPose.offset(0F, 4F, 0F));
+        raLow.addOrReplaceChild("w1", CubeListBuilder.create().texOffs(32, 0).addBox(-3F, 1F, -2F, 4F, 3F, 4F, wrap), PartPose.ZERO);
         ra.addOrReplaceChild("w2", CubeListBuilder.create(), PartPose.ZERO);
         ra.addOrReplaceChild("c1", CubeListBuilder.create(), PartPose.ZERO);
         ra.addOrReplaceChild("c2", CubeListBuilder.create().texOffs(44, 16).addBox(-3.3F, 1F, -2.3F, 0F, 4F, 3F), PartPose.ZERO);
         // left arm: a second wrap at the wrist (2)
         PartDefinition la = r.addOrReplaceChild("left_arm", CubeListBuilder.create(), PartPose.ZERO);
         la.addOrReplaceChild("w1", CubeListBuilder.create(), PartPose.ZERO);
-        la.addOrReplaceChild("w2", CubeListBuilder.create().texOffs(32, 0).addBox(-1F, 8F, -2F, 4F, 2F, 4F, wrap), PartPose.ZERO);
+        PartDefinition laLow = la.addOrReplaceChild(LOWER, CubeListBuilder.create(), PartPose.offset(0F, 4F, 0F));
+        laLow.addOrReplaceChild("w2", CubeListBuilder.create().texOffs(32, 0).addBox(-1F, 4F, -2F, 4F, 2F, 4F, wrap), PartPose.ZERO);
         la.addOrReplaceChild("c1", CubeListBuilder.create(), PartPose.ZERO);
         la.addOrReplaceChild("c2", CubeListBuilder.create(), PartPose.ZERO);
         // right leg: thigh bandage (2); left leg: ripped pant cuff (1)
@@ -76,20 +79,37 @@ public final class BattleDamageModel {
         rl.addOrReplaceChild("w1", CubeListBuilder.create(), PartPose.ZERO);
         rl.addOrReplaceChild("w2", CubeListBuilder.create().texOffs(48, 0).addBox(-2F, 2F, -2F, 4F, 2F, 4F, wrap), PartPose.ZERO);
         rl.addOrReplaceChild("c1", CubeListBuilder.create(), PartPose.ZERO);
-        rl.addOrReplaceChild("c2", CubeListBuilder.create().texOffs(52, 16).addBox(-2.2F, 9F, -2.45F, 2F, 3F, 0F), PartPose.ZERO);
+        PartDefinition rlLow = rl.addOrReplaceChild(LOWER, CubeListBuilder.create(), PartPose.offset(0F, 6F, 0F));
+        rlLow.addOrReplaceChild("c2", CubeListBuilder.create().texOffs(52, 16).addBox(-2.2F, 3F, -2.45F, 2F, 3F, 0F), PartPose.ZERO);
         PartDefinition ll = r.addOrReplaceChild("left_leg", CubeListBuilder.create(), PartPose.ZERO);
         ll.addOrReplaceChild("w1", CubeListBuilder.create(), PartPose.ZERO);
         ll.addOrReplaceChild("w2", CubeListBuilder.create(), PartPose.ZERO);
-        ll.addOrReplaceChild("c1", CubeListBuilder.create().texOffs(58, 16).addBox(0.4F, 10.5F, -2.45F, 2F, 2F, 0F), PartPose.ZERO);
+        PartDefinition llLow = ll.addOrReplaceChild(LOWER, CubeListBuilder.create(), PartPose.offset(0F, 6F, 0F));
+        llLow.addOrReplaceChild("c1", CubeListBuilder.create().texOffs(58, 16).addBox(0.4F, 4.5F, -2.45F, 2F, 2F, 0F), PartPose.ZERO);
         ll.addOrReplaceChild("c2", CubeListBuilder.create(), PartPose.ZERO);
 
         root = LayerDefinition.create(mesh, 64, 32).bakeRoot();
         for (int i = 0; i < 6; i++) {
             parts[i] = root.getChild(PARTS[i]);
-            wraps[i][0] = parts[i].getChild("w1");
-            wraps[i][1] = parts[i].getChild("w2");
-            cloth[i][0] = parts[i].getChild("c1");
-            cloth[i][1] = parts[i].getChild("c2");
+            wraps[i][0] = find(parts[i], "w1");
+            wraps[i][1] = find(parts[i], "w2");
+            cloth[i][0] = find(parts[i], "c1");
+            cloth[i][1] = find(parts[i], "c2");
+        }
+    }
+
+    private static final String LOWER = com.xenowarriors.client.LimbBend.LOWER;
+
+    private static ModelPart find(ModelPart limb, String name) {
+        if (limb.hasChild(name)) return limb.getChild(name);
+        return limb.getChild(LOWER).getChild(name);
+    }
+
+    private void pose(HumanoidModel<?> pose) {
+        ModelPart[] src = {pose.head, pose.body, pose.rightArm, pose.leftArm, pose.rightLeg, pose.leftLeg};
+        for (int i = 0; i < 6; i++) {
+            parts[i].copyFrom(src[i]);
+            com.xenowarriors.client.LimbBend.copy(src[i], parts[i]);       // the elbow / knee bend
         }
     }
 
@@ -100,8 +120,7 @@ public final class BattleDamageModel {
     public void render(HumanoidModel<?> pose, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay,
                        int level, int clothColor) {
         if (level <= 0) return;
-        ModelPart[] src = {pose.head, pose.body, pose.rightArm, pose.leftArm, pose.rightLeg, pose.leftLeg};
-        for (int i = 0; i < 6; i++) parts[i].copyFrom(src[i]);
+        pose(pose);
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
         // bandages
         show(level, true);
@@ -116,8 +135,7 @@ public final class BattleDamageModel {
     public void renderCloth(HumanoidModel<?> pose, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay,
                             int level, int clothColor) {
         if (level <= 0) return;
-        ModelPart[] src = {pose.head, pose.body, pose.rightArm, pose.leftArm, pose.rightLeg, pose.leftLeg};
-        for (int i = 0; i < 6; i++) parts[i].copyFrom(src[i]);
+        pose(pose);
         show(level, false);
         float cr = (clothColor >> 16 & 255) / 255F, cg = (clothColor >> 8 & 255) / 255F, cb = (clothColor & 255) / 255F;
         root.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light, overlay, cr, cg, cb, 1F);
