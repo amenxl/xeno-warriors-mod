@@ -67,7 +67,9 @@ public final class Duels {
     private static final Map<UUID, Integer> KNOCKED = new HashMap<>();
 
     // ---- downed (in a party, beaten by something other than a battle): 30 s for a party member to revive you
-    private static final int DOWNED_TICKS = 30 * 20, REVIVE_TICKS = 60;
+    /** Downed lasts until someone revives you (this just keeps the effects/client state on); alone = whole party down. */
+    private static final int DOWNED_TICKS = 1_000_000, ALONE_TICKS = 10 * 20, REVIVE_TICKS = 60;
+    private static final Map<UUID, net.minecraft.world.phys.Vec3> DOWNED_AT = new HashMap<>();
     private static final float REVIVE_KARMA = 50F;
     private static final Map<UUID, Integer> DOWNED = new HashMap<>();
     private static final Map<UUID, Integer> REVIVING = new HashMap<>();    // downed player -> revive progress
@@ -117,13 +119,15 @@ public final class Duels {
     /** Down instead of dead: 30 seconds for a party member to come and revive them. */
     private static void down(ServerPlayer p) {
         p.setHealth(1F);
-        DOWNED.put(p.getUUID(), DOWNED_TICKS);
+        DOWNED.put(p.getUUID(), ALONE_TICKS);
+        DOWNED_AT.put(p.getUUID(), p.position());
         REVIVING.remove(p.getUUID());
         disable(p, DOWNED_TICKS);
         p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.5, p.getZ(), 14, 0.4, 0.3, 0.4, 0.03);
         p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 1F, 0.6F);
         ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), DOWNED_TICKS), p);
-        title(p, "DOWNED", ChatFormatting.RED, "Hang on - a party member can revive you");
+        title(p, "DOWNED", ChatFormatting.RED, "Wait for a party member to revive you");
+        p.sendSystemMessage(msg("You're down until a party member revives you. Type /xeno giveup to respawn instead."));
         if (p.getServer() != null) {
             for (ServerPlayer other : p.getServer().getPlayerList().getPlayers()) {
                 if (other != p && Parties.sameParty(p, other)) {
@@ -136,6 +140,7 @@ public final class Duels {
 
     private static void revive(ServerPlayer p, ServerPlayer by) {
         DOWNED.remove(p.getUUID());
+        DOWNED_AT.remove(p.getUUID());
         REVIVING.remove(p.getUUID());
         enable(p);
         p.setHealth(Math.max(6F, p.getMaxHealth() * 0.4F));
@@ -151,6 +156,7 @@ public final class Duels {
     public static void bleedOut(ServerPlayer p) {
         if (!DOWNED.containsKey(p.getUUID())) return;
         DOWNED.remove(p.getUUID());
+        DOWNED_AT.remove(p.getUUID());
         REVIVING.remove(p.getUUID());
         enable(p);
         ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
@@ -275,6 +281,10 @@ public final class Duels {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttack(LivingAttackEvent event) {
+        if (event.getSource().getEntity() instanceof Player att && isKnockedOut(att)) {
+            event.setCanceled(true);           // someone who's down can't fight
+            return;
+        }
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
         if (isKnockedOut(p)) {
             event.setCanceled(true);           // no hitting someone who's down
@@ -387,7 +397,18 @@ public final class Duels {
         for (var e : DOWNED.entrySet()) {
             ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
             if (p == null) continue;
-            int left = e.getValue() - 1;
+            // can't move: held where they fell (falling straight down is fine)
+            net.minecraft.world.phys.Vec3 at = DOWNED_AT.get(p.getUUID());
+            if (at != null && p.position().subtract(at).horizontalDistanceSqr() > 0.6 * 0.6) {
+                p.connection.teleport(at.x, Math.min(p.getY(), at.y + 0.5), at.z, p.getYRot(), p.getXRot());
+            } else if (at != null && p.getY() < at.y) {
+                DOWNED_AT.put(p.getUUID(), new net.minecraft.world.phys.Vec3(at.x, p.getY(), at.z));
+            }
+            // nobody left who could come for them (the whole party's down or offline): they don't get back up
+            boolean someone = false;
+            for (ServerPlayer other : server.getPlayerList().getPlayers())
+                if (other != p && other.isAlive() && !isKnockedOut(other) && Parties.sameParty(p, other)) { someone = true; break; }
+            int left = someone ? ALONE_TICKS : e.getValue() - 1;
             e.setValue(left);
             if (left <= 0) {
                 dying.add(p);
@@ -422,8 +443,8 @@ public final class Duels {
                 }
             }
             if (left % 10 == 0) {
-                p.displayClientMessage(Component.literal("DOWNED - " + (left / 20) + "s left. A party member can revive you.")
-                        .withStyle(ChatFormatting.RED), true);
+                p.displayClientMessage(Component.literal(someone ? "DOWNED - waiting for a party member to revive you (/xeno giveup to respawn)"
+                        : "DOWNED - your whole party is down! " + (left / 20) + "s...").withStyle(ChatFormatting.RED), true);
                 // mobs lose interest in someone who's down
                 for (net.minecraft.world.entity.Mob mob : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                         p.getBoundingBox().inflate(32), m -> m.getTarget() == p)) {
@@ -433,7 +454,7 @@ public final class Duels {
         }
         for (ServerPlayer[] r : revived) revive(r[0], r[1]);
         for (ServerPlayer p : dying) {
-            p.sendSystemMessage(msg("Nobody reached you in time..."));
+            p.sendSystemMessage(msg("Nobody was left to revive you..."));
             bleedOut(p);
         }
     }
@@ -451,8 +472,48 @@ public final class Duels {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer && isKnockedOut(target)) {
-            int left = KNOCKED.containsKey(target.getUUID()) ? KNOCKED.get(target.getUUID()) : DOWNED.get(target.getUUID());
+            int left = KNOCKED.containsKey(target.getUUID()) ? KNOCKED.get(target.getUUID()) : DOWNED_TICKS;
             ModNetwork.sendToPlayer(new KnockoutPacket(target.getUUID(), left), viewer);
         }
+    }
+
+    // ---------------------------------------------------------------- downed: no attacking, using or breaking
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onAttackEntity(net.minecraftforge.event.entity.player.AttackEntityEvent event) {
+        if (isKnockedOut(event.getEntity())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onUseItem(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
+        if (isKnockedOut(event.getEntity())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onUseBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+        if (isKnockedOut(event.getEntity())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onUseEntity(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
+        if (isKnockedOut(event.getEntity())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onHitBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event) {
+        if (isKnockedOut(event.getEntity())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onBreak(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+        if (isKnockedOut(event.getPlayer())) event.setCanceled(true);
+    }
+
+    /** /xeno giveup: stop waiting and respawn. */
+    public static boolean giveUp(ServerPlayer p) {
+        if (!isDowned(p)) return false;
+        p.sendSystemMessage(msg("You gave up."));
+        bleedOut(p);
+        return true;
     }
 }

@@ -110,6 +110,28 @@ public final class PartyClient {
         }
     }
 
+    /** Knocked out or downed: no walking, jumping or crouching. */
+    @SubscribeEvent
+    public static void onMoveInput(net.minecraftforge.client.event.MovementInputUpdateEvent event) {
+        if (!knockedOut(event.getEntity())) return;
+        var in = event.getInput();
+        in.forwardImpulse = 0F;
+        in.leftImpulse = 0F;
+        in.up = in.down = in.left = in.right = false;
+        in.jumping = false;
+        in.shiftKeyDown = false;
+    }
+
+    /** ...and no attacking, using items or picking blocks. */
+    @SubscribeEvent
+    public static void onInteractKey(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && knockedOut(mc.player)) {
+            event.setSwingHand(false);
+            event.setCanceled(true);
+        }
+    }
+
     /** Lying on his back: the head ends up behind where he stood. */
     private static Vec3 headPos(Player p) {
         float yaw = p.yBodyRot * Mth.DEG_TO_RAD;

@@ -180,6 +180,11 @@ public final class XenoCommands {
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), false))))));
 
+        root.then(Commands.literal("giveup").executes(ctx -> {
+            boolean ok = com.xenowarriors.party.Duels.giveUp(ctx.getSource().getPlayerOrException());
+            if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));
+            return ok ? 1 : 0;
+        }));
         root.then(Commands.literal("raid").requires(src -> src.hasPermission(2)).executes(ctx -> {
             boolean ok = com.xenowarriors.npc.SkyHaterRaids.start(ctx.getSource().getPlayerOrException(), true);
             ctx.getSource().sendSuccess(() -> Component.literal(ok ? "Sky Hater raid started" : "A raid is already going on near here"), false);
