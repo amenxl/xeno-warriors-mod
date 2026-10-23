@@ -86,6 +86,11 @@ public final class MikikoAnimations {
     private static final java.util.List<net.minecraft.client.resources.sounds.SoundInstance> CAT = new java.util.ArrayList<>();
     /** GeckoLib idle animations he cycles through while standing around (replaces the old look-around). */
     private static final String[] IDLES = {"idle_stretch", "idle_scratch", "idle_kick_dirt"};
+    /** After ten minutes without a fight he works some leg stretches into them. */
+    private static final String[] CALM_IDLES = {"idle_stretch", "idle_leg_stretch", "idle_scratch", "idle_leg_stretch", "idle_kick_dirt"};
+    /** Knee bends through the leg stretch: side lunges right and left, then pulling his left heel up behind him. */
+    private static final float[][] LEG_STRETCH_KNEES = {{0F, 0F, 0F}, {0.6F, 0.9F, 0F}, {1.8F, 0.9F, 0F}, {2.2F, 0F, 0.9F},
+            {3.0F, 0F, 0.9F}, {3.4F, 0F, 0F}, {3.6F, 0F, 2.2F}, {4.6F, 0F, 2.2F}, {5.0F, 0F, 0F}};
     private static final int IDLE_CYCLE = 240;
     private static boolean lastJumpDown;
 
@@ -107,6 +112,8 @@ public final class MikikoAnimations {
         boolean lastSwinging;
         int lastSwingTime;
         int still;
+        /** Playback stretch of the current attack (Epic Fight battle mode times it to its own hit). */
+        float moveScale = 1F;
         /** Hekublade slung on his back from running: stays there through jumps until he stops or attacks. */
         boolean backSlung;
         float sit, sitO, look, lookO, poison, poisonO, fire, fireO;
@@ -234,15 +241,22 @@ public final class MikikoAnimations {
                 && (!s.lastSwinging || p.swingTime < s.lastSwingTime);
         s.lastSwinging = p.swinging;
         s.lastSwingTime = p.swingTime;
-        if (swingStart && !mining(p) && charged(p, s, now)) startAttack(p, s, now);
-        else if (com.xenowarriors.client.AttackHooks.externalAttack.test(p)) startAttack(p, s, now);   // Epic Fight battle mode
+        if (swingStart && !mining(p) && charged(p, s, now)) {
+            startAttack(p, s, now);
+            s.moveScale = 1F;
+        }
+        else if (com.xenowarriors.client.AttackHooks.externalAttack.test(p)) {        // Epic Fight battle mode
+            startAttack(p, s, now);
+            // timed so his strike lands with Epic Fight's hit (his strikes land about a third of the way in)
+            if (s.move != null) s.moveScale = com.xenowarriors.client.AttackHooks.timeScale(p, s.move.duration, 0.36F);
+        }
         if (swingStart) s.lastSwingStart = now;
         if (p == Minecraft.getInstance().player) s.strengthLastTick = p.getAttackStrengthScale(0F);
 
         // strike effects
         if (s.move != null) {
-            float pPrev = (now - 1 - s.moveStart) / (float) s.move.duration;
-            float pNow = (now - s.moveStart) / (float) s.move.duration;
+            float pPrev = (now - 1 - s.moveStart) / (s.move.duration * s.moveScale);
+            float pNow = (now - s.moveStart) / (s.move.duration * s.moveScale);
             if (pPrev < STRIKE && pNow >= STRIKE) MikikoEffects.strike(level, p, s.move, bladeKind(p, s));
             if (pNow > 1F) s.move = null;
         }
@@ -695,9 +709,18 @@ public final class MikikoAnimations {
                 && s.tired <= 0F && s.swordTired <= 0F && s.groove <= 0F && s.alert <= 0F
                 && !Hekublade.isBlade(player.getMainHandItem()) && crossX(player, partial) <= 0F && !player.isUsingItem()) {
             int since = s.still - LOOK_AROUND_AFTER;
-            String idle = IDLES[Math.floorMod(since / IDLE_CYCLE + player.getId(), IDLES.length)];
+            String[] idles = player instanceof net.minecraft.client.player.AbstractClientPlayer acp
+                    && com.xenowarriors.client.CalmTracker.longCalm(acp) ? CALM_IDLES : IDLES;   // ten quiet minutes: leg stretches too
+            String idle = idles[Math.floorMod(since / IDLE_CYCLE + player.getId(), idles.length)];
             float t = since % IDLE_CYCLE + partial, len = GeoAnims.length(idle);
-            if (t <= len) GeoAnims.apply(model, idle, t, false, GeoAnims.envelope(t, len, 6F) * (1F - sit * 2F));
+            if (t <= len) {
+                float iw = GeoAnims.envelope(t, len, 6F) * (1F - sit * 2F);
+                GeoAnims.apply(model, idle, t, false, iw);
+                if (idle.equals("idle_leg_stretch")) {
+                    float[] k = com.xenowarriors.client.LimbBend.kneeKeys(LEG_STRETCH_KNEES, t / 20F);
+                    com.xenowarriors.client.LimbBend.extraKnees(player, k[0] * iw, k[1] * iw);
+                }
+            }
         }
         float stroll = Mth.lerp(partial, s.strollO, s.stroll);
         if (stroll > 0F) strollPose(model, stroll, player, partial, ageInTicks);
@@ -757,7 +780,7 @@ public final class MikikoAnimations {
             // in fast flight his whole body is tipped forward; the attack poses are made for standing, so turn the arms
             // by that lean too (otherwise his arm swings back toward his feet)
             float flyLean = 65F * Mth.lerp(partial, s.fastO, s.fast) * fly * 0.35F;
-            movePose(model, s.move, (ageInTicks - s.moveStart) / s.move.duration, fly > 0.05F ? flyLean : -1F);
+            movePose(model, s.move, (ageInTicks - s.moveStart) / (s.move.duration * s.moveScale), fly > 0.05F ? flyLean : -1F);
         }
         float tired = Mth.lerp(partial, s.tiredO, s.tired);
         if (tired > 0F) tiredPose(model, tired, ageInTicks);
@@ -941,21 +964,24 @@ public final class MikikoAnimations {
         // a little bob of the head with every stride, eyes forward while leaning in
         model.head.xRot -= (0.32F + Math.abs(sn) * 0.05F) * w;
 
-        // ninja run when he's really moving
-        double v = Math.sqrt(p.getDeltaMovement().horizontalDistanceSqr());
-        float ninja = w * Mth.clamp((float) (v - 0.42) / 0.2F, 0F, 1F);
+        // ninja run when he's really moving (or burning with Netsu)
+        float ninja = w * ninjaRun(p);
         if (ninja > 0F) {
             float sway = Mth.sin(step * 2F) * 0.04F;
             set(model.rightArm, 1.25F + sway, 0.1F, 0.25F, ninja);
             set(model.leftArm, 1.25F - sway, -0.1F, -0.25F, ninja);
             model.head.xRot -= 0.15F * ninja;
+            // longer, snappier strides with the heels kicking high behind
+            model.rightLeg.xRot *= 1F + 0.35F * ninja;
+            model.leftLeg.xRot *= 1F + 0.35F * ninja;
         }
     }
 
     /** 0..1 how much he's in the ninja run (also leans his body further, see bodyMotion). */
     private static float ninjaRun(Player p) {
+        if (ClientSkillState.netsuActive(p.getId()) && p.isSprinting()) return 1F;      // Netsu: flat out
         double v = Math.sqrt(p.getDeltaMovement().horizontalDistanceSqr());
-        return Mth.clamp((float) (v - 0.42) / 0.2F, 0F, 1F);
+        return Mth.clamp((float) (v - 0.36) / 0.16F, 0F, 1F);
     }
 
     /**
@@ -1251,7 +1277,7 @@ public final class MikikoAnimations {
         float[] out = new float[6];
         float age = p.tickCount + partial;
         if (s.move != null) {
-            float pr = (age - s.moveStart) / s.move.duration;
+            float pr = (age - s.moveStart) / (s.move.duration * s.moveScale);
             if (pr >= 0F && pr <= 1F) {
                 float strike = smooth((pr - 0.26F) / 0.16F) * (1F - smooth((pr - 0.72F) / 0.28F));
                 float[] b = s.move.body(pr, strike);

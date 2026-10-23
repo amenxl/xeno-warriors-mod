@@ -59,6 +59,7 @@ public final class RhalixCombatAnim {
         boolean air;
         float strength, idle, idleO;
         boolean sword;
+        float scale = 1F;           // attack playback stretch (Epic Fight battle mode)
     }
 
     private static final Map<Integer, State> STATES = new HashMap<>();
@@ -90,7 +91,8 @@ public final class RhalixCombatAnim {
             s.lastSwinging = p.swinging;
             s.lastSwingTime = p.swingTime;
             boolean charged = p == mc.player ? s.strength >= 0.9F : now - s.lastSwingStart >= 9;
-            if (AttackHooks.externalAttack.test(p)) {          // an Epic Fight battle-mode attack
+            boolean external = AttackHooks.externalAttack.test(p);
+            if (external) {                                    // an Epic Fight battle-mode attack
                 start = true;
                 charged = true;
             }
@@ -105,6 +107,7 @@ public final class RhalixCombatAnim {
                 s.sword = true;
                 s.move = SWORD_COMBOS[s.variant][s.step++];
                 s.moveStart = now;
+                s.scale = external ? AttackHooks.timeScale(p, GeoAnims.length(GeoAnims.RHALIX, s.move), 0.42F) : 1F;
                 s.lastAttack = now;
             }
             // standing about holding a sword
@@ -120,7 +123,7 @@ public final class RhalixCombatAnim {
                     && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
                     && p.getMainHandItem().isEmpty() && s.move == null && !RhalixWingsClient.busy(p) && !RhalixHungerClient.hungry(p);
             int stickT = s.calm >= STICK_AFTER ? (s.calm - STICK_AFTER) % STICK_EVERY : -1;
-            float stickLen = GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle");
+            float stickLen = GeoAnims.length(GeoAnims.RHALIX, fidget(s, p));
             if (calm) s.calm++;
             else if (stickT < 0 || stickT >= stickLen) s.calm = 0;      // (finishes putting the stick back first)
             else s.calm++;
@@ -136,11 +139,12 @@ public final class RhalixCombatAnim {
                 s.air = air;
                 s.move = (air ? AIR_COMBOS : COMBOS)[s.variant][s.step++];
                 s.moveStart = now;
+                s.scale = external ? AttackHooks.timeScale(p, GeoAnims.length(GeoAnims.RHALIX, s.move), 0.42F) : 1F;
                 s.lastAttack = now;
             }
             if (start) s.lastSwingStart = now;
             if (p == mc.player) s.strength = p.getAttackStrengthScale(0F);
-            if (s.move != null && now - s.moveStart > GeoAnims.length(GeoAnims.RHALIX, s.move) + 1) s.move = null;   // (length is in ticks)
+            if (s.move != null && now - s.moveStart > GeoAnims.length(GeoAnims.RHALIX, s.move) * s.scale + 1) s.move = null;   // (length is in ticks)
         }
     }
 
@@ -185,11 +189,21 @@ public final class RhalixCombatAnim {
         return s != null && s.idle > 0.3F && s.move == null && isSword(p) && "rh_sw_sharpen".equals(idleAnim(s, 0F)[0]);
     }
 
-    /** Ticks into the stick fidget, or -1. */
+    /** Knees through the leg stretch: hamstrings (back knee soft), then hugging his right knee up to his chest. */
+    private static final float[][] LEG_STRETCH_KNEES = {{0F, 0F, 0F}, {0.7F, 0F, 0.3F}, {1.9F, 0F, 0.3F}, {2.5F, 0.3F, 0F},
+            {3.7F, 0.3F, 0F}, {4.2F, 1.9F, 0F}, {4.9F, 1.9F, 0F}, {5.3F, 0F, 0F}, {6.0F, 0F, 0F}};
+
+    /** Which fidget this round is: the stick, or (after ten minutes without a fight, every other time) a leg stretch. */
+    private static String fidget(State s, Player p) {
+        int round = Math.max(0, s.calm - STICK_AFTER) / STICK_EVERY;
+        return p instanceof AbstractClientPlayer cp && CalmTracker.longCalm(cp) && round % 2 == 1 ? "rh_leg_stretch" : "rh_stick_idle";
+    }
+
+    /** Ticks into the fidget, or -1. */
     private static float stickTime(State s, float partial) {
         if (s.calm < STICK_AFTER) return -1F;
         float t = (s.calm - STICK_AFTER) % STICK_EVERY + partial;
-        return t <= GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle") ? t : -1F;
+        return t <= Math.max(GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle"), GeoAnims.length(GeoAnims.RHALIX, "rh_leg_stretch")) ? t : -1F;
     }
 
     /** Where the stick is: 0 in his mouth, 1 in his hand, 2 in his pocket. */
@@ -197,7 +211,7 @@ public final class RhalixCombatAnim {
         State s = STATES.get(p.getId());
         if (s == null) return 0;
         float t = stickTime(s, partial) / 20F;
-        if (t < 0F) return 0;
+        if (t < 0F || !"rh_stick_idle".equals(fidget(s, p))) return 0;
         if (t < 0.8F) return 0;
         if (t < 1.5F) return 1;
         if (t < 2.6F) return 2;
@@ -210,9 +224,15 @@ public final class RhalixCombatAnim {
         if (s == null || !rhalix(p)) return;
         float partial = age - p.tickCount;
         float st = s.move == null ? stickTime(s, Mth.clamp(partial, 0F, 1F)) : -1F;
-        if (st >= 0F) {
-            GeoAnims.apply(m, GeoAnims.RHALIX, "rh_stick_idle", st, false,
-                    GeoAnims.envelope(st, GeoAnims.length(GeoAnims.RHALIX, "rh_stick_idle"), 4F));
+        String fid = fidget(s, p);
+        float fidLen = GeoAnims.length(GeoAnims.RHALIX, fid);
+        if (st >= 0F && st <= fidLen) {
+            float fw = GeoAnims.envelope(st, fidLen, 4F);
+            GeoAnims.apply(m, GeoAnims.RHALIX, fid, st, false, fw);
+            if (fid.equals("rh_leg_stretch")) {
+                float[] k = LimbBend.kneeKeys(LEG_STRETCH_KNEES, st / 20F);
+                LimbBend.extraKnees(p, k[0] * fw, k[1] * fw);
+            }
             m.hat.copyFrom(m.head);
         }
         float idle = Mth.lerp(partial, s.idleO, s.idle);
@@ -223,7 +243,7 @@ public final class RhalixCombatAnim {
             return;
         }
         if (s.move == null) return;
-        float t = age - s.moveStart;                                  // ticks, like GeoAnims expects
+        float t = (age - s.moveStart) / s.scale;                      // ticks, like GeoAnims expects
         float len = GeoAnims.length(GeoAnims.RHALIX, s.move);
         if (t < 0 || t > len) return;
         float w = GeoAnims.envelope(t, len, 1.5F);

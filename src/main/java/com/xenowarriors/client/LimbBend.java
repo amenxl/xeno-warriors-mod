@@ -87,6 +87,20 @@ public final class LimbBend {
         EXTRA.put(e.getId(), new float[]{right, left});
     }
 
+    /** Knee bends at keyframes {time s, right, left}, eased between - for animations that bend the knees. */
+    public static float[] kneeKeys(float[][] keys, float tSeconds) {
+        if (tSeconds <= keys[0][0]) return new float[]{keys[0][1], keys[0][2]};
+        for (int i = 1; i < keys.length; i++) {
+            if (tSeconds <= keys[i][0]) {
+                float f = (tSeconds - keys[i - 1][0]) / (keys[i][0] - keys[i - 1][0]);
+                f = f * f * (3F - 2F * f);
+                return new float[]{Mth.lerp(f, keys[i - 1][1], keys[i][1]), Mth.lerp(f, keys[i - 1][2], keys[i][2])};
+            }
+        }
+        float[] last = keys[keys.length - 1];
+        return new float[]{last[1], last[2]};
+    }
+
     private static ModelPart lower(ModelPart limb) {
         return limb.hasChild(LOWER) ? limb.getChild(LOWER) : null;
     }

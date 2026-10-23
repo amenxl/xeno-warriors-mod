@@ -54,6 +54,7 @@ public final class EpicFightCompat {
                 return null;
             }
         };
+        com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
         com.xenowarriors.client.AttackHooks.externalBusy = p -> {
             var patch = patch(p);
             return patch != null && patch.isEpicFightMode()
@@ -63,6 +64,18 @@ public final class EpicFightCompat {
 
     private static final java.util.Map<Integer, Object[]> LAST = new java.util.HashMap<>();   // id -> {animation, elapsed}
     private static final java.util.Map<Integer, Integer> STARTED = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Float> HIT = new java.util.HashMap<>();
+
+    /** Ticks from the start of an Epic Fight attack to its first hit (its attack speed included), or -1. */
+    private static float hitTicks(yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch, Object anim) {
+        try {
+            if (anim instanceof yesman.epicfight.api.animation.types.AttackAnimation attack && attack.phases.length > 0) {
+                float speed = Math.max(0.1F, attack.getPlaySpeed(patch, attack));
+                return attack.phases[0].contact * 20F / speed;
+            }
+        } catch (Throwable ignored) {}
+        return -1F;
+    }
 
     /** The animation Epic Fight is playing on the player's main layer right now (null if none / unknown). */
     private static Object currentAnimation(yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch) {
@@ -139,7 +152,10 @@ public final class EpicFightCompat {
             float time = elapsed(patch);
             Object[] last = LAST.put(p.getId(), new Object[]{anim, time});
             boolean fresh = last == null || last[0] != anim || time + 0.01F < (float) last[1];
-            if (fresh && basicAttack(anim) && ownWeapon(p)) STARTED.put(p.getId(), p.tickCount);
+            if (fresh && basicAttack(anim) && ownWeapon(p)) {
+                STARTED.put(p.getId(), p.tickCount);
+                HIT.put(p.getId(), hitTicks(patch, anim));
+            }
         }
     }
 
