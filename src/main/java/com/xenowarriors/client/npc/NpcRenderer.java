@@ -53,6 +53,9 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
         return armband;
     }
 
+    /** This one's wings: {scale, r, g, b, extra spread, extra sweep}, or null to draw them as modelled. */
+    protected float[] wingLook(T e) { return null; }
+
     /** Per-entity tweaks before the details are drawn (wings etc.). */
     protected void prepare(T e, DetailModel m, float age) {}
 
@@ -97,7 +100,31 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
             com.xenowarriors.client.LimbBend.copy(p.leftLeg, m.leftLeg);
             boolean d = darkened(e), possessedLook = dark.test(e) || key.startsWith("dark_");
             int overlay = LivingEntityRenderer.getOverlayCoords(e, 0F);
-            m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(tex(key + (d ? "_dark_details" : "_details")))), light, overlay);
+            var detailVc = buffers.getBuffer(RenderType.entityCutoutNoCull(tex(key + (d ? "_dark_details" : "_details"))));
+            float[] wing = wingLook(e);
+            if (wing != null && m.rightWing != null && m.leftWing != null && m.rightWing.visible) {
+                // this one's own wings: drawn on their own, sized and tinted
+                m.rightWing.visible = false;
+                m.leftWing.visible = false;
+                m.root.render(pose, detailVc, light, overlay);
+                m.rightWing.visible = true;
+                m.leftWing.visible = true;
+                pose.pushPose();
+                m.body.translateAndRotate(pose);
+                for (var w : new net.minecraft.client.model.geom.ModelPart[]{m.rightWing, m.leftWing}) {
+                    float zr = w.zRot, xr = w.xRot;
+                    w.xScale = w.yScale = w.zScale = wing[0];
+                    w.zRot += (w == m.rightWing ? 1 : -1) * wing[4];      // spread
+                    w.xRot += wing[5];                                     // swept back
+                    w.render(pose, detailVc, light, overlay, wing[1], wing[2], wing[3], 1F);
+                    w.xScale = w.yScale = w.zScale = 1F;
+                    w.zRot = zr;
+                    w.xRot = xr;
+                }
+                pose.popPose();
+            } else {
+                m.root.render(pose, detailVc, light, overlay);
+            }
             if (m.faceRoot != null) {
                 m.faceHead.copyFrom(p.head);
                 ResourceLocation face = tex(key + (d ? "_face_dark" : faceSuffix(e)));

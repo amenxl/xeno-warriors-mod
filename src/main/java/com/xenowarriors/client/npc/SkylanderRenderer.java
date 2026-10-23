@@ -35,6 +35,25 @@ public class SkylanderRenderer extends NpcRenderer<SkylanderEntity> {
         }
     }
 
+    /** No two flocks alike: every Skylander's wings differ in size, color and set (picked from its UUID). */
+    private static final float[][] TINTS = {
+            {1F, 1F, 1F}, {0.78F, 0.9F, 1F}, {1F, 0.93F, 0.66F}, {1F, 0.8F, 0.88F}, {0.72F, 0.74F, 0.8F},
+            {0.84F, 0.74F, 1F}, {0.4F, 0.4F, 0.48F}, {0.8F, 1F, 0.86F}, {1F, 0.78F, 0.62F}};
+    private static final float[] SIZES = {0.82F, 0.92F, 1F, 1.1F, 1.22F, 1.35F};
+
+    @Override
+    protected float[] wingLook(SkylanderEntity e) {
+        if (e.wingless()) return null;
+        long h = e.getUUID().getLeastSignificantBits() ^ (e.getUUID().getMostSignificantBits() * 31);
+        int a = (int) Math.floorMod(h, 997L);
+        float[] t = TINTS[a % TINTS.length];
+        float size = SIZES[(a / 9) % SIZES.length];
+        float spread = ((a / 54) % 5 - 2) * 0.06F;
+        float sweep = ((a / 270) % 3 - 1) * 0.12F;
+        if (e.guardian()) { size = Math.max(size, 1.22F); t = TINTS[2]; }       // guardians: big golden wings
+        return new float[]{size, t[0], t[1], t[2], spread, sweep};
+    }
+
     @Override
     protected String faceSuffix(SkylanderEntity e) {
         return e.wingless() ? "_face_sad" : "_face";
