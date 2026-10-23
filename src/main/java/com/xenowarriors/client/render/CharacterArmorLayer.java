@@ -54,6 +54,53 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         }
     }
 
+    private net.minecraft.client.model.HumanoidModel<AbstractClientPlayer> inner, outer;
+
+    /** Armor from another mod (not vanilla's materials, not ours). */
+    private static boolean foreign(ItemStack stack) {
+        var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return key != null && !key.getNamespace().equals("minecraft") && !key.getNamespace().equals(XenoWarriors.MOD_ID);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void renderForeign(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, ItemStack stack,
+                               ArmorItem armor, EquipmentSlot slot) {
+        if (inner == null) {
+            var set = net.minecraft.client.Minecraft.getInstance().getEntityModels();
+            inner = new net.minecraft.client.model.HumanoidModel<>(set.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER_INNER_ARMOR));
+            outer = new net.minecraft.client.model.HumanoidModel<>(set.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER_OUTER_ARMOR));
+        }
+        boolean legs = slot == EquipmentSlot.LEGS;
+        net.minecraft.client.model.HumanoidModel<AbstractClientPlayer> base = legs ? inner : outer;
+        getParentModel().copyPropertiesTo(base);
+        showFor(base, slot);
+        net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
+        if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
+            ((net.minecraft.client.model.HumanoidModel) getParentModel()).copyPropertiesTo(hm);
+            showFor(hm, slot);
+        }
+        String name = armor.getMaterial().getName();
+        String domain = "minecraft";
+        int colon = name.indexOf(':');
+        if (colon >= 0) { domain = name.substring(0, colon); name = name.substring(colon + 1); }
+        String def = String.format(java.util.Locale.ROOT, "%s:textures/models/armor/%s_layer_%d.png", domain, name, legs ? 2 : 1);
+        ResourceLocation tex = new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
+        float[] c = tint(stack, armor);
+        if (!(armor instanceof net.minecraft.world.item.DyeableLeatherItem)) c = new float[]{1F, 1F, 1F};
+        VertexConsumer vc = net.minecraft.client.renderer.entity.ItemRenderer.getArmorFoilBuffer(buffers, RenderType.armorCutoutNoCull(tex), false, stack.hasFoil());
+        model.renderToBuffer(pose, vc, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, c[0], c[1], c[2], 1F);
+    }
+
+    private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
+        m.setAllVisible(false);
+        switch (slot) {
+            case HEAD -> { m.head.visible = true; m.hat.visible = true; }
+            case CHEST -> { m.body.visible = true; m.rightArm.visible = true; m.leftArm.visible = true; }
+            case LEGS -> { m.body.visible = true; m.rightLeg.visible = true; m.leftLeg.visible = true; }
+            default -> { m.rightLeg.visible = true; m.leftLeg.visible = true; }
+        }
+    }
+
     private static String slotName(EquipmentSlot slot) {
         return switch (slot) {
             case HEAD -> "helmet";
@@ -82,6 +129,11 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         for (EquipmentSlot slot : SLOTS) {
             ItemStack stack = player.getItemBySlot(slot);
             if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) continue;
+            // other mods' armor (DragonMineZ's gis and armors...): worn as that mod made it, its own model and texture
+            if (foreign(stack)) {
+                renderForeign(pose, buffers, light, player, stack, armor, slot);
+                continue;
+            }
             DetailModel m = bySlot.get(slot);
             boolean sr = stack.getItem() instanceof com.xenowarriors.item.SrHoodieItem;
             boolean hoodie = stack.getItem() instanceof com.xenowarriors.item.KarmaHoodieItem;
