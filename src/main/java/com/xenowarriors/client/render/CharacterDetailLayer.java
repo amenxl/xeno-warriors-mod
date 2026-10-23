@@ -133,6 +133,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (com.xenowarriors.client.KarmaFocusClient.weight(p) > 0.4F) return "sense";      // eyes closed, sensing Karma
         String arrow = com.xenowarriors.client.ArrowPullClient.face(p);
         if (arrow != null) return arrow;
+        String rainIdle = com.xenowarriors.client.RainIdle.face(p);
+        if (rainIdle != null) return rainIdle;
         if (ClientSkillState.currentAnim(p) != null) return "shout";
         String efFace = com.xenowarriors.client.AttackHooks.externalFace.apply(p);
         if (efFace != null) return efFace;

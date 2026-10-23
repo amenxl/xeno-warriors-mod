@@ -210,6 +210,13 @@ public final class RhalixWingsClient {
         } else if (animIn) {
             spread = Math.max(spread, 0.4F * (1F - smooth(t / 10F)));
         }
+        // rain shelter: wings swung forward and wrapped around him, tips raised over his head
+        float shelter = RainIdle.shelter(p);
+        if (shelter > 0F) {
+            tuck = Mth.lerp(shelter, tuck, -2.3F);
+            flap = Mth.lerp(shelter, flap, 0.3F);
+            spread *= 1F - shelter;
+        }
         model.poseWings(true, grow, flap, tuck, sweep, Mth.clamp(spread, 0F, 1F));
     }
 

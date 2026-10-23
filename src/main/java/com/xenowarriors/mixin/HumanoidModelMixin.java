@@ -52,6 +52,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.mikiko.CombatStance.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.KarmaFocusClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.ArrowPullClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.RainIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.mikiko.HoodClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.mikiko.RopeBladeClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.ChargePose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

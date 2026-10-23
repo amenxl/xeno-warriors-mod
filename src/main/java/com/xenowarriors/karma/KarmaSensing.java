@@ -151,6 +151,7 @@ public final class KarmaSensing {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
             if (d.senseUses < 1_000_000) d.senseUses++;
         });
+        com.xenowarriors.compat.DmzKiTraining.practiced(player);         // (DragonMineZ: trains max Ki too)
         int after = uses + 1;
         if (after == READ_LEVELS) {
             player.sendSystemMessage(Component.literal("Your Karma Sensing is sharp enough to read levels now - sensed players and enemies show theirs.")
