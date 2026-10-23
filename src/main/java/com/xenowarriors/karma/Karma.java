@@ -53,6 +53,7 @@ public final class Karma {
     }
 
     public static void add(ServerPlayer player, float amount) {
+        if (amount < 0) com.xenowarriors.compat.DmzKiTraining.karmaSpent(player, -amount);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             data.setKarma(data.getKarma() + amount);
             sync(player, data);

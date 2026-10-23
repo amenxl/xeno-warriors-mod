@@ -71,6 +71,7 @@ public final class SkillManager {
             }
             if (skill.use(player)) {
                 if (!player.isCreative()) Karma.add(player, -cost);
+                com.xenowarriors.compat.DmzKiTraining.skillUsed(player);       // (DragonMineZ: trains Ki Power)
                 int cooldown = skill.getCooldownTicks();
                 data.cooldownEnd[slot] = now(player) + cooldown;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(slot, cooldown, cooldown), player);
