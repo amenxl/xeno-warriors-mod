@@ -10,8 +10,8 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 ## Queue (rough priority)
 1. ~~Rhalix hair~~ done (A in game; switch to B/C if user picks)
 2. ~~Skylander wing variants~~ done
-3. Sky Crystal tools: sword, pickaxe, axe, shovel, hoe (+ corrupted versions).
-4. Skylanders stay on their islands; bigger islands; house/chest defense (run in and attack).
+3. ~~Sky Crystal + Corrupted tools~~ done (tools/sprites/tool_sprites.py)
+4. ~~Island Skylanders, bigger islands, house/chest defense~~ done
 5. Sky Haters build ladders/towers up to sky islands.
 6. UI/HUD pass: nothing overlaps (party HUD, karma bar, level HUD, request cards, pointers, Epic Fight/DMZ HUDs).
 7. Dragon Ball outfit compatibility: full 3D, no clipping, both characters (start with the most common gis).
@@ -25,3 +25,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 ## Log
 - Fri 05:30 — plan set up, folder access granted, tools backed up.
 - Fri 06:10 — 0.88.0: Rhalix hair black only at the tips (options A/B/C sent, A in game; rhalix.py HAIR_STYLE env), Skylander wing variety (size/tint/spread per UUID, guardians big golden).
+- Fri 11:20 — 0.89.0: Sky/Corrupted tool sets (effects: sky +35% vs airborne & faster digging above y150; corrupted lifesteal/wither & faster below y0). Islands bigger (r 7-16, centered in chunk), island Skylanders circle/land on their own island, attack anyone entering their house or breaking/opening near home.
