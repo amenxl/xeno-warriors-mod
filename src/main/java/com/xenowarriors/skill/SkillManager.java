@@ -47,6 +47,8 @@ public final class SkillManager {
     public static void useSkill(ServerPlayer player, int slot) {
         if (com.xenowarriors.party.Duels.isKnockedOut(player)) return;      // can't do anything while knocked out
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
+        // the team ultimate (sneak + ultimate key with your partner close by), or joining one you were asked to
+        if (slot == ULTIMATE_SLOT && com.xenowarriors.party.TeamUltimate.onUltimateKey(player)) return;
         CharacterType type = ModCapabilities.getType(player);
         Skill skill = get(type, slot);
         if (skill == null) {

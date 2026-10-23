@@ -173,8 +173,10 @@ public final class KarmaSensing {
                 }
             }
         }
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.SkyOreSensedPacket(found.stream().mapToLong(Long::longValue).toArray(),
-                darkFound.stream().mapToLong(Long::longValue).toArray(), duration), p);
+        var orePacket = (new com.xenowarriors.network.SkyOreSensedPacket(found.stream().mapToLong(Long::longValue).toArray(),
+                darkFound.stream().mapToLong(Long::longValue).toArray(), duration));
+        ModNetwork.sendToPlayer(orePacket, p);
+        for (ServerPlayer m : partyNearby(p)) ModNetwork.sendToPlayer(orePacket, m);
     }
 
     /** One more use's worth of practice (with the milestone messages). */
@@ -199,6 +201,14 @@ public final class KarmaSensing {
 
     /** Each player's own render distance (chunks), sent with the key press. */
     public static final Map<UUID, Integer> CLIENT_VIEW = new HashMap<>();
+
+    /** Party members within 64 blocks (not you). */
+    static java.util.List<ServerPlayer> partyNearby(ServerPlayer p) {
+        java.util.List<ServerPlayer> out = new java.util.ArrayList<>();
+        for (ServerPlayer m : com.xenowarriors.party.Parties.members(p))
+            if (m != p && m.level() == p.level() && m.distanceTo(p) <= 64) out.add(m);
+        return out;
+    }
 
     /** As far as you can see: your render distance (in blocks). */
     private static double viewLimit(ServerPlayer p) {
@@ -225,7 +235,14 @@ public final class KarmaSensing {
         int[] damage = found.stream().mapToInt(e -> e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
                 ? (int) Math.round(e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 10) : 0).toArray();
         int[] armor = found.stream().mapToInt(LivingEntity::getArmorValue).toArray();
-        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS || overflow, souls, damage, armor, first, (float) RADIUS, overflow), player);
+        KarmaSensedPacket packet = new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS || overflow, souls, damage, armor, first, (float) RADIUS, overflow);
+        ModNetwork.sendToPlayer(packet, player);
+        // party members close by (64 blocks) see what you sense too
+        for (ServerPlayer m : partyNearby(player)) {
+            ModNetwork.sendToPlayer(packet, m);
+            if (first) m.displayClientMessage(Component.literal(player.getName().getString() + " is sharing their Karma Sensing with you")
+                    .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
+        }
         if (first) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);

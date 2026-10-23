@@ -180,6 +180,10 @@ public final class XenoCommands {
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), false))))));
 
+        root.then(Commands.literal("teamult").then(Commands.literal("join").executes(ctx -> {
+            com.xenowarriors.party.TeamUltimate.join(ctx.getSource().getPlayerOrException());
+            return 1;
+        })));
         root.then(Commands.literal("party")
                 .then(Commands.literal("invite").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                     com.xenowarriors.party.Parties.invite(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"));
