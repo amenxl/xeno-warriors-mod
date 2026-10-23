@@ -78,6 +78,8 @@ public final class TeamUltimate {
         other.sendSystemMessage(Component.literal(p.getName().getString() + " wants to do Gravity Fox Fire! Press your ultimate key or ")
                 .withStyle(ChatFormatting.GOLD).append(Parties.button("[Join]", "/xeno teamult join", ChatFormatting.GREEN)));
         other.level().playSound(null, other.blockPosition(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS, 1F, 1.4F);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Team Ultimate",
+                p.getName().getString() + " wants to do Gravity Fox Fire!", "/xeno teamult join", "", PROMPT_TICKS, 0xFFFFB040), other);
         return true;
     }
 

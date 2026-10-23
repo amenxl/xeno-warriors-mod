@@ -77,6 +77,8 @@ public final class ClientModEvents {
         event.register(ModKeyMappings.SUMMON_BLADE);
         event.register(ModKeyMappings.TOGGLE_WINGS);
         event.register(ModKeyMappings.TOGGLE_HOOD);
+        event.register(ModKeyMappings.ACCEPT_REQUEST);
+        event.register(ModKeyMappings.DECLINE_REQUEST);
         event.register(ModKeyMappings.HEKUBLADE_REALM);
         event.register(ModKeyMappings.LOCK_ON);
         event.register(ModKeyMappings.KARMA_SENSE);
@@ -107,6 +109,7 @@ public final class ClientModEvents {
         event.registerAboveAll("skills", new SkillHudOverlay());
         event.registerAboveAll("cutscene", new UltimateCutscene.Overlay());
         event.registerAboveAll("team_cutscene", new TeamUltCutscene.Overlay());
+        event.registerAboveAll("request_popup", new RequestPopups.Overlay());
         event.registerAboveAll("stat_toasts", new StatToasts());
         event.registerAboveAll("lock_on", new LockOn.Overlay());
         event.registerAboveAll("karma_sense", new KarmaSense.Overlay());

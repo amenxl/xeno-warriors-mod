@@ -188,6 +188,8 @@ public final class Duels {
                 .append(Component.literal(" "))
                 .append(Parties.button("[Decline]", "/xeno duel decline", ChatFormatting.RED)));
         to.level().playSound(null, to.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.PLAYERS, 0.4F, 1.6F);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Battle Challenge",
+                from.getName().getString() + " challenges you to a PvP battle!", "/xeno duel accept", "/xeno duel decline", REQUEST_TICKS, 0xFFFF6A5A), to);
     }
 
     public static void accept(ServerPlayer p) {

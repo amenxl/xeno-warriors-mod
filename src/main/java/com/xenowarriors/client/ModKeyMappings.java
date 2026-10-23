@@ -38,6 +38,10 @@ public final class ModKeyMappings {
     /** Rhalix: take out / put away his wings. */
     public static final KeyMapping TOGGLE_WINGS = key("toggle_wings", GLFW.GLFW_KEY_H);
 
+    /** Accept / decline the request card on screen (party invites, battles, team ultimate). */
+    public static final KeyMapping ACCEPT_REQUEST = key("accept_request", GLFW.GLFW_KEY_Y);
+    public static final KeyMapping DECLINE_REQUEST = key("decline_request", GLFW.GLFW_KEY_X);
+
     private ModKeyMappings() {}
 
     private static KeyMapping ctrlKey(String name, int defaultKey) {

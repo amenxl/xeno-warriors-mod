@@ -199,5 +199,7 @@
   "container.xenowarriors.karma_altar": "Karma Altar",
   "block.xenowarriors.corrupted_soil": "Corrupted Soil",
   "block.xenowarriors.corrupted_stone": "Corrupted Stone",
-  "event.xenowarriors.sky_raid": "Sky Hater Raid"
+  "event.xenowarriors.sky_raid": "Sky Hater Raid",
+  "key.xenowarriors.accept_request": "Accept Request (party/battle/team)",
+  "key.xenowarriors.decline_request": "Decline Request"
 }

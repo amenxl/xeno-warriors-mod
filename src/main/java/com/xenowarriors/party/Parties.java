@@ -113,6 +113,8 @@ public final class Parties {
                 .append(Component.literal(" "))
                 .append(button("[Decline]", "/xeno party decline", ChatFormatting.RED)));
         to.level().playSound(null, to.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.8F, 1.4F);
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Party Invite",
+                from.getName().getString() + " invited you to their party!", "/xeno party accept", "/xeno party decline", INVITE_TICKS, 0xFF6CC4FF), to);
     }
 
     static MutableComponent button(String text, String command, ChatFormatting color) {
