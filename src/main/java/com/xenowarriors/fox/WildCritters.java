@@ -51,7 +51,7 @@ public final class WildCritters {
         if (d.getBoolean(ROLLED)) return;
         d.putBoolean(ROLLED, true);
         if (fox && FoxPets.ownerOf((Fox) e) != null) return;
-        if (wing && WingPets.ownerOf(e) != null) return;
+        if (wing && com.xenowarriors.wing.WingPets.ownerOf(e) != null) return;
         Holder<Biome> b = event.getLevel().getBiome(e.blockPosition());
         RandomSource r = e.level().random;
         if (fox) {
@@ -80,7 +80,7 @@ public final class WildCritters {
                 if (f < 0.02F) look = 6;                       // Void
                 else if (f < 0.22F) look = 1 + r.nextInt(5);   // Shadow, Rose, Frost, Ember, Golden
             }
-            if (look != 0) d.putInt(WingPets.SKIN_KEY, look);
+            if (look != 0) d.putInt(com.xenowarriors.wing.WingPets.SKIN_KEY, look);
         }
     }
 }
