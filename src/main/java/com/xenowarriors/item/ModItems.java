@@ -17,6 +17,10 @@ public final class ModItems {
     public static final RegistryObject<Item> HEKUBLADE = ITEMS.register("hekublade",
             () -> new HekubladeItem(new Item.Properties().stacksTo(1).fireResistant()));
 
+    /** A long metal pole: Epic Fight's spear moves; Mikiko's last hit of a combo sends out a gust of wind. */
+    public static final RegistryObject<Item> METAL_POLE = ITEMS.register("metal_pole",
+            () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.IRON, 3, -2.8F, new Item.Properties()));
+
     public static final RegistryObject<Item> KARMA_HOODIE = ITEMS.register("karma_hoodie",
             () -> new KarmaHoodieItem(new Item.Properties()));
 

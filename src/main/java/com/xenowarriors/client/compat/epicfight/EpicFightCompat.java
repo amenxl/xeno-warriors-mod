@@ -55,6 +55,16 @@ public final class EpicFightCompat {
             }
         };
         com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
+        com.xenowarriors.client.AttackHooks.externalFace = EpicFightCompat::face;
+        com.xenowarriors.client.AttackHooks.externalStanceFace = p -> {
+            var patch = patch(p);
+            if (patch == null || !patch.isEpicFightMode() || ownWeapon(p)) return null;
+            // weapon at the ready: steady and focused, a blink now and then, a confident look every so often
+            int t = (p.tickCount + p.getId() * 13) % 200;
+            if (t < 3) return "blink";
+            boolean rhalix = ClientCharacterData.get(p) == CharacterType.RHALIX;
+            return t > 160 ? (rhalix ? "smug" : "cool") : "focused";
+        };
         // busy only while Epic Fight is really playing an action (an attack, dodge, guard...) - not just because
         // battle mode is on, or a mode switch flickered the state
         com.xenowarriors.client.AttackHooks.externalBusy = p -> {
@@ -109,6 +119,46 @@ public final class EpicFightCompat {
         } catch (Throwable t) {
             return 0F;
         }
+    }
+
+    /**
+     * Faces for Epic Fight's moves: each swing of a combo gets its own (gritted, yelling, steely), heavy and skill moves
+     * a shout, guarding a focused stare, dodges a startled look, and getting knocked about a wince.
+     */
+    private static String face(net.minecraft.world.entity.player.Player p) {
+        var patch = patch(p);
+        if (patch == null || !patch.isEpicFightMode()) return null;
+        Object anim = currentAnimation(patch);
+        if (anim == null) return null;
+        String name = anim.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
+        String path = String.valueOf(anim).toLowerCase(java.util.Locale.ROOT);
+        boolean rhalix = ClientCharacterData.get(p) == CharacterType.RHALIX;
+        if (name.contains("knockdown") || name.contains("hit") || path.contains("knockdown") || path.contains("hit_")) return "hurt";
+        if (name.contains("guard") || path.contains("guard")) return path.contains("hit") ? "strained" : "focused";
+        if (name.contains("dodge") || path.contains("roll") || path.contains("step") || path.contains("dodge")) return rhalix ? "cool" : "surprised";
+        if (anim instanceof yesman.epicfight.api.animation.types.AttackAnimation) {
+            if (!basicAttack(anim)) return "shout";                                        // skills, heavy and special attacks
+            String[] swing = rhalix ? new String[]{"focused", "fierce", "smug"} : new String[]{"fierce", "shout", "concentrate"};
+            float t = elapsed(patch);
+            if (t < 0.12F) return "concentrate";                                           // winding up
+            return swing[Math.floorMod(anim.hashCode(), swing.length)];
+        }
+        boolean action = Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION));
+        return action ? "shout" : null;
+    }
+
+    /** Mikiko swinging the Metal Pole, and this is the last hit of its combo (before the dash and air attacks). */
+    private static boolean finalComboHit(net.minecraft.world.entity.player.Player p,
+                                         yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch, Object anim) {
+        if (ClientCharacterData.get(p) != CharacterType.MIKIKO || !p.getMainHandItem().is(com.xenowarriors.item.ModItems.METAL_POLE.get())) return false;
+        try {
+            var cap = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(p.getMainHandItem());
+            var list = cap.getAutoAttackMotion(patch);
+            if (list == null || list.size() < 3) return false;
+            int last = list.size() - 3;                                 // combo..., dash attack, air attack
+            for (int i = 0; i < list.size(); i++) if (list.get(i).get() == anim) return i == last;
+        } catch (Throwable ignored) {}
+        return false;
     }
 
     /** One of Epic Fight's normal combo attacks (the ones Mikiko and Rhalix have their own versions of). */
@@ -175,6 +225,9 @@ public final class EpicFightCompat {
             float time = elapsed(patch);
             Object[] last = LAST.put(p.getId(), new Object[]{anim, time});
             boolean fresh = last == null || last[0] != anim || time + 0.01F < (float) last[1];
+            if (fresh && basicAttack(anim) && p == net.minecraft.client.Minecraft.getInstance().player && finalComboHit(p, patch, anim)) {
+                com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.PoleGustPacket());   // Metal Pole gust
+            }
             if (fresh && basicAttack(anim) && ownWeapon(p)) {
                 STARTED.put(p.getId(), p.tickCount);
                 HIT.put(p.getId(), hitTicks(patch, anim));

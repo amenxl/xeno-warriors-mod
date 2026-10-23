@@ -31,6 +31,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     /** Mikiko's other outfits (index = outfit number; 0 = his normal look, the type's own model). */
     private final Map<CharacterType, DetailModel[]> outfits = new EnumMap<>(CharacterType.class);
+    /** The same outfits in Fox King mode: the outfit with Fox King's hair. */
+    private final Map<CharacterType, DetailModel[]> kingOutfits = new EnumMap<>(CharacterType.class);
 
     /** The most recently made layer (both player renderers load the same models) - for Epic Fight's renderer. */
     private static CharacterDetailLayer instance;
@@ -50,6 +52,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                         + "_" + keys[i] + ".json");
             }
             outfits.put(type, arr);
+            if (type == CharacterType.MIKIKO) {
+                DetailModel[] karr = new DetailModel[keys.length];
+                for (int i = 1; i < keys.length; i++) {
+                    karr[i] = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + type.getId()
+                            + "_" + keys[i] + "_foxking.json");
+                }
+                kingOutfits.put(type, karr);
+            }
         }
     }
 
@@ -72,19 +82,26 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     private DetailModel outfitModel(AbstractClientPlayer p, CharacterType type) {
         int o = ClientCharacterData.outfit(p);
-        DetailModel[] arr = outfits.get(type);
-        return o > 0 && arr != null && o < arr.length ? arr[o] : null;
+        DetailModel[] arr = (foxActive(p, type) ? kingOutfits : outfits).get(type);
+        DetailModel m = o > 0 && arr != null && o < arr.length ? arr[o] : null;
+        if (m == null && o > 0 && outfits.get(type) != null) m = outfits.get(type)[o];
+        return m;
     }
 
     /** "mikiko_origins1"... for an outfit, else the type's id. */
     public static String outfitName(AbstractClientPlayer p, CharacterType type) {
         int o = ClientCharacterData.outfit(p);
-        return o > 0 ? type.getId() + "_" + type.outfitKeys()[o] : type.getId();
+        return o > 0 ? type.getId() + "_" + type.outfitKeys()[o] + (foxActive(p, type) ? "_foxking" : "") : type.getId();
     }
 
+    /** Mikiko is in Fox King mode (whatever he's wearing). */
+    private static boolean foxActive(AbstractClientPlayer p, CharacterType type) {
+        return type == CharacterType.MIKIKO && com.xenowarriors.client.mikiko.FoxKingClient.active(p);
+    }
+
+    /** Fox King in his normal outfit (other outfits have their own Fox King versions, see outfitModel). */
     private static boolean isFoxKing(AbstractClientPlayer p, CharacterType type) {
-        return type == CharacterType.MIKIKO && instance != null && instance.foxKing != null
-                && com.xenowarriors.client.mikiko.FoxKingClient.active(p) && ClientCharacterData.outfit(p) == 0;   // (outfits keep their own look)
+        return foxActive(p, type) && instance != null && instance.foxKing != null && ClientCharacterData.outfit(p) == 0;
     }
 
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
@@ -114,6 +131,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
         if (p.hurtTime > 0) return "hurt";
         if (ClientSkillState.currentAnim(p) != null) return "shout";
+        String efFace = com.xenowarriors.client.AttackHooks.externalFace.apply(p);
+        if (efFace != null) return efFace;
         if (com.xenowarriors.client.ChargePose.weight(p) > 0.5F) {
             return (p.tickCount / 20) % 3 == 0 ? "concentrate" : "shout";   // gritting, then yelling as it builds
         }
@@ -140,6 +159,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         if (ClientSkillState.feelingSick(p)) return "sick";
         if (p == net.minecraft.client.Minecraft.getInstance().player && com.xenowarriors.client.StatToasts.justLeveledUp()) return "sparkle";
+        String stance = com.xenowarriors.client.AttackHooks.externalStanceFace.apply(p);
+        if (stance != null) return stance;
         int around = com.xenowarriors.client.Surroundings.of(p);
         if (around == com.xenowarriors.client.Surroundings.ENEMIES) {
             // enemies close by: eyes narrowed, ready to fight
@@ -414,7 +435,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
         if (formHair >= 0 && model.hair != null) {
-            String atlas = king ? "mikiko_foxking" : type.getId();
+            String atlas = king || (outfit > 0 && foxActive(player, type)) ? "mikiko_foxking" : type.getId();
             VertexConsumer hairBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(
                     "textures/entity/character/" + atlas + "_details_hairmask.png")));
             float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;

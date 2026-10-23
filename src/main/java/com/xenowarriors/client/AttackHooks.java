@@ -12,6 +12,10 @@ public final class AttackHooks {
     public static Predicate<Player> externalAttack = p -> false;
     /** In the middle of one of the other mod's actions (dodging, guarding, a skill...). */
     public static Predicate<Player> externalBusy = p -> false;
+    /** Face for what Epic Fight is playing on them right now (attacks, guarding, dodging, getting hit...), or null. */
+    public static java.util.function.Function<Player, String> externalFace = p -> null;
+    /** Face while just standing in an Epic Fight weapon's battle stance, or null. */
+    public static java.util.function.Function<Player, String> externalStanceFace = p -> null;
     /** Ticks until the other mod's current attack lands its hit (-1 if unknown): our attack is timed to it. */
     public static java.util.function.ToDoubleFunction<Player> externalHitTicks = p -> -1;
 

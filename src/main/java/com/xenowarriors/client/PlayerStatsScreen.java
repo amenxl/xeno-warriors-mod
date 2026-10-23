@@ -18,12 +18,12 @@ import java.util.List;
 
 /**
  * The M menu. "Warriors" lists every player on the server; "My Warrior" shows your own progress (stats, skills and
- * status in tidy sections, Mikiko's Hekublade button); "Settings" has your options.
+ * status in tidy sections, Mikiko's Hekublade button); "Outfits" shows your character and lets you change outfit;
+ * "Settings" has your options.
  * Everything is measured to fit its box: long text is shortened with "…", big numbers are shortened (22.4K), and the
  * whole card shrinks on small windows.
  */
 public class PlayerStatsScreen extends Screen {
-    private static final boolean OUTFITS_READY = true;
 
     private static final int ROW = 30, PAD = 8;
     private static final int BG = 0xD0101018, BG_SELF = 0xD01C1C2A, SECTION = 0xFF8C8CA0, LABEL = 0xFFA0A0B0;
@@ -31,7 +31,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabSettings, realm, plea, senseFriendly, efMode, efBattle, outfit;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -61,30 +61,33 @@ public class PlayerStatsScreen extends Screen {
 
     @Override
     protected void init() {
-        int tw = Math.min(80, (cardW() - 8) / 3), tx = (width - (tw * 3 + 8)) / 2;
+        // tabs: four across, as wide as fits
+        int gap = 4, tw = Math.min(84, (cardW() - gap * 3) / 4), tx = (width - (tw * 4 + gap * 3)) / 2;
         tabPlayers = addRenderableWidget(Button.builder(Component.literal("Warriors"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
-        tabMe = addRenderableWidget(Button.builder(Component.literal("My Warrior"), b -> setTab(1)).bounds(tx + tw + 4, 6, tw, 16).build());
-        tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(2)).bounds(tx + 2 * (tw + 4), 6, tw, 16).build());
-        int bw = Math.min(240, cardW() - 20);
+        tabMe = addRenderableWidget(Button.builder(Component.literal("My Warrior"), b -> setTab(1)).bounds(tx + (tw + gap), 6, tw, 16).build());
+        tabOutfits = addRenderableWidget(Button.builder(Component.literal("Outfits"), b -> setTab(2)).bounds(tx + 2 * (tw + gap), 6, tw, 16).build());
+        tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(3)).bounds(tx + 3 * (tw + gap), 6, tw, 16).build());
+        // settings: Karma Sensing (with its explanation underneath), then the Epic Fight options under their heading
+        int bw = Math.min(240, cardW() - 20), bx = width / 2 - bw / 2;
         senseFriendly = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setSenseFriendly(!ClientSettings.senseFriendly());
             updateButtons();
-        }).bounds(width / 2 - bw / 2, 56, bw, 20).build());
+        }).bounds(bx, SET_TOP + 34, bw, 20).build());
         efMode = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfWholeBattleMode(!ClientSettings.efWholeBattleMode());
             updateButtons();
-        }).bounds(width / 2 - bw / 2, 80, bw, 20).build());
+        }).bounds(bx, SET_TOP + 98, bw, 20).build());
         efBattle = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
-        }).bounds(width / 2 - bw / 2, 104, bw, 20).build());
-        outfit = addRenderableWidget(Button.builder(Component.empty(), b -> {
-            if (minecraft.player == null) return;
-            int next = (ClientCharacterData.outfit(minecraft.player) + 1) % ClientCharacterData.get(minecraft.player).outfitKeys().length;
-            ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(next));
-            ClientCharacterData.setOutfit(minecraft.player.getUUID(), next);     // show it right away
-            updateButtons();
-        }).bounds(width / 2 - bw / 2, 128, bw, 20).build());
+        }).bounds(bx, SET_TOP + 122, bw, 20).build());
+        // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
+        outfitButtons.clear();
+        for (int i = 0; i < MAX_OUTFITS; i++) {
+            final int idx = i;
+            outfitButtons.add(addRenderableWidget(Button.builder(Component.empty(), b -> chooseOutfit(idx)).bounds(0, 0, 10, 20).build()));
+        }
+        layoutOutfits();
         realm = addRenderableWidget(Button.builder(Component.literal("Enter the Hekublade"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade realm");
             onClose();
@@ -92,6 +95,50 @@ public class PlayerStatsScreen extends Screen {
         plea = addRenderableWidget(Button.builder(Component.literal("Ask to be freed"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade plea");
         }).bounds(width / 2 - 75, height - 46, 150, 20).build());
+        updateButtons();
+    }
+
+    private static final int SET_TOP = 30, MAX_OUTFITS = 6, OUT_TOP = 30;
+    private final List<Button> outfitButtons = new ArrayList<>();
+
+    /** The Outfits card: preview box and button column side by side, stacked when the window is narrow. */
+    private boolean outfitsStacked() {
+        return cardW() < 280;
+    }
+
+    private int[] previewBox() {     // {x, y, w, h}
+        int x = cardX(), w = cardW(), bottom = height - 20;
+        if (outfitsStacked()) {
+            int n = outfitCount(), listH = n * 22 + 6;
+            int h = Math.max(70, bottom - OUT_TOP - 24 - listH);
+            return new int[]{x + 6, OUT_TOP + 20, w - 12, h};
+        }
+        return new int[]{x + 6, OUT_TOP + 20, Math.round(w * 0.45F), bottom - OUT_TOP - 26};
+    }
+
+    private int outfitCount() {
+        if (minecraft == null || minecraft.player == null) return 1;
+        return Math.min(MAX_OUTFITS, ClientCharacterData.get(minecraft.player).outfitKeys().length);
+    }
+
+    private void layoutOutfits() {
+        int[] pb = previewBox();
+        int x0, y0, bw;
+        if (outfitsStacked()) {
+            x0 = cardX() + 10; bw = cardW() - 20; y0 = pb[1] + pb[3] + 6;
+        } else {
+            x0 = pb[0] + pb[2] + 10; bw = cardX() + cardW() - 8 - x0; y0 = OUT_TOP + 24;
+        }
+        for (int i = 0; i < outfitButtons.size(); i++) {
+            Button b = outfitButtons.get(i);
+            b.setX(x0); b.setY(y0 + i * 22); b.setWidth(bw);
+        }
+    }
+
+    private void chooseOutfit(int idx) {
+        if (minecraft.player == null) return;
+        ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(idx));
+        ClientCharacterData.setOutfit(minecraft.player.getUUID(), idx);          // show it right away
         updateButtons();
     }
 
@@ -105,17 +152,28 @@ public class PlayerStatsScreen extends Screen {
         if (realm == null) return;
         tabPlayers.active = tab != 0;
         tabMe.active = tab != 1;
-        tabSettings.active = tab != 2;
-        senseFriendly.visible = tab == 2;
+        tabOutfits.active = tab != 2;
+        tabSettings.active = tab != 3;
+        senseFriendly.visible = tab == 3;
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
-        efMode.visible = tab == 2 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
+        efMode.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
         efBattle.visible = efMode.visible;
         efBattle.setMessage(Component.literal("Always battle mode: " + (ClientSettings.efAlwaysBattle() ? "ON" : "OFF")));
         efMode.setMessage(Component.literal("Battle mode moves: " + (ClientSettings.efWholeBattleMode() ? "Epic Fight's" : "Xeno Warriors'")));
         boolean mikiko = ClientCharacterData.getLocal() == CharacterType.MIKIKO;
-        outfit.visible = tab == 2 && ClientCharacterData.getLocal() != CharacterType.NONE && OUTFITS_READY;
-        if (minecraft != null && minecraft.player != null)
-            outfit.setMessage(Component.literal("Outfit: " + ClientCharacterData.get(minecraft.player).outfitNames()[ClientCharacterData.outfit(minecraft.player)]));
+        CharacterType type = minecraft != null && minecraft.player != null ? ClientCharacterData.get(minecraft.player) : CharacterType.NONE;
+        String[] names = type.outfitNames();
+        int current = minecraft != null && minecraft.player != null ? ClientCharacterData.outfit(minecraft.player) : 0;
+        layoutOutfits();
+        for (int i = 0; i < outfitButtons.size(); i++) {
+            Button b = outfitButtons.get(i);
+            b.visible = tab == 2 && type != CharacterType.NONE && i < names.length;
+            if (i < names.length) {
+                String label = (i == current ? "✔ " : "") + names[i];
+                b.setMessage(Component.literal(fit(label, b.getWidth() - 10)));
+            }
+            b.active = i != current;
+        }
         boolean prisoner = me != null && me.prisoner();
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
         realm.setMessage(Component.literal(me != null && me.inRealm() ? "Leave the Hekublade" : "Enter the Hekublade"));
@@ -146,7 +204,8 @@ public class PlayerStatsScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBackground(g);
-        if (tab == 2) renderSettings(g);
+        if (tab == 3) renderSettings(g);
+        else if (tab == 2) renderOutfits(g, mouseX, mouseY);
         else if (players.isEmpty()) g.drawCenteredString(font, "Loading...", width / 2, 50, 0xAAAAAA);
         else if (tab == 0) renderPlayers(g);
         else renderMe(g);
@@ -336,14 +395,57 @@ public class PlayerStatsScreen extends Screen {
     // ------------------------------------------------------------------ Settings tab
 
     private void renderSettings(GuiGraphics g) {
-        int w = cardW(), x = cardX(), y = 30;
-        int ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 48 : 0;     // room for the Epic Fight buttons
-        g.fill(x, y, x + w, y + 84 + ef, BG);
+        int w = cardW(), x = cardX(), y = SET_TOP;
+        boolean ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
+        int h = ef ? 150 : 84;
+        g.fill(x, y, x + w, y + h, BG);
+        g.fill(x, y, x + w, y + 1, 0xFF8C8CA0);
         g.drawCenteredString(font, "Settings", width / 2, y + 6, 0xFFFFFF);
-        String[] help = {"Off: Karma Sensing only shows other players", "and anything that's a threat."};
-        for (int i = 0; i < help.length; i++) {
-            g.drawCenteredString(font, fit(help[i], w - 16), width / 2, y + 54 + ef + i * 11, 0x999999);
+        small(g, "KARMA SENSING", x + PAD, y + 22, SECTION);
+        // explanation under the button, shrunk to fit the card
+        String help = ClientSettings.senseFriendly() ? "On: also shows animals, villagers and other friendly life."
+                : "Off: only shows other players and anything that's a threat.";
+        for (int i = 0, n = 0; n < 2; n++) {
+            String line = font.plainSubstrByWidth(help.substring(i), w - 16);
+            if (line.isEmpty()) break;
+            g.drawCenteredString(font, line.trim(), width / 2, y + 59 + n * 10, 0x999999);
+            i += line.length();
+            if (i >= help.length()) break;
         }
+        if (ef) {
+            g.fill(x + PAD, y + 82, x + w - PAD, y + 83, 0x30FFFFFF);
+            small(g, "EPIC FIGHT", x + PAD, y + 86, SECTION);
+        }
+    }
+
+    // ------------------------------------------------------------------ Outfits tab
+
+    private void renderOutfits(GuiGraphics g, int mouseX, int mouseY) {
+        var p = minecraft.player;
+        if (p == null) return;
+        CharacterType type = ClientCharacterData.get(p);
+        int w = cardW(), x = cardX(), y = OUT_TOP, bottom = height - 20;
+        int color = type.getColor() | 0xFF000000;
+        g.fill(x, y, x + w, bottom, BG);
+        g.fill(x, y, x + w, y + 1, color);
+        if (type == CharacterType.NONE) {
+            g.drawCenteredString(font, "Choose a warrior first.", width / 2, y + 30, 0xAAAAAA);
+            return;
+        }
+        String[] names = type.outfitNames();
+        String cur = names[ClientCharacterData.outfit(p)];
+        int[] pb = previewBox();
+        text(g, type.getDisplayName().getString() + "  •  " + cur, x + PAD, y + 6, w - PAD * 2, color);
+        // preview: your character, turning to follow the mouse, standing in a soft spotlight
+        g.fill(pb[0], pb[1], pb[0] + pb[2], pb[1] + pb[3], 0x60000000);
+        g.fill(pb[0], pb[1] + pb[3] - 14, pb[0] + pb[2], pb[1] + pb[3], 0x30FFFFFF);
+        int size = Math.max(18, Math.min(pb[3] * 36 / 100, pb[2] * 55 / 100));
+        int cx = pb[0] + pb[2] / 2, feet = pb[1] + pb[3] - 8;
+        g.enableScissor(pb[0], pb[1], pb[0] + pb[2], pb[1] + pb[3]);
+        net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(g, cx, feet, size,
+                cx - mouseX, feet - size * 1.6F - mouseY, p);
+        g.disableScissor();
+        if (!outfitsStacked()) small(g, "OUTFITS", pb[0] + pb[2] + 10, y + 14, SECTION);
     }
 
     @Override

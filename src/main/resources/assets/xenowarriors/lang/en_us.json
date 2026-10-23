@@ -169,5 +169,6 @@
   "key.xenowarriors.ultimate_ctrl5": "Ultimate",
   "subtitles.xenowarriors.stomach_growl": "Stomach growls",
   "message.xenowarriors.rhalix.too_hungry": "Rhalix is too hungry to fly...",
-  "message.xenowarriors.rhalix.too_hungry_fall": "*grrrumble* Too hungry to keep flying!"
+  "message.xenowarriors.rhalix.too_hungry_fall": "*grrrumble* Too hungry to keep flying!",
+  "item.xenowarriors.metal_pole": "Metal Pole"
 }
