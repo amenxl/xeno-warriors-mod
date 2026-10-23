@@ -699,9 +699,17 @@ public final class MikikoAnimations {
         float fire = Mth.lerp(partial, s.fireO, s.fire);
 
         float robot = Mth.lerp(partial, s.robotO, s.robot);
+        // just stopped, empty-handed: a loose fighting stance (fists up by his chest, knees soft, bouncing a little)
+        // until the idle animations take over
+        float rw = 0F;
+        if (s.still >= 2 && player.getMainHandItem().isEmpty() && poison <= 0F && s.move == null && s.vibe <= 0F
+                && robot <= 0F && s.groove <= 0F && s.tired <= 0F && sit <= 0F && !player.isCrouching()) {
+            rw = smooth((s.still - 2 + partial) / 6F) * (1F - smooth((s.still - (LOOK_AROUND_AFTER - 14) + partial) / 14F));
+            if (rw > 0F) readyStance(model, player, ageInTicks, rw);
+        }
         // standing around: never ramrod straight - he shifts his weight from leg to leg, knee loose
         if (s.still >= 12 && poison <= 0F && s.move == null && s.vibe <= 0F && robot <= 0F && s.groove <= 0F && !player.isCrouching()) {
-            float sw = smooth((s.still - 12 + partial) / 16F) * (1F - Math.min(1F, sit * 2F));
+            float sw = smooth((s.still - 12 + partial) / 16F) * (1F - Math.min(1F, sit * 2F)) * (1F - rw);
             if (sw > 0F) standShift(model, player, s.still + partial + player.getId() * 37, sw);
         }
         // standing around: now and then a GeckoLib idle (a big stretch, scratching his head, kicking the dirt)
@@ -982,6 +990,18 @@ public final class MikikoAnimations {
         if (ClientSkillState.netsuActive(p.getId()) && p.isSprinting()) return 1F;      // Netsu: flat out
         double v = Math.sqrt(p.getDeltaMovement().horizontalDistanceSqr());
         return Mth.clamp((float) (v - 0.36) / 0.16F, 0F, 1F);
+    }
+
+    /** Fists raised in front of his chest, elbows bent and tucked, feet apart with soft knees, a light bounce. */
+    private static void readyStance(HumanoidModel<?> m, Player p, float age, float w) {
+        float breathe = Mth.sin(age * 0.12F) * 0.04F, bounce = Mth.sin(age * 0.24F) * 0.03F;
+        set(m.rightArm, -0.42F + breathe, -0.28F, 0.16F, w);
+        set(m.leftArm, -0.55F - breathe, 0.32F, -0.16F, w);
+        set(m.rightLeg, -0.08F + bounce, 0.18F, 0.1F, w);
+        set(m.leftLeg, 0.1F - bounce, -0.18F, -0.1F, w);
+        m.body.xRot = Mth.lerp(w, m.body.xRot, 0.08F);
+        com.xenowarriors.client.LimbBend.extraElbows(p, -1.25F * w, -1.35F * w);
+        com.xenowarriors.client.LimbBend.extraKnees(p, 0.18F * w, 0.22F * w);
     }
 
     /**

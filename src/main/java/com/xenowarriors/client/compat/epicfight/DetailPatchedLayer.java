@@ -38,10 +38,16 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                                RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> layer, PoseStack pose,
                                MultiBufferSource buffers, int light, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partial) {
         if (player.isInvisible()) return;
-        DetailModel model = CharacterDetailLayer.detailModel(player);
-        if (model == null || FAILED.contains(model)) return;
-        SkinnedMesh[] mesh = BAKED.computeIfAbsent(model, DetailPatchedLayer::bake);
-        if (mesh == null) return;
+        DetailModel live = CharacterDetailLayer.detailModel(player);
+        if (live == null || FAILED.contains(live)) return;
+        // baked from its own fresh copy of the model, so Epic Fight's baker never touches (and can't disturb) the
+        // model the normal renderer animates - wings, coat, hair
+        SkinnedMesh[] mesh = BAKED.computeIfAbsent(live, m -> bake(freshCopy(player, m)));
+        DetailModel model = live;
+        if (mesh == null) {
+            FAILED.add(live);
+            return;
+        }
         int overlay = OverlayTexture.NO_OVERLAY;
         if (mesh[0] != null) {
             mesh[0].draw(pose, buffers, RenderType.entityCutoutNoCull(CharacterDetailLayer.detailTexture(player)), light,
@@ -51,6 +57,14 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(CharacterDetailLayer.faceTexture(player)), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
+    }
+
+    private static DetailModel freshCopy(AbstractClientPlayer player, DetailModel live) {
+        var type = com.xenowarriors.client.ClientCharacterData.get(player);
+        boolean king = type == com.xenowarriors.character.CharacterType.MIKIKO && com.xenowarriors.client.mikiko.FoxKingClient.active(player);
+        DetailModel copy = king ? DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/mikiko_foxking.json")
+                : DetailModel.load(type);
+        return copy != null ? copy : live;
     }
 
     private static ModelPart empty() {
@@ -91,7 +105,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             return new SkinnedMesh[]{details, face};
         } catch (Throwable t) {
             XenoWarriors.LOGGER.error("Couldn't prepare Xeno Warriors details for Epic Fight", t);
-            FAILED.add(model);
+            FAILED.add(model);    // (the fresh copy; the live model just won't get Epic Fight details)
             return null;
         }
     }

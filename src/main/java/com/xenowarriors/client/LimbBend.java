@@ -85,6 +85,13 @@ public final class LimbBend {
 
     private static final java.util.Map<Integer, float[]> EXTRA = new java.util.HashMap<>();
 
+    private static final java.util.Map<Integer, float[]> EXTRA_ELBOWS = new java.util.HashMap<>();
+
+    /** Extra elbow bend (negative = forearm up) asked for by an animation this frame, used once. */
+    public static void extraElbows(net.minecraft.world.entity.Entity e, float right, float left) {
+        EXTRA_ELBOWS.put(e.getId(), new float[]{right, left});
+    }
+
     /** Extra knee bend asked for by an animation this frame (relaxed standing...), used once. */
     public static void extraKnees(net.minecraft.world.entity.Entity e, float right, float left) {
         EXTRA.put(e.getId(), new float[]{right, left});
@@ -139,6 +146,11 @@ public final class LimbBend {
         float er = bends ? elbow(m.rightArm.xRot) : 0F, el = bends ? elbow(m.leftArm.xRot) : 0F;
         float kr = bends ? knee(m.rightLeg.xRot, m.leftLeg.xRot, m.riding) : 0F;
         float kl = bends ? knee(m.leftLeg.xRot, m.rightLeg.xRot, m.riding) : 0F;
+        float[] extraE = EXTRA_ELBOWS.remove(entity.getId());
+        if (bends && extraE != null) {
+            er += extraE[0];
+            el += extraE[1];
+        }
         float[] extra = EXTRA.remove(entity.getId());
         if (bends && extra != null) {
             kr += extra[0];
