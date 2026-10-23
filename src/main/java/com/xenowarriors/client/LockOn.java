@@ -131,12 +131,21 @@ public final class LockOn {
                 && attackable(e);
     }
 
+    /** NPCs that can't be fought: DragonMineZ's masters (Goku, Gohan...), quest people, the Nimbus and space pods. */
+    private static boolean peaceful(LivingEntity e) {
+        for (Class<?> c = e.getClass(); c != null && c != LivingEntity.class; c = c.getSuperclass()) {
+            String n = c.getName();
+            if (n.endsWith(".MastersEntity") || n.contains(".questnpc.") || n.contains("NimbusEntity") || n.endsWith(".SpacePodEntity")) return true;
+        }
+        return e instanceof net.minecraft.world.entity.npc.AbstractVillager v && v.isBaby();
+    }
+
     /** Only things you could actually hurt: not the invulnerable, your own pets, your party, or (as Mikiko) ordinary people. */
-    private static boolean attackable(LivingEntity e) {
+    public static boolean attackable(LivingEntity e) {
         Minecraft mc = Minecraft.getInstance();
         Player me = mc.player;
         if (me == null) return true;
-        if (e.isInvulnerable()) return false;
+        if (e.isInvulnerable() || peaceful(e)) return false;
         if (e instanceof Player p && (p.isCreative() || com.xenowarriors.client.party.PartyClient.inMyParty(p.getUUID()))) return false;
         if (e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame() && me.getUUID().equals(t.getOwnerUUID())) return false;
         if (e instanceof net.minecraft.world.entity.OwnableEntity o && me.getUUID().equals(o.getOwnerUUID())) return false;

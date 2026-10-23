@@ -28,6 +28,7 @@ public final class Busy {
                 || ClientSkillState.currentAnim(p) != null
                 || AttackHooks.externalBusy.test(p)
                 || KarmaFocusClient.focusing(p)
+                || ArrowPullClient.active(p)
                 || com.xenowarriors.client.mikiko.CombatStance.wanted(p) != com.xenowarriors.client.mikiko.CombatStance.NONE   // on guard
                 || (efWeapon(p) && !DiscTracker.anyNear(p));
     }
