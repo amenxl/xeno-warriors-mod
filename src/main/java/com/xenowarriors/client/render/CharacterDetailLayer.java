@@ -336,6 +336,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         int shownStyle = lastStyle(player);
         model.animateHair(windS, windF, ageInTicks, shownStyle, ssjWeight);
 
+        // your own head in first person (camera inside it): no hair, goggles or face
+        boolean noHead = com.xenowarriors.client.FirstPersonHead.hidden() && player == net.minecraft.client.Minecraft.getInstance().player;
+        model.head.visible = !noHead;
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off
         int torn = ClientCharacterData.isPreviewing() ? 0 : TORN.getOrDefault(player.getUUID(), 0);
@@ -398,7 +401,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     type == CharacterType.MIKIKO ? 0x3A3440 : 0x7A3AA8);
         }
 
-        if (model.faceRoot != null) {
+        if (model.faceRoot != null && !noHead) {
             model.faceHead.copyFrom(parent.head);
             String expr = expression(player, type);
             var faceTexture = expr == null ? type.getFaceTexture()
