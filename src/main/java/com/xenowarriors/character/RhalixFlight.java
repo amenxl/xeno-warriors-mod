@@ -18,11 +18,11 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RhalixFlight {
     /** Starting flight height (blocks above the ground); each level he gains (any stat) lets him go one block higher. */
-    public static final double BASE_HEIGHT = 20, MAX_LIMIT = 200;
+    public static final double BASE_HEIGHT = 30, PER_LEVEL = 3, MAX_LIMIT = 200;
     /** The limit as last told by the server (client side). */
     public static double clientMax = BASE_HEIGHT;
     /** Flying speed: normal at first, building up the longer he keeps flying forward (about 10 seconds to top speed). */
-    private static final float BASE_SPEED = 0.05F, TOP_SPEED = 0.135F;
+    private static final float BASE_SPEED = 0.06F, TOP_SPEED = 0.2F;
     private static final int SPEED_UP_TICKS = 200;
     private static final java.util.Map<java.util.UUID, double[]> CRUISE = new java.util.HashMap<>();   // {x, z, ticks}
     private static final String GRANTED = "xenowarriors_granted_flight";
@@ -81,11 +81,11 @@ public final class RhalixFlight {
                 net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.9F + p.getRandom().nextFloat() * 0.2F);
     }
 
-    /** How high he can fly: 20 blocks to start, +1 for every level he's gained in Speed, Attack and Defense. */
+    /** How high he can fly: 30 blocks to start, +3 for every level he's gained in Speed, Attack and Defense. */
     public static double maxHeight(Player p) {
         if (p.level().isClientSide) return clientMax;
         int levels = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.statLevel[0] + d.statLevel[1] + d.statLevel[2]).orElse(0);
-        return Math.min(MAX_LIMIT, BASE_HEIGHT + levels);
+        return Math.min(MAX_LIMIT, BASE_HEIGHT + levels * PER_LEVEL);
     }
 
     /** Blocks between the player's feet and the ground/water below (limit + 16 if there's nothing in range). */
