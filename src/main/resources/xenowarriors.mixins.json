@@ -24,6 +24,7 @@
     "EntityTeamColorMixin",
     "ElytraLayerMixin",
     "ItemInHandLayerMixin",
+    "InventoryEntityMixin",
     "LivingEntityPoofMixin",
     "FoxRendererMixin",
     "FoxHeldItemLayerMixin",

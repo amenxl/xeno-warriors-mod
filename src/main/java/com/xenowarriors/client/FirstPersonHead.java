@@ -17,6 +17,8 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class FirstPersonHead {
     private static boolean hidden;
+    /** Set while a menu draws the player (inventory, M menu): never first person then. */
+    public static boolean inGui;
 
     private FirstPersonHead() {}
 
@@ -27,7 +29,7 @@ public final class FirstPersonHead {
 
     public static boolean ownFirstPerson(AbstractClientPlayer p) {
         Minecraft mc = Minecraft.getInstance();
-        return p == mc.player && mc.options.getCameraType().isFirstPerson() && mc.getCameraEntity() == p
+        return !inGui && p == mc.player && mc.options.getCameraType().isFirstPerson() && mc.getCameraEntity() == p
                 && !ClientCharacterData.isPreviewing() && ClientCharacterData.get(p) != CharacterType.NONE;
     }
 
