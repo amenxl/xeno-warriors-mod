@@ -64,8 +64,11 @@ public final class LimbBend {
     /** A 12-pixel limb as two 6-pixel boxes; {@code upperH} is the length of the upper half above the pivot's top. */
     private static void limb(PartDefinition root, String name, int u, int v, float x, float y, float z, float w,
                              float upperUnused, float d, CubeDeformation def, PartPose pose) {
-        PartDefinition upper = root.addOrReplaceChild(name,
-                CubeListBuilder.create().texOffs(u, v).addBox(x, y, z, w, 6F, d, def), pose);
+        // the upper half's underside would show the palm / shoe sole when the joint opens up; a paper-thin cap
+        // under it shows a strip of the limb's own side (pants / sleeve / skin) instead
+        PartDefinition upper = root.addOrReplaceChild(name, CubeListBuilder.create()
+                .texOffs(u, v).addBox(x, y, z, w, 6F, d, def)
+                .texOffs(u, v + 9).addBox(x, y + 6F, z, w, 0.02F, d, def), pose);
         // the lower half: side textures carry on 6 pixels further down the same strip
         // plus a slightly thinner joint piece reaching 2 pixels up into the upper half: hidden while the limb is
         // straight, it fills the wedge that opens on the outside of the elbow / knee when it bends
