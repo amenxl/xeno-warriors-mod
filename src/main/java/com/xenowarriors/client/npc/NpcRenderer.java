@@ -53,7 +53,10 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
         return armband;
     }
 
-    /** This one's wings: {scale, r, g, b, extra spread, extra sweep}, or null to draw them as modelled. */
+    /** Wing style models (models/detail/npc/wing_<style>.json), see tools/xw/wings/wing_styles.py. */
+    public static final String[] WING_STYLES = {"angel", "hawk", "falcon", "bat", "butterfly", "crystal", "seraph", "tattered"};
+
+    /** This one's wings: {scale, r, g, b, extra spread, extra sweep[, style index or -1 for its own]}, or null to draw them as modelled. */
     protected float[] wingLook(T e) { return null; }
 
     /** Per-entity tweaks before the details are drawn (wings etc.). */
@@ -111,12 +114,22 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
                 m.leftWing.visible = true;
                 pose.pushPose();
                 m.body.translateAndRotate(pose);
-                for (var w : new net.minecraft.client.model.geom.ModelPart[]{m.rightWing, m.leftWing}) {
+                // a wing style of its own: that model's wings, posed like these
+                DetailModel styled = wing.length > 6 && wing[6] >= 0 ? model("wing_" + WING_STYLES[(int) wing[6] % WING_STYLES.length]) : null;
+                var wingVc = detailVc;
+                var parts = new net.minecraft.client.model.geom.ModelPart[]{m.rightWing, m.leftWing};
+                if (styled != null && styled.rightWing != null && styled.leftWing != null) {
+                    styled.rightWing.copyFrom(m.rightWing);
+                    styled.leftWing.copyFrom(m.leftWing);
+                    parts = new net.minecraft.client.model.geom.ModelPart[]{styled.rightWing, styled.leftWing};
+                    wingVc = buffers.getBuffer(RenderType.entityCutoutNoCull(tex("wing_" + WING_STYLES[(int) wing[6] % WING_STYLES.length] + "_details")));
+                }
+                for (var w : parts) {
                     float zr = w.zRot, xr = w.xRot;
                     w.xScale = w.yScale = w.zScale = wing[0];
-                    w.zRot += (w == m.rightWing ? 1 : -1) * wing[4];      // spread
+                    w.zRot += (w == parts[0] ? 1 : -1) * wing[4];         // spread
                     w.xRot += wing[5];                                     // swept back
-                    w.render(pose, detailVc, light, overlay, wing[1], wing[2], wing[3], 1F);
+                    w.render(pose, wingVc, light, overlay, wing[1], wing[2], wing[3], 1F);
                     w.xScale = w.yScale = w.zScale = 1F;
                     w.zRot = zr;
                     w.xRot = xr;

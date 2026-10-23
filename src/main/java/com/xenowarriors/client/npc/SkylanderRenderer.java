@@ -50,8 +50,11 @@ public class SkylanderRenderer extends NpcRenderer<SkylanderEntity> {
         float size = SIZES[(a / 9) % SIZES.length];
         float spread = ((a / 54) % 5 - 2) * 0.06F;
         float sweep = ((a / 270) % 3 - 1) * 0.12F;
-        if (e.guardian()) { size = Math.max(size, 1.22F); t = TINTS[2]; }       // guardians: big golden wings
-        return new float[]{size, t[0], t[1], t[2], spread, sweep};
+        // style: 1 in 9 keep the classic wings, the rest one of the styles (guardians: grand seraph wings)
+        int style = (a / 811 + a * 7) % 9 - 1;
+        if (e.guardian()) { size = Math.max(size, 1.15F); t = TINTS[2]; style = 6; }
+        if (style == 6 || style == 0) size = Math.min(size, 1.15F);           // (the big styles don't need extra size)
+        return new float[]{size, t[0], t[1], t[2], spread, sweep, style};
     }
 
     @Override
