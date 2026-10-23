@@ -74,6 +74,9 @@ public final class ClientEvents {
         while (ModKeyMappings.SUMMON_BLADE.consumeClick()) { }      // (tap vs hold: BladeChannelClient)
         if (!UltimateCutscene.active()) com.xenowarriors.client.mikiko.BladeChannelClient.keyTick(mc);
 
+        while (ModKeyMappings.HEKUBLADE_REALM.consumeClick()) {
+            if (mc.player != null) com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.RealmKeyPacket());
+        }
         while (ModKeyMappings.TOGGLE_HOOD.consumeClick()) {
             if (mc.player != null && com.xenowarriors.client.mikiko.HoodClient.hooded(mc.player))
                 com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.HoodTogglePacket(

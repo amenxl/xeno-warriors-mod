@@ -32,6 +32,9 @@ public final class ModKeyMappings {
     /** Pull your hood up / push it back down (hooded outfits and the Karma-Reducing Hoodie). */
     public static final KeyMapping TOGGLE_HOOD = key("toggle_hood", GLFW.GLFW_KEY_J);
 
+    /** Mikiko: open / leave the Hekublade Dimension (with the Hekublade in hand). */
+    public static final KeyMapping HEKUBLADE_REALM = key("hekublade_realm", GLFW.GLFW_KEY_U);
+
     /** Rhalix: take out / put away his wings. */
     public static final KeyMapping TOGGLE_WINGS = key("toggle_wings", GLFW.GLFW_KEY_H);
 

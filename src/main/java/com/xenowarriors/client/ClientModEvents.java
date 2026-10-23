@@ -74,6 +74,7 @@ public final class ClientModEvents {
         event.register(ModKeyMappings.SUMMON_BLADE);
         event.register(ModKeyMappings.TOGGLE_WINGS);
         event.register(ModKeyMappings.TOGGLE_HOOD);
+        event.register(ModKeyMappings.HEKUBLADE_REALM);
         event.register(ModKeyMappings.LOCK_ON);
         event.register(ModKeyMappings.KARMA_SENSE);
         event.register(ModKeyMappings.STATS_MENU);

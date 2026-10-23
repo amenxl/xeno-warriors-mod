@@ -71,7 +71,7 @@ public final class RopeBlade {
     // ------------------------------------------------------------------ boomerang throw
 
     public static void throwBlade(ServerPlayer p, int targetId) {
-        if (!eligible(p) || isOut(p)) return;
+        if (!eligible(p) || isOut(p) || !p.isShiftKeyDown()) return;
         LivingEntity target = p.level().getEntity(targetId) instanceof LivingEntity l && l.isAlive() && l != p ? l : null;
         Hekublade.removeAll(p.getInventory());
         ThrownHekubladeEntity e = ThrownHekubladeEntity.create(p, target);

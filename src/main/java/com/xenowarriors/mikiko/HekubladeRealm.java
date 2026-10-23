@@ -339,7 +339,7 @@ public final class HekubladeRealm {
         }
     }
 
-    @SubscribeEvent
+    // (crouch + right-click is the Season 3 throw now; the dimension has its own key - RealmKeyPacket)
     public static void onRightClick(PlayerInteractEvent.RightClickItem event) {
         if (event.getLevel().isClientSide || !(event.getEntity() instanceof ServerPlayer p) || !p.isShiftKeyDown()) return;
         if (!Hekublade.isBlade(event.getItemStack()) || ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
