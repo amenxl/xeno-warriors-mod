@@ -25,11 +25,11 @@ import net.minecraft.world.item.ItemStack;
 /** Two slots on the altar - the Hekublade and the material - and the Upgrade button (button id 0). */
 public class KarmaAltarMenu extends AbstractContainerMenu {
     public static final int BLADE = 0, MATERIAL = 1;
-    private final Container slots = new SimpleContainer(2) {
+    private final Container table = new SimpleContainer(2) {
         @Override
         public void setChanged() {
             super.setChanged();
-            slotsChanged(this);
+            KarmaAltarMenu.this.slotsChanged(this);
         }
     };
     private final ContainerLevelAccess access;
@@ -39,11 +39,11 @@ public class KarmaAltarMenu extends AbstractContainerMenu {
         super(ModAltar.MENU.get(), id);
         this.access = access;
         this.player = inv.player;
-        addSlot(new Slot(slots, BLADE, 44, 35) {
+        addSlot(new Slot(table, BLADE, 44, 35) {
             @Override public boolean mayPlace(ItemStack s) { return Hekublade.isBlade(s); }
             @Override public int getMaxStackSize() { return 1; }
         });
-        addSlot(new Slot(slots, MATERIAL, 80, 35) {
+        addSlot(new Slot(table, MATERIAL, 80, 35) {
             @Override public boolean mayPlace(ItemStack s) { return path(s) != null; }
         });
         for (int r = 0; r < 3; r++) for (int c = 0; c < 9; c++) addSlot(new Slot(inv, c + r * 9 + 9, 8 + c * 18, 84 + r * 18));
@@ -61,8 +61,8 @@ public class KarmaAltarMenu extends AbstractContainerMenu {
         return null;
     }
 
-    public ItemStack blade() { return slots.getItem(BLADE); }
-    public ItemStack material() { return slots.getItem(MATERIAL); }
+    public ItemStack blade() { return table.getItem(BLADE); }
+    public ItemStack material() { return table.getItem(MATERIAL); }
 
     /** Current level of the path the material is for (or -1 if nothing to upgrade). */
     public int currentLevel() {
@@ -86,7 +86,7 @@ public class KarmaAltarMenu extends AbstractContainerMenu {
         PlayerCharacter d = sp.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve().orElse(null);
         if (d == null) return false;
         if (path.equals("sky")) d.bladeSky = lvl + 1; else d.bladeDark = lvl + 1;
-        slots.setItem(BLADE, BladeUpgrades.apply(sp, blade().copy()));
+        table.setItem(BLADE, BladeUpgrades.apply(sp, blade().copy()));
         // and any other copy he's carrying
         for (int i = 0; i < sp.getInventory().getContainerSize(); i++) {
             ItemStack s = sp.getInventory().getItem(i);
@@ -109,7 +109,7 @@ public class KarmaAltarMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player p) {
         super.removed(p);
-        if (!p.level().isClientSide) clearContainer(p, slots);
+        if (!p.level().isClientSide) clearContainer(p, table);
     }
 
     @Override
