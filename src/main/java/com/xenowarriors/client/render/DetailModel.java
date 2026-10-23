@@ -418,7 +418,13 @@ public class DetailModel {
                     continue;
                 }
                 upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], h1, sz[2]);
-                lower.texOffs(u, v + h1).addBox(f[0], top + h1 - split, f[2], sz[0], sz[1] - h1, sz[2]);
+                float y0 = top + h1 - split;
+                lower.texOffs(u, v + h1).addBox(f[0], y0, f[2], sz[0], sz[1] - h1, sz[2]);
+                if (h1 >= 2 && sz[1] - h1 >= 2F) {
+                    // joint piece across the cut, a hair thinner: fills the gap when the elbow / knee bends
+                    lower.texOffs(u, v + h1 - 2).addBox(f[0], y0 - 2F, f[2], sz[0], 4F, sz[2],
+                            new net.minecraft.client.model.geom.builders.CubeDeformation(-0.05F));
+                }
             }
         }
         PartDefinition up = root.addOrReplaceChild(name, upper, PartPose.offset(p[0], p[1], p[2]));

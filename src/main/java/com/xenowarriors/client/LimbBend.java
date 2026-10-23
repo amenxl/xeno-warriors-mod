@@ -67,7 +67,11 @@ public final class LimbBend {
         PartDefinition upper = root.addOrReplaceChild(name,
                 CubeListBuilder.create().texOffs(u, v).addBox(x, y, z, w, 6F, d, def), pose);
         // the lower half: side textures carry on 6 pixels further down the same strip
-        upper.addOrReplaceChild(LOWER, CubeListBuilder.create().texOffs(u, v + 6).addBox(x, 0F, z, w, 6F, d, def),
+        // plus a slightly thinner joint piece reaching 2 pixels up into the upper half: hidden while the limb is
+        // straight, it fills the wedge that opens on the outside of the elbow / knee when it bends
+        upper.addOrReplaceChild(LOWER, CubeListBuilder.create()
+                        .texOffs(u, v + 6).addBox(x, 0F, z, w, 6F, d, def)
+                        .texOffs(u, v + 4).addBox(x, -2F, z, w, 4F, d, def.extend(-0.06F)),
                 PartPose.offset(0F, y + 6F, 0F));
     }
 
