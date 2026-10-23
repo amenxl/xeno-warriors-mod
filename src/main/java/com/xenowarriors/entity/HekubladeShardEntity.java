@@ -123,8 +123,15 @@ public class HekubladeShardEntity extends Projectile {
             for (Entity e : level().getEntities(this, getBoundingBox().expandTowards(v).inflate(0.6), this::canHitEntity)) {
                 if (hasPassenger(e) || e == getOwner()) continue;
                 if (e instanceof LivingEntity target && target.invulnerableTime <= 10) {
-                    target.hurt(ModDamageTypes.source(level(), ModDamageTypes.HEKUBLADE_SCATTER, this, getOwner()), DAMAGE);
-                    target.push(v.x * 0.6, 0.3, v.z * 0.6);
+                    // rammed with Mikiko riding it: hits much harder - more the faster it's going, and with his strength
+                    double speed = Math.sqrt(v.x * v.x + v.z * v.z);
+                    double rider = getPassengers().isEmpty() || !(getFirstPassenger() instanceof LivingEntity l) ? 0
+                            : l.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 1.5;
+                    float ram = (float) (Math.max(DAMAGE * 2.2, rider) * (0.6 + 0.6 * Math.min(1.0, speed / SURF_SPEED)));
+                    target.hurt(ModDamageTypes.source(level(), ModDamageTypes.HEKUBLADE_SCATTER, this, getOwner()), ram);
+                    if (level() instanceof net.minecraft.server.level.ServerLevel sl)
+                        sl.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(), 10, 0.3, 0.3, 0.3, 0.2);
+                    target.push(v.x * 0.9, 0.4, v.z * 0.9);
                     com.xenowarriors.mikiko.Hekublade.rollFire(target, 2);
                 }
             }

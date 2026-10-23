@@ -96,7 +96,8 @@ public class HumanNpcEntity extends PathfinderMob {
                 || e instanceof Villager;
         if (!fighter() || HiddenSouls.hidden(this)) return false;
         return e instanceof CorruptedSoulEntity || e instanceof CorruptedVillagerEntity || e instanceof DarkPossessedEntity
-                || (e instanceof HumanNpcEntity h && h.possessed()) || CorruptedAnimals.isCorrupted(e);
+                || (e instanceof HumanNpcEntity h && h.possessed()) || CorruptedAnimals.isCorrupted(e)
+                || e instanceof net.minecraft.world.entity.monster.Zombie;      // fighters stand up to zombies too
     }
 
     @Override
