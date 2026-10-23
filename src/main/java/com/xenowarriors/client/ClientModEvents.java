@@ -84,6 +84,7 @@ public final class ClientModEvents {
         event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.BASE);
         event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.ORIGINS_2);
         event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.SEASON_3);
+        event.register(com.xenowarriors.client.mikiko.HekubladeRenderer.SEASON_3_GLOBE);
         for (var rl : com.xenowarriors.client.mikiko.HekubladeRenderer.CRYSTALS) event.register(rl);
     }
 

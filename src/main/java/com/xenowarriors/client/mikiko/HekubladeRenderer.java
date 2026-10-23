@@ -25,7 +25,8 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
     public static final ResourceLocation BASE = XenoWarriors.id("item/hekublade_base");
     public static final ResourceLocation[] CRYSTALS = new ResourceLocation[8];
     /** Mikiko's outfits carry the blade's look from that time: Origins 2's broadsword, Season 3's hooked blade. */
-    public static final ResourceLocation ORIGINS_2 = XenoWarriors.id("item/hekublade_origins2"), SEASON_3 = XenoWarriors.id("item/hekublade_s3");
+    public static final ResourceLocation ORIGINS_2 = XenoWarriors.id("item/hekublade_origins2"), SEASON_3 = XenoWarriors.id("item/hekublade_s3"),
+            SEASON_3_GLOBE = XenoWarriors.id("item/hekublade_s3_globe");
     static {
         for (int i = 0; i < 8; i++) CRYSTALS[i] = XenoWarriors.id("item/hekublade_crystal_" + i);
     }
@@ -64,14 +65,18 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
 
     /** An extra additive pass over a crystal so it shines, tinted warm red-white, faded by the glow amount. */
     private static void drawGlow(BakedModel model, PoseStack pose, VertexConsumer vc, float glow) {
-        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) quads(model, dir, pose, vc, glow);
-        quads(model, null, pose, vc, glow);
+        drawGlow(model, pose, vc, glow, glow * 0.55F, glow * 0.4F);
     }
 
-    private static void quads(BakedModel model, net.minecraft.core.Direction dir, PoseStack pose, VertexConsumer vc, float glow) {
+    private static void drawGlow(BakedModel model, PoseStack pose, VertexConsumer vc, float r, float g, float b) {
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) quads(model, dir, pose, vc, r, g, b);
+        quads(model, null, pose, vc, r, g, b);
+    }
+
+    private static void quads(BakedModel model, net.minecraft.core.Direction dir, PoseStack pose, VertexConsumer vc, float r, float g, float b) {
         RAND.setSeed(42L);
         for (var q : model.getQuads(null, dir, RAND)) {
-            vc.putBulkData(pose.last(), q, glow, glow * 0.55F, glow * 0.4F, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT,
+            vc.putBulkData(pose.last(), q, r, g, b, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT,
                     net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
         }
     }
@@ -96,6 +101,13 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
         if (outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 || outfit >= com.xenowarriors.client.ClientCharacterData.SEASON_3) {
             BakedModel alt = mc.getModelManager().getModel(outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 ? ORIGINS_2 : SEASON_3);
             items.renderModelLists(alt, stack, light, overlay, pose, vc);
+            if (outfit != com.xenowarriors.client.ClientCharacterData.ORIGINS_2) {
+                // the globe in the guard: a slowly turning galaxy that glows faintly
+                BakedModel globe = mc.getModelManager().getModel(SEASON_3_GLOBE);
+                items.renderModelLists(globe, stack, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT, overlay, pose, vc);
+                drawGlow(globe, pose, buffers.getBuffer(net.minecraft.client.renderer.RenderType.eyes(
+                        net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)), 0.3F, 0.3F, 0.38F);
+            }
             return;
         }
         BakedModel base = mc.getModelManager().getModel(BASE);
