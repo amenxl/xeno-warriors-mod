@@ -12,6 +12,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 2. ~~Skylander wing variants~~ done
 3. ~~Sky Crystal + Corrupted tools~~ done (tools/sprites/tool_sprites.py)
 4. ~~Island Skylanders, bigger islands, house/chest defense~~ done
+4b. **NEXT (user asked Fri 15:52): Skylander wing STYLES, not just size/color** — separate wing models per style (e.g. big feathered angel, hawk/eagle pointed, swept falcon, bat/dragon membrane, butterfly/fairy, crystal sky wings, four-wing seraph, tattered/ragged). Pick per UUID (guardians: grand style). Send a picture sheet of all styles.
 5. Sky Haters build ladders/towers up to sky islands.
 6. UI/HUD pass: nothing overlaps (party HUD, karma bar, level HUD, request cards, pointers, Epic Fight/DMZ HUDs).
 7. Dragon Ball outfit compatibility: full 3D, no clipping, both characters (start with the most common gis).
