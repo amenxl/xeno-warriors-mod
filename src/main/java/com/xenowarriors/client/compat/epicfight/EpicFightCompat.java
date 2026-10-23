@@ -30,6 +30,7 @@ public final class EpicFightCompat {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(EpicFightCompat::onModifyRenderers);
+        modBus.addListener(EpicFightCompat::onAddRenderers);
         MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, EpicFightCompat::onRenderPlayer);
         MinecraftForge.EVENT_BUS.addListener(EpicFightCompat::onClientTick);
         com.xenowarriors.client.AttackHooks.externalAttack = p -> STARTED.remove(p.getId()) != null;
@@ -242,6 +243,19 @@ public final class EpicFightCompat {
                 STARTED.put(p.getId(), p.tickCount);
                 HIT.put(p.getId(), hitTicks(patch, anim));
             }
+        }
+    }
+
+    /** The townsfolk and the possessed on Epic Fight's humanoid body, with their hair, outfits and faces. */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void onAddRenderers(PatchedRenderersEvent.Add event) {
+        for (EntityType<?> t : java.util.List.of(com.xenowarriors.npc.ModNpcs.HUMAN.get(), com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get())) {
+            event.addPatchedEntityRenderer(t, type -> {
+                var r = new yesman.epicfight.client.renderer.patched.entity.PHumanoidRenderer(
+                        yesman.epicfight.api.client.model.Meshes.BIPED_OUTLAYER, event.getContext(), type);
+                r.addCustomLayer(new NpcDetailPatchedLayer());
+                return r;
+            });
         }
     }
 

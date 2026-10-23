@@ -45,6 +45,7 @@ public class DarkPossessedEntity extends Monster {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.15, false));
+        goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.DARK, 70, 4, 20));      // dark blasts from range
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 10F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));

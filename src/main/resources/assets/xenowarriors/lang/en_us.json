@@ -177,6 +177,10 @@
   "entity.xenowarriors.dark_possessed": "Possessed",
   "item.xenowarriors.human_spawn_egg": "Human Spawn Egg",
   "entity.xenowarriors.skylander": "Skylander",
+  "item.xenowarriors.phone": "Phone",
+  "item.xenowarriors.briefcase": "Briefcase",
+  "entity.xenowarriors.npc_thrown": "Thrown Item",
+  "entity.xenowarriors.ki_blast": "Ki Blast",
   "item.xenowarriors.skylander_spawn_egg": "Skylander Spawn Egg",
   "item.xenowarriors.dark_possessed_spawn_egg": "Possessed Spawn Egg"
 }

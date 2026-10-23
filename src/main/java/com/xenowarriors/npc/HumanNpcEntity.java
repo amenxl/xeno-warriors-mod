@@ -42,6 +42,8 @@ public class HumanNpcEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FIGHTER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SKY_HATER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private static Boolean dmz;
     private int rhalixTauntAt = -10000;
     private long possessedSince = -1;
     private boolean reported;
@@ -64,11 +66,32 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.define(POSSESSED, false);
         entityData.define(FIGHTER, false);
         entityData.define(SKY_HATER, false);
+        entityData.define(FLYING, false);
     }
 
     public int variant() { return entityData.get(VARIANT); }
     public boolean possessed() { return entityData.get(POSSESSED); }
     public boolean fighter() { return entityData.get(FIGHTER); }
+    public boolean flying() { return entityData.get(FLYING); }
+
+    static boolean dmz() {
+        if (dmz == null) dmz = net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
+        return dmz;
+    }
+
+    /** Who shoots what: the gunner fires bullets, the phone and briefcase guys throw theirs, fighters throw Ki (DMZ). */
+    public boolean canShoot(NpcRangedGoal.Kind kind) {
+        if (possessed() || HiddenSouls.hidden(this)) return false;
+        String look = NpcLooks.human(variant());
+        return switch (kind) {
+            case BULLET -> look.equals("gunner");
+            case PHONE -> look.equals("phone");
+            case BRIEFCASE -> look.equals("briefcase");
+            case KI -> fighter() && dmz() && !look.equals("gunner");
+            default -> false;
+        };
+    }
+
     /** Hates Skylanders: goes for their wings (red armband). */
     public boolean skyHater() { return entityData.get(SKY_HATER); }
 
@@ -106,6 +129,10 @@ public class HumanNpcEntity extends PathfinderMob {
             public boolean canUse() { return !fighter() && !possessed() && super.canUse(); }
         });
         goalSelector.addGoal(3, new OpenDoorGoal(this, true));
+        goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.BULLET, 28, 3, 18));
+        goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.PHONE, 60, 3, 12));
+        goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.BRIEFCASE, 70, 3, 10));
+        goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.KI, 90, 4, 18));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.75));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -137,13 +164,24 @@ public class HumanNpcEntity extends PathfinderMob {
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType reason, SpawnGroupData data, CompoundTag tag) {
         var r = level.getRandom();
         entityData.set(VARIANT, r.nextInt(NpcLooks.HUMANS.length));
-        boolean fighter = r.nextFloat() < 0.3F || NpcLooks.human(variant()).equals("soldier");
+        String look = NpcLooks.human(variant());
+        boolean fighter = r.nextFloat() < 0.3F || look.equals("soldier") || look.equals("gunner");
         entityData.set(FIGHTER, fighter);
         if (!NpcLooks.human(variant()).equals("soldier") && r.nextFloat() < 0.2F) {
             entityData.set(SKY_HATER, true);
             setCustomName(Component.literal("Sky Hater").withStyle(ChatFormatting.RED));
         }
-        if (fighter) setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(r.nextFloat() < 0.6F ? Items.IRON_SWORD : Items.STONE_SWORD));
+        // each kind of person fights their own way (with Epic Fight: its moves for that weapon)
+        if (fighter) {
+            ItemStack weapon = switch (look) {
+                case "soldier", "woman" -> new ItemStack(Items.IRON_SWORD);
+                case "redhair" -> new ItemStack(Items.IRON_AXE);
+                case "waver" -> new ItemStack(r.nextBoolean() ? Items.STONE_SWORD : Items.TRIDENT);
+                case "capboy", "messy", "spiky", "girl", "gunner" -> ItemStack.EMPTY;          // fists (gunner shoots)
+                default -> new ItemStack(r.nextFloat() < 0.6F ? Items.IRON_SWORD : Items.STONE_SWORD);
+            };
+            setItemSlot(EquipmentSlot.MAINHAND, weapon);
+        }
         else if (r.nextFloat() < 0.08F) setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_SWORD));
         setDropChance(EquipmentSlot.MAINHAND, 0.1F);
         return super.finalizeSpawn(level, difficulty, reason, data, tag);
@@ -246,8 +284,41 @@ public class HumanNpcEntity extends PathfinderMob {
             }
             return;
         }
+        flightTick();
         if (tickCount % 100 == 0 && carriesSoul() && !reported && possessedSince >= 0
                 && level().getGameTime() - possessedSince >= PERMANENT_AFTER) becomePermanent();
+    }
+
+    /**
+     * With DragonMineZ, fighters fly: up after anything in the air they're fighting, and back down when it lands.
+     */
+    private void flightTick() {
+        LivingEntity t = getTarget();
+        boolean want = dmz() && fighter() && !carriesSoul() && t != null && t.isAlive()
+                && (t.getY() - getY() > 2.5 || (!t.onGround() && !t.isInWater() && t.getY() - getY() > 1.2) || (flying() && !t.onGround()));
+        if (want != flying()) {
+            entityData.set(FLYING, want);
+            setNoGravity(want);
+            if (want) {
+                setDeltaMovement(getDeltaMovement().add(0, 0.5, 0));
+                if (level() instanceof ServerLevel s) s.sendParticles(ParticleTypes.CLOUD, getX(), getY(), getZ(), 8, 0.3, 0.05, 0.3, 0.05);
+            }
+        }
+        if (!flying() || t == null) return;
+        net.minecraft.world.phys.Vec3 to = t.position().add(0, 0.2, 0).subtract(position());
+        double d = to.length();
+        net.minecraft.world.phys.Vec3 want3 = d > 1.6 ? to.normalize().scale(Math.min(0.42, d * 0.12)) : net.minecraft.world.phys.Vec3.ZERO;
+        setDeltaMovement(getDeltaMovement().lerp(want3, 0.25));
+        getLookControl().setLookAt(t);
+        fallDistance = 0;
+        if (tickCount % 4 == 0 && level() instanceof ServerLevel s)
+            s.sendParticles(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(1F, 1F, 0.85F), 1F),
+                    getX(), getY() + 0.2, getZ(), 2, 0.25, 0.1, 0.25, 0);
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
+        return !(dmz() && fighter()) && super.causeFallDamage(distance, multiplier, source);
     }
 
     /** Three days and nobody helped: the soul has them for good. */
@@ -296,6 +367,7 @@ public class HumanNpcEntity extends PathfinderMob {
         tag.putBoolean("Possessed", possessed());
         tag.putBoolean("Fighter", fighter());
         tag.putBoolean("SkyHater", skyHater());
+        tag.putBoolean("Flying", flying());
         tag.putLong("PossessedSince", possessedSince);
         tag.putBoolean("Reported", reported);
     }
@@ -307,6 +379,8 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.set(POSSESSED, tag.getBoolean("Possessed"));
         entityData.set(FIGHTER, tag.getBoolean("Fighter"));
         entityData.set(SKY_HATER, tag.getBoolean("SkyHater"));
+        entityData.set(FLYING, tag.getBoolean("Flying"));
+        setNoGravity(flying());
         possessedSince = tag.contains("PossessedSince") ? tag.getLong("PossessedSince") : -1;
         reported = tag.getBoolean("Reported");
     }

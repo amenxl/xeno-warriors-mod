@@ -85,6 +85,11 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         return new HumanoidModel<>(new ModelPart(List.of(), parts));
     }
 
+    /** Bakes any detail model (the townsfolk's too) for Epic Fight: {details, face}; null if it failed. */
+    static SkinnedMesh[] bakeModel(DetailModel model) {
+        return bake(model, false);
+    }
+
     private static SkinnedMesh[] bake(DetailModel model, boolean hood) {
         try {
             // rest pose: no copied player pose, no blown hair or swinging coat

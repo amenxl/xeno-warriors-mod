@@ -23,6 +23,8 @@ public final class ModItems {
 
     public static final RegistryObject<Item> HUMAN_SPAWN_EGG = ITEMS.register("human_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.HUMAN, 0xE8C8A8, 0x2A2A44, new Item.Properties()));
+    public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new Item(new Item.Properties().stacksTo(16)));
+    public static final RegistryObject<Item> BRIEFCASE = ITEMS.register("briefcase", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKYLANDER_SPAWN_EGG = ITEMS.register("skylander_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.SKYLANDER, 0xF2F2FF, 0x5EA8E8, new Item.Properties()));
     public static final RegistryObject<Item> DARK_POSSESSED_SPAWN_EGG = ITEMS.register("dark_possessed_spawn_egg",

@@ -59,7 +59,7 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
     /** "_face", or another expression. */
     protected String faceSuffix(T e) { return "_face"; }
 
-    static ResourceLocation tex(String name) {
+    public static ResourceLocation tex(String name) {
         return XenoWarriors.id("textures/entity/npc/" + name + ".png");
     }
 
