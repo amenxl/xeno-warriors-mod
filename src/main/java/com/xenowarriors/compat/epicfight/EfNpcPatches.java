@@ -21,8 +21,15 @@ public final class EfNpcPatches {
     }
 
     private static void onPatches(EntityPatchRegistryEvent event) {
-        event.getTypeEntry().put(ModNpcs.HUMAN.get(), e -> () -> new XWHumanPatch<>(Factions.VILLAGER));
-        event.getTypeEntry().put(ModNpcs.DARK_POSSESSED.get(), e -> () -> new XWHumanPatch<>(Factions.UNDEAD));
+        event.getTypeEntry().put(ModNpcs.HUMAN.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.VILLAGER); });
+        event.getTypeEntry().put(ModNpcs.DARK_POSSESSED.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.UNDEAD); });
+        armature();
+    }
+
+    /** Epic Fight needs to know which skeleton our people use (the humanoid one) - without it, it crashes. */
+    private static void armature() {
+        yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.HUMAN.get(), yesman.epicfight.gameasset.Armatures.BIPED);
+        yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.DARK_POSSESSED.get(), yesman.epicfight.gameasset.Armatures.BIPED);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

@@ -149,6 +149,10 @@ public final class LockOn {
         if (e instanceof Player p && (p.isCreative() || com.xenowarriors.client.party.PartyClient.inMyParty(p.getUUID()))) return false;
         if (e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame() && me.getUUID().equals(t.getOwnerUUID())) return false;
         if (e instanceof net.minecraft.world.entity.OwnableEntity o && me.getUUID().equals(o.getOwnerUUID())) return false;
+        // your pets and your party's (foxes, wing pets, tamed animals)
+        java.util.UUID owner = PetOwners.owner(e.getId());
+        if (owner == null && e instanceof net.minecraft.world.entity.OwnableEntity o2) owner = o2.getOwnerUUID();
+        if (owner != null && (owner.equals(me.getUUID()) || com.xenowarriors.client.party.PartyClient.inMyParty(owner))) return false;
         if (ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.MIKIKO
                 && e instanceof com.xenowarriors.npc.HumanNpcEntity h && !h.possessed() && !(h.skyHater() && h.isAggressive())) return false;
         return true;
