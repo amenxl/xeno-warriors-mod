@@ -25,6 +25,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 
 import java.util.UUID;
 
@@ -46,6 +47,11 @@ public class SkylanderEntity extends PathfinderMob {
     private int helpedAt = -10000;
     /** Sky island dungeon guardians: where their temple is (null = an ordinary Skylander). */
     private BlockPos guardHome;
+    /** The sky island they live on (center of its top), how far it reaches, and whether their house is at its middle. */
+    private BlockPos islandHome;
+    private int islandRadius = 8;
+    private boolean hasHouse;
+    private int warnedAt = -10000;
 
     public SkylanderEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -95,6 +101,16 @@ public class SkylanderEntity extends PathfinderMob {
     }
 
     public boolean guardian() { return guardHome != null; }
+    public BlockPos islandHome() { return islandHome; }
+    /** Where they'd defend: their temple, or their island home. */
+    public BlockPos defendsAt() { return guardHome != null ? guardHome : islandHome; }
+
+    public void liveOn(BlockPos center, int radius, boolean house) {
+        islandHome = center.immutable();
+        islandRadius = Math.max(4, radius);
+        hasHouse = house;
+        restrictTo(islandHome, islandRadius);
+    }
     public BlockPos guardHome() { return guardHome; }
 
     /** Guards a sky temple: stays by it, tougher, and leaves people be unless they break things or open the chests. */
@@ -183,7 +199,8 @@ public class SkylanderEntity extends PathfinderMob {
                 // back to their post once the fight's over
                 if (getTarget() == null && tickCount % 40 == 0 && distanceToSqr(Vec3.atCenterOf(guardHome)) > 14 * 14)
                     getNavigation().moveTo(guardHome.getX() + 0.5, guardHome.getY(), guardHome.getZ() + 0.5, 1.0);
-            } else if (onGround() && ++groundTime > 2400 && tickCount - threatenedAt > 200) takeOff();     // done hanging out
+            } else if (onGround() && ++groundTime > (islandHome != null ? 900 : 2400) && tickCount - threatenedAt > 200) takeOff();     // done hanging out
+            if (islandHome != null && hasHouse && tickCount % 20 == 0 && getTarget() == null) guardHouse();
         }
         // saved: once nobody's after them any more, they thank whoever helped
         if (helper != null && tickCount - threatenedAt > 100 && tickCount - helpedAt < 1200 && !wingless()) {
@@ -198,9 +215,25 @@ public class SkylanderEntity extends PathfinderMob {
         if (helper != null && tickCount - helpedAt > 2400) helper = null;
     }
 
+    /** Someone walked into their house: they come running and attack. */
+    private void guardHouse() {
+        BlockPos h = islandHome;
+        AABB house = new AABB(h.getX() - 2.5, h.getY(), h.getZ() - 2.5, h.getX() + 3.5, h.getY() + 3.5, h.getZ() + 3.5);
+        for (Player pl : level().getEntitiesOfClass(Player.class, house, pl -> !pl.isCreative() && !pl.isSpectator())) {
+            if (flying()) setFlying(false);
+            defendAgainst(pl);
+            if (tickCount - warnedAt > 400 && pl instanceof ServerPlayer sp) {
+                warnedAt = tickCount;
+                sp.sendSystemMessage(Component.literal("Skylander: \"Hey! Get out of my house!\"").withStyle(ChatFormatting.AQUA));
+            }
+            return;
+        }
+    }
+
     /** Free flight: drifting between points in the sky; now and then gliding down to land by people. */
     private void flyTick() {
         Vec3 pos = position();
+        if (islandHome != null) { islandFlight(pos); return; }
         if (landAt == null && random.nextInt(600) == 0) {
             var people = level().getEntitiesOfClass(Mob.class, getBoundingBox().inflate(48, 80, 48), m -> m instanceof HumanNpcEntity || m instanceof Villager);
             if (!people.isEmpty()) landAt = people.get(random.nextInt(people.size())).blockPosition().offset(random.nextInt(5) - 2, 0, random.nextInt(5) - 2);
@@ -235,6 +268,43 @@ public class SkylanderEntity extends PathfinderMob {
         }
     }
 
+    /** Island Skylanders: circling and swooping around their own island, landing back on it - never wandering off. */
+    private void islandFlight(Vec3 pos) {
+        Vec3 home = Vec3.atBottomCenterOf(islandHome);
+        if (landAt == null && (random.nextInt(260) == 0 || pos.distanceTo(home) > islandRadius + 40)) {
+            landAt = islandHome.offset(random.nextInt(islandRadius * 2 + 1) - islandRadius, 0, random.nextInt(islandRadius * 2 + 1) - islandRadius);
+        }
+        Vec3 dest;
+        if (landAt != null) {
+            BlockPos ground = level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, landAt);
+            if (ground.getY() < islandHome.getY() - 12) { landAt = islandHome; ground = islandHome; }      // (off the edge: aim for the middle)
+            dest = Vec3.atBottomCenterOf(ground);
+            if (pos.distanceTo(dest) < 1.2 || (onGround() && pos.distanceTo(dest) < 4)) {
+                setFlying(false);
+                groundTime = 0;
+                landAt = null;
+                return;
+            }
+        } else {
+            if (flyTarget == null || pos.distanceTo(flyTarget) < 2 || random.nextInt(160) == 0) {
+                // loops around the island, sometimes a long swoop out and back
+                double ang = random.nextDouble() * Math.PI * 2, rad = islandRadius + 4 + random.nextInt(random.nextInt(6) == 0 ? 28 : 12);
+                flyTarget = home.add(Math.cos(ang) * rad, 4 + random.nextInt(14), Math.sin(ang) * rad);
+            }
+            dest = flyTarget;
+        }
+        Vec3 to = dest.subtract(pos);
+        double speed = landAt != null ? 0.3 : 0.26;
+        Vec3 want = to.length() > speed ? to.normalize().scale(speed) : to;
+        Vec3 v = getDeltaMovement().lerp(want.add(0, Math.sin(tickCount * 0.1) * 0.02, 0), 0.1);
+        setDeltaMovement(v);
+        if (v.horizontalDistanceSqr() > 1.0E-4) {
+            setYRot((float) (Mth.atan2(v.z, v.x) * Mth.RAD_TO_DEG) - 90F);
+            yBodyRot = getYRot();
+            yHeadRot = getYRot();
+        }
+    }
+
     @Override
     public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
         return !wingless() && super.causeFallDamage(distance, multiplier, source);
@@ -242,7 +312,7 @@ public class SkylanderEntity extends PathfinderMob {
 
     @Override
     public boolean removeWhenFarAway(double dist) {
-        return !wingless() && !guardian() && !isPersistenceRequired() && dist > 160 * 160;
+        return !wingless() && !guardian() && islandHome == null && !isPersistenceRequired() && dist > 160 * 160;
     }
 
     @Override
@@ -252,6 +322,11 @@ public class SkylanderEntity extends PathfinderMob {
         tag.putBoolean("Flying", flying());
         tag.putBoolean("Wingless", wingless());
         if (guardHome != null) tag.putLong("GuardHome", guardHome.asLong());
+        if (islandHome != null) {
+            tag.putLong("IslandHome", islandHome.asLong());
+            tag.putInt("IslandRadius", islandRadius);
+            tag.putBoolean("HasHouse", hasHouse);
+        }
     }
 
     @Override
@@ -260,6 +335,7 @@ public class SkylanderEntity extends PathfinderMob {
         entityData.set(VARIANT, tag.getInt("Variant"));
         entityData.set(WINGLESS, tag.getBoolean("Wingless"));
         setFlying(tag.getBoolean("Flying"));
+        if (tag.contains("IslandHome")) liveOn(BlockPos.of(tag.getLong("IslandHome")), tag.getInt("IslandRadius"), tag.getBoolean("HasHouse"));
         if (tag.contains("GuardHome")) {
             guardHome = BlockPos.of(tag.getLong("GuardHome"));
             restrictTo(guardHome, 12);

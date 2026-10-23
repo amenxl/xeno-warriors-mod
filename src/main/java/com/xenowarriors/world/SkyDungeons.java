@@ -23,7 +23,7 @@ public final class SkyDungeons {
 
     private static List<SkylanderEntity> guards(Level level, BlockPos pos) {
         return level.getEntitiesOfClass(SkylanderEntity.class, new AABB(pos).inflate(32),
-                g -> g.guardian() && g.isAlive() && g.guardHome().distSqr(pos) < 16 * 16);
+                g -> g.isAlive() && g.defendsAt() != null && g.defendsAt().distSqr(pos) < 16 * 16);
     }
 
     private static void alarm(ServerPlayer p, BlockPos pos, String why) {
@@ -34,12 +34,13 @@ public final class SkyDungeons {
             if (g.getTarget() != p) fresh = true;
             g.defendAgainst(p);
         }
-        if (fresh) p.displayClientMessage(Component.literal("Skylander Guardian: \"" + why + "\"").withStyle(ChatFormatting.AQUA), false);
+        if (fresh) p.displayClientMessage(Component.literal((gs.stream().anyMatch(SkylanderEntity::guardian) ? "Skylander Guardian" : "Skylander")
+                + ": \"" + why + "\"").withStyle(ChatFormatting.AQUA), false);
     }
 
     @SubscribeEvent
     public static void onBreak(BlockEvent.BreakEvent event) {
-        if (event.getPlayer() instanceof ServerPlayer p) alarm(p, event.getPos(), "Stop wrecking our temple!");
+        if (event.getPlayer() instanceof ServerPlayer p) alarm(p, event.getPos(), "Stop wrecking our home!");
     }
 
     @SubscribeEvent

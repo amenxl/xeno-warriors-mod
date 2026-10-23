@@ -40,8 +40,8 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
         if (r.nextFloat() < 0.18F) return dungeon(level, r, origin);
         // (above 192, where water springs can't form: nothing pours off them)
         int top = Math.min(level.getMaxBuildHeight() - 30, 198 + r.nextInt(40));
-        int radius = 6 + r.nextInt(7);
-        BlockPos c = new BlockPos(origin.getX(), top, origin.getZ());
+        int radius = 7 + r.nextInt(10);                                    // bigger islands now (up to ~18 across the middle)
+        BlockPos c = new BlockPos((origin.getX() & ~15) + 8, top, (origin.getZ() & ~15) + 8);   // centered: room to build it all
         // a lumpy outline: radius wobbles around the edge
         float[] wob = new float[16];
         for (int i = 0; i < wob.length; i++) wob[i] = 0.8F + r.nextFloat() * 0.35F;
@@ -83,13 +83,14 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
             tree(level, base, r);
         }
         // Skylanders resting up here
-        if (r.nextFloat() < 0.35F) {
-            int n = 1 + r.nextInt(2);
+        if (r.nextFloat() < (house ? 0.8F : 0.35F)) {
+            int n = 1 + r.nextInt(house ? 3 : 2);
             for (int k = 0; k < n; k++) {
                 SkylanderEntity sk = ModNpcs.SKYLANDER.get().create(level.getLevel());
                 if (sk == null) continue;
                 sk.moveTo(c.getX() + 0.5 + r.nextInt(5) - 2, top + 2, c.getZ() + 0.5 + r.nextInt(5) - 2, r.nextFloat() * 360F, 0F);
                 sk.finalizeSpawn(level, level.getCurrentDifficultyAt(c), MobSpawnType.STRUCTURE, null, null);
+                sk.liveOn(c.above(), radius, house);                       // this is their island (and their house)
                 sk.setPersistenceRequired();
                 level.addFreshEntityWithPassengers(sk);
             }
