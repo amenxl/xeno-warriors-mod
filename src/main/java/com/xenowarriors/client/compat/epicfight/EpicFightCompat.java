@@ -55,16 +55,27 @@ public final class EpicFightCompat {
             }
         };
         com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
+        // busy only while Epic Fight is really playing an action (an attack, dodge, guard...) - not just because
+        // battle mode is on, or a mode switch flickered the state
         com.xenowarriors.client.AttackHooks.externalBusy = p -> {
             var patch = patch(p);
-            return patch != null && patch.isEpicFightMode()
-                    && Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION));
+            if (patch == null || !patch.isEpicFightMode()
+                    || !Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION))) return false;
+            if (!(currentAnimation(patch) instanceof yesman.epicfight.api.animation.types.ActionAnimation action)) return false;
+            try {
+                yesman.epicfight.api.animation.Animator animator = patch.getAnimator();
+                var player = animator.getPlayerFor(null);
+                return player != null && !player.isEnd() && player.getElapsedTime() < action.getTotalTime();
+            } catch (Throwable t) {
+                return false;
+            }
         };
     }
 
     private static final java.util.Map<Integer, Object[]> LAST = new java.util.HashMap<>();   // id -> {animation, elapsed}
     private static final java.util.Map<Integer, Integer> STARTED = new java.util.HashMap<>();
     private static final java.util.Map<Integer, Float> HIT = new java.util.HashMap<>();
+    private static int battleRequests;
 
     /** Ticks from the start of an Epic Fight attack to its first hit (its attack speed included), or -1. */
     private static float hitTicks(yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch, Object anim) {
@@ -133,12 +144,15 @@ public final class EpicFightCompat {
         }
         // always in battle mode (Epic Fight's mode key would switch to mining mode: it switches straight back)
         var me = net.minecraft.client.Minecraft.getInstance().player;
-        if (me != null && me.tickCount % 5 == 0 && ClientSettings.efAlwaysBattle()) {
+        if (me != null && me.tickCount % 20 == 0 && ClientSettings.efAlwaysBattle() && battleRequests < 6) {
             var mine = patch(me);
             if (mine != null && !mine.isEpicFightMode()) {
+                battleRequests++;                       // (gives up after a few if the server won't allow it)
                 try {
                     mine.toEpicFightMode(true);
                 } catch (Throwable ignored) {}
+            } else if (mine != null) {
+                battleRequests = 0;
             }
         }
         for (AbstractClientPlayer p : level.players()) {
