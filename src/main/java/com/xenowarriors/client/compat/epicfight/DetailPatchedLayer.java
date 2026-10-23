@@ -60,10 +60,9 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     }
 
     private static DetailModel freshCopy(AbstractClientPlayer player, DetailModel live) {
-        var type = com.xenowarriors.client.ClientCharacterData.get(player);
-        boolean king = type == com.xenowarriors.character.CharacterType.MIKIKO && com.xenowarriors.client.mikiko.FoxKingClient.active(player);
-        DetailModel copy = king ? DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/mikiko_foxking.json")
-                : DetailModel.load(type);
+        // limbs left whole: Epic Fight bends knees and elbows itself, and cuts our pre-split halves and joint
+        // fillers into stretched, striped pieces (crouching with an axe...)
+        DetailModel copy = DetailModel.loadWhole(CharacterDetailLayer.detailModelPath(player));
         return copy != null ? copy : live;
     }
 

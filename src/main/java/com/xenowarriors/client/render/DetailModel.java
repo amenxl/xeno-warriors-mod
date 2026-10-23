@@ -355,6 +355,18 @@ public class DetailModel {
     }
 
     /** Loads any model file in the same format (e.g. a character's armor pieces); null if missing. */
+    /** Loading for Epic Fight's baker: limbs left whole (it bends knees and elbows itself). */
+    private static boolean wholeLimbs;
+
+    public static DetailModel loadWhole(String path) {
+        wholeLimbs = true;
+        try {
+            return loadPath(path);
+        } finally {
+            wholeLimbs = false;
+        }
+    }
+
     public static DetailModel loadPath(String path) {
         try (InputStream in = DetailModel.class.getResourceAsStream(path)) {
             if (in == null) return null;
@@ -365,7 +377,7 @@ public class DetailModel {
             for (Map.Entry<String, JsonElement> bone : json.getAsJsonObject("bones").entrySet()) {
                 JsonObject b = bone.getValue().getAsJsonObject();
                 float[] p = floats(b.getAsJsonArray("pivot"));
-                float split = com.xenowarriors.client.LimbBend.splitY(bone.getKey());
+                float split = wholeLimbs ? 0F : com.xenowarriors.client.LimbBend.splitY(bone.getKey());
                 if (split > 0F) {
                     limb(rootDef, bone.getKey(), b, p, split);
                     continue;

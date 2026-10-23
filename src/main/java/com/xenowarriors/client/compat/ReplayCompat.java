@@ -46,6 +46,28 @@ public final class ReplayCompat {
         }
     }
 
+    /** replaying(), checked once a tick (cheap to read from render code). */
+    public static boolean active;
+
+    @SubscribeEvent
+    public static void onTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.START) active = replaying();
+    }
+
+    /**
+     * In a replay the camera is a player entity of its own with your name - it isn't a warrior, and it must never be
+     * drawn: (a first-person body view would show it as a second Mikiko doing his normal moves right next to the
+     * recorded one while Epic Fight animates the real him).
+     */
+    public static boolean isReplayCamera(net.minecraft.world.entity.player.Player p) {
+        return active && p == net.minecraft.client.Minecraft.getInstance().player;
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void onRenderPlayer(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
+        if (isReplayCamera(event.getEntity())) event.setCanceled(true);
+    }
+
     @SubscribeEvent
     public static void onOverlay(RenderGuiOverlayEvent.Pre event) {
         if (XenoWarriors.MOD_ID.equals(event.getOverlay().id().getNamespace()) && replaying()) event.setCanceled(true);

@@ -19,6 +19,8 @@ public class PlayerCharacter {
     public net.minecraft.nbt.ListTag wingPets = new net.minecraft.nbt.ListTag();
     /** Rhalix: are his wings out (true) or put away (false)? */
     public boolean wingsOut = true;
+    /** Mikiko's outfit: 0 Recarnet 1 (normal), 1 Origins 1, 2 Origins 2. */
+    public int outfit;
     /** How torn their clothes are from explosions (0-3); mends when healed up and resting. */
     public int torn;
     /** The fox riding on his back (saved entity data), or empty. */
@@ -85,6 +87,7 @@ public class PlayerCharacter {
         this.wingPets = other.wingPets.copy();
         this.backFox = other.backFox.copy();
         this.wingsOut = other.wingsOut;
+        this.outfit = other.outfit;
     }
 
     public CompoundTag save() {
@@ -113,6 +116,7 @@ public class PlayerCharacter {
         tag.put("wing_pets", wingPets.copy());
         tag.put("back_fox", backFox.copy());
         tag.putBoolean("wings_in", !wingsOut);
+        tag.putInt("outfit", outfit);
         tag.putInt("torn", torn);
         for (int i = 0; i < 3; i++) tag.putFloat("stat_xp_" + i, statXp[i]);
         return tag;
@@ -141,6 +145,7 @@ public class PlayerCharacter {
         this.wingPets = tag.getList("wing_pets", net.minecraft.nbt.Tag.TAG_COMPOUND);
         this.backFox = tag.getCompound("back_fox");
         this.wingsOut = !tag.getBoolean("wings_in");
+        this.outfit = tag.getInt("outfit");
         this.torn = tag.getInt("torn");
         int[] lv = tag.getIntArray("stat_levels");
         for (int i = 0; i < 3; i++) {

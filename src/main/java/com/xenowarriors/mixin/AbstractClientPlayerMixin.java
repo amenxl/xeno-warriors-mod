@@ -17,7 +17,9 @@ public abstract class AbstractClientPlayerMixin {
     private void xenowarriors$characterSkin(CallbackInfoReturnable<ResourceLocation> cir) {
         CharacterType type = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
         if (type != CharacterType.NONE) {
-            cir.setReturnValue(type.getSkin());
+            int o = ClientCharacterData.outfit((AbstractClientPlayer) (Object) this);
+            cir.setReturnValue(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"
+                    + ClientCharacterData.OUTFIT_KEYS[o] + ".png") : type.getSkin());
         }
     }
 

@@ -33,7 +33,11 @@ public final class CharacterManager {
     }
 
     public static void syncToTrackingAndSelf(ServerPlayer player) {
-        ModNetwork.sendToTrackingAndSelf(new SyncCharacterPacket(player.getUUID(), ModCapabilities.getType(player)), player);
+        ModNetwork.sendToTrackingAndSelf(new SyncCharacterPacket(player.getUUID(), ModCapabilities.getType(player), outfit(player)), player);
+    }
+
+    public static int outfit(net.minecraft.world.entity.player.Player p) {
+        return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.outfit).orElse(0);
     }
 
     public static void openSelectScreen(ServerPlayer player) {
@@ -64,7 +68,7 @@ public final class CharacterManager {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer) {
-            ModNetwork.sendToPlayer(new SyncCharacterPacket(target.getUUID(), ModCapabilities.getType(target)), viewer);
+            ModNetwork.sendToPlayer(new SyncCharacterPacket(target.getUUID(), ModCapabilities.getType(target), outfit(target)), viewer);
         }
     }
 

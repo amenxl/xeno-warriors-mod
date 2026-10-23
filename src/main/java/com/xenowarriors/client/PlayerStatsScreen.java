@@ -23,13 +23,15 @@ import java.util.List;
  * whole card shrinks on small windows.
  */
 public class PlayerStatsScreen extends Screen {
+    private static final boolean OUTFITS_READY = false;
+
     private static final int ROW = 30, PAD = 8;
     private static final int BG = 0xD0101018, BG_SELF = 0xD01C1C2A, SECTION = 0xFF8C8CA0, LABEL = 0xFFA0A0B0;
     private static int tab;
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabSettings, realm, plea, senseFriendly, efMode, efBattle;
+    private Button tabPlayers, tabMe, tabSettings, realm, plea, senseFriendly, efMode, efBattle, outfit;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -76,6 +78,13 @@ public class PlayerStatsScreen extends Screen {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
         }).bounds(width / 2 - bw / 2, 104, bw, 20).build());
+        outfit = addRenderableWidget(Button.builder(Component.empty(), b -> {
+            if (minecraft.player == null) return;
+            int next = (ClientCharacterData.outfit(minecraft.player) + 1) % ClientCharacterData.OUTFIT_NAMES.length;
+            ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(next));
+            ClientCharacterData.setOutfit(minecraft.player.getUUID(), next);     // show it right away
+            updateButtons();
+        }).bounds(width / 2 - bw / 2, 128, bw, 20).build());
         realm = addRenderableWidget(Button.builder(Component.literal("Enter the Hekublade"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade realm");
             onClose();
@@ -104,6 +113,9 @@ public class PlayerStatsScreen extends Screen {
         efBattle.setMessage(Component.literal("Always battle mode: " + (ClientSettings.efAlwaysBattle() ? "ON" : "OFF")));
         efMode.setMessage(Component.literal("Battle mode moves: " + (ClientSettings.efWholeBattleMode() ? "Epic Fight's" : "Xeno Warriors'")));
         boolean mikiko = ClientCharacterData.getLocal() == CharacterType.MIKIKO;
+        outfit.visible = tab == 2 && mikiko && OUTFITS_READY;
+        if (minecraft != null && minecraft.player != null)
+            outfit.setMessage(Component.literal("Outfit: " + ClientCharacterData.OUTFIT_NAMES[ClientCharacterData.outfit(minecraft.player)]));
         boolean prisoner = me != null && me.prisoner();
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
         realm.setMessage(Component.literal(me != null && me.inRealm() ? "Leave the Hekublade" : "Enter the Hekublade"));

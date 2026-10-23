@@ -29,6 +29,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_foxking_details.png");
     private final DetailModel foxKing = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_foxking.json");
 
+    /** Mikiko's other outfits (index = outfit number; 0 = his normal look, the type's own model). */
+    private final DetailModel[] outfits = new DetailModel[ClientCharacterData.OUTFIT_KEYS.length];
+
     /** The most recently made layer (both player renderers load the same models) - for Epic Fight's renderer. */
     private static CharacterDetailLayer instance;
 
@@ -39,6 +42,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             DetailModel model = DetailModel.load(type);
             if (model != null) models.put(type, model);
         }
+        for (int i = 1; i < outfits.length; i++) {
+            outfits[i] = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_"
+                    + ClientCharacterData.OUTFIT_KEYS[i] + ".json");
+        }
     }
 
     /** The detail model this player shows right now (Fox King Mikiko has his own), or null. */
@@ -46,7 +53,22 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (instance == null) return null;
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return instance.foxKing;
+        int o = ClientCharacterData.outfit(p);
+        if (o > 0 && instance.outfits[o] != null) return instance.outfits[o];
         return instance.models.get(type);
+    }
+
+    /** Resource path of the detail model this player shows (for Epic Fight's own copy). */
+    public static String detailModelPath(AbstractClientPlayer p) {
+        CharacterType type = ClientCharacterData.get(p);
+        String name = isFoxKing(p, type) ? "mikiko_foxking" : outfitName(p, type);
+        return "/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + name + ".json";
+    }
+
+    /** "mikiko_origins1"... for an outfit, else the type's id. */
+    public static String outfitName(AbstractClientPlayer p, CharacterType type) {
+        int o = ClientCharacterData.outfit(p);
+        return o > 0 ? type.getId() + "_" + ClientCharacterData.OUTFIT_KEYS[o] : type.getId();
     }
 
     private static boolean isFoxKing(AbstractClientPlayer p, CharacterType type) {
@@ -56,7 +78,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
-        return isFoxKing(p, type) ? FOX_KING_TEX : type.getDetailTexture();
+        if (isFoxKing(p, type)) return FOX_KING_TEX;
+        int o = ClientCharacterData.outfit(p);
+        return o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
+                : type.getDetailTexture();
     }
 
     public static net.minecraft.resources.ResourceLocation faceTexture(AbstractClientPlayer p) {
@@ -270,6 +295,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         DetailModel model = models.get(type);
         boolean king = type == CharacterType.MIKIKO && foxKing != null && com.xenowarriors.client.mikiko.FoxKingClient.active(player);
         if (king) model = foxKing;
+        int outfit = king ? 0 : ClientCharacterData.outfit(player);
+        if (outfit > 0 && outfits[outfit] != null) model = outfits[outfit];
         if (model == null) return;
 
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
@@ -341,10 +368,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         model.head.visible = !noHead;
         int overlay = LivingEntityRenderer.getOverlayCoords(player, 0.0F);
         // torn clothes (explosions): holes ripped in the clothing, skin showing through, strips hanging off
-        int torn = ClientCharacterData.isPreviewing() ? 0 : TORN.getOrDefault(player.getUUID(), 0);
+        int torn = ClientCharacterData.isPreviewing() || outfit > 0 ? 0 : TORN.getOrDefault(player.getUUID(), 0);
         var detailTex = torn > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_details_torn" + torn + ".png")
                 : type.getDetailTexture();
-        if (king) detailTex = FOX_KING_TEX;      // its own atlas (the torn/damaged detail sheets are for the normal look)
+        if (king) detailTex = FOX_KING_TEX;
+        if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
         int stick = type == CharacterType.RHALIX && !model.mouthStick.isEmpty()
@@ -392,9 +420,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         int damage = damageLevel(player);
         if (damage > 0 && !ClientCharacterData.isPreviewing()) {
             String base = "textures/entity/character/" + type.getId();
-            parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
+            if (outfit == 0) parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityTranslucent(   // (painted for his normal clothes)
                     com.xenowarriors.XenoWarriors.id(base + "_damage" + damage + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);
-            if (!king) model.root.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
+            if (!king && outfit == 0) model.root.render(poseStack, buffers.getBuffer(RenderType.entityTranslucent(
                     com.xenowarriors.XenoWarriors.id(base + "_details_damage" + damage + ".png"))), packedLight, overlay);
             // 3D: bandages and torn, hanging cloth
             BattleDamageModel.get().render(parent, poseStack, buffers, packedLight, overlay, damage,
