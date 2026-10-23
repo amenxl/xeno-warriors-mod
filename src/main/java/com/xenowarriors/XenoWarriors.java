@@ -29,6 +29,7 @@ public class XenoWarriors {
         ModEntities.ENTITY_TYPES.register(modBus);
         com.xenowarriors.world.SkyIslandFeature.FEATURES.register(modBus);
         com.xenowarriors.altar.ModAltar.init();
+        com.xenowarriors.sky.ModTools.init();
         com.xenowarriors.corrupted.CorruptionBlocks.init();
         com.xenowarriors.sky.ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);

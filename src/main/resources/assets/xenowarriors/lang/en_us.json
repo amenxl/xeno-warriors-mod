@@ -201,5 +201,15 @@
   "block.xenowarriors.corrupted_stone": "Corrupted Stone",
   "event.xenowarriors.sky_raid": "Sky Hater Raid",
   "key.xenowarriors.accept_request": "Accept Request (party/battle/team)",
-  "key.xenowarriors.decline_request": "Decline Request"
+  "key.xenowarriors.decline_request": "Decline Request",
+  "item.xenowarriors.sky_sword": "Sky Crystal Sword",
+  "item.xenowarriors.sky_pickaxe": "Sky Crystal Pickaxe",
+  "item.xenowarriors.sky_axe": "Sky Crystal Axe",
+  "item.xenowarriors.sky_shovel": "Sky Crystal Shovel",
+  "item.xenowarriors.sky_hoe": "Sky Crystal Hoe",
+  "item.xenowarriors.corrupted_sword": "Corrupted Sword",
+  "item.xenowarriors.corrupted_pickaxe": "Corrupted Pickaxe",
+  "item.xenowarriors.corrupted_axe": "Corrupted Axe",
+  "item.xenowarriors.corrupted_shovel": "Corrupted Shovel",
+  "item.xenowarriors.corrupted_hoe": "Corrupted Hoe"
 }
