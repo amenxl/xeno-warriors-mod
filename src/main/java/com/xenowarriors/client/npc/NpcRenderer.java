@@ -40,7 +40,26 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
         return new NpcRenderer<>(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), look, dark);
     }
 
-    private static ResourceLocation tex(String name) {
+    private static final ResourceLocation ARMBAND_TEX = XenoWarriors.id("textures/entity/npc/armband.png");
+    private static net.minecraft.client.model.geom.ModelPart armband;
+
+    private static net.minecraft.client.model.geom.ModelPart armband() {
+        if (armband == null) {
+            var mesh = new net.minecraft.client.model.geom.builders.MeshDefinition();
+            mesh.getRoot().addOrReplaceChild("band", net.minecraft.client.model.geom.builders.CubeListBuilder.create().texOffs(0, 0)
+                    .addBox(-1.35F, 2.6F, -2.35F, 4.7F, 1.8F, 4.7F), net.minecraft.client.model.geom.PartPose.ZERO);
+            armband = net.minecraft.client.model.geom.builders.LayerDefinition.create(mesh, 32, 16).bakeRoot();
+        }
+        return armband;
+    }
+
+    /** Per-entity tweaks before the details are drawn (wings etc.). */
+    protected void prepare(T e, DetailModel m, float age) {}
+
+    /** "_face", or another expression. */
+    protected String faceSuffix(T e) { return "_face"; }
+
+    static ResourceLocation tex(String name) {
         return XenoWarriors.id("textures/entity/npc/" + name + ".png");
     }
 
@@ -67,6 +86,7 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
             String key = look.apply(e);
             DetailModel m = model(key);
             if (m == null) return;
+            prepare(e, m, age);
             PlayerModel<T> p = getParentModel();
             m.head.copyFrom(p.head); m.body.copyFrom(p.body);
             m.rightArm.copyFrom(p.rightArm); m.leftArm.copyFrom(p.leftArm);
@@ -80,9 +100,16 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
             m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(tex(key + (d ? "_dark_details" : "_details")))), light, overlay);
             if (m.faceRoot != null) {
                 m.faceHead.copyFrom(p.head);
-                ResourceLocation face = tex(key + (d ? "_face_dark" : "_face"));
+                ResourceLocation face = tex(key + (d ? "_face_dark" : faceSuffix(e)));
                 m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(face)), light, overlay);
                 if (possessedLook) m.faceRoot.render(pose, buffers.getBuffer(RenderType.eyes(face)), light, overlay);    // glowing red eyes
+            }
+            // Sky Haters wear a red armband
+            if (e instanceof com.xenowarriors.npc.HumanNpcEntity h && h.skyHater()) {
+                pose.pushPose();
+                p.leftArm.translateAndRotate(pose);
+                armband().render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(ARMBAND_TEX)), light, overlay);
+                pose.popPose();
             }
         }
     }

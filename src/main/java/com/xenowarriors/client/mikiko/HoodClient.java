@@ -39,9 +39,19 @@ public final class HoodClient {
         return ClientCharacterData.rhalixOutfit(p) == ClientCharacterData.RHALIX_ORIGINS_2;   // his hooded coat
     }
 
+    /** A Karma-Reducing Hoodie in the chest slot (Mikiko or Rhalix): its hood goes up in the rain too. */
+    public static boolean karmaHoodie(Player p) {
+        return p.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem() instanceof com.xenowarriors.item.KarmaHoodieItem
+                && ClientCharacterData.get(p) != com.xenowarriors.character.CharacterType.NONE;
+    }
+
+    private static boolean hooded(Player p) {
+        return hasHood(p) || karmaHoodie(p);
+    }
+
     private static boolean wantsUp(Player p) {
         var pos = p.blockPosition();
-        return hasHood(p) && p.level().isRainingAt(pos.above()) && !p.isUnderWater();
+        return hooded(p) && p.level().isRainingAt(pos.above()) && !p.isUnderWater();
     }
 
     @SubscribeEvent
@@ -50,7 +60,7 @@ public final class HoodClient {
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STATE.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         for (AbstractClientPlayer p : mc.level.players()) {
-            if (!hasHood(p)) { STATE.remove(p.getId()); continue; }
+            if (!hooded(p)) { STATE.remove(p.getId()); continue; }
             int[] s = STATE.computeIfAbsent(p.getId(), k -> new int[]{wantsUp(p) ? 1 : 0, PULL * 4});
             int want = wantsUp(p) ? 1 : 0;
             if (want != s[0] && s[1] > PULL) { s[0] = want; s[1] = 0; }

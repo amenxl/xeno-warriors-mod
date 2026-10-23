@@ -357,11 +357,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         // hood up (SR hoodie): the hair tucks under it, only the front bangs show
         boolean hood = model.hoodUp != null && com.xenowarriors.client.mikiko.HoodClient.up(player);
+        boolean armorHood = com.xenowarriors.client.mikiko.HoodClient.karmaHoodie(player) && com.xenowarriors.client.mikiko.HoodClient.up(player);
         if (model.hoodUp != null) model.hoodUp.visible = hood;
         if (model.hoodDown != null) model.hoodDown.visible = !hood;
         if (model.hair != null) {
-            model.hair.visible = !hood && !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
+            // the outfit's own hood: his hair still shows under it (the strands that would poke through it are tucked in)
+            model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
                     instanceof com.xenowarriors.item.SrHoodieItem);
+            for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood;
         }
 
         // Rhalix's cigarette while he's on his smoke break

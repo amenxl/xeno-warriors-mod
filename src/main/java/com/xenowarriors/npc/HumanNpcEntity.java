@@ -41,6 +41,8 @@ public class HumanNpcEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FIGHTER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> SKY_HATER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private int rhalixTauntAt = -10000;
     private long possessedSince = -1;
     private boolean reported;
 
@@ -61,11 +63,37 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.define(VARIANT, 0);
         entityData.define(POSSESSED, false);
         entityData.define(FIGHTER, false);
+        entityData.define(SKY_HATER, false);
     }
 
     public int variant() { return entityData.get(VARIANT); }
     public boolean possessed() { return entityData.get(POSSESSED); }
     public boolean fighter() { return entityData.get(FIGHTER); }
+    /** Hates Skylanders: goes for their wings (red armband). */
+    public boolean skyHater() { return entityData.get(SKY_HATER); }
+
+    static boolean isMikiko(Entity e) {
+        return e instanceof Player p && com.xenowarriors.character.ModCapabilities.getType(p) == com.xenowarriors.character.CharacterType.MIKIKO;
+    }
+
+    static boolean isRhalixWithWings(Entity e) {
+        return e instanceof Player p && !p.isCreative() && !p.isSpectator()
+                && com.xenowarriors.character.ModCapabilities.getType(p) == com.xenowarriors.character.CharacterType.RHALIX
+                && com.xenowarriors.character.RhalixWings.out(p);
+    }
+
+    /** People never go after Mikiko (only a soul wearing them would). */
+    @Override
+    public void setTarget(LivingEntity target) {
+        if (target != null && !possessed() && isMikiko(target)) target = null;
+        super.setTarget(target);
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (!possessed() && isMikiko(target)) return false;
+        return super.canAttack(target);
+    }
     /** Has a soul in them at all (showing or hidden). */
     public boolean carriesSoul() { return possessed() || HiddenSouls.hidden(this); }
 
@@ -92,12 +120,17 @@ public class HumanNpcEntity extends PathfinderMob {
     }
 
     private boolean wantsToFight(LivingEntity e) {
+        if (skyHater() && !carriesSoul()) {
+            if (e instanceof SkylanderEntity sk && !sk.flying() && !sk.wingless()) return true;
+            if (isRhalixWithWings(e)) return true;
+        }
         if (possessed()) return e instanceof Player p && !p.isCreative() && !p.isSpectator() || (e instanceof HumanNpcEntity h && !h.possessed())
                 || e instanceof Villager;
         if (!fighter() || HiddenSouls.hidden(this)) return false;
         return e instanceof CorruptedSoulEntity || e instanceof CorruptedVillagerEntity || e instanceof DarkPossessedEntity
                 || (e instanceof HumanNpcEntity h && h.possessed()) || CorruptedAnimals.isCorrupted(e)
-                || e instanceof net.minecraft.world.entity.monster.Zombie;      // fighters stand up to zombies too
+                || e instanceof net.minecraft.world.entity.monster.Zombie      // fighters stand up to zombies too
+                || (e instanceof HumanNpcEntity h && h.skyHater() && h.getTarget() instanceof SkylanderEntity);   // and stop wing-rippers
     }
 
     @Override
@@ -106,6 +139,10 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.set(VARIANT, r.nextInt(NpcLooks.HUMANS.length));
         boolean fighter = r.nextFloat() < 0.3F || NpcLooks.human(variant()).equals("soldier");
         entityData.set(FIGHTER, fighter);
+        if (!NpcLooks.human(variant()).equals("soldier") && r.nextFloat() < 0.2F) {
+            entityData.set(SKY_HATER, true);
+            setCustomName(Component.literal("Sky Hater").withStyle(ChatFormatting.RED));
+        }
         if (fighter) setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(r.nextFloat() < 0.6F ? Items.IRON_SWORD : Items.STONE_SWORD));
         else if (r.nextFloat() < 0.08F) setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_SWORD));
         setDropChance(EquipmentSlot.MAINHAND, 0.1F);
@@ -135,6 +172,22 @@ public class HumanNpcEntity extends PathfinderMob {
     protected void pickUpItem(net.minecraft.world.entity.item.ItemEntity item) {
         super.pickUpItem(item);
         if (getMainHandItem().getItem() instanceof SwordItem || getMainHandItem().getItem() instanceof AxeItem) entityData.set(FIGHTER, true);  // armed now: will fight
+    }
+
+    /** Sky Haters: worn down enough, a Skylander's wings get torn off. Rhalix's won't come off, however hard they pull. */
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        boolean hit = super.doHurtTarget(target);
+        if (hit && skyHater() && !carriesSoul()) {
+            if (target instanceof SkylanderEntity sk && sk.isAlive() && sk.getHealth() < sk.getMaxHealth() * 0.4F) {
+                sk.loseWings(this);
+                setTarget(null);
+            } else if (target instanceof Player p && isRhalixWithWings(p) && p.getHealth() < p.getMaxHealth() * 0.4F && tickCount - rhalixTauntAt > 200) {
+                rhalixTauntAt = tickCount;
+                p.displayClientMessage(Component.literal("The Sky Hater grabs at your wings - but they won't tear!").withStyle(ChatFormatting.RED), true);
+            }
+        }
+        return hit;
     }
 
     // ------------------------------------------------------------------ possession
@@ -172,6 +225,9 @@ public class HumanNpcEntity extends PathfinderMob {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        // Mikiko won't hurt ordinary people - only the corrupted (or a Sky Hater caught going for a Skylander)
+        if (!level().isClientSide && !possessed() && isMikiko(source.getEntity()) && !(skyHater() && getTarget() instanceof SkylanderEntity)) return false;
+        if (!level().isClientSide && source.getEntity() instanceof Player p && getTarget() instanceof SkylanderEntity sk) sk.helpedBy(p);
         // held down after being reported: worn low enough, the soul is driven out instead of them dying
         if (!level().isClientSide && possessed() && reported && getHealth() - amount < getMaxHealth() * 0.25F) {
             setHealth(getMaxHealth() * 0.25F);
@@ -239,6 +295,7 @@ public class HumanNpcEntity extends PathfinderMob {
         tag.putInt("Variant", variant());
         tag.putBoolean("Possessed", possessed());
         tag.putBoolean("Fighter", fighter());
+        tag.putBoolean("SkyHater", skyHater());
         tag.putLong("PossessedSince", possessedSince);
         tag.putBoolean("Reported", reported);
     }
@@ -249,6 +306,7 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.set(VARIANT, tag.getInt("Variant"));
         entityData.set(POSSESSED, tag.getBoolean("Possessed"));
         entityData.set(FIGHTER, tag.getBoolean("Fighter"));
+        entityData.set(SKY_HATER, tag.getBoolean("SkyHater"));
         possessedSince = tag.contains("PossessedSince") ? tag.getLong("PossessedSince") : -1;
         reported = tag.getBoolean("Reported");
     }

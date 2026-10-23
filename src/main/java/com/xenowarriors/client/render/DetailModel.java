@@ -66,6 +66,49 @@ public class DetailModel {
         this.leftWingY = leftWing != null ? leftWing.yRot : 0;
         if (hair != null) collectStrands(hair);
         if (bangs != null) collectStrands(bangs);
+        if (hair != null) findHoodPokers();
+    }
+
+    /** Hair strands that would stick out through the outfit's hood (hidden while it's up); the rest still show under it. */
+    public final java.util.List<ModelPart> hoodPokers = new java.util.ArrayList<>();
+
+    private void findHoodPokers() {
+        float[] b = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE};
+        // (no hood of its own: the standard hoodie hood's size - the Karma-Reducing Hoodie's)
+        if (hoodUp == null) { b[0] = -5.45F; b[1] = -10.8F; b[2] = -5.1F; b[3] = 5.45F; b[4] = -0.6F; b[5] = 5.65F; }
+        else hoodUp.visit(new com.mojang.blaze3d.vertex.PoseStack(), (pose, path, index, cube) -> {
+            for (org.joml.Vector3f c : corners(pose, cube)) {
+                b[0] = Math.min(b[0], c.x); b[1] = Math.min(b[1], c.y); b[2] = Math.min(b[2], c.z);
+                b[3] = Math.max(b[3], c.x); b[4] = Math.max(b[4], c.y); b[5] = Math.max(b[5], c.z);
+            }
+        });
+        float in = 0.15F;
+        java.util.Set<String> poke = new java.util.HashSet<>();
+        hair.visit(new com.mojang.blaze3d.vertex.PoseStack(), (pose, path, index, cube) -> {
+            String rel = path.startsWith("/") ? path.substring(1) : path;      // paths look like "/strand/piece"
+            int slash = rel.indexOf('/');
+            String strand = slash < 0 ? rel : rel.substring(0, slash);
+            if (strand.isEmpty()) return;     // the cap itself sits under the hood
+            for (org.joml.Vector3f c : corners(pose, cube)) {
+                // the open front of the hood lets the fringe through; anywhere else outside it would poke through
+                if (c.x < b[0] + in || c.x > b[3] - in || c.y < b[1] + in || c.z > b[5] - in) { poke.add(strand); return; }
+            }
+        });
+        for (String name : poke) {
+            if (hair.hasChild(name)) hoodPokers.add(hair.getChild(name));
+        }
+    }
+
+    private static org.joml.Vector3f[] corners(com.mojang.blaze3d.vertex.PoseStack.Pose pose, ModelPart.Cube cube) {
+        org.joml.Vector3f[] out = new org.joml.Vector3f[8];
+        int i = 0;
+        for (int dx = 0; dx < 2; dx++) for (int dy = 0; dy < 2; dy++) for (int dz = 0; dz < 2; dz++) {
+            org.joml.Vector4f v = new org.joml.Vector4f((dx == 0 ? cube.minX : cube.maxX) / 16F, (dy == 0 ? cube.minY : cube.maxY) / 16F,
+                    (dz == 0 ? cube.minZ : cube.maxZ) / 16F, 1F);
+            pose.pose().transform(v);
+            out[i++] = new org.joml.Vector3f(v.x * 16F, v.y * 16F, v.z * 16F);
+        }
+        return out;
     }
 
     // ---------------------------------------------------------------- hair blowing in the wind

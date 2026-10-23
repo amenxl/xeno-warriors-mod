@@ -40,6 +40,21 @@ public final class NpcSpawner {
                     spawn(level, ModNpcs.HUMAN.get(), around(p.blockPosition(), r, 24, 40), false);
                 }
             }
+            // Skylanders flying overhead
+            if (r.nextFloat() < 0.2F && level.getEntitiesOfClass(SkylanderEntity.class, p.getBoundingBox().inflate(96, 160, 96)).size() < 3) {
+                BlockPos at = around(p.blockPosition(), r, 20, 50);
+                int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ());
+                BlockPos sky = new BlockPos(at.getX(), Math.min(level.getMaxBuildHeight() - 10, Math.max(surface + 25, 110 + r.nextInt(50))), at.getZ());
+                if (level.isEmptyBlock(sky) && level.isEmptyBlock(sky.above())) {
+                    SkylanderEntity sk = ModNpcs.SKYLANDER.get().create(level);
+                    if (sk != null) {
+                        sk.moveTo(sky.getX() + 0.5, sky.getY(), sky.getZ() + 0.5, r.nextFloat() * 360F, 0F);
+                        sk.finalizeSpawn(level, level.getCurrentDifficultyAt(sky), MobSpawnType.NATURAL, null, null);
+                        sk.setFlying(true);
+                        level.addFreshEntity(sk);
+                    }
+                }
+            }
             if (level.isNight() && r.nextFloat() < 0.03F && level.getEntitiesOfClass(DarkPossessedEntity.class, near).size() < MAX_DARK_NEAR) {
                 spawn(level, ModNpcs.DARK_POSSESSED.get(), around(p.blockPosition(), r, 30, 50), false);
             }

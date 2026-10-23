@@ -95,6 +95,11 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             m.rightLeg.copyFrom(parent.rightLeg);
             m.leftLeg.copyFrom(parent.leftLeg);
             m.copyBends(parent);
+            if (hoodie) {          // the hood: up in the rain, bunched at the neck otherwise
+                boolean up = com.xenowarriors.client.mikiko.HoodClient.up(player);
+                if (m.hoodUp != null) m.hoodUp.visible = up;
+                if (m.hoodDown != null) m.hoodDown.visible = !up;
+            }
             float[] c = sr ? new float[]{1F, 1F, 1F} : tint(stack, armor);
             // Mikiko: no armor on his left arm, so his shoulder plate shows
             m.leftArm.visible = type != CharacterType.MIKIKO;   // Mikiko: nothing on his left arm (armor or hoodies), so his shoulder plate shows   // the hoodie's dye comes through here too (it's dyeable like leather)

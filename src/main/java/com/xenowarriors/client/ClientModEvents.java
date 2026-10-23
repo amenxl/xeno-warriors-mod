@@ -41,6 +41,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.HUMAN.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.npc.HumanNpcEntity>plain(ctx,
                         e -> com.xenowarriors.npc.NpcLooks.human(e.variant()), com.xenowarriors.npc.HumanNpcEntity::possessed));
+        event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.SKYLANDER.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.npc.DarkPossessedEntity>plain(ctx,
                         e -> com.xenowarriors.npc.NpcLooks.dark(e.variant()), e -> true));

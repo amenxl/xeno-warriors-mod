@@ -40,7 +40,7 @@ public final class HumanVillages {
         if (v.getTags().contains(CHECKED)) return;
         v.addTag(CHECKED);
         if (v.isBaby() || v.hasCustomName() || v.getVillagerXp() > 0 || HiddenSouls.hidden(v)) return;
-        if (v.getGossips().store(net.minecraft.nbt.NbtOps.INSTANCE).getValue() instanceof net.minecraft.nbt.ListTag l && !l.isEmpty()) return;   // cured / has history
+        if (v.getGossips().store(net.minecraft.nbt.NbtOps.INSTANCE) instanceof net.minecraft.nbt.ListTag l && !l.isEmpty()) return;   // cured / has history
         if (v.getRandom().nextFloat() < REPLACE) QUEUE.add(v);     // swapped next tick (not while the chunk is loading)
     }
 

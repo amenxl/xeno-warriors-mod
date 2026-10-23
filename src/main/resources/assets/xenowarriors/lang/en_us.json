@@ -174,5 +174,7 @@
   "entity.xenowarriors.human": "Human",
   "entity.xenowarriors.dark_possessed": "Possessed",
   "item.xenowarriors.human_spawn_egg": "Human Spawn Egg",
+  "entity.xenowarriors.skylander": "Skylander",
+  "item.xenowarriors.skylander_spawn_egg": "Skylander Spawn Egg",
   "item.xenowarriors.dark_possessed_spawn_egg": "Possessed Spawn Egg"
 }

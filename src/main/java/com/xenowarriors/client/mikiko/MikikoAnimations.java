@@ -518,7 +518,8 @@ public final class MikikoAnimations {
         State s = STATES.get(p.getId());
         // running with it: slung on his back, both arms free to pump
         // (not while it's shouldered behind his head when he's worn out)
-        if (s != null && s.move == null && s.backSlung && s.swordTired <= 0.5F && Hekublade.isBlade(p.getMainHandItem())) {
+        if (s != null && s.move == null && s.backSlung && s.swordTired <= 0.5F && Hekublade.isBlade(p.getMainHandItem())
+                && !RopeBladeClient.sawing(p, partial)) {      // (Season 3 saw spin: it's out on its rope, not on his back)
             return new float[]{BI_RUN, 0F};
         }
         if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()

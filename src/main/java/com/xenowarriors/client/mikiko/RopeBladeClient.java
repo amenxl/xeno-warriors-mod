@@ -104,6 +104,11 @@ public final class RopeBladeClient {
         return w == null ? 0F : Mth.lerp(partial, w[1], w[0]);
     }
 
+    /** The running saw spin is on (the blade's out on its rope). */
+    public static boolean sawing(Player p, float partial) {
+        return saw(p, partial) > 0.02F;
+    }
+
     /** Ticks into the idle string-spin, or -1. */
     private static float idleSpin(Player p, float partial) {
         float[] bi = MikikoAnimations.bladeIdle(p, partial);
@@ -152,7 +157,7 @@ public final class RopeBladeClient {
             float th3 = it * 0.55F;
             m.rightArm.xRot = Mth.lerp(in, m.rightArm.xRot, -1.0F + Mth.sin(th3) * 0.08F);
             m.rightArm.yRot = Mth.lerp(in, m.rightArm.yRot, -0.25F);
-            m.rightArm.zRot = Mth.lerp(in, m.rightArm.zRot, Mth.cos(th3) * 0.08F);
+            m.rightArm.zRot = Mth.lerp(in, m.rightArm.zRot, 0.3F + Mth.cos(th3) * 0.08F);     // arm held a little out to the side
             m.head.xRot = Mth.lerp(in, m.head.xRot, 0.2F);
             m.hat.copyFrom(m.head);
         }
@@ -183,8 +188,9 @@ public final class RopeBladeClient {
             bladeAt = new Vector3f(c).add(new Vector3f(dir).mul(0.55F));
         } else {
             float th = it * 0.55F;
-            dir = new Vector3f(0, Mth.cos(th), Mth.sin(th));
-            bladeAt = new Vector3f(hand).add(new Vector3f(dir).mul(0.75F));
+            // swung round off to his right (a cone tilted out from the arm), so it never passes through his arm
+            dir = new Vector3f(-0.75F, Mth.cos(th), Mth.sin(th)).normalize();
+            bladeAt = new Vector3f(hand).add(new Vector3f(dir).mul(0.8F));
         }
         // the rope from his finger to the ring on the pommel
         VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(ROPE));
@@ -198,6 +204,7 @@ public final class RopeBladeClient {
             float th = sw > 0.3F ? (p.tickCount + pt) * 1.4F : it * 0.55F;
             float amount = sw > 0.3F ? 0.22F : 0.14F;
             lag = new Vector3f(0, Mth.sin(th), -Mth.cos(th)).mul(amount);
+            if (sw <= 0.3F) lag.x = 0F;
         }
         rope(pose, vc, hand, bladeAt, 0.022F, light, lag, whip, p.tickCount + pt);
         // the blade itself, pommel at the rope's end, pointing on along it

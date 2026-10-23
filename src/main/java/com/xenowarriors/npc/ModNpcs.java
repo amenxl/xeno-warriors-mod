@@ -18,6 +18,10 @@ public final class ModNpcs {
             () -> EntityType.Builder.<DarkPossessedEntity>of(DarkPossessedEntity::new, MobCategory.MONSTER).sized(0.6F, 1.8F)
                     .clientTrackingRange(10).build("dark_possessed"));
 
+    public static final RegistryObject<EntityType<SkylanderEntity>> SKYLANDER = ModEntities.ENTITY_TYPES.register("skylander",
+            () -> EntityType.Builder.<SkylanderEntity>of(SkylanderEntity::new, MobCategory.CREATURE).sized(0.6F, 1.8F)
+                    .clientTrackingRange(12).build("skylander"));
+
     private ModNpcs() {}
 
     public static void init() {}
@@ -26,5 +30,6 @@ public final class ModNpcs {
     public static void attributes(EntityAttributeCreationEvent event) {
         event.put(HUMAN.get(), HumanNpcEntity.createAttributes().build());
         event.put(DARK_POSSESSED.get(), DarkPossessedEntity.createAttributes().build());
+        event.put(SKYLANDER.get(), SkylanderEntity.createAttributes().build());
     }
 }
