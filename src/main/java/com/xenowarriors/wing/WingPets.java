@@ -60,7 +60,8 @@ public final class WingPets {
     public static final int MAX = 2;
     private static final String OWNER = "xw_wing_owner", GEN = "xw_wing_gen", SKIN = "xw_wing_skin";
     /** Looks a companion can wear (colors live in the client's WingSkinLayer). */
-    public static final String[] SKINS = {"Classic", "Shadow", "Rose", "Frost", "Ember", "Golden", "Void"};
+    public static final String[] SKINS = {"Classic", "Shadow", "Rose", "Frost", "Ember", "Golden", "Void", "Namekian", "Sacred Kai"};
+    public static final String SKIN_KEY = "xw_wing_skin";
     public static final int BAG_SLOTS = 18;
     private static final int EAT_COOLDOWN = 60;
 
@@ -184,6 +185,7 @@ public final class WingPets {
         rec.putString("name", defaultName(mob));
         rec.putString("type", EntityType.getKey(mob.getType()).toString());
         rec.putInt("gen", 0);
+        rec.putInt("skin", mob.getPersistentData().getInt(SKIN));      // keeps the look it was born with
         cap(p).ifPresent(c -> c.wingPets.add(rec));
         prepare(p, mob, rec);
         snapshot(mob, rec);
@@ -458,7 +460,7 @@ public final class WingPets {
     @SubscribeEvent
     public static void onStartTracking(net.minecraftforge.event.entity.player.PlayerEvent.StartTracking event) {
         Entity e = event.getTarget();
-        if (winged(e) && ownerOf(e) != null && e.getPersistentData().getInt(SKIN) != 0 && event.getEntity() instanceof ServerPlayer sp) {
+        if (winged(e) && e.getPersistentData().getInt(SKIN) != 0 && event.getEntity() instanceof ServerPlayer sp) {
             ModNetwork.sendToPlayer(new com.xenowarriors.network.WingSkinPacket(e.getId(), e.getPersistentData().getInt(SKIN)), sp);
         }
     }

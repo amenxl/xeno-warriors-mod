@@ -13,6 +13,11 @@ public final class FoxSkins {
             new Skin("golden", "Golden", 30),
             new Skin("celestial", "Celestial", 40),
             new Skin("fox_king", "Fox King", 50),
+            // wild kinds (found out in the world; unlockable for any fox later on)
+            new Skin("desert", "Desert", 8),
+            new Skin("namek", "Namekian", 25),
+            new Skin("kai", "Sacred Kai", 35),
+            new Skin("spirit", "Otherworld Spirit", 45),
     };
 
     private FoxSkins() {}

@@ -1,0 +1,23 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:meadow",
+    "minecraft:cherry_grove",
+    "minecraft:sunflower_plains"
+  ],
+  "spawners": [
+    {
+      "type": "minecraft:fox",
+      "weight": 8,
+      "minCount": 1,
+      "maxCount": 3
+    },
+    {
+      "type": "minecraft:chicken",
+      "weight": 4,
+      "minCount": 2,
+      "maxCount": 3
+    }
+  ]
+}

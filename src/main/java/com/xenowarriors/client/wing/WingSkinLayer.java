@@ -26,6 +26,8 @@ public class WingSkinLayer<T extends LivingEntity, M extends EntityModel<T>> ext
             {1F, 0.5F, 0.2F, 0.3F, 0.6F, 0.25F, 0.05F},     // Ember
             {1F, 0.85F, 0.3F, 0.35F, 0.55F, 0.42F, 0.1F},   // Golden
             {0.35F, 0.1F, 0.6F, 0.55F, 0.35F, 0.1F, 0.55F}, // Void
+            {0.35F, 0.85F, 0.35F, 0.5F, 0.1F, 0.3F, 0.08F},  // Namekian (green)
+            {0.95F, 0.9F, 1F, 0.4F, 0.45F, 0.3F, 0.6F},      // Sacred Kai (pale, violet glow)
     };
 
     public WingSkinLayer(RenderLayerParent<T, M> parent) {

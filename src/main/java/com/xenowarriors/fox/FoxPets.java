@@ -789,9 +789,15 @@ public final class FoxPets {
         return fox.getPersistentData().getInt(SKIN);
     }
 
+    /** What it shows: the skin its owner picked, or (wild, or still on "Natural") the kind of fox it was born as. */
+    public static int shownSkin(Fox fox) {
+        int s = skinOf(fox);
+        return s > 0 ? s : fox.getPersistentData().getInt(WildCritters.FOX_KIND);
+    }
+
     private static void sendSkin(Fox fox) {
         ModNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> fox),
-                new FoxSkinPacket(fox.getId(), skinOf(fox)));
+                new FoxSkinPacket(fox.getId(), shownSkin(fox)));
     }
 
     private static void fx(Fox fox, int kind) {
@@ -985,8 +991,8 @@ public final class FoxPets {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer) {
             ModNetwork.sendToPlayer(new BackFoxPacket(target.getUUID(), backVariant(target)), viewer);
         }
-        if (event.getTarget() instanceof Fox fox && ownerOf(fox) != null && event.getEntity() instanceof ServerPlayer viewer) {
-            ModNetwork.sendToPlayer(new FoxSkinPacket(fox.getId(), skinOf(fox)), viewer);
+        if (event.getTarget() instanceof Fox fox && (ownerOf(fox) != null || shownSkin(fox) > 0) && event.getEntity() instanceof ServerPlayer viewer) {
+            ModNetwork.sendToPlayer(new FoxSkinPacket(fox.getId(), shownSkin(fox)), viewer);
         }
     }
 }
