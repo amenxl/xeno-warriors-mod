@@ -72,6 +72,7 @@ public final class MikikoAnimations {
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
     private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
+    private static final Move[] AIR_COMBO = {Move.AIR_LUNGE_SLASH, Move.AIR_FLIP_SLASH, Move.AIR_FLIP_SLASH, Move.AIR_LUNGE_SLASH};
     private static final Move[] HEKU_COMBO = {Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN, Move.KICK_ROUNDHOUSE, Move.BLADE_THRUST, Move.BLADE_SPIN};
     private static final Move[] SWORD_COMBO = {Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN, Move.BLADE_THRUST};
     private static final Move[] SWORD = {Move.BLADE_H, Move.BLADE_DOWN, Move.BLADE_UP, Move.BLADE_THRUST};
@@ -112,6 +113,8 @@ public final class MikikoAnimations {
         boolean hop;                // the opening punches: hopping forward into them
         int comboStep, variant = -1, lastAttack = -1000;
         Move lastSword;
+        net.minecraft.world.item.Item heldItem;
+        int heldCount;
         int swordStep;
         int bladeUntil = -1;        // summoned blade stays out until this tick
         boolean bladeShown;
@@ -243,7 +246,14 @@ public final class MikikoAnimations {
         s.run = approach(s.run, running ? 1F : 0F, 0.15F);
 
         // a new swing of the main hand?
-        boolean swingStart = p.swinging && p.swingingArm == InteractionHand.MAIN_HAND
+        // dropping an item (Q) swings the arm too - that isn't an attack
+        ItemStack heldNow = p.getMainHandItem();
+        boolean dropped = (s.heldCount > 0 && heldNow.getCount() < s.heldCount && heldNow.getItem() == s.heldItem)
+                || (s.heldCount > 0 && heldNow.isEmpty())
+                || (p == Minecraft.getInstance().player && Minecraft.getInstance().options.keyDrop.isDown());
+        s.heldItem = heldNow.getItem();
+        s.heldCount = heldNow.getCount();
+        boolean swingStart = !dropped && p.swinging && p.swingingArm == InteractionHand.MAIN_HAND
                 && (!s.lastSwinging || p.swingTime < s.lastSwingTime);
         s.lastSwinging = p.swinging;
         s.lastSwingTime = p.swingTime;
@@ -485,6 +495,17 @@ public final class MikikoAnimations {
             }
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
         } else if (held.getItem() instanceof SwordItem) {
+            // in the air with the Hekublade: the aerial combo (launch, juggle, spike)
+            if (p instanceof net.minecraft.client.player.LocalPlayer alp && AerialCombo.applies(alp)) {
+                int hit = AerialCombo.swing(alp);
+                move = AIR_COMBO[Math.min(hit, AIR_COMBO.length - 1)];
+                s.moveBlade = false;
+                s.hop = false;
+                s.move = move;
+                s.moveStart = now;
+                s.lastAttack = now;
+                return;
+            }
             // a set combo (starts over after 2 s without a hit), so the first swing is always the same one
             Move[] combo = Hekublade.isBlade(held) ? HEKU_COMBO : SWORD_COMBO;
             if (now - s.lastAttack > COMBO_TIMEOUT || s.swordStep >= combo.length) s.swordStep = 0;
