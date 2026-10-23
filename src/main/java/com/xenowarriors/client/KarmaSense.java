@@ -130,7 +130,8 @@ public final class KarmaSense {
         SENSED.values().removeIf(until -> until < now);
         LEVELS.keySet().removeIf(id -> !SENSED.containsKey(id));
         STATS.keySet().removeIf(id -> !SENSED.containsKey(id));
-        if (now % 3 == 0) auras(mc);
+        // (with DragonMineZ its own Ki Sense auras show them instead, in these colors - see DmzKiSenseLink)
+        if (now % 3 == 0 && !com.xenowarriors.client.compat.DmzKiSenseLink.karmaDriven()) auras(mc);
         TRACKED.values().removeIf(until -> until < now);
         // a ring of light rolling outward for the first second
         long age = now - pulseStart;
