@@ -165,9 +165,12 @@ public final class KarmaSensing {
         }
     }
 
+    /** Each player's own render distance (chunks), sent with the key press. */
+    public static final Map<UUID, Integer> CLIENT_VIEW = new HashMap<>();
+
     /** As far as you can see: your render distance (in blocks). */
     private static double viewLimit(ServerPlayer p) {
-        int chunks = Math.min(p.server.getPlayerList().getViewDistance(), Math.max(2, p.requestedViewDistance()));
+        int chunks = Math.min(p.server.getPlayerList().getViewDistance(), Math.max(2, CLIENT_VIEW.getOrDefault(p.getUUID(), 32)));
         return chunks * 16.0;
     }
 

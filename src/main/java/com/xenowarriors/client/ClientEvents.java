@@ -71,8 +71,8 @@ public final class ClientEvents {
         while (ModKeyMappings.KARMA_SENSE.consumeClick()) {}
         boolean senseDown = mc.player != null && mc.screen == null && ModKeyMappings.KARMA_SENSE.isDown()
                 && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active();
-        if (senseDown && !senseHeld) ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(ClientSettings.senseFriendly(), true));
-        else if (!senseDown && senseHeld) ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(false, false));
+        if (senseDown && !senseHeld) ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(ClientSettings.senseFriendly(), true, mc.options.getEffectiveRenderDistance()));
+        else if (!senseDown && senseHeld) ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(false, false, 0));
         senseHeld = senseDown;
         while (ModKeyMappings.SUMMON_BLADE.consumeClick()) { }      // (tap vs hold: BladeChannelClient)
         if (!UltimateCutscene.active()) com.xenowarriors.client.mikiko.BladeChannelClient.keyTick(mc);
