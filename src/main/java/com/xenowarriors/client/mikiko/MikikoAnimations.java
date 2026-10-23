@@ -72,8 +72,10 @@ public final class MikikoAnimations {
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
     private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
+    private static final Move[] HEKU_COMBO = {Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN, Move.KICK_ROUNDHOUSE, Move.BLADE_THRUST, Move.BLADE_SPIN};
+    private static final Move[] SWORD_COMBO = {Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN, Move.BLADE_THRUST};
     private static final Move[] SWORD = {Move.BLADE_H, Move.BLADE_DOWN, Move.BLADE_UP, Move.BLADE_THRUST};
-    private static final int COMBO_TIMEOUT = 30;
+    private static final int COMBO_TIMEOUT = 40;      // 2 s without another hit: the combo starts over
     private static final int BLADE_LINGER = 14;
     private static final float STRIKE = 0.36F;
     // idle timing (ticks standing still)
@@ -110,6 +112,7 @@ public final class MikikoAnimations {
         boolean hop;                // the opening punches: hopping forward into them
         int comboStep, variant = -1, lastAttack = -1000;
         Move lastSword;
+        int swordStep;
         int bladeUntil = -1;        // summoned blade stays out until this tick
         boolean bladeShown;
         boolean lastSwinging;
@@ -480,17 +483,21 @@ public final class MikikoAnimations {
             }
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
         } else if (held.getItem() instanceof SwordItem) {
-            s.hop = false;
-            if (Hekublade.isBlade(held) && RANDOM.nextFloat() < 0.25F) {
-                // with the Hekublade he now and then throws a kick into the mix
-                Move[] kicks = {Move.KICK_FRONT, Move.KICK_ROUNDHOUSE, Move.KICK_SIDE, Move.KICK_SPIN};
-                do move = kicks[RANDOM.nextInt(kicks.length)]; while (move == s.lastSword);
-            } else if (RANDOM.nextFloat() < 0.15F) move = Move.BLADE_SPIN;
-            else {
-                do move = SWORD[RANDOM.nextInt(SWORD.length)]; while (move == s.lastSword);
-            }
+            // a set combo (starts over after 2 s without a hit), so the first swing is always the same one
+            Move[] combo = Hekublade.isBlade(held) ? HEKU_COMBO : SWORD_COMBO;
+            if (now - s.lastAttack > COMBO_TIMEOUT || s.swordStep >= combo.length) s.swordStep = 0;
+            move = combo[s.swordStep++];
             s.lastSword = move;
             s.moveBlade = false;
+            // dashing in with the blade too: a skip on the first two swings, a lunge on the thrust
+            s.hop = s.swordStep <= 2 && !flying && p.onGround() && !p.isCrouching();
+            if (p instanceof net.minecraft.client.player.LocalPlayer lp && !flying && p.onGround() && !p.isCrouching()
+                    && (s.hop || move == Move.BLADE_THRUST)) {
+                double fwd = s.hop ? 0.42 : 0.4, up = s.hop ? 0.2 : 0.08;
+                float yaw = lp.getYRot() * Mth.DEG_TO_RAD;
+                net.minecraft.world.phys.Vec3 v = lp.getDeltaMovement();
+                lp.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * fwd, up, v.z * 0.3 + Mth.cos(yaw) * fwd);
+            }
         } else {
             return;     // tools etc. keep the vanilla swing
         }

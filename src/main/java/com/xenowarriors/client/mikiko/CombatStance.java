@@ -22,8 +22,8 @@ import java.util.Map;
 /**
  * Mikiko with enemies around: on guard.
  * <ul>
- * <li>Bare hands - a wide, low fighting stance: right fist raised by his face, left hand open and forward at his
- *     waist, bouncing lightly on bent knees.</li>
+ * <li>Bare hands - a wide, low fighting stance, left shoulder forward: left fist up by his face, right hand down
+ *     by his hip, bouncing lightly on bent knees.</li>
  * <li>Hekublade in hand - a low lunge: front knee bent, back leg stretched out, the blade held low and forward in his
  *     right hand, left arm out for balance.</li>
  * </ul>
@@ -111,8 +111,8 @@ public final class CombatStance {
         float bounce = Mth.sin(age * 0.3F);
         float sink = (1.5F + bounce * 0.35F) * legs;
         // legs: wide and low, knees bent, feet turned out
-        m.rightLeg.xRot = Mth.lerp(legs, m.rightLeg.xRot, -0.22F);
-        m.leftLeg.xRot = Mth.lerp(legs, m.leftLeg.xRot, -0.12F);
+        m.rightLeg.xRot = Mth.lerp(legs, m.rightLeg.xRot, 0.02F);             // left foot leading
+        m.leftLeg.xRot = Mth.lerp(legs, m.leftLeg.xRot, -0.35F);
         m.rightLeg.yRot = Mth.lerp(legs, m.rightLeg.yRot, 0.2F);
         m.leftLeg.yRot = Mth.lerp(legs, m.leftLeg.yRot, -0.2F);
         m.rightLeg.zRot = Mth.lerp(legs, m.rightLeg.zRot, 0.32F);
@@ -121,16 +121,25 @@ public final class CombatStance {
         sinkBody(m, sink);
         m.body.xRot = Mth.lerp(e, m.body.xRot, 0.1F);
         m.head.xRot = Mth.lerp(e, m.head.xRot, -0.05F);
+        // leading with the left shoulder: body turned a little, arms moved round with it
+        float twist = 0.38F * e;
+        m.body.yRot = Mth.lerp(e, m.body.yRot, twist);
         if (arms <= 0F) return;
-        // right fist raised by his face (a jab forward when he shows he's ready); left hand open, forward at the waist
+        float bs = Mth.sin(m.body.yRot), bc = Mth.cos(m.body.yRot);
+        m.rightArm.z = Mth.lerp(arms, m.rightArm.z, bs * 5F);
+        m.rightArm.x = Mth.lerp(arms, m.rightArm.x, -bc * 5F);
+        m.leftArm.z = Mth.lerp(arms, m.leftArm.z, -bs * 5F);
+        m.leftArm.x = Mth.lerp(arms, m.leftArm.x, bc * 5F);
+        // left fist up by his face (snapping out in a jab when he shows he's ready)
         float jab = fl;
-        m.rightArm.xRot = Mth.lerp(arms, m.rightArm.xRot, Mth.lerp(jab, -1.25F, -1.6F) + bounce * 0.04F);
-        m.rightArm.yRot = Mth.lerp(arms, m.rightArm.yRot, Mth.lerp(jab, -0.35F, -0.05F));
-        m.rightArm.zRot = Mth.lerp(arms, m.rightArm.zRot, Mth.lerp(jab, 0.35F, 0.05F));
-        m.leftArm.xRot = Mth.lerp(arms, m.leftArm.xRot, -0.75F - bounce * 0.04F);
-        m.leftArm.yRot = Mth.lerp(arms, m.leftArm.yRot, 0.3F);
-        m.leftArm.zRot = Mth.lerp(arms, m.leftArm.zRot, -0.3F);
-        LimbBend.extraElbows(p, Mth.lerp(jab, -1.7F, -0.2F) * arms, -0.65F * arms);
+        m.leftArm.xRot = Mth.lerp(arms, m.leftArm.xRot, Mth.lerp(jab, -1.35F, -1.62F) + bounce * 0.04F);
+        m.leftArm.yRot = Mth.lerp(arms, m.leftArm.yRot, Mth.lerp(jab, 0.35F, 0.05F));
+        m.leftArm.zRot = Mth.lerp(arms, m.leftArm.zRot, Mth.lerp(jab, -0.3F, -0.05F));
+        // right hand down at his side, resting by his hip
+        m.rightArm.xRot = Mth.lerp(arms, m.rightArm.xRot, 0.1F - bounce * 0.03F);
+        m.rightArm.yRot = Mth.lerp(arms, m.rightArm.yRot, 0F);
+        m.rightArm.zRot = Mth.lerp(arms, m.rightArm.zRot, 0.32F);
+        LimbBend.extraElbows(p, -1.0F * arms, Mth.lerp(jab, -1.75F, -0.2F) * arms);
     }
 
     private static void blade(HumanoidModel<?> m, Player p, float age, float e, float legs, float arms, float fl) {
