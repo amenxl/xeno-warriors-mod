@@ -16,6 +16,7 @@ import org.joml.Vector3f;
 
 /** A Ki blast (fighters, with DragonMineZ installed): a glowing ball of energy that bursts on impact. */
 public class KiBlastEntity extends AbstractHurtingProjectile {
+    private float damage = 6F;
     private static final DustParticleOptions GLOW = new DustParticleOptions(new Vector3f(1F, 0.92F, 0.45F), 1.6F);
 
     public KiBlastEntity(EntityType<? extends KiBlastEntity> type, Level level) {
@@ -55,7 +56,13 @@ public class KiBlastEntity extends AbstractHurtingProjectile {
         Entity target = hit.getEntity();
         Entity owner = getOwner();
         if (target == owner) return;
-        target.hurt(damageSources().mobProjectile(this, owner instanceof LivingEntity l ? l : null), 6F);
+        // a pet's blast never hits its owner
+        if (owner instanceof net.minecraft.world.entity.TamableAnimal ta && ta.getOwner() == target) return;
+        if (owner != null) {
+            var d = owner.getPersistentData();
+            for (String k : new String[]{"xw_owner", "xw_wing_owner"}) if (d.hasUUID(k) && d.getUUID(k).equals(target.getUUID())) return;
+        }
+        target.hurt(damageSources().mobProjectile(this, owner instanceof LivingEntity l ? l : null), damage);
     }
 
     @Override
@@ -67,6 +74,11 @@ public class KiBlastEntity extends AbstractHurtingProjectile {
             server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), 0.5F, 1.6F);
             discard();
         }
+    }
+
+    public KiBlastEntity setDamage(float d) {
+        damage = d;
+        return this;
     }
 
     @Override
