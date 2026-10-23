@@ -44,7 +44,7 @@ public final class ClientSettings {
         save();
     }
 
-    /** With Epic Fight: let it animate everything in battle mode (off = only its attacks, dodges and skills). */
+    /** With Epic Fight: its own animations in battle mode (off = Mikiko's and Rhalix's own moves). */
     public static boolean efWholeBattleMode() {
         return "true".equals(props().getProperty("ef_whole_battle_mode", "false"));
     }

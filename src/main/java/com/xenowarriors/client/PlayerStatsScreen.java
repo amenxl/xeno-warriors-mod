@@ -96,7 +96,7 @@ public class PlayerStatsScreen extends Screen {
         senseFriendly.visible = tab == 2;
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
         efMode.visible = tab == 2 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
-        efMode.setMessage(Component.literal("Epic Fight animates: " + (ClientSettings.efWholeBattleMode() ? "everything" : "combat only")));
+        efMode.setMessage(Component.literal("Battle mode moves: " + (ClientSettings.efWholeBattleMode() ? "Epic Fight's" : "Xeno Warriors'")));
         boolean mikiko = ClientCharacterData.getLocal() == CharacterType.MIKIKO;
         boolean prisoner = me != null && me.prisoner();
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;

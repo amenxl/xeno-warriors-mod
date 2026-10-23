@@ -185,13 +185,13 @@ public final class DmzForms {
         if (event.isCanceled() || !ours(p)) return;
         Form f = info(p);
         float s = f == null || f.dmz() ? 1F : f.scale();
-        event.getPoseStack().pushPose();
+        com.xenowarriors.client.PoseGuard.push(event.getPoseStack());
         if (s != 1F) event.getPoseStack().scale(s, s, s);
     }
 
     @SubscribeEvent
     public static void onRenderPost(RenderPlayerEvent.Post event) {
-        if (ours(event.getEntity())) event.getPoseStack().popPose();
+        if (ours(event.getEntity())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
     @SubscribeEvent

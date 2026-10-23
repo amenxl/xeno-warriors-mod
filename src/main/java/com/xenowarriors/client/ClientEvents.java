@@ -93,14 +93,14 @@ public final class ClientEvents {
     private static final java.util.Set<Integer> SQUISHED = new java.util.HashSet<>();
 
     /** Gravity Compress squashes its target flat and makes it shake. */
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderLivingPre(net.minecraftforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
         net.minecraft.world.entity.LivingEntity e = event.getEntity();
         float s = ClientSkillState.squish(e.getId());
         if (s <= 0F) return;
         float t = e.tickCount + event.getPartialTick();
         var pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         pose.translate(Math.sin(t * 5.1) * 0.035 * s, 0, Math.cos(t * 4.3) * 0.035 * s);
         pose.scale(1F + 0.14F * s, 1F - 0.24F * s, 1F + 0.14F * s);
         SQUISHED.add(e.getId());
@@ -108,7 +108,7 @@ public final class ClientEvents {
 
     @SubscribeEvent
     public static void onRenderLivingPost(net.minecraftforge.client.event.RenderLivingEvent.Post<?, ?> event) {
-        if (SQUISHED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+        if (SQUISHED.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
     private static boolean warnedCeiling;

@@ -143,7 +143,7 @@ public final class FoxClientFx {
 
     private static final Map<Integer, Boolean> PUSHED = new HashMap<>();
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
         if (!(event.getEntity() instanceof Fox fox)) return;
         long[] f = FX.get(fox.getId());
@@ -158,7 +158,7 @@ public final class FoxClientFx {
         }
         float p = t / len;
         PoseStack pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         PUSHED.put(fox.getId(), true);
         switch (kind) {
             case FoxFxPacket.LEVEL_UP -> {
@@ -185,6 +185,6 @@ public final class FoxClientFx {
 
     @SubscribeEvent
     public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
-        if (PUSHED.remove(event.getEntity().getId()) != null) event.getPoseStack().popPose();
+        if (PUSHED.remove(event.getEntity().getId()) != null) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 }

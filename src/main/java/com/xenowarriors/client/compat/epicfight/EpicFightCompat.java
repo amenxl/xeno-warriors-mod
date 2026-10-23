@@ -19,9 +19,8 @@ import yesman.epicfight.client.renderer.patched.entity.PatchedLivingEntityRender
  * <ul>
  * <li>In battle mode Epic Fight draws the player with its own skinned body; we add a layer that draws Mikiko's and
  *     Rhalix's hair, clothes, wings and face on it, bent with Epic Fight's elbows and knees.</li>
- * <li>Epic Fight plays its attacks, dodges and skills (much smoother, with real elbows and knees); the rest of the
- *     time - idles, flying, surfing, skills, faces, dances - it hands the body back to our own animations.
- *     (A setting in the M menu lets Epic Fight animate everything instead.)</li>
+ * <li>In battle mode Mikiko and Rhalix keep their own animations: each Epic Fight attack plays the character's own
+ *     attack (their punches, kicks and blade work). A setting in the M menu lets Epic Fight animate them instead.</li>
  * <li>With DragonMineZ also installed (through the DragonMineZ x Epic Fight Bridge), DragonMineZ's model is the one
  *     drawn, so we never let Epic Fight draw our characters.</li>
  * </ul>
@@ -32,6 +31,37 @@ public final class EpicFightCompat {
     public static void init(IEventBus modBus) {
         modBus.addListener(EpicFightCompat::onModifyRenderers);
         MinecraftForge.EVENT_BUS.addListener(EpicFightCompat::onRenderPlayer);
+        MinecraftForge.EVENT_BUS.addListener(EpicFightCompat::onClientTick);
+        com.xenowarriors.client.AttackHooks.externalAttack = p -> STARTED.remove(p.getId()) != null;
+    }
+
+    private static final java.util.Map<Integer, Boolean> ATTACKING = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Integer> STARTED = new java.util.HashMap<>();
+
+    /** Each new Epic Fight attack (its "attacking" state switching on) starts our own attack animation for it. */
+    private static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.START) return;
+        var level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level == null) {
+            ATTACKING.clear();
+            STARTED.clear();
+            return;
+        }
+        STARTED.clear();
+        for (AbstractClientPlayer p : level.players()) {
+            if (ClientCharacterData.get(p) == CharacterType.NONE) continue;
+            yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch;
+            try {
+                patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(p,
+                        yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
+            } catch (Throwable t) {
+                continue;
+            }
+            boolean attacking = patch != null && patch.isEpicFightMode()
+                    && Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.ATTACKING));
+            boolean was = Boolean.TRUE.equals(ATTACKING.put(p.getId(), attacking));
+            if (attacking && !was) STARTED.put(p.getId(), p.tickCount);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -48,9 +78,9 @@ public final class EpicFightCompat {
             event.setShouldRender(false);
             return;
         }
-        if (ClientSettings.efWholeBattleMode()) return;
-        boolean action = Boolean.TRUE.equals(event.getPlayerPatch().getEntityState().getState(EntityState.INACTION));
-        // our own skill casts always show; otherwise Epic Fight only takes over for its actions
-        if (!action || ClientSkillState.currentAnim(p) != null) event.setShouldRender(false);
+        // Mikiko and Rhalix keep their own look and moves in battle mode: Epic Fight runs the combat, and every
+        // attack it starts plays that character's own attack animation (now with elbows and knees).
+        // (The M menu setting hands everything to Epic Fight's animations instead.)
+        if (!ClientSettings.efWholeBattleMode() || ClientSkillState.currentAnim(p) != null) event.setShouldRender(false);
     }
 }

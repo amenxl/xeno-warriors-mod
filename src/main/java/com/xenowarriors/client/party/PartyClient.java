@@ -119,12 +119,12 @@ public final class PartyClient {
 
     private static final Set<Integer> LAID = new HashSet<>();
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         if (!knockedOut(p)) return;
         PoseStack pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         LAID.add(p.getId());
         float yaw = Mth.rotLerp(event.getPartialTick(), p.yBodyRotO, p.yBodyRot) * Mth.DEG_TO_RAD;
         // fall back onto his back: rotate about his right-hand axis
@@ -134,7 +134,7 @@ public final class PartyClient {
 
     @SubscribeEvent
     public static void onRenderPost(RenderPlayerEvent.Post event) {
-        if (LAID.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+        if (LAID.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
     /** Limp, arms flung out. */

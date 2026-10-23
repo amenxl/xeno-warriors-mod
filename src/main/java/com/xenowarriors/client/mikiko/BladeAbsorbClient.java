@@ -133,7 +133,7 @@ public final class BladeAbsorbClient {
 
     private static final Map<Integer, Boolean> PUSHED = new HashMap<>();
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
         LivingEntity e = event.getEntity();
         Absorb a = ACTIVE.get(e.getId());
@@ -151,7 +151,7 @@ public final class BladeAbsorbClient {
         Vec3 offset = bladePoint(killer, partial).subtract(e.getPosition(partial).add(0, e.getBbHeight() * 0.5, 0)).scale(pull);
         float scale = Math.max(0.02F, 1F - ease);
         PoseStack pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         pose.translate(offset.x, offset.y, offset.z);
         float h = e.getBbHeight() * 0.5F;
         pose.translate(0, h, 0);
@@ -163,6 +163,6 @@ public final class BladeAbsorbClient {
 
     @SubscribeEvent
     public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
-        if (PUSHED.remove(event.getEntity().getId()) != null) event.getPoseStack().popPose();
+        if (PUSHED.remove(event.getEntity().getId()) != null) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 }

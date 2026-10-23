@@ -260,7 +260,7 @@ public final class RhalixWingsClient {
     private static final java.util.Set<Integer> LIFTED = new java.util.HashSet<>();
 
     /** Gravity dance: he floats a little off the ground, bobbing, and every so often spins all the way round. */
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
         float w = gravityDance(p, event.getPartialTick());
@@ -271,7 +271,7 @@ public final class RhalixWingsClient {
         if (sw > 0F) {
             // whole body tipped forward into the flight, pivoting around his middle
             var sp = event.getPoseStack();
-            sp.pushPose();
+            com.xenowarriors.client.PoseGuard.push(sp);
             LIFTED.add(p.getId());
             float yaw = Mth.rotLerp(event.getPartialTick(), p.yBodyRotO, p.yBodyRot);
             sp.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-yaw));
@@ -284,14 +284,14 @@ public final class RhalixWingsClient {
         if (hw > 0F) {
             // jumping on every beat
             var hp = event.getPoseStack();
-            hp.pushPose();
+            com.xenowarriors.client.PoseGuard.push(hp);
             LIFTED.add(p.getId());
             hp.translate(0, DiscTracker.hypeLift(hypeTime(p, age)) * hw, 0);
             return;
         }
         float t = danceTime(p, age) % 160F;
         var pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         LIFTED.add(p.getId());
         pose.translate(0, (0.25F + 0.08F * Mth.sin(age * 0.15F)) * w, 0);
         if (t >= 110F && t < 120F) pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(smooth((t - 110F) / 10F) * 360F));
@@ -299,7 +299,7 @@ public final class RhalixWingsClient {
 
     @SubscribeEvent
     public static void onRenderPost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
-        if (LIFTED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+        if (LIFTED.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
     /** Dancing, vibing or on a smoke break right now (so other idles stay out of the way). */

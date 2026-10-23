@@ -233,6 +233,7 @@ public final class MikikoAnimations {
         s.lastSwinging = p.swinging;
         s.lastSwingTime = p.swingTime;
         if (swingStart && !mining(p) && charged(p, s, now)) startAttack(p, s, now);
+        else if (com.xenowarriors.client.AttackHooks.externalAttack.test(p)) startAttack(p, s, now);   // Epic Fight battle mode
         if (swingStart) s.lastSwingStart = now;
         if (p == Minecraft.getInstance().player) s.strengthLastTick = p.getAttackStrengthScale(0F);
 
@@ -972,12 +973,12 @@ public final class MikikoAnimations {
         m.head.xRot = Mth.lerp(w, m.head.xRot, -0.6F);   // body is tipped forward, so this looks down
     }
 
-    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onDivePre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         float d = event.isCanceled() ? 0F : dive(event.getEntity(), event.getPartialTick());
         if (d <= 0F) return;
         var pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         DIVING.add(event.getEntity().getId());
         float yaw = Mth.rotLerp(event.getPartialTick(), event.getEntity().yBodyRotO, event.getEntity().yBodyRot);
         pose.translate(0, 1.0, 0);
@@ -989,7 +990,7 @@ public final class MikikoAnimations {
 
     @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
     public static void onDivePost(net.minecraftforge.client.event.RenderPlayerEvent.Post event) {
-        if (DIVING.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+        if (DIVING.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
     private static final java.util.Set<Integer> DIVING = new java.util.HashSet<>();
@@ -1292,7 +1293,7 @@ public final class MikikoAnimations {
         if (event.getStage() == net.minecraftforge.client.event.RenderLevelStageEvent.Stage.AFTER_PARTICLES) MikikoEffects.renderXl(event);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !isMikiko(p)) return;
         if (p.isSleeping()) {
@@ -1300,7 +1301,7 @@ public final class MikikoAnimations {
             net.minecraft.core.Direction bed = p.getBedOrientation();
             if (bed == null) return;
             PoseStack pose = event.getPoseStack();
-            pose.pushPose();
+            com.xenowarriors.client.PoseGuard.push(pose);
             TRANSFORMED.add(p.getId());
             pose.translate(0, 0.15, 0);
             pose.mulPose(Axis.of(new org.joml.Vector3f(bed.getStepX(), 0, bed.getStepZ())).rotationDegrees(75F));
@@ -1310,7 +1311,7 @@ public final class MikikoAnimations {
         float[] m = bodyMotion(p, event.getPartialTick());
         if (m == null) return;
         PoseStack pose = event.getPoseStack();
-        pose.pushPose();
+        com.xenowarriors.client.PoseGuard.push(pose);
         TRANSFORMED.add(p.getId());
         float yaw = Mth.rotLerp(event.getPartialTick(), p.yBodyRotO, p.yBodyRot);
         // work in his own facing: +z forward, +x to his left
@@ -1327,7 +1328,7 @@ public final class MikikoAnimations {
 
     @SubscribeEvent
     public static void onRenderPost(RenderPlayerEvent.Post event) {
-        if (TRANSFORMED.remove(event.getEntity().getId())) event.getPoseStack().popPose();
+        if (TRANSFORMED.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
     /** World position of his right palm while sitting (for the fire trick). */

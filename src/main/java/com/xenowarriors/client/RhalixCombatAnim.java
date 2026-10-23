@@ -90,6 +90,10 @@ public final class RhalixCombatAnim {
             s.lastSwinging = p.swinging;
             s.lastSwingTime = p.swingTime;
             boolean charged = p == mc.player ? s.strength >= 0.9F : now - s.lastSwingStart >= 9;
+            if (AttackHooks.externalAttack.test(p)) {          // an Epic Fight battle-mode attack
+                start = true;
+                charged = true;
+            }
             boolean sword = isSword(p);
             if (start && sword && charged && !(p == mc.player && mc.hitResult != null
                     && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK)) {
