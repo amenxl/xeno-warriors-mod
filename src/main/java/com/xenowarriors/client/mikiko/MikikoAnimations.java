@@ -507,9 +507,7 @@ public final class MikikoAnimations {
                 // dashing in: a skip (hits 1-2), a long lunge step (3-4), springing up into the flip (5)
                 double fwd = move == Move.FLIP_KICK ? 0.28 : s.hop ? 0.42 : 0.38;
                 double up = move == Move.FLIP_KICK ? 0.48 : s.hop ? 0.2 : 0.08;
-                float yaw = lp.getYRot() * Mth.DEG_TO_RAD;
-                net.minecraft.world.phys.Vec3 v = lp.getDeltaMovement();
-                lp.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * fwd, up, v.z * 0.3 + Mth.cos(yaw) * fwd);
+                DashGuard.dash(lp, fwd, up);           // (locked on: stops in front of the target, not through it)
             }
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
         } else if (held.getItem() instanceof SwordItem) {
@@ -535,9 +533,7 @@ public final class MikikoAnimations {
             if (p instanceof net.minecraft.client.player.LocalPlayer lp && !flying && p.onGround() && !p.isCrouching()
                     && (s.hop || move == Move.BLADE_THRUST)) {
                 double fwd = s.hop ? 0.42 : 0.4, up = s.hop ? 0.2 : 0.08;
-                float yaw = lp.getYRot() * Mth.DEG_TO_RAD;
-                net.minecraft.world.phys.Vec3 v = lp.getDeltaMovement();
-                lp.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * fwd, up, v.z * 0.3 + Mth.cos(yaw) * fwd);
+                DashGuard.dash(lp, fwd, up);
             }
         } else {
             return;     // tools etc. keep the vanilla swing
