@@ -107,6 +107,8 @@ public final class MikikoAnimations {
         boolean lastSwinging;
         int lastSwingTime;
         int still;
+        /** Hekublade slung on his back from running: stays there through jumps until he stops or attacks. */
+        boolean backSlung;
         float sit, sitO, look, lookO, poison, poisonO, fire, fireO;
         float fly, flyO, fast, fastO, roll, rollO;
         int barrelStart = -1000, nextBarrel = 60, barrelDir = 1;
@@ -265,6 +267,9 @@ public final class MikikoAnimations {
                 || p.isPassenger() || p.isSleeping() || p.isSwimming() || p.isFallFlying() || s.move != null
                 || ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.Busy.busy(p);
         s.still = moving ? 0 : s.still + 1;
+        if (!Hekublade.isBlade(p.getMainHandItem()) || s.move != null || s.swordTired > 0.5F) s.backSlung = false;
+        else if (p.isSprinting() && p.onGround() && s.run > 0.35F) s.backSlung = true;
+        else if (s.still >= 4) s.backSlung = false;                 // stood still: back into his hand
         boolean poisoned = POISONED.contains(p.getId()) || (p == Minecraft.getInstance().player
                 && p.hasEffect(net.minecraft.world.effect.MobEffects.POISON));
         s.sitO = s.sit;
@@ -498,7 +503,10 @@ public final class MikikoAnimations {
     public static float[] bladeIdle(Player p, float partial) {
         State s = STATES.get(p.getId());
         // running with it: slung on his back, both arms free to pump
-        if (s != null && s.move == null && s.run > 0.35F && Hekublade.isBlade(p.getMainHandItem())) return new float[]{BI_RUN, 0F};
+        // (not while it's shouldered behind his head when he's worn out)
+        if (s != null && s.move == null && s.backSlung && s.swordTired <= 0.5F && Hekublade.isBlade(p.getMainHandItem())) {
+            return new float[]{BI_RUN, 0F};
+        }
         if (s == null || s.move != null || !Hekublade.isBlade(p.getMainHandItem()) || s.still < BLADE_IDLE_AFTER || p.isSleeping()
                 || lowHealth(p)) return null;
         float c = (s.still - BLADE_IDLE_AFTER + partial) % BLADE_CYCLE;
