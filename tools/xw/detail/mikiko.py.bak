@@ -1,0 +1,189 @@
+from core import *
+
+def orient(d):
+    """Rotation [rx, 0, rz] that points a cube's +y axis along direction d."""
+    dx, dy, dz = d
+    n = math.sqrt(dx * dx + dy * dy + dz * dz); dx, dy, dz = dx / n, dy / n, dz / n
+    return [math.degrees(math.asin(max(-1, min(1, dz)))), 0, math.degrees(math.atan2(-dx, dy))]
+
+def build():
+    m = Model('mikiko')
+    A = m.add
+    BLACK, BLACK2, BLACK3 = '#141114', '#211b20', '#2e262c'
+    RED, RED_D, RED_L = '#d0232a', '#8e161b', '#ee4a3a'
+    ORANGE, ORANGE_D, YELLOW = '#f19a22', '#c8741a', '#fccb3c'
+    NAVY, NAVY_D, NAVY_L = '#1d2034', '#141626', '#2b3050'
+    WHITE, SILVER, SILVER_L, SILVER_D = '#ececec', '#b9bfcc', '#dfe3ec', '#7c8290'
+    GOG, LENS, LENS_L = '#e0561e', '#8fd0ea', '#e6f7ff'
+    PATCH, GLOVE = '#a9c8e8', '#18171c'
+    rnd = random.Random(21)
+
+    # ---------------- hair: long red dreads (stacked blocks so they look twisted)
+    RED1, RED2, RED3, RED4, ROOT = '#d42026', '#b3171d', '#ec3a2e', '#8e1217', '#4a0e10'
+    BLK1, BLK2 = '#171214', '#262022'                         # the top of his hair is black
+    A('Head', 'Hair Cap Top', [-4.55, 32.0, -4.55], [4.55, 32.9, 4.55], BLK1)
+    A('Head', 'Hair Cap Front', [-4.55, 30.9, -4.7], [4.55, 32.0, -4.0], BLK1)
+    A('Head', 'Hair Cap Back', [-4.6, 24.6, 4.0], [4.6, 32.0, 4.7], ROOT)
+    for s in (1, -1):
+        x0, x1 = sorted([s * 4.0, s * 4.7])
+        A('Head', 'Hair Cap Side', [x0, 25.0, -4.55], [x1, 32.0, 4.7], ROOT)
+
+    def dread(root, d, length, lighter=False, tip=None, black=1.6):
+        """Black at the roots (the top of his hair), red the rest of the way down."""
+        n = max(2, int(round(length / 0.95)))
+        seg = [length / n] * n
+        widths = [1.05 if i % 2 == 0 else 0.92 for i in range(n)]
+        cols = []
+        a = 0.0
+        for i in range(n):
+            if a < black - 1e-6:
+                cols.append(BLK1 if i % 2 == 0 else BLK2)
+            else:
+                cols.append((RED3 if lighter else RED1) if i % 2 == 0 else RED2)
+            a += seg[i]
+        if tip:
+            cols[-1] = tip
+        strand(m, 'Head', root, d, seg, widths, 1.0, cols, 'x', name='Dread')
+
+    # top: dreads lying over the crown and falling outward
+    # fewer, shorter dreads over the crown so less sticks up off the top
+    for k in range(12):
+        az = math.radians(k * 30 + 15)
+        dx, dz = math.sin(az), -math.cos(az)                 # az 0 = front
+        if dz < -0.6:
+            continue                                         # the goggles sit on the front of the crown
+        dread((dx * 1.4, 32.85, 0.3 + dz * 1.4), (dx, -0.45, dz), 3.0, lighter=(k % 2 == 0), black=2.2)
+    # front: two between the eyes, two beside the eyes, and long ones at the temples
+    for x, ln in ((0.5, 3.6), (-0.5, 3.2)):
+        dread((x, 29.8, -4.9), (0, -1, -0.12), ln - 1.6, lighter=True, black=0.6)   # start below the goggles
+    for s in (1, -1):
+        dread((s * 3.55, 29.8, -4.9), (s * 0.06, -1, -0.12), 1.8, lighter=True, black=0.6)
+        dread((s * 5.0, 31.6, -4.3), (s * 0.12, -1, -0.06), 6.2)   # outside the goggle frame
+        dread((s * 4.75, 31.6, -3.2), (s * 0.14, -1, -0.04), 6.8, lighter=True)
+    # sides: two layers hanging to the shoulders
+    for s in (1, -1):
+        for z, ln in ((-2.1, 7.4), (-0.9, 7.8), (0.3, 8.2), (1.5, 8.0), (2.7, 7.6), (3.8, 7.2)):
+            dread((s * 4.95, 31.7, z), (s * 0.12, -1, 0.05), ln + rnd.uniform(-.3, .3), lighter=(int(z * 10) % 2 == 0))
+        for z, ln in ((-1.5, 6.6), (0.9, 7.0), (3.2, 6.6)):
+            dread((s * 5.75, 31.0, z), (s * 0.2, -1, 0.06), ln, lighter=False)
+    # back: two layers hanging down the back
+    for x in [-3.9, -2.6, -1.3, 0.0, 1.3, 2.6, 3.9]:
+        dread((x, 31.7, 4.95), (x * 0.03, -1, 0.12), 8.6 + rnd.uniform(-.4, .4), lighter=(int((x + 4) * 10) % 2 == 0))
+    for x in [-3.2, -1.0, 1.0, 3.2]:
+        dread((x, 30.9, 5.7), (x * 0.04, -1, 0.18), 7.6, lighter=False)
+    # a few dark strands underneath, like in the render
+    for s in (1, -1):
+        dread((s * 4.4, 30.6, -1.6), (s * 0.1, -1, 0), 5.2, tip=ROOT)
+
+    # ---------------- big goggles pushed up on his forehead (tilted back)
+    G_FRAME, G_FRAME_D = '#d8221f', '#9c1416'
+    G_LENS, G_LENS_L, G_LENS_W = '#7fb8ee', '#b4daff', '#eef8ff'
+    gtilt, gorg = [0, 0, 0], [0, 29.90, -4.9]          # upright, so the back never sinks into the hair
+    for s in (1, -1):
+        x0, x1 = sorted([s * 0.35, s * 4.4])
+        A('Head', 'Goggle Frame', [x0, 29.90, -5.45], [x1, 32.90, -4.78], G_FRAME, gtilt, gorg, 'edge')
+        l0, l1 = sorted([s * 0.85, s * 3.9])
+        A('Head', 'Goggle Lens', [l0, 30.35, -5.65], [l1, 32.45, -5.45], G_LENS, gtilt, gorg)
+        h0, h1 = sorted([s * 0.85, s * 2.6])
+        A('Head', 'Goggle Lens Light', [h0, 31.55, -5.7], [h1, 32.45, -5.6], G_LENS_L, gtilt, gorg)
+        w0, w1 = sorted([s * 0.95, s * 1.7])
+        A('Head', 'Goggle Glare', [w0, 31.80, -5.75], [w1, 32.35, -5.68], G_LENS_W, gtilt, gorg)
+    A('Head', 'Goggle Bridge', [-0.35, 30.90, -5.3], [0.35, 31.70, -4.78], G_FRAME_D, gtilt, gorg)
+    # hair meeting the goggles: a black ridge rising right behind the strap, short tufts falling forward over
+    # the top edge, and hair wrapping the ends of the goggles at the temples
+    A('Head', 'Hair Brim', [-4.4, 32.0, -4.77], [4.4, 33.45, -4.0], BLK1)
+    A('Head', 'Hair Brim Top', [-4.1, 33.45, -4.6], [4.1, 33.85, -2.6], BLK2)
+    for i, x in enumerate((-3.3, -1.7, 0.0, 1.7, 3.3)):
+        dread((x, 33.75, -4.45), (x * 0.05, -0.22, -1), 0.9, lighter=(i % 2 == 0), black=2.0)
+    # hair filling the gap between the lenses, under the bridge
+    A('Head', 'Hair Between Lenses', [-0.34, 29.55, -5.25], [0.34, 30.88, -4.1], BLK1)
+    A('Head', 'Hair Between Lenses Tip', [-0.3, 29.0, -5.0], [0.3, 29.6, -4.3], RED2 if False else '#b3171d')
+    for s in (1, -1):
+        x0, x1 = sorted([s * 4.42, s * 4.85])
+        A('Head', 'Hair Temple', [x0, 29.6, -5.35], [x1, 33.2, -3.9], BLK2)
+
+    # ---------------- cropped navy jacket
+    for s in (1, -1):
+        x0, x1 = sorted([s * 1.6, s * 4.35])
+        A('Body', 'Jacket Panel', [x0, 18.2, -2.55], [x1, 24.1, -2.0], NAVY)
+        t0, t1 = sorted([s * 1.25, s * 1.75])
+        A('Body', 'Jacket Trim', [t0, 18.2, -2.7], [t1, 23.4, -2.3], WHITE)
+        c0, c1 = sorted([s * 2.9, s * 4.35])
+        A('Body', 'Collar Side', [c0, 23.4, -2.2], [c1, 25.1, 2.6], NAVY, [0, 0, s * -10], [s * 3.6, 23.6, 0])
+        i0, i1 = sorted([s * 2.65, s * 2.9])
+        A('Body', 'Collar Lining', [i0, 23.6, -2.0], [i1, 24.9, 2.4], ORANGE, [0, 0, s * -10], [s * 3.6, 23.6, 0])
+    A('Body', 'Collar Back', [-4.3, 23.4, 1.9], [4.3, 25.1, 2.7], NAVY)
+    A('Body', 'Shirt Collar', [-1.6, 23.3, -2.4], [1.6, 24.5, -2.05], ORANGE)
+    A('Body', 'Zipper Pull', [-0.25, 22.6, -2.35], [0.35, 23.5, -2.15], SILVER)
+    A('Body', 'Jacket Back', [-4.35, 18.2, 2.0], [4.35, 24.1, 2.5], NAVY)
+    # orange hem band with red triangles (front panels and back)
+    hems = [(-4.4, -1.6, -2.75, -2.25), (1.6, 4.4, -2.75, -2.25), (-4.4, 4.4, 2.25, 2.75)]
+    for x0, x1, zf, zb in hems:
+        A('Body', 'Jacket Hem', [x0, 17.3, zf], [x1, 18.3, zb], ORANGE)
+        nteeth = max(1, int((x1 - x0) / 0.9))
+        for i in range(nteeth):
+            x = x0 + .1 + i * (x1 - x0 - .2) / nteeth
+            z = zf - .07 if zf < 0 else zb
+            A('Body', 'Hem Tooth', [x + .12, 17.65, z], [x + .62, 18.15, z + .07], RED, [0, 0, 45], [x + .37, 17.9, z])
+    # belt around the bottom of the torso (on the body, never over the legs) with a diamond buckle,
+    # and a short sash tail tied on his right hip, hanging outside the leg so it never clips
+    BY0, BY1 = 12.05, 13.3
+    A('Body', 'Belt Front', [-4.42, BY0, -2.5], [4.42, BY1, -2.05], RED)
+    A('Body', 'Belt Back', [-4.42, BY0, 2.05], [4.42, BY1, 2.5], RED)
+    A('Body', 'Belt R', [4.0, BY0, -2.5], [4.42, BY1, 2.5], RED)
+    A('Body', 'Belt L', [-4.42, BY0, -2.5], [-4.0, BY1, 2.5], RED)
+    A('Body', 'Belt Edge', [-4.44, BY1 - 0.18, -2.52], [4.44, BY1, -2.48], RED_D)
+    A('Body', 'Buckle', [-0.7, 12.0, -2.82], [0.7, 13.4, -2.45], SILVER, [0, 0, 45], [0, 12.7, -2.6], 'edge')
+    A('Body', 'Buckle Gem', [-0.3, 12.4, -2.9], [0.3, 13.0, -2.8], SILVER_D, [0, 0, 45], [0, 12.7, -2.85])
+    A('Body', 'Sash Knot', [4.42, 12.0, -1.3], [5.1, 13.35, 0.1], RED_D)
+    A('Body', 'Sash Tail', [4.5, 9.2, -1.2], [5.05, 12.1, -0.1], RED, [0, 0, -5], [4.75, 12.1, -0.65])
+    A('Body', 'Sash Tail End', [4.48, 8.5, -1.25], [5.1, 9.3, -0.05], RED_D, [0, 0, -5], [4.75, 12.1, -0.65])
+
+    # ---------------- arms: short sleeves, glove on the right hand, wristband on the left
+    A('RightArm', 'Short Sleeve', [3.7, 19.0, -2.3], [8.3, 24.3, 2.3], NAVY)
+    A('RightArm', 'Sleeve Stripe', [3.62, 18.25, -2.38], [8.38, 19.0, 2.38], WHITE)
+    A('RightArm', 'Sleeve Lining', [3.66, 17.95, -2.34], [8.34, 18.25, 2.34], ORANGE)
+    m.mirror_x('RightArm', 'LeftArm')
+    A('RightArm', 'Glove', [3.65, 11.8, -2.35], [8.35, 15.4, 2.35], GLOVE, shade='edge')   # covers the whole hand, fingertips too
+    A('RightArm', 'Glove Cuff', [3.55, 15.1, -2.45], [8.45, 15.9, 2.45], '#2b2a32')
+    A('LeftArm', 'Wristband', [-8.4, 13.2, -2.4], [-3.6, 14.8, 2.4], RED, shade='edge')
+    # rounded shoulder pad on his left shoulder
+    o = [-4.3, 24.2, 0]
+    A('LeftArm', 'Pad Dome', [-8.6, 23.6, -2.8], [-3.6, 25.4, 2.8], SILVER, [0, 0, 16], o, 'edge')
+    A('LeftArm', 'Pad Shell', [-9.2, 21.8, -3.1], [-4.6, 23.8, 3.1], SILVER_L, [0, 0, 16], o, 'edge')
+    A('LeftArm', 'Pad Rim', [-9.5, 21.2, -2.9], [-6.2, 22.0, 2.9], SILVER_D, [0, 0, 16], o)
+    A('LeftArm', 'Pad Top', [-8.0, 25.3, -2.2], [-4.2, 25.9, 2.2], SILVER_L, [0, 0, 16], o)
+    A('LeftArm', 'Pad Stud', [-7.4, 23.0, -3.4], [-6.3, 24.1, -3.0], SILVER_L, [0, 0, 16], o)
+
+    # ---------------- legs: capri pants, bare shins, red high-tops
+    A('RightLeg', 'Capri', [-0.45, 6.6, -2.5], [4.45, 12.0, 2.5], NAVY)
+    A('RightLeg', 'Capri Fold', [-0.5, 8.4, -2.55], [4.5, 8.8, 2.55], NAVY_D)
+    A('RightLeg', 'Capri Hem', [-0.6, 5.6, -2.65], [4.6, 6.7, 2.65], ORANGE)
+    A('RightLeg', 'Capri Hem Line', [-0.65, 5.35, -2.7], [4.65, 5.65, 2.7], RED_D)
+    for i in range(5):
+        x = -0.5 + i * 1.0
+        for z in (-2.72, 2.65):
+            A('RightLeg', 'Hem Tooth', [x + .2, 6.0, z], [x + .75, 6.55, z + .07], RED, [0, 0, 45], [x + .47, 6.27, z])
+        zz = -2.3 + i * .95
+        A('RightLeg', 'Hem Tooth', [4.65, 6.0, zz], [4.72, 6.55, zz + .55], RED, [45, 0, 0], [4.68, 6.27, zz + .27])
+        A('RightLeg', 'Hem Tooth', [-0.72, 6.0, zz], [-0.65, 6.55, zz + .55], RED, [45, 0, 0], [-0.68, 6.27, zz + .27])
+    A('RightLeg', 'Sock', [0.1, 2.6, -2.2], [3.9, 3.6, 2.2], NAVY_D)
+    A('RightLeg', 'Shoe Upper', [-0.35, 0.7, -2.6], [4.35, 3.6, 2.45], RED)
+    A('RightLeg', 'Shoe Collar', [-0.45, 3.0, -1.8], [4.45, 3.7, 2.55], RED_D)
+    A('RightLeg', 'Shoe Tongue', [0.6, 2.4, -2.85], [3.4, 4.3, -2.3], RED, [-10, 0, 0], [2, 2.4, -2.6])
+    A('RightLeg', 'Toe Cap', [-0.45, 0.7, -3.55], [4.45, 2.3, -0.9], NAVY, shade='edge')
+    A('RightLeg', 'Sole', [-0.55, 0.0, -3.7], [4.55, 0.75, 2.6], '#a8121a')
+    for z in (-3.0, -1.6, -0.2, 1.2):
+        A('RightLeg', 'Sole Lug', [-0.6, 0.0, z], [4.6, 0.35, z + .6], '#6e0b10')
+    A('RightLeg', 'Shoe Emblem', [1.5, 2.9, -3.0], [2.5, 3.9, -2.85], SILVER_L, [0, 0, 45], [2, 3.4, -2.9])
+    m.mirror_x('RightLeg', 'LeftLeg')
+    # stitched patches (right thigh, left knee)
+    def patch(bone, x0, y0, x1, y1):
+        A(bone, 'Patch', [x0, y0, -2.68], [x1, y1, -2.5], PATCH)
+        n = int((x1 - x0) / .7)
+        for i in range(n):
+            x = x0 + i * (x1 - x0) / n
+            A(bone, 'Patch Stitch', [x + .1, y1 - .1, -2.74], [x + .5, y1 + .3, -2.66], WHITE, [0, 0, 45], [x + .3, y1 + .1, -2.7])
+            A(bone, 'Patch Stitch', [x + .1, y0 - .3, -2.74], [x + .5, y0 + .1, -2.66], WHITE, [0, 0, 45], [x + .3, y0 - .1, -2.7])
+    # (the blue patches were removed)
+    return m
