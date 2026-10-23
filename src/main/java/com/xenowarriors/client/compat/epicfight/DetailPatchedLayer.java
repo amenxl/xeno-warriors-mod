@@ -91,6 +91,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 p.visible = true;
                 p.yScale = 1F;
             });
+            if (model.hoodUp != null) model.hoodUp.visible = false;          // (the rain hood is down for Epic Fight's copy)
             SkinnedMesh details = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(
                     humanoid(model.head, model.body, model.rightArm, model.leftArm, model.rightLeg, model.leftLeg));
             if (details != null) details.initialize();

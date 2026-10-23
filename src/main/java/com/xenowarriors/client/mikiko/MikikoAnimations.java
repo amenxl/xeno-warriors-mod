@@ -1292,6 +1292,13 @@ public final class MikikoAnimations {
     // ------------------------------------------------------------------ whole-body motion
 
     /** {lift, forward, spin, lean, roll} for this frame. */
+    /** How far his whole body is lowered toward the ground right now (sitting, landing, crouched low...), in blocks. */
+    public static float lowered(Player p, float partial) {
+        if (!(p instanceof AbstractClientPlayer cp)) return 0F;
+        float[] m = bodyMotion(cp, partial);
+        return m == null ? 0F : Math.max(0F, -m[0]);
+    }
+
     private static float[] bodyMotion(AbstractClientPlayer p, float partial) {
         State s = STATES.get(p.getId());
         if (s == null) return null;

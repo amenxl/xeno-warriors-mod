@@ -71,11 +71,8 @@ public final class ClientEvents {
                 ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(ClientSettings.senseFriendly()));
             }
         }
-        while (ModKeyMappings.SUMMON_BLADE.consumeClick()) {
-            if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && !UltimateCutscene.active()) {
-                ModNetwork.sendToServer(new com.xenowarriors.network.SummonBladePacket());
-            }
-        }
+        while (ModKeyMappings.SUMMON_BLADE.consumeClick()) { }      // (tap vs hold: BladeChannelClient)
+        if (!UltimateCutscene.active()) com.xenowarriors.client.mikiko.BladeChannelClient.keyTick(mc);
 
         while (ModKeyMappings.TOGGLE_WINGS.consumeClick()) {
             if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.RHALIX && !UltimateCutscene.active()) {

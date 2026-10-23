@@ -172,7 +172,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         var pos = p.blockPosition();
         boolean snowing = p.level().isRaining() && p.level().canSeeSky(pos) && p.level().getBiome(pos).value().coldEnoughToSnow(pos);
         if (p.getTicksFrozen() > 0 || snowing) return "freezing";
-        if (p.level().isRainingAt(pos.above()) && !p.isUnderWater()) {
+        if (p.level().isRainingAt(pos.above()) && !p.isUnderWater() && !com.xenowarriors.client.mikiko.HoodClient.wearingHoodie(p)) {
             // caught in the rain: soaked, drops running down the face (two frames so they drip)
             int bt = p.tickCount + p.getId() * 37;
             if (bt % 97 < 3) return "blink";
@@ -356,8 +356,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
 
         // hood up (SR hoodie): the hair tucks under it, only the front bangs show
+        boolean hood = model.hoodUp != null && com.xenowarriors.client.mikiko.HoodClient.up(player);
+        if (model.hoodUp != null) model.hoodUp.visible = hood;
+        if (model.hoodDown != null) model.hoodDown.visible = !hood;
         if (model.hair != null) {
-            model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
+            model.hair.visible = !hood && !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
                     instanceof com.xenowarriors.item.SrHoodieItem);
         }
 

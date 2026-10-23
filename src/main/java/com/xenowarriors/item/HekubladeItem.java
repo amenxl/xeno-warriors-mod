@@ -24,7 +24,7 @@ public class HekubladeItem extends SwordItem {
 
     public HekubladeItem(Properties properties) {
         // 1 (hand) + 4 (tier) + 3 = 8 damage, a bit faster than a normal sword
-        super(TIER, 3, -2.2F, properties);
+        super(TIER, 3, -2.6F, properties);     // attack speed 1.4: combos at the pace of the other big weapons
     }
 
     @Override

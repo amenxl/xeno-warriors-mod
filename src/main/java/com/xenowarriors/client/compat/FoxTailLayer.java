@@ -68,6 +68,21 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
         tail.yRot = sway;
         tail.zRot = 0F;
         mid.xRot = -0.25F + Mth.sin(age * 0.09F + 0.6F) * 0.08F;
+        // keep it out of the ground: sitting / landing low it lies out behind him and curls up and round;
+        // crouching lifts it, riding and lying down it rests along his body, swimming and flying it streams out straight
+        float low = Mth.clamp(com.xenowarriors.client.mikiko.MikikoAnimations.lowered(p, partialTick) / 0.5F, 0F, 1F);
+        if (low > 0F) {
+            tail.xRot = Mth.lerp(low, tail.xRot, 1.55F);
+            tail.yRot = Mth.lerp(low, tail.yRot, 0.55F + sway * 0.3F);
+            mid.xRot = Mth.lerp(low, mid.xRot, -0.45F);
+        }
+        if (p.isCrouching()) tail.xRot += 0.35F;
+        if (p.isPassenger()) { tail.xRot = 1.5F; mid.xRot = -0.3F; }
+        if (p.isSleeping()) { tail.xRot = 0.2F; tail.yRot = 0.35F; mid.xRot = -0.1F; sway = 0F; }
+        if (p.isSwimming() || p.isFallFlying() || com.xenowarriors.client.FlightTracker.isFlying(p)) {
+            tail.xRot = 1.45F + Mth.sin(age * 0.3F) * 0.05F;
+            mid.xRot = -0.05F;
+        }
         mid.yRot = sway * 0.6F;
         tip.xRot = -0.2F;
         tip.yRot = sway * 0.4F;

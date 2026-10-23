@@ -38,6 +38,9 @@ public class DetailModel {
     public ModelPart faceRoot, faceHead;
     private final float rightWingZ, leftWingZ, rightWingY, leftWingY;
 
+    /** Outfit hood, pulled up over the head / bunched behind the neck (null if the outfit has none). */
+    public ModelPart hoodUp, hoodDown;
+
     private DetailModel(ModelPart root) {
         this.root = root;
         this.head = root.getChild("head");
@@ -48,6 +51,8 @@ public class DetailModel {
         this.leftLeg = root.getChild("left_leg");
         this.hair = childOrNull(head, "hair");
         this.bangs = childOrNull(head, "bangs");
+        this.hoodUp = childOrNull(head, "hood_up");
+        this.hoodDown = childOrNull(body, "hood_down");
         this.coatBack = childOrNull(body, "coat_back");
         this.coatFrontR = childOrNull(body, "coat_front_r");
         this.coatFrontL = childOrNull(body, "coat_front_l");
