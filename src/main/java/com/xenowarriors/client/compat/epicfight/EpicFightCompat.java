@@ -291,7 +291,7 @@ public final class EpicFightCompat {
             ef = !(own && basicAttack(currentAnimation(patch)));    // their own combos; Epic Fight's other actions
         } else {
             boolean special = com.xenowarriors.client.FlightTracker.isFlying(p) || p.isPassenger() || p.isSleeping();
-            ef = !own && !special;                                  // another weapon in hand: its Epic Fight stance
+            ef = !own && !special && !com.xenowarriors.client.DiscTracker.dancing(p);   // another weapon: its stance (unless dancing)
         }
         event.setShouldRender(ef);
     }

@@ -31,6 +31,7 @@ import java.util.Map;
 public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>,
         PlayerModel<AbstractClientPlayer>, RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>> {
     private static final Map<DetailModel, SkinnedMesh[]> BAKED = new IdentityHashMap<>();   // {details, face}
+    private static final Map<DetailModel, SkinnedMesh[]> BAKED_HOOD = new IdentityHashMap<>();   // the same, rain hood up
     private static final java.util.Set<DetailModel> FAILED = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
 
     @Override
@@ -42,7 +43,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         if (live == null || FAILED.contains(live)) return;
         // baked from its own fresh copy of the model, so Epic Fight's baker never touches (and can't disturb) the
         // model the normal renderer animates - wings, coat, hair
-        SkinnedMesh[] mesh = BAKED.computeIfAbsent(live, m -> bake(freshCopy(player, m)));
+        boolean hood = live.hoodUp != null && com.xenowarriors.client.mikiko.HoodClient.up(player);
+        SkinnedMesh[] mesh = (hood ? BAKED_HOOD : BAKED).computeIfAbsent(live, m -> bake(freshCopy(player, m), hood));
         DetailModel model = live;
         if (mesh == null) {
             FAILED.add(live);
@@ -83,7 +85,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         return new HumanoidModel<>(new ModelPart(List.of(), parts));
     }
 
-    private static SkinnedMesh[] bake(DetailModel model) {
+    private static SkinnedMesh[] bake(DetailModel model, boolean hood) {
         try {
             // rest pose: no copied player pose, no blown hair or swinging coat
             model.root.getAllParts().forEach(p -> {
@@ -91,7 +93,10 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 p.visible = true;
                 p.yScale = 1F;
             });
-            if (model.hoodUp != null) model.hoodUp.visible = false;          // (the rain hood is down for Epic Fight's copy)
+            // the rain hood: a second copy is baked with it up (hood_down hidden, hair that would poke through tucked in)
+            if (model.hoodUp != null) model.hoodUp.visible = hood;
+            if (model.hoodDown != null) model.hoodDown.visible = !hood;
+            if (hood) for (ModelPart strand : model.hoodPokers) strand.visible = false;
             SkinnedMesh details = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(
                     humanoid(model.head, model.body, model.rightArm, model.leftArm, model.rightLeg, model.leftLeg));
             if (details != null) details.initialize();

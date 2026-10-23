@@ -16,6 +16,13 @@ public final class Busy {
                 || ChargePose.weight(p) > 0.02F
                 || SurfPose.surfing(p)
                 || ClientSkillState.currentAnim(p) != null
-                || AttackHooks.externalBusy.test(p);
+                || AttackHooks.externalBusy.test(p)
+                || (efWeapon(p) && !DiscTracker.anyNear(p));
+    }
+
+    /** An Epic Fight weapon in hand: it has its own idle stance, so ours wait (dancing to music still happens). */
+    public static boolean efWeapon(Player p) {
+        return net.minecraftforge.fml.ModList.get().isLoaded("epicfight")
+                && !com.xenowarriors.client.compat.epicfight.EpicFightCompat.ownWeapon(p);
     }
 }

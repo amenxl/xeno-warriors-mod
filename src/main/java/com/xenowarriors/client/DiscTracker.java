@@ -43,6 +43,17 @@ public final class DiscTracker {
         }
     }
 
+    /** Any music disc playing within 20 blocks (something to dance to)? */
+    public static boolean anyNear(Player p) {
+        for (String disc : PLAYING.keySet()) if (near(p, disc)) return true;
+        return false;
+    }
+
+    /** Standing about with music on: the dances take over (even from Epic Fight's own idle stance). */
+    public static boolean dancing(Player p) {
+        return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && anyNear(p);
+    }
+
     /** Is this disc playing within 20 blocks of the player? */
     public static boolean near(Player p, String disc) {
         List<SoundInstance> list = PLAYING.get(disc);
