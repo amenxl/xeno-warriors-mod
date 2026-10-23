@@ -80,9 +80,9 @@ public final class BladeChannelClient {
         m.rightArm.xRot = Mth.lerp(w, m.rightArm.xRot, -2.95F + tremble);        // blade held up high
         m.rightArm.yRot = Mth.lerp(w, m.rightArm.yRot, 0.1F);
         m.rightArm.zRot = Mth.lerp(w, m.rightArm.zRot, -0.12F);
-        m.leftArm.xRot = Mth.lerp(w, m.leftArm.xRot, -1.45F - tremble);          // other hand held out, palm forward
-        m.leftArm.yRot = Mth.lerp(w, m.leftArm.yRot, 0.15F);
-        m.leftArm.zRot = Mth.lerp(w, m.leftArm.zRot, 0F);
+        m.leftArm.xRot = Mth.lerp(w, m.leftArm.xRot, 0.08F - tremble);           // other hand down at his side
+        m.leftArm.yRot = Mth.lerp(w, m.leftArm.yRot, 0F);
+        m.leftArm.zRot = Mth.lerp(w, m.leftArm.zRot, -0.12F);
         m.head.xRot = Mth.lerp(w, m.head.xRot, 0.65F);                            // head bowed
         m.head.yRot = Mth.lerp(w, m.head.yRot, 0F);
         m.body.xRot = Mth.lerp(w, m.body.xRot, 0.08F);

@@ -36,8 +36,6 @@ public final class BladeChannel {
     public static void set(ServerPlayer p, boolean on) {
         if (ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
         if (on) {
-            if (!Hekublade.holding(p) && !p.getInventory().contains(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get())))
-                Hekublade.toggle(p);                                     // calls it to his hand first
             START.put(p.getUUID(), p.tickCount);
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.5F, 1.6F);
         } else if (START.remove(p.getUUID()) == null) return;
@@ -49,7 +47,7 @@ public final class BladeChannel {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
         Integer start = START.get(p.getUUID());
         if (start == null) return;
-        if (!p.isAlive() || !Hekublade.holding(p)) { set(p, false); return; }
+        if (!p.isAlive()) { set(p, false); return; }
         int t = p.tickCount - start;
         var level = p.serverLevel();
         if (t % 3 == 0) {
@@ -58,6 +56,9 @@ public final class BladeChannel {
                     p.getX() + Math.cos(a) * 0.8, p.getY() + 0.2 + t / (double) CHARGE * 2.0, p.getZ() + Math.sin(a) * 0.8, 1, 0, 0, 0, 0);
         }
         if (t >= CHARGE) {
+            // the blade answers at the end of it, right into his raised hand
+            if (!Hekublade.holding(p) && !p.getInventory().contains(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get())))
+                Hekublade.toggle(p);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, BOOST, 1, false, true, true));
             level.sendParticles(ParticleTypes.FLAME, p.getX(), p.getY() + 1.8, p.getZ(), 24, 0.4, 0.5, 0.4, 0.06);
             level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.6F, 0.2F), 1.6F), p.getX(), p.getY() + 1.2, p.getZ(), 30, 0.6, 0.8, 0.6, 0);

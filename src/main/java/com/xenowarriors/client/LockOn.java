@@ -127,7 +127,22 @@ public final class LockOn {
     }
 
     private static boolean lockable(LivingEntity e) {
-        return e.isAlive() && !(e instanceof ArmorStand) && !(e instanceof Player p && p.isSpectator()) && !e.isInvisible();
+        return e.isAlive() && !(e instanceof ArmorStand) && !(e instanceof Player p && p.isSpectator()) && !e.isInvisible()
+                && attackable(e);
+    }
+
+    /** Only things you could actually hurt: not the invulnerable, your own pets, your party, or (as Mikiko) ordinary people. */
+    private static boolean attackable(LivingEntity e) {
+        Minecraft mc = Minecraft.getInstance();
+        Player me = mc.player;
+        if (me == null) return true;
+        if (e.isInvulnerable()) return false;
+        if (e instanceof Player p && (p.isCreative() || com.xenowarriors.client.party.PartyClient.inMyParty(p.getUUID()))) return false;
+        if (e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame() && me.getUUID().equals(t.getOwnerUUID())) return false;
+        if (e instanceof net.minecraft.world.entity.OwnableEntity o && me.getUUID().equals(o.getOwnerUUID())) return false;
+        if (ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.MIKIKO
+                && e instanceof com.xenowarriors.npc.HumanNpcEntity h && !h.possessed() && !(h.skyHater() && h.isAggressive())) return false;
+        return true;
     }
 
     private static boolean visible(Player player, Entity e) {
