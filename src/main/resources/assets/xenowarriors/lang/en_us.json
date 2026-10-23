@@ -194,5 +194,10 @@
   "item.xenowarriors.corrupted_helmet": "Corrupted Helmet",
   "item.xenowarriors.corrupted_chestplate": "Corrupted Chestplate",
   "item.xenowarriors.corrupted_leggings": "Corrupted Leggings",
-  "item.xenowarriors.corrupted_boots": "Corrupted Boots"
+  "item.xenowarriors.corrupted_boots": "Corrupted Boots",
+  "block.xenowarriors.karma_altar": "Karma Altar",
+  "container.xenowarriors.karma_altar": "Karma Altar",
+  "block.xenowarriors.corrupted_soil": "Corrupted Soil",
+  "block.xenowarriors.corrupted_stone": "Corrupted Stone",
+  "event.xenowarriors.sky_raid": "Sky Hater Raid"
 }

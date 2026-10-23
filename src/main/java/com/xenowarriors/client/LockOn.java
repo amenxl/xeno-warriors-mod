@@ -154,7 +154,7 @@ public final class LockOn {
         if (owner == null && e instanceof net.minecraft.world.entity.OwnableEntity o2) owner = o2.getOwnerUUID();
         if (owner != null && (owner.equals(me.getUUID()) || com.xenowarriors.client.party.PartyClient.inMyParty(owner))) return false;
         if (ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.MIKIKO
-                && e instanceof com.xenowarriors.npc.HumanNpcEntity h && !h.possessed() && !(h.skyHater() && h.isAggressive())) return false;
+                && e instanceof com.xenowarriors.npc.HumanNpcEntity h && !h.possessed() && !h.raider() && !(h.skyHater() && h.isAggressive())) return false;
         return true;
     }
 

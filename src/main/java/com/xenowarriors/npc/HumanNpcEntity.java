@@ -42,6 +42,7 @@ public class HumanNpcEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FIGHTER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SKY_HATER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> RAIDER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static Boolean dmz;
     private int rhalixTauntAt = -10000;
@@ -67,6 +68,7 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.define(FIGHTER, false);
         entityData.define(SKY_HATER, false);
         entityData.define(FLYING, false);
+        entityData.define(RAIDER, false);
     }
 
     public int variant() { return entityData.get(VARIANT); }
@@ -92,6 +94,28 @@ public class HumanNpcEntity extends PathfinderMob {
         };
     }
 
+    /** Part of a Sky Hater raid on a village: hostile to everyone there, Mikiko included (and he can fight back). */
+    public boolean raider() { return entityData.get(RAIDER); }
+
+    public void makeRaider(boolean captain) {
+        entityData.set(SKY_HATER, true);
+        entityData.set(FIGHTER, true);
+        entityData.set(RAIDER, true);
+        setCustomName(Component.literal(captain ? "Sky Hater Captain" : "Sky Hater Raider").withStyle(captain ? ChatFormatting.GOLD : ChatFormatting.RED));
+        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(captain ? Items.DIAMOND_SWORD : random.nextFloat() < 0.4F ? Items.IRON_AXE : Items.IRON_SWORD));
+        setDropChance(EquipmentSlot.MAINHAND, 0.05F);
+        if (captain) {
+            setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+            setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+            var hp = getAttribute(Attributes.MAX_HEALTH);
+            if (hp != null) hp.setBaseValue(60);
+            var dmg = getAttribute(Attributes.ATTACK_DAMAGE);
+            if (dmg != null) dmg.setBaseValue(5);
+            setHealth(getMaxHealth());
+        }
+        setPersistenceRequired();
+    }
+
     /** Hates Skylanders: goes for their wings (red armband). */
     public boolean skyHater() { return entityData.get(SKY_HATER); }
 
@@ -108,13 +132,13 @@ public class HumanNpcEntity extends PathfinderMob {
     /** People never go after Mikiko (only a soul wearing them would). */
     @Override
     public void setTarget(LivingEntity target) {
-        if (target != null && !possessed() && isMikiko(target)) target = null;
+        if (target != null && !possessed() && !raider() && isMikiko(target)) target = null;
         super.setTarget(target);
     }
 
     @Override
     public boolean canAttack(LivingEntity target) {
-        if (!possessed() && isMikiko(target)) return false;
+        if (!possessed() && !raider() && isMikiko(target)) return false;
         return super.canAttack(target);
     }
     /** Has a soul in them at all (showing or hidden). */
@@ -143,10 +167,14 @@ public class HumanNpcEntity extends PathfinderMob {
     /** Something a normal person runs from. */
     private boolean scary(LivingEntity e) {
         return e instanceof CorruptedSoulEntity || e instanceof CorruptedVillagerEntity || e instanceof DarkPossessedEntity
-                || (e instanceof HumanNpcEntity h && h.possessed()) || CorruptedAnimals.isCorrupted(e) || e instanceof Enemy;
+                || (e instanceof HumanNpcEntity h && (h.possessed() || h.raider())) || CorruptedAnimals.isCorrupted(e) || e instanceof Enemy;
     }
 
     private boolean wantsToFight(LivingEntity e) {
+        if (raider()) return (e instanceof Player p && !p.isCreative() && !p.isSpectator()) || e instanceof Villager
+                || e instanceof SkylanderEntity || e instanceof net.minecraft.world.entity.animal.IronGolem
+                || (e instanceof HumanNpcEntity h && !h.raider());
+        if (e instanceof HumanNpcEntity h && h.raider()) return fighter() && !carriesSoul();      // defend the village
         if (skyHater() && !carriesSoul()) {
             if (e instanceof SkylanderEntity sk && !sk.flying() && !sk.wingless()) return true;
             if (isRhalixWithWings(e)) return true;
@@ -264,7 +292,7 @@ public class HumanNpcEntity extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         // Mikiko won't hurt ordinary people - only the corrupted (or a Sky Hater caught going for a Skylander)
-        if (!level().isClientSide && !possessed() && isMikiko(source.getEntity()) && !(skyHater() && getTarget() instanceof SkylanderEntity)) return false;
+        if (!level().isClientSide && !possessed() && !raider() && isMikiko(source.getEntity()) && !(skyHater() && getTarget() instanceof SkylanderEntity)) return false;
         if (!level().isClientSide && source.getEntity() instanceof Player p && getTarget() instanceof SkylanderEntity sk) sk.helpedBy(p);
         // held down after being reported: worn low enough, the soul is driven out instead of them dying
         if (!level().isClientSide && possessed() && reported && getHealth() - amount < getMaxHealth() * 0.25F) {
@@ -367,6 +395,7 @@ public class HumanNpcEntity extends PathfinderMob {
         tag.putBoolean("Possessed", possessed());
         tag.putBoolean("Fighter", fighter());
         tag.putBoolean("SkyHater", skyHater());
+        tag.putBoolean("Raider", raider());
         tag.putBoolean("Flying", flying());
         tag.putLong("PossessedSince", possessedSince);
         tag.putBoolean("Reported", reported);
@@ -379,6 +408,7 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.set(POSSESSED, tag.getBoolean("Possessed"));
         entityData.set(FIGHTER, tag.getBoolean("Fighter"));
         entityData.set(SKY_HATER, tag.getBoolean("SkyHater"));
+        entityData.set(RAIDER, tag.getBoolean("Raider"));
         entityData.set(FLYING, tag.getBoolean("Flying"));
         setNoGravity(flying());
         possessedSince = tag.contains("PossessedSince") ? tag.getLong("PossessedSince") : -1;

@@ -1,0 +1,26 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "SCS",
+  "ODO",
+  "OOO"
+ ],
+ "key": {
+  "S": {
+   "item": "xenowarriors:sky_crystal"
+  },
+  "C": {
+   "item": "xenowarriors:corrupted_shard"
+  },
+  "D": {
+   "item": "minecraft:diamond"
+  },
+  "O": {
+   "item": "minecraft:obsidian"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:karma_altar"
+ }
+}

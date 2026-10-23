@@ -34,6 +34,12 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> SKY_BOOTS = ITEMS.register("sky_boots",
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    public static final RegistryObject<Item> KARMA_ALTAR = ITEMS.register("karma_altar",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.altar.ModAltar.ALTAR.get(), new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_SOIL = ITEMS.register("corrupted_soil",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.corrupted.CorruptionBlocks.SOIL.get(), new Item.Properties()));
+    public static final RegistryObject<Item> CORRUPTED_STONE = ITEMS.register("corrupted_stone",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.corrupted.CorruptionBlocks.STONE.get(), new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_SHARD = ITEMS.register("corrupted_shard", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_ORE = ITEMS.register("corrupted_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get(), new Item.Properties()));

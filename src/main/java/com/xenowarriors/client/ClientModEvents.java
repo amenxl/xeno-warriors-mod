@@ -114,8 +114,12 @@ public final class ClientModEvents {
 
     @SubscribeEvent
     public static void clientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
-        event.enqueueWork(() -> net.minecraft.client.gui.screens.MenuScreens.register(
-                com.xenowarriors.fox.ModMenus.FOX.get(), com.xenowarriors.client.fox.FoxInventoryScreen::new));
+        event.enqueueWork(() -> {
+            net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.xenowarriors.fox.ModMenus.FOX.get(), com.xenowarriors.client.fox.FoxInventoryScreen::new);
+            net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.xenowarriors.altar.ModAltar.MENU.get(), com.xenowarriors.client.KarmaAltarScreen::new);
+        });
     }
 
     @SubscribeEvent

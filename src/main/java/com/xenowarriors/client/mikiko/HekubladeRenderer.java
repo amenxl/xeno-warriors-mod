@@ -101,6 +101,7 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
         if (outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 || outfit >= com.xenowarriors.client.ClientCharacterData.SEASON_3) {
             BakedModel alt = mc.getModelManager().getModel(outfit == com.xenowarriors.client.ClientCharacterData.ORIGINS_2 ? ORIGINS_2 : SEASON_3);
             items.renderModelLists(alt, stack, light, overlay, pose, vc);
+            edgeGlow(stack, alt, pose, buffers);
             if (outfit != com.xenowarriors.client.ClientCharacterData.ORIGINS_2) {
                 // the globe in the guard: a slowly turning galaxy that glows faintly
                 BakedModel globe = mc.getModelManager().getModel(SEASON_3_GLOBE);
@@ -112,6 +113,7 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
         }
         BakedModel base = mc.getModelManager().getModel(BASE);
         items.renderModelLists(base, stack, light, overlay, pose, vc);
+        edgeGlow(stack, base, pose, buffers);
 
         float time = mc.level != null ? mc.level.getGameTime() + mc.getFrameTime() : Util.getMillis() / 50F;
         float turn = turn(time);
@@ -130,6 +132,23 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
             items.renderModelLists(crystal, stack, crystalLight, overlay, pose, vc);
             if (glowVc != null) drawGlow(crystal, pose, glowVc, glow);
             pose.popPose();
+        }
+    }
+
+    /** Karma Altar upgrades: the blade shines sky blue (Sky Edge) and/or purple (Dark Edge), brighter with each level. */
+    private static void edgeGlow(ItemStack stack, BakedModel model, PoseStack pose, MultiBufferSource buffers) {
+        int sky = com.xenowarriors.mikiko.BladeUpgrades.sky(stack), dark = com.xenowarriors.mikiko.BladeUpgrades.dark(stack);
+        if (sky == 0 && dark == 0) return;
+        Minecraft mc = Minecraft.getInstance();
+        float time = mc.level != null ? mc.level.getGameTime() + mc.getFrameTime() : Util.getMillis() / 50F;
+        VertexConsumer glowVc = buffers.getBuffer(net.minecraft.client.renderer.RenderType.eyes(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS));
+        if (sky > 0) {
+            float f = (0.12F + 0.1F * sky) * (0.75F + 0.25F * Mth.sin(time * 0.15F));
+            drawGlow(model, pose, glowVc, f * 0.45F, f * 0.85F, f);
+        }
+        if (dark > 0) {
+            float f = (0.12F + 0.1F * dark) * (0.75F + 0.25F * Mth.sin(time * 0.15F + 2F));
+            drawGlow(model, pose, glowVc, f * 0.75F, f * 0.2F, f);
         }
     }
 

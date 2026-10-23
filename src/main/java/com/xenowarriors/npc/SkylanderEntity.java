@@ -44,6 +44,8 @@ public class SkylanderEntity extends PathfinderMob {
     private int groundTime, threatenedAt = -10000;
     private UUID helper;
     private int helpedAt = -10000;
+    /** Sky island dungeon guardians: where their temple is (null = an ordinary Skylander). */
+    private BlockPos guardHome;
 
     public SkylanderEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -92,6 +94,30 @@ public class SkylanderEntity extends PathfinderMob {
         return r;
     }
 
+    public boolean guardian() { return guardHome != null; }
+    public BlockPos guardHome() { return guardHome; }
+
+    /** Guards a sky temple: stays by it, tougher, and leaves people be unless they break things or open the chests. */
+    public void makeGuardian(BlockPos home) {
+        guardHome = home.immutable();
+        restrictTo(guardHome, 12);
+        var hp = getAttribute(Attributes.MAX_HEALTH);
+        if (hp != null) hp.setBaseValue(40);
+        var dmg = getAttribute(Attributes.ATTACK_DAMAGE);
+        if (dmg != null) dmg.setBaseValue(6);
+        setHealth(getMaxHealth());
+        setCustomName(Component.literal("Skylander Guardian").withStyle(ChatFormatting.AQUA));
+        setPersistenceRequired();
+    }
+
+    /** A guardian turns on someone who's raiding the temple. */
+    public void defendAgainst(LivingEntity thief) {
+        if (wingless()) return;
+        if (flying()) setFlying(false);
+        setTarget(thief);
+        threatenedAt = tickCount;
+    }
+
     public void setFlying(boolean f) {
         entityData.set(FLYING, f && !wingless());
         setNoGravity(flying());
@@ -128,7 +154,12 @@ public class SkylanderEntity extends PathfinderMob {
         if (source.getEntity() instanceof HumanNpcEntity h && h.skyHater()) threatenedAt = tickCount;
         boolean r = super.hurt(source, amount);
         // fighting back on the ground; now and then they get away into the air
-        if (r && !level().isClientSide && !flying() && !wingless() && random.nextFloat() < 0.15F && getHealth() > getMaxHealth() * 0.4F) takeOff();
+        if (r && !level().isClientSide && guardian() && source.getEntity() instanceof LivingEntity attacker && !(attacker instanceof SkylanderEntity)) {
+            // one guardian attacked: all of them come
+            for (SkylanderEntity g : level().getEntitiesOfClass(SkylanderEntity.class, getBoundingBox().inflate(24), SkylanderEntity::guardian))
+                if (g != this && g.getTarget() == null) g.defendAgainst(attacker);
+        }
+        if (r && !level().isClientSide && !guardian() && !flying() && !wingless() && random.nextFloat() < 0.15F && getHealth() > getMaxHealth() * 0.4F) takeOff();
         return r;
     }
 
@@ -148,7 +179,11 @@ public class SkylanderEntity extends PathfinderMob {
         }
         if (flying()) flyTick();
         else if (!wingless()) {
-            if (onGround() && ++groundTime > 2400 && tickCount - threatenedAt > 200) takeOff();     // done hanging out
+            if (guardian()) {
+                // back to their post once the fight's over
+                if (getTarget() == null && tickCount % 40 == 0 && distanceToSqr(Vec3.atCenterOf(guardHome)) > 14 * 14)
+                    getNavigation().moveTo(guardHome.getX() + 0.5, guardHome.getY(), guardHome.getZ() + 0.5, 1.0);
+            } else if (onGround() && ++groundTime > 2400 && tickCount - threatenedAt > 200) takeOff();     // done hanging out
         }
         // saved: once nobody's after them any more, they thank whoever helped
         if (helper != null && tickCount - threatenedAt > 100 && tickCount - helpedAt < 1200 && !wingless()) {
@@ -207,7 +242,7 @@ public class SkylanderEntity extends PathfinderMob {
 
     @Override
     public boolean removeWhenFarAway(double dist) {
-        return !wingless() && !isPersistenceRequired() && dist > 160 * 160;
+        return !wingless() && !guardian() && !isPersistenceRequired() && dist > 160 * 160;
     }
 
     @Override
@@ -216,6 +251,7 @@ public class SkylanderEntity extends PathfinderMob {
         tag.putInt("Variant", variant());
         tag.putBoolean("Flying", flying());
         tag.putBoolean("Wingless", wingless());
+        if (guardHome != null) tag.putLong("GuardHome", guardHome.asLong());
     }
 
     @Override
@@ -224,6 +260,10 @@ public class SkylanderEntity extends PathfinderMob {
         entityData.set(VARIANT, tag.getInt("Variant"));
         entityData.set(WINGLESS, tag.getBoolean("Wingless"));
         setFlying(tag.getBoolean("Flying"));
+        if (tag.contains("GuardHome")) {
+            guardHome = BlockPos.of(tag.getLong("GuardHome"));
+            restrictTo(guardHome, 12);
+        }
         if (wingless()) {
             var speed = getAttribute(Attributes.MOVEMENT_SPEED);
             if (speed != null) speed.setBaseValue(0.2);

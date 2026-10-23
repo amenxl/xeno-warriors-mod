@@ -84,7 +84,7 @@ public final class Hekublade {
                 inv.items.set(inv.selected, ItemStack.EMPTY);
             }
         }
-        inv.items.set(inv.selected, new ItemStack(ModItems.HEKUBLADE.get()));
+        inv.items.set(inv.selected, com.xenowarriors.mikiko.BladeUpgrades.apply(player, new ItemStack(ModItems.HEKUBLADE.get())));
         inv.setChanged();
         effects(player, true);
     }

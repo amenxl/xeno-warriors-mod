@@ -36,6 +36,8 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
         WorldGenLevel level = ctx.level();
         RandomSource r = ctx.random();
         BlockPos origin = ctx.origin();
+        // now and then: a big island with a sky temple on it, guarded by Skylanders
+        if (r.nextFloat() < 0.18F) return dungeon(level, r, origin);
         // (above 192, where water springs can't form: nothing pours off them)
         int top = Math.min(level.getMaxBuildHeight() - 30, 198 + r.nextInt(40));
         int radius = 6 + r.nextInt(7);
@@ -93,6 +95,88 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         return true;
+    }
+
+    // ------------------------------------------------------------------ sky temple dungeons
+
+    /** A broad, flat island with a temple of quartz and sky glass; treasure inside, Skylander guardians around it. */
+    private boolean dungeon(WorldGenLevel level, RandomSource r, BlockPos origin) {
+        // centered in the chunk so the whole thing stays inside what this feature may build in
+        int top = Math.min(level.getMaxBuildHeight() - 34, 200 + r.nextInt(30));
+        BlockPos c = new BlockPos((origin.getX() & ~15) + 8, top, (origin.getZ() & ~15) + 8);
+        int radius = 13 + r.nextInt(2);
+        for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) {
+            double d = Math.sqrt(dx * dx + dz * dz);
+            double edge = radius - (r.nextInt(3) == 0 ? 1 : 0);
+            if (d > edge) continue;
+            double f = 1.0 - d / edge;
+            int depth = 2 + (int) (Math.pow(f, 0.6) * radius * 1.2) + r.nextInt(2);
+            for (int y = 0; y >= -depth; y--) {
+                BlockState s = y == 0 ? Blocks.GRASS_BLOCK.defaultBlockState()
+                        : y > -3 ? Blocks.COARSE_DIRT.defaultBlockState()
+                        : r.nextInt(18) == 0 ? com.xenowarriors.sky.ModBlocks.SKY_ORE.get().defaultBlockState()
+                        : r.nextInt(4) == 0 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState();
+                setBlock(level, c.offset(dx, y, dz), s);
+            }
+            if (d > 8 && r.nextInt(6) == 0) setBlock(level, c.offset(dx, 1, dz), Blocks.GRASS.defaultBlockState());
+        }
+        temple(level, c.above(), r);
+        // the guardians
+        int n = 3 + r.nextInt(2);
+        for (int k = 0; k < n; k++) {
+            SkylanderEntity sk = ModNpcs.SKYLANDER.get().create(level.getLevel());
+            if (sk == null) continue;
+            double a = k * (Math.PI * 2 / n) + r.nextFloat() * 0.4;
+            sk.moveTo(c.getX() + 0.5 + Math.cos(a) * 8, top + 1, c.getZ() + 0.5 + Math.sin(a) * 8, r.nextFloat() * 360F, 0F);
+            sk.finalizeSpawn(level, level.getCurrentDifficultyAt(c), MobSpawnType.STRUCTURE, null, null);
+            sk.makeGuardian(c.above());
+            level.addFreshEntityWithPassengers(sk);
+        }
+        return true;
+    }
+
+    private void temple(WorldGenLevel level, BlockPos floor, RandomSource r) {
+        BlockState quartz = Blocks.SMOOTH_QUARTZ.defaultBlockState(), pillar = Blocks.QUARTZ_PILLAR.defaultBlockState(),
+                calcite = Blocks.CALCITE.defaultBlockState(), glass = Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState(),
+                air = Blocks.AIR.defaultBlockState(), bricks = Blocks.QUARTZ_BRICKS.defaultBlockState();
+        int h = 6;
+        // platform and steps
+        for (int dx = -7; dx <= 7; dx++) for (int dz = -7; dz <= 7; dz++) {
+            setBlock(level, floor.offset(dx, -1, dz), Math.abs(dx) <= 5 && Math.abs(dz) <= 5 ? calcite : bricks);
+            for (int y = 0; y <= h + 3; y++) setBlock(level, floor.offset(dx, y, dz), air);
+        }
+        for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
+            boolean edgeX = Math.abs(dx) == 5, edgeZ = Math.abs(dz) == 5;
+            for (int y = 0; y < h; y++) {
+                BlockPos p = floor.offset(dx, y, dz);
+                if (edgeX && edgeZ) setBlock(level, p, pillar);
+                else if (edgeX || edgeZ) {
+                    boolean door = dz == 5 && Math.abs(dx) <= 1 && y < 4;
+                    boolean window = y >= 2 && y <= 3 && (Math.abs(dx) == 3 || Math.abs(dz) == 3);
+                    setBlock(level, p, door ? air : window ? glass : quartz);
+                }
+            }
+            // roof, with a sky glass skylight
+            boolean skylight = Math.abs(dx) <= 1 && Math.abs(dz) <= 1;
+            setBlock(level, floor.offset(dx, h, dz), skylight ? glass : quartz);
+            if (Math.abs(dx) <= 4 && Math.abs(dz) <= 4 && !skylight && (Math.abs(dx) == 4 || Math.abs(dz) == 4))
+                setBlock(level, floor.offset(dx, h + 1, dz), Blocks.QUARTZ_SLAB.defaultBlockState());
+        }
+        // outside pillars along the front
+        for (int dx : new int[]{-3, 3}) for (int y = 0; y < 4; y++) setBlock(level, floor.offset(dx, y, 7), pillar);
+        // inside: the treasure dais at the back, Sky Ore set into the floor, lights
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -4; dz <= -2; dz++) setBlock(level, floor.offset(dx, 0, dz), bricks);
+        for (int[] o : new int[][]{{-3, 0}, {3, 0}, {0, 2}, {-3, 3}, {3, 3}})
+            setBlock(level, floor.offset(o[0], -1, o[1]), com.xenowarriors.sky.ModBlocks.SKY_ORE.get().defaultBlockState());
+        for (int[] o : new int[][]{{-4, -4}, {4, -4}, {-4, 4}, {4, 4}}) setBlock(level, floor.offset(o[0], h - 1, o[1]), Blocks.SEA_LANTERN.defaultBlockState());
+        for (int dx : new int[]{-1, 1}) {
+            BlockPos chest = floor.offset(dx, 1, -3);
+            setBlock(level, chest, Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, net.minecraft.core.Direction.SOUTH));
+            net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity.setLootTable(level, r, chest,
+                    new net.minecraft.resources.ResourceLocation(XenoWarriors.MOD_ID, "chests/sky_temple"));
+        }
+        setBlock(level, floor.offset(0, 1, -4), com.xenowarriors.sky.ModBlocks.SKY_ORE.get().defaultBlockState());
+        setBlock(level, floor.offset(0, 2, -4), Blocks.SOUL_LANTERN.defaultBlockState());
     }
 
     /** A 5x5 cottage: plank walls on log corners, a door gap, windows, a stepped roof, a bed and a chest. */

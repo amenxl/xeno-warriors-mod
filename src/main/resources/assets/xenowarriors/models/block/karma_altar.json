@@ -1,0 +1,215 @@
+{
+ "parent": "minecraft:block/block",
+ "textures": {
+  "particle": "xenowarriors:block/karma_altar_side",
+  "top": "xenowarriors:block/karma_altar_top",
+  "side": "xenowarriors:block/karma_altar_side",
+  "bottom": "xenowarriors:block/karma_altar_bottom"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    0
+   ],
+   "to": [
+    16,
+    4,
+    16
+   ],
+   "faces": {
+    "down": {
+     "texture": "#bottom",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#top",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "north": {
+     "texture": "#side",
+     "uv": [
+      0,
+      12,
+      16,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#side",
+     "uv": [
+      0,
+      12,
+      16,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#side",
+     "uv": [
+      0,
+      12,
+      16,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#side",
+     "uv": [
+      0,
+      12,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "from": [
+    3,
+    4,
+    3
+   ],
+   "to": [
+    13,
+    12,
+    13
+   ],
+   "faces": {
+    "down": {
+     "texture": "#bottom",
+     "uv": [
+      3,
+      3,
+      13,
+      13
+     ]
+    },
+    "up": {
+     "texture": "#top",
+     "uv": [
+      3,
+      3,
+      13,
+      13
+     ]
+    },
+    "north": {
+     "texture": "#side",
+     "uv": [
+      3,
+      4,
+      13,
+      12
+     ]
+    },
+    "south": {
+     "texture": "#side",
+     "uv": [
+      3,
+      4,
+      13,
+      12
+     ]
+    },
+    "west": {
+     "texture": "#side",
+     "uv": [
+      3,
+      4,
+      13,
+      12
+     ]
+    },
+    "east": {
+     "texture": "#side",
+     "uv": [
+      3,
+      4,
+      13,
+      12
+     ]
+    }
+   }
+  },
+  {
+   "from": [
+    1,
+    12,
+    1
+   ],
+   "to": [
+    15,
+    16,
+    15
+   ],
+   "faces": {
+    "down": {
+     "texture": "#bottom",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ]
+    },
+    "up": {
+     "texture": "#top",
+     "uv": [
+      1,
+      1,
+      15,
+      15
+     ]
+    },
+    "north": {
+     "texture": "#side",
+     "uv": [
+      1,
+      0,
+      15,
+      4
+     ]
+    },
+    "south": {
+     "texture": "#side",
+     "uv": [
+      1,
+      0,
+      15,
+      4
+     ]
+    },
+    "west": {
+     "texture": "#side",
+     "uv": [
+      1,
+      0,
+      15,
+      4
+     ]
+    },
+    "east": {
+     "texture": "#side",
+     "uv": [
+      1,
+      0,
+      15,
+      4
+     ]
+    }
+   }
+  }
+ ]
+}

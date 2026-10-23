@@ -41,6 +41,8 @@ public class PlayerCharacter {
     /** The Hekublade's own level (1-50) and progress; higher = longer stays inside it. */
     public int bladeLevel = 1;
     public float bladeXp;
+    /** Karma Altar upgrades on the Hekublade: Sky Edge and Dark Edge, 0-3 each. */
+    public int bladeSky, bladeDark;
     /** Ticks of time left inside the blade (refills while outside), and when he may go back in after being pushed out. */
     public int realmTicks = -1;
     public long realmCooldownUntil;
@@ -75,6 +77,8 @@ public class PlayerCharacter {
         this.miningLevel = other.miningLevel;
         this.bladeLevel = other.bladeLevel;
         this.bladeXp = other.bladeXp;
+        this.bladeSky = other.bladeSky;
+        this.bladeDark = other.bladeDark;
         this.realmTicks = other.realmTicks;
         this.realmCooldownUntil = other.realmCooldownUntil;
         this.miningXp = other.miningXp;
@@ -105,6 +109,8 @@ public class PlayerCharacter {
         tag.putInt("mining_level", miningLevel);
         tag.putInt("blade_level", bladeLevel);
         tag.putFloat("blade_xp", bladeXp);
+        tag.putInt("blade_sky", bladeSky);
+        tag.putInt("blade_dark", bladeDark);
         tag.putInt("realm_ticks", realmTicks);
         tag.putLong("realm_cooldown", realmCooldownUntil);
         tag.putFloat("mining_xp", miningXp);
@@ -134,6 +140,8 @@ public class PlayerCharacter {
         this.miningLevel = tag.getInt("mining_level");
         this.bladeLevel = Math.max(1, tag.getInt("blade_level"));
         this.bladeXp = tag.getFloat("blade_xp");
+        this.bladeSky = tag.getInt("blade_sky");
+        this.bladeDark = tag.getInt("blade_dark");
         this.realmTicks = tag.contains("realm_ticks") ? tag.getInt("realm_ticks") : -1;
         this.realmCooldownUntil = tag.getLong("realm_cooldown");
         this.miningXp = tag.getFloat("mining_xp");
