@@ -52,7 +52,7 @@ public final class RhalixHungerClient {
             m.hat.copyFrom(m.head);
             return;
         }
-        if (hungry(p) && p.onGround() && !p.isUsingItem() && !p.swinging
+        if (hungry(p) && p.onGround() && !p.isUsingItem() && !p.swinging && !Busy.busy(p)
                 && Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !RhalixCombatAnim.isSword(p)
                 && !RhalixWingsClient.busy(p)) {
             GeoAnims.apply(m, GeoAnims.RHALIX, "rh_hungry_idle", age, true, 0.85F);

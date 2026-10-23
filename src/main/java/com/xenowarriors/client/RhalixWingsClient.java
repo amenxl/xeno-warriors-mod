@@ -325,7 +325,7 @@ public final class RhalixWingsClient {
             }
             // dancing to "Gravity Glitch Duel", sadly vibing to "Lunar Ascendence" (when he's standing about)
             float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[15]);
-            boolean stillNow = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging;
+            boolean stillNow = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && !Busy.busy(p);
             d[5] = stillNow ? d[5] + 1 : 0;
             boolean standing = d[5] >= 10 && !FlightTracker.isFlying(p);
             boolean hyped = standing && DiscTracker.near(p, DiscTracker.SKYBOUND);

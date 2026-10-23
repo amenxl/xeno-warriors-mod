@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 /** Server -> clients: whether a character is poisoned / weakened (other players' effects aren't normally sent). */
 public record PoisonStatePacket(int entityId, int flags) {
-    public static final int POISON = 1, WEAKNESS = 2;
+    public static final int POISON = 1, WEAKNESS = 2, HUNGER = 4;
 
     public static void encode(PoisonStatePacket msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.entityId);

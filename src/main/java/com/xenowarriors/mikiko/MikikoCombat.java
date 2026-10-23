@@ -100,7 +100,8 @@ public final class MikikoCombat {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || player.tickCount % 10 != 0) return;
         if (ModCapabilities.getType(player) == CharacterType.NONE) return;
         int flags = (player.hasEffect(MobEffects.POISON) ? PoisonStatePacket.POISON : 0)
-                | (player.hasEffect(MobEffects.WEAKNESS) ? PoisonStatePacket.WEAKNESS : 0);
+                | (player.hasEffect(MobEffects.WEAKNESS) ? PoisonStatePacket.WEAKNESS : 0)
+                | (player.hasEffect(MobEffects.HUNGER) ? PoisonStatePacket.HUNGER : 0);
         Integer before = STATUS.put(player.getUUID(), flags);
         // send on change, and every 2s while affected so players who walk up see it too
         if (before == null || before != flags || (flags != 0 && player.tickCount % 40 == 0)) {

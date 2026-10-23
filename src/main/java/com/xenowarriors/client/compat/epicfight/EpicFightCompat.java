@@ -33,6 +33,11 @@ public final class EpicFightCompat {
         MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, EpicFightCompat::onRenderPlayer);
         MinecraftForge.EVENT_BUS.addListener(EpicFightCompat::onClientTick);
         com.xenowarriors.client.AttackHooks.externalAttack = p -> STARTED.remove(p.getId()) != null;
+        com.xenowarriors.client.AttackHooks.externalBusy = p -> {
+            var patch = patch(p);
+            return patch != null && patch.isEpicFightMode()
+                    && Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION));
+        };
     }
 
     private static final java.util.Map<Integer, Object[]> LAST = new java.util.HashMap<>();   // id -> {animation, elapsed}

@@ -96,6 +96,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return (p.tickCount / 7) % 2 == 0 ? "exhausted" : "exhausted2";
         }
         if (p.getHealth() <= p.getMaxHealth() * 0.3F && p.isAlive()) return "strained";
+        if (ClientSkillState.hungerEffect(p)) {
+            // the Hunger effect: queasy and starving - drooling, the odd green-faced wince
+            int ht = (p.tickCount + p.getId() * 17) % 120;
+            if (ht < 3) return "blink";
+            return ht >= 90 && ht < 108 ? "sick" : (ht / 12) % 2 == 0 ? "hungry" : "hungry2";
+        }
         if (ClientSkillState.feelingSick(p)) return "sick";
         if (p == net.minecraft.client.Minecraft.getInstance().player && com.xenowarriors.client.StatToasts.justLeveledUp()) return "sparkle";
         int around = com.xenowarriors.client.Surroundings.of(p);

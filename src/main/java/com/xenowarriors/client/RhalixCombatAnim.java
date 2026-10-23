@@ -95,6 +95,7 @@ public final class RhalixCombatAnim {
                 charged = true;
             }
             boolean sword = isSword(p);
+            if (com.xenowarriors.client.compat.DmzCompat.blocking(p)) start = false;   // strikes from the guard: BlockPose
             if (start && sword && charged && !(p == mc.player && mc.hitResult != null
                     && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK)) {
                 if (now - s.lastAttack > COMBO_TIMEOUT || s.step >= 5 || s.variant < 0 || !s.sword) {
@@ -107,7 +108,7 @@ public final class RhalixCombatAnim {
                 s.lastAttack = now;
             }
             // standing about holding a sword
-            boolean still = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround()
+            boolean still = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p)
                     && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p);
             s.still = still && sword && s.move == null ? s.still + 1 : 0;
             boolean idling = s.still >= SWORD_IDLE_AFTER && !RhalixWingsClient.busy(p);
@@ -115,7 +116,7 @@ public final class RhalixCombatAnim {
             s.idle = Mth.clamp(s.idle + (idling ? 0.08F : -0.2F), 0F, 1F);
             if (idling) s.clock++;
             else if (s.idle <= 0F) s.clock = 0;          // (keeps its place while fading out)
-            boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround()
+            boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p)
                     && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
                     && p.getMainHandItem().isEmpty() && s.move == null && !RhalixWingsClient.busy(p) && !RhalixHungerClient.hungry(p);
             int stickT = s.calm >= STICK_AFTER ? (s.calm - STICK_AFTER) % STICK_EVERY : -1;

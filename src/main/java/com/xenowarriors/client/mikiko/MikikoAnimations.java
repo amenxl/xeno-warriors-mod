@@ -263,7 +263,7 @@ public final class MikikoAnimations {
                 || Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) > 0.01
                 || !p.onGround() || p.isCrouching() || p.swinging || p.hurtTime > 0 || p.isUsingItem()
                 || p.isPassenger() || p.isSleeping() || p.isSwimming() || p.isFallFlying() || s.move != null
-                || ClientSkillState.currentAnim(p) != null;
+                || ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.Busy.busy(p);
         s.still = moving ? 0 : s.still + 1;
         boolean poisoned = POISONED.contains(p.getId()) || (p == Minecraft.getInstance().player
                 && p.hasEffect(net.minecraft.world.effect.MobEffects.POISON));
@@ -417,6 +417,7 @@ public final class MikikoAnimations {
     }
 
     private static void startAttack(AbstractClientPlayer p, State s, int now) {
+        if (com.xenowarriors.client.compat.DmzCompat.blocking(p)) return;      // strikes from the guard: BlockPose
         if (com.xenowarriors.client.SurfPose.surfing(p)) {            // on the Hekublade: board moves instead
             com.xenowarriors.client.SurfPose.startAttack(p, now);
             s.lastAttack = now;

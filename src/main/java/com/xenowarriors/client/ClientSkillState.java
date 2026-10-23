@@ -59,7 +59,13 @@ public final class ClientSkillState {
         if (p == Minecraft.getInstance().player) {
             return p.hasEffect(net.minecraft.world.effect.MobEffects.POISON) || p.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS);
         }
-        return STATUS.getOrDefault(p.getId(), 0) != 0;
+        return (STATUS.getOrDefault(p.getId(), 0) & 3) != 0;
+    }
+
+    /** Has the Hunger effect (rotten flesh, raw chicken...) - exact for your own player, from the server for others. */
+    public static boolean hungerEffect(net.minecraft.world.entity.player.Player p) {
+        if (p == Minecraft.getInstance().player) return p.hasEffect(net.minecraft.world.effect.MobEffects.HUNGER);
+        return (STATUS.getOrDefault(p.getId(), 0) & 4) != 0;
     }
 
     private static final Map<Integer, Integer> FLIGHT = new HashMap<>();   // entity id -> total flight ticks
