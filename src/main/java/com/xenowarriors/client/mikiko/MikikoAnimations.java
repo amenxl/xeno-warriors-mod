@@ -250,7 +250,8 @@ public final class MikikoAnimations {
         ItemStack heldNow = p.getMainHandItem();
         boolean dropped = (s.heldCount > 0 && heldNow.getCount() < s.heldCount && heldNow.getItem() == s.heldItem)
                 || (s.heldCount > 0 && heldNow.isEmpty())
-                || (p == Minecraft.getInstance().player && Minecraft.getInstance().options.keyDrop.isDown());
+                || (p == Minecraft.getInstance().player && (Minecraft.getInstance().options.keyDrop.isDown()
+                        || Minecraft.getInstance().options.keyUse.isDown()));     // (right-clicking someone or something isn't an attack either)
         s.heldItem = heldNow.getItem();
         s.heldCount = heldNow.getCount();
         boolean swingStart = !dropped && p.swinging && p.swingingArm == InteractionHand.MAIN_HAND
@@ -482,7 +483,7 @@ public final class MikikoAnimations {
                 // the Hekublade only comes out now and then, on the last couple of hits, for someone just out of fist
                 // range (its slash reaches them); otherwise it stays punches and kicks
                 boolean lastHits = s.comboStep >= COMBOS[0].length - 1;
-                net.minecraft.world.entity.LivingEntity far = flying || !held.isEmpty() || !lastHits || RANDOM.nextFloat() >= 0.45F
+                net.minecraft.world.entity.LivingEntity far = flying || !held.isEmpty() || !lastHits || RANDOM.nextFloat() >= 0.2F
                         ? null : BladeReach.farTarget(lp);
                 if (far != null) {
                     if (!move.blade) move = COMBO_BLADE[RANDOM.nextInt(COMBO_BLADE.length)];

@@ -165,8 +165,18 @@ public final class KarmaSensing {
         }
     }
 
+    /** As far as you can see: your render distance (in blocks). */
+    private static double viewLimit(ServerPlayer p) {
+        int chunks = Math.min(p.server.getPlayerList().getViewDistance(), Math.max(2, p.requestedViewDistance()));
+        return chunks * 16.0;
+    }
+
     private static void scan(ServerPlayer player, double RADIUS, int DURATION, boolean friendly, boolean first) {
         int uses = uses(player);
+        // never further than you can see; reaching past that, your sense is strong enough to read everyone's stats
+        double limit = viewLimit(player);
+        boolean overflow = RADIUS > limit;
+        RADIUS = Math.min(RADIUS, limit);
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
                         && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses < MASTERY)))
@@ -180,7 +190,7 @@ public final class KarmaSensing {
         int[] damage = found.stream().mapToInt(e -> e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
                 ? (int) Math.round(e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 10) : 0).toArray();
         int[] armor = found.stream().mapToInt(LivingEntity::getArmorValue).toArray();
-        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS, souls, damage, armor, first, (float) RADIUS), player);
+        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS || overflow, souls, damage, armor, first, (float) RADIUS, overflow), player);
         if (first) {
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);

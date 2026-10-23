@@ -87,7 +87,8 @@ public final class RhalixCombatAnim {
             if (!rhalix(p)) continue;
             State s = STATES.computeIfAbsent(p.getId(), k -> new State());
             int now = p.tickCount;
-            boolean start = p.swinging && p.swingingArm == InteractionHand.MAIN_HAND && (!s.lastSwinging || p.swingTime < s.lastSwingTime);
+            boolean start = p.swinging && p.swingingArm == InteractionHand.MAIN_HAND && (!s.lastSwinging || p.swingTime < s.lastSwingTime)
+                    && !(p == mc.player && (mc.options.keyUse.isDown() || mc.options.keyDrop.isDown()));   // right-click / drop swings aren't attacks
             s.lastSwinging = p.swinging;
             s.lastSwingTime = p.swingTime;
             boolean charged = p == mc.player ? s.strength >= 0.9F : now - s.lastSwingStart >= 9;

@@ -54,13 +54,17 @@ public final class KarmaSense {
         return lv == null ? 0 : Math.max(0, lv);
     }
 
-    /** You're stronger than it: you can read its stats. */
+    private static boolean allStats;       // sensing past your render distance: everyone's stats, however strong
+
+    /** You're stronger than it (or sensing that far): you can read its stats. */
     public static boolean outclass(Entity e) {
         Integer lv = LEVELS.get(e.getId());
+        if (allStats && lv != null && lv >= 0) return true;
         return lv != null && lv >= 0 && com.xenowarriors.client.LevelHud.level() > lv;
     }
 
-    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor, boolean first) {
+    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor, boolean first, boolean allStats) {
+        KarmaSense.allStats = allStats;
         STATS.clear();
         for (int i = 0; i < ids.length && i < damage.length && i < armor.length; i++) STATS.put(ids[i], new int[]{damage[i], armor[i]});
         SOULS.clear();
