@@ -16,6 +16,14 @@ def build():
 
     # ---------------- hair: long straight purple locks, pink highlights on top, a few black strands
     PH, P1, P2, P3, PK = '#d06ae8', '#a63fdc', '#8a2cc4', '#6a1f9e', '#1c1622'
+    import os
+    STYLE = os.environ.get('HAIR_STYLE', 'A')     # A: black tips; B: black tips + black under-layer; C: purple fading to black
+    BK = '#18141c'
+    def tip(c, under=False):
+        # his hair is purple, only the bottom part black
+        if STYLE == 'C': return (c[0], P3, BK)
+        if STYLE == 'B' and under: return (c[0], BK, BK)
+        return (c[0], c[1], BK)
     A('Head', 'Hair Cap Top', [-4.6, 32.0, -4.6], [4.6, 33.2, 4.6], P2)
     A('Head', 'Hair Cap Front', [-4.6, 30.8, -4.75], [4.6, 32.0, -4.0], P3)
     A('Head', 'Hair Cap Back', [-4.6, 26.2, 4.0], [4.6, 32.0, 4.75], P3)
@@ -43,22 +51,22 @@ def build():
                           (-0.55, 4.4, 1.3, (P1, P2, P2)), (-1.85, 3.2, 1.7, (PH, P1, P1)),
                           (-3.3, 4.4, 1.6, (P1, P2, P3))):
         hang((x, 32.8, -4.95), (x * 0.02, -1, -0.12), ln, w, col)
-    hang((2.95, 32.4, -5.05), (0.02, -1, -0.1), 6.6, 0.95, (PK, PK, PK))      # black strand by his eye
-    hang((0.35, 32.4, -5.05), (0.0, -1, -0.1), 6.0, 0.95, (PK, PK, PK))       # black strand between his eyes
+    hang((2.95, 32.4, -5.05), (0.02, -1, -0.1), 6.6, 0.95, tip((P1, P2, P3)))      # black strand by his eye
+    hang((0.35, 32.4, -5.05), (0.0, -1, -0.1), 6.0, 0.95, tip((P1, P2, P3)))       # black strand between his eyes
     # sides: two layers down past the jaw, flaring out a little
     for s in (1, -1):
         for z, ln in ((-3.3, 7.6), (-1.9, 8.2), (-0.5, 8.6), (0.9, 8.6), (2.3, 8.2), (3.6, 7.8)):
             hang((s * 5.0, 32.4, z), (s * 0.12, -1, 0.04), ln + rnd.uniform(-.3, .3), 1.5,
-                 (PH, P1, P2) if int((z + 4) * 10) % 2 else (P1, P2, P3), 'z')
+                 tip((PH, P1, P2) if int((z + 4) * 10) % 2 else (P1, P2, P3)), 'z')
         for z, ln in ((-2.6, 7.0), (0.2, 7.4), (2.9, 7.0)):
-            hang((s * 5.7, 31.6, z), (s * 0.2, -1, 0.05), ln, 1.6, (P1, P2, P3), 'z')
-        hang((s * 4.85, 31.0, -4.0), (s * 0.1, -1, -0.02), 6.2, 1.0, (PK, PK, P3), 'z')
+            hang((s * 5.7, 31.6, z), (s * 0.2, -1, 0.05), ln, 1.6, tip((P1, P2, P3), True), 'z')
+        hang((s * 4.85, 31.0, -4.0), (s * 0.1, -1, -0.02), 6.2, 1.0, tip((P2, P3, P3), True), 'z')
     # back
     for x in [-3.7, -2.25, -0.75, 0.75, 2.25, 3.7]:
         hang((x, 32.4, 5.0), (x * 0.03, -1, 0.12), 9.0 + rnd.uniform(-.4, .4), 1.5,
-             (PH, P1, P2) if int((x + 4) * 10) % 2 else (P1, P2, P3))
+             tip((PH, P1, P2) if int((x + 4) * 10) % 2 else (P1, P2, P3)))
     for x in [-3.0, -1.0, 1.0, 3.0]:
-        hang((x, 31.6, 5.7), (x * 0.04, -1, 0.18), 8.0, 1.6, (P1, P2, P3))
+        hang((x, 31.6, 5.7), (x * 0.04, -1, 0.18), 8.0, 1.6, tip((P1, P2, P3), True))
     # twig in his mouth
     A('Head', 'Twig', [-4.6, 25.95, -4.55], [-1.5, 26.25, -4.25], '#3d5a24', [0, 18, -10], [-1.6, 26.1, -4.4])
     A('Head', 'Twig Leaf', [-4.8, 26.2, -4.9], [-3.8, 26.45, -3.9], '#4f7a2a', [0, 30, -8], [-1.6, 26.1, -4.4])

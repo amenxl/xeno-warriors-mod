@@ -8,8 +8,8 @@ Generator tools live in tools/xw (if the container was reset: `mkdir -p /home/cl
 User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Poses for Chars/, manga/, Heku/, S3 script .docx, episodes).
 
 ## Queue (rough priority)
-1. Rhalix hair: black only on the bottom part (check refs), send picture options.
-2. Skylander wing variants (shapes/colors/sizes).
+1. ~~Rhalix hair~~ done (A in game; switch to B/C if user picks)
+2. ~~Skylander wing variants~~ done
 3. Sky Crystal tools: sword, pickaxe, axe, shovel, hoe (+ corrupted versions).
 4. Skylanders stay on their islands; bigger islands; house/chest defense (run in and attack).
 5. Sky Haters build ladders/towers up to sky islands.
@@ -24,3 +24,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 
 ## Log
 - Fri 05:30 — plan set up, folder access granted, tools backed up.
+- Fri 06:10 — 0.88.0: Rhalix hair black only at the tips (options A/B/C sent, A in game; rhalix.py HAIR_STYLE env), Skylander wing variety (size/tint/spread per UUID, guardians big golden).
