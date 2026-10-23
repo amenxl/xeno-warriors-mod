@@ -86,7 +86,7 @@ public final class DmzKiSenseLink {
     /** Karma's aura colours: dark purple; corrupted creatures a deeper, darker purple. */
     public static void recolor(LivingEntity e, float[][] colors) {
         if (!linked || colors == null) return;
-        boolean corrupted = com.xenowarriors.client.corrupted.CorruptionClient.is(e.getId())
+        boolean corrupted = KarmaSense.soul(e) || com.xenowarriors.client.corrupted.CorruptionClient.is(e.getId())
                 || e instanceof com.xenowarriors.corrupted.CorruptedVillagerEntity || e instanceof com.xenowarriors.corrupted.CorruptedSoulEntity;
         float[] c = corrupted ? new float[]{0.32F, 0.02F, 0.46F} : new float[]{0.45F, 0.12F, 0.68F};
         for (int i = 0; i < colors.length; i++) {

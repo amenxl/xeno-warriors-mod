@@ -47,6 +47,10 @@ public class CorruptedVillagerEntity extends Zombie {
         this.xpReward = 8;
     }
 
+    public boolean wasVillager() {
+        return wasVillager;
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return Zombie.createAttributes()
                 .add(Attributes.MAX_HEALTH, 24.0)

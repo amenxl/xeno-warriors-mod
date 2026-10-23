@@ -71,6 +71,7 @@ public final class RopeBladeClient {
     public static void onUse(InputEvent.InteractionKeyMappingTriggered event) {
         Minecraft mc = Minecraft.getInstance();
         if (!event.isUseItem() || event.getHand() != InteractionHand.MAIN_HAND || mc.player == null || !eligible(mc.player)) return;
+        if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult) return;   // (right-clicking someone: drawing out a soul)
         if (mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult b && b.getType() != net.minecraft.world.phys.HitResult.Type.MISS
                 && mc.level.getBlockState(b.getBlockPos()).hasBlockEntity()) return;     // (still open chests and such)
         event.setCanceled(true);

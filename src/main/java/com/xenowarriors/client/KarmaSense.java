@@ -39,7 +39,16 @@ public final class KarmaSense {
 
     private KarmaSense() {}
 
-    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels) {
+    private static final java.util.Set<Integer> SOULS = new java.util.HashSet<>();   // sensed with a corrupted soul inside
+
+    /** Sensed as a corrupted soul (or carrying one, even hidden). */
+    public static boolean soul(Entity e) {
+        return SOULS.contains(e.getId()) && isSensed(e);
+    }
+
+    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls) {
+        SOULS.clear();
+        for (int id : souls) SOULS.add(id);
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         long until = mc.level.getGameTime() + duration;
@@ -75,6 +84,7 @@ public final class KarmaSense {
     public static int color(Entity e) {
         Minecraft mc = Minecraft.getInstance();
         if (faint(e)) return 0x6E6A7E;
+        if (SOULS.contains(e.getId())) return 0x5A1A8A;                 // corrupted soul: dark purple
         Long tracked = TRACKED.get(e.getId());
         if (tracked != null && mc.level != null && mc.level.getGameTime() < tracked) return 0xFF7A1A;
         if (e instanceof Enemy) return 0xFF3A3A;

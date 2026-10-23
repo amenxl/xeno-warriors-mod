@@ -73,7 +73,7 @@ public final class CorruptedAnimals {
      * villagers): the soul takes the body as it is, rather than turning it into a vanilla-looking possessed person.
      */
     public static boolean canPossessOther(net.minecraft.world.entity.PathfinderMob m) {
-        return !vanilla(m) && !(m instanceof net.minecraft.world.entity.monster.Monster) && !(m instanceof Animal)
+        return !vanilla(m) && !HiddenSouls.hidden(m) && !(m instanceof net.minecraft.world.entity.monster.Monster) && !(m instanceof Animal)
                 && !(m instanceof TamableAnimal) && !isCorrupted(m) && m.getMaxHealth() <= MAX_HOST_HEALTH
                 && m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) != null
                 && !m.getPersistentData().contains("xw_sealed") && !m.getPersistentData().contains("xw_owner");
@@ -120,6 +120,11 @@ public final class CorruptedAnimals {
         inst.removeModifier(id);
         inst.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(id, "Corrupted soul", amount,
                 net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE));
+    }
+
+    /** Drives the soul out of a possessed monster or other creature (Mikiko's Hekublade). */
+    public static void cleanseMob(net.minecraft.world.entity.Mob m) {
+        cleanseMonster(m);
     }
 
     private static void cleanseMonster(net.minecraft.world.entity.Mob m) {

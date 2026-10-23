@@ -184,7 +184,7 @@ public class CorruptedSoulEntity extends Monster {
             if (target != null && soul.distanceToSqr(target) < 36) return false;
             List<Mob> bodies = soul.level().getEntitiesOfClass(Mob.class, soul.getBoundingBox().inflate(16),
                     m -> m.isAlive() && ((m instanceof Animal a && CorruptedAnimals.canPossess(a))
-                            || (m instanceof Villager && m.getClass() == Villager.class)
+                            || (m instanceof Villager && m.getClass() == Villager.class && !HiddenSouls.hidden(m))
                             || (m instanceof Monster mon && m != soul && CorruptedAnimals.canPossess(mon))
                             || (m instanceof net.minecraft.world.entity.PathfinderMob pm && CorruptedAnimals.canPossessOther(pm))));
             host = null;
@@ -216,6 +216,16 @@ public class CorruptedSoulEntity extends Monster {
             soul.getNavigation().moveTo(host.getX(), host.getY() + host.getBbHeight() * 0.6, host.getZ(), 1.3);
             if (soul.distanceToSqr(host.getX(), host.getY() + host.getBbHeight() * 0.5, host.getZ()) < 2.5) {
                 boolean took = false;
+                boolean person = host instanceof Villager || (host instanceof net.minecraft.world.entity.PathfinderMob op
+                        && !(host instanceof Animal) && !(host instanceof Monster) && CorruptedAnimals.canPossessOther(op));
+                if (person && soul.getRandom().nextFloat() < HiddenSouls.CHANCE && !HiddenSouls.hidden(host)) {
+                    // slips in quietly and hides: the person carries on as normal (only Karma Sensing gives it away)
+                    HiddenSouls.hide(host);
+                    soul.playSound(SoundEvents.SOUL_ESCAPE, 0.3F, 0.6F);
+                    soul.discard();
+                    host = null;
+                    return;
+                }
                 if (host instanceof Animal a) {
                     took = CorruptedAnimals.corrupt(a);
                 } else if (host instanceof Monster mon) {

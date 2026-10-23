@@ -69,6 +69,12 @@ public final class KarmaSensing {
     }
 
     /** A threat: something hostile, or anything that's hunting you. */
+    /** A corrupted soul, or something with one inside it (showing or hidden). */
+    public static boolean corrupted(LivingEntity e) {
+        return e instanceof com.xenowarriors.corrupted.CorruptedSoulEntity || e instanceof com.xenowarriors.corrupted.CSoulBossEntity
+                || com.xenowarriors.mikiko.SoulExtract.hasSoul(e);
+    }
+
     private static boolean threat(LivingEntity e, ServerPlayer player) {
         return e instanceof net.minecraft.world.entity.monster.Enemy
                 || (e instanceof net.minecraft.world.entity.Mob m && m.getTarget() == player);
@@ -108,11 +114,13 @@ public final class KarmaSensing {
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
                         && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses(player) < MASTERY)))
-                        && (friendly || e instanceof Player || threat(e, player)));
+                        && (friendly || e instanceof Player || threat(e, player) || corrupted(e)));
         int[] ids = found.stream().mapToInt(LivingEntity::getId).toArray();
         // a fully mastered sense can feel people through a Karma-reducing hoodie - but only faintly, no level (-1)
         int[] levels = found.stream().mapToInt(e -> e instanceof Player p && HoodieItem.wearing(p) ? -1 : power(e)).toArray();
-        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS), player);
+        // anything with a corrupted soul in it (hidden ones too) feels like the soul itself
+        int[] souls = found.stream().filter(KarmaSensing::corrupted).mapToInt(LivingEntity::getId).toArray();
+        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS, souls), player);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.6F);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
         player.displayClientMessage(Component.translatable("message.xenowarriors.karma_sense.found", ids.length), true);
