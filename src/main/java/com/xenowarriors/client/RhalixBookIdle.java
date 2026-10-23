@@ -166,12 +166,12 @@ public final class RhalixBookIdle {
             pose.translate((o1 ? 4.6F : -4.6F) / 16F, -0.6F / 16F, -9.6F / 16F);
             pose.mulPose(Axis.YP.rotation(st[2]));
         } else {
-            pose.translate(0F, 6.2F / 16F, -9.4F / 16F);         // between his hands, in front of his chest
+            pose.translate(0F, 4.4F / 16F, -10.2F / 16F);        // between his hands, held up in front of him
             pose.mulPose(Axis.XP.rotationDegrees(-30F));          // tilted up toward his face
         }
         pose.mulPose(Axis.ZP.rotationDegrees(180F));              // (model space is upside down)
         pose.mulPose(Axis.YP.rotationDegrees(-90F));              // pages open toward him
-        float s = 0.55F * st[1];
+        float s = (st[0] == 1F ? 0.55F : 0.78F) * st[1];      // (bigger once it's open in both hands)
         pose.scale(s, s, s);
         float flip = (t % 90F) > 80F ? ((t % 90F) - 80F) / 10F : 0F;
         book.setupAnim(t, flip, 0F, st[3]);

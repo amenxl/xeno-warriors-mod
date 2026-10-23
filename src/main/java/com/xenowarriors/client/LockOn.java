@@ -41,7 +41,7 @@ import org.joml.Matrix4f;
 public final class LockOn {
     private static final double RANGE = 28, KEEP_RANGE = 36, CONE = 32;
     /** In the air you can see (and lock on to) much further. */
-    private static final double FLY_RANGE = 64, FLY_KEEP_RANGE = 80;
+    private static final double FLY_RANGE = 110, FLY_KEEP_RANGE = 140;
 
     private static boolean flying(net.minecraft.world.entity.player.Player p) {
         return p.getAbilities().flying || p.isFallFlying()
@@ -151,6 +151,7 @@ public final class LockOn {
             }
             external = true;
             shownHealth = Mth.lerp(0.25F, shownHealth, target.getHealth());
+            matchHeight(mc.player, target);
             return;
         }
         if (external) {                                  // the other lock-on let go
@@ -170,6 +171,25 @@ public final class LockOn {
             return;      // (target is gone now - this was the crash)
         }
         shownHealth = Mth.lerp(0.25F, shownHealth, target.getHealth());
+        matchHeight(mc.player, target);
+    }
+
+    /**
+     * Flying while locked on: you rise or sink to the target's height as you close in, so you meet it level
+     * (holding jump or sneak still moves you up or down yourself).
+     */
+    private static void matchHeight(LocalPlayer p, LivingEntity t) {
+        if (p == null || t == null || !p.getAbilities().flying) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.keyJump.isDown() || mc.options.keyShift.isDown()) return;
+        double dy = t.getY() + t.getBbHeight() * 0.5 - (p.getY() + p.getBbHeight() * 0.5);
+        if (Math.abs(dy) < 0.4) return;
+        double horiz = Math.sqrt(Math.pow(t.getX() - p.getX(), 2) + Math.pow(t.getZ() - p.getZ(), 2));
+        // gentle when far off, settling in firmly as you approach
+        double strength = horiz < 24 ? 0.18 : 0.08;
+        double want = Mth.clamp(dy * strength, -0.6, 0.6);
+        Vec3 v = p.getDeltaMovement();
+        p.setDeltaMovement(v.x, Mth.lerp(0.35, v.y, want), v.z);
     }
 
     /** Turn the view toward the target every frame, smoothly. */

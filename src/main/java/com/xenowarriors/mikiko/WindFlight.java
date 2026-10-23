@@ -91,10 +91,16 @@ public final class WindFlight {
             }
             if (!granted) {
                 p.getPersistentData().putBoolean(GRANTED, true);
-                p.sendSystemMessage(Component.literal("After a lot of thought and consideration, why not use my wing to fly?")
-                        .withStyle(ChatFormatting.AQUA));
-                p.sendSystemMessage(Component.literal("(Double-tap jump to take off.)").withStyle(ChatFormatting.GRAY));
-                p.level().playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1F, 1.4F);
+                // told only the first time ever (kept through deaths and respawns)
+                var keep = p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG);
+                if (!keep.getBoolean("xw_flight_announced")) {
+                    keep.putBoolean("xw_flight_announced", true);
+                    p.getPersistentData().put(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG, keep);
+                    p.sendSystemMessage(Component.literal("After a lot of thought and consideration, why not use my wing to fly?")
+                            .withStyle(ChatFormatting.AQUA));
+                    p.sendSystemMessage(Component.literal("(Double-tap jump to take off.)").withStyle(ChatFormatting.GRAY));
+                    p.level().playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1F, 1.4F);
+                }
             }
         } else if (granted) {
             // not Mikiko any more (or levels were reset): the wind lets go
