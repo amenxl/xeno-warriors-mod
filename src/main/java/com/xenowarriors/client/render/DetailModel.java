@@ -407,7 +407,8 @@ public class DetailModel {
             float[] sz = floats(c.getAsJsonArray("size"));
             int u = (int) uv[0], v = (int) uv[1];
             float top = f[1], bottom = f[1] + sz[1];
-            if (bottom <= split + 0.6F && (top + bottom) / 2F < split) {
+            // (thin trim sitting just over the joint - a hem, a rim - stays with the upper half)
+            if ((bottom <= split + 0.6F && (top + bottom) / 2F < split) || (top < split + 0.45F && bottom <= split + 0.75F)) {
                 upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2]);
             } else if (top >= split - 0.6F) {
                 lower.texOffs(u, v).addBox(f[0], f[1] - split, f[2], sz[0], sz[1], sz[2]);
