@@ -21,6 +21,11 @@ public final class ModItems {
     public static final RegistryObject<Item> METAL_POLE = ITEMS.register("metal_pole",
             () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.IRON, 3, -2.8F, new Item.Properties()));
 
+    public static final RegistryObject<Item> HUMAN_SPAWN_EGG = ITEMS.register("human_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.HUMAN, 0xE8C8A8, 0x2A2A44, new Item.Properties()));
+    public static final RegistryObject<Item> DARK_POSSESSED_SPAWN_EGG = ITEMS.register("dark_possessed_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.DARK_POSSESSED, 0x141016, 0xE01818, new Item.Properties()));
+
     public static final RegistryObject<Item> KARMA_HOODIE = ITEMS.register("karma_hoodie",
             () -> new KarmaHoodieItem(new Item.Properties()));
 

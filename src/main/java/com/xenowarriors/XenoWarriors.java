@@ -24,6 +24,7 @@ public class XenoWarriors {
             com.xenowarriors.client.compat.epicfight.EpicFightCompat.init(modBus);
         }
         com.xenowarriors.corrupted.ModCorrupted.init();
+        com.xenowarriors.npc.ModNpcs.init();
         ModEntities.ENTITY_TYPES.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);

@@ -72,6 +72,7 @@ public final class KarmaSensing {
     /** A corrupted soul, or something with one inside it (showing or hidden). */
     public static boolean corrupted(LivingEntity e) {
         return e instanceof com.xenowarriors.corrupted.CorruptedSoulEntity || e instanceof com.xenowarriors.corrupted.CSoulBossEntity
+                || e instanceof com.xenowarriors.npc.DarkPossessedEntity
                 || com.xenowarriors.mikiko.SoulExtract.hasSoul(e);
     }
 

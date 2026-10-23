@@ -35,8 +35,17 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.THROWN_HEKUBLADE.get(), com.xenowarriors.client.render.ThrownHekubladeRenderer::new);
         event.registerEntityRenderer(ModEntities.FIRE_BLITZ.get(), FireBlitzRenderer::new);
         event.registerEntityRenderer(ModEntities.BLAZING_WIND.get(), BlazingWindRenderer::new);
+        // possessed people look like the townsfolk they were - drained dark, red eyes (fighting moves from PossessedModel)
         event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_VILLAGER.get(),
-                com.xenowarriors.client.corrupted.CorruptedVillagerRenderer::new);
+                ctx -> new com.xenowarriors.client.npc.NpcRenderer<com.xenowarriors.corrupted.CorruptedVillagerEntity>(ctx,
+                        new com.xenowarriors.client.corrupted.PossessedModel(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER)),
+                        e -> com.xenowarriors.npc.NpcLooks.human(e.getUUID().hashCode()), e -> true));
+        event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.HUMAN.get(),
+                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.npc.HumanNpcEntity>plain(ctx,
+                        e -> com.xenowarriors.npc.NpcLooks.human(e.variant()), com.xenowarriors.npc.HumanNpcEntity::possessed));
+        event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get(),
+                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.npc.DarkPossessedEntity>plain(ctx,
+                        e -> com.xenowarriors.npc.NpcLooks.dark(e.variant()), e -> true));
         event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get(),
                 com.xenowarriors.client.corrupted.CorruptedSoulRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.C_SOUL.get(),

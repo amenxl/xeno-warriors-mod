@@ -37,7 +37,8 @@ public final class SoulExtract {
 
     /** Has a corrupted soul in it - showing or hidden. */
     public static boolean hasSoul(LivingEntity e) {
-        return e instanceof CorruptedVillagerEntity || CorruptedAnimals.isCorrupted(e) || HiddenSouls.hidden(e);
+        return e instanceof CorruptedVillagerEntity || CorruptedAnimals.isCorrupted(e) || HiddenSouls.hidden(e)
+                || (e instanceof com.xenowarriors.npc.HumanNpcEntity h && h.carriesSoul());
     }
 
     @SubscribeEvent
@@ -60,7 +61,10 @@ public final class SoulExtract {
             HekubladeRealm.seal(p, soul);
         }
         String freed;
-        if (target instanceof CorruptedVillagerEntity cv) {
+        if (target instanceof com.xenowarriors.npc.HumanNpcEntity h) {
+            h.free();
+            freed = "They're themselves again.";
+        } else if (target instanceof CorruptedVillagerEntity cv) {
             if (cv.wasVillager()) {
                 Villager v = cv.convertTo(EntityType.VILLAGER, false);
                 freed = v != null ? "The villager is free." : null;

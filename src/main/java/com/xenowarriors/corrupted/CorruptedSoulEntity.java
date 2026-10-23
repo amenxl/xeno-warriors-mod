@@ -185,6 +185,7 @@ public class CorruptedSoulEntity extends Monster {
             List<Mob> bodies = soul.level().getEntitiesOfClass(Mob.class, soul.getBoundingBox().inflate(16),
                     m -> m.isAlive() && ((m instanceof Animal a && CorruptedAnimals.canPossess(a))
                             || (m instanceof Villager && m.getClass() == Villager.class && !HiddenSouls.hidden(m))
+                            || (m instanceof com.xenowarriors.npc.HumanNpcEntity h && !h.carriesSoul())
                             || (m instanceof Monster mon && m != soul && CorruptedAnimals.canPossess(mon))
                             || (m instanceof net.minecraft.world.entity.PathfinderMob pm && CorruptedAnimals.canPossessOther(pm))));
             host = null;
@@ -216,6 +217,21 @@ public class CorruptedSoulEntity extends Monster {
             soul.getNavigation().moveTo(host.getX(), host.getY() + host.getBbHeight() * 0.6, host.getZ(), 1.3);
             if (soul.distanceToSqr(host.getX(), host.getY() + host.getBbHeight() * 0.5, host.getZ()) < 2.5) {
                 boolean took = false;
+                if (host instanceof com.xenowarriors.npc.HumanNpcEntity h) {
+                    // people fight back: an armed one can drive it off
+                    if (h.fighter() && soul.getRandom().nextFloat() < 0.5F) {
+                        h.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                        soul.knockback(0.8, h.getX() - soul.getX(), h.getZ() - soul.getZ());
+                        h.setTarget(soul);
+                        host = null;
+                        return;
+                    }
+                    h.possess(soul.getRandom().nextFloat() < HiddenSouls.CHANCE);
+                    soul.playSound(SoundEvents.SOUL_ESCAPE, 0.4F, 0.6F);
+                    soul.discard();
+                    host = null;
+                    return;
+                }
                 boolean person = host instanceof Villager || (host instanceof net.minecraft.world.entity.PathfinderMob op
                         && !(host instanceof Animal) && !(host instanceof Monster) && CorruptedAnimals.canPossessOther(op));
                 if (person && soul.getRandom().nextFloat() < HiddenSouls.CHANCE && !HiddenSouls.hidden(host)) {
