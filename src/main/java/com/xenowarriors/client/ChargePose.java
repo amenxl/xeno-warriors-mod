@@ -126,10 +126,23 @@ public final class ChargePose {
         m.leftArm.xRot = Mth.lerp(e, m.leftArm.xRot, 0.25F - shake);
         m.leftArm.yRot = Mth.lerp(e, m.leftArm.yRot, 0F);
         m.leftArm.zRot = Mth.lerp(e, m.leftArm.zRot, -0.5F - shake);
-        m.rightLeg.xRot = Mth.lerp(e, m.rightLeg.xRot, 0F);
-        m.leftLeg.xRot = Mth.lerp(e, m.leftLeg.xRot, 0F);
-        m.rightLeg.zRot = Mth.lerp(e, m.rightLeg.zRot, 0.22F);
-        m.leftLeg.zRot = Mth.lerp(e, m.leftLeg.zRot, -0.22F);
+        // legs: a low, wide horse stance - thighs forward, knees bent and trembling with the same effort as the
+        // rest of him; the whole body sinks into it so hips and legs stay joined
+        float legShake = Mth.sin(age * 3.3F + 1.1F) * 0.03F + Mth.sin(age * 5.2F) * 0.015F;
+        float sink = 1.6F * e + shake * 6F * e;                     // px down, shuddering with the body
+        m.rightLeg.xRot = Mth.lerp(e, m.rightLeg.xRot, -0.32F + legShake);
+        m.leftLeg.xRot = Mth.lerp(e, m.leftLeg.xRot, -0.32F - legShake);
+        m.rightLeg.yRot = Mth.lerp(e, m.rightLeg.yRot, 0.12F);
+        m.leftLeg.yRot = Mth.lerp(e, m.leftLeg.yRot, -0.12F);
+        m.rightLeg.zRot = Mth.lerp(e, m.rightLeg.zRot, 0.3F + legShake * 0.6F);
+        m.leftLeg.zRot = Mth.lerp(e, m.leftLeg.zRot, -0.3F + legShake * 0.6F);
+        LimbBend.extraKnees(p, (0.75F + legShake * 2F) * e, (0.75F - legShake * 2F) * e);
+        m.rightLeg.y += sink * 0.5F;
+        m.leftLeg.y += sink * 0.5F;
+        m.body.y += sink;
+        m.head.y += sink;
+        m.rightArm.y += sink;
+        m.leftArm.y += sink;
         m.body.xRot = Mth.lerp(e, m.body.xRot, 0.12F + shake * 0.5F);
         m.head.xRot = Mth.lerp(e, m.head.xRot, -0.15F - 0.35F * yell);
         m.hat.copyFrom(m.head);

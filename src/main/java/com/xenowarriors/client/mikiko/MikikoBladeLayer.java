@@ -76,8 +76,10 @@ public class MikikoBladeLayer extends RenderLayer<AbstractClientPlayer, PlayerMo
         getParentModel().body.translateAndRotate(pose);
         if (toss) {
             float u = (t - 6F) / 24F;
-            float rise = 4F * u * (1F - u) * 1.7F;            // up and back down into his hand
-            pose.translate(-0.36F, 0.62F - rise, -0.35F);       // model space: y points down, -x is his right
+            // from his raised hand high above his head and back down into it; clear of his arm almost at once
+            float rise = 4F * u * (1F - u) * 2.8F;
+            float off = Math.min(1F, Math.min(u, 1F - u) * 6F);  // drifts a little forward while it's up
+            pose.translate(-0.36F, -0.1F - rise, -0.62F - off * 0.25F);   // model space: y points down, -x is his right
             pose.mulPose(Axis.XP.rotationDegrees(u * 720F));     // two full flips
             pose.mulPose(Axis.ZP.rotationDegrees(45F));
         } else {
