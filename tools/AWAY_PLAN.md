@@ -16,7 +16,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 5. ~~Sky Hater siege towers~~ done 0.91.0 (/xeno siege to test)
 6. ~~UI/HUD pass~~ done 0.92.0 (HudLayout.java). Still to check: menus/screens (stats screen, altar, fox screens) at small GUI scales; DMZ HUD actual position.
 7. Dragon Ball outfit compatibility — STEP 1 done 0.93.0: DMZ skin-layout outfits drawn on a split-limb PlayerModel (bends with knees/elbows), character's own torso/arm/leg clothes hidden under them (wings/hair kept). STEP 2 done 0.96.x: GiVoxels — outer layer (jacket/sleeves/pants/hat regions) voxelized per pixel (0.9 deep) on the bending gi model, all ~90 outfits. STEP 3 done 0.97.0 (user: 'full outfit shape'): GiShapes — loose 3D cut built from skin-layout UVs (collar, gi flap, thick belt, wrist/pant cuffs; armor style: chest plate + shoulder pads). NEXT (optional): hand-made 3D accents per popular gi (belts/wristbands/shoulder pads/collars) as extra detail models keyed by DMZ texture name; DMZ textures in /tmp/dmzx (re-extract from uploads/dragonminez-2_1_3.jar).
-8. Epic Fight weapon movesets for DMZ weapons (power pole etc.), per character.
+8. ~~EF movesets for DMZ weapons~~ done 0.98.0 (EfDmzWeapons: combined presets, Rhalix's moves in the OCHS style slot via styleProvider). NEXT (optional): truly custom EF animations per character (e.g. power pole spin) — needs EF animation JSON authoring.
 9. Enemy animation polish (humans, possessed, corrupted, sky haters).
 10. Humans/Skylanders gather, mine, build, craft gear (staged: gather → build small huts → craft armor).
 11. 3D armor polish (sky/corrupted), then vanilla armor in 3D.
@@ -37,3 +37,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Sat 09:25 — 0.95.2: call audio routed manually (MicrophonePacketEvent → decode → per-phone filter → static packet to partner); smartphone clean, flip = phone line, brick = crunchy/hiss/dropouts.
 - Sat 12:55 — 0.96.1: DMZ outfits in 3D (GiVoxels per-pixel raised outer layer, cached per texture, bends with knees/elbows). Preview sheet sent (tools/xw/outfits/dmz_voxel_preview.py).
 - Sat 16:35 — 0.97.0 (user clarified 'full outfit shape'): GiShapes 3D cut for DMZ outfits; preview sheet sent.
+- Sat 18:00 — 0.98.0: EF movesets for DMZ weapons per character (pole: M tachi / R spear; Z sword: M longsword / R greatsword; brave+dimensional: M sword / R longsword; katana: M uchigatana / R tachi).
