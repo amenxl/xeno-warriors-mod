@@ -60,6 +60,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.ClimbPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.SurfPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.BlockPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.PhoneClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
             }
         }
     }

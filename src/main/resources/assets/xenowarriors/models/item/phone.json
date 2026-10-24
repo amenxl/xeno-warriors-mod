@@ -1,1 +1,17 @@
-{"parent": "minecraft:item/generated", "textures": {"layer0": "xenowarriors:item/phone"}}
+{
+ "parent": "xenowarriors:item/phone_smart",
+ "overrides": [
+  {
+   "predicate": {
+    "xenowarriors:style": 0.5
+   },
+   "model": "xenowarriors:item/phone_flip"
+  },
+  {
+   "predicate": {
+    "xenowarriors:style": 1.0
+   },
+   "model": "xenowarriors:item/phone_brick"
+  }
+ ]
+}

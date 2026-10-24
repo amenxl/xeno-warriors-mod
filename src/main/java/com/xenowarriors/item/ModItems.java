@@ -51,7 +51,7 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_BOOTS = ITEMS.register("corrupted_boots",
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
-    public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new Item(new Item.Properties().stacksTo(16)));
+    public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new PhoneItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> BRIEFCASE = ITEMS.register("briefcase", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKYLANDER_SPAWN_EGG = ITEMS.register("skylander_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.SKYLANDER, 0xF2F2FF, 0x5EA8E8, new Item.Properties()));
@@ -163,7 +163,10 @@ public final class ModItems {
                     .displayItems((params, out) -> {
                         for (RegistryObject<Item> entry : ITEMS.getEntries()) {
                             Item item = entry.get();
-                            if (item == KARMA_HOODIE.get()) {
+                            if (item == PHONE.get()) {
+                                for (int st = 0; st < PhoneItem.STYLES.length; st++)
+                                    for (int color : PhoneItem.COLORS) out.accept(PhoneItem.make(item, st, color));
+                            } else if (item == KARMA_HOODIE.get()) {
                                 for (int color : KarmaHoodieItem.PRESETS) out.accept(KarmaHoodieItem.colored(item, color));
                             } else {
                                 out.accept(item);

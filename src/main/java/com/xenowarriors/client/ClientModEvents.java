@@ -92,6 +92,8 @@ public final class ClientModEvents {
         event.register((stack, layer) -> layer == 0
                         ? ((com.xenowarriors.item.KarmaHoodieItem) stack.getItem()).getColor(stack) | 0xFF000000 : -1,
                 com.xenowarriors.item.ModItems.KARMA_HOODIE.get());
+        event.register((stack, layer) -> layer == 0 ? com.xenowarriors.item.PhoneItem.color(stack) | 0xFF000000 : -1,
+                com.xenowarriors.item.ModItems.PHONE.get());
     }
 
     /** Extra Hekublade models (the sword and each crystal, drawn separately so the crystals can move). */
@@ -125,6 +127,8 @@ public final class ClientModEvents {
                     com.xenowarriors.fox.ModMenus.FOX.get(), com.xenowarriors.client.fox.FoxInventoryScreen::new);
             net.minecraft.client.gui.screens.MenuScreens.register(
                     com.xenowarriors.altar.ModAltar.MENU.get(), com.xenowarriors.client.KarmaAltarScreen::new);
+            net.minecraft.client.renderer.item.ItemProperties.register(com.xenowarriors.item.ModItems.PHONE.get(),
+                    com.xenowarriors.XenoWarriors.id("style"), (stack, level, entity, seed) -> com.xenowarriors.item.PhoneItem.style(stack) / 2F);
         });
     }
 
