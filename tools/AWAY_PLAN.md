@@ -15,7 +15,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 4b. ~~Wing styles~~ done 0.90.0 (tools/xw/wings/wing_styles.py) — was: Skylander wing STYLES, not just size/color** — separate wing models per style (e.g. big feathered angel, hawk/eagle pointed, swept falcon, bat/dragon membrane, butterfly/fairy, crystal sky wings, four-wing seraph, tattered/ragged). Pick per UUID (guardians: grand style). Send a picture sheet of all styles.
 5. ~~Sky Hater siege towers~~ done 0.91.0 (/xeno siege to test)
 6. ~~UI/HUD pass~~ done 0.92.0 (HudLayout.java). Still to check: menus/screens (stats screen, altar, fox screens) at small GUI scales; DMZ HUD actual position.
-7. Dragon Ball outfit compatibility: full 3D, no clipping, both characters (start with the most common gis).
+7. Dragon Ball outfit compatibility — STEP 1 done 0.93.0: DMZ skin-layout outfits drawn on a split-limb PlayerModel (bends with knees/elbows), character's own torso/arm/leg clothes hidden under them (wings/hair kept). NEXT: 3D accents per popular gi (belts/wristbands/shoulder pads/collars) as extra detail models keyed by DMZ texture name; DMZ textures in /tmp/dmzx (re-extract from uploads/dragonminez-2_1_3.jar).
 8. Epic Fight weapon movesets for DMZ weapons (power pole etc.), per character.
 9. Enemy animation polish (humans, possessed, corrupted, sky haters).
 10. Humans/Skylanders gather, mine, build, craft gear (staged: gather → build small huts → craft armor).
@@ -31,3 +31,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Fri 16:30 — 0.90.0: 8 Skylander wing styles as separate models (angel, hawk, falcon, bat, butterfly, crystal, seraph, tattered), picked per UUID (1/9 classic), guardians seraph; sheet sent.
 - Fri 21:25 — 0.91.0: Sky Hater sieges (random near island Skylanders, 2-day cooldown per island): builders build cobble+ladder tower w/ plank platforms, foreman rides top, bridge across, climb and attack Skylanders; /xeno siege (op).
 - Sat 02:35 — 0.92.0: HudLayout: top-right stack under status effects (request card, then toasts), lock-on bar under boss bars, level box left of offhand slot, party HUD kept above chat, skill bar raised 34px with Epic Fight. Layout diagram sent.
+- Sat 07:40 — 0.93.0: DMZ outfits bend with the body + hide own clothes underneath (no clipping); preview sheet (flat) sent.
