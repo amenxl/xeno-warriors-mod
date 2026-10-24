@@ -424,6 +424,8 @@ public class DetailModel {
                 if (p != body && !keep.contains(p) && p.visible) { p.visible = false; hidden.add(p); }
             });
         }
+        if (torso) for (ModelPart p : new ModelPart[]{hoodUp, hoodDown})          // (his hood goes with the top)
+            if (p != null && p.visible) { p.visible = false; hidden.add(p); }
         if (arms) for (ModelPart p : new ModelPart[]{rightArm, leftArm}) if (p.visible) { p.visible = false; hidden.add(p); }
         if (legs) for (ModelPart p : new ModelPart[]{rightLeg, leftLeg}) if (p.visible) { p.visible = false; hidden.add(p); }
     }
