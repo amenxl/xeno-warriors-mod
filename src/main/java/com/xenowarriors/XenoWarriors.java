@@ -24,6 +24,7 @@ public class XenoWarriors {
             com.xenowarriors.client.compat.epicfight.EpicFightCompat.init(modBus);
         }
         if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfNpcPatches.register(modBus);
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfDmzWeapons.register(modBus);
         com.xenowarriors.corrupted.ModCorrupted.init();
         com.xenowarriors.npc.ModNpcs.init();
         ModEntities.ENTITY_TYPES.register(modBus);

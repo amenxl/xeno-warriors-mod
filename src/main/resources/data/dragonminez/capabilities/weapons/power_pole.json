@@ -1,0 +1,15 @@
+{
+ "type": "xenowarriors:dmz_pole",
+ "attributes": {
+  "one_hand": {
+   "armor_negation": 0.0,
+   "impact": 1.8,
+   "max_strikes": 3
+  },
+  "two_hand": {
+   "armor_negation": 0.0,
+   "impact": 1.8,
+   "max_strikes": 3
+  }
+ }
+}
