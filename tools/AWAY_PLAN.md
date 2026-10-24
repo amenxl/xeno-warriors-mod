@@ -34,3 +34,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Sat 07:40 — 0.93.0: DMZ outfits bend with the body + hide own clothes underneath (no clipping); preview sheet (flat) sent.
 - Sat 09:05 — 0.94.0 (user request): usable phones: 3 3D models (smart/flip/brick) x 12 colors, right-click call toggles held-to-ear pose (PhoneClient), no attacks/skills while on call.
 - Sat 09:15 — 0.95.x (user requests): phone calls between players (contacts screen, ring card, SVC hidden group, /xeno phone answer|decline|hangup), ringtone + notes + caller ringback.
+- Sat 09:25 — 0.95.2: call audio routed manually (MicrophonePacketEvent → decode → per-phone filter → static packet to partner); smartphone clean, flip = phone line, brick = crunchy/hiss/dropouts.
