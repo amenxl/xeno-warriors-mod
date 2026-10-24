@@ -99,6 +99,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         getParentModel().copyPropertiesTo(base);
         showFor(base, slot);
         net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
+        boolean giVoxels = false;
         // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his
         if (model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) {
             if (giInner == null) {
@@ -133,7 +134,11 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                                gi.rightPants.visible = gi.leftPants.visible = true; }
                 default -> { gi.rightLeg.visible = gi.leftLeg.visible = true; gi.rightPants.visible = gi.leftPants.visible = true; }
             }
+            // the outer layer comes out in 3D (raised blocks), so its flat version is left off
+            gi.hat.visible = false; gi.jacket.visible = false;
+            gi.rightSleeve.visible = gi.leftSleeve.visible = gi.rightPants.visible = gi.leftPants.visible = false;
             model = gi;
+            giVoxels = true;
         } else if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
             ((net.minecraft.client.model.HumanoidModel) getParentModel()).copyPropertiesTo(hm);
             showFor(hm, slot);
@@ -148,6 +153,18 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         if (!(armor instanceof net.minecraft.world.item.DyeableLeatherItem)) c = new float[]{1F, 1F, 1F};
         VertexConsumer vc = net.minecraft.client.renderer.entity.ItemRenderer.getArmorFoilBuffer(buffers, RenderType.armorCutoutNoCull(tex), false, stack.hasFoil());
         model.renderToBuffer(pose, vc, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, c[0], c[1], c[2], 1F);
+        if (giVoxels) {
+            PlayerModel<AbstractClientPlayer> gi = (PlayerModel<AbstractClientPlayer>) model;
+            // show the parts this slot covers again so the 3D layer knows where to go
+            switch (slot) {
+                case HEAD -> gi.head.visible = true;
+                case CHEST -> { gi.body.visible = true; gi.rightArm.visible = gi.leftArm.visible = true; }
+                case LEGS -> { gi.rightLeg.visible = gi.leftLeg.visible = true; gi.body.visible = false; }
+                default -> { gi.rightLeg.visible = gi.leftLeg.visible = true; }
+            }
+            GiVoxels.render(pose, net.minecraft.client.renderer.entity.ItemRenderer.getArmorFoilBuffer(buffers, RenderType.armorCutoutNoCull(tex), false, stack.hasFoil()),
+                    tex, gi, legs ? 0.32F : 0.62F, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, c[0], c[1], c[2]);
+        }
     }
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
