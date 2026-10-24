@@ -121,8 +121,11 @@ public final class PhoneCalls {
 
     @SubscribeEvent
     public static void onTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.getServer().getTickCount() % 20 != 0) return;
+        if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
+        int tick = server.getTickCount();
+        if (tick % 5 == 0) ring(server, tick);
+        if (tick % 20 != 0) return;
         long now = server.overworld().getGameTime();
         RINGING.entrySet().removeIf(e -> {
             if (now <= e.getValue().until) return false;
@@ -139,6 +142,34 @@ public final class PhoneCalls {
                     UUID o = CALLS.remove(id);
                     if (o != null) { CALLS.remove(o); ServerPlayer op = server.getPlayerList().getPlayer(o); if (op != null) hangUp(op); }
                 }
+            }
+        }
+    }
+
+    /**
+     * The phone ringing: a ringtone everyone nearby can hear (two quick bursts of notes, then a pause), music notes
+     * popping off the person being called, and a reminder on their screen; the caller hears the line ringing.
+     */
+    private static void ring(MinecraftServer server, int tick) {
+        int beat = (tick / 5) % 12;                         // 3 s cycle: notes on beats 0-3 and 5-8, quiet 9-11
+        boolean note = beat < 4 || (beat >= 5 && beat < 9);
+        float[] tune = {1.2F, 1.6F, 1.35F, 1.8F};
+        for (var e : RINGING.entrySet()) {
+            ServerPlayer to = server.getPlayerList().getPlayer(e.getKey());
+            ServerPlayer from = server.getPlayerList().getPlayer(e.getValue().from);
+            if (to == null) continue;
+            if (note) {
+                to.level().playSound(null, to.getX(), to.getY() + 1, to.getZ(), SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.PLAYERS,
+                        0.9F, tune[beat % 4]);
+                to.level().playSound(null, to.getX(), to.getY() + 1, to.getZ(), SoundEvents.NOTE_BLOCK_PLING.value(), SoundSource.PLAYERS,
+                        0.5F, tune[beat % 4]);
+                to.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE, to.getX(), to.getY() + 2.1, to.getZ(),
+                        1, 0.3, 0.1, 0.3, 1.0);
+            }
+            if (beat == 0) {
+                to.displayClientMessage(msg((from != null ? from.getName().getString() : "Someone") + " is calling... [Y] answer  [X] decline",
+                        ChatFormatting.AQUA), true);
+                if (from != null) from.playNotifySound(SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.6F, 0.5F);
             }
         }
     }
