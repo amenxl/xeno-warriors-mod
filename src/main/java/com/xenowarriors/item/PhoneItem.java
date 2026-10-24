@@ -52,13 +52,11 @@ public class PhoneItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack s = player.getItemInHand(hand);
-        boolean call = !onCall(s);
-        s.getOrCreateTag().putBoolean(CALL, call);
-        if (!level.isClientSide) {
-            level.playSound(null, player.blockPosition(), call ? SoundEvents.NOTE_BLOCK_CHIME.value() : SoundEvents.NOTE_BLOCK_BASS.value(),
-                    SoundSource.PLAYERS, 0.7F, call ? 1.8F : 0.6F);
-            player.displayClientMessage(Component.literal(call ? "📞 On a call... (right-click to hang up)" : "Call ended")
-                    .withStyle(call ? ChatFormatting.AQUA : ChatFormatting.GRAY), true);
+        // on a call: hang up; otherwise open the contacts screen (calls go through the server, see PhoneCalls)
+        if (level.isClientSide) {
+            if (onCall(player)) com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.PhoneActionPacket(1, new java.util.UUID(0, 0)));
+            else net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.xenowarriors.client.PhoneScreen()));
         }
         return InteractionResultHolder.sidedSuccess(s, level.isClientSide);
     }

@@ -22,5 +22,7 @@ public class XenoVoicePlugin implements VoicechatPlugin {
         registration.registerEvent(ClientReceiveSoundEvent.EntitySound.class,
                 e -> VoiceLevels.onAudio(e.getEntityId(), e.getRawAudio()));
         registration.registerEvent(ClientSoundEvent.class, e -> VoiceLevels.onAudio(VoiceLevels.LOCAL, e.getRawAudio()));
+        // phone calls (server side): remember the server API so calls can put both callers in one group
+        registration.registerEvent(de.maxhenkel.voicechat.api.events.VoicechatServerStartedEvent.class, e -> VoiceCalls.api = e.getVoicechat());
     }
 }

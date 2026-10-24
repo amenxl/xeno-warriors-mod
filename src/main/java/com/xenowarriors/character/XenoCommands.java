@@ -180,6 +180,10 @@ public final class XenoCommands {
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), false))))));
 
+        root.then(Commands.literal("phone")
+                .then(Commands.literal("answer").executes(ctx -> { com.xenowarriors.item.PhoneCalls.answer(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("decline").executes(ctx -> { com.xenowarriors.item.PhoneCalls.decline(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("hangup").executes(ctx -> { com.xenowarriors.item.PhoneCalls.hangUp(ctx.getSource().getPlayerOrException()); return 1; })));
         root.then(Commands.literal("giveup").executes(ctx -> {
             boolean ok = com.xenowarriors.party.Duels.giveUp(ctx.getSource().getPlayerOrException());
             if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));
