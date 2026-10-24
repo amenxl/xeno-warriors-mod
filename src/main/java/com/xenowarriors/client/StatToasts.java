@@ -49,7 +49,7 @@ public class StatToasts implements IGuiOverlay {
         long now = Util.getMillis();
         TOASTS.removeIf(t -> now - t[2] > SHOW_MS);
         Font font = mc.font;
-        int y = 6;
+        int y = HudLayout.topRight();               // (under the status effects and any request card)
         for (long[] t : TOASTS) {
             Stat stat = Stat.values()[(int) t[0]];
             int level = (int) t[1];

@@ -24,7 +24,7 @@ public class SkillHudOverlay implements IGuiOverlay {
 
         Font font = mc.font;
         int left = width - SkillManager.SLOTS * (SIZE + GAP) - 4;
-        int top = height - SIZE - 6;
+        int top = height - SIZE - 6 - HudLayout.skillBarLift();
 
         for (int slot = 0; slot < SkillManager.SLOTS; slot++) {
             int x = left + slot * (SIZE + GAP);

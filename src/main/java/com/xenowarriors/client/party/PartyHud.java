@@ -20,7 +20,10 @@ public class PartyHud implements IGuiOverlay {
         float sc = 0.7F;
         g.pose().pushPose();
         g.pose().scale(sc, sc, 1F);
-        int x = Math.round(5 / sc), y = Math.round((height / 2F - 34) / sc);
+        // left side, kept above the chat area (bottom ~150 px) and under the top-left corner other mods use
+        int members = Math.max(0, PartyClient.members().size() - 1);
+        int top = (int) Mth.clamp(height / 2F - 34, 40, Math.max(40, height - 150 - members * 28 * sc));
+        int x = Math.round(5 / sc), y = Math.round(top / sc);
         for (PartySyncPacket.Member m : PartyClient.members()) {
             if (m.id().equals(mc.player.getUUID())) continue;
             CharacterType type = CharacterType.values()[Mth.clamp(m.type(), 0, CharacterType.values().length - 1)];

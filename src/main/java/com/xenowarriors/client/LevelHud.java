@@ -40,7 +40,8 @@ public class LevelHud implements IGuiOverlay {
         int color = type.getColor() | 0xFF000000;
         String lv = String.valueOf(Math.max(1, level));
         int w = Math.max(30, font.width("Lv " + lv) + 8);
-        int x = width / 2 - 91 - w - 6, y = height - 22;
+        boolean offhand = !mc.player.getOffhandItem().isEmpty() && mc.options.mainHand().get() == net.minecraft.world.entity.HumanoidArm.RIGHT;
+        int x = width / 2 - 91 - w - 6 - (offhand ? 29 : 0), y = height - 22;        // (left of the offhand slot too)
         g.fill(x, y, x + w, y + 20, 0xC0101018);
         g.fill(x, y, x + w, y + 1, color);
         g.drawCenteredString(font, "Lv " + lv, x + w / 2, y + 4, 0xFFFFFF);

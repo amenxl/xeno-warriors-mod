@@ -303,7 +303,7 @@ public final class LockOn {
             Minecraft mc = Minecraft.getInstance();
             if (t == null || mc.player == null || mc.options.hideGui) return;
             Font font = mc.font;
-            int w = 120, x = width / 2 - w / 2, y = 18;
+            int w = 120, x = width / 2 - w / 2, y = Math.max(18, HudLayout.bossBottom() + 14);    // (under boss bars)
             float frac = Mth.clamp(shownHealth / Math.max(1F, t.getMaxHealth()), 0F, 1F);
             float real = Mth.clamp(t.getHealth() / Math.max(1F, t.getMaxHealth()), 0F, 1F);
             g.drawCenteredString(font, t.getDisplayName(), width / 2, y - 11, 0xFFFFFF);

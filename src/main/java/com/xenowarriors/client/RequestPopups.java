@@ -76,7 +76,7 @@ public final class RequestPopups {
             String no = ModKeyMappings.DECLINE_REQUEST.getTranslatedKeyMessage().getString();
             var lines = font.split(net.minecraft.network.chat.Component.literal(c.req.text()), 170);
             int w = 186, h = 30 + lines.size() * 10 + 14;
-            int x = Math.round(width - 6 - w * slide), y = 6;
+            int x = Math.round(width - 6 - w * slide), y = HudLayout.takeTopRight(h);
             int a = Math.round(fade * 230);
             g.fill(x, y, x + w, y + h, (a << 24) | 0x14121C);
             g.fill(x, y, x + 3, y + h, (Math.round(fade * 255) << 24) | (c.req.color() & 0xFFFFFF));
