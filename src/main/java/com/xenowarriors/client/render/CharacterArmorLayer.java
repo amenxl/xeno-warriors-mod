@@ -100,13 +100,17 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         showFor(base, slot);
         net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
         boolean giVoxels = false;
+        String name = armor.getMaterial().getName();
+        String domain = "minecraft";
+        int colon = name.indexOf(':');
+        if (colon >= 0) { domain = name.substring(0, colon); name = name.substring(colon + 1); }
+        String def = String.format(java.util.Locale.ROOT, "%s:textures/models/armor/%s_layer_%d.png", domain, name, legs ? 2 : 1);
+        ResourceLocation tex = new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
         // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his
         if (model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) {
             if (giInner == null) {
-                giInner = new PlayerModel<>(net.minecraft.client.model.geom.builders.LayerDefinition.create(
-                        PlayerModel.createMesh(new net.minecraft.client.model.geom.builders.CubeDeformation(0.32F), false), 64, 64).bakeRoot(), false);
-                giOuter = new PlayerModel<>(net.minecraft.client.model.geom.builders.LayerDefinition.create(
-                        PlayerModel.createMesh(new net.minecraft.client.model.geom.builders.CubeDeformation(0.62F), false), 64, 64).bakeRoot(), false);
+                giInner = GiShapes.build(0.4F);         // pants: loose
+                giOuter = GiShapes.build(0.62F);        // tops: looser still, over the pants
             }
             PlayerModel<AbstractClientPlayer> gi = legs ? giInner : giOuter;
             PlayerModel<AbstractClientPlayer> parent = getParentModel();
@@ -137,18 +141,13 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             // the outer layer comes out in 3D (raised blocks), so its flat version is left off
             gi.hat.visible = false; gi.jacket.visible = false;
             gi.rightSleeve.visible = gi.leftSleeve.visible = gi.rightPants.visible = gi.leftPants.visible = false;
+            GiShapes.setup(gi, tex, slot);          // its 3D cut: collar, gi flap, belt, cuffs (or armor plate and pads)
             model = gi;
             giVoxels = true;
         } else if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
             ((net.minecraft.client.model.HumanoidModel) getParentModel()).copyPropertiesTo(hm);
             showFor(hm, slot);
         }
-        String name = armor.getMaterial().getName();
-        String domain = "minecraft";
-        int colon = name.indexOf(':');
-        if (colon >= 0) { domain = name.substring(0, colon); name = name.substring(colon + 1); }
-        String def = String.format(java.util.Locale.ROOT, "%s:textures/models/armor/%s_layer_%d.png", domain, name, legs ? 2 : 1);
-        ResourceLocation tex = new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
         float[] c = tint(stack, armor);
         if (!(armor instanceof net.minecraft.world.item.DyeableLeatherItem)) c = new float[]{1F, 1F, 1F};
         VertexConsumer vc = net.minecraft.client.renderer.entity.ItemRenderer.getArmorFoilBuffer(buffers, RenderType.armorCutoutNoCull(tex), false, stack.hasFoil());
