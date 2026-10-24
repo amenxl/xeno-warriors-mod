@@ -102,6 +102,7 @@ public class SkylanderEntity extends PathfinderMob {
 
     public boolean guardian() { return guardHome != null; }
     public BlockPos islandHome() { return islandHome; }
+    public int islandRadius() { return islandRadius; }
     /** Where they'd defend: their temple, or their island home. */
     public BlockPos defendsAt() { return guardHome != null ? guardHome : islandHome; }
 

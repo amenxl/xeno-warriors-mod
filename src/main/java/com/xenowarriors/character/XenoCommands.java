@@ -185,6 +185,14 @@ public final class XenoCommands {
             if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));
             return ok ? 1 : 0;
         }));
+        root.then(Commands.literal("siege").requires(src -> src.hasPermission(2)).executes(ctx -> {
+            var p = ctx.getSource().getPlayerOrException();
+            var sk = p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.SkylanderEntity.class, p.getBoundingBox().inflate(128, 256, 128),
+                    s -> s.islandHome() != null && !s.guardian()).stream().findFirst().orElse(null);
+            boolean ok = sk != null && com.xenowarriors.npc.SkyHaterSieges.start(p.serverLevel(), sk, p);
+            ctx.getSource().sendSuccess(() -> Component.literal(ok ? "Sky Hater siege started" : "No sky island with Skylanders nearby (or nowhere to build)"), false);
+            return ok ? 1 : 0;
+        }));
         root.then(Commands.literal("raid").requires(src -> src.hasPermission(2)).executes(ctx -> {
             boolean ok = com.xenowarriors.npc.SkyHaterRaids.start(ctx.getSource().getPlayerOrException(), true);
             ctx.getSource().sendSuccess(() -> Component.literal(ok ? "Sky Hater raid started" : "A raid is already going on near here"), false);
