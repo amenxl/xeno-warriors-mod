@@ -32,3 +32,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Fri 21:25 — 0.91.0: Sky Hater sieges (random near island Skylanders, 2-day cooldown per island): builders build cobble+ladder tower w/ plank platforms, foreman rides top, bridge across, climb and attack Skylanders; /xeno siege (op).
 - Sat 02:35 — 0.92.0: HudLayout: top-right stack under status effects (request card, then toasts), lock-on bar under boss bars, level box left of offhand slot, party HUD kept above chat, skill bar raised 34px with Epic Fight. Layout diagram sent.
 - Sat 07:40 — 0.93.0: DMZ outfits bend with the body + hide own clothes underneath (no clipping); preview sheet (flat) sent.
+- Sat 09:05 — 0.94.0 (user request): usable phones: 3 3D models (smart/flip/brick) x 12 colors, right-click call toggles held-to-ear pose (PhoneClient), no attacks/skills while on call.
