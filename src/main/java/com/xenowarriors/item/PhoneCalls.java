@@ -64,7 +64,7 @@ public final class PhoneCalls {
             setOnCall(p, true);
             p.level().playSound(null, p.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.7F, 1.8F);
         }
-        boolean voice = ModList.get().isLoaded("voicechat") && Voice.connect(from.getUUID(), to.getUUID());
+        boolean voice = ModList.get().isLoaded("voicechat") && Voice.connect(from.getUUID(), style(from), to.getUUID(), style(to));
         String note = voice ? "" : " (no voice chat - talk in chat)";
         from.sendSystemMessage(msg("Connected with " + to.getName().getString() + note, ChatFormatting.GREEN));
         to.sendSystemMessage(msg("Connected with " + from.getName().getString() + note, ChatFormatting.GREEN));
@@ -75,6 +75,13 @@ public final class PhoneCalls {
         if (r == null) return;
         ServerPlayer from = to.server.getPlayerList().getPlayer(r.from);
         if (from != null) from.displayClientMessage(msg(to.getName().getString() + " declined the call", ChatFormatting.GRAY), true);
+    }
+
+    /** Which phone they're talking on (0 smartphone, 1 flip, 2 brick). */
+    private static int style(ServerPlayer p) {
+        if (p.getMainHandItem().getItem() instanceof PhoneItem) return PhoneItem.style(p.getMainHandItem());
+        if (p.getOffhandItem().getItem() instanceof PhoneItem) return PhoneItem.style(p.getOffhandItem());
+        return 0;
     }
 
     public static boolean inCall(ServerPlayer p) { return CALLS.containsKey(p.getUUID()); }
@@ -182,7 +189,7 @@ public final class PhoneCalls {
 
     /** (kept apart so nothing touches Simple Voice Chat's classes unless it's installed) */
     private static final class Voice {
-        static boolean connect(UUID a, UUID b) { return com.xenowarriors.voice.VoiceCalls.connect(a, b); }
+        static boolean connect(UUID a, int sa, UUID b, int sb) { return com.xenowarriors.voice.VoiceCalls.connect(a, sa, b, sb); }
         static void disconnect(UUID a, UUID b) { com.xenowarriors.voice.VoiceCalls.disconnect(a, b); }
     }
 }
