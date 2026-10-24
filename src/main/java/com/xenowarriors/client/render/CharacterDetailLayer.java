@@ -430,7 +430,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         int stick = type == CharacterType.RHALIX && !model.mouthStick.isEmpty()
                 ? com.xenowarriors.client.RhalixCombatAnim.stickState(player, partialTick) : 0;
         if (stick != 0) for (var sp : model.mouthStick) sp.visible = false;
+        // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, so nothing clips through
+        boolean giTop = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST);
+        boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
+        if (giTop || giLegs) model.hideOutfit(giTop, giTop, giLegs);
         model.root.render(poseStack, buffer, packedLight, overlay);
+        if (giTop || giLegs) model.showOutfit();
         if (stick != 0) for (var sp : model.mouthStick) sp.visible = true;
         if (stick == 1) {
             poseStack.pushPose();

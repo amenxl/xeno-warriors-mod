@@ -405,6 +405,35 @@ public class DetailModel {
         leftWing.yRot = (leftWingY * (1F + tuck) - sweep) * (1F - spread);
     }
 
+    // ---------------------------------------------------------------- outfits worn over the character (DragonMineZ gis)
+
+    private final java.util.List<ModelPart> hidden = new java.util.ArrayList<>();
+
+    /**
+     * Hides this outfit's own clothes where another outfit covers him (so nothing pokes through it): the torso
+     * (coat, shirt, belt - not the wings), the arms, the legs. Call {@link #showOutfit()} after drawing.
+     */
+    public void hideOutfit(boolean torso, boolean arms, boolean legs) {
+        hidden.clear();
+        if (torso) {
+            java.util.Set<ModelPart> keep = new java.util.HashSet<>();
+            if (rightWing != null) rightWing.getAllParts().forEach(keep::add);
+            if (leftWing != null) leftWing.getAllParts().forEach(keep::add);
+            body.skipDraw = true;
+            body.getAllParts().forEach(p -> {
+                if (p != body && !keep.contains(p) && p.visible) { p.visible = false; hidden.add(p); }
+            });
+        }
+        if (arms) for (ModelPart p : new ModelPart[]{rightArm, leftArm}) if (p.visible) { p.visible = false; hidden.add(p); }
+        if (legs) for (ModelPart p : new ModelPart[]{rightLeg, leftLeg}) if (p.visible) { p.visible = false; hidden.add(p); }
+    }
+
+    public void showOutfit() {
+        for (ModelPart p : hidden) p.visible = true;
+        hidden.clear();
+        body.skipDraw = false;
+    }
+
     /** Loads the detail model for a character, or returns null if it has none. */
     public static DetailModel load(CharacterType type) {
         return loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + type.getId() + ".json");

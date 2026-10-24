@@ -71,6 +71,14 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     }
 
     private net.minecraft.client.model.HumanoidModel<AbstractClientPlayer> inner, outer;
+    /** Other mods' skin-style outfits on his own bending body (knees and elbows bend with him, nothing pokes through). */
+    private PlayerModel<AbstractClientPlayer> giInner, giOuter;
+
+    /** Is he wearing another mod's armor in this slot? */
+    public static boolean foreignWorn(AbstractClientPlayer p, EquipmentSlot slot) {
+        ItemStack s = p.getItemBySlot(slot);
+        return s.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot && foreign(s);
+    }
 
     /** Armor from another mod (not vanilla's materials, not ours). */
     private static boolean foreign(ItemStack stack) {
@@ -91,7 +99,42 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         getParentModel().copyPropertiesTo(base);
         showFor(base, slot);
         net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
-        if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
+        // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his
+        if (model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) {
+            if (giInner == null) {
+                giInner = new PlayerModel<>(net.minecraft.client.model.geom.builders.LayerDefinition.create(
+                        PlayerModel.createMesh(new net.minecraft.client.model.geom.builders.CubeDeformation(0.32F), false), 64, 64).bakeRoot(), false);
+                giOuter = new PlayerModel<>(net.minecraft.client.model.geom.builders.LayerDefinition.create(
+                        PlayerModel.createMesh(new net.minecraft.client.model.geom.builders.CubeDeformation(0.62F), false), 64, 64).bakeRoot(), false);
+            }
+            PlayerModel<AbstractClientPlayer> gi = legs ? giInner : giOuter;
+            PlayerModel<AbstractClientPlayer> parent = getParentModel();
+            parent.copyPropertiesTo(gi);
+            gi.hat.copyFrom(gi.head);
+            gi.jacket.copyFrom(gi.body);
+            gi.rightSleeve.copyFrom(gi.rightArm);
+            gi.leftSleeve.copyFrom(gi.leftArm);
+            gi.rightPants.copyFrom(gi.rightLeg);
+            gi.leftPants.copyFrom(gi.leftLeg);
+            com.xenowarriors.client.LimbBend.copy(parent.rightArm, gi.rightArm);
+            com.xenowarriors.client.LimbBend.copy(parent.leftArm, gi.leftArm);
+            com.xenowarriors.client.LimbBend.copy(parent.rightLeg, gi.rightLeg);
+            com.xenowarriors.client.LimbBend.copy(parent.leftLeg, gi.leftLeg);
+            com.xenowarriors.client.LimbBend.copy(parent.rightArm, gi.rightSleeve);
+            com.xenowarriors.client.LimbBend.copy(parent.leftArm, gi.leftSleeve);
+            com.xenowarriors.client.LimbBend.copy(parent.rightLeg, gi.rightPants);
+            com.xenowarriors.client.LimbBend.copy(parent.leftLeg, gi.leftPants);
+            gi.setAllVisible(false);
+            switch (slot) {
+                case HEAD -> { gi.head.visible = true; gi.hat.visible = true; }
+                case CHEST -> { gi.body.visible = gi.jacket.visible = true; gi.rightArm.visible = gi.leftArm.visible = true;
+                                gi.rightSleeve.visible = gi.leftSleeve.visible = true; }
+                case LEGS -> { gi.body.visible = true; gi.rightLeg.visible = gi.leftLeg.visible = true;
+                               gi.rightPants.visible = gi.leftPants.visible = true; }
+                default -> { gi.rightLeg.visible = gi.leftLeg.visible = true; gi.rightPants.visible = gi.leftPants.visible = true; }
+            }
+            model = gi;
+        } else if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
             ((net.minecraft.client.model.HumanoidModel) getParentModel()).copyPropertiesTo(hm);
             showFor(hm, slot);
         }
