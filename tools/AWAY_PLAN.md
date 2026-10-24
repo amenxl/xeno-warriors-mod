@@ -14,7 +14,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 4. ~~Island Skylanders, bigger islands, house/chest defense~~ done
 4b. ~~Wing styles~~ done 0.90.0 (tools/xw/wings/wing_styles.py) — was: Skylander wing STYLES, not just size/color** — separate wing models per style (e.g. big feathered angel, hawk/eagle pointed, swept falcon, bat/dragon membrane, butterfly/fairy, crystal sky wings, four-wing seraph, tattered/ragged). Pick per UUID (guardians: grand style). Send a picture sheet of all styles.
 5. ~~Sky Hater siege towers~~ done 0.91.0 (/xeno siege to test)
-6. UI/HUD pass: nothing overlaps (party HUD, karma bar, level HUD, request cards, pointers, Epic Fight/DMZ HUDs).
+6. ~~UI/HUD pass~~ done 0.92.0 (HudLayout.java). Still to check: menus/screens (stats screen, altar, fox screens) at small GUI scales; DMZ HUD actual position.
 7. Dragon Ball outfit compatibility: full 3D, no clipping, both characters (start with the most common gis).
 8. Epic Fight weapon movesets for DMZ weapons (power pole etc.), per character.
 9. Enemy animation polish (humans, possessed, corrupted, sky haters).
@@ -30,3 +30,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Fri 15:50 — user picked hair C → 0.89.1; sent wing variant sheet. (Device file tools disconnected: jar not copied to Documents.)
 - Fri 16:30 — 0.90.0: 8 Skylander wing styles as separate models (angel, hawk, falcon, bat, butterfly, crystal, seraph, tattered), picked per UUID (1/9 classic), guardians seraph; sheet sent.
 - Fri 21:25 — 0.91.0: Sky Hater sieges (random near island Skylanders, 2-day cooldown per island): builders build cobble+ladder tower w/ plank platforms, foreman rides top, bridge across, climb and attack Skylanders; /xeno siege (op).
+- Sat 02:35 — 0.92.0: HudLayout: top-right stack under status effects (request card, then toasts), lock-on bar under boss bars, level box left of offhand slot, party HUD kept above chat, skill bar raised 34px with Epic Fight. Layout diagram sent.
