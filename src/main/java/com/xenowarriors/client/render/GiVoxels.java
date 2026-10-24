@@ -153,10 +153,10 @@ public final class GiVoxels {
     private static void quad(VertexConsumer vc, Matrix4f m, Matrix3f n, float nx, float ny, float nz,
                              float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz, float dx, float dy, float dz,
                              float u, float t, int light, int overlay, float r, float g, float b) {
-        // (model space has y pointing down, so these normals are flipped to match the game's lighting)
-        vc.vertex(m, ax, ay, az).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, -ny, -nz).endVertex();
-        vc.vertex(m, bx, by, bz).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, -ny, -nz).endVertex();
-        vc.vertex(m, cx, cy, cz).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, -ny, -nz).endVertex();
-        vc.vertex(m, dx, dy, dz).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, -ny, -nz).endVertex();
+        // (model space, like the game's own cubes: y points down)
+        vc.vertex(m, ax, ay, az).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, ny, nz).endVertex();
+        vc.vertex(m, bx, by, bz).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, ny, nz).endVertex();
+        vc.vertex(m, cx, cy, cz).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, ny, nz).endVertex();
+        vc.vertex(m, dx, dy, dz).color(r, g, b, 1F).uv(u, t).overlayCoords(overlay).uv2(light).normal(n, nx, ny, nz).endVertex();
     }
 }
