@@ -18,7 +18,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 7. Dragon Ball outfit compatibility — STEP 1 done 0.93.0: DMZ skin-layout outfits drawn on a split-limb PlayerModel (bends with knees/elbows), character's own torso/arm/leg clothes hidden under them (wings/hair kept). STEP 2 done 0.96.x: GiVoxels — outer layer (jacket/sleeves/pants/hat regions) voxelized per pixel (0.9 deep) on the bending gi model, all ~90 outfits. STEP 3 done 0.97.0 (user: 'full outfit shape'): GiShapes — loose 3D cut built from skin-layout UVs (collar, gi flap, thick belt, wrist/pant cuffs; armor style: chest plate + shoulder pads). NEXT (optional): hand-made 3D accents per popular gi (belts/wristbands/shoulder pads/collars) as extra detail models keyed by DMZ texture name; DMZ textures in /tmp/dmzx (re-extract from uploads/dragonminez-2_1_3.jar).
 8. ~~EF movesets for DMZ weapons~~ done 0.98.0 (EfDmzWeapons: combined presets, Rhalix's moves in the OCHS style slot via styleProvider). NEXT (optional): truly custom EF animations per character (e.g. power pole spin) — needs EF animation JSON authoring.
 9. PART done 0.99.0: human reactions (HumanReactions + HumanModel poses; vanilla model only — with Epic Fight patched NPCs the poses don't show: TODO map to EF anims). Still: enemy animation polish (corrupted souls/villagers, boss).
-10. Humans/Skylanders gather, mine, build, craft gear (staged: gather → build small huts → craft armor).
+10. Humans PART done 0.100.0 (HumanWorkGoal: chop natural trees, mine raw stone/ore, craft planks/swords/iron armor, build 5x5 hut once; mobGriefing respected). NEXT: Skylanders version on islands (gather sky crystals, build island huts), humans add more structures/farms.
 11. 3D armor polish (sky/corrupted), then vanilla armor in 3D.
 12. Character blueprints from the S3 script: model sheets + skill lists (send as pictures/doc).
 13. Rhalix outfits accuracy pass with alternates for the user to pick.
@@ -39,3 +39,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Sat 16:35 — 0.97.0 (user clarified 'full outfit shape'): GiShapes 3D cut for DMZ outfits; preview sheet sent.
 - Sat 18:00 — 0.98.0: EF movesets for DMZ weapons per character (pole: M tachi / R spear; Z sword: M longsword / R greatsword; brave+dimensional: M sword / R longsword; katana: M uchigatana / R tachi).
 - Sat 23:05 — 0.99.0: townsfolk reactions: cower (explosions/lightning, flee), awe (skills), dance (jukebox), rain cover, wave (looked at), hands up (armed player close), cheer (raid won).
+- Sun 04:15 — 0.100.0: townsfolk work loop (gather/mine/craft/equip/build hut).
