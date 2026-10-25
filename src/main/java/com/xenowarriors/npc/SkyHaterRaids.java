@@ -207,6 +207,7 @@ public final class SkyHaterRaids {
             }
         }
         for (var m : people) level.sendParticles(ParticleTypes.HAPPY_VILLAGER, m.getX(), m.getY() + 2.1, m.getZ(), 4, 0.3, 0.2, 0.3, 0);
+        HumanReactions.everyone(level, Vec3.atCenterOf(r.center), 48, HumanReactions.CHEER, 120);
     }
 
     @SubscribeEvent

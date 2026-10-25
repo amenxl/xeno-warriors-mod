@@ -42,6 +42,9 @@ public class HumanNpcEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FIGHTER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SKY_HATER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
+    /** What they're reacting to right now (see HumanReactions), shown as a pose. */
+    private static final EntityDataAccessor<Integer> REACTION = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.INT);
+    private int reactUntil;
     private static final EntityDataAccessor<Boolean> RAIDER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static Boolean dmz;
@@ -69,6 +72,7 @@ public class HumanNpcEntity extends PathfinderMob {
         entityData.define(SKY_HATER, false);
         entityData.define(FLYING, false);
         entityData.define(RAIDER, false);
+        entityData.define(REACTION, 0);
     }
 
     public int variant() { return entityData.get(VARIANT); }
@@ -96,6 +100,17 @@ public class HumanNpcEntity extends PathfinderMob {
 
     /** Part of a Sky Hater raid on a village: hostile to everyone there, Mikiko included (and he can fight back). */
     public boolean raider() { return entityData.get(RAIDER); }
+
+    public int reaction() { return entityData.get(REACTION); }
+
+    /** Shows a reaction for a while (a stronger one isn't cut short by a weaker one). */
+    public void react(int type, int ticks) {
+        if (level().isClientSide || carriesSoul()) return;
+        int cur = reaction();
+        if (cur != 0 && tickCount < reactUntil && HumanReactions.priority(cur) > HumanReactions.priority(type)) return;
+        entityData.set(REACTION, type);
+        reactUntil = tickCount + ticks;
+    }
 
     public void makeRaider(boolean captain) {
         entityData.set(SKY_HATER, true);
@@ -313,6 +328,8 @@ public class HumanNpcEntity extends PathfinderMob {
             return;
         }
         flightTick();
+        if (reaction() != 0 && tickCount >= reactUntil) entityData.set(REACTION, 0);
+        if (tickCount % 20 == 7) HumanReactions.look(this);
         if (tickCount % 100 == 0 && carriesSoul() && !reported && possessedSince >= 0
                 && level().getGameTime() - possessedSince >= PERMANENT_AFTER) becomePermanent();
     }

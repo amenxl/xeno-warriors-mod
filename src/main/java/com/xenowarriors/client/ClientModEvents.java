@@ -40,7 +40,8 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_VILLAGER.get(),
                 com.xenowarriors.client.corrupted.PossessedVillagerRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.HUMAN.get(),
-                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.npc.HumanNpcEntity>plain(ctx,
+                ctx -> new com.xenowarriors.client.npc.NpcRenderer<com.xenowarriors.npc.HumanNpcEntity>(ctx,
+                        new com.xenowarriors.client.npc.HumanModel(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER)),
                         e -> com.xenowarriors.npc.NpcLooks.human(e.variant()), com.xenowarriors.npc.HumanNpcEntity::possessed));
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.SKYLANDER.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.THROWN.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
