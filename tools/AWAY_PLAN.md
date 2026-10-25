@@ -19,7 +19,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 8. ~~EF movesets for DMZ weapons~~ done 0.98.0 (EfDmzWeapons: combined presets, Rhalix's moves in the OCHS style slot via styleProvider). NEXT (optional): truly custom EF animations per character (e.g. power pole spin) — needs EF animation JSON authoring.
 9. PART done 0.99.0: human reactions (HumanReactions + HumanModel poses; vanilla model only — with Epic Fight patched NPCs the poses don't show: TODO map to EF anims). Still: enemy animation polish (corrupted souls/villagers, boss).
 10. Humans PART done 0.100.0 (HumanWorkGoal: chop natural trees, mine raw stone/ore, craft planks/swords/iron armor, build 5x5 hut once; mobGriefing respected). Skylanders done 0.101.0 (SkylanderWorkGoal: mine island Sky Ore refilled w/ cobble, plant saplings/flowers, forge sky sword/boots/helmet, build shrine/lookout/garden/quartz home). NEXT (optional): humans farms/more structures.
-11. PART done 0.102.0: vanilla armor own 3D cut per material (tools/xw/armor/vanilla_armor.py; leather tinted by dye, others untinted, turtle uses shared cut). NEXT: sky/corrupted armor polish pass (add upper-arm pieces, more detail).
+11. PART done 0.102.0: vanilla armor own 3D cut per material (tools/xw/armor/vanilla_armor.py; leather tinted by dye, others untinted, turtle uses shared cut). Sky/corrupted polish done 0.102.1 (upper-arm sleeves, faulds, tabard/back guard, corrupted spines + jagged faulds).
 12. Character blueprints from the S3 script: model sheets + skill lists (send as pictures/doc).
 13. Rhalix outfits accuracy pass with alternates for the user to pick.
 
@@ -42,3 +42,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Sun 04:15 — 0.100.0: townsfolk work loop (gather/mine/craft/equip/build hut).
 - Sun 13:40 — 0.101.0: island Skylanders work loop (mine/plant/forge/build 4 build types); NPC armor layer added so townsfolk iron + Skylander sky armor show.
 - Sun 18:45 — 0.102.0: vanilla armor in 3D per material (leather jerkin, chain coif/hauberk, iron knight plate w/ nasal helm, gold crown/sun, diamond crystal horns/shards, netherite horned spiked w/ ember core). Faces kept open.
+- Sun 23:40 — 0.102.1: sky + corrupted armor polish (no more bare upper arms; faulds, sky tabard, corrupted spines).
