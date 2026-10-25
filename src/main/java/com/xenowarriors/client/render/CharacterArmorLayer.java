@@ -37,6 +37,9 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     private final Map<CharacterType, Map<EquipmentSlot, DetailModel>> skyModels = new EnumMap<>(CharacterType.class);
     private static final ResourceLocation SKY_TEX = XenoWarriors.id("textures/entity/character/sky_armor.png");
     private final Map<CharacterType, Map<EquipmentSlot, DetailModel>> corruptedModels = new EnumMap<>(CharacterType.class);
+    /** Vanilla materials, each with its own 3D cut (tools/xw/armor/vanilla_armor.py). */
+    private static final String[] VANILLA = {"leather", "chainmail", "iron", "gold", "diamond", "netherite"};
+    private final Map<CharacterType, Map<String, DetailModel>> vanillaModels = new EnumMap<>(CharacterType.class);
     private static final ResourceLocation CORRUPTED_TEX = XenoWarriors.id("textures/entity/character/corrupted_armor.png");
 
     public CharacterArmorLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
@@ -65,6 +68,12 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                 if (m != null) corr.put(slot, m);
             }
             corruptedModels.put(type, corr);
+            Map<String, DetailModel> van = new java.util.HashMap<>();
+            for (String mat : VANILLA) for (EquipmentSlot slot : SLOTS) {
+                DetailModel m = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_" + mat + "_" + slotName(slot) + ".json");
+                if (m != null) van.put(mat + "_" + slotName(slot), m);
+            }
+            vanillaModels.put(type, van);
             DetailModel sr = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_sr_hoodie.json");
             if (sr != null) srHoodies.put(type, sr);
         }
@@ -218,6 +227,9 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             if (skyArmor && skyModels.get(type) != null) m = skyModels.get(type).get(slot);
             boolean corruptArmor = stack.getItem() instanceof com.xenowarriors.sky.CorruptedArmorItem;
             if (corruptArmor && corruptedModels.get(type) != null) m = corruptedModels.get(type).get(slot);
+            String mat = vanillaMat(armor);
+            DetailModel vm = mat == null || vanillaModels.get(type) == null ? null : vanillaModels.get(type).get(mat + "_" + slotName(slot));
+            if (vm != null && !hoodie && !sr && !skyArmor && !corruptArmor) m = vm; else mat = null;
             if (m == null) continue;
             m.head.copyFrom(parent.head);
             m.body.copyFrom(parent.body);
@@ -231,10 +243,11 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                 if (m.hoodUp != null) m.hoodUp.visible = up;
                 if (m.hoodDown != null) m.hoodDown.visible = !up;
             }
-            float[] c = sr || skyArmor || corruptArmor ? new float[]{1F, 1F, 1F} : tint(stack, armor);
+            float[] c = sr || skyArmor || corruptArmor || (mat != null && !mat.equals("leather")) ? new float[]{1F, 1F, 1F} : tint(stack, armor);
             // Mikiko: no armor on his left arm, so his shoulder plate shows
             m.leftArm.visible = type != CharacterType.MIKIKO;   // Mikiko: nothing on his left arm (armor or hoodies), so his shoulder plate shows   // the hoodie's dye comes through here too (it's dyeable like leather)
-            ResourceLocation tex = skyArmor ? SKY_TEX : corruptArmor ? CORRUPTED_TEX : texture;
+            ResourceLocation tex = skyArmor ? SKY_TEX : corruptArmor ? CORRUPTED_TEX
+                    : mat != null ? XenoWarriors.id("textures/entity/character/vanilla_" + mat + ".png") : texture;
             if ((hoodie || sr) && stack.isDamageableItem() && stack.getMaxDamage() > 0) {
                 // hoodies get scuffed below half durability and ripped up below a quarter
                 float worn = stack.getDamageValue() / (float) stack.getMaxDamage();
@@ -258,6 +271,19 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             }
             m.leftArm.visible = true;
         }
+    }
+
+    private static String vanillaMat(ArmorItem armor) {
+        if (!(armor.getMaterial() instanceof ArmorMaterials m)) return null;
+        return switch (m) {
+            case LEATHER -> "leather";
+            case CHAIN -> "chainmail";
+            case IRON -> "iron";
+            case GOLD -> "gold";
+            case DIAMOND -> "diamond";
+            case NETHERITE -> "netherite";
+            default -> null;       // turtle shell keeps the shared cut
+        };
     }
 
     /** Plate color for each armor material. */
