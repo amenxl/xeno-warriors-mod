@@ -34,6 +34,10 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
         this.look = look;
         this.dark = dark;
         addLayer(new Details(this));
+        // whatever armor they've made themselves (townsfolk iron, Skylander sky crystal)
+        addLayer(new net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer<>(this,
+                new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
+                new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)), ctx.getModelManager()));
     }
 
     public static <T extends Mob> NpcRenderer<T> plain(EntityRendererProvider.Context ctx, Function<T, String> look, Predicate<T> dark) {

@@ -51,6 +51,19 @@ public class SkylanderEntity extends PathfinderMob {
     private BlockPos islandHome;
     private int islandRadius = 8;
     private boolean hasHouse;
+    private final net.minecraft.world.SimpleContainer pack = new net.minecraft.world.SimpleContainer(9);
+    private int project = -1, built, bumps;
+    private BlockPos projectAt;
+    private boolean working;
+    public net.minecraft.world.SimpleContainer pack() { return pack; }
+    public int project() { return project; }
+    public BlockPos projectAt() { return projectAt; }
+    public void setProject(int p, BlockPos at) { project = p; projectAt = at.immutable(); }
+    public void finishProject() { project = -1; projectAt = null; built++; }
+    public int bump() { return bumps++; }
+    public boolean hasHouse() { return hasHouse; }
+    public void setHasHouse(boolean b) { hasHouse = b; }
+    public void setWorking(boolean b) { working = b; }
     private int warnedAt = -10000;
 
     public SkylanderEntity(EntityType<? extends PathfinderMob> type, Level level) {
@@ -84,6 +97,7 @@ public class SkylanderEntity extends PathfinderMob {
         goalSelector.addGoal(2, new AvoidEntityGoal<>(this, HumanNpcEntity.class, 8F, 1.0, 1.3, e -> ((HumanNpcEntity) e).skyHater()) {
             @Override public boolean canUse() { return !flying() && wingless() && super.canUse(); }
         });
+        goalSelector.addGoal(4, new SkylanderWorkGoal(this));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.7) {
             @Override public boolean canUse() { return !flying() && super.canUse(); }
         });
@@ -200,7 +214,8 @@ public class SkylanderEntity extends PathfinderMob {
                 // back to their post once the fight's over
                 if (getTarget() == null && tickCount % 40 == 0 && distanceToSqr(Vec3.atCenterOf(guardHome)) > 14 * 14)
                     getNavigation().moveTo(guardHome.getX() + 0.5, guardHome.getY(), guardHome.getZ() + 0.5, 1.0);
-            } else if (onGround() && ++groundTime > (islandHome != null ? 900 : 2400) && tickCount - threatenedAt > 200) takeOff();     // done hanging out
+            } else if (working) groundTime = 0;
+            else if (onGround() && ++groundTime > (islandHome != null ? 900 : 2400) && tickCount - threatenedAt > 200) takeOff();     // done hanging out
             if (islandHome != null && hasHouse && tickCount % 20 == 0 && getTarget() == null) guardHouse();
         }
         // saved: once nobody's after them any more, they thank whoever helped
@@ -327,6 +342,10 @@ public class SkylanderEntity extends PathfinderMob {
             tag.putLong("IslandHome", islandHome.asLong());
             tag.putInt("IslandRadius", islandRadius);
             tag.putBoolean("HasHouse", hasHouse);
+            tag.put("Pack", pack.createTag());
+            tag.putInt("Project", project);
+            tag.putInt("Built", built);
+            if (projectAt != null) tag.putLong("ProjectAt", projectAt.asLong());
         }
     }
 
@@ -337,6 +356,10 @@ public class SkylanderEntity extends PathfinderMob {
         entityData.set(WINGLESS, tag.getBoolean("Wingless"));
         setFlying(tag.getBoolean("Flying"));
         if (tag.contains("IslandHome")) liveOn(BlockPos.of(tag.getLong("IslandHome")), tag.getInt("IslandRadius"), tag.getBoolean("HasHouse"));
+        if (tag.contains("Pack")) pack.fromTag(tag.getList("Pack", 10));
+        project = tag.contains("Project") ? tag.getInt("Project") : -1;
+        built = tag.getInt("Built");
+        projectAt = tag.contains("ProjectAt") ? BlockPos.of(tag.getLong("ProjectAt")) : null;
         if (tag.contains("GuardHome")) {
             guardHome = BlockPos.of(tag.getLong("GuardHome"));
             restrictTo(guardHome, 12);
