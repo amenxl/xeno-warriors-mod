@@ -23,6 +23,8 @@ def helmet():
     f.add('head', [-1.2, 30.6, -4.9], [1.2, 33.0, -4.5], WH)
     f.add('head', [-0.7, 33.0, -4.9], [0.7, 34.0, -4.55], WH)
     f.add('head', [-0.45, 31.2, -5.1], [0.45, 32.1, -4.85], GLOW, shade=False)
+    # back guard under the circlet, behind the hair
+    f.add('head', [-3.6, 28.6, 4.5], [3.6, 30.2, 4.95], WH, {'back': lambda x, y: GOLD if y > .7 else WH})
     # wings at the temples sweeping back
     for side in (1, -1):
         x = 4.55 if side > 0 else -4.55
@@ -56,6 +58,14 @@ def chest():
     # vambraces
     f.both('right_arm', [3.65, 13.0, -2.35], [8.35, 16.5, 2.35], WH, {'top': None, 'bottom': None})
     f.both('right_arm', [3.6, 16.5, -2.4], [8.4, 17.0, 2.4], GOLD, {'top': None, 'bottom': None})
+    # upper-arm sleeves, elbow guards
+    f.both('right_arm', [3.55, 17.0, -2.3], [8.45, 20.6, 2.3], SKYD, {'top': None, 'bottom': None, 'front': lambda x, y: WH if .35 < x < .65 else SKYD})
+    f.both('right_arm', [4.2, 16.4, -2.75], [7.8, 17.8, -2.3], WH)
+    # faulds: white plates with a sky stripe and gold edge, and a back tabard
+    for i, y in enumerate((12.2, 11.0)):
+        f.add('body', [-4.3 + i * .25, y, -2.8], [4.3 - i * .25, y + 1.3, 2.7], WH if i == 0 else SKY,
+              {'top': None, 'bottom': None, 'front': lambda x, yy: GOLD if yy > .8 else (SKY if abs(x - .5) < .1 else WH)})
+    f.add('body', [-2.6, 8.4, 2.6], [2.6, 14.4, 2.95], SKY, {'back': lambda x, y: GOLD if x < .1 or x > .9 or y > .9 else (GLOW if abs(x - .5) < .08 and .3 < y < .6 else SKY)})
     return f
 
 def legs():
@@ -68,6 +78,8 @@ def legs():
     f.both('right_leg', [-0.45, 11.3, -2.45], [4.45, 11.8, 2.45], GOLD, {'top': None, 'bottom': None})
     f.both('right_leg', [0.4, 4.6, -2.75], [3.6, 6.6, -2.35], SKY)                # knee guard
     f.both('right_leg', [3.9, 7.0, -1.6], [4.6, 10.6, 1.6], SKYD)               # hip plate
+    f.both('right_leg', [1.5, 5.2, -3.0], [2.5, 6.0, -2.75], GLOW, shade=False)   # knee gem
+    f.both('right_leg', [-0.4, 8.0, 2.4], [4.4, 11.0, 2.7], SKY)                  # back thigh plate
     return f
 
 def boots():

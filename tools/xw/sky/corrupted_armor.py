@@ -38,6 +38,18 @@ def c_chest():
     f.both('right_arm', [7.4, 24.6, -0.6], [8.4, 26.6, 0.6], PUD, rot=[0, 0, -20], origin=[7.9, 24.6, 0])
     f.both('right_arm', [3.65, 12.6, -2.35], [8.35, 17.0, 2.35], BK, {'top': None, 'bottom': None})       # gauntlets
     f.both('right_arm', [8.3, 13.5, -0.8], [9.1, 16.2, 0.8], PU)
+    # upper-arm sleeves with veins, a spiked elbow
+    f.both('right_arm', [3.55, 17.0, -2.3], [8.45, 20.6, 2.3], BKD, {'top': None, 'bottom': None, 'front': veins(BKD), 'right': veins(BKD)})
+    f.both('right_arm', [5.5, 16.6, 2.3], [6.5, 18.0, 3.6], PUD, rot=[-30, 0, 0], origin=[6, 17.3, 2.3])
+    # jagged faulds (alternating long/short shards)
+    for k in range(5):
+        x0 = -4.2 + k * 1.68; ln = 2.6 if k % 2 == 0 else 1.6
+        f.add('body', [x0, 12.6 - ln, -2.8], [x0 + 1.6, 12.9, -2.45], BK if k % 2 == 0 else PUD, {'front': veins(BK)})
+        f.add('body', [x0, 12.6 - ln, 2.45], [x0 + 1.6, 12.9, 2.8], BK if k % 2 else PUD)
+    # back spines
+    for k, y in enumerate((22.4, 19.8, 17.2)):
+        f.add('body', [-0.5, y, 2.6], [0.5, y + 1.0, 4.0 - k * .3], PUL if k == 0 else PU, rot=[-25, 0, 0], origin=[0, y + .5, 2.6])
+    f.add('body', [-0.9, 16.0, -2.95], [0.9, 16.6, -2.6], GL, shade=False)
     return f
 
 def c_legs():
