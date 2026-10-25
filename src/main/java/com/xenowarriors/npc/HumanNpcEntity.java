@@ -45,6 +45,12 @@ public class HumanNpcEntity extends PathfinderMob {
     /** What they're reacting to right now (see HumanReactions), shown as a pose. */
     private static final EntityDataAccessor<Integer> REACTION = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.INT);
     private int reactUntil;
+    /** What they've gathered (logs, stone, ore, planks, ingots), and the hut they built. */
+    private final net.minecraft.world.SimpleContainer pack = new net.minecraft.world.SimpleContainer(12);
+    private net.minecraft.core.BlockPos home;
+    public net.minecraft.world.SimpleContainer pack() { return pack; }
+    public net.minecraft.core.BlockPos home() { return home; }
+    public void setHome(net.minecraft.core.BlockPos p) { home = p; }
     private static final EntityDataAccessor<Boolean> RAIDER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static Boolean dmz;
@@ -172,6 +178,7 @@ public class HumanNpcEntity extends PathfinderMob {
         goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.PHONE, 60, 3, 12));
         goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.BRIEFCASE, 70, 3, 10));
         goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.KI, 90, 4, 18));
+        goalSelector.addGoal(4, new HumanWorkGoal(this));      // chopping, mining, crafting, building their hut
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.75));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -408,6 +415,8 @@ public class HumanNpcEntity extends PathfinderMob {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.put("Pack", pack.createTag());
+        if (home != null) tag.putLong("Home", home.asLong());
         tag.putInt("Variant", variant());
         tag.putBoolean("Possessed", possessed());
         tag.putBoolean("Fighter", fighter());
@@ -421,6 +430,8 @@ public class HumanNpcEntity extends PathfinderMob {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        pack.fromTag(tag.getList("Pack", 10));
+        if (tag.contains("Home")) home = net.minecraft.core.BlockPos.of(tag.getLong("Home"));
         entityData.set(VARIANT, tag.getInt("Variant"));
         entityData.set(POSSESSED, tag.getBoolean("Possessed"));
         entityData.set(FIGHTER, tag.getBoolean("Fighter"));
