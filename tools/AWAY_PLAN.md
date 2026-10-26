@@ -44,3 +44,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Sun 18:45 — 0.102.0: vanilla armor in 3D per material (leather jerkin, chain coif/hauberk, iron knight plate w/ nasal helm, gold crown/sun, diamond crystal horns/shards, netherite horned spiked w/ ember core). Faces kept open.
 - Sun 23:40 — 0.102.1: sky + corrupted armor polish (no more bare upper arms; faulds, sky tabard, corrupted spines).
 - Mon 00:45 — S3 blueprints: Mikiko + Rhalix blueprint sheets (in-mod vs idea skills), 25-character cast roster, docs/S3_BLUEPRINTS.md (also saved to the claude.ai project). No jar this time.
+- Mon 01:20 (user here) — 0.103.0: skill loadouts (SkillPool: 4 equipped + fixed ult, unlock by Character Level, Skills tab in M menu, swap = 5s cooldown). Mikiko: Dance Kick Lv15, Netsu Burst Lv30, Manifest Greatness Lv50, True Empathy Lv75. Rhalix: KA Release Lv60. Creative = all unlocked.
