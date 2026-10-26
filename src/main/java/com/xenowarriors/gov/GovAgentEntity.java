@@ -72,7 +72,8 @@ public class GovAgentEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.15, true) { @Override public boolean canUse() { return guard() && super.canUse(); } });
+        goalSelector.addGoal(1, new GunGoal());
+        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.15, true) { @Override public boolean canUse() { return guard() && !hasGun() && super.canUse(); } });
         goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 10F, 1.0, 1.35, p -> !guard() && GovFacilities.wanted((Player) p)));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
@@ -114,11 +115,63 @@ public class GovAgentEntity extends PathfinderMob {
         return super.finalizeSpawn(level, d, reason, data, tag);
     }
 
+    // ---------------------------------------------------------------- guns (with TACZ installed)
+
+    private boolean gunDrawn;
+    private int burst;
+
+    public boolean hasGun() { return com.xenowarriors.compat.TaczGuns.isGun(getMainHandItem()); }
+
+    public boolean skyAmmo() { return getPersistentData().getBoolean("xw_sky_ammo"); }
+
+    /** Some guards carry a gun (and some of those load Sky-tech rounds). Rolled once per guard. */
+    private void armWithGun() {
+        var t = getPersistentData();
+        if (t.getBoolean("xw_gun_rolled") || !guard() || !com.xenowarriors.compat.TaczGuns.available()) return;
+        t.putBoolean("xw_gun_rolled", true);
+        if (random.nextFloat() >= 0.6F) return;
+        String id = com.xenowarriors.compat.TaczGuns.GOV_GUNS[random.nextInt(com.xenowarriors.compat.TaczGuns.GOV_GUNS.length)];
+        net.minecraft.world.item.ItemStack g = com.xenowarriors.compat.TaczGuns.gun(id, 30);
+        if (g.isEmpty()) return;
+        setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, g);
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.04F);
+        if (random.nextFloat() < 0.35F) t.putBoolean("xw_sky_ammo", true);
+    }
+
+    /** Keeps 6-16 blocks away and fires in bursts while it can see its target. */
+    private class GunGoal extends net.minecraft.world.entity.ai.goal.Goal {
+        GunGoal() { setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        @Override public boolean canUse() { return guard() && hasGun() && getTarget() != null && getTarget().isAlive(); }
+        @Override public void stop() { getNavigation().stop(); }
+        @Override public void tick() {
+            LivingEntity t = getTarget();
+            if (t == null) return;
+            getLookControl().setLookAt(t, 30F, 30F);
+            double dist = distanceTo(t);
+            boolean see = getSensing().hasLineOfSight(t);
+            if (!see || dist > 16) getNavigation().moveTo(t, 1.0);
+            else if (dist < 6) {
+                Vec3 away = position().add(position().subtract(t.position()).normalize().scale(5));
+                getNavigation().moveTo(away.x, away.y, away.z, 1.1);
+            } else getNavigation().stop();
+            burst = (burst + 1) % 50;
+            if (!see || burst >= 28) return;                                 // fire ~1.4 s, then pause
+            if (!gunDrawn) { com.xenowarriors.compat.TaczGuns.draw(GovAgentEntity.this); gunDrawn = true; return; }
+            Vec3 d = t.getBoundingBox().getCenter().subtract(getEyePosition());
+            float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F) + (random.nextFloat() - .5F) * 4F;
+            float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z))) + (random.nextFloat() - .5F) * 3F;
+            setYRot(yaw); yBodyRot = yaw; yHeadRot = yaw; setXRot(pitch);
+            com.xenowarriors.compat.TaczGuns.shoot(GovAgentEntity.this, pitch, yaw);
+        }
+    }
+
     @Override
     public void aiStep() {
         super.aiStep();
         if (level().isClientSide) return;
         ServerLevel l = (ServerLevel) level();
+        if (tickCount == 10) armWithGun();
+        if (tickCount == 20 && hasGun()) { com.xenowarriors.compat.TaczGuns.draw(this); gunDrawn = true; }
         LivingEntity t = getTarget();
         if (dashCd > 0) dashCd--;
         if (t != null && t.isAlive()) {
