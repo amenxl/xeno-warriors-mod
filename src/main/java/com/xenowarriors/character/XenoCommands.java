@@ -278,6 +278,19 @@ public final class XenoCommands {
                     com.xenowarriors.gov.GovFacilityFeature.build(p.serverLevel(), p.getRandom(), p.blockPosition().offset(0, 0, -12));
                     say(ctx, gray("Government facility built just ahead of you."));
                     return 1;
+                }))
+                .then(Commands.literal("order_hideout").executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    com.xenowarriors.s3.OrderHideoutFeature.build(p.serverLevel(), p.getRandom(), p.blockPosition().offset(0, 0, -10));
+                    say(ctx, gray("Order of Assassins hideout built just ahead of you" + (Seasons.unlocked(p.server, 3) ? "." : " (its members leave unless Season 3 is unlocked).")));
+                    return 1;
+                })));
+        root.then(Commands.literal("distortion").requires(src -> src.hasPermission(2))
+                .then(Commands.argument("size", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    if (!Seasons.unlocked(p.server, 3)) { ctx.getSource().sendFailure(Component.literal("Distortions are Season 3 content - /xeno season unlock 3")); return 0; }
+                    com.xenowarriors.s3.Distortions.open(p.serverLevel(), p, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "size"));
+                    return 1;
                 })));
 
         root.then(Commands.literal("giveup").executes(ctx -> {

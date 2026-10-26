@@ -86,7 +86,7 @@ public class CorruptedSoulEntity extends Monster {
         }
         if (sinking > 0) {
             sinkTick();
-        } else if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition())) {
+        } else if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition()) && !getPersistentData().getBoolean(com.xenowarriors.s3.DistortionEntity.TAG)) {   // Distortion souls don't fear the sun
             sinking = 1;          // daylight: it flees down into the ground before it fades away
             playSound(SoundEvents.SOUL_ESCAPE, 1F, 0.6F);
         }

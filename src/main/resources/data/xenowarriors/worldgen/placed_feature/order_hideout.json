@@ -1,0 +1,1 @@
+{ "feature": "xenowarriors:order_hideout", "placement": [ { "type": "minecraft:rarity_filter", "chance": 220 }, { "type": "minecraft:in_square" }, { "type": "minecraft:biome" } ] }

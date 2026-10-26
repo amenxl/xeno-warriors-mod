@@ -29,6 +29,8 @@ public class XenoWarriors {
         com.xenowarriors.npc.ModNpcs.init();
         com.xenowarriors.gov.GovEntities.init();
         com.xenowarriors.gov.GovFacilityFeature.init();
+        com.xenowarriors.s3.S3Entities.init();
+        com.xenowarriors.s3.OrderHideoutFeature.init();
         ModEntities.ENTITY_TYPES.register(modBus);
         com.xenowarriors.world.SkyIslandFeature.FEATURES.register(modBus);
         com.xenowarriors.altar.ModAltar.init();

@@ -46,6 +46,9 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.SKYLANDER.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.gov.GovAgentEntity>plain(ctx, com.xenowarriors.gov.GovAgentEntity::look, e -> false));
+        event.registerEntityRenderer(com.xenowarriors.s3.S3Entities.ORDER_ASSASSIN.get(),
+                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.s3.OrderAssassinEntity>plain(ctx, com.xenowarriors.s3.OrderAssassinEntity::look, e -> false));
+        event.registerEntityRenderer(com.xenowarriors.s3.S3Entities.DISTORTION.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.THROWN.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.KI_BLAST.get(), com.xenowarriors.client.npc.KiBlastRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get(),

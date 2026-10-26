@@ -318,5 +318,7 @@
   "skill.xenowarriors.moon_fall": "Moon Fall",
   "skill.xenowarriors.moon_fall.short": "MF",
   "skill.xenowarriors.moon_fall.desc": "Lunar Form super move. Rhalix raises a hand and a moon falls on the spot he's looking at, then bursts in a huge silver blast. Doesn't break blocks.",
-  "skill.xenowarriors.moon_fall.how": "Ctrl+6 in Lunar Form. Sneak + Ctrl+6 still uses a test KA."
+  "skill.xenowarriors.moon_fall.how": "Ctrl+6 in Lunar Form. Sneak + Ctrl+6 still uses a test KA.",
+  "entity.xenowarriors.distortion": "Distortion",
+  "entity.xenowarriors.order_assassin": "Order Assassin"
 }
