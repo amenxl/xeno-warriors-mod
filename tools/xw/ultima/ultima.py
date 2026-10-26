@@ -41,7 +41,15 @@ def body_paint(gloves, sleek=False):
         return None
     return fn
 
-SPEC = dict(skin=SKIN, eyes='#3cf2c8', hair=[HAIR_T, HAIR_B],
+def nose(px, cm, dark):
+    """A small anime nose: a shadow down one side and a soft shaded tip."""
+    if dark: return
+    sh, tip = cm['h'], cm['m']
+    for (x, y) in ((16, 18), (16, 19), (17, 20)): px[x, y] = sh + (255,)
+    for (x, y) in ((15, 21), (16, 21)): px[x, y] = tip + (255,)
+    px[14, 20] = tuple(min(255, c + 14) for c in cm['h']) + (255,)
+
+SPEC = dict(skin=SKIN, face_extra=[nose], eyes='#3cf2c8', hair=[HAIR_T, HAIR_B],
             brow=['......kkk', '..kkkk...', 'kk.......'],
             eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wOOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
             mouth=['kwwwwwwwwk', '.kwkwkwkk.', '..kkkkkk..'], mouth_x=11, mouth_y=23)
