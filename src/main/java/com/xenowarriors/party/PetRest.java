@@ -38,7 +38,8 @@ public final class PetRest {
             for (ListTag list : new ListTag[]{d.pets, d.wingPets})
                 for (int i = 0; i < list.size(); i++) {
                     CompoundTag rec = list.getCompound(i);
-                    if (rec.hasUUID("uuid") && p.serverLevel().getEntity(rec.getUUID("uuid")) instanceof Entity e && e.isAlive()) out.add(e);
+                    Entity e = rec.hasUUID("uuid") ? p.serverLevel().getEntity(rec.getUUID("uuid")) : null;
+                    if (e != null && e.isAlive()) out.add(e);
                 }
         });
         return out;
