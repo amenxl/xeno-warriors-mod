@@ -81,6 +81,13 @@ public final class ClientSkillState {
 
     private ClientSkillState() {}
 
+    private static int[] loadout = com.xenowarriors.skill.SkillPool.defaultLoadout();
+    private static int level;
+
+    public static void setLoadout(int[] l, int lv) { if (l.length == 4) loadout = l; level = lv; }
+    public static int[] loadout() { return loadout; }
+    public static int level() { return level; }
+
     public static void setKarma(float value, float max) {
         karma = value;
         maxKarma = max;

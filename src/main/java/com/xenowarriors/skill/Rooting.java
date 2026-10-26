@@ -16,6 +16,7 @@ public final class Rooting {
 
     /** Call every tick while the entity should be stuck at {@code anchor}. */
     public static void hold(LivingEntity target, Vec3 anchor) {
+        if (com.xenowarriors.skill.rhalix.KaReleaseSkill.free(target)) return;     // KA Release: can't be held
         target.getPersistentData().putLong(ROOTED_UNTIL, target.level().getGameTime() + 2);
         target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 6, false, false, false));
         if (target instanceof Player player) {

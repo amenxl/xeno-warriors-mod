@@ -43,6 +43,11 @@ public final class SkillAnimations {
             case SkillAnimPacket.BLITZ -> BLITZ_DURATION;
             case SkillAnimPacket.BLAZING -> BLAZING_DURATION;
             case SkillAnimPacket.TEAM_RHALIX, SkillAnimPacket.TEAM_MIKIKO -> com.xenowarriors.entity.TeamUltEntity.END;
+            case SkillAnimPacket.DANCE_KICK -> 22;
+            case SkillAnimPacket.NETSU_BURST -> 12;
+            case SkillAnimPacket.MANIFEST -> 40;
+            case SkillAnimPacket.EMPATHY -> 16;
+            case SkillAnimPacket.KA_RELEASE -> 14;
             default -> KISHI_DURATION;
         };
     }
@@ -68,6 +73,11 @@ public final class SkillAnimations {
             case SkillAnimPacket.BLAZING -> blazing(model, t);
             case SkillAnimPacket.TEAM_RHALIX -> teamRhalix(model, t);
             case SkillAnimPacket.TEAM_MIKIKO -> teamMikiko(model, t);
+            case SkillAnimPacket.DANCE_KICK -> danceKick(model, t);
+            case SkillAnimPacket.NETSU_BURST -> netsuBurst(model, t);
+            case SkillAnimPacket.MANIFEST -> manifest(model, t);
+            case SkillAnimPacket.EMPATHY -> empathy(model, t);
+            case SkillAnimPacket.KA_RELEASE -> kaRelease(model, t);
             default -> kishi(model, t, anim.airborne());
         }
         return true;
@@ -303,6 +313,66 @@ public final class SkillAnimations {
                 {99, -2.3F, -0.4F, 0.2F, 0.15F, 0, -0.55F, 0, 0, 0.12F, 0, 0, -0.12F, 0},               // blade on shoulder, hand on hip
                 {104, -2.3F, -0.4F, 0.2F, 0.15F, 0, -0.55F, 0, 0, 0.12F, 0, 0, -0.12F, 0}};
         keyframes(m, t, keys, w);
+    }
+
+    /** Dance Kick: disco point to the sky, a spinning kick with the leg out wide, then a flying front kick. */
+    private static void danceKick(HumanoidModel<?> m, float t) {
+        float w = weight(t, 22, 1.5F, 18F);
+        if (w <= 0F) return;
+        float spin = smooth((t - 2F) / 3F) * (1F - smooth((t - 10F) / 2F));
+        float fin = smooth((t - 12F) / 2F);
+        float swirl = (float) Math.sin(t * 1.4F);
+        pose(m.rightArm, w, lerp(lerp(-2.9F, -1.6F, spin), -0.6F, fin), 0F, lerp(lerp(0.2F, 1.2F, spin), 0.6F, fin));
+        pose(m.leftArm, w, lerp(lerp(0.3F, -1.6F, spin), -0.6F, fin), 0F, lerp(lerp(-0.4F, -1.2F, spin), -0.6F, fin));
+        pose(m.rightLeg, w, lerp(lerp(0F, -0.9F + swirl * 0.3F, spin), -1.55F, fin), 0F, lerp(lerp(0.05F, 1.0F, spin), 0.05F, fin));
+        pose(m.leftLeg, w, lerp(0F, 0.35F, Math.max(spin, fin)), 0F, -0.08F);
+    }
+
+    /** Netsu Burst: crouched sprint start, then leaning far forward with arms swept back. */
+    private static void netsuBurst(HumanoidModel<?> m, float t) {
+        float w = weight(t, 12, 1F, 9F);
+        if (w <= 0F) return;
+        float run = (float) Math.sin(t * 2.2F);
+        pose(m.rightArm, w, 1.3F, 0.2F, 0.35F);
+        pose(m.leftArm, w, 1.3F, -0.2F, -0.35F);
+        pose(m.rightLeg, w, run * 1.1F - 0.2F, 0F, 0.05F);
+        pose(m.leftLeg, w, -run * 1.1F - 0.2F, 0F, -0.05F);
+        m.head.xRot -= 0.3F * w;
+    }
+
+    /** Manifest Greatness: fists clenched at his sides while he chants, then both arms thrown up. */
+    private static void manifest(HumanoidModel<?> m, float t) {
+        float w = weight(t, 40, 3F, 34F);
+        if (w <= 0F) return;
+        float shake = t < 26F ? (float) Math.sin(t * 3.5F) * 0.04F * smooth(t / 20F) : 0F;
+        float up = smooth((t - 25F) / 3F);
+        pose(m.rightArm, w, lerp(0.25F + shake, -2.9F, up), 0F, lerp(0.35F, 0.45F, up));
+        pose(m.leftArm, w, lerp(0.25F - shake, -2.9F, up), 0F, lerp(-0.35F, -0.45F, up));
+        pose(m.rightLeg, w, 0F, 0F, lerp(0.12F, 0.2F, up));
+        pose(m.leftLeg, w, 0F, 0F, lerp(-0.12F, -0.2F, up));
+        m.head.xRot += lerp(0.35F, -0.45F, up) * w;
+    }
+
+    /** True Empathy: two fingers to his temple, then the hand opens toward them. */
+    private static void empathy(HumanoidModel<?> m, float t) {
+        float w = weight(t, 16, 2F, 12F);
+        if (w <= 0F) return;
+        float open = smooth((t - 7F) / 3F);
+        float aimX = m.head.xRot - (float) Math.PI / 2F;
+        pose(m.rightArm, w, lerp(-2.2F, aimX + 0.2F, open), lerp(-0.9F, m.head.yRot, open), lerp(0.3F, 0F, open));
+        pose(m.leftArm, w, -0.15F, 0F, -0.2F);
+    }
+
+    /** KA Release: arms flung out and wide as the hold breaks. */
+    private static void kaRelease(HumanoidModel<?> m, float t) {
+        float w = weight(t, 14, 1F, 10F);
+        if (w <= 0F) return;
+        float burst = smooth((t - 2F) / 2F);
+        pose(m.rightArm, w, lerp(-0.6F, -0.3F, burst), 0F, lerp(0.2F, 1.9F, burst));
+        pose(m.leftArm, w, lerp(-0.6F, -0.3F, burst), 0F, lerp(-0.2F, -1.9F, burst));
+        pose(m.rightLeg, w, 0F, 0F, 0.25F * burst);
+        pose(m.leftLeg, w, 0F, 0F, -0.25F * burst);
+        m.head.xRot -= 0.35F * burst * w;
     }
 
     private static float weight(float t, float duration, float in, float outStart) {

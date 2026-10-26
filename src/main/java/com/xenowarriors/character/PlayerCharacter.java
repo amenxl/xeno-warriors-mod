@@ -51,6 +51,14 @@ public class PlayerCharacter {
     public int craftLevel, smeltLevel;
     public float craftXp, smeltXp;
     public CompoundTag prisonReturn = new CompoundTag();
+    /** Equipped skills per character id: 4 indexes into SkillPool (the ultimate is fixed). */
+    public CompoundTag loadouts = new CompoundTag();
+
+    public int[] loadout(CharacterType t) {
+        int[] l = loadouts.getIntArray(t.getId());
+        return l.length == 4 ? l : com.xenowarriors.skill.SkillPool.defaultLoadout();
+    }
+    public void setLoadout(CharacterType t, int[] l) { loadouts.putIntArray(t.getId(), l.clone()); }
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -87,6 +95,7 @@ public class PlayerCharacter {
         this.smeltLevel = other.smeltLevel;
         this.smeltXp = other.smeltXp;
         this.prisonReturn = other.prisonReturn.copy();
+        this.loadouts = other.loadouts.copy();
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
         this.backFox = other.backFox.copy();
@@ -106,6 +115,7 @@ public class PlayerCharacter {
         tag.putInt("next_seal_id", nextSealId);
         if (prisonerOf != null) tag.putUUID("prisoner_of", prisonerOf);
         tag.put("prison_return", prisonReturn.copy());
+        tag.put("loadouts", loadouts.copy());
         tag.putInt("mining_level", miningLevel);
         tag.putInt("blade_level", bladeLevel);
         tag.putFloat("blade_xp", bladeXp);
@@ -137,6 +147,7 @@ public class PlayerCharacter {
         this.nextSealId = tag.getInt("next_seal_id");
         this.prisonerOf = tag.hasUUID("prisoner_of") ? tag.getUUID("prisoner_of") : null;
         this.prisonReturn = tag.getCompound("prison_return");
+        this.loadouts = tag.getCompound("loadouts");
         this.miningLevel = tag.getInt("mining_level");
         this.bladeLevel = Math.max(1, tag.getInt("blade_level"));
         this.bladeXp = tag.getFloat("blade_xp");

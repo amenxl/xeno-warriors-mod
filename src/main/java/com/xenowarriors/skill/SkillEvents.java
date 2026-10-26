@@ -25,6 +25,7 @@ public final class SkillEvents {
     @SubscribeEvent
     public static void onJump(LivingEvent.LivingJumpEvent event) {
         LivingEntity entity = event.getEntity();
+        if (com.xenowarriors.skill.rhalix.KaReleaseSkill.free(entity)) return;
         if (Rooting.isRooted(entity)) {
             Vec3 v = entity.getDeltaMovement();
             entity.setDeltaMovement(0, Math.min(v.y, 0), 0);
