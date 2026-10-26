@@ -59,3 +59,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 03:10 (user here) — 0.109.1: skill season locks (Netsu Burst S2; Dance Kick, True Empathy, KA Release S3; shown as ??? when locked).
 - Mon 03:20 — Ultima 5 model options + Overload sheet sent (tools/xw/ultima/ultima.py; outputs /home/claude/xw/ultima/out). Waiting on pick. Overload = >100% output: circuit face, white-green eyes, green static (user wants it added).
 - Mon 03:25 — Ultima: user picked Option A + bracelet on bare wrist; ultima.bbmodel sent (tools/xw/ultima/bb.py). Next: integrate Ultima (Season 2 locked) when user confirms model; Overload effects; boss later (remind).
+- Mon 03:30 — Ultima default face = option 8 (Bored, looking away), NO nose. User may change later: REMIND them when integrating Ultima.

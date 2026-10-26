@@ -49,10 +49,11 @@ def nose(px, cm, dark):
     for (x, y) in ((15, 21), (16, 21)): px[x, y] = tip + (255,)
     px[14, 20] = tuple(min(255, c + 14) for c in cm['h']) + (255,)
 
-SPEC = dict(skin=SKIN, face_extra=[nose], eyes='#3cf2c8', hair=[HAIR_T, HAIR_B],
-            brow=['......kkk', '..kkkk...', 'kk.......'],
-            eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wOOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
-            mouth=['kwwwwwwwwk', '.kwkwkwkk.', '..kkkkkk..'], mouth_x=11, mouth_y=23)
+SPEC = dict(skin=SKIN, eyes='#3cf2c8', hair=[HAIR_T, HAIR_B],   # (nose(): optional 2D nose - user chose no nose for now)
+            # default face = option 8 "Bored, looking away" (user's pick; may change later)
+            brow=['.........', 'kkkkkkk..', '.........'],
+            eye=['.........', '.........', 'kkkkkkkkk', 'kkkkkkkkk', '.wwwOpOw.', '..kkkkk..', '.........'],
+            mouth=['..kkkkk.'], mouth_x=12, mouth_y=23)
 
 def ultima_hair(f, long_spikes=False):
     """Messy, mostly lying down: a full cap, layered locks falling around the sides and back, a few short tufts
