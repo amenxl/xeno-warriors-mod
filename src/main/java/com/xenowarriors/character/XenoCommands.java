@@ -222,6 +222,27 @@ public final class XenoCommands {
                                     return 1;
                                 }))));
 
+        root.then(Commands.literal("element")
+                .then(Commands.literal("list").executes(ctx -> {
+                    for (com.xenowarriors.ka.Element e : com.xenowarriors.ka.Element.values()) say(ctx, gray(e.title() + " - " + e.karma + " Karma"));
+                    return 1;
+                }))
+                .then(Commands.literal("give").requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("element", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(com.xenowarriors.ka.Element.values()).map(com.xenowarriors.ka.Element::id), b))
+                                .executes(ctx -> {
+                                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                                    var el = com.xenowarriors.ka.Element.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "element"));
+                                    var t = com.xenowarriors.skill.SkillTargeting.aimed(p, 20, 15);
+                                    if (el == null || !(t instanceof net.minecraft.world.entity.Mob)) {
+                                        ctx.getSource().sendFailure(Component.literal("Look at an NPC or mob and give an element from /xeno element list."));
+                                        return 0;
+                                    }
+                                    com.xenowarriors.ka.Elements.give(t, el);
+                                    say(ctx, gray(t.getName().getString() + " now has the " + el.title() + " element"));
+                                    return 1;
+                                }))));
+
         root.then(Commands.literal("giveup").executes(ctx -> {
             boolean ok = com.xenowarriors.party.Duels.giveUp(ctx.getSource().getPlayerOrException());
             if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));
