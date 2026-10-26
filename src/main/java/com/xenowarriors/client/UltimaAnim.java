@@ -89,11 +89,11 @@ public final class UltimaAnim {
         LimbBend.extraElbows(p, -1.25F, -1.3F);
         if (atk <= 0F) return;
         float s = Mth.sin(atk * Mth.PI);
-        if (step % 3 == 0) {                                                     // spinning roundhouse kick
-            float spin = atk * Mth.TWO_PI;
-            m.body.yRot = spin;
-            m.head.yRot -= spin * 0.5F;
-            m.rightLeg.xRot = -1.35F * s; m.rightLeg.zRot = 0.75F * s; m.rightLeg.yRot = 0.4F * s;
+        if (step % 3 == 0) {                                                     // roundhouse kick: hips twist hard, the leg sweeps round
+            float sweep = atk < 0.5F ? atk / 0.5F : 1F;
+            m.body.yRot = 0.85F * s;
+            m.head.yRot -= 0.4F * s;
+            m.rightLeg.xRot = -1.35F * s; m.rightLeg.zRot = 0.75F * s; m.rightLeg.yRot = -0.9F + 1.6F * sweep;
             m.leftLeg.xRot = 0.45F;
             LimbBend.extraKnees(p, 0.1F, 0.9F);
             m.rightArm.xRot = -0.4F; m.rightArm.zRot = 1.1F * s; m.leftArm.xRot = -0.4F; m.leftArm.zRot = -1.1F * s;
