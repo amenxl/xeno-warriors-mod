@@ -119,10 +119,6 @@ public final class Parties {
             from.sendSystemMessage(msg("Your party is full (" + MAX_SIZE + " players and bots)."));
             return;
         }
-        if (partyPets(from) + pets(to) > MAX_PETS) {
-            from.sendSystemMessage(msg("A party can only have " + MAX_PETS + " pets - together you'd have " + (partyPets(from) + pets(to)) + ". Release some first."));
-            return;
-        }
         INVITES.put(to.getUUID(), new Invite(from.getUUID(), from.level().getGameTime() + INVITE_TICKS));
         from.sendSystemMessage(msg("Invited " + to.getName().getString() + " to your party."));
         to.sendSystemMessage(msg(from.getName().getString() + " invited you to their party! ")
@@ -158,10 +154,6 @@ public final class Parties {
         }
         if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > MAX_SIZE) {
             p.sendSystemMessage(msg("That party is full (players and bots count)."));
-            return;
-        }
-        if (partyPets(from) + pets(p) > MAX_PETS) {
-            p.sendSystemMessage(msg("A party can only have " + MAX_PETS + " pets - together you'd have " + (partyPets(from) + pets(p)) + ". Release some first."));
             return;
         }
         party.members.add(p.getUUID());

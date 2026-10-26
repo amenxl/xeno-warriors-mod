@@ -20,7 +20,7 @@ public class WingFollowGoal extends Goal {
     @Override
     public boolean canUse() {
         Player p = WingPets.owner(mob);
-        if (p == null || p.isSpectator() || mob.isLeashed() || mob.isPassenger() || mob.distanceToSqr(p) < 5 * 5) return false;
+        if (p == null || p.isSpectator() || mob.isLeashed() || mob.isPassenger() || com.xenowarriors.party.PetRest.resting(mob) || mob.distanceToSqr(p) < 5 * 5) return false;
         owner = p;
         return true;
     }

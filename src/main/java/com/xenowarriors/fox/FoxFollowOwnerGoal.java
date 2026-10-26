@@ -28,7 +28,7 @@ public class FoxFollowOwnerGoal extends Goal {
     @Override
     public boolean canUse() {
         Player p = FoxPets.owner(fox);
-        if (p == null || p.isSpectator() || fox.isLeashed() || fox.isPassenger()) return false;
+        if (p == null || p.isSpectator() || fox.isLeashed() || fox.isPassenger() || com.xenowarriors.party.PetRest.resting(fox)) return false;
         double d = startDistance();
         if (fox.distanceToSqr(p) < d * d) return false;
         owner = p;
@@ -68,6 +68,7 @@ public class FoxFollowOwnerGoal extends Goal {
 
     /** Puts the fox on a safe spot a few blocks from the owner. */
     public static boolean teleportNear(Fox fox, Entity owner) {
+        if (com.xenowarriors.party.PetRest.resting(fox)) return false;        // staying behind (party pet limit)
         BlockPos base = owner.blockPosition();
         RandomSource r = fox.getRandom();
         for (int i = 0; i < 16; i++) {

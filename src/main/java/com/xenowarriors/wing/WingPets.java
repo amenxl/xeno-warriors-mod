@@ -235,6 +235,7 @@ public final class WingPets {
     // ---------------------------------------------------------------- keeping up with him
 
     public static void teleportNear(Mob mob, Entity owner) {
+        if (com.xenowarriors.party.PetRest.resting(mob)) return;            // staying behind (party pet limit)
         Vec3 o = owner.position();
         double a = mob.getRandom().nextDouble() * Math.PI * 2;
         double y = mob instanceof Bat || mob instanceof Bee || mob instanceof Parrot ? o.y + 1.8 : o.y;
