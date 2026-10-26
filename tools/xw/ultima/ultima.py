@@ -96,6 +96,10 @@ def bracers(f, both=True):
     f.both('right_arm', [3.55, 13.6, -2.45], [8.45, 14.7, 2.45], SILV, {'front': lambda x, y: '#8e90a0' if int(x * 5) % 2 else SILV}) if both else \
         f.add('right_arm', [3.55, 13.6, -2.45], [8.45, 14.7, 2.45], SILV)
 
+def bracelet(f):
+    """The silver bracelet on his bare wrist (his right; the left hand wears the glove)."""
+    f.add('right_arm', [3.5, 13.4, -2.5], [8.5, 14.8, 2.5], SILV, {k: (lambda x, y: '#8e90a0' if int(x * 6) % 3 == 0 else '#d0d2de' if y < .3 else SILV) for k in ('front', 'back', 'right', 'left')})
+
 def chest_plate(f):
     f.add('body', [-3.0, 17.0, -2.85], [3.0, 21.5, -2.4], BLK2, {'front': lambda x, y: TRIM if y < .08 or y > .92 or x < .06 or x > .94 else BLK2})
     f.add('body', [-0.8, 18.4, -3.05], [0.8, 20.0, -2.8], GEM)
@@ -108,7 +112,7 @@ def legs(f, sleek=False):
     f.both('right_leg', [0.1, 0, -3.2], [3.9, 1.6, -2.45], '#14141a')
 
 OPTIONS = {
-    'A': ('Classic (art 1): cropped open jacket, one glove', lambda f: (ultima_hair(f), cape_jacket(f), collar_and_gems(f), belt(f), legs(f)), 'one', False),
+    'A': ('Classic (art 1): cropped open jacket, one glove, bracelet', lambda f: (ultima_hair(f), cape_jacket(f), collar_and_gems(f), belt(f), legs(f), bracelet(f)), 'one', False),
     'B': ('Battle (art 2): both gloves, silver bracers, wilder hair', lambda f: (ultima_hair(f, True), cape_jacket(f), collar_and_gems(f), belt(f), bracers(f), legs(f)), 'both', False),
     'C': ('Commander: long coat tails to the knees', lambda f: (ultima_hair(f), long_coat(f), collar_and_gems(f), belt(f), bracers(f), legs(f)), 'both', False),
     'D': ('Living weapon: big shoulder pads + chest gem plate', lambda f: (ultima_hair(f, True), cape_jacket(f, 17.5), collar_and_gems(f, True), chest_plate(f), belt(f), bracers(f), legs(f)), 'both', False),
