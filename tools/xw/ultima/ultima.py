@@ -185,7 +185,48 @@ OPTIONS = {
     'E': ('Sleek tech: no jacket, glowing circuit lines', lambda f: (ultima_hair(f), collar_and_gems(f), belt(f), legs(f, True), f.both('right_arm', [3.55, 20.0, -2.45], [8.45, 24.4, 2.45], BLK, {'front': trimmed(BLK), 'right': trimmed(BLK), 'left': trimmed(BLK), 'back': trimmed(BLK)})), 'both', True),
 }
 
-def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=None):
+def box_quads2(frm, size, uv, tex, M, T, xf=None):
+    """kit.box_quads with an optional per-point local transform (for bent elbows/knees)."""
+    from kit import mul as _mul
+    x0, y0, z0 = frm; w, h, d = size; u, v = uv
+    X1, Y1, Z1 = x0 + w, y0 + h, z0 + d
+    Fs = [((x0, y0, z0), (w, 0, 0), (0, h, 0), (u + d, v + d, w, h), (0, 0, -1)),
+          ((X1, y0, Z1), (-w, 0, 0), (0, h, 0), (u + 2 * d + w, v + d, w, h), (0, 0, 1)),
+          ((x0, y0, Z1), (0, 0, -d), (0, h, 0), (u, v + d, d, h), (-1, 0, 0)),
+          ((X1, y0, z0), (0, 0, d), (0, h, 0), (u + d + w, v + d, d, h), (1, 0, 0)),
+          ((x0, y0, Z1), (w, 0, 0), (0, 0, -d), (u + d, v, w, d), (0, -1, 0)),
+          ((x0, Y1, z0), (w, 0, 0), (0, 0, d), (u + d + w, v, w, d), (0, 1, 0))]
+    out = []
+    light = np.array([-0.3, -0.8, -0.5]); light /= np.linalg.norm(light)
+    for o, ax, ay, (tu, tv, tw, th), nrm in Fs:
+        nx, ny = max(1, int(round(tw))), max(1, int(round(th)))
+        nx = min(nx, 16); ny = min(ny, 16)
+        for j in range(ny):
+            for i in range(nx):
+                sx = tu + (i + .5) * tw / nx; sy = tv + (j + .5) * th / ny
+                if not (0 <= sx < tex.width and 0 <= sy < tex.height): continue
+                c = tex.getpixel((int(sx), int(sy)))
+                if c[3] < 10: continue
+                loc = [np.array(o, float) + np.array(ax) * (a / nx) + np.array(ay) * (b / ny) for a, b in ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1))]
+                mid = sum(loc) / 4
+                Mx = M
+                if xf is not None:
+                    Rb = xf(mid)
+                    if Rb is not None:
+                        piv, R = Rb
+                        loc = [piv + R @ (p - piv) for p in loc]
+                        n_ = M @ (R @ np.array(nrm, float))
+                    else: n_ = M @ np.array(nrm, float)
+                else: n_ = M @ np.array(nrm, float)
+                if n_[2] > 0.01: continue
+                sh = 0.6 + 0.4 * max(0, n_ @ light)
+                pts = [M @ p + T for p in loc]
+                out.append((np.mean([p[2] for p in pts]), [(p[0], p[1]) for p in pts], _mul(c[:3], sh)))
+    return out
+
+SPLIT = {'right_arm': 2.0, 'left_arm': 2.0, 'right_leg': 6.0, 'left_leg': 6.0}   # local y (mod space) where the limb bends
+
+def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=None, bends=None, offset=None):
     """Like kit.preview, but taller (hair fits) and with the full 32x32 face drawn on the head."""
     ims = []
     fimg = face.crop((0, 0, 32, 32)) if face is not None else None
@@ -193,11 +234,17 @@ def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=Non
         V = Rzyx([0, math.radians(yaw), 0])
         quads = []
         for b, (piv, frm, uv) in VBONES.items():
-            M = V @ Rzyx((pose or {}).get(b, [0, 0, 0])); T = V @ np.array(piv, float)
-            quads += box_quads(frm, [8, 8, 8] if b == 'head' else [8, 12, 4] if b == 'body' else [4, 12, 4], uv, skin, M, T)
+            M = V @ Rzyx((pose or {}).get(b, [0, 0, 0])); T = V @ (np.array(piv, float) + np.array((offset or {}).get(b, [0, 0, 0]), float))
+            bend = (bends or {}).get(b, 0)
+            xf = None
+            if bend and b in SPLIT:
+                sy = SPLIT[b]; zp = 0.0
+                Rb = Rzyx([bend, 0, 0])
+                xf = (lambda sy, Rb: (lambda mid: (np.array([0, sy, 0.0]), Rb) if mid[1] > sy else None))(sy, Rb)
+            quads += box_quads2(frm, [8, 8, 8] if b == 'head' else [8, 12, 4] if b == 'body' else [4, 12, 4], uv, skin, M, T, xf)
             def walk(nd, M, T):
                 out = []
-                for c in nd['cubes']: out += box_quads(c['from'], c['size'], c['uv'], detail, M, T)
+                for c in nd['cubes']: out += box_quads2(c['from'], c['size'], c['uv'], detail, M, T, xf)
                 for ch in nd.get('children', []):
                     M2 = M @ Rzyx(ch.get('rot', [0, 0, 0])); T2 = M @ np.array(ch['pivot'], float) + T
                     out += walk(ch, M2, T2)
