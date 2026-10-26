@@ -62,12 +62,13 @@ public class PlayerStatsScreen extends Screen {
     @Override
     protected void init() {
         // tabs: four across, as wide as fits
-        int gap = 4, tw = Math.min(84, (cardW() - gap * 4) / 5), tx = (width - (tw * 5 + gap * 4)) / 2;
+        int gap = 4, tw = Math.min(84, (cardW() - gap * 5) / 6), tx = (width - (tw * 6 + gap * 5)) / 2;
         tabPlayers = addRenderableWidget(Button.builder(Component.literal("Warriors"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
         tabMe = addRenderableWidget(Button.builder(Component.literal("My Warrior"), b -> setTab(1)).bounds(tx + (tw + gap), 6, tw, 16).build());
         tabOutfits = addRenderableWidget(Button.builder(Component.literal("Outfits"), b -> setTab(2)).bounds(tx + 2 * (tw + gap), 6, tw, 16).build());
         tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(3)).bounds(tx + 3 * (tw + gap), 6, tw, 16).build());
         addRenderableWidget(Button.builder(Component.literal("Skills"), b -> minecraft.setScreen(new SkillLoadoutScreen(this))).bounds(tx + 4 * (tw + gap), 6, tw, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("KAs"), b -> minecraft.setScreen(new KaGuideScreen(this))).bounds(tx + 5 * (tw + gap), 6, tw, 16).build());
         // settings: Karma Sensing (with its explanation underneath), then the Epic Fight options under their heading
         int bw = Math.min(240, cardW() - 20), bx = width / 2 - bw / 2;
         senseFriendly = addRenderableWidget(Button.builder(Component.empty(), b -> {

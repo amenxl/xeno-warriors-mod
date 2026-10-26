@@ -65,9 +65,9 @@ public class SkillLoadoutScreen extends Screen {
             g.fill(x, y, x + BOX, y + BOX, 0xEE140A1E);
             g.drawCenteredString(font, "?", x + BOX / 2, y + 9, 0xB070FF);
             g.drawCenteredString(font, "KA", x + BOX / 2, y + BOX - 10, 0xB070FF);
-            if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) hover = "Super Ultimate - KAs and really big attacks\n" + type.getDisplayName().getString() + "'s KA hasn't been revealed yet.";
+            if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) { var tk = ClientSkillState.ka(); hover = "Super Ultimate - KAs and really big attacks\n" + (tk == null ? type.getDisplayName().getString() + "'s KA hasn't been revealed yet." : "Test KA: " + tk.title() + " - " + KaGuideScreen.does(tk) + "\nPrice: " + tk.cost); }
         }
-        g.drawCenteredString(font, "Click a slot, then a skill to put in it", width / 2, 84, 0x888888);
+        g.drawCenteredString(font, "Click a slot, then a skill to put in it - hover anything for details", width / 2, 84, 0x888888);
         // every skill this character can learn
         List<SkillPool.Entry> pool = SkillPool.of(type);
         for (int i = 0; i < pool.size(); i++) {
@@ -86,9 +86,20 @@ public class SkillLoadoutScreen extends Screen {
         super.render(g, mx, my, pt);
         if (hover != null) {
             List<net.minecraft.util.FormattedCharSequence> lines = new java.util.ArrayList<>();
-            for (String l : hover.split("\n")) lines.addAll(font.split(Component.literal(l), 220));
+            boolean first = true;
+            for (String l : hover.split("\n")) {
+                if (l.isEmpty()) { lines.add(net.minecraft.util.FormattedCharSequence.EMPTY); continue; }
+                lines.addAll(font.split(Component.literal(l).withStyle(first ? net.minecraft.ChatFormatting.YELLOW : l.startsWith("Karma") ? net.minecraft.ChatFormatting.AQUA : net.minecraft.ChatFormatting.GRAY), 240));
+                first = false;
+            }
             g.renderTooltip(font, lines, mx, my);
         }
+    }
+
+    @Override
+    protected void init() {
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal("KA & Element Guide"),
+                b -> minecraft.setScreen(new KaGuideScreen(this))).bounds(width - 124, height - 24, 116, 18).build());
     }
 
     @Override
@@ -128,8 +139,10 @@ public class SkillLoadoutScreen extends Screen {
     }
 
     private static String desc(Skill s) {
-        String k = "skill.xenowarriors." + s.getId() + ".desc";
-        return I18n.exists(k) ? I18n.get(k) : "";
+        String k = "skill.xenowarriors." + s.getId() + ".desc", h = "skill.xenowarriors." + s.getId() + ".how";
+        String cd = s.getCooldownTicks() < 20 ? "none" : s.getCooldownTicks() / 20 + "s";
+        String stats = "Karma " + s.getKarmaCost() + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
+        return stats + "\n\n" + (I18n.exists(k) ? I18n.get(k) : "") + (I18n.exists(h) ? "\n\nHow: " + I18n.get(h) : "");
     }
 
     @Override
