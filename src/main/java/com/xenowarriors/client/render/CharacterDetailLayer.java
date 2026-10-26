@@ -113,6 +113,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     private static final net.minecraft.resources.ResourceLocation LUNAR_TEX = com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar_details.png");
+    private static final net.minecraft.resources.ResourceLocation LUNAR_GLOW = com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar_glow.png");
 
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
@@ -453,6 +454,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
         if (giTop || giLegs) model.hideOutfit(giTop, giTop, giLegs);
         model.root.render(poseStack, buffer, packedLight, overlay);
+        if (detailTex == LUNAR_TEX) model.root.render(poseStack, buffers.getBuffer(RenderType.eyes(LUNAR_GLOW)), packedLight, overlay);   // the moons' purple glow
         if (giTop || giLegs) model.showOutfit();
         if (stick != 0) for (var sp : model.mouthStick) sp.visible = true;
         if (stick == 1) {

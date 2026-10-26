@@ -62,15 +62,20 @@ def main():
     W, H, D = math.ceil(SEG_L) + 1, math.ceil(SEG_T) + 1, 2
     for y in range(CV, CV + D + H + 1):
         for x in range(CU, CU + 2 * D + 2 * W + 2):
-            px[x, y] = (18, 12, 26, 255)
+            px[x, y] = (8, 6, 10, 255)
     for x in range(CU, CU + 2 * D + 2 * W + 2):                  # outer edge (local -y side = top row) glows pink
-        px[x, CV + D] = (220, 95, 185, 255)
-        for y in range(CV, CV + D): px[x, y] = (220, 95, 185, 255)
+        px[x, CV + D] = (165, 80, 255, 255)
+        for y in range(CV, CV + D): px[x, y] = (165, 80, 255, 255)
     for y in range(SV, SV + 6):
         for x in range(SU, SU + 10): px[x, y] = (150, 150, 156, 255) if (x + y) % 3 else (128, 128, 134, 255)
         for x in range(OU, OU + 10): px[x, y] = (22, 20, 26, 255)
         for x in range(KU, KU + 8): px[x, y] = (14, 12, 16, 255)
     im.save(CH + 'rhalix_lunar_details.png')
+    # the glow pass (drawn full-bright in game): only the purple rim of the moons
+    g = Image.new('RGBA', im.size, (0, 0, 0, 0)); gp = g.load()
+    for x in range(CU, CU + 2 * D + 2 * W + 2):
+        for y in range(CV, CV + D + 1): gp[x, y] = (185, 100, 255, 255)
+    g.save(CH + 'rhalix_lunar_glow.png')
     print('ok')
 
 if __name__ == '__main__':
