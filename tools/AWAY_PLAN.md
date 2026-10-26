@@ -61,3 +61,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 03:25 — Ultima: user picked Option A + bracelet on bare wrist; ultima.bbmodel sent (tools/xw/ultima/bb.py). Next: integrate Ultima (Season 2 locked) when user confirms model; Overload effects; boss later (remind).
 - Mon 03:30 — Ultima default face = option 8 (Bored, looking away), NO nose. User may change later: REMIND them when integrating Ultima.
 - Mon 04:00 (user here) — 0.110.0: Ultima playable, Season 2 locked (ultima/UltimaOutput, skill/ultima/*, assets via tools/xw/ultima/mod_assets.py, HUD output %). TODO: Ultima boss (remind user), remind about Ultima face choice, Lunar form next, then Gov facilities etc.
+- Mon 04:05 — STANDING: send GIFs of every new/changed animation from now on (tools/xw/ultima/idle_pics.py has a GIF builder: lerp_pose + U.preview with pose/bends/offset).
