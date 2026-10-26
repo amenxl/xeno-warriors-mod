@@ -184,6 +184,29 @@ public final class XenoCommands {
                 .then(Commands.literal("answer").executes(ctx -> { com.xenowarriors.item.PhoneCalls.answer(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("decline").executes(ctx -> { com.xenowarriors.item.PhoneCalls.decline(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("hangup").executes(ctx -> { com.xenowarriors.item.PhoneCalls.hangUp(ctx.getSource().getPlayerOrException()); return 1; })));
+        // KAs: list them, or give one to the NPC you're looking at (for videos and testing)
+        root.then(Commands.literal("ka")
+                .then(Commands.literal("list").executes(ctx -> {
+                    for (com.xenowarriors.ka.Ka k : com.xenowarriors.ka.Ka.values())
+                        say(ctx, Component.literal((k.rare ? "[rare] " : "[simple] ") + k.title() + " - manipulates " + k.manipulates + "; price: " + k.cost).withStyle(k.chat()));
+                    return 1;
+                }))
+                .then(Commands.literal("give").requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("ka", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(com.xenowarriors.ka.Ka.values()).map(com.xenowarriors.ka.Ka::id), b))
+                                .executes(ctx -> {
+                                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                                    var ka = com.xenowarriors.ka.Ka.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "ka"));
+                                    var t = com.xenowarriors.skill.SkillTargeting.aimed(p, 20, 15);
+                                    if (ka == null || t == null || t instanceof net.minecraft.world.entity.player.Player) {
+                                        ctx.getSource().sendFailure(Component.literal("Look at an NPC or mob and give a KA from /xeno ka list (players can't hold KAs)."));
+                                        return 0;
+                                    }
+                                    com.xenowarriors.ka.Kas.give(t, ka);
+                                    say(ctx, Component.literal(t.getName().getString() + " now has KA " + ka.title()).withStyle(ka.chat()));
+                                    return 1;
+                                }))));
+
         root.then(Commands.literal("giveup").executes(ctx -> {
             boolean ok = com.xenowarriors.party.Duels.giveUp(ctx.getSource().getPlayerOrException());
             if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));

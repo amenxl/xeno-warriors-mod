@@ -19,6 +19,8 @@ public final class ModKeyMappings {
     };
 
     /** Lock on to the target you're facing (press again to let go). */
+    /** Super ultimate (KAs and really big attacks): Ctrl + 6. */
+    public static final KeyMapping SUPER_ULT = ctrlKey("super_ultimate_ctrl6", GLFW.GLFW_KEY_6);
     public static final KeyMapping LOCK_ON = key("lock_on", GLFW.GLFW_KEY_Z);
 
     /** Sense the Karma of everything nearby. */
@@ -53,7 +55,8 @@ public final class ModKeyMappings {
     public static boolean ctrlHeld() {
         long w = net.minecraft.client.Minecraft.getInstance().getWindow().getWindow();
         if (!InputConstants.isKeyDown(w, GLFW.GLFW_KEY_LEFT_CONTROL) && !InputConstants.isKeyDown(w, GLFW.GLFW_KEY_RIGHT_CONTROL)) return false;
-        for (KeyMapping k : SKILLS) if (k.isDown()) return true;    // only when a skill number is pressed
+        for (KeyMapping k : SKILLS) if (k.isDown()) return true;
+        if (SUPER_ULT.isDown()) return true;    // only when a skill number is pressed
         return false;
     }
 

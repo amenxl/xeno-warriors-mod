@@ -59,6 +59,14 @@ public class SkillLoadoutScreen extends Screen {
             g.drawCenteredString(font, ult ? "ULT" : String.valueOf(s + 1), x + BOX / 2, y + BOX - 10, ult ? 0xFFD24A : 0xBBBBBB);
             if (sk != null && mx >= x && mx < x + BOX && my >= y && my < y + BOX) hover = sk.getName().getString() + (ult ? " (ultimate - always equipped)" : "") + "\n" + desc(sk);
         }
+        {   // super ultimate: KAs and really big attacks
+            int x = slotsLeft() + 5 * (BOX + 8) + 6, y = 40;
+            g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, 0xFF8A3CC8);
+            g.fill(x, y, x + BOX, y + BOX, 0xEE140A1E);
+            g.drawCenteredString(font, "?", x + BOX / 2, y + 9, 0xB070FF);
+            g.drawCenteredString(font, "KA", x + BOX / 2, y + BOX - 10, 0xB070FF);
+            if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) hover = "Super Ultimate - KAs and really big attacks\n" + type.getDisplayName().getString() + "'s KA hasn't been revealed yet.";
+        }
         g.drawCenteredString(font, "Click a slot, then a skill to put in it", width / 2, 84, 0x888888);
         // every skill this character can learn
         List<SkillPool.Entry> pool = SkillPool.of(type);

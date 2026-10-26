@@ -234,5 +234,6 @@
   "skill.xenowarriors.kishi.desc": "Gravity pins enemies in place.",
   "skill.xenowarriors.earth_wave.desc": "Stomp a wave through the ground.",
   "skill.xenowarriors.gravity_compress.desc": "Crush a target with gravity.",
-  "skill.xenowarriors.bang.desc": "A gravity blast."
+  "skill.xenowarriors.bang.desc": "A gravity blast.",
+  "key.xenowarriors.super_ultimate_ctrl6": "Super Ultimate (KA)"
 }

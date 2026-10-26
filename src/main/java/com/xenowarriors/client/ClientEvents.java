@@ -58,6 +58,11 @@ public final class ClientEvents {
             }
         }
 
+        while (ModKeyMappings.SUPER_ULT.consumeClick()) {
+            if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE)
+                mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(ClientCharacterData.getLocal().getDisplayName().getString()
+                        + "'s KA hasn't been revealed yet...").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), true);
+        }
         while (ModKeyMappings.LOCK_ON.consumeClick()) LockOn.toggle();
         while (ModKeyMappings.FOX_KING.consumeClick()) {
             if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && !UltimateCutscene.active()) {
