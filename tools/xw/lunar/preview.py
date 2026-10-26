@@ -3,7 +3,7 @@ sys.path.insert(0, '/home/claude/xw/ultima'); sys.path.insert(0, '/home/claude/x
 import ultima as U
 from PIL import Image, ImageDraw, ImageFont
 A = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'; CH = A + 'textures/entity/character/'
-mj = json.load(open(A + 'models/detail/rhalix.json'))
+mj = json.load(open(A + 'models/detail/rhalix.json')); mjl = json.load(open(A + 'models/detail/rhalix_lunar.json'))
 skin = Image.open(CH + 'rhalix.png').convert('RGBA')
 F = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 18)
 def P_CH_SKIN(lunar): return CH + ('rhalix_lunar.png' if lunar else 'rhalix.png')
@@ -25,7 +25,7 @@ def shot(lunar, yaw, expr='', pose=None, scale=8):
     det = Image.open(CH + ('rhalix_lunar_details.png' if lunar else 'rhalix_details.png')).convert('RGBA')
     fc = Image.open(CH + (('rhalix_lunar_face' if lunar else 'rhalix_face') + expr + '.png')).convert('RGBA')
     sk = Image.open(P_CH_SKIN(lunar)).convert('RGBA')
-    im = U.preview(mj, sk, det, fc, yaws=(yaw,), scale=scale, pose=pose).convert('RGBA')
+    im = U.preview(mjl if lunar else mj, sk, det, fc, yaws=(yaw,), scale=scale, pose=pose, wide=46).convert('RGBA')
     px = im.load()
     for y in range(im.height):
         for x in range(im.width):
@@ -39,7 +39,7 @@ def shot(lunar, yaw, expr='', pose=None, scale=8):
         glow = Image.new('RGBA', bg.size, (255, 90, 160, 0)); gd = ImageDraw.Draw(glow)
         moon = Image.new('RGBA', bg.size, (16, 10, 20, 255))
         edge = mask.filter(__import__('PIL.ImageFilter', fromlist=['x']).MaxFilter(7))
-        bg.paste(Image.new('RGBA', bg.size, (210, 80, 170, 255)), (0, 0), edge); bg.paste(moon, (0, 0), mask)
+        pass
         for (sx, sy, sr) in [(.82, .18, 24), (.86, .5, 14), (.12, .62, 16), (.2, .2, 10)]: star(d, W * sx, H * sy, sr)
     bg.alpha_composite(im)
     return bg.convert('RGB')

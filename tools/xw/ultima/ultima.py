@@ -226,7 +226,7 @@ def box_quads2(frm, size, uv, tex, M, T, xf=None):
 
 SPLIT = {'right_arm': 2.0, 'left_arm': 2.0, 'right_leg': 6.0, 'left_leg': 6.0}   # local y (mod space) where the limb bends
 
-def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=None, bends=None, offset=None):
+def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=None, bends=None, offset=None, wide=30, tall=40, top=7):
     """Like kit.preview, but taller (hair fits) and with the full 32x32 face drawn on the head."""
     ims = []
     fimg = face.crop((0, 0, 32, 32)) if face is not None else None
@@ -258,10 +258,10 @@ def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=Non
                         pts = [M @ np.array([-4 + (i + a) / 4, -8 + (j + bb) / 4, -4.06]) + T for a, bb in ((0, 0), (1, 0), (1, 1), (0, 1))]
                         quads.append((np.mean([p[2] for p in pts]) - 0.02, [(p[0], p[1]) for p in pts], c[:3]))
         quads.sort(key=lambda q: -q[0])
-        W, H = 30 * scale, 40 * scale
+        W, H = wide * scale, tall * scale
         img = Image.new('RGB', (W, H), (40, 44, 52)); dr = ImageDraw.Draw(img)
         for _, pts, col in quads:
-            dr.polygon([(W / 2 + x * scale, 7 * scale + (y + 8) * scale) for x, y in pts], fill=col)
+            dr.polygon([(W / 2 + x * scale, top * scale + (y + 8) * scale) for x, y in pts], fill=col)
         ims.append(img)
     sheet = Image.new('RGB', (sum(i.width for i in ims), ims[0].height))
     x = 0

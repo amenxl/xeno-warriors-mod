@@ -153,6 +153,7 @@ public final class RhalixWingsClient {
         float partial = Mth.clamp(age - p.tickCount, 0F, 1F);
         float grow = preview || skillSpread > 0F || kishi ? Math.max(grow(p, partial), skillSpread > 0F || kishi ? 1F : 0F)
                 : grow(p, partial);
+        if (LunarClient.active(p.getId()) && ClientCharacterData.outfit(p) == 0) grow = 1F;     // the crescent moons are always out
         State s = STATES.get(p.getUUID());
         float t = s == null ? 999F : time(s, partial);
         boolean animOut = s != null && s.animate && s.out && t < OUT_LEN;

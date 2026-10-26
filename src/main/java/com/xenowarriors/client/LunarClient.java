@@ -44,12 +44,24 @@ public final class LunarClient {
         for (Player p : mc.level.players()) {
             if (!STATE.containsKey(p.getId()) || p.isInvisible()) continue;
             if (p == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
-            if (active(p.getId()) && p.tickCount % 3 == 0) crescent(mc, p);
+            if (active(p.getId()) && p.tickCount % 12 == 0) stars(mc, p);
             if (reflecting(p.getId())) mirror(mc, p);
         }
     }
 
-    /** A crescent outline (rim + dark body) with a few stars, hanging behind his shoulders like in the art. */
+    /** A few star sparkles around his crescent-moon wings. */
+    private static void stars(Minecraft mc, Player p) {
+        float yaw = p.yBodyRot * Mth.DEG_TO_RAD;
+        Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw)), right = new Vec3(Mth.cos(yaw), 0, Mth.sin(yaw));
+        Vec3 c = p.position().add(0, 1.6, 0).subtract(fwd.scale(0.5));
+        for (double[] s : new double[][]{{1.4, 1.1}, {-1.4, 1.1}, {1.9, 0.0}, {-1.9, 0.0}}) {
+            Vec3 st = c.add(right.scale(s[0])).add(0, s[1], 0);
+            mc.level.addParticle(ParticleTypes.END_ROD, st.x, st.y, st.z, 0, 0.003, 0);
+        }
+    }
+
+    /** (old) crescent outline drawn with particles - replaced by the crescent-moon wing model. */
+    @SuppressWarnings("unused")
     private static void crescent(Minecraft mc, Player p) {
         float yaw = p.yBodyRot * Mth.DEG_TO_RAD;
         Vec3 fwd = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw)), right = new Vec3(Mth.cos(yaw), 0, Mth.sin(yaw));

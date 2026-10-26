@@ -44,6 +44,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             DetailModel model = DetailModel.load(type);
             if (model != null) models.put(type, model);
         }
+        lunarModel = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/rhalix_lunar.json");
         for (CharacterType type : CharacterType.PLAYABLE) {
             String[] keys = type.outfitKeys();
             DetailModel[] arr = new DetailModel[keys.length];
@@ -68,6 +69,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (instance == null) return null;
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return instance.foxKing;
+        if (lunar(p, type) && instance.lunarModel != null) return instance.lunarModel;      // crescent-moon wings
         DetailModel om = instance.outfitModel(p, type);
         if (om != null) return om;
         return instance.models.get(type);
@@ -76,8 +78,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     /** Resource path of the detail model this player shows (for Epic Fight's own copy). */
     public static String detailModelPath(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
-        String name = isFoxKing(p, type) ? "mikiko_foxking" : outfitName(p, type);
+        String name = isFoxKing(p, type) ? "mikiko_foxking" : lunar(p, type) ? "rhalix_lunar" : outfitName(p, type);
         return "/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + name + ".json";
+    }
+
+    private DetailModel lunarModel;
+
+    private static boolean lunar(AbstractClientPlayer p, CharacterType type) {
+        return type == CharacterType.RHALIX && ClientCharacterData.outfit(p) == 0 && com.xenowarriors.client.LunarClient.active(p.getId());
     }
 
     private DetailModel outfitModel(AbstractClientPlayer p, CharacterType type) {

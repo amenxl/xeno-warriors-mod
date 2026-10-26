@@ -13,7 +13,7 @@ def spr(lunar, pose, expr=''):
         import ultima as U
         det = Image.open(P.CH + ('rhalix_lunar_details.png' if lunar else 'rhalix_details.png')).convert('RGBA')
         fc = Image.open(P.CH + ('rhalix_lunar_face' if lunar else 'rhalix_face') + expr + '.png').convert('RGBA')
-        im = U.preview(P.mj, Image.open(P.P_CH_SKIN(lunar)).convert('RGBA'), det, fc, yaws=(20,), scale=S, pose=pose).convert('RGBA')
+        im = U.preview(P.mjl if lunar else P.mj, Image.open(P.P_CH_SKIN(lunar)).convert('RGBA'), det, fc, yaws=(20,), scale=S, pose=pose, wide=46).convert('RGBA')
         px = im.load()
         for y in range(im.height):
             for x in range(im.width):
@@ -35,9 +35,13 @@ def star(d, cx, cy, r, a=255):
     pts = [(cx + math.cos(-math.pi / 2 + i * math.pi / 5) * (r if i % 2 == 0 else r * .45),
             cy + math.sin(-math.pi / 2 + i * math.pi / 5) * (r if i % 2 == 0 else r * .45)) for i in range(10)]
     d.polygon(pts, fill=(232, 222, 236, a), outline=(110, 70, 120, a))
-CX, FEET = 200, H - 58
+CX, FEET = 190, H - 58
 def put(im, s, cx=CX):
     im.paste(s, (int(cx - s.width / 2), int(FEET - 33 * S)), s)
+def stars_layer(alpha, rise=0):
+    L = Image.new('RGBA', (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(L); cx, cy, R = CX, FEET - 33 * S + 9 * S - rise, 24 * S
+    for (dx, dy, r) in [(1.0, -.9, 16), (1.15, .1, 10), (-1.05, .4, 12), (-.7, -1.0, 8)]: star(d, cx + dx * R, cy + dy * R, r, int(255 * alpha))
+    return L
 def crescent_layer(alpha, rise=0):
     L = Image.new('RGBA', (W, H), (0, 0, 0, 0)); cx, cy, R = CX, FEET - 33 * S + 9 * S - rise, 24 * S
     m = Image.new('L', (W, H), 0); md = ImageDraw.Draw(m)
@@ -72,12 +76,12 @@ for i in range(14):
     add(im.convert('RGB'))
 # 3) flash
 for f in (.9, .6, .3):
-    im = sky(30).convert('RGBA'); im.alpha_composite(crescent_layer(.4)); put(im, spr(True, ARMS_OUT, '_fierce'))
+    im = sky(30).convert('RGBA'); im.alpha_composite(stars_layer(.4)); put(im, spr(True, ARMS_OUT, '_fierce'))
     add(Image.blend(im.convert('RGB'), Image.new('RGB', (W, H), (240, 235, 255)), f), 60)
 # 4) Lunar Form: crescent rises behind him, motes drift
 for i in range(22):
     t = min(1, i / 8); im = sky(33 + i).convert('RGBA')
-    im.alpha_composite(crescent_layer(t, int(12 * (1 - t))))
+    im.alpha_composite(stars_layer(t, int(12 * (1 - t))))
     put(im, spr(True, IDLE if i > 6 else ARMS_OUT, '_fierce' if i < 12 else ''))
     d = ImageDraw.Draw(im)
     for k in range(6):
@@ -86,7 +90,7 @@ for i in range(22):
 # 5) Moon Fall: hand raised, a moon comes down on the field to the right
 TX = 420
 for i in range(26):
-    t = i / 25; im = sky(55 + i).convert('RGBA'); im.alpha_composite(crescent_layer(1)); put(im, spr(True, HAND_UP, '_shout' if i < 6 else '_fierce'))
+    t = i / 25; im = sky(55 + i).convert('RGBA'); im.alpha_composite(stars_layer(1)); put(im, spr(True, HAND_UP, '_shout' if i < 6 else '_fierce'))
     d = ImageDraw.Draw(im); R = 46; cy = -60 + (FEET - R - (-60)) * t * t
     d.ellipse([TX - R - 6, cy - R - 6, TX + R + 6, cy + R + 6], fill=(200, 210, 255, 90))
     d.ellipse([TX - R, cy - R, TX + R, cy + R], fill=(222, 226, 238))
@@ -94,7 +98,7 @@ for i in range(26):
     o = im.convert('RGB'); label(o, 'MOON FALL!'); add(o, 60)
 # 6) impact
 for i in range(10):
-    t = (i + 1) / 10; im = sky(81).convert('RGBA'); im.alpha_composite(crescent_layer(1)); put(im, spr(True, HAND_UP, '_grin'))
+    t = (i + 1) / 10; im = sky(81).convert('RGBA'); im.alpha_composite(stars_layer(1)); put(im, spr(True, HAND_UP, '_grin'))
     d = ImageDraw.Draw(im); r = 30 + 120 * t
     d.ellipse([TX - r, FEET - r * .5, TX + r, FEET + r * .25], fill=(225, 230, 255, int(230 * (1 - t) + 20)))
     for k in range(14):
@@ -104,7 +108,7 @@ for i in range(10):
     o = o.transform(o.size, Image.AFFINE, (1, 0, rnd.uniform(-6, 6) * (1 - t), 0, 1, rnd.uniform(-6, 6) * (1 - t)))
     add(o, 60)
 for i in range(10):
-    im = sky(91 + i).convert('RGBA'); im.alpha_composite(crescent_layer(1)); put(im, spr(True, IDLE, '_smug')); add(im.convert('RGB'), 90)
+    im = sky(91 + i).convert('RGBA'); im.alpha_composite(stars_layer(1)); put(im, spr(True, IDLE, '_smug')); add(im.convert('RGB'), 90)
 durs[-1] = 900
 frames[0].save('/mnt/user-data/outputs/lunar_rhalix_transform.gif', save_all=True, append_images=frames[1:], duration=durs, loop=0, optimize=True)
 print(len(frames))

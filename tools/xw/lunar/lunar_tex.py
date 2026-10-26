@@ -90,6 +90,7 @@ def face(src, dst):
 
 if __name__ == '__main__':
     details(); skin()
+    import lunar_wings; lunar_wings.main()
     n = 0
     for f in sorted(glob.glob(CH + 'rhalix_face*.png')):
         face(f, f.replace('rhalix_face', 'rhalix_lunar_face')); n += 1
