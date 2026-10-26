@@ -1,0 +1,24 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  " R ",
+  "DID",
+  " R "
+ ],
+ "key": {
+  "R": {
+   "item": "minecraft:redstone"
+  },
+  "D": {
+   "item": "xenowarriors:data_shard"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:mod_chip",
+  "count": 2
+ }
+}

@@ -1,1 +1,8 @@
-{"replace": false, "values": ["xenowarriors:sky_ore", "xenowarriors:corrupted_ore"]}
+{
+ "replace": false,
+ "values": [
+  "xenowarriors:sky_ore",
+  "xenowarriors:corrupted_ore",
+  "xenowarriors:data_ore"
+ ]
+}

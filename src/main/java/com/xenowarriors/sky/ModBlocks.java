@@ -24,6 +24,11 @@ public final class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.5F, 3F).requiresCorrectToolForDrops()
                     .sound(SoundType.DEEPSLATE).lightLevel(s -> 3), UniformInt.of(2, 5)));
 
+    /** Data Ore: green-veined, found deep; Ultima's Data Sense finds it. Drops Data Shards. */
+    public static final RegistryObject<Block> DATA_ORE = BLOCKS.register("data_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).strength(4F, 5F).requiresCorrectToolForDrops()
+                    .sound(SoundType.DEEPSLATE).lightLevel(s -> 4), UniformInt.of(2, 5)));
+
     /** Government healing pod (2 tall). Breaks loose only with a diamond pickaxe or better. */
     public static final RegistryObject<Block> HEALING_POD = BLOCKS.register("healing_pod", () -> new com.xenowarriors.gov.HealingPodBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).strength(6F, 9F).requiresCorrectToolForDrops()

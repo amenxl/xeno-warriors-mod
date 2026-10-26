@@ -1,1 +1,11 @@
-{"replace": false, "values": ["xenowarriors:sky_ore", "xenowarriors:corrupted_ore", "xenowarriors:karma_altar", "xenowarriors:corrupted_stone", "xenowarriors:healing_pod"]}
+{
+ "replace": false,
+ "values": [
+  "xenowarriors:sky_ore",
+  "xenowarriors:corrupted_ore",
+  "xenowarriors:karma_altar",
+  "xenowarriors:corrupted_stone",
+  "xenowarriors:healing_pod",
+  "xenowarriors:data_ore"
+ ]
+}

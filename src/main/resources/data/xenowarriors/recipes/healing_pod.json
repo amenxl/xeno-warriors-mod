@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "GDG",
+  "IDI",
+  "III"
+ ],
+ "key": {
+  "G": {
+   "item": "minecraft:glass"
+  },
+  "D": {
+   "item": "xenowarriors:data_shard"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:healing_pod"
+ }
+}

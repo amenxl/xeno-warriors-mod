@@ -97,6 +97,7 @@ public final class KarmaSensing {
      */
     public static void use(ServerPlayer player, boolean friendly) {
         if (ModCapabilities.getType(player) == CharacterType.NONE || player.isSpectator()) return;
+        if (com.xenowarriors.ultima.DataSense.is(player)) { com.xenowarriors.ultima.DataSense.use(player); return; }   // Ultima scans instead
         long now = player.level().getGameTime();
         long ready = READY_AT.getOrDefault(player.getUUID(), 0L);
         if (now < ready) {

@@ -37,6 +37,14 @@ public final class KarmaSense {
         if (mc.level != null) TRACKED.put(id, mc.level.getGameTime() + duration);
     }
 
+    private static final Map<Integer, Long> DATA = new HashMap<>();     // Ultima's Data Sense: green, scanned look
+
+    /** Glow from Ultima's Data Sense. */
+    public static void data(int id, int duration) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) DATA.put(id, mc.level.getGameTime() + duration);
+    }
+
     private KarmaSense() {}
 
     private static final java.util.Set<Integer> SOULS = new java.util.HashSet<>();   // sensed with a corrupted soul inside
@@ -91,8 +99,9 @@ public final class KarmaSense {
         if (mc.level == null) return false;
         Long until = SENSED.get(e.getId());
         Long tracked = TRACKED.get(e.getId());
+        Long data = DATA.get(e.getId());
         long now = mc.level.getGameTime();
-        return (until != null && now < until) || (tracked != null && now < tracked);
+        return (until != null && now < until) || (tracked != null && now < tracked) || (data != null && now < data);
     }
 
     /** Sensed through a Karma-reducing hoodie: just a faint grey trace. */
@@ -104,6 +113,8 @@ public final class KarmaSense {
     public static int color(Entity e) {
         Minecraft mc = Minecraft.getInstance();
         if (faint(e)) return 0x6E6A7E;
+        Long dt = DATA.get(e.getId());
+        if (dt != null && mc.level != null && mc.level.getGameTime() < dt && !SENSED.containsKey(e.getId())) return 0x33FF88;   // Data Sense: green
         if (SOULS.contains(e.getId())) return 0x5A1A8A;                 // corrupted soul: dark purple
         Long tracked = TRACKED.get(e.getId());
         if (tracked != null && mc.level != null && mc.level.getGameTime() < tracked) return 0xFF7A1A;
@@ -128,6 +139,7 @@ public final class KarmaSense {
         }
         long now = mc.level.getGameTime();
         SENSED.values().removeIf(until -> until < now);
+        DATA.values().removeIf(until -> until < now);
         LEVELS.keySet().removeIf(id -> !SENSED.containsKey(id));
         STATS.keySet().removeIf(id -> !SENSED.containsKey(id));
         // (with DragonMineZ its own Ki Sense auras show them instead, in these colors - see DmzKiSenseLink)

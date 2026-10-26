@@ -53,6 +53,10 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_BOOTS = ITEMS.register("corrupted_boots",
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    public static final RegistryObject<Item> DATA_ORE = ITEMS.register("data_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.DATA_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> DATA_SHARD = ITEMS.register("data_shard", () -> new com.xenowarriors.ultima.DataShardItem(new Item.Properties()));
+    /** Human modification chip (Gov C2 tech) - made from Data Shards; for modded characters like Kyle later. */
+    public static final RegistryObject<Item> MOD_CHIP = ITEMS.register("mod_chip", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> RECARNET_PASS = ITEMS.register("recarnet_pass", () -> new com.xenowarriors.recarnet.RecarnetPassItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> AURORA_MEDICINE = ITEMS.register("aurora_medicine", () -> new com.xenowarriors.virus.AuroraMedicineItem(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new PhoneItem(new Item.Properties().stacksTo(1)));

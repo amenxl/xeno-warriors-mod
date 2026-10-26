@@ -325,5 +325,8 @@
   "effect.xenowarriors.virus_immunity": "Virus Protection",
   "item.xenowarriors.aurora_medicine": "Aurora Medicine",
   "item.xenowarriors.recarnet_pass": "Recarnet Pass",
-  "biome.xenowarriors.aurora": "Aurora City"
+  "biome.xenowarriors.aurora": "Aurora City",
+  "block.xenowarriors.data_ore": "Data Ore",
+  "item.xenowarriors.data_shard": "Data Shard",
+  "item.xenowarriors.mod_chip": "Modification Chip"
 }
