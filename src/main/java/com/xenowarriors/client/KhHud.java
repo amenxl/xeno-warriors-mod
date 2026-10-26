@@ -55,7 +55,7 @@ public final class KhHud implements IGuiOverlay {
     // ---------------------------------------------------------------- drawing helpers
 
     /** A slanted Kingdom Hearts bar that fills from the right (the portrait side). */
-    static void bar(GuiGraphics g, int x, int y, int w, int h, float frac, int color, float chipFrac) {
+    public static void bar(GuiGraphics g, int x, int y, int w, int h, float frac, int color, float chipFrac) {
         int slant = Math.max(2, h / 2 + 1);
         for (int r = -1; r <= h; r++) {
             int off = (h - r) * slant / Math.max(1, h);
@@ -70,12 +70,12 @@ public final class KhHud implements IGuiOverlay {
         }
     }
 
-    static int brighten(int c) {
+    public static int brighten(int c) {
         int r = Math.min(255, (c >> 16 & 255) + 55), gg = Math.min(255, (c >> 8 & 255) + 55), b = Math.min(255, (c & 255) + 55);
         return 0xFF000000 | r << 16 | gg << 8 | b;
     }
 
-    static void small(GuiGraphics g, Font f, String s, float x, float y, int color, float scale) {
+    public static void small(GuiGraphics g, Font f, String s, float x, float y, int color, float scale) {
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
         g.pose().scale(scale, scale, 1);
@@ -83,7 +83,7 @@ public final class KhHud implements IGuiOverlay {
         g.pose().popPose();
     }
 
-    static void portrait(GuiGraphics g, ResourceLocation tex, int x, int y, int size, boolean redFlash) {
+    public static void portrait(GuiGraphics g, ResourceLocation tex, int x, int y, int size, boolean redFlash) {
         RenderSystem.enableBlend();
         if (redFlash) RenderSystem.setShaderColor(1F, 0.55F, 0.55F, 1F);
         g.blit(tex, x, y, size, size, 0, 0, 128, 128, 128, 128);
