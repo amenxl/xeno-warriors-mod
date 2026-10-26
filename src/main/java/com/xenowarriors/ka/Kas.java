@@ -347,7 +347,7 @@ public final class Kas {
             e.hurt(e.damageSources().magic(), dmg);
             t.remove(DELAYED);
         }
-        if (!(e instanceof Mob m)) return;
+        if (!(e instanceof Mob m) || Clashes.inClash(e)) return;
         // NPCs: roll once, then use it on whoever they're fighting
         if (!t.getBoolean(ROLLED) && e.tickCount > 40 && (e instanceof HumanNpcEntity || e instanceof SkylanderEntity)) roll(m);
         Ka ka = Ka.byId(t.getString(KA));

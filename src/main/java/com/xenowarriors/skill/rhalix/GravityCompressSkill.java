@@ -40,4 +40,7 @@ public class GravityCompressSkill implements Skill {
         player.displayClientMessage(Component.translatable("message.xenowarriors.gravity_compress.cast"), true);
         return true;
     }
+
+    @Override
+    public int clashColor() { return 0x7A40D0; }
 }

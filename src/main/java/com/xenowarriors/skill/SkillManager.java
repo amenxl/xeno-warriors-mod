@@ -88,6 +88,7 @@ public final class SkillManager {
     public static void useSkill(ServerPlayer player, int slot) {
         if (com.xenowarriors.party.Duels.isKnockedOut(player)) return;
         if (com.xenowarriors.item.PhoneItem.onCall(player)) return;          // hang up first      // can't do anything while knocked out
+        if (com.xenowarriors.ka.Clashes.inClash(player)) return;          // busy clashing
         if (slot == SUPER_SLOT) { useSuper(player); return; }
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
         // the team ultimate (sneak + ultimate key with your partner close by), or joining one you were asked to
@@ -112,7 +113,9 @@ public final class SkillManager {
                 Karma.notEnough(player, cost);
                 return;
             }
-            if (skill.use(player)) {
+            // a blast aimed at someone charging their own: CLASH instead
+            boolean clash = skill.clashColor() >= 0 && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
+            if (clash || skill.use(player)) {
                 if (!player.isCreative()) Karma.add(player, -cost);
                 com.xenowarriors.compat.DmzKiTraining.skillUsed(player);       // (DragonMineZ: trains Ki Power)
                 com.xenowarriors.npc.HumanReactions.skillUsed(player);         // (people nearby are amazed)

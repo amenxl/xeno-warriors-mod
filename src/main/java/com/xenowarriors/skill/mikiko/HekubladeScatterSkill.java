@@ -69,4 +69,7 @@ public class HekubladeScatterSkill implements Skill {
         player.displayClientMessage(Component.translatable("message.xenowarriors.scatter.cast"), true);
         return true;
     }
+
+    @Override
+    public int clashColor() { return 0xFF3A3A; }
 }

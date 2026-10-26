@@ -35,7 +35,19 @@ import org.joml.Vector3f;
 /** Who has an element, their aura, and their element attacks in a fight (each costs Karma). */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Elements {
-    private static final String EL = "xw_element", ROLLED = "xw_el_rolled", CD = "xw_el_cd";
+    private static final String EL = "xw_element", ROLLED = "xw_el_rolled", CD = "xw_el_cd", CHARGE = "xw_el_charge", CHARGE_T = "xw_el_charge_t";
+
+    /** Blast elements charge up first (that's when you can clash with them). */
+    public static boolean blast(Element el) {
+        return switch (el) { case FIRE, WATER, ICE, LIGHTNING, WIND, SOUND, LIGHT, METAL, SHADOW, CORRUPTION, CRYSTAL -> true; default -> false; };
+    }
+
+    /** Is {@code e} charging an element blast at {@code target} right now? */
+    public static boolean chargingAt(LivingEntity e, LivingEntity target) {
+        return e.getPersistentData().getLong(CHARGE) > e.level().getGameTime() && e.getPersistentData().getInt(CHARGE_T) == target.getId();
+    }
+
+    public static void cancelCharge(LivingEntity e) { e.getPersistentData().remove(CHARGE); }
 
     private Elements() {}
 
@@ -79,15 +91,32 @@ public final class Elements {
         if (m.tickCount % 12 == 0)                                                         // aura
             level.sendParticles(new DustParticleOptions(rgb(el), 0.8F), m.getX(), m.getY() + m.getBbHeight() * 0.5, m.getZ(), 2,
                     m.getBbWidth() * 0.5, m.getBbHeight() * 0.35, m.getBbWidth() * 0.5, 0);
-        LivingEntity target = m.getTarget();
         long now = level.getGameTime();
+        if (Clashes.inClash(m)) return;
+        // a charged blast goes off
+        if (t.contains(CHARGE)) {
+            long at = t.getLong(CHARGE);
+            if (now < at) {
+                Vec3 hand = m.getEyePosition().add(m.getLookAngle().scale(0.7)).subtract(0, 0.3, 0);
+                level.sendParticles(new DustParticleOptions(rgb(el), 1.4F), hand.x, hand.y, hand.z, 3, 0.15, 0.15, 0.15, 0);
+                return;
+            }
+            t.remove(CHARGE);
+            if (level.getEntity(t.getInt(CHARGE_T)) instanceof LivingEntity ct && ct.isAlive() && ct.distanceTo(m) < 20) cast(m, ct, el, level);
+            return;
+        }
+        LivingEntity target = m.getTarget();
         if (target == null || !target.isAlive() || now < t.getLong(CD) || m.distanceTo(target) > 16 || !m.hasLineOfSight(target)) return;
         if (target instanceof Player p && (p.isCreative() || p.isSpectator())) return;
         if (!EnemyKarma.has(m, el.karma)) return;
         t.putLong(CD, now + 80 + m.getRandom().nextInt(80));
         EnemyKarma.spend(m, el.karma);
         m.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-        cast(m, target, el, level);
+        if (blast(el)) {                                     // charge it up (you can see it coming - and clash it)
+            t.putLong(CHARGE, now + 16);
+            t.putInt(CHARGE_T, target.getId());
+            sound(level, m, SoundEvents.BEACON_ACTIVATE, 1.8F);
+        } else cast(m, target, el, level);
     }
 
     private static void line(ServerLevel l, LivingEntity a, LivingEntity b, ParticleOptions p, int n) {

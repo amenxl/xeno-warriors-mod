@@ -111,6 +111,7 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("skills", new SkillHudOverlay());
+        event.registerAboveAll("clash", new ClashClient());
         event.registerAboveAll("cutscene", new UltimateCutscene.Overlay());
         event.registerAboveAll("team_cutscene", new TeamUltCutscene.Overlay());
         event.registerAboveAll("request_popup", new RequestPopups.Overlay());

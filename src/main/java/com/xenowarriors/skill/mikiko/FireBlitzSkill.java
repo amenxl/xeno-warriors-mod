@@ -39,4 +39,7 @@ public class FireBlitzSkill implements Skill {
         player.displayClientMessage(Component.translatable("message.xenowarriors.blitz.cast"), true);
         return true;
     }
+
+    @Override
+    public int clashColor() { return 0xFF6A1F; }
 }

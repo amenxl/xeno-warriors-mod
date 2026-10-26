@@ -28,6 +28,11 @@ public interface Skill {
         return false;
     }
 
+    /** Blasts that can clash with an enemy's element (or another player's blast): their color, or -1 if this skill doesn't clash. */
+    default int clashColor() {
+        return -1;
+    }
+
     /** Use the skill. Return true if it was used, which starts the cooldown. */
     boolean use(ServerPlayer player);
 

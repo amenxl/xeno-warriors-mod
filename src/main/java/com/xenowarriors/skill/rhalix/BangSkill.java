@@ -53,4 +53,7 @@ public class BangSkill implements Skill {
         ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), SkillAnimPacket.BANG, false), player);
         return true;
     }
+
+    @Override
+    public int clashColor() { return 0xA060FF; }
 }

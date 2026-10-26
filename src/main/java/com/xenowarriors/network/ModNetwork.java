@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "39";
+    private static final String VERSION = "40";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -22,6 +22,10 @@ public final class ModNetwork {
                 .encoder(SetSkillSlotPacket::encode).decoder(SetSkillSlotPacket::decode).consumerMainThread(SetSkillSlotPacket::handle).add();
         CHANNEL.messageBuilder(KaEffectPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(KaEffectPacket::encode).decoder(KaEffectPacket::decode).consumerMainThread(KaEffectPacket::handle).add();
+        CHANNEL.messageBuilder(ClashStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ClashStatePacket::encode).decoder(ClashStatePacket::decode).consumerMainThread(ClashStatePacket::handle).add();
+        CHANNEL.messageBuilder(ClashPushPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ClashPushPacket::encode).decoder(ClashPushPacket::decode).consumerMainThread(ClashPushPacket::handle).add();
         CHANNEL.messageBuilder(PhoneActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(PhoneActionPacket::encode)
                 .decoder(PhoneActionPacket::decode)
