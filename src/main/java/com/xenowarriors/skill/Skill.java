@@ -15,6 +15,11 @@ public interface Skill {
         return 20;
     }
 
+    /** The cost for this player right now (some skills change it - KA Release costs what the enemy's KA took). */
+    default int getKarmaCost(ServerPlayer player) {
+        return getKarmaCost();
+    }
+
     /**
      * Called every time the key is pressed, even during cooldown, before {@link #use}.
      * Return true if the press was used up here (for example, powering up a skill that's already active).

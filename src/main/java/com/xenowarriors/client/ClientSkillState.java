@@ -8,8 +8,8 @@ import java.util.UUID;
 
 /** Client-side skill info for the HUD and visuals. */
 public final class ClientSkillState {
-    private static final long[] COOLDOWN_END = new long[5];
-    private static final int[] COOLDOWN_TOTAL = new int[5];
+    private static final long[] COOLDOWN_END = new long[6];
+    private static final int[] COOLDOWN_TOTAL = new int[6];
     private static final Map<UUID, Long> KISHI_SEEN = new HashMap<>();
     private static final Map<UUID, Integer> KISHI_LEVEL = new HashMap<>();
     private static final Map<Integer, SkillAnim> ANIMS = new HashMap<>();
@@ -87,6 +87,10 @@ public final class ClientSkillState {
     public static void setLoadout(int[] l, int lv) { if (l.length == 4) loadout = l; level = lv; }
     public static int[] loadout() { return loadout; }
     public static int level() { return level; }
+    private static String ka = "";
+    public static void setKa(String k) { ka = k == null ? "" : k; }
+    /** A test KA in the super slot, or null. */
+    public static com.xenowarriors.ka.Ka ka() { return com.xenowarriors.ka.Ka.byId(ka); }
 
     public static void setKarma(float value, float max) {
         karma = value;

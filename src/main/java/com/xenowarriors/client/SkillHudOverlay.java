@@ -80,7 +80,14 @@ public class SkillHudOverlay implements IGuiOverlay {
             int x = left - SIZE - GAP - 4;
             g.fill(x - 1, top - 1, x + SIZE + 1, top + SIZE + 1, 0xFF8A3CC8);
             g.fill(x, top, x + SIZE, top + SIZE, 0xCC140A1E);
-            g.drawCenteredString(font, "?", x + SIZE / 2, top + 4, 0xB070FF);
+            var ka = ClientSkillState.ka();
+            g.drawCenteredString(font, ka == null ? "?" : ka.title().substring(0, 2), x + SIZE / 2, top + 4, ka == null ? 0xB070FF : ka.color);
+            float scd = ClientSkillState.cooldownFraction(com.xenowarriors.skill.SkillManager.SUPER_SLOT);
+            if (ka != null && scd > 0) {
+                int shade = Math.round(SIZE * scd);
+                g.fill(x, top + SIZE - shade, x + SIZE, top + SIZE, 0xB0000000);
+                g.drawCenteredString(font, String.valueOf((ClientSkillState.cooldownTicks(com.xenowarriors.skill.SkillManager.SUPER_SLOT) + 19) / 20), x + SIZE / 2, top + 8, 0xFF5555);
+            }
             var km = ModKeyMappings.SUPER_ULT;
             String key = km.getKey().getDisplayName().getString();
             if (key.length() > 3) key = key.substring(0, 3);

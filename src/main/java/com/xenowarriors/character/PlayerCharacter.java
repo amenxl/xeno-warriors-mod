@@ -7,7 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 public class PlayerCharacter {
     private CharacterType type = CharacterType.NONE;
     /** Game time when each skill slot's cooldown ends (not saved; resets on relog). */
-    public final long[] cooldownEnd = new long[5];
+    public final long[] cooldownEnd = new long[6];
     /** Karma - the energy every skill runs on. Starts full. */
     private float karma = Karma.MAX;
     /** Level-up stats (see stats/Stats): level and progress toward the next level for each. */
@@ -53,6 +53,8 @@ public class PlayerCharacter {
     public CompoundTag prisonReturn = new CompoundTag();
     /** Equipped skills per character id: 4 indexes into SkillPool (the ultimate is fixed). */
     public CompoundTag loadouts = new CompoundTag();
+    /** A KA given for testing (/xeno ka self); their real KAs aren't revealed yet. */
+    public String ka = "";
 
     public int[] loadout(CharacterType t) {
         int[] l = loadouts.getIntArray(t.getId());
@@ -96,6 +98,7 @@ public class PlayerCharacter {
         this.smeltXp = other.smeltXp;
         this.prisonReturn = other.prisonReturn.copy();
         this.loadouts = other.loadouts.copy();
+        this.ka = other.ka;
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
         this.backFox = other.backFox.copy();
@@ -116,6 +119,7 @@ public class PlayerCharacter {
         if (prisonerOf != null) tag.putUUID("prisoner_of", prisonerOf);
         tag.put("prison_return", prisonReturn.copy());
         tag.put("loadouts", loadouts.copy());
+        tag.putString("ka", ka);
         tag.putInt("mining_level", miningLevel);
         tag.putInt("blade_level", bladeLevel);
         tag.putFloat("blade_xp", bladeXp);
@@ -148,6 +152,7 @@ public class PlayerCharacter {
         this.prisonerOf = tag.hasUUID("prisoner_of") ? tag.getUUID("prisoner_of") : null;
         this.prisonReturn = tag.getCompound("prison_return");
         this.loadouts = tag.getCompound("loadouts");
+        this.ka = tag.getString("ka");
         this.miningLevel = tag.getInt("mining_level");
         this.bladeLevel = Math.max(1, tag.getInt("blade_level"));
         this.bladeXp = tag.getFloat("blade_xp");

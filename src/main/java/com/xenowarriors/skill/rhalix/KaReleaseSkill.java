@@ -29,6 +29,13 @@ public class KaReleaseSkill implements Skill {
     @Override public int getCooldownTicks() { return 25 * 20; }
     @Override public int getKarmaCost() { return 30; }
 
+    /** Breaking a KA costs as much Karma as the enemy spent using it; with no KA on him, the base 30. */
+    @Override
+    public int getKarmaCost(ServerPlayer p) {
+        int paid = com.xenowarriors.ka.Kas.lastPaid(p);
+        return paid > 0 ? paid : getKarmaCost();
+    }
+
     public static boolean free(LivingEntity e) {
         return e.getPersistentData().getLong(FREE_UNTIL) >= e.level().getGameTime();
     }
@@ -36,6 +43,7 @@ public class KaReleaseSkill implements Skill {
     @Override
     public boolean use(ServerPlayer p) {
         ServerLevel level = p.serverLevel();
+        int cost = getKarmaCost(p);
         int cleared = 0;
         for (var inst : new java.util.ArrayList<>(p.getActiveEffects()))
             if (inst.getEffect().getCategory() == MobEffectCategory.HARMFUL) { p.removeEffect(inst.getEffect()); cleared++; }
@@ -45,7 +53,7 @@ public class KaReleaseSkill implements Skill {
         p.clearFire();
         com.xenowarriors.ka.Kas.release(p);       // and every KA on him
         ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(p.getId(), SkillAnimPacket.KA_RELEASE, false), p);
-        p.displayClientMessage(Component.literal(cleared > 0 ? "KA Release!" : "KA Release - nothing can hold me.").withStyle(ChatFormatting.DARK_PURPLE), true);
+        p.displayClientMessage(Component.literal((cleared > 0 ? "KA Release!" : "KA Release - nothing can hold me.") + "  (-" + cost + " Karma)").withStyle(ChatFormatting.DARK_PURPLE), true);
         level.playSound(null, p.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1F, 0.6F);
         level.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.5F, 1.6F);
         for (int a = 0; a < 40; a++) {

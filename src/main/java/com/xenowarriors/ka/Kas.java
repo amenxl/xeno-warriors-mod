@@ -49,17 +49,28 @@ public final class Kas {
     private static final String STRAIN = "xw_ka_strain", BURN = "xw_ka_burn", EFFECT = "xw_kae_", SRC = "_src", DELAYED = "xw_ka_delayed_hit";
     private static final UUID REACH_ID = UUID.fromString("2a6c4d61-9b0e-4f0c-8a5f-1c2d3e4f5a61");
     public static final int BURNOUT = 6;
+    public static final String PAID = "xw_ka_paid", PAID_UNTIL = "xw_ka_paid_until";
+
+    /** The Karma the last KA used on this entity cost its user (while it's still fresh), or -1. */
+    public static int lastPaid(LivingEntity e) {
+        return e.getPersistentData().getLong(PAID_UNTIL) >= e.level().getGameTime() ? e.getPersistentData().getInt(PAID) : -1;
+    }
 
     private Kas() {}
 
     // ---------------------------------------------------------------- who has what
 
     public static Ka of(LivingEntity e) {
+        if (e instanceof ServerPlayer p) return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> Ka.byId(d.ka)).orElse(null);
         return Ka.byId(e.getPersistentData().getString(KA));
     }
 
     public static void give(LivingEntity e, Ka ka) {
-        if (e instanceof Player) return;          // only certain people in the show have KAs; Mikiko's and Rhalix's aren't revealed yet
+        if (e instanceof ServerPlayer p) {          // players only for testing (/xeno ka self): their real KAs aren't revealed yet
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.ka = ka == null ? "" : ka.id());
+            com.xenowarriors.skill.SkillManager.syncLoadout(p);
+            return;
+        }
         e.getPersistentData().putString(KA, ka == null ? "" : ka.id());
         e.getPersistentData().putBoolean(ROLLED, true);
     }
@@ -101,6 +112,27 @@ public final class Kas {
     }
 
     // ---------------------------------------------------------------- using one
+
+    public static final int PLAYER_COOLDOWN = 45 * 20;
+
+    /** A player with a test KA pressing the super ultimate key. True if it went off. */
+    public static boolean usePlayer(ServerPlayer p) {
+        Ka ka = of(p);
+        if (ka == null) {
+            p.displayClientMessage(Component.literal(ModCapabilities.getType(p).getDisplayName().getString() + "'s KA hasn't been revealed yet...").withStyle(ChatFormatting.DARK_PURPLE), true);
+            return false;
+        }
+        if (burntOut(p)) { p.displayClientMessage(Component.literal("Your KA is burnt out.").withStyle(ChatFormatting.DARK_RED), true); return false; }
+        LivingEntity target = SkillTargeting.aimed(p, 14, 22);
+        if (target == null && needsTarget(ka)) { p.displayClientMessage(Component.literal("KA " + ka.title() + ": no one to use it on.").withStyle(ChatFormatting.GRAY), true); return false; }
+        int cost = EnemyKarma.kaCost(p, ka);
+        if (!p.isCreative() && !com.xenowarriors.karma.Karma.has(p, cost)) { com.xenowarriors.karma.Karma.notEnough(p, cost); return false; }
+        if (!p.isCreative()) com.xenowarriors.karma.Karma.add(p, -cost);
+        if (target != null) { target.getPersistentData().putInt(PAID, cost); target.getPersistentData().putLong(PAID_UNTIL, now(p) + 200); }
+        announce(p, ka);
+        apply(p, target, ka);
+        return true;
+    }
 
     private static boolean needsTarget(Ka ka) { return ka != Ka.REACH && ka != Ka.MIRROR; }
 
@@ -268,6 +300,7 @@ public final class Kas {
     public static void release(ServerPlayer p) {
         CompoundTag t = p.getPersistentData();
         for (String k : new java.util.ArrayList<>(t.getAllKeys())) if (k.startsWith(EFFECT)) t.remove(k);
+        t.remove(PAID_UNTIL);
         ModNetwork.sendToPlayer(new KaEffectPacket(-1, 0, -1), p);
         setReach(p, 0);
     }
@@ -304,6 +337,7 @@ public final class Kas {
             ((ServerLevel) e.level()).sendParticles(ParticleTypes.SWEEP_ATTACK, m.getTarget().getX(), m.getTarget().getY() + 1, m.getTarget().getZ(), 1, 0, 0, 0, 0);
         }
         // strain fades: one point a minute
+        if (e.tickCount % 20 == 0 && EnemyKarma.usesKarma(e)) EnemyKarma.regen(e);
         if (e.tickCount % 20 == 0 && t.getFloat(STRAIN) > 0) t.putFloat(STRAIN, Math.max(0, t.getFloat(STRAIN) - 1F / 60F));
         // a delayed batch of hits lands
         if (t.contains("xw_ka_delay_store") && t.getLong("xw_ka_delay_self") <= now) {
@@ -323,11 +357,18 @@ public final class Kas {
         if (cast > 0 && now >= cast) {
             t.remove(CAST);
             Entity tg = e.level().getEntity(t.getInt(CAST_TARGET));
-            if (tg instanceof LivingEntity lt && lt.isAlive() && lt.distanceTo(e) < 16 && e.isAlive()) apply(e, lt, ka);
+            int cost = EnemyKarma.kaCost(e, ka);
+            if (tg instanceof LivingEntity lt && lt.isAlive() && lt.distanceTo(e) < 16 && e.isAlive() && EnemyKarma.has(e, cost)) {
+                EnemyKarma.spend(e, cost);
+                lt.getPersistentData().putInt(PAID, cost);                   // KA Release costs what this took them
+                lt.getPersistentData().putLong(PAID_UNTIL, now + 200);
+                apply(e, lt, ka);
+            }
             return;
         }
         LivingEntity target = m.getTarget();
         if (cast == 0 && target != null && target.isAlive() && now >= t.getLong(CD) && !burntOut(e) && e.distanceTo(target) < 12 && m.hasLineOfSight(target)
+                && EnemyKarma.has(e, EnemyKarma.kaCost(e, ka))
                 && !(target instanceof Player pl && (pl.isCreative() || pl.isSpectator()))) {
             t.putLong(CAST, now + 15);                                     // a short wind-up you can see coming
             t.putInt(CAST_TARGET, target.getId());

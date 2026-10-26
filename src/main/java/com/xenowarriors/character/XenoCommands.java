@@ -191,6 +191,21 @@ public final class XenoCommands {
                         say(ctx, Component.literal((k.rare ? "[rare] " : "[simple] ") + k.title() + " - manipulates " + k.manipulates + "; price: " + k.cost).withStyle(k.chat()));
                     return 1;
                 }))
+                .then(Commands.literal("self").requires(src -> src.hasPermission(2))      // testing: give yourself a KA (Ctrl+6)
+                        .then(Commands.argument("ka", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.stream.Stream.concat(
+                                        java.util.Arrays.stream(com.xenowarriors.ka.Ka.values()).map(com.xenowarriors.ka.Ka::id), java.util.stream.Stream.of("clear")), b))
+                                .executes(ctx -> {
+                                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                                    String id = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "ka");
+                                    var ka = com.xenowarriors.ka.Ka.byId(id);
+                                    if (ka == null && !id.equals("clear")) { ctx.getSource().sendFailure(Component.literal("Unknown KA - see /xeno ka list")); return 0; }
+                                    com.xenowarriors.ka.Kas.give(p, ka);
+                                    p.getPersistentData().remove("xw_ka_strain");
+                                    p.getPersistentData().remove("xw_ka_burn");
+                                    say(ctx, ka == null ? gray("Test KA removed.") : Component.literal("Test KA: " + ka.title() + " - use it with Ctrl+6. Price: " + ka.cost + ".").withStyle(ka.chat()));
+                                    return 1;
+                                })))
                 .then(Commands.literal("give").requires(src -> src.hasPermission(2))
                         .then(Commands.argument("ka", com.mojang.brigadier.arguments.StringArgumentType.word())
                                 .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(com.xenowarriors.ka.Ka.values()).map(com.xenowarriors.ka.Ka::id), b))

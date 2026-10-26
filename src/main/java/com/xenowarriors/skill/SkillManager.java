@@ -14,6 +14,24 @@ import java.util.Map;
 public final class SkillManager {
     public static final int SLOTS = 5;
     public static final int ULTIMATE_SLOT = 4;
+    /** Super ultimate: KAs and really big attacks (Ctrl+6). */
+    public static final int SUPER_SLOT = 5;
+
+    private static void useSuper(ServerPlayer player) {
+        if (!player.isAlive() || player.isSpectator() || ModCapabilities.getType(player) == CharacterType.NONE) return;
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
+            long remaining = data.cooldownEnd[SUPER_SLOT] - now(player);
+            if (remaining > 0) {
+                player.displayClientMessage(Component.literal("KA ready in " + (remaining + 19) / 20 + "s"), true);
+                return;
+            }
+            if (com.xenowarriors.ka.Kas.usePlayer(player)) {
+                int cd = com.xenowarriors.ka.Kas.PLAYER_COOLDOWN;
+                data.cooldownEnd[SUPER_SLOT] = now(player) + cd;
+                ModNetwork.sendToPlayer(new SkillCooldownPacket(SUPER_SLOT, cd, cd), player);
+            }
+        });
+    }
 
     private SkillManager() {}
 
@@ -57,7 +75,7 @@ public final class SkillManager {
     public static void syncLoadout(ServerPlayer player) {
         CharacterType type = ModCapabilities.getType(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d ->
-                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadout(type), com.xenowarriors.stats.Stats.characterLevel(player)), player));
+                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadout(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka), player));
     }
 
     /** Last skill someone used near each player, for Mikiko's True Empathy: {skill, game time}. */
@@ -70,6 +88,7 @@ public final class SkillManager {
     public static void useSkill(ServerPlayer player, int slot) {
         if (com.xenowarriors.party.Duels.isKnockedOut(player)) return;
         if (com.xenowarriors.item.PhoneItem.onCall(player)) return;          // hang up first      // can't do anything while knocked out
+        if (slot == SUPER_SLOT) { useSuper(player); return; }
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
         // the team ultimate (sneak + ultimate key with your partner close by), or joining one you were asked to
         if (slot == ULTIMATE_SLOT && com.xenowarriors.party.TeamUltimate.onUltimateKey(player)) return;
@@ -88,7 +107,7 @@ public final class SkillManager {
                         skill.getName(), (remaining + 19) / 20), true);
                 return;
             }
-            int cost = skill.getKarmaCost();
+            int cost = skill.getKarmaCost(player);
             if (!Karma.has(player, cost)) {
                 Karma.notEnough(player, cost);
                 return;
@@ -109,7 +128,7 @@ public final class SkillManager {
 
     public static void resetCooldowns(ServerPlayer player) {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
-            for (int i = 0; i < SLOTS; i++) {
+            for (int i = 0; i <= SUPER_SLOT; i++) {
                 data.cooldownEnd[i] = 0;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(i, 0, 0), player);
             }
