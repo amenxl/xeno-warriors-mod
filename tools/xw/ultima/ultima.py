@@ -193,7 +193,7 @@ def preview(model_json, skin, detail, face, yaws=(0, 35, 180), scale=7, pose=Non
         V = Rzyx([0, math.radians(yaw), 0])
         quads = []
         for b, (piv, frm, uv) in VBONES.items():
-            M = V; T = V @ np.array(piv, float)
+            M = V @ Rzyx((pose or {}).get(b, [0, 0, 0])); T = V @ np.array(piv, float)
             quads += box_quads(frm, [8, 8, 8] if b == 'head' else [8, 12, 4] if b == 'body' else [4, 12, 4], uv, skin, M, T)
             def walk(nd, M, T):
                 out = []
