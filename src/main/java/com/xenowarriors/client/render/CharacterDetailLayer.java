@@ -444,6 +444,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (outfit == 0 && torn == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(player.getId())) detailTex = LUNAR_TEX;
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         if (!noHead && HeadShape.active(player)) HeadShape.drawHead(parent.head, poseStack, buffers, player, packedLight, overlay);
+        detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
         int stick = type == CharacterType.RHALIX && !model.mouthStick.isEmpty()
@@ -454,7 +455,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
         if (giTop || giLegs) model.hideOutfit(giTop, giTop, giLegs);
         model.root.render(poseStack, buffer, packedLight, overlay);
-        if (detailTex == LUNAR_TEX) model.root.render(poseStack, buffers.getBuffer(RenderType.eyes(LUNAR_GLOW)), packedLight, overlay);   // the moons' purple glow
+        if (com.xenowarriors.client.cel.Cel.on() && !noHead) {                 // cel-shading: the ink outline around him
+            com.xenowarriors.client.cel.CelOutline.body(parent, poseStack, buffers, packedLight, overlay);
+            com.xenowarriors.client.cel.CelOutline.details(model, poseStack, buffers, packedLight, overlay);
+        }
+        if (detailTex == LUNAR_TEX || detailTex.getPath().endsWith("rhalix_lunar_details_cel.png")) model.root.render(poseStack, buffers.getBuffer(RenderType.eyes(LUNAR_GLOW)), packedLight, overlay);   // the moons' purple glow
         if (giTop || giLegs) model.showOutfit();
         if (stick != 0) for (var sp : model.mouthStick) sp.visible = true;
         if (stick == 1) {

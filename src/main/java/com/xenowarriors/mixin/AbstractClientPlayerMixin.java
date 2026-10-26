@@ -19,11 +19,11 @@ public abstract class AbstractClientPlayerMixin {
         if (type != CharacterType.NONE) {
             int o = ClientCharacterData.outfit((AbstractClientPlayer) (Object) this);
             if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(((AbstractClientPlayer) (Object) this).getId())) {
-                cir.setReturnValue(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png"));   // Lunar: white coat
+                cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png")));   // Lunar: white coat
                 return;
             }
-            cir.setReturnValue(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"
-                    + type.outfitKeys()[o] + ".png") : type.getSkin());
+            cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"
+                    + type.outfitKeys()[o] + ".png") : type.getSkin()));
         }
     }
 

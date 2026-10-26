@@ -88,4 +88,9 @@ public final class ClientSettings {
     public static boolean skillsAlways() { return "true".equals(props().getProperty("skills_always", "false")); }
 
     public static void setSkillsAlways(boolean on) { props().setProperty("skills_always", String.valueOf(on)); save(); }
+
+    /** Cel-shaded look: flat-shaded textures with ink lines and a black outline around characters. Off by default. */
+    public static boolean celShading() { return "true".equals(props().getProperty("cel_shading", "false")); }
+
+    public static void setCelShading(boolean on) { props().setProperty("cel_shading", String.valueOf(on)); save(); }
 }

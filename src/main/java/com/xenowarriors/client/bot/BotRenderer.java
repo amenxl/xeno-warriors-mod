@@ -36,7 +36,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
     }
 
     @Override
-    public ResourceLocation getTextureLocation(PartyBotEntity e) { return e.character().getSkin(); }
+    public ResourceLocation getTextureLocation(PartyBotEntity e) { return com.xenowarriors.client.cel.Cel.tex(e.character().getSkin()); }
 
     @Override
     protected void setupRotations(PartyBotEntity e, PoseStack pose, float bob, float yaw, float partial) {
@@ -67,7 +67,11 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
             com.xenowarriors.client.LimbBend.copy(p.rightLeg, m.rightLeg);
             com.xenowarriors.client.LimbBend.copy(p.leftLeg, m.leftLeg);
             int overlay = LivingEntityRenderer.getOverlayCoords(e, 0F);
-            m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(t.getDetailTexture())), light, overlay);
+            m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(t.getDetailTexture()))), light, overlay);
+            if (com.xenowarriors.client.cel.Cel.on()) {
+                com.xenowarriors.client.cel.CelOutline.body(p, pose, buffers, light, overlay);
+                com.xenowarriors.client.cel.CelOutline.details(m, pose, buffers, light, overlay);
+            }
             if (m.faceRoot != null) {
                 m.faceHead.copyFrom(p.head);
                 m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(t.getFaceTexture())), light, overlay);

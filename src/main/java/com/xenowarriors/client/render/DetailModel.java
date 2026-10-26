@@ -444,6 +444,22 @@ public class DetailModel {
     /** Loads any model file in the same format (e.g. a character's armor pieces); null if missing. */
     /** Loading for Epic Fight's baker: limbs left whole (it bends knees and elbows itself). */
     private static boolean wholeLimbs;
+    /** Set while loading a cel-outline copy: every cube grows by this much. */
+    private static float inflate;
+    private String sourcePath;
+    private boolean sourceWhole;
+
+    /** An inflated copy of this model for the cel-shading outline (null if it can't be rebuilt). */
+    public DetailModel outlineCopy() {
+        if (sourcePath == null) return null;
+        boolean w = wholeLimbs; float i = inflate;
+        wholeLimbs = sourceWhole; inflate = com.xenowarriors.client.cel.CelOutline.DETAIL;
+        try { return loadPath(sourcePath); } finally { wholeLimbs = w; inflate = i; }
+    }
+
+    private static net.minecraft.client.model.geom.builders.CubeDeformation def() {
+        return new net.minecraft.client.model.geom.builders.CubeDeformation(inflate);
+    }
 
     public static DetailModel loadWhole(String path) {
         wholeLimbs = true;
@@ -473,6 +489,8 @@ public class DetailModel {
                 children(part, b);
             }
             DetailModel model = new DetailModel(LayerDefinition.create(mesh, size, size).bakeRoot());
+            model.sourcePath = path;
+            model.sourceWhole = wholeLimbs;
             if (json.has("face")) {
                 JsonObject face = json.getAsJsonObject("face");
                 int faceSize = face.get("texture_size").getAsInt();
@@ -508,18 +526,18 @@ public class DetailModel {
             float top = f[1], bottom = f[1] + sz[1];
             // (thin trim sitting just over the joint - a hem, a rim - stays with the upper half)
             if ((bottom <= split + 0.6F && (top + bottom) / 2F < split) || (top < split + 0.45F && bottom <= split + 0.75F)) {
-                upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2]);
+                upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2], def());
             } else if (top >= split - 0.6F) {
-                lower.texOffs(u, v).addBox(f[0], f[1] - split, f[2], sz[0], sz[1], sz[2]);
+                lower.texOffs(u, v).addBox(f[0], f[1] - split, f[2], sz[0], sz[1], sz[2], def());
             } else {
                 int h1 = Math.max(1, Math.round(split - top));            // whole pixels, so the texture lines up
                 if (h1 >= sz[1] - 0.5F) {
-                    upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2]);
+                    upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], sz[1], sz[2], def());
                     continue;
                 }
-                upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], h1, sz[2]);
+                upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], h1, sz[2], def());
                 float y0 = top + h1 - split;
-                lower.texOffs(u, v + h1).addBox(f[0], y0, f[2], sz[0], sz[1] - h1, sz[2]);
+                lower.texOffs(u, v + h1).addBox(f[0], y0, f[2], sz[0], sz[1] - h1, sz[2], def());
                 lower.texOffs(u, v).addBox(f[0], y0 + sz[1] - h1, f[2], sz[0], 0.02F, sz[2]);   // its real underside
                 if (h1 >= 2 && sz[1] - h1 >= 2F) {
                     // joint piece across the cut, a hair thinner: fills the gap when the elbow / knee bends
@@ -559,7 +577,7 @@ public class DetailModel {
             float[] uv = floats(c.getAsJsonArray("uv"));
             float[] f = floats(c.getAsJsonArray("from"));
             float[] s = floats(c.getAsJsonArray("size"));
-            builder.texOffs((int) uv[0], (int) uv[1]).addBox(f[0], f[1], f[2], s[0], s[1], s[2]);
+            builder.texOffs((int) uv[0], (int) uv[1]).addBox(f[0], f[1], f[2], s[0], s[1], s[2], def());
         }
         return builder;
     }

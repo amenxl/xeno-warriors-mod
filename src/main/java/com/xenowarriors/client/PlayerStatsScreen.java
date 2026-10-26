@@ -31,7 +31,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape, hudStyle, vanillaBars, skillsAlways;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape, hudStyle, vanillaBars, skillsAlways, celShade;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -90,7 +90,9 @@ public class PlayerStatsScreen extends Screen {
         headShape = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setAnimeJaw(!ClientSettings.animeJaw());
             updateButtons();
-        }).bounds(bx, SET_TOP + 98, bw, 20).build());
+        }).bounds(bx, SET_TOP + 98, bw / 2 - 2, 20).build());
+        celShade = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setCelShading(!ClientSettings.celShading()); updateButtons(); })
+                .bounds(bx + bw / 2 + 2, SET_TOP + 98, bw / 2 - 2, 20).build());
         hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 194, bw, 20).build());
         vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 218, bw / 2 - 2, 20).build());
         skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 218, bw / 2 - 2, 20).build());
@@ -170,7 +172,9 @@ public class PlayerStatsScreen extends Screen {
         senseFriendly.visible = tab == 3;
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
         headShape.visible = tab == 3;
-        headShape.setMessage(Component.literal("Head shape: " + (ClientSettings.animeJaw() ? "Anime jaw" : "Classic")));
+        headShape.setMessage(Component.literal("Head: " + (ClientSettings.animeJaw() ? "Anime jaw" : "Classic")));
+        celShade.visible = tab == 3;
+        celShade.setMessage(Component.literal("Cel-shading: " + (ClientSettings.celShading() ? "ON" : "OFF")));
         hudStyle.visible = vanillaBars.visible = skillsAlways.visible = tab == 3;
         hudStyle.setMessage(Component.literal("HUD: " + (ClientSettings.khHud() ? "Kingdom Hearts style" : "Classic")));
         vanillaBars.setMessage(Component.literal("Hearts/food: " + (ClientSettings.vanillaBars() ? "Shown" : "Hidden")));
