@@ -37,7 +37,8 @@ import java.util.UUID;
 public final class EnemyScaling {
     private static final String LVL = "xw_lvl";
     private static final UUID HP = UUID.fromString("9d1c5e2a-3f41-4b8a-a0c2-7e5f1d3b9a01"), DMG = UUID.fromString("9d1c5e2a-3f41-4b8a-a0c2-7e5f1d3b9a02"),
-            ARM = UUID.fromString("9d1c5e2a-3f41-4b8a-a0c2-7e5f1d3b9a03");
+            ARM = UUID.fromString("9d1c5e2a-3f41-4b8a-a0c2-7e5f1d3b9a03"), DBZ_HP = UUID.fromString("9d1c5e2a-3f41-4b8a-a0c2-7e5f1d3b9a04"),
+            DBZ_DMG = UUID.fromString("9d1c5e2a-3f41-4b8a-a0c2-7e5f1d3b9a05");
     private static final Map<UUID, Integer> ZONE = new HashMap<>();
 
     private EnemyScaling() {}
@@ -61,7 +62,7 @@ public final class EnemyScaling {
     public static float effective(LivingEntity e) { return Stat.effective(level(e)); }
 
     /** Damage multiplier for the extra things they do (elements, KAs). */
-    public static float damageMult(LivingEntity e) { return 1F + effective(e) * 0.02F; }
+    public static float damageMult(LivingEntity e) { return (1F + effective(e) * 0.02F) * Math.max(1F, e.getPersistentData().getFloat("xw_dbz_dmg")); }
 
     private static int playerPower(ServerPlayer p) {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> (d.statLevel[0] + d.statLevel[1] * 2 + d.statLevel[2]) / 4).orElse(0);
@@ -84,6 +85,16 @@ public final class EnemyScaling {
         mod(m.getAttribute(Attributes.MAX_HEALTH), HP, eff * 0.035, AttributeModifier.Operation.MULTIPLY_BASE);
         mod(m.getAttribute(Attributes.ATTACK_DAMAGE), DMG, eff * 0.02, AttributeModifier.Operation.MULTIPLY_BASE);
         mod(m.getAttribute(Attributes.ARMOR), ARM, Math.min(12, eff * 0.12), AttributeModifier.Operation.ADDITION);
+        // with DragonMineZ, players get far stronger (skills follow Ki/strike damage, health follows Vitality): enemies keep up
+        if (near != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) {
+            double dm = Math.max(com.xenowarriors.compat.DmzScaling.multiplier(near, true), com.xenowarriors.compat.DmzScaling.multiplier(near, false));
+            double hpRatio = Math.max(1.0, near.getMaxHealth() / 20.0);
+            double hpBonus = pull * (Math.pow(Math.max(1.0, dm), 0.85) - 1.0);       // so your stronger hits still feel strong, but they don't melt
+            double dmgBonus = pull * (Math.pow(hpRatio, 0.6) - 1.0);                // so they can still hurt a Vitality-stacked player
+            mod(m.getAttribute(Attributes.MAX_HEALTH), DBZ_HP, hpBonus, AttributeModifier.Operation.MULTIPLY_TOTAL);
+            mod(m.getAttribute(Attributes.ATTACK_DAMAGE), DBZ_DMG, dmgBonus, AttributeModifier.Operation.MULTIPLY_TOTAL);
+            m.getPersistentData().putFloat("xw_dbz_dmg", (float) (1.0 + dmgBonus));
+        }
         m.setHealth(m.getMaxHealth());
         // more Karma to work with
         var t = m.getPersistentData();

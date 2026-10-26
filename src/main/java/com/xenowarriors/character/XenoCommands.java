@@ -243,6 +243,22 @@ public final class XenoCommands {
                                     return 1;
                                 }))));
 
+        // story seasons: Season 2/3 content stays locked (no spoilers) until unlocked here
+        root.then(Commands.literal("season")
+                .executes(ctx -> { say(ctx, gray("Story content unlocked up to Season " + Seasons.highest(ctx.getSource().getServer()) + ".")); return 1; })
+                .then(Commands.literal("unlock").requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("season", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {
+                            int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "season");
+                            Seasons.set(ctx.getSource().getServer(), n);
+                            ctx.getSource().getServer().getPlayerList().broadcastSystemMessage(Component.literal("Season " + n + " content unlocked!").withStyle(ChatFormatting.GOLD), false);
+                            return 1;
+                        })))
+                .then(Commands.literal("lock").requires(src -> src.hasPermission(2)).executes(ctx -> {
+                    Seasons.set(ctx.getSource().getServer(), 1);
+                    say(ctx, gray("Back to Season 1 content only."));
+                    return 1;
+                })));
+
         root.then(Commands.literal("giveup").executes(ctx -> {
             boolean ok = com.xenowarriors.party.Duels.giveUp(ctx.getSource().getPlayerOrException());
             if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));
