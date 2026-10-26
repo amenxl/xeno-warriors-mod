@@ -331,6 +331,16 @@ public final class XenoCommands {
                 .then(Commands.literal("enter").executes(ctx -> { com.xenowarriors.tower.Tower.enter(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.tower.Tower.leave(ctx.getSource().getPlayerOrException(), "You left the Tower"); return 1; }))
                 .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; })));
+        root.then(Commands.literal("miniboss").executes(ctx -> {
+            var p = ctx.getSource().getPlayerOrException();
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (z == null) return 0;
+            z.moveTo(p.getX() + 4, p.getY(), p.getZ(), 0, 0);
+            z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            com.xenowarriors.boss.MiniBosses.make(z, null);
+            p.serverLevel().addFreshEntity(z);
+            return 1;
+        }));
         root.then(Commands.literal("bounty").executes(ctx -> { com.xenowarriors.bounty.Bounties.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("collection").executes(ctx -> {
             com.xenowarriors.collection.Collection.openFromBook(ctx.getSource().getPlayerOrException());
