@@ -17,6 +17,7 @@ public final class UltimaAnim {
         if (UltimaClient.overload(p.getId())) return;
         int tier = UltimaClient.tier(p.getId());
         float atk = m.attackTime;
+        if (tier == 0 && atk <= 0F && idle(m, p, age)) return;
         if (tier == 0) {
             // hands in his pockets, shoulders a bit slack, head tilted - not even trying
             m.rightArm.xRot = 0.18F + (p.isCrouching() ? 0.3F : 0F);
@@ -53,6 +54,56 @@ public final class UltimaAnim {
                 m.rightLeg.xRot = -0.3F * s; m.leftLeg.xRot = 0.3F * s;
             }
         }
+    }
+
+    private static final java.util.Map<Integer, Integer> STILL_SINCE = new java.util.HashMap<>();
+
+    private static float smooth(float x) { x = Mth.clamp(x, 0F, 1F); return x * x * (3F - 2F * x); }
+
+    private static void lerp(net.minecraft.client.model.geom.ModelPart part, float w, float x, float y, float z) {
+        part.xRot = Mth.lerp(w, part.xRot, x); part.yRot = Mth.lerp(w, part.yRot, y); part.zRot = Mth.lerp(w, part.zRot, z);
+    }
+
+    /**
+     * Standing around at 25%, he settles into lazy poses: leaning back on a wall with his arms crossed (if there's a
+     * wall behind him), otherwise switching between arms crossed and rubbing the back of his neck with a hand in
+     * his pocket; crouching still, he squats down. Returns true if an idle pose was drawn.
+     */
+    private static boolean idle(HumanoidModel<?> m, Player p, float age) {
+        boolean still = p.onGround() && p.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4 && !p.isUsingItem();
+        if (!still) { STILL_SINCE.remove(p.getId()); return false; }
+        int since = STILL_SINCE.computeIfAbsent(p.getId(), k -> p.tickCount);
+        float t = age - since;
+        float w = smooth((t - 30F) / 20F);
+        if (w <= 0F) return false;
+        float breathe = Mth.sin(age * 0.08F) * 0.03F;
+        if (p.isCrouching()) {                                       // squatting on his heels, an arm on his knee
+            lerp(m.rightLeg, w, -1.75F, 0.25F, 0.1F); lerp(m.leftLeg, w, -1.75F, -0.25F, -0.1F);
+            lerp(m.rightArm, w, -0.9F + breathe, -0.2F, 0.15F); lerp(m.leftArm, w, -0.5F, 0.1F, -0.1F);
+            m.head.xRot = Mth.lerp(w, m.head.xRot, m.head.xRot + 0.2F);
+            return true;
+        }
+        var back = net.minecraft.core.BlockPos.containing(p.position().subtract(p.getLookAngle().multiply(0.8, 0, 0.8))).above();
+        boolean wall = p.level().getBlockState(back).isCollisionShapeFullBlock(p.level(), back);
+        int pose = wall ? 0 : (int) (t / 240) % 2 == 0 ? 1 : 2;
+        if (pose == 2) {                                             // rubbing the back of his neck, other hand in his pocket
+            lerp(m.rightArm, w, -2.55F + breathe, 0.15F, -0.75F);
+            lerp(m.leftArm, w, 0.18F, -0.25F, -0.12F);
+            m.head.xRot = Mth.lerp(w, m.head.xRot, 0.25F);
+            m.head.zRot = Mth.lerp(w, m.head.zRot, -0.15F);
+            lerp(m.leftLeg, w, -0.08F, 0F, -0.08F); lerp(m.rightLeg, w, 0.05F, 0F, 0.06F);
+        } else {                                                     // arms crossed (leaning back on the wall, one foot crossed over)
+            lerp(m.rightArm, w, -0.95F + breathe, -0.62F, 0.12F);
+            lerp(m.leftArm, w, -1.05F + breathe, 0.62F, -0.12F);
+            m.head.zRot = Mth.lerp(w, m.head.zRot, 0.12F);
+            if (pose == 0) {
+                m.body.xRot = Mth.lerp(w, m.body.xRot, -0.12F);
+                lerp(m.rightLeg, w, 0.15F, 0F, -0.22F); lerp(m.leftLeg, w, -0.1F, 0F, -0.04F);
+            } else {
+                lerp(m.leftLeg, w, -0.08F, 0F, -0.08F); lerp(m.rightLeg, w, 0.05F, 0F, 0.06F);
+            }
+        }
+        return true;
     }
 
     /** What his energy is called: Data (Gov data powers him), not Karma. */
