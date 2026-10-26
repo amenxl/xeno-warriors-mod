@@ -29,6 +29,9 @@ def skin():
     for y in range(64):
         for x in range(64):
             if y < 16: continue                                      # head / hat rows untouched
+            r, g, b, a = px[x, y]
+            if 20 <= x < 28 and 20 <= y < 32 and a and r > 180 and g > 150 and b < 120:   # yellow undershirt -> dark
+                px[x, y] = (40, 32, 52, a) if (x + y) % 3 else (52, 42, 66, a); continue
             px[x, y] = cloth(px[x, y])
     im.save(CH + 'rhalix_lunar.png')
 
