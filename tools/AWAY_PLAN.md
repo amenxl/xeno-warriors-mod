@@ -76,6 +76,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 14:40-14:55 (user here) — 0.121.1/0.121.2: Lunar moons: hanging grey stars, black moons with glowing purple edge (eyes glow pass, rhalix_lunar_glow.png); flying GIF sent.
 - Mon 15:15 (away) — 0.122.0: Bounty boards (bounty/*): 3 daily bounties easy/medium/hard, emeralds + stat XP (+ karma potion/data shard), boards in Mountain Village + Aurora plaza, craftable, /xeno bounty. Lodestone effects DEFERRED (needs client particle packet plumbing per effect; low value vs. queue).
 
+- Mon 16:35 (away) — 0.123.0: named mini-bosses (boss/MiniBosses): 1.5% of monsters (not creepers/Tower), name + title, boss bar, x4 HP, +75% dmg, glow, power (Blazing/Swift/Ironhide/Karma-Eater/Summoner/Frostbound), loot + 50% of a level in each stat; /xeno miniboss.
 ## Reminders
 - When more playable characters exist: disable two players being the same character, but keep a way to switch if nobody else is free in the character screen (user asked to be reminded).
 - Away mode resumes 2pm ET Mon Oct 26, check-ins every 1 hour.
