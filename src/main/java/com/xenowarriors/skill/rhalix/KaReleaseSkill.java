@@ -52,7 +52,7 @@ public class KaReleaseSkill implements Skill {
         p.getPersistentData().putLong(FREE_UNTIL, level.getGameTime() + 80);
         p.clearFire();
         com.xenowarriors.ka.Kas.release(p);       // and every KA on him
-        ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(p.getId(), SkillAnimPacket.KA_RELEASE, false), p);
+        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KA_BREAK, 16);
         p.displayClientMessage(Component.literal((cleared > 0 ? "KA Release!" : "KA Release - nothing can hold me.") + "  (-" + cost + " Karma)").withStyle(ChatFormatting.DARK_PURPLE), true);
         level.playSound(null, p.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1F, 0.6F);
         level.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 0.5F, 1.6F);

@@ -115,6 +115,7 @@ public class HumanNpcEntity extends PathfinderMob {
         int cur = reaction();
         if (cur != 0 && tickCount < reactUntil && HumanReactions.priority(cur) > HumanReactions.priority(type)) return;
         entityData.set(REACTION, type);
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfPoses.reaction(this, type);
         reactUntil = tickCount + ticks;
     }
 

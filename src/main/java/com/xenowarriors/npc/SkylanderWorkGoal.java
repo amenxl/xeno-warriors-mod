@@ -106,8 +106,8 @@ public class SkylanderWorkGoal extends Goal {
     private void mine(ServerLevel level) {
         BlockState st = level.getBlockState(target);
         if (!st.is(ModBlocks.SKY_ORE.get())) { stop(); return; }
-        if (work++ % 6 == 0) {
-            s.swing(InteractionHand.MAIN_HAND);
+        if (work++ % 10 == 0) {
+            com.xenowarriors.anim.Poses.play(s, com.xenowarriors.anim.Poses.SKY_MINE, 10);
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, st), target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, 6, 0.3, 0.3, 0.3, 0.05);
             level.sendParticles(ParticleTypes.END_ROD, target.getX() + 0.5, target.getY() + 1, target.getZ() + 0.5, 2, 0.3, 0.3, 0.3, 0.02);
             level.playSound(null, target, SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.NEUTRAL, 0.7F, 1.2F);
@@ -126,7 +126,7 @@ public class SkylanderWorkGoal extends Goal {
         BlockState put = r == 0 ? Blocks.OAK_SAPLING.defaultBlockState() : r == 1 ? Blocks.BIRCH_SAPLING.defaultBlockState()
                 : r == 2 ? Blocks.CORNFLOWER.defaultBlockState() : r == 3 ? Blocks.ALLIUM.defaultBlockState() : Blocks.AZURE_BLUET.defaultBlockState();
         level.setBlock(target, put, 3);
-        s.swing(InteractionHand.MAIN_HAND);
+        com.xenowarriors.anim.Poses.play(s, com.xenowarriors.anim.Poses.PLANT, 24);
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, 8, 0.3, 0.3, 0.3, 0);
         level.playSound(null, target, SoundEvents.GRASS_PLACE, SoundSource.NEUTRAL, 0.8F, 1F);
         stop();
@@ -245,7 +245,7 @@ public class SkylanderWorkGoal extends Goal {
             if (cur.equals(b) || (!cur.isAir() && !cur.canBeReplaced() && !b.isAir())) continue;
             if (!b.isAir() && s.bump() % 6 == 0 && !spend(1)) { buildStep--; stop(); return; }     // out of crystal: back to digging
             level.setBlock(p, b, 3);
-            s.swing(InteractionHand.MAIN_HAND);
+            com.xenowarriors.anim.Poses.play(s, com.xenowarriors.anim.Poses.SHAPE, 10);
             level.sendParticles(ParticleTypes.END_ROD, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 3, 0.25, 0.25, 0.25, 0.02);
             level.playSound(null, p, b.getSoundType().getPlaceSound(), SoundSource.NEUTRAL, 0.7F, 1.1F);
             return;

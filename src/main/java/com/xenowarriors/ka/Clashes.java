@@ -125,6 +125,7 @@ public final class Clashes {
             c.ticks++;
             Rooting.hold(c.a, c.anchorA);
             Rooting.hold(c.b, c.anchorB);
+            if (c.ticks % 8 == 1) { com.xenowarriors.anim.Poses.play(c.a, com.xenowarriors.anim.Poses.CLASH, 12); com.xenowarriors.anim.Poses.play(c.b, com.xenowarriors.anim.Poses.CLASH, 12); }
             float pa = c.a instanceof ServerPlayer sa ? playerPush(c, sa, c.clicksA) : npcPush(c.a);
             float pb = c.b instanceof ServerPlayer sb ? playerPush(c, sb, c.clicksB) : npcPush(c.b);
             c.clicksA = c.clicksB = 0;
@@ -163,6 +164,7 @@ public final class Clashes {
         ServerLevel l = (ServerLevel) c.a.level();
         for (LivingEntity e : new LivingEntity[]{c.a, c.b}) {
             e.getPersistentData().remove(Rooting.ROOTED_UNTIL);
+            com.xenowarriors.anim.Poses.clearState(e);
             if (e instanceof ServerPlayer sp) ModNetwork.sendToPlayer(new ClashStatePacket(false, 0, 0, ""), sp);
         }
         if (result < 0) return;
@@ -171,6 +173,7 @@ public final class Clashes {
         l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, meet.x, meet.y, meet.z, 1, 0, 0, 0, 0);
         l.playSound(null, net.minecraft.core.BlockPos.containing(meet), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.4F, 0.8F);
         if (result == 2) {
+            com.xenowarriors.anim.Poses.play(c.a, com.xenowarriors.anim.Poses.CLASH_LOSE, 20); com.xenowarriors.anim.Poses.play(c.b, com.xenowarriors.anim.Poses.CLASH_LOSE, 20);
             for (LivingEntity e : new LivingEntity[]{c.a, c.b}) {
                 e.hurt(l.damageSources().explosion(null, null), c.dmg * 0.4F);
                 Vec3 away = e.position().subtract(meet).multiply(1, 0, 1).normalize();
@@ -180,6 +183,8 @@ public final class Clashes {
             return;
         }
         LivingEntity win = result == 1 ? c.a : c.b, lose = result == 1 ? c.b : c.a;
+        com.xenowarriors.anim.Poses.play(win, com.xenowarriors.anim.Poses.CLASH_WIN, 30);
+        com.xenowarriors.anim.Poses.play(lose, com.xenowarriors.anim.Poses.CLASH_LOSE, 20);
         lose.hurt(win instanceof Player pw ? l.damageSources().playerAttack(pw) : l.damageSources().mobAttack(win), c.dmg * 2F);
         Vec3 away = lose.position().subtract(win.position()).multiply(1, 0, 1).normalize();
         lose.push(away.x * 1.8, 0.6, away.z * 1.8); lose.hurtMarked = true;

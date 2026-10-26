@@ -75,5 +75,34 @@ public class CSoulModel extends HierarchicalModel<CSoulBossEntity> {
         tail1.xRot = 0.2F + Mth.cos(age * 0.1F) * 0.1F;
         tail2.xRot = Mth.cos(age * 0.1F - 0.8F) * 0.15F;
         tail3.xRot = Mth.cos(age * 0.1F - 1.6F) * 0.2F;
+        float move = Math.min(1F, limbSwingAmount * 1.5F);
+        head.xRot += 0.25F * move;
+        armL.xRot -= 0.5F * move; armR.xRot -= 0.5F * move;
+        // a raking two-claw swipe, jaw wide
+        if (attackTime > 0F) {
+            float a = attackTime, s = Mth.sin(a * Mth.PI), up = a < 0.4F ? a / 0.4F : 1F - (a - 0.4F) / 0.6F;
+            armL.xRot = -0.3F - 2.4F * up + (a > 0.4F ? 1.6F * s : 0F);
+            armR.xRot = -0.3F - 2.4F * up + (a > 0.4F ? 1.6F * s : 0F);
+            armL.zRot = -0.6F * s; armR.zRot = 0.6F * s;
+            jaw.xRot = 0.15F + 0.8F * s;
+            head.xRot += a > 0.4F ? 0.4F * s : -0.3F * up;
+        }
+        // roars when hurt
+        if (e.hurtTime > 0) {
+            float k = e.hurtTime / (float) Math.max(1, e.hurtDuration);
+            jaw.xRot = Math.max(jaw.xRot, 0.9F * k);
+            head.xRot -= 0.5F * k;
+            head.zRot = Mth.sin(age * 2.5F) * 0.15F * k;
+        } else head.zRot = 0F;
+        // casting: claws thrust forward, mouth open
+        int act = com.xenowarriors.client.EntityPoses.action(e);
+        if (act >= 10 && act <= 16) {
+            float t = com.xenowarriors.client.EntityPoses.actionTime(e, 0F), w = Mth.sin(Math.min(1F, t) * Mth.PI);
+            armL.xRot = Mth.lerp(w, armL.xRot, -1.6F);
+            armR.xRot = Mth.lerp(w, armR.xRot, -1.6F);
+            armL.zRot = Mth.lerp(w, armL.zRot, 0.2F);
+            armR.zRot = Mth.lerp(w, armR.zRot, -0.2F);
+            jaw.xRot = Math.max(jaw.xRot, 0.7F * w);
+        }
     }
 }

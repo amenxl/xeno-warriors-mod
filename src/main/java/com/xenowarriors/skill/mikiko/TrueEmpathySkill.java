@@ -31,6 +31,7 @@ public class TrueEmpathySkill implements Skill {
     public boolean use(ServerPlayer p) {
         long now = p.level().getGameTime();
         ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(p.getId(), SkillAnimPacket.EMPATHY, false), p);
+        p.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, p.getX(), p.getY() + 1.2, p.getZ(), 16, 0.35, 0.6, 0.35, 0.01);
         p.serverLevel().sendParticles(ParticleTypes.ENCHANT, p.getX(), p.getY() + 1.6, p.getZ(), 30, 0.4, 0.4, 0.4, 0.6);
         p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1F, 1.3F);
         strain(p, now);
@@ -39,7 +40,8 @@ public class TrueEmpathySkill implements Skill {
             p.displayClientMessage(Component.literal("True Empathy - ").withStyle(ChatFormatting.LIGHT_PURPLE)
                     .append(copy.getName().copy().withStyle(ChatFormatting.WHITE)), true);
             SkillManager.WITNESSED.remove(p.getUUID());
-            copy.use(p);
+            com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.MIRROR, 8);                 // a mirror flash... then their move, done his way
+            com.xenowarriors.skill.ServerScheduler.later(6, () -> { if (p.isAlive()) copy.use(p); });
             return true;
         }
         p.getPersistentData().putLong(READ_UNTIL, now + 60);

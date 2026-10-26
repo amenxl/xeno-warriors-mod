@@ -104,6 +104,7 @@ public final class Kas {
         e.getPersistentData().putFloat(STRAIN, s);
         if (s >= BURNOUT) {
             e.getPersistentData().putLong(BURN, e.level().getGameTime() + 5 * 60 * 20);
+            com.xenowarriors.anim.Poses.play(e, com.xenowarriors.anim.Poses.KA_BURNOUT, 50);
             for (ServerPlayer o : ((ServerLevel) e.level()).players()) if (o.distanceToSqr(e) < 32 * 32)
                 o.displayClientMessage(Component.literal(e.getName().getString() + "'s KA burnt out!").withStyle(ChatFormatting.DARK_RED), true);
             ((ServerLevel) e.level()).sendParticles(ParticleTypes.LARGE_SMOKE, e.getX(), e.getY() + 1.2, e.getZ(), 20, 0.3, 0.5, 0.3, 0.02);
@@ -140,6 +141,7 @@ public final class Kas {
         Component line = Component.literal(user.getName().getString() + ": ").withStyle(ChatFormatting.WHITE)
                 .append(Component.literal("KA - " + ka.title() + "!").withStyle(ka.chat(), ChatFormatting.BOLD));
         for (ServerPlayer o : ((ServerLevel) user.level()).players()) if (o.distanceToSqr(user) < 40 * 40) o.displayClientMessage(line, true);
+        com.xenowarriors.anim.Poses.play(user, com.xenowarriors.anim.Poses.KA_CAST, 20);
         user.level().playSound(null, user.blockPosition(), SoundEvents.ILLUSIONER_CAST_SPELL, SoundSource.HOSTILE, 1F, ka.rare ? 0.7F : 1.1F);
         ring((ServerLevel) user.level(), user, ka, 2.2, 32);
     }
@@ -157,6 +159,9 @@ public final class Kas {
     private static void mark(LivingEntity target, Ka ka, int ticks, Entity src) {
         target.getPersistentData().putLong(EFFECT + ka.id(), now(target) + ticks);
         if (src != null) target.getPersistentData().putInt(EFFECT + ka.id() + SRC, src.getId());
+        if (ka == Ka.BIND) com.xenowarriors.anim.Poses.play(target, com.xenowarriors.anim.Poses.BOUND, ticks);
+        else if (ka == Ka.WEIGHT) com.xenowarriors.anim.Poses.play(target, com.xenowarriors.anim.Poses.HEAVY, ticks);
+        else if (ka == Ka.GRIP) com.xenowarriors.anim.Poses.play(target, com.xenowarriors.anim.Poses.SLIDING, ticks);
         if (target instanceof ServerPlayer p && (ka == Ka.GRIP || ka == Ka.FLIP || ka == Ka.SIGHT))
             ModNetwork.sendToPlayer(new KaEffectPacket(ka.ordinal(), ticks, src == null ? -1 : src.getId()), p);
     }
@@ -203,6 +208,7 @@ public final class Kas {
                     level.addFreshEntity(it);
                     target.setItemInHand(hand, ItemStack.EMPTY);
                 }
+                com.xenowarriors.anim.Poses.play(target, com.xenowarriors.anim.Poses.HOLD_JOLT, 14);
                 level.playSound(null, target.blockPosition(), SoundEvents.ITEM_BREAK, SoundSource.HOSTILE, 0.8F, 1.4F);
             }
             case PACE -> {
@@ -301,6 +307,7 @@ public final class Kas {
         CompoundTag t = p.getPersistentData();
         for (String k : new java.util.ArrayList<>(t.getAllKeys())) if (k.startsWith(EFFECT)) t.remove(k);
         t.remove(PAID_UNTIL);
+        com.xenowarriors.anim.Poses.clearState(p);
         ModNetwork.sendToPlayer(new KaEffectPacket(-1, 0, -1), p);
         setReach(p, 0);
     }
@@ -446,6 +453,7 @@ public final class Kas {
                 o -> has(o, Ka.BIND) && o.getPersistentData().getInt(EFFECT + "bind" + SRC) == victim.getId())) {
             held.getPersistentData().remove(EFFECT + "bind");
             held.getPersistentData().remove(Rooting.ROOTED_UNTIL);
+            com.xenowarriors.anim.Poses.clearState(held);
         }
         if (has(victim, Ka.BIND) && !victim.getPersistentData().contains(EFFECT + "bind" + SRC)) victim.getPersistentData().remove(EFFECT + "bind");
     }

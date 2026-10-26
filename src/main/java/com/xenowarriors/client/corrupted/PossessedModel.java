@@ -51,6 +51,15 @@ public class PossessedModel extends PlayerModel<CorruptedVillagerEntity> {
             }
             copyOuter();
         }
+        // a lurching, uneven walk and sudden head twitches - something else is driving the body
+        body.zRot = Mth.sin(limbSwing * 0.3331F) * 0.12F * limbSwingAmount;
+        float twitchPhase = (age + e.getId() * 13) % 70F;
+        if (twitchPhase < 4F) {
+            float k = Mth.sin(twitchPhase / 4F * Mth.PI);
+            head.zRot = (e.getId() % 2 == 0 ? 0.55F : -0.55F) * k;
+            head.yRot += 0.3F * k;
+        } else head.zRot = 0F;
+        copyOuter();
         // getting hit: head snaps back, body rocks, arms fly out
         if (e.hurtTime > 0) {
             float h = e.hurtTime / (float) Math.max(1, e.hurtDuration);

@@ -56,5 +56,30 @@ public class CorruptedSoulModel<T extends net.minecraft.world.entity.Mob> extend
         tail1.xRot = 0.15F + Mth.cos(age * 0.13F) * 0.1F;
         tail2.xRot = Mth.cos(age * 0.13F - 0.8F) * 0.15F;
         tail3.xRot = Mth.cos(age * 0.13F - 1.6F) * 0.2F;
+        // leaning into the chase, tail streaming out behind
+        float move = Math.min(1F, limbSwingAmount * 1.6F);
+        head.xRot += 0.35F * move;
+        tail1.xRot -= 0.25F * move; tail2.xRot -= 0.15F * move;
+        tail1.yRot *= 1F + move; tail2.yRot *= 1F + move;
+        // lunge: rears back then snaps forward
+        if (attackTime > 0F) {
+            float a = attackTime, s = Mth.sin(a * Mth.PI);
+            head.xRot += a < 0.35F ? -0.6F * (a / 0.35F) : 0.9F * s;
+            head.z = -3F * s;
+        } else head.z = 0F;
+        // shudders when hit
+        if (e.hurtTime > 0) {
+            float k = e.hurtTime / (float) Math.max(1, e.hurtDuration);
+            head.zRot = Mth.sin(age * 3.5F) * 0.3F * k;
+            head.xRot -= 0.4F * k;
+        } else head.zRot = 0F;
+        // casting an element: rears up, tail coiled
+        int act = com.xenowarriors.client.EntityPoses.action(e);
+        if (act >= 10 && act <= 16) {
+            float t = com.xenowarriors.client.EntityPoses.actionTime(e, 0F), w = Mth.sin(Math.min(1F, t) * Mth.PI);
+            head.xRot -= 0.7F * w;
+            head.y -= 2.5F * w;
+            tail1.xRot += 0.6F * w; tail2.xRot += 0.5F * w; tail3.xRot += 0.4F * w;
+        }
     }
 }

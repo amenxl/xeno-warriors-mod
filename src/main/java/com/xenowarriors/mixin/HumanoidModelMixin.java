@@ -63,5 +63,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.PhoneClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
             }
         }
+        // poses anyone can strike (clashing, KAs, elements, working...), players and NPCs alike
+        com.xenowarriors.client.EntityPoses.apply((HumanoidModel<?>) self, entity, ageInTicks);
     }
 }

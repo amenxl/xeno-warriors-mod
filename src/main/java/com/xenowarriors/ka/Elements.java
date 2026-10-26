@@ -114,6 +114,7 @@ public final class Elements {
         m.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         if (blast(el)) {                                     // charge it up (you can see it coming - and clash it)
             t.putLong(CHARGE, now + 16);
+            com.xenowarriors.anim.Poses.play(m, com.xenowarriors.anim.Poses.EL_CHARGE, 16);
             t.putInt(CHARGE_T, target.getId());
             sound(level, m, SoundEvents.BEACON_ACTIVATE, 1.8F);
         } else cast(m, target, el, level);
@@ -136,6 +137,12 @@ public final class Elements {
     }
 
     private static void cast(Mob m, LivingEntity t, Element el, ServerLevel l) {
+        com.xenowarriors.anim.Poses.play(m, switch (el) {
+            case FIRE, CRYSTAL, METAL, POISON -> com.xenowarriors.anim.Poses.EL_THROW;
+            case EARTH -> com.xenowarriors.anim.Poses.EL_STOMP;
+            case CLOUD, PLANT, VOID, SMOKE -> com.xenowarriors.anim.Poses.EL_RAISE;
+            default -> com.xenowarriors.anim.Poses.EL_THRUST;
+        }, 12);
         Vec3 to = t.position().subtract(m.position()).normalize();
         switch (el) {
             case FIRE -> {

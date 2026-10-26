@@ -91,8 +91,8 @@ public class HumanWorkGoal extends Goal {
         h.getNavigation().stop();
         BlockState s = level.getBlockState(target);
         if ((job == Job.CHOP && !s.is(BlockTags.LOGS)) || (job == Job.MINE && !minable(s))) { stop(); return; }
-        if (work++ % 6 == 0) {
-            h.swing(InteractionHand.MAIN_HAND);
+        if (work++ % 10 == 0) {
+            com.xenowarriors.anim.Poses.play(h, job == Job.CHOP ? com.xenowarriors.anim.Poses.CHOP : com.xenowarriors.anim.Poses.MINE, 10);
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, s), target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, 6, 0.3, 0.3, 0.3, 0.05);
             level.playSound(null, target, s.getSoundType().getHitSound(), SoundSource.NEUTRAL, 0.6F, 0.9F);
         }
@@ -231,11 +231,12 @@ public class HumanWorkGoal extends Goal {
             }
             if (cost != null) take(cost, 1);
             level.setBlock(p, s, 3);
-            h.swing(InteractionHand.MAIN_HAND);
+            com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.PLACE, 8);
             level.playSound(null, p, s.getSoundType().getPlaceSound(), SoundSource.NEUTRAL, 0.7F, 1F);
             return;
         }
         h.setHome(target);
+        com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.WIPE, 40);           // done - phew
         stop();
     }
 

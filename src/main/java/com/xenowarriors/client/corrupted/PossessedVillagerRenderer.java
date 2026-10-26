@@ -84,6 +84,14 @@ public class PossessedVillagerRenderer extends MobRenderer<CorruptedVillagerEnti
         public void setupAnim(CorruptedVillagerEntity e, float limbSwing, float limbSwingAmount, float age, float yaw, float pitch) {
             super.setupAnim(e, limbSwing, limbSwingAmount, age, yaw, pitch);
             arms.y = 3F; arms.z = -1F; arms.xRot = -0.75F;
+            // head twitches and a hurt flinch
+            float tw = (age + e.getId() * 11) % 60F;
+            head.zRot = tw < 4F ? (e.getId() % 2 == 0 ? 0.5F : -0.5F) * Mth.sin(tw / 4F * Mth.PI) : 0F;
+            if (e.hurtTime > 0) {
+                float k = Mth.sin(e.hurtTime / (float) Math.max(1, e.hurtDuration) * Mth.PI);
+                head.xRot -= 0.5F * k;
+                arms.xRot += 0.4F * k;
+            }
             body.xRot = 0F;
             // chasing: hunched forward, arms already coming up
             if (e.isAggressive()) {

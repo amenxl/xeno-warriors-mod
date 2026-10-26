@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "40";
+    private static final String VERSION = "41";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -26,6 +26,8 @@ public final class ModNetwork {
                 .encoder(ClashStatePacket::encode).decoder(ClashStatePacket::decode).consumerMainThread(ClashStatePacket::handle).add();
         CHANNEL.messageBuilder(ClashPushPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ClashPushPacket::encode).decoder(ClashPushPacket::decode).consumerMainThread(ClashPushPacket::handle).add();
+        CHANNEL.messageBuilder(EntityPosePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(EntityPosePacket::encode).decoder(EntityPosePacket::decode).consumerMainThread(EntityPosePacket::handle).add();
         CHANNEL.messageBuilder(PhoneActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(PhoneActionPacket::encode)
                 .decoder(PhoneActionPacket::decode)
@@ -373,5 +375,9 @@ public final class ModNetwork {
 
     public static void sendToTrackingAndSelf(Object msg, ServerPlayer player) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), msg);
+    }
+
+    public static void sendToTrackingEntityAndSelf(Object msg, net.minecraft.world.entity.Entity e) {
+        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> e), msg);
     }
 }
