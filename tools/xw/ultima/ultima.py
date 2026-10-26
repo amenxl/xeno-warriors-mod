@@ -47,13 +47,44 @@ SPEC = dict(skin=SKIN, eyes='#3cf2c8', hair=[HAIR_T, HAIR_B],
             mouth=['kwwwwwwwwk', '.kwkwkwkk.', '..kkkkkk..'], mouth_x=11, mouth_y=23)
 
 def ultima_hair(f, long_spikes=False):
-    sp = crown_spikes(11 if long_spikes else 9, 3.6 if long_spikes else 2.8, 1.6, seed=21, up=0.7)
-    sp += [([0.5, 33.2, -1], [0.3, 1, 0.4], 4.6 if long_spikes else 3.4, 1.0), ([-3.5, 31.5, 2], [-1, 0.5, 0.6], 3.6, 1.4), ([3.5, 31.5, 2], [1, 0.4, 0.6], 3.4, 1.4)]
-    # the long fringe that falls over his right eye (his right = +x)
-    locks = [([x, 31.6, -4.75], [0.15, -1, -0.2], ln, 1.5) for x, ln in ((3.4, 4.2), (2.2, 3.8), (1.0, 3.0), (-0.4, 2.2), (-1.8, 2.0), (-3.2, 1.8))]
-    locks += [([s * 4.6, 30.5, z], [s * 0.4, -1, 0.1], 3.8, 1.4) for s in (1, -1) for z in (-2.0, 1.0)]
-    locks += [([x, 29, 4.7], [0, -1, 0.5], 3.2, 1.6) for x in (-2.5, 0, 2.5)]
-    hair(f, HAIR_T, HAIR_B, spikes=sp, locks=locks, back_len=25.2)
+    """Messy, mostly lying down: a full cap, layered locks falling around the sides and back, a few short tufts
+    on the crown (not standing up), and the long fringe over his right eye."""
+    rnd = random.Random(31)
+    m = npcs.Adapter(f)
+    A = lambda frm, to, c: f.add('head', frm, to, c)
+    A([-4.65, 31.6, -4.65], [4.65, 33.0, 4.65], HAIR_T)                       # cap, a little taller at the crown
+    A([-3.6, 33.0, -3.2], [3.6, 33.6, 3.8], HAIR_B)
+    A([-4.65, 25.0, 4.0], [4.65, 32.0, 4.75], HAIR_B)                         # back
+    for s_ in (1, -1):
+        x0, x1 = sorted([s_ * 4.0, s_ * 4.75]); A([x0, 27.0, -4.0], [x1, 32.0, 4.75], HAIR_B)
+    A([-4.65, 30.8, -4.8], [4.65, 32.2, -4.0], HAIR_T)                        # fringe base
+    # crown tufts: short, swept back and to the sides
+    for i in range(9 if long_spikes else 7):
+        a = i / 7 * math.tau + rnd.random() * 0.4
+        x, z = math.sin(a) * 2.6, -math.cos(a) * 2.4 + 0.8
+        core_lock(m, [x, 33.2, z], [math.sin(a) * 0.9, 0.35, -math.cos(a) * 0.9 + 0.6], 2.2 + rnd.random() * 1.2, 1.5, (HAIR_T, HAIR_T, HAIR_B))
+    core_lock(m, [0.6, 33.4, 1.5], [0.2, 0.45, 1.0], 2.8, 1.3, (HAIR_T, HAIR_B, HAIR_B))     # the one cowlick at the back
+    core_lock(m, [-0.4, 33.4, -1.0], [-0.3, 0.5, -0.6], 2.0, 1.1, (HAIR_T, HAIR_B, HAIR_B))
+    # long fringe over his right eye, shorter on his left
+    for x, ln, w in ((3.6, 4.4, 1.5), (2.4, 4.0, 1.5), (1.2, 3.2, 1.4), (0.0, 2.4, 1.3), (-1.3, 2.0, 1.3), (-2.6, 1.8, 1.3), (-3.8, 2.2, 1.2)):
+        hang(m, [x, 31.8, -4.8], [0.12, -1, -0.22], ln, w)
+    # sides: layered locks down past the ears
+    for s_ in (1, -1):
+        for z, ln in ((-2.6, 4.0), (-0.6, 4.6), (1.4, 4.2), (3.4, 4.6)):
+            hang(m, [s_ * 4.75, 31.2, z], [s_ * 0.35, -1, 0.1], ln + rnd.random(), 1.5, wide='z')
+    # back: jagged layers
+    for x in (-3.4, -1.7, 0.0, 1.7, 3.4):
+        hang(m, [x, 30.5, 4.8], [x * 0.05, -1, 0.35], 3.6 + rnd.random() * 1.4, 1.7)
+    for x in (-2.5, 0.0, 2.5):
+        hang(m, [x, 27.0, 4.8], [0, -1, 0.45], 2.2 + rnd.random(), 1.4)
+
+def core_lock(m, root, d, length, width, colors):
+    import core
+    core.lock(m, 'Head', root, d, length, width, width * 0.8, colors, wide='x')
+
+def hang(m, root, d, length, width, wide='x'):
+    import core
+    core.lock(m, 'Head', root, d, length, width, 0.8, (HAIR_B, HAIR_B, HAIR_T), wide=wide, taper=(0.75, 0.45), tip_len=(0.3, 0.2))
 
 def collar_and_gems(f, big_pads=False):
     # high collar with green trim, and the big round gem at his throat
@@ -64,17 +95,32 @@ def collar_and_gems(f, big_pads=False):
     r = 1.0 if big_pads else 0.0
     f.both('right_arm', [3.6 - r * .2, 24.3, -2.0 - r * .5], [8.2 + r, 25.0 + r * .3, 2.0 + r * .5], SILV, {'top': lambda x, y: GEM if .2 < x < .8 and .15 < y < .85 else SILV})
     f.both('right_arm', [4.6, 25.0 + r * .3, -1.2 - r * .3], [7.4 + r * .5, 25.5 + r * .4, 1.2 + r * .3], GEM, {'top': lambda x, y: '#b8ffd8' if x < .3 and y < .3 else GEM})
-    # cords hanging off the pads (from the art)
-    f.both('right_arm', [8.2, 20.5, -0.2], [8.55, 24.4, 0.15], TRIM)
+    # silver rim ring under the gem, and a highlight
+    f.both('right_arm', [4.3, 25.0 + r * .3, -1.6 - r * .3], [7.7 + r * .5, 25.2 + r * .3, 1.6 + r * .3], '#e6e8f2')
+    # cords hanging off the pads, with little gold tips (from the art)
+    f.both('right_arm', [8.2, 19.4, -0.2], [8.55, 24.4, 0.15], TRIM)
+    f.both('right_arm', [8.15, 18.8, -0.25], [8.6, 19.4, 0.2], '#e2c26a')
+    # silver ring around the throat gem
+    f.add('body', [-1.5, 22.1, -3.0], [1.5, 24.3, -2.55], SILV)
 
 def belt(f):
-    shell(f, 'body', [-4, 12.0, -2], [4, 13.4, 2], 0.42, '#121218')
+    shell(f, 'body', [-4, 12.0, -2], [4, 13.4, 2], 0.42, '#121218', {'front': lambda x, y: '#2a2a34' if int(x * 9) % 3 == 0 and .2 < y < .8 else '#121218'})
+    for s_ in (1, -1):                                                         # silver plates on the hips
+        f.add('body', [s_ * 3.0 if s_ > 0 else -4.55, 10.6, -2.6], [4.55 if s_ > 0 else -3.0, 12.2, -2.2], SILV, {'front': lambda x, y: '#e6e8f2' if y > .6 else SILV})
     f.add('body', [-1.5, 11.6, -2.85], [1.5, 13.9, -2.45], SILV)
     f.add('body', [-1.1, 12.0, -3.0], [1.1, 13.5, -2.8], GEM, {'front': lambda x, y: '#b8ffd8' if x < .35 and y < .35 else GEM})
 
 def cape_jacket(f, length=17.0, sleeves=True):
     """The cropped jacket worn open: hangs from the shoulders, green edges, ends mid-chest (or longer)."""
     e = TRIM
+    # pointed front panel tips (the jacket ends in points like in the art) and a raised green edge down the opening
+    for s_ in (1, -1):
+        x0, x1 = (1.0, 2.6) if s_ > 0 else (-2.6, -1.0)
+        f.add('body', [x0, length - 1.2, -2.78], [x1, length, -2.38], BLK2, {'front': lambda x, y: e if y > .5 else BLK2})
+        xe = 0.9 if s_ > 0 else -1.2
+        f.add('body', [xe, length - 1.0, -2.95], [xe + 0.3, 24.0, -2.7], e)
+    f.add('body', [-4.4, length - 0.4, 2.7], [4.4, length + 0.2, 2.95], e)              # back hem
+    f.add('body', [-3.2, 21.0, 2.7], [3.2, 21.4, 2.95], e)                            # back trim line
     for s in (1, -1):
         x0, x1 = (0.9, 4.4) if s > 0 else (-4.4, -0.9)
         f.add('body', [x0, length, -2.75], [x1, 24.2, -2.35], BLK2, {'front': lambda x, y, s=s: e if y > .93 or (x < .12 if s > 0 else x > .88) else BLK2})
@@ -84,6 +130,7 @@ def cape_jacket(f, length=17.0, sleeves=True):
         f.add('body', [x0, length, -2.75], [x1, 24.2, 2.75], BLK2)
     if sleeves:
         f.both('right_arm', [3.5, 19.4, -2.5], [8.5, 24.4, 2.5], BLK2, {'front': trimmed(BLK2), 'back': trimmed(BLK2), 'right': trimmed(BLK2), 'left': trimmed(BLK2)})
+        f.both('right_arm', [3.4, 18.9, -2.6], [8.6, 19.5, 2.6], e)                     # raised green cuff band
 
 def long_coat(f):
     cape_jacket(f, 13.0)
@@ -104,15 +151,25 @@ def chest_plate(f):
     f.add('body', [-3.0, 17.0, -2.85], [3.0, 21.5, -2.4], BLK2, {'front': lambda x, y: TRIM if y < .08 or y > .92 or x < .06 or x > .94 else BLK2})
     f.add('body', [-0.8, 18.4, -3.05], [0.8, 20.0, -2.8], GEM)
 
+def shirt_details(f):
+    f.add('body', [-2.6, 19.2, -2.45], [2.6, 19.6, -2.2], TRIM)                        # chest band
+    for s_ in (1, -1):                                                                # the curve at the waist
+        f.add('body', [s_ * 0.2 if s_ > 0 else -3.6, 14.6, -2.45], [3.6 if s_ > 0 else -0.2, 15.0, -2.2], TRIM, rot=[0, 0, s_ * -12], origin=[0, 14.8, -2.3])
+    # the glove on his left hand: a cuff with a green trim line
+    f.add('left_arm', [-8.5, 15.0, -2.5], [-3.5, 15.9, 2.5], '#15151c', {k: (lambda x, y: TRIM if y < .35 else '#15151c') for k in ('front', 'back', 'right', 'left')})
+
 def legs(f, sleek=False):
     pants(f, PANT, 6.8, baggy=0.2 if not sleek else 0.05)
     f.both('right_leg', [-0.38, 0, -2.45], [4.38, 7.2, 2.45], '#14141a', {'front': lambda x, y: TRIM if .25 < x < .45 else '#14141a', 'top': TRIM,
                                                                         'right': lambda x, y: TRIM if y < .1 else '#14141a', 'left': lambda x, y: TRIM if y < .1 else '#14141a'})
     f.both('right_leg', [-0.45, -0.3, -3.3], [4.45, 0.45, 2.5], TRIM2)          # green soles
-    f.both('right_leg', [0.1, 0, -3.2], [3.9, 1.6, -2.45], '#14141a')
+    f.both('right_leg', [0.1, 0, -3.2], [3.9, 1.6, -2.45], '#14141a', {'top': '#24242c'})   # toe cap
+    f.both('right_leg', [-0.48, 6.9, -2.55], [4.48, 7.5, 2.55], TRIM)                        # green ring at the boot top
+    f.both('right_leg', [0.4, 0, 2.45], [3.6, 1.4, 2.85], '#101014')                          # heel
+    f.both('right_leg', [-0.32, 9.0, -2.4], [4.32, 9.3, 2.4], '#1f1a2a')                      # a fold in the pants
 
 OPTIONS = {
-    'A': ('Classic (art 1): cropped open jacket, one glove, bracelet', lambda f: (ultima_hair(f), cape_jacket(f), collar_and_gems(f), belt(f), legs(f), bracelet(f)), 'one', False),
+    'A': ('Classic (art 1): cropped open jacket, one glove, bracelet', lambda f: (ultima_hair(f), cape_jacket(f), collar_and_gems(f), belt(f), legs(f), bracelet(f), shirt_details(f)), 'one', False),
     'B': ('Battle (art 2): both gloves, silver bracers, wilder hair', lambda f: (ultima_hair(f, True), cape_jacket(f), collar_and_gems(f), belt(f), bracers(f), legs(f)), 'both', False),
     'C': ('Commander: long coat tails to the knees', lambda f: (ultima_hair(f), long_coat(f), collar_and_gems(f), belt(f), bracers(f), legs(f)), 'both', False),
     'D': ('Living weapon: big shoulder pads + chest gem plate', lambda f: (ultima_hair(f, True), cape_jacket(f, 17.5), collar_and_gems(f, True), chest_plate(f), belt(f), bracers(f), legs(f)), 'both', False),
