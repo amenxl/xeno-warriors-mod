@@ -129,7 +129,7 @@ public final class Elements {
     }
 
     private static void hit(Mob m, LivingEntity t, float dmg) {
-        t.hurt(m.damageSources().mobAttack(m), dmg);
+        t.hurt(m.damageSources().mobAttack(m), dmg * com.xenowarriors.scaling.EnemyScaling.damageMult(m));
     }
 
     private static void sound(ServerLevel l, LivingEntity at, SoundEvent s, float pitch) {

@@ -1,5 +1,7 @@
 package com.xenowarriors.client;
 
+import net.minecraft.network.chat.Component;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -39,6 +41,9 @@ import org.joml.Matrix4f;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LockOn {
+    /** Enemy levels the server told us about (EnemyLevelPacket). */
+    public static final java.util.Map<Integer, Integer> LEVELS = new java.util.HashMap<>();
+
     private static final double RANGE = 28, KEEP_RANGE = 36, CONE = 32;
     /** In the air you can see (and lock on to) much further. */
     private static final double FLY_RANGE = 110, FLY_KEEP_RANGE = 140;
@@ -306,7 +311,10 @@ public final class LockOn {
             int w = 120, x = width / 2 - w / 2, y = Math.max(18, HudLayout.bossBottom() + 14);    // (under boss bars)
             float frac = Mth.clamp(shownHealth / Math.max(1F, t.getMaxHealth()), 0F, 1F);
             float real = Mth.clamp(t.getHealth() / Math.max(1F, t.getMaxHealth()), 0F, 1F);
-            g.drawCenteredString(font, t.getDisplayName(), width / 2, y - 11, 0xFFFFFF);
+            Integer lv = LEVELS.get(t.getId());
+            int mine = com.xenowarriors.client.ClientSkillState.level() / 3;           // their level is on the same scale as one of your stats
+            int col = lv == null ? 0xFFFFFF : lv > mine * 1.15 + 3 ? 0xFF5555 : lv < mine * 0.7 ? 0x88DD88 : 0xFFFFFF;   // red = tougher than you, green = weaker
+            g.drawCenteredString(font, lv == null ? t.getDisplayName() : Component.literal("Lv " + lv + "  ").append(t.getDisplayName()), width / 2, y - 11, col);
             g.fill(x - 1, y - 1, x + w + 1, y + 6, 0xFF0A0A10);
             g.fill(x, y, x + w, y + 5, 0xFF2A1416);
             g.fill(x, y, x + Math.round(w * frac), y + 5, 0xFFFFD27A);       // trailing chip
