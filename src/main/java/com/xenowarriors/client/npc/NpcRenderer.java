@@ -79,7 +79,7 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
 
     @Override
     public ResourceLocation getTextureLocation(T e) {
-        return tex(look.apply(e) + (darkened(e) ? "_dark" : ""));
+        return com.xenowarriors.client.cel.Cel.tex(tex(look.apply(e) + (darkened(e) ? "_dark" : "")));
     }
 
     static DetailModel model(String key) {
@@ -107,7 +107,11 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
             com.xenowarriors.client.LimbBend.copy(p.leftLeg, m.leftLeg);
             boolean d = darkened(e), possessedLook = dark.test(e) || key.startsWith("dark_");
             int overlay = LivingEntityRenderer.getOverlayCoords(e, 0F);
-            var detailVc = buffers.getBuffer(RenderType.entityCutoutNoCull(tex(key + (d ? "_dark_details" : "_details"))));
+            var detailVc = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(tex(key + (d ? "_dark_details" : "_details")))));
+            if (com.xenowarriors.client.cel.Cel.on()) {                     // cel-shading: ink outline (body + details)
+                com.xenowarriors.client.cel.CelOutline.body(p, pose, buffers, light, overlay);
+                com.xenowarriors.client.cel.CelOutline.details(m, pose, buffers, light, overlay);
+            }
             float[] wing = wingLook(e);
             if (wing != null && m.rightWing != null && m.leftWing != null && m.rightWing.visible) {
                 // this one's own wings: drawn on their own, sized and tinted
