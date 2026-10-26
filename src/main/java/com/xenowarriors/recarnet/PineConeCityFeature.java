@@ -87,6 +87,7 @@ public class PineConeCityFeature extends Feature<NoneFeatureConfiguration> {
         if (lx < ROAD || lz < ROAD) { lane(x, z, lx, lz, seed); return true; }
         int a = lx - ROAD, bb = lz - ROAD;                                     // 0..26 inside the lot
         if (cx == -2 && cz == 0) { dojo(a, bb, x, z); return true; }
+        if (cx >= -1 && cx <= 0 && cz >= -1 && cz <= 0) { garden(seed, x, z, a, bb); return true; }   // around the square: gardens
         long h = AuroraCityFeature.hash(seed, cx, cz, 21);
         int k = (int) (h % 100);
         if (d > 95 && k < 25) pines(seed, x, z, B, 12);
@@ -96,6 +97,16 @@ public class PineConeCityFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     // ------------------------------------------------------------------ pieces
+
+    private void garden(long seed, int x, int z, int a, int bb) {
+        long h = AuroraCityFeature.hash(seed, x, z, 31) % 17;
+        if (h == 0) set(x, B + 1, z, b(Blocks.ROSE_BUSH));
+        else if (h == 1) set(x, B + 1, z, b(Blocks.LILAC));
+        else if (h < 5) set(x, B + 1, z, b(Blocks.GRASS));
+        if (h == 0 && ((x + z) & 3) == 0) { set(x, B + 1, z, b(Blocks.AZALEA)); }
+        if ((a == 13 || bb == 13) && h < 9) set(x, B, z, b(Blocks.DIRT_PATH));
+        pines(seed, x, z, B, 14);
+    }
 
     private void lane(int x, int z, int lx, int lz, long seed) {
         int across = lx < ROAD ? lx : lz, along = lx < ROAD ? lz : lx;
