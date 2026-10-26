@@ -56,7 +56,7 @@ public class PhoneItem extends Item {
         if (level.isClientSide) {
             if (onCall(player)) com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.PhoneActionPacket(1, new java.util.UUID(0, 0)));
             else net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
-                    () -> () -> net.minecraft.client.Minecraft.getInstance().setScreen(new com.xenowarriors.client.PhoneScreen()));
+                    () -> () -> com.xenowarriors.client.PacketScreens.openPhone());
         }
         return InteractionResultHolder.sidedSuccess(s, level.isClientSide);
     }
