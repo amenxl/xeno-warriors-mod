@@ -244,6 +244,18 @@ public final class XenoCommands {
                                 }))));
 
         // story seasons: Season 2/3 content stays locked (no spoilers) until unlocked here
+        root.then(Commands.literal("lunar").requires(src -> src.hasPermission(2))
+                .then(Commands.literal("unlock").executes(ctx -> {
+                    net.minecraft.server.level.ServerPlayer sp = ctx.getSource().getPlayerOrException();
+                    com.xenowarriors.lunar.LunarForm.setUnlocked(sp, true);
+                    say(ctx, gray("Lunar Form unlocked (Rhalix, Season 2, at night or under DragonMineZ's fake moon)."));
+                    return 1;
+                }))
+                .then(Commands.literal("lock").executes(ctx -> {
+                    com.xenowarriors.lunar.LunarForm.setUnlocked(ctx.getSource().getPlayerOrException(), false);
+                    say(ctx, gray("Lunar Form locked again - pass the Lunar trial to get it back."));
+                    return 1;
+                })));
         root.then(Commands.literal("season")
                 .executes(ctx -> { say(ctx, gray("Story content unlocked up to Season " + Seasons.highest(ctx.getSource().getServer()) + ".")); return 1; })
                 .then(Commands.literal("unlock").requires(src -> src.hasPermission(2))

@@ -310,5 +310,13 @@
   "skill.xenowarriors.full_output_beam.how": "Press the ultimate key and aim.",
   "block.xenowarriors.healing_pod": "Healing Pod",
   "item.xenowarriors.healing_pod": "Healing Pod",
-  "entity.xenowarriors.gov_agent": "Government Agent"
+  "entity.xenowarriors.gov_agent": "Government Agent",
+  "skill.xenowarriors.moon_reflect": "Moon Reflect",
+  "skill.xenowarriors.moon_reflect.short": "MR",
+  "skill.xenowarriors.moon_reflect.desc": "Lunar Form only. A silver crescent mirror wraps around Rhalix for 5 seconds: arrows and blasts fly back at whoever threw them, and half of every blow is turned back on the attacker.",
+  "skill.xenowarriors.moon_reflect.how": "Press in Lunar Form (at night), right before they hit you.",
+  "skill.xenowarriors.moon_fall": "Moon Fall",
+  "skill.xenowarriors.moon_fall.short": "MF",
+  "skill.xenowarriors.moon_fall.desc": "Lunar Form super move. Rhalix raises a hand and a moon falls on the spot he's looking at, then bursts in a huge silver blast. Doesn't break blocks.",
+  "skill.xenowarriors.moon_fall.how": "Ctrl+6 in Lunar Form. Sneak + Ctrl+6 still uses a test KA."
 }

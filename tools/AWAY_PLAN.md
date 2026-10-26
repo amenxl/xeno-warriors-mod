@@ -65,3 +65,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 04:10 (user) ORDER: (1) Gov facilities + healing pod + Gov workers/guards [in progress], (2) Lunar form (S2), (3) bounty boards, (4) named mini-bosses, (5) SR camps. Ultima BOSS: only after more player-Ultima work. THEN: send pictures of all + GIFs: phone animation, Ultima fighting at 25/45/70/100/Overload.
 - Mon 04:35 — 0.111.0: Gov facilities (gov/*), healing pod, Gov agents w/ mods, /xeno build gov_facility. NEXT: Lunar form (S2).
 - Mon 04:50 — 0.111.1: Ultima boss intro pose (UltimaAnim.perch) + GIF; 20 battle refs saved to docs/refs/ultima_battle. NEXT: Lunar form.
+- Mon 05:20 — 0.112.0: Lunar form (lunar/LunarForm, MoonFall, MoonReflectSkill, LunarClient, lunar textures from user art), /xeno lunar unlock|lock, Lunar trial (crouch still 30s under full moon), DMZ fake moon. Spin-off docs summarized in docs/lore. NEXT: bounty boards.

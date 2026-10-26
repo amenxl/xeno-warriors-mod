@@ -25,8 +25,11 @@ public final class SkillManager {
                 player.displayClientMessage(Component.literal("KA ready in " + (remaining + 19) / 20 + "s"), true);
                 return;
             }
-            boolean went = ModCapabilities.getType(player) == CharacterType.ULTIMA && com.xenowarriors.ka.Kas.of(player) == null
-                    ? com.xenowarriors.ultima.UltimaOutput.overload(player) : com.xenowarriors.ka.Kas.usePlayer(player);      // Ultima's super slot: Overload
+            CharacterType ct = ModCapabilities.getType(player);
+            boolean went;
+            if (ct == CharacterType.ULTIMA && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.ultima.UltimaOutput.overload(player);   // Ultima's super slot: Overload
+            else if (ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player) && !player.isShiftKeyDown()) went = com.xenowarriors.lunar.MoonFall.use(player); // Lunar: Moon Fall
+            else went = com.xenowarriors.ka.Kas.usePlayer(player);
             if (went) {
                 int cd = com.xenowarriors.ka.Kas.PLAYER_COOLDOWN;
                 data.cooldownEnd[SUPER_SLOT] = now(player) + cd;

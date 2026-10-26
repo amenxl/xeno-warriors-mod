@@ -104,10 +104,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return foxActive(p, type) && instance != null && instance.foxKing != null && ClientCharacterData.outfit(p) == 0;
     }
 
+    private static final net.minecraft.resources.ResourceLocation LUNAR_TEX = com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar_details.png");
+
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return FOX_KING_TEX;
         int o = ClientCharacterData.outfit(p);
+        if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId())) return LUNAR_TEX;
         return o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
                 : type.getDetailTexture();
     }
@@ -117,6 +120,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_face_overload.png");
         CharacterType type = ClientCharacterData.get(p);
         String expr = expression(p, type);
+        if (type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId()))      // Lunar: crescents on his cheeks
+            return com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar_face" + (expr == null ? "" : "_" + expr) + ".png");
         return expr == null ? type.getFaceTexture()
                 : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
     }
@@ -425,6 +430,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         var detailTex = torn > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_details_torn" + torn + ".png")
                 : type.getDetailTexture();
         if (king) detailTex = FOX_KING_TEX;
+        if (outfit == 0 && torn == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(player.getId())) detailTex = LUNAR_TEX;
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         if (!noHead && HeadShape.active(player)) HeadShape.drawHead(parent.head, poseStack, buffers, player, packedLight, overlay);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
