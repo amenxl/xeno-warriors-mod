@@ -1,0 +1,1096 @@
+[
+  {
+    "name": "Mikiko",
+    "role": "\"AmenXL Mikiko\", captain of the Xeno Warriors, demigod, reincarnation of Xeno, Corrupted soul / C-soul, Orenji clan; Fox Girl's first apprentice; ally.",
+    "appearance": "Red hair (Technica: \"that red haired one\", Ep 25). Lost his fox tail when reincarnated, so he is no longer half fox (Ep 22). Wears a red bracelet that appeared when he was reincarnated; it holds the antivirus and blows up after the Ultima fight, leaving burns on his hand (Ep 19, 25). Eyes glow orange when using True empathy (Ep 13).",
+    "forms": [
+      {
+        "name": "Fox King mode",
+        "note": "Main power-up; has a time limit and runs out (Ep 13, 25). Also lets him smell things from far away (Ep 14, 22). Kaeru says it can't work at full power since he is no longer a Fox (Ep 22)."
+      },
+      {
+        "name": "Corrupted form",
+        "note": "Darkness surrounds him and he transforms after Ultima taunts him about Kitsune (Ep 20). Overpowers Ultima at 25%, sees invisible Kyle, makes a dark blade; his heart stops and he dies briefly (Ep 21-22)."
+      },
+      {
+        "name": "Glowing red (XLing)",
+        "note": "Glows red after \"Manifest Greatness!\" (Ep 25)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Fire Blitz",
+        "description": "Shoots fire at the enemy (Fire element).",
+        "episode": 13
+      },
+      {
+        "name": "Blazing Wind",
+        "description": "Wind and fire wrap around the enemy, cutting off air and burning them; costs a lot of Karma.",
+        "episode": 13
+      },
+      {
+        "name": "Xeno Blast",
+        "description": "Combined energy blast with Rhalix. In Ep 18 Mikiko's alone hits about 50% of Ultima's strength. Uses up a lot of energy.",
+        "episode": 13
+      },
+      {
+        "name": "True empathy",
+        "description": "Orenji clan power: reads the opponent's emotions and copies any of their attacks his body can physically do; eyes glow orange. Overuse causes 'withdrawals' where he loses control of his emotions (Ep 25).",
+        "episode": 13
+      },
+      {
+        "name": "HekuBlade scatter",
+        "description": "Surrounds the enemy with blades.",
+        "episode": 13
+      },
+      {
+        "name": "Hekubarrier",
+        "description": "Makes a barrier out of the scattered blades; Fox Girl made the blade so it's very hard to break.",
+        "episode": 13
+      },
+      {
+        "name": "Heku",
+        "description": "Summons the Hekublade; used to send souls inside it. After Kaeru returns, the blade's form changes to match the holder's soul (Ep 22).",
+        "episode": 13
+      },
+      {
+        "name": "Netsu",
+        "description": "Speed burst; he can hold it about 30 seconds (Ep 13).",
+        "episode": 14
+      },
+      {
+        "name": "Netsu Burst",
+        "description": "Full Netsu; his body goes on fire. Can be cast on someone else: used on Rhalix to escape Ultima (it gave Rhalix 3rd degree burns) and to hold Ultima down.",
+        "episode": 13
+      },
+      {
+        "name": "Wind flight",
+        "description": "Flies using his Wind element; Rhalix trains him in the air.",
+        "episode": 18
+      },
+      {
+        "name": "Soul Splitter",
+        "description": "Technique Master Yo taught: sends a copy of your soul to attack, which enemies who can't see souls won't see coming. Safer for him because he has a C-soul.",
+        "episode": 18
+      },
+      {
+        "name": "Karma activation",
+        "description": "Unleashing Karma inside someone's soul to start their Karma flowing; can kill the target. Offered to Yuri with Rhalix.",
+        "episode": 18
+      },
+      {
+        "name": "Manifest Greatness",
+        "description": "Cross arms in an X, imagine handcuffs, break out while saying it; frees you from bad thoughts (taught to Yuri, Ep 22 flashback). Makes him glow red (Ep 25).",
+        "episode": 22
+      },
+      {
+        "name": "Kaeru!",
+        "description": "Calls Kaeru out of the Hekublade; she lands on him.",
+        "episode": 22
+      },
+      {
+        "name": "Dark blade",
+        "description": "Makes a dark blade in his corrupted form.",
+        "episode": 21,
+        "unnamed": true
+      },
+      {
+        "name": "Corrupted Karma blast",
+        "description": "Blasts with corrupted Karma (phased through invisible Kyle).",
+        "episode": 21,
+        "unnamed": true
+      },
+      {
+        "name": "Seeing invisible enemies",
+        "description": "In corrupted form he can see Kyle while Kyle is invisible.",
+        "episode": 21,
+        "unnamed": true
+      },
+      {
+        "name": "Wing eating",
+        "description": "Eats Technica's ripped-off Skylander wings; it heals him and raises his Karma.",
+        "episode": 25,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Hekublade (Heku), made by Fox Girl",
+      "Red bracelet with Yuri's antivirus (broken in Ep 25)",
+      "Fox King crown",
+      "Healing potions from Max"
+    ],
+    "relationships": [
+      "Rhalix — fellow Xeno Warrior and friendly rival",
+      "Yuri Tenjo — trainer/ally; calls her \"Little Yuri\"; she has a crush on him",
+      "Kaeru — Hekublade's guardian; calls him Mikiko Senpai",
+      "Fox Girl (Kitsune) — master and boss",
+      "Zane — coworker; trained with him",
+      "Ultima — enemy he saves with the antivirus",
+      "Kyle — enemy",
+      "Master Yo — taught him Soul splitter"
+    ],
+    "episodes": [13, 14, 15, 18, 19, 20, 21, 22, 23, 25],
+    "key_quote": "True strength is the weak that overcomes the strong and finds a way through.",
+    "soul_state": "Corrupted",
+    "clan": "Orenji clan",
+    "elements": ["Wind", "Fire"]
+  },
+  {
+    "name": "Rhalix",
+    "role": "Rhalix Murasaki, demigod Skylander, captain of the Sky Patrol (SP); ex Royal Knight who was banished; memory chaser; ally.",
+    "appearance": "Wings he can retract (Ep 13); wings burned by Netsu Burst (Ep 14). Lunar form: Karma goes from purple to silver, eyes become crescent moons, several moons on his body, gray light (Ep 23).",
+    "forms": [
+      {
+        "name": "Lunar form",
+        "note": "Unlocked by meditating at night and passing three fear trials set by the first Skylander with the moon element. He is at the form's peak and calmer in it. Runs out in Ep 25."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Kishi",
+        "description": "Gravity power. Slows Mikiko down (Ep 14), slows and drops Ultima's blasts (Ep 25), carries Ultima (Ep 25).",
+        "episode": 14
+      },
+      {
+        "name": "Xeno Blast",
+        "description": "Combined blast with Mikiko.",
+        "episode": 13
+      },
+      {
+        "name": "Wing retraction",
+        "description": "Pulls his wings in to escape a grab and to let burned wings heal.",
+        "episode": 13,
+        "unnamed": true
+      },
+      {
+        "name": "Flight",
+        "description": "Flies; teaches Mikiko to fight in the air.",
+        "episode": 13,
+        "unnamed": true
+      },
+      {
+        "name": "Karma activation",
+        "description": "\"KARMA ACTIVATION!\" Used on Zane, who already had Karma.",
+        "episode": 21
+      },
+      {
+        "name": "Soul Splitter",
+        "description": "Sends a soul copy that hits Ultima unseen until Ultima's sky tech senses it.",
+        "episode": 23
+      },
+      {
+        "name": "Moon reflect",
+        "description": "Reflects attacks; costs a good amount of Karma.",
+        "episode": 23
+      },
+      {
+        "name": "Moon Fall",
+        "description": "Drops his moon; costs a lot of Karma. Usually an attack, used here to save Mikiko.",
+        "episode": 25
+      },
+      {
+        "name": "Roof blast",
+        "description": "Shoots a hole in the roof to reveal the moon before going Lunar.",
+        "episode": 22,
+        "unnamed": true
+      },
+      {
+        "name": "Healing",
+        "description": "Heals Sam, Sintrie and Mikiko after the Ultima fight.",
+        "episode": 19,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Healing potions"
+    ],
+    "relationships": [
+      "Mikiko — fellow Xeno Warrior",
+      "Sintrie/Max — vice captain",
+      "Sam — SP member",
+      "Lexy — SP member taken by SR",
+      "Kyrie — ally; she thinks he's cute asleep",
+      "Yuri Tenjo — trainer",
+      "Hannah (Gov girl) — he threatened, then promised to protect her",
+      "Ai Oni — once took him over",
+      "First moon Skylander — his Lunar form mentor"
+    ],
+    "episodes": [13, 14, 15, 18, 19, 20, 21, 22, 23, 25],
+    "key_quote": "Saving you was the goal, not winning the fight.",
+    "clan": "Murasaki (name given to the highest Royal knights)",
+    "elements": ["Gravity (Kishi)", "Moon (Lunar form)"],
+    "note": "Scared of butterflies (Ep 23)."
+  },
+  {
+    "name": "Yuri Tenjo",
+    "role": "Genius ex-C1 Government tech, Ultima's little sister; builds the antivirus and trains Mikiko and Rhalix at her HQ; ally.",
+    "appearance": "Age 14 at F2 (Ep 16). Rhalix calls her \"pretty green\" like her brother (Ep 14).",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Hacking",
+        "description": "Hacks Government security cameras and sees live feeds.",
+        "episode": 17,
+        "unnamed": true
+      },
+      {
+        "name": "VR room",
+        "description": "Advanced VR with an exact Ultima replica at set power % that simulates pain.",
+        "episode": 15,
+        "unnamed": true
+      },
+      {
+        "name": "Ultima-pinning fight form",
+        "description": "Lock your feet, don't look at his eyes, attack. Pins VR Ultima at 50%.",
+        "episode": 15,
+        "unnamed": true
+      },
+      {
+        "name": "Yuri Bomb",
+        "description": "Homemade bomb thrown to save Minta.",
+        "episode": 16
+      },
+      {
+        "name": "Heat wave decoy",
+        "description": "Turns an air conditioner/heater up full to throw off heat scanners.",
+        "episode": 16,
+        "unnamed": true
+      },
+      {
+        "name": "Invention",
+        "description": "Antivirus, communicators, healing pods; upgraded Ultima with sky tech.",
+        "episode": 15,
+        "unnamed": true
+      },
+      {
+        "name": "Karma control",
+        "description": "Starts learning Karma while building the antivirus.",
+        "episode": 19,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Laptop",
+      "Communicators",
+      "Antivirus"
+    ],
+    "relationships": [
+      "Ultima (Aniri Tenjo) — big brother",
+      "Minta Tenjo — late big sister",
+      "Gracie, Euphoria — C1 coworkers who tried to befriend her",
+      "Mikiko — crush; wants to join his Freedom Fighters",
+      "Kyle — killed her sister"
+    ],
+    "episodes": [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+    "key_quote": "God loves us."
+  },
+  {
+    "name": "Ultima",
+    "role": "Aniri Tenjo, Project Ultima, the Government's \"Ultimate Weapon\". Controlled by Kyle's virus and set on killing the Government (\"Golden path\"); freed by the antivirus in Ep 25.",
+    "appearance": "",
+    "forms": [
+      {
+        "name": "Power output %",
+        "note": "Fights at set percentages and needs time to ramp up (25% to 45% to 70% to 100% output)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Attack prediction",
+        "description": "Computer chip reads fighting habits, exhaustion, fear and heart rate to predict attacks.",
+        "episode": 13,
+        "unnamed": true
+      },
+      {
+        "name": "Endless stamina",
+        "description": "Can fight for weeks or years without breaks.",
+        "episode": 13,
+        "unnamed": true
+      },
+      {
+        "name": "Blasts",
+        "description": "Fires energy blasts, including many at once.",
+        "episode": 13,
+        "unnamed": true
+      },
+      {
+        "name": "Flight",
+        "description": "Flies after Rhalix and Mikiko.",
+        "episode": 13,
+        "unnamed": true
+      },
+      {
+        "name": "Facility walls",
+        "description": "Controls Government facilities and raises a wall powered by cores.",
+        "episode": 19,
+        "unnamed": true
+      },
+      {
+        "name": "Living weapon body",
+        "description": "Every part of his body is a weapon and a shield; survives bombs inside him; heals faster than demigods.",
+        "episode": 19,
+        "unnamed": true
+      },
+      {
+        "name": "Sky tech sixth sense",
+        "description": "Senses unseen things like Soul Splitter copies.",
+        "episode": 23,
+        "unnamed": true
+      },
+      {
+        "name": "100% output",
+        "description": "Full power; breaks Rhalix's ribs.",
+        "episode": 23
+      }
+    ],
+    "weapons": [
+      "Computer chip",
+      "Sky tech"
+    ],
+    "relationships": [
+      "Yuri Tenjo — little sister",
+      "Minta Tenjo — late big sister",
+      "Kyle — controlled him with a virus; brief 'business partner'",
+      "Mikiko, Rhalix — enemies who save him",
+      "Zane — his captive"
+    ],
+    "episodes": [13, 15, 18, 19, 20, 21, 22, 23, 24, 25],
+    "key_quote": "This is my Golden path.",
+    "aliases": ["Aniri Tenjo", "Project Ultima", "Ultimate Weapon"],
+    "note": "Has no Karma control. Kyle says he took Ultima's KA (Ep 24). Down to 5% power after Ep 25."
+  },
+  {
+    "name": "Sintrie (Max)",
+    "role": "SP vice captain; ex Government C3 Tech Squad, the only Skylander there; lost his memories; wanted for killing Royals; ally.",
+    "appearance": "White hair, big smoker. Has wings.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Vampire cut",
+        "description": "Knife cut that keeps draining blood while healing his own wounds; also stops the target moving.",
+        "episode": 19
+      },
+      {
+        "name": "Healing potions",
+        "description": "Makes healing potions for the team.",
+        "episode": 14,
+        "unnamed": true
+      },
+      {
+        "name": "Wing rip",
+        "description": "Rips off Technica's wings, the most painful thing you can do to a Skylander.",
+        "episode": 21,
+        "unnamed": true
+      },
+      {
+        "name": "Flight",
+        "description": "Flies with his wings.",
+        "episode": 17,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Knife",
+      "Healing potions"
+    ],
+    "relationships": [
+      "Technica — best friend/love from 5 years ago",
+      "Kyle — old coworker; bound him with the Kyle phone deal",
+      "Rhalix — captain",
+      "Sam — teammate",
+      "Hannah — Gov soldier he befriends",
+      "Kyrie — gives him 2 years to save her mom or she turns him in",
+      "SR Leader — looking for him"
+    ],
+    "episodes": [13, 14, 15, 17, 18, 19, 20, 21, 22, 25],
+    "key_quote": "You don't disrespect the SP!",
+    "aliases": ["Max", "Sintrie"]
+  },
+  {
+    "name": "Sam",
+    "role": "\"Skylander Sam\", SP member; kicked off his sky island; ally.",
+    "appearance": "Green hair.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Psychotic time bomb",
+        "description": "Bat throw that puts a bomb mark over the target and freezes them; bombs go off inside after a few seconds. Doesn't need a direct hit.",
+        "episode": 14
+      },
+      {
+        "name": "TTB",
+        "description": "Named in Ep 23 (\"one hit from my TTB and you're out of here\").",
+        "episode": 23
+      }
+    ],
+    "weapons": [
+      "Bat"
+    ],
+    "relationships": [
+      "Rhalix — captain",
+      "Sintrie/Max — vice captain",
+      "Hannah — Gov soldier",
+      "Zane — opponent he walks away from"
+    ],
+    "episodes": [13, 14, 15, 18, 19, 20, 21, 23, 24, 25],
+    "key_quote": "TIME TO BEAT SOME HEADS!"
+  },
+  {
+    "name": "Kyle",
+    "role": "Lieutenant Kyle of C2 (human modifications); made the virus that controls Ultima; killed Minta, Gracie and Euphoria; main villain of the season.",
+    "appearance": "C2 outfit.",
+    "forms": [
+      {
+        "name": "Attack Mode",
+        "note": "Activates and suddenly gets much stronger (Ep 16)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Speed modification",
+        "description": "Human speed modification; steals the Hekublade.",
+        "episode": 16
+      },
+      {
+        "name": "Invisibility / invincibility",
+        "description": "Invisible, and attacks phase through him; wears off the more he's hit.",
+        "episode": 17
+      },
+      {
+        "name": "Kyle phone",
+        "description": "Anyone who tells Sintrie their real name gets it swapped for 'Kyle' (Minta's name comes out as Kyle).",
+        "episode": 15
+      },
+      {
+        "name": "KA steal",
+        "description": "His KA: steals KAs by touch, even unawakened ones. Holds over 10,000, including Ultima's. Makes his own Karma impossible to sense.",
+        "episode": 24
+      },
+      {
+        "name": "Clone Clone",
+        "description": "Makes Kyle clones that split in two when cut.",
+        "episode": 24
+      },
+      {
+        "name": "Mind-control chip",
+        "description": "Controls Technica with a chip and modes (defense/passive/attack).",
+        "episode": 16,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Control chips",
+      "Undead Technica (his 'project')"
+    ],
+    "relationships": [
+      "Technica — controlled her, then turned her into an undead Skylander",
+      "Sintrie — old coworker",
+      "Ultima — controlled him; 'business partner'",
+      "Minta Tenjo, Gracie, Euphoria — killed them",
+      "Hannah — killed by his project",
+      "Zack and the gas patients — abandoned them",
+      "SR Leader — gave him the demons' location"
+    ],
+    "episodes": [14, 15, 16, 17, 19, 20, 21, 22, 23, 24],
+    "key_quote": "Human speed modifications gotta love them right?"
+  },
+  {
+    "name": "Technica",
+    "role": "\"Tech\", ex Government Tech Squad; freed the gas patients; thought killed in the F2 explosion; Kyle turned her into an undead Skylander weapon; ally.",
+    "appearance": "Pink hair. Armor outfit (flashback). As Kyle's project: Skylander-DNA wings like Sintrie's (ripped off in Ep 21).",
+    "forms": [
+      {
+        "name": "Undead Skylander (Kyle's project)",
+        "note": "Undead corpse with Skylander DNA and Karma; 'Attack Mode'."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Heat scanner",
+        "description": "Scans body heat signatures.",
+        "episode": 16,
+        "unnamed": true
+      },
+      {
+        "name": "Shooting",
+        "description": "Gun; shoots Minta while chip-controlled.",
+        "episode": 16,
+        "unnamed": true
+      },
+      {
+        "name": "Karma combat",
+        "description": "Fights Sintrie using the Karma Kyle gave her; killed Hannah.",
+        "episode": 20,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Gun",
+      "Scanner",
+      "Wings (ripped off)"
+    ],
+    "relationships": [
+      "Sintrie — best friend; loves him",
+      "Kyle — controlled her",
+      "Gas patients (Zack, Kaitlyn, Barry, Ava, Persephone) — she freed them",
+      "Minta Tenjo — freed her from Kyle's chip"
+    ],
+    "episodes": [16, 17, 20, 21, 24, 25],
+    "key_quote": "If my life will end for caring for others. Yours will end because of your ignorance of the human race!"
+  },
+  {
+    "name": "Hannah",
+    "role": "\"Gov girl\", Soldier 3523 of F3; ends up protecting SP; killed by Kyle's project.",
+    "appearance": "Age 15 (Year 95 flashback).",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Kyle — her lieutenant; killed her",
+      "Rhalix — threatened her, then promised to protect her",
+      "Sintrie, Sam — learn her real name"
+    ],
+    "episodes": [13, 14, 15, 18, 19, 24],
+    "key_quote": "My actual name?.. Nobody asked me that before.. It's Hannah",
+    "aliases": ["Gov girl", "3523"]
+  },
+  {
+    "name": "Minta Tenjo",
+    "role": "Oldest Tenjo sibling; buys time for Yuri and Aniri; killed by Kyle.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Hand-to-hand",
+        "description": "Gets past Kyle's guard and lands a big hit.",
+        "episode": 16,
+        "unnamed": true
+      },
+      {
+        "name": "Mode hijack",
+        "description": "Figures out Technica's command modes and gets her chip removed.",
+        "episode": 16,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Yuri, Aniri (Ultima) — siblings",
+      "Kyle — killed her",
+      "Technica — freed her from control"
+    ],
+    "episodes": [16, 17],
+    "key_quote": "Remember you too, God loves us."
+  },
+  {
+    "name": "Gracie",
+    "role": "C1 tech at F2; workaholic who used to work in Aurora City; killed by Kyle.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Euphoria — friend",
+      "Yuri — making her a cross necklace",
+      "Kyle — tells him about Yuri; killed by him"
+    ],
+    "episodes": [16, 17],
+    "key_quote": "I like you kid, Call me Gracie."
+  },
+  {
+    "name": "Euphoria",
+    "role": "C1 tech at F2; sees through Kyle; killed by him.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Gracie — friend",
+      "Yuri — wants to be her big sister",
+      "Kyle — killed her"
+    ],
+    "episodes": [16, 17],
+    "key_quote": "Kyle is clearly up to something bad."
+  },
+  {
+    "name": "Kaeru",
+    "role": "Guardian of the Hekublade (\"Heku\"), from Recarnet; half fox from Kitsune's last blood; Orenji clan; ally.",
+    "appearance": "A girl who looks like a fox.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Fox Heal",
+        "description": "Taps Mikiko's chest and restarts his heart; takes a lot of energy.",
+        "episode": 22
+      },
+      {
+        "name": "True empathy",
+        "description": "Copies and clashes Ultima's kick, pushing him back.",
+        "episode": 22
+      },
+      {
+        "name": "Fox martial arts",
+        "description": "Trained 5 years under Kitsune.",
+        "episode": 22
+      },
+      {
+        "name": "Heku",
+        "description": "Can summon the Hekublade herself.",
+        "episode": 22
+      },
+      {
+        "name": "Tracking by scent",
+        "description": "Sniffs out invisible Kyle.",
+        "episode": 22,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Hekublade (lives inside it)"
+    ],
+    "relationships": [
+      "Mikiko — \"Mikiko Senpai\"",
+      "Fox Girl — \"Master Kitsune\"",
+      "Kyle — stole the blade from her"
+    ],
+    "episodes": [22],
+    "key_quote": "You're inside the HekuBlade Dumb Dumb now get out of here!",
+    "aliases": ["Heku"]
+  },
+  {
+    "name": "Zane",
+    "role": "\"Magical Mage in training\", Mikiko's coworker; captured by Ultima and chipped by Kyle; vanishes from a healing pod.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Water Magic",
+        "description": "Weak water attack (Rhalix mocks his form).",
+        "episode": 21
+      },
+      {
+        "name": "Elemental change",
+        "description": "Turns his spilled water into quicksand that traps Rhalix.",
+        "episode": 21
+      }
+    ],
+    "weapons": [
+      "Kyle's chip (he dies if it's removed)"
+    ],
+    "relationships": [
+      "Mikiko — coworker/trainee",
+      "Ultima, Kyle — captors",
+      "Rhalix, Sam — opponents"
+    ],
+    "episodes": [19, 20, 21, 23, 25],
+    "key_quote": "Words will not make me free you.",
+    "note": "Gets weak after using all his Karma."
+  },
+  {
+    "name": "Kyrie",
+    "role": "Royal of Section 1; leads the Royal Sisters' attack on SR; becomes Queen of Section 1 at 20.",
+    "appearance": "Wears her mom's old battle uniform with no armor (Ep 22); wears her mom's crown (Ep 25).",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Kishi",
+        "description": "Gravity; makes it hard to move.",
+        "episode": 22
+      },
+      {
+        "name": "Full Power Kishi",
+        "description": "Max-power Kishi; doesn't work once Logan and Persephone remove their hoodies.",
+        "episode": 22
+      },
+      {
+        "name": "Royal formation 1",
+        "description": "Team attack with Atherea and Ranrea.",
+        "episode": 22
+      }
+    ],
+    "weapons": [
+      "Mom's crown"
+    ],
+    "relationships": [
+      "Atherea, Ranrea — Royal sisters",
+      "Queen Loverie (her mom) — captured by SR",
+      "Rhalix — ally",
+      "Sintrie — gave him 2 years",
+      "Lexy/Persephone — Persephone hates her for killing Ava",
+      "Logan — wants to kill him"
+    ],
+    "episodes": [22, 23, 25],
+    "key_quote": "It's 100% a death plan which is why I have to say this now."
+  },
+  {
+    "name": "Atherea",
+    "role": "Royal sister; Zack's girlfriend; daughter of Queen Sainea.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Earth element",
+        "description": "Throws dirt in Persephone's eyes; Zack taught her Karma and elements.",
+        "episode": 22
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Zack — boyfriend",
+      "Kyrie, Ranrea — sisters",
+      "Queen Sainea — mother"
+    ],
+    "episodes": [22],
+    "key_quote": "Welp that's a death plan for ya."
+  },
+  {
+    "name": "Ranrea",
+    "role": "Oldest Royal sister; sleepy, mixes in Spanish (\"Ada\"); daughter of Queen Koixea.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Tank",
+        "description": "Gets back up after hits like a tank.",
+        "episode": 22,
+        "unnamed": true
+      },
+      {
+        "name": "Finding hidden places",
+        "description": "Finds the SR hideout.",
+        "episode": 22,
+        "unnamed": true
+      },
+      {
+        "name": "Throw",
+        "description": "Sneaks behind Lexy and throws her.",
+        "episode": 22,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Kyrie, Atherea — sisters",
+      "Queen Koixea — mother"
+    ],
+    "episodes": [22],
+    "key_quote": "Nda, I'm staying with you Kyrie!"
+  },
+  {
+    "name": "Lexy / Persephone",
+    "role": "SP member taken by SR; Persephone, a demon (ex gas patient), takes over her body as \"Lexy(Persephone)\"; enemy.",
+    "appearance": "Wears a Karma reducing hoodie.",
+    "forms": [
+      {
+        "name": "Lexy(Persephone)",
+        "note": "Persephone in control of Lexy's body."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Power kick",
+        "description": "Kicks Ranrea down (\"It's night night time!\").",
+        "episode": 22,
+        "unnamed": true
+      },
+      {
+        "name": "Take over",
+        "description": "Persephone takes control from Lexy.",
+        "episode": 22,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Karma reducing hoodie"
+    ],
+    "relationships": [
+      "Ava — Persephone's best friend (killed by Kyrie)",
+      "Kyrie — target of revenge",
+      "Zack, Kaitlyn, Barry — fellow gas patients",
+      "Logan, SR Leader — SR",
+      "Rhalix/SP — Lexy's team"
+    ],
+    "episodes": [16, 22, 24],
+    "key_quote": "Maybe if you took some time to learn about Ava you would have been right beside us!"
+  },
+  {
+    "name": "Ava",
+    "role": "Gas patient who became a demon to cure her sickness; Persephone's best friend; later killed by Kyrie (mentioned).",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Kishi",
+        "description": "Sintrie says Ava used all her power to take him out with Kishi.",
+        "episode": 25,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Persephone — best friend",
+      "Kyrie — killed her"
+    ],
+    "episodes": [16, 24],
+    "key_quote": "Being a demon is great!"
+  },
+  {
+    "name": "Logan",
+    "role": "SR \"Skylander Demon\" who calls the leader Father; enemy.",
+    "appearance": "Wears a Karma reducing hoodie (KRH).",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Thunder flash",
+        "description": "Lightning strike.",
+        "episode": 22
+      },
+      {
+        "name": "Portal",
+        "description": "Escapes through a portal.",
+        "episode": 22,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Karma reducing hoodie"
+    ],
+    "relationships": [
+      "SR Leader — Father",
+      "Persephone, Keita — SR",
+      "Kyrie — wants him dead",
+      "Zack — knocked him down"
+    ],
+    "episodes": [22],
+    "key_quote": "Go ahead and take off your Karma Reducing Hoodie Persephone, let's show them the power of SR!"
+  },
+  {
+    "name": "Keita",
+    "role": "SR member; would rather nap.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "SR Leader, Logan — SR"
+    ],
+    "episodes": [22],
+    "key_quote": "I would rather nap, have someone else go."
+  },
+  {
+    "name": "SR Leader",
+    "role": "Leader of SR (the Sky Rebellion), called \"Father\"; gives demons and fallen Skylanders a second chance; wants demons strong enough for possession.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Karma freeze",
+        "description": "Kyle can't move near him; Kyle feels his Karma.",
+        "episode": 24,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Logan, Keita, Persephone — SR",
+      "Kyle — got the demons' location from him",
+      "Sintrie — looking for him"
+    ],
+    "episodes": [22, 24],
+    "key_quote": "That would be called Karma.. A power well known in my world.",
+    "aliases": ["Father"]
+  },
+  {
+    "name": "Zack",
+    "role": "Ex-assassin turned gas-patient demon who looks human; Ai Oni's student; Atherea's boyfriend; out to kill Kyle.",
+    "appearance": "Looks human; arrives in a light purple flash.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Demon's Eye",
+        "description": "Learned from his master; finds invisible Kyle.",
+        "episode": 24
+      },
+      {
+        "name": "One-hit KO",
+        "description": "Takes down Persephone with one kick and Logan with one punch (\"TIME TO SHOW YOU REAL POWER!!\").",
+        "episode": 22,
+        "unnamed": true
+      },
+      {
+        "name": "Damage tank",
+        "description": "Takes Thunder flash without flinching.",
+        "episode": 22,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Ai Oni — master",
+      "Kaitlyn — partner",
+      "Atherea — girlfriend",
+      "Kyle — wants revenge",
+      "Persephone, Ava, Barry — fellow gas patients"
+    ],
+    "episodes": [16, 22, 23, 24],
+    "key_quote": "Sorry but I train with the best, You aren't going to win."
+  },
+  {
+    "name": "Kaitlyn",
+    "role": "Gas patient demon; Zack's partner; Ai Oni's student.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Zack — partner",
+      "Ai Oni — master"
+    ],
+    "episodes": [16, 24],
+    "key_quote": "If you ask me you're already a demon Zack."
+  },
+  {
+    "name": "Barry",
+    "role": "Gas patient demon who works alone.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Zack, Kaitlyn, Ava, Persephone — fellow gas patients"
+    ],
+    "episodes": [16, 24],
+    "key_quote": "I work alone.."
+  },
+  {
+    "name": "Ai Oni",
+    "role": "Demon who can make herself look human; master of Zack and Kaitlyn; once took over Rhalix.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Clone clearing",
+        "description": "Takes down all the Kyle clones.",
+        "episode": 24,
+        "unnamed": true
+      },
+      {
+        "name": "Demon portal",
+        "description": "Opens a demon portal home.",
+        "episode": 24,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Zack, Kaitlyn — students",
+      "Rhalix — took him over before"
+    ],
+    "episodes": [24],
+    "key_quote": "I'll handle this."
+  },
+  {
+    "name": "Fox Girl",
+    "role": "Kitsune, Mikiko's master and boss at the farm; made the Hekublade and put Kaeru's soul in it; has lost her fox kin powers.",
+    "appearance": "No longer has a tail (Ep 22).",
+    "forms": [
+      {
+        "name": "Geo Fox form",
+        "note": "Turning fully into a fox; she could use it before losing her powers (Ep 22, mentioned)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Knockout",
+        "description": "Knocks Mikiko out to stop his withdrawals.",
+        "episode": 25,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Mikiko — first apprentice",
+      "Kaeru — apprentice",
+      "Ultima — wanted to capture her"
+    ],
+    "episodes": [25],
+    "key_quote": "Last time you were like this it took weeks to fix you.. Oh wait, I know just the person to help.",
+    "aliases": ["Kitsune", "Master Kitsune"]
+  },
+  {
+    "name": "Skylander Henry",
+    "role": "Skylander classmate of Mikiko held hostage by Ultima.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Mikiko — classmate",
+      "Ultima — captor"
+    ],
+    "episodes": [19],
+    "key_quote": "Wait, its a trap dont go."
+  },
+  {
+    "name": "First moon Skylander",
+    "role": "The first Skylander with the moon element; made the moon and the Lunar form; tests Rhalix in a mental space.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Fear trials",
+        "description": "Three trials: butterflies, frozen water, losing memories.",
+        "episode": 23,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Rhalix — student"
+    ],
+    "episodes": [23],
+    "key_quote": "",
+    "note": "Unnamed; only described in Rhalix's narration."
+  },
+  {
+    "name": "Queen Koixea",
+    "role": "Ranrea's mom (\"Miss Garcia\"), queen at the Royal council.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Ranrea — daughter",
+      "Kyrie — supports her"
+    ],
+    "episodes": [25],
+    "key_quote": "It looks good on you Kyrie."
+  },
+  {
+    "name": "Queen Sainea",
+    "role": "Atherea's mom; proud queen who won't wear her crown.",
+    "appearance": "No crown.",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Atherea — daughter",
+      "Kyrie — looks down on her"
+    ],
+    "episodes": [25],
+    "key_quote": "Sorry Kyrie the adults are talking.."
+  },
+  {
+    "name": "3062",
+    "role": "Government officer who grades Yuri's drafting exam.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Yuri — assigned her to C1 at F2"
+    ],
+    "episodes": [16],
+    "key_quote": "F1 is only for people who are personally invited by the boss."
+  }
+]
