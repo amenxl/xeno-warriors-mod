@@ -45,3 +45,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Sun 23:40 — 0.102.1: sky + corrupted armor polish (no more bare upper arms; faulds, sky tabard, corrupted spines).
 - Mon 00:45 — S3 blueprints: Mikiko + Rhalix blueprint sheets (in-mod vs idea skills), 25-character cast roster, docs/S3_BLUEPRINTS.md (also saved to the claude.ai project). No jar this time.
 - Mon 01:20 (user here) — 0.103.0: skill loadouts (SkillPool: 4 equipped + fixed ult, unlock by Character Level, Skills tab in M menu, swap = 5s cooldown). Mikiko: Dance Kick Lv15, Netsu Burst Lv30, Manifest Greatness Lv50, True Empathy Lv75. Rhalix: KA Release Lv60. Creative = all unlocked.
+- Mon 01:45 (user here) — 0.104.0: KAs (ka/Ka, ka/Kas, KaClient): 7 simple + 7 rare, NPC-only (players can't hold KAs; Mikiko/Rhalix KAs unrevealed -> super slot '?' Ctrl+6), price per KA scales with strain, burnout at 6; KA Release clears; /xeno ka list|give.
