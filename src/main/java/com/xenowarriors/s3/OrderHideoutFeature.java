@@ -129,7 +129,12 @@ public class OrderHideoutFeature extends Feature<NoneFeatureConfiguration> {
         if (com.xenowarriors.world.Clip.ok(p) && l.getBlockEntity(p) instanceof SignBlockEntity s) {
             SignText t = new SignText();
             for (int i = 0; i < Math.min(4, lines.length); i++) t = t.setMessage(i, Component.literal(lines[i]));
-            s.setText(t, true);
+            final SignText text = t;                                       // load() rather than setText(): no block update during worldgen
+            SignText.DIRECT_CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, text).result().ifPresent(tag -> {
+                net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag();
+                nbt.put("front_text", tag);
+                s.load(nbt);
+            });
         }
     }
 }
