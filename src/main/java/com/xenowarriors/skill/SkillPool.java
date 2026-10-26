@@ -13,7 +13,10 @@ import java.util.Map;
  * Skills unlock at a Character Level; the first four are known from the start (and are the default loadout).
  */
 public final class SkillPool {
-    public record Entry(Skill skill, int unlockLevel) {}
+    /** season = the story season it comes from (1 always on; 2/3 need /xeno season unlock). */
+    public record Entry(Skill skill, int unlockLevel, int season) {
+        Entry(Skill skill, int unlockLevel) { this(skill, unlockLevel, 1); }
+    }
 
     private static final Map<CharacterType, List<Entry>> POOL = new EnumMap<>(CharacterType.class);
     private static final Map<CharacterType, Skill> ULTIMATE = new EnumMap<>(CharacterType.class);
@@ -22,13 +25,13 @@ public final class SkillPool {
         POOL.put(CharacterType.MIKIKO, List.of(
                 new Entry(new HekubladeScatterSkill(), 0), new Entry(new KitsuneSkill(), 0),
                 new Entry(new NetsuSkill(), 0), new Entry(new FireBlitzSkill(), 0),
-                new Entry(new DanceKickSkill(), 15), new Entry(new NetsuBurstSkill(), 30),
-                new Entry(new ManifestGreatnessSkill(), 50), new Entry(new TrueEmpathySkill(), 75)));
+                new Entry(new DanceKickSkill(), 15, 3), new Entry(new NetsuBurstSkill(), 30, 2),
+                new Entry(new ManifestGreatnessSkill(), 50, 1), new Entry(new TrueEmpathySkill(), 75, 3)));
         ULTIMATE.put(CharacterType.MIKIKO, new BlazingWindSkill());
         POOL.put(CharacterType.RHALIX, List.of(
                 new Entry(new KishiSkill(), 0), new Entry(new EarthWaveSkill(), 0),
                 new Entry(new GravityCompressSkill(), 0), new Entry(new BangSkill(), 0),
-                new Entry(new KaReleaseSkill(), 60)));
+                new Entry(new KaReleaseSkill(), 60, 3)));
         ULTIMATE.put(CharacterType.RHALIX, new GravityBarrageSkill());
     }
 
@@ -55,5 +58,10 @@ public final class SkillPool {
 
     public static boolean unlocked(Entry e, int level, boolean creative) {
         return creative || level >= e.unlockLevel();
+    }
+
+    /** Unlocked by level (or creative) AND its story season is unlocked in this world. */
+    public static boolean available(Entry e, int level, boolean creative, int season) {
+        return season >= e.season() && unlocked(e, level, creative);
     }
 }

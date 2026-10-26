@@ -87,6 +87,9 @@ public final class ClientSkillState {
     public static void setLoadout(int[] l, int lv) { if (l.length == 4) loadout = l; level = lv; }
     public static int[] loadout() { return loadout; }
     public static int level() { return level; }
+    private static int season = 1;
+    public static void setSeason(int s) { season = Math.max(1, s); }
+    public static int season() { return season; }
     private static String ka = "";
     public static void setKa(String k) { ka = k == null ? "" : k; }
     /** A test KA in the super slot, or null. */

@@ -53,6 +53,11 @@ public final class SkillManager {
         SkillPool.Entry e = SkillPool.entry(type, index);
         if (e == null) return;
         int level = com.xenowarriors.stats.Stats.characterLevel(player);
+        int season = com.xenowarriors.character.Seasons.highest(player.server);
+        if (season < e.season()) {
+            player.displayClientMessage(Component.literal("Season " + e.season() + " content - locked (/xeno season unlock " + e.season() + ")").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
         if (!SkillPool.unlocked(e, level, player.isCreative())) {
             player.displayClientMessage(Component.literal("Unlocks at Character Level " + e.unlockLevel()).withStyle(net.minecraft.ChatFormatting.RED), true);
             return;
@@ -75,7 +80,7 @@ public final class SkillManager {
     public static void syncLoadout(ServerPlayer player) {
         CharacterType type = ModCapabilities.getType(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d ->
-                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadout(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka), player));
+                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadout(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka, com.xenowarriors.character.Seasons.highest(player.server)), player));
     }
 
     /** Last skill someone used near each player, for Mikiko's True Empathy: {skill, game time}. */
@@ -98,6 +103,15 @@ public final class SkillManager {
         if (skill == null) {
             player.displayClientMessage(Component.translatable("message.xenowarriors.skill_locked"), true);
             return;
+        }
+        // a skill from a season that's locked again can't be used (it stays in the slot)
+        if (slot < ULTIMATE_SLOT) {
+            int idx = player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadout(type)[slot]).orElse(-1);
+            SkillPool.Entry en = SkillPool.entry(type, idx);
+            if (en != null && com.xenowarriors.character.Seasons.highest(player.server) < en.season()) {
+                player.displayClientMessage(Component.literal("Season " + en.season() + " content is locked").withStyle(net.minecraft.ChatFormatting.RED), true);
+                return;
+            }
         }
         if (skill.tryRecast(player)) return;
 

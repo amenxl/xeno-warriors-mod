@@ -73,15 +73,16 @@ public class SkillLoadoutScreen extends Screen {
         for (int i = 0; i < pool.size(); i++) {
             SkillPool.Entry e = pool.get(i);
             int x = cardX(i), y = cardY(i);
-            boolean open = SkillPool.unlocked(e, ClientSkillState.level(), creative());
+            boolean seasonOk = ClientSkillState.season() >= e.season();
+            boolean open = seasonOk && SkillPool.unlocked(e, ClientSkillState.level(), creative());
             int at = indexOf(loadout, i);
             boolean over = mx >= x && mx < x + CARD_W && my >= y && my < y + CARD_H;
             g.fill(x, y, x + CARD_W, y + CARD_H, at >= 0 ? 0xCC23402A : over && open ? 0xCC30304A : 0xCC1A1A24);
             g.fill(x, y, x + 3, y + CARD_H, open ? type.getColor() : 0xFF555555);
-            g.drawString(font, e.skill().getName().getString(), x + 8, y + 6, open ? 0xFFFFFF : 0x777777);
-            String line = !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : "Karma " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
+            g.drawString(font, seasonOk ? e.skill().getName().getString() : "???", x + 8, y + 6, open ? 0xFFFFFF : 0x777777);
+            String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : "Karma " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
             g.drawString(font, line, x + 8, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
-            if (over) hover = e.skill().getName().getString() + "\n" + desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
+            if (over) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
         }
         super.render(g, mx, my, pt);
         if (hover != null) {
@@ -112,7 +113,7 @@ public class SkillLoadoutScreen extends Screen {
         for (int i = 0; i < pool.size(); i++) {
             int x = cardX(i), y = cardY(i);
             if (mx >= x && mx < x + CARD_W && my >= y && my < y + CARD_H) {
-                if (!SkillPool.unlocked(pool.get(i), ClientSkillState.level(), creative())) return true;
+                if (!SkillPool.available(pool.get(i), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;
                 ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(selected, i));
                 // show it right away; the server's answer confirms it
                 int[] l = ClientSkillState.loadout().clone();
