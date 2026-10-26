@@ -21,7 +21,7 @@ public final class Recarnet {
     public static final RegistryObject<Codec<? extends BiomeSource>> RECARNET_SOURCE = BIOME_SOURCES.register("recarnet", () -> RecarnetBiomeSource.CODEC);
 
     /** Aurora City: wall radius and street level. */
-    public static final int CITY_R = 208, BASE_Y = 72, BLEND = 18;
+    public static final int CITY_R = 208, BASE_Y = 72, BLEND = 40;
 
     private Recarnet() {}
 

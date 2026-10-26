@@ -73,7 +73,7 @@ public final class RecarnetEvents {
 
     /** Where you arrive: just outside Aurora's south gate. */
     public static BlockPos arrival(ServerLevel s) {
-        int x = 0, z = Recarnet.CITY_R + 36;
+        int x = 0, z = Recarnet.CITY_R + 14;
         s.getChunk(x >> 4, z >> 4);
         int y = s.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         return new BlockPos(x, Math.max(y, s.getSeaLevel() + 1), z);

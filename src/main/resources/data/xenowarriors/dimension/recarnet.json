@@ -10,7 +10,7 @@
     "preset": "minecraft:overworld"
    },
    "aurora": "xenowarriors:aurora",
-   "radius": 226
+   "radius": 250
   }
  }
 }
