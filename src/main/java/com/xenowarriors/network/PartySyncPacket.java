@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 /** Server -> party members: everyone in the party with their health and Karma (empty = not in a party). */
 public record PartySyncPacket(List<Member> members) {
     public record Member(UUID id, String name, float health, float maxHealth, float karma, float maxKarma, int type,
-                         boolean knockedOut, boolean leader, double x, double y, double z, String dim) {}
+                         boolean knockedOut, boolean leader, double x, double y, double z, String dim, boolean bot) {}
 
     public static void encode(PartySyncPacket m, FriendlyByteBuf buf) {
         buf.writeVarInt(m.members.size());
@@ -31,6 +31,7 @@ public record PartySyncPacket(List<Member> members) {
             buf.writeDouble(x.y);
             buf.writeDouble(x.z);
             buf.writeUtf(x.dim);
+            buf.writeBoolean(x.bot);
         }
     }
 
@@ -39,7 +40,7 @@ public record PartySyncPacket(List<Member> members) {
         java.util.ArrayList<Member> list = new java.util.ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             list.add(new Member(buf.readUUID(), buf.readUtf(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
-                    buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readUtf()));
+                    buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readUtf(), buf.readBoolean()));
         }
         return new PartySyncPacket(list);
     }

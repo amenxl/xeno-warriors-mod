@@ -34,7 +34,7 @@ public final class Stats {
 
     public static int characterLevel(ServerPlayer player) {
         return player.getCapability(ModCapabilities.PLAYER_CHARACTER)
-                .map(d -> fromStats(d.statLevel[0] + d.statLevel[1] + d.statLevel[2])).orElse(0);
+                .map(d -> Math.max(1, fromStats(d.statLevel[0] + d.statLevel[1] + d.statLevel[2]))).orElse(1);   // everyone starts at level 1
     }
 
     /** How far toward the next level (average of the three stats' XP bars, 0..1). */
@@ -75,6 +75,14 @@ public final class Stats {
                     AttributeModifier.Operation.ADDITION));
         }
         if (player.getHealth() > player.getMaxHealth()) player.setHealth(player.getMaxHealth());
+    }
+
+    /** All stat levels + the Character Level to the client (after switching characters). */
+    public static void syncAll(ServerPlayer player) {
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+            for (int i = 0; i < 3; i++) ModNetwork.sendToPlayer(new StatLevelPacket(i, d.statLevel[i]), player);
+        });
+        syncLevel(player);
     }
 
     public static void syncLevel(ServerPlayer player) {

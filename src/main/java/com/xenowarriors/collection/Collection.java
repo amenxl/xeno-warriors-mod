@@ -42,7 +42,10 @@ public final class Collection {
         if (dead.level().isClientSide || dead instanceof Player) return;
         ServerPlayer p = null;
         var src = event.getSource().getEntity();
-        if (src instanceof ServerPlayer sp) p = sp;
+        var bot = com.xenowarriors.bot.PartyBots.botOf(src);
+        if (bot != null) p = bot.owner();                                   // bot teammates' kills count for their owner
+        else if (src instanceof net.minecraftforge.common.util.FakePlayer) return;
+        else if (src instanceof ServerPlayer sp) p = sp;
         else if (src instanceof OwnableEntity o && o.getOwner() instanceof ServerPlayer sp) p = sp;
         if (p == null) return;
         var id = ForgeRegistries.ENTITY_TYPES.getKey(dead.getType());

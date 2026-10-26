@@ -77,6 +77,10 @@ public class FoxFetchFoodGoal extends Goal {
         ItemStack picked = target.getItem().copy();
         ItemStack left = FoxPets.addToBag(fox, picked);
         int taken = picked.getCount() - left.getCount();
+        if (!left.isEmpty() && fox.level() instanceof ServerLevel sl) {                  // tell the owner the bag is full
+            java.util.UUID o = com.xenowarriors.party.Parties.petOwner(fox);
+            if (o != null && sl.getPlayerByUUID(o) instanceof net.minecraft.server.level.ServerPlayer sp) com.xenowarriors.bot.PartyBots.notifyPetFull(fox, sp);
+        }
         if (taken > 0) {
             if (left.isEmpty()) target.discard();
             else target.setItem(left);

@@ -32,6 +32,7 @@ public class FoxPounceGoal extends Goal {
         if (t == null || !t.isAlive() || !fox.onGround() || fox.isInWater() || fox.isPassenger()) return false;
         double d = fox.distanceToSqr(t);
         if (d < 2.5 * 2.5 || d > 7.5 * 7.5 || !fox.getSensing().hasLineOfSight(t)) return false;
+        if (!com.xenowarriors.fox.PetKarma.spend(fox, 8F)) return false;      // a pounce costs the fox a little Karma
         target = t;
         return true;
     }

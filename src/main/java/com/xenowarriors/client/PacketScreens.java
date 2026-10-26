@@ -12,6 +12,12 @@ public final class PacketScreens {
 
     public static void openCollection(String[] ids, int[] counts, int total) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.screen.CollectionScreen(ids, counts, total)); }
 
+    public static void openBotPick(com.xenowarriors.network.OpenBotPickPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.bot.BotPickScreen(m)); }
+
+    public static void openBotMenu(com.xenowarriors.network.OpenBotMenuPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.bot.BotScreen(m)); }
+
+    public static void openPartyMenu() { Minecraft.getInstance().setScreen(new com.xenowarriors.client.bot.PartyScreen()); }
+
     public static void openPhone() { Minecraft.getInstance().setScreen(new com.xenowarriors.client.PhoneScreen()); }
 
     public static void openWingPet(com.xenowarriors.network.OpenWingPetPacket m) {

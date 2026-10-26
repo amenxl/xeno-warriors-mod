@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "46";
+    private static final String VERSION = "47";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -30,6 +30,18 @@ public final class ModNetwork {
                 .encoder(EntityPosePacket::encode).decoder(EntityPosePacket::decode).consumerMainThread(EntityPosePacket::handle).add();
         CHANNEL.messageBuilder(EnemyLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(EnemyLevelPacket::encode).decoder(EnemyLevelPacket::decode).consumerMainThread(EnemyLevelPacket::handle).add();
+        CHANNEL.messageBuilder(OpenBotPickPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenBotPickPacket::encode).decoder(OpenBotPickPacket::decode).consumerMainThread(OpenBotPickPacket::handle).add();
+        CHANNEL.messageBuilder(BotPickPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(BotPickPacket::encode).decoder(BotPickPacket::decode).consumerMainThread(BotPickPacket::handle).add();
+        CHANNEL.messageBuilder(OpenBotMenuPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenBotMenuPacket::encode).decoder(OpenBotMenuPacket::decode).consumerMainThread(OpenBotMenuPacket::handle).add();
+        CHANNEL.messageBuilder(BotActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(BotActionPacket::encode).decoder(BotActionPacket::decode).consumerMainThread(BotActionPacket::handle).add();
+        CHANNEL.messageBuilder(OpenPartyMenuPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenPartyMenuPacket::encode).decoder(OpenPartyMenuPacket::decode).consumerMainThread(OpenPartyMenuPacket::handle).add();
+        CHANNEL.messageBuilder(PetBarsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(PetBarsPacket::encode).decoder(PetBarsPacket::decode).consumerMainThread(PetBarsPacket::handle).add();
         CHANNEL.messageBuilder(DemonStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(DemonStatePacket::encode).decoder(DemonStatePacket::decode).consumerMainThread(DemonStatePacket::handle).add();
         CHANNEL.messageBuilder(CollectionPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)

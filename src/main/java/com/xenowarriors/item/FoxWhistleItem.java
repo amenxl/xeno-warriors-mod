@@ -16,7 +16,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-/** Mikiko's whistle: calls his foxes to him, sets down the one on his back, and brings back any that fell. */
+/** The Pet Whistle (was the Fox Whistle): calls your pets to you, sets down the one on his back, and brings back any that fell. */
 public class FoxWhistleItem extends Item {
     public FoxWhistleItem(Properties props) {
         super(props);
@@ -37,8 +37,8 @@ public class FoxWhistleItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("Calls Mikiko's foxes to his side").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("...and Rhalix's winged companions").withStyle(ChatFormatting.LIGHT_PURPLE));
-        tooltip.add(Component.literal("Brings back foxes that have fallen").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal("Calls all your pets to your side").withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.literal("Foxes, winged companions - anything you've tamed").withStyle(ChatFormatting.LIGHT_PURPLE));
+        tooltip.add(Component.literal("Brings back pets that have fallen").withStyle(ChatFormatting.GRAY));
     }
 }

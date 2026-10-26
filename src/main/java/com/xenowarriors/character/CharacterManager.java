@@ -22,7 +22,12 @@ public final class CharacterManager {
     private CharacterManager() {}
 
     public static void setCharacter(ServerPlayer player, CharacterType type) {
-        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> data.setType(type));
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
+            data.switchStats(data.getType(), type);           // every character keeps its own level
+            data.setType(type);
+        });
+        com.xenowarriors.stats.Stats.reapply(player);
+        com.xenowarriors.stats.Stats.syncAll(player);
         syncToTrackingAndSelf(player);
         RhalixWings.sync(player, false);
         SkillManager.resetCooldowns(player);

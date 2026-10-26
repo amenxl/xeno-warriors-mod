@@ -40,6 +40,10 @@ public class KhParty implements IGuiOverlay {
                 KhHud.portrait(g, HudFaces.texture(type, face), x + 1, y + 1, 26, low && (HudFaces.clock() / 6) % 2 == 0);
             }
             KhHud.small(g, font, m.name(), x + 30, y + 4, 0xFFFFFF, 0.65F);
+            if (m.bot()) {                                   // bot teammates get a little BOT tag on their portrait
+                g.fill(x + 2, y + CARD_H - 9, x + 20, y + CARD_H - 2, 0xE0303A50);
+                KhHud.small(g, font, "BOT", x + 4, y + CARD_H - 8, 0x9FE0FF, 0.5F);
+            }
             String info;
             if (m.knockedOut()) info = "DOWN";
             else {

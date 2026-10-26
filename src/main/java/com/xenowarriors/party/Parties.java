@@ -102,8 +102,8 @@ public final class Parties {
             return;
         }
         Party party = BY_PLAYER.get(from.getUUID());
-        if (party != null && party.members.size() >= MAX_SIZE) {
-            from.sendSystemMessage(msg("Your party is full (" + MAX_SIZE + " players)."));
+        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(to).size() > MAX_SIZE) {
+            from.sendSystemMessage(msg("Your party is full (" + MAX_SIZE + " players and bots)."));
             return;
         }
         INVITES.put(to.getUUID(), new Invite(from.getUUID(), from.level().getGameTime() + INVITE_TICKS));
@@ -139,8 +139,8 @@ public final class Parties {
             party.members.add(from.getUUID());
             BY_PLAYER.put(from.getUUID(), party);
         }
-        if (party.members.size() >= MAX_SIZE) {
-            p.sendSystemMessage(msg("That party is full."));
+        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > MAX_SIZE) {
+            p.sendSystemMessage(msg("That party is full (players and bots count)."));
             return;
         }
         party.members.add(p.getUUID());
@@ -222,7 +222,11 @@ public final class Parties {
             if (m == null) continue;
             list.add(new PartySyncPacket.Member(id, m.getName().getString(), m.getHealth(), m.getMaxHealth(),
                     Karma.get(m), Karma.MAX, ModCapabilities.getType(m).ordinal(), Duels.isKnockedOut(m),
-                    id.equals(party.leader), m.getX(), m.getY(), m.getZ(), m.level().dimension().location().toString()));
+                    id.equals(party.leader), m.getX(), m.getY(), m.getZ(), m.level().dimension().location().toString(), false));
+        }
+        for (UUID id : party.members) {
+            ServerPlayer m = server.getPlayerList().getPlayer(id);
+            if (m != null) list.addAll(com.xenowarriors.bot.PartyBots.syncMembers(m));
         }
         for (UUID id : party.members) {
             ServerPlayer m = server.getPlayerList().getPlayer(id);

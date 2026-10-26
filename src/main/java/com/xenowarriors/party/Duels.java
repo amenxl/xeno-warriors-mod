@@ -267,6 +267,10 @@ public final class Duels {
             ServerPlayer winner = p.getServer() == null ? null : p.getServer().getPlayerList().getPlayer(d.other(p.getUUID()));
             end(p.getServer(), d, d.other(p.getUUID()), p.getName().getString() + " was knocked out!");
             if (winner != null) title(p, "KNOCKED OUT", ChatFormatting.RED, winner.getName().getString() + " wins the battle");
+            if (winner != null && Parties.sameParty(winner, p)) {          // sparring a party member: big XP (more vs. someone stronger)
+                com.xenowarriors.bot.PartyBots.sparReward(winner, com.xenowarriors.stats.Stats.characterLevel(p), true);
+                com.xenowarriors.bot.PartyBots.sparReward(p, com.xenowarriors.stats.Stats.characterLevel(winner), false);
+            }
         }
     }
 

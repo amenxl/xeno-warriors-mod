@@ -30,6 +30,7 @@ public class XenoWarriors {
         com.xenowarriors.gov.GovEntities.init();
         com.xenowarriors.gov.GovFacilityFeature.init();
         com.xenowarriors.s3.S3Entities.init();
+        com.xenowarriors.bot.BotEntities.init();
         com.xenowarriors.s3.OrderHideoutFeature.init();
         com.xenowarriors.recarnet.AuroraCityFeature.init();
         com.xenowarriors.recarnet.PineConeCityFeature.init();

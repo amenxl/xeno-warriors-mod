@@ -53,6 +53,22 @@ public class PlayerCharacter {
     public CompoundTag prisonReturn = new CompoundTag();
     /** Equipped skills per character id: 4 indexes into SkillPool (the ultimate is fixed). */
     public CompoundTag loadouts = new CompoundTag();
+    /** Each character's own stats (levels + XP), so switching characters keeps every character's level. */
+    public CompoundTag charStats = new CompoundTag();
+
+    /** Saves the current stats under this character, then loads that character's (fresh = level 1) . */
+    public void switchStats(CharacterType from, CharacterType to) {
+        if (from != CharacterType.NONE) {
+            CompoundTag t = new CompoundTag();
+            t.putIntArray("lv", statLevel.clone());
+            float[] xp = statXp; t.putFloat("x0", xp[0]); t.putFloat("x1", xp[1]); t.putFloat("x2", xp[2]);
+            charStats.put(from.getId(), t);
+        }
+        if (to == CharacterType.NONE || to == from) return;
+        CompoundTag t = charStats.getCompound(to.getId());
+        int[] lv = t.getIntArray("lv");
+        for (int i = 0; i < 3; i++) { statLevel[i] = i < lv.length ? lv[i] : 0; statXp[i] = t.getFloat("x" + i); }
+    }
     /** A KA given for testing (/xeno ka self); their real KAs aren't revealed yet. */
     public String ka = "";
 
@@ -98,6 +114,7 @@ public class PlayerCharacter {
         this.smeltXp = other.smeltXp;
         this.prisonReturn = other.prisonReturn.copy();
         this.loadouts = other.loadouts.copy();
+        this.charStats = other.charStats.copy();
         this.ka = other.ka;
         this.pets = other.pets.copy();
         this.wingPets = other.wingPets.copy();
@@ -119,6 +136,7 @@ public class PlayerCharacter {
         if (prisonerOf != null) tag.putUUID("prisoner_of", prisonerOf);
         tag.put("prison_return", prisonReturn.copy());
         tag.put("loadouts", loadouts.copy());
+        tag.put("char_stats", charStats.copy());
         tag.putString("ka", ka);
         tag.putInt("mining_level", miningLevel);
         tag.putInt("blade_level", bladeLevel);
@@ -152,6 +170,7 @@ public class PlayerCharacter {
         this.prisonerOf = tag.hasUUID("prisoner_of") ? tag.getUUID("prisoner_of") : null;
         this.prisonReturn = tag.getCompound("prison_return");
         this.loadouts = tag.getCompound("loadouts");
+        this.charStats = tag.getCompound("char_stats");
         this.ka = tag.getString("ka");
         this.miningLevel = tag.getInt("mining_level");
         this.bladeLevel = Math.max(1, tag.getInt("blade_level"));

@@ -327,7 +327,19 @@ public final class XenoCommands {
             com.xenowarriors.party.TeamUltimate.join(ctx.getSource().getPlayerOrException());
             return 1;
         })));
+        root.then(Commands.literal("bot").executes(ctx -> {
+            com.xenowarriors.bot.PartyBots.openPick(ctx.getSource().getPlayerOrException());
+            return 1;
+        }).then(Commands.literal("clear").executes(ctx -> {
+            var p = ctx.getSource().getPlayerOrException();
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) com.xenowarriors.bot.PartyBots.action(p, b.getId(), com.xenowarriors.bot.PartyBots.ACT_DISMISS, 0);
+            return 1;
+        })));
         root.then(Commands.literal("party")
+                .then(Commands.literal("menu").executes(ctx -> {
+                    com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenPartyMenuPacket(), ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
                 .then(Commands.literal("invite").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                     com.xenowarriors.party.Parties.invite(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"));
                     return 1;
