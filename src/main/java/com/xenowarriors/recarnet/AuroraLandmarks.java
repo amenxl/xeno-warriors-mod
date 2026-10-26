@@ -191,10 +191,10 @@ public final class AuroraLandmarks {
         set(cx, B + 16, cz + 4, b(Blocks.GOLD_BLOCK));
         set(cx, B + 17, cz + 4, b(Blocks.PLAYER_HEAD));
         sign(cx + 1, B + 16, cz + 3, Direction.NORTH, "Gale Manchester", "Aurora", "Hohohoho!", "Future President");
-        for (int x = cx - 5; x <= cx + 5; x += 10) for (int z = cz - 5; z <= cz + 5; z += 10) set(x, B + 15, z, b(Blocks.POTTED_AZALEA_BUSH));
+        for (int x = cx - 5; x <= cx + 5; x += 10) for (int z = cz - 5; z <= cz + 5; z += 10) set(x, B + 15, z, b(Blocks.POTTED_AZALEA));
         // roof terrace rail
         for (int x = x0; x <= x1; x++) for (int z = z0; z <= z1; z++)
-            if (x == x0 || x == x1 || z == z0 || z == z1) set(x, B + 15, z, b(Blocks.QUARTZ_SLAB).setValue(SlabType.TYPE, SlabType.BOTTOM));
+            if (x == x0 || x == x1 || z == z0 || z == z1) set(x, B + 15, z, b(Blocks.QUARTZ_SLAB).setValue(SlabBlock.TYPE, SlabType.BOTTOM));
     }
 
     // ------------------------------------------------------------------------------------------------ Yuri's HQ
@@ -215,7 +215,7 @@ public final class AuroraLandmarks {
         // computer lab: desks of monitors, server racks, Yuri's laptop
         for (int x = x0 + 2; x < div - 2; x += 4) for (int z = z0 + 2; z <= z1 - 2; z++) {
             if (Math.abs(z - YURI_Z) <= 1) continue;
-            set(x, fy, z, b(Blocks.SMOOTH_STONE_SLAB).setValue(SlabType.TYPE, SlabType.TOP));
+            set(x, fy, z, b(Blocks.SMOOTH_STONE_SLAB).setValue(SlabBlock.TYPE, SlabType.TOP));
             set(x, fy + 1, z, z % 2 == 0 ? b(Blocks.BLACK_STAINED_GLASS) : b(Blocks.DAYLIGHT_DETECTOR));
             set(x + 1, fy, z, b(Blocks.POLISHED_BLACKSTONE_STAIRS).setValue(StairBlock.FACING, Direction.EAST));
         }
