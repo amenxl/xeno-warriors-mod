@@ -19,6 +19,7 @@ public class SkillHudOverlay implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui || mc.player.isSpectator()) return;
+        if (com.xenowarriors.client.KhHud.active()) return;      // the Kingdom Hearts HUD covers this
         CharacterType type = ClientCharacterData.getLocal();
         if (type == CharacterType.NONE) return;
 

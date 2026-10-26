@@ -51,6 +51,12 @@ public final class ModKeyMappings {
                 net.minecraftforge.client.settings.KeyModifier.CONTROL, InputConstants.Type.KEYSYM, defaultKey, CATEGORY);
     }
 
+    /** Is either Control key held right now. */
+    public static boolean ctrlDown() {
+        long w = net.minecraft.client.Minecraft.getInstance().getWindow().getWindow();
+        return InputConstants.isKeyDown(w, GLFW.GLFW_KEY_LEFT_CONTROL) || InputConstants.isKeyDown(w, GLFW.GLFW_KEY_RIGHT_CONTROL);
+    }
+
     /** Holding Control (so 1-5 use skills instead of picking a hotbar slot). */
     public static boolean ctrlHeld() {
         long w = net.minecraft.client.Minecraft.getInstance().getWindow().getWindow();

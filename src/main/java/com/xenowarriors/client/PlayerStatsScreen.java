@@ -31,7 +31,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape, hudStyle, vanillaBars, skillsAlways;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -87,6 +87,9 @@ public class PlayerStatsScreen extends Screen {
             ClientSettings.setAnimeJaw(!ClientSettings.animeJaw());
             updateButtons();
         }).bounds(bx, SET_TOP + 98, bw, 20).build());
+        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 194, bw, 20).build());
+        vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 218, bw / 2 - 2, 20).build());
+        skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 218, bw / 2 - 2, 20).build());
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
         for (int i = 0; i < MAX_OUTFITS; i++) {
@@ -164,6 +167,11 @@ public class PlayerStatsScreen extends Screen {
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
         headShape.visible = tab == 3;
         headShape.setMessage(Component.literal("Head shape: " + (ClientSettings.animeJaw() ? "Anime jaw" : "Classic")));
+        hudStyle.visible = vanillaBars.visible = skillsAlways.visible = tab == 3;
+        hudStyle.setMessage(Component.literal("HUD: " + (ClientSettings.khHud() ? "Kingdom Hearts style" : "Classic")));
+        vanillaBars.setMessage(Component.literal("Hearts/food: " + (ClientSettings.vanillaBars() ? "Shown" : "Hidden")));
+        skillsAlways.setMessage(Component.literal("Skills: " + (ClientSettings.skillsAlways() ? "Always" : "Hold Ctrl")));
+        vanillaBars.active = skillsAlways.active = ClientSettings.khHud();
         efMode.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
         efBattle.visible = efMode.visible;
         efBattle.setMessage(Component.literal("Always battle mode: " + (ClientSettings.efAlwaysBattle() ? "ON" : "OFF")));

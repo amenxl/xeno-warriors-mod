@@ -15,6 +15,7 @@ public class PartyHud implements IGuiOverlay {
     public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.options.hideGui || mc.player == null || PartyClient.members().isEmpty()) return;
+        if (com.xenowarriors.client.KhHud.active()) return;      // the Kingdom Hearts HUD covers this
         Font font = mc.font;
         // drawn at 70% size so it doesn't take up much of the screen
         float sc = 0.7F;

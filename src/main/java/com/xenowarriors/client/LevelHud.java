@@ -22,6 +22,8 @@ public class LevelHud implements IGuiOverlay {
     }
 
     /** Your own Character Level. */
+    public static float progress() { return progress; }
+
     public static int level() {
         return Math.max(1, level);
     }
@@ -33,6 +35,7 @@ public class LevelHud implements IGuiOverlay {
 
     @Override
     public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
+        if (KhHud.active()) return;          // shown on the portrait badge instead
         Minecraft mc = Minecraft.getInstance();
         CharacterType type = ClientCharacterData.getLocal();
         if (mc.options.hideGui || mc.player == null || type == CharacterType.NONE || mc.player.isSpectator()) return;

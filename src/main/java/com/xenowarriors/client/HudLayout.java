@@ -34,6 +34,7 @@ public final class HudLayout {
             if (good) y = 27;
             if (bad) y = good ? 53 : 27;
         }
+        if (KhHud.active()) y = Math.max(6, com.xenowarriors.client.party.KhParty.bottom() + 2);   // effects sit above the health gauge instead
         topRight = y;
         bossBottom = bossBottomNext;
         bossBottomNext = 0;

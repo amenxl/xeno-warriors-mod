@@ -73,4 +73,19 @@ public final class ClientSettings {
         props().setProperty("ef_always_battle", String.valueOf(on));
         save();
     }
+
+    /** The Kingdom Hearts style HUD (portrait gauge, skill list, party cards). Off = the classic Xeno Warriors HUD. */
+    public static boolean khHud() { return !"false".equals(props().getProperty("kh_hud", "true")); }
+
+    public static void setKhHud(boolean on) { props().setProperty("kh_hud", String.valueOf(on)); save(); }
+
+    /** Also show Minecraft's own hearts, armor and hunger next to the hotbar. */
+    public static boolean vanillaBars() { return "true".equals(props().getProperty("vanilla_bars", "false")); }
+
+    public static void setVanillaBars(boolean on) { props().setProperty("vanilla_bars", String.valueOf(on)); save(); }
+
+    /** Skill list always visible (off = only while holding Control). */
+    public static boolean skillsAlways() { return "true".equals(props().getProperty("skills_always", "false")); }
+
+    public static void setSkillsAlways(boolean on) { props().setProperty("skills_always", String.valueOf(on)); save(); }
 }
