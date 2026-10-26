@@ -1,5 +1,4 @@
 """Normal Rhalix touch-ups from the colored reference: fully yellow undershirt (skin), black stand-up collar and
-lapel facings, yellow wrist bands, sleeve seams, pocket flaps with gold buttons, extra strap rivets.
 Idempotent: removes its own 'xwplus' nodes/cubes, then re-adds them to the Forge rhalix.json."""
 import json, math
 import numpy as np
@@ -36,7 +35,6 @@ for s in (1, -1):                                                               
     for x in (2.9, -2.9):
         pass                                       # collar back
 for arm, s in (('right_arm', 1), ('left_arm', -1)):
-    add(arm, [s * 3.68, 11.55, -2.38], [s * 8.32, 12.35, 2.38], YEL)                                 # yellow wrist band
     add(arm, [s * 8.41, 14.4, -0.15], [s * 8.5, 22.5, 0.15], COAT_D)                                 # outer sleeve seam
     add(arm, [s * 3.5, 14.4, -2.52], [s * 8.5, 14.65, 2.52], COAT_D)                                 # cuff seam line
 
