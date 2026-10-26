@@ -55,7 +55,7 @@ public class OrderHideoutFeature extends Feature<NoneFeatureConfiguration> {
         return true;
     }
 
-    private static void set(WorldGenLevel l, BlockPos p, BlockState s) { l.setBlock(p, s, 2); }
+    private static void set(WorldGenLevel l, BlockPos p, BlockState s) { if (com.xenowarriors.world.Clip.ok(p)) l.setBlock(p, s, 2); }
 
     public static void build(WorldGenLevel l, RandomSource r, BlockPos b) {
         BlockState wall = Blocks.DEEPSLATE_BRICKS.defaultBlockState(), crack = Blocks.CRACKED_DEEPSLATE_BRICKS.defaultBlockState(),
@@ -102,7 +102,7 @@ public class OrderHideoutFeature extends Feature<NoneFeatureConfiguration> {
         set(l, b.offset(-1, 0, 0), Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.EAST));
         set(l, b.offset(1, 0, 0), Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.WEST));
         set(l, b.offset(HX - 1, 0, 0), Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST));
-        if (l.getBlockEntity(b.offset(HX - 1, 0, 0)) instanceof ChestBlockEntity ch) ch.setLootTable(LOOT, r.nextLong());
+        if (com.xenowarriors.world.Clip.ok(b.offset(HX - 1, 0, 0)) && l.getBlockEntity(b.offset(HX - 1, 0, 0)) instanceof ChestBlockEntity ch) ch.setLootTable(LOOT, r.nextLong());
         set(l, b.offset(-HX + 1, 0, -4), Blocks.BARREL.defaultBlockState());
         for (int[] p : new int[][]{{-3, -2}, {3, 2}, {-3, 3}, {3, -3}}) set(l, b.offset(p[0], H - 2, p[1]), Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
         for (int[] p : new int[][]{{-3, -2}, {3, 2}, {-3, 3}, {3, -3}}) set(l, b.offset(p[0], H - 1, p[1]), Blocks.CHAIN.defaultBlockState());
@@ -114,7 +114,7 @@ public class OrderHideoutFeature extends Feature<NoneFeatureConfiguration> {
             a.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, r.nextFloat() * 360F, 0);
             a.finalizeSpawn(l, l.getCurrentDifficultyAt(at), MobSpawnType.STRUCTURE, null, null);
             a.setup(i, at);
-            l.addFreshEntityWithPassengers(a);
+            if (com.xenowarriors.world.Clip.ok(at)) l.addFreshEntityWithPassengers(a);
         }
     }
 
@@ -126,7 +126,7 @@ public class OrderHideoutFeature extends Feature<NoneFeatureConfiguration> {
 
     private static void sign(WorldGenLevel l, BlockPos p, Direction face, String... lines) {
         set(l, p, Blocks.DARK_OAK_WALL_SIGN.defaultBlockState().setValue(WallSignBlock.FACING, face));
-        if (l.getBlockEntity(p) instanceof SignBlockEntity s) {
+        if (com.xenowarriors.world.Clip.ok(p) && l.getBlockEntity(p) instanceof SignBlockEntity s) {
             SignText t = new SignText();
             for (int i = 0; i < Math.min(4, lines.length); i++) t = t.setMessage(i, Component.literal(lines[i]));
             s.setText(t, true);

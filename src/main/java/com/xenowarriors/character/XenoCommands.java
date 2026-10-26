@@ -293,6 +293,10 @@ public final class XenoCommands {
                     return 1;
                 }))
                 .then(Commands.literal("cure").executes(ctx -> { com.xenowarriors.virus.AuroraVirus.cure(ctx.getSource().getPlayerOrException(), 0); say(ctx, gray("Cured.")); return 1; })));
+        root.then(Commands.literal("recarnet").requires(src -> src.hasPermission(2)).executes(ctx -> {
+            com.xenowarriors.recarnet.RecarnetEvents.travel(ctx.getSource().getPlayerOrException());
+            return 1;
+        }));
         root.then(Commands.literal("distortion").requires(src -> src.hasPermission(2))
                 .then(Commands.argument("size", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {
                     ServerPlayer p = ctx.getSource().getPlayerOrException();

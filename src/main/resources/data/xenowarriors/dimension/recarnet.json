@@ -1,0 +1,16 @@
+{
+ "type": "xenowarriors:recarnet",
+ "generator": {
+  "type": "minecraft:noise",
+  "settings": "minecraft:overworld",
+  "biome_source": {
+   "type": "xenowarriors:recarnet",
+   "base": {
+    "type": "minecraft:multi_noise",
+    "preset": "minecraft:overworld"
+   },
+   "aurora": "xenowarriors:aurora",
+   "radius": 226
+  }
+ }
+}

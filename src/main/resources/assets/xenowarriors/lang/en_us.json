@@ -323,5 +323,7 @@
   "entity.xenowarriors.order_assassin": "Order Assassin",
   "effect.xenowarriors.aurora_virus": "Aurora Virus",
   "effect.xenowarriors.virus_immunity": "Virus Protection",
-  "item.xenowarriors.aurora_medicine": "Aurora Medicine"
+  "item.xenowarriors.aurora_medicine": "Aurora Medicine",
+  "item.xenowarriors.recarnet_pass": "Recarnet Pass",
+  "biome.xenowarriors.aurora": "Aurora City"
 }

@@ -53,7 +53,7 @@ public class GovFacilityFeature extends Feature<NoneFeatureConfiguration> {
         return true;
     }
 
-    private static void set(WorldGenLevel l, BlockPos p, BlockState s) { l.setBlock(p, s, 2); }
+    private static void set(WorldGenLevel l, BlockPos p, BlockState s) { if (com.xenowarriors.world.Clip.ok(p)) l.setBlock(p, s, 2); }
 
     public static void build(WorldGenLevel l, RandomSource r, BlockPos b) {
         BlockState wall = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), trim = Blocks.GRAY_CONCRETE.defaultBlockState(),
@@ -139,12 +139,12 @@ public class GovFacilityFeature extends Feature<NoneFeatureConfiguration> {
             g.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, r.nextFloat() * 360F, 0);
             g.finalizeSpawn(l, l.getCurrentDifficultyAt(at), MobSpawnType.STRUCTURE, null, null);
             g.setup(guard, r.nextInt(2), b);
-            l.addFreshEntityWithPassengers(g);
+            if (com.xenowarriors.world.Clip.ok(at)) l.addFreshEntityWithPassengers(g);
         }
     }
 
     private static void chest(WorldGenLevel l, RandomSource r, BlockPos p, Direction facing) {
         set(l, p, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing));
-        if (l.getBlockEntity(p) instanceof RandomizableContainerBlockEntity be) be.setLootTable(LOOT, r.nextLong());
+        if (com.xenowarriors.world.Clip.ok(p) && l.getBlockEntity(p) instanceof RandomizableContainerBlockEntity be) be.setLootTable(LOOT, r.nextLong());
     }
 }

@@ -31,6 +31,8 @@ public class XenoWarriors {
         com.xenowarriors.gov.GovFacilityFeature.init();
         com.xenowarriors.s3.S3Entities.init();
         com.xenowarriors.s3.OrderHideoutFeature.init();
+        com.xenowarriors.recarnet.AuroraCityFeature.init();
+        com.xenowarriors.recarnet.Recarnet.BIOME_SOURCES.register(modBus);
         ModEntities.ENTITY_TYPES.register(modBus);
         com.xenowarriors.world.SkyIslandFeature.FEATURES.register(modBus);
         com.xenowarriors.altar.ModAltar.init();
