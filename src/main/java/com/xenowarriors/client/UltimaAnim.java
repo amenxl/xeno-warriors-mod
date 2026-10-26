@@ -33,6 +33,8 @@ public final class UltimaAnim {
                 m.body.yRot = -0.15F * s;
                 m.rightArm.xRot += 0.1F * s; m.leftArm.xRot += 0.1F * s;
             }
+        } else if (tier == 1 && (!p.onGround() || p.getAbilities().flying)) {
+            flying(m, p, age, atk);
         } else if (tier == 2 && atk > 0F) {
             // heavy blows: both fists come up and smash down, the body throwing its weight in
             boolean slam = (p.swingTime + p.getId()) % 2 == 0 || p.fallDistance > 0.5F;
@@ -54,6 +56,63 @@ public final class UltimaAnim {
                 m.rightLeg.xRot = -0.3F * s; m.leftLeg.xRot = 0.3F * s;
             }
         }
+    }
+
+    /** Hits in his current flurry (which fist, and when the spin kick comes). */
+    private static final java.util.Map<Integer, int[]> COMBO = new java.util.HashMap<>();
+
+    private static int comboStep(Player p, float atk) {
+        int[] c = COMBO.computeIfAbsent(p.getId(), k -> new int[]{0, 0});
+        boolean swinging = atk > 0F;
+        if (swinging && c[1] == 0) c[0]++;
+        c[1] = swinging ? 1 : 0;
+        return c[0];
+    }
+
+    /**
+     * 45%, in the air: leaning into the flight, legs trailing with the knees a little bent, fists up in a guard -
+     * attacks are quick alternating jabs that twist the body through, and every third hit a spinning roundhouse kick.
+     */
+    private static void flying(HumanoidModel<?> m, Player p, float age, float atk) {
+        float bob = Mth.sin(age * 0.18F);
+        int step = comboStep(p, atk);
+        // the flight pose
+        m.body.xRot = 0.32F;
+        m.head.xRot = Math.min(m.head.xRot, 0.2F) - 0.25F;
+        m.rightLeg.xRot = 0.55F + bob * 0.08F; m.leftLeg.xRot = 0.3F - bob * 0.08F;
+        m.rightLeg.zRot = 0.06F; m.leftLeg.zRot = -0.06F;
+        m.rightLeg.z = 3.2F; m.leftLeg.z = 3.0F;                                 // hips trail back with the lean
+        LimbBend.extraKnees(p, 0.45F, 0.6F);
+        // guard: both fists up in front of his face
+        m.rightArm.xRot = -1.35F + bob * 0.05F; m.rightArm.yRot = -0.35F; m.rightArm.zRot = 0.1F;
+        m.leftArm.xRot = -1.25F - bob * 0.05F; m.leftArm.yRot = 0.4F; m.leftArm.zRot = -0.1F;
+        LimbBend.extraElbows(p, -1.25F, -1.3F);
+        if (atk <= 0F) return;
+        float s = Mth.sin(atk * Mth.PI);
+        if (step % 3 == 0) {                                                     // spinning roundhouse kick
+            float spin = atk * Mth.TWO_PI;
+            m.body.yRot = spin;
+            m.head.yRot -= spin * 0.5F;
+            m.rightLeg.xRot = -1.35F * s; m.rightLeg.zRot = 0.75F * s; m.rightLeg.yRot = 0.4F * s;
+            m.leftLeg.xRot = 0.45F;
+            LimbBend.extraKnees(p, 0.1F, 0.9F);
+            m.rightArm.xRot = -0.4F; m.rightArm.zRot = 1.1F * s; m.leftArm.xRot = -0.4F; m.leftArm.zRot = -1.1F * s;
+            LimbBend.extraElbows(p, -0.3F, -0.3F);
+            return;
+        }
+        boolean right = step % 2 == 1;                                           // jab: the arm snaps straight out, the body twists through
+        float out = Mth.sin(Math.min(1F, atk * 1.6F) * Mth.HALF_PI);
+        float back = atk > 0.62F ? (atk - 0.62F) / 0.38F : 0F;                  // and pulls back to guard
+        float ext = out * (1F - back);
+        var hit = right ? m.rightArm : m.leftArm;
+        var off = right ? m.leftArm : m.rightArm;
+        hit.xRot = Mth.lerp(ext, hit.xRot, -1.62F);
+        hit.yRot = Mth.lerp(ext, hit.yRot, right ? 0.12F : -0.12F);
+        off.xRot = Mth.lerp(ext, off.xRot, -0.75F);
+        m.body.yRot = (right ? -0.38F : 0.38F) * ext;
+        if (right) LimbBend.extraElbows(p, -1.25F * (1F - ext), -1.3F - 0.3F * ext);
+        else LimbBend.extraElbows(p, -1.25F - 0.3F * ext, -1.3F * (1F - ext));
+        m.rightLeg.xRot += (right ? 0.15F : -0.1F) * s;
     }
 
     private static final java.util.Map<Integer, Integer> STILL_SINCE = new java.util.HashMap<>();
