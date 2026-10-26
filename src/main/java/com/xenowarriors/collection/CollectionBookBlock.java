@@ -37,7 +37,7 @@ public class CollectionBookBlock extends HorizontalDirectionalBlock {
     @Override
     public InteractionResult use(BlockState s, Level level, BlockPos pos, Player p, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide && p instanceof ServerPlayer sp) {
-            Collection.open(sp);
+            Collection.openFromBook(sp);
             level.playSound(null, pos, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 1F, 1F);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

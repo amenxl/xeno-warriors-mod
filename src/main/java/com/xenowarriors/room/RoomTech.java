@@ -122,7 +122,7 @@ public final class RoomTech {
                     room.setBlock(b.set(r.center.getX() + dx, r.center.getY() + dy, r.center.getZ() + dz), Blocks.AIR.defaultBlockState(), 2 | 16);
     }
 
-    static Entity move(Entity e, ServerLevel to, Vec3 pos, float yRot) {
+    public static Entity move(Entity e, ServerLevel to, Vec3 pos, float yRot) {
         if (e.level() == to) { e.teleportTo(pos.x, pos.y, pos.z); return e; }
         if (e instanceof ServerPlayer p) { p.teleportTo(to, pos.x, pos.y, pos.z, yRot, p.getXRot()); return p; }
         return e.changeDimension(to, new ITeleporter() {

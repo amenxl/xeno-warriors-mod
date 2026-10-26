@@ -67,6 +67,10 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 04:50 — 0.111.1: Ultima boss intro pose (UltimaAnim.perch) + GIF; 20 battle refs saved to docs/refs/ultima_battle. NEXT: Lunar form.
 - Mon 05:20 — 0.112.0: Lunar form (lunar/LunarForm, MoonFall, MoonReflectSkill, LunarClient, lunar textures from user art), /xeno lunar unlock|lock, Lunar trial (crouch still 30s under full moon), DMZ fake moon. Spin-off docs summarized in docs/lore. NEXT: bounty boards.
 - Mon 06:20 — 0.113-0.114.1: Aurora virus (S2), Distortions + Order of Assassins (S3), Recarnet dimension with Aurora City (S2 barrier), dedicated-server crash fixes, CI selftest (selftest.yml -> 'selftest' release, render with tools/xw/recarnet). NEXT: Mountain Village/Pine Cone City + Kitsune farm + Disco Dojo in Recarnet, then bounty boards, mini-bosses, SR camps, GIFs.
+- Mon 06:50 — 0.115-0.117: Pine Cone City + Mountain Village + Kitsune farm + Disco Dojo + canyon, Rhalix virus immunity, hunger (Mikiko x10, Rhalix x3), Ultima Data Sense / Data Ore / armor rules, locked upcoming slots, Collection Book, Demon's Remnants.
+- Mon 07:05 — 0.118.0: bot teammates (/xeno bot pick screen, modes, skills via FakePlayer, downed/revive, spar XP w/ hidden 30m cooldown, bot menu, /xeno party menu, BOT tag), Rhalix carry, party XP share + boss loot split, pet whistle 3D + pet HUD, per-character levels. Dedicated-server selftest OK.
+- Mon 07:30 — 0.119.0: Room Technology (creative, room dimension), Gale's Hotel + Yuri's HQ in Aurora.
+  STILL TODO: #73 model/UI audit w/ before-after images, #75 char models, #76 compat (TACZ/Lodestone optional-vs-required unanswered), #78 more 3D items, max 4 pets limit, bounty boards, mini-bosses, SR camps, GIFs (Demon's Remnants, phone, Ultima styles).
 
 ## Reminders
 - When more playable characters exist: disable two players being the same character, but keep a way to switch if nobody else is free in the character screen (user asked to be reminded).

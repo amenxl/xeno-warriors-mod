@@ -35,7 +35,20 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Parties {
-    public static final int MAX_SIZE = 4;
+    public static final int MAX_SIZE = 4, MAX_PETS = 4;
+
+    /** Pets one player keeps (Mikiko's foxes + Rhalix's winged companions). */
+    public static int pets(ServerPlayer p) { return com.xenowarriors.fox.FoxPets.count(p) + com.xenowarriors.wing.WingPets.count(p); }
+
+    /** Pets the whole party keeps (a party can only have 4). */
+    public static int partyPets(ServerPlayer p) { int n = 0; for (ServerPlayer m : members(p)) n += pets(m); return n; }
+
+    /** Can this player take on another pet without the party going over 4? */
+    public static boolean petRoom(ServerPlayer p) {
+        if (partyPets(p) < MAX_PETS) return true;
+        p.displayClientMessage(Component.literal("Your party already has " + MAX_PETS + " pets (the party limit)").withStyle(ChatFormatting.RED), true);
+        return false;
+    }
     private static final int INVITE_TICKS = 60 * 20;
 
     private static final class Party {
@@ -106,6 +119,10 @@ public final class Parties {
             from.sendSystemMessage(msg("Your party is full (" + MAX_SIZE + " players and bots)."));
             return;
         }
+        if (partyPets(from) + pets(to) > MAX_PETS) {
+            from.sendSystemMessage(msg("A party can only have " + MAX_PETS + " pets - together you'd have " + (partyPets(from) + pets(to)) + ". Release some first."));
+            return;
+        }
         INVITES.put(to.getUUID(), new Invite(from.getUUID(), from.level().getGameTime() + INVITE_TICKS));
         from.sendSystemMessage(msg("Invited " + to.getName().getString() + " to your party."));
         to.sendSystemMessage(msg(from.getName().getString() + " invited you to their party! ")
@@ -141,6 +158,10 @@ public final class Parties {
         }
         if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > MAX_SIZE) {
             p.sendSystemMessage(msg("That party is full (players and bots count)."));
+            return;
+        }
+        if (partyPets(from) + pets(p) > MAX_PETS) {
+            p.sendSystemMessage(msg("A party can only have " + MAX_PETS + " pets - together you'd have " + (partyPets(from) + pets(p)) + ". Release some first."));
             return;
         }
         party.members.add(p.getUUID());

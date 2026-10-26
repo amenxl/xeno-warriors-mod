@@ -170,6 +170,7 @@ public final class WingPets {
     }
 
     private static void tryTame(ServerPlayer p, Mob mob, ItemStack stack) {
+        if (!com.xenowarriors.party.Parties.petRoom(p)) return;
         if (pets(p).size() >= MAX) {
             say(p, "You can only keep " + MAX + " winged companions.");
             return;

@@ -10,7 +10,15 @@ public final class PacketScreens {
         Minecraft.getInstance().setScreen(new com.xenowarriors.client.fox.FoxNameScreen(pet, name, justTamed, "companion"));
     }
 
-    public static void openCollection(String[] ids, int[] counts, int total) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.screen.CollectionScreen(ids, counts, total)); }
+    /** Latest Collection info (the menu shows the Collection once it's unlocked). */
+    public static boolean collectionUnlocked;
+    public static int towerFloor;
+
+    public static void openCollection(com.xenowarriors.network.CollectionPacket m) {
+        collectionUnlocked = m.unlocked();
+        towerFloor = m.floor();
+        if (m.show()) Minecraft.getInstance().setScreen(new com.xenowarriors.client.screen.CollectionScreen(m));
+    }
 
     public static void openBotPick(com.xenowarriors.network.OpenBotPickPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.bot.BotPickScreen(m)); }
 

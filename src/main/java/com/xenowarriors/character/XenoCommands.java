@@ -327,6 +327,14 @@ public final class XenoCommands {
             com.xenowarriors.party.TeamUltimate.join(ctx.getSource().getPlayerOrException());
             return 1;
         })));
+        root.then(Commands.literal("tower")
+                .then(Commands.literal("enter").executes(ctx -> { com.xenowarriors.tower.Tower.enter(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.tower.Tower.leave(ctx.getSource().getPlayerOrException(), "You left the Tower"); return 1; }))
+                .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; })));
+        root.then(Commands.literal("collection").executes(ctx -> {
+            com.xenowarriors.collection.Collection.openFromBook(ctx.getSource().getPlayerOrException());
+            return 1;
+        }));
         root.then(Commands.literal("bot").executes(ctx -> {
             com.xenowarriors.bot.PartyBots.openPick(ctx.getSource().getPlayerOrException());
             return 1;

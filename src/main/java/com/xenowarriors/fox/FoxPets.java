@@ -175,6 +175,7 @@ public final class FoxPets {
     }
 
     private static void tryTame(ServerPlayer p, Fox fox, ItemStack stack) {
+        if (!com.xenowarriors.party.Parties.petRoom(p)) return;
         if (pets(p).size() >= MAX_FOXES) {
             say(p, "You can only keep " + MAX_FOXES + " foxes.");
             return;
