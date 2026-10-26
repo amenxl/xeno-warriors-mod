@@ -113,6 +113,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     public static net.minecraft.resources.ResourceLocation faceTexture(AbstractClientPlayer p) {
+        if (ClientCharacterData.get(p) == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(p.getId()))
+            return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_face_overload.png");
         CharacterType type = ClientCharacterData.get(p);
         String expr = expression(p, type);
         return expr == null ? type.getFaceTexture()
@@ -489,7 +491,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (model.faceRoot != null && !noHead) {
             model.faceHead.copyFrom(parent.head);
             String expr = expression(player, type);
-            var faceTexture = expr == null ? type.getFaceTexture()
+            var faceTexture = type == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(player.getId())
+                    ? com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_face_overload.png")
+                    : expr == null ? type.getFaceTexture()
                     : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             renderFace(model, parent, player, poseStack, faceBuffer, packedLight, overlay);

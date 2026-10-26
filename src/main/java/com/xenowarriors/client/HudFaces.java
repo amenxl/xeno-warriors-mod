@@ -91,7 +91,7 @@ public final class HudFaces {
     }
 
     public static ResourceLocation texture(CharacterType type, String face) {
-        String ch = type == CharacterType.RHALIX ? "rhalix" : "mikiko";
+        String ch = type == CharacterType.RHALIX ? "rhalix" : type == CharacterType.ULTIMA ? "ultima" : "mikiko";
         return XenoWarriors.id("textures/gui/hud/portrait_" + ch + "_" + face + ".png");
     }
 

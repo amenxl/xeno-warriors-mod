@@ -150,10 +150,19 @@ public final class KhHud implements IGuiOverlay {
         small(g, font, lv, px + 5 - font.width(lv) * (lv.length() > 2 ? 0.25F : 0.3F), py + size - 10, 0x201408, lv.length() > 2 ? 0.5F : 0.6F);
         String nm = type.getDisplayName().getString();
         small(g, font, nm, px + size / 2F - font.width(nm) * 0.3F, py + size - 1, col, 0.6F);
+        if (type == CharacterType.ULTIMA) {         // his output %, above the portrait
+            int pc = UltimaClient.percent(p.getId());
+            boolean ov = UltimaClient.overload(p.getId());
+            String ot = ov ? "OVERLOAD" : "OUTPUT " + pc + "%";
+            int oc = ov ? ((HudFaces.clock() / 3) % 2 == 0 ? 0x9CFFC8 : 0xFFFFFF) : 0x3FFF8C;
+            small(g, font, ot, px + size / 2F - font.width(ot) * 0.3F, py - (dbz ? 14 : 7), oc, 0.6F);
+            for (int i = 0; i < 4; i++)
+                g.fill(px + 6 + i * 11, py - (dbz ? 6 : 1) - 2, px + 15 + i * 11, py - (dbz ? 6 : 1), i <= UltimaClient.tier(p.getId()) || ov ? 0xFF3FFF8C : 0xFF203028);
+        }
         // KA orb (super ultimate)
         var ka = ClientSkillState.ka();
         g.blit(ORB, px - 20, py + size - 16, 14, 14, 0, 0, 32, 32, 32, 32);
-        String kl = ka == null ? "?" : ka.title().substring(0, 1);
+        String kl = ka == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka.title().substring(0, 1);
         small(g, font, kl, px - 13 - font.width(kl) * 0.3F, py + size - 12, ka == null ? 0xB070FF : ka.color, 0.6F);
 
         effects(g, mc, bx, by - 14, px + size);
@@ -228,7 +237,7 @@ public final class KhHud implements IGuiOverlay {
             if (key.length() > 2) key = key.substring(0, 2);
             g.fill(x + 2, y + 2, x + 13, y + rowH - 2, alpha(0xFF0F0F19, a));
             small(g, font, key, x + 7.5F - font.width(key) * 0.3F, y + 4, alpha(0xDDDDDD, a), 0.6F);
-            String name = sup ? (ka == null ? "KA - ???" : "KA - " + ka.title()) : sk == null ? "-" : sk.getName().getString() + (ult ? " ★" : "");
+            String name = sup ? (ka == null ? (type == CharacterType.ULTIMA ? "Overload (100%)" : "KA - ???") : "KA - " + ka.title()) : sk == null ? "-" : sk.getName().getString() + (ult ? " ★" : "");
             small(g, font, name, x + 16, y + 3.5F, alpha(sup ? 0xC896FF : ult ? 0xFFF0C8 : 0xFFFFFF, a), 0.65F);
             String right = cd > 0 ? (ClientSkillState.cooldownTicks(s) + 19) / 20 + "s" : sk != null ? String.valueOf(sk.getKarmaCost()) : "";
             boolean afford = sk == null || mc.player.isCreative() || ClientSkillState.karma() >= sk.getKarmaCost();

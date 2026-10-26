@@ -10,7 +10,7 @@ def clean(im):
         for x in range(im.width):
             if p[x, y][:3] == bg[:3]: p[x, y] = (0, 0, 0, 0)
     return im
-for ch in ('mikiko', 'rhalix'):
+for ch in ('mikiko', 'rhalix', 'ultima'):
     mj = json.load(open(MD + ch + '.json'))
     for b in mj['bones']:
         if b != 'head': mj['bones'][b]['cubes'] = []; mj['bones'][b]['children'] = []

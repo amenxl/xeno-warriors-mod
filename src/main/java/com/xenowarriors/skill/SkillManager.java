@@ -25,7 +25,9 @@ public final class SkillManager {
                 player.displayClientMessage(Component.literal("KA ready in " + (remaining + 19) / 20 + "s"), true);
                 return;
             }
-            if (com.xenowarriors.ka.Kas.usePlayer(player)) {
+            boolean went = ModCapabilities.getType(player) == CharacterType.ULTIMA && com.xenowarriors.ka.Kas.of(player) == null
+                    ? com.xenowarriors.ultima.UltimaOutput.overload(player) : com.xenowarriors.ka.Kas.usePlayer(player);      // Ultima's super slot: Overload
+            if (went) {
                 int cd = com.xenowarriors.ka.Kas.PLAYER_COOLDOWN;
                 data.cooldownEnd[SUPER_SLOT] = now(player) + cd;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(SUPER_SLOT, cd, cd), player);

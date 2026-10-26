@@ -11,10 +11,15 @@ import net.minecraft.resources.ResourceLocation;
 public enum CharacterType {
     NONE("none", 0xFFFFFFFF),
     MIKIKO("mikiko", 0xFFE8801A),
-    RHALIX("rhalix", 0xFFA02CD2);
+    RHALIX("rhalix", 0xFFA02CD2),
+    /** Season 2 content (locked until /xeno season unlock 2). */
+    ULTIMA("ultima", 0xFF1FE07A);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA};
+
+    /** The story season a character comes from (2/3 stay locked until unlocked). */
+    public int season() { return this == ULTIMA ? 2 : 1; }
 
     private final String id;
     private final int color;

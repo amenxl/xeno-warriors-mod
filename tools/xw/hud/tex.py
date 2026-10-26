@@ -2,9 +2,9 @@ from PIL import Image, ImageDraw
 import os
 OUT='/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/textures/gui/hud/'
 os.makedirs(OUT, exist_ok=True)
-COL={'mikiko':(235,70,60),'rhalix':(170,90,255)}
+COL={'mikiko':(235,70,60),'rhalix':(170,90,255),'ultima':(31,224,122)}
 N=128; K=4
-for ch in ('mikiko','rhalix'):
+for ch in ('mikiko','rhalix','ultima'):
     for ex in ('', '_blink', '_hurt', '_damage1', '_exhausted', '_shout', '_rage'):
         big=Image.new('RGBA',(N*K,N*K),(0,0,0,0)); d=ImageDraw.Draw(big)
         d.ellipse((0,0,N*K-1,N*K-1),fill=(12,12,20,255))

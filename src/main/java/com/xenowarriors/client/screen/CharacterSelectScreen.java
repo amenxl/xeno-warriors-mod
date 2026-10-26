@@ -12,7 +12,10 @@ import net.minecraft.network.chat.Component;
 
 /** The "Choose Your Warrior" screen shown when a player first joins. */
 public class CharacterSelectScreen extends Screen {
-    private static final int CARD_WIDTH = 150;
+    private static final int CARD_WIDTH_MAX = 150;
+    private int CARD_WIDTH = 150;
+
+    private static boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }
     private static final int CARD_HEIGHT = 200;
     private static final int GAP = 24;
 
@@ -37,6 +40,7 @@ public class CharacterSelectScreen extends Screen {
     @Override
     protected void init() {
         CharacterType[] choices = CharacterType.PLAYABLE;
+        CARD_WIDTH = Math.min(CARD_WIDTH_MAX, (width - 20 - (choices.length - 1) * GAP) / choices.length);   // three cards fit
         for (int i = 0; i < choices.length; i++) {
             CharacterType type = choices[i];
             int x = cardLeft(i);
@@ -44,7 +48,7 @@ public class CharacterSelectScreen extends Screen {
                             Component.translatable("screen.xenowarriors.select.play_as", type.getDisplayName()),
                             b -> choose(type))
                     .bounds(x + 10, cardTop() + CARD_HEIGHT - 28, CARD_WIDTH - 20, 20)
-                    .build());
+                    .build()).active = !locked(type);
         }
     }
 
@@ -78,6 +82,13 @@ public class CharacterSelectScreen extends Screen {
             g.fill(x, top, x + CARD_WIDTH, top + CARD_HEIGHT, 0xE0101016);
 
             // names
+            if (locked(type)) {                 // no spoilers: a locked card shows nothing about who it is
+                g.drawCenteredString(font, "???", centerX, top + 8, 0x888888);
+                g.drawCenteredString(font, "Season " + type.season() + " content", centerX, top + 20, 0xAA5555);
+                g.drawCenteredString(font, "/xeno season unlock " + type.season(), centerX, top + 32, 0x777777);
+                g.drawCenteredString(font, "?", centerX, top + CARD_HEIGHT / 2 - 10, 0x555555);
+                continue;
+            }
             g.drawCenteredString(font, type.getFullName(), centerX, top + 8, type.getColor());
             g.drawCenteredString(font, type.getTitle(), centerX, top + 20, 0xDDDDDD);
             g.drawCenteredString(font, type.getElements(), centerX, top + 32, 0x999999);
