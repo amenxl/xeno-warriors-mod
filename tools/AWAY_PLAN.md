@@ -60,7 +60,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 03:20 — Ultima 5 model options + Overload sheet sent (tools/xw/ultima/ultima.py; outputs /home/claude/xw/ultima/out). Waiting on pick. Overload = >100% output: circuit face, white-green eyes, green static (user wants it added).
 - Mon 03:25 — Ultima: user picked Option A + bracelet on bare wrist; ultima.bbmodel sent (tools/xw/ultima/bb.py). Next: integrate Ultima (Season 2 locked) when user confirms model; Overload effects; boss later (remind).
 - Mon 03:30 — Ultima default face = option 8 (Bored, looking away), NO nose. User may change later: REMIND them when integrating Ultima.
-- Mon 04:00 (user here) — 0.110.0: Ultima playable, Season 2 locked (ultima/UltimaOutput, skill/ultima/*, assets via tools/xw/ultima/mod_assets.py, HUD output %). TODO: Ultima boss (remind user), remind about Ultima face choice, Lunar form next, then Gov facilities etc.
+- Mon 04:00 (user here) — 0.110.0: Ultima playable, Season 2 locked (ultima/UltimaOutput, skill/ultima/*, assets via tools/xw/ultima/mod_assets.py, HUD output %). TODO: Ultima boss (remind user), remind about Ultima face (DONE: anime option 8), Lunar form next, then Gov facilities etc.
 - Mon 04:05 — STANDING: send GIFs of every new/changed animation from now on (tools/xw/ultima/idle_pics.py has a GIF builder: lerp_pose + U.preview with pose/bends/offset).
 - Mon 04:10 (user) ORDER: (1) Gov facilities + healing pod + Gov workers/guards [in progress], (2) Lunar form (S2), (3) bounty boards, (4) named mini-bosses, (5) SR camps. Ultima BOSS: only after more player-Ultima work. THEN: send pictures of all + GIFs: phone animation, Ultima fighting at 25/45/70/100/Overload.
 - Mon 04:35 — 0.111.0: Gov facilities (gov/*), healing pod, Gov agents w/ mods, /xeno build gov_facility. NEXT: Lunar form (S2).
@@ -78,6 +78,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 
 - Mon 16:35 (away) — 0.123.0: named mini-bosses (boss/MiniBosses): 1.5% of monsters (not creepers/Tower), name + title, boss bar, x4 HP, +75% dmg, glow, power (Blazing/Swift/Ironhide/Karma-Eater/Summoner/Frostbound), loot + 50% of a level in each stat; /xeno miniboss.
 - Mon 17:50 (away) — 0.124.0: Sky Rebellion camps (sr/*): rare overworld camp (2 black tents, campfire, barrels, loot chest w/ SR hoodie chance, sign), 3-4 SR members (black SR hoodie with white eye, red eyes, leap, demon vessel at 50% HP); SR hoodie = disguise (they won't attack). /xeno build sr_camp. No wings on SR members yet.
+- Mon 18:00-18:15 (user here) — 0.124.1 SR wings on demand (tattered, only when flying); 0.124.2 party pets over 4 stay behind (party/PetRest) instead of blocking invites; answers: Tower checkpoint on reaching 10/20 (keep), Collection rewards hostile-only (keep). 0.124.3: Ultima faces redone anime-style (tools/xw/ultima/anime_assets.py), default = new option 8 'Narrow, distant'.
 ## Reminders
 - When more playable characters exist: disable two players being the same character, but keep a way to switch if nobody else is free in the character screen (user asked to be reminded).
 - Away mode resumes 2pm ET Mon Oct 26, check-ins every 1 hour.
