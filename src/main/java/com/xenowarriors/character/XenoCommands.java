@@ -259,6 +259,15 @@ public final class XenoCommands {
                     return 1;
                 })));
 
+        // build a Government facility where you stand (for testing and videos)
+        root.then(Commands.literal("build").requires(src -> src.hasPermission(2))
+                .then(Commands.literal("gov_facility").executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    com.xenowarriors.gov.GovFacilityFeature.build(p.serverLevel(), p.getRandom(), p.blockPosition().offset(0, 0, -12));
+                    say(ctx, gray("Government facility built just ahead of you."));
+                    return 1;
+                })));
+
         root.then(Commands.literal("giveup").executes(ctx -> {
             boolean ok = com.xenowarriors.party.Duels.giveUp(ctx.getSource().getPlayerOrException());
             if (!ok) ctx.getSource().sendFailure(Component.literal("You're not downed"));

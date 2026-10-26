@@ -55,7 +55,7 @@ public class GovFacilityFeature extends Feature<NoneFeatureConfiguration> {
 
     private static void set(WorldGenLevel l, BlockPos p, BlockState s) { l.setBlock(p, s, 2); }
 
-    static void build(WorldGenLevel l, RandomSource r, BlockPos b) {
+    public static void build(WorldGenLevel l, RandomSource r, BlockPos b) {
         BlockState wall = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), trim = Blocks.GRAY_CONCRETE.defaultBlockState(),
                 inner = Blocks.GRAY_CONCRETE.defaultBlockState(), dark = Blocks.BLACK_CONCRETE.defaultBlockState(),
                 floor = Blocks.POLISHED_DEEPSLATE.defaultBlockState(), lamp = Blocks.SEA_LANTERN.defaultBlockState(),
