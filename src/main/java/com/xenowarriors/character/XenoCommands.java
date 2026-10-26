@@ -279,6 +279,12 @@ public final class XenoCommands {
                     say(ctx, gray("Government facility built just ahead of you."));
                     return 1;
                 }))
+                .then(Commands.literal("sr_camp").executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    com.xenowarriors.sr.SrCampFeature.build(p.serverLevel(), p.getRandom(), p.blockPosition().offset(0, 0, -10));
+                    say(ctx, gray("Sky Rebellion camp built just ahead of you."));
+                    return 1;
+                }))
                 .then(Commands.literal("order_hideout").executes(ctx -> {
                     ServerPlayer p = ctx.getSource().getPlayerOrException();
                     com.xenowarriors.s3.OrderHideoutFeature.build(p.serverLevel(), p.getRandom(), p.blockPosition().offset(0, 0, -10));

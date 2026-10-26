@@ -50,6 +50,8 @@ public final class ClientModEvents {
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.s3.OrderAssassinEntity>plain(ctx, com.xenowarriors.s3.OrderAssassinEntity::look, e -> false));
         event.registerEntityRenderer(com.xenowarriors.s3.S3Entities.DISTORTION.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.bot.BotEntities.BOT.get(), com.xenowarriors.client.bot.BotRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(),
+                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.sr.SrMemberEntity>plain(ctx, com.xenowarriors.sr.SrMemberEntity::look, e -> false));
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.THROWN.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.KI_BLAST.get(), com.xenowarriors.client.npc.KiBlastRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get(),
