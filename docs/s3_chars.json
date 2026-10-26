@@ -1,0 +1,1003 @@
+[
+  {
+    "name": "Mikiko",
+    "role": "Demigod hero, leader of the Xeno Warriors (\"AmenXL Mikiko\"); Orenji clan; student of Komatsu Norio; ally.",
+    "appearance": "A boy with a girl's name. Arm burned and bandaged after the Ultima battle (Ep 26). Wears the Fox King crown in Fox King mode (lost in Ep 29); has a work outfit for Kitsune's Farm. Nicknamed \"Red Mikikies\".",
+    "forms": [
+      {
+        "name": "Base form",
+        "note": "Komatsu says it is as strong as his old Fox King mode."
+      },
+      {
+        "name": "Fox King mode",
+        "note": "Uses the Fox King crown; only works for a Fox Kin. Lost when Chase took the crown (Ep 29)."
+      },
+      {
+        "name": "Corrupted state",
+        "note": "His soul state is corrupted; anger triggers a transformation he once could not reverse (Ep 26)."
+      },
+      {
+        "name": "Glowing red (XL)",
+        "note": "Glows red after chanting \"Manifest True Greatness\" (Ep 27)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "True empathy",
+        "description": "Says what he feels and copies others' moves; used it to pull off the Dance Kick. Overuse knocked him out for 2 weeks, and Komatsu warns it can make him lose his true self.",
+        "episode": 26
+      },
+      {
+        "name": "Dance Kick",
+        "description": "Komatsu Norio's signature kick, copied with True empathy.",
+        "episode": 26
+      },
+      {
+        "name": "Karma sensing",
+        "description": "Senses how much Karma someone has, and dark Karma nearby or far off (Royal capital).",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Manifest Greatness / Manifest True Greatness",
+        "description": "A chant. Said with true belief, it powers him up and makes him glow red.",
+        "episode": 27
+      },
+      {
+        "name": "Netsu",
+        "description": "Burst to top speed while running.",
+        "episode": 27
+      },
+      {
+        "name": "Netsu Bust",
+        "description": "All-out speed burst; broke the treadmill.",
+        "episode": 27
+      },
+      {
+        "name": "Heku",
+        "description": "Summons the Hekublade (looked different and stronger in Ep 31); sent all the C-souls into the blade.",
+        "episode": 31
+      },
+      {
+        "name": "Kaeru return!",
+        "description": "Calls Kaeru back into the Hekublade.",
+        "episode": 28
+      },
+      {
+        "name": "Hekubeats",
+        "description": "Kaeru turns the Hekublade into headphones so he can hear her and fight to the music.",
+        "episode": 30
+      },
+      {
+        "name": "Two-finger catch",
+        "description": "Stopped Zack's knife with two fingers.",
+        "episode": 31,
+        "unnamed": true
+      },
+      {
+        "name": "Rap combat",
+        "description": "Dodges Zack's attacks while rapping to the beat, in Komatsu Norio style.",
+        "episode": 31,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Hekublade (Heku)",
+      "Hekubeats (headphone form)",
+      "Fox King crown (lost)"
+    ],
+    "relationships": [
+      "Komatsu Norio — master (\"Master Matsu\")",
+      "Fox Girl — former trainer and boss",
+      "Garry, Stevie — fellow students and friends",
+      "Kaeru — guardian of his Hekublade; calls him senpai",
+      "Rhalix — rival",
+      "Chase — stole his Fox King crown",
+      "Zane — former training partner (missing)",
+      "Ai Oni — plans to capture him"
+    ],
+    "episodes": [
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "key_quote": "Fighting with certainty, to ensure the battle is won.",
+    "soul_state": "Corrupted",
+    "clan": "Orenji clan (ancient Egypt)"
+  },
+  {
+    "name": "Rhalix",
+    "role": "Rhalix Murasaki of the Murasaki clan; captain of the Sky Patrol (SP), ex royal knight; becomes King of Royal capital Section 1; ally.",
+    "appearance": "His eyes glow bright red when he is enraged (Ep 26). Kyrie restyles his hair as a disguise after the 2-year timeskip (Ep 27).",
+    "forms": [
+      {
+        "name": "Lunar form",
+        "note": "A new form, mentioned by Mikiko (Ep 26, 28)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Kshi",
+        "description": "Gravity-element power that pins enemies so they can't move; also used to break apart Keita's KA.",
+        "episode": 26
+      },
+      {
+        "name": "Gravity element",
+        "description": "The queens identify his power as a Gravity element.",
+        "episode": 26
+      },
+      {
+        "name": "KA Release",
+        "description": "Breaks free of an enemy's KA.",
+        "episode": 29
+      },
+      {
+        "name": "Wire knife",
+        "description": "Makes a knife out of his wires to cut Keita.",
+        "episode": 29,
+        "unnamed": true
+      },
+      {
+        "name": "Flight",
+        "description": "Flies between locations.",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Karma sensing",
+        "description": "Senses enemies' Karma nearby.",
+        "episode": 29,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Knife made from his wires"
+    ],
+    "relationships": [
+      "Kyrie — close ally; she has feelings for him",
+      "Sintrie/Max — teammate who betrayed him, now on probation",
+      "Sam — loyal teammate",
+      "Lexy — teammate he aims to rescue",
+      "Mikiko — rival",
+      "Keita — killed him",
+      "Ai Oni — knows him from the old world"
+    ],
+    "episodes": [
+      26,
+      27,
+      28,
+      29
+    ],
+    "key_quote": "Never run into a king's kingdom unannounced.",
+    "clan": "Murasaki clan"
+  },
+  {
+    "name": "Sintrie (Max)",
+    "role": "Real name Sintrie, goes by Max; Sky Patrol fighter from the commoner islands; once tied to SR by a debt; ally.",
+    "appearance": "White hair (Lexy jokes he's old as the dinosaurs). Flashback: light yellow and gray outfit, light blue wings. Smokes heavily.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Wind of Sorrow",
+        "description": "His wind element; also how he travels fast.",
+        "episode": 28
+      },
+      {
+        "name": "Vampire Slice",
+        "description": "His KA, a slashing strike. He calls the Ep 28 one the 2nd version and says he has reached level 3.",
+        "episode": 28
+      },
+      {
+        "name": "KA Release",
+        "description": "Breaks Keita's mind-control KA.",
+        "episode": 28
+      },
+      {
+        "name": "Rapid Vampire Slice",
+        "description": "Rapid slashes that drain the target's blood and can't be removed by KA Release.",
+        "episode": 30
+      },
+      {
+        "name": "Vampire cut (healing)",
+        "description": "His KA heals him; closed the sword wound through his chest.",
+        "episode": 31
+      },
+      {
+        "name": "Flight",
+        "description": "Flies using his wings.",
+        "episode": 28,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Technica — wife",
+      "Baby daughter — his child (he can't say her name because of the Kyle phone)",
+      "Rhalix — captain who beat him for betraying the team",
+      "Sam, Lexy — teammates",
+      "SR Leader (Senju) — owed him a debt from Year 90",
+      "Keita, Kill — SR enemies he fought",
+      "Kyle — past betrayal left him with trust issues"
+    ],
+    "episodes": [
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "key_quote": "Lucky for me, I've been cleaning a lot of shit.",
+    "aliases": [
+      "Max",
+      "Sintrie"
+    ],
+    "note": "The script uses Max and Sintrie for the same person (\"That's Max's real name\")."
+  },
+  {
+    "name": "Sam",
+    "role": "Sky Patrol knight (\"SP Knight Samatha\" on his ID), one of SP's strongest fighters; ally.",
+    "appearance": "Green hair. Wears a Karma reducing hoodie.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Clear Space",
+        "description": "Teleports the target to right in front of him, or himself to them.",
+        "episode": 29
+      },
+      {
+        "name": "Batter up!",
+        "description": "Bat swing that sends the enemy flying.",
+        "episode": 29
+      },
+      {
+        "name": "PTB psychotic time bomb",
+        "description": "Plants bombs that go off inside the target after a 10-second countdown; killed Logan.",
+        "episode": 29
+      },
+      {
+        "name": "Batter batter and shoot",
+        "description": "Finishing bat combo, used together with PTB.",
+        "episode": 29
+      }
+    ],
+    "weapons": [
+      "Bat",
+      "Karma reducing hoodie"
+    ],
+    "relationships": [
+      "Rhalix — captain who trained him",
+      "Sintrie/Max — teammate",
+      "Lexy — teammate he reunites with",
+      "Logan — killed him"
+    ],
+    "episodes": [
+      26,
+      27,
+      29
+    ],
+    "key_quote": "Captain was right about ending fights fast.",
+    "note": "Appears as Kid Sam in the Ep 30 flashback."
+  },
+  {
+    "name": "Lexy",
+    "role": "Sky Patrol member taken by SR, turned into a demon Skylander and fused with Persephone; ally.",
+    "appearance": "Wore a mask and a Karma reducing hoodie at SR, then gave them up (Ep 27). No longer shy after 2 years.",
+    "forms": [
+      {
+        "name": "Demon Skylander / Persephone fusion",
+        "note": "Shares a body with Persephone and resists fully fusing with her."
+      },
+      {
+        "name": "Lexy(Persephone)",
+        "note": "Persephone takes control of her body (Ep 28)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "High Karma",
+        "description": "Sam says her Karma is off the charts.",
+        "episode": 27,
+        "unnamed": true
+      },
+      {
+        "name": "Flight",
+        "description": "Flies to the Royal capital.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Karma reducing hoodie (given up)",
+      "Mask"
+    ],
+    "relationships": [
+      "Persephone — demon sharing her body",
+      "Sam, Max, Rhalix — SP teammates",
+      "Technica — met her in Ep 27",
+      "Keita — used her to find Max, then cut her down"
+    ],
+    "episodes": [
+      27,
+      28
+    ],
+    "key_quote": "SP gave me a home and made me feel like I could be myself!"
+  },
+  {
+    "name": "Persephone",
+    "role": "Demon fused with Lexy and loyal to SR; enemy, though she bonds with Lexy.",
+    "appearance": "",
+    "forms": [
+      {
+        "name": "Lexy(Persephone)",
+        "note": "Controls Lexy's body."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Take over",
+        "description": "Takes control of Lexy's body.",
+        "episode": 28
+      },
+      {
+        "name": "Royal capital knowledge",
+        "description": "Knows where the Royal capital is.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Lexy — host she shares a body with",
+      "Kyrie — enemy; Kyrie killed her friend Ava",
+      "Ava — her late friend",
+      "SR — group she was loyal to until Keita cut her down"
+    ],
+    "episodes": [
+      27,
+      28
+    ],
+    "key_quote": "I guess Killers get to be Queens around here."
+  },
+  {
+    "name": "Komatsu Norio",
+    "role": "\"Master Matsu\", the self-styled genuine and passionate ultimate disco dancer and rapper; runs a disco and trains Mikiko and the gang; ally.",
+    "appearance": "Disco dancer; he is getting new disco outfits for the group (Ep 31).",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Dance Kick",
+        "description": "\"The Komatsu Norio! Dance Kick!\", his signature move.",
+        "episode": 26
+      },
+      {
+        "name": "Speed",
+        "description": "Fast enough to keep tripping and kicking Mikiko.",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Karma teaching",
+        "description": "Teaches Karma through belief, certainty and the Komatsu Norio style of life.",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Treadmill-breaking sprint",
+        "description": "Broke the treadmill to beat Mikiko's speed record.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Mikiko — student (\"Young Mikikies\")",
+      "Stevie, Garry — students (\"gang brothers\")",
+      "Fox Girl — sent Mikiko to him",
+      "Zane, Henery — former students"
+    ],
+    "episodes": [
+      26,
+      27,
+      28,
+      30
+    ],
+    "key_quote": "It's a part of you, you're not a part of it."
+  },
+  {
+    "name": "Stevie",
+    "role": "\"Purple Stevie\", gang member, rapper and Komatsu Norio's student; ally.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Karma control",
+        "description": "Learned Karma a month before Ep 26; knocked Mikiko out of Fox King mode.",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Dance Kick",
+        "description": "Hit Mikiko with the Master Matsu original.",
+        "episode": 26
+      },
+      {
+        "name": "Rap Karma strike",
+        "description": "Knocks Mikiko down with Karma during rap training.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Komatsu Norio — master",
+      "Garry — fellow student and friend",
+      "Mikiko — training partner"
+    ],
+    "episodes": [
+      26,
+      27,
+      28,
+      30,
+      31
+    ],
+    "key_quote": "We fight with our words, not our hands ya know!"
+  },
+  {
+    "name": "Garry",
+    "role": "\"Green Garry\", gang member and Komatsu Norio's student; ally.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Karma control",
+        "description": "Learned Karma at the disco.",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Slam",
+        "description": "Slams Stevie during dance training.",
+        "episode": 30,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Komatsu Norio — master",
+      "Stevie — fellow student",
+      "Mikiko — friend"
+    ],
+    "episodes": [
+      26,
+      28,
+      30,
+      31
+    ],
+    "key_quote": "You're in control, not the corruption!"
+  },
+  {
+    "name": "Fox Girl",
+    "role": "Kitsune, Mikiko's former trainer and boss at Kitsune's Farm; ally.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Fox martial arts",
+        "description": "Trained Mikiko in it, but can't anymore since she lost her fox blood.",
+        "episode": 26,
+        "unnamed": true
+      },
+      {
+        "name": "Throw",
+        "description": "Throws Mikiko all the way to Komatsu Norio's disco.",
+        "episode": 26,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Mikiko — former student and worker",
+      "Kaeru — calls her master",
+      "Chase — hired him, then he quit",
+      "Komatsu Norio — arranged Mikiko's training with him",
+      "Master Yo — Mikiko's other trainer"
+    ],
+    "episodes": [
+      26,
+      28
+    ],
+    "key_quote": "Maybe next time don't overuse your true empathy like it's some kinda toy!",
+    "aliases": [
+      "Kitsune"
+    ]
+  },
+  {
+    "name": "Kaeru",
+    "role": "Guardian spirit of the Hekublade, Orenji clan; ally.",
+    "appearance": "",
+    "forms": [
+      {
+        "name": "Hekubeats",
+        "note": "Turns the Hekublade into headphones."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Change",
+        "description": "Her KA: changes into anything she chooses.",
+        "episode": 30
+      },
+      {
+        "name": "Sound element",
+        "description": "Lets Mikiko hear her through headphone form.",
+        "episode": 30
+      }
+    ],
+    "weapons": [
+      "Hekublade (she lives inside it)"
+    ],
+    "relationships": [
+      "Mikiko — calls him senpai",
+      "Fox Girl — calls her master",
+      "Chase — sizes him up, decides he isn't Orenji"
+    ],
+    "episodes": [
+      28,
+      30,
+      31
+    ],
+    "key_quote": "No need to worry Senpai, I'm sure we will be able to fight off anyone."
+  },
+  {
+    "name": "Chase",
+    "role": "Mysterious co-worker at Kitsune's Farm from Mikiko's world, sent by the old fox king to take the crown; antagonist.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Karma control",
+        "description": "Knows Karma control and KAs. Even a little of his Karma far outclasses Mikiko's.",
+        "episode": 28,
+        "unnamed": true
+      },
+      {
+        "name": "Crown removal",
+        "description": "Took the Fox King crown, which then stopped working for Mikiko.",
+        "episode": 29,
+        "unnamed": true
+      },
+      {
+        "name": "Mind reading (suspected)",
+        "description": "Mikiko wonders if he can read minds.",
+        "episode": 28,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Mikiko — took his crown",
+      "Fox Girl — former employer",
+      "Old fox king — sent him"
+    ],
+    "episodes": [
+      28,
+      29
+    ],
+    "key_quote": "Tell fox girl I quit."
+  },
+  {
+    "name": "Technica",
+    "role": "\"Tech\", a custom-made Skylander, inventor and Max's wife; ally.",
+    "appearance": "Has wings she made with Yuri's help. Smokes.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Scan",
+        "description": "Scans Lexy and finds something wrong.",
+        "episode": 27,
+        "unnamed": true
+      },
+      {
+        "name": "Invention",
+        "description": "Built her own wings and is making anti Kyle phones with Yuri.",
+        "episode": 27,
+        "unnamed": true
+      },
+      {
+        "name": "Shooting",
+        "description": "Shoots at Kill.",
+        "episode": 30,
+        "unnamed": true
+      },
+      {
+        "name": "Flight",
+        "description": "Flies with her custom wings.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Custom wings",
+      "Unnamed ranged weapon (shoots at Kill)"
+    ],
+    "relationships": [
+      "Sintrie/Max — husband",
+      "Baby daughter — her child",
+      "Yuri Tenjo — fellow inventor",
+      "Keita — mind-controlled her"
+    ],
+    "episodes": [
+      27,
+      28,
+      30
+    ],
+    "key_quote": "Being a hard working wife!"
+  },
+  {
+    "name": "Yuri Tenjo",
+    "role": "Ally at HQ Earth and an inventor.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Invention",
+        "description": "Helped Tech make wings and anti Kyle phones.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Max — lets him stay at HQ Earth",
+      "Technica — fellow inventor",
+      "\"Big bro\" — goes shopping with him (Ultima is present)"
+    ],
+    "episodes": [
+      27
+    ],
+    "key_quote": "It's all good!"
+  },
+  {
+    "name": "Kyrie",
+    "role": "Queen Kyrie of Royal capital Section 1, daughter of Queen Loverie and the late King; ally.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Hairstyling",
+        "description": "Restyles Rhalix's hair as a disguise.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Rhalix — ally; she has feelings for him",
+      "Queen Loverie — mother, captured by SR",
+      "The King — late father",
+      "Ava — someone she killed",
+      "Persephone — wants revenge on her"
+    ],
+    "episodes": [
+      26,
+      27
+    ],
+    "key_quote": "Y'all got any alcohol here?",
+    "note": "Appears young (age 10) in the Ep 30 flashback."
+  },
+  {
+    "name": "SR Leader (Senju)",
+    "role": "Senju, leader of SR (\"Father\" to its members); wants a strong Skylander group to take over the Royal capital; main villain.",
+    "appearance": "Carries a sword (flashback). SR members wear his hoodie.",
+    "forms": [
+      {
+        "name": "Split self",
+        "note": "Split into two halves; Kill is the other half."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Self-splitting",
+        "description": "A demon/devil skill used to split himself in two.",
+        "episode": 31
+      },
+      {
+        "name": "Demon granting",
+        "description": "Gives demons to members and turns people into demon vessels.",
+        "episode": 27,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Sword"
+    ],
+    "relationships": [
+      "Kill — his other half",
+      "Keita, Logan — \"sons\"/subordinates",
+      "Sintrie — trapped by a deal",
+      "Persephone/Lexy — vessel"
+    ],
+    "episodes": [
+      27,
+      30,
+      31
+    ],
+    "key_quote": "Don't blame me for your mistakes.",
+    "aliases": [
+      "Senju",
+      "Father"
+    ]
+  },
+  {
+    "name": "Keita",
+    "role": "SR member who calls the leader \"Father\"; lazy but powerful KA user; enemy. Killed by Rhalix.",
+    "appearance": "Wears a KRH (Karma reducing hoodie).",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Everything I say you believe",
+        "description": "His KA: anyone who hears him believes and obeys what he says, even loss of sight or hearing.",
+        "episode": 27
+      },
+      {
+        "name": "KA disable",
+        "description": "Turns off his own KA.",
+        "episode": 29
+      },
+      {
+        "name": "Mass kill attack",
+        "description": "Killed all the guards with one attack.",
+        "episode": 30,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Sword (cut down Persephone)"
+    ],
+    "relationships": [
+      "SR Leader — \"Father\" who calls him useless",
+      "Logan, Kill — fellow SR",
+      "Rhalix — killed him",
+      "Max/Technica — he mind-controlled them"
+    ],
+    "episodes": [
+      27,
+      28,
+      29,
+      30
+    ],
+    "key_quote": "Everything I say you believe."
+  },
+  {
+    "name": "Logan",
+    "role": "SR member who calls the leader \"Father\"; once a knight and inside man at the Royal capital; enemy. Killed by Sam.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Thunder flash",
+        "description": "Lightning strike that knocked off Sam's hoodie.",
+        "episode": 29
+      },
+      {
+        "name": "KA",
+        "description": "Has a KA he only ever used on Kill and Keita; never shown.",
+        "episode": 29,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "SR Leader — \"Father\"",
+      "Keita, Kill — fellow SR",
+      "Sam — killed him",
+      "The King — betrayed him as a knight"
+    ],
+    "episodes": [
+      27,
+      28,
+      29,
+      30
+    ],
+    "key_quote": "Its time for him to repay his Debt!"
+  },
+  {
+    "name": "Kill",
+    "role": "\"The first demon Skylander\", secretly the other half of Senju; posed as SR's weakest; enemy.",
+    "appearance": "Has demon wings like someone Max recognizes. Uses a sword.",
+    "forms": [
+      {
+        "name": "Senju's other half",
+        "note": "Speaks in the SR Leader's voice; looks younger."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Devil skills",
+        "description": "Has a devil inside him and can use all of its skills.",
+        "episode": 31
+      },
+      {
+        "name": "Sword impale",
+        "description": "Ran Max through; claims removing the sword kills faster.",
+        "episode": 30,
+        "unnamed": true
+      }
+    ],
+    "weapons": [
+      "Sword"
+    ],
+    "relationships": [
+      "SR Leader (Senju) — his other half",
+      "Logan, Keita — fellow SR",
+      "Sintrie/Max — target"
+    ],
+    "episodes": [
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "key_quote": "How would you like to die Max..",
+    "aliases": [
+      "Senju (other half)"
+    ]
+  },
+  {
+    "name": "Zack",
+    "role": "A demon SR missed, now Ai Oni's student; enemy.",
+    "appearance": "Carries a knife.",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Infinite loop",
+        "description": "His KA: while he stays still, the target keeps repeating their action every 5 seconds and never finishes it.",
+        "episode": 31
+      }
+    ],
+    "weapons": [
+      "Knife"
+    ],
+    "relationships": [
+      "Ai Oni — master",
+      "Kaitlyn — partner",
+      "Mikiko — target"
+    ],
+    "episodes": [
+      31
+    ],
+    "key_quote": "I'm a demon, you will respect my power!"
+  },
+  {
+    "name": "Kaitlyn",
+    "role": "Ai Oni's student who poses as a victim to lure Mikiko; enemy.",
+    "appearance": "",
+    "forms": [],
+    "skills": [
+      {
+        "name": "Dark Karma",
+        "description": "High levels of dark Karma.",
+        "episode": 31,
+        "unnamed": true
+      }
+    ],
+    "weapons": [],
+    "relationships": [
+      "Ai Oni — master",
+      "Zack — partner",
+      "Mikiko — target"
+    ],
+    "episodes": [
+      31
+    ],
+    "key_quote": "Come on now hero show me what you got."
+  },
+  {
+    "name": "Ai Oni",
+    "role": "Master of Zack and Kaitlyn, from Mikiko's old world; plots to capture Mikiko to draw out Kyle and Duo; antagonist.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Zack, Kaitlyn — students",
+      "Rhalix — knows him; seeing him would be an \"inconvenience\"",
+      "Mikiko — target",
+      "Kyle, Duo — targets she is hunting"
+    ],
+    "episodes": [
+      31
+    ],
+    "key_quote": "We need to capture a Demigod, named Mikiko."
+  },
+  {
+    "name": "Queen Koixea",
+    "role": "Ranrea's mother, a queen of Section 1 and one of the late King's three wives.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Queen Sainea — co-queen",
+      "Queen Loverie — like a sister",
+      "Rhalix — fought him and accepted him as king"
+    ],
+    "episodes": [
+      26
+    ],
+    "key_quote": "He reminds me of the old king.."
+  },
+  {
+    "name": "Queen Sainea",
+    "role": "Atherea's mother, a proud queen of Section 1 and one of the late King's three wives.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Queen Koixea — co-queen",
+      "Queen Loverie — like a sister",
+      "Rhalix — calls him \"commoner\""
+    ],
+    "episodes": [
+      26
+    ],
+    "key_quote": "Fight us in a battle!"
+  },
+  {
+    "name": "Queen Loverie",
+    "role": "Kyrie's mother and ex-Queen of Section 1, held captive by SR.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Kyrie — daughter",
+      "The King — husband"
+    ],
+    "episodes": [
+      30
+    ],
+    "key_quote": "It's to create peace for y'all Kyrie.",
+    "note": "Mentioned in Ep 26; appears in flashbacks."
+  },
+  {
+    "name": "The King (Section 1)",
+    "role": "Kyrie's father, King of Section 1, killed in his sleep.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Kyrie — daughter",
+      "Queen Loverie, Koixea, Sainea — wives",
+      "Logan — knight who betrayed him"
+    ],
+    "episodes": [
+      30
+    ],
+    "key_quote": "Royalty is freedom and creates peace for all.",
+    "note": "Only appears in the Ep 30 flashback."
+  },
+  {
+    "name": "Ultima",
+    "role": "The \"ultimate weapon\" the Xeno Warriors defeated; now seen at HQ Earth.",
+    "appearance": "",
+    "forms": [],
+    "skills": [],
+    "weapons": [],
+    "relationships": [
+      "Max — teases him",
+      "Yuri Tenjo — at HQ Earth together"
+    ],
+    "episodes": [
+      27
+    ],
+    "key_quote": "Came here for your girlfriend?"
+  }
+]
