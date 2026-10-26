@@ -6,7 +6,9 @@ from PIL import Image
 A = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'
 CH = A + 'textures/entity/character/'
 CU, CV = 220, 228          # crescent segment UV
-SU, SV = 220, 242          # star UV
+SU, SV = 220, 242          # star UV (grey)
+OU, OV = 232, 242          # star outline UV (dark)
+KU, KV = 244, 242          # cord UV
 SEG_L, SEG_T, SEG_D = 4.0, 5.0, 1.2
 
 def find(n, name):
@@ -32,10 +34,21 @@ def crescent(side):
         kids.append({'name': f'moon{side}_{i}', 'pivot': [round(x, 3), round(y, 3), 0.6], 'rot': [0.0, 0.0, round(ang, 4)],
                      'cubes': [{'uv': [CU, CV], 'from': [round(-seg / 2, 3), 0.0, -SEG_D / 2],
                                 'size': [round(seg, 3), round(thick, 3), SEG_D]}], 'children': []})
-    for (sx, sy, s) in [(cx + side * 3.0, cy - R - 1.0, 2.2), (cx + side * 3.5, cy + R + 1.0, 1.6), (cx + side * (R + 4.0), cy - 3, 1.4)]:
-        for k, rz in enumerate((0.0, math.pi / 2, math.pi / 4)):           # little stars: crossed bars
-            kids.append({'name': f'star{side}_{k}_{round(sy)}', 'pivot': [round(sx, 3), round(sy, 3), 0.6], 'rot': [0.0, 0.0, rz],
-                         'cubes': [{'uv': [SU, SV], 'from': [-s / 2, -0.35 if k < 2 else -0.25, -0.35], 'size': [s, 0.7 if k < 2 else 0.5, 0.7]}], 'children': []})
+    # grey stars hanging off the moon on short dark cords (like the art): an outlined 5-point star at each cord's end
+    for j, t in enumerate((0.1, 0.4, 0.7, 0.86)):
+        a = a0 + (a1 - a0) * t
+        x = cx + side * math.cos(a) * (R + 0.3); y = cy + math.sin(a) * (R + 0.3)
+        cord = (1.6, 2.6, 2.2, 1.4)[j]
+        sz = (4.2, 3.6, 3.9, 4.6)[j]
+        kids.append({'name': f'cord{side}_{j}', 'pivot': [round(x, 3), round(y, 3), 0.6], 'rot': [0.0, 0.0, 0.0],
+                     'cubes': [{'uv': [KU, KV], 'from': [-0.2, 0.0, -0.2], 'size': [0.4, cord, 0.4]},
+                               {'uv': [KU, KV], 'from': [-0.6, -0.4, -0.45], 'size': [1.2, 0.8, 0.9]}], 'children': []})
+        sx, sy = x, y + cord + sz * 0.45
+        for k in range(5):
+            rz = round(k * 2 * math.pi / 5 + (0.25 * side if j % 2 else 0.0), 4)
+            kids.append({'name': f'star{side}_{j}_{k}', 'pivot': [round(sx, 3), round(sy, 3), 0.6], 'rot': [0.0, 0.0, rz],
+                         'cubes': [{'uv': [SU, SV], 'from': [round(-sz * 0.15, 3), round(-sz * 0.55, 3), -0.35], 'size': [round(sz * 0.3, 3), round(sz * 0.55, 3), 0.7]},
+                                   {'uv': [OU, OV], 'from': [round(-sz * 0.21, 3), round(-sz * 0.64, 3), -0.25], 'size': [round(sz * 0.42, 3), round(sz * 0.66, 3), 0.5]}], 'children': []})
     return kids
 
 def main():
@@ -53,8 +66,10 @@ def main():
     for x in range(CU, CU + 2 * D + 2 * W + 2):                  # outer edge (local -y side = top row) glows pink
         px[x, CV + D] = (220, 95, 185, 255)
         for y in range(CV, CV + D): px[x, y] = (220, 95, 185, 255)
-    for y in range(SV, SV + 4):
-        for x in range(SU, SU + 6): px[x, y] = (236, 228, 240, 255)
+    for y in range(SV, SV + 6):
+        for x in range(SU, SU + 10): px[x, y] = (150, 150, 156, 255) if (x + y) % 3 else (128, 128, 134, 255)
+        for x in range(OU, OU + 10): px[x, y] = (22, 20, 26, 255)
+        for x in range(KU, KU + 8): px[x, y] = (14, 12, 16, 255)
     im.save(CH + 'rhalix_lunar_details.png')
     print('ok')
 
