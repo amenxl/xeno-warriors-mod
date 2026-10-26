@@ -26,6 +26,8 @@ public final class ModItems {
     public static final RegistryObject<Item> SKY_CRYSTAL = ITEMS.register("sky_crystal", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> SKY_ORE = ITEMS.register("sky_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.SKY_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> HEALING_POD = ITEMS.register("healing_pod",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.HEALING_POD.get(), new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKY_HELMET = ITEMS.register("sky_helmet",
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
     public static final RegistryObject<Item> SKY_CHESTPLATE = ITEMS.register("sky_chestplate",

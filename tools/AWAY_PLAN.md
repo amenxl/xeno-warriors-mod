@@ -62,3 +62,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 03:30 — Ultima default face = option 8 (Bored, looking away), NO nose. User may change later: REMIND them when integrating Ultima.
 - Mon 04:00 (user here) — 0.110.0: Ultima playable, Season 2 locked (ultima/UltimaOutput, skill/ultima/*, assets via tools/xw/ultima/mod_assets.py, HUD output %). TODO: Ultima boss (remind user), remind about Ultima face choice, Lunar form next, then Gov facilities etc.
 - Mon 04:05 — STANDING: send GIFs of every new/changed animation from now on (tools/xw/ultima/idle_pics.py has a GIF builder: lerp_pose + U.preview with pose/bends/offset).
+- Mon 04:10 (user) ORDER: (1) Gov facilities + healing pod + Gov workers/guards [in progress], (2) Lunar form (S2), (3) bounty boards, (4) named mini-bosses, (5) SR camps. Ultima BOSS: only after more player-Ultima work. THEN: send pictures of all + GIFs: phone animation, Ultima fighting at 25/45/70/100/Overload.
