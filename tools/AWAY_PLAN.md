@@ -64,3 +64,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 04:05 — STANDING: send GIFs of every new/changed animation from now on (tools/xw/ultima/idle_pics.py has a GIF builder: lerp_pose + U.preview with pose/bends/offset).
 - Mon 04:10 (user) ORDER: (1) Gov facilities + healing pod + Gov workers/guards [in progress], (2) Lunar form (S2), (3) bounty boards, (4) named mini-bosses, (5) SR camps. Ultima BOSS: only after more player-Ultima work. THEN: send pictures of all + GIFs: phone animation, Ultima fighting at 25/45/70/100/Overload.
 - Mon 04:35 — 0.111.0: Gov facilities (gov/*), healing pod, Gov agents w/ mods, /xeno build gov_facility. NEXT: Lunar form (S2).
+- Mon 04:50 — 0.111.1: Ultima boss intro pose (UltimaAnim.perch) + GIF; 20 battle refs saved to docs/refs/ultima_battle. NEXT: Lunar form.

@@ -113,6 +113,28 @@ public final class UltimaAnim {
         return true;
     }
 
+    /**
+     * Boss intro (for the Ultima boss, not wired up yet): sitting on a Government facility's roof edge, legs
+     * swinging, forearms on his lap, bored and looking away. {@code notice} 0..1 turns his head to the player and
+     * leans him forward (switch the face to grin past 0.7); then the boss pushes off and drops. Knee bend of
+     * ~1.45 + 0.45*swing per leg is applied by the renderer's limb bending.
+     */
+    public static void perch(HumanoidModel<?> m, float age, float notice) {
+        float swing = Mth.sin(age * 0.21F) * (1F - notice);
+        m.rightLeg.xRot = -1.5F + 0.05F * swing; m.rightLeg.yRot = 0.12F; m.rightLeg.zRot = 0.05F;
+        m.leftLeg.xRot = -1.5F - 0.05F * swing;  m.leftLeg.yRot = -0.12F; m.leftLeg.zRot = -0.05F;
+        m.body.xRot = 0.25F * notice;
+        m.rightArm.xRot = -0.3F - 0.15F * notice; m.rightArm.yRot = -0.1F; m.rightArm.zRot = 0.12F;
+        m.leftArm.xRot = -0.2F - 0.15F * notice;  m.leftArm.yRot = 0.35F;  m.leftArm.zRot = -0.2F;
+        m.head.xRot = 0.05F + 0.1F * notice; m.head.yRot = 0.55F - 0.75F * notice; m.head.zRot = 0.08F + 0.1F * notice;
+    }
+
+    /** Knee bends that go with {@link #perch}: right, left. */
+    public static float[] perchKnees(float age, float notice) {
+        float swing = Mth.sin(age * 0.21F) * (1F - notice);
+        return new float[] {1.45F + 0.45F * swing, 1.45F - 0.45F * swing};
+    }
+
     /** What his energy is called: Data (Gov data powers him), not Karma. */
     public static String resource() {
         return ClientCharacterData.getLocal() == CharacterType.ULTIMA ? "Data" : "Karma";
