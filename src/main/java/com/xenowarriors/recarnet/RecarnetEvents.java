@@ -31,14 +31,26 @@ public final class RecarnetEvents {
     public static void onJoin(EntityJoinLevelEvent event) {
         if (!(event.getLevel() instanceof ServerLevel s) || !Recarnet.is(s) || !(event.getEntity() instanceof AbstractVillager v)) return;
         event.setCanceled(true);
-        HumanNpcEntity h = ModNpcs.HUMAN.get().create(s);
-        if (h == null) return;
-        h.moveTo(v.getX(), v.getY(), v.getZ(), v.getYRot(), 0);
-        s.getServer().execute(() -> {                                     // after this join is done
-            h.finalizeSpawn(s, s.getCurrentDifficultyAt(h.blockPosition()), MobSpawnType.CONVERSION, null, null);
+        PENDING.add(new Object[]{s, v.position(), v.getYRot()});            // swapped in on the next server tick (never while a chunk loads)
+    }
+
+    private static final java.util.List<Object[]> PENDING = new java.util.ArrayList<>();
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || PENDING.isEmpty()) return;
+        var list = new java.util.ArrayList<>(PENDING);
+        PENDING.clear();
+        for (Object[] o : list) {
+            ServerLevel s = (ServerLevel) o[0];
+            Vec3 at = (Vec3) o[1];
+            HumanNpcEntity h = ModNpcs.HUMAN.get().create(s);
+            if (h == null) continue;
+            h.moveTo(at.x, at.y, at.z, (Float) o[2], 0);
+            h.finalizeSpawn(s, new net.minecraft.world.DifficultyInstance(s.getDifficulty(), s.getDayTime(), 0L, s.getMoonBrightness()), MobSpawnType.CONVERSION, null, null);
             h.setPersistenceRequired();
             s.addFreshEntity(h);
-        });
+        }
     }
 
     @SubscribeEvent
