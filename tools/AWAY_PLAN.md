@@ -50,3 +50,4 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 02:05 (user here) — 0.105.0 elements (ka/Element, ka/Elements; humans 75%/Skylanders 40%/C-souls 90%, no Blood) + 0.106.0 clashes (ka/Clashes, ClashClient; Skill.clashColor on FireBlitz/Scatter/Bang/Compress).
 - Mon 02:25 (user here) — 0.107.0: animation pass (anim/Poses + client/EntityPoses + compat/epicfight/EfPoses): clash, element casts, KA cast/burnout, KA victim states, empathy mirror, KA break, work anims, corrupted model polish, EF fallbacks.
 - Mon 02:30 (user here) — 0.107.1: skill info tooltips (desc/how/stats), KaGuideScreen (KAs + Elements), M menu 'KAs' tab. User will allow PC play-testing when home: link computer, then do a full visual test pass.
+- Mon 02:45 (user here) — 0.108.0: scaling/EnemyScaling (zone per 1k blocks, player power pull w/ spread, HP/dmg/armor/karma/xp), Lv on lock-on bar, zone messages.
