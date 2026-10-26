@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "48";
+    private static final String VERSION = "49";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -42,6 +42,10 @@ public final class ModNetwork {
                 .encoder(OpenPartyMenuPacket::encode).decoder(OpenPartyMenuPacket::decode).consumerMainThread(OpenPartyMenuPacket::handle).add();
         CHANNEL.messageBuilder(CollectionActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(CollectionActionPacket::encode).decoder(CollectionActionPacket::decode).consumerMainThread(CollectionActionPacket::handle).add();
+        CHANNEL.messageBuilder(BountyPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(BountyPacket::encode).decoder(BountyPacket::decode).consumerMainThread(BountyPacket::handle).add();
+        CHANNEL.messageBuilder(BountyClaimPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(BountyClaimPacket::encode).decoder(BountyClaimPacket::decode).consumerMainThread(BountyClaimPacket::handle).add();
         CHANNEL.messageBuilder(PetBarsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(PetBarsPacket::encode).decoder(PetBarsPacket::decode).consumerMainThread(PetBarsPacket::handle).add();
         CHANNEL.messageBuilder(DemonStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)

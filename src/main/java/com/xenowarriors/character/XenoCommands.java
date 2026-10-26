@@ -331,6 +331,7 @@ public final class XenoCommands {
                 .then(Commands.literal("enter").executes(ctx -> { com.xenowarriors.tower.Tower.enter(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.tower.Tower.leave(ctx.getSource().getPlayerOrException(), "You left the Tower"); return 1; }))
                 .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; })));
+        root.then(Commands.literal("bounty").executes(ctx -> { com.xenowarriors.bounty.Bounties.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("collection").executes(ctx -> {
             com.xenowarriors.collection.Collection.openFromBook(ctx.getSource().getPlayerOrException());
             return 1;

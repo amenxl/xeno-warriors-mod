@@ -243,6 +243,8 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
         if (r < 1.5) { for (int y = 1; y <= 4; y++) set(l, p, x, B + y, z, Blocks.QUARTZ_PILLAR.defaultBlockState()); set(l, p, x, B + 5, z, Blocks.SEA_LANTERN.defaultBlockState()); set(l, p, x, B + 6, z, Blocks.WATER.defaultBlockState()); }
         else if (r < 5.5) set(l, p, x, B, z, Blocks.WATER.defaultBlockState());
         else if (r < 6.5) { set(l, p, x, B + 1, z, Blocks.QUARTZ_SLAB.defaultBlockState()); }
+        else if (dx == -10 && dz == 0) set(l, p, x, B + 1, z, com.xenowarriors.sky.ModBlocks.BOUNTY_BOARD.get().defaultBlockState()
+                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, net.minecraft.core.Direction.EAST));    // city Bounty Board
         else if (Math.abs(r - 15) < 0.6 && (dx + dz) % 4 == 0) { set(l, p, x, B, z, Blocks.GRASS_BLOCK.defaultBlockState()); set(l, p, x, B + 1, z, Blocks.FLOWERING_AZALEA_LEAVES.defaultBlockState()); }
         else if ((Math.abs(dx) == 18 || Math.abs(dz) == 18) && (dx + dz) % 6 == 0) { for (int y = 1; y <= 3; y++) set(l, p, x, B + y, z, Blocks.IRON_BARS.defaultBlockState()); set(l, p, x, B + 4, z, Blocks.SEA_LANTERN.defaultBlockState()); }
     }

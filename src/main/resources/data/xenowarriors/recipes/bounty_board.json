@@ -1,0 +1,22 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "PPP",
+  "pPp",
+  "S S"
+ ],
+ "key": {
+  "P": {
+   "tag": "minecraft:planks"
+  },
+  "p": {
+   "item": "minecraft:paper"
+  },
+  "S": {
+   "item": "minecraft:stick"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:bounty_board"
+ }
+}

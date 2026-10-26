@@ -134,6 +134,8 @@ public class PineConeCityFeature extends Feature<NoneFeatureConfiguration> {
             set(x, B + 1, z, b(Blocks.SPRUCE_STAIRS));                          // benches
         }
         if (ux == 7 && uz == 7) sign(x, B + 1, z, true, "Mountain", "Village", "~ Pine Cone", "City ~");
+        if (ux == -7 && uz == 7) set(x, B + 1, z, net.minecraftforge.registries.ForgeRegistries.BLOCKS.getValue(com.xenowarriors.XenoWarriors.id("bounty_board")).defaultBlockState()
+                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, net.minecraft.core.Direction.EAST));       // the village Bounty Board
     }
 
     /** A spruce with a cone of needles (column-wise, from a few hashed spots). */
