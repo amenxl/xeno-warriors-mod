@@ -10,7 +10,9 @@
     "preset": "minecraft:overworld"
    },
    "aurora": "xenowarriors:aurora",
-   "radius": 250
+   "radius": 250,
+   "village": "xenowarriors:mountain_village",
+   "canyon": "minecraft:badlands"
   }
  }
 }

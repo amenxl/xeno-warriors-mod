@@ -328,5 +328,7 @@
   "biome.xenowarriors.aurora": "Aurora City",
   "block.xenowarriors.data_ore": "Data Ore",
   "item.xenowarriors.data_shard": "Data Shard",
-  "item.xenowarriors.mod_chip": "Modification Chip"
+  "item.xenowarriors.mod_chip": "Modification Chip",
+  "block.xenowarriors.collection_book": "Collection Book",
+  "biome.xenowarriors.mountain_village": "Mountain Village"
 }

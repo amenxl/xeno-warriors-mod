@@ -67,3 +67,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 04:50 — 0.111.1: Ultima boss intro pose (UltimaAnim.perch) + GIF; 20 battle refs saved to docs/refs/ultima_battle. NEXT: Lunar form.
 - Mon 05:20 — 0.112.0: Lunar form (lunar/LunarForm, MoonFall, MoonReflectSkill, LunarClient, lunar textures from user art), /xeno lunar unlock|lock, Lunar trial (crouch still 30s under full moon), DMZ fake moon. Spin-off docs summarized in docs/lore. NEXT: bounty boards.
 - Mon 06:20 — 0.113-0.114.1: Aurora virus (S2), Distortions + Order of Assassins (S3), Recarnet dimension with Aurora City (S2 barrier), dedicated-server crash fixes, CI selftest (selftest.yml -> 'selftest' release, render with tools/xw/recarnet). NEXT: Mountain Village/Pine Cone City + Kitsune farm + Disco Dojo in Recarnet, then bounty boards, mini-bosses, SR camps, GIFs.
+
+## Reminders
+- When more playable characters exist: disable two players being the same character, but keep a way to switch if nobody else is free in the character screen (user asked to be reminded).
+- Away mode resumes 2pm ET Mon Oct 26, check-ins every 1 hour.

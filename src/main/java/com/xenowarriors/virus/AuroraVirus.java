@@ -44,7 +44,7 @@ public final class AuroraVirus {
 
     public static boolean immune(LivingEntity e) {
         if (e.hasEffect(ModEffects.VIRUS_IMMUNITY.get())) return true;
-        if (e instanceof Player p && (p.isCreative() || p.isSpectator() || ModCapabilities.getType(p) == CharacterType.ULTIMA)) return true;
+        if (e instanceof Player p && (p.isCreative() || p.isSpectator() || ModCapabilities.getType(p) == CharacterType.ULTIMA || ModCapabilities.getType(p) == CharacterType.RHALIX)) return true;   // Rhalix (demigod, Skylander healing) can't catch it
         return e instanceof com.xenowarriors.npc.DarkPossessedEntity;                   // demons are immune to all sickness
     }
 

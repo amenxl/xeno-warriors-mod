@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "xenowarriors:block/collection_book",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "xenowarriors:block/collection_book",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "xenowarriors:block/collection_book",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "xenowarriors:block/collection_book",
+   "y": 270
+  }
+ }
+}

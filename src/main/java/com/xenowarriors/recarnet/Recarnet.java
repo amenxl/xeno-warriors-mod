@@ -22,6 +22,16 @@ public final class Recarnet {
 
     /** Aurora City: wall radius and street level. */
     public static final int CITY_R = 208, BASE_Y = 72, BLEND = 40;
+    /** Pine Cone City (with the Mountain Village, Kitsune's Farm, the Disco Dojo, the element school), up in the hills north. */
+    public static final int VILLAGE_X = 0, VILLAGE_Z = -760, VILLAGE_R = 150, VILLAGE_BLEND = 60, VILLAGE_Y = 92;
+    /** The desert canyon (badlands) east of Aurora. */
+    public static final int CANYON_X = 900, CANYON_Z = 0, CANYON_R = 320;
+
+    public static boolean inVillage(net.minecraft.world.level.Level l, BlockPos p) {
+        if (!is(l)) return false;
+        double dx = p.getX() - VILLAGE_X, dz = p.getZ() - VILLAGE_Z;
+        return dx * dx + dz * dz < (double) VILLAGE_R * VILLAGE_R;
+    }
 
     private Recarnet() {}
 

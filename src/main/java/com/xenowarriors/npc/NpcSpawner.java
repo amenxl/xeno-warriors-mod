@@ -28,7 +28,7 @@ public final class NpcSpawner {
         if (event.phase != TickEvent.Phase.END || event.getServer().getTickCount() % EVERY != 0) return;
         for (ServerPlayer p : event.getServer().getPlayerList().getPlayers()) {
             if (!(p.level() instanceof ServerLevel level) || (level.dimension() != Level.OVERWORLD && !com.xenowarriors.recarnet.Recarnet.is(level)) || p.isSpectator()) continue;
-            if (com.xenowarriors.recarnet.Recarnet.inAurora(level, p.blockPosition())) {     // Aurora City: busy streets, day and night
+            if (com.xenowarriors.recarnet.Recarnet.inAurora(level, p.blockPosition()) || com.xenowarriors.recarnet.Recarnet.inVillage(level, p.blockPosition())) {     // Aurora City / Pine Cone City: busy streets
                 int people = level.getEntitiesOfClass(HumanNpcEntity.class, p.getBoundingBox().inflate(64)).size();
                 for (int i = 0; i < 3 && people + i < 14; i++) if (level.random.nextFloat() < 0.7F) spawn(level, ModNpcs.HUMAN.get(), around(p.blockPosition(), level.random, 14, 40), false);
                 continue;

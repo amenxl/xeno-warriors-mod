@@ -16,7 +16,10 @@ public class CharacterSelectScreen extends Screen {
     private int CARD_WIDTH = 150;
 
     private static boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }
-    private static final int CARD_HEIGHT = 200;
+    private static final int CARD_HEIGHT = 176;
+    /** Characters coming later: blank, locked slots (name + color) under the playable ones. */
+    public static final String[] UPCOMING = {"Sam", "Lexy", "Max", "Kyle", "Chase", "Zack", "Kyrie", "Kaitlyn", "Zane", "Stevie", "Garry", "Technica", "Yuri", "SR Leader"};
+    public static final int[] UPCOMING_COLOR = {0x4AA8FF, 0xC83A3A, 0x6AD08A, 0x8A8A9A, 0x6A6A8A, 0x9A3A3A, 0xE8B0D8, 0xD86AA0, 0x4A6AD8, 0xA05AE0, 0x4AC85A, 0x5AC8E8, 0x6AE08A, 0x9A2A2A};
     private static final int GAP = 24;
 
     /** Players who already have a character (opened via /xeno choose) can back out with Esc. */
@@ -34,7 +37,37 @@ public class CharacterSelectScreen extends Screen {
     }
 
     private int cardTop() {
-        return Math.max(40, (height - CARD_HEIGHT) / 2 + 10);
+        return Math.max(34, (height - CARD_HEIGHT - 2 * SLOT_H - 22) / 2 + 6);
+    }
+
+    private static final int SLOT_W = 46, SLOT_H = 40, SLOT_GAP = 4;
+
+    /** The locked future characters: two rows of 7 under the cards. */
+    private void drawUpcoming(GuiGraphics g, int mouseX, int mouseY) {
+        int perRow = 7, top = cardTop() + CARD_HEIGHT + 14;
+        int rowW = perRow * SLOT_W + (perRow - 1) * SLOT_GAP;
+        int sw = SLOT_W, x0 = (width - rowW) / 2;
+        if (rowW > width - 10) { sw = (width - 10 - (perRow - 1) * SLOT_GAP) / perRow; x0 = 5; }
+        g.drawCenteredString(font, "Coming later", width / 2, top - 10, 0x777777);
+        for (int i = 0; i < UPCOMING.length; i++) {
+            int x = x0 + (i % perRow) * (sw + SLOT_GAP), y = top + (i / perRow) * (SLOT_H + SLOT_GAP);
+            boolean hov = mouseX >= x && mouseX < x + sw && mouseY >= y && mouseY < y + SLOT_H;
+            int c = UPCOMING_COLOR[i];
+            g.fill(x - 1, y - 1, x + sw + 1, y + SLOT_H + 1, hov ? 0xFF000000 | c : 0x66000000 | (c & 0xFFFFFF));
+            g.fill(x, y, x + sw, y + SLOT_H, 0xE0101016);
+            int cx = x + sw / 2;
+            g.fill(cx - 4, y + 4, cx + 4, y + 12, 0xFF2A2A34);              // silhouette: head
+            g.fill(cx - 6, y + 13, cx + 6, y + 25, 0xFF2A2A34);             // body
+            g.fill(cx - 3, y + 17, cx + 3, y + 22, 0xFF55555F);             // padlock
+            g.fill(cx - 2, y + 15, cx + 2, y + 17, 0xFF55555F);
+            g.pose().pushPose();
+            g.pose().translate(cx, y + SLOT_H - 9, 0);
+            float sc = Math.min(1F, (sw - 4) / (float) Math.max(1, font.width(UPCOMING[i])));
+            g.pose().scale(sc, sc, 1F);
+            g.drawCenteredString(font, UPCOMING[i], 0, 0, hov ? c : 0x888888);
+            g.pose().popPose();
+            if (hov) g.renderTooltip(font, Component.literal(UPCOMING[i] + " - locked (coming in a later update)"), mouseX, mouseY);
+        }
     }
 
     @Override
@@ -105,6 +138,7 @@ public class CharacterSelectScreen extends Screen {
         }
 
         super.render(g, mouseX, mouseY, partialTick);
+        drawUpcoming(g, mouseX, mouseY);
     }
 
     @Override

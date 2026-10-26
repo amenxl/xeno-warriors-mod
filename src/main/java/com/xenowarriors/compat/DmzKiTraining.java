@@ -78,6 +78,15 @@ public final class DmzKiTraining {
         if (gain) give(p, stat, label);
     }
 
+    /** +amount to a DragonMineZ stat (for any character), if DragonMineZ is installed. Returns true if it worked. */
+    public static boolean bonus(ServerPlayer p, String stat, int amount, String label) {
+        if (!ready()) return false;
+        for (int i = 0; i < amount; i++) give(p, stat, label);
+        return !broken;
+    }
+
+    public static final String[] DMZ_STATS = {"Strength", "StrikePower", "Resistance", "Vitality", "KiPower", "Energy"};
+
     private static void give(ServerPlayer p, String stat, String label) {
         try {
             Object data = p.getCapability(cap).resolve().orElse(null);

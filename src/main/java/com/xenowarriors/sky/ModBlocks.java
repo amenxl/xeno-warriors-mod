@@ -29,6 +29,10 @@ public final class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).strength(4F, 5F).requiresCorrectToolForDrops()
                     .sound(SoundType.DEEPSLATE).lightLevel(s -> 4), UniformInt.of(2, 5)));
 
+    /** The Collection Book on its stand (Mountain Village Element School). */
+    public static final RegistryObject<Block> COLLECTION_BOOK = BLOCKS.register("collection_book", () -> new com.xenowarriors.collection.CollectionBookBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD).noOcclusion()));
+
     /** Government healing pod (2 tall). Breaks loose only with a diamond pickaxe or better. */
     public static final RegistryObject<Block> HEALING_POD = BLOCKS.register("healing_pod", () -> new com.xenowarriors.gov.HealingPodBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).strength(6F, 9F).requiresCorrectToolForDrops()

@@ -30,6 +30,8 @@ public final class ModNetwork {
                 .encoder(EntityPosePacket::encode).decoder(EntityPosePacket::decode).consumerMainThread(EntityPosePacket::handle).add();
         CHANNEL.messageBuilder(EnemyLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(EnemyLevelPacket::encode).decoder(EnemyLevelPacket::decode).consumerMainThread(EnemyLevelPacket::handle).add();
+        CHANNEL.messageBuilder(CollectionPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(CollectionPacket::encode).decoder(CollectionPacket::decode).consumerMainThread(CollectionPacket::handle).add();
         CHANNEL.messageBuilder(DataSensedPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(DataSensedPacket::encode).decoder(DataSensedPacket::decode).consumerMainThread(DataSensedPacket::handle).add();
         CHANNEL.messageBuilder(BigHungerPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
