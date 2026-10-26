@@ -77,6 +77,7 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
 - Mon 15:15 (away) — 0.122.0: Bounty boards (bounty/*): 3 daily bounties easy/medium/hard, emeralds + stat XP (+ karma potion/data shard), boards in Mountain Village + Aurora plaza, craftable, /xeno bounty. Lodestone effects DEFERRED (needs client particle packet plumbing per effect; low value vs. queue).
 
 - Mon 16:35 (away) — 0.123.0: named mini-bosses (boss/MiniBosses): 1.5% of monsters (not creepers/Tower), name + title, boss bar, x4 HP, +75% dmg, glow, power (Blazing/Swift/Ironhide/Karma-Eater/Summoner/Frostbound), loot + 50% of a level in each stat; /xeno miniboss.
+- Mon 17:50 (away) — 0.124.0: Sky Rebellion camps (sr/*): rare overworld camp (2 black tents, campfire, barrels, loot chest w/ SR hoodie chance, sign), 3-4 SR members (black SR hoodie with white eye, red eyes, leap, demon vessel at 50% HP); SR hoodie = disguise (they won't attack). /xeno build sr_camp. No wings on SR members yet.
 ## Reminders
 - When more playable characters exist: disable two players being the same character, but keep a way to switch if nobody else is free in the character screen (user asked to be reminded).
 - Away mode resumes 2pm ET Mon Oct 26, check-ins every 1 hour.
