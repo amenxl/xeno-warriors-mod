@@ -73,6 +73,8 @@ User refs: C:\Users\amenk\OneDrive\Pictures\Xeno Warriors Recarnet (chars/, Pose
   STILL TODO: #73 model/UI audit w/ before-after images, #75 char models, #76 compat (TACZ/Lodestone optional-vs-required unanswered), #78 more 3D items, max 4 pets limit, bounty boards, mini-bosses, SR camps, GIFs (Demon's Remnants, phone, Ultima styles).
 - Mon 13:40 (user here) — 0.120.0: Collection (hostile only, 1000 cap, DMZ), menu Collection tab, Tower mode (tower dim, waves from unfinished, checkpoints every 10 floors, party join, 10 hearts healing/floor), party pet limit 4, TACZ/Lodestone optional + tip.
 - Mon 14:05 (away, hourly) — 0.121.0: optional TACZ guns for Gov guards (60%, reflection bridge compat/TaczGuns), 35% Sky-tech rounds (+30% dmg, slow, blue burst). Untested with TACZ installed (CI has no TACZ).
+- Mon 14:40-14:55 (user here) — 0.121.1/0.121.2: Lunar moons: hanging grey stars, black moons with glowing purple edge (eyes glow pass, rhalix_lunar_glow.png); flying GIF sent.
+- Mon 15:15 (away) — 0.122.0: Bounty boards (bounty/*): 3 daily bounties easy/medium/hard, emeralds + stat XP (+ karma potion/data shard), boards in Mountain Village + Aurora plaza, craftable, /xeno bounty. Lodestone effects DEFERRED (needs client particle packet plumbing per effect; low value vs. queue).
 
 ## Reminders
 - When more playable characters exist: disable two players being the same character, but keep a way to switch if nobody else is free in the character screen (user asked to be reminded).
