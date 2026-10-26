@@ -78,8 +78,13 @@ public final class UltimaAnim {
         if (w <= 0F) return false;
         float breathe = Mth.sin(age * 0.08F) * 0.03F;
         if (p.isCrouching()) {                                       // squatting on his heels, an arm on his knee
-            lerp(m.rightLeg, w, -1.75F, 0.25F, 0.1F); lerp(m.leftLeg, w, -1.75F, -0.25F, -0.1F);
-            lerp(m.rightArm, w, -0.9F + breathe, -0.2F, 0.15F); lerp(m.leftArm, w, -0.5F, 0.1F, -0.1F);
+            lerp(m.rightLeg, w, -1.45F, 0.3F, 0.12F); lerp(m.leftLeg, w, -1.45F, -0.3F, -0.12F);
+            lerp(m.rightArm, w, -1.1F + breathe, -0.25F, 0.15F); lerp(m.leftArm, w, -0.7F, 0.1F, -0.1F);
+            LimbBend.extraKnees(p, 2.3F * w, 2.3F * w);
+            LimbBend.extraElbows(p, -0.6F * w, -0.3F * w);
+            float drop = 5.5F * w;                                      // the whole body sinks down onto his heels
+            m.head.y += drop; m.body.y += drop; m.rightArm.y += drop; m.leftArm.y += drop; m.rightLeg.y += drop; m.leftLeg.y += drop;
+            m.rightLeg.z -= 2F * w; m.leftLeg.z -= 2F * w;
             m.head.xRot = Mth.lerp(w, m.head.xRot, m.head.xRot + 0.2F);
             return true;
         }
@@ -88,6 +93,7 @@ public final class UltimaAnim {
         int pose = wall ? 0 : (int) (t / 240) % 2 == 0 ? 1 : 2;
         if (pose == 2) {                                             // rubbing the back of his neck, other hand in his pocket
             lerp(m.rightArm, w, -2.55F + breathe, 0.15F, -0.75F);
+            LimbBend.extraElbows(p, -1.7F * w, 0F);
             lerp(m.leftArm, w, 0.18F, -0.25F, -0.12F);
             m.head.xRot = Mth.lerp(w, m.head.xRot, 0.25F);
             m.head.zRot = Mth.lerp(w, m.head.zRot, -0.15F);
@@ -95,6 +101,7 @@ public final class UltimaAnim {
         } else {                                                     // arms crossed (leaning back on the wall, one foot crossed over)
             lerp(m.rightArm, w, -0.95F + breathe, -0.62F, 0.12F);
             lerp(m.leftArm, w, -1.05F + breathe, 0.62F, -0.12F);
+            LimbBend.extraElbows(p, -0.5F * w, -0.5F * w);
             m.head.zRot = Mth.lerp(w, m.head.zRot, 0.12F);
             if (pose == 0) {
                 m.body.xRot = Mth.lerp(w, m.body.xRot, -0.12F);
