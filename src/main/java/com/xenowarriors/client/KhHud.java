@@ -120,7 +120,7 @@ public final class KhHud implements IGuiOverlay {
         small(g, font, "HP", bx - 11, by, 0xE6E6F0, 0.6F);
         float karma = ClientSkillState.karma(), kmax = Math.max(1F, ClientSkillState.maxKarma());
         bar(g, bx + 6, by + 10, bw - 6, 5, karma / kmax, 0xFF5A96FF, 0);
-        small(g, font, "KARMA", bx - 21, by + 10, 0xC8D8FF, 0.5F);
+        small(g, font, UltimaAnim.resource().toUpperCase(), bx - (type == CharacterType.ULTIMA ? 14 : 21), by + 10, 0xC8D8FF, 0.5F);
         small(g, font, Math.round(karma) + "", bx + bw - 2 - font.width(Math.round(karma) + "") * 0.5F, by + 10.5F, 0xFFFFFF, 0.5F);
         int y = by + 18;
         boolean dbz = DmzHud.read(p);
@@ -220,7 +220,7 @@ public final class KhHud implements IGuiOverlay {
         g.fill(x, top, x + w, top + 12, alpha(0xFF19285A, a));
         g.fill(x, top + 11, x + w, top + 12, alpha(0xFF8CBEFF, a));
         small(g, font, "SKILLS", x + 5, top + 3, alpha(0xC8E1FF, a), 0.65F);
-        small(g, font, "Karma", x + w - 22, top + 3.5F, alpha(0x96BEFF, a), 0.5F);
+        small(g, font, UltimaAnim.resource(), x + w - 22, top + 3.5F, alpha(0x96BEFF, a), 0.5F);
         int[] loadout = ClientSkillState.loadout();
         int y = top + 14;
         for (int s = 0; s <= SkillManager.SLOTS; s++) {

@@ -80,7 +80,7 @@ public class SkillLoadoutScreen extends Screen {
             g.fill(x, y, x + CARD_W, y + CARD_H, at >= 0 ? 0xCC23402A : over && open ? 0xCC30304A : 0xCC1A1A24);
             g.fill(x, y, x + 3, y + CARD_H, open ? type.getColor() : 0xFF555555);
             g.drawString(font, seasonOk ? e.skill().getName().getString() : "???", x + 8, y + 6, open ? 0xFFFFFF : 0x777777);
-            String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : "Karma " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
+            String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
             g.drawString(font, line, x + 8, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
         }
@@ -90,7 +90,7 @@ public class SkillLoadoutScreen extends Screen {
             boolean first = true;
             for (String l : hover.split("\n")) {
                 if (l.isEmpty()) { lines.add(net.minecraft.util.FormattedCharSequence.EMPTY); continue; }
-                lines.addAll(font.split(Component.literal(l).withStyle(first ? net.minecraft.ChatFormatting.YELLOW : l.startsWith("Karma") ? net.minecraft.ChatFormatting.AQUA : net.minecraft.ChatFormatting.GRAY), 240));
+                lines.addAll(font.split(Component.literal(l).withStyle(first ? net.minecraft.ChatFormatting.YELLOW : (l.startsWith("Karma") || l.startsWith("Data")) ? net.minecraft.ChatFormatting.AQUA : net.minecraft.ChatFormatting.GRAY), 240));
                 first = false;
             }
             g.renderTooltip(font, lines, mx, my);
@@ -142,7 +142,7 @@ public class SkillLoadoutScreen extends Screen {
     private static String desc(Skill s) {
         String k = "skill.xenowarriors." + s.getId() + ".desc", h = "skill.xenowarriors." + s.getId() + ".how";
         String cd = s.getCooldownTicks() < 20 ? "none" : s.getCooldownTicks() / 20 + "s";
-        String stats = "Karma " + s.getKarmaCost() + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
+        String stats = UltimaAnim.resource() + " " + s.getKarmaCost() + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
         return stats + "\n\n" + (I18n.exists(k) ? I18n.get(k) : "") + (I18n.exists(h) ? "\n\nHow: " + I18n.get(h) : "");
     }
 

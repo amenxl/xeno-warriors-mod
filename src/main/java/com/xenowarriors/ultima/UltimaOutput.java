@@ -34,7 +34,7 @@ import java.util.UUID;
  * Overload (over 100%, the super slot) is everything at once - and it burns him up.
  *   25% Analysis   - Attack Prediction sometimes dodges hits on its own
  *   45% Blaster    - he can fly; blasts come in bursts
- *   70% Living Weapon - hits much harder, shrugs off knockback, tougher
+ *   70% Heavy hitter - heavy combos (every third blow a slam), shrugs off knockback, tougher
  *   100% Full Output - fastest and strongest, everything at max
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -177,6 +177,24 @@ public final class UltimaOutput {
         }
         if (event.getSource().getEntity() instanceof ServerPlayer p && is(p)) {
             p.getPersistentData().putLong(LAST_FIGHT, p.level().getGameTime());
+            if (tier(p) == 2 && !overloaded(p) && event.getSource().getDirectEntity() == p && !arcing) {
+                int n = p.getPersistentData().getInt("xw_ult_heavy") + 1;
+                p.getPersistentData().putInt("xw_ult_heavy", n);
+                LivingEntity hit = event.getEntity();
+                event.setAmount(event.getAmount() * 1.25F);
+                hit.push((hit.getX() - p.getX()) * 0.35, 0.15, (hit.getZ() - p.getZ()) * 0.35); hit.hurtMarked = true;
+                if (n % 3 == 0) {                                     // every third blow: the slam
+                    arcing = true;
+                    try {
+                        for (LivingEntity o : p.serverLevel().getEntitiesOfClass(LivingEntity.class, hit.getBoundingBox().inflate(3), o -> o != p && com.xenowarriors.skill.SkillTargeting.canTarget(p, o))) {
+                            if (o != hit) o.hurt(p.damageSources().playerAttack(p), event.getAmount() * 0.5F);
+                            o.push(0, 0.65, 0); o.hurtMarked = true;
+                        }
+                    } finally { arcing = false; }
+                    p.serverLevel().sendParticles(ParticleTypes.EXPLOSION, hit.getX(), hit.getY() + 0.3, hit.getZ(), 2, 0.5, 0.1, 0.5, 0);
+                    p.serverLevel().playSound(null, hit.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.8F, 0.6F);
+                }
+            }
             if (overloaded(p) && event.getSource().getDirectEntity() == p && !arcing) {
                 arcing = true;
                 try {

@@ -48,7 +48,9 @@ public final class Karma {
     }
 
     public static void notEnough(ServerPlayer player, float amount) {
-        player.displayClientMessage(Component.translatable("message.xenowarriors.no_karma",
+        if (com.xenowarriors.character.ModCapabilities.getType(player) == com.xenowarriors.character.CharacterType.ULTIMA)
+            player.displayClientMessage(Component.literal("Not enough Data (" + Math.round(get(player)) + "/" + Math.round(amount) + ")").withStyle(net.minecraft.ChatFormatting.RED), true);
+        else player.displayClientMessage(Component.translatable("message.xenowarriors.no_karma",
                 Math.round(amount), Math.round(get(player))), true);
     }
 
