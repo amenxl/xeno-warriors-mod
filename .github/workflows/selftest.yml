@@ -5,6 +5,9 @@ name: Server self-test (Recarnet)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   selftest:
     runs-on: ubuntu-latest
@@ -24,6 +27,17 @@ jobs:
           printf "online-mode=false\nlevel-seed=xenowarriors\nspawn-protection=0\n" > run/server.properties
           timeout 1500 ./gradlew runServer --no-daemon > server.log 2>&1 || true
           grep -E "XW-SELFTEST|ERROR|Exception|Caused by" server.log | head -80
+      - name: Publish results to the "selftest" release
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out
+          cp server.log out/ || true
+          cp run/logs/latest.log out/latest.log || true
+          (cd run/world/dimensions/xenowarriors/recarnet 2>/dev/null && zip -qr $GITHUB_WORKSPACE/out/recarnet-world.zip region entities) || true
+          gh release delete selftest --yes --cleanup-tag || true
+          gh release create selftest out/* --title "Self-test results" --notes "Recarnet server self-test output" --prerelease
           grep -q "XW-SELFTEST OK" server.log
       - name: Upload
         if: always()
