@@ -15,6 +15,6 @@ public record FoxKingTogglePacket() {
 
     public static void handle(FoxKingTogglePacket m, Supplier<NetworkEvent.Context> ctx) {
         var p = ctx.get().getSender();
-        if (p != null) com.xenowarriors.mikiko.FoxKing.toggle(p);
+        if (p != null) { com.xenowarriors.mikiko.FoxKing.toggle(p); com.xenowarriors.rhalix.DemonsRemnants.activate(p); }   // each only works for its own character
     }
 }

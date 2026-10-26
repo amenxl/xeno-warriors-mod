@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "45";
+    private static final String VERSION = "46";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -30,6 +30,8 @@ public final class ModNetwork {
                 .encoder(EntityPosePacket::encode).decoder(EntityPosePacket::decode).consumerMainThread(EntityPosePacket::handle).add();
         CHANNEL.messageBuilder(EnemyLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(EnemyLevelPacket::encode).decoder(EnemyLevelPacket::decode).consumerMainThread(EnemyLevelPacket::handle).add();
+        CHANNEL.messageBuilder(DemonStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(DemonStatePacket::encode).decoder(DemonStatePacket::decode).consumerMainThread(DemonStatePacket::handle).add();
         CHANNEL.messageBuilder(CollectionPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(CollectionPacket::encode).decoder(CollectionPacket::decode).consumerMainThread(CollectionPacket::handle).add();
         CHANNEL.messageBuilder(DataSensedPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)

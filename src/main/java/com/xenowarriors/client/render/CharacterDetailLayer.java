@@ -128,6 +128,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_face_overload.png");
         CharacterType type = ClientCharacterData.get(p);
         String expr = expression(p, type);
+        if (type == CharacterType.RHALIX && com.xenowarriors.client.DemonClient.active(p.getId()) && !com.xenowarriors.client.LunarClient.active(p.getId()))   // Demon's Remnants: glowing red eyes
+            return com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_demon_face" + (expr == null ? "" : "_" + expr) + ".png");
         if (type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId()))      // Lunar: crescents on his cheeks
             return com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar_face" + (expr == null ? "" : "_" + expr) + ".png");
         return expr == null ? type.getFaceTexture()

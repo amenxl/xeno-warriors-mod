@@ -50,11 +50,11 @@ public final class FoxKing {
 
     public static void toggle(ServerPlayer p) {
         if (ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
-        if (END.containsKey(p.getUUID())) {
-            stop(p, true);
+        long now = p.level().getGameTime();
+        if (END.containsKey(p.getUUID())) {                 // can't transform back early: it ends on its own
+            p.displayClientMessage(Component.literal("Fox King mode can't be stopped - wait for it to end (" + (END.get(p.getUUID()) - now + 19) / 20 + "s)").withStyle(ChatFormatting.GOLD), true);
             return;
         }
-        long now = p.level().getGameTime();
         long ready = READY.getOrDefault(p.getUUID(), 0L);
         if (now < ready) {
             p.displayClientMessage(Component.literal("Fox King needs to recover (" + (ready - now + 19) / 20 + "s)").withStyle(ChatFormatting.RED), true);

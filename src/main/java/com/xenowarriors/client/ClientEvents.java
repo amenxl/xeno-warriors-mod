@@ -64,7 +64,7 @@ public final class ClientEvents {
         }
         while (ModKeyMappings.LOCK_ON.consumeClick()) LockOn.toggle();
         while (ModKeyMappings.FOX_KING.consumeClick()) {
-            if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && !UltimateCutscene.active()) {
+            if (mc.player != null && (ClientCharacterData.getLocal() == CharacterType.MIKIKO || ClientCharacterData.getLocal() == CharacterType.RHALIX) && !UltimateCutscene.active()) {
                 ModNetwork.sendToServer(new com.xenowarriors.network.FoxKingTogglePacket());
             }
         }
