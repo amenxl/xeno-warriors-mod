@@ -17,5 +17,12 @@ public final class ModEffects {
     public static final RegistryObject<MobEffect> BLADE_EXHAUSTED = EFFECTS.register("blade_exhausted",
             () -> new MobEffect(MobEffectCategory.HARMFUL, 0x5A3A8A) {});
 
+    /** The Aurora virus (Season 2): amplifier = how bad it's got (0-2). */
+    public static final RegistryObject<MobEffect> AURORA_VIRUS = EFFECTS.register("aurora_virus",
+            () -> new MobEffect(MobEffectCategory.HARMFUL, 0x6FA8C8) {});
+    /** Took Aurora Medicine: can't catch the virus for a while. */
+    public static final RegistryObject<MobEffect> VIRUS_IMMUNITY = EFFECTS.register("virus_immunity",
+            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x7FE0D0) {});
+
     private ModEffects() {}
 }

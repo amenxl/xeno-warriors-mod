@@ -285,6 +285,14 @@ public final class XenoCommands {
                     say(ctx, gray("Order of Assassins hideout built just ahead of you" + (Seasons.unlocked(p.server, 3) ? "." : " (its members leave unless Season 3 is unlocked).")));
                     return 1;
                 })));
+        root.then(Commands.literal("virus").requires(src -> src.hasPermission(2))
+                .then(Commands.literal("catch").executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    if (!Seasons.unlocked(p.server, 2)) { ctx.getSource().sendFailure(Component.literal("The Aurora virus is Season 2 content - /xeno season unlock 2")); return 0; }
+                    if (!com.xenowarriors.virus.AuroraVirus.infect(p)) ctx.getSource().sendFailure(Component.literal("Couldn't infect you (immune, creative, Ultima, or already sick)"));
+                    return 1;
+                }))
+                .then(Commands.literal("cure").executes(ctx -> { com.xenowarriors.virus.AuroraVirus.cure(ctx.getSource().getPlayerOrException(), 0); say(ctx, gray("Cured.")); return 1; })));
         root.then(Commands.literal("distortion").requires(src -> src.hasPermission(2))
                 .then(Commands.argument("size", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {
                     ServerPlayer p = ctx.getSource().getPlayerOrException();

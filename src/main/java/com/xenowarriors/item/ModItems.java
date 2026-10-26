@@ -53,6 +53,7 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_BOOTS = ITEMS.register("corrupted_boots",
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    public static final RegistryObject<Item> AURORA_MEDICINE = ITEMS.register("aurora_medicine", () -> new com.xenowarriors.virus.AuroraMedicineItem(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> PHONE = ITEMS.register("phone", () -> new PhoneItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> BRIEFCASE = ITEMS.register("briefcase", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKYLANDER_SPAWN_EGG = ITEMS.register("skylander_spawn_egg",
