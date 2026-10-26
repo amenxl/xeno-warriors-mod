@@ -27,6 +27,8 @@ public class XenoWarriors {
         if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfDmzWeapons.register(modBus);
         com.xenowarriors.corrupted.ModCorrupted.init();
         com.xenowarriors.npc.ModNpcs.init();
+        com.xenowarriors.gov.GovEntities.init();
+        com.xenowarriors.gov.GovFacilityFeature.init();
         ModEntities.ENTITY_TYPES.register(modBus);
         com.xenowarriors.world.SkyIslandFeature.FEATURES.register(modBus);
         com.xenowarriors.altar.ModAltar.init();

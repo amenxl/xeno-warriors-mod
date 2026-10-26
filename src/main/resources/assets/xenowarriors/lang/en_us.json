@@ -307,5 +307,8 @@
   "skill.xenowarriors.full_output_beam": "Full Output Beam",
   "skill.xenowarriors.full_output_beam.short": "FB",
   "skill.xenowarriors.full_output_beam.desc": "Ultima's ultimate: a second of charging, then a huge green beam that tears through everything in a line. Bigger and stronger with every output step - strongest in Overload.",
-  "skill.xenowarriors.full_output_beam.how": "Press the ultimate key and aim."
+  "skill.xenowarriors.full_output_beam.how": "Press the ultimate key and aim.",
+  "block.xenowarriors.healing_pod": "Healing Pod",
+  "item.xenowarriors.healing_pod": "Healing Pod",
+  "entity.xenowarriors.gov_agent": "Government Agent"
 }

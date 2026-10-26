@@ -1,0 +1,1 @@
+{ "feature": "xenowarriors:gov_facility", "placement": [ { "type": "minecraft:rarity_filter", "chance": 110 }, { "type": "minecraft:in_square" }, { "type": "minecraft:biome" } ] }

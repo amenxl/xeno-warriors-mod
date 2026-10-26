@@ -44,7 +44,7 @@ public final class EnemyScaling {
     private EnemyScaling() {}
 
     public static boolean scales(LivingEntity e) {
-        return e instanceof Enemy || e instanceof com.xenowarriors.npc.HumanNpcEntity || e instanceof com.xenowarriors.npc.SkylanderEntity;
+        return e instanceof Enemy || e instanceof com.xenowarriors.npc.HumanNpcEntity || e instanceof com.xenowarriors.npc.SkylanderEntity || e instanceof com.xenowarriors.gov.GovAgentEntity;
     }
 
     /** Danger from distance: +1 per 1,000 blocks from world spawn (tapering past 10). */
