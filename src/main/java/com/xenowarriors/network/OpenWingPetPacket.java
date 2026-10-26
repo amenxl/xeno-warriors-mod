@@ -26,7 +26,6 @@ public record OpenWingPetPacket(UUID pet, int entityId, String name, int skin, f
     }
 
     public static void handle(OpenWingPetPacket m, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> net.minecraft.client.Minecraft.getInstance().setScreen(
-                new com.xenowarriors.client.wing.WingPetScreen(m)));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.xenowarriors.client.PacketScreens.openWingPet(m));
     }
 }

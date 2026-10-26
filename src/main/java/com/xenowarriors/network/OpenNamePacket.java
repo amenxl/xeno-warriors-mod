@@ -21,7 +21,6 @@ public record OpenNamePacket(UUID pet, String name, boolean justTamed) {
     }
 
     public static void handle(OpenNamePacket m, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> net.minecraft.client.Minecraft.getInstance().setScreen(
-                new com.xenowarriors.client.fox.FoxNameScreen(m.pet, m.name, m.justTamed, "companion")));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.xenowarriors.client.PacketScreens.openName(m.pet, m.name, m.justTamed));
     }
 }
