@@ -13,7 +13,7 @@ def spr(lunar, pose, expr=''):
         import ultima as U
         det = Image.open(P.CH + ('rhalix_lunar_details.png' if lunar else 'rhalix_details.png')).convert('RGBA')
         fc = Image.open(P.CH + ('rhalix_lunar_face' if lunar else 'rhalix_face') + expr + '.png').convert('RGBA')
-        im = U.preview(P.mj, P.skin, det, fc, yaws=(20,), scale=S, pose=pose).convert('RGBA')
+        im = U.preview(P.mj, Image.open(P.P_CH_SKIN(lunar)).convert('RGBA'), det, fc, yaws=(20,), scale=S, pose=pose).convert('RGBA')
         px = im.load()
         for y in range(im.height):
             for x in range(im.width):

@@ -6,6 +6,7 @@ A = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'; CH
 mj = json.load(open(A + 'models/detail/rhalix.json'))
 skin = Image.open(CH + 'rhalix.png').convert('RGBA')
 F = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 18)
+def P_CH_SKIN(lunar): return CH + ('rhalix_lunar.png' if lunar else 'rhalix.png')
 def backdrop(w, h):
     im = Image.new('RGB', (w, h)); d = ImageDraw.Draw(im)
     for y in range(h):
@@ -23,7 +24,8 @@ def star(d, cx, cy, r, col=(232, 222, 236)):
 def shot(lunar, yaw, expr='', pose=None, scale=8):
     det = Image.open(CH + ('rhalix_lunar_details.png' if lunar else 'rhalix_details.png')).convert('RGBA')
     fc = Image.open(CH + (('rhalix_lunar_face' if lunar else 'rhalix_face') + expr + '.png')).convert('RGBA')
-    im = U.preview(mj, skin, det, fc, yaws=(yaw,), scale=scale, pose=pose).convert('RGBA')
+    sk = Image.open(P_CH_SKIN(lunar)).convert('RGBA')
+    im = U.preview(mj, sk, det, fc, yaws=(yaw,), scale=scale, pose=pose).convert('RGBA')
     px = im.load()
     for y in range(im.height):
         for x in range(im.width):
