@@ -28,7 +28,7 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
     public static final RegistryObject<Feature<NoneFeatureConfiguration>> AURORA_CITY = com.xenowarriors.world.SkyIslandFeature.FEATURES.register("aurora_city",
             () -> new AuroraCityFeature(NoneFeatureConfiguration.CODEC));
     static final int CELL = 48, ROAD = 7, R = Recarnet.CITY_R, B = Recarnet.BASE_Y;
-    static final int TOWER = 0, MIDRISE = 1, PARK = 2, APART = 3, GOV = 4, ORDER = 5, PLAZA = 6, DOME = 7;
+    static final int TOWER = 0, MIDRISE = 1, PARK = 2, APART = 3, GOV = 4, ORDER = 5, PLAZA = 6, DOME = 7, HOTEL = 8;
 
     public AuroraCityFeature(Codec<NoneFeatureConfiguration> c) { super(c); }
 
@@ -44,6 +44,7 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
     static int type(long seed, int cx, int cz, boolean s3) {
         if (cx == 0 && cz == 0) return PLAZA;
         if (cx == -2 && cz == 1) return DOME;
+        if (cx == AuroraLandmarks.HOTEL_CX && cz == AuroraLandmarks.HOTEL_CZ) return HOTEL;
         double d = Math.sqrt(Math.pow(cx * CELL + 27, 2) + Math.pow(cz * CELL + 27, 2));
         if (d > R - 30) return PARK;
         int k = (int) (hash(seed, cx, cz, 1) % 100);
@@ -80,6 +81,7 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
                 else com.xenowarriors.s3.OrderHideoutFeature.build(l, r, c);
             } finally { Clip.clear(); }
         }
+        AuroraLandmarks.build(l, x0, z0);                                  // Gale's Hotel, Yuri's HQ
         return true;
     }
 

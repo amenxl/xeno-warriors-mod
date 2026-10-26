@@ -28,6 +28,8 @@ public final class SelfTest {
             int n = 0;
             for (int cx = -r; cx <= r; cx++) for (int cz = -r; cz <= r; cz++) { rec.getChunk(cx, cz); n++; }
             rec.getChunk(0, (Recarnet.CITY_R + 36) >> 4);
+            for (int cx = (AuroraLandmarks.YURI_X - 18) >> 4; cx <= (AuroraLandmarks.YURI_X + 18) >> 4; cx++)          // Yuri's HQ
+                for (int cz = (AuroraLandmarks.HATCH_Z - 4) >> 4; cz <= (AuroraLandmarks.YURI_Z + 16) >> 4; cz++) { rec.getChunk(cx, cz); n++; }
             int vr = Integer.parseInt(System.getenv().getOrDefault("XW_SELFTEST_VR", "11"));
             int vcx = Recarnet.VILLAGE_X >> 4, vcz = Recarnet.VILLAGE_Z >> 4;
             for (int cx = vcx - vr; cx <= vcx + vr; cx++) for (int cz = vcz - vr; cz <= vcz + vr; cz++) { rec.getChunk(cx, cz); n++; }
