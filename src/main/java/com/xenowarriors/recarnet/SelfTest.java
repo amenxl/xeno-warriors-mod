@@ -28,6 +28,9 @@ public final class SelfTest {
             int n = 0;
             for (int cx = -r; cx <= r; cx++) for (int cz = -r; cz <= r; cz++) { rec.getChunk(cx, cz); n++; }
             rec.getChunk(0, (Recarnet.CITY_R + 36) >> 4);
+            int vr = Integer.parseInt(System.getenv().getOrDefault("XW_SELFTEST_VR", "11"));
+            int vcx = Recarnet.VILLAGE_X >> 4, vcz = Recarnet.VILLAGE_Z >> 4;
+            for (int cx = vcx - vr; cx <= vcx + vr; cx++) for (int cz = vcz - vr; cz <= vcz + vr; cz++) { rec.getChunk(cx, cz); n++; }
             XenoWarriors.LOGGER.info("XW-SELFTEST generated {} chunks in {} ms", n, System.currentTimeMillis() - t0);
             XenoWarriors.LOGGER.info("XW-SELFTEST biome at 0,0: {}", rec.getBiome(new net.minecraft.core.BlockPos(0, 80, 0)).unwrapKey().map(Object::toString).orElse("?"));
             XenoWarriors.LOGGER.info("XW-SELFTEST block at plaza: {} / street {}", rec.getBlockState(new net.minecraft.core.BlockPos(27, Recarnet.BASE_Y, 27)),

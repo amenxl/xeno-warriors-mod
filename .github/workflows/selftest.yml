@@ -20,7 +20,8 @@ jobs:
       - name: Run server
         env:
           XW_SELFTEST: "1"
-          XW_SELFTEST_R: "15"
+          XW_SELFTEST_R: "8"
+          XW_SELFTEST_VR: "11"
         run: |
           chmod +x gradlew
           mkdir -p run && echo "eula=true" > run/eula.txt
