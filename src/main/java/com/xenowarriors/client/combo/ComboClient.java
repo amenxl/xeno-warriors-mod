@@ -205,6 +205,11 @@ public final class ComboClient {
         event.getInput().leftImpulse *= slow;
     }
 
+    /** The enemy a combo is aimed at right now (what you aim at, or the nearest foe just in front), within 4 blocks. */
+    public static LivingEntity assistTarget(LocalPlayer p) {
+        return target(p, ComboStyle.SPEAR);
+    }
+
     /** Who the hit lands on: what you aim at, your lock-on, or the nearest enemy right in front of you. */
     private static LivingEntity target(LocalPlayer p, ComboStyle style) {
         Minecraft mc = Minecraft.getInstance();

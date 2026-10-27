@@ -303,11 +303,10 @@ public final class GarryBeatbox {
         pose.pushPose();
         parent.rightArm.translateAndRotate(pose);
         LimbBend.toForearm(parent.rightArm, pose);                        // follows the bent elbow up to his mouth
-        pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90F));
-        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180F));
-        pose.translate(-1F / 16F, 0.125F, -0.625F);
+        // gripped in his fist, the head of the mic sticking out past his knuckles toward his mouth
+        pose.translate(-1F / 16F, 14F / 16F, -0.5F / 16F);
         Minecraft.getInstance().getItemRenderer().renderStatic(p, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.MICROPHONE.get()),
-                net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, false, pose, buffers, p.level(), light,
+                net.minecraft.world.item.ItemDisplayContext.NONE, false, pose, buffers, p.level(), light,
                 net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, p.getId());
         pose.popPose();
     }

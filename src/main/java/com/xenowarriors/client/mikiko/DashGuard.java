@@ -30,7 +30,8 @@ public final class DashGuard {
 
     private static LivingEntity target(LocalPlayer p) {
         LivingEntity t = LockOn.target();
-        return t != null && t.isAlive() && t.distanceTo(p) < 12 ? t : null;
+        if (t != null && t.isAlive() && t.distanceTo(p) < 12) return t;
+        return com.xenowarriors.client.combo.ComboClient.assistTarget(p);   // not locked on: whoever the combo is hitting
     }
 
     /** Space left between the two of them, flat. */
@@ -64,7 +65,7 @@ public final class DashGuard {
         LivingEntity t = null;
         if (targetId >= 0 && p.level().getGameTime() <= until && p.level().getEntity(targetId) instanceof LivingEntity e && e.isAlive()) t = e;
         else targetId = -1;
-        if (t == null) t = target(p);                               // (any lock-on dash, the aerial one too)
+        if (t == null) { LivingEntity lock = LockOn.target(); if (lock != null && lock.isAlive() && lock.distanceTo(p) < 12) t = lock; }   // (any lock-on dash, the aerial one too)
         if (t == null) return;
         Vec3 to = new Vec3(t.getX() - p.getX(), 0, t.getZ() - p.getZ());
         if (to.lengthSqr() < 1.0E-4) return;

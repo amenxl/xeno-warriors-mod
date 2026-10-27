@@ -496,6 +496,8 @@ public final class UiTest {
      * Films a combo on a husk from the side: clicks every 3 ticks (spamming - the combo queues them at its own pace),
      * a frame every 2 ticks. The husk stands its ground until the finisher sends it flying.
      */
+    private static final net.minecraft.world.phys.Vec3[] REEL_ORIGIN = new net.minecraft.world.phys.Vec3[1];
+
     private static void comboReel(Minecraft mc, List<Step> l, String tag, CharacterType who, net.minecraft.world.item.Item item,
                                   boolean wild, boolean heavy, int frames) {
         int[] ids = new int[2];
@@ -505,6 +507,8 @@ public final class UiTest {
             p.setHealth(wild ? 7F : p.getMaxHealth());                // under half health: Mikiko's wild version
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
+            if (REEL_ORIGIN[0] == null) REEL_ORIGIN[0] = p.position();           // every reel starts from the same spot
+            p.teleportTo(REEL_ORIGIN[0].x, REEL_ORIGIN[0].y, REEL_ORIGIN[0].z); p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
             p.setYRot(0); p.setXRot(0);
             var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());          // (a husk: doesn't burn in the sun)
             z.moveTo(p.getX(), p.getY(), p.getZ() + 1.7, 180, 0); z.setYHeadRot(180); z.yBodyRot = 180;

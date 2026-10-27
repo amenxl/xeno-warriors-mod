@@ -159,7 +159,7 @@ public final class ComboServer {
         Ctx c = CTX.get();
         if (c == null) return;
         if (c.heavy) event.setCanceled(true);
-        else if (c.finisher) event.setStrength(Math.max(event.getOriginalStrength(), 0.4F) * c.style.finisherKnock * 2.2F);
+        else if (c.finisher) event.setStrength(Math.max(event.getOriginalStrength(), 0.4F) * c.style.finisherKnock * 1.4F);
         else event.setStrength(event.getOriginalStrength() * 0.15F);
     }
 }
