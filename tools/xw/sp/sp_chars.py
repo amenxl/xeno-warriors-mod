@@ -90,7 +90,7 @@ KYRIE = dict(skin=K_SKIN, eyes=K_EYE, hair=[KH1, KH2], paint=kyrie_paint,
              brow=['..kkkkkk.', 'kk.......'],
              eye=['.kkkkkkk.', 'kkkkkkkkk', '.wdOOodw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '.kkkkkk..'],
              mouth=['.rrrr.', '.rRRr.'], mouth_x=13, mouth_y=24, face_extra=[kyrie_marks],
-             wing=('bat', '#5a3a78'), fit=kyrie)
+             wing=('kyrie', '#5e3a80'), fit=kyrie)
 
 # ====================================================================== LEXY
 L_SKIN, L_EYE = '#a2704e', '#c89048'
@@ -159,7 +159,7 @@ LEXY = dict(skin=L_SKIN, eyes=L_EYE, hair=[LH1, LH2], paint=lexy_paint,
             brow=['.........', '..kkkkk..', 'kk.......'],
             eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
             mouth=['......'], mouth_x=13, mouth_y=26, face_extra=[lexy_mask],
-            wing=('angel', '#f4f2f8'), fit=lexy)
+            wing=('angel_small', '#f4f2f8'), fit=lexy)
 
 # ====================================================================== MAX (Sintrie)
 M_SKIN, M_EYE = '#e8c0a8', '#8a3a2a'
@@ -212,7 +212,7 @@ MAX = dict(skin=M_SKIN, eyes=M_EYE, hair=[MH1, MH2], paint=max_paint,
            brow=['.........', '.kkkkkk..'],
            eye=['.........', 'kkkkkkkkk', '.wddpddw.', '.wWoopow.', '..wOOOw..', '..kkkkk..', '.........'],
            mouth=['..kkk.'], mouth_x=13, mouth_y=25, face_extra=[max_blush],
-           wing=('falcon', '#d2ecf6'), fit=max_fit)
+           wing=('falcon_small', '#d2ecf6'), fit=max_fit)
 
 # ====================================================================== SAM
 S_SKIN, S_EYE = '#f0c8a8', '#1a2238'
@@ -269,7 +269,7 @@ SAM = dict(skin=S_SKIN, eyes=S_EYE, hair=[SH1, SH2], paint=sam_paint,
            brow=['..kkkkk..', 'kk.....k.'],
            eye=['.........', '.........', '..kkkkk..', '.k.....k.', 'k.......k', '.........', '.........'],
            mouth=['kkkkkkkk', 'kwwwwwwk', '.krrrrk.', '..kkkk..'], mouth_x=12, mouth_y=24, face_extra=[sam_marks],
-           wing=('hawk', '#3a6a4a'), fit=sam)
+           wing=('hawk_small', '#3a6a4a'), fit=sam)
 
 CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM}
 
@@ -301,14 +301,20 @@ def wings(style, colour, atlas):
             dst[x, y] = tuple(max(0, min(255, int(c * (0.45 + 0.75 * l)))) for c in tgt) + (255,)
     return [c for c in wj['bones']['body']['children'] if c.get('name') in ('right_wing', 'left_wing')]
 
-WING_ROWS = {'bat': 30, 'angel': 52, 'falcon': 29, 'hawk': 23}
+def wing_rows(style):
+    wj = json.load(open(RES + f'models/detail/npc/wing_{style}.json')); m = [0]
+    def w(n):
+        for c in n.get('cubes', []): W, H, D = c['size']; m[0] = max(m[0], c['uv'][1] + math.ceil(D + H) + 1)
+        for ch in n.get('children', []): w(ch)
+    for c in wj['bones']['body']['children']: w(c)
+    return m[0] + 1
 
 def make(key):
     spec = CHARS[key]
     fit = Fit(); spec['fit'](fit)
     atlas = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
     style, col = spec['wing']
-    pack(fit, atlas, region=(0, WING_ROWS[style], 256, 256))
+    pack(fit, atlas, region=(0, wing_rows(style), 256, 256))
     w = wings(style, col, atlas)
     skin = paint_skin(spec)
     return fit, atlas, skin, w

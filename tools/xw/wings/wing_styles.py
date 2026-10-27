@@ -142,8 +142,45 @@ def export(spec, path):
     for n in out['bones'].values(): strip(n)
     json.dump(out, open(path, 'w'), separators=(',', ':'))
 
+def kyrie(m):
+    # Kyrie's: a compact dark wing held out to the side - a solid spread with a spiky lower edge and dark spots along the top
+    arm(m, [(22, 6.0, 1.3), (4, 5.5, 1.1)])
+    for k in range(10):
+        ang = 30 - k * 9.5
+        ln = (11.5 if k % 2 == 0 else 8.5) * (1.0 - 0.3 * max(0, k - 5) / 4)
+        seg(m, O, ang, ln * 0.82, 2.8, 0.5, W2 if k % 2 else W3, 'Membrane')
+        tip_root = (O[0] + math.cos(math.radians(ang)) * ln * 0.8, O[1] + math.sin(math.radians(ang)) * ln * 0.8, O[2])
+        seg(m, tip_root, ang - 6, ln * 0.22, 1.1, 0.5, W3, 'Spike')                 # the spiky points
+    for ang, d in ((26, 6.5), (18, 8.0), (10, 8.8), (2, 8.0)):                       # the dark spots near the top edge
+        a = math.radians(ang); c = (O[0] + math.cos(a) * d, O[1] + math.sin(a) * d)
+        m.add('RightWing', 'Spot', [c[0] - 0.6, c[1] - 0.45, O[2] - 0.12], [c[0] + 0.6, c[1] + 0.45, O[2] + 0.62], '#4a4a4a')
+
+def demon(m):
+    # a demon's bat wing (Ai-oni): bony arm, three long fingers, red membrane scalloped between them
+    pts = arm(m, [(50, 7, 1.2), (24, 6, 1.0)])
+    wrist = pts[-1]
+    fingers = [(46, 10), (12, 12), (-24, 11)]
+    for ang, ln in fingers: seg(m, wrist, ang, ln, 0.6, 0.9, BONE, 'Bone')
+    for a0, a1, l0, l1 in ((46, 12, 10, 12), (12, -24, 12, 11)):
+        for k in range(6):
+            t = (k + 0.5) / 6
+            seg(m, wrist, a0 + (a1 - a0) * t, (l0 + (l1 - l0) * t) * (0.86 - 0.12 * math.sin(math.pi * t)), 2.4, 0.3, W3 if k % 2 else W2, 'Membrane')
+    for k in range(6):
+        t = (k + 0.5) / 6
+        root = along(pts[0], pts[2], t)
+        seg(m, root, -72 - 14 * t, 4 + 6 * t, 2.6, 0.3, W2 if k % 2 else W3, 'Membrane')
+
+class _Scaled:
+    """Wraps a Model so a style comes out smaller (everything shrunk toward the wing root)."""
+    def __init__(self, m, k): self.m, self.k = m, k
+    def add(self, bone, name, frm, to, col, rot=None, origin=None, *a, **kw):
+        sc = lambda p: [O[i] + (p[i] - O[i]) * self.k if i < 2 else p[i] for i in range(3)]
+        return self.m.add(bone, name, sc(frm), sc(to), col, rot, sc(origin) if origin else origin, *a, **kw)
+def scaled(fn, k): return lambda m: fn(_Scaled(m, k))
+
 STYLES = {'angel': angel, 'hawk': hawk, 'falcon': falcon, 'bat': bat, 'butterfly': butterfly,
-          'crystal': crystal, 'seraph': seraph, 'tattered': tattered}
+          'crystal': crystal, 'seraph': seraph, 'tattered': tattered,
+          'kyrie': kyrie, 'demon': demon, 'angel_small': scaled(angel, 0.6), 'falcon_small': scaled(falcon, 0.5), 'hawk_small': scaled(hawk, 0.6)}
 
 def build(style):
     m = Model('wing_' + style)
@@ -155,7 +192,7 @@ def build(style):
 
 if __name__ == '__main__':
     export_mod.BANGS_UNDER_HOOD['x'] = False
-    for style in STYLES:
+    for style in (sys.argv[1:] or STYLES):
         m = build(style)
         img, size = pack_and_paint(m.cubes)
         spec = {'size': size, 'cubes': m.cubes, 'groups': m.extra_groups, 'keep': []}
