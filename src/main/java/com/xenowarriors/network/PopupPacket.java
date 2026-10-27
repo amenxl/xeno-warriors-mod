@@ -20,6 +20,13 @@ public record PopupPacket(int style, UUID subject, int type, int pet, String tit
         ModNetwork.sendToPlayer(new PopupPacket(style, subject, type, pet, title, text, face), to);
     }
 
+    /** To everyone else in this player's party who's nearby (same world, within 96 blocks). */
+    public static void toParty(ServerPlayer from, int style, String title, String text, String face) {
+        int type = com.xenowarriors.character.ModCapabilities.getType(from).ordinal();
+        for (ServerPlayer m : com.xenowarriors.party.Parties.members(from))
+            if (m != from && m.level() == from.level() && m.distanceTo(from) < 96) send(m, style, from.getUUID(), type, -1, title, text, face);
+    }
+
     public static void encode(PopupPacket m, FriendlyByteBuf b) {
         b.writeVarInt(m.style); b.writeUUID(m.subject); b.writeVarInt(m.type); b.writeVarInt(m.pet + 1);
         b.writeUtf(m.title, 64); b.writeUtf(m.text, 160); b.writeUtf(m.face, 24);

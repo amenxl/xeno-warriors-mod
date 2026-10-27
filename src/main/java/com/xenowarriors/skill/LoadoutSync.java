@@ -33,10 +33,13 @@ public final class LoadoutSync {
             int was = Integer.parseInt(old.split(":")[1]);
             int season = com.xenowarriors.character.Seasons.highest(p.server);
             for (SkillPool.Entry e : SkillPool.of(type))
-                if (e.unlockLevel() > was && e.unlockLevel() <= level && season >= e.season())
+                if (e.unlockLevel() > was && e.unlockLevel() <= level && season >= e.season()) {
+                    com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), type.ordinal(), -1, "New skill!",
+                            e.skill().getName().getString() + " unlocked. Equip it in Character Customization.", "normal");
                     p.sendSystemMessage(Component.literal("New skill unlocked: ").withStyle(net.minecraft.ChatFormatting.GOLD)
                             .append(e.skill().getName().copy().withStyle(net.minecraft.ChatFormatting.YELLOW))
-                            .append(Component.literal(" - equip it in the Skills tab (M)").withStyle(net.minecraft.ChatFormatting.GRAY)));
+                            .append(Component.literal(" - equip it in Character Customization (M)").withStyle(net.minecraft.ChatFormatting.GRAY)));
+                }
         }
     }
 

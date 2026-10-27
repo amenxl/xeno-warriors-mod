@@ -75,6 +75,8 @@ public final class SkyHaterRaids {
         LAST.put(p.getUUID(), level.getGameTime());
         for (ServerPlayer q : level.players()) if (q.blockPosition().closerThan(at, AREA)) {
             q.sendSystemMessage(Component.literal("The Sky Haters are raiding the village! Hold them off!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+            com.xenowarriors.network.PopupPacket.send(q, com.xenowarriors.network.PopupPacket.DANGER, q.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), -1,
+                    level.isNight() ? "Night raid!" : "Raid!", "The Sky Haters are raiding the village! Hold them off!", "");
             level.playSound(null, q.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 64F, 1F);
         }
         return true;

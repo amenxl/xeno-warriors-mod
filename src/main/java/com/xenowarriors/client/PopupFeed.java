@@ -174,17 +174,19 @@ public final class PopupFeed implements IGuiOverlay {
         if (p.pet >= 0) {
             LivingEntity e = HudHead.find(p.subject);
             if (e != null) {
-                int scale = Math.round(size * (p.pet == 0 ? 1.15F : 1.4F));
+                float bh = Math.max(0.4F, e.getBbHeight());
+                int scale = p.pet == 2 ? Math.round(size * 1.2F / Math.max(0.8F, bh * 0.55F)) : Math.round(size * (p.pet == 0 ? 1.15F : 1.4F));
+                g.fill(x, y, x + size, y + size, 0x90000000);
                 g.enableScissor(x, y, x + size, y + size + 6);
                 try {
-                    InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * 0.62F + e.getBbHeight() * 0.8F * scale), scale,
+                    InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * (p.pet == 2 ? 0.45F : 0.62F) + bh * 0.8F * scale), scale,
                             new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateY(-0.6F)), null, e);
                 } finally { g.disableScissor(); }
             } else {
                 g.pose().pushPose();
                 g.pose().translate(x + 4, y + 8, 0);
                 g.pose().scale(1.5F, 1.5F, 1F);
-                g.renderItem(new ItemStack(p.pet == 0 ? Items.FOX_SPAWN_EGG : Items.BAT_SPAWN_EGG), 0, 0);
+                g.renderItem(new ItemStack(p.pet == 0 ? Items.FOX_SPAWN_EGG : p.pet == 1 ? Items.BAT_SPAWN_EGG : Items.WITHER_SKELETON_SKULL), 0, 0);
                 g.pose().popPose();
             }
             return;

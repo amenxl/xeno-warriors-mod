@@ -122,6 +122,8 @@ public final class Stats {
         if (after != before) {
             applyHealth(player);
             syncLevel(player);
+            if (after > before) com.xenowarriors.network.PopupPacket.send(player, com.xenowarriors.network.PopupPacket.GOOD, player.getUUID(), ModCapabilities.getType(player).ordinal(), -1, "Level up!",
+                    "Character Level " + after + (bonusHearts(after) > bonusHearts(before) ? "  +1 max heart" : ""), "normal");
             if (bonusHearts(after) > bonusHearts(before)) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Character Level " + after + "! +1 max heart")
                         .withStyle(net.minecraft.ChatFormatting.GOLD));

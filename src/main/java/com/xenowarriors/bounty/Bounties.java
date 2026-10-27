@@ -94,7 +94,10 @@ public final class Bounties {
         int tier = b.getInt("tier");
         var r = p.getRandom();
         give(p, new ItemStack(Items.EMERALD, 3 + tier * 4 + r.nextInt(4)));
-        com.xenowarriors.economy.Money.add(p, 300L + tier * 400L + r.nextInt(100), true);
+        long paid = 300L + tier * 400L + r.nextInt(100);
+        com.xenowarriors.economy.Money.add(p, paid, true);
+        com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), -1, "Bounty complete",
+                "+" + com.xenowarriors.economy.Money.fmt(paid) + " Money" + net.minecraft.world.entity.EntityType.byString(b.getString("id")).map(et -> " - " + b.getInt("need") + " " + et.getDescription().getString()).orElse(""), "");
         Stat stat = Stat.values()[r.nextInt(Stat.values().length)];
         Stats.addXp(p, stat, stat.needed(Stats.level(p, stat)) * (0.25F * tier));
         String extra = "";

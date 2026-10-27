@@ -54,6 +54,7 @@ public final class PetCare {
     @SubscribeEvent
     public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
         if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0) return;
+        bossNearby(p);
         for (int kind = 0; kind < 2; kind++) {
             ListTag list = kind == 0 ? FoxPets.records(p) : WingPets.records(p);
             for (int i = 0; i < list.size(); i++) {
@@ -64,6 +65,20 @@ public final class PetCare {
                 com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.PET, rec.hasUUID("uuid") ? rec.getUUID("uuid") : p.getUUID(), 0, kind,
                         "Ready to come back", rec.getString("name") + " calmed down. Use the Fox Whistle!", "");
             }
+        }
+    }
+
+    /** A boss coming within 40 blocks: warn once (again only after 3 minutes for the same boss). */
+    private static void bossNearby(ServerPlayer p) {
+        if (p.isSpectator() || p.isCreative()) return;
+        long t = p.level().getGameTime();
+        for (Mob m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(40),
+                m -> m.isAlive() && m instanceof net.minecraft.world.entity.monster.Enemy && com.xenowarriors.combat.Stagger.boss(m) && ownerOfPet(m) == null)) {
+            String key = "xw_boss_told_" + p.getUUID();
+            if (m.getPersistentData().getLong(key) > t) continue;
+            m.getPersistentData().putLong(key, t + 3600);
+            com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, m.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), 2,
+                    "Boss nearby!", m.getName().getString() + " is close. Get ready!", "");
         }
     }
 
