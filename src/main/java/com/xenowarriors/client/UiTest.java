@@ -21,7 +21,7 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class UiTest {
     private static final boolean ON = "1".equals(System.getenv("XW_UITEST"));
-    private record Step(String name, Runnable action, int wait) {}
+    private record Step(String name, Runnable action, int delay) {}
     private static List<Step> steps;
     private static int idx = -1, wait, ingame;
 
@@ -104,6 +104,6 @@ public final class UiTest {
         idx++;
         if (idx >= steps.size()) { XenoWarriors.LOGGER.info("XW-UITEST done"); mc.stop(); return; }
         try { steps.get(idx).action.run(); } catch (Throwable t) { XenoWarriors.LOGGER.error("XW-UITEST step failed", t); }
-        wait = steps.get(idx).wait;
+        wait = steps.get(idx).delay;
     }
 }
