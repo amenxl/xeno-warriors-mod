@@ -114,6 +114,10 @@ public final class Parties {
             from.sendSystemMessage(msg(to.getName().getString() + " is already in another party."));
             return;
         }
+        if (com.xenowarriors.character.AiOniRules.clash(from, to)) {
+            from.sendSystemMessage(msg("Ai-oni and Rhalix can never be in the same party."));
+            return;
+        }
         Party party = BY_PLAYER.get(from.getUUID());
         if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(to).size() > MAX_SIZE) {
             from.sendSystemMessage(msg("Your party is full (" + MAX_SIZE + " players and bots)."));
@@ -142,6 +146,10 @@ public final class Parties {
         ServerPlayer from = inv == null || server == null ? null : server.getPlayerList().getPlayer(inv.from);
         if (inv == null || from == null || p.level().getGameTime() > inv.expires) {
             p.sendSystemMessage(msg("You don't have a party invite (or it ran out)."));
+            return;
+        }
+        for (ServerPlayer m : members(from)) if (com.xenowarriors.character.AiOniRules.clash(m, p)) {
+            p.sendSystemMessage(msg("Ai-oni and Rhalix can never be in the same party."));
             return;
         }
         leave(p, false);

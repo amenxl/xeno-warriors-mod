@@ -168,6 +168,8 @@ public final class PartyBots {
             CharacterType t = CharacterType.byId(id);
             if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (4 people and bots).").withStyle(ChatFormatting.RED)); return; }
             if (t == CharacterType.NONE || !Arrays.asList(CharacterType.PLAYABLE).contains(t) || taken.contains(id)) continue;
+            if ((t == CharacterType.AIONI && taken.contains("rhalix")) || (t == CharacterType.RHALIX && taken.contains("aioni"))) {
+                p.sendSystemMessage(Component.literal("Ai-oni and Rhalix can never be in the same party.").withStyle(ChatFormatting.RED)); continue; }
             if (com.xenowarriors.character.Seasons.highest(p.server) < t.season()) { p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is Season " + t.season() + " content.").withStyle(ChatFormatting.RED)); continue; }
             if (p.getPersistentData().getLong(REJOIN + id) > p.level().getGameTime()) {
                 p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is still recovering - try again later.").withStyle(ChatFormatting.RED)); continue;

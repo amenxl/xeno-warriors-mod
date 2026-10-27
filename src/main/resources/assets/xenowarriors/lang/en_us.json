@@ -492,5 +492,9 @@
   "skill.xenowarriors.psychotic_time_bomb": "Psychotic Time Bomb",
   "skill.xenowarriors.psychotic_time_bomb.short": "PT",
   "skill.xenowarriors.psychotic_time_bomb.desc": "Sam's ultimate: plants bombs in every enemy within 12 blocks. They all go off 5 seconds later.",
-  "skill.xenowarriors.psychotic_time_bomb.how": "Press the ultimate key in a crowd."
+  "skill.xenowarriors.psychotic_time_bomb.how": "Press the ultimate key in a crowd.",
+  "character.xenowarriors.aioni": "Ai-oni",
+  "character.xenowarriors.aioni.full_name": "Ai-oni",
+  "character.xenowarriors.aioni.title": "The Demon Teacher",
+  "character.xenowarriors.aioni.elements": "Demon"
 }

@@ -125,10 +125,23 @@ def lexy(f):
         f.add('head', [s * 3.4 - 0.5, 29.6, -5.4], [s * 3.4 + 0.5, 31.0, -5.1], '#f4f4ff')
         f.add('head', [s * 2.5 - 0.4, 30.6, -5.4], [s * 2.5 + 0.4, 31.8, -5.1], '#f4f4ff')
     # the black mask with the white zigzag, tied over the lower face
-    for s_ in (1, -1):                                                                  # the mask wraps round the sides
-        x0, x1 = (4.0, 4.3) if s_ > 0 else (-4.3, -4.0)
-        f.add('head', [x0, 24.4, -4.3], [x1, 26.6, 3.0], L_BLK)
-    f.add('head', [-4.4, 26.0, 2.6], [4.4, 27.6, 4.5], L_BLK)                          # the tie at the back
+    # her mask, fully 3D: a black scarf over the lower face, wrapping round, tied at the back, the end draped down the front
+    f.add('head', [-4.45, 23.8, -4.8], [4.45, 26.8, -4.35], L_BLK)                        # front
+    for s_ in (1, -1):
+        x0, x1 = (4.1, 4.5) if s_ > 0 else (-4.5, -4.1)
+        f.add('head', [x0, 24.2, -4.8], [x1, 26.6, 4.5], L_BLK)                            # wraps round the sides
+    f.add('head', [-4.5, 24.2, 4.1], [4.5, 26.6, 4.5], L_BLK)                               # and the back
+    f.add('head', [-1.0, 24.6, 4.5], [1.0, 26.2, 5.4], '#222228')                            # the knot
+    lock(f, [0.4, 25.0, 5.2], [0.15, -1, 0.35], 3.6, 1.2, (L_BLK, '#222228', L_BLK), thick=0.3)
+    ZIG = ['k.....k.....k.....k...', '.k...k.k...k.k...k.k..', '..k.k...k.k...k.k...k.', '...k.....k.....k.....k',
+           '......................', '.k.k...k.k...k.k...k..', '..k.....k.....k.....k.']
+    C_ = 0.4; X0 = -4.4
+    for r, row in enumerate(ZIG):                                                          # the white zigzag, as thin plates
+        for c, ch in enumerate(row):
+            if ch == 'k':
+                f.add('head', [X0 + c * C_, 26.5 - (r + 1) * C_, -4.9], [X0 + (c + 1) * C_, 26.5 - r * C_, -4.8], '#eceef8', shade=False)
+    f.add('head', [-3.4, 22.2, -4.75], [-0.4, 24.0, -4.4], L_BLK)                          # the end draped under her chin
+    f.add('head', [-3.0, 23.0, -4.85], [-2.2, 23.6, -4.74], '#d8d8e0')                      # with a little buckle
     # blue tee, black capelet with a strap, wristbands, baggy pants with stripes and little bows, flats
     shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.3, L_BLUE)
     f.both('right_arm', [3.62, 20.0, -2.38], [8.38, 24.38, 2.38], L_BLUE)
@@ -184,9 +197,12 @@ def max_paint(part, face, x, y, W, H, outer):
 def max_fit(f):
     # messy silver-white hair hanging over his eyes
     hair(f, MH1, MH2, back_len=25, side_len=26,
-         locks=[([x, 32.2, -4.7], [x * 0.05, -1, -0.35], 5.6, 2.0) for x in (-3.2, -1.6, 0.0, 1.6, 3.2)]
+         locks=[([x, 32.3, -4.7], [x * 0.08, -1, -0.45], 3.0 if abs(x) < 2 else 4.4, 2.0) for x in (-3.2, -1.6, 0.0, 1.6, 3.2)]
          + [([s * 4.6, 30.5, z], [s * 0.4, -1, 0.1], 4.6, 1.8) for s in (1, -1) for z in (-2.2, 0.8, 3.4)]
          + [([x, 31.0, 4.7], [x * 0.1, -1, 0.3], 5.2, 2.2) for x in (-2.6, 0.0, 2.6)])
+    for sx in (1, -1):
+        lock(f, [sx * 0.4, 32.9, -3.6], [sx * 0.9, -0.5, -0.4], 3.6, 2.0, (MH2, MH1, MH3), thick=0.8)        # swept from his centre part
+        lock(f, [sx * 0.5, 31.6, -4.8], [sx * 0.05, -1, -0.2], 4.4, 1.0, (MH1, MH2, MH3), thick=0.5)        # thin strands between his eyes
     for x, z in ((-2.2, -1.6), (1.0, -0.4), (2.6, 1.8), (-0.8, 2.2)):
         lock(f, [x, 32.6, z], [x * 0.3, 0.35, -0.8], 3.0, 2.2, (MH2, MH2, MH3), thick=0.9)   # messy, flat tufts
     # cream tee with the lavender star, dark shoulder strap, black belt with pale-blue clips, grey cargo shorts
@@ -209,8 +225,8 @@ def max_fit(f):
 def max_blush(px, cm, dark):
     for x in (5, 6, 25, 26): px[x, 21] = (232, 150, 150, 255)
 MAX = dict(skin=M_SKIN, eyes=M_EYE, hair=[MH1, MH2], paint=max_paint,
-           brow=['.........', '.kkkkkk..'],
-           eye=['.........', 'kkkkkkkkk', '.wddpddw.', '.wWoopow.', '..wOOOw..', '..kkkkk..', '.........'],
+           brow=['.........', 'kkkkkkk..'],
+           eye=['mmmmmmmm.', 'kkkkkkkkk', '.wdpppdw.', '.wdpWpdw.', '..wdddw..', '..mkkkm..', '.........'],
            mouth=['..kkk.'], mouth_x=13, mouth_y=25, face_extra=[max_blush],
            wing=('falcon_small', '#d2ecf6'), fit=max_fit)
 
@@ -271,7 +287,75 @@ SAM = dict(skin=S_SKIN, eyes=S_EYE, hair=[SH1, SH2], paint=sam_paint,
            mouth=['kkkkkkkk', 'kwwwwwwk', '.krrrrk.', '..kkkk..'], mouth_x=12, mouth_y=24, face_extra=[sam_marks],
            wing=('hawk_small', '#3a6a4a'), fit=sam)
 
-CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM}
+# ====================================================================== AI-ONI (demon)
+A_SKIN, A_EYE = '#f2d6c2', '#d0182a'
+AH1, AH2, A_RED = '#121014', '#1e1a22', '#c41e30'
+A_GREY, A_GREYD, A_BLK = '#8a8a90', '#6e6e74', '#1a181c'
+
+def aioni_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 10: return A_GREY                                            # her long grey top
+        return A_GREY
+    if part in ('rarm', 'larm'):
+        if face == 'bottom': return A_GREYD
+        return A_GREY if y < 10 else (A_GREYD if y == 10 else None)          # long sleeves to the wrist
+    if part in ('rleg', 'lleg'):
+        if y < 2: return A_BLK                                               # black shorts
+        if y < 4: return None                                                # bare thigh
+        if y == 4: return A_GREY                                             # grey band on the thigh-highs
+        if y >= 8:
+            return A_BLK
+        return A_BLK
+    return None
+
+def aioni(f):
+    # black bob with red streaks, a little side bun with a red ribbon, cream horns, a gold star clip
+    hair(f, AH1, AH2, back_len=25.5, side_len=26,
+         locks=fringe_locks(6, 31.8, 7.6, 4.6, 1.8, 0.3) + [([s * 3.9, 31.4, -4.5], [s * 0.12, -1, -0.05], 6.4, 2.2) for s in (1, -1)]
+         + [([s * 4.6, 30, z], [s * 0.2, -1, 0.15], 5.2, 1.9) for s in (1, -1) for z in (-1.2, 1.6, 3.8)])
+    for x in (-3.9, 3.4):
+        f.add('head', [x, 28.6, -4.95], [x + 0.5, 31.8, -4.7], A_RED)                         # red streaks in the side locks
+    f.add('head', [4.4, 27.0, 1.0], [4.75, 31.5, 2.2], A_RED)
+    f.add('head', [-6.0, 30.0, 1.2], [-3.8, 32.6, 3.6], AH2)                                  # side bun (her left)
+    f.add('head', [-6.6, 30.6, 1.6], [-5.6, 32.2, 3.2], AH1)
+    f.add('head', [-5.0, 29.4, 1.0], [-4.4, 30.4, 3.8], A_RED)                                # red ribbon
+    lock(f, [-5.2, 29.6, 3.6], [-0.2, -1, 0.4], 3.0, 0.9, (A_RED, A_RED, '#e04050'), thick=0.3)
+    for sx in (1, -1):                                                                     # cream horns curving back
+        core.lock(Adapter(f), 'Head', [sx * 2.4, 32.6, -1.6], [sx * 0.3, 1, 0.35], 3.6, 1.4, 1.4, ('#efe6cc', '#e2d6b2', '#fff6e2'),
+                  wide='x', taper=(0.7, 0.35), tip_len=(0.4, 0.35))
+    for (dx, dy) in ((0, 0.5), (-0.5, 0), (0.5, 0), (-0.3, -0.5), (0.3, -0.5), (0, 0)):
+        f.add('head', [3.3 + dx - 0.25, 30.6 + dy - 0.25, -4.95], [3.3 + dx + 0.25, 30.6 + dy + 0.25, -4.75], '#e8c030')   # star clip
+    # long grey top, black open hoodie vest with red trim and a grey hood down
+    shell(f, 'body', [-4, 9.4, -2], [4, 24, 2], 0.28, A_GREY)
+    for sx in (1, -1):
+        x0, x1 = (2.3, 4.55) if sx > 0 else (-4.55, -2.3)
+        f.add('body', [x0, 11.0, -2.6], [x1, 24.4, -2.35], A_BLK)
+        t0, t1 = (2.3, 2.75) if sx > 0 else (-2.75, -2.3)
+        f.add('body', [t0, 11.0, -2.7], [t1, 24.4, -2.55], A_RED, shade=False)                 # red trim
+    shell(f, 'body', [-4, 11.0, -2], [4, 24.2, 2], 0.45, A_BLK, {'front': lambda x, y: None})
+    f.add('body', [-3.9, 20.8, 2.3], [3.9, 24.8, 4.2], A_GREY, {'back': lambda x, y: A_GREYD if y > .7 else A_GREY})       # hood
+    f.both('right_arm', [3.45, 12.0, -2.55], [8.55, 24.4, 2.55], A_GREY, {'bottom': A_GREYD})                               # baggy sleeves
+    f.both('right_arm', [3.4, 18.6, -2.6], [8.6, 19.0, 2.6], A_GREYD)
+    # black shorts, thigh-highs with a grey band, laced boots with red laces and chunky soles
+    f.both('right_leg', [-0.4, 10.0, -2.4], [4.4, 12.3, 2.4], A_BLK)
+    f.both('right_leg', [-0.32, 3.4, -2.32], [4.32, 8.0, 2.32], A_BLK)
+    f.both('right_leg', [-0.36, 7.4, -2.36], [4.36, 8.2, 2.36], A_GREY)
+    f.both('right_leg', [-0.42, 0.0, -2.62], [4.42, 4.0, 2.42], '#121014')
+    for yy in (1.0, 1.7, 2.4, 3.1):
+        f.both('right_leg', [1.1, yy, -2.74], [2.9, yy + 0.3, -2.6], A_RED)                # red laces, criss-crossed
+    f.both('right_leg', [1.85, 0.8, -2.72], [2.15, 3.6, -2.6], '#e04050')
+    f.both('right_leg', [0.1, 0.0, -3.2], [3.9, 1.6, -2.6], '#121014')
+    f.both('right_leg', [-0.5, 0.0, -3.35], [4.5, 0.6, 2.5], '#2a2a2e')                    # chunky soles
+
+def aioni_marks(px, cm, dark):
+    for y in range(21, 25): px[6, y] = (200, 20, 36, 255); px[25, y] = (200, 20, 36, 255)   # red tear streaks
+AIONI = dict(skin=A_SKIN, eyes=A_EYE, hair=[AH1, AH2], paint=aioni_paint,
+             brow=['.........', '..kkkkkk.', 'kk.......'],
+             eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
+             mouth=['kkkkkkkk', 'kWrrrrWk', '.krrrrk.', '..kkkk..'], mouth_x=12, mouth_y=24, face_extra=[aioni_marks],
+             wing=('demon', '#c42a38'), fit=aioni)
+
+CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):
