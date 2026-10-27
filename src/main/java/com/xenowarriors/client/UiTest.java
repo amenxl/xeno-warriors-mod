@@ -23,7 +23,7 @@ public final class UiTest {
     private static final boolean ON = "1".equals(System.getenv("XW_UITEST"));
     private record Step(String name, Runnable action, int delay) {}
     private static List<Step> steps;
-    private static int idx = -1, wait, ingame;
+    private static int idx = -1, wait, ingame, pre;
 
     private UiTest() {}
 
@@ -93,7 +93,23 @@ public final class UiTest {
     public static void onTick(TickEvent.ClientTickEvent event) {
         if (!ON || event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        if (mc.player == null || mc.level == null) {
+            // loading the test world: click through "experimental settings" / backup warnings
+            if (mc.screen != null && ++pre % 40 == 0) {
+                XenoWarriors.LOGGER.info("XW-UITEST waiting on screen {}", mc.screen.getClass().getName());
+                for (var w : mc.screen.children()) {
+                    if (w instanceof net.minecraft.client.gui.components.AbstractButton b) {
+                        String t = b.getMessage().getString().toLowerCase();
+                        if (t.contains("proceed") || t.contains("yes") || t.contains("know what") || t.contains("continue") || t.contains("load")) {
+                            XenoWarriors.LOGGER.info("XW-UITEST pressing '{}'", t);
+                            b.onPress();
+                            break;
+                        }
+                    }
+                }
+            }
+            return;
+        }
         if (++ingame < 200) return;                                      // let the world settle
         if (steps == null) { steps = build(); idx = -1; wait = 0; XenoWarriors.LOGGER.info("XW-UITEST start ({} steps)", steps.size()); }
         if (wait > 0) { wait--; return; }
