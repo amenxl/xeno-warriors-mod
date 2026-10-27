@@ -666,6 +666,8 @@ public final class UiTest {
             l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(t); hold(null); server(p -> {
                 p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
                 p.setYRot(0); p.setXRot(0);
+                p.getPersistentData().remove("xw_karma_lock_until");
+                com.xenowarriors.skill.SkillManager.resetCooldowns(p);
                 com.xenowarriors.karma.Karma.add(p, 200);
                 for (int k = 0; k < 3; k++) {
                     var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
