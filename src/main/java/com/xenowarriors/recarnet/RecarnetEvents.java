@@ -58,7 +58,8 @@ public final class RecarnetEvents {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || !Recarnet.is(p.level()) || p.tickCount % 10 != 0) return;
         // Aurora's barrier (F1 tech) is up until Season 2 is unlocked
         double d = Recarnet.dist(p.blockPosition());
-        if (d < Recarnet.CITY_R + 1 && !Seasons.unlocked(p.server, 2) && !p.isSpectator() && !p.isCreative()) {
+        boolean up = p.getY() >= RoyalCapitalFeature.FLOOR_Y;            // (the Royal Capital floats above Aurora: Season 1, no barrier up there)
+        if (d < Recarnet.CITY_R + 1 && !up && !Seasons.unlocked(p.server, 2) && !p.isSpectator() && !p.isCreative()) {
             Vec3 out = new Vec3(p.getX(), 0, p.getZ()).normalize().scale(Recarnet.CITY_R + 6);
             if (out.lengthSqr() < 1) out = new Vec3(0, 0, Recarnet.CITY_R + 6);
             int y = p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) out.x, (int) out.z);
@@ -67,7 +68,7 @@ public final class RecarnetEvents {
             p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 0.8F, 1.6F);
         }
         // Aurora at night: Sky Haters come out much more often
-        if (d < Recarnet.CITY_R && p.tickCount % 400 == 0 && p.level().isNight() && !p.isCreative() && p.getRandom().nextInt(10) == 0)
+        if (d < Recarnet.CITY_R && !up && p.tickCount % 400 == 0 && p.level().isNight() && !p.isCreative() && p.getRandom().nextInt(10) == 0)
             com.xenowarriors.npc.SkyHaterRaids.start(p, true);
     }
 
@@ -82,6 +83,18 @@ public final class RecarnetEvents {
     /** Travel between the overworld and Recarnet (the Recarnet Pass, or /xeno recarnet). */
     public static void travel(ServerPlayer p) {
         var server = p.server;
+        if (p.isShiftKeyDown()) {                                        // sneaking: straight up to the Royal Capital
+            ServerLevel rec = server.getLevel(Recarnet.LEVEL);
+            if (rec != null) {
+                if (p.level().dimension() == Level.OVERWORLD) p.getPersistentData().putLong("xw_recarnet_back", p.blockPosition().asLong());
+                BlockPos at = RoyalCapitalFeature.LANDING;
+                rec.getChunk(at.getX() >> 4, at.getZ() >> 4);
+                p.teleportTo(rec, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180F, 0F);
+                p.displayClientMessage(Component.literal("Royal Capital - Section 1").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
+                rec.playSound(null, at, SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 0.4F, 1.6F);
+                return;
+            }
+        }
         if (Recarnet.is(p.level())) {
             ServerLevel ow = server.overworld();
             BlockPos back = p.getPersistentData().contains("xw_recarnet_back") ? BlockPos.of(p.getPersistentData().getLong("xw_recarnet_back")) : ow.getSharedSpawnPos();

@@ -82,6 +82,7 @@ public final class UiTest {
         if ("s3fits".equals(System.getenv("XW_UITEST_FOCUS"))) { s3Outfits(mc, l); return l; }
         if ("ores".equals(System.getenv("XW_UITEST_FOCUS"))) { oresAndPjs(mc, l); return l; }
         if ("village".equals(System.getenv("XW_UITEST_FOCUS"))) { village(mc, l); return l; }
+        if ("capital".equals(System.getenv("XW_UITEST_FOCUS"))) { capital(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -516,6 +517,44 @@ public final class UiTest {
             }), 140));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
             l.add(new Step("village_" + sh[0], () -> {}, 5));
+        }
+    }
+
+    /** A tour of the Royal Capital (Section 1) high above Aurora. */
+    private static void capital(Minecraft mc, List<Step> l) {
+        // name, x, y, z, yaw, pitch
+        Object[][] shots = {
+            {"overview", 0, 300, 230, 180F, 18F},
+            {"overview_side", 250, 290, -20, 90F, 14F},
+            {"below", 40, 205, 60, 160F, -35F},
+            {"landing", 0, 256, 60, 180F, 6F},
+            {"palace_front", 0, 262, 40, 180F, 10F},
+            {"throne_room", 0, 256, 2, 180F, 4F},
+            {"library", 10, 267, -8, 150F, 12F},
+            {"courtyard", 18, 258, 32, 135F, 18F},
+            {"market", 104, 258, -12, 180F, 22F},
+            {"black_market", 112, 239, -6, 180F, 10F},
+            {"school", -100, 256, -36, 180F, 8F},
+            {"school_class", -107, 252, -54, 180F, 10F},
+            {"barracks", -64, 254, 116, 180F, 14F},
+            {"noble", 84, 258, 120, 180F, 16F},
+            {"commoner", 186, 242, 68, 180F, 18F},
+            {"chains", 54, 250, -34, 70F, 14F},
+        };
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl != null) { lvl.setDayTime(5000); p.teleportTo(lvl, 0.5, 300, 230.5, 180F, 18F); }
+        }), 240));
+        for (Object[] sh : shots) {
+            double x = ((Integer) sh[1]) + 0.5, y = (Integer) sh[2], z = ((Integer) sh[3]) + 0.5;
+            float yaw = (Float) sh[4], pitch = (Float) sh[5];
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+                if (lvl != null) p.teleportTo(lvl, x, y, z, yaw, pitch);
+            }), 140));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
+            l.add(new Step("capital_" + sh[0], () -> {}, 5));
         }
     }
 

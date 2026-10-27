@@ -39,5 +39,5 @@ public final class Recarnet {
 
     public static double dist(BlockPos p) { return Math.sqrt((double) p.getX() * p.getX() + (double) p.getZ() * p.getZ()); }
 
-    public static boolean inAurora(Level l, BlockPos p) { return is(l) && dist(p) < CITY_R; }
+    public static boolean inAurora(Level l, BlockPos p) { return is(l) && dist(p) < CITY_R && p.getY() < RoyalCapitalFeature.FLOOR_Y; }
 }

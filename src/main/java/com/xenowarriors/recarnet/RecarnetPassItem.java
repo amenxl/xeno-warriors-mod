@@ -35,5 +35,6 @@ public class RecarnetPassItem extends Item {
     @Override
     public void appendHoverText(ItemStack s, Level l, List<Component> tip, TooltipFlag f) {
         tip.add(Component.literal("Hold to travel to Recarnet and back").withStyle(ChatFormatting.GRAY));
+        tip.add(Component.literal("Sneak while holding: the Royal Capital").withStyle(ChatFormatting.GOLD));
     }
 }

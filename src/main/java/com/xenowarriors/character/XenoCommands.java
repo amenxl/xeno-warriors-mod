@@ -302,7 +302,15 @@ public final class XenoCommands {
         root.then(Commands.literal("recarnet").requires(src -> src.hasPermission(2)).executes(ctx -> {
             com.xenowarriors.recarnet.RecarnetEvents.travel(ctx.getSource().getPlayerOrException());
             return 1;
-        }));
+        }).then(Commands.literal("capital").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            var rec = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (rec == null) return 0;
+            var at = com.xenowarriors.recarnet.RoyalCapitalFeature.LANDING;
+            rec.getChunk(at.getX() >> 4, at.getZ() >> 4);
+            p.teleportTo(rec, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180F, 0F);
+            return 1;
+        })));
         root.then(Commands.literal("distortion").requires(src -> src.hasPermission(2))
                 .then(Commands.argument("size", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {
                     ServerPlayer p = ctx.getSource().getPlayerOrException();

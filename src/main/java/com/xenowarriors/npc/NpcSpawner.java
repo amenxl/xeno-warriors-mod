@@ -28,6 +28,7 @@ public final class NpcSpawner {
         if (event.phase != TickEvent.Phase.END || event.getServer().getTickCount() % EVERY != 0) return;
         for (ServerPlayer p : event.getServer().getPlayerList().getPlayers()) {
             if (!(p.level() instanceof ServerLevel level) || (level.dimension() != Level.OVERWORLD && !com.xenowarriors.recarnet.Recarnet.is(level)) || p.isSpectator()) continue;
+            if (com.xenowarriors.recarnet.RoyalCapitalFeature.inCapital(level, p.blockPosition())) continue;   // (the Royal Capital has its own Skylanders)
             if (com.xenowarriors.recarnet.Recarnet.inAurora(level, p.blockPosition()) || com.xenowarriors.recarnet.Recarnet.inVillage(level, p.blockPosition())) {     // Aurora City / Pine Cone City: busy streets
                 int people = level.getEntitiesOfClass(HumanNpcEntity.class, p.getBoundingBox().inflate(64)).size();
                 for (int i = 0; i < 3 && people + i < 14; i++) if (level.random.nextFloat() < 0.7F) spawn(level, ModNpcs.HUMAN.get(), around(p.blockPosition(), level.random, 14, 40), false);
@@ -73,6 +74,7 @@ public final class NpcSpawner {
 
     private static <T extends net.minecraft.world.entity.Mob> void spawn(ServerLevel level, net.minecraft.world.entity.EntityType<T> type, BlockPos at, boolean persistent) {
         BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
+        if (com.xenowarriors.recarnet.Recarnet.is(level) && top.getY() >= com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y) return;   // (that's a Royal Capital island overhead, not the street)
         if (!level.getBlockState(top.below()).isSolidRender(level, top.below()) || !level.isEmptyBlock(top) || !level.isEmptyBlock(top.above())) return;
         T e = type.create(level);
         if (e == null) return;
