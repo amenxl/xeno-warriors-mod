@@ -55,6 +55,7 @@ jobs:
           cp client.log out/ || true
           tail -c 400000 server.log > out/server.log || true
           if ls run/screenshots/xw_anim_* >/dev/null 2>&1; then (cd run/screenshots && zip -q ../../out/anim.zip xw_anim_*.png && rm xw_anim_*.png); fi
+          if ls run/screenshots/xw_allanim_* >/dev/null 2>&1; then (cd run/screenshots && zip -q ../../out/allanim.zip xw_allanim_*.png && rm xw_allanim_*.png); fi
           cp run/screenshots/*.png out/ 2>/dev/null || true
           TAG="uitest"; if [ -n "${{ github.event.inputs.focus }}" ]; then TAG="uitest-${{ github.event.inputs.focus }}"; fi
           gh release delete "$TAG" --yes --cleanup-tag || true

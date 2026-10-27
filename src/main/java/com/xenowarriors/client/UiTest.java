@@ -76,7 +76,7 @@ public final class UiTest {
         if ("auras".equals(System.getenv("XW_UITEST_FOCUS"))) { auras(mc, l); return l; }
         if ("beatbox".equals(System.getenv("XW_UITEST_FOCUS"))) { beatbox(mc, l); return l; }
         if ("girls".equals(System.getenv("XW_UITEST_FOCUS"))) { girls(mc, l); return l; }
-        if ("allanim".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
+        if ("allanim".equals(System.getenv("XW_UITEST_FOCUS")) || "allanimb".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -336,8 +336,11 @@ public final class UiTest {
             p.serverLevel().addFreshEntity(z); p.setYRot(0); p.setXRot(0);
             p.serverLevel().setDayTime(6000);
         }), 20));
+        net.minecraft.world.phys.Vec3[] origin = new net.minecraft.world.phys.Vec3[1];
         for (CharacterType t : CharacterType.PLAYABLE) {
-            l.add(new Step(null, () -> { character(t); hold(null); }, 30));
+            l.add(new Step(null, () -> { character(t); hold(null); server(p -> {
+                if (origin[0] == null) origin[0] = p.position();
+                p.teleportTo(origin[0].x, origin[0].y, origin[0].z); p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); }); }, 30));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
                 mc.player.setYRot(0); mc.player.setXRot(0); server(p -> { p.setYRot(0); p.setXRot(0); com.xenowarriors.karma.Karma.add(p, 500F); }); }, 15));
             l.add(new Step(null, () -> mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND), 2));
@@ -349,7 +352,7 @@ public final class UiTest {
             for (com.xenowarriors.skill.Skill sk : skills) {
                 l.add(new Step(null, () -> server(p -> { p.setYRot(0); p.setXRot(0); try { sk.use(p); } catch (Exception ex) { XenoWarriors.LOGGER.warn("XW-UITEST skill {} failed", sk.getId(), ex); } }), 4));
                 for (int f = 0; f < 3; f++) l.add(new Step("allanim_" + t.getId() + "_" + sk.getId() + "_" + f, () -> {}, 5));
-                l.add(new Step(null, () -> {}, 40));                    // let it finish
+                l.add(new Step(null, () -> server(p -> { if (origin[0] != null) { p.teleportTo(origin[0].x, origin[0].y, origin[0].z); p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); } }), 40));
             }
         }
     }
