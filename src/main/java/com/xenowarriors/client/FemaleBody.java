@@ -54,7 +54,7 @@ public final class FemaleBody {
     }
 
     /** Girl NPCs (by look): townsfolk, the Sky Patrol's Lexy look, and the SR girls. */
-    private static final Set<String> GIRL_NPCS = Set.of("woman", "girl", "sky_lexy", "sr_ava", "sr_ava_demon",
+    private static final Set<String> GIRL_NPCS = Set.of("woman", "girl", "sky_lexy", "sky_royal", "sr_ava", "sr_ava_demon",
             "sr_persephone", "sr_persephone_demon", "sr_maddie");
     /** Set while a girl NPC is drawn. */
     public static boolean npcGirl;
