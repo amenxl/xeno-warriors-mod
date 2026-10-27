@@ -52,9 +52,11 @@ def build(key):
     V['base'].save(CH + f'{key}_face.png')
     for fpath in glob.glob(CH + 'rhalix_face_*.png'):
         expr = os.path.basename(fpath)[len('rhalix_face_'):-4]
+        if expr in ('damage1', 'damage2'): continue                  # (those are battle-damage overlays, from damage_all)
         V[MAP.get(expr, 'base')].save(CH + f'{key}_face_{expr}.png')
-    for suf in ('damage1', 'damage2', 'torn1', 'torn2', 'torn3'): skin.save(CH + f'{key}_{suf}.png')
-    for suf in ('details_damage1', 'details_damage2', 'details_torn1', 'details_torn2', 'details_torn3'): atlas.save(CH + f'{key}_{suf}.png')
+    # the girls' skin goes slim first, then battle damage is drawn from it (tools/xw/damage/damage_all.py)
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert(CH + f'{key}.png')
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/damage'); import damage_all; damage_all.build(key)
     for suf in ('armor', 'armor_torn', 'armor_worn', 'mouth_1', 'mouth_2', 'mouth_3', 'mouth_4', 'mouth_5'):
         shutil.copy(CH + f'rhalix_{suf}.png', CH + f'{key}_{suf}.png')
     for fpath in glob.glob(RES + 'models/armor/rhalix_*.json'):

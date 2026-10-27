@@ -234,6 +234,40 @@ public final class GarryBeatbox {
         dance(m, p, t, w);
     }
 
+    /** Is someone of this character within r blocks? */
+    public static boolean closeTo(Player p, CharacterType who, double r) {
+        if (who == null || Minecraft.getInstance().level == null) return false;
+        for (AbstractClientPlayer o : Minecraft.getInstance().level.players())
+            if (o != p && type(o) == who && o.distanceToSqr(p) < r * r) return true;
+        return false;
+    }
+
+    /** Faces for the beatbox: Garry in the zone, the dancers laughing, Stevie smug while he copies, both of them glaring. */
+    public static String face(Player p) {
+        CharacterType ct = type(p);
+        float pt = 0F;
+        if (ct == CharacterType.GARRY) {
+            float t = time(p, pt);
+            if (t < MIC) return null;
+            AbstractClientPlayer s = copier(p);
+            if (s != null && t >= CAUGHT && t < CALM) return (int) t / 20 % 2 == 0 ? "rage" : "pout";
+            if (s != null && t >= CALM && t < RESUME) return "annoyed";
+            return (int) t / 24 % 3 == 0 ? "grin" : "determined";
+        }
+        if (ct != CharacterType.STEVIE && ct != CharacterType.MIKIKO && ct != CharacterType.KAERU) return null;
+        if (!(p instanceof AbstractClientPlayer ap) || !calmish(ap)) return null;
+        AbstractClientPlayer g = garryNear(p);
+        if (g == null) return null;
+        float t = time(g, pt);
+        if (ct == CharacterType.STEVIE && copier(g) == p) {
+            if (t >= COPY && t < CAUGHT) return "smirk";
+            if (t >= CAUGHT && t < CALM) return (int) t / 20 % 2 == 0 ? "pout" : "rage";
+            if (t >= CALM && t < RESUME) return "laugh";
+        }
+        if (!beating(g, t)) return null;
+        return (int) t / 30 % 2 == 0 ? "laugh" : "excited";
+    }
+
     /** Is this player holding a mic up right now (Garry beatboxing, or Stevie copying him)? */
     public static boolean mic(Player p, float partial) {
         CharacterType ct = type(p);

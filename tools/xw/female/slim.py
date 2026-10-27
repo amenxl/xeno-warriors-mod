@@ -2,8 +2,17 @@
 client/FemaleBody.java). Converts a wide-arm skin by dropping one middle column from each arm's front, back, top and
 bottom. Safe to run again: skins already in the slim layout are left alone. Run convert_all() after any script that
 writes a girl's skin (sp_assets, sr_named, npcs, kaeru)."""
-import os, glob, sys
+import os, glob, sys, json, hashlib
 from PIL import Image
+MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'slim_done.json')
+
+def _md5(path): return hashlib.md5(open(path, 'rb').read()).hexdigest()
+def _load():
+    try: return json.load(open(MANIFEST))
+    except Exception: return {}
+def mark(path):
+    """Record a file as already in the slim layout (e.g. an overlay drawn from a slim skin)."""
+    m = _load(); m[os.path.basename(path)] = _md5(path); json.dump(m, open(MANIFEST, 'w'), indent=0, sort_keys=True)
 
 RES = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/textures/entity/'
 GIRLS = ['kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri']
@@ -34,10 +43,14 @@ def to_slim(im):
     return im
 
 def convert(path):
+    """Converts a wide skin (or skin overlay) to slim, once: the manifest remembers what's done (by file contents)."""
     if not os.path.exists(path): return False
+    m = _load(); name = os.path.basename(path)
+    if m.get(name) == _md5(path): return False
     im = Image.open(path).convert('RGBA')
-    if im.size != (64, 64) or is_slim(im): return False
-    to_slim(im).save(path); return True
+    if im.size != (64, 64): return False
+    if name not in m and is_slim(im): mark(path); return False      # (an opaque skin already slim)
+    to_slim(im).save(path); mark(path); return True
 
 def files():
     out = []

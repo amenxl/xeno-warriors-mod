@@ -158,7 +158,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return (p.tickCount % 40) < 22 ? "snore" : "sleep";   // snores in time with the z's
         }
         if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
-        if (p.hurtTime > 0) return "hurt";
+        if (p.hurtTime > 0) return p.getHealth() < p.getMaxHealth() * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
+        String beat = com.xenowarriors.client.GarryBeatbox.face(p);
+        if (beat != null) return beat;
         if (com.xenowarriors.client.KarmaFocusClient.weight(p) > 0.4F) return "sense";      // eyes closed, sensing Karma
         String arrow = com.xenowarriors.client.ArrowPullClient.face(p);
         if (arrow != null) return arrow;
@@ -184,7 +186,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             // worn out: droopy eyes, sweat, panting
             return (p.tickCount / 7) % 2 == 0 ? "exhausted" : "exhausted2";
         }
-        if (p.getHealth() <= p.getMaxHealth() * 0.3F && p.isAlive()) return "strained";
+        if (p.getHealth() <= p.getMaxHealth() * 0.3F && p.isAlive())
+            return com.xenowarriors.client.Surroundings.of(p) == com.xenowarriors.client.Surroundings.ENEMIES ? "determined" : "strained";   // not giving up
         if (ClientSkillState.hungerEffect(p)) {
             // the Hunger effect: queasy and starving - drooling, the odd green-faced wince
             int ht = (p.tickCount + p.getId() * 17) % 120;
@@ -247,8 +250,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             String[] h = {"happy", "grin", "happy", "excited", "happy", "wink"};        // glad to have company
             mood = h[((p.tickCount + p.getId() * 41) / 60) % h.length];
         } else if (mood == null && around != com.xenowarriors.client.Surroundings.NONE) {
-            String[] c = {"calm", "hum", "calm", "cool", "whistle", "calm"};           // nothing to worry about: chilling
+            String[] c = {"calm", "hum", "calm", "cool", "whistle", "smirk", "calm"};  // nothing to worry about: chilling
             mood = c[((p.tickCount + p.getId() * 41) / 70) % c.length];
+        }
+        // the people they care about: Yuri blushes around Mikiko (her crush), Max and Technica (married) light up together
+        if (mood == null) {
+            String heart = com.xenowarriors.client.GarryBeatbox.closeTo(p, type == CharacterType.YURI ? CharacterType.MIKIKO
+                    : type == CharacterType.MAX ? CharacterType.TECHNICA : type == CharacterType.TECHNICA ? CharacterType.MAX : null, 6) ? (type == CharacterType.YURI ? "blush" : "love") : null;
+            if (heart != null && ((p.tickCount + p.getId() * 13) % 240) < 70) mood = heart;
         }
         int bt = p.tickCount + p.getId() * 37;
         boolean blink = bt % 97 < 3 || (bt % 233 >= 8 && bt % 233 < 11);
