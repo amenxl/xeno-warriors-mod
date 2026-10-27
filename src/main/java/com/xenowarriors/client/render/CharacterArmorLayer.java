@@ -86,7 +86,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     /** Is he wearing another mod's armor in this slot? */
     public static boolean foreignWorn(AbstractClientPlayer p, EquipmentSlot slot) {
         ItemStack s = p.getItemBySlot(slot);
-        return s.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot && (foreign(s) || s.getItem() instanceof com.xenowarriors.item.FoxPjsItem);
+        return s.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot && (foreign(s) || s.getItem() instanceof com.xenowarriors.item.SkinLayoutArmor);
     }
 
     /** Armor from another mod (not vanilla's materials, not ours). */
@@ -215,7 +215,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) continue;
             // other mods' armor (DragonMineZ's gis and armors...): worn as that mod made it, its own model and texture
             // (the Fox PJs are a skin-layout onesie too: worn the same way over any outfit)
-            if (foreign(stack) || stack.getItem() instanceof com.xenowarriors.item.FoxPjsItem) {
+            if (foreign(stack) || stack.getItem() instanceof com.xenowarriors.item.SkinLayoutArmor) {
                 renderForeign(pose, buffers, light, player, stack, armor, slot);
                 continue;
             }

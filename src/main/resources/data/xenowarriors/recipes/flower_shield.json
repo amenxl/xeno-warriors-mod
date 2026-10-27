@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "FIF",
+  "III",
+  " F "
+ ],
+ "key": {
+  "F": {
+   "tag": "minecraft:flowers"
+  },
+  "I": {
+   "item": "minecraft:iron_ingot"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:flower_shield"
+ }
+}

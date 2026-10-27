@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "IFI",
+  "I I",
+  "F F"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "F": {
+   "tag": "minecraft:flowers"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:flower_leggings"
+ }
+}

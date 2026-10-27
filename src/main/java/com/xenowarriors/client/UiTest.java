@@ -351,6 +351,22 @@ public final class UiTest {
             l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 15));
             l.add(new Step("foxpjs_" + t.getId() + "_back", () -> {}, 5));
         }
+        // Flower Armor and the Flower Shield
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.KAERU}) {
+            l.add(new Step(null, () -> { character(t); server(p -> {
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FLOWER_HELMET.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FLOWER_CHESTPLATE.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FLOWER_LEGGINGS.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FLOWER_BOOTS.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FLOWER_SHIELD.get())); }); }, 30));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(10F); }, 15));
+            l.add(new Step("flower_" + t.getId() + "_front", () -> {}, 5));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 15));
+            l.add(new Step("flower_" + t.getId() + "_back", () -> {}, 5));
+        }
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 15));
+        l.add(new Step("flower_shield_firstperson", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, net.minecraft.world.item.ItemStack.EMPTY)); }, 5));
         l.add(new Step(null, () -> server(p -> { for (var sl : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
                 net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) p.setItemSlot(sl, net.minecraft.world.item.ItemStack.EMPTY); }), 5));
         l.add(new Step(null, () -> hold(null), 5));

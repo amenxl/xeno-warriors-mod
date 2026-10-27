@@ -144,6 +144,8 @@ public final class ClientModEvents {
                     com.xenowarriors.altar.ModAltar.MENU.get(), com.xenowarriors.client.KarmaAltarScreen::new);
             net.minecraft.client.renderer.item.ItemProperties.register(com.xenowarriors.item.ModItems.PHONE.get(),
                     com.xenowarriors.XenoWarriors.id("style"), (stack, level, entity, seed) -> com.xenowarriors.item.PhoneItem.style(stack) / 2F);
+            net.minecraft.client.renderer.item.ItemProperties.register(com.xenowarriors.item.ModItems.FLOWER_SHIELD.get(), new net.minecraft.resources.ResourceLocation("blocking"),
+                    (stack, level, entity, seed) -> entity != null && entity.isUsingItem() && entity.getUseItem() == stack ? 1F : 0F);
         });
     }
 

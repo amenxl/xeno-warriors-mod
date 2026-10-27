@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "I I",
+  "IFI",
+  "FIF"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "F": {
+   "tag": "minecraft:flowers"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:flower_chestplate"
+ }
+}

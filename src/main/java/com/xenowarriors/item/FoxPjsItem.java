@@ -25,7 +25,7 @@ import java.util.UUID;
  * Fox PJs (made with Fox Shards): a cozy orange fox onesie - hood with ears, white belly, elastic cuffs, a white-tipped
  * tail and paw slippers. Every character can wear it over any of their outfits. Each piece: +5% running speed.
  */
-public class FoxPjsItem extends ArmorItem {
+public class FoxPjsItem extends ArmorItem implements SkinLayoutArmor {
     public static final ArmorMaterial FOX_PJS = new ArmorMaterial() {
         @Override public int getDurabilityForType(Type type) { return new int[]{65, 75, 80, 55}[3 - type.ordinal()]; }
         @Override public int getDefenseForType(Type type) { return switch (type) { case CHESTPLATE -> 3; case LEGGINGS -> 2; default -> 1; }; }

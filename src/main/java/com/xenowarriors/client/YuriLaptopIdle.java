@@ -104,9 +104,9 @@ public final class YuriLaptopIdle {
         float type = sm((t - 16F) / 6F);
         if (type > 0F) {
             float a = Mth.sin(age * 1.3F) * 0.06F, b = Mth.sin(age * 1.3F + 1.7F) * 0.06F;
-            set(m.rightArm, -0.95F + a, -0.32F, 0.04F, type);
-            set(m.leftArm, -0.95F + b, 0.32F, -0.04F, type);
-            LimbBend.extraElbows(p, 0.55F * type, 0.55F * type);
+            set(m.rightArm, -0.62F + a, -0.18F, 0.12F, type);          // hands low and apart, typing under the screen
+            set(m.leftArm, -0.62F + b, 0.18F, -0.12F, type);
+            LimbBend.extraElbows(p, 0.15F * type, 0.15F * type);
             m.head.xRot = Mth.lerp(type, m.head.xRot, 0.32F + Mth.sin(age * 0.04F) * 0.03F);
             m.head.yRot = Mth.lerp(type, m.head.yRot, Mth.sin(age * 0.03F) * 0.12F);   // reading across the screen
         }
@@ -122,14 +122,14 @@ public final class YuriLaptopIdle {
         float flicker = 0.85F + 0.15F * Mth.sin(t * 0.7F);
         VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentEmissive(TEX));   // see-through, glowing
         pose.pushPose();
-        pose.translate(0F, 8.2F / 16F, -10.0F / 16F);              // in front of her, at hand height
+        pose.translate(0F, 10.4F / 16F, -9.0F / 16F);              // in front of her, at hand height
         pose.scale(s, s, s);
         // keyboard: a flat plate under her hands
         quad(vc, pose, -4.5F, 0F, -2.6F, 4.5F, 0F, 2.6F, true, 0F, 40F / 64F, 1F, 1F, flicker);
         // screen: rising from the back edge, tilted toward her
         pose.translate(0F, 0F, -2.8F / 16F);
         pose.mulPose(Axis.XP.rotationDegrees(-12F));
-        quad(vc, pose, -5F, -6.6F, 0F, 5F, 0F, 0F, false, 0F, 0F, 1F, 40F / 64F, flicker);
+        quad(vc, pose, -6F, -7.6F, 0F, 6F, 0F, 0F, false, 0F, 0F, 1F, 40F / 64F, flicker);
         pose.popPose();
     }
 

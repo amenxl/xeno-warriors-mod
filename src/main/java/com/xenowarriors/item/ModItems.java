@@ -50,6 +50,12 @@ public final class ModItems {
     public static final RegistryObject<Item> FOX_PJS_TOP = ITEMS.register("fox_pjs_top", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));
     public static final RegistryObject<Item> FOX_PJS_BOTTOMS = ITEMS.register("fox_pjs_bottoms", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> FOX_PJS_SLIPPERS = ITEMS.register("fox_pjs_slippers", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    /** Flower Armor and the Flower Shield (iron and flowers). */
+    public static final RegistryObject<Item> FLOWER_HELMET = ITEMS.register("flower_helmet", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
+    public static final RegistryObject<Item> FLOWER_CHESTPLATE = ITEMS.register("flower_chestplate", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));
+    public static final RegistryObject<Item> FLOWER_LEGGINGS = ITEMS.register("flower_leggings", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
+    public static final RegistryObject<Item> FLOWER_BOOTS = ITEMS.register("flower_boots", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    public static final RegistryObject<Item> FLOWER_SHIELD = ITEMS.register("flower_shield", () -> new FlowerShieldItem(new Item.Properties().durability(420)));
     public static final RegistryObject<Item> FOX_SHARD = ITEMS.register("fox_shard", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> FOX_SHARD_ORE = ITEMS.register("fox_shard_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.FOX_SHARD_ORE.get(), new Item.Properties()));
