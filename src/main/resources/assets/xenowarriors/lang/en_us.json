@@ -633,5 +633,10 @@
   "block.xenowarriors.fox_shard_ore": "Fox Shard Ore",
   "block.xenowarriors.deepslate_fox_shard_ore": "Deepslate Fox Shard Ore",
   "block.xenowarriors.fox_shard_block": "Block of Fox Shards",
-  "item.xenowarriors.fox_shard": "Fox Shard"
+  "item.xenowarriors.fox_shard": "Fox Shard",
+  "item.xenowarriors.microphone": "Microphone",
+  "item.xenowarriors.fox_pjs_hood": "Fox PJs Hood",
+  "item.xenowarriors.fox_pjs_top": "Fox PJs Top",
+  "item.xenowarriors.fox_pjs_bottoms": "Fox PJs Bottoms",
+  "item.xenowarriors.fox_pjs_slippers": "Fox PJs Slippers"
 }

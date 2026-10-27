@@ -401,7 +401,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (model.hair != null) {
             // the outfit's own hood: his hair still shows under it (the strands that would poke through it are tucked in)
             model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
-                    instanceof com.xenowarriors.item.SrHoodieItem);
+                    instanceof com.xenowarriors.item.SrHoodieItem)
+                    && !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.item.FoxPjsItem);   // (under the Fox PJs hood)
             for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood;
         }
 
@@ -415,6 +416,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // Rhalix's Origins outfits: the book he summons and reads
         if (type == CharacterType.RHALIX) com.xenowarriors.client.RhalixBookIdle.render(player, poseStack, buffers, packedLight, partialTick);
         if (type == CharacterType.YURI) com.xenowarriors.client.YuriLaptopIdle.render(player, poseStack, buffers, packedLight, partialTick);
+        if (type == CharacterType.GARRY || type == CharacterType.STEVIE) com.xenowarriors.client.GarryBeatbox.render(player, parent, poseStack, buffers, packedLight, partialTick);
 
         // Rhalix sharpening his sword: a whetstone in his other hand
         if (type == CharacterType.RHALIX && com.xenowarriors.client.RhalixCombatAnim.sharpening(player)) {

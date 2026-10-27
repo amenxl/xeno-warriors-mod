@@ -74,6 +74,7 @@ public final class UiTest {
         if ("sp".equals(System.getenv("XW_UITEST_FOCUS"))) { skyPatrol(mc, l); return l; }
         if ("ffr".equals(System.getenv("XW_UITEST_FOCUS"))) { ffr(mc, l); return l; }
         if ("auras".equals(System.getenv("XW_UITEST_FOCUS"))) { auras(mc, l); return l; }
+        if ("beatbox".equals(System.getenv("XW_UITEST_FOCUS"))) { beatbox(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -322,6 +323,37 @@ public final class UiTest {
                 mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
         }
         l.add(new Step(null, () -> mc.setScreen(null), 5));
+    }
+
+    /** Garry's beatbox idle (mic out, bobbing), and the Fox King mask and crown item. */
+    private static void beatbox(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { character(CharacterType.GARRY); hold(null); }, 30));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            mc.player.setXRot(10F); mc.player.setYRot(-35F); mc.player.yBodyRot = -35F; mc.player.setYHeadRot(-35F); }, 150));
+        for (int f = 0; f < 16; f++) l.add(new Step(String.format("beatbox_%02d", f), () -> {}, 3));
+        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); }, 30));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.karma.Karma.add(p, 100F); com.xenowarriors.mikiko.FoxKing.toggle(p); }), 40));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(5F); mc.player.setYRot(-70F); mc.player.yBodyRot = -70F; mc.player.setYHeadRot(-70F); }, 20));
+        l.add(new Step("beatbox_foxking_side", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.player.setYRot(-25F); mc.player.yBodyRot = -25F; mc.player.setYHeadRot(-25F); }, 10));
+        l.add(new Step("beatbox_foxking_front", () -> {}, 5));
+        l.add(new Step(null, () -> hold(com.xenowarriors.item.ModItems.FOX_KING_CROWN.get()), 20));
+        l.add(new Step("beatbox_crown_item", () -> {}, 5));
+        // Fox PJs on a few characters (front and back)
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.KYRIE, CharacterType.RHALIX, CharacterType.YURI}) {
+            l.add(new Step(null, () -> { hold(null); character(t); server(p -> {
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_HOOD.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_TOP.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_BOTTOMS.get()));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_SLIPPERS.get())); }); }, 30));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(10F); mc.player.setYRot(-25F); mc.player.yBodyRot = -25F; mc.player.setYHeadRot(-25F); }, 15));
+            l.add(new Step("foxpjs_" + t.getId() + "_front", () -> {}, 5));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 15));
+            l.add(new Step("foxpjs_" + t.getId() + "_back", () -> {}, 5));
+        }
+        l.add(new Step(null, () -> server(p -> { for (var sl : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
+                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) p.setItemSlot(sl, net.minecraft.world.item.ItemStack.EMPTY); }), 5));
+        l.add(new Step(null, () -> hold(null), 5));
     }
 
     /** Every character powering up (their aura), Karma focus glows, and element auras on a row of mobs. */

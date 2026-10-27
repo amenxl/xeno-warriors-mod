@@ -43,6 +43,13 @@ public final class ModItems {
     public static final RegistryObject<Item> CORRUPTED_STONE = ITEMS.register("corrupted_stone",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.corrupted.CorruptionBlocks.STONE.get(), new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_SHARD = ITEMS.register("corrupted_shard", () -> new Item(new Item.Properties()));
+    /** Garry's microphone (he pulls it out to beatbox). */
+    public static final RegistryObject<Item> MICROPHONE = ITEMS.register("microphone", () -> new Item(new Item.Properties().stacksTo(1)));
+    /** Fox PJs: a fox onesie made with Fox Shards (+5% running speed per piece; fits every character over any outfit). */
+    public static final RegistryObject<Item> FOX_PJS_HOOD = ITEMS.register("fox_pjs_hood", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
+    public static final RegistryObject<Item> FOX_PJS_TOP = ITEMS.register("fox_pjs_top", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));
+    public static final RegistryObject<Item> FOX_PJS_BOTTOMS = ITEMS.register("fox_pjs_bottoms", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
+    public static final RegistryObject<Item> FOX_PJS_SLIPPERS = ITEMS.register("fox_pjs_slippers", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
     public static final RegistryObject<Item> FOX_SHARD = ITEMS.register("fox_shard", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> FOX_SHARD_ORE = ITEMS.register("fox_shard_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.FOX_SHARD_ORE.get(), new Item.Properties()));

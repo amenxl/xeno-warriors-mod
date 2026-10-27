@@ -1,0 +1,21 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "OSO",
+  "W W"
+ ],
+ "key": {
+  "O": {
+   "item": "minecraft:orange_wool"
+  },
+  "W": {
+   "item": "minecraft:white_wool"
+  },
+  "S": {
+   "item": "xenowarriors:fox_shard"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:fox_pjs_hood"
+ }
+}

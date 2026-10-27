@@ -86,7 +86,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     /** Is he wearing another mod's armor in this slot? */
     public static boolean foreignWorn(AbstractClientPlayer p, EquipmentSlot slot) {
         ItemStack s = p.getItemBySlot(slot);
-        return s.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot && foreign(s);
+        return s.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot && (foreign(s) || s.getItem() instanceof com.xenowarriors.item.FoxPjsItem);
     }
 
     /** Armor from another mod (not vanilla's materials, not ours). */
@@ -214,7 +214,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             ItemStack stack = player.getItemBySlot(slot);
             if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) continue;
             // other mods' armor (DragonMineZ's gis and armors...): worn as that mod made it, its own model and texture
-            if (foreign(stack)) {
+            // (the Fox PJs are a skin-layout onesie too: worn the same way over any outfit)
+            if (foreign(stack) || stack.getItem() instanceof com.xenowarriors.item.FoxPjsItem) {
                 renderForeign(pose, buffers, light, player, stack, armor, slot);
                 continue;
             }
@@ -270,6 +271,53 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                 m.root.render(pose, buffers.getBuffer(RenderType.armorEntityGlint()), light, overlay, 1F, 1F, 1F, 1F);
             }
             m.leftArm.visible = true;
+        }
+        foxPjsExtras(pose, buffers, light, player);
+    }
+
+    private static final ResourceLocation FOX_EXTRAS_TEX = XenoWarriors.id("textures/entity/fox_pjs_extras.png");
+    private static net.minecraft.client.model.geom.ModelPart foxEars, foxTail;
+
+    /** The Fox PJs' 3D bits: ears on the hood, and the white-tipped tail on the back. */
+    private void foxPjsExtras(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player) {
+        boolean hood = player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.item.FoxPjsItem;
+        boolean top = player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof com.xenowarriors.item.FoxPjsItem;
+        if (!hood && !top) return;
+        if (foxEars == null) {
+            var mesh = new net.minecraft.client.model.geom.builders.MeshDefinition();
+            var root = mesh.getRoot();
+            var ears = root.addOrReplaceChild("ears", net.minecraft.client.model.geom.builders.CubeListBuilder.create(), net.minecraft.client.model.geom.PartPose.ZERO);
+            for (int s = -1; s <= 1; s += 2) {
+                ears.addOrReplaceChild("ear" + s, net.minecraft.client.model.geom.builders.CubeListBuilder.create()
+                                .texOffs(0, 0).addBox(-1.75F, -3.6F, -0.6F, 3.5F, 3.6F, 1.2F)              // orange outside
+                                .texOffs(16, 0).addBox(-1.25F, -3.0F, -0.75F, 2.5F, 2.8F, 0.2F)            // white rim
+                                .texOffs(32, 0).addBox(-0.8F, -2.4F, -0.85F, 1.6F, 2.0F, 0.2F)             // dark inside
+                                .texOffs(0, 0).addBox(-0.9F, -4.6F, -0.5F, 1.8F, 1.1F, 1.0F),
+                        net.minecraft.client.model.geom.PartPose.offsetAndRotation(s * 2.6F, -8.4F, -0.8F, 0F, 0F, s * 0.28F));
+            }
+            var tail = root.addOrReplaceChild("tail", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
+                            .texOffs(0, 0).addBox(-1.4F, -1.4F, 0F, 2.8F, 2.8F, 3.6F)
+                            .texOffs(16, 0).addBox(-1.5F, -1.5F, 3.4F, 3.0F, 3.0F, 1.8F),                  // white tip
+                    net.minecraft.client.model.geom.PartPose.offsetAndRotation(0F, 10.6F, 2.2F, 0.9F, 0F, 0F));
+            var baked = net.minecraft.client.model.geom.builders.LayerDefinition.create(mesh, 64, 32).bakeRoot();
+            foxEars = baked.getChild("ears"); foxTail = baked.getChild("tail");
+        }
+        PlayerModel<AbstractClientPlayer> parent = getParentModel();
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityCutoutNoCull(FOX_EXTRAS_TEX));
+        int overlay = LivingEntityRenderer.getOverlayCoords(player, 0F);
+        if (hood) {
+            pose.pushPose();
+            parent.head.translateAndRotate(pose);
+            foxEars.render(pose, vc, light, overlay);
+            pose.popPose();
+        }
+        if (top) {
+            pose.pushPose();
+            parent.body.translateAndRotate(pose);
+            float sway = net.minecraft.util.Mth.sin(player.tickCount * 0.12F) * 0.15F;
+            foxTail.yRot = sway;
+            foxTail.render(pose, vc, light, overlay);
+            pose.popPose();
         }
     }
 
