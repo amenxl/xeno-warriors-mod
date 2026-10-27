@@ -43,6 +43,13 @@ public final class ModItems {
     public static final RegistryObject<Item> CORRUPTED_STONE = ITEMS.register("corrupted_stone",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.corrupted.CorruptionBlocks.STONE.get(), new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_SHARD = ITEMS.register("corrupted_shard", () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> FOX_SHARD = ITEMS.register("fox_shard", () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> FOX_SHARD_ORE = ITEMS.register("fox_shard_ore",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.FOX_SHARD_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> DEEPSLATE_FOX_SHARD_ORE = ITEMS.register("deepslate_fox_shard_ore",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.DEEPSLATE_FOX_SHARD_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> FOX_SHARD_BLOCK = ITEMS.register("fox_shard_block",
+            () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.FOX_SHARD_BLOCK.get(), new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_ORE = ITEMS.register("corrupted_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_HELMET = ITEMS.register("corrupted_helmet",

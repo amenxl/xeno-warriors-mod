@@ -1,8 +1,10 @@
 {
- "replace": false,
- "values": [
-  "xenowarriors:sky_ore",
-  "xenowarriors:corrupted_ore",
-  "xenowarriors:data_ore"
- ]
+  "replace": false,
+  "values": [
+    "xenowarriors:sky_ore",
+    "xenowarriors:corrupted_ore",
+    "xenowarriors:data_ore",
+    "xenowarriors:fox_shard_ore",
+    "xenowarriors:deepslate_fox_shard_ore"
+  ]
 }

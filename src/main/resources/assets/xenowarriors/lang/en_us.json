@@ -629,5 +629,9 @@
   "skill.xenowarriors.past_mages.how": "Press the ultimate key.",
   "item.xenowarriors.zane_broom": "Zane's Broom Staff",
   "item.xenowarriors.max_knife": "Max's Knife",
-  "item.xenowarriors.sam_bat": "Sam's Bat"
+  "item.xenowarriors.sam_bat": "Sam's Bat",
+  "block.xenowarriors.fox_shard_ore": "Fox Shard Ore",
+  "block.xenowarriors.deepslate_fox_shard_ore": "Deepslate Fox Shard Ore",
+  "block.xenowarriors.fox_shard_block": "Block of Fox Shards",
+  "item.xenowarriors.fox_shard": "Fox Shard"
 }

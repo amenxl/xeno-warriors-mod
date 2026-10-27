@@ -1,0 +1,12 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "ingredients": [
+  {
+   "item": "xenowarriors:fox_shard_block"
+  }
+ ],
+ "result": {
+  "item": "xenowarriors:fox_shard",
+  "count": 9
+ }
+}

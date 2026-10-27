@@ -24,6 +24,17 @@ public final class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE).strength(3.5F, 3F).requiresCorrectToolForDrops()
                     .sound(SoundType.DEEPSLATE).lightLevel(s -> 3), UniformInt.of(2, 5)));
 
+    /** Fox Shards: fox-orange crystal shards in the stone (and deepslate) of the overworld. */
+    public static final RegistryObject<Block> FOX_SHARD_ORE = BLOCKS.register("fox_shard_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(3F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.STONE).lightLevel(s -> 2), UniformInt.of(2, 5)));
+    public static final RegistryObject<Block> DEEPSLATE_FOX_SHARD_ORE = BLOCKS.register("deepslate_fox_shard_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(4.5F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.DEEPSLATE).lightLevel(s -> 2), UniformInt.of(3, 6)));
+    public static final RegistryObject<Block> FOX_SHARD_BLOCK = BLOCKS.register("fox_shard_block", () -> new Block(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(3F, 4F).requiresCorrectToolForDrops()
+                    .sound(SoundType.AMETHYST).lightLevel(s -> 7)));
+
     /** Data Ore: green-veined, found deep; Ultima's Data Sense finds it. Drops Data Shards. */
     public static final RegistryObject<Block> DATA_ORE = BLOCKS.register("data_ore", () -> new DropExperienceBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).strength(4F, 5F).requiresCorrectToolForDrops()

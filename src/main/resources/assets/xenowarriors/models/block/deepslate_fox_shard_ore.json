@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:block/cube_all",
+ "textures": {
+  "all": "xenowarriors:block/deepslate_fox_shard_ore"
+ }
+}

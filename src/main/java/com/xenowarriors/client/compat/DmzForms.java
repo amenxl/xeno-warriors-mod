@@ -134,6 +134,9 @@ public final class DmzForms {
     /** This Xeno Warriors player is in a form DragonMineZ should draw (Oozaru, giant forms...). */
     public static boolean dmzDraws(Player p) {
         if (!ours(p) || giantFox(p)) return false;
+        // Ai-oni (for now): DragonMineZ draws and animates her (its body, attacks and animations), with her
+        // 3D details still put on by DragonMineZ's layer forwarder
+        if (ClientCharacterData.get((AbstractClientPlayer) p) == CharacterType.AIONI && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return true;
         Form f = info(p);
         return f != null && f.dmz();
     }
