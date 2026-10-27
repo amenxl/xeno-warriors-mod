@@ -517,10 +517,6 @@
   "skill.xenowarriors.visor_scan.short": "VS",
   "skill.xenowarriors.visor_scan.desc": "Her visor tracks movement: everything within 40 blocks glows for 15 seconds, and it reads the health of what she looks at.",
   "skill.xenowarriors.visor_scan.how": "Press to scout.",
-  "skill.xenowarriors.wing_cloak": "Wing Cloak",
-  "skill.xenowarriors.wing_cloak.short": "WC",
-  "skill.xenowarriors.wing_cloak.desc": "Her wing-invisibility device turned all the way up: invisible for 12 seconds.",
-  "skill.xenowarriors.wing_cloak.how": "Press to slip away.",
   "skill.xenowarriors.rescue_platform": "Rescue Platform",
   "skill.xenowarriors.rescue_platform.short": "RP",
   "skill.xenowarriors.rescue_platform.desc": "Her watch calls the rescue platform: party members within 48 blocks are pulled to her, healed and floating safely.",
@@ -528,5 +524,9 @@
   "skill.xenowarriors.tech_barrage": "Tech Barrage",
   "skill.xenowarriors.tech_barrage.short": "TB",
   "skill.xenowarriors.tech_barrage.desc": "Technica's ultimate: four seconds of non-stop Uzi fire into everything in front of her, explosive and gravity rounds mixed.",
-  "skill.xenowarriors.tech_barrage.how": "Press the ultimate key and aim."
+  "skill.xenowarriors.tech_barrage.how": "Press the ultimate key and aim.",
+  "skill.xenowarriors.cloak_device": "Cloak Device",
+  "skill.xenowarriors.cloak_device.short": "CD",
+  "skill.xenowarriors.cloak_device.desc": "One of her inventions: she turns invisible for 12 seconds.",
+  "skill.xenowarriors.cloak_device.how": "Press to slip away."
 }

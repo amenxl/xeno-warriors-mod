@@ -101,9 +101,9 @@ public final class TechSkills {
         }
     }
 
-    /** Wing Cloak: her wing-invisibility device, turned all the way up - she vanishes for 12 seconds. */
+    /** Cloak Device: one of her inventions - she vanishes for 12 seconds. */
     public static class WingCloak implements Skill {
-        @Override public String getId() { return "wing_cloak"; }
+        @Override public String getId() { return "cloak_device"; }
         @Override public int getCooldownTicks() { return 35 * 20; }
         @Override public int getKarmaCost() { return 25; }
         @Override public boolean use(ServerPlayer p) {

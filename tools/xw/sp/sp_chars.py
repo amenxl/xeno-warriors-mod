@@ -422,7 +422,7 @@ def technica(f):
 TECHNICA = dict(skin=T_SKIN, eyes=T_EYE, hair=[TH1, TH2], paint=tech_paint,
                 brow=['.........', '..kkkkk..', 'kk.......'],
                 eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
-                mouth=['..kkkk..'], mouth_x=12, mouth_y=25, wing=('tech', '#e8a0c4'), fit=technica)
+                mouth=['..kkkk..'], mouth_x=12, mouth_y=25, wing=None, fit=technica)   # (her artificial wings come later in the show)
 
 CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA}
 
@@ -466,9 +466,12 @@ def make(key):
     spec = CHARS[key]
     fit = Fit(); spec['fit'](fit)
     atlas = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
-    style, col = spec['wing']
-    pack(fit, atlas, region=(0, wing_rows(style), 256, 256))
-    w = wings(style, col, atlas)
+    if spec.get('wing'):
+        style, col = spec['wing']
+        pack(fit, atlas, region=(0, wing_rows(style), 256, 256))
+        w = wings(style, col, atlas)
+    else:
+        pack(fit, atlas, region=(0, 0, 256, 256)); w = []
     skin = paint_skin(spec)
     return fit, atlas, skin, w
 

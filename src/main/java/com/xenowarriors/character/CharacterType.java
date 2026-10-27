@@ -31,7 +31,7 @@ public enum CharacterType {
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
-    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == TECHNICA || this == AIONI; }   // (Ai-oni flies on her demon wings)
+    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
 
     /** The Sky Patrol members (for team synergy). */
     public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
