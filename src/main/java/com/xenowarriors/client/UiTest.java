@@ -632,7 +632,6 @@ public final class UiTest {
         l.add(new Step(null, () -> { noToasts(mc); character(CharacterType.KYRIE); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             server(p -> { var fox = net.minecraft.world.entity.EntityType.FOX.create(p.serverLevel());
                 if (fox != null) { fox.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0, 0); p.serverLevel().addFreshEntity(fox); com.xenowarriors.fox.FoxPets.tameNow(p, fox); } }); }, 60));
-        java.util.UUID me = mc.getUser().getProfileId() == null ? java.util.UUID.randomUUID() : mc.getUser().getProfileId();
         l.add(new Step(null, () -> PopupFeed.push(com.xenowarriors.network.PopupPacket.DANGER, java.util.UUID.randomUUID(), CharacterType.MIKIKO.ordinal(), -1, "Down!", "Mikiko is down! Get to them.", "exhausted"), 12));
         l.add(new Step("popup_one", () -> {}, 3));
         l.add(new Step(null, () -> PopupFeed.push(com.xenowarriors.network.PopupPacket.REQUEST, java.util.UUID.randomUUID(), CharacterType.RHALIX.ordinal(), -1, "Team attack!", "Rhalix wants Gravity Fox Fire! Ultimate key to join.", "shout"), 10));
