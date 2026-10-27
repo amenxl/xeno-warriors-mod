@@ -65,7 +65,10 @@ public class CharacterSelectScreen extends Screen {
         this.canClose = ClientCharacterData.getLocal() != CharacterType.NONE;
         if (!opened) { opened = true; if (canClose) group = Group.of(ClientCharacterData.getLocal()); }
         if (canClose && Group.of(ClientCharacterData.getLocal()) == group) focus = ClientCharacterData.getLocal();
+        ModNetwork.sendToServer(new com.xenowarriors.network.CharLevelsPacket(new int[0]));      // ask for our level with everyone
     }
+
+    private static int level(CharacterType t) { return com.xenowarriors.network.CharLevelsPacket.CLIENT[t.ordinal()]; }
 
     /** UI test: flip to the next team. */
     public static void nextPageForTest() { group = Group.values()[(group.ordinal() + 1) % Group.values().length]; }
@@ -170,7 +173,8 @@ public class CharacterSelectScreen extends Screen {
             g.pose().scale(ns, ns, 1F);
             g.drawString(font, locked(focus) ? Component.literal("???") : focus.getFullName(), 0, 0, 0xFFFFFF);
             g.pose().popPose();
-            Component sub = locked(focus) ? Component.literal("Season " + focus.season() + " - /xeno season unlock " + focus.season()) : focus.getTitle();
+            Component sub = locked(focus) ? Component.literal("Season " + focus.season() + " - /xeno season unlock " + focus.season())
+                    : level(focus) > 0 ? Component.literal("").append(focus.getTitle()).append(Component.literal("   Lv." + level(focus)).withStyle(net.minecraft.ChatFormatting.GOLD)) : focus.getTitle();
             g.drawString(font, sub, 12, height - 26, locked(focus) ? 0xAA5555 : 0xCCCCCC);
             if (!locked(focus)) {
                 Component el = focus.getElements();
@@ -216,6 +220,14 @@ public class CharacterSelectScreen extends Screen {
             g.fill(c.x, c.y + c.h - 12, c.x + c.w, c.y + c.h - 11, 0xFF000000 | tc);
             drawFit(g, c.type.getDisplayName().getString(), c.x + c.w / 2, c.y + c.h - 10, c.w - 4, sel ? 0xFFFFFF : 0xDDDDDD);
             if (ClientCharacterData.getLocal() == c.type) g.drawString(font, "★", c.x + c.w - 9, c.y + 2, 0xFFE040);   // your current character
+            int lv = level(c.type);
+            if (lv > 0) {                                                        // your level with them, on the card
+                String ls = "Lv." + lv;
+                int lw = font.width(ls) + 4;
+                g.fill(c.x + 1, c.y + 1, c.x + 1 + lw, c.y + 11, 0xC0000000);
+                g.fill(c.x + 1, c.y + 11, c.x + 1 + lw, c.y + 12, 0xFF000000 | tc);
+                g.drawString(font, ls, c.x + 3, c.y + 2, 0xFFE8C040);
+            }
             g.pose().popPose();
         }
 

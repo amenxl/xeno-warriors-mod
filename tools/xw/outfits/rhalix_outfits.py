@@ -138,8 +138,6 @@ def r3_skin(part, face_, x, y, W, H, outer):
             if y >= 11: return P['BK']
             if y in (9, 10): return P['WH'] if x in (3, 4) else P['BR']
             if x in (0, 1, 6, 7): return P['P'] if x in (0, 7) else P['PD']
-            if (x, y) in ((2, 0), (5, 0), (2, 1), (5, 1), (3, 2), (4, 2)): return P['SI']        # chain
-            if (x == 4 and 3 <= y <= 6) or (y == 4 and x in (3, 5)): return P['SI']            # cross
             return P['BK'] if y else SK if x in (3, 4) else P['BK']
         if face_ == 'top': return SK if 2 <= x <= 5 and y >= 1 else P['P']
         if y >= 11: return P['BK']
@@ -150,10 +148,6 @@ def r3_skin(part, face_, x, y, W, H, outer):
         if face_ == 'top': return P['P'] if part == 'larm' else P['BK']
         if y <= 4: return P['P']
         if y == 5: return P['PD']
-        if part == 'rarm' and face_ == 'front' and 9 <= y <= 11:                     # the pink sigil on the back of his hand
-            ring = {(1, 9), (2, 9), (0, 10), (3, 10), (1, 11), (2, 11)}
-            if (x, y) in ring: return '#e86ab8'
-            if (x, y) in ((1, 10), (2, 10)): return '#f4a8d8'
         return SK if y < 11 else SKD
     if part in ('rleg', 'lleg'):
         if face_ == 'top': return P['BK']
@@ -186,8 +180,18 @@ def r3_fit():
     f.add('body', [-3.9, 9.4, -2.62], [-2.2, 12.4, -2.4], P['WH'], {'front': lambda x, y: P['SI'] if y > .8 else P['WH']})
     torn = lambda x, y: (None if y > .55 + .4 * abs(((x * 3) % 1) - .5) else P['PL'] if y > .5 and int(x * 7) % 3 == 0 else P['WH'])
     f.add('body', [4.3, 7.2, -1.4], [4.9, 12.4, 1.6], P['WH'], {'right': torn, 'left': torn, 'front': torn, 'back': torn})
-    f.add('body', [0.5, 17.6, -2.2], [1.2, 19.8, -2.08], P['SI'])                               # 3D cross
-    f.add('body', [0.15, 18.7, -2.2], [1.55, 19.2, -2.08], P['SI'])
+    # the cross necklace: a fine chain hanging in a V from his collar, and a silver cross with a dark edge
+    for sx in (1, -1):
+        for k in range(7):
+            t = k / 6
+            x, y = sx * (1.7 - 1.5 * t), 23.9 - 3.4 * t
+            f.add('body', [x - 0.13, y - 0.28, -2.24], [x + 0.13, y + 0.28, -2.12], '#c8c8cc' if k % 2 else '#9a9aa0', shade=False)
+    f.add('body', [-0.2, 19.9, -2.25], [0.2, 20.5, -2.12], '#c8c8cc', shade=False)                # the bail
+    f.add('body', [-0.42, 17.0, -2.3], [0.42, 20.0, -2.14], '#3a3a40', shade=False)               # dark edge
+    f.add('body', [-1.12, 18.5, -2.3], [1.12, 19.34, -2.14], '#3a3a40', shade=False)
+    f.add('body', [-0.27, 17.15, -2.38], [0.27, 19.85, -2.22], '#e8e8ee', shade=False)            # the cross
+    f.add('body', [-0.97, 18.65, -2.38], [0.97, 19.19, -2.22], '#e8e8ee', shade=False)
+    f.add('body', [-0.1, 18.8, -2.42], [0.1, 19.05, -2.36], '#ffffff', shade=False)               # a glint
     # baggy black pants, tall purple boots with the black pattern
     f.both('right_leg', [-0.4, 6.0, -2.4], [4.4, 12.3, 2.4], P['BK'])
     f.both('right_leg', [-0.32, 0.0, -2.55], [4.32, 6.6, 2.35], P['P'], {'front': boot_pattern, 'right': boot_pattern, 'left': boot_pattern, 'top': P['PD']})
