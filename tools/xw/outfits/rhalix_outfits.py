@@ -150,14 +150,20 @@ def r3_skin(part, face_, x, y, W, H, outer):
         if face_ == 'top': return P['P'] if part == 'larm' else P['BK']
         if y <= 4: return P['P']
         if y == 5: return P['PD']
+        if part == 'rarm' and face_ == 'front' and 9 <= y <= 11:                     # the pink sigil on the back of his hand
+            ring = {(1, 9), (2, 9), (0, 10), (3, 10), (1, 11), (2, 11)}
+            if (x, y) in ring: return '#e86ab8'
+            if (x, y) in ((1, 10), (2, 10)): return '#f4a8d8'
         return SK if y < 11 else SKD
     if part in ('rleg', 'lleg'):
         if face_ == 'top': return P['BK']
         if face_ == 'bottom': return P['CR']
         if y >= 6:
             if face_ in ('front', outer) and y in (7, 9) and x in (1, 2): return P['BK']
+            if face_ == 'front' and x == 1: return '#2a1a36'                           # zip line
             return P['P'] if y < 11 else P['PD']
-        return P['BK'] if (x + y) % 4 else P['BKL']
+        if face_ in ('front', 'back') and (x + (y // 2)) % 3 == 0: return P['BKL']      # baggy folds
+        return P['BK']
     return None
 
 def boot_pattern(fx, fy):
@@ -187,17 +193,58 @@ def r3_fit():
     f.both('right_leg', [-0.32, 0.0, -2.55], [4.32, 6.6, 2.35], P['P'], {'front': boot_pattern, 'right': boot_pattern, 'left': boot_pattern, 'top': P['PD']})
     f.both('right_leg', [0.15, 0.0, -3.1], [3.85, 1.4, -2.55], P['P'])
     f.both('right_leg', [-0.42, 0.0, -3.2], [4.42, 0.4, 2.45], P['CR'])
-    # crown on his hair, purple visor with red eyes over the forehead
-    for cube in (([-5.3, 32.1, -5.3], [5.3, 33.1, -4.9]), ([-5.3, 32.1, 4.9], [5.3, 33.1, 5.3]),
-                 ([-5.3, 32.1, -5.3], [-4.9, 33.1, 5.3]), ([4.9, 32.1, -5.3], [5.3, 33.1, 5.3])):
-        f.add('head', cube[0], cube[1], P['CR'], {'front': lambda x, y: P['P'] if int(x * 10) % 3 == 1 and y > .3 else P['CR']})
-    for x, z in ((-5.0, -5.0), (0, -5.1), (5.0, -5.0), (-5.0, 5.0), (5.0, 5.0)):
-        f.add('head', [x - .4, 33.1, z - .25], [x + .4, 34.9, z + .25], P['CR'])
-        f.add('head', [x - .35, 34.9, z - .35], [x + .35, 35.6, z + .35], P['BKL'])
-    eyes = lambda x, y: P['RD'] if .3 < y < .7 and (.12 < x < .4 or .6 < x < .88) else P['P']
-    f.add('head', [-3.8, 29.7, -6.15], [3.8, 31.3, -5.85], P['P'], {'front': eyes})
-    f.add('head', [-4.7, 30.1, -5.9], [-3.6, 30.9, -2.0], P['PD'])
-    f.add('head', [3.6, 30.1, -5.9], [4.7, 30.9, -2.0], P['PD'])
+    # wide lapels in a lighter purple, a stand-up collar at the back
+    for sx in (1, -1):
+        x0, x1 = (1.3, 2.6) if sx > 0 else (-2.6, -1.3)
+        f.add('body', [x0, 19.4, -2.72], [x1, 24.2, -2.5], P['PL'], {'front': lambda x, y: P['PD'] if y > .85 else P['PL']})
+    f.add('body', [-3.6, 23.4, 1.9], [3.6, 25.8, 2.9], P['PD'])
+    # the black pants bunch up over the boots
+    f.both('right_leg', [-0.55, 5.4, -2.55], [4.55, 7.0, 2.55], P['BK'], {'front': lambda x, y: P['BKL'] if int(x * 5) % 2 == 0 else P['BK']})
+    # S3 hair: dark grey locs hanging round his head, purple locs tied up on top
+    sys.path.insert(0, '/home/claude/xw/detail'); import core as _core
+    class _A:
+        def __init__(s_, f_): s_.f = f_
+        def add(s_, bone, name, frm, to, color, rot=None, origin=None, shade=None):
+            s_.f.add('head', frm, to, color, rot=rot if rot and any(rot) else None, origin=origin)
+    A_ = _A(f)
+    G1, G2, G3 = '#2a2a2e', '#3a3a40', '#4c4c54'
+    f.add('head', [-4.55, 31.4, -4.55], [4.55, 32.6, 4.55], G1)                                  # cap of hair under the crown
+    f.add('head', [-4.55, 26.0, 4.0], [4.55, 32.0, 4.7], G1)
+    for side in (1, -1):
+        x0, x1 = (4.0, 4.7) if side > 0 else (-4.7, -4.0)
+        f.add('head', [x0, 27.0, -3.0], [x1, 32.0, 4.6], G1)
+        for z in (-4.2, -2.4, -0.4, 1.6, 3.4):
+            _core.lock(A_, 'Head', [side * 4.6, 31.0, z], [side * 0.18, -1, 0.05], 6.0 + (z > 0) * 1.0, 1.5, 1.3, (G2, G1, G3), wide='x', taper=(0.85, 0.7), tip_len=(0.2, 0.2))
+    for x in (-3.2, -1.6, 0.0, 1.6, 3.2):
+        _core.lock(A_, 'Head', [x, 31.0, 4.7], [0, -1, 0.15], 5.6, 1.5, 1.3, (G2, G1, G3), wide='x', taper=(0.85, 0.7), tip_len=(0.2, 0.2))
+    PU1, PU2, PU3 = '#8a2ec0', '#a64ade', '#c46cf0'
+    f.add('head', [-1.6, 32.4, -1.4], [1.6, 34.0, 1.6], PU1)                                    # where the top locs are tied
+    for (dx, dz, tx, tz, ln) in ((-1.0, -0.6, -0.25, -0.35, 5.2), (0.0, -0.8, 0.05, -0.45, 5.8), (1.0, -0.6, 0.3, -0.35, 5.0),
+                                (-0.6, 0.6, -0.2, 0.25, 4.6), (0.7, 0.7, 0.25, 0.3, 4.4)):
+        _core.lock(A_, 'Head', [dx, 33.6, dz], [tx, 1, tz], ln, 1.7, 1.6, (PU1, PU2, PU3), wide='x', taper=(0.9, 0.75), tip_len=(0.25, 0.25))
+    # the purple mask over his brow, red eyes slanting in
+    eyes = lambda x, y: (P['RD'] if (.12 < x < .42 and abs(y - (.3 + (x - .12) * 0.9)) < .2) or (.58 < x < .88 and abs(y - (.3 + (.88 - x) * 0.9)) < .2)
+                         else '#3a0a5a' if y > .82 else P['P'])
+    f.add('head', [-4.45, 29.2, -4.85], [4.45, 32.2, -4.3], P['P'], {'front': lambda x, y: '#3a0a5a' if y > .85 else P['P']})
+    EYE = ['kkkk......kkkk', '.kkkk....kkkk.', '...kkk..kkk...']
+    for r, row in enumerate(EYE):                                   # red mask eyes, slanting in (thin plates so they stay sharp)
+        c = 0
+        while c < len(row):
+            if row[c] != 'k': c += 1; continue
+            e = c
+            while e < len(row) and row[e] == 'k': e += 1
+            f.add('head', [-4.2 + c * 0.6, 31.6 - (r + 1) * 0.55, -4.97], [-4.2 + e * 0.6, 31.6 - r * 0.55, -4.85], P['RD'], shade=False)
+            c = e
+    for sx in (1, -1):
+        x0, x1 = (4.25, 4.75) if sx > 0 else (-4.75, -4.25)
+        f.add('head', [x0, 29.6, -4.6], [x1, 31.8, 1.0], P['PD'])
+    # the black crown on top, five points with little balls
+    for cube in (([-4.0, 32.4, -4.2], [4.0, 33.6, -3.8]), ([-4.0, 32.4, 3.8], [4.0, 33.6, 4.2]),
+                 ([-4.2, 32.4, -4.2], [-3.8, 33.6, 4.2]), ([3.8, 32.4, -4.2], [4.2, 33.6, 4.2])):
+        f.add('head', cube[0], cube[1], P['CR'], {'front': lambda x, y: P['PL'] if abs((x * 6) % 2 - 1) < 0.35 and y > .35 else P['CR']})
+    for x, z in ((-3.8, -4.0), (0, -4.0), (3.8, -4.0), (-3.8, 3.8), (3.8, 3.8)):
+        f.add('head', [x - .35, 33.6, z - .25], [x + .35, 35.4, z + .25], P['CR'])
+        f.add('head', [x - .4, 35.4, z - .4], [x + .4, 36.1, z + .4], '#101012')
     return f
 
 OUTFITS = {'origins1': (r1_skin, r1_fit, ()), 'origins2': (r2_skin, r2_fit, ('coat_back', 'coat_front_r', 'coat_front_l', 'coat_side_r', 'coat_side_l')),
@@ -220,7 +267,16 @@ if __name__ == '__main__':
         pack(fit, atlas, region=(0, 148, 256, 256))
         name = 'rhalix_' + key
         skin.save(CHAR + name + '.png'); atlas.save(CHAR + name + '_details.png')
+        if key == 's3':
+            px = skin.load()
+            for (x0, y0, w, h) in ((8, 0, 8, 8), (24, 8, 8, 8), (0, 8, 8, 3), (16, 8, 8, 3)):   # top, back, upper sides
+                for yy in range(y0, y0 + h):
+                    for xx in range(x0, x0 + w): px[xx, yy] = (42, 42, 46, 255)
+            skin.save(CHAR + name + '.png')
         mj = export(fit, RES + 'models/detail/' + name + '.json', char='rhalix', keep=('right_wing', 'left_wing') + coat)
+        if key == 's3':
+            mj['bones']['head']['children'] = [c for c in mj['bones']['head'].get('children', []) if c.get('name') not in ('hair', 'bangs')]
+            json.dump(mj, open(RES + 'models/detail/' + name + '.json', 'w'))
         mjp = json.loads(json.dumps(mj))
         for w in ('right_wing', 'left_wing'):
             mjp['bones']['body']['children'] = [c for c in mjp['bones']['body']['children'] if c.get('name') != w]
