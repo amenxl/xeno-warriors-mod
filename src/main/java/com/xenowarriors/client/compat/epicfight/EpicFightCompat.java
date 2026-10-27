@@ -249,7 +249,8 @@ public final class EpicFightCompat {
     /** The townsfolk and the possessed on Epic Fight's humanoid body, with their hair, outfits and faces. */
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void onAddRenderers(PatchedRenderersEvent.Add event) {
-        for (EntityType<?> t : java.util.List.of(com.xenowarriors.npc.ModNpcs.HUMAN.get(), com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get())) {
+        for (EntityType<?> t : java.util.List.of(com.xenowarriors.npc.ModNpcs.HUMAN.get(), com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get(),
+                com.xenowarriors.sr.SrEntities.SR_MEMBER.get())) {
             event.addPatchedEntityRenderer(t, type -> {
                 var r = new yesman.epicfight.client.renderer.patched.entity.PHumanoidRenderer(
                         yesman.epicfight.api.client.model.Meshes.BIPED_OUTLAYER, event.getContext(), type);

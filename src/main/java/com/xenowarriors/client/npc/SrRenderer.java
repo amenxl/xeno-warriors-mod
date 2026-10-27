@@ -24,6 +24,8 @@ public class SrRenderer extends NpcRenderer<SrMemberEntity> {
     @Override
     protected void setupRotations(SrMemberEntity e, PoseStack pose, float bob, float yaw, float pt) {
         super.setupRotations(e, pose, bob, yaw, pt);
+        float lean = SrModel.lean(e, pt);
+        if (lean != 0F) pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(lean));
         float spin = SrModel.spin(e, pt);
         if (spin > 0) pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-360F * spin));
         boolean forcedFly = "fly".equals(SrModel.force);

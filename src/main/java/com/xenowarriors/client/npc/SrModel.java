@@ -22,6 +22,25 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
     public static String force;
     public static float clock;
 
+    /** Whole-body forward lean in degrees (the renderer tips the entire model, so the hips stay attached). */
+    public static float lean(SrMemberEntity e, float pt) {
+        if (!e.isNamed()) return 0;
+        String k = e.key();
+        boolean f = force != null;
+        float demon = f ? (force.equals("demon") ? clock % 40F : -1) : e.demonAge(pt);
+        if (demon >= 0 && demon < 40) { float p = demon / 40F; return p < 0.5F ? 28F * Math.min(1F, p / 0.2F) : 28F * Math.max(0F, 1F - (p - 0.5F) / 0.15F) - 8F * Math.min(1F, (p - 0.5F) / 0.2F); }
+        float sp = f ? (force.equals("special") || force.equals("redirect") ? clock % 30F : -1) : e.specialAge(pt);
+        if (sp >= 0 && sp < 30) {
+            float p = sp / 30F;
+            if (k.equals("kill") || k.equals("keita")) return p < 0.3F ? -6F * p / 0.3F : 26F * Math.max(0F, 1F - Math.max(0F, p - 0.7F) / 0.3F);
+            if (k.equals("persephone") || k.equals("ava")) return p < 0.4F ? 25F * p / 0.4F : 25F - 35F * Math.min(1F, (p - 0.4F) / 0.15F);
+        }
+        boolean fight = f ? (force.equals("combat") || force.equals("attack")) : e.isAggressive();
+        if (fight && !k.equals("senju") && !k.equals("maddie")) return 10F;
+        if (!fight && k.equals("keita")) return 6F;           // lazy slouch
+        return 0F;
+    }
+
     /** Senju's sweep turns his whole body around (0..1 of a turn), for the renderer. */
     public static float spin(SrMemberEntity e, float pt) {
         if (!"senju".equals(e.key())) return 0;
@@ -56,7 +75,6 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
         float breath = Mth.sin(age * 0.08F);
 
         // breathing for everyone
-        body.y += breath * 0.15F;
         head.xRot += breath * 0.02F;
 
         if (flying) fly(age);
@@ -70,6 +88,13 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
 
     /** Copy the main parts onto the outer layers (sleeves, pants, jacket, hat). */
     private void sync() {
+        // the arms stay on the shoulders when the body twists (like vanilla's attack swing does)
+        float by = body.yRot;
+        if (by != 0F) {
+            rightArm.z = Mth.sin(by) * 5F; rightArm.x = -Mth.cos(by) * 5F;
+            leftArm.z = -Mth.sin(by) * 5F; leftArm.x = Mth.cos(by) * 5F;
+            rightArm.yRot += by; leftArm.yRot += by;
+        }
         hat.copyFrom(head); jacket.copyFrom(body);
         leftSleeve.copyFrom(leftArm); rightSleeve.copyFrom(rightArm);
         leftPants.copyFrom(leftLeg); rightPants.copyFrom(rightLeg);
@@ -87,27 +112,22 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
             }
             case "logan" -> {                    // hands on hips, grinning, bouncing on his heels
                 set(rightArm, -0.3F, 0, 0.95F); set(leftArm, -0.3F, 0, -0.95F);
-                body.y += Math.abs(Mth.sin(age * 0.15F)) * 0.4F;
-                head.zRot = Mth.sin(t) * 0.08F;
             }
             case "kill" -> {                     // hands behind his back, looking around
                 set(rightArm, 0.55F, 0, 0.35F); set(leftArm, 0.55F, 0, -0.35F);
                 head.yRot += Mth.sin(t * 0.9F) * 0.6F;
             }
             case "keita" -> {                    // slouched; every so often a big lazy stretch and yawn
-                float c = (age % 120F) / 120F;
-                body.xRot = 0.18F; head.xRot += 0.25F; head.y += 0.6F;
+                float c = (age % 120F) / 120F; head.xRot += 0.25F;
                 set(rightArm, 0.1F, 0, 0.1F); set(leftArm, 0.1F, 0, -0.1F);
                 if (c > 0.7F) {
                     float s = Mth.sin((c - 0.7F) / 0.3F * PI);
                     set(rightArm, -2.9F * s, 0, 0.3F * s); set(leftArm, -2.9F * s, 0, -0.3F * s);
-                    head.xRot -= 0.6F * s; body.xRot -= 0.25F * s;
+                    head.xRot -= 0.6F * s;
                 }
             }
             case "maddie" -> {                   // hands folded in front, head tilted, a slow sway
                 set(rightArm, -0.6F, -0.35F, 0.1F); set(leftArm, -0.6F, 0.35F, -0.1F);
-                head.zRot = 0.18F + Mth.sin(t) * 0.05F;
-                body.zRot = Mth.sin(t * 0.8F) * 0.04F;
             }
             case "persephone" -> {               // hugging her own arm, looking down and away
                 set(rightArm, -0.9F, -0.7F, 0.25F); set(leftArm, 0.1F, 0, -0.1F);
@@ -124,10 +144,10 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
     private void walkStyle(String k, float age, float limb, float amt) {
         switch (k) {
             case "senju" -> { rightArm.xRot = rightArm.xRot * 0.4F - 0.25F; body.yRot = Mth.cos(limb * 0.6662F) * amt * 0.1F; }   // a measured stride, sword steady
-            case "logan" -> { body.y += Math.abs(Mth.cos(limb * 0.6662F)) * amt * 0.8F; }   // a bouncy swagger
+            case "logan" -> { }   // a bouncy swagger
             case "kill" -> { set(rightArm, 0.55F, 0, 0.35F); set(leftArm, 0.55F, 0, -0.35F); }
-            case "keita" -> { body.xRot = 0.2F; head.xRot += 0.2F; rightArm.xRot *= 0.3F; leftArm.xRot *= 0.3F; }   // shuffling
-            case "maddie" -> { rightArm.xRot *= 0.4F; leftArm.xRot *= 0.4F; head.zRot = 0.15F; }
+            case "keita" -> { head.xRot += 0.2F; rightArm.xRot *= 0.3F; leftArm.xRot *= 0.3F; }   // shuffling
+            case "maddie" -> { rightArm.xRot *= 0.4F; leftArm.xRot *= 0.4F; }
             default -> {}
         }
     }
@@ -141,19 +161,15 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
             }
             case "logan" -> {                    // crouched, sword hand back, free hand forward
                 set(rightArm, -0.2F + b, 0.4F, 0.5F); set(leftArm, -1.2F, 0.2F, 0);
-                body.xRot = 0.15F;
             }
             case "kill", "keita" -> {            // low one-handed guard, leaning in
-                set(rightArm, -0.6F + b, 0.1F, 0.25F); set(leftArm, -0.4F, 0, -0.5F);
-                body.xRot = 0.25F; head.xRot -= 0.25F;
+                set(rightArm, -0.6F + b, 0.1F, 0.25F); set(leftArm, -0.4F, 0, -0.5F); head.xRot -= 0.25F;
             }
             case "maddie" -> {                   // unnervingly still: one hand slightly raised, head tilted
                 set(rightArm, -0.5F, 0, 0.3F); set(leftArm, 0.1F, 0, -0.1F);
-                head.zRot = 0.3F;
             }
             default -> {                         // demons: claws up
                 set(rightArm, -1.4F + b, -0.2F, 0.3F); set(leftArm, -1.4F - b, 0.2F, -0.3F);
-                body.xRot = 0.2F;
             }
         }
         if (!moving) { rightLeg.xRot = -0.25F; leftLeg.xRot = 0.25F; rightLeg.zRot = 0.08F; leftLeg.zRot = -0.08F; }
@@ -166,19 +182,18 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
             case "senju" -> {                    // two-handed overhead cut
                 float x = a < 0.35F ? -1.1F - 1.9F * (a / 0.35F) : -3.0F + 3.3F * Math.min(1F, (a - 0.35F) / 0.3F);
                 rightArm.xRot = x; leftArm.xRot = x; rightArm.yRot = -0.1F; leftArm.yRot = 0.3F;
-                body.xRot = a > 0.35F ? 0.35F * s : -0.1F;
             }
             case "kill", "keita" -> {            // fast flat slash across
                 rightArm.xRot = -1.5F; rightArm.yRot = 0.9F - 2.2F * a; body.yRot = 0.5F - 1.0F * a;
             }
             case "logan" -> {                    // thrust
-                rightArm.xRot = -0.3F - 1.3F * s; rightArm.yRot = 0.4F * (1 - s); body.yRot = -0.4F * s; body.xRot = 0.2F * s;
+                rightArm.xRot = -0.3F - 1.3F * s; rightArm.yRot = 0.4F * (1 - s); body.yRot = -0.4F * s;
             }
             case "maddie" -> {                   // backhand
                 rightArm.xRot = -1.4F; rightArm.yRot = -1.0F + 2.2F * a; body.yRot = -0.6F + 1.2F * a;
             }
             default -> {                         // demons: alternating claw rakes
-                rightArm.xRot = -2.6F + 2.4F * a; leftArm.xRot = -0.6F - 2.0F * up; body.xRot = 0.3F * s;
+                rightArm.xRot = -2.6F + 2.4F * a; leftArm.xRot = -0.6F - 2.0F * up;
             }
         }
     }
@@ -188,9 +203,8 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
         switch (k) {
             case "senju" -> {                    // spinning sweep: wind up, then the whole body turns through the cut
                 float wind = Math.min(1F, p / 0.3F), turn = p < 0.3F ? 0 : (p - 0.3F) / 0.7F;
-                body.yRot = 0.9F * wind * (1F - turn);          // (the whole model spins in the renderer)
-                set(rightArm, -1.5F, -1.1F * wind + 2.4F * turn, 0); set(leftArm, -1.4F, 0.6F, 0);
-                body.xRot = 0.25F * s; rightLeg.xRot = -0.4F * s; leftLeg.xRot = 0.4F * s;
+                body.yRot = 0.4F * wind * (1F - turn);          // (the whole model spins in the renderer)
+                set(rightArm, -1.5F, -1.1F * wind + 2.4F * turn, 0); set(leftArm, -1.4F, 0.6F, 0); rightLeg.xRot = -0.4F * s; leftLeg.xRot = 0.4F * s;
             }
             case "logan" -> {                    // Redirect: palm thrust out, the other hand pulling back - then the price, a stagger
                 if (p < 0.7F) {
@@ -200,25 +214,22 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
                     leftArm.zRot += Mth.sin(age * 1.7F) * 0.05F;        // the strain
                 } else {
                     float q = (p - 0.7F) / 0.3F;
-                    body.zRot = Mth.sin(q * PI * 3) * 0.2F; head.zRot = -Mth.sin(q * PI * 3) * 0.25F;
                     set(rightArm, -0.4F, 0, 0.6F); set(leftArm, -0.4F, 0, -0.6F);
                 }
             }
             case "kill", "keita" -> {            // dash slash: crouch, lunge forward, follow through
-                float lunge = p < 0.3F ? -p / 0.3F * 0.3F : Math.min(1F, (p - 0.3F) / 0.2F);
-                body.xRot = 0.6F * Math.max(0, lunge); head.xRot -= 0.5F * Math.max(0, lunge);
+                float lunge = p < 0.3F ? -p / 0.3F * 0.3F : Math.min(1F, (p - 0.3F) / 0.2F); head.xRot -= 0.5F * Math.max(0, lunge);
                 set(rightArm, -1.6F * Math.max(0, lunge), 1.2F - 2.6F * Math.max(0, (p - 0.3F) / 0.7F), 0);
                 set(leftArm, 0.8F * Math.max(0, lunge), 0, -0.3F);
                 rightLeg.xRot = -1.0F * Math.max(0, lunge); leftLeg.xRot = 0.7F * Math.max(0, lunge);
             }
             case "maddie" -> {                   // the red eye: still, head forward, one hand lifting her hair from her eye
-                head.xRot -= 0.15F; head.zRot = 0;
+                head.xRot -= 0.15F;
                 set(rightArm, -2.4F * Math.min(1F, p / 0.3F), -0.5F, 0.2F); set(leftArm, 0.1F, 0, -0.15F);
-                body.xRot = 0.1F * s;
             }
             default -> {                         // demons' fire burst: hunch, then fling the arms wide
-                if (p < 0.4F) { float q = p / 0.4F; body.xRot = 0.6F * q; set(rightArm, -0.4F * q, 0, 0.3F * q); set(leftArm, -0.4F * q, 0, -0.3F * q); head.xRot += 0.4F * q; }
-                else { float q = Math.min(1F, (p - 0.4F) / 0.15F); body.xRot = 0.6F - 0.85F * q; set(rightArm, -1.2F * q, 0, 1.6F * q); set(leftArm, -1.2F * q, 0, -1.6F * q); head.xRot -= 0.5F * q; }
+                if (p < 0.4F) { float q = p / 0.4F; set(rightArm, -0.4F * q, 0, 0.3F * q); set(leftArm, -0.4F * q, 0, -0.3F * q); head.xRot += 0.4F * q; }
+                else { float q = Math.min(1F, (p - 0.4F) / 0.15F); set(rightArm, -1.2F * q, 0, 1.6F * q); set(leftArm, -1.2F * q, 0, -1.6F * q); head.xRot -= 0.5F * q; }
             }
         }
     }
@@ -235,13 +246,11 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
     private void demonWake(String k, float t, float age) {
         float p = t / 40F;
         if (p < 0.5F) {
-            float q = Math.min(1F, p / 0.2F), shake = Mth.sin(age * 2.5F) * 0.06F;
-            body.xRot = 0.7F * q; head.xRot += 0.6F * q + shake;
+            float q = Math.min(1F, p / 0.2F), shake = Mth.sin(age * 2.5F) * 0.06F; head.xRot += 0.6F * q + shake;
             set(rightArm, -2.6F * q, -0.4F, 0.4F + shake); set(leftArm, -2.6F * q, 0.4F, -0.4F - shake);
             rightLeg.xRot = -0.3F * q; leftLeg.xRot = 0.3F * q;
         } else {
-            float q = Math.min(1F, (p - 0.5F) / 0.2F);
-            body.xRot = 0.7F - 0.95F * q; head.xRot -= 0.5F * q;
+            float q = Math.min(1F, (p - 0.5F) / 0.2F); head.xRot -= 0.5F * q;
             set(rightArm, -0.8F * q, 0, 1.4F * q); set(leftArm, -0.8F * q, 0, -1.4F * q);
         }
     }

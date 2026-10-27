@@ -23,6 +23,8 @@ public final class EfNpcPatches {
     private static void onPatches(EntityPatchRegistryEvent event) {
         event.getTypeEntry().put(ModNpcs.HUMAN.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.VILLAGER); });
         event.getTypeEntry().put(ModNpcs.DARK_POSSESSED.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.UNDEAD); });
+        // the Sky Rebellion: Epic Fight's sword and fist combos, hit reactions and knockdowns
+        event.getTypeEntry().put(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.ILLAGER); });
         armature();
     }
 
@@ -30,6 +32,23 @@ public final class EfNpcPatches {
     private static void armature() {
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.HUMAN.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.DARK_POSSESSED.get(), yesman.epicfight.gameasset.Armatures.BIPED);
+        yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), yesman.epicfight.gameasset.Armatures.BIPED);
+    }
+
+    /** A named SR member's special move, as an Epic Fight skill animation. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static void srSpecial(LivingEntity e, String who, boolean redirect) {
+        LivingEntityPatch patch = EpicFightCapabilities.getEntityPatch(e, LivingEntityPatch.class);
+        if (patch == null) return;
+        var anim = redirect ? Animations.SWORD_GUARD : switch (who) {
+            case "senju" -> Animations.SWEEPING_EDGE;
+            case "logan" -> Animations.BIPED_MOB_THROW;          // calling down Thunder Flash
+            case "kill" -> Animations.SWORD_DASH;
+            case "keita" -> Animations.DANCING_EDGE;
+            case "maddie" -> Animations.BIPED_MOB_THROW;
+            default -> Animations.FIST_DASH;                    // the demons
+        };
+        try { patch.playAnimationSynchronized(anim, 0F); } catch (Throwable ignored) {}
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

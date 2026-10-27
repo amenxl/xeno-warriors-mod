@@ -194,6 +194,7 @@ public class SrMemberEntity extends Monster {
     private void special(net.minecraft.world.entity.LivingEntity t) {
         ServerLevel l = (ServerLevel) level();
         entityData.set(SPECIAL, entityData.get(SPECIAL) + 1);
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfNpcPatches.srSpecial(this, key(), false);
         float dmg = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
         switch (key()) {
             case "senju" -> {        // Father's blade: a sweeping ring of red shards
@@ -277,6 +278,7 @@ public class SrMemberEntity extends Monster {
         if (t == null || distanceTo(t) > 14) return;
         redirectTicks = 90;
         entityData.set(REDIRECT, true);
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfNpcPatches.srSpecial(this, "logan", true);
         entityData.set(SPECIAL, entityData.get(SPECIAL) + 1);
         // send the target flying the other way
         Vec3 away = t.position().subtract(position()).normalize();
