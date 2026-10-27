@@ -79,7 +79,7 @@ public enum CharacterType {
         String[] keys = outfitKeys();
         if (outfit <= 0 || outfit >= keys.length) return 1;
         String k = keys[outfit];
-        if (k.startsWith("s3") || k.equals("royal")) return 3;     // Season 3 looks; the Royal Capital disguises are from Season 3 too
+        if (k.startsWith("s3")) return 3;                          // (the Royal Capital disguises are Season 1: Max and Sam's first trip there with Kyrie)
         if (k.equals("c1pjs")) return 2;
         return 1;
     }
