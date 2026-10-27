@@ -41,6 +41,10 @@ public class SrMemberEntity extends Monster {
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DEMON = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> WINGS = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Counts up each time a special move starts (the client animates from when it changes). */
+    private static final EntityDataAccessor<Integer> SPECIAL = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.INT);
+    /** Logan's KA, Redirect, is up. */
+    private static final EntityDataAccessor<Boolean> REDIRECT = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.BOOLEAN);
     private static final DustParticleOptions DARK = new DustParticleOptions(new Vector3f(0.55F, 0.05F, 0.1F), 1.2F);
     private static final String[] LINES = {"For Father.", "Nice hoodie. Welcome, brother.", "The Royal capital will be ours.", "Father sees everything.", "Stay out of the rebellion's way."};
     private BlockPos post;
@@ -53,7 +57,24 @@ public class SrMemberEntity extends Monster {
                 .add(Attributes.MOVEMENT_SPEED, 0.3).add(Attributes.ARMOR, 4.0).add(Attributes.FOLLOW_RANGE, 28.0);
     }
 
-    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(DEMON, false); entityData.define(WINGS, false); }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(DEMON, false); entityData.define(WINGS, false); entityData.define(SPECIAL, 0); entityData.define(REDIRECT, false); }
+
+    // client: when the special move / demon started (for the animations)
+    private int specialStart = -1000, demonStart = -1000;
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (key.equals(SPECIAL) && entityData.get(SPECIAL) > 0) specialStart = tickCount;
+        if (key.equals(DEMON) && entityData.get(DEMON) && tickCount > 5) demonStart = tickCount;
+    }
+
+    /** Ticks since the special move started (for the animation), or -1. */
+    public float specialAge(float pt) { float t = tickCount - specialStart + pt; return t >= 0 && t < 30 ? t : -1; }
+    public float demonAge(float pt) { float t = tickCount - demonStart + pt; return t >= 0 && t < 40 ? t : -1; }
+    public boolean redirecting() { return entityData.get(REDIRECT); }
+
+    private int redirectTicks, redirectCd = 60, stagger;
 
     /** The named Sky Rebellion bosses (variants 2..8): each one rarely leads a camp. */
     public static final String[] NAMED = {"senju", "logan", "kill", "keita", "maddie", "persephone", "ava"};
@@ -172,6 +193,7 @@ public class SrMemberEntity extends Monster {
     /** Each one's special move, every few seconds in a fight. */
     private void special(net.minecraft.world.entity.LivingEntity t) {
         ServerLevel l = (ServerLevel) level();
+        entityData.set(SPECIAL, entityData.get(SPECIAL) + 1);
         float dmg = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
         switch (key()) {
             case "senju" -> {        // Father's blade: a sweeping ring of red shards
@@ -182,10 +204,16 @@ public class SrMemberEntity extends Monster {
                 l.playSound(null, blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.2F, 0.6F);
                 for (var e : l.getEntitiesOfClass(Player.class, getBoundingBox().inflate(5))) { e.hurt(damageSources().mobAttack(this), dmg * 0.8F); e.knockback(1.0, getX() - e.getX(), getZ() - e.getZ()); }
             }
-            case "logan" -> {        // wings out, up, and a diving strike
-                setWings(true);
-                setDeltaMovement(0, 1.1, 0); hurtMarked = true;
-                l.playSound(null, blockPosition(), SoundEvents.PHANTOM_SWOOP, SoundSource.HOSTILE, 1F, 1.2F);
+            case "logan" -> {        // Thunder Flash: a lightning strike on you (cosmetic bolt, real damage), knocks your helmet off
+                var bolt = EntityType.LIGHTNING_BOLT.create(l);
+                if (bolt != null) { bolt.moveTo(t.getX(), t.getY(), t.getZ()); bolt.setVisualOnly(true); l.addFreshEntity(bolt); }
+                t.hurt(damageSources().lightningBolt(), dmg * 0.9F);
+                if (t instanceof Player p && !p.getItemBySlot(EquipmentSlot.HEAD).isEmpty() && random.nextFloat() < 0.5F) {
+                    ItemStack hat = p.getItemBySlot(EquipmentSlot.HEAD).copy();
+                    p.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+                    p.drop(hat, true);
+                    p.displayClientMessage(Component.literal("Thunder Flash knocked your helmet off!").withStyle(ChatFormatting.YELLOW), true);
+                }
             }
             case "kill", "keita" -> { // a dash slash straight through
                 Vec3 d = t.position().subtract(position()).normalize();
@@ -209,6 +237,56 @@ public class SrMemberEntity extends Monster {
                 for (var e : l.getEntitiesOfClass(Player.class, getBoundingBox().inflate(4))) { e.hurt(damageSources().mobAttack(this), dmg * (demon() ? 0.9F : 0.6F)); e.setSecondsOnFire(4); }
             }
         }
+    }
+
+    /**
+     * Logan's KA - Redirect: he changes where things are going. While it's up, arrows, tridents and karma blasts flying
+     * at him turn around and go back, a melee hit is turned back on whoever threw it, and when it starts he sends his
+     * target flying the other way. The price: it scrambles his own sense of direction - afterwards he staggers around.
+     */
+    private void redirectTick(net.minecraft.world.entity.LivingEntity t) {
+        ServerLevel l = (ServerLevel) level();
+        if (redirectTicks > 0) {
+            redirectTicks--;
+            if (tickCount % 3 == 0) {
+                for (int i = 0; i < 8; i++) {
+                    double a = tickCount * 0.3 + i * Math.PI / 4;
+                    l.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.85F, 0.25F), 1.0F), getX() + Math.cos(a) * 1.3, getY() + 1.0 + Math.sin(a * 2) * 0.4, getZ() + Math.sin(a) * 1.3, 1, 0, 0, 0, 0);
+                }
+            }
+            for (var pr : l.getEntitiesOfClass(net.minecraft.world.entity.projectile.Projectile.class, getBoundingBox().inflate(4.5), pr -> pr.getOwner() != this)) {
+                Vec3 v = pr.getDeltaMovement();
+                if (v.lengthSqr() < 0.01 || v.dot(position().add(0, 1, 0).subtract(pr.position())) <= 0) continue;
+                net.minecraft.world.entity.Entity shooter = pr.getOwner();
+                Vec3 back = shooter != null ? shooter.getEyePosition().subtract(pr.position()).normalize().scale(v.length() * 1.15) : v.scale(-1.1);
+                pr.setDeltaMovement(back); pr.setOwner(this); pr.hasImpulse = true; pr.hurtMarked = true;
+                l.sendParticles(ParticleTypes.ELECTRIC_SPARK, pr.getX(), pr.getY(), pr.getZ(), 8, .2, .2, .2, .1);
+                l.playSound(null, pr.blockPosition(), SoundEvents.ENDER_EYE_DEATH, SoundSource.HOSTILE, 0.8F, 1.6F);
+            }
+            if (redirectTicks == 0) {                  // the price
+                entityData.set(REDIRECT, false);
+                stagger = 50;
+                addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 50, 2, false, false));
+                l.players().stream().filter(o -> o.distanceTo(this) < 24).forEach(o -> o.displayClientMessage(
+                        Component.literal("Logan staggers - Redirect scrambled his own sense of direction!").withStyle(ChatFormatting.GOLD), true));
+                redirectCd = 260 + random.nextInt(80);
+            }
+            return;
+        }
+        if (redirectCd > 0) { redirectCd--; return; }
+        if (t == null || distanceTo(t) > 14) return;
+        redirectTicks = 90;
+        entityData.set(REDIRECT, true);
+        entityData.set(SPECIAL, entityData.get(SPECIAL) + 1);
+        // send the target flying the other way
+        Vec3 away = t.position().subtract(position()).normalize();
+        Vec3 v = t.getDeltaMovement();
+        t.setDeltaMovement(new Vec3(-v.x, 0, -v.z).add(away.scale(1.6)).add(0, 0.55, 0));
+        t.hurtMarked = true;
+        l.sendParticles(ParticleTypes.ELECTRIC_SPARK, t.getX(), t.getY() + 1, t.getZ(), 20, .4, .6, .4, .2);
+        l.playSound(null, blockPosition(), SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.HOSTILE, 1.2F, 0.8F);
+        l.players().stream().filter(o -> o.distanceTo(this) < 24).forEach(o -> o.sendSystemMessage(Component.literal("Logan: ").withStyle(ChatFormatting.DARK_RED)
+                .append(Component.literal("Redirect!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD))));
     }
 
     @Override
@@ -257,6 +335,13 @@ public class SrMemberEntity extends Monster {
 
     @Override
     public boolean hurt(DamageSource src, float amount) {
+        if (!level().isClientSide && redirecting() && src.getEntity() instanceof net.minecraft.world.entity.LivingEntity atk
+                && src.getDirectEntity() == atk && atk != this && atk.distanceTo(this) < 6) {
+            atk.hurt(damageSources().mobAttack(this), amount * 0.6F);          // Redirect: the hit goes back where it came from
+            atk.knockback(0.9, getX() - atk.getX(), getZ() - atk.getZ());
+            ((ServerLevel) level()).sendParticles(ParticleTypes.ELECTRIC_SPARK, atk.getX(), atk.getY() + 1, atk.getZ(), 12, .3, .5, .3, .15);
+            return false;
+        }
         boolean r = super.hurt(src, amount);
         if (r && !level().isClientSide && !demon() && getHealth() < getMaxHealth() * 0.5F) {        // the demon wakes up
             entityData.set(DEMON, true);
@@ -287,8 +372,10 @@ public class SrMemberEntity extends Monster {
             bar.setName(getDisplayName());
             bar.setProgress(getHealth() / getMaxHealth());
             if (specialCd > 0) specialCd--;
-            else if (t != null && distanceTo(t) < 10) { special(t); specialCd = 100 + random.nextInt(60); }
+            else if (t != null && distanceTo(t) < (key().equals("logan") ? 16 : 10)) { special(t); specialCd = 100 + random.nextInt(60); }
+            if (key().equals("logan")) redirectTick(t);
         }
+        if (stagger > 0) { stagger--; getNavigation().stop(); if (tickCount % 6 == 0) setYRot(getYRot() + (random.nextFloat() - 0.5F) * 90F); }
         // stuck: has a target, isn't getting closer on foot
         if (t != null && !wings()) { if (getNavigation().isDone() && distanceTo(t) > 3) stuck++; else stuck = Math.max(0, stuck - 2); }
         if (!wings() && needsFlight(t)) setWings(true);

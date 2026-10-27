@@ -17,15 +17,18 @@ public class SrRenderer extends NpcRenderer<SrMemberEntity> {
     private static final String STYLE = "tattered";
 
     public SrRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), SrMemberEntity::look, e -> false);
+        super(ctx, new SrModel(ctx.bakeLayer(ModelLayers.PLAYER)), SrMemberEntity::look, e -> false);
         addLayer(new Wings(this));
     }
 
     @Override
     protected void setupRotations(SrMemberEntity e, PoseStack pose, float bob, float yaw, float pt) {
         super.setupRotations(e, pose, bob, yaw, pt);
-        if (!e.wings()) return;
-        float sp = (float) Math.min(1.0, e.getDeltaMovement().horizontalDistance() / 0.3);
+        float spin = SrModel.spin(e, pt);
+        if (spin > 0) pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-360F * spin));
+        boolean forcedFly = "fly".equals(SrModel.force);
+        if (!e.wings() && !forcedFly) return;
+        float sp = forcedFly ? 0.6F : (float) Math.min(1.0, e.getDeltaMovement().horizontalDistance() / 0.3);
         pose.translate(0, net.minecraft.util.Mth.sin(bob * 0.45F) * 0.08F, 0);
         pose.translate(0, 0.9F, 0);
         pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(55F * sp));
@@ -37,14 +40,14 @@ public class SrRenderer extends NpcRenderer<SrMemberEntity> {
 
         @Override
         public void render(PoseStack pose, MultiBufferSource buffers, int light, SrMemberEntity e, float limb, float limbAmt, float pt, float age, float yaw, float pitch) {
-            if (!e.wings() || e.isInvisible()) return;
+            if ((!e.wings() && !"fly".equals(SrModel.force)) || e.isInvisible()) return;
             String k = e.key();
             if (k.equals("persephone") || k.equals("ava")) return;             // demons, not Skylanders: they just float
             // the named members' own wings
             String style = switch (k) { case "senju" -> "falcon"; case "logan" -> "hawk"; case "keita" -> "bat"; case "maddie" -> "angel_maddie"; default -> STYLE; };
             DetailModel m = NpcRenderer.model("wing_" + style);
             if (m == null || m.rightWing == null || m.leftWing == null) return;
-            m.setupWings(true, true, age * 1.3F, 0F);
+            m.setupWings(true, true, (SrModel.force != null ? SrModel.clock : age) * 1.3F, 0F);
             pose.pushPose();
             getParentModel().body.translateAndRotate(pose);
             var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(NpcRenderer.tex("wing_" + style + "_details")));

@@ -60,6 +60,7 @@ public final class UiTest {
             p.serverLevel().setWeatherParameters(6000, 0, false, false);
         }), 20));
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
+        if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -134,6 +135,70 @@ public final class UiTest {
         l.add(new Step("blade_hotbar", () -> {}, 5));
     }
 
+    /** Frame-by-frame animation captures of the named SR bosses (driven by SrModel's fixed clock), for GIFs. */
+    private static void srAnims(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.player.setXRot(10F); mc.player.setYRot(0F); }, 20));
+        String[] names = com.xenowarriors.sr.SrMemberEntity.NAMED;
+        for (int i = 0; i < names.length; i++) {
+            final int idx = i;
+            final String n = names[i];
+            boolean demonic = n.equals("persephone") || n.equals("ava");
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.serverLevel();
+                lvl.getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard());
+                var m = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(lvl);
+                if (m == null) return;
+                p.setYRot(0); p.setXRot(10);
+                m.moveTo(p.getX(), p.getY(), p.getZ() + 4.4, 150, 0);
+                m.setup(2 + idx, p.blockPosition());
+                m.setNoAi(true); m.setYHeadRot(150); m.yBodyRot = 150; m.setNoGravity(true);
+                lvl.addFreshEntity(m);
+            }), 30));
+            java.util.List<Object[]> states = new java.util.ArrayList<>();
+            states.add(new Object[]{"idle", 24, n.equals("keita") ? 5F : 3F});
+            states.add(new Object[]{"walk", 16, 1.5F});
+            states.add(new Object[]{"attack", 14, 1F});
+            states.add(new Object[]{n.equals("logan") ? "redirect" : "special", 15, 2F});
+            if (!demonic) states.add(new Object[]{"fly", 16, 2F});
+            else states.add(new Object[]{"demon", 20, 2F});
+            for (Object[] st : states) {
+                String name = (String) st[0]; int count = (int) st[1]; float step = (float) st[2];
+                for (int f = 0; f < count; f++) {
+                    final int ff = f;
+                    l.add(new Step(null, () -> {
+                        com.xenowarriors.client.npc.SrModel.force = name;
+                        com.xenowarriors.client.npc.SrModel.clock = ff * step;
+                        if (name.equals("demon") && ff == count / 2) server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class,
+                                p.getBoundingBox().inflate(20)).forEach(e -> e.uiTestPose(false, true)));
+                        animParticles(mc, n, name, ff);
+                    }, 1));
+                    l.add(new Step(String.format("anim_%s_%s_%02d", n, name, f), () -> {}, 0));
+                }
+            }
+            l.add(new Step(null, () -> com.xenowarriors.client.npc.SrModel.force = null, 2));
+        }
+        l.add(new Step(null, () -> { com.xenowarriors.client.npc.SrModel.force = null;
+            server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard())); }, 5));
+    }
+
+    /** Client-side effects for the special-move frames (the real ones come from the server). */
+    private static void animParticles(Minecraft mc, String n, String state, int f) {
+        if (mc.level == null || mc.player == null) return;
+        if (!(state.equals("special") || state.equals("redirect") || state.equals("demon"))) return;
+        double x = mc.player.getX(), y = mc.player.getY(), z = mc.player.getZ() + 4.4;
+        var r = mc.level.random;
+        switch (state.equals("redirect") ? "redirect" : state.equals("demon") ? "demon" : n) {
+            case "senju" -> { if (f > 4) for (int i = 0; i < 10; i++) { double a = r.nextDouble() * Math.PI * 2; mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.6F, 0.05F, 0.1F), 1.4F), x + Math.cos(a) * 2.5, y + 1, z + Math.sin(a) * 2.5, 0, 0, 0); } }
+            case "redirect" -> { for (int i = 0; i < 6; i++) { double a = f * 0.5 + i * Math.PI / 3; mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(1F, 0.85F, 0.25F), 1.1F), x + Math.cos(a) * 1.3, y + 1 + Math.sin(a * 2) * 0.4, z + Math.sin(a) * 1.3, 0, 0, 0); }
+                mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, x - 0.8, y + 1.3, z - 0.6, 0, 0, 0); }
+            case "kill", "keita" -> { if (f > 4 && f < 10) mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK, x - 0.6, y + 1.1, z - 0.8, 0, 0, 0); }
+            case "maddie" -> { if (f > 4) mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(1F, 0.05F, 0.05F), 0.8F), x - 0.15, y + 1.75, z - 0.35, 0, 0, 0); }
+            case "demon" -> { if (f >= 10) for (int i = 0; i < 4; i++) mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, x + r.nextGaussian() * 0.4, y + r.nextDouble() * 2, z + r.nextGaussian() * 0.4, 0, 0.03, 0); }
+            default -> { if (f > 6) for (int i = 0; i < 8; i++) mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, x + r.nextGaussian() * 1.2, y + 1 + r.nextGaussian() * 0.4, z + r.nextGaussian() * 1.2, 0, 0.02, 0); }
+        }
+    }
+
     /** Small helper so the Collection counts as read (and the menu shows its tab). */
     private static final class CompoundHolder {
         static void unlock(ServerPlayer p) {
@@ -143,6 +208,11 @@ public final class UiTest {
             com.xenowarriors.collection.Collection.open(p, false);
         }
     }
+
+    private static int frames, actFrames;
+
+    @SubscribeEvent
+    public static void onRender(TickEvent.RenderTickEvent event) { if (ON && event.phase == TickEvent.Phase.END) frames++; }
 
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent event) {
@@ -168,6 +238,7 @@ public final class UiTest {
         if (++ingame < 200) return;                                      // let the world settle
         if (steps == null) { steps = build(); idx = -1; wait = 0; XenoWarriors.LOGGER.info("XW-UITEST start ({} steps)", steps.size()); }
         if (wait > 0) { wait--; return; }
+        if (frames - actFrames < 2) return;                              // make sure the last change has been drawn
         if (idx >= 0 && idx < steps.size() && steps.get(idx).name != null) {
             String n = steps.get(idx).name;
             Screenshot.grab(mc.gameDirectory, "xw_" + n + ".png", mc.getMainRenderTarget(), c -> XenoWarriors.LOGGER.info("XW-UITEST shot {}", n));
@@ -176,5 +247,6 @@ public final class UiTest {
         if (idx >= steps.size()) { XenoWarriors.LOGGER.info("XW-UITEST done"); mc.stop(); return; }
         try { steps.get(idx).action.run(); } catch (Throwable t) { XenoWarriors.LOGGER.error("XW-UITEST step failed", t); }
         wait = steps.get(idx).delay;
+        actFrames = frames;
     }
 }
