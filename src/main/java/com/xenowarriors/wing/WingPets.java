@@ -60,7 +60,8 @@ public final class WingPets {
     public static final int MAX = 2;
     private static final String OWNER = "xw_wing_owner", GEN = "xw_wing_gen", SKIN = "xw_wing_skin";
     /** Looks a companion can wear (colors live in the client's WingSkinLayer). */
-    public static final String[] SKINS = {"Classic", "Shadow", "Rose", "Frost", "Ember", "Golden", "Void", "Namekian", "Sacred Kai"};
+    public static final String[] SKINS = {"Classic", "Shadow", "Rose", "Frost", "Ember", "Golden", "Void", "Namekian", "Sacred Kai",
+            "Sand", "Jungle", "Swamp", "Ocean", "Mushroom", "Storm", "Crimson", "Ender", "Spirit", "Lush"};
     public static final String SKIN_KEY = "xw_wing_skin";
     public static final int BAG_SLOTS = 18;
     private static final int EAT_COOLDOWN = 60;
@@ -234,6 +235,31 @@ public final class WingPets {
 
     // ---------------------------------------------------------------- keeping up with him
 
+    /**
+     * Wild bats are drawn to Rhalix: they flutter in close around him, and if he's holding something a bat eats they
+     * come and hover right in front of his face so he can feed them.
+     */
+    private static void curiousBats(ServerPlayer p) {
+        ItemStack held = p.getMainHandItem();
+        boolean food = held.is(Items.GLOW_BERRIES) || held.is(Items.SWEET_BERRIES) || held.is(Items.MELON_SLICE) || held.is(Items.APPLE);
+        double range = food ? 28 : 20;
+        Vec3 look = p.getLookAngle();
+        for (Bat bat : p.serverLevel().getEntitiesOfClass(Bat.class, p.getBoundingBox().inflate(range), b -> ownerOf(b) == null)) {
+            bat.setResting(false);
+            double d = bat.distanceTo(p);
+            BlockPos target;
+            if (food) {
+                Vec3 front = p.getEyePosition().add(look.x * 1.6, 0.1, look.z * 1.6);
+                target = BlockPos.containing(front);
+                if (d < 3.0) bat.setDeltaMovement(bat.getDeltaMovement().scale(0.35).add(front.subtract(bat.position()).scale(0.08)));   // hover in reach
+            } else {
+                double a = (p.tickCount + bat.getId() * 37) * 0.05;
+                target = BlockPos.containing(p.getX() + Math.cos(a) * 3, p.getEyeY() + 0.8, p.getZ() + Math.sin(a) * 3);
+            }
+            ((BatAccessor) bat).xenowarriors$setTargetPosition(target);
+        }
+    }
+
     public static void teleportNear(Mob mob, Entity owner) {
         if (com.xenowarriors.party.PetRest.resting(mob)) return;            // staying behind (party pet limit)
         Vec3 o = owner.position();
@@ -246,6 +272,7 @@ public final class WingPets {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
+        if (p.tickCount % 5 == 0 && ModCapabilities.getType(p) == CharacterType.RHALIX) curiousBats(p);
         ListTag pets = pets(p);
         if (pets.isEmpty()) return;
         for (int i = 0; i < pets.size(); i++) {

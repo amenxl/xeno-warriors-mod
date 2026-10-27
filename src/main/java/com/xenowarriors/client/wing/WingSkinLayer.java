@@ -28,6 +28,16 @@ public class WingSkinLayer<T extends LivingEntity, M extends EntityModel<T>> ext
             {0.35F, 0.1F, 0.6F, 0.55F, 0.35F, 0.1F, 0.55F}, // Void
             {0.35F, 0.85F, 0.35F, 0.5F, 0.1F, 0.3F, 0.08F},  // Namekian (green)
             {0.95F, 0.9F, 1F, 0.4F, 0.45F, 0.3F, 0.6F},      // Sacred Kai (pale, violet glow)
+            {0.95F, 0.8F, 0.5F, 0.5F, 0, 0, 0},              // Sand (deserts, badlands, savannas)
+            {0.3F, 0.75F, 0.25F, 0.5F, 0, 0, 0},             // Jungle
+            {0.4F, 0.5F, 0.25F, 0.55F, 0.08F, 0.18F, 0.04F}, // Swamp
+            {0.3F, 0.6F, 1F, 0.45F, 0.05F, 0.22F, 0.4F},     // Ocean
+            {1F, 0.22F, 0.22F, 0.5F, 0, 0, 0},               // Mushroom
+            {0.8F, 0.85F, 0.95F, 0.4F, 0.25F, 0.3F, 0.6F},   // Storm (mountains)
+            {0.8F, 0.1F, 0.1F, 0.55F, 0.5F, 0.08F, 0.04F},   // Crimson (the Nether)
+            {0.1F, 0.05F, 0.15F, 0.6F, 0.1F, 0.45F, 0.4F},   // Ender (the End)
+            {0.95F, 0.95F, 0.7F, 0.4F, 0.5F, 0.5F, 0.3F},    // Spirit (DragonMineZ Otherworld)
+            {0.6F, 0.9F, 0.4F, 0.4F, 0.4F, 0.35F, 0.05F},    // Lush (lush caves, glowing like glow berries)
     };
 
     public WingSkinLayer(RenderLayerParent<T, M> parent) {

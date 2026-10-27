@@ -61,6 +61,7 @@ public final class UiTest {
         }), 20));
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
+        if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -180,6 +181,35 @@ public final class UiTest {
         }
         l.add(new Step(null, () -> { com.xenowarriors.client.npc.SrModel.force = null;
             server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard())); }, 5));
+    }
+
+    /** Every bat look, lined up in front of the camera (with name tags). */
+    private static void bats(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.player.setXRot(5F); mc.player.setYRot(0F); }, 20));
+        String[] skins = com.xenowarriors.wing.WingPets.SKINS;
+        for (int page = 0; page < 2; page++) {
+            final int pg = page;
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.serverLevel();
+                lvl.getEntitiesOfClass(net.minecraft.world.entity.ambient.Bat.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard());
+                p.setYRot(0); p.setXRot(5);
+                for (int i = 0; i < 10; i++) {
+                    int skin = pg * 10 + i;
+                    if (skin >= skins.length) break;
+                    var b = net.minecraft.world.entity.EntityType.BAT.create(lvl);
+                    if (b == null) continue;
+                    b.getPersistentData().putBoolean(com.xenowarriors.fox.WildCritters.ROLLED, true);
+                    b.getPersistentData().putInt(com.xenowarriors.wing.WingPets.SKIN_KEY, skin);
+                    int col = i % 5, row = i / 5;
+                    b.moveTo(p.getX() - 2.4 + col * 1.2, p.getY() + 2.0 - row * 1.3, p.getZ() + 3.2, 180, 0);
+                    b.setNoAi(true); b.setResting(false); b.setNoGravity(true);
+                    b.setCustomName(net.minecraft.network.chat.Component.literal(skins[skin])); b.setCustomNameVisible(true);
+                    lvl.addFreshEntity(b);
+                }
+            }), 40));
+            l.add(new Step("bats_" + page, () -> {}, 5));
+        }
     }
 
     /** Client-side effects for the special-move frames (the real ones come from the server). */

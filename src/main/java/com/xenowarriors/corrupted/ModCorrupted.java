@@ -62,5 +62,10 @@ public final class ModCorrupted {
                 ModCorrupted::nightOnly, SpawnPlacementRegisterEvent.Operation.REPLACE);
         event.register(CORRUPTED_SOUL.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 ModCorrupted::nightOnly, SpawnPlacementRegisterEvent.Operation.REPLACE);
+        // bats in every biome: besides caves, they come out wherever it's dark - the surface at night, the Nether, the End
+        event.register(EntityType.BAT, SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                (type, level, reason, pos, random) -> random.nextInt(3) == 0 && level.getMaxLocalRawBrightness(pos) <= 7
+                        && level.getBlockState(pos.below()).isSolid(),
+                SpawnPlacementRegisterEvent.Operation.OR);
     }
 }
