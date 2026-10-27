@@ -156,12 +156,12 @@ public class SkillLoadoutScreen extends Screen {
 
     private static int indexOf(int[] l, int v) { for (int i = 0; i < l.length; i++) if (l[i] == v) return i; return -1; }
 
-    private static String shortName(Skill s) {
+    public static String shortName(Skill s) {
         String k = "skill.xenowarriors." + s.getId() + ".short";
         return I18n.exists(k) ? I18n.get(k) : s.getName().getString().substring(0, Math.min(2, s.getName().getString().length()));
     }
 
-    private static String desc(Skill s) {
+    public static String desc(Skill s) {
         String k = "skill.xenowarriors." + s.getId() + ".desc", h = "skill.xenowarriors." + s.getId() + ".how";
         String cd = s.getCooldownTicks() < 20 ? "none" : s.getCooldownTicks() / 20 + "s";
         String stats = UltimaAnim.resource() + " " + s.getKarmaCost() + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");

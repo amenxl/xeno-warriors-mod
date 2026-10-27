@@ -631,8 +631,16 @@ public final class UiTest {
                 l.add(new Step("mainmenu_" + t.getId() + (gs == 3 ? "_gs3" : ""), () -> {}, 3));
             }
         }
-        l.add(new Step(null, () -> { PlayerStatsScreen.openTab(mc.screen, 2); }, 30));
-        l.add(new Step("mainmenu_outfits_from_menu", () -> {}, 3));
+        // Character Customization: each tab, for a few characters
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.MAX}) {
+            l.add(new Step(null, () -> { mc.setScreen(null); character(t); outfit(0); hold(null); }, 50));
+            for (int tb = 0; tb < 4; tb++) {
+                int tt = tb;
+                l.add(new Step(null, () -> { if (!(mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen)) com.xenowarriors.client.menu.CharacterCustomScreen.open(null);
+                    if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(tt); }, 30));
+                l.add(new Step("custom_" + t.getId() + "_tab" + tb, () -> {}, 3));
+            }
+        }
         l.add(new Step(null, () -> mc.setScreen(null), 5));
     }
 

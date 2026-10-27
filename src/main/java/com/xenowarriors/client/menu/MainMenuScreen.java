@@ -8,11 +8,9 @@ import com.mojang.math.Axis;
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.client.ClientCharacterData;
 import com.xenowarriors.client.ClientMoney;
-import com.xenowarriors.client.KaGuideScreen;
 import com.xenowarriors.client.ModKeyMappings;
 import com.xenowarriors.client.PacketScreens;
 import com.xenowarriors.client.PlayerStatsScreen;
-import com.xenowarriors.client.SkillLoadoutScreen;
 import com.xenowarriors.client.cel.Cel;
 import com.xenowarriors.client.portrait.PortraitScreen;
 import com.xenowarriors.network.PlayerStatsPacket;
@@ -51,12 +49,10 @@ public class MainMenuScreen extends Screen {
     public MainMenuScreen() {
         super(Component.literal("Main Menu"));
         entries = List.of(
-                new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
-                new Entry("My Warrior", "Your levels, training and progress.", () -> PlayerStatsScreen.openTab(this, 1)),
-                new Entry("Outfits", "Change your outfit.", () -> PlayerStatsScreen.openTab(this, 2)),
-                new Entry("Skills", "Set up your skill loadout.", () -> minecraft.setScreen(new SkillLoadoutScreen(this))),
-                new Entry("KAs", "Your Karma Attacks and how to use them.", () -> minecraft.setScreen(new KaGuideScreen(this))),
+                new Entry("Character Select", "Pick which warrior you play as.", () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen())),
+                new Entry("Character Customization", "Your stats, skill loadout, outfits and KA.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
                 new Entry("Party", "Your party, bot teammates and pets.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
+                new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
                 new Entry("Settings", "Cel-shading, HUD, Karma Sensing and combat options.", () -> PlayerStatsScreen.openTab(this, 3)));
     }
 
@@ -79,7 +75,7 @@ public class MainMenuScreen extends Screen {
 
     private float step() { return height * 0.092F; }
     private float listX() { return width * 0.40F; }
-    private float listY() { return height * 0.17F; }
+    private float listY() { return height * 0.33F; }
     private float bigScale() { return step() * 0.92F / 9F; }
 
     private int entryAt(double mx, double my) {
