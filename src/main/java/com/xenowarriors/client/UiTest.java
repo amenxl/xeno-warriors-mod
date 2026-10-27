@@ -483,17 +483,18 @@ public final class UiTest {
             String tag = run == 0 ? "side" : "angle";
             float camYaw = run == 0 ? -90F : -135F;
             l.add(new Step(null, () -> server(p -> {
-                p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
+                p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
                 p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
                 p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(0);
-                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
-                z.moveTo(p.getX(), p.getY(), p.getZ() + 1.9, 180, 0); z.setNoAi(true); z.setYHeadRot(180); z.yBodyRot = 180;
+                var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());          // (a husk: doesn't burn in the sun)
+                z.moveTo(p.getX(), p.getY(), p.getZ() + 1.7, 180, 0); z.setYHeadRot(180); z.yBodyRot = 180;
+                z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 20 * 600, 20, false, false));
                 z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
                 z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
                 p.serverLevel().addFreshEntity(z); ids[0] = z.getId();
                 var cam = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
-                double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 5.2, cz = p.getZ() + 2.6 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 5.2;
-                cam.moveTo(cx, p.getY() + 0.2, cz, camYaw, 8); cam.setNoGravity(true); cam.setInvisible(true); cam.setYHeadRot(camYaw);
+                double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.0, cz = p.getZ() + 2.2 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.0;
+                cam.moveTo(cx, p.getY() - 0.4, cz, camYaw, 5); cam.setNoGravity(true); cam.setInvisible(true); cam.setYHeadRot(camYaw);
                 p.serverLevel().addFreshEntity(cam); ids[1] = cam.getId();
             }), 20));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);

@@ -38,6 +38,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class DbzAura {
     private static final ResourceLocation TEX = XenoWarriors.id("textures/entity/aura/dbz_aura.png");
+    private static final ResourceLocation TEX_A = XenoWarriors.id("textures/entity/aura/dbz_aura_a.png");
     private static final int FRAMES = 8;
     private static final Map<Integer, long[]> MARKS = new HashMap<>();   // mob id -> {rgb, until game time}
 
@@ -94,25 +95,27 @@ public final class DbzAura {
                              float size, float speed) {
         float r = (rgb >> 16 & 255) / 255F, g = (rgb >> 8 & 255) / 255F, b = (rgb & 255) / 255F;
         float h = e.getBbHeight() / 1.8F, w = Math.max(e.getBbWidth() / 0.6F, h);
-        float height = 2.9F * h * size, width = 1.75F * w * size;
+        float height = 3.3F * h * size, width = 2.5F * w * size;
         float camYaw = Minecraft.getInstance().gameRenderer.getMainCamera().getYRot();
-        VertexConsumer vc = buffers.getBuffer(RenderType.eyes(TEX));   // additive glow
         int frame = (int) (age * speed) % FRAMES;
         pose.pushPose();
-        pose.translate(0, -0.25F * h, 0);
+        pose.translate(0, -0.3F * h, 0);
         pose.mulPose(Axis.YP.rotationDegrees(180F - camYaw));          // stands up, always facing the camera
-        // outer flame, behind the body
-        layer(vc, pose, -0.38F * w, width, height, frame, r * strength, g * strength, b * strength);
-        // white-hot inner flame, smaller and a few frames ahead so the two layers churn against each other
-        float wr = (0.55F + 0.45F * r) * strength * 0.8F, wg = (0.55F + 0.45F * g) * strength * 0.8F, wb = (0.55F + 0.45F * b) * strength * 0.8F;
-        layer(vc, pose, -0.3F * w, width * 0.72F, height * 0.82F, (frame + 3) % FRAMES, wr, wg, wb);
-        // a faint layer over the front, so they look wrapped in it
-        float f = 0.28F * strength;
-        layer(vc, pose, 0.42F * w, width * 0.96F, height * 0.97F, (frame + 5) % FRAMES, r * f, g * f, b * f);
+        // outer flame behind the body: see-through but solid colour, so it keeps its colour even against a bright sky
+        VertexConsumer tr = buffers.getBuffer(RenderType.entityTranslucentEmissive(TEX_A));
+        layer(tr, pose, -0.42F * w, width, height, frame, r, g, b, 0.8F * strength);
+        // a faint veil of it over the front, so they look wrapped in it
+        layer(tr, pose, 0.45F * w, width * 0.94F, height * 0.95F, (frame + 5) % FRAMES, r, g, b, 0.16F * strength);
+        // glow (additive): the outer flame again, and a white-hot inner flame churning a few frames ahead
+        VertexConsumer add = buffers.getBuffer(RenderType.eyes(TEX));
+        float k = 0.55F * strength;
+        layer(add, pose, -0.4F * w, width, height, frame, r * k, g * k, b * k, 1F);
+        float wr = (0.5F + 0.5F * r) * strength * 0.75F, wg = (0.5F + 0.5F * g) * strength * 0.75F, wb = (0.5F + 0.5F * b) * strength * 0.75F;
+        layer(add, pose, -0.34F * w, width * 0.7F, height * 0.8F, (frame + 3) % FRAMES, wr, wg, wb, 1F);
         pose.popPose();
     }
 
-    private static void layer(VertexConsumer vc, PoseStack pose, float z, float width, float height, int frame, float r, float g, float b) {
+    private static void layer(VertexConsumer vc, PoseStack pose, float z, float width, float height, int frame, float r, float g, float b, float a) {
         PoseStack.Pose last = pose.last();
         Matrix4f m = last.pose(); Matrix3f n = last.normal();
         float u0 = frame / (float) FRAMES, u1 = (frame + 1) / (float) FRAMES, x = width / 2;
@@ -120,7 +123,7 @@ public final class DbzAura {
         for (int side = 0; side < 2; side++) {
             for (int i = 0; i < 4; i++) {
                 float[] q = c[side == 0 ? i : 3 - i];
-                vc.vertex(m, q[0], q[1], z).color(r, g, b, 1F).uv(q[2], q[3]).overlayCoords(OverlayTexture.NO_OVERLAY)
+                vc.vertex(m, q[0], q[1], z).color(r, g, b, a).uv(q[2], q[3]).overlayCoords(OverlayTexture.NO_OVERLAY)
                         .uv2(0xF000F0).normal(n, 0, 0, 1).endVertex();
             }
         }

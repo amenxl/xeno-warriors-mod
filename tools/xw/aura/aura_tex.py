@@ -59,6 +59,9 @@ for f in range(F):
     img[:, f * W:(f + 1) * W, 3] = a
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 Image.fromarray(img, 'RGBA').save(OUT)
+# the same with white colour and the shape in alpha only (for the translucent layer that keeps its colour in daylight)
+img2 = img.copy(); img2[..., 0:3] = 255
+Image.fromarray(img2, 'RGBA').save(OUT.replace('dbz_aura.png', 'dbz_aura_a.png'))
 # preview on dark bg, tinted orange
 p = img[..., :3].astype(float) / 255
 prev = (np.stack([p[..., 0], p[..., 1] * 0.55, p[..., 2] * 0.15], -1) * 255).astype(np.uint8)
