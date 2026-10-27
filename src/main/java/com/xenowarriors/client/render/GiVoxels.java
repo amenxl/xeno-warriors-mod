@@ -48,6 +48,7 @@ public final class GiVoxels {
             return new Layer(Map.of());
         }
         try {
+            if (img.getHeight() < img.getWidth()) return new Layer(Map.of());   // old 64x32 layout: no raised layer
             int s = Math.max(1, img.getWidth() / 64);
             Map<String, Part> parts = new HashMap<>();
             for (Object[] o : OVERLAYS) {

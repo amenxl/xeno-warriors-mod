@@ -115,6 +115,9 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         if (colon >= 0) { domain = name.substring(0, colon); name = name.substring(colon + 1); }
         String def = String.format(java.util.Locale.ROOT, "%s:textures/models/armor/%s_layer_%d.png", domain, name, legs ? 2 : 1);
         ResourceLocation tex = new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
+        // our skin-layout armor (Fox PJs, Flower Armor) has a 64x64 skin-layout texture for characters; the 64x32 one is for vanilla bodies
+        if (armor instanceof com.xenowarriors.item.SkinLayoutArmor)
+            tex = new ResourceLocation(domain, String.format(java.util.Locale.ROOT, "textures/models/armor/%s_skin_layer_%d.png", name, legs ? 2 : 1));
         // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his
         if (model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) {
             if (giInner == null) {
