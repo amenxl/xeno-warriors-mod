@@ -144,7 +144,8 @@ public final class KhHud implements IGuiOverlay {
 
         // portrait + level badge + name
         String face = HudFaces.face(p.getUUID(), hp, max, HudFaces.allOut(p), false);
-        portrait(g, HudFaces.texture(type, face), px, py, size, flash);
+        if (HudFaces.hasArt(type)) portrait(g, HudFaces.texture(type, face), px, py, size, flash);
+        else HudHead.draw(g, p, type, px, py, size, flash);
         g.blit(BADGE, px - 3, py + size - 15, 16, 16, 0, 0, 32, 32, 32, 32);
         String lv = String.valueOf(LevelHud.level());
         small(g, font, lv, px + 5 - font.width(lv) * (lv.length() > 2 ? 0.25F : 0.3F), py + size - 10, 0x201408, lv.length() > 2 ? 0.5F : 0.6F);

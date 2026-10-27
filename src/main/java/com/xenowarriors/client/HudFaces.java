@@ -90,6 +90,11 @@ public final class HudFaces {
         return "normal";
     }
 
+    /** Whether this character has drawn HUD portrait art (the others show their live head - see HudHead). */
+    public static boolean hasArt(CharacterType type) {
+        return type == CharacterType.MIKIKO || type == CharacterType.RHALIX || type == CharacterType.ULTIMA;
+    }
+
     public static ResourceLocation texture(CharacterType type, String face) {
         String ch = type == CharacterType.RHALIX ? "rhalix" : type == CharacterType.ULTIMA ? "ultima" : "mikiko";
         return XenoWarriors.id("textures/gui/hud/portrait_" + ch + "_" + face + ".png");

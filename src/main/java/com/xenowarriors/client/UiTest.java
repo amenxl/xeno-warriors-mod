@@ -87,6 +87,7 @@ public final class UiTest {
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         if ("underlight".equals(System.getenv("XW_UITEST_FOCUS"))) { underlight(mc, l); return l; }
         if ("mainmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { mainMenu(mc, l); return l; }
+        if ("posecal".equals(System.getenv("XW_UITEST_FOCUS"))) { poseCal(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -611,6 +612,20 @@ public final class UiTest {
     }
 
     /** The new M main menu with a few characters (its colours follow the character), at a few GUI scales. */
+    /** Pose calibration sheets (arm angle conventions), then the battle HUD portrait for characters without drawn art. */
+    private static void poseCal(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); character(CharacterType.STEVIE); hold(null); }, 50));
+        for (float yaw : new float[]{0F, -70F}) {
+            l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.portrait.PoseCalScreen(CharacterType.STEVIE, yaw)), 20));
+            l.add(new Step("posecal_" + (int) yaw, () -> {}, 3));
+        }
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 10));
+        for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.GARRY, CharacterType.ZANE, CharacterType.LOGAN, CharacterType.MIKIKO}) {
+            l.add(new Step(null, () -> { character(t); }, 50));
+            l.add(new Step("hud_" + t.getId(), () -> {}, 3));
+        }
+    }
+
     private static void noToasts(Minecraft mc) {
         mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
         mc.getToasts().clear();

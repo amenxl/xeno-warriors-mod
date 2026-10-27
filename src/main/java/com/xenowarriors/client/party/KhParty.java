@@ -37,7 +37,9 @@ public class KhParty implements IGuiOverlay {
             boolean low = m.maxHealth() > 0 && m.health() / m.maxHealth() < 0.3F;
             if (type != CharacterType.NONE) {
                 String face = HudFaces.face(m.id(), m.health(), m.maxHealth(), false, m.knockedOut());
-                KhHud.portrait(g, HudFaces.texture(type, face), x + 1, y + 1, 26, low && (HudFaces.clock() / 6) % 2 == 0);
+                boolean flash = low && (HudFaces.clock() / 6) % 2 == 0;
+                if (HudFaces.hasArt(type)) KhHud.portrait(g, HudFaces.texture(type, face), x + 1, y + 1, 26, flash);
+                else com.xenowarriors.client.HudHead.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, x + 1, y + 1, 26, flash);
             }
             KhHud.small(g, font, m.name(), x + 30, y + 4, 0xFFFFFF, 0.65F);
             if (m.bot()) {                                   // bot teammates get a little BOT tag on their portrait

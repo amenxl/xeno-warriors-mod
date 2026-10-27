@@ -18,6 +18,8 @@ import java.util.Map;
 public final class PortraitPoses {
     /** The character id being posed (null = not drawing a portrait). */
     public static String active;
+    /** (pose calibration) use this pose instead of the character's own. */
+    public static float[] override;
 
     private static final Map<String, float[]> POSES = new HashMap<>();
 
@@ -63,7 +65,7 @@ public final class PortraitPoses {
     /** Absolute elbow/knee bends {right elbow, left elbow, right knee, left knee} while posing, else null. */
     public static float[] bends(LivingEntity e) {
         if (active == null || !(e instanceof Player)) return null;
-        float[] v = POSES.get(active);
+        float[] v = override != null ? override : POSES.get(active);
         return v == null ? null : new float[]{v[15], v[16], v[17], v[18]};
     }
 
@@ -71,7 +73,7 @@ public final class PortraitPoses {
 
     public static void apply(HumanoidModel<?> m, LivingEntity e) {
         if (active == null || !(e instanceof Player)) return;
-        float[] v = POSES.get(active);
+        float[] v = override != null ? override : POSES.get(active);
         if (v == null) return;
         m.head.setRotation(v[0], v[1], v[2]);
         m.hat.copyFrom(m.head);
