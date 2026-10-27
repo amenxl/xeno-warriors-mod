@@ -66,6 +66,19 @@ public class MainMenuScreen extends Screen {
     @Override
     public boolean isPauseScreen() { return false; }
 
+    private Boolean hudWas;
+
+    @Override
+    protected void init() {
+        // hide the game HUD (hotbar, bars) behind the menu
+        if (hudWas == null) { hudWas = minecraft.options.hideGui; minecraft.options.hideGui = true; }
+    }
+
+    @Override
+    public void removed() {
+        if (hudWas != null) { minecraft.options.hideGui = hudWas; hudWas = null; }
+    }
+
     @Override
     public void tick() {
         if (++refresh % 40 == 0) ModNetwork.sendToServer(new PlayerStatsRequestPacket());
@@ -185,7 +198,7 @@ public class MainMenuScreen extends Screen {
         if (mc.player != null) {
             Cel.force = true;
             try {
-                PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.2F + slide), (int) (h * 1.2F), (int) (h * 0.56F), 24F);
+                PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.2F + slide), (int) (h * 1.12F), (int) (h * 0.5F), 24F);
             } finally { Cel.force = false; }
         }
 
@@ -248,15 +261,15 @@ public class MainMenuScreen extends Screen {
                 {"Level", String.valueOf(self.level())}, {"Attack", String.valueOf(self.attack())}, {"Defense", String.valueOf(self.defense())},
                 {"Speed", String.valueOf(self.speed())}, {"Karma", String.valueOf(Math.round(self.karma()))}};
         int[] dots = {col, 0xE05050, 0x50A0E0, 0x60D070, 0xC080F0};
-        g.fill((int) (px + pw * 0.35F), (int) ry, (int) (px + pw), (int) (ry + stats.length * 11 * rs + 3 * rs), 0xB0101018);
+        g.fill((int) px, (int) ry, (int) (px + pw), (int) (ry + stats.length * 11 * rs + 3 * rs), 0xB0101018);
         for (int i = 0; i < stats.length; i++) {
             float yy = ry + 2 * rs + i * 11 * rs;
             g.pose().pushPose();
-            g.pose().translate(px + pw * 0.35F + 4 * rs, yy, 0);
+            g.pose().translate(px + 4 * rs, yy, 0);
             g.pose().scale(rs, rs, 1F);
             g.fill(0, 2, 5, 7, 0xFF000000 | dots[i]);
             g.drawString(font, stats[i][0], 8, 1, 0xC8C8D8, false);
-            g.drawString(font, stats[i][1], (int) ((pw * 0.65F - 8 * rs) / rs) - font.width(stats[i][1]), 1, 0xFFFFFF, false);
+            g.drawString(font, stats[i][1], (int) ((pw - 8 * rs) / rs) - font.width(stats[i][1]), 1, 0xFFFFFF, false);
             g.pose().popPose();
         }
 

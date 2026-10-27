@@ -82,6 +82,18 @@ public class CharacterCustomScreen extends Screen {
     @Override
     public void onClose() { minecraft.setScreen(parent); }
 
+    private Boolean hudWas;
+
+    @Override
+    protected void init() {
+        if (hudWas == null) { hudWas = minecraft.options.hideGui; minecraft.options.hideGui = true; }
+    }
+
+    @Override
+    public void removed() {
+        if (hudWas != null) { minecraft.options.hideGui = hudWas; hudWas = null; }
+    }
+
     @Override
     public void tick() {
         if (++refresh % 40 == 0) ModNetwork.sendToServer(new PlayerStatsRequestPacket());
