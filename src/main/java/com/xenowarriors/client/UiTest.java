@@ -76,6 +76,7 @@ public final class UiTest {
         if ("auras".equals(System.getenv("XW_UITEST_FOCUS"))) { auras(mc, l); return l; }
         if ("beatbox".equals(System.getenv("XW_UITEST_FOCUS"))) { beatbox(mc, l); return l; }
         if ("girls".equals(System.getenv("XW_UITEST_FOCUS"))) { girls(mc, l); return l; }
+        if ("allanim".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -324,6 +325,33 @@ public final class UiTest {
                 mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
         }
         l.add(new Step(null, () -> mc.setScreen(null), 5));
+    }
+
+    /** Every playable: an attack swing, each skill and the ultimate, a few frames each (from the front). */
+    private static void allAnims(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> server(p -> {
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (z == null) return;
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 9, 180, 0); z.setNoAi(true); z.setInvulnerable(true); z.setYHeadRot(180); z.yBodyRot = 180;
+            p.serverLevel().addFreshEntity(z); p.setYRot(0); p.setXRot(0);
+            p.serverLevel().setDayTime(6000);
+        }), 20));
+        for (CharacterType t : CharacterType.PLAYABLE) {
+            l.add(new Step(null, () -> { character(t); hold(null); }, 30));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                mc.player.setYRot(0); mc.player.setXRot(0); server(p -> { p.setYRot(0); p.setXRot(0); com.xenowarriors.karma.Karma.add(p, 500F); }); }, 15));
+            l.add(new Step(null, () -> mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND), 2));
+            for (int f = 0; f < 3; f++) l.add(new Step("allanim_" + t.getId() + "_attack_" + f, () -> {}, 2));
+            var pool = com.xenowarriors.skill.SkillPool.of(t);
+            java.util.List<com.xenowarriors.skill.Skill> skills = new java.util.ArrayList<>();
+            for (int i = 0; i < Math.min(5, pool.size()); i++) skills.add(pool.get(i).skill());
+            if (com.xenowarriors.skill.SkillPool.ultimate(t) != null) skills.add(com.xenowarriors.skill.SkillPool.ultimate(t));
+            for (com.xenowarriors.skill.Skill sk : skills) {
+                l.add(new Step(null, () -> server(p -> { p.setYRot(0); p.setXRot(0); try { sk.use(p); } catch (Exception ex) { XenoWarriors.LOGGER.warn("XW-UITEST skill {} failed", sk.getId(), ex); } }), 4));
+                for (int f = 0; f < 3; f++) l.add(new Step("allanim_" + t.getId() + "_" + sk.getId() + "_" + f, () -> {}, 5));
+                l.add(new Step(null, () -> {}, 40));                    // let it finish
+            }
+        }
     }
 
     /** The girls' body on everyone, as a row of bots turned to each side (front, 3/4, side, back). */
