@@ -79,10 +79,28 @@ class F:
             self.line([tip, (x1 + w * 0.18, by - 10)], INK, 0.9)
 
     # ------------------------------------------------------------------ eyes
-    def eye(self, cx, cy, side, kind='sharp', look=0.0, glow=True, scar_eye=False):
+    def eye(self, cx, cy, side, kind='sharp', look=0.0, glow=True, scar_eye=False, lookY=0.0):
         """side -1 = his right (viewer left). kinds: sharp, wide, calm, glare, bored, closed, wink_closed."""
         o = side
         I = self.I
+        if kind == 'closed_flat':                                     # asleep / blinking: a flat line with lashes
+            self.line([(cx - o * 16, cy + 1), (cx + o * 18, cy)], INK, 3.0)
+            for t in (0.25, 0.55, 0.85): self.line([(cx + o * (-16 + 34 * t), cy + 1), (cx + o * (-15 + 34 * t), cy + 4)], INK, 1.0)
+            return
+        if kind == 'wince':                                           # squeezed shut: > <
+            self.line([(cx - o * 14, cy - 5), (cx + o * 12, cy), (cx - o * 14, cy + 5)], INK, 3.0)
+            return
+        if kind == 'dizzy':                                           # spirals
+            pts = [(cx + math.cos(a) * a * 1.0, cy + math.sin(a) * a * 0.75) for a in [i * 0.35 for i in range(40)]]
+            self.line(pts, INK, 1.6)
+            return
+        if kind == 'robot':                                           # glowing data bars instead of eyes
+            g = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+            self.poly([(cx - 15 + look * 5, cy - 4), (cx + 15 + look * 5, cy - 4), (cx + 13 + look * 5, cy + 4), (cx - 13 + look * 5, cy + 4)], self.I + (255,), g)
+            self.blur_layer(g, 2.5)
+            self.poly([(cx - 14 + look * 5, cy - 3), (cx + 14 + look * 5, cy - 3), (cx + 12 + look * 5, cy + 3), (cx - 12 + look * 5, cy + 3)], (210, 255, 235, 255))
+            for k in range(-12, 13, 4): self.line([(cx + k + look * 5, cy - 2.5), (cx + k + look * 5, cy + 2.5)], self.I, 0.7)
+            return
         if kind in ('closed', 'wink_closed'):
             self.line([(cx - o * 17, cy + 3), (cx - o * 4, cy - 4), (cx + o * 10, cy - 4), (cx + o * 19, cy + 2)], INK, 3.2)
             self.line([(cx + o * 19, cy + 2), (cx + o * 24, cy - 2)], INK, 2.0)
@@ -99,7 +117,7 @@ class F:
         lay = Image.new('RGBA', self.im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
         ld.rectangle((0, 0, *self.im.size), fill=(238, 240, 236, 255))
         self.poly([(cx - 20, cy - 20), (cx + 20, cy - 20), (cx + 20, cy - h_top + 3.5), (cx - 20, cy - h_top + 3.5)], (170, 176, 186, 255), lay)   # lid shadow
-        ix, iy, ir = cx + look * 6 + o * 1.5, cy + 0.8, (10.2 if kind != 'wide' else 8.8)
+        ix, iy, ir = cx + look * 6 + o * 1.5, cy + 0.8 + lookY * 3.5, (10.2 if kind != 'wide' else 8.8)
         for k in range(20):                                          # iris: dark green top -> bright, glowing bottom
             t = k / 19
             c = lerp(lerp(I, (0, 40, 30), 0.65), lerp(I, (220, 255, 230), 0.35), t)
@@ -171,6 +189,19 @@ class F:
             self.poly(pts, (250, 248, 246, 255)); self.line(pts + [pts[0]], INK, 1.5)
             for x in range(54, 76, 4): self.line([(x, 101.5), (x, 108.5)], (150, 150, 160), 0.8)
             self.line([(51, 105), (77, 105)], (150, 150, 160), 0.8)
+        elif kind == 'smirk':
+            self.line([(55, 107), (64, 106.5), (72, 104.5), (76, 102)], INK, 1.6)
+        elif kind == 'wavy':
+            self.line([(54, 106), (58, 104), (62, 107), (66, 104), (70, 107), (74, 105)], INK, 1.4)
+        elif kind == 'yawn':
+            self.ell(64, 107, 7.5, 9, INK + (255,)); self.ell(64, 108, 6.2, 7.6, (110, 26, 34, 255)); self.ell(64, 112, 4.6, 2.6, (210, 90, 96, 255))
+        elif kind == 'tongue':
+            self.line([(55, 104), (64, 105), (73, 104)], INK, 1.6)
+            self.poly([(60, 105), (68, 105), (67, 111), (64, 113), (61, 111)], (225, 100, 110, 255)); self.line([(64, 106), (64, 110)], (180, 60, 70), 0.7)
+        elif kind == 'chew':
+            self.line([(57, 105), (61, 107), (64, 105.5), (67, 107), (71, 105)], INK, 1.5)
+        elif kind == 'whistle':
+            self.ell(66, 106, 2.6, 2.6, INK + (255,)); self.ell(66, 106, 1.4, 1.4, (120, 34, 44, 255))
         elif kind == 'open_happy':
             pts = [(52, 100), (76, 100), (72, 109), (64, 112), (56, 109)]
             self.poly(pts, (110, 26, 34, 255)); self.poly([(53, 100.5), (75, 100.5), (74, 103), (54, 103)], (250, 248, 246, 255))
@@ -193,6 +224,60 @@ class F:
             self.ell(cx, 86, 10, 4.5, (240, 110, 120, 120), b)
             for k in range(3): self.line([(cx - 5 + k * 4, 84), (cx - 7 + k * 4, 88)], (220, 90, 100, 160), 0.7, b)
         self.blur_layer(b, 0.8)
+
+    def tears(self, both=True, stream=True):
+        for cx in ((35, 93) if both else (35,)):
+            t = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+            if stream: self.poly([(cx - 4, 74), (cx - 1, 74), (cx - 2, 100), (cx - 5, 100)], (150, 210, 255, 200), t)
+            self.ell(cx - 3, 102, 2.6, 3.4, (170, 220, 255, 230), t)
+            self.im.alpha_composite(t)
+            self.line([(cx - 4.5, 76), (cx - 5, 98)], (240, 250, 255), 0.6)
+
+    def sweat(self):
+        self.poly([(112, 40), (116, 50), (113, 56), (108, 54), (108, 48)], (170, 220, 255, 235))
+        self.line([(112, 40), (116, 50), (113, 56), (108, 54), (108, 48), (112, 40)], (60, 110, 160), 0.9)
+        self.ell(111, 50, 1.2, 2, (255, 255, 255, 230))
+
+    def drool(self):
+        self.poly([(70, 106), (72, 106), (72.5, 116), (71, 119), (69.5, 116)], (180, 225, 255, 220))
+
+    def sparkle(self):
+        for cx, cy, r in ((22, 52, 6), (108, 50, 5), (100, 84, 3.5)):
+            self.poly([(cx, cy - r), (cx + r * 0.25, cy - r * 0.25), (cx + r, cy), (cx + r * 0.25, cy + r * 0.25), (cx, cy + r), (cx - r * 0.25, cy + r * 0.25), (cx - r, cy), (cx - r * 0.25, cy - r * 0.25)], (255, 255, 210, 255))
+
+    def veins(self):
+        for cx, cy in ((106, 40),):
+            for a in range(4):
+                ang = a * math.pi / 2 + 0.6
+                self.line([(cx + math.cos(ang) * 2, cy + math.sin(ang) * 2), (cx + math.cos(ang) * 6, cy + math.sin(ang) * 6)], (200, 30, 40), 1.6)
+
+    def tint(self, col, a=60):
+        t = Image.new('RGBA', self.im.size, (0, 0, 0, 0)); self.poly([(0, 60), (128, 60), (128, 128), (0, 128)], col + (a,), t)
+        self.blur_layer(t, 4)
+
+    def glitch(self):
+        r = random.Random(9)
+        for _ in range(7):
+            y = r.uniform(30, 120); x = r.uniform(0, 90); w = r.uniform(12, 38)
+            self.poly([(x, y), (x + w, y), (x + w, y + 2), (x, y + 2)], self.I + (170,))
+        for _ in range(4):
+            y = r.uniform(40, 110); self.poly([(0, y), (128, y), (128, y + 0.8), (0, y + 0.8)], (255, 255, 255, 60))
+
+    def rain(self, frame):
+        r = random.Random(40 + frame)
+        for _ in range(9):
+            x, y = r.uniform(6, 122), r.uniform(30, 110) + frame * 6
+            y = 30 + (y - 30) % 90
+            self.poly([(x, y), (x + 1.4, y + 4), (x, y + 6), (x - 1.4, y + 4)], (170, 215, 255, 220))
+            self.line([(x - 0.3, y + 2), (x - 0.4, y + 4)], (245, 252, 255), 0.5)
+
+    def overload(self):
+        g = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+        for cx in (35, 93): self.ell(cx, 66, 16, 10, self.I + (200,), g)
+        self.blur_layer(g, 4)
+        for cx in (35, 93): self.ell(cx + 1, 66, 9, 5.5, (235, 255, 245, 255))
+        for pts in ([(10, 60), (16, 70), (12, 76), (20, 88)], [(118, 58), (112, 68), (117, 74), (108, 86)]):
+            self.line(pts, self.I, 1.4)
 
     def texture(self):
         small = self.im.resize((N, N), Image.LANCZOS)

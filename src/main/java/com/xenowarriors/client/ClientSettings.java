@@ -90,6 +90,11 @@ public final class ClientSettings {
     public static void setSkillsAlways(boolean on) { props().setProperty("skills_always", String.valueOf(on)); save(); }
 
     /** Cel-shaded look: flat-shaded textures with ink lines and a black outline around characters. Off by default. */
+    /** Ultima's hand-drawn (hi-res) faces instead of the old pixel ones. */
+    public static boolean drawnFaces() { return !"false".equals(props().getProperty("drawn_faces", "true")); }
+
+    public static void setDrawnFaces(boolean on) { props().setProperty("drawn_faces", String.valueOf(on)); save(); }
+
     public static boolean celShading() { return "true".equals(props().getProperty("cel_shading", "false")); }
 
     public static void setCelShading(boolean on) { props().setProperty("cel_shading", String.valueOf(on)); save(); }

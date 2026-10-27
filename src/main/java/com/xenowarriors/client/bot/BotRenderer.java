@@ -74,7 +74,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
             }
             if (m.faceRoot != null) {
                 m.faceHead.copyFrom(p.head);
-                m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(t.getFaceTexture())), light, overlay);
+                m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.render.CharacterDetailLayer.baseFace(t))), light, overlay);
             }
         }
     }

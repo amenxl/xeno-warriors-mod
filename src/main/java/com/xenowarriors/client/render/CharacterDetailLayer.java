@@ -124,11 +124,22 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                 : type.getDetailTexture();
     }
 
+    /** Ultima's drawn faces are on (the setting): his face textures come from the ultima_drawn_* set. */
+    public static boolean drawn(CharacterType type) {
+        return type == CharacterType.ULTIMA && com.xenowarriors.client.ClientSettings.drawnFaces();
+    }
+
+    /** The plain face for a character (bots, VR, previews). */
+    public static net.minecraft.resources.ResourceLocation baseFace(CharacterType type) {
+        return drawn(type) ? com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_drawn_face.png") : type.getFaceTexture();
+    }
+
     public static net.minecraft.resources.ResourceLocation faceTexture(AbstractClientPlayer p) {
         if (ClientCharacterData.get(p) == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(p.getId()))
-            return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_face_overload.png");
+            return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_" + (drawn(CharacterType.ULTIMA) ? "drawn_" : "") + "face_overload.png");
         CharacterType type = ClientCharacterData.get(p);
         String expr = expression(p, type);
+        if (drawn(type)) return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_drawn_face" + (expr == null ? "" : "_" + expr) + ".png");
         if (type == CharacterType.RHALIX && com.xenowarriors.client.DemonClient.active(p.getId()) && !com.xenowarriors.client.LunarClient.active(p.getId()))   // Demon's Remnants: glowing red eyes
             return com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_demon_face" + (expr == null ? "" : "_" + expr) + ".png");
         if (type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId()))      // Lunar: crescents on his cheeks
@@ -514,22 +525,24 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (model.faceRoot != null && !noHead) {
             model.faceHead.copyFrom(parent.head);
             String expr = expression(player, type);
+            boolean dr = drawn(type);
+            String fp = dr ? "ultima_drawn" : type.getId();
             var faceTexture = type == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(player.getId())
-                    ? com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_face_overload.png")
-                    : expr == null ? type.getFaceTexture()
-                    : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
+                    ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_overload.png")
+                    : expr == null ? baseFace(type)
+                    : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_" + expr + ".png");
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             renderFace(model, parent, player, poseStack, faceBuffer, packedLight, overlay);
 
             if (damage > 0 && !ClientCharacterData.isPreviewing()) {
                 renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.XenoWarriors.id(
-                        "textures/entity/character/" + type.getId() + "_face_damage" + damage + ".png"))), packedLight, overlay);
+                        "textures/entity/character/" + fp + "_face_damage" + damage + ".png"))), packedLight, overlay);
             }
 
             // talking in voice chat: an animated mouth drawn over the face
             int mouth = talkingMouth(player, expr);
             if (mouth > 0) {
-                var mouthTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_mouth_" + mouth + ".png");
+                var mouthTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_mouth_" + mouth + ".png");
                 renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(mouthTexture)), packedLight, overlay);
             }
         }

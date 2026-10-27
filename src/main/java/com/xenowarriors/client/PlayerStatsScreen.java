@@ -34,7 +34,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape, hudStyle, vanillaBars, skillsAlways, celShade;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -85,22 +85,24 @@ public class PlayerStatsScreen extends Screen {
         efMode = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfWholeBattleMode(!ClientSettings.efWholeBattleMode());
             updateButtons();
-        }).bounds(bx, SET_TOP + 202, bw, 20).build());
+        }).bounds(bx, SET_TOP + 226, bw, 20).build());
         efBattle = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
-        }).bounds(bx, SET_TOP + 226, bw, 20).build());
+        }).bounds(bx, SET_TOP + 250, bw, 20).build());
         headShape = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setAnimeJaw(!ClientSettings.animeJaw());
             updateButtons();
         }).bounds(bx, SET_TOP + 98, bw / 2 - 2, 20).build());
         celShade = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setCelShading(!ClientSettings.celShading()); updateButtons(); })
                 .bounds(bx + bw / 2 + 2, SET_TOP + 98, bw / 2 - 2, 20).build());
-        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 138, bw, 20).build());
-        vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 162, bw / 2 - 2, 20).build());
-        skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 162, bw / 2 - 2, 20).build());
+        drawnFaces = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDrawnFaces(!ClientSettings.drawnFaces()); updateButtons(); })
+                .bounds(bx, SET_TOP + 122, bw, 20).build());
+        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 162, bw, 20).build());
+        vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 186, bw / 2 - 2, 20).build());
+        skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 186, bw / 2 - 2, 20).build());
         setBaseY.clear();
-        for (Button b : new Button[]{senseFriendly, efMode, efBattle, headShape, celShade, hudStyle, vanillaBars, skillsAlways}) setBaseY.put(b, b.getY());
+        for (Button b : new Button[]{senseFriendly, efMode, efBattle, headShape, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways}) setBaseY.put(b, b.getY());
         if (players.isEmpty()) ModNetwork.sendToServer(new PlayerStatsRequestPacket());     // (opened some other way: ask for the list)
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
@@ -123,7 +125,7 @@ public class PlayerStatsScreen extends Screen {
     private final java.util.Map<Button, Integer> setBaseY = new java.util.HashMap<>();
     private int setScroll;
 
-    private int settingsHeight() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 252 : 190; }
+    private int settingsHeight() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 276 : 214; }
 
     private int maxSetScroll() { return Math.max(0, SET_TOP + settingsHeight() + 6 - height); }
 
@@ -193,6 +195,8 @@ public class PlayerStatsScreen extends Screen {
         headShape.setMessage(Component.literal("Head: " + (ClientSettings.animeJaw() ? "Anime jaw" : "Classic")));
         celShade.visible = tab == 3;
         celShade.setMessage(Component.literal("Cel-shading: " + (ClientSettings.celShading() ? "ON" : "OFF")));
+        drawnFaces.visible = tab == 3;
+        drawnFaces.setMessage(Component.literal("Ultima's face: " + (ClientSettings.drawnFaces() ? "Drawn (new)" : "Pixel (old)")));
         hudStyle.visible = vanillaBars.visible = skillsAlways.visible = tab == 3;
         hudStyle.setMessage(Component.literal("HUD: " + (ClientSettings.khHud() ? "Kingdom Hearts style" : "Classic")));
         vanillaBars.setMessage(Component.literal("Hearts/food: " + (ClientSettings.vanillaBars() ? "Shown" : "Hidden")));
@@ -462,11 +466,11 @@ public class PlayerStatsScreen extends Screen {
         }
         g.fill(x + PAD, y + 82, x + w - PAD, y + 83, 0x30FFFFFF);
         small(g, "LOOK", x + PAD, y + 86, SECTION);
-        g.fill(x + PAD, y + 122, x + w - PAD, y + 123, 0x30FFFFFF);
-        small(g, "HUD", x + PAD, y + 126, SECTION);
+        g.fill(x + PAD, y + 146, x + w - PAD, y + 147, 0x30FFFFFF);
+        small(g, "HUD", x + PAD, y + 150, SECTION);
         if (ef) {
-            g.fill(x + PAD, y + 186, x + w - PAD, y + 187, 0x30FFFFFF);
-            small(g, "EPIC FIGHT", x + PAD, y + 190, SECTION);
+            g.fill(x + PAD, y + 210, x + w - PAD, y + 211, 0x30FFFFFF);
+            small(g, "EPIC FIGHT", x + PAD, y + 214, SECTION);
         }
         g.disableScissor();
         if (maxSetScroll() > 0) g.drawString(font, setScroll < maxSetScroll() ? "\u25bc scroll" : "\u25b2 scroll", x + w - 52, Math.min(height - 10, y + h - 10), 0x8899AA, false);
