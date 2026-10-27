@@ -160,6 +160,8 @@ public final class LimbBend {
             kr += 0.3F;
             kl += 0.3F;
         }
+        float[] portrait = com.xenowarriors.client.portrait.PortraitPoses.bends(entity);   // portrait hero pose: exact bends
+        if (portrait != null) { er = portrait[0]; el = portrait[1]; kr = portrait[2]; kl = portrait[3]; }
         pose(ra, er);
         pose(la, el);
         pose(rl, kr);

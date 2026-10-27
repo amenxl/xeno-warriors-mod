@@ -1,6 +1,5 @@
 package com.xenowarriors.client.portrait;
 
-import com.xenowarriors.client.LimbBend;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -47,6 +46,13 @@ public final class PortraitPoses {
 
     private static void put(String id, float... v) { POSES.put(id, v); }
 
+    /** Absolute elbow/knee bends {right elbow, left elbow, right knee, left knee} while posing, else null. */
+    public static float[] bends(LivingEntity e) {
+        if (active == null || !(e instanceof Player)) return null;
+        float[] v = POSES.get(active);
+        return v == null ? null : new float[]{v[15], v[16], v[17], v[18]};
+    }
+
     public static boolean has(String id) { return POSES.containsKey(id); }
 
     public static void apply(HumanoidModel<?> m, LivingEntity e) {
@@ -64,8 +70,6 @@ public final class PortraitPoses {
         m.leftArm.setRotation(v[8], v[9], v[10]);
         m.rightLeg.xRot = v[11]; m.rightLeg.yRot = 0F; m.rightLeg.zRot = v[12];
         m.leftLeg.xRot = v[13]; m.leftLeg.yRot = 0F; m.leftLeg.zRot = v[14];
-        // the bend code adds its own automatic bend; ask only for the difference so the totals are ours
-        LimbBend.extraElbows(e, v[15] - LimbBend.elbow(v[5]), v[16] - LimbBend.elbow(v[8]));
-        LimbBend.extraKnees(e, v[17] - LimbBend.knee(v[11], v[13], false), v[18] - LimbBend.knee(v[13], v[11], false));
+        // (elbows and knees: LimbBend.apply asks bends() and uses ours as they are)
     }
 }

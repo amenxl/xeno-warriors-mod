@@ -591,7 +591,7 @@ public final class UiTest {
         held.put(CharacterType.MAX, () -> com.xenowarriors.item.ModItems.MAX_KNIFE.get());
         held.put(CharacterType.SAM, () -> com.xenowarriors.item.ModItems.SAM_BAT.get());
         held.put(CharacterType.GARRY, () -> com.xenowarriors.item.ModItems.MICROPHONE.get());
-        l.add(new Step(null, () -> { mc.options.guiScale().set(2); mc.resizeDisplay(); ClientSettings.setCelShading(true);
+        l.add(new Step(null, () -> { mc.options.guiScale().set(2); mc.resizeDisplay(); ClientSettings.setCelShading(true); noToasts(mc);
             mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 20));
         int k = 0;
         for (CharacterType t : CharacterType.PLAYABLE) {
@@ -611,7 +611,13 @@ public final class UiTest {
     }
 
     /** The new M main menu with a few characters (its colours follow the character), at a few GUI scales. */
+    private static void noToasts(Minecraft mc) {
+        mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
+        mc.getToasts().clear();
+    }
+
     private static void mainMenu(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> noToasts(mc), 5));
         Object[][] who = {{CharacterType.MIKIKO, 0, 0}, {CharacterType.RHALIX, 0, 3}, {CharacterType.KYRIE, 0, 5}, {CharacterType.GARRY, 0, 1},
                 {CharacterType.ZANE, 0, 6}, {CharacterType.SAM, 2, 2}, {CharacterType.KAERU, 0, 4}, {CharacterType.AIONI, 0, 0}};
         for (int gs : new int[]{0, 3}) {
