@@ -179,12 +179,16 @@ def wrap_tex(seed, tilt=0.35):
         return mul(shades[band], 1.0 - 0.12 * fr)
     return fn
 
-def hand_wraps(f, y_top):
-    """Bandages on his left forearm and over the knuckles, wound on the slant, a loose end hanging."""
+def hand_wraps(f, y_top, glove=False):
+    """Bandages on his left forearm and over the knuckles, wound on the slant, a loose end hanging.
+    glove=True (like the art): a black glove on the hand instead, the wraps above it."""
     P = S3
     faces = lambda s: {k: wrap_tex(s + i) for i, k in enumerate(('front', 'back', 'right', 'left'))}
     f.add('left_arm', [-8.28, 13.2, -2.28], [-3.72, y_top, 2.28], P['RD'], faces(0), shade=False)
-    f.add('left_arm', [-8.2, 12.0, -2.2], [-3.8, 13.3, 2.2], P['RD'], faces(5) | {'bottom': None}, shade=False)   # over the knuckles
+    if glove:
+        f.add('left_arm', [-8.15, 12.0, -2.15], [-3.85, 13.25, 2.15], P['GL'], {'front': lambda x, y: '#2c2c30' if y < .25 else P['GL']})
+    else:
+        f.add('left_arm', [-8.2, 12.0, -2.2], [-3.8, 13.3, 2.2], P['RD'], faces(5) | {'bottom': None}, shade=False)   # over the knuckles
     # a couple of turns standing proud, tipped on the slant like the art
     for i, (y0, ang) in enumerate(((14.1, 10), (15.9, -8), (y_top - 1.0, 12))):
         f.add('left_arm', [-8.42, y0, -2.42], [-3.58, y0 + 0.75, 2.42], '#c8201e' if i % 2 == 0 else '#9a1818',
@@ -282,7 +286,8 @@ def s3_fit(tied):
         f.add('right_arm', [3.62, 13.1, -2.4], [8.38, 17.6, 2.4], P['RD'],             # flame guard on his right forearm
               {k: flames(P['RD'], P['BL']) for k in ('front', 'back', 'right', 'left')})
         f.add('right_arm', [3.85, 12.0, -2.15], [8.15, 13.1, 2.15], P['GL'])
-        hand_wraps(f, 16.8)
+        f.add('right_arm', [3.75, 13.0, -2.25], [8.25, 13.8, 2.25], P['RD'], {'front': lambda x, y: '#9a1818' if y > .7 else P['RD']})   # red wrist strap (art)
+        hand_wraps(f, 16.8, glove=True)
         f.both('right_arm', [3.6, 16.8, -2.42], [8.4, 17.7, 2.42], P['BLL'])            # bunched hoodie cuffs
     # shoulder pauldron on his left shoulder
     f.add('left_arm', [-8.75, 20.4, -2.75], [-3.35, 24.9, 2.75], P['PA'], {'top': P['PAL'], 'right': P['PAL']})
@@ -299,6 +304,9 @@ def s3_fit(tied):
     f.both('right_leg', [-0.48, -0.32, -3.5], [4.48, 0.5, 2.5], P['BLD'])
     f.both('right_leg', [-0.46, 1.75, -2.88], [4.46, 2.2, 2.48], P['SI'])
     f.both('right_leg', [1.35, 1.4, -3.1], [2.65, 2.8, -2.8], P['SI'], {'front': lambda x, y: P['WH'] if x < .5 and y < .5 else P['SI'] if x < .5 or y < .5 else P['SID']})
+    if not tied:                                                   # white chevron on the outer side of the sneakers (art)
+        f.add('right_leg', [4.36, 0.5, -1.6], [4.6, 2.4, 1.2], P['WH'], {'right': lambda x, y: P['WH'] if abs(y - .5) < .5 - abs(x - .5) * .8 else P['RD']})
+        f.add('left_leg', [-0.6, 0.5, -1.6], [-0.36, 2.4, 1.2], P['WH'], {'left': lambda x, y: P['WH'] if abs(y - .5) < .5 - abs(x - .5) * .8 else P['RD']})
     if tied:
         # jacket tied around his hips: back panel to mid-thigh with white hem, sides, knotted sleeves in front
         hem = lambda x, y: P['WH'] if y > .82 else P['BL']
