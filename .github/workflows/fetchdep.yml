@@ -1,0 +1,35 @@
+name: Fetch a dependency jar (manual)
+
+# Downloads an optional-mod jar (e.g. Lodestone) from its maven and publishes it to the "deps" release, so the API can
+# be inspected and the jar checked into libs/ for compileOnly use.
+on:
+  workflow_dispatch:
+    inputs:
+      group: { description: 'maven group path (e.g. team/lodestar/lodestone)', required: true }
+      artifact: { description: 'artifact id', required: true }
+      repo: { description: 'maven repo base url', required: true, default: 'https://maven.blamejared.com' }
+      filter: { description: 'version substring to pick (latest matching)', required: true, default: '1.20.1' }
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          base="${{ github.event.inputs.repo }}/${{ github.event.inputs.group }}/${{ github.event.inputs.artifact }}"
+          curl -sfL "$base/maven-metadata.xml" -o meta.xml
+          cat meta.xml | head -100
+          ver=$(grep -o '<version>[^<]*</version>' meta.xml | sed 's/<[^>]*>//g' | grep "${{ github.event.inputs.filter }}" | tail -1)
+          echo "version $ver"
+          mkdir out
+          curl -sfL "$base/$ver/${{ github.event.inputs.artifact }}-$ver.jar" -o "out/${{ github.event.inputs.artifact }}-$ver.jar"
+          cp meta.xml out/
+          ls -la out
+          gh release delete deps --yes --cleanup-tag -R ${{ github.repository }} || true
+          gh release create deps out/* --title "deps" --notes "fetched dependency jars" --prerelease -R ${{ github.repository }}
