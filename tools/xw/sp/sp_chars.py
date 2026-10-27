@@ -196,6 +196,10 @@ def max_paint(part, face, x, y, W, H, outer):
 
 def max_fit(f, royal=False):
     if royal: return max_royal(f)
+    max_hair(f)
+    max_clothes(f)
+
+def max_hair(f):
     # messy silver-white hair hanging over his eyes
     hair(f, MH1, MH2, back_len=25, side_len=26,
          locks=[([x, 32.3, -4.7], [x * 0.08, -1, -0.45], 3.0 if abs(x) < 2 else 4.4, 2.0) for x in (-3.2, -1.6, 0.0, 1.6, 3.2)]
@@ -210,7 +214,6 @@ def max_fit(f, royal=False):
         lock(f, [sx * 0.5, 31.6, -4.8], [sx * 0.05, -1, -0.2], 4.4, 1.0, (MH1, MH2, MH3), thick=0.5)        # thin strands between his eyes
     for x, z in ((-2.2, -1.6), (1.0, -0.4), (2.6, 1.8), (-0.8, 2.2)):
         lock(f, [x, 32.6, z], [x * 0.3, 0.35, -0.8], 3.0, 2.2, (MH2, MH2, MH3), thick=0.9)   # messy, flat tufts
-    max_clothes(f)
 
 def max_clothes(f, royal=False):
     # cream tee with the lavender star, dark shoulder strap, black belt with pale-blue clips, grey cargo shorts
@@ -778,7 +781,135 @@ LOGAN = _sr('logan', ('hawk_small', '#e8c860'))
 KILL = _sr('kill', ('demon_small', '#3a2e44'))
 KEITA = _sr('keita', ('bat_small', '#2a3070'))
 
-CHARS = {'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
+
+# ====================================================================== SEASON 3 OUTFITS (Max and Sam)
+CAMO_A, CAMO_B, CAMO_C = '#f4ecd2', '#b9b39f', '#d8d0b8'
+
+def camo(seed):
+    """Desert camo blotches (cream with taupe and pale clouds), stable per face."""
+    def fn(x, y):
+        v = (math.sin(x * 9.1 + seed) + math.sin(y * 7.3 + seed * 1.7) + math.sin((x + y) * 5.2 + seed * 0.6)
+             + 0.6 * math.sin(x * 17 - y * 13 + seed * 2.3))
+        return CAMO_B if v > 1.15 else CAMO_C if v > 0.55 else CAMO_A
+    return fn
+
+def camo_faces(seed):
+    return {k: camo(seed + i * 3.1) for i, k in enumerate(('front', 'back', 'left', 'right', 'top', 'bottom'))}
+
+# the black winged-shield badge on his vest
+SHIELD = ['k.....kkk.....k',
+          'kk...kkkkk...kk',
+          '.kk..kk.kk..kk.',
+          '.kkk.kkkkk.kkk.',
+          '..kk.kk.kk.kk..',
+          '...k..kkk..k...',
+          '.......k.......']
+
+def max_s3_paint(part, face, x, y, W, H, outer):
+    c = camo(len(face) + (0 if part == 'body' else 5))(x / max(W, 1), y / max(H, 1))
+    if part == 'body': return '#18181c' if face == 'front' and y < 1 else c
+    if part in ('rarm', 'larm'):
+        if y < 7: return c
+        if y >= 9: return '#1a1a1e'
+        return None
+    if part in ('rleg', 'lleg'): return '#2a2a30' if y >= 7 else c
+    return None
+
+def max_s3(f):
+    """Max in season 3: desert-camo fatigues with the sleeves rolled up, a cream plate carrier with the black winged
+    shield, black shoulder pads and pack straps, black turtleneck, wide belt with a mint buckle, fingerless gloves,
+    a star bracelet, baggy camo cargo pants tucked into buckled combat boots. (His cigarette stays.)"""
+    max_hair(f)
+    shell(f, 'body', [-4, 12.2, -2], [4, 24, 2], 0.3, CAMO_A, camo_faces(1.0))
+    f.add('body', [-2.4, 22.4, -2.5], [2.4, 24.6, 2.5], '#16161a')                                   # turtleneck
+    f.add('body', [-1.8, 24.2, -1.9], [1.8, 24.9, 1.9], '#16161a')
+    # plate carrier: front and back panels
+    f.add('body', [-3.9, 14.0, -2.75], [3.9, 22.6, -2.4], '#f6efdc', {'front': lambda x, y: '#e2dac4' if y > .82 else '#f6efdc'})
+    f.add('body', [-3.9, 14.0, 2.4], [3.9, 22.6, 2.75], '#f6efdc')
+    f.add('body', [-3.0, 14.4, -2.85], [3.0, 16.4, -2.7], '#e8e0ca')                                  # the pouch at the bottom
+    plate(f, 'body', SHIELD, 0.0, 21.3, -2.9, 0.48, '#1e2420')                                       # winged shield badge
+    for sx in (1, -1):                                                                               # pack straps over the shoulders
+        f.add('body', [sx * 2.9 - 0.45, 15.0, -2.95], [sx * 2.9 + 0.45, 24.5, -2.75], '#16161a')
+        f.add('body', [sx * 2.9 - 0.45, 24.2, -2.8], [sx * 2.9 + 0.45, 24.6, 2.8], '#16161a')
+        f.add('body', [sx * 2.9 - 0.45, 15.0, 2.75], [sx * 2.9 + 0.45, 24.5, 2.95], '#16161a')
+    f.add('body', [-4.5, 11.3, -2.6], [4.5, 13.4, 2.6], '#16161a')                                   # wide belt
+    f.add('body', [-1.1, 11.6, -2.8], [1.1, 13.1, -2.6], '#c6f0e6')                                  # mint buckle
+    f.add('body', [-0.4, 11.9, -2.9], [0.4, 12.8, -2.75], '#16161a')
+    # sleeves rolled to the elbow, black shoulder pads, fingerless gloves, a star bracelet on his right wrist
+    f.both('right_arm', [3.62, 17.4, -2.38], [8.38, 24.38, 2.38], CAMO_A, camo_faces(4.0))
+    f.both('right_arm', [3.45, 16.6, -2.55], [8.55, 18.0, 2.55], '#e8e0c8')                          # the roll
+    f.both('right_arm', [3.3, 21.4, -2.7], [8.7, 24.7, 2.7], '#2a2a2e', {'top': '#3a3a40'})           # shoulder pads
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 14.2, 2.5], '#1a1a1e', {'bottom': M_SKIN})          # fingerless gloves
+    f.add('right_arm', [3.45, 14.3, -2.55], [8.55, 14.7, 2.55], '#c8b8f0')                           # star bracelet
+    f.add('right_arm', [5.4, 13.8, -2.9], [6.4, 14.8, -2.55], '#e8d890')
+    # baggy camo cargo pants, buckled combat boots
+    f.both('right_leg', [-0.65, 4.4, -2.65], [4.65, 12.3, 2.65], CAMO_A, camo_faces(7.0))
+    f.both('right_leg', [4.55, 6.4, -1.4], [5.0, 9.4, 1.4], '#cfc7ae')                               # thigh pockets
+    f.both('right_leg', [-0.55, 0, -2.6], [4.55, 5.4, 2.6], '#26262a', {'top': '#1e1e22'})            # boots
+    for y in (2.6, 4.0): f.both('right_leg', [-0.65, y, -2.7], [4.65, y + 0.6, 2.7], '#4a4a52')        # buckle straps
+    f.both('right_leg', [0.0, 0, -3.25], [4.0, 1.4, -2.6], '#26262a')                                 # toe caps
+    f.both('right_leg', [-0.6, 0, -3.35], [4.6, 0.4, 2.65], '#8a8a92')                                # treaded soles
+
+MAX_S3 = dict(MAX, paint=max_s3_paint, fit=max_s3)
+
+SAM_JUMP, SAM_JUMP2, SAM_POCK = '#3a3a3e', '#2c2c30', '#d4d4d8'
+
+def sam_s3_paint(part, face, x, y, W, H, outer):
+    if part == 'body': return SAM_JUMP
+    if part in ('rarm', 'larm'):
+        if y < 3: return SAM_JUMP
+        if y < 4: return '#1a1a1e'
+        if y >= 9: return '#1a1a1e'
+        return None
+    if part in ('rleg', 'lleg'):
+        if y >= 11: return '#e8e8ee'
+        if y >= 9: return '#1e1e22'
+        return SAM_JUMP
+    return None
+
+def sam_s3(f):
+    """Sam in season 3: a charcoal short-sleeved jumpsuit (mandarin collar, zip, pale chest pockets, grey hip panels,
+    a thin black belt), green work goggles pushed up on his hair, fingerless gloves, baggy legs with big pale cargo
+    pockets, black boots with white soles."""
+    hair(f, SH1, SH2, back_len=26, side_len=27,
+         locks=fringe_locks(6, 31.8, 7.6, 4.4, 1.8, 0.45)
+         + [([x, 32.0, -4.7], [x * 0.12, -1, -0.3], 3.2, 2.0) for x in (-2.8, 1.4, 3.4)]
+         + [([s * 4.6, 30.5, z], [s * 0.55, -1, 0.15], 3.8, 1.8) for s in (1, -1) for z in (-2.4, 0.6, 3.2)])
+    for x, z in ((-2.2, -1.8), (0.4, 0.6), (2.6, -0.6), (-1.0, 2.6), (2.0, 2.8)):
+        lock(f, [x, 32.8, z], [x * 0.25, 0.8, z * 0.15 - 0.3], 2.8, 1.8, (SH2, SH2, SH3))
+    # green goggles pushed up on his hair: strap all round, two lenses at the front
+    f.add('head', [-4.75, 30.6, -4.75], [4.75, 31.5, 4.75], '#1c1c20')
+    for sx in (1, -1):
+        x0, x1 = (0.3, 3.9) if sx > 0 else (-3.9, -0.3)
+        f.add('head', [x0, 30.0, -5.35], [x1, 32.6, -4.75], '#2ab84a')                               # frame
+        f.add('head', [x0 + 0.4, 30.4, -5.45], [x1 - 0.4, 32.2, -5.3], '#1e4a44', shade=False)       # dark tinted lens
+        f.add('head', [x0 + 0.6, 31.6, -5.5], [x0 + 1.3, 32.0, -5.42], '#7ad8b0', shade=False)       # glint
+    f.add('head', [-0.4, 30.4, -5.25], [0.4, 31.4, -4.8], '#2ab84a')                                  # nose bridge
+    # the jumpsuit
+    shell(f, 'body', [-4, 11.8, -2], [4, 24, 2], 0.32, SAM_JUMP,
+          {'front': lambda x, y: SAM_JUMP2 if abs(x - .5) < .03 else SAM_JUMP})                      # zip line
+    f.add('body', [-2.2, 22.9, -2.5], [2.2, 24.7, 2.5], SAM_JUMP2)                                   # mandarin collar
+    for sx in (1, -1):
+        x0, x1 = (0.8, 3.4) if sx > 0 else (-3.4, -0.8)
+        f.add('body', [x0, 18.6, -2.55], [x1, 21.4, -2.4], SAM_POCK)                                 # chest pockets
+        f.add('body', [x0 - 0.1, 20.9, -2.62], [x1 + 0.1, 21.6, -2.5], '#b8b8be')                    # flaps
+        f.add('body', [sx * 4.15 - 0.3, 12.6, -2.5], [sx * 4.15 + 0.3, 15.4, 2.5], '#9a9aa0')         # grey hip panels
+    f.add('body', [-4.4, 12.4, -2.5], [4.4, 13.1, 2.5], '#121214')                                   # thin belt
+    f.both('right_arm', [3.62, 20.2, -2.38], [8.38, 24.38, 2.38], SAM_JUMP)                          # short sleeves
+    f.both('right_arm', [3.5, 19.8, -2.5], [8.5, 20.6, 2.5], '#1a1a1e')                              # black cuffs
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 14.6, 2.5], '#1a1a1e', {'bottom': S_SKIN})          # fingerless gloves
+    f.both('right_arm', [3.45, 14.3, -2.55], [8.55, 14.9, 2.55], '#121214')                          # glove wrist band
+    # baggy legs with big pale cargo pockets on the outside, black boots, white soles
+    f.both('right_leg', [-0.6, 2.4, -2.6], [4.6, 12.3, 2.6], SAM_JUMP)
+    f.both('right_leg', [4.5, 6.6, -1.7], [5.1, 10.0, 1.7], SAM_POCK, {'right': lambda x, y: '#b8b8be' if y < .2 else SAM_POCK})
+    f.both('right_leg', [4.5, 3.0, -1.4], [5.0, 5.4, 1.4], SAM_POCK)
+    f.both('right_leg', [-0.5, 0.5, -2.55], [4.5, 3.6, 2.55], '#1e1e22')                              # boots
+    f.both('right_leg', [0.1, 0.5, -3.15], [3.9, 1.6, -2.55], '#1e1e22')
+    f.both('right_leg', [-0.55, 0, -3.25], [4.55, 0.6, 2.6], '#e8e8ee')                               # white soles
+
+SAM_S3 = dict(SAM, paint=sam_s3_paint, fit=sam_s3, mouth=['k.kk.k', '.k..k.'], mouth_x=13, mouth_y=25)
+
+CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

@@ -79,6 +79,7 @@ public final class UiTest {
         if ("allanim".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         if ("mikiko".equals(System.getenv("XW_UITEST_FOCUS"))) { mikikoCombo(mc, l); return l; }
         if ("combo".equals(System.getenv("XW_UITEST_FOCUS"))) { combos(mc, l); return l; }
+        if ("s3fits".equals(System.getenv("XW_UITEST_FOCUS"))) { s3Outfits(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -478,6 +479,27 @@ public final class UiTest {
         l.add(new Step("aura_elements", () -> {}, 3));
         for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_elements_%02d", f), () -> {}, 1));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
+    }
+
+    /** Max's and Sam's season 3 outfits (with his knife and his bat): front, three-quarter, side, back. */
+    private static void s3Outfits(Minecraft mc, List<Step> l) {
+        Object[][] who = {{CharacterType.MAX, com.xenowarriors.item.ModItems.MAX_KNIFE.get()}, {CharacterType.SAM, com.xenowarriors.item.ModItems.SAM_BAT.get()}};
+        for (Object[] w : who) {
+            CharacterType t = (CharacterType) w[0];
+            net.minecraft.world.item.Item item = (net.minecraft.world.item.Item) w[1];
+            l.add(new Step(null, () -> { character(t); hold(item); }, 30));
+            l.add(new Step(null, () -> outfit(2), 30));
+            float[] yaws = {0F, -35F, -80F, 0F};
+            String[] names = {"front", "threequarter", "side", "back"};
+            for (int k = 0; k < yaws.length; k++) {
+                float yaw = yaws[k];
+                CameraType cam = k == 3 ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT;
+                l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(cam);
+                    mc.player.setXRot(8F); mc.player.setYRot(yaw); mc.player.yBodyRot = yaw; mc.player.yBodyRotO = yaw; mc.player.setYHeadRot(yaw); }, 15));
+                l.add(new Step("s3fit_" + t.getId() + "_" + names[k], () -> {}, 5));
+            }
+            l.add(new Step(null, () -> outfit(0), 10));
+        }
     }
 
     /** Mikiko's bare-hand combo string on a husk, filmed from the side (ends in Tie Shan Kao) - then the wild version at low health. */
