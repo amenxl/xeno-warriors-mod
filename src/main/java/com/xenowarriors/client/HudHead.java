@@ -41,7 +41,7 @@ public final class HudHead {
             g.pose().popPose();
             return;
         }
-        int scale = Math.round(size * 1.55F);
+        int scale = Math.round(size * 1.25F);
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
         g.enableScissor(x, y, x + size, y + size);

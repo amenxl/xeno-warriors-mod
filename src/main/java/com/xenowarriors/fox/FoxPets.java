@@ -602,7 +602,7 @@ public final class FoxPets {
         if (victim.level().isClientSide) return;
         Entity src = event.getSource().getEntity();
         if (src instanceof Fox fox && ownerOf(fox) != null) {
-            addXp(fox, event.getAmount() * 3F);
+            addXp(fox, Math.min(event.getAmount(), event.getEntity().getHealth()) * 3F);
             ItemStack sword = fox.getMainHandItem();
             if (sword.getItem() instanceof net.minecraft.world.item.SwordItem && fox.level() instanceof ServerLevel lvl) {
                 // a slash with the blade in its mouth
@@ -613,7 +613,7 @@ public final class FoxPets {
                 sword.hurtAndBreak(1, fox, f -> f.broadcastBreakEvent(net.minecraft.world.entity.EquipmentSlot.MAINHAND));
             }
         }
-        if (victim instanceof Fox fox && ownerOf(fox) != null) addXp(fox, event.getAmount() * 1.5F);
+        if (victim instanceof Fox fox && ownerOf(fox) != null) addXp(fox, Math.min(event.getAmount(), fox.getHealth()) * 1.5F);
         // foxes join in on whatever Mikiko is fighting
         if (src instanceof ServerPlayer p && !pets(p).isEmpty() && !(victim instanceof Player) && !isOwnedBy(victim, p)
                 && !(victim instanceof TamableAnimal t && p.getUUID().equals(t.getOwnerUUID()))) {

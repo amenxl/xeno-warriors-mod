@@ -190,7 +190,7 @@ public class PetsScreen extends Screen {
         g.fill(30, 4, 30 + font.width("PETS") * 2 + 12, 20, 0xFF16161C);
         sc(g, "PETS", 36, 5.5F, 2F, 0xFFFFFF);
         String note = "Enemies mostly leave pets alone. A pet that runs from a fight needs " + PetCare.fmt(PetCare.COOLDOWN) + " before the whistle can call it back.";
-        sc(g, note, VW - 6 - font.width(note) * 0.6F, 10, 0.6F, 0x8A8A9A);
+        sc(g, note, VW - 6 - font.width(note) * 0.55F, 22, 0.55F, 0x8A8A9A);
 
         // the list
         g.enableScissor((int) (o[0] + LIST_X * s), (int) (o[1] + 28 * s), (int) (o[0] + (LIST_X + LIST_W) * s), (int) (o[1] + (VH - 4) * s));
@@ -224,7 +224,7 @@ public class PetsScreen extends Screen {
             LivingEntity e = p.entityId() >= 0 && minecraft.level != null && minecraft.level.getEntity(p.entityId()) instanceof LivingEntity le ? le : null;
             g.fill(PANEL_X + 8, 74, PANEL_X + 90, 160, 0xFF0E0E12);
             box(g, PANEL_X + 8, 74, PANEL_X + 90, 160, 0xFF000000 | dark(col));
-            if (e != null) InventoryScreen.renderEntityInInventoryFollowsMouse(g, PANEL_X + 49, 150, p.kind() == 0 ? 36 : 30, (float) (PANEL_X + 49 - vx), (float) (110 - vy), e);
+            if (e != null) InventoryScreen.renderEntityInInventoryFollowsMouse(g, PANEL_X + 49, 150, p.kind() == 0 ? 52 : 40, (float) (PANEL_X + 49 - vx), (float) (110 - vy), e);
             else { String t = p.status() >= 2 && p.status() <= 3 ? "(away)" : "(not nearby)"; sc(g, t, PANEL_X + 49 - font.width(t) * 0.4F, 114, 0.8F, 0x707080); }
 
             int rx = PANEL_X + 96, rw = PANEL_W - 104, ry = 74;
