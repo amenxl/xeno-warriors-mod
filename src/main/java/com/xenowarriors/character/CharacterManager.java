@@ -52,6 +52,10 @@ public final class CharacterManager {
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            // wearing an outfit from a season that's locked in this world: back to the default look
+            player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+                if (!Seasons.unlocked(player.server, ModCapabilities.getType(player).outfitSeason(d.outfit))) d.outfit = 0;
+            });
             syncToTrackingAndSelf(player);
             if (ModCapabilities.getType(player) == CharacterType.NONE) {
                 openSelectScreen(player);

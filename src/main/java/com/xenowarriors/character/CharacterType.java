@@ -74,6 +74,16 @@ public enum CharacterType {
         };
     }
 
+    /** The season an outfit is from (Season 2/3 outfits stay locked until /xeno season unlock 2 or 3). */
+    public int outfitSeason(int outfit) {
+        String[] keys = outfitKeys();
+        if (outfit <= 0 || outfit >= keys.length) return 1;
+        String k = keys[outfit];
+        if (k.startsWith("s3") || k.equals("royal")) return 3;     // Season 3 looks; the Royal Capital disguises are from Season 3 too
+        if (k.equals("c1pjs")) return 2;
+        return 1;
+    }
+
     public String[] outfitKeys() {
         return switch (this) {
             case MIKIKO -> new String[]{"", "origins1", "origins2", "s3", "s3b"};

@@ -18,6 +18,12 @@ public record SetOutfitPacket(int outfit) {
         ServerPlayer p = ctx.get().getSender();
         if (p == null) return;
         int o = Math.max(0, Math.min(ModCapabilities.getType(p).outfitKeys().length - 1, m.outfit));
+        int season = ModCapabilities.getType(p).outfitSeason(o);
+        if (!com.xenowarriors.character.Seasons.unlocked(p.server, season)) {
+            p.displayClientMessage(net.minecraft.network.chat.Component.literal("Season " + season + " outfit - locked until /xeno season unlock " + season)
+                    .withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
         p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = o);
         CharacterManager.syncToTrackingAndSelf(p);
     }

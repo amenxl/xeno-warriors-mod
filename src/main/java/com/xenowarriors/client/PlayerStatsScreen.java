@@ -208,11 +208,12 @@ public class PlayerStatsScreen extends Screen {
         for (int i = 0; i < outfitButtons.size(); i++) {
             Button b = outfitButtons.get(i);
             b.visible = tab == 2 && type != CharacterType.NONE && i < names.length;
+            boolean seasonLocked = i < names.length && ClientSkillState.season() < type.outfitSeason(i);
             if (i < names.length) {
-                String label = (i == current ? "✔ " : "") + names[i];
+                String label = seasonLocked ? "🔒 " + names[i] + " (S" + type.outfitSeason(i) + ")" : (i == current ? "✔ " : "") + names[i];
                 b.setMessage(Component.literal(fit(label, b.getWidth() - 10)));
             }
-            b.active = i != current;
+            b.active = i != current && !seasonLocked;
         }
         boolean prisoner = me != null && me.prisoner();
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
