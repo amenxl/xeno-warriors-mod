@@ -176,7 +176,7 @@ LEXY = dict(skin=L_SKIN, eyes=L_EYE, hair=[LH1, LH2], paint=lexy_paint,
 
 # ====================================================================== MAX (Sintrie)
 M_SKIN, M_EYE = '#e8c0a8', '#8a3a2a'
-MH1, MH2, MH3 = '#a8b4b4', '#c8d2d0', '#e4ecea'
+MH1, MH2, MH3 = '#94a6a2', '#c2d8d2', '#e2f4ee'
 M_TEE, M_STAR, M_SHORT = '#f8ecd4', '#a8a0e8', '#9a9aa2'
 
 def max_paint(part, face, x, y, W, H, outer):
@@ -228,7 +228,7 @@ MAX = dict(skin=M_SKIN, eyes=M_EYE, hair=[MH1, MH2], paint=max_paint,
            brow=['.........', 'kkkkkkk..'],
            eye=['mmmmmmmm.', 'kkkkkkkkk', '.wdpppdw.', '.wdpWpdw.', '..wdddw..', '..mkkkm..', '.........'],
            mouth=['..kkk.'], mouth_x=13, mouth_y=25, face_extra=[max_blush],
-           wing=('falcon_small', '#d2ecf6'), fit=max_fit)
+           wing=('falcon_small', '#c6f0e6'), fit=max_fit)
 
 # ====================================================================== SAM
 S_SKIN, S_EYE = '#f0c8a8', '#1a2238'
