@@ -75,6 +75,7 @@ public final class UiTest {
         if ("ffr".equals(System.getenv("XW_UITEST_FOCUS"))) { ffr(mc, l); return l; }
         if ("auras".equals(System.getenv("XW_UITEST_FOCUS"))) { auras(mc, l); return l; }
         if ("beatbox".equals(System.getenv("XW_UITEST_FOCUS"))) { beatbox(mc, l); return l; }
+        if ("girls".equals(System.getenv("XW_UITEST_FOCUS"))) { girls(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -323,6 +324,37 @@ public final class UiTest {
                 mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
         }
         l.add(new Step(null, () -> mc.setScreen(null), 5));
+    }
+
+    /** The girls' body on everyone, as a row of bots turned to each side (front, 3/4, side, back). */
+    private static void girls(Minecraft mc, List<Step> l) {
+        CharacterType[] g = {CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI};
+        java.util.List<Integer> ids = new java.util.ArrayList<>();
+        l.add(new Step(null, () -> server(p -> {
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY, 20 * 600, 0, false, false));
+            for (int i = 0; i < g.length; i++) {
+                var b = com.xenowarriors.bot.BotEntities.BOT.get().create(p.serverLevel());
+                if (b == null) continue;
+                b.setCharacter(g[i]); b.setNoAi(true);
+                b.moveTo(p.getX() - 5.5 + i * 2.2, p.getY(), p.getZ() + 6, 180, 0);
+                b.setYHeadRot(180); b.yBodyRot = 180;
+                p.serverLevel().addFreshEntity(b); ids.add(b.getId());
+            }
+            p.setYRot(0); p.setXRot(12);
+        }), 40));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(12); }, 20));
+        float[] yaws = {180, 135, 90, 0, 225};
+        String[] names = {"front", "threequarter", "side", "back", "threequarter2"};
+        for (int k = 0; k < yaws.length; k++) {
+            float yaw = yaws[k];
+            l.add(new Step(null, () -> server(p -> {
+                for (var b : p.serverLevel().getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, p.getBoundingBox().inflate(16))) {
+                    b.setYRot(yaw); b.setYHeadRot(yaw); b.yBodyRot = yaw; b.yBodyRotO = yaw; b.yHeadRotO = yaw;
+                }
+            }), 15));
+            l.add(new Step("girls_" + names[k], () -> {}, 5));
+        }
+        l.add(new Step(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, p.getBoundingBox().inflate(16)).forEach(e -> e.discard())), 5));
     }
 
     /** Garry's beatbox idle (mic out, bobbing), and the Fox King mask and crown item. */
