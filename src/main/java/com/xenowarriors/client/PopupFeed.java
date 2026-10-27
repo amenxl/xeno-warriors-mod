@@ -119,7 +119,7 @@ public final class PopupFeed implements IGuiOverlay {
             float alpha = Mth.clamp((life - age) / (float) FADE, 0F, 1F) * (depth == 0 ? 1F : depth == 1 ? 0.85F : 0.65F);
             float slide = ease(Mth.clamp(age / (float) SLIDE, 0F, 1F));
             int x = Math.round(6 - (1F - slide) * (w + 20));
-            int y = Math.round(baseY - (depth + 1) * (h + gap) + 0);
+            int y = Math.round(baseY - (i + 1) * (h + gap));          // oldest at the bottom, each new one above the last
             drawPop(g, font, p, x, y, w, h, alpha);
         }
     }
