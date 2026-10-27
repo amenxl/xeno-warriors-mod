@@ -145,9 +145,10 @@ public final class GarryBeatbox {
     /** Mic up at the mouth, other hand cupped round it, bobbing to the beat. */
     private static void beatboxPose(HumanoidModel<?> m, Player p, float t, float w, float age) {
         float bob = Mth.sin(t * (float) Math.PI / 6F);                      // two bobs per bar
-        set(m.rightArm, -1.95F, -0.5F, 0.15F, w);
-        set(m.leftArm, -1.7F, 0.6F, -0.1F, w * 0.8F);
-        LimbBend.extraElbows(p, 1.85F * w, 1.6F * w * 0.8F);
+        // upper arms forward and in, forearms folded up: mic hand at his mouth, the other hand cupped round it
+        set(m.rightArm, -0.8F, -0.45F, 0F, w);
+        set(m.leftArm, -0.9F, 0.55F, 0F, w);
+        LimbBend.extraElbows(p, -1.35F * w, -1.2F * w);
         m.head.xRot = Mth.lerp(w, m.head.xRot, 0.12F + 0.12F * Math.abs(bob));
         m.body.xRot = Mth.lerp(w, m.body.xRot, 0.05F * Math.abs(bob));
         LimbBend.extraKnees(p, 0.18F * w * Math.abs(bob), 0.18F * w * Math.abs(bob));
