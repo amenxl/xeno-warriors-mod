@@ -14,7 +14,7 @@ public final class VehicleFx {
         boolean lodestone = net.minecraftforge.fml.ModList.get().isLoaded("lodestone");
         double moving = v.getDeltaMovement().horizontalDistance() + Math.abs(v.getX() - v.xo) + Math.abs(v.getZ() - v.zo);
         if (v.kind != VehicleKind.HELICOPTER && v.getControllingPassenger() != null && v.tickCount % 3 == 0) {
-            double back = v.kind == VehicleKind.GOV_TRUCK ? 2.6 : v.kind == VehicleKind.CAR ? 1.85 : 0.9;
+            double back = (v.kind == VehicleKind.GOV_TRUCK ? 2.6 : v.kind == VehicleKind.CAR ? 1.85 : 0.9) * v.kind.scale;
             double x = v.getX() - fx * back, z = v.getZ() - fz * back, y = v.getY() + 0.35;
             if (lodestone) com.xenowarriors.client.compat.lodestone.LodestoneFx.exhaust(level, x, y, z, moving);
             else level.addParticle(ParticleTypes.SMOKE, x, y, z, -fx * 0.02, 0.02, -fz * 0.02);

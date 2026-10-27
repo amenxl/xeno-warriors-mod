@@ -13,13 +13,15 @@ public enum CharacterType {
     MIKIKO("mikiko", 0xFFE8801A),
     RHALIX("rhalix", 0xFFA02CD2),
     /** Season 2 content (locked until /xeno season unlock 2). */
-    ULTIMA("ultima", 0xFF1FE07A);
+    ULTIMA("ultima", 0xFF1FE07A),
+    /** Season 2 content: the Hekublade's guardian. */
+    KAERU("kaeru", 0xFFE8701C);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
-    public int season() { return this == ULTIMA ? 2 : 1; }
+    public int season() { return this == ULTIMA || this == KAERU ? 2 : 1; }
 
     private final String id;
     private final int color;

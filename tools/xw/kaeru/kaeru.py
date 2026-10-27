@@ -1,6 +1,6 @@
 """Kaeru (Hekublade guardian, Orenji clan): brown bob fading to orange, freckles, amber eyes; black cropped hoodie with
-an orange hood (down) and rolled sleeves, black fingerless gloves, orange shorts with the black Orenji spiral, black
-thigh-high socks, black shoes with orange stripes, and two fox tails (orange and black)."""
+an orange hood (down) and rolled sleeves, black fingerless gloves, an orange undershirt with the black Orenji ring logo, orange shorts, black
+thigh-high socks, black shoes with orange stripes, and her fox tail (orange with a black end)."""
 import sys
 sys.path.insert(0, '/home/claude/xw/ultima'); sys.path.insert(0, '/home/claude/xw/npcs'); sys.path.insert(0, '/home/claude/xw/outfits'); sys.path.insert(0, '/home/claude/xw/detail')
 import ultima as U
@@ -62,11 +62,18 @@ def build(f):
     # orange shorts: high waist, baggy, black cuffs, the spiral on her left leg
     shell(f, 'body', [-4, 9.6, -2], [4, 14.8, 2], 0.42, OR, {'front': lambda x, y: OR2 if abs(x - .5) < .03 else OR})
     f.both('right_leg', [-0.55, 6.0, -2.55], [4.55, 12.3, 2.55], OR)
-    # the Orenji spiral on her left leg (squared off, inked in black bars)
-    X0, X1, Y0, Y1, Z = -4.2, -0.8, 7.4, 10.8, -2.62
-    for lo, hi in (([X0, Y1 - 0.45], [X1, Y1]), ([X1 - 0.45, Y0], [X1, Y1]), ([X0 + 0.9, Y0], [X1, Y0 + 0.45]), ([X0 + 0.9, Y0], [X0 + 1.35, Y1 - 1.3]),
-                   ([X0 + 0.9, Y1 - 1.75], [X1 - 1.3, Y1 - 1.3]), ([X1 - 1.75, Y0 + 1.3], [X1 - 1.3, Y1 - 1.3]), ([X0 + 2.0, Y0 + 1.3], [X1 - 1.3, Y0 + 1.75])):
-        f.add('left_leg', [lo[0], lo[1], Z], [hi[0], hi[1], Z + 0.06], BLK)
+    # the Orenji logo on her orange undershirt (front, centred): a ring with a dot inside and a little triangle on top
+    LOGO = ['.....k.....', '....kkk....', '...kk.kk...', '...kkkkk...', '...........', '...kkkkk...',
+            '..kk...kk..', '.kk.kkk.kk.', '.k.kkkkk.k.', '.kk.kkk.kk.', '..kk...kk..', '...kkkkk...']
+    C, X0, YT, Z = 0.36, -11 * 0.36 / 2, 14.1, -2.56
+    for r, row in enumerate(LOGO):
+        c = 0
+        while c < len(row):
+            if row[c] != 'k': c += 1; continue
+            e = c
+            while e < len(row) and row[e] == 'k': e += 1
+            f.add('body', [X0 + c * C, YT - (r + 1) * C, Z], [X0 + e * C, YT - r * C, Z + 0.12], BLK, shade=False)
+            c = e
     f.both('right_leg', [-0.65, 5.6, -2.65], [4.65, 6.6, 2.65], BLK)               # cuffs
     # thigh-high socks and shoes with an orange stripe
     f.both('right_leg', [-0.3, 1.8, -2.3], [4.3, 5.0, 2.3], BLK)
@@ -74,10 +81,10 @@ def build(f):
                                                                           'right': lambda x, y: OR if .3 < y < .55 and x < .7 else '#1a181c'})
     f.both('right_leg', [0.1, 0, -3.15], [3.9, 1.2, -2.6], '#1a181c')
     f.both('right_leg', [-0.44, 0, -3.3], [4.44, 0.35, 2.44], '#101012')
-    # two fox tails from the lower back: orange (big, fluffy) and black
+    # her fox tail from the lower back: orange, with a black end
     m = Adapter(f)
-    core.lock(m, 'Body', [1.0, 11.2, 2.4], [0.4, -1.0, 0.75], 11.0, 4.6, 3.8, (OR, OR3, OR2), wide='x', taper=(0.85, 0.5), tip_len=(0.35, 0.2))
-    core.lock(m, 'Body', [-1.2, 11.4, 2.4], [-0.5, -0.9, 0.8], 9.5, 3.6, 3.0, (BLK, BLK2, '#3a3640'), wide='x', taper=(0.8, 0.45), tip_len=(0.35, 0.2))
+    core.lock(m, 'Body', [0.0, 11.2, 2.4], [0.25, -0.95, 0.8], 12.0, 4.8, 4.0, (OR, OR3, BLK), wide='x', taper=(0.85, 0.5), tip_len=(0.3, 0.28))
+    f.add('body', [-1.6, 3.4, 9.0], [1.6, 5.6, 11.2], BLK) if False else None
 
 SPEC = dict(skin=SKIN, eyes=EYES, hair=[HAIR_T, HAIR_M], paint=paint,
             brow=['.........', '.kkkkkk..', 'k........'],

@@ -31,6 +31,7 @@ public class XenoWarriors {
         com.xenowarriors.gov.GovFacilityFeature.init();
         com.xenowarriors.s3.S3Entities.init();
         com.xenowarriors.bot.BotEntities.init();
+        com.xenowarriors.soul.SoulEntities.init();
         com.xenowarriors.sr.SrEntities.init();
         com.xenowarriors.vehicle.Vehicles.init();
         com.xenowarriors.vehicle.VehicleBlocks.init();

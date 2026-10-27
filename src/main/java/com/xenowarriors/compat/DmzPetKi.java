@@ -34,4 +34,19 @@ public final class DmzPetKi {
             return new float[]{0, 0};
         }
     }
+
+    /** Sets current Ki (Soul Splitter divides it); false if it couldn't. */
+    public static boolean setKi(Entity e, float value) {
+        if (ki(e)[1] <= 0 || broken) return false;
+        try {
+            Object res = getResources.invoke(e.getCapability(cap).resolve().orElse(null));
+            for (java.lang.reflect.Method m : res.getClass().getMethods()) {
+                if (!m.getName().equals("setCurrentEnergy") || m.getParameterCount() != 1) continue;
+                Class<?> t = m.getParameterTypes()[0];
+                if (t == int.class) m.invoke(res, (int) value); else if (t == float.class) m.invoke(res, value); else if (t == double.class) m.invoke(res, (double) value); else continue;
+                return true;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
 }

@@ -203,7 +203,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (level().isClientSide) {
             wheelRotO = wheelRot; rotorRotO = rotorRot;
             double hs = (getX() - xo) * -Mth.sin(getYRot() * Mth.DEG_TO_RAD) + (getZ() - zo) * Mth.cos(getYRot() * Mth.DEG_TO_RAD);
-            wheelRot += (float) (hs / (kind == VehicleKind.GOV_TRUCK ? 0.44 : 0.33));
+            wheelRot += (float) (hs / ((kind == VehicleKind.GOV_TRUCK ? 0.44 : 0.33) * kind.scale));
             float targetSpin = driven() || !onGround() ? 1.6F : 0F;
             rotorSpin += (targetSpin - rotorSpin) * 0.03F;
             rotorRot += rotorSpin;

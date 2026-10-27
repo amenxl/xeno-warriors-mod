@@ -11,11 +11,12 @@ public class VehicleRenderer extends GeoEntityRenderer<VehicleEntity> {
     public VehicleRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, new VehicleModel());
         addRenderLayer(new AutoGlowingGeoLayer<>(this));
-        shadowRadius = 1.2F;
+        shadowRadius = 1.5F;
     }
 
     @Override
     protected void applyRotations(VehicleEntity e, PoseStack pose, float age, float yaw, float pt) {
         pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-yaw));       // (the models face -z)
+        pose.scale(e.kind.scale, e.kind.scale, e.kind.scale);
     }
 }

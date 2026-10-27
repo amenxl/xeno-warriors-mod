@@ -101,6 +101,7 @@ public final class SkillManager {
         if (com.xenowarriors.item.PhoneItem.onCall(player)) return;          // hang up first      // can't do anything while knocked out
         if (com.xenowarriors.ka.Clashes.inClash(player)) return;          // busy clashing
         if (slot == SUPER_SLOT) { useSuper(player); return; }
+        if (player.isSpectator() && com.xenowarriors.kaeru.KaeruSoul.inBlade(player)) { com.xenowarriors.kaeru.KaeruSoul.castOut(player); return; }
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
         // the team ultimate (sneak + ultimate key with your partner close by), or joining one you were asked to
         if (slot == ULTIMATE_SLOT && com.xenowarriors.party.TeamUltimate.onUltimateKey(player)) return;

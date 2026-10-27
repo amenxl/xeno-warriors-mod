@@ -26,7 +26,7 @@ public final class BladeChannelClient {
     private static final int HOLD = 8;                       // ticks before a press counts as holding
     private static final Map<Integer, float[]> W = new HashMap<>();   // id -> {weight, prev, channelling 0/1}
     private static int held = -1;
-    private static boolean channelling;
+    private static boolean channelling, kaeruWas;
 
     private BladeChannelClient() {}
 
@@ -38,6 +38,14 @@ public final class BladeChannelClient {
 
     /** Called from the key handling instead of sending the summon at once. */
     public static void keyTick(Minecraft mc) {
+        // Kaeru: a press summons/puts away the blade, sneak + press goes back into it (no channelling)
+        boolean kaeru = mc.player != null && ClientCharacterData.getLocal() == CharacterType.KAERU && mc.screen == null;
+        if (kaeru) {
+            boolean d = ModKeyMappings.SUMMON_BLADE.isDown();
+            if (d && !kaeruWas) ModNetwork.sendToServer(new com.xenowarriors.network.SummonBladePacket());
+            kaeruWas = d;
+            return;
+        }
         boolean mikiko = mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && mc.screen == null;
         boolean down = mikiko && ModKeyMappings.SUMMON_BLADE.isDown();
         if (down) {

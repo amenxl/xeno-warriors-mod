@@ -53,11 +53,34 @@ public final class Hekublade {
         return !stack.isEmpty() && stack.is(ModItems.HEKUBLADE.get());
     }
 
+    /** Mikiko and Kaeru can both hold it. */
+    public static boolean canHold(net.minecraft.world.entity.player.Player p) {
+        CharacterType t = ModCapabilities.getType(p);
+        return t == CharacterType.MIKIKO || (t == CharacterType.KAERU && com.xenowarriors.kaeru.KaeruSoul.state(p) == com.xenowarriors.kaeru.KaeruSoul.OUT);
+    }
+
+    /** True if the inventory has a Hekublade in it (doesn't remove anything). */
+    public static boolean removeAllCheck(Container container) {
+        for (int i = 0; i < container.getContainerSize(); i++) if (isBlade(container.getItem(i))) return true;
+        return false;
+    }
+
     public static void toggle(ServerPlayer player) {
-        if (ModCapabilities.getType(player) != CharacterType.MIKIKO || player.isSpectator()) return;
+        CharacterType type = ModCapabilities.getType(player);
+        // Kaeru: sneak + G goes back into the blade (or G steps out of it / pulls her soul back)
+        if (type == CharacterType.KAERU && (player.isShiftKeyDown() || com.xenowarriors.kaeru.KaeruSoul.state(player) != com.xenowarriors.kaeru.KaeruSoul.OUT)) {
+            com.xenowarriors.kaeru.KaeruSoul.bladeKey(player);
+            return;
+        }
+        if ((type != CharacterType.MIKIKO && type != CharacterType.KAERU) || player.isSpectator()) return;
         if (RopeBlade.blockSummon(player)) return;                        // thrown and still on its way back
         if (removeAll(player.getInventory()) > 0) {
             effects(player, false);
+            return;
+        }
+        ServerPlayer other = com.xenowarriors.kaeru.KaeruSoul.otherHolder(player);   // one blade, one holder
+        if (other != null) {
+            player.displayClientMessage(Component.literal(other.getName().getString() + " is holding the Hekublade").withStyle(net.minecraft.ChatFormatting.RED), true);
             return;
         }
         Inventory inv = player.getInventory();
@@ -118,8 +141,8 @@ public final class Hekublade {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player) || player.tickCount % 10 != 0) return;
-        if (ModCapabilities.getType(player) != CharacterType.MIKIKO) removeAll(player.getInventory());
-        if (isBlade(player.containerMenu.getCarried()) && ModCapabilities.getType(player) != CharacterType.MIKIKO) {
+        if (!canHold(player)) removeAll(player.getInventory());
+        if (isBlade(player.containerMenu.getCarried()) && !canHold(player)) {
             player.containerMenu.setCarried(ItemStack.EMPTY);
         }
     }

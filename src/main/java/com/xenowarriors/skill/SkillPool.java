@@ -26,17 +26,24 @@ public final class SkillPool {
                 new Entry(new HekubladeScatterSkill(), 0), new Entry(new KitsuneSkill(), 0),
                 new Entry(new NetsuSkill(), 0), new Entry(new FireBlitzSkill(), 0),
                 new Entry(new DanceKickSkill(), 15, 3), new Entry(new NetsuBurstSkill(), 30, 2),
-                new Entry(new ManifestGreatnessSkill(), 50, 1), new Entry(new TrueEmpathySkill(), 75, 3)));
+                new Entry(new ManifestGreatnessSkill(), 50, 1), new Entry(new TrueEmpathySkill(), 75, 3),
+                new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 10, 2)));
         ULTIMATE.put(CharacterType.MIKIKO, new BlazingWindSkill());
         POOL.put(CharacterType.RHALIX, List.of(
                 new Entry(new KishiSkill(), 0), new Entry(new EarthWaveSkill(), 0),
                 new Entry(new GravityCompressSkill(), 0), new Entry(new BangSkill(), 0),
-                new Entry(new com.xenowarriors.skill.rhalix.MoonReflectSkill(), 25, 2), new Entry(new KaReleaseSkill(), 60, 3)));
+                new Entry(new com.xenowarriors.skill.rhalix.MoonReflectSkill(), 25, 2), new Entry(new KaReleaseSkill(), 60, 3),
+                new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 10, 2)));
         ULTIMATE.put(CharacterType.RHALIX, new GravityBarrageSkill());
         POOL.put(CharacterType.ULTIMA, List.of(
                 new Entry(new com.xenowarriors.skill.ultima.AttackPredictionSkill(), 0, 2), new Entry(new com.xenowarriors.skill.ultima.EnergyBlastSkill(), 0, 2),
                 new Entry(new com.xenowarriors.skill.ultima.LivingWeaponSkill(), 0, 2), new Entry(new com.xenowarriors.skill.ultima.OutputSurgeSkill(), 0, 2)));
         ULTIMATE.put(CharacterType.ULTIMA, new com.xenowarriors.skill.ultima.FullOutputBeamSkill());
+        POOL.put(CharacterType.KAERU, List.of(
+                new Entry(new HekubladeScatterSkill(), 0, 2), new Entry(new com.xenowarriors.skill.kaeru.SoundBurstSkill(), 0, 2),
+                new Entry(new com.xenowarriors.skill.kaeru.HekubarrierSkill(), 0, 2), new Entry(new com.xenowarriors.skill.kaeru.FoxHealSkill(), 0, 2),
+                new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 0, 2), new Entry(new com.xenowarriors.skill.kaeru.ScentTrackSkill(), 15, 2)));
+        ULTIMATE.put(CharacterType.KAERU, new com.xenowarriors.skill.kaeru.HekubeatsFinaleSkill());
     }
 
     private SkillPool() {}

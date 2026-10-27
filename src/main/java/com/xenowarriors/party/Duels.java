@@ -138,6 +138,9 @@ public final class Duels {
         }
     }
 
+    /** Kaeru's Fox Heal: revives a downed teammate straight away. */
+    public static void foxRevive(ServerPlayer p, ServerPlayer by) { if (DOWNED.containsKey(p.getUUID())) revive(p, by); }
+
     private static void revive(ServerPlayer p, ServerPlayer by) {
         DOWNED.remove(p.getUUID());
         DOWNED_AT.remove(p.getUUID());
