@@ -119,6 +119,8 @@ def keita(f):
         lock(f, [x, 31.0, -4.9], [0.15, -1, -0.2], ln, 1.6, ('#1a1e6a', '#1a1e6a', '#2a32a0'))
     for s in (1, -1): lock(f, [s * 3.6, 28.0, -4.6], [s * 0.4, -1, -0.3], 3.5, 1.2, ('#1a1e6a', '#2a32a0', '#2a32a0'))
     sr_uniform(f)
+    for x in (-2.4, -1.0, 1.0, 2.4):
+        f.add('body', [x - 0.35, 23.0, -2.5], [x + 0.35, 23.7, -2.35], '#e8e8ec', shade=False)        # white studs round his collar
 
 def sr_uniform(f):
     """The SR uniform from the manga: hooded black tee with rolled cuffs and the SR eye, drawstring, rolled-up black capris, bare shins."""
@@ -186,12 +188,26 @@ def persephone(f, demon=False):
             f.add('head', [s * 5.6 - 0.9, y, 3.4 - 0.4 * k], [s * 5.6 + 0.9, y + 0.6, 5.2 - 0.4 * k], '#f2f2f2' if k % 2 == 0 else '#0c080e')
     if demon:
         for s in (1, -1): horn(f, [s * 1.6, 33.0, -2.2], [s * 0.35, 1, -0.2], 3.6, 1.5, '#b88ad8', '#e0c8f4')
-    tee(f, '#7a2aa8', 21.0, '#d6b0f0')
-    f.add('body', [-4.4, 12.0, -2.4], [4.4, 13.0, 2.4], '#d6b0f0')                 # lavender hem
-    f.both('right_arm', [3.4, 12.0, -2.6], [8.6, 15.0, 2.6], '#2a1236')             # fingerless gloves
-    f.both('right_arm', [3.3, 14.6, -2.7], [8.7, 15.2, 2.7], '#9a3ad0')
-    pants(f, '#2a1236', 1.6)
-    shoes(f, '#141216', '#d6b0f0', 2.2)
+    # SR recruit outfit: lavender top under an open dark-purple sleeveless jacket, long purple arm warmers with black bows,
+    # purple shorts with a big black bow, lavender thigh-highs with black bows
+    LAV, LAV2, PUR, PUR2 = '#c8a8e8', '#b090d8', '#5a2a8a', '#3a1a5e'
+    shell(f, 'body', [-4, 11.8, -2], [4, 24, 2], 0.26, LAV, {'front': lambda x, y: '#2a1236' if abs(x - .5) < .04 and y < .35 else LAV})
+    for s_ in (1, -1):
+        x0, x1 = (1.8, 4.5) if s_ > 0 else (-4.5, -1.8)
+        f.add('body', [x0, 12.6, -2.55], [x1, 24.3, -2.3], PUR, {'front': (lambda q: lambda x, y: '#7a4ab0' if (x < .2 if q > 0 else x > .8) else PUR)(s_)})
+    shell(f, 'body', [-4, 12.6, -2], [4, 24.2, 2], 0.42, PUR, {'front': lambda x, y: None})
+    f.add('body', [-0.9, 21.2, -2.4], [0.9, 21.6, -2.3], '#f2f2f2')                     # lacing
+    f.add('body', [-0.6, 20.4, -2.4], [0.6, 20.8, -2.3], '#f2f2f2')
+    f.both('right_arm', [3.4, 12.0, -2.6], [8.6, 20.0, 2.6], PUR2)                        # arm warmers
+    f.both('right_arm', [3.3, 19.4, -2.7], [8.7, 20.2, 2.7], PUR)
+    f.both('right_arm', [8.6, 17.4, -1.4], [9.4, 19.0, 1.4], '#141216')                   # little black bows
+    f.both('right_leg', [-0.45, 8.6, -2.45], [4.45, 12.3, 2.45], PUR, {'front': lambda x, y: PUR2 if y > .8 else PUR})   # shorts
+    f.add('body', [1.6, 10.6, -2.75], [4.2, 13.2, -2.45], '#141216')                      # big black bow at the hip
+    f.add('body', [2.4, 8.2, -2.7], [3.4, 10.8, -2.5], '#141216')
+    f.both('right_leg', [-0.32, 1.6, -2.32], [4.32, 7.6, 2.32], LAV, {'top': LAV2})       # thigh-highs
+    f.both('right_leg', [-0.4, 7.0, -2.4], [4.4, 7.8, 2.4], '#141216')
+    f.both('right_leg', [-0.6, 6.6, -2.6], [0.6, 8.2, -1.0], '#141216')                   # bows on them
+    shoes(f, '#141216', '#2a1236', 1.8)
 
 def ava(f, demon=False):
     hair(f, '#0c0a0e', '#16121a', back_len=24, side_len=24.5, spikes=crown_spikes(10, 2.4, 1.6, seed=57),
@@ -202,13 +218,29 @@ def ava(f, demon=False):
         f.add('head', [s * 4.55, 30.4, -1.0], [s * 4.55 + s * 0.3, 31.4, 1.6], '#f2f2f2')
     if demon:
         for s in (1, -1): horn(f, [s * 1.4, 33.0, -2.0], [s * 0.25, 1, 0.1], 3.8, 1.5, '#f2f2f2', '#c8c8cc')
-    top = '#c02028' if demon else '#3a3a3e'
-    shell(f, 'body', [-4, 13.0, -2], [4, 24, 2], 0.26, top, {'front': lambda x, y: (top if .18 < x < .82 or y < .82 else (0, 0, 0, 0))})  # tank top
-    f.add('body', [-4.4, 12.4, -2.4], [4.4, 13.2, 2.4], '#f06a78')                  # pink ruffle
-    pants(f, '#121014', 6.0, '#f06a78', baggy=0.25)
-    f.both('right_leg', [-0.5, 5.2, -2.5], [4.5, 5.6, 2.5], '#f2f2f2')
-    f.both('right_leg', [-0.3, 1.6, -2.3], [4.3, 3.8, 2.3], '#f06a78')              # pink socks
-    shoes(f, '#f06a78', '#f2f2f2', 1.8, lace='#f2f2f2')
+    # SR recruit outfit: red sleeveless crop jacket with white trim over a red crop top, red armbands with bows,
+    # a red jacket tied round her waist over a black pleated skirt, pink socks, white sneakers with red bows
+    RD, RD2, PK = '#d42a3a', '#a81e2c', '#f0607a'
+    shell(f, 'body', [-4, 17.4, -2], [4, 24, 2], 0.24, RD)                                  # crop top (midriff bare below)
+    for s_ in (1, -1):
+        x0, x1 = (1.0, 4.45) if s_ > 0 else (-4.45, -1.0)
+        f.add('body', [x0, 17.0, -2.5], [x1, 24.3, -2.28], RD2)
+        t0, t1 = (1.0, 1.45) if s_ > 0 else (-1.45, -1.0)
+        f.add('body', [t0, 17.0, -2.6], [t1, 24.3, -2.45], '#f2f2f2', shade=False)          # white trim
+    shell(f, 'body', [-4, 17.0, -2], [4, 24.2, 2], 0.4, RD2, {'front': lambda x, y: None})
+    f.add('body', [-2.6, 23.4, -2.62], [2.6, 24.4, -2.4], '#f2f2f2')                        # white collar
+    f.both('right_arm', [3.4, 18.2, -2.6], [8.6, 19.4, 2.6], RD)                            # armbands
+    f.both('right_arm', [8.6, 18.0, -1.2], [9.4, 19.6, 1.2], RD)                            # their little bows
+    # jacket tied round her waist + black pleated skirt
+    f.add('body', [-4.5, 9.0, -2.55], [4.5, 13.0, 2.55], '#141216',
+          {k: (lambda x, y: '#2a2a30' if int(x * 9) % 2 == 0 else '#141216') for k in ('front', 'back', 'right', 'left')})
+    f.add('body', [-4.7, 11.0, -2.75], [4.7, 13.4, 2.75], RD, {'front': lambda x, y: RD2 if abs(x - .5) < .06 else RD})
+    f.add('body', [-1.0, 8.2, -2.95], [1.0, 11.2, -2.7], RD)                                 # the knotted sleeves hanging
+    f.add('body', [-4.8, 6.8, 1.6], [4.8, 11.2, 2.9], RD, {'back': lambda x, y: RD2 if y > .8 else RD})   # jacket hanging at the back
+    f.both('right_leg', [-0.3, 1.8, -2.3], [4.3, 6.0, 2.3], PK)                             # pink socks
+    f.both('right_leg', [-0.4, 5.6, -2.4], [4.4, 6.4, 2.4], '#141216')
+    shoes(f, '#f4f4f4', '#e8e8ec', 1.8)
+    f.both('right_leg', [1.2, 1.4, -2.75], [2.8, 2.2, -2.55], RD)                           # red bows on the sneakers
 
 def bare(skin, shirt, pantsc, shoesc, sleeve=12, pl=12):
     return clothes(shirt, sleeve, pantsc, pl, shoesc, 3)
@@ -230,15 +262,15 @@ SPECS = {
                       paint=bare(0, '#141217', '#f4f4f4', '#d42020', 4, 12), eye=EYE_NARROW, mouth=['.kkkk.'], mouth_x=13, mouth_y=25,
                       wing=('angel_maddie', (1.0, 1.0, 1.0))),
     'sr_persephone': dict(name='Persephone', fit=persephone, skin='#e8b8a0', eyes='#6a2aa8', hair=['#1a0a26', '#3a1258'],
-                          paint=bare(0, '#7a2aa8', '#2a1236', '#141216', 4, 12), mouth=['..kkk.', '.k....'], mouth_x=13, mouth_y=25, face_extra=[freckles]),
+                          paint=bare(0, '#c8a8e8', '#5a2a8a', '#141216', 4, 12), mouth=['..kkk.', '.k....'], mouth_x=13, mouth_y=25, face_extra=[freckles]),
     'sr_ava': dict(name='Ava', fit=ava, skin='#9a6044', eyes='#2a1810', hair=['#0c0a0e', '#16121a'],
-                   paint=bare(0, '#3a3a3e', '#121014', '#f06a78', 0, 6), eye=EYE_ROUND, mouth=['.kk.'], mouth_x=14, mouth_y=25, face_extra=[mole]),
+                   paint=bare(0, '#d42a3a', '#141216', '#f0607a', 0, 6), eye=EYE_ROUND, mouth=['.kk.'], mouth_x=14, mouth_y=25, face_extra=[mole]),
 }
 # demon forms
 SPECS['sr_persephone_demon'] = dict(SPECS['sr_persephone'], name='Persephone (demon)', fit=lambda f: persephone(f, True), eyes='#d01818',
                                     eye=EYE_SPIRAL, mouth=['.kkkkk.', '..WkW..'], mouth_x=12, mouth_y=25)
 SPECS['sr_ava_demon'] = dict(SPECS['sr_ava'], name='Ava (demon)', fit=lambda f: ava(f, True), eyes='#d01818', eye=EYE_SPIRAL,
-                             paint=bare(0, '#c02028', '#121014', '#f06a78', 0, 6), face_extra=[ava_marks, star_eye(0)])
+                             paint=bare(0, '#d42a3a', '#141216', '#f0607a', 0, 6), face_extra=[ava_marks, star_eye(0)])
 
 def maddie_wings():
     """The angel wings, white with black tips (Maddie's)."""

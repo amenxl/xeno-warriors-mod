@@ -568,5 +568,7 @@
   "skill.xenowarriors.brother_blast": "Brother Blast",
   "skill.xenowarriors.brother_blast.short": "BB",
   "skill.xenowarriors.brother_blast.desc": "The ultimate: a huge karma blast in a line - much stronger with the other brother in your party.",
-  "skill.xenowarriors.brother_blast.how": "Press the ultimate key and aim."
+  "skill.xenowarriors.brother_blast.how": "Press the ultimate key and aim.",
+  "item.xenowarriors.logan_blade": "Logan's Sword",
+  "item.xenowarriors.keita_blade": "Keita's Sword"
 }

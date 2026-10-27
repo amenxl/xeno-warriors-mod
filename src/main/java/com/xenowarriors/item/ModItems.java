@@ -59,6 +59,11 @@ public final class ModItems {
     /** Senju's Blade: the SR leader's long sword (he drops it sometimes). */
     public static final RegistryObject<Item> SENJU_BLADE = ITEMS.register("senju_blade", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.NETHERITE, 5, -2.6F,
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
+    /** Logan's long sword and Keita's slim curved one (they drop them sometimes). */
+    public static final RegistryObject<Item> LOGAN_BLADE = ITEMS.register("logan_blade", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 5, -2.7F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> KEITA_BLADE = ITEMS.register("keita_blade", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 4, -2.2F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
     public static final RegistryObject<Item> FOX_KING_CROWN = ITEMS.register("fox_king_crown", () -> new com.xenowarriors.item.recarnet.FoxKingCrownItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
     public static final RegistryObject<Item> FACILITY_MAP = ITEMS.register("facility_map", () -> new com.xenowarriors.item.recarnet.FacilityMapItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> VR_CONSOLE = ITEMS.register("vr_console", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.VR_CONSOLE.get(), new Item.Properties()));
@@ -222,6 +227,8 @@ public final class ModItems {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));
             event.accept(SR_HOODIE);
             event.accept(SENJU_BLADE);
+            event.accept(LOGAN_BLADE);
+            event.accept(KEITA_BLADE);
         }
     }
 }

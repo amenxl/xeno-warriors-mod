@@ -168,7 +168,9 @@ public class SrMemberEntity extends Monster {
         setHealth(getMaxHealth());
         ItemStack hand = switch (k) {
             case "senju" -> new ItemStack(com.xenowarriors.item.ModItems.SENJU_BLADE.get());
-            case "logan", "kill", "keita" -> new ItemStack(Items.IRON_SWORD);
+            case "logan" -> new ItemStack(com.xenowarriors.item.ModItems.LOGAN_BLADE.get());
+            case "keita" -> new ItemStack(com.xenowarriors.item.ModItems.KEITA_BLADE.get());
+            case "kill" -> new ItemStack(Items.IRON_SWORD);
             default -> ItemStack.EMPTY;
         };
         setItemSlot(EquipmentSlot.MAINHAND, hand);
@@ -304,6 +306,8 @@ public class SrMemberEntity extends Monster {
             spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP, 2));
             if (random.nextFloat() < 0.35F + 0.1F * looting) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.SENJU_BLADE.get()));
         }
+        if (key().equals("logan") && random.nextFloat() < 0.3F + 0.1F * looting) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.LOGAN_BLADE.get()));
+        if (key().equals("keita") && random.nextFloat() < 0.3F + 0.1F * looting) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.KEITA_BLADE.get()));
         if (random.nextFloat() < 0.5F) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.SR_HOODIE.get()));
         if (src.getEntity() instanceof Player p)
             p.level().players().stream().filter(o -> o.distanceTo(this) < 48).forEach(o -> o.sendSystemMessage(
