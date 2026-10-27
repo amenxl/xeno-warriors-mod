@@ -434,7 +434,7 @@ public class CharacterCustomScreen extends Screen {
             if (ka) {
                 Ka k = ClientSkillState.ka();
                 if (xeno()) {
-                    g.drawCenteredString(font, "XB", x + SLOT / 2, y + 5, 0xB070FF);
+                    com.xenowarriors.client.SkillIcons.draw(g, com.xenowarriors.client.SkillIcons.xenoBlast(type), x + 3, y + 1, SLOT - 8);
                     scaled(g, "LAST", x + SLOT / 2F - 8, y + SLOT - 8, 0.75F, 0xB070FF);
                     if (inBox(mx, my, x, y, SLOT, SLOT)) tip = List.of(SkillLoadoutScreen.XENO_TIP.split("\n"));
                     continue;
@@ -446,7 +446,7 @@ public class CharacterCustomScreen extends Screen {
                 continue;
             }
             Skill sk = SkillPool.inSlot(type, loadout, s);
-            if (sk != null) g.drawCenteredString(font, SkillLoadoutScreen.shortName(sk), x + SLOT / 2, y + 5, 0xFFFFFF);
+            if (sk != null && !com.xenowarriors.client.SkillIcons.draw(g, sk.getId(), x + 3, y + 1, SLOT - 8)) g.drawCenteredString(font, SkillLoadoutScreen.shortName(sk), x + SLOT / 2, y + 5, 0xFFFFFF);
             String lab = ult ? "ULT" : String.valueOf(s + 1);
             scaled(g, lab, x + SLOT / 2F - font.width(lab) * 0.375F, y + SLOT - 8, 0.75F, ult ? 0xFFD24A : 0xA0A0B0);
             if (sk != null && inBox(mx, my, x, y, SLOT, SLOT)) tip = lines(sk.getName().getString() + (ult ? " (ultimate)" : ""), SkillLoadoutScreen.desc(sk));
@@ -466,9 +466,12 @@ public class CharacterCustomScreen extends Screen {
             g.fill(x, y, x + CARD_W, y + CARD_H, at >= 0 ? 0xFF203828 : over && open ? 0xFF2A2A3A : 0xFF1C1C24);
             g.fill(x, y, x + 2, y + CARD_H, open ? 0xFF000000 | col : 0xFF555555);
             String nm = seasonOk ? e.skill().getName().getString() : "???";
-            scaled(g, font.plainSubstrByWidth(nm, (int) ((CARD_W - 8) / 0.9F)), x + 5, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
+            boolean pic = seasonOk && com.xenowarriors.client.SkillIcons.get(e.skill().getId()) != null;
+            if (pic) { com.xenowarriors.client.SkillIcons.draw(g, e.skill().getId(), x + 3, y + 1, CARD_H - 2); if (!open) g.fill(x + 3, y + 1, x + CARD_H + 1, y + CARD_H - 1, 0xA0101018); }
+            int tx = pic ? x + CARD_H + 3 : x + 5;
+            scaled(g, font.plainSubstrByWidth(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
             String line = !seasonOk ? "Season " + e.season() : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
-            scaled(g, line, x + 5, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
+            scaled(g, font.plainSubstrByWidth(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over) tip = !seasonOk ? List.of("???", "Season " + e.season() + " content (locked, no spoilers)")
                     : lines(e.skill().getName().getString(), SkillLoadoutScreen.desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel()));
         }

@@ -684,6 +684,10 @@ public final class UiTest {
             l.add(new Step("xeno_" + t.getId() + "_drained", () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3));
             l.add(new Step(null, () -> { com.xenowarriors.client.menu.CharacterCustomScreen.open(null); if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(3); }, 30));
             l.add(new Step("xeno_" + t.getId() + "_tab", () -> {}, 3));
+            l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(1); }, 10));
+            l.add(new Step("xeno_" + t.getId() + "_skills", () -> {}, 3));
+            l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.SkillLoadoutScreen(null)), 15));
+            l.add(new Step("xeno_" + t.getId() + "_loadout", () -> {}, 3));
             l.add(new Step(null, () -> { mc.setScreen(null); server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(40)).forEach(e -> e.discard())); }, 10));
         }
     }

@@ -240,8 +240,15 @@ public final class KhHud implements IGuiOverlay {
             if (key.length() > 2) key = key.substring(0, 2);
             g.fill(x + 2, y + 2, x + 13, y + rowH - 2, alpha(0xFF0F0F19, a));
             small(g, font, key, x + 7.5F - font.width(key) * 0.3F, y + 4, alpha(0xDDDDDD, a), 0.6F);
-            String name = sup ? (ka == null ? (type == CharacterType.ULTIMA ? "Overload (100%)" : "KA - ???") : "KA - " + ka.title()) : sk == null ? "-" : sk.getName().getString() + (ult ? " ★" : "");
-            small(g, font, name, x + 16, y + 3.5F, alpha(sup ? 0xC896FF : ult ? 0xFFF0C8 : 0xFFFFFF, a), 0.65F);
+            boolean xb = sup && com.xenowarriors.skill.XenoBlast.has(type);
+            String name = xb ? "Xeno Blast (last resort)" : sup ? (ka == null ? (type == CharacterType.ULTIMA ? "Overload (100%)" : "KA - ???") : "KA - " + ka.title()) : sk == null ? "-" : sk.getName().getString() + (ult ? " ★" : "");
+            int nx = x + 16;
+            if (a > 200 && (xb || sk != null)) {
+                if (xb) SkillIcons.draw(g, SkillIcons.xenoBlast(type), nx, y + 1, rowH - 2);
+                else if (!SkillIcons.draw(g, sk.getId(), nx, y + 1, rowH - 2)) nx -= rowH;
+                nx += rowH;
+            }
+            small(g, font, name, nx, y + 3.5F, alpha(sup ? 0xC896FF : ult ? 0xFFF0C8 : 0xFFFFFF, a), 0.65F);
             String right = cd > 0 ? (ClientSkillState.cooldownTicks(s) + 19) / 20 + "s" : sk != null ? String.valueOf(sk.getKarmaCost()) : "";
             boolean afford = sk == null || mc.player.isCreative() || ClientSkillState.karma() >= sk.getKarmaCost();
             small(g, font, right, x + w - 4 - font.width(right) * 0.6F, y + 3.5F, alpha(cd > 0 ? 0xFF6E6E : afford ? 0x8CC8FF : 0xFF5555, a), 0.6F);

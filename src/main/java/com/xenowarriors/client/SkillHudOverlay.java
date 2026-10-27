@@ -42,7 +42,7 @@ public class SkillHudOverlay implements IGuiOverlay {
                 String shortName = net.minecraft.client.resources.language.I18n.exists(shortKey)
                         ? net.minecraft.client.resources.language.I18n.get(shortKey)
                         : name.length() <= 2 ? name : name.substring(0, 2);
-                g.drawCenteredString(font, shortName, x + SIZE / 2, top + 4, 0xFFFFFF);
+                if (!SkillIcons.draw(g, skill.getId(), x, top, SIZE)) g.drawCenteredString(font, shortName, x + SIZE / 2, top + 4, 0xFFFFFF);
 
                 // not enough Karma: tint the slot blue and show the cost in red
                 boolean canAfford = mc.player.isCreative() || ClientSkillState.karma() >= skill.getKarmaCost();
@@ -83,7 +83,7 @@ public class SkillHudOverlay implements IGuiOverlay {
             g.fill(x, top, x + SIZE, top + SIZE, 0xCC140A1E);
             var ka = ClientSkillState.ka();
             boolean xb = com.xenowarriors.skill.XenoBlast.has(ClientCharacterData.getLocal());   // Mikiko / Rhalix: Xeno Blast (last resort)
-            if (xb) g.drawCenteredString(font, "XB", x + SIZE / 2, top + 4, ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.RHALIX ? 0xC890FF : 0xFFA040);
+            if (xb) SkillIcons.draw(g, SkillIcons.xenoBlast(ClientCharacterData.getLocal()), x, top, SIZE);
             else g.drawCenteredString(font, ka == null ? "?" : ka.title().substring(0, 2), x + SIZE / 2, top + 4, ka == null ? 0xB070FF : ka.color);
             float scd = ClientSkillState.cooldownFraction(com.xenowarriors.skill.SkillManager.SUPER_SLOT);
             if ((ka != null || xb) && scd > 0) {

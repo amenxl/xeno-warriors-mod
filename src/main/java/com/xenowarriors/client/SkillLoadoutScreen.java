@@ -74,7 +74,7 @@ public class SkillLoadoutScreen extends Screen {
             int border = ult ? 0xFFFFD24A : s == selected ? 0xFFFFFFFF : type.getColor();
             g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, border);
             g.fill(x, y, x + BOX, y + BOX, 0xEE101018);
-            if (sk != null) g.drawCenteredString(font, shortName(sk), x + BOX / 2, y + 9, 0xFFFFFF);
+            if (sk != null && !SkillIcons.draw(g, sk.getId(), x + 3, y + 1, BOX - 12)) g.drawCenteredString(font, shortName(sk), x + BOX / 2, y + 9, 0xFFFFFF);
             g.drawCenteredString(font, ult ? "ULT" : String.valueOf(s + 1), x + BOX / 2, y + BOX - 10, ult ? 0xFFD24A : 0xBBBBBB);
             if (sk != null && mx >= x && mx < x + BOX && my >= y && my < y + BOX) hover = sk.getName().getString() + (ult ? " (ultimate - always equipped)" : "") + "\n" + desc(sk);
         }
@@ -83,7 +83,8 @@ public class SkillLoadoutScreen extends Screen {
             g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, 0xFF8A3CC8);
             g.fill(x, y, x + BOX, y + BOX, 0xEE140A1E);
             boolean xb = com.xenowarriors.skill.XenoBlast.has(type);
-            g.drawCenteredString(font, xb ? "XB" : "?", x + BOX / 2, y + 9, 0xB070FF);
+            if (xb) SkillIcons.draw(g, SkillIcons.xenoBlast(type), x + 3, y + 1, BOX - 12);
+            else g.drawCenteredString(font, "?", x + BOX / 2, y + 9, 0xB070FF);
             g.drawCenteredString(font, xb ? "LAST" : "KA", x + BOX / 2, y + BOX - 10, 0xB070FF);
             if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) { var tk = ClientSkillState.ka(); hover = com.xenowarriors.skill.XenoBlast.has(type) ? XENO_TIP : "KAs / Last resort\n" + (tk == null ? type.getDisplayName().getString() + "'s KA hasn't been revealed yet." : "Test KA: " + tk.title() + " - " + KaGuideScreen.does(tk) + "\nPrice: " + tk.cost); }
         }
@@ -102,9 +103,12 @@ public class SkillLoadoutScreen extends Screen {
             boolean over = mx >= x && mx < x + CARD_W && my >= y && my < y + CARD_H;
             g.fill(x, y, x + CARD_W, y + CARD_H, at >= 0 ? 0xCC23402A : over && open ? 0xCC30304A : 0xCC1A1A24);
             g.fill(x, y, x + 3, y + CARD_H, open ? type.getColor() : 0xFF555555);
-            g.drawString(font, seasonOk ? e.skill().getName().getString() : "???", x + 8, y + 6, open ? 0xFFFFFF : 0x777777);
+            boolean pic = seasonOk && SkillIcons.get(e.skill().getId()) != null;
+            if (pic) { SkillIcons.draw(g, e.skill().getId(), x + 5, y + 4, 32); if (!open) g.fill(x + 5, y + 4, x + 37, y + 36, 0xA0101018); }
+            int tx = pic ? x + 41 : x + 8;
+            g.drawString(font, seasonOk ? font.plainSubstrByWidth(e.skill().getName().getString(), x + CARD_W - 4 - tx) : "???", tx, y + 6, open ? 0xFFFFFF : 0x777777);
             String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
-            g.drawString(font, line, x + 8, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
+            g.drawString(font, font.plainSubstrByWidth(line, x + CARD_W - 4 - tx), tx, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over && my >= 100 && my < height - 28) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
         }
         g.disableScissor();
