@@ -130,6 +130,12 @@ public class SrMemberEntity extends Monster {
         if (isNamed()) makeBoss();
     }
 
+    /** (UI test only) show the wings / the demon form. */
+    public void uiTestPose(boolean wings, boolean demon) {
+        if (wings) { entityData.set(WINGS, true); setNoGravity(true); }
+        if (demon) entityData.set(DEMON, true);
+    }
+
     /** A named member: tougher, a boss bar, their own special move and loot. */
     private void makeBoss() {
         String k = key();
@@ -140,7 +146,7 @@ public class SrMemberEntity extends Monster {
         getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0.6);
         setHealth(getMaxHealth());
         ItemStack hand = switch (k) {
-            case "senju" -> new ItemStack(Items.NETHERITE_SWORD);
+            case "senju" -> new ItemStack(com.xenowarriors.item.ModItems.SENJU_BLADE.get());
             case "logan", "kill", "keita" -> new ItemStack(Items.IRON_SWORD);
             default -> ItemStack.EMPTY;
         };
@@ -211,7 +217,10 @@ public class SrMemberEntity extends Monster {
         if (!isNamed()) return;
         spawnAtLocation(new ItemStack(Items.DIAMOND, 2 + random.nextInt(3 + looting)));
         spawnAtLocation(new ItemStack(Items.EMERALD, 4 + random.nextInt(6)));
-        if (key().equals("senju")) spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP, 2));
+        if (key().equals("senju")) {
+            spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP, 2));
+            if (random.nextFloat() < 0.35F + 0.1F * looting) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.SENJU_BLADE.get()));
+        }
         if (random.nextFloat() < 0.5F) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.SR_HOODIE.get()));
         if (src.getEntity() instanceof Player p)
             p.level().players().stream().filter(o -> o.distanceTo(this) < 48).forEach(o -> o.sendSystemMessage(

@@ -59,6 +59,7 @@ public final class UiTest {
             }
             p.serverLevel().setWeatherParameters(6000, 0, false, false);
         }), 20));
+        if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -84,6 +85,42 @@ public final class UiTest {
         }
         l.add(new Step(null, () -> { ClientSettings.setCelShading(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
         return l;
+    }
+
+    /** The named SR bosses, one at a time in front of the camera (wings out for the Skylanders, demon forms too). */
+    private static void srGallery(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.player.setXRot(8F); mc.player.setYRot(0F); }, 20));
+        String[] names = com.xenowarriors.sr.SrMemberEntity.NAMED;
+        for (int i = 0; i < names.length; i++) {
+            final int idx = i;
+            for (int pose = 0; pose < 3; pose++) {
+                final int ps = pose;
+                if (pose == 2 && !(names[i].equals("persephone") || names[i].equals("ava"))) continue;
+                l.add(new Step(null, () -> server(p -> {
+                    var lvl = p.serverLevel();
+                    lvl.getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard());
+                    var m = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(lvl);
+                    if (m == null) return;
+                    p.setYRot(0); p.setXRot(8);
+                    m.moveTo(p.getX(), p.getY() + (ps == 1 ? 0.6 : 0), p.getZ() + 3.6, 180, 0);
+                    m.setup(2 + idx, p.blockPosition());
+                    m.setNoAi(true); m.setYHeadRot(180); m.yBodyRot = 180;
+                    lvl.addFreshEntity(m);
+                    m.uiTestPose(ps == 1, ps == 2);
+                }), 30));
+                l.add(new Step("sr_" + names[i] + (ps == 1 ? "_wings" : ps == 2 ? "_demon" : ""), () -> {}, 5));
+            }
+        }
+        l.add(new Step(null, () -> server(p -> {
+            p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard());
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.SENJU_BLADE.get()));
+        }), 20));
+        l.add(new Step("blade_firstperson", () -> {}, 5));
+        l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 20));
+        l.add(new Step("blade_thirdperson", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
+        l.add(new Step("blade_hotbar", () -> {}, 5));
     }
 
     /** Small helper so the Collection counts as read (and the menu shows its tab). */
