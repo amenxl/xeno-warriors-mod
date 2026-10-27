@@ -25,7 +25,7 @@ public final class GiVoxels {
     /** One body part's blocks: {x0, y0, z0, x1, y1, z1, u, v, faceMask} in that part's own space (pixels). */
     private record Part(List<float[]> upper, List<float[]> lower, float split) {}
     private record Layer(Map<String, Part> parts) {}
-    private static final Map<ResourceLocation, Layer> CACHE = new HashMap<>();
+    private static final Map<String, Layer> CACHE = new HashMap<>();   // texture + "#" + inflate
     private static final float DEPTH = 0.9F;
 
     private GiVoxels() {}
@@ -106,7 +106,7 @@ public final class GiVoxels {
     /** Draws the raised outer layer of {@code tex} on the visible parts of {@code model} (which is posed and bent). */
     public static void render(PoseStack pose, VertexConsumer vc, ResourceLocation tex, PlayerModel<?> model, float inflate,
                               int light, int overlay, float r, float g, float b) {
-        Layer layer = CACHE.computeIfAbsent(new ResourceLocation(tex.getNamespace(), tex.getPath() + "#" + inflate), k -> load(tex, inflate));
+        Layer layer = CACHE.computeIfAbsent(tex + "#" + inflate, k -> load(tex, inflate));
         if (layer.parts.isEmpty()) return;
         draw(pose, vc, layer.parts.get("hat"), model.head, light, overlay, r, g, b);
         draw(pose, vc, layer.parts.get("jacket"), model.body, light, overlay, r, g, b);
