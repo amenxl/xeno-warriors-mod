@@ -417,6 +417,10 @@ public final class ModNetwork {
                 .encoder(ComboSwingPacket::encode).decoder(ComboSwingPacket::decode).consumerMainThread(ComboSwingPacket::handle).add();
         CHANNEL.messageBuilder(PartyCardsPacket.class, id++)
                 .encoder(PartyCardsPacket::encode).decoder(PartyCardsPacket::decode).consumerMainThread(PartyCardsPacket::handle).add();
+        CHANNEL.messageBuilder(PetListPacket.class, id++)
+                .encoder(PetListPacket::encode).decoder(PetListPacket::decode).consumerMainThread(PetListPacket::handle).add();
+        CHANNEL.messageBuilder(PetActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(PetActionPacket::encode).decoder(PetActionPacket::decode).consumerMainThread(PetActionPacket::handle).add();
         CHANNEL.messageBuilder(MoneyPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(MoneyPacket::encode).decoder(MoneyPacket::decode).consumerMainThread(MoneyPacket::handle).add();
         CHANNEL.messageBuilder(AuraMarkPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)

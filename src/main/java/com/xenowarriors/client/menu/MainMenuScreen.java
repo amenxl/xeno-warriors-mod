@@ -51,7 +51,8 @@ public class MainMenuScreen extends Screen {
         entries = List.of(
                 new Entry("Character Select", "Pick which warrior you play as.", () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen())),
                 new Entry("Character Customization", "Your stats, skill loadout, outfits and KA.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
-                new Entry("Party", "Your party, bot teammates and pets.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
+                new Entry("Party", "Your party and bot teammates.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
+                new Entry("Pets", "Your foxes and companions: names, skins, bags and run-away cool-downs.", () -> PetsScreen.open(this)),
                 new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
                 new Entry("Settings", "Cel-shading, HUD, Karma Sensing and combat options.", () -> PlayerStatsScreen.openTab(this, 3)));
     }
@@ -86,9 +87,9 @@ public class MainMenuScreen extends Screen {
 
     // ------------------------------------------------------------------ layout
 
-    private float step() { return height * 0.092F; }
+    private float step() { return height * 0.09F; }
     private float listX() { return width * 0.40F; }
-    private float listY() { return height * 0.33F; }
+    private float listY() { return height * 0.21F; }
     private float bigScale() { return step() * 0.92F / 9F; }
 
     private int entryAt(double mx, double my) {
@@ -256,23 +257,6 @@ public class MainMenuScreen extends Screen {
         g.pose().popPose();
         String money = com.xenowarriors.economy.Money.fmt(ClientMoney.get());
         outlined(g, money, px + pw - font.width(money) * rs * 1.2F - 5 * rs, py + 3.5F * rs, rs * 1.2F, 0xFFFFFF, 0x000000);
-        float ry = py + 19 * rs;
-        String[][] stats = self == null ? new String[][]{{"Level", "..."}} : new String[][]{
-                {"Level", String.valueOf(self.level())}, {"Attack", String.valueOf(self.attack())}, {"Defense", String.valueOf(self.defense())},
-                {"Speed", String.valueOf(self.speed())}, {"Karma", String.valueOf(Math.round(self.karma()))}};
-        int[] dots = {col, 0xE05050, 0x50A0E0, 0x60D070, 0xC080F0};
-        g.fill((int) px, (int) ry, (int) (px + pw), (int) (ry + stats.length * 11 * rs + 3 * rs), 0xB0101018);
-        for (int i = 0; i < stats.length; i++) {
-            float yy = ry + 2 * rs + i * 11 * rs;
-            g.pose().pushPose();
-            g.pose().translate(px + 4 * rs, yy, 0);
-            g.pose().scale(rs, rs, 1F);
-            g.fill(0, 2, 5, 7, 0xFF000000 | dots[i]);
-            g.drawString(font, stats[i][0], 8, 1, 0xC8C8D8, false);
-            g.drawString(font, stats[i][1], (int) ((pw - 8 * rs) / rs) - font.width(stats[i][1]), 1, 0xFFFFFF, false);
-            g.pose().popPose();
-        }
-
         // bottom right: the Collection Book
         float[] bk = bookBox();
         boolean unlocked = PacketScreens.collectionUnlocked, hov = overBook(mouseX, mouseY);

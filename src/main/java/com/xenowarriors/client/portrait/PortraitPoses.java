@@ -23,7 +23,7 @@ public final class PortraitPoses {
 
     static {
         //                     head            body       right arm          left arm            r leg      l leg       elbows      knees
-        put("mikiko",     .12F, -.25F, 0F,   0F, .35F,  -1.35F, .15F, .1F,  -.55F, 0F, -.15F,  -.35F, .12F, .3F, -.12F,  -1.5F, -1.7F,  .5F, .45F);   // Bajiquan guard
+        put("mikiko",     .15F, .3F, 0F,     .15F, -.3F, -.7F, .2F, .55F,   .25F, -.6F, -.75F, -.6F, .3F,  .35F, -.3F,  -.3F, -1.6F,  .9F, .1F);   // Hekublade low and out, hand on hip, wide stance
         put("rhalix",    -.12F, .2F, 0F,     0F, 0F,    -.95F, -.62F, .12F, -1.05F, .62F, -.12F, 0F, .06F,  .05F, -.1F,  -1.6F, -1.6F,  0F, .15F);   // arms crossed, chin up
         put("ultima",    -.3F, 0F, 0F,       0F, 0F,    -2.9F, 0F, .1F,     .1F, 0F, -.35F,    -.1F, .15F,  .1F, -.1F,   -.2F, -.3F,    0F, .1F);    // fist to the sky
         put("kaeru",      .05F, 0F, -.15F,   0F, 0F,    -2.2F, -.4F, .2F,   .15F, .7F, -.75F,  0F, .05F,   -.15F, -.15F, -1.9F, -1.5F,  0F, .2F);    // peace sign, hand on hip
@@ -43,6 +43,20 @@ public final class PortraitPoses {
     }
 
     private PortraitPoses() {}
+
+    /** What each character holds in their portrait / menu art (their signature weapon), or null. */
+    public static net.minecraft.world.item.Item held(String id) {
+        return switch (id) {
+            case "mikiko" -> com.xenowarriors.item.ModItems.HEKUBLADE.get();
+            case "logan" -> com.xenowarriors.item.ModItems.LOGAN_BLADE.get();
+            case "keita" -> com.xenowarriors.item.ModItems.KEITA_BLADE.get();
+            case "zane" -> com.xenowarriors.item.ModItems.ZANE_BROOM.get();
+            case "max" -> com.xenowarriors.item.ModItems.MAX_KNIFE.get();
+            case "sam" -> com.xenowarriors.item.ModItems.SAM_BAT.get();
+            case "garry" -> com.xenowarriors.item.ModItems.MICROPHONE.get();
+            default -> null;
+        };
+    }
 
     private static void put(String id, float... v) { POSES.put(id, v); }
 

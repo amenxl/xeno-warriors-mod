@@ -113,6 +113,14 @@ public final class FoxPets {
         return cap(p).map(c -> c.pets).orElseGet(ListTag::new);
     }
 
+    /** The fox records (for the Pets menu). */
+    public static ListTag records(Player p) { return pets(p); }
+
+    /** The loaded fox for this record, or null. */
+    public static Fox loaded(ServerPlayer p, CompoundTag rec) {
+        return rec.getBoolean("dead") || !rec.hasUUID("uuid") ? null : findLoaded(p, rec.getUUID("uuid"));
+    }
+
     private static CompoundTag record(Player p, UUID foxId) {
         for (Tag t : pets(p)) {
             CompoundTag rec = (CompoundTag) t;
@@ -194,6 +202,12 @@ public final class FoxPets {
             level.sendParticles(ParticleTypes.SMOKE, fox.getX(), fox.getY() + 0.6, fox.getZ(), 6, 0.25, 0.2, 0.25, 0.01);
             return;
         }
+        tameNow(p, fox);
+    }
+
+    /** Makes this fox his right away (taming worked; also used by the UI test). */
+    public static void tameNow(ServerPlayer p, Fox fox) {
+        ServerLevel level = p.serverLevel();
         UUID id = fox.getUUID();
         fox.getPersistentData().putUUID(OWNER, p.getUUID());
         fox.getPersistentData().putInt(GEN, 0);
@@ -628,7 +642,9 @@ public final class FoxPets {
             if (rec != null) {
                 snapshot(fox, rec);
                 rec.putBoolean("dead", true);
-                p.sendSystemMessage(Component.literal(rec.getString("name") + " ran away! Use the Fox Whistle to call them back.")
+                com.xenowarriors.pet.PetCare.ranAway(p, rec);
+                p.sendSystemMessage(Component.literal(rec.getString("name") + " ran away! They'll be ready to come back in "
+                        + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
                         .withStyle(ChatFormatting.GOLD));
                 fx(fox, FoxFxPacket.RUN_AWAY);
             }
@@ -907,6 +923,7 @@ public final class FoxPets {
                 }
             }
             boolean wasDead = rec.getBoolean("dead");
+            if (wasDead && com.xenowarriors.pet.PetCare.recovering(p, rec)) continue;   // still getting over running away
             if (recreate(p, rec) && wasDead) {
                 revived++;
                 p.sendSystemMessage(Component.literal(rec.getString("name") + " answers your whistle and comes back!").withStyle(ChatFormatting.GOLD));

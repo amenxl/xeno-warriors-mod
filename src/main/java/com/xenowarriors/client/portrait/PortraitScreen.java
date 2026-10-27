@@ -147,10 +147,16 @@ public class PortraitScreen extends Screen {
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
         PortraitPoses.active = type.getId();
+        // hold their signature weapon for the picture (only on our copy here; put back right after)
+        net.minecraft.world.item.Item sig = PortraitPoses.held(type.getId());
+        net.minecraft.world.item.ItemStack hand = e.getMainHandItem();
+        boolean swap = sig != null && !hand.is(sig);
+        if (swap) e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(sig));
         try {
             Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateX(-0.06F)).mul(new Quaternionf().rotateY(yaw * Mth.DEG_TO_RAD));
             InventoryScreen.renderEntityInInventory(g, x, y, scale, pose, null, e);
         } finally {
+            if (swap) e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, hand);
             PortraitPoses.active = null;
             e.yBodyRot = yb; e.yBodyRotO = ybo; e.setYRot(yr); e.setXRot(xr); e.yHeadRot = yh; e.yHeadRotO = yho;
         }

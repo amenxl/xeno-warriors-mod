@@ -631,6 +631,19 @@ public final class UiTest {
                 l.add(new Step("mainmenu_" + t.getId() + (gs == 3 ? "_gs3" : ""), () -> {}, 3));
             }
         }
+        // the Pets menu (Mikiko with a fox that ran away)
+        l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.MIKIKO); server(p -> {
+            for (int k = 0; k < 2; k++) {
+                var fox = net.minecraft.world.entity.EntityType.FOX.create(p.serverLevel());
+                if (fox == null) continue;
+                fox.moveTo(p.getX() + 2 + k, p.getY(), p.getZ() + 1, 0, 0);
+                p.serverLevel().addFreshEntity(fox);
+                com.xenowarriors.fox.FoxPets.tameNow(p, fox);
+                if (k == 1) fox.kill();                      // this one runs away: shows the cool-down
+            }
+        }); }, 60));
+        l.add(new Step(null, () -> com.xenowarriors.client.menu.PetsScreen.open(null), 40));
+        l.add(new Step("pets_menu", () -> {}, 3));
         // Character Customization: each tab, for a few characters
         for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.MAX}) {
             l.add(new Step(null, () -> { mc.setScreen(null); character(t); outfit(0); hold(null); }, 50));

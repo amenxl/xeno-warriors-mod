@@ -103,6 +103,18 @@ public final class WingPets {
         return cap(p).map(c -> c.wingPets).orElseGet(ListTag::new);
     }
 
+    /** The companion records (for the Pets menu). */
+    public static ListTag records(Player p) { return pets(p); }
+
+    /** The loaded companion for this record, or null. */
+    public static Mob loaded(ServerPlayer p, CompoundTag rec) {
+        return rec.getBoolean("dead") || !rec.hasUUID("uuid") ? null : findLoaded(p, rec.getUUID("uuid"));
+    }
+
+    public static String kindName(CompoundTag rec) {
+        return EntityType.byString(rec.getString("type")).map(t -> t.getDescription().getString()).orElse("Companion");
+    }
+
     private static CompoundTag record(Player p, UUID id) {
         for (Tag t : pets(p)) {
             CompoundTag rec = (CompoundTag) t;
@@ -333,7 +345,9 @@ public final class WingPets {
         if (rec == null) return;
         snapshot(mob, rec);
         rec.putBoolean("dead", true);
-        p.sendSystemMessage(Component.literal(rec.getString("name") + " flew away! Use the Fox Whistle to call them back.")
+        com.xenowarriors.pet.PetCare.ranAway(p, rec);
+        p.sendSystemMessage(Component.literal(rec.getString("name") + " flew away! They'll be ready to come back in "
+                + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
     }
 
@@ -358,6 +372,7 @@ public final class WingPets {
                 }
             }
             boolean wasDead = rec.getBoolean("dead");
+            if (wasDead && com.xenowarriors.pet.PetCare.recovering(p, rec)) continue;   // still getting over flying off
             if (recreate(p, rec) && wasDead) {
                 p.sendSystemMessage(Component.literal(rec.getString("name") + " heard you and came back!").withStyle(ChatFormatting.LIGHT_PURPLE));
             }
