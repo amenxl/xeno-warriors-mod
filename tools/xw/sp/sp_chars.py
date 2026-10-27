@@ -194,7 +194,8 @@ def max_paint(part, face, x, y, W, H, outer):
         return None
     return None
 
-def max_fit(f):
+def max_fit(f, royal=False):
+    if royal: return max_royal(f)
     # messy silver-white hair hanging over his eyes
     hair(f, MH1, MH2, back_len=25, side_len=26,
          locks=[([x, 32.3, -4.7], [x * 0.08, -1, -0.45], 3.0 if abs(x) < 2 else 4.4, 2.0) for x in (-3.2, -1.6, 0.0, 1.6, 3.2)]
@@ -209,6 +210,9 @@ def max_fit(f):
         lock(f, [sx * 0.5, 31.6, -4.8], [sx * 0.05, -1, -0.2], 4.4, 1.0, (MH1, MH2, MH3), thick=0.5)        # thin strands between his eyes
     for x, z in ((-2.2, -1.6), (1.0, -0.4), (2.6, 1.8), (-0.8, 2.2)):
         lock(f, [x, 32.6, z], [x * 0.3, 0.35, -0.8], 3.0, 2.2, (MH2, MH2, MH3), thick=0.9)   # messy, flat tufts
+    max_clothes(f)
+
+def max_clothes(f, royal=False):
     # cream tee with the lavender star, dark shoulder strap, black belt with pale-blue clips, grey cargo shorts
     shell(f, 'body', [-4, 12.2, -2], [4, 24, 2], 0.3, M_TEE)
     plate(f, 'body', STAR, 0.6, 21.4, -2.42, 0.48, M_STAR)                            # the lavender star
@@ -221,10 +225,37 @@ def max_fit(f):
     f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 15.0, 2.5], '#1a1a1e', {'bottom': '#1a1a1e'})      # gloves
     f.both('right_leg', [-0.55, 7.2, -2.55], [4.55, 12.3, 2.55], M_SHORT)
     f.both('right_leg', [4.4, 8.0, -1.6], [4.9, 10.6, 1.6], '#8a8a92')                 # cargo pockets
+    if royal:
+        f.both('right_arm', [3.45, 18.0, -2.45], [8.55, 18.8, 2.45], '#1a1a1e')             # black arm bands
+        f.both('right_leg', [-0.5, 0, -2.5], [4.5, 5.0, 2.5], '#3a3a42', {'top': '#2a2a30'})   # tall black boots
+        f.both('right_leg', [-0.6, 4.4, -2.6], [4.6, 5.2, 2.6], '#2a2a30')
+        f.both('right_leg', [0.1, 0, -3.1], [3.9, 1.1, -2.5], '#3a3a42')
+        f.both('right_leg', [-0.55, 0, -3.25], [4.55, 0.3, 2.55], '#222226')
+        return
     f.both('right_leg', [-0.32, 1.6, -2.32], [4.32, 4.4, 2.32], '#2a2a30')             # socks
     f.both('right_leg', [-0.36, 0, -2.6], [4.36, 1.8, 2.36], '#3a3a42')
     f.both('right_leg', [0.1, 0, -3.1], [3.9, 1.1, -2.6], '#3a3a42')
     f.both('right_leg', [-0.44, 0, -3.25], [4.44, 0.3, 2.44], '#222226')
+
+def max_royal(f):
+    """Max's Royal Capital disguise: long silver hair in two low pigtails tied with pink ribbons, the star crop top, boots."""
+    hair(f, MH1, MH2, back_len=21, side_len=22,
+         locks=[([x, 32.3, -4.7], [x * 0.1, -1, -0.45], 3.0 if abs(x) < 2 else 4.6, 2.0) for x in (-3.2, -1.6, 0.0, 1.6, 3.2)]
+         + [([s * 4.6, 30.5, z], [s * 0.25, -1, 0.05], 7.0, 1.9) for s in (1, -1) for z in (-2.4, 0.4, 3.0)]
+         + [([x, 31.0, 4.7], [x * 0.06, -1, 0.15], 9.0, 2.3) for x in (-2.6, 0.0, 2.6)])
+    for sx in (1, -1):
+        lock(f, [sx * 0.4, 32.9, -3.6], [sx * 0.9, -0.5, -0.4], 3.6, 2.0, (MH2, MH1, MH3), thick=0.8)
+        lock(f, [sx * 0.5, 31.6, -4.8], [sx * 0.05, -1, -0.2], 4.4, 1.0, (MH1, MH2, MH3), thick=0.5)
+        # a low pigtail behind each ear, tied with a pink ribbon, hanging down past the shoulders
+        PX, PZ = sx * 8.0, 2.0
+        lock(f, [sx * 4.6, 26.4, 2.2], [sx * 1.0, -0.45, -0.1], 4.2, 2.6, (MH1, MH2, MH1), thick=2.2, taper=(1.0, 0.9))   # flaring out
+        lock(f, [sx * 8.0, 24.6, 2.0], [sx * 0.12, -1, 0.0], 11.0, 2.8, (MH2, MH1, MH3), thick=2.2, taper=(0.9, 0.45))   # hanging down
+        f.add('head', [PX - 1.2, 24.0, PZ - 1.2], [PX + 1.2, 25.4, PZ + 1.2], '#e05ab8')                 # ribbon knot
+        for k in (-1, 1):
+            f.add('head', [PX - 0.3, 24.2, PZ + k * 1.2 - 0.9], [PX + 0.3, 25.2, PZ + k * 1.2 + 0.9],
+                  '#f07ad0', rot=[35 * k, 0, 0], origin=[PX, 24.7, PZ])                                   # ribbon loops
+    max_clothes(f, royal=True)
+    f.add('body', [-4.35, 23.0, -2.4], [4.35, 23.6, 2.4], '#1a1a1e')                                     # choker
 
 def max_blush(px, cm, dark):
     for x in (5, 6, 25, 26): px[x, 21] = (232, 150, 150, 255)
@@ -290,6 +321,58 @@ SAM = dict(skin=S_SKIN, eyes=S_EYE, hair=[SH1, SH2], paint=sam_paint,
            eye=['.........', '.........', '..kkkkk..', '.k.....k.', 'k.......k', '.........', '.........'],
            mouth=['kkkkkkkk', 'kwwwwwwk', '.krrrrk.', '..kkkk..'], mouth_x=12, mouth_y=24, face_extra=[sam_marks],
            wing=('hawk_small', '#3a6a4a'), fit=sam)
+
+MAX_ROYAL = dict(MAX, fit=lambda f: max_fit(f, royal=True))
+
+def sam_royal(f):
+    """Sam's Royal Capital disguise: long teal hair in two drill curls with a green star bow, a zipped white hoodie
+    with a lavender hood, fingerless gloves, black joggers with white bands, white shoes."""
+    hair(f, SH1, SH2, back_len=20, side_len=22,
+         locks=fringe_locks(6, 31.8, 7.6, 4.4, 1.9, 0.45)
+         + [([x, 32.0, -4.7], [x * 0.12, -1, -0.3], 4.0, 2.0) for x in (-2.8, 1.4, 3.4)]
+         + [([s * 4.6, 30.5, z], [s * 0.3, -1, 0.1], 7.5, 1.9) for s in (1, -1) for z in (-2.4, 0.6, 3.2)]
+         + [([x, 31.0, 4.7], [x * 0.08, -1, 0.2], 10.0, 2.4) for x in (-2.6, 0.0, 2.6)])
+    for x, z in ((-2.2, -1.8), (0.4, 0.6), (2.6, -0.6)):
+        lock(f, [x, 32.8, z], [x * 0.25, 0.6, z * 0.15 - 0.3], 2.4, 1.8, (SH2, SH2, SH3))
+    # the drill curls: a spiral of round sections down each side
+    for sx in (1, -1):
+        for i in range(10):
+            a = i * 1.15
+            cx, cy, cz = sx * (8.6 + 0.6 * math.sin(a)), 25.5 - i * 1.45, 1.0 + 0.6 * math.cos(a)
+            w = 2.4 - i * 0.08
+            f.add('head', [cx - w / 2, cy - 0.9, cz - w / 2], [cx + w / 2, cy + 0.9, cz + w / 2], (SH2 if i % 2 else SH1))
+        lock(f, [sx * 4.6, 27.6, 1.2], [sx * 1.0, -0.35, 0.0], 4.6, 2.6, (SH1, SH2, SH1), thick=2.2, taper=(1.0, 0.9))   # out to the curls
+    # green bow with a star (her right, on top)
+    f.add('head', [1.6, 32.4, -0.6], [3.4, 34.0, 1.0], '#3ad85a')
+    for k in (-1, 1):
+        f.add('head', [2.5 + k * 1.5 - 0.9, 32.0, -0.4], [2.5 + k * 1.5 + 0.9, 34.4, 0.8], '#2ab84a', rot=[0, 0, 25 * k], origin=[2.5, 33.2, 0.2])
+    f.add('head', [2.2, 32.9, -0.75], [2.8, 33.5, -0.6], '#c8ffc8', shade=False)                          # the star
+    # zipped white hoodie with a lavender hood down, purple drawstrings
+    shell(f, 'body', [-4, 11.8, -2], [4, 24.2, 2], 0.42, S_WHT, {'front': lambda x, y: '#c8c8d2' if abs(x - .5) < .03 else S_WHT})
+    f.add('body', [-4.2, 21.0, 2.3], [4.2, 24.8, 4.2], '#b8a0e8', {'back': lambda x, y: '#9a86d8' if y > .7 else '#b8a0e8'})
+    f.add('body', [-3.4, 23.6, -2.7], [3.4, 24.8, 2.6], '#b8a0e8')                                       # hood lining at the collar
+    for sx in (1, -1): f.add('body', [sx * 1.5 - 0.22, 19.6, -2.85], [sx * 1.5 + 0.22, 23.8, -2.65], S_PUR)
+    f.both('right_arm', [3.5, 19.6, -2.5], [8.5, 24.5, 2.5], S_WHT)
+    f.both('right_arm', [3.4, 19.2, -2.6], [8.6, 19.8, 2.6], '#1a1a1e')                                   # black sleeve trim
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 15.0, 2.5], '#2a2a30', {'bottom': S_SKIN})               # fingerless gloves
+    f.both('right_leg', [-0.5, 1.6, -2.5], [4.5, 12.3, 2.5], S_PANT,
+           {k: (lambda x, y: S_WHT if .72 < y < .79 or .85 < y < .92 else S_PANT) for k in ('front', 'back', 'right', 'left')})
+    f.both('right_leg', [-0.36, 0, -2.6], [4.36, 1.8, 2.36], S_WHT, {'front': lambda x, y: '#141418' if y < .35 else S_WHT})
+    f.both('right_leg', [0.1, 0, -3.15], [3.9, 1.1, -2.6], S_WHT)
+    f.both('right_leg', [-0.44, 0, -3.25], [4.44, 0.4, 2.44], '#e8e8ee')
+
+def sam_royal_paint(part, face, x, y, W, H, outer):
+    if part == 'body': return S_WHT if y < 10 else S_PANT
+    if part in ('rarm', 'larm'): return S_WHT if y < 5 else ('#2a2a30' if y >= 9 else None)
+    return sam_paint(part, face, x, y, W, H, outer)
+
+SAM_ROYAL = dict(SAM, paint=sam_royal_paint, fit=sam_royal,
+                 mouth=['k.kk.k', '.k..k.'], mouth_x=13, mouth_y=25)
+
+def max_royal_paint(part, face, x, y, W, H, outer):
+    if part in ('rleg', 'lleg') and y >= 7: return '#3a3a42'
+    return max_paint(part, face, x, y, W, H, outer)
+MAX_ROYAL['paint'] = max_royal_paint
 
 # ====================================================================== AI-ONI (demon)
 A_SKIN, A_EYE = '#f2d6c2', '#d0182a'
@@ -685,7 +768,7 @@ ZANE = dict(skin=Z_SKIN, eyes=Z_EYE, hair=[ZH1, ZH2], paint=zane_paint,
             eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
             mouth=['k....k', '.kkkk.'], mouth_x=13, mouth_y=25, wing=None, fit=zane)
 
-CHARS = {'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
+CHARS = {'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

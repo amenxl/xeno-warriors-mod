@@ -532,7 +532,6 @@ public class DetailModel {
         noRefit();
         return builder;
     }
-    }
 
     public static DetailModel loadWhole(String path) {
         wholeLimbs = true;

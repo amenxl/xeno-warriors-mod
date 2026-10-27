@@ -65,6 +65,7 @@ public enum CharacterType {
             case MIKIKO -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3", "Recarnet Season 3 (Variant 2)"};
             case RHALIX -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3"};
             case YURI -> new String[]{"Default", "C1 PJs"};
+            case MAX, SAM -> new String[]{"Default", "Royal Capital"};
             default -> new String[]{"Default"};
         };
     }
@@ -74,6 +75,7 @@ public enum CharacterType {
             case MIKIKO -> new String[]{"", "origins1", "origins2", "s3", "s3b"};
             case RHALIX -> new String[]{"", "origins1", "origins2", "s3"};
             case YURI -> new String[]{"", "c1pjs"};
+            case MAX, SAM -> new String[]{"", "royal"};
             default -> new String[]{""};
         };
     }
