@@ -80,7 +80,7 @@ public final class ClientSettings {
 
     /** Cel-shaded look: flat-shaded textures with ink lines and a black outline around characters. Off by default. */
     /** Ultima's hand-drawn (hi-res) faces instead of the old pixel ones. */
-    public static boolean drawnFaces() { return "true".equals(props().getProperty("drawn_faces", "false"));      // (off by default: pixel faces) }
+    public static boolean drawnFaces() { return "true".equals(props().getProperty("drawn_faces", "false")); }     // (off by default: pixel faces)
 
     public static void setDrawnFaces(boolean on) { props().setProperty("drawn_faces", String.valueOf(on)); save(); }
 
