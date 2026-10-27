@@ -152,6 +152,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
      * Which face to show: sleeping/snoring (Mikiko), hurt when hit, shouting while using a skill, fierce while
      * attacking, sick when poisoned or weakened, a blink now and then - otherwise the normal face (null).
      */
+    /** The color of the torn, hanging cloth and bandages on a hurt character: their clothes' tone. */
+    private static int clothColor(CharacterType type) {
+        if (type == CharacterType.MIKIKO) return 0x3A3440;
+        if (type == CharacterType.RHALIX) return 0x7A3AA8;
+        int c = type.getColor();
+        return (((c >> 16) & 255) * 6 / 10 << 16) | (((c >> 8) & 255) * 6 / 10 << 8) | ((c & 255) * 6 / 10);
+    }
+
     private static String expression(AbstractClientPlayer p, CharacterType type) {
         if (p.isSleeping()) {
             if (type != CharacterType.MIKIKO) return "blink";
@@ -528,7 +536,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             parent.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(
                     "textures/entity/character/" + type.getId() + "_torn" + torn + ".png"))), packedLight, overlay, 1F, 1F, 1F, 1F);
             BattleDamageModel.get().renderCloth(parent, poseStack, buffers, packedLight, overlay, Math.min(2, torn),
-                    type == CharacterType.MIKIKO ? 0x3A3440 : 0x7A3AA8);
+                    clothColor(type));
         }
 
         // battle damage: scratches, grime and torn clothes as they get hurt
@@ -541,7 +549,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     com.xenowarriors.XenoWarriors.id(base + "_details_damage" + damage + ".png"))), packedLight, overlay);
             // 3D: bandages and torn, hanging cloth
             BattleDamageModel.get().render(parent, poseStack, buffers, packedLight, overlay, damage,
-                    type == CharacterType.MIKIKO ? 0x3A3440 : 0x7A3AA8);
+                    clothColor(type));
         }
 
         if (model.faceRoot != null && !noHead) {
