@@ -120,9 +120,9 @@ public final class YuriLaptopIdle {
         if (t < 18F) return;
         float s = sm((t - 18F) / 6F);
         float flicker = 0.85F + 0.15F * Mth.sin(t * 0.7F);
-        VertexConsumer vc = buffers.getBuffer(RenderType.eyes(TEX));
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentEmissive(TEX));   // see-through, glowing
         pose.pushPose();
-        pose.translate(0F, 9.0F / 16F, -8.6F / 16F);               // in front of her, at hand height
+        pose.translate(0F, 8.2F / 16F, -10.0F / 16F);              // in front of her, at hand height
         pose.scale(s, s, s);
         // keyboard: a flat plate under her hands
         quad(vc, pose, -4.5F, 0F, -2.6F, 4.5F, 0F, 2.6F, true, 0F, 40F / 64F, 1F, 1F, flicker);

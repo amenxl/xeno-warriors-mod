@@ -606,7 +606,7 @@ GARRY = dict(skin=D_SKIN, eyes='#2a9a2a', hair=[G1, G2], paint=garry_paint,
              mouth=['.kkkk.', 'k.rr.k', '.kkkk.'], mouth_x=13, mouth_y=24, face_extra=[stubble], wing=None, fit=garry)
 
 # ====================================================================== YURI (Tenjo)
-Y_SKIN, Y_EYE = '#f6dcd2', '#3ac83a'
+Y_SKIN, Y_EYE = '#f0c8b2', '#3ac83a'
 YH1, YH2, YH3 = '#0e100e', '#181c18', '#263026'
 Y_COAT, Y_COATD, Y_GRN, Y_GRN2, Y_BLK = '#eeeef0', '#d0d0d6', '#3ad04a', '#1e8a2a', '#141614'
 

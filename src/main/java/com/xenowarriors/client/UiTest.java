@@ -253,7 +253,7 @@ public final class UiTest {
         l.add(new Step("ffr_yuri_front", () -> {}, 5));
         l.add(new Step(null, back, 15));
         l.add(new Step("ffr_yuri_back", () -> {}, 5));
-        l.add(new Step(null, front, 10));
+        l.add(new Step(null, () -> { front.run(); mc.player.setYRot(-40F); mc.player.setYHeadRot(-40F); mc.player.yBodyRot = -40F; }, 10));   // three-quarter view
         for (int f = 0; f < 22; f++) l.add(new Step(String.format("ffr_yuri_idle_%02d", f), () -> {}, 3));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 6));
         l.add(new Step("ffr_yuri_idle_back", () -> {}, 5));
@@ -294,6 +294,26 @@ public final class UiTest {
         l.add(new Step(null, () -> { character(CharacterType.SAM); hold(com.xenowarriors.item.ModItems.SAM_BAT.get()); }, 40));
         l.add(new Step(null, front, 20));
         l.add(new Step("ffr_sam_bat", () -> {}, 5));
+        // Max and Sam's Royal Capital disguises
+        for (CharacterType t : new CharacterType[]{CharacterType.MAX, CharacterType.SAM}) {
+            l.add(new Step(null, () -> { character(t); hold(null); }, 30));
+            l.add(new Step(null, () -> outfit(1), 30));
+            l.add(new Step(null, front, 15));
+            l.add(new Step("ffr_" + t.getId() + "_royal_front", () -> {}, 5));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(-50F); mc.player.yBodyRot = -50F; mc.player.setYHeadRot(-50F); }, 15));
+            l.add(new Step("ffr_" + t.getId() + "_royal_side", () -> {}, 5));
+            l.add(new Step(null, back, 15));
+            l.add(new Step("ffr_" + t.getId() + "_royal_back", () -> {}, 5));
+            l.add(new Step(null, () -> outfit(0), 10));
+        }
+        // the girls' body on everyone
+        for (CharacterType t : new CharacterType[]{CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI}) {
+            l.add(new Step(null, () -> { character(t); hold(null); }, 30));
+            l.add(new Step(null, front, 15));
+            l.add(new Step("ffr_girl_" + t.getId() + "_front", () -> {}, 5));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(-60F); mc.player.yBodyRot = -60F; mc.player.setYHeadRot(-60F); }, 15));
+            l.add(new Step("ffr_girl_" + t.getId() + "_side", () -> {}, 5));
+        }
         l.add(new Step(null, () -> { hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
         for (int t = 0; t < com.xenowarriors.client.screen.CharacterSelectScreen.Group.values().length; t++) {
