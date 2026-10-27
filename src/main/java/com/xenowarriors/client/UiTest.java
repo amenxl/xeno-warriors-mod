@@ -223,10 +223,11 @@ public final class UiTest {
         l.add(new Step("sp_max_windwall", () -> {}, 5));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
-        l.add(new Step("sp_select_page1", () -> {}, 5));
-        l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.screen.CharacterSelectScreen.nextPageForTest();
-            mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
-        l.add(new Step("sp_select_page2", () -> {}, 5));
+        for (int t = 0; t < com.xenowarriors.client.screen.CharacterSelectScreen.Group.values().length; t++) {
+            l.add(new Step("sp_select_team" + t, () -> {}, 5));
+            l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.screen.CharacterSelectScreen.nextPageForTest();
+                mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
+        }
         l.add(new Step(null, () -> mc.setScreen(null), 5));
     }
 

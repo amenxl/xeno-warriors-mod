@@ -17,25 +17,54 @@ public class CharacterSelectScreen extends Screen {
 
     private static boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }
     private static final int CARD_HEIGHT = 176;
-    /** Characters coming later: blank, locked slots (name + color) under the playable ones. */
-    public static final String[] UPCOMING = {"Kyle", "Chase", "Zack", "Kaitlyn", "Zane", "Stevie", "Garry", "Yuri", "SR Leader"};
-    public static final int[] UPCOMING_COLOR = {0x8A8A9A, 0x6A6A8A, 0x9A3A3A, 0xD86AA0, 0x4A6AD8, 0xA05AE0, 0x4AC85A, 0x6AE08A, 0x9A2A2A};
-    /** Four characters per page; the arrows flip through the rest. */
+    /** The characters sorted into their teams from the show; each tab shows its logo, its playable characters and who's coming later. */
+    public enum Group {
+        FREEDOM("Freedom Fighters", "Freedom", "logo_freedom_fighters", 0xC8282E, new CharacterType[]{CharacterType.MIKIKO, CharacterType.ULTIMA}, "Yuri"),
+        SKY_PATROL("Sky Patrol", "Sky Patrol", "logo_sky_patrol", 0x8A3AE8, new CharacterType[]{CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY,
+                CharacterType.MAX, CharacterType.SAM, CharacterType.TECHNICA}),
+        GOVERNMENT("Government", "Gov", "logo_government", 0x6A3AC8, new CharacterType[]{}, "Kyle"),
+        ORENJI("Orenji Clan", "Orenji", null, 0xE8701C, new CharacterType[]{CharacterType.KAERU}),
+        DEMONS("Ai-oni's Demons", "Demons", null, 0xC41E30, new CharacterType[]{CharacterType.AIONI}, "Zack", "Kaitlyn"),
+        SKY_REBELLION("Sky Rebellion", "SR", null, 0x9A2A2A, new CharacterType[]{}, "SR Leader"),
+        DISCO("Disco Dojo", "Dojo", null, 0xA05AE0, new CharacterType[]{}, "Stevie", "Garry"),
+        WANDERERS("Wanderers", "Others", null, 0x6A8AD8, new CharacterType[]{}, "Chase", "Zane");
+
+        public final String title, tab;
+        public final net.minecraft.resources.ResourceLocation logo;
+        public final int color;
+        public final CharacterType[] members;
+        public final String[] upcoming;
+
+        Group(String title, String tab, String logo, int color, CharacterType[] members, String... upcoming) {
+            this.title = title; this.tab = tab; this.color = color; this.members = members; this.upcoming = upcoming;
+            this.logo = logo == null ? null : com.xenowarriors.XenoWarriors.id("textures/gui/" + logo + ".png");
+        }
+
+        public static Group of(CharacterType t) {
+            for (Group g : values()) for (CharacterType m : g.members) if (m == t) return g;
+            return FREEDOM;
+        }
+    }
+
+    private static Group group = Group.FREEDOM;
+    private static boolean opened;
+    /** Four characters per page; the arrows flip through the rest of the team. */
     private static final int PER_PAGE = 4;
     private static int page;
 
     private static CharacterType[] shown() {
-        CharacterType[] all = CharacterType.PLAYABLE;
+        CharacterType[] all = group.members;
+        if (all.length == 0) return all;
         int pages = (all.length + PER_PAGE - 1) / PER_PAGE;
         page = Math.floorMod(page, pages);
         int from = page * PER_PAGE, to = Math.min(all.length, from + PER_PAGE);
         return java.util.Arrays.copyOfRange(all, from, to);
     }
 
-    /** UI test: flip to the next page. */
-    public static void nextPageForTest() { page++; }
+    /** UI test: flip to the next team. */
+    public static void nextPageForTest() { group = Group.values()[(group.ordinal() + 1) % Group.values().length]; page = 0; }
 
-    private static int pages() { return (CharacterType.PLAYABLE.length + PER_PAGE - 1) / PER_PAGE; }
+    private static int pages() { return Math.max(1, (group.members.length + PER_PAGE - 1) / PER_PAGE); }
     private static final int GAP = 24;
 
     /** Players who already have a character (opened via /xeno choose) can back out with Esc. */
@@ -44,6 +73,7 @@ public class CharacterSelectScreen extends Screen {
     public CharacterSelectScreen() {
         super(Component.translatable("screen.xenowarriors.select.title"));
         this.canClose = ClientCharacterData.getLocal() != CharacterType.NONE;
+        if (!opened) { opened = true; if (canClose) group = Group.of(ClientCharacterData.getLocal()); }
     }
 
     private int cardLeft(int index) {
@@ -53,12 +83,15 @@ public class CharacterSelectScreen extends Screen {
     }
 
     /** Small windows: shorter cards, the coming-later characters as one row of name chips. */
-    private boolean compact() { return height < 330; }
+    private boolean compact() { return height < 380; }
 
-    private int cardH() { return compact() ? Math.max(120, Math.min(CARD_HEIGHT, height - cardTop() - 24)) : CARD_HEIGHT; }
+    private int cardH() { return Math.max(110, Math.min(CARD_HEIGHT, height - cardTop() - (group.upcoming.length > 0 ? (compact() ? 30 : 70) : 22))); }
+
+    private int tabsY() { return compact() ? 15 : 26; }
+    private int logoH() { return compact() ? 22 : 40; }
 
     private int cardTop() {
-        return compact() ? 30 : Math.max(34, (height - CARD_HEIGHT - 2 * SLOT_H - 22) / 2 + 6);
+        return tabsY() + 18 + logoH() + (compact() ? 4 : 8);
     }
 
     private static final int SLOT_W = 46, SLOT_H = 40, SLOT_GAP = 4;
@@ -66,31 +99,34 @@ public class CharacterSelectScreen extends Screen {
     /** The locked future characters: two rows of 7 under the cards. */
     private void drawUpcoming(GuiGraphics g, int mouseX, int mouseY) {
         if (compact()) {                                                  // one row of small name chips
-            int n = UPCOMING.length, cw = Math.min(46, (width - 10) / n), x0 = (width - n * cw) / 2, y = cardTop() + cardH() + (pages() > 1 ? 15 : 6);
+            int n = group.upcoming.length;
+            if (n == 0) return;
+            int cw = Math.min(60, (width - 10) / n), x0 = (width - n * cw) / 2, y = cardTop() + cardH() + (pages() > 1 ? 15 : 6);
             for (int i = 0; i < n; i++) {
-                int x = x0 + i * cw, c = UPCOMING_COLOR[i];
+                int x = x0 + i * cw, c = group.color;
                 boolean hov = mouseX >= x && mouseX < x + cw - 2 && mouseY >= y && mouseY < y + 12;
                 g.fill(x, y, x + cw - 2, y + 12, hov ? 0xFF000000 | c : 0x66000000 | (c & 0xFFFFFF));
                 g.fill(x + 1, y + 1, x + cw - 3, y + 11, 0xE0101016);
                 g.pose().pushPose();
                 g.pose().translate(x + (cw - 2) / 2F, y + 3, 0);
-                float sc = Math.min(0.6F, (cw - 5) / (float) Math.max(1, font.width(UPCOMING[i])));
+                float sc = Math.min(0.8F, (cw - 5) / (float) Math.max(1, font.width(group.upcoming[i])));
                 g.pose().scale(sc, sc, 1F);
-                g.drawCenteredString(font, UPCOMING[i], 0, 0, hov ? c : 0x888888);
+                g.drawCenteredString(font, group.upcoming[i], 0, 0, hov ? c : 0x888888);
                 g.pose().popPose();
-                if (hov) g.renderTooltip(font, Component.literal(UPCOMING[i] + " - locked (coming in a later update)"), mouseX, mouseY);
+                if (hov) g.renderTooltip(font, Component.literal(group.upcoming[i] + " - locked (coming in a later update)"), mouseX, mouseY);
             }
             return;
         }
-        int perRow = 5, top = cardTop() + CARD_HEIGHT + 22;
+        if (group.upcoming.length == 0) return;
+        int perRow = Math.min(5, group.upcoming.length), top = cardTop() + cardH() + 22;
         int rowW = perRow * SLOT_W + (perRow - 1) * SLOT_GAP;
         int sw = SLOT_W, x0 = (width - rowW) / 2;
         if (rowW > width - 10) { sw = (width - 10 - (perRow - 1) * SLOT_GAP) / perRow; x0 = 5; }
         g.drawCenteredString(font, "Coming later", width / 2, top - 10, 0x777777);
-        for (int i = 0; i < UPCOMING.length; i++) {
+        for (int i = 0; i < group.upcoming.length; i++) {
             int x = x0 + (i % perRow) * (sw + SLOT_GAP), y = top + (i / perRow) * (SLOT_H + SLOT_GAP);
             boolean hov = mouseX >= x && mouseX < x + sw && mouseY >= y && mouseY < y + SLOT_H;
-            int c = UPCOMING_COLOR[i];
+            int c = group.color;
             g.fill(x - 1, y - 1, x + sw + 1, y + SLOT_H + 1, hov ? 0xFF000000 | c : 0x66000000 | (c & 0xFFFFFF));
             g.fill(x, y, x + sw, y + SLOT_H, 0xE0101016);
             int cx = x + sw / 2;
@@ -100,16 +136,24 @@ public class CharacterSelectScreen extends Screen {
             g.fill(cx - 2, y + 15, cx + 2, y + 17, 0xFF55555F);
             g.pose().pushPose();
             g.pose().translate(cx, y + SLOT_H - 9, 0);
-            float sc = Math.min(1F, (sw - 4) / (float) Math.max(1, font.width(UPCOMING[i])));
+            float sc = Math.min(1F, (sw - 4) / (float) Math.max(1, font.width(group.upcoming[i])));
             g.pose().scale(sc, sc, 1F);
-            g.drawCenteredString(font, UPCOMING[i], 0, 0, hov ? c : 0x888888);
+            g.drawCenteredString(font, group.upcoming[i], 0, 0, hov ? c : 0x888888);
             g.pose().popPose();
-            if (hov) g.renderTooltip(font, Component.literal(UPCOMING[i] + " - locked (coming in a later update)"), mouseX, mouseY);
+            if (hov) g.renderTooltip(font, Component.literal(group.upcoming[i] + " - locked (coming in a later update)"), mouseX, mouseY);
         }
     }
 
     @Override
     protected void init() {
+        Group[] gs = Group.values();
+        int tw = Math.min(70, (width - 10 - (gs.length - 1) * 2) / gs.length), tx = (width - gs.length * tw - (gs.length - 1) * 2) / 2;
+        for (int i = 0; i < gs.length; i++) {
+            Group gr = gs[i];
+            Button b = addRenderableWidget(Button.builder(Component.literal(gr.tab), x -> { group = gr; page = 0; rebuildWidgets(); })
+                    .bounds(tx + i * (tw + 2), tabsY(), tw, 16).build());
+            b.active = gr != group;
+        }
         CharacterType[] choices = shown();
         CARD_WIDTH = Math.min(CARD_WIDTH_MAX, (width - 60 - (PER_PAGE - 1) * GAP) / PER_PAGE);   // four cards fit, arrows either side
         if (pages() > 1) {
@@ -138,13 +182,26 @@ public class CharacterSelectScreen extends Screen {
         renderBackground(g);
 
         int top = cardTop(), ch = cardH();
-        float ts = compact() ? 1.3F : 2F;
+        float ts = compact() ? 1.2F : 1.8F;
         g.pose().pushPose();
         g.pose().scale(ts, ts, 1F);
-        g.drawCenteredString(font, title, (int) (width / 2 / ts), (int) ((compact() ? 4 : top - 34) / ts), 0xFFFFFF);
+        g.drawCenteredString(font, title, (int) (width / 2 / ts), (int) ((compact() ? 3 : 6) / ts), 0xFFFFFF);
         g.pose().popPose();
-        g.drawCenteredString(font, Component.translatable("screen.xenowarriors.select.subtitle"),
-                width / 2, top - (compact() ? 11 : 12), 0xAAAAAA);
+        // the team: its logo (or a name banner in its colour)
+        int ly = tabsY() + 19, lh = logoH();
+        if (group.logo != null) {
+            int lw = lh * 2;
+            g.blit(group.logo, width / 2 - lw / 2, ly, lw, lh, 0, 0, 256, 128, 256, 128);
+        } else {
+            float bs = compact() ? 1.4F : 2.2F;
+            g.pose().pushPose();
+            g.pose().translate(width / 2F, ly + lh / 2F - 4 * bs, 0);
+            g.pose().scale(bs, bs, 1F);
+            g.drawCenteredString(font, group.title, 0, 0, 0xFF000000 | group.color);
+            g.pose().popPose();
+        }
+        if (group.members.length == 0)
+            g.drawCenteredString(font, "No one from the " + group.title + " is playable yet", width / 2, top + 20, 0x888888);
 
         CharacterType[] choices = shown();
         if (pages() > 1) g.drawCenteredString(font, "Page " + (page + 1) + " / " + pages(), width / 2, top + ch + 4, 0x888888);
