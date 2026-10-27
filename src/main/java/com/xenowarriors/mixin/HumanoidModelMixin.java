@@ -48,6 +48,7 @@ public abstract class HumanoidModelMixin {
                 }
                 com.xenowarriors.client.YuriLaptopIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.GarryBeatbox.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.KeitaDoze.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.JumpAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.party.PartyClient.applyPose((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.FoxRun.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

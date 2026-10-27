@@ -766,7 +766,19 @@ ZANE = dict(skin=Z_SKIN, eyes=Z_EYE, hair=[ZH1, ZH2], paint=zane_paint,
             eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
             mouth=['k....k', '.kkkk.'], mouth_x=13, mouth_y=25, wing=None, fit=zane)
 
-CHARS = {'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
+# ====================================================================== SR members as playables (Logan, Kill, Keita): their boss looks
+sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/sr')
+import sr_named as SRN
+def _sr(key, wing):
+    sp = dict(SRN.SPECS['sr_' + key]); sp.pop('name', None); sp['wing'] = wing
+    sp.setdefault('eye', ['..kkkkkk.', 'kkkkkkkkk', '.wddpddw.', '.wWWoodw.', '.wWoopow.', '..wOOOw..', '..kkkkk..'])
+    sp.setdefault('brow', ['..kkkkk..', 'kk.....k.'])
+    return sp
+LOGAN = _sr('logan', ('hawk_small', '#e8c860'))
+KILL = _sr('kill', ('demon_small', '#3a2e44'))
+KEITA = _sr('keita', ('bat_small', '#2a3070'))
+
+CHARS = {'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

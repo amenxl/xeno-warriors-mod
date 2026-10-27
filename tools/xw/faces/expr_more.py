@@ -136,7 +136,7 @@ def composite(key):
     V['love'] = paint(love, BLUSH, pink)
     return V
 
-TEMPLATE = ['kyrie', 'lexy', 'max', 'sam', 'technica', 'aioni', 'stevie', 'garry', 'yuri', 'zane', 'kaeru']
+TEMPLATE = ['logan', 'kill', 'keita', 'kyrie', 'lexy', 'max', 'sam', 'technica', 'aioni', 'stevie', 'garry', 'yuri', 'zane', 'kaeru']
 HD = ['mikiko', 'rhalix', 'ultima']
 
 if __name__ == '__main__':

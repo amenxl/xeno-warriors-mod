@@ -28,7 +28,7 @@ public class CharacterSelectScreen extends Screen {
         ORENJI("Orenji Clan", "logo_orenji", 0xE8701C, new CharacterType[]{CharacterType.MIKIKO, CharacterType.KAERU}),
         GOVERNMENT("Government", "logo_government", 0x6A3AC8, new CharacterType[]{}, "Kyle"),
         DEMONS("Ai-oni's Demons", null, 0xC41E30, new CharacterType[]{CharacterType.AIONI}, "Zack", "Kaitlyn"),
-        SKY_REBELLION("Sky Rebellion", null, 0x9A2A2A, new CharacterType[]{}, "SR Leader"),
+        SKY_REBELLION("Sky Rebellion", null, 0x9A2A2A, new CharacterType[]{CharacterType.LOGAN, CharacterType.KILL, CharacterType.KEITA}, "SR Leader"),
         DISCO("Disco Dojo", null, 0xA05AE0, new CharacterType[]{CharacterType.STEVIE, CharacterType.GARRY}),
         WANDERERS("Wanderers", null, 0x6A8AD8, new CharacterType[]{}, "Chase");
 

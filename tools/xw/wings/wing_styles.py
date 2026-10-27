@@ -190,7 +190,8 @@ def scaled(fn, k, droop=0.0): return lambda m: fn(_Scaled(m, k, droop))
 
 STYLES = {'angel': angel, 'hawk': hawk, 'falcon': falcon, 'bat': bat, 'butterfly': butterfly,
           'crystal': crystal, 'seraph': seraph, 'tattered': tattered,
-          'kyrie': kyrie, 'demon': demon, 'angel_small': scaled(angel, 0.6), 'falcon_small': scaled(falcon, 0.42, -38), 'tech': scaled(crystal, 0.55, -10), 'hawk_small': scaled(hawk, 0.48, -42)}
+          'kyrie': kyrie, 'demon': demon, 'angel_small': scaled(angel, 0.6), 'falcon_small': scaled(falcon, 0.42, -38), 'tech': scaled(crystal, 0.55, -10), 'hawk_small': scaled(hawk, 0.48, -42),
+          'bat_small': scaled(bat, 0.6, -15), 'demon_small': scaled(demon, 0.7, -10)}
 
 def build(style):
     m = Model('wing_' + style)

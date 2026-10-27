@@ -90,6 +90,18 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.ThunderSpell(), 0, 3), new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.BroomSmack(), 0, 3),
                 new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.ManaBarrier(), 20, 3)));
         ULTIMATE.put(CharacterType.ZANE, new com.xenowarriors.skill.ffr.ZaneSkills.PastMages());
+        POOL.put(CharacterType.LOGAN, List.of(
+                new Entry(new com.xenowarriors.skill.ffr.SrSkills.ThunderFlash(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.KnightCharge(), 0),
+                new Entry(new com.xenowarriors.skill.ffr.SrSkills.RoyalGuard(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.PortalEscape(), 0)));
+        ULTIMATE.put(CharacterType.LOGAN, new com.xenowarriors.skill.ffr.SrSkills.ThunderJudgement());
+        POOL.put(CharacterType.KILL, List.of(
+                new Entry(new com.xenowarriors.skill.ffr.SrSkills.Impale(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.DevilDash(), 0),
+                new Entry(new com.xenowarriors.skill.ffr.SrSkills.PlayWeak(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.DevilFlame(), 0)));
+        ULTIMATE.put(CharacterType.KILL, new com.xenowarriors.skill.ffr.SrSkills.DevilUnleashed());
+        POOL.put(CharacterType.KEITA, List.of(
+                new Entry(new com.xenowarriors.skill.ffr.SrSkills.LightsOut(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.Kneel(), 0),
+                new Entry(new com.xenowarriors.skill.ffr.SrSkills.LazySlash(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.PowerNap(), 0)));
+        ULTIMATE.put(CharacterType.KEITA, new com.xenowarriors.skill.ffr.SrSkills.MassCut());
     }
 
     private SkillPool() {}

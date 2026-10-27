@@ -161,6 +161,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (p.hurtTime > 0) return p.getHealth() < p.getMaxHealth() * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
         String beat = com.xenowarriors.client.GarryBeatbox.face(p);
         if (beat != null) return beat;
+        String doze = com.xenowarriors.client.KeitaDoze.face(p);
+        if (doze != null) return doze;
         if (com.xenowarriors.client.KarmaFocusClient.weight(p) > 0.4F) return "sense";      // eyes closed, sensing Karma
         String arrow = com.xenowarriors.client.ArrowPullClient.face(p);
         if (arrow != null) return arrow;

@@ -31,14 +31,18 @@ public enum CharacterType {
     /** Yuri Tenjo: the hacker genius (season 2), Ultima's little sister. */
     YURI("yuri", 0xFF3AD04A),
     /** Zane the Magical Mage (season 3): magic, not karma. */
-    ZANE("zane", 0xFF9A4AD8);
+    ZANE("zane", 0xFF9A4AD8),
+    /** The Sky Rebellion: Logan (the old royal knight), Kill (the first demon Skylander), Keita (the leader's sleepy son). */
+    LOGAN("logan", 0xFFE8C040),
+    KILL("kill", 0xFF6A2A8A),
+    KEITA("keita", 0xFF2A3AA0);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
-    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
+    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI || this == LOGAN || this == KILL || this == KEITA; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
 
     /** The Sky Patrol members (for team synergy). */
     public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
