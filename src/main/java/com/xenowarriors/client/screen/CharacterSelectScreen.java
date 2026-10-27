@@ -22,11 +22,10 @@ import java.util.List;
 public class CharacterSelectScreen extends Screen {
     /** The characters sorted into their teams from the show. */
     public enum Group {
-        FREEDOM("Freedom Fighters", "logo_freedom_fighters", 0xC8282E, new CharacterType[]{CharacterType.MIKIKO, CharacterType.ULTIMA}, "Yuri"),
+        FREEDOM("Freedom Fighters", "logo_freedom_fighters_icon", 0xC8282E, new CharacterType[]{CharacterType.MIKIKO, CharacterType.ULTIMA, CharacterType.KAERU}, "Yuri"),
         SKY_PATROL("Sky Patrol", "logo_sky_patrol", 0x8A3AE8, new CharacterType[]{CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY,
                 CharacterType.MAX, CharacterType.SAM, CharacterType.TECHNICA}),
         GOVERNMENT("Government", "logo_government", 0x6A3AC8, new CharacterType[]{}, "Kyle"),
-        ORENJI("Orenji Clan", null, 0xE8701C, new CharacterType[]{CharacterType.KAERU}),
         DEMONS("Ai-oni's Demons", null, 0xC41E30, new CharacterType[]{CharacterType.AIONI}, "Zack", "Kaitlyn"),
         SKY_REBELLION("Sky Rebellion", null, 0x9A2A2A, new CharacterType[]{}, "SR Leader"),
         DISCO("Disco Dojo", null, 0xA05AE0, new CharacterType[]{}, "Stevie", "Garry"),

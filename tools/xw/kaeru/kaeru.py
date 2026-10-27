@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 
 SKIN, EYES = '#a86a4a', '#e8901c'
 BLK, BLK2, OR, OR2, OR3 = '#222024', '#2e2b30', '#d4661e', '#a84a14', '#f08a3a'
-HAIR_T, HAIR_M, HAIR_E = '#3c2414', '#6a3418', '#a2541e'
+HAIR_T, HAIR_M, HAIR_E = '#2e1c12', '#7a4220', '#e08a30'
 
 def spiral(x, y):
     """The black Orenji spiral (on the shorts)."""
