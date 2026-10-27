@@ -24,10 +24,13 @@ public enum CharacterType {
     /** Season 3: a demon with wings. Never in a party with Rhalix, and can't come within 400 blocks of him. */
     AIONI("aioni", 0xFFC41E30),
     /** Technica ("Tech"), the Sky Patrol's inventor, on her artificial wings. */
-    TECHNICA("technica", 0xFFEC5AA0);
+    TECHNICA("technica", 0xFFEC5AA0),
+    /** The Disco Dojo brothers. */
+    STEVIE("stevie", 0xFF4A2A9A),
+    GARRY("garry", 0xFF2AA82A);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, AIONI};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */

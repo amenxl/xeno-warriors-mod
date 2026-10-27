@@ -200,6 +200,10 @@ def max_fit(f):
          locks=[([x, 32.3, -4.7], [x * 0.08, -1, -0.45], 3.0 if abs(x) < 2 else 4.4, 2.0) for x in (-3.2, -1.6, 0.0, 1.6, 3.2)]
          + [([s * 4.6, 30.5, z], [s * 0.4, -1, 0.1], 4.6, 1.8) for s in (1, -1) for z in (-2.2, 0.8, 3.4)]
          + [([x, 31.0, 4.7], [x * 0.1, -1, 0.3], 5.2, 2.2) for x in (-2.6, 0.0, 2.6)])
+    O_ = [-0.9, 25.8, -4.7]                                                                           # his cigarette, from the corner of his mouth
+    f.add('head', [-3.6, 25.55, -4.95], [-1.4, 26.05, -4.45], '#f2f0ec', rot=[0, -30, 22], origin=O_, shade=False)
+    f.add('head', [-1.4, 25.55, -4.95], [-0.9, 26.05, -4.45], '#d8a860', rot=[0, -30, 22], origin=O_, shade=False)
+    f.add('head', [-4.0, 25.53, -4.97], [-3.6, 26.07, -4.43], '#ff7a2a', rot=[0, -30, 22], origin=O_, shade=False)
     for sx in (1, -1):
         lock(f, [sx * 0.4, 32.9, -3.6], [sx * 0.9, -0.5, -0.4], 3.6, 2.0, (MH2, MH1, MH3), thick=0.8)        # swept from his centre part
         lock(f, [sx * 0.5, 31.6, -4.8], [sx * 0.05, -1, -0.2], 4.4, 1.0, (MH1, MH2, MH3), thick=0.5)        # thin strands between his eyes
@@ -424,7 +428,101 @@ TECHNICA = dict(skin=T_SKIN, eyes=T_EYE, hair=[TH1, TH2], paint=tech_paint,
                 eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
                 mouth=['..kkkk..'], mouth_x=12, mouth_y=25, wing=None, fit=technica)   # (her artificial wings come later in the show)
 
-CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA}
+# ====================================================================== STEVIE and GARRY (Disco Dojo brothers)
+D_SKIN = '#f0caa8'
+SV1, SV2, SV3 = '#141428', '#222044', '#34306a'
+SV_SHIRT, SV_SCARF, D_GREY, D_GREYD = '#2a1e5a', '#4a2a9a', '#9a9aa2', '#7e7e86'
+
+def stevie_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 10: return D_GREY
+        if face == 'front' and 2 <= x <= 5: return SV_SHIRT
+        return '#1c1838'
+    if part in ('rarm', 'larm'):
+        if y < 4: return SV_SHIRT
+        if y >= 10: return '#141418'                                         # fingerless gloves
+        return None
+    if part in ('rleg', 'lleg'):
+        if y >= 7: return '#2a2060' if y not in (8, 10) else D_GREYD         # purple boots with grey straps
+        return D_GREY
+    return None
+
+def stevie(f):
+    # wild spiky dark hair, spikes up and back
+    hair(f, SV1, SV2, back_len=24, side_len=25.5,
+         spikes=[([x, 32.4, z], [x * 0.25, 1.0, 0.5 + z * 0.1], ln, 2.0) for (x, z, ln) in
+                 ((-2.4, -2.0, 4.2), (0.0, -2.6, 5.0), (2.4, -2.0, 4.4), (-3.2, 1.0, 4.6), (0.0, 0.6, 5.6), (3.2, 1.0, 4.6), (-1.6, 3.2, 4.4), (1.6, 3.2, 4.4))],
+         locks=fringe_locks(5, 31.8, 7.0, 4.6, 1.8, 0.5) + [([s * 4.5, 30.5, z], [s * 0.5, -1, 0.3], 4.6, 1.8) for s in (1, -1) for z in (-1.0, 2.0)]
+         + [([x, 30.5, 4.7], [x * 0.15, -1, 0.5], 6.0, 2.0) for x in (-2.4, 0.0, 2.4)])
+    for (x, y) in ((-1.0, 33.4), (1.4, 33.0)):
+        lock(f, [x, 32.6, -3.0], [x * 0.2, 1, -0.5], 3.0, 1.6, (SV2, SV3, SV1), thick=1.4)
+    f.add('head', [-3.4, 26.0, -4.65], [-1.6, 26.8, -4.5], '#f0c890')                        # bandage on his cheek
+    f.add('head', [-2.9, 25.6, -4.66], [-2.1, 27.2, -4.52], '#e8b878')
+    # purple scarf, dark shirt with a purple front, gloves, grey baggy pants, purple strapped boots
+    f.add('body', [-4.5, 22.4, -2.8], [4.5, 24.6, 2.8], SV_SCARF, {'top': SV_SCARF})
+    lock(f, [-2.6, 22.6, -2.9], [-0.3, -1, -0.2], 3.2, 2.0, (SV_SCARF, '#3a1e7a', SV_SCARF), thick=0.5, bone='Body')
+    shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.3, '#1c1838', {'front': lambda x, y: SV_SHIRT if .25 < x < .75 else '#1c1838'})
+    f.both('right_arm', [3.62, 20.0, -2.38], [8.38, 24.38, 2.38], '#1c1838')
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 14.6, 2.5], '#141418', {'bottom': D_SKIN})
+    f.both('right_leg', [-0.5, 5.0, -2.5], [4.5, 12.3, 2.5], D_GREY)
+    f.both('right_leg', [-0.4, 0.0, -2.7], [4.4, 5.6, 2.45], '#2a2060')
+    for y in (1.6, 3.4): f.both('right_leg', [-0.5, y, -2.8], [4.5, y + 0.8, 2.55], D_GREYD)
+    f.both('right_leg', [0.1, 0.0, -3.2], [3.9, 1.4, -2.7], '#2a2060')
+    f.both('right_leg', [-0.5, 0.0, -3.3], [4.5, 0.4, 2.55], '#141418')
+
+def stevie_grin(px, cm, dark): pass
+STEVIE = dict(skin=D_SKIN, eyes='#2a2240', hair=[SV1, SV2], paint=stevie_paint,
+              brow=['kkkkkkk..', '.......kk'],
+              eye=['.........', 'kkkkkkkkk', '.wddpddw.', '.wdpppdw.', '..kkkkk..', '.........', '.........'],
+              mouth=['kkkkkkkk', 'kWWWWWWk', '.kkkkkk.'], mouth_x=12, mouth_y=24, wing=None, fit=stevie)
+
+G1, G2, G3 = '#1a6a1a', '#2aa82a', '#5ad84a'
+def garry_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 10: return D_GREY
+        if face == 'front' and 1 <= x <= 6 and y >= 2: return '#1e3a1e'
+        return '#161816'
+    if part in ('rarm', 'larm'):
+        if y < 4: return '#161816'
+        if y >= 10: return '#141418'
+        return None
+    if part in ('rleg', 'lleg'):
+        if y >= 9: return '#5a5a62'                                          # grey boots
+        if y >= 6: return None                                               # bare shins
+        return D_GREY
+    return None
+
+def garry(f):
+    # messy bright green hair under a backwards black cap
+    hair(f, G1, G2, back_len=25, side_len=25.5,
+         locks=fringe_locks(6, 31.4, 7.6, 4.6, 1.9, 0.4) + [([s * 4.5, 30, z], [s * 0.4, -1, 0.2], 5.4, 1.9) for s in (1, -1) for z in (-1.4, 1.4, 3.6)]
+         + [([x, 30.0, 4.7], [x * 0.12, -1, 0.4], 5.4, 2.0) for x in (-2.6, 0.0, 2.6)])
+    for s_ in (1, -1):
+        lock(f, [s_ * 3.4, 31.8, -4.4], [s_ * 0.5, -0.8, -0.3], 3.6, 1.6, (G2, G3, G1), thick=0.8)                  # tufts poking out the sides
+    f.add('head', [-4.7, 31.0, -4.7], [4.7, 34.0, 4.7], '#141416', {'top': '#1a1a1e'})                            # cap
+    f.add('head', [-3.0, 30.8, 4.7], [3.0, 32.0, 7.6], '#141416')                                                # brim, turned to the back
+    f.add('head', [-1.0, 31.2, -4.85], [1.0, 32.6, -4.7], '#2aa82a')                                             # strap gap showing green
+    # stubble along the jaw (on the face), green bandana round his neck
+    f.add('body', [-4.5, 22.0, -2.8], [4.5, 24.6, 2.8], G2)
+    lock(f, [0.0, 22.2, -2.9], [0, -1, -0.15], 3.0, 3.0, (G2, G1, G2), thick=0.4, bone='Body')
+    shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.3, '#161816', {'front': lambda x, y: '#1e3a1e' if .15 < x < .85 and y > .2 else '#161816'})
+    f.both('right_arm', [3.62, 20.0, -2.38], [8.38, 24.38, 2.38], '#161816')
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 14.6, 2.5], '#141418', {'bottom': D_SKIN})
+    f.both('right_leg', [-0.5, 6.4, -2.5], [4.5, 12.3, 2.5], D_GREY)
+    f.both('right_leg', [-0.4, 0.0, -2.7], [4.4, 3.4, 2.45], '#5a5a62')
+    f.both('right_leg', [0.1, 0.0, -3.2], [3.9, 1.2, -2.7], '#5a5a62')
+    f.both('right_leg', [-0.5, 0.0, -3.3], [4.5, 0.4, 2.55], '#2a2a2e')
+
+def stubble(px, cm, dark):
+    for x in range(9, 23):
+        for y in (27, 28):
+            if (x + y) % 2 == 0: px[x, y] = (150, 110, 80, 255)
+GARRY = dict(skin=D_SKIN, eyes='#2a9a2a', hair=[G1, G2], paint=garry_paint,
+             brow=['.........', 'kkkkkkk..', '.......kk'],
+             eye=['.........', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '..wOOOw..', '..kkkkk..', '.........'],
+             mouth=['.kkkk.', 'k.rr.k', '.kkkk.'], mouth_x=13, mouth_y=24, face_extra=[stubble], wing=None, fit=garry)
+
+CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

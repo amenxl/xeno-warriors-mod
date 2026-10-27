@@ -41,7 +41,7 @@ import java.util.*;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Synergy {
     public static final double RANGE = 24;
-    public static final String PARTNERS = "Partners", SKYLAND = "Skyland Bond", GOOFY = "Goofy Rivals", SOUL_LINK = "Soul Link";
+    public static final String PARTNERS = "Partners", SKYLAND = "Skyland Bond", GOOFY = "Goofy Rivals", SOUL_LINK = "Soul Link", BROTHERS = "Brothers";
     /** Sky Patrol members (by character id) - for when they become playable. */
     public static final Set<String> SKY_PATROL = Set.of("sam", "lexy", "max", "technica");
     private static final Map<UUID, Set<String>> ACTIVE = new HashMap<>();
@@ -84,6 +84,7 @@ public final class Synergy {
         if ((SKY_PATROL.contains(me) || me.equals("kyrie")) && them.contains("rhalix")) s.add(SKYLAND);
         if (pair(me, them, "mikiko", "ultima")) s.add(GOOFY);
         if (pair(me, them, "mikiko", "kaeru")) s.add(SOUL_LINK);
+        if (pair(me, them, "stevie", "garry")) s.add(BROTHERS);
         return s;
     }
 
@@ -131,6 +132,7 @@ public final class Synergy {
             case SKYLAND -> "+10% damage";
             case GOOFY -> "rival kills fire you up, expect some goofing off";
             case SOUL_LINK -> "+20% damage, -15% damage taken, faster Karma - but if one of you dies, so does the other";
+            case BROTHERS -> "+15% damage, and Brother Blast hits much harder together";
             default -> "";
         };
         p.displayClientMessage(Component.literal("Synergy - " + s + ": ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
@@ -165,6 +167,7 @@ public final class Synergy {
             if (s.contains(PARTNERS)) mult += 0.15F;
             if (s.contains(SKYLAND)) mult += skyPatrolCount(a) >= 3 ? 0.2F : 0.1F;
             if (s.contains(SOUL_LINK)) mult += 0.2F;
+            if (s.contains(BROTHERS)) mult += 0.15F;
             int[] r = RIVAL.get(a.getUUID());
             if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0];
             if (mult != 1F) event.setAmount(event.getAmount() * mult);

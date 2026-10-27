@@ -70,6 +70,16 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.sp.TechSkills.GravityBoots(), 0), new Entry(new com.xenowarriors.skill.sp.TechSkills.VisorScan(), 0),
                 new Entry(new com.xenowarriors.skill.sp.TechSkills.WingCloak(), 15), new Entry(new com.xenowarriors.skill.sp.TechSkills.RescuePlatform(), 30)));
         ULTIMATE.put(CharacterType.TECHNICA, new com.xenowarriors.skill.sp.TechSkills.TechBarrage());
+        POOL.put(CharacterType.STEVIE, List.of(
+                new Entry(new com.xenowarriors.skill.sp.DojoSkills.KarmaBlast(0x6A4AE0), 0), new Entry(new com.xenowarriors.skill.sp.DojoSkills.WarCry(), 0),
+                new Entry(new com.xenowarriors.skill.sp.DojoSkills.GoodKarma(), 0), new Entry(new com.xenowarriors.skill.sp.DojoSkills.DiscoKick(), 0),
+                new Entry(new com.xenowarriors.skill.sp.DojoSkills.BarThief(), 15)));
+        ULTIMATE.put(CharacterType.STEVIE, new com.xenowarriors.skill.sp.DojoSkills.BrotherBlast(0x6A4AE0));
+        POOL.put(CharacterType.GARRY, List.of(
+                new Entry(new com.xenowarriors.skill.sp.DojoSkills.KarmaBlast(0x3AD83A), 0), new Entry(new com.xenowarriors.skill.sp.DojoSkills.WarCry(), 0),
+                new Entry(new com.xenowarriors.skill.sp.DojoSkills.BodySlam(), 0), new Entry(new com.xenowarriors.skill.sp.DojoSkills.DiscoKick(), 0),
+                new Entry(new com.xenowarriors.skill.sp.DojoSkills.FreestyleBars(), 15)));
+        ULTIMATE.put(CharacterType.GARRY, new com.xenowarriors.skill.sp.DojoSkills.BrotherBlast(0x3AD83A));
     }
 
     private SkillPool() {}
