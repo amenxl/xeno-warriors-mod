@@ -642,6 +642,21 @@ public final class UiTest {
         l.add(new Step("popup_four", () -> {}, 3));
         l.add(new Step(null, () -> {}, 90));
         l.add(new Step("popup_fading", () -> {}, 3));
+        // the newer kinds: boss nearby (with its picture), level up, bounty complete
+        l.add(new Step(null, () -> server(p -> {
+            var rav = net.minecraft.world.entity.EntityType.RAVAGER.create(p.serverLevel());
+            if (rav == null) return;
+            rav.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(300);
+            rav.setHealth(300); rav.setNoAi(true);
+            rav.moveTo(p.getX() + 6, p.getY(), p.getZ() + 10, 180, 0);
+            p.serverLevel().addFreshEntity(rav);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        }), 50));
+        l.add(new Step(null, () -> server(p -> {
+            com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), CharacterType.KYRIE.ordinal(), -1, "Level up!", "Character Level 12  +1 max heart", "normal");
+            com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), CharacterType.NONE.ordinal(), -1, "Bounty complete", "+1,120 Money - 12 Zombie", "");
+        }), 12));
+        l.add(new Step("popup_boss_level_bounty", () -> {}, 3));
     }
 
     private static void noToasts(Minecraft mc) {
