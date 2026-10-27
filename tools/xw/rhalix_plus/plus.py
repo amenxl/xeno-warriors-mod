@@ -47,7 +47,7 @@ def main():
     m = json.load(open(MJ)); strip_all = [strip(b) for b in m['bones'].values()]
     tex = Image.open(CH + 'rhalix_details.png').convert('RGBA')
     # wipe previous plus regions (kept in a sidecar so re-runs don't leak atlas space)
-    side = A + 'models/detail/rhalix_plus_uv.json'
+    side = A + '../../tools/xw/rhalix_plus/rhalix_plus_uv.json'
     try:
         for (u, v, w, h) in json.load(open(side)):
             for y in range(v, v + h):

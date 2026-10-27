@@ -165,7 +165,10 @@ public final class ClientModEvents {
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.AXOLOTLS
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.MONSTER
                     && type.getCategory() != net.minecraft.world.entity.MobCategory.MISC) continue;
-            addTint(event.getRenderer((net.minecraft.world.entity.EntityType) type));
+            net.minecraft.client.renderer.entity.EntityRenderer<?> r;
+            try { r = event.getRenderer((net.minecraft.world.entity.EntityType) type); }
+            catch (ClassCastException notLiving) { continue; }               // (non-living renderers, e.g. the Distortion's)
+            addTint(r);
         }
         for (String skin : event.getSkins()) {
             PlayerRenderer renderer = event.getSkin(skin);

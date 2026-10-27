@@ -66,8 +66,8 @@ model('fox_king_crown', crown, d)
 # --- Facility map: a folded blueprint sheet
 tex('facility_map', [(0, 0, 16, 16, lambda x, y: (240, 240, 250, 255) if (x % 4 == 0 or y % 4 == 0) else ((230, 60, 60, 255) if (x, y) in ((10, 6), (11, 6), (10, 7), (11, 7)) else (40, 90, 170, 255)))])
 model('facility_map', [
-    {"from": [1, 0, 2], "to": [8, 0.3, 14], "rotation": {"angle": -8, "axis": "z", "origin": [8, 0, 8]}, "faces": F([0, 0, 8, 16])},
-    {"from": [8, 0, 2], "to": [15, 0.3, 14], "rotation": {"angle": 8, "axis": "z", "origin": [8, 0, 8]}, "faces": F([8, 0, 16, 16])}],
+    {"from": [1, 0, 2], "to": [8, 0.3, 14], "rotation": {"angle": -22.5, "axis": "z", "origin": [8, 0, 8]}, "faces": F([0, 0, 8, 16])},
+    {"from": [8, 0, 2], "to": [15, 0.3, 14], "rotation": {"angle": 22.5, "axis": "z", "origin": [8, 0, 8]}, "faces": F([8, 0, 16, 16])}],
     {**DISP, "gui": {"rotation": [60, 0, 0], "scale": [1, 1, 1]}})
 p = A + 'lang/en_us.json'; s = open(p).read()
 s = s.replace('  "block.xenowarriors.vr_console": "VR Console",', '''  "block.xenowarriors.vr_console": "VR Console",
