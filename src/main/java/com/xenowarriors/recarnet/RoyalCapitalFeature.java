@@ -387,10 +387,15 @@ public class RoyalCapitalFeature extends Feature<NoneFeatureConfiguration> {
         BlockPos p = new BlockPos(x, y, z);
         l.setBlock(p, Blocks.OAK_SIGN.defaultBlockState(), 2);
         if (l.getBlockEntity(p) instanceof net.minecraft.world.level.block.entity.SignBlockEntity s) {
-            var txt = s.getFrontText();
+            // (no setText during world generation - it pings a level that isn't there yet; load the text instead)
+            var txt = new net.minecraft.world.level.block.entity.SignText();
             String[] lines = {a, b, c, d};
             for (int k = 0; k < 4; k++) txt = txt.setMessage(k, net.minecraft.network.chat.Component.literal(lines[k]));
-            s.setText(txt, true);
+            net.minecraft.world.level.block.entity.SignText.DIRECT_CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, txt).result().ifPresent(tag -> {
+                net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag();
+                nbt.put("front_text", tag);
+                s.load(nbt);
+            });
         }
     }
 

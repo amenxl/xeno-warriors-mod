@@ -98,6 +98,11 @@ public final class Parties {
         return out;
     }
 
+    public static boolean isLeader(Player p) {
+        Party party = BY_PLAYER.get(p.getUUID());
+        return party != null && p.getUUID().equals(party.leader);
+    }
+
     public static boolean inParty(Player p) {
         return BY_PLAYER.containsKey(p.getUUID());
     }

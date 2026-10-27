@@ -97,6 +97,13 @@ public final class FoxPets {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve();
     }
 
+    /** Each fox's name and level, for the party screen. */
+    public static java.util.List<String> summary(Player p) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (Tag t : pets(p)) { CompoundTag r = (CompoundTag) t; out.add(r.getString("name") + " Lv " + Math.max(1, r.getInt("level"))); }
+        return out;
+    }
+
     /** How many foxes this player has. */
     public static int count(Player p) {
         return pets(p).size();

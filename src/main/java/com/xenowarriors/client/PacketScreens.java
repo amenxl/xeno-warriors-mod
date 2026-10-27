@@ -24,7 +24,7 @@ public final class PacketScreens {
 
     public static void openBotMenu(com.xenowarriors.network.OpenBotMenuPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.bot.BotScreen(m)); }
 
-    public static void openPartyMenu() { Minecraft.getInstance().setScreen(new com.xenowarriors.client.bot.PartyScreen()); }
+    public static void openPartyMenu() { Minecraft.getInstance().setScreen(new com.xenowarriors.client.party.PartySetupScreen()); }
 
     public static void openBounties(com.xenowarriors.network.BountyPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.screen.BountyScreen(m)); }
 

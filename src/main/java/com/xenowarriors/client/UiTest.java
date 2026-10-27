@@ -83,6 +83,7 @@ public final class UiTest {
         if ("ores".equals(System.getenv("XW_UITEST_FOCUS"))) { oresAndPjs(mc, l); return l; }
         if ("village".equals(System.getenv("XW_UITEST_FOCUS"))) { village(mc, l); return l; }
         if ("capital".equals(System.getenv("XW_UITEST_FOCUS"))) { capital(mc, l); return l; }
+        if ("partyui".equals(System.getenv("XW_UITEST_FOCUS"))) { partyUi(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -518,6 +519,21 @@ public final class UiTest {
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
             l.add(new Step("village_" + sh[0], () -> {}, 5));
         }
+    }
+
+    /** The Party Setup screen: alone, then with three bots (one selected), and an empty slot selected. */
+    private static void partyUi(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); server(p -> { p.serverLevel().setDayTime(6000); }); }, 40));
+        l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.party.PartySetupScreen()), 40));
+        l.add(new Step("partyui_solo", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.KAERU, CharacterType.MAX})
+                com.xenowarriors.bot.PartyBots.spawn(p, t, null);
+        }); }, 60));
+        l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.party.PartySetupScreen()), 60));
+        l.add(new Step("partyui_full", () -> {}, 5));
+        l.add(new Step(null, () -> { if (mc.screen != null) mc.screen.mouseClicked(mc.getWindow().getGuiScaledWidth() * 0.38, mc.getWindow().getGuiScaledHeight() * 0.5, 0); }, 20));
+        l.add(new Step("partyui_selected", () -> {}, 5));
     }
 
     /** A tour of the Royal Capital (Section 1) high above Aurora. */

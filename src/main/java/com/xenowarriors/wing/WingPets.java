@@ -497,4 +497,11 @@ public final class WingPets {
     public static int count(Player p) {
         return pets(p).size();
     }
+
+    /** Each winged pet's name, for the party screen. */
+    public static java.util.List<String> summary(Player p) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (Tag t : pets(p)) out.add(((CompoundTag) t).getString("name"));
+        return out;
+    }
 }

@@ -180,7 +180,7 @@ public final class PartyBots {
         }
     }
 
-    static PartyBotEntity spawn(ServerPlayer p, CharacterType t, CompoundTag record) {
+    public static PartyBotEntity spawn(ServerPlayer p, CharacterType t, CompoundTag record) {
         PartyBotEntity b = BotEntities.BOT.get().create(p.serverLevel());
         if (b == null) return null;
         b.setCharacter(t);

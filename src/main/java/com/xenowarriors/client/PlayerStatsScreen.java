@@ -65,7 +65,7 @@ public class PlayerStatsScreen extends Screen {
     @Override
     protected void init() {
         // tabs: four across, as wide as fits
-        int tabsN = com.xenowarriors.client.PacketScreens.collectionUnlocked ? 7 : 6;
+        int tabsN = com.xenowarriors.client.PacketScreens.collectionUnlocked ? 8 : 7;
         int gap = 4, tw = Math.min(84, (Math.max(cardW(), Math.min(width - 8, 7 * 70)) - gap * (tabsN - 1)) / tabsN), tx = (width - (tw * tabsN + gap * (tabsN - 1))) / 2;
         tabPlayers = addRenderableWidget(Button.builder(Component.literal("Warriors"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
         tabMe = addRenderableWidget(Button.builder(Component.literal("My Warrior"), b -> setTab(1)).bounds(tx + (tw + gap), 6, tw, 16).build());
@@ -73,9 +73,10 @@ public class PlayerStatsScreen extends Screen {
         tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(3)).bounds(tx + 3 * (tw + gap), 6, tw, 16).build());
         addRenderableWidget(Button.builder(Component.literal("Skills"), b -> minecraft.setScreen(new SkillLoadoutScreen(this))).bounds(tx + 4 * (tw + gap), 6, tw, 16).build());
         addRenderableWidget(Button.builder(Component.literal("KAs"), b -> minecraft.setScreen(new KaGuideScreen(this))).bounds(tx + 5 * (tw + gap), 6, tw, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("Party"), b -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))).bounds(tx + 6 * (tw + gap), 6, tw, 16).build());
         if (com.xenowarriors.client.PacketScreens.collectionUnlocked)       // after reading the Collection Book once
             addRenderableWidget(Button.builder(Component.literal("Collection"), b -> com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.CollectionActionPacket(0)))
-                    .bounds(tx + 6 * (tw + gap), 6, tw, 16).build());
+                    .bounds(tx + 7 * (tw + gap), 6, tw, 16).build());
         // settings: Karma Sensing (with its explanation underneath), then the Epic Fight options under their heading
         int bw = Math.min(240, cardW() - 20), bx = width / 2 - bw / 2;
         senseFriendly = addRenderableWidget(Button.builder(Component.empty(), b -> {
