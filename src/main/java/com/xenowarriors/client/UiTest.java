@@ -67,6 +67,7 @@ public final class UiTest {
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
         if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
+        if ("vehicles".equals(System.getenv("XW_UITEST_FOCUS"))) { vehicles(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -186,6 +187,49 @@ public final class UiTest {
         }
         l.add(new Step(null, () -> { com.xenowarriors.client.npc.SrModel.force = null;
             server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard())); }, 5));
+    }
+
+    /** The vehicles: lined up, a few colours, a driver in the car, the truck with its guard, the dealer screen. */
+    private static void vehicles(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.player.setXRot(18F); mc.player.setYRot(0F); }, 20));
+        var K = com.xenowarriors.vehicle.VehicleKind.values();
+        for (int i = 0; i < K.length; i++) {
+            final var k = K[i];
+            for (int v = 0; v < Math.min(2, k.variants.length); v++) {
+                final int vv = v;
+                l.add(new Step(null, () -> server(p -> {
+                    var lvl = p.serverLevel();
+                    lvl.getEntitiesOfClass(com.xenowarriors.vehicle.VehicleEntity.class, p.getBoundingBox().inflate(30)).forEach(e -> { e.ejectPassengers(); e.discard(); });
+                    p.setYRot(0); p.setXRot(18);
+                    var e = com.xenowarriors.vehicle.Vehicles.TYPES.get(k).get().create(lvl);
+                    if (e == null) return;
+                    double dist = k == com.xenowarriors.vehicle.VehicleKind.HELICOPTER ? 9 : k == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 4 : 7;
+                    e.moveTo(p.getX(), p.getY(), p.getZ() + dist, 145, 0); e.yBodyRot = 145; e.yHeadRot = 145;
+                    e.setVariant(vv);
+                    lvl.addFreshEntity(e);
+                    if (k == com.xenowarriors.vehicle.VehicleKind.GOV_TRUCK) {
+                        var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(lvl);
+                        if (g != null) { g.moveTo(e.position()); g.setup(true, 0, e.blockPosition()); lvl.addFreshEntity(g); g.startRiding(e, true); }
+                    }
+                }), 30));
+                l.add(new Step("vehicle_" + k.id + "_" + v, () -> {}, 5));
+            }
+        }
+        // riding the car (third person)
+        l.add(new Step(null, () -> server(p -> {
+            var lvl = p.serverLevel();
+            lvl.getEntitiesOfClass(com.xenowarriors.vehicle.VehicleEntity.class, p.getBoundingBox().inflate(30)).forEach(e -> { e.ejectPassengers(); e.discard(); });
+            var e = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.CAR).get().create(lvl);
+            if (e == null) return;
+            e.moveTo(p.getX(), p.getY(), p.getZ() + 1, 0, 0); lvl.addFreshEntity(e); p.startRiding(e, true);
+        }), 30));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(20F); }, 20));
+        l.add(new Step("vehicle_riding_car", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> { p.stopRiding(); }), 20));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; server(com.xenowarriors.vehicle.Dealer::open); }, 30));
+        l.add(new Step("vehicle_dealer", () -> {}, 5));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
     }
 
     /** Every bat look, lined up in front of the camera (with name tags). */
