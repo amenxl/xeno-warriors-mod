@@ -392,7 +392,14 @@ def export(fit, path):
     for c in fit.cubes:
         P_ = BB_PIV[c['bone']]; node = out['bones'][c['bone']]
         lo, hi = c['lo'], c['hi']; size3 = r4([hi[k] - lo[k] for k in range(3)])
-        if c['rot']:
+        if c.get('group') and not c['rot']:              # a named part the mod can show/hide (e.g. glasses)
+            gname, o = c['group']
+            g = next((ch for ch in node['children'] if ch.get('name') == gname), None)
+            if g is None:
+                g = {'name': gname, 'pivot': r4([P_[0] - o[0], P_[1] - o[1], o[2] - P_[2]]), 'rot': [0, 0, 0], 'cubes': [], 'children': []}
+                node['children'].append(g)
+            g['cubes'].append({'uv': c['uv'], 'from': r4([o[0] - hi[0], o[1] - hi[1], lo[2] - o[2]]), 'size': size3})
+        elif c['rot']:
             o = c['origin']; r = c['rot']
             node['children'].append({'name': f'n{n}', 'pivot': r4([P_[0] - o[0], P_[1] - o[1], o[2] - P_[2]]),
                                      'rot': r4([-math.radians(r[0]), -math.radians(r[1]), math.radians(r[2])]),

@@ -40,6 +40,8 @@ public class DetailModel {
 
     /** Outfit hood, pulled up over the head / bunched behind the neck (null if the outfit has none). */
     public ModelPart hoodUp, hoodDown;
+    /** Glasses that only come out for an idle (Yuri's), or null. */
+    public final ModelPart glasses;
 
     private DetailModel(ModelPart root) {
         this.root = root;
@@ -53,6 +55,7 @@ public class DetailModel {
         this.bangs = childOrNull(head, "bangs");
         this.hoodUp = childOrNull(head, "hood_up");
         this.hoodDown = childOrNull(body, "hood_down");
+        this.glasses = childOrNull(head, "glasses");
         this.coatBack = childOrNull(body, "coat_back");
         this.coatFrontR = childOrNull(body, "coat_front_r");
         this.coatFrontL = childOrNull(body, "coat_front_l");

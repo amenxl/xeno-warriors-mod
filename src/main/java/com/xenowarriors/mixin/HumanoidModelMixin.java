@@ -46,6 +46,7 @@ public abstract class HumanoidModelMixin {
                     com.xenowarriors.client.RhalixHungerClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                     com.xenowarriors.client.RhalixBookIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 }
+                com.xenowarriors.client.YuriLaptopIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.JumpAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.party.PartyClient.applyPose((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.FoxRun.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

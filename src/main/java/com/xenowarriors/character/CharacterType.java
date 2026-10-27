@@ -27,10 +27,14 @@ public enum CharacterType {
     TECHNICA("technica", 0xFFEC5AA0),
     /** The Disco Dojo brothers. */
     STEVIE("stevie", 0xFF4A2A9A),
-    GARRY("garry", 0xFF2AA82A);
+    GARRY("garry", 0xFF2AA82A),
+    /** Yuri Tenjo: the hacker genius (season 2), Ultima's little sister. */
+    YURI("yuri", 0xFF3AD04A),
+    /** Zane the Magical Mage (season 3): magic, not karma. */
+    ZANE("zane", 0xFF9A4AD8);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
@@ -39,7 +43,7 @@ public enum CharacterType {
     /** The Sky Patrol members (for team synergy). */
     public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
 
-    public int season() { return this == AIONI ? 3 : this == ULTIMA || this == KAERU ? 2 : 1; }
+    public int season() { return this == AIONI || this == ZANE ? 3 : this == ULTIMA || this == KAERU || this == YURI ? 2 : 1; }
 
     private final String id;
     private final int color;
@@ -60,6 +64,7 @@ public enum CharacterType {
         return switch (this) {
             case MIKIKO -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3", "Recarnet Season 3 (Variant 2)"};
             case RHALIX -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3"};
+            case YURI -> new String[]{"Default", "C1 PJs"};
             default -> new String[]{"Default"};
         };
     }
@@ -68,6 +73,7 @@ public enum CharacterType {
         return switch (this) {
             case MIKIKO -> new String[]{"", "origins1", "origins2", "s3", "s3b"};
             case RHALIX -> new String[]{"", "origins1", "origins2", "s3"};
+            case YURI -> new String[]{"", "c1pjs"};
             default -> new String[]{""};
         };
     }

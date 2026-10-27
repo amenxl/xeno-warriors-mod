@@ -522,7 +522,170 @@ GARRY = dict(skin=D_SKIN, eyes='#2a9a2a', hair=[G1, G2], paint=garry_paint,
              eye=['.........', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '..wOOOw..', '..kkkkk..', '.........'],
              mouth=['.kkkk.', 'k.rr.k', '.kkkk.'], mouth_x=13, mouth_y=24, face_extra=[stubble], wing=None, fit=garry)
 
-CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
+# ====================================================================== YURI (Tenjo)
+Y_SKIN, Y_EYE = '#f6dcd2', '#3ac83a'
+YH1, YH2, YH3 = '#0e100e', '#181c18', '#263026'
+Y_COAT, Y_COATD, Y_GRN, Y_GRN2, Y_BLK = '#eeeef0', '#d0d0d6', '#3ad04a', '#1e8a2a', '#141614'
+
+def yuri_hair(f):
+    # black bob with blunt bangs, a little side ponytail tied with a red ribbon
+    hair(f, YH1, YH2, back_len=25.0, side_len=25.0,
+         locks=[([x, 31.9, -4.75], [0, -1, -0.12], 3.0, 1.9) for x in (-3.4, -1.7, 0.0, 1.7, 3.4)]
+         + [([s * 4.55, 31.0, z], [s * 0.05, -1, 0.05], 6.4, 2.0) for s in (1, -1) for z in (-3.4, -1.2, 1.2, 3.4)]
+         + [([x, 31.0, 4.65], [0, -1, 0.08], 6.4, 2.2) for x in (-2.8, 0.0, 2.8)])
+    f.add('head', [3.9, 29.6, 0.4], [5.6, 31.6, 2.6], YH2)                                    # side ponytail (her right)
+    lock(f, [5.4, 30.4, 1.5], [0.7, -0.6, 0.3], 3.6, 1.8, (YH2, YH1, YH3), thick=1.6)
+    f.add('head', [4.4, 30.0, 0.2], [5.0, 32.4, 2.8], '#d42a2a')                              # red ribbon
+    lock(f, [4.8, 32.2, 1.4], [0.3, 1, -0.2], 2.2, 0.8, ('#d42a2a', '#e84040', '#d42a2a'), thick=0.25)
+    # her glasses: only out for her laptop idle (the game shows the 'glasses' part then)
+    G = ('glasses', [0, 28, -4.7])
+    for sx in (1, -1):
+        x0, x1 = (0.4, 3.6) if sx > 0 else (-3.6, -0.4)
+        for lo, hi in (([x0, 28.6], [x1, 28.95]), ([x0, 26.9], [x1, 27.25]), ([x0, 26.9], [x0 + 0.32, 28.95]), ([x1 - 0.32, 26.9], [x1, 28.95])):
+            f.add('head', [lo[0], lo[1], -4.85], [hi[0], hi[1], -4.65], Y_GRN, shade=False, group=G)
+    f.add('head', [-0.4, 28.2, -4.85], [0.4, 28.55, -4.65], Y_GRN, shade=False, group=G)
+    for sx in (1, -1):
+        x0, x1 = (3.6, 4.0) if sx > 0 else (-4.0, -3.6)
+        f.add('head', [x0, 28.3, -4.75], [x1, 28.65, -1.0], Y_GRN2, shade=False, group=G)
+
+C1 = [r[::-1] for r in ['.kkkkk.', 'k.....k', 'k..k...', 'k.kk...', 'k..k...', 'k..k..k', 'k.kkk.k', '.kkkkk.']]   # mirrored: +x is her right
+
+def yuri_paint(part, face, x, y, W, H, outer):
+    if part == 'body': return Y_BLK if y < 10 else Y_BLK
+    if part in ('rarm', 'larm'): return Y_COAT if y < 10 else ('#141418' if y >= 10 else None)
+    if part in ('rleg', 'lleg'):
+        if y >= 9: return '#8a8a92'
+        if 6 <= y <= 8: return Y_GRN2
+        return Y_BLK
+    return None
+
+def yuri(f):
+    yuri_hair(f)
+    # black top with green lines in a V down to the C1, a green gem brooch at the collar
+    shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.26, Y_BLK)
+    for sx in (1, -1):
+        for k in range(6):
+            t = k / 5
+            x, y = sx * (1.5 - 1.2 * t), 23.6 - 3.2 * t
+            f.add('body', [x - 0.16, y - 0.36, -2.36], [x + 0.16, y + 0.36, -2.24], Y_GRN, shade=False)
+    plate(f, 'body', C1, 0.0, 19.6, -2.36, 0.32, Y_GRN)
+    f.add('body', [-0.8, 23.4, -2.6], [0.8, 24.6, -2.3], '#5ae86a', shade=False)                # gem brooch
+    f.add('body', [-1.4, 23.8, -2.45], [1.4, 24.2, -2.3], '#c8c8cc')
+    # white lab coat, long, with green piping, shoulder panels and green gem buttons
+    for sx in (1, -1):
+        x0, x1 = (1.8, 4.55) if sx > 0 else (-4.55, -1.8)
+        f.add('body', [x0, 6.0, -2.6], [x1, 24.4, -2.35], Y_COAT)
+        xi = 1.8 if sx > 0 else -2.15                                                       # green piping down the lapel edge
+        f.add('body', [xi, 15.0, -2.72], [xi + 0.35, 24.4, -2.58], Y_GRN, shade=False)
+        f.add('body', [sx * 3.0 - 0.45, 21.4, -2.72], [sx * 3.0 + 0.45, 22.3, -2.58], '#5ae86a', shade=False)   # green gem buttons
+        f.add('body', [sx * 3.0 - 0.45, 18.6, -2.72], [sx * 3.0 + 0.45, 19.5, -2.58], '#5ae86a', shade=False)
+    shell(f, 'body', [-4, 6.0, -2], [4, 24.2, 2], 0.45, Y_COAT, {'front': lambda x, y: None})
+    f.add('body', [-4.5, 6.0, 2.3], [4.5, 12.0, 2.6], Y_COAT, {'back': lambda x, y: Y_GRN if y > .88 else Y_COAT})   # coat tail, green hem
+    f.add('body', [-3.4, 23.4, 1.9], [3.4, 25.2, 2.9], Y_COATD)                                 # collar
+    for sx in (1, -1):
+        f.both('right_arm', [3.4, 22.6, -2.65], [8.6, 24.7, 2.65], Y_COAT, {'top': Y_COAT, 'front': lambda x, y: Y_GRN if y > .7 else Y_COAT}) if sx > 0 else None
+    f.both('right_arm', [6.0, 23.4, -0.9], [7.6, 25.0, 0.9], '#5ae86a', shade=False)              # shoulder gems
+    f.both('right_arm', [3.45, 12.4, -2.55], [8.55, 24.4, 2.55], Y_COAT, {'bottom': Y_COATD})    # long sleeves
+    f.both('right_arm', [3.4, 12.0, -2.6], [8.6, 12.8, 2.6], Y_COATD)
+    f.both('right_arm', [3.5, 11.6, -2.5], [8.5, 12.4, 2.5], '#141418')                         # fingerless gloves peeking out
+    # black pants, big green rolled cuffs, grey boots with green soles
+    f.both('right_leg', [-0.35, 5.0, -2.35], [4.35, 12.3, 2.35], Y_BLK)
+    f.both('right_leg', [-0.65, 4.0, -2.65], [4.65, 6.8, 2.65], Y_GRN2, {'top': Y_GRN})
+    f.both('right_leg', [-0.4, 0.0, -2.7], [4.4, 4.2, 2.45], '#8a8a92')
+    f.both('right_leg', [0.1, 0.0, -3.2], [3.9, 1.6, -2.7], '#8a8a92')
+    f.both('right_leg', [-0.5, 0.0, -3.3], [4.5, 0.5, 2.55], Y_GRN2)
+
+def yuri_mark(px, cm, dark):
+    G = (58, 200, 74, 255)
+    for (x, y) in ((23, 22), (24, 22), (25, 22), (22, 23), (26, 23), (22, 24), (26, 24), (23, 25), (24, 25), (25, 25), (24, 21), (24, 23)):
+        px[x, y] = G                                                                        # the green power mark under her eye
+YURI = dict(skin=Y_SKIN, eyes=Y_EYE, hair=[YH1, YH2], paint=yuri_paint,
+            brow=['.........', '.........'],
+            eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
+            mouth=['..kk..'], mouth_x=13, mouth_y=25, face_extra=[yuri_mark], wing=None, fit=yuri)
+
+# C1 PJs: an oversized bright green sweater-dress with white sunburst stripes at the cuffs, black hems and the C1 badge
+PJ, PJ2 = '#5ae80a', '#46c008'
+def pjs_paint(part, face, x, y, W, H, outer):
+    if part == 'body': return PJ
+    if part in ('rarm', 'larm'): return PJ
+    if part in ('rleg', 'lleg'): return None                                               # bare legs
+    return None
+
+def yuri_pjs(f):
+    yuri_hair(f)
+    shell(f, 'body', [-4, 6.4, -2], [4, 24, 2], 0.5, PJ, {'front': lambda x, y: PJ2 if y > .92 else PJ})
+    f.add('body', [-4.55, 6.0, -2.55], [4.55, 7.2, 2.55], '#141414')                            # black hem
+    f.add('body', [-1.8, 15.6, -2.62], [1.8, 19.2, -2.5], '#f4f4f4', shade=False)                 # the C1 badge
+    plate(f, 'body', C1, 0.0, 18.9, -2.66, 0.38, '#141414')
+    sun = lambda x, y: '#f4f4f4' if int((x * 3 + y * 5) * 2) % 3 == 0 else PJ
+    f.both('right_arm', [3.4, 10.4, -2.6], [8.6, 24.5, 2.6], PJ, {k: (lambda x, y: (sun(x, y) if y > .7 else PJ)) for k in ('front', 'back', 'right', 'left')})
+    f.both('right_arm', [3.3, 10.0, -2.7], [8.7, 11.0, 2.7], '#141414')                          # long sleeves over her hands
+
+YURI_PJS = dict(YURI, paint=pjs_paint, fit=yuri_pjs)
+
+# ====================================================================== ZANE (the Magical Mage)
+Z_SKIN, Z_EYE = '#d89a82', '#6a4ab8'
+ZH1, ZH2, ZP1, ZP2 = '#14102a', '#1e1838', '#8a5ae6', '#a87cf2'
+Z_SHIRT, Z_SHIRT2, Z_HAMSA, Z_BLK = '#b04ac4', '#9a3cae', '#b8a4f2', '#141418'
+HAMSA = ['..k.k.k..', '..k.k.k..', '.kk.k.k.k', 'kkkkkkkkk', 'kkk...kkk', 'kk.kkk.kk', 'kkk...kkk', '.kkkkkkk.', '..kkkkk..', '...kkk...']
+
+def zane_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 10: return Z_BLK
+        return Z_SHIRT
+    if part in ('rarm', 'larm'):
+        if y < 7: return Z_BLK                                                # black sleeves down past the elbow
+        return None
+    if part in ('rleg', 'lleg'):
+        if y >= 11: return Z_BLK if not (face in ('front',) and y == 11) else '#e8eef0'
+        if y >= 6: return None                                                # bare shins
+        if y == 5: return '#e8eef0'                                           # white hem stripe
+        return Z_BLK
+    return None
+
+def zane(f):
+    # messy navy-black hair, spiky on top, with purple streaks on both sides of the front
+    hair(f, ZH1, ZH2, back_len=25.5, side_len=26.0,
+         locks=[([x, 31.9, -4.75], [x * 0.12, -1, -0.3], 2.8, 1.9) for x in (-3.3, -1.5, 0.4, 2.2)]
+         + [([s * 4.55, 31.0, z], [s * 0.35, -1, 0.1], 5.0, 1.9) for s in (1, -1) for z in (-2.8, 0.0, 2.8)]
+         + [([x, 31.0, 4.7], [x * 0.1, -1, 0.35], 5.6, 2.1) for x in (-2.6, 0.0, 2.6)],
+         spikes=[([-0.6, 32.8, -0.6], [-0.3, 1, -0.5], 3.0, 1.4), ([0.8, 32.8, 0.6], [0.4, 1, 0.2], 2.6, 1.3),
+                 ([2.4, 32.6, -1.8], [0.8, 0.6, -0.4], 2.4, 1.2), ([-2.6, 32.6, 1.6], [-0.8, 0.6, 0.3], 2.2, 1.2)])
+    for (x, z, d) in ((3.2, -4.5, [0.5, -1, -0.2]), (4.5, -2.6, [0.4, -1, -0.1]), (4.6, -0.6, [0.4, -1, 0.1]),     # purple streak (his right)
+                      (-2.0, -4.6, [-0.2, -1, -0.3]), (-4.5, -2.8, [-0.4, -1, -0.1])):                             # and (his left)
+        lock(f, [x, 32.0, z], d, 3.4, 1.8, (ZP1, ZP2, ZP1), thick=0.9)
+    f.add('head', [2.0, 32.4, -4.7], [4.7, 33.2, -1.0], ZP1)                                      # purple on top at the front
+    # navy rectangle glasses
+    for sx in (1, -1):
+        x0, x1 = (0.5, 3.7) if sx > 0 else (-3.7, -0.5)
+        for lo, hi in (([x0, 28.5], [x1, 28.85]), ([x0, 26.6], [x1, 26.95]), ([x0, 26.6], [x0 + 0.32, 28.85]), ([x1 - 0.32, 26.6], [x1, 28.85])):
+            f.add('head', [lo[0], lo[1], -4.85], [hi[0], hi[1], -4.65], '#1c2050', shade=False)
+        f.add('head', [x0 + 0.3, 28.35, -4.82], [x1 - 0.3, 28.5, -4.68], '#e8e8f4', shade=False)     # glint
+        xa, xb = (3.7, 4.05) if sx > 0 else (-4.05, -3.7)
+        f.add('head', [xa, 28.4, -4.75], [xb, 28.75, -1.0], '#1c2050', shade=False)
+    f.add('head', [-0.5, 28.1, -4.85], [0.5, 28.45, -4.65], '#1c2050', shade=False)
+    # magenta tee with the lavender hamsa (hand with an eye), black sleeves
+    shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.26, Z_SHIRT, {'front': lambda x, y: Z_SHIRT2 if y > .93 else Z_SHIRT})
+    plate(f, 'body', HAMSA, 0.0, 20.6, -2.38, 0.42, Z_HAMSA)
+    f.add('body', [-0.4, 18.0, -2.42], [0.4, 18.4, -2.3], Z_SHIRT2, shade=False)                    # the eye's pupil
+    f.both('right_arm', [3.62, 17.0, -2.38], [8.38, 24.38, 2.38], Z_BLK)
+    f.both('right_arm', [3.5, 16.6, -2.5], [8.5, 17.6, 2.5], '#22222a')                            # rolled cuff
+    # black shorts, white hem stripes, a white band on his left leg; black shoes with white toes
+    shell(f, 'body', [-4, 10.6, -2], [4, 12.6, 2], 0.32, Z_BLK)
+    f.both('right_leg', [-0.5, 6.0, -2.5], [4.5, 12.3, 2.5], Z_BLK)
+    f.both('right_leg', [-0.55, 5.6, -2.55], [4.55, 6.3, 2.55], '#e8eef0')
+    f.add('left_leg', [-4.56, 9.0, -2.56], [0.56, 9.6, 2.56], '#e8eef0')
+    f.both('right_leg', [-0.4, 0.0, -2.7], [4.4, 1.8, 2.45], Z_BLK)
+    f.both('right_leg', [0.1, 0.0, -3.2], [3.9, 1.0, -2.7], '#e8eef0')
+    f.both('right_leg', [-0.5, 0.0, -3.3], [4.5, 0.35, 2.55], '#e8eef0')
+
+ZANE = dict(skin=Z_SKIN, eyes=Z_EYE, hair=[ZH1, ZH2], paint=zane_paint,
+            brow=['.........', 'kkkkkkk..', '.........'],
+            eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
+            mouth=['k....k', '.kkkk.'], mouth_x=13, mouth_y=25, wing=None, fit=zane)
+
+CHARS = {'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

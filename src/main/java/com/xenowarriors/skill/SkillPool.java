@@ -80,6 +80,16 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.sp.DojoSkills.BodySlam(), 0), new Entry(new com.xenowarriors.skill.sp.DojoSkills.DiscoKick(), 0),
                 new Entry(new com.xenowarriors.skill.sp.DojoSkills.FreestyleBars(), 15)));
         ULTIMATE.put(CharacterType.GARRY, new com.xenowarriors.skill.sp.DojoSkills.BrotherBlast(0x3AD83A));
+        POOL.put(CharacterType.YURI, List.of(
+                new Entry(new com.xenowarriors.skill.ffr.YuriSkills.CameraHack(), 0, 2), new Entry(new com.xenowarriors.skill.ffr.YuriSkills.Firewall(), 0, 2),
+                new Entry(new com.xenowarriors.skill.ffr.YuriSkills.ElevatorHack(), 0, 2), new Entry(new com.xenowarriors.skill.ffr.YuriSkills.TenjoMedical(), 0, 2),
+                new Entry(new com.xenowarriors.skill.ffr.YuriSkills.VirusUpload(), 20, 2)));
+        ULTIMATE.put(CharacterType.YURI, new com.xenowarriors.skill.ffr.YuriSkills.OpenSkyGround());
+        POOL.put(CharacterType.ZANE, List.of(
+                new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.FireSpell(), 0, 3), new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.IceSpell(), 0, 3),
+                new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.ThunderSpell(), 0, 3), new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.BroomSmack(), 0, 3),
+                new Entry(new com.xenowarriors.skill.ffr.ZaneSkills.ManaBarrier(), 20, 3)));
+        ULTIMATE.put(CharacterType.ZANE, new com.xenowarriors.skill.ffr.ZaneSkills.PastMages());
     }
 
     private SkillPool() {}

@@ -15,7 +15,7 @@ BL, ED, GU, PO, GR, FU = [0, 0, 4, 16], [4, 0, 6, 16], [6, 0, 10, 4], [6, 4, 10,
 els = [{"from": [6.8, 7.0, 7.6], "to": [9.4, 30.0, 8.4], "faces": {**F(BL, ("north", "south", "east", "west", "down"))}},       # wide blade
        {"from": [7.4, 8.0, 7.5], "to": [8.4, 28.5, 8.5], "faces": F(FU, ("north", "south"))},                                   # dark fuller with notches
        {"from": [9.4, 7.0, 7.75], "to": [9.9, 30.0, 8.25], "faces": F(ED)},                                                     # edge
-       {"from": [6.8, 30.0, 7.6], "to": [8.6, 32.2, 8.4], "faces": F(BL)},                                                       # the angled tip
+       {"from": [6.8, 30.0, 7.6], "to": [8.6, 31.9, 8.4], "faces": F(BL)},                                                       # the angled tip
        {"from": [8.6, 30.0, 7.7], "to": [9.9, 31.2, 8.3], "faces": F(ED)},
        {"from": [6.0, 6.0, 7.0], "to": [10.2, 7.0, 9.0], "faces": F(GU)},                                                        # small guard
        {"from": [7.2, -3.0, 7.2], "to": [8.8, 6.0, 8.8], "faces": F(GR)},                                                        # cream-wrapped grip

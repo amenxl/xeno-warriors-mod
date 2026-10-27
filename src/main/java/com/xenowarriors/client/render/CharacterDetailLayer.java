@@ -396,6 +396,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean hood = model.hoodUp != null && com.xenowarriors.client.mikiko.HoodClient.up(player);
         boolean armorHood = com.xenowarriors.client.mikiko.HoodClient.karmaHoodie(player) && com.xenowarriors.client.mikiko.HoodClient.up(player);
         if (model.hoodUp != null) model.hoodUp.visible = hood;
+        if (model.glasses != null) model.glasses.visible = com.xenowarriors.client.YuriLaptopIdle.glasses(player);
         if (model.hoodDown != null) model.hoodDown.visible = !hood;
         if (model.hair != null) {
             // the outfit's own hood: his hair still shows under it (the strands that would poke through it are tucked in)
@@ -413,6 +414,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         // Rhalix's Origins outfits: the book he summons and reads
         if (type == CharacterType.RHALIX) com.xenowarriors.client.RhalixBookIdle.render(player, poseStack, buffers, packedLight, partialTick);
+        if (type == CharacterType.YURI) com.xenowarriors.client.YuriLaptopIdle.render(player, poseStack, buffers, packedLight, partialTick);
 
         // Rhalix sharpening his sword: a whetstone in his other hand
         if (type == CharacterType.RHALIX && com.xenowarriors.client.RhalixCombatAnim.sharpening(player)) {

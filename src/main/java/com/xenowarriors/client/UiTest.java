@@ -70,6 +70,7 @@ public final class UiTest {
         if ("vehicles".equals(System.getenv("XW_UITEST_FOCUS"))) { vehicles(mc, l); return l; }
         if ("kaeru".equals(System.getenv("XW_UITEST_FOCUS"))) { kaeru(mc, l); return l; }
         if ("sp".equals(System.getenv("XW_UITEST_FOCUS"))) { skyPatrol(mc, l); return l; }
+        if ("ffr".equals(System.getenv("XW_UITEST_FOCUS"))) { ffr(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -193,7 +194,7 @@ public final class UiTest {
 
     /** The Sky Patrol: each one front/back/flying, a few skills, and both pages of the character select screen. */
     private static void skyPatrol(Minecraft mc, List<Step> l) {
-        CharacterType[] sp = {CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.GARRY, CharacterType.AIONI};
+        CharacterType[] sp = {CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.GARRY, CharacterType.AIONI, CharacterType.YURI, CharacterType.ZANE};
         for (CharacterType t : sp) {
             l.add(new Step(null, () -> { character(t); server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); }); }, 40));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
@@ -225,6 +226,75 @@ public final class UiTest {
             mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
         for (int t = 0; t < com.xenowarriors.client.screen.CharacterSelectScreen.Group.values().length; t++) {
             l.add(new Step("sp_select_team" + t, () -> {}, 5));
+            l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.screen.CharacterSelectScreen.nextPageForTest();
+                mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
+        }
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
+    }
+
+    private static void outfit(int o) {
+        server(p -> { p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = o);
+            com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p); });
+    }
+
+    private static void hold(net.minecraft.world.item.Item it) {
+        server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, it == null ? net.minecraft.world.item.ItemStack.EMPTY : new net.minecraft.world.item.ItemStack(it)));
+    }
+
+    /** Yuri (front/back, glasses + holo laptop idle frames, C1 PJs), Zane (front/back, broom, spells), Max's knife and Sam's bat. */
+    private static void ffr(Minecraft mc, List<Step> l) {
+        Runnable front = () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(10F); mc.player.setYRot(0F); };
+        Runnable back = () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); };
+        l.add(new Step(null, () -> { character(CharacterType.YURI); hold(null); }, 40));
+        l.add(new Step(null, front, 20));
+        l.add(new Step("ffr_yuri_front", () -> {}, 5));
+        l.add(new Step(null, back, 15));
+        l.add(new Step("ffr_yuri_back", () -> {}, 5));
+        l.add(new Step(null, front, 10));
+        for (int f = 0; f < 22; f++) l.add(new Step(String.format("ffr_yuri_idle_%02d", f), () -> {}, 3));
+        l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 6));
+        l.add(new Step("ffr_yuri_idle_back", () -> {}, 5));
+        l.add(new Step(null, () -> { outfit(1); }, 30));
+        l.add(new Step(null, front, 10));
+        l.add(new Step("ffr_yuri_pjs_front", () -> {}, 5));
+        l.add(new Step(null, back, 15));
+        l.add(new Step("ffr_yuri_pjs_back", () -> {}, 5));
+        l.add(new Step(null, () -> { outfit(0); character(CharacterType.ZANE); }, 40));
+        l.add(new Step(null, front, 20));
+        l.add(new Step("ffr_zane_front", () -> {}, 5));
+        l.add(new Step(null, back, 15));
+        l.add(new Step("ffr_zane_back", () -> {}, 5));
+        l.add(new Step(null, () -> { hold(com.xenowarriors.item.ModItems.ZANE_BROOM.get()); front.run(); }, 20));
+        l.add(new Step("ffr_zane_broom", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> {
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (z == null) return;
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 4, 180, 0); z.setNoAi(true); z.setYHeadRot(180); z.yBodyRot = 180;
+            p.serverLevel().addFreshEntity(z); p.setYRot(0); p.setXRot(10);
+        }), 20));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> { p.setYRot(0); p.setXRot(8); new com.xenowarriors.skill.ffr.ZaneSkills.ThunderSpell().use(p); }); }, 4));
+        l.add(new Step("ffr_zane_thunder", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> new com.xenowarriors.skill.ffr.ZaneSkills.IceSpell().use(p)), 6));
+        l.add(new Step("ffr_zane_ice", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> new com.xenowarriors.skill.ffr.ZaneSkills.FireSpell().use(p)), 6));
+        l.add(new Step("ffr_zane_fire", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.skill.ffr.ZaneProjection.use(p)), 10));
+        l.add(new Step("ffr_zane_projection", () -> {}, 5));
+        l.add(new Step(null, () -> { character(CharacterType.YURI); hold(null); }, 40));
+        l.add(new Step(null, () -> server(p -> new com.xenowarriors.skill.ffr.YuriSkills.Firewall().use(p)), 12));
+        l.add(new Step("ffr_yuri_firewall", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> new com.xenowarriors.skill.ffr.YuriSkills.ElevatorHack().use(p)), 16));
+        l.add(new Step("ffr_yuri_elevator", () -> {}, 5));
+        l.add(new Step(null, () -> { character(CharacterType.MAX); hold(com.xenowarriors.item.ModItems.MAX_KNIFE.get()); }, 40));
+        l.add(new Step(null, front, 20));
+        l.add(new Step("ffr_max_knife", () -> {}, 5));
+        l.add(new Step(null, () -> { character(CharacterType.SAM); hold(com.xenowarriors.item.ModItems.SAM_BAT.get()); }, 40));
+        l.add(new Step(null, front, 20));
+        l.add(new Step("ffr_sam_bat", () -> {}, 5));
+        l.add(new Step(null, () -> { hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
+        for (int t = 0; t < com.xenowarriors.client.screen.CharacterSelectScreen.Group.values().length; t++) {
+            l.add(new Step("ffr_select_team" + t, () -> {}, 5));
             l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.screen.CharacterSelectScreen.nextPageForTest();
                 mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
         }

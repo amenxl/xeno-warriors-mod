@@ -64,6 +64,13 @@ public final class ModItems {
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
     public static final RegistryObject<Item> KEITA_BLADE = ITEMS.register("keita_blade", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 4, -2.2F,
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+    /** Zane's broom staff, Max's serrated knife and Sam's bat. */
+    public static final RegistryObject<Item> ZANE_BROOM = ITEMS.register("zane_broom", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.IRON, 3, -2.6F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> MAX_KNIFE = ITEMS.register("max_knife", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 2, -1.8F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> SAM_BAT = ITEMS.register("sam_bat", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.IRON, 5, -3.0F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
     public static final RegistryObject<Item> FOX_KING_CROWN = ITEMS.register("fox_king_crown", () -> new com.xenowarriors.item.recarnet.FoxKingCrownItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
     public static final RegistryObject<Item> FACILITY_MAP = ITEMS.register("facility_map", () -> new com.xenowarriors.item.recarnet.FacilityMapItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> VR_CONSOLE = ITEMS.register("vr_console", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.VR_CONSOLE.get(), new Item.Properties()));
@@ -229,6 +236,9 @@ public final class ModItems {
             event.accept(SENJU_BLADE);
             event.accept(LOGAN_BLADE);
             event.accept(KEITA_BLADE);
+            event.accept(ZANE_BROOM);
+            event.accept(MAX_KNIFE);
+            event.accept(SAM_BAT);
         }
     }
 }
