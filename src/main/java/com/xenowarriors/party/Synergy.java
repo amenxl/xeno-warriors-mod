@@ -41,7 +41,8 @@ import java.util.*;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Synergy {
     public static final double RANGE = 24;
-    public static final String PARTNERS = "Partners", SKYLAND = "Skyland Bond", GOOFY = "Goofy Rivals", SOUL_LINK = "Soul Link", BROTHERS = "Brothers";
+    public static final String PARTNERS = "Partners", SKYLAND = "Skyland Bond", GOOFY = "Goofy Rivals", SOUL_LINK = "Soul Link", BROTHERS = "Brothers",
+            TENJO = "Tenjo Siblings", OLD_FRIENDS = "Old Friends", MARRIED = "Married";
     /** Sky Patrol members (by character id) - for when they become playable. */
     public static final Set<String> SKY_PATROL = Set.of("sam", "lexy", "max", "technica");
     private static final Map<UUID, Set<String>> ACTIVE = new HashMap<>();
@@ -85,6 +86,9 @@ public final class Synergy {
         if (pair(me, them, "mikiko", "ultima")) s.add(GOOFY);
         if (pair(me, them, "mikiko", "kaeru")) s.add(SOUL_LINK);
         if (pair(me, them, "stevie", "garry")) s.add(BROTHERS);
+        if (pair(me, them, "yuri", "ultima")) s.add(TENJO);
+        if (pair(me, them, "zane", "mikiko")) s.add(OLD_FRIENDS);
+        if (pair(me, them, "max", "technica")) s.add(MARRIED);
         return s;
     }
 
@@ -133,6 +137,9 @@ public final class Synergy {
             case GOOFY -> "rival kills fire you up, expect some goofing off";
             case SOUL_LINK -> "+20% damage, -15% damage taken, faster Karma - but if one of you dies, so does the other";
             case BROTHERS -> "+15% damage, and Brother Blast hits much harder together";
+            case TENJO -> "Ultima +15% damage, Yuri's hacks last longer";
+            case OLD_FRIENDS -> "skills cost 25% less";
+            case MARRIED -> "your hits heal your partner a little";
             default -> "";
         };
         p.displayClientMessage(Component.literal("Synergy - " + s + ": ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
@@ -168,6 +175,13 @@ public final class Synergy {
             if (s.contains(SKYLAND)) mult += skyPatrolCount(a) >= 3 ? 0.2F : 0.1F;
             if (s.contains(SOUL_LINK)) mult += 0.2F;
             if (s.contains(BROTHERS)) mult += 0.15F;
+            if (s.contains(TENJO) && ModCapabilities.getType(a) == CharacterType.ULTIMA) mult += 0.15F;
+            if (s.contains(MARRIED) && !(event.getEntity() instanceof ServerPlayer)) {
+                for (LivingEntity e : partners(a)) {
+                    String pid = id(e);
+                    if ((pid.equals("max") || pid.equals("technica")) && !pid.equals(id(a))) e.heal(0.5F);
+                }
+            }
             int[] r = RIVAL.get(a.getUUID());
             if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0];
             if (mult != 1F) event.setAmount(event.getAmount() * mult);

@@ -50,6 +50,8 @@ public final class Karma {
     public static void notEnough(ServerPlayer player, float amount) {
         if (com.xenowarriors.character.ModCapabilities.getType(player) == com.xenowarriors.character.CharacterType.ULTIMA)
             player.displayClientMessage(Component.literal("Not enough Data (" + Math.round(get(player)) + "/" + Math.round(amount) + ")").withStyle(net.minecraft.ChatFormatting.RED), true);
+        else if (com.xenowarriors.character.ModCapabilities.getType(player) == com.xenowarriors.character.CharacterType.ZANE)
+            player.displayClientMessage(Component.literal("Not enough Mana (" + Math.round(get(player)) + "/" + Math.round(amount) + ") - hold your Magical Orb to draw on it").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
         else player.displayClientMessage(Component.translatable("message.xenowarriors.no_karma",
                 Math.round(amount), Math.round(get(player))), true);
     }
@@ -86,6 +88,10 @@ public final class Karma {
             if (data.getKarma() < data.karmaMax) {
                 float rate = (focusing ? FOCUS_REGEN : REGEN) / 20F;
                 if (com.xenowarriors.item.HoodieItem.wearing(player)) rate *= 0.5F;   // it suppresses your Karma
+                // Zane's Mana: his Magical Orb stores it - holding the orb draws it back twice as fast
+                if (data.getType() == CharacterType.ZANE && (player.getMainHandItem().getItem() instanceof com.xenowarriors.item.recarnet.MagicalOrbItem
+                        || player.getOffhandItem().getItem() instanceof com.xenowarriors.item.recarnet.MagicalOrbItem)) rate *= 2F;
+                if (com.xenowarriors.party.Synergy.has(player, com.xenowarriors.party.Synergy.OLD_FRIENDS)) rate += 0.5F / 20F;
                 // Sky Leggings: walking slowly brings Karma back
                 if (com.xenowarriors.sky.SkyArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.LEGS) && player.onGround()
                         && Math.abs(player.getX() - player.xo) + Math.abs(player.getZ() - player.zo) > 0.03) rate += 1.5F / 20F;

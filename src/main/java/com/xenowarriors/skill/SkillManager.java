@@ -134,6 +134,7 @@ public final class SkillManager {
                 return;
             }
             int cost = skill.getKarmaCost(player);
+            if (com.xenowarriors.party.Synergy.has(player, com.xenowarriors.party.Synergy.OLD_FRIENDS)) cost = Math.round(cost * 0.75F);   // Old Friends: Zane + Mikiko
             if (!Karma.has(player, cost)) {
                 Karma.notEnough(player, cost);
                 return;

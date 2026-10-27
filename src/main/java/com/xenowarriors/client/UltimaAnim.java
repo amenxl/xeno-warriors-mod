@@ -196,6 +196,7 @@ public final class UltimaAnim {
 
     /** What his energy is called: Data (Gov data powers him), not Karma. */
     public static String resource() {
-        return ClientCharacterData.getLocal() == CharacterType.ULTIMA ? "Data" : "Karma";
+        CharacterType t = ClientCharacterData.getLocal();
+        return t == CharacterType.ULTIMA ? "Data" : t == CharacterType.ZANE ? "Mana" : "Karma";   // (Zane runs on magic: Mana)
     }
 }

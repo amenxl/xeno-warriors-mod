@@ -362,7 +362,7 @@ if __name__ == '__main__':
         kfit = fit_fn()
         pack(kfit, katlas)
         katlas.save(OUT + name + '_foxking_details.png')
-        export(kfit, RES + 'models/detail/' + name + '_foxking.json', char='mikiko_foxking')
+        export(kfit, RES + 'models/detail/' + name + '_foxking.json', size=512, char='mikiko_foxking')   # (Fox King atlases are 512: the side mask lives in the lower half)
         sheet = preview(mj, skin, atlas, face, scale=9)
         sheet.save(f'/tmp/claude-0/-home-claude/b2fe60cb-fd40-5a94-8ee2-7d1a501fd998/scratchpad/outfit/prev_{key}.png')
         prev.append(sheet)
