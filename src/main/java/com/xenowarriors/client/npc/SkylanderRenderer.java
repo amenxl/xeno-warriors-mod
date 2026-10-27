@@ -11,7 +11,7 @@ import net.minecraft.util.Mth;
 /** Skylanders: wings beating in flight, folded on the ground - and gone for good on a Wingless Skylander, who looks it. */
 public class SkylanderRenderer extends NpcRenderer<SkylanderEntity> {
     public SkylanderRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx, new Model(ctx.bakeLayer(ModelLayers.PLAYER)), SkylanderEntity::look, e -> false);
+        super(ctx, new Model(ctx.bakeLayer(ModelLayers.PLAYER)), new Model(ctx.bakeLayer(ModelLayers.PLAYER_SLIM)), SkylanderEntity::look, e -> false);
     }
 
     /** 0 = hovering, 1 = flying flat out. */

@@ -23,8 +23,12 @@ import java.util.Map;
 public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel<PartyBotEntity>> {
     private static final Map<CharacterType, DetailModel> MODELS = new EnumMap<>(CharacterType.class);
 
+    private final PlayerModel<PartyBotEntity> wide, girl;
+
     public BotRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), 0.5F);
+        wide = this.model;
+        girl = new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true);
         addLayer(new Details(this));
         addLayer(new net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer<>(this,
                 new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
@@ -33,6 +37,16 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
 
     private static DetailModel model(CharacterType t) {
         return MODELS.computeIfAbsent(t, k -> DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + k.getId() + ".json"));
+    }
+
+    /** Girl bots get the girls' slim body (see FemaleBody). */
+    @Override
+    public void render(PartyBotEntity e, float yaw, float pt, PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers, int light) {
+        boolean g = com.xenowarriors.client.FemaleBody.is(e.character(), "");
+        this.model = g ? girl : wide;
+        com.xenowarriors.client.FemaleBody.npcGirl = g;
+        try { super.render(e, yaw, pt, pose, buffers, light); }
+        finally { com.xenowarriors.client.FemaleBody.npcGirl = false; this.model = wide; }
     }
 
     @Override

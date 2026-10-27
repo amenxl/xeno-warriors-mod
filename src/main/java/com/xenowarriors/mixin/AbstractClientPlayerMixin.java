@@ -31,11 +31,11 @@ public abstract class AbstractClientPlayerMixin {
         }
     }
 
-    /** Both characters use the wide (4px) arm model. */
+    /** Characters use the wide (4px) arm model; the girls use the slim one (see FemaleBody). */
     @Inject(method = "getModelName", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$characterModel(CallbackInfoReturnable<String> cir) {
         if (ClientCharacterData.get((AbstractClientPlayer) (Object) this) != CharacterType.NONE) {
-            cir.setReturnValue("default");
+            cir.setReturnValue(com.xenowarriors.client.FemaleBody.is((AbstractClientPlayer) (Object) this) ? "slim" : "default");
         }
     }
 }

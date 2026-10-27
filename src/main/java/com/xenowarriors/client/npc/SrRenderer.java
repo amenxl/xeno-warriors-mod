@@ -17,7 +17,7 @@ public class SrRenderer extends NpcRenderer<SrMemberEntity> {
     private static final String STYLE = "tattered";
 
     public SrRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx, new SrModel(ctx.bakeLayer(ModelLayers.PLAYER)), SrMemberEntity::look, e -> false);
+        super(ctx, new SrModel(ctx.bakeLayer(ModelLayers.PLAYER)), new SrModel(ctx.bakeLayer(ModelLayers.PLAYER_SLIM)), SrMemberEntity::look, e -> false);
         addLayer(new Wings(this));
     }
 

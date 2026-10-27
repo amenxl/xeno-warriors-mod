@@ -31,7 +31,7 @@ public final class ChargePose {
     private ChargePose() {}
 
     public static boolean charging(Player p) {
-        return p instanceof AbstractClientPlayer cp && ClientCharacterData.get(cp) != CharacterType.NONE && DmzCompat.charging(p);
+        return p instanceof AbstractClientPlayer cp && ClientCharacterData.get(cp) != CharacterType.NONE && (DmzCompat.charging(p) || UiTest.forceCharge);
     }
 
     /** How far into the pose (0..1), eased in and out. */
@@ -61,8 +61,10 @@ public final class ChargePose {
     private static void aura(Minecraft mc, AbstractClientPlayer p, int t) {
         boolean mikiko = ClientCharacterData.get(p) == CharacterType.MIKIKO;
         var r = p.getRandom();
-        Vector3f c1 = mikiko ? new Vector3f(1F, 0.35F, 0.1F) : new Vector3f(0.7F, 0.3F, 1F);
-        Vector3f c2 = mikiko ? new Vector3f(1F, 0.75F, 0.2F) : new Vector3f(0.9F, 0.7F, 1F);
+        int rgb = ClientCharacterData.get(p).getColor();                  // everyone's aura in their own Karma color
+        Vector3f k = new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F);
+        Vector3f c1 = mikiko ? new Vector3f(1F, 0.35F, 0.1F) : k;
+        Vector3f c2 = mikiko ? new Vector3f(1F, 0.75F, 0.2F) : new Vector3f(Math.min(1F, k.x + 0.3F), Math.min(1F, k.y + 0.3F), Math.min(1F, k.z + 0.3F));
         float grow = Math.min(1F, t / 30F);
         int n = 3 + Math.round(grow * 4);
         for (int i = 0; i < n; i++) {
@@ -74,7 +76,7 @@ public final class ChargePose {
             mc.level.addParticle(ParticleTypes.FLAME, p.getX() + (r.nextDouble() - 0.5) * 1.2, p.getY() + 0.1,
                     p.getZ() + (r.nextDouble() - 0.5) * 1.2, 0, 0.08, 0);
         }
-        if (!mikiko && r.nextInt(3) == 0) {
+        if (ClientCharacterData.get(p) == CharacterType.RHALIX && r.nextInt(3) == 0) {
             mc.level.addParticle(ParticleTypes.WITCH, p.getX() + (r.nextDouble() - 0.5) * 1.2, p.getY() + r.nextDouble() * 2,
                     p.getZ() + (r.nextDouble() - 0.5) * 1.2, 0, 0.05, 0);
         }

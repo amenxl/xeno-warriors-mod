@@ -77,7 +77,8 @@ public final class KarmaFocusClient {
     private static void aura(Minecraft mc, AbstractClientPlayer p, float t) {
         if ((int) t % 3 != 0) return;
         boolean mikiko = ClientCharacterData.get(p) == CharacterType.MIKIKO;
-        Vector3f c = mikiko ? new Vector3f(1F, 0.4F, 0.15F) : new Vector3f(0.6F, 0.3F, 1F);
+        int rgb = ClientCharacterData.get(p).getColor();
+        Vector3f c = mikiko ? new Vector3f(1F, 0.4F, 0.15F) : new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F);
         var r = p.getRandom();
         double a = r.nextDouble() * Math.PI * 2, rad = 0.7 + r.nextDouble() * 0.4;
         mc.level.addParticle(new DustParticleOptions(c, 0.9F), p.getX() + Math.cos(a) * rad, p.getY() + r.nextDouble() * 1.6 + (mikiko ? 0 : 0.6),

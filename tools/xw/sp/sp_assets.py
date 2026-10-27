@@ -64,3 +64,6 @@ def build(key):
 if __name__ == '__main__':
     for key in (sys.argv[1:] or S.CHARS):
         build(key); print(key, len(glob.glob(CH + key + '_*')))
+
+    # the girls' skins in the slim layout (their body in the mod is slim - see tools/xw/female/slim.py)
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert_all()

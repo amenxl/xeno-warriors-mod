@@ -19,12 +19,14 @@ public abstract class PlayerModelBendMixin {
     @Inject(method = "createMesh", at = @At("RETURN"))
     private static void xenowarriors$splitLimbs(CubeDeformation deformation, boolean slim, CallbackInfoReturnable<MeshDefinition> cir) {
         LimbBend.splitPlayerMesh(cir.getReturnValue(), deformation, slim);
+        if (slim) com.xenowarriors.client.FemaleBody.addToSlimMesh(cir.getReturnValue(), deformation);
     }
 
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
     private void xenowarriors$bend(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                                    float netHeadYaw, float headPitch, CallbackInfo ci) {
         LimbBend.apply((PlayerModel<?>) (Object) this, entity);
+        com.xenowarriors.client.FemaleBody.pose((PlayerModel<?>) (Object) this, entity);
     }
 
     /** Held items follow the bent forearm into the hand. */

@@ -555,3 +555,6 @@ if __name__ == '__main__' and os.environ.get('SKY'):
     big = Image.new('RGB', (3 * tw, 2 * th), (30, 30, 36))
     for i, s in enumerate(sheets): big.paste(s, ((i % 3) * tw, (i // 3) * th))
     big.save('/tmp/claude-0/-home-claude/b2fe60cb-fd40-5a94-8ee2-7d1a501fd998/scratchpad/outfit/sky.png')
+
+    # the girls' skins in the slim layout (their body in the mod is slim - see tools/xw/female/slim.py)
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert_all()

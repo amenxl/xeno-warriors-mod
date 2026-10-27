@@ -303,3 +303,6 @@ if __name__ == '__main__':
     sheet = Image.new('RGB', (tw * cols, th * ((len(tiles) + cols - 1) // cols)), (30, 30, 36))
     for i, t in enumerate(tiles): sheet.paste(t, ((i % cols) * tw, (i // cols) * th))
     sheet.save('/tmp/sr_named.png'); print(sheet.size)
+
+    # the girls' skins in the slim layout (their body in the mod is slim - see tools/xw/female/slim.py)
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert_all()

@@ -70,3 +70,6 @@ for cx in (7, 24):
         for x in range(cx - 3, cx + 4): fp[x, y] = (255, 255, 255, 255)
 sf.save(CH + 'kaeru_silhouette_face.png')
 print('ok', len(glob.glob(CH + 'kaeru*')))
+
+# the girls' skins in the slim layout (their body in the mod is slim - see tools/xw/female/slim.py)
+sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert_all()

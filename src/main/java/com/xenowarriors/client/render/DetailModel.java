@@ -460,8 +460,78 @@ public class DetailModel {
         try { return loadPath(sourcePath); } finally { wholeLimbs = w; inflate = i; }
     }
 
+    /** Loading a girl's model: her outfit is refit to the girls' body (see FemaleBody). */
+    private static boolean female;
+    /** The current cube's refit: shift x/z and shrink x/z (applied as a deformation, so the texture still lines up). */
+    private static float curDX, curDZ, curGX, curGZ;
+
     private static net.minecraft.client.model.geom.builders.CubeDeformation def() {
-        return new net.minecraft.client.model.geom.builders.CubeDeformation(inflate);
+        return new net.minecraft.client.model.geom.builders.CubeDeformation(inflate + curGX, inflate, inflate + curGZ);
+    }
+
+    private static net.minecraft.client.model.geom.builders.CubeDeformation def(float extra) {
+        return new net.minecraft.client.model.geom.builders.CubeDeformation(extra + curGX, extra, extra + curGZ);
+    }
+
+    /** Scales a cube about x = ex (and z about 0) by sx / sz without touching its texture: a shift plus a shrink. */
+    private static void refit(float[] f, float[] sz, float ex, float sx, float sz2) {
+        float cx = f[0] + sz[0] / 2F, cz = f[2] + sz[2] / 2F;
+        curDX = (ex + (cx - ex) * sx) - cx;
+        curDZ = cz * sz2 - cz;
+        curGX = -(sz[0] / 2F) * (1F - sx);
+        curGZ = -(sz[2] / 2F) * (1F - sz2);
+    }
+
+    private static void noRefit() { curDX = curDZ = curGX = curGZ = 0F; }
+
+    /** A girl's limb: arms 3 wide (shrunk toward the body) and 3 deep, legs a little thinner. */
+    private static void limbRefit(String bone, float[] f, float[] sz) {
+        if (!female) { noRefit(); return; }
+        switch (bone) {
+            case "right_arm" -> refit(f, sz, 1F, com.xenowarriors.client.FemaleBody.ARM_X, com.xenowarriors.client.FemaleBody.ARM_Z);
+            case "left_arm" -> refit(f, sz, -1F, com.xenowarriors.client.FemaleBody.ARM_X, com.xenowarriors.client.FemaleBody.ARM_Z);
+            case "right_leg", "left_leg" -> refit(f, sz, 0F, 1F, com.xenowarriors.client.FemaleBody.LEG_Z);
+            default -> noRefit();
+        }
+    }
+
+    /** A girl's body: everything between the chest and the hips draws in to her waist (cubes crossing it are cut). */
+    private static CubeListBuilder femaleBody(JsonObject node) {
+        CubeListBuilder builder = CubeListBuilder.create();
+        float w0 = com.xenowarriors.client.FemaleBody.WAIST_TOP, w1 = com.xenowarriors.client.FemaleBody.WAIST_BOTTOM;
+        for (JsonElement el : node.getAsJsonArray("cubes")) {
+            JsonObject c = el.getAsJsonObject();
+            float[] uv = floats(c.getAsJsonArray("uv"));
+            float[] f = floats(c.getAsJsonArray("from"));
+            float[] sz = floats(c.getAsJsonArray("size"));
+            int u = (int) uv[0], v = (int) uv[1];
+            // pieces {top, bottom, texture shift}
+            java.util.List<float[]> seg = new java.util.ArrayList<>();
+            seg.add(new float[]{f[1], f[1] + sz[1], 0F});
+            for (float b : new float[]{w0, w1}) {
+                java.util.List<float[]> next = new java.util.ArrayList<>();
+                for (float[] q : seg) {
+                    int k = Math.round(b - q[0]);
+                    if (q[0] < b - 0.9F && q[1] > b + 0.9F && k >= 1 && q[0] + k < q[1] - 0.5F) {
+                        next.add(new float[]{q[0], q[0] + k, q[2]});
+                        next.add(new float[]{q[0] + k, q[1], q[2] + k});
+                    } else next.add(q);
+                }
+                seg = next;
+            }
+            for (int i = 0; i < seg.size(); i++) {
+                float[] q = seg.get(i);
+                float mid = (q[0] + q[1]) / 2F;
+                if (mid > w0 && mid < w1) refit(f, sz, 0F, com.xenowarriors.client.FemaleBody.WAIST_X, com.xenowarriors.client.FemaleBody.WAIST_Z);
+                else noRefit();
+                builder.texOffs(u, v + (int) q[2]).addBox(f[0] + curDX, q[0], f[2] + curDZ, sz[0], q[1] - q[0], sz[2], def());
+                if (i == seg.size() - 1 && q[2] > 0F)          // its real underside (the cut piece's own would be off)
+                    builder.texOffs(u, v).addBox(f[0] + curDX, q[1] - 0.02F, f[2] + curDZ, sz[0], 0.02F, sz[2], def());
+            }
+        }
+        noRefit();
+        return builder;
+    }
     }
 
     public static DetailModel loadWhole(String path) {
@@ -478,6 +548,7 @@ public class DetailModel {
             if (in == null) return null;
             JsonObject json = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
             int size = json.get("texture_size").getAsInt();
+            female = com.xenowarriors.client.FemaleBody.model(path);
             MeshDefinition mesh = new MeshDefinition();
             PartDefinition rootDef = mesh.getRoot();
             for (Map.Entry<String, JsonElement> bone : json.getAsJsonObject("bones").entrySet()) {
@@ -488,7 +559,8 @@ public class DetailModel {
                     limb(rootDef, bone.getKey(), b, p, split);
                     continue;
                 }
-                PartDefinition part = rootDef.addOrReplaceChild(bone.getKey(), cubes(b), PartPose.offset(p[0], p[1], p[2]));
+                CubeListBuilder own = female && bone.getKey().equals("body") ? femaleBody(b) : limbCubes(bone.getKey(), b);
+                PartDefinition part = rootDef.addOrReplaceChild(bone.getKey(), own, PartPose.offset(p[0], p[1], p[2]));
                 children(part, b);
             }
             DetailModel model = new DetailModel(LayerDefinition.create(mesh, size, size).bakeRoot());
@@ -511,6 +583,9 @@ public class DetailModel {
         } catch (Exception e) {
             XenoWarriors.LOGGER.error("Could not load model {}", path, e);
             return null;
+        } finally {
+            female = false;
+            noRefit();
         }
     }
 
@@ -526,6 +601,8 @@ public class DetailModel {
             float[] f = floats(c.getAsJsonArray("from"));
             float[] sz = floats(c.getAsJsonArray("size"));
             int u = (int) uv[0], v = (int) uv[1];
+            limbRefit(name, f, sz);
+            f = new float[]{f[0] + curDX, f[1], f[2] + curDZ};
             float top = f[1], bottom = f[1] + sz[1];
             // (thin trim sitting just over the joint - a hem, a rim - stays with the upper half)
             if ((bottom <= split + 0.6F && (top + bottom) / 2F < split) || (top < split + 0.45F && bottom <= split + 0.75F)) {
@@ -541,14 +618,15 @@ public class DetailModel {
                 upper.texOffs(u, v).addBox(f[0], f[1], f[2], sz[0], h1, sz[2], def());
                 float y0 = top + h1 - split;
                 lower.texOffs(u, v + h1).addBox(f[0], y0, f[2], sz[0], sz[1] - h1, sz[2], def());
-                lower.texOffs(u, v).addBox(f[0], y0 + sz[1] - h1, f[2], sz[0], 0.02F, sz[2]);   // its real underside
+                lower.texOffs(u, v).addBox(f[0], y0 + sz[1] - h1, f[2], sz[0], 0.02F, sz[2], def(0F));   // its real underside
                 if (h1 >= 2 && sz[1] - h1 >= 2F) {
                     // joint piece across the cut, a hair thinner: fills the gap when the elbow / knee bends
                     lower.texOffs(u, v + h1 - 2).addBox(f[0], y0 - 2F, f[2], sz[0], 4F, sz[2],
-                            new net.minecraft.client.model.geom.builders.CubeDeformation(-0.05F));
+                            def(-0.05F));
                 }
             }
         }
+        noRefit();
         PartDefinition up = root.addOrReplaceChild(name, upper, PartPose.offset(p[0], p[1], p[2]));
         PartDefinition low = up.addOrReplaceChild(com.xenowarriors.client.LimbBend.LOWER, lower, PartPose.offset(0F, split, 0F));
         for (JsonElement el : b.getAsJsonArray("children")) {
@@ -571,6 +649,21 @@ public class DetailModel {
                     PartPose.offsetAndRotation(p[0], p[1], p[2], r[0], r[1], r[2]));
             children(part, c);
         }
+    }
+
+    /** A bone's own cubes when it isn't split (with a girl's limb refit). */
+    private static CubeListBuilder limbCubes(String bone, JsonObject node) {
+        CubeListBuilder builder = CubeListBuilder.create();
+        for (JsonElement el : node.getAsJsonArray("cubes")) {
+            JsonObject c = el.getAsJsonObject();
+            float[] uv = floats(c.getAsJsonArray("uv"));
+            float[] f = floats(c.getAsJsonArray("from"));
+            float[] s = floats(c.getAsJsonArray("size"));
+            limbRefit(bone, f, s);
+            builder.texOffs((int) uv[0], (int) uv[1]).addBox(f[0] + curDX, f[1], f[2] + curDZ, s[0], s[1], s[2], def());
+        }
+        noRefit();
+        return builder;
     }
 
     private static CubeListBuilder cubes(JsonObject node) {

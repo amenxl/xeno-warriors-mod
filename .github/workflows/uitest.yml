@@ -40,6 +40,7 @@ jobs:
         env:
           XW_UITEST: "1"
           XW_UITEST_FOCUS: ${{ github.event.inputs.focus }}
+          XW_UITEST_LODESTONE: ${{ github.event.inputs.focus == 'auras' && '1' || '0' }}
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: |
           timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClient --no-daemon > client.log 2>&1 || true

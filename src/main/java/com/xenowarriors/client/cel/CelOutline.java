@@ -20,12 +20,16 @@ public final class CelOutline {
     public static final float BODY = 0.24F, DETAIL = 0.17F;
     private static final float INK = 0.05F;
     private static ModelPart bodyRoot;
-    private static PlayerModel<LivingEntity> body;
+    private static PlayerModel<LivingEntity> body, slimBody;
     private static final Map<DetailModel, DetailModel> DETAILS = new WeakHashMap<>();
 
     private CelOutline() {}
 
-    private static PlayerModel<LivingEntity> body() {
+    private static PlayerModel<LivingEntity> body(boolean slim) {
+        if (slim) {
+            if (slimBody == null) slimBody = new PlayerModel<>(LayerDefinition.create(PlayerModel.createMesh(new CubeDeformation(BODY), true), 64, 64).bakeRoot(), true);
+            return slimBody;
+        }
         if (body == null) {
             bodyRoot = LayerDefinition.create(PlayerModel.createMesh(new CubeDeformation(BODY), false), 64, 64).bakeRoot();
             body = new PlayerModel<>(bodyRoot, false);
@@ -40,12 +44,13 @@ public final class CelOutline {
             d.copyFrom(s);
             d.xScale = s.xScale; d.yScale = s.yScale; d.zScale = s.zScale;
             d.visible = s.visible;
+            d.skipDraw = s.skipDraw;
         }
     }
 
     /** The body outline, matching the player model's pose this frame. */
     public static void body(HumanoidModel<?> parent, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
-        PlayerModel<LivingEntity> o = body();
+        PlayerModel<LivingEntity> o = body(parent.body.hasChild(com.xenowarriors.client.FemaleBody.CHEST));
         sync(parent.head, o.head); sync(parent.body, o.body);
         sync(parent.rightArm, o.rightArm); sync(parent.leftArm, o.leftArm);
         sync(parent.rightLeg, o.rightLeg); sync(parent.leftLeg, o.leftLeg);

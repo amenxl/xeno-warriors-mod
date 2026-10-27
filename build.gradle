@@ -64,6 +64,7 @@ dependencies {
     // Epic Fight (optional): Xeno Warriors details on its skinned player, and it hands back non-combat animation to us
     compileOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")
     compileOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")      // optional: fancier effects when Lodestone is installed
+    if (System.getenv('XW_UITEST_LODESTONE') == '1') runtimeOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")   // (aura screenshots in CI)
 }
 
 tasks.named('processResources', ProcessResources).configure {

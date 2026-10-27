@@ -29,8 +29,17 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
     private final Function<T, String> look;
     private final Predicate<T> dark;
 
+    /** The wide body, and the slim girls' body (see FemaleBody) for girl NPCs. */
+    private final PlayerModel<T> wide, girl;
+
     public NpcRenderer(EntityRendererProvider.Context ctx, PlayerModel<T> model, Function<T, String> look, Predicate<T> dark) {
+        this(ctx, model, null, look, dark);
+    }
+
+    public NpcRenderer(EntityRendererProvider.Context ctx, PlayerModel<T> model, PlayerModel<T> girl, Function<T, String> look, Predicate<T> dark) {
         super(ctx, model, 0.5F);
+        this.wide = model;
+        this.girl = girl;
         this.look = look;
         this.dark = dark;
         addLayer(new Details(this));
@@ -41,7 +50,8 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
     }
 
     public static <T extends Mob> NpcRenderer<T> plain(EntityRendererProvider.Context ctx, Function<T, String> look, Predicate<T> dark) {
-        return new NpcRenderer<>(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), look, dark);
+        return new NpcRenderer<>(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false),
+                new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true), look, dark);
     }
 
     private static final ResourceLocation ARMBAND_TEX = XenoWarriors.id("textures/entity/npc/armband.png");
@@ -75,6 +85,15 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
 
     private boolean darkened(T e) {
         return dark.test(e) && !look.apply(e).startsWith("dark_");      // (the permanently possessed are dark already)
+    }
+
+    @Override
+    public void render(T e, float yaw, float pt, PoseStack pose, MultiBufferSource buffers, int light) {
+        boolean g = girl != null && com.xenowarriors.client.FemaleBody.npc(look.apply(e));
+        this.model = g ? girl : wide;
+        com.xenowarriors.client.FemaleBody.npcGirl = g;
+        try { super.render(e, yaw, pt, pose, buffers, light); }
+        finally { com.xenowarriors.client.FemaleBody.npcGirl = false; this.model = wide; }
     }
 
     @Override

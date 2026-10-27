@@ -21,6 +21,8 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class UiTest {
     private static final boolean ON = "1".equals(System.getenv("XW_UITEST"));
+    /** Makes characters power up (as if charging Ki) for the aura gallery. */
+    public static boolean forceCharge;
     private record Step(String name, Runnable action, int delay) {}
     private static List<Step> steps;
     private static int idx = -1, wait, ingame, pre;
@@ -71,6 +73,7 @@ public final class UiTest {
         if ("kaeru".equals(System.getenv("XW_UITEST_FOCUS"))) { kaeru(mc, l); return l; }
         if ("sp".equals(System.getenv("XW_UITEST_FOCUS"))) { skyPatrol(mc, l); return l; }
         if ("ffr".equals(System.getenv("XW_UITEST_FOCUS"))) { ffr(mc, l); return l; }
+        if ("auras".equals(System.getenv("XW_UITEST_FOCUS"))) { auras(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -299,6 +302,40 @@ public final class UiTest {
                 mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 30));
         }
         l.add(new Step(null, () -> mc.setScreen(null), 5));
+    }
+
+    /** Every character powering up (their aura), Karma focus glows, and element auras on a row of mobs. */
+    private static void auras(Minecraft mc, List<Step> l) {
+        Runnable front = () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(12F); mc.player.setYRot(0F); };
+        l.add(new Step(null, () -> server(p -> p.serverLevel().setDayTime(18000)), 10));       // night shows the glow
+        for (CharacterType t : CharacterType.PLAYABLE) {
+            l.add(new Step(null, () -> { forceCharge = false; character(t); }, 30));
+            l.add(new Step(null, () -> { front.run(); forceCharge = true; }, 35));
+            l.add(new Step("aura_" + t.getId(), () -> {}, 3));
+            l.add(new Step("aura_" + t.getId() + "_b", () -> {}, 3));
+        }
+        l.add(new Step(null, () -> forceCharge = false, 20));
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.YURI}) {
+            l.add(new Step(null, () -> character(t), 30));
+            l.add(new Step(null, () -> { front.run(); KarmaFocusClient.set(mc.player.getId(), true); }, 40));
+            l.add(new Step("aura_focus_" + t.getId(), () -> {}, 3));
+            l.add(new Step(null, () -> KarmaFocusClient.set(mc.player.getId(), false), 20));
+        }
+        com.xenowarriors.ka.Element[] els = {com.xenowarriors.ka.Element.FIRE, com.xenowarriors.ka.Element.ICE, com.xenowarriors.ka.Element.LIGHTNING,
+                com.xenowarriors.ka.Element.SHADOW, com.xenowarriors.ka.Element.CORRUPTION, com.xenowarriors.ka.Element.VOID};
+        l.add(new Step(null, () -> server(p -> {
+            for (int i = 0; i < els.length; i++) {
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                if (z == null) continue;
+                z.moveTo(p.getX() - 5 + i * 2, p.getY(), p.getZ() + 6, 180, 0); z.setNoAi(true); z.setYHeadRot(180); z.yBodyRot = 180;
+                p.serverLevel().addFreshEntity(z);
+                com.xenowarriors.ka.Elements.give(z, els[i]);
+            }
+            p.setYRot(0); p.setXRot(15);
+        }), 20));
+        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setYRot(0); mc.player.setXRot(15); }, 60));
+        l.add(new Step("aura_elements", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
     }
 
     /** Kaeru: front/back, her Change (silhouette, a zombie, a log), Soul Splitter for her, Rhalix and Mikiko (3 souls). */
