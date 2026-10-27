@@ -49,6 +49,43 @@ mixin {
     config "${mod_id}.mixins.json"
 }
 
+// Other mods we build against are NOT kept in this repo (their licenses don't let us re-host them): on the first build
+// each one is downloaded from its official source (Modrinth, or its author's maven) into libs/ (git-ignored).
+def xwLibs = [
+    [file: 'geckolib-forge-1.20.1-4.8.4.jar', modrinth: 'geckolib', match: '4.8.4',
+     url: 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/software/bernie/geckolib/geckolib-forge-1.20.1/4.8.4/geckolib-forge-1.20.1-4.8.4.jar'],
+    [file: 'mclib-20.jar', url: 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/com/eliotlash/mclib/mclib/20/mclib-20.jar'],
+    [file: 'voicechat-api-2.6.24.jar', url: 'https://maven.maxhenkel.de/repository/public/de/maxhenkel/voicechat/voicechat-api/2.6.24/voicechat-api-2.6.24.jar'],
+    [file: 'epicfight-forge-1.20.1-20.14.17.jar', modrinth: 'epic-fight', match: '20.14.17'],
+    [file: 'lodestone-1.20.1-1.6.4.1.257.jar', url: 'https://maven.blamejared.com/team/lodestar/lodestone/lodestone/1.20.1-1.6.4.1.257/lodestone-1.20.1-1.6.4.1.257.jar'],
+]
+def xwDownload = { String from, File to ->
+    def c = new URL(from).openConnection()
+    c.setRequestProperty('User-Agent', 'amenxl/xeno-warriors-mod build')
+    c.instanceFollowRedirects = true
+    to.withOutputStream { out -> c.inputStream.withStream { it.transferTo(out) } }
+}
+file('libs').mkdirs()
+xwLibs.each { lib ->
+    File f = file("libs/${lib.file}")
+    if (f.exists() && f.length() > 0) return
+    def errors = []
+    if (lib.url) { try { xwDownload(lib.url, f) } catch (Exception e) { errors << "${lib.url}: $e"; f.delete() } }
+    if (!f.exists() && lib.modrinth) {
+        try {
+            def api = "https://api.modrinth.com/v2/project/${lib.modrinth}/version?loaders=%5B%22forge%22%5D&game_versions=%5B%221.20.1%22%5D"
+            def c = new URL(api).openConnection(); c.setRequestProperty('User-Agent', 'amenxl/xeno-warriors-mod build')
+            def versions = new groovy.json.JsonSlurper().parse(c.inputStream)
+            def v = versions.find { it.version_number.contains(lib.match) && !it.version_number.contains('neoforge') }
+            if (v == null) throw new GradleException("no ${lib.modrinth} version matching ${lib.match}")
+            def jar = v.files.find { it.primary } ?: v.files[0]
+            xwDownload(jar.url, f)
+        } catch (Exception e) { errors << "modrinth ${lib.modrinth}: $e"; f.delete() }
+    }
+    if (!f.exists()) throw new GradleException("Couldn't download ${lib.file}:\n  " + errors.join('\n  '))
+    println "Downloaded ${lib.file}"
+}
+
 repositories {
     flatDir { dir 'libs' }
 }
