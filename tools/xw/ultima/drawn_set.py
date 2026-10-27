@@ -69,7 +69,7 @@ SET = {
 
 CHARS = {
     'ultima': dict(skin=(232, 170, 112), iris=(60, 242, 170), hair='spiky', shade=1.0, scar=True, glow=True, brow_y=46, eye_y=66, grin='smug_grin'),
-    'mikiko': dict(skin=(132, 82, 52), iris=(250, 150, 30), hair='none', soft=True, shade=0.35, scar=False, glow=False, brow_y=50, eye_y=67, grin='fang'),
+    'mikiko': dict(skin=(132, 82, 52), iris=(250, 150, 30), hair='none', soft=True, shade=0.35, scar=False, glow=False, brow_y=48, eye_y=68, grin='fang'),
 }
 # per-character tweaks on top of SET
 EXTRA = {'mikiko': {'annoyed': {'anger': True, 'keep_angry': True}, 'rage': {'anger': True, 'glow_eyes': True, 'keep_angry': True}, 'fierce': {'keep_angry': True},

@@ -156,6 +156,7 @@ class F:
             self.line([(cx - o * 17, cy + 3), (cx - o * 4, cy - 4), (cx + o * 10, cy - 4), (cx + o * 19, cy + 2)], INK, 3.2)
             self.line([(cx + o * 19, cy + 2), (cx + o * 24, cy - 2)], INK, 2.0)
             return
+        if self.soft: return self.eye_mk(cx, cy, side, kind, look, lookY)
         h_top = {'sharp': 10, 'wide': 14.5, 'calm': 8, 'glare': 7.5, 'bored': 5}[kind]
         h_bot = {'sharp': 7, 'wide': 10.5, 'calm': 6.5, 'glare': 6, 'bored': 6}[kind]
         tilt = {'sharp': 4.5, 'wide': 2, 'calm': 2.5, 'glare': 7, 'bored': 0.8}[kind]       # outer corner higher -> fierce
@@ -193,6 +194,46 @@ class F:
         self.poly([outer, (outer[0] + o * 7, outer[1] - 4.5), (outer[0] + o * 1, outer[1] + 2.8)], INK + (255,))
         self.line([(cx + o * 15, cy + h_bot * 0.6), bot_mid, (cx - o * 8, cy + h_bot * 0.55)], INK, 1.4)
         self.line([inner, (inner[0] + o * 2.5, inner[1] + 1.5)], INK, 1.4)
+
+    def eye_mk(self, cx, cy, side, kind, look, lookY):
+        """Mikiko's eyes (his reference): big rounded eyes, lots of white with a blue-grey lid shadow, a tall amber iris
+        (deep orange-red at the top to gold at the bottom), a narrow dark pupil, a white glint streak across the iris."""
+        o = side
+        H = {'sharp': 1.0, 'calm': 0.92, 'wide': 1.18, 'glare': 0.72, 'bored': 0.55}.get(kind, 1.0)
+        lid = {'glare': 0.0, 'bored': 0.0}.get(kind, 0.0)
+        tilt = {'glare': 3.0}.get(kind, 0.0)
+        w, ht, hb = 19.0, 13.5 * H, 10.5 * min(1.0, H + 0.15)
+        # rounded-rectangle-ish shape: inner corner a little lower, top fairly flat, bottom rounded
+        shape = [(cx - o * w, cy + 2), (cx - o * (w - 3), cy - ht * 0.75), (cx - o * 8, cy - ht), (cx + o * 6, cy - ht - tilt * 0.3),
+                 (cx + o * (w - 2), cy - ht * 0.8 - tilt), (cx + o * (w + 1), cy - 1 - tilt * 0.6), (cx + o * (w - 3), cy + hb * 0.75),
+                 (cx + o * 4, cy + hb), (cx - o * 8, cy + hb * 0.95), (cx - o * (w - 2), cy + hb * 0.55)]
+        mask = Image.new('L', self.im.size, 0); ImageDraw.Draw(mask).polygon(self.P(shape), fill=255)
+        lay = Image.new('RGBA', self.im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+        ld.rectangle((0, 0, *self.im.size), fill=(236, 238, 246, 255))
+        self.poly([(cx - 24, cy - 24), (cx + 24, cy - 24), (cx + 24, cy - ht + 5), (cx - 24, cy - ht + 5)], (176, 182, 214, 255), lay)   # lid shadow
+        # iris: a tall oval, deep orange-red at the top to gold at the bottom
+        rx, ry = 7.8, 10.8 * min(1.0, H + 0.2)
+        ix, iy = cx + look * 6 + o * 1.0, cy + 1.0 + lookY * 3
+        top_c, mid_c, bot_c = (120, 30, 12), (226, 104, 20), (255, 206, 70)
+        for k in range(24):
+            t = k / 23
+            c = lerp(top_c, mid_c, t / 0.5) if t < 0.5 else lerp(mid_c, bot_c, (t - 0.5) / 0.5)
+            band = Image.new('L', self.im.size, 0); bd = ImageDraw.Draw(band)
+            bd.ellipse(((ix - rx) * SS, (iy - ry) * SS, (ix + rx) * SS, (iy + ry) * SS), fill=255)
+            bd.rectangle((0, 0, self.im.width, (iy - ry + 2 * ry * t) * SS), fill=0)
+            lay.paste(c + (255,), (0, 0), band)
+        ld.ellipse(((ix - rx) * SS, (iy - ry) * SS, (ix + rx) * SS, (iy + ry) * SS), outline=(70, 18, 8, 255), width=int(1.3 * SS))
+        ld.ellipse(((ix - 2.0) * SS, (iy - 5.2) * SS, (ix + 2.0) * SS, (iy + 4.6) * SS), fill=(36, 8, 4, 255))          # pupil
+        # the white glint streak across the top of the iris
+        ld.rounded_rectangle(((ix - rx - 1.5) * SS, (iy - ry * 0.45 - 1.0) * SS, (ix - 1.0) * SS, (iy - ry * 0.45 + 1.0) * SS), radius=SS, fill=(255, 255, 255, 255))
+        ld.rounded_rectangle(((ix + 1.8) * SS, (iy - ry * 0.45 - 0.8) * SS, (ix + rx + 1.0) * SS, (iy - ry * 0.45 + 0.8) * SS), radius=SS, fill=(255, 255, 255, 235))
+        self.im.paste(lay, (0, 0), mask)
+        # ink: thick dark upper lid sweeping past the outer corner, thin line around the bottom
+        self.line(shape[:6], INK, 3.6)
+        self.poly([shape[5], (shape[5][0] + o * 4.5, shape[5][1] - 2.0), (shape[5][0] + o * 0.5, shape[5][1] + 3.2)], INK + (255,))
+        self.line(shape[5:] + [shape[0]], (60, 30, 24), 1.3)
+        # a soft crease above
+        self.line([(cx - o * 9, cy - ht - 4.2), (cx + o * 8, cy - ht - 4.6 - tilt * 0.3), (cx + o * (w - 3), cy - ht - 2.6 - tilt)], (95, 55, 36), 1.0)
 
     def brow(self, cx, cy, side, kind='angry'):
         o = side
