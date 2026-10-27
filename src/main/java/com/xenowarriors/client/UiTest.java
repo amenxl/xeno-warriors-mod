@@ -81,6 +81,7 @@ public final class UiTest {
         if ("combo".equals(System.getenv("XW_UITEST_FOCUS"))) { combos(mc, l); return l; }
         if ("s3fits".equals(System.getenv("XW_UITEST_FOCUS"))) { s3Outfits(mc, l); return l; }
         if ("ores".equals(System.getenv("XW_UITEST_FOCUS"))) { oresAndPjs(mc, l); return l; }
+        if ("village".equals(System.getenv("XW_UITEST_FOCUS"))) { village(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -480,6 +481,42 @@ public final class UiTest {
         l.add(new Step("aura_elements", () -> {}, 3));
         for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_elements_%02d", f), () -> {}, 1));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
+    }
+
+    /** A tour of the Mountain Village (Pine Cone City) in the Recarnet dimension: from the air, the square, the farm, the school, the dojo, the outskirts. */
+    private static void village(Minecraft mc, List<Step> l) {
+        int vx = com.xenowarriors.recarnet.Recarnet.VILLAGE_X, vz = com.xenowarriors.recarnet.Recarnet.VILLAGE_Z, by = com.xenowarriors.recarnet.Recarnet.VILLAGE_Y;
+        // name, x, y, z, yaw, pitch
+        Object[][] shots = {
+            {"aerial", vx, by + 70, vz + 150, 180F, 28F},
+            {"aerial_side", vx + 170, by + 60, vz, 90F, 22F},
+            {"square", vx + 1, by + 4, vz + 16, 180F, 8F},
+            {"square_well", vx + 6, by + 3, vz + 6, 135F, 18F},
+            {"farm", vx + 64, by + 18, vz + 92, 180F, 20F},
+            {"farm_fields", vx + 100, by + 12, vz + 40, 90F, 22F},
+            {"school", vx, by + 9, vz - 22, 180F, 6F},
+            {"school_hall", vx + 4, by + 2, vz - 46, 180F, 5F},
+            {"dojo", vx - 18, by + 5, vz + 16, 90F, 8F},
+            {"dojo_inside", vx - 40, by + 2, vz + 18, 90F, 8F},
+            {"cottages", vx + 40, by + 8, vz - 40, 225F, 14F},
+            {"outskirts", vx - 120, by + 14, vz + 60, 300F, 14F},
+            {"pine_woods", vx + 175, by + 4, vz + 60, 120F, 2F},
+        };
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl != null) { lvl.setDayTime(5000); p.teleportTo(lvl, vx + 0.5, by + 70, vz + 150.5, 180F, 28F); }
+        }), 200));
+        for (Object[] sh : shots) {
+            double x = ((Integer) sh[1]) + 0.5, y = (Integer) sh[2], z = ((Integer) sh[3]) + 0.5;
+            float yaw = (Float) sh[4], pitch = (Float) sh[5];
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+                if (lvl != null) p.teleportTo(lvl, x, y, z, yaw, pitch);
+            }), 140));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
+            l.add(new Step("village_" + sh[0], () -> {}, 5));
+        }
     }
 
     /** The new ores in a row (each with its gem floating above it), then the Fox PJs on a few characters. */
