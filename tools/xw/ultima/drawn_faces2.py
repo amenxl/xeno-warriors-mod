@@ -202,19 +202,19 @@ class F:
         H = {'sharp': 1.0, 'calm': 0.92, 'wide': 1.18, 'glare': 0.72, 'bored': 0.55}.get(kind, 1.0)
         lid = {'glare': 0.0, 'bored': 0.0}.get(kind, 0.0)
         tilt = {'glare': 3.0}.get(kind, 0.0)
-        w, ht, hb = 19.0, 13.5 * H, 10.5 * min(1.0, H + 0.15)
-        # rounded-rectangle-ish shape: inner corner a little lower, top fairly flat, bottom rounded
-        shape = [(cx - o * w, cy + 2), (cx - o * (w - 3), cy - ht * 0.75), (cx - o * 8, cy - ht), (cx + o * 6, cy - ht - tilt * 0.3),
-                 (cx + o * (w - 2), cy - ht * 0.8 - tilt), (cx + o * (w + 1), cy - 1 - tilt * 0.6), (cx + o * (w - 3), cy + hb * 0.75),
-                 (cx + o * 4, cy + hb), (cx - o * 8, cy + hb * 0.95), (cx - o * (w - 2), cy + hb * 0.55)]
+        w, ht, hb = 19.0, 12.5 * H, 8.5 * min(1.0, H + 0.15)
+        # sharp almond (his reference): pointed inner corner set low, the lid arching up toward the outer third,
+        # a pointed outer corner, a flatter lower lid
+        shape = [(cx - o * 19, cy + 3.5), (cx - o * 10, cy - ht * 0.62), (cx + o * 3, cy - ht - tilt * 0.3), (cx + o * 13, cy - ht * 0.9 - tilt),
+                 (cx + o * 20, cy - ht * 0.3 - tilt * 0.8), (cx + o * 14, cy + hb * 0.7), (cx + o * 2, cy + hb), (cx - o * 10, cy + hb * 0.8)]
         mask = Image.new('L', self.im.size, 0); ImageDraw.Draw(mask).polygon(self.P(shape), fill=255)
         lay = Image.new('RGBA', self.im.size, (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
         ld.rectangle((0, 0, *self.im.size), fill=(236, 238, 246, 255))
         self.poly([(cx - 24, cy - 24), (cx + 24, cy - 24), (cx + 24, cy - ht + 5), (cx - 24, cy - ht + 5)], (176, 182, 214, 255), lay)   # lid shadow
         # iris: a tall oval, deep orange-red at the top to gold at the bottom
-        rx, ry = 7.8, 10.8 * min(1.0, H + 0.2)
-        ix, iy = cx + look * 6 + o * 1.0, cy + 1.0 + lookY * 3
-        top_c, mid_c, bot_c = (120, 30, 12), (226, 104, 20), (255, 206, 70)
+        rx = ry = 10.5
+        ix, iy = cx + look * 6 + o * 2.0, cy + 0.5 + lookY * 3
+        top_c, mid_c, bot_c = ((255, 120, 40), (255, 200, 80), (255, 250, 210)) if getattr(self, 'fire', False) else ((120, 30, 12), (226, 104, 20), (255, 206, 70))
         for k in range(24):
             t = k / 23
             c = lerp(top_c, mid_c, t / 0.5) if t < 0.5 else lerp(mid_c, bot_c, (t - 0.5) / 0.5)
@@ -228,12 +228,21 @@ class F:
         ld.rounded_rectangle(((ix - rx - 1.5) * SS, (iy - ry * 0.45 - 1.0) * SS, (ix - 1.0) * SS, (iy - ry * 0.45 + 1.0) * SS), radius=SS, fill=(255, 255, 255, 255))
         ld.rounded_rectangle(((ix + 1.8) * SS, (iy - ry * 0.45 - 0.8) * SS, (ix + rx + 1.0) * SS, (iy - ry * 0.45 + 0.8) * SS), radius=SS, fill=(255, 255, 255, 235))
         self.im.paste(lay, (0, 0), mask)
-        # ink: thick dark upper lid sweeping past the outer corner, thin line around the bottom
-        self.line(shape[:6], INK, 3.6)
-        self.poly([shape[5], (shape[5][0] + o * 4.5, shape[5][1] - 2.0), (shape[5][0] + o * 0.5, shape[5][1] + 3.2)], INK + (255,))
-        self.line(shape[5:] + [shape[0]], (60, 30, 24), 1.3)
-        # a soft crease above
-        self.line([(cx - o * 9, cy - ht - 4.2), (cx + o * 8, cy - ht - 4.6 - tilt * 0.3), (cx + o * (w - 3), cy - ht - 2.6 - tilt)], (95, 55, 36), 1.0)
+        if getattr(self, 'fire', False):           # rage: a blazing core and fiery rings
+            g = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+            self.ell(ix, iy, 13, 11, (255, 120, 30, 170), g); self.blur_layer(g, 3)
+            self.ell(ix, iy, 4.5, 4.5, (255, 252, 230, 255))
+            for k, col in ((7.5, (255, 90, 30)), (9.5, (230, 40, 20))):
+                self.line([(ix + math.cos(a) * k, iy + math.sin(a) * k) for a in [i * 0.3 for i in range(16)]], col, 1.0)
+        # ink: thick upper lid that runs past the outer corner and flicks up, thin lower lid
+        top = shape[:5]
+        self.line(top, INK, 3.8)
+        ox, oy = shape[4]
+        self.poly([(ox - o * 2, oy - 1.5), (ox + o * 6, oy - 6), (ox + o * 3, oy - 1.0), (ox, oy + 1.5)], INK + (255,))
+        self.line([shape[4]] + shape[5:] + [shape[0]], (50, 24, 20), 1.4)
+        self.line([shape[0], (shape[0][0] - o * 3, shape[0][1] - 0.5)], INK, 1.6)          # inner corner point
+        # crease above the lid
+        self.line([(cx - o * 9, cy - ht - 3.5), (cx + o * 6, cy - ht - 5 - tilt * 0.3), (cx + o * 17, cy - ht * 0.8 - 3.5 - tilt)], (80, 44, 30), 1.1)
 
     def brow(self, cx, cy, side, kind='angry'):
         o = side

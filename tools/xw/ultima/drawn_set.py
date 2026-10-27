@@ -72,13 +72,14 @@ CHARS = {
     'mikiko': dict(skin=(132, 82, 52), iris=(250, 150, 30), hair='none', soft=True, shade=0.35, scar=False, glow=False, brow_y=48, eye_y=68, grin='fang'),
 }
 # per-character tweaks on top of SET
-EXTRA = {'mikiko': {'annoyed': {'anger': True, 'keep_angry': True}, 'rage': {'anger': True, 'glow_eyes': True, 'keep_angry': True}, 'fierce': {'keep_angry': True},
+EXTRA = {'mikiko': {'annoyed': {'anger': True, 'keep_angry': True}, 'rage': {'anger': True, 'fire': True, 'keep_angry': True}, 'fierce': {'keep_angry': True},
                    'shout': {'keep_angry': True}, 'strained': {'keep_angry': True}, 'focused': {'keep_angry': True}, 'concentrate': {'keep_angry': True},
                    'glitch': {'keep_angry': True}}}
 
 def face(eL, eR, brows, mouth, o, c=None):
     c = c or CHARS['ultima']
     f = D.F(c['skin'], c['iris'], c['hair'], c.get('soft', False))
+    f.fire = bool(o.get('fire'))
     f.skin(c['shade'])
     if c.get('soft'):                         # friendlier: brows only angry when he really is
         if brows == 'angry' and not o.get('keep_angry'): brows = 'flat'
