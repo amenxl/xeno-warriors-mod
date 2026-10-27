@@ -58,6 +58,7 @@ public final class SoulSplit {
     }
 
     public static int level(Player p) { return tag(p).getInt("xw_soul_lvl"); }
+    public static void setLevel(Player p, int level) { tag(p).putInt("xw_soul_lvl", level); tag(p).putFloat("xw_soul_xp", 0); }
     public static float needed(int level) { return 30F + level * 12F; }
 
     public static void addXp(ServerPlayer p, float xp) {

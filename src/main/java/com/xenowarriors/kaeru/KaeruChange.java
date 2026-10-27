@@ -90,6 +90,12 @@ public final class KaeruChange {
         return true;
     }
 
+    /** UI test: put her straight into a form (mode SILHOUETTE/CREATURE/BLOCK) for a while. */
+    public static void testForm(ServerPlayer p, int mode, String id) {
+        long now = p.serverLevel().getGameTime();
+        set(p, new Form(mode, id, mode == SILHOUETTE ? CREATURE : mode, now + (mode == SILHOUETTE ? 100000 : LAST)));
+    }
+
     private static void set(ServerPlayer p, Form f) {
         if (f == null) FORMS.remove(p.getUUID()); else FORMS.put(p.getUUID(), f);
         ModNetwork.sendToTrackingAndSelf(f == null ? new ChangeFormPacket(p.getId(), NONE, "") : new ChangeFormPacket(p.getId(), f.mode, f.id), p);

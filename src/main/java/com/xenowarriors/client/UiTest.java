@@ -68,6 +68,7 @@ public final class UiTest {
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
         if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
         if ("vehicles".equals(System.getenv("XW_UITEST_FOCUS"))) { vehicles(mc, l); return l; }
+        if ("kaeru".equals(System.getenv("XW_UITEST_FOCUS"))) { kaeru(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -187,6 +188,38 @@ public final class UiTest {
         }
         l.add(new Step(null, () -> { com.xenowarriors.client.npc.SrModel.force = null;
             server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard())); }, 5));
+    }
+
+    /** Kaeru: front/back, her Change (silhouette, a zombie, a log), Soul Splitter for her, Rhalix and Mikiko (3 souls). */
+    private static void kaeru(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> character(CharacterType.KAERU), 40));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            mc.player.setXRot(10F); mc.player.setYRot(0F); }, 30));
+        l.add(new Step("kaeru_front", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 20));
+        l.add(new Step("kaeru_back", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            server(p -> com.xenowarriors.kaeru.KaeruChange.testForm(p, com.xenowarriors.kaeru.KaeruChange.SILHOUETTE, "minecraft:zombie")); }, 25));
+        l.add(new Step("kaeru_change_silhouette", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.kaeru.KaeruChange.testForm(p, com.xenowarriors.kaeru.KaeruChange.CREATURE, "minecraft:zombie")), 25));
+        l.add(new Step("kaeru_change_zombie", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.kaeru.KaeruChange.testForm(p, com.xenowarriors.kaeru.KaeruChange.CREATURE, "minecraft:fox")), 25));
+        l.add(new Step("kaeru_change_fox", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.kaeru.KaeruChange.testForm(p, com.xenowarriors.kaeru.KaeruChange.BLOCK, "minecraft:oak_log")), 25));
+        l.add(new Step("kaeru_change_block", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.kaeru.KaeruChange.revert(p, false); p.removeAllEffects(); }), 20));
+        CharacterType[] who = {CharacterType.KAERU, CharacterType.RHALIX, CharacterType.MIKIKO};
+        for (CharacterType t : who) {
+            l.add(new Step(null, () -> server(p -> {
+                com.xenowarriors.soul.SoulSplit.end(p, null);
+                com.xenowarriors.character.CharacterManager.setCharacter(p, t);
+                com.xenowarriors.soul.SoulSplit.setLevel(p, t == CharacterType.MIKIKO ? 40 : 0);
+            }), 30));
+            l.add(new Step(null, () -> server(p -> { p.setYRot(0); com.xenowarriors.soul.SoulSplit.start(p); }), 30));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(15F); }, 30));
+            l.add(new Step("soul_split_" + t.getId(), () -> {}, 5));
+        }
+        l.add(new Step(null, () -> { server(p -> com.xenowarriors.soul.SoulSplit.end(p, null)); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 10));
     }
 
     /** The vehicles: lined up, a few colours, a driver in the car, the truck with its guard, the dealer screen. */
