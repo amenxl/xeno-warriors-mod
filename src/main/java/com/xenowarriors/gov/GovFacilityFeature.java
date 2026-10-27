@@ -141,6 +141,21 @@ public class GovFacilityFeature extends Feature<NoneFeatureConfiguration> {
             g.setup(guard, r.nextInt(2), b);
             if (com.xenowarriors.world.Clip.ok(at)) l.addFreshEntityWithPassengers(g);
         }
+        // an armored truck parked out front, a guard at the wheel (he drives patrols around the facility)
+        BlockPos park = b.offset(HX + 5, 0, HZ - 2);
+        if (com.xenowarriors.world.Clip.ok(park) && r.nextFloat() < 0.75F) {
+            var truck = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.GOV_TRUCK).get().create(l.getLevel());
+            GovAgentEntity driver = GovEntities.GOV_AGENT.get().create(l.getLevel());
+            if (truck != null && driver != null) {
+                int gy = l.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, park.getX(), park.getZ());
+                truck.moveTo(park.getX() + 0.5, gy, park.getZ() + 0.5, 180F, 0);
+                driver.moveTo(park.getX() + 0.5, gy, park.getZ() + 0.5, 180F, 0);
+                driver.finalizeSpawn(l, l.getCurrentDifficultyAt(park), MobSpawnType.STRUCTURE, null, null);
+                driver.setup(true, r.nextInt(2), b);
+                driver.startRiding(truck, true);
+                l.addFreshEntityWithPassengers(truck);
+            }
+        }
     }
 
     private static void chest(WorldGenLevel l, RandomSource r, BlockPos p, Direction facing) {

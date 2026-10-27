@@ -63,6 +63,7 @@ dependencies {
     compileOnly files('libs/voicechat-api-2.6.24.jar')
     // Epic Fight (optional): Xeno Warriors details on its skinned player, and it hands back non-combat animation to us
     compileOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")
+    compileOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")      // optional: fancier effects when Lodestone is installed
 }
 
 tasks.named('processResources', ProcessResources).configure {

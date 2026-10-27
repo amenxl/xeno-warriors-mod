@@ -342,5 +342,14 @@
   "item.xenowarriors.data_shard": "Data Shard",
   "item.xenowarriors.mod_chip": "Modification Chip",
   "block.xenowarriors.collection_book": "Collection Book",
-  "biome.xenowarriors.mountain_village": "Mountain Village"
+  "biome.xenowarriors.mountain_village": "Mountain Village",
+  "item.xenowarriors.car": "Car",
+  "item.xenowarriors.motorbike": "Motorbike",
+  "item.xenowarriors.helicopter": "Helicopter",
+  "item.xenowarriors.gov_truck": "Armored Truck",
+  "block.xenowarriors.vehicle_dealer": "Vehicle Dealer",
+  "entity.xenowarriors.car": "Car",
+  "entity.xenowarriors.motorbike": "Motorbike",
+  "entity.xenowarriors.helicopter": "Helicopter",
+  "entity.xenowarriors.gov_truck": "Government Armored Truck"
 }

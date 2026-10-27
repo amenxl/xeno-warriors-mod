@@ -31,6 +31,7 @@ public final class SkillManager {
             else if (ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player) && !player.isShiftKeyDown()) went = com.xenowarriors.lunar.MoonFall.use(player); // Lunar: Moon Fall
             else went = com.xenowarriors.ka.Kas.usePlayer(player);
             if (went) {
+                com.xenowarriors.XwFx.send(player.serverLevel(), com.xenowarriors.network.FxPacket.KA, player.getX(), player.getY(), player.getZ(), ct.getColor(), 1F);
                 int cd = com.xenowarriors.ka.Kas.PLAYER_COOLDOWN;
                 data.cooldownEnd[SUPER_SLOT] = now(player) + cd;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(SUPER_SLOT, cd, cd), player);
@@ -135,6 +136,8 @@ public final class SkillManager {
             // a blast aimed at someone charging their own: CLASH instead
             boolean clash = skill.clashColor() >= 0 && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
             if (clash || skill.use(player)) {
+                com.xenowarriors.XwFx.send(player.serverLevel(), slot == ULTIMATE_SLOT ? com.xenowarriors.network.FxPacket.ULTIMATE : com.xenowarriors.network.FxPacket.SKILL,
+                        player.getX(), player.getY(), player.getZ(), type.getColor(), slot == ULTIMATE_SLOT ? 6F : 1F);
                 if (!player.isCreative()) Karma.add(player, -cost);
                 com.xenowarriors.compat.DmzKiTraining.skillUsed(player);       // (DragonMineZ: trains Ki Power)
                 com.xenowarriors.npc.HumanReactions.skillUsed(player);         // (people nearby are amazed)

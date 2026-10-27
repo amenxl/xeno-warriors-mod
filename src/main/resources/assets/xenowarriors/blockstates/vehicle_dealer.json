@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "xenowarriors:block/vehicle_dealer",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "xenowarriors:block/vehicle_dealer",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "xenowarriors:block/vehicle_dealer",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "xenowarriors:block/vehicle_dealer",
+   "y": 270
+  }
+ }
+}

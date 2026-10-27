@@ -198,6 +198,7 @@ public class SrMemberEntity extends Monster {
         float dmg = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
         switch (key()) {
             case "senju" -> {        // Father's blade: a sweeping ring of red shards
+                com.xenowarriors.XwFx.send(l, com.xenowarriors.network.FxPacket.SHOCK, getX(), getY(), getZ(), 0xA01020, 4F);
                 for (int i = 0; i < 24; i++) {
                     double a = i * Math.PI / 12;
                     l.sendParticles(DARK, getX() + Math.cos(a) * 4, getY() + 1, getZ() + Math.sin(a) * 4, 3, .2, .4, .2, 0);
@@ -224,6 +225,7 @@ public class SrMemberEntity extends Monster {
                 l.playSound(null, blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.HOSTILE, 1F, 1.4F);
             }
             case "maddie" -> {       // her KA: the red eye - meet her gaze and you're frozen in dread
+                com.xenowarriors.XwFx.send(l, com.xenowarriors.network.FxPacket.EYE, getX(), getEyeY(), getZ(), 0xFF1010, 1F);
                 for (var p : l.getEntitiesOfClass(Player.class, getBoundingBox().inflate(12), p -> p.hasLineOfSight(this))) {
                     p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 3));
                     p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 1));
@@ -278,6 +280,7 @@ public class SrMemberEntity extends Monster {
         if (t == null || distanceTo(t) > 14) return;
         redirectTicks = 90;
         entityData.set(REDIRECT, true);
+        com.xenowarriors.XwFx.send(l, com.xenowarriors.network.FxPacket.KA, getX(), getY(), getZ(), 0xFFD940, 1F);
         if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfNpcPatches.srSpecial(this, "logan", true);
         entityData.set(SPECIAL, entityData.get(SPECIAL) + 1);
         // send the target flying the other way

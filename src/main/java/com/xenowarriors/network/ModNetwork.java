@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "50";
+    private static final String VERSION = "51";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -56,6 +56,12 @@ public final class ModNetwork {
                 .encoder(DemonStatePacket::encode).decoder(DemonStatePacket::decode).consumerMainThread(DemonStatePacket::handle).add();
         CHANNEL.messageBuilder(CollectionPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(CollectionPacket::encode).decoder(CollectionPacket::decode).consumerMainThread(CollectionPacket::handle).add();
+        CHANNEL.messageBuilder(FxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FxPacket::encode).decoder(FxPacket::decode).consumerMainThread(FxPacket::handle).add();
+        CHANNEL.messageBuilder(OpenDealerPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(OpenDealerPacket::encode).decoder(OpenDealerPacket::decode).consumerMainThread(OpenDealerPacket::handle).add();
+        CHANNEL.messageBuilder(DealerBuyPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(DealerBuyPacket::encode).decoder(DealerBuyPacket::decode).consumerMainThread(DealerBuyPacket::handle).add();
         CHANNEL.messageBuilder(DataSensedPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(DataSensedPacket::encode).decoder(DataSensedPacket::decode).consumerMainThread(DataSensedPacket::handle).add();
         CHANNEL.messageBuilder(BigHungerPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
