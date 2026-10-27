@@ -48,13 +48,19 @@ public class MainMenuScreen extends Screen {
 
     public MainMenuScreen() {
         super(Component.literal("Main Menu"));
-        entries = List.of(
+        List<Entry> l = new java.util.ArrayList<>(List.of(
                 new Entry("Character Select", "Pick which warrior you play as.", () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen())),
                 new Entry("Character Customization", "Your stats, skill loadout, outfits and KA.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
                 new Entry("Party", "Your party and bot teammates.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
                 new Entry("Pets", "Your foxes and companions: names, skins, bags and run-away cool-downs.", () -> PetsScreen.open(this)),
                 new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
-                new Entry("Settings", "Cel-shading, HUD, Karma Sensing and combat options.", () -> PlayerStatsScreen.openTab(this, 3)));
+                new Entry("Settings", "Cel-shading, HUD, Karma Sensing and combat options.", () -> PlayerStatsScreen.openTab(this, 3))));
+        if (com.xenowarriors.client.compat.DmzMenu.available())          // DragonMineZ installed: its own menu
+            l.add(l.size() - 1, new Entry("DragonMine Z", "Open DragonMineZ's character menu: stats, forms and skills.", () -> {
+                if (!com.xenowarriors.client.compat.DmzMenu.open() && minecraft.player != null)
+                    minecraft.player.displayClientMessage(Component.literal("Couldn't open the DragonMineZ menu."), true);
+            }));
+        entries = List.copyOf(l);
     }
 
     /** (UI test) highlight this entry. */
