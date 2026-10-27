@@ -89,6 +89,7 @@ public final class UiTest {
         if ("mainmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { mainMenu(mc, l); return l; }
         if ("posecal".equals(System.getenv("XW_UITEST_FOCUS"))) { poseCal(mc, l); return l; }
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
+        if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -657,6 +658,32 @@ public final class UiTest {
             com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), CharacterType.NONE.ordinal(), -1, "Bounty complete", "+1,120 Money - 12 Zombie", "");
         }), 12));
         l.add(new Step("popup_boss_level_bounty", () -> {}, 3));
+    }
+
+    /** Mikiko's and Rhalix's Xeno Blast: charge, the blast (from the side), the drained Karma bar, and the menu tab. */
+    private static void xenoBlast(Minecraft mc, List<Step> l) {
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX}) {
+            l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(t); hold(null); server(p -> {
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                p.setYRot(0); p.setXRot(0);
+                com.xenowarriors.karma.Karma.add(p, 200);
+                for (int k = 0; k < 3; k++) {
+                    var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+                    if (h == null) continue;
+                    h.moveTo(p.getX() - 1 + k, p.getY(), p.getZ() + 8 + k * 3, 180, 0);
+                    h.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 400, 10));
+                    p.serverLevel().addFreshEntity(h);
+                }
+            }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 60));
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT)), 8));
+            l.add(new Step("xeno_" + t.getId() + "_charge", () -> {}, 12));
+            l.add(new Step("xeno_" + t.getId() + "_blast", () -> {}, 3));
+            l.add(new Step(null, () -> {}, 30));
+            l.add(new Step("xeno_" + t.getId() + "_drained", () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3));
+            l.add(new Step(null, () -> { com.xenowarriors.client.menu.CharacterCustomScreen.open(null); if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(3); }, 30));
+            l.add(new Step("xeno_" + t.getId() + "_tab", () -> {}, 3));
+            l.add(new Step(null, () -> { mc.setScreen(null); server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(40)).forEach(e -> e.discard())); }, 10));
+        }
     }
 
     private static void noToasts(Minecraft mc) {
