@@ -37,7 +37,23 @@ public class SkillLoadoutScreen extends Screen {
 
     private int cardX(int i) { int c = cols(); return width / 2 - (c * (CARD_W + 6) - 6) / 2 + (i % c) * (CARD_W + 6); }
 
-    private int cardY(int i) { return 104 + (i / cols()) * (CARD_H + 6); }
+    private int listScroll;
+
+    private int cardY(int i) { return 104 + (i / cols()) * (CARD_H + 6) - listScroll; }
+
+    /** How far the skill list can scroll (small windows). */
+    private int maxListScroll() {
+        int n = SkillPool.of(type()).size(), rows = (n + cols() - 1) / cols();
+        return Math.max(0, 104 + rows * (CARD_H + 6) - (height - 28));
+    }
+
+    private boolean cardVisible(int y) { return y + CARD_H > 100 && y < height - 28; }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double delta) {
+        listScroll = Math.max(0, Math.min(maxListScroll(), listScroll - (int) Math.signum(delta) * (CARD_H + 6)));
+        return true;
+    }
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
@@ -70,9 +86,12 @@ public class SkillLoadoutScreen extends Screen {
         g.drawCenteredString(font, "Click a slot, then a skill to put in it - hover anything for details", width / 2, 84, 0x888888);
         // every skill this character can learn
         List<SkillPool.Entry> pool = SkillPool.of(type);
+        listScroll = Math.min(listScroll, maxListScroll());
+        g.enableScissor(0, 100, width, height - 28);
         for (int i = 0; i < pool.size(); i++) {
             SkillPool.Entry e = pool.get(i);
             int x = cardX(i), y = cardY(i);
+            if (!cardVisible(y)) continue;
             boolean seasonOk = ClientSkillState.season() >= e.season();
             boolean open = seasonOk && SkillPool.unlocked(e, ClientSkillState.level(), creative());
             int at = indexOf(loadout, i);
@@ -82,8 +101,10 @@ public class SkillLoadoutScreen extends Screen {
             g.drawString(font, seasonOk ? e.skill().getName().getString() : "???", x + 8, y + 6, open ? 0xFFFFFF : 0x777777);
             String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
             g.drawString(font, line, x + 8, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
-            if (over) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
+            if (over && my >= 100 && my < height - 28) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
         }
+        g.disableScissor();
+        if (maxListScroll() > 0) g.drawString(font, listScroll < maxListScroll() ? "\u25bc scroll for more skills" : "\u25b2 scroll up", 8, height - 20, 0x8899AA, false);
         super.render(g, mx, my, pt);
         if (hover != null) {
             List<net.minecraft.util.FormattedCharSequence> lines = new java.util.ArrayList<>();
@@ -112,6 +133,7 @@ public class SkillLoadoutScreen extends Screen {
         List<SkillPool.Entry> pool = SkillPool.of(type());
         for (int i = 0; i < pool.size(); i++) {
             int x = cardX(i), y = cardY(i);
+            if (!cardVisible(y) || my < 100 || my >= height - 28) continue;
             if (mx >= x && mx < x + CARD_W && my >= y && my < y + CARD_H) {
                 if (!SkillPool.available(pool.get(i), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;
                 ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(selected, i));

@@ -36,14 +36,36 @@ public class CharacterSelectScreen extends Screen {
         return (width - total) / 2 + index * (CARD_WIDTH + GAP);
     }
 
+    /** Small windows: shorter cards, the coming-later characters as one row of name chips. */
+    private boolean compact() { return height < 330; }
+
+    private int cardH() { return compact() ? Math.max(120, Math.min(CARD_HEIGHT, height - cardTop() - 24)) : CARD_HEIGHT; }
+
     private int cardTop() {
-        return Math.max(34, (height - CARD_HEIGHT - 2 * SLOT_H - 22) / 2 + 6);
+        return compact() ? 30 : Math.max(34, (height - CARD_HEIGHT - 2 * SLOT_H - 22) / 2 + 6);
     }
 
     private static final int SLOT_W = 46, SLOT_H = 40, SLOT_GAP = 4;
 
     /** The locked future characters: two rows of 7 under the cards. */
     private void drawUpcoming(GuiGraphics g, int mouseX, int mouseY) {
+        if (compact()) {                                                  // one row of small name chips
+            int n = UPCOMING.length, cw = Math.min(46, (width - 10) / n), x0 = (width - n * cw) / 2, y = cardTop() + cardH() + 6;
+            for (int i = 0; i < n; i++) {
+                int x = x0 + i * cw, c = UPCOMING_COLOR[i];
+                boolean hov = mouseX >= x && mouseX < x + cw - 2 && mouseY >= y && mouseY < y + 12;
+                g.fill(x, y, x + cw - 2, y + 12, hov ? 0xFF000000 | c : 0x66000000 | (c & 0xFFFFFF));
+                g.fill(x + 1, y + 1, x + cw - 3, y + 11, 0xE0101016);
+                g.pose().pushPose();
+                g.pose().translate(x + (cw - 2) / 2F, y + 3, 0);
+                float sc = Math.min(0.6F, (cw - 5) / (float) Math.max(1, font.width(UPCOMING[i])));
+                g.pose().scale(sc, sc, 1F);
+                g.drawCenteredString(font, UPCOMING[i], 0, 0, hov ? c : 0x888888);
+                g.pose().popPose();
+                if (hov) g.renderTooltip(font, Component.literal(UPCOMING[i] + " - locked (coming in a later update)"), mouseX, mouseY);
+            }
+            return;
+        }
         int perRow = 7, top = cardTop() + CARD_HEIGHT + 14;
         int rowW = perRow * SLOT_W + (perRow - 1) * SLOT_GAP;
         int sw = SLOT_W, x0 = (width - rowW) / 2;
@@ -80,7 +102,7 @@ public class CharacterSelectScreen extends Screen {
             addRenderableWidget(Button.builder(
                             Component.translatable("screen.xenowarriors.select.play_as", type.getDisplayName()),
                             b -> choose(type))
-                    .bounds(x + 10, cardTop() + CARD_HEIGHT - 28, CARD_WIDTH - 20, 20)
+                    .bounds(x + 10, cardTop() + cardH() - 28, CARD_WIDTH - 20, 20)
                     .build()).active = !locked(type);
         }
     }
@@ -94,47 +116,53 @@ public class CharacterSelectScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderBackground(g);
 
-        int top = cardTop();
+        int top = cardTop(), ch = cardH();
+        float ts = compact() ? 1.3F : 2F;
         g.pose().pushPose();
-        g.pose().scale(2F, 2F, 1F);
-        g.drawCenteredString(font, title, width / 4, (top - 34) / 2, 0xFFFFFF);
+        g.pose().scale(ts, ts, 1F);
+        g.drawCenteredString(font, title, (int) (width / 2 / ts), (int) ((compact() ? 4 : top - 34) / ts), 0xFFFFFF);
         g.pose().popPose();
         g.drawCenteredString(font, Component.translatable("screen.xenowarriors.select.subtitle"),
-                width / 2, top - 12, 0xAAAAAA);
+                width / 2, top - (compact() ? 11 : 12), 0xAAAAAA);
 
         CharacterType[] choices = CharacterType.PLAYABLE;
         for (int i = 0; i < choices.length; i++) {
             CharacterType type = choices[i];
             int x = cardLeft(i);
             int centerX = x + CARD_WIDTH / 2;
-            boolean hovered = mouseX >= x && mouseX < x + CARD_WIDTH && mouseY >= top && mouseY < top + CARD_HEIGHT;
+            boolean hovered = mouseX >= x && mouseX < x + CARD_WIDTH && mouseY >= top && mouseY < top + ch;
 
             // card: colored border + dark inside
             int border = hovered ? type.getColor() : (type.getColor() & 0x00FFFFFF) | 0x99000000;
-            g.fill(x - 2, top - 2, x + CARD_WIDTH + 2, top + CARD_HEIGHT + 2, border);
-            g.fill(x, top, x + CARD_WIDTH, top + CARD_HEIGHT, 0xE0101016);
+            g.fill(x - 2, top - 2, x + CARD_WIDTH + 2, top + ch + 2, border);
+            g.fill(x, top, x + CARD_WIDTH, top + ch, 0xE0101016);
 
             // names
             if (locked(type)) {                 // no spoilers: a locked card shows nothing about who it is
                 g.drawCenteredString(font, "???", centerX, top + 8, 0x888888);
                 g.drawCenteredString(font, "Season " + type.season() + " content", centerX, top + 20, 0xAA5555);
                 g.drawCenteredString(font, "/xeno season unlock " + type.season(), centerX, top + 32, 0x777777);
-                g.drawCenteredString(font, "?", centerX, top + CARD_HEIGHT / 2 - 10, 0x555555);
+                g.drawCenteredString(font, "?", centerX, top + ch / 2 - 10, 0x555555);
                 continue;
             }
+            // 3D preview of the player wearing this character (drawn first, so the names stay readable over wings)
+            int modelY = top + ch - 34;
+            int size = compact() ? Math.max(30, (ch - 80) / 2) : 50;
+            g.enableScissor(x, top + 40, x + CARD_WIDTH, top + ch - 30);
+            ClientCharacterData.beginPreview(type);
+            try {
+                InventoryScreen.renderEntityInInventoryFollowsMouse(g, centerX, modelY, size,
+                        (float) (centerX - mouseX), (float) (modelY - size * 1.6F - mouseY), minecraft.player);
+            } finally {
+                ClientCharacterData.endPreview();
+                g.disableScissor();
+            }
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 400);
             g.drawCenteredString(font, type.getFullName(), centerX, top + 8, type.getColor());
             g.drawCenteredString(font, type.getTitle(), centerX, top + 20, 0xDDDDDD);
             g.drawCenteredString(font, type.getElements(), centerX, top + 32, 0x999999);
-
-            // 3D preview of the player wearing this character
-            int modelY = top + CARD_HEIGHT - 42;
-            ClientCharacterData.beginPreview(type);
-            try {
-                InventoryScreen.renderEntityInInventoryFollowsMouse(g, centerX, modelY, 50,
-                        (float) (centerX - mouseX), (float) (modelY - 80 - mouseY), minecraft.player);
-            } finally {
-                ClientCharacterData.endPreview();
-            }
+            g.pose().popPose();
         }
 
         super.render(g, mouseX, mouseY, partialTick);

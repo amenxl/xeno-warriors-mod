@@ -97,15 +97,20 @@ public class BotPickScreen extends Screen {
                 g.drawCenteredString(font, "Season " + t.season() + " content", cx, top + 20, 0xAA5555);
                 continue;
             }
-            g.drawCenteredString(font, t.getFullName(), cx, top + 8, t.getColor());
-            g.drawCenteredString(font, t.getTitle(), cx, top + 20, 0xDDDDDD);
-            int modelY = top + CARD_H - 40;
+            int modelY = top + CARD_H - 34;
+            g.enableScissor(x, top + 32, x + cardW, top + CARD_H - 28);
             ClientCharacterData.beginPreview(t);
             try {
-                InventoryScreen.renderEntityInInventoryFollowsMouse(g, cx, modelY, 46, (float) (cx - mx), (float) (modelY - 76 - my), minecraft.player);
+                InventoryScreen.renderEntityInInventoryFollowsMouse(g, cx, modelY, 44, (float) (cx - mx), (float) (modelY - 76 - my), minecraft.player);
             } finally {
                 ClientCharacterData.endPreview();
+                g.disableScissor();
             }
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 400);                                // names over the wings
+            g.drawCenteredString(font, t.getFullName(), cx, top + 8, t.getColor());
+            g.drawCenteredString(font, t.getTitle(), cx, top + 20, 0xDDDDDD);
+            g.pose().popPose();
             if (cooling.contains(t.getId())) g.fill(x, top, x + cardW, top + CARD_H, 0x88300000);
         }
         super.render(g, mx, my, pt);

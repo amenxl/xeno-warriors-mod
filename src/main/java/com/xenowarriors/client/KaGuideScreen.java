@@ -36,8 +36,8 @@ public class KaGuideScreen extends Screen {
 
     @Override
     protected void init() {
-        addRenderableWidget(Button.builder(Component.literal("KAs"), b -> elements = false).bounds(width / 2 - 82, 22, 80, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("Elements"), b -> elements = true).bounds(width / 2 + 2, 22, 80, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("KAs"), b -> { elements = false; scrollY = 0; }).bounds(width / 2 - 82, 22, 80, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("Elements"), b -> { elements = true; scrollY = 0; }).bounds(width / 2 + 2, 22, 80, 16).build());
     }
 
     private int cols() { return Math.max(1, Math.min(4, (width - 20) / (CW + 6))); }
@@ -49,10 +49,10 @@ public class KaGuideScreen extends Screen {
         renderBackground(g);
         g.drawCenteredString(font, "KA & Element Guide", width / 2, 8, 0xFFFFFF);
         List<String> hover = null;
-        int y0 = 46;
+        int y0 = 46 - scrollY;
+        g.enableScissor(0, 40, width, height);
         if (!elements) {
-            g.drawCenteredString(font, "KAs manipulate one thing. Only certain people have one - and every KA costs its user.", width / 2, y0, 0xAAAAAA);
-            int y = y0 + 14, i = 0;
+            int y = intro(g, "KAs manipulate one thing. Only certain people have one - and every KA costs its user.", y0), i = 0;
             for (int tier = 0; tier < 2; tier++) {
                 Ka[] list = tier == 0 ? Ka.SIMPLE : Ka.RARE;
                 g.drawString(font, tier == 0 ? "Simple (rare in townsfolk and Skylanders)" : "Rare (guardians, raid captains, bosses)", cx(0), y, tier == 0 ? 0x55FFFF : 0xFF77FF);
@@ -73,9 +73,9 @@ public class KaGuideScreen extends Screen {
                 }
                 y += ((list.length + cols() - 1) / cols()) * (CH + 4) + 6;
             }
+            contentBottom = y + scrollY;
         } else {
-            g.drawCenteredString(font, "Elements: everyday powers. Each attack costs the user Karma. Blasts can be clashed.", width / 2, y0, 0xAAAAAA);
-            int y = y0 + 14;
+            int y = intro(g, "Elements: everyday powers. Each attack costs the user Karma. Blasts can be clashed.", y0);
             Element[] all = Element.values();
             for (int k = 0; k < all.length; k++) {
                 Element el = all[k];
@@ -88,7 +88,11 @@ public class KaGuideScreen extends Screen {
                 if (over) hover = List.of("Element: " + el.title(), "Karma " + el.karma + (com.xenowarriors.ka.Elements.blast(el) ? "   Charges up first - can be clashed" : ""), "",
                         does(el), "", "Who has it: " + who(el));
             }
+            contentBottom = y + ((all.length + cols() - 1) / cols()) * (CH + 4) + scrollY;
         }
+        g.disableScissor();
+        if (my < 40) hover = null;
+        if (contentBottom > height) g.drawString(font, scrollY < contentBottom - height + 6 ? "\u25bc scroll" : "\u25b2 scroll", width - 52, height - 12, 0x8899AA, false);
         super.render(g, mx, my, pt);
         if (hover != null) {
             List<FormattedCharSequence> lines = new ArrayList<>();
@@ -99,6 +103,20 @@ public class KaGuideScreen extends Screen {
             }
             g.renderTooltip(font, lines, mx, my);
         }
+    }
+
+    private int scrollY, contentBottom;
+
+    /** The intro line, wrapped to the window; returns where the list starts. */
+    private int intro(GuiGraphics g, String text, int y) {
+        for (var line : font.split(Component.literal(text), width - 20)) { g.drawCenteredString(font, line, width / 2, y, 0xAAAAAA); y += 10; }
+        return y + 4;
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double delta) {
+        scrollY = Math.max(0, Math.min(Math.max(0, contentBottom - height + 6), scrollY - (int) Math.signum(delta) * 20));
+        return true;
     }
 
     private static String who(Element el) {

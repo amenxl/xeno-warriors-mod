@@ -51,6 +51,12 @@ public final class UiTest {
             p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG).putBoolean("xw_collection_seen", true);
             CompoundHolder.unlock(p);
             p.serverLevel().setDayTime(6000);
+            // a clean stage for the model shots: clear the grass around, stone floor
+            var c = p.blockPosition();
+            for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) {
+                for (int dy = 0; dy <= 4; dy++) p.serverLevel().setBlock(c.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                p.serverLevel().setBlock(c.offset(dx, -1, dz), net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 3);
+            }
             p.serverLevel().setWeatherParameters(6000, 0, false, false);
         }), 20));
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
@@ -58,7 +64,7 @@ public final class UiTest {
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
         for (int t = 0; t < 4; t++) {
             int tt = t;
-            l.add(new Step("menu_tab" + t, () -> { PlayerStatsScreen.presetTab(tt); mc.setScreen(new PlayerStatsScreen()); }, 20));
+            l.add(new Step("menu_tab" + t, () -> { PlayerStatsScreen.presetTab(tt); PlayerStatsScreen.open(); }, 25));
         }
         l.add(new Step("skills", () -> mc.setScreen(new SkillLoadoutScreen(null)), 20));
         l.add(new Step("ka_guide", () -> mc.setScreen(new KaGuideScreen(null)), 20));
@@ -68,7 +74,8 @@ public final class UiTest {
         l.add(new Step("bot_pick", () -> { mc.setScreen(null); server(com.xenowarriors.bot.PartyBots::openPick); }, 30));
         l.add(new Step("party_menu", () -> mc.setScreen(new com.xenowarriors.client.bot.PartyScreen()), 20));
         // the characters from the front, cel-shading off and on
-        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 20));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+            mc.player.setXRot(10F); }, 20));
         for (CharacterType t : CharacterType.PLAYABLE) {
             for (boolean cel : new boolean[]{false, true}) {
                 l.add(new Step(null, () -> { character(t); ClientSettings.setCelShading(cel); }, 40));

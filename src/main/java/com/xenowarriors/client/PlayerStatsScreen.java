@@ -85,20 +85,23 @@ public class PlayerStatsScreen extends Screen {
         efMode = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfWholeBattleMode(!ClientSettings.efWholeBattleMode());
             updateButtons();
-        }).bounds(bx, SET_TOP + 144, bw, 20).build());
+        }).bounds(bx, SET_TOP + 202, bw, 20).build());
         efBattle = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
-        }).bounds(bx, SET_TOP + 168, bw, 20).build());
+        }).bounds(bx, SET_TOP + 226, bw, 20).build());
         headShape = addRenderableWidget(Button.builder(Component.empty(), b -> {
             ClientSettings.setAnimeJaw(!ClientSettings.animeJaw());
             updateButtons();
         }).bounds(bx, SET_TOP + 98, bw / 2 - 2, 20).build());
         celShade = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setCelShading(!ClientSettings.celShading()); updateButtons(); })
                 .bounds(bx + bw / 2 + 2, SET_TOP + 98, bw / 2 - 2, 20).build());
-        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 194, bw, 20).build());
-        vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 218, bw / 2 - 2, 20).build());
-        skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 218, bw / 2 - 2, 20).build());
+        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 138, bw, 20).build());
+        vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 162, bw / 2 - 2, 20).build());
+        skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 162, bw / 2 - 2, 20).build());
+        setBaseY.clear();
+        for (Button b : new Button[]{senseFriendly, efMode, efBattle, headShape, celShade, hudStyle, vanillaBars, skillsAlways}) setBaseY.put(b, b.getY());
+        if (players.isEmpty()) ModNetwork.sendToServer(new PlayerStatsRequestPacket());     // (opened some other way: ask for the list)
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
         for (int i = 0; i < MAX_OUTFITS; i++) {
@@ -115,6 +118,14 @@ public class PlayerStatsScreen extends Screen {
         }).bounds(width / 2 - 75, height - 46, 150, 20).build());
         updateButtons();
     }
+
+    /** Settings scroll (small windows): base Y of each settings button. */
+    private final java.util.Map<Button, Integer> setBaseY = new java.util.HashMap<>();
+    private int setScroll;
+
+    private int settingsHeight() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 252 : 190; }
+
+    private int maxSetScroll() { return Math.max(0, SET_TOP + settingsHeight() + 6 - height); }
 
     private static final int SET_TOP = 30, MAX_OUTFITS = 6, OUT_TOP = 30;
     private final List<Button> outfitButtons = new ArrayList<>();
@@ -167,6 +178,10 @@ public class PlayerStatsScreen extends Screen {
     }
 
     private void updateButtons() {
+        for (var e : setBaseY.entrySet()) {
+            int y = e.getValue() - setScroll;
+            e.getKey().setY(y);
+        }
         if (realm == null) return;
         tabPlayers.active = tab != 0;
         tabMe.active = tab != 1;
@@ -205,6 +220,7 @@ public class PlayerStatsScreen extends Screen {
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
         realm.setMessage(Component.literal(me != null && me.inRealm() ? "Leave the Hekublade" : "Enter the Hekublade"));
         plea.visible = tab == 1 && prisoner;
+            for (var e : setBaseY.entrySet()) if (e.getKey().getY() < 26) e.getKey().visible = false;   // scrolled up under the tabs
     }
 
     @Override
@@ -223,6 +239,11 @@ public class PlayerStatsScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double x, double y, double delta) {
+        if (tab == 3) {
+            setScroll = Math.max(0, Math.min(maxSetScroll(), setScroll - (int) Math.signum(delta) * 16));
+            updateButtons();
+            return true;
+        }
         int visible = Math.max(1, (height - 60) / ROW);
         scroll = Math.max(0, Math.min(Math.max(0, players.size() - visible), scroll - (int) Math.signum(delta)));
         return true;
@@ -422,14 +443,14 @@ public class PlayerStatsScreen extends Screen {
     // ------------------------------------------------------------------ Settings tab
 
     private void renderSettings(GuiGraphics g) {
-        int w = cardW(), x = cardX(), y = SET_TOP;
+        int w = cardW(), x = cardX(), y = SET_TOP - setScroll;
         boolean ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
-        int h = ef ? 196 : 130;
+        int h = settingsHeight();
+        g.enableScissor(0, 24, width, height);
         g.fill(x, y, x + w, y + h, BG);
         g.fill(x, y, x + w, y + 1, 0xFF8C8CA0);
         g.drawCenteredString(font, "Settings", width / 2, y + 6, 0xFFFFFF);
         small(g, "KARMA SENSING", x + PAD, y + 22, SECTION);
-        // explanation under the button, shrunk to fit the card
         String help = ClientSettings.senseFriendly() ? "On: also shows animals, villagers and other friendly life."
                 : "Off: only shows other players and anything that's a threat.";
         for (int i = 0, n = 0; n < 2; n++) {
@@ -441,10 +462,14 @@ public class PlayerStatsScreen extends Screen {
         }
         g.fill(x + PAD, y + 82, x + w - PAD, y + 83, 0x30FFFFFF);
         small(g, "LOOK", x + PAD, y + 86, SECTION);
+        g.fill(x + PAD, y + 122, x + w - PAD, y + 123, 0x30FFFFFF);
+        small(g, "HUD", x + PAD, y + 126, SECTION);
         if (ef) {
-            g.fill(x + PAD, y + 128, x + w - PAD, y + 129, 0x30FFFFFF);
-            small(g, "EPIC FIGHT", x + PAD, y + 132, SECTION);
+            g.fill(x + PAD, y + 186, x + w - PAD, y + 187, 0x30FFFFFF);
+            small(g, "EPIC FIGHT", x + PAD, y + 190, SECTION);
         }
+        g.disableScissor();
+        if (maxSetScroll() > 0) g.drawString(font, setScroll < maxSetScroll() ? "\u25bc scroll" : "\u25b2 scroll", x + w - 52, Math.min(height - 10, y + h - 10), 0x8899AA, false);
     }
 
     // ------------------------------------------------------------------ Outfits tab
