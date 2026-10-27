@@ -121,7 +121,7 @@ public class CharacterSelectScreen extends Screen {
             CharacterType type = choices[i];
             int x = cardLeft(i);
             addRenderableWidget(Button.builder(
-                            Component.translatable("screen.xenowarriors.select.play_as", type.getDisplayName()),
+                            CARD_WIDTH < 100 ? type.getDisplayName() : Component.translatable("screen.xenowarriors.select.play_as", type.getDisplayName()),
                             b -> choose(type))
                     .bounds(x + 10, cardTop() + cardH() - 28, CARD_WIDTH - 20, 20)
                     .build()).active = !locked(type);
@@ -181,14 +181,26 @@ public class CharacterSelectScreen extends Screen {
             }
             g.pose().pushPose();
             g.pose().translate(0, 0, 400);
-            g.drawCenteredString(font, type.getFullName(), centerX, top + 8, type.getColor());
-            g.drawCenteredString(font, type.getTitle(), centerX, top + 20, 0xDDDDDD);
-            g.drawCenteredString(font, type.getElements(), centerX, top + 32, 0x999999);
+            fit(g, type.getFullName(), centerX, top + 8, type.getColor());
+            fit(g, type.getTitle(), centerX, top + 20, 0xDDDDDD);
+            fit(g, type.getElements(), centerX, top + 32, 0x999999);
             g.pose().popPose();
         }
 
         super.render(g, mouseX, mouseY, partialTick);
         drawUpcoming(g, mouseX, mouseY);
+    }
+
+    /** Centered text shrunk to fit inside a card. */
+    private void fit(GuiGraphics g, Component text, int cx, int y, int color) {
+        int w = font.width(text), room = CARD_WIDTH - 6;
+        if (w <= room) { g.drawCenteredString(font, text, cx, y, color); return; }
+        float sc = room / (float) w;
+        g.pose().pushPose();
+        g.pose().translate(cx, y + (1 - sc) * 4, 0);
+        g.pose().scale(sc, sc, 1F);
+        g.drawCenteredString(font, text, 0, 0, color);
+        g.pose().popPose();
     }
 
     @Override
