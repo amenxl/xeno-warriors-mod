@@ -135,7 +135,7 @@ public final class KaeruChange {
         if (!p.isAlive() || ModCapabilities.getType(p) != CharacterType.KAERU) { revert(p, false); return; }
         if (f.mode == SILHOUETTE) {
             p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 5, 3, false, false));
-            if (now % 2 == 0) l.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1, p.getZ(), 3, 0.35, 0.8, 0.35, 0.03);
+            if (now % 3 == 0) l.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1, p.getZ(), 1, 0.4, 0.8, 0.4, 0.02);
             if (now >= f.until) {
                 set(p, new Form(f.target, f.id, f.target, now + LAST));
                 l.sendParticles(ParticleTypes.FLASH, p.getX(), p.getY() + 1, p.getZ(), 1, 0, 0, 0, 0);

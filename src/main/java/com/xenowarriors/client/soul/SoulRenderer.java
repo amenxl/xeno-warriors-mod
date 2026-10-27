@@ -28,7 +28,7 @@ public class SoulRenderer extends HumanoidMobRenderer<SoulEntity, PlayerModel<So
         super(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false) {
             @Override
             public void renderToBuffer(PoseStack ps, com.mojang.blaze3d.vertex.VertexConsumer vc, int l, int o, float r, float g, float b, float a) {
-                super.renderToBuffer(ps, vc, l, o, r * 0.75F, g * 0.9F, b, a * 0.6F);   // pale and see-through
+                super.renderToBuffer(ps, vc, l, o, r * 0.55F, g * 0.8F, b, a * 0.55F);   // pale and see-through
             }
         }, 0.3F);
         addLayer(new Details(this));
@@ -75,10 +75,10 @@ public class SoulRenderer extends HumanoidMobRenderer<SoulEntity, PlayerModel<So
             com.xenowarriors.client.LimbBend.copy(p.rightLeg, m.rightLeg);
             com.xenowarriors.client.LimbBend.copy(p.leftLeg, m.leftLeg);
             int overlay = LivingEntityRenderer.getOverlayCoords(e, PALE);
-            m.root.render(pose, buffers.getBuffer(RenderType.entityTranslucent(t.getDetailTexture())), light, overlay, 0.75F, 0.9F, 1F, 0.6F);
+            m.root.render(pose, buffers.getBuffer(RenderType.entityTranslucent(t.getDetailTexture())), light, overlay, 0.55F, 0.8F, 1F, 0.55F);
             if (m.faceRoot != null) {
                 m.faceHead.copyFrom(p.head);
-                m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.client.render.CharacterDetailLayer.baseFace(t))), light, overlay, 0.75F, 0.9F, 1F, 0.6F);
+                m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.client.render.CharacterDetailLayer.baseFace(t))), light, overlay, 0.55F, 0.8F, 1F, 0.55F);
             }
         }
     }

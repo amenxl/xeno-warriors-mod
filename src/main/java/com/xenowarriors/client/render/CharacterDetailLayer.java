@@ -468,7 +468,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             model.root.render(poseStack, buffer, packedLight, overlay, 0.05F, 0.05F, 0.06F, 1F);
             if (model.faceRoot != null) {
                 model.faceHead.copyFrom(parent.head);
-                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.eyes(com.xenowarriors.client.kaeru.ChangeClient.SIL_FACE)), packedLight, overlay);
+                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.kaeru.ChangeClient.SIL_FACE)), 0xF000F0, overlay);   // eyes at full brightness
             }
             return;
         }

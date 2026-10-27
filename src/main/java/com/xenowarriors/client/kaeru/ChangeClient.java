@@ -71,7 +71,7 @@ public final class ChangeClient {
             if (!(mc.level.getEntity(e.getKey()) instanceof AbstractClientPlayer p)) continue;
             Form f = e.getValue();
             if (f.mode == KaeruChange.SILHOUETTE) {
-                if (mc.level.random.nextInt(2) == 0)
+                if (mc.level.random.nextInt(4) == 0)
                     mc.level.addParticle(ParticleTypes.END_ROD, p.getRandomX(0.6), p.getRandomY(), p.getRandomZ(0.6), 0, 0.04, 0);
                 continue;
             }
