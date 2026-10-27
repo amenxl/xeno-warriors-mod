@@ -34,6 +34,8 @@ minecraft {
         }
 
         client {
+            // UI test (CI): jump straight into the 'uitest' world
+            if (System.getenv('XW_UITEST') == '1') { args '--quickPlaySingleplayer', 'uitest' }
         }
 
         server {

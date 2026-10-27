@@ -28,6 +28,9 @@ public class PlayerStatsScreen extends Screen {
     private static final int ROW = 30, PAD = 8;
     private static final int BG = 0xD0101018, BG_SELF = 0xD01C1C2A, SECTION = 0xFF8C8CA0, LABEL = 0xFFA0A0B0;
     private static int tab;
+
+    /** (UI test) open on this tab. */
+    public static void presetTab(int t) { tab = t; }
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;

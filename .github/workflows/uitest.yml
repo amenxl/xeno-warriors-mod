@@ -1,0 +1,51 @@
+name: UI test (client screenshots)
+
+# Manual: makes a small world with the server, then starts the real game client (software rendering on a virtual
+# screen), opens every Xeno Warriors screen and photographs each character, and publishes the screenshots.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  uitest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install virtual screen + software OpenGL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri > /dev/null
+      - name: Make a world (server)
+        env:
+          XW_SELFTEST: "1"
+          XW_SELFTEST_R: "1"
+          XW_SELFTEST_VR: "0"
+        run: |
+          chmod +x gradlew
+          mkdir -p run && echo "eula=true" > run/eula.txt
+          printf "online-mode=false\nlevel-seed=xenowarriors\nspawn-protection=0\nmax-tick-time=-1\n" > run/server.properties
+          timeout 900 ./gradlew runServer --no-daemon > server.log 2>&1 || true
+          mkdir -p run/saves && cp -r run/world run/saves/uitest
+          ls run/saves/uitest
+      - name: Run the client
+        env:
+          XW_UITEST: "1"
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: |
+          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClient --no-daemon > client.log 2>&1 || true
+          grep -E "XW-UITEST|ERROR|Exception|Caused by" client.log | head -80
+          ls run/screenshots || true
+      - name: Publish screenshots to the "uitest" release
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out
+          cp client.log out/ || true
+          cp run/screenshots/*.png out/ 2>/dev/null || true
+          gh release delete uitest --yes --cleanup-tag || true
+          gh release create uitest out/* --title "UI test screenshots" --notes "Client UI test output" --prerelease
