@@ -17,6 +17,10 @@ public abstract class AbstractClientPlayerMixin {
     private void xenowarriors$characterSkin(CallbackInfoReturnable<ResourceLocation> cir) {
         CharacterType type = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
         if (type != CharacterType.NONE) {
+            if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(((AbstractClientPlayer) (Object) this).getId())) {
+                cir.setReturnValue(com.xenowarriors.client.kaeru.ChangeClient.SIL_SKIN);
+                return;
+            }
             int o = ClientCharacterData.outfit((AbstractClientPlayer) (Object) this);
             if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(((AbstractClientPlayer) (Object) this).getId())) {
                 cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png")));   // Lunar: white coat

@@ -149,6 +149,9 @@ public final class KaeruSoul {
         burst(p);
     }
 
+    /** Back in her own body right away (Soul Link death, etc.). */
+    public static void forceOut(ServerPlayer p) { if (state(p) != OUT) stepOut(p, OUT); }
+
     /** Any skill key while in the blade. */
     public static void castOut(ServerPlayer p) {
         if (host(p) == null) { stepOut(p, OUT); return; }

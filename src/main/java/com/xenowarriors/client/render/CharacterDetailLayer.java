@@ -464,6 +464,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean giTop = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST);
         boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
         if (giTop || giLegs) model.hideOutfit(giTop, giTop, giLegs);
+        if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(player.getId())) {      // Kaeru's Change: a dark silhouette, glowing white eyes
+            model.root.render(poseStack, buffer, packedLight, overlay, 0.05F, 0.05F, 0.06F, 1F);
+            if (model.faceRoot != null) {
+                model.faceHead.copyFrom(parent.head);
+                model.faceRoot.render(poseStack, buffers.getBuffer(RenderType.eyes(com.xenowarriors.client.kaeru.ChangeClient.SIL_FACE)), packedLight, overlay);
+            }
+            return;
+        }
         model.root.render(poseStack, buffer, packedLight, overlay);
         if (com.xenowarriors.client.cel.Cel.on() && !noHead) {                 // cel-shading: the ink outline around him
             com.xenowarriors.client.cel.CelOutline.body(parent, poseStack, buffers, packedLight, overlay);
