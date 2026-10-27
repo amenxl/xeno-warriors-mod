@@ -80,6 +80,7 @@ public final class UiTest {
         if ("mikiko".equals(System.getenv("XW_UITEST_FOCUS"))) { mikikoCombo(mc, l); return l; }
         if ("combo".equals(System.getenv("XW_UITEST_FOCUS"))) { combos(mc, l); return l; }
         if ("s3fits".equals(System.getenv("XW_UITEST_FOCUS"))) { s3Outfits(mc, l); return l; }
+        if ("ores".equals(System.getenv("XW_UITEST_FOCUS"))) { oresAndPjs(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -479,6 +480,56 @@ public final class UiTest {
         l.add(new Step("aura_elements", () -> {}, 3));
         for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_elements_%02d", f), () -> {}, 1));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
+    }
+
+    /** The new ores in a row (each with its gem floating above it), then the Fox PJs on a few characters. */
+    private static void oresAndPjs(Minecraft mc, List<Step> l) {
+        net.minecraft.world.level.block.Block[] ores = {com.xenowarriors.sky.ModBlocks.FOX_SHARD_ORE.get(), com.xenowarriors.sky.ModBlocks.DEEPSLATE_FOX_SHARD_ORE.get(),
+                com.xenowarriors.sky.ModBlocks.MOONSTONE_ORE.get(), com.xenowarriors.sky.ModBlocks.KARMA_CRYSTAL_ORE.get(), com.xenowarriors.sky.ModBlocks.DEMONITE_ORE.get(),
+                com.xenowarriors.sky.ModBlocks.OLD_WORLD_ORE.get(), com.xenowarriors.sky.ModBlocks.AURORA_GEM_ORE.get()};
+        net.minecraft.world.item.Item[] gems = {com.xenowarriors.item.ModItems.FOX_SHARD.get(), com.xenowarriors.item.ModItems.FOX_SHARD.get(),
+                com.xenowarriors.item.ModItems.MOONSTONE.get(), com.xenowarriors.item.ModItems.KARMA_CRYSTAL.get(), com.xenowarriors.item.ModItems.DEMONITE_SHARD.get(),
+                com.xenowarriors.item.ModItems.OLD_WORLD_FRAGMENT.get(), com.xenowarriors.item.ModItems.AURORA_GEM.get()};
+        l.add(new Step(null, () -> character(CharacterType.MIKIKO), 30));
+        l.add(new Step(null, () -> server(p -> {
+            p.serverLevel().setDayTime(6000);
+            net.minecraft.core.BlockPos base = p.blockPosition().offset(-3, 0, 4);
+            for (int i = 0; i < ores.length; i++) {
+                net.minecraft.core.BlockPos at = base.offset(i, 0, 0);
+                p.serverLevel().setBlock(at, ores[i].defaultBlockState(), 3);
+                p.serverLevel().setBlock(at.below(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                var it = new net.minecraft.world.entity.item.ItemEntity(p.serverLevel(), at.getX() + 0.5, at.getY() + 1.3, at.getZ() + 0.5,
+                        new net.minecraft.world.item.ItemStack(gems[i]), 0, 0, 0);
+                it.setNoGravity(true); it.setNeverPickUp(); it.setUnlimitedLifetime();
+                p.serverLevel().addFreshEntity(it);
+            }
+            p.setYRot(0); p.setXRot(20);
+        }), 30));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.player.setYRot(0); mc.player.setXRot(20); server(p -> p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY, 400, 0, false, false))); }, 30));
+        l.add(new Step("ores_row", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> { p.teleportTo(p.getX() + 0.0, p.getY(), p.getZ() + 2.2); p.setYRot(0); p.setXRot(30); }), 20));
+        l.add(new Step(null, () -> { mc.player.setYRot(0); mc.player.setXRot(30); }, 10));
+        l.add(new Step("ores_close", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> { p.removeEffect(net.minecraft.world.effect.MobEffects.INVISIBILITY); p.teleportTo(p.getX(), p.getY(), p.getZ() - 6); }), 20));
+        // the Fox PJs (+5% speed a piece), over everyone's outfit
+        net.minecraft.world.item.Item[] pjs = {com.xenowarriors.item.ModItems.FOX_PJS_HOOD.get(), com.xenowarriors.item.ModItems.FOX_PJS_TOP.get(),
+                com.xenowarriors.item.ModItems.FOX_PJS_BOTTOMS.get(), com.xenowarriors.item.ModItems.FOX_PJS_SLIPPERS.get()};
+        net.minecraft.world.entity.EquipmentSlot[] slots = {net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
+                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET};
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.KAERU, CharacterType.RHALIX, CharacterType.MAX}) {
+            l.add(new Step(null, () -> { character(t); hold(null); server(p -> { for (int i = 0; i < 4; i++) p.setItemSlot(slots[i], new net.minecraft.world.item.ItemStack(pjs[i])); }); }, 30));
+            float[] yaws = {0F, -45F, 0F};
+            String[] names = {"front", "threequarter", "back"};
+            for (int k = 0; k < 3; k++) {
+                float yaw = yaws[k];
+                CameraType cam = k == 2 ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT;
+                l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(cam);
+                    mc.player.setXRot(8F); mc.player.setYRot(yaw); mc.player.yBodyRot = yaw; mc.player.yBodyRotO = yaw; mc.player.setYHeadRot(yaw); }, 15));
+                l.add(new Step("foxpjs_" + t.getId() + "_" + names[k], () -> {}, 5));
+            }
+            l.add(new Step(null, () -> server(p -> { for (var sl : slots) p.setItemSlot(sl, net.minecraft.world.item.ItemStack.EMPTY); }), 10));
+        }
     }
 
     /** Max's and Sam's season 3 outfits (with his knife and his bat): front, three-quarter, side, back. */
