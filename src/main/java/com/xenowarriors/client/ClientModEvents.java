@@ -44,6 +44,7 @@ public final class ClientModEvents {
                         new com.xenowarriors.client.npc.HumanModel(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER)),
                         e -> com.xenowarriors.npc.NpcLooks.human(e.variant()), com.xenowarriors.npc.HumanNpcEntity::possessed));
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.SKYLANDER.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.ROYAL_GUARD.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.gov.GovAgentEntity>plain(ctx, com.xenowarriors.gov.GovAgentEntity::look, e -> false));
         event.registerEntityRenderer(com.xenowarriors.s3.S3Entities.ORDER_ASSASSIN.get(),

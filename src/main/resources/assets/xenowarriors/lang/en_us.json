@@ -726,5 +726,8 @@
   "skill.xenowarriors.mass_cut": "Mass Cut",
   "skill.xenowarriors.mass_cut.short": "MC",
   "skill.xenowarriors.mass_cut.desc": "Keita's ultimate: the attack that took down every guard at once. One huge cut through everything around him.",
-  "skill.xenowarriors.mass_cut.how": "Press the ultimate key."
+  "skill.xenowarriors.mass_cut.how": "Press the ultimate key.",
+  "item.xenowarriors.money_note": "Money (100)",
+  "item.xenowarriors.sky_id": "Sky ID",
+  "entity.xenowarriors.royal_guard": "Royal Guard"
 }

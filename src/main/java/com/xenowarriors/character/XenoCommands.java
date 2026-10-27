@@ -370,6 +370,25 @@ public final class XenoCommands {
         }
         root.then(srboss);
         root.then(Commands.literal("vr").executes(ctx -> { com.xenowarriors.vr.Vr.open(ctx.getSource().getPlayerOrException()); return 1; }));
+        root.then(Commands.literal("money").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            say(ctx, Component.literal("Money: " + com.xenowarriors.economy.Money.fmt(com.xenowarriors.economy.Money.get(p))).withStyle(net.minecraft.ChatFormatting.GREEN));
+            return 1;
+        }).then(Commands.literal("withdraw").then(Commands.argument("notes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 640)).executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "notes");
+            if (!com.xenowarriors.economy.Money.take(p, (long) n * com.xenowarriors.economy.Money.NOTE)) { ctx.getSource().sendFailure(Component.literal("Not enough Money (each note is 100).")); return 0; }
+            var stack = new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.MONEY_NOTE.get(), n);
+            if (!p.getInventory().add(stack)) p.drop(stack, false);
+            say(ctx, Component.literal("Withdrew " + n + " Money note(s).").withStyle(net.minecraft.ChatFormatting.GREEN));
+            return 1;
+        }))).then(Commands.literal("add").requires(src -> src.hasPermission(2)).then(Commands.argument("player", EntityArgument.player())
+                .then(Commands.argument("amount", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-1_000_000_000, 1_000_000_000)).executes(ctx -> {
+            ServerPlayer t = EntityArgument.getPlayer(ctx, "player");
+            com.xenowarriors.economy.Money.add(t, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), true);
+            say(ctx, Component.literal(t.getName().getString() + " now has " + com.xenowarriors.economy.Money.fmt(com.xenowarriors.economy.Money.get(t)) + " Money"));
+            return 1;
+        })))));
         root.then(Commands.literal("bounty").executes(ctx -> { com.xenowarriors.bounty.Bounties.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("collection").executes(ctx -> {
             com.xenowarriors.collection.Collection.openFromBook(ctx.getSource().getPlayerOrException());

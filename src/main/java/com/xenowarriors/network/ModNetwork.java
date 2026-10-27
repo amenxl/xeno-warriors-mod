@@ -415,6 +415,8 @@ public final class ModNetwork {
                 .encoder(ComboHitPacket::encode).decoder(ComboHitPacket::decode).consumerMainThread(ComboHitPacket::handle).add();
         CHANNEL.messageBuilder(ComboSwingPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ComboSwingPacket::encode).decoder(ComboSwingPacket::decode).consumerMainThread(ComboSwingPacket::handle).add();
+        CHANNEL.messageBuilder(MoneyPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(MoneyPacket::encode).decoder(MoneyPacket::decode).consumerMainThread(MoneyPacket::handle).add();
         CHANNEL.messageBuilder(AuraMarkPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(AuraMarkPacket::encode).decoder(AuraMarkPacket::decode).consumerMainThread(AuraMarkPacket::handle).add();
     }

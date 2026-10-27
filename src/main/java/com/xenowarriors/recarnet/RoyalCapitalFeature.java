@@ -137,6 +137,7 @@ public class RoyalCapitalFeature extends Feature<NoneFeatureConfiguration> {
             any = true;
         }
         for (Island i : ALL) if (in(i.x, i.z)) people(i);
+        for (int[] g : new int[][]{{-3, LANDING.getZ() - 5}, {3, LANDING.getZ() - 5}, {-6, 9}, {6, 9}}) if (in(g[0], g[1])) guard(g[0], PALACE.top + 1, g[1]);
         return any;
     }
 
@@ -652,6 +653,16 @@ public class RoyalCapitalFeature extends Feature<NoneFeatureConfiguration> {
             sk.setPersistenceRequired();
             l.addFreshEntityWithPassengers(sk);
         }
+    }
+
+    private void guard(int x, int y, int z) {
+        RoyalGuardEntity g = ModNpcs.ROYAL_GUARD.get().create(l.getLevel());
+        if (g == null) return;
+        g.moveTo(x + 0.5, y, z + 0.5, 0F, 0F);
+        g.finalizeSpawn(l, l.getCurrentDifficultyAt(new BlockPos(x, y, z)), MobSpawnType.STRUCTURE, null, null);
+        g.post(new BlockPos(x, y, z));
+        g.setYRot(0F); g.setYHeadRot(0F); g.yBodyRot = 0F;
+        l.addFreshEntityWithPassengers(g);
     }
 
     /** Is this spot up in the Royal Capital (in Recarnet, above Aurora, above its floor)? */

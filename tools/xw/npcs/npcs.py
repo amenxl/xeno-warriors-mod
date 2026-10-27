@@ -512,6 +512,26 @@ def sky_kid_fit(f):
     pants(f, '#c8a878', 5.0, '#b89868'); shoes(f, '#6a4426', '#3a2614')
 SKY['sky_kid']['fit'] = sky_kid_fit
 
+
+SKY['sky_guard'] = dict(skin='#e8c4a8', eyes='#3a6ad8', hair=['#5a3a22', '#7a5030'], wing='#f4f0e2',
+    paint=clothes('#d8dce4', 12, '#c8ccd6', 12, '#8a6a1a', 3, extra=lambda part, face, x, y, W, H, o:
+        ('#d8a830' if part == 'body' and face == 'front' and (x in (3, 4) or y in (0, 9)) else None) if part == 'body' else None),
+    brow=['kkkkkkk..', '.......k.'], mouth=['.kkkkk.'], mouth_x=12, mouth_y=24)
+def sky_guard_fit(f):
+    """A Royal Knight of Section 1: silver plate with gold trim, a royal blue tabard and sash, a crested helmet."""
+    hair(f, '#7a5030', '#5a3a22', back_len=27, side_len=27.5, locks=fringe_locks(5, 31, 7.5, 2.2, 1.4, 0.3))
+    f.add('head', [-5.0, 29.6, -5.0], [5.0, 33.4, 5.0], '#d8dce4', {'front': lambda x, y: '#2a2e38' if y < .35 and .15 < x < .85 else '#d8dce4'})   # helmet
+    f.add('head', [-5.1, 29.4, -5.1], [5.1, 29.9, 5.1], '#d8a830')                                  # gold rim
+    f.add('head', [-0.5, 33.2, -4.0], [0.5, 35.6, 4.0], '#2a4ab8')                                  # royal blue crest
+    shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.34, '#d8dce4', {'front': lambda x, y: '#d8a830' if y > .93 or y < .05 else '#d8dce4'})   # breastplate
+    f.add('body', [-2.4, 7.0, -2.6], [2.4, 21.0, -2.4], '#2a4ab8', {'front': lambda x, y: '#d8a830' if x < .1 or x > .9 or y < .04 else '#2a4ab8'})   # tabard
+    f.add('body', [-4.6, 17.0, -2.6], [4.6, 18.2, 2.6], '#d8a830', rot=[0, 0, 35], origin=[0, 17.6, 0])                               # gold sash
+    f.both('right_arm', [3.5, 13.0, -2.5], [8.5, 24.5, 2.5], '#d8dce4')
+    f.both('right_arm', [3.3, 21.4, -2.7], [8.7, 24.8, 2.7], '#c8ccd6', {'top': '#d8a830'})         # pauldrons
+    f.both('right_arm', [3.45, 12.0, -2.55], [8.55, 14.0, 2.55], '#8a8e98')                        # gauntlets
+    pants(f, '#c8ccd6', 3.4); shoes(f, '#8a6a1a', '#4a3a10', 4.0)
+SKY['sky_guard']['fit'] = sky_guard_fit
+
 SKY_ORDER = ['sky_scout', 'sky_lexy', 'sky_max', 'sky_royal', 'sky_patrol', 'sky_kid']
 
 def build_sky(key):

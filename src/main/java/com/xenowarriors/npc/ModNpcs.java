@@ -22,6 +22,10 @@ public final class ModNpcs {
             () -> EntityType.Builder.<SkylanderEntity>of(SkylanderEntity::new, MobCategory.CREATURE).sized(0.6F, 1.8F)
                     .clientTrackingRange(12).build("skylander"));
 
+    public static final RegistryObject<EntityType<com.xenowarriors.recarnet.RoyalGuardEntity>> ROYAL_GUARD = ModEntities.ENTITY_TYPES.register("royal_guard",
+            () -> EntityType.Builder.<com.xenowarriors.recarnet.RoyalGuardEntity>of(com.xenowarriors.recarnet.RoyalGuardEntity::new, MobCategory.CREATURE).sized(0.6F, 1.8F)
+                    .clientTrackingRange(12).build("royal_guard"));
+
     public static final RegistryObject<EntityType<NpcThrownEntity>> THROWN = ModEntities.ENTITY_TYPES.register("npc_thrown",
             () -> EntityType.Builder.<NpcThrownEntity>of(NpcThrownEntity::new, MobCategory.MISC).sized(0.25F, 0.25F)
                     .clientTrackingRange(6).updateInterval(10).build("npc_thrown"));
@@ -38,5 +42,6 @@ public final class ModNpcs {
         event.put(HUMAN.get(), HumanNpcEntity.createAttributes().build());
         event.put(DARK_POSSESSED.get(), DarkPossessedEntity.createAttributes().build());
         event.put(SKYLANDER.get(), SkylanderEntity.createAttributes().build());
+        event.put(ROYAL_GUARD.get(), com.xenowarriors.recarnet.RoyalGuardEntity.createGuardAttributes().build());
     }
 }

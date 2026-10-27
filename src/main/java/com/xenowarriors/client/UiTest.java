@@ -528,6 +528,7 @@ public final class UiTest {
             {"overview_side", 250, 290, -20, 90F, 14F},
             {"below", 40, 205, 60, 160F, -35F},
             {"landing", 0, 256, 60, 180F, 6F},
+            {"checkpoint_guards", 0, 255, 50, 180F, 12F},
             {"palace_front", 0, 262, 40, 180F, 10F},
             {"throne_room", 0, 256, 2, 180F, 4F},
             {"library", 10, 267, -8, 150F, 12F},

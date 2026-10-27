@@ -94,6 +94,7 @@ public final class Bounties {
         int tier = b.getInt("tier");
         var r = p.getRandom();
         give(p, new ItemStack(Items.EMERALD, 3 + tier * 4 + r.nextInt(4)));
+        com.xenowarriors.economy.Money.add(p, 300L + tier * 400L + r.nextInt(100), true);
         Stat stat = Stat.values()[r.nextInt(Stat.values().length)];
         Stats.addXp(p, stat, stat.needed(Stats.level(p, stat)) * (0.25F * tier));
         String extra = "";
@@ -101,7 +102,7 @@ public final class Bounties {
             var item = ForgeRegistries.ITEMS.getValue(XenoWarriors.id(r.nextBoolean() ? "karma_potion" : "data_shard"));
             if (item != null && item != Items.AIR) { give(p, new ItemStack(item)); extra = " + " + new ItemStack(item).getHoverName().getString(); }
         }
-        p.sendSystemMessage(Component.literal("Bounty complete! Emeralds, " + stat.name().charAt(0) + stat.name().substring(1).toLowerCase() + " XP" + extra).withStyle(ChatFormatting.GOLD));
+        p.sendSystemMessage(Component.literal("Bounty complete! Money, emeralds, " + stat.name().charAt(0) + stat.name().substring(1).toLowerCase() + " XP" + extra).withStyle(ChatFormatting.GOLD));
         p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.7F, 1.4F);
         open(p);
     }

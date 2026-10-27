@@ -257,6 +257,8 @@ public class PlayerStatsScreen extends Screen {
         else if (tab == 0) renderPlayers(g);
         else renderMe(g);
         g.drawCenteredString(font, "M or Esc to close", width / 2, height - 12, 0x666666);
+        String money = "Money: " + com.xenowarriors.economy.Money.fmt(ClientMoney.get());
+        g.drawString(font, money, width - font.width(money) - 8, height - 12, 0x7CE07C);
         super.render(g, mouseX, mouseY, partialTick);
     }
 

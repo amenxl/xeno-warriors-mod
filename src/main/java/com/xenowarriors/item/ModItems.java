@@ -67,6 +67,12 @@ public final class ModItems {
     public static final RegistryObject<Item> OLD_WORLD_FRAGMENT = ITEMS.register("old_world_fragment", () -> new OreGems.OldWorldFragment(new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
     public static final RegistryObject<Item> AURORA_GEM = ITEMS.register("aurora_gem", () -> new OreGems.AuroraGem(new Item.Properties().rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
     public static final RegistryObject<Item> DEMONITE_SWORD = ITEMS.register("demonite_sword", () -> new OreGems.DemoniteSword(new Item.Properties().fireResistant().rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> MONEY_NOTE = ITEMS.register("money_note", () -> new com.xenowarriors.economy.MoneyNoteItem(new Item.Properties().stacksTo(64)));
+    public static final RegistryObject<Item> SKY_ID = ITEMS.register("sky_id", () -> new Item(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.UNCOMMON)) {
+        @Override public void appendHoverText(net.minecraft.world.item.ItemStack s, net.minecraft.world.level.Level l, java.util.List<net.minecraft.network.chat.Component> tip, net.minecraft.world.item.TooltipFlag f) {
+            tip.add(net.minecraft.network.chat.Component.literal("Residency & travel pass: Royal Capital, Section 1").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+    });
     public static final RegistryObject<Item> FOX_SHARD = ITEMS.register("fox_shard", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> FOX_SHARD_ORE = ITEMS.register("fox_shard_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.FOX_SHARD_ORE.get(), new Item.Properties()));
