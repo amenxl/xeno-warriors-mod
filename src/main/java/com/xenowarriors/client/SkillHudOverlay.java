@@ -82,9 +82,11 @@ public class SkillHudOverlay implements IGuiOverlay {
             g.fill(x - 1, top - 1, x + SIZE + 1, top + SIZE + 1, 0xFF8A3CC8);
             g.fill(x, top, x + SIZE, top + SIZE, 0xCC140A1E);
             var ka = ClientSkillState.ka();
-            g.drawCenteredString(font, ka == null ? "?" : ka.title().substring(0, 2), x + SIZE / 2, top + 4, ka == null ? 0xB070FF : ka.color);
+            boolean xb = com.xenowarriors.skill.XenoBlast.has(ClientCharacterData.getLocal());   // Mikiko / Rhalix: Xeno Blast (last resort)
+            if (xb) g.drawCenteredString(font, "XB", x + SIZE / 2, top + 4, ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.RHALIX ? 0xC890FF : 0xFFA040);
+            else g.drawCenteredString(font, ka == null ? "?" : ka.title().substring(0, 2), x + SIZE / 2, top + 4, ka == null ? 0xB070FF : ka.color);
             float scd = ClientSkillState.cooldownFraction(com.xenowarriors.skill.SkillManager.SUPER_SLOT);
-            if (ka != null && scd > 0) {
+            if ((ka != null || xb) && scd > 0) {
                 int shade = Math.round(SIZE * scd);
                 g.fill(x, top + SIZE - shade, x + SIZE, top + SIZE, 0xB0000000);
                 g.drawCenteredString(font, String.valueOf((ClientSkillState.cooldownTicks(com.xenowarriors.skill.SkillManager.SUPER_SLOT) + 19) / 20), x + SIZE / 2, top + 8, 0xFF5555);

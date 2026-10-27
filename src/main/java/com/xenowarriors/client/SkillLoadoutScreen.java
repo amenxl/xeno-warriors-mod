@@ -23,6 +23,9 @@ public class SkillLoadoutScreen extends Screen {
     private int selected;
     private static final int BOX = 34, CARD_W = 150, CARD_H = 40;
 
+    /** The Xeno Blast tooltip (Mikiko and Rhalix's last resort). */
+    public static final String XENO_TIP = "Last resort: Xeno Blast\nPours ALL your remaining Karma into one huge blast - the more Karma, the harder and wider it hits (needs at least 10).\n\nAfterwards your Karma is empty and won't regenerate for 30 seconds.";
+
     public SkillLoadoutScreen(Screen parent) {
         super(Component.literal("Skills"));
         this.parent = parent;
@@ -79,9 +82,10 @@ public class SkillLoadoutScreen extends Screen {
             int x = slotsLeft() + 5 * (BOX + 8) + 6, y = 40;
             g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, 0xFF8A3CC8);
             g.fill(x, y, x + BOX, y + BOX, 0xEE140A1E);
-            g.drawCenteredString(font, "?", x + BOX / 2, y + 9, 0xB070FF);
-            g.drawCenteredString(font, "KA", x + BOX / 2, y + BOX - 10, 0xB070FF);
-            if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) { var tk = ClientSkillState.ka(); hover = "Super Ultimate - KAs and really big attacks\n" + (tk == null ? type.getDisplayName().getString() + "'s KA hasn't been revealed yet." : "Test KA: " + tk.title() + " - " + KaGuideScreen.does(tk) + "\nPrice: " + tk.cost); }
+            boolean xb = com.xenowarriors.skill.XenoBlast.has(type);
+            g.drawCenteredString(font, xb ? "XB" : "?", x + BOX / 2, y + 9, 0xB070FF);
+            g.drawCenteredString(font, xb ? "LAST" : "KA", x + BOX / 2, y + BOX - 10, 0xB070FF);
+            if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) { var tk = ClientSkillState.ka(); hover = com.xenowarriors.skill.XenoBlast.has(type) ? XENO_TIP : "KAs / Last resort\n" + (tk == null ? type.getDisplayName().getString() + "'s KA hasn't been revealed yet." : "Test KA: " + tk.title() + " - " + KaGuideScreen.does(tk) + "\nPrice: " + tk.cost); }
         }
         g.drawCenteredString(font, "Click a slot, then a skill to put in it - hover anything for details", width / 2, 84, 0x888888);
         // every skill this character can learn

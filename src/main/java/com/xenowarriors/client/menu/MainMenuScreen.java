@@ -50,7 +50,7 @@ public class MainMenuScreen extends Screen {
         super(Component.literal("Main Menu"));
         List<Entry> l = new java.util.ArrayList<>(List.of(
                 new Entry("Character Select", "Pick which warrior you play as.", () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen())),
-                new Entry("Character Customization", "Your stats, skill loadout, outfits and KA.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
+                new Entry("Character Customization", "Your stats, skill loadout, outfits and KA / last resort.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
                 new Entry("Party", "Your party and bot teammates.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
                 new Entry("Pets", "Your foxes and companions: names, skins, bags and run-away cool-downs.", () -> PetsScreen.open(this)),
                 new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),

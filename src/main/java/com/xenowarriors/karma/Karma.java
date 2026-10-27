@@ -56,6 +56,18 @@ public final class Karma {
                 Math.round(amount), Math.round(get(player))), true);
     }
 
+    private static final String LOCK = "xw_karma_lock_until";
+
+    /** Stops Karma from coming back on its own for a while (Xeno Blast). */
+    public static void lockRegen(ServerPlayer player, int ticks) {
+        player.getPersistentData().putLong(LOCK, player.server.overworld().getGameTime() + ticks);
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.KarmaLockPacket(ticks), player);
+    }
+
+    public static boolean regenLocked(ServerPlayer player) {
+        return player.getPersistentData().getLong(LOCK) > player.server.overworld().getGameTime();
+    }
+
     public static void add(ServerPlayer player, float amount) {
         if (amount < 0) com.xenowarriors.compat.DmzKiTraining.karmaSpent(player, -amount);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
@@ -85,7 +97,7 @@ public final class Karma {
                 if (data.getKarma() > max) data.setKarma(max);
                 sync(player, data);
             }
-            if (data.getKarma() < data.karmaMax) {
+            if (data.getKarma() < data.karmaMax && !regenLocked(player)) {
                 float rate = (focusing ? FOCUS_REGEN : REGEN) / 20F;
                 if (com.xenowarriors.item.HoodieItem.wearing(player)) rate *= 0.5F;   // it suppresses your Karma
                 // Zane's Mana: his Magical Orb stores it - holding the orb draws it back twice as fast

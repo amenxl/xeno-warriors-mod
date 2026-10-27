@@ -72,7 +72,9 @@ public class CharacterCustomScreen extends Screen {
     }
 
     private CharacterType type() { return ClientCharacterData.getLocal(); }
-    private boolean hasKa() { return ClientSkillState.ka() != null; }
+    private boolean xeno() { return com.xenowarriors.skill.XenoBlast.has(type()); }
+    /** The KAs / Last resort tab: a KA, or (Mikiko, Rhalix) the Xeno Blast. */
+    private boolean hasKa() { return ClientSkillState.ka() != null || xeno(); }
     private boolean creative() { return minecraft != null && minecraft.player != null && minecraft.player.isCreative(); }
     private int tabs() { return hasKa() ? 4 : 3; }
 
@@ -187,7 +189,7 @@ public class CharacterCustomScreen extends Screen {
                 return true;
             }
         }
-        if (tab == 3 && inBox(vx, vy, VW / 2 - 55, VH - 18, 110, 14)) { minecraft.setScreen(new KaGuideScreen(this)); return true; }
+        if (tab == 3 && !xeno() && inBox(vx, vy, VW / 2 - 55, VH - 18, 110, 14)) { minecraft.setScreen(new KaGuideScreen(this)); return true; }
         return super.mouseClicked(mx, my, button);
     }
 
@@ -292,7 +294,7 @@ public class CharacterCustomScreen extends Screen {
 
         // tab bar
         float[] tb = tabBar();
-        String[] names = hasKa() ? new String[]{"STATS", "SKILLS", "OUTFITS", "KAS"} : new String[]{"STATS", "SKILLS", "OUTFITS"};
+        String[] names = hasKa() ? new String[]{"STATS", "SKILLS", "OUTFITS", "KAS / LAST RESORT"} : new String[]{"STATS", "SKILLS", "OUTFITS"};
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
         float segW = tb[2] / names.length, ts = tb[3] / 15F;
@@ -311,8 +313,9 @@ public class CharacterCustomScreen extends Screen {
                 BufferUploader.drawWithShader(sb.end());
                 RenderSystem.enableCull();
             }
-            float tw = font.width(names[i]) * ts * 1.1F;
-            scaled(g, names[i], sx + segW / 2 - tw / 2, tb[1] + 3.8F * ts, ts * 1.1F, sel ? dark(col) : 0xD8D8E0);
+            float k = Math.min(ts * 1.1F, segW * 0.86F / font.width(names[i]));       // long names shrink to fit
+            float tw = font.width(names[i]) * k;
+            scaled(g, names[i], sx + segW / 2 - tw / 2, tb[1] + tb[3] / 2 - 4F * k, k, sel ? dark(col) : 0xD8D8E0);
         }
         String hint = "Q / E: switch tabs    Esc: back";
         float hs = Math.max(1F, h / 320F);
@@ -430,6 +433,12 @@ public class CharacterCustomScreen extends Screen {
             g.fill(x, y, x + SLOT, y + SLOT, ka ? 0xFF140A1E : 0xFF101016);
             if (ka) {
                 Ka k = ClientSkillState.ka();
+                if (xeno()) {
+                    g.drawCenteredString(font, "XB", x + SLOT / 2, y + 5, 0xB070FF);
+                    scaled(g, "LAST", x + SLOT / 2F - 8, y + SLOT - 8, 0.75F, 0xB070FF);
+                    if (inBox(mx, my, x, y, SLOT, SLOT)) tip = List.of(SkillLoadoutScreen.XENO_TIP.split("\n"));
+                    continue;
+                }
                 g.drawCenteredString(font, k == null ? "?" : k.title().substring(0, Math.min(2, k.title().length())), x + SLOT / 2, y + 5, 0xB070FF);
                 scaled(g, "KA", x + SLOT / 2F - 4, y + SLOT - 8, 0.75F, 0xB070FF);
                 if (inBox(mx, my, x, y, SLOT, SLOT)) tip = k == null ? List.of("Super Ultimate: KA", type.getDisplayName().getString() + "'s KA hasn't been revealed yet.")
@@ -496,6 +505,7 @@ public class CharacterCustomScreen extends Screen {
     }
 
     private void kaTab(GuiGraphics g, int col, double mx, double my) {
+        if (xeno()) { xenoTab(g, col, mx, my); return; }
         Ka k = ClientSkillState.ka();
         if (k == null) return;
         g.fill(4, 53, 7, 76, 0xFF000000 | k.color);
@@ -511,6 +521,21 @@ public class CharacterCustomScreen extends Screen {
         boolean over = inBox(mx, my, VW / 2 - 55, VH - 18, 110, 14);
         g.fill(VW / 2 - 55, VH - 18, VW / 2 + 55, VH - 4, over ? 0xFF000000 | light(col) : 0xFF000000 | col);
         g.drawCenteredString(font, "KA & Element Guide", VW / 2, VH - 15, over ? 0x101010 : 0xFFFFFF);
+    }
+
+    /** Mikiko's / Rhalix's last resort: the Xeno Blast. */
+    private void xenoTab(GuiGraphics g, int col, double mx, double my) {
+        g.fill(4, 53, 7, 76, 0xFF000000 | col);
+        scaled(g, "XENO BLAST", 11, 54, 1.6F, 0xFFFFFF);
+        g.drawString(font, "Last resort  \u2022  replaces a KA", 11, 68, 0xB0B0C0, false);
+        pill(g, 4, 80, VW - 8, 14);
+        g.drawString(font, "Karma cost", 9, 83, 0xB8B8C8, false);
+        g.drawString(font, "ALL", VW - 9 - font.width("ALL"), 83, 0xFF8080, false);
+        int y = 99;
+        y = para(g, "What it does", "A short charge, then a huge blast that pours out every bit of Karma you have left. The more Karma, the harder and wider it hits (needs at least " + com.xenowarriors.skill.XenoBlast.MIN_KARMA + ").", y, 0xFFFFFF);
+        y = para(g, "The price", "Your Karma is drained to nothing and won't regenerate for 30 seconds.", y + 3, 0xFF9A7A);
+        int left = com.xenowarriors.client.ClientKarmaLock.secondsLeft();
+        if (left > 0) scaled(g, "Drained - Karma back in " + left + "s", 5, y + 2, 0.8F, 0xFF8080);
     }
 
     private int para(GuiGraphics g, String head, String text, int y, int color) {

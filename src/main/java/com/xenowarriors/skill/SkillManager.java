@@ -25,7 +25,7 @@ public final class SkillManager {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             long remaining = data.cooldownEnd[SUPER_SLOT] - now(player);
             if (remaining > 0) {
-                player.displayClientMessage(Component.literal("KA ready in " + (remaining + 19) / 20 + "s"), true);
+                player.displayClientMessage(Component.literal((com.xenowarriors.skill.XenoBlast.has(ModCapabilities.getType(player)) ? "Xeno Blast" : "KA") + " ready in " + (remaining + 19) / 20 + "s"), true);
                 return;
             }
             CharacterType ct = ModCapabilities.getType(player);
@@ -37,9 +37,12 @@ public final class SkillManager {
             else if (ct == CharacterType.ZANE && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.ffr.ZaneProjection.use(player);   // Zane's KA: Projection
             else if (ct == CharacterType.KAERU && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.kaeru.KaeruChange.use(player);   // Kaeru's KA: Change
             else if (ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player) && !player.isShiftKeyDown()) went = com.xenowarriors.lunar.MoonFall.use(player); // Lunar: Moon Fall
+            else if (com.xenowarriors.skill.XenoBlast.has(ct)) went = com.xenowarriors.skill.XenoBlast.use(player);   // Mikiko / Rhalix: last resort
             else went = com.xenowarriors.ka.Kas.usePlayer(player);
             if (went) {
-                com.xenowarriors.network.PopupPacket.toParty(player, com.xenowarriors.network.PopupPacket.REQUEST, "KA!", player.getName().getString() + " used their KA!", "rage");
+                boolean xb = com.xenowarriors.skill.XenoBlast.has(ct) && !(ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player));
+                com.xenowarriors.network.PopupPacket.toParty(player, com.xenowarriors.network.PopupPacket.REQUEST, xb ? "Xeno Blast!" : "KA!",
+                        player.getName().getString() + (xb ? " fired a Xeno Blast - their last resort!" : " used their KA!"), "rage");
                 com.xenowarriors.XwFx.send(player.serverLevel(), com.xenowarriors.network.FxPacket.KA, player.getX(), player.getY(), player.getZ(), ct.getColor(), 1F);
                 int cd = com.xenowarriors.ka.Kas.PLAYER_COOLDOWN;
                 data.cooldownEnd[SUPER_SLOT] = now(player) + cd;
