@@ -28,6 +28,8 @@ public final class PacketScreens {
 
     public static void openBounties(com.xenowarriors.network.BountyPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.screen.BountyScreen(m)); }
 
+    public static void openVr(com.xenowarriors.network.OpenVrPacket m) { Minecraft.getInstance().setScreen(new com.xenowarriors.client.vr.VrScreen(m)); }
+
     public static void openPhone() { Minecraft.getInstance().setScreen(new com.xenowarriors.client.PhoneScreen()); }
 
     public static void openWingPet(com.xenowarriors.network.OpenWingPetPacket m) {

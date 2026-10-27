@@ -1,0 +1,289 @@
+{
+ "textures": {
+  "t": "xenowarriors:block/vr_console",
+  "particle": "xenowarriors:block/vr_console"
+ },
+ "elements": [
+  {
+   "from": [
+    2,
+    0,
+    2
+   ],
+   "to": [
+    14,
+    6,
+    14
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#t"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#t"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#t"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#t"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#t"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      8,
+      8
+     ],
+     "texture": "#t"
+    }
+   }
+  },
+  {
+   "from": [
+    3,
+    6,
+    4
+   ],
+   "to": [
+    13,
+    8,
+    12
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      8,
+      8,
+      16
+     ],
+     "texture": "#t"
+    },
+    "south": {
+     "uv": [
+      0,
+      8,
+      8,
+      16
+     ],
+     "texture": "#t"
+    },
+    "east": {
+     "uv": [
+      0,
+      8,
+      8,
+      16
+     ],
+     "texture": "#t"
+    },
+    "west": {
+     "uv": [
+      0,
+      8,
+      8,
+      16
+     ],
+     "texture": "#t"
+    },
+    "up": {
+     "uv": [
+      0,
+      8,
+      8,
+      16
+     ],
+     "texture": "#t"
+    },
+    "down": {
+     "uv": [
+      0,
+      8,
+      8,
+      16
+     ],
+     "texture": "#t"
+    }
+   }
+  },
+  {
+   "from": [
+    2,
+    7,
+    3
+   ],
+   "to": [
+    14,
+    14,
+    5
+   ],
+   "rotation": {
+    "angle": -22.5,
+    "axis": "x",
+    "origin": [
+     8,
+     7,
+     4
+    ]
+   },
+   "faces": {
+    "north": {
+     "uv": [
+      8,
+      0,
+      16,
+      8
+     ],
+     "texture": "#t"
+    },
+    "south": {
+     "uv": [
+      8,
+      0,
+      16,
+      8
+     ],
+     "texture": "#t"
+    },
+    "east": {
+     "uv": [
+      8,
+      0,
+      16,
+      8
+     ],
+     "texture": "#t"
+    },
+    "west": {
+     "uv": [
+      8,
+      0,
+      16,
+      8
+     ],
+     "texture": "#t"
+    },
+    "up": {
+     "uv": [
+      8,
+      0,
+      16,
+      8
+     ],
+     "texture": "#t"
+    },
+    "down": {
+     "uv": [
+      8,
+      0,
+      16,
+      8
+     ],
+     "texture": "#t"
+    }
+   }
+  },
+  {
+   "from": [
+    3,
+    6,
+    10
+   ],
+   "to": [
+    13,
+    6.5,
+    13
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      8,
+      8,
+      16,
+      16
+     ],
+     "texture": "#t"
+    },
+    "south": {
+     "uv": [
+      8,
+      8,
+      16,
+      16
+     ],
+     "texture": "#t"
+    },
+    "east": {
+     "uv": [
+      8,
+      8,
+      16,
+      16
+     ],
+     "texture": "#t"
+    },
+    "west": {
+     "uv": [
+      8,
+      8,
+      16,
+      16
+     ],
+     "texture": "#t"
+    },
+    "up": {
+     "uv": [
+      8,
+      8,
+      16,
+      16
+     ],
+     "texture": "#t"
+    },
+    "down": {
+     "uv": [
+      8,
+      8,
+      16,
+      16
+     ],
+     "texture": "#t"
+    }
+   }
+  }
+ ]
+}

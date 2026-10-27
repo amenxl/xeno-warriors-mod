@@ -33,6 +33,10 @@ public final class ModBlocks {
     public static final RegistryObject<Block> COLLECTION_BOOK = BLOCKS.register("collection_book", () -> new com.xenowarriors.collection.CollectionBookBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD).noOcclusion()));
 
+    /** Yuri's VR console (VR training + challenges). */
+    public static final RegistryObject<Block> VR_CONSOLE = BLOCKS.register("vr_console", () -> new com.xenowarriors.vr.VrConsoleBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_GREEN).strength(3F).sound(SoundType.METAL).noOcclusion().lightLevel(s -> 9)));
+
     /** Bounty Board (village plazas, or craft one). */
     public static final RegistryObject<Block> BOUNTY_BOARD = BLOCKS.register("bounty_board", () -> new com.xenowarriors.bounty.BountyBoardBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2F).sound(SoundType.WOOD).noOcclusion()));

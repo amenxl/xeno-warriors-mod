@@ -347,6 +347,7 @@ public final class XenoCommands {
             p.serverLevel().addFreshEntity(z);
             return 1;
         }));
+        root.then(Commands.literal("vr").executes(ctx -> { com.xenowarriors.vr.Vr.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("bounty").executes(ctx -> { com.xenowarriors.bounty.Bounties.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("collection").executes(ctx -> {
             com.xenowarriors.collection.Collection.openFromBook(ctx.getSource().getPlayerOrException());

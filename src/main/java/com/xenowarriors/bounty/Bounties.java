@@ -110,7 +110,7 @@ public final class Bounties {
 
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
-        if (event.getEntity().level().isClientSide) return;
+        if (event.getEntity().level().isClientSide || com.xenowarriors.vr.Vr.inVr(event.getEntity())) return;
         ServerPlayer p = com.xenowarriors.collection.Collection.credit(event.getSource().getEntity());
         if (p == null) return;
         CompoundTag root = root(p);

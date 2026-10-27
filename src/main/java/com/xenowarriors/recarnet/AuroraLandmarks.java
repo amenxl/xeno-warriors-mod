@@ -231,7 +231,7 @@ public final class AuroraLandmarks {
             set(x, fy + 8, z, (x % 4 == 0 && z % 4 == 0) ? b(Blocks.SEA_LANTERN) : b(Blocks.WHITE_CONCRETE));
         }
         for (int z = z0; z <= z1; z++) for (int y = 0; y <= 7; y++) set(x1 + 1, fy + y, z, b(Blocks.WHITE_CONCRETE));
-        set(div + 2, fy, YURI_Z + 3, b(Blocks.TARGET));                // the VR console
+        set(div + 2, fy, YURI_Z + 3, com.xenowarriors.sky.ModBlocks.VR_CONSOLE.get().defaultBlockState());   // the VR console
         sign(div + 2, fy + 1, YURI_Z + 3, Direction.EAST, "VR CONSOLE", "\"VR Ultima is", "down - You Win!\"", "");
         // bunks
         for (int z = z1 - 2; z <= z1; z += 2) {

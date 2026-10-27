@@ -62,7 +62,7 @@ public final class Collection {
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity dead = event.getEntity();
-        if (dead.level().isClientSide || !Catalog.hostile(dead)) return;
+        if (dead.level().isClientSide || !Catalog.hostile(dead) || com.xenowarriors.vr.Vr.inVr(dead)) return;   // (VR isn't real)
         ServerPlayer p = credit(event.getSource().getEntity());
         if (p == null) return;
         var id = ForgeRegistries.ENTITY_TYPES.getKey(dead.getType());

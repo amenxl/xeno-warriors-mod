@@ -53,6 +53,7 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_BOOTS = ITEMS.register("corrupted_boots",
             () -> new com.xenowarriors.sky.CorruptedArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    public static final RegistryObject<Item> VR_CONSOLE = ITEMS.register("vr_console", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.VR_CONSOLE.get(), new Item.Properties()));
     public static final RegistryObject<Item> BOUNTY_BOARD = ITEMS.register("bounty_board", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.BOUNTY_BOARD.get(), new Item.Properties()));
     public static final RegistryObject<Item> COLLECTION_BOOK = ITEMS.register("collection_book", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.COLLECTION_BOOK.get(), new Item.Properties()));
     public static final RegistryObject<Item> DATA_ORE = ITEMS.register("data_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.DATA_ORE.get(), new Item.Properties()));

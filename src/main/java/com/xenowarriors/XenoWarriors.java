@@ -32,6 +32,7 @@ public class XenoWarriors {
         com.xenowarriors.s3.S3Entities.init();
         com.xenowarriors.bot.BotEntities.init();
         com.xenowarriors.sr.SrEntities.init();
+        com.xenowarriors.vr.VrEntities.init();
         com.xenowarriors.sr.SrCampFeature.init();
         com.xenowarriors.s3.OrderHideoutFeature.init();
         com.xenowarriors.recarnet.AuroraCityFeature.init();
