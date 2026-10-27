@@ -16,6 +16,6 @@ public class VehicleRenderer extends GeoEntityRenderer<VehicleEntity> {
 
     @Override
     protected void applyRotations(VehicleEntity e, PoseStack pose, float age, float yaw, float pt) {
-        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180F - yaw));
+        pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-yaw));       // (the models face -z)
     }
 }

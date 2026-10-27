@@ -79,6 +79,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
     @Override public boolean shouldRiderSit() { return true; }
     @Override protected boolean canAddPassenger(Entity e) { return getPassengers().size() < kind.seats; }
     @Override public boolean isPickable() { return !isRemoved(); }
+    @Override public double getPassengersRidingOffset() { return 0.0; }
 
     @Override
     public LivingEntity getControllingPassenger() {
@@ -91,7 +92,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
     private boolean guardDriving() { return getFirstPassenger() instanceof com.xenowarriors.gov.GovAgentEntity; }
 
     @Override
-    protected void positionRider(Entity passenger, MoveFunction move) {
+    protected void positionRider(Entity passenger, Entity.MoveFunction move) {
         int i = getPassengers().indexOf(passenger);
         double[][] seats = kind.seats();
         double[] s = seats[Math.max(0, Math.min(seats.length - 1, i))];

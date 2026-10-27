@@ -23,10 +23,10 @@ public enum VehicleKind {
     /** Seat positions (x right, y up, z forward) in blocks, per seat. */
     public double[][] seats() {
         return switch (this) {
-            case CAR -> new double[][]{{-0.38, 0.35, 0.05}, {0.38, 0.35, 0.05}, {-0.38, 0.35, -0.7}, {0.38, 0.35, -0.7}};
-            case MOTORBIKE -> new double[][]{{0, 0.55, -0.15}, {0, 0.6, -0.6}};
-            case HELICOPTER -> new double[][]{{-0.38, 0.45, 0.6}, {0.38, 0.45, 0.6}, {-0.38, 0.45, -0.25}, {0.38, 0.45, -0.25}};
-            case GOV_TRUCK -> new double[][]{{-0.45, 0.6, 1.45}, {0.45, 0.6, 1.45}, {-0.5, 0.6, 0.2}, {0.5, 0.6, 0.2}};
+            case CAR -> new double[][]{{-0.38, -0.05, 0.05}, {0.38, -0.05, 0.05}, {-0.38, -0.05, -0.7}, {0.38, -0.05, -0.7}};
+            case MOTORBIKE -> new double[][]{{0, 0.45, -0.15}, {0, 0.5, -0.6}};
+            case HELICOPTER -> new double[][]{{-0.38, 0.2, 0.6}, {0.38, 0.2, 0.6}, {-0.38, 0.2, -0.25}, {0.38, 0.2, -0.25}};
+            case GOV_TRUCK -> new double[][]{{-0.45, 0.25, 1.45}, {0.45, 0.25, 1.45}, {-0.5, 0.25, 0.2}, {0.5, 0.25, 0.2}};
         };
     }
 
