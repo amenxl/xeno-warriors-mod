@@ -207,16 +207,18 @@ def r3_fit():
         def add(s_, bone, name, frm, to, color, rot=None, origin=None, shade=None):
             s_.f.add('head', frm, to, color, rot=rot if rot and any(rot) else None, origin=origin)
     A_ = _A(f)
-    G1, G2, G3 = '#2a2a2e', '#3a3a40', '#4c4c54'
+    G1, G2, G3 = '#141216', '#22182c', '#7a2ab0'
     f.add('head', [-4.55, 31.4, -4.55], [4.55, 32.6, 4.55], G1)                                  # cap of hair under the crown
     f.add('head', [-4.55, 26.0, 4.0], [4.55, 32.0, 4.7], G1)
     for side in (1, -1):
         x0, x1 = (4.0, 4.7) if side > 0 else (-4.7, -4.0)
         f.add('head', [x0, 27.0, -3.0], [x1, 32.0, 4.6], G1)
-        for z in (-4.2, -2.4, -0.4, 1.6, 3.4):
-            _core.lock(A_, 'Head', [side * 4.6, 31.0, z], [side * 0.18, -1, 0.05], 6.0 + (z > 0) * 1.0, 1.5, 1.3, (G2, G1, G3), wide='x', taper=(0.85, 0.7), tip_len=(0.2, 0.2))
-    for x in (-3.2, -1.6, 0.0, 1.6, 3.2):
-        _core.lock(A_, 'Head', [x, 31.0, 4.7], [0, -1, 0.15], 5.6, 1.5, 1.3, (G2, G1, G3), wide='x', taper=(0.85, 0.7), tip_len=(0.2, 0.2))
+        for k_, z in enumerate((-4.2, -2.4, -0.4, 1.6, 3.4)):
+            LC = (G2, G1, G3) if k_ % 2 == 0 else ('#6a1e9e', '#8a2ec0', '#a64ade')
+            _core.lock(A_, 'Head', [side * 4.6, 31.0, z], [side * 0.18, -1, 0.05], 6.0 + (z > 0) * 1.0, 1.5, 1.3, LC, wide='x', taper=(0.85, 0.7), tip_len=(0.2, 0.2))
+    for k_, x in enumerate((-3.2, -1.6, 0.0, 1.6, 3.2)):
+        LC = (G2, G1, G3) if k_ % 2 == 0 else ('#6a1e9e', '#8a2ec0', '#a64ade')
+        _core.lock(A_, 'Head', [x, 31.0, 4.7], [0, -1, 0.15], 5.6, 1.5, 1.3, LC, wide='x', taper=(0.85, 0.7), tip_len=(0.2, 0.2))
     PU1, PU2, PU3 = '#8a2ec0', '#a64ade', '#c46cf0'
     f.add('head', [-1.6, 32.4, -1.4], [1.6, 34.0, 1.6], PU1)                                    # where the top locs are tied
     for (dx, dz, tx, tz, ln) in ((-1.0, -0.6, -0.25, -0.35, 5.2), (0.0, -0.8, 0.05, -0.45, 5.8), (1.0, -0.6, 0.3, -0.35, 5.0),
@@ -271,7 +273,7 @@ if __name__ == '__main__':
             px = skin.load()
             for (x0, y0, w, h) in ((8, 0, 8, 8), (24, 8, 8, 8), (0, 8, 8, 3), (16, 8, 8, 3)):   # top, back, upper sides
                 for yy in range(y0, y0 + h):
-                    for xx in range(x0, x0 + w): px[xx, yy] = (42, 42, 46, 255)
+                    for xx in range(x0, x0 + w): px[xx, yy] = (22, 18, 26, 255)
             skin.save(CHAR + name + '.png')
         mj = export(fit, RES + 'models/detail/' + name + '.json', char='rhalix', keep=('right_wing', 'left_wing') + coat)
         if key == 's3':
