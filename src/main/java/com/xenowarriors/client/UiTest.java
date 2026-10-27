@@ -86,6 +86,7 @@ public final class UiTest {
         if ("partyui".equals(System.getenv("XW_UITEST_FOCUS"))) { partyUi(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         if ("underlight".equals(System.getenv("XW_UITEST_FOCUS"))) { underlight(mc, l); return l; }
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -574,6 +575,38 @@ public final class UiTest {
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
             l.add(new Step("capital_" + sh[0], () -> {}, 5));
         }
+    }
+
+    /**
+     * HD portrait cards: every playable character in each outfit, in their hero pose, cel-shaded (PortraitScreen).
+     * Focus "portraits" does everyone; "portraits-mikiko" (any character id) redoes one after a model update.
+     */
+    private static void portraits(Minecraft mc, List<Step> l, String only) {
+        String one = only.startsWith("-") ? only.substring(1) : "";
+        java.util.Map<CharacterType, java.util.function.Supplier<net.minecraft.world.item.Item>> held = new java.util.HashMap<>();
+        held.put(CharacterType.LOGAN, () -> com.xenowarriors.item.ModItems.LOGAN_BLADE.get());
+        held.put(CharacterType.KEITA, () -> com.xenowarriors.item.ModItems.KEITA_BLADE.get());
+        held.put(CharacterType.ZANE, () -> com.xenowarriors.item.ModItems.ZANE_BROOM.get());
+        held.put(CharacterType.MAX, () -> com.xenowarriors.item.ModItems.MAX_KNIFE.get());
+        held.put(CharacterType.SAM, () -> com.xenowarriors.item.ModItems.SAM_BAT.get());
+        held.put(CharacterType.GARRY, () -> com.xenowarriors.item.ModItems.MICROPHONE.get());
+        l.add(new Step(null, () -> { mc.options.guiScale().set(2); mc.resizeDisplay(); ClientSettings.setCelShading(true);
+            mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 20));
+        int k = 0;
+        for (CharacterType t : CharacterType.PLAYABLE) {
+            if (!one.isEmpty() && !one.equals(t.getId())) continue;
+            String[] names = t.outfitNames();
+            for (int o = 0; o < Math.max(1, names.length); o++) {
+                final int oo = o;
+                final float yaw = (k++ % 2 == 0) ? -28F : 28F;
+                final String on = names.length == 0 ? "Default" : names[o];
+                var it = held.get(t);
+                l.add(new Step(null, () -> { mc.setScreen(null); character(t); outfit(oo); hold(it == null ? null : it.get()); }, 50));
+                l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.portrait.PortraitScreen(t, on, yaw)), 15));
+                l.add(new Step("portrait_" + t.getId() + "_" + o, () -> {}, 3));
+            }
+        }
+        l.add(new Step(null, () -> { mc.setScreen(null); ClientSettings.setCelShading(false); }, 5));
     }
 
     /** The ground under the Royal Capital (should be lit, not in a dark shadow), by day and by night. */

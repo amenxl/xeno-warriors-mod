@@ -41,9 +41,11 @@ jobs:
           XW_UITEST: "1"
           XW_UITEST_FOCUS: ${{ github.event.inputs.focus }}
           XW_UITEST_LODESTONE: ${{ github.event.inputs.focus == 'auras' && '1' || '0' }}
+          XW_UITEST_HD: ${{ startsWith(github.event.inputs.focus, 'portraits') && '1' || '0' }}
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: |
-          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./gradlew runClient --no-daemon > client.log 2>&1 || true
+          SCREEN="1280x720x24"; if [ "$XW_UITEST_HD" = "1" ]; then SCREEN="1920x1080x24"; fi
+          timeout 1500 xvfb-run -a -s "-screen 0 $SCREEN" ./gradlew runClient --no-daemon > client.log 2>&1 || true
           grep -E "XW-UITEST|ERROR|Exception|Caused by" client.log | head -80
           ls run/screenshots || true
       - name: Publish screenshots to the "uitest" release

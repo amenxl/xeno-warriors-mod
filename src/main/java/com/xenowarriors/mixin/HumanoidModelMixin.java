@@ -70,5 +70,6 @@ public abstract class HumanoidModelMixin {
         // poses anyone can strike (clashing, KAs, elements, working...), players and NPCs alike
         com.xenowarriors.client.combo.ComboAnim.apply((HumanoidModel<?>) self, entity, ageInTicks);   // universal combo swings
         com.xenowarriors.client.EntityPoses.apply((HumanoidModel<?>) self, entity, ageInTicks);
+        com.xenowarriors.client.portrait.PortraitPoses.apply((HumanoidModel<?>) self, entity);   // portrait hero pose (wins)
     }
 }
