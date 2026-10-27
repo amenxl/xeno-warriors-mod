@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
 /**
  * The named Sky Rebellion members' animations, on top of the normal walk:
  * <ul>
- * <li>idle: each their own (Senju rests his sword on his shoulder, Logan hands on hips, Kill hands behind his back,
+ * <li>idle: each their own (Senju holds his sword low, Logan hands on hips, Kill hands behind his back,
  *     Keita slouches and yawns, Maddie hands folded, Persephone hugs her arm, Ava arms crossed) and breathing;</li>
  * <li>combat stance when they're after someone, and their own attack swings (Senju's two-handed overhead cut, Kill and
  *     Keita's fast slashes, Logan's thrust, Maddie's backhand, the demons' clawing);</li>
@@ -80,8 +80,8 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
     private void idle(String k, float age, float breath) {
         float t = age * 0.05F;
         switch (k) {
-            case "senju" -> {                    // sword resting on his shoulder, the other hand at his side, calm
-                set(rightArm, -2.5F + breath * 0.04F, -0.5F, 0.15F);
+            case "senju" -> {                    // sword held low at his side, the other hand loose, calm - watching
+                set(rightArm, -0.3F + breath * 0.03F, -0.1F, 0.12F);
                 set(leftArm, 0.05F, 0, -0.12F);
                 head.yRot += Mth.sin(t * 0.7F) * 0.25F;
             }
@@ -123,7 +123,7 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
     /** A bit of personality on the walk. */
     private void walkStyle(String k, float age, float limb, float amt) {
         switch (k) {
-            case "senju" -> set(rightArm, -2.4F, -0.5F, 0.15F);                     // sword stays on his shoulder
+            case "senju" -> { rightArm.xRot = rightArm.xRot * 0.4F - 0.25F; body.yRot = Mth.cos(limb * 0.6662F) * amt * 0.1F; }   // a measured stride, sword steady
             case "logan" -> { body.y += Math.abs(Mth.cos(limb * 0.6662F)) * amt * 0.8F; }   // a bouncy swagger
             case "kill" -> { set(rightArm, 0.55F, 0, 0.35F); set(leftArm, 0.55F, 0, -0.35F); }
             case "keita" -> { body.xRot = 0.2F; head.xRot += 0.2F; rightArm.xRot *= 0.3F; leftArm.xRot *= 0.3F; }   // shuffling
