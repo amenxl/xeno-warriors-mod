@@ -116,6 +116,19 @@ public class CharacterCustomScreen extends Screen {
         return new float[]{c[0] + 10 * c[2], c[1] + (VH + 6) * c[2], (VW - 20) * c[2], 15 * c[2]};
     }
 
+    /** Tab widths: the long "KAs / Last resort" tab gets more room. */
+    private float tabWeight(int i) { return tabs() == 4 && i == 3 ? 1.9F : 1F; }
+    private float tabW(int i) {
+        float total = 0;
+        for (int k = 0; k < tabs(); k++) total += tabWeight(k);
+        return tabBar()[2] * tabWeight(i) / total;
+    }
+    private float tabX(int i) {
+        float x = tabBar()[0];
+        for (int k = 0; k < i; k++) x += tabW(k);
+        return x;
+    }
+
     private boolean overBack(double mx, double my) { float s = Math.max(1F, height / 240F); return mx < 26 * s && my < 22 * s; }
 
     // skills tab geometry (virtual units)
@@ -149,7 +162,9 @@ public class CharacterCustomScreen extends Screen {
         if (overBack(mx, my)) { onClose(); return true; }
         float[] tb = tabBar();
         if (my >= tb[1] && my < tb[1] + tb[3] && mx >= tb[0] && mx < tb[0] + tb[2]) {
-            tab = Mth.clamp((int) ((mx - tb[0]) / (tb[2] / tabs())), 0, tabs() - 1);
+            int t = tabs() - 1;
+            while (t > 0 && mx < tabX(t)) t--;
+            tab = t;
             click();
             return true;
         }
@@ -263,7 +278,7 @@ public class CharacterCustomScreen extends Screen {
         String money = com.xenowarriors.economy.Money.fmt(ClientMoney.get()) + " Money";
         String karma = self == null ? "" : Math.round(self.karma()) + " Karma";
         float px = w - 6 * us;
-        for (String s : new String[]{money, karma}) {
+        for (String s : new String[]{money}) {             // (Karma is in the Stats tab)
             if (s.isEmpty()) continue;
             float tw = font.width(s) * us;
             g.fill((int) (px - tw - 12 * us), (int) (4 * us), (int) px, (int) (18 * us), 0xE0101014);
@@ -297,9 +312,9 @@ public class CharacterCustomScreen extends Screen {
         String[] names = hasKa() ? new String[]{"STATS", "SKILLS", "OUTFITS", "KAS / LAST RESORT"} : new String[]{"STATS", "SKILLS", "OUTFITS"};
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
-        float segW = tb[2] / names.length, ts = tb[3] / 15F;
+        float ts = tb[3] / 15F;
         for (int i = 0; i < names.length; i++) {
-            float sx = tb[0] + i * segW;
+            float sx = tabX(i), segW = tabW(i);
             boolean sel = i == tab;
             if (sel) {
                 RenderSystem.enableBlend();
@@ -365,8 +380,6 @@ public class CharacterCustomScreen extends Screen {
         int lv = Math.max(1, self.level());
         pill(g, 4, 53, 120, 15);
         g.drawString(font, "Lv. " + String.format("%,d", lv), 10, 57, 0xFFFFFF, false);
-        String max = "/ " + String.format("%,d", Stats.MAX_CHARACTER_LEVEL);
-        g.drawString(font, max, 118 - font.width(max), 57, 0x707080, false);
         pill(g, 128, 53, VW - 132, 15);
         String hearts = "+" + Stats.bonusHearts(lv) + " ❤";
         g.fill(131, 56, 140, 65, 0xFF000000 | col);
@@ -527,7 +540,10 @@ public class CharacterCustomScreen extends Screen {
     }
 
     /** Mikiko's / Rhalix's last resort: the Xeno Blast. */
+    private int paraLimit = VH - 30;
+
     private void xenoTab(GuiGraphics g, int col, double mx, double my) {
+        paraLimit = VH - 14;
         g.fill(4, 53, 7, 76, 0xFF000000 | col);
         scaled(g, "XENO BLAST", 11, 54, 1.6F, 0xFFFFFF);
         g.drawString(font, "Last resort  \u2022  replaces a KA", 11, 68, 0xB0B0C0, false);
@@ -538,14 +554,15 @@ public class CharacterCustomScreen extends Screen {
         y = para(g, "What it does", "A short charge, then a huge blast that pours out every bit of Karma you have left. The more Karma, the harder and wider it hits (needs at least " + com.xenowarriors.skill.XenoBlast.MIN_KARMA + ").", y, 0xFFFFFF);
         y = para(g, "The price", "Your Karma is drained to nothing and won't regenerate for 30 seconds.", y + 3, 0xFF9A7A);
         int left = com.xenowarriors.client.ClientKarmaLock.secondsLeft();
-        if (left > 0) scaled(g, "Drained - Karma back in " + left + "s", 5, y + 2, 0.8F, 0xFF8080);
+        paraLimit = VH - 30;
+        if (left > 0) scaled(g, "Drained - Karma back in " + left + "s", 5, Math.min(y + 3, VH - 9), 0.8F, 0xFF8080);
     }
 
     private int para(GuiGraphics g, String head, String text, int y, int color) {
         scaled(g, head.toUpperCase(java.util.Locale.ROOT), 5, y, 0.75F, 0x8A8A9A);
         y += 8;
         for (FormattedCharSequence l : font.split(Component.literal(text), (int) ((VW - 10) / 0.85F))) {
-            if (y > VH - 30) break;
+            if (y > paraLimit) break;
             g.pose().pushPose();
             g.pose().translate(5, y, 0);
             g.pose().scale(0.85F, 0.85F, 1F);
