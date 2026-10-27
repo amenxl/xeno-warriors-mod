@@ -52,6 +52,7 @@ jobs:
         run: |
           mkdir -p out
           cp client.log out/ || true
+          tail -c 400000 server.log > out/server.log || true
           if ls run/screenshots/xw_anim_* >/dev/null 2>&1; then (cd run/screenshots && zip -q ../../out/anim.zip xw_anim_*.png && rm xw_anim_*.png); fi
           cp run/screenshots/*.png out/ 2>/dev/null || true
           gh release delete uitest --yes --cleanup-tag || true
