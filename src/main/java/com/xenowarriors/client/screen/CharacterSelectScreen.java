@@ -18,8 +18,8 @@ public class CharacterSelectScreen extends Screen {
     private static boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }
     private static final int CARD_HEIGHT = 176;
     /** Characters coming later: blank, locked slots (name + color) under the playable ones. */
-    public static final String[] UPCOMING = {"Kyle", "Chase", "Zack", "Kaitlyn", "Zane", "Stevie", "Garry", "Technica", "Yuri", "SR Leader"};
-    public static final int[] UPCOMING_COLOR = {0x8A8A9A, 0x6A6A8A, 0x9A3A3A, 0xD86AA0, 0x4A6AD8, 0xA05AE0, 0x4AC85A, 0x5AC8E8, 0x6AE08A, 0x9A2A2A};
+    public static final String[] UPCOMING = {"Kyle", "Chase", "Zack", "Kaitlyn", "Zane", "Stevie", "Garry", "Yuri", "SR Leader"};
+    public static final int[] UPCOMING_COLOR = {0x8A8A9A, 0x6A6A8A, 0x9A3A3A, 0xD86AA0, 0x4A6AD8, 0xA05AE0, 0x4AC85A, 0x6AE08A, 0x9A2A2A};
     /** Four characters per page; the arrows flip through the rest. */
     private static final int PER_PAGE = 4;
     private static int page;

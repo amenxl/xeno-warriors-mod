@@ -22,17 +22,19 @@ public enum CharacterType {
     MAX("max", 0xFF9AD2F2),
     SAM("sam", 0xFF2AA890),
     /** Season 3: a demon with wings. Never in a party with Rhalix, and can't come within 400 blocks of him. */
-    AIONI("aioni", 0xFFC41E30);
+    AIONI("aioni", 0xFFC41E30),
+    /** Technica ("Tech"), the Sky Patrol's inventor, on her artificial wings. */
+    TECHNICA("technica", 0xFFEC5AA0);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, AIONI};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, AIONI};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
-    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI; }   // (Ai-oni flies on her demon wings)
+    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == TECHNICA || this == AIONI; }   // (Ai-oni flies on her demon wings)
 
     /** The Sky Patrol members (for team synergy). */
-    public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM; }
+    public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
 
     public int season() { return this == AIONI ? 3 : this == ULTIMA || this == KAERU ? 2 : 1; }
 

@@ -43,7 +43,7 @@ public final class Synergy {
     public static final double RANGE = 24;
     public static final String PARTNERS = "Partners", SKYLAND = "Skyland Bond", GOOFY = "Goofy Rivals", SOUL_LINK = "Soul Link";
     /** Sky Patrol members (by character id) - for when they become playable. */
-    public static final Set<String> SKY_PATROL = Set.of("sam", "lexy", "max");
+    public static final Set<String> SKY_PATROL = Set.of("sam", "lexy", "max", "technica");
     private static final Map<UUID, Set<String>> ACTIVE = new HashMap<>();
     private static final Map<UUID, int[]> RIVAL = new HashMap<>();      // {stacks, ticks left}
     private static final Set<UUID> DYING = new HashSet<>();

@@ -65,6 +65,11 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.sp.SamSkills.TickingTimeBomb(), 0), new Entry(new com.xenowarriors.skill.sp.SamSkills.KnockoutMode(), 0),
                 new Entry(new com.xenowarriors.skill.sp.SamSkills.BatterShoot(), 20)));
         ULTIMATE.put(CharacterType.SAM, new com.xenowarriors.skill.sp.SamSkills.PsychoticTimeBomb());
+        POOL.put(CharacterType.TECHNICA, List.of(
+                new Entry(new com.xenowarriors.skill.sp.TechSkills.ExplosiveRounds(), 0), new Entry(new com.xenowarriors.skill.sp.TechSkills.GravityRounds(), 0),
+                new Entry(new com.xenowarriors.skill.sp.TechSkills.GravityBoots(), 0), new Entry(new com.xenowarriors.skill.sp.TechSkills.VisorScan(), 0),
+                new Entry(new com.xenowarriors.skill.sp.TechSkills.WingCloak(), 15), new Entry(new com.xenowarriors.skill.sp.TechSkills.RescuePlatform(), 30)));
+        ULTIMATE.put(CharacterType.TECHNICA, new com.xenowarriors.skill.sp.TechSkills.TechBarrage());
     }
 
     private SkillPool() {}

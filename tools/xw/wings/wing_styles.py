@@ -171,16 +171,26 @@ def demon(m):
         seg(m, root, -72 - 14 * t, 4 + 6 * t, 2.6, 0.3, W2 if k % 2 else W3, 'Membrane')
 
 class _Scaled:
-    """Wraps a Model so a style comes out smaller (everything shrunk toward the wing root)."""
-    def __init__(self, m, k): self.m, self.k = m, k
+    """Wraps a Model so a style comes out smaller (shrunk toward the wing root) and optionally drooped (turned down by `droop` degrees)."""
+    def __init__(self, m, k, droop=0.0): self.m, self.k, self.d = m, k, droop
     def add(self, bone, name, frm, to, col, rot=None, origin=None, *a, **kw):
-        sc = lambda p: [O[i] + (p[i] - O[i]) * self.k if i < 2 else p[i] for i in range(3)]
-        return self.m.add(bone, name, sc(frm), sc(to), col, rot, sc(origin) if origin else origin, *a, **kw)
-def scaled(fn, k): return lambda m: fn(_Scaled(m, k))
+        k = self.k
+        sc = lambda p: [O[i] + (p[i] - O[i]) * k if i < 2 else p[i] for i in range(3)]
+        frm, to = sc(frm), sc(to)
+        org = sc(origin) if origin else [(frm[i] + to[i]) / 2 for i in range(3)]
+        if self.d:
+            r = math.radians(self.d); dx, dy = org[0] - O[0], org[1] - O[1]
+            new = [O[0] + dx * math.cos(r) - dy * math.sin(r), O[1] + dx * math.sin(r) + dy * math.cos(r), org[2]]
+            off = [new[i] - org[i] for i in range(3)]
+            frm = [frm[i] + off[i] for i in range(3)]; to = [to[i] + off[i] for i in range(3)]
+            org = new
+            rot = [(rot or [0, 0, 0])[0], (rot or [0, 0, 0])[1], (rot or [0, 0, 0])[2] + self.d]
+        return self.m.add(bone, name, frm, to, col, rot, org, *a, **kw)
+def scaled(fn, k, droop=0.0): return lambda m: fn(_Scaled(m, k, droop))
 
 STYLES = {'angel': angel, 'hawk': hawk, 'falcon': falcon, 'bat': bat, 'butterfly': butterfly,
           'crystal': crystal, 'seraph': seraph, 'tattered': tattered,
-          'kyrie': kyrie, 'demon': demon, 'angel_small': scaled(angel, 0.6), 'falcon_small': scaled(falcon, 0.5), 'hawk_small': scaled(hawk, 0.6)}
+          'kyrie': kyrie, 'demon': demon, 'angel_small': scaled(angel, 0.6), 'falcon_small': scaled(falcon, 0.42, -38), 'tech': scaled(crystal, 0.55, -10), 'hawk_small': scaled(hawk, 0.48, -42)}
 
 def build(style):
     m = Model('wing_' + style)

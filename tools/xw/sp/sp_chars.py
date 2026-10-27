@@ -355,7 +355,76 @@ AIONI = dict(skin=A_SKIN, eyes=A_EYE, hair=[AH1, AH2], paint=aioni_paint,
              mouth=['kkkkkkkk', 'kWrrrrWk', '.krrrrk.', '..kkkk..'], mouth_x=12, mouth_y=24, face_extra=[aioni_marks],
              wing=('demon', '#c42a38'), fit=aioni)
 
-CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI}
+# ====================================================================== TECHNICA ("Tech")
+T_SKIN, T_EYE = '#f4dcd0', '#e0408a'
+TH1, TH2, TH3 = '#8a1a5a', '#c42a7e', '#e858a4'
+T_COAT, T_COATD, T_PINK, T_BLK = '#f2f0f4', '#d6d2dc', '#ec5aa0', '#1a181e'
+
+def tech_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 10: return T_BLK
+        return T_BLK
+    if part in ('rarm', 'larm'):
+        if y >= 10: return '#f4f4f6'                                         # white gloves
+        return T_COAT
+    if part in ('rleg', 'lleg'):
+        if y >= 8: return '#9a9aa2' if y != 8 else '#f2a8cc'                 # grey boots, pink band
+        return T_BLK
+    return None
+
+def technica(f):
+    # magenta hair fading darker at the ends, a messy bun with a flower crown, a long lock on one side, a headphone
+    hair(f, TH2, TH1, back_len=25, side_len=25.5,
+         locks=fringe_locks(6, 31.8, 7.6, 4.4, 1.8, 0.35) + [([3.9, 31.2, -4.4], [0.15, -1, -0.1], 6.0, 2.2)]
+         + [([-4.2, 30.8, -3.4], [-0.2, -1, -0.15], 11.0, 2.4)]
+         + [([s * 4.6, 30, z], [s * 0.3, -1, 0.15], 5.0, 1.9) for s in (1, -1) for z in (0.0, 2.8)])
+    f.add('head', [2.2, 30.6, 0.4], [6.0, 34.6, 4.4], TH2, {'top': TH3, 'front': lambda x, y: TH3 if int(x * 6 + y * 4) % 3 == 0 else TH2})   # messy bun
+    f.add('head', [2.8, 34.0, 1.0], [5.4, 35.4, 3.8], TH3)
+    for (x, y, z) in ((2.2, 34.2, 0.2), (3.6, 35.0, 0.2), (5.0, 34.6, 0.2), (6.1, 33.4, 1.2), (6.1, 31.8, 2.6)):   # flower crown
+        f.add('head', [x - 0.5, y - 0.5, z - 0.4], [x + 0.5, y + 0.5, z + 0.4], '#d86ad8')
+        f.add('head', [x - 0.2, y - 0.2, z - 0.5], [x + 0.2, y + 0.2, z - 0.35], '#f6c8f0')
+    f.add('head', [4.2, 26.4, -1.6], [5.4, 29.6, 1.6], '#5a1238', {'right': lambda x, y: '#c42a7e' if (x - .5) ** 2 + (y - .5) ** 2 < .06 else '#5a1238'})   # headphone
+    f.add('head', [3.6, 29.4, -0.6], [4.6, 33.0, 0.6], '#3a0c26')
+    # pink-tinted rectangular glasses
+    for sx in (1, -1):
+        x0, x1 = (0.5, 3.7) if sx > 0 else (-3.7, -0.5)
+        F = '#2a1a24'
+        f.add('head', [x0, 28.6, -4.8], [x1, 28.95, -4.6], F, shade=False)          # rims as thin bars
+        f.add('head', [x0, 26.9, -4.8], [x1, 27.2, -4.6], F, shade=False)
+        f.add('head', [x0, 26.9, -4.8], [x0 + 0.3, 28.95, -4.6], F, shade=False)
+        f.add('head', [x1 - 0.3, 26.9, -4.8], [x1, 28.95, -4.6], F, shade=False)
+    f.add('head', [-0.5, 28.2, -4.75], [0.5, 28.6, -4.6], '#2a1a24')
+    for sx in (1, -1):
+        x0, x1 = (3.7, 4.1) if sx > 0 else (-4.1, -3.7)
+        f.add('head', [x0, 28.3, -4.7], [x1, 28.7, -1.0], '#2a1a24')
+    # black top with a pink collar and the C3 logo, open white lab coat with pink bands
+    shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.26, T_BLK)
+    f.add('body', [-1.4, 22.6, -2.42], [1.4, 24.4, -2.25], T_PINK)                          # pink collar
+    f.add('body', [-0.25, 20.0, -2.44], [0.25, 23.0, -2.28], '#8a8a92')                     # zip
+    C3 = ['.kkkkk.', 'k.....k', 'k.kkk..', 'k...k..', 'k.kkk..', 'k...k.k', 'k.kkk.k', '.kkkkk.']
+    plate(f, 'body', C3, 0.0, 19.8, -2.42, 0.36, T_PINK)
+    for sx in (1, -1):
+        x0, x1 = (2.0, 4.55) if sx > 0 else (-4.55, -2.0)
+        f.add('body', [x0, 9.0, -2.6], [x1, 24.4, -2.35], T_COAT)
+    shell(f, 'body', [-4, 9.0, -2], [4, 24.2, 2], 0.45, T_COAT, {'front': lambda x, y: None})
+    f.add('body', [-3.6, 23.4, 1.9], [3.6, 25.2, 2.9], T_COATD)                             # collar
+    f.both('right_arm', [3.45, 13.0, -2.55], [8.55, 24.4, 2.55], T_COAT, {'bottom': T_COATD})
+    f.both('right_arm', [3.4, 19.4, -2.6], [8.6, 20.8, 2.6], T_PINK)                        # pink sleeve bands
+    f.both('right_arm', [3.4, 13.0, -2.6], [8.6, 14.0, 2.6], T_PINK)                        # pink cuffs
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 13.2, 2.5], '#f6f6f8', {'bottom': '#e8e8ec'})   # white gloves
+    # black pants, chunky grey boots with a pink top
+    f.both('right_leg', [-0.35, 3.6, -2.35], [4.35, 12.3, 2.35], T_BLK)
+    f.both('right_leg', [-0.55, 0.0, -2.75], [4.55, 4.4, 2.55], '#9a9aa2', {'top': '#f2a8cc'})
+    f.both('right_leg', [-0.6, 3.6, -2.8], [4.6, 4.6, 2.6], '#f2a8cc')
+    f.both('right_leg', [0.0, 0.0, -3.3], [4.0, 1.6, -2.7], '#8a8a92')
+    f.both('right_leg', [-0.6, 0.0, -3.4], [4.6, 0.5, 2.6], '#6a6a72')
+
+TECHNICA = dict(skin=T_SKIN, eyes=T_EYE, hair=[TH1, TH2], paint=tech_paint,
+                brow=['.........', '..kkkkk..', 'kk.......'],
+                eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
+                mouth=['..kkkk..'], mouth_x=12, mouth_y=25, wing=('tech', '#e8a0c4'), fit=technica)
+
+CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

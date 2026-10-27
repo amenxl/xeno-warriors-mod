@@ -193,7 +193,7 @@ public final class UiTest {
 
     /** The Sky Patrol: each one front/back/flying, a few skills, and both pages of the character select screen. */
     private static void skyPatrol(Minecraft mc, List<Step> l) {
-        CharacterType[] sp = {CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.AIONI};
+        CharacterType[] sp = {CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.TECHNICA, CharacterType.AIONI};
         for (CharacterType t : sp) {
             l.add(new Step(null, () -> { character(t); server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); }); }, 40));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
