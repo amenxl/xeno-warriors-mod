@@ -108,6 +108,10 @@ public final class UiTest {
                     m.setNoAi(true); m.setYHeadRot(180); m.yBodyRot = 180;
                     lvl.addFreshEntity(m);
                     m.uiTestPose(ps == 1, ps == 2);
+                    if (idx == 0 && ps == 0) {             // a plain member with a vanilla sword beside him, to compare how it's held
+                        var c = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(lvl);
+                        if (c != null) { c.moveTo(p.getX() + 1.8, p.getY(), p.getZ() + 3.6, 150, 0); c.setup(0, p.blockPosition()); c.setNoAi(true); lvl.addFreshEntity(c); }
+                    }
                 }), 30));
                 l.add(new Step("sr_" + names[i] + (ps == 1 ? "_wings" : ps == 2 ? "_demon" : ""), () -> {}, 5));
             }
@@ -119,6 +123,13 @@ public final class UiTest {
         l.add(new Step("blade_firstperson", () -> {}, 5));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 20));
         l.add(new Step("blade_thirdperson", () -> {}, 5));
+        l.add(new Step(null, () -> mc.player.setYRot(90F), 20));
+        l.add(new Step("blade_thirdperson_side", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.player.setYRot(0F); server(p -> p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD))); }, 20));
+        l.add(new Step("vanilla_thirdperson", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.player.setYRot(90F); }, 20));
+        l.add(new Step("vanilla_thirdperson_side", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.player.setYRot(0F); server(p -> p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.SENJU_BLADE.get()))); }, 20));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
         l.add(new Step("blade_hotbar", () -> {}, 5));
     }

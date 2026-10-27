@@ -25,6 +25,6 @@ disp = {"gui": {"rotation": [0, 0, -45], "translation": [0, 0, 0], "scale": [0.4
         "fixed": {"rotation": [0, 0, -45], "scale": [0.5, 0.5, 0.5]},
         "thirdperson_righthand": {"rotation": [0, -90, 10], "translation": [0, 1.5, 0.5], "scale": [0.8, 0.8, 0.8]},
         "thirdperson_lefthand": {"rotation": [0, 90, -10], "translation": [0, 1.5, 0.5], "scale": [0.8, 0.8, 0.8]},
-        "firstperson_righthand": {"rotation": [0, -90, -20], "translation": [1.13, 0.5, 1.13], "scale": [0.6, 0.6, 0.6]},
-        "firstperson_lefthand": {"rotation": [0, 90, 20], "translation": [1.13, 0.5, 1.13], "scale": [0.6, 0.6, 0.6]}}
+        "firstperson_righthand": {"rotation": [0, -90, -20], "translation": [1.13, 1.0, 1.13], "scale": [0.4, 0.4, 0.4]},
+        "firstperson_lefthand": {"rotation": [0, 90, 20], "translation": [1.13, 1.0, 1.13], "scale": [0.4, 0.4, 0.4]}}
 model('senju_blade', els, disp)
