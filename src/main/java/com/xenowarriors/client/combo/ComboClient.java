@@ -214,7 +214,7 @@ public final class ComboClient {
     private static LivingEntity target(LocalPlayer p, ComboStyle style) {
         Minecraft mc = Minecraft.getInstance();
         double reach = p.getEntityReach() + style.reachBonus;
-        if (mc.crosshairPickEntity instanceof LivingEntity l && l.isAlive() && in(p, l, reach)) return l;
+        if (mc.crosshairPickEntity instanceof LivingEntity l && l != p && l.isAlive() && in(p, l, reach)) return l;
         LivingEntity lock = com.xenowarriors.client.LockOn.target();
         if (lock != null && lock.isAlive() && in(p, lock, reach + 0.5)) return lock;
         Vec3 look = p.getViewVector(1F).multiply(1, 0, 1).normalize();
