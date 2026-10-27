@@ -66,7 +66,7 @@ public final class ChargePose {
         Vector3f c1 = mikiko ? new Vector3f(1F, 0.35F, 0.1F) : k;
         Vector3f c2 = mikiko ? new Vector3f(1F, 0.75F, 0.2F) : new Vector3f(Math.min(1F, k.x + 0.3F), Math.min(1F, k.y + 0.3F), Math.min(1F, k.z + 0.3F));
         float grow = Math.min(1F, t / 30F);
-        int n = 3 + Math.round(grow * 4);
+        int n = 1 + Math.round(grow * 2);              // a few motes - the DbzAura shell carries the look
         for (int i = 0; i < n; i++) {
             double a = r.nextDouble() * Math.PI * 2, rad = 0.45 + r.nextDouble() * (0.3 + grow * 0.4);
             mc.level.addParticle(new DustParticleOptions(r.nextBoolean() ? c1 : c2, 0.8F + grow * 0.6F),

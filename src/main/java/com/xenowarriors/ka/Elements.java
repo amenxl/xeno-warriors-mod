@@ -88,8 +88,11 @@ public final class Elements {
         Element el = of(m);
         if (el == null) return;
         ServerLevel level = (ServerLevel) m.level();
-        if (m.tickCount % 12 == 0)                                                         // aura
-            level.sendParticles(new DustParticleOptions(rgb(el), 0.8F), m.getX(), m.getY() + m.getBbHeight() * 0.5, m.getZ(), 2,
+        if (m.tickCount % 20 == 0)                                                         // DBZ-style aura, drawn on the client
+            com.xenowarriors.network.ModNetwork.CHANNEL.send(net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> m),
+                    new com.xenowarriors.network.AuraMarkPacket(m.getId(), el.color));
+        if (m.tickCount % 8 == 0)                                                          // plus a few motes rising off it
+            level.sendParticles(new DustParticleOptions(rgb(el), 0.9F), m.getX(), m.getY() + m.getBbHeight() * 0.5, m.getZ(), 2,
                     m.getBbWidth() * 0.5, m.getBbHeight() * 0.35, m.getBbWidth() * 0.5, 0);
         long now = level.getGameTime();
         if (Clashes.inClash(m)) return;

@@ -409,6 +409,8 @@ public final class ModNetwork {
                 .decoder(RopeFxPacket::decode)
                 .consumerMainThread(RopeFxPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(AuraMarkPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(AuraMarkPacket::encode).decoder(AuraMarkPacket::decode).consumerMainThread(AuraMarkPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

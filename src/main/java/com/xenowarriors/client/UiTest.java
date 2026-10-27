@@ -77,6 +77,7 @@ public final class UiTest {
         if ("beatbox".equals(System.getenv("XW_UITEST_FOCUS"))) { beatbox(mc, l); return l; }
         if ("girls".equals(System.getenv("XW_UITEST_FOCUS"))) { girls(mc, l); return l; }
         if ("allanim".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
+        if ("mikiko".equals(System.getenv("XW_UITEST_FOCUS"))) { mikikoCombo(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -433,21 +434,27 @@ public final class UiTest {
         l.add(new Step(null, () -> hold(null), 5));
     }
 
-    /** Every character powering up (their aura), Karma focus glows, and element auras on a row of mobs. */
+    /** Every character powering up (their DBZ aura) - a still each and GIF frames for a few - Karma focus auras, and element auras on a row of mobs. */
     private static void auras(Minecraft mc, List<Step> l) {
         Runnable front = () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(12F); mc.player.setYRot(0F); };
         l.add(new Step(null, () -> server(p -> p.serverLevel().setDayTime(18000)), 10));       // night shows the glow
+        java.util.Set<CharacterType> gif = java.util.Set.of(CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KAERU, CharacterType.ZANE, CharacterType.LOGAN);
         for (CharacterType t : CharacterType.PLAYABLE) {
             l.add(new Step(null, () -> { forceCharge = false; character(t); }, 30));
             l.add(new Step(null, () -> { front.run(); forceCharge = true; }, 35));
             l.add(new Step("aura_" + t.getId(), () -> {}, 3));
-            l.add(new Step("aura_" + t.getId() + "_b", () -> {}, 3));
+            if (gif.contains(t)) for (int f = 0; f < 16; f++) l.add(new Step(String.format("auragif_%s_%02d", t.getId(), f), () -> {}, 1));
         }
-        l.add(new Step(null, () -> forceCharge = false, 20));
+        // a daytime one too
+        l.add(new Step(null, () -> { forceCharge = false; server(p -> p.serverLevel().setDayTime(6000)); character(CharacterType.MIKIKO); }, 30));
+        l.add(new Step(null, () -> { front.run(); forceCharge = true; }, 35));
+        for (int f = 0; f < 16; f++) l.add(new Step(String.format("auragif_day_mikiko_%02d", f), () -> {}, 1));
+        l.add(new Step(null, () -> { forceCharge = false; server(p -> p.serverLevel().setDayTime(18000)); }, 20));
         for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.YURI}) {
             l.add(new Step(null, () -> character(t), 30));
             l.add(new Step(null, () -> { front.run(); KarmaFocusClient.set(mc.player.getId(), true); }, 40));
             l.add(new Step("aura_focus_" + t.getId(), () -> {}, 3));
+            for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_focus_%s_%02d", t.getId(), f), () -> {}, 1));
             l.add(new Step(null, () -> KarmaFocusClient.set(mc.player.getId(), false), 20));
         }
         com.xenowarriors.ka.Element[] els = {com.xenowarriors.ka.Element.FIRE, com.xenowarriors.ka.Element.ICE, com.xenowarriors.ka.Element.LIGHTNING,
@@ -464,7 +471,48 @@ public final class UiTest {
         }), 20));
         l.add(new Step(null, () -> { character(CharacterType.MIKIKO); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setYRot(0); mc.player.setXRot(15); }, 60));
         l.add(new Step("aura_elements", () -> {}, 3));
+        for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_elements_%02d", f), () -> {}, 1));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
+    }
+
+    /** Mikiko's bare-hand combo string on a zombie, filmed from the side (ends in the Tie Shan Kao finisher). */
+    private static void mikikoCombo(Minecraft mc, List<Step> l) {
+        int[] ids = new int[2];
+        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); hold(null); }, 30));
+        for (int run = 0; run < 2; run++) {
+            String tag = run == 0 ? "side" : "angle";
+            float camYaw = run == 0 ? -90F : -135F;
+            l.add(new Step(null, () -> server(p -> {
+                p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
+                p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
+                p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(0);
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                z.moveTo(p.getX(), p.getY(), p.getZ() + 1.9, 180, 0); z.setNoAi(true); z.setYHeadRot(180); z.yBodyRot = 180;
+                z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
+                z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
+                p.serverLevel().addFreshEntity(z); ids[0] = z.getId();
+                var cam = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+                double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 5.2, cz = p.getZ() + 2.6 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 5.2;
+                cam.moveTo(cx, p.getY() + 0.2, cz, camYaw, 8); cam.setNoGravity(true); cam.setInvisible(true); cam.setYHeadRot(camYaw);
+                p.serverLevel().addFreshEntity(cam); ids[1] = cam.getId();
+            }), 20));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+                mc.player.setYRot(0); mc.player.setXRot(0);
+                if (mc.level.getEntity(ids[1]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                    a.setYRot(camYaw); a.yRotO = camYaw; a.setXRot(8); a.xRotO = 8; a.setYHeadRot(camYaw); a.yHeadRotO = camYaw; mc.setCameraEntity(a); } }, 20));
+            int frame = 0;
+            for (int hit = 0; hit < 6; hit++) {
+                l.add(new Step(null, () -> {
+                    mc.player.setYRot(0); mc.player.setXRot(0);
+                    var z = mc.level.getEntity(ids[0]);
+                    if (z != null) { mc.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, z.position().add(0, 1.2, 0)); mc.gameMode.attack(mc.player, z); }
+                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                }, 0));
+                int n = hit == 5 ? 16 : 7;
+                for (int f = 0; f < n; f++) l.add(new Step(String.format("combo_%s_%02d", tag, frame++), () -> {}, 2));
+            }
+            l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 30));
+        }
     }
 
     /** Kaeru: front/back, her Change (silhouette, a zombie, a log), Soul Splitter for her, Rhalix and Mikiko (3 souls). */

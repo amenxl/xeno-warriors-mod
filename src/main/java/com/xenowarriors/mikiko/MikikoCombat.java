@@ -63,7 +63,20 @@ public final class MikikoCombat {
                         8, 0.25, 0.3, 0.25, 0.04);
             }
         }
-        if (step == COMBO_LENGTH - 1) target.push(dir.x * 0.8, 0.35, dir.z * 0.8);  // finisher
+        if (step == COMBO_LENGTH - 1) {                                    // finisher: Tie Shan Kao - shoulder and back slam, they go flying
+            target.push(dir.x * 1.9, 0.45, dir.z * 1.9); target.hurtMarked = true;
+            var l = player.serverLevel();
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION, target.getX(), target.getY() + 1, target.getZ(), 1, 0, 0, 0, 0);
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, target.getX(), target.getY() + 1, target.getZ(), 18, 0.3, 0.4, 0.3, 0.12);
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, player.getX(), player.getY() + 0.05, player.getZ(), 10, 0.4, 0.02, 0.4, 0.05);   // the stamp
+            l.playSound(null, player.blockPosition(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_KNOCKBACK, net.minecraft.sounds.SoundSource.PLAYERS, 1.2F, 0.6F);
+            l.playSound(null, target.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE, net.minecraft.sounds.SoundSource.PLAYERS, 0.35F, 1.6F);
+            for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(1.5), e -> e != player && e != target
+                    && com.xenowarriors.skill.SkillTargeting.canTarget(player, e))) {
+                Vec3 d2 = e.position().subtract(player.position()).normalize();
+                e.push(d2.x * 1.2, 0.3, d2.z * 1.2); e.hurtMarked = true;     // whoever's right behind them gets bowled over too
+            }
+        }
     }
 
     /** Count up Mikiko's time in the air, and share it so everyone sees how well he flies. */

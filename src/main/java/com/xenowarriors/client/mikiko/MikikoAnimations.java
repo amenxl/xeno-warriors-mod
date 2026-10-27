@@ -64,11 +64,11 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
     private static final Move[][] COMBOS = {
-            {Move.JAB_R, Move.JAB_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_ROUNDHOUSE},
-            {Move.HOOK_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_SPIN},
-            {Move.JAB_L, Move.HOOK_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_ROUNDHOUSE},
-            {Move.UPPERCUT_L, Move.JAB_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_SIDE},
-            {Move.JAB_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.KICK_ROUNDHOUSE},
+            {Move.JAB_R, Move.JAB_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
+            {Move.HOOK_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
+            {Move.JAB_L, Move.HOOK_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
+            {Move.UPPERCUT_L, Move.JAB_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
+            {Move.JAB_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
     private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
@@ -503,9 +503,9 @@ public final class MikikoAnimations {
             s.hop = s.comboStep <= 2 && !move.blade && !flying && p.onGround() && !p.isCrouching();
             boolean ground = !flying && p.onGround() && !p.isCrouching();
             if (p instanceof net.minecraft.client.player.LocalPlayer lp && ground && (s.hop || move == Move.LUNGE_PUNCH_R
-                    || move == Move.LUNGE_PUNCH_L || move == Move.FLIP_KICK)) {
-                // dashing in: a skip (hits 1-2), a long lunge step (3-4), springing up into the flip (5)
-                double fwd = move == Move.FLIP_KICK ? 0.28 : s.hop ? 0.42 : 0.38;
+                    || move == Move.LUNGE_PUNCH_L || move == Move.FLIP_KICK || move == Move.TIE_SHAN_KAO)) {
+                // dashing in: a skip (hits 1-2), a long lunge step (3-4), springing up into the flip (5), the stamping step of Tie Shan Kao (6)
+                double fwd = move == Move.FLIP_KICK ? 0.28 : move == Move.TIE_SHAN_KAO ? 0.5 : s.hop ? 0.42 : 0.38;
                 double up = move == Move.FLIP_KICK ? 0.48 : s.hop ? 0.2 : 0.08;
                 DashGuard.dash(lp, fwd, up);           // (locked on: stops in front of the target, not through it)
             }
