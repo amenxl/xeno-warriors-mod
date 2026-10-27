@@ -85,6 +85,7 @@ public final class UiTest {
         if ("capital".equals(System.getenv("XW_UITEST_FOCUS"))) { capital(mc, l); return l; }
         if ("partyui".equals(System.getenv("XW_UITEST_FOCUS"))) { partyUi(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
+        if ("underlight".equals(System.getenv("XW_UITEST_FOCUS"))) { underlight(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -572,6 +573,28 @@ public final class UiTest {
             }), 140));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
             l.add(new Step("capital_" + sh[0], () -> {}, 5));
+        }
+    }
+
+    /** The ground under the Royal Capital (should be lit, not in a dark shadow), by day and by night. */
+    private static void underlight(Minecraft mc, List<Step> l) {
+        int[][] spots = {{6, 6, 160}, {30, -20, 220}, {100, -30, 180}, {-60, 90, 200}};
+        for (long time : new long[]{5000L, 18000L}) for (int[] sp : spots) {
+            l.add(new Step(null, () -> server(p -> {
+                p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+                var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+                if (lvl == null) return;
+                lvl.setDayTime(time);
+                p.teleportTo(lvl, sp[0] + 0.5, 150, sp[1] + 0.5, sp[2], 15F);
+            }), 120));
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.serverLevel();
+                var m = new net.minecraft.core.BlockPos.MutableBlockPos(sp[0], 199, sp[1]);
+                while (m.getY() > lvl.getMinBuildHeight() && (lvl.getBlockState(m).isAir() || lvl.getBlockState(m).is(net.minecraft.world.level.block.Blocks.LIGHT))) m.move(0, -1, 0);
+                p.teleportTo(lvl, sp[0] + 0.5, m.getY() + 3.0, sp[1] + 0.5, sp[2], 15F);
+            }), 140));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(sp[2]); mc.player.setXRot(15F); }, 20));
+            l.add(new Step("under_" + (time > 12000 ? "night_" : "day_") + sp[0] + "_" + sp[1], () -> {}, 5));
         }
     }
 
