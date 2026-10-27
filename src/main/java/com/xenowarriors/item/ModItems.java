@@ -56,6 +56,17 @@ public final class ModItems {
     public static final RegistryObject<Item> FLOWER_LEGGINGS = ITEMS.register("flower_leggings", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> FLOWER_BOOTS = ITEMS.register("flower_boots", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
     public static final RegistryObject<Item> FLOWER_SHIELD = ITEMS.register("flower_shield", () -> new FlowerShieldItem(new Item.Properties().durability(420)));
+    public static final RegistryObject<Item> MOONSTONE_ORE = ITEMS.register("moonstone_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.MOONSTONE_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> KARMA_CRYSTAL_ORE = ITEMS.register("karma_crystal_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.KARMA_CRYSTAL_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> DEMONITE_ORE = ITEMS.register("demonite_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.DEMONITE_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> OLD_WORLD_ORE = ITEMS.register("old_world_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.OLD_WORLD_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> AURORA_GEM_ORE = ITEMS.register("aurora_gem_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.AURORA_GEM_ORE.get(), new Item.Properties()));
+    public static final RegistryObject<Item> MOONSTONE = ITEMS.register("moonstone", () -> new OreGems.Moonstone(new Item.Properties()));
+    public static final RegistryObject<Item> KARMA_CRYSTAL = ITEMS.register("karma_crystal", () -> new OreGems.KarmaCrystal(new Item.Properties()));
+    public static final RegistryObject<Item> DEMONITE_SHARD = ITEMS.register("demonite_shard", () -> new Item(new Item.Properties().fireResistant()));
+    public static final RegistryObject<Item> OLD_WORLD_FRAGMENT = ITEMS.register("old_world_fragment", () -> new OreGems.OldWorldFragment(new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> AURORA_GEM = ITEMS.register("aurora_gem", () -> new OreGems.AuroraGem(new Item.Properties().rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> DEMONITE_SWORD = ITEMS.register("demonite_sword", () -> new OreGems.DemoniteSword(new Item.Properties().fireResistant().rarity(net.minecraft.world.item.Rarity.RARE)));
     public static final RegistryObject<Item> FOX_SHARD = ITEMS.register("fox_shard", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> FOX_SHARD_ORE = ITEMS.register("fox_shard_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.FOX_SHARD_ORE.get(), new Item.Properties()));

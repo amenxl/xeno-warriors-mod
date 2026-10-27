@@ -5,6 +5,10 @@
     "xenowarriors:corrupted_ore",
     "xenowarriors:data_ore",
     "xenowarriors:fox_shard_ore",
-    "xenowarriors:deepslate_fox_shard_ore"
+    "xenowarriors:deepslate_fox_shard_ore",
+    "xenowarriors:moonstone_ore",
+    "xenowarriors:karma_crystal_ore",
+    "xenowarriors:old_world_ore",
+    "xenowarriors:aurora_gem_ore"
   ]
 }

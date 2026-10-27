@@ -472,23 +472,21 @@ def technica(f):
         f.add('head', [x - 0.2, y - 0.2, z - 0.5], [x + 0.2, y + 0.2, z - 0.35], '#f6c8f0')
     f.add('head', [4.2, 26.4, -1.6], [5.4, 29.6, 1.6], '#5a1238', {'right': lambda x, y: '#c42a7e' if (x - .5) ** 2 + (y - .5) ** 2 < .06 else '#5a1238'})   # headphone
     f.add('head', [3.6, 29.4, -0.6], [4.6, 33.0, 0.6], '#3a0c26')
-    # pink-tinted rectangular glasses
+    # inventor's goggles pushed up on her forehead: two round pink-tinted lenses in dark frames, strap round her head
+    GF, GL, GL2, GS = '#2a2430', '#f07ab8', '#ffc2e2', '#3a3440'
     for sx in (1, -1):
-        x0, x1 = (0.5, 3.7) if sx > 0 else (-3.7, -0.5)
-        F = '#2a1a24'
-        f.add('head', [x0, 28.6, -4.8], [x1, 28.95, -4.6], F, shade=False)          # rims as thin bars
-        f.add('head', [x0, 26.9, -4.8], [x1, 27.2, -4.6], F, shade=False)
-        f.add('head', [x0, 26.9, -4.8], [x0 + 0.3, 28.95, -4.6], F, shade=False)
-        f.add('head', [x1 - 0.3, 26.9, -4.8], [x1, 28.95, -4.6], F, shade=False)
-    f.add('head', [-0.5, 28.2, -4.75], [0.5, 28.6, -4.6], '#2a1a24')
-    for sx in (1, -1):
-        x0, x1 = (3.7, 4.1) if sx > 0 else (-4.1, -3.7)
-        f.add('head', [x0, 28.3, -4.7], [x1, 28.7, -1.0], '#2a1a24')
+        cx = sx * 2.0
+        f.add('head', [cx - 1.75, 29.6, -5.35], [cx + 1.75, 32.6, -4.6], GF)                      # frame
+        f.add('head', [cx - 1.35, 29.95, -5.5], [cx + 1.35, 32.25, -5.3], GL, shade=False)          # lens
+        f.add('head', [cx - 0.95, 31.4, -5.56], [cx - 0.35, 32.0, -5.48], GL2, shade=False)         # glint
+    f.add('head', [-0.35, 30.6, -5.2], [0.35, 31.5, -4.7], GF)                                   # bridge
+    f.add('head', [-4.85, 30.5, -4.85], [4.85, 31.6, 4.85], GS, {'top': lambda x, y: None, 'bottom': lambda x, y: None,
+                                                               'front': lambda x, y: None})        # strap round her head
     # black top with a pink collar and the C3 logo, open white lab coat with pink bands
     shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.26, T_BLK)
     f.add('body', [-1.4, 22.6, -2.42], [1.4, 24.4, -2.25], T_PINK)                          # pink collar
     f.add('body', [-0.25, 20.0, -2.44], [0.25, 23.0, -2.28], '#8a8a92')                     # zip
-    C3 = ['.kkkkk.', 'k.....k', 'k.kkk..', 'k...k..', 'k.kkk..', 'k...k.k', 'k.kkk.k', '.kkkkk.']
+    C3 = [r[::-1] for r in ['.kkkkk.', 'k.....k', 'k.kkk..', 'k...k..', 'k.kkk..', 'k...k.k', 'k.kkk.k', '.kkkkk.']]   # mirrored: +x is her right
     plate(f, 'body', C3, 0.0, 19.8, -2.42, 0.36, T_PINK)
     for sx in (1, -1):
         x0, x1 = (2.0, 4.55) if sx > 0 else (-4.55, -2.0)

@@ -505,6 +505,18 @@ public class DetailModel {
             float[] f = floats(c.getAsJsonArray("from"));
             float[] sz = floats(c.getAsJsonArray("size"));
             int u = (int) uv[0], v = (int) uv[1];
+            // thin plates (logos, buttons, trims) stay whole and where they are when they sit near the hips, so a
+            // logo across the waistline isn't broken in two (it just stands a hair proud of the narrowed shell)
+            boolean plate = sz[2] <= 0.3F || sz[0] <= 0.3F;
+            if (plate) {
+                float mid = f[1] + sz[1] / 2F;
+                if (mid > w0 && mid < w1) refit(f, sz, 0F, com.xenowarriors.client.FemaleBody.WAIST_X, com.xenowarriors.client.FemaleBody.WAIST_Z);
+                else noRefit();
+                // logos and trims on the front of the chest ride out on the bust (so it doesn't cover them)
+                if (f[2] + sz[2] < -1.9F && mid > 1.0F && mid < 5.2F) curDZ -= com.xenowarriors.client.FemaleBody.BUST_OUT;
+                builder.texOffs(u, v).addBox(f[0] + curDX, f[1], f[2] + curDZ, sz[0], sz[1], sz[2], def());
+                continue;
+            }
             // pieces {top, bottom, texture shift}
             java.util.List<float[]> seg = new java.util.ArrayList<>();
             seg.add(new float[]{f[1], f[1] + sz[1], 0F});

@@ -23,7 +23,7 @@ def spiral(x, y):
 
 def paint(part, face, x, y, W, H, outer):
     if part == 'body':
-        if y >= 9: return OR                                            # shorts (high waist)
+        if y >= 7: return OR                                            # orange undershirt showing under the crop top, then the shorts
         return BLK
     if part in ('rarm', 'larm'):
         if y < 5: return BLK                                            # rolled sleeve
@@ -50,8 +50,8 @@ def build(f):
             f.add('head', [s * 4.9 - 0.8, 23.0, z - 0.8], [s * 4.9 + 0.8, 24.6, z + 0.8], HAIR_E)
     f.add('head', [-2.4, 32.6, -1.2], [2.4, 33.1, 0.2], '#8a6a5a')                 # shine
     # cropped black hoodie, orange hood down behind the neck, orange drawstring edge at the collar
-    shell(f, 'body', [-4, 14.6, -2], [4, 24, 2], 0.36, BLK, {'front': lambda x, y: BLK2 if y > .82 else BLK})
-    f.add('body', [-4.4, 14.4, -2.4], [4.4, 15.2, 2.4], BLK2)                     # ribbed hem
+    shell(f, 'body', [-4, 17.4, -2], [4, 24, 2], 0.36, BLK, {'front': lambda x, y: BLK2 if y > .82 else BLK})
+    f.add('body', [-4.4, 17.2, -2.4], [4.4, 18.0, 2.4], BLK2)                     # ribbed hem (cropped short: her orange undershirt shows)
     f.add('body', [-3.9, 20.2, 2.2], [3.9, 24.7, 4.3], OR, {'back': lambda x, y: OR2 if y > .7 else OR, 'top': OR2})   # hood (down)
     f.add('body', [-3.0, 23.6, -2.55], [3.0, 24.6, 2.4], OR2)                     # hood lining at the collar
     # rolled short sleeves and black fingerless gloves
@@ -65,7 +65,7 @@ def build(f):
     # the Orenji logo on her orange undershirt (front, centred): a ring with a dot inside and a little triangle on top
     LOGO = ['.....k.....', '....kkk....', '...kk.kk...', '...kkkkk...', '...........', '...kkkkk...',
             '..kk...kk..', '.kk.kkk.kk.', '.k.kkkkk.k.', '.kk.kkk.kk.', '..kk...kk..', '...kkkkk...']
-    C, X0, YT, Z = 0.36, -11 * 0.36 / 2, 14.1, -2.56
+    C, X0, YT, Z = 0.36, -11 * 0.36 / 2, 16.9, -2.58       # on her belly, on the orange undershirt
     for r, row in enumerate(LOGO):
         c = 0
         while c < len(row):

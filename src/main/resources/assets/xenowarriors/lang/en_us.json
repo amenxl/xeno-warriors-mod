@@ -643,5 +643,16 @@
   "item.xenowarriors.flower_chestplate": "Flower Chestplate",
   "item.xenowarriors.flower_leggings": "Flower Leggings",
   "item.xenowarriors.flower_boots": "Flower Boots",
-  "item.xenowarriors.flower_shield": "Flower Shield"
+  "item.xenowarriors.flower_shield": "Flower Shield",
+  "block.xenowarriors.moonstone_ore": "Moonstone Ore",
+  "block.xenowarriors.karma_crystal_ore": "Karma Crystal Ore",
+  "block.xenowarriors.demonite_ore": "Demonite Ore",
+  "block.xenowarriors.old_world_ore": "Old World Relic Ore",
+  "block.xenowarriors.aurora_gem_ore": "Aurora Gem Ore",
+  "item.xenowarriors.moonstone": "Moonstone",
+  "item.xenowarriors.karma_crystal": "Karma Crystal",
+  "item.xenowarriors.demonite_shard": "Demonite Shard",
+  "item.xenowarriors.old_world_fragment": "Old World Fragment",
+  "item.xenowarriors.aurora_gem": "Aurora Gem",
+  "item.xenowarriors.demonite_sword": "Demonite Sword"
 }

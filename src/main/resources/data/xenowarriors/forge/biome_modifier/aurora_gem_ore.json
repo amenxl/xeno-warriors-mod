@@ -1,0 +1,6 @@
+{
+ "type": "forge:add_features",
+ "biomes": "#forge:is_snowy",
+ "features": "xenowarriors:aurora_gem_ore",
+ "step": "underground_ores"
+}

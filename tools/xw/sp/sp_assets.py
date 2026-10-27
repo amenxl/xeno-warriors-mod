@@ -57,6 +57,12 @@ def build(key):
     # the girls' skin goes slim first, then battle damage is drawn from it (tools/xw/damage/damage_all.py)
     sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert(CH + f'{key}.png')
     sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/damage'); import damage_all; damage_all.build(key)
+    # every expression the game uses, plus the newer ones (tools/xw/faces/expr_more.py)
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/faces'); import expr_more
+    if key in expr_more.TEMPLATE:
+        names = sorted({os.path.basename(p)[len('rhalix_face_'):-4] for p in glob.glob(CH + 'rhalix_face_*.png')} - {'damage1', 'damage2'})
+        FV = expr_more.template_faces(key, S.CHARS[key], lambda sp, **kw: S.face(sp, **kw), masked=(key == 'lexy'))
+        for n in names + ['laugh', 'blush', 'love', 'shocked', 'determined', 'pout', 'smirk']: FV.get(n, FV['base']).save(CH + f'{key}_face_{n}.png')
     for suf in ('armor', 'armor_torn', 'armor_worn', 'mouth_1', 'mouth_2', 'mouth_3', 'mouth_4', 'mouth_5'):
         shutil.copy(CH + f'rhalix_{suf}.png', CH + f'{key}_{suf}.png')
     for fpath in glob.glob(RES + 'models/armor/rhalix_*.json'):

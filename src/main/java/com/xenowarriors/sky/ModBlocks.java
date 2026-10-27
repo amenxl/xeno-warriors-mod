@@ -35,6 +35,23 @@ public final class ModBlocks {
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).strength(3F, 4F).requiresCorrectToolForDrops()
                     .sound(SoundType.AMETHYST).lightLevel(s -> 7)));
 
+    /** The newer ores: Moonstone, Karma Crystal, Demonite, Old World Relics, Aurora Gems. */
+    public static final RegistryObject<Block> MOONSTONE_ORE = BLOCKS.register("moonstone_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(3F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.STONE).lightLevel(s -> 4), UniformInt.of(2, 5)));
+    public static final RegistryObject<Block> KARMA_CRYSTAL_ORE = BLOCKS.register("karma_crystal_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).strength(4.5F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.DEEPSLATE).lightLevel(s -> 6), UniformInt.of(3, 7)));
+    public static final RegistryObject<Block> DEMONITE_ORE = BLOCKS.register("demonite_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.CRIMSON_NYLIUM).strength(3F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.NETHER_ORE).lightLevel(s -> 3), UniformInt.of(3, 6)));
+    public static final RegistryObject<Block> OLD_WORLD_ORE = BLOCKS.register("old_world_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.SAND).strength(4F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.STONE).lightLevel(s -> 0), UniformInt.of(4, 8)));
+    public static final RegistryObject<Block> AURORA_GEM_ORE = BLOCKS.register("aurora_gem_ore", () -> new DropExperienceBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(3.5F, 3F).requiresCorrectToolForDrops()
+                    .sound(SoundType.STONE).lightLevel(s -> 5), UniformInt.of(3, 6)));
+
     /** Data Ore: green-veined, found deep; Ultima's Data Sense finds it. Drops Data Shards. */
     public static final RegistryObject<Block> DATA_ORE = BLOCKS.register("data_ore", () -> new DropExperienceBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GREEN).strength(4F, 5F).requiresCorrectToolForDrops()

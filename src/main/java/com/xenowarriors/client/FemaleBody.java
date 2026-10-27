@@ -22,6 +22,8 @@ import java.util.Set;
 public final class FemaleBody {
     private FemaleBody() {}
 
+    /** How far chest logos are brought forward to sit on the bust. */
+    public static final float BUST_OUT = 0.65F;
     public static final float WAIST_X = 7F / 8F, WAIST_Z = 0.75F, ARM_Z = 0.75F, ARM_X = 0.75F, LEG_Z = 0.95F;
     /** Where the waist starts and ends on the body (model y, down from the neck). */
     public static final float WAIST_TOP = 6F, WAIST_BOTTOM = 12F;
@@ -86,7 +88,7 @@ public final class FemaleBody {
                 .texOffs(16, 16).addBox(-4F, 6F, -2F, 8F, 0.02F, 4F, def), PartPose.offset(0F, 6F, 0F));
         // the bust: a slab tipped forward off the upper chest, its top face carrying the shirt's chest
         body.addOrReplaceChild(BUST, CubeListBuilder.create().texOffs(16, 20).addBox(-4F, -1F, -2F, 8F, 2F, 4F,
-                def.extend(-0.05F, -0.04F, -0.03F)), PartPose.offsetAndRotation(0F, 2.85F, -1.95F, (float) Math.toRadians(64), 0F, 0F));
+                def.extend(-0.05F, -0.04F, -0.03F)), PartPose.offsetAndRotation(0F, 2.95F, -1.55F, (float) Math.toRadians(64), 0F, 0F));
         PartDefinition jacket = root.getChild("jacket");
         CubeDeformation outer = def.extend(0.25F);
         jacket.addOrReplaceChild(CHEST, CubeListBuilder.create().texOffs(16, 32).addBox(-4F, 0F, -2F, 8F, 6F, 4F, outer), PartPose.ZERO);
@@ -103,6 +105,7 @@ public final class FemaleBody {
         ModelPart waist = child(m.body, WAIST), bust = child(m.body, BUST);
         m.body.skipDraw = f;
         chest.visible = f; waist.visible = f; bust.visible = f;
+        bust.yScale = 0.92F; bust.zScale = 0.6F;                         // a modest shape: just out past her clothes
         waist.xScale = WAIST_X; waist.zScale = WAIST_Z;
         ModelPart jc = child(m.jacket, CHEST), jw = child(m.jacket, WAIST);
         if (jc != null && jw != null) {
