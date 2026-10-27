@@ -142,16 +142,26 @@ public final class GarryBeatbox {
         return Mth.clamp(Mth.wrapDegrees(yaw - p.yBodyRot), -70F, 70F) * Mth.DEG_TO_RAD;
     }
 
-    /** Mic up at the mouth, other hand cupped round it, bobbing to the beat. */
+    /**
+     * Mic up at the mouth, the other hand cupped round it, really feeling it: head tipping side to side on the beat,
+     * nodding into the snare, shoulders bouncing and the body swaying with it.
+     */
     private static void beatboxPose(HumanoidModel<?> m, Player p, float t, float w, float age) {
-        float bob = Mth.sin(t * (float) Math.PI / 6F);                      // two bobs per bar
+        float beat = t * (float) Math.PI / 6F;                              // two bobs per bar
+        float bob = Mth.sin(beat), tilt = Mth.sin(beat * 0.5F), bounce = Math.abs(bob);
         // upper arms forward and in, forearms folded up: mic hand at his mouth, the other hand cupped round it
-        set(m.rightArm, -0.8F, -0.45F, 0F, w);
-        set(m.leftArm, -0.9F, 0.55F, 0F, w);
-        LimbBend.extraElbows(p, -1.35F * w, -1.2F * w);
-        m.head.xRot = Mth.lerp(w, m.head.xRot, 0.12F + 0.12F * Math.abs(bob));
-        m.body.xRot = Mth.lerp(w, m.body.xRot, 0.05F * Math.abs(bob));
-        LimbBend.extraKnees(p, 0.18F * w * Math.abs(bob), 0.18F * w * Math.abs(bob));
+        set(m.rightArm, -0.85F - 0.06F * bounce, -0.45F, 0F, w);
+        set(m.leftArm, -0.95F - 0.06F * bounce, 0.55F, 0F, w);
+        LimbBend.extraElbows(p, -1.4F * w, -1.25F * w);
+        // head: tipping side to side across the bar, nodding down into each hit
+        m.head.xRot = Mth.lerp(w, m.head.xRot, 0.1F + 0.16F * bounce);
+        m.head.zRot = Mth.lerp(w, m.head.zRot, 0.22F * tilt);
+        m.head.yRot = Mth.lerp(w, m.head.yRot, -0.12F * tilt);
+        // body sways the other way, shoulders bouncing
+        m.body.xRot = Mth.lerp(w, m.body.xRot, 0.06F * bounce);
+        m.body.zRot = Mth.lerp(w, m.body.zRot, -0.06F * tilt);
+        m.rightArm.y -= 0.6F * bounce * w; m.leftArm.y -= 0.6F * bounce * w;
+        LimbBend.extraKnees(p, 0.22F * w * bounce, 0.22F * w * bounce);
     }
 
     /** Squaring up: chest out, fists up and shaking, glaring at the other one. */
@@ -291,7 +301,8 @@ public final class GarryBeatbox {
     public static void render(Player p, HumanoidModel<?> parent, PoseStack pose, MultiBufferSource buffers, int light, float partial) {
         if (!mic(p, partial)) return;
         pose.pushPose();
-        parent.translateToHand(net.minecraft.world.entity.HumanoidArm.RIGHT, pose);
+        parent.rightArm.translateAndRotate(pose);
+        LimbBend.toForearm(parent.rightArm, pose);                        // follows the bent elbow up to his mouth
         pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-90F));
         pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180F));
         pose.translate(-1F / 16F, 0.125F, -0.625F);

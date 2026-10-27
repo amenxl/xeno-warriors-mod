@@ -409,6 +409,12 @@ public final class ModNetwork {
                 .decoder(RopeFxPacket::decode)
                 .consumerMainThread(RopeFxPacket::handle)
                 .add();
+        CHANNEL.messageBuilder(ComboStartPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ComboStartPacket::encode).decoder(ComboStartPacket::decode).consumerMainThread(ComboStartPacket::handle).add();
+        CHANNEL.messageBuilder(ComboHitPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ComboHitPacket::encode).decoder(ComboHitPacket::decode).consumerMainThread(ComboHitPacket::handle).add();
+        CHANNEL.messageBuilder(ComboSwingPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ComboSwingPacket::encode).decoder(ComboSwingPacket::decode).consumerMainThread(ComboSwingPacket::handle).add();
         CHANNEL.messageBuilder(AuraMarkPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(AuraMarkPacket::encode).decoder(AuraMarkPacket::decode).consumerMainThread(AuraMarkPacket::handle).add();
     }

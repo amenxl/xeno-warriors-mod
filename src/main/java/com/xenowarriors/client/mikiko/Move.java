@@ -31,6 +31,23 @@ public enum Move {
     FLIP_KICK(13, Kind.KICK, false,
             p(-2.7F, 0F, 0.3F, -2.7F, 0F, -0.3F, -1.3F, 0, 0.05F, -1.3F, 0, -0.05F, 0F),
             p(-0.3F, 0F, 1.1F, -0.3F, 0F, -1.1F, -2.1F, 0, 0.05F, 0.45F, 0, -0.05F, 0F)),
+    // ---- Bajiquan (Leo's style, combo hits 3-5): short, explosive strikes, each with a stamping step ----
+    /** Chong Chui: stamp forward into a low bow stance and drive the right fist straight out, left fist pulled to the hip. */
+    CHONG_CHUI_R(9, Kind.PUNCH, false,
+            p(0.35F, 0.2F, 0.15F, -1.2F, 0.4F, -0.1F, 0.45F, 0, 0.12F, -0.5F, 0, -0.1F, -0.6F),
+            p(-1.6F, -0.05F, 0F, 0.35F, 0F, -0.2F, 0.55F, 0, 0.15F, -0.75F, 0, -0.12F, 0.6F)),
+    /** Ding Zhou: a stamp and a horizontal right elbow driven through, the other hand braced against the fist. */
+    DING_ZHOU_R(9, Kind.PUNCH, false,
+            p(0.15F, 0.3F, 0.4F, -0.9F, 0.5F, 0F, 0.4F, 0, 0.12F, -0.45F, 0, -0.1F, -0.7F),
+            p(-1.5F, -0.35F, 1.35F, -1.35F, -0.55F, 0.15F, 0.5F, 0, 0.15F, -0.7F, 0, -0.12F, 0.75F)),
+    /** Tiao Zhang: a rising left palm under the chin, right hand guarding the chest. */
+    TIAO_ZHANG_L(9, Kind.PUNCH, false,
+            p(-0.95F, -0.4F, 0F, 0.25F, 0F, -0.25F, -0.4F, 0, 0.12F, 0.4F, 0, -0.1F, 0.45F),
+            p(-1.1F, -0.5F, 0F, -2.25F, 0.15F, 0F, -0.6F, 0, 0.15F, 0.55F, 0, -0.12F, -0.45F)),
+    /** Shuang Zhang: both palms shoved out together off a heavy stamp. */
+    SHUANG_ZHANG(10, Kind.PUNCH, false,
+            p(-0.55F, 0.2F, 0.1F, -0.55F, -0.2F, -0.1F, 0.35F, 0, 0.12F, -0.45F, 0, -0.12F, 0F),
+            p(-1.55F, -0.15F, 0F, -1.55F, 0.15F, 0F, 0.6F, 0, 0.15F, -0.8F, 0, -0.15F, 0F)),
     /**
      * Tie Shan Kao (Tetsuzanko) - the combo finisher: sinking into a deep stance, he steps in and drives his shoulder
      * and back into them, the lead arm thrown up overhead and the other palm pushing down at his hip. Sends them flying.
@@ -103,6 +120,23 @@ public enum Move {
         this.strike = strike;
     }
 
+    /** Extra elbow bend at the strike {right, left} (folded elbows for the Bajiquan strikes). */
+    public float[] elbows(float strike) {
+        return switch (this) {
+            case DING_ZHOU_R -> new float[]{-1.75F * strike - 0.9F * (1 - strike), -1.5F};
+            case CHONG_CHUI_R -> new float[]{-1.3F * (1 - strike), -1.5F * strike - 0.9F * (1 - strike)};
+            case TIAO_ZHANG_L -> new float[]{-1.4F, -0.35F * strike - 1.2F * (1 - strike)};
+            case SHUANG_ZHANG -> new float[]{-1.5F * (1 - strike), -1.5F * (1 - strike)};
+            case TIE_SHAN_KAO -> new float[]{-0.3F, -0.4F};
+            default -> null;
+        };
+    }
+
+    /** A stamping step lands with this move (dust at the feet, a thud). */
+    public boolean stamp() {
+        return this == CHONG_CHUI_R || this == DING_ZHOU_R || this == SHUANG_ZHANG || this == TIE_SHAN_KAO;
+    }
+
     public boolean isSlash() {
         return kind != Kind.PUNCH && kind != Kind.KICK;
     }
@@ -110,8 +144,8 @@ public enum Move {
     /** The same move done while flying. */
     public Move inAir() {
         return switch (this) {
-            case JAB_R, HOOK_R, LUNGE_PUNCH_R, TIE_SHAN_KAO -> AIR_PUNCH_R;
-            case JAB_L, UPPERCUT_L, LUNGE_PUNCH_L -> AIR_PUNCH_L;
+            case JAB_R, HOOK_R, LUNGE_PUNCH_R, TIE_SHAN_KAO, CHONG_CHUI_R, DING_ZHOU_R, SHUANG_ZHANG -> AIR_PUNCH_R;
+            case JAB_L, UPPERCUT_L, LUNGE_PUNCH_L, TIAO_ZHANG_L -> AIR_PUNCH_L;
             case KICK_FRONT, KICK_ROUNDHOUSE, KICK_SPIN, KICK_SIDE, KNEE_FLYING, FLIP_KICK -> AIR_SPIN_KICK;
             case BLADE_DOWN, BLADE_THRUST -> AIR_LUNGE_SLASH;
             case BLADE_SPIN, BLADE_UP -> AIR_FLIP_SLASH;
@@ -130,6 +164,8 @@ public enum Move {
             case UPPERCUT_L -> new float[]{0.15F * arc, 0, 0, -8 * s, 0};
             case LUNGE_PUNCH_R, LUNGE_PUNCH_L -> new float[]{-0.12F * s * (1 - fadeOut(p)), 0.2F * s * (1 - fadeOut(p)), 0, 16 * s * (1 - fadeOut(p)), 0};
             case FLIP_KICK -> new float[]{0.55F * arc, 0.15F * s, 0, 360 * spin(p), 0};
+            case CHONG_CHUI_R, DING_ZHOU_R, SHUANG_ZHANG -> new float[]{-0.14F * s * (1 - fadeOut(p)), 0.22F * s * (1 - fadeOut(p)), 0, 9 * s * (1 - fadeOut(p)), 0};
+            case TIAO_ZHANG_L -> new float[]{-0.08F * s * (1 - fadeOut(p)) + 0.06F * arc, 0.12F * s, 0, -5 * s, 0};
             case TIE_SHAN_KAO -> new float[]{-0.2F * s * (1 - fadeOut(p)), 0.5F * s * (1 - fadeOut(p)), 0, -6 * s, 14 * s * (1 - fadeOut(p))};
             case KICK_FRONT -> new float[]{0, 0, 0, -12 * s, 0};
             case KICK_ROUNDHOUSE -> new float[]{0.05F * arc, 0, -70 * arc, 0, -10 * s};

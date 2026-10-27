@@ -63,12 +63,13 @@ import java.util.Set;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
+    /** Two opening punches, then Leo's Bajiquan (stamping elbows and palms), always ending in Tie Shan Kao. */
     private static final Move[][] COMBOS = {
-            {Move.JAB_R, Move.JAB_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
-            {Move.HOOK_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
-            {Move.JAB_L, Move.HOOK_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
-            {Move.UPPERCUT_L, Move.JAB_R, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
-            {Move.JAB_R, Move.UPPERCUT_L, Move.LUNGE_PUNCH_R, Move.LUNGE_PUNCH_L, Move.FLIP_KICK, Move.TIE_SHAN_KAO},
+            {Move.JAB_R, Move.JAB_L, Move.DING_ZHOU_R, Move.TIAO_ZHANG_L, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
+            {Move.HOOK_R, Move.UPPERCUT_L, Move.CHONG_CHUI_R, Move.DING_ZHOU_R, Move.TIAO_ZHANG_L, Move.TIE_SHAN_KAO},
+            {Move.JAB_L, Move.HOOK_R, Move.TIAO_ZHANG_L, Move.CHONG_CHUI_R, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
+            {Move.UPPERCUT_L, Move.JAB_R, Move.DING_ZHOU_R, Move.CHONG_CHUI_R, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
+            {Move.JAB_R, Move.UPPERCUT_L, Move.CHONG_CHUI_R, Move.TIAO_ZHANG_L, Move.DING_ZHOU_R, Move.TIE_SHAN_KAO},
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
     private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
@@ -123,6 +124,9 @@ public final class MikikoAnimations {
         int still;
         /** Playback stretch of the current attack (Epic Fight battle mode times it to its own hit). */
         float moveScale = 1F;
+        /** Low on health: the strikes get wild - over-swung, lurching, sloppy (seeded per strike). */
+        boolean wild;
+        int wildSeed;
         /** Hekublade slung on his back from running: stays there through jumps until he stops or attacks. */
         boolean backSlung;
         float sit, sitO, look, lookO, poison, poisonO, fire, fireO;
@@ -274,7 +278,16 @@ public final class MikikoAnimations {
         if (s.move != null) {
             float pPrev = (now - 1 - s.moveStart) / (s.move.duration * s.moveScale);
             float pNow = (now - s.moveStart) / (s.move.duration * s.moveScale);
-            if (pPrev < STRIKE && pNow >= STRIKE) MikikoEffects.strike(level, p, s.move, bladeKind(p, s));
+            if (pPrev < STRIKE && pNow >= STRIKE) {
+                MikikoEffects.strike(level, p, s.move, bladeKind(p, s));
+                if (s.move.stamp() && p.onGround()) {                    // the Bajiquan stamp: dust off the ground and a thud
+                    var below = level.getBlockState(p.blockPosition().below());
+                    if (!below.isAir()) for (int i = 0; i < 8; i++)
+                        level.addParticle(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK, below),
+                                p.getX() + (RANDOM.nextDouble() - 0.5) * 0.8, p.getY() + 0.05, p.getZ() + (RANDOM.nextDouble() - 0.5) * 0.8, 0, 0.05, 0);
+                    level.playLocalSound(p.getX(), p.getY(), p.getZ(), below.getSoundType().getStepSound(), net.minecraft.sounds.SoundSource.PLAYERS, 1.0F, 0.6F, false);
+                }
+            }
             if (pNow > 1F) s.move = null;
         }
 
@@ -448,6 +461,7 @@ public final class MikikoAnimations {
 
     /** Was this swing fully charged? Exact for your own player; for others, judged from the time since their last swing. */
     private static boolean charged(AbstractClientPlayer p, State s, int now) {
+        if (com.xenowarriors.client.combo.ComboClient.comboSwing(p)) return true;     // a combo swing (its own timing)
         if (p == Minecraft.getInstance().player) return s.strengthLastTick >= 0.9F;
         double speed = 4.0;
         for (var mod : p.getMainHandItem().getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND)
@@ -469,11 +483,16 @@ public final class MikikoAnimations {
         boolean flying = FlightTracker.isFlying(p) || p.isFallFlying();
         Move move;
         if (fistCombo(held)) {
-            if (now - s.lastAttack > COMBO_TIMEOUT || s.comboStep >= COMBOS[0].length || s.variant < 0) {
+            int forced = com.xenowarriors.client.combo.ComboClient.hitIndex(p);   // in step with the combo system's string
+            if (forced >= 0) {
+                if (forced == 0 || s.variant < 0) s.variant = RANDOM.nextInt(COMBOS.length);
+                s.comboStep = Math.min(forced, COMBOS[0].length - 1);
+            } else if (now - s.lastAttack > COMBO_TIMEOUT || s.comboStep >= COMBOS[0].length || s.variant < 0) {
                 s.comboStep = 0;
                 s.variant = RANDOM.nextInt(COMBOS.length);
             }
             move = COMBOS[s.variant][s.comboStep++];
+            if (com.xenowarriors.client.combo.ComboClient.heavy(p)) move = Move.FLIP_KICK;   // the heavy: springing up into a launching heel
             // bare-handed in the air: the same floaty aerial combo (launch, juggle, slam) as with the blade
             if (p instanceof net.minecraft.client.player.LocalPlayer alp && held.isEmpty() && AerialCombo.applies(alp)) {
                 AerialCombo.swing(alp);
@@ -502,11 +521,11 @@ public final class MikikoAnimations {
             // the first two hits: a skip forward into the punch, dashing in on them
             s.hop = s.comboStep <= 2 && !move.blade && !flying && p.onGround() && !p.isCrouching();
             boolean ground = !flying && p.onGround() && !p.isCrouching();
-            if (p instanceof net.minecraft.client.player.LocalPlayer lp && ground && (s.hop || move == Move.LUNGE_PUNCH_R
-                    || move == Move.LUNGE_PUNCH_L || move == Move.FLIP_KICK || move == Move.TIE_SHAN_KAO)) {
-                // dashing in: a skip (hits 1-2), a long lunge step (3-4), springing up into the flip (5), the stamping step of Tie Shan Kao (6)
-                double fwd = move == Move.FLIP_KICK ? 0.28 : move == Move.TIE_SHAN_KAO ? 0.5 : s.hop ? 0.42 : 0.38;
-                double up = move == Move.FLIP_KICK ? 0.48 : s.hop ? 0.2 : 0.08;
+            if (p instanceof net.minecraft.client.player.LocalPlayer lp && ground && (s.hop || move.stamp() || move == Move.TIAO_ZHANG_L)) {
+                // dashing in: a skip (hits 1-2), short stamping steps for the Bajiquan strikes, the big step of Tie Shan Kao
+                double fwd = move == Move.TIE_SHAN_KAO ? 0.5 : s.hop ? 0.42 : move == Move.TIAO_ZHANG_L ? 0.2 : 0.3;
+                double up = s.hop ? 0.2 : 0.04;
+                if (lp.getHealth() < lp.getMaxHealth() * 0.5F) fwd *= 1.35;   // wild: lurching in
                 DashGuard.dash(lp, fwd, up);           // (locked on: stops in front of the target, not through it)
             }
             if (move.blade) s.bladeUntil = now + move.duration + BLADE_LINGER;
@@ -524,8 +543,11 @@ public final class MikikoAnimations {
             }
             // a set combo (starts over after 2 s without a hit), so the first swing is always the same one
             Move[] combo = Hekublade.isBlade(held) ? HEKU_COMBO : SWORD_COMBO;
-            if (now - s.lastAttack > COMBO_TIMEOUT || s.swordStep >= combo.length) s.swordStep = 0;
+            int forcedS = com.xenowarriors.client.combo.ComboClient.hitIndex(p);
+            if (forcedS >= 0) s.swordStep = Math.min(forcedS, combo.length - 1);
+            else if (now - s.lastAttack > COMBO_TIMEOUT || s.swordStep >= combo.length) s.swordStep = 0;
             move = combo[s.swordStep++];
+            if (com.xenowarriors.client.combo.ComboClient.heavy(p)) move = Move.BLADE_UP;
             s.lastSword = move;
             s.moveBlade = false;
             // dashing in with the blade too: a skip on the first two swings, a lunge on the thrust
@@ -542,6 +564,9 @@ public final class MikikoAnimations {
         s.move = move;
         s.moveStart = now;
         s.lastAttack = now;
+        s.wild = p.getHealth() < p.getMaxHealth() * 0.5F;
+        s.wildSeed = RANDOM.nextInt(1 << 20);
+        if (s.wild && fistCombo(held)) s.moveScale *= 1.12F;                 // heavier, wilder swings take a little longer
     }
 
     /** Bare hands, or holding something with no attack of its own (a block, food, a stick...): the fist combo. */
@@ -869,7 +894,14 @@ public final class MikikoAnimations {
             // by that lean too (otherwise his arm swings back toward his feet)
             float flyLean = 65F * Mth.lerp(partial, s.fastO, s.fast) * fly * 0.35F;
             float mp = (ageInTicks - s.moveStart) / (s.move.duration * s.moveScale);
-            movePose(model, s.move, mp, fly > 0.05F ? flyLean : -1F);
+            movePose(model, s.move, mp, fly > 0.05F ? flyLean : -1F, s.wild ? s.wildSeed : -1);
+            if (mp >= 0F && mp <= 1F) {
+                float[] el = s.move.elbows(smooth((mp - 0.26F) / 0.16F));
+                if (el != null) {
+                    float amt = Math.max(smooth(mp / 0.28F), smooth((mp - 0.26F) / 0.16F)) * (1F - smooth((mp - 0.72F) / 0.28F));
+                    com.xenowarriors.client.LimbBend.extraElbows(player, el[0] * amt, el[1] * amt);
+                }
+            }
             if (s.hop && fly <= 0.05F) hopPose(model, player, mp);
         }
         float tired = Mth.lerp(partial, s.tiredO, s.tired);
@@ -905,11 +937,19 @@ public final class MikikoAnimations {
     }
 
     private static void movePose(HumanoidModel<?> model, Move m, float p) {
-        movePose(model, m, p, -1F);
+        movePose(model, m, p, -1F, -1);
     }
 
-    /** @param flyLean degrees his body is leaned forward by flight (negative = not flying) */
-    private static void movePose(HumanoidModel<?> model, Move m, float p, float flyLean) {
+    /** One of his moves on anyone's model (the universal combo swings use them). */
+    public static void poseMove(HumanoidModel<?> model, Move m, float p) {
+        movePose(model, m, p);
+    }
+
+    /**
+     * @param flyLean degrees his body is leaned forward by flight (negative = not flying)
+     * @param wildSeed low on health: >= 0 makes the strike wild (over-swung arms, flailing back hand, legs wide), seeded per strike
+     */
+    private static void movePose(HumanoidModel<?> model, Move m, float p, float flyLean, int wildSeed) {
         if (p < 0F || p > 1F) return;
         float wind = smooth(p / 0.28F);
         float strike = smooth((p - 0.26F) / 0.16F);
@@ -917,6 +957,17 @@ public final class MikikoAnimations {
         if (amount <= 0F) return;
         float[] t = new float[13];
         for (int i = 0; i < 13; i++) t[i] = Mth.lerp(strike, m.wind[i], m.strike[i]);
+        if (wildSeed >= 0) {
+            java.util.Random r = new java.util.Random(wildSeed);
+            float over = 1.25F + r.nextFloat() * 0.2F;                      // swinging too far
+            for (int i = 0; i < 6; i++) t[i] = t[i] * over + (r.nextFloat() - 0.5F) * 0.5F;
+            for (int i = 6; i < 12; i++) t[i] = t[i] * 1.2F + (r.nextFloat() - 0.5F) * 0.25F;
+            t[12] *= 1.5F;                                                   // throwing the whole body into it
+            // the off hand flails out on the recovery instead of guarding
+            float rec = smooth((p - 0.5F) / 0.3F);
+            if (m.wind[0] > m.strike[0]) { t[3] = Mth.lerp(rec, t[3], 0.2F); t[5] = Mth.lerp(rec, t[5], -0.9F); }
+            else { t[0] = Mth.lerp(rec, t[0], 0.2F); t[2] = Mth.lerp(rec, t[2], 0.9F); }
+        }
         // punches and thrusts follow where he's looking up/down
         if (m.kind == Move.Kind.PUNCH || m.kind == Move.Kind.THRUST) {
             float pitch = model.head.xRot * strike;
@@ -1409,6 +1460,11 @@ public final class MikikoAnimations {
             if (pr >= 0F && pr <= 1F) {
                 float strike = smooth((pr - 0.26F) / 0.16F) * (1F - smooth((pr - 0.72F) / 0.28F));
                 float[] b = s.move.body(pr, strike);
+                if (s.wild) {                                          // lurching and stumbling through it
+                    java.util.Random r = new java.util.Random(s.wildSeed + 7);
+                    float side = r.nextBoolean() ? 1F : -1F, wob = Mth.sin(pr * (float) Math.PI);
+                    b[1] *= 1.3F; b[3] = b[3] * 1.4F + 7F * wob; b[4] += side * (10F + r.nextFloat() * 8F) * wob; b[2] += side * 14F * wob;
+                }
                 float fade = 1F - smooth((pr - 0.8F) / 0.2F);
                 for (int i = 0; i < 5; i++) out[i] += (i == 2 || (i == 3 && s.move == Move.AIR_FLIP_SLASH)) ? b[i] : b[i] * fade;
             }

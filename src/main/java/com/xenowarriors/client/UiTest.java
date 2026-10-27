@@ -78,6 +78,8 @@ public final class UiTest {
         if ("girls".equals(System.getenv("XW_UITEST_FOCUS"))) { girls(mc, l); return l; }
         if ("allanim".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         if ("mikiko".equals(System.getenv("XW_UITEST_FOCUS"))) { mikikoCombo(mc, l); return l; }
+        if ("combo".equals(System.getenv("XW_UITEST_FOCUS"))) { combos(mc, l); return l; }
+        if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -475,45 +477,57 @@ public final class UiTest {
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
     }
 
-    /** Mikiko's bare-hand combo string on a zombie, filmed from the side (ends in the Tie Shan Kao finisher). */
+    /** Mikiko's bare-hand combo string on a husk, filmed from the side (ends in Tie Shan Kao) - then the wild version at low health. */
     private static void mikikoCombo(Minecraft mc, List<Step> l) {
+        comboReel(mc, l, "side", CharacterType.MIKIKO, null, false, false, 44);
+        comboReel(mc, l, "wild", CharacterType.MIKIKO, null, true, false, 44);
+    }
+
+    /** The universal combos: a string for each kind of weapon, the heavy, and the clicks being spammed (they queue). */
+    private static void combos(Minecraft mc, List<Step> l) {
+        comboReel(mc, l, "fist_garry", CharacterType.GARRY, null, false, false, 34);
+        comboReel(mc, l, "sword_logan", CharacterType.LOGAN, net.minecraft.world.item.Items.IRON_SWORD, false, false, 34);
+        comboReel(mc, l, "axe_max", CharacterType.MAX, net.minecraft.world.item.Items.IRON_AXE, false, false, 34);
+        comboReel(mc, l, "spear_kill", CharacterType.KILL, net.minecraft.world.item.Items.TRIDENT, false, false, 34);
+        comboReel(mc, l, "heavy_rhalix", CharacterType.RHALIX, net.minecraft.world.item.Items.IRON_SWORD, false, true, 16);
+    }
+
+    /**
+     * Films a combo on a husk from the side: clicks every 3 ticks (spamming - the combo queues them at its own pace),
+     * a frame every 2 ticks. The husk stands its ground until the finisher sends it flying.
+     */
+    private static void comboReel(Minecraft mc, List<Step> l, String tag, CharacterType who, net.minecraft.world.item.Item item,
+                                  boolean wild, boolean heavy, int frames) {
         int[] ids = new int[2];
-        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); hold(null); }, 30));
-        for (int run = 0; run < 2; run++) {
-            String tag = run == 0 ? "side" : "angle";
-            float camYaw = run == 0 ? -90F : -135F;
-            l.add(new Step(null, () -> server(p -> {
-                p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
-                p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
-                p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(0);
-                var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());          // (a husk: doesn't burn in the sun)
-                z.moveTo(p.getX(), p.getY(), p.getZ() + 1.7, 180, 0); z.setYHeadRot(180); z.yBodyRot = 180;
-                z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 20 * 600, 20, false, false));
-                z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
-                z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1);   // stands its ground until the finisher (a push) launches it
-                p.serverLevel().addFreshEntity(z); ids[0] = z.getId();
-                var cam = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
-                double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.6, cz = p.getZ() + 2.4 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.6;
-                cam.moveTo(cx, p.getY() - 0.4, cz, camYaw, 5); cam.setNoGravity(true); cam.setInvisible(true); cam.setYHeadRot(camYaw);
-                p.serverLevel().addFreshEntity(cam); ids[1] = cam.getId();
-            }), 20));
-            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
-                mc.player.setYRot(0); mc.player.setXRot(0);
-                if (mc.level.getEntity(ids[1]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
-                    a.setYRot(camYaw); a.yRotO = camYaw; a.setXRot(8); a.xRotO = 8; a.setYHeadRot(camYaw); a.yHeadRotO = camYaw; mc.setCameraEntity(a); } }, 20));
-            int frame = 0;
-            for (int hit = 0; hit < 6; hit++) {
-                l.add(new Step(null, () -> {
-                    mc.player.setYRot(0); mc.player.setXRot(0);
-                    var z = mc.level.getEntity(ids[0]);
-                    if (z != null) { mc.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, z.position().add(0, 1.2, 0)); mc.gameMode.attack(mc.player, z); }
-                    mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-                }, 0));
-                int n = hit == 5 ? 16 : 7;
-                for (int f = 0; f < n; f++) l.add(new Step(String.format("combo_%s_%02d", tag, frame++), () -> {}, 2));
-            }
-            l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 30));
+        float camYaw = -90F;
+        l.add(new Step(null, () -> { character(who); hold(item); }, 30));
+        l.add(new Step(null, () -> server(p -> {
+            p.setHealth(wild ? 7F : p.getMaxHealth());                // under half health: Mikiko's wild version
+            p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
+            p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(30)).forEach(e -> e.discard());
+            p.setYRot(0); p.setXRot(0);
+            var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());          // (a husk: doesn't burn in the sun)
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 1.7, 180, 0); z.setYHeadRot(180); z.yBodyRot = 180;
+            z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 20 * 600, 20, false, false));
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
+            p.serverLevel().addFreshEntity(z); ids[0] = z.getId();
+            var cam = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.6, cz = p.getZ() + 2.4 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.6;
+            cam.moveTo(cx, p.getY() - 0.4, cz, camYaw, 5); cam.setNoGravity(true); cam.setInvisible(true); cam.setYHeadRot(camYaw);
+            p.serverLevel().addFreshEntity(cam); ids[1] = cam.getId();
+        }), 20));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.player.setYRot(0); mc.player.setXRot(0);
+            if (mc.level.getEntity(ids[1]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(camYaw); a.yRotO = camYaw; a.setXRot(8); a.xRotO = 8; a.setYHeadRot(camYaw); a.yHeadRotO = camYaw; mc.setCameraEntity(a); } }, 20));
+        for (int f = 0; f < frames; f++) {
+            int ff = f;
+            l.add(new Step(String.format("combo_%s_%02d", tag, f), () -> {
+                if (ff % 2 == 0 && ff < frames - 10) com.xenowarriors.client.combo.ComboClient.press(heavy);   // spamming: every 4 ticks
+            }, 2));
         }
+        l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 25));
     }
 
     /** Kaeru: front/back, her Change (silhouette, a zombie, a log), Soul Splitter for her, Rhalix and Mikiko (3 souls). */

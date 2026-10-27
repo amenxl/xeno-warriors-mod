@@ -122,7 +122,7 @@ public class PartyBotEntity extends PathfinderMob {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new DownedGoal());
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.3, true));
+        goalSelector.addGoal(2, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
         goalSelector.addGoal(3, new MineGoal());
         goalSelector.addGoal(4, new FollowOwner());
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));

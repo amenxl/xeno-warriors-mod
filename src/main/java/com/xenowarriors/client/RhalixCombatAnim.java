@@ -93,6 +93,7 @@ public final class RhalixCombatAnim {
             s.lastSwinging = p.swinging;
             s.lastSwingTime = p.swingTime;
             boolean charged = p == mc.player ? s.strength >= 0.9F : now - s.lastSwingStart >= 9;
+            if (com.xenowarriors.client.combo.ComboClient.comboSwing(p)) charged = true;   // a combo swing (its own timing)
             boolean external = AttackHooks.externalAttack.test(p);
             if (external) {                                    // an Epic Fight battle-mode attack
                 start = true;

@@ -43,9 +43,12 @@ public final class MikikoCombat {
 
         // only fully charged punches count toward the combo (spam-clicking does normal weak hits)
         if (event.getAmount() < 0.85F) return;
+        if (com.xenowarriors.combat.ComboServer.currentHeavy(player)) return;     // the heavy: the combo system's launcher
         int now = player.tickCount;
         int[] c = COMBO.computeIfAbsent(player.getUUID(), k -> new int[]{0, -1000});
         if (now - c[1] > COMBO_TIMEOUT) c[0] = 0;
+        int forced = com.xenowarriors.combat.ComboServer.currentHit(player);      // in step with the combo system's string
+        if (forced >= 0) c[0] = Math.min(forced, COMBO_LENGTH - 1);
         int step = c[0];
         c[0] = (step + 1) % COMBO_LENGTH;
         c[1] = now;
