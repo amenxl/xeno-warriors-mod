@@ -88,6 +88,7 @@ public final class UiTest {
         if ("underlight".equals(System.getenv("XW_UITEST_FOCUS"))) { underlight(mc, l); return l; }
         if ("mainmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { mainMenu(mc, l); return l; }
         if ("posecal".equals(System.getenv("XW_UITEST_FOCUS"))) { poseCal(mc, l); return l; }
+        if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -624,6 +625,24 @@ public final class UiTest {
             l.add(new Step(null, () -> { character(t); }, 50));
             l.add(new Step("hud_" + t.getId(), () -> {}, 3));
         }
+    }
+
+    /** The left-side pop-up feed: one, then three stacked, then a fourth pushing the oldest out; a pet one with its picture. */
+    private static void popups(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); character(CharacterType.KYRIE); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            server(p -> { var fox = net.minecraft.world.entity.EntityType.FOX.create(p.serverLevel());
+                if (fox != null) { fox.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0, 0); p.serverLevel().addFreshEntity(fox); com.xenowarriors.fox.FoxPets.tameNow(p, fox); } }); }, 60));
+        java.util.UUID me = mc.getUser().getProfileId() == null ? java.util.UUID.randomUUID() : mc.getUser().getProfileId();
+        l.add(new Step(null, () -> PopupFeed.push(com.xenowarriors.network.PopupPacket.DANGER, java.util.UUID.randomUUID(), CharacterType.MIKIKO.ordinal(), -1, "Down!", "Mikiko is down! Get to them.", "exhausted"), 12));
+        l.add(new Step("popup_one", () -> {}, 3));
+        l.add(new Step(null, () -> PopupFeed.push(com.xenowarriors.network.PopupPacket.REQUEST, java.util.UUID.randomUUID(), CharacterType.RHALIX.ordinal(), -1, "Team attack!", "Rhalix wants Gravity Fox Fire! Ultimate key to join.", "shout"), 10));
+        l.add(new Step(null, () -> PopupFeed.push(com.xenowarriors.network.PopupPacket.GOOD, mc.player.getUUID(), CharacterType.KYRIE.ordinal(), -1, "Bot joined", "Kyrie is fighting with you.", "normal"), 12));
+        l.add(new Step("popup_three", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { for (var t : com.xenowarriors.fox.FoxPets.records(p)) { var r = (net.minecraft.nbt.CompoundTag) t;
+            if (r.hasUUID("uuid")) com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.PET, r.getUUID("uuid"), 0, 0, "Pet level up", "Fox reached Lv 5. New skin: Ember!", ""); } }), 14));
+        l.add(new Step("popup_four", () -> {}, 3));
+        l.add(new Step(null, () -> {}, 90));
+        l.add(new Step("popup_fading", () -> {}, 3));
     }
 
     private static void noToasts(Minecraft mc) {

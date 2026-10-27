@@ -47,6 +47,41 @@ public final class PetCare {
     /** Starts the cool-down on a pet that just ran away. */
     public static void ranAway(ServerPlayer p, CompoundTag rec) {
         rec.putLong("awayUntil", now(p) + COOLDOWN);
+        rec.putBoolean("readyTold", false);
+    }
+
+    /** Once a second: tell the owner when a pet that ran away is ready to be whistled back. */
+    @SubscribeEvent
+    public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0) return;
+        for (int kind = 0; kind < 2; kind++) {
+            ListTag list = kind == 0 ? FoxPets.records(p) : WingPets.records(p);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundTag rec = list.getCompound(i);
+                if (!rec.getBoolean("dead") || rec.getBoolean("readyTold") || left(p, rec) > 0) continue;
+                rec.putBoolean("readyTold", true);
+                if (!rec.contains("awayUntil")) continue;                 // ran away before cool-downs existed
+                com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.PET, rec.hasUUID("uuid") ? rec.getUUID("uuid") : p.getUUID(), 0, kind,
+                        "Ready to come back", rec.getString("name") + " calmed down. Use the Fox Whistle!", "");
+            }
+        }
+    }
+
+    /** A pet dropping low on health: let the owner know (at most every 30 seconds per pet). */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onPetHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        LivingEntity e = event.getEntity();
+        if (e.level().isClientSide || event.isCanceled()) return;
+        Player owner = ownerOfPet(e);
+        if (!(owner instanceof ServerPlayer p)) return;
+        float after = e.getHealth() - event.getAmount();
+        if (after <= 0 || after / e.getMaxHealth() >= 0.3F) return;
+        long t = e.level().getGameTime();
+        if (e.getPersistentData().getLong("xw_pet_low_told") > t) return;
+        e.getPersistentData().putLong("xw_pet_low_told", t + 600);
+        String name = e.hasCustomName() ? e.getCustomName().getString() : e.getName().getString();
+        com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, e.getUUID(), 0, e instanceof Fox ? 0 : 1,
+                "Pet in danger", name + " is badly hurt!", "");
     }
 
     /** Ticks until a pet that ran away can come back (0 = ready, or it never left). */

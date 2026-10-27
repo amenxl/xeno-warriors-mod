@@ -233,6 +233,7 @@ public final class FoxPets {
         level.sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.7, fox.getZ(), 7, 0.3, 0.3, 0.3, 0);
         level.playSound(null, fox.blockPosition(), SoundEvents.FOX_AMBIENT, SoundSource.NEUTRAL, 1F, 1.3F);
         say(p, "The fox trusts you now!");
+        com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, id, 0, 0, "New pet!", "A fox joined you. Name it in the Pets menu.", "");
         sync(p, id, "Fox");
         sendSkin(fox);
     }
@@ -547,6 +548,9 @@ public final class FoxPets {
         lvl.sendParticles(ParticleTypes.HEART, fox.getX(), fox.getY() + 0.9, fox.getZ(), 3, 0.2, 0.1, 0.2, 0);
         lvl.playSound(null, fox.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.5F, 1.6F);
         ModNetwork.sendToPlayer(new FoxLevelPacket(rec.getString("name"), level), p);
+        String unlocked = "";
+        for (FoxSkins.Skin sk : FoxSkins.ALL) if (sk.level() == level) unlocked = " New skin: " + sk.name() + "!";
+        com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.PET, fox.getUUID(), 0, 0, "Pet level up", rec.getString("name") + " reached Lv " + level + "." + unlocked, "");
         fx(fox, FoxFxPacket.LEVEL_UP);
     }
 
@@ -643,6 +647,7 @@ public final class FoxPets {
                 snapshot(fox, rec);
                 rec.putBoolean("dead", true);
                 com.xenowarriors.pet.PetCare.ranAway(p, rec);
+                com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, fox.getUUID(), 0, 0, "Pet ran away", rec.getString("name") + " fled the fight. Back in " + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + ".", "");
                 p.sendSystemMessage(Component.literal(rec.getString("name") + " ran away! They'll be ready to come back in "
                         + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
                         .withStyle(ChatFormatting.GOLD));

@@ -128,6 +128,7 @@ public final class ClientModEvents {
         event.registerAboveAll("cutscene", new UltimateCutscene.Overlay());
         event.registerAboveAll("team_cutscene", new TeamUltCutscene.Overlay());
         event.registerAboveAll("request_popup", new RequestPopups.Overlay());
+        event.registerAboveAll("popup_feed", new PopupFeed());
         event.registerAboveAll("stat_toasts", new StatToasts());
         event.registerAboveAll("lock_on", new LockOn.Overlay());
         event.registerAboveAll("karma_sense", new KarmaSense.Overlay());

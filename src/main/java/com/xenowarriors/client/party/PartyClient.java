@@ -38,6 +38,7 @@ public final class PartyClient {
     private PartyClient() {}
 
     public static void setMembers(List<PartySyncPacket.Member> list) {
+        com.xenowarriors.client.PopupFeed.party(list);
         members = list;
     }
 
@@ -70,6 +71,7 @@ public final class PartyClient {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         members = List.of();
         KNOCKED.clear();
+        com.xenowarriors.client.PopupFeed.reset();
     }
 
     /** Right-click another player (empty hand): the party / battle menu. */

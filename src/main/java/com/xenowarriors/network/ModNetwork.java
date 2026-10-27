@@ -421,6 +421,8 @@ public final class ModNetwork {
                 .encoder(PetListPacket::encode).decoder(PetListPacket::decode).consumerMainThread(PetListPacket::handle).add();
         CHANNEL.messageBuilder(PetActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(PetActionPacket::encode).decoder(PetActionPacket::decode).consumerMainThread(PetActionPacket::handle).add();
+        CHANNEL.messageBuilder(PopupPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(PopupPacket::encode).decoder(PopupPacket::decode).consumerMainThread(PopupPacket::handle).add();
         CHANNEL.messageBuilder(MoneyPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(MoneyPacket::encode).decoder(MoneyPacket::decode).consumerMainThread(MoneyPacket::handle).add();
         CHANNEL.messageBuilder(AuraMarkPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)

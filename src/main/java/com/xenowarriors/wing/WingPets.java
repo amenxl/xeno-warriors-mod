@@ -206,6 +206,7 @@ public final class WingPets {
         level.sendParticles(ParticleTypes.HEART, mob.getX(), mob.getY() + mob.getBbHeight(), mob.getZ(), 7, 0.3, 0.3, 0.3, 0);
         level.playSound(null, mob.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.5F, 1.8F);
         say(p, "The " + defaultName(mob).toLowerCase() + " trusts you now!");
+        com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, mob.getUUID(), 0, 1, "New companion!", "The " + defaultName(mob).toLowerCase() + " joined you.", "");
         ModNetwork.sendToPlayer(new OpenNamePacket(mob.getUUID(), rec.getString("name"), true), p);
     }
 
@@ -346,6 +347,7 @@ public final class WingPets {
         snapshot(mob, rec);
         rec.putBoolean("dead", true);
         com.xenowarriors.pet.PetCare.ranAway(p, rec);
+        com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, mob.getUUID(), 0, 1, "Pet flew away", rec.getString("name") + " fled the fight. Back in " + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + ".", "");
         p.sendSystemMessage(Component.literal(rec.getString("name") + " flew away! They'll be ready to come back in "
                 + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
