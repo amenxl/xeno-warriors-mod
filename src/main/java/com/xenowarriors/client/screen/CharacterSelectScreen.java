@@ -18,8 +18,24 @@ public class CharacterSelectScreen extends Screen {
     private static boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }
     private static final int CARD_HEIGHT = 176;
     /** Characters coming later: blank, locked slots (name + color) under the playable ones. */
-    public static final String[] UPCOMING = {"Sam", "Lexy", "Max", "Kyle", "Chase", "Zack", "Kyrie", "Kaitlyn", "Zane", "Stevie", "Garry", "Technica", "Yuri", "SR Leader"};
-    public static final int[] UPCOMING_COLOR = {0x4AA8FF, 0xC83A3A, 0x6AD08A, 0x8A8A9A, 0x6A6A8A, 0x9A3A3A, 0xE8B0D8, 0xD86AA0, 0x4A6AD8, 0xA05AE0, 0x4AC85A, 0x5AC8E8, 0x6AE08A, 0x9A2A2A};
+    public static final String[] UPCOMING = {"Kyle", "Chase", "Zack", "Kaitlyn", "Zane", "Stevie", "Garry", "Technica", "Yuri", "SR Leader"};
+    public static final int[] UPCOMING_COLOR = {0x8A8A9A, 0x6A6A8A, 0x9A3A3A, 0xD86AA0, 0x4A6AD8, 0xA05AE0, 0x4AC85A, 0x5AC8E8, 0x6AE08A, 0x9A2A2A};
+    /** Four characters per page; the arrows flip through the rest. */
+    private static final int PER_PAGE = 4;
+    private static int page;
+
+    private static CharacterType[] shown() {
+        CharacterType[] all = CharacterType.PLAYABLE;
+        int pages = (all.length + PER_PAGE - 1) / PER_PAGE;
+        page = Math.floorMod(page, pages);
+        int from = page * PER_PAGE, to = Math.min(all.length, from + PER_PAGE);
+        return java.util.Arrays.copyOfRange(all, from, to);
+    }
+
+    /** UI test: flip to the next page. */
+    public static void nextPageForTest() { page++; }
+
+    private static int pages() { return (CharacterType.PLAYABLE.length + PER_PAGE - 1) / PER_PAGE; }
     private static final int GAP = 24;
 
     /** Players who already have a character (opened via /xeno choose) can back out with Esc. */
@@ -31,7 +47,7 @@ public class CharacterSelectScreen extends Screen {
     }
 
     private int cardLeft(int index) {
-        CharacterType[] choices = CharacterType.PLAYABLE;
+        CharacterType[] choices = shown();
         int total = choices.length * CARD_WIDTH + (choices.length - 1) * GAP;
         return (width - total) / 2 + index * (CARD_WIDTH + GAP);
     }
@@ -50,7 +66,7 @@ public class CharacterSelectScreen extends Screen {
     /** The locked future characters: two rows of 7 under the cards. */
     private void drawUpcoming(GuiGraphics g, int mouseX, int mouseY) {
         if (compact()) {                                                  // one row of small name chips
-            int n = UPCOMING.length, cw = Math.min(46, (width - 10) / n), x0 = (width - n * cw) / 2, y = cardTop() + cardH() + 6;
+            int n = UPCOMING.length, cw = Math.min(46, (width - 10) / n), x0 = (width - n * cw) / 2, y = cardTop() + cardH() + (pages() > 1 ? 15 : 6);
             for (int i = 0; i < n; i++) {
                 int x = x0 + i * cw, c = UPCOMING_COLOR[i];
                 boolean hov = mouseX >= x && mouseX < x + cw - 2 && mouseY >= y && mouseY < y + 12;
@@ -66,7 +82,7 @@ public class CharacterSelectScreen extends Screen {
             }
             return;
         }
-        int perRow = 7, top = cardTop() + CARD_HEIGHT + 14;
+        int perRow = 5, top = cardTop() + CARD_HEIGHT + 22;
         int rowW = perRow * SLOT_W + (perRow - 1) * SLOT_GAP;
         int sw = SLOT_W, x0 = (width - rowW) / 2;
         if (rowW > width - 10) { sw = (width - 10 - (perRow - 1) * SLOT_GAP) / perRow; x0 = 5; }
@@ -94,8 +110,13 @@ public class CharacterSelectScreen extends Screen {
 
     @Override
     protected void init() {
-        CharacterType[] choices = CharacterType.PLAYABLE;
-        CARD_WIDTH = Math.min(CARD_WIDTH_MAX, (width - 20 - (choices.length - 1) * GAP) / choices.length);   // three cards fit
+        CharacterType[] choices = shown();
+        CARD_WIDTH = Math.min(CARD_WIDTH_MAX, (width - 60 - (PER_PAGE - 1) * GAP) / PER_PAGE);   // four cards fit, arrows either side
+        if (pages() > 1) {
+            int cy = cardTop() + cardH() / 2 - 10;
+            addRenderableWidget(Button.builder(Component.literal("<"), b -> { page--; rebuildWidgets(); }).bounds(cardLeft(0) - 26, cy, 20, 20).build());
+            addRenderableWidget(Button.builder(Component.literal(">"), b -> { page++; rebuildWidgets(); }).bounds(cardLeft(choices.length - 1) + CARD_WIDTH + 6, cy, 20, 20).build());
+        }
         for (int i = 0; i < choices.length; i++) {
             CharacterType type = choices[i];
             int x = cardLeft(i);
@@ -125,7 +146,8 @@ public class CharacterSelectScreen extends Screen {
         g.drawCenteredString(font, Component.translatable("screen.xenowarriors.select.subtitle"),
                 width / 2, top - (compact() ? 11 : 12), 0xAAAAAA);
 
-        CharacterType[] choices = CharacterType.PLAYABLE;
+        CharacterType[] choices = shown();
+        if (pages() > 1) g.drawCenteredString(font, "Page " + (page + 1) + " / " + pages(), width / 2, top + ch + 4, 0x888888);
         for (int i = 0; i < choices.length; i++) {
             CharacterType type = choices[i];
             int x = cardLeft(i);

@@ -25,7 +25,7 @@ public final class RhalixWings {
     }
 
     public static void toggle(ServerPlayer p) {
-        if (ModCapabilities.getType(p) != CharacterType.RHALIX) return;
+        if (!ModCapabilities.getType(p).skylander()) return;
         long now = p.level().getGameTime();
         if (now - p.getPersistentData().getLong(LAST) < 30) return;     // let the animation finish
         p.getPersistentData().putLong(LAST, now);

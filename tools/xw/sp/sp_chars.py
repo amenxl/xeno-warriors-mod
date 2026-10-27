@@ -162,7 +162,7 @@ LEXY = dict(skin=L_SKIN, eyes=L_EYE, hair=[LH1, LH2], paint=lexy_paint,
             wing=('angel', '#f4f2f8'), fit=lexy)
 
 # ====================================================================== MAX (Sintrie)
-M_SKIN, M_EYE = '#e8c0a8', '#6a8aa8'
+M_SKIN, M_EYE = '#e8c0a8', '#8a3a2a'
 MH1, MH2, MH3 = '#a8b4b4', '#c8d2d0', '#e4ecea'
 M_TEE, M_STAR, M_SHORT = '#f8ecd4', '#a8a0e8', '#9a9aa2'
 
@@ -193,7 +193,9 @@ def max_fit(f):
     shell(f, 'body', [-4, 12.2, -2], [4, 24, 2], 0.3, M_TEE)
     plate(f, 'body', STAR, 0.6, 21.4, -2.42, 0.48, M_STAR)                            # the lavender star
     f.both('right_arm', [3.62, 20.0, -2.38], [8.38, 24.38, 2.38], M_TEE)
-    f.both('right_arm', [3.5, 22.2, -2.5], [8.5, 24.5, 2.5], '#2a2224')                  # dark shoulder pads
+    f.both('right_arm', [3.5, 19.6, -2.5], [8.5, 20.4, 2.5], '#1a1a1e')                  # black sleeve trim
+    f.add('body', [-1.6, 21.6, -2.45], [1.6, 24.3, -2.3], '#1a1a1e')                       # black collar
+    f.add('body', [-4.3, 23.6, -2.45], [4.3, 24.4, 2.45], '#1a1a1e')
     f.add('body', [-4.4, 11.6, -2.45], [4.4, 12.6, 2.45], '#18181c')                    # belt
     for x in (-2.6, 2.6): f.add('body', [x - 0.6, 11.0, -2.7], [x + 0.6, 12.8, -2.45], '#bfe4ec')   # pale-blue clips
     f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 15.0, 2.5], '#1a1a1e', {'bottom': '#1a1a1e'})      # gloves
@@ -210,10 +212,10 @@ MAX = dict(skin=M_SKIN, eyes=M_EYE, hair=[MH1, MH2], paint=max_paint,
            brow=['.........', '.kkkkkk..'],
            eye=['.........', 'kkkkkkkkk', '.wddpddw.', '.wWoopow.', '..wOOOw..', '..kkkkk..', '.........'],
            mouth=['..kkk.'], mouth_x=13, mouth_y=25, face_extra=[max_blush],
-           wing=('falcon', '#a8d4f2'), fit=max_fit)
+           wing=('falcon', '#d2ecf6'), fit=max_fit)
 
 # ====================================================================== SAM
-S_SKIN, S_EYE = '#f0c8a8', '#2aa890'
+S_SKIN, S_EYE = '#f0c8a8', '#1a2238'
 SH1, SH2, SH3 = '#1a6a64', '#2a8a80', '#40a89a'
 S_WHT, S_GRY, S_PANT, S_PUR = '#f2f2f6', '#5a5a64', '#18181c', '#6a3ac8'
 
@@ -245,7 +247,8 @@ def sam(f):
     plate(f, 'body', STAR, 0.0, 19.6, -2.4, 0.42, S_WHT)                              # the white star
     for s in (1, -1):                                                                  # the open hoodie front panels
         x0, x1 = (1.9, 4.5) if s > 0 else (-4.5, -1.9)
-        f.add('body', [x0, 11.6, -2.6], [x1, 24.4, -2.3], S_WHT)
+        f.add('body', [x0, 11.6, -2.6], [x1, 24.4, -2.3], S_WHT,
+              {'front': (lambda s_: lambda x, y: '#9a86d8' if (x < .22 if s_ > 0 else x > .78) else S_WHT)(s)})
         f.add('body', [s * 1.7 - 0.22, 19.8, -2.75], [s * 1.7 + 0.22, 23.8, -2.55], S_PUR)          # drawstrings
     shell(f, 'body', [-4, 11.8, -2], [4, 24.2, 2], 0.42, S_WHT, {'front': lambda x, y: None})
     f.add('body', [-4.2, 21.0, 2.3], [4.2, 24.8, 4.2], S_WHT, {'back': lambda x, y: '#dcdce4' if y > .7 else S_WHT})   # hood down
@@ -266,7 +269,7 @@ SAM = dict(skin=S_SKIN, eyes=S_EYE, hair=[SH1, SH2], paint=sam_paint,
            brow=['..kkkkk..', 'kk.....k.'],
            eye=['.........', '.........', '..kkkkk..', '.k.....k.', 'k.......k', '.........', '.........'],
            mouth=['kkkkkkkk', 'kwwwwwwk', '.krrrrk.', '..kkkk..'], mouth_x=12, mouth_y=24, face_extra=[sam_marks],
-           wing=('hawk', '#d8f2e8'), fit=sam)
+           wing=('hawk', '#3a6a4a'), fit=sam)
 
 CHARS = {'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM}
 

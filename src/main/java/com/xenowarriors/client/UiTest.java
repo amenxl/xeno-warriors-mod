@@ -69,6 +69,7 @@ public final class UiTest {
         if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
         if ("vehicles".equals(System.getenv("XW_UITEST_FOCUS"))) { vehicles(mc, l); return l; }
         if ("kaeru".equals(System.getenv("XW_UITEST_FOCUS"))) { kaeru(mc, l); return l; }
+        if ("sp".equals(System.getenv("XW_UITEST_FOCUS"))) { skyPatrol(mc, l); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
@@ -188,6 +189,45 @@ public final class UiTest {
         }
         l.add(new Step(null, () -> { com.xenowarriors.client.npc.SrModel.force = null;
             server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard())); }, 5));
+    }
+
+    /** The Sky Patrol: each one front/back/flying, a few skills, and both pages of the character select screen. */
+    private static void skyPatrol(Minecraft mc, List<Step> l) {
+        CharacterType[] sp = {CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM};
+        for (CharacterType t : sp) {
+            l.add(new Step(null, () -> { character(t); server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); }); }, 40));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                mc.player.setXRot(10F); mc.player.setYRot(0F); }, 30));
+            l.add(new Step("sp_" + t.getId() + "_front", () -> {}, 5));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 20));
+            l.add(new Step("sp_" + t.getId() + "_back", () -> {}, 5));
+            l.add(new Step(null, () -> server(p -> { p.getAbilities().flying = true; p.onUpdateAbilities(); p.teleportTo(p.getX(), p.getY() + 2, p.getZ()); }), 30));
+            l.add(new Step("sp_" + t.getId() + "_flying", () -> {}, 5));
+            l.add(new Step(null, () -> server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); }), 30));
+        }
+        // a zombie to try things on (no AI)
+        l.add(new Step(null, () -> server(p -> {
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (z == null) return;
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 4, 180, 0); z.setNoAi(true); z.setYHeadRot(180); z.yBodyRot = 180;
+            p.serverLevel().addFreshEntity(z); p.setYRot(0); p.setXRot(10);
+        }), 20));
+        l.add(new Step(null, () -> { character(CharacterType.SAM); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 30));
+        l.add(new Step(null, () -> server(p -> { p.setYRot(0); p.setXRot(5); new com.xenowarriors.skill.sp.SamSkills.TickingTimeBomb().use(p); }), 30));
+        l.add(new Step("sp_sam_bomb", () -> {}, 5));
+        l.add(new Step(null, () -> { character(CharacterType.KYRIE); }, 30));
+        l.add(new Step(null, () -> server(p -> new com.xenowarriors.skill.sp.KyrieSkills.BulletStop().use(p)), 20));
+        l.add(new Step("sp_kyrie_field", () -> {}, 5));
+        l.add(new Step(null, () -> { character(CharacterType.MAX); }, 30));
+        l.add(new Step(null, () -> server(p -> new com.xenowarriors.skill.sp.MaxSkills.WindWall().use(p)), 10));
+        l.add(new Step("sp_max_windwall", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
+        l.add(new Step("sp_select_page1", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.screen.CharacterSelectScreen.nextPageForTest();
+            mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 40));
+        l.add(new Step("sp_select_page2", () -> {}, 5));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
     }
 
     /** Kaeru: front/back, her Change (silhouette, a zombie, a log), Soul Splitter for her, Rhalix and Mikiko (3 souls). */

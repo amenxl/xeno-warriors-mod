@@ -15,12 +15,23 @@ public enum CharacterType {
     /** Season 2 content (locked until /xeno season unlock 2). */
     ULTIMA("ultima", 0xFF1FE07A),
     /** Season 2 content: the Hekublade's guardian. */
-    KAERU("kaeru", 0xFFE8701C);
+    KAERU("kaeru", 0xFFE8701C),
+    /** The Sky Patrol (season 1 looks). */
+    KYRIE("kyrie", 0xFF7A4AD8),
+    LEXY("lexy", 0xFF3A4AD0),
+    MAX("max", 0xFF9AD2F2),
+    SAM("sam", 0xFF2AA890);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
+    /** Skylanders: they have wings and can fly (H puts the wings away). */
+    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM; }
+
+    /** The Sky Patrol members (for team synergy). */
+    public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM; }
+
     public int season() { return this == ULTIMA || this == KAERU ? 2 : 1; }
 
     private final String id;

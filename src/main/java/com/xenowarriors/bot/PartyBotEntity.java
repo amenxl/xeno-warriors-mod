@@ -99,7 +99,7 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean downed() { return entityData.get(DOWNED); }
     public boolean sparring() { return entityData.get(SPAR); }
     public void setSparring(boolean b) { entityData.set(SPAR, b); if (!b) setTarget(null); }
-    public boolean canFly() { CharacterType t = character(); return t == CharacterType.RHALIX || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }
+    public boolean canFly() { CharacterType t = character(); return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }
 
     /** Apply this character's level (from the owner's saved stats for it). */
     public void applyLevel(int level) {

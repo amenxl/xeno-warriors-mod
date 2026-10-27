@@ -29,6 +29,7 @@ public final class SkillManager {
             CharacterType ct = ModCapabilities.getType(player);
             boolean went;
             if (ct == CharacterType.ULTIMA && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.ultima.UltimaOutput.overload(player);   // Ultima's super slot: Overload
+            else if (ct == CharacterType.MAX && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.sp.VampireCut.use(player);   // Max's KA: Vampire Cut
             else if (ct == CharacterType.KAERU && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.kaeru.KaeruChange.use(player);   // Kaeru's KA: Change
             else if (ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player) && !player.isShiftKeyDown()) went = com.xenowarriors.lunar.MoonFall.use(player); // Lunar: Moon Fall
             else went = com.xenowarriors.ka.Kas.usePlayer(player);

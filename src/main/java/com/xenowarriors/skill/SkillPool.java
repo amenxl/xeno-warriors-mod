@@ -44,6 +44,27 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.kaeru.HekubarrierSkill(), 0, 2), new Entry(new com.xenowarriors.skill.kaeru.FoxHealSkill(), 0, 2),
                 new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 0, 2), new Entry(new com.xenowarriors.skill.kaeru.ScentTrackSkill(), 15, 2)));
         ULTIMATE.put(CharacterType.KAERU, new com.xenowarriors.skill.kaeru.HekubeatsFinaleSkill());
+        // the Sky Patrol (season 1)
+        POOL.put(CharacterType.KYRIE, List.of(
+                new Entry(new com.xenowarriors.skill.sp.KyrieSkills.RapierThrust(), 0), new Entry(new KishiSkill(), 0),
+                new Entry(new com.xenowarriors.skill.sp.KyrieSkills.GravityFetch(), 0), new Entry(new com.xenowarriors.skill.sp.KyrieSkills.BulletStop(), 0),
+                new Entry(new com.xenowarriors.skill.sp.KyrieSkills.BoxingStance(), 15), new Entry(new com.xenowarriors.skill.sp.KyrieSkills.NoMilk(), 30)));
+        ULTIMATE.put(CharacterType.KYRIE, new com.xenowarriors.skill.sp.KyrieSkills.RoyalGravity());
+        POOL.put(CharacterType.LEXY, List.of(
+                new Entry(new com.xenowarriors.skill.sp.LexySkills.FreakPunch(), 0), new Entry(new com.xenowarriors.skill.sp.LexySkills.TableBreaker(), 0),
+                new Entry(new com.xenowarriors.skill.sp.LexySkills.KarmaSurge(), 0), new Entry(new com.xenowarriors.skill.sp.LexySkills.WingRush(), 0),
+                new Entry(new com.xenowarriors.skill.sp.LexySkills.IronGrip(), 20)));
+        ULTIMATE.put(CharacterType.LEXY, new com.xenowarriors.skill.sp.LexySkills.Persephone());
+        POOL.put(CharacterType.MAX, List.of(
+                new Entry(new com.xenowarriors.skill.sp.MaxSkills.DaggerFlurry(), 0), new Entry(new com.xenowarriors.skill.sp.MaxSkills.WindOfSorrow(), 0),
+                new Entry(new com.xenowarriors.skill.sp.MaxSkills.WindWall(), 0), new Entry(new com.xenowarriors.skill.sp.MaxSkills.LunarMind(), 0),
+                new Entry(new com.xenowarriors.skill.sp.MaxSkills.RapidVampireSlice(), 30)));
+        ULTIMATE.put(CharacterType.MAX, new com.xenowarriors.skill.sp.MaxSkills.MoonlitGale());
+        POOL.put(CharacterType.SAM, List.of(
+                new Entry(new com.xenowarriors.skill.sp.SamSkills.BatterUp(), 0), new Entry(new com.xenowarriors.skill.sp.SamSkills.ClearSpace(), 0),
+                new Entry(new com.xenowarriors.skill.sp.SamSkills.TickingTimeBomb(), 0), new Entry(new com.xenowarriors.skill.sp.SamSkills.KnockoutMode(), 0),
+                new Entry(new com.xenowarriors.skill.sp.SamSkills.BatterShoot(), 20)));
+        ULTIMATE.put(CharacterType.SAM, new com.xenowarriors.skill.sp.SamSkills.PsychoticTimeBomb());
     }
 
     private SkillPool() {}

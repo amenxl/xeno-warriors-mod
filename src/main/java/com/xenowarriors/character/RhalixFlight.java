@@ -33,8 +33,9 @@ public final class RhalixFlight {
     public static final int HUNGRY_FOOD = 6;
 
     public static boolean canFly(Player p) {
-        return ModCapabilities.getType(p) == CharacterType.RHALIX && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p)
-                && !starving(p);
+        CharacterType t = ModCapabilities.getType(p);
+        return t.skylander() && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p)
+                && (t != CharacterType.RHALIX || !starving(p));
     }
 
     public static boolean starving(Player p) {

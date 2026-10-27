@@ -90,7 +90,7 @@ public final class ClientEvents {
                         !com.xenowarriors.client.mikiko.HoodClient.wantsUp(mc.player)));
         }
         while (ModKeyMappings.TOGGLE_WINGS.consumeClick()) {
-            if (mc.player != null && ClientCharacterData.getLocal() == CharacterType.RHALIX && !UltimateCutscene.active()) {
+            if (mc.player != null && ClientCharacterData.getLocal().skylander() && !UltimateCutscene.active()) {
                 ModNetwork.sendToServer(new com.xenowarriors.network.ToggleWingsPacket());
             }
         }

@@ -274,7 +274,7 @@ public final class RhalixWingsClient {
         if (p instanceof AbstractClientPlayer fp && FirstPersonHead.ownFirstPerson(fp)) return;   // (see MikikoAnimations)
         float w = gravityDance(p, event.getPartialTick());
         float hw = hyped(p, event.getPartialTick());
-        float sw = ClientCharacterData.get(p) == CharacterType.RHALIX ? superman(p, event.getPartialTick()) : 0F;
+        float sw = ClientCharacterData.get(p).skylander() ? superman(p, event.getPartialTick()) : 0F;
         if (w <= 0F && hw <= 0F && sw <= 0F) return;
         float age = p.tickCount + event.getPartialTick();
         if (sw > 0F) {
@@ -328,7 +328,7 @@ public final class RhalixWingsClient {
         }
         if (mc.isPaused()) return;
         for (AbstractClientPlayer p : mc.level.players()) {
-            if (ClientCharacterData.get(p) != CharacterType.RHALIX) {
+            if (!ClientCharacterData.get(p).skylander()) {
                 HOVER.remove(p.getId());
                 continue;
             }
@@ -336,7 +336,7 @@ public final class RhalixWingsClient {
             float[] d = DANCE.computeIfAbsent(p.getId(), k -> new float[15]);
             boolean stillNow = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && !Busy.busy(p);
             d[5] = stillNow ? d[5] + 1 : 0;
-            boolean standing = d[5] >= 10 && !FlightTracker.isFlying(p);
+            boolean standing = d[5] >= 10 && !FlightTracker.isFlying(p) && ClientCharacterData.get(p) == CharacterType.RHALIX;   // (his dances are his own)
             boolean hyped = standing && DiscTracker.near(p, DiscTracker.SKYBOUND);
             if (hyped && d[9] <= 0F) d[11] = p.tickCount;
             d[10] = d[9];
