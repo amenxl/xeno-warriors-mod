@@ -95,6 +95,7 @@ public final class ComboServer {
         CTX.set(c);
         try {
             ((com.xenowarriors.mixin.LivingEntityComboAccessor) p).xenowarriors$setAttackStrengthTicker(1000);
+            t.invulnerableTime = 0;            // combo hits come faster than vanilla's half-second of hit immunity: every hit counts
             p.attack(t);
         } finally {
             CTX.remove();
@@ -112,6 +113,7 @@ public final class ComboServer {
         Ctx c = new Ctx(bot, style, hit, heavy, style.multiplier(hit, heavy, 1.5));            // (bots used to hit once a second; 1.5 makes up for the rests between strings)
         CTX.set(c);
         try {
+            t.invulnerableTime = 0;
             if (bot instanceof net.minecraft.world.entity.Mob m) m.doHurtTarget(t);
         } finally {
             CTX.remove();
