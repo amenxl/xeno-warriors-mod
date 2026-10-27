@@ -189,7 +189,7 @@ public class PlayerStatsScreen extends Screen {
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
         celShade.visible = tab == 3;
         celShade.setMessage(Component.literal("Cel-shading: " + (ClientSettings.celShading() ? "ON" : "OFF")));
-        drawnFaces.visible = tab == 3;
+        drawnFaces.visible = tab == 3 && minecraft.player != null && minecraft.player.isCreative();      // (only offered in creative mode)
         drawnFaces.setMessage(Component.literal("Faces: " + (ClientSettings.drawnFaces() ? "Drawn (new)" : "Pixel (old)")));
         hudStyle.visible = vanillaBars.visible = skillsAlways.visible = tab == 3;
         hudStyle.setMessage(Component.literal("HUD: " + (ClientSettings.khHud() ? "Kingdom Hearts style" : "Classic")));
