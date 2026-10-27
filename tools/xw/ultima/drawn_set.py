@@ -67,23 +67,35 @@ SET = {
     'yawn':        ('closed_flat', 'closed_flat', 'soft', 'yawn', {'tears': 'drop'}),
 }
 
-def face(eL, eR, brows, mouth, o):
-    f = D.F()
-    f.skin(1.0)
+CHARS = {
+    'ultima': dict(skin=(232, 170, 112), iris=(60, 242, 170), hair='spiky', shade=1.0, scar=True, glow=True, brow_y=46, eye_y=66, grin='smug_grin'),
+    'mikiko': dict(skin=(132, 82, 52), iris=(250, 150, 30), hair='dreads', shade=0.55, scar=False, glow=True, brow_y=50, eye_y=67, grin='fang'),
+}
+# per-character tweaks on top of SET
+EXTRA = {'mikiko': {'annoyed': {'anger': True}, 'rage': {'anger': True, 'glow_eyes': True}, 'fierce': {'anger': True}}}
+
+def face(eL, eR, brows, mouth, o, c=None):
+    c = c or CHARS['ultima']
+    f = D.F(c['skin'], c['iris'], c['hair'])
+    f.skin(c['shade'])
     for i, (side, cx) in enumerate(((-1, 35), (1, 93))):
-        f.brow(cx, 46, side, brows)
-        f.eye(cx, 66, side, (eL, eR)[i], o.get('look', 0.0), True, SCAR and side == -1, o.get('lookY', 0.0))
-    f.nose(); f.mouth(mouth)
+        f.brow(cx, c['brow_y'], side, brows)
+        f.eye(cx, c['eye_y'], side, (eL, eR)[i], o.get('look', 0.0), c['glow'], c['scar'] and side == -1, o.get('lookY', 0.0))
+    f.nose()
+    if mouth == 'smug_grin' and c['grin'] == 'fang': f.fang_grin()
+    else: f.mouth(mouth)
     if o.get('blush'): f.blush()
     if o.get('tint'): f.tint(o['tint'])
     if o.get('tears'): f.tears(stream=o['tears'] is True)
     if o.get('drool'): f.drool()
     if o.get('overload'): f.overload()
+    if o.get('glow_eyes'): f.glow_eyes()
     f.locks()
-    if SCAR: f.scar()
+    if c['scar']: f.scar()
     if o.get('sweat'): f.sweat()
     if o.get('sparkle'): f.sparkle()
     if o.get('veins'): f.veins()
+    if o.get('anger'): f.anger()
     if o.get('glitch'): f.glitch()
     if 'rain' in o: f.rain(o['rain'])
     return f.texture()
@@ -92,20 +104,26 @@ def overlay(draw):
     f = D.F(); draw(f); return f.texture()
 
 if __name__ == '__main__':
-    for name, (eL, eR, b, m, o) in SET.items():
-        face(eL, eR, b, m, o).save(R + 'ultima_drawn_face' + (('_' + name) if name else '') + '.png')
-    # talking mouths: a patch of skin over his mouth, then the mouth shape (drawn over whatever face is showing)
+    import sys as _s
+    who = _s.argv[1] if len(_s.argv) > 1 else 'ultima'
+    c = CHARS[who]
+    names = [n for n in SET if who == 'ultima' or not n.startswith('overload')]
+    for name in names:
+        eL, eR, b, m, o = SET[name]
+        o = dict(o, **EXTRA.get(who, {}).get(name, {}))
+        face(eL, eR, b, m, o, c).save(R + f'{who}_drawn_face' + (('_' + name) if name else '') + '.png')
     def mouth_frame(kind):
         def draw(f):
-            base = D.F(); base.skin(1.0)
+            base = D.F(c['skin'], c['iris'], c['hair']); base.skin(c['shade'])
             patch = base.im.crop((44 * 4, 94 * 4, 84 * 4, 118 * 4))
             m = Image.new('L', patch.size, 0); ImageDraw.Draw(m).ellipse((0, 0, patch.width, patch.height), fill=255)
             f.im.paste(patch, (44 * 4, 94 * 4), m)
             f.mouth(kind)
         return draw
+    def overlay2(draw):
+        f = D.F(c['skin'], c['iris'], c['hair']); draw(f); return f.texture()
     for i, kind in enumerate(['small', 'o', 'grin', 'open_happy', 'shout']):
-        overlay(mouth_frame(kind)).save(R + f'ultima_drawn_mouth_{i + 1}.png')
-    # battle damage: scratches and a bandage
+        overlay2(mouth_frame(kind)).save(R + f'{who}_drawn_mouth_{i + 1}.png')
     def dmg(level):
         def draw(f):
             for (x0, y0, x1, y1) in [(98, 84, 110, 92), (100, 88, 108, 96)][:level]:
@@ -113,8 +131,8 @@ if __name__ == '__main__':
             f.poly([(14, 94), (30, 90), (31, 96), (15, 100)], (236, 222, 200, 255))
             f.line([(14, 94), (30, 90), (31, 96), (15, 100), (14, 94)], (150, 120, 100), 0.6)
             if level > 1:
-                b = Image.new('RGBA', f.im.size, (0, 0, 0, 0)); f.ell(92, 80, 10, 6, (120, 60, 120, 70), b); f.blur_layer(b, 2)
-                f.line([(56, 40), (62, 52)], (180, 40, 46), 1.0)
+                bb = Image.new('RGBA', f.im.size, (0, 0, 0, 0)); f.ell(92, 80, 10, 6, (120, 60, 120, 70), bb); f.blur_layer(bb, 2)
+                f.line([(56, 44), (62, 54)], (180, 40, 46), 1.0)
         return draw
-    for lv in (1, 2): overlay(dmg(lv)).save(R + f'ultima_drawn_face_damage{lv}.png')
-    print('wrote', len(SET), 'faces')
+    for lv in (1, 2): overlay2(dmg(lv)).save(R + f'{who}_drawn_face_damage{lv}.png')
+    print('wrote', len(names), 'faces for', who)

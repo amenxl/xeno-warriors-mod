@@ -14,8 +14,8 @@ def lerp(a, b, t): return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(len
 
 
 class F:
-    def __init__(self, skin=(232, 170, 112), iris=(60, 242, 170)):
-        self.S, self.I = skin, iris
+    def __init__(self, skin=(232, 170, 112), iris=(60, 242, 170), hair='spiky'):
+        self.S, self.I, self.hair = skin, iris, hair
         self.im = Image.new('RGBA', (N * SS, N * SS), (0, 0, 0, 0))
         self.d = ImageDraw.Draw(self.im)
 
@@ -65,6 +65,7 @@ class F:
 
     # ------------------------------------------------------------------ hair locks over the face
     def locks(self):
+        if self.hair == 'dreads': return self.dreads()
         r = random.Random(3)
         spec = [(-4, 0, 30, 46, 14), (8, 0, 22, 40, 12), (20, 0, 34, 52, 13), (40, 0, 56, 74, 12),      # (x0 top, , x1, bottom y, width)
                 (54, 0, 48, 58, 10), (70, 0, 74, 50, 12), (84, 0, 96, 44, 12), (100, 0, 112, 54, 13), (116, 0, 132, 66, 14),
@@ -79,6 +80,46 @@ class F:
             self.line([tip, (x1 + w * 0.18, by - 10)], INK, 0.9)
 
     # ------------------------------------------------------------------ eyes
+    def dreads(self):
+        """Mikiko's dreadlocks hanging over the face: chunky strands, black at the top turning red, inked."""
+        RED, RED2, BLK = (200, 24, 30), (150, 14, 20), (22, 16, 20)
+        for x, bottom, w in [(-2, 74, 11), (8, 52, 10), (20, 40, 10), (52, 50, 10), (66, 44, 9), (98, 40, 10), (110, 54, 10), (122, 76, 11)]:
+            y = -2
+            seg = 0
+            while y < bottom:
+                h = 9 if seg else 12
+                col = BLK if y < 18 else (RED if seg % 2 else RED2)
+                yy = min(bottom, y + h)
+                self.poly([(x - w / 2, y), (x + w / 2, y), (x + w / 2 - 0.6, yy), (x - w / 2 + 0.6, yy)], col + (255,))
+                self.line([(x - w / 2, y), (x - w / 2 + 0.6, yy), (x + w / 2 - 0.6, yy), (x + w / 2, y)], INK, 0.9)
+                self.line([(x - w / 2 + 2, y + 1.5), (x - w / 2 + 2, yy - 1.5)], lerp(col, (255, 255, 255), 0.25), 0.7)
+                y = yy; seg += 1
+
+    def anger(self):
+        """The popping anger mark at the temple."""
+        cx, cy = 112, 44
+        for a in range(4):
+            ang = a * math.pi / 2 + math.pi / 4
+            p0 = (cx + math.cos(ang) * 2, cy + math.sin(ang) * 2)
+            p1 = (cx + math.cos(ang) * 7, cy + math.sin(ang) * 7)
+            self.line([p0, (p1[0] + math.cos(ang + 1.2) * 2, p1[1] + math.sin(ang + 1.2) * 2), p1], (220, 30, 36), 1.8)
+
+    def fang_grin(self):
+        """A wide confident grin with a fang."""
+        pts = [(47, 99), (64, 103), (81, 97), (77, 104), (64, 109), (51, 105)]
+        self.poly(pts, (250, 248, 246, 255))
+        self.poly([(70, 102.4), (73.5, 101.6), (72, 107)], (250, 248, 246, 255))
+        self.line([(47, 99), (64, 103), (81, 97)], INK, 1.8)
+        self.line([(51, 105), (64, 109), (77, 104)], INK, 1.3)
+        self.line([(70, 102.4), (72, 107), (73.5, 101.6)], INK, 0.8)
+        self.line([(47, 99), (45, 96.5)], INK, 1.2); self.line([(81, 97), (84, 94.5)], INK, 1.2)
+
+    def glow_eyes(self, col=(255, 90, 20)):
+        g = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
+        for cx in (35, 93): self.ell(cx, 66, 18, 8, col + (190,), g)
+        self.poly([(0, 62), (128, 62), (128, 70), (0, 70)], col + (70,), g)
+        self.blur_layer(g, 3.5)
+
     def eye(self, cx, cy, side, kind='sharp', look=0.0, glow=True, scar_eye=False, lookY=0.0):
         """side -1 = his right (viewer left). kinds: sharp, wide, calm, glare, bored, closed, wink_closed."""
         o = side
@@ -120,14 +161,14 @@ class F:
         ix, iy, ir = cx + look * 6 + o * 1.5, cy + 0.8 + lookY * 3.5, (10.2 if kind != 'wide' else 8.8)
         for k in range(20):                                          # iris: dark green top -> bright, glowing bottom
             t = k / 19
-            c = lerp(lerp(I, (0, 40, 30), 0.65), lerp(I, (220, 255, 230), 0.35), t)
+            c = lerp(lerp(I, (0, 0, 0), 0.5), lerp(I, (255, 245, 170), 0.42), t ** 0.8)
             band = Image.new('L', self.im.size, 0); bd = ImageDraw.Draw(band)
             bd.ellipse(((ix - ir) * SS, (iy - ir) * SS, (ix + ir) * SS, (iy + ir) * SS), fill=255)
             bd.rectangle((0, 0, self.im.width, (iy - ir + 2 * ir * t) * SS), fill=0)
             lay.paste(c + (255,), (0, 0), band)
-        ld.ellipse(((ix - ir) * SS, (iy - ir) * SS, (ix + ir) * SS, (iy + ir) * SS), outline=(6, 40, 30, 255), width=int(1.1 * SS))
+        ld.ellipse(((ix - ir) * SS, (iy - ir) * SS, (ix + ir) * SS, (iy + ir) * SS), outline=lerp(I, (0, 0, 0), 0.85) + (255,), width=int(1.1 * SS))
         ld.ellipse(((ix - ir * 0.62) * SS, (iy - ir * 0.62) * SS, (ix + ir * 0.62) * SS, (iy + ir * 0.62) * SS), outline=lerp(I, (255, 255, 255), 0.5) + (180,), width=int(0.6 * SS))
-        ld.ellipse(((ix - 2.2) * SS, (iy - 5.2) * SS, (ix + 2.2) * SS, (iy + 5.2) * SS), fill=(4, 24, 18, 255))       # slit pupil
+        ld.ellipse(((ix - 2.2) * SS, (iy - 5.2) * SS, (ix + 2.2) * SS, (iy + 5.2) * SS), fill=lerp(I, (0, 0, 0), 0.92) + (255,))       # slit pupil
         ld.ellipse(((ix - 6.4) * SS, (iy - 7.0) * SS, (ix - 2.0) * SS, (iy - 2.6) * SS), fill=(255, 255, 255, 255))   # highlights
         ld.ellipse(((ix + 3.0) * SS, (iy + 2.8) * SS, (ix + 5.2) * SS, (iy + 5.0) * SS), fill=(255, 255, 255, 220))
         self.im.paste(lay, (0, 0), mask)
