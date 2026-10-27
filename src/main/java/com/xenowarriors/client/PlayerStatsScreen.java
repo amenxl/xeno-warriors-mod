@@ -34,7 +34,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, headShape, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -90,19 +90,15 @@ public class PlayerStatsScreen extends Screen {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
         }).bounds(bx, SET_TOP + 250, bw, 20).build());
-        headShape = addRenderableWidget(Button.builder(Component.empty(), b -> {
-            ClientSettings.setAnimeJaw(!ClientSettings.animeJaw());
-            updateButtons();
-        }).bounds(bx, SET_TOP + 98, bw / 2 - 2, 20).build());
         celShade = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setCelShading(!ClientSettings.celShading()); updateButtons(); })
-                .bounds(bx + bw / 2 + 2, SET_TOP + 98, bw / 2 - 2, 20).build());
+                .bounds(bx, SET_TOP + 98, bw, 20).build());
         drawnFaces = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDrawnFaces(!ClientSettings.drawnFaces()); updateButtons(); })
                 .bounds(bx, SET_TOP + 122, bw, 20).build());
         hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 162, bw, 20).build());
         vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 186, bw / 2 - 2, 20).build());
         skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 186, bw / 2 - 2, 20).build());
         setBaseY.clear();
-        for (Button b : new Button[]{senseFriendly, efMode, efBattle, headShape, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways}) setBaseY.put(b, b.getY());
+        for (Button b : new Button[]{senseFriendly, efMode, efBattle, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways}) setBaseY.put(b, b.getY());
         if (players.isEmpty()) ModNetwork.sendToServer(new PlayerStatsRequestPacket());     // (opened some other way: ask for the list)
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
@@ -191,8 +187,6 @@ public class PlayerStatsScreen extends Screen {
         tabSettings.active = tab != 3;
         senseFriendly.visible = tab == 3;
         senseFriendly.setMessage(Component.literal("Sense friendly Karma: " + (ClientSettings.senseFriendly() ? "ON" : "OFF")));
-        headShape.visible = tab == 3;
-        headShape.setMessage(Component.literal("Head: " + (ClientSettings.animeJaw() ? "Anime jaw" : "Classic")));
         celShade.visible = tab == 3;
         celShade.setMessage(Component.literal("Cel-shading: " + (ClientSettings.celShading() ? "ON" : "OFF")));
         drawnFaces.visible = tab == 3;

@@ -454,7 +454,6 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (king) detailTex = FOX_KING_TEX;
         if (outfit == 0 && torn == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(player.getId())) detailTex = LUNAR_TEX;
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
-        if (!noHead && HeadShape.active(player)) HeadShape.drawHead(parent.head, poseStack, buffers, player, packedLight, overlay);
         detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
@@ -548,10 +547,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
     }
 
-    /** The face (or a layer over it) on the plain head, or over the anime-jaw head when that's on. */
+    /** The face (or a layer over it) on the head. */
     private static void renderFace(DetailModel model, PlayerModel<AbstractClientPlayer> parent, AbstractClientPlayer player, PoseStack pose,
                                    VertexConsumer vc, int light, int overlay) {
-        if (HeadShape.active(player)) HeadShape.drawFace(parent.head, pose, vc, light, overlay);
-        else model.faceRoot.render(pose, vc, light, overlay);
+        model.faceRoot.render(pose, vc, light, overlay);
     }
 }
