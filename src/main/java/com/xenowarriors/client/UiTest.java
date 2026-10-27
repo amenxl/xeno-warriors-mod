@@ -193,21 +193,21 @@ public final class UiTest {
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             mc.player.setXRot(5F); mc.player.setYRot(0F); }, 20));
         String[] skins = com.xenowarriors.wing.WingPets.SKINS;
-        for (int page = 0; page < 2; page++) {
+        for (int page = 0; page < 4; page++) {
             final int pg = page;
             l.add(new Step(null, () -> server(p -> {
                 var lvl = p.serverLevel();
                 lvl.getEntitiesOfClass(net.minecraft.world.entity.ambient.Bat.class, p.getBoundingBox().inflate(20)).forEach(e -> e.discard());
                 p.setYRot(0); p.setXRot(5);
-                for (int i = 0; i < 10; i++) {
-                    int skin = pg * 10 + i;
+                for (int i = 0; i < 5; i++) {
+                    int skin = pg * 5 + i;
                     if (skin >= skins.length) break;
                     var b = net.minecraft.world.entity.EntityType.BAT.create(lvl);
                     if (b == null) continue;
                     b.getPersistentData().putBoolean(com.xenowarriors.fox.WildCritters.ROLLED, true);
                     b.getPersistentData().putInt(com.xenowarriors.wing.WingPets.SKIN_KEY, skin);
                     int col = i % 5, row = i / 5;
-                    b.moveTo(p.getX() - 2.4 + col * 1.2, p.getY() + 2.0 - row * 1.3, p.getZ() + 3.2, 180, 0);
+                    b.moveTo(p.getX() - 2.4 + col * 1.2, p.getY() + 1.5, p.getZ() + 3.0, 0, 0); b.setYHeadRot(180); b.yBodyRot = 180; b.setYRot(180);
                     b.setNoAi(true); b.setResting(false); b.setNoGravity(true);
                     b.setCustomName(net.minecraft.network.chat.Component.literal(skins[skin])); b.setCustomNameVisible(true);
                     lvl.addFreshEntity(b);
