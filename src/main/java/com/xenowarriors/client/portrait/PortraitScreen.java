@@ -139,7 +139,10 @@ public class PortraitScreen extends Screen {
         g.pose().popPose();
     }
 
-    private void drawCharacter(GuiGraphics g, LivingEntity e, int x, int y, int scale) {
+    private void drawCharacter(GuiGraphics g, LivingEntity e, int x, int y, int scale) { drawCharacter(g, e, type, x, y, scale, yaw); }
+
+    /** Draws the entity in the character's hero pose, turned by {@code yaw} degrees (also used by the main menu). */
+    public static void drawCharacter(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int scale, float yaw) {
         if (e == null) return;
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
@@ -155,34 +158,34 @@ public class PortraitScreen extends Screen {
 
     // ------------------------------------------------------------------ drawing helpers
 
-    private static int argb(float a, float r, float g, float b) {
+    public static int argb(float a, float r, float g, float b) {
         return ((int) (Mth.clamp(a, 0, 1) * 255) << 24) | ((int) (Mth.clamp(r, 0, 1) * 255) << 16) | ((int) (Mth.clamp(g, 0, 1) * 255) << 8) | (int) (Mth.clamp(b, 0, 1) * 255);
     }
 
-    private static BufferBuilder begin() {
+    public static BufferBuilder begin() {
         BufferBuilder bb = Tesselator.getInstance().getBuilder();
         bb.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
         return bb;
     }
 
-    private static void v(BufferBuilder bb, Matrix4f m, float x, float y, float r, float g, float b, float a) {
+    public static void v(BufferBuilder bb, Matrix4f m, float x, float y, float r, float g, float b, float a) {
         bb.vertex(m, x, y, 0F).color(r, g, b, a).endVertex();
     }
 
-    private static void tri(BufferBuilder bb, Matrix4f m, float x1, float y1, float r1, float g1, float b1, float a1,
+    public static void tri(BufferBuilder bb, Matrix4f m, float x1, float y1, float r1, float g1, float b1, float a1,
                             float x2, float y2, float r2, float g2, float b2, float a2, float x3, float y3, float r3, float g3, float b3, float a3) {
         v(bb, m, x1, y1, r1, g1, b1, a1); v(bb, m, x2, y2, r2, g2, b2, a2); v(bb, m, x3, y3, r3, g3, b3, a3);
     }
 
     /** Quad corners clockwise from top-left; colour 1 on the left/top corners (1,4), colour 2 on (2,3). */
-    private static void quad(BufferBuilder bb, Matrix4f m, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
+    public static void quad(BufferBuilder bb, Matrix4f m, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
                              float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2) {
         tri(bb, m, x1, y1, r1, g1, b1, a1, x2, y2, r2, g2, b2, a2, x3, y3, r2, g2, b2, a2);
         tri(bb, m, x1, y1, r1, g1, b1, a1, x3, y3, r2, g2, b2, a2, x4, y4, r1, g1, b1, a1);
     }
 
     /** A soft ellipse: alpha a0 in the middle fading to a1 at the edge. */
-    private static void disc(BufferBuilder bb, Matrix4f m, float cx, float cy, float rx, float ry, float r, float g, float b, float a0, float a1) {
+    public static void disc(BufferBuilder bb, Matrix4f m, float cx, float cy, float rx, float ry, float r, float g, float b, float a0, float a1) {
         int n = 64;
         for (int i = 0; i < n; i++) {
             float t0 = i * Mth.TWO_PI / n, t1 = (i + 1) * Mth.TWO_PI / n;
@@ -194,7 +197,7 @@ public class PortraitScreen extends Screen {
      * An elliptical ring at radius (rx, ry) with soft width {@code thick} (as a fraction of rx when < 1). A negative
      * alpha means a vignette: transparent inside, |a| from the ring outward to far beyond the screen.
      */
-    private static void ring(BufferBuilder bb, Matrix4f m, float cx, float cy, float rx, float ry, float thick, float r, float g, float b, float a) {
+    public static void ring(BufferBuilder bb, Matrix4f m, float cx, float cy, float rx, float ry, float thick, float r, float g, float b, float a) {
         int n = 72;
         boolean vig = a < 0;
         float tw = thick < 1F ? thick * rx : thick, ty = tw * ry / rx;

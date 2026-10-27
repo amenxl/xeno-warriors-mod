@@ -16,7 +16,10 @@ public final class Cel {
 
     private Cel() {}
 
-    public static boolean on() { return ClientSettings.celShading(); }
+    /** Forces cel-shading on for a moment (the main menu's character art is always cel-shaded). */
+    public static boolean force;
+
+    public static boolean on() { return force || ClientSettings.celShading(); }
 
     /** The cel-shaded version of this texture (…_cel.png) when cel-shading is on and one exists. */
     public static ResourceLocation tex(ResourceLocation rl) {

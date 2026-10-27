@@ -40,12 +40,31 @@ public class PlayerStatsScreen extends Screen {
         super(Component.literal("Warriors"));
     }
 
+    /** The M key: the main menu (which opens these tabs). */
     public static void open() {
-        Minecraft.getInstance().setScreen(new PlayerStatsScreen());
+        Minecraft.getInstance().setScreen(new com.xenowarriors.client.menu.MainMenuScreen());
         ModNetwork.sendToServer(new PlayerStatsRequestPacket());
     }
 
+    /** Opens straight on a tab; Esc goes back to {@code parent} (the main menu). */
+    public static void openTab(Screen parent, int t) {
+        tab = t;
+        PlayerStatsScreen s = new PlayerStatsScreen();
+        s.parent = parent;
+        Minecraft.getInstance().setScreen(s);
+        ModNetwork.sendToServer(new PlayerStatsRequestPacket());
+    }
+
+    private Screen parent;
+
+    @Override
+    public void onClose() {
+        if (parent != null) minecraft.setScreen(parent);
+        else super.onClose();
+    }
+
     public static void receive(List<PlayerStatsPacket.Entry> list, PlayerStatsPacket.Me me) {
+        if (Minecraft.getInstance().screen instanceof com.xenowarriors.client.menu.MainMenuScreen mm) mm.receive(list);
         if (Minecraft.getInstance().screen instanceof PlayerStatsScreen s) {
             s.players = list;
             s.me = me;
@@ -110,7 +129,7 @@ public class PlayerStatsScreen extends Screen {
         layoutOutfits();
         realm = addRenderableWidget(Button.builder(Component.literal("Enter the Hekublade"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade realm");
-            onClose();
+            minecraft.setScreen(null);
         }).bounds(width / 2 - 75, height - 46, 150, 20).build());
         plea = addRenderableWidget(Button.builder(Component.literal("Ask to be freed"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade plea");
@@ -231,7 +250,7 @@ public class PlayerStatsScreen extends Screen {
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
         if (ModKeyMappings.STATS_MENU.matches(key, scan)) {
-            onClose();
+            minecraft.setScreen(null);
             return true;
         }
         return super.keyPressed(key, scan, mods);
@@ -257,7 +276,7 @@ public class PlayerStatsScreen extends Screen {
         else if (players.isEmpty()) g.drawCenteredString(font, "Loading...", width / 2, 50, 0xAAAAAA);
         else if (tab == 0) renderPlayers(g);
         else renderMe(g);
-        g.drawCenteredString(font, "M or Esc to close", width / 2, height - 12, 0x666666);
+        g.drawCenteredString(font, parent != null ? "Esc: back to the menu   M: close" : "M or Esc to close", width / 2, height - 12, 0x666666);
         String money = "Money: " + com.xenowarriors.economy.Money.fmt(ClientMoney.get());
         g.drawString(font, money, width - font.width(money) - 8, height - 12, 0x7CE07C);
         super.render(g, mouseX, mouseY, partialTick);

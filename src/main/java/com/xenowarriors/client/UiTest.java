@@ -86,13 +86,14 @@ public final class UiTest {
         if ("partyui".equals(System.getenv("XW_UITEST_FOCUS"))) { partyUi(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
         if ("underlight".equals(System.getenv("XW_UITEST_FOCUS"))) { underlight(mc, l); return l; }
+        if ("mainmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { mainMenu(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
         l.add(new Step("select_screen", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20));
         for (int t = 0; t < 4; t++) {
             int tt = t;
-            l.add(new Step("menu_tab" + t, () -> { PlayerStatsScreen.presetTab(tt); PlayerStatsScreen.open(); }, 25));
+            l.add(new Step("menu_tab" + t, () -> PlayerStatsScreen.openTab(null, tt), 25));
         }
         l.add(new Step("skills", () -> mc.setScreen(new SkillLoadoutScreen(null)), 20));
         l.add(new Step("ka_guide", () -> mc.setScreen(new KaGuideScreen(null)), 20));
@@ -607,6 +608,26 @@ public final class UiTest {
             }
         }
         l.add(new Step(null, () -> { mc.setScreen(null); ClientSettings.setCelShading(false); }, 5));
+    }
+
+    /** The new M main menu with a few characters (its colours follow the character), at a few GUI scales. */
+    private static void mainMenu(Minecraft mc, List<Step> l) {
+        Object[][] who = {{CharacterType.MIKIKO, 0, 0}, {CharacterType.RHALIX, 0, 3}, {CharacterType.KYRIE, 0, 5}, {CharacterType.GARRY, 0, 1},
+                {CharacterType.ZANE, 0, 6}, {CharacterType.SAM, 2, 2}, {CharacterType.KAERU, 0, 4}, {CharacterType.AIONI, 0, 0}};
+        for (int gs : new int[]{0, 3}) {
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.guiScale().set(gs); mc.resizeDisplay(); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 10));
+            for (Object[] w : who) {
+                CharacterType t = (CharacterType) w[0];
+                int o = (Integer) w[1], sel = (Integer) w[2];
+                if (gs == 3 && t != CharacterType.MIKIKO && t != CharacterType.KYRIE) continue;
+                l.add(new Step(null, () -> { mc.setScreen(null); character(t); outfit(o); hold(null); }, 50));
+                l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(sel); }, 40));
+                l.add(new Step("mainmenu_" + t.getId() + (gs == 3 ? "_gs3" : ""), () -> {}, 3));
+            }
+        }
+        l.add(new Step(null, () -> { PlayerStatsScreen.openTab(mc.screen, 2); }, 30));
+        l.add(new Step("mainmenu_outfits_from_menu", () -> {}, 3));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
     }
 
     /** The ground under the Royal Capital (should be lit, not in a dark shadow), by day and by night. */
