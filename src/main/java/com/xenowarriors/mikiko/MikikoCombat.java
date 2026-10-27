@@ -57,7 +57,8 @@ public final class MikikoCombat {
         float charge = Math.max(0.25F, event.getAmount());
         event.setAmount(DAMAGE[step] * charge);
         LivingEntity target = event.getEntity();
-        Vec3 dir = target.position().subtract(player.position()).normalize();
+        // pushed the way he's facing (even if a lunge carried him level with or past them)
+        Vec3 dir = Vec3.directionFromRotation(0, player.getYRot());
         if (step == 2) target.push(dir.x * 0.5, 0.25, dir.z * 0.5);          // the kick
         if (step >= 3) {
             boolean lit = com.xenowarriors.mikiko.Hekublade.rollFire(target, 2);   // only very rarely sets them alight

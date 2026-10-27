@@ -124,8 +124,7 @@ public final class ComboServer {
     /** Stagger, and the finisher's / heavy's send-off. */
     private static void after(Ctx c, LivingEntity t) {
         if (!c.landed || !(t.level() instanceof ServerLevel l)) return;
-        Vec3 dir = t.position().subtract(c.attacker.position()).multiply(1, 0, 1);
-        dir = dir.lengthSqr() < 1.0E-4 ? c.attacker.getLookAngle().multiply(1, 0, 1).normalize() : dir.normalize();
+        Vec3 dir = Vec3.directionFromRotation(0, c.attacker.getYRot());     // the way the hit is thrown
         double y = t.getY() + t.getBbHeight() * 0.6;
         if (c.heavy) {
             Stagger.hit(t, 22, true);
