@@ -15,13 +15,13 @@ def lock(f, root, d, ln, w, cols, thick=0.8, taper=(0.62, 0.3)):
 def horn(f, root, d, ln, w, col, tip=None):
     core.lock(Adapter(f), 'Head', root, d, ln, w, w, (col, col, tip or col), wide='x', taper=(0.7, 0.4), tip_len=(0.35, 0.3))
 
-def hood(f, rim=None, inner='#2a1a1a', tail=True):
+def hood(f, rim=None, inner='#2a1a1a', tail=True, col=BLK):
     """SR hood up: black, optional red rim framing the face (Kill/Keita/Logan's red-rimmed hood)."""
-    f.add('head', [-4.75, 23.9, -3.4], [4.75, 33.4, 4.9], BLK, {'top': lambda x, y: BLK2 if abs(x - .5) < .08 else BLK})
-    f.add('head', [-4.75, 31.4, -5.1], [4.75, 33.4, -3.4], BLK)              # brim over the brow
+    f.add('head', [-4.75, 23.9, -3.4], [4.75, 33.4, 4.9], col, {'top': lambda x, y: BLK2 if col == BLK and abs(x - .5) < .08 else col})
+    f.add('head', [-4.75, 31.4, -5.1], [4.75, 33.4, -3.4], col)              # brim over the brow
     for s in (1, -1):
         x0, x1 = (3.9, 4.75) if s > 0 else (-4.75, -3.9)
-        f.add('head', [x0, 24.4, -5.1], [x1, 31.4, -3.4], BLK)
+        f.add('head', [x0, 24.4, -5.1], [x1, 31.4, -3.4], col)
     if rim:
         f.add('head', [-3.95, 30.8, -5.25], [3.95, 31.5, -5.05], rim)             # red rim: brow (the V dips in the middle)
         f.add('head', [-0.7, 30.2, -5.3], [0.7, 30.9, -5.05], rim)
@@ -29,8 +29,8 @@ def hood(f, rim=None, inner='#2a1a1a', tail=True):
             x0, x1 = (3.25, 3.95) if s > 0 else (-3.95, -3.25)
             f.add('head', [x0, 24.4, -5.25], [x1, 31.5, -5.05], rim)
     if tail:                                                                  # the hood's pointed tail flopping back
-        f.add('head', [-1.6, 31.0, 4.9], [1.6, 33.0, 6.6], BLK)
-        f.add('head', [-1.0, 30.0, 6.6], [1.0, 32.0, 8.0], BLK)
+        f.add('head', [-1.6, 31.0, 4.9], [1.6, 33.0, 6.6], col)
+        f.add('head', [-1.0, 30.0, 6.6], [1.0, 32.0, 8.0], col)
 
 def hoodie_body(f, trim, eye=True, eye_col=WHT):
     shell(f, 'body', [-4, 11.5, -2], [4, 24, 2], 0.45, BLK2)
@@ -78,8 +78,8 @@ def senju(f):
     """Senju, the SR leader (manga ref): black hood with a grey inner rim dipping to a V, black hair over his face,
     a grey wrap-front tunic with two rings on the chest and fishnet in the V, dark belt, fishnet arm guards,
     black fingerless gloves, baggy grey trousers, tall black boots, black cape."""
-    TUN, TUN2, NET = '#55505c', '#3e3a44', '#2a272e'
-    hood(f, rim='#7a7480', tail=True)
+    TUN, TUN2, NET, CAPE = '#7a5434', '#5e3e26', '#3a2a1e', '#3e2818'     # he wears brown
+    hood(f, rim='#8a6644', tail=True, col=CAPE)
     for x, ln in ((-3.1, 5.5), (-0.4, 2.6), (1.2, 2.2), (3.1, 5.0)):
         lock(f, [x, 31.2, -4.9], [0.06 * x, -1, -0.12], ln, 1.4 if abs(x) > 2 else 1.6, ('#0e0c10', '#0e0c10', '#1a1620'))
     def wrap(x, y):                                       # wrap-front: dark diagonal edge from his right shoulder to the left hip
@@ -95,9 +95,9 @@ def senju(f):
         f.add('body', [x, 20.0, -2.6], [x + 1.6, 21.6, -2.45], '#d8d4dc', {'front': lambda u, v: (0, 0, 0, 0) if abs(u - .5) < .2 and abs(v - .5) < .2 else '#d8d4dc'})
     f.add('body', [-4.5, 12.4, -2.55], [4.5, 13.6, 2.55], '#1e1c22')                 # belt
     f.add('body', [-1.0, 12.5, -2.7], [0.6, 13.5, -2.55], '#6a6670')
-    f.add('body', [-4.4, 4.0, 2.2], [4.4, 24.2, 3.0], '#0e0c10',
-          {'back': lambda x, y: '#1a181e' if int(x * 9) % 3 == 0 else '#0e0c10'})        # cape
-    f.add('body', [-4.8, 22.4, -2.7], [4.8, 24.6, 3.0], '#0e0c10')                   # cape over the shoulders
+    f.add('body', [-4.4, 4.0, 2.2], [4.4, 24.2, 3.0], CAPE,
+          {'back': lambda x, y: '#4a3220' if int(x * 9) % 3 == 0 else CAPE})        # cape
+    f.add('body', [-4.8, 22.4, -2.7], [4.8, 24.6, 3.0], CAPE)                   # cape over the shoulders
     f.both('right_arm', [3.45, 15.0, -2.45], [8.55, 24.4, 2.45], TUN)                # long sleeves
     f.both('right_arm', [3.4, 14.0, -2.5], [8.6, 18.0, 2.5], NET,
            {k: (lambda x, y: '#4a4650' if (int(x * 8) + int(y * 8)) % 2 else NET) for k in ('front', 'back', 'right', 'left')})   # fishnet guards
@@ -109,7 +109,7 @@ def senju(f):
 def kill(f):
     hood(f, rim=RED)
     for x in (-2.6, -0.8, 1.2, 2.8):
-        lock(f, [x, 31.0, -4.9], [0.1 * x, -1, -0.2], 2.4, 1.4, ('#5a3020', '#5a3020', '#6a3a26'))
+        lock(f, [x, 31.0, -4.9], [0.1 * x, -1, -0.2], 2.4, 1.4, ('#121014', '#121014', '#1e1a22'))
     sr_uniform(f)
 
 def keita(f):
@@ -215,12 +215,12 @@ def bare(skin, shirt, pantsc, shoesc, sleeve=12, pl=12):
 
 SPECS = {
     'sr_senju': dict(name='Senju (SR Leader)', fit=senju, skin='#a87458', eyes='#d01818', hair=['#0e0c10', '#1a1620'],
-                     paint=bare(0, '#55505c', '#3e3a44', '#0e0c10'), eye=EYE_NARROW, brow=['.........', 'kkkkkk...'], mouth=['.kk.'], mouth_x=14, mouth_y=25, face_extra=[scar],
+                     paint=bare(0, '#7a5434', '#5e3e26', '#0e0c10'), eye=EYE_NARROW, brow=['.........', 'kkkkkk...'], mouth=['.kk.'], mouth_x=14, mouth_y=25, face_extra=[scar],
                      wing=('falcon', (0.16, 0.13, 0.15))),
     'sr_logan': dict(name='Logan', fit=logan, skin='#e2b096', eyes='#b81818', hair=['#c8a034', '#8a6420'],
                      paint=bare(0, BLK2, '#121014', '#141216', 5, 7), eye=EYE_SPIRAL, mouth=SHARP, mouth_x=11, mouth_y=24, face_extra=[crescents],
                      wing=('hawk', (1.0, 0.86, 0.3))),
-    'sr_kill': dict(name='Kill', fit=kill, skin='#d6a088', eyes='#3a2218', hair=['#5a3020', '#6a3a26'],
+    'sr_kill': dict(name='Kill', fit=kill, skin='#d6a088', eyes='#3a2218', hair=['#121014', '#1e1a22'],
                     paint=bare(0, BLK2, '#121014', '#141216', 5, 7), mouth=['kkkkkkkk', '.WWWWWW.', '..kkkk..'], mouth_x=12, mouth_y=24,
                     face_extra=[marks_kill, star_eye(0), star_eye(1)], wing=('tattered', (0.3, 0.26, 0.34))),
     'sr_keita': dict(name='Keita', fit=keita, skin='#dca890', eyes='#d01818', hair=['#1a1e6a', '#2a32a0'],
