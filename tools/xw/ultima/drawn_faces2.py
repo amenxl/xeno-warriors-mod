@@ -14,8 +14,8 @@ def lerp(a, b, t): return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(len
 
 
 class F:
-    def __init__(self, skin=(232, 170, 112), iris=(60, 242, 170), hair='spiky'):
-        self.S, self.I, self.hair = skin, iris, hair
+    def __init__(self, skin=(232, 170, 112), iris=(60, 242, 170), hair='spiky', soft=False):
+        self.S, self.I, self.hair, self.soft = skin, iris, hair, soft
         self.im = Image.new('RGBA', (N * SS, N * SS), (0, 0, 0, 0))
         self.d = ImageDraw.Draw(self.im)
 
@@ -65,6 +65,7 @@ class F:
 
     # ------------------------------------------------------------------ hair locks over the face
     def locks(self):
+        if self.hair == 'none': return
         if self.hair == 'dreads': return self.dreads()
         r = random.Random(3)
         spec = [(-4, 0, 30, 46, 14), (8, 0, 22, 40, 12), (20, 0, 34, 52, 13), (40, 0, 56, 74, 12),      # (x0 top, , x1, bottom y, width)
@@ -114,6 +115,15 @@ class F:
         self.line([(70, 102.4), (72, 107), (73.5, 101.6)], INK, 0.8)
         self.line([(47, 99), (45, 96.5)], INK, 1.2); self.line([(81, 97), (84, 94.5)], INK, 1.2)
 
+    def smile(self):
+        """A warm, open smile with a little fang."""
+        pts = [(50, 100), (78, 100), (74, 106.5), (64, 109.5), (54, 106.5)]
+        self.poly(pts, (250, 248, 246, 255))
+        self.poly([(69, 100.5), (72.5, 100.5), (71, 104.5)], (250, 248, 246, 255))
+        self.line([(48, 98.5), (50, 100), (64, 101.5), (78, 100), (80, 98.5)], INK, 1.7)
+        self.line([(54, 106.5), (64, 109.5), (74, 106.5)], INK, 1.3)
+        self.line([(69, 100.8), (71, 104.5), (72.5, 100.8)], INK, 0.7)
+
     def glow_eyes(self, col=(255, 90, 20)):
         g = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
         for cx in (35, 93): self.ell(cx, 66, 18, 8, col + (190,), g)
@@ -149,6 +159,7 @@ class F:
         h_top = {'sharp': 10, 'wide': 14.5, 'calm': 8, 'glare': 7.5, 'bored': 5}[kind]
         h_bot = {'sharp': 7, 'wide': 10.5, 'calm': 6.5, 'glare': 6, 'bored': 6}[kind]
         tilt = {'sharp': 4.5, 'wide': 2, 'calm': 2.5, 'glare': 7, 'bored': 0.8}[kind]       # outer corner higher -> fierce
+        if self.soft: tilt *= 0.3
         inner, outer = (cx - o * 17, cy + 2), (cx + o * 20, cy - tilt + 1.5)
         top_mid = (cx + o * 1, cy - h_top)
         bot_mid = (cx + o * 0, cy + h_bot)
@@ -168,7 +179,8 @@ class F:
             lay.paste(c + (255,), (0, 0), band)
         ld.ellipse(((ix - ir) * SS, (iy - ir) * SS, (ix + ir) * SS, (iy + ir) * SS), outline=lerp(I, (0, 0, 0), 0.85) + (255,), width=int(1.1 * SS))
         ld.ellipse(((ix - ir * 0.62) * SS, (iy - ir * 0.62) * SS, (ix + ir * 0.62) * SS, (iy + ir * 0.62) * SS), outline=lerp(I, (255, 255, 255), 0.5) + (180,), width=int(0.6 * SS))
-        ld.ellipse(((ix - 2.2) * SS, (iy - 5.2) * SS, (ix + 2.2) * SS, (iy + 5.2) * SS), fill=lerp(I, (0, 0, 0), 0.92) + (255,))       # slit pupil
+        pr = (3.4, 3.6) if self.soft else (2.2, 5.2)
+        ld.ellipse(((ix - pr[0]) * SS, (iy - pr[1]) * SS, (ix + pr[0]) * SS, (iy + pr[1]) * SS), fill=lerp(I, (0, 0, 0), 0.92) + (255,))       # slit pupil
         ld.ellipse(((ix - 6.4) * SS, (iy - 7.0) * SS, (ix - 2.0) * SS, (iy - 2.6) * SS), fill=(255, 255, 255, 255))   # highlights
         ld.ellipse(((ix + 3.0) * SS, (iy + 2.8) * SS, (ix + 5.2) * SS, (iy + 5.0) * SS), fill=(255, 255, 255, 220))
         self.im.paste(lay, (0, 0), mask)

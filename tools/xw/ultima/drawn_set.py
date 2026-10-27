@@ -69,20 +69,26 @@ SET = {
 
 CHARS = {
     'ultima': dict(skin=(232, 170, 112), iris=(60, 242, 170), hair='spiky', shade=1.0, scar=True, glow=True, brow_y=46, eye_y=66, grin='smug_grin'),
-    'mikiko': dict(skin=(132, 82, 52), iris=(250, 150, 30), hair='dreads', shade=0.55, scar=False, glow=True, brow_y=50, eye_y=67, grin='fang'),
+    'mikiko': dict(skin=(132, 82, 52), iris=(250, 150, 30), hair='none', soft=True, shade=0.35, scar=False, glow=False, brow_y=50, eye_y=67, grin='fang'),
 }
 # per-character tweaks on top of SET
-EXTRA = {'mikiko': {'annoyed': {'anger': True}, 'rage': {'anger': True, 'glow_eyes': True}, 'fierce': {'anger': True}}}
+EXTRA = {'mikiko': {'annoyed': {'anger': True, 'keep_angry': True}, 'rage': {'anger': True, 'glow_eyes': True, 'keep_angry': True}, 'fierce': {'keep_angry': True},
+                   'shout': {'keep_angry': True}, 'strained': {'keep_angry': True}, 'focused': {'keep_angry': True}, 'concentrate': {'keep_angry': True},
+                   'glitch': {'keep_angry': True}}}
 
 def face(eL, eR, brows, mouth, o, c=None):
     c = c or CHARS['ultima']
-    f = D.F(c['skin'], c['iris'], c['hair'])
+    f = D.F(c['skin'], c['iris'], c['hair'], c.get('soft', False))
     f.skin(c['shade'])
+    if c.get('soft'):                         # friendlier: brows only angry when he really is
+        if brows == 'angry' and not o.get('keep_angry'): brows = 'flat'
+        if (eL, eR) == ('sharp', 'sharp') and not o.get('keep_angry'): eL = eR = 'calm'
+        elif eL == 'sharp' and eR == 'wink_closed': eL = 'calm'
     for i, (side, cx) in enumerate(((-1, 35), (1, 93))):
         f.brow(cx, c['brow_y'], side, brows)
         f.eye(cx, c['eye_y'], side, (eL, eR)[i], o.get('look', 0.0), c['glow'], c['scar'] and side == -1, o.get('lookY', 0.0))
     f.nose()
-    if mouth == 'smug_grin' and c['grin'] == 'fang': f.fang_grin()
+    if mouth == 'smug_grin' and c['grin'] == 'fang': f.smile()
     else: f.mouth(mouth)
     if o.get('blush'): f.blush()
     if o.get('tint'): f.tint(o['tint'])
