@@ -1,5 +1,7 @@
 package com.xenowarriors.skill;
 
+import com.xenowarriors.network.SkillAnimPacket;
+
 import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.character.ModCapabilities;
 import com.xenowarriors.karma.Karma;
@@ -144,6 +146,8 @@ public final class SkillManager {
             // a blast aimed at someone charging their own: CLASH instead
             boolean clash = skill.clashColor() >= 0 && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
             if (clash || skill.use(player)) {
+                Integer gen = SkillAnimPacket.GENERIC.get(skill.getId());          // newer skills: a general move to go with them
+                if (gen != null && !clash) ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), gen, !player.onGround()), player);
                 com.xenowarriors.XwFx.send(player.serverLevel(), slot == ULTIMATE_SLOT ? com.xenowarriors.network.FxPacket.ULTIMATE : com.xenowarriors.network.FxPacket.SKILL,
                         player.getX(), player.getY(), player.getZ(), type.getColor(), slot == ULTIMATE_SLOT ? 6F : 1F);
                 if (!player.isCreative()) Karma.add(player, -cost);

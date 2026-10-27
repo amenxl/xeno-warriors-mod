@@ -48,6 +48,9 @@ public final class SkillAnimations {
             case SkillAnimPacket.MANIFEST -> 40;
             case SkillAnimPacket.EMPATHY -> 16;
             case SkillAnimPacket.KA_RELEASE -> 14;
+            case SkillAnimPacket.CAST -> 16; case SkillAnimPacket.SLASH -> 14; case SkillAnimPacket.DASH -> 10; case SkillAnimPacket.SHOOT -> 18;
+            case SkillAnimPacket.RAISE -> 28; case SkillAnimPacket.GROUND -> 16; case SkillAnimPacket.TYPE -> 20; case SkillAnimPacket.SWING -> 14;
+            case SkillAnimPacket.GUARD -> 20; case SkillAnimPacket.PUNCH -> 10;
             default -> KISHI_DURATION;
         };
     }
@@ -78,6 +81,10 @@ public final class SkillAnimations {
             case SkillAnimPacket.MANIFEST -> manifest(model, t);
             case SkillAnimPacket.EMPATHY -> empathy(model, t);
             case SkillAnimPacket.KA_RELEASE -> kaRelease(model, t);
+            case SkillAnimPacket.CAST -> cast(model, t); case SkillAnimPacket.SLASH -> slash(model, t); case SkillAnimPacket.DASH -> dash(model, t);
+            case SkillAnimPacket.SHOOT -> shoot(model, t); case SkillAnimPacket.RAISE -> raise(model, t); case SkillAnimPacket.GROUND -> ground(model, t);
+            case SkillAnimPacket.TYPE -> typing(model, t); case SkillAnimPacket.SWING -> swing(model, t); case SkillAnimPacket.GUARD -> guard(model, t);
+            case SkillAnimPacket.PUNCH -> punch(model, t);
             default -> kishi(model, t, anim.airborne());
         }
         return true;
@@ -373,6 +380,108 @@ public final class SkillAnimations {
         pose(m.rightLeg, w, 0F, 0F, 0.25F * burst);
         pose(m.leftLeg, w, 0F, 0F, -0.25F * burst);
         m.head.xRot -= 0.35F * burst * w;
+    }
+
+    // ------------------------------------------------------------------ general moves for the newer characters
+
+    /** Cast: the right hand thrown out where they're looking, the other drawn back, feet braced. */
+    private static void cast(HumanoidModel<?> m, float t) {
+        float w = weight(t, 16, 3F, 10F); if (w <= 0F) return;
+        float aimX = m.head.xRot - (float) Math.PI / 2F, aimY = m.head.yRot;
+        float push = smooth((t - 1F) / 4F);
+        pose(m.rightArm, w, lerp(-0.6F, aimX, push), lerp(0.3F, aimY, push), 0F);
+        pose(m.leftArm, w, 0.35F, 0F, -0.35F);
+        pose(m.rightLeg, w, -0.25F, 0F, 0.08F); pose(m.leftLeg, w, 0.3F, 0F, -0.08F);
+        m.body.yRot = lerp(m.body.yRot, -0.2F * push, w);
+    }
+
+    /** Slash / thrust: the weapon arm up high and cutting down across the body. */
+    private static void slash(HumanoidModel<?> m, float t) {
+        float w = weight(t, 14, 2F, 9F); if (w <= 0F) return;
+        float cut = smooth((t - 2F) / 4F);
+        pose(m.rightArm, w, lerp(-2.6F, -0.6F, cut), lerp(-0.3F, 0.7F, cut), lerp(0.2F, -0.2F, cut));
+        pose(m.leftArm, w, -0.4F, 0F, -0.3F);
+        m.body.yRot = lerp(m.body.yRot, lerp(-0.35F, 0.35F, cut), w);
+        pose(m.rightLeg, w, -0.35F, 0F, 0.05F); pose(m.leftLeg, w, 0.35F, 0F, -0.05F);
+    }
+
+    /** Dash: leaning hard into it, weapon arm out front, the other swept back. */
+    private static void dash(HumanoidModel<?> m, float t) {
+        float w = weight(t, 10, 1.5F, 7F); if (w <= 0F) return;
+        m.body.xRot = lerp(m.body.xRot, 0.45F, w);
+        pose(m.rightArm, w, -1.4F, 0.2F, 0.1F);
+        pose(m.leftArm, w, 0.9F, 0F, -0.2F);
+        pose(m.rightLeg, w, -0.6F, 0F, 0F); pose(m.leftLeg, w, 0.7F, 0F, 0F);
+        m.head.xRot = lerp(m.head.xRot, -0.3F, w);
+    }
+
+    /** Shoot: both arms out at the target, jolting with each shot. */
+    private static void shoot(HumanoidModel<?> m, float t) {
+        float w = weight(t, 18, 2F, 13F); if (w <= 0F) return;
+        float aimX = m.head.xRot - (float) Math.PI / 2F, aimY = m.head.yRot;
+        float kick = (float) Math.abs(Math.sin(t * 1.6F)) * 0.18F;
+        pose(m.rightArm, w, aimX - kick, aimY - 0.15F, 0F);
+        pose(m.leftArm, w, aimX - kick * 0.8F, aimY + 0.15F, 0F);
+        pose(m.rightLeg, w, -0.2F, 0F, 0.1F); pose(m.leftLeg, w, 0.25F, 0F, -0.1F);
+    }
+
+    /** Raise: both arms up and out, chest open to the sky - for ultimates and power-ups. */
+    private static void raise(HumanoidModel<?> m, float t) {
+        float w = weight(t, 28, 5F, 20F); if (w <= 0F) return;
+        float up = smooth(t / 8F);
+        float shake = (float) Math.sin(t * 2.4F) * 0.03F * up;
+        pose(m.rightArm, w, lerp(-0.5F, -2.8F, up) + shake, 0F, lerp(0.3F, 0.55F, up));
+        pose(m.leftArm, w, lerp(-0.5F, -2.8F, up) - shake, 0F, lerp(-0.3F, -0.55F, up));
+        m.head.xRot = lerp(m.head.xRot, -0.45F * up, w);
+        m.body.xRot = lerp(m.body.xRot, -0.1F * up, w);
+        pose(m.rightLeg, w, 0F, 0F, 0.12F); pose(m.leftLeg, w, 0F, 0F, -0.12F);
+    }
+
+    /** Ground: arms up, then both fists slam down into the ground with the knees bent. */
+    private static void ground(HumanoidModel<?> m, float t) {
+        float w = weight(t, 16, 2F, 11F); if (w <= 0F) return;
+        float lift = smooth(t / 4F), slam = smooth((t - 4F) / 2.5F);
+        float armX = lerp(lerp(0F, -2.9F, lift), -0.4F, slam);
+        pose(m.rightArm, w, armX, 0F, 0.15F); pose(m.leftArm, w, armX, 0F, -0.15F);
+        m.body.xRot = lerp(m.body.xRot, 0.5F * slam, w);
+        pose(m.rightLeg, w, -0.5F * slam, 0F, 0.15F); pose(m.leftLeg, w, -0.5F * slam, 0F, -0.15F);
+    }
+
+    /** Typing: hands low in front, fingers going, head down at the screen. */
+    private static void typing(HumanoidModel<?> m, float t) {
+        float w = weight(t, 20, 3F, 15F); if (w <= 0F) return;
+        float a = (float) Math.sin(t * 1.4F) * 0.08F, b = (float) Math.sin(t * 1.4F + 1.7F) * 0.08F;
+        pose(m.rightArm, w, -0.7F + a, -0.2F, 0.1F); pose(m.leftArm, w, -0.7F + b, 0.2F, -0.1F);
+        m.head.xRot = lerp(m.head.xRot, 0.35F, w);
+    }
+
+    /** Swing: a big two-handed swing (bat, broom, great cut) from behind the shoulder right across. */
+    private static void swing(HumanoidModel<?> m, float t) {
+        float w = weight(t, 14, 2F, 10F); if (w <= 0F) return;
+        float s = smooth((t - 2F) / 4F);
+        float yaw = lerp(-1.2F, 1.0F, s);
+        pose(m.rightArm, w, -1.5F, yaw, 0F); pose(m.leftArm, w, -1.4F, yaw + 0.45F, 0F);
+        m.body.yRot = lerp(m.body.yRot, lerp(-0.7F, 0.6F, s), w);
+        pose(m.rightLeg, w, -0.3F, 0F, 0.1F); pose(m.leftLeg, w, 0.3F, 0F, -0.1F);
+    }
+
+    /** Guard: arms crossed in front, braced. */
+    private static void guard(HumanoidModel<?> m, float t) {
+        float w = weight(t, 20, 3F, 14F); if (w <= 0F) return;
+        pose(m.rightArm, w, -1.45F, -0.75F, 0F); pose(m.leftArm, w, -1.3F, 0.75F, 0F);
+        m.head.xRot = lerp(m.head.xRot, 0.15F, w);
+        pose(m.rightLeg, w, -0.15F, 0F, 0.12F); pose(m.leftLeg, w, 0.15F, 0F, -0.12F);
+    }
+
+    /** Punch: a straight right, the shoulder and body behind it. */
+    private static void punch(HumanoidModel<?> m, float t) {
+        float w = weight(t, 10, 1F, 6F); if (w <= 0F) return;
+        float hit = smooth((t - 1F) / 2F);
+        float aimX = m.head.xRot - (float) Math.PI / 2F;
+        pose(m.rightArm, w, lerp(-0.4F, aimX, hit), m.head.yRot, 0F);
+        pose(m.leftArm, w, -0.9F, 0.4F, -0.1F);
+        m.body.yRot = lerp(m.body.yRot, 0.35F * hit, w);
+        pose(m.rightLeg, w, 0.3F, 0F, 0F); pose(m.leftLeg, w, -0.35F, 0F, 0F);
     }
 
     private static float weight(float t, float duration, float in, float outStart) {

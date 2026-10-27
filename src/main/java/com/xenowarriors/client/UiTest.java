@@ -347,7 +347,8 @@ public final class UiTest {
             for (int i = 0; i < Math.min(5, pool.size()); i++) skills.add(pool.get(i).skill());
             if (com.xenowarriors.skill.SkillPool.ultimate(t) != null) skills.add(com.xenowarriors.skill.SkillPool.ultimate(t));
             for (com.xenowarriors.skill.Skill sk : skills) {
-                l.add(new Step(null, () -> server(p -> { p.setYRot(0); p.setXRot(0); try { sk.use(p); } catch (Exception ex) { XenoWarriors.LOGGER.warn("XW-UITEST skill {} failed", sk.getId(), ex); } }), 4));
+                l.add(new Step(null, () -> server(p -> { p.setYRot(0); p.setXRot(0); try { if (sk.use(p)) { Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(sk.getId());
+                    if (gen != null) com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(p.getId(), gen, false), p); } } catch (Exception ex) { XenoWarriors.LOGGER.warn("XW-UITEST skill {} failed", sk.getId(), ex); } }), 4));
                 for (int f = 0; f < 3; f++) l.add(new Step("allanim_" + t.getId() + "_" + sk.getId() + "_" + f, () -> {}, 5));
                 l.add(new Step(null, () -> {}, 40));                    // let it finish
             }
