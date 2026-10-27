@@ -347,6 +347,20 @@ public final class XenoCommands {
             p.serverLevel().addFreshEntity(z);
             return 1;
         }));
+        var srboss = Commands.literal("srboss").requires(s -> s.hasPermission(2));
+        for (int i = 0; i < com.xenowarriors.sr.SrMemberEntity.NAMED.length; i++) {
+            final int idx = i;
+            srboss.then(Commands.literal(com.xenowarriors.sr.SrMemberEntity.NAMED[i]).executes(ctx -> {
+                var p = ctx.getSource().getPlayerOrException();
+                var m = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(p.serverLevel());
+                if (m == null) return 0;
+                m.moveTo(p.getX() + 4, p.getY(), p.getZ(), 180, 0);
+                m.setup(2 + idx, p.blockPosition());
+                p.serverLevel().addFreshEntity(m);
+                return 1;
+            }));
+        }
+        root.then(srboss);
         root.then(Commands.literal("vr").executes(ctx -> { com.xenowarriors.vr.Vr.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("bounty").executes(ctx -> { com.xenowarriors.bounty.Bounties.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("collection").executes(ctx -> {

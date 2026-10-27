@@ -55,7 +55,29 @@ public class SrMemberEntity extends Monster {
 
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(DEMON, false); entityData.define(WINGS, false); }
 
-    public String look() { return "sr_" + (entityData.get(VARIANT) % 2 + 1); }
+    /** The named Sky Rebellion bosses (variants 2..8): each one rarely leads a camp. */
+    public static final String[] NAMED = {"senju", "logan", "kill", "keita", "maddie", "persephone", "ava"};
+    private static final String[] TITLES = {"Senju, SR Leader", "Logan", "Kill", "Keita", "Maddie", "Persephone", "Ava"};
+    private static final String[][] TAUNTS = {
+            {"You came all this way to kneel?", "Father's will is my blade."},
+            {"Heh. Fresh meat!", "Try and keep up!"},
+            {"Don't move. This'll be quick.", "You're in our camp now."},
+            {"Ooh, a visitor!", "Let's make this fun."},
+            {"...", "You shouldn't have looked at me."},
+            {"I don't want to do this. She does.", "Run. Please."},
+            {"Leave me alone.", "You'll regret waking me."}};
+    private final net.minecraft.server.level.ServerBossEvent bar = new net.minecraft.server.level.ServerBossEvent(Component.literal("SR"),
+            net.minecraft.world.BossEvent.BossBarColor.RED, net.minecraft.world.BossEvent.BossBarOverlay.NOTCHED_10);
+    private int specialCd = 80;
+
+    public int named() { return entityData.get(VARIANT) - 2; }
+    public boolean isNamed() { return named() >= 0 && named() < NAMED.length; }
+    public String key() { return isNamed() ? NAMED[named()] : ""; }
+
+    public String look() {
+        if (isNamed()) return "sr_" + key() + (demon() && (key().equals("persephone") || key().equals("ava")) ? "_demon" : "");
+        return "sr_" + (entityData.get(VARIANT) % 2 + 1);
+    }
     public boolean demon() { return entityData.get(DEMON); }
     /** Wings out: they're Skylanders, but only summon their wings when they need to fly. */
     public boolean wings() { return entityData.get(WINGS); }
@@ -105,6 +127,95 @@ public class SrMemberEntity extends Monster {
         setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(variant % 2 == 0 ? Items.IRON_SWORD : Items.STONE_SWORD));
         setDropChance(EquipmentSlot.MAINHAND, 0.05F);
         setPersistenceRequired();
+        if (isNamed()) makeBoss();
+    }
+
+    /** A named member: tougher, a boss bar, their own special move and loot. */
+    private void makeBoss() {
+        String k = key();
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(k.equals("senju") ? 300 : 200);
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(k.equals("senju") ? 14 : 11);
+        getAttribute(Attributes.ARMOR).setBaseValue(10);
+        getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(k.equals("kill") || k.equals("keita") ? 0.34 : 0.31);
+        getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0.6);
+        setHealth(getMaxHealth());
+        ItemStack hand = switch (k) {
+            case "senju" -> new ItemStack(Items.NETHERITE_SWORD);
+            case "logan", "kill", "keita" -> new ItemStack(Items.IRON_SWORD);
+            default -> ItemStack.EMPTY;
+        };
+        setItemSlot(EquipmentSlot.MAINHAND, hand);
+        setDropChance(EquipmentSlot.MAINHAND, 0F);
+        setCustomName(Component.literal(TITLES[named()]).withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
+        setCustomNameVisible(true);
+        xpReward = 120;
+        restrictTo(post == null ? blockPosition() : post, 14);
+    }
+
+    @Override public void startSeenByPlayer(net.minecraft.server.level.ServerPlayer p) { super.startSeenByPlayer(p); if (isNamed()) bar.addPlayer(p); }
+    @Override public void stopSeenByPlayer(net.minecraft.server.level.ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
+
+    @Override
+    public void setTarget(net.minecraft.world.entity.LivingEntity t) {
+        if (isNamed() && t instanceof Player p && getTarget() != t && !level().isClientSide)
+            p.sendSystemMessage(Component.literal(TITLES[named()] + ": ").withStyle(ChatFormatting.DARK_RED)
+                    .append(Component.literal(TAUNTS[named()][random.nextInt(2)]).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC)));
+        super.setTarget(t);
+    }
+
+    /** Each one's special move, every few seconds in a fight. */
+    private void special(net.minecraft.world.entity.LivingEntity t) {
+        ServerLevel l = (ServerLevel) level();
+        float dmg = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
+        switch (key()) {
+            case "senju" -> {        // Father's blade: a sweeping ring of red shards
+                for (int i = 0; i < 24; i++) {
+                    double a = i * Math.PI / 12;
+                    l.sendParticles(DARK, getX() + Math.cos(a) * 4, getY() + 1, getZ() + Math.sin(a) * 4, 3, .2, .4, .2, 0);
+                }
+                l.playSound(null, blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.2F, 0.6F);
+                for (var e : l.getEntitiesOfClass(Player.class, getBoundingBox().inflate(5))) { e.hurt(damageSources().mobAttack(this), dmg * 0.8F); e.knockback(1.0, getX() - e.getX(), getZ() - e.getZ()); }
+            }
+            case "logan" -> {        // wings out, up, and a diving strike
+                setWings(true);
+                setDeltaMovement(0, 1.1, 0); hurtMarked = true;
+                l.playSound(null, blockPosition(), SoundEvents.PHANTOM_SWOOP, SoundSource.HOSTILE, 1F, 1.2F);
+            }
+            case "kill", "keita" -> { // a dash slash straight through
+                Vec3 d = t.position().subtract(position()).normalize();
+                setDeltaMovement(d.x * 1.6, 0.2, d.z * 1.6); hurtMarked = true;
+                l.sendParticles(ParticleTypes.SWEEP_ATTACK, getX(), getY() + 1, getZ(), 4, .5, .3, .5, 0);
+                if (distanceTo(t) < 6) t.hurt(damageSources().mobAttack(this), dmg);
+                l.playSound(null, blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.HOSTILE, 1F, 1.4F);
+            }
+            case "maddie" -> {       // her KA: the red eye - meet her gaze and you're frozen in dread
+                for (var p : l.getEntitiesOfClass(Player.class, getBoundingBox().inflate(12), p -> p.hasLineOfSight(this))) {
+                    p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 3));
+                    p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 1));
+                    p.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0));
+                    p.displayClientMessage(Component.literal("Maddie's eye glows red...").withStyle(ChatFormatting.RED), true);
+                }
+                l.playSound(null, blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.HOSTILE, 1.5F, 1.2F);
+            }
+            default -> {             // the demons: a burst of dark fire
+                l.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1, getZ(), 50, 2, .6, 2, .05);
+                l.playSound(null, blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE, 1F, 0.6F);
+                for (var e : l.getEntitiesOfClass(Player.class, getBoundingBox().inflate(4))) { e.hurt(damageSources().mobAttack(this), dmg * (demon() ? 0.9F : 0.6F)); e.setSecondsOnFire(4); }
+            }
+        }
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource src, int looting, boolean hit) {
+        super.dropCustomDeathLoot(src, looting, hit);
+        if (!isNamed()) return;
+        spawnAtLocation(new ItemStack(Items.DIAMOND, 2 + random.nextInt(3 + looting)));
+        spawnAtLocation(new ItemStack(Items.EMERALD, 4 + random.nextInt(6)));
+        if (key().equals("senju")) spawnAtLocation(new ItemStack(Items.NETHERITE_SCRAP, 2));
+        if (random.nextFloat() < 0.5F) spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.SR_HOODIE.get()));
+        if (src.getEntity() instanceof Player p)
+            p.level().players().stream().filter(o -> o.distanceTo(this) < 48).forEach(o -> o.sendSystemMessage(
+                    Component.literal(TITLES[named()] + " has been defeated!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
     }
 
     /** Wearing the SR hoodie: they take you for one of their own. */
@@ -146,7 +257,13 @@ public class SrMemberEntity extends Monster {
             ServerLevel l = (ServerLevel) level();
             l.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1, getZ(), 30, .4, .8, .4, .08);
             l.playSound(null, blockPosition(), SoundEvents.WITHER_AMBIENT, SoundSource.HOSTILE, 0.7F, 1.4F);
-            setCustomName(Component.literal("SR Member (Demon Vessel)").withStyle(ChatFormatting.DARK_RED));
+            if (isNamed()) {
+                String k = key();
+                Component line = Component.literal(k.equals("persephone") ? "Persephone's horns break through - the demon is awake!"
+                        : k.equals("ava") ? "Ava's eyes turn red - the demon is awake!" : TITLES[named()] + "'s demon wakes up!");
+                l.players().stream().filter(o -> o.distanceTo(this) < 32).forEach(o -> o.sendSystemMessage(line.copy().withStyle(ChatFormatting.DARK_RED)));
+                bar.setColor(net.minecraft.world.BossEvent.BossBarColor.PURPLE);
+            } else setCustomName(Component.literal("SR Member (Demon Vessel)").withStyle(ChatFormatting.DARK_RED));
         }
         return r;
     }
@@ -157,6 +274,12 @@ public class SrMemberEntity extends Monster {
         if (level().isClientSide) return;
         if (leapCd > 0) leapCd--;
         var t = getTarget();
+        if (isNamed()) {
+            bar.setName(getDisplayName());
+            bar.setProgress(getHealth() / getMaxHealth());
+            if (specialCd > 0) specialCd--;
+            else if (t != null && distanceTo(t) < 10) { special(t); specialCd = 100 + random.nextInt(60); }
+        }
         // stuck: has a target, isn't getting closer on foot
         if (t != null && !wings()) { if (getNavigation().isDone() && distanceTo(t) > 3) stuck++; else stuck = Math.max(0, stuck - 2); }
         if (!wings() && needsFlight(t)) setWings(true);
@@ -179,7 +302,7 @@ public class SrMemberEntity extends Monster {
         if (post != null) t.putLong("Post", post.asLong());
     }
     @Override public void readAdditionalSaveData(CompoundTag t) {
-        super.readAdditionalSaveData(t); entityData.set(VARIANT, t.getInt("Variant")); entityData.set(DEMON, t.getBoolean("Demon")); setWings(t.getBoolean("Wings"));
+        super.readAdditionalSaveData(t); entityData.set(VARIANT, t.getInt("Variant")); if (hasCustomName()) bar.setName(getCustomName()); entityData.set(DEMON, t.getBoolean("Demon")); setWings(t.getBoolean("Wings"));
         if (t.contains("Post")) { post = BlockPos.of(t.getLong("Post")); restrictTo(post, 10); }
     }
 }

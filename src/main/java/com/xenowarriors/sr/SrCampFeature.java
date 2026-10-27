@@ -92,6 +92,18 @@ public class SrCampFeature extends Feature<NoneFeatureConfiguration> {
             m.setup(r.nextInt(2), b);
             l.addFreshEntityWithPassengers(m);
         }
+        // sometimes one of the named members leads the camp (Senju, the leader himself, is the rarest)
+        if (r.nextFloat() < 0.4F) {
+            SrMemberEntity boss = SrEntities.SR_MEMBER.get().create(l.getLevel());
+            if (boss != null) {
+                int pick = r.nextInt(13);
+                int idx = pick == 0 ? 0 : 1 + (pick - 1) % (SrMemberEntity.NAMED.length - 1);
+                boss.moveTo(b.getX() + .5, b.getY(), b.getZ() + 1.5, r.nextFloat() * 360F, 0);
+                boss.finalizeSpawn(l, l.getCurrentDifficultyAt(b), MobSpawnType.STRUCTURE, null, null);
+                boss.setup(2 + idx, b);
+                l.addFreshEntityWithPassengers(boss);
+            }
+        }
     }
 
     /** A small black A-frame tent, 3 wide, 4 deep, opening south. */
