@@ -490,10 +490,10 @@ public final class UiTest {
                 z.moveTo(p.getX(), p.getY(), p.getZ() + 1.7, 180, 0); z.setYHeadRot(180); z.yBodyRot = 180;
                 z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 20 * 600, 20, false, false));
                 z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
-                z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
+                z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1);   // stands its ground until the finisher (a push) launches it
                 p.serverLevel().addFreshEntity(z); ids[0] = z.getId();
                 var cam = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
-                double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.0, cz = p.getZ() + 2.2 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.0;
+                double cx = p.getX() + net.minecraft.util.Mth.sin(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.6, cz = p.getZ() + 2.4 - net.minecraft.util.Mth.cos(camYaw * net.minecraft.util.Mth.DEG_TO_RAD) * 4.6;
                 cam.moveTo(cx, p.getY() - 0.4, cz, camYaw, 5); cam.setNoGravity(true); cam.setInvisible(true); cam.setYHeadRot(camYaw);
                 p.serverLevel().addFreshEntity(cam); ids[1] = cam.getId();
             }), 20));
