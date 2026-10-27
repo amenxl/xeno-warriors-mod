@@ -143,12 +143,20 @@ public class PortraitScreen extends Screen {
 
     /** Draws the entity in the character's hero pose, turned by {@code yaw} degrees (also used by the main menu). */
     public static void drawCharacter(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int scale, float yaw) {
+        drawCharacter(g, e, type, x, y, scale, yaw, true);
+    }
+
+    /**
+     * Draws the entity turned by {@code yaw} degrees: in the character's hero pose holding their signature weapon
+     * ({@code heroPose}, portraits), or just as they are - their normal idle animation (the menus).
+     */
+    public static void drawCharacter(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int scale, float yaw, boolean heroPose) {
         if (e == null) return;
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
-        PortraitPoses.active = type.getId();
+        PortraitPoses.active = heroPose ? type.getId() : null;
         // hold their signature weapon for the picture (only on our copy here; put back right after)
-        net.minecraft.world.item.Item sig = PortraitPoses.held(type.getId());
+        net.minecraft.world.item.Item sig = heroPose ? PortraitPoses.held(type.getId()) : null;
         net.minecraft.world.item.ItemStack hand = e.getMainHandItem();
         boolean swap = sig != null && !hand.is(sig);
         if (swap) e.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(sig));

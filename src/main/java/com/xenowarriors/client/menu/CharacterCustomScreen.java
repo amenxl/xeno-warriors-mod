@@ -242,7 +242,7 @@ public class CharacterCustomScreen extends Screen {
         // the character
         if (mc.player != null) {
             Cel.force = true;
-            try { PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.25F), (int) (h * 1.13F), (int) (h * 0.52F), 22F); }
+            try { PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.25F), (int) (h * 1.13F), (int) (h * 0.52F), 22F, false); }   // their idle animation
             finally { Cel.force = false; }
         }
 

@@ -205,7 +205,7 @@ public class MainMenuScreen extends Screen {
         if (mc.player != null) {
             Cel.force = true;
             try {
-                PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.2F + slide), (int) (h * 1.12F), (int) (h * 0.5F), 24F);
+                PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.2F + slide), (int) (h * 1.12F), (int) (h * 0.5F), 24F, false);   // their idle animation
             } finally { Cel.force = false; }
         }
 
