@@ -17,7 +17,8 @@ public class YouSlotsScreen extends JourneyScreen {
         sc(g, "YOUR OWN WARRIORS", 14, 10, 1.4F, 0xFFFFFF);
         sc(g, "Warriors made with your own skin. Pick a name, race and element - each keeps its own level and skills.", 14, 26, 0.65F, 0x9AA8B8);
         int cw = 72, ch = 74, gx = 14, gy = 40;
-        for (int i = 0; i < YouSlot.SLOTS; i++) {
+        for (int slot = 0; slot < YouSlot.SLOTS; slot++) {
+            final int i = slot;
             int c = i % 5, r = i / 5;
             int x = gx + c * (cw + 4), y = gy + r * (ch + 6);
             YouSlot s = i < YouClient.slots.length ? YouClient.slots[i] : null;
