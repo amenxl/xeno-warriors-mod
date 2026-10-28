@@ -151,6 +151,7 @@ public final class LockOn {
         Player me = mc.player;
         if (me == null) return true;
         if (e.isInvulnerable() || peaceful(e)) return false;
+        if (e.isInvisible() && e.hasCustomName() && e.getCustomName().getString().endsWith("'s Hekublade")) return false;   // (Mikiko's floating blade)
         if (e instanceof Player p && (p.isCreative() || com.xenowarriors.client.party.PartyClient.inMyParty(p.getUUID()))) return false;
         if (e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame() && me.getUUID().equals(t.getOwnerUUID())) return false;
         if (e instanceof net.minecraft.world.entity.OwnableEntity o && me.getUUID().equals(o.getOwnerUUID())) return false;

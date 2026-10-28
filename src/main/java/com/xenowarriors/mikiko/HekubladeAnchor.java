@@ -76,6 +76,7 @@ public final class HekubladeAnchor {
         stand.setCustomName(Component.literal(p.getGameProfile().getName() + "'s Hekublade").withStyle(ChatFormatting.GOLD));
         stand.setCustomNameVisible(false);
         stand.addTag(TAG);
+        stand.getPersistentData().putBoolean("xw_mb_rolled", true);          // (never a mini-boss)
         stand.getPersistentData().putUUID(OWNER, p.getUUID());
         stand.getPersistentData().putDouble("xw_ax", x); stand.getPersistentData().putDouble("xw_ay", y + 0.3); stand.getPersistentData().putDouble("xw_az", z);
         ALLOWED.add(stand.getUUID());
@@ -121,10 +122,12 @@ public final class HekubladeAnchor {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttack(LivingAttackEvent event) {
         if (!(event.getEntity() instanceof Mob stand) || !stand.getTags().contains(TAG)) return;
+        if (event.getSource().is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)) return;      // (/kill still works)
         event.setCanceled(true);
         if (stand.level().isClientSide || stand.getPersistentData().getLong("xw_blade_hit") > stand.level().getGameTime()) return;
         stand.getPersistentData().putLong("xw_blade_hit", stand.level().getGameTime() + 10);
         Entity by = event.getSource().getEntity();
+        if (by instanceof net.minecraftforge.common.util.FakePlayer || by instanceof com.xenowarriors.bot.PartyBotEntity) return;   // (bots' swings don't count)
         if (!(by instanceof Player) && !(by instanceof Enemy)) return;          // (only people and monsters count)
         if (!stand.getPersistentData().hasUUID(OWNER)) return;
         UUID owner = stand.getPersistentData().getUUID(OWNER);
@@ -153,7 +156,7 @@ public final class HekubladeAnchor {
             var en = it.next();
             ServerPlayer owner = event.getServer().getPlayerList().getPlayer(en.getKey());
             Anchor a = en.getValue();
-            if (!testKeep && (owner == null || !HekubladeRealm.inRealm(owner))) {               // (out of the blade some other way)
+            if (!testKeep && (owner == null || !HekubladeRealm.inRealm(owner) || ModCapabilities.getType(owner) != com.xenowarriors.character.CharacterType.MIKIKO)) {               // (out of the blade some other way)
                 for (UUID id : new UUID[]{a.stand(), a.display()}) { if (id == null) continue; Entity e = a.level().getEntity(id); if (e != null) e.discard(); }
                 it.remove();
                 continue;
@@ -172,6 +175,17 @@ public final class HekubladeAnchor {
                 for (Mob m : a.level().getEntitiesOfClass(Mob.class, new AABB(stand.blockPosition()).inflate(12), m -> m instanceof Enemy && m.isAlive() && !m.getTags().contains(TAG)))
                     if ((m.getTarget() == null || !m.getTarget().isAlive()) && stand instanceof Mob as && m.getRandom().nextInt(3) == 0) m.setTarget(as);
         }
+    }
+
+    /** Logged back in inside the blade: it's floating where he went in again. */
+    @SubscribeEvent
+    public static void onLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer p) || !HekubladeRealm.inRealm(p) || ModCapabilities.getType(p) != com.xenowarriors.character.CharacterType.MIKIKO) return;
+        CompoundTag ret = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(c -> c.bladeReturn).orElse(new CompoundTag());
+        if (!ret.contains("x")) return;
+        var rl = net.minecraft.resources.ResourceLocation.tryParse(ret.getString("dim"));
+        ServerLevel l = rl == null ? null : p.server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, rl));
+        if (l != null) place(p, l, ret.getDouble("x"), ret.getDouble("y"), ret.getDouble("z"));
     }
 
     /** A leftover floating blade from before a restart (its owner isn't in the blade now): gone. */

@@ -64,6 +64,7 @@ public final class RoomTech {
     public static boolean is(Level l) { return l.dimension() == LEVEL; }
 
     public static void use(ServerPlayer p) {
+        if (com.xenowarriors.journey.Journey.inRun(p)) { p.displayClientMessage(Component.literal("Not on a Journey").withStyle(ChatFormatting.GRAY), true); return; }
         Room existing = BY_PLAYER.get(p.getUUID());
         if (existing != null) { close(p.server, existing, "You left the Room."); return; }
         if (is(p.level())) return;
@@ -80,7 +81,7 @@ public final class RoomTech {
         ROOMS.put(slot, r);
         BY_PLAYER.put(p.getUUID(), r);
         // pull in the enemies around you
-        List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m instanceof Enemy && m.isAlive() && !m.isPassenger());
+        List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m instanceof Enemy && m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor"));
         for (Mob m : mobs) {
             Vec3 to = toRoom(r, m.position());
             Entity moved = move(m, room, to, m.getYRot());

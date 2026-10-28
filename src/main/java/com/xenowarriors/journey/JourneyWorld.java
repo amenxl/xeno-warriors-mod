@@ -268,11 +268,12 @@ public final class JourneyWorld {
 
     /** With DragonMineZ: enemies keep up with your DragonMineZ power (bosses too). */
     static void scale(Mob m, float scale) {
+        m.getPersistentData().putFloat("xw_journey_dmz", scale);
         if (scale <= 1F) return;
         var mh = m.getAttribute(Attributes.MAX_HEALTH);
         if (mh != null) mh.addPermanentModifier(new AttributeModifier(DMZ, "Journey DragonMineZ", scale - 1F, AttributeModifier.Operation.MULTIPLY_TOTAL));
         var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (md != null) md.addPermanentModifier(new AttributeModifier(DMZ_DMG, "Journey DragonMineZ", scale - 1F, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        if (md != null) md.addPermanentModifier(new AttributeModifier(DMZ_DMG, "Journey DragonMineZ", Math.sqrt(scale) - 1F, AttributeModifier.Operation.MULTIPLY_TOTAL));   // (health keeps up fully, damage more gently)
         m.setHealth(m.getMaxHealth());
         m.getPersistentData().putFloat("xw_journey_dmz", scale);
     }

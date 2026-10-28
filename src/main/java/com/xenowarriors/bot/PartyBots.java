@@ -231,6 +231,7 @@ public final class PartyBots {
     public static void teleportNear(PartyBotEntity b, ServerPlayer o) {
         double a = b.getRandom().nextDouble() * Math.PI * 2;
         if (b.level() != o.level()) {
+            if (b.journey()) { b.discard(); return; }
             CompoundTag rec = b.record();
             CharacterType t = b.character();
             b.discard();
@@ -395,6 +396,7 @@ public final class PartyBots {
     // ---------------------------------------------------------------- right-click menu actions
 
     static void interact(PartyBotEntity b, ServerPlayer p) {
+        if (b.journey()) return;
         if (!p.getUUID().equals(b.ownerId()) && !(b.ownerId() != null && Parties.sameParty(p.getUUID(), b.ownerId()))) return;
         if (b.downed()) {
             if (p.isShiftKeyDown()) { b.revive(); p.displayClientMessage(Component.literal("").append(b.label()).append(" is back up!").withStyle(ChatFormatting.GREEN), true); }
@@ -431,6 +433,7 @@ public final class PartyBots {
 
     public static void action(ServerPlayer p, int botId, int action, int arg) {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
+        if (b.journey()) { p.displayClientMessage(Component.literal("Journey teammates just fight - no menu in battle").withStyle(ChatFormatting.GRAY), true); return; }
         switch (action) {
             case ACT_INVENTORY -> net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> ChestMenu.threeRows(id, inv, b.inventory), b.label()));
             case ACT_SUMMON_PET -> {
@@ -545,7 +548,11 @@ public final class PartyBots {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p) || p instanceof FakePlayer) return;
         ListTag list = new ListTag();
-        for (PartyBotEntity b : bots(p)) { if (!b.downed() && !b.getPersistentData().getBoolean("xw_journey_bot")) list.add(b.record()); FAKES.remove(b.getUUID()); b.discard(); }
+        for (PartyBotEntity b : bots(p)) {
+            if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) { ItemStack it = b.inventory.removeItemNoUpdate(i); p.getInventory().add(it); if (!it.isEmpty()) p.drop(it, false); }
+            else if (!b.downed()) list.add(b.record());
+            FAKES.remove(b.getUUID()); b.discard();
+        }
         p.getPersistentData().put(RECORDS, list);
     }
 
@@ -560,7 +567,7 @@ public final class PartyBots {
     @SubscribeEvent
     public static void onChangeDim(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
-        for (PartyBotEntity b : bots(p)) teleportNear(b, p);
+        for (PartyBotEntity b : bots(p)) { if (b.journey()) b.discard(); else teleportNear(b, p); }   // (Journey teammates stay with the journey)
     }
 
     /** Boss drops are split between the party members who were there. */

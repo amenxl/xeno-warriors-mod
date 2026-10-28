@@ -50,6 +50,12 @@ public class PartyBotEntity extends PathfinderMob {
     int downedTicks;
     long[] skillReady = new long[5];
     LivingEntity relayTarget;
+
+    /** (Journey mode) go for this enemy until the given game time. */
+    public void journeyTarget(LivingEntity t, long until) { relayTarget = t; relayUntil = until; setTarget(t); }
+
+    /** A Journey AI teammate (its own rules: no menu, no sparring, no reviving). */
+    public boolean journey() { return getPersistentData().getBoolean("xw_journey_bot"); }
     long relayUntil;
     BlockPos mineTarget;
     int fullNotice;
@@ -164,7 +170,7 @@ public class PartyBotEntity extends PathfinderMob {
             if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget)) { pick = relayTarget; return true; }
             if (mode() == AGGRESSIVE) {
                 pick = level().getNearestEntity(level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(16),
-                        m -> m instanceof Enemy && m.isAlive() && !PartyBots.friendly(PartyBotEntity.this, m)), net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat(),
+                        m -> m instanceof Enemy && m.isAlive() && !PartyBots.friendly(PartyBotEntity.this, m) && !m.getTags().contains("xw_blade_anchor")), net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat(),
                         PartyBotEntity.this, getX(), getY(), getZ());
                 return pick != null;
             }

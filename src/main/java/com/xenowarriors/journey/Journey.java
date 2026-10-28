@@ -153,7 +153,7 @@ public final class Journey {
     public static void open(ServerPlayer p) {
         Run r = BY.get(p.getUUID());
         if (r != null) { sync(p.server, r, p.getUUID(), r.phase == LOBBY ? OPEN_LOBBY : r.phase == CHOOSING ? OPEN_TEAM : OPEN_MENU); return; }
-        if (Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level())) { p.displayClientMessage(msg("You can't start a journey from here", ChatFormatting.GRAY), true); return; }
+        if (Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level()) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p)) { p.displayClientMessage(msg("You can't start a journey from here", ChatFormatting.GRAY), true); return; }
         List<ServerPlayer> mates = new ArrayList<>(com.xenowarriors.party.Parties.members(p));
         mates.remove(p);
         if (mates.size() > 1) { p.sendSystemMessage(msg("Journey mode is for you and one partner - your party has " + (mates.size() + 1) + " players.", ChatFormatting.RED)); return; }
@@ -263,7 +263,7 @@ public final class Journey {
                     : !m.ready && !m.id.equals(r.host) ? m.name + " isn't ready"
                     : p.isCreative() || p.isSpectator() ? m.name + " needs to be in Survival or Adventure mode"
                     : !com.xenowarriors.bot.PartyBots.bots(p).isEmpty() ? m.name + " has bot teammates out - dismiss them first (Journey is just the two of you)"
-                    : Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level()) ? m.name + " can't leave from where they are"
+                    : Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level()) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p) ? m.name + " can't leave from where they are"
                     : r.members.size() == 2 && !m.id.equals(r.host) && !com.xenowarriors.party.Parties.sameParty(p.getUUID(), r.host) ? m.name + " needs to be in your party"
                     : null;
             if (why != null) { host.displayClientMessage(msg(why, ChatFormatting.RED), true); return; }
@@ -504,7 +504,7 @@ public final class Journey {
             for (var s : got) {
                 if (sb.length() > 0) sb.append(", ");
                 sb.append(s.getCount() > 1 ? s.getCount() + " " : "").append(s.getHoverName().getString());
-                if (!p.getInventory().add(s.copy())) p.drop(s, false);
+                give(p, s.copy());
             }
             title(p, "ITEM PANEL", sb.toString(), 0xF070E0);
             p.sendSystemMessage(msg("Item panel: " + sb, ChatFormatting.LIGHT_PURPLE));
@@ -676,20 +676,25 @@ public final class Journey {
         ServerPlayer o = server.getPlayerList().getPlayer(m.id);
         for (var e : m.bots.entrySet()) {
             Entity en = tl == null ? null : tl.getEntity(e.getKey());
-            if (en instanceof com.xenowarriors.bot.PartyBotEntity b) {
-                if (b.isAlive() && !b.downed() && r.alive(e.getValue())) r.hp.put(e.getValue(), Math.max(0.001F, b.getHealth() / b.getMaxHealth()));
-                giveBag(b, o);
-                b.discard();
-            }
+            boolean up = en instanceof com.xenowarriors.bot.PartyBotEntity b0 && b0.isAlive() && !b0.downed();
+            if (up) { var b = (com.xenowarriors.bot.PartyBotEntity) en; if (r.alive(e.getValue())) r.hp.put(e.getValue(), Math.max(0.001F, b.getHealth() / b.getMaxHealth())); }
+            else if (r.phase == BATTLE && r.alive(e.getValue())) charDown(server, r, m, e.getValue());   // (went down this very tick)
+            if (en instanceof com.xenowarriors.bot.PartyBotEntity b) { giveBag(b, o); b.discard(); }
         }
         m.bots.clear();
+    }
+
+    /** Into the inventory; whatever doesn't fit drops at your feet. */
+    private static void give(ServerPlayer p, net.minecraft.world.item.ItemStack s) {
+        p.getInventory().add(s);
+        if (!s.isEmpty()) p.drop(s, false);
     }
 
     private static void giveBag(com.xenowarriors.bot.PartyBotEntity b, ServerPlayer o) {
         for (int i = 0; i < b.inventory.getContainerSize(); i++) {
             var it = b.inventory.removeItemNoUpdate(i);
             if (it.isEmpty()) continue;
-            if (o == null || !o.getInventory().add(it)) b.spawnAtLocation(it);
+            if (o == null) b.spawnAtLocation(it); else give(o, it);
         }
     }
 
@@ -740,6 +745,11 @@ public final class Journey {
                 r.hp.put(e.getValue(), Math.max(0.001F, b.getHealth() / b.getMaxHealth()));
                 if (b.getY() < c.getY() - 10) b.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5);
                 targets.add(b);
+                if (now % 20 == 0 && !r.alive.isEmpty() && (b.getTarget() == null || !b.getTarget().isAlive())) {      // (go for the enemies, don't wait to be hit)
+                    Mob foe = null; double best = Double.MAX_VALUE;
+                    for (UUID id : r.alive) if (tl.getEntity(id) instanceof Mob mm && mm.isAlive() && mm.distanceToSqr(b) < best) { best = mm.distanceToSqr(b); foe = mm; }
+                    if (foe != null) b.journeyTarget(foe, now + 200);
+                }
                 continue;
             }
             mb.bots.remove(e.getKey());                       // down (or gone): no reviving in battle
@@ -760,6 +770,7 @@ public final class Journey {
                     else { m.discard(); continue; }
                 }
                 r.alive.add(m.getUUID());
+                if (!m.getPersistentData().contains("xw_journey_dmz")) JourneyWorld.scale(m, dmzScale(fs));   // (boss helpers that turn up later too)
                 if (r.seen.add(m.getUUID())) r.enemyHp += m.getMaxHealth();
                 if (!targets.isEmpty() && (m.getTarget() == null || !targets.contains(m.getTarget())))
                     m.setTarget(targets.get(tl.random.nextInt(targets.size())));
@@ -798,7 +809,7 @@ public final class Journey {
         if (fs.isEmpty()) return 1F;
         double sum = 0;
         for (ServerPlayer p : fs) sum += Math.max(com.xenowarriors.compat.DmzScaling.multiplier(p, true), com.xenowarriors.compat.DmzScaling.multiplier(p, false));
-        return (float) Math.max(1.0, Math.min(200.0, sum / fs.size()));
+        return (float) Math.max(1.0, Math.min(50.0, sum / fs.size()));
     }
 
     private static void fail(MinecraftServer server, Run r, String why) {
