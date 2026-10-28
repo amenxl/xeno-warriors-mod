@@ -44,14 +44,18 @@ public final class BlazingHud {
         if (HudFaces.hasArt(type)) {
             int s = Math.round(pr * 2 * 0.9F / 0.828F);
             KhHud.portrait(g, HudFaces.texture(type, face), Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash);
-        } else {
-            int s = Math.round(pr * 2 * 0.98F);
-            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.5F, 0.85F, false, 0F);   // (head and hair in the middle of the ring)
         }
         RenderSystem.enableBlend();
         HudFade.color(((col >> 16) & 255) / 255F, ((col >> 8) & 255) / 255F, (col & 255) / 255F, 1F);
         g.blit(EMBLEM, ex, ey, E, H, 0, 0, EW, EH, EW, EH);
         HudFade.reset();
+        if (!HudFaces.hasArt(type)) {
+            // a live head, big and in front of the ring: hair spills over the top and sides, shoulders stop at the ring's bottom
+            int s = Math.round(pr * 2.7F);
+            g.enableScissor(Math.round(pcx - pr * 1.3F), Math.round(pcy - pr * 1.4F), Math.round(pcx + pr * 1.3F), Math.round(pcy + pr * 0.92F));
+            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.47F, 0.78F, false, 0F);
+            g.disableScissor();
+        }
 
         // the bars, running left from their bubbles
         int hotbarRight = width / 2 + 91;
