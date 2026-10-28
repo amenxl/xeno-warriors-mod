@@ -40,8 +40,8 @@ public class KarmaScanClient implements IGuiOverlay {
         boolean visor = mc.player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof KarmaScanner.Item;
         // the lens over the left eye (first person only)
         if (visor && mc.options.getCameraType() == CameraType.FIRST_PERSON) {
-            int x0 = Math.round(width * 0.04F), y0 = Math.round(height * 0.12F), x1 = Math.round(width * 0.36F), y1 = Math.round(height * 0.58F);
-            g.fill(x0, y0, x1, y1, 0x2A30FF60);
+            int x0 = Math.round(width * 0.30F), y0 = Math.round(height * 0.30F), x1 = Math.round(width * 0.46F), y1 = Math.round(height * 0.56F);   // (a small lens over the left eye)
+            g.fill(x0, y0, x1, y1, 0x1A30FF60);
             g.fill(x0, y0, x1, y0 + 1, 0x9050FF80); g.fill(x0, y1 - 1, x1, y1, 0x9050FF80);
             g.fill(x0, y0, x0 + 1, y1, 0x9050FF80); g.fill(x1 - 1, y0, x1, y1, 0x9050FF80);
             for (int y = y0 + 3; y < y1; y += 4) g.fill(x0 + 1, y, x1 - 1, y + 1, 0x1030FF60);          // scan lines

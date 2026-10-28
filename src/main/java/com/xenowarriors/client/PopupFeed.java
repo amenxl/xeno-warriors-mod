@@ -110,6 +110,8 @@ public final class PopupFeed implements IGuiOverlay {
         Font font = mc.font;
         int w = 150, h = 26, gap = 9;
         float baseY = height * 0.47F;                         // left side, above the chat area
+        boolean journey = com.xenowarriors.client.journey.JourneyClient.active() && com.xenowarriors.client.journey.JourneyClient.phase() != 0;
+        if (journey) { baseY = Math.max(baseY, 140F); while (POPS.size() > 1) POPS.remove(0); }   // (on a Journey: one at a time, under its info)
         int n = POPS.size();
         for (int i = n - 1; i >= 0; i--) {
             Pop p = POPS.get(i);
