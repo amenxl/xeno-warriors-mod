@@ -154,12 +154,12 @@ public class GovAgentEntity extends PathfinderMob {
                 Vec3 away = position().add(position().subtract(t.position()).normalize().scale(5));
                 getNavigation().moveTo(away.x, away.y, away.z, 1.1);
             } else getNavigation().stop();
-            burst = (burst + 1) % 50;
-            if (!see || burst >= 28) return;                                 // fire ~1.4 s, then pause
+            burst = (burst + 1) % 60;
+            if (!see || burst >= 18 || tickCount % 2 == 1) return;           // short bursts (~0.9 s, every other tick), then a 2 s pause
             if (!gunDrawn) { com.xenowarriors.compat.TaczGuns.draw(GovAgentEntity.this); gunDrawn = true; return; }
             Vec3 d = t.getBoundingBox().getCenter().subtract(getEyePosition());
-            float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F) + (random.nextFloat() - .5F) * 4F;
-            float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z))) + (random.nextFloat() - .5F) * 3F;
+            float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F) + (random.nextFloat() - .5F) * 12F;
+            float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z))) + (random.nextFloat() - .5F) * 8F;
             setYRot(yaw); yBodyRot = yaw; yHeadRot = yaw; setXRot(pitch);
             com.xenowarriors.compat.TaczGuns.shoot(GovAgentEntity.this, pitch, yaw);
         }
