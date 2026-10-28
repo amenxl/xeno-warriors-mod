@@ -111,7 +111,15 @@ public class JourneyMenuScreen extends JourneyScreen {
     }
 
     private void drawResults(GuiGraphics g, CompoundTag r) {
-        g.fill(0, 0, VW, VH, 0xC0000000);
+        g.flush();
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 400);
+        drawResultsPanel(g, r);
+        g.pose().popPose();
+    }
+
+    private void drawResultsPanel(GuiGraphics g, CompoundTag r) {
+        g.fill(0, 0, VW, VH, 0xE0000000);
         boolean won = r.getBoolean("won");
         int x0 = 80, y0 = 30, x1 = VW - 80, y1 = VH - 30;
         g.fill(x0, y0, x1, y1, 0xF0101820);

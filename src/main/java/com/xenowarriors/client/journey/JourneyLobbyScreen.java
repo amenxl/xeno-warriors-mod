@@ -24,10 +24,10 @@ public class JourneyLobbyScreen extends JourneyScreen {
         boolean host = st.getBoolean("host");
         // header
         sc(g, "JOURNEY", 10, 8, 2.4F, 0xFFFFFF);
-        sc(g, ms.size() == 1 ? "Solo: pick 8 characters (one earner, so fewer Journey Coins)" : "Duo: you and " + mate.name() + " pick 4 characters each",
-                10, 30, 0.7F, 0xA8B8C8);
+        sc(g, ms.size() == 1 ? "Solo: pick 8 characters (fewer Journey Coins)" : "Duo: you and " + mate.name() + " pick 4 each",
+                10, 32, 0.6F, 0xA8B8C8);
         // difficulty
-        sc(g, "DIFFICULTY" + (host ? "" : " (the host picks)"), 196, 6, 0.6F, 0x8898A8);
+        sc(g, "DIFFICULTY - beat one to open the next" + (host ? "" : " (the host picks)"), 196, 6, 0.55F, 0x8898A8);
         for (int i = 0; i < 5; i++) {
             int x0 = 196 + i * 40, y0 = 14, col = JourneyRules.DIFF_COLOR[i];
             boolean locked = i > max, sel = i == diff;
@@ -39,7 +39,6 @@ public class JourneyLobbyScreen extends JourneyScreen {
             sc(g, locked ? "locked" : sel ? "selected" : "", x0 + 19 - font.width(locked ? "locked" : "selected") * 0.45F / 2F, y0 + 11, 0.45F, locked ? 0x60606A : 0xFFFFFF);
             if (host && !locked && !sel) { final int d = i; area(x0, y0, x0 + 38, y0 + 16, () -> JourneyClient.act(2, d, 0)); }
         }
-        sc(g, "Beat a difficulty to open the next one" + (ms.size() > 1 ? " (both of you)" : ""), 196, 33, 0.55F, 0x707A86);
 
         // the characters
         List<CharacterType> avail = new ArrayList<>();

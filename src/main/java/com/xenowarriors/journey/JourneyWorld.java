@@ -127,7 +127,7 @@ public final class JourneyWorld {
         tr.put("left_rotation", floats(0, 0, 0, 1));
         tr.put("right_rotation", floats(0, 0, 0, 1));
         tr.put("translation", floats(0, 0, 0));
-        tr.put("scale", floats(2.5F, 2.5F, 2.5F));
+        tr.put("scale", floats(1.8F, 1.8F, 1.8F));
         t.put("transformation", tr);
         Entity e = EntityType.loadEntityRecursive(t, l, en -> { en.moveTo(c.getX() + .5, c.getY() + 3.2, c.getZ() + .5, 0, 0); return en; });
         if (e == null) return null;

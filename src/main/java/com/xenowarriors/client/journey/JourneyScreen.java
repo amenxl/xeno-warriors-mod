@@ -1,6 +1,5 @@
 package com.xenowarriors.client.journey;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.xenowarriors.character.CharacterType;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -87,13 +86,36 @@ public abstract class JourneyScreen extends Screen {
         g.pose().popPose();
     }
 
-    /** The character's face from their skin (with the hat layer). */
+    /** The character's head, rendered live (you as that character, so faces, hair and outfits all show), on their colour. */
     public static void face(GuiGraphics g, CharacterType t, int x, int y, int size) {
         if (t == CharacterType.NONE) { g.fill(x, y, x + size, y + size, 0xFF303038); return; }
-        RenderSystem.enableBlend();
-        g.blit(t.getSkin(), x, y, size, size, 8F, 8F, 8, 8, 64, 64);
-        g.blit(t.getSkin(), x, y, size, size, 40F, 8F, 8, 8, 64, 64);
-        RenderSystem.disableBlend();
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        int col = t.getColor() & 0xFFFFFF;
+        g.fillGradient(x, y, x + size, y + size, 0xFF000000 | mix(col, 0.55F), 0xFF000000 | mix(col, 0.2F));
+        var e = mc.player;
+        if (e == null) return;
+        // the scissor box is in window pixels: put the box through the current scaling first
+        org.joml.Matrix4f m = g.pose().last().pose();
+        org.joml.Vector4f a = m.transform(new org.joml.Vector4f(x, y, 0, 1)), b = m.transform(new org.joml.Vector4f(x + size, y + size, 0, 1));
+        int scale = Math.round(size * 1.25F);
+        float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
+        e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
+        g.enableScissor((int) Math.floor(a.x), (int) Math.floor(a.y), (int) Math.ceil(b.x), (int) Math.ceil(b.y));
+        com.xenowarriors.client.ClientCharacterData.beginPreview(t);
+        try {
+            org.joml.Quaternionf pose = new org.joml.Quaternionf().rotateZ((float) Math.PI).mul(new org.joml.Quaternionf().rotateY(-0.35F));
+            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * 0.55F + 1.55F * scale), scale, pose, null, e);
+        } catch (Throwable ignored) {
+        } finally {
+            com.xenowarriors.client.ClientCharacterData.endPreview();
+            g.disableScissor();
+            e.yBodyRot = yb; e.yBodyRotO = ybo; e.setYRot(yr); e.setXRot(xr); e.yHeadRot = yh; e.yHeadRotO = yho;
+        }
+    }
+
+    private static int mix(int c, float f) {
+        int r = (int) (((c >> 16) & 255) * f), gg = (int) (((c >> 8) & 255) * f), bb = (int) ((c & 255) * f);
+        return (r << 16) | (gg << 8) | bb;
     }
 
     /** A health bar: red when low, a grey "DOWN" when 0. */

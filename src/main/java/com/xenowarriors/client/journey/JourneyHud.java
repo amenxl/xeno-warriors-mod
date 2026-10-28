@@ -38,21 +38,21 @@ public class JourneyHud implements IGuiOverlay {
         g.fill(6, 46, 12 + font.width(jc), 57, 0x90101820);
         g.drawString(font, jc, 9, 48, 0xFF40D0FF, true);
         int rx = width - 6;
-        if (phase == 3) {
+        if (phase == 3) {                         // (left side, under the party: the top-right is where stat toasts go)
             JourneyClient.Member me = JourneyClient.me();
+            int ly = 62;
             if (me != null) {
-                String sc = String.format("%,d", me.score());
-                JourneyScreen.sc(g, font, "SCORE", rx - font.width("SCORE") * 0.7F, 4, 0.7F, 0xA8B8C8);
-                JourneyScreen.sc(g, font, sc, rx - font.width(sc) * 1.6F, 12, 1.6F, 0xFFFFFF);
+                JourneyScreen.sc(g, font, "SCORE", 6, ly, 0.6F, 0xA8B8C8);
+                JourneyScreen.sc(g, font, String.format("%,d", me.score()), 6, ly + 7, 1.5F, 0xFFFFFF);
+                ly += 21;
                 JourneyClient.Member mate = JourneyClient.partner();
-                if (mate != null) { String s = mate.name() + " " + String.format("%,d", mate.score()); JourneyScreen.sc(g, font, s, rx - font.width(s) * 0.6F, 27, 0.6F, 0x80B0E0); }
+                if (mate != null) { JourneyScreen.sc(g, font, mate.name() + " " + String.format("%,d", mate.score()), 6, ly, 0.6F, 0x80B0E0); ly += 8; }
             }
             boolean ok = st.getBoolean("challengeOk");
-            String ch = (ok ? "✔ " : "✘ ") + st.getString("challenge");
-            JourneyScreen.sc(g, font, ch, rx - font.width(ch) * 0.65F, 36, 0.65F, ok ? 0xFFD040 : 0xE06060);
+            JourneyScreen.sc(g, font, (ok ? "\u2714 " : "\u2718 ") + st.getString("challenge"), 6, ly, 0.6F, ok ? 0xFFD040 : 0xE06060);
             int sec = st.getInt("time");
             String info = String.format("%d:%02d", sec / 60, sec % 60) + "   enemies " + st.getInt("enemies") + (st.getInt("waves") > 0 ? "  +" + st.getInt("waves") + " wave" : "");
-            JourneyScreen.sc(g, font, info, rx - font.width(info) * 0.6F, 45, 0.6F, 0xC0C8D0);
+            JourneyScreen.sc(g, font, info, 6, ly + 8, 0.6F, 0xC0C8D0);
         } else if (phase == 2) {
             String s = "Choosing your team... " + st.getInt("chooseLeft") + "s  (Main Menu > Journey)";
             JourneyScreen.sc(g, font, s, rx - font.width(s) * 0.7F, 6, 0.7F, 0xFFD040);
