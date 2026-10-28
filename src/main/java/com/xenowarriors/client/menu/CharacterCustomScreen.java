@@ -349,18 +349,49 @@ public class CharacterCustomScreen extends Screen {
         }
     }
 
+    /**
+     * The teams each character belongs to (up to two), as {title, logo name}: e.g. Mikiko is a Xeno Warrior and a
+     * Freedom Fighter, Technica works for the Government and the Sky Patrol.
+     */
+    private static String[][] affiliations(CharacterType t) {
+        String[] XW = {"Xeno Warriors", "logo_xeno_warriors"}, FF = {"Freedom Fighters", "logo_freedom_fighters_icon"},
+                SP = {"Sky Patrol", "logo_sky_patrol"}, GOV = {"Government", "logo_government"}, OR = {"Orenji Clan", "logo_orenji"},
+                SR = {"Sky Rebellion", "logo_sky_rebellion"}, DD = {"Disco Dojo", "logo_disco_dojo"}, DEM = {"Ai-oni's Demons", "logo_demons"};
+        return switch (t) {
+            case MIKIKO -> new String[][]{XW, FF};
+            case RHALIX -> new String[][]{XW, SP};
+            case ULTIMA -> new String[][]{GOV, FF};
+            case KAERU -> new String[][]{OR, FF};
+            case TECHNICA -> new String[][]{GOV, SP};
+            case YURI, ZANE -> new String[][]{FF};
+            case KYRIE, LEXY, MAX, SAM -> new String[][]{SP};
+            case LOGAN, KILL, KEITA -> new String[][]{SR};
+            case STEVIE, GARRY -> new String[][]{DD};
+            case AIONI -> new String[][]{DEM};
+            default -> new String[0][];
+        };
+    }
+
+    private static net.minecraft.resources.ResourceLocation logo(String name) {
+        return com.xenowarriors.XenoWarriors.id("textures/gui/" + name + ".png");
+    }
+
     /** Group line, name, and an emblem with their initial. */
     private void header(GuiGraphics g, CharacterType type, int col) {
         var team = com.xenowarriors.client.screen.CharacterSelectScreen.Group.of(type);   // their team in the show
-        String group = type == CharacterType.NONE ? "No warrior chosen" : team.title + "  •  Season " + type.season();
+        String[][] aff = affiliations(type);
+        String names = aff.length == 0 ? team.title : aff.length == 1 ? aff[0][0] : aff[0][0] + " / " + aff[1][0];
+        if (font.width(names + "  •  Season " + type.season()) > VW - 130) names = aff.length > 0 ? aff[0][0] : team.title;
+        String group = type == CharacterType.NONE ? "No warrior chosen" : names + "  •  Season " + type.season();
         g.fill(5, 15, 10, 20, 0xFF000000 | col);
         g.drawString(font, group, 13, 14, 0xD0D0DC, false);
         String name = type == CharacterType.NONE ? "Choose a warrior" : type.getDisplayName().getString().toUpperCase(java.util.Locale.ROOT);
         scaled(g, name, 5, 26, 2F, 0xFFFFFF);
         // the team's logo (Freedom Fighters, Sky Patrol...), or an emblem with their initial for teams without one
-        if (type != CharacterType.NONE && team.logo != null) {
+        if (type != CharacterType.NONE && aff.length > 0) {
             RenderSystem.enableBlend();
-            g.blit(team.logo, VW - 72, 11, 68, 34, 0, 0, 256, 128, 256, 128);
+            if (aff.length == 1) g.blit(logo(aff[0][1]), VW - 72, 11, 68, 34, 0, 0, 256, 128, 256, 128);
+            else for (int k = 0; k < 2; k++) g.blit(logo(aff[k][1]), VW - 112 + k * 55, 14, 54, 27, 0, 0, 256, 128, 256, 128);
             g.fill(4, 48, VW - 4, 49, 0xFF2E2E38);
             return;
         }

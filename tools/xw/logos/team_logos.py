@@ -156,6 +156,28 @@ def wanderers():
     save(glow(im, (100, 140, 220)), 'logo_wanderers')
 
 
+# ---------------------------------------------------------------- Xeno Warriors: a big X of two blades around a karma orb
+def xeno_warriors():
+    im, d = new()
+    cx, cy = 128, 44
+    d.ellipse(P([(cx - 30, cy - 30), (cx + 30, cy + 30)]), outline=(255, 150, 40, 255), width=4 * S)
+    for sgn, col in ((-1, (255, 140, 30)), (1, (170, 70, 230))):     # Mikiko orange, Rhalix purple
+        a = math.radians(45 * sgn)
+        L = 44
+        p0 = (cx - math.sin(a) * L, cy + math.cos(a) * L)
+        p1 = (cx + math.sin(a) * L, cy - math.cos(a) * L)
+        nx, ny = math.cos(a) * 6, math.sin(a) * 6
+        blade = [(p0[0] - nx, p0[1] - ny), (p1[0] - nx * 0.2, p1[1] - ny * 0.2), (p1[0] + nx * 0.2, p1[1] + ny * 0.2), (p0[0] + nx, p0[1] + ny)]
+        outlined_poly(d, blade, col + (255,), 3)
+        q = (p0[0] + (p1[0] - p0[0]) * 0.2, p0[1] + (p1[1] - p0[1]) * 0.2)
+        d.line(P([(q[0] - nx * 1.6, q[1] - ny * 1.6), (q[0] + nx * 1.6, q[1] + ny * 1.6)]), fill=INK, width=8 * S)
+        d.line(P([(q[0] - nx * 1.6, q[1] - ny * 1.6), (q[0] + nx * 1.6, q[1] + ny * 1.6)]), fill=(240, 200, 90, 255), width=5 * S)
+    d.ellipse(P([(cx - 10, cy - 10), (cx + 10, cy + 10)]), fill=(255, 240, 200, 255), outline=INK, width=3 * S)
+    d.ellipse(P([(cx - 5, cy - 6), (cx + 1, cy)]), fill=(255, 255, 255, 255))
+    word(im, 'XENO WARRIORS', 128, 104, 22, (255, 210, 120), (230, 90, 30))
+    save(glow(im, (240, 120, 40)), 'logo_xeno_warriors')
+
+
 if __name__ == '__main__':
-    sky_rebellion(); disco_dojo(); demons(); wanderers()
+    sky_rebellion(); disco_dojo(); demons(); wanderers(); xeno_warriors()
     print('ok')
