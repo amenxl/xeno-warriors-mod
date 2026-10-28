@@ -866,8 +866,9 @@ public final class UiTest {
             log("guards=" + gs.size() + " with TACZ guns=" + guns + " held: " + sb);
         }), 20));
         l.add(new Step("taczguard_armed", () -> {}, 3));
-        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovFacilities.makeWanted(p, "were spotted")), 60));
-        l.add(new Step("taczguard_shooting", () -> server(p -> log("player health after guards opened fire: " + p.getHealth())), 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovFacilities.makeWanted(p, "were spotted")), 20));
+        for (int sec = 1; sec <= 8; sec++) { int ss = sec;
+            l.add(new Step(sec == 3 ? "taczguard_shooting" : null, () -> server(p -> log("health " + ss + "s after becoming wanted: " + p.getHealth())), 20)); }
     }
 
     private static final java.util.Map<String, ServerPlayer> FAKES = new java.util.HashMap<>();
