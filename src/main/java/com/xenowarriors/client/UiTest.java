@@ -96,6 +96,7 @@ public final class UiTest {
         if ("factions".equals(System.getenv("XW_UITEST_FOCUS"))) { factions(mc, l); return l; }
         if ("journey".equals(System.getenv("XW_UITEST_FOCUS"))) { journey(mc, l); return l; }
         if ("dmzlist".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzList(mc, l); return l; }
+        if ("bladeanchor".equals(System.getenv("XW_UITEST_FOCUS"))) { bladeAnchor(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -870,6 +871,41 @@ public final class UiTest {
                 log("DMZ-ITEM " + id + " " + kind + " " + it.getDescription().getString());
             }
         }), 40));
+    }
+
+    /** Mikiko's Hekublade floating where he stood while he's inside it; hits on it cut his time inside. */
+    private static void bladeAnchor(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get())); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setYRot(0); p.setXRot(15);
+            com.xenowarriors.mikiko.HekubladeAnchor.testKeep = true;
+            com.xenowarriors.mikiko.HekubladeAnchor.place(p, p.serverLevel(), p.getX() + 0.5, p.getY(), p.getZ() + 3.5);
+        }); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 50));
+        l.add(new Step("blade_anchor", () -> {}, 3));
+        l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 15));
+        l.add(new Step("blade_anchor_front", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
+            com.xenowarriors.mikiko.HekubladeAnchor.testKeep = false;
+            com.xenowarriors.mikiko.HekubladeAnchor.remove(p.getUUID());
+            com.xenowarriors.mikiko.HekubladeRealm.enter(p);
+        }); }, 40));
+        l.add(new Step(null, () -> server(p -> {
+            var stand = com.xenowarriors.mikiko.HekubladeAnchor.testStand(p);
+            int before = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.realmTicks).orElse(-1);
+            if (stand != null) {
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(stand.level());
+                z.moveTo(stand.getX() + 1, stand.getY() - 0.3, stand.getZ(), 0, 0);
+                stand.level().addFreshEntity(z);
+                stand.hurt(stand.damageSources().mobAttack(z), 5F);
+                z.setTarget(stand);
+            }
+            int after = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.realmTicks).orElse(-1);
+            log("blade anchor stand=" + (stand != null) + " realmTicks before=" + before + " after=" + after);
+        }), 10));
+        l.add(new Step("blade_anchor_hit", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> log("blade anchor 5s later realmTicks=" + p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.realmTicks).orElse(-1))), 100));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.mikiko.HekubladeRealm.leave(p)), 30));
+        l.add(new Step(null, () -> server(p -> log("blade anchor after leaving: stand=" + (com.xenowarriors.mikiko.HekubladeAnchor.testStand(p) != null))), 5));
     }
 
     /** Journey mode, solo: the lobby, the path, choosing a team, a battle with a tag-in, results, the shop, a scenario, the boss. */

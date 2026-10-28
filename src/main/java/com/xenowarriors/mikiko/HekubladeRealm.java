@@ -134,6 +134,7 @@ public final class HekubladeRealm {
         BlockPos house = center.offset(0, 0, -24);
         if (!realm.getBlockState(house).is(Blocks.DARK_OAK_PLANKS)) buildHouse(realm, house);
         burst(p.serverLevel(), p.getX(), p.getY() + 1, p.getZ());
+        HekubladeAnchor.place(p, p.serverLevel(), p.getX(), p.getY(), p.getZ());   // the blade stays behind, floating where he stood
         p.teleportTo(realm, center.getX() + 0.5, center.getY() + 1, center.getZ() + 3.5, 180F, 0F);
         p.fallDistance = 0;
         showSealed(p, realm, center, c);
@@ -146,6 +147,7 @@ public final class HekubladeRealm {
     }
 
     public static void leave(ServerPlayer p) {
+        HekubladeAnchor.remove(p.getUUID());
         p.removeEffect(com.xenowarriors.ModEffects.BLADE_BOUND.get());
         ServerLevel realm = p.server.getLevel(KEY);
         if (realm != null) clearSealed(realm, p.getUUID());
