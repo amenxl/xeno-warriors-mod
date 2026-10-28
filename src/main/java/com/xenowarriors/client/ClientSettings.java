@@ -64,7 +64,7 @@ public final class ClientSettings {
     }
 
     /** The Kingdom Hearts style HUD (portrait gauge, skill list, party cards). Off = the classic Xeno Warriors HUD. */
-    /** The battle HUD: "blazing" (Blazing Wind, the default), "kh" (Kingdom Hearts style) or "classic" (vanilla). */
+    /** The battle HUD: "blazing" (Blazing Wind, the default), "kh" (Modern) or "classic" (vanilla). */
     public static String hudStyle() {
         String s = props().getProperty("hud_style");
         if (s != null) return s;

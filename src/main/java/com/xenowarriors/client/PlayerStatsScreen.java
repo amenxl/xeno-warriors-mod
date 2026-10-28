@@ -214,7 +214,7 @@ public class PlayerStatsScreen extends Screen {
         drawnFaces.visible = tab == 3 && minecraft.player != null && minecraft.player.isCreative();      // (only offered in creative mode)
         drawnFaces.setMessage(Component.literal("Faces: " + (ClientSettings.drawnFaces() ? "Drawn (new)" : "Pixel (old)")));
         hudStyle.visible = vanillaBars.visible = skillsAlways.visible = tab == 3;
-        hudStyle.setMessage(Component.literal("HUD: " + switch (ClientSettings.hudStyle()) { case "kh" -> "Kingdom Hearts style"; case "classic" -> "Classic"; default -> "Blazing Wind"; }));
+        hudStyle.setMessage(Component.literal("HUD: " + switch (ClientSettings.hudStyle()) { case "kh" -> "Modern"; case "classic" -> "Classic"; default -> "Blazing Wind"; }));
         vanillaBars.setMessage(Component.literal("Hearts/food: " + (ClientSettings.vanillaBars() ? "Shown" : "Hidden")));
         skillsAlways.setMessage(Component.literal("Skills: " + (ClientSettings.skillsAlways() ? "Always" : "Hold Ctrl")));
         vanillaBars.active = skillsAlways.active = ClientSettings.khHud();

@@ -101,6 +101,13 @@ public final class UiTest {
         if ("karmascan".equals(System.getenv("XW_UITEST_FOCUS"))) { karmaScan(mc, l); return l; }
         if ("fullhud".equals(System.getenv("XW_UITEST_FOCUS"))) { fullHud(mc, l); return l; }
         if ("journeyguide".equals(System.getenv("XW_UITEST_FOCUS"))) { journeyGuide(mc, l); return l; }
+        if ("dmzhud".equals(System.getenv("XW_UITEST_FOCUS"))) {               // the Blazing Wind HUD with DragonMineZ (KI and ST bars)
+            for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.ZANE, CharacterType.ULTIMA}) {
+                l.add(new Step(null, () -> { noToasts(mc); noDmz(mc); character(t); hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 50));
+                l.add(new Step("dmzhud_" + t.getId(), () -> noDmz(mc), 1));
+            }
+            return l;
+        }
         if ("hudportraits".equals(System.getenv("XW_UITEST_FOCUS"))) {
             for (CharacterType t : CharacterType.PLAYABLE) {
                 l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(t); hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 40));
