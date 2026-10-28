@@ -175,6 +175,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             }
             GiVoxels.render(pose, net.minecraft.client.renderer.entity.ItemRenderer.getArmorFoilBuffer(buffers, RenderType.armorCutoutNoCull(tex), false, stack.hasFoil()),
                     tex, gi, legs ? 0.32F : 0.62F, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, c[0], c[1], c[2]);
+            if (slot == EquipmentSlot.CHEST)          // hand-made details for well-known outfits (capes, Saiyan flaps, sashes, scouters, earrings)
+                GiAccents.render(pose, buffers, tex, stack, getParentModel(), player.walkAnimation.speed(), player.tickCount + net.minecraft.client.Minecraft.getInstance().getFrameTime(), light);
         }
     }
 

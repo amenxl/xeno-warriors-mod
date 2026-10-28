@@ -17,7 +17,7 @@ jobs:
   uitest:
     runs-on: ubuntu-latest
     env:
-      XW_UITEST_EXTRA: ${{ (github.event.inputs.focus == 'dmzmenu' && 'dmz') || (github.event.inputs.focus == 'taczguard' && 'tacz') || '' }}
+      XW_UITEST_EXTRA: ${{ (startsWith(github.event.inputs.focus, 'dmz') && 'dmz') || (github.event.inputs.focus == 'taczguard' && 'tacz') || '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

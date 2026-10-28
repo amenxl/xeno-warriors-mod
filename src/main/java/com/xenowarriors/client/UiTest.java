@@ -92,6 +92,7 @@ public final class UiTest {
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
+        if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
         if ("dmzmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzMenu(mc, l); return l; }
         if ("taczguard".equals(System.getenv("XW_UITEST_FOCUS"))) { taczGuard(mc, l); return l; }
         if ("xenotest".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoTest(mc, l); return l; }
@@ -773,6 +774,35 @@ public final class UiTest {
             if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
                 a.setYRot(0); a.yRotO = 0; a.setXRot(30); a.xRotO = 30; a.setYHeadRot(0); a.yHeadRotO = 0; mc.setCameraEntity(a); } }, 20));
         l.add(new Step("townsfolk_builds", () -> {}, 3));
+        l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
+    }
+
+    /** DragonMineZ outfits on Mikiko with their hand-made 3D details (capes, Saiyan flaps, sashes, scouter, earrings). */
+    private static void dmzOutfits(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setYRot(180); p.setXRot(0);
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(p.getX() + 1.2, p.getY() + 0.1, p.getZ() - 3.2, 0F, 0F); a.setNoGravity(true); a.setInvisible(true);
+            p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+        }); }, 50));
+        String[] outfits = {"goku", "piccolo", "vegeta_saiyan", "king_vegeta", "vegetto", "bardock_dbz", "great_saiyaman_2", "raditz"};
+        for (String o : outfits) {
+            l.add(new Step(null, () -> server(p -> {
+                for (String part : new String[]{"chestplate", "leggings", "boots"}) {
+                    var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", o + "_armor_" + part));
+                    var slot = part.equals("chestplate") ? net.minecraft.world.entity.EquipmentSlot.CHEST : part.equals("leggings") ? net.minecraft.world.entity.EquipmentSlot.LEGS : net.minecraft.world.entity.EquipmentSlot.FEET;
+                    p.setItemSlot(slot, item == null || item == net.minecraft.world.item.Items.AIR ? net.minecraft.world.item.ItemStack.EMPTY : new net.minecraft.world.item.ItemStack(item));
+                }
+                p.setYRot(180); p.setYHeadRot(180); p.setYBodyRot(180);
+                log("dmz outfit " + o + ": " + net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(p.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()));
+            }), 10));
+            l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+                if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                    a.setYRot(-20F); a.yRotO = -20F; a.setXRot(5); a.xRotO = 5; a.setYHeadRot(-20F); a.yHeadRotO = -20F; mc.setCameraEntity(a); }
+                mc.player.setYBodyRot(160); mc.player.yBodyRotO = 160; mc.player.setYHeadRot(160); }, 10));
+            l.add(new Step("dmzoutfit_" + o, () -> {}, 3));
+        }
         l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
     }
 
