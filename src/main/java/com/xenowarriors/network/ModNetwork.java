@@ -423,6 +423,8 @@ public final class ModNetwork {
                 .encoder(PetActionPacket::encode).decoder(PetActionPacket::decode).consumerMainThread(PetActionPacket::handle).add();
         CHANNEL.messageBuilder(XenoMashPacket.class, id++)
                 .encoder(XenoMashPacket::encode).decoder(XenoMashPacket::decode).consumerMainThread(XenoMashPacket::handle).add();
+        CHANNEL.messageBuilder(XenoFxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(XenoFxPacket::encode).decoder(XenoFxPacket::decode).consumerMainThread(XenoFxPacket::handle).add();
         CHANNEL.messageBuilder(XenoClashPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(XenoClashPacket::encode).decoder(XenoClashPacket::decode).consumerMainThread(XenoClashPacket::handle).add();
         CHANNEL.messageBuilder(XenoCounterPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)

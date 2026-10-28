@@ -699,6 +699,32 @@ public final class UiTest {
             l.add(new Step("xeno_" + t.getId() + "_loadout", () -> {}, 3));
             l.add(new Step(null, () -> { mc.setScreen(null); server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(40)).forEach(e -> e.discard())); }, 10));
         }
+        // the beam clash look (a real clash needs two players; here the solid visuals are faked client-side against a husk)
+        int[] ids = {-1, -1};
+        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); server(p -> {
+            p.setYRot(0); p.setXRot(0);
+            var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+            h.moveTo(p.getX(), p.getY(), p.getZ() + 10, 180, 0); h.setNoAi(true); h.setYHeadRot(180); h.setYBodyRot(180);
+            p.serverLevel().addFreshEntity(h); ids[0] = h.getId();
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(p.getX() + 9, p.getY() + 0.6, p.getZ() + 5, 90F, 8F); a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(90F);
+            p.serverLevel().addFreshEntity(a); ids[1] = a.getId();
+        }); }, 40));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            if (mc.level.getEntity(ids[1]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(90F); a.yRotO = 90F; a.setXRot(8); a.xRotO = 8; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a); }
+            mc.player.setYRot(0); mc.player.yRotO = 0; mc.player.setYBodyRot(0); mc.player.setYHeadRot(0);
+            com.xenowarriors.client.KiFx.receive(new com.xenowarriors.network.XenoFxPacket(mc.player.getId(), com.xenowarriors.client.KiFx.CLASH, ids[0], false, 0, 0, 0, 1, 0, 0, 0.5F, 400)); }, 12));
+        l.add(new Step("xeno_clash_0", () -> {}, 1));
+        l.add(new Step(null, () -> com.xenowarriors.client.KiFx.receive(new com.xenowarriors.network.XenoFxPacket(mc.player.getId(), com.xenowarriors.client.KiFx.CLASH, ids[0], false, 0, 0, 0, 1, 0, 0, 0.72F, 400)), 6));
+        l.add(new Step("xeno_clash_1", () -> {}, 1));
+        l.add(new Step(null, () -> com.xenowarriors.client.KiFx.receive(new com.xenowarriors.network.XenoFxPacket(mc.player.getId(), com.xenowarriors.client.KiFx.CLASH, ids[0], false, 0, 0, 0, 1, 0, 0, 0.3F, 400)), 6));
+        l.add(new Step("xeno_clash_2", () -> {}, 1));
+        l.add(new Step(null, () -> { com.xenowarriors.client.KiFx.receive(new com.xenowarriors.network.XenoFxPacket(mc.player.getId(), com.xenowarriors.client.KiFx.STOP, 0, false, 0, 0, 0, 0, 0, 0, 0, 0));
+            com.xenowarriors.client.KiFx.receive(new com.xenowarriors.network.XenoFxPacket(mc.player.getId(), com.xenowarriors.client.KiFx.BURST, 0, false,
+                    (float) mc.player.getX(), (float) mc.player.getY() + 1.3F, (float) mc.player.getZ() + 5, 0, 0, 0, 4F, 20)); }, 6));
+        l.add(new Step("xeno_clash_3", () -> {}, 1));
+        l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
     }
 
     /** Character Customization's animations: frames of it opening, then of switching tabs. */
