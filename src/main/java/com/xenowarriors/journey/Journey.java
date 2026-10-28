@@ -940,7 +940,7 @@ public final class Journey {
             m.hurt += amount;
             for (Member o : r.members) total += o.hurt;
             if (r.challenge == Challenge.TOUGH && total > r.chHearts * 2) fail(p.server, r, "took too much damage");
-        } else if (scorer(event.getSource().getEntity()) instanceof ServerPlayer p) {
+        } else if ((Object) scorer(event.getSource().getEntity()) instanceof ServerPlayer p) {
             Run r = BY.get(p.getUUID());
             if (r == null || r.phase != BATTLE || !(target.getPersistentData().getBoolean("xw_journey") || target.getPersistentData().getBoolean("xw_tower"))) return;
             Member m = r.member(p.getUUID());
@@ -1002,7 +1002,7 @@ public final class Journey {
                 checkLost(p.server, r);
             }
             syncAll(p.server, r, OPEN_NONE);
-        } else if (scorer(event.getSource().getEntity()) instanceof ServerPlayer p) {
+        } else if ((Object) scorer(event.getSource().getEntity()) instanceof ServerPlayer p) {
             Run r = BY.get(p.getUUID());
             if (r != null && r.phase == BATTLE && r.seen.contains(event.getEntity().getUUID())) {
                 Member m = r.member(p.getUUID());
