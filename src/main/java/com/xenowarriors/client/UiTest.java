@@ -793,14 +793,14 @@ public final class UiTest {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
             p.setYRot(0); p.setXRot(0);
             var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
-            a.moveTo(p.getX() + 2.4, p.getY() - 0.2, p.getZ(), 90F, 5F); a.setNoGravity(true); a.setInvisible(true);
+            a.moveTo(p.getX() + 2.3, p.getY() - 0.2, p.getZ() + 2.5, 135F, 5F); a.setNoGravity(true); a.setInvisible(true);
             p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
             com.xenowarriors.compat.epicfight.EfTest.play(p, "none");
             log("epicfight loaded=" + net.minecraftforge.fml.ModList.get().isLoaded("epicfight"));
         }); }, 60));
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
             if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
-                a.setYRot(90F); a.yRotO = 90F; a.setXRot(5); a.xRotO = 5; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a); }
+                a.setYRot(135F); a.yRotO = 135F; a.setXRot(5); a.xRotO = 5; a.setYHeadRot(135F); a.yHeadRotO = 135F; mc.setCameraEntity(a); }
             mc.player.setYBodyRot(0); mc.player.setYHeadRot(0); mc.player.setYRot(0);
             server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "cal")); }, 10));      // the half-second peak of segment 0
         for (int i = 0; i < 10; i++) l.add(new Step("efcal_" + i, () -> {}, 20));
