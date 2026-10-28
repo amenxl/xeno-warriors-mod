@@ -41,15 +41,15 @@ public final class HudHead {
             g.pose().popPose();
             return;
         }
-        int scale = Math.round(size * 1.25F);
+        int scale = Math.round(size * 1.1F);
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
         g.enableScissor(x, y, x + size, y + size);
         if (redFlash) com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 0.55F, 0.55F, 1F);
         try {
             Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateY(-0.35F));
-            // head centre (about 1.55 blocks up) in the middle of the box
-            InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * 0.55F + 1.55F * scale), scale, pose, null, e);
+            // head centre (about 1.6 blocks up, hair included) in the middle of the box
+            InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * 0.5F + 1.6F * scale), scale, pose, null, e);
         } finally {
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
             g.disableScissor();

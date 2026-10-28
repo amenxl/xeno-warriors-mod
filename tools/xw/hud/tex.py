@@ -12,8 +12,8 @@ for ch in ('mikiko','rhalix','ultima'):
         d.ellipse((11*K,11*K,(N-11)*K,(N-11)*K),fill=(30,34,52,255))
         p=Image.open(f'/tmp/portrait_{ch}{ex}.png').convert('RGBA')
         R=(N-22)*K/2
-        s=(2*R*1.18)/p.width; p=p.resize((int(p.width*s),int(p.height*s)),Image.NEAREST)
-        layer=Image.new('RGBA',big.size,(0,0,0,0)); layer.paste(p,(int(N*K/2-p.width/2),int(N*K/2-p.height*0.6)),p)
+        s=(2*R*1.04)/max(p.width,p.height); p=p.resize((int(p.width*s),int(p.height*s)),Image.NEAREST)
+        layer=Image.new('RGBA',big.size,(0,0,0,0)); layer.paste(p,(int(N*K/2-p.width/2),int(N*K/2-p.height*0.5)),p)
         mask=Image.new('L',big.size,0); ImageDraw.Draw(mask).ellipse((11*K,11*K,(N-11)*K,(N-11)*K),fill=255)
         la=layer.split()[3]; from PIL import ImageChops; la=ImageChops.multiply(la,mask); layer.putalpha(la)
         big.alpha_composite(layer)

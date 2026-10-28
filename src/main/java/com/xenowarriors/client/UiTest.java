@@ -101,6 +101,13 @@ public final class UiTest {
         if ("karmascan".equals(System.getenv("XW_UITEST_FOCUS"))) { karmaScan(mc, l); return l; }
         if ("fullhud".equals(System.getenv("XW_UITEST_FOCUS"))) { fullHud(mc, l); return l; }
         if ("journeyguide".equals(System.getenv("XW_UITEST_FOCUS"))) { journeyGuide(mc, l); return l; }
+        if ("hudportraits".equals(System.getenv("XW_UITEST_FOCUS"))) {
+            for (CharacterType t : CharacterType.PLAYABLE) {
+                l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(t); hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 40));
+                l.add(new Step("hudportrait_" + t.getId(), () -> mc.setScreen(null), 3));
+            }
+            return l;
+        }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
