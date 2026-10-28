@@ -209,8 +209,14 @@ public final class XenoCutscene {
         if (sees(mc, unstuck(mc, mirror), target)) return unstuck(mc, mirror);
         Entity c = mc.level.getEntity(cur.caster());
         if (c != null) {
-            Vec3 above = c.position().add(0, 6 + v.length() * 0.3, 0).subtract(Vec3.directionFromRotation(0, cur.yaw()).scale(3));
-            if (sees(mc, unstuck(mc, above), target)) return unstuck(mc, above);
+            Vec3 back = Vec3.directionFromRotation(0, cur.yaw()).scale(-3);
+            for (double hgt : new double[]{6 + v.length() * 0.3, 11, 16}) {
+                Vec3 above = c.position().add(0, hgt, 0).add(back);
+                if (sees(mc, unstuck(mc, above), target)) return unstuck(mc, above);
+            }
+            // nothing sees it: film the caster from just behind and above instead of staring at a wall
+            Vec3 near = c.position().add(0, 3.5, 0).add(back.scale(1.3));
+            if (mc.level.getBlockState(BlockPos.containing(near)).isAir()) return near;
         }
         return clear(mc, unstuck(mc, cam), target);
     }

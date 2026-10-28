@@ -41,12 +41,15 @@ public final class KiFx {
         Fx(XenoFxPacket m, long start) { this.m = m; this.start = start; size = m.size(); other = m.other(); }
     }
     private static final List<Fx> LIVE = new ArrayList<>();
+    private static boolean warned;
+    private static final boolean DEBUG = System.getenv("XW_UITEST_FOCUS") != null;
 
     private KiFx() {}
 
     public static void receive(XenoFxPacket m) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
+        if (DEBUG) XenoWarriors.LOGGER.info("KiFx got kind {} life {} at {}", m.kind(), m.life(), mc.level.getGameTime());
         long now = mc.level.getGameTime();
         switch (m.kind()) {
             case STOP -> LIVE.removeIf(f -> f.m.caster() == m.caster());
@@ -72,6 +75,11 @@ public final class KiFx {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) { LIVE.clear(); return; }
         long now = mc.level.getGameTime();
+        if (DEBUG && now % 5 == 0 && !LIVE.isEmpty()) {
+            StringBuilder sb = new StringBuilder("KiFx live:");
+            for (Fx f : LIVE) sb.append(' ').append(f.m.kind()).append('@').append(now - f.start).append('/').append(f.m.life());
+            XenoWarriors.LOGGER.info(sb.toString());
+        }
         LIVE.removeIf(f -> f.dead || now - f.start > f.m.life() + 1 || now < f.start - 20);
     }
 
@@ -120,16 +128,17 @@ public final class KiFx {
         RenderSystem.disableCull();
         RenderSystem.depthMask(false);
         RenderSystem.enableDepthTest();
-        // pass 1: dark cores (normal blending - light can't make black); pass 2: the glow (additive)
+        // pass 1: the glow (additive); pass 2: dark cores on top (normal blending - light can't make black)
         for (int pass = 0; pass < 2; pass++) {
-            if (pass == 0) RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+            if (pass == 1) RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
             else RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
             BufferBuilder bb = Tesselator.getInstance().getBuilder();
             bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
             for (Fx f : LIVE) {
                 float age = now - f.start;
                 if (age < 0) continue;
-                try { draw(bb, m, mc, f, age, now, pt, pass == 1); } catch (RuntimeException ignored) {}
+                try { draw(bb, m, mc, f, age, now, pt, pass == 0); }
+                catch (RuntimeException ex) { if (!warned) { warned = true; XenoWarriors.LOGGER.error("KiFx draw failed", ex); } }
             }
             BufferUploader.drawWithShader(bb.end());
         }
@@ -199,7 +208,7 @@ public final class KiFx {
                 Vec3 c = new Vec3(p.x(), p.y(), p.z());
                 float a = (1F - k);
                 ball(bb, m, c, r, col, a, now, glow, p.rhalix());
-                if (glow) ring(bb, m, c, new Vec3(0, 1, 0), r * 1.6F, r * 0.25F, col[1], 0.5F * a);
+                if (glow) ring(bb, m, c, new Vec3(0, 1, 0), r * 1.6F, r * 0.2F, col[1], 0.25F * a);
             }
             case SHOT -> {           // the winning blast pushing through onto the loser
                 Entity to = mc.level.getEntity(p.other());
@@ -241,7 +250,7 @@ public final class KiFx {
         if (alpha <= 0.01F) return;
         if (!glow) { if (dark) sphere(bb, m, c, r * 0.62F, col[0], 0.97F * alpha, now, 0.05F); return; }
         if (!dark) sphere(bb, m, c, r * 0.55F, col[0], 0.95F * alpha, now, 0F);
-        sphere(bb, m, c, r * 0.82F, col[1], 0.55F * alpha, now, 0.08F);
+        sphere(bb, m, c, r * 0.82F, col[1], (dark ? 0.3F : 0.55F) * alpha, now, 0.08F);
         sphere(bb, m, c, r, col[2], 0.35F * alpha, now + 3, 0.12F);
         sphere(bb, m, c, r * 1.5F, col[2], 0.12F * alpha, now + 5, 0.18F);
     }
