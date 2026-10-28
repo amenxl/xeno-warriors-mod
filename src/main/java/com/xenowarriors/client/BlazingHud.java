@@ -51,9 +51,9 @@ public final class BlazingHud {
         HudFade.reset();
         if (!HudFaces.hasArt(type)) {
             // a live head, big and in front of the ring: hair spills over the top and sides, shoulders stop at the ring's bottom
-            int s = Math.round(pr * 2.7F);
-            g.enableScissor(Math.round(pcx - pr * 1.3F), Math.round(pcy - pr * 1.4F), Math.round(pcx + pr * 1.3F), Math.round(pcy + pr * 0.92F));
-            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.47F, 0.78F, false, 0F);
+            int s = Math.round(pr * 2.6F);
+            g.enableScissor(Math.round(pcx - pr * 1.3F), Math.round(pcy - pr * 1.4F), Math.round(pcx + pr * 1.3F), Math.round(pcy + pr * 0.95F));
+            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.56F, 0.78F, false, 0F);   // (eyes about the ring's middle)
             g.disableScissor();
         }
 
