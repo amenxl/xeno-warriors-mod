@@ -768,6 +768,12 @@ public final class UiTest {
             mc.player.setYBodyRot(0); mc.player.setYHeadRot(0); mc.player.setYRot(0);
             server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "cal")); }, 10));      // the half-second peak of segment 0
         for (int i = 0; i < 10; i++) l.add(new Step("efcal_" + i, () -> {}, 20));
+        // then our real attacks, a few frames each
+        for (String a : new String[]{"pole1", "pole2", "pole3", "cleave1", "cleave2"}) {
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, a)), 3));
+            for (int f = 0; f < 4; f++) l.add(new Step("ef_" + a + "_" + f, () -> {}, 4));
+            l.add(new Step(null, () -> {}, 15));
+        }
         l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
     }
 

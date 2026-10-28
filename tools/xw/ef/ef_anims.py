@@ -75,3 +75,79 @@ for i, (j, r) in enumerate(CAL):
     keys += [(i * 1.0, {}, {}), (i * 1.0 + 0.3, {j: r}, {}), (i * 1.0 + 0.7, {j: r}, {})]
 keys.append((len(CAL) * 1.0, {}, {}))
 write("biped/xw/xw_cal", anim(keys))
+
+# ---------------------------------------------------------------- semantic poses -> joint rotations
+# CONVENTIONS: (axis index, sign) per motion, checked against the calibration run.
+CONV = {
+    "arm_fwd": (0, +1),      # raise an arm forward
+    "arm_out_R": (2, +1),    # right arm out to the side
+    "arm_out_L": (2, -1),
+    "elbow": (0, +1),        # bend the elbow
+    "chest_bend": (0, +1),   # lean forward
+    "chest_twist": (1, +1),  # turn the shoulders left
+    "root_turn": (1, +1),    # whole body turns left
+    "thigh_fwd": (0, -1),    # leg forward
+    "knee": (0, +1),         # bend the knee
+}
+
+def P(arm_r=0, arm_l=0, out_r=0, out_l=0, el_r=0, el_l=0, bend=0, twist=0, turn=0, th_r=0, th_l=0, kn_r=0, kn_l=0, drop=0.0, fwd=0.0):
+    rots = {}
+    def add(j, motion, deg):
+        if not deg: return
+        ax, sg = CONV[motion]
+        r = list(rots.get(j, (0, 0, 0))); r[ax] += sg * deg; rots[j] = tuple(r)
+    add("Arm_R", "arm_fwd", arm_r); add("Arm_L", "arm_fwd", arm_l)
+    add("Arm_R", "arm_out_R", out_r); add("Arm_L", "arm_out_L", out_l)
+    add("Elbow_R", "elbow", el_r); add("Elbow_L", "elbow", el_l)
+    add("Chest", "chest_bend", bend); add("Chest", "chest_twist", twist)
+    add("Root", "root_turn", turn)
+    add("Thigh_R", "thigh_fwd", th_r); add("Thigh_L", "thigh_fwd", th_l)
+    add("Leg_R", "knee", kn_r); add("Leg_L", "knee", kn_l)
+    trans = {"Root": (0, fwd, -drop)} if (drop or fwd) else {}
+    return rots, trans
+
+def seq(*frames):
+    return anim([(t, *P(**kw)) for t, kw in frames])
+
+GUARD = dict(arm_r=40, arm_l=40, el_r=40, el_l=40, out_r=10, out_l=10)
+# Mikiko - Power Pole 1: wind up to the right, a full spin with the pole held out flat, back on guard
+write("biped/combat/xw_pole1", seq(
+    (0.00, GUARD),
+    (0.15, dict(arm_r=70, arm_l=70, out_r=30, out_l=-10, twist=-60, turn=-20, th_r=10, kn_r=20, kn_l=20, drop=0.05)),
+    (0.30, dict(arm_r=90, arm_l=90, out_r=45, out_l=-20, twist=10, turn=90, kn_r=15, kn_l=15, drop=0.04)),
+    (0.42, dict(arm_r=90, arm_l=90, out_r=45, out_l=-20, twist=40, turn=200, kn_r=15, kn_l=15, drop=0.04)),
+    (0.55, dict(arm_r=85, arm_l=85, out_r=40, out_l=-15, twist=30, turn=330, kn_r=15, kn_l=15, drop=0.04)),
+    (0.75, dict(GUARD, turn=360)),
+    (0.90, dict(GUARD, turn=360))))
+# Power Pole 2: twirl it overhead, leaning back, then slam it down with a deep bend
+write("biped/combat/xw_pole2", seq(
+    (0.00, GUARD),
+    (0.20, dict(arm_r=170, arm_l=170, el_r=10, el_l=10, bend=-15, th_l=15, kn_l=10)),
+    (0.38, dict(arm_r=175, arm_l=175, el_r=5, el_l=5, bend=-20, twist=25, th_l=20, kn_l=10)),
+    (0.52, dict(arm_r=60, arm_l=60, el_r=5, el_l=5, bend=35, th_l=40, kn_l=50, kn_r=30, drop=0.18, fwd=0.15)),
+    (0.70, dict(arm_r=55, arm_l=55, bend=30, th_l=40, kn_l=50, kn_r=30, drop=0.18, fwd=0.15)),
+    (0.95, GUARD)))
+# Power Pole 3: coil back, then a spinning lunge thrust
+write("biped/combat/xw_pole3", seq(
+    (0.00, GUARD),
+    (0.18, dict(arm_r=50, arm_l=30, el_r=90, el_l=60, twist=-45, th_r=-20, kn_l=25, drop=0.06)),
+    (0.30, dict(arm_r=90, arm_l=85, el_r=0, el_l=10, twist=20, turn=45, th_l=45, th_r=-25, kn_l=40, kn_r=10, drop=0.15, fwd=0.35)),
+    (0.45, dict(arm_r=92, arm_l=88, twist=25, turn=90, th_l=45, th_r=-25, kn_l=40, kn_r=10, drop=0.15, fwd=0.4)),
+    (0.70, dict(GUARD, turn=90)),
+    (0.85, dict(GUARD, turn=90))))
+HEAVY = dict(arm_r=35, arm_l=35, el_r=50, el_l=50, out_r=5, out_l=15, twist=-20)
+# Rhalix - Z Sword 1: low on the left, a rising cleave up to the right
+write("biped/combat/xw_cleave1", seq(
+    (0.00, HEAVY),
+    (0.25, dict(arm_r=10, arm_l=20, el_r=20, el_l=20, out_l=40, twist=-60, bend=20, kn_r=30, kn_l=30, drop=0.12)),
+    (0.45, dict(arm_r=150, arm_l=140, el_r=10, el_l=10, out_r=40, twist=40, bend=-15, th_r=20, kn_l=10)),
+    (0.60, dict(arm_r=160, arm_l=150, out_r=50, twist=50, bend=-20, th_r=20)),
+    (0.95, HEAVY)))
+# Z Sword 2: heave it up, crouch, and bring it down like a falling star
+write("biped/combat/xw_cleave2", seq(
+    (0.00, HEAVY),
+    (0.30, dict(arm_r=175, arm_l=175, el_r=30, el_l=30, bend=-20, kn_r=25, kn_l=25, drop=0.1)),
+    (0.50, dict(arm_r=180, arm_l=180, el_r=20, el_l=20, bend=-25, kn_r=35, kn_l=35, drop=0.15)),
+    (0.62, dict(arm_r=50, arm_l=50, bend=45, th_l=45, kn_l=70, kn_r=60, drop=0.35, fwd=0.2)),
+    (0.85, dict(arm_r=45, arm_l=45, bend=40, th_l=45, kn_l=70, kn_r=60, drop=0.35, fwd=0.2)),
+    (1.15, HEAVY)))
