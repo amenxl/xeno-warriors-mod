@@ -13,7 +13,7 @@ public final class CharacterLock {
     public static ServerPlayer takenBy(ServerPlayer asker, CharacterType t) {
         if (t == CharacterType.NONE) return null;
         for (ServerPlayer o : asker.server.getPlayerList().getPlayers())
-            if (o != asker && ModCapabilities.getType(o) == t) return o;
+            if (o != asker && ModCapabilities.getType(o) == t && !com.xenowarriors.journey.Journey.inRun(o)) return o;   // (journey characters don't count)
         return null;
     }
 

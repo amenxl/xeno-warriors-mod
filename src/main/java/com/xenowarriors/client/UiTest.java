@@ -94,6 +94,7 @@ public final class UiTest {
         if ("tower".equals(System.getenv("XW_UITEST_FOCUS"))) { tower(mc, l); return l; }
         if ("towerboss".equals(System.getenv("XW_UITEST_FOCUS"))) { towerBoss(mc, l); return l; }
         if ("factions".equals(System.getenv("XW_UITEST_FOCUS"))) { factions(mc, l); return l; }
+        if ("journey".equals(System.getenv("XW_UITEST_FOCUS"))) { journey(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -844,6 +845,68 @@ public final class UiTest {
         l.add(new Step(null, () -> server(p -> com.xenowarriors.tower.Tower.leave(p, "You left the Tower")), 20));
     }
 
+    /** Journey mode, solo: the lobby, the path, choosing a team, a battle with a tag-in, results, the shop, a scenario, the boss. */
+    private static void journey(Minecraft mc, List<Step> l) {
+        CharacterType[] eight = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.LOGAN};
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.journey.Journey.setCleared(p, 2);
+            com.xenowarriors.journey.Journey.open(p);
+            for (int i = 0; i < 7; i++) com.xenowarriors.journey.Journey.action(p, 1, eight[i].ordinal(), 0);
+        }); mc.options.hideGui = false; }, 40));
+        l.add(new Step("journey_lobby", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 1, eight[7].ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 2, 0, 0); }), 20));
+        l.add(new Step("journey_lobby_full", () -> {}, 3));
+        l.add(new Step(null, () -> { server(p -> com.xenowarriors.journey.Journey.action(p, 4, 0, 0)); }, 80));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> { p.setYRot(0); p.setXRot(10); }); }, 30));
+        l.add(new Step("journey_path", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> {
+            var c = com.xenowarriors.journey.Journey.testNode(p, 0);
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(c.getX() + 7, c.getY() + 7, c.getZ() - 9, 20F, 22F); a.setNoGravity(true); a.setInvisible(true);
+            p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+        }), 20));
+        l.add(new Step(null, () -> { if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+            a.setYRot(20); a.yRotO = 20; a.setXRot(22); a.xRotO = 22; a.setYHeadRot(20); a.yHeadRotO = 20; mc.setCameraEntity(a); } }, 10));
+        l.add(new Step("journey_path_overview", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); server(p -> { var c = com.xenowarriors.journey.Journey.testNode(p, 1); p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5); }); }, 30));
+        l.add(new Step("journey_team", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.KYRIE.ordinal(), 0); }), 15));
+        l.add(new Step("journey_team_picked", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.action(p, 7, 0, 0)), 110));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> {
+            int n = 0;
+            for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40))) if (n++ < 3) m.hurt(p.damageSources().playerAttack(p), 8F);
+            p.hurt(p.damageSources().generic(), 6F);
+        }); }, 20));
+        l.add(new Step("journey_battle", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { p.invulnerableTime = 0; p.hurt(p.damageSources().generic(), 1000F); }), 20));
+        l.add(new Step("journey_tagin", () -> {}, 3));
+        for (int w = 0; w < 3; w++) l.add(new Step(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40)).forEach(m -> m.kill())), 50));
+        l.add(new Step("journey_results", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(new com.xenowarriors.client.journey.JourneyMenuScreen(false)); server(p -> com.xenowarriors.journey.Journey.testSet(p, CharacterType.LEXY, 0.3F, 60)); }, 15));
+        l.add(new Step("journey_shop", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.action(p, 8, 2, CharacterType.MIKIKO.ordinal())), 15));
+        l.add(new Step("journey_shop_revived", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { com.xenowarriors.journey.Journey.skipTo(p, 3); var c = com.xenowarriors.journey.Journey.testNode(p, 3); p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5); }); }, 30));
+        l.add(new Step("journey_scenario", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> {
+            for (CharacterType t : eight) com.xenowarriors.journey.Journey.action(p, 6, t.ordinal(), 0);
+            com.xenowarriors.journey.Journey.action(p, 7, 0, 0);
+        }), 100));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
+        l.add(new Step("journey_scenario_battle", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.testEnd(p, true)), 20));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { com.xenowarriors.journey.Journey.skipTo(p, 10); var c = com.xenowarriors.journey.Journey.testNode(p, 10); p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5); }); }, 30));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 110));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 10));
+        l.add(new Step("journey_boss", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.testEnd(p, true)), 40));
+        l.add(new Step("journey_cleared", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 3));
+        l.add(new Step(null, () -> server(p -> log("journey cleared=" + com.xenowarriors.journey.Journey.cleared(p) + " money=" + com.xenowarriors.economy.Money.get(p))), 5));
+    }
+
     /** Epic Fight calibration: our test animation, one joint/axis per second, photographed from the side at each peak. */
     private static void efCal(Minecraft mc, List<Step> l) {
         int[] ids = {-1};
@@ -940,9 +1003,9 @@ public final class UiTest {
     /** With DragonMineZ installed (CI downloads it for this focus): the main menu shows its entry, and the entry opens DMZ's menu. */
     private static void dmzMenu(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); log("dmz loaded=" + com.xenowarriors.client.compat.DmzMenu.available()); }, 60));
-        l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(6); }, 40));
+        l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(7); }, 40));
         l.add(new Step("dmzmenu_main", () -> {}, 3));
-        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) { m.select(6); m.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); }
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) { m.select(7); m.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); }
             log("after DMZ entry: screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getName())); }, 30));
         l.add(new Step("dmzmenu_opened", () -> {}, 3));
         l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.compat.DmzMenu.open(); log("direct open: screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getName())); }, 30));

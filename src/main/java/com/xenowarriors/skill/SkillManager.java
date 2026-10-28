@@ -40,6 +40,7 @@ public final class SkillManager {
             else if (com.xenowarriors.skill.XenoBlast.has(ct)) went = com.xenowarriors.skill.XenoBlast.use(player);   // Mikiko / Rhalix: last resort
             else went = com.xenowarriors.ka.Kas.usePlayer(player);
             if (went) {
+                com.xenowarriors.journey.Journey.onSkill(player);
                 boolean xb = com.xenowarriors.skill.XenoBlast.has(ct) && !(ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player));
                 com.xenowarriors.network.PopupPacket.toParty(player, com.xenowarriors.network.PopupPacket.REQUEST, xb ? "Xeno Blast!" : "KA!",
                         player.getName().getString() + (xb ? " fired a Xeno Blast - their last resort!" : " used their KA!"), "rage");
@@ -150,6 +151,7 @@ public final class SkillManager {
             // a blast aimed at someone charging their own: CLASH instead
             boolean clash = skill.clashColor() >= 0 && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
             if (clash || skill.use(player)) {
+                com.xenowarriors.journey.Journey.onSkill(player);
                 Integer gen = SkillAnimPacket.GENERIC.get(skill.getId());          // newer skills: a general move to go with them
                 if (gen != null && !clash) ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), gen, !player.onGround()), player);
                 com.xenowarriors.XwFx.send(player.serverLevel(), slot == ULTIMATE_SLOT ? com.xenowarriors.network.FxPacket.ULTIMATE : com.xenowarriors.network.FxPacket.SKILL,

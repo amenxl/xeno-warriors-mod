@@ -333,6 +333,7 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        if (com.xenowarriors.journey.Journey.inRun(p)) return;          // (Journey mode handles its own knock-outs: no reviving)
         if (ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
             event.setCanceled(true);
             knockOut(p);
