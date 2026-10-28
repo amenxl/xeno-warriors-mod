@@ -42,7 +42,15 @@ public final class XenoBlast {
         float dmg; double width; boolean rhalix;
         // a beam clash: one of the frozen fired their own Xeno Blast back
         ServerPlayer rival; float rivalDmg; double rivalWidth; boolean rivalRhalix;
-        int casterPresses, rivalPresses; float point = 0.5F;       // where the two blasts meet: 0 = on the caster, 1 = on the rival
+        int casterPresses, rivalPresses; float point = 0.5F;
+        final java.util.Map<Integer, long[]> rate = new java.util.HashMap<>();     // per player: {tick, presses that tick}
+        /** At most two presses per player per tick (a macro or hacked client can't win instantly). */
+        boolean rateOk(ServerPlayer p) {
+            long t = p.level().getGameTime();
+            long[] r = rate.computeIfAbsent(p.getId(), k -> new long[]{-1, 0});
+            if (r[0] != t) { r[0] = t; r[1] = 0; }
+            return ++r[1] <= 2;
+        }       // where the two blasts meet: 0 = on the caster, 1 = on the rival
         Cast(ServerPlayer c) { caster = c; start = c.level().getGameTime(); }
         int age() { return (int) (caster.level().getGameTime() - start); }
     }
@@ -101,12 +109,13 @@ public final class XenoBlast {
         Cast c = CASTS.get(casterId);
         if (c != null && c.rival != null && !c.cancelled) {            // a beam clash: both sides mash to push
             if (c.age() < RELEASE || c.age() >= RELEASE + CLASH) return;
+            if ((ultima == c.caster || ultima == c.rival) && !c.rateOk(ultima)) return;
             if (ultima == c.caster) c.casterPresses++;
             else if (ultima == c.rival) c.rivalPresses++;
             return;
         }
         if (c == null || c.cancelled || !c.frozen.contains(ultima.getId()) || ModCapabilities.getType(ultima) != CharacterType.ULTIMA) return;
-        if (c.age() > RELEASE + 70) return;                   // too late, it's already landed
+        if (c.age() > RELEASE + 70 || !c.rateOk(ultima)) return;    // too late (it's already landed), or mashing faster than a person can
         long t = ultima.level().getGameTime();
         c.mash = Math.max(0, c.mash - (int) ((t - c.lastMash) / 10)) + 1;   // it slips back if you slow down
         c.lastMash = t;
@@ -445,6 +454,13 @@ public final class XenoBlast {
     private static void clashEnd(Cast c, float point) {
         ServerPlayer a = c.caster, b = c.rival;
         ServerLevel l = a.serverLevel();
+        // a couple of seconds to see who won, then the cutscene ends for everyone and the frozen are let go
+        ServerScheduler.later(45, () -> {
+            var stop = new com.xenowarriors.network.XenoCutscenePacket(a.getId(), false, 0, 0, 0, 0, 0, 0);
+            for (ServerPlayer w : c.watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(stop, w);
+            for (int id : c.frozen) if (l.getEntity(id) instanceof LivingEntity e) com.xenowarriors.combat.Frozen.release(e);
+            if (CASTS.get(a.getId()) == c) CASTS.remove(a.getId());
+        });
         float margin = Math.abs(point - 0.5F) * 2F;
         com.xenowarriors.XenoWarriors.LOGGER.info("Xeno Blast clash over: {} vs {}, meeting point {} -> {}", a.getGameProfile().getName(), b.getGameProfile().getName(), point,
                 margin < 0.25F ? "even, both blow up" : (point > 0.5F ? a : b).getGameProfile().getName() + " wins");

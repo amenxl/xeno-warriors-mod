@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MinecraftGlowMixin {
     @Inject(method = "shouldEntityAppearGlowing", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$karmaGlow(Entity entity, CallbackInfoReturnable<Boolean> cir) {
-        if (KarmaSense.isSensed(entity)) cir.setReturnValue(true);
+        if (KarmaSense.isSensed(entity) || com.xenowarriors.client.ScannerGlow.has(entity)) cir.setReturnValue(true);
     }
 }

@@ -70,6 +70,20 @@ public final class GovShop {
         return null;
     }
 
+    private static final String AT = "xw_gov_terminal";
+
+    /** Opened from a terminal at `pos` (buying only works near it). */
+    public static void open(ServerPlayer p, net.minecraft.core.BlockPos pos) {
+        p.getPersistentData().putLong(AT, pos.asLong());
+        open(p);
+    }
+
+    private static boolean atTerminal(ServerPlayer p) {
+        if (!p.getPersistentData().contains(AT)) return false;
+        net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.of(p.getPersistentData().getLong(AT));
+        return p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)) < 7 * 7 && p.level().getBlockState(pos).is(GovItems.TERMINAL.get());
+    }
+
     public static void open(ServerPlayer p) {
         String no = refuse(p);
         if (no != null) {
@@ -81,7 +95,7 @@ public final class GovShop {
     }
 
     public static void buy(ServerPlayer p, int idx) {
-        if (idx < 0 || idx >= OFFERS.size()) return;
+        if (idx < 0 || idx >= OFFERS.size() || !atTerminal(p)) return;
         if (refuse(p) != null) { open(p); return; }
         Offer o = OFFERS.get(idx);
         long cost = price(p, o);

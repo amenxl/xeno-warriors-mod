@@ -945,10 +945,10 @@ public final class UiTest {
             log("after projectile counters: " + com.xenowarriors.skill.XenoBlast.testState(p));
         }), 40));
         l.add(new Step("xenotest_counter", () -> {}, 2));
-        l.add(new Step(null, () -> server(p -> {
-            for (int i = 0; i < 50; i++) com.xenowarriors.skill.XenoBlast.mash(FAKES.get("FriendUltima"), p.getId());
-            log("after Ultima mashing: " + com.xenowarriors.skill.XenoBlast.testState(p) + " casting=" + com.xenowarriors.skill.XenoBlast.casting(p));
-        }), 10));
+        for (int k = 0; k < 30; k++) l.add(new Step(null, () -> server(p -> {        // (two presses a tick at most)
+            for (int i = 0; i < 3; i++) com.xenowarriors.skill.XenoBlast.mash(FAKES.get("FriendUltima"), p.getId());
+        }), 1));
+        l.add(new Step(null, () -> server(p -> log("after Ultima mashing: " + com.xenowarriors.skill.XenoBlast.testState(p) + " casting=" + com.xenowarriors.skill.XenoBlast.casting(p))), 10));
         l.add(new Step("xenotest_pushed_back", () -> {}, 40));
         // 2) a beam clash: Rhalix fires one back, Mikiko (the caster) out-mashes him
         l.add(new Step(null, () -> server(p -> {
@@ -984,12 +984,12 @@ public final class UiTest {
                     .setValue(com.xenowarriors.gov.GovVaultBlock.FACING, net.minecraft.core.Direction.NORTH), 3);
         }); mc.options.hideGui = false; }, 50));
         l.add(new Step("govshop_blocks", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 10));
-        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovShop.open(p)), 15));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovShop.open(p, p.blockPosition().offset(0, 0, 3))), 15));
         l.add(new Step("govshop_ultima", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovShop.buy(p, 3)), 15));
         l.add(new Step("govshop_bought", () -> {}, 3));
         l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.MIKIKO); }, 30));
-        l.add(new Step(null, () -> server(p -> { p.getPersistentData().remove("xw_gov_wanted_until"); com.xenowarriors.gov.GovShop.open(p); }), 10));
+        l.add(new Step(null, () -> server(p -> { p.getPersistentData().remove("xw_gov_wanted_until"); com.xenowarriors.gov.GovShop.open(p, p.blockPosition().offset(0, 0, 3)); }), 10));
         l.add(new Step("govshop_mikiko_refused", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")), 8));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
             p.getPersistentData().remove("xw_gov_wanted_until");

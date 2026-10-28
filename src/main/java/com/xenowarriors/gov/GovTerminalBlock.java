@@ -36,7 +36,7 @@ public class GovTerminalBlock extends HorizontalDirectionalBlock {
     public InteractionResult use(BlockState s, Level level, BlockPos pos, Player p, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide && p instanceof ServerPlayer sp) {
             level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.4F, 2F);
-            GovShop.open(sp);
+            GovShop.open(sp, pos);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

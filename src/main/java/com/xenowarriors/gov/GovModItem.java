@@ -70,9 +70,10 @@ public class GovModItem extends Item {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p.tickCount % 40 != 0) return;
         if (p.getPersistentData().getLong(SCAN) <= p.level().getGameTime()) return;
         ServerLevel l = p.serverLevel();
-        for (LivingEntity t : l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(24),
-                t -> t != p && (t instanceof net.minecraft.world.entity.monster.Enemy || t instanceof GovAgentEntity)))
-            t.addEffect(new MobEffectInstance(MobEffects.GLOWING, 50, 0, false, false));
+        // (only the user sees them glow: the outline is drawn on their screen alone)
+        int[] ids = l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(24),
+                t -> t != p && (t instanceof net.minecraft.world.entity.monster.Enemy || t instanceof GovAgentEntity)).stream().limit(256).mapToInt(LivingEntity::getId).toArray();
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.ScannerGlowPacket(ids), p);
     }
 
     @SubscribeEvent

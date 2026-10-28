@@ -340,7 +340,9 @@ public class HumanWorkGoal extends Goal {
             BlockPos p = (BlockPos) step[0];
             BlockState s = (BlockState) step[1];
             BlockState cur = level.getBlockState(p);
-            if (cur.equals(s) || (!cur.isAir() && !cur.canBeReplaced() && !s.isAir())) continue;
+            // (natural ground may be dug into: the farmland, water holes and floors go one block down)
+            boolean ground = cur.is(Blocks.GRASS_BLOCK) || cur.is(Blocks.DIRT) || cur.is(Blocks.COARSE_DIRT) || cur.is(Blocks.PODZOL);
+            if (cur.equals(s) || (!cur.isAir() && !cur.canBeReplaced() && !s.isAir() && !ground)) continue;
             Item cost = s.is(Blocks.COBBLESTONE) || s.is(Blocks.COBBLESTONE_WALL) || s.is(Blocks.COBBLESTONE_SLAB) ? Items.COBBLESTONE
                     : s.is(Blocks.OAK_PLANKS) || s.is(Blocks.OAK_SLAB) || s.is(Blocks.OAK_FENCE) || s.is(Blocks.OAK_FENCE_GATE) ? Items.OAK_PLANKS
                     : s.is(Blocks.WHEAT) ? Items.WHEAT_SEEDS : null;

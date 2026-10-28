@@ -264,6 +264,6 @@ public class GovAgentEntity extends PathfinderMob {
     @Override
     protected void dropCustomDeathLoot(net.minecraft.world.damagesource.DamageSource src, int looting, boolean hit) {
         super.dropCustomDeathLoot(src, looting, hit);
-        if (guard() && random.nextFloat() < 0.08F + looting * 0.03F) spawnAtLocation(GovItems.KEYCARD.get());
+        if (hit && guard() && random.nextFloat() < 0.08F + looting * 0.03F) spawnAtLocation(GovItems.KEYCARD.get());
     }
 }

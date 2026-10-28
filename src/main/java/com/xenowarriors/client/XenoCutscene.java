@@ -311,7 +311,8 @@ public final class XenoCutscene {
         if (c != null) g.drawString(font, c.getName().getString(), bx, by + 15, left, true);
         if (r != null) { String rn = r.getName().getString(); g.drawString(font, rn, bx + bw - font.width(rn), by + 15, right, true); }
         if (clashState == 2) {
-            String s = clashShown > 0.62F ? (c != null ? c.getName().getString() : "") + " wins!" : clashShown < 0.38F ? (r != null ? r.getName().getString() : "") + " wins!" : "They cancel out!";
+            // (same thresholds as the server, on the exact final point)
+            String s = clashPoint > 0.625F ? (c != null ? c.getName().getString() : "") + " wins!" : clashPoint < 0.375F ? (r != null ? r.getName().getString() : "") + " wins!" : "They cancel out!";
             g.drawCenteredString(font, s, width / 2, by + 30, 0xFFE070);
         } else if (caster() || rival()) {
             boolean blink = (age / 4) % 2 == 0;
