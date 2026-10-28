@@ -65,6 +65,7 @@ def xwDownload = { String from, File to ->
     def c = new URL(from).openConnection()
     c.setRequestProperty('User-Agent', 'amenxl/xeno-warriors-mod build')
     c.instanceFollowRedirects = true
+    c.connectTimeout = 30000; c.readTimeout = 60000          // (don't hang forever on a stalled download)
     to.withOutputStream { out -> c.inputStream.withStream { it.transferTo(out) } }
 }
 file('libs').mkdirs()
