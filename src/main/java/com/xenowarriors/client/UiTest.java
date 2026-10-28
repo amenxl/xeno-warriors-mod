@@ -90,6 +90,7 @@ public final class UiTest {
         if ("posecal".equals(System.getenv("XW_UITEST_FOCUS"))) { poseCal(mc, l); return l; }
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
+        if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -690,6 +691,16 @@ public final class UiTest {
             l.add(new Step("xeno_" + t.getId() + "_loadout", () -> {}, 3));
             l.add(new Step(null, () -> { mc.setScreen(null); server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Husk.class, p.getBoundingBox().inflate(40)).forEach(e -> e.discard())); }, 10));
         }
+    }
+
+    /** Character Customization's animations: frames of it opening, then of switching tabs. */
+    private static void customAnim(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); }, 60));
+        l.add(new Step(null, () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(null), 1));
+        for (int f = 0; f < 6; f++) l.add(new Step("customanim_open_" + f, () -> {}, 1));
+        l.add(new Step(null, () -> {}, 20));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(1); }, 0));
+        for (int f = 0; f < 5; f++) l.add(new Step("customanim_tab_" + f, () -> {}, 1));
     }
 
     private static void noToasts(Minecraft mc) {
