@@ -940,9 +940,9 @@ public final class UiTest {
     /** With DragonMineZ installed (CI downloads it for this focus): the main menu shows its entry, and the entry opens DMZ's menu. */
     private static void dmzMenu(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); log("dmz loaded=" + com.xenowarriors.client.compat.DmzMenu.available()); }, 60));
-        l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(5); }, 40));
+        l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(6); }, 40));
         l.add(new Step("dmzmenu_main", () -> {}, 3));
-        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) { m.select(5); m.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); }
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) { m.select(6); m.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); }
             log("after DMZ entry: screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getName())); }, 30));
         l.add(new Step("dmzmenu_opened", () -> {}, 3));
         l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.compat.DmzMenu.open(); log("direct open: screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getName())); }, 30));
