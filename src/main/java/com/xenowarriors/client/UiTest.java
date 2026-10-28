@@ -91,6 +91,7 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("tower".equals(System.getenv("XW_UITEST_FOCUS"))) { tower(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -752,6 +753,41 @@ public final class UiTest {
      * Xeno Blast with a second player (a stand-in FakePlayer, like the party bots use): fighting back with a projectile
      * skill, Ultima mashing to cancel it, and a full beam clash. Results go to the log as "XW-TEST".
      */
+    /** Tower mode: the Collection screen, arriving on floor 1, a wave from above and up close, floor cleared, floor 2. */
+    private static void tower(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            var t = p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG);
+            t.putBoolean(com.xenowarriors.collection.Collection.SEEN, true);
+            p.getPersistentData().put(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG, t);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 600, 4, false, false));
+            com.xenowarriors.collection.Collection.open(p, true);
+        }); mc.options.hideGui = false; }, 40));
+        l.add(new Step("tower_collection", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.tower.Tower.enter(p)); }, 30));
+        l.add(new Step("tower_arrive", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 3));
+        l.add(new Step(null, () -> server(p -> {
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(p.getX(), p.getY() + 13, p.getZ() - 17, 0F, 35F); a.setNoGravity(true); a.setInvisible(true);
+            p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+        }), 90));
+        l.add(new Step("tower_wave", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.options.hideGui = true;
+            if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(0); a.yRotO = 0; a.setXRot(35); a.xRotO = 35; a.setYHeadRot(0); a.yHeadRotO = 0; mc.setCameraEntity(a); } }, 10));
+        l.add(new Step("tower_overview", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 15));
+        l.add(new Step("tower_fight", () -> {}, 3));
+        // clear the floor (every wave)
+        for (int w = 0; w < 6; w++) l.add(new Step(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40),
+                m -> !(m instanceof net.minecraft.world.entity.decoration.ArmorStand)).forEach(m -> m.kill())), 60));
+        l.add(new Step("tower_cleared", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 3));
+        l.add(new Step(null, () -> {}, 120));
+        l.add(new Step("tower_floor2", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.tower.Tower.leave(p, "You left the Tower")), 20));
+    }
+
     /** Epic Fight calibration: our test animation, one joint/axis per second, photographed from the side at each peak. */
     private static void efCal(Minecraft mc, List<Step> l) {
         int[] ids = {-1};
