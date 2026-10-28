@@ -79,16 +79,18 @@ write("biped/xw/xw_cal", anim(keys))
 # ---------------------------------------------------------------- semantic poses -> joint rotations
 # CONVENTIONS: (axis index, sign) per motion, checked against the calibration run.
 CONV = {
-    "arm_fwd": (0, +1),      # raise an arm forward
-    "arm_out_R": (2, +1),    # right arm out to the side
-    "arm_out_L": (2, -1),
-    "elbow": (0, +1),        # bend the elbow
-    "chest_bend": (0, +1),   # lean forward
-    "chest_twist": (1, +1),  # turn the shoulders left
-    "root_turn": (1, +1),    # whole body turns left
-    "thigh_fwd": (0, -1),    # leg forward
-    "knee": (0, +1),         # bend the knee
+    # worked out from Epic Fight's own animations (kneel, sneak, float, climb, dig, crossbow, dash):
+    "arm_fwd": (0, +1),      # raise an arm forward (climb/dig: Arm x +85..125)
+    "arm_out_R": (2, -1),    # right arm out to the side (float: Arm_R z -60)
+    "arm_out_L": (2, +1),    #                           (float: Arm_L z +60)
+    "elbow": (0, +1),        # bend the elbow - on the Hand joint (crossbow/fist: Hand x +60..110)
+    "chest_bend": (0, -1),   # lean forward (sneak: Chest x -23)
+    "chest_twist": (1, +1),  # turn the shoulders
+    "root_turn": (1, +1),    # whole body turns
+    "thigh_fwd": (0, +1),    # leg forward (kneel: front Thigh x +78)
+    "knee": (0, -1),         # bend the knee (kneel: Leg x -80..-96)
 }
+# root offset: parent-space y is forward (dash moves +y), z is up
 
 def P(arm_r=0, arm_l=0, out_r=0, out_l=0, el_r=0, el_l=0, bend=0, twist=0, turn=0, th_r=0, th_l=0, kn_r=0, kn_l=0, drop=0.0, fwd=0.0):
     rots = {}
@@ -98,7 +100,7 @@ def P(arm_r=0, arm_l=0, out_r=0, out_l=0, el_r=0, el_l=0, bend=0, twist=0, turn=
         r = list(rots.get(j, (0, 0, 0))); r[ax] += sg * deg; rots[j] = tuple(r)
     add("Arm_R", "arm_fwd", arm_r); add("Arm_L", "arm_fwd", arm_l)
     add("Arm_R", "arm_out_R", out_r); add("Arm_L", "arm_out_L", out_l)
-    add("Elbow_R", "elbow", el_r); add("Elbow_L", "elbow", el_l)
+    add("Hand_R", "elbow", el_r); add("Hand_L", "elbow", el_l)
     add("Chest", "chest_bend", bend); add("Chest", "chest_twist", twist)
     add("Root", "root_turn", turn)
     add("Thigh_R", "thigh_fwd", th_r); add("Thigh_L", "thigh_fwd", th_l)
