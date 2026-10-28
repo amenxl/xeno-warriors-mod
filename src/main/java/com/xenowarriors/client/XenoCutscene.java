@@ -101,7 +101,7 @@ public final class XenoCutscene {
             float w = smooth((t - SHOTS[shot]) / BLEND);
             c = new Vec3[]{prev[0].lerp(c[0], w), prev[1].lerp(c[1], w)};
         }
-        Vec3 pos = unstuck(mc, c[0]);
+        Vec3 pos = clear(mc, unstuck(mc, c[0]), c[1]);
         Vec3 d = c[1].subtract(pos);
         double yaw = Math.toDegrees(Mth.atan2(-d.x, d.z));
         double pitch = -Math.toDegrees(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
@@ -138,10 +138,10 @@ public final class XenoCutscene {
             }
             case 3 -> {   // wide from the side as it's let go
                 Vec3 mid = body.lerp(impact, 0.45);
-                return new Vec3[]{mid.add(side.scale(-14)).add(up.scale(3)), mid};
+                return new Vec3[]{mid.add(side.scale(-9)).add(up.scale(4.5)), mid};
             }
             case 4 -> {   // high above the impact
-                return new Vec3[]{impact.subtract(fwd.scale(6)).add(side.scale(7)).add(up.scale(10 + (t - 260) * 0.03)), impact};
+                return new Vec3[]{impact.subtract(fwd.scale(9)).add(side.scale(5)).add(up.scale(8 + (t - 260) * 0.03)), impact};
             }
             default -> {  // pulling back behind them over the aftermath
                 double k = (t - 330) / 70.0;
@@ -152,13 +152,23 @@ public final class XenoCutscene {
 
     private static float smooth(float x) { x = Mth.clamp(x, 0F, 1F); return x * x * (3F - 2F * x); }
 
+    /** Out of any block (grass and leaves too, so they don't fill the screen). */
     private static Vec3 unstuck(Minecraft mc, Vec3 pos) {
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 16; i++) {
             BlockPos bp = BlockPos.containing(pos);
-            if (mc.level.getBlockState(bp).getCollisionShape(mc.level, bp).isEmpty()) return pos;
+            if (mc.level.getBlockState(bp).isAir()) return pos;
             pos = pos.add(0, 0.5, 0);
         }
         return pos;
+    }
+
+    /** If hills, trees or grass are between the camera and what it's filming, move the camera in front of them. */
+    private static Vec3 clear(Minecraft mc, Vec3 cam, Vec3 target) {
+        var hit = mc.level.clip(new net.minecraft.world.level.ClipContext(target, cam, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
+        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) return cam;
+        Vec3 p = hit.getLocation();
+        return p.add(target.subtract(p).normalize().scale(0.6));
     }
 
     /** Letterbox, the move's name, and (for the frozen) a note that they can't move. */
