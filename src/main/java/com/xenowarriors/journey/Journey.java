@@ -627,6 +627,7 @@ public final class Journey {
             }
             charDown(server, r, mb, e.getValue());
         }
+        if (now >= r.battleStart) {
             // everything flagged in the arena counts - including helpers a boss calls in
             r.alive.clear();
             for (Mob m : tl.getEntitiesOfClass(Mob.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 14, 24, JourneyWorld.ARENA_R + 14),
