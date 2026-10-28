@@ -32,6 +32,102 @@ public final class XenoBlast {
     public static final int CUTSCENE = 20 * 20, RELEASE = 200, FREEZE_RANGE = 24;
     private static final String CASTING = "xw_xeno_casting_until";
 
+    // ---- one cast in progress: who's caught in it, how much each fought back, and Ultima pushing it back
+    public static final int MASH_NEEDED = 45, COUNTER_UNTIL = RELEASE + 60;
+    private static final class Cast {
+        final ServerPlayer caster; final long start; final java.util.List<ServerPlayer> watchers = new java.util.ArrayList<>();
+        final java.util.Map<Integer, Float> resist = new java.util.HashMap<>();
+        final java.util.Set<Integer> frozen = new java.util.HashSet<>();
+        int mash; long lastMash; boolean cancelled;
+        Cast(ServerPlayer c) { caster = c; start = c.level().getGameTime(); }
+        int age() { return (int) (caster.level().getGameTime() - start); }
+    }
+    private static final java.util.Map<Integer, Cast> CASTS = new java.util.HashMap<>();
+
+    private static Cast castOf(ServerPlayer caster) { return CASTS.get(caster.getId()); }
+    private static boolean live(ServerPlayer caster) { Cast c = castOf(caster); return c == null || !c.cancelled; }
+    private static float dmgFor(ServerPlayer caster, LivingEntity e, float dmg) {
+        Cast c = castOf(caster);
+        return c == null ? dmg : dmg * (1F - c.resist.getOrDefault(e.getId(), 0F));
+    }
+
+    /**
+     * A frozen target fights back with a projectile skill: a shot flies at the caster. It can't stop the blast, but
+     * each one (up to three) makes it hit them for less when it lands.
+     */
+    public static void counter(ServerPlayer target, int casterId, int slot) {
+        Cast c = CASTS.get(casterId);
+        if (c == null || c.cancelled || !c.frozen.contains(target.getId()) || c.age() > COUNTER_UNTIL) return;
+        Skill sk = SkillManager.get(target, slot);
+        if (sk == null || sk.clashColor() < 0) {
+            target.displayClientMessage(Component.literal("That move can't reach - fight back with a projectile skill!").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        int cost = sk.getKarmaCost(target);
+        if (!target.isCreative() && !Karma.has(target, cost)) { Karma.notEnough(target, cost); return; }
+        float now = c.resist.getOrDefault(target.getId(), 0F);
+        if (now >= 0.6F) { target.displayClientMessage(Component.literal("You've done all you can - brace yourself!").withStyle(ChatFormatting.GRAY), true); return; }
+        if (!target.isCreative()) Karma.add(target, -cost);
+        c.resist.put(target.getId(), Math.min(0.6F, now + 0.2F));
+        ServerLevel l = target.serverLevel();
+        int col = sk.clashColor();
+        Vector3f v = new Vector3f((col >> 16 & 255) / 255F, (col >> 8 & 255) / 255F, (col & 255) / 255F);
+        Vec3 from = target.getEyePosition().subtract(0, 0.3, 0), to = c.caster.getEyePosition().subtract(0, 0.3, 0);
+        l.playSound(null, target.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1F, 1.3F);
+        for (int k = 0; k <= 10; k++) {
+            int kk = k;
+            ServerScheduler.later(k, () -> {
+                Vec3 q = from.lerp(to, kk / 12.0);         // it never quite gets there: the blast's power eats it
+                l.sendParticles(new DustParticleOptions(v, 2.2F), q.x, q.y, q.z, 4, 0.12, 0.12, 0.12, 0);
+                if (kk == 10) {
+                    l.sendParticles(ParticleTypes.EXPLOSION, q.x, q.y, q.z, 1, 0, 0, 0, 0);
+                    l.playSound(null, BlockPos.containing(q), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.6F, 1.4F);
+                }
+            });
+        }
+        target.displayClientMessage(Component.literal("You fought back! The blast will hit you " + Math.round(c.resist.get(target.getId()) * 100) + "% softer.").withStyle(ChatFormatting.AQUA), true);
+    }
+
+    /** Ultima pushing back the wave: mash enough and the Xeno Blast is thrown off - cancelled. */
+    public static void mash(ServerPlayer ultima, int casterId) {
+        Cast c = CASTS.get(casterId);
+        if (c == null || c.cancelled || !c.frozen.contains(ultima.getId()) || ModCapabilities.getType(ultima) != CharacterType.ULTIMA) return;
+        if (c.age() > RELEASE + 70) return;                   // too late, it's already landed
+        long t = ultima.level().getGameTime();
+        c.mash = Math.max(0, c.mash - (int) ((t - c.lastMash) / 10)) + 1;   // it slips back if you slow down
+        c.lastMash = t;
+        ServerLevel l = ultima.serverLevel();
+        Vec3 mid = ultima.getEyePosition().lerp(c.caster.getEyePosition(), 0.25);
+        l.sendParticles(new DustParticleOptions(new Vector3f(0.25F, 1F, 0.55F), 1.8F), mid.x, mid.y, mid.z, 6, 0.6, 0.6, 0.6, 0);
+        for (ServerPlayer w : c.watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.XenoMashPacket(casterId, c.mash), w);
+        if (c.mash >= MASH_NEEDED) cancel(c, ultima);
+    }
+
+    private static void cancel(Cast c, ServerPlayer ultima) {
+        c.cancelled = true;
+        ServerLevel l = ultima.serverLevel();
+        // a green wave rolls back over the caster
+        Vec3 a = ultima.position().add(0, 1, 0), b = c.caster.position().add(0, 1, 0);
+        for (int k = 0; k <= 12; k++) {
+            int kk = k;
+            ServerScheduler.later(k, () -> {
+                Vec3 q = a.lerp(b, kk / 12.0);
+                l.sendParticles(new DustParticleOptions(new Vector3f(0.25F, 1F, 0.55F), 3F), q.x, q.y, q.z, 14, 1.2, 1.2, 1.2, 0);
+            });
+        }
+        l.playSound(null, ultima.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.4F, 1.4F);
+        Component msg = Component.literal(ultima.getName().getString() + " pushed back the Xeno Blast!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
+        var stop = new com.xenowarriors.network.XenoCutscenePacket(c.caster.getId(), false, 0, 0, 0, 0, 0, 0);
+        for (ServerPlayer w : c.watchers) { w.displayClientMessage(msg, true); com.xenowarriors.network.ModNetwork.sendToPlayer(stop, w); }
+        for (int id : c.frozen) if (l.getEntity(id) instanceof LivingEntity e) com.xenowarriors.combat.Frozen.release(e);
+        com.xenowarriors.combat.Frozen.release(c.caster);
+        c.caster.getPersistentData().remove(CASTING);
+        c.caster.getPersistentData().remove(SkillEvents.ULT_UNTIL);
+        c.caster.push(-c.caster.getLookAngle().x * 1.5, 0.5, -c.caster.getLookAngle().z * 1.5);
+        c.caster.hurtMarked = true;
+        CASTS.remove(c.caster.getId());
+    }
+
     /** Whether this player is in their Xeno Blast cutscene right now. */
     public static boolean casting(ServerPlayer p) { return p.getPersistentData().getLong(CASTING) > p.level().getGameTime(); }
 
@@ -55,7 +151,7 @@ public final class XenoBlast {
         for (int i = 0; i < RELEASE; i += 2) {
             int ii = i;
             ServerScheduler.later(i, () -> {
-                if (!p.isAlive()) return;
+                if (!p.isAlive() || !live(p)) return;
                 float f = ii / (float) RELEASE;                  // grows the whole way
                 Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
                 Vec3 h = p.position().add(0, 0.95, 0).add(right(p).scale(-0.45)).add(look.scale(-0.35));     // cupped at the hip
@@ -71,12 +167,12 @@ public final class XenoBlast {
             });
         }
         ServerScheduler.later(RELEASE, () -> {
-            if (!p.isAlive()) return;
+            if (!p.isAlive() || !live(p)) return;
             l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.85F);
             l.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4F, 0.5F);
             Set<Integer> hit = new HashSet<>();
             for (int k = 0; k < 70; k++) ServerScheduler.later(k, () -> {       // a long, huge beam
-                if (!p.isAlive()) return;
+                if (!p.isAlive() || !live(p)) return;
                 Vec3 s = p.getEyePosition().subtract(0, 0.4, 0).add(p.getLookAngle().scale(0.9)), d = p.getLookAngle();
                 Vec3 up = Math.abs(d.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
                 Vec3 u = d.cross(up).normalize(), v = d.cross(u).normalize();
@@ -99,7 +195,7 @@ public final class XenoBlast {
                     double r = 0.35 + width * Math.pow(Math.max(0, along) / RANGE, 0.6);
                     if (along < 0 || along > RANGE || rel.subtract(d.scale(along)).length() > r + e.getBbWidth()) continue;
                     if (hit.add(e.getId())) {
-                        e.hurt(p.damageSources().indirectMagic(p, p), dmg);
+                        e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg));
                         e.setSecondsOnFire(5);
                         e.push(d.x * 1.8, 0.45, d.z * 1.8);
                         e.hurtMarked = true;
@@ -123,7 +219,7 @@ public final class XenoBlast {
         for (int i = 0; i < charge; i += 2) {
             int ii = i;
             ServerScheduler.later(i, () -> {
-                if (!p.isAlive()) return;
+                if (!p.isAlive() || !live(p)) return;
                 float f = ii / (float) charge;
                 Vec3 h = fingertip.get();
                 float sz = 0.8F + f * 3.2F;                     // the orb swells the whole time
@@ -133,7 +229,7 @@ public final class XenoBlast {
             });
         }
         ServerScheduler.later(charge, () -> {
-            if (!p.isAlive()) return;
+            if (!p.isAlive() || !live(p)) return;
             l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5F, 0.55F);
             Vec3 d = p.getLookAngle();
             Vec3[] pos = {fingertip.get()};
@@ -142,7 +238,7 @@ public final class XenoBlast {
             for (int k = 0; k < 60; k++) {
                 int kk = k;
                 ServerScheduler.later(k, () -> {
-                    if (done[0]) return;
+                    if (done[0] || !live(p)) return;
                     Vec3 from = pos[0], to = from.add(d.scale(0.9));          // slow and heavy, for the camera
                     // light rays streaking out behind it, and a trail
                     for (int t = 0; t < 4; t++) { Vec3 q = from.add(d.scale(t * 0.45)); l.sendParticles(new DustParticleOptions(purple, 1.4F), q.x, q.y, q.z, 1, 0.08, 0.08, 0.08, 0); }
@@ -193,7 +289,7 @@ public final class XenoBlast {
             double dist = e.position().add(0, e.getBbHeight() / 2, 0).distanceTo(at);
             if (dist > radius + e.getBbWidth()) continue;
             float f = (float) Math.max(0.45, 1 - dist / (radius * 1.6));
-            e.hurt(p.damageSources().indirectMagic(p, p), dmg * f);
+            e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg * f));
             Vec3 push = e.position().subtract(at).normalize();
             e.push(push.x * 1.4, 0.55, push.z * 1.4);
             e.hurtMarked = true;
@@ -232,11 +328,16 @@ public final class XenoBlast {
         p.getPersistentData().putLong(CASTING, until);
         p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, until);
         com.xenowarriors.combat.Frozen.freeze(p, CUTSCENE);
-        java.util.List<ServerPlayer> watchers = new java.util.ArrayList<>(java.util.List.of(p));
+        Cast cast = new Cast(p);
+        CASTS.put(p.getId(), cast);
+        java.util.List<ServerPlayer> watchers = cast.watchers;
+        watchers.add(p);
         for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(FREEZE_RANGE), e -> e != p && SkillTargeting.canTarget(p, e))) {
             com.xenowarriors.combat.Frozen.freeze(e, CUTSCENE);
+            cast.frozen.add(e.getId());
             if (e instanceof ServerPlayer sp) watchers.add(sp);
         }
+        ServerScheduler.later(CUTSCENE + 5, () -> { if (CASTS.get(p.getId()) == cast) CASTS.remove(p.getId()); });
         var pkt = new com.xenowarriors.network.XenoCutscenePacket(p.getId(), rhalix, CUTSCENE, RELEASE, p.getX(), p.getY(), p.getZ(), p.getYRot());
         for (ServerPlayer w : watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(pkt, w);
         if (rhalix) darkOrb(p, l, dmg, width);

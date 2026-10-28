@@ -31,6 +31,8 @@ public final class XenoCutscene {
 
     public static void start(XenoCutscenePacket m) {
         Minecraft mc = Minecraft.getInstance();
+        if (m.ticks() <= 0) { if (cur != null) stop(mc); return; }     // cancelled (Ultima pushed it back)
+        mash = 0; counters = 0;
         if (cur == null) saved = mc.options.getCameraType();
         cur = m;
         age = 0;
@@ -39,6 +41,22 @@ public final class XenoCutscene {
     }
 
     public static boolean active() { return cur != null; }
+
+    // ---- fighting back while frozen in it
+    private static int mash, counters;
+
+    /** True while you're caught in someone else's Xeno Blast (your skill keys fire back instead). */
+    public static boolean frozenTarget() { return cur != null && !caster(); }
+
+    private static boolean ultima() { return com.xenowarriors.client.ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.ULTIMA; }
+
+    public static void counter(int slot) {
+        if (cur == null || age > com.xenowarriors.skill.XenoBlast.COUNTER_UNTIL) return;
+        counters++;
+        com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.XenoCounterPacket(cur.caster(), slot));
+    }
+
+    public static void mashProgress(int p) { mash = p; }
 
     private static boolean caster() {
         Minecraft mc = Minecraft.getInstance();
@@ -50,6 +68,9 @@ public final class XenoCutscene {
         if (event.phase != TickEvent.Phase.END || cur == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || ++age >= cur.ticks()) { stop(mc); return; }
+        // Ultima: mash Jump to push the wave back
+        if (frozenTarget() && ultima()) while (mc.options.keyJump.consumeClick())
+            com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.XenoMashPacket(cur.caster(), 0));
         if (caster()) {           // the caster keeps aiming the way they cast it
             mc.player.setYRot(lockYaw);
             mc.player.setYHeadRot(lockYaw);
@@ -168,6 +189,19 @@ public final class XenoCutscene {
         if (!caster()) {
             String s = "Frozen in place...";
             g.drawString(font, s, width - font.width(s) - 10, height - bar - 14, 0xC0C0D0, true);
+            if (t < com.xenowarriors.skill.XenoBlast.COUNTER_UNTIL) {
+                String hint = ultima() ? "MASH [JUMP] to push the wave back!   or use a projectile skill to fight back"
+                        : "Fight back! Use a projectile skill to soften the blow";
+                boolean blink = (age / 6) % 2 == 0;
+                g.drawCenteredString(font, hint, width / 2, bar + 8, blink ? 0xFFE070 : 0xFFFFFF);
+            }
+            if (ultima()) {          // the push-back meter
+                int bw = Math.min(220, width / 2), bx = width / 2 - bw / 2, by = bar + 22;
+                float f = Mth.clamp(mash / (float) com.xenowarriors.skill.XenoBlast.MASH_NEEDED, 0F, 1F);
+                g.fill(bx - 1, by - 1, bx + bw + 1, by + 7, 0xFF000000);
+                g.fill(bx, by, bx + bw, by + 6, 0xFF203028);
+                g.fill(bx, by, bx + Math.round(bw * f), by + 6, 0xFF40FF8C);
+            }
         }
     }
 }

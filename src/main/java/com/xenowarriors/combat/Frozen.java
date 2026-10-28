@@ -29,6 +29,8 @@ public final class Frozen {
         if (e instanceof Mob m) { m.getNavigation().stop(); m.setTarget(null); }
     }
 
+    public static void release(LivingEntity e) { HELD.remove(e.getId()); }
+
     public static boolean is(LivingEntity e) {
         Hold h = HELD.get(e.getId());
         return h != null && h.until > e.level().getGameTime();

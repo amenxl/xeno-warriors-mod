@@ -52,6 +52,7 @@ public final class ClientEvents {
         }
         for (int slot = 0; slot < ModKeyMappings.SKILLS.length; slot++) {
             while (ModKeyMappings.SKILLS[slot].consumeClick()) {
+                if (XenoCutscene.frozenTarget()) { XenoCutscene.counter(slot); continue; }   // caught in a Xeno Blast: fight back
                 if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active()) {
                     ModNetwork.sendToServer(new UseSkillPacket(slot));
                 }
