@@ -53,8 +53,8 @@ public class GovShopScreen extends Screen {
         int x0 = left(), w = panelW(), y0 = top();
         g.fill(x0 - 2, y0 - 34, x0 + w + 2, y0 - 33, 0xFF40C8FF);
         g.drawString(font, "AURORA GOVERNMENT  //  SUPPLY TERMINAL", x0, y0 - 28, 0xFF8FE4FF, false);
-        String bal = "Balance: " + com.xenowarriors.economy.Money.fmt(money) + " Money" + (discount > 0 ? "   (Gov staff -" + discount + "%)" : "");
-        g.drawString(font, bal, x0, y0 - 16, discount > 0 ? 0xFF7CFFB0 : 0xFFDDEEFF, false);
+        String bal = "Balance: " + com.xenowarriors.economy.Money.fmt(money) + " Money" + (discount > 0 ? "   (your standing: -" + discount + "%)" : discount < 0 ? "   (your standing: +" + (-discount) + "%)" : "");
+        g.drawString(font, bal, x0, y0 - 16, discount > 0 ? 0xFF7CFFB0 : discount < 0 ? 0xFFFF9A6A : 0xFFDDEEFF, false);
         int cw = (w - 12) / COLS;
         for (int i = 0; i < GovShop.OFFERS.size(); i++) {
             int c = i % COLS, r = i / COLS;

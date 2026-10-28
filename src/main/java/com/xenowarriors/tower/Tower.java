@@ -67,6 +67,8 @@ public final class Tower {
         final Map<UUID, CompoundTag> pending = new HashMap<>();
         final Map<UUID, Float> healLeft = new HashMap<>();
         List<String> pool = List.of();
+        TowerMod mod = TowerMod.NONE;
+        boolean bossFloor;
     }
 
     private static final Map<Integer, Run> RUNS = new HashMap<>();
@@ -167,6 +169,7 @@ public final class Tower {
 
     private static void close(MinecraftServer server, Run r) {
         RUNS.remove(r.slot);
+        TowerBosses.clear(r.center);
         ServerLevel tl = server.getLevel(LEVEL);
         if (tl == null) return;
         for (UUID id : r.alive) { Entity e = tl.getEntity(id); if (e != null) e.discard(); }
@@ -196,18 +199,25 @@ public final class Tower {
     private static void nextFloor(MinecraftServer server, Run r) {
         r.floor++;
         r.wave = 0;
-        r.waves = Math.min(5, 2 + r.floor / 10);
+        r.bossFloor = r.floor % 10 == 0;
+        r.waves = r.bossFloor ? 1 : Math.min(5, 2 + r.floor / 10);
         r.state = 0;
         ServerLevel tl = server.getLevel(LEVEL);
+        r.mod = tl == null ? TowerMod.NONE : TowerMod.roll(r.floor, tl.getRandom());
         r.nextAt = (tl == null ? 0 : tl.getGameTime()) + 80;
         if (r.floor > 1 && (r.floor - 1) % 5 == 0) r.pool = pool(r, server);         // finished ones drop out as you go
         boolean checkpoint = r.floor % CHECKPOINT == 0;
         for (UUID id : r.players) {
             ServerPlayer p = server.getPlayerList().getPlayer(id);
             if (p == null) continue;
-            r.healLeft.put(id, HEAL_PER_FLOOR);
+            r.healLeft.put(id, r.mod == TowerMod.NO_HEALING ? 0F : HEAL_PER_FLOOR);
             Collection.setBest(p, r.floor);
-            title(p, "FLOOR " + r.floor, checkpoint ? "Checkpoint - Collection saved!" : r.waves + " waves  -  " + (int) (HEAL_PER_FLOOR / 2) + " hearts of healing");
+            TowerBoard.reached(p, r.floor);
+            String sub = r.bossFloor ? (checkpoint ? "Checkpoint saved - " : "") + "a boss is coming..."
+                    : r.mod != TowerMod.NONE ? r.mod.title.toUpperCase() + ": " + r.mod.desc
+                    : checkpoint ? "Checkpoint - Collection saved!" : r.waves + " waves  -  " + (int) (HEAL_PER_FLOOR / 2) + " hearts of healing";
+            title(p, (r.bossFloor ? "BOSS " : "") + "FLOOR " + r.floor, sub);
+            if (r.mod != TowerMod.NONE) p.sendSystemMessage(msg("Floor " + r.floor + ": " + r.mod.title + " - " + r.mod.desc, ChatFormatting.LIGHT_PURPLE));
             if (checkpoint) save(p, r);
         }
         if (tl != null) {
@@ -236,7 +246,14 @@ public final class Tower {
 
     private static void spawnWave(ServerLevel tl, Run r) {
         int people = r.players.size();
+        if (r.bossFloor) {
+            List<ServerPlayer> ps = new ArrayList<>();
+            for (UUID id : r.players) { ServerPlayer p = tl.getServer().getPlayerList().getPlayer(id); if (p != null && p.level() == tl) ps.add(p); }
+            for (Mob m : TowerBosses.spawn(tl, r.center, r.floor, ps)) r.alive.add(m.getUUID());
+            return;
+        }
         int count = Math.min(14, 3 + r.floor / 3 + r.wave + (people - 1) * 2);
+        if (r.mod == TowerMod.HORDE) count = Math.min(21, count * 3 / 2);
         var rnd = tl.getRandom();
         List<ServerPlayer> targets = new ArrayList<>();
         for (UUID id : r.players) { ServerPlayer p = tl.getServer().getPlayerList().getPlayer(id); if (p != null && p.level() == tl) targets.add(p); }
@@ -257,6 +274,9 @@ public final class Tower {
             if (mh != null && hp > 0) mh.addPermanentModifier(new AttributeModifier(HP, "Tower floor", hp, AttributeModifier.Operation.MULTIPLY_TOTAL));
             var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
             if (md != null && dmg > 0) md.addPermanentModifier(new AttributeModifier(DMG, "Tower floor", dmg, AttributeModifier.Operation.MULTIPLY_TOTAL));
+            if (r.mod == TowerMod.ELITE && mh != null) mh.addPermanentModifier(new AttributeModifier(UUID.fromString("5b0e2c11-7a3d-4c55-9a51-0d1f2e3c4b03"), "Tower elite", 0.6, AttributeModifier.Operation.MULTIPLY_TOTAL));
+            if (r.mod == TowerMod.ELITE || r.mod == TowerMod.DARKNESS) m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.GLOWING, -1, 0, false, false));
+            if (r.mod == TowerMod.SWIFT) m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, -1, 1, false, false));
             m.setHealth(m.getMaxHealth());
             m.getPersistentData().putBoolean("xw_tower", true);
             if (!targets.isEmpty()) m.setTarget(targets.get(rnd.nextInt(targets.size())));
@@ -276,7 +296,10 @@ public final class Tower {
         if (tl == null) return;
         long now = tl.getGameTime();
         if (now % 5 != 0) return;
+        for (Mob extra : TowerBosses.tick(tl))                     // helpers the bosses called in count as part of the wave
+            for (Run r : RUNS.values()) if (extra.position().distanceTo(Vec3.atCenterOf(r.center)) < ARENA_R + 8) { r.alive.add(extra.getUUID()); break; }
         for (Run r : new ArrayList<>(RUNS.values())) {
+            if (now % 20 == 0) modEffects(server, tl, r);
             for (UUID id : new ArrayList<>(r.players)) {
                 ServerPlayer p = server.getPlayerList().getPlayer(id);
                 if (p == null) { BY_PLAYER.remove(id); r.players.remove(id); r.pending.remove(id); continue; }
@@ -300,12 +323,48 @@ public final class Tower {
                 r.state = 0;
                 if (r.wave >= r.waves) {
                     vacuum(tl, r, server);
+                    for (UUID id : r.players) {
+                        ServerPlayer p = server.getPlayerList().getPlayer(id);
+                        if (p == null) continue;
+                        if (r.bossFloor) TowerRewards.boss(p, r.floor);
+                        if (r.mod == TowerMod.HORDE) TowerRewards.horde(p, r.floor);
+                    }
                     for (UUID id : r.players) { ServerPlayer p = server.getPlayerList().getPlayer(id); if (p != null) title(p, "FLOOR " + r.floor + " CLEARED", "Next floor..."); }
                     r.nextAt = now + 60;
                     r.state = 2;
                 } else r.nextAt = now + 50;
             } else if (r.state == 2 && now >= r.nextAt) nextFloor(server, r);
         }
+    }
+
+    /** The floor's twist, kept up every second. */
+    private static void modEffects(MinecraftServer server, ServerLevel tl, Run r) {
+        if (r.mod == TowerMod.NONE || r.state == 2) return;
+        for (UUID id : r.players) {
+            ServerPlayer p = server.getPlayerList().getPlayer(id);
+            if (p == null || p.level() != tl) continue;
+            switch (r.mod) {
+                case LOW_GRAVITY -> { p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOW_FALLING, 40, 0, false, false));
+                                      p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.JUMP, 40, 2, false, false)); }
+                case DARKNESS -> p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DARKNESS, 60, 0, false, false));
+                case KARMA_DRAIN -> com.xenowarriors.karma.Karma.lockRegen(p, 30);
+                default -> {}
+            }
+        }
+        if (r.mod == TowerMod.LOW_GRAVITY) for (UUID id : r.alive)
+            if (tl.getEntity(id) instanceof LivingEntity le) le.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOW_FALLING, 40, 0, false, false));
+    }
+
+    /** (op, testing) jump your run to this floor. */
+    public static void skipTo(ServerPlayer p, int floor) {
+        Run r = BY_PLAYER.get(p.getUUID());
+        if (r == null) { p.displayClientMessage(msg("You're not in the Tower", ChatFormatting.GRAY), true); return; }
+        ServerLevel tl = p.serverLevel();
+        for (UUID id : r.alive) { Entity e = tl.getEntity(id); if (e != null) e.discard(); }
+        r.alive.clear();
+        TowerBosses.clear(r.center);
+        r.floor = floor - 1;
+        nextFloor(p.server, r);
     }
 
     /** Drops and XP from the floor fly to the players. */

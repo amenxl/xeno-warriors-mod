@@ -193,6 +193,7 @@ public final class SkyHaterRaids {
         for (UUID id : r.fought) {
             if (!(level.getPlayerByUUID(id) instanceof ServerPlayer p) || !p.blockPosition().closerThan(r.center, AREA)) continue;
             p.sendSystemMessage(Component.literal("The village is safe! The people bring you gifts.").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+            com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.TOWN, 40);
             level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1F, 1F);
             p.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, 0, false, false, true));
             List<ItemStack> gifts = List.of(new ItemStack(Items.EMERALD, 6 + level.random.nextInt(9)),

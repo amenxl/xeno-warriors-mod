@@ -92,6 +92,8 @@ public final class UiTest {
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
         if ("tower".equals(System.getenv("XW_UITEST_FOCUS"))) { tower(mc, l); return l; }
+        if ("towerboss".equals(System.getenv("XW_UITEST_FOCUS"))) { towerBoss(mc, l); return l; }
+        if ("factions".equals(System.getenv("XW_UITEST_FOCUS"))) { factions(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -753,6 +755,61 @@ public final class UiTest {
      * Xeno Blast with a second player (a stand-in FakePlayer, like the party bots use): fighting back with a projectile
      * skill, Ultima mashing to cancel it, and a full beam clash. Results go to the log as "XW-TEST".
      */
+    /** Factions: the screen as Mikiko with mixed standing, then a Hostile-Government Supply Terminal refusal and a hated villager. */
+    private static void factions(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); }, 40));
+        l.add(new Step(null, () -> server(p -> {
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.GOV, -320);
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.SR, 470);
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.SKY, 120);
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.TOWN, 820);
+        }), 20));
+        l.add(new Step(null, () -> com.xenowarriors.client.menu.FactionsScreen.open(null), 25));
+        l.add(new Step("factions_screen", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.LOGAN); }, 30));
+        l.add(new Step(null, () -> com.xenowarriors.client.menu.FactionsScreen.open(null), 25));
+        l.add(new Step("factions_logan_start", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.MAX); }, 30));
+        l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(4); }, 30));
+        l.add(new Step("factions_mainmenu", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.MIKIKO); server(p -> log("rep as mikiko: gov=" + com.xenowarriors.faction.Reputation.get(p, com.xenowarriors.faction.Faction.GOV)
+                + " hostile=" + com.xenowarriors.faction.Reputation.hostile(p, com.xenowarriors.faction.Faction.GOV))); }, 20));
+    }
+
+    /** Tower boss floors (10, 20, 30, 40) and a couple of floor twists. */
+    private static void towerBoss(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            var t = p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG);
+            t.putBoolean(com.xenowarriors.collection.Collection.SEEN, true);
+            p.getPersistentData().put(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG, t);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 900, 4, false, false));
+            com.xenowarriors.tower.Tower.enter(p);
+        }); mc.options.hideGui = false; }, 60));
+        l.add(new Step(null, () -> server(p -> {
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(p.getX(), p.getY() + 9, p.getZ() + 12, 180F, 30F); a.setNoGravity(true); a.setInvisible(true);
+            p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+        }), 10));
+        for (int floor : new int[]{10, 20, 30, 40}) {
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.tower.Tower.skipTo(p, floor)), 10));
+            l.add(new Step("towerboss_" + floor + "_title", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 95));
+            l.add(new Step("towerboss_" + floor + "_hud", () -> {}, 3));
+            l.add(new Step(null, () -> { mc.options.hideGui = true;
+                if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                    a.setYRot(180F); a.yRotO = 180F; a.setXRot(30); a.xRotO = 30; a.setYHeadRot(180F); a.yHeadRotO = 180F; mc.setCameraEntity(a); } }, 8));
+            l.add(new Step("towerboss_" + floor + "_view", () -> {}, 3));
+            l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; }, 5));
+        }
+        for (com.xenowarriors.tower.TowerMod m : new com.xenowarriors.tower.TowerMod[]{com.xenowarriors.tower.TowerMod.DARKNESS, com.xenowarriors.tower.TowerMod.LOW_GRAVITY}) {
+            l.add(new Step(null, () -> server(p -> { com.xenowarriors.tower.TowerMod.forceNext = m; com.xenowarriors.tower.Tower.skipTo(p, 7); }), 10));
+            l.add(new Step("towermod_" + m.name().toLowerCase(), () -> {}, 3));
+        }
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.tower.TowerBoard.show(p); com.xenowarriors.tower.Tower.leave(p, "You left the Tower"); }), 20));
+        l.add(new Step("tower_leaderboard", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")), 6));
+    }
+
     /** Tower mode: the Collection screen, arriving on floor 1, a wave from above and up close, floor cleared, floor 2. */
     private static void tower(Minecraft mc, List<Step> l) {
         int[] ids = {-1};

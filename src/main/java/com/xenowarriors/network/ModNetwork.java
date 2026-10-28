@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "54";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "55";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -447,6 +447,8 @@ public final class ModNetwork {
                 .encoder(AuraMarkPacket::encode).decoder(AuraMarkPacket::decode).consumerMainThread(AuraMarkPacket::handle).add();
         CHANNEL.messageBuilder(ScannerGlowPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ScannerGlowPacket::encode).decoder(ScannerGlowPacket::decode).consumerMainThread(ScannerGlowPacket::handle).add();
+        CHANNEL.messageBuilder(RepPacket.class, id++)
+                .encoder(RepPacket::encode).decoder(RepPacket::decode).consumerMainThread(RepPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

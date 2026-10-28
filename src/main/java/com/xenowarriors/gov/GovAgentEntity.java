@@ -79,7 +79,22 @@ public class GovAgentEntity extends PathfinderMob {
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this) { @Override public boolean canUse() { return guard() && super.canUse(); } }.setAlertOthers(GovAgentEntity.class));
-        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, p -> guard() && GovFacilities.wanted((Player) p)));
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                p -> guard() && (GovFacilities.wanted((Player) p) || com.xenowarriors.faction.Reputation.hostile((Player) p, com.xenowarriors.faction.Faction.GOV))));
+    }
+
+    /** (Tower boss) a Government Commander: every human mod but Phase, much tougher. */
+    public void makeCommander(float hp, float dmg) {
+        entityData.set(MODS, SPEED | ATTACK_MODE | ARMOR | SCANNER | JUMP);
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(hp);
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(dmg);
+        getAttribute(Attributes.ARMOR).setBaseValue(16);
+        getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0.8);
+        getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.32);
+        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.NETHERITE_SWORD));
+        setDropChance(EquipmentSlot.MAINHAND, 0F);
+        setHealth(getMaxHealth());
+        restrictTo(blockPosition(), 40);
     }
 
     /** A worker or guard with its modifications. */

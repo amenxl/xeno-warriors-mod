@@ -38,6 +38,7 @@ public final class Bounties {
             new Target("minecraft:witch", 1, 2, 2, 4), new Target("minecraft:pillager", 1, 2, 4, 8), new Target("minecraft:enderman", 1, 3, 3, 6),
             new Target("minecraft:blaze", 1, 3, 4, 8), new Target("xenowarriors:corrupted_soul", 1, 2, 5, 10), new Target("xenowarriors:dark_possessed", 1, 3, 2, 5),
             new Target("xenowarriors:corrupted_villager", 1, 2, 3, 6), new Target("xenowarriors:gov_agent", 2, 3, 3, 6), new Target("xenowarriors:order_assassin", 3, 3, 2, 4),
+            new Target("xenowarriors:sr_member", 1, 3, 2, 5),
     };
 
     private Bounties() {}
@@ -51,7 +52,7 @@ public final class Bounties {
             ListTag l = new ListTag();
             List<Target> pool = new ArrayList<>();
             int season = com.xenowarriors.character.Seasons.highest(p.server);
-            for (Target t : TARGETS) if (t.season <= season && ForgeRegistries.ENTITY_TYPES.containsKey(new ResourceLocation(t.id))) pool.add(t);
+            for (Target t : TARGETS) if (t.season <= season && ForgeRegistries.ENTITY_TYPES.containsKey(new ResourceLocation(t.id)) && !friendsWith(p, t.id)) pool.add(t);
             var r = p.getRandom();
             for (int i = 0; i < 3 && !pool.isEmpty(); i++) {
                 int want = i + 1;                                         // one easy, one medium, one hard if it can
@@ -72,7 +73,25 @@ public final class Bounties {
         CompoundTag root = root(p); root.put(KEY, l); p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
     }
 
+    /** You aren't asked to hunt a group you're on good terms with. */
+    private static boolean friendsWith(ServerPlayer p, String id) {
+        if (id.equals("xenowarriors:gov_agent")) return com.xenowarriors.faction.Reputation.friendly(p, com.xenowarriors.faction.Faction.GOV);
+        if (id.equals("xenowarriors:sr_member")) return com.xenowarriors.faction.Reputation.friendly(p, com.xenowarriors.faction.Faction.SR);
+        return false;
+    }
+
+    /** Bounty pay from your Townsfolk standing, in percent. */
+    private static int payBonus(ServerPlayer p) {
+        return switch (com.xenowarriors.faction.Reputation.tier(p, com.xenowarriors.faction.Faction.TOWN)) {
+            case UNFRIENDLY -> -25; case FRIENDLY -> 25; case HONORED -> 50; case REVERED -> 75; default -> 0;
+        };
+    }
+
     public static void open(ServerPlayer p) {
+        if (com.xenowarriors.faction.Reputation.hostile(p, com.xenowarriors.faction.Faction.TOWN)) {
+            p.displayClientMessage(Component.literal("Nobody here will give you work - the townsfolk don't trust you.").withStyle(ChatFormatting.RED), true);
+            return;
+        }
         ListTag l = list(p);
         int n = l.size();
         String[] ids = new String[n]; int[] need = new int[n], have = new int[n], tier = new int[n]; boolean[] claimed = new boolean[n];
@@ -85,6 +104,7 @@ public final class Bounties {
     }
 
     public static void claim(ServerPlayer p, int i) {
+        if (com.xenowarriors.faction.Reputation.hostile(p, com.xenowarriors.faction.Faction.TOWN)) return;
         ListTag l = list(p);
         if (i < 0 || i >= l.size()) return;
         CompoundTag b = l.getCompound(i);
@@ -94,7 +114,8 @@ public final class Bounties {
         int tier = b.getInt("tier");
         var r = p.getRandom();
         give(p, new ItemStack(Items.EMERALD, 3 + tier * 4 + r.nextInt(4)));
-        long paid = 300L + tier * 400L + r.nextInt(100);
+        long paid = (300L + tier * 400L + r.nextInt(100)) * (100 + payBonus(p)) / 100;
+        com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.TOWN, 20);
         com.xenowarriors.economy.Money.add(p, paid, true);
         com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), -1, "Bounty complete",
                 "+" + com.xenowarriors.economy.Money.fmt(paid) + " Money" + net.minecraft.world.entity.EntityType.byString(b.getString("id")).map(et -> " - " + b.getInt("need") + " " + et.getDescription().getString()).orElse(""), "");

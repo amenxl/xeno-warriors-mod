@@ -344,7 +344,10 @@ public final class XenoCommands {
         root.then(Commands.literal("tower")
                 .then(Commands.literal("enter").executes(ctx -> { com.xenowarriors.tower.Tower.enter(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.tower.Tower.leave(ctx.getSource().getPlayerOrException(), "You left the Tower"); return 1; }))
-                .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; })));
+                .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("top").executes(ctx -> { com.xenowarriors.tower.TowerBoard.show(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("floor").requires(s -> s.hasPermission(2)).then(Commands.argument("floor", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 500))
+                        .executes(ctx -> { com.xenowarriors.tower.Tower.skipTo(ctx.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "floor")); return 1; }))));
         root.then(Commands.literal("miniboss").executes(ctx -> {
             var p = ctx.getSource().getPlayerOrException();
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
@@ -387,6 +390,20 @@ public final class XenoCommands {
             ServerPlayer t = EntityArgument.getPlayer(ctx, "player");
             com.xenowarriors.economy.Money.add(t, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), true);
             say(ctx, Component.literal(t.getName().getString() + " now has " + com.xenowarriors.economy.Money.fmt(com.xenowarriors.economy.Money.get(t)) + " Money"));
+            return 1;
+        })))));
+        root.then(Commands.literal("rep").executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            for (var f : com.xenowarriors.faction.Faction.values())
+                say(ctx, Component.literal(f.title + ": " + com.xenowarriors.faction.Reputation.get(p, f) + " (" + com.xenowarriors.faction.Reputation.tier(p, f).title + ")"));
+            return 1;
+        }).then(Commands.literal("set").requires(src -> src.hasPermission(2)).then(Commands.argument("faction", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(com.xenowarriors.faction.Faction.values()).map(f -> f.name().toLowerCase()), b))
+                .then(Commands.argument("value", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-1000, 1000)).executes(ctx -> {
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            var f = com.xenowarriors.faction.Faction.valueOf(com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "faction").toUpperCase());
+            com.xenowarriors.faction.Reputation.set(p, f, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "value"));
+            say(ctx, Component.literal(f.title + " standing set to " + com.xenowarriors.faction.Reputation.get(p, f)));
             return 1;
         })))));
         root.then(Commands.literal("bounty").executes(ctx -> { com.xenowarriors.bounty.Bounties.open(ctx.getSource().getPlayerOrException()); return 1; }));

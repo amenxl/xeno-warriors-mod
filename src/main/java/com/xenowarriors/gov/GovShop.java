@@ -56,13 +56,18 @@ public final class GovShop {
         return chest.is(com.xenowarriors.item.ModItems.KARMA_HOODIE.get()) || chest.is(com.xenowarriors.item.ModItems.SR_HOODIE.get());
     }
 
-    public static int discount(ServerPlayer p) { return govSide(ModCapabilities.getType(p)) ? 20 : 0; }
+    /** Percent off from your Government standing (negative = a surcharge). */
+    public static int discount(ServerPlayer p) {
+        Integer c = com.xenowarriors.faction.Reputation.priceChange(p, com.xenowarriors.faction.Faction.GOV);
+        return c == null ? 0 : -c;
+    }
 
     public static long price(ServerPlayer p, Offer o) { return o.price * (100 - discount(p)) / 100; }
 
     /** null if they can shop; otherwise why not (and the alarm may go off). */
     private static String refuse(ServerPlayer p) {
         if (GovFacilities.wanted(p)) return "WANTED - service refused. Guards have been notified.";
+        if (com.xenowarriors.faction.Reputation.priceChange(p, com.xenowarriors.faction.Faction.GOV) == null) return "Service refused - the Government considers you hostile.";
         if (ModCapabilities.getType(p) == CharacterType.MIKIKO && !faceHidden(p) && !hoodie(p) && !p.isCreative()) {
             GovFacilities.makeWanted(p, "were face-scanned at a Gov terminal");
             return "FACE SCAN: AmenXL Mikiko - WANTED BY THE GOVERNMENT OF AURORA. Guards have been notified.";
@@ -107,6 +112,7 @@ public final class GovShop {
         if (!p.addItem(it)) p.drop(it, false);
         p.level().playSound(null, p.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.BLOCKS, 0.8F, 1.6F);
         p.displayClientMessage(Component.literal("Purchased: " + o.name).withStyle(ChatFormatting.AQUA), true);
+        if (p.getRandom().nextInt(2) == 0) com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.GOV, 3);
         open(p);
     }
 }

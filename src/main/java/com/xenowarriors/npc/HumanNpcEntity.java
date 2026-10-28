@@ -205,6 +205,7 @@ public class HumanNpcEntity extends PathfinderMob {
         if (possessed()) return e instanceof Player p && !p.isCreative() && !p.isSpectator() || (e instanceof HumanNpcEntity h && !h.possessed())
                 || e instanceof Villager;
         if (!fighter() || HiddenSouls.hidden(this)) return false;
+        if (e instanceof Player p && com.xenowarriors.faction.Reputation.hostile(p, com.xenowarriors.faction.Faction.TOWN)) return true;     // townsfolk who hate you fight you
         return e instanceof CorruptedSoulEntity || e instanceof CorruptedVillagerEntity || e instanceof DarkPossessedEntity
                 || (e instanceof HumanNpcEntity h && h.possessed()) || CorruptedAnimals.isCorrupted(e)
                 || e instanceof net.minecraft.world.entity.monster.Zombie      // fighters stand up to zombies too

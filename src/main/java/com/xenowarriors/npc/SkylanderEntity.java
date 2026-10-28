@@ -104,6 +104,9 @@ public class SkylanderEntity extends PathfinderMob {
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        // Skylanders who hate you come at you on sight
+        targetSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                p -> com.xenowarriors.faction.Reputation.hostile((Player) p, com.xenowarriors.faction.Faction.SKY)));
     }
 
     @Override

@@ -112,8 +112,10 @@ public final class SkyHaterSieges {
         s.age++;
         List<HumanNpcEntity> alive = builders(s);
         if (alive.isEmpty() || s.age > 20 * 60 * 15) {
-            if (alive.isEmpty()) for (ServerPlayer p : s.level.players()) if (p.blockPosition().closerThan(s.base, 160))
+            if (alive.isEmpty()) for (ServerPlayer p : s.level.players()) if (p.blockPosition().closerThan(s.base, 160)) {
                 p.displayClientMessage(Component.literal("The Sky Hater siege tower was stopped!").withStyle(ChatFormatting.GREEN), true);
+                if (p.blockPosition().closerThan(s.base, 64)) com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.SKY, 30);     // the Skylanders remember who helped
+            }
             return true;
         }
         if (!s.level.isLoaded(s.base)) return false;

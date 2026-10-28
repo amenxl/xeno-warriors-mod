@@ -53,6 +53,7 @@ public class MainMenuScreen extends Screen {
                 new Entry("Character Customization", "Your stats, skill loadout, outfits and KA / last resort.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
                 new Entry("Party", "Your party and bot teammates.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
                 new Entry("Pets", "Your foxes and companions: names, skins, bags and run-away cool-downs.", () -> PetsScreen.open(this)),
+                new Entry("Factions", "Your standing with the Government, Sky Rebellion, Sky Patrol and Townsfolk.", () -> FactionsScreen.open(this)),
                 new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
                 new Entry("Settings", "Cel-shading, HUD, Karma Sensing and combat options.", () -> PlayerStatsScreen.openTab(this, 3))));
         if (com.xenowarriors.client.compat.DmzMenu.available())          // DragonMineZ installed: its own menu

@@ -329,7 +329,8 @@ public class SrMemberEntity extends Monster {
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this).setAlertOthers(SrMemberEntity.class));
-        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, p -> !disguised((Player) p)));
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                p -> !disguised((Player) p) && !com.xenowarriors.faction.Reputation.friendly((Player) p, com.xenowarriors.faction.Faction.SR)));     // friends of the Rebellion are left alone
     }
 
     @Override

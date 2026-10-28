@@ -30,6 +30,7 @@ public final class GovFacilities {
         if (p.isCreative() || p.isSpectator()) return;
         boolean was = wanted(p);
         p.getPersistentData().putLong(WANTED, p.level().getGameTime() + 20 * 90);
+        if (!was && p instanceof ServerPlayer sp0) com.xenowarriors.faction.Reputation.add(sp0, com.xenowarriors.faction.Faction.GOV, -30);
         if (!was && p instanceof ServerPlayer sp)
             sp.sendSystemMessage(Component.literal("You've been caught - you " + why + ". Government guards are after you!").withStyle(ChatFormatting.RED));
     }
