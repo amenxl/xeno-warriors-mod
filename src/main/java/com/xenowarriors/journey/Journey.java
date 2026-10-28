@@ -179,10 +179,31 @@ public final class Journey {
                     .append(Component.literal("[Join]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
                             .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/xeno journey"))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/xeno journey"))))));
-            com.xenowarriors.network.PopupPacket.send(m, com.xenowarriors.network.PopupPacket.REQUEST, p.getUUID(), ModCapabilities.getType(p).ordinal(), -1,
-                    "Journey", p.getGameProfile().getName() + " wants you on their Journey - Main Menu > Journey", "");
+            ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Journey Invite", p.getGameProfile().getName() + " wants you on their Journey!",
+                    "/xeno journey join", "/xeno journey decline", 20 * 60, 0x40D0FF), m);
         }
         sync(p.server, n, p.getUUID(), OPEN_LOBBY);
+    }
+
+    /** Accept on the invite card: into your partner's lobby. */
+    public static void acceptInvite(ServerPlayer p) {
+        if (BY.containsKey(p.getUUID())) { open(p); return; }
+        for (ServerPlayer m : com.xenowarriors.party.Parties.members(p)) {
+            Run o = BY.get(m.getUUID());
+            if (m != p && o != null && o.phase == LOBBY && o.members.size() < 2) { join(p, o); return; }
+        }
+        p.displayClientMessage(msg("That Journey invite isn't open any more", ChatFormatting.GRAY), true);
+    }
+
+    /** Cancel on the invite card: the host hears about it. */
+    public static void declineInvite(ServerPlayer p) {
+        for (ServerPlayer m : com.xenowarriors.party.Parties.members(p)) {
+            Run o = BY.get(m.getUUID());
+            if (m != p && o != null && o.phase == LOBBY) {
+                m.displayClientMessage(msg(p.getGameProfile().getName() + " can't come on the Journey right now", ChatFormatting.YELLOW), true);
+                return;
+            }
+        }
     }
 
     private static void join(ServerPlayer p, Run r) {

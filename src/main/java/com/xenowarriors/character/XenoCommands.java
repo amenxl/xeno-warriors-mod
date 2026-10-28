@@ -350,6 +350,8 @@ public final class XenoCommands {
                         .executes(ctx -> { com.xenowarriors.tower.Tower.skipTo(ctx.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "floor")); return 1; }))));
         root.then(Commands.literal("journey").executes(ctx -> { com.xenowarriors.journey.Journey.open(ctx.getSource().getPlayerOrException()); return 1; })
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.journey.Journey.leave(ctx.getSource().getPlayerOrException(), "You left the Journey", true); return 1; }))
+                .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.journey.Journey.acceptInvite(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("decline").executes(ctx -> { com.xenowarriors.journey.Journey.declineInvite(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("unlock").requires(s -> s.hasPermission(2)).then(Commands.argument("cleared", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 15))
                         .executes(ctx -> { var p = ctx.getSource().getPlayerOrException(); com.xenowarriors.journey.Journey.setCleared(p, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "cleared"));
                             p.sendSystemMessage(net.minecraft.network.chat.Component.literal("Journey stages cleared (of 15): " + com.xenowarriors.journey.Journey.cleared(p))); return 1; })))

@@ -38,6 +38,7 @@ public class CollectionBookBlock extends HorizontalDirectionalBlock {
     public InteractionResult use(BlockState s, Level level, BlockPos pos, Player p, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide && p instanceof ServerPlayer sp) {
             Collection.openFromBook(sp);
+            if (level instanceof net.minecraft.server.level.ServerLevel sl) com.xenowarriors.journey.JourneyGuide.ensureNear(sl, pos);
             level.playSound(null, pos, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 1F, 1F);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

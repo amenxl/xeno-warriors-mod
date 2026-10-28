@@ -284,6 +284,7 @@ public class HumanNpcEntity extends PathfinderMob {
 
     /** A soul takes them: in the open (hostile, dark) or hidden (no sign). */
     public void possess(boolean hidden) {
+        if (com.xenowarriors.journey.JourneyGuide.is(this)) return;          // (the Journey Guide stays himself)
         possessedSince = level().getGameTime();
         reported = false;
         if (hidden) HiddenSouls.hide(this);
@@ -395,6 +396,7 @@ public class HumanNpcEntity extends PathfinderMob {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND || possessed()) return super.mobInteract(player, hand);
         if (level().isClientSide) return InteractionResult.SUCCESS;
+        if (com.xenowarriors.journey.JourneyGuide.is(this) && player instanceof net.minecraft.server.level.ServerPlayer sp) { com.xenowarriors.journey.JourneyGuide.talk(sp, this); return InteractionResult.SUCCESS; }
         List<HumanNpcEntity> near = level().getEntitiesOfClass(HumanNpcEntity.class, getBoundingBox().inflate(64), h -> h != this && h.carriesSoul() && !h.reported);
         if (!near.isEmpty()) {
             for (HumanNpcEntity h : near) h.report(this);

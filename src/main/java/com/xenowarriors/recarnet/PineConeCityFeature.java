@@ -400,6 +400,7 @@ public class PineConeCityFeature extends Feature<NoneFeatureConfiguration> {
             if (sx == 6 && sz == 21 && y <= 6) s = b(Blocks.LADDER).setValue(LadderBlock.FACING, Direction.NORTH);
             set(x, B + y, z, s);
         }
+        if (sx == 34 && sz == 7) com.xenowarriors.journey.JourneyGuide.place(l, x + 0.5, B + 1, z + 0.5, 180F);   // the Journey Guide by the Collection Book
         if (edge && (sx + sz) % 2 == 0) set(x, B + 13, z, b(Blocks.STONE_BRICK_WALL));
     }
 

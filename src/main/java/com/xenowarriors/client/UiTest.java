@@ -100,6 +100,7 @@ public final class UiTest {
         if ("dmzjourney".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzJourney(mc, l); return l; }
         if ("karmascan".equals(System.getenv("XW_UITEST_FOCUS"))) { karmaScan(mc, l); return l; }
         if ("fullhud".equals(System.getenv("XW_UITEST_FOCUS"))) { fullHud(mc, l); return l; }
+        if ("journeyguide".equals(System.getenv("XW_UITEST_FOCUS"))) { journeyGuide(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -989,6 +990,19 @@ public final class UiTest {
         l.add(new Step(null, () -> { mc.options.guiScale().set(0); mc.resizeDisplay(); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 20));
         l.add(new Step("fullhud_battle_third", () -> mc.setScreen(null), 3));
         l.add(new Step("fullhud_menu", () -> mc.setScreen(new com.xenowarriors.client.journey.JourneyMenuScreen(false)), 15));
+    }
+
+    /** The Journey Guide NPC talking to you (with its Accept / Cancel card), and the duo invite card. */
+    private static void journeyGuide(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setYRot(0); p.setXRot(5);
+            var g = com.xenowarriors.journey.JourneyGuide.place(p.serverLevel(), p.getX(), p.getY(), p.getZ() + 3, 180F);
+            if (g != null) com.xenowarriors.journey.JourneyGuide.talk(p, g);
+        }); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 40));
+        l.add(new Step("journeyguide_talk", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Journey Invite", "Rhalix_Fan wants you on their Journey!",
+                "/xeno journey join", "/xeno journey decline", 20 * 60, 0x40D0FF), p)), 20));
+        l.add(new Step("journeyguide_invite", () -> {}, 3));
     }
 
     /** Closes DragonMineZ's race picker (a fresh test player keeps getting it). */

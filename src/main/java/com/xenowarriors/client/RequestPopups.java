@@ -89,7 +89,7 @@ public final class RequestPopups {
             }
             ly += 4;
             g.drawString(font, "[" + yes + "] Accept", x + 9, ly, 0x6CF07A | ta, false);
-            g.drawString(font, "[" + no + "] Decline", x + 95, ly, 0xF06C6C | ta, false);
+            g.drawString(font, "[" + no + "] " + (c.req.decline().contains("journey") || c.req.decline().isEmpty() ? "Cancel" : "Decline"), x + 95, ly, 0xF06C6C | ta, false);
             // time left
             int bw = Math.round((w - 6) * Mth.clamp(left / c.req.ticks(), 0F, 1F));
             g.fill(x + 3, y + h - 2, x + 3 + bw, y + h, (a << 24) | 0x8080A0);
