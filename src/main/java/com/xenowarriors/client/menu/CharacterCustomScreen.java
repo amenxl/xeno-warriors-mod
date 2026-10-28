@@ -506,6 +506,7 @@ public class CharacterCustomScreen extends Screen {
         List<Object[]> rows = new ArrayList<>();      // label, value, xp (or -1), bar colour
         rows.add(new Object[]{"HP", Math.round(self.health()) + " / " + Math.round(self.maxHealth()), -1F, 0});
         rows.add(new Object[]{"Karma", String.valueOf(Math.round(self.karma())), -1F, 0});
+        rows.add(new Object[]{"Karma Level", com.xenowarriors.karma.KarmaLevel.fmt(self.karmaLevel()), -1F, 0});
         rows.add(new Object[]{"Attack", lvStr(self.attack()), me.attackXp(), 0xFF7744});
         rows.add(new Object[]{"Defense", lvStr(self.defense()), me.defenseXp(), 0x88DD66});
         rows.add(new Object[]{"Speed", lvStr(self.speed()), me.speedXp(), 0x55DDFF});

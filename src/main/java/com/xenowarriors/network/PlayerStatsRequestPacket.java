@@ -28,7 +28,7 @@ public record PlayerStatsRequestPacket() {
             int[] lv = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.statLevel.clone()).orElse(new int[3]);
             list.add(new PlayerStatsPacket.Entry(p.getGameProfile().getName(), ModCapabilities.getType(p).getId(),
                     Stats.characterLevel(p), lv[0], lv[1], lv[2], Karma.get(p), p.getHealth(), p.getMaxHealth(),
-                    p == sender, Parties.sameParty(p, sender) && p != sender));
+                    p == sender, Parties.sameParty(p, sender) && p != sender, com.xenowarriors.karma.KarmaLevel.of(p)));
         }
         // you first, then your party, then everyone else by level
         list.sort((a, b) -> a.self() != b.self() ? (a.self() ? -1 : 1)

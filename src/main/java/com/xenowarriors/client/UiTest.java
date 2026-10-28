@@ -98,6 +98,7 @@ public final class UiTest {
         if ("dmzlist".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzList(mc, l); return l; }
         if ("bladeanchor".equals(System.getenv("XW_UITEST_FOCUS"))) { bladeAnchor(mc, l); return l; }
         if ("dmzjourney".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzJourney(mc, l); return l; }
+        if ("karmascan".equals(System.getenv("XW_UITEST_FOCUS"))) { karmaScan(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -922,6 +923,7 @@ public final class UiTest {
             com.xenowarriors.journey.Journey.action(p, 4, 0, 0);
         }); mc.options.hideGui = false; }, 80));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.ITEM)); }, 25));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step("dmzjourney_item", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> {
             StringBuilder sb = new StringBuilder();
@@ -929,6 +931,7 @@ public final class UiTest {
             log("dmzjourney inventory: " + sb);
         }), 5));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.DBZ)); }, 30));
+        l.add(new Step(null, () -> { if (!(mc.screen instanceof com.xenowarriors.client.journey.JourneyTeamScreen)) mc.setScreen(new com.xenowarriors.client.journey.JourneyTeamScreen()); }, 5));
         l.add(new Step("dmzjourney_team", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 110));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> {
@@ -936,8 +939,40 @@ public final class UiTest {
                 log("dmzjourney enemy " + net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(m.getType()) + " hp=" + m.getMaxHealth() + " named=" + m.getPersistentData().getBoolean("xw_journey_named")
                         + " dmzScale=" + m.getPersistentData().getFloat("xw_journey_dmz"));
         }); }, 20));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step("dmzjourney_battle", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.leave(p, "test over", true)), 20));
+    }
+
+    /** Karma Readings: the Gov visor on a zombie, overloading on a warden, and Yuri reading without one. */
+    private static void karmaScan(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.setYRot(0); p.setXRot(5);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get()));
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 4, 180F, 0); z.setNoAi(true); z.setYHeadRot(180F);
+            p.serverLevel().addFreshEntity(z); ids[0] = z.getId();
+        }); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 40));
+        l.add(new Step("karmascan_zombie", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> {
+            if (p.serverLevel().getEntity(ids[0]) != null) p.serverLevel().getEntity(ids[0]).discard();
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(p.getX(), p.getY(), p.getZ() + 5, 180F, 0); g.setNoAi(true); g.setYHeadRot(180F);
+            p.serverLevel().addFreshEntity(g); ids[0] = g.getId();
+        }), 30));
+        l.add(new Step("karmascan_golem", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> {
+            if (p.serverLevel().getEntity(ids[0]) != null) p.serverLevel().getEntity(ids[0]).discard();
+            var w = net.minecraft.world.entity.EntityType.WARDEN.create(p.serverLevel());
+            w.moveTo(p.getX(), p.getY(), p.getZ() + 6, 180F, 0); w.setNoAi(true); w.setYHeadRot(180F);
+            p.serverLevel().addFreshEntity(w); ids[0] = w.getId();
+        }), 8));
+        l.add(new Step("karmascan_overload", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> log("karmascan helmet after warden: " + p.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD))), 5));
+        l.add(new Step(null, () -> { character(CharacterType.YURI); }, 50));
+        l.add(new Step("karmascan_yuri", () -> {}, 3));
     }
 
     /** Journey mode, solo: the lobby, the path, choosing a team, a battle with a tag-in, results, the shop, a scenario, the boss. */

@@ -384,6 +384,7 @@ public class PlayerStatsScreen extends Screen {
         // status items shown in the two-column grid
         List<String[]> items = new ArrayList<>();   // {label, value, color}
         items.add(new String[]{"Karma", compact(self.karma()), "C77DFF"});
+        items.add(new String[]{"Karma Level", com.xenowarriors.karma.KarmaLevel.fmt(self.karmaLevel()), "50FF80"});
         items.add(new String[]{"Health", compact(self.health()) + " / " + compact(self.maxHealth()), "FF6060"});
         items.add(new String[]{"Karma Sensing", me.senseRange() + " blocks, " + me.senseSeconds() + "s", "B45CFF"});
         items.add(new String[]{"Sensing practice", Math.min(me.senseUses(), 100) + " / 100", "9A7ACC"});

@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 /** Server -> client: every online player's character, level and stats. */
 public record PlayerStatsPacket(List<Entry> players, Me me) {
     public record Entry(String name, String type, int level, int speed, int attack, int defense, float karma,
-                        float health, float maxHealth, boolean self, boolean party) {}
+                        float health, float maxHealth, boolean self, boolean party, long karmaLevel) {}
 
     /** Extra detail about yourself for the "My Warrior" tab. */
     public record Me(float speedXp, float attackXp, float defenseXp, int senseRange, int senseSeconds, int senseUses,
@@ -32,6 +32,7 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
             b.writeFloat(e.maxHealth());
             b.writeBoolean(e.self());
             b.writeBoolean(e.party());
+            b.writeVarLong(e.karmaLevel());
         });
         Me me = m.me;
         buf.writeFloat(me.speedXp());
@@ -60,7 +61,7 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
 
     public static PlayerStatsPacket decode(FriendlyByteBuf buf) {
         List<Entry> list = buf.readList(b -> new Entry(b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt(),
-                b.readVarInt(), b.readVarInt(), b.readFloat(), b.readFloat(), b.readFloat(), b.readBoolean(), b.readBoolean()));
+                b.readVarInt(), b.readVarInt(), b.readFloat(), b.readFloat(), b.readFloat(), b.readBoolean(), b.readBoolean(), b.readVarLong()));
         Me me = new Me(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                 buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readFloat(),
                 buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),

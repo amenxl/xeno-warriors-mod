@@ -736,5 +736,6 @@
   "item.xenowarriors.speed_mod": "Speed Mod",
   "item.xenowarriors.jump_mod": "Jump Boosters",
   "item.xenowarriors.scanner_mod": "Scanner Eye",
-  "item.xenowarriors.plating_mod": "Armor Plating"
+  "item.xenowarriors.plating_mod": "Armor Plating",
+  "item.xenowarriors.karma_scanner": "Karma Scanner"
 }
