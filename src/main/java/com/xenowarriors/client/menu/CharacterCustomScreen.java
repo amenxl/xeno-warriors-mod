@@ -363,10 +363,13 @@ public class CharacterCustomScreen extends Screen {
             case ULTIMA -> new String[][]{GOV, FF};
             case KAERU -> new String[][]{OR, FF};
             case TECHNICA -> new String[][]{GOV, SP};
-            case YURI, ZANE -> new String[][]{FF};
-            case KYRIE, LEXY, MAX, SAM -> new String[][]{SP};
+            case YURI -> new String[][]{GOV, FF};
+            case ZANE -> new String[][]{FF};
+            case MAX -> new String[][]{GOV, SP};
+            case LEXY -> new String[][]{SR, SP};
+            case KYRIE, SAM -> new String[][]{SP};
             case LOGAN, KILL, KEITA -> new String[][]{SR};
-            case STEVIE, GARRY -> new String[][]{DD};
+            case STEVIE, GARRY -> new String[][]{DD, FF};
             case AIONI -> new String[][]{DEM};
             default -> new String[0][];
         };
