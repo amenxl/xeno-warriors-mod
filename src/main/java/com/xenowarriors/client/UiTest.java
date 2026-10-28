@@ -91,6 +91,7 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("charlock".equals(System.getenv("XW_UITEST_FOCUS"))) { charLock(mc, l); return l; }
         if ("kitsunestun".equals(System.getenv("XW_UITEST_FOCUS"))) { kitsuneStun(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
@@ -737,6 +738,24 @@ public final class UiTest {
             l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(tb); }, 0));
             for (int f = 0; f < 4; f++) l.add(new Step("customanim_tab" + tb + "_" + f, () -> {}, 3));
             l.add(new Step(null, () -> {}, 10));
+        }
+    }
+
+    /** One character per player: the select screen with other players' characters marked TAKEN (faked client-side). */
+    private static void charLock(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); }, 40));
+        String[] fake = new String[CharacterType.values().length];
+        java.util.Arrays.fill(fake, "");
+        fake[CharacterType.RHALIX.ordinal()] = "Friend123";
+        fake[CharacterType.ULTIMA.ordinal()] = "Sam_YT";
+        for (boolean free : new boolean[]{true, false}) {
+            l.add(new Step(null, () -> { com.xenowarriors.client.screen.CharacterSelectScreen.focusForTest(CharacterType.RHALIX);
+                mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 20));
+            l.add(new Step(null, () -> { com.xenowarriors.network.TakenCharsPacket.CLIENT = fake; com.xenowarriors.network.TakenCharsPacket.CLIENT_ANY_FREE = free;
+                com.xenowarriors.client.screen.CharacterSelectScreen.focusForTest(CharacterType.RHALIX);
+                if (mc.screen != null) mc.screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight()); }, 10));
+            l.add(new Step("charlock_" + (free ? "taken" : "allfull"), () -> {}, 3));
+            l.add(new Step(null, () -> mc.setScreen(null), 5));
         }
     }
 

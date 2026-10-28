@@ -65,15 +65,26 @@ public class CharacterSelectScreen extends Screen {
         this.canClose = ClientCharacterData.getLocal() != CharacterType.NONE;
         if (!opened) { opened = true; if (canClose) group = Group.of(ClientCharacterData.getLocal()); }
         if (canClose && Group.of(ClientCharacterData.getLocal()) == group) focus = ClientCharacterData.getLocal();
+        if (testFocus != null) { group = Group.of(testFocus); focus = testFocus; }
         ModNetwork.sendToServer(new com.xenowarriors.network.CharLevelsPacket(new int[0]));      // ask for our level with everyone
+        ModNetwork.sendToServer(new com.xenowarriors.network.TakenCharsPacket(new String[0], true));   // and who's playing who
     }
 
     private static int level(CharacterType t) { return com.xenowarriors.network.CharLevelsPacket.CLIENT[t.ordinal()]; }
+
+    /** UI test: look at this character. */
+    public static void focusForTest(CharacterType t) { testFocus = t; }
+    private static CharacterType testFocus;
 
     /** UI test: flip to the next team. */
     public static void nextPageForTest() { group = Group.values()[(group.ordinal() + 1) % Group.values().length]; }
 
     private static boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }
+    /** Someone else is playing them (and there's still someone free to pick instead). */
+    private static boolean taken(CharacterType t) {
+        return t != null && t != ClientCharacterData.getLocal() && !com.xenowarriors.network.TakenCharsPacket.who(t).isEmpty() && com.xenowarriors.network.TakenCharsPacket.CLIENT_ANY_FREE;
+    }
+    private static boolean pickable(CharacterType t) { return t != null && !locked(t) && !taken(t); }
 
     private int tabH() { return height < 300 ? 18 : 26; }
 
@@ -98,10 +109,11 @@ public class CharacterSelectScreen extends Screen {
             int x = gridX + r * slant + c * (cw + 4), y = gridTop + r * (ch + 4);
             cards.add(new Card((CharacterType) entries.get(i)[0], (String) entries.get(i)[1], x, y, cw, ch));
         }
+        if (testFocus != null) focus = testFocus;
         if (focus == null || Group.of(focus) != group) focus = group.members.length > 0 ? group.members[0] : null;
-        Button sel = addRenderableWidget(Button.builder(Component.literal("SELECT"), b -> { if (focus != null && !locked(focus)) choose(focus); })
+        Button sel = addRenderableWidget(Button.builder(Component.literal("SELECT"), b -> { if (pickable(focus)) choose(focus); })
                 .bounds(width - 76, height - 30, 68, 22).build());
-        sel.active = focus != null && !locked(focus);
+        sel.active = pickable(focus);
         if (canClose) addRenderableWidget(Button.builder(Component.literal("<"), b -> onClose()).bounds(8, 6, 20, th).build());
     }
 
@@ -116,7 +128,7 @@ public class CharacterSelectScreen extends Screen {
             group = Group.values()[t[4]]; focus = null; rebuildWidgets(); click(); return true;
         }
         for (Card c : cards) if (c.hit(mx, my) && c.type != null) {
-            if (c.type == focus && !locked(c.type)) choose(c.type);
+            if (c.type == focus && pickable(c.type)) choose(c.type);
             else { focus = c.type; rebuildWidgets(); }
             click(); return true;
         }
@@ -176,6 +188,13 @@ public class CharacterSelectScreen extends Screen {
             Component sub = locked(focus) ? Component.literal("Season " + focus.season() + " - /xeno season unlock " + focus.season())
                     : level(focus) > 0 ? Component.literal("").append(focus.getTitle()).append(Component.literal("   Lv." + level(focus)).withStyle(net.minecraft.ChatFormatting.GOLD)) : focus.getTitle();
             g.drawString(font, sub, 12, height - 26, locked(focus) ? 0xAA5555 : 0xCCCCCC);
+            String who = com.xenowarriors.network.TakenCharsPacket.who(focus);
+            if (!locked(focus) && !who.isEmpty() && focus != ClientCharacterData.getLocal()) {
+                String s = taken(focus) ? who + " is playing them - pick someone else" : who + " is playing them (everyone's taken, so you can double up)";
+                int sw = font.width(s) + 8;
+                g.fill(12, height - 58, 12 + sw, height - 47, 0xD0000000);
+                g.drawString(font, s, 16, height - 56, taken(focus) ? 0xFF7070 : 0xFFD070);
+            }
             if (!locked(focus)) {
                 Component el = focus.getElements();
                 int w = font.width(el) + 8;
@@ -220,6 +239,15 @@ public class CharacterSelectScreen extends Screen {
             g.fill(c.x, c.y + c.h - 12, c.x + c.w, c.y + c.h - 11, 0xFF000000 | tc);
             drawFit(g, c.type.getDisplayName().getString(), c.x + c.w / 2, c.y + c.h - 10, c.w - 4, sel ? 0xFFFFFF : 0xDDDDDD);
             if (ClientCharacterData.getLocal() == c.type) g.drawString(font, "★", c.x + c.w - 9, c.y + 2, 0xFFE040);   // your current character
+            String who = com.xenowarriors.network.TakenCharsPacket.who(c.type);
+            if (!who.isEmpty() && ClientCharacterData.getLocal() != c.type) {          // someone else is playing them
+                if (taken(c.type)) g.fill(c.x, c.y, c.x + c.w, c.y + c.h - 12, 0x99000000);
+                int bw = Math.min(c.w - 2, font.width("TAKEN") + 6), by = c.y + c.h / 2 - 6;
+                g.fill(c.x + (c.w - bw) / 2, by, c.x + (c.w + bw) / 2, by + 11, taken(c.type) ? 0xE0A01818 : 0xE0A07018);
+                drawFit(g, "TAKEN", c.x + c.w / 2, by + 2, bw - 2, 0xFFFFFF);
+                drawFit(g, who, c.x + c.w / 2, by + 13, c.w - 4, 0xFFDDDD);
+                if (hov) g.renderTooltip(font, Component.literal(who + " is playing " + c.type.getDisplayName().getString()), mouseX, mouseY);
+            }
             int lv = level(c.type);
             if (lv > 0) {                                                        // your level with them, on the card
                 String ls = "Lv." + lv;

@@ -25,6 +25,15 @@ public record SelectCharacterPacket(CharacterType type) {
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("Season " + msg.type.season() + " content is locked").withStyle(net.minecraft.ChatFormatting.RED), true);
             return;
         }
+        ServerPlayer other = com.xenowarriors.character.CharacterLock.takenBy(player, msg.type);
+        if (other != null && com.xenowarriors.character.ModCapabilities.getType(player) != msg.type) {
+            if (com.xenowarriors.character.CharacterLock.anyFree(player)) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(other.getGameProfile().getName() + " is already playing " + msg.type.getDisplayName().getString() + " - pick someone else!").withStyle(net.minecraft.ChatFormatting.RED), false);
+                ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);
+                return;
+            }
+            player.displayClientMessage(net.minecraft.network.chat.Component.literal("Every character is taken, so you can double up with " + other.getGameProfile().getName() + ".").withStyle(net.minecraft.ChatFormatting.YELLOW), false);
+        }
         CharacterManager.setCharacter(player, msg.type);
     }
 }
