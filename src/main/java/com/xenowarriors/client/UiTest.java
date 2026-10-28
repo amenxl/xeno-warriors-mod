@@ -91,6 +91,7 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
         if ("dmzmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzMenu(mc, l); return l; }
@@ -751,6 +752,25 @@ public final class UiTest {
      * Xeno Blast with a second player (a stand-in FakePlayer, like the party bots use): fighting back with a projectile
      * skill, Ultima mashing to cancel it, and a full beam clash. Results go to the log as "XW-TEST".
      */
+    /** Epic Fight calibration: our test animation, one joint/axis per second, photographed from the side at each peak. */
+    private static void efCal(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setYRot(0); p.setXRot(0);
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(p.getX() + 3.2, p.getY(), p.getZ(), 90F, 5F); a.setNoGravity(true); a.setInvisible(true);
+            p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+            log("epicfight loaded=" + net.minecraftforge.fml.ModList.get().isLoaded("epicfight"));
+        }); }, 60));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(90F); a.yRotO = 90F; a.setXRot(5); a.xRotO = 5; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a); }
+            mc.player.setYBodyRot(0); mc.player.setYHeadRot(0); mc.player.setYRot(0);
+            server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "cal")); }, 10));      // the half-second peak of segment 0
+        for (int i = 0; i < 10; i++) l.add(new Step("efcal_" + i, () -> {}, 20));
+        l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
+    }
+
     /** Townsfolk builds: hut, fenced wheat farm round a water hole, well and lamp post (placed at once for the picture). */
     private static void townsfolk(Minecraft mc, List<Step> l) {
         int[] ids = {-1};
