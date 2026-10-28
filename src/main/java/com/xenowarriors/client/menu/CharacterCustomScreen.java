@@ -64,7 +64,26 @@ public class CharacterCustomScreen extends Screen {
     }
 
     /** (UI test) show this tab. */
-    public void tab(int t) { tab = t; }
+    public void tab(int t) { setTab(t); }
+
+    // ---- animation (like the agent screen in the user's reference): things slide in on open, the film strips scroll,
+    // the tab highlight glides between tabs, and a new tab's content slides in with its rows one after another
+    private final long opened = net.minecraft.Util.getMillis();
+    private long tabAt = opened;
+    private int tabDir = 1;
+    private float pillX = -1, pillW;
+
+    private void setTab(int t) {
+        if (t == tab) return;
+        tabDir = t > tab ? 1 : -1;
+        tab = t;
+        tabAt = net.minecraft.Util.getMillis();
+    }
+
+    private static float ease(float x) { x = Mth.clamp(x, 0F, 1F); return 1F - (1F - x) * (1F - x) * (1F - x); }
+
+    /** 0..1 for a row of the current tab sliding in (staggered by index). */
+    private float rowIn(int i) { return ease((net.minecraft.Util.getMillis() - tabAt - i * 28L) / 220F); }
 
     public void receive(List<PlayerStatsPacket.Entry> list, PlayerStatsPacket.Me me) {
         for (PlayerStatsPacket.Entry e : list) if (e.self()) self = e;
@@ -146,8 +165,8 @@ public class CharacterCustomScreen extends Screen {
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
         if (ModKeyMappings.STATS_MENU.matches(key, scan)) { minecraft.setScreen(null); return true; }
-        if (key == GLFW.GLFW_KEY_Q || key == GLFW.GLFW_KEY_LEFT) { tab = (tab + tabs() - 1) % tabs(); click(); return true; }
-        if (key == GLFW.GLFW_KEY_E || key == GLFW.GLFW_KEY_RIGHT || key == GLFW.GLFW_KEY_TAB) { tab = (tab + 1) % tabs(); click(); return true; }
+        if (key == GLFW.GLFW_KEY_Q || key == GLFW.GLFW_KEY_LEFT) { setTab((tab + tabs() - 1) % tabs()); click(); return true; }
+        if (key == GLFW.GLFW_KEY_E || key == GLFW.GLFW_KEY_RIGHT || key == GLFW.GLFW_KEY_TAB) { setTab((tab + 1) % tabs()); click(); return true; }
         return super.keyPressed(key, scan, mods);
     }
 
@@ -164,7 +183,7 @@ public class CharacterCustomScreen extends Screen {
         if (my >= tb[1] && my < tb[1] + tb[3] && mx >= tb[0] && mx < tb[0] + tb[2]) {
             int t = tabs() - 1;
             while (t > 0 && mx < tabX(t)) t--;
-            tab = t;
+            setTab(t);
             click();
             return true;
         }
@@ -232,6 +251,10 @@ public class CharacterCustomScreen extends Screen {
         float r = ((col >> 16) & 255) / 255F, gr = ((col >> 8) & 255) / 255F, b = (col & 255) / 255F;
         int w = width, h = height;
         float us = Math.max(1F, h / 240F);
+        long now = net.minecraft.Util.getMillis();
+        float t = (now - opened) / 1000F;
+        float inChar = ease(t / 0.45F), inCard = ease((t - 0.08F) / 0.4F), inTop = ease(t / 0.3F), inBar = ease((t - 0.15F) / 0.35F);
+        float tabT = ease((now - tabAt) / 250F);
 
         // background: dark, with slanted film strips tinted in the character's colour
         RenderSystem.enableBlend();
@@ -246,7 +269,8 @@ public class CharacterCustomScreen extends Screen {
             float x0 = s[0] * w, sw = s[1] * w, a = s[2];
             quad(bb, m, x0 + slant, 0, x0 + slant + sw, 0, x0 + sw, h, x0, h, 0.85F, 0.85F, 0.88F, a, mix(r, 0.85F), mix(gr, 0.85F), mix(b, 0.88F), a);
             // sprocket holes down both edges
-            for (float y = 0; y < h; y += 9 * us) {
+            float scroll = (t * 14F * us * (0.6F + s[1] * 4F)) % (9 * us);   // the film rolls slowly
+            for (float y = -9 * us + scroll; y < h; y += 9 * us) {
                 float f = y / h, ex = x0 + slant * (1F - f);
                 quad(bb, m, ex + 2 * us, y, ex + 5 * us, y, ex + 5 * us, y + 4 * us, ex + 2 * us, y + 4 * us, 0F, 0F, 0F, 0.35F, 0F, 0F, 0F, 0.35F);
                 quad(bb, m, ex + sw - 5 * us, y, ex + sw - 2 * us, y, ex + sw - 2 * us, y + 4 * us, ex + sw - 5 * us, y + 4 * us, 0F, 0F, 0F, 0.35F, 0F, 0F, 0F, 0.35F);
@@ -259,13 +283,16 @@ public class CharacterCustomScreen extends Screen {
         // the character
         if (mc.player != null) {
             Cel.force = true;
-            try { PortraitScreen.drawCharacter(g, mc.player, type, (int) (w * 0.25F), (int) (h * 1.13F), (int) (h * 0.52F), 22F, false); }   // their idle animation
+            float cx = w * 0.25F - (1F - inChar) * w * 0.3F + (mx - w / 2F) * 0.012F;    // slides in, slight parallax with the mouse
+            try { PortraitScreen.drawCharacter(g, mc.player, type, (int) cx, (int) (h * 1.13F), (int) (h * 0.52F), 22F + (mx - w / 2F) / w * 10F, false); }   // their idle animation
             finally { Cel.force = false; }
         }
 
         g.pose().pushPose();
         g.pose().translate(0, 0, 400);
 
+        g.pose().pushPose();
+        g.pose().translate(0, (1F - inTop) * -26F * us, 0);               // top bars drop in
         // top left: back button + title
         g.fill((int) (4 * us), (int) (4 * us), (int) (22 * us), (int) (18 * us), 0xE0101014);
         outline(g, (int) (4 * us), (int) (4 * us), (int) (22 * us), (int) (18 * us), 0xFF000000 | col);
@@ -286,12 +313,13 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, s, px - tw - 6 * us, 7.5F * us, us, 0xFFFFFF);
             px -= tw + 16 * us;
         }
+        g.pose().popPose();
 
         // the card
         float[] c = card();
         double vmx = (mx - c[0]) / c[2], vmy = (my - c[1]) / c[2];
         g.pose().pushPose();
-        g.pose().translate(c[0], c[1], 0);
+        g.pose().translate(c[0] + (1F - inCard) * w * 0.35F, c[1], 0);   // the card slides in from the right
         g.pose().scale(c[2], c[2], 1F);
         g.fill(0, 0, VW, VH, 0xEE141418);
         outline(g, 0, 0, VW, VH, 0xFF3A3A44);
@@ -299,6 +327,8 @@ public class CharacterCustomScreen extends Screen {
         small(g, "WARRIOR INFO", 4, 2, 0x8A8A9A);
         List<String> tip = null;
         header(g, type, col);
+        g.pose().pushPose();
+        g.pose().translate((1F - tabT) * 16F * tabDir, 0, 0);            // a new tab's content slides in
         switch (tab) {
             case 0 -> statsTab(g, type, col);
             case 1 -> tip = skillsTab(g, type, col, vmx, vmy);
@@ -306,9 +336,17 @@ public class CharacterCustomScreen extends Screen {
             default -> kaTab(g, col, vmx, vmy);
         }
         g.pose().popPose();
+        g.pose().popPose();
 
         // tab bar
         float[] tb = tabBar();
+        g.pose().pushPose();
+        g.pose().translate(0, (1F - inBar) * 30F * us, 0);                // the tab bar rises in
+        // the highlight glides to the selected tab
+        float targetX = tabX(Math.min(tab, tabs() - 1)), targetW = tabW(Math.min(tab, tabs() - 1));
+        if (pillX < 0) { pillX = targetX; pillW = targetW; }
+        pillX += (targetX - pillX) * 0.3F;
+        pillW += (targetW - pillW) * 0.3F;
         String[] names = hasKa() ? new String[]{"STATS", "SKILLS", "OUTFITS", "KAS / LAST RESORT"} : new String[]{"STATS", "SKILLS", "OUTFITS"};
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
@@ -316,22 +354,24 @@ public class CharacterCustomScreen extends Screen {
         for (int i = 0; i < names.length; i++) {
             float sx = tabX(i), segW = tabW(i);
             boolean sel = i == tab;
-            if (sel) {
+            if (i == 0) {
                 RenderSystem.enableBlend();
                 RenderSystem.disableCull();
                 RenderSystem.setShader(GameRenderer::getPositionColorShader);
                 BufferBuilder sb = begin();
                 Matrix4f mm = g.pose().last().pose();
                 float sk = tb[3] * 0.35F;
-                quad(sb, mm, sx + sk + 1, tb[1] + 1, sx + segW + sk - 1, tb[1] + 1, sx + segW - sk - 1, tb[1] + tb[3] - 1, sx - sk + 1, tb[1] + tb[3] - 1,
+                quad(sb, mm, pillX + sk + 1, tb[1] + 1, pillX + pillW + sk - 1, tb[1] + 1, pillX + pillW - sk - 1, tb[1] + tb[3] - 1, pillX - sk + 1, tb[1] + tb[3] - 1,
                         mix(r, 1F, 0.25F), mix(gr, 1F, 0.25F), mix(b, 1F, 0.25F), 1F, r, gr, b, 1F);
                 BufferUploader.drawWithShader(sb.end());
                 RenderSystem.enableCull();
             }
             float k = Math.min(ts * 1.1F, segW * 0.86F / font.width(names[i]));       // long names shrink to fit
             float tw = font.width(names[i]) * k;
-            scaled(g, names[i], sx + segW / 2 - tw / 2, tb[1] + tb[3] / 2 - 4F * k, k, sel ? dark(col) : 0xD8D8E0);
+            boolean under = pillX + pillW / 2 > sx && pillX + pillW / 2 < sx + segW;   // text turns dark where the highlight is
+            scaled(g, names[i], sx + segW / 2 - tw / 2, tb[1] + tb[3] / 2 - 4F * k, k, under ? dark(col) : 0xD8D8E0);
         }
+        g.pose().popPose();
         String hint = "Q / E: switch tabs    Esc: back";
         float hs = Math.max(1F, h / 320F);
         scaled(g, hint, w - font.width(hint) * hs - 6, h - 11 * hs, hs, 0x9090A0);
@@ -454,7 +494,8 @@ public class CharacterCustomScreen extends Screen {
         int colW = (VW - 12) / 2;
         for (int i = 0; i < rows.size(); i++) {
             Object[] o = rows.get(i);
-            int x = 4 + (i % 2) * (colW + 4);
+            float rin = rowIn(i / 2 + 1);
+            int x = 4 + (i % 2) * (colW + 4) + Math.round((1F - rin) * 18F);
             float y = 73 + (i / 2) * rh;
             int yi = Math.round(y), hh = Math.round(rh) - 2;
             g.fill(x, yi, x + colW, yi + hh, 0xFF1C1C24);
@@ -512,7 +553,7 @@ public class CharacterCustomScreen extends Screen {
         g.enableScissor((int) c[0], (int) (c[1] + LIST_Y * c[2]), (int) (c[0] + VW * c[2]), (int) (c[1] + VH * c[2]));
         for (int i = 0; i < pool.size(); i++) {
             SkillPool.Entry e = pool.get(i);
-            int x = skillX(i), y = skillY(i);
+            int x = skillX(i) + Math.round((1F - rowIn(i / 2 + 2)) * 18F), y = skillY(i);
             if (y + CARD_H < LIST_Y || y > VH) continue;
             boolean seasonOk = ClientSkillState.season() >= e.season();
             boolean open = seasonOk && SkillPool.unlocked(e, ClientSkillState.level(), creative());
@@ -543,7 +584,7 @@ public class CharacterCustomScreen extends Screen {
         String[] names = type.outfitNames();
         int worn = minecraft.player == null ? 0 : ClientCharacterData.outfit(minecraft.player);
         for (int i = 0; i < names.length; i++) {
-            int x = skillX(i), y = outfitY(i);
+            int x = skillX(i) + Math.round((1F - rowIn(i / 2)) * 18F), y = outfitY(i);
             boolean locked = outfitLocked(i), on = i == worn, over = inBox(mx, my, x, y, CARD_W, OUTFIT_H);
             g.fill(x, y, x + CARD_W, y + OUTFIT_H, on ? 0xFF000000 | dark2(col) : over && !locked ? 0xFF2A2A3A : 0xFF1C1C24);
             g.fill(x, y, x + 2, y + OUTFIT_H, locked ? 0xFF555555 : 0xFF000000 | col);
