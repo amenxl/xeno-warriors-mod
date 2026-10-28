@@ -120,7 +120,7 @@ public final class KhHud implements IGuiOverlay {
                 boolean ov = UltimaClient.overload(p.getId());
                 String ot = ov ? "OVERLOAD" : "OUTPUT " + pc + "%";
                 int oc = ov ? ((HudFaces.clock() / 3) % 2 == 0 ? 0x9CFFC8 : 0xFFFFFF) : 0x3FFF8C;
-                small(g, font, ot, at[0] + at[2] / 2F - font.width(ot) * 0.3F, at[1] - 16, oc, 0.6F);
+                small(g, font, ot, at[0] + at[2] / 2F - font.width(ot) * 0.3F, at[1] - (dbz0 ? 25 : 16), oc, 0.6F);   // (above the DragonMineZ form line)
             }
             var ka0 = ClientSkillState.ka();
             int ox = at[0] + at[2] + 2, oy = at[1] - 10;                   // KA orb: top right of the emblem

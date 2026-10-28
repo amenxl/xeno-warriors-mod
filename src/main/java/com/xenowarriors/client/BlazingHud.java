@@ -93,12 +93,6 @@ public final class BlazingHud {
 
     /** A bubble with its bar running left, the value inside the bar. */
     private static void row(GuiGraphics g, Font font, String name, int bx, int by, int w, int h, float frac, float chip, int fill, int border, String text) {
-        // a faint emblem behind the bar, in its colour (like the mock-up)
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderColor(((fill >> 16) & 255) / 255F, ((fill >> 8) & 255) / 255F, (fill & 255) / 255F, 0.28F);
-        int ds = 26;
-        g.blit(EMBLEM, bx - 10 - w / 2 - ds / 2, by + h / 2 - ds + 6, ds, Math.round(ds * EH / (float) EW), 0, 0, EW, EH, EW, EH);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         bar(g, bx + 3 - w, by, w, h, frac, chip, fill, border);       // (runs under the bubble's rim so they touch)
         if (!text.isEmpty()) KhHud.small(g, Minecraft.getInstance().font, text, bx - 3 - font.width(text) * 0.5F, by + (h - 4.5F) / 2F, 0xFFFFFF, 0.5F);
         bub(g, name, bx, by + h / 2 - 7, 14);
