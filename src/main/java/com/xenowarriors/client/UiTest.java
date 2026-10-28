@@ -91,6 +91,7 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("kitsunestun".equals(System.getenv("XW_UITEST_FOCUS"))) { kitsuneStun(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
@@ -714,6 +715,31 @@ public final class UiTest {
             for (int f = 0; f < 4; f++) l.add(new Step("customanim_tab" + tb + "_" + f, () -> {}, 3));
             l.add(new Step(null, () -> {}, 10));
         }
+    }
+
+    /** Kitsune Attack on a husk: the dazed stun with dizzy stars (side camera). */
+    private static void kitsuneStun(Minecraft mc, List<Step> l) {
+        int[] ids = {-1, -1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.setYRot(0); p.setXRot(10);
+            com.xenowarriors.karma.Karma.add(p, 200);
+            var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+            h.moveTo(p.getX(), p.getY(), p.getZ() + 5, 180, 0); h.setNoAi(true);
+            h.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(400); h.setHealth(400);
+            p.serverLevel().addFreshEntity(h); ids[0] = h.getId();
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(p.getX() + 6, p.getY() - 0.3, p.getZ() + 5, 90F, 6F); a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(90F);
+            p.serverLevel().addFreshEntity(a); ids[1] = a.getId();
+        }); }, 50));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            if (mc.level.getEntity(ids[1]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(90F); a.yRotO = 90F; a.setXRot(6); a.xRotO = 6; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a); } }, 10));
+        l.add(new Step(null, () -> server(p -> {
+            int slot = -1; int[] lo = com.xenowarriors.client.ClientSkillState.loadout();
+            com.xenowarriors.skill.SkillManager.useSkill(p, 1);      // Kitsune Attack sits in slot 2 by default
+        }), 10));
+        for (int f = 0; f < 5; f++) l.add(new Step("kitsune_stun_" + f, () -> {}, 8));
+        l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 10));
     }
 
     private static void noToasts(Minecraft mc) {
