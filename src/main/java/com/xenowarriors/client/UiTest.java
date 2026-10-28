@@ -678,10 +678,20 @@ public final class UiTest {
                     p.serverLevel().addFreshEntity(h);
                 }
             }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 60));
+            int[] cam = {-1};
+            l.add(new Step(null, () -> server(p -> {        // a side-on camera so the pose and the blast both show
+                var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+                if (a == null) return;
+                a.moveTo(p.getX() + 7.5, p.getY() - 0.2, p.getZ() + 5, 90F, 4F); a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(90F);
+                p.serverLevel().addFreshEntity(a); cam[0] = a.getId();
+            }), 10));
+            l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+                if (mc.level.getEntity(cam[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                    a.setYRot(90F); a.yRotO = 90F; a.setXRot(4); a.xRotO = 4; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a); } }, 10));
             l.add(new Step(null, () -> server(p -> com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT)), 8));
-            l.add(new Step("xeno_" + t.getId() + "_charge", () -> {}, 12));
-            l.add(new Step("xeno_" + t.getId() + "_blast", () -> {}, 3));
-            l.add(new Step(null, () -> {}, 30));
+            l.add(new Step("xeno_" + t.getId() + "_charge", () -> {}, 9));
+            for (int f = 0; f < 4; f++) l.add(new Step("xeno_" + t.getId() + "_blast" + f, () -> {}, 3));
+            l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; server(p -> { var e = p.serverLevel().getEntity(cam[0]); if (e != null) e.discard(); }); }, 20));
             l.add(new Step("xeno_" + t.getId() + "_drained", () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3));
             l.add(new Step(null, () -> { com.xenowarriors.client.menu.CharacterCustomScreen.open(null); if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(3); }, 30));
             l.add(new Step("xeno_" + t.getId() + "_tab", () -> {}, 3));
