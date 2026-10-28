@@ -115,7 +115,8 @@ repositories {
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // (UI tests with DragonMineZ need a newer Forge: XW_FORGE overrides the version for those runs only)
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${System.getenv('XW_FORGE') ?: forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     // GeckoLib: keyframe animations for Mikiko (required); mclib is the math library it ships inside itself
     implementation fg.deobf("blank:geckolib-forge-1.20.1:4.8.4")
