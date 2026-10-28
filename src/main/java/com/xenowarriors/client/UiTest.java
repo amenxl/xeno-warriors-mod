@@ -91,6 +91,7 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzMenu(mc, l); return l; }
         if ("taczguard".equals(System.getenv("XW_UITEST_FOCUS"))) { taczGuard(mc, l); return l; }
         if ("xenotest".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoTest(mc, l); return l; }
@@ -749,6 +750,32 @@ public final class UiTest {
      * Xeno Blast with a second player (a stand-in FakePlayer, like the party bots use): fighting back with a projectile
      * skill, Ultima mashing to cancel it, and a full beam clash. Results go to the log as "XW-TEST".
      */
+    /** Townsfolk builds: hut, fenced wheat farm round a water hole, well and lamp post (placed at once for the picture). */
+    private static void townsfolk(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); server(p -> {
+            var lv = p.serverLevel();
+            BlockPos base = p.blockPosition().offset(0, 0, 12);
+            for (int dx = -14; dx <= 14; dx++) for (int dz = -8; dz <= 8; dz++) {
+                lv.setBlock(base.offset(dx, -1, dz), net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState(), 3);
+                for (int y = 0; y < 6; y++) lv.setBlock(base.offset(dx, y, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            }
+            com.xenowarriors.npc.HumanWorkGoal.testPlace(lv, base.offset(-7, 0, 0), "hut");
+            com.xenowarriors.npc.HumanWorkGoal.testPlace(lv, base.offset(3, 0, 0), "farm");
+            com.xenowarriors.npc.HumanWorkGoal.testPlace(lv, base.offset(9, 0, -4), "well");
+            com.xenowarriors.npc.HumanWorkGoal.testPlace(lv, base.offset(-2, 0, -5), "lamp");
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(lv);
+            a.moveTo(p.getX(), p.getY() + 7, p.getZ() - 2, 0F, 30F); a.setNoGravity(true); a.setInvisible(true);
+            lv.addFreshEntity(a); ids[0] = a.getId();
+            lv.setDayTime(6000);
+        }); }, 50));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(0); a.yRotO = 0; a.setXRot(30); a.xRotO = 30; a.setYHeadRot(0); a.yHeadRotO = 0; mc.setCameraEntity(a); } }, 20));
+        l.add(new Step("townsfolk_builds", () -> {}, 3));
+        l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
+    }
+
     /** With DragonMineZ installed (CI downloads it for this focus): the main menu shows its entry, and the entry opens DMZ's menu. */
     private static void dmzMenu(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); log("dmz loaded=" + com.xenowarriors.client.compat.DmzMenu.available()); }, 60));

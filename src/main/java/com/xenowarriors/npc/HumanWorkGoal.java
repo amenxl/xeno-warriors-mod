@@ -25,9 +25,14 @@ import java.util.EnumSet;
  * gather into planks, tools, weapons and iron armor (and wear them), and once they have enough material they build
  * themselves a small hut on open ground. Only natural trees (logs with leaves), raw stone and ores are taken, huts go
  * only on clear natural ground, and nothing happens with mobGriefing off - so players' builds are left alone.
+ * Once they have a home they pull up grass for seeds and lay out a fenced wheat farm around a water hole, then tend it
+ * (harvest ripe wheat, replant, bake bread and eat it when hurt), and add a well and a lamp post by their hut.
  */
 public class HumanWorkGoal extends Goal {
-    private enum Job { NONE, CHOP, MINE, BUILD }
+    private enum Job { NONE, CHOP, MINE, BUILD, GRASS, TEND }
+    private static final String FARM = "xw_farm", EXTRAS = "xw_extras";
+    private java.util.List<Object[]> plan;
+    private java.util.function.Consumer<BlockPos> onBuilt;
     private final HumanNpcEntity h;
     private Job job = Job.NONE;
     private BlockPos target;
@@ -48,9 +53,28 @@ public class HumanWorkGoal extends Goal {
         if (--cooldown > 0 || !allowed()) return false;
         cooldown = 100 + h.getRandom().nextInt(200);
         craft();
+        eat();
         if (h.home() == null && count(Items.OAK_PLANKS) + count(Items.COBBLESTONE) >= 40) {
             BlockPos spot = findHutSpot();
-            if (spot != null) { job = Job.BUILD; target = spot; buildStep = 0; return true; }
+            if (spot != null) { startBuild(spot, hutPlan(spot), c -> h.setHome(c)); return true; }
+        }
+        if (h.home() != null && farm() != null && h.getRandom().nextInt(3) > 0) {           // tend the farm
+            BlockPos crop = findCropWork();
+            if (crop != null) { job = Job.TEND; target = crop; return true; }
+        }
+        if (h.home() != null && farm() == null) {
+            if (count(Items.WHEAT_SEEDS) < 6) {                                               // seeds first
+                target = findGrass();
+                if (target != null) { job = Job.GRASS; return true; }
+            } else if (count(Items.OAK_PLANKS) >= 24) {
+                BlockPos spot = findSpotNear(h.home(), 3);
+                if (spot != null) { startBuild(spot, farmPlan(spot), c -> h.getPersistentData().putLong(FARM, c.asLong())); return true; }
+            }
+        }
+        int extras = h.getPersistentData().getInt(EXTRAS);
+        if (h.home() != null && farm() != null && extras < 2 && count(Items.COBBLESTONE) >= 12 && count(Items.OAK_PLANKS) >= 6) {
+            BlockPos spot = findSpotNear(h.home(), 1);
+            if (spot != null) { startBuild(spot, extras == 0 ? wellPlan(spot) : lampPlan(spot), c -> h.getPersistentData().putInt(EXTRAS, extras + 1)); return true; }
         }
         boolean wantStone = count(Items.COBBLESTONE) < 30 || needIron();
         target = h.getRandom().nextBoolean() || !wantStone ? findLog() : null;
@@ -83,6 +107,7 @@ public class HumanWorkGoal extends Goal {
         double d = h.distanceToSqr(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5);
         h.getLookControl().setLookAt(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5);
         if (job == Job.BUILD) { build(level); return; }
+        if (job == Job.TEND) { tend(level, d); return; }
         if (d > 3.2 * 3.2) {
             if (h.getNavigation().isDone()) h.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8);
             if (++work > 400) stop();
@@ -90,7 +115,14 @@ public class HumanWorkGoal extends Goal {
         }
         h.getNavigation().stop();
         BlockState s = level.getBlockState(target);
-        if ((job == Job.CHOP && !s.is(BlockTags.LOGS)) || (job == Job.MINE && !minable(s))) { stop(); return; }
+        if ((job == Job.CHOP && !s.is(BlockTags.LOGS)) || (job == Job.MINE && !minable(s)) || (job == Job.GRASS && !grassy(s))) { stop(); return; }
+        if (job == Job.GRASS) {                       // pull up grass: sometimes a seed
+            com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.PLACE, 8);
+            level.destroyBlock(target, false, h);
+            if (h.getRandom().nextFloat() < 0.6F) pack().addItem(new ItemStack(Items.WHEAT_SEEDS, 1 + h.getRandom().nextInt(2)));
+            stop();
+            return;
+        }
         if (work++ % 10 == 0) {
             com.xenowarriors.anim.Poses.play(h, job == Job.CHOP ? com.xenowarriors.anim.Poses.CHOP : com.xenowarriors.anim.Poses.MINE, 10);
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, s), target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, 6, 0.3, 0.3, 0.3, 0.05);
@@ -177,6 +209,91 @@ public class HumanWorkGoal extends Goal {
         if (h.getItemBySlot(EquipmentSlot.CHEST).isEmpty() && iron >= 8) { take(Items.IRON_INGOT, 8); equip(EquipmentSlot.CHEST, Items.IRON_CHESTPLATE); }
     }
 
+    /** Bread from wheat; eaten when they're hurt. */
+    private void eat() {
+        int wheat = count(Items.WHEAT);
+        if (wheat >= 3) { take(Items.WHEAT, wheat / 3 * 3); pack().addItem(new ItemStack(Items.BREAD, wheat / 3)); }
+        if (h.getHealth() < h.getMaxHealth() - 4 && count(Items.BREAD) > 0) {
+            take(Items.BREAD, 1);
+            h.heal(5F);
+            h.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EAT, 0.8F, 1F);
+        }
+    }
+
+    // ---------------------------------------------------------------- the farm
+
+    private BlockPos farm() {
+        return h.getPersistentData().contains(FARM) ? BlockPos.of(h.getPersistentData().getLong(FARM)) : null;
+    }
+
+    private static boolean grassy(BlockState s) { return s.is(Blocks.GRASS) || s.is(Blocks.TALL_GRASS) || s.is(Blocks.FERN); }
+
+    private BlockPos findGrass() {
+        BlockPos base = h.blockPosition();
+        for (int i = 0; i < 50; i++) {
+            BlockPos p = base.offset(h.getRandom().nextInt(25) - 12, h.getRandom().nextInt(5) - 2, h.getRandom().nextInt(25) - 12);
+            if (grassy(h.level().getBlockState(p))) return p;
+        }
+        return null;
+    }
+
+    /** A ripe crop to harvest, or empty farmland to sow, in their farm. */
+    private BlockPos findCropWork() {
+        BlockPos f = farm();
+        java.util.List<BlockPos> out = new java.util.ArrayList<>();
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+            BlockPos p = f.offset(dx, 0, dz);
+            BlockState s = h.level().getBlockState(p);
+            if (s.getBlock() instanceof net.minecraft.world.level.block.CropBlock c && c.isMaxAge(s)) out.add(p);
+            else if (s.isAir() && h.level().getBlockState(p.below()).is(Blocks.FARMLAND) && count(Items.WHEAT_SEEDS) > 0) out.add(p);
+        }
+        return out.isEmpty() ? null : out.get(h.getRandom().nextInt(out.size()));
+    }
+
+    private void tend(ServerLevel level, double d) {
+        if (d > 2.6 * 2.6) {
+            if (h.getNavigation().isDone()) h.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.7);
+            if (++work > 300) stop();
+            return;
+        }
+        BlockState s = level.getBlockState(target);
+        com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.PLACE, 8);
+        if (s.getBlock() instanceof net.minecraft.world.level.block.CropBlock c && c.isMaxAge(s)) {
+            level.destroyBlock(target, false, h);
+            pack().addItem(new ItemStack(Items.WHEAT, 1));
+            pack().addItem(new ItemStack(Items.WHEAT_SEEDS, 1 + h.getRandom().nextInt(2)));
+        }
+        if (level.getBlockState(target).isAir() && level.getBlockState(target.below()).is(Blocks.FARMLAND) && count(Items.WHEAT_SEEDS) > 0) {
+            take(Items.WHEAT_SEEDS, 1);
+            level.setBlock(target, Blocks.WHEAT.defaultBlockState(), 3);
+            level.playSound(null, target, net.minecraft.sounds.SoundEvents.CROP_PLANTED, SoundSource.NEUTRAL, 0.8F, 1F);
+        }
+        stop();
+    }
+
+    /** Clear natural ground near their home, `r` blocks out from the centre (r=3 gives a 7x7 patch). */
+    private BlockPos findSpotNear(BlockPos home, int r) {
+        for (int i = 0; i < 30; i++) {
+            double a = h.getRandom().nextDouble() * Math.PI * 2, dist = 6 + r + h.getRandom().nextInt(6);
+            BlockPos c = h.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    home.offset((int) (Math.cos(a) * dist), 0, (int) (Math.sin(a) * dist)));
+            if (clearN(c, r)) return c;
+        }
+        return null;
+    }
+
+    private boolean clearN(BlockPos c, int r) {
+        for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) {
+            BlockState gs = h.level().getBlockState(c.offset(dx, -1, dz));
+            if (!(gs.is(Blocks.GRASS_BLOCK) || gs.is(Blocks.DIRT) || gs.is(Blocks.COARSE_DIRT) || gs.is(Blocks.PODZOL))) return false;
+            for (int y = 0; y <= 3; y++) {
+                BlockState s = h.level().getBlockState(c.offset(dx, y, dz));
+                if (!s.isAir() && !s.canBeReplaced()) return false;
+            }
+        }
+        return true;
+    }
+
     private void equip(EquipmentSlot slot, Item item) {
         h.setItemSlot(slot, new ItemStack(item));
         h.setDropChance(slot, 0.15F);
@@ -217,14 +334,17 @@ public class HumanWorkGoal extends Goal {
             return;
         }
         if (work++ % 8 != 0) return;
-        java.util.List<Object[]> plan = hutPlan(target);
+        if (plan == null) { stop(); return; }
         while (buildStep < plan.size()) {
             Object[] step = plan.get(buildStep++);
             BlockPos p = (BlockPos) step[0];
             BlockState s = (BlockState) step[1];
             BlockState cur = level.getBlockState(p);
             if (cur.equals(s) || (!cur.isAir() && !cur.canBeReplaced() && !s.isAir())) continue;
-            Item cost = s.is(Blocks.COBBLESTONE) ? Items.COBBLESTONE : s.is(Blocks.OAK_PLANKS) || s.is(Blocks.OAK_SLAB) ? Items.OAK_PLANKS : null;
+            Item cost = s.is(Blocks.COBBLESTONE) || s.is(Blocks.COBBLESTONE_WALL) || s.is(Blocks.COBBLESTONE_SLAB) ? Items.COBBLESTONE
+                    : s.is(Blocks.OAK_PLANKS) || s.is(Blocks.OAK_SLAB) || s.is(Blocks.OAK_FENCE) || s.is(Blocks.OAK_FENCE_GATE) ? Items.OAK_PLANKS
+                    : s.is(Blocks.WHEAT) ? Items.WHEAT_SEEDS : null;
+            if (cost == Items.WHEAT_SEEDS && count(cost) < 1) continue;                 // sow what they can
             if (cost != null && count(cost) < 1) {
                 if (count(Items.OAK_PLANKS) > 0 && cost == Items.COBBLESTONE) { s = Blocks.OAK_PLANKS.defaultBlockState(); cost = Items.OAK_PLANKS; }
                 else { stop(); return; }                     // out of material: gather more and come back
@@ -235,12 +355,63 @@ public class HumanWorkGoal extends Goal {
             level.playSound(null, p, s.getSoundType().getPlaceSound(), SoundSource.NEUTRAL, 0.7F, 1F);
             return;
         }
-        h.setHome(target);
+        if (onBuilt != null) onBuilt.accept(target);
         com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.WIPE, 40);           // done - phew
         stop();
     }
 
-    private static java.util.List<Object[]> hutPlan(BlockPos c) {
+    private void startBuild(BlockPos spot, java.util.List<Object[]> plan, java.util.function.Consumer<BlockPos> done) {
+        job = Job.BUILD; target = spot; buildStep = 0; this.plan = plan; onBuilt = done;
+    }
+
+    /** A 5x5 wheat field around a water hole, fenced, with a gate. */
+    static java.util.List<Object[]> farmPlan(BlockPos c) {
+        java.util.List<Object[]> out = new java.util.ArrayList<>();
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+            out.add(new Object[]{c.offset(dx, -1, dz), dx == 0 && dz == 0 ? Blocks.WATER.defaultBlockState() : Blocks.FARMLAND.defaultBlockState()});
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
+            if (Math.abs(dx) != 3 && Math.abs(dz) != 3) continue;
+            out.add(new Object[]{c.offset(dx, 0, dz), dx == 0 && dz == 3 ? Blocks.OAK_FENCE_GATE.defaultBlockState() : Blocks.OAK_FENCE.defaultBlockState()});
+        }
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+            if (dx != 0 || dz != 0) out.add(new Object[]{c.offset(dx, 0, dz), Blocks.WHEAT.defaultBlockState()});
+        out.add(new Object[]{c.offset(-3, 1, -3), Blocks.TORCH.defaultBlockState()});
+        out.add(new Object[]{c.offset(3, 1, 3), Blocks.TORCH.defaultBlockState()});
+        return out;
+    }
+
+    /** A little stone well with a roof. */
+    static java.util.List<Object[]> wellPlan(BlockPos c) {
+        java.util.List<Object[]> out = new java.util.ArrayList<>();
+        out.add(new Object[]{c.offset(0, -2, 0), Blocks.COBBLESTONE.defaultBlockState()});
+        out.add(new Object[]{c.offset(0, -1, 0), Blocks.WATER.defaultBlockState()});
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) if (dx != 0 || dz != 0) {
+            out.add(new Object[]{c.offset(dx, -1, dz), Blocks.COBBLESTONE.defaultBlockState()});
+            out.add(new Object[]{c.offset(dx, 0, dz), Blocks.COBBLESTONE_WALL.defaultBlockState()});
+        }
+        for (int[] q : new int[][]{{-1, -1}, {1, 1}}) { out.add(new Object[]{c.offset(q[0], 1, q[1]), Blocks.OAK_FENCE.defaultBlockState()}); out.add(new Object[]{c.offset(q[0], 2, q[1]), Blocks.OAK_FENCE.defaultBlockState()}); }
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) out.add(new Object[]{c.offset(dx, 3, dz), Blocks.OAK_SLAB.defaultBlockState()});
+        return out;
+    }
+
+    /** A lamp post: a cobble base, a fence pole and a lantern. */
+    static java.util.List<Object[]> lampPlan(BlockPos c) {
+        java.util.List<Object[]> out = new java.util.ArrayList<>();
+        out.add(new Object[]{c, Blocks.COBBLESTONE_WALL.defaultBlockState()});
+        for (int y = 1; y <= 3; y++) out.add(new Object[]{c.offset(0, y, 0), Blocks.OAK_FENCE.defaultBlockState()});
+        out.add(new Object[]{c.offset(0, 4, 0), Blocks.LANTERN.defaultBlockState()});
+        return out;
+    }
+
+    /** (UI test) put one of the plans down at once. */
+    public static void testPlace(ServerLevel l, BlockPos c, String which) {
+        java.util.List<Object[]> p = switch (which) { case "hut" -> hutPlan(c); case "farm" -> farmPlan(c); case "well" -> wellPlan(c); default -> lampPlan(c); };
+        for (Object[] st : p) l.setBlock((BlockPos) st[0], (BlockState) st[1], 3);
+        if (which.equals("farm")) for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
+            if ((dx != 0 || dz != 0) && (dx + dz) % 2 == 0) l.setBlock(c.offset(dx, 0, dz), Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7), 3);
+    }
+
+    static java.util.List<Object[]> hutPlan(BlockPos c) {
         java.util.List<Object[]> out = new java.util.ArrayList<>();
         BlockState cob = Blocks.COBBLESTONE.defaultBlockState(), pl = Blocks.OAK_PLANKS.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
         for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) out.add(new Object[]{c.offset(dx, -1, dz), cob});
