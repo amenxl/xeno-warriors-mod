@@ -381,7 +381,7 @@ public class CharacterCustomScreen extends Screen {
         var team = com.xenowarriors.client.screen.CharacterSelectScreen.Group.of(type);   // their team in the show
         String[][] aff = affiliations(type);
         String names = aff.length == 0 ? team.title : aff.length == 1 ? aff[0][0] : aff[0][0] + " / " + aff[1][0];
-        if (font.width(names + "  •  Season " + type.season()) > VW - 130) names = aff.length > 0 ? aff[0][0] : team.title;
+        if (font.width(names + "  •  Season " + type.season()) > VW - 20) names = aff.length > 0 ? aff[0][0] : team.title;
         String group = type == CharacterType.NONE ? "No warrior chosen" : names + "  •  Season " + type.season();
         g.fill(5, 15, 10, 20, 0xFF000000 | col);
         g.drawString(font, group, 13, 14, 0xD0D0DC, false);
@@ -390,8 +390,9 @@ public class CharacterCustomScreen extends Screen {
         // the team's logo (Freedom Fighters, Sky Patrol...), or an emblem with their initial for teams without one
         if (type != CharacterType.NONE && aff.length > 0) {
             RenderSystem.enableBlend();
-            if (aff.length == 1) g.blit(logo(aff[0][1]), VW - 72, 11, 68, 34, 0, 0, 256, 128, 256, 128);
-            else for (int k = 0; k < 2; k++) g.blit(logo(aff[k][1]), VW - 112 + k * 55, 14, 54, 27, 0, 0, 256, 128, 256, 128);
+            // under the team line, beside the name
+            if (aff.length == 1) g.blit(logo(aff[0][1]), VW - 60, 22, 52, 26, 0, 0, 256, 128, 256, 128);
+            else for (int k = 0; k < 2; k++) g.blit(logo(aff[k][1]), VW - 100 + k * 48, 23, 46, 23, 0, 0, 256, 128, 256, 128);
             g.fill(4, 48, VW - 4, 49, 0xFF2E2E38);
             return;
         }
