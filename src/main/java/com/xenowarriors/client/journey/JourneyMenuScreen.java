@@ -50,20 +50,20 @@ public class JourneyMenuScreen extends JourneyScreen {
             sc(g, ms.size() > 1 ? (m.me() ? "you" : m.name()) : "", 34, y + 10, 0.45F, m.me() ? 0x5FD05F : 0x50A0FF);
             hpBar(g, 90, y + 7, 60, 4, hp);
             sc(g, down ? "DOWN" : Math.round(hp * 100) + "%", 154, y + 6, 0.55F, down ? 0xE04040 : 0xC0D0C0);
-            if (down) button(g, 176, y + 2, 234, y + 16, "Revive  " + prices[JourneyRules.REVIVE], 0xE0B030, shop && jc >= prices[JourneyRules.REVIVE], () -> JourneyClient.act(8, JourneyRules.REVIVE, t.ordinal()));
+            if (down) button(g, 176, y + 2, 234, y + 16, "Revive  " + prices[JourneyRules.S_REVIVE], 0xE0B030, shop && jc >= prices[JourneyRules.S_REVIVE], () -> JourneyClient.act(8, JourneyRules.S_REVIVE, t.ordinal()));
             else {
-                button(g, 176, y + 2, 204, y + 16, "+40% " + prices[JourneyRules.HEAL], 0x50D060, shop && hp < 1 && jc >= prices[JourneyRules.HEAL], () -> JourneyClient.act(8, JourneyRules.HEAL, t.ordinal()));
-                button(g, 206, y + 2, 234, y + 16, "Full " + prices[JourneyRules.FULL], 0x50D060, shop && hp < 1 && jc >= prices[JourneyRules.FULL], () -> JourneyClient.act(8, JourneyRules.FULL, t.ordinal()));
+                button(g, 176, y + 2, 204, y + 16, "+40% " + prices[JourneyRules.S_HEAL], 0x50D060, shop && hp < 1 && jc >= prices[JourneyRules.S_HEAL], () -> JourneyClient.act(8, JourneyRules.S_HEAL, t.ordinal()));
+                button(g, 206, y + 2, 234, y + 16, "Full " + prices[JourneyRules.S_FULL], 0x50D060, shop && hp < 1 && jc >= prices[JourneyRules.S_FULL], () -> JourneyClient.act(8, JourneyRules.S_FULL, t.ordinal()));
             }
             y += 20;
         }
 
         // enhance
         int rx = 246;
-        button(g, rx, 42, VW - 10, 58, "Party Heal +25%  -  " + prices[JourneyRules.PARTY_HEAL] + " JC", 0x50D060, shop && jc >= prices[JourneyRules.PARTY_HEAL], () -> JourneyClient.act(8, JourneyRules.PARTY_HEAL, -1));
+        button(g, rx, 42, VW - 10, 58, "Party Heal +25%  -  " + prices[JourneyRules.S_PARTY] + " JC", 0x50D060, shop && jc >= prices[JourneyRules.S_PARTY], () -> JourneyClient.act(8, JourneyRules.S_PARTY, -1));
         boolean pw = st.getBoolean("powerNext");
-        button(g, rx, 61, VW - 10, 77, pw ? "Power Up ready for the next battle" : "Power Up (+30% damage next battle)  -  " + prices[JourneyRules.POWER] + " JC", 0xFFB040,
-                shop && !pw && jc >= prices[JourneyRules.POWER], () -> JourneyClient.act(8, JourneyRules.POWER, -1));
+        button(g, rx, 61, VW - 10, 77, pw ? "Power Up ready for the next battle" : "Power Up (+30% damage next battle)  -  " + prices[JourneyRules.S_POWER] + " JC", 0xFFB040,
+                shop && !pw && jc >= prices[JourneyRules.S_POWER], () -> JourneyClient.act(8, JourneyRules.S_POWER, -1));
 
         // the map
         sc(g, "MAP", rx, 82, 0.7F, 0x40D0FF);

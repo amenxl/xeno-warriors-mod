@@ -653,27 +653,27 @@ public final class Journey {
         if (r.jc < price) { p.displayClientMessage(msg("Not enough Journey Coins (" + price + " JC)", ChatFormatting.RED), true); return; }
         CharacterType t = who >= 0 && who < CharacterType.values().length ? CharacterType.values()[who] : CharacterType.NONE;
         switch (item) {
-            case JourneyRules.HEAL, JourneyRules.FULL -> {
+            case JourneyRules.S_HEAL, JourneyRules.S_FULL -> {
                 if (!r.hp.containsKey(t) || !r.alive(t) || r.hp.get(t) >= 1F) return;
-                r.hp.put(t, item == JourneyRules.FULL ? 1F : Math.min(1F, r.hp.get(t) + 0.4F));
+                r.hp.put(t, item == JourneyRules.S_FULL ? 1F : Math.min(1F, r.hp.get(t) + 0.4F));
             }
-            case JourneyRules.REVIVE -> {
+            case JourneyRules.S_REVIVE -> {
                 if (!r.hp.containsKey(t) || r.alive(t)) return;
                 r.hp.put(t, 0.5F);
             }
-            case JourneyRules.PARTY_HEAL -> {
+            case JourneyRules.S_PARTY -> {
                 boolean any = false;
                 for (CharacterType c : r.hp.keySet()) if (r.alive(c) && r.hp.get(c) < 1F) { r.hp.put(c, Math.min(1F, r.hp.get(c) + 0.25F)); any = true; }
                 if (!any) return;
             }
-            case JourneyRules.POWER -> { if (r.powerNext) return; r.powerNext = true; }
+            case JourneyRules.S_POWER -> { if (r.powerNext) return; r.powerNext = true; }
             default -> { return; }
         }
         r.jc -= price;
         for (Member m : r.members) {
             ServerPlayer mp = server.getPlayerList().getPlayer(m.id);
             if (mp == null) continue;
-            if (m.active == t || item == JourneyRules.PARTY_HEAL || (item == JourneyRules.REVIVE && !r.alive(m.active))) lead(mp, r, m);
+            if (m.active == t || item == JourneyRules.S_PARTY || (item == JourneyRules.S_REVIVE && !r.alive(m.active))) lead(mp, r, m);
             mp.displayClientMessage(msg(p.getGameProfile().getName() + " bought " + JourneyRules.SHOP_NAME[item] + (t != CharacterType.NONE ? " for " + t.getDisplayName().getString() : "") + " (-" + price + " JC)", ChatFormatting.AQUA), true);
         }
         p.level().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 1.4F);

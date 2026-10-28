@@ -21,7 +21,7 @@ public final class JourneyRules {
     public static final int[] STEP_COLOR = {0xFFFFFF, 0xFF7040, 0x40D0FF, 0x60F060, 0xC040FF};
 
     // shop
-    public static final int HEAL = 0, FULL = 1, REVIVE = 2, PARTY_HEAL = 3, POWER = 4;
+    public static final int S_HEAL = 0, S_FULL = 1, S_REVIVE = 2, S_PARTY = 3, S_POWER = 4;
     public static final int[] PRICE = {6, 12, 20, 18, 10};
     public static final String[] SHOP_NAME = {"Heal +40%", "Full Heal", "Revive (50%)", "Party Heal +25%", "Power Up"};
     public static final int START_JC = 15;
