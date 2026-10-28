@@ -23,6 +23,12 @@ public final class BlazingHud {
 
     private static ResourceLocation bubble(String name) { return XenoWarriors.id("textures/gui/hud/blazing_" + name + ".png"); }
 
+    /** The top of your own gauge (the party cards sit above it). */
+    public static int top(int height) {
+        int E = 70, H = Math.round(E * EH / (float) EW);
+        return height - H - 24 - HudLayout.skillBarLift();
+    }
+
     /** Portrait placement for the rest of the HUD (KA orb, chat bubble, effects): {x, y, size, barsLeft, barsTop}. */
     public static int[] render(GuiGraphics g, Minecraft mc, Font font, CharacterType type, int width, int height, int lift,
                                float hp, float max, float chip, boolean low, boolean flash, boolean dbz, String face) {

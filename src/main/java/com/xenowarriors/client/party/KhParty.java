@@ -22,6 +22,7 @@ public class KhParty implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         height = 0;
         if (!KhHud.active() || mc.options.hideGui || PartyClient.members().isEmpty()) return;
+        if (com.xenowarriors.client.ClientSettings.blazingHud()) { blazing(g, mc, width, screenH); return; }
         int x = width - CARD_W - 4, y = 4;
         var font = mc.font;
         g.drawString(font, "PARTY", x + 2, y, 0xC8E1FF, true);
@@ -67,5 +68,61 @@ public class KhParty implements IGuiOverlay {
             y += CARD_H + 3;
         }
         height = y;
+    }
+
+    private static final net.minecraft.resources.ResourceLocation CARD = com.xenowarriors.XenoWarriors.id("textures/gui/hud/blazing_party.png");
+
+    /** Blazing Wind: party cards in a row just above your own gauge (name, LV, portrait, HP, KP and EXP). */
+    private static void blazing(GuiGraphics g, Minecraft mc, int width, int screenH) {
+        var font = mc.font;
+        float s = 0.8F;
+        int cw = Math.round(112 * s), ch = Math.round(78 * s) + 9;
+        int right = width - 4, bottom = com.xenowarriors.client.BlazingHud.top(screenH) - 16;
+        int x = right - cw, y = bottom - ch;
+        for (PartySyncPacket.Member m : PartyClient.members()) {
+            if (m.id().equals(mc.player.getUUID())) continue;
+            if (x < width / 2 + 100) { x = right - cw; y -= ch + 2; }          // (a second row when there's no room)
+            CharacterType type = CharacterType.values()[Math.max(0, Math.min(CharacterType.values().length - 1, m.type()))];
+            g.pose().pushPose();
+            g.pose().translate(x, y + 9, 0);
+            g.pose().scale(s, s, 1F);
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            g.blit(CARD, 0, 0, 112, 78, 0, 0, 112, 78, 112, 78);
+            HudFaces.health(m.id(), m.health(), m.maxHealth());
+            boolean low = m.maxHealth() > 0 && m.health() / m.maxHealth() < 0.3F, flash = low && (HudFaces.clock() / 6) % 2 == 0;
+            if (type != CharacterType.NONE) {
+                String face = HudFaces.face(m.id(), m.health(), m.maxHealth(), false, m.knockedOut());
+                if (HudFaces.hasArt(type)) KhHud.portrait(g, HudFaces.texture(type, face), 3, 24, 40, flash);
+                else com.xenowarriors.client.HudHead.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, 5, 26, 36, flash);
+            }
+            KhHud.small(g, font, String.valueOf(Math.max(1, m.level())), 27, 11, 0xFFFFFF, 1F);
+            String hp = String.valueOf(Math.round(m.health()));
+            KhHud.small(g, font, hp, 99 - font.width(hp) * 0.85F, 22, 0xFFFFFF, 0.85F);
+            float hf = m.maxHealth() > 0 ? m.health() / m.maxHealth() : 0;
+            g.fill(51, 33, 51 + Math.round(47 * net.minecraft.util.Mth.clamp(hf, 0, 1)), 37, low ? 0xFFE04040 : 0xFF40D8B0);
+            if (type == CharacterType.ZANE || type == CharacterType.ULTIMA)
+                g.blit(com.xenowarriors.XenoWarriors.id("textures/gui/hud/blazing_" + (type == CharacterType.ZANE ? "mp" : "dp") + ".png"), 45, 40, 22, 22, 0, 0, 64, 64, 64, 64);
+            String kp = String.valueOf(Math.round(m.karma()));
+            KhHud.small(g, font, kp, 99 - font.width(kp) * 0.85F, 44, 0xFFFFFF, 0.85F);
+            float kf = m.maxKarma() > 0 ? m.karma() / m.maxKarma() : 0;
+            g.fill(51, 56, 51 + Math.round(47 * net.minecraft.util.Mth.clamp(kf, 0, 1)), 60, 0xFF60C850);
+            g.fill(30, 71, 30 + Math.round(67 * net.minecraft.util.Mth.clamp(m.xp(), 0, 1)), 73, 0xFFE8E8F0);
+            if (m.bot()) KhHud.small(g, font, "BOT", 6, 60, 0x9FE0FF, 0.7F);
+            if (m.knockedOut()) { g.fill(2, 2, 110, 76, 0x66800000); KhHud.small(g, font, "DOWN", 40, 64, 0xFF5A5A, 0.9F); }
+            g.pose().popPose();
+            // name above, and how far away they are
+            String nm = m.name();
+            KhHud.small(g, font, nm, x + 2, y, 0xFFFFFF, 0.75F);
+            double dist = mc.player.level().dimension().location().toString().equals(m.dim()) ? Math.sqrt(mc.player.distanceToSqr(m.x(), m.y(), m.z())) : -1;
+            String d = dist >= 0 ? Math.round(dist) + "m" : "far";
+            KhHud.small(g, font, d, x + cw - 2 - font.width(d) * 0.6F, y + 1, 0xBEBED2, 0.6F);
+            String b = HudFaces.bubble(m.id());
+            if (b != null) {
+                int bw = Math.round(font.width(b) * 0.6F) + 6;
+                g.fill(x, y - 12, x + bw, y - 2, 0xF0FAFAFF);
+                KhHud.small(g, font, b, x + 3, y - 10, 0x14141E, 0.6F);
+            }
+            x -= cw + 4;
+        }
     }
 }

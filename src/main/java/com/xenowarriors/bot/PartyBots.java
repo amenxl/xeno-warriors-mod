@@ -85,7 +85,7 @@ public final class PartyBots {
         for (PartyBotEntity b : bots(owner))
             out.add(new com.xenowarriors.network.PartySyncPacket.Member(b.getUUID(), b.character().getDisplayName().getString() + " (" + owner.getName().getString() + ")",
                     b.getHealth(), b.getMaxHealth(), b.karma, 100F, b.character().ordinal(), b.downed(), false,
-                    b.getX(), b.getY(), b.getZ(), b.level().dimension().location().toString(), true));
+                    b.getX(), b.getY(), b.getZ(), b.level().dimension().location().toString(), true, b.botLevel(), 0F));
         return out;
     }
 
@@ -115,7 +115,8 @@ public final class PartyBots {
             }
             list.add(0, new com.xenowarriors.network.PartySyncPacket.Member(p.getUUID(), p.getName().getString(), p.getHealth(), p.getMaxHealth(),
                     com.xenowarriors.karma.Karma.get(p), com.xenowarriors.karma.Karma.MAX, ModCapabilities.getType(p).ordinal(), false, true,
-                    p.getX(), p.getY(), p.getZ(), p.level().dimension().location().toString(), false));
+                    p.getX(), p.getY(), p.getZ(), p.level().dimension().location().toString(), false,
+                    com.xenowarriors.stats.Stats.characterLevel(p), com.xenowarriors.stats.Stats.progress(p)));
             ModNetwork.sendToPlayer(new com.xenowarriors.network.PartySyncPacket(list), p);
             SOLO_SYNCED.add(p.getUUID());
         }

@@ -38,7 +38,7 @@ public final class Stats {
     }
 
     /** How far toward the next level (average of the three stats' XP bars, 0..1). */
-    private static float progress(ServerPlayer player) {
+    public static float progress(ServerPlayer player) {
         return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
             float sum = 0;
             int n = 0;
