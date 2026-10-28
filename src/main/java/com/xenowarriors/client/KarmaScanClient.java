@@ -61,11 +61,22 @@ public class KarmaScanClient implements IGuiOverlay {
             return;
         }
         var ch = ClientCharacterData.getLocal();
-        if (target < 0 || !(visor || ch == com.xenowarriors.character.CharacterType.YURI || ch == com.xenowarriors.character.CharacterType.ULTIMA)) return;
+        boolean tech = ch == com.xenowarriors.character.CharacterType.TECHNICA && TechGoggles.down(mc.player);
+        if (tech && mc.options.getCameraType() == CameraType.FIRST_PERSON) {          // looking through her goggles
+            int r = Math.round(height * 0.32F), cy = height / 2;
+            for (int side = -1; side <= 1; side += 2) {
+                int cx = width / 2 + side * Math.round(r * 1.05F);
+                for (int dy = -r; dy <= r; dy++) {
+                    int w = (int) Math.sqrt(r * r - dy * dy);
+                    g.fill(cx - w, cy + dy, cx + w, cy + dy + 1, 0x18EC5AA0);
+                }
+            }
+        }
+        if (target < 0 || !(visor || tech || ch == com.xenowarriors.character.CharacterType.YURI || ch == com.xenowarriors.character.CharacterType.ULTIMA)) return;
         Entity e = mc.level.getEntity(target);
         if (e == null) return;
-        int col = mode == KarmaScanner.YURI ? 0x3AD04A : mode == KarmaScanner.ULTIMA ? 0x1FE07A : 0x50FF80;
-        String who = mode == KarmaScanner.YURI ? "YURI'S HACK" : mode == KarmaScanner.ULTIMA ? "ULTIMA ANALYSIS" : "GOV SCANNER";
+        int col = mode == KarmaScanner.YURI ? 0x3AD04A : mode == KarmaScanner.ULTIMA ? 0x1FE07A : mode == KarmaScanner.TECHNICA ? 0xFF7AC0 : 0x50FF80;
+        String who = mode == KarmaScanner.YURI ? "YURI'S HACK" : mode == KarmaScanner.ULTIMA ? "ULTIMA ANALYSIS" : mode == KarmaScanner.TECHNICA ? "TECH'S GOGGLES" : "GOV SCANNER";
         float t = Mth.clamp((now - shownAt) / 700F, 0F, 1F);
         long shown = (long) (value * (t * t * (3 - 2 * t)));
         if (t < 1F) shown = shown / 7 * 7 + (now / 30) % 7;                     // (digits rolling while it reads)

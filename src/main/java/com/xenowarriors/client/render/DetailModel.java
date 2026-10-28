@@ -42,6 +42,8 @@ public class DetailModel {
     public ModelPart hoodUp, hoodDown;
     /** Glasses that only come out for an idle (Yuri's), or null. */
     public final ModelPart glasses;
+    /** Technica's goggles (they come down over her eyes while she senses Karma), or null. */
+    public final ModelPart goggles;
 
     private DetailModel(ModelPart root) {
         this.root = root;
@@ -56,6 +58,7 @@ public class DetailModel {
         this.hoodUp = childOrNull(head, "hood_up");
         this.hoodDown = childOrNull(body, "hood_down");
         this.glasses = childOrNull(head, "glasses");
+        this.goggles = childOrNull(head, "goggles");
         this.coatBack = childOrNull(body, "coat_back");
         this.coatFrontR = childOrNull(body, "coat_front_r");
         this.coatFrontL = childOrNull(body, "coat_front_l");

@@ -42,7 +42,7 @@ import java.util.*;
 public final class KarmaScanner {
     /** The visor overloads above this. */
     public static final long CAPACITY = 50_000;
-    public static final int VISOR = 0, YURI = 1, ULTIMA = 2;
+    public static final int VISOR = 0, YURI = 1, ULTIMA = 2, TECHNICA = 3;
     private static final double RANGE = 48;
     private static final Map<UUID, Integer> LAST = new HashMap<>();
 
@@ -73,6 +73,7 @@ public final class KarmaScanner {
         CharacterType t = ModCapabilities.getType(p);
         if (t == CharacterType.YURI) return YURI;
         if (t == CharacterType.ULTIMA) return ULTIMA;
+        if (t == CharacterType.TECHNICA && p instanceof ServerPlayer sp && com.xenowarriors.karma.KarmaSensing.holding(sp)) return TECHNICA;   // (her goggles, while she senses)
         return p.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof Item ? VISOR : -1;
     }
 

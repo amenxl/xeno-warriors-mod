@@ -108,6 +108,22 @@ public final class UiTest {
             }
             return l;
         }
+        if ("techgoggles".equals(System.getenv("XW_UITEST_FOCUS"))) {           // Technica's goggles: up, then down while she senses (with her scanner reading)
+            l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.TECHNICA); hold(null); mc.options.hideGui = false; server(p -> {
+                p.setYRot(0); p.setXRot(5);
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                z.moveTo(p.getX(), p.getY(), p.getZ() + 4, 180F, 0); z.setNoAi(true); p.serverLevel().addFreshEntity(z);
+            }); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 40));
+            l.add(new Step("techgoggles_up", () -> {}, 3));
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.karma.KarmaSensing.use(p, false)), 20));
+            l.add(new Step("techgoggles_down", () -> {}, 3));
+            l.add(new Step(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 15));
+            l.add(new Step("techgoggles_reading", () -> {}, 3));
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.karma.KarmaSensing.release(p)), 60));
+            l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 15));
+            l.add(new Step("techgoggles_after", () -> {}, 3));
+            return l;
+        }
         if ("hudportraits".equals(System.getenv("XW_UITEST_FOCUS"))) {
             for (CharacterType t : CharacterType.PLAYABLE) {
                 l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(t); hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 40));

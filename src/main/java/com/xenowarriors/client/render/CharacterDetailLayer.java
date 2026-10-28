@@ -416,6 +416,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean armorHood = com.xenowarriors.client.mikiko.HoodClient.karmaHoodie(player) && com.xenowarriors.client.mikiko.HoodClient.up(player);
         if (model.hoodUp != null) model.hoodUp.visible = hood;
         if (model.glasses != null) model.glasses.visible = com.xenowarriors.client.YuriLaptopIdle.glasses(player);
+        if (model.goggles != null) { boolean dn = com.xenowarriors.client.TechGoggles.down(player); model.goggles.y = dn ? 2.9F : 0F; model.goggles.z = dn ? -0.15F : 0F; }
         if (model.hoodDown != null) model.hoodDown.visible = !hood;
         if (model.hair != null) {
             // the outfit's own hood: his hair still shows under it (the strands that would poke through it are tucked in)
