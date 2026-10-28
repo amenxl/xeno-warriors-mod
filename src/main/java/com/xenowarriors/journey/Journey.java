@@ -787,7 +787,7 @@ public final class Journey {
                     float dmz = dmzScale(fs);
                     if (r.kind() == JourneyRules.BOSS) {
                         made = com.xenowarriors.tower.TowerBosses.spawn(tl, c, JourneyRules.BOSS_FLOOR[r.diff] + 10 * r.stage, fs);
-                        for (Mob m : made) JourneyWorld.scale(m, dmz);
+                        for (Mob m : made) { JourneyWorld.bossDifficulty(m, r.diff); JourneyWorld.scale(m, dmz); }
                     } else made = JourneyWorld.spawn(tl, r.slot, r.foe, r.diff, r.row() + 2 * r.stage, r.members.size(), fs, dmz);
                     if (made.isEmpty()) made = JourneyWorld.spawn(tl, r.slot, Foe.DARK, r.diff, r.row() + 2 * r.stage, r.members.size(), fs, dmz);
                     for (Mob m : made) { r.alive.add(m.getUUID()); if (r.seen.add(m.getUUID())) r.enemyHp += m.getMaxHealth(); }

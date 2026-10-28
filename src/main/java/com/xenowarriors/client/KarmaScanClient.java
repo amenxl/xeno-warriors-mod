@@ -60,7 +60,8 @@ public class KarmaScanClient implements IGuiOverlay {
             }
             return;
         }
-        if (target < 0 || KarmaScanner.mode(mc.player) < 0) return;
+        var ch = ClientCharacterData.getLocal();
+        if (target < 0 || !(visor || ch == com.xenowarriors.character.CharacterType.YURI || ch == com.xenowarriors.character.CharacterType.ULTIMA)) return;
         Entity e = mc.level.getEntity(target);
         if (e == null) return;
         int col = mode == KarmaScanner.YURI ? 0x3AD04A : mode == KarmaScanner.ULTIMA ? 0x1FE07A : 0x50FF80;

@@ -924,15 +924,14 @@ public final class UiTest {
         }); mc.options.hideGui = false; }, 80));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.ITEM)); }, 25));
         l.add(new Step(null, () -> mc.setScreen(null), 5));
-        l.add(new Step("dmzjourney_item", () -> {}, 3));
+        l.add(new Step("dmzjourney_item", () -> noDmz(mc), 1));
         l.add(new Step(null, () -> server(p -> {
             StringBuilder sb = new StringBuilder();
             for (var s : p.getInventory().items) if (!s.isEmpty()) sb.append(s.getHoverName().getString()).append(" x").append(s.getCount()).append("; ");
             log("dmzjourney inventory: " + sb);
         }), 5));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.DBZ)); }, 30));
-        l.add(new Step(null, () -> { if (!(mc.screen instanceof com.xenowarriors.client.journey.JourneyTeamScreen)) mc.setScreen(new com.xenowarriors.client.journey.JourneyTeamScreen()); }, 5));
-        l.add(new Step("dmzjourney_team", () -> {}, 3));
+        l.add(new Step("dmzjourney_team", () -> mc.setScreen(new com.xenowarriors.client.journey.JourneyTeamScreen()), 1));
         l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 110));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> {
             for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), m -> m.getPersistentData().getBoolean("xw_journey")))
@@ -940,8 +939,13 @@ public final class UiTest {
                         + " dmzScale=" + m.getPersistentData().getFloat("xw_journey_dmz"));
         }); }, 20));
         l.add(new Step(null, () -> mc.setScreen(null), 5));
-        l.add(new Step("dmzjourney_battle", () -> {}, 3));
+        l.add(new Step("dmzjourney_battle", () -> noDmz(mc), 1));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.leave(p, "test over", true)), 20));
+    }
+
+    /** Closes DragonMineZ's race picker (a fresh test player keeps getting it). */
+    private static void noDmz(Minecraft mc) {
+        if (mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez")) mc.setScreen(null);
     }
 
     /** Karma Readings: the Gov visor on a zombie, overloading on a warden, and Yuri reading without one. */
@@ -1045,7 +1049,8 @@ public final class UiTest {
         l.add(new Step("journey_scenario_battle", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.testEnd(p, true)), 20));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.BOSS)); }, 30));
-        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 110));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 70));
+        l.add(new Step(null, () -> server(p -> p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 600, 4, false, false))), 40));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 10));
         l.add(new Step("journey_boss", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.testEnd(p, true)), 40));

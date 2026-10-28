@@ -266,6 +266,15 @@ public final class JourneyWorld {
     /** Whether DBZ panels can happen (DragonMineZ is installed with its saga characters). */
     static boolean dbzReady() { return !real(DBZ_NAMED[0]).isEmpty(); }
 
+    /** The final boss eased (Easy) or toughened (Hard and up) by the journey's difficulty. */
+    static void bossDifficulty(Mob m, int diff) {
+        var mh = m.getAttribute(Attributes.MAX_HEALTH);
+        if (mh != null) mh.setBaseValue(mh.getBaseValue() * JourneyRules.HP_MULT[diff]);
+        var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (md != null) md.setBaseValue(md.getBaseValue() * JourneyRules.DMG_MULT[diff]);
+        m.setHealth(m.getMaxHealth());
+    }
+
     /** With DragonMineZ: enemies keep up with your DragonMineZ power (bosses too). */
     static void scale(Mob m, float scale) {
         m.getPersistentData().putFloat("xw_journey_dmz", scale);
