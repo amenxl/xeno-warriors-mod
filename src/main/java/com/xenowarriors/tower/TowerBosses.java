@@ -177,7 +177,7 @@ public final class TowerBosses {
                 for (ServerPlayer p : ps) p.displayClientMessage(Component.literal(name(b.kind, m) + " is enraged!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
             }
             if ((b.tick += 5) % (b.enraged ? 110 : 160) != 0) continue;
-            LivingEntity t = m.getTarget() instanceof LivingEntity lt && lt.isAlive() ? lt : ps.get(tl.random.nextInt(ps.size()));
+            LivingEntity t = m.getTarget() != null && m.getTarget().isAlive() ? m.getTarget() : ps.get(tl.random.nextInt(ps.size()));
             switch (b.kind) {
                 case GOV -> {            // calls in a guard and dashes at you
                     Mob h = helper(tl, GOV, b.center, tl.random.nextInt(9) - 4, tl.random.nextInt(9) - 4, ps); if (h != null) spawned.add(h);
