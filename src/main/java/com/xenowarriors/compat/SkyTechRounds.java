@@ -22,7 +22,7 @@ public final class SkyTechRounds {
         if (!TaczGuns.isBullet(event.getSource().getDirectEntity())) return;
         if (!(event.getSource().getEntity() instanceof com.xenowarriors.gov.GovAgentEntity g)) return;
         // guards' rifles are tuned down against players so a squad doesn't drop you in a couple of seconds
-        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player) event.setAmount(event.getAmount() * 0.45F);
+        if (event.getEntity() instanceof net.minecraft.world.entity.player.Player) event.setAmount(event.getAmount() * 0.3F);
         if (!g.skyAmmo()) return;
         var v = event.getEntity();
         event.setAmount(event.getAmount() * 1.3F);

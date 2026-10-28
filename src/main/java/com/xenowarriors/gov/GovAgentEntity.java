@@ -142,10 +142,13 @@ public class GovAgentEntity extends PathfinderMob {
     private class GunGoal extends net.minecraft.world.entity.ai.goal.Goal {
         GunGoal() { setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         @Override public boolean canUse() { return guard() && hasGun() && getTarget() != null && getTarget().isAlive(); }
+        private int aim;
+        @Override public void start() { aim = 0; }
         @Override public void stop() { getNavigation().stop(); }
         @Override public void tick() {
             LivingEntity t = getTarget();
             if (t == null) return;
+            if (aim++ < 30) { getLookControl().setLookAt(t, 30F, 30F); return; }     // raise the gun and aim first (a warning)
             getLookControl().setLookAt(t, 30F, 30F);
             double dist = distanceTo(t);
             boolean see = getSensing().hasLineOfSight(t);
@@ -155,7 +158,7 @@ public class GovAgentEntity extends PathfinderMob {
                 getNavigation().moveTo(away.x, away.y, away.z, 1.1);
             } else getNavigation().stop();
             burst = (burst + 1) % 60;
-            if (!see || burst >= 18 || tickCount % 2 == 1) return;           // short bursts (~0.9 s, every other tick), then a 2 s pause
+            if (!see || burst >= 16 || tickCount % 4 != 0) return;           // short, slow bursts (4 shots), then a 2 s pause
             if (!gunDrawn) { com.xenowarriors.compat.TaczGuns.draw(GovAgentEntity.this); gunDrawn = true; return; }
             Vec3 d = t.getBoundingBox().getCenter().subtract(getEyePosition());
             float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F) + (random.nextFloat() - .5F) * 12F;
