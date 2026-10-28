@@ -84,11 +84,11 @@ public final class BlazingHud {
         String lv = String.valueOf(LevelHud.level());
         KhHud.small(g, font, lv, plateR - 13 - font.width(lv) * 0.65F, lvY + 1.2F, 0xFFFFFF, 0.65F);
         bub(g, "lv", plateR - 6, lvY - 3, 14);
-        int expY = lvY + 10;
-        int expR = ex + Math.round(E * 0.12F);
-        bar(g, expR - bw - 6, expY + 3, bw + 6, 3, LevelHud.progress(), 0, 0xFFFF9A30, 0xFFA0581A);
-        bub(g, "exp", expR - 1, expY - 1, 13);
-        return new int[]{Math.round(pcx - pr), Math.round(pcy - pr), Math.round(pr * 2), expR - bw - 6, y0 - 4};
+        // EXP sits level with the LV plate, just left of it, its bar touching the bubble
+        int expB = plateL - 15, expY = lvY;
+        bar(g, expB + 3 - bw, expY + 3, bw, 3, LevelHud.progress(), 0, 0xFFFF9A30, 0xFFA0581A);
+        bub(g, "exp", expB, expY - 2, 13);
+        return new int[]{Math.round(pcx - pr), Math.round(pcy - pr), Math.round(pr * 2), Math.min(expB + 3 - bw, ex + 3 - bw), y0 - 4};
     }
 
     /** A bubble with its bar running left, the value inside the bar. */
@@ -99,8 +99,8 @@ public final class BlazingHud {
         int ds = 26;
         g.blit(EMBLEM, bx - 10 - w / 2 - ds / 2, by + h / 2 - ds + 6, ds, Math.round(ds * EH / (float) EW), 0, 0, EW, EH, EW, EH);
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        bar(g, bx - 4 - w, by, w, h, frac, chip, fill, border);
-        if (!text.isEmpty()) KhHud.small(g, Minecraft.getInstance().font, text, bx - 7 - font.width(text) * 0.5F, by + (h - 4.5F) / 2F, 0xFFFFFF, 0.5F);
+        bar(g, bx + 3 - w, by, w, h, frac, chip, fill, border);       // (runs under the bubble's rim so they touch)
+        if (!text.isEmpty()) KhHud.small(g, Minecraft.getInstance().font, text, bx - 3 - font.width(text) * 0.5F, by + (h - 4.5F) / 2F, 0xFFFFFF, 0.5F);
         bub(g, name, bx, by + h / 2 - 7, 14);
     }
 
