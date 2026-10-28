@@ -17,7 +17,7 @@ jobs:
   uitest:
     runs-on: ubuntu-latest
     env:
-      XW_FORGE: ${{ startsWith(github.event.inputs.focus, 'dmz') && '47.4.0' || '' }}
+      XW_FORGE: ${{ (startsWith(github.event.inputs.focus, 'dmz') || startsWith(github.event.inputs.focus, 'ef')) && '47.4.0' || '' }}
       XW_UITEST_EXTRA: ${{ (startsWith(github.event.inputs.focus, 'dmz') && 'dmz') || (github.event.inputs.focus == 'taczguard' && 'tacz') || (startsWith(github.event.inputs.focus, 'ef') && 'ef') || '' }}
     steps:
       - uses: actions/checkout@v4

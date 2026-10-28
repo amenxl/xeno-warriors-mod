@@ -36,14 +36,31 @@ public final class EfDmzWeapons {
 
     private static void onPresets(WeaponCapabilityPresetRegistryEvent event) {
         var types = event.getTypeEntry();
-        types.put(XenoWarriors.id("dmz_pole"), both(WeaponCapabilityPresets.TACHI, CapabilityItem.Styles.TWO_HAND,
-                WeaponCapabilityPresets.SPEAR, CapabilityItem.Styles.TWO_HAND));
-        types.put(XenoWarriors.id("dmz_heavy_sword"), both(WeaponCapabilityPresets.LONGSWORD, CapabilityItem.Styles.TWO_HAND,
-                WeaponCapabilityPresets.GREATSWORD, CapabilityItem.Styles.TWO_HAND));
+        // (our own animations swapped in at the front of a combo: Mikiko's Power Pole spins, Rhalix's Z Sword cleaves)
+        types.put(XenoWarriors.id("dmz_pole"), custom(both(WeaponCapabilityPresets.TACHI, CapabilityItem.Styles.TWO_HAND,
+                WeaponCapabilityPresets.SPEAR, CapabilityItem.Styles.TWO_HAND), CapabilityItem.Styles.TWO_HAND, () -> List.of(EfAnimations.POLE1, EfAnimations.POLE2, EfAnimations.POLE3)));
+        types.put(XenoWarriors.id("dmz_heavy_sword"), custom(both(WeaponCapabilityPresets.LONGSWORD, CapabilityItem.Styles.TWO_HAND,
+                WeaponCapabilityPresets.GREATSWORD, CapabilityItem.Styles.TWO_HAND), CapabilityItem.Styles.OCHS, () -> List.of(EfAnimations.CLEAVE1, EfAnimations.CLEAVE2)));
         types.put(XenoWarriors.id("dmz_sword"), both(WeaponCapabilityPresets.SWORD, CapabilityItem.Styles.ONE_HAND,
                 WeaponCapabilityPresets.LONGSWORD, CapabilityItem.Styles.TWO_HAND));
         types.put(XenoWarriors.id("dmz_katana"), both(WeaponCapabilityPresets.UCHIGATANA, CapabilityItem.Styles.TWO_HAND,
                 WeaponCapabilityPresets.TACHI, CapabilityItem.Styles.TWO_HAND));
+    }
+
+    /** Puts our own attacks at the front of one style's combo, keeping its dash and air attacks (the last two). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Function<Item, CapabilityItem.Builder> custom(Function<Item, CapabilityItem.Builder> base, Style style,
+                                                                 java.util.function.Supplier<List<yesman.epicfight.api.animation.AnimationManager.AnimationAccessor>> ours) {
+        return item -> {
+            WeaponCapability.Builder b = (WeaponCapability.Builder) base.apply(item);
+            List mine = ours.get();
+            List old = b.getComboAnimations().get(style);
+            if (old == null || old.size() < 2 || mine.stream().anyMatch(java.util.Objects::isNull)) return b;
+            java.util.List all = new java.util.ArrayList(mine);
+            all.addAll(old.subList(old.size() - 2, old.size()));
+            b.newStyleCombo(style, (yesman.epicfight.api.animation.AnimationManager.AnimationAccessor[]) all.toArray(new yesman.epicfight.api.animation.AnimationManager.AnimationAccessor[0]));
+            return b;
+        };
     }
 
     /** A weapon with Mikiko's moveset (and everyone else's) from one preset and Rhalix's from another. */
