@@ -729,5 +729,12 @@
   "skill.xenowarriors.mass_cut.how": "Press the ultimate key.",
   "item.xenowarriors.money_note": "Money (100)",
   "item.xenowarriors.sky_id": "Sky ID",
-  "entity.xenowarriors.royal_guard": "Royal Guard"
+  "entity.xenowarriors.royal_guard": "Royal Guard",
+  "block.xenowarriors.gov_terminal": "Gov Supply Terminal",
+  "block.xenowarriors.gov_vault": "Gov Vault",
+  "item.xenowarriors.gov_keycard": "Gov Keycard",
+  "item.xenowarriors.speed_mod": "Speed Mod",
+  "item.xenowarriors.jump_mod": "Jump Boosters",
+  "item.xenowarriors.scanner_mod": "Scanner Eye",
+  "item.xenowarriors.plating_mod": "Armor Plating"
 }

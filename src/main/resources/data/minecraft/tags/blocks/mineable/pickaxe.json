@@ -1,19 +1,21 @@
 {
-  "replace": false,
-  "values": [
-    "xenowarriors:sky_ore",
-    "xenowarriors:corrupted_ore",
-    "xenowarriors:karma_altar",
-    "xenowarriors:corrupted_stone",
-    "xenowarriors:healing_pod",
-    "xenowarriors:data_ore",
-    "xenowarriors:fox_shard_ore",
-    "xenowarriors:deepslate_fox_shard_ore",
-    "xenowarriors:fox_shard_block",
-    "xenowarriors:moonstone_ore",
-    "xenowarriors:karma_crystal_ore",
-    "xenowarriors:demonite_ore",
-    "xenowarriors:old_world_ore",
-    "xenowarriors:aurora_gem_ore"
-  ]
+ "replace": false,
+ "values": [
+  "xenowarriors:sky_ore",
+  "xenowarriors:corrupted_ore",
+  "xenowarriors:karma_altar",
+  "xenowarriors:corrupted_stone",
+  "xenowarriors:healing_pod",
+  "xenowarriors:data_ore",
+  "xenowarriors:fox_shard_ore",
+  "xenowarriors:deepslate_fox_shard_ore",
+  "xenowarriors:fox_shard_block",
+  "xenowarriors:moonstone_ore",
+  "xenowarriors:karma_crystal_ore",
+  "xenowarriors:demonite_ore",
+  "xenowarriors:old_world_ore",
+  "xenowarriors:aurora_gem_ore",
+  "xenowarriors:gov_terminal",
+  "xenowarriors:gov_vault"
+ ]
 }

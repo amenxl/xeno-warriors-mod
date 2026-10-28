@@ -36,6 +36,7 @@ public class XenoWarriors {
         com.xenowarriors.vehicle.Vehicles.init();
         com.xenowarriors.vehicle.VehicleBlocks.init();
         com.xenowarriors.vehicle.VehicleItems.init();
+        com.xenowarriors.gov.GovItems.init();
         com.xenowarriors.vr.VrEntities.init();
         com.xenowarriors.sr.SrCampFeature.init();
         com.xenowarriors.s3.OrderHideoutFeature.init();

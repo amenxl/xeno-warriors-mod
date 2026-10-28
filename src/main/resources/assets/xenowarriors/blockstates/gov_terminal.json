@@ -1,0 +1,20 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "xenowarriors:block/gov_terminal",
+   "y": 0
+  },
+  "facing=east": {
+   "model": "xenowarriors:block/gov_terminal",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "xenowarriors:block/gov_terminal",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "xenowarriors:block/gov_terminal",
+   "y": 270
+  }
+ }
+}

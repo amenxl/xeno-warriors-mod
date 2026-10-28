@@ -256,4 +256,11 @@ public class GovAgentEntity extends PathfinderMob {
 
     @Override
     public boolean removeWhenFarAway(double d) { return false; }
+
+    /** Guards sometimes carry a Gov Keycard (opens a facility vault). */
+    @Override
+    protected void dropCustomDeathLoot(net.minecraft.world.damagesource.DamageSource src, int looting, boolean hit) {
+        super.dropCustomDeathLoot(src, looting, hit);
+        if (guard() && random.nextFloat() < 0.08F + looting * 0.03F) spawnAtLocation(GovItems.KEYCARD.get());
+    }
 }

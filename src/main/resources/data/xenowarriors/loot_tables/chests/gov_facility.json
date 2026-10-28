@@ -118,6 +118,36 @@
        }
       }
      ]
+    },
+    {
+     "type": "minecraft:item",
+     "name": "xenowarriors:gov_keycard",
+     "weight": 3
+    },
+    {
+     "type": "minecraft:item",
+     "name": "xenowarriors:speed_mod",
+     "weight": 3
+    },
+    {
+     "type": "minecraft:item",
+     "name": "xenowarriors:jump_mod",
+     "weight": 3
+    },
+    {
+     "type": "minecraft:item",
+     "name": "xenowarriors:scanner_mod",
+     "weight": 2
+    },
+    {
+     "type": "minecraft:item",
+     "name": "xenowarriors:plating_mod",
+     "weight": 2
+    },
+    {
+     "type": "minecraft:item",
+     "name": "xenowarriors:mod_chip",
+     "weight": 4
     }
    ]
   }

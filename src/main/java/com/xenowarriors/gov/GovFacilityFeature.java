@@ -126,6 +126,11 @@ public class GovFacilityFeature extends Feature<NoneFeatureConfiguration> {
             set(l, b.offset(dx, 0, -HZ + 4), Blocks.IRON_BLOCK.defaultBlockState());                     // its console
             set(l, b.offset(dx, 1, -HZ + 4), Blocks.DAYLIGHT_DETECTOR.defaultBlockState());
         }
+        // the vault in the back corner (a Gov Keycard opens it)
+        set(l, b.offset(-HX + 2, 0, -HZ + 1), GovItems.VAULT.get().defaultBlockState().setValue(GovVaultBlock.FACING, Direction.SOUTH));
+        set(l, b.offset(-HX + 2, 1, -HZ + 1), Blocks.IRON_BLOCK.defaultBlockState());
+        // a supply terminal in the security office
+        set(l, b.offset(5, 0, 1), GovItems.TERMINAL.get().defaultBlockState().setValue(GovTerminalBlock.FACING, Direction.SOUTH));
         // a lab bench in the middle
         for (int dx = -3; dx <= 3; dx++) set(l, b.offset(dx, 0, -2), Blocks.SMOOTH_STONE.defaultBlockState());
         set(l, b.offset(-2, 1, -2), Blocks.BREWING_STAND.defaultBlockState()); set(l, b.offset(2, 1, -2), Blocks.LIGHT_BLUE_STAINED_GLASS_PANE.defaultBlockState());

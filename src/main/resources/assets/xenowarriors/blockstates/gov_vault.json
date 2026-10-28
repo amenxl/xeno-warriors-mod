@@ -1,0 +1,36 @@
+{
+ "variants": {
+  "facing=north,open=false": {
+   "model": "xenowarriors:block/gov_vault",
+   "y": 0
+  },
+  "facing=north,open=true": {
+   "model": "xenowarriors:block/gov_vault_open",
+   "y": 0
+  },
+  "facing=east,open=false": {
+   "model": "xenowarriors:block/gov_vault",
+   "y": 90
+  },
+  "facing=east,open=true": {
+   "model": "xenowarriors:block/gov_vault_open",
+   "y": 90
+  },
+  "facing=south,open=false": {
+   "model": "xenowarriors:block/gov_vault",
+   "y": 180
+  },
+  "facing=south,open=true": {
+   "model": "xenowarriors:block/gov_vault_open",
+   "y": 180
+  },
+  "facing=west,open=false": {
+   "model": "xenowarriors:block/gov_vault",
+   "y": 270
+  },
+  "facing=west,open=true": {
+   "model": "xenowarriors:block/gov_vault_open",
+   "y": 270
+  }
+ }
+}

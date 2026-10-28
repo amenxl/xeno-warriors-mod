@@ -91,6 +91,7 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("govshop".equals(System.getenv("XW_UITEST_FOCUS"))) { govShop(mc, l); return l; }
         if ("charlock".equals(System.getenv("XW_UITEST_FOCUS"))) { charLock(mc, l); return l; }
         if ("kitsunestun".equals(System.getenv("XW_UITEST_FOCUS"))) { kitsuneStun(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
@@ -739,6 +740,36 @@ public final class UiTest {
             for (int f = 0; f < 4; f++) l.add(new Step("customanim_tab" + tb + "_" + f, () -> {}, 3));
             l.add(new Step(null, () -> {}, 10));
         }
+    }
+
+    /** Government shop and loot: the terminal (as Ultima, with the Gov discount), Mikiko refused, the vault opened with a keycard. */
+    private static void govShop(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.ULTIMA); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.setYRot(0); p.setXRot(20);
+            com.xenowarriors.economy.Money.set(p, 3000);
+            var at = p.blockPosition().offset(0, 0, 3);
+            p.serverLevel().setBlock(at, com.xenowarriors.gov.GovItems.TERMINAL.get().defaultBlockState()
+                    .setValue(com.xenowarriors.gov.GovTerminalBlock.FACING, net.minecraft.core.Direction.NORTH), 3);
+            p.serverLevel().setBlock(at.offset(2, 0, 0), com.xenowarriors.gov.GovItems.VAULT.get().defaultBlockState()
+                    .setValue(com.xenowarriors.gov.GovVaultBlock.FACING, net.minecraft.core.Direction.NORTH), 3);
+        }); mc.options.hideGui = false; }, 50));
+        l.add(new Step("govshop_blocks", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 10));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovShop.open(p)), 15));
+        l.add(new Step("govshop_ultima", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovShop.buy(p, 3)), 15));
+        l.add(new Step("govshop_bought", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.MIKIKO); }, 30));
+        l.add(new Step(null, () -> server(p -> { p.getPersistentData().remove("xw_gov_wanted_until"); com.xenowarriors.gov.GovShop.open(p); }), 10));
+        l.add(new Step("govshop_mikiko_refused", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")), 8));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            p.getPersistentData().remove("xw_gov_wanted_until");
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(com.xenowarriors.gov.GovItems.KEYCARD.get()));
+            var at = p.blockPosition().offset(2, 0, 3);
+            var st = p.serverLevel().getBlockState(at);
+            st.use(p.serverLevel(), p, net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(at), net.minecraft.core.Direction.NORTH, at, false));
+        }); }, 25));
+        l.add(new Step("govshop_vault_open", () -> {}, 3));
     }
 
     /** One character per player: the select screen with other players' characters marked TAKEN (faked client-side). */

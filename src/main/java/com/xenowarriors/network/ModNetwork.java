@@ -58,6 +58,8 @@ public final class ModNetwork {
                 .encoder(CollectionPacket::encode).decoder(CollectionPacket::decode).consumerMainThread(CollectionPacket::handle).add();
         CHANNEL.messageBuilder(FxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(FxPacket::encode).decoder(FxPacket::decode).consumerMainThread(FxPacket::handle).add();
+        CHANNEL.messageBuilder(GovShopPacket.class, id++)
+                .encoder(GovShopPacket::encode).decoder(GovShopPacket::decode).consumerMainThread(GovShopPacket::handle).add();
         CHANNEL.messageBuilder(TakenCharsPacket.class, id++)
                 .encoder(TakenCharsPacket::encode).decoder(TakenCharsPacket::decode).consumerMainThread(TakenCharsPacket::handle).add();
         CHANNEL.messageBuilder(CharLevelsPacket.class, id++)

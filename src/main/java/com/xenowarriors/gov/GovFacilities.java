@@ -34,7 +34,7 @@ public final class GovFacilities {
             sp.sendSystemMessage(Component.literal("You've been caught - you " + why + ". Government guards are after you!").withStyle(ChatFormatting.RED));
     }
 
-    private static boolean staffNear(ServerLevel l, BlockPos pos, int r) {
+    static boolean staffNear(ServerLevel l, BlockPos pos, int r) {
         return !l.getEntitiesOfClass(GovAgentEntity.class, new net.minecraft.world.phys.AABB(pos).inflate(r)).isEmpty();
     }
 
