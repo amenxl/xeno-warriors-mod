@@ -40,7 +40,11 @@ public final class DmzHud {
     }
 
     /** Refreshes the numbers; false if there's nothing to show. */
+    /** (UI test) pretend DragonMineZ is there, with these bars. */
+    public static boolean testFake;
+
     public static boolean read(Player p) {
+        if (testFake) { ki = 3400; maxKi = 5000; sta = 70; maxSta = 100; form = "Base"; powerRelease = 50; return true; }
         if (!on()) return false;
         try {
             Object data = p.getCapability(cap).resolve().orElse(null);
