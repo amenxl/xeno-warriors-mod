@@ -119,6 +119,7 @@ public final class XenoBlast {
 
     private static void cancel(Cast c, ServerPlayer ultima) {
         c.cancelled = true;
+        com.xenowarriors.XenoWarriors.LOGGER.info("Xeno Blast pushed back and cancelled by {}", ultima.getGameProfile().getName());
         fx(c.caster, FX_STOP, 0, false, Vec3.ZERO, Vec3.ZERO, 0, 0);
         ServerLevel l = ultima.serverLevel();
         // a green wave rolls back over the caster
@@ -141,6 +142,22 @@ public final class XenoBlast {
         c.caster.push(-c.caster.getLookAngle().x * 1.5, 0.5, -c.caster.getLookAngle().z * 1.5);
         c.caster.hurtMarked = true;
         CASTS.remove(c.caster.getId());
+    }
+
+    /** Tests: put another player in a cast as if they'd been frozen by it. */
+    public static void testJoin(ServerPlayer caster, ServerPlayer target) {
+        Cast c = CASTS.get(caster.getId());
+        if (c == null) return;
+        c.frozen.add(target.getId());
+        if (!c.watchers.contains(target)) c.watchers.add(target);
+    }
+
+    /** Tests: a short summary of a cast. */
+    public static String testState(ServerPlayer caster) {
+        Cast c = CASTS.get(caster.getId());
+        if (c == null) return "no cast";
+        return "age=" + c.age() + " cancelled=" + c.cancelled + " mash=" + c.mash + " rival=" + (c.rival == null ? "-" : c.rival.getGameProfile().getName())
+                + " point=" + c.point + " presses=" + c.casterPresses + "/" + c.rivalPresses + " resist=" + c.resist;
     }
 
     /** Whether this player is in their Xeno Blast cutscene right now. */
@@ -429,6 +446,8 @@ public final class XenoBlast {
         ServerPlayer a = c.caster, b = c.rival;
         ServerLevel l = a.serverLevel();
         float margin = Math.abs(point - 0.5F) * 2F;
+        com.xenowarriors.XenoWarriors.LOGGER.info("Xeno Blast clash over: {} vs {}, meeting point {} -> {}", a.getGameProfile().getName(), b.getGameProfile().getName(), point,
+                margin < 0.25F ? "even, both blow up" : (point > 0.5F ? a : b).getGameProfile().getName() + " wins");
         // nobody is safe now - the cutscene protection is over for both
         a.getPersistentData().remove(SkillEvents.ULT_UNTIL);
         a.getPersistentData().remove(CASTING);

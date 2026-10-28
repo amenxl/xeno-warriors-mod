@@ -91,6 +91,9 @@ public final class UiTest {
         if ("popups".equals(System.getenv("XW_UITEST_FOCUS"))) { popups(mc, l); return l; }
         if ("xenoblast".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoBlast(mc, l); return l; }
         if ("customanim".equals(System.getenv("XW_UITEST_FOCUS"))) { customAnim(mc, l); return l; }
+        if ("dmzmenu".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzMenu(mc, l); return l; }
+        if ("taczguard".equals(System.getenv("XW_UITEST_FOCUS"))) { taczGuard(mc, l); return l; }
+        if ("xenotest".equals(System.getenv("XW_UITEST_FOCUS"))) { xenoTest(mc, l); return l; }
         if ("govshop".equals(System.getenv("XW_UITEST_FOCUS"))) { govShop(mc, l); return l; }
         if ("charlock".equals(System.getenv("XW_UITEST_FOCUS"))) { charLock(mc, l); return l; }
         if ("kitsunestun".equals(System.getenv("XW_UITEST_FOCUS"))) { kitsuneStun(mc, l); return l; }
@@ -740,6 +743,101 @@ public final class UiTest {
             for (int f = 0; f < 4; f++) l.add(new Step("customanim_tab" + tb + "_" + f, () -> {}, 3));
             l.add(new Step(null, () -> {}, 10));
         }
+    }
+
+    /**
+     * Xeno Blast with a second player (a stand-in FakePlayer, like the party bots use): fighting back with a projectile
+     * skill, Ultima mashing to cancel it, and a full beam clash. Results go to the log as "XW-TEST".
+     */
+    /** With DragonMineZ installed (CI downloads it for this focus): the main menu shows its entry, and the entry opens DMZ's menu. */
+    private static void dmzMenu(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); log("dmz loaded=" + com.xenowarriors.client.compat.DmzMenu.available()); }, 60));
+        l.add(new Step(null, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(5); }, 40));
+        l.add(new Step("dmzmenu_main", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) { m.select(5); m.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); }
+            log("after DMZ entry: screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getName())); }, 30));
+        l.add(new Step("dmzmenu_opened", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.compat.DmzMenu.open(); log("direct open: screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getName())); }, 30));
+        l.add(new Step("dmzmenu_direct", () -> {}, 3));
+    }
+
+    /** With TACZ installed (CI downloads it for this focus): Government guards carry TACZ guns and shoot when you're wanted. */
+    private static void taczGuard(Minecraft mc, List<Step> l) {
+        int[] ids = {-1};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); server(p -> {
+            log("tacz available=" + com.xenowarriors.compat.TaczGuns.available());
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.setYRot(0); p.setXRot(5);
+            for (int k = 0; k < 6; k++) {
+                var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel());
+                if (g == null) continue;
+                g.moveTo(p.getX() - 4 + k * 1.6, p.getY(), p.getZ() + 7, 180, 0);
+                g.finalizeSpawn(p.serverLevel(), p.serverLevel().getCurrentDifficultyAt(p.blockPosition()), net.minecraft.world.entity.MobSpawnType.COMMAND, null, null);
+                g.setup(true, k % 2, p.blockPosition());
+                p.serverLevel().addFreshEntity(g);
+            }
+        }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 60));
+        l.add(new Step(null, () -> server(p -> {
+            var gs = p.serverLevel().getEntitiesOfClass(com.xenowarriors.gov.GovAgentEntity.class, p.getBoundingBox().inflate(16));
+            int guns = 0; for (var g : gs) if (com.xenowarriors.compat.TaczGuns.isGun(g.getMainHandItem())) guns++;
+            StringBuilder sb = new StringBuilder(); for (var g : gs) sb.append(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(g.getMainHandItem().getItem())).append(' ');
+            log("guards=" + gs.size() + " with TACZ guns=" + guns + " held: " + sb);
+        }), 20));
+        l.add(new Step("taczguard_armed", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.gov.GovFacilities.makeWanted(p, "were spotted")), 60));
+        l.add(new Step("taczguard_shooting", () -> server(p -> log("player health after guards opened fire: " + p.getHealth())), 3));
+    }
+
+    private static final java.util.Map<String, ServerPlayer> FAKES = new java.util.HashMap<>();
+    private static ServerPlayer fake(ServerPlayer near, String name, CharacterType t) {
+        ServerPlayer f = net.minecraftforge.common.util.FakePlayerFactory.get(near.serverLevel(), new com.mojang.authlib.GameProfile(java.util.UUID.nameUUIDFromBytes(name.getBytes()), name));
+        f.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setType(t));
+        f.moveTo(near.getX(), near.getY(), near.getZ() + 8, 180F, 0F);
+        com.xenowarriors.karma.Karma.add(f, 200);
+        f.getPersistentData().remove("xw_karma_lock_until");
+        FAKES.put(name, f);
+        return f;
+    }
+    private static void log(String s) { com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST " + s); }
+
+    private static void xenoTest(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.setYRot(0); p.setXRot(0);
+            fake(p, "FriendMikiko", CharacterType.MIKIKO); fake(p, "FriendUltima", CharacterType.ULTIMA); fake(p, "FriendRhalix", CharacterType.RHALIX);
+        }); }, 40));
+        // 1) fight back with a projectile skill, then Ultima pushes it back
+        l.add(new Step(null, () -> server(p -> {
+            p.getPersistentData().remove("xw_karma_lock_until"); com.xenowarriors.skill.SkillManager.resetCooldowns(p); com.xenowarriors.karma.Karma.add(p, 200);
+            com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT);
+            com.xenowarriors.skill.XenoBlast.testJoin(p, FAKES.get("FriendMikiko")); com.xenowarriors.skill.XenoBlast.testJoin(p, FAKES.get("FriendUltima"));
+            for (int slot = 0; slot < 4; slot++) com.xenowarriors.skill.XenoBlast.counter(FAKES.get("FriendMikiko"), p.getId(), slot);
+            log("after projectile counters: " + com.xenowarriors.skill.XenoBlast.testState(p));
+        }), 40));
+        l.add(new Step("xenotest_counter", () -> {}, 2));
+        l.add(new Step(null, () -> server(p -> {
+            for (int i = 0; i < 50; i++) com.xenowarriors.skill.XenoBlast.mash(FAKES.get("FriendUltima"), p.getId());
+            log("after Ultima mashing: " + com.xenowarriors.skill.XenoBlast.testState(p) + " casting=" + com.xenowarriors.skill.XenoBlast.casting(p));
+        }), 10));
+        l.add(new Step("xenotest_pushed_back", () -> {}, 40));
+        // 2) a beam clash: Rhalix fires one back, Mikiko (the caster) out-mashes him
+        l.add(new Step(null, () -> server(p -> {
+            p.getPersistentData().remove("xw_karma_lock_until"); com.xenowarriors.skill.SkillManager.resetCooldowns(p); com.xenowarriors.karma.Karma.add(p, 200);
+            com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT);
+            com.xenowarriors.skill.XenoBlast.testJoin(p, FAKES.get("FriendRhalix"));
+        }), 20));
+        l.add(new Step(null, () -> server(p -> {
+            com.xenowarriors.skill.XenoBlast.counter(FAKES.get("FriendRhalix"), p.getId(), com.xenowarriors.skill.SkillManager.SUPER_SLOT);
+            log("after Rhalix fired back: " + com.xenowarriors.skill.XenoBlast.testState(p) + " rhalixKarma=" + com.xenowarriors.karma.Karma.get(FAKES.get("FriendRhalix")));
+        }), 185));
+        l.add(new Step("xenotest_clash_start", () -> {}, 1));
+        for (int i = 0; i < 40; i++) {
+            int ii = i;
+            l.add(new Step(ii == 20 ? "xenotest_clash_mid" : null, () -> server(p -> {
+                com.xenowarriors.skill.XenoBlast.mash(p, p.getId()); com.xenowarriors.skill.XenoBlast.mash(p, p.getId());
+                if (ii % 3 == 0) com.xenowarriors.skill.XenoBlast.mash(FAKES.get("FriendRhalix"), p.getId());
+                if (ii % 10 == 0) log("clash tick " + ii + ": " + com.xenowarriors.skill.XenoBlast.testState(p));
+            }), 2));
+        }
+        l.add(new Step("xenotest_clash_end", () -> server(p -> log("after clash: " + com.xenowarriors.skill.XenoBlast.testState(p))), 30));
     }
 
     /** Government shop and loot: the terminal (as Ultima, with the Gov discount), Mikiko refused, the vault opened with a keycard. */
