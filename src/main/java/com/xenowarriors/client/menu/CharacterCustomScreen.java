@@ -88,8 +88,8 @@ public class CharacterCustomScreen extends Screen {
     // {x (fraction of width), feet y (fraction of height), scale (fraction of height), yaw degrees, pitch}
     private static final float[][] CAMS = {
             {0.25F, 1.13F, 0.52F, 22F, -0.06F},
-            {0.28F, 1.42F, 0.74F, 38F, 0.30F},
-            {0.20F, 1.62F, 0.98F, 152F, 0.04F},
+            {0.27F, 1.36F, 0.66F, 38F, 0.30F},
+            {0.22F, 1.50F, 0.76F, 152F, 0.04F},
             {0.27F, 1.26F, 0.62F, -16F, 0.12F}};
     private float[] camFrom = {0.30F, 1.70F, 1.05F, 70F, 0.05F};
     private final float[] camNow = CAMS[0].clone();
@@ -99,7 +99,7 @@ public class CharacterCustomScreen extends Screen {
     private float[] tabPose(int tab, float t) {
         float s = Mth.sin(t * 2.2F) * 0.03F;
         return switch (tab) {
-            case 1 -> new float[]{.22F + s, .25F, 0F, 0F, .25F, -1.55F + s, .3F, .3F, .2F, -.6F, -.75F, -.15F, .15F, .15F, -.12F, -.3F, -1.6F, .12F, .1F};   // presenting a move
+            case 1 -> new float[]{.22F + s, .25F, 0F, 0F, .25F, -1.15F + s, .2F, 1.0F, .2F, -.6F, -.75F, -.15F, .15F, .15F, -.12F, -.3F, -1.6F, .12F, .1F};   // presenting a move
             case 2 -> new float[]{.05F, -1.0F + s, 0F, 0F, 0F, -.35F, 0F, .12F, -2.2F + s, .5F, -.2F, 0F, .06F, .1F, -.06F, -.3F, -2.0F, 0F, .2F};       // looking back over the shoulder
             case 3 -> new float[]{.15F, 0F, 0F, .1F, -.4F, .35F + s, -.9F, .25F, .25F - s, -.4F, .1F, .5F, .15F, -.6F, -.12F, -1.2F, -1.4F, .2F, .7F};  // gathering power
             default -> null;
