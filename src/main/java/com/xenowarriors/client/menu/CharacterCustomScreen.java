@@ -89,7 +89,7 @@ public class CharacterCustomScreen extends Screen {
     private static final float[][] CAMS = {
             {0.25F, 1.13F, 0.52F, 22F, -0.06F},
             {0.27F, 1.36F, 0.66F, 38F, 0.30F},
-            {0.22F, 1.50F, 0.76F, 152F, 0.04F},
+            {0.25F, 1.10F, 0.47F, -20F, -0.04F},       // Outfits: always the full body, so the whole outfit shows
             {0.27F, 1.26F, 0.62F, -16F, 0.12F}};
     private float[] camFrom = {0.30F, 1.70F, 1.05F, 70F, 0.05F};
     private final float[] camNow = CAMS[0].clone();
@@ -100,7 +100,6 @@ public class CharacterCustomScreen extends Screen {
         float s = Mth.sin(t * 2.2F) * 0.03F;
         return switch (tab) {
             case 1 -> new float[]{.22F + s, .25F, 0F, 0F, .25F, -1.15F + s, .2F, 1.0F, .2F, -.6F, -.75F, -.15F, .15F, .15F, -.12F, -.3F, -1.6F, .12F, .1F};   // presenting a move
-            case 2 -> new float[]{.05F, -1.0F + s, 0F, 0F, 0F, -.35F, 0F, .12F, -2.2F + s, .5F, -.2F, 0F, .06F, .1F, -.06F, -.3F, -2.0F, 0F, .2F};       // looking back over the shoulder
             case 3 -> new float[]{.15F, 0F, 0F, .1F, -.4F, .35F + s, -.9F, .25F, .25F - s, -.4F, .1F, .5F, .15F, -.6F, -.12F, -1.2F, -1.4F, .2F, .7F};  // gathering power
             default -> null;
         };
@@ -319,7 +318,7 @@ public class CharacterCustomScreen extends Screen {
             for (int k = 0; k < 5; k++) camNow[k] = camFrom[k] + (to[k] - camFrom[k]) * ct;
             float cx = w * camNow[0] - (1F - inChar) * w * 0.15F + (mx - w / 2F) * 0.012F;   // slight parallax with the mouse
             try { PortraitScreen.drawCharacterCam(g, mc.player, type, (int) cx, (int) (h * camNow[1]), (int) (h * camNow[2]),
-                    camNow[3] + (mx - w / 2F) / w * 10F, camNow[4], tabPose(tab, t)); }
+                    camNow[3] + (mx - w / 2F) / w * 10F + (tab == 2 ? Mth.sin(t * 0.5F) * 35F * ct : 0F), camNow[4], tabPose(tab, t)); }   // (Outfits: slowly turns so you see it all round)
             finally { Cel.force = false; }
         }
 
