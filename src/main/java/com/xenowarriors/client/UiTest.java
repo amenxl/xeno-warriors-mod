@@ -780,8 +780,7 @@ public final class UiTest {
         l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 15));
         l.add(new Step("tower_fight", () -> {}, 3));
         // clear the floor (every wave)
-        for (int w = 0; w < 6; w++) l.add(new Step(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40),
-                m -> !(m instanceof net.minecraft.world.entity.decoration.ArmorStand)).forEach(m -> m.kill())), 60));
+        for (int w = 0; w < 6; w++) l.add(new Step(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40)).forEach(m -> m.kill())), 60));
         l.add(new Step("tower_cleared", () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 3));
         l.add(new Step(null, () -> {}, 120));
         l.add(new Step("tower_floor2", () -> {}, 3));
