@@ -105,7 +105,9 @@ def P(arm_r=0, arm_l=0, out_r=0, out_l=0, el_r=0, el_l=0, bend=0, twist=0, turn=
     add("Root", "root_turn", turn)
     add("Thigh_R", "thigh_fwd", th_r); add("Thigh_L", "thigh_fwd", th_l)
     add("Leg_R", "knee", kn_r); add("Leg_L", "knee", kn_l)
-    trans = {"Root": (0, fwd, -drop)} if (drop or fwd) else {}
+    # Epic Fight turns root movement in attack animations into real movement (it would sink you into the floor),
+    # so attacks keep the root still; crouches come from bent knees instead.
+    trans = {}
     return rots, trans
 
 def seq(*frames):
