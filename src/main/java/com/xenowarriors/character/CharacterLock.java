@@ -11,7 +11,7 @@ public final class CharacterLock {
 
     /** Another (real) player on the server playing this character, or null. */
     public static ServerPlayer takenBy(ServerPlayer asker, CharacterType t) {
-        if (t == CharacterType.NONE) return null;
+        if (t == CharacterType.NONE || t == CharacterType.YOU) return null;         // (any number of players can be their own You characters)
         for (ServerPlayer o : asker.server.getPlayerList().getPlayers())
             if (o != asker && ModCapabilities.getType(o) == t && !com.xenowarriors.journey.Journey.inRun(o)) return o;   // (journey characters don't count)
         return null;
@@ -20,7 +20,7 @@ public final class CharacterLock {
     /** Whether there's any character this player could pick that nobody else is playing. */
     public static boolean anyFree(ServerPlayer asker) {
         for (CharacterType t : CharacterType.values()) {
-            if (t == CharacterType.NONE || !Seasons.unlocked(asker.server, t.season())) continue;
+            if (t == CharacterType.NONE || t == CharacterType.YOU || !Seasons.unlocked(asker.server, t.season())) continue;
             if (takenBy(asker, t) == null) return true;
         }
         return false;

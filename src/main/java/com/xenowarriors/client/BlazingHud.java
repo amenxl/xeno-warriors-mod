@@ -34,7 +34,7 @@ public final class BlazingHud {
     public static int[] render(GuiGraphics g, Minecraft mc, Font font, CharacterType type, int width, int height, int lift,
                                float hp, float max, float chip, boolean low, boolean flash, boolean dbz, String face) {
         var p = mc.player;
-        int col = type.getColor() & 0xFFFFFF;
+        int col = ClientCharacterData.color(p) & 0xFFFFFF;
         int E = 70, H = Math.round(E * EH / (float) EW);
         int ex = width - E - 1, ey = height - H - 24 - lift;
         float pcx = ex + CX * E, pcy = ey + CY * H, pr = CR * E;
@@ -76,6 +76,9 @@ public final class BlazingHud {
             row(g, font, "st", ex + 8, y, bw - 10, 3, DmzHud.sta / Math.max(1F, DmzHud.maxSta), 0, 0xFF8CE678, 0xFF3C8A3C, "");
             String fl = DmzHud.form + "  " + DmzHud.powerRelease + "%";
             KhHud.small(g, font, fl, pcx - font.width(fl) * 0.275F, ey - 6, 0xFFD25A, 0.55F);
+        } else if (com.xenowarriors.client.you.YouClient.sun >= 0) {   // Seedlings: sunlight instead of food
+            float sun = com.xenowarriors.client.you.YouClient.sun / (float) com.xenowarriors.you.YouRaces.SUN_MAX;
+            row(g, font, "hg", ex + 2, y, bw, 4, sun, 0, sun > 0.15F ? 0xFFFFD040 : 0xFF806020, 0xFFA08A10, "SUN");
         } else if (type != CharacterType.ULTIMA) {                     // (Ultima doesn't get hungry)
             float food = BigHungerHud.max() > 20 && BigHungerHud.total() >= 0 ? BigHungerHud.total() / (float) BigHungerHud.max() : p.getFoodData().getFoodLevel() / 20F;
             row(g, font, "hg", ex + 2, y, bw, 4, food, 0, 0xFFE8D020, 0xFFA08A10, "");

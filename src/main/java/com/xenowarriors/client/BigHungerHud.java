@@ -37,10 +37,30 @@ public final class BigHungerHud {
         if (mc.player == null || mc.options.hideGui) return;
         CharacterType t = ClientCharacterData.getLocal();
         if (t == CharacterType.ULTIMA) { event.setCanceled(true); return; }
+        if (com.xenowarriors.client.you.YouClient.sun >= 0) {           // a Seedling: the Sun meter in the food bar's place
+            event.setCanceled(true);
+            drawSun(event.getGuiGraphics(), mc, com.xenowarriors.client.you.YouClient.sun / (float) com.xenowarriors.you.YouRaces.SUN_MAX);
+            return;
+        }
         if (max <= 20 || total < 0 || (t != CharacterType.MIKIKO && t != CharacterType.RHALIX)) return;
         if (event.isCanceled()) return;
         event.setCanceled(true);
         draw(event.getGuiGraphics(), mc);
+    }
+
+    /** Ten little suns, filling from the right. */
+    private static void drawSun(GuiGraphics g, Minecraft mc, float frac) {
+        int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
+        int right = w / 2 + 91, top = h - ((net.minecraftforge.client.gui.overlay.ForgeGui) mc.gui).rightHeight;
+        ((net.minecraftforge.client.gui.overlay.ForgeGui) mc.gui).rightHeight += 10;
+        int lit = Math.round(frac * 20);
+        for (int i = 0; i < 10; i++) {
+            int x = right - i * 8 - 9, y = top;
+            g.fill(x + 2, y + 2, x + 7, y + 7, 0xFF3A3020);
+            int pts = i * 2;
+            int c = pts + 2 <= lit ? 0xFFFFD040 : pts + 1 == lit ? 0xFFB08A30 : 0;
+            if (c != 0) { g.fill(x + 3, y + 3, x + 6, y + 6, c); g.fill(x + 4, y + 2, x + 5, y + 7, c); g.fill(x + 2, y + 4, x + 7, y + 5, c); }
+        }
     }
 
     private static void draw(GuiGraphics g, Minecraft mc) {

@@ -35,7 +35,9 @@ public enum CharacterType {
     /** The Sky Rebellion: Logan (the old royal knight), Kill (the first demon Skylander), Keita (the leader's sleepy son). */
     LOGAN("logan", 0xFFE8C040),
     KILL("kill", 0xFF6A2A8A),
-    KEITA("keita", 0xFF2A3AA0);
+    KEITA("keita", 0xFF2A3AA0),
+    /** A player-made warrior (see you/YouSlot): the player's own skin, a chosen name, race and element. */
+    YOU("you", 0xFFC8A0FF);
 
     /** The characters shown on the selection screen, in order. */
     public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA};

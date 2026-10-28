@@ -46,7 +46,7 @@ public class SkillLoadoutScreen extends Screen {
 
     /** How far the skill list can scroll (small windows). */
     private int maxListScroll() {
-        int n = SkillPool.of(type()).size(), rows = (n + cols() - 1) / cols();
+        int n = SkillPool.of(minecraft.player).size(), rows = (n + cols() - 1) / cols();
         return Math.max(0, 104 + rows * (CARD_H + 6) - (height - 28));
     }
 
@@ -70,7 +70,7 @@ public class SkillLoadoutScreen extends Screen {
         for (int s = 0; s < SkillManager.SLOTS; s++) {
             int x = slotsLeft() + s * (BOX + 8), y = 40;
             boolean ult = s == SkillManager.ULTIMATE_SLOT;
-            Skill sk = SkillPool.inSlot(type, loadout, s);
+            Skill sk = SkillPool.inSlot(minecraft.player, loadout, s);
             int border = ult ? 0xFFFFD24A : s == selected ? 0xFFFFFFFF : type.getColor();
             g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, border);
             g.fill(x, y, x + BOX, y + BOX, 0xEE101018);
@@ -90,7 +90,7 @@ public class SkillLoadoutScreen extends Screen {
         }
         g.drawCenteredString(font, "Click a slot, then a skill to put in it - hover anything for details", width / 2, 84, 0x888888);
         // every skill this character can learn
-        List<SkillPool.Entry> pool = SkillPool.of(type);
+        List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
         listScroll = Math.min(listScroll, maxListScroll());
         g.enableScissor(0, 100, width, height - 28);
         for (int i = 0; i < pool.size(); i++) {
@@ -138,7 +138,7 @@ public class SkillLoadoutScreen extends Screen {
             int x = slotsLeft() + s * (BOX + 8), y = 40;
             if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) { selected = s; click(); return true; }
         }
-        List<SkillPool.Entry> pool = SkillPool.of(type());
+        List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
         for (int i = 0; i < pool.size(); i++) {
             int x = cardX(i), y = cardY(i);
             if (!cardVisible(y) || my < 100 || my >= height - 28) continue;

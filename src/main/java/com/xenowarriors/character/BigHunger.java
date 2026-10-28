@@ -31,7 +31,7 @@ public final class BigHunger {
         };
     }
 
-    public static boolean noHunger(Player p) { return ModCapabilities.getType(p) == CharacterType.ULTIMA; }
+    public static boolean noHunger(Player p) { return ModCapabilities.getType(p) == CharacterType.ULTIMA || com.xenowarriors.you.YouRaces.noHunger(p); }
 
     public static int total(Player p) {
         return p.getPersistentData().contains(TOTAL) ? p.getPersistentData().getInt(TOTAL) : p.getFoodData().getFoodLevel();

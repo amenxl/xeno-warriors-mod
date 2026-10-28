@@ -227,7 +227,7 @@ public final class Journey {
         MinecraftServer server = p.server;
         switch (act) {
             case 1 -> {                                            // pick / unpick a character
-                if (r.phase != LOBBY || a < 0 || a >= CharacterType.values().length) return;
+                if (r.phase != LOBBY || a < 0 || a >= CharacterType.values().length || CharacterType.values()[a] == CharacterType.YOU) return;
                 CharacterType t = CharacterType.values()[a];
                 if (t == CharacterType.NONE || !com.xenowarriors.character.Seasons.unlocked(server, t.season())) return;
                 if (me.picks.remove(t)) { me.ready = false; break; }
@@ -253,7 +253,7 @@ public final class Journey {
             case 4 -> { if (r.phase == LOBBY && p.getUUID().equals(r.host)) start(server, r, p); }
             case 5 -> { if (r.phase == LOBBY) leave(p, "You left the Journey lobby", false); return; }
             case 6 -> {                                            // choose who comes into this battle
-                if (r.phase != CHOOSING || me.ready || a < 0 || a >= CharacterType.values().length) return;
+                if (r.phase != CHOOSING || me.ready || a < 0 || a >= CharacterType.values().length || CharacterType.values()[a] == CharacterType.YOU) return;
                 CharacterType t = CharacterType.values()[a];
                 if (!me.picks.contains(t) || !r.alive(t) || !r.scenario.rule.fits(t)) return;
                 if (!me.chosen.remove(t) && me.chosen.size() < r.field()) me.chosen.add(t);

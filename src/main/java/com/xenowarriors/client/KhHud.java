@@ -101,7 +101,7 @@ public final class KhHud implements IGuiOverlay {
         CharacterType type = ClientCharacterData.getLocal();
         int lift = HudLayout.skillBarLift();
         int size = 52, px = width - size - 6, py = height - size - 6 - lift;
-        int col = type.getColor();
+        int col = ClientCharacterData.color(p);
 
         float hp = p.getHealth(), max = Math.max(1F, p.getMaxHealth());
         HudFaces.health(p.getUUID(), hp, max);
@@ -185,7 +185,7 @@ public final class KhHud implements IGuiOverlay {
         g.blit(BADGE, px - 3, py + size - 15, 16, 16, 0, 0, 32, 32, 32, 32);
         String lv = String.valueOf(LevelHud.level());
         small(g, font, lv, px + 5 - font.width(lv) * (lv.length() > 2 ? 0.25F : 0.3F), py + size - 10, 0x201408, lv.length() > 2 ? 0.5F : 0.6F);
-        String nm = type.getDisplayName().getString();
+        String nm = ClientCharacterData.name(p);
         small(g, font, nm, px + size / 2F - font.width(nm) * 0.3F, py + size - 1, col, 0.6F);
         if (type == CharacterType.ULTIMA) {         // his output %, above the portrait
             int pc = UltimaClient.percent(p.getId());
@@ -262,7 +262,7 @@ public final class KhHud implements IGuiOverlay {
         int y = top + 14;
         for (int s = 0; s <= SkillManager.SLOTS; s++) {
             boolean ult = s == SkillManager.ULTIMATE_SLOT, sup = s == SkillManager.SUPER_SLOT;
-            Skill sk = sup ? null : SkillPool.inSlot(type, loadout, s);
+            Skill sk = sup ? null : SkillPool.inSlot(mc.player, loadout, s);
             var ka = ClientSkillState.ka();
             int border = sup ? 0xFF8A3CC8 : ult ? 0xFFFFD24A : 0xFF5A6EA0;
             g.fill(x, y, x + w, y + rowH, alpha(border, a));

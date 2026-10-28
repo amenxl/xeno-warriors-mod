@@ -115,6 +115,34 @@ public final class SkillPool {
         return index >= 0 && index < l.size() ? l.get(index) : null;
     }
 
+    // ---- by player: a You character's pool comes from their race and element (works on both sides)
+
+    public static List<Entry> of(net.minecraft.world.entity.player.Player p) {
+        var s = com.xenowarriors.you.You.slot(p);
+        return s != null ? com.xenowarriors.you.YouSkills.pool(s) : of(typeOf(p));
+    }
+
+    private static CharacterType typeOf(net.minecraft.world.entity.player.Player p) {
+        return p.level().isClientSide ? com.xenowarriors.you.You.clientType.apply(p) : com.xenowarriors.character.ModCapabilities.getType(p);
+    }
+
+    public static Skill ultimate(net.minecraft.world.entity.player.Player p) {
+        var s = com.xenowarriors.you.You.slot(p);
+        return s != null ? com.xenowarriors.you.YouSkills.ultimate(s) : ultimate(typeOf(p));
+    }
+
+    public static Entry entry(net.minecraft.world.entity.player.Player p, int index) {
+        List<Entry> l = of(p);
+        return index >= 0 && index < l.size() ? l.get(index) : null;
+    }
+
+    public static Skill inSlot(net.minecraft.world.entity.player.Player p, int[] loadout, int slot) {
+        if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(p);
+        if (loadout == null || slot < 0 || slot >= loadout.length) return null;
+        Entry e = entry(p, loadout[slot]);
+        return e == null ? null : e.skill();
+    }
+
     public static int[] defaultLoadout() { return new int[]{0, 1, 2, 3}; }
 
     /** The skill in a slot for this loadout (slot 4 = ultimate). */

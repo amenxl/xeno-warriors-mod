@@ -131,15 +131,28 @@ public final class Elements {
         }
     }
 
-    private static void hit(Mob m, LivingEntity t, float dmg) {
-        t.hurt(m.damageSources().mobAttack(m), dmg * com.xenowarriors.scaling.EnemyScaling.damageMult(m));
+    private static void hit(LivingEntity m, LivingEntity t, float dmg) {
+        if (m instanceof Player p) t.hurt(p.damageSources().playerAttack(p), dmg * com.xenowarriors.you.YouRaces.damageMult(p));
+        else if (m instanceof Mob mob) t.hurt(mob.damageSources().mobAttack(mob), dmg * com.xenowarriors.scaling.EnemyScaling.damageMult(mob));
+        else t.hurt(m.damageSources().generic(), dmg);
+    }
+
+    /** On the same side as the caster: for mobs the same kind, for players their party. */
+    private static boolean ally(LivingEntity m, LivingEntity o) {
+        if (m instanceof Player p) return o instanceof Player q && (q == p || com.xenowarriors.party.Parties.sameParty(p, q));
+        return o.getClass() == m.getClass();
+    }
+
+    /** A player casting their element at a target (the You characters' element skills). */
+    public static void castFrom(Player caster, LivingEntity target, Element el) {
+        if (caster.level() instanceof ServerLevel l) cast(caster, target, el, l);
     }
 
     private static void sound(ServerLevel l, LivingEntity at, SoundEvent s, float pitch) {
         l.playSound(null, at.blockPosition(), s, SoundSource.HOSTILE, 1F, pitch);
     }
 
-    private static void cast(Mob m, LivingEntity t, Element el, ServerLevel l) {
+    private static void cast(LivingEntity m, LivingEntity t, Element el, ServerLevel l) {
         com.xenowarriors.anim.Poses.play(m, switch (el) {
             case FIRE, CRYSTAL, METAL, POISON -> com.xenowarriors.anim.Poses.EL_THROW;
             case EARTH -> com.xenowarriors.anim.Poses.EL_STOMP;
@@ -185,7 +198,7 @@ public final class Elements {
                 hit(m, t, 5F);
                 LivingEntity from = t;
                 int jumps = 0;
-                for (LivingEntity o : l.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(4), o -> o != m && o != t && o.isAlive() && o.getClass() != m.getClass())) {
+                for (LivingEntity o : l.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(4), o -> o != m && o != t && o.isAlive() && !ally(m, o))) {
                     if (jumps++ >= 2) break;
                     line(l, from, o, ParticleTypes.ELECTRIC_SPARK, 10);
                     hit(m, o, 3F);
@@ -225,7 +238,7 @@ public final class Elements {
             case CLOUD -> {
                 Vec3 at = t.position();
                 l.sendParticles(ParticleTypes.CLOUD, at.x, at.y + 1, at.z, 60, 1.5, 0.8, 1.5, 0.01);
-                for (LivingEntity o : l.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(3), o -> o != m && o.getClass() != m.getClass())) {
+                for (LivingEntity o : l.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(3), o -> o != m && !ally(m, o))) {
                     o.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
                     o.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 0));
                 }
@@ -236,7 +249,7 @@ public final class Elements {
                 l.sendParticles(ParticleTypes.HAPPY_VILLAGER, anchor.x, anchor.y + 0.5, anchor.z, 20, 0.5, 0.5, 0.5, 0);
                 for (int i = 0; i < 40; i++) ServerScheduler.later(i, () -> { if (t.isAlive()) Rooting.hold(t, anchor); });
                 hit(m, t, 2F);
-                for (LivingEntity a : l.getEntitiesOfClass(LivingEntity.class, m.getBoundingBox().inflate(6), a -> a.getClass() == m.getClass())) a.heal(4F);
+                for (LivingEntity a : l.getEntitiesOfClass(LivingEntity.class, m.getBoundingBox().inflate(6), a -> ally(m, a))) a.heal(4F);
                 sound(l, t, SoundEvents.CAVE_VINES_PLACE, 0.8F);
             }
             case METAL -> {

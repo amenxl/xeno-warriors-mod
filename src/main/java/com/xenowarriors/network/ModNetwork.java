@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "58";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "59";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -455,6 +455,12 @@ public final class ModNetwork {
                 .encoder(JourneyActionPacket::encode).decoder(JourneyActionPacket::decode).consumerMainThread(JourneyActionPacket::handle).add();
         CHANNEL.messageBuilder(KarmaReadingPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(KarmaReadingPacket::encode).decoder(KarmaReadingPacket::decode).consumerMainThread(KarmaReadingPacket::handle).add();
+        CHANNEL.messageBuilder(YouStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(YouStatePacket::encode).decoder(YouStatePacket::decode).consumerMainThread(YouStatePacket::handle).add();
+        CHANNEL.messageBuilder(YouSlotsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(YouSlotsPacket::encode).decoder(YouSlotsPacket::decode).consumerMainThread(YouSlotsPacket::handle).add();
+        CHANNEL.messageBuilder(YouActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(YouActionPacket::encode).decoder(YouActionPacket::decode).consumerMainThread(YouActionPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

@@ -16,7 +16,7 @@ public abstract class AbstractClientPlayerMixin {
     @Inject(method = "getSkinTextureLocation", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$characterSkin(CallbackInfoReturnable<ResourceLocation> cir) {
         CharacterType type = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
-        if (type != CharacterType.NONE) {
+        if (type != CharacterType.NONE && type != CharacterType.YOU) {
             if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(((AbstractClientPlayer) (Object) this).getId())) {
                 cir.setReturnValue(com.xenowarriors.client.kaeru.ChangeClient.SIL_SKIN);
                 return;
@@ -34,7 +34,8 @@ public abstract class AbstractClientPlayerMixin {
     /** Characters use the wide (4px) arm model; the girls use the slim one (see FemaleBody). */
     @Inject(method = "getModelName", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$characterModel(CallbackInfoReturnable<String> cir) {
-        if (ClientCharacterData.get((AbstractClientPlayer) (Object) this) != CharacterType.NONE) {
+        CharacterType t = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
+        if (t != CharacterType.NONE && t != CharacterType.YOU) {
             cir.setReturnValue(com.xenowarriors.client.FemaleBody.is((AbstractClientPlayer) (Object) this) ? "slim" : "default");
         }
     }

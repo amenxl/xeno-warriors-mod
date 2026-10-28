@@ -15,7 +15,40 @@ public enum Race {
     DEVIL("Devil", 0xA01020),                            // stronger than demons (Ai-oni, Duo)
     FOX_KIN("Fox Kin", 0xFF9A40),
     SEEDLING("Seedling", 0x70D050),
-    REBRINGER("Rebringer", 0xFFB060);
+    REBRINGER("Rebringer", 0xFFB060),
+    ANGEL("Angel", 0xFFF2B0),                            // what Skylanders descend from; creative-only for You characters for now
+    YOU("You", 0xC8A0FF);                                // made by the Government to capture and control distortions
+
+    /** The races a You character can be made as, in creator order. ANGEL needs creative mode. */
+    public static final Race[] CREATABLE = {HUMAN, FOX_KIN, SEEDLING, SKYLANDER, DEMON, YOU, ANGEL};
+
+    /** Creator blurb: what this race is and what you get. */
+    public String info() {
+        return switch (this) {
+            case HUMAN -> "The everyday people of Recarnet. No special traits, but humans grow into their element the fastest and can earn Government modifications later on.";
+            case FOX_KIN -> "Fox people, like Fox Girl. Nimble healers: Fox Heal from the start, and the Kitsune attack grows through three tiers as you level.";
+            case SEEDLING -> "Plant people. You heal while in water and live on sunlight instead of food - at night, carry Sunlight. If you fall, you become a seed: 30 seconds in water and you sprout back with half your health, but an enemy can break the seed.";
+            case SKYLANDER -> "Angel descendants with wings. You can fly (H puts the wings away), and you choose a Lunar or Solar form that empowers you at night or by day.";
+            case DEMON -> "Horned and winged, with a human form to blend in (the transform key switches). Demons hit hard and can one day become Devils.";
+            case YOU -> "Made by the Government to capture and control distortions. Hardy and balanced; the capture skill comes later.";
+            case ANGEL -> "The first winged ones. Far stronger than anyone else from level 1, with seraph wings. Creative mode only for now.";
+            default -> title;
+        };
+    }
+
+    /** Elements a You character of this race may pick. */
+    public com.xenowarriors.ka.Element[] elements() {
+        return switch (this) {
+            case SKYLANDER, ANGEL -> com.xenowarriors.ka.Element.SKYLANDER;
+            case DEMON -> new com.xenowarriors.ka.Element[]{com.xenowarriors.ka.Element.FIRE, com.xenowarriors.ka.Element.SHADOW, com.xenowarriors.ka.Element.SMOKE, com.xenowarriors.ka.Element.POISON, com.xenowarriors.ka.Element.LIGHTNING};
+            case SEEDLING -> new com.xenowarriors.ka.Element[]{com.xenowarriors.ka.Element.PLANT, com.xenowarriors.ka.Element.WATER, com.xenowarriors.ka.Element.EARTH, com.xenowarriors.ka.Element.LIGHT, com.xenowarriors.ka.Element.POISON};
+            case FOX_KIN -> new com.xenowarriors.ka.Element[]{com.xenowarriors.ka.Element.FIRE, com.xenowarriors.ka.Element.WIND, com.xenowarriors.ka.Element.SOUND, com.xenowarriors.ka.Element.LIGHTNING, com.xenowarriors.ka.Element.ICE};
+            default -> com.xenowarriors.ka.Element.HUMAN;
+        };
+    }
+
+    /** Has wings and can fly (as a You character). */
+    public boolean wings() { return this == SKYLANDER || this == ANGEL || this == DEMON || skylanderKind(); }
 
     public final String title;
     public final int color;
@@ -24,6 +57,16 @@ public enum Race {
 
     /** Skylanders of any kind (born, made, or fused with a demon). */
     public boolean skylanderKind() { return this == SKYLANDER || this == ARTIFICIAL_SKYLANDER || this == DEMON_SKYLANDER; }
+
+    /** The race of whoever this player is playing - a You character's own race, or their show character's. */
+    public static Race of(net.minecraft.world.entity.player.Player p) {
+        CharacterType t = ModCapabilities.getType(p);
+        if (t == CharacterType.YOU) {
+            var d = p.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            return d == null ? HUMAN : d.you().race;
+        }
+        return of(t);
+    }
 
     public static Race of(CharacterType t) {
         return switch (t) {

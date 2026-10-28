@@ -114,6 +114,9 @@ public class CharacterSelectScreen extends Screen {
         Button sel = addRenderableWidget(Button.builder(Component.literal("SELECT"), b -> { if (pickable(focus)) choose(focus); })
                 .bounds(width - 76, height - 30, 68, 22).build());
         sel.active = pickable(focus);
+        // your own warriors: the You character slots
+        addRenderableWidget(Button.builder(Component.literal("YOUR OWN \u2605"), b -> ModNetwork.sendToServer(new com.xenowarriors.network.YouActionPacket(com.xenowarriors.network.YouActionPacket.OPEN, 0, null)))
+                .bounds(width - 76 - 96, height - 30, 90, 22).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Make your own warrior with your Minecraft skin: pick a name, race and element. 10 slots."))).build());
         if (canClose) addRenderableWidget(Button.builder(Component.literal("<"), b -> onClose()).bounds(8, 6, 20, th).build());
     }
 

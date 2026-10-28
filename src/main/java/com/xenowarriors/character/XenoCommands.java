@@ -180,6 +180,10 @@ public final class XenoCommands {
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> karma(ctx, EntityArgument.getPlayers(ctx, "targets"), false))))));
 
+        // your own warriors (the You character slots)
+        root.then(Commands.literal("you")
+                .executes(ctx -> { com.xenowarriors.you.YouSlots.send(ctx.getSource().getPlayerOrException(), true); return 1; })
+                .then(Commands.literal("sun").requires(s -> s.hasPermission(2)).executes(ctx -> { com.xenowarriors.you.YouRaces.giveSun(ctx.getSource().getPlayerOrException()); return 1; })));
         root.then(Commands.literal("phone")
                 .then(Commands.literal("answer").executes(ctx -> { com.xenowarriors.item.PhoneCalls.answer(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("decline").executes(ctx -> { com.xenowarriors.item.PhoneCalls.decline(ctx.getSource().getPlayerOrException()); return 1; }))

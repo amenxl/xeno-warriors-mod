@@ -57,8 +57,11 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer p, float limbSwing, float limbSwingAmount,
                        float partialTick, float age, float yaw, float pitch) {
-        if (p.isInvisible() || ClientCharacterData.get(p) != CharacterType.MIKIKO) return;
-        boolean outfit = outfitTail(p);
+        if (p.isInvisible()) return;
+        var ys = ClientCharacterData.you(p);
+        boolean foxKin = ys != null && ys.race == com.xenowarriors.character.Race.FOX_KIN;
+        if (!foxKin && ClientCharacterData.get(p) != CharacterType.MIKIKO) return;
+        boolean outfit = foxKin || outfitTail(p);
         if (!outfit && !(DmzCompat.tail(p) && !DmzForms.giantFox(p))) return;
         if (DmzForms.giantFox(p)) return;
         float run = com.xenowarriors.client.FoxRun.weight(p);

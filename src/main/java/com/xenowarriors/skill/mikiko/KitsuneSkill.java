@@ -33,6 +33,9 @@ public class KitsuneSkill implements Skill {
     private static final DustParticleOptions FOX_WHITE = new DustParticleOptions(new Vector3f(1F, 0.95F, 0.85F), 1F);
     private static final DustParticleOptions STAR = new DustParticleOptions(new Vector3f(1F, 0.9F, 0.2F), 0.9F), STAR_W = new DustParticleOptions(new Vector3f(1F, 1F, 1F), 0.8F);
 
+    /** Damage scale (the Fox Kin tiers hit harder). */
+    protected float power() { return 1F; }
+
     @Override
     public String getId() { return "kitsune"; }
 
@@ -102,7 +105,7 @@ public class KitsuneSkill implements Skill {
             ServerScheduler.later(6 + h * 2, () -> {
                 if (!target.isAlive()) return;
                 target.invulnerableTime = 0;
-                target.hurt(ModDamageTypes.source(level, ModDamageTypes.KITSUNE, player, player), 2.5F);
+                target.hurt(ModDamageTypes.source(level, ModDamageTypes.KITSUNE, player, player), 2.5F * power());
                 target.setDeltaMovement(target.getDeltaMovement().multiply(0.2, 1, 0.2));
                 Vec3 c = target.getBoundingBox().getCenter();
                 level.sendParticles(ParticleTypes.CRIT, c.x, c.y, c.z, 8, 0.3, 0.4, 0.3, 0.3);
@@ -115,7 +118,7 @@ public class KitsuneSkill implements Skill {
         ServerScheduler.later(18, () -> {
             if (!target.isAlive()) return;
             target.invulnerableTime = 0;
-            target.hurt(ModDamageTypes.source(level, ModDamageTypes.KITSUNE, player, player), 8F);
+            target.hurt(ModDamageTypes.source(level, ModDamageTypes.KITSUNE, player, player), 8F * power());
             Vec3 away = target.position().subtract(player.position()).multiply(1, 0, 1);
             if (away.lengthSqr() > 1.0E-4) away = away.normalize();
             target.push(away.x * 0.6, 0.35, away.z * 0.6);   // knocked away from him

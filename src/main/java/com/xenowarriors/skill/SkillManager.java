@@ -62,14 +62,14 @@ public final class SkillManager {
     /** This player's equipped skill in a slot. */
     public static Skill get(ServerPlayer player, int slot) {
         CharacterType type = ModCapabilities.getType(player);
-        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> SkillPool.inSlot(type, d.loadout(type), slot)).orElse(null);
+        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> SkillPool.inSlot(player, d.loadout(type), slot)).orElse(null);
     }
 
     /** Equip pool skill {@code index} into slot 0-3 (swapped with wherever it already sits). */
     public static void setSlot(ServerPlayer player, int slot, int index) {
         if (slot < 0 || slot >= ULTIMATE_SLOT) return;
         CharacterType type = ModCapabilities.getType(player);
-        SkillPool.Entry e = SkillPool.entry(type, index);
+        SkillPool.Entry e = SkillPool.entry(player, index);
         if (e == null) return;
         int level = com.xenowarriors.stats.Stats.characterLevel(player);
         int season = com.xenowarriors.character.Seasons.highest(player.server);
@@ -127,7 +127,7 @@ public final class SkillManager {
         // a skill from a season that's locked again can't be used (it stays in the slot)
         if (slot < ULTIMATE_SLOT) {
             int idx = player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadout(type)[slot]).orElse(-1);
-            SkillPool.Entry en = SkillPool.entry(type, idx);
+            SkillPool.Entry en = SkillPool.entry(player, idx);
             if (en != null && com.xenowarriors.character.Seasons.highest(player.server) < en.season()) {
                 player.displayClientMessage(Component.literal("Season " + en.season() + " content is locked").withStyle(net.minecraft.ChatFormatting.RED), true);
                 return;

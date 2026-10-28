@@ -33,10 +33,10 @@ public final class HudHead {
 
     /** headAt: where the head's centre sits in the box (0-1, from the top); zoom: model scale per box size; box: draw the backdrop. */
     public static void draw(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int size, boolean redFlash, float headAt, float zoom, boolean box, float yaw) {
-        int col = type.getColor() & 0xFFFFFF;
+        int col = (e instanceof net.minecraft.world.entity.player.Player pl ? ClientCharacterData.color(pl) : type.getColor()) & 0xFFFFFF;
         if (box) g.fillGradient(x, y, x + size, y + size, 0xFF000000 | mix(col, 0.55F), 0xFF000000 | mix(col, 0.2F));
         if (e == null) {
-            String init = type.getDisplayName().getString().substring(0, 1);
+            String init = type.getDisplayName().getString().substring(0, 1);   // (no player to draw: the type's initial)
             var font = Minecraft.getInstance().font;
             g.pose().pushPose();
             g.pose().translate(x + size / 2F, y + size / 2F, 0);

@@ -32,13 +32,32 @@ public final class CharacterManager {
         RhalixWings.sync(player, false);
         SkillManager.resetCooldowns(player);
         if (type != CharacterType.NONE) {
-            player.sendSystemMessage(Component.translatable("message.xenowarriors.chosen", type.getDisplayName())
-                    .withStyle(s -> s.withColor(type.getColor() & 0xFFFFFF)));
+            player.sendSystemMessage(Component.translatable("message.xenowarriors.chosen", Component.literal(com.xenowarriors.you.You.name(player)))
+                    .withStyle(s -> s.withColor(com.xenowarriors.you.You.color(player) & 0xFFFFFF)));
         }
     }
 
+    /** Play one of their You characters (slot 0-9; it must exist). */
+    public static boolean setYou(ServerPlayer player, int slot) {
+        var d = player.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
+        if (d == null || slot < 0 || slot >= com.xenowarriors.you.YouSlot.SLOTS || !d.youSlots[slot].exists()) return false;
+        String from = d.key();
+        d.youSlot = slot;
+        d.switchStats(from, d.key(CharacterType.YOU));
+        d.setType(CharacterType.YOU);
+        com.xenowarriors.stats.Stats.reapply(player);
+        com.xenowarriors.stats.Stats.syncAll(player);
+        syncToTrackingAndSelf(player);
+        RhalixWings.sync(player, false);
+        SkillManager.resetCooldowns(player);
+        com.xenowarriors.you.YouRaces.sync(player);
+        player.sendSystemMessage(Component.translatable("message.xenowarriors.chosen", Component.literal(d.you().name))
+                .withStyle(s -> s.withColor(d.you().color())));
+        return true;
+    }
+
     public static void syncToTrackingAndSelf(ServerPlayer player) {
-        ModNetwork.sendToTrackingAndSelf(new SyncCharacterPacket(player.getUUID(), ModCapabilities.getType(player), outfit(player)), player);
+        ModNetwork.sendToTrackingAndSelf(SyncCharacterPacket.of(player), player);
     }
 
     public static int outfit(net.minecraft.world.entity.player.Player p) {
@@ -77,7 +96,7 @@ public final class CharacterManager {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer) {
-            ModNetwork.sendToPlayer(new SyncCharacterPacket(target.getUUID(), ModCapabilities.getType(target), outfit(target)), viewer);
+            ModNetwork.sendToPlayer(SyncCharacterPacket.of(target), viewer);
         }
     }
 

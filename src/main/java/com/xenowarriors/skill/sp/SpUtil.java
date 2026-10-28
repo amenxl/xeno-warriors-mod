@@ -15,11 +15,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /** Small helpers for the Sky Patrol skills. */
-final class SpUtil {
+public final class SpUtil {
     private SpUtil() {}
 
     /** What she's aiming at, else the closest valid target in front within range. */
-    static LivingEntity front(ServerPlayer p, double range) {
+    public static LivingEntity front(ServerPlayer p, double range) {
         LivingEntity t = SkillTargeting.aimed(p, range, 10);
         if (t != null) return t;
         Vec3 look = p.getLookAngle(), eye = p.getEyePosition();
@@ -33,7 +33,7 @@ final class SpUtil {
         return t;
     }
 
-    static List<LivingEntity> around(ServerPlayer p, Vec3 c, double r) {
+    public static List<LivingEntity> around(ServerPlayer p, Vec3 c, double r) {
         List<LivingEntity> out = new ArrayList<>();
         for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(c, c).inflate(r)))
             if (e != p && SkillTargeting.canTarget(p, e) && e.position().distanceTo(c) <= r) out.add(e);
@@ -41,7 +41,7 @@ final class SpUtil {
     }
 
     /** A dash along the look direction over `ticks`; each entity it passes through is hit once. */
-    static void dash(ServerPlayer p, double speed, int ticks, ParticleOptions trail, Consumer<LivingEntity> onHit) {
+    public static void dash(ServerPlayer p, double speed, int ticks, ParticleOptions trail, Consumer<LivingEntity> onHit) {
         Vec3 dir = p.getLookAngle().multiply(1, 0.35, 1).normalize();
         Set<Integer> hit = new HashSet<>();
         for (int i = 0; i < ticks; i++) {

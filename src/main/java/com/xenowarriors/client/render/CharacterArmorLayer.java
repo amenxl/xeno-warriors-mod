@@ -201,7 +201,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
 
     /** Whether this player's armor is drawn by us instead of the vanilla armor layer. */
     public static boolean replacesVanilla(net.minecraft.world.entity.LivingEntity entity) {
-        return entity instanceof AbstractClientPlayer p && ClientCharacterData.get(p) != CharacterType.NONE;
+        return entity instanceof AbstractClientPlayer p && ClientCharacterData.get(p) != CharacterType.NONE && ClientCharacterData.get(p) != CharacterType.YOU;
     }
 
     @Override

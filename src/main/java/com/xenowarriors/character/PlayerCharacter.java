@@ -56,16 +56,32 @@ public class PlayerCharacter {
     /** Each character's own stats (levels + XP), so switching characters keeps every character's level. */
     public CompoundTag charStats = new CompoundTag();
 
+    /** The player's ten You characters (see you/YouSlot) and which one is in use. */
+    public final com.xenowarriors.you.YouSlot[] youSlots = new com.xenowarriors.you.YouSlot[com.xenowarriors.you.YouSlot.SLOTS];
+    public int youSlot;
+    { for (int i = 0; i < youSlots.length; i++) youSlots[i] = new com.xenowarriors.you.YouSlot(); }
+
+    /** The You character in use (an empty one when they're playing a show character). */
+    public com.xenowarriors.you.YouSlot you() { return youSlots[Math.max(0, Math.min(youSlots.length - 1, youSlot))]; }
+
+    /** The save key for a character's own stats, loadout and standing: the show character's id, or "you&lt;slot&gt;". */
+    public static String key(CharacterType t, int youSlot) { return t == CharacterType.YOU ? "you" + youSlot : t.getId(); }
+    public String key(CharacterType t) { return key(t, youSlot); }
+    public String key() { return key(type, youSlot); }
+
     /** Saves the current stats under this character, then loads that character's (fresh = level 1) . */
-    public void switchStats(CharacterType from, CharacterType to) {
-        if (from != CharacterType.NONE) {
+    public void switchStats(CharacterType from, CharacterType to) { switchStats(key(from), key(to)); }
+
+    /** The same, by save key (You slots have one key each). */
+    public void switchStats(String from, String to) {
+        if (!from.equals(CharacterType.NONE.getId())) {
             CompoundTag t = new CompoundTag();
             t.putIntArray("lv", statLevel.clone());
             float[] xp = statXp; t.putFloat("x0", xp[0]); t.putFloat("x1", xp[1]); t.putFloat("x2", xp[2]);
-            charStats.put(from.getId(), t);
+            charStats.put(from, t);
         }
-        if (to == CharacterType.NONE || to == from) return;
-        CompoundTag t = charStats.getCompound(to.getId());
+        if (to.equals(CharacterType.NONE.getId()) || to.equals(from)) return;
+        CompoundTag t = charStats.getCompound(to);
         int[] lv = t.getIntArray("lv");
         for (int i = 0; i < 3; i++) { statLevel[i] = i < lv.length ? lv[i] : 0; statXp[i] = t.getFloat("x" + i); }
     }
@@ -73,10 +89,10 @@ public class PlayerCharacter {
     public String ka = "";
 
     public int[] loadout(CharacterType t) {
-        int[] l = loadouts.getIntArray(t.getId());
+        int[] l = loadouts.getIntArray(key(t));
         return l.length == 4 ? l : com.xenowarriors.skill.SkillPool.defaultLoadout();
     }
-    public void setLoadout(CharacterType t, int[] l) { loadouts.putIntArray(t.getId(), l.clone()); }
+    public void setLoadout(CharacterType t, int[] l) { loadouts.putIntArray(key(t), l.clone()); }
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 
@@ -121,6 +137,8 @@ public class PlayerCharacter {
         this.backFox = other.backFox.copy();
         this.wingsOut = other.wingsOut;
         this.outfit = other.outfit;
+        this.youSlot = other.youSlot;
+        for (int i = 0; i < youSlots.length; i++) youSlots[i] = other.youSlots[i].copy();
     }
 
     public CompoundTag save() {
@@ -156,6 +174,10 @@ public class PlayerCharacter {
         tag.putBoolean("wings_in", !wingsOut);
         tag.putInt("outfit", outfit);
         tag.putInt("torn", torn);
+        tag.putInt("you_slot", youSlot);
+        net.minecraft.nbt.ListTag ys = new net.minecraft.nbt.ListTag();
+        for (com.xenowarriors.you.YouSlot s : youSlots) ys.add(s.save());
+        tag.put("you_slots", ys);
         for (int i = 0; i < 3; i++) tag.putFloat("stat_xp_" + i, statXp[i]);
         return tag;
     }
@@ -190,6 +212,9 @@ public class PlayerCharacter {
         this.wingsOut = !tag.getBoolean("wings_in");
         this.outfit = tag.getInt("outfit");
         this.torn = tag.getInt("torn");
+        this.youSlot = Math.max(0, Math.min(youSlots.length - 1, tag.getInt("you_slot")));
+        net.minecraft.nbt.ListTag ys = tag.getList("you_slots", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < youSlots.length; i++) youSlots[i] = i < ys.size() ? com.xenowarriors.you.YouSlot.load(ys.getCompound(i)) : new com.xenowarriors.you.YouSlot();
         int[] lv = tag.getIntArray("stat_levels");
         for (int i = 0; i < 3; i++) {
             statLevel[i] = i < lv.length ? lv[i] : 0;

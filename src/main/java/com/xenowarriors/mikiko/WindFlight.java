@@ -105,7 +105,7 @@ public final class WindFlight {
         } else if (granted) {
             // not Mikiko any more (or levels were reset): the wind lets go
             p.getPersistentData().remove(GRANTED);
-            if (!ModCapabilities.getType(p).skylander()) {
+            if (!com.xenowarriors.character.RhalixFlight.winged(p)) {
                 abilities.mayfly = false;
                 abilities.flying = false;
                 abilities.setFlyingSpeed(0.05F);

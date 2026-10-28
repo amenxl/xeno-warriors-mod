@@ -34,8 +34,21 @@ public final class RhalixFlight {
 
     public static boolean canFly(Player p) {
         CharacterType t = ModCapabilities.getType(p);
-        return t.skylander() && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p)
-                && (t != CharacterType.RHALIX || !starving(p));
+        return winged(p) && !p.isCreative() && !p.isSpectator() && RhalixWings.out(p)
+                && (t != CharacterType.RHALIX || !starving(p)) && !com.xenowarriors.you.YouRaces.isSeed(p);
+    }
+
+    /** Has wings: a winged show character, or a You character of a winged race (not a demon in human form). */
+    public static boolean winged(Player p) {
+        CharacterType t = ModCapabilities.getType(p);
+        return t == CharacterType.YOU ? com.xenowarriors.you.You.wings(p) : t.skylander();
+    }
+
+    /** Puts them on the ground (wings gone): flight taken back right away. */
+    public static void land(ServerPlayer p) {
+        if (p.isCreative() || p.isSpectator()) return;
+        var a = p.getAbilities();
+        if (a.flying || a.mayfly) { a.mayfly = false; a.flying = false; p.onUpdateAbilities(); }
     }
 
     public static boolean starving(Player p) {

@@ -149,6 +149,7 @@ public final class UiTest {
             }
             return l;
         }
+        if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -1792,5 +1793,48 @@ public final class UiTest {
         try { steps.get(idx).action.run(); } catch (Throwable t) { XenoWarriors.LOGGER.error("XW-UITEST step failed", t); }
         wait = steps.get(idx).delay;
         actFrames = frames;
+    }
+
+    /** You characters: the slots screen, the creator (a Seedling, then a Skylander), play one, its HUD, skills and stats; a Seedling's seed. */
+    private static void youTest(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); mc.options.hideGui = false; }, 30));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.you.YouSlots.send(p, true)), 15));
+        l.add(new Step("you_slots_empty", () -> {}, 3));
+        l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.you.YouCreatorScreen(0)), 10));
+        l.add(new Step("you_creator", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.you.YouCreatorScreen c) c.testFill("Sprout", com.xenowarriors.character.Race.SEEDLING, com.xenowarriors.ka.Element.PLANT); }, 5));
+        l.add(new Step("you_creator_seedling", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.you.YouCreatorScreen c) c.testFill("Skye", com.xenowarriors.character.Race.SKYLANDER, com.xenowarriors.ka.Element.WIND); }, 5));
+        l.add(new Step("you_creator_skylander", () -> {}, 3));
+        // create them for real (server side), then look at the slots
+        l.add(new Step(null, () -> server(p -> {
+            var a = new com.xenowarriors.you.YouSlot(); a.name = "Sprout"; a.race = com.xenowarriors.character.Race.SEEDLING; a.element = com.xenowarriors.ka.Element.PLANT;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 0, a);
+            var b = new com.xenowarriors.you.YouSlot(); b.name = "Skye"; b.race = com.xenowarriors.character.Race.SKYLANDER; b.element = com.xenowarriors.ka.Element.WIND; b.form = com.xenowarriors.you.YouSlot.FORM_SOLAR;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 1, b);
+            var c = new com.xenowarriors.you.YouSlot(); c.name = "Ember"; c.race = com.xenowarriors.character.Race.DEMON; c.element = com.xenowarriors.ka.Element.FIRE;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 2, c);
+            com.xenowarriors.you.YouSlots.send(p, true);
+        }), 30));
+        l.add(new Step("you_slots", () -> {}, 3));
+        // playing Skye: third person with wings, then the HUD, skills and stats
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.character.CharacterManager.setYou(p, 1)); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 40));
+        l.add(new Step("you_skylander_wings", () -> {}, 3));
+        l.add(new Step(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 10));
+        l.add(new Step("you_hud", () -> {}, 3));
+        l.add(new Step(null, () -> mc.setScreen(new SkillLoadoutScreen(null)), 15));
+        l.add(new Step("you_skills", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.menu.CharacterCustomScreen.open(null); }, 20));
+        l.add(new Step("you_custom", () -> {}, 3));
+        // the Seedling: its HUD with the Sun meter, then its seed
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.character.CharacterManager.setYou(p, 0)); }, 40));
+        l.add(new Step("you_seedling_hud", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.hurt(p.damageSources().generic(), 1000F); }); }, 30));
+        l.add(new Step("you_seed", () -> {}, 3));
+        // the demon: wings, then human form
+        l.add(new Step(null, () -> server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); com.xenowarriors.character.CharacterManager.setYou(p, 2); }), 40));
+        l.add(new Step("you_demon", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.you.YouRaces.toggleHumanForm(p)), 20));
+        l.add(new Step("you_demon_human", () -> {}, 3));
     }
 }

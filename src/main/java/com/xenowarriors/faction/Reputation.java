@@ -53,7 +53,7 @@ public final class Reputation {
     private static int[] values(Player p) {
         CharacterType t = ModCapabilities.getType(p);
         CompoundTag all = all(p);
-        String id = t.getId();
+        String id = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key()).orElse(t.getId());
         int[] v = all.getIntArray(id);
         if (v.length != Faction.values().length) {          // first time as this character: starting standing from their teams
             v = start(t);
@@ -86,7 +86,7 @@ public final class Reputation {
         int[] v = values(p);
         Tier before = Tier.of(v[f.ordinal()]);
         v[f.ordinal()] = Math.max(MIN, Math.min(MAX, value));
-        all(p).putIntArray(ModCapabilities.getType(p).getId(), v);
+        all(p).putIntArray(p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key()).orElse(ModCapabilities.getType(p).getId()), v);
         Tier after = Tier.of(v[f.ordinal()]);
         if (before != after) {
             boolean up = after.ordinal() > before.ordinal();

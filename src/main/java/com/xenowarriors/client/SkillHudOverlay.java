@@ -29,7 +29,7 @@ public class SkillHudOverlay implements IGuiOverlay {
 
         for (int slot = 0; slot < SkillManager.SLOTS; slot++) {
             int x = left + slot * (SIZE + GAP);
-            Skill skill = com.xenowarriors.skill.SkillPool.inSlot(type, ClientSkillState.loadout(), slot);
+            Skill skill = com.xenowarriors.skill.SkillPool.inSlot(Minecraft.getInstance().player, ClientSkillState.loadout(), slot);
             boolean ultimate = slot == SkillManager.ULTIMATE_SLOT;
 
             int border = skill == null ? 0xFF3A3A3A : ultimate ? 0xFFFFD24A : type.getColor();

@@ -101,7 +101,7 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
         return com.xenowarriors.client.cel.Cel.tex(tex(look.apply(e) + (darkened(e) ? "_dark" : "")));
     }
 
-    static DetailModel model(String key) {
+    public static DetailModel model(String key) {
         return MODELS.computeIfAbsent(key, k -> DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/npc/" + k + ".json"));
     }
 

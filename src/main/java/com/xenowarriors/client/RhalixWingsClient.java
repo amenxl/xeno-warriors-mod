@@ -274,7 +274,7 @@ public final class RhalixWingsClient {
         if (p instanceof AbstractClientPlayer fp && FirstPersonHead.ownFirstPerson(fp)) return;   // (see MikikoAnimations)
         float w = gravityDance(p, event.getPartialTick());
         float hw = hyped(p, event.getPartialTick());
-        float sw = ClientCharacterData.get(p).skylander() ? superman(p, event.getPartialTick()) : 0F;
+        float sw = ClientCharacterData.winged(p) ? superman(p, event.getPartialTick()) : 0F;
         if (w <= 0F && hw <= 0F && sw <= 0F) return;
         float age = p.tickCount + event.getPartialTick();
         if (sw > 0F) {
@@ -328,7 +328,7 @@ public final class RhalixWingsClient {
         }
         if (mc.isPaused()) return;
         for (AbstractClientPlayer p : mc.level.players()) {
-            if (!ClientCharacterData.get(p).skylander()) {
+            if (!ClientCharacterData.winged(p)) {
                 HOVER.remove(p.getId());
                 continue;
             }

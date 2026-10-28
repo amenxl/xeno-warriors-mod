@@ -141,6 +141,9 @@ public final class ClientModEvents {
 
     @SubscribeEvent
     public static void clientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
+        // You characters: the common code reads the synced copy here on the client
+        com.xenowarriors.you.You.clientSlot = p -> ClientCharacterData.you(p);
+        com.xenowarriors.you.You.clientType = p -> ClientCharacterData.get(p);
         event.enqueueWork(() -> {
             net.minecraft.client.gui.screens.MenuScreens.register(
                     com.xenowarriors.fox.ModMenus.FOX.get(), com.xenowarriors.client.fox.FoxInventoryScreen::new);
@@ -183,6 +186,7 @@ public final class ClientModEvents {
             if (renderer != null) {
                 renderer.addLayer(new CharacterDetailLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.compat.FoxTailLayer(renderer, event.getEntityModels()));
+                renderer.addLayer(new com.xenowarriors.client.you.YouWingsLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.render.CharacterArmorLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.fox.FoxBackLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));

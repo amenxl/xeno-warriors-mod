@@ -24,6 +24,8 @@ public final class ModItems {
     public static final RegistryObject<Item> HUMAN_SPAWN_EGG = ITEMS.register("human_spawn_egg",
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.npc.ModNpcs.HUMAN, 0xE8C8A8, 0x2A2A44, new Item.Properties()));
     public static final RegistryObject<Item> SKY_CRYSTAL = ITEMS.register("sky_crystal", () -> new Item(new Item.Properties()));
+    /** Sunlight in a bottle: a Seedling You character's food for the night. */
+    public static final RegistryObject<Item> SUNLIGHT = ITEMS.register("sunlight", () -> new com.xenowarriors.you.SunlightItem(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SKY_ORE = ITEMS.register("sky_ore",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.SKY_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> HEALING_POD = ITEMS.register("healing_pod",

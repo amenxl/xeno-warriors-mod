@@ -92,7 +92,7 @@ public final class ClientEvents {
                         !com.xenowarriors.client.mikiko.HoodClient.wantsUp(mc.player)));
         }
         while (ModKeyMappings.TOGGLE_WINGS.consumeClick()) {
-            if (mc.player != null && ClientCharacterData.getLocal().skylander() && !UltimateCutscene.active()) {
+            if (mc.player != null && ClientCharacterData.winged(mc.player) && !UltimateCutscene.active()) {
                 ModNetwork.sendToServer(new com.xenowarriors.network.ToggleWingsPacket());
             }
         }
@@ -178,6 +178,7 @@ public final class ClientEvents {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         pendingSelectScreen = false;
         ClientCharacterData.clear();
+        com.xenowarriors.client.you.YouClient.clear();
         ClientSkillState.clear();
         FlightTracker.clear();
         com.xenowarriors.client.journey.JourneyClient.state = new net.minecraft.nbt.CompoundTag();

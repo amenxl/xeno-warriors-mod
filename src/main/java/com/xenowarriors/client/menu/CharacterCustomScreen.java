@@ -181,7 +181,7 @@ public class CharacterCustomScreen extends Screen {
     private int skillX(int i) { return 4 + (i % 2) * (CARD_W + 4); }
     private int skillY(int i) { return LIST_Y + (i / 2) * (CARD_H + 3) - skillScroll; }
     private int maxSkillScroll() {
-        int rows = (SkillPool.of(type()).size() + 1) / 2;
+        int rows = (SkillPool.of(minecraft.player).size() + 1) / 2;
         return Math.max(0, rows * (CARD_H + 3) - (VH - LIST_Y - 2));
     }
 
@@ -222,7 +222,7 @@ public class CharacterCustomScreen extends Screen {
         if (tab == 1) {
             for (int s = 0; s < SkillManager.ULTIMATE_SLOT; s++)
                 if (inBox(vx, vy, slotX(s), SLOT_Y, SLOT, SLOT)) { selectedSlot = s; click(); return true; }
-            List<SkillPool.Entry> pool = SkillPool.of(type());
+            List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
             if (vy >= LIST_Y && vy < VH)
                 for (int i = 0; i < pool.size(); i++) {
                     if (!inBox(vx, vy, skillX(i), skillY(i), CARD_W, CARD_H)) continue;
@@ -462,7 +462,7 @@ public class CharacterCustomScreen extends Screen {
         String group = type == CharacterType.NONE ? "No warrior chosen" : names + "  •  Season " + type.season();
         g.fill(5, 15, 10, 20, 0xFF000000 | col);
         g.drawString(font, group, 13, 14, 0xD0D0DC, false);
-        String name = type == CharacterType.NONE ? "Choose a warrior" : type.getDisplayName().getString().toUpperCase(java.util.Locale.ROOT);
+        String name = type == CharacterType.NONE ? "Choose a warrior" : ClientCharacterData.name(minecraft.player).toUpperCase(java.util.Locale.ROOT);
         scaled(g, name, 5, 26, 2F, 0xFFFFFF);
         // the team's logo (Freedom Fighters, Sky Patrol...), or an emblem with their initial for teams without one
         if (type != CharacterType.NONE && aff.length > 0) {
@@ -504,7 +504,9 @@ public class CharacterCustomScreen extends Screen {
         g.drawString(font, "Hearts", 144, 57, 0xB0B0C0, false);
 
         List<Object[]> rows = new ArrayList<>();      // label, value, xp (or -1), bar colour
-        rows.add(new Object[]{"Race", com.xenowarriors.character.Race.label(type), -1F, 0});
+        var ys = ClientCharacterData.you(minecraft.player);
+        rows.add(new Object[]{"Race", ys != null ? ys.race.title + (ys.race == com.xenowarriors.character.Race.SKYLANDER ? (ys.form == com.xenowarriors.you.YouSlot.FORM_SOLAR ? " (Solar)" : " (Lunar)") : ys.race == com.xenowarriors.character.Race.DEMON && ys.humanForm ? " (human form)" : "") : com.xenowarriors.character.Race.label(type), -1F, 0});
+        if (ys != null) rows.add(new Object[]{"Element", ys.element.title(), -1F, 0});
         rows.add(new Object[]{"HP", Math.round(self.health()) + " / " + Math.round(self.maxHealth()), -1F, 0});
         rows.add(new Object[]{"Karma", String.valueOf(Math.round(self.karma())), -1F, 0});
         rows.add(new Object[]{"Karma Level", com.xenowarriors.karma.KarmaLevel.fmt(self.karmaLevel()), -1F, 0});
@@ -577,13 +579,13 @@ public class CharacterCustomScreen extends Screen {
                         : List.of("KA: " + k.title(), KaGuideScreen.does(k), "Price: " + k.cost);
                 continue;
             }
-            Skill sk = SkillPool.inSlot(type, loadout, s);
+            Skill sk = SkillPool.inSlot(minecraft.player, loadout, s);
             if (sk != null && !com.xenowarriors.client.SkillIcons.draw(g, sk.getId(), x + 3, y + 1, SLOT - 8)) g.drawCenteredString(font, SkillLoadoutScreen.shortName(sk), x + SLOT / 2, y + 5, 0xFFFFFF);
             String lab = ult ? "ULT" : String.valueOf(s + 1);
             scaled(g, lab, x + SLOT / 2F - font.width(lab) * 0.375F, y + SLOT - 8, 0.75F, ult ? 0xFFD24A : 0xA0A0B0);
             if (sk != null && inBox(mx, my, x, y, SLOT, SLOT)) tip = lines(sk.getName().getString() + (ult ? " (ultimate)" : ""), SkillLoadoutScreen.desc(sk));
         }
-        List<SkillPool.Entry> pool = SkillPool.of(type);
+        List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
         skillScroll = Math.min(skillScroll, maxSkillScroll());
         float[] c = card();
         g.enableScissor((int) c[0], (int) (c[1] + LIST_Y * c[2]), (int) (c[0] + VW * c[2]), (int) (c[1] + VH * c[2]));

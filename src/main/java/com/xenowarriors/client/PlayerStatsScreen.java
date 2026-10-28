@@ -343,13 +343,13 @@ public class PlayerStatsScreen extends Screen {
         for (int i = 0; i < visible && i + scroll < players.size(); i++) {
             PlayerStatsPacket.Entry e = players.get(i + scroll);
             CharacterType type = typeOf(e);
-            int color = type.getColor() | 0xFF000000;
+            int color = (type == CharacterType.YOU ? ClientCharacterData.color(minecraft.player) : type.getColor()) | 0xFF000000;
             int y = top + i * ROW;
             g.fill(x, y, x + w, y + ROW - 3, e.self() ? BG_SELF : BG);
             g.fill(x, y, x + 2, y + ROW - 3, color);
             String tag = e.self() ? " (you)" : e.party() ? " (party)" : "";
             text(g, e.name() + tag, c1, y + 4, c2 - c1 - 6, 0xFFFFFF);
-            text(g, type == CharacterType.NONE ? "No warrior" : type.getDisplayName().getString(), c1, y + 15, c2 - c1 - 6, color);
+            text(g, type == CharacterType.NONE ? "No warrior" : type == CharacterType.YOU ? (e.self() ? ClientCharacterData.name(minecraft.player) : "Their own warrior") : type.getDisplayName().getString(), c1, y + 15, c2 - c1 - 6, color);
             text(g, type == CharacterType.NONE ? "-" : "Lv " + commas(Math.max(1, e.level())), c2, y + 4, c3 - c2 - 6, 0xFFD966);
             text(g, "❤ " + compact(e.health()) + "/" + compact(e.maxHealth()), c2, y + 15, c3 - c2 - 6, 0xFF6060);
             // three slim stat bars with their levels
@@ -378,7 +378,7 @@ public class PlayerStatsScreen extends Screen {
         PlayerStatsPacket.Entry self = players.stream().filter(PlayerStatsPacket.Entry::self).findFirst().orElse(null);
         if (self == null || me == null) return;
         CharacterType type = typeOf(self);
-        int color = type.getColor() | 0xFF000000;
+        int color = (type == CharacterType.YOU ? ClientCharacterData.color(minecraft.player) : type.getColor()) | 0xFF000000;
         boolean mikiko = type == CharacterType.MIKIKO;
 
         // status items shown in the two-column grid
@@ -414,7 +414,7 @@ public class PlayerStatsScreen extends Screen {
         // header: who, level, hearts
         String lv = "Lv " + commas(Math.max(1, self.level())) + " / " + commas(Stats.MAX_CHARACTER_LEVEL);
         int lvW = font.width(lv);
-        text(g, type == CharacterType.NONE ? "No warrior" : type.getDisplayName().getString(), x + PAD, y + 6, w - lvW - PAD * 3, color);
+        text(g, type == CharacterType.NONE ? "No warrior" : ClientCharacterData.name(minecraft.player), x + PAD, y + 6, w - lvW - PAD * 3, color);
         g.drawString(font, lv, right - lvW, y + 6, 0xFFD966);
         int hearts = Stats.bonusHearts(self.level());
         int next = self.level() < 1000 ? (self.level() / 10 + 1) * 10 : (self.level() / 1000 + 1) * 1000;
@@ -503,7 +503,7 @@ public class PlayerStatsScreen extends Screen {
         if (p == null) return;
         CharacterType type = ClientCharacterData.get(p);
         int w = cardW(), x = cardX(), y = OUT_TOP, bottom = height - 20;
-        int color = type.getColor() | 0xFF000000;
+        int color = (type == CharacterType.YOU ? ClientCharacterData.color(minecraft.player) : type.getColor()) | 0xFF000000;
         g.fill(x, y, x + w, bottom, BG);
         g.fill(x, y, x + w, y + 1, color);
         if (type == CharacterType.NONE) {
@@ -513,7 +513,7 @@ public class PlayerStatsScreen extends Screen {
         String[] names = type.outfitNames();
         String cur = names[ClientCharacterData.outfit(p)];
         int[] pb = previewBox();
-        text(g, type.getDisplayName().getString() + "  •  " + cur, x + PAD, y + 6, w - PAD * 2, color);
+        text(g, ClientCharacterData.name(minecraft.player) + "  •  " + cur, x + PAD, y + 6, w - PAD * 2, color);
         // preview: your character, turning to follow the mouse, standing in a soft spotlight
         g.fill(pb[0], pb[1], pb[0] + pb[2], pb[1] + pb[3], 0x60000000);
         g.fill(pb[0], pb[1] + pb[3] - 14, pb[0] + pb[2], pb[1] + pb[3], 0x30FFFFFF);

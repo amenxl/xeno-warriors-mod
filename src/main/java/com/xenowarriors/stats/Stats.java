@@ -148,6 +148,7 @@ public final class Stats {
     public static void reapply(ServerPlayer player) {
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> applySpeed(player, d));
         applyHealth(player);
+        com.xenowarriors.you.YouRaces.apply(player);
         syncLevel(player);
     }
 
@@ -192,7 +193,7 @@ public final class Stats {
         float amount = event.getAmount();
 
         if (source instanceof ServerPlayer attacker && attacker != target) {
-            amount *= 1F + Stat.ATTACK.bonus(level(attacker, Stat.ATTACK));
+            amount *= (1F + Stat.ATTACK.bonus(level(attacker, Stat.ATTACK))) * com.xenowarriors.you.YouRaces.damageMult(attacker);
             addXp(attacker, Stat.ATTACK, Math.min(amount, target.getHealth()));
         }
         if (target instanceof ServerPlayer defender && source instanceof LivingEntity && source != defender) {
