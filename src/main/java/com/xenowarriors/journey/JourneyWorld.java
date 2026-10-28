@@ -36,32 +36,27 @@ public final class JourneyWorld {
     public static BlockPos arena(int slot) { return new BlockPos(slot * SPACING + SPACING / 2, Tower.Y, Z); }
     public static BlockPos start(int slot) { return new BlockPos(slot * SPACING + SPACING / 2, PATH_Y, Z + 70); }
 
-    /** The centre of step i's platform (0 = the start). */
-    public static BlockPos node(int slot, int i) {
-        BlockPos s = start(slot);
-        return new BlockPos(s.getX() + (int) Math.round(Math.sin(i * 1.3) * 6), s.getY() + i, s.getZ() + i * GAP);
-    }
-
     public static AABB area(int slot) {
         BlockPos a = arena(slot), s = start(slot);
-        return new AABB(a.getX() - 40, a.getY() - 20, a.getZ() - 40, a.getX() + 40, s.getY() + 30, s.getZ() + GAP * (JourneyRules.STEPS + 1) + 10);
+        return new AABB(a.getX() - 40, a.getY() - 20, a.getZ() - 40, a.getX() + 40, s.getY() + 40, s.getZ() + GAP * 20 + 10);
     }
 
     // ------------------------------------------------------------------------------------------------ the path
 
     /** Clears what an earlier run left and lays out every platform (no bridges yet). */
-    public static void buildPath(ServerLevel l, int slot, int[] nodes) {
+    public static void buildPath(ServerLevel l, int slot, JourneyMap map) {
         BlockPos s = start(slot);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        for (int x = s.getX() - 14; x <= s.getX() + 14; x++)
-            for (int z = s.getZ() - 8; z <= s.getZ() + GAP * (nodes.length) + 4; z++)
-                for (int y = s.getY() - 2; y <= s.getY() + nodes.length + 4; y++)
+        for (int x = s.getX() - 22; x <= s.getX() + 22; x++)
+            for (int z = s.getZ() - 8; z <= s.getZ() + GAP * 19 + 6; z++)
+                for (int y = s.getY() - 2; y <= s.getY() + 24; y++)
                     if (!l.getBlockState(m.set(x, y, z)).isAir()) l.setBlock(m, Blocks.AIR.defaultBlockState(), 2);
-        for (int i = 0; i < nodes.length; i++) platform(l, node(slot, i), ring(nodes[i], i == 0 ? 2 : 0));
+        for (JourneyMap.Node n : map.nodes) platform(l, map.pos(slot, n), ring(n.kind, n.state == JourneyMap.HERE ? 2 : 0));
     }
 
     /** Ring colours: state 0 = ahead (by step kind), 1 = where you are, 2 = done. */
     static BlockState ring(int kind, int state) {
+        if (state == 3) return Blocks.BLACK_STAINED_GLASS.defaultBlockState();
         if (state == 1) return Blocks.RED_STAINED_GLASS.defaultBlockState();
         if (state == 2) return Blocks.GRAY_STAINED_GLASS.defaultBlockState();
         return switch (kind) {
@@ -69,6 +64,7 @@ public final class JourneyWorld {
             case JourneyRules.SCENARIO -> Blocks.CYAN_STAINED_GLASS.defaultBlockState();
             case JourneyRules.HEAL -> Blocks.LIME_STAINED_GLASS.defaultBlockState();
             case JourneyRules.BOSS -> Blocks.PURPLE_STAINED_GLASS.defaultBlockState();
+            case JourneyRules.EVENT -> Blocks.YELLOW_STAINED_GLASS.defaultBlockState();
             default -> Blocks.WHITE_STAINED_GLASS.defaultBlockState();
         };
     }
@@ -90,9 +86,8 @@ public final class JourneyWorld {
             if (Math.abs(dx) + Math.abs(dz) == 4) l.setBlock(m.set(c.getX() + dx, c.getY(), c.getZ() + dz), ring, 2);
     }
 
-    /** The bridge from step i to i+1, in the order it's laid (start to end), 3 wide; the second half one block up. */
-    static List<BlockPos> bridge(int slot, int i) {
-        BlockPos a = node(slot, i), b = node(slot, i + 1);
+    /** The bridge from one step to the next, in the order it's laid (start to end), 3 wide; the second half one block up. */
+    static List<BlockPos> bridge(BlockPos a, BlockPos b) {
         List<BlockPos> out = new ArrayList<>();
         Set<BlockPos> seen = new HashSet<>();
         int n = (int) Math.ceil(Math.sqrt(a.distSqr(b)) * 2);

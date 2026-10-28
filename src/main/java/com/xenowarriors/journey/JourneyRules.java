@@ -6,7 +6,6 @@ import com.xenowarriors.character.CharacterType;
 public final class JourneyRules {
     private JourneyRules() {}
 
-    public static final int STEPS = 10;
     public static final String[] DIFF = {"EASY", "NORMAL", "HARD", "INSANE", "XENO"};
     public static final int[] DIFF_COLOR = {0x5FD05F, 0x50A0FF, 0xFFB040, 0xFF4040, 0xC040FF};
     static final float[] HP_MULT = {0.7F, 1F, 1.5F, 2.2F, 3.2F}, DMG_MULT = {0.6F, 1F, 1.3F, 1.7F, 2.2F};
@@ -16,9 +15,22 @@ public final class JourneyRules {
     static final int[] BOSS_FLOOR = {10, 20, 30, 50, 80};
 
     // step kinds
-    public static final int START = 0, BATTLE = 1, SCENARIO = 2, HEAL = 3, BOSS = 4;
-    public static final String[] STEP_NAME = {"START", "BATTLE", "SCENARIO", "HEALING POD", "BOSS"};
-    public static final int[] STEP_COLOR = {0xFFFFFF, 0xFF7040, 0x40D0FF, 0x60F060, 0xC040FF};
+    public static final int START = 0, BATTLE = 1, SCENARIO = 2, HEAL = 3, BOSS = 4, EVENT = 5;
+    public static final String[] STEP_NAME = {"START", "BATTLE", "SCENARIO", "HEALING POD", "BOSS", "EVENT"};
+    public static final int[] STEP_COLOR = {0xFFFFFF, 0xFF7040, 0x40D0FF, 0x60F060, 0xC040FF, 0xFFD040};
+
+    // stages: each difficulty has 3, longer each time; clear Stage 3 to open the next difficulty
+    public static final int STAGES = 3;
+    public static final int[] STAGE_ROWS = {10, 14, 18};
+    public static final float[] STAGE_PAY = {1F, 1.5F, 2F};
+
+    /** Event panel boosts: for the rest of the journey, for the whole party; they stack. */
+    public enum Boost {
+        POWER("Power", "+10% damage", 5, 0xFF6040), GUARD("Guard", "-10% damage taken", 5, 0x60A0FF), SWIFT("Swift", "+10% speed", 4, 0x60F0C0),
+        VITALITY("Vitality", "+10% max health", 5, 0x60F060), FORTUNE("Fortune", "+20% Journey Coins", 5, 0xFFD040);
+        public final String title, text; public final int max, color;
+        Boost(String title, String text, int max, int color) { this.title = title; this.text = text; this.max = max; this.color = color; }
+    }
 
     // shop
     public static final int S_HEAL = 0, S_FULL = 1, S_REVIVE = 2, S_PARTY = 3, S_POWER = 4;

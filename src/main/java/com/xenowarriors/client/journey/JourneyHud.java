@@ -21,7 +21,7 @@ public class JourneyHud implements IGuiOverlay {
         var st = JourneyClient.state;
         int diff = Math.max(0, Math.min(4, st.getInt("diff"))), cur = st.getInt("cur"), phase = JourneyClient.phase();
         JourneyScreen.sc(g, font, JourneyRules.DIFF[diff], 6, 4, 1.6F, JourneyRules.DIFF_COLOR[diff]);
-        JourneyScreen.sc(g, font, String.format("%02d/%02d", cur, JourneyRules.STEPS), 8 + font.width(JourneyRules.DIFF[diff]) * 1.6F, 9, 0.9F, 0xFFFFFF);
+        JourneyScreen.sc(g, font, (st.getInt("stage") + 1) + "-" + String.format("%02d/%02d", cur, st.getInt("rows")), 8 + font.width(JourneyRules.DIFF[diff]) * 1.6F, 9, 0.9F, 0xFFFFFF);
         // the party
         int x = 6, y = 20;
         for (JourneyClient.Member m : JourneyClient.members()) for (CharacterType t : m.picks()) {
@@ -37,6 +37,16 @@ public class JourneyHud implements IGuiOverlay {
         String jc = st.getInt("jc") + " JC";
         g.fill(6, 46, 12 + font.width(jc), 57, 0x90101820);
         g.drawString(font, jc, 9, 48, 0xFF40D0FF, true);
+        // event boosts
+        int[] bs = st.getIntArray("boosts");
+        float bx = 16 + font.width(jc);
+        for (JourneyRules.Boost b : JourneyRules.Boost.values()) {
+            int n = b.ordinal() < bs.length ? bs[b.ordinal()] : 0;
+            if (n <= 0) continue;
+            String s = b.title + " x" + n;
+            JourneyScreen.sc(g, font, s, bx, 49, 0.6F, b.color);
+            bx += font.width(s) * 0.6F + 6;
+        }
         int rx = width - 6;
         if (phase == 3) {                         // (left side, under the party: the top-right is where stat toasts go)
             JourneyClient.Member me = JourneyClient.me();

@@ -19,7 +19,7 @@ public class JourneyTeamScreen extends JourneyScreen {
         int col = JourneyRules.STEP_COLOR[Math.max(0, Math.min(4, kind))];
         String head = kind == JourneyRules.BOSS ? "BOSS BATTLE" : (kind == JourneyRules.SCENARIO ? "SCENARIO " : "BATTLE ") + String.format("%02d", cur);
         sc(g, head, 10, 8, 2F, col);
-        sc(g, JourneyRules.DIFF[st.getInt("diff")] + "  -  step " + cur + "/" + JourneyRules.STEPS, 10, 27, 0.6F, 0x8898A8);
+        sc(g, JourneyRules.DIFF[st.getInt("diff")] + " Stage " + (st.getInt("stage") + 1) + "  -  step " + cur + "/" + st.getInt("rows"), 10, 27, 0.6F, 0x8898A8);
         String left = "Starts in " + st.getInt("chooseLeft") + "s";
         sc(g, left, VW - 10 - font.width(left) * 0.7F, 10, 0.7F, 0xA8B8C8);
         int y = 38;

@@ -856,7 +856,7 @@ public final class UiTest {
             for (int i = 0; i < 7; i++) com.xenowarriors.journey.Journey.action(p, 1, eight[i].ordinal(), 0);
         }); mc.options.hideGui = false; }, 40));
         l.add(new Step("journey_lobby", () -> {}, 3));
-        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 1, eight[7].ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 2, 0, 0); }), 20));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 1, eight[7].ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 2, 0, 0); com.xenowarriors.journey.Journey.action(p, 11, 1, 0); }), 20));
         l.add(new Step("journey_lobby_full", () -> {}, 3));
         l.add(new Step(null, () -> { server(p -> com.xenowarriors.journey.Journey.action(p, 4, 0, 0)); }, 80));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> { p.setYRot(0); p.setXRot(10); }); }, 30));
@@ -890,7 +890,22 @@ public final class UiTest {
         l.add(new Step("journey_shop", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.action(p, 8, 2, CharacterType.MIKIKO.ordinal())), 15));
         l.add(new Step("journey_shop_revived", () -> {}, 3));
-        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { com.xenowarriors.journey.Journey.skipTo(p, 3); var c = com.xenowarriors.journey.Journey.testNode(p, 3); p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5); }); }, 30));
+        // the fork ahead, from above
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            var c = com.xenowarriors.journey.Journey.testNode(p, 1);
+            p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5);
+            var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(c.getX() + .5, c.getY() + 16, c.getZ() - 10, 0F, 40F); a.setNoGravity(true); a.setInvisible(true);
+            p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+        }); }, 60));
+        l.add(new Step(null, () -> { if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+            a.setYRot(0); a.yRotO = 0; a.setXRot(40); a.xRotO = 40; a.setYHeadRot(0); a.yHeadRotO = 0; mc.setCameraEntity(a); } }, 10));
+        l.add(new Step("journey_fork", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.EVENT)); }, 25));
+        l.add(new Step("journey_event", () -> {}, 3));
+        l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.journey.JourneyMenuScreen(false)), 15));
+        l.add(new Step("journey_map", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.SCENARIO)); }, 30));
         l.add(new Step("journey_scenario", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> {
             for (CharacterType t : eight) com.xenowarriors.journey.Journey.action(p, 6, t.ordinal(), 0);
@@ -899,7 +914,7 @@ public final class UiTest {
         l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step("journey_scenario_battle", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.testEnd(p, true)), 20));
-        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { com.xenowarriors.journey.Journey.skipTo(p, 10); var c = com.xenowarriors.journey.Journey.testNode(p, 10); p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5); }); }, 30));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.BOSS)); }, 30));
         l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 110));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 10));
         l.add(new Step("journey_boss", () -> {}, 3));

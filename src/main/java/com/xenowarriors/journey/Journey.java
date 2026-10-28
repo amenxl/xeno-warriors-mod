@@ -76,11 +76,14 @@ public final class Journey {
     }
 
     static final class Run {
-        int slot, diff, phase = LOBBY, cur, jc, chSec, chHearts, waves;
+        int slot, diff, stage, phase = LOBBY, cur, jc, chSec, chHearts, waves;
         UUID host;
         final List<Member> members = new ArrayList<>();
         final Map<CharacterType, Float> hp = new EnumMap<>(CharacterType.class);
-        int[] nodes = new int[0];
+        JourneyMap map;
+        final int[] boosts = new int[Boost.values().length];
+        /** Bridge blocks per link (from step id * 1000 + to step id), so a route that closes can take its bridge away. */
+        final Map<Integer, List<BlockPos>> bridges = new HashMap<>();
         boolean cleared = true, powerUp, powerNext;
         Scenario scenario = Scenario.NONE; Foe foe = Foe.MIXED; Challenge challenge = Challenge.NO_DOWNS; boolean challengeOk;
         long chooseUntil, spawnAt, battleStart, battleEnd;
@@ -89,14 +92,17 @@ public final class Journey {
         final List<String> log = new ArrayList<>();
         CompoundTag results = new CompoundTag();
         final ArrayDeque<BlockPos> building = new ArrayDeque<>();
-        final UUID[] labels = new UUID[JourneyRules.STEPS + 1];
         boolean solo() { return members.size() == 1; }
         /** How many characters each player brings onto the field at once: 4 alone, 2 each as a duo. */
         int field() { return solo() ? 4 : 2; }
         int cap() { return solo() ? 8 : 4; }
         Member member(UUID id) { for (Member m : members) if (m.id.equals(id)) return m; return null; }
         boolean alive(CharacterType t) { return hp.getOrDefault(t, 0F) > 0F; }
-        int kind() { return cur < nodes.length ? nodes[cur] : JourneyRules.START; }
+        int kind() { return map == null || map.get(cur) == null ? JourneyRules.START : map.get(cur).kind; }
+        JourneyMap.Node node() { return map.get(cur); }
+        int row() { return map == null ? 0 : map.get(cur).row; }
+        int rows() { return map == null ? JourneyRules.STAGE_ROWS[stage] : map.rows; }
+        BlockPos here() { return map.pos(slot, map.get(cur)); }
     }
 
     private static final Map<Integer, Run> RUNS = new HashMap<>();
@@ -112,20 +118,33 @@ public final class Journey {
 
     // ------------------------------------------------------------------------------------------------ progress
 
-    /** How many difficulties this player has cleared, in order (0-5). */
-    public static int cleared(ServerPlayer p) { return p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getInt(KEY); }
+    private static final String STAGES_KEY = "xw_journey_stages";
+
+    /** How many stages this player has cleared, in order (0-15: Easy 1-3, Normal 1-3, ...). */
+    public static int cleared(ServerPlayer p) {
+        CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        return Math.max(root.getInt(STAGES_KEY), Math.min(5, root.getInt(KEY)) * JourneyRules.STAGES);   // (older saves counted whole difficulties)
+    }
 
     public static void setCleared(ServerPlayer p, int n) {
         CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
-        root.putInt(KEY, Math.max(0, Math.min(5, n)));
+        n = Math.max(0, Math.min(5 * JourneyRules.STAGES, n));
+        root.putInt(STAGES_KEY, n);
+        root.putInt(KEY, n / JourneyRules.STAGES);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
     }
 
-    /** The hardest difficulty this lobby can pick: one past the lowest either of you has cleared. */
-    private static int maxDiff(Run r, MinecraftServer server) {
-        int min = 5;
+    /** The furthest stage this lobby can pick (difficulty * 3 + stage): one past the lowest either of you has cleared. */
+    private static int maxIndex(Run r, MinecraftServer server) {
+        int min = 5 * JourneyRules.STAGES;
         for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) min = Math.min(min, cleared(p)); }
-        return Math.min(4, min);
+        return Math.min(5 * JourneyRules.STAGES - 1, min);
+    }
+
+    /** Keeps the picked difficulty/stage within what's open (the furthest open stage when it isn't). */
+    private static void clampPick(Run r, MinecraftServer server) {
+        int max = maxIndex(r, server);
+        if (r.diff * JourneyRules.STAGES + r.stage > max) { r.diff = max / JourneyRules.STAGES; r.stage = max % JourneyRules.STAGES; }
     }
 
     // ------------------------------------------------------------------------------------------------ the lobby
@@ -153,7 +172,8 @@ public final class Journey {
         RUNS.put(slot, n);
         n.members.add(new Member(p));
         BY.put(p.getUUID(), n);
-        n.diff = maxDiff(n, p.server);
+        int idx = maxIndex(n, p.server);
+        n.diff = idx / JourneyRules.STAGES; n.stage = idx % JourneyRules.STAGES;
         for (ServerPlayer m : mates) {
             m.sendSystemMessage(msg(p.getGameProfile().getName() + " is setting up a Journey! ", ChatFormatting.AQUA).copy()
                     .append(Component.literal("[Join]").withStyle(s -> s.withColor(ChatFormatting.GREEN).withBold(true)
@@ -171,7 +191,7 @@ public final class Journey {
         Member host = r.members.get(0);
         while (host.picks.size() > 4) host.picks.remove(host.picks.size() - 1);
         for (Member m : r.members) m.ready = false;
-        r.diff = Math.min(r.diff, maxDiff(r, p.server));
+        clampPick(r, p.server);
         syncAll(p.server, r, OPEN_NONE);
         sync(p.server, r, p.getUUID(), OPEN_LOBBY);
     }
@@ -195,7 +215,19 @@ public final class Journey {
                 me.picks.add(t);
                 me.ready = false;
             }
-            case 2 -> { if (r.phase == LOBBY && p.getUUID().equals(r.host)) { r.diff = Math.max(0, Math.min(maxDiff(r, server), a)); for (Member m : r.members) m.ready = false; } }
+            case 2 -> {                                            // difficulty (its furthest open stage)
+                int max = maxIndex(r, server);
+                if (r.phase == LOBBY && p.getUUID().equals(r.host) && a >= 0 && a * JourneyRules.STAGES <= max) {
+                    r.diff = a; r.stage = Math.min(JourneyRules.STAGES - 1, max - a * JourneyRules.STAGES);
+                    for (Member m : r.members) m.ready = false;
+                }
+            }
+            case 11 -> {                                           // stage
+                if (r.phase == LOBBY && p.getUUID().equals(r.host) && a >= 0 && a < JourneyRules.STAGES && r.diff * JourneyRules.STAGES + a <= maxIndex(r, server)) {
+                    r.stage = a;
+                    for (Member m : r.members) m.ready = false;
+                }
+            }
             case 3 -> { if (r.phase == LOBBY) me.ready = !me.ready && me.picks.size() == r.cap(); }
             case 4 -> { if (r.phase == LOBBY && p.getUUID().equals(r.host)) start(server, r, p); }
             case 5 -> { if (r.phase == LOBBY) leave(p, "You left the Journey lobby", false); return; }
@@ -236,26 +268,21 @@ public final class Journey {
                     : null;
             if (why != null) { host.displayClientMessage(msg(why, ChatFormatting.RED), true); return; }
         }
-        r.diff = Math.min(r.diff, maxDiff(r, server));
-        // the path: 10 steps, a healing pod at 7 (and sometimes 4), a boss at the end
-        var rnd = tl.getRandom();
-        r.nodes = new int[JourneyRules.STEPS + 1];
-        r.nodes[0] = JourneyRules.START;
-        for (int i = 1; i <= JourneyRules.STEPS; i++) {
-            r.nodes[i] = i == JourneyRules.STEPS ? JourneyRules.BOSS : i == 7 ? JourneyRules.HEAL : i == 4 && rnd.nextBoolean() ? JourneyRules.HEAL
-                    : i == 1 ? JourneyRules.BATTLE : i == 3 || i == 6 ? JourneyRules.SCENARIO : rnd.nextInt(3) == 0 ? JourneyRules.SCENARIO : JourneyRules.BATTLE;
-        }
+        clampPick(r, server);
+        r.map = JourneyMap.generate(JourneyRules.STAGE_ROWS[r.stage], tl.getRandom());
+        Arrays.fill(r.boosts, 0);
+        r.bridges.clear();
+        r.building.clear();
         r.hp.clear();
         for (Member m : r.members) for (CharacterType t : m.picks) r.hp.put(t, 1F);
         r.jc = JourneyRules.START_JC;
         r.cur = 0; r.cleared = true; r.phase = IDLE;
         r.log.clear();
-        r.log.add(JourneyRules.DIFF[r.diff] + " journey started (" + (r.solo() ? "solo" : "duo") + ")");
-        for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> !(e instanceof Player))) e.discard();
-        JourneyWorld.buildPath(tl, r.slot, r.nodes);
-        for (int i = 1; i < r.nodes.length; i++) relabel(tl, r, i, false);
-        relabel(tl, r, 0, false);
-        BlockPos s = JourneyWorld.node(r.slot, 0);
+        r.log.add(stageName(r) + " started (" + (r.solo() ? "solo" : "duo") + ", " + r.rows() + " steps)");
+        for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> !(e instanceof Player) && !(e instanceof com.xenowarriors.bot.PartyBotEntity))) e.discard();
+        JourneyWorld.buildPath(tl, r.slot, r.map);
+        for (JourneyMap.Node n : r.map.nodes) relabel(tl, r, n);
+        BlockPos s = r.here();
         int k = 0;
         for (Member m : r.members) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
@@ -267,13 +294,15 @@ public final class Journey {
             setBack(p, m);
             p.teleportTo(tl, s.getX() + .5 + (k++ == 0 ? -1.5 : 1.5), s.getY() + 1, s.getZ() + .5, 0F, 0F);
             lead(p, r, m);
-            title(p, JourneyRules.DIFF[r.diff] + " JOURNEY", "Walk the path - step on the next platform", JourneyRules.DIFF_COLOR[r.diff]);
-            p.sendSystemMessage(msg("JOURNEY - " + JourneyRules.STEPS + " steps to the boss. Nothing heals you in battle: use Main Menu > Journey (Heal/Enhance) between steps. "
+            title(p, stageName(r).toUpperCase(), "Walk the path - step on the next platform", JourneyRules.DIFF_COLOR[r.diff]);
+            p.sendSystemMessage(msg("JOURNEY - " + r.rows() + " steps to the boss. Where the path forks, pick a route (the other one closes). Event panels boost the whole party. Nothing heals you in battle: use Main Menu > Journey (Heal/Enhance) between steps. "
                     + "Earn Journey Coins with high scores and challenges.", ChatFormatting.AQUA));
         }
-        openBridge(r);
+        openBridges(r);
         syncAll(server, r, OPEN_NONE);
     }
+
+    static String stageName(Run r) { return JourneyRules.DIFF[r.diff].charAt(0) + JourneyRules.DIFF[r.diff].substring(1).toLowerCase() + " Stage " + (r.stage + 1); }
 
     // ------------------------------------------------------------------------------------------------ leaving
 
@@ -309,6 +338,7 @@ public final class Journey {
     /** Back to who you were (the select screen if that character's taken now, or you had none), your game mode and where you were. */
     private static void restore(ServerPlayer p, CharacterType original, GameType mode, ResourceKey<Level> dim, Vec3 pos, float yRot) {
         setBack(p, null);
+        applyBoosts(p, null, false);
         if (p.gameMode.getGameModeForPlayer() != mode) p.setGameMode(mode);
         ServerPlayer holder = com.xenowarriors.character.CharacterLock.takenBy(p, original);
         if (original == CharacterType.NONE || holder != null) {
@@ -364,7 +394,7 @@ public final class Journey {
         RUNS.remove(r.slot);
         for (Member m : r.members) BY.remove(m.id);
         ServerLevel tl = server.getLevel(Tower.LEVEL);
-        if (tl == null || r.nodes.length == 0) return;
+        if (tl == null || r.map == null) return;
         com.xenowarriors.tower.TowerBosses.clear(JourneyWorld.arena(r.slot));
         for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> !(e instanceof Player) && !(e instanceof com.xenowarriors.bot.PartyBotEntity))) e.discard();
     }
@@ -373,6 +403,7 @@ public final class Journey {
 
     /** The character you walk the path as: the one you last fought with if they're up, else your first one still standing. */
     private static void lead(ServerPlayer p, Run r, Member m) {
+        applyBoosts(p, r, false);
         CharacterType t = m.active != CharacterType.NONE && r.alive(m.active) && m.picks.contains(m.active) ? m.active : CharacterType.NONE;
         if (t == CharacterType.NONE) for (CharacterType c : m.picks) if (r.alive(c)) { t = c; break; }
         if (t == CharacterType.NONE && !m.picks.isEmpty()) t = m.picks.get(0);
@@ -382,30 +413,65 @@ public final class Journey {
         p.setHealth(Math.max(1F, p.getMaxHealth() * r.hp.getOrDefault(t, 0F)));
     }
 
+    private static final UUID VIT = UUID.fromString("7c1d4e22-8b4e-4d66-ab62-1e2f3d4c5b11"), SPD = UUID.fromString("7c1d4e22-8b4e-4d66-ab62-1e2f3d4c5b12");
+
+    /** Vitality and Swift boosts as attribute bonuses while fighting (off on the path and when you leave). */
+    private static void applyBoosts(LivingEntity e, Run r, boolean on) {
+        var hp = e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        var sp = e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        if (hp != null) hp.removeModifier(VIT);
+        if (sp != null) sp.removeModifier(SPD);
+        if (!on || r == null) { if (e.getHealth() > e.getMaxHealth()) e.setHealth(e.getMaxHealth()); return; }
+        int v = r.boosts[Boost.VITALITY.ordinal()], s = r.boosts[Boost.SWIFT.ordinal()];
+        if (hp != null && v > 0) hp.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(VIT, "Journey vitality", 0.1 * v, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL));
+        if (sp != null && s > 0) sp.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(SPD, "Journey swift", 0.1 * s, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL));
+    }
+
     private static void become(ServerPlayer p, CharacterType t) {
         if (ModCapabilities.getType(p) != t) CharacterManager.setCharacter(p, t);
     }
 
-    private static void openBridge(Run r) {
-        if (r.cur + 1 >= r.nodes.length) return;
-        r.building.addAll(JourneyWorld.bridge(r.slot, r.cur));
+    /** Bridges from where you are to every step you can go next. */
+    private static void openBridges(Run r) {
+        JourneyMap.Node c = r.node();
+        for (int to : c.next) {
+            JourneyMap.Node n = r.map.get(to);
+            if (n.state != JourneyMap.AHEAD) continue;
+            List<BlockPos> b = JourneyWorld.bridge(r.map.pos(r.slot, c), r.map.pos(r.slot, n));
+            r.bridges.put(c.id * 1000 + to, b);
+            r.building.addAll(b);
+        }
     }
 
-    private static void relabel(ServerLevel tl, Run r, int i, boolean done) {
-        if (r.labels[i] != null) { Entity e = tl.getEntity(r.labels[i]); if (e != null) e.discard(); }
-        String text = done ? "CLEARED" : JourneyRules.STEP_NAME[r.nodes[i]];
-        int col = done ? 0x9A9AA8 : JourneyRules.STEP_COLOR[r.nodes[i]];
-        Entity e = JourneyWorld.label(tl, JourneyWorld.node(r.slot, i), text, col, i);
-        r.labels[i] = e == null ? null : e.getUUID();
+    private static void relabel(ServerLevel tl, Run r, JourneyMap.Node n) {
+        if (n.label != null) { Entity e = tl.getEntity(n.label); if (e != null) e.discard(); }
+        String text = n.state == JourneyMap.DONE && n.row > 0 ? "CLEARED" : n.state == JourneyMap.CLOSED ? "CLOSED" : JourneyRules.STEP_NAME[n.kind];
+        int col = n.state == JourneyMap.DONE && n.row > 0 ? 0x9A9AA8 : n.state == JourneyMap.CLOSED ? 0x50505A : JourneyRules.STEP_COLOR[n.kind];
+        Entity e = JourneyWorld.label(tl, r.map.pos(r.slot, n), text, col, n.row);
+        n.label = e == null ? null : e.getUUID();
     }
 
-    private static void arrive(MinecraftServer server, ServerLevel tl, Run r, int i) {
-        JourneyWorld.recolor(tl, JourneyWorld.node(r.slot, r.cur), JourneyWorld.ring(r.nodes[r.cur], 2));
-        if (r.cur > 0) relabel(tl, r, r.cur, true);
-        r.cur = i;
+    private static void arrive(MinecraftServer server, ServerLevel tl, Run r, int id) {
+        JourneyMap.Node prev = r.node(), to = r.map.get(id);
+        prev.state = JourneyMap.DONE;
+        JourneyWorld.recolor(tl, r.map.pos(r.slot, prev), JourneyWorld.ring(prev.kind, 2));
+        if (prev.row > 0) relabel(tl, r, prev);
+        // the routes you didn't take close: their bridges fall away
+        for (JourneyMap.Node n : r.map.choose(id)) {
+            JourneyWorld.recolor(tl, r.map.pos(r.slot, n), JourneyWorld.ring(n.kind, 3));
+            relabel(tl, r, n);
+            List<BlockPos> b = r.bridges.remove(prev.id * 1000 + n.id);
+            if (b != null) {
+                r.building.removeAll(b);
+                for (BlockPos p : b) { tl.setBlock(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2); }
+                if (!b.isEmpty()) tl.sendParticles(ParticleTypes.CLOUD, b.get(b.size() / 2).getX() + .5, b.get(b.size() / 2).getY() + .5, b.get(b.size() / 2).getZ() + .5, 20, 2, .3, 2, .02);
+            }
+        }
+        r.cur = id;
         r.cleared = false;
-        BlockPos c = JourneyWorld.node(r.slot, i);
-        JourneyWorld.recolor(tl, c, JourneyWorld.ring(r.nodes[i], 1));
+        to.state = JourneyMap.HERE;
+        BlockPos c = r.map.pos(r.slot, to);
+        JourneyWorld.recolor(tl, c, JourneyWorld.ring(to.kind, 1));
         int k = 0;
         for (Member m : r.members) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
@@ -413,29 +479,57 @@ public final class Journey {
             k++;
         }
         tl.playSound(null, c, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1F, 1.4F);
-        if (r.nodes[i] == JourneyRules.HEAL) {
+        if (to.kind == JourneyRules.HEAL) {
             for (CharacterType t : r.hp.keySet()) if (r.alive(t)) r.hp.put(t, Math.min(1F, r.hp.get(t) + 0.6F));
             for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) { lead(p, r, m); title(p, "HEALING POD", "Everyone still standing healed 60%", 0x60F060); } }
             tl.sendParticles(ParticleTypes.HEART, c.getX() + .5, c.getY() + 1.5, c.getZ() + .5, 30, 2.5, .6, 2.5, 0);
             tl.playSound(null, c, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1F, 1.2F);
-            r.log.add("Step " + i + ": Healing Pod - healed 60%");
+            r.log.add("Step " + to.row + ": Healing Pod - healed 60%");
             stepDone(server, tl, r);
             return;
         }
+        if (to.kind == JourneyRules.EVENT) { event(server, tl, r, c); return; }
         beginChoose(server, r);
+    }
+
+    /** An event panel: a boost for the whole party for the rest of the journey (they stack). */
+    private static void event(MinecraftServer server, ServerLevel tl, Run r, BlockPos c) {
+        List<Boost> open = new ArrayList<>();
+        for (Boost b : Boost.values()) if (r.boosts[b.ordinal()] < b.max) open.add(b);
+        String title, sub;
+        int col;
+        if (open.isEmpty()) {                                // (everything maxed: a heal instead)
+            for (CharacterType t : r.hp.keySet()) if (r.alive(t)) r.hp.put(t, Math.min(1F, r.hp.get(t) + 0.3F));
+            title = "EVENT: RESPITE"; sub = "Everyone still standing healed 30%"; col = 0x60F060;
+            r.log.add("Step " + r.row() + ": Event - healed 30%");
+        } else {
+            Boost b = open.get(tl.getRandom().nextInt(open.size()));
+            int n = ++r.boosts[b.ordinal()];
+            title = "EVENT: " + b.title.toUpperCase();
+            sub = b.text + " for the whole party" + (n > 1 ? " (x" + n + " now)" : "") + " - rest of the journey";
+            col = b.color;
+            r.log.add("Step " + r.row() + ": Event - " + b.title + " (" + b.text + ")" + (n > 1 ? " x" + n : ""));
+        }
+        for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) { lead(p, r, m); title(p, title, sub, col); } }
+        tl.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, c.getX() + .5, c.getY() + 1.5, c.getZ() + .5, 50, 2, .8, 2, .3);
+        tl.playSound(null, c, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1F, 0.8F);
+        stepDone(server, tl, r);
     }
 
     private static void stepDone(MinecraftServer server, ServerLevel tl, Run r) {
         r.cleared = true;
-        openBridge(r);
+        openBridges(r);
+        int ways = 0;
+        for (int to : r.node().next) if (r.map.get(to).state == JourneyMap.AHEAD) ways++;
+        String next = ways > 1 ? "  The path forks - pick a route (the other one closes)." : "  The path to the next step is open.";
         for (Member m : r.members) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
             if (p == null) continue;
-            p.sendSystemMessage(msg("Step " + r.cur + " done. ", ChatFormatting.GREEN).copy()
+            p.sendSystemMessage(msg("Step " + r.row() + " done. ", ChatFormatting.GREEN).copy()
                     .append(Component.literal("[Heal/Enhance]").withStyle(s -> s.withColor(ChatFormatting.AQUA).withBold(true)
                             .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/xeno journey"))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Spend Journey Coins on healing and revives")))))
-                    .append(msg("  (" + r.jc + " JC)  The path to step " + (r.cur + 1) + " is open.", ChatFormatting.GRAY)));
+                    .append(msg("  (" + r.jc + " JC)" + next, ChatFormatting.GRAY)));
         }
         syncAll(server, r, OPEN_NONE);
     }
@@ -470,7 +564,7 @@ public final class Journey {
         Challenge[] all = Challenge.values();
         r.challenge = all[rnd.nextInt(all.length)];
         int people = r.members.size();
-        r.chSec = 45 + 8 * (3 + r.diff + r.cur / 3 + (people - 1) * 2) + (kind == JourneyRules.BOSS ? 60 : 0);
+        r.chSec = 45 + 8 * (3 + r.diff + r.row() / 3 + (people - 1) * 2) + (kind == JourneyRules.BOSS ? 60 : 0);
         r.chHearts = 10 + 5 * people + (kind == JourneyRules.BOSS ? 10 : 0);
         r.phase = CHOOSING;
         r.chooseUntil = server.overworld().getGameTime() + 20 * 60;
@@ -524,11 +618,12 @@ public final class Journey {
             become(p, m.active);
             p.removeAllEffects();
             p.clearFire();
+            applyBoosts(p, r, true);
             p.setHealth(Math.max(1F, p.getMaxHealth() * r.hp.getOrDefault(m.active, 1F)));
             com.xenowarriors.karma.Karma.add(p, 100000F);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4, false, false));
             for (int i = 1; i < m.chosen.size(); i++) spawnBot(p, r, m, m.chosen.get(i));
-            String what = boss ? "BOSS" : r.scenario != Scenario.NONE ? r.scenario.title.toUpperCase() : "BATTLE " + r.cur;
+            String what = boss ? "BOSS" : r.scenario != Scenario.NONE ? r.scenario.title.toUpperCase() : "BATTLE " + r.row();
             title(p, what, "Challenge: " + challengeText(r) + (r.challengeOk ? "" : "  (missed)"), boss ? 0xC040FF : JourneyRules.STEP_COLOR[r.kind()]);
             if (r.powerUp) p.displayClientMessage(msg("Power Up: +30% damage this battle", ChatFormatting.GOLD), true);
         }
@@ -542,6 +637,7 @@ public final class Journey {
         var b = com.xenowarriors.bot.PartyBots.spawn(p, t, new CompoundTag());
         if (b == null) return;
         b.getPersistentData().putBoolean("xw_journey_bot", true);
+        applyBoosts(b, r, true);
         b.setHealth(Math.max(1F, b.getMaxHealth() * r.hp.getOrDefault(t, 1F)));
         b.karma = 100F;
         m.bots.put(b.getUUID(), t);
@@ -652,8 +748,8 @@ public final class Journey {
                     List<Mob> made;
                     if (r.kind() == JourneyRules.BOSS)
                         made = com.xenowarriors.tower.TowerBosses.spawn(tl, c, JourneyRules.BOSS_FLOOR[r.diff], fs);
-                    else made = JourneyWorld.spawn(tl, r.slot, r.foe, r.diff, r.cur, r.members.size(), fs);
-                    if (made.isEmpty()) made = JourneyWorld.spawn(tl, r.slot, Foe.DARK, r.diff, r.cur, r.members.size(), fs);
+                    else made = JourneyWorld.spawn(tl, r.slot, r.foe, r.diff, r.row() + 2 * r.stage, r.members.size(), fs);
+                    if (made.isEmpty()) made = JourneyWorld.spawn(tl, r.slot, Foe.DARK, r.diff, r.row() + 2 * r.stage, r.members.size(), fs);
                     for (Mob m : made) { r.alive.add(m.getUUID()); if (r.seen.add(m.getUUID())) r.enemyHp += m.getMaxHealth(); }
                 }
             }
@@ -682,7 +778,7 @@ public final class Journey {
         for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 14, 24, JourneyWorld.ARENA_R + 14),
                 e -> (e instanceof Mob && !(e instanceof com.xenowarriors.bot.PartyBotEntity)) || e instanceof net.minecraft.world.entity.projectile.Projectile)) e.discard();
         // drops and XP come with you
-        BlockPos at = JourneyWorld.node(r.slot, r.cur);
+        BlockPos at = r.here();
         for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 6, 16, JourneyWorld.ARENA_R + 6),
                 e -> e instanceof net.minecraft.world.entity.item.ItemEntity || e instanceof net.minecraft.world.entity.ExperienceOrb))
             e.teleportTo(at.getX() + .5, at.getY() + 1, at.getZ() + .5);
@@ -700,6 +796,7 @@ public final class Journey {
         for (Member m : r.members) {
             int rank = JourneyRules.rank(m.score / share);
             int jc = won && m.fought ? JourneyRules.RANK_JC[rank] * (boss ? 2 : 1) + (r.challengeOk ? r.challenge.bonus : 0) : 0;   // (watching earns nothing)
+            jc = Math.round(jc * (1F + 0.2F * r.boosts[Boost.FORTUNE.ordinal()]));
             gained += jc;
             CompoundTag t = new CompoundTag();
             t.putString("name", m.name); t.putInt("score", m.score); t.putInt("rank", rank); t.putInt("jc", jc);
@@ -712,7 +809,7 @@ public final class Journey {
         r.jc += gained;
         r.results = res;
         String what = boss ? "Boss" : r.scenario != Scenario.NONE ? r.scenario.title : "Battle";
-        r.log.add("Step " + r.cur + ": " + what + " - " + (won ? "won (" + line + ")" + (r.challengeOk ? ", challenge done" : "") + ", +" + gained + " JC" : "lost"));
+        r.log.add("Step " + r.row() + ": " + what + " - " + (won ? "won (" + line + ")" + (r.challengeOk ? ", challenge done" : "") + ", +" + gained + " JC" : "lost"));
         // back up to the path
         int k = 0;
         for (Member m : r.members) {
@@ -731,7 +828,7 @@ public final class Journey {
         for (float v : r.hp.values()) if (v > 0) anyAlive = true;
         if (won && boss) { finished(server, r); return; }
         if (!anyAlive) { failed(server, r); return; }
-        if (won) { JourneyWorld.recolor(tl, at, JourneyWorld.ring(r.nodes[r.cur], 1)); stepDone(server, tl, r); }
+        if (won) stepDone(server, tl, r);
         syncAll(server, r, OPEN_RESULTS);
     }
 
@@ -743,19 +840,23 @@ public final class Journey {
     }
 
     private static void finished(MinecraftServer server, Run r) {
-        long money = JourneyRules.REWARD[r.diff];
+        long money = Math.round(JourneyRules.REWARD[r.diff] * JourneyRules.STAGE_PAY[r.stage]);
+        int idx = r.diff * JourneyRules.STAGES + r.stage;
+        String name = stageName(r);
         for (Member m : new ArrayList<>(r.members)) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
             if (p == null) continue;
-            boolean first = cleared(p) <= r.diff;
-            if (first) setCleared(p, r.diff + 1);
+            boolean first = cleared(p) <= idx;
+            if (first) setCleared(p, idx + 1);
             com.xenowarriors.economy.Money.add(p, money, true);
-            String next = r.diff < 4 ? (first ? JourneyRules.DIFF[r.diff + 1] + " unlocked!" : "") : "You beat Xeno difficulty!";
-            p.sendSystemMessage(msg("JOURNEY CLEARED (" + JourneyRules.DIFF[r.diff] + ")! +" + com.xenowarriors.economy.Money.fmt(money) + " Money. " + next, ChatFormatting.GOLD));
+            int nx = idx + 1;
+            String next = nx >= 5 * JourneyRules.STAGES ? "You beat Xeno Stage 3!" : !first ? ""
+                    : nx % JourneyRules.STAGES == 0 ? JourneyRules.DIFF[nx / JourneyRules.STAGES] + " difficulty unlocked!" : "Stage " + (nx % JourneyRules.STAGES + 1) + " unlocked!";
+            p.sendSystemMessage(msg("JOURNEY CLEARED (" + name + ")! +" + com.xenowarriors.economy.Money.fmt(money) + " Money. " + next, ChatFormatting.GOLD));
             com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), CharacterType.NONE.ordinal(), -1,
-                    JourneyRules.DIFF[r.diff] + " Journey cleared", "+" + com.xenowarriors.economy.Money.fmt(money) + " Money. " + next, "");
+                    name + " cleared", "+" + com.xenowarriors.economy.Money.fmt(money) + " Money. " + next, "");
             leave(p, "Journey complete!", true);
-            title(p, "JOURNEY CLEARED", JourneyRules.DIFF[r.diff] + "  -  +" + com.xenowarriors.economy.Money.fmt(money) + " Money", JourneyRules.DIFF_COLOR[r.diff]);
+            title(p, "JOURNEY CLEARED", name + "  -  +" + com.xenowarriors.economy.Money.fmt(money) + " Money", JourneyRules.DIFF_COLOR[r.diff]);
         }
     }
 
@@ -764,7 +865,7 @@ public final class Journey {
         for (Member m : new ArrayList<>(r.members)) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
             if (p == null) continue;
-            leave(p, "Your whole party is down - the journey is over (step " + r.cur + "/" + JourneyRules.STEPS + ").", true);
+            leave(p, "Your whole party is down - the journey is over (step " + r.row() + "/" + r.rows() + ").", true);
             title(p, "JOURNEY FAILED", "Your whole party went down", 0xFF4040);
         }
     }
@@ -847,24 +948,29 @@ public final class Journey {
             }
             // IDLE: on the path
             if (now % 5 != 0) continue;
-            BlockPos here = JourneyWorld.node(r.slot, r.cur);
+            BlockPos here = r.here();
             for (Member m : r.members) {
                 ServerPlayer p = server.getPlayerList().getPlayer(m.id);
                 if (p != null && p.getY() < JourneyWorld.PATH_Y - 12) p.teleportTo(here.getX() + .5, here.getY() + 1, here.getZ() + .5);
             }
-            if (r.cleared && r.building.isEmpty() && r.cur + 1 < r.nodes.length) {
-                BlockPos next = JourneyWorld.node(r.slot, r.cur + 1);
-                if (now % 20 == 0) {                          // a light trail to the next step, and a beam over it
-                    for (int i = 0; i <= 10; i++) {
-                        double t = i / 10.0;
-                        tl.sendParticles(ParticleTypes.END_ROD, here.getX() + .5 + (next.getX() - here.getX()) * t, here.getY() + 1.2 + (next.getY() - here.getY()) * t,
-                                here.getZ() + .5 + (next.getZ() - here.getZ()) * t, 1, 0, 0, 0, 0);
+            if (r.cleared && r.building.isEmpty()) {
+                outer:
+                for (int to : r.node().next) {
+                    JourneyMap.Node n = r.map.get(to);
+                    if (n.state != JourneyMap.AHEAD) continue;
+                    BlockPos next = r.map.pos(r.slot, n);
+                    if (now % 20 == 0) {                      // a light trail to each step you can go to, and a beam over it
+                        for (int i = 0; i <= 10; i++) {
+                            double t = i / 10.0;
+                            tl.sendParticles(ParticleTypes.END_ROD, here.getX() + .5 + (next.getX() - here.getX()) * t, here.getY() + 1.2 + (next.getY() - here.getY()) * t,
+                                    here.getZ() + .5 + (next.getZ() - here.getZ()) * t, 1, 0, 0, 0, 0);
+                        }
+                        for (int y = 0; y < 12; y += 2) tl.sendParticles(ParticleTypes.END_ROD, next.getX() + .5, next.getY() + 1 + y, next.getZ() + .5, 1, .05, .3, .05, 0);
                     }
-                    for (int y = 0; y < 12; y += 2) tl.sendParticles(ParticleTypes.END_ROD, next.getX() + .5, next.getY() + 1 + y, next.getZ() + .5, 1, .05, .3, .05, 0);
-                }
-                for (Member m : r.members) {
-                    ServerPlayer p = server.getPlayerList().getPlayer(m.id);
-                    if (p != null && JourneyWorld.onPlatform(p, next)) { arrive(server, tl, r, r.cur + 1); break; }
+                    for (Member m : r.members) {
+                        ServerPlayer p = server.getPlayerList().getPlayer(m.id);
+                        if (p != null && JourneyWorld.onPlatform(p, next)) { arrive(server, tl, r, to); break outer; }
+                    }
                 }
             }
         }
@@ -910,8 +1016,15 @@ public final class Journey {
         ServerPlayer p = scorer(event.getSource().getEntity());
         if (p != null && !(event.getEntity() instanceof Player) && !(event.getEntity() instanceof com.xenowarriors.bot.PartyBotEntity)) {
             Run r = BY.get(p.getUUID());
-            if (r != null && r.phase == BATTLE && r.powerUp) event.setAmount(event.getAmount() * 1.3F);
+            if (r != null && r.phase == BATTLE) event.setAmount(event.getAmount() * (r.powerUp ? 1.3F : 1F) * (1F + 0.1F * r.boosts[Boost.POWER.ordinal()]));
         }
+        // Guard: less damage to your characters (you and your AI teammates)
+        LivingEntity t = event.getEntity();
+        ServerPlayer owner = t instanceof com.xenowarriors.bot.PartyBotEntity b && b.getPersistentData().getBoolean("xw_journey_bot") ? b.owner()
+                : t instanceof ServerPlayer sp && !(sp instanceof net.minecraftforge.common.util.FakePlayer) ? sp : null;
+        Run gr = owner == null ? null : BY.get(owner.getUUID());
+        if (gr != null && gr.phase == BATTLE && gr.boosts[Boost.GUARD.ordinal()] > 0)
+            event.setAmount(event.getAmount() * Math.max(0.5F, 1F - 0.1F * gr.boosts[Boost.GUARD.ordinal()]));
     }
 
     /** Score: up for every hit you land, down for every hit you take (never below 0). */
@@ -990,6 +1103,7 @@ public final class Journey {
                 m.active = next;
                 become(p, next);
                 p.teleportTo(tl, at.x, at.y, at.z, yaw, p.getXRot());
+                applyBoosts(p, r, true);
                 p.setHealth(Math.max(1F, p.getMaxHealth() * frac));
                 p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 50, 4, false, false));
                 tl.playSound(null, p.blockPosition(), SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.PLAYERS, 1F, 1.2F);
@@ -1033,14 +1147,18 @@ public final class Journey {
         t.putBoolean("active", true);
         t.putInt("phase", r.phase);
         t.putInt("diff", r.diff);
-        t.putInt("maxDiff", maxDiff(r, server));
+        t.putInt("stage", r.stage);
+        t.putInt("maxIdx", maxIndex(r, server));
         t.putBoolean("host", viewer.equals(r.host));
         t.putInt("cap", r.cap());
         t.putInt("field", r.field());
         t.putInt("jc", r.jc);
-        t.putInt("cur", r.cur);
+        t.putInt("cur", r.row());
+        t.putInt("rows", r.rows());
+        t.putInt("here", r.cur);
         t.putBoolean("cleared", r.cleared);
-        t.put("nodes", new IntArrayTag(r.nodes));
+        if (r.map != null) t.put("map", r.map.save());
+        t.put("boosts", new IntArrayTag(r.boosts));
         t.putBoolean("powerNext", r.powerNext);
         t.putBoolean("powerUp", r.powerUp);
         int season = com.xenowarriors.character.Seasons.highest(server);
@@ -1093,26 +1211,43 @@ public final class Journey {
 
     // ------------------------------------------------------------------------------------------------ testing
 
-    /** (UI test / op) jump an active journey to step n (the steps before count as cleared). */
+    /** (UI test / op) jump an active journey to step n (taking the first route at forks; the steps before count as cleared). */
     public static void skipTo(ServerPlayer p, int step) {
         Run r = BY.get(p.getUUID());
-        if (r == null || r.phase != IDLE) return;
+        if (r == null || r.phase != IDLE || r.map == null) return;
         ServerLevel tl = p.server.getLevel(Tower.LEVEL);
         if (tl == null) return;
-        step = Math.max(1, Math.min(JourneyRules.STEPS, step));
+        step = Math.max(1, Math.min(r.rows(), step));
         r.building.clear();
-        for (int i = r.cur; i < step - 1; i++) {
-            for (BlockPos b : JourneyWorld.bridge(r.slot, i)) tl.setBlock(b, net.minecraft.world.level.block.Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState(), 2);
-            JourneyWorld.recolor(tl, JourneyWorld.node(r.slot, i), JourneyWorld.ring(r.nodes[i], 2));
-            if (i > 0) relabel(tl, r, i, true);
+        while (r.row() < step - 1 && !r.node().next.isEmpty()) {
+            JourneyMap.Node c = r.node();
+            int to = c.next.get(0);
+            for (BlockPos b : JourneyWorld.bridge(r.map.pos(r.slot, c), r.map.pos(r.slot, r.map.get(to)))) tl.setBlock(b, net.minecraft.world.level.block.Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState(), 2);
+            c.state = JourneyMap.DONE;
+            JourneyWorld.recolor(tl, r.map.pos(r.slot, c), JourneyWorld.ring(c.kind, 2));
+            if (c.row > 0) relabel(tl, r, c);
+            for (JourneyMap.Node n : r.map.choose(to)) { JourneyWorld.recolor(tl, r.map.pos(r.slot, n), JourneyWorld.ring(n.kind, 3)); relabel(tl, r, n); }
+            r.cur = to;
         }
-        r.cur = step - 1;
+        r.node().state = JourneyMap.HERE;
         r.cleared = true;
-        BlockPos c = JourneyWorld.node(r.slot, r.cur);
-        JourneyWorld.recolor(tl, c, JourneyWorld.ring(r.nodes[r.cur], 1));
+        BlockPos c = r.here();
+        JourneyWorld.recolor(tl, c, JourneyWorld.ring(r.kind(), 1));
         for (Member m : r.members) { ServerPlayer mp = p.server.getPlayerList().getPlayer(m.id); if (mp != null) mp.teleportTo(tl, c.getX() + .5, c.getY() + 1, c.getZ() + .5, 0, 0); }
-        openBridge(r);
+        openBridges(r);
         syncAll(p.server, r, OPEN_NONE);
+    }
+
+    /** (UI test) walk straight onto the nearest step of this kind still ahead (as if you'd taken the route to it). */
+    public static void testJump(ServerPlayer p, int kind) {
+        Run r = BY.get(p.getUUID());
+        ServerLevel tl = p.server.getLevel(Tower.LEVEL);
+        if (r == null || tl == null || r.phase != IDLE || r.map == null) return;
+        for (JourneyMap.Node n : r.map.nodes) if (n.kind == kind && n.state == JourneyMap.AHEAD && n.row > r.row()) {
+            r.building.clear();
+            arrive(p.server, tl, r, n.id);
+            return;
+        }
     }
 
     /** (UI test) set a character's health in the run (0 = down) and the coins. */
@@ -1132,7 +1267,12 @@ public final class Journey {
     }
 
     /** (UI test) the centre of step i's platform on this player's journey. */
-    public static BlockPos testNode(ServerPlayer p, int i) { Run r = BY.get(p.getUUID()); return r == null ? null : JourneyWorld.node(r.slot, i); }
+    public static BlockPos testNode(ServerPlayer p, int row) {
+        Run r = BY.get(p.getUUID());
+        if (r == null || r.map == null) return null;
+        for (JourneyMap.Node n : r.map.nodes) if (n.row == row && n.state != JourneyMap.CLOSED && n.state != JourneyMap.DONE) return r.map.pos(r.slot, n);
+        return r.here();
+    }
 
     /** (UI test) the arena centre of this player's journey. */
     public static BlockPos testArena(ServerPlayer p) { Run r = BY.get(p.getUUID()); return r == null ? null : JourneyWorld.arena(r.slot); }

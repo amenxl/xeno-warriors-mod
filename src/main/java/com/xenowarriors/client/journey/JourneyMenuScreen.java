@@ -1,6 +1,7 @@
 package com.xenowarriors.client.journey;
 
 import com.xenowarriors.character.CharacterType;
+import com.xenowarriors.journey.JourneyMap;
 import com.xenowarriors.journey.JourneyRules;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.nbt.CompoundTag;
@@ -27,7 +28,7 @@ public class JourneyMenuScreen extends JourneyScreen {
         int[] prices = st.getIntArray("prices");
         // header, like the path's sign: difficulty and step
         sc(g, JourneyRules.DIFF[diff], 10, 6, 2.4F, JourneyRules.DIFF_COLOR[diff]);
-        sc(g, String.format("%02d/%02d", cur, JourneyRules.STEPS), 12 + font.width(JourneyRules.DIFF[diff]) * 2.4F, 14, 1.2F, 0xFFFFFF);
+        sc(g, "Stage " + (st.getInt("stage") + 1) + "   " + String.format("%02d/%02d", cur, st.getInt("rows")), 12 + font.width(JourneyRules.DIFF[diff]) * 2.4F, 14, 1.2F, 0xFFFFFF);
         // coins
         g.fill(VW - 96, 6, VW - 10, 24, 0xE0101820);
         box(g, VW - 96, 6, VW - 10, 24, 0xFF40D0FF);
@@ -67,24 +68,40 @@ public class JourneyMenuScreen extends JourneyScreen {
 
         // the map
         sc(g, "MAP", rx, 82, 0.7F, 0x40D0FF);
-        int[] nodes = st.getIntArray("nodes");
         boolean cleared = st.getBoolean("cleared");
+        CompoundTag map = st.getCompound("map");
+        ListTag ns = map.getList("nodes", Tag.TAG_COMPOUND);
+        int rows = Math.max(1, map.getInt("rows")), hereId = st.getInt("here");
         int mw = VW - 10 - rx;
-        for (int i = 0; i < nodes.length; i++) {
-            float x = rx + 6 + i * (mw - 12) / (float) Math.max(1, nodes.length - 1);
-            int yy = 100 - (i % 2) * 5;
-            if (i + 1 < nodes.length) {
-                float x2 = rx + 6 + (i + 1) * (mw - 12) / (float) Math.max(1, nodes.length - 1);
-                g.fill((int) x, yy, (int) x2, yy + 1, i < cur || (i == cur && cleared) ? 0xFF40D0FF : 0xFF303A44);
-            }
-            int c = i < cur || (i == cur && cleared) ? 0xFF5A5A64 : 0xFF000000 | JourneyRules.STEP_COLOR[nodes[i]];
-            diamond(g, (int) x, yy, i == cur ? 5 : 4, i == cur ? 0xFFFF4040 : c);
-            if (hover(x - 5, yy - 5, x + 5, yy + 5)) {
-                String s = String.format("%02d ", i) + JourneyRules.STEP_NAME[nodes[i]];
-                sc(g, s, Math.min(VW - 10 - font.width(s) * 0.6F, x - font.width(s) * 0.3F), 108, 0.6F, 0xFFFFFF);
+        float[][] at = new float[ns.size()][];
+        for (int i = 0; i < ns.size(); i++) {
+            CompoundTag n = ns.getCompound(i);
+            at[i] = new float[]{rx + 6 + n.getInt("r") * (mw - 12) / (float) rows, 101 + n.getInt("l") * 8};
+        }
+        for (int i = 0; i < ns.size(); i++) for (int to : ns.getCompound(i).getIntArray("n")) {
+            if (to < 0 || to >= ns.size()) continue;
+            int s1 = ns.getCompound(i).getInt("s"), s2 = ns.getCompound(to).getInt("s");
+            int col = s2 == JourneyMap.CLOSED || s1 == JourneyMap.CLOSED ? 0xFF24242A : (s1 == JourneyMap.DONE || s1 == JourneyMap.HERE) && (s2 != JourneyMap.AHEAD || cleared && s1 == JourneyMap.HERE) ? 0xFF40D0FF : 0xFF3A4450;
+            line(g, at[i][0], at[i][1], at[to][0], at[to][1], col);
+        }
+        for (int i = 0; i < ns.size(); i++) {
+            CompoundTag n = ns.getCompound(i);
+            int st8 = n.getInt("s"), kind = Math.max(0, Math.min(JourneyRules.STEP_NAME.length - 1, n.getInt("k")));
+            int c = i == hereId ? 0xFFFF4040 : st8 == JourneyMap.DONE ? 0xFF5A5A64 : st8 == JourneyMap.CLOSED ? 0xFF2A2A30 : 0xFF000000 | JourneyRules.STEP_COLOR[kind];
+            diamond(g, (int) at[i][0], (int) at[i][1], i == hereId ? 4 : kind == JourneyRules.BOSS ? 4 : 3, c);
+            if (hover(at[i][0] - 4, at[i][1] - 4, at[i][0] + 4, at[i][1] + 4)) {
+                String s = String.format("%02d ", n.getInt("r")) + (st8 == JourneyMap.CLOSED ? "CLOSED" : JourneyRules.STEP_NAME[kind]);
+                sc(g, s, Math.min(VW - 10 - font.width(s) * 0.6F, at[i][0] - font.width(s) * 0.3F), 88, 0.6F, 0xFFFFFF);
             }
         }
-        if (cur + 1 < nodes.length) sc(g, "Next: " + JourneyRules.STEP_NAME[nodes[cur + 1]] + (cleared ? "" : "  (clear this step first)"), rx, 116, 0.55F, 0xA8B8C8);
+        // event boosts
+        int[] bs = st.getIntArray("boosts");
+        StringBuilder sb = new StringBuilder();
+        for (JourneyRules.Boost b : JourneyRules.Boost.values()) {
+            int n = b.ordinal() < bs.length ? bs[b.ordinal()] : 0;
+            if (n > 0) sb.append(sb.length() > 0 ? ",  " : "").append(b.title).append(" x").append(n);
+        }
+        sc(g, sb.length() == 0 ? "No event boosts yet - step on EVENT panels" : "Boosts: " + sb, rx, 117, Math.min(0.55F, (mw - 2F) / Math.max(1, font.width("Boosts: " + sb))), sb.length() == 0 ? 0x707A86 : 0xFFD040);
 
         // battle rewards
         sc(g, "BATTLE REWARDS", rx, 128, 0.7F, 0x40D0FF);
@@ -99,7 +116,8 @@ public class JourneyMenuScreen extends JourneyScreen {
 
         // buttons
         int by = VH - 22;
-        boolean retry = shop && !cleared && cur > 0 && nodes.length > cur && nodes[cur] != JourneyRules.HEAL;
+        int hk = hereId >= 0 && hereId < ns.size() ? ns.getCompound(hereId).getInt("k") : 0;
+        boolean retry = shop && !cleared && cur > 0 && (hk == JourneyRules.BATTLE || hk == JourneyRules.SCENARIO || hk == JourneyRules.BOSS);
         if (retry) button(g, rx, by, rx + 74, by + 16, "Retry battle", 0xFF7040, true, () -> { JourneyClient.act(10, 0, 0); onClose(); });
         boolean confirm = net.minecraft.Util.getMillis() - retreatAt < 3000;
         button(g, VW - 84, by, VW - 10, by + 16, confirm ? "Click to confirm" : "Retreat", 0xA05050, true, () -> {
@@ -142,6 +160,11 @@ public class JourneyMenuScreen extends JourneyScreen {
         sc(g, won ? "Total: +" + r.getInt("gained") + " Journey Coins" : "Revive your party at Heal/Enhance, then Retry battle", x0 + 14, y + 16, 0.7F, 0xFFFFFF);
         sc(g, "Click to continue", VW / 2F - font.width("Click to continue") * 0.3F, y1 - 12, 0.6F, 0x8090A0);
         area(0, 0, VW, VH, () -> results = false);
+    }
+
+    private static void line(GuiGraphics g, float x0, float y0, float x1, float y1, int c) {
+        int n = (int) Math.max(1, Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
+        for (int i = 0; i <= n; i++) { int x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); g.fill(x, y, x + 1, y + 1, c); }
     }
 
     static void diamond(GuiGraphics g, int cx, int cy, int r, int c) {
