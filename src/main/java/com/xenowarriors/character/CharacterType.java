@@ -47,6 +47,9 @@ public enum CharacterType {
     /** The Sky Patrol members (for team synergy). */
     public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
 
+    /** Their race (see Race). */
+    public Race race() { return Race.of(this); }
+
     public int season() { return this == AIONI || this == ZANE ? 3 : this == ULTIMA || this == KAERU || this == YURI ? 2 : 1; }
 
     private final String id;

@@ -69,10 +69,9 @@ public class JourneyLobbyScreen extends JourneyScreen {
             String n = name(t);
             float k = Math.min(0.6F, (cw - 4F) / font.width(n));
             sc(g, n, x + cw / 2F - font.width(n) * k / 2F, y + 34, k, 0xE8E8F0);
-            if (t.skylander()) sc(g, "Skylander", x + cw / 2F - font.width("Skylander") * 0.42F / 2F, y + 42, 0.42F, 0x80C8FF);
-            else if (t.skyPatrol()) sc(g, "Sky Patrol", x + cw / 2F - font.width("Sky Patrol") * 0.42F / 2F, y + 42, 0.42F, 0xF080C0);
-            else if (t == CharacterType.MIKIKO || t == CharacterType.KAERU) sc(g, "Rebringer", x + cw / 2F - font.width("Rebringer") * 0.42F / 2F, y + 42, 0.42F, 0xFFB060);
-            else sc(g, "Human", x + cw / 2F - font.width("Human") * 0.42F / 2F, y + 42, 0.42F, 0xC0C0A0);
+            String race = t.race().title;
+            float rk = Math.min(0.42F, (cw - 2F) / font.width(race));
+            sc(g, race, x + cw / 2F - font.width(race) * rk / 2F, y + 42, rk, t.race().color);
             if (mine >= 0) { box(g, x, y, x + cw, y + ch, 0xFF5FD05F); g.fill(x + cw - 9, y + 3, x + cw - 2, y + 11, 0xFF5FD05F); sc(g, String.valueOf(mine + 1), x + cw - 7.5F, y + 3.5F, 0.7F, 0x102010); }
             else if (theirs) { box(g, x, y, x + cw, y + ch, 0xFF50A0FF); sc(g, mate.name(), x + 2, y + 6, 0.45F, 0x80C0FF); }
             else box(g, x, y, x + cw, y + ch, h ? 0xFF8A9AAA : 0xFF2A3038);

@@ -41,14 +41,14 @@ public final class JourneyRules {
     public static final int START_JC = 15;
 
     public enum Rule {
-        ANY("Anyone"), SKYLANDER("Skylanders only"), HUMAN("No Skylanders (humans and Rebringers)"), SKY_PATROL("Sky Patrol only"), REBELLION("Sky Rebellion only");
+        ANY("Anyone"), SKYLANDER("Skylanders only"), HUMAN("No Skylanders"), SKY_PATROL("Sky Patrol only"), REBELLION("Sky Rebellion only");
         public final String text;
         Rule(String t) { text = t; }
         public boolean fits(CharacterType t) {
             return switch (this) {
                 case ANY -> true;
-                case SKYLANDER -> t.skylander();
-                case HUMAN -> !t.skylander();
+                case SKYLANDER -> t.race().skylanderKind();
+                case HUMAN -> !t.race().skylanderKind();
                 case SKY_PATROL -> t.skyPatrol();
                 case REBELLION -> t == CharacterType.LOGAN || t == CharacterType.KILL || t == CharacterType.KEITA;
             };
