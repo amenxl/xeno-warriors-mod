@@ -4,6 +4,11 @@ name: Server self-test (Recarnet)
 # Uploads the log and the Recarnet region files so the city can be rendered.
 on:
   workflow_dispatch:
+    inputs:
+      extra:
+        description: 'Other mods to load from Modrinth (e.g. ef,tacz or dmz) - also switches to Forge 47.4.0'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -22,6 +27,8 @@ jobs:
           XW_SELFTEST: "1"
           XW_SELFTEST_R: "8"
           XW_SELFTEST_VR: "11"
+          XW_UITEST_EXTRA: ${{ github.event.inputs.extra }}
+          XW_FORGE: ${{ github.event.inputs.extra != '' && '47.4.0' || '' }}
         run: |
           chmod +x gradlew
           mkdir -p run && echo "eula=true" > run/eula.txt
@@ -37,8 +44,9 @@ jobs:
           cp server.log out/ || true
           cp run/logs/latest.log out/latest.log || true
           (cd run/world/dimensions/xenowarriors/recarnet 2>/dev/null && zip -qr $GITHUB_WORKSPACE/out/recarnet-world.zip region entities) || true
-          gh release delete selftest --yes --cleanup-tag || true
-          gh release create selftest out/* --title "Self-test results" --notes "Recarnet server self-test output" --prerelease
+          TAG=selftest; if [ -n "${{ github.event.inputs.extra }}" ]; then TAG="selftest-$(echo '${{ github.event.inputs.extra }}' | tr ',' '-')"; fi
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" out/* --title "Self-test results ($TAG)" --notes "Recarnet server self-test output" --prerelease
           grep -q "XW-SELFTEST OK" server.log
       - name: Upload
         if: always()
