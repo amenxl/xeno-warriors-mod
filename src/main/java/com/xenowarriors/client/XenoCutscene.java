@@ -125,7 +125,7 @@ public final class XenoCutscene {
             float w = smooth((t - SHOTS[shot]) / BLEND);
             c = new Vec3[]{prev[0].lerp(c[0], w), prev[1].lerp(c[1], w)};
         }
-        Vec3 pos = clear(mc, unstuck(mc, c[0]), c[1]);
+        Vec3 pos = place(mc, c[0], unstuck(mc, c[1]));
         Vec3 d = c[1].subtract(pos);
         double yaw = Math.toDegrees(Mth.atan2(-d.x, d.z));
         double pitch = -Math.toDegrees(Mth.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
@@ -175,8 +175,8 @@ public final class XenoCutscene {
                 Vec3 mid = body.lerp(impact, 0.45);
                 return new Vec3[]{mid.add(side.scale(-9)).add(up.scale(4.5)), mid};
             }
-            case 4 -> {   // high above the impact
-                return new Vec3[]{impact.subtract(fwd.scale(9)).add(side.scale(5)).add(up.scale(8 + (t - 260) * 0.03)), impact};
+            case 4 -> {   // high up behind them, looking down the blast to where it lands
+                return new Vec3[]{body.subtract(fwd.scale(5)).add(side.scale(2)).add(up.scale(7 + (t - 260) * 0.03)), impact};
             }
             default -> {  // pulling back behind them over the aftermath
                 double k = (t - 330) / 70.0;
@@ -195,6 +195,30 @@ public final class XenoCutscene {
             pos = pos.add(0, 0.5, 0);
         }
         return pos;
+    }
+
+    /**
+     * Where the camera goes: its spot if it can see the subject; if not, the mirror spot on the other side; if that's
+     * blocked too, straight above the caster; and failing everything, in front of whatever's in the way.
+     */
+    private static Vec3 place(Minecraft mc, Vec3 cam, Vec3 target) {
+        if (sees(mc, unstuck(mc, cam), target)) return unstuck(mc, cam);
+        Vec3 side = Vec3.directionFromRotation(0, cur.yaw() + 90F);
+        Vec3 v = cam.subtract(target);
+        Vec3 mirror = target.add(v.subtract(side.scale(2 * v.dot(side))));
+        if (sees(mc, unstuck(mc, mirror), target)) return unstuck(mc, mirror);
+        Entity c = mc.level.getEntity(cur.caster());
+        if (c != null) {
+            Vec3 above = c.position().add(0, 6 + v.length() * 0.3, 0).subtract(Vec3.directionFromRotation(0, cur.yaw()).scale(3));
+            if (sees(mc, unstuck(mc, above), target)) return unstuck(mc, above);
+        }
+        return clear(mc, unstuck(mc, cam), target);
+    }
+
+    private static boolean sees(Minecraft mc, Vec3 cam, Vec3 target) {
+        if (!mc.level.getBlockState(BlockPos.containing(cam)).isAir()) return false;
+        return mc.level.clip(new net.minecraft.world.level.ClipContext(target, cam, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player)).getType() == net.minecraft.world.phys.HitResult.Type.MISS;
     }
 
     /** If hills, trees or grass are between the camera and what it's filming, move the camera in front of them. */
