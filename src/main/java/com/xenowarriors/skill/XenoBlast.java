@@ -28,6 +28,12 @@ import java.util.Set;
  */
 public final class XenoBlast {
     public static final int LOCK_TICKS = 30 * 20, MIN_KARMA = 10, RANGE = 40;
+    /** The cutscene: 20 seconds; it charges for the first half and lets go at RELEASE. */
+    public static final int CUTSCENE = 20 * 20, RELEASE = 200, FREEZE_RANGE = 24;
+    private static final String CASTING = "xw_xeno_casting_until";
+
+    /** Whether this player is in their Xeno Blast cutscene right now. */
+    public static boolean casting(ServerPlayer p) { return p.getPersistentData().getLong(CASTING) > p.level().getGameTime(); }
 
     private XenoBlast() {}
 
@@ -44,30 +50,32 @@ public final class XenoBlast {
      */
     private static void fireBeam(ServerPlayer p, ServerLevel l, float dmg, double width) {
         Vector3f white = new Vector3f(1F, 0.97F, 0.8F), yellow = new Vector3f(1F, 0.85F, 0.25F), orange = new Vector3f(1F, 0.5F, 0.1F), red = new Vector3f(0.95F, 0.12F, 0.05F);
-        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.XENO_MIKIKO, 46);
+        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.XENO_MIKIKO, CUTSCENE);
         l.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.6F);
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < RELEASE; i += 2) {
             int ii = i;
             ServerScheduler.later(i, () -> {
                 if (!p.isAlive()) return;
+                float f = ii / (float) RELEASE;                  // grows the whole way
                 Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
                 Vec3 h = p.position().add(0, 0.95, 0).add(right(p).scale(-0.45)).add(look.scale(-0.35));     // cupped at the hip
-                float sz = 0.6F + ii * 0.08F;
-                l.sendParticles(new DustParticleOptions(white, sz + 0.6F), h.x, h.y, h.z, 2, 0.05, 0.05, 0.05, 0);
-                l.sendParticles(new DustParticleOptions(orange, sz + 1F), h.x, h.y, h.z, 3, 0.12 + ii * 0.01, 0.12, 0.12 + ii * 0.01, 0);
+                float sz = 0.6F + f * 2.4F;
+                l.sendParticles(new DustParticleOptions(white, Math.min(4F, sz + 0.6F)), h.x, h.y, h.z, 2, 0.05 + f * 0.1, 0.05 + f * 0.1, 0.05 + f * 0.1, 0);
+                l.sendParticles(new DustParticleOptions(orange, Math.min(4F, sz + 1F)), h.x, h.y, h.z, 3, 0.12 + f * 0.3, 0.12 + f * 0.2, 0.12 + f * 0.3, 0);
                 for (int k = 0; k < 4; k++) {          // sparks pulled in
-                    double a = ii * 0.7 + k * Math.PI / 2, r = 1.4 - ii * 0.07;
+                    double a = ii * 0.35 + k * Math.PI / 2, r = 2.4 - (ii % 20) * 0.1;
                     l.sendParticles(new DustParticleOptions(k % 2 == 0 ? yellow : red, 0.9F), h.x + Math.cos(a) * r, h.y + Math.sin(a * 1.7) * r * 0.5, h.z + Math.sin(a) * r, 1, 0, 0, 0, 0);
                 }
-                if (ii % 4 == 0) l.playSound(null, p.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.4F, 0.6F + ii * 0.05F);
+                if (ii % 20 == 0) l.playSound(null, p.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.5F, 0.5F + f);
+                if (ii % 40 == 0) l.playSound(null, p.blockPosition(), SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 1F, 0.6F + f * 0.8F);
             });
         }
-        ServerScheduler.later(16, () -> {
+        ServerScheduler.later(RELEASE, () -> {
             if (!p.isAlive()) return;
             l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.85F);
             l.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4F, 0.5F);
             Set<Integer> hit = new HashSet<>();
-            for (int k = 0; k < 24; k++) ServerScheduler.later(k, () -> {
+            for (int k = 0; k < 70; k++) ServerScheduler.later(k, () -> {       // a long, huge beam
                 if (!p.isAlive()) return;
                 Vec3 s = p.getEyePosition().subtract(0, 0.4, 0).add(p.getLookAngle().scale(0.9)), d = p.getLookAngle();
                 Vec3 up = Math.abs(d.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
@@ -108,18 +116,20 @@ public final class XenoBlast {
      */
     private static void darkOrb(ServerPlayer p, ServerLevel l, float dmg, double width) {
         Vector3f black = new Vector3f(0.07F, 0.0F, 0.1F), purple = new Vector3f(0.78F, 0.35F, 1F), pink = new Vector3f(1F, 0.55F, 1F);
-        int charge = 16;
-        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.XENO_RHALIX, charge + 20);
+        int charge = RELEASE;
+        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.XENO_RHALIX, CUTSCENE);
         l.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.4F);
         java.util.function.Supplier<Vec3> fingertip = () -> p.getEyePosition().subtract(0, 0.3, 0).add(p.getLookAngle().scale(1.3)).add(right(p).scale(0.25));
-        for (int i = 0; i < charge; i++) {
+        for (int i = 0; i < charge; i += 2) {
             int ii = i;
             ServerScheduler.later(i, () -> {
                 if (!p.isAlive()) return;
+                float f = ii / (float) charge;
                 Vec3 h = fingertip.get();
-                float sz = 0.8F + ii * 0.12F;
+                float sz = 0.8F + f * 3.2F;                     // the orb swells the whole time
                 orb(l, h, sz, black, purple, ii);
-                if (ii % 3 == 0) l.playSound(null, p.blockPosition(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 0.4F, 0.6F + ii * 0.04F);
+                if (ii % 20 == 0) l.playSound(null, p.blockPosition(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 0.6F, 0.5F + f);
+                if (ii % 30 == 0) l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1F, 0.7F + f * 0.5F);
             });
         }
         ServerScheduler.later(charge, () -> {
@@ -129,17 +139,17 @@ public final class XenoBlast {
             Vec3[] pos = {fingertip.get()};
             boolean[] done = {false};
             double hitR = 0.9 + width * 0.3;
-            for (int k = 0; k < 26; k++) {
+            for (int k = 0; k < 60; k++) {
                 int kk = k;
                 ServerScheduler.later(k, () -> {
                     if (done[0]) return;
-                    Vec3 from = pos[0], to = from.add(d.scale(1.7));
+                    Vec3 from = pos[0], to = from.add(d.scale(0.9));          // slow and heavy, for the camera
                     // light rays streaking out behind it, and a trail
                     for (int t = 0; t < 4; t++) { Vec3 q = from.add(d.scale(t * 0.45)); l.sendParticles(new DustParticleOptions(purple, 1.4F), q.x, q.y, q.z, 1, 0.08, 0.08, 0.08, 0); }
                     orb(l, to, 3.2F, black, purple, kk);
                     var clip = l.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
                     Vec3 end = clip.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK ? clip.getLocation() : to;
-                    boolean struck = clip.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK || kk == 25
+                    boolean struck = clip.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK || kk == 59
                             || !l.getEntitiesOfClass(LivingEntity.class, new AABB(from, end).inflate(hitR), e -> SkillTargeting.canTarget(p, e)).isEmpty();
                     pos[0] = end;
                     if (struck) { done[0] = true; burst(p, l, end, dmg, 2.5 + width, black, purple, pink); }
@@ -211,12 +221,24 @@ public final class XenoBlast {
 
         // it takes everything they have
         if (!p.isCreative()) Karma.add(p, -karma);
-        Karma.lockRegen(p, LOCK_TICKS);
+        Karma.lockRegen(p, CUTSCENE + LOCK_TICKS);          // 30 seconds of no regen after the cutscene ends
         p.displayClientMessage(Component.literal("XENO BLAST!").withStyle(rhalix ? ChatFormatting.DARK_PURPLE : ChatFormatting.GOLD, ChatFormatting.BOLD), true);
         Component line = Component.literal(p.getName().getString() + ": ").withStyle(ChatFormatting.WHITE)
                 .append(Component.literal("XENO BLAST!").withStyle(rhalix ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GOLD, ChatFormatting.BOLD));
         for (ServerPlayer o : l.players()) if (o != p && o.distanceToSqr(p) < 48 * 48) o.displayClientMessage(line, true);
 
+        // the cutscene: everything around can't move, the caster is locked in and can't be hurt while it plays
+        long until = l.getGameTime() + CUTSCENE;
+        p.getPersistentData().putLong(CASTING, until);
+        p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, until);
+        com.xenowarriors.combat.Frozen.freeze(p, CUTSCENE);
+        java.util.List<ServerPlayer> watchers = new java.util.ArrayList<>(java.util.List.of(p));
+        for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(FREEZE_RANGE), e -> e != p && SkillTargeting.canTarget(p, e))) {
+            com.xenowarriors.combat.Frozen.freeze(e, CUTSCENE);
+            if (e instanceof ServerPlayer sp) watchers.add(sp);
+        }
+        var pkt = new com.xenowarriors.network.XenoCutscenePacket(p.getId(), rhalix, CUTSCENE, RELEASE, p.getX(), p.getY(), p.getZ(), p.getYRot());
+        for (ServerPlayer w : watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(pkt, w);
         if (rhalix) darkOrb(p, l, dmg, width);
         else fireBeam(p, l, dmg, width);
         return true;

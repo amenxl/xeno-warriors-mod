@@ -41,7 +41,7 @@ public final class UltimateCutscene {
     private UltimateCutscene() {}
 
     public static boolean active() {
-        return current != null;
+        return current != null || XenoCutscene.active();
     }
 
     private static Entity find(Minecraft mc) {
@@ -122,6 +122,7 @@ public final class UltimateCutscene {
 
     /** Camera position and angles for this frame: {x, y, z, yaw, pitch}, or null when not in a cutscene. */
     public static double[] camera(float partialTick) {
+        if (XenoCutscene.active()) return XenoCutscene.camera(partialTick);
         Entity e = current;
         Minecraft mc = Minecraft.getInstance();
         if (e == null || !e.isAlive() || mc.player == null) return null;
@@ -226,6 +227,7 @@ public final class UltimateCutscene {
     public static class Overlay implements IGuiOverlay {
         @Override
         public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
+            if (XenoCutscene.active()) { XenoCutscene.overlay(g, partialTick, width, height); return; }
             Entity u = current;
             if (u == null) return;
             float age = u.tickCount + partialTick;
