@@ -755,7 +755,7 @@ public final class UiTest {
         int[] ids = {-1};
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); server(p -> {
             var lv = p.serverLevel();
-            BlockPos base = p.blockPosition().offset(0, 0, 12);
+            net.minecraft.core.BlockPos base = p.blockPosition().offset(0, 0, 12);
             for (int dx = -14; dx <= 14; dx++) for (int dz = -8; dz <= 8; dz++) {
                 lv.setBlock(base.offset(dx, -1, dz), net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState(), 3);
                 for (int y = 0; y < 6; y++) lv.setBlock(base.offset(dx, y, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
