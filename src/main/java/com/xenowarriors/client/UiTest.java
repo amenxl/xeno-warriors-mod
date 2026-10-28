@@ -95,6 +95,7 @@ public final class UiTest {
         if ("towerboss".equals(System.getenv("XW_UITEST_FOCUS"))) { towerBoss(mc, l); return l; }
         if ("factions".equals(System.getenv("XW_UITEST_FOCUS"))) { factions(mc, l); return l; }
         if ("journey".equals(System.getenv("XW_UITEST_FOCUS"))) { journey(mc, l); return l; }
+        if ("dmzlist".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzList(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -843,6 +844,32 @@ public final class UiTest {
         l.add(new Step(null, () -> {}, 120));
         l.add(new Step("tower_floor2", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.tower.Tower.leave(p, "You left the Tower")), 20));
+    }
+
+    /** (DragonMineZ installed) logs its entities and armor/weapon items, to pick Journey's DBZ fights and loot from. */
+    private static void dmzList(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> server(p -> {
+            for (var t : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValues()) {
+                var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(t);
+                if (id == null || !id.getNamespace().equals("dragonminez")) continue;
+                String info = t.getCategory().getName();
+                try {
+                    var e = t.create(p.serverLevel());
+                    if (e instanceof net.minecraft.world.entity.LivingEntity le) info += " living hp=" + le.getMaxHealth() + " enemy=" + (e instanceof net.minecraft.world.entity.monster.Enemy) + " class=" + e.getClass().getSimpleName()
+                            + " name=" + e.getName().getString();
+                    else info += " class=" + (e == null ? "null" : e.getClass().getSimpleName());
+                    if (e != null) e.discard();
+                } catch (Throwable x) { info += " err=" + x; }
+                log("DMZ-ENTITY " + id + " " + info);
+            }
+            for (var it : net.minecraftforge.registries.ForgeRegistries.ITEMS.getValues()) {
+                var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(it);
+                if (id == null || !id.getNamespace().equals("dragonminez")) continue;
+                String kind = it instanceof net.minecraft.world.item.ArmorItem a ? "armor:" + a.getType().getName() : it instanceof net.minecraft.world.item.SwordItem ? "sword"
+                        : it instanceof net.minecraft.world.item.TieredItem ? "tool" : "item";
+                log("DMZ-ITEM " + id + " " + kind + " " + it.getDescription().getString());
+            }
+        }), 40));
     }
 
     /** Journey mode, solo: the lobby, the path, choosing a team, a battle with a tag-in, results, the shop, a scenario, the boss. */
