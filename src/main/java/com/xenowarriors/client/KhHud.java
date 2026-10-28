@@ -111,6 +111,26 @@ public final class KhHud implements IGuiOverlay {
         shownHp = hp;
         boolean low = hp / max <= 0.25F, flash = low && (HudFaces.clock() / 6) % 2 == 0;
 
+        if (ClientSettings.blazingHud()) {
+            boolean dbz0 = DmzHud.read(p);
+            int[] at = BlazingHud.render(g, mc, font, type, width, height, lift, hp, max, chip, low, flash, dbz0,
+                    HudFaces.face(p.getUUID(), hp, max, HudFaces.allOut(p), false));
+            if (type == CharacterType.ULTIMA) {         // his output %, above the emblem
+                int pc = UltimaClient.percent(p.getId());
+                boolean ov = UltimaClient.overload(p.getId());
+                String ot = ov ? "OVERLOAD" : "OUTPUT " + pc + "%";
+                int oc = ov ? ((HudFaces.clock() / 3) % 2 == 0 ? 0x9CFFC8 : 0xFFFFFF) : 0x3FFF8C;
+                small(g, font, ot, at[0] + at[2] / 2F - font.width(ot) * 0.3F, at[1] - 16, oc, 0.6F);
+            }
+            var ka0 = ClientSkillState.ka();
+            g.blit(ORB, at[0] - 16, at[1] - 12, 14, 14, 0, 0, 32, 32, 32, 32);
+            String kl0 = ka0 == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka0.title().substring(0, 1);
+            small(g, font, kl0, at[0] - 9 - font.width(kl0) * 0.3F, at[1] - 8, ka0 == null ? 0xB070FF : ka0.color, 0.6F);
+            effects(g, mc, at[3], at[4] - 14, width - 4);
+            bubble(g, font, p, at[0], at[1]);
+            commandMenu(g, mc, font, type, height, partial);
+            return;
+        }
         // bars, left of the portrait
         int hotbarRight = width / 2 + 91;
         int bw = Mth.clamp(px - 10 - hotbarRight - 8, 50, 120);

@@ -116,7 +116,7 @@ public class PlayerStatsScreen extends Screen {
                 .bounds(bx, SET_TOP + 98, bw, 20).build());
         drawnFaces = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDrawnFaces(!ClientSettings.drawnFaces()); updateButtons(); })
                 .bounds(bx, SET_TOP + 122, bw, 20).build());
-        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setKhHud(!ClientSettings.khHud()); updateButtons(); }).bounds(bx, SET_TOP + 162, bw, 20).build());
+        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { String s = ClientSettings.hudStyle(); ClientSettings.setHudStyle(s.equals("blazing") ? "kh" : s.equals("kh") ? "classic" : "blazing"); updateButtons(); }).bounds(bx, SET_TOP + 162, bw, 20).build());
         vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 186, bw / 2 - 2, 20).build());
         skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 186, bw / 2 - 2, 20).build());
         setBaseY.clear();
@@ -214,7 +214,7 @@ public class PlayerStatsScreen extends Screen {
         drawnFaces.visible = tab == 3 && minecraft.player != null && minecraft.player.isCreative();      // (only offered in creative mode)
         drawnFaces.setMessage(Component.literal("Faces: " + (ClientSettings.drawnFaces() ? "Drawn (new)" : "Pixel (old)")));
         hudStyle.visible = vanillaBars.visible = skillsAlways.visible = tab == 3;
-        hudStyle.setMessage(Component.literal("HUD: " + (ClientSettings.khHud() ? "Kingdom Hearts style" : "Classic")));
+        hudStyle.setMessage(Component.literal("HUD: " + switch (ClientSettings.hudStyle()) { case "kh" -> "Kingdom Hearts style"; case "classic" -> "Classic"; default -> "Blazing Wind"; }));
         vanillaBars.setMessage(Component.literal("Hearts/food: " + (ClientSettings.vanillaBars() ? "Shown" : "Hidden")));
         skillsAlways.setMessage(Component.literal("Skills: " + (ClientSettings.skillsAlways() ? "Always" : "Hold Ctrl")));
         vanillaBars.active = skillsAlways.active = ClientSettings.khHud();

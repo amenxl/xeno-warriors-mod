@@ -64,9 +64,20 @@ public final class ClientSettings {
     }
 
     /** The Kingdom Hearts style HUD (portrait gauge, skill list, party cards). Off = the classic Xeno Warriors HUD. */
-    public static boolean khHud() { return !"false".equals(props().getProperty("kh_hud", "true")); }
+    /** The battle HUD: "blazing" (Blazing Wind, the default), "kh" (Kingdom Hearts style) or "classic" (vanilla). */
+    public static String hudStyle() {
+        String s = props().getProperty("hud_style");
+        if (s != null) return s;
+        return "false".equals(props().getProperty("kh_hud", "true")) ? "classic" : "blazing";
+    }
 
-    public static void setKhHud(boolean on) { props().setProperty("kh_hud", String.valueOf(on)); save(); }
+    public static void setHudStyle(String s) { props().setProperty("hud_style", s); props().setProperty("kh_hud", String.valueOf(!s.equals("classic"))); save(); }
+
+    public static boolean blazingHud() { return hudStyle().equals("blazing"); }
+
+    public static boolean khHud() { return !hudStyle().equals("classic"); }
+
+    public static void setKhHud(boolean on) { setHudStyle(on ? "kh" : "classic"); }
 
     /** Also show Minecraft's own hearts, armor and hunger next to the hotbar. */
     public static boolean vanillaBars() { return "true".equals(props().getProperty("vanilla_bars", "false")); }
