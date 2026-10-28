@@ -29,7 +29,7 @@ public final class You {
     public static Race race(Player p) {
         YouSlot s = slot(p);
         if (s != null) return s.race;
-        return Race.of(p.level().isClientSide ? clientType(p) : ModCapabilities.getType(p));
+        return Race.of(p.level().isClientSide ? clientType.apply(p) : ModCapabilities.getType(p));
     }
 
     /** Set by the client: the synced character type. */
