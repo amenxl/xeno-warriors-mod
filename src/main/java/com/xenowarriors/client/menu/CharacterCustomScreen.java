@@ -351,12 +351,19 @@ public class CharacterCustomScreen extends Screen {
 
     /** Group line, name, and an emblem with their initial. */
     private void header(GuiGraphics g, CharacterType type, int col) {
-        String group = type == CharacterType.NONE ? "No warrior chosen" : (type.skyPatrol() ? "Sky Patrol" : type.skylander() ? "Skylander" : "Warrior") + "  •  Season " + type.season();
+        var team = com.xenowarriors.client.screen.CharacterSelectScreen.Group.of(type);   // their team in the show
+        String group = type == CharacterType.NONE ? "No warrior chosen" : team.title + "  •  Season " + type.season();
         g.fill(5, 15, 10, 20, 0xFF000000 | col);
         g.drawString(font, group, 13, 14, 0xD0D0DC, false);
         String name = type == CharacterType.NONE ? "Choose a warrior" : type.getDisplayName().getString().toUpperCase(java.util.Locale.ROOT);
         scaled(g, name, 5, 26, 2F, 0xFFFFFF);
-        // emblem
+        // the team's logo (Freedom Fighters, Sky Patrol...), or an emblem with their initial for teams without one
+        if (type != CharacterType.NONE && team.logo != null) {
+            RenderSystem.enableBlend();
+            g.blit(team.logo, VW - 72, 11, 68, 34, 0, 0, 256, 128, 256, 128);
+            g.fill(4, 48, VW - 4, 49, 0xFF2E2E38);
+            return;
+        }
         int ex = VW - 26, ey = 26;
         RenderSystem.enableBlend();
         RenderSystem.disableCull();
