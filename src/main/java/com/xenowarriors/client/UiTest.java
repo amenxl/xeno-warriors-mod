@@ -826,8 +826,11 @@ public final class UiTest {
             l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
                 if (mc.level.getEntity(ids[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
                     a.setYRot(-20F); a.yRotO = -20F; a.setXRot(5); a.xRotO = 5; a.setYHeadRot(-20F); a.yHeadRotO = -20F; mc.setCameraEntity(a); }
+                mc.setScreen(null);
                 mc.player.setYBodyRot(160); mc.player.yBodyRotO = 160; mc.player.setYHeadRot(160); }, 10));
-            l.add(new Step("dmzoutfit_" + o, () -> {}, 3));
+            l.add(new Step("dmzoutfit_" + o, () -> mc.setScreen(null), 3));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.player.setYBodyRot(-20); mc.player.yBodyRotO = -20; mc.player.setYHeadRot(-20); mc.player.setYRot(-20); }, 6));
+            l.add(new Step("dmzoutfit_" + o + "_back", () -> {}, 3));
         }
         l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 5));
     }
