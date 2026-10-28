@@ -28,6 +28,7 @@ public final class GovFacilities {
 
     public static void makeWanted(Player p, String why) {
         if (p.isCreative() || p.isSpectator()) return;
+        if (com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;     // (Tower and VR fights don't count)
         boolean was = wanted(p);
         p.getPersistentData().putLong(WANTED, p.level().getGameTime() + 20 * 90);
         if (!was && p instanceof ServerPlayer sp0) com.xenowarriors.faction.Reputation.add(sp0, com.xenowarriors.faction.Faction.GOV, -30);

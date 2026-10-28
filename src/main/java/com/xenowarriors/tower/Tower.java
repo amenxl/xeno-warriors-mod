@@ -135,7 +135,8 @@ public final class Tower {
         if (tl == null) return;
         r.players.add(p.getUUID());
         r.back.put(p.getUUID(), new Back(p.level().dimension(), p.position(), p.getYRot()));
-        r.healLeft.put(p.getUUID(), HEAL_PER_FLOOR);
+        r.healLeft.put(p.getUUID(), r.mod == TowerMod.NO_HEALING ? 0F : HEAL_PER_FLOOR);
+        TowerBosses.addPlayer(p, r.center);
         BY_PLAYER.put(p.getUUID(), r);
         double a = r.players.size() * 1.6;
         p.teleportTo(tl, r.center.getX() + .5 + Math.cos(a) * 3, Y + 1, r.center.getZ() + .5 + Math.sin(a) * 3, p.getYRot(), 0);
@@ -146,6 +147,7 @@ public final class Tower {
     public static void leave(ServerPlayer p, String why) {
         Run r = BY_PLAYER.remove(p.getUUID());
         if (r == null) return;
+        TowerBosses.removePlayer(p);
         r.players.remove(p.getUUID());
         CompoundTag lost = r.pending.remove(p.getUUID());
         r.healLeft.remove(p.getUUID());
@@ -249,7 +251,9 @@ public final class Tower {
         if (r.bossFloor) {
             List<ServerPlayer> ps = new ArrayList<>();
             for (UUID id : r.players) { ServerPlayer p = tl.getServer().getPlayerList().getPlayer(id); if (p != null && p.level() == tl) ps.add(p); }
-            for (Mob m : TowerBosses.spawn(tl, r.center, r.floor, ps)) r.alive.add(m.getUUID());
+            List<Mob> spawned = TowerBosses.spawn(tl, r.center, r.floor, ps);
+            for (Mob m : spawned) r.alive.add(m.getUUID());
+            if (spawned.isEmpty()) r.bossFloor = false;          // (couldn't make the boss: an ordinary clear, no boss reward)
             return;
         }
         int count = Math.min(14, 3 + r.floor / 3 + r.wave + (people - 1) * 2);
@@ -310,7 +314,10 @@ public final class Tower {
             r.alive.removeIf(id -> {
                 Entity e = tl.getEntity(id);
                 if (!(e instanceof LivingEntity le) || !le.isAlive()) return true;
-                if (e.getY() < Y - 12 || e.position().distanceTo(Vec3.atCenterOf(r.center)) > ARENA_R + 12) { e.discard(); return true; }   // fell out / wandered off
+                if (e.getY() < Y - 12 || e.position().distanceTo(Vec3.atCenterOf(r.center)) > ARENA_R + 12) {
+                    if (TowerBosses.isBoss(e)) { e.teleportTo(r.center.getX() + .5, Y + 1, r.center.getZ() + .5); return false; }   // a boss can't be knocked out of the fight
+                    e.discard(); return true;                     // fell out / wandered off
+                }
                 if (e instanceof Mob m && m.getTarget() == null) {
                     var near = tl.getNearestPlayer(m, 48);
                     if (near != null && !near.isCreative() && !near.isSpectator()) m.setTarget(near);

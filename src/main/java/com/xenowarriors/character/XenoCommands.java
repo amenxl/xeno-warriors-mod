@@ -401,7 +401,9 @@ public final class XenoCommands {
                 .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(com.xenowarriors.faction.Faction.values()).map(f -> f.name().toLowerCase()), b))
                 .then(Commands.argument("value", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-1000, 1000)).executes(ctx -> {
             ServerPlayer p = ctx.getSource().getPlayerOrException();
-            var f = com.xenowarriors.faction.Faction.valueOf(com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "faction").toUpperCase());
+            String fn = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "faction").toUpperCase();
+            var f = java.util.Arrays.stream(com.xenowarriors.faction.Faction.values()).filter(x -> x.name().equals(fn)).findFirst().orElse(null);
+            if (f == null) { ctx.getSource().sendFailure(Component.literal("Unknown faction - use gov, sr, sky or town")); return 0; }
             com.xenowarriors.faction.Reputation.set(p, f, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "value"));
             say(ctx, Component.literal(f.title + " standing set to " + com.xenowarriors.faction.Reputation.get(p, f)));
             return 1;

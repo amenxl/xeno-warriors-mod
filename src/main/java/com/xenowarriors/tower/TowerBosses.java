@@ -177,10 +177,13 @@ public final class TowerBosses {
                 for (ServerPlayer p : ps) p.displayClientMessage(Component.literal(name(b.kind, m) + " is enraged!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
             }
             if ((b.tick += 5) % (b.enraged ? 110 : 160) != 0) continue;
+            int near = tl.getEntitiesOfClass(Mob.class, new net.minecraft.world.phys.AABB(b.center).inflate(Tower.ARENA_R + 4, 12, Tower.ARENA_R + 4),
+                    x -> x.isAlive() && x.getPersistentData().getBoolean("xw_tower")).size();
+            boolean canCall = near <= HELPER_CAP;
             LivingEntity t = m.getTarget() != null && m.getTarget().isAlive() ? m.getTarget() : ps.get(tl.random.nextInt(ps.size()));
             switch (b.kind) {
                 case GOV -> {            // calls in a guard and dashes at you
-                    Mob h = helper(tl, GOV, b.center, tl.random.nextInt(9) - 4, tl.random.nextInt(9) - 4, ps); if (h != null) spawned.add(h);
+                    if (canCall) { Mob h = helper(tl, GOV, b.center, tl.random.nextInt(9) - 4, tl.random.nextInt(9) - 4, ps); if (h != null) spawned.add(h); }
                     Vec3 d = t.position().subtract(m.position()).normalize();
                     m.setDeltaMovement(d.x * 1.4, 0.2, d.z * 1.4); m.hurtMarked = true;
                     tl.playSound(null, m.blockPosition(), SoundEvents.PHANTOM_FLAP, SoundSource.HOSTILE, 1F, 1.5F);
@@ -203,15 +206,31 @@ public final class TowerBosses {
                         Vec3 d = p.position().subtract(m.position()).normalize();
                         p.push(d.x * 1.4, 0.5, d.z * 1.4); p.hurtMarked = true;
                     }
-                    for (int i = 0; i < (b.enraged ? 3 : 2); i++) { Mob h = helper(tl, BRUTE, b.center, tl.random.nextInt(11) - 5, tl.random.nextInt(11) - 5, ps); if (h != null) spawned.add(h); }
+                    for (int i = 0; i < (b.enraged ? 3 : 2) && canCall; i++) { Mob h = helper(tl, BRUTE, b.center, tl.random.nextInt(11) - 5, tl.random.nextInt(11) - 5, ps); if (h != null) spawned.add(h); }
                 }
                 default -> {             // SR fighters have their own moves; the boss floor adds a rebel now and then
-                    if (tl.random.nextInt(2) == 0) { Mob h = helper(tl, SR, b.center, tl.random.nextInt(9) - 4, tl.random.nextInt(9) - 4, ps); if (h != null) spawned.add(h); }
+                    if (canCall && tl.random.nextInt(2) == 0) { Mob h = helper(tl, SR, b.center, tl.random.nextInt(9) - 4, tl.random.nextInt(9) - 4, ps); if (h != null) spawned.add(h); }
                 }
             }
         }
         return spawned;
     }
+
+    /** Someone left the Tower: off every boss bar and out of the bosses' reach. */
+    public static void removePlayer(ServerPlayer p) {
+        for (Boss b : LIVE.values()) { if (b.bar != null) b.bar.removePlayer(p); b.players.remove(p.getUUID()); }
+    }
+
+    /** Someone joined a run mid-boss: on its bar too. */
+    public static void addPlayer(ServerPlayer p, BlockPos center) {
+        for (Boss b : LIVE.values()) if (b.center.equals(center)) { if (b.bar != null) b.bar.addPlayer(p); if (!b.players.contains(p.getUUID())) b.players.add(p.getUUID()); }
+    }
+
+    /** Whether this entity is a live Tower boss. */
+    public static boolean isBoss(Entity e) { return LIVE.containsKey(e.getUUID()); }
+
+    /** How many helpers a boss may still call in (keeps them from piling up). */
+    private static final int HELPER_CAP = 10;
 
     /** A run ended: drop any bars. */
     public static void clear(BlockPos center) {

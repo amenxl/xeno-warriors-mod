@@ -27,6 +27,7 @@ public class FactionsScreen extends Screen {
     public FactionsScreen(Screen parent) { super(Component.literal("Factions")); this.parent = parent; }
 
     public static void open(Screen parent) {
+        RepPacket.CLIENT = new int[0];                     // (don't show the last character's numbers while we wait)
         Minecraft.getInstance().setScreen(new FactionsScreen(parent));
         ModNetwork.sendToServer(new RepPacket(new int[0]));
     }

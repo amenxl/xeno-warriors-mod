@@ -138,7 +138,7 @@ public final class Reputation {
         else if (dead instanceof com.xenowarriors.sr.SrMemberEntity) { add(p, Faction.SR, -25); add(p, Faction.GOV, 5); add(p, Faction.SKY, 5); }
         else if (dead instanceof com.xenowarriors.npc.SkylanderEntity s) add(p, Faction.SKY, s.guardian() ? -60 : -40);
         else if (dead instanceof com.xenowarriors.npc.HumanNpcEntity h) {
-            if (h.raider() || h.skyHater()) { add(p, Faction.TOWN, 8); add(p, Faction.SKY, 5); }
+            if (h.raider() || (h.skyHater() && h.getTarget() instanceof com.xenowarriors.npc.SkylanderEntity)) { add(p, Faction.TOWN, 8); add(p, Faction.SKY, 5); }
             else if (h.carriesSoul()) add(p, Faction.TOWN, 5);
             else add(p, Faction.TOWN, -50);
         }
@@ -147,7 +147,14 @@ public final class Reputation {
 
     @SubscribeEvent
     public static void onTrade(TradeWithVillagerEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p && p.getRandom().nextInt(3) == 0) add(p, Faction.TOWN, 1);
+        if (!(e.getEntity() instanceof ServerPlayer p) || p.getRandom().nextInt(3) != 0) return;
+        CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        long day = p.level().getDayTime() / 24000L;
+        if (root.getLong("xw_rep_trade_day") != day) { root.putLong("xw_rep_trade_day", day); root.putInt("xw_rep_trade_n", 0); }
+        if (root.getInt("xw_rep_trade_n") >= 10) return;            // (at most +10 a day from trading)
+        root.putInt("xw_rep_trade_n", root.getInt("xw_rep_trade_n") + 1);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
+        add(p, Faction.TOWN, 1);
     }
 
     /** Villagers price their trades from your Townsfolk standing (through their own gossip), and won't trade if you're hated. */
@@ -162,10 +169,11 @@ public final class Reputation {
             return;
         }
         var g = v.getGossips();
-        g.remove(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MAJOR_POSITIVE);
-        g.remove(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MINOR_NEGATIVE);
-        if (rep > 0) g.add(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MAJOR_POSITIVE, Math.min(20, rep / 40));
-        else if (rep < 0) g.add(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MINOR_NEGATIVE, Math.min(200, -rep / 4));
+        // (our share goes in its own kinds of gossip - vanilla's cure discount and hit penalties are left as they are)
+        g.remove(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MINOR_POSITIVE);
+        g.remove(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MAJOR_NEGATIVE);
+        if (rep > 0) g.add(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MINOR_POSITIVE, Math.min(200, rep / 5));
+        else if (rep < 0) g.add(p.getUUID(), net.minecraft.world.entity.ai.gossip.GossipType.MAJOR_NEGATIVE, Math.min(100, -rep / 10));
     }
 
     /** For the Factions screen: this character's standing with each group. */

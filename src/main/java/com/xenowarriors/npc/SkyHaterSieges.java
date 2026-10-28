@@ -44,6 +44,7 @@ public final class SkyHaterSieges {
         final Direction facing;                 // from the tower toward the island
         final int topY;
         final List<UUID> builders = new ArrayList<>();
+        final java.util.Set<UUID> fought = new java.util.HashSet<>();        // players who hit a builder
         int y, age, climb = -1;
         boolean bridged;
         Siege(ServerLevel level, BlockPos island, BlockPos base, Direction facing, int topY) {
@@ -66,6 +67,13 @@ public final class SkyHaterSieges {
             }
         }
         SIEGES.removeIf(SkyHaterSieges::tick);
+    }
+
+    /** Whoever hits a siege builder helped stop it. */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent e) {
+        if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
+        for (Siege s : SIEGES) if (s.builders.contains(e.getEntity().getUUID())) s.fought.add(p.getUUID());
     }
 
     /** Starts a siege on this Skylander's island (false if it had one recently or there's nowhere to build). */
@@ -114,7 +122,7 @@ public final class SkyHaterSieges {
         if (alive.isEmpty() || s.age > 20 * 60 * 15) {
             if (alive.isEmpty()) for (ServerPlayer p : s.level.players()) if (p.blockPosition().closerThan(s.base, 160)) {
                 p.displayClientMessage(Component.literal("The Sky Hater siege tower was stopped!").withStyle(ChatFormatting.GREEN), true);
-                if (p.blockPosition().closerThan(s.base, 64)) com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.SKY, 30);     // the Skylanders remember who helped
+                if (s.fought.contains(p.getUUID())) com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.SKY, 30);     // the Skylanders remember who helped
             }
             return true;
         }

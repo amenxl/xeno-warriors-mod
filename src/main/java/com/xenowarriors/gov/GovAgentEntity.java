@@ -86,6 +86,7 @@ public class GovAgentEntity extends PathfinderMob {
     /** (Tower boss) a Government Commander: every human mod but Phase, much tougher. */
     public void makeCommander(float hp, float dmg) {
         entityData.set(MODS, SPEED | ATTACK_MODE | ARMOR | SCANNER | JUMP);
+        removeEffect(MobEffects.INVISIBILITY);              // (in case its first roll gave it Phase)
         getAttribute(Attributes.MAX_HEALTH).setBaseValue(hp);
         getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(dmg);
         getAttribute(Attributes.ARMOR).setBaseValue(16);
