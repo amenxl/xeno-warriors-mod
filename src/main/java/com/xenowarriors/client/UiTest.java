@@ -99,6 +99,7 @@ public final class UiTest {
         if ("bladeanchor".equals(System.getenv("XW_UITEST_FOCUS"))) { bladeAnchor(mc, l); return l; }
         if ("dmzjourney".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzJourney(mc, l); return l; }
         if ("karmascan".equals(System.getenv("XW_UITEST_FOCUS"))) { karmaScan(mc, l); return l; }
+        if ("fullhud".equals(System.getenv("XW_UITEST_FOCUS"))) { fullHud(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -941,6 +942,46 @@ public final class UiTest {
         l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step("dmzjourney_battle", () -> noDmz(mc), 1));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.leave(p, "test over", true)), 20));
+    }
+
+    /** The busiest the screen gets: a Journey boss fight with 4 on the field, every boost maxed, a huge score, the Karma Scanner on - at several GUI scales. */
+    private static void fullHud(Minecraft mc, List<Step> l) {
+        CharacterType[] eight = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.LOGAN};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.journey.Journey.setCleared(p, 14);
+            com.xenowarriors.journey.Journey.open(p);
+            for (CharacterType t : eight) com.xenowarriors.journey.Journey.action(p, 1, t.ordinal(), 0);
+            com.xenowarriors.journey.Journey.action(p, 2, 4, 0);
+            com.xenowarriors.journey.Journey.action(p, 11, 2, 0);
+            com.xenowarriors.journey.Journey.action(p, 4, 0, 0);
+        }); mc.options.hideGui = false; }, 80));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            com.xenowarriors.journey.Journey.testMax(p);
+            com.xenowarriors.journey.Journey.testSet(p, CharacterType.MAX, 0F, -1);
+            com.xenowarriors.journey.Journey.testSet(p, CharacterType.LEXY, 0.3F, -1);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get()));
+        }); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 30));
+        l.add(new Step("fullhud_path", () -> mc.setScreen(null), 5));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.BOSS)), 25));
+        l.add(new Step(null, () -> server(p -> {
+            for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY}) com.xenowarriors.journey.Journey.action(p, 6, t.ordinal(), 0);
+            com.xenowarriors.journey.Journey.action(p, 7, 0, 0);
+        }), 70));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4, false, false));
+            com.xenowarriors.journey.Journey.testMax(p);
+            var boss = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), m -> m.getPersistentData().getBoolean("xw_tower_boss")).stream().findFirst().orElse(null);
+            if (boss != null) { boss.setNoAi(true); boss.teleportTo(p.getX(), p.getY(), p.getZ() - 5); }
+            p.setYRot(180F); p.setXRot(0F);
+        }); }, 50));
+        for (int gs : new int[]{0, 2, 3, 4}) {
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.guiScale().set(gs); mc.resizeDisplay(); server(p -> { com.xenowarriors.journey.Journey.testMax(p); p.setYRot(180F); p.setXRot(0F); }); }, 25));
+            l.add(new Step("fullhud_battle_gui" + (gs == 0 ? "auto" : String.valueOf(gs)), () -> mc.setScreen(null), 3));
+        }
+        l.add(new Step(null, () -> { mc.options.guiScale().set(0); mc.resizeDisplay(); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 20));
+        l.add(new Step("fullhud_battle_third", () -> mc.setScreen(null), 3));
+        l.add(new Step("fullhud_menu", () -> mc.setScreen(new com.xenowarriors.client.journey.JourneyMenuScreen(false)), 15));
     }
 
     /** Closes DragonMineZ's race picker (a fresh test player keeps getting it). */

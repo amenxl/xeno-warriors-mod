@@ -1307,6 +1307,16 @@ public final class Journey {
         }
     }
 
+    /** (UI test) everything on the HUD at its biggest: every boost maxed, a huge score, lots of coins. */
+    public static void testMax(ServerPlayer p) {
+        Run r = BY.get(p.getUUID());
+        if (r == null) return;
+        for (Boost b : Boost.values()) r.boosts[b.ordinal()] = b.max;
+        r.jc = 9999;
+        for (Member m : r.members) m.score = 999_999;
+        syncAll(p.server, r, OPEN_NONE);
+    }
+
     /** (UI test) set a character's health in the run (0 = down) and the coins. */
     public static void testSet(ServerPlayer p, CharacterType t, float hp, int jc) {
         Run r = BY.get(p.getUUID());
