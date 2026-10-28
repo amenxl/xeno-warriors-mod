@@ -436,9 +436,13 @@ def _(i):
 
 @spec('xeno_blast', 'rhalix')
 def _(i):
-    i.figure(8, Y, CAST)
-    i.beam((14, 15), (31, 13), 8, (200, 120, 255), (255, 230, 255))
-    i.burst(14, 15, 4, (255, 255, 255), 8)
+    for ang, L in ((-25, 18), (10, 16), (40, 14), (-60, 12), (75, 10)):      # purple light rays
+        r = math.radians(ang)
+        i.line((21, 14), (21 + math.cos(r) * L, 14 - math.sin(r) * L), (220, 140, 255), 1)
+    h = i.figure(8, Y, POINT)
+    i.circle(21, 14, 5.5, fill=(200, 90, 255))
+    i.circle(21, 14, 4.2, fill=(16, 4, 24))
+    for a in (30, 150, 260): i.line((21, 14), (21 + math.cos(math.radians(a)) * 5, 14 + math.sin(math.radians(a)) * 5), (255, 160, 255), 0.6)
 
 # ---------------------------------------------------------------- Ultima
 @spec('attack_prediction', 'ultima')
@@ -916,9 +920,10 @@ def _(i):
 # ---------------------------------------------------------------- Mikiko: Xeno Blast (KA slot)
 @spec('xeno_blast_mikiko', 'mikiko')
 def _(i):
-    i.figure(8, Y, CAST)
-    i.beam((14, 15), (31, 13), 8, FIRE, (255, 245, 200))
-    i.burst(14, 15, 4, (255, 255, 255), 8)
+    i.figure(9, Y, dict(fa=88, ba=82, fl=55, bl=-50), lean=15)
+    i.poly([(15, 14), (32, 4), (32, 26)], (220, 30, 20))             # red edge
+    i.poly([(15, 14.5), (32, 6.5), (32, 23.5)], (255, 130, 30))      # orange body
+    i.poly([(15, 15), (32, 10), (32, 20)], (255, 240, 160))          # white-yellow core
 
 
 if __name__ == '__main__':

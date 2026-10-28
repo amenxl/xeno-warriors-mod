@@ -242,6 +242,27 @@ public final class EntityPoses {
                 m.body.xRot = lerp(m.body.xRot, 0.6F, w);
                 m.head.xRot += 0.5F * w;
             }
+            case Poses.XENO_MIKIKO -> {     // Xeno Blast (from the art): hands cupped back at the hip, then both thrust out in a deep lunge
+                float w = w(t, dur, 3F, 5F), go = smooth((t - 14F) / 3F), sh = (1F - go) * Mth.sin(t * 3.1F) * 0.05F;
+                // charge: hands cupped behind at the hip, body wound back
+                float rx = lerp(0.35F + sh, aimX, go), lx = lerp(0.25F - sh, aimX + 0.08F, go);
+                pose(m.rightArm, w, rx, lerp(-0.9F, aimY - 0.12F, go), lerp(0.25F, 0.05F, go));
+                pose(m.leftArm, w, lx, lerp(-0.4F, aimY + 0.12F, go), lerp(0.1F, -0.05F, go));
+                m.body.yRot = lerp(m.body.yRot, lerp(-0.55F, 0.15F, go), w);
+                m.body.xRot = lerp(m.body.xRot, lerp(0.05F, 0.28F, go), w);
+                pose(m.leftLeg, w, -0.75F, 0F, -0.12F);          // front leg forward, knee bent
+                pose(m.rightLeg, w, 0.7F, 0F, 0.15F);            // back leg stretched behind
+                m.head.xRot += 0.12F * w;
+            }
+            case Poses.XENO_RHALIX -> {     // Xeno Blast (from the art): side-on stance, pointing finger out, other hand steadying the wrist
+                float w = w(t, dur, 3F, 5F), sh = Mth.sin(t * 2.3F) * 0.03F;
+                pose(m.rightArm, w, aimX + sh, aimY - 0.05F, 0F);
+                pose(m.leftArm, w, aimX + 0.22F - sh, aimY - 0.55F, 0.1F);
+                m.body.yRot = lerp(m.body.yRot, 0.45F, w);
+                pose(m.rightLeg, w, -0.45F, 0F, 0.22F);
+                pose(m.leftLeg, w, 0.45F, 0F, -0.22F);
+                m.head.yRot -= 0.3F * w;
+            }
             case Poses.SHAPE -> {           // hands held out, shaping crystal into place
                 float w = w(t, dur, 2F, 3F), circ = Mth.sin(t * 0.7F) * 0.3F;
                 pose(m.rightArm, w, -1.4F + circ, -0.35F, 0F);
