@@ -150,6 +150,24 @@ public class PortraitScreen extends Screen {
      * Draws the entity turned by {@code yaw} degrees: in the character's hero pose holding their signature weapon
      * ({@code heroPose}, portraits), or just as they are - their normal idle animation (the menus).
      */
+    /**
+     * The menu "camera": draws the entity turned by {@code yaw} degrees and tilted by {@code pitch} (positive = seen
+     * from lower down), in {@code pose} (a PortraitPoses-style array) or, when null, their normal idle animation.
+     */
+    public static void drawCharacterCam(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int scale, float yaw, float pitch, float[] pose) {
+        if (e == null) return;
+        float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
+        e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
+        if (pose != null) { PortraitPoses.active = type.getId(); PortraitPoses.override = pose; }
+        try {
+            Quaternionf q = new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateX(pitch)).mul(new Quaternionf().rotateY(yaw * Mth.DEG_TO_RAD));
+            InventoryScreen.renderEntityInInventory(g, x, y, scale, q, null, e);
+        } finally {
+            PortraitPoses.active = null; PortraitPoses.override = null;
+            e.yBodyRot = yb; e.yBodyRotO = ybo; e.setYRot(yr); e.setXRot(xr); e.yHeadRot = yh; e.yHeadRotO = yho;
+        }
+    }
+
     public static void drawCharacter(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int scale, float yaw, boolean heroPose) {
         if (e == null) return;
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;

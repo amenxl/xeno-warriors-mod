@@ -75,9 +75,35 @@ public class CharacterCustomScreen extends Screen {
 
     private void setTab(int t) {
         if (t == tab) return;
+        camFrom = camNow.clone();
         tabDir = t > tab ? 1 : -1;
         tab = t;
         tabAt = net.minecraft.Util.getMillis();
+        camAt = tabAt;
+    }
+
+    // ---- the "camera" on the character, one framing per tab (like the agent screen in the user's video): full body for
+    // Stats, a low close angle for Skills, over the shoulder for Outfits, a dramatic front angle for KAs / Last resort.
+    // It swoops from one to the next; on opening it starts close and pulls back.
+    // {x (fraction of width), feet y (fraction of height), scale (fraction of height), yaw degrees, pitch}
+    private static final float[][] CAMS = {
+            {0.25F, 1.13F, 0.52F, 22F, -0.06F},
+            {0.28F, 1.42F, 0.74F, 38F, 0.30F},
+            {0.20F, 1.62F, 0.98F, 152F, 0.04F},
+            {0.27F, 1.26F, 0.62F, -16F, 0.12F}};
+    private float[] camFrom = {0.30F, 1.70F, 1.05F, 70F, 0.05F};
+    private final float[] camNow = CAMS[0].clone();
+    private long camAt = opened;
+
+    /** The character's pose on each tab (null = their idle animation), with a little breathing sway. */
+    private float[] tabPose(int tab, float t) {
+        float s = Mth.sin(t * 2.2F) * 0.03F;
+        return switch (tab) {
+            case 1 -> new float[]{.22F + s, .25F, 0F, 0F, .25F, -1.55F + s, .3F, .3F, .2F, -.6F, -.75F, -.15F, .15F, .15F, -.12F, -.3F, -1.6F, .12F, .1F};   // presenting a move
+            case 2 -> new float[]{.05F, -1.0F + s, 0F, 0F, 0F, -.35F, 0F, .12F, -2.2F + s, .5F, -.2F, 0F, .06F, .1F, -.06F, -.3F, -2.0F, 0F, .2F};       // looking back over the shoulder
+            case 3 -> new float[]{.15F, 0F, 0F, .1F, -.4F, .35F + s, -.9F, .25F, .25F - s, -.4F, .1F, .5F, .15F, -.6F, -.12F, -1.2F, -1.4F, .2F, .7F};  // gathering power
+            default -> null;
+        };
     }
 
     private static float ease(float x) { x = Mth.clamp(x, 0F, 1F); return 1F - (1F - x) * (1F - x) * (1F - x); }
@@ -288,8 +314,12 @@ public class CharacterCustomScreen extends Screen {
         // the character
         if (mc.player != null) {
             Cel.force = true;
-            float cx = w * 0.25F - (1F - inChar) * w * 0.3F + (mx - w / 2F) * 0.012F;    // slides in, slight parallax with the mouse
-            try { PortraitScreen.drawCharacter(g, mc.player, type, (int) cx, (int) (h * 1.13F), (int) (h * 0.52F), 22F + (mx - w / 2F) / w * 10F, false); }   // their idle animation
+            float ct = ease((now - camAt) / 600F);
+            float[] to = CAMS[Math.min(tab, CAMS.length - 1)];
+            for (int k = 0; k < 5; k++) camNow[k] = camFrom[k] + (to[k] - camFrom[k]) * ct;
+            float cx = w * camNow[0] - (1F - inChar) * w * 0.15F + (mx - w / 2F) * 0.012F;   // slight parallax with the mouse
+            try { PortraitScreen.drawCharacterCam(g, mc.player, type, (int) cx, (int) (h * camNow[1]), (int) (h * camNow[2]),
+                    camNow[3] + (mx - w / 2F) / w * 10F, camNow[4], tabPose(tab, t)); }
             finally { Cel.force = false; }
         }
 
