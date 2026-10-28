@@ -81,9 +81,9 @@ public final class EfDmzWeapons {
 
     private static boolean isRhalix(LivingEntityPatch<?> patch) {
         if (!(patch.getOriginal() instanceof Player p)) return false;
+        // (the client-side check lives in its own class so a dedicated server never loads client classes)
         if (p.level().isClientSide) return net.minecraftforge.fml.DistExecutor.unsafeCallWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
-                () -> () -> p instanceof net.minecraft.client.player.AbstractClientPlayer cp
-                        && com.xenowarriors.client.ClientCharacterData.get(cp) == CharacterType.RHALIX) == Boolean.TRUE;
+                () -> () -> EfClientCheck.isRhalix(p)) == Boolean.TRUE;
         return ModCapabilities.getType(p) == CharacterType.RHALIX;
     }
 }
