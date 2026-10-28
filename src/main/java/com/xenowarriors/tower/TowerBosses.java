@@ -42,6 +42,7 @@ public final class TowerBosses {
     }
     private static final Map<UUID, Boss> LIVE = new HashMap<>();
     private static long lastTick = -1;
+    private static List<Mob> lastSpawned = List.of();
 
     private TowerBosses() {}
 
@@ -160,9 +161,10 @@ public final class TowerBosses {
 
     /** Called by the Tower every 5 ticks: boss bars, special moves, enrage; returns helpers spawned (to count as wave enemies). */
     public static List<Mob> tick(ServerLevel tl) {
+        if (tl.getGameTime() == lastTick) return lastSpawned;          // (the Tower and Journey mode both tick bosses: once per tick, same answer)
         List<Mob> spawned = new ArrayList<>();
-        if (tl.getGameTime() == lastTick) return spawned;            // (the Tower and Journey mode both tick bosses: once per tick)
         lastTick = tl.getGameTime();
+        lastSpawned = spawned;
         Iterator<Boss> it = LIVE.values().iterator();
         while (it.hasNext()) {
             Boss b = it.next();

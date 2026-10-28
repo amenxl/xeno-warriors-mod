@@ -180,5 +180,6 @@ public final class ClientEvents {
         ClientCharacterData.clear();
         ClientSkillState.clear();
         FlightTracker.clear();
+        com.xenowarriors.client.journey.JourneyClient.state = new net.minecraft.nbt.CompoundTag();
     }
 }

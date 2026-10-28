@@ -317,6 +317,7 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDamage(LivingDamageEvent event) {
         if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p) || event.getAmount() < p.getHealth()) return;
+        if (com.xenowarriors.journey.Journey.inRun(p)) return;          // (Journey mode: the next character tags in instead)
         Duel d = ACTIVE.get(p.getUUID());
         if (d != null && d.fighting()) {
             event.setCanceled(true);

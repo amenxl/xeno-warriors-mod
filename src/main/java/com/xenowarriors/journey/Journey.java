@@ -66,7 +66,7 @@ public final class Journey {
     static final class Member {
         final UUID id; String name;
         final List<CharacterType> picks = new ArrayList<>(), chosen = new ArrayList<>();
-        boolean ready, out;
+        boolean ready, out, fought;
         CharacterType active = CharacterType.NONE, original = CharacterType.NONE;
         int score; float hurt;
         Back back; GameType mode = GameType.SURVIVAL;
@@ -202,7 +202,7 @@ public final class Journey {
                 if (!me.chosen.remove(t) && me.chosen.size() < 4) me.chosen.add(t);
             }
             case 7 -> {
-                if (r.phase != CHOOSING) return;
+                if (r.phase != CHOOSING || me.out) return;
                 if (me.ready) me.ready = false;
                 else if (!me.chosen.isEmpty()) me.ready = true;
                 if (allReady(r)) { startBattle(server, r); return; }
@@ -225,6 +225,7 @@ public final class Journey {
             String why = p == null ? m.name + " isn't online"
                     : m.picks.size() != r.cap() ? m.name + " needs to pick " + r.cap() + " characters"
                     : !m.ready && !m.id.equals(r.host) ? m.name + " isn't ready"
+                    : p.isCreative() || p.isSpectator() ? m.name + " needs to be in Survival or Adventure mode"
                     : !com.xenowarriors.bot.PartyBots.bots(p).isEmpty() ? m.name + " has bot teammates out - dismiss them first (Journey is just the two of you)"
                     : Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level()) ? m.name + " can't leave from where they are"
                     : r.members.size() == 2 && !m.id.equals(r.host) && !com.xenowarriors.party.Parties.sameParty(p.getUUID(), r.host) ? m.name + " needs to be in your party"
@@ -259,6 +260,7 @@ public final class Journey {
             m.original = ModCapabilities.getType(p);
             m.mode = p.gameMode.getGameModeForPlayer();
             m.ready = false;
+            setBack(p, m);
             p.teleportTo(tl, s.getX() + .5 + (k++ == 0 ? -1.5 : 1.5), s.getY() + 1, s.getZ() + .5, 0F, 0F);
             lead(p, r, m);
             title(p, JourneyRules.DIFF[r.diff] + " JOURNEY", "Walk the path - step on the next platform", JourneyRules.DIFF_COLOR[r.diff]);
@@ -296,16 +298,61 @@ public final class Journey {
     }
 
     private static void restore(ServerPlayer p, Member m) {
-        if (p.isSpectator() || p.gameMode.getGameModeForPlayer() != m.mode) p.setGameMode(m.mode);
-        if (m.original != CharacterType.NONE && ModCapabilities.getType(p) != m.original) CharacterManager.setCharacter(p, m.original);
+        restore(p, m.original, m.mode, m.back == null ? null : m.back.dim(), m.back == null ? null : m.back.pos(), m.back == null ? 0F : m.back.yRot());
+    }
+
+    /** Back to who you were (the select screen if that character's taken now, or you had none), your game mode and where you were. */
+    private static void restore(ServerPlayer p, CharacterType original, GameType mode, ResourceKey<Level> dim, Vec3 pos, float yRot) {
+        setBack(p, null);
+        if (p.gameMode.getGameModeForPlayer() != mode) p.setGameMode(mode);
+        ServerPlayer holder = com.xenowarriors.character.CharacterLock.takenBy(p, original);
+        if (original == CharacterType.NONE || holder != null) {
+            CharacterManager.setCharacter(p, CharacterType.NONE);
+            if (holder != null) p.sendSystemMessage(msg(holder.getGameProfile().getName() + " is playing " + original.getDisplayName().getString() + " now - pick another character.", ChatFormatting.YELLOW));
+            CharacterManager.openSelectScreen(p);
+        } else if (ModCapabilities.getType(p) != original) CharacterManager.setCharacter(p, original);
         p.removeAllEffects();
         p.clearFire();
         p.setHealth(p.getMaxHealth());
-        if (Tower.is(p.level()) && m.back != null) {
-            ServerLevel to = p.server.getLevel(m.back.dim());
+        if (Tower.is(p.level()) && pos != null) {
+            ServerLevel to = dim == null ? null : p.server.getLevel(dim);
             if (to == null) to = p.server.overworld();
-            p.teleportTo(to, m.back.pos().x, m.back.pos().y, m.back.pos().z, m.back.yRot(), 0);
+            p.teleportTo(to, pos.x, pos.y, pos.z, yRot, 0);
         }
+    }
+
+    /** Where to send you back (kept on you, so a crash or restart mid-journey still gets you home). */
+    private static void setBack(ServerPlayer p, Member m) {
+        CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        if (m == null) root.remove("xw_journey_back");
+        else {
+            CompoundTag t = new CompoundTag();
+            t.putInt("char", m.original.ordinal());
+            t.putInt("mode", m.mode.getId());
+            if (m.back != null) {
+                t.putString("dim", m.back.dim().location().toString());
+                t.putDouble("x", m.back.pos().x); t.putDouble("y", m.back.pos().y); t.putDouble("z", m.back.pos().z); t.putFloat("yRot", m.back.yRot());
+            }
+            root.put("xw_journey_back", t);
+        }
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
+    }
+
+    /** Logged in with a journey still on you (the server stopped mid-run): put you back. */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer p) || BY.containsKey(p.getUUID())) return;
+        CompoundTag t = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound("xw_journey_back");
+        if (t.isEmpty()) return;
+        ResourceKey<Level> dim = t.contains("dim") ? ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(t.getString("dim"))) : null;
+        Vec3 pos = t.contains("x") ? new Vec3(t.getDouble("x"), t.getDouble("y"), t.getDouble("z")) : null;
+        if (!Tower.is(p.level()) && pos != null && dim != null) {          // (the Tower already sent you to spawn: go back to where you were)
+            ServerLevel to = p.server.getLevel(dim);
+            if (to != null) p.teleportTo(to, pos.x, pos.y, pos.z, t.getFloat("yRot"), 0);
+            pos = null;
+        }
+        restore(p, (t.getInt("char") >= 0 && t.getInt("char") < CharacterType.values().length ? CharacterType.values()[t.getInt("char")] : CharacterType.NONE), GameType.byId(t.getInt("mode")), dim, pos, t.getFloat("yRot"));
+        p.sendSystemMessage(msg("Your last Journey ended when the server stopped - you're back where you started it.", ChatFormatting.GRAY));
     }
 
     private static void close(MinecraftServer server, Run r) {
@@ -314,7 +361,7 @@ public final class Journey {
         ServerLevel tl = server.getLevel(Tower.LEVEL);
         if (tl == null || r.nodes.length == 0) return;
         com.xenowarriors.tower.TowerBosses.clear(JourneyWorld.arena(r.slot));
-        for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> !(e instanceof Player))) e.discard();
+        for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> !(e instanceof Player) && !(e instanceof com.xenowarriors.bot.PartyBotEntity))) e.discard();
     }
 
     // ------------------------------------------------------------------------------------------------ walking the path
@@ -456,6 +503,7 @@ public final class Journey {
             if (p == null) continue;
             m.score = 0; m.hurt = 0;
             m.ready = false;
+            m.fought = false;
             double a = k++ * Math.PI;
             if (m.out || m.chosen.isEmpty()) {
                 m.out = true;
@@ -465,6 +513,7 @@ public final class Journey {
                 continue;
             }
             if (r.challenge == Challenge.SOLO && m.chosen.size() != 1) r.challengeOk = false;
+            m.fought = true;
             p.teleportTo(tl, c.getX() + .5 + Math.sin(a) * 2, c.getY() + 1, c.getZ() + .5 + 10, 180F, 0F);
             m.active = m.chosen.get(0);
             become(p, m.active);
@@ -555,14 +604,14 @@ public final class Journey {
         boolean boss = r.kind() == JourneyRules.BOSS;
         com.xenowarriors.tower.TowerBosses.clear(c);
         for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 14, 24, JourneyWorld.ARENA_R + 14),
-                e -> e instanceof Mob || e instanceof net.minecraft.world.entity.projectile.Projectile)) e.discard();
+                e -> (e instanceof Mob && !(e instanceof com.xenowarriors.bot.PartyBotEntity)) || e instanceof net.minecraft.world.entity.projectile.Projectile)) e.discard();
         // drops and XP come with you
         BlockPos at = JourneyWorld.node(r.slot, r.cur);
         for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 6, 16, JourneyWorld.ARENA_R + 6),
                 e -> e instanceof net.minecraft.world.entity.item.ItemEntity || e instanceof net.minecraft.world.entity.ExperienceOrb))
             e.teleportTo(at.getX() + .5, at.getY() + 1, at.getZ() + .5);
         int fighting = 0;
-        for (Member m : r.members) if (!m.out || m.score > 0) fighting++;
+        for (Member m : r.members) if (m.fought) fighting++;
         float share = Math.max(1F, r.enemyHp * JourneyRules.PER_DAMAGE / Math.max(1, fighting));
         CompoundTag res = new CompoundTag();
         res.putBoolean("won", won);
@@ -574,7 +623,7 @@ public final class Journey {
         StringBuilder line = new StringBuilder();
         for (Member m : r.members) {
             int rank = JourneyRules.rank(m.score / share);
-            int jc = won ? JourneyRules.RANK_JC[rank] * (boss ? 2 : 1) + (r.challengeOk ? r.challenge.bonus : 0) : 0;
+            int jc = won && m.fought ? JourneyRules.RANK_JC[rank] * (boss ? 2 : 1) + (r.challengeOk ? r.challenge.bonus : 0) : 0;   // (watching earns nothing)
             gained += jc;
             CompoundTag t = new CompoundTag();
             t.putString("name", m.name); t.putInt("score", m.score); t.putInt("rank", rank); t.putInt("jc", jc);
@@ -758,6 +807,12 @@ public final class Journey {
     /** Nothing heals you during a journey: only the shop and healing pods (which set your health directly). */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onHeal(LivingHealEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p && inRun(p)) event.setCanceled(true);
+    }
+
+    /** No totems either: going down means the next character tags in. */
+    @SubscribeEvent
+    public static void onTotem(net.minecraftforge.event.entity.living.LivingUseTotemEvent event) {
         if (event.getEntity() instanceof ServerPlayer p && inRun(p)) event.setCanceled(true);
     }
 

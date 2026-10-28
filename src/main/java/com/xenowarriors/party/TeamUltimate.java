@@ -118,6 +118,7 @@ public final class TeamUltimate {
         ServerPlayer mikiko = rhalix == p ? asker : p;
         for (ServerPlayer s : new ServerPlayer[]{rhalix, mikiko}) {
             if (!s.isCreative()) Karma.add(s, -KARMA);
+            com.xenowarriors.journey.Journey.onSkill(s);
             var skill = SkillManager.get(ModCapabilities.getType(s), SkillManager.ULTIMATE_SLOT);
             int cd = skill == null ? 60 * 20 : skill.getCooldownTicks();
             long now = s.server.overworld().getGameTime();

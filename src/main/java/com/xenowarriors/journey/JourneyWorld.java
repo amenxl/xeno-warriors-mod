@@ -140,14 +140,13 @@ public final class JourneyWorld {
 
     // ------------------------------------------------------------------------------------------------ the arena
 
-    private static final Set<Integer> BUILT = new HashSet<>();
 
     /** The arena's walls (once per slot) and a floor in the look of who you're fighting. */
     static void arena(ServerLevel l, int slot, JourneyRules.Foe foe, boolean boss) {
         BlockPos c = arena(slot);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         int Y = c.getY();
-        if (BUILT.add(slot)) {
+        if (!l.getBlockState(m.set(c.getX() + ARENA_R + 1, Y + 20, c.getZ())).is(Blocks.BARRIER)) {
             for (int dx = -ARENA_R - 2; dx <= ARENA_R + 2; dx++) for (int dz = -ARENA_R - 2; dz <= ARENA_R + 2; dz++) {
                 double d = Math.sqrt(dx * dx + dz * dz);
                 if (d > ARENA_R + 1.5) continue;

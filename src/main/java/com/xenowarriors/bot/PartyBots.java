@@ -161,6 +161,7 @@ public final class PartyBots {
     }
 
     public static void add(ServerPlayer p, String[] ids) {
+        if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { p.sendSystemMessage(Component.literal("No bot teammates on a Journey - it's just you and your partner.").withStyle(ChatFormatting.RED)); return; }
         int free = Parties.MAX_SIZE - partySize(p);
         Set<String> taken = new HashSet<>();
         for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
