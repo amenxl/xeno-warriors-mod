@@ -29,7 +29,7 @@ public final class BlazingHud {
         var p = mc.player;
         int col = type.getColor() & 0xFFFFFF;
         int E = 70, H = Math.round(E * EH / (float) EW);
-        int ex = width - E - 1, ey = height - H - 12 - lift;
+        int ex = width - E - 1, ey = height - H - 24 - lift;
         float pcx = ex + CX * E, pcy = ey + CY * H, pr = CR * E;
 
         // the portrait, then the emblem over it in the character's colour

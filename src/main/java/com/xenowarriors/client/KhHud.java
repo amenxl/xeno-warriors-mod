@@ -123,9 +123,10 @@ public final class KhHud implements IGuiOverlay {
                 small(g, font, ot, at[0] + at[2] / 2F - font.width(ot) * 0.3F, at[1] - 16, oc, 0.6F);
             }
             var ka0 = ClientSkillState.ka();
-            g.blit(ORB, at[0] - 16, at[1] - 12, 14, 14, 0, 0, 32, 32, 32, 32);
+            int ox = at[0] + at[2] + 2, oy = at[1] - 10;                   // KA orb: top right of the emblem
+            g.blit(ORB, ox, oy, 14, 14, 0, 0, 32, 32, 32, 32);
             String kl0 = ka0 == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka0.title().substring(0, 1);
-            small(g, font, kl0, at[0] - 9 - font.width(kl0) * 0.3F, at[1] - 8, ka0 == null ? 0xB070FF : ka0.color, 0.6F);
+            small(g, font, kl0, ox + 7 - font.width(kl0) * 0.3F, oy + 4, ka0 == null ? 0xB070FF : ka0.color, 0.6F);
             effects(g, mc, at[3], at[4] - 14, width - 4);
             bubble(g, font, p, at[0], at[1]);
             commandMenu(g, mc, font, type, height, partial);
