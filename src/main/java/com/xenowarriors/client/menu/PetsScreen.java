@@ -173,6 +173,11 @@ public class PetsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
+        renderMenu(g, mx, my, pt);
+        MenuInterrupt.warning(g, width, height);
+    }
+
+    private void renderMenu(GuiGraphics g, int mx, int my, float pt) {
         CharacterType type = ClientCharacterData.getLocal();
         int col = type == CharacterType.NONE ? 0x8090A0 : type.getColor() & 0xFFFFFF;
         g.fillGradient(0, 0, width, height, 0xF0101016, 0xF0060608);

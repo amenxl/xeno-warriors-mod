@@ -156,6 +156,11 @@ public class MainMenuScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float pt) {
+        renderMenu(g, mouseX, mouseY, pt);
+        MenuInterrupt.warning(g, width, height);
+    }
+
+    private void renderMenu(GuiGraphics g, int mouseX, int mouseY, float pt) {
         Minecraft mc = Minecraft.getInstance();
         CharacterType type = ClientCharacterData.getLocal();
         int col = type == CharacterType.NONE ? 0x8090A0 : type.getColor() & 0xFFFFFF;

@@ -245,6 +245,11 @@ public class CharacterCustomScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
+        renderMenu(g, mx, my, pt);
+        MenuInterrupt.warning(g, width, height);
+    }
+
+    private void renderMenu(GuiGraphics g, int mx, int my, float pt) {
         Minecraft mc = Minecraft.getInstance();
         CharacterType type = type();
         int col = type == CharacterType.NONE ? 0x8090A0 : type.getColor() & 0xFFFFFF;
