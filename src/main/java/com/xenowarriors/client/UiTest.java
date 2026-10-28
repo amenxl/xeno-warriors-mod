@@ -47,6 +47,16 @@ public final class UiTest {
     private static List<Step> build() {
         Minecraft mc = Minecraft.getInstance();
         List<Step> l = new ArrayList<>();
+        HudFade.forceFull = !"hudfade".equals(System.getenv("XW_UITEST_FOCUS"));   // (the HUD's out-of-combat fade would dim the other shots)
+        if ("hudfade".equals(System.getenv("XW_UITEST_FOCUS"))) {               // the Blazing Wind HUD fading out of combat
+            l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 40));
+            l.add(new Step("hudfade_full", () -> {}, 1));
+            l.add(new Step(null, () -> {}, 240));
+            l.add(new Step("hudfade_faded", () -> {}, 1));
+            l.add(new Step(null, () -> mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND), 10));
+            l.add(new Step("hudfade_hit", () -> {}, 1));
+            return l;
+        }
         l.add(new Step(null, () -> server(p -> {
             com.xenowarriors.character.Seasons.set(p.server, 3);
             p.server.getPlayerList().op(p.getGameProfile());

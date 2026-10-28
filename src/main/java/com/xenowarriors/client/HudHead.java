@@ -28,11 +28,11 @@ public final class HudHead {
     }
 
     public static void draw(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int size, boolean redFlash) {
-        draw(g, e, type, x, y, size, redFlash, 0.5F, 1.1F, true);
+        draw(g, e, type, x, y, size, redFlash, 0.5F, 1.1F, true, -0.35F);
     }
 
     /** headAt: where the head's centre sits in the box (0-1, from the top); zoom: model scale per box size; box: draw the backdrop. */
-    public static void draw(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int size, boolean redFlash, float headAt, float zoom, boolean box) {
+    public static void draw(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int size, boolean redFlash, float headAt, float zoom, boolean box, float yaw) {
         int col = type.getColor() & 0xFFFFFF;
         if (box) g.fillGradient(x, y, x + size, y + size, 0xFF000000 | mix(col, 0.55F), 0xFF000000 | mix(col, 0.2F));
         if (e == null) {
@@ -50,13 +50,13 @@ public final class HudHead {
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
         g.enableScissor(x, y, x + size, y + size);
-        if (redFlash) com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 0.55F, 0.55F, 1F);
+        if (redFlash) HudFade.color(1F, 0.55F, 0.55F, 1F);
         try {
-            Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateY(-0.35F));
+            Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateY(yaw));
             // head centre (about 1.6 blocks up, hair included) in the middle of the box
             InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * headAt + 1.6F * scale), scale, pose, null, e);
         } finally {
-            com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+            HudFade.reset();
             g.disableScissor();
             e.yBodyRot = yb; e.yBodyRotO = ybo; e.setYRot(yr); e.setXRot(xr); e.yHeadRot = yh; e.yHeadRotO = yho;
         }

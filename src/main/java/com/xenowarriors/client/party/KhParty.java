@@ -22,7 +22,11 @@ public class KhParty implements IGuiOverlay {
         Minecraft mc = Minecraft.getInstance();
         height = 0;
         if (!KhHud.active() || mc.options.hideGui || PartyClient.members().isEmpty()) return;
-        if (com.xenowarriors.client.ClientSettings.blazingHud()) { blazing(g, mc, width, screenH); return; }
+        if (com.xenowarriors.client.ClientSettings.blazingHud()) {
+            com.xenowarriors.client.HudFade.begin();
+            try { blazing(g, mc, width, screenH); } finally { com.xenowarriors.client.HudFade.end(); }
+            return;
+        }
         int x = width - CARD_W - 4, y = 4;
         var font = mc.font;
         g.drawString(font, "PARTY", x + 2, y, 0xC8E1FF, true);

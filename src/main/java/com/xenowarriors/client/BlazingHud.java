@@ -19,7 +19,8 @@ public final class BlazingHud {
 
     private static final ResourceLocation EMBLEM = XenoWarriors.id("textures/gui/hud/blazing_emblem.png");
     private static final int EW = 480, EH = 456;
-    private static final float CX = 260F / EW, CY = 208F / EH, CR = 124F / EW;
+    /** The middle of the emblem's opening (its centre of mass) and a radius that fills all of it - the ring is drawn on top. */
+    private static final float CX = 258F / EW, CY = 225F / EH, CR = 142F / EW;
 
     private static ResourceLocation bubble(String name) { return XenoWarriors.id("textures/gui/hud/blazing_" + name + ".png"); }
 
@@ -39,18 +40,18 @@ public final class BlazingHud {
         float pcx = ex + CX * E, pcy = ey + CY * H, pr = CR * E;
 
         // the portrait, then the emblem over it in the character's colour
+        disc(g, pcx, pcy, pr, 0xFF000000 | mix(col, 0.35F));
         if (HudFaces.hasArt(type)) {
-            int s = Math.round(pr * 2 / 0.828F);
+            int s = Math.round(pr * 2 * 0.9F / 0.828F);
             KhHud.portrait(g, HudFaces.texture(type, face), Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash);
         } else {
             int s = Math.round(pr * 2 * 0.98F);
-            disc(g, pcx, pcy, pr * 1.05F, 0xFF000000 | mix(col, 0.35F));
-            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.62F, 0.95F, false);   // (head and hair in the middle of the ring)
+            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.5F, 0.85F, false, 0F);   // (head and hair in the middle of the ring)
         }
         RenderSystem.enableBlend();
-        RenderSystem.setShaderColor(((col >> 16) & 255) / 255F, ((col >> 8) & 255) / 255F, (col & 255) / 255F, 1F);
+        HudFade.color(((col >> 16) & 255) / 255F, ((col >> 8) & 255) / 255F, (col & 255) / 255F, 1F);
         g.blit(EMBLEM, ex, ey, E, H, 0, 0, EW, EH, EW, EH);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        HudFade.reset();
 
         // the bars, running left from their bubbles
         int hotbarRight = width / 2 + 91;

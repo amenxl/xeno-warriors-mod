@@ -85,9 +85,9 @@ public final class KhHud implements IGuiOverlay {
 
     public static void portrait(GuiGraphics g, ResourceLocation tex, int x, int y, int size, boolean redFlash) {
         RenderSystem.enableBlend();
-        if (redFlash) RenderSystem.setShaderColor(1F, 0.55F, 0.55F, 1F);
+        if (redFlash) HudFade.color(1F, 0.55F, 0.55F, 1F);
         g.blit(tex, x, y, size, size, 0, 0, 128, 128, 128, 128);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        HudFade.reset();
     }
 
     // ---------------------------------------------------------------- the HUD
@@ -112,6 +112,16 @@ public final class KhHud implements IGuiOverlay {
         boolean low = hp / max <= 0.25F, flash = low && (HudFaces.clock() / 6) % 2 == 0;
 
         if (ClientSettings.blazingHud()) {
+            HudFade.begin();
+            try { blazing(g, mc, font, p, type, width, height, lift, hp, max, low, flash, partial); } finally { HudFade.end(); }
+            return;
+        }
+        rest(g, mc, font, p, type, width, height, lift, size, px, py, col, hp, max, low, flash, partial);
+    }
+
+    private void blazing(GuiGraphics g, Minecraft mc, Font font, net.minecraft.client.player.LocalPlayer p, CharacterType type,
+                         int width, int height, int lift, float hp, float max, boolean low, boolean flash, float partial) {
+        {
             boolean dbz0 = DmzHud.read(p);
             int[] at = BlazingHud.render(g, mc, font, type, width, height, lift, hp, max, chip, low, flash, dbz0,
                     HudFaces.face(p.getUUID(), hp, max, HudFaces.allOut(p), false));
@@ -130,8 +140,11 @@ public final class KhHud implements IGuiOverlay {
             effects(g, mc, at[3], at[4] - 14, width - 4);
             bubble(g, font, p, at[0], at[1]);
             commandMenu(g, mc, font, type, height, partial);
-            return;
         }
+    }
+
+    private void rest(GuiGraphics g, Minecraft mc, Font font, net.minecraft.client.player.LocalPlayer p, CharacterType type,
+                      int width, int height, int lift, int size, int px, int py, int col, float hp, float max, boolean low, boolean flash, float partial) {
         // bars, left of the portrait
         int hotbarRight = width / 2 + 91;
         int bw = Mth.clamp(px - 10 - hotbarRight - 8, 50, 120);
@@ -206,9 +219,9 @@ public final class KhHud implements IGuiOverlay {
             g.fill(x - 1, y - 1, x + 11, y + 11, e.getEffect().isBeneficial() ? 0xAA1E3A24 : 0xAA3A1E1E);
             var sprite = tex.get(e.getEffect());
             float alpha = e.endsWithin(200) ? (e.getDuration() / 10 % 2 == 0 ? 0.4F : 1F) : 1F;
-            RenderSystem.setShaderColor(1F, 1F, 1F, alpha);
+            HudFade.color(1F, 1F, 1F, alpha);
             g.blit(x, y, 0, 10, 10, sprite);
-            RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+            HudFade.reset();
             if (e.getAmplifier() > 0) small(g, mc.font, String.valueOf(e.getAmplifier() + 1), x + 7, y + 6, 0xFFFFFF, 0.5F);
             x -= 13;
         }
