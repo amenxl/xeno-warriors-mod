@@ -697,10 +697,13 @@ public final class UiTest {
     private static void customAnim(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); }, 60));
         l.add(new Step(null, () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(null), 1));
-        for (int f = 0; f < 6; f++) l.add(new Step("customanim_open_" + f, () -> {}, 1));
+        for (int f = 0; f < 5; f++) l.add(new Step("customanim_open_" + f, () -> {}, 2));
         l.add(new Step(null, () -> {}, 20));
-        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(1); }, 0));
-        for (int f = 0; f < 5; f++) l.add(new Step("customanim_tab_" + f, () -> {}, 1));
+        for (int tb : new int[]{1, 2, 3, 0}) {
+            l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(tb); }, 0));
+            for (int f = 0; f < 4; f++) l.add(new Step("customanim_tab" + tb + "_" + f, () -> {}, 3));
+            l.add(new Step(null, () -> {}, 10));
+        }
     }
 
     private static void noToasts(Minecraft mc) {
