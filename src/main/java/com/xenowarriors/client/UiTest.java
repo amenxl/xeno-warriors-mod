@@ -875,7 +875,7 @@ public final class UiTest {
 
     /** Mikiko's Hekublade floating where he stood while he's inside it; hits on it cut his time inside. */
     private static void bladeAnchor(Minecraft mc, List<Step> l) {
-        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get())); server(p -> {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(com.xenowarriors.item.ModItems.HEKUBLADE.get()); server(p -> {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.setYRot(0); p.setXRot(15);
             com.xenowarriors.mikiko.HekubladeAnchor.testKeep = true;
