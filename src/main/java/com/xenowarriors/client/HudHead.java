@@ -28,8 +28,13 @@ public final class HudHead {
     }
 
     public static void draw(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int size, boolean redFlash) {
+        draw(g, e, type, x, y, size, redFlash, 0.5F, 1.1F, true);
+    }
+
+    /** headAt: where the head's centre sits in the box (0-1, from the top); zoom: model scale per box size; box: draw the backdrop. */
+    public static void draw(GuiGraphics g, LivingEntity e, CharacterType type, int x, int y, int size, boolean redFlash, float headAt, float zoom, boolean box) {
         int col = type.getColor() & 0xFFFFFF;
-        g.fillGradient(x, y, x + size, y + size, 0xFF000000 | mix(col, 0.55F), 0xFF000000 | mix(col, 0.2F));
+        if (box) g.fillGradient(x, y, x + size, y + size, 0xFF000000 | mix(col, 0.55F), 0xFF000000 | mix(col, 0.2F));
         if (e == null) {
             String init = type.getDisplayName().getString().substring(0, 1);
             var font = Minecraft.getInstance().font;
@@ -41,7 +46,7 @@ public final class HudHead {
             g.pose().popPose();
             return;
         }
-        int scale = Math.round(size * 1.1F);
+        int scale = Math.round(size * zoom);
         float yb = e.yBodyRot, ybo = e.yBodyRotO, yr = e.getYRot(), xr = e.getXRot(), yh = e.yHeadRot, yho = e.yHeadRotO;
         e.yBodyRot = 180F; e.yBodyRotO = 180F; e.setYRot(180F); e.setXRot(0F); e.yHeadRot = 180F; e.yHeadRotO = 180F;
         g.enableScissor(x, y, x + size, y + size);
@@ -49,7 +54,7 @@ public final class HudHead {
         try {
             Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).mul(new Quaternionf().rotateY(-0.35F));
             // head centre (about 1.6 blocks up, hair included) in the middle of the box
-            InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * 0.5F + 1.6F * scale), scale, pose, null, e);
+            InventoryScreen.renderEntityInInventory(g, x + size / 2, Math.round(y + size * headAt + 1.6F * scale), scale, pose, null, e);
         } finally {
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
             g.disableScissor();

@@ -45,7 +45,7 @@ public final class BlazingHud {
         } else {
             int s = Math.round(pr * 2 * 0.98F);
             disc(g, pcx, pcy, pr * 1.05F, 0xFF000000 | mix(col, 0.35F));
-            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash);
+            HudHead.draw(g, p, type, Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash, 0.62F, 0.95F, false);   // (head and hair in the middle of the ring)
         }
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(((col >> 16) & 255) / 255F, ((col >> 8) & 255) / 255F, (col & 255) / 255F, 1F);
