@@ -805,8 +805,17 @@ public final class UiTest {
             server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "cal")); }, 10));      // the half-second peak of segment 0
         for (int i = 0; i < 10; i++) l.add(new Step("efcal_" + i, () -> {}, 20));
         // then our real attacks, a few frames each
+        int[] dummy = {-1};
+        l.add(new Step(null, () -> server(p -> {        // a zombie stand-in in front of the camera (keeps the player's camera out of it)
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 1.0, p.getY(), p.getZ() + 1.2, 135F, 0F); z.setNoAi(true); z.setYHeadRot(135F); z.setYBodyRot(135F);
+            z.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+            z.setInvulnerable(true);
+            p.serverLevel().addFreshEntity(z); dummy[0] = z.getId();
+            p.teleportTo(p.getX() - 4, p.getY(), p.getZ() - 4);
+        }), 30));
         for (String a : new String[]{"pole1", "pole2", "pole3", "cleave1", "cleave2"}) {
-            l.add(new Step(null, () -> server(p -> { com.xenowarriors.compat.epicfight.EfTest.play(p, a); log("ef " + a + " at " + p.position()); }), 3));
+            l.add(new Step(null, () -> server(p -> { if (p.serverLevel().getEntity(dummy[0]) instanceof net.minecraft.world.entity.LivingEntity z) com.xenowarriors.compat.epicfight.EfTest.play(z, a); }), 3));
             for (int f = 0; f < 4; f++) l.add(new Step("ef_" + a + "_" + f, () -> {}, 4));
             l.add(new Step(null, () -> {}, 15));
         }
