@@ -60,6 +60,7 @@ public final class ClientEvents {
         }
 
         while (ModKeyMappings.SUPER_ULT.consumeClick()) {
+            if (XenoCutscene.frozenTarget()) { XenoCutscene.counter(com.xenowarriors.skill.SkillManager.SUPER_SLOT); continue; }   // Xeno Blast back: clash
             if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active())
                 ModNetwork.sendToServer(new UseSkillPacket(com.xenowarriors.skill.SkillManager.SUPER_SLOT));
         }

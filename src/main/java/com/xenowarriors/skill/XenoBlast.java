@@ -39,6 +39,10 @@ public final class XenoBlast {
         final java.util.Map<Integer, Float> resist = new java.util.HashMap<>();
         final java.util.Set<Integer> frozen = new java.util.HashSet<>();
         int mash; long lastMash; boolean cancelled;
+        float dmg; double width; boolean rhalix;
+        // a beam clash: one of the frozen fired their own Xeno Blast back
+        ServerPlayer rival; float rivalDmg; double rivalWidth; boolean rivalRhalix;
+        int casterPresses, rivalPresses; float point = 0.5F;       // where the two blasts meet: 0 = on the caster, 1 = on the rival
         Cast(ServerPlayer c) { caster = c; start = c.level().getGameTime(); }
         int age() { return (int) (caster.level().getGameTime() - start); }
     }
@@ -46,6 +50,9 @@ public final class XenoBlast {
 
     private static Cast castOf(ServerPlayer caster) { return CASTS.get(caster.getId()); }
     private static boolean live(ServerPlayer caster) { Cast c = castOf(caster); return c == null || !c.cancelled; }
+    /** The blast was met by another Xeno Blast - the normal release doesn't happen, the clash does. */
+    private static boolean clashed(ServerPlayer caster) { Cast c = castOf(caster); return c != null && c.rival != null; }
+    public static final int CLASH = 120;
     private static float dmgFor(ServerPlayer caster, LivingEntity e, float dmg) {
         Cast c = castOf(caster);
         return c == null ? dmg : dmg * (1F - c.resist.getOrDefault(e.getId(), 0F));
@@ -58,6 +65,7 @@ public final class XenoBlast {
     public static void counter(ServerPlayer target, int casterId, int slot) {
         Cast c = CASTS.get(casterId);
         if (c == null || c.cancelled || !c.frozen.contains(target.getId()) || c.age() > COUNTER_UNTIL) return;
+        if (slot == SkillManager.SUPER_SLOT) { clashBack(c, target); return; }
         Skill sk = SkillManager.get(target, slot);
         if (sk == null || sk.clashColor() < 0) {
             target.displayClientMessage(Component.literal("That move can't reach - fight back with a projectile skill!").withStyle(ChatFormatting.GRAY), true);
@@ -91,6 +99,12 @@ public final class XenoBlast {
     /** Ultima pushing back the wave: mash enough and the Xeno Blast is thrown off - cancelled. */
     public static void mash(ServerPlayer ultima, int casterId) {
         Cast c = CASTS.get(casterId);
+        if (c != null && c.rival != null && !c.cancelled) {            // a beam clash: both sides mash to push
+            if (c.age() < RELEASE || c.age() >= RELEASE + CLASH) return;
+            if (ultima == c.caster) c.casterPresses++;
+            else if (ultima == c.rival) c.rivalPresses++;
+            return;
+        }
         if (c == null || c.cancelled || !c.frozen.contains(ultima.getId()) || ModCapabilities.getType(ultima) != CharacterType.ULTIMA) return;
         if (c.age() > RELEASE + 70) return;                   // too late, it's already landed
         long t = ultima.level().getGameTime();
@@ -167,7 +181,7 @@ public final class XenoBlast {
             });
         }
         ServerScheduler.later(RELEASE, () -> {
-            if (!p.isAlive() || !live(p)) return;
+            if (!p.isAlive() || !live(p) || clashed(p)) return;
             l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.85F);
             l.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4F, 0.5F);
             Set<Integer> hit = new HashSet<>();
@@ -229,7 +243,7 @@ public final class XenoBlast {
             });
         }
         ServerScheduler.later(charge, () -> {
-            if (!p.isAlive() || !live(p)) return;
+            if (!p.isAlive() || !live(p) || clashed(p)) return;
             l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5F, 0.55F);
             Vec3 d = p.getLookAngle();
             Vec3[] pos = {fingertip.get()};
@@ -296,6 +310,197 @@ public final class XenoBlast {
         }
     }
 
+    private static float dmgOf(float power) { return 12F + power * 0.5F; }
+    private static double widthOf(float power) { return 1.2 + Math.min(2.0, power / 80.0); }
+
+    /**
+     * Caught in a Xeno Blast as Mikiko or Rhalix: fire your own Xeno Blast back (your KA key) before it's let go, and
+     * the two blasts meet in the middle and CLASH. It costs everything, just like casting one.
+     */
+    private static void clashBack(Cast c, ServerPlayer r) {
+        CharacterType type = ModCapabilities.getType(r);
+        if (!has(type)) {
+            r.displayClientMessage(Component.literal("Only another Xeno Blast can meet a Xeno Blast head on.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        if (c.rival != null) {
+            r.displayClientMessage(Component.literal(c.rival == r ? "You're already clashing!" : "Someone else already met it head on!").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        if (c.age() >= RELEASE) {
+            r.displayClientMessage(Component.literal("Too late - it's already been let go!").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        if (Karma.regenLocked(r)) {
+            r.displayClientMessage(Component.literal("Your Karma is still drained from the last Xeno Blast.").withStyle(ChatFormatting.DARK_RED), true);
+            return;
+        }
+        boolean[] cool = {false};
+        r.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> cool[0] = d.cooldownEnd[SkillManager.SUPER_SLOT] > r.level().getGameTime());
+        if (cool[0] && !r.isCreative()) {
+            r.displayClientMessage(Component.literal("Your Xeno Blast isn't ready yet.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        float karma = Karma.get(r);
+        if (karma < MIN_KARMA && !r.isCreative()) {
+            r.displayClientMessage(Component.literal("Not enough Karma left for a Xeno Blast (needs " + MIN_KARMA + ").").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        float power = r.isCreative() ? Math.max(karma, 100F) : karma;
+        if (!r.isCreative()) Karma.add(r, -karma);
+        int left = CUTSCENE - c.age();
+        Karma.lockRegen(r, left + LOCK_TICKS);
+        int cd = com.xenowarriors.ka.Kas.PLAYER_COOLDOWN;
+        r.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.cooldownEnd[SkillManager.SUPER_SLOT] = r.level().getGameTime() + cd);
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillCooldownPacket(SkillManager.SUPER_SLOT, cd, cd), r);
+        c.rival = r; c.rivalDmg = dmgOf(power); c.rivalWidth = widthOf(power); c.rivalRhalix = type == CharacterType.RHALIX;
+        c.resist.remove(r.getId());
+        // turn to face them, take the stance and start charging
+        Vec3 to = c.caster.position().subtract(r.position());
+        float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+        r.connection.teleport(r.getX(), r.getY(), r.getZ(), yaw, 0F);
+        r.setYHeadRot(yaw); r.yBodyRot = yaw;
+        com.xenowarriors.anim.Poses.play(r, c.rivalRhalix ? com.xenowarriors.anim.Poses.XENO_RHALIX : com.xenowarriors.anim.Poses.XENO_MIKIKO, left);
+        ServerLevel l = r.serverLevel();
+        Vector3f col = c.rivalRhalix ? new Vector3f(0.72F, 0.3F, 1F) : new Vector3f(1F, 0.55F, 0.12F);
+        for (int i = 0; i < RELEASE - c.age(); i += 2) {
+            ServerScheduler.later(i, () -> {
+                if (c.cancelled || !r.isAlive()) return;
+                Vec3 h = handOf(r, c.rivalRhalix);
+                l.sendParticles(new DustParticleOptions(col, 2.6F), h.x, h.y, h.z, 3, 0.25, 0.25, 0.25, 0);
+            });
+        }
+        l.playSound(null, r.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.5F);
+        Component msg = Component.literal(r.getName().getString() + " fired a Xeno Blast back - BEAM CLASH!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+        if (!c.watchers.contains(r)) c.watchers.add(r);
+        clashPacket(c, 0);
+        for (ServerPlayer w : c.watchers) w.displayClientMessage(msg, true);
+        com.xenowarriors.network.PopupPacket.toParty(r, com.xenowarriors.network.PopupPacket.REQUEST, "Beam Clash!",
+                r.getName().getString() + " met " + c.caster.getName().getString() + "'s Xeno Blast with their own!", "rage");
+    }
+
+    private static Vec3 handOf(ServerPlayer p, boolean rhalix) {
+        Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
+        return p.position().add(0, rhalix ? 1.35 : 1.15, 0).add(look.scale(1.1));
+    }
+
+    private static void clashPacket(Cast c, int state) {
+        var pkt = new com.xenowarriors.network.XenoClashPacket(c.caster.getId(), c.rival.getId(), c.rivalRhalix, c.point, state);
+        for (ServerPlayer w : c.watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(pkt, w);
+    }
+
+    /** The clash itself: two blasts meeting, both sides mashing to push the meeting point onto the other. */
+    private static void clashRun(Cast c) {
+        ServerPlayer a = c.caster, b = c.rival;
+        ServerLevel l = a.serverLevel();
+        Vector3f aCore = c.rhalix ? new Vector3f(0.75F, 0.35F, 1F) : new Vector3f(1F, 0.85F, 0.3F);
+        Vector3f aRim = c.rhalix ? new Vector3f(0.1F, 0F, 0.15F) : new Vector3f(1F, 0.45F, 0.08F);
+        Vector3f bCore = c.rivalRhalix ? new Vector3f(0.75F, 0.35F, 1F) : new Vector3f(1F, 0.85F, 0.3F);
+        Vector3f bRim = c.rivalRhalix ? new Vector3f(0.1F, 0F, 0.15F) : new Vector3f(1F, 0.45F, 0.08F);
+        Vector3f white = new Vector3f(1F, 1F, 0.95F);
+        l.playSound(null, a.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.8F);
+        l.playSound(null, b.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.7F);
+        // the stronger blast (more Karma behind it) slowly gains ground on its own; mashing decides it
+        float bias = (c.dmg - c.rivalDmg) / (c.dmg + c.rivalDmg) * 0.003F;
+        int[] seen = {0, 0};
+        boolean[] over = {false};
+        for (int k = 0; k < CLASH; k++) {
+            int kk = k;
+            ServerScheduler.later(k, () -> {
+                if (over[0] || c.cancelled) return;
+                if (!a.isAlive() || !b.isAlive()) { over[0] = true; clashEnd(c, a.isAlive() ? 1F : 0F); return; }
+                int da = c.casterPresses - seen[0], db = c.rivalPresses - seen[1];
+                seen[0] = c.casterPresses; seen[1] = c.rivalPresses;
+                c.point = Math.max(0F, Math.min(1F, c.point + (da - db) * 0.011F + bias));
+                Vec3 ha = handOf(a, c.rhalix), hb = handOf(b, c.rivalRhalix);
+                Vec3 meet = ha.lerp(hb, c.point);
+                double len = ha.distanceTo(hb);
+                // each blast from its owner's hands to the meeting point
+                for (double t = 0; t < 1; t += 0.6 / Math.max(1, len)) {
+                    if (t < c.point) {
+                        Vec3 q = ha.lerp(hb, t);
+                        l.sendParticles(new DustParticleOptions(aCore, 2.2F), q.x, q.y, q.z, 1, 0.08, 0.08, 0.08, 0);
+                        l.sendParticles(new DustParticleOptions(aRim, 2.8F), q.x, q.y, q.z, 1, 0.3 + c.width * 0.1, 0.3, 0.3 + c.width * 0.1, 0);
+                    } else {
+                        Vec3 q = ha.lerp(hb, t);
+                        l.sendParticles(new DustParticleOptions(bCore, 2.2F), q.x, q.y, q.z, 1, 0.08, 0.08, 0.08, 0);
+                        l.sendParticles(new DustParticleOptions(bRim, 2.8F), q.x, q.y, q.z, 1, 0.3 + c.rivalWidth * 0.1, 0.3, 0.3 + c.rivalWidth * 0.1, 0);
+                    }
+                }
+                // where they meet: a ball of clashing energy throwing off sparks and lightning
+                float pulse = 1.2F + (float) Math.sin(kk * 0.6) * 0.3F;
+                l.sendParticles(new DustParticleOptions(white, 4F), meet.x, meet.y, meet.z, 6, 0.35 * pulse, 0.35 * pulse, 0.35 * pulse, 0);
+                l.sendParticles(new DustParticleOptions(aRim, 3F), meet.x, meet.y, meet.z, 5, 0.8 * pulse, 0.8 * pulse, 0.8 * pulse, 0);
+                l.sendParticles(new DustParticleOptions(bRim, 3F), meet.x, meet.y, meet.z, 5, 0.8 * pulse, 0.8 * pulse, 0.8 * pulse, 0);
+                l.sendParticles(ParticleTypes.ELECTRIC_SPARK, meet.x, meet.y, meet.z, 6, 0.9, 0.9, 0.9, 0.4);
+                if (kk % 3 == 0) l.sendParticles(ParticleTypes.FLASH, meet.x, meet.y, meet.z, 1, 0, 0, 0, 0);
+                if (kk % 4 == 0) l.sendParticles(ParticleTypes.EXPLOSION, meet.x, meet.y, meet.z, 1, 0.6, 0.6, 0.6, 0);
+                if (kk % 10 == 0) l.playSound(null, BlockPos.containing(meet), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.7F, 0.6F + c.point * 0.6F);
+                if (kk % 20 == 0) l.playSound(null, BlockPos.containing(meet), SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 1.2F, 1.4F);
+                if (kk % 2 == 0) clashPacket(c, 1);
+                if (c.point >= 0.92F || c.point <= 0.08F || kk == CLASH - 1) { over[0] = true; clashEnd(c, c.point); }
+            });
+        }
+    }
+
+    /** Whoever pushed the meeting point onto the other wins: their blast swallows both and hits the loser. */
+    private static void clashEnd(Cast c, float point) {
+        ServerPlayer a = c.caster, b = c.rival;
+        ServerLevel l = a.serverLevel();
+        float margin = Math.abs(point - 0.5F) * 2F;
+        // nobody is safe now - the cutscene protection is over for both
+        a.getPersistentData().remove(SkillEvents.ULT_UNTIL);
+        a.getPersistentData().remove(CASTING);
+        com.xenowarriors.combat.Frozen.release(a);
+        com.xenowarriors.combat.Frozen.release(b);
+        Vec3 ha = handOf(a, c.rhalix), hb = handOf(b, c.rivalRhalix);
+        if (margin < 0.25F) {           // dead even: both blasts blow up between them
+            Vec3 mid = ha.lerp(hb, point);
+            l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, mid.x, mid.y, mid.z, 3, 1, 1, 1, 0);
+            l.playSound(null, BlockPos.containing(mid), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2F, 0.5F);
+            for (ServerPlayer p : new ServerPlayer[]{a, b}) {
+                ServerPlayer other = p == a ? b : a;
+                float od = p == a ? c.rivalDmg : c.dmg;
+                p.hurt(other.damageSources().indirectMagic(other, other), od * 0.35F);
+                Vec3 push = p.position().subtract(mid).normalize();
+                p.push(push.x * 2, 0.6, push.z * 2); p.hurtMarked = true;
+            }
+            Component msg = Component.literal("The Xeno Blasts cancelled each other out!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
+            for (ServerPlayer w : c.watchers) w.displayClientMessage(msg, true);
+            clashPacket(c, 2);
+            return;
+        }
+        boolean casterWins = point > 0.5F;
+        ServerPlayer win = casterWins ? a : b, lose = casterWins ? b : a;
+        float wd = casterWins ? c.dmg : c.rivalDmg;
+        double ww = casterWins ? c.width : c.rivalWidth;
+        boolean decisive = point >= 0.92F || point <= 0.08F;
+        float dmg = decisive ? wd * 1.25F : wd * (0.6F + 0.4F * margin);   // pushed all the way through: both blasts' power
+        Vec3 from = casterWins ? ha.lerp(hb, point) : hb.lerp(ha, 1F - point), at = lose.position().add(0, 1, 0);
+        Vector3f core = (casterWins ? c.rhalix : c.rivalRhalix) ? new Vector3f(0.75F, 0.35F, 1F) : new Vector3f(1F, 0.6F, 0.15F);
+        for (int k = 0; k <= 8; k++) {
+            int kk = k;
+            ServerScheduler.later(k, () -> {
+                Vec3 q = from.lerp(at, kk / 8.0);
+                l.sendParticles(new DustParticleOptions(core, 4F), q.x, q.y, q.z, 16, 0.8 + ww * 0.3, 0.8, 0.8 + ww * 0.3, 0);
+                if (kk == 8) {
+                    l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+                    l.playSound(null, lose.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2F, 0.6F);
+                    for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(2 + ww), e -> e == lose || (e != win && SkillTargeting.canTarget(win, e)))) {
+                        e.hurt(win.damageSources().indirectMagic(win, win), e == lose ? dmg : dmg * 0.5F);
+                        e.setSecondsOnFire(5);
+                        Vec3 push = e.position().subtract(win.position()).normalize();
+                        e.push(push.x * 2, 0.6, push.z * 2); e.hurtMarked = true;
+                    }
+                }
+            });
+        }
+        Component msg = Component.literal(win.getName().getString() + " won the clash!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        for (ServerPlayer w : c.watchers) w.displayClientMessage(msg, true);
+        c.point = point;
+        clashPacket(c, 2);
+    }
+
     public static boolean use(ServerPlayer p) {
         CharacterType type = ModCapabilities.getType(p);
         if (Karma.regenLocked(p)) {
@@ -308,8 +513,8 @@ public final class XenoBlast {
             return false;
         }
         float power = p.isCreative() ? Math.max(karma, 100F) : karma;
-        float dmg = 12F + power * 0.5F;
-        double width = 1.2 + Math.min(2.0, power / 80.0);
+        float dmg = dmgOf(power);
+        double width = widthOf(power);
         boolean rhalix = type == CharacterType.RHALIX;
         Vector3f core = rhalix ? new Vector3f(0.72F, 0.3F, 1F) : new Vector3f(1F, 0.5F, 0.12F);
         Vector3f rim = rhalix ? new Vector3f(0.35F, 0.05F, 0.6F) : new Vector3f(1F, 0.85F, 0.3F);
@@ -329,7 +534,9 @@ public final class XenoBlast {
         p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, until);
         com.xenowarriors.combat.Frozen.freeze(p, CUTSCENE);
         Cast cast = new Cast(p);
+        cast.dmg = dmg; cast.width = width; cast.rhalix = rhalix;
         CASTS.put(p.getId(), cast);
+        ServerScheduler.later(RELEASE, () -> { if (CASTS.get(p.getId()) == cast && cast.rival != null && !cast.cancelled) clashRun(cast); });
         java.util.List<ServerPlayer> watchers = cast.watchers;
         watchers.add(p);
         for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(FREEZE_RANGE), e -> e != p && SkillTargeting.canTarget(p, e))) {

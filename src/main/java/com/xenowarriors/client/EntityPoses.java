@@ -254,7 +254,7 @@ public final class EntityPoses {
                 pose(m.leftLeg, w, 0.1F, 0F, -0.08F + Mth.sin(a * 0.7F) * 0.05F);
             }
             case Poses.XENO_MIKIKO -> {     // Xeno Blast (from the art): hands cupped back at the hip, then both thrust out in a deep lunge
-                float rel = dur > 100 ? com.xenowarriors.skill.XenoBlast.RELEASE - 2F : 14F;   // (the 20 s cutscene charges for 10 s)
+                float rel = dur > 100 ? dur - (com.xenowarriors.skill.XenoBlast.CUTSCENE - com.xenowarriors.skill.XenoBlast.RELEASE) - 2F : 14F;   // (the 20 s cutscene charges for 10 s; a clash-back starts later but lets go at the same moment)
                 float w = w(t, dur, 3F, 5F), go = smooth((t - rel) / 3F), sh = (1F - go) * Mth.sin(t * 3.1F) * (dur > 100 ? 0.09F : 0.05F);
                 // charge: hands cupped behind at the hip, body wound back
                 float rx = lerp(0.35F + sh, aimX, go), lx = lerp(0.25F - sh, aimX + 0.08F, go);

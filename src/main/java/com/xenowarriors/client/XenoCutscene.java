@@ -32,7 +32,7 @@ public final class XenoCutscene {
     public static void start(XenoCutscenePacket m) {
         Minecraft mc = Minecraft.getInstance();
         if (m.ticks() <= 0) { if (cur != null) stop(mc); return; }     // cancelled (Ultima pushed it back)
-        mash = 0; counters = 0;
+        mash = 0; counters = 0; clashRival = -1; clashPoint = 0.5F; clashState = -1;
         if (cur == null) saved = mc.options.getCameraType();
         cur = m;
         age = 0;
@@ -58,6 +58,26 @@ public final class XenoCutscene {
 
     public static void mashProgress(int p) { mash = p; }
 
+    // ---- a beam clash (someone caught in it fired their own Xeno Blast back)
+    private static int clashRival = -1, clashState = -1;
+    private static float clashPoint = 0.5F, clashShown = 0.5F;
+    private static boolean clashRhalix;
+
+    public static void clash(com.xenowarriors.network.XenoClashPacket m) {
+        if (cur == null || m.caster() != cur.caster()) return;
+        clashRival = m.rival(); clashRhalix = m.rivalRhalix(); clashPoint = m.point(); clashState = m.state();
+    }
+
+    private static boolean clashing() { return cur != null && clashRival >= 0; }
+    private static boolean clashLive() { return clashing() && clashState != 2 && age >= cur.release() && age < cur.release() + com.xenowarriors.skill.XenoBlast.CLASH; }
+    private static boolean rival() {
+        Minecraft mc = Minecraft.getInstance();
+        return clashing() && mc.player != null && mc.player.getId() == clashRival;
+    }
+    private static boolean canClashBack() {
+        return com.xenowarriors.skill.XenoBlast.has(com.xenowarriors.client.ClientCharacterData.getLocal()) && !clashing() && cur != null && age < cur.release();
+    }
+
     private static boolean caster() {
         Minecraft mc = Minecraft.getInstance();
         return cur != null && mc.player != null && mc.player.getId() == cur.caster();
@@ -68,8 +88,12 @@ public final class XenoCutscene {
         if (event.phase != TickEvent.Phase.END || cur == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || ++age >= cur.ticks()) { stop(mc); return; }
+        clashShown += (clashPoint - clashShown) * 0.35F;
+        // a beam clash: both sides mash Jump to push
+        if (clashLive() && (caster() || rival())) while (mc.options.keyJump.consumeClick())
+            com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.XenoMashPacket(cur.caster(), 0));
         // Ultima: mash Jump to push the wave back
-        if (frozenTarget() && ultima()) while (mc.options.keyJump.consumeClick())
+        else if (frozenTarget() && ultima() && !clashing()) while (mc.options.keyJump.consumeClick())
             com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.XenoMashPacket(cur.caster(), 0));
         if (caster()) {           // the caster keeps aiming the way they cast it
             mc.player.setYRot(lockYaw);
@@ -122,6 +146,17 @@ public final class XenoCutscene {
         Vec3 fwd = Vec3.directionFromRotation(0, cur.yaw()), side = new Vec3(-fwd.z, 0, fwd.x), up = new Vec3(0, 1, 0);
         Vec3 hands = cur.rhalix() ? head.add(fwd.scale(1.3)).add(side.scale(-0.25)).subtract(0, 0.3, 0) : body.add(side.scale(0.45)).subtract(fwd.scale(0.35)).subtract(0, 0.35, 0);
         Vec3 impact = body.add(fwd.scale(cur.rhalix() ? 16 : 18));
+        if (clashing() && (shot == 3 || shot == 4)) {     // the clash: side on to both of them, centred where the blasts meet
+            Entity r = mc.level.getEntity(clashRival);
+            Vec3 rb = r != null ? r.getPosition(pt).add(0, 1.3, 0) : impact;
+            Vec3 meet = body.lerp(rb, clashShown);
+            Vec3 line = rb.subtract(body);
+            double len = Math.max(4, line.length());
+            Vec3 n = new Vec3(-line.z, 0, line.x).normalize();
+            double k = (t - cur.release()) / (double) com.xenowarriors.skill.XenoBlast.CLASH;
+            double sway = Math.sin(t * 0.03) * 0.15;
+            return new Vec3[]{meet.add(n.scale(len * (0.85 - k * 0.15))).add(line.normalize().scale(len * sway)).add(up.scale(2.2 + k)), meet};
+        }
         switch (shot) {
             case 0 -> {   // close on their face, slowly pushing in
                 double push = t / 40.0 * 0.6;
@@ -196,22 +231,66 @@ public final class XenoCutscene {
             int col = cur.rhalix() ? 0xD9B0FF : 0xFFF0C0;
             g.fill(0, 0, width, height, (Math.round(flash * 160) << 24) | col);
         }
+        if (clashing() && t >= cur.release()) { clashOverlay(g, t, width, height, bar); return; }
         if (!caster()) {
             String s = "Frozen in place...";
             g.drawString(font, s, width - font.width(s) - 10, height - bar - 14, 0xC0C0D0, true);
             if (t < com.xenowarriors.skill.XenoBlast.COUNTER_UNTIL) {
-                String hint = ultima() ? "MASH [JUMP] to push the wave back!   or use a projectile skill to fight back"
+                String ka = com.xenowarriors.client.ModKeyMappings.SUPER_ULT.getTranslatedKeyMessage().getString();
+                String hint = clashing() ? (rival() ? "Your Xeno Blast is charging - get ready to CLASH!" : "BEAM CLASH incoming!")
+                        : canClashBack() ? "Press [" + ka + "] to fire your own Xeno Blast back - CLASH!   or a projectile skill to soften it"
+                        : ultima() ? "MASH [JUMP] to push the wave back!   or use a projectile skill to fight back"
                         : "Fight back! Use a projectile skill to soften the blow";
                 boolean blink = (age / 6) % 2 == 0;
                 g.drawCenteredString(font, hint, width / 2, bar + 8, blink ? 0xFFE070 : 0xFFFFFF);
             }
-            if (ultima()) {          // the push-back meter
+            if (ultima() && !clashing()) {          // the push-back meter
                 int bw = Math.min(220, width / 2), bx = width / 2 - bw / 2, by = bar + 22;
                 float f = Mth.clamp(mash / (float) com.xenowarriors.skill.XenoBlast.MASH_NEEDED, 0F, 1F);
                 g.fill(bx - 1, by - 1, bx + bw + 1, by + 7, 0xFF000000);
                 g.fill(bx, by, bx + bw, by + 6, 0xFF203028);
                 g.fill(bx, by, bx + Math.round(bw * f), by + 6, 0xFF40FF8C);
             }
+        }
+    }
+
+    /** The clash: the name, the tug-of-war bar (where the blasts meet), and for the two clashing - MASH! */
+    private static void clashOverlay(GuiGraphics g, float t, int width, int height, int bar) {
+        var font = Minecraft.getInstance().font;
+        Minecraft mc = Minecraft.getInstance();
+        float since = t - cur.release();
+        int left = cur.rhalix() ? 0xFFB060FF : 0xFFFF9020, right = clashRhalix ? 0xFFB060FF : 0xFFFF9020;
+        if (cur.rhalix() == clashRhalix) right = cur.rhalix() ? 0xFF6A20C0 : 0xFFFFD040;     // same colours: tell them apart
+        // the title punches in
+        float pop = Mth.clamp(since / 6F, 0F, 1F);
+        float sc = 3.2F - pop * 0.8F;
+        g.pose().pushPose();
+        g.pose().translate(width / 2F, bar + 10, 0);
+        g.pose().scale(sc, sc, 1F);
+        g.drawCenteredString(font, "BEAM CLASH!", 0, 0, ((int) (pop * 255) << 24) | 0xFFFFFF);
+        g.pose().popPose();
+        // names and the bar
+        Entity c = mc.level.getEntity(cur.caster()), r = mc.level.getEntity(clashRival);
+        int bw = Math.min(300, width * 2 / 3), bx = width / 2 - bw / 2, by = bar + 40;
+        g.fill(bx - 2, by - 2, bx + bw + 2, by + 12, 0xFF000000);
+        int split = bx + Math.round(bw * Mth.clamp(clashShown, 0F, 1F));
+        g.fill(bx, by, split, by + 10, left);
+        g.fill(split, by, bx + bw, by + 10, right);
+        int jig = Math.round(Mth.sin(t * 1.7F) * 1.5F);
+        g.fill(split - 2, by - 5 + jig, split + 2, by + 15 + jig, 0xFFFFFFFF);
+        if (c != null) g.drawString(font, c.getName().getString(), bx, by + 15, left, true);
+        if (r != null) { String rn = r.getName().getString(); g.drawString(font, rn, bx + bw - font.width(rn), by + 15, right, true); }
+        if (clashState == 2) {
+            String s = clashShown > 0.62F ? (c != null ? c.getName().getString() : "") + " wins!" : clashShown < 0.38F ? (r != null ? r.getName().getString() : "") + " wins!" : "They cancel out!";
+            g.drawCenteredString(font, s, width / 2, by + 30, 0xFFE070);
+        } else if (caster() || rival()) {
+            boolean blink = (age / 4) % 2 == 0;
+            String jump = mc.options.keyJump.getTranslatedKeyMessage().getString();
+            g.pose().pushPose();
+            g.pose().translate(width / 2F, height - bar - 30, 0);
+            g.pose().scale(2F, 2F, 1F);
+            g.drawCenteredString(font, "MASH [" + jump + "]!", 0, 0, blink ? 0xFFE070 : 0xFFFFFF);
+            g.pose().popPose();
         }
     }
 }
