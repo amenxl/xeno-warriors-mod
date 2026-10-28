@@ -969,15 +969,22 @@ public final class UiTest {
             com.xenowarriors.journey.Journey.action(p, 7, 0, 0);
         }), 70));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
-            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4, false, false));
+            p.getAbilities().invulnerable = true; p.onUpdateAbilities();          // (so the fight holds still for the pictures)
             com.xenowarriors.journey.Journey.testMax(p);
-            var boss = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), m -> m.getPersistentData().getBoolean("xw_tower_boss")).stream().findFirst().orElse(null);
-            if (boss != null) { boss.setNoAi(true); boss.teleportTo(p.getX(), p.getY(), p.getZ() - 5); }
-            p.setYRot(180F); p.setXRot(0F);
-        }); }, 50));
+            for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40))) {
+                if (m instanceof com.xenowarriors.bot.PartyBotEntity) { m.setInvulnerable(true); continue; }
+                if (m.getPersistentData().getBoolean("xw_tower_boss")) { m.setNoAi(true); m.teleportTo(p.getX() + 4, p.getY(), p.getZ() - 7); }
+                else if (m.getPersistentData().getBoolean("xw_journey") || m.getPersistentData().getBoolean("xw_tower")) m.setNoAi(true);
+            }
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX(), p.getY(), p.getZ() - 3.5, 0F, 0); z.setNoAi(true);
+            p.serverLevel().addFreshEntity(z);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get()));
+            p.setYRot(180F); p.setXRot(8F);
+        }); try { mc.getWindow().setWindowed(1920, 1080); } catch (Throwable t) { log("resize failed " + t); } mc.resizeDisplay(); }, 50));
         for (int gs : new int[]{0, 2, 3, 4}) {
-            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.guiScale().set(gs); mc.resizeDisplay(); server(p -> { com.xenowarriors.journey.Journey.testMax(p); p.setYRot(180F); p.setXRot(0F); }); }, 25));
-            l.add(new Step("fullhud_battle_gui" + (gs == 0 ? "auto" : String.valueOf(gs)), () -> mc.setScreen(null), 3));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.guiScale().set(gs); mc.resizeDisplay(); server(p -> { com.xenowarriors.journey.Journey.testMax(p); p.setYRot(180F); p.setXRot(8F); }); }, 25));
+            l.add(new Step("fullhud_battle_gui" + (gs == 0 ? "auto" : String.valueOf(gs)), () -> { mc.setScreen(null); log("window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " guiScale=" + mc.getWindow().getGuiScale()); }, 3));
         }
         l.add(new Step(null, () -> { mc.options.guiScale().set(0); mc.resizeDisplay(); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 20));
         l.add(new Step("fullhud_battle_third", () -> mc.setScreen(null), 3));
