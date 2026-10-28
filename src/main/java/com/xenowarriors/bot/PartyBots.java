@@ -545,7 +545,7 @@ public final class PartyBots {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p) || p instanceof FakePlayer) return;
         ListTag list = new ListTag();
-        for (PartyBotEntity b : bots(p)) { if (!b.downed()) list.add(b.record()); FAKES.remove(b.getUUID()); b.discard(); }
+        for (PartyBotEntity b : bots(p)) { if (!b.downed() && !b.getPersistentData().getBoolean("xw_journey_bot")) list.add(b.record()); FAKES.remove(b.getUUID()); b.discard(); }
         p.getPersistentData().put(RECORDS, list);
     }
 

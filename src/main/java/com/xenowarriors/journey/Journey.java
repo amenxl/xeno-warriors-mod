@@ -70,6 +70,8 @@ public final class Journey {
         CharacterType active = CharacterType.NONE, original = CharacterType.NONE;
         int score; float hurt;
         Back back; GameType mode = GameType.SURVIVAL;
+        /** The characters fighting beside you as AI teammates this battle (bot entity -> character). */
+        final Map<UUID, CharacterType> bots = new LinkedHashMap<>();
         Member(ServerPlayer p) { id = p.getUUID(); name = p.getGameProfile().getName(); }
     }
 
@@ -89,6 +91,8 @@ public final class Journey {
         final ArrayDeque<BlockPos> building = new ArrayDeque<>();
         final UUID[] labels = new UUID[JourneyRules.STEPS + 1];
         boolean solo() { return members.size() == 1; }
+        /** How many characters each player brings onto the field at once: 4 alone, 2 each as a duo. */
+        int field() { return solo() ? 4 : 2; }
         int cap() { return solo() ? 8 : 4; }
         Member member(UUID id) { for (Member m : members) if (m.id.equals(id)) return m; return null; }
         boolean alive(CharacterType t) { return hp.getOrDefault(t, 0F) > 0F; }
@@ -199,7 +203,7 @@ public final class Journey {
                 if (r.phase != CHOOSING || me.ready || a < 0 || a >= CharacterType.values().length) return;
                 CharacterType t = CharacterType.values()[a];
                 if (!me.picks.contains(t) || !r.alive(t) || !r.scenario.rule.fits(t)) return;
-                if (!me.chosen.remove(t) && me.chosen.size() < 4) me.chosen.add(t);
+                if (!me.chosen.remove(t) && me.chosen.size() < r.field()) me.chosen.add(t);
             }
             case 7 -> {
                 if (r.phase != CHOOSING || me.out) return;
@@ -277,6 +281,7 @@ public final class Journey {
         Run r = BY.remove(p.getUUID());
         if (r == null) return;
         Member m = r.member(p.getUUID());
+        if (m != null) clearBots(p.server, r, m);
         r.members.remove(m);
         com.xenowarriors.tower.TowerBosses.removePlayer(p);
         if (m != null && r.phase != LOBBY) {
@@ -522,6 +527,7 @@ public final class Journey {
             p.setHealth(Math.max(1F, p.getMaxHealth() * r.hp.getOrDefault(m.active, 1F)));
             com.xenowarriors.karma.Karma.add(p, 100000F);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4, false, false));
+            for (int i = 1; i < m.chosen.size(); i++) spawnBot(p, r, m, m.chosen.get(i));
             String what = boss ? "BOSS" : r.scenario != Scenario.NONE ? r.scenario.title.toUpperCase() : "BATTLE " + r.cur;
             title(p, what, "Challenge: " + challengeText(r) + (r.challengeOk ? "" : "  (missed)"), boss ? 0xC040FF : JourneyRules.STEP_COLOR[r.kind()]);
             if (r.powerUp) p.displayClientMessage(msg("Power Up: +30% damage this battle", ChatFormatting.GOLD), true);
@@ -529,6 +535,58 @@ public final class Journey {
         tl.playSound(null, c, SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 2F, 1.2F);
         syncAll(server, r, OPEN_NONE);
         checkLost(server, r);
+    }
+
+    /** One of your picks fighting beside you (a party bot of that character, with its journey health). */
+    private static void spawnBot(ServerPlayer p, Run r, Member m, CharacterType t) {
+        var b = com.xenowarriors.bot.PartyBots.spawn(p, t, new CompoundTag());
+        if (b == null) return;
+        b.getPersistentData().putBoolean("xw_journey_bot", true);
+        b.setHealth(Math.max(1F, b.getMaxHealth() * r.hp.getOrDefault(t, 1F)));
+        b.karma = 100F;
+        m.bots.put(b.getUUID(), t);
+    }
+
+    /** Your AI teammates leave the field (their health is kept; anything they picked up goes to you). */
+    private static void clearBots(MinecraftServer server, Run r, Member m) {
+        ServerLevel tl = server.getLevel(Tower.LEVEL);
+        ServerPlayer o = server.getPlayerList().getPlayer(m.id);
+        for (var e : m.bots.entrySet()) {
+            Entity en = tl == null ? null : tl.getEntity(e.getKey());
+            if (en instanceof com.xenowarriors.bot.PartyBotEntity b) {
+                if (b.isAlive() && !b.downed() && r.alive(e.getValue())) r.hp.put(e.getValue(), Math.max(0.001F, b.getHealth() / b.getMaxHealth()));
+                giveBag(b, o);
+                b.discard();
+            }
+        }
+        m.bots.clear();
+    }
+
+    private static void giveBag(com.xenowarriors.bot.PartyBotEntity b, ServerPlayer o) {
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) {
+            var it = b.inventory.removeItemNoUpdate(i);
+            if (it.isEmpty()) continue;
+            if (o == null || !o.getInventory().add(it)) b.spawnAtLocation(it);
+        }
+    }
+
+    /** A character going down (yours or an AI teammate's): the score drops, and it's out until revived at the shop. */
+    private static void charDown(MinecraftServer server, Run r, Member m, CharacterType down) {
+        r.hp.put(down, 0F);
+        m.score = Math.max(0, m.score - JourneyRules.OWN_DOWN);
+        for (Member o : r.members) if (o != m) o.score = Math.max(0, o.score - JourneyRules.MATE_DOWN);
+        if (r.challenge == Challenge.NO_DOWNS) fail(server, r, down.getDisplayName().getString() + " went down");
+        for (Member o : r.members) {
+            ServerPlayer op = server.getPlayerList().getPlayer(o.id);
+            if (op != null) op.displayClientMessage(msg(down.getDisplayName().getString() + " is down!", ChatFormatting.RED), true);
+        }
+    }
+
+    /** Who gets the score for a hit: a player, or the owner of the AI teammate (or its skill stand-in) that landed it. */
+    private static ServerPlayer scorer(Entity src) {
+        var bot = com.xenowarriors.bot.PartyBots.botOf(src);
+        if (bot != null) return bot.getPersistentData().getBoolean("xw_journey_bot") ? bot.owner() : null;
+        return src instanceof ServerPlayer p && !(src instanceof net.minecraftforge.common.util.FakePlayer) ? p : null;
     }
 
     static String challengeText(Run r) {
@@ -552,7 +610,23 @@ public final class Journey {
     private static void battleTick(MinecraftServer server, ServerLevel tl, Run r, long now) {
         BlockPos c = JourneyWorld.arena(r.slot);
         List<ServerPlayer> fs = fighters(server, r);
-        if (now >= r.battleStart) {
+        List<LivingEntity> targets = new ArrayList<>(fs);
+        for (Member mb : r.members) for (var e : new ArrayList<>(mb.bots.entrySet())) {
+            Entity en = tl.getEntity(e.getKey());
+            if (en instanceof com.xenowarriors.bot.PartyBotEntity b && b.isAlive() && !b.downed()) {
+                r.hp.put(e.getValue(), Math.max(0.001F, b.getHealth() / b.getMaxHealth()));
+                if (b.getY() < c.getY() - 10) b.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5);
+                targets.add(b);
+                continue;
+            }
+            mb.bots.remove(e.getKey());                       // down (or gone): no reviving in battle
+            if (en instanceof com.xenowarriors.bot.PartyBotEntity b) {
+                tl.sendParticles(ParticleTypes.CLOUD, b.getX(), b.getY() + .5, b.getZ(), 20, .4, .4, .4, .05);
+                giveBag(b, server.getPlayerList().getPlayer(mb.id));
+                b.discard();
+            }
+            charDown(server, r, mb, e.getValue());
+        }
             // everything flagged in the arena counts - including helpers a boss calls in
             r.alive.clear();
             for (Mob m : tl.getEntitiesOfClass(Mob.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 14, 24, JourneyWorld.ARENA_R + 14),
@@ -563,8 +637,8 @@ public final class Journey {
                 }
                 r.alive.add(m.getUUID());
                 if (r.seen.add(m.getUUID())) r.enemyHp += m.getMaxHealth();
-                if (!fs.isEmpty() && (!(m.getTarget() instanceof ServerPlayer t) || !fs.contains(t)))
-                    m.setTarget(fs.get(tl.random.nextInt(fs.size())));
+                if (!targets.isEmpty() && (m.getTarget() == null || !targets.contains(m.getTarget())))
+                    m.setTarget(targets.get(tl.random.nextInt(targets.size())));
             }
             if (r.alive.isEmpty()) {
                 if (r.waves <= 0) { endBattle(server, tl, r, true); return; }
@@ -603,6 +677,7 @@ public final class Journey {
         BlockPos c = JourneyWorld.arena(r.slot);
         boolean boss = r.kind() == JourneyRules.BOSS;
         com.xenowarriors.tower.TowerBosses.clear(c);
+        for (Member m : r.members) clearBots(server, r, m);
         for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(c).inflate(JourneyWorld.ARENA_R + 14, 24, JourneyWorld.ARENA_R + 14),
                 e -> (e instanceof Mob && !(e instanceof com.xenowarriors.bot.PartyBotEntity)) || e instanceof net.minecraft.world.entity.projectile.Projectile)) e.discard();
         // drops and XP come with you
@@ -762,7 +837,7 @@ public final class Journey {
             if (r.phase == CHOOSING) {
                 if (now >= r.chooseUntil) {                // time's up: everyone still choosing brings whoever can fight
                     for (Member m : r.members) if (!m.ready) {
-                        if (m.chosen.isEmpty()) for (CharacterType t : m.picks) if (r.alive(t) && r.scenario.rule.fits(t) && m.chosen.size() < 4) m.chosen.add(t);
+                        if (m.chosen.isEmpty()) for (CharacterType t : m.picks) if (r.alive(t) && r.scenario.rule.fits(t) && m.chosen.size() < r.field()) m.chosen.add(t);
                         m.ready = true;
                     }
                     startBattle(server, r);
@@ -795,6 +870,7 @@ public final class Journey {
     }
 
     private static void leaveOffline(MinecraftServer server, Run r, Member m) {
+        clearBots(server, r, m);
         BY.remove(m.id);
         r.members.remove(m);
         for (CharacterType t : m.picks) r.hp.remove(t);
@@ -807,7 +883,7 @@ public final class Journey {
     /** Nothing heals you during a journey: only the shop and healing pods (which set your health directly). */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onHeal(LivingHealEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p && inRun(p)) event.setCanceled(true);
+        if ((event.getEntity() instanceof ServerPlayer p && inRun(p)) || event.getEntity().getPersistentData().getBoolean("xw_journey_bot")) event.setCanceled(true);
     }
 
     /** No totems either: going down means the next character tags in. */
@@ -830,7 +906,8 @@ public final class Journey {
     /** Power Up: +30% damage for the battle. */
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
-        if (event.getSource().getEntity() instanceof ServerPlayer p && !(event.getEntity() instanceof Player)) {
+        ServerPlayer p = scorer(event.getSource().getEntity());
+        if (p != null && !(event.getEntity() instanceof Player) && !(event.getEntity() instanceof com.xenowarriors.bot.PartyBotEntity)) {
             Run r = BY.get(p.getUUID());
             if (r != null && r.phase == BATTLE && r.powerUp) event.setAmount(event.getAmount() * 1.3F);
         }
@@ -840,7 +917,18 @@ public final class Journey {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDamage(LivingDamageEvent event) {
         LivingEntity target = event.getEntity();
-        if (target instanceof ServerPlayer p) {
+        if (target instanceof com.xenowarriors.bot.PartyBotEntity b && b.getPersistentData().getBoolean("xw_journey_bot")) {
+            ServerPlayer o = b.owner();
+            Run r = o == null ? null : BY.get(o.getUUID());
+            Member m = r == null ? null : r.member(o.getUUID());
+            if (m == null || r.phase != BATTLE) return;
+            float amount = Math.min(event.getAmount(), b.getHealth());
+            m.score = Math.max(0, m.score - Math.round(amount * JourneyRules.PER_HURT));
+            m.hurt += amount;
+            float total = 0;
+            for (Member x : r.members) total += x.hurt;
+            if (r.challenge == Challenge.TOUGH && total > r.chHearts * 2) fail(o.server, r, "took too much damage");
+        } else if (target instanceof ServerPlayer p && !(p instanceof net.minecraftforge.common.util.FakePlayer)) {
             Run r = BY.get(p.getUUID());
             if (r == null || r.phase != BATTLE) return;
             Member m = r.member(p.getUUID());
@@ -851,7 +939,7 @@ public final class Journey {
             m.hurt += amount;
             for (Member o : r.members) total += o.hurt;
             if (r.challenge == Challenge.TOUGH && total > r.chHearts * 2) fail(p.server, r, "took too much damage");
-        } else if (event.getSource().getEntity() instanceof ServerPlayer p) {
+        } else if (scorer(event.getSource().getEntity()) instanceof ServerPlayer p) {
             Run r = BY.get(p.getUUID());
             if (r == null || r.phase != BATTLE || !(target.getPersistentData().getBoolean("xw_journey") || target.getPersistentData().getBoolean("xw_tower"))) return;
             Member m = r.member(p.getUUID());
@@ -881,25 +969,30 @@ public final class Journey {
             Member m = r.member(p.getUUID());
             if (r.phase != BATTLE || m == null || m.out) { p.setHealth(1F); return; }
             CharacterType down = m.active;
-            r.hp.put(down, 0F);
-            m.score = Math.max(0, m.score - JourneyRules.OWN_DOWN);
-            for (Member o : r.members) if (o != m) o.score = Math.max(0, o.score - JourneyRules.MATE_DOWN);
-            if (r.challenge == Challenge.NO_DOWNS) fail(p.server, r, down.getDisplayName().getString() + " went down");
-            CharacterType next = CharacterType.NONE;
-            for (CharacterType t : m.chosen) if (r.alive(t)) { next = t; break; }
             ServerLevel tl = p.serverLevel();
             tl.sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + .5, p.getZ(), 20, .4, .4, .4, .05);
-            for (Member o : r.members) {
-                ServerPlayer op = p.server.getPlayerList().getPlayer(o.id);
-                if (op != null) op.displayClientMessage(msg(down.getDisplayName().getString() + " is down!", ChatFormatting.RED), true);
+            charDown(p.server, r, m, down);
+            // take over an AI teammate still fighting: you become them, with their health, where they stand
+            com.xenowarriors.bot.PartyBotEntity take = null;
+            CharacterType next = CharacterType.NONE;
+            for (var e : new ArrayList<>(m.bots.entrySet())) {
+                if (tl.getEntity(e.getKey()) instanceof com.xenowarriors.bot.PartyBotEntity b && b.isAlive() && !b.downed()) { take = b; next = e.getValue(); break; }
             }
-            if (next != CharacterType.NONE) {
+            if (take != null) {
+                float frac = Math.max(0.001F, take.getHealth() / take.getMaxHealth());
+                r.hp.put(next, frac);
+                Vec3 at = take.position();
+                float yaw = take.getYRot();
+                m.bots.remove(take.getUUID());
+                giveBag(take, p);
+                take.discard();
                 m.active = next;
                 become(p, next);
-                p.setHealth(Math.max(1F, p.getMaxHealth() * r.hp.get(next)));
+                p.teleportTo(tl, at.x, at.y, at.z, yaw, p.getXRot());
+                p.setHealth(Math.max(1F, p.getMaxHealth() * frac));
                 p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 50, 4, false, false));
                 tl.playSound(null, p.blockPosition(), SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.PLAYERS, 1F, 1.2F);
-                title(p, "TAG IN", next.getDisplayName().getString() + " jumps in!", next.getColor());
+                title(p, "TAKE OVER", "You're " + next.getDisplayName().getString() + " now!", next.getColor());
             } else {
                 m.out = true;
                 p.setHealth(1F);
@@ -908,7 +1001,7 @@ public final class Journey {
                 checkLost(p.server, r);
             }
             syncAll(p.server, r, OPEN_NONE);
-        } else if (event.getSource().getEntity() instanceof ServerPlayer p) {
+        } else if (scorer(event.getSource().getEntity()) instanceof ServerPlayer p) {
             Run r = BY.get(p.getUUID());
             if (r != null && r.phase == BATTLE && r.seen.contains(event.getEntity().getUUID())) {
                 Member m = r.member(p.getUUID());
@@ -942,6 +1035,7 @@ public final class Journey {
         t.putInt("maxDiff", maxDiff(r, server));
         t.putBoolean("host", viewer.equals(r.host));
         t.putInt("cap", r.cap());
+        t.putInt("field", r.field());
         t.putInt("jc", r.jc);
         t.putInt("cur", r.cur);
         t.putBoolean("cleared", r.cleared);

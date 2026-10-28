@@ -26,7 +26,7 @@ public class JourneyHud implements IGuiOverlay {
         int x = 6, y = 20;
         for (JourneyClient.Member m : JourneyClient.members()) for (CharacterType t : m.picks()) {
             float hp = JourneyClient.hp(t);
-            boolean on = m.active() == t && phase == 3 && !m.out();
+            boolean on = phase == 3 && m.chosen().contains(t) && hp > 0;      // (on the field: played or fighting beside you)
             g.fill(x - 1, y - 1, x + 19, y + 19, on ? 0xFFFFFFFF : m.me() ? 0xFF2A5A30 : 0xFF2A3A5A);
             JourneyScreen.face(g, t, x, y, 18);
             if (hp <= 0) { g.fill(x, y, x + 18, y + 18, 0xB0300000); JourneyScreen.sc(g, font, "X", x + 6, y + 5, 1F, 0xFF4040); }

@@ -872,7 +872,8 @@ public final class UiTest {
         l.add(new Step("journey_path_overview", () -> {}, 3));
         l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); server(p -> { var c = com.xenowarriors.journey.Journey.testNode(p, 1); p.teleportTo(c.getX() + .5, c.getY() + 1, c.getZ() + .5); }); }, 30));
         l.add(new Step("journey_team", () -> {}, 3));
-        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.KYRIE.ordinal(), 0); }), 15));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.KYRIE.ordinal(), 0);
+            com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MAX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.TECHNICA.ordinal(), 0); }), 15));
         l.add(new Step("journey_team_picked", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.action(p, 7, 0, 0)), 110));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> {

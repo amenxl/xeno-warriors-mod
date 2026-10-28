@@ -44,7 +44,7 @@ public class JourneyTeamScreen extends JourneyScreen {
         y += 24;
 
         // your characters
-        sc(g, me.ready() ? "You're ready" : "Click who comes in - the first one starts, the rest tag in (up to 4)", 12, y, 0.65F, me.ready() ? 0x5FD05F : 0xFFFFFF);
+        sc(g, me.ready() ? "You're ready" : "Click who fights (up to " + st.getInt("field") + ") - you play the first, the rest fight beside you", 12, y, 0.65F, me.ready() ? 0x5FD05F : 0xFFFFFF);
         y += 10;
         int n = me.picks().size(), cw = n > 4 ? 44 : 80, chh = n > 4 ? 70 : 88;
         int gx = (VW - n * (cw + 4)) / 2;
@@ -71,7 +71,7 @@ public class JourneyTeamScreen extends JourneyScreen {
                 box(g, x, y, x + cw, y + chh, 0xFF5FD05F);
                 g.fill(x + 2, y + 4, x + 12, y + 14, 0xFF5FD05F);
                 sc(g, String.valueOf(order + 1), x + 4.5F, y + 5.5F, 0.8F, 0x102010);
-                if (order == 0) sc(g, "STARTS", x + cw - 4 - font.width("STARTS") * 0.45F, y + 5, 0.45F, 0x5FD05F);
+                sc(g, order == 0 ? "YOU" : "AI", x + cw - 4 - font.width(order == 0 ? "YOU" : "AI") * 0.45F, y + 5, 0.45F, 0x5FD05F);
             } else box(g, x, y, x + cw, y + chh, h ? 0xFF8A9AAA : 0xFF2A3038);
             if (can) area(x, y, x + cw, y + chh, () -> JourneyClient.act(6, t.ordinal(), 0));
         }
