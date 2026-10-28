@@ -794,8 +794,9 @@ public final class UiTest {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
             p.setYRot(0); p.setXRot(0);
             var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
-            a.moveTo(p.getX() + 3.2, p.getY(), p.getZ(), 90F, 5F); a.setNoGravity(true); a.setInvisible(true);
+            a.moveTo(p.getX() + 2.4, p.getY() - 0.2, p.getZ(), 90F, 5F); a.setNoGravity(true); a.setInvisible(true);
             p.serverLevel().addFreshEntity(a); ids[0] = a.getId();
+            com.xenowarriors.compat.epicfight.EfTest.play(p, "none");
             log("epicfight loaded=" + net.minecraftforge.fml.ModList.get().isLoaded("epicfight"));
         }); }, 60));
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
