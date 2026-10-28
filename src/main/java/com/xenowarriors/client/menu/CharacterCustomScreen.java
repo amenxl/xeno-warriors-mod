@@ -354,7 +354,7 @@ public class CharacterCustomScreen extends Screen {
      * Freedom Fighter, Technica works for the Government and the Sky Patrol.
      */
     private static String[][] affiliations(CharacterType t) {
-        String[] XW = {"Xeno Warriors", "logo_xeno_warriors"}, FF = {"Freedom Fighters", "logo_freedom_fighters_icon"},
+        String[] XW = {"Xeno Warriors", "logo_xeno_warriors"}, FF = {"Freedom Fighters", "logo_freedom_fighters"},
                 SP = {"Sky Patrol", "logo_sky_patrol"}, GOV = {"Government", "logo_government"}, OR = {"Orenji Clan", "logo_orenji"},
                 SR = {"Sky Rebellion", "logo_sky_rebellion"}, DD = {"Disco Dojo", "logo_disco_dojo"}, DEM = {"Ai-oni's Demons", "logo_demons"};
         return switch (t) {
