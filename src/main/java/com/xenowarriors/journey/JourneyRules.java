@@ -41,7 +41,7 @@ public final class JourneyRules {
     public static final int START_JC = 15;
 
     public enum Rule {
-        ANY("Anyone"), SKYLANDER("Skylanders only"), HUMAN("Humans only (no Skylanders)"), SKY_PATROL("Sky Patrol only"), REBELLION("Sky Rebellion only");
+        ANY("Anyone"), SKYLANDER("Skylanders only"), HUMAN("No Skylanders (humans and Rebringers)"), SKY_PATROL("Sky Patrol only"), REBELLION("Sky Rebellion only");
         public final String text;
         Rule(String t) { text = t; }
         public boolean fits(CharacterType t) {
