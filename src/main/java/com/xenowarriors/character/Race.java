@@ -14,6 +14,7 @@ public enum Race {
     DEMON("Demon", 0xD04040),
     DEVIL("Devil", 0xA01020),                            // stronger than demons (Ai-oni, Duo)
     FOX_KIN("Fox Kin", 0xFF9A40),
+    SEEDLING("Seedling", 0x70D050),
     REBRINGER("Rebringer", 0xFFB060);
 
     public final String title;
