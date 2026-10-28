@@ -35,7 +35,7 @@ public final class GovShop {
             new Offer("Jump Boosters", "Human mod: big jumps, soft landings, 10 min", 400, () -> new ItemStack(GovItems.JUMP_MOD.get())),
             new Offer("Scanner Eye", "Human mod: see enemies through walls, 10 min", 450, () -> new ItemStack(GovItems.SCANNER_MOD.get())),
             new Offer("Armor Plating", "Human mod: Resistance + extra hearts, 10 min", 500, () -> new ItemStack(GovItems.PLATING_MOD.get())),
-            new Offer("Karma Scanner", "Visor: Karma Readings of anyone you look at (overloads above 50,000)", 600, () -> new ItemStack(GovItems.KARMA_SCANNER.get())),
+            new Offer("Karma Scanner", "Visor: Karma Levels of anyone you look at (overloads above 50,000)", 600, () -> new ItemStack(GovItems.KARMA_SCANNER.get())),
             new Offer("Mod Chip", "Government tech part", 250, () -> new ItemStack(com.xenowarriors.item.ModItems.MOD_CHIP.get())),
             new Offer("Facility Map", "Finds the nearest Gov facility", 300, () -> new ItemStack(com.xenowarriors.item.ModItems.FACILITY_MAP.get())),
             new Offer("Gov Keycard", "Opens a facility vault", 2500, () -> new ItemStack(GovItems.KEYCARD.get())),

@@ -13,7 +13,7 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /**
- * Karma Readings on screen: with the Government visor on, a green lens over one eye (first person); whoever you look at
+ * Karma Levels on screen: with the Government visor on, a green lens over one eye (first person); whoever you look at
  * gets a reading that counts up beside the crosshair, scouter style. Yuri and Ultima read Karma without one, in their own
  * colours. When the visor overloads: ERROR, cracks, then it's gone.
  */
@@ -72,7 +72,7 @@ public class KarmaScanClient implements IGuiOverlay {
         int x = width / 2 + 14, y = height / 2 - 26;
         g.fill(x - 3, y - 3, x + 118, y + 31, 0x80001008);
         g.fill(x - 3, y - 3, x - 2, y + 31, 0xFF000000 | col);
-        sc(g, font, who + "  -  KARMA READING", x, y, 0.55F, col);
+        sc(g, font, who + "  -  KARMA LEVEL", x, y, 0.55F, col);
         sc(g, font, name, x, y + 6, 0.7F, 0xFFFFFF);
         String num = KarmaLevel.fmt(Math.max(0, shown));
         sc(g, font, num, x, y + 15, 1.4F, value > KarmaScanner.CAPACITY && mode == KarmaScanner.VISOR ? 0xFF5050 : col);

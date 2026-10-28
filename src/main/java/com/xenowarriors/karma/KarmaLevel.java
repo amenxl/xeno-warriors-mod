@@ -7,8 +7,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
 /**
- * Karma Level: how strong someone is, as one number (the show's "power level"). Everyone calls it their Karma Level;
- * when the Government's scanner, Yuri or Ultima measure it, it's a "Karma Reading".
+ * Karma Level: how strong someone is, as one number (the show's "power level"). The Government's Karma Scanner,
+ * Yuri and Ultima can measure anyone's.
  * Built from health and attack, and for players their max Karma, Character Level and (with DragonMineZ) their power.
  */
 public final class KarmaLevel {

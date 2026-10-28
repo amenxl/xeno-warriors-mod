@@ -23,7 +23,7 @@ public final class GovItems {
     public static final RegistryObject<Item> SPEED_MOD = ModItems.ITEMS.register("speed_mod", () -> new GovModItem(GovModItem.SPEED, new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> JUMP_MOD = ModItems.ITEMS.register("jump_mod", () -> new GovModItem(GovModItem.JUMP, new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SCANNER_MOD = ModItems.ITEMS.register("scanner_mod", () -> new GovModItem(GovModItem.SCANNER, new Item.Properties().stacksTo(16)));
-    /** The Karma Scanner visor (worn on your head): Karma Readings of whoever you look at. */
+    /** The Karma Scanner visor (worn on your head): Karma Levels of whoever you look at. */
     public static final RegistryObject<Item> KARMA_SCANNER = ModItems.ITEMS.register("karma_scanner", () -> new KarmaScanner.Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> PLATING_MOD = ModItems.ITEMS.register("plating_mod", () -> new GovModItem(GovModItem.PLATING, new Item.Properties().stacksTo(16)));
 

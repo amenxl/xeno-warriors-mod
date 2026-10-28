@@ -948,7 +948,7 @@ public final class UiTest {
         if (mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez")) mc.setScreen(null);
     }
 
-    /** Karma Readings: the Gov visor on a zombie, overloading on a warden, and Yuri reading without one. */
+    /** Karma Levels: the Gov visor on a zombie, overloading on a warden, and Yuri reading without one. */
     private static void karmaScan(Minecraft mc, List<Step> l) {
         int[] ids = {-1};
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {

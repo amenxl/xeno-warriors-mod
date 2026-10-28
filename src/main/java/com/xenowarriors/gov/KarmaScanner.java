@@ -34,7 +34,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.*;
 
 /**
- * The Government's Karma Scanner: a visor worn like a helmet. Look at anyone and it takes a Karma Reading. Point it at
+ * The Government's Karma Scanner: a visor worn like a helmet. Look at anyone and it takes the Karma Level. Point it at
  * someone far too strong and it overloads and blows apart. Yuri (hacking) and Ultima (her sensors) take readings
  * without one, and never break.
  */
@@ -63,7 +63,7 @@ public final class KarmaScanner {
         public Item(Properties p) { super(MATERIAL, Type.HELMET, p); }
         @Override
         public void appendHoverText(ItemStack stack, Level level, List<Component> tip, TooltipFlag flag) {
-            tip.add(Component.literal("Government tech: look at anyone for a Karma Reading").withStyle(ChatFormatting.GREEN));
+            tip.add(Component.literal("Government tech: look at anyone for the Karma Level").withStyle(ChatFormatting.GREEN));
             tip.add(Component.literal("Overloads above " + KarmaLevel.fmt(CAPACITY)).withStyle(ChatFormatting.RED));
         }
     }
@@ -107,7 +107,7 @@ public final class KarmaScanner {
         l.playSound(null, p.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1F, 0.8F);
         l.playSound(null, p.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.4F, 1.6F);
         p.hurt(p.damageSources().generic(), 1F);
-        p.sendSystemMessage(Component.literal("Your Karma Scanner couldn't handle " + target.getName().getString() + "'s Karma Reading (over "
+        p.sendSystemMessage(Component.literal("Your Karma Scanner couldn't handle " + target.getName().getString() + "'s Karma Level (over "
                 + KarmaLevel.fmt(CAPACITY) + ") - it blew apart!").withStyle(ChatFormatting.RED));
     }
 
