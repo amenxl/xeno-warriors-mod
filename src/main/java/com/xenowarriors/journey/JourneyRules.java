@@ -15,9 +15,11 @@ public final class JourneyRules {
     static final int[] BOSS_FLOOR = {10, 20, 30, 50, 80};
 
     // step kinds
-    public static final int START = 0, BATTLE = 1, SCENARIO = 2, HEAL = 3, BOSS = 4, EVENT = 5;
-    public static final String[] STEP_NAME = {"START", "BATTLE", "SCENARIO", "HEALING POD", "BOSS", "EVENT"};
-    public static final int[] STEP_COLOR = {0xFFFFFF, 0xFF7040, 0x40D0FF, 0x60F060, 0xC040FF, 0xFFD040};
+    public static final int START = 0, BATTLE = 1, SCENARIO = 2, HEAL = 3, BOSS = 4, EVENT = 5, ITEM = 6, DBZ = 7;
+    public static final String[] STEP_NAME = {"START", "BATTLE", "SCENARIO", "HEALING POD", "BOSS", "EVENT", "ITEM", "DBZ"};
+    public static final int[] STEP_COLOR = {0xFFFFFF, 0xFF7040, 0x40D0FF, 0x60F060, 0xC040FF, 0xFFD040, 0xF070E0, 0xFF9A20};
+    /** Whether a step is a fight. */
+    public static boolean fight(int kind) { return kind == BATTLE || kind == SCENARIO || kind == BOSS || kind == DBZ; }
 
     // stages: each difficulty has 3, longer each time; clear Stage 3 to open the next difficulty
     public static final int STAGES = 3;
@@ -54,7 +56,7 @@ public final class JourneyRules {
     }
 
     /** Who you fight (and how the arena looks). */
-    public enum Foe { MIXED, GOV, SR, SKY_HATERS, DARK }
+    public enum Foe { MIXED, GOV, SR, SKY_HATERS, DARK, DBZ }
 
     public enum Scenario {
         NONE("", "", Rule.ANY, Foe.MIXED),

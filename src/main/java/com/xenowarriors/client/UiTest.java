@@ -97,6 +97,7 @@ public final class UiTest {
         if ("journey".equals(System.getenv("XW_UITEST_FOCUS"))) { journey(mc, l); return l; }
         if ("dmzlist".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzList(mc, l); return l; }
         if ("bladeanchor".equals(System.getenv("XW_UITEST_FOCUS"))) { bladeAnchor(mc, l); return l; }
+        if ("dmzjourney".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzJourney(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -906,6 +907,37 @@ public final class UiTest {
         l.add(new Step(null, () -> server(p -> log("blade anchor 5s later realmTicks=" + p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.realmTicks).orElse(-1))), 100));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.mikiko.HekubladeRealm.leave(p)), 30));
         l.add(new Step(null, () -> server(p -> log("blade anchor after leaving: stand=" + (com.xenowarriors.mikiko.HekubladeAnchor.testStand(p) != null))), 5));
+    }
+
+    /** Journey mode with DragonMineZ: an item panel (its armor can drop), a DBZ panel fight, enemies scaled to your DragonMineZ power. */
+    private static void dmzJourney(Minecraft mc, List<Step> l) {
+        CharacterType[] eight = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.LOGAN};
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.journey.Journey.setCleared(p, 3);
+            com.xenowarriors.journey.Journey.open(p);
+            for (CharacterType t : eight) com.xenowarriors.journey.Journey.action(p, 1, t.ordinal(), 0);
+            com.xenowarriors.journey.Journey.action(p, 2, 1, 0);
+            com.xenowarriors.journey.Journey.action(p, 11, 0, 0);
+            com.xenowarriors.journey.Journey.action(p, 4, 0, 0);
+        }); mc.options.hideGui = false; }, 80));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.ITEM)); }, 25));
+        l.add(new Step("dmzjourney_item", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> {
+            StringBuilder sb = new StringBuilder();
+            for (var s : p.getInventory().items) if (!s.isEmpty()) sb.append(s.getHoverName().getString()).append(" x").append(s.getCount()).append("; ");
+            log("dmzjourney inventory: " + sb);
+        }), 5));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.DBZ)); }, 30));
+        l.add(new Step("dmzjourney_team", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 6, CharacterType.RHALIX.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }), 110));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> {
+            for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), m -> m.getPersistentData().getBoolean("xw_journey")))
+                log("dmzjourney enemy " + net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(m.getType()) + " hp=" + m.getMaxHealth() + " named=" + m.getPersistentData().getBoolean("xw_journey_named")
+                        + " dmzScale=" + m.getPersistentData().getFloat("xw_journey_dmz"));
+        }); }, 20));
+        l.add(new Step("dmzjourney_battle", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.leave(p, "test over", true)), 20));
     }
 
     /** Journey mode, solo: the lobby, the path, choosing a team, a battle with a tag-in, results, the shop, a scenario, the boss. */

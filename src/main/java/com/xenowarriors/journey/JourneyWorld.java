@@ -65,6 +65,8 @@ public final class JourneyWorld {
             case JourneyRules.HEAL -> Blocks.LIME_STAINED_GLASS.defaultBlockState();
             case JourneyRules.BOSS -> Blocks.PURPLE_STAINED_GLASS.defaultBlockState();
             case JourneyRules.EVENT -> Blocks.YELLOW_STAINED_GLASS.defaultBlockState();
+            case JourneyRules.ITEM -> Blocks.MAGENTA_STAINED_GLASS.defaultBlockState();
+            case JourneyRules.DBZ -> Blocks.BROWN_STAINED_GLASS.defaultBlockState();
             default -> Blocks.WHITE_STAINED_GLASS.defaultBlockState();
         };
     }
@@ -154,6 +156,7 @@ public final class JourneyWorld {
             case GOV -> new Block[]{Blocks.SMOOTH_QUARTZ, Blocks.SEA_LANTERN, Blocks.CYAN_STAINED_GLASS};
             case SR -> new Block[]{Blocks.STONE_BRICKS, Blocks.MOSSY_STONE_BRICKS, Blocks.YELLOW_STAINED_GLASS};
             case SKY_HATERS -> new Block[]{Blocks.GRASS_BLOCK, Blocks.WHITE_WOOL, Blocks.WHITE_STAINED_GLASS};
+            case DBZ -> new Block[]{Blocks.SMOOTH_SANDSTONE, Blocks.ORANGE_TERRACOTTA, Blocks.ORANGE_STAINED_GLASS};
             case DARK -> new Block[]{Blocks.BLACKSTONE, Blocks.CRYING_OBSIDIAN, Blocks.PURPLE_STAINED_GLASS};
             default -> new Block[]{Blocks.SMOOTH_STONE, Blocks.SEA_LANTERN, Blocks.LIGHT_BLUE_STAINED_GLASS};
         };
@@ -172,12 +175,22 @@ public final class JourneyWorld {
     // ------------------------------------------------------------------------------------------------ enemies
 
     /** Spawns one wave: returns what was spawned. */
-    static List<Mob> spawn(ServerLevel l, int slot, JourneyRules.Foe foe, int diff, int step, int players, List<ServerPlayer> targets) {
+    static List<Mob> spawn(ServerLevel l, int slot, JourneyRules.Foe foe, int diff, int step, int players, List<ServerPlayer> targets, float scale) {
         BlockPos c = arena(slot);
         var rnd = l.getRandom();
         int count = Math.min(14, 3 + diff + step / 3 + (players - 1) * 2);
         List<Mob> out = new ArrayList<>();
         List<String> pool = null;
+        List<String> dbz = List.of();
+        if (foe == JourneyRules.Foe.DBZ) {
+            // a named Dragon Ball character (two on Insane and Xeno) leading their henchmen, by difficulty
+            dbz = new ArrayList<>();
+            List<String> named = real(DBZ_NAMED[diff]), minions = real(DBZ_MINIONS[diff]);
+            for (int i = 0; i < (diff >= 3 ? 2 : 1) && !named.isEmpty(); i++) dbz.add(named.get(rnd.nextInt(named.size())));
+            for (int i = 0; i < Math.max(1, count / 2) && !minions.isEmpty(); i++) dbz.add(minions.get(rnd.nextInt(minions.size())));
+            if (dbz.isEmpty()) foe = JourneyRules.Foe.MIXED;
+            else count = dbz.size();
+        }
         for (int i = 0; i < count; i++) {
             JourneyRules.Foe f = foe == JourneyRules.Foe.MIXED && rnd.nextInt(3) == 0 ? JourneyRules.Foe.values()[1 + rnd.nextInt(4)] : foe;
             Mob mob = null;
@@ -196,6 +209,10 @@ public final class JourneyWorld {
                     mob = h;
                 }
                 case DARK -> mob = create(l, i % 3 == 0 ? "xenowarriors:dark_possessed" : "xenowarriors:corrupted_soul", at);
+                case DBZ -> {
+                    mob = create(l, dbz.get(i), at);
+                    if (mob != null && i < (diff >= 3 ? 2 : 1)) mob.getPersistentData().putBoolean("xw_journey_named", true);
+                }
                 default -> {
                     if (pool == null) {
                         pool = new ArrayList<>();
@@ -206,7 +223,7 @@ public final class JourneyWorld {
                 }
             }
             if (mob == null) continue;
-            prepare(l, mob, diff, step);
+            prepare(l, mob, diff, step, scale);
             if (!targets.isEmpty()) mob.setTarget(targets.get(rnd.nextInt(targets.size())));
             l.addFreshEntity(mob);
             l.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL, mob.getX(), mob.getY() + 1, mob.getZ(), 20, .4, .6, .4, .3);
@@ -226,7 +243,44 @@ public final class JourneyWorld {
         return m;
     }
 
-    private static void prepare(ServerLevel l, Mob m, int diff, int step) {
+    // DBZ panels (DragonMineZ's saga characters), by difficulty: who leads, and their henchmen
+    private static final String[][] DBZ_NAMED = {
+            {"saga_raditz", "saga_nappa", "saga_vegeta", "saga_piccolo", "saga_yamcha", "saga_tien_early", "saga_krillin", "saga_chaoz"},
+            {"saga_dodoria", "saga_zarbon", "saga_zarbont1", "saga_guldo", "saga_burter", "saga_jeice", "saga_recoome", "saga_ginyu", "saga_cui", "saga_frieza_first", "saga_vegeta_namek", "saga_a19", "saga_drgero"},
+            {"saga_frieza_second", "saga_frieza_third", "saga_frieza_base", "saga_a16", "saga_a17", "saga_a18", "saga_cell_imperfect", "saga_cell_semiperfect", "saga_cooler", "saga_turles", "saga_slug", "saga_garlick_jr_transformed", "saga_mecha_frieza"},
+            {"saga_frieza_fp", "saga_cell_perfect", "saga_cell_superperfect", "saga_bojack", "saga_zangya", "saga_broly_base", "saga_broly_ssj", "saga_dabura", "saga_buufat", "saga_metal_cooler", "saga_janemba_fat", "saga_cooler_5ta", "saga_vegeta_majin"},
+            {"saga_kidbuu", "saga_superbuu", "saga_superbuu_gotenks", "saga_superbuu_gohan", "saga_evilbuu", "saga_broly_lssj", "saga_super_janemba", "saga_vegetto_ssj", "saga_gotenks_ssj3", "saga_goku_end_ssj3", "saga_super_a13", "saga_bojack_fp"}};
+    private static final String[][] DBZ_MINIONS = {
+            {"saga_saibaman1", "saga_saibaman2", "saga_saibaman3", "red_ribbon_soldier", "bandit"},
+            {"saga_friezasoldier01", "saga_friezasoldier02", "saga_friezasoldier03", "saga_saibaman4", "saga_saibaman5"},
+            {"saga_friezasoldier01", "saga_friezasoldier03", "saga_cell_jr", "saga_slug_soldier", "saga_dore", "saga_neiz", "saga_salza"},
+            {"saga_cell_jr", "saga_morosoldier", "saga_puipui", "saga_spopovitch", "saga_yakon", "saga_bido", "saga_bujin"},
+            {"saga_cell_jr", "saga_morosoldier", "saga_bujin", "saga_bido", "saga_gokua", "saga_paragus", "saga_metal_cooler_core"}};
+
+    private static List<String> real(String[] ids) {
+        List<String> out = new ArrayList<>();
+        for (String id : ids) if (ForgeRegistries.ENTITY_TYPES.containsKey(new ResourceLocation("dragonminez", id))) out.add("dragonminez:" + id);
+        return out;
+    }
+
+    /** Whether DBZ panels can happen (DragonMineZ is installed with its saga characters). */
+    static boolean dbzReady() { return !real(DBZ_NAMED[0]).isEmpty(); }
+
+    /** With DragonMineZ: enemies keep up with your DragonMineZ power (bosses too). */
+    static void scale(Mob m, float scale) {
+        if (scale <= 1F) return;
+        var mh = m.getAttribute(Attributes.MAX_HEALTH);
+        if (mh != null) mh.addPermanentModifier(new AttributeModifier(DMZ, "Journey DragonMineZ", scale - 1F, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (md != null) md.addPermanentModifier(new AttributeModifier(DMZ_DMG, "Journey DragonMineZ", scale - 1F, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        m.setHealth(m.getMaxHealth());
+        m.getPersistentData().putFloat("xw_journey_dmz", scale);
+    }
+
+    private static final UUID DMZ = UUID.fromString("7c1d4e22-8b4e-4d66-ab62-1e2f3d4c5b03"), DMZ_DMG = UUID.fromString("7c1d4e22-8b4e-4d66-ab62-1e2f3d4c5b04");
+
+    private static void prepare(ServerLevel l, Mob m, int diff, int step, float scale) {
+        scale(m, scale);
         m.setPersistenceRequired();
         float hp = JourneyRules.HP_MULT[diff] * (1F + 0.05F * step) - 1F, dmg = JourneyRules.DMG_MULT[diff] * (1F + 0.03F * step) - 1F;
         var mh = m.getAttribute(Attributes.MAX_HEALTH);

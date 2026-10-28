@@ -245,7 +245,7 @@ public final class Journey {
             }
             case 8 -> buy(server, r, p, a, b);
             case 9 -> { if (r.phase != LOBBY) leave(p, "You retreated from the Journey", true); return; }
-            case 10 -> { if (r.phase == IDLE && !r.cleared && r.kind() != JourneyRules.HEAL) beginChoose(server, r); return; }
+            case 10 -> { if (r.phase == IDLE && !r.cleared && JourneyRules.fight(r.kind())) beginChoose(server, r); return; }
             default -> { return; }
         }
         syncAll(server, r, OPEN_NONE);
@@ -269,7 +269,7 @@ public final class Journey {
             if (why != null) { host.displayClientMessage(msg(why, ChatFormatting.RED), true); return; }
         }
         clampPick(r, server);
-        r.map = JourneyMap.generate(JourneyRules.STAGE_ROWS[r.stage], tl.getRandom());
+        r.map = JourneyMap.generate(JourneyRules.STAGE_ROWS[r.stage], tl.getRandom(), JourneyWorld.dbzReady());
         Arrays.fill(r.boosts, 0);
         r.bridges.clear();
         r.building.clear();
@@ -489,7 +489,31 @@ public final class Journey {
             return;
         }
         if (to.kind == JourneyRules.EVENT) { event(server, tl, r, c); return; }
+        if (to.kind == JourneyRules.ITEM) { itemPanel(server, tl, r, c); return; }
         beginChoose(server, r);
+    }
+
+    /** An item panel: everyone gets ore, maybe a weapon, and (with DragonMineZ) maybe a piece of its armor. */
+    private static void itemPanel(MinecraftServer server, ServerLevel tl, Run r, BlockPos c) {
+        List<String> all = new ArrayList<>();
+        for (Member m : r.members) {
+            ServerPlayer p = server.getPlayerList().getPlayer(m.id);
+            if (p == null) continue;
+            List<net.minecraft.world.item.ItemStack> got = JourneyLoot.roll(tl, r.diff, r.stage);
+            StringBuilder sb = new StringBuilder();
+            for (var s : got) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(s.getCount() > 1 ? s.getCount() + " " : "").append(s.getHoverName().getString());
+                if (!p.getInventory().add(s.copy())) p.drop(s, false);
+            }
+            title(p, "ITEM PANEL", sb.toString(), 0xF070E0);
+            p.sendSystemMessage(msg("Item panel: " + sb, ChatFormatting.LIGHT_PURPLE));
+            all.add(m.name + ": " + sb);
+        }
+        r.log.add("Step " + r.row() + ": Items - " + String.join("; ", all));
+        tl.sendParticles(ParticleTypes.HAPPY_VILLAGER, c.getX() + .5, c.getY() + 1.5, c.getZ() + .5, 30, 2, .6, 2, 0);
+        tl.playSound(null, c, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1F, 0.8F);
+        stepDone(server, tl, r);
     }
 
     /** An event panel: a boost for the whole party for the rest of the journey (they stack). */
@@ -506,7 +530,7 @@ public final class Journey {
             Boost b = open.get(tl.getRandom().nextInt(open.size()));
             int n = ++r.boosts[b.ordinal()];
             title = "EVENT: " + b.title.toUpperCase();
-            sub = b.text + " for the whole party" + (n > 1 ? " (x" + n + " now)" : "") + " - rest of the journey";
+            sub = b.text + " for everyone" + (n > 1 ? " (x" + n + ")" : "");
             col = b.color;
             r.log.add("Step " + r.row() + ": Event - " + b.title + " (" + b.text + ")" + (n > 1 ? " x" + n : ""));
         }
@@ -557,9 +581,12 @@ public final class Journey {
             picky.remove(Scenario.OUTBREAK);
             r.scenario = !picky.isEmpty() && rnd.nextInt(4) != 0 ? picky.get(rnd.nextInt(picky.size())) : Scenario.OUTBREAK;
             r.foe = r.scenario.foe;
+        } else if (kind == JourneyRules.DBZ) {
+            r.scenario = Scenario.NONE;
+            r.foe = Foe.DBZ;
         } else {
             r.scenario = Scenario.NONE;
-            r.foe = Foe.values()[rnd.nextInt(Foe.values().length)];
+            r.foe = Foe.values()[rnd.nextInt(Foe.DBZ.ordinal())];          // (DBZ fighters only on DBZ panels)
         }
         Challenge[] all = Challenge.values();
         r.challenge = all[rnd.nextInt(all.length)];
@@ -623,7 +650,7 @@ public final class Journey {
             com.xenowarriors.karma.Karma.add(p, 100000F);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4, false, false));
             for (int i = 1; i < m.chosen.size(); i++) spawnBot(p, r, m, m.chosen.get(i));
-            String what = boss ? "BOSS" : r.scenario != Scenario.NONE ? r.scenario.title.toUpperCase() : "BATTLE " + r.row();
+            String what = boss ? "BOSS" : r.scenario != Scenario.NONE ? r.scenario.title.toUpperCase() : (r.kind() == JourneyRules.DBZ ? "DBZ BATTLE " : "BATTLE ") + r.row();
             title(p, what, "Challenge: " + challengeText(r) + (r.challengeOk ? "" : "  (missed)"), boss ? 0xC040FF : JourneyRules.STEP_COLOR[r.kind()]);
             if (r.powerUp) p.displayClientMessage(msg("Power Up: +30% damage this battle", ChatFormatting.GOLD), true);
         }
@@ -746,10 +773,12 @@ public final class Journey {
                     r.waves--;
                     r.spawnAt = Long.MAX_VALUE;
                     List<Mob> made;
-                    if (r.kind() == JourneyRules.BOSS)
-                        made = com.xenowarriors.tower.TowerBosses.spawn(tl, c, JourneyRules.BOSS_FLOOR[r.diff], fs);
-                    else made = JourneyWorld.spawn(tl, r.slot, r.foe, r.diff, r.row() + 2 * r.stage, r.members.size(), fs);
-                    if (made.isEmpty()) made = JourneyWorld.spawn(tl, r.slot, Foe.DARK, r.diff, r.row() + 2 * r.stage, r.members.size(), fs);
+                    float dmz = dmzScale(fs);
+                    if (r.kind() == JourneyRules.BOSS) {
+                        made = com.xenowarriors.tower.TowerBosses.spawn(tl, c, JourneyRules.BOSS_FLOOR[r.diff] + 10 * r.stage, fs);
+                        for (Mob m : made) JourneyWorld.scale(m, dmz);
+                    } else made = JourneyWorld.spawn(tl, r.slot, r.foe, r.diff, r.row() + 2 * r.stage, r.members.size(), fs, dmz);
+                    if (made.isEmpty()) made = JourneyWorld.spawn(tl, r.slot, Foe.DARK, r.diff, r.row() + 2 * r.stage, r.members.size(), fs, dmz);
                     for (Mob m : made) { r.alive.add(m.getUUID()); if (r.seen.add(m.getUUID())) r.enemyHp += m.getMaxHealth(); }
                 }
             }
@@ -762,6 +791,14 @@ public final class Journey {
             if (m.active != CharacterType.NONE && r.alive(m.active)) r.hp.put(m.active, Math.max(0.001F, p.getHealth() / p.getMaxHealth()));
         }
         if (now % 10 == 0) syncAll(server, r, OPEN_NONE);
+    }
+
+    /** With DragonMineZ: how much stronger enemies get, from the fighters' DragonMineZ damage (1 without it). */
+    private static float dmzScale(List<ServerPlayer> fs) {
+        if (fs.isEmpty()) return 1F;
+        double sum = 0;
+        for (ServerPlayer p : fs) sum += Math.max(com.xenowarriors.compat.DmzScaling.multiplier(p, true), com.xenowarriors.compat.DmzScaling.multiplier(p, false));
+        return (float) Math.max(1.0, Math.min(200.0, sum / fs.size()));
     }
 
     private static void fail(MinecraftServer server, Run r, String why) {
@@ -808,7 +845,7 @@ public final class Journey {
         res.putInt("gained", gained);
         r.jc += gained;
         r.results = res;
-        String what = boss ? "Boss" : r.scenario != Scenario.NONE ? r.scenario.title : "Battle";
+        String what = boss ? "Boss" : r.scenario != Scenario.NONE ? r.scenario.title : r.kind() == JourneyRules.DBZ ? "DBZ battle" : "Battle";
         r.log.add("Step " + r.row() + ": " + what + " - " + (won ? "won (" + line + ")" + (r.challengeOk ? ", challenge done" : "") + ", +" + gained + " JC" : "lost"));
         // back up to the path
         int k = 0;
@@ -1244,6 +1281,15 @@ public final class Journey {
         ServerLevel tl = p.server.getLevel(Tower.LEVEL);
         if (r == null || tl == null || r.phase != IDLE || r.map == null) return;
         for (JourneyMap.Node n : r.map.nodes) if (n.kind == kind && n.state == JourneyMap.AHEAD && n.row > r.row()) {
+            r.building.clear();
+            arrive(p.server, tl, r, n.id);
+            return;
+        }
+        // none on this route: the next step becomes one
+        for (int to : r.node().next) {
+            JourneyMap.Node n = r.map.get(to);
+            if (n.state != JourneyMap.AHEAD || n.kind == JourneyRules.BOSS) continue;
+            n.kind = kind;
             r.building.clear();
             arrive(p.server, tl, r, n.id);
             return;

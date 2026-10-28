@@ -117,7 +117,7 @@ public class JourneyMenuScreen extends JourneyScreen {
         // buttons
         int by = VH - 22;
         int hk = hereId >= 0 && hereId < ns.size() ? ns.getCompound(hereId).getInt("k") : 0;
-        boolean retry = shop && !cleared && cur > 0 && (hk == JourneyRules.BATTLE || hk == JourneyRules.SCENARIO || hk == JourneyRules.BOSS);
+        boolean retry = shop && !cleared && cur > 0 && JourneyRules.fight(hk);
         if (retry) button(g, rx, by, rx + 74, by + 16, "Retry battle", 0xFF7040, true, () -> { JourneyClient.act(10, 0, 0); onClose(); });
         boolean confirm = net.minecraft.Util.getMillis() - retreatAt < 3000;
         button(g, VW - 84, by, VW - 10, by + 16, confirm ? "Click to confirm" : "Retreat", 0xA05050, true, () -> {

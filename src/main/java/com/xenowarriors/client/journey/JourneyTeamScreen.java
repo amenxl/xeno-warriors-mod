@@ -16,8 +16,8 @@ public class JourneyTeamScreen extends JourneyScreen {
         int kind = st.getInt("kind"), cur = st.getInt("cur");
         JourneyRules.Rule rule = JourneyRules.Rule.values()[Math.max(0, Math.min(JourneyRules.Rule.values().length - 1, st.getInt("rule")))];
         String scen = st.getString("scenario");
-        int col = JourneyRules.STEP_COLOR[Math.max(0, Math.min(4, kind))];
-        String head = kind == JourneyRules.BOSS ? "BOSS BATTLE" : (kind == JourneyRules.SCENARIO ? "SCENARIO " : "BATTLE ") + String.format("%02d", cur);
+        int col = JourneyRules.STEP_COLOR[Math.max(0, Math.min(JourneyRules.STEP_COLOR.length - 1, kind))];
+        String head = kind == JourneyRules.BOSS ? "BOSS BATTLE" : (kind == JourneyRules.SCENARIO ? "SCENARIO " : kind == JourneyRules.DBZ ? "DBZ BATTLE " : "BATTLE ") + String.format("%02d", cur);
         sc(g, head, 10, 8, 2F, col);
         sc(g, JourneyRules.DIFF[st.getInt("diff")] + " Stage " + (st.getInt("stage") + 1) + "  -  step " + cur + "/" + st.getInt("rows"), 10, 27, 0.6F, 0x8898A8);
         String left = "Starts in " + st.getInt("chooseLeft") + "s";
@@ -31,7 +31,7 @@ public class JourneyTeamScreen extends JourneyScreen {
             y += 30;
         }
         String foe = switch (st.getString("foe")) {
-            case "GOV" -> "Government agents"; case "SR" -> "Sky Rebellion members"; case "SKY_HATERS" -> "Sky Haters"; case "DARK" -> "Dark Possessed"; default -> "Monsters";
+            case "GOV" -> "Government agents"; case "SR" -> "Sky Rebellion members"; case "SKY_HATERS" -> "Sky Haters"; case "DARK" -> "Dark Possessed"; case "DBZ" -> "Dragon Ball fighters"; default -> "Monsters";
         };
         sc(g, "Enemies: " + (kind == JourneyRules.BOSS ? "a boss and its helpers" : foe) + (st.getInt("waves") > 1 ? "  (" + st.getInt("waves") + " waves)" : ""), 12, y, 0.65F, 0xC8C8D0);
         sc(g, "Who can fight: " + rule.text, 12, y + 9, 0.65F, rule == JourneyRules.Rule.ANY ? 0xC8C8D0 : 0xFFD040);

@@ -40,7 +40,7 @@ public final class JourneyMap {
         };
     }
 
-    public static JourneyMap generate(int rows, RandomSource rnd) {
+    public static JourneyMap generate(int rows, RandomSource rnd, boolean dbz) {
         JourneyMap m = new JourneyMap(rows);
         int[][] forks = forks(rows);
         List<List<Node>> byRow = new ArrayList<>();
@@ -50,7 +50,7 @@ public final class JourneyMap {
             List<Node> here = new ArrayList<>();
             if (fork == null) {
                 int kind = row == 0 ? JourneyRules.START : row == rows ? JourneyRules.BOSS : row == 1 ? JourneyRules.BATTLE
-                        : row == rows - 1 && rnd.nextInt(5) < 3 ? JourneyRules.HEAL : pick(rnd);
+                        : row == rows - 1 && rnd.nextInt(5) < 3 ? JourneyRules.HEAL : pick(rnd, dbz);
                 here.add(m.add(row, 0, kind));
             } else {
                 // two routes: the risky one gets an event panel in the middle, the safe one a healing pod
@@ -59,8 +59,8 @@ public final class JourneyMap {
                 for (int lane : new int[]{-1, 1}) {
                     boolean risky = (lane == -1) == riskyLeft;
                     int kind = row == mid ? (risky ? JourneyRules.EVENT : JourneyRules.HEAL)
-                            : risky ? (rnd.nextInt(3) == 0 ? JourneyRules.SCENARIO : JourneyRules.BATTLE)
-                            : (rnd.nextInt(4) == 0 ? JourneyRules.EVENT : rnd.nextBoolean() ? JourneyRules.SCENARIO : JourneyRules.BATTLE);
+                            : risky ? (dbz && rnd.nextInt(3) == 0 ? JourneyRules.DBZ : rnd.nextInt(3) == 0 ? JourneyRules.SCENARIO : JourneyRules.BATTLE)
+                            : (rnd.nextInt(4) == 0 ? JourneyRules.ITEM : rnd.nextInt(3) == 0 ? JourneyRules.EVENT : rnd.nextBoolean() ? JourneyRules.SCENARIO : JourneyRules.BATTLE);
                     here.add(m.add(row, lane, kind));
                 }
             }
@@ -74,9 +74,9 @@ public final class JourneyMap {
         return m;
     }
 
-    private static int pick(RandomSource rnd) {
-        int x = rnd.nextInt(20);
-        return x < 10 ? JourneyRules.BATTLE : x < 16 ? JourneyRules.SCENARIO : JourneyRules.EVENT;
+    private static int pick(RandomSource rnd, boolean dbz) {
+        int x = rnd.nextInt(dbz ? 23 : 20);
+        return x < 9 ? JourneyRules.BATTLE : x < 14 ? JourneyRules.SCENARIO : x < 17 ? JourneyRules.EVENT : x < 20 ? JourneyRules.ITEM : JourneyRules.DBZ;
     }
 
     private Node add(int row, int lane, int kind) { Node n = new Node(nodes.size(), row, lane, kind); nodes.add(n); return n; }

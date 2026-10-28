@@ -93,7 +93,7 @@ public final class HekubladeAnchor {
         tr.put("translation", floats(0, 0, 0));
         tr.put("scale", floats(1.6F, 1.6F, 1.6F));
         t.put("transformation", tr);
-        Entity display = EntityType.loadEntityRecursive(t, level, en -> { en.moveTo(x, y + 1.3, z, p.getYRot(), 0); return en; });
+        Entity display = EntityType.loadEntityRecursive(t, level, en -> { en.moveTo(x, y + 0.9, z, p.getYRot(), 0); return en; });
         if (display != null) {
             ALLOWED.add(display.getUUID());
             display.addTag(TAG);
