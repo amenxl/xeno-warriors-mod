@@ -421,6 +421,8 @@ public final class ModNetwork {
                 .encoder(PetListPacket::encode).decoder(PetListPacket::decode).consumerMainThread(PetListPacket::handle).add();
         CHANNEL.messageBuilder(PetActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(PetActionPacket::encode).decoder(PetActionPacket::decode).consumerMainThread(PetActionPacket::handle).add();
+        CHANNEL.messageBuilder(GroundedPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(GroundedPacket::encode).decoder(GroundedPacket::decode).consumerMainThread(GroundedPacket::handle).add();
         CHANNEL.messageBuilder(KarmaLockPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(KarmaLockPacket::encode).decoder(KarmaLockPacket::decode).consumerMainThread(KarmaLockPacket::handle).add();
         CHANNEL.messageBuilder(PopupPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)

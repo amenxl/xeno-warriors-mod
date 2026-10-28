@@ -242,6 +242,17 @@ public final class EntityPoses {
                 m.body.xRot = lerp(m.body.xRot, 0.6F, w);
                 m.head.xRot += 0.5F * w;
             }
+            case Poses.STUNNED -> {         // dazed: head rolling in circles, arms hanging limp, swaying on bent knees
+                float w = w(t, dur, 2F, 6F), a = t * 0.45F;
+                m.head.xRot = lerp(m.head.xRot, 0.25F + Mth.sin(a) * 0.18F, w);
+                m.head.zRot = lerp(m.head.zRot, Mth.cos(a) * 0.25F, w);
+                m.body.zRot = lerp(m.body.zRot, Mth.sin(a * 0.7F) * 0.12F, w);
+                m.body.xRot = lerp(m.body.xRot, 0.18F, w);
+                pose(m.rightArm, w, 0.25F + Mth.sin(a + 1F) * 0.12F, 0F, 0.12F + Mth.cos(a) * 0.05F);
+                pose(m.leftArm, w, 0.25F + Mth.sin(a) * 0.12F, 0F, -0.12F - Mth.cos(a) * 0.05F);
+                pose(m.rightLeg, w, -0.15F, 0F, 0.08F + Mth.sin(a * 0.7F) * 0.05F);
+                pose(m.leftLeg, w, 0.1F, 0F, -0.08F + Mth.sin(a * 0.7F) * 0.05F);
+            }
             case Poses.XENO_MIKIKO -> {     // Xeno Blast (from the art): hands cupped back at the hip, then both thrust out in a deep lunge
                 float w = w(t, dur, 3F, 5F), go = smooth((t - 14F) / 3F), sh = (1F - go) * Mth.sin(t * 3.1F) * 0.05F;
                 // charge: hands cupped behind at the hip, body wound back

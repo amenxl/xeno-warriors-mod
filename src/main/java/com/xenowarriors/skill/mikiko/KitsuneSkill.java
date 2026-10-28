@@ -31,6 +31,7 @@ public class KitsuneSkill implements Skill {
     private static final int COOLDOWN = 16 * 20;
     private static final DustParticleOptions FOX = new DustParticleOptions(new Vector3f(1F, 0.55F, 0.1F), 1.3F);
     private static final DustParticleOptions FOX_WHITE = new DustParticleOptions(new Vector3f(1F, 0.95F, 0.85F), 1F);
+    private static final DustParticleOptions STAR = new DustParticleOptions(new Vector3f(1F, 0.9F, 0.2F), 0.9F), STAR_W = new DustParticleOptions(new Vector3f(1F, 1F, 1F), 0.8F);
 
     @Override
     public String getId() { return "kitsune"; }
@@ -79,6 +80,22 @@ public class KitsuneSkill implements Skill {
             level.playSound(null, land.x, land.y, land.z, SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F, 0.7F);
             level.playSound(null, land.x, land.y, land.z, SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 0.5F, 1.8F);
         });
+        // the target reels: a dazed stun (with dizzy stars) from the first hit until well after the finisher
+        ServerScheduler.later(6, () -> {
+            if (!target.isAlive()) return;
+            com.xenowarriors.anim.Poses.play(target, com.xenowarriors.anim.Poses.STUNNED, 60);
+            for (int i = 0; i < 60; i += 2) {
+                int ii = i;
+                ServerScheduler.later(i, () -> {
+                    if (!target.isAlive()) return;
+                    double top = target.getY() + target.getBbHeight() + 0.25;
+                    for (int s = 0; s < 3; s++) {
+                        double a = ii * 0.35 + s * Math.PI * 2 / 3, r = target.getBbWidth() * 0.6 + 0.2;
+                        level.sendParticles(s == 0 ? STAR_W : STAR, target.getX() + Math.cos(a) * r, top, target.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
+                    }
+                });
+            }
+        });
         // a flurry of hits landing after he's through, each cracking bone
         for (int h = 0; h < 5; h++) {
             int k = h;
@@ -104,6 +121,7 @@ public class KitsuneSkill implements Skill {
             target.push(away.x * 0.6, 0.35, away.z * 0.6);   // knocked away from him
             target.hurtMarked = true;
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 120, 2));
+            com.xenowarriors.combat.Grounded.apply(target, 200);          // broken legs: no running or flying for 10 seconds
             target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1));
             target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 120, 1));
             Vec3 c = target.getBoundingBox().getCenter();

@@ -16,7 +16,7 @@ public final class Poses {
     // actions
     public static final int EL_THROW = 10, EL_THRUST = 11, EL_STOMP = 12, EL_RAISE = 13, EL_CHARGE = 14, KA_CAST = 15, KA_BURNOUT = 16,
             HOLD_JOLT = 17, CLASH_WIN = 18, CLASH_LOSE = 19, MIRROR = 20, KA_BREAK = 21, CHOP = 22, MINE = 23, PLACE = 24, WIPE = 25,
-            PLANT = 26, SHAPE = 27, SKY_MINE = 28, XENO_MIKIKO = 29, XENO_RHALIX = 30;
+            PLANT = 26, SHAPE = 27, SKY_MINE = 28, XENO_MIKIKO = 29, XENO_RHALIX = 30, STUNNED = 31;
 
     private Poses() {}
 
