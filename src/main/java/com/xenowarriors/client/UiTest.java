@@ -153,6 +153,7 @@ public final class UiTest {
         if ("chars2".equals(System.getenv("XW_UITEST_FOCUS"))) { chars2(mc, l); return l; }
         if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
+        if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -1987,5 +1988,15 @@ public final class UiTest {
         l.add(new Step("bots2_player_down", () -> {}, 3));
         l.add(new Step(null, () -> {}, 140));
         l.add(new Step("bots2_player_revived", () -> {}, 3));
+    }
+
+    /** DragonMineZ per character: Mikiko keeps his DMZ character; switching to Rhalix (none yet) opens the race picker; back to Mikiko brings his back. */
+    private static void dmzPerCharacter(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); }, 60));
+        l.add(new Step("dmzpc_mikiko", () -> {}, 3));
+        l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.RHALIX); }, 80));
+        l.add(new Step("dmzpc_rhalix_picker", () -> log("dmzpc screen after Rhalix: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())), 3));
+        l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.MIKIKO); }, 80));
+        l.add(new Step("dmzpc_mikiko_back", () -> log("dmzpc screen after Mikiko again: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())), 3));
     }
 }

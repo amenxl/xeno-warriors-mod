@@ -25,6 +25,7 @@ public final class CharacterManager {
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);               // (Kaeru inside a blade would be stuck a spectator)
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             CharacterInventories.switchTo(player, data.key(), data.key(type));   // each character has its own inventory
+            if (type != CharacterType.NONE && com.xenowarriors.compat.DmzPerCharacter.switchTo(player, data.key(), data.key(type))) pickDmzRace(player, type.getDisplayName().getString());   // ...and their own DragonMineZ character
 
             data.switchStats(data.getType(), type);           // every character keeps its own level
             data.setType(type);
@@ -40,6 +41,12 @@ public final class CharacterManager {
         }
     }
 
+    /** A character with no DragonMineZ character yet: pick their Dragon Ball race (a moment later, once they've switched). */
+    private static void pickDmzRace(ServerPlayer player, String name) {
+        player.sendSystemMessage(Component.literal("Pick " + name + "'s Dragon Ball race - every warrior has their own DragonMineZ character.").withStyle(net.minecraft.ChatFormatting.GOLD));
+        com.xenowarriors.skill.ServerScheduler.later(20, () -> { if (player.isAlive()) ModNetwork.sendToPlayer(new com.xenowarriors.network.DmzRacePickPacket(), player); });
+    }
+
     /** Play one of their You characters (slot 0-9; it must exist). */
     public static boolean setYou(ServerPlayer player, int slot) {
         var d = player.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
@@ -47,6 +54,7 @@ public final class CharacterManager {
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);
         String from = d.key();
         CharacterInventories.switchTo(player, from, PlayerCharacter.key(CharacterType.YOU, slot));
+        if (com.xenowarriors.compat.DmzPerCharacter.switchTo(player, from, PlayerCharacter.key(CharacterType.YOU, slot))) pickDmzRace(player, d.youSlots[slot].name);
         d.youSlot = slot;
         d.switchStats(from, d.key(CharacterType.YOU));
         d.setType(CharacterType.YOU);
