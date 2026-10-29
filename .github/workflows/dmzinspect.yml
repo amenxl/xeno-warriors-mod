@@ -1,0 +1,36 @@
+name: Inspect DragonMineZ API (manual)
+
+# Downloads DragonMineZ from Modrinth and publishes only javap signatures of its stats/network classes (not the jar
+# itself: it can't be re-hosted), so the per-character DMZ data swap can be written against the real API.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Inspect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          UA='amenxl/xeno-warriors-mod inspect'
+          url=$(curl -sfL -A "$UA" "https://api.modrinth.com/v2/project/dragonminez/version?loaders=%5B%22forge%22%5D&game_versions=%5B%221.20.1%22%5D" \
+            | python3 -c "import sys,json; v=[x for x in json.load(sys.stdin) if '2.1.3' in x['version_number']] ; v=v or []; print((v[0] if v else None)['files'][0]['url'])")
+          curl -sfL -A "$UA" "$url" -o dmz.jar
+          mkdir out
+          unzip -l dmz.jar | grep -E "common/stats|common/network|StatsCapability|StatsData|Character|Sync|Race|Form" | head -400 > out/dmz_classes.txt
+          for c in $(unzip -l dmz.jar | awk '{print $4}' | grep -E "^com/dragonminez/common/(stats|network)/.*\.class$" | grep -v '\$' | sed 's/\.class$//' | head -120); do
+            echo "=== $c" >> out/dmz_javap.txt
+            javap -cp dmz.jar -p "${c//\//.}" >> out/dmz_javap.txt 2>&1 || true
+          done
+          ls -la out
+          gh release delete dmz-inspect --yes --cleanup-tag -R ${{ github.repository }} || true
+          gh release create dmz-inspect out/* --title "dmz-inspect" --notes "javap signatures of DragonMineZ stats/network classes" --prerelease -R ${{ github.repository }}
