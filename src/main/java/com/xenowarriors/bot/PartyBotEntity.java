@@ -213,8 +213,11 @@ public class PartyBotEntity extends PathfinderMob {
     /** Someone's down (the owner, a party member or another bot): go and stand in their revive circle. */
     class ReviveGoal extends Goal {
         ReviveGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        private int lastLook;
         @Override public boolean canUse() {
-            if (downed() || journey() || tickCount % 10 != 0) return false;
+            // (the goal selector only asks every other tick, on its own clock: a tickCount % 10 test could never line up)
+            if (downed() || journey() || tickCount - lastLook < 5) return false;
+            lastLook = tickCount;
             reviving = PartyBots.someoneDown(PartyBotEntity.this);
             return reviving != null;
         }
@@ -224,8 +227,13 @@ public class PartyBotEntity extends PathfinderMob {
             if (reviving == null) return;
             setTarget(null);
             getLookControl().setLookAt(reviving);
-            if (distanceToSqr(reviving) > 1.6 * 1.6) getNavigation().moveTo(reviving, 1.3);
-            else getNavigation().stop();
+            if (distanceToSqr(reviving) > 1.4 * 1.4) {
+                if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(reviving.getX(), reviving.getY(), reviving.getZ(), 1.35);
+                if (distanceToSqr(reviving) > 24 * 24 || (tickCount % 40 == 0 && getNavigation().isStuck())) {   // too far or stuck: hop over to them
+                    net.minecraft.world.phys.Vec3 at = reviving.position().add(1, 0, 0);
+                    if (level().noCollision(PartyBotEntity.this, getBoundingBox().move(at.subtract(position())))) teleportTo(at.x, at.y, at.z);
+                }
+            } else getNavigation().stop();
         }
     }
 

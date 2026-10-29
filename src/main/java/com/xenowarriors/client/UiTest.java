@@ -1978,5 +1978,14 @@ public final class UiTest {
         l.add(new Step("bots2_revive_circle", () -> {}, 3));
         l.add(new Step(null, () -> {}, 45));
         l.add(new Step("bots2_revived", () -> {}, 3));
+        // you go down: your bots come and stand in your circle to get you up
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) { if (b.downed()) b.revive(); b.moveTo(p.getX() + 7, p.getY(), p.getZ() + 5); }
+            p.hurt(p.damageSources().generic(), 1000F);
+        }), 20));
+        l.add(new Step("bots2_player_down", () -> {}, 3));
+        l.add(new Step(null, () -> {}, 140));
+        l.add(new Step("bots2_player_revived", () -> {}, 3));
     }
 }
