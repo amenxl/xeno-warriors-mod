@@ -35,6 +35,7 @@ public class SrCampFeature extends Feature<NoneFeatureConfiguration> {
 
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+        if (!com.xenowarriors.recarnet.Recarnet.is(ctx.level().getLevel())) return false;   // (Recarnet only: nothing of the show's world is built in the overworld)
         WorldGenLevel l = ctx.level();
         BlockPos o = ctx.origin();
         int cx = (o.getX() & ~15) + 8, cz = (o.getZ() & ~15) + 8;

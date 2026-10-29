@@ -19,7 +19,9 @@ public final class ModEffects {
 
     /** The Aurora virus (Season 2): amplifier = how bad it's got (0-2). */
     public static final RegistryObject<MobEffect> AURORA_VIRUS = EFFECTS.register("aurora_virus",
-            () -> new MobEffect(MobEffectCategory.HARMFUL, 0x6FA8C8) {});
+            () -> new MobEffect(MobEffectCategory.HARMFUL, 0x6FA8C8) {
+                @Override public java.util.List<net.minecraft.world.item.ItemStack> getCurativeItems() { return java.util.List.of(); }   // (milk doesn't cure it - Aurora Medicine does)
+            });
     /** Took Aurora Medicine: can't catch the virus for a while. */
     public static final RegistryObject<MobEffect> VIRUS_IMMUNITY = EFFECTS.register("virus_immunity",
             () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x7FE0D0) {});

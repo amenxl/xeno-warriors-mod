@@ -218,6 +218,9 @@ public final class XenoBlast {
             l.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4F, 0.5F);
             fx(p, FX_BEAM, 0, false, Vec3.ZERO, Vec3.ZERO, (float) width, 70);
             Set<Integer> hit = new HashSet<>();
+            landOnFrozen(p, l, hit, e -> { e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg)); e.setSecondsOnFire(5);
+                e.push(p.getLookAngle().x * 1.8, 0.45, p.getLookAngle().z * 1.8); e.hurtMarked = true;
+                l.sendParticles(ParticleTypes.EXPLOSION, e.getX(), e.getY() + e.getBbHeight() / 2, e.getZ(), 1, 0, 0, 0, 0); });
             for (int k = 0; k < 70; k++) ServerScheduler.later(k, () -> {       // a long, huge beam
                 if (!p.isAlive() || !live(p)) return;
                 Vec3 s = p.getEyePosition().subtract(0, 0.4, 0).add(p.getLookAngle().scale(0.9)), d = p.getLookAngle();
@@ -326,7 +329,11 @@ public final class XenoBlast {
                 l.sendParticles(new DustParticleOptions(ray % 3 == 0 ? pink : purple, 1.3F), q.x, q.y, q.z, 1, 0, 0, 0, 0);
             }
         }
+        Set<Integer> hit = new HashSet<>();
+        landOnFrozen(p, l, hit, e -> { e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg * 0.8F));
+            Vec3 push = e.position().subtract(at).normalize(); e.push(push.x * 1.4, 0.55, push.z * 1.4); e.hurtMarked = true; });
         for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(radius), e -> SkillTargeting.canTarget(p, e))) {
+            if (hit.contains(e.getId())) continue;
             double dist = e.position().add(0, e.getBbHeight() / 2, 0).distanceTo(at);
             if (dist > radius + e.getBbWidth()) continue;
             float f = (float) Math.max(0.45, 1 - dist / (radius * 1.6));
@@ -334,6 +341,15 @@ public final class XenoBlast {
             Vec3 push = e.position().subtract(at).normalize();
             e.push(push.x * 1.4, 0.55, push.z * 1.4);
             e.hurtMarked = true;
+        }
+    }
+
+    /** The blast always lands on whoever the cutscene froze - flying, fallen, or ducked behind something - never a miss. */
+    private static void landOnFrozen(ServerPlayer p, ServerLevel l, Set<Integer> hit, java.util.function.Consumer<LivingEntity> strike) {
+        Cast c = castOf(p);
+        if (c == null) return;
+        for (int id : c.frozen) {
+            if (l.getEntity(id) instanceof LivingEntity e && e.isAlive() && e != p && e.distanceTo(p) <= RANGE + 8 && SkillTargeting.canTarget(p, e) && hit.add(id)) strike.accept(e);
         }
     }
 

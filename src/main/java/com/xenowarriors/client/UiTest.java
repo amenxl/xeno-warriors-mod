@@ -151,6 +151,8 @@ public final class UiTest {
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
         if ("chars2".equals(System.getenv("XW_UITEST_FOCUS"))) { chars2(mc, l); return l; }
+        if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
+        if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -559,6 +561,33 @@ public final class UiTest {
         l.add(new Step("aura_elements", () -> {}, 3));
         for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_elements_%02d", f), () -> {}, 1));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
+    }
+
+    /** The Distortion Field in Recarnet: the purple ground and crystals from the air and up close, with distortions torn open. */
+    private static void distortionBiome(Minecraft mc, List<Step> l) {
+        int x = com.xenowarriors.recarnet.Recarnet.DISTORTION_X, z = com.xenowarriors.recarnet.Recarnet.DISTORTION_Z;
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl != null) { lvl.setDayTime(6000); lvl.getChunk(x >> 4, z >> 4); p.teleportTo(lvl, x + 0.5, 150, z + 0.5, 0F, 90F); }
+        }), 260));
+        l.add(new Step(null, () -> server(p -> {
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl == null) return;
+            var top = lvl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new net.minecraft.core.BlockPos(x, 0, z));
+            p.teleportTo(lvl, x + 0.5, top.getY() + 40, z + 120.5, 180F, 25F);
+        }), 120));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(180F); mc.player.setXRot(25F); }, 20));
+        l.add(new Step("distortion_field_aerial", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> {
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl == null) return;
+            var top = lvl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new net.minecraft.core.BlockPos(x, 0, z));
+            p.teleportTo(lvl, x + 0.5, top.getY() + 2, z + 0.5, 180F, 5F);
+            for (int i = 0; i < 2; i++) com.xenowarriors.s3.Distortions.open(lvl, p, 1 + i);
+        }), 80));
+        l.add(new Step(null, () -> { mc.player.setYRot(180F); mc.player.setXRot(5F); }, 10));
+        l.add(new Step("distortion_field_ground", () -> {}, 5));
     }
 
     /** A tour of the Mountain Village (Pine Cone City) in the Recarnet dimension: from the air, the square, the farm, the school, the dojo, the outskirts. */
@@ -1693,6 +1722,8 @@ public final class UiTest {
         }), 30));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(20F); }, 20));
         l.add(new Step("vehicle_riding_car", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(8F); }, 10));
+        l.add(new Step("vehicle_riding_car_inside", () -> {}, 5));
         l.add(new Step(null, () -> server(p -> { p.stopRiding(); }), 20));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; server(com.xenowarriors.vehicle.Dealer::open); }, 30));
         l.add(new Step("vehicle_dealer", () -> {}, 5));
@@ -1920,5 +1951,28 @@ public final class UiTest {
             l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 10));
             l.add(new Step("chars2_wings_" + t.getId() + "_back", () -> {}, 3));
         }
+    }
+
+    /** Bot teammates: the new pick grid, a bot's menu, one wearing armour, a downed bot's revive circle, and one eating. */
+    private static void bots2(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 40));
+        l.add(new Step(null, () -> server(com.xenowarriors.bot.PartyBots::openPick), 30));
+        l.add(new Step("bots2_pick", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.bot.BotPickScreen s) { s.mouseClicked(mc.getWindow().getGuiScaledWidth() / 2.0 - 100, 80, 0); s.mouseClicked(mc.getWindow().getGuiScaledWidth() / 2.0, 80, 0); } }, 10));
+        l.add(new Step("bots2_pick_selected", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            var r = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
+            var k = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (r != null) { r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_CHESTPLATE)); r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLDEN_HELMET)); }
+            if (k != null) { k.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COOKED_BEEF, 8)); k.setHealth(5F); }
+            p.setYRot(0); p.setXRot(10);
+        }); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 50));
+        l.add(new Step("bots2_armour_eating", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> { for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.character() == CharacterType.RHALIX) com.xenowarriors.bot.PartyBots.interact(b, p); }); }, 20));
+        l.add(new Step("bots2_menu", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.character() == CharacterType.RHALIX) { b.moveTo(p.getX() + 1.2, p.getY(), p.getZ() + 1.2); b.die(p.damageSources().generic()); } }); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 25));
+        l.add(new Step("bots2_revive_circle", () -> {}, 3));
+        l.add(new Step(null, () -> {}, 45));
+        l.add(new Step("bots2_revived", () -> {}, 3));
     }
 }

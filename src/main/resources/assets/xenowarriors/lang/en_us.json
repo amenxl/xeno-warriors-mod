@@ -786,5 +786,7 @@
   "skill.xenowarriors.you_suppress.desc": "Weakens and slows your target for 10 seconds. One day, the start of a capture.",
   "skill.xenowarriors.you_second_wind": "Second Wind",
   "skill.xenowarriors.you_second_wind.short": "SW",
-  "skill.xenowarriors.you_second_wind.desc": "A burst of health and speed - a big one when you're below 40% health."
+  "skill.xenowarriors.you_second_wind.desc": "A burst of health and speed - a big one when you're below 40% health.",
+  "entity.xenowarriors.thrown_hekublade": "Thrown Hekublade",
+  "entity.xenowarriors.team_ult": "Gravity Fox Fire"
 }

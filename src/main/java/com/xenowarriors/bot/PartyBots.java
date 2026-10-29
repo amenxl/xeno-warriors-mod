@@ -101,8 +101,10 @@ public final class PartyBots {
             LEFT_BEHIND.clear();
             for (var e : list) {
                 ServerPlayer o = event.getServer().getPlayerList().getPlayer(e.getKey());
-                if (o != null && bots(o).stream().noneMatch(b -> b.character().getId().equals(e.getValue().getString("char"))))
-                    spawn(o, CharacterType.byId(e.getValue().getString("char")), e.getValue());
+                if (o == null) continue;
+                CharacterType ct = CharacterType.byId(e.getValue().getString("char"));
+                if (!canFollowTo(ct, o.level())) { LEFT_BEHIND.add(e); continue; }          // (waits outside the Hekublade)
+                if (bots(o).stream().noneMatch(b -> b.character() == ct)) spawn(o, ct, e.getValue());
             }
         }
         if (event.getServer().getTickCount() % 10 != 5) return;
@@ -114,7 +116,7 @@ public final class PartyBots {
                 continue;
             }
             list.add(0, new com.xenowarriors.network.PartySyncPacket.Member(p.getUUID(), p.getName().getString(), p.getHealth(), p.getMaxHealth(),
-                    com.xenowarriors.karma.Karma.get(p), com.xenowarriors.karma.Karma.MAX, ModCapabilities.getType(p).ordinal(), false, true,
+                    com.xenowarriors.karma.Karma.get(p), p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.karmaMax).orElse(com.xenowarriors.karma.Karma.MAX), ModCapabilities.getType(p).ordinal(), false, true,
                     p.getX(), p.getY(), p.getZ(), p.level().dimension().location().toString(), false,
                     com.xenowarriors.stats.Stats.characterLevel(p), com.xenowarriors.stats.Stats.progress(p)));
             ModNetwork.sendToPlayer(new com.xenowarriors.network.PartySyncPacket(list), p);
@@ -189,6 +191,14 @@ public final class PartyBots {
         b.setOwner(p.getUUID());
         b.applyLevel(levelFor(p, t));
         if (record != null) b.loadRecord(record);
+        else {                                                                   // a fresh teammate: their own inventory, as you left it
+            CompoundTag saved = com.xenowarriors.character.CharacterInventories.checkOut(p, t.getId());
+            b.inventory.fromTag(com.xenowarriors.character.CharacterInventories.mainItems(saved));
+            ItemStack[] arm = com.xenowarriors.character.CharacterInventories.armour(saved);
+            for (int i = 0; i < 4; i++) b.setItemSlot(com.xenowarriors.character.CharacterInventories.ARMOUR_SLOTS[i], arm[i]);
+            b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, arm[4]);
+            b.getPersistentData().put("xw_inv_kept", saved);
+        }
         teleportNear(b, p);
         b.setYRot(p.getYRot());
         p.serverLevel().addFreshEntity(b);
@@ -229,21 +239,153 @@ public final class PartyBots {
         });
     }
 
+    /** Whether a bot of this character may come along to a dimension (only Kaeru follows Mikiko into the Hekublade). */
+    public static boolean canFollowTo(CharacterType t, net.minecraft.world.level.Level level) {
+        return level.dimension() != com.xenowarriors.mikiko.HekubladeRealm.KEY || t == CharacterType.KAERU;
+    }
+
+    /** A character's things back into its save when a bot leaves. */
+    static void checkIn(PartyBotEntity b, ServerPlayer o) {
+        if (b.journey() || o == null) return;
+        com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), b.inventory.createTag(), b.armour(),
+                b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), b.getPersistentData().getCompound("xw_inv_kept"));
+        b.inventory.clearContent();
+    }
+
+    /** In the air and not on anything: the owner is flying (wings, creative, elytra) or falling a long way. */
+    public static boolean airborne(ServerPlayer o) {
+        if (o.getAbilities().flying || o.isFallFlying()) return true;
+        if (o.onGround() || o.isInWater() || o.isPassenger()) return false;
+        return com.xenowarriors.character.RhalixFlight.heightAboveGround(o) > 3.5;
+    }
+
+    /** Flying along with the owner (bots that can fly): straight towards them, hovering a few blocks off. */
+    static void flyToward(PartyBotEntity b, ServerPlayer o) {
+        b.getNavigation().stop();
+        b.setNoGravity(true);
+        Vec3 goal = o.position().add(-o.getLookAngle().x * 2.5, 0.5, -o.getLookAngle().z * 2.5);
+        Vec3 d = goal.subtract(b.position());
+        double dist = d.length();
+        if (dist > 48) { teleportNear(b, o); b.setNoGravity(true); return; }
+        double speed = dist > 10 ? 0.9 : dist > 4 ? 0.55 : 0.25;
+        Vec3 v = dist < 1.5 ? Vec3.ZERO : d.normalize().scale(speed);
+        b.setDeltaMovement(b.getDeltaMovement().scale(0.5).add(v.scale(0.5)));
+        b.fallDistance = 0;
+        b.getLookControl().setLookAt(o);
+        double yaw = Math.toDegrees(Math.atan2(-d.x, d.z));
+        if (dist > 1.5) { b.setYRot((float) yaw); b.yBodyRot = (float) yaw; }
+    }
+
+    /** The owner's in a vehicle (a mod vehicle or a boat) with a free seat: climb in. */
+    static boolean boardWith(PartyBotEntity b, ServerPlayer o) {
+        Entity v = o.getVehicle();
+        if (v == null || b.isPassenger() || b.distanceToSqr(v) > 5 * 5) return false;
+        if (v instanceof com.xenowarriors.vehicle.VehicleEntity || v instanceof net.minecraft.world.entity.vehicle.Boat) return b.startRiding(v, false);
+        return false;
+    }
+
+    /** Bots get out when their owner does. */
+    static void unboard(PartyBotEntity b, ServerPlayer o) {
+        if (b.isPassenger() && b.getVehicle() != o && o.getVehicle() == null) b.stopRiding();
+    }
+
+    /** A party member who's down (the owner, a party player, or another bot) within 40 blocks, nearest first. */
+    static LivingEntity someoneDown(PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        if (o == null) return null;
+        LivingEntity best = null; double bd = 40 * 40;
+        for (ServerPlayer m : Parties.members(o)) if (m.level() == b.level() && com.xenowarriors.party.Duels.isDowned(m) && m.distanceToSqr(b) < bd) { best = m; bd = m.distanceToSqr(b); }
+        if (!Parties.inParty(o) && o.level() == b.level() && com.xenowarriors.party.Duels.isDowned(o) && o.distanceToSqr(b) < bd) { best = o; bd = o.distanceToSqr(b); }
+        for (ServerPlayer m : Parties.members(o)) for (PartyBotEntity ob : bots(m)) if (ob != b && ob.downed() && ob.level() == b.level() && ob.distanceToSqr(b) < bd) { best = ob; bd = ob.distanceToSqr(b); }
+        return best;
+    }
+
+    public static boolean isDown(LivingEntity e) {
+        return e instanceof PartyBotEntity b ? b.downed() : e instanceof ServerPlayer p && com.xenowarriors.party.Duels.isDowned(p);
+    }
+
+    /** Puts on the best armour in its bag (so you can just hand it armour). */
+    static void wearBestArmour(PartyBotEntity b) {
+        if (b.downed()) return;
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) {
+            ItemStack s = b.inventory.getItem(i);
+            if (!(s.getItem() instanceof net.minecraft.world.item.ArmorItem ai)) continue;
+            ItemStack worn = b.getItemBySlot(ai.getEquipmentSlot());
+            float have = worn.getItem() instanceof net.minecraft.world.item.ArmorItem wa ? wa.getDefense() * 10 + wa.getToughness() : -1F;
+            if (ai.getDefense() * 10 + ai.getToughness() > have) {
+                b.setItemSlot(ai.getEquipmentSlot(), s.copyWithCount(1));
+                s.shrink(1);
+                if (s.isEmpty()) b.inventory.setItem(i, ItemStack.EMPTY);
+                if (!worn.isEmpty()) b.inventory.addItem(worn);
+                b.level().playSound(null, b.blockPosition(), SoundEvents.ARMOR_EQUIP_GENERIC, SoundSource.NEUTRAL, 0.8F, 1F);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- bots on a Journey: put away and brought back
+
+    private static final String STASH = "xw_bots_stash";
+
+    /** A Journey is just you and your partner: bots are put away (with their things) and come back afterwards. */
+    public static void stashAll(ServerPlayer p) {
+        ListTag list = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getList(STASH, 10);
+        for (PartyBotEntity b : bots(p)) {
+            if (b.journey()) continue;
+            if (!b.downed()) list.add(b.record());
+            else checkIn(b, p);
+            FAKES.remove(b.getUUID()); b.discard();
+        }
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        persisted.put(STASH, list);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+    }
+
+    public static void unstash(ServerPlayer p) {
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        ListTag list = persisted.getList(STASH, 10);
+        if (list.isEmpty()) return;
+        persisted.remove(STASH);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+        for (int i = 0; i < list.size(); i++) spawn(p, CharacterType.byId(list.getCompound(i).getString("char")), list.getCompound(i));
+        p.displayClientMessage(Component.literal("Your bot teammates are back.").withStyle(ChatFormatting.AQUA), true);
+    }
+
     public static void teleportNear(PartyBotEntity b, ServerPlayer o) {
         double a = b.getRandom().nextDouble() * Math.PI * 2;
         if (b.level() != o.level()) {
             if (b.journey()) { b.discard(); return; }
+            if (!canFollowTo(b.character(), o.level())) return;                       // (waits outside the Hekublade)
             CompoundTag rec = b.record();
             CharacterType t = b.character();
             b.discard();
             spawn(o, t, rec);
             return;
         }
-        b.moveTo(o.getX() + Math.cos(a) * 2, o.getY(), o.getZ() + Math.sin(a) * 2, b.getYRot(), 0);
-        b.getNavigation().stop();
+        // somewhere to stand near them (never into a block, lava or thin air)
+        for (int i = 0; i < 8; i++) {
+            double ang = a + i * Math.PI / 4, r = 2 + (i % 2);
+            BlockPos at = BlockPos.containing(o.getX() + Math.cos(ang) * r, o.getY(), o.getZ() + Math.sin(ang) * r);
+            for (int dy = 0; dy >= -3; dy--) {
+                BlockPos q = at.offset(0, dy, 0);
+                if (b.level().getBlockState(q).isAir() && b.level().getBlockState(q.above()).isAir() && b.level().getBlockState(q.below()).isSolid()
+                        && !b.level().getBlockState(q.below()).is(net.minecraft.world.level.block.Blocks.LAVA) && !b.level().getBlockState(q.below()).is(net.minecraft.world.level.block.Blocks.MAGMA_BLOCK)) {
+                    b.moveTo(q.getX() + 0.5, q.getY(), q.getZ() + 0.5, b.getYRot(), 0);
+                    b.getNavigation().stop();
+                    b.fallDistance = 0;
+                    return;
+                }
+            }
+        }
+        if (o.onGround()) { b.moveTo(o.getX(), o.getY(), o.getZ(), b.getYRot(), 0); b.getNavigation().stop(); b.fallDistance = 0; }
     }
 
     // ---------------------------------------------------------------- skills (through a stand-in player)
+
+    /** A bot is gone for good: its stand-in FakePlayer goes with it. */
+    public static void forgetFake(UUID bot) {
+        FakePlayer f = FAKES.remove(bot);
+        if (f != null) FAKE_TO_BOT.remove(f.getUUID());
+    }
 
     private static FakePlayer fake(PartyBotEntity b) {
         ServerLevel s = (ServerLevel) b.level();
@@ -262,14 +404,26 @@ public final class PartyBots {
                 int[] lv = od.getType() == b.character() ? od.statLevel : od.charStats.getCompound(b.character().getId()).getIntArray("lv");
                 for (int i = 0; i < 3; i++) d.statLevel[i] = i < lv.length ? lv[i] : 0;
                 d.loadouts = od.loadouts.copy();
+                d.youSlot = od.youSlot;                                  // (a You owner's bots can use their skills)
+                for (int i = 0; i < d.youSlots.length; i++) d.youSlots[i] = od.youSlots[i].copy();
             });
             d.setKarma(100F);
         });
         return ff;
     }
 
+    /** Worth a skill: bosses, players and anything as tough as the bot (weak mobs just get hit). */
+    static boolean strong(PartyBotEntity b, LivingEntity t) {
+        if (t instanceof Player || t instanceof PartyBotEntity) return true;
+        if (t.getPersistentData().getBoolean("xw_boss") || t.getPersistentData().getBoolean("xw_miniboss") || t.getTags().contains("xw_miniboss")
+                || t instanceof com.xenowarriors.corrupted.CSoulBossEntity || t.getType().getCategory() == net.minecraft.world.entity.MobCategory.MISC && t.getMaxHealth() > 100) return true;
+        if (t.getMaxHealth() >= b.getMaxHealth() * 0.6F) return true;
+        return com.xenowarriors.karma.KarmaLevel.of(t) >= com.xenowarriors.karma.KarmaLevel.of(b) * 0.6;
+    }
+
     static void trySkill(PartyBotEntity b, LivingEntity target) {
         if (b.sparring() && b.getRandom().nextInt(3) != 0) return;
+        if (!b.sparring() && !strong(b, target)) return;                         // save the Karma for enemies that matter
         double dist = b.distanceTo(target);
         if (dist > 20) return;
         long now = b.level().getGameTime();
@@ -356,7 +510,7 @@ public final class PartyBots {
 
     static void downed(PartyBotEntity b) {
         ServerPlayer o = b.owner();
-        if (o != null) o.displayClientMessage(Component.literal("").append(b.label()).append(" is down! Sneak + right-click to revive (30s)").withStyle(ChatFormatting.RED), false);
+        if (o != null) o.displayClientMessage(Component.literal("").append(b.label()).append(" is down! Stand in their circle for 2 seconds to revive them (30s)").withStyle(ChatFormatting.RED), false);
         b.level().playSound(null, b.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, 1F, 0.6F);
     }
 
@@ -365,7 +519,8 @@ public final class PartyBots {
         if (o != null) {
             o.getPersistentData().putLong(REJOIN + b.character().getId(), o.level().getGameTime() + REJOIN_COOLDOWN);
             o.displayClientMessage(Component.literal("").append(b.label()).append(" wasn't revived and left the party to recover (5 min).").withStyle(ChatFormatting.GRAY), false);
-            for (int i = 0; i < b.inventory.getContainerSize(); i++) Block.popResource(b.level(), b.blockPosition(), b.inventory.removeItemNoUpdate(i));
+            if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) Block.popResource(b.level(), b.blockPosition(), b.inventory.removeItemNoUpdate(i));
+            else checkIn(b, o);                                                   // (their things wait in their own save)
         }
         b.discard();
     }
@@ -396,20 +551,14 @@ public final class PartyBots {
 
     // ---------------------------------------------------------------- right-click menu actions
 
-    static void interact(PartyBotEntity b, ServerPlayer p) {
+    public static void interact(PartyBotEntity b, ServerPlayer p) {
         if (b.journey()) return;
         if (!p.getUUID().equals(b.ownerId()) && !(b.ownerId() != null && Parties.sameParty(p.getUUID(), b.ownerId()))) return;
         if (b.downed()) {
-            if (p.isShiftKeyDown()) { b.revive(); p.displayClientMessage(Component.literal("").append(b.label()).append(" is back up!").withStyle(ChatFormatting.GREEN), true); }
-            else p.displayClientMessage(Component.literal("Sneak + right-click to revive").withStyle(ChatFormatting.GRAY), true);
+            p.displayClientMessage(Component.literal("Stand in the circle for 2 seconds to revive them").withStyle(ChatFormatting.GRAY), true);
             return;
         }
         if (!p.getUUID().equals(b.ownerId())) return;
-        if (p.isShiftKeyDown() && com.xenowarriors.character.RhalixWings.out(p) && ModCapabilities.getType(p) == CharacterType.RHALIX) {   // Rhalix picks them up
-            b.startRiding(p, true);
-            p.displayClientMessage(Component.literal("Carrying ").append(b.label()).append(" - land to set them down").withStyle(ChatFormatting.LIGHT_PURPLE), true);
-            return;
-        }
         List<String> names = new ArrayList<>(); List<Integer> ids = new ArrayList<>();
         for (LivingEntity pet : petsFor(p, b.character())) { names.add(pet.getDisplayName().getString()); ids.add(pet.getId()); }
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotMenuPacket(b.getId(), b.character().getId(), b.mode(), b.botLevel(), b.canFly(),
@@ -430,13 +579,18 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7;
 
     public static void action(ServerPlayer p, int botId, int action, int arg) {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
         if (b.journey()) { p.displayClientMessage(Component.literal("Journey teammates just fight - no menu in battle").withStyle(ChatFormatting.GRAY), true); return; }
         switch (action) {
-            case ACT_INVENTORY -> net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> ChestMenu.threeRows(id, inv, b.inventory), b.label()));
+            case ACT_INVENTORY -> net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> new ChestMenu(net.minecraft.world.inventory.MenuType.GENERIC_9x4, id, inv, b.inventory, 4), b.label()));
+            case ACT_CARRY -> {                                                   // Rhalix picks them up and flies them
+                if (!com.xenowarriors.character.RhalixWings.out(p) || !com.xenowarriors.character.RhalixFlight.winged(p)) { p.displayClientMessage(Component.literal("You need your wings out to carry someone").withStyle(ChatFormatting.GRAY), true); return; }
+                b.startRiding(p, true);
+                p.displayClientMessage(Component.literal("Carrying ").append(b.label()).append(" - land to set them down").withStyle(ChatFormatting.LIGHT_PURPLE), true);
+            }
             case ACT_SUMMON_PET -> {
                 if (p.serverLevel().getEntity(arg) instanceof net.minecraft.world.entity.Mob pet && Parties.petOwner(pet) != null && Parties.petOwner(pet).equals(p.getUUID())) {
                     com.xenowarriors.wing.WingPets.teleportNear(pet, b);
@@ -458,9 +612,9 @@ public final class PartyBots {
                 p.displayClientMessage(Component.literal("").append(b.label()).append(": " + PartyBotEntity.MODES[b.mode()] + " mode").withStyle(ChatFormatting.AQUA), true);
             }
             case ACT_DISMISS -> {
-                for (int i = 0; i < b.inventory.getContainerSize(); i++) { ItemStack it = b.inventory.removeItemNoUpdate(i); if (!it.isEmpty() && !p.getInventory().add(it)) p.drop(it, false); }
+                checkIn(b, p);
                 b.discard();
-                p.displayClientMessage(Component.literal("").append(b.label()).append(" left the party (their bag went to you).").withStyle(ChatFormatting.GRAY), true);
+                p.displayClientMessage(Component.literal("").append(b.label()).append(" left the party (their things are kept for when you play them).").withStyle(ChatFormatting.GRAY), true);
             }
             case ACT_MENU -> interact(b, p);
             default -> {}
@@ -525,6 +679,7 @@ public final class PartyBots {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p instanceof FakePlayer) return;
+        if (p.tickCount % 10 == 0) for (PartyBotEntity b : bots(p)) unboard(b, p);
         // carried bots step down once Rhalix lands
         if (p.tickCount % 20 == 0 && p.onGround()) for (Entity pass : p.getPassengers()) if (pass instanceof PartyBotEntity b) {
             int t = b.getPersistentData().getInt("xw_landed") + 1;
@@ -552,6 +707,7 @@ public final class PartyBots {
         for (PartyBotEntity b : bots(p)) {
             if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) { ItemStack it = b.inventory.removeItemNoUpdate(i); p.getInventory().add(it); if (!it.isEmpty()) p.drop(it, false); }
             else if (!b.downed()) list.add(b.record());
+            else checkIn(b, p);
             FAKES.remove(b.getUUID()); b.discard();
         }
         p.getPersistentData().put(RECORDS, list);
@@ -568,7 +724,13 @@ public final class PartyBots {
     @SubscribeEvent
     public static void onChangeDim(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
-        for (PartyBotEntity b : bots(p)) { if (b.journey()) b.discard(); else teleportNear(b, p); }   // (Journey teammates stay with the journey)
+        for (PartyBotEntity b : bots(p)) { if (b.journey()) b.discard(); else if (canFollowTo(b.character(), p.level())) teleportNear(b, p); }   // (Journey teammates stay; only Kaeru goes into the Hekublade)
+        if (p.level().dimension() != com.xenowarriors.mikiko.HekubladeRealm.KEY) {   // back from the blade: the ones who waited come over
+            List<Map.Entry<UUID, CompoundTag>> waiting = new ArrayList<>();
+            for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) waiting.add(e);
+            LEFT_BEHIND.removeAll(waiting);
+            for (var e : waiting) if (bots(p).stream().noneMatch(b -> b.character().getId().equals(e.getValue().getString("char")))) spawn(p, CharacterType.byId(e.getValue().getString("char")), e.getValue());
+        }
     }
 
     /** Boss drops are split between the party members who were there. */

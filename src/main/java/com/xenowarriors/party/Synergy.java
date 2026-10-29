@@ -189,9 +189,9 @@ public final class Synergy {
         if (event.getEntity() instanceof ServerPlayer v && has(v, SOUL_LINK)) event.setAmount(event.getAmount() * 0.85F);
     }
 
-    @SubscribeEvent(priority = EventPriority.LOW)
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onDeath(LivingDeathEvent event) {
-        if (event.isCanceled()) return;
+        if (event.isCanceled()) return;                         // (after the Hekublade seal and the modes have had their say)
         // a rival's kill fires the other one up
         if (event.getSource().getEntity() instanceof ServerPlayer killer && has(killer, GOOFY) && !(event.getEntity() instanceof ServerPlayer)) {
             for (LivingEntity e : partners(killer)) {
@@ -211,6 +211,14 @@ public final class Synergy {
             boolean link = (t == CharacterType.MIKIKO && ot == CharacterType.KAERU && linked(o, dead))
                     || (t == CharacterType.KAERU && ot == CharacterType.MIKIKO && linked(dead, o));
             if (!link) continue;
+            // a tick later, once every death handler is done: if the death was taken back (sealed, downed), nothing happens
+            com.xenowarriors.skill.ServerScheduler.later(1, () -> { if (dead.isDeadOrDying() || !dead.isAlive()) sever(dead, o); });
+        }
+    }
+
+    private static void sever(ServerPlayer dead, ServerPlayer o) {
+        if (!o.isAlive() || DYING.contains(o.getUUID())) return;
+        {
             DYING.add(o.getUUID());
             try {
                 if (KaeruSoul.state(o) != KaeruSoul.OUT) KaeruSoul.forceOut(o);

@@ -28,6 +28,8 @@ public final class BladeAbsorb {
         if (victim instanceof Player || !(source.getEntity() instanceof ServerPlayer p)) return null;
         if (ModCapabilities.getType(p) != CharacterType.MIKIKO || p.level() != victim.level()) return null;
         if (com.xenowarriors.fox.FoxPets.isOwnedBy(victim, p)) return null;
+        if (com.xenowarriors.vr.Vr.inVr(victim) || com.xenowarriors.tower.Tower.is(victim.level()) || victim instanceof com.xenowarriors.soul.SoulEntity
+                || victim.getPersistentData().getBoolean("xw_journey") || victim.getTags().contains("xw_journey")) return null;   // (nothing from the modes is real)
         return p;
     }
 

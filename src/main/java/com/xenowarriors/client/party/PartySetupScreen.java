@@ -116,9 +116,9 @@ public class PartySetupScreen extends Screen {
     /** What to draw for a card: the real entity if it's loaded here, otherwise a stand-in of their character. */
     private LivingEntity body(int i, PartyCardsPacket.Card c) {
         if (minecraft.level == null) return null;
-        Entity e = minecraft.level.getEntity(c.entityId());
-        if (c.mine() && !c.bot()) return minecraft.player;
-        if (e instanceof LivingEntity l && e.getUUID().equals(c.id())) return l;
+        CharacterType ct = CharacterType.values()[Mth.clamp(c.type(), 0, CharacterType.values().length - 1)];
+        if (c.mine() && !c.bot() && ct == CharacterType.YOU) return minecraft.player;     // (a You character: only you have that skin)
+        // otherwise always a stand-in, even for yourself: real players keep their world facing and can show their back
         PartyBotEntity s = stand_ins.computeIfAbsent(i, k -> com.xenowarriors.bot.BotEntities.BOT.get().create(minecraft.level));
         if (s != null) s.setCharacter(CharacterType.values()[Mth.clamp(c.type(), 0, CharacterType.values().length - 1)]);
         return s;

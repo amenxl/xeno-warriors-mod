@@ -145,7 +145,7 @@ public final class ClientEvents {
 
     private static void limitRhalixFlight(Minecraft mc) {
         var p = mc.player;
-        if (p == null || !p.getAbilities().flying || !com.xenowarriors.character.RhalixFlight.canFly(p)
+        if (p == null || !p.getAbilities().flying || !ClientCharacterData.winged(p) || p.isCreative() || p.isSpectator()
                 || UltimateCutscene.active()) {
             warnedCeiling = false;
             return;

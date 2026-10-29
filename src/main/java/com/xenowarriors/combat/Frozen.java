@@ -27,9 +27,14 @@ public final class Frozen {
     public static void freeze(LivingEntity e, int ticks) {
         HELD.put(e.getId(), new Hold(e.position(), e.level().getGameTime() + ticks));
         if (e instanceof Mob m) { m.getNavigation().stop(); m.setTarget(null); }
+        if (!e.onGround() && !(e instanceof ServerPlayer) && !e.isNoGravity()) { e.setNoGravity(true); e.getPersistentData().putBoolean("xw_frozen_nograv", true); }   // (held in the air: the blast lands on flyers too)
     }
 
-    public static void release(LivingEntity e) { HELD.remove(e.getId()); }
+    public static void release(LivingEntity e) { HELD.remove(e.getId()); unhold(e); }
+
+    private static void unhold(LivingEntity e) {
+        if (e.getPersistentData().getBoolean("xw_frozen_nograv")) { e.setNoGravity(false); e.getPersistentData().remove("xw_frozen_nograv"); }
+    }
 
     public static boolean is(LivingEntity e) {
         Hold h = HELD.get(e.getId());
@@ -42,14 +47,15 @@ public final class Frozen {
         if (e.level().isClientSide) return;
         Hold h = HELD.get(e.getId());
         if (h == null) return;
-        if (h.until <= e.level().getGameTime() || !e.isAlive()) { HELD.remove(e.getId()); return; }
+        if (h.until <= e.level().getGameTime() || !e.isAlive()) { HELD.remove(e.getId()); unhold(e); return; }
         Vec3 v = e.getDeltaMovement();
-        e.setDeltaMovement(0, Math.min(0, v.y), 0);
+        boolean air = e.getPersistentData().getBoolean("xw_frozen_nograv");
+        e.setDeltaMovement(0, air ? 0 : Math.min(0, v.y), 0);
         e.setSprinting(false);
         if (e instanceof Mob m) {
             m.getNavigation().stop();
             m.setTarget(null);
-            if (e.position().distanceToSqr(h.pos) > 0.01) e.setPos(h.pos.x, e.getY(), h.pos.z);
+            if (e.position().distanceToSqr(h.pos) > 0.01) e.setPos(h.pos.x, air ? h.pos.y : e.getY(), h.pos.z);
         } else if (e instanceof ServerPlayer p && p.position().distanceToSqr(h.pos) > 0.25) {
             p.connection.teleport(h.pos.x, p.getY(), h.pos.z, p.getYRot(), p.getXRot());
         }

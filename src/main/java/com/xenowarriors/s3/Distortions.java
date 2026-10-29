@@ -30,14 +30,18 @@ public final class Distortions {
 
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || (p.tickCount + p.getId() * 37) % 1200 != 0) return;
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || (p.tickCount + p.getId() * 37) % 300 != 0) return;
         ServerLevel s = p.serverLevel();
-        if (s.dimension() != Level.OVERWORLD || !Seasons.unlocked(s.getServer(), 3) || p.isSpectator()) return;
+        boolean field = com.xenowarriors.recarnet.Recarnet.inDistortionField(s, p.blockPosition());
+        if (!field && (p.tickCount + p.getId() * 37) % 1200 != 0) return;
+        if ((s.dimension() != Level.OVERWORLD && !com.xenowarriors.recarnet.Recarnet.is(s)) || !Seasons.unlocked(s.getServer(), 3) || p.isSpectator()) return;
         int pw = power(p);
-        float chance = 0.025F + 0.05F * Math.min(1F, pw / 50F);
+        // the Distortion Field: one tears open most of the time you look around, and up to three can be about
+        float chance = field ? 0.55F : 0.025F + 0.05F * Math.min(1F, pw / 50F);
         if (p.getRandom().nextFloat() > chance) return;
-        if (!s.getEntitiesOfClass(DistortionEntity.class, p.getBoundingBox().inflate(160)).isEmpty()) return;
-        int size = 1 + (pw > 20 ? 1 : 0) + (pw > 45 && p.getRandom().nextBoolean() ? 1 : 0);
+        var near = s.getEntitiesOfClass(DistortionEntity.class, p.getBoundingBox().inflate(field ? 64 : 160));
+        if (near.size() >= (field ? 3 : 1)) return;
+        int size = 1 + (pw > 20 || (field && p.getRandom().nextInt(3) == 0) ? 1 : 0) + ((pw > 45 || field) && p.getRandom().nextInt(field ? 4 : 2) == 0 ? 1 : 0);
         open(s, p, size);
     }
 

@@ -109,7 +109,7 @@ public final class KarmaSensing {
         practice(player);
         int uses = uses(player);
         scan(player, radius(uses), duration(uses), friendly, true);
-        HOLDING.put(player.getUUID(), new Object[]{player.tickCount, friendly});
+        HOLDING.put(player.getUUID(), new Object[]{(int) player.level().getGameTime(), friendly});
         ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.KarmaFocusPacket(player.getId(), true), player);
     }
 
@@ -126,8 +126,8 @@ public final class KarmaSensing {
         Object[] h = HOLDING.get(p.getUUID());
         if (h == null) return;
         if (!p.isAlive() || p.isSpectator()) { release(p); return; }
-        int held = p.tickCount - (Integer) h[0];
-        if (held <= 0) return;
+        int held = (int) p.level().getGameTime() - (Integer) h[0];
+        if (held <= 0) { if (held < -5) release(p); return; }
         if (held % 10 == 0) {
             if (!Karma.trySpend(p, HOLD_DRAIN / 2F)) {
                 p.displayClientMessage(Component.literal("Out of focus...").withStyle(net.minecraft.ChatFormatting.GRAY), true);

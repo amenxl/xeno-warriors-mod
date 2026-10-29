@@ -6,6 +6,7 @@ import com.xenowarriors.network.ModNetwork;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
@@ -68,9 +69,8 @@ public final class Duels {
 
     // ---- downed (in a party, beaten by something other than a battle): 30 s for a party member to revive you
     /** Downed lasts until someone revives you (this just keeps the effects/client state on); alone = whole party down. */
-    private static final int DOWNED_TICKS = 1_000_000, ALONE_TICKS = 10 * 20, REVIVE_TICKS = 60;
+    private static final int DOWNED_TICKS = 1_000_000, ALONE_TICKS = 10 * 20, REVIVE_TICKS = ReviveCircle.TICKS;
     private static final Map<UUID, net.minecraft.world.phys.Vec3> DOWNED_AT = new HashMap<>();
-    private static final float REVIVE_KARMA = 50F;
     private static final Map<UUID, Integer> DOWNED = new HashMap<>();
     private static final Map<UUID, Integer> REVIVING = new HashMap<>();    // downed player -> revive progress
 
@@ -92,6 +92,11 @@ public final class Duels {
     /** Knocked out in a battle, or downed waiting for a revive. */
     public static boolean isKnockedOut(Player p) {
         return KNOCKED.containsKey(p.getUUID()) || DOWNED.containsKey(p.getUUID());
+    }
+
+    /** A party, or bot teammates of their own: someone who could revive them. */
+    public static boolean hasTeam(ServerPlayer p) {
+        return Parties.inParty(p) || !com.xenowarriors.bot.PartyBots.bots(p).isEmpty();
     }
 
     public static boolean isDowned(Player p) {
@@ -127,12 +132,11 @@ public final class Duels {
         p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 1F, 0.6F);
         ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), DOWNED_TICKS), p);
         title(p, "DOWNED", ChatFormatting.RED, "Wait for a party member to revive you");
-        p.sendSystemMessage(msg("You're down until a party member revives you. Type /xeno giveup to respawn instead."));
+        p.sendSystemMessage(msg("You're down until a teammate stands in your circle for 2 seconds. Type /xeno giveup to respawn instead."));
         if (p.getServer() != null) {
             for (ServerPlayer other : p.getServer().getPlayerList().getPlayers()) {
                 if (other != p && Parties.sameParty(p, other)) {
-                    other.sendSystemMessage(msg(p.getName().getString() + " is down! Crouch next to them to revive (costs "
-                            + Math.round(REVIVE_KARMA) + " Karma)."));
+                    other.sendSystemMessage(msg(p.getName().getString() + " is down! Stand in their circle for 2 seconds to revive them."));
                 }
             }
         }
@@ -141,7 +145,7 @@ public final class Duels {
     /** Kaeru's Fox Heal: revives a downed teammate straight away. */
     public static void foxRevive(ServerPlayer p, ServerPlayer by) { if (DOWNED.containsKey(p.getUUID())) revive(p, by); }
 
-    private static void revive(ServerPlayer p, ServerPlayer by) {
+    private static void revive(ServerPlayer p, LivingEntity by) {
         DOWNED.remove(p.getUUID());
         DOWNED_AT.remove(p.getUUID());
         REVIVING.remove(p.getUUID());
@@ -151,8 +155,8 @@ public final class Duels {
         p.serverLevel().sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1, p.getZ(), 30, 0.4, 0.6, 0.4, 0.2);
         p.level().playSound(null, p.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.6F, 1.4F);
         ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
-        title(p, "REVIVED", ChatFormatting.GREEN, "by " + by.getName().getString());
-        by.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
+        title(p, "REVIVED", ChatFormatting.GREEN, "by " + ReviveCircle.name(by));
+        if (by instanceof ServerPlayer bp) bp.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
     }
 
     /** Ran out of time (or gave up): they die for real. */
@@ -317,15 +321,16 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDamage(LivingDamageEvent event) {
         if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p) || event.getAmount() < p.getHealth()) return;
-        if (com.xenowarriors.journey.Journey.inRun(p)) return;          // (Journey mode: the next character tags in instead)
+        if (com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;   // (the modes handle their own deaths)
+        if (event.getSource().getEntity() instanceof ServerPlayer k && com.xenowarriors.character.ModCapabilities.getType(k) == com.xenowarriors.character.CharacterType.MIKIKO && k != p) return;   // (a Mikiko's kill: the blade seals them)
         Duel d = ACTIVE.get(p.getUUID());
         if (d != null && d.fighting()) {
             event.setCanceled(true);
             knockOut(p);
             return;
         }
-        // in a party: go down instead of dying, so someone can revive you
-        if (Parties.inParty(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()) {
+        // in a party (or with bot teammates): go down instead of dying, so someone can revive you
+        if (hasTeam(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()) {
             event.setCanceled(true);
             down(p);
         }
@@ -334,11 +339,11 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
-        if (com.xenowarriors.journey.Journey.inRun(p)) return;          // (Journey mode handles its own knock-outs: no reviving)
+        if (com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;   // (the modes handle their own knock-outs)
         if (ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
             event.setCanceled(true);
             knockOut(p);
-        } else if (Parties.inParty(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p)) {
+        } else if (hasTeam(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p)) {
             event.setCanceled(true);
             down(p);
         }
@@ -380,7 +385,6 @@ public final class Duels {
                 end(server, d, a == null ? d.b : d.a, "The other player left.");
                 continue;
             }
-            d.ticks++;
             if (d.ticks <= COUNTDOWN && (COUNTDOWN - d.ticks) % 20 == 0) {
                 int n = (COUNTDOWN - d.ticks) / 20;
                 for (ServerPlayer s : new ServerPlayer[]{a, b}) {
@@ -393,6 +397,7 @@ public final class Duels {
                     }
                 }
             }
+            d.ticks++;
             if (a.level() != b.level() || a.distanceTo(b) > MAX_DISTANCE) {
                 end(server, d, null, "You moved too far apart.");
             } else if (d.ticks > MAX_TICKS + COUNTDOWN) {
@@ -404,7 +409,7 @@ public final class Duels {
     /** Downed players' timers, party members reviving them, and mobs leaving them alone. */
     private static void tickDowned(MinecraftServer server) {
         java.util.List<ServerPlayer> dying = new java.util.ArrayList<>();
-        java.util.List<ServerPlayer[]> revived = new java.util.ArrayList<>();
+        java.util.List<LivingEntity[]> revived = new java.util.ArrayList<>();
         for (var e : DOWNED.entrySet()) {
             ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
             if (p == null) continue;
@@ -419,37 +424,22 @@ public final class Duels {
             boolean someone = false;
             for (ServerPlayer other : server.getPlayerList().getPlayers())
                 if (other != p && other.isAlive() && !isKnockedOut(other) && Parties.sameParty(p, other)) { someone = true; break; }
+            if (!someone) for (ServerPlayer m : Parties.members(p)) for (var b : com.xenowarriors.bot.PartyBots.bots(m)) if (!b.downed() && !b.journey()) { someone = true; break; }
             int left = someone ? ALONE_TICKS : e.getValue() - 1;
             e.setValue(left);
             if (left <= 0) {
                 dying.add(p);
                 continue;
             }
-            // a party member crouching right next to them fills the revive bar
-            ServerPlayer helper = null;
-            for (ServerPlayer other : server.getPlayerList().getPlayers()) {
-                if (other != p && other.isAlive() && !isKnockedOut(other) && other.level() == p.level() && other.isShiftKeyDown()
-                        && other.distanceTo(p) < 2.6 && Parties.sameParty(p, other)) {
-                    helper = other;
-                    break;
-                }
-            }
+            // a teammate (player or bot) standing in their circle fills the revive bar
+            LivingEntity helper = ReviveCircle.helperFor(p);
             int progress = helper == null ? 0 : REVIVING.getOrDefault(p.getUUID(), 0) + 1;
-            if (helper != null && progress == 1 && !com.xenowarriors.karma.Karma.has(helper, REVIVE_KARMA)) {
-                helper.displayClientMessage(msg("You need " + Math.round(REVIVE_KARMA) + " Karma to revive someone."), true);
-                progress = 0;
-            }
             REVIVING.put(p.getUUID(), progress);
+            if (p.tickCount % 3 == 0) ReviveCircle.draw(p.serverLevel(), p.position(), progress);
             if (helper != null && progress > 0) {
-                if (progress % 5 == 0) {
-                    int bars = Math.round(progress / (float) REVIVE_TICKS * 10);
-                    helper.displayClientMessage(msg("Reviving " + p.getName().getString() + "  ")
-                            .append(Component.literal("\u25AE".repeat(bars)).withStyle(ChatFormatting.GREEN))
-                            .append(Component.literal("\u25AF".repeat(10 - bars)).withStyle(ChatFormatting.DARK_GRAY)), true);
-                    p.serverLevel().sendParticles(ParticleTypes.HEART, p.getX(), p.getY() + 0.4, p.getZ(), 1, 0.3, 0.1, 0.3, 0);
-                }
-                if (progress >= REVIVE_TICKS && com.xenowarriors.karma.Karma.trySpend(helper, REVIVE_KARMA)) {
-                    revived.add(new ServerPlayer[]{p, helper});
+                ReviveCircle.show(helper, p, progress);
+                if (progress >= REVIVE_TICKS) {
+                    revived.add(new LivingEntity[]{p, helper});
                     continue;
                 }
             }
@@ -463,7 +453,7 @@ public final class Duels {
                 }
             }
         }
-        for (ServerPlayer[] r : revived) revive(r[0], r[1]);
+        for (LivingEntity[] r : revived) revive((ServerPlayer) r[0], r[1]);
         for (ServerPlayer p : dying) {
             p.sendSystemMessage(msg("Nobody was left to revive you..."));
             bleedOut(p);

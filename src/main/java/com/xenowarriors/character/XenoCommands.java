@@ -314,6 +314,16 @@ public final class XenoCommands {
             rec.getChunk(at.getX() >> 4, at.getZ() >> 4);
             p.teleportTo(rec, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180F, 0F);
             return 1;
+        })).then(Commands.literal("field").executes(ctx -> {              // the Distortion Field
+            ServerPlayer p = ctx.getSource().getPlayerOrException();
+            var rec = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (rec == null) return 0;
+            int x = com.xenowarriors.recarnet.Recarnet.DISTORTION_X, z = com.xenowarriors.recarnet.Recarnet.DISTORTION_Z;
+            rec.getChunk(x >> 4, z >> 4);
+            var at = rec.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new net.minecraft.core.BlockPos(x, 0, z));
+            p.teleportTo(rec, at.getX() + 0.5, at.getY() + 1, at.getZ() + 0.5, 0F, 0F);
+            ctx.getSource().sendSuccess(() -> Component.literal("The Distortion Field").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE), false);
+            return 1;
         })));
         root.then(Commands.literal("distortion").requires(src -> src.hasPermission(2))
                 .then(Commands.argument("size", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {

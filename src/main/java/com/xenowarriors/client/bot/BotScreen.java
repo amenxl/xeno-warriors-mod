@@ -49,9 +49,11 @@ public class BotScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal("Pets (" + m.petNames().length + ")"), b -> { showPets = true; rebuildWidgets(); }).bounds(x, y + 22, bw, 20).build());
         Button fly = addRenderableWidget(Button.builder(Component.literal("Fly me"), b -> { send(PartyBots.ACT_FLY, 0); onClose(); }).bounds(x, y + 44, bw, 20).build());
         fly.active = m.canFly();
-        addRenderableWidget(Button.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 66, bw, 20).build());
-        addRenderableWidget(Button.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 88, bw, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, y + 120, bw, 20).build());
+        Button carry = addRenderableWidget(Button.builder(Component.literal("Carry them (fly)"), b -> { send(PartyBots.ACT_CARRY, 0); onClose(); }).bounds(x, y + 66, bw, 20).build());
+        carry.active = minecraft.player != null && com.xenowarriors.client.ClientCharacterData.winged(minecraft.player);
+        addRenderableWidget(Button.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 88, bw, 20).build());
+        addRenderableWidget(Button.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, y + 140, bw, 20).build());
     }
 
     private Component modeLabel() { return Component.literal("Mode: " + PartyBotEntity.MODES[mode]); }
@@ -71,7 +73,12 @@ public class BotScreen extends Screen {
             case PartyBotEntity.AGGRESSIVE -> "Attacks any hostile mob near you";
             default -> type == CharacterType.ULTIMA ? "Data Sense: finds and mines ore" : "Karma Sense: finds and mines ore";
         };
-        if (!showPets) g.drawString(font, hint, x + 96, y + 30 + 110, 0x8899AA, false);
+        if (!showPets) {
+            g.pose().pushPose(); g.pose().translate(x + 8, y + H - 12, 0); g.pose().scale(0.7F, 0.7F, 1F);
+            g.drawString(font, hint, 0, 0, 0x8899AA, false); g.pose().popPose();
+            g.pose().pushPose(); g.pose().translate(x + 8, y + 28, 0); g.pose().scale(0.7F, 0.7F, 1F);
+            g.drawString(font, "Sneak + right-click with armour to dress them", 0, 0, 0x8899AA, false); g.pose().popPose();
+        }
         super.render(g, mx, my, pt);
     }
 

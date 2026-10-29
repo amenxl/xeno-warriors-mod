@@ -53,6 +53,7 @@ public final class HekubladeRealm {
     public static final float BREAKOUT_CHANCE = 0.0001F;
     public static final int BREAKOUT_INTERVAL = 5 * 60 * 20;
     private static final java.util.Map<UUID, Long> LAST_PLEA = new java.util.HashMap<>();
+    public static void forget(UUID id) { LAST_PLEA.remove(id); }
     private static final String SEALED_TAG = "xw_sealed", SEALED_ID = "xw_sealed_id";
 
     private HekubladeRealm() {}

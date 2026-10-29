@@ -2,14 +2,15 @@ package com.xenowarriors.stats;
 
 /**
  * Stats that grow by doing things - no skill tree.
- *  SPEED   - levels up by sprinting; each level makes you 1% faster
- *  ATTACK  - levels up by dealing damage; each level is +2% damage (melee and skills)
- *  DEFENSE - levels up by taking hits from enemies; each level is -1% damage taken
+ *  SPEED   - levels up by sprinting; each level makes you 1.5% faster
+ *  ATTACK  - levels up by dealing damage; each level is +6% damage (melee and skills)
+ *  DEFENSE - levels up by taking hits from enemies; each level is -2% damage taken
+ * Levels matter a lot (the user's call): a level-50 warrior hits four times as hard as a level-1 one.
  */
 public enum Stat {
-    SPEED(60F, 30F, 0.01F),      // xp = blocks sprinted
-    ATTACK(20F, 10F, 0.02F),     // xp = damage dealt
-    DEFENSE(15F, 8F, 0.01F);     // xp = damage taken from enemies
+    SPEED(60F, 30F, 0.015F),     // xp = blocks sprinted
+    ATTACK(20F, 10F, 0.06F),     // xp = damage dealt
+    DEFENSE(15F, 8F, 0.02F);     // xp = damage taken from enemies
 
     /** Every stat and skill goes to 30,000; with Speed, Attack and Defense all maxed you're Character Level 88,888. */
     public static final int MAX_LEVEL = 30000;
@@ -29,9 +30,9 @@ public enum Stat {
     public float bonus(int level) {
         float b = effective(level) * bonusPerLevel;
         return switch (this) {
-            case SPEED -> Math.min(1.5F, b);       // up to +150% speed
-            case ATTACK -> Math.min(5F, b);        // up to +500% damage
-            case DEFENSE -> Math.min(0.75F, b);    // up to 75% less damage taken
+            case SPEED -> Math.min(2F, b);         // up to +200% speed
+            case ATTACK -> Math.min(15F, b);       // up to +1500% damage
+            case DEFENSE -> Math.min(0.9F, b);     // up to 90% less damage taken
         };
     }
 

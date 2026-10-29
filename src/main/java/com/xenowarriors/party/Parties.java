@@ -157,6 +157,10 @@ public final class Parties {
             p.sendSystemMessage(msg("Ai-oni and Rhalix can never be in the same party."));
             return;
         }
+        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > MAX_SIZE) {   // (checked first: a full party leaves both sides as they were)
+            p.sendSystemMessage(msg("That party is full (players and bots count)."));
+            return;
+        }
         leave(p, false);
         Party party = BY_PLAYER.get(from.getUUID());
         if (party == null) {
@@ -164,10 +168,6 @@ public final class Parties {
             party.leader = from.getUUID();
             party.members.add(from.getUUID());
             BY_PLAYER.put(from.getUUID(), party);
-        }
-        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > MAX_SIZE) {
-            p.sendSystemMessage(msg("That party is full (players and bots count)."));
-            return;
         }
         party.members.add(p.getUUID());
         BY_PLAYER.put(p.getUUID(), party);
@@ -247,7 +247,7 @@ public final class Parties {
             ServerPlayer m = server.getPlayerList().getPlayer(id);
             if (m == null) continue;
             list.add(new PartySyncPacket.Member(id, m.getName().getString(), m.getHealth(), m.getMaxHealth(),
-                    Karma.get(m), Karma.MAX, ModCapabilities.getType(m).ordinal(), Duels.isKnockedOut(m),
+                    Karma.get(m), m.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.karmaMax).orElse(Karma.MAX), ModCapabilities.getType(m).ordinal(), Duels.isKnockedOut(m),
                     id.equals(party.leader), m.getX(), m.getY(), m.getZ(), m.level().dimension().location().toString(), false,
                     com.xenowarriors.stats.Stats.characterLevel(m), com.xenowarriors.stats.Stats.progress(m)));
         }

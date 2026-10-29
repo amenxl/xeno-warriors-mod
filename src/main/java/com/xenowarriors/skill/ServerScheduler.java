@@ -21,6 +21,9 @@ public final class ServerScheduler {
         TASKS.add(new Task(tick + Math.max(1, ticks), run));
     }
 
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent e) { TASKS.clear(); tick = 0; }   // (nothing from the old world runs in the next one)
+
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;

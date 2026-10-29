@@ -153,6 +153,9 @@ public final class LockOn {
         if (e.isInvulnerable() || peaceful(e)) return false;
         if (e.isInvisible() && e.hasCustomName() && e.getCustomName().getString().endsWith("'s Hekublade")) return false;   // (Mikiko's floating blade)
         if (e instanceof Player p && (p.isCreative() || com.xenowarriors.client.party.PartyClient.inMyParty(p.getUUID()))) return false;
+        // your bot teammates (and your party's): only when they're down, so you can find them
+        if (e instanceof com.xenowarriors.bot.PartyBotEntity b && b.ownerId() != null
+                && (b.ownerId().equals(me.getUUID()) || com.xenowarriors.client.party.PartyClient.inMyParty(b.ownerId())) && !b.downed()) return false;
         if (e instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame() && me.getUUID().equals(t.getOwnerUUID())) return false;
         if (e instanceof net.minecraft.world.entity.OwnableEntity o && me.getUUID().equals(o.getOwnerUUID())) return false;
         // your pets and your party's (foxes, wing pets, tamed animals)

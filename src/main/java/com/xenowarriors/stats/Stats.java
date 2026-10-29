@@ -60,9 +60,9 @@ public final class Stats {
         return (int) Math.min(MAX_CHARACTER_LEVEL - 1, Math.round(sum * (double) MAX_CHARACTER_LEVEL / top));
     }
 
-    /** +1 heart every 10 levels up to level 1,000, then +1 heart every 1,000 levels (about 188 at the cap). */
+    /** +1 heart every 4 levels up to level 1,000, then +1 heart every 400 levels (about 470 at the cap). */
     public static int bonusHearts(int level) {
-        return level <= 1000 ? level / 10 : 100 + (level - 1000) / 1000;
+        return level <= 1000 ? level / 4 : 250 + (level - 1000) / 400;
     }
 
     private static void applyHealth(ServerPlayer player) {
@@ -182,6 +182,11 @@ public final class Stats {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        java.util.UUID id = event.getEntity().getUUID();                // (per-player caches that would otherwise grow forever)
+        com.xenowarriors.skill.SkillManager.forget(id);
+        com.xenowarriors.mikiko.HekubladeRealm.forget(id);
+        com.xenowarriors.gov.KarmaScanner.forget(id);
+        com.xenowarriors.character.RhalixFlight.forget(id);
         LAST_POS.remove(event.getEntity().getUUID());
     }
 

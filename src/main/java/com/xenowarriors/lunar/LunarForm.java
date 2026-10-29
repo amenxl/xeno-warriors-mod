@@ -53,11 +53,18 @@ public final class LunarForm {
 
     private LunarForm() {}
 
-    public static boolean unlocked(Player p) { return p.getPersistentData().getBoolean(UNLOCKED); }
+    private static net.minecraft.nbt.CompoundTag keep(Player p) {       // (survives death: Forge keeps this sub-tag)
+        var root = p.getPersistentData();
+        if (!root.contains(Player.PERSISTED_NBT_TAG)) root.put(Player.PERSISTED_NBT_TAG, new net.minecraft.nbt.CompoundTag());
+        return root.getCompound(Player.PERSISTED_NBT_TAG);
+    }
+
+    public static boolean unlocked(Player p) { return keep(p).getBoolean(UNLOCKED) || p.getPersistentData().getBoolean(UNLOCKED); }
 
     public static boolean active(LivingEntity e) { return e.getPersistentData().getBoolean(ACTIVE); }
 
     public static void setUnlocked(ServerPlayer p, boolean on) {
+        keep(p).putBoolean(UNLOCKED, on);
         p.getPersistentData().putBoolean(UNLOCKED, on);
         if (!on && active(p)) setActive(p, false);
     }
