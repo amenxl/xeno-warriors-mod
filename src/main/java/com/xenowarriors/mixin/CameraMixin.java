@@ -32,7 +32,7 @@ public abstract class CameraMixin {
             double extra = v.kind == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
             move(-getMaxZoom(extra), 0.6, 0.0);
         } else {
-            move(0.0, v.kind == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.45, 0.0);   // eyes above the dashboard
+            move(0.0, v.kind == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.75, 0.0);   // eyes above the hood
         }
     }
 

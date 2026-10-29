@@ -28,7 +28,7 @@ public class VehicleRenderer extends GeoEntityRenderer<VehicleEntity> {
 
     @Override
     public software.bernie.geckolib.core.object.Color getRenderColor(VehicleEntity e, float pt, int light) {
-        return inside(e) ? software.bernie.geckolib.core.object.Color.ofRGBA(1F, 1F, 1F, 0.3F) : super.getRenderColor(e, pt, light);
+        return inside(e) ? software.bernie.geckolib.core.object.Color.ofRGBA(1F, 1F, 1F, 0.18F) : super.getRenderColor(e, pt, light);
     }
 
     @Override
