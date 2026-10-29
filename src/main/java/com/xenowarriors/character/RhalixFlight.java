@@ -56,6 +56,7 @@ public final class RhalixFlight {
     }
 
     private static final java.util.Map<java.util.UUID, int[]> HUNGER = new java.util.HashMap<>();   // {hungry 0/1, next growl tick}
+    public static void forget(java.util.UUID id) { CRUISE.remove(id); HUNGER.remove(id); }
 
     /** Starving: he drops out of the sky, his stomach growls (and keeps growling now and then until he eats). */
     private static void hunger(ServerPlayer p) {

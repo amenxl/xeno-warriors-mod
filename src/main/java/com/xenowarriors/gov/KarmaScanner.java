@@ -45,6 +45,7 @@ public final class KarmaScanner {
     public static final int VISOR = 0, YURI = 1, ULTIMA = 2, TECHNICA = 3;
     private static final double RANGE = 48;
     private static final Map<UUID, Integer> LAST = new HashMap<>();
+    public static void forget(UUID id) { LAST.remove(id); }
 
     private KarmaScanner() {}
 

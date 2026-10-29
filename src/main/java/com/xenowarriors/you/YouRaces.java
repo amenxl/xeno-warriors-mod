@@ -98,12 +98,18 @@ public final class YouRaces {
 
     // ------------------------------------------------------------------ seedlings
 
-    public static int sun(Player p) { return You.slot(p) != null && You.slot(p).race == Race.SEEDLING ? p.getPersistentData().getInt(SUN) : -1; }
+    public static int sun(Player p) { return You.slot(p) != null && You.slot(p).race == Race.SEEDLING ? keep(p).getInt(SUN) : -1; }
+
+    private static CompoundTag keep(Player p) {                  // (survives death: Forge keeps this sub-tag)
+        CompoundTag root = p.getPersistentData();
+        if (!root.contains(Player.PERSISTED_NBT_TAG)) root.put(Player.PERSISTED_NBT_TAG, new CompoundTag());
+        return root.getCompound(Player.PERSISTED_NBT_TAG);
+    }
 
     public static boolean isSeed(Player p) { return p.getPersistentData().getBoolean(SEED); }
 
     /** Sunlight (the item): a full charge. */
-    public static void giveSun(ServerPlayer p) { p.getPersistentData().putInt(SUN, SUN_MAX); sync(p); }
+    public static void giveSun(ServerPlayer p) { keep(p).putInt(SUN, SUN_MAX); sync(p); }
 
     private static boolean seedling(Player p) { YouSlot s = You.slot(p); return s != null && s.race == Race.SEEDLING; }
 
@@ -112,7 +118,7 @@ public final class YouRaces {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p)) return;
         if (isSeed(p)) { seedTick(p); return; }
         if (!seedling(p) || p.isCreative() || p.isSpectator()) return;
-        CompoundTag t = p.getPersistentData();
+        CompoundTag t = keep(p);
         if (!t.contains(SUN)) t.putInt(SUN, SUN_MAX);
         int sun = t.getInt(SUN);
         if (p.tickCount % 20 == 0) {
@@ -181,14 +187,22 @@ public final class YouRaces {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttack(LivingAttackEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || !isSeed(p)) return;
-        if (e.getSource().getEntity() instanceof net.minecraft.world.entity.LivingEntity && e.getSource().getEntity() != p) {
-            // the seed is broken: they die for real
-            p.getPersistentData().remove(SEED);
-            p.getPersistentData().putBoolean("xw_seed_broken", true);
-            removeSeed(p);
-            p.removeEffect(MobEffects.INVISIBILITY);
-            p.displayClientMessage(Component.literal("Your seed was broken!").withStyle(ChatFormatting.RED), false);
-        } else e.setCanceled(true);                            // fire, falls, drowning: a seed doesn't mind
+        boolean enemy = e.getSource().getEntity() instanceof net.minecraft.world.entity.LivingEntity && e.getSource().getEntity() != p;
+        if (!enemy && !e.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) e.setCanceled(true);   // fire, falls, drowning: a seed doesn't mind (/kill still works)
+    }
+
+    /** An enemy's hit that would finish the seed breaks it: they die for real. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onDamage(net.minecraftforge.event.entity.living.LivingDamageEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || !isSeed(p) || e.isCanceled()) return;
+        boolean enemy = e.getSource().getEntity() instanceof net.minecraft.world.entity.LivingEntity && e.getSource().getEntity() != p;
+        if (!enemy && !e.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return;
+        if (e.getAmount() < p.getHealth()) return;              // (took the hit and lived: still a seed)
+        p.getPersistentData().remove(SEED);
+        p.getPersistentData().putBoolean("xw_seed_broken", true);
+        removeSeed(p);
+        p.removeEffect(MobEffects.INVISIBILITY);
+        p.displayClientMessage(Component.literal("Your seed was broken!").withStyle(ChatFormatting.RED), false);
     }
 
     private static void placeSeed(ServerPlayer p) {

@@ -40,7 +40,14 @@ public final class AuroraVirus {
 
     public static boolean enabled(LivingEntity e) { return e.level().getServer() != null && Seasons.unlocked(e.level().getServer(), 2); }
 
-    public static boolean has(LivingEntity e) { return e.hasEffect(ModEffects.AURORA_VIRUS.get()); }
+    public static boolean has(LivingEntity e) { return e.hasEffect(ModEffects.AURORA_VIRUS.get()) || (e instanceof Player p && keep(p).getBoolean("xw_virus_infected")); }
+
+    /** Players: the infection is remembered through death and knockouts (the effect is only its face). */
+    private static net.minecraft.nbt.CompoundTag keep(Player p) {
+        var root = p.getPersistentData();
+        if (!root.contains(Player.PERSISTED_NBT_TAG)) root.put(Player.PERSISTED_NBT_TAG, new net.minecraft.nbt.CompoundTag());
+        return root.getCompound(Player.PERSISTED_NBT_TAG);
+    }
 
     public static boolean immune(LivingEntity e) {
         if (e.hasEffect(ModEffects.VIRUS_IMMUNITY.get())) return true;
@@ -53,6 +60,7 @@ public final class AuroraVirus {
         if (!enabled(e) || immune(e) || has(e)) return false;
         e.addEffect(new MobEffectInstance(ModEffects.AURORA_VIRUS.get(), -1, 0, false, false, true));
         e.getPersistentData().putLong("xw_virus_since", e.level().getGameTime());
+        if (e instanceof Player p) { keep(p).putBoolean("xw_virus_infected", true); keep(p).putLong("xw_virus_since", e.level().getGameTime()); keep(p).putInt("xw_virus_stage", 0); }
         if (e instanceof ServerPlayer p)
             p.displayClientMessage(Component.literal("Your throat itches... you caught the Aurora virus.").withStyle(ChatFormatting.DARK_AQUA), false);
         return true;
@@ -60,6 +68,7 @@ public final class AuroraVirus {
 
     public static void cure(LivingEntity e, int immuneTicks) {
         e.removeEffect(ModEffects.AURORA_VIRUS.get());
+        if (e instanceof Player p) { keep(p).remove("xw_virus_infected"); keep(p).remove("xw_virus_since"); keep(p).remove("xw_virus_stage"); }
         e.getPersistentData().remove(CARRIER);
         if (immuneTicks > 0) e.addEffect(new MobEffectInstance(ModEffects.VIRUS_IMMUNITY.get(), immuneTicks, 0, false, false, true));
     }
@@ -82,9 +91,11 @@ public final class AuroraVirus {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || !has(p)) return;
         if (!enabled(p) || immune(p)) { cure(p, 0); return; }
         MobEffectInstance v = p.getEffect(ModEffects.AURORA_VIRUS.get());
-        int stage = v == null ? 0 : v.getAmplifier();
-        long since = p.getPersistentData().getLong("xw_virus_since");
+        int stage = Math.max(keep(p).getInt("xw_virus_stage"), v == null ? 0 : v.getAmplifier());
+        if (v == null || v.getAmplifier() < stage) p.addEffect(new MobEffectInstance(ModEffects.AURORA_VIRUS.get(), -1, stage, false, false, true));   // (back after death/milk)
+        long since = keep(p).contains("xw_virus_since") ? keep(p).getLong("xw_virus_since") : p.getPersistentData().getLong("xw_virus_since");
         if (stage < 2 && p.level().getGameTime() - since > (long) STAGE_TICKS * (stage + 1)) {      // it gets worse
+            keep(p).putInt("xw_virus_stage", stage + 1);
             p.addEffect(new MobEffectInstance(ModEffects.AURORA_VIRUS.get(), -1, stage + 1, false, false, true));
             p.displayClientMessage(Component.literal(stage == 0 ? "The coughing is getting worse..." : "It's getting hard to breathe. You need Aurora Medicine.").withStyle(ChatFormatting.DARK_AQUA), false);
         }

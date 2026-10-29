@@ -20,7 +20,7 @@ public record SelectCharacterPacket(CharacterType type) {
 
     public static void handle(SelectCharacterPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
-        if (player == null || msg.type == CharacterType.NONE) return;
+        if (player == null || msg.type == CharacterType.NONE || msg.type == CharacterType.YOU) return;   // (You characters go through their slots screen)
         if (com.xenowarriors.journey.Journey.inRun(player)) {
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("You can't switch characters on a Journey - pick your team before each battle").withStyle(net.minecraft.ChatFormatting.RED), true);
             return;

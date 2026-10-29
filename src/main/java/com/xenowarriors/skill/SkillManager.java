@@ -104,6 +104,7 @@ public final class SkillManager {
 
     /** Last skill someone used near each player, for Mikiko's True Empathy: {skill, game time}. */
     public static final java.util.Map<java.util.UUID, Object[]> WITNESSED = new java.util.HashMap<>();
+    public static void forget(java.util.UUID id) { WITNESSED.remove(id); }
 
     private static long now(ServerPlayer player) {
         return player.server.overworld().getGameTime();

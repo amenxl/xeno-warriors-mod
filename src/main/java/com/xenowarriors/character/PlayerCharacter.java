@@ -220,6 +220,6 @@ public class PlayerCharacter {
             statLevel[i] = i < lv.length ? lv[i] : 0;
             statXp[i] = tag.getFloat("stat_xp_" + i);
         }
-        this.karma = tag.contains("karma") ? Math.max(0F, Math.min(Karma.MAX, tag.getFloat("karma"))) : Karma.MAX;
+        this.karma = tag.contains("karma") ? Math.max(0F, Math.min(Karma.MAX * 3F, tag.getFloat("karma"))) : Karma.MAX;   // (caps above 100 exist: the tick re-clamps to the real one)
     }
 }

@@ -45,9 +45,14 @@ public final class ModCapabilities {
         original.getCapability(PLAYER_CHARACTER).ifPresent(old ->
                 event.getEntity().getCapability(PLAYER_CHARACTER).ifPresent(fresh -> {
                     fresh.copyFrom(old);
+                    fresh.karmaMax = old.karmaMax;
                     if (!event.isWasDeath()) fresh.setKarma(old.getKarma());   // through the End portal: keep Karma too
                 }));
         original.invalidateCaps();
+        if (event.isWasDeath() && event.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp) {   // timed forms end with the old body (their buffs did)
+            com.xenowarriors.mikiko.FoxKing.stop(sp, false);
+            com.xenowarriors.mikiko.Netsu.stop(sp);
+        }
     }
 
     private static class Provider implements ICapabilitySerializable<CompoundTag> {

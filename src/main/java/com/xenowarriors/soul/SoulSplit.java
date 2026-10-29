@@ -208,8 +208,9 @@ public final class SoulSplit {
             event.setAmount(event.getAmount() / divisor(p));
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
     public static void onDeath(LivingDeathEvent event) {
+        if (event.isCanceled()) return;
         if (event.getEntity() instanceof ServerPlayer p) end(p, null);
         if (event.getSource().getEntity() instanceof SoulEntity s && s.owner() != null) addXp(s.owner(), 5F);
     }

@@ -182,6 +182,11 @@ public final class Stats {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        java.util.UUID id = event.getEntity().getUUID();                // (per-player caches that would otherwise grow forever)
+        com.xenowarriors.skill.SkillManager.forget(id);
+        com.xenowarriors.mikiko.HekubladeRealm.forget(id);
+        com.xenowarriors.gov.KarmaScanner.forget(id);
+        com.xenowarriors.character.RhalixFlight.forget(id);
         LAST_POS.remove(event.getEntity().getUUID());
     }
 
