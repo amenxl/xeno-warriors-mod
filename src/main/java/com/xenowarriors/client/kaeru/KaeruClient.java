@@ -62,6 +62,14 @@ public final class KaeruClient {
         onDoubleJump(p.getId());
     }
 
+    /** A double jump seen from the server: Kaeru's sound burst, or Mikiko's flip and wind. */
+    public static void doubleJumpFx(int entityId) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.getEntity(entityId) instanceof AbstractClientPlayer p && ClientCharacterData.get(p) == CharacterType.KAERU)
+            onDoubleJump(entityId);
+        else com.xenowarriors.client.mikiko.MikikoAnimations.onDoubleJump(entityId);
+    }
+
     /** The sound-burst jump: a ring of notes and a pop (for everyone who sees her). */
     public static void onDoubleJump(int entityId) {
         Minecraft mc = Minecraft.getInstance();
