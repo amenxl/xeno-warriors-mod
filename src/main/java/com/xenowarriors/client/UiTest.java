@@ -151,6 +151,7 @@ public final class UiTest {
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
         if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
+        if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -1866,5 +1867,28 @@ public final class UiTest {
         l.add(new Step("you_demon", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.you.YouRaces.toggleHumanForm(p)), 20));
         l.add(new Step("you_demon_human", () -> {}, 3));
+    }
+
+    /** Bot teammates: the new pick grid, a bot's menu, one wearing armour, a downed bot's revive circle, and one eating. */
+    private static void bots2(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 40));
+        l.add(new Step(null, () -> server(com.xenowarriors.bot.PartyBots::openPick), 30));
+        l.add(new Step("bots2_pick", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.bot.BotPickScreen s) { s.mouseClicked(mc.getWindow().getGuiScaledWidth() / 2.0 - 100, 80, 0); s.mouseClicked(mc.getWindow().getGuiScaledWidth() / 2.0, 80, 0); } }, 10));
+        l.add(new Step("bots2_pick_selected", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            var r = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
+            var k = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (r != null) { r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_CHESTPLATE)); r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLDEN_HELMET)); }
+            if (k != null) { k.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COOKED_BEEF, 8)); k.setHealth(5F); }
+            p.setYRot(0); p.setXRot(10);
+        }); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 50));
+        l.add(new Step("bots2_armour_eating", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> { for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.character() == CharacterType.RHALIX) com.xenowarriors.bot.PartyBots.interact(b, p); }); }, 20));
+        l.add(new Step("bots2_menu", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.character() == CharacterType.RHALIX) { b.moveTo(p.getX() + 1.2, p.getY(), p.getZ() + 1.2); b.die(p.damageSources().generic()); } }); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 25));
+        l.add(new Step("bots2_revive_circle", () -> {}, 3));
+        l.add(new Step(null, () -> {}, 45));
+        l.add(new Step("bots2_revived", () -> {}, 3));
     }
 }

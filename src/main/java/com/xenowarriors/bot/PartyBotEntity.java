@@ -45,7 +45,14 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DOWNED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
-    public final SimpleContainer inventory = new SimpleContainer(27);
+    /** Its bag: the character's own inventory (36 slots, like a player's main inventory). */
+    public final SimpleContainer inventory = new SimpleContainer(36);
+    /** Eating: ticks left on the current bite, and the slot being eaten from. */
+    int eatTicks = -1, eatSlot = -1;
+    /** Reviving: who it's standing by. */
+    LivingEntity reviving;
+    /** Wandering about near its owner. */
+    Vec3 wanderTo; int wanderWait;
     public float karma = 100F;
     int downedTicks;
     long[] skillReady = new long[5];
@@ -128,11 +135,13 @@ public class PartyBotEntity extends PathfinderMob {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new DownedGoal());
-        goalSelector.addGoal(2, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
-        goalSelector.addGoal(3, new MineGoal());
-        goalSelector.addGoal(4, new FollowOwner());
-        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
-        goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+        goalSelector.addGoal(2, new ReviveGoal());
+        goalSelector.addGoal(3, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
+        goalSelector.addGoal(4, new MineGoal());
+        goalSelector.addGoal(5, new FollowOwner());
+        goalSelector.addGoal(6, new WanderNearOwner());
+        goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8F));
+        goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new BotTargetGoal());
     }
 
@@ -143,19 +152,74 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public void tick() { getNavigation().stop(); setTarget(null); }
     }
 
+    /** Keeps 4-8 blocks from the owner (not on top of them); flies along if it can, otherwise waits and teleports once they land. */
     class FollowOwner extends Goal {
         FollowOwner() { setFlags(EnumSet.of(Flag.MOVE)); }
         @Override public boolean canUse() {
             ServerPlayer o = owner();
-            return o != null && !downed() && getTarget() == null && mineTarget == null && distanceToSqr(o) > 6 * 6;
+            return o != null && !downed() && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 8 * 8;
         }
-        @Override public boolean canContinueToUse() { ServerPlayer o = owner(); return o != null && getTarget() == null && mineTarget == null && distanceToSqr(o) > 3 * 3; }
+        @Override public boolean canContinueToUse() { ServerPlayer o = owner(); return o != null && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 4 * 4; }
+        @Override public void stop() { getNavigation().stop(); if (isNoGravity() && !isVehicle()) { setNoGravity(false); } }
         @Override public void tick() {
             ServerPlayer o = owner();
             if (o == null) return;
-            if (distanceToSqr(o) > 28 * 28 || o.level() != level()) PartyBots.teleportNear(PartyBotEntity.this, o);
-            else getNavigation().moveTo(o, distanceToSqr(o) > 12 * 12 ? 1.35 : 1.1);
+            boolean ownerFlying = o.getAbilities().flying || o.isFallFlying() || PartyBots.airborne(o);
+            if (o.level() != level()) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
+            if (ownerFlying) {
+                if (canFly()) { PartyBots.flyToward(PartyBotEntity.this, o); return; }
+                // can't fly: wait on the ground for them to land
+                getNavigation().stop();
+                getLookControl().setLookAt(o);
+                return;
+            }
+            if (isNoGravity() && !isVehicle()) setNoGravity(false);
+            double d2 = distanceToSqr(o);
+            if (d2 > 28 * 28 || (d2 > 12 * 12 && !canFly() && o.onGround() && getNavigation().isDone() && tickCount % 20 == 0)) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
+            if (o.getVehicle() != null && tickCount % 10 == 0 && PartyBots.boardWith(PartyBotEntity.this, o)) return;
+            getNavigation().moveTo(o, d2 > 14 * 14 ? 1.4 : d2 > 10 * 10 ? 1.2 : 1.0);
             getLookControl().setLookAt(o);
+        }
+    }
+
+    /** Idle near the owner: every so often strolls a few blocks and looks about, instead of standing on the spot. */
+    class WanderNearOwner extends Goal {
+        WanderNearOwner() { setFlags(EnumSet.of(Flag.MOVE)); }
+        @Override public boolean canUse() {
+            ServerPlayer o = owner();
+            if (o == null || downed() || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || o.getVehicle() != null) return false;
+            if (PartyBots.airborne(o) || o.getAbilities().flying) return false;
+            if (--wanderWait > 0) return false;
+            wanderWait = 60 + getRandom().nextInt(140);
+            if (distanceToSqr(o) > 8 * 8) return false;
+            double a = getRandom().nextDouble() * Math.PI * 2, r = 2.5 + getRandom().nextDouble() * 4;
+            Vec3 to = o.position().add(Math.cos(a) * r, 0, Math.sin(a) * r);
+            BlockPos bp = BlockPos.containing(to);
+            if (!level().getBlockState(bp).isAir() || !level().getBlockState(bp.below()).isSolid()) return false;
+            wanderTo = to;
+            return true;
+        }
+        @Override public boolean canContinueToUse() { return wanderTo != null && !getNavigation().isDone() && getTarget() == null && !downed() && reviving == null; }
+        @Override public void start() { getNavigation().moveTo(wanderTo.x, wanderTo.y, wanderTo.z, 0.8); }
+        @Override public void stop() { wanderTo = null; }
+    }
+
+    /** Someone's down (the owner, a party member or another bot): go and stand in their revive circle. */
+    class ReviveGoal extends Goal {
+        ReviveGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        @Override public boolean canUse() {
+            if (downed() || journey() || tickCount % 10 != 0) return false;
+            reviving = PartyBots.someoneDown(PartyBotEntity.this);
+            return reviving != null;
+        }
+        @Override public boolean canContinueToUse() { return reviving != null && reviving.isAlive() && !downed() && PartyBots.isDown(reviving) && reviving.distanceToSqr(PartyBotEntity.this) < 40 * 40; }
+        @Override public void stop() { reviving = null; }
+        @Override public void tick() {
+            if (reviving == null) return;
+            setTarget(null);
+            getLookControl().setLookAt(reviving);
+            if (distanceToSqr(reviving) > 1.6 * 1.6) getNavigation().moveTo(reviving, 1.3);
+            else getNavigation().stop();
         }
     }
 
@@ -219,15 +283,55 @@ public class PartyBotEntity extends PathfinderMob {
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
         if (downed()) {
-            if (++downedTicks > PartyBots.BLEED_OUT) PartyBots.bleedOut(this);
+            if (++downedTicks > PartyBots.BLEED_OUT) { PartyBots.bleedOut(this); return; }
             if (tickCount % 10 == 0) ((ServerLevel) level()).sendParticles(net.minecraft.core.particles.ParticleTypes.DAMAGE_INDICATOR, getX(), getY() + 0.5, getZ(), 1, .3, .1, .3, 0);
+            if (!journey()) com.xenowarriors.party.ReviveCircle.tickBot(this);
             return;
         }
         if (getTarget() != null && tickCount % 10 == 0) PartyBots.trySkill(this, getTarget());
         if (tickCount % 10 == 0) pickUpItems();
+        tickEating();
+        if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         ServerPlayer o = owner();
         if (o == null && tickCount > 100 && tickCount % 40 == 0) discard();          // owner gone
     }
+
+    /** Hungry (under 60% health, not fighting): eats food from its bag - a few seconds of chewing, then the food's worth in health. */
+    private void tickEating() {
+        if (eatTicks >= 0) {
+            if (eatSlot < 0 || eatSlot >= inventory.getContainerSize() || !inventory.getItem(eatSlot).isEdible()) { eatTicks = -1; eatSlot = -1; return; }
+            if (eatTicks % 4 == 0) {
+                ItemStack food = inventory.getItem(eatSlot);
+                ((ServerLevel) level()).sendParticles(new net.minecraft.core.particles.ItemParticleOption(net.minecraft.core.particles.ParticleTypes.ITEM, food), getX(), getY() + 1.2, getZ(), 4, 0.15, 0.1, 0.15, 0.05);
+                level().playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EAT, net.minecraft.sounds.SoundSource.NEUTRAL, 0.6F, 0.9F + getRandom().nextFloat() * 0.3F);
+            }
+            if (--eatTicks < 0) {
+                ItemStack food = inventory.getItem(eatSlot);
+                var props = food.getFoodProperties(this);
+                float heal = props == null ? 2F : props.getNutrition() * 1.2F + props.getSaturationModifier() * 4F;
+                heal(Math.max(2F, heal));
+                if (props != null) for (var eff : props.getEffects()) if (getRandom().nextFloat() < eff.getSecond()) addEffect(new net.minecraft.world.effect.MobEffectInstance(eff.getFirst()));
+                ItemStack rest = food.getCraftingRemainingItem();
+                food.shrink(1);
+                if (food.isEmpty()) inventory.setItem(eatSlot, rest.isEmpty() ? ItemStack.EMPTY : rest);
+                else if (!rest.isEmpty()) inventory.addItem(rest);
+                level().playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.PLAYER_BURP, net.minecraft.sounds.SoundSource.NEUTRAL, 0.5F, 1F);
+                eatSlot = -1;
+            }
+            return;
+        }
+        if (tickCount % 30 != 0 || getHealth() > getMaxHealth() * 0.6F || getTarget() != null || sparring()) return;
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack s = inventory.getItem(i);
+            if (s.isEdible() && s.getFoodProperties(this) != null && !s.is(net.minecraft.world.item.Items.ROTTEN_FLESH) && !s.is(net.minecraft.world.item.Items.SPIDER_EYE) && !s.is(net.minecraft.world.item.Items.PUFFERFISH)) {
+                eatSlot = i; eatTicks = 32;
+                com.xenowarriors.anim.Poses.play(this, com.xenowarriors.anim.Poses.EL_RAISE, 32);
+                return;
+            }
+        }
+    }
+
+    public boolean eating() { return eatTicks >= 0; }
 
     private void pickUpItems() {
         for (ItemEntity it : level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(1.5), ItemEntity::isAlive)) {
@@ -262,7 +366,7 @@ public class PartyBotEntity extends PathfinderMob {
         super.die(src);
     }
 
-    public void revive() { entityData.set(DOWNED, false); setHealth(getMaxHealth() * 0.4F); downedTicks = 0; }
+    public void revive() { entityData.set(DOWNED, false); setHealth(getMaxHealth() * 0.4F); downedTicks = 0; com.xenowarriors.party.ReviveCircle.forget(getUUID()); }
 
     @Override public boolean isPushable() { return !downed() && super.isPushable(); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
@@ -271,12 +375,33 @@ public class PartyBotEntity extends PathfinderMob {
     @Override protected boolean shouldDespawnInPeaceful() { return false; }
     @Override public boolean canBeLeashed(Player p) { return false; }
 
+    /** Sneak + right-click to talk to a bot (a plain right-click just tells you so). Sneaking with armour in hand puts it on them. */
     @Override
     protected InteractionResult mobInteract(Player p, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
-        if (!level().isClientSide && p instanceof ServerPlayer sp) PartyBots.interact(this, sp);
+        if (!level().isClientSide && p instanceof ServerPlayer sp) {
+            if (!p.isShiftKeyDown()) {
+                if (!journey() && p.getUUID().equals(ownerId())) sp.displayClientMessage(net.minecraft.network.chat.Component.literal("Sneak + right-click to talk to ").append(label()).withStyle(net.minecraft.ChatFormatting.GRAY), true);
+                return InteractionResult.PASS;
+            }
+            ItemStack held = p.getItemInHand(hand);
+            if (!held.isEmpty() && held.getItem() instanceof net.minecraft.world.item.ArmorItem ai && p.getUUID().equals(ownerId()) && !downed() && !journey()) {
+                ItemStack old = getItemBySlot(ai.getEquipmentSlot());
+                setItemSlot(ai.getEquipmentSlot(), held.copyWithCount(1));
+                held.shrink(1);
+                if (!old.isEmpty() && !p.getInventory().add(old)) p.drop(old, false);
+                level().playSound(null, blockPosition(), net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_GENERIC, net.minecraft.sounds.SoundSource.NEUTRAL, 1F, 1F);
+                sp.displayClientMessage(net.minecraft.network.chat.Component.literal("").append(label()).append(" put on ").append(getItemBySlot(ai.getEquipmentSlot()).getHoverName()).withStyle(net.minecraft.ChatFormatting.AQUA), true);
+                return InteractionResult.CONSUME;
+            }
+            PartyBots.interact(this, sp);
+        }
         return InteractionResult.sidedSuccess(level().isClientSide);
     }
+
+    /** Bots keep their armour: it's never dropped as loot (it goes back to the character's save). */
+    @Override protected void dropEquipment() {}
+    @Override protected void dropCustomDeathLoot(DamageSource s, int looting, boolean recentlyHit) {}
 
     // ---------------------------------------------------------------- carrying the player (flying characters)
 
@@ -325,6 +450,23 @@ public class PartyBotEntity extends PathfinderMob {
         t.putInt("Mode", mode());
         t.putFloat("BotKarma", karma);
         t.put("Inv", inventory.createTag());
+        t.put("Armour", armourTag());
+    }
+
+    /** Worn armour and offhand, as a list (feet, legs, chest, head, offhand). */
+    public ListTag armourTag() {
+        ListTag l = new ListTag();
+        for (EquipmentSlot s : new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND}) l.add(getItemBySlot(s).save(new CompoundTag()));
+        return l;
+    }
+
+    public void loadArmour(ListTag l) {
+        EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND};
+        for (int i = 0; i < slots.length && i < l.size(); i++) setItemSlot(slots[i], ItemStack.of(l.getCompound(i)));
+    }
+
+    public ItemStack[] armour() {
+        return new ItemStack[]{getItemBySlot(EquipmentSlot.FEET), getItemBySlot(EquipmentSlot.LEGS), getItemBySlot(EquipmentSlot.CHEST), getItemBySlot(EquipmentSlot.HEAD)};
     }
 
     @Override
@@ -335,6 +477,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.set(MODE, t.getInt("Mode"));
         karma = t.getFloat("BotKarma");
         if (t.contains("Inv")) inventory.fromTag(t.getList("Inv", 10));
+        if (t.contains("Armour")) loadArmour(t.getList("Armour", 10));
     }
 
     /** The bot as a record kept with the owner while they're offline. */
@@ -344,12 +487,14 @@ public class PartyBotEntity extends PathfinderMob {
         t.putInt("mode", mode());
         t.putFloat("hp", getHealth());
         t.put("inv", inventory.createTag());
+        t.put("armour", armourTag());
         return t;
     }
 
     public void loadRecord(CompoundTag t) {
         entityData.set(MODE, t.getInt("mode"));
         if (t.contains("inv")) inventory.fromTag(t.getList("inv", 10));
+        if (t.contains("armour")) loadArmour(t.getList("armour", 10));
         if (t.contains("hp")) setHealth(Math.max(1F, t.getFloat("hp")));
     }
 }

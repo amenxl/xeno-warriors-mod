@@ -283,12 +283,12 @@ public final class Journey {
                     : m.picks.size() != r.cap() ? m.name + " needs to pick " + r.cap() + " characters"
                     : !m.ready && !m.id.equals(r.host) ? m.name + " isn't ready"
                     : p.isCreative() || p.isSpectator() ? m.name + " needs to be in Survival or Adventure mode"
-                    : !com.xenowarriors.bot.PartyBots.bots(p).isEmpty() ? m.name + " has bot teammates out - dismiss them first (Journey is just the two of you)"
                     : Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level()) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p) ? m.name + " can't leave from where they are"
                     : r.members.size() == 2 && !m.id.equals(r.host) && !com.xenowarriors.party.Parties.sameParty(p.getUUID(), r.host) ? m.name + " needs to be in your party"
                     : null;
             if (why != null) { host.displayClientMessage(msg(why, ChatFormatting.RED), true); return; }
         }
+        for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) com.xenowarriors.bot.PartyBots.stashAll(p); }   // (bots wait at home)
         clampPick(r, server);
         r.map = JourneyMap.generate(JourneyRules.STAGE_ROWS[r.stage], tl.getRandom(), JourneyWorld.dbzReady());
         Arrays.fill(r.boosts, 0);
@@ -370,6 +370,7 @@ public final class Journey {
         p.removeAllEffects();
         p.clearFire();
         p.setHealth(p.getMaxHealth());
+        com.xenowarriors.skill.ServerScheduler.later(10, () -> { if (p.isAlive() && !inLobbyOrRun(p)) com.xenowarriors.bot.PartyBots.unstash(p); });
         if (Tower.is(p.level()) && pos != null) {
             ServerLevel to = dim == null ? null : p.server.getLevel(dim);
             if (to == null) to = p.server.overworld();

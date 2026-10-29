@@ -24,6 +24,8 @@ public final class CharacterManager {
     public static void setCharacter(ServerPlayer player, CharacterType type) {
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);               // (Kaeru inside a blade would be stuck a spectator)
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
+            CharacterInventories.switchTo(player, data.key(type));   // each character has its own inventory
+
             data.switchStats(data.getType(), type);           // every character keeps its own level
             data.setType(type);
         });
@@ -44,6 +46,7 @@ public final class CharacterManager {
         if (d == null || slot < 0 || slot >= com.xenowarriors.you.YouSlot.SLOTS || !d.youSlots[slot].exists()) return false;
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);
         String from = d.key();
+        CharacterInventories.switchTo(player, PlayerCharacter.key(CharacterType.YOU, slot));
         d.youSlot = slot;
         d.switchStats(from, d.key(CharacterType.YOU));
         d.setType(CharacterType.YOU);
