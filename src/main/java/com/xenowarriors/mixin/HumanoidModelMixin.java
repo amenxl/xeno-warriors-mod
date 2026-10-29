@@ -35,6 +35,11 @@ public abstract class HumanoidModelMixin {
     private void xenowarriors$skillPose(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                                         float netHeadYaw, float headPitch, CallbackInfo ci) {
         Object self = this;
+        // drawn in a menu (the inventory's preview, say): a plain standing pose, so held items and shields sit in the
+        // hands - unless the screen asked for a pose of its own (portraits, the M menu, the select screen)
+        boolean plainGui = com.xenowarriors.client.FirstPersonHead.inGui && com.xenowarriors.client.portrait.PortraitPoses.active == null
+                && !com.xenowarriors.client.ClientCharacterData.isPreviewing();
+        if (plainGui) return;
         if (self instanceof PlayerModel<?> && entity instanceof Player) {
             if (!SkillAnimations.apply((HumanoidModel<?>) self, entity, ageInTicks)) {
                 com.xenowarriors.client.mikiko.MikikoAnimations.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

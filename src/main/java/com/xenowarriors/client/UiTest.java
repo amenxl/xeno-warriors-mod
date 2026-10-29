@@ -1876,8 +1876,13 @@ public final class UiTest {
         l.add(new Step(null, () -> { if (mc.player != null && mc.player.isDeadOrDying()) mc.player.respawn(); if (mc.screen instanceof net.minecraft.client.gui.screens.DeathScreen) mc.player.respawn(); }, 40));
         l.add(new Step(null, () -> { pjs.run(); front.run(); server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE)); }, 30));
         l.add(new Step("chars2_pjs_after_death", () -> {}, 3));
+        l.add(new Step(null, () -> { server(p -> { p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FLOWER_SHIELD.get()));
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK)); }); }, 10));
         l.add(new Step(null, () -> { mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)); }, 10));
         l.add(new Step("chars2_pjs_inventory", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); front.run(); }, 10));
+        l.add(new Step("chars2_shield_world", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, net.minecraft.world.item.ItemStack.EMPTY); p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.item.ItemStack.EMPTY); }), 5));
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { for (var s : net.minecraft.world.entity.EquipmentSlot.values()) if (s.isArmor()) p.setItemSlot(s, net.minecraft.world.item.ItemStack.EMPTY); }); }, 10));
         // the Skills tab preview
         l.add(new Step(null, () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(null), 25));
