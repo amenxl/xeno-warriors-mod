@@ -1993,10 +1993,35 @@ public final class UiTest {
     /** DragonMineZ per character: Mikiko keeps his DMZ character; switching to Rhalix (none yet) opens the race picker; back to Mikiko brings his back. */
     private static void dmzPerCharacter(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); }, 60));
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> { dmzSet(p, "saiyan"); log("dmzpc Mikiko made: " + dmzInfo(p)); }); }, 20));
         l.add(new Step("dmzpc_mikiko", () -> {}, 3));
         l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.RHALIX); }, 80));
-        l.add(new Step("dmzpc_rhalix_picker", () -> log("dmzpc screen after Rhalix: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())), 3));
+        l.add(new Step("dmzpc_rhalix_picker", () -> { log("dmzpc screen after Rhalix: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())); server(p -> log("dmzpc Rhalix: " + dmzInfo(p))); }, 3));
         l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.MIKIKO); }, 80));
-        l.add(new Step("dmzpc_mikiko_back", () -> log("dmzpc screen after Mikiko again: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())), 3));
+        l.add(new Step("dmzpc_mikiko_back", () -> { log("dmzpc screen after Mikiko again: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())); server(p -> log("dmzpc Mikiko again: " + dmzInfo(p))); }, 3));
+    }
+
+    private static Object dmzData(ServerPlayer p) throws Exception {
+        var cap = (net.minecraftforge.common.capabilities.Capability<?>) Class.forName("com.dragonminez.common.stats.StatsCapability").getField("INSTANCE").get(null);
+        return p.getCapability(cap).resolve().orElse(null);
+    }
+
+    private static void dmzSet(ServerPlayer p, String race) {
+        try {
+            Object d = dmzData(p);
+            Object ch = d.getClass().getMethod("getCharacter").invoke(d);
+            ch.getClass().getMethod("setRace", String.class).invoke(ch, race);
+            Object st = d.getClass().getMethod("getStatus").invoke(d);
+            st.getClass().getMethod("setHasCreatedCharacter", boolean.class).invoke(st, true);
+        } catch (Throwable t) { log("dmzpc set failed: " + t); }
+    }
+
+    private static String dmzInfo(ServerPlayer p) {
+        try {
+            Object d = dmzData(p);
+            Object ch = d.getClass().getMethod("getCharacter").invoke(d);
+            Object st = d.getClass().getMethod("getStatus").invoke(d);
+            return "race=" + ch.getClass().getMethod("getRaceName").invoke(ch) + " created=" + st.getClass().getMethod("isHasCreatedCharacter").invoke(st);
+        } catch (Throwable t) { return "? " + t; }
     }
 }
