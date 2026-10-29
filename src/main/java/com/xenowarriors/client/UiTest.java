@@ -1720,6 +1720,8 @@ public final class UiTest {
         }), 30));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(20F); }, 20));
         l.add(new Step("vehicle_riding_car", () -> {}, 5));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(8F); }, 10));
+        l.add(new Step("vehicle_riding_car_inside", () -> {}, 5));
         l.add(new Step(null, () -> server(p -> { p.stopRiding(); }), 20));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; server(com.xenowarriors.vehicle.Dealer::open); }, 30));
         l.add(new Step("vehicle_dealer", () -> {}, 5));
