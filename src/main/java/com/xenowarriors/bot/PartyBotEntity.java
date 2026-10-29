@@ -98,7 +98,7 @@ public class PartyBotEntity extends PathfinderMob {
     public void onRemovedFromWorld() {
         super.onRemovedFromWorld();
         PartyBots.track(this, false);
-        if (!level().isClientSide && getRemovalReason() == RemovalReason.UNLOADED_TO_CHUNK && ownerId() != null) PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));   // owner teleported far away
+        if (!level().isClientSide && getRemovalReason() == RemovalReason.UNLOADED_TO_CHUNK && ownerId() != null && !journey()) PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));   // owner teleported far away
         if (!level().isClientSide && getRemovalReason() != null && getRemovalReason().shouldDestroy()) PartyBots.forgetFake(getUUID());
     }
 
@@ -106,7 +106,8 @@ public class PartyBotEntity extends PathfinderMob {
     public void setCharacter(CharacterType t) { entityData.set(CHAR, t.getId()); }
     public UUID ownerId() { return entityData.get(OWNER).orElse(null); }
     public void setOwner(UUID id) { PartyBots.track(this, false); entityData.set(OWNER, Optional.ofNullable(id)); if (isAddedToWorld()) PartyBots.track(this, true); }
-    public ServerPlayer owner() { return level() instanceof ServerLevel s && ownerId() != null ? (ServerPlayer) s.getPlayerByUUID(ownerId()) : null; }
+    /** The owner, wherever they are on the server (null when offline). */
+    public ServerPlayer owner() { return level() instanceof ServerLevel s && ownerId() != null ? s.getServer().getPlayerList().getPlayer(ownerId()) : null; }
     public int mode() { return entityData.get(MODE); }
     public void setMode(int m) { entityData.set(MODE, Math.floorMod(m, 3)); mineTarget = null; setTarget(null); }
     public int botLevel() { return entityData.get(LEVEL); }
@@ -154,6 +155,9 @@ public class PartyBotEntity extends PathfinderMob {
     }
 
     /** Keeps 4-8 blocks from the owner (not on top of them); flies along if it can, otherwise waits and teleports once they land. */
+    /** Flying alongside the owner right now (gravity stays off). */
+    boolean flyingWithOwner;
+
     class FollowOwner extends Goal {
         FollowOwner() { setFlags(EnumSet.of(Flag.MOVE)); }
         @Override public boolean canUse() {
@@ -161,14 +165,15 @@ public class PartyBotEntity extends PathfinderMob {
             return o != null && !downed() && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 8 * 8;
         }
         @Override public boolean canContinueToUse() { ServerPlayer o = owner(); return o != null && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 4 * 4; }
-        @Override public void stop() { getNavigation().stop(); if (isNoGravity() && !isVehicle()) { setNoGravity(false); } }
+        @Override public void stop() { getNavigation().stop(); flyingWithOwner = false; if (isNoGravity() && !isVehicle()) { setNoGravity(false); } }
         @Override public void tick() {
             ServerPlayer o = owner();
             if (o == null) return;
             boolean ownerFlying = o.getAbilities().flying || o.isFallFlying() || PartyBots.airborne(o);
             if (o.level() != level()) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
             if (ownerFlying) {
-                if (canFly()) { PartyBots.flyToward(PartyBotEntity.this, o); return; }
+                if (canFly()) { flyingWithOwner = true; PartyBots.flyToward(PartyBotEntity.this, o); return; }
+                flyingWithOwner = false;
                 // can't fly: wait on the ground for them to land
                 getNavigation().stop();
                 getLookControl().setLookAt(o);
@@ -294,7 +299,11 @@ public class PartyBotEntity extends PathfinderMob {
         tickEating();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         ServerPlayer o = owner();
-        if (o == null && tickCount > 100 && tickCount % 40 == 0) discard();          // owner gone
+        if (o == null && tickCount > 100 && tickCount % 40 == 0) { if (!journey()) PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }   // owner gone: kept until they're back
+        else if (o != null && o.level() != level() && tickCount % 20 == 0 && !journey()) {   // owner in another world (respawned, portal): follow, or wait
+            if (PartyBots.canFollowTo(character(), o.level())) PartyBots.teleportNear(this, o);
+            else { PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }
+        }
     }
 
     /** Hungry (under 60% health, not fighting): eats food from its bag - a few seconds of chewing, then the food's worth in health. */
@@ -366,6 +375,7 @@ public class PartyBotEntity extends PathfinderMob {
             PartyBots.downed(this);
             return;
         }
+        if (!level().isClientSide && !journey()) PartyBots.checkIn(this, owner());   // (the void, /kill: their things go home first)
         super.die(src);
     }
 
@@ -436,7 +446,7 @@ public class PartyBotEntity extends PathfinderMob {
             fallDistance = 0;
             return;
         }
-        if (isNoGravity() && !isVehicle()) setNoGravity(false);
+        if (isNoGravity() && !isVehicle() && !flyingWithOwner) setNoGravity(false);
         super.travel(input);
     }
 
@@ -491,6 +501,7 @@ public class PartyBotEntity extends PathfinderMob {
         t.putFloat("hp", getHealth());
         t.put("inv", inventory.createTag());
         t.put("armour", armourTag());
+        if (getPersistentData().contains("xw_inv_kept")) t.put("kept", getPersistentData().getCompound("xw_inv_kept"));   // (that character's ender chest and XP)
         return t;
     }
 
@@ -499,5 +510,6 @@ public class PartyBotEntity extends PathfinderMob {
         if (t.contains("inv")) inventory.fromTag(t.getList("inv", 10));
         if (t.contains("armour")) loadArmour(t.getList("armour", 10));
         if (t.contains("hp")) setHealth(Math.max(1F, t.getFloat("hp")));
+        if (t.contains("kept")) getPersistentData().put("xw_inv_kept", t.getCompound("kept"));
     }
 }

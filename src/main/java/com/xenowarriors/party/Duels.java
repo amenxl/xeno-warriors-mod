@@ -424,7 +424,7 @@ public final class Duels {
             boolean someone = false;
             for (ServerPlayer other : server.getPlayerList().getPlayers())
                 if (other != p && other.isAlive() && !isKnockedOut(other) && Parties.sameParty(p, other)) { someone = true; break; }
-            if (!someone) for (ServerPlayer m : Parties.members(p)) for (var b : com.xenowarriors.bot.PartyBots.bots(m)) if (!b.downed() && !b.journey()) { someone = true; break; }
+            if (!someone) for (ServerPlayer m : Parties.members(p)) for (var b : com.xenowarriors.bot.PartyBots.bots(m)) if (!b.downed() && !b.journey() && b.level() == p.level() && b.distanceToSqr(p) < 48 * 48) { someone = true; break; }
             int left = someone ? ALONE_TICKS : e.getValue() - 1;
             e.setValue(left);
             if (left <= 0) {

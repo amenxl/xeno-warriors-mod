@@ -46,7 +46,7 @@ public final class Frozen {
         LivingEntity e = event.getEntity();
         if (e.level().isClientSide) return;
         Hold h = HELD.get(e.getId());
-        if (h == null) return;
+        if (h == null) { if (e.getPersistentData().getBoolean("xw_frozen_nograv")) unhold(e); return; }   // (frozen when it was saved: let it fall again)
         if (h.until <= e.level().getGameTime() || !e.isAlive()) { HELD.remove(e.getId()); unhold(e); return; }
         Vec3 v = e.getDeltaMovement();
         boolean air = e.getPersistentData().getBoolean("xw_frozen_nograv");

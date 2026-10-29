@@ -32,10 +32,10 @@ public final class ReviveCircle {
     /** Someone alive who can revive this downed player, standing in their circle. */
     public static LivingEntity helperFor(ServerPlayer downed) {
         for (ServerPlayer other : downed.server.getPlayerList().getPlayers())
-            if (other != downed && other.isAlive() && !Duels.isKnockedOut(other) && other.level() == downed.level()
-                    && other.distanceTo(downed) < RADIUS && Parties.sameParty(downed, other)) return other;
+            if (other != downed && other.isAlive() && !other.isSpectator() && !Duels.isKnockedOut(other) && other.level() == downed.level()
+                    && other.distanceTo(downed) < RADIUS && other.hasLineOfSight(downed) && Parties.sameParty(downed, other)) return other;
         for (PartyBotEntity b : downed.level().getEntitiesOfClass(PartyBotEntity.class, downed.getBoundingBox().inflate(RADIUS + 1),
-                b -> !b.downed() && !b.journey() && b.distanceTo(downed) < RADIUS && PartyBots.friendly(b, downed))) return b;
+                b -> !b.downed() && !b.journey() && b.distanceTo(downed) < RADIUS && b.hasLineOfSight(downed) && PartyBots.friendly(b, downed))) return b;
         return null;
     }
 
@@ -44,10 +44,10 @@ public final class ReviveCircle {
         ServerPlayer o = downed.owner();
         if (o == null) return null;
         for (ServerPlayer other : o.server.getPlayerList().getPlayers())
-            if (other.isAlive() && !Duels.isKnockedOut(other) && other.level() == downed.level() && other.distanceTo(downed) < RADIUS
-                    && PartyBots.friendly(downed, other)) return other;
+            if (other.isAlive() && !other.isSpectator() && !Duels.isKnockedOut(other) && other.level() == downed.level() && other.distanceTo(downed) < RADIUS
+                    && other.hasLineOfSight(downed) && PartyBots.friendly(downed, other)) return other;
         for (PartyBotEntity b : downed.level().getEntitiesOfClass(PartyBotEntity.class, downed.getBoundingBox().inflate(RADIUS + 1),
-                b -> b != downed && !b.downed() && !b.journey() && b.distanceTo(downed) < RADIUS && PartyBots.friendly(downed, b))) return b;
+                b -> b != downed && !b.downed() && !b.journey() && b.distanceTo(downed) < RADIUS && b.hasLineOfSight(downed) && PartyBots.friendly(downed, b))) return b;
         return null;
     }
 

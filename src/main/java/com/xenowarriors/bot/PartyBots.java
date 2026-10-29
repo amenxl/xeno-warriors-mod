@@ -101,7 +101,7 @@ public final class PartyBots {
             LEFT_BEHIND.clear();
             for (var e : list) {
                 ServerPlayer o = event.getServer().getPlayerList().getPlayer(e.getKey());
-                if (o == null) continue;
+                if (o == null) { LEFT_BEHIND.add(e); continue; }                    // (owner offline: kept for when they're back)
                 CharacterType ct = CharacterType.byId(e.getValue().getString("char"));
                 if (!canFollowTo(ct, o.level())) { LEFT_BEHIND.add(e); continue; }          // (waits outside the Hekublade)
                 if (bots(o).stream().noneMatch(b -> b.character() == ct)) spawn(o, ct, e.getValue());
@@ -245,7 +245,7 @@ public final class PartyBots {
     }
 
     /** A character's things back into its save when a bot leaves. */
-    static void checkIn(PartyBotEntity b, ServerPlayer o) {
+    public static void checkIn(PartyBotEntity b, ServerPlayer o) {
         if (b.journey() || o == null) return;
         com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), b.inventory.createTag(), b.armour(),
                 b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), b.getPersistentData().getCompound("xw_inv_kept"));
@@ -333,7 +333,7 @@ public final class PartyBots {
             if (b.journey()) continue;
             if (!b.downed()) list.add(b.record());
             else checkIn(b, p);
-            FAKES.remove(b.getUUID()); b.discard();
+            forgetFake(b.getUUID()); b.discard();
         }
         CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         persisted.put(STASH, list);
@@ -392,7 +392,7 @@ public final class PartyBots {
         FakePlayer f = FAKES.get(b.getUUID());
         if (f == null || f.level() != s) {
             String name = ("xwbot_" + b.character().getId() + "_" + b.getUUID().toString().substring(0, 4));
-            f = FakePlayerFactory.get(s, new GameProfile(UUID.nameUUIDFromBytes(("xwbot" + b.getUUID()).getBytes()), name.substring(0, Math.min(16, name.length()))));
+            f = FakePlayerFactory.get(s, new GameProfile(UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.character().getId()).getBytes()), name.substring(0, Math.min(16, name.length()))));   // (one per owner + character: the factory's cache stays small)
             FAKES.put(b.getUUID(), f);
             FAKE_TO_BOT.put(f.getUUID(), b.getUUID());
         }
@@ -708,8 +708,9 @@ public final class PartyBots {
             if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) { ItemStack it = b.inventory.removeItemNoUpdate(i); p.getInventory().add(it); if (!it.isEmpty()) p.drop(it, false); }
             else if (!b.downed()) list.add(b.record());
             else checkIn(b, p);
-            FAKES.remove(b.getUUID()); b.discard();
+            forgetFake(b.getUUID()); b.discard();
         }
+        for (var it = LEFT_BEHIND.iterator(); it.hasNext(); ) { var e = it.next(); if (e.getKey().equals(p.getUUID())) { list.add(e.getValue()); it.remove(); } }   // (waiting ones too)
         p.getPersistentData().put(RECORDS, list);
     }
 
@@ -719,6 +720,13 @@ public final class PartyBots {
         ListTag list = p.getPersistentData().getList(RECORDS, 10);
         p.getPersistentData().remove(RECORDS);
         for (int i = 0; i < list.size(); i++) spawn(p, CharacterType.byId(list.getCompound(i).getString("char")), list.getCompound(i));
+        if (!com.xenowarriors.journey.Journey.inLobbyOrRun(p)) unstash(p);      // (a Journey that ended while they were away)
+    }
+
+    @SubscribeEvent
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p && !com.xenowarriors.journey.Journey.inLobbyOrRun(p))
+            com.xenowarriors.skill.ServerScheduler.later(20, () -> { if (p.isAlive() && !com.xenowarriors.journey.Journey.inLobbyOrRun(p)) unstash(p); });
     }
 
     @SubscribeEvent

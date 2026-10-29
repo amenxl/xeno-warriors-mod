@@ -116,6 +116,7 @@ public final class YouRaces {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p)) return;
+        if (!p.isDeadOrDying()) p.getPersistentData().remove("xw_seed_broken");   // (a broken seed that got taken back - downed instead - doesn't carry over)
         if (isSeed(p)) { seedTick(p); return; }
         if (!seedling(p) || p.isCreative() || p.isSpectator()) return;
         CompoundTag t = keep(p);

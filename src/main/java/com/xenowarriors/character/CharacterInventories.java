@@ -76,9 +76,13 @@ public final class CharacterInventories {
     }
 
     /** Put the live character's things away under {@code to}'s key? No: away under the live key, then bring {@code to}'s out. */
-    public static void switchTo(ServerPlayer p, String to) {
+    public static void switchTo(ServerPlayer p, String to) { switchTo(p, "", to); }
+
+    /** {@code current}: the save key of the character they're playing now (whose things they carry if they never switched). */
+    public static void switchTo(ServerPlayer p, String current, String to) {
         if (p instanceof net.minecraftforge.common.util.FakePlayer) return;
         String from = live(p);
+        if (from.isEmpty() && current != null && !current.isEmpty() && !current.equals(com.xenowarriors.character.CharacterType.NONE.getId())) from = current;
         if (from.equals(to)) return;
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) return;        // (a Journey swaps characters for battles; things stay yours)
         CompoundTag root = root(p);
@@ -107,18 +111,52 @@ public final class CharacterInventories {
         CompoundTag t = kept == null ? new CompoundTag() : kept.copy();
         // rebuild the vanilla inventory list: slots 0-35 main, 100-103 armour, 150 offhand
         ListTag list = new ListTag();
-        for (int i = 0; i < inv.size(); i++) {
-            CompoundTag it = inv.getCompound(i);
-            int slot = it.getByte("Slot") & 255;
-            if (slot < 36) list.add(it);
+        for (int i = 0; i < inv.size() && i < 36; i++) {              // (a bot's bag has no slot numbers: number them in order)
+            CompoundTag it = inv.getCompound(i).copy();
+            it.putByte("Slot", (byte) i);
+            list.add(it);
         }
         for (int i = 0; i < 4 && i < armour.length; i++) if (!armour[i].isEmpty()) {
             CompoundTag it = new CompoundTag(); armour[i].save(it); it.putByte("Slot", (byte) (100 + i)); list.add(it);
         }
         if (offhand != null && !offhand.isEmpty()) { CompoundTag it = new CompoundTag(); offhand.save(it); it.putByte("Slot", (byte) 150); list.add(it); }
+        if (key.equals(live(p))) {                                     // they're playing that character now: hand the things over
+            for (int i = 0; i < list.size(); i++) give(p, ItemStack.of(list.getCompound(i)));
+            net.minecraft.world.SimpleContainer ender = new net.minecraft.world.SimpleContainer(27);
+            ender.fromTag(t.getList("ender", net.minecraft.nbt.Tag.TAG_COMPOUND));
+            for (int i = 0; i < ender.getContainerSize(); i++) {
+                ItemStack left = p.getEnderChestInventory().addItem(ender.getItem(i));
+                if (!left.isEmpty()) give(p, left);
+            }
+            if (t.getInt("xp_total") > 0) p.giveExperiencePoints(t.getInt("xp_total"));
+            return;
+        }
+        if (root.contains(key)) {                                      // (a save already there: keep both, nothing is overwritten)
+            CompoundTag old = root.getCompound(key);
+            ListTag merged = old.getList("inv", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            java.util.Set<Integer> used = new java.util.HashSet<>();
+            for (int i = 0; i < merged.size(); i++) used.add(merged.getCompound(i).getByte("Slot") & 255);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundTag it = list.getCompound(i);
+                int slot = it.getByte("Slot") & 255;
+                if (used.contains(slot)) { int free = -1; for (int s = 0; s < 36; s++) if (!used.contains(s)) { free = s; break; }
+                    if (free < 0) { give(p, ItemStack.of(it)); continue; } it.putByte("Slot", (byte) free); slot = free; }
+                used.add(slot); merged.add(it);
+            }
+            t = old; t.put("inv", merged);
+            root.put(key, t);
+            put(p, root);
+            return;
+        }
         t.put("inv", list);
         root.put(key, t);
         put(p, root);
+    }
+
+    /** Into their pockets, or at their feet. */
+    private static void give(ServerPlayer p, ItemStack s) {
+        if (s.isEmpty()) return;
+        if (!p.getInventory().add(s) && !s.isEmpty()) p.drop(s, false);
     }
 
     /** The armour in a save, by EquipmentSlot index (feet, legs, chest, head), and the offhand. */
