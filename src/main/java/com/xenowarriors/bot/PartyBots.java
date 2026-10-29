@@ -311,7 +311,7 @@ public final class PartyBots {
             ItemStack s = b.inventory.getItem(i);
             if (!(s.getItem() instanceof net.minecraft.world.item.ArmorItem ai)) continue;
             ItemStack worn = b.getItemBySlot(ai.getEquipmentSlot());
-            int have = worn.getItem() instanceof net.minecraft.world.item.ArmorItem wa ? wa.getDefense() * 10 + wa.getToughness() : -1;
+            float have = worn.getItem() instanceof net.minecraft.world.item.ArmorItem wa ? wa.getDefense() * 10 + wa.getToughness() : -1F;
             if (ai.getDefense() * 10 + ai.getToughness() > have) {
                 b.setItemSlot(ai.getEquipmentSlot(), s.copyWithCount(1));
                 s.shrink(1);
@@ -543,7 +543,7 @@ public final class PartyBots {
 
     // ---------------------------------------------------------------- right-click menu actions
 
-    static void interact(PartyBotEntity b, ServerPlayer p) {
+    public static void interact(PartyBotEntity b, ServerPlayer p) {
         if (b.journey()) return;
         if (!p.getUUID().equals(b.ownerId()) && !(b.ownerId() != null && Parties.sameParty(p.getUUID(), b.ownerId()))) return;
         if (b.downed()) {
@@ -577,7 +577,7 @@ public final class PartyBots {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
         if (b.journey()) { p.displayClientMessage(Component.literal("Journey teammates just fight - no menu in battle").withStyle(ChatFormatting.GRAY), true); return; }
         switch (action) {
-            case ACT_INVENTORY -> net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> ChestMenu.fourRows(id, inv, b.inventory), b.label()));
+            case ACT_INVENTORY -> net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> new ChestMenu(net.minecraft.world.inventory.MenuType.GENERIC_9x4, id, inv, b.inventory, 4), b.label()));
             case ACT_CARRY -> {                                                   // Rhalix picks them up and flies them
                 if (!com.xenowarriors.character.RhalixWings.out(p) || !com.xenowarriors.character.RhalixFlight.winged(p)) { p.displayClientMessage(Component.literal("You need your wings out to carry someone").withStyle(ChatFormatting.GRAY), true); return; }
                 b.startRiding(p, true);
