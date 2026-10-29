@@ -94,7 +94,7 @@ public final class CharacterManager {
 
     /** Out of spectator mode (a Journey knock-out, say): the client draws you again, so make sure it knows who you are. */
     @SubscribeEvent
-    public static void onGameMode(PlayerEvent.PlayerChangedGameModeEvent event) {
+    public static void onGameMode(net.minecraftforge.event.entity.player.PlayerEvent.PlayerChangeGameModeEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) player.server.execute(() -> syncToTrackingAndSelf(player));
     }
 
