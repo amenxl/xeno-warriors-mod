@@ -73,7 +73,9 @@ public final class PetCare {
         if (p.isSpectator() || p.isCreative()) return;
         long t = p.level().getGameTime();
         for (Mob m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(40),
-                m -> m.isAlive() && m instanceof net.minecraft.world.entity.monster.Enemy && com.xenowarriors.combat.Stagger.boss(m) && ownerOfPet(m) == null)) {
+                m -> m.isAlive() && m instanceof net.minecraft.world.entity.monster.Enemy && com.xenowarriors.combat.Stagger.boss(m) && ownerOfPet(m) == null
+                        && net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(m.getType()) != null
+                        && net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(m.getType()).getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID))) {   // (only this mod's bosses)
             String key = "xw_boss_told_" + p.getUUID();
             if (m.getPersistentData().getLong(key) > t) continue;
             m.getPersistentData().putLong(key, t + 3600);

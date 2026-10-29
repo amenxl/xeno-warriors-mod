@@ -62,7 +62,7 @@ public final class EnemyScaling {
     public static float effective(LivingEntity e) { return Stat.effective(level(e)); }
 
     /** Damage multiplier for the extra things they do (elements, KAs). */
-    public static float damageMult(LivingEntity e) { return (1F + effective(e) * 0.02F) * Math.max(1F, e.getPersistentData().getFloat("xw_dbz_dmg")); }
+    public static float damageMult(LivingEntity e) { return (1F + effective(e) * 0.06F) * Math.max(1F, e.getPersistentData().getFloat("xw_dbz_dmg")); }
 
     private static int playerPower(ServerPlayer p) {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> (d.statLevel[0] + d.statLevel[1] * 2 + d.statLevel[2]) / 4).orElse(0);
@@ -82,9 +82,10 @@ public final class EnemyScaling {
         if (m instanceof com.xenowarriors.npc.SkylanderEntity s && s.guardian()) lvl += 5;
         m.getPersistentData().putInt(LVL, lvl);
         float eff = Stat.effective(lvl);
-        mod(m.getAttribute(Attributes.MAX_HEALTH), HP, eff * 0.035, AttributeModifier.Operation.MULTIPLY_BASE);
-        mod(m.getAttribute(Attributes.ATTACK_DAMAGE), DMG, eff * 0.02, AttributeModifier.Operation.MULTIPLY_BASE);
-        mod(m.getAttribute(Attributes.ARMOR), ARM, Math.min(12, eff * 0.12), AttributeModifier.Operation.ADDITION);
+        // level matters a lot (the user's call): a level-50 enemy has ~6x the health and hits ~4x as hard
+        mod(m.getAttribute(Attributes.MAX_HEALTH), HP, eff * 0.10, AttributeModifier.Operation.MULTIPLY_BASE);
+        mod(m.getAttribute(Attributes.ATTACK_DAMAGE), DMG, eff * 0.06, AttributeModifier.Operation.MULTIPLY_BASE);
+        mod(m.getAttribute(Attributes.ARMOR), ARM, Math.min(20, eff * 0.25), AttributeModifier.Operation.ADDITION);
         // with DragonMineZ, players get far stronger (skills follow Ki/strike damage, health follows Vitality): enemies keep up
         if (near != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) {
             double dm = Math.max(com.xenowarriors.compat.DmzScaling.multiplier(near, true), com.xenowarriors.compat.DmzScaling.multiplier(near, false));
