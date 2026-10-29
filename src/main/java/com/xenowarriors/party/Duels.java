@@ -321,7 +321,8 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDamage(LivingDamageEvent event) {
         if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p) || event.getAmount() < p.getHealth()) return;
-        if (com.xenowarriors.journey.Journey.inRun(p)) return;          // (Journey mode: the next character tags in instead)
+        if (com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;   // (the modes handle their own deaths)
+        if (event.getSource().getEntity() instanceof ServerPlayer k && ModCapabilities.getType(k) == com.xenowarriors.character.CharacterType.MIKIKO && k != p) return;   // (a Mikiko's kill: the blade seals them)
         Duel d = ACTIVE.get(p.getUUID());
         if (d != null && d.fighting()) {
             event.setCanceled(true);
@@ -338,7 +339,7 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
-        if (com.xenowarriors.journey.Journey.inRun(p)) return;          // (Journey mode handles its own knock-outs: no reviving)
+        if (com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;   // (the modes handle their own knock-outs)
         if (ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
             event.setCanceled(true);
             knockOut(p);
@@ -384,7 +385,6 @@ public final class Duels {
                 end(server, d, a == null ? d.b : d.a, "The other player left.");
                 continue;
             }
-            d.ticks++;
             if (d.ticks <= COUNTDOWN && (COUNTDOWN - d.ticks) % 20 == 0) {
                 int n = (COUNTDOWN - d.ticks) / 20;
                 for (ServerPlayer s : new ServerPlayer[]{a, b}) {
@@ -397,6 +397,7 @@ public final class Duels {
                     }
                 }
             }
+            d.ticks++;
             if (a.level() != b.level() || a.distanceTo(b) > MAX_DISTANCE) {
                 end(server, d, null, "You moved too far apart.");
             } else if (d.ticks > MAX_TICKS + COUNTDOWN) {

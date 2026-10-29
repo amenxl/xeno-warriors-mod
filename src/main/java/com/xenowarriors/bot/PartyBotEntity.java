@@ -99,6 +99,7 @@ public class PartyBotEntity extends PathfinderMob {
         super.onRemovedFromWorld();
         PartyBots.track(this, false);
         if (!level().isClientSide && getRemovalReason() == RemovalReason.UNLOADED_TO_CHUNK && ownerId() != null) PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));   // owner teleported far away
+        if (!level().isClientSide && getRemovalReason() != null && getRemovalReason().shouldDestroy()) PartyBots.forgetFake(getUUID());
     }
 
     public CharacterType character() { return CharacterType.byId(entityData.get(CHAR)); }
@@ -334,8 +335,10 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean eating() { return eatTicks >= 0; }
 
     private void pickUpItems() {
+        ServerPlayer own = owner();
+        if (own != null && own.distanceToSqr(this) < 9) return;          // (the owner's own drops are theirs)
         for (ItemEntity it : level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(1.5), ItemEntity::isAlive)) {
-            if (it.hasPickUpDelay()) continue;
+            if (it.hasPickUpDelay() || it.getOwner() instanceof net.minecraft.world.entity.player.Player || it.getAge() < 60) continue;
             ItemStack left = inventory.addItem(it.getItem().copy());
             if (left.isEmpty()) it.discard();
             else { it.setItem(left); PartyBots.notifyFull(this); }

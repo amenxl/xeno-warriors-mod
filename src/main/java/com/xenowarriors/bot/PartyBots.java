@@ -116,7 +116,7 @@ public final class PartyBots {
                 continue;
             }
             list.add(0, new com.xenowarriors.network.PartySyncPacket.Member(p.getUUID(), p.getName().getString(), p.getHealth(), p.getMaxHealth(),
-                    com.xenowarriors.karma.Karma.get(p), com.xenowarriors.karma.Karma.MAX, ModCapabilities.getType(p).ordinal(), false, true,
+                    com.xenowarriors.karma.Karma.get(p), p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.karmaMax).orElse(com.xenowarriors.karma.Karma.MAX), ModCapabilities.getType(p).ordinal(), false, true,
                     p.getX(), p.getY(), p.getZ(), p.level().dimension().location().toString(), false,
                     com.xenowarriors.stats.Stats.characterLevel(p), com.xenowarriors.stats.Stats.progress(p)));
             ModNetwork.sendToPlayer(new com.xenowarriors.network.PartySyncPacket(list), p);
@@ -381,6 +381,12 @@ public final class PartyBots {
 
     // ---------------------------------------------------------------- skills (through a stand-in player)
 
+    /** A bot is gone for good: its stand-in FakePlayer goes with it. */
+    public static void forgetFake(UUID bot) {
+        FakePlayer f = FAKES.remove(bot);
+        if (f != null) FAKE_TO_BOT.remove(f.getUUID());
+    }
+
     private static FakePlayer fake(PartyBotEntity b) {
         ServerLevel s = (ServerLevel) b.level();
         FakePlayer f = FAKES.get(b.getUUID());
@@ -398,6 +404,8 @@ public final class PartyBots {
                 int[] lv = od.getType() == b.character() ? od.statLevel : od.charStats.getCompound(b.character().getId()).getIntArray("lv");
                 for (int i = 0; i < 3; i++) d.statLevel[i] = i < lv.length ? lv[i] : 0;
                 d.loadouts = od.loadouts.copy();
+                d.youSlot = od.youSlot;                                  // (a You owner's bots can use their skills)
+                for (int i = 0; i < d.youSlots.length; i++) d.youSlots[i] = od.youSlots[i].copy();
             });
             d.setKarma(100F);
         });
