@@ -90,10 +90,10 @@ public class CharacterCustomScreen extends Screen {
     // It swoops from one to the next; on opening it starts close and pulls back.
     // {x (fraction of width), feet y (fraction of height), scale (fraction of height), yaw degrees, pitch}
     private static final float[][] CAMS = {
-            {0.25F, 1.13F, 0.52F, 22F, -0.06F},
-            {0.27F, 1.27F, 0.55F, 38F, 0.22F},         // Skills: close, but the whole head stays on screen
+            {0.25F, 1.16F, 0.48F, 22F, -0.06F},        // (room above the head for hoods, ears and hair)
+            {0.27F, 1.30F, 0.50F, 38F, 0.20F},         // Skills: close, but the whole head stays on screen
             {0.25F, 0.95F, 0.41F, -20F, -0.04F},       // Outfits: always the full body, so the whole outfit shows
-            {0.27F, 1.22F, 0.55F, -16F, 0.10F}};
+            {0.27F, 1.24F, 0.50F, -16F, 0.10F}};
     private float[] camFrom = {0.30F, 1.70F, 1.05F, 70F, 0.05F};
     private final float[] camNow = CAMS[0].clone();
     private long camAt = opened;
