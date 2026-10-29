@@ -16,18 +16,19 @@ public class RecarnetBiomeSource extends BiomeSource {
             Biome.CODEC.fieldOf("aurora").forGetter(s -> s.aurora),
             Codec.INT.fieldOf("radius").forGetter(s -> s.radius),
             Biome.CODEC.fieldOf("village").forGetter(s -> s.village),
-            Biome.CODEC.fieldOf("canyon").forGetter(s -> s.canyon)).apply(i, RecarnetBiomeSource::new));
+            Biome.CODEC.fieldOf("canyon").forGetter(s -> s.canyon),
+            Biome.CODEC.optionalFieldOf("distortion").forGetter(s -> java.util.Optional.ofNullable(s.distortion))).apply(i, RecarnetBiomeSource::new));
     private final BiomeSource base;
-    private final Holder<Biome> aurora, village, canyon;
+    private final Holder<Biome> aurora, village, canyon, distortion;
     private final int radius;
 
-    public RecarnetBiomeSource(BiomeSource base, Holder<Biome> aurora, int radius, Holder<Biome> village, Holder<Biome> canyon) {
-        this.base = base; this.aurora = aurora; this.radius = radius; this.village = village; this.canyon = canyon;
+    public RecarnetBiomeSource(BiomeSource base, Holder<Biome> aurora, int radius, Holder<Biome> village, Holder<Biome> canyon, java.util.Optional<Holder<Biome>> distortion) {
+        this.base = base; this.aurora = aurora; this.radius = radius; this.village = village; this.canyon = canyon; this.distortion = distortion.orElse(null);
     }
 
     @Override protected Codec<? extends BiomeSource> codec() { return CODEC; }
 
-    @Override protected Stream<Holder<Biome>> collectPossibleBiomes() { return Stream.concat(base.possibleBiomes().stream(), Stream.of(aurora, village, canyon)); }
+    @Override protected Stream<Holder<Biome>> collectPossibleBiomes() { return Stream.concat(base.possibleBiomes().stream(), distortion == null ? Stream.of(aurora, village, canyon) : Stream.of(aurora, village, canyon, distortion)); }
 
     @Override
     public Holder<Biome> getNoiseBiome(int qx, int qy, int qz, Climate.Sampler sampler) {
@@ -37,6 +38,8 @@ public class RecarnetBiomeSource extends BiomeSource {
         if (vx * vx + vz * vz < (long) (Recarnet.VILLAGE_R + Recarnet.VILLAGE_BLEND + 4) * (Recarnet.VILLAGE_R + Recarnet.VILLAGE_BLEND + 4)) return village;
         long cx = x - Recarnet.CANYON_X, cz = z - Recarnet.CANYON_Z;
         if (cx * cx + cz * cz < (long) Recarnet.CANYON_R * Recarnet.CANYON_R) return canyon;
+        long dx = x - Recarnet.DISTORTION_X, dz = z - Recarnet.DISTORTION_Z;
+        if (distortion != null && dx * dx + dz * dz < (long) Recarnet.DISTORTION_R * Recarnet.DISTORTION_R) return distortion;
         return base.getNoiseBiome(qx, qy, qz, sampler);
     }
 }

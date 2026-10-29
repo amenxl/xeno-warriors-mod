@@ -150,6 +150,7 @@ public final class UiTest {
             return l;
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
+        if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -558,6 +559,33 @@ public final class UiTest {
         l.add(new Step("aura_elements", () -> {}, 3));
         for (int f = 0; f < 12; f++) l.add(new Step(String.format("auragif_elements_%02d", f), () -> {}, 1));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> p.serverLevel().setDayTime(6000)); }, 5));
+    }
+
+    /** The Distortion Field in Recarnet: the purple ground and crystals from the air and up close, with distortions torn open. */
+    private static void distortionBiome(Minecraft mc, List<Step> l) {
+        int x = com.xenowarriors.recarnet.Recarnet.DISTORTION_X, z = com.xenowarriors.recarnet.Recarnet.DISTORTION_Z;
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl != null) { lvl.setDayTime(6000); lvl.getChunk(x >> 4, z >> 4); p.teleportTo(lvl, x + 0.5, 150, z + 0.5, 0F, 90F); }
+        }), 260));
+        l.add(new Step(null, () -> server(p -> {
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl == null) return;
+            var top = lvl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new net.minecraft.core.BlockPos(x, 0, z));
+            p.teleportTo(lvl, x + 0.5, top.getY() + 40, z + 120.5, 180F, 25F);
+        }), 120));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(180F); mc.player.setXRot(25F); }, 20));
+        l.add(new Step("distortion_field_aerial", () -> {}, 5));
+        l.add(new Step(null, () -> server(p -> {
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl == null) return;
+            var top = lvl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new net.minecraft.core.BlockPos(x, 0, z));
+            p.teleportTo(lvl, x + 0.5, top.getY() + 2, z + 0.5, 180F, 5F);
+            for (int i = 0; i < 2; i++) com.xenowarriors.s3.Distortions.open(lvl, p, 1 + i);
+        }), 80));
+        l.add(new Step(null, () -> { mc.player.setYRot(180F); mc.player.setXRot(5F); }, 10));
+        l.add(new Step("distortion_field_ground", () -> {}, 5));
     }
 
     /** A tour of the Mountain Village (Pine Cone City) in the Recarnet dimension: from the air, the square, the farm, the school, the dojo, the outskirts. */

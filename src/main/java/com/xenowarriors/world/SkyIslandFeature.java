@@ -33,6 +33,7 @@ public class SkyIslandFeature extends Feature<NoneFeatureConfiguration> {
 
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+        if (!(ctx.level().getLevel() instanceof net.minecraft.server.level.ServerLevel sl0) || !com.xenowarriors.recarnet.Recarnet.is(sl0)) return false;   // (Recarnet only: nothing of the show's world is built in the overworld)
         WorldGenLevel level = ctx.level();
         RandomSource r = ctx.random();
         BlockPos origin = ctx.origin();

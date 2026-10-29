@@ -12,7 +12,8 @@
    "aurora": "xenowarriors:aurora",
    "radius": 250,
    "village": "xenowarriors:mountain_village",
-   "canyon": "minecraft:badlands"
+   "canyon": "minecraft:badlands",
+   "distortion": "xenowarriors:distortion_field"
   }
  }
 }

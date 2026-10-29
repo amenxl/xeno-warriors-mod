@@ -26,6 +26,11 @@ public final class Recarnet {
     public static final int VILLAGE_X = 0, VILLAGE_Z = -760, VILLAGE_R = 150, VILLAGE_BLEND = 60, VILLAGE_Y = 92;
     /** The desert canyon (badlands) east of Aurora. */
     public static final int CANYON_X = 900, CANYON_Z = 0, CANYON_R = 320;
+    /** The Distortion Field: a purple, crystal-strewn stretch of Recarnet where the world keeps tearing open (Season 3). */
+    public static final int DISTORTION_X = -850, DISTORTION_Z = 650, DISTORTION_R = 240;
+    public static final ResourceKey<net.minecraft.world.level.biome.Biome> DISTORTION_FIELD = ResourceKey.create(Registries.BIOME, XenoWarriors.id("distortion_field"));
+
+    public static boolean inDistortionField(Level l, BlockPos p) { return is(l) && l.getBiome(p).is(DISTORTION_FIELD); }
 
     public static boolean inVillage(net.minecraft.world.level.Level l, BlockPos p) {
         if (!is(l)) return false;

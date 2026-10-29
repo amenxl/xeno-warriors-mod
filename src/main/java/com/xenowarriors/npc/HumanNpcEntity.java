@@ -395,6 +395,7 @@ public class HumanNpcEntity extends PathfinderMob {
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND || possessed()) return super.mobInteract(player, hand);
+        if (skyHater() || raider()) return InteractionResult.PASS;                   // (Sky Haters have nothing to say to you)
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (com.xenowarriors.journey.JourneyGuide.is(this) && player instanceof net.minecraft.server.level.ServerPlayer sp) { com.xenowarriors.journey.JourneyGuide.talk(sp, this); return InteractionResult.SUCCESS; }
         List<HumanNpcEntity> near = level().getEntitiesOfClass(HumanNpcEntity.class, getBoundingBox().inflate(64), h -> h != this && h.carriesSoul() && !h.reported);
