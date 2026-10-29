@@ -92,6 +92,12 @@ public final class CharacterManager {
         if (event.getEntity() instanceof ServerPlayer player) syncToTrackingAndSelf(player);
     }
 
+    /** Out of spectator mode (a Journey knock-out, say): the client draws you again, so make sure it knows who you are. */
+    @SubscribeEvent
+    public static void onGameMode(PlayerEvent.PlayerChangedGameModeEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) player.server.execute(() -> syncToTrackingAndSelf(player));
+    }
+
     /** When a player comes into view of another player, tell the viewer which character they are. */
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {

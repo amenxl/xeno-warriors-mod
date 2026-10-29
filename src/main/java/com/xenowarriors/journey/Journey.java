@@ -367,6 +367,7 @@ public final class Journey {
             if (holder != null) p.sendSystemMessage(msg(holder.getGameProfile().getName() + " is playing " + original.getDisplayName().getString() + " now - pick another character.", ChatFormatting.YELLOW));
             CharacterManager.openSelectScreen(p);
         } else if (ModCapabilities.getType(p) != original) CharacterManager.setCharacter(p, original);
+        else CharacterManager.syncToTrackingAndSelf(p);          // (same character: still tell every client, so armor and looks come back right)
         p.removeAllEffects();
         p.clearFire();
         p.setHealth(p.getMaxHealth());
