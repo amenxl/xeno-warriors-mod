@@ -51,6 +51,7 @@ public final class SkillAnimations {
             case SkillAnimPacket.CAST -> 22; case SkillAnimPacket.SLASH -> 18; case SkillAnimPacket.DASH -> 14; case SkillAnimPacket.SHOOT -> 24;
             case SkillAnimPacket.RAISE -> 30; case SkillAnimPacket.GROUND -> 22; case SkillAnimPacket.TYPE -> 26; case SkillAnimPacket.SWING -> 18;
             case SkillAnimPacket.GUARD -> 24; case SkillAnimPacket.PUNCH -> 14;
+            case SkillAnimPacket.KICK -> 12; case SkillAnimPacket.SPIN_KICK -> 16;
             default -> KISHI_DURATION;
         };
     }
@@ -85,6 +86,8 @@ public final class SkillAnimations {
             case SkillAnimPacket.SHOOT -> shoot(model, t); case SkillAnimPacket.RAISE -> raise(model, t); case SkillAnimPacket.GROUND -> ground(model, t);
             case SkillAnimPacket.TYPE -> typing(model, t); case SkillAnimPacket.SWING -> swing(model, t); case SkillAnimPacket.GUARD -> guard(model, t);
             case SkillAnimPacket.PUNCH -> punch(model, t);
+            case SkillAnimPacket.KICK -> com.xenowarriors.client.mikiko.MikikoAnimations.poseMove(model, com.xenowarriors.client.mikiko.Move.KICK_FRONT, Math.min(1F, t / 12F));
+            case SkillAnimPacket.SPIN_KICK -> com.xenowarriors.client.mikiko.MikikoAnimations.poseMove(model, com.xenowarriors.client.mikiko.Move.KICK_SPIN, Math.min(1F, t / 16F));
             default -> kishi(model, t, anim.airborne());
         }
         return true;
