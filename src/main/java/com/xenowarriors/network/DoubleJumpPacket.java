@@ -21,10 +21,13 @@ public record DoubleJumpPacket() {
 
     public static void handle(DoubleJumpPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
-        if (player == null || ModCapabilities.getType(player) != CharacterType.MIKIKO || player.onGround()) return;
+        CharacterType t = ModCapabilities.getType(player);
+        if (player == null || (t != CharacterType.MIKIKO && t != CharacterType.KAERU) || player.onGround()) return;
         player.fallDistance = 0F;
-        // sound for everyone else (his own client already played it)
-        player.level().playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.ENDER_DRAGON_FLAP,
+        // sound for everyone else (their own client already played it)
+        if (t == CharacterType.KAERU) player.level().playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.NOTE_BLOCK_BASS.value(),
+                SoundSource.PLAYERS, 0.8F, 1.5F);
+        else player.level().playSound(player, player.getX(), player.getY(), player.getZ(), SoundEvents.ENDER_DRAGON_FLAP,
                 SoundSource.PLAYERS, 0.35F, 1.7F);
         ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), new DoubleJumpFxPacket(player.getId()));
     }

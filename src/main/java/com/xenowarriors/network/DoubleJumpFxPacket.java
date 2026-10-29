@@ -19,6 +19,12 @@ public record DoubleJumpFxPacket(int entityId) {
     }
 
     public static void handle(DoubleJumpFxPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MikikoAnimations.onDoubleJump(msg.entityId));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.level != null && mc.level.getEntity(msg.entityId) instanceof net.minecraft.client.player.AbstractClientPlayer p
+                    && com.xenowarriors.client.ClientCharacterData.get(p) == com.xenowarriors.character.CharacterType.KAERU)
+                com.xenowarriors.client.kaeru.KaeruClient.onDoubleJump(msg.entityId);
+            else MikikoAnimations.onDoubleJump(msg.entityId);
+        });
     }
 }

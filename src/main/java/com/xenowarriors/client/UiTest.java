@@ -150,6 +150,7 @@ public final class UiTest {
             return l;
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
+        if ("chars2".equals(System.getenv("XW_UITEST_FOCUS"))) { chars2(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -1836,5 +1837,83 @@ public final class UiTest {
         l.add(new Step("you_demon", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.you.YouRaces.toggleHumanForm(p)), 20));
         l.add(new Step("you_demon_human", () -> {}, 3));
+    }
+
+    /**
+     * The characters batch: Mikiko climbing a ladder (blade on his back, body turning with the look), the Fox PJs after a
+     * character swap and after a death (the Journey armor bug), the Skills tab preview, Kaeru's kicks and her double jump,
+     * and the Skylanders' wings (one pair each).
+     */
+    private static void chars2(Minecraft mc, List<Step> l) {
+        Runnable front = () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(12F); mc.player.setYRot(0F); };
+        // a ladder wall in front of him, then climb it looking off to the side
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(com.xenowarriors.item.ModItems.HEKUBLADE.get()); server(p -> {
+            var c = p.blockPosition().south(1);
+            for (int dy = 0; dy < 6; dy++) {
+                p.serverLevel().setBlock(c.offset(0, dy, 1), net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState(), 3);
+                p.serverLevel().setBlock(c.offset(0, dy, 0), net.minecraft.world.level.block.Blocks.LADDER.defaultBlockState().setValue(net.minecraft.world.level.block.LadderBlock.FACING, net.minecraft.core.Direction.NORTH), 3);
+            }
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.teleportTo(c.getX() + 0.5, c.getY() + 2.0, c.getZ() + 0.3);
+            p.setYRot(60F); p.setXRot(-20F);
+        }); }, 30));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(60F); mc.player.setXRot(-20F); mc.options.keyJump.setDown(true); }, 12));
+        l.add(new Step("chars2_climb", () -> {}, 2));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 6));
+        l.add(new Step("chars2_climb_back", () -> { mc.options.keyJump.setDown(false); }, 2));
+        l.add(new Step(null, () -> server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.teleportTo(p.getX(), p.getY() - 2, p.getZ() - 3); }), 20));
+        // Fox PJs: on, after swapping to Kaeru and back, and after dying and respawning
+        Runnable pjs = () -> server(p -> {
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_HOOD.get()));
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_TOP.get()));
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.FOX_PJS_BOTTOMS.get())); });
+        l.add(new Step(null, () -> { hold(null); pjs.run(); front.run(); }, 25));
+        l.add(new Step("chars2_pjs_before", () -> {}, 3));
+        l.add(new Step(null, () -> { character(CharacterType.KAERU); }, 20));
+        l.add(new Step(null, () -> { character(CharacterType.MIKIKO); }, 25));
+        l.add(new Step("chars2_pjs_after_swap", () -> {}, 3));
+        l.add(new Step(null, () -> server(p -> { p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.getInventory().setItem(9, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.APPLE)); p.hurt(p.damageSources().genericKill(), 1000F); }), 30));
+        l.add(new Step(null, () -> { if (mc.player != null && mc.player.isDeadOrDying()) mc.player.respawn(); if (mc.screen instanceof net.minecraft.client.gui.screens.DeathScreen) mc.player.respawn(); }, 40));
+        l.add(new Step(null, () -> { pjs.run(); front.run(); server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE)); }, 30));
+        l.add(new Step("chars2_pjs_after_death", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)); }, 10));
+        l.add(new Step("chars2_pjs_inventory", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { for (var s : net.minecraft.world.entity.EquipmentSlot.values()) if (s.isArmor()) p.setItemSlot(s, net.minecraft.world.item.ItemStack.EMPTY); }); }, 10));
+        // the Skills tab preview
+        l.add(new Step(null, () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(null), 25));
+        l.add(new Step("chars2_custom_stats", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.testTab(1); }, 25));
+        l.add(new Step("chars2_custom_skills", () -> {}, 3));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.testTab(3); }, 25));
+        l.add(new Step("chars2_custom_ka", () -> {}, 3));
+        // Kaeru: her kicks (a Kaeru bot swinging), and her double jump
+        int[] bot = new int[1];
+        l.add(new Step(null, () -> { mc.setScreen(null); character(CharacterType.KAERU); server(p -> {
+            var b = com.xenowarriors.bot.BotEntities.BOT.get().create(p.serverLevel());
+            if (b == null) return;
+            b.setCharacter(CharacterType.KAERU); b.setNoAi(true);
+            b.moveTo(p.getX() + 1.5, p.getY(), p.getZ() + 3, 180, 0); b.setYHeadRot(180); b.yBodyRot = 180;
+            p.serverLevel().addFreshEntity(b); bot[0] = b.getId();
+            p.setYRot(0); p.setXRot(10);
+        }); }, 30));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(10F); mc.player.setXRot(8F); }, 10));
+        for (int hit = 1; hit <= 4; hit++) {
+            int h = hit;
+            l.add(new Step(null, () -> com.xenowarriors.client.combo.ComboClient.remote(bot[0], com.xenowarriors.combat.ComboStyle.FIST.ordinal(), h, false), 3));
+            l.add(new Step("chars2_kaeru_kick" + h, () -> {}, 1));
+        }
+        l.add(new Step(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, p.getBoundingBox().inflate(16)).forEach(e -> e.discard())), 5));
+        l.add(new Step(null, () -> { front.run(); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); }); }, 10));
+        l.add(new Step(null, () -> { mc.player.jumpFromGround(); }, 6));
+        l.add(new Step(null, () -> { mc.options.keyJump.setDown(true); }, 1));
+        l.add(new Step("chars2_kaeru_doublejump", () -> { mc.options.keyJump.setDown(false); }, 3));
+        l.add(new Step(null, () -> server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE)), 20));
+        // Skylanders' wings: one pair each (front and back)
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LOGAN}) {
+            l.add(new Step(null, () -> { character(t); front.run(); }, 30));
+            l.add(new Step("chars2_wings_" + t.getId() + "_front", () -> {}, 3));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(10F); }, 10));
+            l.add(new Step("chars2_wings_" + t.getId() + "_back", () -> {}, 3));
+        }
     }
 }

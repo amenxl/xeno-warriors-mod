@@ -73,6 +73,9 @@ public class CharacterCustomScreen extends Screen {
     private int tabDir = 1;
     private float pillX = -1, pillW;
 
+    /** UI test: switch tabs. */
+    public void testTab(int t) { setTab(Math.min(t, tabs() - 1)); }
+
     private void setTab(int t) {
         if (t == tab) return;
         camFrom = camNow.clone();
@@ -88,9 +91,9 @@ public class CharacterCustomScreen extends Screen {
     // {x (fraction of width), feet y (fraction of height), scale (fraction of height), yaw degrees, pitch}
     private static final float[][] CAMS = {
             {0.25F, 1.13F, 0.52F, 22F, -0.06F},
-            {0.27F, 1.36F, 0.66F, 38F, 0.30F},
+            {0.27F, 1.27F, 0.55F, 38F, 0.22F},         // Skills: close, but the whole head stays on screen
             {0.25F, 0.95F, 0.41F, -20F, -0.04F},       // Outfits: always the full body, so the whole outfit shows
-            {0.27F, 1.26F, 0.62F, -16F, 0.12F}};
+            {0.27F, 1.22F, 0.55F, -16F, 0.10F}};
     private float[] camFrom = {0.30F, 1.70F, 1.05F, 70F, 0.05F};
     private final float[] camNow = CAMS[0].clone();
     private long camAt = opened;

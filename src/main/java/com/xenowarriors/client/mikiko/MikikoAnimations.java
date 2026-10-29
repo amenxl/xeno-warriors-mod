@@ -313,6 +313,7 @@ public final class MikikoAnimations {
         s.still = moving ? 0 : s.still + 1;
         if (!Hekublade.isBlade(p.getMainHandItem()) || s.move != null || s.swordTired > 0.5F) s.backSlung = false;
         else if (p.isSprinting() && p.onGround() && s.run > 0.35F) s.backSlung = true;
+        else if (p.onClimbable() && !p.onGround()) s.backSlung = true;   // climbing: both hands on the ladder, blade on his back
         else if (s.still >= 4) s.backSlung = false;                 // stood still: back into his hand
         boolean poisoned = POISONED.contains(p.getId()) || (p == Minecraft.getInstance().player
                 && p.hasEffect(net.minecraft.world.effect.MobEffects.POISON));
@@ -524,7 +525,7 @@ public final class MikikoAnimations {
             if (p instanceof net.minecraft.client.player.LocalPlayer lp && ground && (s.hop || move.stamp() || move == Move.TIAO_ZHANG_L)) {
                 // dashing in: a skip (hits 1-2), short stamping steps for the Bajiquan strikes, the big step of Tie Shan Kao
                 double fwd = move == Move.TIE_SHAN_KAO ? 0.5 : s.hop ? 0.42 : move == Move.TIAO_ZHANG_L ? 0.2 : 0.3;
-                double up = s.hop ? 0.2 : 0.04;
+                double up = s.hop ? 0.09 : 0.03;         // (a skip, not a jump)
                 if (lp.getHealth() < lp.getMaxHealth() * 0.5F) fwd *= 1.35;   // wild: lurching in
                 DashGuard.dash(lp, fwd, up);           // (locked on: stops in front of the target, not through it)
             }
@@ -554,7 +555,7 @@ public final class MikikoAnimations {
             s.hop = s.swordStep <= 2 && !flying && p.onGround() && !p.isCrouching();
             if (p instanceof net.minecraft.client.player.LocalPlayer lp && !flying && p.onGround() && !p.isCrouching()
                     && (s.hop || move == Move.BLADE_THRUST)) {
-                double fwd = s.hop ? 0.42 : 0.4, up = s.hop ? 0.2 : 0.08;
+                double fwd = s.hop ? 0.42 : 0.4, up = s.hop ? 0.09 : 0.05;
                 DashGuard.dash(lp, fwd, up);
             }
         } else {

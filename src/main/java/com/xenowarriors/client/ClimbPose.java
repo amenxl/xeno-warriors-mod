@@ -58,6 +58,15 @@ public final class ClimbPose {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (event.phase != TickEvent.Phase.END || p == null || mc.isPaused()) return;
+        // climbing, the body turns with the look instead of staying locked facing one way (vanilla only turns it
+        // once the head is 75 degrees off), so he can look around the ladder without his back staying put
+        for (var o : mc.level.players()) {
+            if (!(o instanceof AbstractClientPlayer cp) || ClientCharacterData.get(cp) == CharacterType.NONE || !climbing(o)) continue;
+            float want = o.getYRot();
+            float d = Mth.wrapDegrees(want - o.yBodyRot);
+            o.yBodyRotO = o.yBodyRot;
+            o.yBodyRot += Mth.clamp(d, -25F, 25F) * 0.5F;
+        }
         boolean up = climbing(p) && ClientCharacterData.getLocal() == CharacterType.MIKIKO && p.getDeltaMovement().y > 0.1
                 && (p.horizontalCollision || p.input.jumping) && !p.isShiftKeyDown();
         if (!up) {

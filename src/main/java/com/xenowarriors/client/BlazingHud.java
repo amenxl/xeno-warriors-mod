@@ -70,13 +70,11 @@ public final class BlazingHud {
         row(g, font, kp, ex - 4, y0 + 15, bw, 5, karma / kmax, 0, sealed > 0 ? 0xFF6A5A70 : kc, 0xFF000000 | darker(kc),
                 sealed > 0 ? "DRAINED " + sealed + "s" : String.valueOf(Math.round(karma)));
         int y = y0 + 30;
-        if (dbz) {
-            row(g, font, "ki", ex + 2, y, bw, 5, DmzHud.ki / Math.max(1F, DmzHud.maxKi), 0, 0xFFFFCD3C, 0xFFB07A10, Math.round(DmzHud.ki) + "/" + Math.round(DmzHud.maxKi));
-            y += 13;
-            row(g, font, "st", ex + 8, y, bw - 10, 3, DmzHud.sta / Math.max(1F, DmzHud.maxSta), 0, 0xFF8CE678, 0xFF3C8A3C, "");
+        if (dbz) {                                                     // (the form line above; KI and ST take the EXP bar's place below)
             String fl = DmzHud.form + "  " + DmzHud.powerRelease + "%";
             KhHud.small(g, font, fl, pcx - font.width(fl) * 0.275F, ey - 6, 0xFFD25A, 0.55F);
-        } else if (com.xenowarriors.client.you.YouClient.sun >= 0) {   // Seedlings: sunlight instead of food
+        }
+        if (com.xenowarriors.client.you.YouClient.sun >= 0) {          // Seedlings: sunlight instead of food
             float sun = com.xenowarriors.client.you.YouClient.sun / (float) com.xenowarriors.you.YouRaces.SUN_MAX;
             row(g, font, "hg", ex + 2, y, bw, 4, sun, 0, sun > 0.15F ? 0xFFFFD040 : 0xFF806020, 0xFFA08A10, "SUN");
         } else if (type != CharacterType.ULTIMA) {                     // (Ultima doesn't get hungry)
@@ -92,10 +90,18 @@ public final class BlazingHud {
         String lv = String.valueOf(LevelHud.level());
         KhHud.small(g, font, lv, plateR - 13 - font.width(lv) * 0.65F, lvY + 1.2F, 0xFFFFFF, 0.65F);
         bub(g, "lv", plateR - 6, lvY - 3, 14);
-        // EXP sits level with the LV plate, just left of it, its bar touching the bubble
         int expB = plateL - 15, expY = lvY;
-        bar(g, expB + 3 - bw, expY + 3, bw, 3, LevelHud.progress(), 0, 0xFFFF9A30, 0xFFA0581A);
-        bub(g, "exp", expB, expY - 2, 13);
+        if (dbz) {
+            // DragonMineZ: KI where the EXP bar was (ST tucked under it); EXP becomes a thin line under the LV plate
+            row(g, font, "ki", expB + 1, expY - 6, bw, 5, DmzHud.ki / Math.max(1F, DmzHud.maxKi), 0, 0xFFFFCD3C, 0xFFB07A10, Math.round(DmzHud.ki) + "/" + Math.round(DmzHud.maxKi));
+            row(g, font, "st", expB + 7, expY + 7, bw - 10, 3, DmzHud.sta / Math.max(1F, DmzHud.maxSta), 0, 0xFF8CE678, 0xFF3C8A3C, "");
+            g.fill(plateL + 1, lvY + 9, plateR - 1, lvY + 10, 0xFF40281A);
+            g.fill(plateL + 1, lvY + 9, plateL + 1 + Math.round((plateR - plateL - 2) * LevelHud.progress()), lvY + 10, 0xFFFF9A30);
+        } else {
+            // EXP sits level with the LV plate, just left of it, its bar touching the bubble
+            bar(g, expB + 3 - bw, expY + 3, bw, 3, LevelHud.progress(), 0, 0xFFFF9A30, 0xFFA0581A);
+            bub(g, "exp", expB, expY - 2, 13);
+        }
         return new int[]{Math.round(pcx - pr), Math.round(pcy - pr), Math.round(pr * 2), Math.min(expB + 3 - bw, ex + 3 - bw), y0 - 4};
     }
 

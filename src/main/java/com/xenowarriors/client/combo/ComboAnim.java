@@ -20,6 +20,8 @@ public final class ComboAnim {
     private static final Move[] HEAVY = {Move.BLADE_DOWN, Move.BLADE_H, Move.BLADE_DOWN};
     private static final Move[] SPEAR = {Move.BLADE_THRUST, Move.BLADE_THRUST, Move.BLADE_H, Move.BLADE_THRUST};
     private static final Move[] TOOL = {Move.BLADE_DOWN, Move.BLADE_H, Move.BLADE_DOWN};
+    /** Kaeru fights with her legs: a jab to open, then front kick, roundhouse, side kick, and a spinning kick to finish. */
+    private static final Move[] KAERU = {Move.JAB_R, Move.KICK_FRONT, Move.KICK_ROUNDHOUSE, Move.KICK_SIDE, Move.KICK_SPIN};
 
     private ComboAnim() {}
 
@@ -53,7 +55,10 @@ public final class ComboAnim {
         if (s == null || ownAnimation(e, s.style())) return;
         float p = s.progress(age);
         if (p < 0F || p > 1F) return;
-        MikikoAnimations.poseMove(m, move(s.style(), s.hit(), s.heavy()), p);
+        boolean kaeru = ((e instanceof AbstractClientPlayer cp && ClientCharacterData.get(cp) == CharacterType.KAERU)
+                || (e instanceof com.xenowarriors.bot.PartyBotEntity b && b.character() == CharacterType.KAERU))
+                && (s.style() == ComboStyle.FIST || s.style() == ComboStyle.MIKIKO);
+        MikikoAnimations.poseMove(m, kaeru ? (s.heavy() ? Move.FLIP_KICK : KAERU[Math.floorMod(s.hit(), KAERU.length)]) : move(s.style(), s.hit(), s.heavy()), p);
         if (s.heavy()) {                                            // a heavy: thrown with the whole body
             float k = (float) Math.sin(Math.min(1F, p) * Math.PI);
             m.body.xRot += 0.25F * k;
