@@ -322,7 +322,7 @@ public final class Duels {
     public static void onDamage(LivingDamageEvent event) {
         if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer p) || event.getAmount() < p.getHealth()) return;
         if (com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;   // (the modes handle their own deaths)
-        if (event.getSource().getEntity() instanceof ServerPlayer k && ModCapabilities.getType(k) == com.xenowarriors.character.CharacterType.MIKIKO && k != p) return;   // (a Mikiko's kill: the blade seals them)
+        if (event.getSource().getEntity() instanceof ServerPlayer k && com.xenowarriors.character.ModCapabilities.getType(k) == com.xenowarriors.character.CharacterType.MIKIKO && k != p) return;   // (a Mikiko's kill: the blade seals them)
         Duel d = ACTIVE.get(p.getUUID());
         if (d != null && d.fighting()) {
             event.setCanceled(true);
