@@ -66,7 +66,7 @@ public class BotPickScreen extends Screen {
     private void toggle(CharacterType t) {
         if (!usable(t)) return;
         if (!picked.remove(t)) {
-            if (picked.size() >= Math.min(2, max)) picked.remove(picked.iterator().next());      // swap out the oldest pick
+            if (picked.size() >= Math.min(3, max)) picked.remove(picked.iterator().next());      // swap out the oldest pick
             picked.add(t);
         }
         confirm.active = !picked.isEmpty();
@@ -93,7 +93,7 @@ public class BotPickScreen extends Screen {
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderBackground(g);
         hover = null;
-        int n = Math.min(2, max);
+        int n = Math.min(3, max);
         g.drawCenteredString(font, title, width / 2, 10, 0xFFFFFF);
         String sub = max <= 0 ? "Your party is full (4 people and bots)" : "Pick up to " + n + " - they join at the level you have them at   (" + picked.size() + "/" + n + " picked)";
         g.drawCenteredString(font, sub, width / 2, 24, max <= 0 ? 0xFF6060 : 0xAAAAAA);

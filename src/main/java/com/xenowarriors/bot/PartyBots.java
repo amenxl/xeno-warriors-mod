@@ -159,7 +159,7 @@ public final class PartyBots {
         List<String> cooling = new ArrayList<>();
         long now = p.level().getGameTime();
         for (CharacterType t : CharacterType.PLAYABLE) if (p.getPersistentData().getLong(REJOIN + t.getId()) > now) cooling.add(t.getId());
-        int free = Math.max(0, Math.min(2, Parties.MAX_SIZE - partySize(p)));
+        int free = Math.max(0, Math.min(MAX_BOTS, Parties.MAX_SIZE - partySize(p)));   // (up to 3: you plus three makes a full party)
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free), p);
     }
 
