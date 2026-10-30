@@ -2270,7 +2270,10 @@ public final class UiTest {
                 if (st[0] == 2) return;
                 if (st[0] == 0) {
                     if (z.getTarget() != p) z.setTarget(p);                   // (vanilla AI drops a target it can't walk to)
-                    if (!z.isAlive() || !com.xenowarriors.ka.Elements.chargingAt(z, p)) { if (ii % 50 == 0) log("skillsclash waiting for the zombie to charge (t" + ii * 2 + ")"); return; }
+                    if (!z.isAlive() || !com.xenowarriors.ka.Elements.chargingAt(z, p)) { if (ii % 50 == 0) log("skillsclash waiting for the zombie to charge (t" + ii * 2 + ") alive=" + z.isAlive() + " removed=" + z.getRemovalReason()
+                            + " target=" + (z.getTarget() == p) + " dist=" + Math.round(z.distanceTo(p)) + " sight=" + z.hasLineOfSight(p) + " el=" + com.xenowarriors.ka.Elements.of(z)
+                            + " karma=" + com.xenowarriors.ka.EnemyKarma.get(z) + " cd=" + (z.getPersistentData().getLong("xw_el_cd") - z.level().getGameTime()) + " diff=" + z.level().getDifficulty()
+                            + " ticks=" + z.tickCount); return; }
                     p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); java.util.Arrays.fill(d.cooldownEnd, 0); });
                     com.xenowarriors.skill.SkillManager.useSkill(p, 1);       // Energy Blast (default slot 2)
                     log("skillsclash cast at a charging zombie (t" + ii * 2 + "): " + com.xenowarriors.ka.Clashes.last);
