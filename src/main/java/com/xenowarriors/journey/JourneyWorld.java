@@ -276,7 +276,7 @@ public final class JourneyWorld {
     }
 
     /** With DragonMineZ: enemies keep up with your DragonMineZ power (bosses too). */
-    static void scale(Mob m, float scale) {
+    public static void scale(Mob m, float scale) {
         m.getPersistentData().putFloat("xw_journey_dmz", scale);
         if (scale <= 1F) return;
         var mh = m.getAttribute(Attributes.MAX_HEALTH);

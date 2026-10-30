@@ -65,6 +65,14 @@ public final class DmzScaling {
         }
     }
 
+    /** How much stronger a group of players' DragonMineZ hits are on average (1 without it, capped at 50). */
+    public static float partyScale(java.util.List<? extends Player> ps) {
+        if (ps.isEmpty()) return 1F;
+        double sum = 0;
+        for (Player p : ps) sum += Math.max(multiplier(p, true), multiplier(p, false));
+        return (float) Math.max(1.0, Math.min(50.0, sum / ps.size()));
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onHurt(LivingHurtEvent event) {
         if (!ready() || !(event.getSource().getEntity() instanceof Player p)) return;

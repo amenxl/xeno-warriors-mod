@@ -808,7 +808,7 @@ public final class Journey {
                     else { m.discard(); continue; }
                 }
                 r.alive.add(m.getUUID());
-                if (!m.getPersistentData().contains("xw_journey_dmz")) JourneyWorld.scale(m, dmzScale(fs));   // (boss helpers that turn up later too)
+                if (!m.getPersistentData().contains("xw_journey_dmz")) JourneyWorld.scale(m, dmzScale(fs, r.diff));   // (boss helpers that turn up later too)
                 if (r.seen.add(m.getUUID())) r.enemyHp += m.getMaxHealth();
                 if (!targets.isEmpty() && (m.getTarget() == null || !targets.contains(m.getTarget())))
                     m.setTarget(targets.get(tl.random.nextInt(targets.size())));
@@ -822,7 +822,7 @@ public final class Journey {
                     r.waves--;
                     r.spawnAt = Long.MAX_VALUE;
                     List<Mob> made;
-                    float dmz = dmzScale(fs);
+                    float dmz = dmzScale(fs, r.diff);
                     if (r.kind() == JourneyRules.BOSS) {
                         made = com.xenowarriors.tower.TowerBosses.spawn(tl, c, JourneyRules.BOSS_FLOOR[r.diff] + 10 * r.stage, fs);
                         for (Mob m : made) { JourneyWorld.bossDifficulty(m, r.diff); JourneyWorld.scale(m, dmz); }
@@ -843,11 +843,9 @@ public final class Journey {
     }
 
     /** With DragonMineZ: how much stronger enemies get, from the fighters' DragonMineZ damage (1 without it). */
-    private static float dmzScale(List<ServerPlayer> fs) {
-        if (fs.isEmpty()) return 1F;
-        double sum = 0;
-        for (ServerPlayer p : fs) sum += Math.max(com.xenowarriors.compat.DmzScaling.multiplier(p, true), com.xenowarriors.compat.DmzScaling.multiplier(p, false));
-        return (float) Math.max(1.0, Math.min(50.0, sum / fs.size()));
+    private static float dmzScale(List<ServerPlayer> fs, int diff) {
+        float s = com.xenowarriors.compat.DmzScaling.partyScale(fs);
+        return 1F + (s - 1F) * JourneyRules.DMZ_PULL[Math.max(0, Math.min(JourneyRules.DMZ_PULL.length - 1, diff))];
     }
 
     private static void fail(MinecraftServer server, Run r, String why) {

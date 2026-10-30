@@ -263,13 +263,20 @@ public final class Tower {
         return true;
     }
 
+    /** With DragonMineZ: enemies keep up with part of your power - about half on the first floors, rising to all of it by floor 50. */
+    private static float dmzPull(List<ServerPlayer> ps, int floor) {
+        float s = com.xenowarriors.compat.DmzScaling.partyScale(ps);
+        return 1F + (s - 1F) * Math.min(1F, 0.5F + floor * 0.01F);
+    }
+
     private static void spawnWave(ServerLevel tl, Run r) {
         int people = r.players.size();
         if (r.bossFloor) {
             List<ServerPlayer> ps = new ArrayList<>();
             for (UUID id : r.players) { ServerPlayer p = tl.getServer().getPlayerList().getPlayer(id); if (p != null && p.level() == tl) ps.add(p); }
             List<Mob> spawned = TowerBosses.spawn(tl, r.center, r.floor, ps);
-            for (Mob m : spawned) r.alive.add(m.getUUID());
+            float dz = dmzPull(ps, r.floor);
+            for (Mob m : spawned) { com.xenowarriors.journey.JourneyWorld.scale(m, dz); r.alive.add(m.getUUID()); }
             if (spawned.isEmpty()) r.bossFloor = false;          // (couldn't make the boss: an ordinary clear, no boss reward)
             return;
         }
@@ -300,6 +307,7 @@ public final class Tower {
             if (r.mod == TowerMod.SWIFT) m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED, -1, 1, false, false));
             m.setHealth(m.getMaxHealth());
             m.getPersistentData().putBoolean("xw_tower", true);
+            com.xenowarriors.journey.JourneyWorld.scale(m, dmzPull(targets, r.floor));
             if (!targets.isEmpty()) m.setTarget(targets.get(rnd.nextInt(targets.size())));
             tl.addFreshEntity(m);
             tl.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 20, .4, .6, .4, .3);

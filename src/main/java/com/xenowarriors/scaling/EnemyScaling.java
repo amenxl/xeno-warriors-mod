@@ -77,6 +77,13 @@ public final class EnemyScaling {
         // spread: 30% weaker, 55% close, 15% tougher
         float roll = r.nextFloat();
         float pull = roll < 0.3F ? 0.35F + r.nextFloat() * 0.3F : roll < 0.85F ? 0.7F + r.nextFloat() * 0.3F : 1.0F + r.nextFloat() * 0.25F;
+        // Journey, Tower and VR enemies are scaled by their mode alone (stacking this on top made Easy impossible, more so with DragonMineZ)
+        var tag = m.getPersistentData();
+        if (tag.getBoolean("xw_journey") || tag.getBoolean("xw_tower") || com.xenowarriors.modes.ModeRules.arena(level)) {
+            tag.putInt(LVL, Math.max(1, pp));
+            ModNetwork.sendToTrackingEntityAndSelf(new EnemyLevelPacket(m.getId(), Math.max(1, pp)), m);
+            return;
+        }
         int lvl = Math.max(0, Math.round(zone * 4 + pp * pull) + r.nextInt(3));
         if (m instanceof com.xenowarriors.corrupted.CSoulBossEntity) lvl += 10 + zone * 2;
         if (m instanceof com.xenowarriors.npc.SkylanderEntity s && s.guardian()) lvl += 5;

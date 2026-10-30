@@ -8,7 +8,9 @@ public final class JourneyRules {
 
     public static final String[] DIFF = {"EASY", "NORMAL", "HARD", "INSANE", "XENO"};
     public static final int[] DIFF_COLOR = {0x5FD05F, 0x50A0FF, 0xFFB040, 0xFF4040, 0xC040FF};
-    static final float[] HP_MULT = {0.7F, 1F, 1.5F, 2.2F, 3.2F}, DMG_MULT = {0.6F, 1F, 1.3F, 1.7F, 2.2F};
+    static final float[] HP_MULT = {0.55F, 0.9F, 1.5F, 2.2F, 3.2F}, DMG_MULT = {0.45F, 0.8F, 1.3F, 1.7F, 2.2F};
+    /** How much of your DragonMineZ power enemies keep up with, by difficulty (Easy lets you outgrow them). */
+    static final float[] DMZ_PULL = {0.45F, 0.7F, 0.9F, 1F, 1.1F};
     /** Money for clearing a journey, per player. */
     public static final long[] REWARD = {600, 1200, 2500, 4500, 8000};
     /** Which Tower boss "floor" each difficulty's final boss is made as (sets the boss and how tough it is). */
