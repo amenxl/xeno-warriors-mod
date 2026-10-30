@@ -59,6 +59,13 @@ def ring(ch, p, ex):
     layer.putalpha(ImageChops.multiply(layer.split()[3], mask))
     big.alpha_composite(layer)
     big.resize((N, N), Image.LANCZOS).save(OUT + f'portrait_{ch}_{ex[1:] if ex else "normal"}.png')
+    # the same face with no rim, filling the whole circle: for the Blazing Wind emblem (its own ring frames it)
+    bare = Image.new('RGBA', (N * K, N * K), (0, 0, 0, 0)); ImageDraw.Draw(bare).ellipse((0, 0, N * K - 1, N * K - 1), fill=(30, 34, 52, 255))
+    q = p.resize((int(N * K * 1.02), int(N * K * 1.02)), Image.NEAREST) if p.width == p.height else p.resize((int(p.width * N * K * 1.02 / max(p.width, p.height)), int(p.height * N * K * 1.02 / max(p.width, p.height))), Image.NEAREST)
+    lay = Image.new('RGBA', bare.size, (0, 0, 0, 0)); lay.paste(q, (int(N * K / 2 - q.width / 2), int(N * K / 2 - q.height / 2)), q)
+    m2 = Image.new('L', bare.size, 0); ImageDraw.Draw(m2).ellipse((0, 0, N * K - 1, N * K - 1), fill=255)
+    lay.putalpha(ImageChops.multiply(lay.split()[3], m2)); bare.alpha_composite(lay)
+    bare.resize((N, N), Image.LANCZOS).save(OUT + f'portrait_{ch}_{ex[1:] if ex else "normal"}_bare.png')
 
 for ch in sys.argv[1:]:
     try:

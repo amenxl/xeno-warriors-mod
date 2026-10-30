@@ -104,6 +104,11 @@ public final class HudFaces {
         return type != CharacterType.NONE && type != CharacterType.YOU;
     }
 
+    /** The same portrait without its own rim (for the Blazing Wind emblem, whose ring frames it). */
+    public static ResourceLocation bare(CharacterType type, String face) {
+        return XenoWarriors.id("textures/gui/hud/portrait_" + type.getId() + "_" + face + "_bare.png");
+    }
+
     public static ResourceLocation texture(CharacterType type, String face) {
         return XenoWarriors.id("textures/gui/hud/portrait_" + type.getId() + "_" + face + ".png");
     }
