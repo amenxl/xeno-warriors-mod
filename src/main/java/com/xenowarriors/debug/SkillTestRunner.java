@@ -77,23 +77,57 @@ public final class SkillTestRunner {
                 skill = SkillPool.inSlot(p, l, 0);
             }
             if (skill == null) { log("skill " + j.who + " slot" + j.slotIndex + " used=false dmg=0 err=no-skill"); return; }
-            Husk target = spawnDummy(p);
-            float before = target.getHealth();
-            long cdBefore = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[slot]).orElse(0L);
-            String err = "";
-            try { SkillManager.useSkill(p, slot); } catch (Throwable e) { err = e + " @ " + (e.getStackTrace().length > 0 ? e.getStackTrace()[0] : ""); }
-            long cdAfter = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[slot]).orElse(0L);
-            boolean used = cdAfter != cdBefore;
-            String id = skill.getId(), errF = err;
+            Husk target = spawnDummy(p, 6);
+            String id = skill.getId();
             int clash = skill.clashColor();
-            ServerScheduler.later(j.ult ? 130 : 60, () -> {
-                float lost = target.isAlive() ? before - target.getHealth() : before;
-                log("skill " + j.who + " " + id + (j.ult ? "(ult)" : "") + " used=" + used + " dmg=" + Math.round(lost * 10) / 10F + " clash=" + (clash >= 0) + " err=" + errF);
-                target.discard();
+            ServerScheduler.later(5, () -> {                       // (after whatever scales mobs on spawning)
+                target.setHealth(target.getMaxHealth());
+                DAMAGE.put(target.getUUID(), 0F);
+                String err = fire(p, slot);
+                boolean used = err == null;
+                double dist = 6;
+                if (!used && err.isEmpty()) {                         // didn't fire at 6 blocks: a close-range move? try up close
+                    target.teleportTo(target.getX(), target.getY(), home(p).z + 2.5); dist = 2.5;
+                    prepareCooldowns(p);
+                    err = fire(p, slot); used = err == null;
+                }
+                String errF = err == null ? "" : err; boolean usedF = used; double distF = dist;
+                ServerScheduler.later(j.ult ? 130 : 60, () -> {
+                    float dealt = DAMAGE.getOrDefault(target.getUUID(), 0F);
+                    DAMAGE.remove(target.getUUID());
+                    log("skill " + j.who + " " + id + (j.ult ? "(ult)" : "") + " used=" + usedF + " dmg=" + Math.round(dealt * 10) / 10F + " dist=" + distF
+                            + " clash=" + (clash >= 0) + " err=" + errF);
+                    target.discard();
+                });
             });
         } catch (Throwable e) {
             log("skill " + j.who + " slot" + j.slotIndex + " used=false dmg=0 err=RUNNER " + e + " @ " + (e.getStackTrace().length > 0 ? e.getStackTrace()[0] : ""));
         }
+    }
+
+    /** Damage the test dummies have taken (after armor/effects). */
+    private static final java.util.Map<java.util.UUID, Float> DAMAGE = new java.util.concurrent.ConcurrentHashMap<>();
+
+    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
+    public static final class Events {
+        @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+        public static void onDamage(net.minecraftforge.event.entity.living.LivingDamageEvent e) {
+            if (DAMAGE.isEmpty()) return;
+            DAMAGE.computeIfPresent(e.getEntity().getUUID(), (k, v) -> v + e.getAmount());
+        }
+    }
+
+    /** Uses the skill in that slot: null if it fired, "" if it didn't, the exception if it threw. */
+    private static String fire(ServerPlayer p, int slot) {
+        long before = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[slot]).orElse(0L);
+        try { SkillManager.useSkill(p, slot); } catch (Throwable e) { return e + " @ " + (e.getStackTrace().length > 0 ? e.getStackTrace()[0] : ""); }
+        long after = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[slot]).orElse(0L);
+        return after != before ? null : "";
+    }
+
+    private static void prepareCooldowns(ServerPlayer p) {
+        SkillManager.resetCooldowns(p);
+        p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); java.util.Arrays.fill(d.cooldownEnd, 0); });
     }
 
     private static void prepare(ServerPlayer p) {
@@ -125,9 +159,9 @@ public final class SkillTestRunner {
         return base;
     }
 
-    private static Husk spawnDummy(ServerPlayer p) {
+    private static Husk spawnDummy(ServerPlayer p, double dist) {
         Husk h = EntityType.HUSK.create(p.serverLevel());
-        Vec3 at = home(p).add(0, 0, 6);
+        Vec3 at = home(p).add(0, 0, dist);
         h.moveTo(at.x, at.y, at.z, 180F, 0F);
         h.setNoAi(true);
         h.setPersistenceRequired();
