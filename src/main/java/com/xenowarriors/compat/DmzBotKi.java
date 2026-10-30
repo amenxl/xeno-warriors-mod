@@ -97,6 +97,16 @@ public final class DmzBotKi {
     /** (For the tests) its techniques are ready again. */
     public static void resetForTest(UUID bot) { Kit k = KITS.get(bot); if (k != null) { k.ready.clear(); k.nextAny = 0; k.charging = false; } }
 
+    /** (For the tests) its DMZ character's ki damage and the ki-attack modifier a player would get. */
+    public static String kiDamageForTest(PartyBotEntity b) {
+        Kit k = KITS.get(b.getUUID());
+        if (k == null || k.stats == null) return "-";
+        StringBuilder sb = new StringBuilder();
+        for (String m : new String[]{"getKiDamage", "getKiAttackDamageModifier"})
+            try { sb.append(m).append('=').append(k.stats.getClass().getMethod(m).invoke(k.stats)).append(' '); } catch (Throwable t) { sb.append(m).append("=? "); }
+        return sb.toString().trim();
+    }
+
     /** A bot is gone: forget its kit. */
     public static void forget(UUID bot) { KITS.remove(bot); }
 
@@ -188,6 +198,7 @@ public final class DmzBotKi {
             final Kit kk = k;
             com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.EL_CHARGE, cast);
             final Object stats = k.stats;
+            for (int i = 1; i < cast; i++) com.xenowarriors.skill.ServerScheduler.later(i, () -> { if (kk.charging && b.isAlive() && target.isAlive()) aim(b, target); });   // (keeps facing it while charging)
             com.xenowarriors.skill.ServerScheduler.later(cast, () -> release(b, target, tech, kk, stats, id));
             return true;
         } catch (Throwable t) { fail(t); return false; }
@@ -199,10 +210,24 @@ public final class DmzBotKi {
         if (target != null && target.isAlive() && target.level() == b.level()) aim(b, target);
         try {
             boolean ok = (Boolean) execute.invoke(null, b, level, tech, stats, 1F);
-            note("release " + id + " ok=" + ok);
+            note("release " + id + " ok=" + ok + " facing " + Math.round(b.getYHeadRot()) + "/" + Math.round(b.getXRot()) + " " + inAir(b));
+            com.xenowarriors.skill.ServerScheduler.later(3, () -> note("after " + id + ": " + inAir(b)));
         } catch (Throwable t) { fail(t); drop(b); return; }
         b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);
+    }
+
+    /** (For the logs) its ki attacks around: kind, firing, which way they point, their damage. */
+    private static String inAir(PartyBotEntity b) {
+        if (!(b.level() instanceof ServerLevel level)) return "";
+        StringBuilder sb = new StringBuilder("[");
+        for (Projectile p : level.getEntitiesOfClass(Projectile.class, b.getBoundingBox().inflate(24), e -> e.getOwner() == b && com.xenowarriors.ka.DmzKi.isKi(e))) {
+            Object dmg = null;
+            try { dmg = p.getClass().getMethod("getKiDamage").invoke(p); } catch (Throwable ignored) {}
+            sb.append(p.getClass().getSimpleName()).append(" firing=").append(firing(p)).append(" rot=").append(Math.round(p.getYRot())).append('/').append(Math.round(p.getXRot()))
+                    .append(" dmg=").append(dmg).append(" at ").append(p.blockPosition().toShortString()).append("; ");
+        }
+        return sb.append(']').toString();
     }
 
     /** Anything it was still charging goes away (it went down mid-cast). */

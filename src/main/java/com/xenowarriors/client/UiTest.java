@@ -2240,7 +2240,7 @@ public final class UiTest {
             if (r == null || z == null) return;
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(2000); z.setHealth(z.getMaxHealth());
             st[2] = p.getHealth();
-            log("dmzbots techniques found: " + com.xenowarriors.compat.DmzBotKi.techniques(r, () -> com.xenowarriors.bot.PartyBots.standIn(r)));
+            log("dmzbots techniques found: " + com.xenowarriors.compat.DmzBotKi.techniques(r, () -> com.xenowarriors.bot.PartyBots.standIn(r)) + " ki damage " + com.xenowarriors.compat.DmzBotKi.kiDamageForTest(r));
             com.xenowarriors.compat.DmzBotKi.LOG.clear();
             r.setTarget(z);
             // watch for 30 s: what the bot throws, its ki attacks in the air, the dummy's and your health
@@ -2261,9 +2261,9 @@ public final class UiTest {
                 var r = (com.xenowarriors.bot.PartyBotEntity) st[0]; var z = (net.minecraft.world.entity.LivingEntity) st[1];
                 if (r == null || z == null) return;
                 net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
-                p.connection.teleport(at.x + 7, at.y + 1, at.z + 5, 90F, 8F);
-                r.moveTo(at.x, at.y, at.z); z.setHealth(z.getMaxHealth());
-                r.setTarget(z);
+                p.connection.teleport(at.x - 8, at.y + 1.5, at.z + 5, -90F, 10F);
+                r.setNoAi(true); r.setTarget(null);                          // (stands still; only the forced throws below)
+                r.moveTo(at.x, at.y, at.z, 0F, 0F); z.setHealth(z.getMaxHealth());
                 com.xenowarriors.compat.DmzBotKi.resetForTest(r.getUUID());
             }); }, 60));
             l.add(new Step(null, () -> server(p -> {
