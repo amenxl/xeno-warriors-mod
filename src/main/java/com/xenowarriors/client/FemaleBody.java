@@ -93,6 +93,9 @@ public final class FemaleBody {
         CubeDeformation outer = def.extend(0.25F);
         jacket.addOrReplaceChild(CHEST, CubeListBuilder.create().texOffs(16, 32).addBox(-4F, 0F, -2F, 8F, 6F, 4F, outer), PartPose.ZERO);
         jacket.addOrReplaceChild(WAIST, CubeListBuilder.create().texOffs(16, 38).addBox(-4F, 0F, -2F, 8F, 6F, 4F, outer), PartPose.offset(0F, 6F, 0F));
+        // the jacket / lab coat over the bust too (otherwise the shirt's bust pokes out through the coat and cuts it off at the chest)
+        jacket.addOrReplaceChild(BUST, CubeListBuilder.create().texOffs(16, 36).addBox(-4F, -1F, -2F, 8F, 2F, 4F,
+                outer.extend(-0.05F, -0.04F, -0.03F)), PartPose.offsetAndRotation(0F, 2.95F, -1.55F, (float) Math.toRadians(64), 0F, 0F));
     }
 
     private static ModelPart child(ModelPart p, String n) { return p.hasChild(n) ? p.getChild(n) : null; }
@@ -107,10 +110,11 @@ public final class FemaleBody {
         chest.visible = f; waist.visible = f; bust.visible = f;
         bust.yScale = 0.92F; bust.zScale = 0.6F;                         // a modest shape: just out past her clothes
         waist.xScale = WAIST_X; waist.zScale = WAIST_Z;
-        ModelPart jc = child(m.jacket, CHEST), jw = child(m.jacket, WAIST);
+        ModelPart jc = child(m.jacket, CHEST), jw = child(m.jacket, WAIST), jb = child(m.jacket, BUST);
         if (jc != null && jw != null) {
             m.jacket.skipDraw = f;
             jc.visible = f; jw.visible = f;
+            if (jb != null) { jb.visible = f; jb.yScale = bust.yScale; jb.zScale = bust.zScale; }
             jw.xScale = WAIST_X; jw.zScale = WAIST_Z;
         }
         float az = f ? ARM_Z : 1F, lz = f ? LEG_Z : 1F;
