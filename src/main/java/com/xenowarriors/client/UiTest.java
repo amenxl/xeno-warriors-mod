@@ -150,7 +150,8 @@ public final class UiTest {
             return l;
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
-        if ("skills".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l); return l; }
+        if ("skills".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l, false); return l; }
+        if ("skillsyou".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l, true); return l; }
         if ("skillsclash".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsClash(mc, l); return l; }
         if ("dmzskillsclash".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzSkillsClash(mc, l); return l; }
         if ("chars2".equals(System.getenv("XW_UITEST_FOCUS"))) { chars2(mc, l); return l; }
@@ -2224,7 +2225,7 @@ public final class UiTest {
     }
 
     /** Every skill of every character on a target dummy: one XW-TEST line each (fired, damage, errors). */
-    private static void skillsAll(Minecraft mc, List<Step> l) {
+    private static void skillsAll(Minecraft mc, List<Step> l, boolean youOnly) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); hold(null); server(p -> {
             p.serverLevel().setDayTime(18000);
             List<com.xenowarriors.you.YouSlot> yous = new java.util.ArrayList<>();
@@ -2236,11 +2237,12 @@ public final class UiTest {
                 var y = new com.xenowarriors.you.YouSlot(); y.name = (String) o[0]; y.race = (com.xenowarriors.character.Race) o[1]; y.element = (com.xenowarriors.ka.Element) o[2];
                 y.form = y.race == com.xenowarriors.character.Race.SKYLANDER ? 1 : 0; yous.add(y);
             }
-            int t = com.xenowarriors.debug.SkillTestRunner.runAll(p, java.util.Arrays.asList(CharacterType.PLAYABLE), yous);
+            int t = youOnly ? com.xenowarriors.debug.SkillTestRunner.runAll(p, java.util.List.of(), yous)
+                    : com.xenowarriors.debug.SkillTestRunner.runAll(p, java.util.Arrays.asList(CharacterType.PLAYABLE), java.util.List.of());
             log("skills queued, ticks=" + t);
         }); }, 40));
-        l.add(new Step("skills_midway", () -> {}, 4000));
-        for (int i = 0; i < 4; i++) l.add(new Step(null, () -> {}, 3000));
+        l.add(new Step("skills_midway", () -> {}, youOnly ? 4000 : 6000));
+        for (int i = 0; i < (youOnly ? 2 : 4); i++) l.add(new Step(null, () -> {}, youOnly ? 2500 : 2700));
         l.add(new Step("skills_done", () -> log("skills test end"), 600));
     }
 

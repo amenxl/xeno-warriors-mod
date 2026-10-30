@@ -54,7 +54,7 @@ public final class SkillTestRunner {
         int t = 0;
         for (Job j : jobs) {
             ServerScheduler.later(t + 1, () -> run(p, j));
-            t += j.setup != null ? 30 : j.ult ? 145 : 75;
+            t += j.setup != null ? 30 : j.ult ? 215 : 110;
         }
         return t;
     }
@@ -92,12 +92,12 @@ public final class SkillTestRunner {
         Husk target = spawnDummy(p, dist);
         String id = skill.getId();
         int clash = skill.clashColor();
-        int wait = j.ult ? 62 : 28;
+        int wait = first ? (j.ult ? 120 : 55) : (j.ult ? 80 : 40);
         ServerScheduler.later(5, () -> {                       // (after whatever scales mobs on spawning)
             target.setHealth(target.getMaxHealth());
             DAMAGE.put(target.getUUID(), 0F);
             String err = fire(p, slot);
-            for (int k = 0; k < 5; k++) ServerScheduler.later(6 + k * 4, () -> { try { SkillManager.useSkill(p, slot); } catch (Throwable ignored) {} });   // (second presses)
+            for (int k = 0; k < 6; k++) ServerScheduler.later(6 + k * 4, () -> { try { SkillManager.useSkill(p, slot); } catch (Throwable ignored) {} });   // (second presses)
             boolean used = err == null;
             String errF = err == null ? "" : err;
             ServerScheduler.later(wait, () -> {
