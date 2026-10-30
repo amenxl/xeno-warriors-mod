@@ -1169,6 +1169,12 @@ public final class Journey {
     }
 
     /** Called by the skill system whenever a skill (or KA / Xeno Blast) goes off. */
+    /** A "No skills" battle is on for this player's run: their AI teammates hold their skills too. */
+    public static boolean noSkills(ServerPlayer p) {
+        Run r = p == null ? null : BY.get(p.getUUID());
+        return r != null && r.phase == BATTLE && r.challenge == Challenge.NO_SKILLS;
+    }
+
     public static void onSkill(ServerPlayer p) {
         Run r = BY.get(p.getUUID());
         if (r == null || r.phase != BATTLE) return;

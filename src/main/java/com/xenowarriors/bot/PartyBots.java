@@ -424,6 +424,7 @@ public final class PartyBots {
     static void trySkill(PartyBotEntity b, LivingEntity target) {
         if (b.sparring() && b.getRandom().nextInt(3) != 0) return;
         if (!b.sparring() && !strong(b, target)) return;                         // save the Karma for enemies that matter
+        if (b.journey() && com.xenowarriors.journey.Journey.noSkills(b.owner())) return;   // ("No skills" battle: teammates fight with basic attacks too)
         double dist = b.distanceTo(target);
         if (dist > 20) return;
         long now = b.level().getGameTime();
@@ -445,7 +446,6 @@ public final class PartyBots {
         f.setOnGround(b.onGround());
         boolean used;
         try { used = skill.use(f); } catch (Throwable t) { used = false; }
-        if (used && b.journey() && b.owner() != null) com.xenowarriors.journey.Journey.onSkill(b.owner());   // (a teammate's skill still breaks "No skills")
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());
