@@ -151,6 +151,7 @@ public final class UiTest {
             return l;
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
+        if ("logangl2".equals(System.getenv("XW_UITEST_FOCUS"))) { loganGl2(mc, l); return l; }
         if ("skills".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l, false); return l; }
         if ("skillsyou".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l, true); return l; }
         if ("skillsclash".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsClash(mc, l); return l; }
@@ -455,6 +456,43 @@ public final class UiTest {
     }
 
     /** The girls' body on everyone, as a row of bots turned to each side (front, 3/4, side, back). */
+    /** Logan's face now, then each Gacha Life 2 face to try (close up and full body). */
+    private static void loganGl2(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); hold(null); server(p -> {
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY, 20 * 600, 0, false, false));
+            p.serverLevel().setDayTime(6000);
+            var b = com.xenowarriors.bot.BotEntities.BOT.get().create(p.serverLevel());
+            if (b == null) return;
+            b.setCharacter(CharacterType.LOGAN); b.setNoAi(true);
+            b.moveTo(p.getX(), p.getY(), p.getZ() + 2.2, 180, 0);
+            b.setYHeadRot(180); b.yBodyRot = 180;
+            p.serverLevel().addFreshEntity(b);
+            p.setYRot(0); p.setXRot(10);
+        }); }, 40));
+        String[] faces = {null, "v1", "v2", "v3", "v4"};
+        for (String f : faces) {
+            String name = f == null ? "before" : f;
+            l.add(new Step(null, () -> {
+                com.xenowarriors.client.render.CharacterDetailLayer.testLoganFace = f == null ? null : com.xenowarriors.XenoWarriors.id("textures/entity/character/logan_gl2_" + f + ".png");
+                mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+                server(p -> { p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(28); p.setYHeadRot(0); });
+                mc.player.setYRot(0); mc.player.setXRot(28);
+            }, 10));
+            l.add(new Step("logangl2_" + name + "_close", () -> {}, 5));
+        }
+        // full body, a step back
+        l.add(new Step(null, () -> server(p -> { p.teleportTo(p.getX(), p.getY(), p.getZ() - 1.6); }), 10));
+        for (String f : faces) {
+            String name = f == null ? "before" : f;
+            l.add(new Step(null, () -> {
+                com.xenowarriors.client.render.CharacterDetailLayer.testLoganFace = f == null ? null : com.xenowarriors.XenoWarriors.id("textures/entity/character/logan_gl2_" + f + ".png");
+                mc.player.setYRot(0); mc.player.setXRot(14);
+            }, 8));
+            l.add(new Step("logangl2_" + name + "_body", () -> {}, 5));
+        }
+        l.add(new Step(null, () -> com.xenowarriors.client.render.CharacterDetailLayer.testLoganFace = null, 2));
+    }
+
     private static void girls(Minecraft mc, List<Step> l) {
         CharacterType[] g = {CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI};
         java.util.List<Integer> ids = new java.util.ArrayList<>();

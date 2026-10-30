@@ -130,7 +130,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     /** The plain face for a character (bots, VR, previews). */
+    /** (UI test) try a face on Logan's bots without changing anything else. */
+    public static net.minecraft.resources.ResourceLocation testLoganFace;
+
     public static net.minecraft.resources.ResourceLocation baseFace(CharacterType type) {
+        if (type == CharacterType.LOGAN && testLoganFace != null) return testLoganFace;
         return drawn(type) ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_drawn_face.png") : type.getFaceTexture();
     }
 
