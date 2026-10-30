@@ -108,6 +108,7 @@ public final class UiTest {
         if ("dmzlist".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzList(mc, l); return l; }
         if ("bladeanchor".equals(System.getenv("XW_UITEST_FOCUS"))) { bladeAnchor(mc, l); return l; }
         if ("dmzjourney".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzJourney(mc, l); return l; }
+        if ("dmzbalance".equals(System.getenv("XW_UITEST_FOCUS")) || "balance".equals(System.getenv("XW_UITEST_FOCUS"))) { balance(mc, l); return l; }
         if ("karmascan".equals(System.getenv("XW_UITEST_FOCUS"))) { karmaScan(mc, l); return l; }
         if ("fullhud".equals(System.getenv("XW_UITEST_FOCUS"))) { fullHud(mc, l); return l; }
         if ("journeyguide".equals(System.getenv("XW_UITEST_FOCUS"))) { journeyGuide(mc, l); return l; }
@@ -2153,6 +2154,71 @@ public final class UiTest {
         l.add(new Step("dmzpc_rhalix_picker", () -> { log("dmzpc screen after Rhalix: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())); server(p -> log("dmzpc Rhalix: " + dmzInfo(p))); }, 3));
         l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.MIKIKO); }, 80));
         l.add(new Step("dmzpc_mikiko_back", () -> { log("dmzpc screen after Mikiko again: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())); server(p -> log("dmzpc Mikiko again: " + dmzInfo(p))); }, 3));
+    }
+
+    /** Journey Easy stage 1 and Tower floor 1 at three DragonMineZ power levels: how many of your hits an enemy takes, and how many of its hits you take. */
+    private static void balance(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); }, 60));
+        boolean dmz = net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
+        int[] powers = dmz ? new int[]{5, 60, 250} : new int[]{0};
+        for (int pw : powers) {
+            l.add(new Step(null, () -> { noDmz(mc); server(p -> {
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                if (dmz) { dmzSet(p, "saiyan"); dmzStats(p, pw); }
+                log("balance power=" + pw + " player maxHp=" + p.getMaxHealth() + " atk=" + p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+                        + " dmz=" + com.xenowarriors.compat.DmzScaling.multiplier(p, true));
+                com.xenowarriors.journey.Journey.open(p);
+                for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.LOGAN})
+                    com.xenowarriors.journey.Journey.action(p, 1, t.ordinal(), 0);
+                com.xenowarriors.journey.Journey.action(p, 2, 0, 0);
+                com.xenowarriors.journey.Journey.action(p, 11, 0, 0);
+                com.xenowarriors.journey.Journey.action(p, 4, 0, 0);
+            }); }, 80));
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.BATTLE)); }, 30));
+            l.add(new Step(null, () -> { noDmz(mc); server(p -> { com.xenowarriors.journey.Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); com.xenowarriors.journey.Journey.action(p, 7, 0, 0); }); }, 110));
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); server(p -> measure(p, "journey-easy power=" + pw, "xw_journey")); }, 10));
+            l.add(new Step("balance_journey_" + pw, () -> {}, 3));
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.journey.Journey.leave(p, "test", true)), 60));
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); server(p -> { if (dmz) dmzStats(p, pw); com.xenowarriors.tower.Tower.enter(p); }); }, 120));
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); server(p -> measure(p, "tower-floor1 power=" + pw, "xw_tower")); }, 10));
+            l.add(new Step("balance_tower_" + pw, () -> {}, 3));
+            l.add(new Step(null, () -> server(p -> com.xenowarriors.tower.Tower.leave(p, "test")), 60));
+        }
+    }
+
+    private static void measure(ServerPlayer p, String what, String flag) {
+        var mobs = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(48), m -> m.isAlive() && m.getPersistentData().getBoolean(flag));
+        log("balance " + what + " enemies=" + mobs.size() + (mobs.isEmpty() ? " (none: phase? at " + p.blockPosition() + ")" : ""));
+        int n = 0;
+        for (var m : mobs) {
+            if (n++ >= 4) break;
+            m.setNoAi(true);
+            float max = m.getMaxHealth();
+            m.setHealth(max); m.invulnerableTime = 0;
+            m.hurt(p.damageSources().playerAttack(p), (float) p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE));
+            float dealt = max - m.getHealth();
+            m.setHealth(max);
+            p.setHealth(p.getMaxHealth()); p.invulnerableTime = 0;
+            float before = p.getHealth();
+            boolean hit = m.doHurtTarget(p);
+            float took = before - p.getHealth();
+            p.setHealth(p.getMaxHealth());
+            log(String.format("balance %s %s hp=%.0f atk=%.1f lvl=%d | you deal %.1f -> %.1f hits to kill | it deals %.1f (hit=%b) -> %.1f hits to down you",
+                    what, net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(m.getType()), max,
+                    m.getAttributes().hasAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) ? m.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) : -1,
+                    com.xenowarriors.scaling.EnemyScaling.level(m), dealt, dealt > 0 ? max / dealt : -1, took, hit, took > 0 ? p.getMaxHealth() / took : -1));
+            m.setNoAi(false);
+        }
+    }
+
+    /** Sets every DragonMineZ stat to this value. */
+    private static void dmzStats(ServerPlayer p, int v) {
+        try {
+            Object d = dmzData(p);
+            Object st = d.getClass().getMethod("getStats").invoke(d);
+            for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"}) st.getClass().getMethod(m, int.class).invoke(st, v);
+            p.setHealth(p.getMaxHealth());
+        } catch (Throwable t) { log("balance dmz stats failed: " + t); }
     }
 
     private static Object dmzData(ServerPlayer p) throws Exception {
