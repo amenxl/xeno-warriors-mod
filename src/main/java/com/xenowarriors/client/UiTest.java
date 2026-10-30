@@ -2301,11 +2301,13 @@ public final class UiTest {
             p.serverLevel().addFreshEntity(z);
             state[0] = z;
         }); }, 20));
-        String[] kinds = {"ki_blast", "ki_wave", "ki_laser"};
+        String[] kinds = {"ki_blast", "ki_wave", "ki_laser", "ki_blast_rev"};
         for (String kind : kinds) {
+            boolean rev = kind.endsWith("_rev");
+            String ent = kind.replace("_rev", "");
             l.add(new Step(null, () -> server(p -> {
                 var z = (net.minecraft.world.entity.LivingEntity) state[0];
-                var type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", kind));
+                var type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", ent));
                 if (type == null || z == null) { log("dmzskillsclash " + kind + ": no entity type"); return; }
                 var e = type.create(p.serverLevel());
                 if (!(e instanceof net.minecraft.world.entity.projectile.Projectile pr)) { log("dmzskillsclash " + kind + ": not a projectile " + e); return; }
@@ -2313,12 +2315,12 @@ public final class UiTest {
                 net.minecraft.world.phys.Vec3 dz = p.getEyePosition().subtract(z.getEyePosition());
                 float yaw = (float) (Math.toDegrees(Math.atan2(dz.z, dz.x)) - 90F);
                 z.setYRot(yaw); z.setYHeadRot(yaw); z.setYBodyRot(yaw); z.setXRot(0F);
-                String setup = kind.equals("ki_blast") ? "setupKiBlast" : kind.equals("ki_wave") ? "setupKiWave" : "setupKiLaser";
-                int n = kind.equals("ki_laser") ? 7 : 8;
+                String setup = ent.equals("ki_blast") ? "setupKiBlast" : ent.equals("ki_wave") ? "setupKiWave" : "setupKiLaser";
+                int n = ent.equals("ki_laser") ? 7 : 8;
                 String how = "?";
                 try {
                     for (var m : e.getClass().getMethods()) if (m.getName().equals(setup) && m.getParameterCount() == n) {
-                        if (n == 8) m.invoke(e, z, 20F, 0.6F, 0xFFE040, 0xFFFFFF, 0xFFA000, 1.2F, 10);
+                        if (n == 8) m.invoke(e, z, 20F, 0.35F, 0xFFE040, 0xFFFFFF, 0xFFA000, 1.2F, 10);
                         else m.invoke(e, z, 20F, 0.6F, 0xFFE040, 0xFFFFFF, 0xFFA000, 10);
                         how = setup; break;
                     }
@@ -2327,16 +2329,22 @@ public final class UiTest {
                 state[1] = pr;
                 com.xenowarriors.ka.Clashes.last = "";
                 log("dmzskillsclash " + kind + " thrown: " + e.getClass().getSimpleName() + " isKi=" + com.xenowarriors.ka.DmzKi.isKi(e) + " via " + how);
-                com.xenowarriors.skill.ServerScheduler.later(12, () -> {
-                    try { e.getClass().getMethod("fireHability", int.class).invoke(e, 80); } catch (Throwable t) { log("dmzskillsclash " + kind + " fire failed " + t); }
-                });
-                com.xenowarriors.skill.ServerScheduler.later(17, () -> {
-                    log("dmzskillsclash " + kind + " alive before cast=" + pr.isAlive() + " at " + Math.round(pr.distanceTo(p)) + " blocks; " + com.xenowarriors.ka.DmzKi.why(p));
+                // it charges for 10 ticks, then DragonMineZ fires it by itself. Normal: you answer the moment it's flying at you.
+                // Reverse ("_rev"): you fire first, it's fired into yours a few ticks later.
+                boolean[] cast = {false};
+                Runnable doCast = () -> {
+                    cast[0] = true;
                     p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(dd -> { dd.setKarma(dd.karmaMax); java.util.Arrays.fill(dd.cooldownEnd, 0); });
                     p.setYRot(0); p.setXRot(0);
                     com.xenowarriors.skill.SkillManager.useSkill(p, 1);    // Energy Blast
-                    log("dmzskillsclash " + kind + " cast: " + com.xenowarriors.ka.Clashes.last + " inClash=" + com.xenowarriors.ka.Clashes.inClash(p));
-                });
+                    log("dmzskillsclash " + kind + " cast at tick " + pr.tickCount + ": " + com.xenowarriors.ka.Clashes.last + " inClash=" + com.xenowarriors.ka.Clashes.inClash(p));
+                };
+                for (int t = 1; t <= 40; t++) { int tt = t; com.xenowarriors.skill.ServerScheduler.later(t, () -> {
+                    if (cast[0] && !rev) { if (tt % 4 == 0 && tt < 30) log("dmzskillsclash " + kind + " t" + tt + " " + com.xenowarriors.ka.Clashes.last); return; }
+                    String why = com.xenowarriors.ka.DmzKi.why(p);
+                    if (tt <= 16 || tt % 4 == 0) log("dmzskillsclash " + kind + " t" + tt + " alive=" + pr.isAlive() + " " + why + " | " + com.xenowarriors.ka.Clashes.last);
+                    if (!cast[0] && (rev ? tt == 6 : why.contains(":ok"))) doCast.run();
+                }); }
                 for (int i = 0; i < 90; i++) com.xenowarriors.skill.ServerScheduler.later(8 + i * 2, () -> { if (com.xenowarriors.ka.Clashes.inClash(p)) com.xenowarriors.ka.Clashes.push(p); });
             }), 30));
             l.add(new Step("dmzskillsclash_" + kind, () -> server(p -> log("dmzskillsclash " + kind + " mid: " + com.xenowarriors.ka.Clashes.last)), 3));
