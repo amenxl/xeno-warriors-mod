@@ -237,6 +237,15 @@ public class PartyBotEntity extends PathfinderMob {
         }
     }
 
+    /** Never a target: souls sealed in a Hekublade (on display in the realm), anything that can't be hurt, the blade's anchor. */
+    public static boolean untouchable(LivingEntity t) {
+        return t != null && (t.getPersistentData().hasUUID("xw_sealed") || t.isInvulnerable() || t.getTags().contains("xw_blade_anchor")
+                || (t.level().dimension() == com.xenowarriors.mikiko.HekubladeRealm.KEY && t instanceof net.minecraft.world.entity.Mob m && m.isNoAi()));
+    }
+
+    @Override
+    public void setTarget(LivingEntity t) { super.setTarget(untouchable(t) ? null : t); }
+
     class BotTargetGoal extends TargetGoal {
         LivingEntity pick;
         BotTargetGoal() { super(PartyBotEntity.this, false); }
@@ -245,10 +254,10 @@ public class PartyBotEntity extends PathfinderMob {
             ServerPlayer o = owner();
             if (o == null) return false;
             if (sparring()) { pick = o; return true; }
-            if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget)) { pick = relayTarget; return true; }
+            if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget) && !untouchable(relayTarget)) { pick = relayTarget; return true; }
             if (mode() == AGGRESSIVE) {
                 pick = level().getNearestEntity(level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(16),
-                        m -> m instanceof Enemy && m.isAlive() && !PartyBots.friendly(PartyBotEntity.this, m) && !m.getTags().contains("xw_blade_anchor")), net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat(),
+                        m -> m instanceof Enemy && m.isAlive() && !PartyBots.friendly(PartyBotEntity.this, m) && !untouchable(m)), net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat(),
                         PartyBotEntity.this, getX(), getY(), getZ());
                 return pick != null;
             }
@@ -257,7 +266,7 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public void start() { setTarget(pick); super.start(); }
         @Override public boolean canContinueToUse() {
             LivingEntity t = getTarget();
-            if (t == null || !t.isAlive() || downed()) return false;
+            if (t == null || !t.isAlive() || downed() || untouchable(t)) return false;
             if (sparring()) return t == owner();
             ServerPlayer o = owner();
             return o != null && t.distanceToSqr(o) < 40 * 40 && !PartyBots.friendly(PartyBotEntity.this, t);
