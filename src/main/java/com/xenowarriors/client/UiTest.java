@@ -2079,7 +2079,7 @@ public final class UiTest {
         // mine mode: iron ore beside you
         l.add(new Step(null, () -> server(p -> {                                  // (right beside the bot, so it's the nearest ore whatever the world has)
             var r = bot(p, CharacterType.RHALIX);
-            net.minecraft.core.BlockPos o = (r == null ? p.blockPosition() : r.blockPosition()).offset(2, 0, 0);
+            net.minecraft.core.BlockPos o = p.blockPosition().offset(2, 0, 2);   // (ore is looked for around you; trees further out)
             p.serverLevel().setBlock(o, net.minecraft.world.level.block.Blocks.IRON_ORE.defaultBlockState(), 3);
             p.serverLevel().setBlock(o.above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
             base[0] = o;
@@ -2088,7 +2088,7 @@ public final class UiTest {
         l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX);
             if (r != null) log("bots3 ore mid: bot at " + r.blockPosition().toShortString() + " owner at " + p.blockPosition().toShortString() + " placed " + base[0].toShortString()
                     + " exposed=" + com.xenowarriors.bot.PartyBots.exposedForTest(r, base[0]) + " would pick " + com.xenowarriors.bot.PartyBots.findOreForTest(r, p));
-            if (r != null) log("bots3 ore mid: mode=" + r.mode() + " target=" + r.getTarget() + " mining=" + r.mineTargetForTest() + " goals=[" + r.goalsForTest() + "] hand=" + id(r.getMainHandItem()) + " dist=" + String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(r.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(base[0]))))); }), 100));
+            if (r != null) log("bots3 ore mid: mode=" + r.mode() + " target=" + r.getTarget() + " mining=" + r.mineTargetForTest() + " goals=[" + r.goalsForTest() + "] hand=" + id(r.getMainHandItem()) + " dist=" + String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(r.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(base[0]))))); }), 200));
         l.add(new Step(null, () -> server(p -> {
             var r = bot(p, CharacterType.RHALIX);
             log("bots3 ore: ore still there=" + p.serverLevel().getBlockState(base[0]).is(net.minecraft.world.level.block.Blocks.IRON_ORE)
