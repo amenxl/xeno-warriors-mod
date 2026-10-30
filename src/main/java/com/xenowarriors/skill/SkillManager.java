@@ -150,7 +150,7 @@ public final class SkillManager {
                 return;
             }
             // a blast aimed at someone charging their own: CLASH instead
-            boolean clash = skill.clashColor() >= 0 && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
+            boolean clash = skill.clashColor() >= 0 && skill.clashesOnUse() && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
             if (clash || skill.use(player)) {
                 com.xenowarriors.journey.Journey.onSkill(player);
                 Integer gen = SkillAnimPacket.GENERIC.get(skill.getId());          // newer skills: a general move to go with them

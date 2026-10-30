@@ -42,13 +42,15 @@ public final class SrSkills {
     static void dashSlash(ServerPlayer p, float dmg, DustParticleOptions trail) {
         Vec3 dir = p.getLookAngle().multiply(1, 0.2, 1).normalize();
         Set<Integer> hit = new HashSet<>();
-        for (int i = 0; i < 6; i++) ServerScheduler.later(i, () -> {
+        Vec3 start = p.position();
+        double reach = com.xenowarriors.skill.sp.SpUtil.pathReach(p, start, dir, 1.6 * 6);
+        for (int i = 0; i < 6; i++) { int ii = i; ServerScheduler.later(i, () -> {
             if (!p.isAlive()) return;
             p.setDeltaMovement(dir.scale(1.6)); p.hurtMarked = true; p.fallDistance = 0;
             p.serverLevel().sendParticles(trail, p.getX(), p.getY() + 1, p.getZ(), 4, 0.2, 0.3, 0.2, 0);
-            for (LivingEntity e : YuriSkills.around(p, p.position().add(0, 1, 0), 2.0))
+            for (LivingEntity e : com.xenowarriors.skill.sp.SpUtil.swept(p, start, dir, Math.min(reach, (ii + 1) * 1.6), 2.0))
                 if (hit.add(e.getId())) { e.hurt(p.damageSources().playerAttack(p), dmg); p.serverLevel().sendParticles(ParticleTypes.SWEEP_ATTACK, e.getX(), e.getY() + 1, e.getZ(), 1, 0, 0, 0, 0); }
-        });
+        }); }
         ServerScheduler.later(6, () -> { p.setDeltaMovement(p.getDeltaMovement().scale(0.2)); p.hurtMarked = true; });
         p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1F, 1.2F);
     }

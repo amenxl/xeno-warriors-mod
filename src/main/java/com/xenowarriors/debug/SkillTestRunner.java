@@ -54,7 +54,7 @@ public final class SkillTestRunner {
         int t = 0;
         for (Job j : jobs) {
             ServerScheduler.later(t + 1, () -> run(p, j));
-            t += j.setup != null ? 30 : j.ult ? 140 : 70;
+            t += j.setup != null ? 30 : j.ult ? 145 : 75;
         }
         return t;
     }
@@ -77,32 +77,43 @@ public final class SkillTestRunner {
                 skill = SkillPool.inSlot(p, l, 0);
             }
             if (skill == null) { log("skill " + j.who + " slot" + j.slotIndex + " used=false dmg=0 err=no-skill"); return; }
-            Husk target = spawnDummy(p, 6);
-            String id = skill.getId();
-            int clash = skill.clashColor();
-            ServerScheduler.later(5, () -> {                       // (after whatever scales mobs on spawning)
-                target.setHealth(target.getMaxHealth());
-                DAMAGE.put(target.getUUID(), 0F);
-                String err = fire(p, slot);
-                boolean used = err == null;
-                double dist = 6;
-                if (!used && err.isEmpty()) {                         // didn't fire at 6 blocks: a close-range move? try up close
-                    target.teleportTo(target.getX(), target.getY(), home(p).z + 2.5); dist = 2.5;
-                    prepareCooldowns(p);
-                    err = fire(p, slot); used = err == null;
-                }
-                String errF = err == null ? "" : err; boolean usedF = used; double distF = dist;
-                ServerScheduler.later(j.ult ? 130 : 60, () -> {
-                    float dealt = DAMAGE.getOrDefault(target.getUUID(), 0F);
-                    DAMAGE.remove(target.getUUID());
-                    log("skill " + j.who + " " + id + (j.ult ? "(ult)" : "") + " used=" + usedF + " dmg=" + Math.round(dealt * 10) / 10F + " dist=" + distF
-                            + " clash=" + (clash >= 0) + " err=" + errF);
-                    target.discard();
-                });
-            });
+            attempt(p, j, skill, slot, 6, true);
         } catch (Throwable e) {
             log("skill " + j.who + " slot" + j.slotIndex + " used=false dmg=0 err=RUNNER " + e + " @ " + (e.getStackTrace().length > 0 ? e.getStackTrace()[0] : ""));
         }
+    }
+
+    /**
+     * One try: a dummy `dist` blocks ahead, the skill used (and pressed again a few times, for skills that fire on a
+     * second press), then the damage counted. A first try at 6 blocks that didn't fire or did no damage is tried again
+     * up close (a melee or close-range move), and both are logged.
+     */
+    private static void attempt(ServerPlayer p, Job j, Skill skill, int slot, double dist, boolean first) {
+        Husk target = spawnDummy(p, dist);
+        String id = skill.getId();
+        int clash = skill.clashColor();
+        int wait = j.ult ? 62 : 28;
+        ServerScheduler.later(5, () -> {                       // (after whatever scales mobs on spawning)
+            target.setHealth(target.getMaxHealth());
+            DAMAGE.put(target.getUUID(), 0F);
+            String err = fire(p, slot);
+            for (int k = 0; k < 5; k++) ServerScheduler.later(6 + k * 4, () -> { try { SkillManager.useSkill(p, slot); } catch (Throwable ignored) {} });   // (second presses)
+            boolean used = err == null;
+            String errF = err == null ? "" : err;
+            ServerScheduler.later(wait, () -> {
+                float dealt = DAMAGE.getOrDefault(target.getUUID(), 0F);
+                DAMAGE.remove(target.getUUID());
+                target.discard();
+                if (first && errF.isEmpty() && (!used || dealt <= 0)) {
+                    log("skill-try " + j.who + " " + id + (j.ult ? "(ult)" : "") + " used=" + used + " dmg=" + Math.round(dealt * 10) / 10F + " dist=" + dist + " -> again up close");
+                    prepare(p);
+                    attempt(p, j, skill, slot, 2.5, false);
+                    return;
+                }
+                log("skill " + j.who + " " + id + (j.ult ? "(ult)" : "") + " used=" + used + " dmg=" + Math.round(dealt * 10) / 10F + " dist=" + dist
+                        + " clash=" + (clash >= 0) + " err=" + errF);
+            });
+        });
     }
 
     /** Damage the test dummies have taken (after armor/effects). */

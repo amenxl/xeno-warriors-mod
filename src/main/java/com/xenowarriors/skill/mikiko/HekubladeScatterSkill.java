@@ -50,6 +50,10 @@ public class HekubladeScatterSkill implements Skill {
             next.surf(player);
             return true;
         }
+        if (com.xenowarriors.ka.Clashes.tryStart(player, clashColor())) {   // fired into someone's charging blast: this blade clashes with it
+            next.discard();
+            return true;
+        }
         next.fire(SkillTargeting.homing(player, 40));
         ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), SkillAnimPacket.BANG, false), player);
         return true;
@@ -72,4 +76,7 @@ public class HekubladeScatterSkill implements Skill {
 
     @Override
     public int clashColor() { return 0xFF3A3A; }
+
+    @Override
+    public boolean clashesOnUse() { return false; }     // (summoning the blades doesn't clash - firing one does)
 }
