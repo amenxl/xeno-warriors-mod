@@ -27,7 +27,7 @@ jobs:
           curl -sfL -A "$UA" "$url" -o dmz.jar
           mkdir out
           unzip -l dmz.jar | grep -E "common/stats|common/network|StatsCapability|StatsData|Character|Sync|Race|Form" | head -400 > out/dmz_classes.txt
-          for c in $(unzip -l dmz.jar | awk '{print $4}' | grep -E "^com/dragonminez/common/(stats|network)/.*\.class$" | grep -v '\$' | sed 's/\.class$//' | head -120); do
+          for c in $(unzip -l dmz.jar | awk '{print $4}' | grep -E "^com/dragonminez/(common/(stats|network)/|.*([Kk]i|[Bb]eam|[Bb]last|[Cc]lash|[Tt]echnique|[Pp]rojectile)[A-Za-z]*\.class$)" | grep -v '\$' | sed 's/\.class$//' | head -260); do
             echo "=== $c" >> out/dmz_javap.txt
             javap -cp dmz.jar -p "${c//\//.}" >> out/dmz_javap.txt 2>&1 || true
           done
