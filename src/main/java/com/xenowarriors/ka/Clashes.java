@@ -218,7 +218,9 @@ public final class Clashes {
         LivingEntity win = result == 1 ? c.a : c.b, lose = result == 1 ? c.b : c.a;
         com.xenowarriors.anim.Poses.play(win, com.xenowarriors.anim.Poses.CLASH_WIN, 30);
         com.xenowarriors.anim.Poses.play(lose, com.xenowarriors.anim.Poses.CLASH_LOSE, 20);
+        float hpBefore = lose.getHealth();
         lose.hurt(win instanceof Player pw ? l.damageSources().playerAttack(pw) : l.damageSources().mobAttack(win), c.dmg * 2F);
+        last += " - " + lose.getName().getString() + " took the hit (" + Math.round(hpBefore) + " -> " + Math.round(lose.getHealth()) + " hp)";
         Vec3 away = lose.position().subtract(win.position()).multiply(1, 0, 1).normalize();
         lose.push(away.x * 1.8, 0.6, away.z * 1.8); lose.hurtMarked = true;
         if (win instanceof ServerPlayer sp) sp.displayClientMessage(Component.literal("You won the clash!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
