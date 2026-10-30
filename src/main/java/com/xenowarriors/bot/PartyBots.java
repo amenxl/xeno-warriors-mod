@@ -247,6 +247,8 @@ public final class PartyBots {
     /** A character's things back into its save when a bot leaves. */
     public static void checkIn(PartyBotEntity b, ServerPlayer o) {
         if (b.journey() || o == null) return;
+        ItemStack held = BotGear.stowHand(b);                                    // (what's in its hand goes home too)
+        if (!held.isEmpty() && !o.getInventory().add(held)) o.drop(held, false);
         com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), b.inventory.createTag(), b.armour(),
                 b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), b.getPersistentData().getCompound("xw_inv_kept"));
         b.inventory.clearContent();
@@ -302,6 +304,12 @@ public final class PartyBots {
 
     public static boolean isDown(LivingEntity e) {
         return e instanceof PartyBotEntity b ? b.downed() : e instanceof ServerPlayer p && com.xenowarriors.party.Duels.isDowned(p);
+    }
+
+    /** A bot's things: armour, offhand, hand and its bag. */
+    public static void openBag(ServerPlayer p, PartyBotEntity b) {
+        net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> new BotMenu(id, inv, b.inventory, new BotMenu.GearContainer(b), b), b.label()),
+                buf -> buf.writeVarInt(b.getId()));
     }
 
     /** Puts on the best armour in its bag (so you can just hand it armour). */
@@ -482,7 +490,8 @@ public final class PartyBots {
         ServerLevel s = (ServerLevel) b.level();
         BlockState st = s.getBlockState(pos);
         if (!isOre(st) || !com.xenowarriors.modes.ModeRules.canGrief(s)) return;
-        List<ItemStack> drops = Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, new ItemStack(Items.DIAMOND_PICKAXE));
+        ItemStack tool = b.getMainHandItem().isCorrectToolForDrops(st) ? b.getMainHandItem() : new ItemStack(Items.DIAMOND_PICKAXE);   // (its own pickaxe - Fortune and all - or its bare Karma)
+        List<ItemStack> drops = Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, tool);
         s.destroyBlock(pos, false, b);
         for (ItemStack d : drops) {
             ItemStack left = b.inventory.addItem(d);
@@ -585,7 +594,7 @@ public final class PartyBots {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
         if (b.journey()) { p.displayClientMessage(Component.literal("Journey teammates just fight - no menu in battle").withStyle(ChatFormatting.GRAY), true); return; }
         switch (action) {
-            case ACT_INVENTORY -> net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> new ChestMenu(net.minecraft.world.inventory.MenuType.GENERIC_9x4, id, inv, b.inventory, 4), b.label()));
+            case ACT_INVENTORY -> openBag(p, b);
             case ACT_CARRY -> {                                                   // Rhalix picks them up and flies them
                 if (!com.xenowarriors.character.RhalixWings.out(p) || !com.xenowarriors.character.RhalixFlight.winged(p)) { p.displayClientMessage(Component.literal("You need your wings out to carry someone").withStyle(ChatFormatting.GRAY), true); return; }
                 b.startRiding(p, true);
