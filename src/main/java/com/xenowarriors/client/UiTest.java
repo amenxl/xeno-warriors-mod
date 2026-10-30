@@ -2249,11 +2249,12 @@ public final class UiTest {
     /** Element clash: a fire-element zombie charges a blast at you, you answer with Ultima's Energy Blast; logged start + outcome. */
     private static void skillsClash(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); hold(null); character(CharacterType.ULTIMA); }, 40));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.debug.SkillTestRunner.arena(p)), 50));   // (a clear stone floor up high; its chunks load first)
         l.add(new Step(null, () -> server(p -> {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4));
             p.serverLevel().setDayTime(18000);
-            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);   // (a clear stone floor up high)
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(at.x, at.y, at.z + 10, 180F, 0F);
             z.getPersistentData().putBoolean("xw_mb_rolled", true);
@@ -2294,6 +2295,7 @@ public final class UiTest {
     private static void dmzSkillsClash(Minecraft mc, List<Step> l) {
         Object[] state = new Object[2];
         l.add(new Step(null, () -> { noToasts(mc); noDmz(mc); mc.setScreen(null); hold(null); character(CharacterType.ULTIMA); }, 60));
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> com.xenowarriors.debug.SkillTestRunner.arena(p)); }, 50));   // (its chunks load first)
         l.add(new Step(null, () -> { noDmz(mc); server(p -> {
             StringBuilder names = new StringBuilder();
             for (var k : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKeys()) if (k.getNamespace().equals("dragonminez")) names.append(k.getPath()).append(' ');
