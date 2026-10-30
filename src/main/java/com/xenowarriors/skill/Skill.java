@@ -33,6 +33,11 @@ public interface Skill {
         return -1;
     }
 
+    /** False for a skill whose first press only gets ready (its blast goes out on a later press - that press clashes instead). */
+    default boolean clashesOnUse() {
+        return true;
+    }
+
     /** Use the skill. Return true if it was used, which starts the cooldown. */
     boolean use(ServerPlayer player);
 

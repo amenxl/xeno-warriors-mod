@@ -219,7 +219,6 @@ public final class YouSkillSet {
         @Override public String getId() { return "you_light"; }
         @Override public int getCooldownTicks() { return 12 * 20; }
         @Override public int getKarmaCost() { return 25; }
-        @Override public int clashColor() { return 0xFFFDE0; }
         @Override public boolean use(ServerPlayer p) {
             LivingEntity t = SkillTargeting.aimed(p, 24, 12);
             if (t == null) return noTarget(p);

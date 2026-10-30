@@ -45,11 +45,23 @@ public final class Clashes {
         final float dmg;
         float pos = 0.5F;
         int ticks, clicksA, clicksB;
+        /** A DragonMineZ ki attack on b's side (held where the blasts meet), and how much stronger it pushes. */
+        net.minecraft.world.entity.Entity kiB;
+        float biasB = 1F;
 
         Clash(LivingEntity a, LivingEntity b, int colorA, int colorB, float dmg) {
             this.a = a; this.b = b; this.colorA = colorA; this.colorB = colorB; this.dmg = dmg;
             anchorA = a.position(); anchorB = b.position();
         }
+    }
+
+    /** What happened last (for the UI tests' logs). */
+    public static String last = "";
+
+    /** This DragonMineZ ki attack is already held in a clash. */
+    static boolean isKiClashing(net.minecraft.world.entity.Entity ki) {
+        for (Clash c : ACTIVE) if (c.kiB == ki) return true;
+        return false;
     }
 
     public static boolean inClash(LivingEntity e) {
@@ -71,6 +83,8 @@ public final class Clashes {
             start(p, e, color, el == null ? 0xFFFFFF : el.color, 12F);
             return true;
         }
+        // a DragonMineZ ki attack coming at them
+        if (DmzKi.tryClash(p, color)) return true;
         // another player who just fired one at them
         long now = level.getGameTime();
         for (ServerPlayer o : level.players()) {
@@ -88,8 +102,21 @@ public final class Clashes {
         return false;
     }
 
+    /** Our player (a) against a DragonMineZ ki attack fired by b (its owner; may be any living thing). */
+    static void startKi(ServerPlayer a, LivingEntity b, net.minecraft.world.entity.Entity ki, int ca, int cb, float dmg, float bias) {
+        Clash c = new Clash(a, b, ca, cb, dmg);
+        c.kiB = ki; c.biasB = bias;
+        ACTIVE.add(c);
+        last = "start " + a.getName().getString() + " vs " + b.getName().getString() + " (DragonMineZ ki, x" + Math.round(bias * 100) / 100F + ")";
+        ServerLevel l = (ServerLevel) a.level();
+        l.playSound(null, a.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.6F, 1.6F);
+        for (LivingEntity e : new LivingEntity[]{a, b})
+            if (e instanceof ServerPlayer sp) sp.sendSystemMessage(Component.literal("CLASH! Mash attack (left click) to push it back!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+    }
+
     private static void start(LivingEntity a, LivingEntity b, int ca, int cb, float dmg) {
         ACTIVE.add(new Clash(a, b, ca, cb, dmg));
+        last = "start " + a.getName().getString() + " vs " + b.getName().getString();
         ServerLevel l = (ServerLevel) a.level();
         l.playSound(null, a.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.6F, 1.6F);
         for (LivingEntity e : new LivingEntity[]{a, b})
@@ -114,7 +141,7 @@ public final class Clashes {
         float stat = 1F + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.ATTACK) * 0.004F;
         if (clicks > 0 && !p.isCreative()) com.xenowarriors.karma.Karma.add(p, -0.6F * clicks);
         boolean karma = com.xenowarriors.karma.Karma.get(p) > 1F || p.isCreative();
-        return clicks * 0.012F * Math.min(2F, stat) * (karma ? 1F : 0.35F);
+        return clicks * 0.03F * Math.min(2F, stat) * (karma ? 1F : 0.35F);   // (~8 clicks a second beats an ordinary mob in about 4 seconds; a karma-heavy boss needs more)
     }
 
     @SubscribeEvent
@@ -127,12 +154,16 @@ public final class Clashes {
             Rooting.hold(c.b, c.anchorB);
             if (c.ticks % 8 == 1) { com.xenowarriors.anim.Poses.play(c.a, com.xenowarriors.anim.Poses.CLASH, 12); com.xenowarriors.anim.Poses.play(c.b, com.xenowarriors.anim.Poses.CLASH, 12); }
             float pa = c.a instanceof ServerPlayer sa ? playerPush(c, sa, c.clicksA) : npcPush(c.a);
-            float pb = c.b instanceof ServerPlayer sb ? playerPush(c, sb, c.clicksB) : npcPush(c.b);
+            float pb = (c.b instanceof ServerPlayer sb ? playerPush(c, sb, c.clicksB) : npcPush(c.b)) * c.biasB;
             c.clicksA = c.clicksB = 0;
             c.pos = Math.max(0F, Math.min(1F, c.pos + pa - pb));
             ServerLevel l = (ServerLevel) c.a.level();
             Vec3 ea = c.a.getEyePosition().subtract(0, 0.3, 0), eb = c.b.getEyePosition().subtract(0, 0.3, 0);
             Vec3 meet = ea.lerp(eb, c.pos);
+            if (c.kiB != null) {                                    // the ki attack is held where the blasts meet
+                if (!c.kiB.isAlive()) { end(c, 1); continue; }     // (it fizzled out: the push wins)
+                DmzKi.hold(c.kiB, meet, c.a);
+            }
             if (c.ticks % 2 == 0) {
                 beam(l, ea, meet, c.colorA);
                 beam(l, eb, meet, c.colorB);
@@ -161,6 +192,8 @@ public final class Clashes {
     /** winner: 1 = a wins, 0 = b wins, 2 = draw, -1 = broken off. */
     private static void end(Clash c, int result) {
         ACTIVE.remove(c);
+        last = "end " + (result == 1 ? c.a.getName().getString() + " won" : result == 0 ? c.b.getName().getString() + " won" : result == 2 ? "draw" : "broken off") + (c.kiB != null ? " (DragonMineZ ki)" : "") + " after " + c.ticks + " ticks";
+        if (c.kiB != null) DmzKi.release(c.kiB);                 // the ki attack is spent either way (the loser takes the hit below)
         ServerLevel l = (ServerLevel) c.a.level();
         for (LivingEntity e : new LivingEntity[]{c.a, c.b}) {
             e.getPersistentData().remove(Rooting.ROOTED_UNTIL);
@@ -185,7 +218,9 @@ public final class Clashes {
         LivingEntity win = result == 1 ? c.a : c.b, lose = result == 1 ? c.b : c.a;
         com.xenowarriors.anim.Poses.play(win, com.xenowarriors.anim.Poses.CLASH_WIN, 30);
         com.xenowarriors.anim.Poses.play(lose, com.xenowarriors.anim.Poses.CLASH_LOSE, 20);
+        float hpBefore = lose.getHealth();
         lose.hurt(win instanceof Player pw ? l.damageSources().playerAttack(pw) : l.damageSources().mobAttack(win), c.dmg * 2F);
+        last += " - " + lose.getName().getString() + " took the hit (" + Math.round(hpBefore) + " -> " + Math.round(lose.getHealth()) + " hp)";
         Vec3 away = lose.position().subtract(win.position()).multiply(1, 0, 1).normalize();
         lose.push(away.x * 1.8, 0.6, away.z * 1.8); lose.hurtMarked = true;
         if (win instanceof ServerPlayer sp) sp.displayClientMessage(Component.literal("You won the clash!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);

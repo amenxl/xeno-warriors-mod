@@ -151,6 +151,10 @@ public final class UiTest {
             return l;
         }
         if ("you".equals(System.getenv("XW_UITEST_FOCUS"))) { youTest(mc, l); return l; }
+        if ("skills".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l, false); return l; }
+        if ("skillsyou".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsAll(mc, l, true); return l; }
+        if ("skillsclash".equals(System.getenv("XW_UITEST_FOCUS"))) { skillsClash(mc, l); return l; }
+        if ("dmzskillsclash".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzSkillsClash(mc, l); return l; }
         if ("chars2".equals(System.getenv("XW_UITEST_FOCUS"))) { chars2(mc, l); return l; }
         if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
@@ -2352,5 +2356,159 @@ public final class UiTest {
         }), 30));
         l.add(new Step(null, LockOn::toggle, 15));
         l.add(new Step(pre + "hud_lockon_boss", () -> log("uisweep lockon target=" + LockOn.target()), 3));
+    }
+
+    /** Every skill of every character on a target dummy: one XW-TEST line each (fired, damage, errors). */
+    private static void skillsAll(Minecraft mc, List<Step> l, boolean youOnly) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); hold(null); server(p -> {
+            p.serverLevel().setDayTime(18000);
+            List<com.xenowarriors.you.YouSlot> yous = new java.util.ArrayList<>();
+            Object[][] spec = {{"FoxKin", com.xenowarriors.character.Race.FOX_KIN, com.xenowarriors.ka.Element.FIRE}, {"Seed", com.xenowarriors.character.Race.SEEDLING, com.xenowarriors.ka.Element.PLANT},
+                    {"Sky", com.xenowarriors.character.Race.SKYLANDER, com.xenowarriors.ka.Element.LIGHTNING}, {"Demon", com.xenowarriors.character.Race.DEMON, com.xenowarriors.ka.Element.SHADOW},
+                    {"Ang", com.xenowarriors.character.Race.ANGEL, com.xenowarriors.ka.Element.LIGHT}, {"YouR", com.xenowarriors.character.Race.YOU, com.xenowarriors.ka.Element.WATER},
+                    {"Hum", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.EARTH}};
+            for (Object[] o : spec) {
+                var y = new com.xenowarriors.you.YouSlot(); y.name = (String) o[0]; y.race = (com.xenowarriors.character.Race) o[1]; y.element = (com.xenowarriors.ka.Element) o[2];
+                y.form = y.race == com.xenowarriors.character.Race.SKYLANDER ? 1 : 0; yous.add(y);
+            }
+            int t = youOnly ? com.xenowarriors.debug.SkillTestRunner.runAll(p, java.util.List.of(), yous)
+                    : com.xenowarriors.debug.SkillTestRunner.runAll(p, java.util.Arrays.asList(CharacterType.PLAYABLE), java.util.List.of());
+            log("skills queued, ticks=" + t);
+        }); }, 40));
+        l.add(new Step("skills_midway", () -> {}, youOnly ? 4000 : 6000));
+        for (int i = 0; i < (youOnly ? 2 : 4); i++) l.add(new Step(null, () -> {}, youOnly ? 2500 : 2700));
+        l.add(new Step("skills_done", () -> log("skills test end"), 600));
+    }
+
+    /** Element clash: a fire-element zombie charges a blast at you, you answer with Ultima's Energy Blast; logged start + outcome. */
+    private static void skillsClash(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); hold(null); character(CharacterType.ULTIMA); }, 40));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.debug.SkillTestRunner.arena(p)), 50));   // (a clear stone floor up high; its chunks load first)
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4));
+            p.serverLevel().setDayTime(18000);
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(at.x, at.y, at.z + 10, 180F, 0F);
+            z.setPersistenceRequired();
+            z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0);
+            p.serverLevel().addFreshEntity(z);
+            com.xenowarriors.ka.Elements.give(z, com.xenowarriors.ka.Element.FIRE);
+            z.setTarget(p);
+            com.xenowarriors.ka.Clashes.last = "";
+            // wait for it to charge, then answer; mash while it lasts (about 10 clicks a second); log how it ends
+            int[] st = {0};      // 0 waiting, 1 cast, 2 done
+            for (int i = 0; i < 450; i++) { int ii = i; com.xenowarriors.skill.ServerScheduler.later(i * 2, () -> {
+                if (st[0] == 2) return;
+                if (st[0] == 0) {
+                    if (z.getTarget() != p) z.setTarget(p);                   // (vanilla AI drops a target it can't walk to)
+                    if (!z.isAlive() || !com.xenowarriors.ka.Elements.chargingAt(z, p)) { if (ii % 50 == 0) log("skillsclash waiting for the zombie to charge (t" + ii * 2 + ") alive=" + z.isAlive() + " removed=" + z.getRemovalReason()
+                            + " target=" + (z.getTarget() == p) + " dist=" + Math.round(z.distanceTo(p)) + " sight=" + z.hasLineOfSight(p) + " el=" + com.xenowarriors.ka.Elements.of(z)
+                            + " karma=" + com.xenowarriors.ka.EnemyKarma.get(z) + " cd=" + (z.getPersistentData().getLong("xw_el_cd") - z.level().getGameTime()) + " diff=" + z.level().getDifficulty()
+                            + " ticks=" + z.tickCount); return; }
+                    p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); java.util.Arrays.fill(d.cooldownEnd, 0); });
+                    com.xenowarriors.skill.SkillManager.useSkill(p, 1);       // Energy Blast (default slot 2)
+                    log("skillsclash cast at a charging zombie (t" + ii * 2 + "): " + com.xenowarriors.ka.Clashes.last);
+                    st[0] = 1; return;
+                }
+                if (com.xenowarriors.ka.Clashes.inClash(p)) com.xenowarriors.ka.Clashes.push(p);
+                else { st[0] = 2; log("skillsclash result: " + com.xenowarriors.ka.Clashes.last + " zombieHp=" + z.getHealth() + "/" + z.getMaxHealth()); }
+            }); }
+        }), 60));
+        l.add(new Step("skillsclash_mid", () -> server(p -> log("skillsclash mid: " + com.xenowarriors.ka.Clashes.last + " inClash=" + com.xenowarriors.ka.Clashes.inClash(p))), 200));
+        l.add(new Step("skillsclash_end", () -> server(p -> log("skillsclash end: " + com.xenowarriors.ka.Clashes.last)), 700));
+        // bots: a clashing skill from a bot goes through the same check
+        l.add(new Step(null, () -> server(p -> {
+            StringBuilder sb = new StringBuilder();
+            for (CharacterType t : CharacterType.PLAYABLE) for (var e : com.xenowarriors.skill.SkillPool.of(t)) if (e.skill().clashColor() >= 0) sb.append(t.getId()).append(':').append(e.skill().getId()).append(' ');
+            for (CharacterType t : CharacterType.PLAYABLE) { var u = com.xenowarriors.skill.SkillPool.ultimate(t); if (u != null && u.clashColor() >= 0) sb.append(t.getId()).append(":").append(u.getId()).append("(ult) "); }
+            log("skillsclash clashable: " + sb);
+        }), 5));
+    }
+
+    /** DragonMineZ: a ki blast thrown at you, answered with Ultima's Energy Blast - they clash; logged start + outcome. */
+    private static void dmzSkillsClash(Minecraft mc, List<Step> l) {
+        Object[] state = new Object[2];
+        l.add(new Step(null, () -> { noToasts(mc); noDmz(mc); mc.setScreen(null); hold(null); character(CharacterType.ULTIMA); }, 60));
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> { com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p); com.xenowarriors.debug.SkillTestRunner.arena(p); }); }, 50));   // (its chunks load first; no DMZ creation menu pausing the game)
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> {
+            StringBuilder names = new StringBuilder();
+            for (var k : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKeys()) if (k.getNamespace().equals("dragonminez")) names.append(k.getPath()).append(' ');
+            log("dmzskillsclash entity types: " + names);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4));
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);   // (a clear stone floor up high)
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(at.x, at.y, at.z + 14, 180F, 0F);
+            z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true); z.setPersistenceRequired();
+            z.setCustomName(net.minecraft.network.chat.Component.literal("Ki Thrower"));
+            p.serverLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, p.server);
+            z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200); z.setHealth(200);
+            p.serverLevel().setDayTime(18000);
+            p.serverLevel().addFreshEntity(z);
+            state[0] = z;
+        }); }, 20));
+        String[] kinds = {"ki_blast", "ki_wave", "ki_laser", "ki_blast_rev"};
+        for (String kind : kinds) {
+            boolean rev = kind.endsWith("_rev");
+            String ent = kind.replace("_rev", "");
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); }, 5));     // (a menu open pauses the game)
+            l.add(new Step(null, () -> server(p -> {
+                var z = (net.minecraft.world.entity.LivingEntity) state[0];
+                var type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", ent));
+                if (type == null || z == null) { log("dmzskillsclash " + kind + ": no entity type"); return; }
+                var e = type.create(p.serverLevel());
+                if (!(e instanceof net.minecraft.world.entity.projectile.Projectile pr)) { log("dmzskillsclash " + kind + ": not a projectile " + e); return; }
+                // the zombie looks at you and throws it the way DragonMineZ's own fighters do: set up (charging), then fired
+                net.minecraft.world.phys.Vec3 dz = p.getEyePosition().subtract(z.getEyePosition());
+                float yaw = (float) (Math.toDegrees(Math.atan2(dz.z, dz.x)) - 90F);
+                z.setYRot(yaw); z.setYHeadRot(yaw); z.setYBodyRot(yaw); z.setXRot(0F);
+                String setup = ent.equals("ki_blast") ? "setupKiBlast" : ent.equals("ki_wave") ? "setupKiWave" : "setupKiLaser";
+                int n = ent.equals("ki_laser") ? 7 : 8;
+                String how = "?";
+                try {
+                    for (var m : e.getClass().getMethods()) if (m.getName().equals(setup) && m.getParameterCount() == n) {
+                        if (n == 8) m.invoke(e, z, 20F, 0.35F, 0xFFE040, 0xFFFFFF, 0xFFA000, 1.2F, 10);
+                        else m.invoke(e, z, 20F, 0.6F, 0xFFE040, 0xFFFFFF, 0xFFA000, 10);
+                        how = setup; break;
+                    }
+                } catch (Throwable t) { how = "setup failed " + t; }
+                if (!e.isAddedToWorld() && p.serverLevel().getEntity(e.getUUID()) == null) p.serverLevel().addFreshEntity(pr);
+                state[1] = pr;
+                com.xenowarriors.ka.Clashes.last = "";
+                log("dmzskillsclash " + kind + " thrown: " + e.getClass().getSimpleName() + " isKi=" + com.xenowarriors.ka.DmzKi.isKi(e) + " via " + how);
+                // it charges for 10 ticks, then DragonMineZ fires it by itself. Normal: you answer the moment it's flying at you.
+                // Reverse ("_rev"): you fire first, it's fired into yours a few ticks later.
+                boolean[] cast = {false};
+                Runnable doCast = () -> {
+                    cast[0] = true;
+                    p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(dd -> { dd.setKarma(dd.karmaMax); java.util.Arrays.fill(dd.cooldownEnd, 0); });
+                    p.setYRot(0); p.setXRot(0);
+                    com.xenowarriors.skill.SkillManager.useSkill(p, 1);    // Energy Blast
+                    log("dmzskillsclash " + kind + " cast at tick " + pr.tickCount + ": " + com.xenowarriors.ka.Clashes.last + " inClash=" + com.xenowarriors.ka.Clashes.inClash(p));
+                };
+                for (int t = 1; t <= 40; t++) { int tt = t; com.xenowarriors.skill.ServerScheduler.later(t, () -> {
+                    if (cast[0] && !rev) { if (tt % 4 == 0 && tt < 30) log("dmzskillsclash " + kind + " t" + tt + " " + com.xenowarriors.ka.Clashes.last); return; }
+                    String why = com.xenowarriors.ka.DmzKi.why(p);
+                    if (tt <= 16 || tt % 4 == 0) log("dmzskillsclash " + kind + " t" + tt + " alive=" + pr.isAlive() + " " + why + " | " + com.xenowarriors.ka.Clashes.last);
+                    if (!cast[0] && (rev ? tt == 6 : why.contains(":ok"))) doCast.run();
+                }); }
+                for (int i = 0; i < 90; i++) com.xenowarriors.skill.ServerScheduler.later(8 + i * 2, () -> { if (com.xenowarriors.ka.Clashes.inClash(p)) com.xenowarriors.ka.Clashes.push(p); });
+            }), 30));
+            l.add(new Step(null, () -> noDmz(mc), 1));
+            l.add(new Step("dmzskillsclash_" + kind, () -> server(p -> log("dmzskillsclash " + kind + " mid: " + com.xenowarriors.ka.Clashes.last)), 220));
+            l.add(new Step(null, () -> server(p -> {
+                log("dmzskillsclash " + kind + " result: " + com.xenowarriors.ka.Clashes.last + " zombieHp=" + (state[0] instanceof net.minecraft.world.entity.LivingEntity z ? z.getHealth() : -1));
+                var z = (net.minecraft.world.entity.LivingEntity) state[0];
+                if (z != null && z.isAlive()) z.setHealth(z.getMaxHealth());
+                p.setHealth(p.getMaxHealth());
+                net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+                if (z != null && z.isAlive()) { z.teleportTo(at.x, at.y, at.z + 14); z.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); }
+            }), 20));
+        }
     }
 }
