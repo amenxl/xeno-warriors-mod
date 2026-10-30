@@ -464,7 +464,7 @@ public final class UiTest {
             var b = com.xenowarriors.bot.BotEntities.BOT.get().create(p.serverLevel());
             if (b == null) return;
             b.setCharacter(CharacterType.LOGAN); b.setNoAi(true);
-            b.moveTo(p.getX(), p.getY(), p.getZ() + 2.2, 180, 0);
+            b.moveTo(p.getX(), p.getY(), p.getZ() + 1.6, 180, 0);
             b.setYHeadRot(180); b.yBodyRot = 180;
             p.serverLevel().addFreshEntity(b);
             p.setYRot(0); p.setXRot(10);
@@ -475,13 +475,13 @@ public final class UiTest {
             l.add(new Step(null, () -> {
                 com.xenowarriors.client.render.CharacterDetailLayer.testLoganFace = f == null ? null : com.xenowarriors.XenoWarriors.id("textures/entity/character/logan_gl2_" + f + ".png");
                 mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
-                server(p -> { p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(28); p.setYHeadRot(0); });
-                mc.player.setYRot(0); mc.player.setXRot(28);
+                server(p -> { p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(2); p.setYHeadRot(0); });
+                mc.player.setYRot(0); mc.player.setXRot(2);
             }, 10));
             l.add(new Step("logangl2_" + name + "_close", () -> {}, 5));
         }
         // full body, a step back
-        l.add(new Step(null, () -> server(p -> { p.teleportTo(p.getX(), p.getY(), p.getZ() - 1.6); }), 10));
+        l.add(new Step(null, () -> server(p -> { p.teleportTo(p.getX(), p.getY(), p.getZ() - 2.0); }), 10));
         for (String f : faces) {
             String name = f == null ? "before" : f;
             l.add(new Step(null, () -> {
