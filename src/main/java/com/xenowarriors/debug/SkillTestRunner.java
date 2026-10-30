@@ -169,7 +169,8 @@ public final class SkillTestRunner {
 
     private static Vec3 home(ServerPlayer p) {
         if (base == null) {
-            net.minecraft.core.BlockPos b = new net.minecraft.core.BlockPos(3000, 120, 3000);
+            // right where the player is (its chunks are loaded and ticking already), lifted clear of the ground
+            net.minecraft.core.BlockPos b = p.blockPosition().above(6);
             for (int x = -12; x <= 12; x++) for (int z = -6; z <= 30; z++) {
                 p.serverLevel().setBlock(b.offset(x, -1, z), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 2);
                 for (int y = 0; y < 8; y++) p.serverLevel().setBlock(b.offset(x, y, z), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
@@ -187,6 +188,7 @@ public final class SkillTestRunner {
         h.setPersistenceRequired();
         h.getPersistentData().putBoolean("xw_mb_rolled", true);
         h.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);
+        h.setYRot(180F); h.setYHeadRot(180F);
         p.serverLevel().addFreshEntity(h);
         for (var m : new ArrayList<>(h.getAttribute(Attributes.MAX_HEALTH).getModifiers())) h.getAttribute(Attributes.MAX_HEALTH).removeModifier(m);
         for (var m : new ArrayList<>(h.getAttribute(Attributes.ARMOR).getModifiers())) h.getAttribute(Attributes.ARMOR).removeModifier(m);

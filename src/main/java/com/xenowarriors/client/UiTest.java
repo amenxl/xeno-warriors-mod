@@ -2257,6 +2257,7 @@ public final class UiTest {
             net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(at.x, at.y, at.z + 10, 180F, 0F);
+            z.setPersistenceRequired();
             z.getPersistentData().putBoolean("xw_mb_rolled", true);
             z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0);
@@ -2308,7 +2309,7 @@ public final class UiTest {
             net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);   // (a clear stone floor up high)
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(at.x, at.y, at.z + 14, 180F, 0F);
-            z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true); z.setPersistenceRequired();
             z.setCustomName(net.minecraft.network.chat.Component.literal("Ki Thrower"));
             p.serverLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, p.server);
             z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
