@@ -481,7 +481,7 @@ public final class PartyBots {
     static void mine(PartyBotEntity b, BlockPos pos) {
         ServerLevel s = (ServerLevel) b.level();
         BlockState st = s.getBlockState(pos);
-        if (!isOre(st)) return;
+        if (!isOre(st) || !com.xenowarriors.modes.ModeRules.canGrief(s)) return;
         List<ItemStack> drops = Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, new ItemStack(Items.DIAMOND_PICKAXE));
         s.destroyBlock(pos, false, b);
         for (ItemStack d : drops) {

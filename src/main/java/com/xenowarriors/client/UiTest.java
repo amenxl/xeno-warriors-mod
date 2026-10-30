@@ -154,6 +154,7 @@ public final class UiTest {
         if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
         if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
+        if ("modeblocks".equals(System.getenv("XW_UITEST_FOCUS"))) { modeBlocks(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -2023,5 +2024,46 @@ public final class UiTest {
             Object st = d.getClass().getMethod("getStatus").invoke(d);
             return "race=" + ch.getClass().getMethod("getRaceName").invoke(ch) + " created=" + st.getClass().getMethod("isHasCreatedCharacter").invoke(st);
         } catch (Throwable t) { return "? " + t; }
+    }
+
+    /** The Tower/Journey and the Hekublade realm: nothing breaks there - not by hand, explosions or creepers. Each check is logged. */
+    private static void modeBlocks(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); }, 30));
+        for (var dim : java.util.List.of(com.xenowarriors.tower.Tower.LEVEL, com.xenowarriors.mikiko.HekubladeRealm.KEY, net.minecraft.world.level.Level.OVERWORLD)) {
+            String name = dim.location().getPath();
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.server.getLevel(dim);
+                if (lvl == null) { log("modeblocks " + name + " missing"); return; }
+                net.minecraft.core.BlockPos base = new net.minecraft.core.BlockPos(5000, 150, 5000);
+                for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++) for (int y = 0; y < 3; y++)
+                    lvl.setBlock(base.offset(x, y, z), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                p.teleportTo(lvl, base.getX() + 0.5, base.getY() + 3, base.getZ() + 0.5, 0, 60);
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            }), 40));
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.serverLevel();
+                net.minecraft.core.BlockPos base = new net.minecraft.core.BlockPos(5000, 150, 5000);
+                // by hand
+                net.minecraft.core.BlockPos hand = base.offset(1, 2, 0);
+                p.gameMode.destroyBlock(hand);
+                boolean handKept = !lvl.getBlockState(hand).isAir();
+                // an explosion (as strong as TNT) and a creeper's
+                lvl.explode(null, base.getX() + 2.5, base.getY() + 2.5, base.getZ() + 2.5, 4F, net.minecraft.world.level.Level.ExplosionInteraction.TNT);
+                var c = net.minecraft.world.entity.EntityType.CREEPER.create(lvl);
+                if (c != null) { c.moveTo(base.getX() - 2.5, base.getY() + 3, base.getZ() - 2.5); lvl.addFreshEntity(c); c.ignite(); }
+                int left = 0;
+                for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++) for (int y = 0; y < 3; y++) if (!lvl.getBlockState(base.offset(x, y, z)).isAir()) left++;
+                log("modeblocks " + name + " hand " + (handKept ? "KEPT" : "BROKEN") + ", after TNT " + left + "/147 blocks");
+            }), 50));
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.serverLevel();
+                net.minecraft.core.BlockPos base = new net.minecraft.core.BlockPos(5000, 150, 5000);
+                int left = 0;
+                for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++) for (int y = 0; y < 3; y++) if (!lvl.getBlockState(base.offset(x, y, z)).isAir()) left++;
+                log("modeblocks " + name + " after creeper " + left + "/147 blocks");
+                p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.heal(100);
+            }), 5));
+            l.add(new Step("modeblocks_" + name, () -> {}, 3));
+        }
     }
 }

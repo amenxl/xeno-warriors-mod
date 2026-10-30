@@ -118,7 +118,7 @@ public class HumanWorkGoal extends Goal {
         if ((job == Job.CHOP && !s.is(BlockTags.LOGS)) || (job == Job.MINE && !minable(s)) || (job == Job.GRASS && !grassy(s))) { stop(); return; }
         if (job == Job.GRASS) {                       // pull up grass: sometimes a seed
             com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.PLACE, 8);
-            level.destroyBlock(target, false, h);
+            if (com.xenowarriors.modes.ModeRules.canGrief(level)) level.destroyBlock(target, false, h);
             if (h.getRandom().nextFloat() < 0.6F) pack().addItem(new ItemStack(Items.WHEAT_SEEDS, 1 + h.getRandom().nextInt(2)));
             stop();
             return;
@@ -131,7 +131,7 @@ public class HumanWorkGoal extends Goal {
         if (work >= (job == Job.CHOP ? 50 : 70)) {
             Item got = s.is(BlockTags.LOGS) ? Items.OAK_LOG : s.is(Blocks.IRON_ORE) || s.is(Blocks.DEEPSLATE_IRON_ORE) ? Items.RAW_IRON
                     : s.is(Blocks.COAL_ORE) ? Items.COAL : Items.COBBLESTONE;
-            level.destroyBlock(target, false, h);
+            if (com.xenowarriors.modes.ModeRules.canGrief(level)) level.destroyBlock(target, false, h);
             pack().addItem(new ItemStack(got, got == Items.COBBLESTONE ? 1 : 1));
             // keep at it on the same tree
             if (job == Job.CHOP && level.getBlockState(target.above()).is(BlockTags.LOGS)) { target = target.above(); work = 0; return; }
@@ -259,7 +259,7 @@ public class HumanWorkGoal extends Goal {
         BlockState s = level.getBlockState(target);
         com.xenowarriors.anim.Poses.play(h, com.xenowarriors.anim.Poses.PLACE, 8);
         if (s.getBlock() instanceof net.minecraft.world.level.block.CropBlock c && c.isMaxAge(s)) {
-            level.destroyBlock(target, false, h);
+            if (com.xenowarriors.modes.ModeRules.canGrief(level)) level.destroyBlock(target, false, h);
             pack().addItem(new ItemStack(Items.WHEAT, 1));
             pack().addItem(new ItemStack(Items.WHEAT_SEEDS, 1 + h.getRandom().nextInt(2)));
         }
