@@ -187,17 +187,18 @@ public final class DmzBotKi {
             k.charging = true;
             final Kit kk = k;
             com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.EL_CHARGE, cast);
-            com.xenowarriors.skill.ServerScheduler.later(cast, () -> release(b, target, tech, kk, id));
+            final Object stats = k.stats;
+            com.xenowarriors.skill.ServerScheduler.later(cast, () -> release(b, target, tech, kk, stats, id));
             return true;
         } catch (Throwable t) { fail(t); return false; }
     }
 
-    private static void release(PartyBotEntity b, LivingEntity target, Object tech, Kit k, String id) {
+    private static void release(PartyBotEntity b, LivingEntity target, Object tech, Kit k, Object stats, String id) {
         k.charging = false;
         if (!b.isAlive() || b.isRemoved() || b.downed() || !(b.level() instanceof ServerLevel level)) { drop(b); note("release " + id + " dropped (bot down/gone)"); return; }
         if (target != null && target.isAlive() && target.level() == b.level()) aim(b, target);
         try {
-            boolean ok = (Boolean) execute.invoke(null, b, level, tech, k.stats, 1F);
+            boolean ok = (Boolean) execute.invoke(null, b, level, tech, stats, 1F);
             note("release " + id + " ok=" + ok);
         } catch (Throwable t) { fail(t); drop(b); return; }
         b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
