@@ -2295,6 +2295,9 @@ public final class UiTest {
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(p.getX(), p.getY(), p.getZ() + 14, 180F, 0F);
             z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200); z.setHealth(200);
+            p.serverLevel().setDayTime(18000);
             p.serverLevel().addFreshEntity(z);
             state[0] = z;
         }); }, 20));
@@ -2306,19 +2309,29 @@ public final class UiTest {
                 if (type == null || z == null) { log("dmzskillsclash " + kind + ": no entity type"); return; }
                 var e = type.create(p.serverLevel());
                 if (!(e instanceof net.minecraft.world.entity.projectile.Projectile pr)) { log("dmzskillsclash " + kind + ": not a projectile " + e); return; }
-                pr.setOwner(z);
-                try { e.getClass().getMethod("setKiDamage", float.class).invoke(e, 20F); } catch (Throwable ignored) {}
-                try { e.getClass().getMethod("setKiSpeed", float.class).invoke(e, 0.3F); } catch (Throwable ignored) {}
-                net.minecraft.world.phys.Vec3 from = z.getEyePosition().add(0, -0.3, -1.2);
-                pr.moveTo(from.x, from.y, from.z, 0F, 0F);
-                net.minecraft.world.phys.Vec3 d = p.getEyePosition().subtract(from).normalize();
-                pr.shoot(d.x, d.y, d.z, 0.35F, 0F);
-                p.serverLevel().addFreshEntity(pr);
+                // the zombie looks at you and throws it the way DragonMineZ's own fighters do: set up (charging), then fired
+                net.minecraft.world.phys.Vec3 dz = p.getEyePosition().subtract(z.getEyePosition());
+                float yaw = (float) (Math.toDegrees(Math.atan2(dz.z, dz.x)) - 90F);
+                z.setYRot(yaw); z.setYHeadRot(yaw); z.setYBodyRot(yaw); z.setXRot(0F);
+                String setup = kind.equals("ki_blast") ? "setupKiBlast" : kind.equals("ki_wave") ? "setupKiWave" : "setupKiLaser";
+                int n = kind.equals("ki_laser") ? 7 : 8;
+                String how = "?";
+                try {
+                    for (var m : e.getClass().getMethods()) if (m.getName().equals(setup) && m.getParameterCount() == n) {
+                        if (n == 8) m.invoke(e, z, 20F, 0.6F, 0xFFE040, 0xFFFFFF, 0xFFA000, 1.2F, 10);
+                        else m.invoke(e, z, 20F, 0.6F, 0xFFE040, 0xFFFFFF, 0xFFA000, 10);
+                        how = setup; break;
+                    }
+                } catch (Throwable t) { how = "setup failed " + t; }
+                if (!e.isAddedToWorld() && p.serverLevel().getEntity(e.getUUID()) == null) p.serverLevel().addFreshEntity(pr);
                 state[1] = pr;
                 com.xenowarriors.ka.Clashes.last = "";
-                log("dmzskillsclash " + kind + " thrown: " + e.getClass().getSimpleName() + " isKi=" + com.xenowarriors.ka.DmzKi.isKi(e));
-                com.xenowarriors.skill.ServerScheduler.later(6, () -> {
-                    log("dmzskillsclash " + kind + " alive before cast=" + pr.isAlive() + " at " + Math.round(pr.distanceTo(p)) + " blocks");
+                log("dmzskillsclash " + kind + " thrown: " + e.getClass().getSimpleName() + " isKi=" + com.xenowarriors.ka.DmzKi.isKi(e) + " via " + how);
+                com.xenowarriors.skill.ServerScheduler.later(12, () -> {
+                    try { e.getClass().getMethod("fireHability", int.class).invoke(e, 80); } catch (Throwable t) { log("dmzskillsclash " + kind + " fire failed " + t); }
+                });
+                com.xenowarriors.skill.ServerScheduler.later(17, () -> {
+                    log("dmzskillsclash " + kind + " alive before cast=" + pr.isAlive() + " at " + Math.round(pr.distanceTo(p)) + " blocks; " + com.xenowarriors.ka.DmzKi.why(p));
                     p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(dd -> { dd.setKarma(dd.karmaMax); java.util.Arrays.fill(dd.cooldownEnd, 0); });
                     p.setYRot(0); p.setXRot(0);
                     com.xenowarriors.skill.SkillManager.useSkill(p, 1);    // Energy Blast
