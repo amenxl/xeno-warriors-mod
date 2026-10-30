@@ -41,7 +41,9 @@ def heads(ch):
                 if a and g < 40 and r > 100 and b > 100 and 0 <= x - ox < 8 * S and 0 <= y - oy < 8 * S:
                     c = fp[x - ox, y - oy]
                     p[x, y] = c if c[3] else (0, 0, 0, 0)
-        out[ex] = im.crop(im.getbbox())
+        # a close-up: the face fills the circle (hair and hood run off the edges) - no floating heads
+        side = int(8 * S * 1.32); cx, cy = W // 2, oy + 4 * S - int(0.35 * S)
+        out[ex] = im.crop((cx - side // 2, cy - side // 2, cx + side // 2, cy + side // 2))
     return out
 
 def ring(ch, p, ex):
@@ -51,8 +53,8 @@ def ring(ch, p, ex):
     d.ellipse((5 * K, 5 * K, (N - 5) * K, (N - 5) * K), fill=col + (255,))
     d.ellipse((11 * K, 11 * K, (N - 11) * K, (N - 11) * K), fill=(30, 34, 52, 255))
     R = (N - 22) * K / 2
-    s = (2 * R * 1.04) / max(p.width, p.height); p = p.resize((int(p.width * s), int(p.height * s)), Image.NEAREST)
-    layer = Image.new('RGBA', big.size, (0, 0, 0, 0)); layer.paste(p, (int(N * K / 2 - p.width / 2), int(N * K / 2 - p.height * 0.5)), p)
+    s = (2 * R * 1.02) / max(p.width, p.height); p = p.resize((int(p.width * s), int(p.height * s)), Image.NEAREST)
+    layer = Image.new('RGBA', big.size, (0, 0, 0, 0)); layer.paste(p, (int(N * K / 2 - p.width / 2), int(N * K / 2 - p.height / 2)), p)
     mask = Image.new('L', big.size, 0); ImageDraw.Draw(mask).ellipse((11 * K, 11 * K, (N - 11) * K, (N - 11) * K), fill=255)
     layer.putalpha(ImageChops.multiply(layer.split()[3], mask))
     big.alpha_composite(layer)
