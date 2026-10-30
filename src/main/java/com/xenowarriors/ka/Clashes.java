@@ -141,7 +141,7 @@ public final class Clashes {
         float stat = 1F + com.xenowarriors.stats.Stats.level(p, com.xenowarriors.stats.Stat.ATTACK) * 0.004F;
         if (clicks > 0 && !p.isCreative()) com.xenowarriors.karma.Karma.add(p, -0.6F * clicks);
         boolean karma = com.xenowarriors.karma.Karma.get(p) > 1F || p.isCreative();
-        return clicks * 0.02F * Math.min(2F, stat) * (karma ? 1F : 0.35F);   // (~8 clicks a second beats an ordinary mob; a karma-heavy boss needs more)
+        return clicks * 0.03F * Math.min(2F, stat) * (karma ? 1F : 0.35F);   // (~8 clicks a second beats an ordinary mob in about 4 seconds; a karma-heavy boss needs more)
     }
 
     @SubscribeEvent
