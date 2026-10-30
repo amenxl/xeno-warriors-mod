@@ -72,7 +72,7 @@ public final class SkyHaterSieges {
     /** Whoever hits a siege builder helped stop it. */
     @net.minecraftforge.eventbus.api.SubscribeEvent
     public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent e) {
-        if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
+        if (!(com.xenowarriors.collection.Collection.credit(e.getSource().getEntity()) instanceof ServerPlayer p)) return;   // (a bot's hits count for its owner)
         for (Siege s : SIEGES) if (s.builders.contains(e.getEntity().getUUID())) s.fought.add(p.getUUID());
     }
 

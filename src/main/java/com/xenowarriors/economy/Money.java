@@ -69,7 +69,8 @@ public final class Money {
     @SubscribeEvent
     public static void onKill(LivingDeathEvent e) {
         LivingEntity dead = e.getEntity();
-        if (dead.level().isClientSide || !(e.getSource().getEntity() instanceof ServerPlayer p) || dead instanceof Player
+        // (a bot's kill pays its owner; a stand-in player never gets paid)
+        if (dead.level().isClientSide || !(com.xenowarriors.collection.Collection.credit(e.getSource().getEntity()) instanceof ServerPlayer p) || dead instanceof Player
                 || com.xenowarriors.vr.Vr.inVr(dead)) return;   // (VR enemies are training, not loot)
         boolean foe = dead instanceof Enemy
                 || (dead instanceof com.xenowarriors.npc.HumanNpcEntity h && (h.raider() || h.isAggressive()))

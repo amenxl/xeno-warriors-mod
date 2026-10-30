@@ -36,6 +36,9 @@ public final class DmzBotKi {
     private static Method execute, statsLoad, getTechniques, equipped, unlocked, cooldown, castTime, instant, kiType, utility, techId;
     private static Constructor<?> statsNew;
     private static Class<?> kiData;
+    // ki melee (DragonMineZ's "strike" techniques)
+    private static Class<?> strikeData;
+    private static Method strikeDamage, sDamageMult, sDuration, sCooldown, sCast, strikeSource, techConfig, strikeConfig, cfgDamageMult;
 
     private static boolean ready() {
         if (loaded == null) loaded = ModList.get() != null && ModList.get().isLoaded("dragonminez");
@@ -59,6 +62,21 @@ public final class DmzBotKi {
             techId = data.getMethod("getId");
             execute = Class.forName("com.dragonminez.common.stats.techniques.TechniqueDispatcher")
                     .getMethod("executeKiAttack", LivingEntity.class, Level.class, kiData, stats, float.class);
+            try {                                                                   // ki melee: optional (ki attacks still work without it)
+                strikeData = Class.forName("com.dragonminez.common.stats.techniques.StrikeAttackData");
+                strikeDamage = stats.getMethod("getStrikeDamage");
+                sDamageMult = strikeData.getMethod("getDamageMultiplier");
+                sDuration = strikeData.getMethod("getDurationTicks");
+                sCooldown = strikeData.getMethod("getActualCooldown");
+                sCast = strikeData.getMethod("getActualCastTime");
+                strikeSource = Class.forName("com.dragonminez.common.init.MainDamageTypes").getMethod("strikeAttack", Level.class, Entity.class, String.class);
+                techConfig = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getTechniqueConfig");
+                strikeConfig = techConfig.getReturnType().getMethod("getStrikeConfig", String.class);
+                cfgDamageMult = strikeConfig.getReturnType().getMethod("getDamageMultiplier");
+            } catch (Throwable t) {
+                strikeData = null;
+                XenoWarriors.LOGGER.warn("Bots can't use DragonMineZ ki melee techniques (its API changed?)", t);
+            }
             return true;
         } catch (Throwable t) {
             broken = true; execute = null;
@@ -134,6 +152,7 @@ public final class DmzBotKi {
             if (slots != null) for (String id : slots) {
                 if (id == null || id.isEmpty()) continue;
                 Object t = all.get(id);
+                if (strikeData != null && strikeData.isInstance(t)) { k.techniques.add(t); continue; }   // ki melee
                 if (!kiData.isInstance(t) || !usable(t)) continue;
                 k.techniques.add(t);
             }
@@ -160,7 +179,10 @@ public final class DmzBotKi {
         if (!ready()) return out;
         Kit k = kit(b, standIn);
         if (k != null) for (Object t : k.techniques) {
-            try { out.add(techId.invoke(t) + "(" + kiType.invoke(t) + ", cd " + cooldown.invoke(t) + ", cast " + castTime.invoke(t) + ")"); } catch (Throwable ignored) {}
+            try {
+                if (isStrike(t)) out.add(techId.invoke(t) + "(STRIKE, cd " + sCooldown.invoke(t) + ", " + sDuration.invoke(t) + " ticks)");
+                else out.add(techId.invoke(t) + "(" + kiType.invoke(t) + ", cd " + cooldown.invoke(t) + ", cast " + castTime.invoke(t) + ")");
+            } catch (Throwable ignored) {}
         }
         return out;
     }
@@ -178,12 +200,15 @@ public final class DmzBotKi {
         k = kit(b, standIn);
         if (k == null || k.stats == null || k.techniques.isEmpty()) return false;
         if (!b.hasLineOfSight(target)) return false;
+        boolean near = b.distanceTo(target) <= STRIKE_RANGE;
         List<Object> ready = new ArrayList<>();
         for (Object t : k.techniques) {
+            if (isStrike(t) && !near) continue;                                     // (ki melee: it flashes over to them, but not from across the field)
             try { if (now >= k.ready.getOrDefault((String) techId.invoke(t), 0L)) ready.add(t); } catch (Throwable ignored) {}
         }
         if (ready.isEmpty()) return false;
         Object tech = ready.get(b.getRandom().nextInt(ready.size()));
+        if (isStrike(tech)) return strike(b, target, tech, k, now);
         try {
             String id = (String) techId.invoke(tech);
             int cd = Math.max(MIN_GAP, Math.min(20 * 60, (Integer) cooldown.invoke(tech)));
@@ -202,6 +227,97 @@ public final class DmzBotKi {
             com.xenowarriors.skill.ServerScheduler.later(cast, () -> release(b, target, tech, kk, stats, id));
             return true;
         } catch (Throwable t) { fail(t); return false; }
+    }
+
+    // ---------------------------------------------------------------- ki melee
+
+    private static final double STRIKE_RANGE = 12;
+
+    private static boolean isStrike(Object t) { return strikeData != null && strikeData.isInstance(t); }
+
+    /**
+     * A ki melee technique, the way DragonMineZ runs them for players (its own handler only works for real players):
+     * a short wind-up, it appears right in front of the target, then a flurry - a hit every half second for the
+     * technique's duration (65% of the damage) and a final blow (35%) that knocks them back. The damage is
+     * DragonMineZ's: the character's strike damage x the technique's multiplier x the server's config multiplier.
+     */
+    private static boolean strike(PartyBotEntity b, LivingEntity target, Object tech, Kit k, long now) {
+        try {
+            String id = (String) techId.invoke(tech);
+            double cfg = 1.0;
+            try { cfg = Math.max(0.0, ((Number) cfgDamageMult.invoke(strikeConfig.invoke(techConfig.invoke(null), id))).doubleValue()); } catch (Throwable ignored) {}
+            double total = ((Number) strikeDamage.invoke(k.stats)).doubleValue() * ((Number) sDamageMult.invoke(tech)).doubleValue() * cfg;
+            if (!(total > 0)) { k.ready.put(id, now + MIN_GAP); return false; }
+            int duration = Math.max(20, (Integer) sDuration.invoke(tech)), hits = Math.max(1, (int) Math.ceil(duration / 10.0));
+            float perHit = (float) (total * 0.65 / hits), last = (float) (total * 0.35);
+            int cd = Math.max(MIN_GAP, Math.min(20 * 60, (Integer) sCooldown.invoke(tech)));
+            int windup = Math.max(4, Math.min(20, (Integer) sCast.invoke(tech)));
+            k.ready.put(id, now + cd);
+            k.nextAny = now + windup + duration + 20;
+            k.charging = true;
+            note("strike start " + id + " total=" + Math.round(total * 10) / 10.0 + " hits=" + hits + " cd=" + cd + " target=" + target.getType().getDescriptionId());
+            aim(b, target);
+            com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.EL_CHARGE, windup);
+            final Kit kk = k;
+            com.xenowarriors.skill.ServerScheduler.later(windup, () -> {
+                if (!canStrike(b, target)) { kk.charging = false; note("strike " + id + " called off"); return; }
+                appear(b, target);
+                for (int i = 0; i <= hits; i++) {
+                    final int n = i;
+                    com.xenowarriors.skill.ServerScheduler.later(i * 10, () -> {
+                        if (!kk.charging) return;
+                        if (!canStrike(b, target) || b.distanceTo(target) > 6) { kk.charging = false; note("strike " + id + " broke off after " + n + " hits"); return; }
+                        if (b.distanceTo(target) > 2.5) appear(b, target);
+                        aim(b, target);
+                        b.getNavigation().stop();
+                        target.setDeltaMovement(target.getDeltaMovement().multiply(0, 1, 0));   // (held in place by the flurry)
+                        boolean fin = n == hits;
+                        hit(b, target, id, fin ? last : perHit, fin);
+                        if (fin) { kk.charging = false; note("strike " + id + " done"); }
+                    });
+                }
+            });
+            return true;
+        } catch (Throwable t) { fail(t); return false; }
+    }
+
+    private static boolean canStrike(PartyBotEntity b, LivingEntity target) {
+        return b.isAlive() && !b.isRemoved() && !b.downed() && target != null && target.isAlive() && target.level() == b.level();
+    }
+
+    /** Flashes over to just in front of the target (if there's room - otherwise it stays where it is). */
+    private static void appear(PartyBotEntity b, LivingEntity target) {
+        Vec3 dir = b.position().subtract(target.position()).multiply(1, 0, 1);
+        if (dir.lengthSqr() < 1.0E-4) dir = Vec3.directionFromRotation(0, target.getYRot());
+        dir = dir.normalize().scale(target.getBbWidth() / 2 + b.getBbWidth() / 2 + 0.5);
+        Vec3 to = target.position().add(dir);
+        var box = b.getBoundingBox().move(to.subtract(b.position()));
+        if (!b.level().noCollision(b, box)) return;
+        if (b.level() instanceof ServerLevel l) l.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, b.getX(), b.getY() + 1, b.getZ(), 6, .2, .4, .2, .02);
+        b.teleportTo(to.x, to.y, to.z);
+        aim(b, target);
+    }
+
+    private static void hit(PartyBotEntity b, LivingEntity target, String id, float amount, boolean last) {
+        net.minecraft.world.damagesource.DamageSource src;
+        try { src = (net.minecraft.world.damagesource.DamageSource) strikeSource.invoke(null, b.level(), b, id); }
+        catch (Throwable t) { src = b.damageSources().mobAttack(b); }
+        target.invulnerableTime = 0;
+        boolean landed = target.hurt(src, Math.max(0.01F, amount));
+        b.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+        com.xenowarriors.anim.Poses.play(b, last ? com.xenowarriors.anim.Poses.KA_BREAK : com.xenowarriors.anim.Poses.EL_THRUST, last ? 10 : 6);
+        if (b.level() instanceof ServerLevel l) {
+            Vec3 c = target.getBoundingBox().getCenter();
+            l.sendParticles(last ? net.minecraft.core.particles.ParticleTypes.EXPLOSION : net.minecraft.core.particles.ParticleTypes.CRIT, c.x, c.y, c.z, last ? 2 : 6, .3, .3, .3, last ? 0 : .3);
+            l.playSound(null, target.blockPosition(), last ? net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_KNOCKBACK : net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_STRONG,
+                    net.minecraft.sounds.SoundSource.PLAYERS, 0.9F, last ? 0.8F : 1.1F + b.getRandom().nextFloat() * 0.2F);
+        }
+        if (last && landed) {
+            Vec3 d = target.position().subtract(b.position());
+            target.knockback(1.4, -d.x, -d.z);
+            target.hurtMarked = true;
+        }
+        note("strike hit " + id + " " + Math.round(amount * 100) / 100.0 + (landed ? "" : " (blocked)") + (last ? " final" : ""));
     }
 
     private static void release(PartyBotEntity b, LivingEntity target, Object tech, Kit k, Object stats, String id) {

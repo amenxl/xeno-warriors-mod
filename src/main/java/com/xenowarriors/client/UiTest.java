@@ -160,7 +160,8 @@ public final class UiTest {
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
         if ("bots3".equals(System.getenv("XW_UITEST_FOCUS"))) { bots3(mc, l); return l; }
         if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
-        if ("dmzbots".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzBots(mc, l); return l; }
+        if ("dmzbots".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzBots(mc, l, false); return l; }
+        if ("dmzbotsmelee".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzBots(mc, l, true); return l; }
         if ("modeblocks".equals(System.getenv("XW_UITEST_FOCUS"))) { modeBlocks(mc, l); return l; }
         if ("uisweep".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, false); return l; }
         if ("uisweep2".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, true); return l; }
@@ -2169,7 +2170,7 @@ public final class UiTest {
      * line of fire. Logged: the techniques it found, each throw, its ki attacks in the air, damage to the dummy, and
      * that you take none. Then a few throws from the side for the screenshots.
      */
-    private static void dmzBots(Minecraft mc, List<Step> l) {
+    private static void dmzBots(Minecraft mc, List<Step> l, boolean melee) {
         final Object[] st = new Object[3];                       // bot, dummy, owner hp at start
         final int[] hits = new int[4];                           // owner attacked, owner damaged, dummy damaged (count), ki seen
         final float[] dealt = new float[1];
@@ -2202,6 +2203,12 @@ public final class UiTest {
                     if (m.getName().equals("unlockTechnique") && m.getParameterCount() == 1) unlock = m;
                     if (m.getName().equals("equipTechnique") && m.getParameterCount() == 2) equip = m;
                 }
+                if (melee) {                                             // ki melee only: one strike technique
+                    var sreg = (java.util.Map<?, ?>) Class.forName("com.dragonminez.common.stats.techniques.PredefinedTechniques").getField("STRIKE_REGISTRY").get(null);
+                    log("dmzbots strike techniques: " + sreg.keySet());
+                    String sid = sreg.containsKey("wolf_fang") ? "wolf_fang" : (String) sreg.keySet().iterator().next();
+                    unlock.invoke(tech, sreg.get(sid)); equip.invoke(tech, 0, sid);
+                } else
                 for (int i = 0; i < pick.size(); i++) { unlock.invoke(tech, reg.get(pick.get(i))); equip.invoke(tech, i, pick.get(i)); }
                 log("dmzbots rhalix equipped: " + java.util.Arrays.toString((String[]) tech.getClass().getMethod("getEquippedSlots").invoke(tech)) + " " + dmzInfo(p));
             } catch (Throwable t) { log("dmzbots equip FAILED " + t); }
@@ -2277,6 +2284,41 @@ public final class UiTest {
             l.add(new Step("dmzbots_throw" + sh + "_c", () -> {}, 15));
             l.add(new Step(null, () -> server(p -> { synchronized (com.xenowarriors.compat.DmzBotKi.LOG) { for (String s : com.xenowarriors.compat.DmzBotKi.LOG) log("dmzbots shot fire: " + s); com.xenowarriors.compat.DmzBotKi.LOG.clear(); } }), 2));
         }
+        // kill credit: the bot finishes off a weak zombie - Money, Collection and XP orbs should be its owner's
+        final long[] before = new long[2];
+        l.add(new Step(null, () -> server(p -> {
+            var r = (com.xenowarriors.bot.PartyBotEntity) st[0]; var z0 = (net.minecraft.world.entity.LivingEntity) st[1];
+            if (r == null) return;
+            if (z0 != null) z0.discard();
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(at.x, at.y, at.z + 6, 180F, 0F); z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            p.serverLevel().addFreshEntity(z);
+            st[1] = z;
+            before[0] = com.xenowarriors.economy.Money.get(p); before[1] = com.xenowarriors.collection.Collection.total(p);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, false, net.minecraftforge.event.entity.living.LivingDeathEvent.class, e -> {
+                if (e.getEntity() != st[1]) return;
+                var c = com.xenowarriors.collection.Collection.credit(e.getSource().getEntity());
+                log("dmzbots credit: zombie killed by " + e.getSource().getMsgId() + " from " + (e.getSource().getEntity() == null ? "-" : e.getSource().getEntity().getClass().getSimpleName())
+                        + " credited to " + (c == null ? "nobody" : c == p ? "the owner" : c.getName().getString()));
+            });
+        }), 5));
+        l.add(new Step(null, () -> server(p -> {                              // (once level scaling is done) weak enough to finish in a hit or two
+            var r = (com.xenowarriors.bot.PartyBotEntity) st[0]; var z = (net.minecraft.world.entity.LivingEntity) st[1];
+            if (r == null || z == null) return;
+            z.setHealth(Math.min(z.getHealth(), 1.5F));
+            r.setNoAi(false); r.setTarget(z);
+            com.xenowarriors.compat.DmzBotKi.resetForTest(r.getUUID());
+            boolean ok = com.xenowarriors.compat.DmzBotKi.tryFire(r, z, () -> com.xenowarriors.bot.PartyBots.standIn(r), true);
+            log("dmzbots credit: bot attacks the zombie (dmz technique started=" + ok + ")");
+        }), 200));
+        l.add(new Step(null, () -> server(p -> {
+            var z = (net.minecraft.world.entity.LivingEntity) st[1];
+            int orbs = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, p.getBoundingBox().inflate(24)).size();
+            synchronized (com.xenowarriors.compat.DmzBotKi.LOG) { for (String s2 : com.xenowarriors.compat.DmzBotKi.LOG) log("dmzbots credit fire: " + s2); com.xenowarriors.compat.DmzBotKi.LOG.clear(); }
+            log("dmzbots credit result: zombie dead=" + (z == null || !z.isAlive()) + " owner Money " + before[0] + " -> " + com.xenowarriors.economy.Money.get(p)
+                    + " Collection kills " + before[1] + " -> " + com.xenowarriors.collection.Collection.total(p) + " xp orbs nearby=" + orbs);
+        }), 5));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> log("dmzbots end: owner hp=" + p.getHealth() + " owner damaged=" + hits[1])); }, 5));
     }
 
