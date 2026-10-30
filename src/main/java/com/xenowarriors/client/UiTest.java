@@ -2077,10 +2077,13 @@ public final class UiTest {
         }), 3));
         l.add(new Step("bots3_tree", () -> {}, 3));
         // mine mode: iron ore beside you
-        l.add(new Step(null, () -> server(p -> {
-            net.minecraft.core.BlockPos o = p.blockPosition().offset(-3, 0, 3);
+        l.add(new Step(null, () -> server(p -> {                                  // (right beside the bot, so it's the nearest ore whatever the world has)
+            var r = bot(p, CharacterType.RHALIX);
+            net.minecraft.core.BlockPos o = (r == null ? p.blockPosition() : r.blockPosition()).offset(2, 0, 0);
             p.serverLevel().setBlock(o, net.minecraft.world.level.block.Blocks.IRON_ORE.defaultBlockState(), 3);
+            p.serverLevel().setBlock(o.above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
             base[0] = o;
+            if (r != null) { r.setMode(com.xenowarriors.bot.PartyBotEntity.NEUTRAL); r.setMode(com.xenowarriors.bot.PartyBotEntity.MINING); }
         }), 40));
         l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX);
             if (r != null) log("bots3 ore mid: mode=" + r.mode() + " target=" + r.getTarget() + " mining=" + r.mineTargetForTest() + " goals=[" + r.goalsForTest() + "] hand=" + id(r.getMainHandItem()) + " dist=" + String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(r.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(base[0]))))); }), 100));

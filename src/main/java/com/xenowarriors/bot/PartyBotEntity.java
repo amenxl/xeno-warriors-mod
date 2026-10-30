@@ -238,8 +238,8 @@ public class PartyBotEntity extends PathfinderMob {
             return reviving != null;
         }
         @Override public boolean canContinueToUse() { return reviving != null && reviving.isAlive() && !downed() && PartyBots.isDown(reviving) && reviving.distanceToSqr(PartyBotEntity.this) < 40 * 40; }
-        private int stalled; private double closest;
-        @Override public void start() { stalled = 0; closest = 1e9; }
+        private int stalled, going; private double closest;
+        @Override public void start() { stalled = 0; going = 0; closest = 1e9; }
         @Override public void stop() { reviving = null; }
         @Override public void tick() {
             if (reviving == null) return;
@@ -249,8 +249,8 @@ public class PartyBotEntity extends PathfinderMob {
             if (d2 > 1.4 * 1.4) {
                 if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(reviving.getX(), reviving.getY(), reviving.getZ(), 1.35);
                 if (d2 < closest - 0.25) { closest = d2; stalled = 0; } else stalled++;
-                if (d2 > 24 * 24 || stalled > 40) {                               // too far, or two seconds without getting closer: hop over to them
-                    stalled = 0;
+                if (d2 > 24 * 24 || stalled > 40 || ++going > 60) {               // too far, two seconds without getting closer, or three seconds on the way: hop over to them
+                    stalled = 0; going = 0;
                     for (net.minecraft.world.phys.Vec3 off : new net.minecraft.world.phys.Vec3[]{new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1), new Vec3(1, 1, 0), new Vec3(0, 1, 1)}) {
                         Vec3 at = reviving.position().add(off);
                         if (level().noCollision(PartyBotEntity.this, getBoundingBox().move(at.subtract(position())))) { teleportTo(at.x, at.y, at.z); getNavigation().stop(); break; }
