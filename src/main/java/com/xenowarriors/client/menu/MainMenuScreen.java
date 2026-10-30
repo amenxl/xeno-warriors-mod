@@ -96,7 +96,11 @@ public class MainMenuScreen extends Screen {
 
     // ------------------------------------------------------------------ layout
 
-    private float step() { return height * 0.09F; }
+    /** Row height: 9% of the screen, but smaller when that many rows would run into the help bar (9 rows didn't fit at 854x480). */
+    private float step() {
+        float helpTop = height - 26 * Math.max(1F, height / 300F) - 12 * Math.max(1F, height / 300F);
+        return Math.min(height * 0.09F, (helpTop - listY()) / Math.max(1, entries.size()));
+    }
     private float listX() { return width * 0.40F; }
     private float listY() { return height * 0.21F; }
     private float bigScale() { return step() * 0.92F / 9F; }
@@ -289,6 +293,7 @@ public class MainMenuScreen extends Screen {
         String bl = unlocked ? "[C] Open Collection" : "Read a Collection Book";
         float bls = Math.max(1F, h / 300F);
         float blx = bk[0] + bk[2] / 2 - font.width(bl) * bls / 2, bly = bk[1] - 13 * bls;
+        blx = Math.min(blx, w - 5 - font.width(bl) * bls);                // keep it on screen (it was clipped at the right edge)
         g.fill((int) (blx - 3), (int) (bly - 2), (int) (blx + font.width(bl) * bls + 3), (int) (bly + 9 * bls + 1), 0xD0101018);
         g.pose().pushPose();
         g.pose().translate(blx, bly, 0);
@@ -300,13 +305,19 @@ public class MainMenuScreen extends Screen {
         float hs = Math.max(1F, h / 300F);
         String help = entries.get(selected).help;
         float hx = w * 0.40F, hy = h - 26 * hs;
-        g.fill((int) (hx - 4), (int) (hy - 3), (int) (w * 0.98F), (int) (hy + 9 * hs + 3), 0xD0101018);
-        g.fill((int) (hx - 4), (int) (hy - 3), (int) (hx - 2), (int) (hy + 9 * hs + 3), 0xFF000000 | col);
-        g.pose().pushPose();
-        g.pose().translate(hx + 2, hy, 0);
-        g.pose().scale(hs, hs, 1F);
-        g.drawString(font, help, 0, 0, 0xF0F0F0, false);
-        g.pose().popPose();
+        // wrapped to the bar's width (it used to run off the right edge on small windows), up to two lines going up
+        var helpLines = font.split(Component.literal(help), Math.max(40, (int) ((w * 0.98F - hx - 6) / hs)));
+        int nl = Math.min(2, helpLines.size());
+        float top = hy - (nl - 1) * 10 * hs;
+        g.fill((int) (hx - 4), (int) (top - 3), (int) (w * 0.98F), (int) (hy + 9 * hs + 3), 0xD0101018);
+        g.fill((int) (hx - 4), (int) (top - 3), (int) (hx - 2), (int) (hy + 9 * hs + 3), 0xFF000000 | col);
+        for (int li = 0; li < nl; li++) {
+            g.pose().pushPose();
+            g.pose().translate(hx + 2, top + li * 10 * hs, 0);
+            g.pose().scale(hs, hs, 1F);
+            g.drawString(font, helpLines.get(li), 0, 0, 0xF0F0F0, false);
+            g.pose().popPose();
+        }
         String keys = "↑↓ Select    Esc Back    Enter Confirm";
         g.pose().pushPose();
         g.pose().translate(w * 0.98F - font.width(keys) * hs, h - 12 * hs, 0);

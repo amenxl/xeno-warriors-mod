@@ -206,7 +206,10 @@ public class CharacterSelectScreen extends Screen {
             }
             g.pose().popPose();
         } else {
-            g.drawCenteredString(font, "No one from the " + group.title + " is playable yet", width * 22 / 100, height / 2, 0x888888);
+            // wrapped to the left panel so it never runs off the left edge on small windows
+            var lines = font.split(Component.literal("No one from the " + group.title + " is playable yet"), Math.max(60, width * 40 / 100));
+            int ly = height / 2 - lines.size() * 5;
+            for (var line : lines) { g.drawCenteredString(font, line, width * 22 / 100, ly, 0x888888); ly += 10; }
         }
 
         // the grid of portrait cards

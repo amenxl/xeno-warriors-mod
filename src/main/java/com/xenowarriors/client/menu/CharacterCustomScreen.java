@@ -606,15 +606,27 @@ public class CharacterCustomScreen extends Screen {
             boolean pic = seasonOk && com.xenowarriors.client.SkillIcons.get(e.skill().getId()) != null;
             if (pic) { com.xenowarriors.client.SkillIcons.draw(g, e.skill().getId(), x + 3, y + 1, CARD_H - 2); if (!open) g.fill(x + 3, y + 1, x + CARD_H + 1, y + CARD_H - 1, 0xA0101018); }
             int tx = pic ? x + CARD_H + 3 : x + 5;
-            scaled(g, font.plainSubstrByWidth(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
+            scaled(g, ell(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
             String line = !seasonOk ? "Season " + e.season() : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
-            scaled(g, font.plainSubstrByWidth(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
+            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over) tip = !seasonOk ? List.of("???", "Season " + e.season() + " content (locked, no spoilers)")
                     : lines(e.skill().getName().getString(), SkillLoadoutScreen.desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel()));
         }
         g.disableScissor();
-        if (maxSkillScroll() > 0) scaled(g, skillScroll < maxSkillScroll() ? "▼ scroll" : "▲", VW - 30, VH - 7, 0.7F, 0x8899AA);
+        if (maxSkillScroll() > 0) {                          // on a dark tab so it doesn't print over the last card's text
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 50);
+            g.fill(VW - 33, VH - 9, VW - 1, VH - 1, 0xF0101016);
+            scaled(g, skillScroll < maxSkillScroll() ? "▼ scroll" : "▲", VW - 30, VH - 7, 0.7F, 0x8899AA);
+            g.pose().popPose();
+        }
         return tip;
+    }
+
+    /** Cut a string to a width, with "…" when it had to be shortened. */
+    private String ell(String s, int w) {
+        if (font.width(s) <= w) return s;
+        return font.plainSubstrByWidth(s, Math.max(0, w - font.width("…"))).stripTrailing() + "…";
     }
 
     private static final int OUTFIT_H = 26;
@@ -631,7 +643,7 @@ public class CharacterCustomScreen extends Screen {
             g.fill(x, y, x + 2, y + OUTFIT_H, locked ? 0xFF555555 : 0xFF000000 | col);
             if (on) outline(g, x, y, x + CARD_W, y + OUTFIT_H, 0xFF000000 | light(col));
             String nm = locked ? "\uD83D\uDD12 " + names[i] : names[i];
-            scaled(g, font.plainSubstrByWidth(nm, (int) ((CARD_W - 8) / 0.9F)), x + 5, y + 4, 0.9F, locked ? 0x777777 : 0xFFFFFF);
+            scaled(g, ell(nm, (int) ((CARD_W - 8) / 0.9F)), x + 5, y + 4, 0.9F, locked ? 0x777777 : 0xFFFFFF);
             int season = type.outfitSeason(i);
             String line = locked ? "Season " + season + " - locked" : on ? "Wearing" : "Season " + Math.max(1, season) + "  \u2022  click to wear";
             scaled(g, line, x + 5, y + 15, 0.75F, locked ? 0xAA5555 : on ? 0x77DD88 : 0x99AABB);

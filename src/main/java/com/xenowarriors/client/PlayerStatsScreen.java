@@ -145,7 +145,8 @@ public class PlayerStatsScreen extends Screen {
 
     private int settingsHeight() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 276 : 214; }
 
-    private int maxSetScroll() { return Math.max(0, SET_TOP + settingsHeight() + 6 - height); }
+    private int maxSetScroll() { return Math.max(0, SET_TOP + settingsHeight() + 6 - (height - FOOT)); }
+    private static final int FOOT = 16;          // the "Esc to close / Money" line at the bottom
 
     private static final int SET_TOP = 30, MAX_OUTFITS = 6, OUT_TOP = 30;
     private final List<Button> outfitButtons = new ArrayList<>();
@@ -241,7 +242,8 @@ public class PlayerStatsScreen extends Screen {
         realm.visible = tab == 1 && mikiko && me != null && !prisoner;
         realm.setMessage(Component.literal(me != null && me.inRealm() ? "Leave the Hekublade" : "Enter the Hekublade"));
         plea.visible = tab == 1 && prisoner;
-            for (var e : setBaseY.entrySet()) if (e.getKey().getY() < 26) e.getKey().visible = false;   // scrolled up under the tabs
+        for (var e : setBaseY.entrySet())        // scrolled up under the tabs, or down over the footer
+            if (e.getKey().getY() < 26 || e.getKey().getY() + e.getKey().getHeight() > height - FOOT) e.getKey().visible = false;
     }
 
     @Override
@@ -470,7 +472,7 @@ public class PlayerStatsScreen extends Screen {
         int w = cardW(), x = cardX(), y = SET_TOP - setScroll;
         boolean ef = net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
         int h = settingsHeight();
-        g.enableScissor(0, 24, width, height);
+        g.enableScissor(0, 24, width, height - FOOT);
         g.fill(x, y, x + w, y + h, BG);
         g.fill(x, y, x + w, y + 1, 0xFF8C8CA0);
         g.drawCenteredString(font, "Settings", width / 2, y + 6, 0xFFFFFF);
@@ -493,7 +495,7 @@ public class PlayerStatsScreen extends Screen {
             small(g, "EPIC FIGHT", x + PAD, y + 214, SECTION);
         }
         g.disableScissor();
-        if (maxSetScroll() > 0) g.drawString(font, setScroll < maxSetScroll() ? "\u25bc scroll" : "\u25b2 scroll", x + w - 52, Math.min(height - 10, y + h - 10), 0x8899AA, false);
+        if (maxSetScroll() > 0) g.drawString(font, setScroll < maxSetScroll() ? "\u25bc scroll" : "\u25b2 scroll", x + w - 52, Math.min(height - FOOT - 10, y + h - 10), 0x8899AA, false);
     }
 
     // ------------------------------------------------------------------ Outfits tab

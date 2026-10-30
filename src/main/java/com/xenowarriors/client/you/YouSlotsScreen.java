@@ -34,7 +34,9 @@ public class YouSlotsScreen extends JourneyScreen {
                 String sub = s.race.title + " • " + s.element.title();
                 float k2 = Math.min(0.55F, (cw - 6) / (float) Math.max(1, font.width(sub)) * 0.55F);
                 sc(g, sub, x + cw / 2F - font.width(sub) * k2 / 2F, y + 50, k2, 0xFF000000 | col);
-                sc(g, "Lv " + (i < YouClient.levels.length ? YouClient.levels[i] : 1), x + 4, y + ch - 14, 0.6F, 0xFFD24A);
+                // level in the top-right corner (it used to sit on top of the PLAY button)
+                String lv = "Lv " + Math.max(1, i < YouClient.levels.length ? YouClient.levels[i] : 1);
+                sc(g, lv, x + cw - 4 - font.width(lv) * 0.55F, y + 3, 0.55F, 0xFFD24A);
                 if (cur) sc(g, "PLAYING", x + cw - 4 - font.width("PLAYING") * 0.55F, y + ch - 14, 0.55F, ACCENT);
                 else {
                     button(g, x + 3, y + ch - 13, x + cw / 2 - 1, y + ch - 2, "PLAY", ACCENT, true, () -> ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.PLAY, i, null)));

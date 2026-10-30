@@ -85,7 +85,7 @@ public class KhParty implements IGuiOverlay {
         int x = right - cw, y = bottom - ch;
         for (PartySyncPacket.Member m : PartyClient.members()) {
             if (m.id().equals(mc.player.getUUID())) continue;
-            if (x < width / 2 + 100) { x = right - cw; y -= ch + 2; }          // (a second row when there's no room)
+            if (x < width / 2 + 8) { x = right - cw; y -= ch + 2; }            // (a second row only when the right half is full - stacking up early ran it into the top-right cards)
             CharacterType type = CharacterType.values()[Math.max(0, Math.min(CharacterType.values().length - 1, m.type()))];
             g.pose().pushPose();
             g.pose().translate(x, y + 9, 0);
