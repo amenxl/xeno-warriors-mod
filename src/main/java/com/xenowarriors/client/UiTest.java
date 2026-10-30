@@ -2253,14 +2253,15 @@ public final class UiTest {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4));
             p.serverLevel().setDayTime(18000);
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);   // (a clear stone floor up high)
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
-            z.moveTo(p.getX(), p.getY(), p.getZ() + 10, 180F, 0F);
+            z.moveTo(at.x, at.y, at.z + 10, 180F, 0F);
             z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0);
             p.serverLevel().addFreshEntity(z);
             com.xenowarriors.ka.Elements.give(z, com.xenowarriors.ka.Element.FIRE);
             z.setTarget(p);
-            p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0F, 0F);
             com.xenowarriors.ka.Clashes.last = "";
             // wait for it to charge, then answer; mash while it lasts (about 10 clicks a second); log how it ends
             int[] st = {0};      // 0 waiting, 1 cast, 2 done
@@ -2298,10 +2299,9 @@ public final class UiTest {
             log("dmzskillsclash entity types: " + names);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2400, 4));
-            p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0F, 0F);
-            p.setYRot(0); p.setXRot(0);
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);   // (a clear stone floor up high)
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
-            z.moveTo(p.getX(), p.getY(), p.getZ() + 14, 180F, 0F);
+            z.moveTo(at.x, at.y, at.z + 14, 180F, 0F);
             z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true);
             z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200); z.setHealth(200);
@@ -2355,13 +2355,16 @@ public final class UiTest {
                 }); }
                 for (int i = 0; i < 90; i++) com.xenowarriors.skill.ServerScheduler.later(8 + i * 2, () -> { if (com.xenowarriors.ka.Clashes.inClash(p)) com.xenowarriors.ka.Clashes.push(p); });
             }), 30));
-            l.add(new Step("dmzskillsclash_" + kind, () -> server(p -> log("dmzskillsclash " + kind + " mid: " + com.xenowarriors.ka.Clashes.last)), 3));
+            l.add(new Step(null, () -> noDmz(mc), 1));
+            l.add(new Step("dmzskillsclash_" + kind, () -> server(p -> log("dmzskillsclash " + kind + " mid: " + com.xenowarriors.ka.Clashes.last)), 220));
             l.add(new Step(null, () -> server(p -> {
                 log("dmzskillsclash " + kind + " result: " + com.xenowarriors.ka.Clashes.last + " zombieHp=" + (state[0] instanceof net.minecraft.world.entity.LivingEntity z ? z.getHealth() : -1));
                 var z = (net.minecraft.world.entity.LivingEntity) state[0];
                 if (z != null && z.isAlive()) z.setHealth(z.getMaxHealth());
                 p.setHealth(p.getMaxHealth());
-            }), 200));
+                net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+                if (z != null && z.isAlive()) { z.teleportTo(at.x, at.y, at.z + 14); z.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); }
+            }), 20));
         }
     }
 }

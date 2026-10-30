@@ -158,6 +158,14 @@ public final class SkillTestRunner {
 
     private static Vec3 base;
 
+    /** The test floor (built once, high up and clear), with the player put at its start facing +Z. */
+    public static Vec3 arena(ServerPlayer p) {
+        Vec3 at = home(p);
+        p.connection.teleport(at.x, at.y, at.z, 0F, 0F);
+        p.setYRot(0F); p.setXRot(0F); p.setYHeadRot(0F);
+        return at;
+    }
+
     private static Vec3 home(ServerPlayer p) {
         if (base == null) {
             net.minecraft.core.BlockPos b = new net.minecraft.core.BlockPos(3000, 120, 3000);
