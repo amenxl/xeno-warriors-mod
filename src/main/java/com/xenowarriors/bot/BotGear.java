@@ -25,13 +25,20 @@ import java.util.Set;
 public final class BotGear {
     private BotGear() {}
 
-    /** How hard this hits in the main hand (its attack damage bonus plus Sharpness and the like). */
+    /**
+     * How much damage this does over time in the main hand: its hit (attack damage bonus, Sharpness and the like)
+     * times how fast it swings - so a diamond sword beats an iron axe, as it does for players.
+     */
     public static float weaponScore(PartyBotEntity b, ItemStack s) {
         if (s.isEmpty() || !allowed(b, s)) return 0F;
-        float dmg = 0F;
+        float dmg = 0F, speed = 0F;
         for (AttributeModifier m : s.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE))
             if (m.getOperation() == AttributeModifier.Operation.ADDITION) dmg += (float) m.getAmount();
-        return dmg <= 0F ? 0F : dmg + EnchantmentHelper.getDamageBonus(s, MobType.UNDEFINED);
+        for (AttributeModifier m : s.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_SPEED))
+            if (m.getOperation() == AttributeModifier.Operation.ADDITION) speed += (float) m.getAmount();
+        if (dmg <= 0F) return 0F;
+        float swings = Math.max(0.5F, Math.min(4F, 4F + speed));             // (players swing 4 times a second bare-handed)
+        return (1F + dmg + EnchantmentHelper.getDamageBonus(s, MobType.UNDEFINED)) * swings;
     }
 
     /** How well this breaks a block (fast, and the right tool so it drops). */

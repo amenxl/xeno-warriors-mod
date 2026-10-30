@@ -67,6 +67,15 @@ public class PartyBotEntity extends PathfinderMob {
     long relayUntil;
     BlockPos mineTarget;
     int fullNotice;
+    /** (For tests) what it's mining and which goals are running. */
+    public BlockPos mineTargetForTest() { return mineTarget; }
+    public String goalsForTest() {
+        StringBuilder sb = new StringBuilder();
+        goalSelector.getRunningGoals().forEach(g -> sb.append(g.getGoal().getClass().getSimpleName()).append(' '));
+        targetSelector.getRunningGoals().forEach(g -> sb.append("T:").append(g.getGoal().getClass().getSimpleName()).append(' '));
+        return sb.toString().trim();
+    }
+
     /** When you last put something in its hand from its menu (it keeps that a while; see BotGear). */
     public int handPicked = -100000;
 
