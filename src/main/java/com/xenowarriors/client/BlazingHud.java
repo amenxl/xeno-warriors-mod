@@ -42,8 +42,9 @@ public final class BlazingHud {
         // the portrait, then the emblem over it in the character's colour
         disc(g, pcx, pcy, pr, 0xFF000000 | mix(col, 0.35F));
         if (HudFaces.hasArt(type)) {
-            int s = Math.round(pr * 2 + 2);                       // (the rim-free portrait, right up to the emblem's ring: no gap)
-            KhHud.portrait(g, HudFaces.bare(type, face), Math.round(pcx - s / 2F), Math.round(pcy - s / 2F), s, flash);
+            // the framed portrait, a little bigger and nudged left and down so it sits snug in the emblem's opening (nothing shows through)
+            int s = Math.round(pr * 2 * 0.97F / 0.828F);
+            KhHud.portrait(g, HudFaces.texture(type, face), Math.round(pcx - s / 2F - 1.5F), Math.round(pcy - s / 2F + 2F), s, flash);
         }
         RenderSystem.enableBlend();
         HudFade.color(((col >> 16) & 255) / 255F, ((col >> 8) & 255) / 255F, (col & 255) / 255F, 1F);
