@@ -98,6 +98,9 @@ public final class ClientCharacterData {
     public static void endPreview() { preview = null; }
     public static boolean isPreviewing() { return preview != null; }
 
+    /** Set while a small head-and-shoulders card is drawn: a plain standing pose, no idles (Mikiko sitting down hid his face). */
+    public static boolean standStill;
+
     public static void clear() {
         CHARACTERS.clear();
         OUTFITS.clear();

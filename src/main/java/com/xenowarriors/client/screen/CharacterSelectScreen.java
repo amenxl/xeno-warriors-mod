@@ -234,11 +234,12 @@ public class CharacterSelectScreen extends Screen {
             // portrait: head and shoulders, zoomed in
             g.enableScissor(c.x, c.y, c.x + c.w, c.y + c.h - 11);
             ClientCharacterData.beginPreview(c.type);
+            ClientCharacterData.standStill = true;
             try {
                 int size = (int) (c.h * 1.1F);
                 int feet = c.y + (int) (size * 2.1F);
                 InventoryScreen.renderEntityInInventoryFollowsMouse(g, c.x + c.w / 2, feet, size, -8F, 0F, minecraft.player);
-            } finally { ClientCharacterData.endPreview(); g.disableScissor(); }
+            } finally { ClientCharacterData.standStill = false; ClientCharacterData.endPreview(); g.disableScissor(); }
             g.pose().pushPose();
             g.pose().translate(0, 0, 400);
             g.fill(c.x, c.y + c.h - 11, c.x + c.w, c.y + c.h, 0xE0000000);
