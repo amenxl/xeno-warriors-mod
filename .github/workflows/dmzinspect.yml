@@ -31,6 +31,8 @@ jobs:
             echo "=== $c" >> out/dmz_javap.txt
             javap -cp dmz.jar -p "${c//\//.}" >> out/dmz_javap.txt 2>&1 || true
           done
+          javap -cp dmz.jar -c -p com.dragonminez.common.stats.techniques.TechniqueDispatcher > out/td_c.txt 2>&1 || true
+          javap -cp dmz.jar -c -p com.dragonminez.common.network.C2S.KiBlastC2S > out/kiblastc2s_c.txt 2>&1 || true
           ls -la out
           gh release delete dmz-inspect --yes --cleanup-tag -R ${{ github.repository }} || true
           gh release create dmz-inspect out/* --title "dmz-inspect" --notes "javap signatures of DragonMineZ stats/network classes" --prerelease -R ${{ github.repository }}
