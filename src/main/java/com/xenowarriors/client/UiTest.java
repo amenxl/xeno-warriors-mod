@@ -2197,7 +2197,8 @@ public final class UiTest {
             m.setNoAi(true);
             float max = m.getMaxHealth();
             m.setHealth(max); m.invulnerableTime = 0;
-            m.hurt(p.damageSources().playerAttack(p), (float) p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE));
+            net.minecraftforge.fml.util.ObfuscationReflectionHelper.setPrivateValue(net.minecraft.world.entity.LivingEntity.class, p, 200, "f_20922_");   // (a fully charged swing)
+            p.attack(m);
             float dealt = max - m.getHealth();
             m.setHealth(max);
             p.setHealth(p.getMaxHealth()); p.invulnerableTime = 0;

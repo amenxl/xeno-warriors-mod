@@ -54,8 +54,15 @@ public final class Catalog {
         return all;
     }
 
+    /** A DragonMineZ saga character (a story fighter, not a henchman like a Saibaman or a Frieza soldier). */
+    public static boolean sagaCharacter(String id) {
+        if (!id.startsWith("dragonminez:saga_")) return false;
+        return !(id.contains("saibaman") || id.contains("soldier") || id.contains("cell_jr"));
+    }
+
     public static boolean inTower(String id) {
         if (NOT_IN_TOWER.contains(id)) return false;
+        if (sagaCharacter(id)) return false;          // (Broly, Vegetto... on floor 1 was impossible: they only come in Journey's Dragon Ball battles)
         return ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(id)) != null;
     }
 }

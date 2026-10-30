@@ -275,6 +275,19 @@ public final class JourneyWorld {
         m.setHealth(m.getMaxHealth());
     }
 
+    /** DragonMineZ's own fighters bring their own stats (hundreds of health, hits of 100+): capped to the difficulty first, then scaled like everyone else. */
+    static void tame(Mob m, int diff) {
+        var id = ForgeRegistries.ENTITY_TYPES.getKey(m.getType());
+        if (id == null || !id.getNamespace().equals("dragonminez")) return;
+        boolean named = com.xenowarriors.collection.Catalog.sagaCharacter(id.toString());
+        double hpCap = (named ? 80 : 30) * (1 + 0.6 * diff), dmgCap = (named ? 7 : 4) * (1 + 0.4 * diff);
+        var mh = m.getAttribute(Attributes.MAX_HEALTH);
+        if (mh != null && mh.getBaseValue() > hpCap) mh.setBaseValue(hpCap);
+        var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (md != null && md.getBaseValue() > dmgCap) md.setBaseValue(dmgCap);
+        m.setHealth(m.getMaxHealth());
+    }
+
     /** With DragonMineZ: enemies keep up with your DragonMineZ power (bosses too). */
     public static void scale(Mob m, float scale) {
         m.getPersistentData().putFloat("xw_journey_dmz", scale);
@@ -290,6 +303,7 @@ public final class JourneyWorld {
     private static final UUID DMZ = UUID.fromString("7c1d4e22-8b4e-4d66-ab62-1e2f3d4c5b03"), DMZ_DMG = UUID.fromString("7c1d4e22-8b4e-4d66-ab62-1e2f3d4c5b04");
 
     private static void prepare(ServerLevel l, Mob m, int diff, int step, float scale) {
+        tame(m, diff);
         scale(m, scale);
         m.setPersistenceRequired();
         float hp = JourneyRules.HP_MULT[diff] * (1F + 0.05F * step) - 1F, dmg = JourneyRules.DMG_MULT[diff] * (1F + 0.03F * step) - 1F;
