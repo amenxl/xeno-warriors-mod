@@ -453,6 +453,7 @@ public final class PartyBots {
         f.setOnGround(b.onGround());
         boolean used;
         try { used = skill.use(f); } catch (Throwable t) { used = false; }
+        if (used && b.journey() && b.owner() != null) com.xenowarriors.journey.Journey.onSkill(b.owner());   // (a teammate's skill still breaks "No skills")
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());

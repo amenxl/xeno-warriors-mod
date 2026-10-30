@@ -98,6 +98,7 @@ public final class HekubladeRealm {
     public static void toggle(ServerPlayer p) {
         if (ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
         if (com.xenowarriors.journey.Journey.inRun(p) && !inRealm(p)) { p.displayClientMessage(Component.literal("Not on a Journey").withStyle(ChatFormatting.GRAY), true); return; }
+        if (com.xenowarriors.tower.Tower.is(p.level()) && !inRealm(p)) { p.displayClientMessage(Component.literal("Not in the Tower").withStyle(ChatFormatting.GRAY), true); return; }
         if (isPrisoner(p)) {
             p.displayClientMessage(Component.literal("You're sealed in someone else's blade - ask them to free you."), true);
             return;

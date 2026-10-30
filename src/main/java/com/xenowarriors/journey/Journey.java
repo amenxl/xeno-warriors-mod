@@ -70,6 +70,7 @@ public final class Journey {
         CharacterType active = CharacterType.NONE, original = CharacterType.NONE;
         int score; float hurt;
         Back back; GameType mode = GameType.SURVIVAL;
+        float karma = -1;                                       // (what it was before the journey: given back afterwards)
         /** The characters fighting beside you as AI teammates this battle (bot entity -> character). */
         final Map<UUID, CharacterType> bots = new LinkedHashMap<>();
         Member(ServerPlayer p) { id = p.getUUID(); name = p.getGameProfile().getName(); }
@@ -112,7 +113,10 @@ public final class Journey {
 
     /** In a journey (walking the path or fighting) - not just the lobby. */
     public static boolean inRun(Player p) { Run r = BY.get(p.getUUID()); return r != null && r.phase != LOBBY; }
-    public static boolean inLobbyOrRun(Player p) { return BY.containsKey(p.getUUID()); }
+    public static boolean inLobbyOrRun(Player p) { return BY.containsKey(p.getUUID()) || RESTORING.contains(p.getUUID()); }
+
+    /** Being put back after a run: character switches don't swap inventories or DragonMineZ data (they were never swapped in). */
+    private static final Set<UUID> RESTORING = new HashSet<>();
 
     private static Component msg(String s, ChatFormatting c) { return Component.literal(s).withStyle(c); }
 
@@ -232,6 +236,8 @@ public final class Journey {
                 if (t == CharacterType.NONE || !com.xenowarriors.character.Seasons.unlocked(server, t.season())) return;
                 if (me.picks.remove(t)) { me.ready = false; break; }
                 for (Member o : r.members) if (o != me && o.picks.contains(t)) return;
+                for (Member o : r.members) if ((t == CharacterType.AIONI && o.picks.contains(CharacterType.RHALIX)) || (t == CharacterType.RHALIX && o.picks.contains(CharacterType.AIONI))) {
+                    p.displayClientMessage(msg("Ai-oni and Rhalix can never fight on the same side", ChatFormatting.RED), true); return; }
                 if (me.picks.size() >= r.cap()) return;
                 me.picks.add(t);
                 me.ready = false;
@@ -283,6 +289,8 @@ public final class Journey {
                     : m.picks.size() != r.cap() ? m.name + " needs to pick " + r.cap() + " characters"
                     : !m.ready && !m.id.equals(r.host) ? m.name + " isn't ready"
                     : p.isCreative() || p.isSpectator() ? m.name + " needs to be in Survival or Adventure mode"
+                    : com.xenowarriors.party.Duels.isKnockedOut(p) ? m.name + " is down"
+                    : server.getWorldData().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL ? "Journeys don't start on Peaceful difficulty"
                     : Tower.is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level()) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p) ? m.name + " can't leave from where they are"
                     : r.members.size() == 2 && !m.id.equals(r.host) && !com.xenowarriors.party.Parties.sameParty(p.getUUID(), r.host) ? m.name + " needs to be in your party"
                     : null;
@@ -353,11 +361,17 @@ public final class Journey {
     }
 
     private static void restore(ServerPlayer p, Member m) {
+        if (m.karma >= 0) { float k = m.karma; com.xenowarriors.skill.ServerScheduler.later(2, () -> p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(k); })); }
         restore(p, m.original, m.mode, m.back == null ? null : m.back.dim(), m.back == null ? null : m.back.pos(), m.back == null ? 0F : m.back.yRot());
     }
 
     /** Back to who you were (the select screen if that character's taken now, or you had none), your game mode and where you were. */
     private static void restore(ServerPlayer p, CharacterType original, GameType mode, ResourceKey<Level> dim, Vec3 pos, float yRot) {
+        RESTORING.add(p.getUUID());
+        try { restoreNow(p, original, mode, dim, pos, yRot); } finally { RESTORING.remove(p.getUUID()); }
+    }
+
+    private static void restoreNow(ServerPlayer p, CharacterType original, GameType mode, ResourceKey<Level> dim, Vec3 pos, float yRot) {
         setBack(p, null);
         applyBoosts(p, null, false);
         if (p.gameMode.getGameModeForPlayer() != mode) p.setGameMode(mode);
@@ -670,6 +684,7 @@ public final class Journey {
             p.clearFire();
             applyBoosts(p, r, true);
             p.setHealth(Math.max(1F, p.getMaxHealth() * r.hp.getOrDefault(m.active, 1F)));
+            if (m.karma < 0) m.karma = com.xenowarriors.karma.Karma.get(p);      // (remembered once, given back at the end)
             com.xenowarriors.karma.Karma.add(p, 100000F);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4, false, false));
             for (int i = 1; i < m.chosen.size(); i++) spawnBot(p, r, m, m.chosen.get(i));
@@ -911,6 +926,7 @@ public final class Journey {
     }
 
     private static void finished(MinecraftServer server, Run r) {
+        handOutDrops(server, r);
         long money = Math.round(JourneyRules.REWARD[r.diff] * JourneyRules.STAGE_PAY[r.stage]);
         int idx = r.diff * JourneyRules.STAGES + r.stage;
         String name = stageName(r);
@@ -928,6 +944,26 @@ public final class Journey {
                     name + " cleared", "+" + com.xenowarriors.economy.Money.fmt(money) + " Money. " + next, "");
             leave(p, "Journey complete!", true);
             title(p, "JOURNEY CLEARED", name + "  -  +" + com.xenowarriors.economy.Money.fmt(money) + " Money", JourneyRules.DIFF_COLOR[r.diff]);
+        }
+    }
+
+    /** Everything lying on the arena or path (the last battle's drops, item panels' overflow): shared out before you go home. */
+    private static void handOutDrops(MinecraftServer server, Run r) {
+        ServerLevel tl = server.getLevel(Tower.LEVEL);
+        if (tl == null) return;
+        List<ServerPlayer> who = new ArrayList<>();
+        for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) who.add(p); }
+        if (who.isEmpty()) return;
+        int i = 0;
+        for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> e instanceof net.minecraft.world.entity.item.ItemEntity || e instanceof net.minecraft.world.entity.ExperienceOrb)) {
+            ServerPlayer p = who.get(i++ % who.size());
+            if (e instanceof net.minecraft.world.entity.ExperienceOrb orb) { p.giveExperiencePoints(orb.getValue()); orb.discard(); continue; }
+            net.minecraft.world.item.ItemStack s = ((net.minecraft.world.entity.item.ItemEntity) e).getItem().copy();
+            e.discard();
+            if (!p.getInventory().add(s) && !s.isEmpty()) {
+                net.minecraft.world.item.ItemStack left = p.getEnderChestInventory().addItem(s);
+                if (!left.isEmpty()) { final net.minecraft.world.item.ItemStack drop = left; com.xenowarriors.skill.ServerScheduler.later(5, () -> p.drop(drop, false)); }   // (at home, after the trip back)
+            }
         }
     }
 
