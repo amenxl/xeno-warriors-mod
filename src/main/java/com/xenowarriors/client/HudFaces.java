@@ -83,6 +83,7 @@ public final class HudFaces {
         if (down) return "exhausted";
         if (allOut) return "rage";
         if (s != null && clock < s.talkUntil) return (clock / 4) % 2 == 0 ? "shout" : "normal";
+        if (voice(id) > 0) return voice(id) >= 3 || (clock / 3) % 2 == 0 ? "shout" : "normal";   // talking in voice chat: the portrait talks too
         if (s != null && clock < s.bigHitUntil) return "damage1";
         if (s != null && clock < s.hitUntil) return "hurt";
         if (max > 0 && hp / max <= 0.25F) return "exhausted";
@@ -90,14 +91,21 @@ public final class HudFaces {
         return "normal";
     }
 
-    /** Whether this character has drawn HUD portrait art (the others show their live head - see HudHead). */
+    /** How open their mouth is in voice chat right now (0 = quiet). */
+    private static int voice(UUID id) {
+        int m = com.xenowarriors.voice.VoiceLevels.mouth(id);
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null && id.equals(mc.player.getUUID())) m = Math.max(m, com.xenowarriors.voice.VoiceLevels.mouth(com.xenowarriors.voice.VoiceLevels.LOCAL));
+        return m;
+    }
+
+    /** Every show character has a round drawn portrait (tools/xw/hud/portraits_all.py); You characters show their live head (HudHead). */
     public static boolean hasArt(CharacterType type) {
-        return type == CharacterType.MIKIKO || type == CharacterType.RHALIX || type == CharacterType.ULTIMA;
+        return type != CharacterType.NONE && type != CharacterType.YOU;
     }
 
     public static ResourceLocation texture(CharacterType type, String face) {
-        String ch = type == CharacterType.RHALIX ? "rhalix" : type == CharacterType.ULTIMA ? "ultima" : "mikiko";
-        return XenoWarriors.id("textures/gui/hud/portrait_" + ch + "_" + face + ".png");
+        return XenoWarriors.id("textures/gui/hud/portrait_" + type.getId() + "_" + face + ".png");
     }
 
     public static int clock() { return clock; }
