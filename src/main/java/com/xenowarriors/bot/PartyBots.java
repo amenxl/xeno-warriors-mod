@@ -476,14 +476,23 @@ public final class PartyBots {
             BlockState s = b.level().getBlockState(p);
             if (s.is(com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get())) { if (ultima) return null; continue; }   // Data Sense can't read it
             if (!isOre(s)) continue;
+            if (exposed(b, p) && !b.unreachable(p)) {                            // (buried ore it can't get to isn't a target)
+                double dd = p.distSqr(b.blockPosition());
+                if (dd < bd) { bd = dd; best = p.immutable(); }
+            }
             seen.add(p.asLong()); kinds.add(s.is(com.xenowarriors.sky.ModBlocks.DATA_ORE.get()) ? 4 : s.is(Tags.Blocks.ORES_DIAMOND) || s.is(Tags.Blocks.ORES_EMERALD) ? 3 : s.is(Tags.Blocks.ORES_GOLD) ? 1 : 0);
-            double dd = p.distSqr(b.blockPosition());
-            if (dd < bd) { bd = dd; best = p.immutable(); }
         }
         if (!seen.isEmpty() && b.tickCount % 200 < 20)                       // shows you the ore it senses
             ModNetwork.sendToPlayer(new com.xenowarriors.network.DataSensedPacket(new int[0], seen.stream().mapToLong(Long::longValue).toArray(),
                     kinds.stream().mapToInt(Integer::intValue).toArray(), 200, false), o);
         return best;
+    }
+
+    /** Open to the air on some side (in a cave, a cliff, a hillside): somewhere a bot can stand next to it. */
+    static boolean exposed(PartyBotEntity b, BlockPos p) {
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values())
+            if (!b.level().getBlockState(p.relative(d)).isSolidRender(b.level(), p.relative(d))) return true;
+        return false;
     }
 
     static void mine(PartyBotEntity b, BlockPos pos) {

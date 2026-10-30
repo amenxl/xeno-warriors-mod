@@ -67,6 +67,10 @@ public class PartyBotEntity extends PathfinderMob {
     long relayUntil;
     BlockPos mineTarget;
     int fullNotice;
+    /** Blocks it gave up on reaching (pos -> until tickCount), so it doesn't walk at a buried ore forever. */
+    final java.util.Map<Long, Integer> giveUp = new java.util.HashMap<>();
+    boolean unreachable(BlockPos p) { Integer t = giveUp.get(p.asLong()); return t != null && t > tickCount; }
+
     /** (For tests) what it's mining and which goals are running. */
     public BlockPos mineTargetForTest() { return mineTarget; }
     public String goalsForTest() {
@@ -234,16 +238,23 @@ public class PartyBotEntity extends PathfinderMob {
             return reviving != null;
         }
         @Override public boolean canContinueToUse() { return reviving != null && reviving.isAlive() && !downed() && PartyBots.isDown(reviving) && reviving.distanceToSqr(PartyBotEntity.this) < 40 * 40; }
+        private int stalled; private double closest;
+        @Override public void start() { stalled = 0; closest = 1e9; }
         @Override public void stop() { reviving = null; }
         @Override public void tick() {
             if (reviving == null) return;
             setTarget(null);
             getLookControl().setLookAt(reviving);
-            if (distanceToSqr(reviving) > 1.4 * 1.4) {
+            double d2 = distanceToSqr(reviving);
+            if (d2 > 1.4 * 1.4) {
                 if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(reviving.getX(), reviving.getY(), reviving.getZ(), 1.35);
-                if (distanceToSqr(reviving) > 24 * 24 || (tickCount % 40 == 0 && getNavigation().isStuck())) {   // too far or stuck: hop over to them
-                    net.minecraft.world.phys.Vec3 at = reviving.position().add(1, 0, 0);
-                    if (level().noCollision(PartyBotEntity.this, getBoundingBox().move(at.subtract(position())))) teleportTo(at.x, at.y, at.z);
+                if (d2 < closest - 0.25) { closest = d2; stalled = 0; } else stalled++;
+                if (d2 > 24 * 24 || stalled > 40) {                               // too far, or two seconds without getting closer: hop over to them
+                    stalled = 0;
+                    for (net.minecraft.world.phys.Vec3 off : new net.minecraft.world.phys.Vec3[]{new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1), new Vec3(1, 1, 0), new Vec3(0, 1, 1)}) {
+                        Vec3 at = reviving.position().add(off);
+                        if (level().noCollision(PartyBotEntity.this, getBoundingBox().move(at.subtract(position())))) { teleportTo(at.x, at.y, at.z); getNavigation().stop(); break; }
+                    }
                 }
             } else getNavigation().stop();
         }
@@ -279,7 +290,8 @@ public class PartyBotEntity extends PathfinderMob {
     /** Mining mode: senses ore near you (Karma Sense, or Data Sense for Ultima) and digs it out into its bag. */
     /** Mine mode: ore it senses near you, and trees (the whole trunk comes down), with the best tool it has. */
     class MineGoal extends Goal {
-        int dig, need, lastLook, lastTreeLook = -1000;
+        int dig, need, lastLook, lastTreeLook = -1000, walking;
+        double closest;
         MineGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         @Override public boolean canUse() {
             // (the goal selector asks every other tick on its own clock: a tickCount % 20 test could never line up)
@@ -296,12 +308,23 @@ public class PartyBotEntity extends PathfinderMob {
         }
         private boolean breakable(BlockState s) { return PartyBots.isOre(s) || BotGear.isLog(s); }
         @Override public boolean canContinueToUse() { return mineTarget != null && mode() == MINING && !downed() && getTarget() == null && breakable(level().getBlockState(mineTarget)); }
-        @Override public void start() { dig = 0; need = 0; }
+        @Override public void start() { dig = 0; need = 0; walking = 0; closest = 1e9; }
         @Override public void stop() { if (mineTarget != null) level().destroyBlockProgress(getId(), mineTarget, -1); mineTarget = null; }
         @Override public void tick() {
             if (mineTarget == null) return;
             getLookControl().setLookAt(Vec3.atCenterOf(mineTarget));
-            if (distanceToSqr(Vec3.atCenterOf(mineTarget)) > 3.2 * 3.2) { getNavigation().moveTo(mineTarget.getX() + .5, mineTarget.getY(), mineTarget.getZ() + .5, 1.1); return; }
+            double d2 = distanceToSqr(Vec3.atCenterOf(mineTarget));
+            if (d2 > 3.2 * 3.2) {
+                if (d2 < closest - 0.5) { closest = d2; walking = 0; }              // getting closer
+                if (++walking > 80) {                                              // 4 seconds without getting any closer: it can't get there
+                    giveUp.put(mineTarget.asLong(), tickCount + 20 * 60);
+                    if (giveUp.size() > 64) giveUp.values().removeIf(t -> t <= tickCount);
+                    mineTarget = null;
+                    return;
+                }
+                if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(mineTarget.getX() + .5, mineTarget.getY(), mineTarget.getZ() + .5, 1.1);
+                return;
+            }
             getNavigation().stop();
             BlockState st = level().getBlockState(mineTarget);
             if (need == 0) { BotGear.holdBestTool(PartyBotEntity.this, st); need = BotGear.digTicks(PartyBotEntity.this, mineTarget, st); }

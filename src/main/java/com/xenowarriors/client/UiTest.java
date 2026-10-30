@@ -2104,7 +2104,9 @@ public final class UiTest {
             r.moveTo(p.getX() + 3, p.getY(), p.getZ() + 3);
             r.die(p.damageSources().generic());
             log("bots3 revive: rhalix downed=" + r.downed());
-        }), 120));
+        }), 40));
+        l.add(new Step(null, () -> server(p -> { var k = bot(p, CharacterType.KAERU); var r = bot(p, CharacterType.RHALIX);
+            if (k != null && r != null) log("bots3 revive mid: kaeru goals=[" + k.goalsForTest() + "] dist to rhalix=" + String.format(java.util.Locale.ROOT, "%.1f", k.distanceTo(r)) + " rhalix downed=" + r.downed()); }), 100));
         l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX); log("bots3 revive: rhalix downed after 6s=" + (r == null ? "?" : r.downed())); }), 3));
         l.add(new Step("bots3_revive", () -> {}, 3));
         // eating: Kaeru hurt with food in her bag

@@ -123,7 +123,7 @@ public final class BotGear {
         double bd = 1e9;
         for (BlockPos p : BlockPos.betweenClosed(c.offset(-16, -4, -16), c.offset(16, 8, 16))) {
             BlockState s = b.level().getBlockState(p);
-            if (!isLog(s) || isLog(b.level().getBlockState(p.below()))) continue;
+            if (!isLog(s) || isLog(b.level().getBlockState(p.below())) || b.unreachable(p)) continue;
             double dd = p.distSqr(b.blockPosition());
             if (dd >= bd || !natural(b, p)) continue;
             bd = dd; best = p.immutable();
