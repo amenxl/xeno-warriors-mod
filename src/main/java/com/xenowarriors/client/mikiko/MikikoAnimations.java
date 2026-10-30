@@ -1561,6 +1561,7 @@ public final class MikikoAnimations {
         // your own body seen from inside it (first-person body view): the camera doesn't move with these whole-body
         // moves, so they'd pull the body away from the view
         if (com.xenowarriors.client.FirstPersonHead.ownFirstPerson(p)) return;
+        if (com.xenowarriors.client.ClientCharacterData.standStill) return;    // a menu head-shot: standing, not sat on the floor
         if (p.isSleeping()) {
             // roll from lying on his back onto his side (the pillow side), around the length of his body
             net.minecraft.core.Direction bed = p.getBedOrientation();

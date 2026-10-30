@@ -47,8 +47,17 @@ public class BountyScreen extends Screen {
             g.fill(px + 40, py - 2, px + 48, py + 4, 0xFFAA2A2A);                            // pin
             g.drawCenteredString(font, "WANTED", px + 44, py + 8, 0xFF6A1A12);
             String name = EntityType.byString(m.ids()[i]).map(t -> t.getDescription().getString()).orElse(m.ids()[i]);
-            if (name.length() > 13) name = name.substring(0, 12) + ".";
-            g.drawCenteredString(font, name, px + 44, py + 26, 0xFF2A2A2A);
+            if (font.width(name) <= 82) g.drawCenteredString(font, name, px + 44, py + 26, 0xFF2A2A2A);
+            else {                                    // long names ("Possessed Villager") on two smaller lines instead of cut off
+                var lines = font.split(net.minecraft.network.chat.Component.literal(name), (int) (82 / 0.8F));
+                for (int li = 0; li < Math.min(2, lines.size()); li++) {
+                    g.pose().pushPose();
+                    g.pose().translate(px + 44, py + 21 + li * 9, 0);
+                    g.pose().scale(0.8F, 0.8F, 1F);
+                    g.drawCenteredString(font, lines.get(li), 0, 0, 0xFF2A2A2A);
+                    g.pose().popPose();
+                }
+            }
             g.drawCenteredString(font, "Defeat " + m.need()[i], px + 44, py + 42, 0xFF4A3A2A);
             int t = Math.max(1, Math.min(3, m.tier()[i]));
             g.drawCenteredString(font, TIER[t], px + 44, py + 56, TIER_COL[t]);

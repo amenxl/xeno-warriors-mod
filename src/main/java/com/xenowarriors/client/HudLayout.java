@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class HudLayout {
-    private static int topRight = 6, bossBottom, bossBottomNext;
+    private static int topRight = 6, petTop = 6, bossBottom, bossBottomNext;
     private static Boolean epicFight;
 
     private HudLayout() {}
@@ -35,6 +35,8 @@ public final class HudLayout {
             if (bad) y = good ? 53 : 27;
         }
         if (KhHud.active()) y = Math.max(6, com.xenowarriors.client.party.KhParty.bottom() + 2);   // effects sit above the health gauge instead
+        petTop = y;                                         // pet cards next, then request cards / toasts under them
+        y += PetHud.blockHeight();
         topRight = y;
         bossBottom = bossBottomNext;
         bossBottomNext = 0;
@@ -53,6 +55,9 @@ public final class HudLayout {
     }
 
     public static int topRight() { return topRight; }
+
+    /** Where the pet cards start (top right). */
+    public static int petTop() { return petTop; }
 
     /** The lowest point of the boss bars this frame (0 if none). */
     public static int bossBottom() { return bossBottom; }

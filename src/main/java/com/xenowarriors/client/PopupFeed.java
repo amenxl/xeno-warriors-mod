@@ -110,6 +110,8 @@ public final class PopupFeed implements IGuiOverlay {
         Font font = mc.font;
         int w = 150, h = 26, gap = 9;
         float baseY = height * 0.47F;                         // left side, above the chat area
+        int party = com.xenowarriors.client.party.PartyHud.shownTop();
+        if (party > 0) baseY = Math.max(h + gap + 4, Math.min(baseY, party - 2));   // (and above the classic party frames)
         boolean journey = com.xenowarriors.client.journey.JourneyClient.active() && com.xenowarriors.client.journey.JourneyClient.phase() != 0;
         if (journey) { baseY = Math.max(baseY, 140F); while (POPS.size() > 1) POPS.remove(0); }   // (on a Journey: one at a time, under its info)
         int n = POPS.size();
@@ -161,12 +163,25 @@ public final class PopupFeed implements IGuiOverlay {
         g.pose().scale(0.75F, 0.75F, 1F);
         g.drawString(font, p.title.toUpperCase(java.util.Locale.ROOT), 0, 0, ta | 0xFFF6D8, true);
         g.pose().popPose();
-        String line = font.plainSubstrByWidth(p.text, (int) ((w - 44) / 0.8F));
-        g.pose().pushPose();
-        g.pose().translate(x + 7, y + 13.5F, 0);
-        g.pose().scale(0.8F, 0.8F, 1F);
-        g.drawString(font, line, 0, 0, ta | 0xFFFFFF, true);
-        g.pose().popPose();
+        int avail = w - 44;
+        if (font.width(p.text) * 0.8F <= avail) {
+            g.pose().pushPose();
+            g.pose().translate(x + 7, y + 13.5F, 0);
+            g.pose().scale(0.8F, 0.8F, 1F);
+            g.drawString(font, p.text, 0, 0, ta | 0xFFFFFF, true);
+            g.pose().popPose();
+        } else {                                              // too long for one line: two smaller lines (it used to just cut off)
+            var lines = font.getSplitter().splitLines(p.text, (int) (avail / 0.6F), net.minecraft.network.chat.Style.EMPTY);
+            for (int i = 0; i < Math.min(2, lines.size()); i++) {
+                String s = lines.get(i).getString();
+                if (i == 1 && lines.size() > 2) s = font.plainSubstrByWidth(s, (int) (avail / 0.6F) - font.width("…")).stripTrailing() + "…";
+                g.pose().pushPose();
+                g.pose().translate(x + 7, y + 12F + i * 6.5F, 0);
+                g.pose().scale(0.6F, 0.6F, 1F);
+                g.drawString(font, s, 0, 0, ta | 0xFFFFFF, true);
+                g.pose().popPose();
+            }
+        }
 
         // the picture: overlapping the right end, poking out above the banner
         if (a > 0.25F) picture(g, p, x + w - 34, y - 6, 32);

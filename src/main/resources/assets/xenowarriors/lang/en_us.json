@@ -1,5 +1,8 @@
 {
   "character.xenowarriors.none": "None",
+  "character.xenowarriors.none.full_name": "No Character",
+  "character.xenowarriors.none.title": "Pick a warrior",
+  "character.xenowarriors.none.elements": "None",
   "character.xenowarriors.mikiko": "Mikiko",
   "character.xenowarriors.mikiko.full_name": "AmenXL Mikiko",
   "character.xenowarriors.mikiko.title": "The Fox King",

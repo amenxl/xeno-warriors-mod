@@ -263,7 +263,13 @@ public class PetsScreen extends Screen {
         for (Btn b : buttons()) {
             boolean over = b.enabled && vx >= b.x && vx < b.x + b.w && vy >= b.y && vy < b.y + b.h;
             g.fill((int) b.x, (int) b.y, (int) (b.x + b.w), (int) (b.y + b.h), !b.enabled ? 0xFF2A2A30 : over ? 0xFF000000 | light(col) : 0xFF000000 | col);
-            g.drawCenteredString(font, b.label, (int) (b.x + b.w / 2), (int) (b.y + (b.h - 8) / 2), !b.enabled ? 0x707078 : over ? 0x101010 : 0xFFFFFF);
+            // shrink a label that's wider than its button instead of letting it spill out
+            float k = Math.min(1F, (b.w - 6) / Math.max(1F, font.width(b.label)));
+            g.pose().pushPose();
+            g.pose().translate(b.x + b.w / 2, b.y + b.h / 2 - 4 * k, 0);
+            g.pose().scale(k, k, 1F);
+            g.drawCenteredString(font, b.label, 0, 0, !b.enabled ? 0x707078 : over ? 0x101010 : 0xFFFFFF);
+            g.pose().popPose();
         }
         g.pose().popPose();
         if (name.visible) name.render(g, mx, my, pt);

@@ -17,10 +17,15 @@ public class KhParty implements IGuiOverlay {
     /** How far down the top-right corner the party cards reach (other things stack under them). */
     public static int bottom() { return height; }
 
+    private static int blazingTop;
+    /** Blazing Wind: the top of the party cards above your gauge (0 = none shown) - top-right cards keep above it. */
+    public static int blazingTop() { return blazingTop; }
+
     @Override
     public void render(ForgeGui gui, GuiGraphics g, float partial, int width, int screenH) {
         Minecraft mc = Minecraft.getInstance();
         height = 0;
+        blazingTop = 0;
         if (!KhHud.active() || mc.options.hideGui || PartyClient.members().isEmpty()) return;
         if (com.xenowarriors.client.ClientSettings.blazingHud()) {
             com.xenowarriors.client.HudFade.begin();
@@ -85,7 +90,7 @@ public class KhParty implements IGuiOverlay {
         int x = right - cw, y = bottom - ch;
         for (PartySyncPacket.Member m : PartyClient.members()) {
             if (m.id().equals(mc.player.getUUID())) continue;
-            if (x < width / 2 + 100) { x = right - cw; y -= ch + 2; }          // (a second row when there's no room)
+            if (x < width / 2 + 8) { x = right - cw; y -= ch + 2; }            // (a second row only when the right half is full - stacking up early ran it into the top-right cards)
             CharacterType type = CharacterType.values()[Math.max(0, Math.min(CharacterType.values().length - 1, m.type()))];
             g.pose().pushPose();
             g.pose().translate(x, y + 9, 0);
@@ -117,6 +122,7 @@ public class KhParty implements IGuiOverlay {
             // name above, and how far away they are
             String nm = m.name();
             KhHud.small(g, font, nm, x + 2, y, 0xFFFFFF, 0.75F);
+            blazingTop = blazingTop == 0 ? y - 2 : Math.min(blazingTop, y - 2);
             double dist = mc.player.level().dimension().location().toString().equals(m.dim()) ? Math.sqrt(mc.player.distanceToSqr(m.x(), m.y(), m.z())) : -1;
             String d = dist >= 0 ? Math.round(dist) + "m" : "far";
             KhHud.small(g, font, d, x + cw - 2 - font.width(d) * 0.6F, y + 1, 0xBEBED2, 0.6F);

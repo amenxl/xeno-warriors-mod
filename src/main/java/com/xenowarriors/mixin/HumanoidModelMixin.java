@@ -38,7 +38,8 @@ public abstract class HumanoidModelMixin {
         // drawn in a menu (the inventory's preview, say): a plain standing pose, so held items and shields sit in the
         // hands - unless the screen asked for a pose of its own (portraits, the M menu, the select screen)
         boolean plainGui = com.xenowarriors.client.FirstPersonHead.inGui && com.xenowarriors.client.portrait.PortraitPoses.active == null
-                && !com.xenowarriors.client.ClientCharacterData.isPreviewing();
+                && !com.xenowarriors.client.ClientCharacterData.isPreviewing()
+                || com.xenowarriors.client.FirstPersonHead.inGui && com.xenowarriors.client.ClientCharacterData.standStill;   // head-shot cards
         if (plainGui) return;
         if (self instanceof PlayerModel<?> && entity instanceof Player) {
             if (!SkillAnimations.apply((HumanoidModel<?>) self, entity, ageInTicks)) {

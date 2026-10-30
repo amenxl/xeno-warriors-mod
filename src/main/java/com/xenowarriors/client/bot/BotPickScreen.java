@@ -41,7 +41,7 @@ public class BotPickScreen extends Screen {
     private int level(CharacterType t) { return Math.max(1, com.xenowarriors.network.CharLevelsPacket.CLIENT[t.ordinal()]); }
 
     private int gridTop() { return 44; }
-    private int gridBottom() { return height - 36; }
+    private int gridBottom() { return height - 46; }       // room under the grid for the scroll hint
     private int gridLeft() { return (width - (cols * CW + (cols - 1) * GAP)) / 2; }
     private int rows() { return (choices.size() + cols - 1) / cols; }
     private int maxScroll() { return Math.max(0, rows() * (CH + GAP) - GAP - (gridBottom() - gridTop())); }
@@ -136,7 +136,7 @@ public class BotPickScreen extends Screen {
             } else if (!ok) g.fill(x, y, x + CW, y + CH, 0x80000000);
         }
         g.disableScissor();
-        if (maxScroll() > 0) g.drawCenteredString(font, scroll < maxScroll() ? "▼ scroll for more" : "▲ scroll up", width / 2, gridBottom() - 10, 0x8899AA);
+        if (maxScroll() > 0) g.drawCenteredString(font, scroll < maxScroll() ? "▼ scroll for more" : "▲ scroll up", width / 2, gridBottom() + 2, 0x8899AA);
         super.render(g, mx, my, pt);
         if (hover != null) {
             List<net.minecraft.util.FormattedCharSequence> lines = new ArrayList<>(font.split(Component.literal(hover.getFullName().getString() + "\n" + hover.getTitle().getString() + "\n" + hover.getElements().getString()), 160));

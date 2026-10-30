@@ -157,6 +157,8 @@ public final class UiTest {
         if ("bots3".equals(System.getenv("XW_UITEST_FOCUS"))) { bots3(mc, l); return l; }
         if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
         if ("modeblocks".equals(System.getenv("XW_UITEST_FOCUS"))) { modeBlocks(mc, l); return l; }
+        if ("uisweep".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, false); return l; }
+        if ("uisweep2".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, true); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }
@@ -2284,5 +2286,70 @@ public final class UiTest {
             }), 5));
             l.add(new Step("modeblocks_" + name, () -> {}, 3));
         }
+    }
+
+    /** Every screen and HUD element, for a UI review: uisweep at 854x480, uisweep2 at 1920x1080 (GUI scale auto). */
+    private static void uiSweep(Minecraft mc, List<Step> l, boolean big) {
+        String pre = big ? "uisweep2_" : "uisweep_";
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); mc.options.hideGui = false;
+            mc.options.setCameraType(CameraType.FIRST_PERSON);
+            if (big) { try { mc.getWindow().setWindowed(1920, 1080); } catch (Throwable t) { log("resize failed " + t); } mc.options.guiScale().set(0); mc.resizeDisplay(); }
+            server(p -> {
+                p.serverLevel().setDayTime(6000); p.setYRot(0); p.setXRot(10);
+                com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
+                com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.KAERU, null);
+                var a = new com.xenowarriors.you.YouSlot(); a.name = "Sweep"; a.race = com.xenowarriors.character.Race.SKYLANDER; a.element = com.xenowarriors.ka.Element.WIND; a.form = 1;
+                com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 0, a);
+                com.xenowarriors.character.CharacterManager.setCharacter(p, CharacterType.MIKIKO);
+                var fox = net.minecraft.world.entity.EntityType.FOX.create(p.serverLevel());
+                if (fox != null) { fox.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2); p.serverLevel().addFreshEntity(fox); com.xenowarriors.fox.FoxPets.tameNow(p, fox); }
+            });
+            log("uisweep window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 70));
+        java.util.function.BiConsumer<String, Runnable> shot = (n, r) -> {
+            l.add(new Step(null, () -> { mc.setScreen(null); r.run(); }, 25));
+            l.add(new Step(pre + n, () -> log("uisweep " + n + " screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName())), 3));
+        };
+        // the M menu and each entry's own screen
+        for (int i = 0; i < 9; i++) { int ii = i; shot.accept("menu" + i, () -> { PlayerStatsScreen.open(); if (mc.screen instanceof com.xenowarriors.client.menu.MainMenuScreen m) m.select(ii); }); }
+        for (int g = 0; g < 9; g++) { shot.accept("select" + g, () -> { com.xenowarriors.client.screen.CharacterSelectScreen.nextPageForTest(); mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }); }
+        shot.accept("you_slots", () -> server(p -> com.xenowarriors.you.YouSlots.send(p, true)));
+        shot.accept("you_creator", () -> mc.setScreen(new com.xenowarriors.client.you.YouCreatorScreen(1)));
+        shot.accept("skills", () -> mc.setScreen(new SkillLoadoutScreen(null)));
+        for (int t = 0; t < 4; t++) { int tt = t; shot.accept("custom" + t, () -> { com.xenowarriors.client.menu.CharacterCustomScreen.open(null); if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.testTab(tt); }); }
+        for (int t = 0; t < 4; t++) { int tt = t; shot.accept("stats" + t, () -> PlayerStatsScreen.openTab(null, tt)); }
+        shot.accept("party_setup", () -> mc.setScreen(new com.xenowarriors.client.party.PartySetupScreen()));
+        shot.accept("bot_pick", () -> server(com.xenowarriors.bot.PartyBots::openPick));
+        shot.accept("bot_bag", () -> server(p -> { var bs = com.xenowarriors.bot.PartyBots.bots(p); if (!bs.isEmpty()) com.xenowarriors.bot.PartyBots.openBag(p, bs.get(0)); }));
+        shot.accept("phone", () -> mc.setScreen(new PhoneScreen()));
+        shot.accept("ka_guide", () -> mc.setScreen(new KaGuideScreen(null)));
+        shot.accept("collection", () -> server(p -> com.xenowarriors.collection.Collection.open(p, true)));
+        shot.accept("factions", () -> com.xenowarriors.client.menu.FactionsScreen.open(null));
+        shot.accept("pets", () -> com.xenowarriors.client.menu.PetsScreen.open(null));
+        shot.accept("fox_bag", () -> server(p -> { for (var f : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.Fox.class, p.getBoundingBox().inflate(10))) { com.xenowarriors.fox.FoxPets.openBag(p, f.getUUID()); break; } }));
+        shot.accept("altar", () -> server(p -> p.openMenu(new net.minecraft.world.SimpleMenuProvider((id, inv, pl) -> new com.xenowarriors.altar.KarmaAltarMenu(id, inv, net.minecraft.world.inventory.ContainerLevelAccess.NULL), net.minecraft.network.chat.Component.literal("Karma Altar")))));
+        shot.accept("bounty", () -> server(com.xenowarriors.bounty.Bounties::open));
+        shot.accept("gov_shop", () -> server(p -> com.xenowarriors.gov.GovShop.open(p)));
+        shot.accept("dealer", () -> server(com.xenowarriors.vehicle.Dealer::open));
+        shot.accept("vr", () -> server(com.xenowarriors.vr.Vr::open));
+        shot.accept("journey_lobby", () -> server(com.xenowarriors.journey.Journey::open));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.journey.Journey.leave(p, "", true)); }, 10));
+        // HUD: the three styles with a party, pop-ups, the DMZ bars, lock-on and a boss bar
+        shot.accept("popups", () -> {
+            server(p -> com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Party Invite", "Rhalix_Fan wants you in their party!", "Accept", "Cancel", 200, 0x40D0FF), p));
+            PopupFeed.push(com.xenowarriors.network.PopupPacket.GOOD, mc.player.getUUID(), CharacterType.KYRIE.ordinal(), -1, "Level up!", "Character Level 12  +1 max heart", "normal");
+            PopupFeed.push(com.xenowarriors.network.PopupPacket.DANGER, mc.player.getUUID(), CharacterType.AIONI.ordinal(), -1, "Boss nearby!", "A Corrupted Soul King is close. Get ready!", "");
+        });
+        for (String style : new String[]{"blazing", "kh", "classic"})
+            shot.accept("hud_" + style, () -> ClientSettings.setHudStyle(style));
+        shot.accept("hud_dmz", () -> { ClientSettings.setHudStyle("blazing"); DmzHud.testFake = true; });
+        l.add(new Step(null, () -> DmzHud.testFake = false, 2));
+        l.add(new Step(null, () -> server(p -> {
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (z != null) { z.moveTo(p.getX(), p.getY(), p.getZ() + 4, 180, 0); z.setNoAi(true); p.serverLevel().addFreshEntity(z); }
+            var w = net.minecraft.world.entity.EntityType.WITHER.create(p.serverLevel());
+            if (w != null) { w.moveTo(p.getX() + 6, p.getY() + 3, p.getZ() + 12, 180, 0); w.setNoAi(true); p.serverLevel().addFreshEntity(w); }
+        }), 30));
+        l.add(new Step(null, LockOn::toggle, 15));
+        l.add(new Step(pre + "hud_lockon_boss", () -> log("uisweep lockon target=" + LockOn.target()), 3));
     }
 }

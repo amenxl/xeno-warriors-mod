@@ -25,14 +25,28 @@ public final class PetHud {
         stamp = mc.level == null ? 0 : mc.level.getGameTime();
     }
 
+    private static boolean shown(Minecraft mc) {
+        if (mc.level == null || mc.player == null || mc.options.hideGui || ids.length == 0 || mc.level.getGameTime() - stamp > 60) return false;
+        return ClientSettings.khHud() || ClientSettings.vanillaBars();
+    }
+
+    /** How much of the top-right column the pet cards need (HudLayout puts request cards under them). */
+    public static int blockHeight() {
+        Minecraft mc = Minecraft.getInstance();
+        if (!shown(mc)) return 0;
+        int h = 10;
+        for (int i = 0; i < ids.length; i++)
+            if (mc.level.getEntity(ids[i]) instanceof LivingEntity) h += (kimax[i] > 0 ? 24 : 19) + 4;
+        return h + 2;
+    }
+
     @SubscribeEvent
     public static void onGui(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || mc.options.hideGui || ids.length == 0 || mc.level.getGameTime() - stamp > 60) return;
-        if (!ClientSettings.khHud() && !ClientSettings.vanillaBars()) return;
+        if (!shown(mc)) return;
         GuiGraphics g = event.getGuiGraphics();
         int w = mc.getWindow().getGuiScaledWidth();
-        int cw = 96, x = w - cw - 4, y = com.xenowarriors.client.party.KhParty.bottom() + 6;
+        int cw = 96, x = w - cw - 4, y = HudLayout.petTop();      // (its own slot in the top-right column - it used to sit under request cards)
         g.drawString(mc.font, "Pets", x, y, 0xFFE8D8A0, true);
         y += 10;
         for (int i = 0; i < ids.length; i++) {
