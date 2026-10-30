@@ -37,6 +37,7 @@ public final class DojoSkills {
         private final int rgb;
         public KarmaBlast(int rgb) { this.rgb = rgb; }
         @Override public String getId() { return "karma_blast"; }
+        @Override public int clashColor() { return rgb; }
         @Override public int getCooldownTicks() { return 6 * 20; }
         @Override public int getKarmaCost() { return 15; }
         @Override public boolean use(ServerPlayer p) {
@@ -163,6 +164,7 @@ public final class DojoSkills {
         private final int rgb;
         public BrotherBlast(int rgb) { this.rgb = rgb; }
         @Override public String getId() { return "brother_blast"; }
+        @Override public int clashColor() { return rgb; }
         @Override public int getCooldownTicks() { return 90 * 20; }
         @Override public int getKarmaCost() { return 60; }
         @Override public boolean use(ServerPlayer p) {
