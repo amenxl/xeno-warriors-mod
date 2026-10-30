@@ -2298,7 +2298,7 @@ public final class UiTest {
     private static void dmzSkillsClash(Minecraft mc, List<Step> l) {
         Object[] state = new Object[2];
         l.add(new Step(null, () -> { noToasts(mc); noDmz(mc); mc.setScreen(null); hold(null); character(CharacterType.ULTIMA); }, 60));
-        l.add(new Step(null, () -> { noDmz(mc); server(p -> com.xenowarriors.debug.SkillTestRunner.arena(p)); }, 50));   // (its chunks load first)
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> { com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p); com.xenowarriors.debug.SkillTestRunner.arena(p); }); }, 50));   // (its chunks load first; no DMZ creation menu pausing the game)
         l.add(new Step(null, () -> { noDmz(mc); server(p -> {
             StringBuilder names = new StringBuilder();
             for (var k : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKeys()) if (k.getNamespace().equals("dragonminez")) names.append(k.getPath()).append(' ');
@@ -2309,6 +2309,8 @@ public final class UiTest {
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(at.x, at.y, at.z + 14, 180F, 0F);
             z.setNoAi(true); z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            z.setCustomName(net.minecraft.network.chat.Component.literal("Ki Thrower"));
+            p.serverLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, p.server);
             z.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 6000, 0));
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200); z.setHealth(200);
             p.serverLevel().setDayTime(18000);
@@ -2319,6 +2321,7 @@ public final class UiTest {
         for (String kind : kinds) {
             boolean rev = kind.endsWith("_rev");
             String ent = kind.replace("_rev", "");
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); }, 5));     // (a menu open pauses the game)
             l.add(new Step(null, () -> server(p -> {
                 var z = (net.minecraft.world.entity.LivingEntity) state[0];
                 var type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", ent));

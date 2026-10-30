@@ -58,6 +58,18 @@ public final class DmzPerCharacter {
         return root.getCompound(Player.PERSISTED_NBT_TAG);
     }
 
+    /** For the UI tests: count the current DMZ character as made, so its creation menu stops opening (and pausing the game). */
+    public static void markCreatedForTest(ServerPlayer p) {
+        if (!ready()) return;
+        try {
+            Object data = p.getCapability(cap).resolve().orElse(null);
+            if (data == null) return;
+            Object st = getStatus.invoke(data);
+            st.getClass().getMethod("setHasCreatedCharacter", boolean.class).invoke(st, true);
+            sync(p);
+        } catch (Throwable t) { XenoWarriors.LOGGER.warn("markCreatedForTest", t); }
+    }
+
     /** Has this player's current DMZ character been made (race picked)? */
     public static boolean created(ServerPlayer p) {
         if (!ready()) return true;
