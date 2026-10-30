@@ -71,6 +71,7 @@ public final class Duels {
     /** Downed lasts until someone revives you (this just keeps the effects/client state on); alone = whole party down. */
     private static final int DOWNED_TICKS = 1_000_000, ALONE_TICKS = 10 * 20, REVIVE_TICKS = ReviveCircle.TICKS;
     private static final Map<UUID, net.minecraft.world.phys.Vec3> DOWNED_AT = new HashMap<>();
+    private static final Map<UUID, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> DOWNED_DIM = new HashMap<>();
     private static final Map<UUID, Integer> DOWNED = new HashMap<>();
     private static final Map<UUID, Integer> REVIVING = new HashMap<>();    // downed player -> revive progress
 
@@ -126,6 +127,7 @@ public final class Duels {
         p.setHealth(1F);
         DOWNED.put(p.getUUID(), ALONE_TICKS);
         DOWNED_AT.put(p.getUUID(), p.position());
+        DOWNED_DIM.put(p.getUUID(), p.level().dimension());
         REVIVING.remove(p.getUUID());
         disable(p, DOWNED_TICKS);
         p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.5, p.getZ(), 14, 0.4, 0.3, 0.4, 0.03);
@@ -147,7 +149,7 @@ public final class Duels {
 
     private static void revive(ServerPlayer p, LivingEntity by) {
         DOWNED.remove(p.getUUID());
-        DOWNED_AT.remove(p.getUUID());
+        DOWNED_AT.remove(p.getUUID()); DOWNED_DIM.remove(p.getUUID());
         REVIVING.remove(p.getUUID());
         enable(p);
         p.setHealth(Math.max(6F, p.getMaxHealth() * 0.4F));
@@ -163,7 +165,7 @@ public final class Duels {
     public static void bleedOut(ServerPlayer p) {
         if (!DOWNED.containsKey(p.getUUID())) return;
         DOWNED.remove(p.getUUID());
-        DOWNED_AT.remove(p.getUUID());
+        DOWNED_AT.remove(p.getUUID()); DOWNED_DIM.remove(p.getUUID());
         REVIVING.remove(p.getUUID());
         enable(p);
         ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
@@ -414,7 +416,7 @@ public final class Duels {
             ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
             if (p == null) continue;
             // can't move: held where they fell (falling straight down is fine)
-            net.minecraft.world.phys.Vec3 at = DOWNED_AT.get(p.getUUID());
+            net.minecraft.world.phys.Vec3 at = p.level().dimension() == DOWNED_DIM.get(p.getUUID()) ? DOWNED_AT.get(p.getUUID()) : null;   // (moved to another world: no pulling back)
             if (at != null && p.position().subtract(at).horizontalDistanceSqr() > 0.6 * 0.6) {
                 p.connection.teleport(at.x, Math.min(p.getY(), at.y + 0.5), at.z, p.getYRot(), p.getXRot());
             } else if (at != null && p.getY() < at.y) {

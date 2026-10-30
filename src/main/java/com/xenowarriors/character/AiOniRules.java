@@ -31,6 +31,7 @@ public final class AiOniRules {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 10 != 0) return;
+        if (com.xenowarriors.journey.Journey.inLobbyOrRun(p) || com.xenowarriors.tower.Tower.is(p.level())) return;   // (the modes keep them apart themselves)
         CharacterType t = ModCapabilities.getType(p);
         if (t != CharacterType.AIONI && t != CharacterType.RHALIX) return;
         // never partied together

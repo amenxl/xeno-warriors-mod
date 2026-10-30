@@ -66,6 +66,8 @@ public final class Tower {
         final Map<UUID, Back> back = new HashMap<>();
         final Map<UUID, CompoundTag> pending = new HashMap<>();
         final Map<UUID, Float> healLeft = new HashMap<>();
+        /** Joined after the first floor: the leaderboard only counts runs climbed from the bottom. */
+        final Set<UUID> lateJoin = new HashSet<>();
         List<String> pool = List.of();
         TowerMod mod = TowerMod.NONE;
         boolean bossFloor;
@@ -89,6 +91,7 @@ public final class Tower {
         if (!Collection.unlocked(p)) { p.displayClientMessage(msg("Read the Collection Book at the Element School first", ChatFormatting.GRAY), true); return; }
         if (BY_PLAYER.containsKey(p.getUUID())) { p.displayClientMessage(msg("You're already in the Tower", ChatFormatting.GRAY), true); return; }
         if (is(p.level()) || com.xenowarriors.room.RoomTech.is(p.level())) return;
+        if (blocked(p)) return;
         // a party member's Tower run already going? join that one
         for (ServerPlayer m : com.xenowarriors.party.Parties.members(p)) {
             Run r = BY_PLAYER.get(m.getUUID());
@@ -127,7 +130,9 @@ public final class Tower {
     }
 
     private static void join(ServerPlayer p, Run r) {
-        if (BY_PLAYER.containsKey(p.getUUID()) || is(p.level())) return;
+        if (BY_PLAYER.containsKey(p.getUUID()) || is(p.level()) || blocked(p)) return;
+        if (r.floor > 0 && r.state != 2) { p.displayClientMessage(msg("Wait for them to clear this floor, then join", ChatFormatting.GRAY), true); return; }
+        if (r.floor > 0) r.lateJoin.add(p.getUUID());
         int people = 0;
         for (UUID id : r.players) { ServerPlayer m = p.server.getPlayerList().getPlayer(id); people += 1 + (m == null ? 0 : com.xenowarriors.bot.PartyBots.bots(m).size()); }
         if (people + 1 > com.xenowarriors.party.Parties.MAX_SIZE) { p.displayClientMessage(msg("That Tower run is full (4 people and bots)", ChatFormatting.RED), true); return; }
@@ -144,9 +149,21 @@ public final class Tower {
                 + "You can heal " + (int) (HEAL_PER_FLOOR / 2) + " hearts per floor.", ChatFormatting.AQUA));
     }
 
+    /** Can't go up while downed, inside (or sealed in) a Hekublade, or when the world is on Peaceful (nothing would fight back). */
+    private static boolean blocked(ServerPlayer p) {
+        String why = com.xenowarriors.party.Duels.isKnockedOut(p) ? "You can't enter the Tower while you're down"
+                : com.xenowarriors.mikiko.HekubladeRealm.inRealm(p) || com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(p) ? "You can't reach the Tower from inside a Hekublade"
+                : p.server.getWorldData().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL ? "The Tower doesn't open on Peaceful difficulty"
+                : null;
+        if (why != null) p.displayClientMessage(msg(why, ChatFormatting.RED), true);
+        return why != null;
+    }
+
     public static void leave(ServerPlayer p, String why) {
         Run r = BY_PLAYER.remove(p.getUUID());
         if (r == null) return;
+        r.lateJoin.remove(p.getUUID());
+        if (p.getUUID().equals(r.leader)) for (UUID id : r.players) if (!id.equals(p.getUUID())) { r.leader = id; break; }   // (someone else leads now)
         TowerBosses.removePlayer(p);
         r.players.remove(p.getUUID());
         CompoundTag lost = r.pending.remove(p.getUUID());
@@ -185,6 +202,7 @@ public final class Tower {
     private static List<String> pool(Run r, MinecraftServer server) {
         List<String> out = new ArrayList<>();
         ServerPlayer leader = server.getPlayerList().getPlayer(r.leader);
+        if (leader == null) for (UUID id : r.players) { leader = server.getPlayerList().getPlayer(id); if (leader != null) { r.leader = id; break; } }
         if (leader == null) return out;
         List<String> all = Catalog.all(leader.serverLevel());
         boolean s3 = com.xenowarriors.character.Seasons.unlocked(server, 3);
@@ -213,8 +231,7 @@ public final class Tower {
             ServerPlayer p = server.getPlayerList().getPlayer(id);
             if (p == null) continue;
             r.healLeft.put(id, r.mod == TowerMod.NO_HEALING ? 0F : HEAL_PER_FLOOR);
-            Collection.setBest(p, r.floor);
-            TowerBoard.reached(p, r.floor);
+            if (!r.lateJoin.contains(id)) { Collection.setBest(p, r.floor); TowerBoard.reached(p, r.floor); }
             String sub = r.bossFloor ? (checkpoint ? "Checkpoint saved - " : "") + "a boss is coming..."
                     : r.mod != TowerMod.NONE ? r.mod.title.toUpperCase() + ": " + r.mod.desc
                     : checkpoint ? "Checkpoint - Collection saved!" : r.waves + " waves  -  " + (int) (HEAL_PER_FLOOR / 2) + " hearts of healing";

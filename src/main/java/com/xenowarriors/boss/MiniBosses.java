@@ -72,7 +72,7 @@ public final class MiniBosses {
         var t = m.getPersistentData();
         if (!t.contains("xw_mb_rolled")) {
             t.putBoolean("xw_mb_rolled", true);
-            if (t.getBoolean("xw_tower") || event.loadedFromDisk() || m.getRandom().nextFloat() >= CHANCE || m.getType() == EntityType.CREEPER) return;
+            if (t.getBoolean("xw_tower") || t.getBoolean("xw_journey") || event.loadedFromDisk() || m.getRandom().nextFloat() >= CHANCE || m.getType() == EntityType.CREEPER) return;
             make(m, null);
         }
         if (is(m)) bar(m);
