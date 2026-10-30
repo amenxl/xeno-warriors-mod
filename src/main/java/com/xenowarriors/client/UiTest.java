@@ -2296,6 +2296,7 @@ public final class UiTest {
             p.serverLevel().addFreshEntity(z);
             st[1] = z;
             before[0] = com.xenowarriors.economy.Money.get(p); before[1] = com.xenowarriors.collection.Collection.total(p);
+            log("dmzbots credit: owner xp before=" + p.totalExperience);
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, false, net.minecraftforge.event.entity.living.LivingDeathEvent.class, e -> {
                 if (e.getEntity() != st[1]) return;
                 var c = com.xenowarriors.collection.Collection.credit(e.getSource().getEntity());
@@ -2318,7 +2319,9 @@ public final class UiTest {
             synchronized (com.xenowarriors.compat.DmzBotKi.LOG) { for (String s2 : com.xenowarriors.compat.DmzBotKi.LOG) log("dmzbots credit fire: " + s2); com.xenowarriors.compat.DmzBotKi.LOG.clear(); }
             log("dmzbots credit result: zombie dead=" + (z == null || !z.isAlive()) + " owner Money " + before[0] + " -> " + com.xenowarriors.economy.Money.get(p)
                     + " Collection kills " + before[1] + " -> " + com.xenowarriors.collection.Collection.total(p) + " xp orbs nearby=" + orbs);
+            for (var o : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, p.getBoundingBox().inflate(24))) p.connection.teleport(o.getX(), o.getY(), o.getZ(), 0F, 0F);
         }), 5));
+        l.add(new Step(null, () -> server(p -> log("dmzbots credit: owner xp after=" + p.totalExperience)), 40));
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> log("dmzbots end: owner hp=" + p.getHealth() + " owner damaged=" + hits[1])); }, 5));
     }
 
