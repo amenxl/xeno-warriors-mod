@@ -75,6 +75,10 @@ public final class Money {
                 || (dead instanceof com.xenowarriors.npc.HumanNpcEntity h && (h.raider() || h.isAggressive()))
                 || dead instanceof com.xenowarriors.sr.SrMemberEntity;
         if (!foe) return;
-        add(p, Math.max(5, Math.round(dead.getMaxHealth() * 1.5)), true);
+        // from its natural health (not what levels/DragonMineZ piled on), with a little for its level
+        var mh = dead.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        double base = mh != null ? mh.getBaseValue() : dead.getMaxHealth();
+        int lvl = Math.min(50, com.xenowarriors.scaling.EnemyScaling.level(dead));
+        add(p, (int) Math.max(5, Math.min(400, Math.round(base * 1.5 * (1 + lvl * 0.02)))), true);
     }
 }

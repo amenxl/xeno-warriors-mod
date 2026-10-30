@@ -125,7 +125,7 @@ public class RoyalCapitalFeature extends Feature<NoneFeatureConfiguration> {
     private final BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+    public synchronized boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {   // (its drawing state lives in fields: chunks generating in parallel must take turns)
         if (!Recarnet.is(ctx.level().getLevel())) return false;
         l = ctx.level();
         cx0 = ctx.origin().getX() & ~15; cz0 = ctx.origin().getZ() & ~15;

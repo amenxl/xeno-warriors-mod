@@ -193,7 +193,7 @@ public class CSoulBossEntity extends Monster {
 
     @Override
     public boolean removeWhenFarAway(double distance) {
-        return false;
+        return !getPersistentData().getBoolean(com.xenowarriors.s3.DistortionEntity.TAG) && super.removeWhenFarAway(distance);   // (wild ones despawn like any monster)
     }
 
     @Override

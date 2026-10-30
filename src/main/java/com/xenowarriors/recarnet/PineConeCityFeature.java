@@ -53,7 +53,7 @@ public class PineConeCityFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
+    public synchronized boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {   // (its drawing state lives in fields: chunks generating in parallel must take turns)
         l = ctx.level();
         x0c = ctx.origin().getX() & ~15; z0c = ctx.origin().getZ() & ~15;
         long seed = l.getSeed();

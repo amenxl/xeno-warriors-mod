@@ -166,6 +166,27 @@ public final class Hekublade {
         if (event.getEntity() instanceof ItemEntity item && isBlade(item.getItem())) event.setCanceled(true);
     }
 
+    /** While a chest or other container is open, a blade put in it vanishes at once (before a hopper can take it). */
+    @SubscribeEvent
+    public static void onOpenTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.containerMenu == p.inventoryMenu) return;
+        for (Slot slot : p.containerMenu.slots)
+            if (!(slot.container instanceof Inventory) && isBlade(slot.getItem())) slot.set(ItemStack.EMPTY);
+    }
+
+    /** Nor hung on armor stands or in item frames. */
+    @SubscribeEvent
+    public static void onHang(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteractSpecific event) {
+        if ((event.getTarget() instanceof net.minecraft.world.entity.decoration.ArmorStand || event.getTarget() instanceof net.minecraft.world.entity.decoration.ItemFrame)
+                && isBlade(event.getItemStack())) event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void onFrame(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
+        if ((event.getTarget() instanceof net.minecraft.world.entity.decoration.ArmorStand || event.getTarget() instanceof net.minecraft.world.entity.decoration.ItemFrame)
+                && isBlade(event.getItemStack())) event.setCanceled(true);
+    }
+
     /** Can't be stashed in chests or other containers. */
     @SubscribeEvent
     public static void onContainerClose(PlayerContainerEvent.Close event) {

@@ -50,7 +50,7 @@ public final class HumanVillages {
         List<Villager> todo = new ArrayList<>(QUEUE);
         QUEUE.clear();
         for (Villager v : todo) {
-            if (v.isRemoved() || !(v.level() instanceof ServerLevel s)) continue;
+            if (v.isRemoved() || !v.isAddedToWorld() || !(v.level() instanceof ServerLevel s) || com.xenowarriors.recarnet.Recarnet.is(s)) continue;   // (Recarnet swaps its own villagers)
             HumanNpcEntity h = ModNpcs.HUMAN.get().create(s);
             if (h == null) continue;
             h.moveTo(v.getX(), v.getY(), v.getZ(), v.getYRot(), 0F);

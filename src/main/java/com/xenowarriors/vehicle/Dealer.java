@@ -19,14 +19,19 @@ public final class Dealer {
         return n;
     }
 
+    /** Where each player last opened a dealer (a purchase has to happen near it). */
+    private static final java.util.Map<java.util.UUID, net.minecraft.core.GlobalPos> AT = new java.util.HashMap<>();
+
     public static void open(ServerPlayer p) {
+        AT.put(p.getUUID(), net.minecraft.core.GlobalPos.of(p.level().dimension(), p.blockPosition()));
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenDealerPacket(emeralds(p)), p);
     }
 
     public static void buy(ServerPlayer p, int kindIdx, int variant) {
         if (kindIdx < 0 || kindIdx >= VehicleKind.values().length) return;
         VehicleKind k = VehicleKind.values()[kindIdx];
-        if (p.distanceToSqr(p.position()) < 0) return;
+        var at = AT.get(p.getUUID());
+        if (at == null || at.dimension() != p.level().dimension() || !at.pos().closerThan(p.blockPosition(), 10)) return;   // (only at the dealer)
         if (!p.isCreative()) {
             if (emeralds(p) < k.price) {
                 p.displayClientMessage(Component.literal("You need " + k.price + " emeralds for a " + k.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);

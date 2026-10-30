@@ -91,7 +91,7 @@ public class DistortionEntity extends Mob {
             return;
         }
         ServerLevel s = (ServerLevel) level();
-        if (!Seasons.unlocked(s.getServer(), 3) || tickCount > LIFETIME) { discard(); return; }
+        if (!Seasons.unlocked(s.getServer(), 3) || ++age > LIFETIME) { discard(); return; }
         if (tickCount % 40 == 0) s.playSound(null, blockPosition(), SoundEvents.PORTAL_AMBIENT, SoundSource.HOSTILE, 0.6F, 0.5F);
         if (tickCount % 100 == 20) {                                      // more C-souls pour out
             List<CorruptedSoulEntity> have = souls();
@@ -106,7 +106,7 @@ public class DistortionEntity extends Mob {
                 s.sendParticles(BLACK, soul.getX(), soul.getY(), soul.getZ(), 12, 0.3, 0.3, 0.3, 0);
             }
         }
-        if (lv >= 3 && !released && tickCount > 600) {                  // the powerful C-soul it was opening for
+        if (lv >= 3 && !released && age > 600) {                  // the powerful C-soul it was opening for
             released = true;
             CSoulBossEntity boss = ModCorrupted.C_SOUL.get().create(s);
             if (boss != null) {
@@ -150,6 +150,15 @@ public class DistortionEntity extends Mob {
         discard();
     }
 
-    @Override public void addAdditionalSaveData(CompoundTag t) { super.addAdditionalSaveData(t); t.putInt("Size", size()); t.putBoolean("Released", released); }
-    @Override public void readAdditionalSaveData(CompoundTag t) { super.readAdditionalSaveData(t); setSize(t.getInt("Size")); released = t.getBoolean("Released"); }
+    private int age;                                                    // (saved: tickCount restarts at every reload)
+
+    @Override public void addAdditionalSaveData(CompoundTag t) { super.addAdditionalSaveData(t); t.putInt("Size", size()); t.putBoolean("Released", released); t.putInt("Age", age); }
+    @Override public void readAdditionalSaveData(CompoundTag t) {
+        super.readAdditionalSaveData(t);
+        float hp = getHealth();
+        setSize(t.getInt("Size"));
+        if (t.contains("Health")) setHealth(Math.min(hp, getMaxHealth()));   // (damage you dealt stays dealt)
+        released = t.getBoolean("Released");
+        age = t.getInt("Age");
+    }
 }

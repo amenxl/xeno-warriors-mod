@@ -107,7 +107,14 @@ public class VehicleEntity extends Mob implements GeoEntity {
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity e) {
         float yaw = getYRot() * Mth.DEG_TO_RAD;
-        return position().add(Mth.cos(yaw) * (kind.width / 2 + 0.6), 0.2, Mth.sin(yaw) * (kind.width / 2 + 0.6));
+        double side = kind.width / 2 + 0.6, back = kind.width / 2 + 1.0;
+        Vec3[] tries = {position().add(Mth.cos(yaw) * side, 0.2, Mth.sin(yaw) * side), position().add(-Mth.cos(yaw) * side, 0.2, -Mth.sin(yaw) * side),
+                position().add(Mth.sin(yaw) * back, 0.2, -Mth.cos(yaw) * back), position().add(0, getBbHeight() + 0.1, 0)};
+        for (Vec3 c : tries) {                                              // the first spot with room to stand (never inside a wall)
+            Vec3 ok = net.minecraft.world.entity.vehicle.DismountHelper.findSafeDismountLocation(e.getType(), level(), net.minecraft.core.BlockPos.containing(c), true);
+            if (ok != null) return ok;
+        }
+        return super.getDismountLocationForPassenger(e);
     }
 
     @Override
@@ -115,7 +122,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (p.isSecondaryUseActive()) {                                   // pack it up
-            if (owner != null && !owner.equals(p.getUUID()) && !p.isCreative()) {
+            if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && kind == VehicleKind.GOV_TRUCK))) {   // (a seized Gov truck can be wrecked for iron, not packed up)
                 p.displayClientMessage(Component.literal("That's not your " + kind.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
                 return InteractionResult.CONSUME;
             }

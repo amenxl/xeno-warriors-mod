@@ -331,6 +331,7 @@ public class HumanNpcEntity extends PathfinderMob {
     @Override
     public void aiStep() {
         super.aiStep();
+        if (!level().isClientSide && raider() && tickCount % 100 == 50 && !SkyHaterRaids.listed(getUUID())) { discard(); return; }   // (its raid is over)
         if (level().isClientSide) {
             if (possessed() && random.nextInt(3) == 0) {
                 level().addParticle(CorruptedFx.BLACK, getRandomX(0.5), getRandomY(), getRandomZ(0.5), 0, 0.02, 0);

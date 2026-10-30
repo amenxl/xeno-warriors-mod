@@ -110,6 +110,7 @@ public final class RoyalGate {
         double dx = p.getX() - (at.getX() + 0.5), dz = p.getZ() - (at.getZ() + 0.5);
         if (dx * dx + dz * dz <= CHECKPOINT * CHECKPOINT || allowed(p)) return;
         // held at the checkpoint
+        p.stopRiding();                                   // (a vehicle would just carry them back in)
         p.teleportTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         p.setDeltaMovement(0, 0, 0);
         p.hurtMarked = true;

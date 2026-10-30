@@ -41,7 +41,7 @@ public final class NpcSpawner {
                 var villagers = level.getEntitiesOfClass(Villager.class, p.getBoundingBox().inflate(48));
                 if (!villagers.isEmpty() && r.nextFloat() < 0.6F) {
                     Villager v = villagers.get(r.nextInt(villagers.size()));
-                    spawn(level, ModNpcs.HUMAN.get(), v.blockPosition().offset(r.nextInt(9) - 4, 0, r.nextInt(9) - 4), true);
+                    spawn(level, ModNpcs.HUMAN.get(), v.blockPosition().offset(r.nextInt(9) - 4, 0, r.nextInt(9) - 4), false);
                 } else if (r.nextFloat() < 0.12F && level.isDay()) {
                     spawn(level, ModNpcs.HUMAN.get(), around(p.blockPosition(), r, 24, 40), false);
                 }

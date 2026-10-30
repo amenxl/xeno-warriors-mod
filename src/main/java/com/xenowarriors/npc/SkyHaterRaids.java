@@ -101,6 +101,12 @@ public final class SkyHaterRaids {
     }
 
     /** One tick of a raid; true when it's over. */
+    /** Is this raider part of a raid still going? (Ones left over from a raid that ended, or a restart, leave.) */
+    public static boolean listed(UUID id) {
+        for (Raid r : RAIDS) if (r.raiders.contains(id)) return true;
+        return false;
+    }
+
     private static boolean tick(Raid r) {
         r.age++;
         ServerLevel level = r.level;
@@ -119,10 +125,13 @@ public final class SkyHaterRaids {
         }
         // the raiders still standing
         List<HumanNpcEntity> alive = new ArrayList<>();
+        int unloaded = 0;
         for (Iterator<UUID> it = r.raiders.iterator(); it.hasNext(); ) {
-            Entity e = level.getEntity(it.next());
+            UUID id = it.next();
+            Entity e = level.getEntity(id);
             if (e instanceof HumanNpcEntity h && h.isAlive()) alive.add(h);
-            else it.remove();
+            else if (e != null) it.remove();
+            else unloaded++;                                    // (in an unloaded chunk: still part of the raid, not beaten)
         }
         if (r.waveSize > 0) r.bar.setProgress(Math.max(0F, alive.size() / (float) r.waveSize));
         for (HumanNpcEntity h : alive) {
@@ -131,7 +140,7 @@ public final class SkyHaterRaids {
             if (h.getTarget() == null && h.tickCount % 40 == 0 && h.onGround() && !h.blockPosition().closerThan(r.center, 10))
                 h.getNavigation().moveTo(r.center.getX() + 0.5, r.center.getY(), r.center.getZ() + 0.5, 1.1);
         }
-        if (alive.isEmpty()) {
+        if (alive.isEmpty() && unloaded == 0) {
             if (r.nextWaveAt < 0) {
                 if (r.wave >= WAVES) {
                     end(r, true);

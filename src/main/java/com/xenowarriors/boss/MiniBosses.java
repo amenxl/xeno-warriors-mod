@@ -89,7 +89,6 @@ public final class MiniBosses {
         String name = FIRST[r.nextInt(FIRST.length)] + " " + TITLE[r.nextInt(TITLE.length)];
         m.setCustomName(Component.literal(name).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         m.setCustomNameVisible(true);
-        m.setPersistenceRequired();
         mod(m, Attributes.MAX_HEALTH, HP, 3.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
         mod(m, Attributes.ATTACK_DAMAGE, DMG, 0.75, AttributeModifier.Operation.MULTIPLY_TOTAL);
         if (p == Power.SWIFT) mod(m, Attributes.MOVEMENT_SPEED, SPD, 0.45, AttributeModifier.Operation.MULTIPLY_TOTAL);

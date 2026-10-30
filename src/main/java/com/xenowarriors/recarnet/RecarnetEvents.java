@@ -63,6 +63,7 @@ public final class RecarnetEvents {
             Vec3 out = new Vec3(p.getX(), 0, p.getZ()).normalize().scale(Recarnet.CITY_R + 6);
             if (out.lengthSqr() < 1) out = new Vec3(0, 0, Recarnet.CITY_R + 6);
             int y = p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) out.x, (int) out.z);
+            p.stopRiding();
             p.teleportTo(out.x, y + 0.1, out.z);
             p.displayClientMessage(Component.literal("Aurora's barrier is up - the city opens with Season 2").withStyle(ChatFormatting.AQUA), true);
             p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 0.8F, 1.6F);
