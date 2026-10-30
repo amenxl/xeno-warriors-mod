@@ -2268,6 +2268,7 @@ public final class UiTest {
             for (int i = 0; i < 450; i++) { int ii = i; com.xenowarriors.skill.ServerScheduler.later(i * 2, () -> {
                 if (st[0] == 2) return;
                 if (st[0] == 0) {
+                    if (z.getTarget() != p) z.setTarget(p);                   // (vanilla AI drops a target it can't walk to)
                     if (!z.isAlive() || !com.xenowarriors.ka.Elements.chargingAt(z, p)) { if (ii % 50 == 0) log("skillsclash waiting for the zombie to charge (t" + ii * 2 + ")"); return; }
                     p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); java.util.Arrays.fill(d.cooldownEnd, 0); });
                     com.xenowarriors.skill.SkillManager.useSkill(p, 1);       // Energy Blast (default slot 2)
