@@ -22,6 +22,7 @@ public final class CharacterManager {
     private CharacterManager() {}
 
     public static void setCharacter(ServerPlayer player, CharacterType type) {
+        if (com.xenowarriors.mikiko.HekubladeRealm.inRealm(player) && !com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(player)) com.xenowarriors.mikiko.HekubladeRealm.leave(player);   // (only Mikiko can open the way out)
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);               // (Kaeru inside a blade would be stuck a spectator)
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             CharacterInventories.switchTo(player, data.key(), data.key(type));   // each character has its own inventory
@@ -51,6 +52,11 @@ public final class CharacterManager {
     public static boolean setYou(ServerPlayer player, int slot) {
         var d = player.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
         if (d == null || slot < 0 || slot >= com.xenowarriors.you.YouSlot.SLOTS || !d.youSlots[slot].exists()) return false;
+        if (d.youSlots[slot].race == Race.ANGEL && !player.isCreative()) {
+            player.displayClientMessage(Component.literal("Angels can only be played in creative mode for now").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return false;
+        }
+        if (com.xenowarriors.mikiko.HekubladeRealm.inRealm(player) && !com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(player)) com.xenowarriors.mikiko.HekubladeRealm.leave(player);   // (only Mikiko can open the way out)
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);
         String from = d.key();
         CharacterInventories.switchTo(player, from, PlayerCharacter.key(CharacterType.YOU, slot));

@@ -456,8 +456,11 @@ public final class WingPets {
         rec.put("inv", list);
     }
 
+    private static final java.util.Set<CompoundTag> OPEN_BAGS = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
     private static void openBag(ServerPlayer p, Mob mob, CompoundTag rec) {
         net.minecraft.world.SimpleContainer c = bag(rec);
+        OPEN_BAGS.add(rec);
         c.addListener(changed -> saveBag(rec, changed));
         p.openMenu(new net.minecraft.world.SimpleMenuProvider((id, inv, pl) -> new net.minecraft.world.inventory.ChestMenu(
                 net.minecraft.world.inventory.MenuType.GENERIC_9x2, id, inv, c, 2) {
@@ -470,6 +473,7 @@ public final class WingPets {
             public void removed(Player player) {
                 super.removed(player);
                 saveBag(rec, c);
+                OPEN_BAGS.remove(rec);
             }
         }, Component.literal(rec.getString("name") + "'s Bag")));
         p.serverLevel().playSound(null, mob.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 0.6F, 1.3F);
@@ -477,7 +481,7 @@ public final class WingPets {
 
     /** When a companion is hurt it snacks on food from its bag (its favourite food, or anything edible). */
     private static void eatFromBag(ServerPlayer p, Mob mob, CompoundTag rec) {
-        if (mob.getHealth() >= mob.getMaxHealth() * 0.6F || !rec.contains("inv")) return;
+        if (mob.getHealth() >= mob.getMaxHealth() * 0.6F || !rec.contains("inv") || OPEN_BAGS.contains(rec)) return;   // (open bag: it'd be saved back over the eaten food)
         long now = p.serverLevel().getGameTime();
         if (now - rec.getLong("ate") < EAT_COOLDOWN) return;
         net.minecraft.world.SimpleContainer c = bag(rec);

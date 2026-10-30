@@ -81,7 +81,9 @@ public final class HekubladeRealm {
         cap(p).ifPresent(c -> {
             CompoundTag data = victim.saveWithoutId(new CompoundTag());
             for (String k : new String[]{"UUID", "Passengers", "ActiveEffects", "Pos", "Motion", "Fire", "DeathTime", "HurtTime",
-                    "ForgeData", "Leash", "Brain"}) data.remove(k);
+                    "ForgeData", "Leash", "Brain",
+                    // what it carried already dropped at Mikiko's feet: the soul doesn't keep a copy (no duplicating chests and gear)
+                    "HandItems", "ArmorItems", "HandDropChances", "ArmorDropChances", "Items", "Inventory", "SaddleItem", "ArmorItem", "ChestedHorse", "DecorItem", "Offers"}) data.remove(k);
             CompoundTag rec = new CompoundTag();
             rec.putInt("id", c.nextSealId++);
             rec.putString("type", EntityType.getKey(victim.getType()).toString());

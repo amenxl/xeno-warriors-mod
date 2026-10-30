@@ -440,6 +440,12 @@ public final class FoxPets {
         CompoundTag rec = found.get(0);
         if (rec.getBoolean("back")) putDown(p);
         Fox fox = rec.hasUUID("uuid") ? findLoaded(p, rec.getUUID("uuid")) : null;
+        if (rec.contains("inv")) {                          // its bag comes back to you
+            net.minecraft.core.NonNullList<ItemStack> items = net.minecraft.core.NonNullList.withSize(54, ItemStack.EMPTY);
+            net.minecraft.world.ContainerHelper.loadAllItems(rec.getCompound("inv"), items);
+            for (ItemStack s : items) if (!s.isEmpty() && !p.getInventory().add(s)) p.drop(s, false);
+            rec.remove("inv");
+        }
         pets(p).remove(rec);
         if (fox != null) {
             fox.getPersistentData().remove(OWNER);
@@ -645,6 +651,7 @@ public final class FoxPets {
             CompoundTag rec = record(p, fox.getUUID());
             if (rec != null) {
                 snapshot(fox, rec);
+                fox.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY);   // (it comes back with its sword: don't also drop it)
                 rec.putBoolean("dead", true);
                 com.xenowarriors.pet.PetCare.ranAway(p, rec);
                 com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, fox.getUUID(), 0, 0, "Pet ran away", rec.getString("name") + " fled the fight. Back in " + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + ".", "");
@@ -779,12 +786,13 @@ public final class FoxPets {
         Fox fox = EntityType.FOX.create(p.serverLevel());
         if (fox == null) return false;
         fox.load(tag);
-        c.backFox = new CompoundTag();
         CompoundTag rec = record(p, fox.getUUID());
         if (rec == null) {   // shouldn't happen, but never lose the fox
+            fox.discard();
             sendBack(p);
             return false;
         }
+        c.backFox = new CompoundTag();
         rec.putBoolean("back", false);
         Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
         Vec3 pos = p.position().add(look.scale(1.1));

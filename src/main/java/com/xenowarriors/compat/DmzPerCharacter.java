@@ -21,6 +21,14 @@ public final class DmzPerCharacter {
     private DmzPerCharacter() {}
 
     private static final String ROOT = "xw_dmz_chars", LIVE = "xw_dmz_live";
+
+    /** A character is gone for good (a deleted You): its DragonMineZ character goes with it. */
+    public static void forget(net.minecraft.world.entity.player.Player p, String key) {
+        CompoundTag keep = p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG);
+        if (!keep.contains(ROOT)) return;
+        keep.getCompound(ROOT).remove(key);
+        p.getPersistentData().put(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG, keep);
+    }
     private static Boolean loaded;
     private static boolean broken;
     private static Capability<?> cap;

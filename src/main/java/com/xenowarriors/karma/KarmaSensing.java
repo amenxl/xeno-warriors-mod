@@ -63,6 +63,12 @@ public final class KarmaSensing {
     }
     private static final Map<UUID, Long> READY_AT = new HashMap<>();
 
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
+        HOLDING.remove(e.getEntity().getUUID());
+        READY_AT.remove(e.getEntity().getUUID());
+    }
+
     private KarmaSensing() {}
 
     public static void use(ServerPlayer player) {

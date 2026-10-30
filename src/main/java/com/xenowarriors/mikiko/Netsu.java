@@ -108,7 +108,7 @@ public final class Netsu {
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
         if (!END.containsKey(p.getUUID())) return;
-        if (!active(p) || !p.isAlive()) {
+        if (!active(p) || !p.isAlive() || com.xenowarriors.character.ModCapabilities.getType(p) != com.xenowarriors.character.CharacterType.MIKIKO) {
             stop(p);
             return;
         }

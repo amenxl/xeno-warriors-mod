@@ -55,6 +55,7 @@ public final class YouSlots {
                 s.humanForm = false;
                 d.charStats.remove(PlayerCharacter.key(CharacterType.YOU, slot));
                 d.loadouts.remove(PlayerCharacter.key(CharacterType.YOU, slot));
+                forgetSaves(p, PlayerCharacter.key(CharacterType.YOU, slot));
                 p.sendSystemMessage(Component.literal("Created " + s.name + ", a " + s.race.title + " of " + s.element.title() + ".").withStyle(st -> st.withColor(s.color())));
                 CharacterManager.setYou(p, slot);
                 send(p, false);
@@ -69,6 +70,7 @@ public final class YouSlots {
                 d.youSlots[slot] = new YouSlot();
                 d.charStats.remove(PlayerCharacter.key(CharacterType.YOU, slot));
                 d.loadouts.remove(PlayerCharacter.key(CharacterType.YOU, slot));
+                forgetSaves(p, PlayerCharacter.key(CharacterType.YOU, slot));
                 p.sendSystemMessage(Component.literal(name + " was deleted.").withStyle(ChatFormatting.GRAY));
                 send(p, true);
             }
@@ -77,6 +79,13 @@ public final class YouSlots {
     }
 
     /** Why a creation isn't allowed, or null. */
+    /** Nothing of an old character in this slot carries over to the next one (its things are handed to you). */
+    private static void forgetSaves(ServerPlayer p, String key) {
+        com.xenowarriors.character.CharacterInventories.forget(p, key);
+        com.xenowarriors.faction.Reputation.forget(p, key);
+        com.xenowarriors.compat.DmzPerCharacter.forget(p, key);
+    }
+
     private static String check(ServerPlayer p, PlayerCharacter d, int slot, YouSlot data) {
         if (d.youSlots[slot].exists()) return "That slot already has a character - delete it first";
         if (!YouSlot.validName(data.name.trim())) return "Names are 2-16 letters, numbers, spaces, ' - or _";

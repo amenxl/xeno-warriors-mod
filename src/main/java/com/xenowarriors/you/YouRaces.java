@@ -51,13 +51,19 @@ public final class YouRaces {
     // ------------------------------------------------------------------ stats
 
     /** Level-1 toughness: Angels far above everyone, Demons and Seedlings a little. Reapplied with the other stats. */
+    /** Angels are creative-only: their bonuses come and go with the game mode. */
+    @SubscribeEvent
+    public static void onGameMode(net.minecraftforge.event.entity.player.PlayerEvent.PlayerChangeGameModeEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p) com.xenowarriors.skill.ServerScheduler.later(1, () -> { if (!p.hasDisconnected()) apply(p); });
+    }
+
     public static void apply(ServerPlayer p) {
         AttributeInstance hp = p.getAttribute(Attributes.MAX_HEALTH);
         if (hp == null) return;
         hp.removeModifier(HEALTH_ID);
         YouSlot s = You.slot(p);
         if (s == null) return;
-        double add = switch (s.race) { case ANGEL -> 40; case DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };
+        double add = switch (s.race) { case ANGEL -> p.isCreative() ? 40 : 0; case DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };
         if (add > 0) hp.addPermanentModifier(new AttributeModifier(HEALTH_ID, "You race health", add, AttributeModifier.Operation.ADDITION));
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
     }
@@ -66,7 +72,7 @@ public final class YouRaces {
     public static float damageMult(Player p) {
         YouSlot s = You.slot(p);
         if (s == null) return 1F;
-        return switch (s.race) { case ANGEL -> 2F; case DEMON -> s.humanForm ? 1F : 1.15F; default -> 1F; };
+        return switch (s.race) { case ANGEL -> p.isCreative() ? 2F : 1F; case DEMON -> s.humanForm ? 1F : 1.15F; default -> 1F; };
     }
 
     // ------------------------------------------------------------------ forms
@@ -217,7 +223,7 @@ public final class YouRaces {
         tr.put("translation", floats(0, 0, 0)); tr.put("scale", floats(1.4F, 1.4F, 1.4F));
         t.put("transformation", tr);
         Entity d = EntityType.loadEntityRecursive(t, level, en -> { en.moveTo(p.getX(), p.getY() + 0.4, p.getZ(), 0, 0); return en; });
-        if (d != null) { d.addTag(SEED_TAG); d.getPersistentData().putUUID("xw_owner", p.getUUID()); level.addFreshEntity(d); p.getPersistentData().putUUID("xw_seed_disp", d.getUUID()); }
+        if (d != null) { d.addTag(SEED_TAG); d.getPersistentData().putUUID("xw_owner", p.getUUID()); p.getPersistentData().putUUID("xw_seed_disp", d.getUUID()); level.addFreshEntity(d); }
     }
 
     private static void removeSeed(ServerPlayer p) {
@@ -232,6 +238,17 @@ public final class YouRaces {
         net.minecraft.nbt.ListTag l = new net.minecraft.nbt.ListTag();
         for (float f : v) l.add(net.minecraft.nbt.FloatTag.valueOf(f));
         return l;
+    }
+
+    /** A seed display that isn't its owner's current one (left over from a relog while its chunk was unloaded) goes away. */
+    @SubscribeEvent
+    public static void onJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent e) {
+        Entity d = e.getEntity();
+        if (e.getLevel().isClientSide() || !d.getTags().contains(SEED_TAG) || !d.getPersistentData().hasUUID("xw_owner")) return;
+        var owner = e.getLevel().getServer() == null ? null : e.getLevel().getServer().getPlayerList().getPlayer(d.getPersistentData().getUUID("xw_owner"));
+        if (owner == null) return;                                       // (owner offline: their login sorts it out)
+        boolean mine = owner.getPersistentData().hasUUID("xw_seed_disp") && owner.getPersistentData().getUUID("xw_seed_disp").equals(d.getUUID());
+        if (!mine || !isSeed(owner)) e.setCanceled(true);
     }
 
     /** On login: a seed display that was unloaded is put back; stale seed displays are cleaned when their owner sprouts. */

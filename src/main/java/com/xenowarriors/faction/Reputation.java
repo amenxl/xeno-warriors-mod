@@ -50,6 +50,9 @@ public final class Reputation {
         return root.getCompound(KEY);
     }
 
+    /** A character is gone for good (a deleted You): its standing goes with it. */
+    public static void forget(Player p, String key) { all(p).remove(key); }
+
     private static int[] values(Player p) {
         CharacterType t = ModCapabilities.getType(p);
         CompoundTag all = all(p);

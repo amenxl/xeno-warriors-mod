@@ -50,6 +50,23 @@ public final class CharacterInventories {
 
     public static boolean has(Player p, String key) { return root(p).contains(key); }
 
+    /** A character is gone for good (a deleted You): whatever it had saved is handed to the player (dropped if full), and its save is cleared. */
+    public static void forget(ServerPlayer p, String key) {
+        CompoundTag root = root(p);
+        if (!root.contains(key)) return;
+        CompoundTag saved = root.getCompound(key);
+        java.util.List<ItemStack> give = new java.util.ArrayList<>();
+        ListTag inv = saved.getList("inv", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < inv.size(); i++) give.add(ItemStack.of(inv.getCompound(i)));
+        ListTag ender = saved.getList("ender", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < ender.size(); i++) give.add(ItemStack.of(ender.getCompound(i)));
+        int n = 0;
+        for (ItemStack s : give) if (!s.isEmpty()) { n++; if (!p.getInventory().add(s)) p.drop(s, false); }
+        if (n > 0) p.sendSystemMessage(net.minecraft.network.chat.Component.literal("Their things came to you.").withStyle(net.minecraft.ChatFormatting.GRAY));
+        root.remove(key);
+        put(p, root);
+    }
+
     /** Snapshot of what the player is carrying. */
     public static CompoundTag snapshot(ServerPlayer p) {
         CompoundTag t = new CompoundTag();

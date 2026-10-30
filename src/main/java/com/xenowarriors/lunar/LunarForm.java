@@ -129,7 +129,7 @@ public final class LunarForm {
         if (active(p) && p.tickCount % 4 == 0)                                        // silver motes drifting off him
             p.serverLevel().sendParticles(new DustParticleOptions(SILVER, 0.8F), p.getX(), p.getY() + 1.2, p.getZ(), 1, 0.4, 0.6, 0.4, 0);
         if (active(p) && p.tickCount % 40 == 0)                                       // his moon makes allies nearby stronger
-            for (ServerPlayer o : p.serverLevel().getEntitiesOfClass(ServerPlayer.class, p.getBoundingBox().inflate(8), o -> o != p && o.isAlive()))
+            for (ServerPlayer o : p.serverLevel().getEntitiesOfClass(ServerPlayer.class, p.getBoundingBox().inflate(8), o -> o != p && o.isAlive() && com.xenowarriors.party.Parties.sameParty(p, o)))
                 o.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, 60, 0, true, false, true));
         trial(p);
     }
