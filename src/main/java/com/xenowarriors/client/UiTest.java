@@ -2260,17 +2260,23 @@ public final class UiTest {
             z.setTarget(p);
             p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0F, 0F);
             com.xenowarriors.ka.Clashes.last = "";
-            // wait for it to charge, then answer
-            for (int i = 0; i < 60; i++) com.xenowarriors.skill.ServerScheduler.later(i * 5, () -> {
-                if (!z.isAlive() || com.xenowarriors.ka.Clashes.inClash(p) || !com.xenowarriors.ka.Elements.chargingAt(z, p)) return;
-                p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); java.util.Arrays.fill(d.cooldownEnd, 0); });
-                com.xenowarriors.skill.SkillManager.useSkill(p, 1);       // Energy Blast (default slot 2)
-                log("skillsclash cast at a charging zombie: " + com.xenowarriors.ka.Clashes.last);
-            });
-            for (int i = 0; i < 200; i++) com.xenowarriors.skill.ServerScheduler.later(i * 2, () -> { if (com.xenowarriors.ka.Clashes.inClash(p)) com.xenowarriors.ka.Clashes.push(p); });
+            // wait for it to charge, then answer; mash while it lasts (about 10 clicks a second); log how it ends
+            int[] st = {0};      // 0 waiting, 1 cast, 2 done
+            for (int i = 0; i < 450; i++) { int ii = i; com.xenowarriors.skill.ServerScheduler.later(i * 2, () -> {
+                if (st[0] == 2) return;
+                if (st[0] == 0) {
+                    if (!z.isAlive() || !com.xenowarriors.ka.Elements.chargingAt(z, p)) { if (ii % 50 == 0) log("skillsclash waiting for the zombie to charge (t" + ii * 2 + ")"); return; }
+                    p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); java.util.Arrays.fill(d.cooldownEnd, 0); });
+                    com.xenowarriors.skill.SkillManager.useSkill(p, 1);       // Energy Blast (default slot 2)
+                    log("skillsclash cast at a charging zombie (t" + ii * 2 + "): " + com.xenowarriors.ka.Clashes.last);
+                    st[0] = 1; return;
+                }
+                if (com.xenowarriors.ka.Clashes.inClash(p)) com.xenowarriors.ka.Clashes.push(p);
+                else { st[0] = 2; log("skillsclash result: " + com.xenowarriors.ka.Clashes.last + " zombieHp=" + z.getHealth() + "/" + z.getMaxHealth()); }
+            }); }
         }), 60));
         l.add(new Step("skillsclash_mid", () -> server(p -> log("skillsclash mid: " + com.xenowarriors.ka.Clashes.last + " inClash=" + com.xenowarriors.ka.Clashes.inClash(p))), 200));
-        l.add(new Step("skillsclash_end", () -> server(p -> log("skillsclash end: " + com.xenowarriors.ka.Clashes.last)), 3));
+        l.add(new Step("skillsclash_end", () -> server(p -> log("skillsclash end: " + com.xenowarriors.ka.Clashes.last)), 700));
         // bots: a clashing skill from a bot goes through the same check
         l.add(new Step(null, () -> server(p -> {
             StringBuilder sb = new StringBuilder();
