@@ -368,6 +368,7 @@ public class PartyBotEntity extends PathfinderMob {
         tickEating();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         ServerPlayer o = owner();
+        if (o == null && ownerId() == null) { if (tickCount > 100 && !isNoAi()) { PartyBots.forgetFake(getUUID()); discard(); } return; }   // (nobody's bot, e.g. summoned by command: it goes; a no-AI display one stays)
         if (o == null && tickCount > 100 && tickCount % 40 == 0) { if (!journey()) PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }   // owner gone: kept until they're back
         else if (o != null && o.level() != level() && tickCount % 20 == 0 && !journey()) {   // owner in another world (respawned, portal): follow, or wait
             if (PartyBots.canFollowTo(character(), o.level())) PartyBots.teleportNear(this, o);
