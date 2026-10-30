@@ -393,7 +393,11 @@ public final class PartyBots {
     public static void forgetFake(UUID bot) {
         FakePlayer f = FAKES.remove(bot);
         if (f != null) FAKE_TO_BOT.remove(f.getUUID());
+        com.xenowarriors.compat.DmzBotKi.forget(bot);
     }
+
+    /** The bot's stand-in player (for the tests). */
+    public static FakePlayer standIn(PartyBotEntity b) { return fake(b); }
 
     private static FakePlayer fake(PartyBotEntity b) {
         ServerLevel s = (ServerLevel) b.level();
@@ -435,6 +439,7 @@ public final class PartyBots {
         if (b.journey() && com.xenowarriors.journey.Journey.noSkills(b.owner())) return;   // ("No skills" battle: teammates fight with basic attacks too)
         double dist = b.distanceTo(target);
         if (dist > 20) return;
+        if (com.xenowarriors.compat.DmzBotKi.tryFire(b, target, () -> fake(b), false)) return;   // (with DragonMineZ: sometimes one of its equipped ki techniques instead)
         long now = b.level().getGameTime();
         ServerPlayer o = b.owner();
         int[] loadout = o == null ? SkillPool.defaultLoadout() : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadout(b.character())).orElse(SkillPool.defaultLoadout());
@@ -681,7 +686,7 @@ public final class PartyBots {
         }
         if (attacker != null && attacker != event.getEntity()) {
             float lvBonus = 1F + Stat.ATTACK.bonus(Math.min(Stat.MAX_LEVEL, attacker.botLevel() / 3));
-            if (event.getSource().getEntity() instanceof PartyBotEntity) event.setAmount(event.getAmount() * lvBonus);
+            if (event.getSource().getEntity() instanceof PartyBotEntity && !com.xenowarriors.ka.DmzKi.isKi(event.getSource().getDirectEntity())) event.setAmount(event.getAmount() * lvBonus);   // (its DMZ ki attacks hit as hard as its DMZ character, like skills)
             addXp(attacker, Stat.ATTACK, Math.min(event.getAmount(), event.getEntity().getHealth()));
         }
         if (event.getEntity() instanceof PartyBotEntity b && event.getSource().getEntity() instanceof LivingEntity) addXp(b, Stat.DEFENSE, event.getAmount());

@@ -160,6 +160,7 @@ public final class UiTest {
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
         if ("bots3".equals(System.getenv("XW_UITEST_FOCUS"))) { bots3(mc, l); return l; }
         if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
+        if ("dmzbots".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzBots(mc, l); return l; }
         if ("modeblocks".equals(System.getenv("XW_UITEST_FOCUS"))) { modeBlocks(mc, l); return l; }
         if ("uisweep".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, false); return l; }
         if ("uisweep2".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, true); return l; }
@@ -2160,6 +2161,123 @@ public final class UiTest {
         l.add(new Step("dmzpc_rhalix_picker", () -> { log("dmzpc screen after Rhalix: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())); server(p -> log("dmzpc Rhalix: " + dmzInfo(p))); }, 3));
         l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.MIKIKO); }, 80));
         l.add(new Step("dmzpc_mikiko_back", () -> { log("dmzpc screen after Mikiko again: " + (mc.screen == null ? "none" : mc.screen.getClass().getName())); server(p -> log("dmzpc Mikiko again: " + dmzInfo(p))); }, 3));
+    }
+
+    /**
+     * DragonMineZ ki techniques from bots: Rhalix gets a DMZ character with ki techniques equipped (made while playing
+     * him, then put away by switching back to Mikiko), joins as a bot and fights a tough dummy with you standing in the
+     * line of fire. Logged: the techniques it found, each throw, its ki attacks in the air, damage to the dummy, and
+     * that you take none. Then a few throws from the side for the screenshots.
+     */
+    private static void dmzBots(Minecraft mc, List<Step> l) {
+        final Object[] st = new Object[3];                       // bot, dummy, owner hp at start
+        final int[] hits = new int[4];                           // owner attacked, owner damaged, dummy damaged (count), ki seen
+        final float[] dealt = new float[1];
+        final java.util.Set<Integer> seenKi = new java.util.HashSet<>();
+        l.add(new Step(null, () -> { noToasts(mc); noDmz(mc); mc.setScreen(null); hold(null); character(CharacterType.MIKIKO); }, 60));
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> { dmzSet(p, "saiyan"); com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p); com.xenowarriors.debug.SkillTestRunner.arena(p); }); }, 50));
+        l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.RHALIX); }, 80));
+        // Rhalix's own DMZ character: a Saiyan with a ki wave and a ki blast equipped
+        l.add(new Step(null, () -> { noDmz(mc); server(p -> {
+            dmzSet(p, "saiyan"); dmzStats(p, 30);
+            try {
+                Object d = dmzData(p);
+                Object tech = d.getClass().getMethod("getTechniques").invoke(d);
+                var reg = (java.util.Map<?, ?>) Class.forName("com.dragonminez.common.stats.techniques.PredefinedTechniques").getField("REGISTRY").get(null);
+                StringBuilder all = new StringBuilder();
+                java.util.List<String> pick = new java.util.ArrayList<>();
+                for (var e : reg.entrySet()) {
+                    String type = String.valueOf(e.getValue().getClass().getMethod("getKiType").invoke(e.getValue()));
+                    all.append(e.getKey()).append(':').append(type).append(' ');
+                }
+                if (reg.containsKey("kamehameha")) pick.add("kamehameha");
+                for (var e : reg.entrySet()) {
+                    String type = String.valueOf(e.getValue().getClass().getMethod("getKiType").invoke(e.getValue()));
+                    if (pick.size() < 2 && !pick.contains((String) e.getKey()) && type.contains("BLAST") && !type.contains("LARGE")) pick.add((String) e.getKey());
+                }
+                for (var e : reg.entrySet()) if (pick.size() < 2 && !pick.contains((String) e.getKey())) pick.add((String) e.getKey());
+                log("dmzbots predefined: " + all);
+                java.lang.reflect.Method unlock = null, equip = null;
+                for (var m : tech.getClass().getMethods()) {
+                    if (m.getName().equals("unlockTechnique") && m.getParameterCount() == 1) unlock = m;
+                    if (m.getName().equals("equipTechnique") && m.getParameterCount() == 2) equip = m;
+                }
+                for (int i = 0; i < pick.size(); i++) { unlock.invoke(tech, reg.get(pick.get(i))); equip.invoke(tech, i, pick.get(i)); }
+                log("dmzbots rhalix equipped: " + java.util.Arrays.toString((String[]) tech.getClass().getMethod("getEquippedSlots").invoke(tech)) + " " + dmzInfo(p));
+            } catch (Throwable t) { log("dmzbots equip FAILED " + t); }
+        }); }, 20));
+        l.add(new Step(null, () -> { noDmz(mc); character(CharacterType.MIKIKO); }, 80));     // (Rhalix's DMZ character is put away)
+        // Rhalix joins as a bot; a tough dummy 10 blocks off, you in between (in the line of fire)
+        l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); server(p -> {
+            net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setHealth(p.getMaxHealth());
+            var r = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
+            var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+            if (r == null || z == null) { log("dmzbots spawn FAILED"); return; }
+            r.moveTo(at.x, at.y, at.z, 0F, 0F);
+            r.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0);
+            z.moveTo(at.x, at.y, at.z + 10, 180F, 0F);
+            z.setNoAi(true); z.setPersistenceRequired(); z.getPersistentData().putBoolean("xw_mb_rolled", true);
+            z.setCustomName(net.minecraft.network.chat.Component.literal("Dummy"));
+            p.serverLevel().addFreshEntity(z);
+            p.connection.teleport(at.x, at.y, at.z + 4, 0F, 0F);
+            st[0] = r; st[1] = z;
+            var bus = net.minecraftforge.common.MinecraftForge.EVENT_BUS;
+            bus.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, true, net.minecraftforge.event.entity.living.LivingAttackEvent.class, e -> {
+                if (e.getEntity() == p && e.getSource().getEntity() == st[0]) { hits[0]++; log("dmzbots owner attacked by the bot: " + e.getSource().getMsgId() + " via " + (e.getSource().getDirectEntity() == null ? "-" : e.getSource().getDirectEntity().getClass().getSimpleName()) + " canceled=" + e.isCanceled()); }
+            });
+            bus.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, false, net.minecraftforge.event.entity.living.LivingDamageEvent.class, e -> {
+                if (e.getEntity() == p) { hits[1]++; log("dmzbots OWNER DAMAGED " + e.getAmount() + " by " + e.getSource().getMsgId() + " from " + e.getSource().getEntity()); }
+                if (e.getEntity() == st[1] && e.getSource().getEntity() == st[0]) {
+                    hits[2]++; dealt[0] += e.getAmount();
+                    log("dmzbots dummy hit " + String.format(java.util.Locale.ROOT, "%.1f", e.getAmount()) + " (" + e.getSource().getMsgId() + " via " + (e.getSource().getDirectEntity() == null ? "-" : e.getSource().getDirectEntity().getClass().getSimpleName()) + ")");
+                }
+            });
+        }); }, 5));
+        l.add(new Step(null, () -> server(p -> {                                  // (after level scaling has set its health)
+            var r = (com.xenowarriors.bot.PartyBotEntity) st[0]; var z = (net.minecraft.world.entity.LivingEntity) st[1];
+            if (r == null || z == null) return;
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(2000); z.setHealth(z.getMaxHealth());
+            st[2] = p.getHealth();
+            log("dmzbots techniques found: " + com.xenowarriors.compat.DmzBotKi.techniques(r, () -> com.xenowarriors.bot.PartyBots.standIn(r)) + " ki damage " + com.xenowarriors.compat.DmzBotKi.kiDamageForTest(r));
+            com.xenowarriors.compat.DmzBotKi.LOG.clear();
+            r.setTarget(z);
+            // watch for 30 s: what the bot throws, its ki attacks in the air, the dummy's and your health
+            for (int i = 1; i <= 300; i++) { int ii = i; com.xenowarriors.skill.ServerScheduler.later(i * 2, () -> {
+                synchronized (com.xenowarriors.compat.DmzBotKi.LOG) { for (String s : com.xenowarriors.compat.DmzBotKi.LOG) log("dmzbots fire: " + s + " (t" + ii * 2 + ")"); com.xenowarriors.compat.DmzBotKi.LOG.clear(); }
+                if (r.getTarget() != z && z.isAlive()) r.setTarget(z);
+                for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.projectile.Projectile.class, p.getBoundingBox().inflate(32), q -> q.getOwner() == r && com.xenowarriors.ka.DmzKi.isKi(q)))
+                    if (seenKi.add(e.getId())) { hits[3]++; log("dmzbots ki projectile spawned: " + e.getClass().getSimpleName() + " at " + e.blockPosition().toShortString() + " owner=bot (t" + ii * 2 + ")"); }
+                if (ii % 50 == 0) log("dmzbots t" + ii * 2 + ": dummy hp=" + Math.round(z.getHealth()) + "/" + Math.round(z.getMaxHealth()) + " owner hp=" + p.getHealth() + "/" + p.getMaxHealth() + " bot target=" + (r.getTarget() == z));
+            }); }
+        }), 620));
+        l.add(new Step(null, () -> server(p -> log("dmzbots summary: ki projectiles=" + hits[3] + " dummy hits=" + hits[2] + " dealt=" + String.format(java.util.Locale.ROOT, "%.1f", dealt[0])
+                + " | owner attacked by bot=" + hits[0] + " owner damaged=" + hits[1] + " owner hp " + st[2] + " -> " + p.getHealth())), 5));
+        // the screenshots: from the side, the bot throwing at the dummy
+        for (int shot = 0; shot < 3; shot++) {
+            int sh = shot;
+            l.add(new Step(null, () -> { noDmz(mc); mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
+                var r = (com.xenowarriors.bot.PartyBotEntity) st[0]; var z = (net.minecraft.world.entity.LivingEntity) st[1];
+                if (r == null || z == null) return;
+                net.minecraft.world.phys.Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+                p.connection.teleport(at.x - 8, at.y + 1.5, at.z + 5, -90F, 10F);
+                r.setNoAi(true); r.setTarget(null);                          // (stands still; only the forced throws below)
+                r.moveTo(at.x, at.y, at.z, 0F, 0F); z.setHealth(z.getMaxHealth());
+                com.xenowarriors.compat.DmzBotKi.resetForTest(r.getUUID());
+            }); }, 60));
+            l.add(new Step(null, () -> server(p -> {
+                var r = (com.xenowarriors.bot.PartyBotEntity) st[0]; var z = (net.minecraft.world.entity.LivingEntity) st[1];
+                if (r == null || z == null) return;
+                boolean ok = com.xenowarriors.compat.DmzBotKi.tryFire(r, z, () -> com.xenowarriors.bot.PartyBots.standIn(r), true);
+                log("dmzbots screenshot throw " + sh + ": started=" + ok);
+            }), 10));
+            l.add(new Step("dmzbots_throw" + sh + "_a", () -> {}, 2));
+            l.add(new Step("dmzbots_throw" + sh + "_b", () -> {}, 23));
+            l.add(new Step("dmzbots_throw" + sh + "_c", () -> {}, 15));
+            l.add(new Step(null, () -> server(p -> { synchronized (com.xenowarriors.compat.DmzBotKi.LOG) { for (String s : com.xenowarriors.compat.DmzBotKi.LOG) log("dmzbots shot fire: " + s); com.xenowarriors.compat.DmzBotKi.LOG.clear(); } }), 2));
+        }
+        l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> log("dmzbots end: owner hp=" + p.getHealth() + " owner damaged=" + hits[1])); }, 5));
     }
 
     /** Journey Easy stage 1 and Tower floor 1 at three DragonMineZ power levels: how many of your hits an enemy takes, and how many of its hits you take. */

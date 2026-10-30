@@ -116,6 +116,23 @@ public final class DmzPerCharacter {
         }
     }
 
+    /**
+     * The saved DragonMineZ character for this key (a bot's character), read-only: the stored tag itself for a character
+     * put away, or a snapshot of the live one when the key is the one being played. Null when it has none (or no DMZ).
+     */
+    public static CompoundTag saved(ServerPlayer owner, String key) {
+        if (!ready() || owner == null || key == null) return null;
+        CompoundTag keep = persisted(owner);
+        if (key.equals(keep.getString(LIVE))) {
+            try {
+                Object data = owner.getCapability(cap).resolve().orElse(null);
+                return data == null ? null : (CompoundTag) save.invoke(data);
+            } catch (Throwable t) { return null; }
+        }
+        CompoundTag all = keep.getCompound(ROOT);
+        return all.contains(key) ? all.getCompound(key) : null;
+    }
+
     /** Tell everyone who can see them (and them) about their DMZ data. */
     private static void sync(ServerPlayer p) {
         for (Constructor<?> c : new Constructor<?>[]{statsSync, appearanceSync, progressionSync}) {
