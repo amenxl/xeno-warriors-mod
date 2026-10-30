@@ -80,7 +80,10 @@ public final class RequestPopups {
             int cards = com.xenowarriors.client.party.KhParty.blazingTop();
             if (cards > 0 && y + h > cards && PetHud.blockHeight() > 0) {    // no room under the pet cards: go beside them instead
                 y = HudLayout.petTop();
-                x -= 104;
+                w = Math.max(140, Math.min(186, width - 110 - 168));             // narrower on small screens: clear of the popup feed on the left
+                lines = font.split(net.minecraft.network.chat.Component.literal(c.req.text()), w - 16);
+                h = 30 + lines.size() * 10 + 14;
+                x = Math.round(width - 110 - w * slide);
             }
             int a = Math.round(fade * 230);
             g.fill(x, y, x + w, y + h, (a << 24) | 0x14121C);
@@ -94,7 +97,8 @@ public final class RequestPopups {
             }
             ly += 4;
             g.drawString(font, "[" + yes + "] Accept", x + 9, ly, 0x6CF07A | ta, false);
-            g.drawString(font, "[" + no + "] " + (c.req.decline().contains("journey") || c.req.decline().isEmpty() ? "Cancel" : "Decline"), x + 95, ly, 0xF06C6C | ta, false);
+            String noText = "[" + no + "] " + (c.req.decline().contains("journey") || c.req.decline().isEmpty() ? "Cancel" : "Decline");
+            g.drawString(font, noText, Math.min(x + 95, x + w - 6 - font.width(noText)), ly, 0xF06C6C | ta, false);
             // time left
             int bw = Math.round((w - 6) * Mth.clamp(left / c.req.ticks(), 0F, 1F));
             g.fill(x + 3, y + h - 2, x + 3 + bw, y + h, (a << 24) | 0x8080A0);
