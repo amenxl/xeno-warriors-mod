@@ -51,7 +51,8 @@ public final class SkillTestRunner {
             for (int i = 0; i < com.xenowarriors.you.YouSkills.pool(y).size(); i++) jobs.add(new Job(null, who, i, false));
             jobs.add(new Job(null, who, -1, true));
         }
-        int t = 0;
+        arena(p);                 // (the test floor first, so its chunks are loaded and ticking before the first skill)
+        int t = 60;
         for (Job j : jobs) {
             ServerScheduler.later(t + 1, () -> run(p, j));
             t += j.setup != null ? 30 : j.ult ? 215 : 110;
