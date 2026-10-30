@@ -44,7 +44,7 @@ class Face:
         self.poly([(0, 0), (128, 0), (128, 128), (116, 128), (112, 60), (100, 40), (64, 36), (28, 40), (16, 60), (12, 128), (0, 128)], (70, 30, 34, 90), sh)
         self.soft(sh, 6)
         bl = Image.new('RGBA', self.im.size, (0, 0, 0, 0))          # a touch of blush
-        self.ell(30, 86, 9, 4, (232, 120, 120, 70), bl); self.ell(98, 86, 9, 4, (232, 120, 120, 70), bl)
+        self.ell(30, 96, 9, 4, (232, 120, 120, 70), bl); self.ell(98, 96, 9, 4, (232, 120, 120, 70), bl)
         self.soft(bl, 2)
 
     def eye(self, cx, cy, right):
@@ -71,12 +71,12 @@ class Face:
 
     def crescents(self):
         if self.v.get('no_marks'): return
-        self.arc(26, 84, 7, 6, 70, 200, INK, 2.6)       # "(" under his right eye's outer corner
-        self.arc(102, 84, 7, 6, -20, 110, INK, 2.6)     # ")" under his left eye's
+        self.arc(26, 94, 7, 6, 70, 200, INK, 2.6)       # "(" under his right eye's outer corner
+        self.arc(102, 94, 7, 6, -20, 110, INK, 2.6)     # ")" under his left eye's
 
     def mouth(self):
         v = self.v
-        x0, x1, y = (46, 82, 98) if not v.get('small') else (52, 76, 100)
+        x0, x1, y = (46, 82, 106) if not v.get('small') else (52, 76, 108)
         h = 12 if not v.get('small') else 7
         top = [(x0, y)] + [(x0 + (x1 - x0) * t / 10, y + 2.5 * (1 - (2 * t / 10 - 1) ** 2)) for t in range(1, 10)] + [(x1, y)]
         bot = [(x1, y)] + [(x1 - (x1 - x0) * t / 10, y + h * (1 - (2 * t / 10 - 1) ** 2) ** 0.8) for t in range(1, 10)] + [(x0, y)]
@@ -97,7 +97,7 @@ class Face:
         self.line([(x0 - 2, y - 1.5), (x0 + 1, y + 1)], INK, 1.4); self.line([(x1 + 2, y - 1.5), (x1 - 1, y + 1)], INK, 1.4)   # dimples
 
     def nose(self):
-        self.line([(65, 84), (63, 87)], (170, 110, 96), 1.1)
+        self.line([(65, 93), (63, 96)], (170, 110, 96), 1.1)
 
     def hair(self):
         v = self.v
@@ -113,9 +113,9 @@ class Face:
             self.line(pts[1:] , (96, 66, 26), 1.1, L)
         if not v.get('no_lock'):
             # the long lock falling over his left eye (viewer's right), diagonal like the reference
-            lock = [(66, 10), (80, 8), (92, 34), (98, 58), (94, 80), (89, 62), (80, 38)]
+            lock = [(66, 10), (80, 8), (92, 40), (98, 66), (94, 90), (89, 70), (80, 42)]
             self.poly(lock, HAIR[2] + (255,), L)
-            self.poly([(72, 10), (80, 8), (90, 36), (94, 58), (86, 38)], HAIR[3] + (255,), L)
+            self.poly([(72, 10), (80, 8), (90, 42), (94, 66), (86, 44)], HAIR[3] + (255,), L)
             self.line(lock[1:] + [lock[0]], (96, 66, 26), 1.1, L)
         # shade the hair's edge onto the face, then the hair itself
         shade = Image.new('RGBA', self.im.size, (0, 0, 0, 0))
@@ -130,7 +130,7 @@ class Face:
 
     def draw(self):
         self.skin(); self.crescents(); self.nose()
-        self.eye(42, 64, False); self.eye(86, 64, True)
+        self.eye(42, 74, False); self.eye(86, 74, True)
         self.mouth(); self.hair()
         small = self.im.resize((N, N), Image.LANCZOS)
         out = Image.new('RGBA', (256, 256), (0, 0, 0, 0)); out.paste(small, (0, 0))
