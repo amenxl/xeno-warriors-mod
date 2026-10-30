@@ -239,6 +239,7 @@ public class PartyBotEntity extends PathfinderMob {
         }
         @Override public boolean canContinueToUse() { return reviving != null && reviving.isAlive() && !downed() && PartyBots.isDown(reviving) && reviving.distanceToSqr(PartyBotEntity.this) < 40 * 40; }
         private int stalled, going; private double closest;
+        @Override public boolean requiresUpdateEveryTick() { return true; }     // (its timers count real ticks)
         @Override public void start() { stalled = 0; going = 0; closest = 1e9; }
         @Override public void stop() { reviving = null; }
         @Override public void tick() {
@@ -301,6 +302,7 @@ public class PartyBotEntity extends PathfinderMob {
     class MineGoal extends Goal {
         int dig, need, lastLook, lastTreeLook = -1000, walking;
         double closest;
+        @Override public boolean requiresUpdateEveryTick() { return true; }     // (digging and its timers count real ticks)
         MineGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         @Override public boolean canUse() {
             // (the goal selector asks every other tick on its own clock: a tickCount % 20 test could never line up)

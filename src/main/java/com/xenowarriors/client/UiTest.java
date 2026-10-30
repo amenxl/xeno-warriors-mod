@@ -2086,6 +2086,8 @@ public final class UiTest {
             if (r != null) { r.setMode(com.xenowarriors.bot.PartyBotEntity.NEUTRAL); r.setMode(com.xenowarriors.bot.PartyBotEntity.MINING); }
         }), 40));
         l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX);
+            if (r != null) log("bots3 ore mid: bot at " + r.blockPosition().toShortString() + " owner at " + p.blockPosition().toShortString() + " placed " + base[0].toShortString()
+                    + " exposed=" + com.xenowarriors.bot.PartyBots.exposedForTest(r, base[0]) + " would pick " + com.xenowarriors.bot.PartyBots.findOreForTest(r, p));
             if (r != null) log("bots3 ore mid: mode=" + r.mode() + " target=" + r.getTarget() + " mining=" + r.mineTargetForTest() + " goals=[" + r.goalsForTest() + "] hand=" + id(r.getMainHandItem()) + " dist=" + String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(r.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(base[0]))))); }), 100));
         l.add(new Step(null, () -> server(p -> {
             var r = bot(p, CharacterType.RHALIX);
@@ -2109,7 +2111,8 @@ public final class UiTest {
             log("bots3 revive: rhalix downed=" + r.downed());
         }), 40));
         l.add(new Step(null, () -> server(p -> { var k = bot(p, CharacterType.KAERU); var r = bot(p, CharacterType.RHALIX);
-            if (k != null && r != null) log("bots3 revive mid: kaeru goals=[" + k.goalsForTest() + "] dist to rhalix=" + String.format(java.util.Locale.ROOT, "%.1f", k.distanceTo(r)) + " rhalix downed=" + r.downed()); }), 100));
+            if (k != null && r != null) log("bots3 revive mid: kaeru goals=[" + k.goalsForTest() + "] dist to rhalix=" + String.format(java.util.Locale.ROOT, "%.1f", k.distanceTo(r)) + " rhalix downed=" + r.downed()
+                    + " kaeru at " + k.position() + " rhalix at " + r.position() + " nav done=" + k.getNavigation().isDone()); }), 100));
         l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX); log("bots3 revive: rhalix downed after 6s=" + (r == null ? "?" : r.downed())); }), 3));
         l.add(new Step("bots3_revive", () -> {}, 3));
         // eating: Kaeru hurt with food in her bag

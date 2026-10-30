@@ -489,6 +489,10 @@ public final class PartyBots {
         return best;
     }
 
+    /** (For tests) the ore it would pick now, and whether a block counts as open to the air. */
+    public static BlockPos findOreForTest(PartyBotEntity b, ServerPlayer o) { return findOre(b, o); }
+    public static boolean exposedForTest(PartyBotEntity b, BlockPos p) { return exposed(b, p); }
+
     /** Open to the air on some side (in a cave, a cliff, a hillside): somewhere a bot can stand next to it. */
     static boolean exposed(PartyBotEntity b, BlockPos p) {
         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values())
