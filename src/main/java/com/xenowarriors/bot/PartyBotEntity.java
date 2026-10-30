@@ -23,6 +23,7 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -66,6 +67,21 @@ public class PartyBotEntity extends PathfinderMob {
     long relayUntil;
     BlockPos mineTarget;
     int fullNotice;
+    /** Blocks it gave up on reaching (pos -> until tickCount), so it doesn't walk at a buried ore forever. */
+    final java.util.Map<Long, Integer> giveUp = new java.util.HashMap<>();
+    boolean unreachable(BlockPos p) { Integer t = giveUp.get(p.asLong()); return t != null && t > tickCount; }
+
+    /** (For tests) what it's mining and which goals are running. */
+    public BlockPos mineTargetForTest() { return mineTarget; }
+    public String goalsForTest() {
+        StringBuilder sb = new StringBuilder();
+        goalSelector.getRunningGoals().forEach(g -> sb.append(g.getGoal().getClass().getSimpleName()).append(' '));
+        targetSelector.getRunningGoals().forEach(g -> sb.append("T:").append(g.getGoal().getClass().getSimpleName()).append(' '));
+        return sb.toString().trim();
+    }
+
+    /** When you last put something in its hand from its menu (it keeps that a while; see BotGear). */
+    public int handPicked = -100000;
 
     public PartyBotEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -222,16 +238,24 @@ public class PartyBotEntity extends PathfinderMob {
             return reviving != null;
         }
         @Override public boolean canContinueToUse() { return reviving != null && reviving.isAlive() && !downed() && PartyBots.isDown(reviving) && reviving.distanceToSqr(PartyBotEntity.this) < 40 * 40; }
+        private int stalled, going; private double closest;
+        @Override public boolean requiresUpdateEveryTick() { return true; }     // (its timers count real ticks)
+        @Override public void start() { stalled = 0; going = 0; closest = 1e9; }
         @Override public void stop() { reviving = null; }
         @Override public void tick() {
             if (reviving == null) return;
             setTarget(null);
             getLookControl().setLookAt(reviving);
-            if (distanceToSqr(reviving) > 1.4 * 1.4) {
+            double d2 = distanceToSqr(reviving);
+            if (d2 > 1.4 * 1.4) {
                 if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(reviving.getX(), reviving.getY(), reviving.getZ(), 1.35);
-                if (distanceToSqr(reviving) > 24 * 24 || (tickCount % 40 == 0 && getNavigation().isStuck())) {   // too far or stuck: hop over to them
-                    net.minecraft.world.phys.Vec3 at = reviving.position().add(1, 0, 0);
-                    if (level().noCollision(PartyBotEntity.this, getBoundingBox().move(at.subtract(position())))) teleportTo(at.x, at.y, at.z);
+                if (d2 < closest - 0.25) { closest = d2; stalled = 0; } else stalled++;
+                if (d2 > 24 * 24 || stalled > 40 || ++going > 60) {               // too far, two seconds without getting closer, or three seconds on the way: hop over to them
+                    stalled = 0; going = 0;
+                    for (net.minecraft.world.phys.Vec3 off : new net.minecraft.world.phys.Vec3[]{new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1), new Vec3(1, 1, 0), new Vec3(0, 1, 1)}) {
+                        Vec3 at = reviving.position().add(off);
+                        if (level().noCollision(PartyBotEntity.this, getBoundingBox().move(at.subtract(position())))) { teleportTo(at.x, at.y, at.z); getNavigation().stop(); break; }
+                    }
                 }
             } else getNavigation().stop();
         }
@@ -274,27 +298,55 @@ public class PartyBotEntity extends PathfinderMob {
     }
 
     /** Mining mode: senses ore near you (Karma Sense, or Data Sense for Ultima) and digs it out into its bag. */
+    /** Mine mode: ore it senses near you, and trees (the whole trunk comes down), with the best tool it has. */
     class MineGoal extends Goal {
-        int dig;
+        int dig, need, lastLook, lastTreeLook = -1000, walking;
+        double closest;
+        @Override public boolean requiresUpdateEveryTick() { return true; }     // (digging and its timers count real ticks)
         MineGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         @Override public boolean canUse() {
-            if (mode() != MINING || downed() || getTarget() != null || tickCount % 20 != 0) return false;
+            // (the goal selector asks every other tick on its own clock: a tickCount % 20 test could never line up)
+            if (mode() != MINING || downed() || getTarget() != null || tickCount - lastLook < 10) return false;
+            lastLook = tickCount;
             ServerPlayer o = owner();
-            if (o == null) return false;
+            if (o == null || o.level() != level() || !com.xenowarriors.modes.ModeRules.canGrief(level())) return false;
             mineTarget = PartyBots.findOre(PartyBotEntity.this, o);
+            if (mineTarget == null && tickCount - lastTreeLook >= 40) {         // no ore: a tree (looked for less often - it's a bigger search)
+                lastTreeLook = tickCount;
+                mineTarget = BotGear.findTree(PartyBotEntity.this, o);
+            }
             return mineTarget != null;
         }
-        @Override public boolean canContinueToUse() { return mineTarget != null && mode() == MINING && !downed() && getTarget() == null && PartyBots.isOre(level().getBlockState(mineTarget)); }
-        @Override public void start() { dig = 0; }
-        @Override public void stop() { mineTarget = null; }
+        private boolean breakable(BlockState s) { return PartyBots.isOre(s) || BotGear.isLog(s); }
+        @Override public boolean canContinueToUse() { return mineTarget != null && mode() == MINING && !downed() && getTarget() == null && breakable(level().getBlockState(mineTarget)); }
+        @Override public void start() { dig = 0; need = 0; walking = 0; closest = 1e9; }
+        @Override public void stop() { if (mineTarget != null) level().destroyBlockProgress(getId(), mineTarget, -1); mineTarget = null; }
         @Override public void tick() {
             if (mineTarget == null) return;
             getLookControl().setLookAt(Vec3.atCenterOf(mineTarget));
-            if (distanceToSqr(Vec3.atCenterOf(mineTarget)) > 3.2 * 3.2) { getNavigation().moveTo(mineTarget.getX() + .5, mineTarget.getY(), mineTarget.getZ() + .5, 1.1); return; }
+            double d2 = distanceToSqr(Vec3.atCenterOf(mineTarget));
+            if (d2 > 3.2 * 3.2) {
+                if (d2 < closest - 0.5) { closest = d2; walking = 0; }              // getting closer
+                if (++walking > 80) {                                              // 4 seconds without getting any closer: it can't get there
+                    giveUp.put(mineTarget.asLong(), tickCount + 20 * 60);
+                    if (giveUp.size() > 64) giveUp.values().removeIf(t -> t <= tickCount);
+                    mineTarget = null;
+                    return;
+                }
+                if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(mineTarget.getX() + .5, mineTarget.getY(), mineTarget.getZ() + .5, 1.1);
+                return;
+            }
             getNavigation().stop();
+            BlockState st = level().getBlockState(mineTarget);
+            if (need == 0) { BotGear.holdBestTool(PartyBotEntity.this, st); need = BotGear.digTicks(PartyBotEntity.this, mineTarget, st); }
             if (++dig % 6 == 0) swing(InteractionHand.MAIN_HAND);
-            level().destroyBlockProgress(getId(), mineTarget, Math.min(9, dig / 3));
-            if (dig >= 30) { PartyBots.mine(PartyBotEntity.this, mineTarget); level().destroyBlockProgress(getId(), mineTarget, -1); mineTarget = null; }
+            level().destroyBlockProgress(getId(), mineTarget, Math.min(9, dig * 10 / Math.max(1, need)));
+            if (dig >= need) {
+                level().destroyBlockProgress(getId(), mineTarget, -1);
+                if (BotGear.isLog(st)) BotGear.fellTree(PartyBotEntity.this, mineTarget);
+                else { PartyBots.mine(PartyBotEntity.this, mineTarget); BotGear.wear(PartyBotEntity.this); }
+                mineTarget = null;
+            }
         }
     }
 
@@ -311,7 +363,7 @@ public class PartyBotEntity extends PathfinderMob {
             if (!journey()) com.xenowarriors.party.ReviveCircle.tickBot(this);
             return;
         }
-        if (getTarget() != null && tickCount % 10 == 0) PartyBots.trySkill(this, getTarget());
+        if (getTarget() != null && tickCount % 10 == 0) { BotGear.holdBestWeapon(this); PartyBots.trySkill(this, getTarget()); }
         if (tickCount % 10 == 0) pickUpItems();
         tickEating();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
@@ -430,6 +482,14 @@ public class PartyBotEntity extends PathfinderMob {
     }
 
     /** Bots keep their armour: it's never dropped as loot (it goes back to the character's save). */
+    /** A landed hit wears its weapon down (the weapon's damage is already in its attack damage, as a held item). */
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity t) {
+        boolean hit = super.doHurtTarget(t);
+        if (hit && !level().isClientSide) BotGear.wear(this);
+        return hit;
+    }
+
     @Override protected void dropEquipment() {}
     @Override protected void dropCustomDeathLoot(DamageSource s, int looting, boolean recentlyHit) {}
 
@@ -483,15 +543,15 @@ public class PartyBotEntity extends PathfinderMob {
         t.put("Armour", armourTag());
     }
 
-    /** Worn armour and offhand, as a list (feet, legs, chest, head, offhand). */
+    /** Worn armour, offhand and what's in its hand, as a list (feet, legs, chest, head, offhand, hand). */
     public ListTag armourTag() {
         ListTag l = new ListTag();
-        for (EquipmentSlot s : new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND}) l.add(getItemBySlot(s).save(new CompoundTag()));
+        for (EquipmentSlot s : new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND, EquipmentSlot.MAINHAND}) l.add(getItemBySlot(s).save(new CompoundTag()));
         return l;
     }
 
     public void loadArmour(ListTag l) {
-        EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND};
+        EquipmentSlot[] slots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD, EquipmentSlot.OFFHAND, EquipmentSlot.MAINHAND};
         for (int i = 0; i < slots.length && i < l.size(); i++) setItemSlot(slots[i], ItemStack.of(l.getCompound(i)));
     }
 

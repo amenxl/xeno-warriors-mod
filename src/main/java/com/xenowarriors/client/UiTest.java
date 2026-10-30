@@ -153,6 +153,7 @@ public final class UiTest {
         if ("chars2".equals(System.getenv("XW_UITEST_FOCUS"))) { chars2(mc, l); return l; }
         if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
+        if ("bots3".equals(System.getenv("XW_UITEST_FOCUS"))) { bots3(mc, l); return l; }
         if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
         if ("modeblocks".equals(System.getenv("XW_UITEST_FOCUS"))) { modeBlocks(mc, l); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
@@ -1989,6 +1990,158 @@ public final class UiTest {
         l.add(new Step("bots2_player_down", () -> {}, 3));
         l.add(new Step(null, () -> {}, 140));
         l.add(new Step("bots2_player_revived", () -> {}, 3));
+    }
+
+    // ---------------------------------------------------------------- bots3: a full bot check-up
+
+    private static com.xenowarriors.bot.PartyBotEntity bot(ServerPlayer p, CharacterType t) {
+        for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.character() == t) return b;
+        return null;
+    }
+
+    private static int count(net.minecraft.world.Container c, net.minecraft.world.item.Item it) {
+        int n = 0;
+        for (int i = 0; i < c.getContainerSize(); i++) if (c.getItem(i).is(it)) n += c.getItem(i).getCount();
+        return n;
+    }
+
+    private static String id(net.minecraft.world.item.ItemStack s) { return s.isEmpty() ? "empty" : net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem()).getPath(); }
+
+    /**
+     * Bots: their bag + armour menu, picking the best weapon (and hitting harder with it), felling a tree and mining ore
+     * with the right tools in mine mode, keeping their distance when following, reviving each other, eating when hurt,
+     * and their things coming home when dismissed.
+     */
+    private static void bots3(Minecraft mc, List<Step> l) {
+        final net.minecraft.core.BlockPos[] base = new net.minecraft.core.BlockPos[1];
+        final float[] hp = new float[2];
+        l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); mc.options.hideGui = false;
+            server(p -> { p.serverLevel().setDayTime(6000); p.setYRot(0); p.setXRot(10); base[0] = p.blockPosition(); }); }, 40));
+        // the bag and armour menu, with a weapon choice in the bag
+        l.add(new Step(null, () -> server(p -> {
+            var r = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (r == null) { log("bots3 spawn FAILED"); return; }
+            r.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2);
+            r.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+            r.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
+            r.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_PICKAXE));
+            r.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_AXE));
+            r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_CHESTPLATE));
+            com.xenowarriors.bot.PartyBots.openBag(p, r);
+        }), 25));
+        l.add(new Step("bots3_bag", () -> log("bots3 menu: " + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName())), 3));
+        // a fight: it should pick the diamond sword, and hit harder than bare-handed
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> {
+            var r = bot(p, CharacterType.RHALIX);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (r == null || z == null) return;
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(500); z.setHealth(500);
+            z.setNoAi(true); z.addTag("xw_bots3_z");
+            z.moveTo(r.getX() + 2, r.getY(), r.getZ(), 0, 0);
+            p.serverLevel().addFreshEntity(z);
+        }); }, 5));
+        l.add(new Step(null, () -> server(p -> {                                  // (after its level scaling has set its health)
+            var r = bot(p, CharacterType.RHALIX);
+            var zs = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(16), z -> z.getTags().contains("xw_bots3_z"));
+            if (r == null || zs.isEmpty()) return;
+            var z = zs.get(0);
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(2000); z.setHealth(z.getMaxHealth());
+            hp[0] = z.getHealth();
+            r.setTarget(z);
+        }), 60));
+        l.add(new Step(null, () -> server(p -> {
+            var r = bot(p, CharacterType.RHALIX);
+            var zs = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(16), z -> z.getTags().contains("xw_bots3_z"));
+            float dealt = zs.isEmpty() ? -1 : hp[0] - zs.get(0).getHealth();
+            log("bots3 weapon: hand=" + (r == null ? "?" : id(r.getMainHandItem())) + " dealt=" + dealt + " in 3s (attack attr " + (r == null ? 0 : r.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)) + ")");
+            for (var z : zs) z.discard();
+            if (r != null) r.setTarget(null);
+        }), 5));
+        l.add(new Step("bots3_weapon", () -> {}, 3));
+        // mine mode: a tree (four logs and natural leaves) a few blocks away
+        l.add(new Step(null, () -> server(p -> {
+            var lv = p.serverLevel();
+            var r = bot(p, CharacterType.RHALIX);
+            net.minecraft.core.BlockPos t = p.blockPosition().offset(5, 0, -3);
+            for (int y = 0; y < 4; y++) lv.setBlock(t.above(y), net.minecraft.world.level.block.Blocks.OAK_LOG.defaultBlockState(), 3);
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int dy = 3; dy <= 4; dy++)
+                if (!(dx == 0 && dz == 0 && dy == 3)) lv.setBlock(t.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.DISTANCE, 1), 3);
+            base[0] = t;
+            if (r != null) { r.setMode(com.xenowarriors.bot.PartyBotEntity.MINING); log("bots3 tree placed at " + t.toShortString() + " logs in bag before=" + count(r.inventory, net.minecraft.world.item.Items.OAK_LOG)); }
+        }), 60));
+        l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX); if (r != null) log("bots3 tree mid: hand=" + id(r.getMainHandItem())); }), 160));
+        l.add(new Step(null, () -> server(p -> {
+            var r = bot(p, CharacterType.RHALIX);
+            int left = 0; for (int y = 0; y < 4; y++) if (p.serverLevel().getBlockState(base[0].above(y)).is(net.minecraft.world.level.block.Blocks.OAK_LOG)) left++;
+            log("bots3 tree: logs left standing=" + left + " oak logs in bag=" + (r == null ? -1 : count(r.inventory, net.minecraft.world.item.Items.OAK_LOG)) + " hand=" + (r == null ? "?" : id(r.getMainHandItem())));
+        }), 3));
+        l.add(new Step("bots3_tree", () -> {}, 3));
+        // mine mode: iron ore beside you
+        l.add(new Step(null, () -> server(p -> {                                  // (right beside the bot, so it's the nearest ore whatever the world has)
+            var r = bot(p, CharacterType.RHALIX);
+            net.minecraft.core.BlockPos o = p.blockPosition().offset(2, 0, 2);   // (ore is looked for around you; trees further out)
+            p.serverLevel().setBlock(o, net.minecraft.world.level.block.Blocks.IRON_ORE.defaultBlockState(), 3);
+            p.serverLevel().setBlock(o.above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            base[0] = o;
+            if (r != null) { r.setMode(com.xenowarriors.bot.PartyBotEntity.NEUTRAL); r.setMode(com.xenowarriors.bot.PartyBotEntity.MINING); }
+        }), 40));
+        l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX);
+            if (r != null) log("bots3 ore mid: bot at " + r.blockPosition().toShortString() + " owner at " + p.blockPosition().toShortString() + " placed " + base[0].toShortString()
+                    + " exposed=" + com.xenowarriors.bot.PartyBots.exposedForTest(r, base[0]) + " would pick " + com.xenowarriors.bot.PartyBots.findOreForTest(r, p));
+            if (r != null) log("bots3 ore mid: mode=" + r.mode() + " target=" + r.getTarget() + " mining=" + r.mineTargetForTest() + " goals=[" + r.goalsForTest() + "] hand=" + id(r.getMainHandItem()) + " dist=" + String.format(java.util.Locale.ROOT, "%.1f", Math.sqrt(r.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(base[0]))))); }), 200));
+        l.add(new Step(null, () -> server(p -> {
+            var r = bot(p, CharacterType.RHALIX);
+            log("bots3 ore: ore still there=" + p.serverLevel().getBlockState(base[0]).is(net.minecraft.world.level.block.Blocks.IRON_ORE)
+                    + " raw iron in bag=" + (r == null ? -1 : count(r.inventory, net.minecraft.world.item.Items.RAW_IRON)) + " hand=" + (r == null ? "?" : id(r.getMainHandItem()))
+                    + " pickaxe wear=" + (r == null ? -1 : (r.getMainHandItem().is(net.minecraft.world.item.Items.IRON_PICKAXE) ? r.getMainHandItem().getDamageValue() : -1)));
+            if (r != null) r.setMode(com.xenowarriors.bot.PartyBotEntity.NEUTRAL);
+        }), 3));
+        // following: you walk 10 blocks; it keeps up, but not right on top of you
+        l.add(new Step(null, () -> server(p -> p.teleportTo(p.getX() + 10, p.getY(), p.getZ())), 100));
+        l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX); log("bots3 follow: distance=" + (r == null ? -1 : String.format(java.util.Locale.ROOT, "%.1f", r.distanceTo(p)))); }), 3));
+        l.add(new Step("bots3_follow", () -> {}, 3));
+        // a downed bot revived by another bot
+        l.add(new Step(null, () -> server(p -> {
+            var k = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.KAERU, null);
+            var r = bot(p, CharacterType.RHALIX);
+            if (k == null || r == null) { log("bots3 revive setup FAILED"); return; }
+            k.moveTo(p.getX() - 4, p.getY(), p.getZ() + 3);
+            r.moveTo(p.getX() + 3, p.getY(), p.getZ() + 3);
+            r.die(p.damageSources().generic());
+            log("bots3 revive: rhalix downed=" + r.downed());
+        }), 40));
+        l.add(new Step(null, () -> server(p -> { var k = bot(p, CharacterType.KAERU); var r = bot(p, CharacterType.RHALIX);
+            if (k != null && r != null) log("bots3 revive mid: kaeru goals=[" + k.goalsForTest() + "] dist to rhalix=" + String.format(java.util.Locale.ROOT, "%.1f", k.distanceTo(r)) + " rhalix downed=" + r.downed()
+                    + " kaeru at " + k.position() + " rhalix at " + r.position() + " nav done=" + k.getNavigation().isDone()); }), 100));
+        l.add(new Step(null, () -> server(p -> { var r = bot(p, CharacterType.RHALIX); log("bots3 revive: rhalix downed after 6s=" + (r == null ? "?" : r.downed())); }), 3));
+        l.add(new Step("bots3_revive", () -> {}, 3));
+        // eating: Kaeru hurt with food in her bag
+        l.add(new Step(null, () -> server(p -> {
+            var k = bot(p, CharacterType.KAERU);
+            if (k == null) return;
+            k.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COOKED_BEEF, 4));
+            k.setHealth(5F); hp[1] = k.getHealth();
+        }), 140));
+        l.add(new Step(null, () -> server(p -> { var k = bot(p, CharacterType.KAERU);
+            log("bots3 eat: health " + hp[1] + " -> " + (k == null ? -1 : k.getHealth()) + ", beef left=" + (k == null ? -1 : count(k.inventory, net.minecraft.world.item.Items.COOKED_BEEF))); }), 3));
+        // dismiss Rhalix, then play him: his bag is yours
+        l.add(new Step(null, () -> server(p -> {
+            var r = bot(p, CharacterType.RHALIX);
+            if (r == null) return;
+            int bag = 0; for (int i = 0; i < r.inventory.getContainerSize(); i++) if (!r.inventory.getItem(i).isEmpty()) bag++;
+            log("bots3 dismiss: rhalix bag stacks=" + bag + " hand=" + id(r.getMainHandItem()) + " chest=" + id(r.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST)));
+            com.xenowarriors.bot.PartyBots.action(p, r.getId(), com.xenowarriors.bot.PartyBots.ACT_DISMISS, 0);
+        }), 20));
+        l.add(new Step(null, () -> character(CharacterType.RHALIX), 40));
+        l.add(new Step(null, () -> server(p -> {
+            var inv = p.getInventory();
+            int stacks = 0; for (int i = 0; i < inv.getContainerSize(); i++) if (!inv.getItem(i).isEmpty()) stacks++;
+            log("bots3 home: playing rhalix, stacks=" + stacks + " diamond swords=" + count(inv, net.minecraft.world.item.Items.DIAMOND_SWORD)
+                    + " oak logs=" + count(inv, net.minecraft.world.item.Items.OAK_LOG) + " raw iron=" + count(inv, net.minecraft.world.item.Items.RAW_IRON)
+                    + " chest=" + id(p.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST)));
+        }), 3));
+        l.add(new Step("bots3_home", () -> mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)), 15));
+        l.add(new Step("bots3_home_inv", () -> {}, 3));
     }
 
     /** DragonMineZ per character: Mikiko keeps his DMZ character; switching to Rhalix (none yet) opens the race picker; back to Mikiko brings his back. */

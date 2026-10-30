@@ -11,6 +11,8 @@ public final class ModMenus {
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, XenoWarriors.MOD_ID);
 
     public static final RegistryObject<MenuType<FoxMenu>> FOX = MENUS.register("fox", () -> IForgeMenuType.create(FoxMenu::fromNetwork));
+    /** A bot teammate's bag, armour, offhand and hand. */
+    public static final RegistryObject<MenuType<com.xenowarriors.bot.BotMenu>> BOT = MENUS.register("bot", () -> IForgeMenuType.create(com.xenowarriors.bot.BotMenu::fromNetwork));
 
     private ModMenus() {}
 }

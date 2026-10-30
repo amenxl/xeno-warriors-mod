@@ -148,6 +148,8 @@ public final class ClientModEvents {
             net.minecraft.client.gui.screens.MenuScreens.register(
                     com.xenowarriors.fox.ModMenus.FOX.get(), com.xenowarriors.client.fox.FoxInventoryScreen::new);
             net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.xenowarriors.fox.ModMenus.BOT.get(), com.xenowarriors.client.bot.BotInventoryScreen::new);
+            net.minecraft.client.gui.screens.MenuScreens.register(
                     com.xenowarriors.altar.ModAltar.MENU.get(), com.xenowarriors.client.KarmaAltarScreen::new);
             net.minecraft.client.renderer.item.ItemProperties.register(com.xenowarriors.item.ModItems.PHONE.get(),
                     com.xenowarriors.XenoWarriors.id("style"), (stack, level, entity, seed) -> com.xenowarriors.item.PhoneItem.style(stack) / 2F);
