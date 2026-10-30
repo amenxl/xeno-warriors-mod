@@ -130,6 +130,14 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean downed() { return entityData.get(DOWNED); }
     public boolean sparring() { return entityData.get(SPAR); }
     public void setSparring(boolean b) { entityData.set(SPAR, b); if (!b) setTarget(null); }
+    /** Its side: owner, party, their pets and bots (so DragonMineZ ki attacks it throws pass them by) - not the owner while sparring. */
+    @Override
+    public boolean isAlliedTo(Entity e) {
+        if (super.isAlliedTo(e)) return true;
+        if (level().isClientSide || e == null || e == this) return false;
+        return PartyBots.friendly(this, e) && !(sparring() && e == owner());
+    }
+
     public boolean canFly() { CharacterType t = character(); return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }
 
     /** Apply this character's level (from the owner's saved stats for it). */

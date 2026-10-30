@@ -91,6 +91,8 @@ public final class DmzKi {
         if (Boolean.TRUE.equals(call(locked, e)) || Clashes.isKiClashing(e)) return "locked";
         if (Boolean.FALSE.equals(call(firing, e))) return "charging";                          // still being charged in their hands
         if (o != null && !com.xenowarriors.skill.SkillTargeting.canTarget(p, o)) return "friend";
+        com.xenowarriors.bot.PartyBotEntity bot = com.xenowarriors.bot.PartyBots.botOf(o);   // (a party bot's ki attacks are on your side)
+        if (bot != null && com.xenowarriors.bot.PartyBots.friendly(bot, p) && !(bot.sparring() && p == bot.owner())) return "friend";
         if (beam(e)) {                                                                          // a beam: starts at the thrower, points somewhere
             Vec3 dir = Vec3.directionFromRotation(e.getXRot(), e.getYRot());
             Vec3 at = eye.subtract(e.position());
