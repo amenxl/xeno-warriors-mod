@@ -264,10 +264,29 @@ public final class RhalixComboAnim {
                 f = b.snap ? 1F - (1F - f) * (1F - f) * (1F - f) : f * f * (3F - 2F * f);      // strikes snap out, the rest eases
                 float[] o = new float[N];
                 for (int j = 0; j < N; j++) o[j] = Mth.lerp(f, a.v[j], b.v[j]);
-                return o;
+                return mirror(o);
             }
         }
-        return ks[ks.length - 1].v.clone();
+        return mirror(ks[ks.length - 1].v.clone());
+    }
+
+    /**
+     * He leads with his left (as in the reference: the striking arm is the one toward the camera there). The keys are
+     * written right-handed; this swaps sides: arms, legs, knees and elbows trade places, turns and tilts flip.
+     */
+    private static final boolean LEFT_HANDED = true;
+
+    private static float[] mirror(float[] v) {
+        if (!LEFT_HANDED) return v;
+        float[] o = v.clone();
+        for (int k = 0; k < 3; k++) {
+            float sgn = k == 0 ? 1F : -1F;
+            o[RA + k] = v[LA + k] * sgn; o[LA + k] = v[RA + k] * sgn;
+            o[RL + k] = v[LL + k] * sgn; o[LL + k] = v[RL + k] * sgn;
+        }
+        o[KR] = v[KL]; o[KL] = v[KR]; o[ER] = v[EL]; o[EL] = v[ER];
+        o[TW] = -v[TW]; o[SPIN] = -v[SPIN]; o[ROLL] = -v[ROLL];
+        return o;
     }
 
     /** {pose, weight} right now, or null. Keeps the blends between moves (and out of the string). */

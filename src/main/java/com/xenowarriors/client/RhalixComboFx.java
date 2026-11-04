@@ -122,7 +122,7 @@ public final class RhalixComboFx {
     }
 
     private static void spawn(ClientLevel level, AbstractClientPlayer p, Track tr, int move, float t, float start, int dur) {
-        Vec3 f = fwd(p), r = f.cross(UP).normalize(), o = p.position();
+        Vec3 f = fwd(p), r = UP.cross(f).normalize(), o = p.position();      // (r: his leading side - he's left-handed, see RhalixComboAnim)
         float at;
         switch (move) {
             case 0 -> {      // Shadow Rush: the rising claw, a long light streak up across it
@@ -229,7 +229,7 @@ public final class RhalixComboFx {
 
     /** Charging a held attack: sparks gathering in his palm (blue-white at half, his violet once it's full). */
     public static void chargeSparks(AbstractClientPlayer p, boolean full) {
-        Vec3 f = fwd(p), r = f.cross(UP).normalize();
+        Vec3 f = fwd(p), r = UP.cross(f).normalize();
         Vec3 hand = p.position().add(0, 0.85, 0).add(f.scale(-0.1)).add(r.scale(0.38));
         var rnd = p.getRandom();
         for (int i = 0; i < (full ? 3 : 2); i++) {
