@@ -72,6 +72,8 @@ public class BotAvatar extends RemotePlayer {
         setPose(b.getPose());
         setShiftKeyDown(b.isShiftKeyDown());
         setNoGravity(b.isNoGravity());
+        var maxHp = getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (maxHp != null && maxHp.getBaseValue() != b.getMaxHealth()) maxHp.setBaseValue(b.getMaxHealth());
         double dx = b.getX() - b.xo, dz = b.getZ() - b.zo;
         boolean running = b.isSprinting() || (b.onGround() || b.isNoGravity()) && dx * dx + dz * dz > 0.2 * 0.2;   // (bots keep up at a run)
         if (isSprinting() != running) setSprinting(running);
@@ -94,7 +96,6 @@ public class BotAvatar extends RemotePlayer {
     // what it holds and wears, its health and riding: the bot's own
     @Override public ItemStack getItemBySlot(EquipmentSlot slot) { return bot == null ? ItemStack.EMPTY : bot.getItemBySlot(slot); }
     @Override public float getHealth() { return bot == null ? 20F : bot.getHealth(); }
-    @Override public float getMaxHealth() { return bot == null ? 20F : bot.getMaxHealth(); }
     @Override public boolean isInvisible() { return bot != null && bot.isInvisible(); }
     @Override public boolean isPassenger() { return bot != null && bot.isPassenger(); }
     @Override public Entity getVehicle() { return bot == null ? null : bot.getVehicle(); }

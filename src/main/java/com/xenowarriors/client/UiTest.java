@@ -159,7 +159,7 @@ public final class UiTest {
         if ("distortionbiome".equals(System.getenv("XW_UITEST_FOCUS"))) { distortionBiome(mc, l); return l; }
         if ("bots2".equals(System.getenv("XW_UITEST_FOCUS"))) { bots2(mc, l); return l; }
         if ("bots3".equals(System.getenv("XW_UITEST_FOCUS"))) { bots3(mc, l); return l; }
-        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("botgear")) { com.xenowarriors.client.test.BotGearTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^(dmz|ef)", "").startsWith("botgear")) { com.xenowarriors.client.test.BotGearTests.build(mc, l, System.getenv("XW_UITEST_FOCUS").replaceFirst("^(dmz|ef)", "")); return l; }
         if ("dmzpercharacter".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzPerCharacter(mc, l); return l; }
         if ("dmzbots".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzBots(mc, l, false); return l; }
         if ("dmzbotsmelee".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzBots(mc, l, true); return l; }
