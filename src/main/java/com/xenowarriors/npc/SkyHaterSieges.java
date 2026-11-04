@@ -56,13 +56,15 @@ public final class SkyHaterSieges {
     public static void onTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         var server = event.getServer();
-        ServerLevel level = server.overworld();
-        long now = level.getGameTime();
-        if (now % CHECK_EVERY == 0 && level.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL) {
+        long now = server.overworld().getGameTime();
+        // sky islands (and their Skylanders) are only ever built in Recarnet - looking in the overworld alone, a
+        // siege could never start; the Royal Capital's islands float over Aurora and aren't besieged from the street
+        ServerLevel level = server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+        if (level != null && now % CHECK_EVERY == 0 && level.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL) {
             for (ServerPlayer p : level.players()) {
                 if (p.isSpectator() || level.random.nextInt(CHANCE) != 0) continue;
                 SkylanderEntity sk = level.getEntitiesOfClass(SkylanderEntity.class, p.getBoundingBox().inflate(96, 200, 96),
-                        s -> s.islandHome() != null && !s.guardian()).stream().findFirst().orElse(null);
+                        s -> s.islandHome() != null && !s.guardian() && !com.xenowarriors.recarnet.RoyalCapitalFeature.inCapital(level, s.islandHome())).stream().findFirst().orElse(null);
                 if (sk != null) start(level, sk, p);
             }
         }
