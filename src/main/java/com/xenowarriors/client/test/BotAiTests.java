@@ -84,16 +84,19 @@ public final class BotAiTests {
     /** Dummies' health, set again a few ticks after they spawn (after the mob scaling has had its go). */
     static final float DUMMY_HP = 300F;
 
-    private static Zombie dummy(ServerPlayer p, double x, double y, double z, boolean ai, String tag) {
+    private static Zombie dummy(ServerPlayer p, double x, double y, double z, boolean ai, String tag) { return dummy(p, x, y, z, ai, tag, DUMMY_HP); }
+
+    /** A zombie to fight (hp: 150+ counts as a boss for stuns and staggers). Kept out of the level scaling so its health stays put. */
+    private static Zombie dummy(ServerPlayer p, double x, double y, double z, boolean ai, String tag, float hp) {
         Zombie zb = EntityType.ZOMBIE.create(p.serverLevel());
         if (zb == null) return null;
         zb.moveTo(x, y, z, 180, 0);
         zb.setNoAi(!ai);
         zb.setPersistenceRequired();
         zb.addTag("xw_botai"); zb.addTag(tag);
+        zb.getPersistentData().putInt("xw_lvl", 0);                              // (EnemyScaling: already has a level, leave it be)
         p.serverLevel().addFreshEntity(zb);
-        zb.getAttribute(Attributes.MAX_HEALTH).setBaseValue(DUMMY_HP); zb.setHealth(DUMMY_HP);
-        ServerScheduler.later(3, () -> { if (zb.isAlive()) { var a = zb.getAttribute(Attributes.MAX_HEALTH); for (var mod : new java.util.ArrayList<>(a.getModifiers())) a.removeModifier(mod); a.setBaseValue(DUMMY_HP); zb.setHealth(DUMMY_HP); } });
+        zb.getAttribute(Attributes.MAX_HEALTH).setBaseValue(hp); zb.setHealth(hp);
         return zb;
     }
 
@@ -339,11 +342,12 @@ public final class BotAiTests {
             if (k == null || zb == null) return;
             k.setHealth(k.getMaxHealth());
             k.inventory.addItem(new ItemStack(com.xenowarriors.item.ModItems.KARMA_POTION.get()));
-            k.karma = 10F; v[1] = k.karma; v[2] = k.drinks;
+            k.karma = 10F; v[1] = k.karma; v[2] = k.drinks; v[4] = k.karma;
             k.setTarget(zb);
+            sample(60, 1, () -> { var kk = bot(sp(), CharacterType.KAERU); if (kk != null) v[4] = Math.max(v[4], kk.karma); });
         }), 60);
         l.add(null, () -> server(p -> { var k = bot(p, CharacterType.KAERU);
-            if (k != null) log("karma: " + f(v[1]) + " -> " + f(k.karma) + " in 3s (regen alone would be ~+5) drank=[" + BotPotions.last(k) + "] karma potions left=" + count(k, s -> s.is(com.xenowarriors.item.ModItems.KARMA_POTION.get())) + " drinks=" + (k.drinks - (int) v[2]));
+            if (k != null) log("karma: " + f(v[1]) + " -> highest " + f(v[4]) + " -> now " + f(k.karma) + " in 3s (regen alone would be ~+5; it spends Karma on skills) drank=[" + BotPotions.last(k) + "] karma potions left=" + count(k, s -> s.is(com.xenowarriors.item.ModItems.KARMA_POTION.get())) + " drinks=" + (k.drinks - (int) v[2]));
             Zombie zb = tagged(p, "karma"); if (zb != null) zb.discard(); if (k != null) k.setTarget(null); }), 5);
         // 3) on fire, with a fire resistance potion
         l.add(null, () -> server(p -> {
@@ -423,7 +427,7 @@ public final class BotAiTests {
             PartyBotEntity k = bot(p, CharacterType.KAERU), r = bot(p, CharacterType.RHALIX);
             if (k != null) { k.moveTo(X - 4.5, Y, Z - 3.5); k.setHealth(k.getMaxHealth()); }
             if (r != null) { r.moveTo(X + 5.5, Y, Z - 4.5); r.setHealth(r.getMaxHealth()); }
-            Zombie zb = dummy(p, X + 0.5, Y, Z + 3.5, true, "downz");
+            Zombie zb = dummy(p, X + 0.5, Y, Z + 3.5, true, "downz", 60F);           // (an ordinary zombie: not a boss, so the full stun)
             if (zb == null) return;
             zb.setTarget(p);
             p.hurt(p.damageSources().generic(), 1000F);
@@ -445,7 +449,7 @@ public final class BotAiTests {
             p.teleportTo(p.serverLevel(), X - 5.5, Y, Z + 5.5, 135, 20);
             r.moveTo(X + 0.5, Y, Z + 0.5); k.moveTo(X + 4.5, Y, Z - 4.5);
             var kh = k.getAttribute(Attributes.MAX_HEALTH); if (kh != null) kh.setBaseValue(200); k.setHealth(k.getMaxHealth());
-            Zombie zb = dummy(p, X + 0.5, Y, Z + 3.5, true, "botdownz");
+            Zombie zb = dummy(p, X + 0.5, Y, Z + 3.5, true, "botdownz", 60F);
             if (zb == null) return;
             zb.setTarget(r);
             r.die(p.damageSources().generic());

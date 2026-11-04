@@ -279,6 +279,9 @@ public class PartyBotEntity extends PathfinderMob {
             Vec3 to = o.position().add(Math.cos(a) * r, 0, Math.sin(a) * r);
             BlockPos bp = BlockPos.containing(to);
             if (!level().getBlockState(bp).isAir() || !level().getBlockState(bp.below()).isSolid()) return false;
+            var path = getNavigation().createPath(bp, 0);                      // (a stroll, not a swim: no wandering through water)
+            if (path == null) return false;
+            for (int i = 0; i < path.getNodeCount(); i++) { var t = path.getNode(i).type; if (t == net.minecraft.world.level.pathfinder.BlockPathTypes.WATER || t == net.minecraft.world.level.pathfinder.BlockPathTypes.LAVA) return false; }
             wanderTo = to;
             return true;
         }
