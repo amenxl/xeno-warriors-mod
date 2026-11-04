@@ -182,6 +182,11 @@ public final class LockOn {
     public static void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+        // enemy levels for mobs that are gone (it only ever grew: one entry for every mob ever seen)
+        if (mc.level != null && !LEVELS.isEmpty() && mc.level.getGameTime() % 200 == 0) {
+            var lv = mc.level;
+            LEVELS.keySet().removeIf(id -> lv.getEntity(id) == null);
+        }
         LivingEntity ext = mc.player == null ? null : externalTarget.get();
         if (ext != null) {
             if (target != ext) {
