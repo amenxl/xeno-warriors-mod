@@ -21,7 +21,7 @@ public final class SurfHud {
         int max = Math.max(1, b.rideMax()), left = b.rideLeft();
         GuiGraphics g = event.getGuiGraphics();
         int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
-        int bw = 90, x = w / 2 - bw / 2, y = h - 59;
+        int bw = 90, x = w / 2 - bw / 2, y = h - 74;    // (above the hotbar and the "dismount" hint)
         float f = Math.min(1F, left / (float) max);
         boolean low = left <= HekubladeShardEntity.SURF_FADE;
         g.fill(x - 1, y - 1, x + bw + 1, y + 4, 0xC0101014);

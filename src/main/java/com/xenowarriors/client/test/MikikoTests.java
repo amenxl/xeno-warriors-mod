@@ -297,13 +297,16 @@ public final class MikikoTests {
 
     private static void ride(Minecraft mc, Steps l) {
         character(l, CharacterType.MIKIKO);
+        double[] home = new double[3];
+        l.add(null, () -> server(p -> { home[0] = p.getX(); home[1] = p.getY(); home[2] = p.getZ(); }), 5);
         for (int lv : new int[]{1, 20, 50, 200}) {
+            l.add(null, () -> server(p -> p.teleportTo(home[0], home[1], home[2])), 10);   // every ride from the same spot
             int[] start = {-1};
             l.add(null, () -> server(p -> {
                 p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
                 p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 60, 4, false, false));
                 p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.bladeLevel = lv);
-                p.teleportTo(p.getX(), p.getY() + 30, p.getZ());                  // up high, so he's in the air with room to ride
+                p.teleportTo(p.getX(), Math.max(p.getY() + 30, 200), p.getZ());   // up high above any hills, so he has room to ride
                 p.setYRot(-90); p.setXRot(0);                                      // (heading +x)
                 var b = com.xenowarriors.entity.HekubladeShardEntity.create(p, 0);
                 p.level().addFreshEntity(b);
@@ -315,7 +318,7 @@ public final class MikikoTests {
                 for (int t = 1; t <= 700; t++) { int tt = t; com.xenowarriors.skill.ServerScheduler.later(t, () -> {
                     if (ticks[0] < 0) return;
                     if (p.getVehicle() instanceof com.xenowarriors.entity.HekubladeShardEntity) ticks[0]++;
-                    else { log("ride blade level " + lv + ": rode " + ticks[0] + " ticks (" + ticks[0] / 20F + "s)"); ticks[0] = -1; }
+                    else { log("ride blade level " + lv + ": rode " + ticks[0] + " ticks (" + ticks[0] / 20F + "s), ended at y=" + Math.round(p.getY()) + " " + (p.horizontalCollision ? "(hit something)" : "")); ticks[0] = -1; }
                 }); }
             }), 25);
             if (lv == 50) l.add("mikiko_ride_hud", () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 5);
@@ -344,11 +347,12 @@ public final class MikikoTests {
                 l.add(null, () -> mc.setScreen(null), 25);
             }
             for (String v : views) {
-                l.add(null, () -> { mc.options.setCameraType(v.equals("back") ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT);
-                    float yaw = v.equals("side") ? 90F : 0F; mc.player.setYRot(yaw); mc.player.yBodyRot = yaw; mc.player.yHeadRot = yaw; mc.player.setXRot(8F);
-                    server(p -> { p.setYRot(yaw); p.setYBodyRot(yaw); p.setYHeadRot(yaw); }); }, 25);
+                if (v.equals("side")) camera(mc, l, 3.4, 0.4, 0.4, 90F, 6F);       // filmed from her left (she faces +z)
+                else l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.setCameraType(v.equals("back") ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT);
+                    mc.player.setYRot(0F); mc.player.yBodyRot = 0F; mc.player.yHeadRot = 0F; mc.player.setXRot(8F); }, 25);
                 l.add("mikiko_hood_" + (up ? "up" : "down") + "_" + v, () -> log("hood " + (up ? "up" : "down") + " " + v + ": client up=" + com.xenowarriors.client.mikiko.HoodClient.up(mc.player)), 5);
             }
+            l.add(null, () -> mc.setCameraEntity(mc.player), 5);
         }
         // the hood key puts it back down (and it stays saved through a relog: the server's copy)
         l.add(null, () -> com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.HoodTogglePacket(false)), 20);
