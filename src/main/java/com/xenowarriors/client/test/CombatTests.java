@@ -50,6 +50,13 @@ public final class CombatTests {
         });
     }
 
+    /** No screens (the fox's naming box...) and no chat over a screenshot. */
+    static void clean(Minecraft mc) {
+        if (mc.screen != null) mc.setScreen(null);
+        mc.gui.getChat().clearMessages(false);
+        mc.getToasts().clear();
+    }
+
     static void character(CharacterType t) { server(p -> com.xenowarriors.character.CharacterManager.setCharacter(p, t)); }
 
     public static boolean handles(String focus) { return focus != null && (focus.startsWith("combat") || focus.startsWith("dmzcombat")); }
@@ -157,7 +164,9 @@ public final class CombatTests {
             com.xenowarriors.combat.SkillContext.run(p, () -> new com.xenowarriors.skill.mikiko.BlazingWindSkill().use(p));
             log("blazing wind cast");
         }), 120);
+        l.add(null, () -> { clean(mc); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 2);
         l.add("combat_allies_blazing", () -> server(p -> compare("blazing mid")), 160);
+        l.add(null, () -> { clean(mc); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 1);
         l.add(null, () -> server(p -> compare("blazing end")), 20);
         // Xeno Blast's freeze: only enemies are frozen/caught
         l.add(null, () -> server(p -> {
@@ -223,8 +232,9 @@ public final class CombatTests {
                 com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT);
                 log("xenoblast " + n + " cast karma=" + k);
                 mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
-            }), com.xenowarriors.skill.XenoBlast.RELEASE + (ct == CharacterType.RHALIX ? 34 : 12));
-            l.add("combat_xenoblast_" + n, () -> {}, 40);
+                clean(mc);
+            }), com.xenowarriors.skill.XenoBlast.RELEASE + (ct == CharacterType.RHALIX ? 20 : 14));
+            l.add("combat_xenoblast_" + n, () -> clean(mc), 40);
             l.add(null, () -> server(p -> { compare("xenoblast " + n); p.getAbilities().invulnerable = false; p.onUpdateAbilities(); mc.options.setCameraType(CameraType.FIRST_PERSON); }), 200);
         }
     }
@@ -256,6 +266,12 @@ public final class CombatTests {
             }
             com.xenowarriors.pickup.HealthOrbs.testChance = -1F;
         }); }, 40);
+        l.add(null, () -> { clean(mc); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
+            p.setHealth(p.getMaxHealth()); p.setYRot(0); p.setXRot(30);
+            for (int i = 0; i < 3; i++) { var o = com.xenowarriors.pickup.HealthOrbs.drop(p.serverLevel(), p); if (o != null) { o.moveTo(p.getX() - 1 + i, p.getY() + 0.2, p.getZ() + 2.5 + (i % 2) * 0.6); o.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); } }
+        }); }, 40);
+        l.add("combat_health_orb", () -> {}, 2);
+        l.add(null, () -> { mc.options.hideGui = false; server(p -> { for (var o : p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(8))) o.discard(); }); }, 2);
         // heal 2.5% at two max-health levels (a weak and a strong character)
         for (double maxHp : new double[]{20, 120}) {
             l.add(null, () -> server(p -> {
@@ -272,7 +288,6 @@ public final class CombatTests {
                 com.xenowarriors.pickup.HealthOrbs.testChance = -1F;
                 p.setYRot(-120); p.setXRot(25);
             }), 6);
-            if (maxHp == 20) l.add("combat_health_orb", () -> {}, 2);
             l.add(null, () -> server(p -> {
                 float before = p.getPersistentData().getFloat("xw_test_hp");
                 log("orbs heal: dropped=" + com.xenowarriors.pickup.HealthOrbs.dropped + " orbs near=" + p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(12)).stream().map(o -> String.format("%.1f", o.distanceTo(p))).toList());
@@ -298,10 +313,11 @@ public final class CombatTests {
             log("ultima poison: addEffect=" + took + " hasPoison=" + p.hasEffect(MobEffects.POISON) + " wither still works=" + p.addEffect(new MobEffectInstance(MobEffects.WITHER, 20, 0)));
             p.removeEffect(MobEffects.WITHER);
             E.clear();
-            var z = mob(p, EntityType.ZOMBIE, "invisible_zombie", 0, 5);
+            var z = mob(p, EntityType.HUSK, "invisible_zombie", -1.2, 4);
             if (z != null) { z.setInvisible(true); z.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 20000, 0, false, false)); }
-            mob(p, EntityType.SKELETON, "visible_skeleton", 3, 6);
-        }); }, 40);
+            mob(p, EntityType.HUSK, "visible_husk", 2.5, 6);
+        }); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 40);
+        l.add(null, () -> clean(mc), 2);
         l.add("combat_ultima_sees_invisible", () -> {
             mc.player.setYRot(0); mc.player.setXRot(8);
             com.xenowarriors.client.LockOn.toggle();
@@ -309,6 +325,7 @@ public final class CombatTests {
             log("ultima lock-on target: " + (t == null ? "none" : t.getType().toShortString() + " invisible=" + t.isInvisible()) + " sees=" + com.xenowarriors.client.UltimaSight.local());
         }, 10);
         l.add(null, () -> { if (com.xenowarriors.client.LockOn.target() != null) com.xenowarriors.client.LockOn.toggle(); character(CharacterType.MIKIKO); }, 30);
+        l.add(null, () -> clean(mc), 2);
         l.add("combat_mikiko_no_invisible", () -> {
             mc.player.setYRot(0); mc.player.setXRot(8);
             com.xenowarriors.client.LockOn.toggle();
@@ -345,14 +362,14 @@ public final class CombatTests {
         }), 5);
         for (int i = 0; i < 4; i++) {
             int ii = i;
-            l.add(ii == 2 ? "combat_soul_flying" : null, () -> server(p -> {
+            l.add(ii == 2 ? "combat_soul_flying" : null, () -> { clean(mc); server(p -> {
                 p.getAbilities().flying = true; p.onUpdateAbilities();
                 if (ii == 1) { p.teleportTo(p.getX() + 3, p.getY() + 4, p.getZ()); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }
                 for (var s : p.serverLevel().getEntitiesOfClass(com.xenowarriors.soul.SoulEntity.class, p.getBoundingBox().inflate(40)))
                     log(String.format("soul flying t=%d: owner y=%.1f soul y=%.1f (ground %d) flying=%b noGravity=%b dist=%.1f", ii * 30, p.getY(), s.getY(),
                             p.serverLevel().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, s.blockPosition().getX(), s.blockPosition().getZ()),
                             s.soulFlying(), s.isNoGravity(), s.distanceTo(p)));
-            }), 30);
+            }); }, 30);
         }
         l.add(null, () -> server(p -> {               // landing: it walks again
             p.getAbilities().flying = false; p.getAbilities().mayfly = false; p.onUpdateAbilities();
@@ -376,6 +393,11 @@ public final class CombatTests {
         Object d = dmzData(p);
         Object st = d.getClass().getMethod("getStats").invoke(d);
         for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"}) st.getClass().getMethod(m, int.class).invoke(st, v);
+        // (round-trip it through its save, the way a character switch loads it, so its damage figures are worked out)
+        boolean was = (Boolean) d.getClass().getMethod("isDataLoaded").invoke(d);
+        Object tag = d.getClass().getMethod("save").invoke(d);
+        d.getClass().getMethod("load", net.minecraft.nbt.CompoundTag.class).invoke(d, tag);
+        log("dmz stats " + v + ": dataLoaded " + was + " -> " + d.getClass().getMethod("isDataLoaded").invoke(d));
     }
 
     static void dmzCreated(ServerPlayer p) {
