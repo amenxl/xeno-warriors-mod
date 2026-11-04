@@ -98,6 +98,8 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
             com.xenowarriors.client.LimbBend.copy(p.leftArm, m.leftArm);
             com.xenowarriors.client.LimbBend.copy(p.rightLeg, m.rightLeg);
             com.xenowarriors.client.LimbBend.copy(p.leftLeg, m.leftLeg);
+            // Rhalix's coat tails swing with the legs like on a player (standing still they'd let the legs through)
+            m.animateCoat(p.rightLeg.xRot, p.leftLeg.xRot, p.rightLeg.zRot, -p.leftLeg.zRot, 0F, 0F, age, e.isPassenger() || p.riding);
             int overlay = LivingEntityRenderer.getOverlayCoords(e, 0F);
             m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(t.getDetailTexture()))), light, overlay);
             if (com.xenowarriors.client.cel.Cel.on()) {
