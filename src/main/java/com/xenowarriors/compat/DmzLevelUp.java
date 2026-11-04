@@ -59,11 +59,14 @@ public final class DmzLevelUp {
     }
 
     /** {level, total stats, free points, room left} of the player's current DragonMineZ character, or null. */
-    public static int[] read(ServerPlayer p) {
+    public static int[] read(ServerPlayer p) { return read(p, false); }
+
+    /** (any = also for a DragonMineZ character not made yet) */
+    public static int[] read(ServerPlayer p, boolean any) {
         if (!ready()) return null;
         try {
             Object d = p.getCapability(cap).resolve().orElse(null);
-            if (d == null || !(Boolean) isCreated.invoke(getStatus.invoke(d))) return null;
+            if (d == null || (!any && !(Boolean) isCreated.invoke(getStatus.invoke(d)))) return null;
             Object res = getResources.invoke(d);
             return new int[]{(Integer) getLevel.invoke(d), (Integer) totalStats.invoke(getStats.invoke(d)), (Integer) getPending.invoke(res),
                     (Integer) getRemaining.invoke(d)};

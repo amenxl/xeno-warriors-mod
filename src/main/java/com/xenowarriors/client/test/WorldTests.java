@@ -124,7 +124,8 @@ public final class WorldTests {
 
     private static String dmzState(ServerPlayer p) {
         int[] r = com.xenowarriors.compat.DmzLevelUp.read(p);
-        return r == null ? "none" : "level=" + r[0] + " stats=" + r[1] + " free=" + r[2] + " room=" + r[3];
+        if (r == null) { int[] q = com.xenowarriors.compat.DmzLevelUp.read(p, true); return q == null ? "none" : "not made yet (level=" + q[0] + " stats=" + q[1] + " free=" + q[2] + ")"; }
+        return "level=" + r[0] + " stats=" + r[1] + " free=" + r[2] + " room=" + r[3];
     }
 
     private static void dmzWorld(Minecraft mc) {
@@ -268,10 +269,22 @@ public final class WorldTests {
         log(what + " " + v.kind.id + " riders=" + v.getPassengers().size() + "/" + v.kind.seats + " (inside " + v.kind.insideSeats() + ") onGround=" + v.onGround() + ": " + sb);
     }
 
+    /** What this client sees: each rider's spot, position relative to the vehicle, and whether it's drawn. */
+    private static void clientRiders(Minecraft mc, int id, String what) {
+        if (!(mc.level.getEntity(id) instanceof VehicleEntity v)) { log(what + ": vehicle not on the client"); return; }
+        StringBuilder sb = new StringBuilder();
+        for (Entity e : v.getPassengers())
+            sb.append(e.getType().getDescriptionId().replace("entity.", "")).append(' ').append(v.seatOf(e).type()).append(v(e.position().subtract(v.position())))
+                    .append(e.isInvisible() ? " invisible" : "").append("; ");
+        log(what + " " + v.kind.id + " onGround=" + v.onGround() + ": " + sb);
+    }
+
     private static void vehicleScene(Minecraft mc, VehicleKind k, int riders, double up, String shot) {
         int[] veh = {-1};
         int[] cam = {-1};
         step(null, () -> server(p -> {
+            p.stopRiding();
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
             ServerLevel l = p.serverLevel();
             l.getEntitiesOfClass(VehicleEntity.class, p.getBoundingBox().inflate(40)).forEach(e -> { e.ejectPassengers(); e.discard(); });
             l.getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(40)).forEach(Entity::discard);
@@ -292,8 +305,8 @@ public final class WorldTests {
             log(k.id + " seats=" + k.seats + " inside=" + k.insideSeats() + " boarded " + (ok + 1) + " of " + riders + " (refused " + refused + "), one more accepted=" + overflow);
         }), 30);
         step(null, () -> server(p -> { if (p.serverLevel().getEntity(veh[0]) instanceof VehicleEntity e) logRiders(e, up > 0 ? "in the air" : "on the ground"); }), 5);
-        camera(mc, cam, 8.5, up > 0 ? -0.8 : 1.0, 4, 90F, up > 0 ? 10F : 8F);
-        step(shot, () -> {}, 5);
+        camera(mc, cam, 6.5, up > 0 ? -0.8 : 1.0, 4, 90F, up > 0 ? 10F : 8F);
+        step(shot, () -> clientRiders(mc, veh[0], "client view"), 5);
         step(null, () -> {}, 3);
         cameraOff(mc);
         if (k == VehicleKind.HELICOPTER && up > 0) {
@@ -314,7 +327,7 @@ public final class WorldTests {
             step(null, () -> mc.options.keySprint.setDown(false), 10);
             step(null, () -> server(p -> { if (p.serverLevel().getEntity(veh[0]) instanceof VehicleEntity e) logRiders(e, "landed"); }), 5);
             camera(mc, cam, 7.5, 1.0, 4, 90F, 8F);
-            step(shot + "_landed", () -> {}, 5);
+            step(shot + "_landed", () -> clientRiders(mc, veh[0], "client view landed"), 5);
             cameraOff(mc);
         }
         // everyone off: safe spots
@@ -446,6 +459,11 @@ public final class WorldTests {
         step(area + "_sword", report, 3);
         step(null, () -> server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.EL_THRUST, 20)), 5);
         step(area + "_pose_thrust", report, 20);
+        step(null, () -> server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get()))), 20);
+        step(area + "_hekublade", report, 3);
+        step(null, () -> server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "mining")), 20);
+        step(area + "_mining_mode", report, 3);
+        step(null, () -> server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "none")), 20);
         step(null, () -> server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.item.ItemStack.EMPTY)), 10);
         step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 10);
         step(area + "_back", report, 3);
