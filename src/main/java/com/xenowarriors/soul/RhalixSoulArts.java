@@ -20,7 +20,7 @@ final class RhalixSoulArts {
     private RhalixSoulArts() {}
 
     static void cast(SoulEntity s, LivingEntity t, int level) {
-        if (level < GRAVITY_LEVEL || !(s.level() instanceof ServerLevel l) || s.distanceTo(t) > 14) return;
+        if (level < GRAVITY_LEVEL || !(s.level() instanceof ServerLevel l) || s.distanceTo(t) > 14 || com.xenowarriors.combat.Allies.isAlly(s, t)) return;
         float dmg = (float) s.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
         boolean wire = level >= WIRE_LEVEL && s.getRandom().nextBoolean();
         if (wire) {                                                   // wire lash: yanks them in

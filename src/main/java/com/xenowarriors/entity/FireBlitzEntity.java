@@ -107,7 +107,8 @@ public class FireBlitzEntity extends Projectile {
 
     @Override
     protected boolean canHitEntity(Entity e) {
-        return super.canHitEntity(e) && e instanceof LivingEntity && !(e instanceof Player p && (p.isCreative() || p.isSpectator()));
+        return super.canHitEntity(e) && e instanceof LivingEntity && !(e instanceof Player p && (p.isCreative() || p.isSpectator()))
+                && !com.xenowarriors.combat.Allies.isAlly(getOwner(), e);     // (flies through allies)
     }
 
     @Override

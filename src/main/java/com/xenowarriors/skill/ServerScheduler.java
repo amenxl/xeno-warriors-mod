@@ -18,7 +18,7 @@ public final class ServerScheduler {
     private ServerScheduler() {}
 
     public static void later(int ticks, Runnable run) {
-        TASKS.add(new Task(tick + Math.max(1, ticks), run));
+        TASKS.add(new Task(tick + Math.max(1, ticks), com.xenowarriors.combat.SkillContext.carry(run)));   // (a skill's later steps still count as that skill)
     }
 
     @net.minecraftforge.eventbus.api.SubscribeEvent

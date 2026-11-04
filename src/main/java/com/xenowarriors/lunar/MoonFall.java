@@ -70,7 +70,7 @@ public final class MoonFall {
         s.sendParticles(new DustParticleOptions(LunarForm.SILVER, 3F), at.x, at.y + 1, at.z, 200, RADIUS * .6, 1.5, RADIUS * .6, 0);
         s.sendParticles(ParticleTypes.END_ROD, at.x, at.y + 1, at.z, 80, 2, 2, 2, 0.4);
         for (LivingEntity e : s.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(RADIUS),
-                e -> e != p && e.isAlive() && !(e instanceof TamableAnimal ta && ta.isOwnedBy(p)))) {
+                e -> e != p && e.isAlive() && com.xenowarriors.skill.SkillTargeting.canTarget(p, e))) {
             double d = e.position().distanceTo(at);
             if (d > RADIUS) continue;
             float dmg = (float) (DAMAGE * (1 - 0.5 * d / RADIUS));

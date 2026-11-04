@@ -70,7 +70,7 @@ public final class PoleGust {
                 g.level().sendParticles(ParticleTypes.POOF, pos.x, pos.y - 0.6, pos.z, 2, 0.4, 0.05, 0.4, 0.01);
             double r = RADIUS * grow;
             for (LivingEntity e : g.level().getEntitiesOfClass(LivingEntity.class, new AABB(pos, pos).inflate(r, 1.2, r))) {
-                if (e == g.owner() || !g.hit().add(e.getId())) continue;
+                if (e == g.owner() || !com.xenowarriors.skill.SkillTargeting.canTarget(g.owner(), e) || !g.hit().add(e.getId())) continue;
                 e.hurt(g.owner().damageSources().playerAttack(g.owner()), DAMAGE);
                 e.push(g.dir().x * 1.4, 0.45, g.dir().z * 1.4);
                 e.hurtMarked = true;

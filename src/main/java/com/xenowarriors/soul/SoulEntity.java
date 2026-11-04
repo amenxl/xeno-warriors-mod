@@ -102,8 +102,8 @@ public class SoulEntity extends PathfinderMob {
             return pick != null;
         }
         private boolean ok(LivingEntity e, ServerPlayer o) {
-            return e != null && e.isAlive() && e != SoulEntity.this && e != o && !(e instanceof SoulEntity s && o.getUUID().equals(s.ownerId()))
-                    && !(e instanceof Player p && com.xenowarriors.party.Parties.sameParty(p, o)) && e.distanceToSqr(o) < 24 * 24;
+            return e != null && e.isAlive() && e != SoulEntity.this && e != o && !com.xenowarriors.combat.Allies.isAlly(SoulEntity.this, e)    // (never the owner's side)
+                    && e.distanceToSqr(o) < 24 * 24;
         }
         @Override public void start() { setTarget(pick); super.start(); }
     }
@@ -117,7 +117,57 @@ public class SoulEntity extends PathfinderMob {
             if (distanceToSqr(o) > SoulSplit.LEASH * SoulSplit.LEASH) { SoulSplit.soulGone(this, true); return; }
             if (tickCount % 4 == 0) l.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1.0, getZ(), 1, 0.25, 0.5, 0.25, 0.005);
             if (character() == CharacterType.RHALIX && getTarget() != null && --castCd <= 0) { castCd = 70; RhalixSoulArts.cast(this, getTarget(), soulLevel); }
+            fly(o);
         }
+    }
+
+    private int flyHitCd;
+    private boolean soulFlying;
+
+    /** Whether the soul is flying right now (tests). */
+    public boolean soulFlying() { return soulFlying; }
+
+    /**
+     * Its owner can fly (creative flight, DragonMineZ flight, Rhalix's wings, an elytra, any mod's flight): so can the
+     * soul. It flies while its owner is up in the air, or to reach something in the air that it's fighting - rising,
+     * hovering and coming down with them - and walks again once they've landed.
+     */
+    private void fly(ServerPlayer o) {
+        boolean ownerUp = com.xenowarriors.bot.PartyBots.airborne(o);
+        boolean ownerCan = ownerUp || o.getAbilities().mayfly || o.isFallFlying();
+        LivingEntity t = getTarget();
+        boolean targetUp = t != null && t.isAlive() && !t.onGround() && level().clip(new net.minecraft.world.level.ClipContext(t.position(), t.position().subtract(0, 2.5, 0),
+                net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.ANY, t)).getType() == net.minecraft.world.phys.HitResult.Type.MISS;
+        boolean want = ownerCan && (ownerUp || targetUp);
+        if (!want) {
+            if (soulFlying) { soulFlying = false; setNoGravity(false); }
+            return;
+        }
+        soulFlying = true;
+        setNoGravity(true);
+        fallDistance = 0;
+        getNavigation().stop();
+        Vec3 goal;
+        if (t != null && t.isAlive()) {
+            goal = t.position().add(0, t.getBbHeight() * 0.3, 0);
+            if (distanceToSqr(t) < 2.6 * 2.6 && --flyHitCd <= 0) { flyHitCd = 20; doHurtTarget(t); swing(net.minecraft.world.InteractionHand.MAIN_HAND); }
+        } else {
+            Vec3 side = Vec3.directionFromRotation(0, o.getYRot() + 90F).scale(1.8);
+            goal = o.position().add(side).add(0, 0.3, 0);
+        }
+        Vec3 d = goal.subtract(position());
+        double dist = d.length();
+        if (dist > 40) { teleportTo(o.getX(), o.getY(), o.getZ()); return; }
+        double speed = dist > 10 ? 0.9 : dist > 4 ? 0.55 : 0.25;
+        Vec3 v = dist < 1.2 ? Vec3.ZERO : d.normalize().scale(speed);
+        setDeltaMovement(getDeltaMovement().scale(0.5).add(v.scale(0.5)));
+        getLookControl().setLookAt(t != null ? t : o);
+        if (dist > 1.2) { float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z)); setYRot(yaw); yBodyRot = yaw; }
+    }
+
+    @Override
+    public boolean causeFallDamage(float dist, float mult, DamageSource src) {
+        return !soulFlying && super.causeFallDamage(dist, mult, src);
     }
 
     @Override

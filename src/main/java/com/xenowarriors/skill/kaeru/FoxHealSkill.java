@@ -25,7 +25,7 @@ public class FoxHealSkill implements Skill {
         var server = p.getServer();
         if (server != null) for (ServerPlayer o : server.getPlayerList().getPlayers()) {
             if (o == p || o.level() != p.level() || o.distanceToSqr(p) > 8 * 8) continue;
-            if (com.xenowarriors.party.Duels.isDowned(o) && com.xenowarriors.party.Parties.sameParty(p, o)) {
+            if (com.xenowarriors.party.Duels.isDowned(o) && com.xenowarriors.combat.Allies.isAlly(p, o)) {
                 com.xenowarriors.party.Duels.foxRevive(o, p);
                 fx(o);
                 return true;
@@ -34,8 +34,7 @@ public class FoxHealSkill implements Skill {
         LivingEntity best = p;
         float worst = p.getHealth() / p.getMaxHealth();
         for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(8))) {
-            boolean ally = (e instanceof ServerPlayer o && com.xenowarriors.party.Parties.sameParty(p, o)) || com.xenowarriors.party.Parties.petOwner(e) != null
-                    && p.getUUID().equals(com.xenowarriors.party.Parties.petOwner(e));
+            boolean ally = com.xenowarriors.skill.SkillTargeting.isFriend(p, e);     // (party, pets, bots, souls)
             if (!ally || e == p) continue;
             float f = e.getHealth() / e.getMaxHealth();
             if (f < worst) { worst = f; best = e; }

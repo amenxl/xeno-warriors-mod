@@ -3,7 +3,6 @@ package com.xenowarriors.skill;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -18,17 +17,27 @@ import java.util.List;
 public final class SkillTargeting {
     private SkillTargeting() {}
 
-    /** Whether a skill used by this player is allowed to hit this entity. */
+    /**
+     * Whether a skill used by this player is allowed to hit (hurt, pull, push, freeze, debuff) this entity. Never its
+     * allies: themself, their party, everyone's pets, party bots and Soul Splitter souls (see {@link com.xenowarriors.combat.Allies}).
+     */
     public static boolean canTarget(ServerPlayer owner, Entity e) {
+        return canTarget((Entity) owner, e);
+    }
+
+    /** The same for any caster (a player, a bot, a soul, a pet, a skill entity). */
+    public static boolean canTarget(Entity owner, Entity e) {
         if (!(e instanceof LivingEntity living) || !living.isAlive() || e == owner || e instanceof ArmorStand) return false;
         if (e instanceof Player p && (p.isCreative() || p.isSpectator())) return false;
-        if (e instanceof TamableAnimal pet && owner.getUUID().equals(pet.getOwnerUUID())) return false;
-        if (com.xenowarriors.fox.FoxPets.isOwnedBy(e, owner)) return false;   // Mikiko's own foxes
-        if (com.xenowarriors.wing.WingPets.isOwnedBy(e, owner)) return false;  // Rhalix's winged companions
-        if (e instanceof Player other && com.xenowarriors.party.Parties.sameParty(owner, other)
-                && !com.xenowarriors.party.Duels.dueling(owner, other)) return false;   // party members
+        if (com.xenowarriors.combat.Allies.isAlly(owner, e)) return false;
         if (e instanceof Player down && com.xenowarriors.party.Duels.isKnockedOut(down)) return false;
         return true;
+    }
+
+    /** Allies a support skill (heal, buff, shield) should reach: the caster's side, alive, not a skill entity. */
+    public static boolean isFriend(Entity owner, Entity e) {
+        return e instanceof LivingEntity l && l.isAlive() && !(e instanceof ArmorStand) && com.xenowarriors.combat.Allies.isAlly(owner, e)
+                && !com.xenowarriors.combat.Allies.opponents(owner, e);
     }
 
     /**

@@ -90,7 +90,7 @@ public final class TechSkills {
         @Override public int getKarmaCost() { return 15; }
         @Override public boolean use(ServerPlayer p) {
             int n = 0;
-            for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(40), e -> e != p)) {
+            for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(40), e -> e != p && com.xenowarriors.skill.SkillTargeting.canTarget(p, e))) {   // (allies aren't lit up)
                 e.addEffect(new MobEffectInstance(MobEffects.GLOWING, 300, 0, false, false)); n++;
             }
             LivingEntity t = com.xenowarriors.skill.SkillTargeting.aimed(p, 40, 8);

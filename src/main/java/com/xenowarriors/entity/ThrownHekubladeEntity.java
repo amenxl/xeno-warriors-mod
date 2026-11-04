@@ -111,7 +111,7 @@ public class ThrownHekubladeEntity extends Entity {
     private void cut(ServerPlayer owner) {
         float dmg = (float) Math.max(3.0, owner.getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.9);
         for (LivingEntity e : level().getEntitiesOfClass(LivingEntity.class, new AABB(position(), position()).inflate(1.1))) {
-            if (e == owner || !e.isAlive() || !hit.add(e.getId())) continue;
+            if (e == owner || !e.isAlive() || !com.xenowarriors.skill.SkillTargeting.canTarget(owner, e) || !hit.add(e.getId())) continue;
             e.hurt(owner.damageSources().playerAttack(owner), dmg);
         }
     }

@@ -508,7 +508,7 @@ public final class PartyBots {
         f.setOnGround(b.onGround());
         boolean used;
         ANIM_SENT.remove(b.getUUID());
-        try { used = skill.use(f); } catch (Throwable t) { used = false; }
+        try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); } catch (Throwable t) { used = false; }
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());

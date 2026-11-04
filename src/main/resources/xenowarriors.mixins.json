@@ -43,7 +43,8 @@
     "compat.DragonMineZKiSenseMixin",
     "compat.DragonMineZKiSenseBPMixin",
     "compat.EpicFightTargetOutlineMixin",
-    "compat.EpicFightLockOnFilterMixin"
+    "compat.EpicFightLockOnFilterMixin",
+    "UltimaSightMixin"
   ],
   "injectors": {
     "defaultRequire": 1
