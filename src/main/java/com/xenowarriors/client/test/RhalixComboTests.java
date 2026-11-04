@@ -137,13 +137,13 @@ public final class RhalixComboTests {
         l.add(null, () -> server(p -> {
             p.serverLevel().getEntitiesOfClass(ArmorStand.class, p.getBoundingBox().inflate(60), a -> a.getTags().contains("xw_rc_cam")).forEach(a -> a.discard());
             var a = EntityType.ARMOR_STAND.create(p.serverLevel());
-            a.moveTo(HOME[0] + side, HOME[1] + up, HOME[2] + dz, 90F, 12F); a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(90F);
+            a.moveTo(HOME[0] + side * 0.82, HOME[1] + up, HOME[2] + dz, 90F, 14F); a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(90F);
             a.addTag("xw_rc_cam");
             p.serverLevel().addFreshEntity(a); cam = a.getId();
         }), 8);
         l.add(null, () -> {
             if (mc.level.getEntity(cam) instanceof ArmorStand a) {
-                a.setYRot(90F); a.yRotO = 90F; a.setXRot(12F); a.xRotO = 12F; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a);
+                a.setYRot(90F); a.yRotO = 90F; a.setXRot(14F); a.xRotO = 14F; a.setYHeadRot(90F); a.yHeadRotO = 90F; mc.setCameraEntity(a);
             }
             mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = true;
             if (mc.screen != null) mc.setScreen(null);
@@ -167,6 +167,17 @@ public final class RhalixComboTests {
                 pl == null ? "-" : pl[0] < 0 ? "heavy" : String.valueOf((int) pl[0]), pl == null ? -1F : pl[1], sw == null ? "-" : sw.style(),
                 p.getZ() - HOME[2], p.getY() - HOME[1], ComboClient.charge(), com.xenowarriors.client.KishiWarpClient.crouchTicks(p, 0F),
                 com.xenowarriors.client.RhalixComboFx.live(), t));
+        var of = com.xenowarriors.combat.ComboStyle.of(p, p.getMainHandItem(), com.xenowarriors.client.ClientCharacterData.get(p));
+        if (of != com.xenowarriors.combat.ComboStyle.RHALIX && of != com.xenowarriors.combat.ComboStyle.RHALIX_AIR)
+            log("  style for him now " + of + ": held " + p.getMainHandItem() + " flying " + p.getAbilities().flying + " mayfly " + p.getAbilities().mayfly
+                    + " fallFlying " + p.isFallFlying() + " onGround " + p.onGround() + " char " + com.xenowarriors.client.ClientCharacterData.get(p));
+    }
+
+    /** The camera is an armor stand, so the game doesn't send his moves to the server by itself (only the camera's owner
+     *  does): send them, as his game would. */
+    private static void sync(Minecraft mc) {
+        var p = mc.player;
+        p.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot(), p.onGround()));
     }
 
     /** Shots one per tick: each frame's action logs the state the previous shot caught, then does the input for this tick. */
@@ -176,6 +187,7 @@ public final class RhalixComboTests {
             int ff = f;
             l.add(String.format("rc_%s_%02d", scene, f), () -> {
                 if (ff > 0) state(mc, String.format("rc_%s_%02d", scene, ff - 1));
+                sync(mc);
                 input.accept(ff);
             }, 0);
         }
@@ -231,7 +243,7 @@ public final class RhalixComboTests {
         l.add(null, () -> { face(mc); slow(mc, SLOW); }, 3);
         for (int f = 0; f < 40; f++) {
             int ff = f;
-            l.add(String.format("rc_still_%02d", f), () -> { face(mc); state(mc, "still-" + ff); if (ff < 34) ComboClient.press(false); }, 1);
+            l.add(String.format("rc_still_%02d", f), () -> { face(mc); sync(mc); state(mc, "still-" + ff); if (ff < 34) ComboClient.press(false); }, 1);
         }
         l.add(null, () -> slow(mc, 1), 2);
 

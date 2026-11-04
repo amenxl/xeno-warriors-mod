@@ -48,6 +48,9 @@ public final class RhalixComboAnim {
         READY[TW] = 0.15F; READY[KR] = 0.35F; READY[KL] = 0.4F; READY[ER] = -1.1F; READY[EL] = -1.3F; READY[LEAN] = 4F;
     }
 
+    /** How much of the keyed torso twist is used (more turns his back or chest to anyone watching from the side). */
+    private static final float TWIST = 0.65F;
+
     /** The move names, hit by hit (for logs and the test sheets). */
     public static final String[] NAMES = {"Shadow Rush", "Low Lunge", "Crescent Slash", "Crow Wing", "Gravity Whirl",
             "Reaping Grab", "Raven Launcher", "Gravity Burst"};
@@ -345,7 +348,7 @@ public final class RhalixComboAnim {
         pose(m.leftArm, v[LA], v[LA + 1], v[LA + 2], w);
         pose(m.rightLeg, v[RL] - th, v[RL + 1], v[RL + 2], w);
         pose(m.leftLeg, v[LL] - th, v[LL + 1], v[LL + 2], w);
-        float tw = Mth.lerp(w, m.body.yRot, v[TW]);
+        float tw = Mth.lerp(w, m.body.yRot, v[TW] * TWIST);
         m.body.yRot = tw;
         m.rightArm.z = Mth.sin(tw) * 5F;
         m.rightArm.x = -Mth.cos(tw) * 5F;
@@ -379,18 +382,10 @@ public final class RhalixComboAnim {
         return new float[]{(lift + v[LIFT]) * w, v[FWD] * w, v[SPIN] * w, v[LEAN] * w, v[ROLL] * w};
     }
 
-    /** How far his wings open for the move (0..1), for RhalixWingsClient: flared on the big ones. */
+    /** How much he's fighting right now (0..1), for RhalixWingsClient: the wings fold in tight out of the way. */
     public static float wingSpread(Player p, float partial) {
         Object[] c = current(p, p.tickCount + partial);
-        St st = STATES.get(p.getId());
-        if (c == null || st == null) return 0F;
-        float w = (float) c[1];
-        ComboClient.Swing sw = ComboClient.swing(p);
-        float t = sw == null ? 1F : Mth.clamp((p.tickCount + partial - sw.start()) / sw.duration(), 0F, 1F);
-        float flare = smooth((t - 0.2F) / 0.18F) * (1F - smooth((t - 0.7F) / 0.3F));
-        // (only a little: open wide they hide the moves, and the reference doesn't show them at all)
-        float big = switch (st.lastMoveHit) { case 3, 6 -> 0.3F; case 4, 7 -> 0.2F; default -> 0.08F; };
-        return Mth.clamp(big * flare * w, 0F, 1F);
+        return c == null ? 0F : Mth.clamp((float) c[1], 0F, 1F);
     }
 
     private static final java.util.Set<Integer> TRANSFORMED = ClientReset.trackAll(new java.util.HashSet<>());
