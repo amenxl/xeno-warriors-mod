@@ -166,6 +166,7 @@ public final class PartyBots {
     }
 
     public static void add(ServerPlayer p, String[] ids) {
+        if (!p.isAlive() || com.xenowarriors.vr.Vr.is(p.level())) return;   // (not from the death screen or inside VR)
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { p.sendSystemMessage(Component.literal("No bot teammates on a Journey - it's just you and your partner.").withStyle(ChatFormatting.RED)); return; }
         int free = Parties.MAX_SIZE - partySize(p);
         Set<String> taken = new HashSet<>();
