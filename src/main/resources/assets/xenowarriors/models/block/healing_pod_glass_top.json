@@ -1,0 +1,219 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:translucent",
+ "ambientocclusion": false,
+ "textures": {
+  "particle": "xenowarriors:block/healing_pod_shell",
+  "shell": "xenowarriors:block/healing_pod_shell",
+  "base": "xenowarriors:block/healing_pod_base",
+  "glass": "xenowarriors:block/healing_pod_glass",
+  "glow": "xenowarriors:block/healing_pod_glow",
+  "liquid": "xenowarriors:block/healing_pod_liquid"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    8,
+    -2.5
+   ],
+   "to": [
+    8,
+    22,
+    -1.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "from": [
+    8,
+    8,
+    -2.5
+   ],
+   "to": [
+    16,
+    22,
+    -1.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#glass",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "from": [
+    7.6,
+    8,
+    -2.8
+   ],
+   "to": [
+    8.4,
+    22,
+    -1.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#shell",
+     "uv": [
+      7.6,
+      10,
+      8.4,
+      13
+     ]
+    },
+    "south": {
+     "texture": "#shell",
+     "uv": [
+      7.6,
+      10,
+      8.4,
+      13
+     ]
+    },
+    "east": {
+     "texture": "#shell",
+     "uv": [
+      0.0,
+      10,
+      1.0,
+      13
+     ]
+    },
+    "west": {
+     "texture": "#shell",
+     "uv": [
+      0.0,
+      10,
+      1.0,
+      13
+     ]
+    },
+    "up": {
+     "texture": "#shell",
+     "uv": [
+      7.6,
+      0.0,
+      8.4,
+      1.0
+     ]
+    },
+    "down": {
+     "texture": "#shell",
+     "uv": [
+      7.6,
+      0.0,
+      8.4,
+      1.0
+     ]
+    }
+   }
+  }
+ ]
+}

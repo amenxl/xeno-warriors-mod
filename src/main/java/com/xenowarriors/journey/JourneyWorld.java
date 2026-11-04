@@ -82,6 +82,18 @@ public final class JourneyWorld {
         l.setBlock(m.set(c.getX(), c.getY() + 4, c.getZ()), Blocks.LIGHT.defaultBlockState(), 2);
     }
 
+    /** Pod i of n on a healing step's platform (placed if it isn't there yet): side by side at the back, facing the way you came. Returns its lower half. */
+    static BlockPos healPod(ServerLevel l, BlockPos c, int i, int n) {
+        BlockPos at = c.offset(n <= 1 ? 0 : i == 0 ? -1 : 1, 1, 2);
+        BlockState s = l.getBlockState(at);
+        if (!(s.getBlock() instanceof com.xenowarriors.gov.HealingPodBlock)) {
+            BlockState pod = com.xenowarriors.sky.ModBlocks.HEALING_POD.get().defaultBlockState().setValue(com.xenowarriors.gov.HealingPodBlock.FACING, net.minecraft.core.Direction.NORTH);
+            l.setBlock(at, pod, 3);
+            l.setBlock(at.above(), pod.setValue(com.xenowarriors.gov.HealingPodBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), 3);
+        }
+        return at;
+    }
+
     static void recolor(ServerLevel l, BlockPos c, BlockState ring) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++)
@@ -139,11 +151,16 @@ public final class JourneyWorld {
 
 
     /** The arena's walls (once per slot) and a floor in the look of who you're fighting. */
-    static void arena(ServerLevel l, int slot, JourneyRules.Foe foe, boolean boss) {
+    static void arena(ServerLevel l, int slot, JourneyRules.Foe foe, boolean boss) { arena(l, slot, foe, boss, false); }
+
+    /** (resetmap) the whole arena again, walls included. */
+    static void rebuildArena(ServerLevel l, int slot, JourneyRules.Foe foe, boolean boss) { arena(l, slot, foe, boss, true); }
+
+    private static void arena(ServerLevel l, int slot, JourneyRules.Foe foe, boolean boss, boolean walls) {
         BlockPos c = arena(slot);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         int Y = c.getY();
-        if (!l.getBlockState(m.set(c.getX() + ARENA_R + 1, Y + 20, c.getZ())).is(Blocks.BARRIER)) {
+        if (walls || !l.getBlockState(m.set(c.getX() + ARENA_R + 1, Y + 20, c.getZ())).is(Blocks.BARRIER)) {
             for (int dx = -ARENA_R - 2; dx <= ARENA_R + 2; dx++) for (int dz = -ARENA_R - 2; dz <= ARENA_R + 2; dz++) {
                 double d = Math.sqrt(dx * dx + dz * dz);
                 if (d > ARENA_R + 1.5) continue;

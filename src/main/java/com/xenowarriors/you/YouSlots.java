@@ -36,8 +36,9 @@ public final class YouSlots {
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        if (com.xenowarriors.journey.Journey.inRun(p)) {
-            p.displayClientMessage(Component.literal("You can't switch characters on a Journey").withStyle(ChatFormatting.RED), true);
+        String blocked = (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        if (blocked != null) {
+            p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
         }
         switch (action) {

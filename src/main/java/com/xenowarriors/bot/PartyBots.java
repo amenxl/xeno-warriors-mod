@@ -551,6 +551,7 @@ public final class PartyBots {
             else checkIn(b, o);                                                   // (their things wait in their own save)
         }
         b.discard();
+        if (o != null && !b.journey()) com.xenowarriors.party.PartySwap.botLost(o, b.character());   // (Party Swap on: someone else comes in)
     }
 
     // ---------------------------------------------------------------- sparring (party PvP XP)

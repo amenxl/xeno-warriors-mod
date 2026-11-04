@@ -161,6 +161,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     private static String expression(AbstractClientPlayer p, CharacterType type) {
+        String pod = com.xenowarriors.client.pod.PodFace.face(p);       // resting in a healing pod: eyes closed
+        if (pod != null) return pod;
         if (p.isSleeping()) {
             if (type != CharacterType.MIKIKO) return "blink";
             return (p.tickCount % 40) < 22 ? "snore" : "sleep";   // snores in time with the z's

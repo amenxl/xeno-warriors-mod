@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "60";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "61";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -463,6 +463,8 @@ public final class ModNetwork {
                 .encoder(YouActionPacket::encode).decoder(YouActionPacket::decode).consumerMainThread(YouActionPacket::handle).add();
         CHANNEL.messageBuilder(DmzRacePickPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(DmzRacePickPacket::encode).decoder(DmzRacePickPacket::decode).consumerMainThread(DmzRacePickPacket::handle).add();
+        CHANNEL.messageBuilder(PartySwapPacket.class, id++)                     // (both ways: the toggle, and its state)
+                .encoder(PartySwapPacket::encode).decoder(PartySwapPacket::decode).consumerMainThread(PartySwapPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

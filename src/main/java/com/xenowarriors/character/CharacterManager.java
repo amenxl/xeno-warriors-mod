@@ -21,6 +21,13 @@ import net.minecraftforge.fml.common.Mod;
 public final class CharacterManager {
     private CharacterManager() {}
 
+    /**
+     * Why the player may not pick a different character themselves right now (a Tower floor, a Journey, down, mid-duel,
+     * a boss fight, in combat...), or null. See {@link com.xenowarriors.modes.SwitchRules}. Mode code that switches
+     * characters itself (Journey tag-ins) calls setCharacter directly.
+     */
+    public static String switchBlocked(ServerPlayer player) { return com.xenowarriors.modes.SwitchRules.why(player); }
+
     public static void setCharacter(ServerPlayer player, CharacterType type) {
         if (com.xenowarriors.mikiko.HekubladeRealm.inRealm(player) && !com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(player)) com.xenowarriors.mikiko.HekubladeRealm.leave(player);   // (only Mikiko can open the way out)
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);               // (Kaeru inside a blade would be stuck a spectator)

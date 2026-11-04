@@ -1,0 +1,83 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:translucent",
+ "ambientocclusion": false,
+ "textures": {
+  "particle": "xenowarriors:block/healing_pod_shell",
+  "shell": "xenowarriors:block/healing_pod_shell",
+  "base": "xenowarriors:block/healing_pod_base",
+  "glass": "xenowarriors:block/healing_pod_glass",
+  "glow": "xenowarriors:block/healing_pod_glow",
+  "liquid": "xenowarriors:block/healing_pod_liquid"
+ },
+ "elements": [
+  {
+   "from": [
+    0.3,
+    3.5,
+    -1.3
+   ],
+   "to": [
+    15.7,
+    24,
+    12.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#liquid",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#liquid",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#liquid",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#liquid",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#liquid",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#liquid",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  }
+ ]
+}

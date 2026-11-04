@@ -51,10 +51,19 @@ public class PartySetupScreen extends Screen {
 
     private List<PartyCardsPacket.Card> cards() { return last == null ? List.of() : last.cards(); }
 
+    /** Party Swap (from the server): a lost bot teammate is replaced by another of your characters. */
+    public static boolean swapOn;
+
+    private static Component swapLabel() { return Component.literal("Party Swap: " + (swapOn ? "ON" : "OFF")); }
+
     @Override
     protected void init() {
         request();
         rebuild();
+        addRenderableWidget(Button.builder(swapLabel(), b -> { swapOn = !swapOn; ModNetwork.sendToServer(new com.xenowarriors.network.PartySwapPacket(swapOn)); b.setMessage(swapLabel()); })
+                .bounds(width - 122, 24, 110, 18)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("When one of your bot teammates is lost (not revived in time), another of your characters joins in their place to keep the party full.")))
+                .build());
     }
 
     @Override
