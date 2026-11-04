@@ -14,7 +14,8 @@ import java.util.function.Consumer;
  * "XW-TEST sweep ...".
  * <ul>
  *   <li>sweepsuper: every character presses the super-ultimate key with no test KA (the normal case) - nothing may
- *   throw, and the ones with their own KA (Ultima, Max, Logan, Keita, Zane, Kaeru) or a Xeno Blast have to go off.</li>
+ *   throw, and the ones with their own KA (Ultima, Max, Logan, Keita, Zane, Kaeru) or a Xeno Blast have to go off
+ *   (Kyrie has none: went=false is right for her).</li>
  * </ul>
  */
 public final class SweepTests {
@@ -57,6 +58,8 @@ public final class SweepTests {
             }), 30);
             l.add("sweep_super_" + t.getId(), () -> server(p -> {
                 SkillManager.resetCooldowns(p);
+                p.getPersistentData().remove("xw_karma_lock_until");                      // (the last Xeno Blast's drain carries over a character swap)
+                if (t == CharacterType.ULTIMA) com.xenowarriors.ultima.UltimaOutput.setTier(p, 3);   // Overload needs 100% output
                 com.xenowarriors.karma.Karma.add(p, 200);
                 String err = "none";
                 try { SkillManager.useSkill(p, SkillManager.SUPER_SLOT); }
