@@ -57,7 +57,7 @@ public class HealthOrbEntity extends Entity {
     public void tick() {
         super.tick();
         if (level().isClientSide) {
-            if (tickCount % 6 == 0) level().addParticle(ParticleTypes.HEART, getX() + (random.nextDouble() - 0.5) * 0.2, getY() + 0.5, getZ() + (random.nextDouble() - 0.5) * 0.2, 0, 0.02, 0);
+            if (tickCount % 25 == 0) level().addParticle(ParticleTypes.HEART, getX() + (random.nextDouble() - 0.5) * 0.2, getY() + 0.5, getZ() + (random.nextDouble() - 0.5) * 0.2, 0, 0.02, 0);
             return;
         }
         if (tickCount > LIFE) { discard(); return; }

@@ -163,9 +163,10 @@ public final class CombatTests {
             snapshot();
             com.xenowarriors.combat.SkillContext.run(p, () -> new com.xenowarriors.skill.mikiko.BlazingWindSkill().use(p));
             log("blazing wind cast");
-        }), 120);
+        }), 70);
         l.add(null, () -> { clean(mc); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 2);
-        l.add("combat_allies_blazing", () -> server(p -> compare("blazing mid")), 160);
+        l.add("combat_allies_blazing", () -> clean(mc), 50);
+        l.add(null, () -> server(p -> compare("blazing mid")), 160);
         l.add(null, () -> { clean(mc); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 1);
         l.add(null, () -> server(p -> compare("blazing end")), 20);
         // Xeno Blast's freeze: only enemies are frozen/caught
@@ -233,7 +234,7 @@ public final class CombatTests {
                 log("xenoblast " + n + " cast karma=" + k);
                 mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
                 clean(mc);
-            }), com.xenowarriors.skill.XenoBlast.RELEASE + (ct == CharacterType.RHALIX ? 20 : 14));
+            }), com.xenowarriors.skill.XenoBlast.RELEASE + (ct == CharacterType.RHALIX ? 15 : 14));
             l.add("combat_xenoblast_" + n, () -> clean(mc), 40);
             l.add(null, () -> server(p -> { compare("xenoblast " + n); p.getAbilities().invulnerable = false; p.onUpdateAbilities(); mc.options.setCameraType(CameraType.FIRST_PERSON); }), 200);
         }
@@ -268,7 +269,7 @@ public final class CombatTests {
         }); }, 40);
         l.add(null, () -> { clean(mc); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
             p.setHealth(p.getMaxHealth()); p.setYRot(0); p.setXRot(30);
-            for (int i = 0; i < 3; i++) { var o = com.xenowarriors.pickup.HealthOrbs.drop(p.serverLevel(), p); if (o != null) { o.moveTo(p.getX() - 1 + i, p.getY() + 0.2, p.getZ() + 2.5 + (i % 2) * 0.6); o.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); } }
+            for (int i = 0; i < 3; i++) { var o = com.xenowarriors.pickup.HealthOrbs.drop(p.serverLevel(), p); if (o != null) { o.moveTo(p.getX() - 1.2 + i * 1.2, p.getY() + 0.2, p.getZ() + 3.5 + (i % 2) * 0.8); o.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); } }
         }); }, 40);
         l.add("combat_health_orb", () -> {}, 2);
         l.add(null, () -> { mc.options.hideGui = false; server(p -> { for (var o : p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(8))) o.discard(); }); }, 2);
