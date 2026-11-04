@@ -341,17 +341,38 @@ public final class BotGearTests {
                 l.add(new Step("botgear_anim_rhalix_air", () -> {}, 10));
                 l.add(new Step(null, () -> server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); p.teleportTo(at[0], at[1], at[2]); }), 10));
             }
-            // walking: you step away, the bot follows
+            // walking: the bot walks across in front of you (moved a step each tick, like a walking player)
             l.add(new Step(null, () -> server(p -> {
                 PartyBotEntity b = bot(p, t);
                 if (b == null) return;
                 b.setNoGravity(false);
-                b.moveTo(at[0] - 1.5, at[1], at[2], 0, 0);
-                b.setNoAi(false);
-                p.teleportTo(at[0] + 10, at[1], at[2]);
-            }), 14));
-            l.add(new Step("botgear_anim_" + n + "_walk", () -> {}, 8));
-            l.add(new Step("botgear_anim_" + n + "_walk2", () -> {}, 5));
+                b.moveTo(at[0] - 3.5, at[1], at[2] + 1, -90, 0);
+                b.setYHeadRot(-90); b.yBodyRot = -90;
+            }), 3));
+            for (int k = 0; k < 16; k++) {
+                final int kk = k;
+                l.add(new Step(kk == 9 ? "botgear_anim_" + n + "_walk" : kk == 13 ? "botgear_anim_" + n + "_walk2" : null, () -> server(p -> {
+                    PartyBotEntity b = bot(p, t);
+                    if (b == null) return;
+                    b.moveTo(at[0] - 3.5 + (kk + 1) * 0.22, at[1], at[2] + 1, -90, 0);
+                    b.setYHeadRot(-90); b.yBodyRot = -90;
+                }), 1));
+            }
+            if (t == CharacterType.MIKIKO) {                                   // down: lying there dazed, like a knocked-out player
+                l.add(new Step(null, () -> server(p -> {
+                    PartyBotEntity b = bot(p, t);
+                    if (b == null) return;
+                    b.moveTo(at[0] - 1.5, at[1], at[2] + 0.5, 0, 0);
+                    b.hurt(p.damageSources().generic(), 5000F);
+                    log("anim mikiko downed=" + b.downed());
+                }), 30));
+                l.add(new Step("botgear_anim_mikiko_downed", () -> {}, 5));
+                l.add(new Step(null, () -> server(p -> { PartyBotEntity b = bot(p, t); if (b != null) b.revive(); }), 10));
+                // its bag screen draws it too
+                l.add(new Step(null, () -> server(p -> { PartyBotEntity b = bot(p, t); if (b != null) PartyBots.openBag(p, b); }), 15));
+                l.add(new Step("botgear_anim_mikiko_bag", () -> {}, 3));
+                l.add(new Step(null, () -> mc.setScreen(null), 5));
+            }
         }
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 5));
     }
