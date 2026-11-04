@@ -24,10 +24,10 @@ public class HealthOrbRenderer extends EntityRenderer<HealthOrbEntity> {
         pose.pushPose();
         pose.translate(0, 0.25 + Mth.sin(age * 0.12F) * 0.08, 0);
         pose.mulPose(Axis.YP.rotationDegrees(age * 4F));
-        float r = 0.14F * pulse;
-        FxDraw.sphere(pose, FxDraw.glow(buffers), r * 0.55F, 1F, 0.9F, 0.92F, 0.95F * fade, age, 1.5F);
-        FxDraw.sphere(pose, FxDraw.glow(buffers), r, 1F, 0.25F, 0.35F, 0.75F * fade, age, -1.2F);
-        FxDraw.sphere(pose, FxDraw.glow(buffers), r * 1.7F, 1F, 0.15F, 0.2F, 0.28F * fade, age * 1.3F, 2F);
+        float r = 0.2F * pulse;
+        for (int i = 0; i < 3; i++) FxDraw.sphere(pose, FxDraw.glow(buffers), r * (0.5F + i * 0.04F), 1F, 0.88F, 0.9F, fade, age + i * 3, 1.5F);   // (a bright, solid-looking core)
+        for (int i = 0; i < 2; i++) FxDraw.sphere(pose, FxDraw.glow(buffers), r * (0.85F + i * 0.08F), 1F, 0.2F, 0.3F, 0.9F * fade, age + i * 5, -1.2F);
+        FxDraw.sphere(pose, FxDraw.glow(buffers), r * 1.6F, 1F, 0.15F, 0.2F, 0.35F * fade, age * 1.3F, 2F);
         pose.popPose();
         super.render(e, yaw, partialTick, pose, buffers, light);
     }

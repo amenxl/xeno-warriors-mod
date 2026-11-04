@@ -547,6 +547,7 @@ public final class CombatTests {
             var z = mob(p, EntityType.ZOMBIE, "zombie", 6, 4);
             if (z != null) { z.setNoAi(false); z.setTarget(p); p.setLastHurtByMob(z); z.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200); z.setHealth(200); }
         }), 60);
+        l.add(null, () -> clean(mc), 2);
         l.add("combat_robot_fights", () -> server(p -> {
             Mob m = (Mob) E.get("robot"); LivingEntity z = E.get("zombie");
             if (m == null || z == null) return;
