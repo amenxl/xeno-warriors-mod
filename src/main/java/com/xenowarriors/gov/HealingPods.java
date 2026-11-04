@@ -259,7 +259,8 @@ public final class HealingPods {
         int minY = Math.max(l.getMinBuildHeight(), o.getY() - 8), maxY = Math.min(l.getMaxBuildHeight() - 1, o.getY() + 8);
         for (int cx = (o.getX() - radius) >> 4; cx <= (o.getX() + radius) >> 4; cx++)
             for (int cz = (o.getZ() - radius) >> 4; cz <= (o.getZ() + radius) >> 4; cz++) {
-                if (!(l.getChunkSource().getChunkNow(cx, cz) instanceof LevelChunk ch)) continue;
+                LevelChunk ch = l.getChunkSource().getChunkNow(cx, cz);
+                if (ch == null) continue;
                 for (int sy = l.getSectionIndex(minY); sy <= l.getSectionIndex(maxY); sy++) {
                     if (sy < 0 || sy >= ch.getSections().length) continue;
                     LevelChunkSection sec = ch.getSections()[sy];
