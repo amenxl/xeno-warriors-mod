@@ -49,19 +49,19 @@ public enum VehicleKind {
 
     // x, y, z (model blocks, before scaling), type (0 sit, 1 stand on top, 2 hang on the rail)
     private double[][] rawSeats() {
-        return switch (this) {
+        return switch (id) {          // (by id: an enum switch here would read values() before the constants exist)
             // 4 inside, then 2 standing on the roof
-            case CAR -> new double[][]{{-0.38, -0.05, 0.05, 0}, {0.38, -0.05, 0.05, 0}, {-0.38, -0.05, -0.7, 0}, {0.38, -0.05, -0.7, 0},
+            case "car" -> new double[][]{{-0.38, -0.05, 0.05, 0}, {0.38, -0.05, 0.05, 0}, {-0.38, -0.05, -0.7, 0}, {0.38, -0.05, -0.7, 0},
                     {-0.32, 1.38, -0.25, 1}, {0.32, 1.38, -0.25, 1}};
             // rider and pillion, then 2 standing on the back
-            case MOTORBIKE -> new double[][]{{0, 0.45, -0.15, 0}, {0, 0.5, -0.6, 0},
+            case "motorbike" -> new double[][]{{0, 0.45, -0.15, 0}, {0, 0.5, -0.6, 0},
                     {-0.2, 0.95, -0.92, 1}, {0.2, 0.95, -0.92, 1}};
             // 6 in the cabin (three rows), then 4 hanging from the skids (two a side) - the rotor's on top, so nobody stands there
-            case HELICOPTER -> new double[][]{{-0.38, 0.2, 0.6, 0}, {0.38, 0.2, 0.6, 0}, {-0.38, 0.2, -0.12, 0}, {0.38, 0.2, -0.12, 0},
+            case "helicopter" -> new double[][]{{-0.38, 0.2, 0.6, 0}, {0.38, 0.2, 0.6, 0}, {-0.38, 0.2, -0.12, 0}, {0.38, 0.2, -0.12, 0},
                     {-0.38, 0.2, -0.8, 0}, {0.38, 0.2, -0.8, 0},
                     {-0.98, HANG_Y, 0.45, 2}, {0.98, HANG_Y, 0.45, 2}, {-0.98, HANG_Y, -0.45, 2}, {0.98, HANG_Y, -0.45, 2}};
             // 4 in the cab, then 4 standing on the cargo box
-            case GOV_TRUCK -> new double[][]{{-0.45, 0.25, 1.45, 0}, {0.45, 0.25, 1.45, 0}, {-0.5, 0.25, 0.2, 0}, {0.5, 0.25, 0.2, 0},
+            default -> new double[][]{{-0.45, 0.25, 1.45, 0}, {0.45, 0.25, 1.45, 0}, {-0.5, 0.25, 0.2, 0}, {0.5, 0.25, 0.2, 0},
                     {-0.45, 2.13, -0.5, 1}, {0.45, 2.13, -0.5, 1}, {-0.45, 2.13, -1.6, 1}, {0.45, 2.13, -1.6, 1}};
         };
     }
