@@ -810,19 +810,41 @@ public final class PartyBots {
         p.getPersistentData().put(RECORDS, list);
     }
 
-    /** Bots waiting for an offline owner belong to this world: none turn up (doubled) in the next save opened (singleplayer). */
+    /** What was waiting for offline owners when this world was last saved (BotLimbo) comes back. */
+    @SubscribeEvent
+    public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) { BotLimbo.restore(event.getServer()); }
+
+    /** Bots still standing about for an owner who's gone (the 2 s before they'd step out) join the waiting list before the final save. */
+    @SubscribeEvent
+    public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        for (var e : new ArrayList<>(LIVE.entrySet())) {
+            if (event.getServer().getPlayerList().getPlayer(e.getKey()) != null) continue;   // (online owners: their logout keeps them)
+            for (PartyBotEntity b : new ArrayList<>(e.getValue())) {
+                if (b.isRemoved() || b.journey() || b.ownerId() == null) continue;
+                LEFT_BEHIND.add(Map.entry(b.ownerId(), b.record()));
+                forgetFake(b.getUUID()); b.discard();
+            }
+        }
+    }
+
+    /** Bots waiting for an offline owner belong to this world (saved with it, see BotLimbo): none turn up (doubled) in the next save opened (singleplayer). */
     @SubscribeEvent
     public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
-        if (!LEFT_BEHIND.isEmpty() || !PENDING_HOME.isEmpty())
-            com.xenowarriors.XenoWarriors.LOGGER.warn("Server stopped with {} bot teammates waiting for offline owners and {} bot inventories not yet home - they stay behind", LEFT_BEHIND.size(), PENDING_HOME.size());
         LEFT_BEHIND.clear(); PENDING_HOME.clear(); ANIM_SENT.clear();
+    }
+
+    /** The things of bots that went home while this owner was away, into their saves (taken off the list first: handed over once). */
+    static int deliverPending(ServerPlayer p) {
+        List<CompoundTag> home = PENDING_HOME.remove(p.getUUID());
+        if (home == null) return 0;
+        for (CompoundTag rec : home) homeFromRecord(p, rec);
+        return home.size();
     }
 
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
-        List<CompoundTag> home = PENDING_HOME.remove(p.getUUID());
-        if (home != null) for (CompoundTag rec : home) homeFromRecord(p, rec);   // (bots that went home while you were away)
+        deliverPending(p);                                                        // (bots that went home while you were away)
         ListTag list = p.getPersistentData().getList(RECORDS, 10);
         p.getPersistentData().remove(RECORDS);
         for (int i = 0; i < list.size(); i++) spawn(p, CharacterType.byId(list.getCompound(i).getString("char")), list.getCompound(i));
