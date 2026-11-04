@@ -88,6 +88,8 @@ public final class Journey {
         boolean cleared = true, powerUp, powerNext;
         Scenario scenario = Scenario.NONE; Foe foe = Foe.MIXED; Challenge challenge = Challenge.NO_DOWNS; boolean challengeOk;
         long chooseUntil, spawnAt, battleStart, battleEnd;
+        /** On a healing step: when everyone's out of the pods (0 = not resting). */
+        long podUntil;
         float enemyHp;
         final Set<UUID> alive = new HashSet<>(), seen = new HashSet<>();
         final List<String> log = new ArrayList<>();
@@ -305,7 +307,7 @@ public final class Journey {
         r.hp.clear();
         for (Member m : r.members) for (CharacterType t : m.picks) r.hp.put(t, 1F);
         r.jc = JourneyRules.START_JC;
-        r.cur = 0; r.cleared = true; r.phase = IDLE;
+        r.cur = 0; r.cleared = true; r.phase = IDLE; r.podUntil = 0;
         r.log.clear();
         r.log.add(stageName(r) + " started (" + (r.solo() ? "solo" : "duo") + ", " + r.rows() + " steps)");
         for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> !(e instanceof Player) && !(e instanceof com.xenowarriors.bot.PartyBotEntity))) e.discard();
@@ -517,17 +519,35 @@ public final class Journey {
         }
         tl.playSound(null, c, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1F, 1.4F);
         if (to.kind == JourneyRules.HEAL) {
-            for (CharacterType t : r.hp.keySet()) if (r.alive(t)) r.hp.put(t, Math.min(1F, r.hp.get(t) + 0.6F));
-            for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) { lead(p, r, m); title(p, "HEALING POD", "Everyone still standing healed 60%", 0x60F060); } }
-            tl.sendParticles(ParticleTypes.HEART, c.getX() + .5, c.getY() + 1.5, c.getZ() + .5, 30, 2.5, .6, 2.5, 0);
-            tl.playSound(null, c, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1F, 1.2F);
-            r.log.add("Step " + to.row + ": Healing Pod - healed 60%");
-            stepDone(server, tl, r);
+            // a pod for each of you on the platform: in you go, a short rest with your eyes closed, then out healed
+            int i = 0;
+            for (Member m : r.members) {
+                ServerPlayer p = server.getPlayerList().getPlayer(m.id);
+                BlockPos pod = JourneyWorld.healPod(tl, c, i++, r.members.size());
+                if (p != null) { com.xenowarriors.gov.HealingPods.start(tl, pod, p, POD_REST, null); title(p, "HEALING POD", "Resting...", 0x60F060); }
+            }
+            r.podUntil = tl.getGameTime() + POD_REST + com.xenowarriors.gov.HealingPods.WAKE + 4;
+            syncAll(server, r, OPEN_NONE);
             return;
         }
         if (to.kind == JourneyRules.EVENT) { event(server, tl, r, c); return; }
         if (to.kind == JourneyRules.ITEM) { itemPanel(server, tl, r, c); return; }
         beginChoose(server, r);
+    }
+
+    /** How long you rest in a Journey healing pod (ticks). */
+    static final int POD_REST = 70;
+
+    /** Out of the healing pods: everyone still standing healed 60%. */
+    private static void healDone(MinecraftServer server, ServerLevel tl, Run r) {
+        r.podUntil = 0;
+        BlockPos c = r.here();
+        for (CharacterType t : r.hp.keySet()) if (r.alive(t)) r.hp.put(t, Math.min(1F, r.hp.get(t) + 0.6F));
+        for (Member m : r.members) { ServerPlayer p = server.getPlayerList().getPlayer(m.id); if (p != null) { lead(p, r, m); title(p, "HEALING POD", "Everyone still standing healed 60%", 0x60F060); } }
+        tl.sendParticles(ParticleTypes.HEART, c.getX() + .5, c.getY() + 1.5, c.getZ() + .5, 30, 2.5, .6, 2.5, 0);
+        tl.playSound(null, c, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1F, 1.2F);
+        r.log.add("Step " + r.row() + ": Healing Pod - healed 60%");
+        stepDone(server, tl, r);
     }
 
     /** An item panel: everyone gets ore, maybe a weapon, and (with DragonMineZ) maybe a piece of its armor. */
@@ -1052,6 +1072,7 @@ public final class Journey {
                 continue;
             }
             // IDLE: on the path
+            if (r.podUntil > 0 && now >= r.podUntil) healDone(server, tl, r);
             if (now % 5 != 0) continue;
             BlockPos here = r.here();
             for (Member m : r.members) {
@@ -1318,6 +1339,45 @@ public final class Journey {
         p.connection.send(new ClientboundSetTitlesAnimationPacket(5, 50, 10));
         p.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(sub).withStyle(ChatFormatting.GRAY)));
         p.connection.send(new ClientboundSetTitleTextPacket(Component.literal(title).withStyle(s -> s.withColor(color & 0xFFFFFF).withBold(true))));
+    }
+
+    // ------------------------------------------------------------------------------------------------ fixing the map
+
+    /**
+     * (op) /xeno journey resetmap: rebuilds the path (platforms, the bridges you've opened, healing pods), the arena and
+     * the labels of your journey - or of every journey going on when you're not on one - from the generator, then puts
+     * everyone back somewhere safe (on their step, or in the arena mid-battle). Returns how many journeys were fixed.
+     */
+    public static int resetMap(ServerPlayer by) {
+        ServerLevel tl = by.server.getLevel(Tower.LEVEL);
+        if (tl == null) return 0;
+        Run mine = BY.get(by.getUUID());
+        List<Run> runs = mine != null && mine.phase != LOBBY ? List.of(mine) : new ArrayList<>(RUNS.values());
+        int n = 0;
+        for (Run r : runs) {
+            if (r.phase == LOBBY || r.map == null) continue;
+            JourneyWorld.buildPath(tl, r.slot, r.map);
+            for (JourneyMap.Node nd : r.map.nodes) {
+                BlockPos c = r.map.pos(r.slot, nd);
+                JourneyWorld.recolor(tl, c, JourneyWorld.ring(nd.kind, nd.state == JourneyMap.HERE ? 1 : nd.state == JourneyMap.DONE ? 2 : nd.state == JourneyMap.CLOSED ? 3 : 0));
+                relabel(tl, r, nd);
+                if (nd.kind == JourneyRules.HEAL && (nd.state == JourneyMap.DONE || nd.state == JourneyMap.HERE) && nd.row > 0)
+                    for (int i = 0; i < r.members.size(); i++) JourneyWorld.healPod(tl, c, i, r.members.size());
+            }
+            for (List<BlockPos> b : r.bridges.values()) for (BlockPos p : b) if (!r.building.contains(p)) tl.setBlock(p, net.minecraft.world.level.block.Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState(), 2);
+            JourneyWorld.rebuildArena(tl, r.slot, r.foe, r.kind() == JourneyRules.BOSS);
+            BlockPos safe = r.phase == BATTLE ? JourneyWorld.arena(r.slot) : r.here();
+            int k = 0;
+            for (Member m : r.members) {
+                ServerPlayer p = by.server.getPlayerList().getPlayer(m.id);
+                if (p == null || !Tower.is(p.level()) || com.xenowarriors.gov.HealingPods.inPod(p)) continue;
+                if (p.isSpectator()) continue;                     // (watching: they float above anyway)
+                p.teleportTo(tl, safe.getX() + .5 + (k++ % 2 == 0 ? -1.5 : 1.5), safe.getY() + 1, safe.getZ() + .5 + (r.phase == BATTLE ? 10 : 0), p.getYRot(), 0);
+                p.displayClientMessage(msg("The map was reset", ChatFormatting.AQUA), true);
+            }
+            n++;
+        }
+        return n;
     }
 
     // ------------------------------------------------------------------------------------------------ testing

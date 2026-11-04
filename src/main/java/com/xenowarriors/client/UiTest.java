@@ -23,7 +23,7 @@ public final class UiTest {
     private static final boolean ON = "1".equals(System.getenv("XW_UITEST"));
     /** Makes characters power up (as if charging Ki) for the aura gallery. */
     public static boolean forceCharge;
-    private record Step(String name, Runnable action, int delay) {}
+    public record Step(String name, Runnable action, int delay) {}
     private static List<Step> steps;
     private static int idx = -1, wait, ingame, pre;
 
@@ -35,12 +35,12 @@ public final class UiTest {
         return s == null || mc.player == null ? null : s.getPlayerList().getPlayer(mc.player.getUUID());
     }
 
-    private static void server(java.util.function.Consumer<ServerPlayer> f) {
+    public static void server(java.util.function.Consumer<ServerPlayer> f) {
         var s = Minecraft.getInstance().getSingleplayerServer();
         if (s != null) s.execute(() -> { ServerPlayer p = sp(); if (p != null) f.accept(p); });
     }
 
-    private static void character(CharacterType t) {
+    public static void character(CharacterType t) {
         server(p -> com.xenowarriors.character.CharacterManager.setCharacter(p, t));
     }
 
@@ -76,6 +76,7 @@ public final class UiTest {
             if (System.getenv("XW_UITEST_FOCUS") != null && !System.getenv("XW_UITEST_FOCUS").isEmpty() && !"bats".equals(System.getenv("XW_UITEST_FOCUS"))) p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, p.getBoundingBox().inflate(64), m -> !(m instanceof com.xenowarriors.sr.SrMemberEntity)).forEach(m -> m.discard());
         }), 20));
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("modes")) { com.xenowarriors.client.test.ModesTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
         if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
@@ -342,7 +343,7 @@ public final class UiTest {
             com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p); });
     }
 
-    private static void hold(net.minecraft.world.item.Item it) {
+    public static void hold(net.minecraft.world.item.Item it) {
         server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, it == null ? net.minecraft.world.item.ItemStack.EMPTY : new net.minecraft.world.item.ItemStack(it)));
     }
 
@@ -1354,7 +1355,7 @@ public final class UiTest {
         FAKES.put(name, f);
         return f;
     }
-    private static void log(String s) { com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST " + s); }
+    public static void log(String s) { com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST " + s); }
 
     private static void xenoTest(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { noToasts(mc); mc.setScreen(null); character(CharacterType.MIKIKO); hold(null); server(p -> {
@@ -1470,7 +1471,7 @@ public final class UiTest {
         l.add(new Step(null, () -> mc.setCameraEntity(mc.player), 10));
     }
 
-    private static void noToasts(Minecraft mc) {
+    public static void noToasts(Minecraft mc) {
         mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
         mc.getToasts().clear();
     }

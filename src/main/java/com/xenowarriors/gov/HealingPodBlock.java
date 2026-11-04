@@ -2,14 +2,10 @@ package com.xenowarriors.gov;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffectCategory;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -23,31 +19,39 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.joml.Vector3f;
 
 /**
- * Government healing pod: a reclined white capsule under a glowing green glass dome, two blocks tall. Right-click to
- * get in - it heals you fast and clears bad effects while you're inside. Only a diamond (or better) pickaxe breaks
- * one loose so you can take it home.
+ * Government healing pod: an upright white tank with a glowing green glass front, about 2.6 blocks tall and a little
+ * wider than a block (one placeable block that fills two: the lower half draws the bottom of the pod, the upper half
+ * the top). Right-click to get in: you (or a bot / NPC) stand inside with your eyes closed while green light and
+ * bubbles heal you; when you're healed the glass doors swing open, you open your eyes and step out.
+ * One at a time, and a short cooldown after each use (see {@link HealingPods}). Only a diamond (or better) pickaxe
+ * breaks one loose so you can take it home.
+ * Older placed pods (before the doors) load as closed and empty, so they keep working.
  */
 public class HealingPodBlock extends HorizontalDirectionalBlock {
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
+    /** The glass doors are swung open (someone is stepping out). */
+    public static final BooleanProperty OPEN = BooleanProperty.create("open");
+    /** Someone is inside (the healing fluid glows). */
+    public static final BooleanProperty OCCUPIED = BooleanProperty.create("occupied");
     private static final VoxelShape BASE = Block.box(0, 0, 0, 16, 3, 16);
-    private static final VoxelShape OUTLINE_LOWER = Block.box(0, 0, 0, 16, 16, 16), OUTLINE_UPPER = Block.box(0, 0, 0, 16, 15, 16);
+    private static final VoxelShape OUTLINE_LOWER = Block.box(-3, 0, -3, 19, 16, 19), OUTLINE_UPPER = Block.box(-3, 0, -3, 19, 26, 19);
 
     public HealingPodBlock(Properties p) {
         super(p);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(HALF, DoubleBlockHalf.LOWER));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(HALF, DoubleBlockHalf.LOWER).setValue(OPEN, false).setValue(OCCUPIED, false));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, HALF); }
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) { b.add(FACING, HALF, OPEN, OCCUPIED); }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
@@ -92,9 +96,23 @@ public class HealingPodBlock extends HorizontalDirectionalBlock {
         super.playerWillDestroy(level, pos, state, player);
     }
 
+    /** Taken apart with someone inside: they're let out. */
     @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? RenderShape.MODEL : RenderShape.INVISIBLE;   // the lower model draws the whole pod
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState now, boolean moved) {
+        if (!level.isClientSide && !now.is(this) && state.getValue(HALF) == DoubleBlockHalf.LOWER) HealingPods.broken((ServerLevel) level, pos);
+        super.onRemove(state, level, pos, now, moved);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }     // (the pod is drawn in two parts, the top one by the upper half)
+
+    /** Doors and fluid on both halves (the upper half draws the top of the pod). */
+    static void set(Level level, BlockPos base, boolean open, boolean occupied) {
+        for (BlockPos p : new BlockPos[]{base, base.above()}) {
+            BlockState s = level.getBlockState(p);
+            if (s.getBlock() instanceof HealingPodBlock && (s.getValue(OPEN) != open || s.getValue(OCCUPIED) != occupied))
+                level.setBlock(p, s.setValue(OPEN, open).setValue(OCCUPIED, occupied), 3);
+        }
     }
 
     @Override
@@ -104,29 +122,25 @@ public class HealingPodBlock extends HorizontalDirectionalBlock {
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? BASE : Shapes.empty();     // you can climb in
+        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? BASE : Shapes.empty();     // you can step in
     }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         BlockPos base = state.getValue(HALF) == DoubleBlockHalf.LOWER ? pos : pos.below();
         if (!level.isClientSide) {
-            player.teleportTo(base.getX() + 0.5, base.getY() + 0.2, base.getZ() + 0.5);
-            player.setYRot(state.getValue(FACING).toYRot());
-            level.playSound(null, base, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.8F, 1.6F);
+            String why = HealingPods.start((ServerLevel) level, base, player, -1, null);
+            if (why != null) player.displayClientMessage(net.minecraft.network.chat.Component.literal(why).withStyle(net.minecraft.ChatFormatting.GRAY), true);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    /** Inside the pod: fast healing and bad effects washed away, with green bubbles. */
+    /** A pod left "occupied" with no one in it (a server restart mid-heal) clears itself. */
     @Override
-    public void entityInside(BlockState state, Level level, BlockPos pos, Entity e) {
-        if (level.isClientSide || state.getValue(HALF) != DoubleBlockHalf.LOWER || !(e instanceof LivingEntity le) || le.tickCount % 10 != 0) return;
-        if (le.getHealth() < le.getMaxHealth()) le.heal(1.5F);
-        for (var inst : new java.util.ArrayList<>(le.getActiveEffects()))
-            if (inst.getEffect().getCategory() == MobEffectCategory.HARMFUL) le.removeEffect(inst.getEffect());
-        if (le.isOnFire()) le.clearFire();
-        ((ServerLevel) level).sendParticles(new DustParticleOptions(new Vector3f(.35F, 1F, .5F), 1F), le.getX(), le.getY() + 1, le.getZ(), 6, 0.3, 0.6, 0.3, 0);
-        if (le.tickCount % 40 == 0) level.playSound(null, pos, SoundEvents.BUBBLE_COLUMN_UPWARDS_AMBIENT, SoundSource.BLOCKS, 0.5F, 1.3F);
+    public boolean isRandomlyTicking(BlockState state) { return state.getValue(HALF) == DoubleBlockHalf.LOWER && (state.getValue(OCCUPIED) || state.getValue(OPEN)); }
+
+    @Override
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!HealingPods.inUse(level, pos)) set(level, pos, false, false);
     }
 }

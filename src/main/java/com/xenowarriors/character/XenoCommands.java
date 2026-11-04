@@ -360,12 +360,20 @@ public final class XenoCommands {
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.tower.Tower.leave(ctx.getSource().getPlayerOrException(), "You left the Tower"); return 1; }))
                 .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("top").executes(ctx -> { com.xenowarriors.tower.TowerBoard.show(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("resetmap").requires(s -> s.hasPermission(2)).executes(ctx -> {
+                    int n = com.xenowarriors.tower.Tower.resetMap(ctx.getSource().getPlayerOrException());
+                    ctx.getSource().sendSuccess(() -> Component.literal(n == 0 ? "No Tower runs going on" : "Rebuilt " + n + " Tower arena" + (n == 1 ? "" : "s")), true);
+                    return n; }))
                 .then(Commands.literal("floor").requires(s -> s.hasPermission(2)).then(Commands.argument("floor", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 500))
                         .executes(ctx -> { com.xenowarriors.tower.Tower.skipTo(ctx.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "floor")); return 1; }))));
         root.then(Commands.literal("journey").executes(ctx -> { com.xenowarriors.journey.Journey.open(ctx.getSource().getPlayerOrException()); return 1; })
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.journey.Journey.leave(ctx.getSource().getPlayerOrException(), "You left the Journey", true); return 1; }))
                 .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.journey.Journey.acceptInvite(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("decline").executes(ctx -> { com.xenowarriors.journey.Journey.declineInvite(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("resetmap").requires(s -> s.hasPermission(2)).executes(ctx -> {
+                    int n = com.xenowarriors.journey.Journey.resetMap(ctx.getSource().getPlayerOrException());
+                    ctx.getSource().sendSuccess(() -> Component.literal(n == 0 ? "No journeys going on" : "Rebuilt the map of " + n + " journey" + (n == 1 ? "" : "s")), true);
+                    return n; }))
                 .then(Commands.literal("unlock").requires(s -> s.hasPermission(2)).then(Commands.argument("cleared", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 15))
                         .executes(ctx -> { var p = ctx.getSource().getPlayerOrException(); com.xenowarriors.journey.Journey.setCleared(p, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "cleared"));
                             p.sendSystemMessage(net.minecraft.network.chat.Component.literal("Journey stages cleared (of 15): " + com.xenowarriors.journey.Journey.cleared(p))); return 1; })))

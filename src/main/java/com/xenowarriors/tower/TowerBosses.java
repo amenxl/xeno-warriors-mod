@@ -182,7 +182,7 @@ public final class TowerBosses {
                 for (ServerPlayer p : ps) p.displayClientMessage(Component.literal(name(b.kind, m) + " is enraged!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD), true);
             }
             if ((b.tick += 5) % (b.enraged ? 110 : 160) != 0) continue;
-            int near = tl.getEntitiesOfClass(Mob.class, new net.minecraft.world.phys.AABB(b.center).inflate(Tower.ARENA_R + 4, 12, Tower.ARENA_R + 4),
+            int near = tl.getEntitiesOfClass(Mob.class, new net.minecraft.world.phys.AABB(b.center).inflate(Tower.MAX_R + 4, 12, Tower.MAX_R + 4),
                     x -> x.isAlive() && x.getPersistentData().getBoolean("xw_tower")).size();
             boolean canCall = near <= HELPER_CAP;
             LivingEntity t = m.getTarget() != null && m.getTarget().isAlive() ? m.getTarget() : ps.get(tl.random.nextInt(ps.size()));

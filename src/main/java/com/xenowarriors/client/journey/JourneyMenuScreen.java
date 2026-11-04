@@ -119,6 +119,7 @@ public class JourneyMenuScreen extends JourneyScreen {
         int hk = hereId >= 0 && hereId < ns.size() ? ns.getCompound(hereId).getInt("k") : 0;
         boolean retry = shop && !cleared && cur > 0 && JourneyRules.fight(hk);
         if (retry) button(g, rx, by, rx + 74, by + 16, "Retry battle", 0xFF7040, true, () -> { JourneyClient.act(10, 0, 0); onClose(); });
+        else if (shop && cleared) button(g, rx, by, rx + 74, by + 16, "Continue ▶", 0x40D0FF, true, this::onClose);   // (back to the path - no need for Esc)
         boolean confirm = net.minecraft.Util.getMillis() - retreatAt < 3000;
         button(g, VW - 84, by, VW - 10, by + 16, confirm ? "Click to confirm" : "Retreat", 0xA05050, true, () -> {
             if (confirm) { JourneyClient.act(9, 0, 0); onClose(); } else retreatAt = net.minecraft.Util.getMillis();
@@ -158,8 +159,13 @@ public class JourneyMenuScreen extends JourneyScreen {
         boolean ok = r.getBoolean("challengeOk");
         sc(g, (ok ? "✔ " : "✘ ") + "Challenge: " + r.getString("challenge"), x0 + 14, y + 4, Math.min(0.65F, (x1 - x0 - 28F) / font.width("xx Challenge: " + r.getString("challenge"))), ok ? 0x5FD05F : 0xE06060);
         sc(g, won ? "Total: +" + r.getInt("gained") + " Journey Coins" : "Revive your party at Heal/Enhance, then Retry battle", x0 + 14, y + 16, 0.7F, 0xFFFFFF);
-        sc(g, "Click to continue", VW / 2F - font.width("Click to continue") * 0.3F, y1 - 12, 0.6F, 0x8090A0);
-        area(0, 0, VW, VH, () -> results = false);
+        // Continue: straight back to the path (walk on to the next step); Heal / Enhance: the shop and map first
+        area(0, 0, VW, VH, () -> {});                            // (clicks outside the buttons do nothing)
+        int bw = 86, bx = VW / 2, byy = y1 - 24;
+        if (won && JourneyClient.phase() == 1) {
+            button(g, bx - bw - 4, byy, bx - 4, byy + 16, "Continue ▶", 0x40D0FF, true, this::onClose);
+            button(g, bx + 4, byy, bx + 4 + bw, byy + 16, "Heal / Enhance", 0x50D060, true, () -> results = false);
+        } else button(g, bx - bw / 2, byy, bx + bw / 2, byy + 16, won ? "Continue ▶" : "Heal / Enhance", won ? 0x40D0FF : 0x50D060, true, () -> results = false);
     }
 
     private static void line(GuiGraphics g, float x0, float y0, float x1, float y1, int c) {

@@ -69,10 +69,10 @@ public final class ModBlocks {
     public static final RegistryObject<Block> BOUNTY_BOARD = BLOCKS.register("bounty_board", () -> new com.xenowarriors.bounty.BountyBoardBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2F).sound(SoundType.WOOD).noOcclusion()));
 
-    /** Government healing pod (2 tall). Breaks loose only with a diamond pickaxe or better. */
+    /** Government healing pod (2 blocks, drawn about 2.6 tall; glows brighter with someone inside). Breaks loose only with a diamond pickaxe or better. */
     public static final RegistryObject<Block> HEALING_POD = BLOCKS.register("healing_pod", () -> new com.xenowarriors.gov.HealingPodBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).strength(6F, 9F).requiresCorrectToolForDrops()
-                    .sound(SoundType.METAL).lightLevel(s -> 10).noOcclusion()));
+                    .sound(SoundType.METAL).lightLevel(s -> s.getValue(com.xenowarriors.gov.HealingPodBlock.OCCUPIED) ? 14 : 10).noOcclusion()));
 
     private ModBlocks() {}
 }

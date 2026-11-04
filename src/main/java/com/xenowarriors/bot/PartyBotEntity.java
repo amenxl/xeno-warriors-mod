@@ -453,7 +453,7 @@ public class PartyBotEntity extends PathfinderMob {
             PartyBots.downed(this);
             return;
         }
-        if (!level().isClientSide && !journey()) PartyBots.checkIn(this, owner());   // (the void, /kill: their things go home first)
+        if (!level().isClientSide && !journey()) { PartyBots.checkIn(this, owner()); com.xenowarriors.party.PartySwap.botLost(owner(), character()); }   // (the void, /kill: their things go home first)
         super.die(src);
     }
 
