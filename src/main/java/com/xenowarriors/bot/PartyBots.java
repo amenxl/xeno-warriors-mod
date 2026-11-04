@@ -517,16 +517,8 @@ public final class PartyBots {
         f.moveTo(b.getX(), b.getY(), b.getZ(), yaw, pitch);
         f.setYHeadRot(yaw);
         f.setOnGround(b.onGround());
-        // the stand-in mirrors the bot's state, so what the skill does to its user lands on the bot (see toBot)
-        f.removeAllEffects();
-        f.setDeltaMovement(Vec3.ZERO);
-        f.setHealth(Math.max(1F, f.getMaxHealth() * b.getHealth() / b.getMaxHealth()));
-        float h0 = f.getHealth();
-        Vec3 at0 = f.position();
-        boolean used;
         ANIM_SENT.remove(b.getUUID());
-        try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); } catch (Throwable t) { used = false; }
-        toBot(b, f, h0, at0);
+        boolean used = standInUse(b, f, skill);
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());
@@ -535,6 +527,26 @@ public final class PartyBots {
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
             if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);   // (a skill without one of its own)
         } else b.skillReady[slot] = now + 60;
+    }
+
+    /** The stand-in uses the skill. It mirrors the bot's state first, so what the skill does to its user lands on the bot (see toBot). */
+    private static boolean standInUse(PartyBotEntity b, FakePlayer f, Skill skill) {
+        f.removeAllEffects();
+        f.setDeltaMovement(Vec3.ZERO);
+        f.setHealth(Math.max(1F, f.getMaxHealth() * b.getHealth() / b.getMaxHealth()));
+        float h0 = f.getHealth();
+        Vec3 at0 = f.position();
+        boolean used;
+        try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); } catch (Throwable t) { used = false; }
+        toBot(b, f, h0, at0);
+        return used;
+    }
+
+    /** (tests) the bot uses this skill through its stand-in, standing where it is. */
+    public static boolean useForTest(PartyBotEntity b, Skill skill) {
+        FakePlayer f = fake(b);
+        f.moveTo(b.getX(), b.getY(), b.getZ(), b.getYRot(), 0F);
+        return standInUse(b, f, skill);
     }
 
     /**

@@ -86,6 +86,7 @@ public final class TeamUltimate {
     }
 
     private static boolean ready(ServerPlayer p, boolean tell) {
+        if (!p.isAlive() || p.isSpectator() || Duels.cantAct(p)) return false;   // (down: the asker can be knocked out while waiting, and /xeno teamult join skips the skill key's checks)
         long now = p.server.overworld().getGameTime();
         boolean[] ok = {true};
         p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
