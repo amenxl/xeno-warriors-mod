@@ -38,6 +38,8 @@ public final class ComboServer {
     public static final class Ctx {
         public final LivingEntity attacker; public final ComboStyle style; public final int hit; public final boolean heavy, finisher;
         public final float mult; boolean landed;
+        /** The damage it came to (after the combo multiplier, before armor). */
+        public float dealt;
         Ctx(LivingEntity a, ComboStyle s, int hit, boolean heavy, float mult) {
             attacker = a; style = s; this.hit = hit; this.heavy = heavy; finisher = !heavy && hit == s.length() - 1; this.mult = mult;
         }
@@ -83,7 +85,7 @@ public final class ComboServer {
         int[] st = STARTED.get(p.getUUID());
         if (st == null || st[1] != hit || (st[2] != 0) != heavy) return;
         ComboStyle style = ComboStyle.values()[st[0]];
-        if (ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)) != style) return;
+        if (!ComboStyle.same(ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)), style)) return;
         if (p.tickCount - st[3] < ComboStyle.windup(style.duration(hit, heavy)) - 3) return;
         st[1] = -99;                                                        // one strike per swing
         Entity e = p.level().getEntity(targetId);
@@ -124,6 +126,7 @@ public final class ComboServer {
     /** Stagger, and the finisher's / heavy's send-off. */
     private static void after(Ctx c, LivingEntity t) {
         if (!c.landed || !(t.level() instanceof ServerLevel l)) return;
+        if (c.style.rhalix() && RhalixComboServer.after(c, t, l)) return;      // his own send-offs
         Vec3 dir = Vec3.directionFromRotation(0, c.attacker.getYRot());     // the way the hit is thrown
         double y = t.getY() + t.getBbHeight() * 0.6;
         if (c.heavy) {
@@ -150,8 +153,9 @@ public final class ComboServer {
         Ctx c = CTX.get();
         if (c == null || event.getSource().getEntity() != c.attacker) return;
         c.landed = true;
-        if (c.style.ownDamage && !c.heavy) return;
+        if (c.style.ownDamage && !c.heavy) { c.dealt = event.getAmount(); return; }
         event.setAmount(event.getAmount() * c.mult);
+        c.dealt = event.getAmount();
     }
 
     /** Light hits barely push (so the next hit connects), finishers knock them away, heavies launch (done after). */

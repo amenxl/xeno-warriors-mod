@@ -211,6 +211,9 @@ public final class RhalixWingsClient {
         } else if (animIn) {
             spread = Math.max(spread, 0.4F * (1F - smooth(t / 10F)));
         }
+        // his ground combo: the wings flare open on the big moves
+        float combo = RhalixComboAnim.wingSpread(p, partial);
+        if (combo > 0F) { spread = Math.max(spread, combo); flap += 0.25F * combo; tuck *= 1F - combo; }
         // rain shelter: wings swung forward and wrapped around him, tips raised over his head
         float shelter = RainIdle.shelter(p);
         if (shelter > 0F) {

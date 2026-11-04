@@ -99,6 +99,7 @@ public final class RhalixCombatAnim {
                 start = true;
                 charged = true;
             }
+            if (start && RhalixComboAnim.owns(p)) start = false;    // his ground combo string: RhalixComboAnim animates it
             boolean sword = isSword(p);
             // in the air: the floaty aerial combo (launch, juggle, slam), on top of his own moves
             if (start && charged && p == mc.player && mc.player != null && com.xenowarriors.client.mikiko.AerialCombo.applies(mc.player))
@@ -238,6 +239,11 @@ public final class RhalixCombatAnim {
     }
 
     public static void apply(HumanoidModel<?> m, Player p, float age) {
+        applyGeo(m, p, age);
+        RhalixComboAnim.apply(m, p, age);                    // his ground combo string (bare hands)
+    }
+
+    private static void applyGeo(HumanoidModel<?> m, Player p, float age) {
         State s = STATES.get(p.getId());
         if (s == null || !rhalix(p)) return;
         float partial = age - p.tickCount;
