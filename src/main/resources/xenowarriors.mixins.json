@@ -15,6 +15,11 @@
     "FurnaceSpeedMixin",
     "compat.DragonMineZQuestBiomeMixin",
     "compat.DragonMineZQuestDimensionMixin",
+    "compat.DragonMineZStructurePlanMixin",
+    "compat.DragonMineZStructureRepairMixin",
+    "ChunkGeneratorStructureMixin",
+    "StructurePlacementMixin",
+    "ChunkGeneratorStructureStateAccessor",
     "PlayerSkyWalkMixin",
     "ServerGamePacketListenerAccessor"
   ],

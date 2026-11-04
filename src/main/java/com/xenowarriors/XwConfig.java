@@ -13,6 +13,8 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_QUESTS_ANY_DIMENSION;
     /** DragonMineZ installed: some Xeno Warriors energy blasts and beams use DragonMineZ's ki effects. */
     public static final ForgeConfigSpec.BooleanValue DMZ_KI_VISUALS;
+    /** DragonMineZ's structures in the Recarnet dimension too (off: overworld only). */
+    public static final ForgeConfigSpec.BooleanValue DMZ_STRUCTURES_IN_RECARNET;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -24,6 +26,9 @@ public final class XwConfig {
                 .define("questsAnyDimension", true);
         DMZ_KI_VISUALS = b.comment("Ultima's blasts and beam, Karma Blast and the Xeno Blast trail use DragonMineZ's ki particles.")
                 .define("kiVisuals", true);
+        DMZ_STRUCTURES_IN_RECARNET = b.comment("DragonMineZ's own structures (Kame House, Goku's house...) also generate in the Recarnet dimension.",
+                        "Off: they stay in the overworld - Recarnet uses the overworld's biomes, so DragonMineZ would otherwise plan and force-place them there too.")
+                .define("structuresInRecarnet", false);
         b.pop();
         SPEC = b.build();
     }

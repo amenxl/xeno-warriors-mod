@@ -202,7 +202,7 @@ public final class PerfTests {
                 r.addFreshEntity(h); made++;
             }
             log("city: at " + p.blockPosition().toShortString() + " townsfolk_added=" + made + " humans_near=" + r.getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(96)).size()
-                    + " bots_here=" + com.xenowarriors.bot.PartyBots.bots(p).stream().filter(b -> b.level() == p.level()).count());
+                    + " bots_here=" + com.xenowarriors.bot.PartyBots.bots(p).stream().filter(b -> b.level() == p.level()).count() + " dmz_structures_skipped=" + com.xenowarriors.compat.DmzRecarnetStructures.skipped());
         }), 100);
         phase(mc, l, "city", null);
         l.add("perf4_city", () -> {}, 5);
