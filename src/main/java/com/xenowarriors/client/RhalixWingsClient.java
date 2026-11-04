@@ -327,7 +327,7 @@ public final class RhalixWingsClient {
             return;
         }
         if (mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!ClientCharacterData.winged(p)) {
                 HOVER.remove(p.getId());
                 continue;

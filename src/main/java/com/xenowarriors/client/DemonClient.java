@@ -31,7 +31,7 @@ public final class DemonClient {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || ON.isEmpty() || mc.isPaused()) return;
-        for (Player p : mc.level.players()) {
+        for (Player p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!ON.contains(p.getId()) || p.tickCount % 2 != 0) continue;
             if (p == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
             float yaw = p.getYHeadRot() * Mth.DEG_TO_RAD;

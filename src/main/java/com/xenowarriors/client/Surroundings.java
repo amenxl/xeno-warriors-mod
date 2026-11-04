@@ -24,7 +24,7 @@ public final class Surroundings {
         if (level == null) return c[0] = NONE;
         boolean people = false, peaceful = false;
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(ENEMY_RANGE),
-                e -> e != p && e.isAlive() && !e.isSpectator() && !e.isInvisible())) {
+                e -> e != p && e.getId() != p.getId() && e.isAlive() && !e.isSpectator() && !e.isInvisible())) {
             if (e instanceof Enemy) {
                 CACHE.put(p.getId(), new int[]{ENEMIES, p.tickCount});
                 return ENEMIES;

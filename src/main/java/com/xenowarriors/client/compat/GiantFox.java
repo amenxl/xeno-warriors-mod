@@ -45,7 +45,7 @@ public final class GiantFox {
             return;
         }
         FOXES.keySet().removeIf(id -> !(mc.level.getEntity(id) instanceof Player pl) || !DmzForms.giantFox(pl));
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!DmzForms.giantFox(p)) continue;
             Fox f = fox(p);
             f.xo = p.xo; f.yo = p.yo; f.zo = p.zo;

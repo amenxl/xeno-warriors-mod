@@ -175,7 +175,7 @@ public final class MikikoAnimations {
             return;
         }
         if (mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!isMikiko(p)) {
                 STATES.remove(p.getId());
                 continue;
@@ -184,10 +184,10 @@ public final class MikikoAnimations {
         }
         STATES.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         MikikoEffects.tickSummons(mc.level);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (ClientSkillState.netsuActive(p.getId())) MikikoEffects.netsuAura(mc.level, p);
         }
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (isMikiko(p) && p.isSleeping() && p.tickCount % 40 == 0) MikikoEffects.snore(p);
         }
     }

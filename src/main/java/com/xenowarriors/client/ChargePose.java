@@ -44,7 +44,7 @@ public final class ChargePose {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             boolean on = charging(p);
             float[] w = WEIGHT.computeIfAbsent(p.getId(), k -> new float[2]);
             w[0] = Mth.clamp(w[0] + (on ? 0.2F : -0.15F), 0F, 1F);

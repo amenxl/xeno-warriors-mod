@@ -43,7 +43,7 @@ public final class JumpAnimations {
             return;
         }
         if (mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (ClientCharacterData.get(p) == CharacterType.NONE) continue;
             State s = STATES.computeIfAbsent(p.getId(), k -> new State());
             s.vyO = s.vy;

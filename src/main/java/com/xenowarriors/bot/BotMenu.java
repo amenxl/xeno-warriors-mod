@@ -92,6 +92,7 @@ public class BotMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         bag.stopOpen(player);
+        if (bot != null && player instanceof net.minecraft.server.level.ServerPlayer sp && sp.getUUID().equals(bot.ownerId())) BotCrafting.bagClosed(bot, sp);   // (you may have just handed it what it needed)
     }
 
     /** The bot's equipment, read and written straight on the bot (server side). */

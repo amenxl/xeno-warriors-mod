@@ -13,7 +13,7 @@ public final class WindEffects {
 
     public static void tick(Minecraft mc) {
         if (mc.level == null || mc.isPaused()) return;
-        for (AbstractClientPlayer player : mc.level.players()) {
+        for (AbstractClientPlayer player : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             FlightTracker.tick(player);
             if (player.isInvisible() || ClientCharacterData.get(player) != CharacterType.MIKIKO) continue;
             if (!FlightTracker.isFlying(player)) continue;

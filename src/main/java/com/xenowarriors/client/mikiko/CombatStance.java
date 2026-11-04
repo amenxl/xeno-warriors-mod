@@ -61,7 +61,7 @@ public final class CombatStance {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             int want = wanted(p);
             float[] s = STATE.get(p.getId());
             if (s == null) { if (want == NONE) continue; STATE.put(p.getId(), s = new float[]{0F, 0F, 0F, want}); }

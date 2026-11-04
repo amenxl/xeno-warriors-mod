@@ -35,6 +35,7 @@
     "FoxHeldItemLayerMixin",
     "LivingEntityRendererSoulMixin",
     "LocalPlayerNetsuMixin",
+    "WalkAnimationAccessor",
     "compat.DragonMineZRendererMixin",
     "compat.DragonMineZFirstPersonMixin",
     "compat.DragonMineZHandMixin",

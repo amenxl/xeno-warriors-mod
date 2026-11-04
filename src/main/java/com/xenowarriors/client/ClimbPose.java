@@ -60,7 +60,7 @@ public final class ClimbPose {
         if (event.phase != TickEvent.Phase.END || p == null || mc.isPaused()) return;
         // climbing, the body turns with the look instead of staying locked facing one way (vanilla only turns it
         // once the head is 75 degrees off), so he can look around the ladder without his back staying put
-        for (var o : mc.level.players()) {
+        for (var o : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (ClientCharacterData.get(o) == CharacterType.NONE || !climbing(o)) continue;
             float want = o.getYRot();
             float d = Mth.wrapDegrees(want - o.yBodyRot);

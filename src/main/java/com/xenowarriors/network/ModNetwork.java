@@ -482,6 +482,15 @@ public final class ModNetwork {
     }
 
     public static void sendToTrackingAndSelf(Object msg, ServerPlayer player) {
+        if (player instanceof net.minecraftforge.common.util.FakePlayer) {          // a bot's stand-in skill player: what it sends goes to those who see the bot
+            com.xenowarriors.bot.PartyBotEntity bot = com.xenowarriors.bot.PartyBots.botOf(player);
+            if (bot != null) {
+                if (msg instanceof SkillAnimPacket s && s.entityId() == player.getId()) { msg = new SkillAnimPacket(bot.getId(), s.anim(), s.airborne()); com.xenowarriors.bot.PartyBots.animSent(bot); }
+                final Object m = msg;
+                CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> bot), m);
+                return;
+            }
+        }
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), msg);
     }
 

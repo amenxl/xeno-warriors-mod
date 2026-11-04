@@ -29,7 +29,7 @@ public final class KeitaDoze {
         Minecraft mc = Minecraft.getInstance();
         if (e.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STILL.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!keita(p)) { STILL.remove(p.getId()); continue; }
             int[] s = STILL.computeIfAbsent(p.getId(), k -> new int[1]);
             boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p) && p.hurtTime == 0 && !p.isUsingItem();

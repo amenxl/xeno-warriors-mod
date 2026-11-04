@@ -36,7 +36,7 @@ public final class CorruptedArmorClient {
         if (mc.level == null || mc.isPaused()) return;
         LocalPlayer me = mc.player;
         if (me != null) jump(mc, me);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!CorruptedArmorItem.fullSet(p)) continue;
             aura(mc, p);
         }
