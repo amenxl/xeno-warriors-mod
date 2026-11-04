@@ -24,7 +24,11 @@ public final class DojoSkills {
     static void blast(ServerPlayer p, LivingEntity t, float dmg, int rgb) {
         ServerLevel l = p.serverLevel();
         DustParticleOptions c = new DustParticleOptions(new Vector3f((rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F), 1.6F);
-        SpUtil.line(l, p.getEyePosition().subtract(0, 0.3, 0), t.position().add(0, t.getBbHeight() / 2, 0), c, 20);
+        if (com.xenowarriors.compat.DmzFx.on()) {          // DragonMineZ's ki look: a blast streaking across, going off on them
+            Vec3 from = p.getEyePosition().subtract(0, 0.3, 0).add(p.getLookAngle().scale(0.6)), to = t.position().add(0, t.getBbHeight() / 2, 0);
+            com.xenowarriors.compat.DmzFx.beam(l, from, to, rgb, 0.7F);
+            com.xenowarriors.compat.DmzFx.burst(l, to, rgb, 1.2F);
+        } else SpUtil.line(l, p.getEyePosition().subtract(0, 0.3, 0), t.position().add(0, t.getBbHeight() / 2, 0), c, 20);
         t.hurt(p.damageSources().playerAttack(p), dmg);
         Vec3 k = t.position().subtract(p.position()).multiply(1, 0, 1).normalize();
         t.setDeltaMovement(k.scale(0.9).add(0, 0.3, 0)); t.hurtMarked = true;

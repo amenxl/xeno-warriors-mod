@@ -19,6 +19,7 @@ import java.util.Set;
 /** Ultima's green energy: travelling blasts and the full-output beam. */
 final class UltimaBlasts {
     static final Vector3f GREEN = new Vector3f(.25F, 1F, .55F);
+    static final int RGB = 0x40FF8C;
 
     private UltimaBlasts() {}
 
@@ -35,7 +36,8 @@ final class UltimaBlasts {
                 ServerScheduler.later(t, () -> {
                     if (pos[0] == null) return;
                     Vec3 next = pos[0].add(dir.scale(1.6));
-                    l.sendParticles(new DustParticleOptions(GREEN, size * 1.4F), next.x, next.y, next.z, 4, size * 0.15, size * 0.15, size * 0.15, 0);
+                    if (com.xenowarriors.compat.DmzFx.on()) com.xenowarriors.compat.DmzFx.ball(l, next, dir, RGB, size);    // DragonMineZ's ki look
+                    else l.sendParticles(new DustParticleOptions(GREEN, size * 1.4F), next.x, next.y, next.z, 4, size * 0.15, size * 0.15, size * 0.15, 0);
                     l.sendParticles(ParticleTypes.ELECTRIC_SPARK, next.x, next.y, next.z, 1, 0.05, 0.05, 0.05, 0);
                     if (!l.getBlockState(net.minecraft.core.BlockPos.containing(next)).isAir()) { burst(l, next, size); pos[0] = null; return; }
                     for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, new AABB(pos[0], next).inflate(0.6 * size), e -> SkillTargeting.canTarget(p, e))) {
@@ -51,7 +53,8 @@ final class UltimaBlasts {
     }
 
     static void burst(ServerLevel l, Vec3 at, float size) {
-        l.sendParticles(new DustParticleOptions(GREEN, 2F), at.x, at.y, at.z, (int) (14 * size), 0.3 * size, 0.3 * size, 0.3 * size, 0);
+        if (com.xenowarriors.compat.DmzFx.on()) com.xenowarriors.compat.DmzFx.burst(l, at, RGB, size);
+        else l.sendParticles(new DustParticleOptions(GREEN, 2F), at.x, at.y, at.z, (int) (14 * size), 0.3 * size, 0.3 * size, 0.3 * size, 0);
         l.sendParticles(ParticleTypes.ELECTRIC_SPARK, at.x, at.y, at.z, 8, 0.3, 0.3, 0.3, 0.2);
         l.playSound(null, net.minecraft.core.BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.4F, 1.7F);
     }

@@ -294,7 +294,8 @@ public final class EpicFightCompat {
             event.setShouldRender(false);
             return;
         }
-        if (ClientSkillState.currentAnim(p) != null) {               // our skill casts always show
+        if (ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.EntityPoses.posed(p)          // our skill casts and poses always show
+                || p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity) {                       // (and our vehicle seats / riding on top / hanging on)
             event.setShouldRender(false);
             return;
         }

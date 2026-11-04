@@ -99,6 +99,7 @@ public final class DmzPerCharacter {
         if (from.isEmpty() && current != null && !current.isEmpty() && !current.equals(com.xenowarriors.character.CharacterType.NONE.getId())) from = current;
         if (from.isEmpty()) { keep.putString(LIVE, to); return !created(p); }     // first character ever: what they have goes with them
         if (from.equals(to)) return false;
+        DmzLevelUp.poll(p);                        // (the one being put away gets any level-up bonus it's owed first)
         try {
             Object data = p.getCapability(cap).resolve().orElse(null);
             if (data == null) return false;
@@ -131,6 +132,12 @@ public final class DmzPerCharacter {
         }
         CompoundTag all = keep.getCompound(ROOT);
         return all.contains(key) ? all.getCompound(key) : null;
+    }
+
+    /** Sends DragonMineZ's own stats sync for this player (after changing their stats or points). */
+    public static void syncStats(ServerPlayer p) {
+        if (!ready()) return;
+        try { sendTracking.invoke(null, statsSync.newInstance(p), p); } catch (Throwable ignored) {}
     }
 
     /** Tell everyone who can see them (and them) about their DMZ data. */

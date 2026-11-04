@@ -44,7 +44,24 @@ public final class EnemyScaling {
     private EnemyScaling() {}
 
     public static boolean scales(LivingEntity e) {
-        return e instanceof Enemy || e instanceof com.xenowarriors.npc.HumanNpcEntity || e instanceof com.xenowarriors.npc.SkylanderEntity || e instanceof com.xenowarriors.gov.GovAgentEntity;
+        return e instanceof Enemy || dmz(e) || e instanceof com.xenowarriors.npc.HumanNpcEntity || e instanceof com.xenowarriors.npc.SkylanderEntity || e instanceof com.xenowarriors.gov.GovAgentEntity;
+    }
+
+    /** DragonMineZ's own creatures and fighters (friendly or hostile): they bring their own power, so no Xeno Warriors level (always Lv 1). */
+    public static boolean dmz(LivingEntity e) {
+        var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(e.getType());
+        return id != null && id.getNamespace().equals("dragonminez");
+    }
+
+    /** Takes any Xeno Warriors level modifiers back off (older saves gave DragonMineZ mobs levels). */
+    private static void clearLevel(Mob m) {
+        for (var a : java.util.List.of(Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE, Attributes.ARMOR)) {
+            AttributeInstance in = m.getAttribute(a);
+            if (in == null) continue;
+            in.removeModifier(HP); in.removeModifier(DMG); in.removeModifier(ARM); in.removeModifier(DBZ_HP); in.removeModifier(DBZ_DMG);
+        }
+        m.getPersistentData().remove("xw_dbz_dmg");
+        if (m.getHealth() > m.getMaxHealth()) m.setHealth(m.getMaxHealth());
     }
 
     /** Danger from distance: +1 per 1,000 blocks from world spawn (tapering past 10). */
@@ -84,6 +101,12 @@ public final class EnemyScaling {
             ModNetwork.sendToTrackingEntityAndSelf(new EnemyLevelPacket(m.getId(), Math.max(1, pp)), m);
             return;
         }
+        if (dmz(m)) {      // DragonMineZ's own: level 1, nothing added (the user's call)
+            clearLevel(m);
+            tag.putInt(LVL, 1);
+            ModNetwork.sendToTrackingEntityAndSelf(new EnemyLevelPacket(m.getId(), 1), m);
+            return;
+        }
         int lvl = Math.max(0, Math.round(zone * 4 + pp * pull) + r.nextInt(3));
         if (m instanceof com.xenowarriors.corrupted.CSoulBossEntity) lvl += 10 + zone * 2;
         if (m instanceof com.xenowarriors.npc.SkylanderEntity s && s.guardian()) lvl += 5;
@@ -119,7 +142,10 @@ public final class EnemyScaling {
     @SubscribeEvent
     public static void onTick(LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Mob m) || m.level().isClientSide || m.tickCount != 5 || !scales(m)) return;
-        if (!m.getPersistentData().contains(LVL)) assign(m);
+        var tag = m.getPersistentData();
+        if (!tag.contains(LVL)) assign(m);
+        else if (dmz(m) && tag.getInt(LVL) != 1 && !tag.getBoolean("xw_journey") && !tag.getBoolean("xw_tower")
+                && !com.xenowarriors.modes.ModeRules.arena(m.level())) assign(m);      // (levelled before this rule)
     }
 
     /** Players coming into view of it learn its level (for the lock-on bar). */

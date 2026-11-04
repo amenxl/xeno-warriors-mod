@@ -34,7 +34,8 @@ public class FullOutputBeamSkill implements Skill {
         l.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2F, 0.7F);
         for (int i = 0; i < 20; i++) ServerScheduler.later(i, () -> {
             Vec3 h = p.getEyePosition().add(p.getLookAngle().scale(0.8));
-            l.sendParticles(new DustParticleOptions(UltimaBlasts.GREEN, 1.6F), h.x, h.y - 0.2, h.z, 4, 0.2, 0.2, 0.2, 0);
+            if (com.xenowarriors.compat.DmzFx.on()) com.xenowarriors.compat.DmzFx.ball(l, h.subtract(0, 0.2, 0), p.getLookAngle(), UltimaBlasts.RGB, 0.9F);   // the charge ball
+            else l.sendParticles(new DustParticleOptions(UltimaBlasts.GREEN, 1.6F), h.x, h.y - 0.2, h.z, 4, 0.2, 0.2, 0.2, 0);
         });
         ServerScheduler.later(20, () -> {
             if (!p.isAlive()) return;
@@ -44,7 +45,13 @@ public class FullOutputBeamSkill implements Skill {
             for (int k = 0; k < 24; k++) ServerScheduler.later(k, () -> {
                 if (!p.isAlive()) return;
                 Vec3 s = p.getEyePosition().subtract(0, 0.2, 0), d = p.getLookAngle();
-                for (int j = 1; j <= 32; j++) {
+                if (com.xenowarriors.compat.DmzFx.on()) {          // DragonMineZ's ki beam look (every other tick: its particles linger)
+                    if (p.tickCount % 2 == 0) {
+                        var hitBlock = l.clip(new net.minecraft.world.level.ClipContext(s, s.add(d.scale(32)), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                                net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+                        com.xenowarriors.compat.DmzFx.beam(l, s.add(d.scale(0.8)), hitBlock.getLocation(), UltimaBlasts.RGB, (float) width);
+                    }
+                } else for (int j = 1; j <= 32; j++) {
                     Vec3 q = s.add(d.scale(j));
                     l.sendParticles(new DustParticleOptions(UltimaBlasts.GREEN, 2.2F), q.x, q.y, q.z, 2, width * 0.25, width * 0.25, width * 0.25, 0);
                     if (j % 4 == 0) l.sendParticles(ParticleTypes.ELECTRIC_SPARK, q.x, q.y, q.z, 1, 0.2, 0.2, 0.2, 0.1);

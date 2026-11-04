@@ -81,6 +81,54 @@ public final class KiFx {
             XenoWarriors.LOGGER.info(sb.toString());
         }
         LIVE.removeIf(f -> f.dead || now - f.start > f.m.life() + 1 || now < f.start - 20);
+        if (!LIVE.isEmpty() && com.xenowarriors.compat.DmzFx.on() && com.xenowarriors.client.compat.DmzKiParticles.available())
+            for (Fx f : LIVE) dmzTrail(mc, f, now - f.start);
+    }
+
+    /** With DragonMineZ: its ki particles streaming off the Xeno Blast (the solid shapes stay ours). */
+    private static void dmzTrail(Minecraft mc, Fx f, long age) {
+        XenoFxPacket p = f.m;
+        if (age < 0 || age > p.life()) return;
+        var rnd = mc.level.random;
+        int body = palette(p.rhalix())[1];
+        Entity caster = mc.level.getEntity(p.caster());
+        switch (p.kind()) {
+            case CHARGE -> {
+                if (caster == null) return;
+                Vec3 c = chargeSpot(caster, p.rhalix(), 1F);
+                for (int i = 0; i < 2; i++) {            // ki gathering in
+                    Vec3 o = new Vec3(rnd.nextGaussian(), rnd.nextGaussian(), rnd.nextGaussian()).normalize().scale(1.4);
+                    com.xenowarriors.client.compat.DmzKiParticles.spawn("ki_trail", c.x + o.x, c.y + o.y, c.z + o.z, -o.x * 0.09, -o.y * 0.09, -o.z * 0.09, body, 1.2F);
+                }
+            }
+            case BEAM -> {
+                if (caster == null || age % 2 != 0) return;
+                Vec3 d = look(caster, 1F);
+                Vec3 s = caster.getPosition(1F).add(0, caster.getEyeHeight() - 0.4, 0).add(d.scale(0.9));
+                double len = 40 * Mth.clamp(age / 6F, 0F, 1F);
+                var hit = mc.level.clip(new ClipContext(s, s.add(d.scale(len)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
+                if (hit.getType() == HitResult.Type.BLOCK) len = hit.getLocation().distanceTo(s);
+                float r1 = 0.55F + p.size() * 0.42F;
+                for (int i = 0; i < 6; i++) {            // shed off the beam's skin
+                    Vec3 q = s.add(d.scale(rnd.nextDouble() * len));
+                    Vec3 o = new Vec3(rnd.nextGaussian(), rnd.nextGaussian(), rnd.nextGaussian()).normalize().scale(r1);
+                    com.xenowarriors.client.compat.DmzKiParticles.spawn("ki_shedding", q.x + o.x, q.y + o.y, q.z + o.z, o.x * 0.06, o.y * 0.06, o.z * 0.06, body, 1F);
+                }
+                Vec3 e = s.add(d.scale(len));
+                com.xenowarriors.client.compat.DmzKiParticles.spawn("ki_splash", e.x, e.y, e.z, rnd.nextGaussian() * 0.2, rnd.nextGaussian() * 0.2, rnd.nextGaussian() * 0.2, body, 1.5F);
+            }
+            case ORB -> {
+                Vec3 d = new Vec3(p.dx(), p.dy(), p.dz());
+                Vec3 c = new Vec3(p.x(), p.y(), p.z()).add(d.scale(0.9 * Math.min(age, p.life())));
+                for (int i = 0; i < 3; i++)              // its ki trail
+                    com.xenowarriors.client.compat.DmzKiParticles.spawn("ki_trail", c.x + rnd.nextGaussian() * 0.2 * p.size(), c.y + rnd.nextGaussian() * 0.2 * p.size(),
+                            c.z + rnd.nextGaussian() * 0.2 * p.size(), -d.x * 0.03, -d.y * 0.03, -d.z * 0.03, body, 1.6F * p.size());
+            }
+            case BURST -> {
+                if (age == 0) com.xenowarriors.client.compat.DmzKiParticles.burst(new Vec3(p.x(), p.y(), p.z()), body, p.size(), rnd);
+            }
+            default -> {}
+        }
     }
 
     // ------------------------------------------------------------------ where things are
