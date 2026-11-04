@@ -220,6 +220,8 @@ public final class ComboClient {
         SWINGS.put(p.getId(), cur);
         STARTED_AT.put(p.getId(), ticks);
         ModNetwork.sendToServer(new ComboStartPacket(hit, heavy));
+        if (style.rhalix()) com.xenowarriors.client.RhalixComboFx.log("start " + style + " hit " + hit + (heavy ? " heavy" : "") + " at " + now
+                + " (prev " + lastStyle + " " + lastHit + ")");
         p.swing(InteractionHand.MAIN_HAND);
         p.resetAttackStrengthTicker();
         // stepping in on the hit (Mikiko dashes in his own way, Rhalix rushes in on his)
