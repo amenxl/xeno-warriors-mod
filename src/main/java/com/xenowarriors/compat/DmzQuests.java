@@ -86,6 +86,44 @@ public final class DmzQuests {
         } catch (Throwable t) { return "? " + t; }
     }
 
+    /** UI test: is DragonMineZ's story mode (saga quests) on? With enable, turns it on (test world only). */
+    public static String storyMode(boolean enable) {
+        try {
+            Object cfg = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getServerConfig").invoke(null);
+            Object g = cfg.getClass().getMethod("getGameplay").invoke(cfg);
+            Object on = g.getClass().getMethod("getStoryModeEnabled").invoke(g);
+            if (enable && !Boolean.TRUE.equals(on)) {
+                try { g.getClass().getMethod("setStoryModeEnabled", Boolean.class).invoke(g, Boolean.TRUE); }
+                catch (NoSuchMethodException e) {
+                    var f = g.getClass().getDeclaredField("storyModeEnabled"); f.setAccessible(true); f.set(g, Boolean.TRUE);
+                }
+                return on + " (now " + g.getClass().getMethod("getStoryModeEnabled").invoke(g) + ")";
+            }
+            return String.valueOf(on);
+        } catch (Throwable t) { return "? " + t; }
+    }
+
+    /** UI test: DragonMineZ's own text for why the quest can't be started here (null = nothing in the way). */
+    public static String blocker(ServerPlayer p, String quest) {
+        try {
+            Object d = data(p);
+            Object def = Class.forName("com.dragonminez.common.quest.QuestRegistry").getMethod("getQuest", String.class).invoke(null, quest);
+            Object c = Class.forName("com.dragonminez.common.quest.QuestAvailabilityChecker").getMethod("describeStartRequirementFailure", def.getClass(), String.class,
+                    net.minecraft.world.entity.player.Player.class, d.getClass()).invoke(null, def, quest, p, d);
+            return c == null ? "nothing" : ((net.minecraft.network.chat.Component) c).getString();
+        } catch (Throwable t) { return "? " + t; }
+    }
+
+    /** UI test: does DragonMineZ count this location objective as met where the player is? */
+    public static String locationMet(ServerPlayer p, String quest, int objective) {
+        try {
+            Object def = Class.forName("com.dragonminez.common.quest.QuestRegistry").getMethod("getQuest", String.class).invoke(null, quest);
+            Object o = ((java.util.List<?>) def.getClass().getMethod("getObjectives").invoke(def)).get(objective);
+            Class<?> obj = Class.forName("com.dragonminez.common.quest.QuestObjective");
+            return String.valueOf(Class.forName("com.dragonminez.common.quest.QuestLocationHelper").getMethod("isLocationConditionMet", ServerPlayer.class, obj).invoke(null, p, o));
+        } catch (Throwable t) { return "? " + t; }
+    }
+
     /** UI test: QuestLocationHelper.isInDimension straight (should be true anywhere now). */
     public static String inDimension(ServerPlayer p, String dim) {
         try {

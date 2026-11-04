@@ -34,14 +34,14 @@ public final class WorldTests {
     private static String area;
 
     public static boolean handles(String focus) {
-        return "dmzworld".equals(focus) || "world".equals(focus) || "efworld".equals(focus);
+        return "dmzworld".equals(focus) || "world".equals(focus) || "efworld".equals(focus) || "dmzefworld".equals(focus);
     }
 
     public static void build(Minecraft mc, String focus, Adder steps, Consumer<Consumer<ServerPlayer>> server, Consumer<CharacterType> character, Consumer<String> log) {
         S = steps; SERVER = server; LOG = log; CHAR = character; area = focus;
         switch (focus) {
             case "dmzworld" -> dmzWorld(mc);
-            case "efworld" -> efWorld(mc);
+            case "efworld", "dmzefworld" -> efWorld(mc);
             default -> world(mc);
         }
     }
@@ -137,7 +137,7 @@ public final class WorldTests {
             List<net.minecraft.world.entity.EntityType<?>> hostile = new ArrayList<>(), friendly = new ArrayList<>();
             for (var t : net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES) {
                 var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(t);
-                if (id == null || !id.getNamespace().equals("dragonminez")) continue;
+                if (id == null || !id.getNamespace().equals("dragonminez") || id.getPath().contains("shenron") || id.getPath().contains("porunga")) continue;
                 if (t.getCategory() == net.minecraft.world.entity.MobCategory.MONSTER && hostile.size() < 3) hostile.add(t);
                 else if (t.getCategory() == net.minecraft.world.entity.MobCategory.CREATURE && friendly.size() < 2) friendly.add(t);
             }
@@ -166,6 +166,7 @@ public final class WorldTests {
             }
         }); }, 5);
         step("dmzworld_mobs", () -> { for (int id : mobs) log("lock-on shows Lv " + com.xenowarriors.client.LockOn.LEVELS.get(id) + " for entity " + id); }, 5);
+        step(null, () -> server(p -> { for (int id : mobs) { Entity e = p.serverLevel().getEntity(id); if (e != null) e.discard(); } }), 5);
         // ---- 2. DragonMineZ level-ups give 3x the stats (and per character)
         int[] got = new int[4];
         step(null, () -> { noDmzScreen(mc); server(p -> log("levelup before: " + dmzState(p) + " multiplier=" + com.xenowarriors.XwConfig.get(com.xenowarriors.XwConfig.DMZ_LEVEL_UP_MULTIPLIER))); }, 30);
@@ -175,7 +176,8 @@ public final class WorldTests {
         step(null, () -> server(p -> log("levelup after spending free points (no extra bonus expected): " + dmzState(p))), 5);
         // per character: Rhalix's own DragonMineZ character
         step(null, () -> { noDmzScreen(mc); CHAR.accept(CharacterType.RHALIX); }, 80);
-        step(null, () -> { noDmzScreen(mc); server(p -> { dmzMake(p); log("percharacter Rhalix start: " + dmzState(p)); }); }, 45);
+        step(null, () -> { noDmzScreen(mc); server(p -> { log("percharacter right after switching to Rhalix (live key " + p.getPersistentData().getCompound("PlayerPersisted").getString("xw_dmz_live") + "): " + dmzState(p)
+                + " screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName())); dmzMake(p); log("percharacter Rhalix start: " + dmzState(p)); }); }, 45);
         step(null, () -> { noDmzScreen(mc); server(p -> { got[2] = forceLevelUp(p); log("percharacter Rhalix forced: raised " + got[2] + " -> " + dmzState(p)); }); }, 45);
         step(null, () -> { noDmzScreen(mc); server(p -> log("percharacter Rhalix after: " + dmzState(p) + " (bonus expected ~" + got[2] * 2 + ")")); }, 5);
         step(null, () -> { noDmzScreen(mc); CHAR.accept(CharacterType.MIKIKO); }, 80);
@@ -196,6 +198,8 @@ public final class WorldTests {
                     + " isInDimension(minecraft:overworld)=" + com.xenowarriors.compat.DmzQuests.inDimension(p, "minecraft:overworld"));
             if (quest[0] == null) return;
             log("quest " + quest[0] + " (objective " + quest[1] + ": be in " + quest[2] + ") startable here=" + com.xenowarriors.compat.DmzQuests.startable(p, quest[0]));
+            log("quest story mode enabled=" + com.xenowarriors.compat.DmzQuests.storyMode(true) + " why not startable: " + com.xenowarriors.compat.DmzQuests.blocker(p, quest[0]));
+            log("quest objective condition met here (QuestLocationHelper)=" + com.xenowarriors.compat.DmzQuests.locationMet(p, quest[0], Integer.parseInt(quest[1])));
             com.xenowarriors.compat.DmzQuests.accept(p, quest[0]);
             log("quest before: " + com.xenowarriors.compat.DmzQuests.progress(p, quest[0], Integer.parseInt(quest[1])));
         }); }, 80);
@@ -212,6 +216,7 @@ public final class WorldTests {
         int[] cam = {-1};
         int[] target = {-1};
         step(null, () -> { noDmzScreen(mc); server(p -> {
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.setYRot(0); p.setXRot(0); p.setYHeadRot(0); p.setYBodyRot(0);
             var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
             h.moveTo(p.getX(), p.getY(), p.getZ() + 12, 180, 0); h.setNoAi(true); h.setInvulnerable(true);
@@ -234,6 +239,7 @@ public final class WorldTests {
         step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.getPersistentData().remove("xw_karma_lock_until");
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
             com.xenowarriors.skill.SkillManager.resetCooldowns(p);
             com.xenowarriors.karma.Karma.add(p, 200);
             com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT);
@@ -286,7 +292,7 @@ public final class WorldTests {
             log(k.id + " seats=" + k.seats + " inside=" + k.insideSeats() + " boarded " + (ok + 1) + " of " + riders + " (refused " + refused + "), one more accepted=" + overflow);
         }), 30);
         step(null, () -> server(p -> { if (p.serverLevel().getEntity(veh[0]) instanceof VehicleEntity e) logRiders(e, up > 0 ? "in the air" : "on the ground"); }), 5);
-        camera(mc, cam, 7.5, 1.0 + up * 0.6, 4, 90F, up > 0 ? -6F : 8F);
+        camera(mc, cam, 8.5, up > 0 ? -0.8 : 1.0, 4, 90F, up > 0 ? 10F : 8F);
         step(shot, () -> {}, 5);
         step(null, () -> {}, 3);
         cameraOff(mc);
@@ -299,6 +305,7 @@ public final class WorldTests {
                 if (hanger == null) { log("no hanger to drop"); return; }
                 Vec3 before = hanger.position();
                 hanger.stopRiding();
+                if (hanger instanceof Mob m) m.setNoAi(false);              // (so it falls)
                 boolean free = hanger.level().noCollision(hanger, hanger.getBoundingBox());
                 log("hanger let go at " + v(before) + " -> dismounted at " + v(hanger.position()) + " room to stand=" + free + " (vehicle at " + v(e.position()) + ")");
             }), 5);
@@ -373,7 +380,7 @@ public final class WorldTests {
     /** The playable characters standing, walking and in a skill pose (front view). */
     private static void poses(Minecraft mc, String tag) {
         for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.ULTIMA, CharacterType.KAERU, CharacterType.KYRIE}) {
-            step(null, () -> { mc.setScreen(null); CHAR.accept(t); server(p -> { p.setYRot(0); p.setXRot(0); }); }, 50);
+            step(null, () -> { mc.setScreen(null); CHAR.accept(t); server(p -> com.xenowarriors.debug.SkillTestRunner.arena(p)); }, 50);
             step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(10F); mc.player.setYRot(0F); }, 10);
             step(tag + "_pose_" + t.getId() + "_idle", () -> {}, 3);
             step(null, () -> mc.options.keyUp.setDown(true), 12);
@@ -420,31 +427,36 @@ public final class WorldTests {
             var b = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
             if (b != null) { b.moveTo(p.getX() + 1.8, p.getY(), p.getZ() + 0.5, 0, 0); b.setNoAi(true); ids[0] = b.getId(); }
             var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(p.serverLevel());
-            if (h != null) { h.moveTo(p.getX() - 1.8, p.getY(), p.getZ() + 0.5, 0, 0); h.setNoAi(true); p.serverLevel().addFreshEntity(h); ids[1] = h.getId(); }
+            if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) dmzMake(p);
+            if (h != null) { h.moveTo(p.getX() - 1.8, p.getY(), p.getZ() + 0.5, 0, 0); h.setYBodyRot(0); h.setYHeadRot(0); h.setNoAi(true); p.serverLevel().addFreshEntity(h); ids[1] = h.getId(); }
             var d = com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get().create(p.serverLevel());
-            if (d != null) { d.moveTo(p.getX() - 3.6, p.getY(), p.getZ() + 0.5, 0, 0); d.setNoAi(true); p.serverLevel().addFreshEntity(d); ids[2] = d.getId(); }
+            if (d != null) { d.moveTo(p.getX() - 3.6, p.getY(), p.getZ() + 0.5, 0, 0); d.setYBodyRot(0); d.setYHeadRot(0); d.setNoAi(true); p.serverLevel().addFreshEntity(d); ids[2] = d.getId(); }
         }), 60);
         Runnable report = () -> log("draws last frame: player " + draws(mc.player) + " | bot " + draws(mc.level.getEntity(ids[0])) + " | townsfolk "
                 + draws(mc.level.getEntity(ids[1])) + " | possessed " + draws(mc.level.getEntity(ids[2])) + " | battle=" + battle(mc));
         step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(12F); mc.player.setYRot(0F); }, 20);
-        step("efworld_idle", report, 3);
+        step(area + "_idle", report, 3);
         step(null, () -> mc.options.keyUp.setDown(true), 12);
-        step("efworld_walk", report, 1);
+        step(area + "_walk", report, 1);
         step(null, () -> mc.options.keyUp.setDown(false), 10);
         step(null, () -> server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "pole1")), 4);
-        step("efworld_attack_0", report, 4);
-        step("efworld_attack_1", report, 20);
+        step(area + "_attack_0", report, 4);
+        step(area + "_attack_1", report, 20);
         step(null, () -> server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD))), 30);
-        step("efworld_sword", report, 3);
+        step(area + "_sword", report, 3);
         step(null, () -> server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.EL_THRUST, 20)), 5);
-        step("efworld_pose_thrust", report, 20);
+        step(area + "_pose_thrust", report, 20);
         step(null, () -> server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.item.ItemStack.EMPTY)), 10);
         step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 10);
-        step("efworld_back", report, 3);
+        step(area + "_back", report, 3);
         step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; mc.player.setXRot(40F); }, 10);
-        step("efworld_firstperson", report, 3);
+        step(area + "_firstperson", report, 3);
+        step(null, () -> server(p -> p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL)), 10);
         step(null, () -> mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)), 10);
-        step("efworld_inventory", report, 3);
+        step(area + "_inventory", report, 3);
+        step(null, () -> com.xenowarriors.client.PlayerStatsScreen.open(), 15);
+        step(area + "_menu", report, 3);
+        step(null, () -> { mc.setScreen(null); server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE)); }, 10);
         step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; }, 5);
         // in a vehicle (our seat poses) and other characters
         step(null, () -> server(p -> {
@@ -452,14 +464,14 @@ public final class WorldTests {
             e.moveTo(p.getX(), p.getY(), p.getZ() + 2, 0, 0); p.serverLevel().addFreshEntity(e); p.startRiding(e, true);
         }), 20);
         step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(15F); }, 10);
-        step("efworld_car", report, 3);
+        step(area + "_car", report, 3);
         step(null, () -> server(p -> { var v = p.getVehicle(); p.stopRiding(); if (v != null) v.discard(); }), 10);
         for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.KAERU, CharacterType.KYRIE}) {
             step(null, () -> { mc.setScreen(null); CHAR.accept(t); server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "none")); }, 60);
             step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(12F); mc.player.setYRot(0F); }, 10);
-            step("efworld_" + t.getId() + "_idle", report, 3);
+            step(area + "_" + t.getId() + "_idle", report, 3);
             step(null, () -> server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, "pole1")), 4);
-            step("efworld_" + t.getId() + "_attack", report, 20);
+            step(area + "_" + t.getId() + "_attack", report, 20);
         }
         step(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 5);
     }
