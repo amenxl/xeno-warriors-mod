@@ -54,15 +54,17 @@ public class HumanWorkGoal extends Goal {
         cooldown = 100 + h.getRandom().nextInt(200);
         craft();
         eat();
+        // home chores only near home: wandered off, it could be in a chunk that isn't loaded (looking there would load it)
+        boolean atHome = h.home() != null && h.home().closerThan(h.blockPosition(), 32) && h.level().isLoaded(h.home());
         if (h.home() == null && count(Items.OAK_PLANKS) + count(Items.COBBLESTONE) >= 40) {
             BlockPos spot = findHutSpot();
             if (spot != null) { startBuild(spot, hutPlan(spot), c -> h.setHome(c)); return true; }
         }
-        if (h.home() != null && farm() != null && h.getRandom().nextInt(3) > 0) {           // tend the farm
+        if (atHome && farm() != null && h.level().isLoaded(farm()) && h.getRandom().nextInt(3) > 0) {           // tend the farm
             BlockPos crop = findCropWork();
             if (crop != null) { job = Job.TEND; target = crop; return true; }
         }
-        if (h.home() != null && farm() == null) {
+        if (atHome && farm() == null) {
             if (count(Items.WHEAT_SEEDS) < 6) {                                               // seeds first
                 target = findGrass();
                 if (target != null) { job = Job.GRASS; return true; }
@@ -72,7 +74,7 @@ public class HumanWorkGoal extends Goal {
             }
         }
         int extras = h.getPersistentData().getInt(EXTRAS);
-        if (h.home() != null && farm() != null && extras < 2 && count(Items.COBBLESTONE) >= 12 && count(Items.OAK_PLANKS) >= 6) {
+        if (atHome && farm() != null && extras < 2 && count(Items.COBBLESTONE) >= 12 && count(Items.OAK_PLANKS) >= 6) {
             BlockPos spot = findSpotNear(h.home(), 1);
             if (spot != null) { startBuild(spot, extras == 0 ? wellPlan(spot) : lampPlan(spot), c -> h.getPersistentData().putInt(EXTRAS, extras + 1)); return true; }
         }
@@ -275,8 +277,9 @@ public class HumanWorkGoal extends Goal {
     private BlockPos findSpotNear(BlockPos home, int r) {
         for (int i = 0; i < 30; i++) {
             double a = h.getRandom().nextDouble() * Math.PI * 2, dist = 6 + r + h.getRandom().nextInt(6);
-            BlockPos c = h.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    home.offset((int) (Math.cos(a) * dist), 0, (int) (Math.sin(a) * dist)));
+            BlockPos at = home.offset((int) (Math.cos(a) * dist), 0, (int) (Math.sin(a) * dist));
+            if (!h.level().isLoaded(at)) continue;
+            BlockPos c = h.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
             if (clearN(c, r)) return c;
         }
         return null;

@@ -60,6 +60,21 @@ public final class Catalog {
         return !(id.contains("saibaman") || id.contains("soldier") || id.contains("cell_jr"));
     }
 
+    /** Season 3 enemies (the Order of Assassins, Distortions): kept out of every pool and list until Season 3 is unlocked. */
+    private static final Set<String> SEASON_3 = Set.of("xenowarriors:order_assassin", "xenowarriors:distortion");
+
+    /** Story content of a season that isn't unlocked yet in this world. */
+    public static boolean locked(String id, net.minecraft.server.MinecraftServer server) {
+        return SEASON_3.contains(id) && !com.xenowarriors.character.Seasons.unlocked(server, 3);
+    }
+
+    /** {@link #all}, minus what's still locked behind a season. */
+    public static List<String> available(ServerLevel level) {
+        List<String> out = new ArrayList<>();
+        for (String id : all(level)) if (!locked(id, level.getServer())) out.add(id);
+        return out;
+    }
+
     public static boolean inTower(String id) {
         if (NOT_IN_TOWER.contains(id)) return false;
         if (sagaCharacter(id)) return false;          // (Broly, Vegetto... on floor 1 was impossible: they only come in Journey's Dragon Ball battles)

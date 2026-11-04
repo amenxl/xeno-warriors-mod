@@ -120,7 +120,7 @@ public final class Collection {
             p.displayClientMessage(Component.literal("Read the Collection Book at the Mountain Village Element School first").withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        List<String> ids = show ? Catalog.all(p.serverLevel()) : List.of();
+        List<String> ids = show ? Catalog.available(p.serverLevel()) : List.of();   // (Season 3 enemies stay off the list until unlocked)
         CompoundTag k = kills(p);
         int[] counts = new int[ids.size()];
         for (int i = 0; i < ids.size(); i++) counts[i] = k.getInt(ids.get(i));

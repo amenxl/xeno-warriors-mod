@@ -41,7 +41,7 @@ public class OrderHideoutFeature extends Feature<NoneFeatureConfiguration> {
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> ctx) {
         if (!com.xenowarriors.recarnet.Recarnet.is(ctx.level().getLevel())) return false;   // (Recarnet only: nothing of the show's world is built in the overworld)
         WorldGenLevel level = ctx.level();
-        if (level.getServer() == null || !Seasons.unlocked(level.getServer(), 3)) return false;
+        if (level.getServer() == null || !Seasons.unlockedForWorldgen(3)) return false;   // (world generation thread: the cached setting)
         BlockPos o = ctx.origin();
         BlockPos c = new BlockPos((o.getX() & ~15) + 8, 0, (o.getZ() & ~15) + 8);
         int lo = 999, hi = -999;

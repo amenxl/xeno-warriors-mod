@@ -31,6 +31,7 @@ public class AddDiscLootModifier extends LootModifier {
                     .apply(inst, AddDiscLootModifier::new)));
 
     public static final RegistryObject<Codec<AddDiscLootModifier>> ADD_DISC = SERIALIZERS.register("add_disc", CODEC);
+    public static final RegistryObject<Codec<SeasonLootModifier>> SEASON_LOCK = SERIALIZERS.register("season_lock", SeasonLootModifier.CODEC);
 
     private final float chance;
 

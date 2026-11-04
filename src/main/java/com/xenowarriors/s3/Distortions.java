@@ -57,6 +57,7 @@ public final class Distortions {
             double a = r.nextDouble() * Math.PI * 2, d = 24 + r.nextInt(17);
             at = p.blockPosition().offset((int) (Math.cos(a) * d), 0, (int) (Math.sin(a) * d));
         }
+        if (!s.isLoaded(at)) at = p.blockPosition();                   // (a short view distance: don't load a chunk for it)
         at = s.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
         DistortionEntity d = S3Entities.DISTORTION.get().create(s);
         if (d == null) return null;

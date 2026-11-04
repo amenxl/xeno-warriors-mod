@@ -49,9 +49,10 @@ public final class NpcSpawner {
             // Skylanders flying overhead
             if (r.nextFloat() < 0.2F && level.getEntitiesOfClass(SkylanderEntity.class, p.getBoundingBox().inflate(96, 160, 96)).size() < 3) {
                 BlockPos at = around(p.blockPosition(), r, 20, 50);
-                int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ());
+                boolean loaded = level.isLoaded(at);                   // (short view distance: never load a chunk to spawn into it)
+                int surface = loaded ? level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) : 0;
                 BlockPos sky = new BlockPos(at.getX(), Math.min(level.getMaxBuildHeight() - 10, Math.max(surface + 25, 110 + r.nextInt(50))), at.getZ());
-                if (level.isEmptyBlock(sky) && level.isEmptyBlock(sky.above())) {
+                if (loaded && level.isEmptyBlock(sky) && level.isEmptyBlock(sky.above())) {
                     SkylanderEntity sk = ModNpcs.SKYLANDER.get().create(level);
                     if (sk != null) {
                         sk.moveTo(sky.getX() + 0.5, sky.getY(), sky.getZ() + 0.5, r.nextFloat() * 360F, 0F);
@@ -73,6 +74,7 @@ public final class NpcSpawner {
     }
 
     private static <T extends net.minecraft.world.entity.Mob> void spawn(ServerLevel level, net.minecraft.world.entity.EntityType<T> type, BlockPos at, boolean persistent) {
+        if (!level.isLoaded(at)) return;
         BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
         if (com.xenowarriors.recarnet.Recarnet.is(level) && top.getY() >= com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y) return;   // (that's a Royal Capital island overhead, not the street)
         if (!level.getBlockState(top.below()).isSolidRender(level, top.below()) || !level.isEmptyBlock(top) || !level.isEmptyBlock(top.above())) return;

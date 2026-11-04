@@ -57,6 +57,13 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
         return TOWER;
     }
 
+    /** {@link #type}, with an Order block's season decided once for all of its chunks (see AuroraCells). */
+    private static int cellType(long seed, int cx, int cz, boolean s3Now) {
+        int t = type(seed, cx, cz, true);
+        if (t != ORDER) return t;
+        return AuroraCells.s3(cx, cz, s3Now) ? ORDER : MIDRISE;
+    }
+
     private static void set(WorldGenLevel l, BlockPos.MutableBlockPos p, int x, int y, int z, BlockState s) { l.setBlock(p.set(x, y, z), s, 2); }
 
     @Override
@@ -64,14 +71,14 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
         WorldGenLevel l = ctx.level();
         int x0 = ctx.origin().getX() & ~15, z0 = ctx.origin().getZ() & ~15;
         long seed = l.getSeed();
-        boolean s3 = l.getServer() != null && Seasons.unlocked(l.getServer(), 3);
+        boolean s3 = Seasons.unlockedForWorldgen(3);                      // (off the server thread: the cached setting)
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         boolean any = false;
         for (int x = x0; x < x0 + 16; x++) for (int z = z0; z < z0 + 16; z++) any |= column(l, p, seed, s3, x, z);
         if (!any) return false;
         // Government facilities and Order cells: the whole building, clipped to this chunk
         int cx = Math.floorDiv(x0, CELL), cz = Math.floorDiv(z0, CELL);
-        int t = type(seed, cx, cz, s3);
+        int t = cellType(seed, cx, cz, s3);
         if (t == GOV || t == ORDER) {
             BlockPos c = new BlockPos(cx * CELL + 27, B + 1, cz * CELL + 27);
             Clip.set(x0, z0, x0 + 15, z0 + 15);
@@ -103,7 +110,7 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
         int lx = Math.floorMod(x, CELL), lz = Math.floorMod(z, CELL);
         if (lx < ROAD || lz < ROAD) { road(l, p, seed, x, z, lx, lz); return true; }
         int cx = Math.floorDiv(x, CELL), cz = Math.floorDiv(z, CELL);
-        int t = type(seed, cx, cz, s3);
+        int t = cellType(seed, cx, cz, s3);
         long h = hash(seed, cx, cz, 2);
         switch (t) {
             case TOWER -> tower(l, p, h, x, z, lx, lz);

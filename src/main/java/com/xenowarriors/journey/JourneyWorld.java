@@ -234,8 +234,7 @@ public final class JourneyWorld {
                 default -> {
                     if (pool == null) {
                         pool = new ArrayList<>();
-                        boolean s3 = com.xenowarriors.character.Seasons.unlocked(l.getServer(), 3);
-                        for (String id : Catalog.all(l)) if (Catalog.inTower(id) && (s3 || !id.equals("xenowarriors:order_assassin"))) pool.add(id);
+                        for (String id : Catalog.available(l)) if (Catalog.inTower(id)) pool.add(id);
                     }
                     if (!pool.isEmpty()) mob = create(l, pool.get(rnd.nextInt(pool.size())), at);
                 }

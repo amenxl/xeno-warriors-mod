@@ -1,0 +1,11 @@
+{
+  "type": "xenowarriors:season_lock",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "xenowarriors:chests/gov_facility"
+    }
+  ],
+  "season": 2,
+  "items": ["xenowarriors:aurora_medicine"]
+}

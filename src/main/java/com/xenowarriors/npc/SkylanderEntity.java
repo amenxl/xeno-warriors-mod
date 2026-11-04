@@ -259,7 +259,7 @@ public class SkylanderEntity extends PathfinderMob {
         }
         Vec3 dest;
         if (landAt != null) {
-            BlockPos ground = level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, landAt);
+            BlockPos ground = level().isLoaded(landAt) ? level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, landAt) : landAt;   // (not loading a chunk just to look)
             dest = Vec3.atBottomCenterOf(ground);
             if (pos.distanceTo(dest) < 1.2 || (onGround() && pos.distanceTo(dest) < 4)) {
                 setFlying(false);
@@ -295,7 +295,7 @@ public class SkylanderEntity extends PathfinderMob {
         }
         Vec3 dest;
         if (landAt != null) {
-            BlockPos ground = level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, landAt);
+            BlockPos ground = level().isLoaded(landAt) ? level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, landAt) : landAt;   // (not loading a chunk just to look)
             if (ground.getY() < islandHome.getY() - 12) { landAt = islandHome; ground = islandHome; }      // (off the edge: aim for the middle)
             dest = Vec3.atBottomCenterOf(ground);
             if (pos.distanceTo(dest) < 1.2 || (onGround() && pos.distanceTo(dest) < 4)) {

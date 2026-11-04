@@ -31,6 +31,8 @@ public class GovShopScreen extends Screen {
     private int left() { return width / 2 - panelW() / 2; }
     private int top() { return Math.max(44, height / 2 - 110); }
     private long price(int i) { return GovShop.OFFERS.get(i).price() * (100 - discount) / 100; }
+    /** Season 2/3 stock this world hasn't unlocked: shown as "Locked", not by name. */
+    private static boolean locked(int i) { return GovShop.OFFERS.get(i).season() > com.xenowarriors.client.ClientSkillState.season(); }
 
     @Override
     protected void init() {
@@ -42,7 +44,7 @@ public class GovShopScreen extends Screen {
             if (y + ROW > height - 24) continue;
             Button b = addRenderableWidget(Button.builder(Component.literal("Buy"), bt -> ModNetwork.sendToServer(new GovShopPacket(0, 0, idx)))
                     .bounds(x + cw - 38, y + 3, 34, 18).build());
-            b.active = creative || money >= price(i);
+            b.active = !locked(i) && (creative || money >= price(i));
         }
     }
 
@@ -64,6 +66,11 @@ public class GovShopScreen extends Screen {
             boolean hov = mx >= x && mx < x + cw && my >= y && my < y + ROW - 2;
             g.fill(x, y, x + cw, y + ROW - 2, hov ? 0xC0183048 : 0xB00E1A28);
             g.fill(x, y, x + 2, y + ROW - 2, 0xFF40C8FF);
+            if (locked(i)) {
+                g.drawString(font, "Locked", x + 25, y + 3, 0xFF7A8794, false);
+                g.drawString(font, "Season " + o.season(), x + 25, y + 13, 0xFF5A6774, false);
+                continue;
+            }
             ItemStack icon = o.make().get();
             g.renderItem(icon, x + 5, y + 4);
             g.drawString(font, o.name(), x + 25, y + 3, 0xFFFFFFFF, false);

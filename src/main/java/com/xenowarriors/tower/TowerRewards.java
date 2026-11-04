@@ -23,7 +23,7 @@ public final class TowerRewards {
     /** How many Collection entries this player has finished. */
     public static int completed(ServerPlayer p) {
         int n = 0;
-        for (String id : Catalog.all(p.serverLevel())) if (Collection.count(p, id) >= Collection.MAX) n++;
+        for (String id : Catalog.available(p.serverLevel())) if (Collection.count(p, id) >= Collection.MAX) n++;
         return n;
     }
 

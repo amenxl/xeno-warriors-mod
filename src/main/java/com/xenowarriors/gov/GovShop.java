@@ -25,10 +25,13 @@ import java.util.function.Supplier;
  * for a facility break-in is refused.
  */
 public final class GovShop {
-    public record Offer(String name, String desc, long price, Supplier<ItemStack> make) {}
+    /** season: the story season it's from (2/3 stay off the shelf until /xeno season unlock). */
+    public record Offer(String name, String desc, long price, Supplier<ItemStack> make, int season) {
+        public Offer(String name, String desc, long price, Supplier<ItemStack> make) { this(name, desc, price, make, 1); }
+    }
 
     public static final List<Offer> OFFERS = List.of(
-            new Offer("Aurora Medicine", "Slows the Aurora virus", 150, () -> new ItemStack(com.xenowarriors.item.ModItems.AURORA_MEDICINE.get())),
+            new Offer("Aurora Medicine", "Slows the Aurora virus", 150, () -> new ItemStack(com.xenowarriors.item.ModItems.AURORA_MEDICINE.get()), 2),   // (the virus is Season 2)
             new Offer("Med Pack", "Strong healing", 100, () -> PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.STRONG_HEALING)),
             new Offer("Data Shard", "Ultima's Data", 120, () -> new ItemStack(com.xenowarriors.item.ModItems.DATA_SHARD.get())),
             new Offer("Speed Mod", "Human mod: Speed II, 10 min", 400, () -> new ItemStack(GovItems.SPEED_MOD.get())),
@@ -104,6 +107,10 @@ public final class GovShop {
         if (idx < 0 || idx >= OFFERS.size() || !atTerminal(p)) return;
         if (refuse(p) != null) { open(p); return; }
         Offer o = OFFERS.get(idx);
+        if (!com.xenowarriors.character.Seasons.unlocked(p.server, o.season())) {
+            p.displayClientMessage(Component.literal("Season " + o.season() + " content - locked (/xeno season unlock " + o.season() + ")").withStyle(ChatFormatting.RED), true);
+            return;
+        }
         long cost = price(p, o);
         if (!p.isCreative() && !Money.take(p, cost)) {
             p.displayClientMessage(Component.literal("Card declined - you need " + Money.fmt(cost) + " Money.").withStyle(ChatFormatting.RED), true);

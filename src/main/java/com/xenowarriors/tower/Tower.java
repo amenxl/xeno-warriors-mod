@@ -241,10 +241,9 @@ public final class Tower {
         ServerPlayer leader = server.getPlayerList().getPlayer(r.leader);
         if (leader == null) for (UUID id : r.players) { leader = server.getPlayerList().getPlayer(id); if (leader != null) { r.leader = id; break; } }
         if (leader == null) return out;
-        List<String> all = Catalog.all(leader.serverLevel());
-        boolean s3 = com.xenowarriors.character.Seasons.unlocked(server, 3);
+        List<String> all = Catalog.available(leader.serverLevel());   // (no Season 3 enemies until it's unlocked - in the fallback below too)
         for (String id : all) {
-            if (!Catalog.inTower(id) || (!s3 && id.equals("xenowarriors:order_assassin"))) continue;
+            if (!Catalog.inTower(id)) continue;
             boolean unfinished = false;
             for (UUID u : r.players) { ServerPlayer m = server.getPlayerList().getPlayer(u); if (m != null && Collection.count(m, id) < Collection.MAX) unfinished = true; }
             if (unfinished) out.add(id);
