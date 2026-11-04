@@ -109,7 +109,8 @@ public final class HealingPods {
         CLOSE.remove(k);
         Direction f = st.getValue(HealingPodBlock.FACING);
         Vec3 c0 = center(base);
-        e.teleportTo(c0.x, c0.y, c0.z);
+        if (e instanceof ServerPlayer sp0) sp0.connection.teleport(c0.x, c0.y, c0.z, f.toYRot(), 0F);     // (facing out of the glass)
+        else e.teleportTo(c0.x, c0.y, c0.z);
         e.setYRot(f.toYRot()); e.setYHeadRot(f.toYRot()); e.setYBodyRot(f.toYRot()); e.setXRot(0);
         e.setDeltaMovement(Vec3.ZERO);
         if (e instanceof Mob m) { m.getNavigation().stop(); m.setTarget(null); }
