@@ -48,7 +48,8 @@ public abstract class LivingEntityRendererSoulMixin {
 
     @Redirect(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"))
+                    target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"),
+            require = 0)   // (another mod redirecting the same call wins: the soul tint is lost, the game doesn't crash)
     private void xenowarriors$soulColor(EntityModel<?> model, PoseStack pose, VertexConsumer buffer, int light, int overlay,
                                         float r, float g, float b, float a) {
         if (xenowarriors$current != null) {
