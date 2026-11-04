@@ -97,29 +97,32 @@ public final class ModesTests {
             }
             pods[0] = b.offset(0, 0, 4); pods[1] = b.offset(4, 0, 4); pods[2] = b.offset(-4, 0, 4);
             for (BlockPos q : pods) placePod(lv, q, Direction.NORTH);
-            p.teleportTo(b.getX() + .5, b.getY(), b.getZ() + .5); p.setYRot(0); p.setXRot(0);
+            p.teleportTo(b.getX() + 8.5, b.getY(), b.getZ() - 4.5); p.setYRot(0); p.setXRot(0);
             log("pods placed at " + pods[0].toShortString() + " / " + pods[1].toShortString() + " / " + pods[2].toShortString() + " state " + podState(lv, pods[0]));
         }); }, 40));
-        cam(mc, l, p -> new double[]{pods[0].getX() + .5, pods[0].getY() + 0.4, pods[0].getZ() - 3.6, 0, -8});
+        // (an armor stand's eyes are ~1.75 above its feet)
+        cam(mc, l, p -> new double[]{pods[0].getX() + .5, pods[0].getY() - 0.4, pods[0].getZ() - 4.2, 0, -6});
         l.add(new Step("modes_pod_empty", () -> {}, 3));
         cam(mc, l, p -> new double[]{pods[0].getX() + 4.5, pods[0].getY() + 2.5, pods[0].getZ() - 4.5, 45, 18});
         l.add(new Step("modes_pod_row", () -> {}, 3));
         // the player resting inside (fixed rest, so the pictures land at the right moments)
         l.add(new Step(null, () -> UiTest.server(p -> {
-            HealingPods.WAKE = 60;
+            HealingPods.WAKE = 100;
             p.setHealth(6F);
-            String why = HealingPods.start(p.serverLevel(), pods[0], p, 80, () -> log("pod: player stepped out at hp=" + p.getHealth()));
+            String why = HealingPods.start(p.serverLevel(), pods[0], p, 140, () -> log("pod: player stepped out at hp=" + p.getHealth()));
             log("pod start (player) -> " + (why == null ? "ok" : why) + " state " + podState(p.serverLevel(), pods[0]) + " inPod=" + HealingPods.inPod(p));
             log("pod second user refused: " + HealingPods.start(p.serverLevel(), pods[0], EntityType.ZOMBIE.create(p.serverLevel()), -1, null));
-        }), 30));
-        cam(mc, l, p -> new double[]{pods[0].getX() + .5, pods[0].getY() + 1.55, pods[0].getZ() - 2.2, 0, 4});
+        }), 10));
+        cam(mc, l, p -> new double[]{pods[0].getX() + .5, pods[0].getY() - 0.1, pods[0].getZ() - 2.0, 0, 2});
         l.add(new Step("modes_pod_sleeping", () -> UiTest.server(p -> log("pod asleep: " + podState(p.serverLevel(), pods[0]) + " asleep=" + HealingPods.asleep(p) + " face=" + com.xenowarriors.client.pod.PodFace.face(mc.player))), 3));
-        cam(mc, l, p -> new double[]{pods[0].getX() + 3, pods[0].getY() + 1.8, pods[0].getZ() - 3, 45, 10});
+        cam(mc, l, p -> new double[]{pods[0].getX() + 2.6, pods[0].getY() + 0.2, pods[0].getZ() - 2.6, 45, 8});
         l.add(new Step("modes_pod_sleeping_side", () -> {}, 3));
-        l.add(new Step(null, () -> {}, 40));
-        cam(mc, l, p -> new double[]{pods[0].getX() + .5, pods[0].getY() + 1.55, pods[0].getZ() - 2.2, 0, 4});
+        cam(mc, l, p -> new double[]{pods[0].getX() + .5, pods[0].getY() - 0.1, pods[0].getZ() - 2.3, 0, 2});
+        l.add(new Step(null, () -> UiTest.server(p -> log("pod before waking: asleep=" + HealingPods.asleep(p))), 1));
+        // wait for the doors (the rest is 80 ticks): poll, then picture
+        for (int i = 0; i < 14; i++) l.add(new Step(null, () -> {}, 5));
         l.add(new Step("modes_pod_waking", () -> UiTest.server(p -> log("pod waking: " + podState(p.serverLevel(), pods[0]) + " asleep=" + HealingPods.asleep(p) + " inPod=" + HealingPods.inPod(p) + " face=" + com.xenowarriors.client.pod.PodFace.face(mc.player))), 3));
-        l.add(new Step(null, () -> {}, 60));
+        l.add(new Step(null, () -> {}, 130));
         l.add(new Step("modes_pod_out", () -> UiTest.server(p -> log("pod after: " + podState(p.serverLevel(), pods[0]) + " inPod=" + HealingPods.inPod(p) + " player z-offset=" + String.format("%.2f", p.getZ() - (pods[0].getZ() + .5)))), 3));
         // a real heal (natural length): health over time, cooldown afterwards
         l.add(new Step(null, () -> UiTest.server(p -> {
@@ -133,22 +136,26 @@ public final class ModesTests {
                 + " cooldown refuse: " + HealingPods.start(p.serverLevel(), pods[2], p, -1, null))), 5));
         l.add(new Step(null, () -> UiTest.server(p -> { if (HealingPods.inPod(p)) HealingPods.wake(p); }), 40));
         // a bot low on health walks to a pod by itself
+        cam(mc, l, p -> new double[]{pods[1].getX() + 9, pods[1].getY() + 5, pods[1].getZ() - 10, 35, 25});
         l.add(new Step(null, () -> UiTest.server(p -> {
             p.teleportTo(pods[0].getX() + .5, pods[0].getY(), pods[0].getZ() - 9.5);
             var b = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.LOGAN, null);
             if (b == null) { log("bot spawn failed"); return; }
-            b.teleportTo(pods[1].getX() + 6.5, pods[1].getY(), pods[1].getZ() - 8.5);
+            b.teleportTo(pods[1].getX() + 9.5, pods[1].getY(), pods[1].getZ() - 9.5);
             b.setHealth(b.getMaxHealth() * 0.25F);
             bot[0] = b.getId();
             log("bot " + b.character().getId() + " hp=" + b.getHealth() + "/" + b.getMaxHealth() + " distToPod=" + String.format("%.1f", Math.sqrt(b.blockPosition().distSqr(pods[1]))));
-        }), 45));
-        cam(mc, l, p -> new double[]{pods[1].getX() + 9, pods[1].getY() + 5, pods[1].getZ() - 10, 35, 25});
+        }), 30));
         l.add(new Step("modes_bot_walking", () -> UiTest.server(p -> { if (p.serverLevel().getEntity(bot[0]) instanceof Mob b)
             log("bot walking: pos=" + b.blockPosition().toShortString() + " dist=" + String.format("%.1f", Math.sqrt(b.blockPosition().distSqr(pods[1]))) + " inPod=" + HealingPods.inPod(b)); }), 3));
-        for (int i = 0; i < 8; i++) l.add(new Step(null, () -> UiTest.server(p -> { if (p.serverLevel().getEntity(bot[0]) instanceof Mob b)
-            log("bot t: dist=" + String.format("%.1f", Math.sqrt(b.blockPosition().distSqr(pods[1]))) + " inPod=" + HealingPods.inPod(b) + " hp=" + String.format("%.1f", b.getHealth()) + " " + podState(p.serverLevel(), pods[1])); }), 20));
-        cam(mc, l, p -> new double[]{pods[1].getX() + .5, pods[1].getY() + 1.55, pods[1].getZ() - 2.2, 0, 4});
-        l.add(new Step("modes_bot_in_pod", () -> {}, 3));
+        for (int i = 0; i < 10; i++) {
+            if (i == 3) {
+                cam(mc, l, p -> new double[]{pods[1].getX() + .5, pods[1].getY() - 0.1, pods[1].getZ() - 2.0, 0, 2});
+                l.add(new Step("modes_bot_in_pod", () -> {}, 3));
+            }
+            l.add(new Step(null, () -> UiTest.server(p -> { if (p.serverLevel().getEntity(bot[0]) instanceof Mob b)
+                log("bot t: dist=" + String.format("%.1f", Math.sqrt(b.blockPosition().distSqr(pods[1]))) + " inPod=" + HealingPods.inPod(b) + " hp=" + String.format("%.1f", b.getHealth()) + " " + podState(p.serverLevel(), pods[1])); }), 15));
+        }
         // a Gov worker, hurt, uses the third pod
         l.add(new Step(null, () -> UiTest.server(p -> {
             var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel());
@@ -160,10 +167,14 @@ public final class ModesTests {
             npc[0] = g.getId();
             log("gov worker hp=" + g.getHealth() + "/" + g.getMaxHealth());
         }), 20));
-        for (int i = 0; i < 8; i++) l.add(new Step(null, () -> UiTest.server(p -> { if (p.serverLevel().getEntity(npc[0]) instanceof Mob g)
-            log("gov t: dist=" + String.format("%.1f", Math.sqrt(g.blockPosition().distSqr(pods[2]))) + " inPod=" + HealingPods.inPod(g) + " hp=" + String.format("%.1f", g.getHealth())); }), 20));
-        cam(mc, l, p -> new double[]{pods[2].getX() + .5, pods[2].getY() + 1.6, pods[2].getZ() - 2.6, 0, 6});
-        l.add(new Step("modes_npc_in_pod", () -> {}, 3));
+        for (int i = 0; i < 8; i++) {
+            if (i == 3) {
+                cam(mc, l, p -> new double[]{pods[2].getX() + .5, pods[2].getY() - 0.1, pods[2].getZ() - 2.2, 0, 2});
+                l.add(new Step("modes_npc_in_pod", () -> {}, 3));
+            }
+            l.add(new Step(null, () -> UiTest.server(p -> { if (p.serverLevel().getEntity(npc[0]) instanceof Mob g)
+                log("gov t: dist=" + String.format("%.1f", Math.sqrt(g.blockPosition().distSqr(pods[2]))) + " inPod=" + HealingPods.inPod(g) + " hp=" + String.format("%.1f", g.getHealth())); }), 15));
+        }
         me(mc, l);
         // an old-style pod (no doors/fluid properties set) still works: the default state is closed + empty
         l.add(new Step(null, () -> UiTest.server(p -> log("default pod state: " + com.xenowarriors.sky.ModBlocks.HEALING_POD.get().defaultBlockState())), 5));
@@ -307,13 +318,10 @@ public final class ModesTests {
         }); mc.options.hideGui = false; }, 80));
         l.add(new Step(null, () -> { mc.setScreen(null); UiTest.server(p -> { com.xenowarriors.journey.Journey.testSet(p, CharacterType.MIKIKO, 0.3F, -1); com.xenowarriors.journey.Journey.testSet(p, CharacterType.KYRIE, 0.5F, -1); }); }, 10));
         // the healing pod step
-        l.add(new Step(null, () -> { mc.setScreen(null); UiTest.server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.HEAL)); }, 30));
-        cam(mc, l, p -> new double[]{p.getX(), p.getY() + 0.9, p.getZ() - 2.7, 0, 5});
-        l.add(new Step("modes_journey_pod", () -> { mc.setScreen(null); UiTest.server(p -> log("journey pod: inPod=" + HealingPods.inPod(p) + " asleep=" + HealingPods.asleep(p) + " hp mikiko=" + com.xenowarriors.journey.Journey.class.getSimpleName())); }, 3));
-        cam(mc, l, p -> new double[]{p.getX() + 4, p.getY() + 3, p.getZ() - 5, 35, 20});
-        l.add(new Step("modes_journey_pod_wide", () -> mc.setScreen(null), 3));
-        l.add(new Step(null, () -> {}, 80));
-        me(mc, l);
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); UiTest.server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.HEAL)); }, 20));
+        l.add(new Step("modes_journey_pod", () -> { mc.setScreen(null); UiTest.server(p -> log("journey pod: inPod=" + HealingPods.inPod(p) + " asleep=" + HealingPods.asleep(p) + " pos=" + p.blockPosition().toShortString())); }, 3));
+        l.add(new Step(null, () -> {}, 100));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
         l.add(new Step("modes_journey_pod_done", () -> { mc.setScreen(null); UiTest.server(p -> log("journey pod done: inPod=" + HealingPods.inPod(p) + " hp=" + p.getHealth() + "/" + p.getMaxHealth())); }, 3));
         // a battle, then the results with Continue
         l.add(new Step(null, () -> { mc.setScreen(null); UiTest.server(p -> com.xenowarriors.journey.Journey.testJump(p, com.xenowarriors.journey.JourneyRules.BATTLE)); }, 30));
