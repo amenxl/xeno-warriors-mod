@@ -22,7 +22,11 @@ public record SelectCharacterPacket(CharacterType type) {
         ServerPlayer player = ctx.get().getSender();
         if (player == null || msg.type == CharacterType.NONE || msg.type == CharacterType.YOU) return;   // (You characters go through their slots screen)
         CharacterType now = com.xenowarriors.character.ModCapabilities.getType(player);
-        String blocked = now == msg.type || now == CharacterType.NONE ? null : CharacterManager.switchBlocked(player);   // (no one yet: always pick)
+        if (now == msg.type) {                // picked who they already are: nothing changes (re-picking used to reset every cooldown, even mid-fight)
+            CharacterManager.syncToTrackingAndSelf(player);
+            return;
+        }
+        String blocked = now == CharacterType.NONE ? null : CharacterManager.switchBlocked(player);   // (no one yet: always pick)
         if (blocked != null) {                // (a Tower floor, a Journey, down, a duel, a boss fight, in combat...)
             player.displayClientMessage(net.minecraft.network.chat.Component.literal(blocked).withStyle(net.minecraft.ChatFormatting.RED), true);
             return;
@@ -37,7 +41,7 @@ public record SelectCharacterPacket(CharacterType type) {
             return;
         }
         ServerPlayer other = com.xenowarriors.character.CharacterLock.takenBy(player, msg.type);
-        if (other != null && com.xenowarriors.character.ModCapabilities.getType(player) != msg.type) {
+        if (other != null) {
             if (com.xenowarriors.character.CharacterLock.anyFree(player)) {
                 player.displayClientMessage(net.minecraft.network.chat.Component.literal(other.getGameProfile().getName() + " is already playing " + msg.type.getDisplayName().getString() + " - pick someone else!").withStyle(net.minecraft.ChatFormatting.RED), false);
                 ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);

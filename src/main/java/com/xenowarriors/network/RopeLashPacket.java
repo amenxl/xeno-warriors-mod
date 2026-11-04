@@ -13,6 +13,6 @@ public record RopeLashPacket() {
 
     public static void handle(RopeLashPacket m, Supplier<NetworkEvent.Context> ctx) {
         var p = ctx.get().getSender();
-        if (p != null) com.xenowarriors.mikiko.RopeBlade.lash(p);
+        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) com.xenowarriors.mikiko.RopeBlade.lash(p);
     }
 }

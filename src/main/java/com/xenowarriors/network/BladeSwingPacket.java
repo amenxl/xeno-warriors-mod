@@ -15,6 +15,6 @@ public record BladeSwingPacket() {
 
     public static void handle(BladeSwingPacket m, Supplier<NetworkEvent.Context> ctx) {
         var p = ctx.get().getSender();
-        if (p != null) com.xenowarriors.mikiko.HekubladeSwing.swingAtAir(p);
+        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) com.xenowarriors.mikiko.HekubladeSwing.swingAtAir(p);
     }
 }

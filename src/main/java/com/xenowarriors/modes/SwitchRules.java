@@ -34,6 +34,7 @@ public final class SwitchRules {
         if (com.xenowarriors.journey.Journey.inRun(p)) return "You can't switch characters on a Journey - pick your team before each battle";
         if (com.xenowarriors.tower.Tower.fighting(p)) return "You can't switch characters during a Tower floor - wait until it's cleared";
         if (com.xenowarriors.party.Duels.isKnockedOut(p)) return "You can't switch characters while you're down";
+        if (com.xenowarriors.you.YouRaces.isSeed(p)) return "You can't switch characters while you're a seed - sprout first";
         if (com.xenowarriors.party.Duels.inDuel(p)) return "You can't switch characters in the middle of a duel";
         if (com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(p)) return "You can't switch characters while you're sealed in the Hekublade";
         if (com.xenowarriors.vr.Vr.inVr(p)) return "You can't switch characters in a VR challenge";

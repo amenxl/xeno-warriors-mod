@@ -152,7 +152,7 @@ public final class SkillManager {
     }
 
     private static void useSkillNow(ServerPlayer player, int slot) {
-        if (com.xenowarriors.party.Duels.isKnockedOut(player)) return;
+        if (com.xenowarriors.party.Duels.cantAct(player)) return;          // down, or a seed
         if (com.xenowarriors.item.PhoneItem.onCall(player)) return;          // hang up first      // can't do anything while knocked out
         if (com.xenowarriors.ka.Clashes.inClash(player)) return;          // busy clashing
         if (slot == SUPER_SLOT) { useSuper(player); return; }

@@ -517,9 +517,16 @@ public final class PartyBots {
         f.moveTo(b.getX(), b.getY(), b.getZ(), yaw, pitch);
         f.setYHeadRot(yaw);
         f.setOnGround(b.onGround());
+        // the stand-in mirrors the bot's state, so what the skill does to its user lands on the bot (see toBot)
+        f.removeAllEffects();
+        f.setDeltaMovement(Vec3.ZERO);
+        f.setHealth(Math.max(1F, f.getMaxHealth() * b.getHealth() / b.getMaxHealth()));
+        float h0 = f.getHealth();
+        Vec3 at0 = f.position();
         boolean used;
         ANIM_SENT.remove(b.getUUID());
         try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); } catch (Throwable t) { used = false; }
+        toBot(b, f, h0, at0);
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());
@@ -528,6 +535,23 @@ public final class PartyBots {
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
             if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);   // (a skill without one of its own)
         } else b.skillReady[slot] = now + 60;
+    }
+
+    /**
+     * A skill's effect on its own user (a self-buff or its cost, a heal, a dash or a blink) went to the stand-in, which
+     * never ticks or moves: hand it to the bot. Effects move over (the stand-in keeps none - they'd never wear off on it),
+     * health changes carry over as a share of max health, a push becomes the bot's, and a teleport moves the bot.
+     */
+    private static void toBot(PartyBotEntity b, FakePlayer f, float h0, Vec3 at0) {
+        try {
+            for (net.minecraft.world.effect.MobEffectInstance e : new ArrayList<>(f.getActiveEffects())) b.addEffect(new net.minecraft.world.effect.MobEffectInstance(e));
+            f.removeAllEffects();
+            float dh = f.getHealth() - h0;
+            if (Math.abs(dh) > 0.01F && b.isAlive()) b.setHealth(Math.max(1F, Math.min(b.getMaxHealth(), b.getHealth() + dh / f.getMaxHealth() * b.getMaxHealth())));
+            Vec3 v = f.getDeltaMovement();
+            if (v.lengthSqr() > 1.0E-4) { b.setDeltaMovement(b.getDeltaMovement().add(v)); b.hurtMarked = true; f.setDeltaMovement(Vec3.ZERO); }
+            if (f.level() == b.level() && f.position().distanceToSqr(at0) > 1.0 && f.position().distanceToSqr(at0) < 64 * 64) b.teleportTo(f.getX(), f.getY(), f.getZ());
+        } catch (Throwable ignored) {}
     }
 
     // ---------------------------------------------------------------- mining mode

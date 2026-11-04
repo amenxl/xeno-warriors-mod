@@ -12,6 +12,6 @@ public record XenoCounterPacket(int caster, int slot) {
     public static XenoCounterPacket decode(FriendlyByteBuf b) { return new XenoCounterPacket(b.readVarInt(), b.readVarInt()); }
     public static void handle(XenoCounterPacket m, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer p = ctx.get().getSender();
-        if (p != null) com.xenowarriors.skill.XenoBlast.counter(p, m.caster, m.slot);
+        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) com.xenowarriors.skill.XenoBlast.counter(p, m.caster, m.slot);
     }
 }

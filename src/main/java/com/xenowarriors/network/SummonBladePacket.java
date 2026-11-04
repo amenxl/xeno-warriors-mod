@@ -17,6 +17,6 @@ public record SummonBladePacket() {
 
     public static void handle(SummonBladePacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
-        if (player != null) Hekublade.toggle(player);
+        if (player != null && !com.xenowarriors.party.Duels.cantAct(player)) Hekublade.toggle(player);
     }
 }

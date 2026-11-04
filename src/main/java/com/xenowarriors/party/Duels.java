@@ -95,6 +95,14 @@ public final class Duels {
         return KNOCKED.containsKey(p.getUUID()) || DOWNED.containsKey(p.getUUID());
     }
 
+    /**
+     * Can't fight or use anything right now: knocked out / downed, or a You Seedling lying as a seed. Every action key
+     * (skills, KA, transformations, the Hekublade's moves, its dimension, combos) checks this.
+     */
+    public static boolean cantAct(Player p) {
+        return p != null && (isKnockedOut(p) || com.xenowarriors.you.YouRaces.isSeed(p));
+    }
+
     /** A party, or bot teammates of their own: someone who could revive them. */
     public static boolean hasTeam(ServerPlayer p) {
         return Parties.inParty(p) || !com.xenowarriors.bot.PartyBots.bots(p).isEmpty();
@@ -297,8 +305,8 @@ public final class Duels {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttack(LivingAttackEvent event) {
-        if (event.getSource().getEntity() instanceof Player att && isKnockedOut(att)) {
-            event.setCanceled(true);           // someone who's down can't fight
+        if (event.getSource().getEntity() instanceof Player att && cantAct(att)) {
+            event.setCanceled(true);           // someone who's down (or a seed) can't fight
             return;
         }
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
@@ -485,7 +493,7 @@ public final class Duels {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttackEntity(net.minecraftforge.event.entity.player.AttackEntityEvent event) {
-        if (isKnockedOut(event.getEntity())) event.setCanceled(true);
+        if (cantAct(event.getEntity())) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

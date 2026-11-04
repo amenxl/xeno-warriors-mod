@@ -13,6 +13,6 @@ public record RopeThrowPacket(int targetId) {
 
     public static void handle(RopeThrowPacket m, Supplier<NetworkEvent.Context> ctx) {
         var p = ctx.get().getSender();
-        if (p != null) com.xenowarriors.mikiko.RopeBlade.throwBlade(p, m.targetId);
+        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) com.xenowarriors.mikiko.RopeBlade.throwBlade(p, m.targetId);
     }
 }

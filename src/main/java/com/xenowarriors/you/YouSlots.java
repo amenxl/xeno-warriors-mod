@@ -43,6 +43,7 @@ public final class YouSlots {
         }
         switch (action) {
             case YouActionPacket.PLAY -> {
+                if (d.getType() == CharacterType.YOU && d.youSlot == slot) { send(p, false); return; }   // already playing it (re-picking used to reset every cooldown)
                 if (!CharacterManager.setYou(p, slot)) p.displayClientMessage(Component.literal("That slot is empty").withStyle(ChatFormatting.RED), true);
                 else send(p, false);
             }

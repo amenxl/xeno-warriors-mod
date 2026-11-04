@@ -11,6 +11,6 @@ public record ComboHitPacket(int target, int hit, boolean heavy) {
     public static ComboHitPacket decode(FriendlyByteBuf b) { return new ComboHitPacket(b.readVarInt(), b.readVarInt(), b.readBoolean()); }
     public static void handle(ComboHitPacket m, Supplier<NetworkEvent.Context> ctx) {
         var p = ctx.get().getSender();
-        if (p != null) com.xenowarriors.combat.ComboServer.strike(p, m.target, m.hit, m.heavy);
+        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) com.xenowarriors.combat.ComboServer.strike(p, m.target, m.hit, m.heavy);
     }
 }
