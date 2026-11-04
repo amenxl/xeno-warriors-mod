@@ -425,6 +425,12 @@ public final class MikikoAnimations {
     }
 
     /** He's used his double jump in this jump, at least `ticks` ago (so a third jump doesn't fire on the same press). */
+    /** How far he's sat down right now (0 standing, 1 sitting) - for tests. */
+    public static float sitWeight(Player p) {
+        State s = STATES.get(p.getId());
+        return s == null ? 0F : s.sit;
+    }
+
     public static boolean doubleJumpedBefore(Player p, int ticks) {
         State s = STATES.get(p.getId());
         return s != null && s.doubleJumped && p.tickCount - s.jumpStart >= ticks;
