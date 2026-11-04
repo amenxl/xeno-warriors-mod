@@ -93,7 +93,7 @@ public final class Allies {
         // two players' things in a duel (their souls, pets): fair game too
         UUID sa = side(a), sb = side(b);
         if (sa != null && sb != null && !sa.equals(sb) && a.level() instanceof ServerLevel l
-                && l.getPlayerByUUID(sa) instanceof Player pa && l.getPlayerByUUID(sb) instanceof Player pb) return Duels.dueling(pa, pb);
+                && l.getPlayerByUUID(sa) != null && l.getPlayerByUUID(sb) != null) return Duels.dueling(l.getPlayerByUUID(sa), l.getPlayerByUUID(sb));
         return false;
     }
 
@@ -103,8 +103,9 @@ public final class Allies {
         var key = src.typeHolder().unwrapKey().orElse(null);
         if (key != null && key.location().getNamespace().equals(XenoWarriors.MOD_ID)) return true;
         Entity d = src.getDirectEntity();
-        return d != null && d != src.getEntity() && net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(d.getType()) instanceof net.minecraft.resources.ResourceLocation id
-                && id.getNamespace().equals(XenoWarriors.MOD_ID) && !(d instanceof LivingEntity);
+        if (d == null || d == src.getEntity() || d instanceof LivingEntity) return false;
+        var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(d.getType());
+        return id != null && id.getNamespace().equals(XenoWarriors.MOD_ID);
     }
 
     /** A skill's explosion (or one set off inside a skill) pushes and hurts only the other side. */
