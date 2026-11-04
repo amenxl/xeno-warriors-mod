@@ -287,7 +287,7 @@ public final class CombatTests {
                 z.hurt(p.damageSources().playerAttack(p), 10000F);
                 com.xenowarriors.pickup.HealthOrbs.testChance = -1F;
                 p.setYRot(-120); p.setXRot(25);
-            }), 6);
+            }), 100);
             l.add(null, () -> server(p -> {
                 float before = p.getPersistentData().getFloat("xw_test_hp");
                 log("orbs heal: dropped=" + com.xenowarriors.pickup.HealthOrbs.dropped + " orbs near=" + p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(12)).stream().map(o -> String.format("%.1f %s", o.distanceTo(p), o.debug())).toList() + " playerHp=" + p.getHealth() + "/" + p.getMaxHealth() + " collector=" + com.xenowarriors.pickup.HealthOrbEntity.collector(p));
@@ -393,6 +393,14 @@ public final class CombatTests {
         Object d = dmzData(p);
         Object st = d.getClass().getMethod("getStats").invoke(d);
         for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"}) st.getClass().getMethod(m, int.class).invoke(st, v);
+        // fully powered up (DragonMineZ's power release, which its damage follows)
+        try {
+            Object res = d.getClass().getMethod("getResources").invoke(d);
+            int was0 = (Integer) res.getClass().getMethod("getPowerRelease").invoke(res);
+            res.getClass().getMethod("setReleaseLimit", int.class).invoke(res, 100);
+            res.getClass().getMethod("setPowerRelease", int.class).invoke(res, 100);
+            log("dmz stats " + v + ": power release " + was0 + "% -> " + res.getClass().getMethod("getPowerRelease").invoke(res) + "%");
+        } catch (Throwable t) { log("dmz release failed " + t); }
         // (round-trip it through its save, the way a character switch loads it, so its damage figures are worked out)
         boolean was = (Boolean) d.getClass().getMethod("isDataLoaded").invoke(d);
         Object tag = d.getClass().getMethod("save").invoke(d);
