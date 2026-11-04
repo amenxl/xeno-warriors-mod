@@ -52,6 +52,11 @@ public final class ClientReset {
         DataSenseClient.reset();
         KarmaScanClient.reset();
         ClientKarmaLock.reset();
+        PetHud.reset();
+        com.xenowarriors.client.mikiko.DashGuard.reset();
+        PacketScreens.collectionUnlocked = false;    // (the next server says whether you've read the Collection Book there)
+        PacketScreens.towerFloor = 0;
+        ClientMoney.set(0);
         for (Runnable r : HOOKS) {
             try { r.run(); } catch (RuntimeException e) { XenoWarriors.LOGGER.warn("ClientReset: a reset hook failed", e); }
         }
