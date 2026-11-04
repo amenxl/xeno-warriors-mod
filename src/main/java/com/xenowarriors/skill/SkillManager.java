@@ -62,8 +62,8 @@ public final class SkillManager {
     /** This player's equipped skill in a slot. */
     public static Skill get(ServerPlayer player, int slot) {
         CharacterType type = ModCapabilities.getType(player);
-        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> SkillPool.inSlot(player, ultUsable(player, d.ultChoice(type))
-                ? d.loadoutWithUlt(type) : d.loadout(type), slot)).orElse(null);
+        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve().map(d -> SkillPool.inSlot(player, ultUsable(player, d.ultChoice(type))
+                ? d.loadoutWithUlt(type) : d.loadout(type), slot)).orElse(null);   // (resolve(): an empty slot maps to null, which LazyOptional.map throws on)
     }
 
     /** The picked ultimate is still theirs to use (its level reached - or creative - and its season unlocked); else the default one fires. */

@@ -181,6 +181,7 @@ public final class UiTest {
         if ("kitsunestun".equals(System.getenv("XW_UITEST_FOCUS"))) { kitsuneStun(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("botai")) { com.xenowarriors.client.test.BotAiTests.build(System.getenv("XW_UITEST_FOCUS"), mc, (stepName, stepAction, stepDelay) -> l.add(new Step(stepName, stepAction, stepDelay))); return l; }
         if (com.xenowarriors.client.test.CombatTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.CombatTests.build(mc, (n, a, d) -> l.add(new Step(n, a, d)), System.getenv("XW_UITEST_FOCUS")); return l; }
+        if (com.xenowarriors.client.test.SweepTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.SweepTests.build(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("portraits")) { portraits(mc, l, System.getenv("XW_UITEST_FOCUS").substring(9)); return l; }
         l.add(new Step(null, () -> character(CharacterType.MIKIKO), 40));
         l.add(new Step("hud_mikiko", () -> mc.setScreen(null), 30));
