@@ -106,7 +106,15 @@ public final class DmzPerCharacter {
             CompoundTag all = keep.getCompound(ROOT);
             all.put(from, ((CompoundTag) save.invoke(data)).copy());
             CompoundTag next = all.contains(to) ? all.getCompound(to) : (CompoundTag) save.invoke(fresh.newInstance(p));
+            boolean brandNew = !all.contains(to);
             load.invoke(data, next.copy());
+            // DragonMineZ keeps the six stats in the player's attributes, so a "fresh" StatsData for the same player reads
+            // (and saved) the old character's stats: a new character starts from zero (its race pick gives the starting stats)
+            if (brandNew) {
+                Object st = data.getClass().getMethod("getStats").invoke(data);
+                for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"})
+                    st.getClass().getMethod(m, int.class).invoke(st, 0);
+            }
             keep.put(ROOT, all);
             keep.putString(LIVE, to);
             sync(p);

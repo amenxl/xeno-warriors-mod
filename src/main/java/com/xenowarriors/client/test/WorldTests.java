@@ -233,7 +233,9 @@ public final class WorldTests {
         step(tag + "_beam_charge", () -> {}, 14);
         step(tag + "_beam_0", () -> {}, 6);
         step(tag + "_beam_1", () -> log("ki particles drawn so far: " + com.xenowarriors.client.compat.DmzKiParticles.spawned), 30);
-        step(null, () -> server(p -> { p.setYRot(0); p.setXRot(0); new com.xenowarriors.skill.sp.DojoSkills.KarmaBlast(0xFF4A3A).use(p); }), 2);
+        step(null, () -> server(p -> { if (p.serverLevel().getEntity(target[0]) instanceof Mob h) { h.teleportTo(p.getX(), p.getY(), p.getZ() + 10); h.setDeltaMovement(Vec3.ZERO); } }), 5);
+        step(null, () -> server(p -> { p.setYRot(0); p.setXRot(0); p.setYHeadRot(0);
+            log("karma blast used=" + new com.xenowarriors.skill.sp.DojoSkills.KarmaBlast(0xFF4A3A).use(p)); }), 3);
         step(tag + "_karmablast", () -> log("ki particles drawn so far: " + com.xenowarriors.client.compat.DmzKiParticles.spawned), 30);
         cameraOff(mc);
         // the Xeno Blast (its trail): through its own cutscene camera

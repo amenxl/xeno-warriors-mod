@@ -101,7 +101,24 @@ public class VehicleEntity extends Mob implements GeoEntity {
     }
 
     /** Hanging on the skids: dangling in the air, or (helicopter on the ground) standing beside it holding on. */
-    public boolean dangling() { return !onGround() && !isInWater(); }
+    public boolean dangling() { return groundBelow() < 0; }
+
+    private int groundTick = -1;
+    private double ground;
+
+    /**
+     * How far down the ground is (0 to 2.2 blocks), or -1 if it's further than that (hangers dangle). Not onGround: a
+     * helicopter its pilot has set down can sit a hair above the ground (no gravity while driven), never "on" it.
+     */
+    public double groundBelow() {
+        if (groundTick == tickCount) return ground;
+        groundTick = tickCount;
+        if (onGround() || isInWater()) return ground = 0;
+        Vec3 a = position().add(0, 0.05, 0);
+        var hit = level().clip(new net.minecraft.world.level.ClipContext(a, a.subtract(0, 2.25, 0), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.ANY, this));
+        return ground = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? -1 : Math.max(0, a.y - 0.05 - hit.getLocation().y);
+    }
     @Override protected boolean canAddPassenger(Entity e) { return getPassengers().size() < kind.seats; }
     @Override public boolean isPickable() { return !isRemoved(); }
     @Override public double getPassengersRidingOffset() { return 0.0; }
@@ -125,7 +142,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         double sx = s.x(), sy = s.y();
         switch (s.type()) {
             case SIT -> sy += passenger.getMyRidingOffset();
-            case HANG -> { if (!dangling()) { sy = 0; sx += Math.signum(sx) * 0.25; } }    // (landed: standing beside it, holding on)
+            case HANG -> { if (!dangling()) { sy = -groundBelow(); sx += Math.signum(sx) * 0.25; } }    // (landed: standing beside it on the ground, holding on)
             default -> {}                                                                  // standing on top: feet on the roof
         }
         double x = getX() + fx * s.z() + rx * sx, z = getZ() + fz * s.z() + rz * sx;
