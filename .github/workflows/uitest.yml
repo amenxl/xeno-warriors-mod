@@ -44,7 +44,7 @@ jobs:
           XW_UITEST: "1"
           XW_UITEST_FOCUS: ${{ github.event.inputs.focus }}
           XW_UITEST_LODESTONE: ${{ github.event.inputs.focus == 'auras' && '1' || '0' }}
-          XW_UITEST_HD: ${{ startsWith(github.event.inputs.focus, 'portraits') && '1' || '0' }}
+          XW_UITEST_HD: ${{ (startsWith(github.event.inputs.focus, 'portraits') || startsWith(github.event.inputs.focus, 'rhalix')) && '1' || '0' }}
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: |
           SCREEN="1280x720x24"; if [ "$XW_UITEST_HD" = "1" ]; then SCREEN="1920x1080x24"; fi
