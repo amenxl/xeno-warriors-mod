@@ -86,6 +86,9 @@ public class HealthOrbEntity extends Entity {
         setDeltaMovement(v.scale(follow != null ? 0.9 : 0.7));
     }
 
+    /** (tests) what it's doing. */
+    public String debug() { return "follow=" + (follow == null ? "-" : follow.getName().getString()) + " v=" + getDeltaMovement() + " pos=" + position() + " age=" + tickCount + " removed=" + isRemoved(); }
+
     /** Heals 2.5% of their max health. */
     public void collect(LivingEntity who) {
         float heal = who.getMaxHealth() * HEAL_FRACTION;

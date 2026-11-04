@@ -290,7 +290,7 @@ public final class CombatTests {
             }), 6);
             l.add(null, () -> server(p -> {
                 float before = p.getPersistentData().getFloat("xw_test_hp");
-                log("orbs heal: dropped=" + com.xenowarriors.pickup.HealthOrbs.dropped + " orbs near=" + p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(12)).stream().map(o -> String.format("%.1f", o.distanceTo(p))).toList());
+                log("orbs heal: dropped=" + com.xenowarriors.pickup.HealthOrbs.dropped + " orbs near=" + p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(12)).stream().map(o -> String.format("%.1f %s", o.distanceTo(p), o.debug())).toList() + " playerHp=" + p.getHealth() + "/" + p.getMaxHealth() + " collector=" + com.xenowarriors.pickup.HealthOrbEntity.collector(p));
                 log(String.format("orbs heal: maxHp=%.0f health %.2f -> %.2f = +%.2f%% of max (collected=%d, last=%.2f%%)", p.getMaxHealth(), before, p.getHealth(),
                         (p.getHealth() - before) * 100F / p.getMaxHealth(), com.xenowarriors.pickup.HealthOrbs.collectedCount, com.xenowarriors.pickup.HealthOrbs.lastHealFraction * 100F));
             }), 100);
