@@ -15,7 +15,7 @@ import java.util.Map;
 public final class EntityPoses {
     private record P(int pose, int start, int ticks) {}
 
-    private static final Map<Integer, P> STATE = new HashMap<>(), ACTION = new HashMap<>();
+    private static final Map<Integer, P> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>()), ACTION = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private EntityPoses() {}
 

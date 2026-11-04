@@ -19,7 +19,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KeitaDoze {
     private static final int AFTER = 80;
-    private static final Map<Integer, int[]> STILL = new HashMap<>();
+    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     private KeitaDoze() {}
 
     private static boolean keita(Player p) { return p instanceof AbstractClientPlayer a && ClientCharacterData.get(a) == CharacterType.KEITA; }

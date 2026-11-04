@@ -19,7 +19,7 @@ import java.util.Set;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MenuStateClient {
-    private static final Set<Integer> OPEN = new HashSet<>();
+    private static final Set<Integer> OPEN = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
     private static boolean sent;
     private static Player sentFor;
 

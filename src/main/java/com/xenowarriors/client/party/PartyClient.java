@@ -32,7 +32,7 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class PartyClient {
     private static List<PartySyncPacket.Member> members = List.of();
-    private static final Map<UUID, Long> KNOCKED = new HashMap<>();     // player -> game time they get up
+    private static final Map<UUID, Long> KNOCKED = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // player -> game time they get up
     private static CameraType cameraBefore;
 
     private PartyClient() {}
@@ -141,7 +141,7 @@ public final class PartyClient {
         return p.position().add(fwd.scale(-1.5)).add(0, 0.2, 0);
     }
 
-    private static final Set<Integer> LAID = new HashSet<>();
+    private static final Set<Integer> LAID = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {

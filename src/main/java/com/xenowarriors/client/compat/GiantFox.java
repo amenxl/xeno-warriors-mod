@@ -28,7 +28,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class GiantFox {
     private static final int EMBER = 1, GOLDEN = 5;
-    private static final Map<Integer, Fox> FOXES = new HashMap<>();
+    private static final Map<Integer, Fox> FOXES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private GiantFox() {}
 

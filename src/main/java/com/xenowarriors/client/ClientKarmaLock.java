@@ -8,6 +8,8 @@ public final class ClientKarmaLock {
 
     private ClientKarmaLock() {}
 
+    public static void reset() { until = 0; }
+
     public static void set(int ticks) { until = Util.getMillis() + ticks * 50L; }
 
     /** Seconds left (0 = not locked). */

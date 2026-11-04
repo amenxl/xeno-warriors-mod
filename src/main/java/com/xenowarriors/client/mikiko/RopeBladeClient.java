@@ -40,8 +40,8 @@ import java.util.Map;
 public final class RopeBladeClient {
     private static final ResourceLocation ROPE = XenoWarriors.id("textures/entity/hekublade_rope.png");
     private static final int THROW_T = 8, LASH_T = 14;
-    private static final Map<Integer, float[]> FX = new HashMap<>();      // id -> {type, start tick}
-    private static final Map<Integer, float[]> SAW = new HashMap<>();     // id -> {weight, prev}
+    private static final Map<Integer, float[]> FX = com.xenowarriors.client.ClientReset.track(new HashMap<>());      // id -> {type, start tick}
+    private static final Map<Integer, float[]> SAW = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // id -> {weight, prev}
 
     private RopeBladeClient() {}
 

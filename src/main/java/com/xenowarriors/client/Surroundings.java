@@ -12,7 +12,7 @@ import java.util.Map;
 public final class Surroundings {
     public static final int NONE = 0, PEACEFUL = 1, PEOPLE = 2, ENEMIES = 3;
     private static final double ENEMY_RANGE = 14, OTHER_RANGE = 10;
-    private static final Map<Integer, int[]> CACHE = new HashMap<>();    // id -> {state, tick checked}
+    private static final Map<Integer, int[]> CACHE = com.xenowarriors.client.ClientReset.track(new HashMap<>());    // id -> {state, tick checked}
 
     private Surroundings() {}
 

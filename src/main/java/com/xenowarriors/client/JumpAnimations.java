@@ -30,7 +30,7 @@ public final class JumpAnimations {
         float vy, vyO;
     }
 
-    private static final Map<Integer, State> STATES = new HashMap<>();
+    private static final Map<Integer, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private JumpAnimations() {}
 

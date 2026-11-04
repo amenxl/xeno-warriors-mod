@@ -24,7 +24,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class BladeChannelClient {
     private static final int HOLD = 8;                       // ticks before a press counts as holding
-    private static final Map<Integer, float[]> W = new HashMap<>();   // id -> {weight, prev, channelling 0/1}
+    private static final Map<Integer, float[]> W = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {weight, prev, channelling 0/1}
     private static int held = -1;
     private static boolean channelling, kaeruWas;
 

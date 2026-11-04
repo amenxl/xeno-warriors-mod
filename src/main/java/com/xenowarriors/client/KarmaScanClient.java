@@ -22,6 +22,9 @@ public class KarmaScanClient implements IGuiOverlay {
     private static long value, shownAt, brokeAt = -100000;
     private static String name = "";
 
+    /** Leaving the world: forget the last reading. */
+    public static void reset() { target = -1; value = 0; name = ""; brokeAt = -100000; }
+
     public static void receive(int entity, long v, int m, boolean broke) {
         Minecraft mc = Minecraft.getInstance();
         if (broke) { brokeAt = net.minecraft.Util.getMillis(); target = -1; value = v; return; }

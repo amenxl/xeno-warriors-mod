@@ -33,9 +33,9 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class FoxClientFx {
-    private static final Map<Integer, Integer> SKINS = new HashMap<>();
-    private static final Map<Integer, Integer> PREVIEW = new HashMap<>();
-    private static final Map<Integer, long[]> FX = new HashMap<>();     // id -> {kind, start game time}
+    private static final Map<Integer, Integer> SKINS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Integer> PREVIEW = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, long[]> FX = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // id -> {kind, start game time}
     private static final int[] FX_LENGTH = {30, 24, 20};
     private static Field[] partFields;
 
@@ -141,7 +141,7 @@ public final class FoxClientFx {
         }
     }
 
-    private static final Map<Integer, Boolean> PUSHED = new HashMap<>();
+    private static final Map<Integer, Boolean> PUSHED = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {

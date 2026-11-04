@@ -30,7 +30,7 @@ import java.util.Map;
 public final class KaeruClient {
     private KaeruClient() {}
 
-    private static final Map<Integer, int[]> JUMP = new HashMap<>();     // entity id -> {start tick, air ticks, jumped}
+    private static final Map<Integer, int[]> JUMP = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // entity id -> {start tick, air ticks, jumped}
     private static boolean lastJumpDown;
     private static final int FLIP_TICKS = 14;
 

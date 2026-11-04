@@ -56,6 +56,18 @@ public class BotScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, y + 140, bw, 20).build());
     }
 
+    private int missing;
+
+    /** The bot is gone (dismissed, killed, sent home elsewhere): close, so the buttons don't act on nothing. */
+    @Override
+    public void tick() {
+        super.tick();
+        var e = minecraft == null || minecraft.level == null ? null : minecraft.level.getEntity(m.botId());
+        boolean gone = !(e instanceof PartyBotEntity) || e.isRemoved() || !((PartyBotEntity) e).isAlive();
+        missing = gone ? missing + 1 : 0;
+        if (missing > 5) onClose();
+    }
+
     private Component modeLabel() { return Component.literal("Mode: " + PartyBotEntity.MODES[mode]); }
 
     @Override

@@ -24,7 +24,7 @@ import java.util.UUID;
 public final class HudFaces {
     private static final class State { float lastHp = -1; int hitUntil, bigHitUntil, talkUntil; String bubble; int bubbleUntil; }
 
-    private static final Map<UUID, State> STATES = new HashMap<>();
+    private static final Map<UUID, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     private static int clock;
     public static final int BUBBLE_MAX = 32;
 

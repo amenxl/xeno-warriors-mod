@@ -22,7 +22,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ArrowPullClient {
     private static final int START_AFTER = 20, CYCLE = 34, YANK = 24;
-    private static final Map<Integer, int[]> STATE = new HashMap<>();   // id -> {ticks still, ticks pulling, which spot}
+    private static final Map<Integer, int[]> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {ticks still, ticks pulling, which spot}
 
     private ArrowPullClient() {}
 

@@ -41,8 +41,8 @@ public final class ComboClient {
     public record Swing(ComboStyle style, int hit, boolean heavy, int start, int duration) {
         public float progress(float age) { return (age - start) / duration; }
     }
-    private static final Map<Integer, Swing> SWINGS = new HashMap<>();
-    private static final Map<Integer, Integer> STARTED_AT = new HashMap<>();   // id -> client tick a combo swing began
+    private static final Map<Integer, Swing> SWINGS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Integer> STARTED_AT = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> client tick a combo swing began
 
     // your own string
     private static Swing cur;

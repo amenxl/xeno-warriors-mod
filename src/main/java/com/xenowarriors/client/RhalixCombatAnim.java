@@ -63,7 +63,7 @@ public final class RhalixCombatAnim {
         float fold, foldO;          // arms folded across his chest (flying / fighting in the air)
     }
 
-    private static final Map<Integer, State> STATES = new HashMap<>();
+    private static final Map<Integer, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private RhalixCombatAnim() {}
 

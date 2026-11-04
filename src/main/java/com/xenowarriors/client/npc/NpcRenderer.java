@@ -102,7 +102,12 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
     }
 
     public static DetailModel model(String key) {
-        return MODELS.computeIfAbsent(key, k -> DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/npc/" + k + ".json"));
+        DetailModel m = MODELS.get(key);
+        if (m == null && !MODELS.containsKey(key)) {    // (a missing model is remembered too - not looked up again every frame)
+            m = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/npc/" + key + ".json");
+            MODELS.put(key, m);
+        }
+        return m;
     }
 
     private class Details extends RenderLayer<T, PlayerModel<T>> {

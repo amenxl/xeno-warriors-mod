@@ -19,6 +19,9 @@ public final class PetHud {
 
     private PetHud() {}
 
+    /** Leaving the world: no cards for the last world's pet ids. */
+    public static void reset() { ids = new int[0]; stamp = 0; }
+
     public static void set(int[] i, float[] k, float[] km, float[] q, float[] qm) {
         ids = i; karma = k; kmax = km; ki = q; kimax = qm;
         var mc = Minecraft.getInstance();

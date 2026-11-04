@@ -26,7 +26,7 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class ChargePose {
-    private static final Map<Integer, float[]> WEIGHT = new HashMap<>();   // id -> {weight, ticks charging}
+    private static final Map<Integer, float[]> WEIGHT = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {weight, ticks charging}
 
     private ChargePose() {}
 

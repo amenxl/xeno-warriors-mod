@@ -42,7 +42,7 @@ import org.joml.Matrix4f;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LockOn {
     /** Enemy levels the server told us about (EnemyLevelPacket). */
-    public static final java.util.Map<Integer, Integer> LEVELS = new java.util.HashMap<>();
+    public static final java.util.Map<Integer, Integer> LEVELS = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     private static final double RANGE = 28, KEEP_RANGE = 36, CONE = 32;
     /** In the air you can see (and lock on to) much further. */
@@ -182,6 +182,11 @@ public final class LockOn {
     public static void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+        // enemy levels for mobs that are gone (it only ever grew: one entry for every mob ever seen)
+        if (mc.level != null && !LEVELS.isEmpty() && mc.level.getGameTime() % 200 == 0) {
+            var lv = mc.level;
+            LEVELS.keySet().removeIf(id -> lv.getEntity(id) == null);
+        }
         LivingEntity ext = mc.player == null ? null : externalTarget.get();
         if (ext != null) {
             if (target != ext) {

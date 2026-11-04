@@ -11,8 +11,8 @@ import java.util.Map;
 
 /** Starving Rhalix: the hungry face, clutching his growling stomach, rubbing it while he stands about. */
 public final class RhalixHungerClient {
-    private static final Map<Integer, Boolean> HUNGRY = new HashMap<>();
-    private static final Map<Integer, Integer> GROWL = new HashMap<>();
+    private static final Map<Integer, Boolean> HUNGRY = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Integer> GROWL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     private static final int GROWL_TIME = 48;
 
     private RhalixHungerClient() {}

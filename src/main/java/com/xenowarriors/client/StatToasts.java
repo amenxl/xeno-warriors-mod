@@ -18,7 +18,7 @@ public class StatToasts implements IGuiOverlay {
     private static final long SHOW_MS = 3500, SLIDE_MS = 250;
     private static final int[] COLORS = {0xFF5CE1E6, 0xFFFF5A4A, 0xFF7CD65A};
     private static final String[] ICONS = {"»", "⚔", "⛨"};
-    private static final List<long[]> TOASTS = new ArrayList<>();   // {stat, level, start ms}
+    private static final List<long[]> TOASTS = com.xenowarriors.client.ClientReset.trackAll(new ArrayList<>());   // {stat, level, start ms}
 
     private static long lastLevelUp = -100000;
 
@@ -33,7 +33,7 @@ public class StatToasts implements IGuiOverlay {
         TOASTS.add(new long[]{stat, level, Util.getMillis()});
     }
 
-    private static final List<Object[]> FOX_TOASTS = new ArrayList<>();   // {name, level, start ms}
+    private static final List<Object[]> FOX_TOASTS = com.xenowarriors.client.ClientReset.trackAll(new ArrayList<>());   // {name, level, start ms}
 
     /** "Kit ▲ Lv 4" for one of Mikiko's foxes. */
     public static void addFox(String name, int level) {

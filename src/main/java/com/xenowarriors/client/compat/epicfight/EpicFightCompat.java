@@ -87,9 +87,9 @@ public final class EpicFightCompat {
         };
     }
 
-    private static final java.util.Map<Integer, Object[]> LAST = new java.util.HashMap<>();   // id -> {animation, elapsed}
-    private static final java.util.Map<Integer, Integer> STARTED = new java.util.HashMap<>();
-    private static final java.util.Map<Integer, Float> HIT = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Object[]> LAST = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());   // id -> {animation, elapsed}
+    private static final java.util.Map<Integer, Integer> STARTED = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
+    private static final java.util.Map<Integer, Float> HIT = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
     private static int battleRequests;
 
     /** Ticks from the start of an Epic Fight attack to its first hit (its attack speed included), or -1. */

@@ -36,7 +36,12 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
     }
 
     private static DetailModel model(CharacterType t) {
-        return MODELS.computeIfAbsent(t, k -> DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + k.getId() + ".json"));
+        DetailModel m = MODELS.get(t);
+        if (m == null && !MODELS.containsKey(t)) {      // (a missing model is remembered too - not looked up again every frame)
+            m = DetailModel.loadPath("/assets/" + XenoWarriors.MOD_ID + "/models/detail/" + t.getId() + ".json");
+            MODELS.put(t, m);
+        }
+        return m;
     }
 
     /** Girl bots get the girls' slim body (see FemaleBody). */

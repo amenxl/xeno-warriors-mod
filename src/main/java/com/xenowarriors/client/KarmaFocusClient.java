@@ -31,8 +31,8 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KarmaFocusClient {
     private static final int HAND_TO_HEAD = 70;
-    private static final Map<Integer, float[]> W = new HashMap<>();   // id -> {weight, prev, on, ticks focusing}
-    private static final Set<Integer> LIFTED = new HashSet<>();
+    private static final Map<Integer, float[]> W = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {weight, prev, on, ticks focusing}
+    private static final Set<Integer> LIFTED = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
 
     private KarmaFocusClient() {}
 

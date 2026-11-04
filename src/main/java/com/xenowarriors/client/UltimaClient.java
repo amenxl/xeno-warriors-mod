@@ -5,7 +5,7 @@ import java.util.Map;
 
 /** What the client knows about Ultimas' output (for the HUD and the Overload face). */
 public final class UltimaClient {
-    private static final Map<Integer, int[]> STATE = new HashMap<>();
+    private static final Map<Integer, int[]> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private UltimaClient() {}
 

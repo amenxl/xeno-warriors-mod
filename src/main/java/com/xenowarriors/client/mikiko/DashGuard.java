@@ -26,6 +26,9 @@ public final class DashGuard {
     private static int targetId = -1;
     private static long until;
 
+    /** Leaving the world: forget the last target (its id means someone else on the next server). */
+    public static void reset() { targetId = -1; until = 0; }
+
     private DashGuard() {}
 
     private static LivingEntity target(LocalPlayer p) {

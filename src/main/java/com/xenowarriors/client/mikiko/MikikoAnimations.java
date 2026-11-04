@@ -100,9 +100,9 @@ public final class MikikoAnimations {
     private static final int IDLE_CYCLE = 240;
     private static boolean lastJumpDown;
 
-    private static final Map<Integer, State> STATES = new HashMap<>();
-    private static final Set<Integer> POISONED = new HashSet<>();
-    private static final Set<Integer> TRANSFORMED = new HashSet<>();
+    private static final Map<Integer, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Set<Integer> POISONED = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
+    private static final Set<Integer> TRANSFORMED = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
     private static final Random RANDOM = new Random();
 
     private MikikoAnimations() {}
@@ -1251,7 +1251,7 @@ public final class MikikoAnimations {
         if (DIVING.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
-    private static final java.util.Set<Integer> DIVING = new java.util.HashSet<>();
+    private static final java.util.Set<Integer> DIVING = com.xenowarriors.client.ClientReset.trackAll(new java.util.HashSet<>());
 
     /** Slams into the crouch instantly, holds it, then rises. */
     private static float landWeight(float t) {

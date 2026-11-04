@@ -20,10 +20,13 @@ public final class SkillIcons {
 
     /** The picture for this skill id, or null if it has none. */
     public static ResourceLocation get(String id) {
-        return CACHE.computeIfAbsent(id, k -> {
-            ResourceLocation rl = XenoWarriors.id("textures/gui/skill/" + k + ".png");
-            return Minecraft.getInstance().getResourceManager().getResource(rl).isPresent() ? rl : null;
-        });
+        ResourceLocation r = CACHE.get(id);
+        if (r == null && !CACHE.containsKey(id)) {       // (skills without a picture are remembered too, not looked up every frame)
+            ResourceLocation rl = XenoWarriors.id("textures/gui/skill/" + id + ".png");
+            r = Minecraft.getInstance().getResourceManager().getResource(rl).isPresent() ? rl : null;
+            CACHE.put(id, r);
+        }
+        return r;
     }
 
     /** The Xeno Blast picture for this character (Mikiko's is orange, Rhalix's purple). */

@@ -59,7 +59,7 @@ public final class UltimaAnim {
     }
 
     /** Hits in his current flurry (which fist, and when the spin kick comes). */
-    private static final java.util.Map<Integer, int[]> COMBO = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, int[]> COMBO = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     private static int comboStep(Player p, float atk) {
         int[] c = COMBO.computeIfAbsent(p.getId(), k -> new int[]{0, 0});
@@ -115,7 +115,7 @@ public final class UltimaAnim {
         m.rightLeg.xRot += (right ? 0.15F : -0.1F) * s;
     }
 
-    private static final java.util.Map<Integer, Integer> STILL_SINCE = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Integer> STILL_SINCE = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     private static float smooth(float x) { x = Mth.clamp(x, 0F, 1F); return x * x * (3F - 2F * x); }
 

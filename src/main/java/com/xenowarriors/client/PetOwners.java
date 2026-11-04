@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /** Who owns which pet (as the server tells us). */
 public final class PetOwners {
-    private static final Map<Integer, UUID> OWNERS = new HashMap<>();
+    private static final Map<Integer, UUID> OWNERS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private PetOwners() {}
 

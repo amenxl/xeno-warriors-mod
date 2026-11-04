@@ -22,7 +22,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class HoodClient {
     private static final int PULL = 16;
-    private static final Map<Integer, int[]> STATE = new HashMap<>();   // id -> {up 0/1, ticks since it changed}
+    private static final Map<Integer, int[]> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {up 0/1, ticks since it changed}
 
     private HoodClient() {}
 
@@ -38,7 +38,7 @@ public final class HoodClient {
     }
 
     /** Kaeru's hood choice by player (from the server). */
-    private static final Map<Integer, Boolean> KAERU = new HashMap<>();
+    private static final Map<Integer, Boolean> KAERU = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     /** Kaeru's hood is (to be) up - what the menu toggle shows. */
     public static boolean kaeruUp(Player p) { return KAERU.getOrDefault(p.getId(), false); }
@@ -57,7 +57,7 @@ public final class HoodClient {
     }
 
     /** Put up / down by hand (the hood key): {up, was it raining then}. Holds until pressed again or the weather turns. */
-    private static final Map<Integer, boolean[]> MANUAL = new HashMap<>();
+    private static final Map<Integer, boolean[]> MANUAL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     public static void setManual(int id, boolean up) {
         Minecraft mc = Minecraft.getInstance();
