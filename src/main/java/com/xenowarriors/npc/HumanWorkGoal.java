@@ -37,6 +37,19 @@ public class HumanWorkGoal extends Goal {
     private Job job = Job.NONE;
     private BlockPos target;
     private int work, cooldown, buildStep;
+    private int repath, fails;
+
+    /**
+     * Walks on toward (x, y, z): a fresh path at most once a second - a spot it can't reach (ore inside the rock, a
+     * crop behind a fence) used to be searched for again every single tick - and false after three searches in a row
+     * that found no way there at all.
+     */
+    private boolean walk(double x, double y, double z, double speed) {
+        if (!h.getNavigation().isDone() || --repath > 0) return true;
+        repath = 20;
+        if (h.getNavigation().moveTo(x, y, z, speed)) { fails = 0; return true; }
+        return ++fails < 3;
+    }
 
     public HumanWorkGoal(HumanNpcEntity h) {
         this.h = h;
@@ -92,7 +105,7 @@ public class HumanWorkGoal extends Goal {
 
     @Override
     public void start() {
-        work = 0;
+        work = 0; repath = 20; fails = 0;
         h.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8);
     }
 
@@ -111,7 +124,7 @@ public class HumanWorkGoal extends Goal {
         if (job == Job.BUILD) { build(level); return; }
         if (job == Job.TEND) { tend(level, d); return; }
         if (d > 3.2 * 3.2) {
-            if (h.getNavigation().isDone()) h.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8);
+            if (!walk(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8)) { stop(); return; }
             if (++work > 400) stop();
             return;
         }
@@ -254,7 +267,7 @@ public class HumanWorkGoal extends Goal {
 
     private void tend(ServerLevel level, double d) {
         if (d > 2.6 * 2.6) {
-            if (h.getNavigation().isDone()) h.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.7);
+            if (!walk(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.7)) { stop(); return; }
             if (++work > 300) stop();
             return;
         }
@@ -332,7 +345,7 @@ public class HumanWorkGoal extends Goal {
     /** One block at a time: a cobblestone floor and walls, a doorway, windows, a plank roof, a torch inside. */
     private void build(ServerLevel level) {
         if (h.distanceToSqr(target.getX() + 0.5, target.getY(), target.getZ() + 0.5) > 6 * 6) {
-            if (h.getNavigation().isDone()) h.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8);
+            if (!walk(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8)) { stop(); return; }
             if (++work > 600) stop();
             return;
         }

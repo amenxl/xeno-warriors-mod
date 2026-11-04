@@ -38,16 +38,18 @@ public enum Ka {
         this.cost = cost;
     }
 
-    public String id() { return name().toLowerCase(); }
+    private final String id = name().toLowerCase(java.util.Locale.ROOT);   // (worked out once: it's looked up for every mob, every tick)
+
+    public String id() { return id; }
 
     public String title() { return name().charAt(0) + name().substring(1).toLowerCase(); }
 
     public ChatFormatting chat() { return rare ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.AQUA; }
 
-    public static Ka byId(String id) {
-        for (Ka k : values()) if (k.id().equals(id)) return k;
-        return null;
-    }
+    private static final java.util.Map<String, Ka> BY_ID = new java.util.HashMap<>();
+    static { for (Ka k : values()) BY_ID.put(k.id, k); }
+
+    public static Ka byId(String id) { return id == null || id.isEmpty() ? null : BY_ID.get(id); }
 
     public static final Ka[] SIMPLE = {WEIGHT, GRIP, STRIDE, HOLD, REACH, PACE, SIGHT};
     public static final Ka[] RARE = {DELAY, MIRROR, TETHER, FLIP, MEMORY, SWAP, BIND};

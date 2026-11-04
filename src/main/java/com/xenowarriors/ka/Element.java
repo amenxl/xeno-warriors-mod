@@ -11,14 +11,16 @@ public enum Element {
 
     Element(int color, int karma) { this.color = color; this.karma = karma; }
 
-    public String id() { return name().toLowerCase(); }
+    private final String id = name().toLowerCase(java.util.Locale.ROOT);   // (worked out once: it's looked up for every mob, every tick)
+
+    public String id() { return id; }
 
     public String title() { return name().charAt(0) + name().substring(1).toLowerCase(); }
 
-    public static Element byId(String id) {
-        for (Element e : values()) if (e.id().equals(id)) return e;
-        return null;
-    }
+    private static final java.util.Map<String, Element> BY_ID = new java.util.HashMap<>();
+    static { for (Element e : values()) BY_ID.put(e.id, e); }
+
+    public static Element byId(String id) { return id == null || id.isEmpty() ? null : BY_ID.get(id); }
 
     public static final Element[] HUMAN = {FIRE, WATER, EARTH, ICE, LIGHTNING, SOUND, PLANT, METAL, SMOKE};
     public static final Element[] SKYLANDER = {WIND, LIGHT, CRYSTAL, CLOUD, ICE, LIGHTNING};

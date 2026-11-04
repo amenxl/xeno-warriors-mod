@@ -166,7 +166,11 @@ public final class Kas {
             ModNetwork.sendToPlayer(new KaEffectPacket(ka.ordinal(), ticks, src == null ? -1 : src.getId()), p);
     }
 
-    public static boolean has(LivingEntity e, Ka ka) { return e.getPersistentData().getLong(EFFECT + ka.id()) > now(e); }
+    /** "xw_kae_<id>" for each KA, made once (has() runs for every KA on every living thing, every tick). */
+    private static final String[] KEY = new String[Ka.values().length];
+    static { for (Ka k : Ka.values()) KEY[k.ordinal()] = EFFECT + k.id(); }
+
+    public static boolean has(LivingEntity e, Ka ka) { return e.getPersistentData().getLong(KEY[ka.ordinal()]) > now(e); }
 
     private static Entity src(LivingEntity e, Ka ka) { return e.level().getEntity(e.getPersistentData().getInt(EFFECT + ka.id() + SRC)); }
 

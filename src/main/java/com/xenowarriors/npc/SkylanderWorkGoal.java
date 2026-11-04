@@ -38,6 +38,19 @@ public class SkylanderWorkGoal extends Goal {
     private Job job = Job.NONE;
     private BlockPos target;
     private int work, cooldown, buildStep;
+    private int repath, fails;
+
+    /**
+     * Walks on toward (x, y, z): a fresh path at most once a second - a spot it can't reach (ore inside the rock, a
+     * crop behind a fence) used to be searched for again every single tick - and false after three searches in a row
+     * that found no way there at all.
+     */
+    private boolean walk(double x, double y, double z, double speed) {
+        if (!s.getNavigation().isDone() || --repath > 0) return true;
+        repath = 20;
+        if (s.getNavigation().moveTo(x, y, z, speed)) { fails = 0; return true; }
+        return ++fails < 3;
+    }
 
     public SkylanderWorkGoal(SkylanderEntity s) {
         this.s = s;
@@ -69,7 +82,7 @@ public class SkylanderWorkGoal extends Goal {
 
     @Override
     public void start() {
-        work = 0;
+        work = 0; repath = 20; fails = 0;
         s.setWorking(true);
         s.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 0.8);
     }
@@ -88,7 +101,7 @@ public class SkylanderWorkGoal extends Goal {
         s.getLookControl().setLookAt(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5);
         double reach = job == Job.BUILD ? 6 : job == Job.MINE ? 4.5 : 2.5;
         if (s.distanceToSqr(target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5) > reach * reach) {
-            if (s.getNavigation().isDone()) s.getNavigation().moveTo(target.getX() + 0.5, target.getY() + 1, target.getZ() + 0.5, 0.8);
+            if (!walk(target.getX() + 0.5, target.getY() + 1, target.getZ() + 0.5, 0.8)) { stop(); return; }
             if (++work > 500) stop();
             return;
         }

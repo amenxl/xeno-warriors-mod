@@ -59,12 +59,14 @@ public final class CapitalUnderlight {
         for (int x = Math.floorMod(-x0, GRID); x < 16; x += GRID) for (int z = Math.floorMod(-z0, GRID); z < 16; z += GRID) {
             // only under the capital: something solid above the floor height in (or right beside) this column
             if (!shaded(ch, x, z, floor)) continue;
+            // (straight from the chunk: going through the level asked the chunk system for it each time, and the server
+            // thread sat waiting on chunks that were still finishing loading - the worst stalls in Aurora City)
             int y = floor - 1;
-            for (; y > bottom; y--) { m.set(x0 + x, y, z0 + z); if (!l.getBlockState(m).isAir()) break; }
-            if (y <= bottom || l.getBlockState(m).is(Blocks.LIGHT)) continue;
+            for (; y > bottom; y--) { m.set(x0 + x, y, z0 + z); if (!ch.getBlockState(m).isAir()) break; }
+            if (y <= bottom || ch.getBlockState(m).is(Blocks.LIGHT)) continue;
             m.set(x0 + x, y + 2, z0 + z);
-            if (!l.getBlockState(m).isAir() || !l.getBlockState(m.below()).isAir()) continue;
-            l.setBlock(m, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15), 2);
+            if (!ch.getBlockState(m).isAir() || !ch.getBlockState(m.below()).isAir()) continue;
+            if (ch.setBlockState(m, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15), false) != null) l.getChunkSource().blockChanged(m);
         }
     }
 
