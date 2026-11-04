@@ -146,6 +146,7 @@ public final class PartyBots {
         PartyBotEntity other = botOf(e);
         if (other != null) return owner.equals(other.ownerId()) || Parties.sameParty(owner, other.ownerId());
         if (e instanceof Player p) return p.getUUID().equals(owner) || Parties.sameParty(owner, p.getUUID());
+        if (e instanceof com.xenowarriors.soul.SoulEntity soul) { UUID so = soul.ownerId(); return so != null && (so.equals(owner) || Parties.sameParty(owner, so)); }   // (a Soul Splitter's soul)
         UUID petOwner = Parties.petOwner(e);
         return petOwner != null && (petOwner.equals(owner) || Parties.sameParty(petOwner, owner));
     }
