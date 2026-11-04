@@ -122,6 +122,7 @@ public final class DmzScaling {
         boolean listed = PHYSICAL.contains(type) || ENERGY.contains(type);
         if (!listed) {
             if (!com.xenowarriors.combat.Allies.skillHit(src)) return 1.0;           // a plain swing: DragonMineZ already handles those
+            if (physical(src)) return 1.0;      // (a skill's blow dealt as a player attack: DragonMineZ already scales those with its own melee damage)
             var caster = com.xenowarriors.combat.SkillContext.caster();
             if (caster != null && com.xenowarriors.combat.Allies.actor(caster) != com.xenowarriors.combat.Allies.actor(p)) return 1.0;   // (someone else's hit while this skill runs)
         }

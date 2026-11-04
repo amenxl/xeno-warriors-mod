@@ -275,6 +275,7 @@ public final class CombatTests {
             if (maxHp == 20) l.add("combat_health_orb", () -> {}, 2);
             l.add(null, () -> server(p -> {
                 float before = p.getPersistentData().getFloat("xw_test_hp");
+                log("orbs heal: dropped=" + com.xenowarriors.pickup.HealthOrbs.dropped + " orbs near=" + p.serverLevel().getEntitiesOfClass(com.xenowarriors.pickup.HealthOrbEntity.class, p.getBoundingBox().inflate(12)).stream().map(o -> String.format("%.1f", o.distanceTo(p))).toList());
                 log(String.format("orbs heal: maxHp=%.0f health %.2f -> %.2f = +%.2f%% of max (collected=%d, last=%.2f%%)", p.getMaxHealth(), before, p.getHealth(),
                         (p.getHealth() - before) * 100F / p.getMaxHealth(), com.xenowarriors.pickup.HealthOrbs.collectedCount, com.xenowarriors.pickup.HealthOrbs.lastHealFraction * 100F));
             }), 100);
@@ -382,6 +383,8 @@ public final class CombatTests {
             Object d = dmzData(p);
             Object ch = d.getClass().getMethod("getCharacter").invoke(d);
             ch.getClass().getMethod("setRace", String.class).invoke(ch, "saiyan");
+            try { ch.getClass().getMethod("setCharacterClass", String.class).invoke(ch, (String) ch.getClass().getField("CLASS_WARRIOR").get(null)); } catch (Throwable t) { log("dmz class failed " + t); }
+            try { Object st0 = d.getClass().getMethod("getStatus").invoke(d); for (var m : st0.getClass().getMethods()) if (m.getName().equals("setDataLoaded") || m.getName().equals("setAlive")) m.invoke(st0, true); } catch (Throwable ignored) {}
             Object st = d.getClass().getMethod("getStatus").invoke(d);
             st.getClass().getMethod("setHasCreatedCharacter", boolean.class).invoke(st, true);
             com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
