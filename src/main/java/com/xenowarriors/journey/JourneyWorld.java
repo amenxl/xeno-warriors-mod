@@ -130,6 +130,7 @@ public final class JourneyWorld {
         t.putString("id", "minecraft:text_display");
         t.putString("text", json);
         t.putString("billboard", "center");
+        t.putString("alignment", "center");   // vanilla decodes this one unconditionally and logs "Display entityNot a string" when it's absent
         t.putInt("background", 0x40000000);
         t.putBoolean("shadow", true);
         CompoundTag tr = new CompoundTag();
