@@ -702,6 +702,13 @@ public class PartyBotEntity extends PathfinderMob {
     }
 
     @Override public boolean isPushable() { return !downed() && super.isPushable(); }
+
+    /** Standing in someone's revive circle: it holds its ground (hits don't knock it out of the circle). */
+    @Override
+    public void knockback(double strength, double x, double z) {
+        if (reviving != null && !downed() && distanceToSqr(reviving) < com.xenowarriors.party.ReviveCircle.RADIUS * com.xenowarriors.party.ReviveCircle.RADIUS) return;
+        super.knockback(strength, x, z);
+    }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     /** Saved with the owner (and respawned next to them), never into the world. */
     @Override public boolean shouldBeSaved() { return false; }

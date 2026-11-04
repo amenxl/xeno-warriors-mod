@@ -158,7 +158,7 @@ public final class BotRanged extends Goal {
         float v = kind == CROSSBOW ? 3.15F : 2.8F;
         Vec3 c = t.getBoundingBox().getCenter();
         double dx = c.x - b.getX(), dz = c.z - b.getZ(), dy = c.y - arrow.getY(), h = Math.sqrt(dx * dx + dz * dz);
-        arrow.shoot(dx, dy + 0.03 * h * h / (v * v) * 2.5, dz, v, 1.0F);
+        arrow.shoot(dx, dy + 0.027 * h * h / (v * v), dz, v, 1.0F);                     // (lifted for the drop over that distance)
         aim(t);
         b.level().playSound(null, b.getX(), b.getY(), b.getZ(), kind == CROSSBOW ? SoundEvents.CROSSBOW_SHOOT : SoundEvents.ARROW_SHOOT, SoundSource.NEUTRAL, 1F, 1F / (b.getRandom().nextFloat() * 0.4F + 0.8F));
         b.level().addFreshEntity(arrow);

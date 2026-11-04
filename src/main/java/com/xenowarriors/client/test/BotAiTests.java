@@ -81,6 +81,9 @@ public final class BotAiTests {
         for (BlockPos q : BlockPos.betweenClosed(Math.min(x0, x1), Math.min(y0, y1), Math.min(z0, z1), Math.max(x0, x1), Math.max(y0, y1), Math.max(z0, z1))) l.setBlock(q, s, 3);
     }
 
+    /** Dummies' health, set again a few ticks after they spawn (after the mob scaling has had its go). */
+    static final float DUMMY_HP = 300F;
+
     private static Zombie dummy(ServerPlayer p, double x, double y, double z, boolean ai, String tag) {
         Zombie zb = EntityType.ZOMBIE.create(p.serverLevel());
         if (zb == null) return null;
@@ -89,7 +92,8 @@ public final class BotAiTests {
         zb.setPersistenceRequired();
         zb.addTag("xw_botai"); zb.addTag(tag);
         p.serverLevel().addFreshEntity(zb);
-        zb.getAttribute(Attributes.MAX_HEALTH).setBaseValue(300); zb.setHealth(300);
+        zb.getAttribute(Attributes.MAX_HEALTH).setBaseValue(DUMMY_HP); zb.setHealth(DUMMY_HP);
+        ServerScheduler.later(3, () -> { if (zb.isAlive()) { var a = zb.getAttribute(Attributes.MAX_HEALTH); for (var mod : new java.util.ArrayList<>(a.getModifiers())) a.removeModifier(mod); a.setBaseValue(DUMMY_HP); zb.setHealth(DUMMY_HP); } });
         return zb;
     }
 
@@ -172,7 +176,7 @@ public final class BotAiTests {
             p.teleportTo(p.serverLevel(), X - 1.5, Y, Z + 0.5, -90, 10);
             var k = spawnBot(p, CharacterType.KAERU, X + 3.5, Y, Z + 0.5);
             Zombie zb = dummy(p, X + 12.5, Y, Z + 0.5, false, "gap");
-            if (k != null && zb != null) { k.setTarget(zb); m[0] = zb.getHealth(); }
+            if (k != null && zb != null) { k.setTarget(zb); m[0] = DUMMY_HP; }
             m[1] = 1e9;
             sample(160, 5, () -> { var kk = bot(sp(), CharacterType.KAERU); if (kk != null) m[1] = Math.min(m[1], kk.getY()); });
         }), 100);
@@ -217,7 +221,7 @@ public final class BotAiTests {
             Zombie zb = dummy(p, X + 5.5, Y + 1, Z + 3.5, false, "step");
             if (k == null || zb == null) return;
             k.moveTo(X - 1.5, Y, Z + 2.5);
-            k.setTarget(zb); m[0] = zb.getHealth();
+            k.setTarget(zb); m[0] = DUMMY_HP;
         }), 120);
         l.add(null, () -> server(p -> {
             var k = bot(p, CharacterType.KAERU); Zombie zb = tagged(p, "step");
@@ -234,7 +238,7 @@ public final class BotAiTests {
             var r = spawnBot(p, CharacterType.RHALIX, X - 1.5, Y, Z + 1.5);
             Zombie zb = dummy(p, X + 3.5, Y + 6, Z - 4.5, false, "pillar");
             if (r == null || zb == null) return;
-            r.setTarget(zb); m[0] = zb.getHealth(); m[1] = 0;
+            r.setTarget(zb); m[0] = DUMMY_HP; m[1] = 0;
             sample(160, 5, () -> { var rr = bot(sp(), CharacterType.RHALIX); if (rr != null) m[1] = Math.max(m[1], rr.getY() - Y); });
         }), 80);
         l.add("botai_pillar", () -> { ServerPlayer p = sp(); if (p != null) lookAt(mc, tagged(p, "pillar")); }, 80);
@@ -363,7 +367,7 @@ public final class BotAiTests {
             p.teleportTo(p.serverLevel(), X - 5.5, Y, Z + 2.5, -90, 5);
             Zombie zb = dummy(p, X + 12.5, Y, Z + 0.5, false, "bow");
             if (zb == null) return;
-            k.setTarget(zb); v[0] = zb.getHealth(); v[1] = k.shots; v[2] = r.shots;
+            k.setTarget(zb); v[0] = DUMMY_HP; v[1] = k.shots; v[2] = r.shots;
             Zombie z2 = dummy(p, X + 12.5, Y, Z - 1.5, false, "bow2");              // (Rhalix's own far target: no bow, so he flies over instead)
             if (z2 != null) r.setTarget(z2);
         }), 100);
@@ -425,32 +429,10 @@ public final class BotAiTests {
             p.hurt(p.damageSources().generic(), 1000F);
             log("downed: player downed=" + com.xenowarriors.party.Duels.isDowned(p) + " zombie target right after=" + name(zb.getTarget()));
             sample(80, 10, () -> { Zombie z2 = tagged(sp(), "downz"); if (z2 != null) tgt[0] += name(z2.getTarget()) + " "; });
+            watchRevive();
         }), 30);
         l.add("botai_downed", () -> {}, 60);
         l.add(null, () -> server(p -> log("downed: zombie targets while down (every 0.5s) = [" + tgt[0].trim() + "] player still downed=" + com.xenowarriors.party.Duels.isDowned(p))), 1);
-        // wait for the revive (Kaeru or Rhalix stands in the circle 2 s)
-        final double[] zd = new double[3];
-        l.add(null, () -> server(p -> {
-            for (int t = 1; t <= 200; t++) { int tt = t; ServerScheduler.later(t, () -> {
-                ServerPlayer o = sp(); Zombie z2 = tagged(o, "downz");
-                if (o == null || zd[0] != 0 || com.xenowarriors.party.Duels.isDowned(o)) return;
-                zd[0] = tt; zd[1] = z2 == null ? -1 : z2.distanceTo(o);
-                log("revive: player up after +" + tt + " ticks, invincible ticks=" + ReviveAftermath.invulnerableTicks(o) + " glowing=" + o.hasEffect(MobEffects.GLOWING) + " shockwave " + ReviveAftermath.lastBurst
-                        + " zombie stunned=" + (z2 != null && ReviveAftermath.stunned(z2)));
-                ServerScheduler.later(10, () -> { Zombie z3 = tagged(sp(), "downz"); if (z3 != null) { zd[2] = z3.distanceTo(sp()); log("revive: zombie pushed from " + f(zd[1]) + " to " + f(zd[2]) + " blocks away in 0.5s"); } });
-                ServerScheduler.later(20, () -> { Zombie z3 = tagged(sp(), "downz"); if (z3 != null) zd[1] = z3.distanceTo(sp()); });
-                ServerScheduler.later(80, () -> { Zombie z3 = tagged(sp(), "downz"); ServerPlayer o2 = sp();
-                    if (z3 != null && o2 != null) {
-                        float before = o2.getHealth();
-                        boolean took = o2.hurt(o2.damageSources().mobAttack(z3), 6F);
-                        log("revive +4s: zombie stunned=" + ReviveAftermath.stunned(z3) + " moved " + f(Math.abs(z3.distanceTo(o2) - zd[1])) + " blocks since +1s, a 6-damage hit on the player landed=" + took + " health " + f(before) + " -> " + f(o2.getHealth()) + " invincible ticks left=" + ReviveAftermath.invulnerableTicks(o2));
-                    } });
-                ServerScheduler.later(130, () -> { Zombie z3 = tagged(sp(), "downz"); if (z3 != null) log("revive +6.5s: zombie stunned=" + ReviveAftermath.stunned(z3) + " target=" + name(z3.getTarget())); });
-                ServerScheduler.later(215, () -> { Zombie z3 = tagged(sp(), "downz"); ServerPlayer o2 = sp();
-                    if (z3 != null && o2 != null) { float before = o2.getHealth(); boolean took = o2.hurt(o2.damageSources().mobAttack(z3), 2F);
-                        log("revive +10.75s: invincible ticks left=" + ReviveAftermath.invulnerableTicks(o2) + " a 2-damage hit landed=" + took + " health " + f(before) + " -> " + f(o2.getHealth())); } });
-            }); }
-        }), 60);
         l.add("botai_revived", () -> {}, 60);
         l.add(null, () -> {}, 200);
         // 7) a bot goes down with a zombie on it: the zombie goes for whoever's reviving it
@@ -462,15 +444,43 @@ public final class BotAiTests {
             if (k == null || r == null) return;
             p.teleportTo(p.serverLevel(), X - 5.5, Y, Z + 5.5, 135, 20);
             r.moveTo(X + 0.5, Y, Z + 0.5); k.moveTo(X + 4.5, Y, Z - 4.5);
+            var kh = k.getAttribute(Attributes.MAX_HEALTH); if (kh != null) kh.setBaseValue(200); k.setHealth(k.getMaxHealth());
             Zombie zb = dummy(p, X + 0.5, Y, Z + 3.5, true, "botdownz");
             if (zb == null) return;
             zb.setTarget(r);
             r.die(p.damageSources().generic());
             log("bot downed: rhalix downed=" + r.downed() + " zombie target right after=" + name(zb.getTarget()));
-            sample(100, 10, () -> { Zombie z2 = tagged(sp(), "botdownz"); var rr = bot(sp(), CharacterType.RHALIX); if (z2 != null) bt[0] += name(z2.getTarget()) + (rr != null && !rr.downed() ? "(up)" : "") + " "; });
+            sample(100, 10, () -> { Zombie z2 = tagged(sp(), "botdownz"); var rr = bot(sp(), CharacterType.RHALIX); var kk = bot(sp(), CharacterType.KAERU); if (z2 != null) bt[0] += name(z2.getTarget()) + (rr != null && !rr.downed() ? "(up)" : "") + (kk != null && rr != null ? "[k " + f(kk.distanceTo(rr)) + "m hp" + f(kk.getHealth()) + "]" : "") + " "; });
         }), 110);
         l.add("botai_botrevive", () -> server(p -> { var r = bot(p, CharacterType.RHALIX);
             log("bot downed: zombie targets (every 0.5s) = [" + bt[0].trim() + "] rhalix downed now=" + (r == null ? "?" : r.downed()) + " invincible ticks=" + (r == null ? -1 : ReviveAftermath.invulnerableTicks(r)) + " shockwave " + ReviveAftermath.lastBurst); }), 5);
+    }
+
+
+    private static final double[] zd = new double[3];
+
+    /** From the moment the player goes down: when they're back up, what the shockwave did, the stun, and the invincibility. */
+    private static void watchRevive() {
+        zd[0] = 0;
+            for (int t = 1; t <= 400; t++) { int tt = t; ServerScheduler.later(t, () -> {
+                ServerPlayer o = sp(); Zombie z2 = tagged(o, "downz");
+                if (o == null || zd[0] != 0 || com.xenowarriors.party.Duels.isDowned(o)) return;
+                zd[0] = tt; zd[1] = z2 == null ? -1 : z2.distanceTo(o);
+                log("revive: player up after +" + tt + " ticks, invincible ticks=" + ReviveAftermath.invulnerableTicks(o) + " glowing=" + o.hasEffect(MobEffects.GLOWING) + " shockwave " + ReviveAftermath.lastBurst
+                        + " zombie stunned=" + (z2 != null && ReviveAftermath.stunned(z2)));
+                ServerScheduler.later(10, () -> { Zombie z3 = tagged(sp(), "downz"); if (z3 != null) { zd[2] = z3.distanceTo(sp()); log("revive: zombie pushed from " + f(zd[1]) + " to " + f(zd[2]) + " blocks away in 0.5s"); } });
+                ServerScheduler.later(20, () -> { Zombie z3 = tagged(sp(), "downz"); if (z3 != null) zd[1] = z3.distanceTo(sp()); });
+                ServerScheduler.later(80, () -> { Zombie z3 = tagged(sp(), "downz"); ServerPlayer o2 = sp();
+                    if (z3 != null && o2 != null) {
+                        float before = o2.getHealth(); o2.invulnerableTime = 0;
+                        boolean took = o2.hurt(o2.damageSources().mobAttack(z3), 6F);
+                        log("revive +4s: zombie stunned=" + ReviveAftermath.stunned(z3) + " moved " + f(Math.abs(z3.distanceTo(o2) - zd[1])) + " blocks since +1s, a 6-damage hit on the player landed=" + took + " health " + f(before) + " -> " + f(o2.getHealth()) + " invincible ticks left=" + ReviveAftermath.invulnerableTicks(o2));
+                    } });
+                ServerScheduler.later(130, () -> { Zombie z3 = tagged(sp(), "downz"); if (z3 != null) log("revive +6.5s: zombie stunned=" + ReviveAftermath.stunned(z3) + " target=" + name(z3.getTarget())); });
+                ServerScheduler.later(215, () -> { Zombie z3 = tagged(sp(), "downz"); ServerPlayer o2 = sp();
+                    if (z3 != null && o2 != null) { float before = o2.getHealth(); o2.invulnerableTime = 0; boolean took = o2.hurt(o2.damageSources().mobAttack(z3), 2F);
+                        log("revive +10.75s: invincible ticks left=" + ReviveAftermath.invulnerableTicks(o2) + " a 2-damage hit landed=" + took + " health " + f(before) + " -> " + f(o2.getHealth())); } });
+            }); }
     }
 
     private static String name(LivingEntity e) {
@@ -495,7 +505,7 @@ public final class BotAiTests {
             p.teleportTo(p.serverLevel(), X - 5.5, Y, Z + 3.5, -90, 5);
             Zombie zb = dummy(p, X + 9.5, Y, Z + 0.5, false, "gunz");
             if (zb == null) return;
-            k.setTarget(zb); v[0] = zb.getHealth(); v[1] = k.shots;
+            k.setTarget(zb); v[0] = DUMMY_HP; v[1] = k.shots;
         }), 100);
         l.add("botai_gun", () -> {}, 60);
         l.add(null, () -> server(p -> {
