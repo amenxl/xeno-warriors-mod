@@ -56,6 +56,40 @@ public final class RhalixComboTests {
         if (countChats) { chats++; log("chat/hud message during kishi test: " + event.getMessage().getString()); }
     }
 
+    // ------------------------------------------------------------------ slow motion (the CI renders ~2 fps at 1080p)
+
+    /** Extra ms the server sleeps each tick, and the client's ms per tick, while filming (both slowed alike). */
+    private static volatile int serverSleep;
+
+    /** Slow the whole game down by this factor (1 = normal), server and client together, so a shot lands every tick. */
+    static void slow(Minecraft mc, int factor) {
+        serverSleep = factor <= 1 ? 0 : 50 * (factor - 1);
+        try {
+            for (var f : Minecraft.class.getDeclaredFields()) {
+                if (f.getType() != net.minecraft.client.Timer.class) continue;
+                f.setAccessible(true);
+                Object timer = f.get(mc);
+                for (var g : net.minecraft.client.Timer.class.getDeclaredFields()) {
+                    if (g.getType() == float.class && java.lang.reflect.Modifier.isFinal(g.getModifiers()) && !java.lang.reflect.Modifier.isStatic(g.getModifiers())) {
+                        g.setAccessible(true);
+                        g.setFloat(timer, 50F * Math.max(1, factor));
+                        log("slow motion x" + factor + " (client " + g.getName() + "=" + g.getFloat(timer) + " ms/tick, server +" + serverSleep + " ms)");
+                    }
+                }
+            }
+        } catch (Throwable t) { log("slow motion failed: " + t); }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+        // the targets never die (kept under 150 health so they're not counted as bosses)
+        var l = event.getServer().overworld();
+        if (target >= 0 && l.getEntity(target) instanceof LivingEntity e && e.getTags().contains("xw_rc")) e.setHealth(e.getMaxHealth());
+        int ms = serverSleep;
+        if (ms > 0) try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+    }
+
     private static final double[] HOME = new double[3];
     private static int target = -1, cam = -1, bot = -1;
 
@@ -127,6 +161,7 @@ public final class RhalixComboTests {
 
     /** Shots one per tick: each frame's action logs the state the previous shot caught, then does the input for this tick. */
     private static void film(Minecraft mc, RhalixTests.Steps l, String scene, int frames, java.util.function.IntConsumer input) {
+        l.add(null, () -> slow(mc, SLOW), 2);
         for (int f = 0; f < frames; f++) {
             int ff = f;
             l.add(String.format("rc_%s_%02d", scene, f), () -> {
@@ -134,8 +169,10 @@ public final class RhalixComboTests {
                 input.accept(ff);
             }, 0);
         }
-        l.add(null, () -> state(mc, String.format("rc_%s_%02d", scene, frames - 1)), 1);
+        l.add(null, () -> { state(mc, String.format("rc_%s_%02d", scene, frames - 1)); slow(mc, 1); }, 1);
     }
+
+    private static final int SLOW = 8;
 
     private static void run(Minecraft mc, boolean on) {
         var o = mc.options;
@@ -170,7 +207,7 @@ public final class RhalixComboTests {
         }), 30);
 
         // ---- 1. the ground string on a dummy 4 blocks off (the Shadow Rush closes the gap), filmed every tick
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 4.0, true, 1000); }), 12);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 4.0, true, 120); }), 12);
         camera(mc, l, 5.2, 2.2, 0.35);
         l.add(null, () -> { face(mc); log("scene ground: string on a dummy 4 blocks away"); }, 3);
         film(mc, l, "ground", 84, f -> { face(mc); if (f % 2 == 0 && f < 70) ComboClient.press(false); });
@@ -180,15 +217,16 @@ public final class RhalixComboTests {
         }), 20);
 
         // ---- 1b. stills every other tick (10 fps) of one more full string, the same angle
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 4.0, true, 1000); }), 30);
-        l.add(null, () -> face(mc), 3);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 4.0, true, 120); }), 30);
+        l.add(null, () -> { face(mc); slow(mc, SLOW); }, 3);
         for (int f = 0; f < 40; f++) {
             int ff = f;
-            l.add(String.format("rc_still_%02d", f), () -> { face(mc); state(mc, "still-" + ff); ComboClient.press(false); }, 1);
+            l.add(String.format("rc_still_%02d", f), () -> { face(mc); state(mc, "still-" + ff); if (ff < 34) ComboClient.press(false); }, 1);
         }
+        l.add(null, () -> slow(mc, 1), 2);
 
         // ---- 2. a regular zombie (it fights back - he's invulnerable for the test)
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.ZOMBIE, 3.5, false, 200); }), 12);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.ZOMBIE, 3.5, false, 120); }), 12);
         l.add(null, () -> { face(mc); log("scene zombie"); }, 3);
         film(mc, l, "zombie", 70, f -> { face(mc); if (f % 2 == 0 && f < 64) ComboClient.press(false); });
 
@@ -199,7 +237,7 @@ public final class RhalixComboTests {
             if (b == null) { log("bot: none spawned"); return; }
             b.moveTo(HOME[0] - 3, HOME[1], HOME[2], 0F, 0F); b.addTag("xw_rc"); bot = b.getId();
             b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-            var z = mob(p, EntityType.ZOMBIE, 3.0, true, 1000);
+            var z = mob(p, EntityType.ZOMBIE, 3.0, true, 120);
             z.moveTo(HOME[0] - 3, HOME[1], HOME[2] + 3.5, 180F, 0F);
             b.setTarget(z);
             log("bot spawned " + b.character() + " style " + com.xenowarriors.combat.ComboStyle.of(b, b.getMainHandItem(), b.character()));
@@ -212,9 +250,9 @@ public final class RhalixComboTests {
         // ---- 4. the Kishi Warp: running, attack held, at a dummy 10 blocks off; then again inside 5 s (cooldown), then after
         for (int round = 0; round < 3; round++) {
             int rr = round;
-            l.add(null, () -> server(p -> { reset(p); if (rr == 0) mob(p, EntityType.HUSK, 12.0, true, 1000);
+            l.add(null, () -> server(p -> { reset(p); if (rr == 0) mob(p, EntityType.HUSK, 12.0, true, 120);
                 else if (p.serverLevel().getEntity(target) instanceof LivingEntity e) { e.teleportTo(HOME[0], HOME[1], HOME[2] + 12.0); e.setDeltaMovement(Vec3.ZERO); }
-                else mob(p, EntityType.HUSK, 12.0, true, 1000); }), rr == 2 ? 70 : 8);
+                else mob(p, EntityType.HUSK, 12.0, true, 120); }), rr == 2 ? 70 : 8);
             if (round == 0) camera(mc, l, 9.0, 6.0, 0.8);
             l.add(null, () -> { face(mc); countChats = true; chats = 0; log("scene kishi round " + rr + " (ready " + com.xenowarriors.client.KishiWarpClient.ready() + ")"); }, 2);
             film(mc, l, "kishi" + rr, rr == 1 ? 40 : 75, f -> {
@@ -227,7 +265,7 @@ public final class RhalixComboTests {
         }
 
         // ---- 5. the air string: the dummy thrown up, he jumps and attacks
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 2.2, true, 1000); }), 12);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 2.2, true, 120); }), 12);
         camera(mc, l, 5.5, 1.5, 1.2);
         l.add(null, () -> { face(mc); server(p -> { if (p.serverLevel().getEntity(target) instanceof LivingEntity e) { e.setDeltaMovement(0, 0.85, 0); e.hurtMarked = true; } }); }, 3);
         film(mc, l, "air", 70, f -> {
@@ -237,11 +275,11 @@ public final class RhalixComboTests {
         });
 
         // ---- 6. Ki Burst (half hold) on a knocked-down dummy, then Rising Leap (full hold) at one in the air
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 2.0, true, 1000); }), 12);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 2.0, true, 120); }), 12);
         camera(mc, l, 5.2, 1.6, 0.35);
         l.add(null, () -> { face(mc); server(p -> { if (p.serverLevel().getEntity(target) instanceof LivingEntity e) com.xenowarriors.anim.Poses.play(e, com.xenowarriors.anim.Poses.KNOCKDOWN, 40); }); }, 6);
         film(mc, l, "half", 40, f -> { face(mc); if (f == 0) ComboClient.testHold(10); });
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 2.6, true, 1000); }), 20);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 2.6, true, 120); }), 20);
         l.add(null, () -> face(mc), 2);
         film(mc, l, "hold", 70, f -> {
             face(mc);
@@ -252,7 +290,7 @@ public final class RhalixComboTests {
 
         // ---- 7. a ground-and-air mix (after the "Mix ground & air" video): dash in, the string, dash, Ki Burst, the
         //         grab and launcher, jump into the air string and its spike, then Ki Burst again and back on the ground
-        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 6.0, true, 2000); }), 12);
+        l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.HUSK, 6.0, true, 140); }), 12);
         camera(mc, l, 7.0, 4.0, 0.9);
         l.add(null, () -> { face(mc); log("scene mix"); }, 2);
         int[] route = new int[400];

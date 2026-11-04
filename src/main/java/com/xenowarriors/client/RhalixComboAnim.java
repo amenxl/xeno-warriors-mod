@@ -388,8 +388,9 @@ public final class RhalixComboAnim {
         ComboClient.Swing sw = ComboClient.swing(p);
         float t = sw == null ? 1F : Mth.clamp((p.tickCount + partial - sw.start()) / sw.duration(), 0F, 1F);
         float flare = smooth((t - 0.2F) / 0.18F) * (1F - smooth((t - 0.7F) / 0.3F));
-        float big = switch (st.lastMoveHit) { case 3, 6 -> 0.85F; case 4, 7 -> 0.6F; case 0 -> 0.35F; default -> 0.2F; };
-        return Mth.clamp((0.15F + big * flare) * w, 0F, 1F);
+        // (only a little: open wide they hide the moves, and the reference doesn't show them at all)
+        float big = switch (st.lastMoveHit) { case 3, 6 -> 0.3F; case 4, 7 -> 0.2F; default -> 0.08F; };
+        return Mth.clamp(big * flare * w, 0F, 1F);
     }
 
     private static final java.util.Set<Integer> TRANSFORMED = ClientReset.trackAll(new java.util.HashSet<>());

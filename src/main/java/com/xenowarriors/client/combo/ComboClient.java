@@ -185,6 +185,7 @@ public final class ComboClient {
         if (now < lockUntil) return;
         if (com.xenowarriors.client.KishiWarpClient.warping()) return;            // knelt, sending the Kishi out
         ComboStyle style = styleFor(p);
+        if (autoString && style != null && style.rhalix()) style = ComboStyle.RHALIX;      // (the warp string stays on the ground)
         if (style == null) { queued = false; return; }
         boolean heavy = queuedHeavy;
         int hit;
@@ -219,7 +220,7 @@ public final class ComboClient {
         struck = false;
         SWINGS.put(p.getId(), cur);
         STARTED_AT.put(p.getId(), ticks);
-        ModNetwork.sendToServer(new ComboStartPacket(hit, heavy));
+        ModNetwork.sendToServer(new ComboStartPacket(style == ComboStyle.RHALIX_AIR ? hit + ComboStyle.AIR_FLAG : hit, heavy));   // (Rhalix: which of his strings)
         if (style.rhalix()) com.xenowarriors.client.RhalixComboFx.log("start " + style + " hit " + hit + (heavy ? " heavy" : "") + " at " + now
                 + " (prev " + lastStyle + " " + lastHit + ")");
         p.swing(InteractionHand.MAIN_HAND);

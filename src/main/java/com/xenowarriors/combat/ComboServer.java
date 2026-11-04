@@ -69,6 +69,9 @@ public final class ComboServer {
     public static void start(ServerPlayer p, int hit, boolean heavy) {
         ComboStyle style = ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p));
         if (style == null || !p.isAlive() || p.isSpectator()) return;
+        // Rhalix: his client says which string (ground or air) - its idea of being on the ground is the right one
+        if (style.rhalix()) style = hit >= ComboStyle.AIR_FLAG ? ComboStyle.RHALIX_AIR : ComboStyle.RHALIX;
+        if (hit >= ComboStyle.AIR_FLAG) hit -= ComboStyle.AIR_FLAG;
         int now = p.tickCount;
         int[] prev = STARTED.get(p.getUUID());
         if (prev != null && prev[0] == style.ordinal()) {

@@ -80,6 +80,8 @@ public enum ComboStyle {
      * Rising Leap (held a second: he leaps up at someone in the air and goes on into his air string).
      */
     public static final int BURST = 20, LEAP = 21;
+    /** Added to a Rhalix hit his client starts: it's one of his air string's. */
+    public static final int AIR_FLAG = 100;
 
     public boolean special(int hit) { return rhalix() && (hit == BURST || hit == LEAP); }
 
