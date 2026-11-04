@@ -416,7 +416,7 @@ public final class BotAiTests {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.teleportTo(p.serverLevel(), X + 0.5, Y, Z + 0.5, 0, 20);
             p.setHealth(p.getMaxHealth());
-            var k = bot(p, CharacterType.KAERU), r = bot(p, CharacterType.RHALIX);
+            PartyBotEntity k = bot(p, CharacterType.KAERU), r = bot(p, CharacterType.RHALIX);
             if (k != null) { k.moveTo(X - 4.5, Y, Z - 3.5); k.setHealth(k.getMaxHealth()); }
             if (r != null) { r.moveTo(X + 5.5, Y, Z - 4.5); r.setHealth(r.getMaxHealth()); }
             Zombie zb = dummy(p, X + 0.5, Y, Z + 3.5, true, "downz");
@@ -458,7 +458,7 @@ public final class BotAiTests {
         l.add(null, () -> server(p -> {
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             clearDummies(p);
-            var k = bot(p, CharacterType.KAERU), r = bot(p, CharacterType.RHALIX);
+            PartyBotEntity k = bot(p, CharacterType.KAERU), r = bot(p, CharacterType.RHALIX);
             if (k == null || r == null) return;
             p.teleportTo(p.serverLevel(), X - 5.5, Y, Z + 5.5, 135, 20);
             r.moveTo(X + 0.5, Y, Z + 0.5); k.moveTo(X + 4.5, Y, Z - 4.5);
