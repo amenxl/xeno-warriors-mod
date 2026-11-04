@@ -478,7 +478,8 @@ public final class BotCrafting {
 
     private static ItemStack combine(PartyBotEntity b, Idea i) {
         ItemStack a = at(b, i.slot), o = i.material >= 0 && i.material < b.inventory.getContainerSize() ? b.inventory.getItem(i.material) : ItemStack.EMPTY;
-        if (!a.is(i.result.getItem()) || !o.is(a.getItem()) || i.material == i.slot) return null;
+        // (the bag may have changed since the offer: never fold an enchanted copy into another - the grid repair loses them)
+        if (!a.is(i.result.getItem()) || !o.is(a.getItem()) || i.material == i.slot || a.isEnchanted() || o.isEnchanted() || !o.isDamageableItem()) return null;
         int max = a.getMaxDamage();
         int left = (max - a.getDamageValue()) + (max - o.getDamageValue()) + max * 5 / 100;
         a.setDamageValue(Math.max(0, max - left));
@@ -507,6 +508,10 @@ public final class BotCrafting {
 
     /** A bot left or went down: its open offer goes. */
     public static void forget(UUID bot) { OFFERS.remove(bot); OFFER_UNTIL.remove(bot); }
+
+    /** Cooldowns are game times of this world: none carry into another save (singleplayer). */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) { OFFERS.clear(); OFFER_UNTIL.clear(); QUIET.clear(); }
 
     /** (Tests) the open offer's token, or 0. */
     public static int offerToken(PartyBotEntity b) { Idea i = OFFERS.get(b.getUUID()); return i == null ? 0 : i.token; }

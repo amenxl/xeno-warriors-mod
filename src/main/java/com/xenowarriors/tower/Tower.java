@@ -617,6 +617,10 @@ public final class Tower {
         if (event.getEntity() instanceof ServerPlayer p && BY_PLAYER.containsKey(p.getUUID())) leave(p, "Left the Tower");
     }
 
+    /** The arenas built belong to this world: opening another save (singleplayer) builds its own (else "already built" left it with no floor). */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) { BUILT.clear(); }
+
     /** Logged in inside the Tower with no run going (e.g. after a restart): back to spawn. */
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {

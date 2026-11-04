@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * Health orbs: a defeated enemy (a hostile mob beaten by a player, their bot or pet) has a 5% chance to leave one.
- * Not in VR (it's a simulation). See {@link HealthOrbEntity}.
+ * Not in VR (it's a simulation), nor from Journey enemies (nothing heals you on a Journey). See {@link HealthOrbEntity}.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class HealthOrbs {
@@ -33,6 +33,7 @@ public final class HealthOrbs {
         LivingEntity dead = event.getEntity();
         if (!(dead.level() instanceof ServerLevel l) || dead instanceof Player || !(dead instanceof Enemy)) return;
         if (com.xenowarriors.vr.Vr.is(l)) return;
+        if (dead.getPersistentData().getBoolean("xw_journey") || dead.getTags().contains("xw_journey")) return;   // (nothing heals you on a Journey: an orb there would only be wasted)
         ServerPlayer credit = com.xenowarriors.collection.Collection.credit(event.getSource().getEntity());
         if (credit == null) return;
         float chance = testChance >= 0 ? testChance : CHANCE;

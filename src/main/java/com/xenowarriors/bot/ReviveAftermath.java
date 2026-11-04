@@ -137,6 +137,15 @@ public final class ReviveAftermath {
         }
     }
 
+    /**
+     * Times here are game times: kept into another world (singleplayer, another save with an earlier clock) a revive's
+     * invincibility would last until that world caught up - so nothing carries over.
+     */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
+        INVULN.clear(); STUNNED.clear(); DAZED.clear(); lastBurst = "";
+    }
+
     // ---------------------------------------------------------------- back up: invincible, and a shockwave
 
     /** Someone (a player or a bot) was just revived. */

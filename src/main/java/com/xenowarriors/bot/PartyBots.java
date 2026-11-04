@@ -438,6 +438,8 @@ public final class PartyBots {
         FakePlayer f = FAKES.remove(bot);
         if (f != null) FAKE_TO_BOT.remove(f.getUUID());
         com.xenowarriors.compat.DmzBotKi.forget(bot);
+        BotCrafting.forget(bot);                                                  // (an offer to a bot that's gone: logout, owner away)
+        ANIM_SENT.remove(bot);
     }
 
     private static final Map<UUID, Boolean> ANIM_SENT = new HashMap<>();
@@ -492,6 +494,11 @@ public final class PartyBots {
         long now = b.level().getGameTime();
         ServerPlayer o = b.owner();
         int[] loadout = o == null ? SkillPool.defaultLoadout() : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout());   // (with the ultimate picked for that character)
+        if (loadout.length > com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] > 0) {    // (the picked one only once the bot itself is strong enough - a pick made in creative doesn't count)
+            var ults = SkillPool.ultimates(b.character());
+            int c = loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT];
+            if (c >= ults.size() || !SkillPool.available(ults.get(c), b.botLevel(), false, com.xenowarriors.character.Seasons.highest(b.getServer()))) loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] = 0;
+        }
         int slot = b.getRandom().nextInt(5);
         if (slot == 4 && (b.getHealth() > b.getMaxHealth() * 0.6F || b.karma < 60)) slot = b.getRandom().nextInt(4);    // ultimates when it matters
         if (now < b.skillReady[slot]) return;
@@ -800,6 +807,14 @@ public final class PartyBots {
         }
         for (var it = LEFT_BEHIND.iterator(); it.hasNext(); ) { var e = it.next(); if (e.getKey().equals(p.getUUID())) { list.add(e.getValue()); it.remove(); } }   // (waiting ones too)
         p.getPersistentData().put(RECORDS, list);
+    }
+
+    /** Bots waiting for an offline owner belong to this world: none turn up (doubled) in the next save opened (singleplayer). */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
+        if (!LEFT_BEHIND.isEmpty() || !PENDING_HOME.isEmpty())
+            com.xenowarriors.XenoWarriors.LOGGER.warn("Server stopped with {} bot teammates waiting for offline owners and {} bot inventories not yet home - they stay behind", LEFT_BEHIND.size(), PENDING_HOME.size());
+        LEFT_BEHIND.clear(); PENDING_HOME.clear(); ANIM_SENT.clear();
     }
 
     @SubscribeEvent

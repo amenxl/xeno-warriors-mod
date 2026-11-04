@@ -64,6 +64,10 @@ public final class SwitchRules {
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { HIT.remove(event.getEntity().getUUID()); }
 
+    /** Died and back at spawn: out of that fight (you can pick someone else straight away). */
+    @SubscribeEvent
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) { if (!event.isEndConquered()) HIT.remove(event.getEntity().getUUID()); }
+
     /** (tests) forget the combat timer. */
     public static void clearCombat(ServerPlayer p) { HIT.remove(p.getUUID()); }
 }
