@@ -38,7 +38,7 @@ public class HekubladeRenderer extends BlockEntityWithoutLevelRenderer {
     private static HekubladeRenderer instance;
 
     // ---- the crystals glow after an enemy is sealed into the blade
-    private static final java.util.Map<Integer, Long> GLOW = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, Long> GLOW = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
     private static final int GLOW_TIME = 90;
     /** Who's holding the blade being drawn right now (null = you, e.g. first person). */
     public static net.minecraft.world.entity.Entity current;

@@ -131,21 +131,57 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     /** The plain face for a character (bots, VR, previews). */
     public static net.minecraft.resources.ResourceLocation baseFace(CharacterType type) {
-        return drawn(type) ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_drawn_face.png") : type.getFaceTexture();
+        return drawn(type) ? face(type.getId() + "_drawn", null) : type.getFaceTexture();
     }
+
+    /** set -> expression ("" = none) -> texture; filled as faces are first shown, emptied on resource reload. */
+    private static final java.util.Map<String, java.util.Map<String, net.minecraft.resources.ResourceLocation>> FACES = new java.util.concurrent.ConcurrentHashMap<>();
+    /** A close expression for sets that don't have one (the drawn faces, Rhalix's Demon/Lunar faces lack a few). */
+    private static final java.util.Map<String, String> FACE_FALLBACK = java.util.Map.of("shocked", "hurt", "determined", "focused",
+            "smirk", "smug", "laugh", "grin", "pout", "annoyed", "blush", "happy", "love", "happy");
+
+    /**
+     * textures/entity/character/&lt;set&gt;_face_&lt;expr&gt;.png - or a close expression, or the plain &lt;set&gt;_face.png when
+     * that set has no such face (never the missing-texture checkerboard). Looked up once, no allocation per frame.
+     */
+    public static net.minecraft.resources.ResourceLocation face(String set, String expr) {
+        var bySet = FACES.computeIfAbsent(set, k -> new java.util.concurrent.ConcurrentHashMap<>());
+        String key = expr == null ? "" : expr;
+        net.minecraft.resources.ResourceLocation r = bySet.get(key);
+        if (r == null) {
+            r = resolveFace(set, expr);
+            bySet.put(key, r);
+        }
+        return r;
+    }
+
+    private static net.minecraft.resources.ResourceLocation resolveFace(String set, String expr) {
+        String base = "textures/entity/character/" + set + "_face";
+        net.minecraft.resources.ResourceLocation plain = com.xenowarriors.XenoWarriors.id(base + ".png");
+        if (expr == null) return plain;
+        var rm = net.minecraft.client.Minecraft.getInstance().getResourceManager();
+        int hops = 0;
+        for (String e = expr; e != null && hops++ < 4; e = FACE_FALLBACK.get(e)) {
+            net.minecraft.resources.ResourceLocation rl = com.xenowarriors.XenoWarriors.id(base + "_" + e + ".png");
+            if (rm.getResource(rl).isPresent()) return rl;
+        }
+        return plain;
+    }
+
+    /** Resource packs changed: look the faces up again. */
+    public static void clearFaceCache() { FACES.clear(); }
 
     public static net.minecraft.resources.ResourceLocation faceTexture(AbstractClientPlayer p) {
         if (ClientCharacterData.get(p) == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(p.getId()))
-            return com.xenowarriors.XenoWarriors.id("textures/entity/character/ultima_" + (drawn(CharacterType.ULTIMA) ? "drawn_" : "") + "face_overload.png");
+            return face(drawn(CharacterType.ULTIMA) ? "ultima_drawn" : "ultima", "overload");
         CharacterType type = ClientCharacterData.get(p);
         String expr = expression(p, type);
-        if (drawn(type)) return com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_drawn_face" + (expr == null ? "" : "_" + expr) + ".png");
+        if (drawn(type)) return face(type.getId() + "_drawn", expr);
         if (type == CharacterType.RHALIX && com.xenowarriors.client.DemonClient.active(p.getId()) && !com.xenowarriors.client.LunarClient.active(p.getId()))   // Demon's Remnants: glowing red eyes
-            return com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_demon_face" + (expr == null ? "" : "_" + expr) + ".png");
+            return face("rhalix_demon", expr);
         if (type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId()))      // Lunar: crescents on his cheeks
-            return com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar_face" + (expr == null ? "" : "_" + expr) + ".png");
-        return expr == null ? type.getFaceTexture()
-                : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_face_" + expr + ".png");
+            return face("rhalix_lunar", expr);
+        return expr == null ? type.getFaceTexture() : face(type.getId(), expr);
     }
 
     /**
@@ -303,7 +339,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         };
     }
 
-    private static final java.util.Map<Integer, float[]> HAIR = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, float[]> HAIR = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     /** which = 0: how far the hair is blown back, 1: how much it flutters (smoothed so it eases in and out). */
     private static float hairStream(AbstractClientPlayer p, int which) {
@@ -326,7 +362,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     /** per player: {style weight 0..1, last age, style shown} - the hair rises when transforming and falls back after */
-    private static final java.util.Map<Integer, float[]> SSJ = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, float[]> SSJ = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     private static float hairStyleWeight(AbstractClientPlayer p, int style, float age) {
         float[] s = SSJ.computeIfAbsent(p.getId(), k -> new float[]{0F, age, 0F});
@@ -349,7 +385,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return s == null ? 0 : (int) s[2];
     }
 
-    private static final java.util.Map<java.util.UUID, Integer> TORN = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<java.util.UUID, Integer> TORN = com.xenowarriors.client.ClientReset.track(new java.util.concurrent.ConcurrentHashMap<>());
 
     public static void setTorn(java.util.UUID player, int torn) {
         if (torn <= 0) TORN.remove(player);
@@ -563,9 +599,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             boolean dr = drawn(type);
             String fp = dr ? type.getId() + "_drawn" : type.getId();
             var faceTexture = type == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(player.getId())
-                    ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_overload.png")
+                    ? face(fp, "overload")
                     : expr == null ? baseFace(type)
-                    : com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_" + expr + ".png");
+                    : face(fp, expr);
             VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
             renderFace(model, parent, player, poseStack, faceBuffer, packedLight, overlay);
 

@@ -26,10 +26,10 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KarmaSense {
-    private static final Map<Integer, Long> SENSED = new HashMap<>();   // entity id -> game time it stops glowing
-    private static final Map<Integer, Long> TRACKED = new HashMap<>();  // Fire Blitz targets (orange outline)
+    private static final Map<Integer, Long> SENSED = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // entity id -> game time it stops glowing
+    private static final Map<Integer, Long> TRACKED = com.xenowarriors.client.ClientReset.track(new HashMap<>());  // Fire Blitz targets (orange outline)
     private static long pulseStart = -1000;
-    private static final Map<Integer, Integer> LEVELS = new HashMap<>();  // entity id -> how strong it is (1-150)
+    private static final Map<Integer, Integer> LEVELS = com.xenowarriors.client.ClientReset.track(new HashMap<>());  // entity id -> how strong it is (1-150)
     private static boolean showLevels;
 
     public static void track(int id, int duration) {
@@ -37,7 +37,7 @@ public final class KarmaSense {
         if (mc.level != null) TRACKED.put(id, mc.level.getGameTime() + duration);
     }
 
-    private static final Map<Integer, Long> DATA = new HashMap<>();     // Ultima's Data Sense: green, scanned look
+    private static final Map<Integer, Long> DATA = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // Ultima's Data Sense: green, scanned look
 
     /** Glow from Ultima's Data Sense. */
     public static void data(int id, int duration) {
@@ -47,14 +47,14 @@ public final class KarmaSense {
 
     private KarmaSense() {}
 
-    private static final java.util.Set<Integer> SOULS = new java.util.HashSet<>();   // sensed with a corrupted soul inside
+    private static final java.util.Set<Integer> SOULS = com.xenowarriors.client.ClientReset.trackAll(new java.util.HashSet<>());   // sensed with a corrupted soul inside
 
     /** Sensed as a corrupted soul (or carrying one, even hidden). */
     public static boolean soul(Entity e) {
         return SOULS.contains(e.getId()) && isSensed(e);
     }
 
-    private static final Map<Integer, int[]> STATS = new HashMap<>();     // entity id -> {attack x10, defense}
+    private static final Map<Integer, int[]> STATS = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // entity id -> {attack x10, defense}
 
     /** How strong a sensed thing is (its level), or 0 if unknown / hidden. */
     public static int level(int id) {

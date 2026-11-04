@@ -35,8 +35,8 @@ public final class ChangeClient {
     public static final ResourceLocation SIL_FACE = XenoWarriors.id("textures/entity/character/kaeru_silhouette_face.png");
 
     private record Form(int mode, String id) {}
-    private static final Map<Integer, Form> FORMS = new HashMap<>();
-    private static final Map<Integer, Entity> DISGUISE = new HashMap<>();
+    private static final Map<Integer, Form> FORMS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Entity> DISGUISE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private ChangeClient() {}
 

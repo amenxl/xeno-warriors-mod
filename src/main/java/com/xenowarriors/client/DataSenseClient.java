@@ -28,6 +28,9 @@ public final class DataSenseClient {
 
     private DataSenseClient() {}
 
+    /** Leaving the world: no boxes around the last world's ore. */
+    public static void reset() { ores = new long[0]; kinds = new int[0]; until = 0; errorUntil = 0; }
+
     public static void set(int[] ids, long[] o, int[] k, int duration, boolean error) {
         var mc = Minecraft.getInstance();
         if (mc.level == null) return;

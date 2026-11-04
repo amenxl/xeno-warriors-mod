@@ -46,7 +46,7 @@ public final class BladeAbsorbClient {
         }
     }
 
-    private static final Map<Integer, Absorb> ACTIVE = new HashMap<>();
+    private static final Map<Integer, Absorb> ACTIVE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private BladeAbsorbClient() {}
 
@@ -131,7 +131,7 @@ public final class BladeAbsorbClient {
         }
     }
 
-    private static final Map<Integer, Boolean> PUSHED = new HashMap<>();
+    private static final Map<Integer, Boolean> PUSHED = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {

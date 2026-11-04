@@ -24,7 +24,7 @@ import java.util.Deque;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class RequestPopups {
     private record Card(RequestPopupPacket req, long shownAt) {}
-    private static final Deque<Card> CARDS = new ArrayDeque<>();
+    private static final Deque<Card> CARDS = com.xenowarriors.client.ClientReset.trackAll(new ArrayDeque<>());
 
     private RequestPopups() {}
 

@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LunarClient {
-    private static final Map<Integer, boolean[]> STATE = new HashMap<>();
+    private static final Map<Integer, boolean[]> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     private static final DustParticleOptions RIM = new DustParticleOptions(new Vector3f(0.85F, 0.35F, 0.72F), 0.75F),
             DARK = new DustParticleOptions(new Vector3f(0.08F, 0.05F, 0.12F), 1.1F),
             MIRROR = new DustParticleOptions(new Vector3f(0.85F, 0.9F, 1F), 0.9F);

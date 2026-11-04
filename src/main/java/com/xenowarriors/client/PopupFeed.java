@@ -42,7 +42,7 @@ public final class PopupFeed implements IGuiOverlay {
 
     private record Pop(int style, UUID subject, int type, int pet, String title, String text, String face, long born) {}
 
-    private static final List<Pop> POPS = new ArrayList<>();     // oldest first
+    private static final List<Pop> POPS = com.xenowarriors.client.ClientReset.trackAll(new ArrayList<>());     // oldest first
 
     public static void push(int style, UUID subject, int type, int pet, String title, String text, String face) {
         long now = Util.getMillis();
@@ -60,7 +60,7 @@ public final class PopupFeed implements IGuiOverlay {
     // ------------------------------------------------------------------ party news (from the synced party list)
 
     private record Seen(boolean down, boolean low, String name, int type, boolean bot) {}
-    private static final Map<UUID, Seen> SEEN = new HashMap<>();
+    private static final Map<UUID, Seen> SEEN = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     private static boolean primed;
 
     /** Called whenever the party list arrives. */

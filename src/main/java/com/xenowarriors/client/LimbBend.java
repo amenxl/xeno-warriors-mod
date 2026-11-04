@@ -83,9 +83,9 @@ public final class LimbBend {
 
     // ------------------------------------------------------------------ bending
 
-    private static final java.util.Map<Integer, float[]> EXTRA = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, float[]> EXTRA = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
-    private static final java.util.Map<Integer, float[]> EXTRA_ELBOWS = new java.util.HashMap<>();
+    private static final java.util.Map<Integer, float[]> EXTRA_ELBOWS = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     /** Extra elbow bend (negative = forearm up) asked for by an animation this frame, used once. */
     public static void extraElbows(net.minecraft.world.entity.Entity e, float right, float left) {

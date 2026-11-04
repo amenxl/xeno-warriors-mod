@@ -18,7 +18,7 @@ import java.util.Set;
 /** Demon's Remnants on the client: the glowing red eye face, and a faint red trail from his eyes. */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class DemonClient {
-    private static final Set<Integer> ON = new HashSet<>();
+    private static final Set<Integer> ON = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
     private static final DustParticleOptions GLOW = new DustParticleOptions(new Vector3f(1F, 0.08F, 0.1F), 0.45F);
 
     private DemonClient() {}

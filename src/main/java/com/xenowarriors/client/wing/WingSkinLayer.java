@@ -16,7 +16,7 @@ import net.minecraft.world.entity.LivingEntity;
  * glow (Frost, Ember, Golden), and Void does both.
  */
 public class WingSkinLayer<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M> {
-    private static final Int2IntOpenHashMap SKIN = new Int2IntOpenHashMap();
+    private static final Int2IntOpenHashMap SKIN = com.xenowarriors.client.ClientReset.track(new Int2IntOpenHashMap());
     //                                   wash r,g,b,a                  glow r,g,b
     private static final float[][] LOOK = {
             null,

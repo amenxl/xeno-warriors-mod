@@ -16,7 +16,7 @@ import java.util.Map;
 public final class CalmTracker {
     /** Ten minutes without a fight. */
     public static final int CALM_TICKS = 20 * 60 * 10;
-    private static final Map<Integer, Long> LAST_FIGHT = new HashMap<>();
+    private static final Map<Integer, Long> LAST_FIGHT = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private CalmTracker() {}
 

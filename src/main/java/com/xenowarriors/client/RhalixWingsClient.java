@@ -34,10 +34,10 @@ public final class RhalixWingsClient {
 
     private record State(boolean out, long changed, boolean animate) {}
 
-    private static final Map<UUID, State> STATES = new HashMap<>();
-    private static final Map<Integer, float[]> HOVER = new HashMap<>();   // id -> {now, before}
+    private static final Map<UUID, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, float[]> HOVER = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {now, before}
     /** Dancing to music: id -> {gravity dance, before, sad vibe, before, start tick, still ticks, smoke, before, smoke start}. */
-    private static final Map<Integer, float[]> DANCE = new HashMap<>();
+    private static final Map<Integer, float[]> DANCE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     public static float gravityDance(Player p, float partial) {
         float[] d = DANCE.get(p.getId());
@@ -96,7 +96,7 @@ public final class RhalixWingsClient {
         return danceTime(p, age);
     }
 
-    private static final Map<Integer, float[]> SUPER = new HashMap<>();      // id -> {now, before}
+    private static final Map<Integer, float[]> SUPER = com.xenowarriors.client.ClientReset.track(new HashMap<>());      // id -> {now, before}
 
     /** 0..1: flying forward fast enough for the Superman pose. */
     public static float superman(Player p, float partial) {
@@ -265,7 +265,7 @@ public final class RhalixWingsClient {
         if (t <= len) GeoAnims.apply(model, GeoAnims.RHALIX, name, t, false, GeoAnims.envelope(t, len, 4F));
     }
 
-    private static final java.util.Set<Integer> LIFTED = new java.util.HashSet<>();
+    private static final java.util.Set<Integer> LIFTED = com.xenowarriors.client.ClientReset.trackAll(new java.util.HashSet<>());
 
     /** Gravity dance: he floats a little off the ground, bobbing, and every so often spins all the way round. */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)

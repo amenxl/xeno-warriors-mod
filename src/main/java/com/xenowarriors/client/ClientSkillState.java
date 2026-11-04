@@ -68,7 +68,7 @@ public final class ClientSkillState {
         return (STATUS.getOrDefault(p.getId(), 0) & 4) != 0;
     }
 
-    private static final Map<Integer, Integer> FLIGHT = new HashMap<>();   // entity id -> total flight ticks
+    private static final Map<Integer, Integer> FLIGHT = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // entity id -> total flight ticks
 
     public static void setFlightSkill(int entityId, int ticks) {
         FLIGHT.put(entityId, ticks);
@@ -177,11 +177,16 @@ public final class ClientSkillState {
         NETSU.clear();
         STATUS.clear();
         SQUISH.clear();
-        for (int i = 0; i < 5; i++) {
-            COOLDOWN_END[i] = 0;
-            COOLDOWN_TOTAL[i] = 0;
-        }
+        java.util.Arrays.fill(COOLDOWN_END, 0);
+        java.util.Arrays.fill(COOLDOWN_TOTAL, 0);
         KISHI_SEEN.clear();
         KISHI_LEVEL.clear();
+        FLIGHT.clear();
+        // the next server sends its own loadout/season; until then nothing from the last world (e.g. Season 2 unlocked)
+        loadout = com.xenowarriors.skill.SkillPool.defaultLoadout();
+        level = 0;
+        ultimate = 0;
+        season = 1;
+        ka = "";
     }
 }

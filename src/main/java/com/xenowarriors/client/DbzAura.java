@@ -40,7 +40,7 @@ public final class DbzAura {
     private static final ResourceLocation TEX = XenoWarriors.id("textures/entity/aura/dbz_aura.png");
     private static final ResourceLocation TEX_A = XenoWarriors.id("textures/entity/aura/dbz_aura_a.png");
     private static final int FRAMES = 8;
-    private static final Map<Integer, long[]> MARKS = new HashMap<>();   // mob id -> {rgb, until game time}
+    private static final Map<Integer, long[]> MARKS = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // mob id -> {rgb, until game time}
 
     private DbzAura() {}
 

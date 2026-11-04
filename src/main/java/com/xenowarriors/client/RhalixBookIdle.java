@@ -36,7 +36,7 @@ import java.util.Map;
 public final class RhalixBookIdle {
     private static final int AFTER = 120;                      // ticks standing still first
     private static final ResourceLocation BOOK_TEX = new ResourceLocation("textures/entity/enchanting_table_book.png");
-    private static final Map<Integer, int[]> STILL = new HashMap<>();   // id -> {ticks still}
+    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {ticks still}
     private static BookModel book;
 
     private RhalixBookIdle() {}

@@ -15,7 +15,7 @@ import java.util.Map;
  * (or holds his sword up across himself), chin tucked, feet braced - jolting back when a hit lands on the guard.
  */
 public final class BlockPose {
-    private static final Map<Integer, float[]> W = new HashMap<>();   // {weight, age last updated}
+    private static final Map<Integer, float[]> W = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // {weight, age last updated}
 
     private BlockPose() {}
 

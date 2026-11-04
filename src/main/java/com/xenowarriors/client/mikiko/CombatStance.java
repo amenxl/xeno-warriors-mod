@@ -34,7 +34,7 @@ import java.util.Map;
 public final class CombatStance {
     public static final int NONE = 0, FISTS = 1, SWORD = 2;
     private static final int FLOURISH_EVERY = 170, FLOURISH_T = 22;
-    private static final Map<Integer, float[]> STATE = new HashMap<>();   // id -> {weight, previous weight, ticks on guard, style}
+    private static final Map<Integer, float[]> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {weight, previous weight, ticks on guard, style}
 
     private CombatStance() {}
 

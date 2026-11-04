@@ -12,7 +12,7 @@ import java.util.Map;
  * scanner shows the Karma Level of whoever she looks at.
  */
 public final class TechGoggles {
-    private static final Map<Integer, Long> LAST = new HashMap<>();
+    private static final Map<Integer, Long> LAST = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
     private TechGoggles() {}
 
