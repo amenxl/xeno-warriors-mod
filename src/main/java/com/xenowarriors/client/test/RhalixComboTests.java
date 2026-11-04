@@ -107,6 +107,8 @@ public final class RhalixComboTests {
     private static void reset(ServerPlayer p) {
         var l = p.serverLevel();
         l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(40), e -> e.getTags().contains("xw_rc")).forEach(e -> e.discard());
+        l.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(40)).forEach(e -> e.discard());
+        p.getInventory().clearContent();                // (bare hands: he'd fight with whatever he picked up)
         p.teleportTo(l, HOME[0], HOME[1], HOME[2], 0F, 8F);
         p.setDeltaMovement(Vec3.ZERO);
         p.setHealth(p.getMaxHealth());
@@ -216,6 +218,7 @@ public final class RhalixComboTests {
             l2.setDayTime(6000);
             l2.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, l2.getServer());
             l2.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, l2.getServer());
+            l2.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOBLOCKDROPS).set(false, l2.getServer());
             // a flat stone floor to fight on
             BlockPos c = p.blockPosition();
             for (int x = -12; x <= 12; x++) for (int z = -8; z <= 24; z++) {
