@@ -156,6 +156,7 @@ public final class PerfTests {
                 }
             });
         }, 200);
+        l.add(null, () -> server(PerfTests::seasonChecks), 20);
         phase(mc, l, "idle", null);
         // bots + 40 hostiles
         l.add(null, () -> server(p -> {
@@ -214,6 +215,33 @@ public final class PerfTests {
             SRV.on = false; CLI.on = false;
             log("done");
         }, 10);
+    }
+
+    /** Season gating (world review): what Season 1 / 2 worlds may and may not hand out. Leaves the world at Season 3. */
+    private static void seasonChecks(ServerPlayer p) {
+        var srv = p.server;
+        var lv = p.serverLevel();
+        var table = srv.getLootData().getLootTable(com.xenowarriors.XenoWarriors.id("chests/gov_facility"));
+        var med = com.xenowarriors.item.ModItems.AURORA_MEDICINE.get();
+        for (int season = 1; season <= 3; season++) {
+            com.xenowarriors.character.Seasons.set(srv, season);
+            var cat = com.xenowarriors.collection.Catalog.available(lv);
+            int meds = 0;
+            for (int i = 0; i < 200; i++) {
+                var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(lv)
+                        .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, p.position())
+                        .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
+                for (var st : table.getRandomItems(params)) if (st.is(med)) meds += st.getCount();
+            }
+            log("seasons s=" + season + " collection_has_order_assassin=" + cat.contains("xenowarriors:order_assassin") + " collection_has_distortion=" + cat.contains("xenowarriors:distortion")
+                    + " gov_facility_medicine_in_200_rolls=" + meds + " worldgen_s3=" + com.xenowarriors.character.Seasons.unlockedForWorldgen(3)
+                    + " shop_medicine_locked=" + !com.xenowarriors.character.Seasons.unlocked(srv, com.xenowarriors.gov.GovShop.OFFERS.get(0).season()));
+        }
+        // an Aurora block keeps the season its first chunk saw
+        boolean first = com.xenowarriors.recarnet.AuroraCells.s3(100000, 100000 + (int) (srv.getTickCount() % 1000), false);
+        boolean second = com.xenowarriors.recarnet.AuroraCells.s3(100000, 100000 + (int) (srv.getTickCount() % 1000), true);
+        log("seasons aurora_cell first=" + first + " later_chunk_after_unlock=" + second + (first == second ? " OK" : " FAIL"));
+        com.xenowarriors.character.Seasons.set(srv, 3);
     }
 
     /** Keeps 40 tagged hostiles around the player, each one set on a bot or the player. */
