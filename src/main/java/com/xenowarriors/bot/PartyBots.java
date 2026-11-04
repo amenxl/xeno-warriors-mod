@@ -326,6 +326,7 @@ public final class PartyBots {
     static boolean boardWith(PartyBotEntity b, ServerPlayer o) {
         Entity v = o.getVehicle();
         if (v == null || b.isPassenger() || b.distanceToSqr(v) > 5 * 5) return false;
+        if (b.downed() || b.reviving != null || com.xenowarriors.gov.HealingPods.inPod(b)) return false;   // (down, in someone's revive circle or resting in a pod: it stays put)
         if (v instanceof com.xenowarriors.vehicle.VehicleEntity || v instanceof net.minecraft.world.entity.vehicle.Boat) return b.startRiding(v, false);
         return false;
     }
