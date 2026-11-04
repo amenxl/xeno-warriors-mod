@@ -41,7 +41,7 @@ public final class LunarClient {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused() || STATE.isEmpty()) return;
-        for (Player p : mc.level.players()) {
+        for (Player p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!STATE.containsKey(p.getId()) || p.isInvisible()) continue;
             if (p == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
             if (active(p.getId()) && p.tickCount % 12 == 0) stars(mc, p);

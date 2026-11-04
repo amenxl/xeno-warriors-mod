@@ -59,7 +59,7 @@ public final class GarryBeatbox {
         int[] s = STILL.get(garry.getId());
         if (s == null || s[1] % 3 != 0) return null;                      // about one session in three
         AbstractClientPlayer best = null;
-        for (AbstractClientPlayer o : Minecraft.getInstance().level.players())
+        for (AbstractClientPlayer o : com.xenowarriors.client.bot.BotAvatars.players(Minecraft.getInstance().level))
             if (o != garry && type(o) == CharacterType.STEVIE && o.distanceToSqr(garry) < RANGE * RANGE && calmish(o)) best = o;
         return best;
     }
@@ -72,7 +72,7 @@ public final class GarryBeatbox {
     /** The beatboxing Garry this player is reacting to (dancing / copying), or null. */
     private static AbstractClientPlayer garryNear(Player p) {
         if (Minecraft.getInstance().level == null) return null;
-        for (AbstractClientPlayer o : Minecraft.getInstance().level.players())
+        for (AbstractClientPlayer o : com.xenowarriors.client.bot.BotAvatars.players(Minecraft.getInstance().level))
             if (o != p && type(o) == CharacterType.GARRY && o.distanceToSqr(p) < RANGE * RANGE && time(o, 0F) >= MIC) return o;
         return null;
     }
@@ -88,7 +88,7 @@ public final class GarryBeatbox {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STILL.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             CharacterType t = type(p);
             if (t != CharacterType.GARRY && t != CharacterType.STEVIE && t != CharacterType.MIKIKO && t != CharacterType.KAERU) { STILL.remove(p.getId()); continue; }
             int[] s = STILL.computeIfAbsent(p.getId(), k -> new int[2]);
@@ -248,7 +248,7 @@ public final class GarryBeatbox {
     /** Is someone of this character within r blocks? */
     public static boolean closeTo(Player p, CharacterType who, double r) {
         if (who == null || Minecraft.getInstance().level == null) return false;
-        for (AbstractClientPlayer o : Minecraft.getInstance().level.players())
+        for (AbstractClientPlayer o : com.xenowarriors.client.bot.BotAvatars.players(Minecraft.getInstance().level))
             if (o != p && type(o) == who && o.distanceToSqr(p) < r * r) return true;
         return false;
     }

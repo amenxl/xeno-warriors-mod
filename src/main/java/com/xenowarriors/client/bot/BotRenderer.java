@@ -42,6 +42,24 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
     /** Girl bots get the girls' slim body (see FemaleBody). */
     @Override
     public void render(PartyBotEntity e, float yaw, float pt, PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers, int light) {
+        // drawn as a player of that character (see BotAvatar): their animations, faces, wings and details
+        if (!BotAvatars.disabled) {
+            BotAvatar a = BotAvatars.of(e);
+            if (a != null) {
+                a.sync(e);
+                var r = net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(a);
+                pose.pushPose();
+                try {
+                    r.render(a, yaw, pt, pose, buffers, light);
+                    return;
+                } catch (Throwable t) {
+                    BotAvatars.disabled = true;                               // (never again this session: the plain look below)
+                    XenoWarriors.LOGGER.error("Drawing a bot as its character failed - using the plain bot look", t);
+                } finally {
+                    pose.popPose();
+                }
+            }
+        }
         boolean g = com.xenowarriors.client.FemaleBody.is(e.character(), "");
         this.model = g ? girl : wide;
         com.xenowarriors.client.FemaleBody.npcGirl = g;

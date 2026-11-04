@@ -89,7 +89,7 @@ public final class RopeBladeClient {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             boolean on = sawWanted(p);
             float[] w = SAW.get(p.getId());
             if (w == null) { if (!on) continue; SAW.put(p.getId(), w = new float[2]); }

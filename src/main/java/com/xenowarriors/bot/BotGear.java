@@ -100,6 +100,27 @@ public final class BotGear {
         return left;
     }
 
+    private static final java.util.Map<PartyBotEntity, Integer> LAST_BUSY = new java.util.WeakHashMap<>();
+
+    /**
+     * Once a second, from the bot's tick: out of a fight for a while (and not mining), it puts its weapon or tool away
+     * like a player would - so its character's idles (most need empty hands) play - and looks at what it could craft.
+     */
+    public static void tickIdle(PartyBotEntity b) {
+        if (b.level().isClientSide) return;
+        boolean busy = b.getTarget() != null || b.mode() == PartyBotEntity.MINING || b.downed() || b.sparring() || b.isPassenger()
+                || b.hurtTime > 0 || handLocked(b);
+        if (busy || !LAST_BUSY.containsKey(b)) LAST_BUSY.put(b, b.tickCount);
+        ItemStack hand = b.getMainHandItem();
+        if (!busy && !hand.isEmpty() && b.tickCount - LAST_BUSY.get(b) > 15 * 20 && !b.journey()
+                && (hand.isDamageableItem() || weaponScore(b, hand) > 0F)) {
+            ItemStack left = b.inventory.addItem(hand.copy());
+            if (left.isEmpty()) b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            else if (left.getCount() != hand.getCount()) b.setItemSlot(EquipmentSlot.MAINHAND, left);
+        }
+        BotCrafting.tick(b);
+    }
+
     /** One use of the held item (a hit landed, a block broken): it wears, and breaks when it's done. */
     public static void wear(PartyBotEntity b) {
         ItemStack hand = b.getMainHandItem();

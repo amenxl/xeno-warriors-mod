@@ -92,7 +92,7 @@ public final class PartyClient {
         long now = mc.level.getGameTime();
         KNOCKED.values().removeIf(t -> now > t + 40);
         // dazed: little stars circling the head of anyone knocked out
-        for (Player p : mc.level.players()) {
+        for (Player p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!knockedOut(p) || p.tickCount % 3 != 0) continue;
             Vec3 head = headPos(p);
             double a = p.tickCount * 0.35;

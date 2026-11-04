@@ -84,7 +84,7 @@ public final class RhalixCombatAnim {
             return;
         }
         STATES.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!rhalix(p)) continue;
             State s = STATES.computeIfAbsent(p.getId(), k -> new State());
             int now = p.tickCount;

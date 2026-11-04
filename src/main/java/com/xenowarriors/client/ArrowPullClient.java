@@ -45,7 +45,7 @@ public final class ArrowPullClient {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STATE.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!warrior(p) || p.getArrowCount() <= 0) { STATE.remove(p.getId()); continue; }
             int[] s = STATE.computeIfAbsent(p.getId(), k -> new int[3]);
             boolean still = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && p.onGround() && !p.swinging

@@ -201,7 +201,7 @@ public final class DmzForms {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused() || !ready()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!ours(p) || dmzDraws(p) || giantFox(p)) continue;
             int c = auraColor(p);
             if (c < 0 || (p == mc.player && mc.options.getCameraType().isFirstPerson())) continue;

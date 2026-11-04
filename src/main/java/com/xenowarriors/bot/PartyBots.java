@@ -246,12 +246,55 @@ public final class PartyBots {
 
     /** A character's things back into its save when a bot leaves. */
     public static void checkIn(PartyBotEntity b, ServerPlayer o) {
-        if (b.journey() || o == null) return;
-        ItemStack held = BotGear.stowHand(b);                                    // (what's in its hand goes home too)
-        if (!held.isEmpty() && !o.getInventory().add(held)) o.drop(held, false);
-        com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), b.inventory.createTag(), b.armour(),
-                b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), b.getPersistentData().getCompound("xw_inv_kept"));
+        if (b.journey()) return;
+        BotCrafting.forget(b.getUUID());
+        if (o == null) {                                                          // owner offline (the void, a /kill while they're away): kept for when they're back
+            if (b.ownerId() != null) PENDING_HOME.computeIfAbsent(b.ownerId(), k -> new ArrayList<>()).add(b.record());
+        } else {
+            ItemStack held = BotGear.stowHand(b);                                // (what's in its hand goes home too)
+            CompoundTag kept = b.getPersistentData().getCompound("xw_inv_kept").copy();
+            if (!held.isEmpty() && !intoEnder(kept, held) && !o.getInventory().add(held)) o.drop(held, false);   // (bag full: its ender chest, then you)
+            com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), b.inventory.createTag(), b.armour(),
+                    b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), kept);
+        }
+        // everything went home: nothing left on it to drop or count twice
         b.inventory.clearContent();
+        for (net.minecraft.world.entity.EquipmentSlot es : net.minecraft.world.entity.EquipmentSlot.values()) b.setItemSlot(es, ItemStack.EMPTY);
+        b.getPersistentData().remove("xw_inv_kept");
+    }
+
+    /** Things of bots whose owner was offline when they went home (handed to the save when the owner logs in). */
+    static final Map<UUID, List<CompoundTag>> PENDING_HOME = new HashMap<>();
+
+    /** A saved bot record's things into that character's save (see record()). */
+    static void homeFromRecord(ServerPlayer o, CompoundTag rec) {
+        ListTag inv = rec.getList("inv", 10).copy();
+        ListTag arm = rec.getList("armour", 10);
+        ItemStack[] armour = new ItemStack[4];
+        for (int i = 0; i < 4; i++) armour[i] = i < arm.size() ? ItemStack.of(arm.getCompound(i)) : ItemStack.EMPTY;
+        ItemStack off = arm.size() > 4 ? ItemStack.of(arm.getCompound(4)) : ItemStack.EMPTY;
+        ItemStack hand = arm.size() > 5 ? ItemStack.of(arm.getCompound(5)) : ItemStack.EMPTY;
+        CompoundTag kept = rec.getCompound("kept").copy();
+        if (!hand.isEmpty()) {
+            if (inv.size() < 36) inv.add(hand.save(new CompoundTag()));
+            else if (!intoEnder(kept, hand) && !o.getInventory().add(hand)) o.drop(hand, false);
+        }
+        com.xenowarriors.character.CharacterInventories.checkIn(o, rec.getString("char"), inv, armour, off, kept);
+    }
+
+    /** Into the ender chest part of a character's save, if there's a free slot. */
+    private static boolean intoEnder(CompoundTag kept, ItemStack s) {
+        ListTag ender = kept.getList("ender", 10);
+        Set<Integer> used = new HashSet<>();
+        for (int i = 0; i < ender.size(); i++) used.add(ender.getCompound(i).getByte("Slot") & 255);
+        for (int slot = 0; slot < 27; slot++) if (!used.contains(slot)) {
+            CompoundTag t = s.save(new CompoundTag());
+            t.putByte("Slot", (byte) slot);
+            ender.add(t);
+            kept.put("ender", ender);
+            return true;
+        }
+        return false;
     }
 
     /** In the air and not on anything: the owner is flying (wings, creative, elytra) or falling a long way. */
@@ -396,6 +439,11 @@ public final class PartyBots {
         com.xenowarriors.compat.DmzBotKi.forget(bot);
     }
 
+    private static final Map<UUID, Boolean> ANIM_SENT = new HashMap<>();
+
+    /** Its stand-in's skill sent a body animation (relayed to those who see the bot, see ModNetwork). */
+    public static void animSent(PartyBotEntity b) { ANIM_SENT.put(b.getUUID(), true); }
+
     /** The bot's stand-in player (for the tests). */
     public static FakePlayer standIn(PartyBotEntity b) { return fake(b); }
 
@@ -458,12 +506,15 @@ public final class PartyBots {
         f.setYHeadRot(yaw);
         f.setOnGround(b.onGround());
         boolean used;
+        ANIM_SENT.remove(b.getUUID());
         try { used = skill.use(f); } catch (Throwable t) { used = false; }
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());
             b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-            com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);
+            Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());   // the same body animation a player gets for it
+            if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
+            if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);   // (a skill without one of its own)
         } else b.skillReady[slot] = now + 60;
     }
 
@@ -542,14 +593,18 @@ public final class PartyBots {
         b.level().playSound(null, b.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, 1F, 0.6F);
     }
 
+    /** (Tests) runs out its downed timer now. */
+    public static void bleedOutForTest(PartyBotEntity b) { bleedOut(b); }
+
     static void bleedOut(PartyBotEntity b) {
         ServerPlayer o = b.owner();
         if (o != null) {
             o.getPersistentData().putLong(REJOIN + b.character().getId(), o.level().getGameTime() + REJOIN_COOLDOWN);
-            o.displayClientMessage(Component.literal("").append(b.label()).append(" wasn't revived and left the party to recover (5 min).").withStyle(ChatFormatting.GRAY), false);
-            if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) Block.popResource(b.level(), b.blockPosition(), b.inventory.removeItemNoUpdate(i));
+            o.displayClientMessage(Component.literal("").append(b.label()).append(" wasn't revived and left the party to recover (5 min). They keep all their things.").withStyle(ChatFormatting.GRAY), false);
+            if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) { ItemStack it = b.inventory.removeItemNoUpdate(i); if (!it.isEmpty() && !o.getInventory().add(it)) o.drop(it, false); }   // (a Journey teammate's finds come to you)
             else checkIn(b, o);                                                   // (their things wait in their own save)
-        }
+        } else checkIn(b, null);                                                  // (owner away: kept for when they're back)
+        forgetFake(b.getUUID());
         b.discard();
     }
 
@@ -745,6 +800,8 @@ public final class PartyBots {
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        List<CompoundTag> home = PENDING_HOME.remove(p.getUUID());
+        if (home != null) for (CompoundTag rec : home) homeFromRecord(p, rec);   // (bots that went home while you were away)
         ListTag list = p.getPersistentData().getList(RECORDS, 10);
         p.getPersistentData().remove(RECORDS);
         for (int i = 0; i < list.size(); i++) spawn(p, CharacterType.byId(list.getCompound(i).getString("char")), list.getCompound(i));

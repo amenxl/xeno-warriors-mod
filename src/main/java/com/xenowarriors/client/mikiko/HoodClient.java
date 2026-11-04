@@ -79,7 +79,7 @@ public final class HoodClient {
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STATE.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         MANUAL.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!hooded(p)) { STATE.remove(p.getId()); continue; }
             int[] s = STATE.computeIfAbsent(p.getId(), k -> new int[]{wantsUp(p) ? 1 : 0, PULL * 4});
             int want = wantsUp(p) ? 1 : 0;

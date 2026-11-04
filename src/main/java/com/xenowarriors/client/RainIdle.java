@@ -44,7 +44,7 @@ public final class RainIdle {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         STILL.keySet().removeIf(id -> mc.level.getEntity(id) == null);
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!wanted(p)) { STILL.remove(p.getId()); continue; }
             STILL.computeIfAbsent(p.getId(), k -> new int[1])[0]++;
         }

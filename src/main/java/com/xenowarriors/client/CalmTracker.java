@@ -37,7 +37,7 @@ public final class CalmTracker {
             return;
         }
         long now = level.getGameTime();
-        for (AbstractClientPlayer p : level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(level)) {
             boolean fighting = p.swinging || p.hurtTime > 0 || Busy.busy(p)
                     || (p == Minecraft.getInstance().player && LockOn.target() != null);
             if (fighting || !LAST_FIGHT.containsKey(p.getId())) LAST_FIGHT.put(p.getId(), now);

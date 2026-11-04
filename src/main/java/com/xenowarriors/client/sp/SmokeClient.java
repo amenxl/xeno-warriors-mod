@@ -21,7 +21,7 @@ public final class SmokeClient {
     public static void onTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
         if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
-        for (AbstractClientPlayer p : mc.level.players()) {
+        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (ClientCharacterData.get(p) != CharacterType.MAX || ClientCharacterData.outfit(p) != 0 || p.isInvisible() || p.isInWater()) continue;   // (no cigarette in his disguise)
             if ((p.tickCount + p.getId()) % 9 != 0) continue;
             if (p == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
