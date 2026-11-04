@@ -289,6 +289,8 @@ public final class ComboClient {
     /** The Rising Leap (attack held fully, on the ground): a jump straight up at someone in the air, or just up. */
     private static void leap(LocalPlayer p) {
         LivingEntity t = airPick(p, 6.5);
+        if (p.level().getEntity(lastTarget) instanceof LivingEntity lt)
+            com.xenowarriors.client.RhalixComboFx.log(String.format("leap: last target %s %.1f away, %.1f up, on ground %s", lt.getType().getDescriptionId(), p.distanceTo(lt), lt.getY() - p.getY(), lt.onGround()));
         Vec3 v;
         if (t != null && !t.onGround()) {
             Vec3 f = t.position().subtract(p.position()).multiply(1, 0, 1);

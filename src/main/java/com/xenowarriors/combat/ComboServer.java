@@ -77,7 +77,7 @@ public final class ComboServer {
         if (prev != null && prev[0] == style.ordinal()) {
             // no faster than the combo allows (some slack for lag)
             int need = ComboStyle.cancel(style.duration(prev[1], prev[2] != 0));
-            if (now - prev[3] < need * 0.6F) return;
+            if (now - prev[3] < need * 0.6F) { dbg(p, "start refused (too soon): hit " + hit + " " + (now - prev[3]) + " ticks after hit " + prev[1]); return; }
         }
         STARTED.put(p.getUUID(), new int[]{style.ordinal(), hit, heavy ? 1 : 0, now});
         ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> p), new ComboSwingPacket(p.getId(), style.ordinal(), hit, heavy));
@@ -86,15 +86,15 @@ public final class ComboServer {
     /** The player's swing reached its strike: hit this target. */
     public static void strike(ServerPlayer p, int targetId, int hit, boolean heavy) {
         int[] st = STARTED.get(p.getUUID());
-        if (st == null || st[1] != hit || (st[2] != 0) != heavy) return;
+        if (st == null || st[1] != hit || (st[2] != 0) != heavy) { dbg(p, "strike refused: hit " + hit + " but started " + (st == null ? "nothing" : String.valueOf(st[1]))); return; }
         ComboStyle style = ComboStyle.values()[st[0]];
-        if (!ComboStyle.same(ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)), style)) return;
-        if (p.tickCount - st[3] < ComboStyle.windup(style.duration(hit, heavy)) - 3) return;
+        if (!ComboStyle.same(ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)), style)) { dbg(p, "strike refused: style now " + ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)) + " vs " + style); return; }
+        if (p.tickCount - st[3] < ComboStyle.windup(style.duration(hit, heavy)) - 3) { dbg(p, "strike refused: too early"); return; }
         st[1] = -99;                                                        // one strike per swing
         Entity e = p.level().getEntity(targetId);
         if (!(e instanceof LivingEntity t) || !t.isAlive() || t == p) return;
         double reach = p.getEntityReach() + style.reachBonus + 1.0;
-        if (p.distanceToSqr(t) > (reach + t.getBbWidth()) * (reach + t.getBbWidth()) || !p.hasLineOfSight(t)) return;
+        if (p.distanceToSqr(t) > (reach + t.getBbWidth()) * (reach + t.getBbWidth()) || !p.hasLineOfSight(t)) { dbg(p, "strike refused: out of reach " + Math.sqrt(p.distanceToSqr(t))); return; }
         float mult = style.multiplier(hit, heavy, p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
         Ctx c = new Ctx(p, style, hit, heavy, mult);
         CTX.set(c);
@@ -105,7 +105,15 @@ public final class ComboServer {
         } finally {
             CTX.remove();
         }
+        if (!c.landed) dbg(p, "strike didn't land: hit " + hit + " on " + t.getType().getDescriptionId() + " hurtTime " + t.hurtTime + " invul " + t.invulnerableTime);
         after(c, t);
+    }
+
+    private static final boolean TEST = System.getenv("XW_UITEST_FOCUS") != null;
+
+    private static void dbg(ServerPlayer p, String s) {
+        if (TEST && ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)) != null
+                && ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)).rhalix()) XenoWarriors.LOGGER.info("XW-TEST rhalixcombo server " + s + " (tick " + p.tickCount + ")");
     }
 
     @SubscribeEvent

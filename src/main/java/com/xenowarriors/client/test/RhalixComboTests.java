@@ -87,7 +87,17 @@ public final class RhalixComboTests {
         var l = event.getServer().overworld();
         if (target >= 0 && l.getEntity(target) instanceof LivingEntity e && e.getTags().contains("xw_rc")) e.setHealth(e.getMaxHealth());
         int ms = serverSleep;
-        if (ms > 0) try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+        if (ms > 0) {                       // (sleeps what's left of the slowed tick, so server and client keep the same pace)
+            long left = ms + 50 - (System.nanoTime() - tickStart) / 1_000_000L;
+            if (left > 0) try { Thread.sleep(left); } catch (InterruptedException ignored) {}
+        }
+    }
+
+    private static long tickStart;
+
+    @SubscribeEvent
+    public static void onServerTickStart(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.START) tickStart = System.nanoTime();
     }
 
     private static final double[] HOME = new double[3];
@@ -172,7 +182,7 @@ public final class RhalixComboTests {
         l.add(null, () -> { state(mc, String.format("rc_%s_%02d", scene, frames - 1)); slow(mc, 1); }, 1);
     }
 
-    private static final int SLOW = 8;
+    private static final int SLOW = 16;
 
     private static void run(Minecraft mc, boolean on) {
         var o = mc.options;
@@ -228,7 +238,7 @@ public final class RhalixComboTests {
         // ---- 2. a regular zombie (it fights back - he's invulnerable for the test)
         l.add(null, () -> server(p -> { reset(p); mob(p, EntityType.ZOMBIE, 3.5, false, 120); }), 12);
         l.add(null, () -> { face(mc); log("scene zombie"); }, 3);
-        film(mc, l, "zombie", 70, f -> { face(mc); if (f % 2 == 0 && f < 64) ComboClient.press(false); });
+        film(mc, l, "zombie", 40, f -> { face(mc); if (f % 2 == 0 && f < 64) ComboClient.press(false); });
 
         // ---- 3. a Rhalix bot doing his string on a dummy zombie
         l.add(null, () -> server(p -> {
@@ -243,19 +253,19 @@ public final class RhalixComboTests {
             log("bot spawned " + b.character() + " style " + com.xenowarriors.combat.ComboStyle.of(b, b.getMainHandItem(), b.character()));
         }), 10);
         camera(mc, l, 2.2, 2.0, 0.35);
-        film(mc, l, "bot", 90, f -> {
+        film(mc, l, "bot", 70, f -> {
             if (f % 10 == 0) server(p -> { if (p.serverLevel().getEntity(bot) instanceof com.xenowarriors.bot.PartyBotEntity b && p.serverLevel().getEntity(target) instanceof LivingEntity z) b.setTarget(z); });
         });
 
         // ---- 4. the Kishi Warp: running, attack held, at a dummy 10 blocks off; then again inside 5 s (cooldown), then after
         for (int round = 0; round < 3; round++) {
             int rr = round;
-            l.add(null, () -> server(p -> { reset(p); if (rr == 0) mob(p, EntityType.HUSK, 12.0, true, 120);
+            l.add(null, () -> server(p -> { reset(p); log("kishi round " + rr + " starts, client says ready " + com.xenowarriors.client.KishiWarpClient.ready()); if (rr == 0) mob(p, EntityType.HUSK, 12.0, true, 120);
                 else if (p.serverLevel().getEntity(target) instanceof LivingEntity e) { e.teleportTo(HOME[0], HOME[1], HOME[2] + 12.0); e.setDeltaMovement(Vec3.ZERO); }
-                else mob(p, EntityType.HUSK, 12.0, true, 120); }), rr == 2 ? 70 : 8);
-            if (round == 0) camera(mc, l, 9.0, 6.0, 0.8);
+                else mob(p, EntityType.HUSK, 12.0, true, 120); }), rr == 2 ? 110 : 3);
+            if (round != 1) camera(mc, l, 9.0, 6.0, 0.8);
             l.add(null, () -> { face(mc); countChats = true; chats = 0; log("scene kishi round " + rr + " (ready " + com.xenowarriors.client.KishiWarpClient.ready() + ")"); }, 2);
-            film(mc, l, "kishi" + rr, rr == 1 ? 40 : 75, f -> {
+            film(mc, l, "kishi" + rr, rr == 0 ? 42 : rr == 1 ? 30 : 80, f -> {
                 face(mc);
                 if (f == 0) run(mc, true);
                 if (f == 4) ComboClient.testHold(10);
