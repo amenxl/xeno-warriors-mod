@@ -72,7 +72,7 @@ public final class RopeBlade {
 
     public static void throwBlade(ServerPlayer p, int targetId) {
         if (!eligible(p) || isOut(p) || !p.isShiftKeyDown()) return;
-        LivingEntity target = p.level().getEntity(targetId) instanceof LivingEntity l && l.isAlive() && l != p ? l : null;
+        LivingEntity target = p.level().getEntity(targetId) instanceof LivingEntity l && l.isAlive() && l != p && l.distanceToSqr(p) < 150 * 150 ? l : null;   // (a lock-on target - up to 140 blocks in the air - not any id in the world)
         Hekublade.removeAll(p.getInventory());
         ThrownHekubladeEntity e = ThrownHekubladeEntity.create(p, target);
         p.level().addFreshEntity(e);

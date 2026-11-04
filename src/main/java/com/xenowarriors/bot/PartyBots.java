@@ -105,6 +105,7 @@ public final class PartyBots {
                 CharacterType ct = CharacterType.byId(e.getValue().getString("char"));
                 if (!canFollowTo(ct, o.level())) { LEFT_BEHIND.add(e); continue; }          // (waits outside the Hekublade)
                 if (bots(o).stream().noneMatch(b -> b.character() == ct)) spawn(o, ct, e.getValue());
+                else homeFromRecord(o, e.getValue());                               // (that character came back another way meanwhile: its things go home, not into thin air)
             }
         }
         if (event.getServer().getTickCount() % 10 != 5) return;
@@ -169,6 +170,7 @@ public final class PartyBots {
         int free = Parties.MAX_SIZE - partySize(p);
         Set<String> taken = new HashSet<>();
         for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
+        for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
         for (String id : ids) {
             CharacterType t = CharacterType.byId(id);
             if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (4 people and bots).").withStyle(ChatFormatting.RED)); return; }
@@ -865,7 +867,10 @@ public final class PartyBots {
             List<Map.Entry<UUID, CompoundTag>> waiting = new ArrayList<>();
             for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) waiting.add(e);
             LEFT_BEHIND.removeAll(waiting);
-            for (var e : waiting) if (bots(p).stream().noneMatch(b -> b.character().getId().equals(e.getValue().getString("char")))) spawn(p, CharacterType.byId(e.getValue().getString("char")), e.getValue());
+            for (var e : waiting) {
+                if (bots(p).stream().noneMatch(b -> b.character().getId().equals(e.getValue().getString("char")))) spawn(p, CharacterType.byId(e.getValue().getString("char")), e.getValue());
+                else homeFromRecord(p, e.getValue());                               // (already back another way: its things go home)
+            }
         }
     }
 

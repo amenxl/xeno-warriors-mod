@@ -182,7 +182,11 @@ public final class Tower {
 
     /** Can't go up while downed, inside (or sealed in) a Hekublade, or when the world is on Peaceful (nothing would fight back). */
     private static boolean blocked(ServerPlayer p) {
-        String why = com.xenowarriors.party.Duels.isKnockedOut(p) ? "You can't enter the Tower while you're down"
+        String why = !p.isAlive() || p.isSpectator() ? "You can't enter the Tower right now"
+                : com.xenowarriors.party.Duels.isKnockedOut(p) ? "You can't enter the Tower while you're down"
+                : com.xenowarriors.party.Duels.inDuel(p) ? "Finish your duel first"
+                : com.xenowarriors.journey.Journey.inLobbyOrRun(p) ? "You can't enter the Tower on a Journey"
+                : com.xenowarriors.vr.Vr.is(p.level()) ? "Take the VR goggles off first"
                 : com.xenowarriors.mikiko.HekubladeRealm.inRealm(p) || com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(p) ? "You can't reach the Tower from inside a Hekublade"
                 : p.server.getWorldData().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL ? "The Tower doesn't open on Peaceful difficulty"
                 : null;

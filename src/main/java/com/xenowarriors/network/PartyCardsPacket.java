@@ -36,11 +36,11 @@ public record PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader
     public static PartyCardsPacket decode(FriendlyByteBuf b) {
         boolean in = b.readBoolean(), lead = b.readBoolean();
         int n = b.readVarInt();
-        List<Card> l = new ArrayList<>(n);
+        List<Card> l = new ArrayList<>(Math.min(n, 64));            // (n is from the wire: a request from a client could claim billions)
         for (int i = 0; i < n; i++) {
             UUID id = b.readUUID(); int eid = b.readVarInt(); String name = b.readUtf(), owner = b.readUtf(); int type = b.readVarInt(), outfit = b.readVarInt(), level = b.readVarInt();
             boolean bot = b.readBoolean(), leader = b.readBoolean(), mine = b.readBoolean();
-            int pn = b.readVarInt(); List<String> pets = new ArrayList<>(pn); for (int k = 0; k < pn; k++) pets.add(b.readUtf());
+            int pn = b.readVarInt(); List<String> pets = new ArrayList<>(Math.min(pn, 64)); for (int k = 0; k < pn; k++) pets.add(b.readUtf());
             l.add(new Card(id, eid, name, owner, type, outfit, level, bot, leader, mine, pets));
         }
         return new PartyCardsPacket(l, in, lead);

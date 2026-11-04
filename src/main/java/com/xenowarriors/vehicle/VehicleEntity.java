@@ -302,7 +302,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     @Override
     public boolean hurt(DamageSource src, float amount) {
-        if (level().isClientSide || isInvulnerableTo(src)) return false;
+        if (level().isClientSide || isRemoved() || isInvulnerableTo(src)) return false;   // (already wrecked this tick: a second hit drops no second item)
         if (src.getEntity() != null && hasPassenger(src.getEntity())) return false;          // (no shooting your own ride)
         float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : 0.6F);
         if (hp > 0) { setHealth(hp); level().playSound(null, blockPosition(), SoundEvents.IRON_GOLEM_HURT, SoundSource.NEUTRAL, 0.5F, 1.4F); return true; }

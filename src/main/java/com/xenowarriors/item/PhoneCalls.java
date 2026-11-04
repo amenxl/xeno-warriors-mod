@@ -44,7 +44,7 @@ public final class PhoneCalls {
 
     public static void call(ServerPlayer from, UUID toId) {
         ServerPlayer to = from.server.getPlayerList().getPlayer(toId);
-        if (to == null || to == from) return;
+        if (to == null || to == from || !hasPhone(from)) return;           // (a call needs a phone on your side too)
         if (CALLS.containsKey(from.getUUID())) { from.displayClientMessage(msg("You're already on a call", ChatFormatting.GRAY), true); return; }
         if (!hasPhone(to)) { from.displayClientMessage(msg(to.getName().getString() + " doesn't have a phone on them", ChatFormatting.GRAY), true); return; }
         if (CALLS.containsKey(toId) || RINGING.containsKey(toId)) { from.displayClientMessage(msg(to.getName().getString() + " is busy", ChatFormatting.GRAY), true); return; }

@@ -174,6 +174,10 @@ public final class SkillManager {
                 player.displayClientMessage(Component.literal("Season " + en.season() + " content is locked").withStyle(net.minecraft.ChatFormatting.RED), true);
                 return;
             }
+            if (en != null && !SkillPool.unlocked(en, com.xenowarriors.stats.Stats.characterLevel(player), player.isCreative())) {   // (slotted in creative, now in survival)
+                player.displayClientMessage(Component.literal("Unlocks at Character Level " + en.unlockLevel()).withStyle(net.minecraft.ChatFormatting.RED), true);
+                return;
+            }
         }
         if (skill.tryRecast(player)) return;
 

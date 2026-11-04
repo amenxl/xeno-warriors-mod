@@ -37,11 +37,9 @@ public final class AerialComboServer {
         if (p.isSpectator() || (type != CharacterType.MIKIKO && type != CharacterType.RHALIX)) return;
         if (!(held.isEmpty() || Hekublade.isBlade(held) || (type == CharacterType.RHALIX && held.getItem() instanceof net.minecraft.world.item.SwordItem))) return;
         if (!(p.level().getEntity(targetId) instanceof LivingEntity t) || !t.isAlive() || t == p) return;
-        if (p.distanceTo(t) > 8.0) return;
-        if (doHit) {
-            if (!p.hasLineOfSight(t)) return;
-            p.attack(t);
-        }
+        if (!p.isAlive() || com.xenowarriors.party.Duels.isKnockedOut(p)) return;   // (someone who's down can't juggle anyone)
+        if (p.distanceTo(t) > 8.0 || !p.hasLineOfSight(t)) return;           // (the launch too: nothing through walls)
+        if (doHit) p.attack(t);
         if (!t.isAlive() || t.isInvulnerable()) return;
         PENDING.add(new Object[]{t, p, step, last});
     }

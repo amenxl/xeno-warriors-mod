@@ -116,13 +116,25 @@ public final class Vr {
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenVrPacket(done, BY_PLAYER.containsKey(p.getUUID())), p);
     }
 
+    /** Why someone can't go into VR right now (a way out of a Journey, a Tower floor, a duel, the Hekublade...), or null. */
+    private static String busy(ServerPlayer p) {
+        if (!p.isAlive() || p.isSpectator()) return "You can't go into VR right now";
+        if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) return "You can't go into VR on a Journey";
+        if (com.xenowarriors.tower.Tower.fighting(p)) return "You can't go into VR during a Tower floor";
+        if (com.xenowarriors.party.Duels.isKnockedOut(p) || com.xenowarriors.party.Duels.inDuel(p)) return "You can't go into VR while you're down or in a duel";
+        if (com.xenowarriors.mikiko.HekubladeRealm.inRealm(p) || com.xenowarriors.gov.HealingPods.inPod(p) || com.xenowarriors.ka.Clashes.inClash(p)) return "You can't go into VR right now";
+        return null;
+    }
+
     /** kind 0 = free training (arg = environment), 1 = challenge (arg = index), 2 = leave. */
     public static void action(ServerPlayer p, int kind, int arg) {
         if (kind == 2) { leave(p, "You took the VR goggles off."); return; }
         if (BY_PLAYER.containsKey(p.getUUID()) || is(p.level())) return;
+        String busy = busy(p);
+        if (busy != null) { p.displayClientMessage(msg(busy, ChatFormatting.RED), true); return; }
         List<ServerPlayer> team = new ArrayList<>();
         team.add(p);
-        for (ServerPlayer m : com.xenowarriors.party.Parties.members(p)) if (m != p && m.level() == p.level() && m.distanceToSqr(p) < 16 * 16 && !BY_PLAYER.containsKey(m.getUUID())) team.add(m);
+        for (ServerPlayer m : com.xenowarriors.party.Parties.members(p)) if (m != p && m.level() == p.level() && m.distanceToSqr(p) < 16 * 16 && !BY_PLAYER.containsKey(m.getUUID()) && busy(m) == null) team.add(m);
         int count = 0;
         for (ServerPlayer m : team) count += 1 + com.xenowarriors.bot.PartyBots.bots(m).size();
         if (kind == 1) {

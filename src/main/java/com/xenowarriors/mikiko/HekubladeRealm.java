@@ -98,7 +98,8 @@ public final class HekubladeRealm {
     // ---------------------------------------------------------------- going in and out
 
     public static void toggle(ServerPlayer p) {
-        if (ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
+        if (ModCapabilities.getType(p) != CharacterType.MIKIKO || !p.isAlive()) return;
+        if (com.xenowarriors.vr.Vr.is(p.level()) && !inRealm(p)) { p.displayClientMessage(Component.literal("Not in VR").withStyle(ChatFormatting.GRAY), true); return; }
         if (com.xenowarriors.journey.Journey.inRun(p) && !inRealm(p)) { p.displayClientMessage(Component.literal("Not on a Journey").withStyle(ChatFormatting.GRAY), true); return; }
         if (com.xenowarriors.tower.Tower.is(p.level()) && !inRealm(p)) { p.displayClientMessage(Component.literal("Not in the Tower").withStyle(ChatFormatting.GRAY), true); return; }
         if (isPrisoner(p)) {

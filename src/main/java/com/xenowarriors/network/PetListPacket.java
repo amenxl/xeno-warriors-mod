@@ -29,12 +29,12 @@ public record PetListPacket(List<Pet> pets) {
 
     public static PetListPacket decode(FriendlyByteBuf b) {
         int n = b.readVarInt();
-        List<Pet> l = new ArrayList<>(n);
+        List<Pet> l = new ArrayList<>(Math.min(n, 64));              // (n is from the wire: a request from a client could claim billions)
         for (int i = 0; i < n; i++) {
             int kind = b.readVarInt(), index = b.readVarInt(); String name = b.readUtf(), species = b.readUtf(); int level = b.readVarInt(); float xp = b.readFloat();
             int need = b.readVarInt(), status = b.readVarInt(), away = b.readVarInt(); float hp = b.readFloat(), max = b.readFloat();
             int eid = b.readVarInt(), skin = b.readVarInt();
-            int sn = b.readVarInt(); List<String> skins = new ArrayList<>(sn); List<Integer> lv = new ArrayList<>(sn);
+            int sn = b.readVarInt(); List<String> skins = new ArrayList<>(Math.min(sn, 64)); List<Integer> lv = new ArrayList<>(Math.min(sn, 64));
             for (int k = 0; k < sn; k++) { skins.add(b.readUtf()); lv.add(b.readVarInt()); }
             int kills = b.readVarInt();
             l.add(new Pet(kind, index, name, species, level, xp, need, status, away, hp, max, eid, skin, skins, lv, kills));
