@@ -34,6 +34,13 @@ public final class AerialCombo {
     private static final double REACH = 5.5, DASH_RANGE = 18;
     private static int step, lastHit = -1000, floatUntil = -1000;
     private static boolean broken;
+    /**
+     * The combo's own clock. (It used to run on the player's tickCount, which starts again from 0 whenever you get a
+     * new player - a dimension change like going in and out of the Hekublade, or a respawn - so an old floatUntil
+     * kept him drifting down slowly on every fall for minutes afterwards.)
+     */
+    private static int clock;
+    private static LocalPlayer lastPlayer;
 
     private AerialCombo() {}
 
@@ -49,11 +56,11 @@ public final class AerialCombo {
 
     /** Called as he starts an aerial swing; returns which hit of the combo this is (0-based). */
     public static int swing(LocalPlayer p) {
-        int now = p.tickCount;
+        int now = clock;
         if (now - lastHit > TIMEOUT || step >= HITS || broken) { step = 0; broken = false; }
         int hit = step++;
         lastHit = now;
-        floatUntil = now + 16;
+        boolean holdUp = false;
         LivingEntity lock = LockOn.target();
         // locked on to something up in the air and out of reach: dash up to it (taking off if he can fly)
         if (lock != null && lock.isAlive() && !lock.onGround() && p.distanceTo(lock) > 3.0 && p.distanceTo(lock) <= DASH_RANGE) {
@@ -65,12 +72,16 @@ public final class AerialCombo {
             double d = to.length();
             Vec3 dash = to.normalize().scale(Math.min(1.6, (d - 1.8) * 0.45));
             p.setDeltaMovement(dash);
+            holdUp = true;
             Minecraft.getInstance().level.addParticle(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK, p.getX(), p.getY() + 1, p.getZ(), 0, 0, 0);
-        } else {
+        }
+        LivingEntity target = target(p, lock);
+        if (target != null && !holdUp) {
             Vec3 v = p.getDeltaMovement();
             p.setDeltaMovement(v.x * 0.6, Math.max(v.y, 0.14), v.z * 0.6);       // the swing holds him up
         }
-        LivingEntity target = target(p, lock);
+        // floaty only while he's really fighting someone in the air: swinging at nothing, he just falls
+        if (target != null || holdUp) floatUntil = now + 16;
         if (target != null) {
             // can fly but can't reach it: take off after it
             if (p.distanceTo(target) > 3.2 && p.getAbilities().mayfly && !p.getAbilities().flying) {
@@ -109,9 +120,17 @@ public final class AerialCombo {
         if (event.phase != TickEvent.Phase.END) return;
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null || Minecraft.getInstance().isPaused()) return;
-        if (p.onGround()) { step = 0; return; }
-        if (p.hurtTime > 0 && p.tickCount - lastHit < TIMEOUT) broken = true;
-        if (p.tickCount < floatUntil && !p.getAbilities().flying) {
+        clock++;
+        if (p != lastPlayer) { lastPlayer = p; floatUntil = lastHit = -1000; step = 0; }     // a new player (respawn, other dimension)
+        // landed, flying, swimming, riding, or not Mikiko/Rhalix any more: the float is over
+        if (p.onGround() || p.getAbilities().flying || p.isInWater() || p.isPassenger() || p.isFallFlying()
+                || (ClientCharacterData.getLocal() != CharacterType.MIKIKO && ClientCharacterData.getLocal() != CharacterType.RHALIX)) {
+            floatUntil = -1000;
+            if (p.onGround()) step = 0;
+            return;
+        }
+        if (p.hurtTime > 0 && clock - lastHit < TIMEOUT) broken = true;
+        if (clock < floatUntil) {
             Vec3 v = p.getDeltaMovement();
             if (v.y < 0) p.setDeltaMovement(v.x, Math.max(v.y * 0.55, -0.12), v.z);
         }

@@ -26,11 +26,22 @@ public final class HoodClient {
 
     private HoodClient() {}
 
-    /** Outfits with a hood he can put up. */
+    /** Outfits with a hood he can put up (and Kaeru's hoodie). */
     public static boolean hasHood(Player p) {
         int o = ClientCharacterData.mikikoOutfit(p);
-        return o == ClientCharacterData.ORIGINS_2 || o == ClientCharacterData.SEASON_3;
+        return o == ClientCharacterData.ORIGINS_2 || o == ClientCharacterData.SEASON_3 || kaeru(p);
     }
+
+    /** Kaeru in her hoodie: her hood stays the way she put it (saved on the server, not pulled up by the rain). */
+    public static boolean kaeru(Player p) {
+        return ClientCharacterData.get(p) == com.xenowarriors.character.CharacterType.KAERU && ClientCharacterData.outfit(p) == 0;
+    }
+
+    /** Kaeru's hood choice by player (from the server). */
+    private static final Map<Integer, Boolean> KAERU = new HashMap<>();
+
+    /** Kaeru's hood is (to be) up - what the menu toggle shows. */
+    public static boolean kaeruUp(Player p) { return KAERU.getOrDefault(p.getId(), false); }
 
     /** Wearing a hoodie at all - from the outfit (hood up or down) or a hoodie in the chest slot. */
     public static boolean wearingHoodie(Player p) {
@@ -50,7 +61,8 @@ public final class HoodClient {
 
     public static void setManual(int id, boolean up) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || !(mc.level.getEntity(id) instanceof Player p)) return;
+        if (mc.level == null || !(mc.level.getEntity(id) instanceof Player p)) { KAERU.put(id, up); return; }   // (not here yet: kept for when she is)
+        if (kaeru(p)) { KAERU.put(id, up); return; }
         MANUAL.put(id, new boolean[]{up, raining(p)});
     }
 
@@ -64,6 +76,7 @@ public final class HoodClient {
 
     public static boolean wantsUp(Player p) {
         if (!hooded(p)) return false;
+        if (kaeru(p)) return kaeruUp(p);
         boolean rain = raining(p);
         boolean[] m = MANUAL.get(p.getId());
         if (m != null) {

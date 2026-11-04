@@ -93,6 +93,11 @@ public class PlayerCharacter {
         return l.length == 4 ? l : com.xenowarriors.skill.SkillPool.defaultLoadout();
     }
     public void setLoadout(CharacterType t, int[] l) { loadouts.putIntArray(key(t), l.clone()); }
+    /** Which of the character's ultimates is in the ultimate slot (0 = the default; see SkillPool.ultimates). */
+    public int ultChoice(CharacterType t) { return Math.max(0, loadouts.getInt(key(t) + "#ult")); }
+    public void setUltChoice(CharacterType t, int c) { if (c <= 0) loadouts.remove(key(t) + "#ult"); else loadouts.putInt(key(t) + "#ult", c); }
+    /** The 4 skills plus the chosen ultimate as a 5th number. */
+    public int[] loadoutWithUlt(CharacterType t) { return com.xenowarriors.skill.SkillPool.withUltimate(loadout(t), ultChoice(t)); }
     /** Last Karma value sent to the client (-1 = never sent). Not saved. */
     public float lastSyncedKarma = -1F;
 

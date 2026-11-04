@@ -43,7 +43,23 @@ public class HekubladeShardEntity extends Projectile {
     private static final EntityDataAccessor<Boolean> SURF = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.BOOLEAN);
     /** Blade-surfing: launch speed, how fast it slows, when it starts to sink, and when it gives out. */
     public static final double SURF_SPEED = 1.3, SURF_DRAG = 0.985, SURF_SINK_BELOW = 0.6, SURF_END_BELOW = 0.18;
-    private static final int SURF_LIFE = 20 * 20;
+    /** Cruising speed it holds until the ride starts giving out, and the last stretch where it slows, sinks and drops him. */
+    public static final double SURF_CRUISE = 0.95;
+    public static final int SURF_FADE = 40;
+    private static final int SURF_LIFE = 40 * 20;
+    private static final EntityDataAccessor<Integer> RIDE = SynchedEntityData.defineId(HekubladeShardEntity.class, EntityDataSerializers.INT);
+
+    /**
+     * How long he can ride a blade, by Hekublade level: 6 seconds at level 1, 0.4 seconds more a level (levels past
+     * 50 count less, see Stat.effective), up to 30 seconds.
+     */
+    public static int rideTicks(int bladeLevel) {
+        return Math.min(30 * 20, Math.round(120 + (com.xenowarriors.stats.Stat.effective(Math.max(1, bladeLevel)) - 1) * 8));
+    }
+
+    /** Ticks of riding left (both sides; for the HUD bar). */
+    public int rideLeft() { return firedAt < 0 ? rideMax() : Math.max(0, rideMax() - (tickCount - firedAt)); }
+    public int rideMax() { return entityData.get(RIDE); }
 
     private int firedAt = -1;
 
@@ -68,6 +84,7 @@ public class HekubladeShardEntity extends Projectile {
         entityData.define(FIRED, false);
         entityData.define(TARGET, -1);
         entityData.define(SURF, false);
+        entityData.define(RIDE, rideTicks(1));
     }
 
     public boolean fired() { return entityData.get(FIRED); }
@@ -86,6 +103,8 @@ public class HekubladeShardEntity extends Projectile {
         entityData.set(FIRED, true);
         entityData.set(SURF, true);
         entityData.set(TARGET, -1);
+        // a stronger Hekublade carries him further
+        entityData.set(RIDE, rideTicks(rider instanceof net.minecraft.server.level.ServerPlayer sp ? com.xenowarriors.mikiko.BladeLevel.level(sp) : 1));
         firedAt = tickCount;
         rider.startRiding(this, true);
         level().playSound(null, getX(), getY(), getZ(), SoundEvents.TRIDENT_RIPTIDE_1, SoundSource.PLAYERS, 1F, 1.3F);
@@ -109,13 +128,16 @@ public class HekubladeShardEntity extends Projectile {
     private void surfTick() {
         Vec3 v = getDeltaMovement();
         double flat = Math.sqrt(v.x * v.x + v.z * v.z);
-        // loses momentum; once it's slow it starts to sink, then gives out
+        // cruises along while the ride lasts (how long: the Hekublade's level), then loses momentum, sinks and gives out
+        int age = tickCount - firedAt;
+        boolean cruising = age < rideMax() - SURF_FADE;
         double vy = v.y * 0.9;
         if (flat < SURF_SINK_BELOW) vy -= 0.035 * (1 - flat / SURF_SINK_BELOW) + 0.01;
-        v = new Vec3(v.x * SURF_DRAG, vy, v.z * SURF_DRAG);
+        double drag = cruising ? (flat * 0.998 < SURF_CRUISE ? Math.min(1.05, SURF_CRUISE / Math.max(1.0E-4, flat)) : 0.998) : 0.955;
+        v = new Vec3(v.x * drag, vy, v.z * drag);
         setDeltaMovement(v);
         if (!level().isClientSide) {
-            if (getPassengers().isEmpty() && tickCount - firedAt > 5 || flat < SURF_END_BELOW || tickCount - firedAt > SURF_LIFE) {
+            if (getPassengers().isEmpty() && age > 5 || (!cruising && flat < SURF_END_BELOW) || age > Math.min(SURF_LIFE, rideMax() + 20)) {
                 endSurf();
                 return;
             }

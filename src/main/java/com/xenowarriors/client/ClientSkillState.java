@@ -84,8 +84,19 @@ public final class ClientSkillState {
     private static int[] loadout = com.xenowarriors.skill.SkillPool.defaultLoadout();
     private static int level;
 
-    public static void setLoadout(int[] l, int lv) { if (l.length == 4) loadout = l; level = lv; }
+    /** 4 skills (the chosen ultimate kept as it is), or 4 + the chosen ultimate (from the server). */
+    public static void setLoadout(int[] l, int lv) {
+        if (l.length == 5) { ultimate = Math.max(0, l[4]); loadout = java.util.Arrays.copyOf(l, 4); }
+        else if (l.length == 4) loadout = l;
+        level = lv;
+    }
     public static int[] loadout() { return loadout; }
+    private static int ultimate;
+    /** Which of the character's ultimates is in the ultimate slot (0 = the default). */
+    public static int ultimate() { return ultimate; }
+    public static void setUltimate(int u) { ultimate = Math.max(0, u); }
+    /** The loadout with the chosen ultimate as its 5th number (for SkillPool.inSlot). */
+    public static int[] fullLoadout() { return com.xenowarriors.skill.SkillPool.withUltimate(loadout, ultimate); }
     public static int level() { return level; }
     private static int season = 1;
     public static void setSeason(int s) { season = Math.max(1, s); }

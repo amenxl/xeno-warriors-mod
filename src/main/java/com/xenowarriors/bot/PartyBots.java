@@ -442,7 +442,7 @@ public final class PartyBots {
         if (com.xenowarriors.compat.DmzBotKi.tryFire(b, target, () -> fake(b), false)) return;   // (with DragonMineZ: sometimes one of its equipped ki techniques instead)
         long now = b.level().getGameTime();
         ServerPlayer o = b.owner();
-        int[] loadout = o == null ? SkillPool.defaultLoadout() : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadout(b.character())).orElse(SkillPool.defaultLoadout());
+        int[] loadout = o == null ? SkillPool.defaultLoadout() : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout());   // (with the ultimate picked for that character)
         int slot = b.getRandom().nextInt(5);
         if (slot == 4 && (b.getHealth() > b.getMaxHealth() * 0.6F || b.karma < 60)) slot = b.getRandom().nextInt(4);    // ultimates when it matters
         if (now < b.skillReady[slot]) return;

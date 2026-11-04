@@ -24,7 +24,7 @@ import java.util.Set;
 public final class DmzScaling {
     /** DragonMineZ damage that counts as "normal" (x1); above it the skill scales up in proportion. */
     private static final double REFERENCE = 10.0;
-    private static final Set<ResourceKey<DamageType>> PHYSICAL = Set.of(ModDamageTypes.KITSUNE, ModDamageTypes.NETSU, ModDamageTypes.HEKUBLADE_SCATTER);
+    private static final Set<ResourceKey<DamageType>> PHYSICAL = Set.of(ModDamageTypes.KITSUNE, ModDamageTypes.NETSU, ModDamageTypes.HEKUBLADE_SCATTER, ModDamageTypes.HEKUBLADE_RAIN);
     private static final Set<ResourceKey<DamageType>> ENERGY = Set.of(ModDamageTypes.KISHI, ModDamageTypes.EARTH_WAVE, ModDamageTypes.GRAVITY_COMPRESS,
             ModDamageTypes.BANG, ModDamageTypes.GRAVITY_BARRAGE, ModDamageTypes.FIRE_BLITZ, ModDamageTypes.BLAZING_WIND);
     private static Boolean loaded;

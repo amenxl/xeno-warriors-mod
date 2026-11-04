@@ -15,6 +15,8 @@ public record HoodTogglePacket(boolean up) {
 
     public static void handle(HoodTogglePacket m, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer p = ctx.get().getSender();
-        if (p != null) ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p), new HoodStatePacket(p.getId(), m.up));
+        if (p == null) return;
+        if (com.xenowarriors.kaeru.KaeruHood.applies(p)) { com.xenowarriors.kaeru.KaeruHood.set(p, m.up); return; }   // Kaeru's is saved
+        ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> p), new HoodStatePacket(p.getId(), m.up));
     }
 }

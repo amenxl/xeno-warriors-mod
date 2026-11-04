@@ -62,11 +62,48 @@ public final class SkillManager {
     /** This player's equipped skill in a slot. */
     public static Skill get(ServerPlayer player, int slot) {
         CharacterType type = ModCapabilities.getType(player);
-        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> SkillPool.inSlot(player, d.loadout(type), slot)).orElse(null);
+        return player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> SkillPool.inSlot(player, ultUsable(player, d.ultChoice(type))
+                ? d.loadoutWithUlt(type) : d.loadout(type), slot)).orElse(null);
+    }
+
+    /** The picked ultimate is still theirs to use (its level reached - or creative - and its season unlocked); else the default one fires. */
+    private static boolean ultUsable(ServerPlayer player, int choice) {
+        if (choice <= 0) return false;
+        java.util.List<SkillPool.Entry> l = SkillPool.ultimates(player);
+        if (choice >= l.size()) return false;
+        SkillPool.Entry e = l.get(choice);
+        return SkillPool.available(e, com.xenowarriors.stats.Stats.characterLevel(player), player.isCreative(), com.xenowarriors.character.Seasons.highest(player.server));
+    }
+
+    /** Put one of the character's ultimates ({@code index} in SkillPool.ultimates) in the ultimate slot. */
+    public static void setUltimate(ServerPlayer player, int index) {
+        CharacterType type = ModCapabilities.getType(player);
+        java.util.List<SkillPool.Entry> l = SkillPool.ultimates(player);
+        if (index < 0 || index >= l.size()) return;
+        SkillPool.Entry e = l.get(index);
+        int level = com.xenowarriors.stats.Stats.characterLevel(player);
+        if (com.xenowarriors.character.Seasons.highest(player.server) < e.season()) {
+            player.displayClientMessage(Component.literal("Season " + e.season() + " content - locked (/xeno season unlock " + e.season() + ")").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
+        if (!SkillPool.unlocked(e, level, player.isCreative())) {
+            player.displayClientMessage(Component.literal("Unlocks at Character Level " + e.unlockLevel()).withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
+        player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+            if (d.ultChoice(type) == index) return;
+            d.setUltChoice(type, index);
+            // swapping doesn't skip the cooldown: the ultimate waits at least 5 seconds
+            long until = Math.max(d.cooldownEnd[ULTIMATE_SLOT], now(player) + 100);
+            d.cooldownEnd[ULTIMATE_SLOT] = until;
+            ModNetwork.sendToPlayer(new SkillCooldownPacket(ULTIMATE_SLOT, (int) (until - now(player)), 100), player);
+        });
+        syncLoadout(player);
     }
 
     /** Equip pool skill {@code index} into slot 0-3 (swapped with wherever it already sits). */
     public static void setSlot(ServerPlayer player, int slot, int index) {
+        if (slot == ULTIMATE_SLOT) { setUltimate(player, index); return; }      // (the ultimate slot: index into the ultimates)
         if (slot < 0 || slot >= ULTIMATE_SLOT) return;
         CharacterType type = ModCapabilities.getType(player);
         SkillPool.Entry e = SkillPool.entry(player, index);
@@ -99,7 +136,7 @@ public final class SkillManager {
     public static void syncLoadout(ServerPlayer player) {
         CharacterType type = ModCapabilities.getType(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d ->
-                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadout(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka, com.xenowarriors.character.Seasons.highest(player.server)), player));
+                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadoutWithUlt(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka, com.xenowarriors.character.Seasons.highest(player.server)), player));
     }
 
     /** Last skill someone used near each player, for Mikiko's True Empathy: {skill, game time}. */

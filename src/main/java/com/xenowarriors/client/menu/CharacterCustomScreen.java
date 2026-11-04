@@ -66,6 +66,14 @@ public class CharacterCustomScreen extends Screen {
     /** (UI test) show this tab. */
     public void tab(int t) { setTab(t); }
 
+    /** UI test: click Kaeru's Hood up / Hood down card on the Outfits tab. */
+    public void testClickHood() {
+        if (!hoodToggle()) return;
+        boolean up = !com.xenowarriors.client.mikiko.HoodClient.kaeruUp(minecraft.player);
+        ModNetwork.sendToServer(new com.xenowarriors.network.HoodTogglePacket(up));
+        com.xenowarriors.client.mikiko.HoodClient.setManual(minecraft.player.getId(), up);
+    }
+
     // ---- animation (like the agent screen in the user's reference): things slide in on open, the film strips scroll,
     // the tab highlight glides between tabs, and a new tab's content slides in with its rows one after another
     private final long opened = net.minecraft.Util.getMillis();
@@ -183,8 +191,12 @@ public class CharacterCustomScreen extends Screen {
     private int slotX(int i) { return (VW - (6 * SLOT + 5 * 6)) / 2 + i * (SLOT + 6); }
     private int skillX(int i) { return 4 + (i % 2) * (CARD_W + 4); }
     private int skillY(int i) { return LIST_Y + (i / 2) * (CARD_H + 3) - skillScroll; }
+    /** The ultimates to pick between (a card each after the skills, on a new row) - only shown when there's a choice. */
+    private List<SkillPool.Entry> ultChoices() { return minecraft.player == null ? List.of() : SkillPool.ultimates(minecraft.player); }
+    private int ultCardStart() { int n = SkillPool.of(minecraft.player).size(); return n + (n % 2); }
+
     private int maxSkillScroll() {
-        int rows = (SkillPool.of(minecraft.player).size() + 1) / 2;
+        int rows = (ultCardStart() + (ultChoices().size() > 1 ? ultChoices().size() : 0) + 1) / 2;
         return Math.max(0, rows * (CARD_H + 3) - (VH - LIST_Y - 2));
     }
 
@@ -239,6 +251,17 @@ public class CharacterCustomScreen extends Screen {
                     click();
                     return true;
                 }
+            List<SkillPool.Entry> ults = ultChoices();
+            if (ults.size() > 1 && vy >= LIST_Y && vy < VH)
+                for (int k = 0; k < ults.size(); k++) {
+                    int i = ultCardStart() + k;
+                    if (!inBox(vx, vy, skillX(i), skillY(i), CARD_W, CARD_H)) continue;
+                    if (!SkillPool.available(ults.get(k), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;
+                    ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(SkillManager.ULTIMATE_SLOT, k));
+                    ClientSkillState.setUltimate(k);
+                    click();
+                    return true;
+                }
         }
         if (tab == 2) {
             String[] names = type().outfitNames();
@@ -247,6 +270,13 @@ public class CharacterCustomScreen extends Screen {
                 if (outfitLocked(i) || minecraft.player == null) return true;
                 ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(i));
                 ClientCharacterData.setOutfit(minecraft.player.getUUID(), i);
+                click();
+                return true;
+            }
+            if (hoodToggle() && inBox(vx, vy, skillX(names.length), outfitY(names.length), CARD_W, OUTFIT_H)) {
+                boolean up = !com.xenowarriors.client.mikiko.HoodClient.kaeruUp(minecraft.player);
+                ModNetwork.sendToServer(new com.xenowarriors.network.HoodTogglePacket(up));
+                com.xenowarriors.client.mikiko.HoodClient.setManual(minecraft.player.getId(), up);     // (shown right away; the server saves it)
                 click();
                 return true;
             }
@@ -582,7 +612,7 @@ public class CharacterCustomScreen extends Screen {
                         : List.of("KA: " + k.title(), KaGuideScreen.does(k), "Price: " + k.cost);
                 continue;
             }
-            Skill sk = SkillPool.inSlot(minecraft.player, loadout, s);
+            Skill sk = SkillPool.inSlot(minecraft.player, ClientSkillState.fullLoadout(), s);
             if (sk != null && !com.xenowarriors.client.SkillIcons.draw(g, sk.getId(), x + 3, y + 1, SLOT - 8)) g.drawCenteredString(font, SkillLoadoutScreen.shortName(sk), x + SLOT / 2, y + 5, 0xFFFFFF);
             String lab = ult ? "ULT" : String.valueOf(s + 1);
             scaled(g, lab, x + SLOT / 2F - font.width(lab) * 0.375F, y + SLOT - 8, 0.75F, ult ? 0xFFD24A : 0xA0A0B0);
@@ -611,6 +641,30 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over) tip = !seasonOk ? List.of("???", "Season " + e.season() + " content (locked, no spoilers)")
                     : lines(e.skill().getName().getString(), SkillLoadoutScreen.desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel()));
+        }
+        // a choice of ultimates: one card each (gold edge), click to put it in the ULT slot
+        List<SkillPool.Entry> ults = ultChoices();
+        if (ults.size() > 1) for (int k = 0; k < ults.size(); k++) {
+            SkillPool.Entry e = ults.get(k);
+            int i = ultCardStart() + k;
+            int x = skillX(i) + Math.round((1F - rowIn(i / 2 + 2)) * 18F), y = skillY(i);
+            if (y + CARD_H < LIST_Y || y > VH) continue;
+            boolean seasonOk = ClientSkillState.season() >= e.season();
+            boolean open = seasonOk && SkillPool.unlocked(e, ClientSkillState.level(), creative());
+            boolean on = ClientSkillState.ultimate() == k || (k == 0 && ClientSkillState.ultimate() >= ults.size());
+            boolean over = my >= LIST_Y && inBox(mx, my, x, y, CARD_W, CARD_H);
+            g.fill(x, y, x + CARD_W, y + CARD_H, on ? 0xFF3A3018 : over && open ? 0xFF2A2A3A : 0xFF1C1C24);
+            g.fill(x, y, x + 2, y + CARD_H, open ? 0xFFFFD24A : 0xFF555555);
+            if (on) outline(g, x, y, x + CARD_W, y + CARD_H, 0xFFFFD24A);
+            boolean pic = seasonOk && com.xenowarriors.client.SkillIcons.get(e.skill().getId()) != null;
+            if (pic) { com.xenowarriors.client.SkillIcons.draw(g, e.skill().getId(), x + 3, y + 1, CARD_H - 2); if (!open) g.fill(x + 3, y + 1, x + CARD_H + 1, y + CARD_H - 1, 0xA0101018); }
+            int tx = pic ? x + CARD_H + 3 : x + 5;
+            String nm = seasonOk ? e.skill().getName().getString() : "???";
+            scaled(g, ell(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFE8A0 : 0x777777);
+            String line = !seasonOk ? "Season " + e.season() : !open ? "🔒 Unlocks at Lv " + e.unlockLevel() : on ? "Ultimate - equipped" : "Ultimate - click to equip";
+            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : on ? 0xFFD24A : 0x99AABB);
+            if (over) tip = !seasonOk ? List.of("???", "Season " + e.season() + " content (locked, no spoilers)")
+                    : lines(e.skill().getName().getString() + " (ultimate)", SkillLoadoutScreen.desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel()));
         }
         g.disableScissor();
         if (maxSkillScroll() > 0) {                          // on a dark tab so it doesn't print over the last card's text
@@ -648,7 +702,21 @@ public class CharacterCustomScreen extends Screen {
             String line = locked ? "Season " + season + " - locked" : on ? "Wearing" : "Season " + Math.max(1, season) + "  \u2022  click to wear";
             scaled(g, line, x + 5, y + 15, 0.75F, locked ? 0xAA5555 : on ? 0x77DD88 : 0x99AABB);
         }
+        if (hoodToggle()) {                    // Kaeru: her hoodie's hood, up or down
+            int i = names.length, x = skillX(i) + Math.round((1F - rowIn(i / 2)) * 18F), y = outfitY(i);
+            boolean up = com.xenowarriors.client.mikiko.HoodClient.kaeruUp(minecraft.player), over = inBox(mx, my, x, y, CARD_W, OUTFIT_H);
+            g.fill(x, y, x + CARD_W, y + OUTFIT_H, up ? 0xFF000000 | dark2(col) : over ? 0xFF2A2A3A : 0xFF1C1C24);
+            g.fill(x, y, x + 2, y + OUTFIT_H, 0xFF000000 | col);
+            if (up) outline(g, x, y, x + CARD_W, y + OUTFIT_H, 0xFF000000 | light(col));
+            scaled(g, up ? "Hood up" : "Hood down", x + 5, y + 4, 0.9F, 0xFFFFFF);
+            scaled(g, "Hoodie  •  click to " + (up ? "put it down" : "put it up"), x + 5, y + 15, 0.75F, up ? 0x77DD88 : 0x99AABB);
+        }
         if (names.length <= 1) scaled(g, "More outfits come with later seasons.", 5, outfitY(2) + 4, 0.8F, 0x8A8A9A);
+    }
+
+    /** The outfits tab has a Hood up / Hood down card (Kaeru in her hoodie). */
+    private boolean hoodToggle() {
+        return minecraft.player != null && com.xenowarriors.client.mikiko.HoodClient.kaeru(minecraft.player);
     }
 
     private static int dark2(int c) {

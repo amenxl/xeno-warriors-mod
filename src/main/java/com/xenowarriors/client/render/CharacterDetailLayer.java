@@ -424,6 +424,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     instanceof com.xenowarriors.item.SrHoodieItem)
                     && !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.item.FoxPjsItem);   // (under the Fox PJs hood)
             for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood;
+        } else {
+            for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood;   // (Kaeru: her bob's outer locks)
         }
 
         // Rhalix's cigarette while he's on his smoke break

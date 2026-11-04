@@ -72,7 +72,7 @@ public class DetailModel {
         this.leftWingY = leftWing != null ? leftWing.yRot : 0;
         if (hair != null) collectStrands(hair);
         if (bangs != null) collectStrands(bangs);
-        if (hair != null) findHoodPokers();
+        if (hair != null || hoodUp != null) findHoodPokers();     // (no hair part: the head's own strands, e.g. Kaeru's bob)
     }
 
     /** Hair strands that would stick out through the outfit's hood (hidden while it's up); the rest still show under it. */
@@ -90,18 +90,20 @@ public class DetailModel {
         });
         float in = 0.15F;
         java.util.Set<String> poke = new java.util.HashSet<>();
-        hair.visit(new com.mojang.blaze3d.vertex.PoseStack(), (pose, path, index, cube) -> {
+        ModelPart src = hair != null ? hair : head;
+        src.visit(new com.mojang.blaze3d.vertex.PoseStack(), (pose, path, index, cube) -> {
             String rel = path.startsWith("/") ? path.substring(1) : path;      // paths look like "/strand/piece"
             int slash = rel.indexOf('/');
             String strand = slash < 0 ? rel : rel.substring(0, slash);
             if (strand.isEmpty()) return;     // the cap itself sits under the hood
+            if (src == head && (strand.equals("hood_up") || strand.equals("glasses") || strand.equals("goggles") || strand.equals("bangs"))) return;
             for (org.joml.Vector3f c : corners(pose, cube)) {
                 // the open front of the hood lets the fringe through; anywhere else outside it would poke through
                 if (c.x < b[0] + in || c.x > b[3] - in || c.y < b[1] + in || c.z > b[5] - in) { poke.add(strand); return; }
             }
         });
         for (String name : poke) {
-            if (hair.hasChild(name)) hoodPokers.add(hair.getChild(name));
+            if (src.hasChild(name)) hoodPokers.add(src.getChild(name));
         }
     }
 

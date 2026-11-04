@@ -384,8 +384,10 @@ public final class MikikoAnimations {
         s.swordTiredO = s.swordTired;
         s.swordTired = approach(s.swordTired, low && anySword && s.move == null && !p.isUsingItem() && s.fly < 0.5F
                 && !p.isPassenger() && !p.isSwimming() && !p.onClimbable() && !p.isSleeping() ? 1F : 0F, 0.1F);   // (not slumped on a horse, in water or on a ladder)
-        s.sit = approach(s.sit, !poisoned && !holdingBlade && !robotDance && !groovy && !alert && !low && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
-                s.still == 0 ? 0.3F : 0.06F);
+        // in a menu he isn't idling, just standing there while the player is busy: no sitting down (he gets back up)
+        boolean menu = MenuStateClient.inMenu(p);
+        s.sit = approach(s.sit, !menu && !poisoned && !holdingBlade && !robotDance && !groovy && !alert && !low && (s.still >= SIT_AFTER || s.vibeTicks >= VIBE_SIT_AFTER) ? 1F : 0F,
+                s.still == 0 || menu ? 0.3F : 0.06F);
         s.look = 0F;   // (the old look-around idle is gone: GeckoLib idles play instead, see apply)
         boolean fire = s.sit > 0.95F && fireActive(s.still) && !vibing && !robotDance && !groovy;
         // a pet fox sitting at his side: he pets it

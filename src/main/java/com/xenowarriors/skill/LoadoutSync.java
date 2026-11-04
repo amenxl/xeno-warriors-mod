@@ -24,7 +24,7 @@ public final class LoadoutSync {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0) return;
         var type = ModCapabilities.getType(p);
         int level = com.xenowarriors.stats.Stats.characterLevel(p);
-        String key = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key()).orElse("") + ":" + level + ":" + com.xenowarriors.character.Seasons.highest(p.server) + ":" + java.util.Arrays.toString(p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadout(type)).orElse(new int[0]));
+        String key = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key()).orElse("") + ":" + level + ":" + com.xenowarriors.character.Seasons.highest(p.server) + ":" + java.util.Arrays.toString(p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(type)).orElse(new int[0]));
         String old = LAST.put(p.getUUID(), key);
         if (key.equals(old)) return;
         SkillManager.syncLoadout(p);
@@ -39,6 +39,14 @@ public final class LoadoutSync {
                     p.sendSystemMessage(Component.literal("New skill unlocked: ").withStyle(net.minecraft.ChatFormatting.GOLD)
                             .append(e.skill().getName().copy().withStyle(net.minecraft.ChatFormatting.YELLOW))
                             .append(Component.literal(" - equip it in Character Customization (M)").withStyle(net.minecraft.ChatFormatting.GRAY)));
+                }
+            for (SkillPool.Entry e : SkillPool.ultimates(p))                      // a new ultimate to choose
+                if (e.unlockLevel() > 0 && e.unlockLevel() > was && e.unlockLevel() <= level && season >= e.season()) {
+                    com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), type.ordinal(), -1, "New ultimate!",
+                            e.skill().getName().getString() + " unlocked. Pick it for your ultimate slot in Character Customization.", "rage");
+                    p.sendSystemMessage(Component.literal("New ultimate unlocked: ").withStyle(net.minecraft.ChatFormatting.GOLD)
+                            .append(e.skill().getName().copy().withStyle(net.minecraft.ChatFormatting.YELLOW))
+                            .append(Component.literal(" - pick it for the ultimate slot in Character Customization (M)").withStyle(net.minecraft.ChatFormatting.GRAY)));
                 }
         }
     }

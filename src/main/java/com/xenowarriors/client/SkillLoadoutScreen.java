@@ -70,13 +70,13 @@ public class SkillLoadoutScreen extends Screen {
         for (int s = 0; s < SkillManager.SLOTS; s++) {
             int x = slotsLeft() + s * (BOX + 8), y = 40;
             boolean ult = s == SkillManager.ULTIMATE_SLOT;
-            Skill sk = SkillPool.inSlot(minecraft.player, loadout, s);
+            Skill sk = SkillPool.inSlot(minecraft.player, ClientSkillState.fullLoadout(), s);
             int border = ult ? 0xFFFFD24A : s == selected ? 0xFFFFFFFF : type.getColor();
             g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, border);
             g.fill(x, y, x + BOX, y + BOX, 0xEE101018);
             if (sk != null && !SkillIcons.draw(g, sk.getId(), x + 3, y + 1, BOX - 12)) g.drawCenteredString(font, shortName(sk), x + BOX / 2, y + 9, 0xFFFFFF);
             g.drawCenteredString(font, ult ? "ULT" : String.valueOf(s + 1), x + BOX / 2, y + BOX - 10, ult ? 0xFFD24A : 0xBBBBBB);
-            if (sk != null && mx >= x && mx < x + BOX && my >= y && my < y + BOX) hover = sk.getName().getString() + (ult ? " (ultimate - always equipped)" : "") + "\n" + desc(sk);
+            if (sk != null && mx >= x && mx < x + BOX && my >= y && my < y + BOX) hover = sk.getName().getString() + (ult ? (SkillPool.ultimates(minecraft.player).size() > 1 ? " (ultimate - click to switch)" : " (ultimate - always equipped)") : "") + "\n" + desc(sk);
         }
         {   // super ultimate: KAs and really big attacks
             int x = slotsLeft() + 5 * (BOX + 8) + 6, y = 40;
@@ -137,6 +137,23 @@ public class SkillLoadoutScreen extends Screen {
         for (int s = 0; s < SkillManager.ULTIMATE_SLOT; s++) {
             int x = slotsLeft() + s * (BOX + 8), y = 40;
             if (mx >= x && mx < x + BOX && my >= y && my < y + BOX) { selected = s; click(); return true; }
+        }
+        {   // the ultimate slot: with more than one ultimate unlocked, clicking it switches to the next
+            int x = slotsLeft() + SkillManager.ULTIMATE_SLOT * (BOX + 8), y = 40;
+            List<SkillPool.Entry> ults = SkillPool.ultimates(minecraft.player);
+            if (ults.size() > 1 && mx >= x && mx < x + BOX && my >= y && my < y + BOX) {
+                for (int k = 1; k <= ults.size(); k++) {
+                    int next = (ClientSkillState.ultimate() + k) % ults.size();
+                    if (!SkillPool.available(ults.get(next), ClientSkillState.level(), creative(), ClientSkillState.season())) continue;
+                    if (next != ClientSkillState.ultimate()) {
+                        ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(SkillManager.ULTIMATE_SLOT, next));
+                        ClientSkillState.setUltimate(next);
+                        click();
+                    }
+                    break;
+                }
+                return true;
+            }
         }
         List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
         for (int i = 0; i < pool.size(); i++) {

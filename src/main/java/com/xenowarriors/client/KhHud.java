@@ -262,7 +262,7 @@ public final class KhHud implements IGuiOverlay {
         int y = top + 14;
         for (int s = 0; s <= SkillManager.SLOTS; s++) {
             boolean ult = s == SkillManager.ULTIMATE_SLOT, sup = s == SkillManager.SUPER_SLOT;
-            Skill sk = sup ? null : SkillPool.inSlot(mc.player, loadout, s);
+            Skill sk = sup ? null : SkillPool.inSlot(mc.player, ClientSkillState.fullLoadout(), s);
             var ka = ClientSkillState.ka();
             int border = sup ? 0xFF8A3CC8 : ult ? 0xFFFFD24A : 0xFF5A6EA0;
             g.fill(x, y, x + w, y + rowH, alpha(border, a));

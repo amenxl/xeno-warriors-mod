@@ -379,6 +379,15 @@ def _(i):
     i.flames(16, 30, 26, 8, n=7)
     i.figure(16, 20, RAISE, scale=0.6)
 
+@spec('hekublade_rain', 'mikiko')
+def _(i):
+    i.ring(16, 4.5, 12, 2, FIRE2, 1.0)                                    # the ring they hang in
+    for k, (bx, by) in enumerate([(5, 4), (12, 11), (20, 6), (27, 12)]):
+        i.sword((bx, by), 0, 7, col=SILVER, guard=RED)                    # point down, falling
+    i.burst(12, 27, 3.4, FIRE, 7)
+    i.burst(26, 26, 2.6, FIRE2, 6)
+    i.figure(5, Y + 1, RAISE, scale=0.55)
+
 # ---------------------------------------------------------------- Rhalix
 @spec('kishi', 'rhalix')
 def _(i):

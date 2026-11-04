@@ -100,5 +100,14 @@ public final class ModEntities {
                     .updateInterval(1)
                     .build("blazing_wind"));
 
+    public static final RegistryObject<EntityType<HekubladeRainEntity>> HEKUBLADE_RAIN = ENTITY_TYPES.register("hekublade_rain",
+            () -> EntityType.Builder.<HekubladeRainEntity>of(HekubladeRainEntity::new, MobCategory.MISC)
+                    .sized(1F, 1F)
+                    .noSummon()
+                    .fireImmune()
+                    .clientTrackingRange(10)
+                    .updateInterval(20)
+                    .build("hekublade_rain"));
+
     private ModEntities() {}
 }

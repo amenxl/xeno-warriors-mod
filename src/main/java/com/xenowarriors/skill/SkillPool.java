@@ -20,6 +20,8 @@ public final class SkillPool {
 
     private static final Map<CharacterType, List<Entry>> POOL = new EnumMap<>(CharacterType.class);
     private static final Map<CharacterType, Skill> ULTIMATE = new EnumMap<>(CharacterType.class);
+    /** Characters with more than one ultimate to choose from (index 0 = the default one, the same as ULTIMATE). */
+    private static final Map<CharacterType, List<Entry>> ULTIMATES = new EnumMap<>(CharacterType.class);
 
     static {
         POOL.put(CharacterType.MIKIKO, List.of(
@@ -28,7 +30,10 @@ public final class SkillPool {
                 new Entry(new DanceKickSkill(), 15, 3), new Entry(new NetsuBurstSkill(), 30, 2),
                 new Entry(new ManifestGreatnessSkill(), 50, 1), new Entry(new TrueEmpathySkill(), 75, 3),
                 new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 10, 2)));
-        ULTIMATE.put(CharacterType.MIKIKO, new BlazingWindSkill());
+        Skill blazing = new BlazingWindSkill();
+        ULTIMATE.put(CharacterType.MIKIKO, blazing);
+        // a second ultimate to pick for the ultimate slot, once he's strong enough
+        ULTIMATES.put(CharacterType.MIKIKO, List.of(new Entry(blazing, 0), new Entry(new HekubladeRainSkill(), HekubladeRainSkill.UNLOCK_LEVEL)));
         POOL.put(CharacterType.RHALIX, List.of(
                 new Entry(new KishiSkill(), 0), new Entry(new EarthWaveSkill(), 0),
                 new Entry(new GravityCompressSkill(), 0), new Entry(new BangSkill(), 0),
@@ -136,8 +141,45 @@ public final class SkillPool {
         return index >= 0 && index < l.size() ? l.get(index) : null;
     }
 
+    // ---- ultimates: some characters can pick another one for the ultimate slot (it unlocks at a Character Level).
+    //      A loadout array may carry the chosen one as a 5th number (0 or missing = the default ultimate).
+
+    /** The ultimates this character can choose between (just the one for most). */
+    public static List<Entry> ultimates(CharacterType type) {
+        List<Entry> l = ULTIMATES.get(type);
+        if (l != null) return l;
+        Skill u = ultimate(type);
+        return u == null ? List.of() : List.of(new Entry(u, 0));
+    }
+
+    public static List<Entry> ultimates(net.minecraft.world.entity.player.Player p) {
+        var s = com.xenowarriors.you.You.slot(p);
+        if (s != null) { Skill u = com.xenowarriors.you.YouSkills.ultimate(s); return u == null ? List.of() : List.of(new Entry(u, 0)); }
+        return ultimates(typeOf(p));
+    }
+
+    /** The ultimate picked in this loadout (its 5th number), else the default one. */
+    public static Skill ultimate(CharacterType type, int[] loadout) {
+        List<Entry> l = ultimates(type);
+        int c = loadout != null && loadout.length > SkillManager.ULTIMATE_SLOT ? loadout[SkillManager.ULTIMATE_SLOT] : 0;
+        return c > 0 && c < l.size() ? l.get(c).skill() : ultimate(type);
+    }
+
+    public static Skill ultimate(net.minecraft.world.entity.player.Player p, int[] loadout) {
+        List<Entry> l = ultimates(p);
+        int c = loadout != null && loadout.length > SkillManager.ULTIMATE_SLOT ? loadout[SkillManager.ULTIMATE_SLOT] : 0;
+        return c > 0 && c < l.size() ? l.get(c).skill() : ultimate(p);
+    }
+
+    /** A 4-skill loadout with the chosen ultimate added as its 5th number. */
+    public static int[] withUltimate(int[] loadout, int ultimate) {
+        int[] out = java.util.Arrays.copyOf(loadout, SkillManager.ULTIMATE_SLOT + 1);
+        out[SkillManager.ULTIMATE_SLOT] = Math.max(0, ultimate);
+        return out;
+    }
+
     public static Skill inSlot(net.minecraft.world.entity.player.Player p, int[] loadout, int slot) {
-        if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(p);
+        if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(p, loadout);
         if (loadout == null || slot < 0 || slot >= loadout.length) return null;
         Entry e = entry(p, loadout[slot]);
         return e == null ? null : e.skill();
@@ -147,7 +189,7 @@ public final class SkillPool {
 
     /** The skill in a slot for this loadout (slot 4 = ultimate). */
     public static Skill inSlot(CharacterType type, int[] loadout, int slot) {
-        if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(type);
+        if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(type, loadout);
         if (loadout == null || slot < 0 || slot >= loadout.length) return null;
         Entry e = entry(type, loadout[slot]);
         return e == null ? null : e.skill();

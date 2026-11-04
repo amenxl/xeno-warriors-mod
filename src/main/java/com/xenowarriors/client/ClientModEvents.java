@@ -36,6 +36,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.THROWN_HEKUBLADE.get(), com.xenowarriors.client.render.ThrownHekubladeRenderer::new);
         event.registerEntityRenderer(ModEntities.FIRE_BLITZ.get(), FireBlitzRenderer::new);
         event.registerEntityRenderer(ModEntities.BLAZING_WIND.get(), BlazingWindRenderer::new);
+        event.registerEntityRenderer(ModEntities.HEKUBLADE_RAIN.get(), com.xenowarriors.client.render.HekubladeRainRenderer::new);
         // possessed villagers still look like villagers - drained dark with red eyes
         event.registerEntityRenderer(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_VILLAGER.get(),
                 com.xenowarriors.client.corrupted.PossessedVillagerRenderer::new);

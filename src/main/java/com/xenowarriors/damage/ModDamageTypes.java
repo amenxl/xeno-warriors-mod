@@ -28,6 +28,7 @@ public final class ModDamageTypes {
     public static final ResourceKey<DamageType> NETSU = key("netsu");
     public static final ResourceKey<DamageType> FIRE_BLITZ = key("fire_blitz");
     public static final ResourceKey<DamageType> BLAZING_WIND = key("blazing_wind");
+    public static final ResourceKey<DamageType> HEKUBLADE_RAIN = key("hekublade_rain");
 
     private static ResourceKey<DamageType> key(String id) {
         return ResourceKey.create(Registries.DAMAGE_TYPE, XenoWarriors.id(id));
