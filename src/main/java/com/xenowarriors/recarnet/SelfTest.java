@@ -40,11 +40,33 @@ public final class SelfTest {
             int gov = 0, order = 0;
             for (var e : rec.getAllEntities()) { if (e instanceof com.xenowarriors.gov.GovAgentEntity) gov++; if (e instanceof com.xenowarriors.s3.OrderAssassinEntity) order++; }
             XenoWarriors.LOGGER.info("XW-SELFTEST gov agents {} order assassins {}", gov, order);
+            try { modePodCheck(server); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST pod check failed", t); }
             server.saveAllChunks(false, true, true);
             XenoWarriors.LOGGER.info("XW-SELFTEST OK");
         } catch (Throwable t) {
             XenoWarriors.LOGGER.error("XW-SELFTEST FAIL", t);
         }
         server.halt(false);
+    }
+
+    /** A self-service healing pod in the Tower dimension (where Journeys run) refuses; Journey's own fixed rest still starts. */
+    private static void modePodCheck(MinecraftServer server) {
+        ServerLevel tl = server.getLevel(com.xenowarriors.tower.Tower.LEVEL);
+        if (tl == null) { XenoWarriors.LOGGER.info("XW-SELFTEST pod check: no Tower level"); return; }
+        net.minecraft.core.BlockPos at = new net.minecraft.core.BlockPos(-4000, 120, -4000);
+        tl.getChunk(at);
+        var pod = com.xenowarriors.sky.ModBlocks.HEALING_POD.get().defaultBlockState();
+        tl.setBlock(at.below(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 2);
+        tl.setBlock(at, pod, 2);
+        tl.setBlock(at.above(), pod.setValue(com.xenowarriors.gov.HealingPodBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), 2);
+        var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(tl);
+        if (z == null) return;
+        z.moveTo(at.getX() + .5, at.getY(), at.getZ() + .5, 0, 0);
+        tl.addFreshEntity(z);
+        String self = com.xenowarriors.gov.HealingPods.start(tl, at, z, -1, null);
+        String fixed = com.xenowarriors.gov.HealingPods.start(tl, at, z, 40, null);
+        XenoWarriors.LOGGER.info("XW-SELFTEST pod in tower: self-service -> {} / journey rest -> {} (inPod={})", self, fixed == null ? "ok" : fixed, com.xenowarriors.gov.HealingPods.inPod(z));
+        z.discard();
+        for (var p : new net.minecraft.core.BlockPos[]{at.above(), at, at.below()}) tl.setBlock(p, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
     }
 }
