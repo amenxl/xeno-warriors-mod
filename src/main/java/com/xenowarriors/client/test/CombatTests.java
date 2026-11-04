@@ -538,17 +538,17 @@ public final class CombatTests {
             log("robot sit: " + res + " sitting=" + com.xenowarriors.ultima.RobotPets.sitting(m));
             res = p.interactOn(m, net.minecraft.world.InteractionHand.MAIN_HAND);
             log("robot stand: " + res + " sitting=" + com.xenowarriors.ultima.RobotPets.sitting(m));
-            m.moveTo(p.getX() + 14, p.getY(), p.getZ() + 6); p.setYRot(-60);
+            m.moveTo(p.getX() + 8, p.getY(), p.getZ() + 6); p.setYRot(-60);   // (inside the cleared stage)
         }), 80);
         l.add(null, () -> server(p -> {
             Mob m = (Mob) E.get("robot");
             if (m == null) return;
-            log(String.format("robot follow: distance to Ultima after 4s = %.1f (started 15)", m.distanceTo(p)));
+            log(String.format("robot follow: distance to Ultima after 4s = %.1f (started 10)", m.distanceTo(p)));
             var z = mob(p, EntityType.ZOMBIE, "zombie", 6, 4);
             if (z != null) { z.setNoAi(false); z.setTarget(p); p.setLastHurtByMob(z); z.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200); z.setHealth(200); }
         }), 60);
         l.add(null, () -> { clean(mc); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 2);
-        l.add("combat_robot_fights", () -> server(p -> {
+        l.add("combat_robot_fights", () -> { clean(mc); server(p -> {
             Mob m = (Mob) E.get("robot"); LivingEntity z = E.get("zombie");
             if (m == null || z == null) return;
             log("robot guard: target=" + (m.getTarget() == null ? "none" : m.getTarget().getType().toShortString()) + " zombieHp=" + z.getHealth() + "/200 ultimaHurtByRobot=" + (p.getLastHurtByMob() == m));
@@ -557,7 +557,7 @@ public final class CombatTests {
             m.save(tag);
             var copy = net.minecraft.world.entity.EntityType.create(tag, p.serverLevel()).orElse(null);
             log("robot saved/loaded: owner kept=" + (copy != null && p.getUUID().equals(com.xenowarriors.ultima.RobotPets.ownerOf(copy))) + " persistent=" + (copy instanceof Mob cm && cm.isPersistenceRequired()));
-        }), 100);
+        }); }, 100);
         l.add(null, () -> server(p -> { p.getAbilities().invulnerable = false; p.onUpdateAbilities(); for (var e : E.values()) e.discard(); E.clear(); }), 5);
     }
 
