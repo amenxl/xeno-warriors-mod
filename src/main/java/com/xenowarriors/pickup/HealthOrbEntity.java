@@ -76,7 +76,7 @@ public class HealthOrbEntity extends Entity {
             double d = to.length();
             if (d < PICKUP_RANGE + follow.getBbWidth() * 0.5) { collect(follow); return; }
             double f = 1.0 - d / PULL_RANGE;
-            v = v.add(to.normalize().scale(f * f * 0.12));
+            v = v.add(to.normalize().scale(0.03 + f * f * 0.2));
             setNoGravity(true);
         } else {
             setNoGravity(false);

@@ -132,7 +132,13 @@ public final class CombatTests {
             if (bot != null) { bot.moveTo(p.getX() + 6, p.getY(), p.getZ() + 9); bot.setNoAi(true); E.put("my_bot", bot); }
             mob(p, EntityType.ZOMBIE, "enemy_zombie", 0, 12);
             mob(p, EntityType.HUSK, "enemy_husk", -6, 9);
-            for (var e : E.values()) { e.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200); e.setHealth(200); }
+            for (var e : E.values()) {
+                e.getAttribute(Attributes.MAX_HEALTH).setBaseValue(200); e.setHealth(200);
+                if (e instanceof Mob m) m.setNoAi(false);                               // (AI on, so pushes and pulls move them...)
+                e.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0);                 // (...but they can't walk anywhere themselves)
+                if (e instanceof Mob m) m.goalSelector.removeAllGoals(g -> true);
+                if (e instanceof Mob m) m.targetSelector.removeAllGoals(g -> true);
+            }
             log("allies setup: mate party=" + com.xenowarriors.party.Parties.sameParty(p.getUUID(), mate.getUUID()) + " ents=" + E.keySet());
         }); }, 40);
         // the ally table
@@ -140,7 +146,7 @@ public final class CombatTests {
             ServerPlayer mate = net.minecraftforge.common.util.FakePlayerFactory.get(p.serverLevel(), new com.mojang.authlib.GameProfile(java.util.UUID.nameUUIDFromBytes("CombatMate".getBytes()), "CombatMate"));
             com.xenowarriors.soul.SoulSplit.start(p);
             var souls = p.serverLevel().getEntitiesOfClass(com.xenowarriors.soul.SoulEntity.class, p.getBoundingBox().inflate(6));
-            if (!souls.isEmpty()) { souls.get(0).setNoAi(true); E.put("my_soul", souls.get(0)); }
+            if (!souls.isEmpty()) { var s = souls.get(0); s.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0); s.goalSelector.removeAllGoals(g -> true); s.targetSelector.removeAllGoals(g -> true); E.put("my_soul", s); }
             log("isAlly self=" + com.xenowarriors.combat.Allies.isAlly(p, p) + " mate=" + com.xenowarriors.combat.Allies.isAlly(p, mate)
                     + " mate->my_fox=" + com.xenowarriors.combat.Allies.isAlly(mate, E.get("my_fox")));
             for (var e : E.entrySet()) log("isAlly " + e.getKey() + "=" + com.xenowarriors.combat.Allies.isAlly(p, e.getValue())
@@ -202,9 +208,9 @@ public final class CombatTests {
                 }
                 for (int dx = -6; dx <= 6; dx++) for (int dy = 0; dy <= 6; dy++) lv.setBlock(c.offset(dx, dy, 56), Blocks.STONE.defaultBlockState(), 2);   // a wall at 56
                 E.clear();
-                mob(p, EntityType.ZOMBIE, "z_at_20", 0, 20);
-                mob(p, EntityType.ZOMBIE, "z_at_50", 0, 50);                 // past the old 40-block reach
-                mob(p, EntityType.ZOMBIE, "z_side_50", 4.5, 53);             // next to where it lands
+                mob(p, EntityType.HUSK, "z_at_20", 0, 20);
+                mob(p, EntityType.HUSK, "z_at_50", 0, 50);                   // past the old 40-block reach
+                mob(p, EntityType.HUSK, "z_side_50", 4.5, 53);               // next to where it lands
                 for (var e : E.values()) { e.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000); e.setHealth(1000); }
                 snapshot();
             }); }, 30);
@@ -271,7 +277,7 @@ public final class CombatTests {
                 float before = p.getPersistentData().getFloat("xw_test_hp");
                 log(String.format("orbs heal: maxHp=%.0f health %.2f -> %.2f = +%.2f%% of max (collected=%d, last=%.2f%%)", p.getMaxHealth(), before, p.getHealth(),
                         (p.getHealth() - before) * 100F / p.getMaxHealth(), com.xenowarriors.pickup.HealthOrbs.collectedCount, com.xenowarriors.pickup.HealthOrbs.lastHealFraction * 100F));
-            }), 60);
+            }), 100);
         }
         l.add(null, () -> server(p -> {
             p.getAttribute(Attributes.MAX_HEALTH).removeModifier(java.util.UUID.fromString("0f8c3b38-2d0e-4b8a-9a55-2a0b7c1e4d01"));
@@ -375,13 +381,26 @@ public final class CombatTests {
         try {
             Object d = dmzData(p);
             Object ch = d.getClass().getMethod("getCharacter").invoke(d);
-            ch.getClass().getMethod("setRace", String.class).invoke(ch, "human");
+            ch.getClass().getMethod("setRace", String.class).invoke(ch, "saiyan");
             Object st = d.getClass().getMethod("getStatus").invoke(d);
             st.getClass().getMethod("setHasCreatedCharacter", boolean.class).invoke(st, true);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
         } catch (Throwable t) { log("dmz create failed " + t); }
     }
 
-    /** One 10-damage hit of each kind on a dummy; what it really took. */
+    static String dmzFigures(ServerPlayer p) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            Object d = dmzData(p);
+            for (String m : new String[]{"getLevel", "getBattlePower", "getKiDamage", "getStrikeDamage", "getMeleeDamage", "getKiAttackDamageModifier", "getMaxHealth"})
+                try { sb.append(m.substring(3)).append('=').append(d.getClass().getMethod(m).invoke(d)).append(' '); } catch (Throwable t) { sb.append(m).append("=? "); }
+            Object st = d.getClass().getMethod("getStats").invoke(d);
+            sb.append("KiPower=").append(st.getClass().getMethod("getKiPower").invoke(st)).append(" StrikePower=").append(st.getClass().getMethod("getStrikePower").invoke(st));
+        } catch (Throwable t) { sb.append(t); }
+        return sb.toString();
+    }
+
+    /** What a hit really took off the dummy. */
     static float hit(ServerPlayer p, LivingEntity z, Runnable r) {
         z.setHealth(z.getMaxHealth()); z.invulnerableTime = 0;
         float before = z.getHealth();
@@ -391,32 +410,58 @@ public final class CombatTests {
         return took;
     }
 
+    /** A real DragonMineZ ki blast (as its basic ki blast key makes it: ki damage x 0.5), fired point-blank at the dummy. */
+    static void dmzKiBlast(ServerPlayer p, LivingEntity z) {
+        try {
+            Object d = dmzData(p);
+            double ki = ((Number) d.getClass().getMethod("getKiDamage").invoke(d)).doubleValue();
+            var type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", "ki_blast"));
+            var e = type.create(p.serverLevel());
+            e.getClass().getMethod("setup", LivingEntity.class, float.class, float.class, float.class, int.class, int.class).invoke(e, p, (float) (ki * 0.5), 0.5F, 1.5F, 0x66CCFF, 0xFFFFFF);
+            Vec3 from = p.getEyePosition(), to = z.position().add(0, 1, 0), dir = to.subtract(from).normalize();
+            e.moveTo(from.x + dir.x, from.y + dir.y, from.z + dir.z, 0, 0);
+            if (e instanceof net.minecraft.world.entity.projectile.Projectile pr) { pr.setOwner(p); pr.shoot(dir.x, dir.y, dir.z, 1.5F, 0F); }
+            z.setHealth(z.getMaxHealth()); z.invulnerableTime = 0;
+            p.serverLevel().addFreshEntity(e);
+        } catch (Throwable t) { log("dmz ki blast failed " + t); }
+    }
+
     static void dmzScaling(Minecraft mc, Sink l) {
         l.add(null, () -> { character(CharacterType.MIKIKO); server(p -> {
             p.setGameMode(GameType.SURVIVAL); stage(p, 6); dmzCreated(p);
+            p.getAbilities().invulnerable = true; p.onUpdateAbilities();
             E.clear();
-            var z = mob(p, EntityType.IRON_GOLEM, "dummy", 0, 3);       // (armorless... golems have no armor points)
+            var z = mob(p, EntityType.IRON_GOLEM, "dummy", 0, 3);
             if (z != null) { z.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000000); z.setHealth(1000000); }
-        }); }, 30);
+            log("dmz fresh: " + dmzFigures(p));
+        }); }, 40);
         for (int lv : new int[]{5, 60, 250}) {
             l.add(null, () -> server(p -> {
                 try { dmzStats(p, lv); } catch (Throwable t) { log("dmz stats failed " + t); }
-            }), 10);
+            }), 40);
             l.add(null, () -> server(p -> {
                 LivingEntity z = E.get("dummy");
                 double[] raw = com.xenowarriors.compat.DmzScaling.raw(p);
                 double oldKi = Math.max(1.0, raw[0] / 10.0), oldStrike = Math.max(1.0, raw[1] / 10.0);
+                log("dmz stats=" + lv + " figures: " + dmzFigures(p));
                 float listed = hit(p, z, () -> z.hurt(com.xenowarriors.damage.ModDamageTypes.source(p.level(), com.xenowarriors.damage.ModDamageTypes.BLAZING_WIND, p, p), 10F));
                 float xeno = hit(p, z, () -> com.xenowarriors.combat.SkillContext.run(p, () -> z.hurt(p.damageSources().indirectMagic(p, p), 10F)));
                 float kick = hit(p, z, () -> com.xenowarriors.combat.SkillContext.run(p, () -> z.hurt(p.damageSources().playerAttack(p), 10F)));
                 float plain = hit(p, z, () -> z.hurt(p.damageSources().indirectMagic(p, p), 10F));
-                log(String.format("dmz scaling stats=%d kiDamage=%.1f strikeDamage=%.1f | multiplier ki old=%.2f new=%.2f, strike old=%.2f new=%.2f", lv, raw[0], raw[1],
+                float punch = hit(p, z, () -> { net.minecraftforge.fml.util.ObfuscationReflectionHelper.setPrivateValue(LivingEntity.class, p, 200, "f_20922_"); p.attack(z); });
+                log(String.format("dmz scaling stats=%d | skill multiplier ki old=%.2f new=%.2f, strike old=%.2f new=%.2f", lv,
                         oldKi, com.xenowarriors.compat.DmzScaling.skillMultiplier(p, false), oldStrike, com.xenowarriors.compat.DmzScaling.skillMultiplier(p, true)));
-                log(String.format("dmz scaling stats=%d 10-dmg hits: Blazing Wind type took %.1f (before: %.1f) | energy skill (Xeno Blast/indirectMagic in a skill) took %.1f (before: 10.0) | physical skill (playerAttack in a skill) took %.1f (before: 10.0) | not a skill took %.1f",
-                        lv, listed, 10 * oldKi, xeno, kick, plain));
+                log(String.format("dmz scaling stats=%d 10-dmg hits: Blazing Wind type took %.1f (old rule: %.1f) | energy skill (Xeno Blast-style, in a skill) took %.1f (old: no scaling) | physical skill (playerAttack in a skill) took %.1f | not a skill took %.1f | a DMZ punch took %.1f",
+                        lv, listed, 10 * oldKi, xeno, kick, plain, punch));
+                dmzKiBlast(p, z);
+            }), 25);
+            l.add(null, () -> server(p -> {
+                LivingEntity z = E.get("dummy");
+                log(String.format("dmz scaling stats=%d a DMZ basic ki blast took %.1f", lv, z.getMaxHealth() - z.getHealth()));
+                z.setHealth(z.getMaxHealth());
             }), 5);
         }
-        l.add(null, () -> server(p -> { try { dmzStats(p, 5); } catch (Throwable ignored) {} for (var e : E.values()) e.discard(); E.clear(); }), 5);
+        l.add(null, () -> server(p -> { try { dmzStats(p, 5); } catch (Throwable ignored) {} p.getAbilities().invulnerable = false; p.onUpdateAbilities(); for (var e : E.values()) e.discard(); E.clear(); }), 5);
     }
 
     // ------------------------------------------------------------------ 5) the Xenoverse Robot
@@ -499,6 +544,20 @@ public final class CombatTests {
                 var lvl = p.serverLevel();
                 int before = count(lvl, base);
                 StringBuilder s = new StringBuilder();
+                // DragonMineZ's own ki griefing rule(s): switched on, so the overworld shows what ki does when it's allowed
+                lvl.getGameRules().visitGameRuleTypes(new net.minecraft.world.level.GameRules.GameRuleTypeVisitor() {
+                    @Override public <T extends net.minecraft.world.level.GameRules.Value<T>> void visit(net.minecraft.world.level.GameRules.Key<T> key, net.minecraft.world.level.GameRules.Type<T> type) {
+                        String id = key.getId().toLowerCase();
+                        if (!(id.contains("ki") || id.contains("grief") || id.contains("destr") || id.contains("dmz"))) return;
+                        var v = lvl.getGameRules().getRule(key);
+                        if (v instanceof net.minecraft.world.level.GameRules.BooleanValue b && (id.contains("grief") || id.contains("destr"))) b.set(true, p.server);
+                        s.append("rule ").append(key.getId()).append('=').append(lvl.getGameRules().getRule(key)).append(' ');
+                    }
+                });
+                try {
+                    var m = Class.forName("com.dragonminez.common.init.MainGameRules").getMethod("canKiGrief", net.minecraft.world.level.Level.class, BlockPos.class, net.minecraft.world.entity.Entity.class);
+                    s.append("canKiGrief=").append(m.invoke(null, lvl, base.offset(0, 2, 12), p)).append(' ');
+                } catch (Throwable t) { s.append("canKiGrief? ").append(t).append(' '); }
                 for (String id : new String[]{"ki_blast", "ki_wave", "ki_disc", "ki_laser"}) {
                     var type = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", id));
                     if (type == null) { s.append(id).append("=missing "); continue; }
