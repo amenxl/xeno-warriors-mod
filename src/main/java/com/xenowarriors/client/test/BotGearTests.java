@@ -147,8 +147,9 @@ public final class BotGearTests {
                 }), 10));
             }
             l.add(new Step(null, () -> server(p -> {
-                long dropped = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(16)).size();
-                log("keep " + how + " gone: bot there=" + (bot(p, CharacterType.RHALIX) != null) + " items on the ground=" + dropped + " saved for rhalix=" + saved(p, "rhalix")
+                StringBuilder dropped = new StringBuilder();
+                for (var it : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(16))) dropped.append(id(it.getItem())).append('x').append(it.getItem().getCount()).append(' ');
+                log("keep " + how + " gone: bot there=" + (bot(p, CharacterType.RHALIX) != null) + " items on the ground=[" + dropped.toString().trim() + "] saved for rhalix=" + saved(p, "rhalix")
                         + " in your bag=" + count(p.getInventory()));
                 p.getPersistentData().remove("xw_bot_rejoin_rhalix");
                 PartyBots.add(p, new String[]{"rhalix"});
@@ -202,6 +203,10 @@ public final class BotGearTests {
             b.inventory.clearContent();
             b.inventory.addItem(new ItemStack(Items.IRON_INGOT, 3));
             b.inventory.addItem(new ItemStack(Items.CRAFTING_TABLE));
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_SWORD));            // (good weapons and tools already: only armour is worth it)
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_PICKAXE));
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_AXE));
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_HELMET));
             p.getInventory().add(new ItemStack(Items.IRON_INGOT, 1));
             var pick = com.xenowarriors.bot.BotCrafting.suggest(b, p, true);
             log("craft one-short suggested: " + (pick == null ? "nothing" : pick.kind + " " + id(pick.result) + " missing=" + pick.missing + " short of " + (pick.missingWhat == null ? "-" : pick.missingWhat.getString())));
@@ -223,10 +228,14 @@ public final class BotGearTests {
             b.inventory.clearContent();
             b.inventory.addItem(new ItemStack(Items.IRON_INGOT, 5));
             b.inventory.addItem(new ItemStack(Items.CRAFTING_TABLE));
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_SWORD));
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_PICKAXE));
+            b.inventory.addItem(new ItemStack(Items.DIAMOND_AXE));
+            b.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
             com.xenowarriors.bot.BotCrafting.forget(b.getUUID());
             b.setLastHurtByMob(null);
             log("craft waiting for the periodic look (tick " + b.tickCount + ")");
-        }), 130));
+        }), 260));
         l.add(new Step(null, () -> server(p -> {
             PartyBotEntity b = bot(p, CharacterType.RHALIX);
             if (b == null) return;
@@ -296,6 +305,15 @@ public final class BotGearTests {
             }), 10));
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
                 mc.player.setYRot(0); mc.player.setXRot(10); mc.player.yBodyRot = 0; mc.player.setYHeadRot(0); }, 200));
+            l.add(new Step(null, () -> {                                     // (client side: what the bot's player body reports)
+                for (var e : mc.level.entitiesForRendering()) if (e instanceof PartyBotEntity b && b.character() == t) {
+                    var a = com.xenowarriors.client.bot.BotAvatars.existing(b);
+                    if (a == null) { log("anim " + n + " client: no body"); continue; }
+                    log("anim " + n + " client: body id=" + a.getId() + "/" + b.getId() + " char=" + com.xenowarriors.client.ClientCharacterData.get(a).getId()
+                            + " onGround=" + a.onGround() + " (bot " + b.onGround() + ") flying=" + com.xenowarriors.client.FlightTracker.isFlying(a)
+                            + " busy=" + com.xenowarriors.client.Busy.busy(a) + " tick=" + a.tickCount + " inPlayers=" + com.xenowarriors.client.bot.BotAvatars.players(mc.level).contains(a));
+                }
+            }, 1));
             for (int f = 0; f < 3; f++) l.add(new Step("botgear_anim_" + n + "_idle" + f, () -> {}, 12));
             // a skill: the same cast pose on both
             int cast = t == CharacterType.RHALIX ? com.xenowarriors.network.SkillAnimPacket.KISHI : t == CharacterType.MIKIKO ? com.xenowarriors.network.SkillAnimPacket.KITSUNE
@@ -323,16 +341,17 @@ public final class BotGearTests {
                 l.add(new Step("botgear_anim_rhalix_air", () -> {}, 10));
                 l.add(new Step(null, () -> server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); p.teleportTo(at[0], at[1], at[2]); }), 10));
             }
-            // walking: the bot strolls off
+            // walking: you step away, the bot follows
             l.add(new Step(null, () -> server(p -> {
                 PartyBotEntity b = bot(p, t);
                 if (b == null) return;
                 b.setNoGravity(false);
                 b.moveTo(at[0] - 1.5, at[1], at[2], 0, 0);
                 b.setNoAi(false);
-                b.getNavigation().moveTo(at[0] - 6, at[1], at[2] + 1, 1.0);
-            }), 8));
-            l.add(new Step("botgear_anim_" + n + "_walk", () -> {}, 10));
+                p.teleportTo(at[0] + 10, at[1], at[2]);
+            }), 14));
+            l.add(new Step("botgear_anim_" + n + "_walk", () -> {}, 8));
+            l.add(new Step("botgear_anim_" + n + "_walk2", () -> {}, 5));
         }
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 5));
     }

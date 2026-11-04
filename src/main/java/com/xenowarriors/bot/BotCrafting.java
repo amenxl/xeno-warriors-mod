@@ -90,6 +90,15 @@ public final class BotCrafting {
         long now = b.level().getGameTime();
         Long until = OFFER_UNTIL.get(b.getUUID());
         if (until != null && until > now) return;                              // (already asked: waiting for an answer)
+        log(b, "periodic look at tick " + b.tickCount);
+        suggest(b, o, false);
+    }
+
+    /** You closed its bag: a look right away (cooldowns still apply). */
+    public static void bagClosed(PartyBotEntity b, ServerPlayer o) {
+        if (b.downed() || b.journey() || b.sparring() || b.getTarget() != null) return;
+        Long until = OFFER_UNTIL.get(b.getUUID());
+        if (until != null && until > b.level().getGameTime()) return;
         suggest(b, o, false);
     }
 
