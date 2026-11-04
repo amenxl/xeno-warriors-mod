@@ -17,7 +17,7 @@ public class VehicleRenderer extends GeoEntityRenderer<VehicleEntity> {
     /** Riding it in first person: the body goes see-through so you can see the road. */
     private static boolean inside(VehicleEntity e) {
         var mc = net.minecraft.client.Minecraft.getInstance();
-        return mc.player != null && mc.player.getVehicle() == e && mc.options.getCameraType().isFirstPerson();
+        return mc.player != null && mc.player.getVehicle() == e && mc.getCameraEntity() == mc.player && mc.options.getCameraType().isFirstPerson();
     }
 
     @Override

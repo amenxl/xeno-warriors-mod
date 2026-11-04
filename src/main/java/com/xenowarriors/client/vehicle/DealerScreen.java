@@ -50,7 +50,9 @@ public class DealerScreen extends Screen {
             g.fill(x, ry, x + 3, ry + 42, 0xFF33AACC);
             g.drawString(font, k.title, x + 10, ry + 8, 0xFFFFFF, false);
             String v = k.variant(colour[i]);
-            g.drawString(font, k.seats + " seats" + (k.variants.length > 1 ? " - " + Character.toUpperCase(v.charAt(0)) + v.substring(1) : ""), x + 10, ry + 20, 0xAAAAAA, false);
+            int in = k.insideSeats(), extra = k.seats - in;
+            String seatText = in + " seats" + (extra > 0 ? " +" + extra + (k == com.xenowarriors.vehicle.VehicleKind.HELICOPTER ? " hanging on" : " on top") : "");
+            g.drawString(font, seatText + (k.variants.length > 1 ? " - " + Character.toUpperCase(v.charAt(0)) + v.substring(1) : ""), x + 10, ry + 20, 0xAAAAAA, false);
             g.drawString(font, k.price + " emeralds", x + 10, ry + 31, emeralds >= k.price ? 0x55FF55 : 0xFF5555, false);
         }
         super.render(g, mx, my, pt);

@@ -76,7 +76,49 @@ public class VehicleEntity extends Mob implements GeoEntity {
     @Override public boolean causeFallDamage(float d, float m, DamageSource s) { return false; }
     @Override public boolean canBreatheUnderwater() { return true; }
     @Override protected boolean canRide(Entity e) { return false; }
-    @Override public boolean shouldRiderSit() { return true; }
+    /** Client: the rider being drawn right now (so a rider standing on top or hanging on isn't drawn sitting). */
+    public static Entity renderingRider;
+
+    @Override public boolean shouldRiderSit() {
+        Entity r = renderingRider;
+        return r == null || r.getVehicle() != this || seatOf(r).type() == VehicleKind.SeatType.SIT;
+    }
+
+    /** The spot this passenger has (by boarding order). */
+    public VehicleKind.Seat seatOf(Entity passenger) {
+        return kind.seat(Math.max(0, getPassengers().indexOf(passenger)));
+    }
+
+    /** Who got off last and where they were (the dismount spot is asked for after they're off). */
+    private Entity lastLeaver;
+    private VehicleKind.SeatType lastLeaverSeat;
+
+    @Override
+    protected void removePassenger(Entity p) {
+        lastLeaver = p;
+        lastLeaverSeat = seatOf(p).type();
+        super.removePassenger(p);
+    }
+
+    /** Hanging on the skids: dangling in the air, or (helicopter on the ground) standing beside it holding on. */
+    public boolean dangling() { return groundBelow() < 0; }
+
+    private int groundTick = -1;
+    private double ground;
+
+    /**
+     * How far down the ground is (0 to 2.2 blocks), or -1 if it's further than that (hangers dangle). Not onGround: a
+     * helicopter its pilot has set down can sit a hair above the ground (no gravity while driven), never "on" it.
+     */
+    public double groundBelow() {
+        if (groundTick == tickCount) return ground;
+        groundTick = tickCount;
+        if (onGround() || isInWater()) return ground = 0;
+        Vec3 a = position().add(0, 0.05, 0);
+        var hit = level().clip(new net.minecraft.world.level.ClipContext(a, a.subtract(0, 2.25, 0), net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.ANY, this));
+        return ground = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? -1 : Math.max(0, a.y - 0.05 - hit.getLocation().y);
+    }
     @Override protected boolean canAddPassenger(Entity e) { return getPassengers().size() < kind.seats; }
     @Override public boolean isPickable() { return !isRemoved(); }
     @Override public double getPassengersRidingOffset() { return 0.0; }
@@ -93,19 +135,27 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     @Override
     protected void positionRider(Entity passenger, Entity.MoveFunction move) {
-        int i = getPassengers().indexOf(passenger);
-        double[][] seats = kind.seats();
-        double[] s = seats[Math.max(0, Math.min(seats.length - 1, i))];
+        VehicleKind.Seat s = seatOf(passenger);
         float yaw = getYRot() * Mth.DEG_TO_RAD;
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);               // forward
         double rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);               // right
-        double x = getX() + fx * s[2] + rx * s[0], z = getZ() + fz * s[2] + rz * s[0];
-        move.accept(passenger, x, getY() + s[1] + passenger.getMyRidingOffset(), z);
+        double sx = s.x(), sy = s.y();
+        switch (s.type()) {
+            case SIT -> sy += passenger.getMyRidingOffset();
+            case HANG -> { if (!dangling()) { sy = -groundBelow(); sx += Math.signum(sx) * 0.25; } }    // (landed: standing beside it on the ground, holding on)
+            default -> {}                                                                  // standing on top: feet on the roof
+        }
+        double x = getX() + fx * s.z() + rx * sx, z = getZ() + fz * s.z() + rz * sx;
+        move.accept(passenger, x, getY() + sy, z);
         if (passenger instanceof LivingEntity le && passenger != getControllingPassenger()) le.yBodyRot = getYRot();
+        passenger.fallDistance = 0;
     }
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity e) {
+        // hanging off a helicopter in the air: just let go (drop from where you are, if there's room)
+        if (e == lastLeaver && lastLeaverSeat == VehicleKind.SeatType.HANG && dangling()
+                && level().noCollision(e, e.getBoundingBox())) return e.position();
         float yaw = getYRot() * Mth.DEG_TO_RAD;
         double side = kind.width / 2 + 0.6, back = kind.width / 2 + 1.0;
         Vec3[] tries = {position().add(Mth.cos(yaw) * side, 0.2, Mth.sin(yaw) * side), position().add(-Mth.cos(yaw) * side, 0.2, -Mth.sin(yaw) * side),
@@ -142,7 +192,12 @@ public class VehicleEntity extends Mob implements GeoEntity {
             if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind == VehicleKind.HELICOPTER
                     ? "W/S speed, look to turn, Jump to climb, Sprint key to descend, Sneak to get out"
                     : "W/S speed and brake, A/D steer, Sneak to get out").withStyle(ChatFormatting.GRAY), true);
-        }
+            else if (p.getVehicle() == this && seatOf(p).type() != VehicleKind.SeatType.SIT)
+                p.displayClientMessage(Component.literal(seatOf(p).type() == VehicleKind.SeatType.HANG
+                        ? "No seats left - you're hanging on to the rail (Sneak to let go)" : "No seats left - you're riding on top (Sneak to get off)")
+                        .withStyle(ChatFormatting.GRAY), true);
+        } else if (getPassengers().size() >= kind.seats)
+            p.displayClientMessage(Component.literal("It's full.").withStyle(ChatFormatting.GRAY), true);
         return InteractionResult.CONSUME;
     }
 

@@ -710,6 +710,9 @@ public final class PartyBots {
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p instanceof FakePlayer) return;
         if (p.tickCount % 10 == 0) for (PartyBotEntity b : bots(p)) unboard(b, p);
+        // standing right by you when you get in (the follow goal only runs when they're further off): they hop in too
+        if (p.tickCount % 10 == 5 && p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity)
+            for (PartyBotEntity b : bots(p)) if (b.getTarget() == null && !b.isPassenger() && b.level() == p.level()) boardWith(b, p);
         // carried bots step down once Rhalix lands
         if (p.tickCount % 20 == 0 && p.onGround()) for (Entity pass : p.getPassengers()) if (pass instanceof PartyBotEntity b) {
             int t = b.getPersistentData().getInt("xw_landed") + 1;

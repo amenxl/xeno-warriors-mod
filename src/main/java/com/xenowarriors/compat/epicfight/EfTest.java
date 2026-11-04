@@ -18,10 +18,11 @@ public final class EfTest {
             LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(p, LivingEntityPatch.class);
             yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation> anim = switch (which) {
                 case "pole1" -> EfAnimations.POLE1; case "pole2" -> EfAnimations.POLE2; case "pole3" -> EfAnimations.POLE3;
-                case "cleave1" -> EfAnimations.CLEAVE1; case "cleave2" -> EfAnimations.CLEAVE2; case "none" -> null;
+                case "cleave1" -> EfAnimations.CLEAVE1; case "cleave2" -> EfAnimations.CLEAVE2; case "none", "mining" -> null;
                 default -> EfAnimations.CAL; };
             if (patch instanceof yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> pp)
-                pp.toMode(yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.PlayerMode.EPICFIGHT, true);     // its skeleton only shows in battle mode
+                pp.toMode("mining".equals(which) ? yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.PlayerMode.VANILLA
+                        : yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.PlayerMode.EPICFIGHT, true);     // its skeleton only shows in battle mode
             if (patch != null && anim != null) patch.playAnimationSynchronized(anim, 0F);
             com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST ef play {} patch={} anim={}", which, patch, anim);
         }

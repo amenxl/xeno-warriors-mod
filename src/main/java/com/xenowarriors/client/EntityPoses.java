@@ -34,6 +34,13 @@ public final class EntityPoses {
         return p != null && e.tickCount - p.start <= p.ticks ? p.pose : -1;
     }
 
+    /** In one of our poses right now (an action or a lasting state)? Epic Fight hands the body back to us for these. */
+    public static boolean posed(Entity e) {
+        if (action(e) >= 0) return true;
+        P s = STATE.get(e.getId());
+        return s != null && e.tickCount - s.start <= s.ticks;
+    }
+
     public static float actionTime(Entity e, float partial) {
         P p = ACTION.get(e.getId());
         return p == null ? 0 : (e.tickCount - p.start + partial) / Math.max(1, p.ticks);
