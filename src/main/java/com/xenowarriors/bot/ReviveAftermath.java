@@ -171,7 +171,7 @@ public final class ReviveAftermath {
             double a = i / 36.0 * Math.PI * 2;
             for (double r : new double[]{1.5, 3.5, 5.5})
                 l.sendParticles(ParticleTypes.CLOUD, who.getX() + Math.cos(a) * r, who.getY() + 0.3, who.getZ() + Math.sin(a) * r, 1, 0, 0.05, 0, 0.02);
-            l.sendParticles(GOLD, who.getX() + Math.cos(a) * 1.2, who.getY() + 1, who.getZ() + Math.sin(a) * 1.2, 1, 0, 0.3, 0, 0);
+            others(l, who, GOLD, who.getX() + Math.cos(a) * 1.2, who.getY() + 1, who.getZ() + Math.sin(a) * 1.2, 1, 0, 0.3, 0);
         }
         l.sendParticles(ParticleTypes.EXPLOSION, who.getX(), who.getY() + 0.5, who.getZ(), 1, 0, 0, 0, 0);
         l.playSound(null, who.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.6F, 1.5F);
@@ -246,6 +246,11 @@ public final class ReviveAftermath {
             }
         }
         if (e.tickCount % 4 == 0 && invulnerable(e))
-            l.sendParticles(GOLD, e.getX(), e.getY() + e.getBbHeight() * 0.5, e.getZ(), 2, e.getBbWidth() * 0.5, e.getBbHeight() * 0.4, e.getBbWidth() * 0.5, 0);
+            others(l, e, GOLD, e.getX(), e.getY() + e.getBbHeight() * 0.5, e.getZ(), 2, e.getBbWidth() * 0.5, e.getBbHeight() * 0.4, e.getBbWidth() * 0.5);
+    }
+
+    /** Particles for everyone nearby except the one they're on (round a player's own head they'd fill the screen). */
+    private static void others(ServerLevel l, LivingEntity on, net.minecraft.core.particles.ParticleOptions o, double x, double y, double z, int n, double dx, double dy, double dz) {
+        for (ServerPlayer p : l.players()) if (p != on && p.distanceToSqr(x, y, z) < 64 * 64) l.sendParticles(p, o, false, x, y, z, n, dx, dy, dz, 0);
     }
 }
