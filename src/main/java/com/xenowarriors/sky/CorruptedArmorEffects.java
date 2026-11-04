@@ -47,7 +47,7 @@ public final class CorruptedArmorEffects {
         level.sendParticles(ParticleTypes.WITCH, p.getX(), p.getY() + 0.3, p.getZ(), 20, 0.8, 0.2, 0.8, 0.02);
         level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.5F, 1.6F);
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(3.5),
-                e -> e != p && e.isAlive() && (e instanceof Enemy || com.xenowarriors.karma.KarmaSensing.corrupted(e)))) {
+                e -> e != p && e.isAlive() && com.xenowarriors.skill.SkillTargeting.canTarget(p, e) && (e instanceof Enemy || com.xenowarriors.karma.KarmaSensing.corrupted(e)))) {
             e.hurt(p.damageSources().playerAttack(p), 5F);
             e.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0));
         }

@@ -16,9 +16,13 @@ import java.lang.reflect.Method;
 import java.util.Set;
 
 /**
- * With DragonMineZ: every Xeno Warriors skill hits as hard as the caster's DragonMineZ stats say. Energy skills
- * (Kishi, gravity, earth, fire, Blazing Wind) follow their Ki damage; physical ones (Kitsune, Netsu, Hekublade
- * Scatter) their strike damage. A fresh character stays at the normal damage; it grows with their stats and forms.
+ * With DragonMineZ: every Xeno Warriors skill, ultimate, KA and Xeno Blast hits as hard as the caster's DragonMineZ
+ * stats say, so a strong DragonMineZ character finds their Xeno Warriors moves about as strong as their ki attacks.
+ * Energy skills (blasts, beams, gravity, fire, Xeno Blast...) follow their Ki damage; physical ones (kicks, slashes,
+ * dashes, Kitsune, Netsu, Hekublade Scatter) their strike damage. A fresh character stays at the normal damage.
+ *
+ * Which hits are skill hits: the mod's own damage types, hits by the mod's skill entities, and anything dealt while a
+ * skill runs (combat.SkillContext, which follows a skill into its later scheduled steps).
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class DmzScaling {
@@ -73,13 +77,60 @@ public final class DmzScaling {
         return (float) Math.max(1.0, Math.min(50.0, sum / ps.size()));
     }
 
+    /** Up to x40 a skill follows the DragonMineZ damage exactly; past that it keeps growing, more slowly, to x150. */
+    public static final double SOFT_CAP = 40, HARD_CAP = 150;
+
+    /** The curve: x1 for a fresh character, DMZ damage / 10 up to the soft cap, then slower growth, capped. */
+    public static double curve(double ratio) {
+        if (!Double.isFinite(ratio) || ratio <= 1) return 1.0;
+        if (ratio <= SOFT_CAP) return ratio;
+        return Math.min(HARD_CAP, SOFT_CAP + 6.0 * Math.sqrt(ratio - SOFT_CAP) + (ratio - SOFT_CAP) * 0.25);
+    }
+
+    /** The caster's skill damage multiplier (1 without DragonMineZ). */
+    public static double skillMultiplier(Player p, boolean physical) {
+        return curve(multiplier(p, physical));
+    }
+
+    /** The DragonMineZ figures that drive it: {ki damage, strike damage} (0s without DragonMineZ). */
+    public static double[] raw(Player p) {
+        if (!ready()) return new double[]{0, 0};
+        try {
+            Object data = p.getCapability(cap).resolve().orElse(null);
+            if (data == null) return new double[]{0, 0};
+            return new double[]{((Number) kiDamage.invoke(data)).doubleValue(), ((Number) strikeDamage.invoke(data)).doubleValue()};
+        } catch (Throwable t) { return new double[]{0, 0}; }
+    }
+
+    private static final Set<String> MELEE_TYPES = Set.of("player_attack", "mob_attack", "mob_attack_no_aggro", "sting", "thorns");
+
+    /** Is this a physical (strike) skill hit? Otherwise it's an energy (ki) one. */
+    public static boolean physical(net.minecraft.world.damagesource.DamageSource src) {
+        var type = src.typeHolder().unwrapKey().orElse(null);
+        if (type == null) return false;
+        if (PHYSICAL.contains(type)) return true;
+        if (ENERGY.contains(type)) return false;
+        return type.location().getNamespace().equals("minecraft") && MELEE_TYPES.contains(type.location().getPath());
+    }
+
+    /** How much this hit is scaled by (1 = left alone): only Xeno Warriors skill hits by a player with DragonMineZ stats. */
+    public static double scaleFor(net.minecraft.world.damagesource.DamageSource src) {
+        if (!ready() || !(src.getEntity() instanceof Player p)) return 1.0;
+        if (com.xenowarriors.ka.DmzKi.isKi(src.getDirectEntity())) return 1.0;      // (DragonMineZ's own ki attacks scale themselves)
+        var type = src.typeHolder().unwrapKey().orElse(null);
+        if (type == null) return 1.0;
+        boolean listed = PHYSICAL.contains(type) || ENERGY.contains(type);
+        if (!listed) {
+            if (!com.xenowarriors.combat.Allies.skillHit(src)) return 1.0;           // a plain swing: DragonMineZ already handles those
+            var caster = com.xenowarriors.combat.SkillContext.caster();
+            if (caster != null && com.xenowarriors.combat.Allies.actor(caster) != com.xenowarriors.combat.Allies.actor(p)) return 1.0;   // (someone else's hit while this skill runs)
+        }
+        return skillMultiplier(p, physical(src));
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onHurt(LivingHurtEvent event) {
-        if (!ready() || !(event.getSource().getEntity() instanceof Player p)) return;
-        var type = event.getSource().typeHolder().unwrapKey().orElse(null);
-        if (type == null) return;
-        boolean physical = PHYSICAL.contains(type);
-        if (!physical && !ENERGY.contains(type)) return;
-        event.setAmount((float) (event.getAmount() * multiplier(p, physical)));
+        double m = scaleFor(event.getSource());
+        if (m != 1.0) event.setAmount((float) (event.getAmount() * m));
     }
 }

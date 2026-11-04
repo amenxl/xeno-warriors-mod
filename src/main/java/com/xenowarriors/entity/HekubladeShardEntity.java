@@ -262,7 +262,8 @@ public class HekubladeShardEntity extends Projectile {
 
     @Override
     protected boolean canHitEntity(Entity e) {
-        return fired() && super.canHitEntity(e) && !hasPassenger(e) && e instanceof LivingEntity && !(e instanceof Player p && (p.isCreative() || p.isSpectator()));
+        return fired() && super.canHitEntity(e) && !hasPassenger(e) && e instanceof LivingEntity && !(e instanceof Player p && (p.isCreative() || p.isSpectator()))
+                && !com.xenowarriors.combat.Allies.isAlly(getOwner(), e);
     }
 
     @Override

@@ -165,7 +165,7 @@ public final class TeamUltimate {
 
     private static List<LivingEntity> enemies(ServerPlayer src, AABB box, ServerPlayer a, ServerPlayer b) {
         return src.level().getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != a && e != b && !(e instanceof Player)
-                && Parties.petOwner(e) == null && (e instanceof Enemy || com.xenowarriors.karma.KarmaSensing.corrupted(e)
+                && Parties.petOwner(e) == null && !com.xenowarriors.combat.Allies.isAlly(a, e) && (e instanceof Enemy || com.xenowarriors.karma.KarmaSensing.corrupted(e)
                 || (e instanceof Mob m && m.getTarget() instanceof Player t && Parties.sameParty(t, a))));
     }
 }

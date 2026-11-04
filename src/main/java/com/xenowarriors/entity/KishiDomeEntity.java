@@ -113,6 +113,7 @@ public class KishiDomeEntity extends Entity {
     /** Whether the dome should affect this entity. Rhalix himself is never affected. */
     public boolean affects(Entity e) {
         if (!(e instanceof LivingEntity) || !e.isAlive() || e.getUUID().equals(getOwnerId())) return false;
+        if (com.xenowarriors.combat.Allies.isAlly(level(), getOwnerId(), e)) return false;   // (allies aren't weighed down)
         if (e instanceof Player p && (p.isCreative() || p.isSpectator())) return false;
         return isInside(e);
     }

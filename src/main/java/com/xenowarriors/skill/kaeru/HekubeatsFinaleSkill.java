@@ -40,9 +40,9 @@ public class HekubeatsFinaleSkill implements Skill {
                 e.hurt(p.damageSources().playerAttack(p), dmg);
                 e.knockback(0.8 + beat * 0.2, p.getX() - e.getX(), p.getZ() - e.getZ());
                 e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 3));
-            } else if (e instanceof ServerPlayer o && com.xenowarriors.party.Parties.sameParty(p, o)) {
-                o.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 200, 1));
-                o.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 0));
+            } else if (com.xenowarriors.skill.SkillTargeting.isFriend(p, e)) {         // (the party, their bots and pets get the beat)
+                e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 200, 1));
+                e.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 200, 0));
             }
         }
         for (int i = 0; i < 40; i++) {

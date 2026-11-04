@@ -100,5 +100,13 @@ public final class ModEntities {
                     .updateInterval(1)
                     .build("blazing_wind"));
 
+    public static final RegistryObject<EntityType<com.xenowarriors.pickup.HealthOrbEntity>> HEALTH_ORB = ENTITY_TYPES.register("health_orb",
+            () -> EntityType.Builder.<com.xenowarriors.pickup.HealthOrbEntity>of(com.xenowarriors.pickup.HealthOrbEntity::new, MobCategory.MISC)
+                    .sized(0.35F, 0.35F)
+                    .fireImmune()
+                    .clientTrackingRange(8)
+                    .updateInterval(2)
+                    .build("health_orb"));
+
     private ModEntities() {}
 }

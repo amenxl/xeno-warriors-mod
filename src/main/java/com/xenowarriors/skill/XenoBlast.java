@@ -27,9 +27,11 @@ import java.util.Set;
  * it, their Karma is empty and won't come back for 30 seconds.
  */
 public final class XenoBlast {
-    public static final int LOCK_TICKS = 30 * 20, MIN_KARMA = 10, RANGE = 40;
+    public static final int LOCK_TICKS = 30 * 20, MIN_KARMA = 10, RANGE = 64;
+    /** Rhalix's dark orb: blocks a tick (60 ticks of flight: ~72 blocks). */
+    public static final double ORB_SPEED = 1.2;
     /** The cutscene: 20 seconds; it charges for the first half and lets go at RELEASE. */
-    public static final int CUTSCENE = 20 * 20, RELEASE = 200, FREEZE_RANGE = 24;
+    public static final int CUTSCENE = 20 * 20, RELEASE = 200, FREEZE_RANGE = 32;
     private static final String CASTING = "xw_xeno_casting_until";
 
     // ---- one cast in progress: who's caught in it, how much each fought back, and Ultima pushing it back
@@ -221,6 +223,25 @@ public final class XenoBlast {
             landOnFrozen(p, l, hit, e -> { e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg)); e.setSecondsOnFire(5);
                 e.push(p.getLookAngle().x * 1.8, 0.45, p.getLookAngle().z * 1.8); e.hurtMarked = true;
                 l.sendParticles(ParticleTypes.EXPLOSION, e.getX(), e.getY() + e.getBbHeight() / 2, e.getZ(), 1, 0, 0, 0, 0); });
+            ServerScheduler.later(10, () -> {                                    // where the beam lands, it blows up
+                if (!p.isAlive() || !live(p)) return;
+                Vec3 s = p.getEyePosition().subtract(0, 0.4, 0), d = p.getLookAngle();
+                var clip = l.clip(new net.minecraft.world.level.ClipContext(s, s.add(d.scale(RANGE)), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+                Vec3 at = clip.getLocation();
+                double radius = burstRadius(width);
+                l.playSound(null, BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2F, 0.55F);
+                l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, (int) Math.max(2, radius / 2), radius * 0.4, radius * 0.3, radius * 0.4, 0);
+                l.sendParticles(ParticleTypes.FLAME, at.x, at.y + 1, at.z, 80, radius * 0.4, radius * 0.3, radius * 0.4, 0.15);
+                fx(p, FX_BURST, 0, false, at, Vec3.ZERO, (float) radius * 1.2F, 20);
+                for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(radius), e -> SkillTargeting.canTarget(p, e))) {
+                    if (hit.contains(e.getId()) || e.position().add(0, e.getBbHeight() / 2, 0).distanceTo(at) > radius + e.getBbWidth()) continue;
+                    hit.add(e.getId());
+                    e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg * 0.7F));
+                    e.setSecondsOnFire(5);
+                    Vec3 push = e.position().subtract(at).normalize();
+                    e.push(push.x * 1.4, 0.55, push.z * 1.4); e.hurtMarked = true;
+                }
+            });
             for (int k = 0; k < 70; k++) ServerScheduler.later(k, () -> {       // a long, huge beam
                 if (!p.isAlive() || !live(p)) return;
                 Vec3 s = p.getEyePosition().subtract(0, 0.4, 0).add(p.getLookAngle().scale(0.9)), d = p.getLookAngle();
@@ -285,7 +306,7 @@ public final class XenoBlast {
                 int kk = k;
                 ServerScheduler.later(k, () -> {
                     if (done[0] || !live(p)) return;
-                    Vec3 from = pos[0], to = from.add(d.scale(0.9));          // slow and heavy, for the camera
+                    Vec3 from = pos[0], to = from.add(d.scale(ORB_SPEED));          // slow and heavy, for the camera
                     // light rays streaking out behind it, and a trail
                     l.sendParticles(ParticleTypes.ELECTRIC_SPARK, to.x, to.y, to.z, 3, 0.4, 0.4, 0.4, 0.15);
                     var clip = l.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
@@ -293,7 +314,7 @@ public final class XenoBlast {
                     boolean struck = clip.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK || kk == 59
                             || !l.getEntitiesOfClass(LivingEntity.class, new AABB(from, end).inflate(hitR), e -> SkillTargeting.canTarget(p, e)).isEmpty();
                     pos[0] = end;
-                    if (struck) { done[0] = true; burst(p, l, end, dmg, 2.5 + width, black, purple, pink); }
+                    if (struck) { done[0] = true; burst(p, l, end, dmg, burstRadius(width), black, purple, pink); }
                 });
             }
         });
@@ -320,7 +341,8 @@ public final class XenoBlast {
         l.playSound(null, BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 0.6F);
         l.playSound(null, BlockPos.containing(at), SoundEvents.WITHER_BREAK_BLOCK, SoundSource.PLAYERS, 0.8F, 0.7F);
         l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, 1, 0, 0, 0, 0);
-        fx(p, FX_BURST, 0, true, at, Vec3.ZERO, (float) radius * 1.2F, 16);
+        fx(p, FX_BURST, 0, true, at, Vec3.ZERO, (float) radius * 1.2F, 20);
+        l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, (int) Math.max(2, radius / 2), radius * 0.4, radius * 0.3, radius * 0.4, 0);   // (a big blast, a big cloud)
         java.util.Random r = new java.util.Random();
         for (int ray = 0; ray < 6; ray++) {
             Vec3 dir = new Vec3(r.nextGaussian(), r.nextGaussian() * 0.7, r.nextGaussian()).normalize();
@@ -353,8 +375,12 @@ public final class XenoBlast {
         }
     }
 
-    private static float dmgOf(float power) { return 12F + power * 0.5F; }
-    private static double widthOf(float power) { return 1.2 + Math.min(2.0, power / 80.0); }
+    /** How hard it hits for the Karma poured in (2.5x the old 12 + K/2: 62 -> 155 at 100 Karma). */
+    public static float dmgOf(float power) { return (12F + power * 0.5F) * 2.5F; }
+    /** How wide the beam spreads / how big the orb is (old 1.2 + K/80, max 3.2; now 2 + K/40, max 5.5). */
+    public static double widthOf(float power) { return 2.0 + Math.min(3.5, power / 40.0); }
+    /** Rhalix's orb burst radius (old 2.5 + width; now 3.5 + 1.5 x width: ~5 -> ~10 blocks at 100 Karma). */
+    public static double burstRadius(double width) { return 3.5 + width * 1.5; }
 
     /**
      * Caught in a Xeno Blast as Mikiko or Rhalix: fire your own Xeno Blast back (your KA key) before it's let go, and

@@ -197,7 +197,7 @@ public class EarthWaveEntity extends Entity {
     private void hitEntities(ServerLevel server, Player owner, Vec3 front, float half) {
         double dx = dirX(), dz = dirZ();
         AABB box = new AABB(front.x - half - 2, front.y - 1, front.z - half - 2, front.x + half + 2, front.y + 3, front.z + half + 2);
-        for (LivingEntity target : server.getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != owner)) {
+        for (LivingEntity target : server.getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e != owner && !com.xenowarriors.combat.Allies.isAlly(owner, e))) {
             if (target instanceof Player p && (p.isCreative() || p.isSpectator())) continue;
             if (hit.contains(target.getId())) continue;
             double rx = target.getX() - front.x, rz = target.getZ() - front.z;

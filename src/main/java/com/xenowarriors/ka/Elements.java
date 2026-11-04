@@ -139,7 +139,7 @@ public final class Elements {
 
     /** On the same side as the caster: for mobs the same kind, for players their party. */
     private static boolean ally(LivingEntity m, LivingEntity o) {
-        if (m instanceof Player p) return o instanceof Player q && (q == p || com.xenowarriors.party.Parties.sameParty(p, q));
+        if (m instanceof Player || com.xenowarriors.combat.Allies.side(m) != null) return com.xenowarriors.combat.Allies.isAlly(m, o);   // (a player's side: party, pets, bots, souls)
         return o.getClass() == m.getClass();
     }
 

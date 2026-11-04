@@ -24,8 +24,7 @@ public final class PetOwnerSync {
         if (e instanceof Fox f && FoxPets.ownerOf(f) != null) return FoxPets.ownerOf(f);
         UUID w = com.xenowarriors.wing.WingPets.ownerOf(e);
         if (w != null) return w;
-        if (e instanceof OwnableEntity o) return o.getOwnerUUID();
-        return null;
+        return com.xenowarriors.party.Parties.petOwner(e);    // (tamed animals, Ultima's robots)
     }
 
     @SubscribeEvent

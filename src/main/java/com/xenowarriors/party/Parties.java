@@ -37,8 +37,8 @@ import java.util.UUID;
 public final class Parties {
     public static final int MAX_SIZE = 4, MAX_PETS = 4;
 
-    /** Pets one player keeps (Mikiko's foxes + Rhalix's winged companions). */
-    public static int pets(ServerPlayer p) { return com.xenowarriors.fox.FoxPets.count(p) + com.xenowarriors.wing.WingPets.count(p); }
+    /** Pets one player keeps (Mikiko's foxes + Rhalix's winged companions + Ultima's robots). */
+    public static int pets(ServerPlayer p) { return com.xenowarriors.fox.FoxPets.count(p) + com.xenowarriors.wing.WingPets.count(p) + com.xenowarriors.ultima.RobotPets.count(p); }
 
     /** Pets the whole party keeps (a party can only have 4). */
     public static int partyPets(ServerPlayer p) { int n = 0; for (ServerPlayer m : members(p)) n += pets(m); return n; }
@@ -72,16 +72,24 @@ public final class Parties {
         return p != null && p == BY_PLAYER.get(b.getUUID());
     }
 
+    /** Tests: puts two players (by UUID - fake players too) in one party, no invite. */
+    public static void testParty(UUID leader, UUID other) {
+        Party p = BY_PLAYER.computeIfAbsent(leader, k -> { Party n = new Party(); n.leader = leader; n.members.add(leader); return n; });
+        p.members.add(other);
+        BY_PLAYER.put(other, p);
+    }
+
     public static boolean sameParty(UUID a, UUID b) {
         Party p = BY_PLAYER.get(a);
         return p != null && p == BY_PLAYER.get(b);
     }
 
-    /** Who owns this pet: Mikiko's foxes, Rhalix's winged pets, or any vanilla tamed animal. */
+    /** Who owns this pet: Mikiko's foxes, Rhalix's winged pets, Ultima's robots, or any vanilla tamed animal. */
     public static UUID petOwner(net.minecraft.world.entity.Entity e) {
         var data = e.getPersistentData();
         if (data.hasUUID("xw_owner")) return data.getUUID("xw_owner");
         if (data.hasUUID("xw_wing_owner")) return data.getUUID("xw_wing_owner");
+        if (data.hasUUID(com.xenowarriors.ultima.RobotPets.OWNER)) return data.getUUID(com.xenowarriors.ultima.RobotPets.OWNER);   // Ultima's robots
         if (e instanceof net.minecraft.world.entity.OwnableEntity o) return o.getOwnerUUID();
         return null;
     }

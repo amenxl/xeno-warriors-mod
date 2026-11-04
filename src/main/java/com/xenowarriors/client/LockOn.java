@@ -132,7 +132,7 @@ public final class LockOn {
     }
 
     private static boolean lockable(LivingEntity e) {
-        return e.isAlive() && !(e instanceof ArmorStand) && !(e instanceof Player p && p.isSpectator()) && !e.isInvisible()
+        return e.isAlive() && !(e instanceof ArmorStand) && !(e instanceof Player p && p.isSpectator()) && (!e.isInvisible() || UltimaSight.local())   // (Ultima sees the invisible)
                 && attackable(e);
     }
 
@@ -152,6 +152,9 @@ public final class LockOn {
         if (me == null) return true;
         if (e.isInvulnerable() || peaceful(e)) return false;
         if (e.isInvisible() && e.hasCustomName() && e.getCustomName().getString().endsWith("'s Hekublade")) return false;   // (Mikiko's floating blade)
+        // Soul Splitter souls: never your own, nor your party's (they're on your side)
+        if (e instanceof com.xenowarriors.soul.SoulEntity s && s.ownerId() != null
+                && (s.ownerId().equals(me.getUUID()) || com.xenowarriors.client.party.PartyClient.inMyParty(s.ownerId()))) return false;
         if (e instanceof Player p && (p.isCreative() || com.xenowarriors.client.party.PartyClient.inMyParty(p.getUUID()))) return false;
         // your bot teammates (and your party's): only when they're down, so you can find them
         if (e instanceof com.xenowarriors.bot.PartyBotEntity b && b.ownerId() != null

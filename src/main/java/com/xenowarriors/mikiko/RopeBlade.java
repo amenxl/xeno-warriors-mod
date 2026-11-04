@@ -111,7 +111,7 @@ public final class RopeBlade {
         Vec3 eye = p.getEyePosition(), look = p.getViewVector(1F), end = eye.add(look.scale(LASH_RANGE));
         float dmg = attack(p, 0.8F);
         for (LivingEntity e : p.level().getEntitiesOfClass(LivingEntity.class, new AABB(eye, end).inflate(1.0))) {
-            if (e == p || !e.isAlive()) continue;
+            if (e == p || !e.isAlive() || !com.xenowarriors.skill.SkillTargeting.canTarget(p, e)) continue;
             if (e.getBoundingBox().inflate(0.6).clip(eye, end).isEmpty()) continue;
             e.hurt(p.damageSources().playerAttack(p), dmg);
             Vec3 pull = p.position().subtract(e.position()).normalize().scale(0.35);       // yanked a little as it reels in
@@ -158,7 +158,7 @@ public final class RopeBlade {
         Map<Integer, Integer> cd = SPIN_HIT.computeIfAbsent(p.getUUID(), k -> new HashMap<>());
         float dmg = attack(p, 0.6F);
         for (LivingEntity e : p.level().getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(1.3, 1.0, 1.3))) {
-            if (e == p || !e.isAlive()) continue;
+            if (e == p || !e.isAlive() || !com.xenowarriors.skill.SkillTargeting.canTarget(p, e)) continue;
             Integer last = cd.get(e.getId());
             if (last != null && p.tickCount - last < 10) continue;
             cd.put(e.getId(), p.tickCount);

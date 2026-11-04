@@ -144,7 +144,7 @@ public class TeamUltEntity extends Entity {
         double rad = KishiDomeEntity.MAX_RADIUS;
         Vec3 c = position();
         return level().getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(rad, KishiDomeEntity.MAX_HEIGHT, rad),
-                e -> e.isAlive() && e != r && e != m && !(e instanceof Player) && Parties.petOwner(e) == null
+                e -> e.isAlive() && e != r && e != m && !(e instanceof Player) && Parties.petOwner(e) == null && !com.xenowarriors.combat.Allies.isAlly(r, e) && !com.xenowarriors.combat.Allies.isAlly(m, e)
                         && (e instanceof Enemy || com.xenowarriors.karma.KarmaSensing.corrupted(e)
                         || (e instanceof Mob mob && mob.getTarget() instanceof Player t && (t == r || t == m || Parties.sameParty(t, r)))));
     }

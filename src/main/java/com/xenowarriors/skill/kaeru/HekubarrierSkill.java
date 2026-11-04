@@ -66,7 +66,7 @@ public class HekubarrierSkill implements Skill {
             if (com.xenowarriors.skill.SkillTargeting.canTarget(p, e)) {
                 if (p.tickCount % 10 == 0) e.hurt(p.damageSources().playerAttack(p), 3F);
                 e.knockback(0.6, p.getX() - e.getX(), p.getZ() - e.getZ());
-            } else e.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20, 1, false, false));
+            } else if (com.xenowarriors.skill.SkillTargeting.isFriend(p, e)) e.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20, 1, false, false));
         }
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20, 2, false, false));
     }

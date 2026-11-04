@@ -178,7 +178,7 @@ public final class KiFx {
                 Vec3 d = look(caster, pt);
                 Vec3 s = caster.getPosition(pt).add(0, caster.getEyeHeight() - 0.4, 0).add(d.scale(0.9));
                 float grow = Mth.clamp(age / 6F, 0F, 1F);
-                double len = 40 * grow;
+                double len = com.xenowarriors.skill.XenoBlast.RANGE * grow;
                 var hit = mc.level.clip(new ClipContext(s, s.add(d.scale(len)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
                 if (hit.getType() == HitResult.Type.BLOCK) len = hit.getLocation().distanceTo(s);
                 Vec3 e = s.add(d.scale(len));
@@ -197,7 +197,7 @@ public final class KiFx {
             }
             case ORB -> {            // Rhalix: the dark orb flies out, slow and heavy
                 Vec3 d = new Vec3(p.dx(), p.dy(), p.dz());
-                Vec3 c = new Vec3(p.x(), p.y(), p.z()).add(d.scale(0.9 * Math.min(age, life)));
+                Vec3 c = new Vec3(p.x(), p.y(), p.z()).add(d.scale(com.xenowarriors.skill.XenoBlast.ORB_SPEED * Math.min(age, life)));
                 float r = p.size() * (1F + 0.07F * Mth.sin(now * 1.7F));
                 ball(bb, m, c, r, col, 1F, now, glow, true);
                 if (glow) tube(bb, m, c.subtract(d.scale(5)), c, 0.05F, r * 0.8F, col[1], 0.3F, 12, 0, now);      // its trail
