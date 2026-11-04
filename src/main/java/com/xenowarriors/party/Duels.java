@@ -159,6 +159,7 @@ public final class Duels {
         ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
         title(p, "REVIVED", ChatFormatting.GREEN, "by " + ReviveCircle.name(by));
         if (by instanceof ServerPlayer bp) bp.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
+        com.xenowarriors.bot.ReviveAftermath.revived(p);                       // (10 s invincible, and a shockwave that stuns the enemies about)
     }
 
     /** Ran out of time (or gave up): they die for real. */
@@ -448,10 +449,10 @@ public final class Duels {
             if (left % 10 == 0) {
                 p.displayClientMessage(Component.literal(someone ? "DOWNED - waiting for a party member to revive you (/xeno giveup to respawn)"
                         : "DOWNED - your whole party is down! " + (left / 20) + "s...").withStyle(ChatFormatting.RED), true);
-                // mobs lose interest in someone who's down
+                // mobs leave someone who's down and go for whoever's reviving them
                 for (net.minecraft.world.entity.Mob mob : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
                         p.getBoundingBox().inflate(32), m -> m.getTarget() == p)) {
-                    mob.setTarget(null);
+                    mob.setTarget(com.xenowarriors.bot.ReviveAftermath.redirect(mob, p));   // (whoever's reviving them instead, or nobody)
                 }
             }
         }

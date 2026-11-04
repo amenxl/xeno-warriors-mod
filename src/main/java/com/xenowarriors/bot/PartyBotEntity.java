@@ -83,6 +83,44 @@ public class PartyBotEntity extends PathfinderMob {
     /** When you last put something in its hand from its menu (it keeps that a while; see BotGear). */
     public int handPicked = -100000;
 
+    /** Flying under its own power right now (to reach something, or a turn about the sky); when it last flew. */
+    boolean selfFlying; int flewAt;
+    /** Ticks left of a running jump across a gap (no cliff check meanwhile), and what the last one was (tests). */
+    int leapTicks; public String lastLeap = "";
+    /** Drinking a potion: ticks left, from which bag slot; when it may drink again; what it last drank; how many. */
+    int drinkTicks = -1, drinkSlot = -1, drinkReady; String lastDrink = ""; public int drinks;
+    /** Using a bow or gun right now (so it doesn't swap to its sword mid-shot), and shots fired (tests). */
+    boolean rangedActive; public int shots;
+    /** Ticks spent in water / lava in a row, and how it got out (tests). */
+    int wetTicks, lavaTicks; public String lastEscape = "";
+    /** When it next takes a turn about the sky (flying characters, idle by their owner). */
+    int nextFlourish = 600 + (int) (Math.random() * 600);
+    /** Its target can't be reached on foot (flying, up a pillar, across a drop): worked out every half second. */
+    private boolean unreachableCache; private int unreachableAt = -100; private LivingEntity unreachableFor;
+    /** Cliff edges it stopped at (tests). */
+    public int edgeStops;
+
+    public boolean drinking() { return drinkTicks >= 0; }
+    public boolean selfFlyingForTest() { return selfFlying; }
+    /** (Tests) take a turn about the sky now. */
+    public void flourishNow() { nextFlourish = tickCount; }
+
+    /** Its target can't be reached by walking there (it flies, or there's no path to it). */
+    public boolean targetUnreachable() {
+        LivingEntity t = getTarget();
+        if (t == null) return false;
+        if (t != unreachableFor || tickCount - unreachableAt >= 10) {
+            unreachableFor = t; unreachableAt = tickCount;
+            if (BotMoves.airborne(t)) unreachableCache = true;
+            else if (distanceToSqr(t) < 2.5 * 2.5) unreachableCache = false;
+            else {
+                var path = getNavigation().createPath(t, 0);
+                unreachableCache = path == null || !path.canReach() && (path.getEndNode() == null || path.getEndNode().distanceTo(t.blockPosition()) > 2.5F);
+            }
+        }
+        return unreachableCache;
+    }
+
     public PartyBotEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
         setPersistenceRequired();
@@ -161,13 +199,17 @@ public class PartyBotEntity extends PathfinderMob {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new DownedGoal());
-        goalSelector.addGoal(2, new ReviveGoal());
-        goalSelector.addGoal(3, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
-        goalSelector.addGoal(4, new MineGoal());
-        goalSelector.addGoal(5, new FollowOwner());
-        goalSelector.addGoal(6, new WanderNearOwner());
-        goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8F));
-        goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        goalSelector.addGoal(2, new EscapeLiquid());
+        goalSelector.addGoal(3, new ReviveGoal());
+        goalSelector.addGoal(4, new BotRanged(this));                                                   // bows, crossbows, guns: far or out-of-reach enemies
+        goalSelector.addGoal(5, new FlyChase());                                                        // fliers: up to what they can't walk to
+        goalSelector.addGoal(6, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
+        goalSelector.addGoal(7, new MineGoal());
+        goalSelector.addGoal(8, new FollowOwner());
+        goalSelector.addGoal(9, new FlyAbout());
+        goalSelector.addGoal(10, new WanderNearOwner());
+        goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8F));
+        goalSelector.addGoal(12, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new BotTargetGoal());
     }
 
@@ -189,7 +231,8 @@ public class PartyBotEntity extends PathfinderMob {
             return o != null && !downed() && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 8 * 8;
         }
         @Override public boolean canContinueToUse() { ServerPlayer o = owner(); return o != null && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 4 * 4; }
-        @Override public void stop() { getNavigation().stop(); flyingWithOwner = false; if (isNoGravity() && !isVehicle()) { setNoGravity(false); } }
+        @Override public void stop() { getNavigation().stop(); flyingWithOwner = false; BotMoves.land(PartyBotEntity.this); stuck = 0; if (isNoGravity() && !isVehicle()) { setNoGravity(false); } }
+        private int stuck; private Vec3 lastPos = Vec3.ZERO;
         @Override public void tick() {
             ServerPlayer o = owner();
             if (o == null) return;
@@ -203,8 +246,18 @@ public class PartyBotEntity extends PathfinderMob {
                 getLookControl().setLookAt(o);
                 return;
             }
-            if (isNoGravity() && !isVehicle()) setNoGravity(false);
             double d2 = distanceToSqr(o);
+            // a flier that can't walk to them (up on a ledge, across a ravine, stuck behind something): flies over
+            if (canFly()) {
+                if (!selfFlying && position().distanceToSqr(lastPos) < 0.0025 && d2 > 6 * 6) stuck++; else if (!selfFlying) stuck = 0;   // (not getting anywhere on foot)
+                lastPos = position();
+                boolean above = o.getY() - getY() > 2.5 && o.onGround();
+                if (selfFlying || stuck > 30 || (above && getNavigation().isDone()) || (tickCount % 10 == 0 && above && !getNavigation().moveTo(o, 1.0))) {
+                    if (d2 < 3.5 * 3.5 && Math.abs(o.getY() - getY()) < 1.5) { BotMoves.land(PartyBotEntity.this); stuck = 0; }
+                    else { BotMoves.flyTo(PartyBotEntity.this, o.position().add(0, 1.2, 0).add(position().subtract(o.position()).multiply(1, 0, 1).normalize().scale(1.2)), d2 > 12 * 12 ? 0.8 : 0.5); getLookControl().setLookAt(o); return; }
+                }
+            }
+            if (isNoGravity() && !isVehicle() && !selfFlying) setNoGravity(false);
             if (d2 > 28 * 28 || (d2 > 12 * 12 && !canFly() && o.onGround() && getNavigation().isDone() && tickCount % 20 == 0)) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
             if (o.getVehicle() != null && tickCount % 10 == 0 && PartyBots.boardWith(PartyBotEntity.this, o)) return;
             getNavigation().moveTo(o, d2 > 14 * 14 ? 1.4 : d2 > 10 * 10 ? 1.2 : 1.0);
@@ -233,6 +286,144 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public void start() { getNavigation().moveTo(wanderTo.x, wanderTo.y, wanderTo.z, 0.8); }
         @Override public void stop() { wanderTo = null; }
     }
+
+    /** Fliers: something they can't walk to (a flying enemy, one up a pillar or across a ravine) - up into the air and at it. */
+    class FlyChase extends Goal {
+        private int swingAt;
+        FlyChase() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        private boolean able() { LivingEntity t = getTarget(); return canFly() && t != null && t.isAlive() && !downed() && !isPassenger() && reviving == null && distanceToSqr(t) < 48 * 48; }
+        @Override public boolean canUse() { return able() && targetUnreachable(); }
+        @Override public boolean canContinueToUse() { return able() && (targetUnreachable() || !onGround()); }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        @Override public void stop() { BotMoves.land(PartyBotEntity.this); }
+        @Override public void tick() {
+            LivingEntity t = getTarget();
+            if (t == null) return;
+            getLookControl().setLookAt(t, 30F, 30F);
+            if (!targetUnreachable()) { BotMoves.land(PartyBotEntity.this); if (tickCount % 10 == 0) getNavigation().moveTo(t, 1.3); return; }   // (they came down: back to the ground)
+            Vec3 side = position().subtract(t.position()).multiply(1, 0, 1);
+            side = side.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : side.normalize();
+            Vec3 goal = t.position().add(side.scale(1.3)).add(0, Math.max(0, t.getBbHeight() * 0.5 - getBbHeight() * 0.4), 0);
+            BotMoves.flyTo(PartyBotEntity.this, goal, distanceToSqr(t) > 10 * 10 ? 0.8 : 0.55);
+            getLookControl().setLookAt(t, 30F, 30F);
+            if (distanceToSqr(t) < 3.2 * 3.2 && tickCount - swingAt >= 12 && hasLineOfSight(t)) {      // close enough: hit them (the same combo hits as on the ground)
+                swingAt = tickCount;
+                com.xenowarriors.combat.ComboStyle st = com.xenowarriors.combat.ComboStyle.of(PartyBotEntity.this, getMainHandItem(), character());
+                if (st == null || st == com.xenowarriors.combat.ComboStyle.MIKIKO) st = com.xenowarriors.combat.ComboStyle.FIST;
+                swing(InteractionHand.MAIN_HAND);
+                com.xenowarriors.combat.ComboServer.botStrike(PartyBotEntity.this, st, 0, false, t);
+                airHits++;
+            }
+        }
+    }
+    public int airHits;
+
+    /** In water it doesn't need to be in (or any lava): out onto the nearest dry land, fast. */
+    class EscapeLiquid extends Goal {
+        private BlockPos spot; private int ticks, look; private String from = "";
+        EscapeLiquid() { setFlags(EnumSet.of(Flag.MOVE)); }
+        private boolean needed() {
+            if (downed() || isPassenger()) return false;
+            if (isInLava()) return true;
+            if (!isInWater()) return false;
+            if (getAirSupply() < getMaxAirSupply() / 3) return true;                // running out of air
+            ServerPlayer o = owner();
+            if (o != null && o.level() == level() && o.isInWater() && o.distanceToSqr(PartyBotEntity.this) < 16 * 16) return false;   // swimming with the owner
+            LivingEntity t = getTarget();
+            if (t != null && t.isInWater()) return false;                           // fighting something in the water
+            return wetTicks > 40;                                                   // otherwise no standing about in it
+        }
+        @Override public boolean canUse() {
+            if (!needed() || tickCount - look < 8) return false;
+            look = tickCount;
+            spot = BotMoves.dryLand(PartyBotEntity.this, isInLava() ? 8 : 12);
+            return spot != null || isInLava();
+        }
+        @Override public boolean canContinueToUse() { return (isInWater() || isInLava() || !onGround()) && ticks < 400 && !downed() && !isPassenger(); }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        @Override public void start() { ticks = 0; from = isInLava() ? "lava" : "water"; getNavigation().stop(); }
+        @Override public void stop() {
+            BotMoves.land(PartyBotEntity.this);
+            lastEscape = from + (isInWater() || isInLava() ? " still in after " : " out after ") + ticks + " ticks";
+        }
+        @Override public void tick() {
+            ticks++;
+            boolean lava = isInLava();
+            if (spot == null || ticks % 40 == 0) { BlockPos s2 = BotMoves.dryLand(PartyBotEntity.this, lava ? 8 : 12); if (s2 != null) spot = s2; }
+            if (spot != null) {
+                Vec3 at = Vec3.atBottomCenterOf(spot);
+                if (canFly()) {
+                    if (!lava && !isInWater() && position().distanceToSqr(at) < 1.5 * 1.5) BotMoves.land(PartyBotEntity.this);
+                    else BotMoves.flyTo(PartyBotEntity.this, at.add(0, 0.6, 0), lava ? 0.7 : 0.5);
+                } else {
+                    if (ticks % 10 == 1) getNavigation().moveTo(at.x, at.y, at.z, 1.4);
+                    if (isInWater() || isInLava()) { BotMoves.swimToward(PartyBotEntity.this, spot, lava); getJumpControl().jump(); }
+                }
+            } else getJumpControl().jump();
+            // the safety net: still in lava after 3 seconds (or water after 15): out onto the land, or over to the owner
+            if ((lava && lavaTicks > 60) || (!lava && isInWater() && ticks > 300)) {
+                if (spot != null) teleportTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5);
+                else if (owner() != null && owner().level() == level()) PartyBots.teleportNear(PartyBotEntity.this, owner());
+                from = from + " (lifted out)";
+                lavaTicks = 0;
+            }
+        }
+    }
+
+    /** Now and then a flier takes a turn about the sky: up off the ground, a lap or two around its owner, and back down. */
+    class FlyAbout extends Goal {
+        private int t, dur; private double ang, turn; private boolean landing;
+        public FlyAbout() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        private boolean calm() {
+            ServerPlayer o = owner();
+            return o != null && o.level() == level() && canFly() && !downed() && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && !isVehicle()
+                    && o.getVehicle() == null && !sparring() && !journey() && mode() != MINING && !isInLava() && !PartyBots.airborne(o) && !o.getAbilities().flying && eatTicks < 0 && drinkTicks < 0;
+        }
+        private boolean openSky() {
+            for (int i = 1; i <= 7; i++) if (!level().getBlockState(blockPosition().above(i)).getCollisionShape(level(), blockPosition().above(i)).isEmpty()) return false;
+            return true;
+        }
+        @Override public boolean canUse() {
+            if (tickCount < nextFlourish || !calm()) return false;
+            if (distanceToSqr(owner()) > 10 * 10 || !openSky()) { nextFlourish = tickCount + 200; return false; }   // (indoors, underground: not now)
+            nextFlourish = tickCount + 900 + getRandom().nextInt(1500);           // (every 45 s - 2 min or so)
+            return true;
+        }
+        @Override public boolean canContinueToUse() {
+            ServerPlayer o = owner();
+            return calm() && distanceToSqr(o) < 14 * 14 && t < dur + 120 && !(landing && onGround() && t > 5);
+        }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        @Override public void start() {
+            ServerPlayer o = owner();
+            t = 0; dur = 120 + getRandom().nextInt(80); landing = false;
+            ang = Math.atan2(getZ() - o.getZ(), getX() - o.getX());
+            turn = getRandom().nextBoolean() ? 0.045 : -0.045;
+            flourishes++; flourishPeak = 0; flourishFar = 0;
+            ((ServerLevel) level()).sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, getX(), getY() + 0.1, getZ(), 8, 0.3, 0.05, 0.3, 0.05);
+        }
+        @Override public void stop() { BotMoves.land(PartyBotEntity.this); }
+        @Override public void tick() {
+            ServerPlayer o = owner();
+            if (o == null) return;
+            t++;
+            flourishPeak = Math.max(flourishPeak, getY() - o.getY());
+            flourishFar = Math.max(flourishFar, Math.sqrt(distanceToSqr(o)));
+            if (!landing && t >= dur) landing = true;
+            if (!landing) {
+                ang += turn;
+                double h = Math.min(5.0, t * 0.1) + Math.sin(t * 0.08) * 0.6;
+                Vec3 goal = o.position().add(Math.cos(ang) * 4.5, h, Math.sin(ang) * 4.5);
+                if (!level().noCollision(PartyBotEntity.this, getBoundingBox().move(goal.subtract(position())))) goal = goal.add(0, 1.5, 0);
+                BotMoves.flyTo(PartyBotEntity.this, goal, 0.42);
+            } else {                                                            // back down beside them
+                Vec3 spot = o.position().add(Math.cos(ang) * 2.5, 0.2, Math.sin(ang) * 2.5);
+                if (position().subtract(spot).horizontalDistanceSqr() < 1.0 || BotMoves.heightAboveGround(PartyBotEntity.this) < 0.8 || t > dur + 100) BotMoves.land(PartyBotEntity.this);
+                else BotMoves.flyTo(PartyBotEntity.this, spot, 0.35);
+            }
+        }
+    }
+    public int flourishes; public double flourishPeak, flourishFar;
 
     /** Someone's down (the owner, a party member or another bot): go and stand in their revive circle. */
     class ReviveGoal extends Goal {
@@ -276,7 +467,10 @@ public class PartyBotEntity extends PathfinderMob {
     }
 
     @Override
-    public void setTarget(LivingEntity t) { super.setTarget(untouchable(t) ? null : t); }
+    public void setTarget(LivingEntity t) {
+        if (t != null && !level().isClientSide && PartyBots.friendly(this, t) && !(sparring() && t == owner())) t = null;   // (never its own side: the owner, the party, their pets, bots and souls)
+        super.setTarget(untouchable(t) ? null : t);
+    }
 
     class BotTargetGoal extends TargetGoal {
         LivingEntity pick;
@@ -371,9 +565,11 @@ public class PartyBotEntity extends PathfinderMob {
             if (!journey()) com.xenowarriors.party.ReviveCircle.tickBot(this);
             return;
         }
-        if (getTarget() != null && tickCount % 10 == 0) { BotGear.holdBestWeapon(this); PartyBots.trySkill(this, getTarget()); }
+        if (getTarget() != null && tickCount % 10 == 0) { if (!rangedActive) BotGear.holdBestWeapon(this); PartyBots.trySkill(this, getTarget()); }
         if (tickCount % 10 == 0) pickUpItems();
         tickEating();
+        BotPotions.tick(this);
+        tickMoves();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         ServerPlayer o = owner();
         if (o == null && ownerId() == null) { if (tickCount > 100 && !isNoAi()) { PartyBots.forgetFake(getUUID()); discard(); } return; }   // (nobody's bot, e.g. summoned by command: it goes; a no-AI display one stays)
@@ -382,6 +578,49 @@ public class PartyBotEntity extends PathfinderMob {
             if (PartyBots.canFollowTo(character(), o.level())) PartyBots.teleportNear(this, o);
             else { PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }
         }
+    }
+
+    /** Getting about: gap jumps, hopping up steps, time in water/lava, no hovering left over from a flight. */
+    private void tickMoves() {
+        wetTicks = isInWater() ? wetTicks + 1 : 0;
+        lavaTicks = isInLava() ? lavaTicks + 1 : 0;
+        if (leapTicks > 0) leapTicks--;
+        if (selfFlying && tickCount - flewAt > 5) BotMoves.land(this);           // (whatever was flying it has stopped)
+        if (selfFlying || isPassenger() || downed() || isInWater() || isInLava()) return;
+        BotMoves.stepUp(this);
+        // a gap between it and where it's going: a running jump across (if there's somewhere to land)
+        if (tickCount % 4 == 0 && onGround() && leapTicks == 0) {
+            Vec3 goal = null;
+            LivingEntity t = getTarget();
+            ServerPlayer o = owner();
+            if (t != null && reviving == null) goal = t.position();
+            else if (reviving != null) goal = reviving.position();
+            else if (mineTarget != null) goal = Vec3.atBottomCenterOf(mineTarget);
+            else if (o != null && o.level() == level() && distanceToSqr(o) > 6 * 6 && o.onGround()) goal = o.position();
+            if (goal != null && Math.abs(goal.y - getY()) < 2.5 && (getNavigation().isDone() || getDeltaMovement().horizontalDistanceSqr() < 0.0004)) BotMoves.tryLeap(this, goal);
+        }
+    }
+
+    /** Never walks off a cliff (4+ blocks down, no water at the bottom) unless it can fly - knocked back or not. */
+    @Override
+    public void move(MoverType type, Vec3 v) {
+        if (!level().isClientSide && (type == MoverType.SELF || type == MoverType.PLAYER) && onGround() && leapTicks == 0 && !isNoGravity() && !canFly()
+                && !isInWater() && !isInLava() && !isPassenger() && BotMoves.cliffAhead(this, v)) {
+            v = new Vec3(0, v.y, 0);
+            setDeltaMovement(0, getDeltaMovement().y, 0);
+            if (++edgeStops % 20 == 1) getNavigation().stop();
+        }
+        super.move(type, v);
+    }
+
+    /** How far a path may drop it: never a cliff on foot (whatever it's chasing); fliers just fly down. */
+    @Override public int getMaxFallDistance() { return canFly() ? 16 : 3; }
+
+    /** Fliers catch themselves before they land. */
+    @Override
+    public boolean causeFallDamage(float dist, float mult, DamageSource src) {
+        if (canFly() && !downed()) { fallDistance = 0; return false; }
+        return super.causeFallDamage(dist, mult, src);
     }
 
     /** Hungry (under 60% health, not fighting): eats food from its bag - a few seconds of chewing, then the food's worth in health. */
@@ -408,7 +647,7 @@ public class PartyBotEntity extends PathfinderMob {
             }
             return;
         }
-        if (tickCount % 30 != 0 || getHealth() > getMaxHealth() * 0.6F || getTarget() != null || sparring()) return;
+        if (tickCount % 30 != 0 || getHealth() > getMaxHealth() * 0.6F || getTarget() != null || sparring() || drinking()) return;
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack s = inventory.getItem(i);
             if (s.isEdible() && s.getFoodProperties(this) != null && !s.is(net.minecraft.world.item.Items.ROTTEN_FLESH) && !s.is(net.minecraft.world.item.Items.SPIDER_EYE) && !s.is(net.minecraft.world.item.Items.PUFFERFISH)) {
@@ -457,7 +696,10 @@ public class PartyBotEntity extends PathfinderMob {
         super.die(src);
     }
 
-    public void revive() { entityData.set(DOWNED, false); setHealth(getMaxHealth() * 0.4F); downedTicks = 0; com.xenowarriors.party.ReviveCircle.forget(getUUID()); }
+    public void revive() {
+        entityData.set(DOWNED, false); setHealth(getMaxHealth() * 0.4F); downedTicks = 0; com.xenowarriors.party.ReviveCircle.forget(getUUID());
+        ReviveAftermath.revived(this);                                          // (10 s invincible, and a shockwave that stuns the enemies about)
+    }
 
     @Override public boolean isPushable() { return !downed() && super.isPushable(); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
@@ -532,7 +774,7 @@ public class PartyBotEntity extends PathfinderMob {
             fallDistance = 0;
             return;
         }
-        if (isNoGravity() && !isVehicle() && !flyingWithOwner) setNoGravity(false);
+        if (isNoGravity() && !isVehicle() && !flyingWithOwner && !selfFlying) setNoGravity(false);
         super.travel(input);
     }
 
