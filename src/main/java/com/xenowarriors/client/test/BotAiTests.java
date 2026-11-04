@@ -59,6 +59,7 @@ public final class BotAiTests {
     private static String f(double d) { return String.format(Locale.ROOT, "%.1f", d); }
 
     private static PartyBotEntity bot(ServerPlayer p, CharacterType t) {
+        if (p == null) return null;   // (a scheduled check can still run after the client has left)
         for (var b : PartyBots.bots(p)) if (b.character() == t) return b;
         return null;
     }

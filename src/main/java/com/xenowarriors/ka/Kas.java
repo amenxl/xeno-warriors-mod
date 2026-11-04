@@ -61,7 +61,7 @@ public final class Kas {
     // ---------------------------------------------------------------- who has what
 
     public static Ka of(LivingEntity e) {
-        if (e instanceof ServerPlayer p) return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> Ka.byId(d.ka)).orElse(null);
+        if (e instanceof ServerPlayer p) return p.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve().map(d -> Ka.byId(d.ka)).orElse(null);   // (resolve(): LazyOptional.map throws when the mapper gives null, i.e. no KA)
         return Ka.byId(e.getPersistentData().getString(KA));
     }
 
