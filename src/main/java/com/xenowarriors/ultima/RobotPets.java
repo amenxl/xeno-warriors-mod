@@ -161,7 +161,7 @@ public final class RobotPets {
         robot.targetSelector.removeAllGoals(g -> true);         // (no more hunting players)
         robot.targetSelector.addGoal(1, new Guard(robot));
         robot.goalSelector.addGoal(0, new Sit(robot));
-        robot.goalSelector.addGoal(3, new Follow(robot));
+        robot.goalSelector.addGoal(1, new Follow(robot));      // (ahead of its own wandering; only while it has nothing to fight)
     }
 
     /** Waits where it was told to. */

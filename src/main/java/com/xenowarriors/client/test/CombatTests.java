@@ -538,7 +538,7 @@ public final class CombatTests {
             log("robot sit: " + res + " sitting=" + com.xenowarriors.ultima.RobotPets.sitting(m));
             res = p.interactOn(m, net.minecraft.world.InteractionHand.MAIN_HAND);
             log("robot stand: " + res + " sitting=" + com.xenowarriors.ultima.RobotPets.sitting(m));
-            m.moveTo(p.getX() + 14, p.getY(), p.getZ() + 6);
+            m.moveTo(p.getX() + 14, p.getY(), p.getZ() + 6); p.setYRot(-60);
         }), 80);
         l.add(null, () -> server(p -> {
             Mob m = (Mob) E.get("robot");
