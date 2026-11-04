@@ -78,6 +78,43 @@ public final class BotLimbo extends SavedData {
                     PartyBots.LEFT_BEHIND.size(), PartyBots.PENDING_HOME.values().stream().mapToInt(List::size).sum());
     }
     /**
+     * (UI test) The same round trip for a real player: a bag of 5 emeralds for character {@code ch} (one they aren't
+     * playing) went home while they were "away", the lists are saved, wiped and read back, and two logins hand it over.
+     * Returns how many emeralds that character's save gained (5 = exactly once) and the pending count after.
+     */
+    public static String testRealOwner(net.minecraft.server.level.ServerPlayer p, String ch) {
+        var keepLeft = new ArrayList<>(PartyBots.LEFT_BEHIND);
+        var keepHome = new HashMap<>(PartyBots.PENDING_HOME);
+        try {
+            int before = emeralds(com.xenowarriors.character.CharacterInventories.saved(p, ch));
+            CompoundTag rec = new CompoundTag();
+            rec.putString("char", ch);
+            ListTag inv = new ListTag();
+            inv.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD, 5).save(new CompoundTag()));
+            rec.put("inv", inv);
+            rec.put("armour", new ListTag());
+            PartyBots.PENDING_HOME.clear(); PartyBots.LEFT_BEHIND.clear();
+            PartyBots.PENDING_HOME.computeIfAbsent(p.getUUID(), k -> new ArrayList<>()).add(rec);
+            CompoundTag snap = write(new CompoundTag());
+            PartyBots.PENDING_HOME.clear();
+            read(snap);
+            int d1 = PartyBots.deliverPending(p), d2 = PartyBots.deliverPending(p);
+            int gained = emeralds(com.xenowarriors.character.CharacterInventories.saved(p, ch)) - before;
+            return "delivered=" + d1 + "/" + d2 + " gained=" + gained + " pendingAfter=" + write(new CompoundTag()).getList("pending_home", 10).size();
+        } finally {
+            PartyBots.LEFT_BEHIND.clear(); PartyBots.LEFT_BEHIND.addAll(keepLeft);
+            PartyBots.PENDING_HOME.clear(); PartyBots.PENDING_HOME.putAll(keepHome);
+        }
+    }
+
+    private static int emeralds(CompoundTag saved) {
+        int n = 0;
+        ListTag l = saved.getList("inv", 10);
+        for (int i = 0; i < l.size(); i++) { var st = net.minecraft.world.item.ItemStack.of(l.getCompound(i)); if (st.is(net.minecraft.world.item.Items.EMERALD)) n += st.getCount(); }
+        return n;
+    }
+
+    /**
      * Selftest: a waiting bot and a bot bag that went home while its owner was away are saved with the world, the
      * lists are wiped (a restart), read back from the file on disk, and the bag reaches the owner's save exactly once.
      * The real lists are put back afterwards. Returns a one-line result ("OK ..." or "FAIL ...").
