@@ -49,8 +49,9 @@ public final class MikikoTests {
 
     public static void run(Minecraft mc, String focus, Steps l) {
         l.add(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null); }, 5);
-        if (focus.contains("fall") || focus.equals("mikikoall")) fall(mc, l);
-        if (focus.contains("menu") || focus.equals("mikikoall")) menuSit(mc, l);
+        boolean all = focus.contains("all") || focus.contains("before") || focus.contains("after");
+        if (all || focus.contains("fall")) fall(mc, l);
+        if (all || focus.contains("menu")) menuSit(mc, l);
         l.add(null, () -> log("done"), 5);
     }
 
