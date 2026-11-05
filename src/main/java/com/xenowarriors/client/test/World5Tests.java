@@ -401,7 +401,7 @@ public final class World5Tests {
             int killed = 0;
             for (Mob m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(30), e -> e instanceof net.minecraft.world.entity.monster.Zombie)) { m.hurt(p.damageSources().playerAttack(p), 1000); killed++; }
             log("in the Room: killed " + killed + " zombies");
-        }), 10);
+        }), 110);
         step(null, () -> server(p -> {
             List<String> drops = new ArrayList<>();
             for (ItemEntity it : p.serverLevel().getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(12))) drops.add(it.getItem().getCount() + "x " + it.getItem().getHoverName().getString());
@@ -597,13 +597,13 @@ public final class World5Tests {
         ride(VehicleKind.CAR_MK2, 0);
         step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.keyJump.setDown(true); }, 30);
         step(null, () -> { mc.options.keyJump.setDown(false); sample(mc, "car mk2 after 30 ticks of Jump", mk); }, 1);
-        step(null, () -> mc.options.keyUp.setDown(true), 40);
+        step(null, () -> mc.options.keyUp.setDown(true), 22);
         step(null, () -> sample(mc, "car mk2 flying forward", mk), 1);
         camera(mc, cam, c -> { VehicleEntity v = clientVehicle(mc); double x = v == null ? base.getX() : v.getX(), y = v == null ? base.getY() + 6 : v.getY(), z = v == null ? base.getZ() : v.getZ();
             c[0] = x + 14; c[1] = y + 1; c[2] = z + 10; c[3] = 90; c[4] = 0; });
         step("mk2_car_flying", () -> sample(mc, "car mk2 flying (side shot)", mk), 1);
         cameraOff(mc);
-        step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(true); }, 50);
+        step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(true); }, 80);
         step(null, () -> { mc.options.keySprint.setDown(false); VehicleEntity v = clientVehicle(mc); sample(mc, "car mk2 came down", mk);
             log("car mk2: onGround=" + (v != null && v.onGround()) + " airborne=" + (v != null && v.airborne())); }, 10);
         // top speed on the ground: base car vs Mk II
