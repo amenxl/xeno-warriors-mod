@@ -186,7 +186,7 @@ public final class JudgmentTests {
         l.add(new Step("judg_bj_finale", () -> {}, 22));
         l.add(new Step(null, () -> {}, 25));
         l.add(new Step(null, () -> UiTest.server(p -> {
-            float lost = D[3] - huskHp();
+            double lost = D[3] - huskHp();
             log("Blazing Judgment done: held at most " + TeamUltEntity.lastHeld + " of 5, Rhalix dealt " + f(TeamUltEntity.lastRhalixDamage) + ", Mikiko (bot) dealt " + f(TeamUltEntity.lastMikikoDamage)
                     + ", husk hp lost " + f(lost) + " interrupted=" + (CutsceneBreak.lastAt > 0 ? CutsceneBreak.lastWhat : "no")
                     + " -> " + (TeamUltEntity.lastHeld >= 3 && TeamUltEntity.lastRhalixDamage > 0 && TeamUltEntity.lastMikikoDamage > 0 ? "PASS" : "FAIL"));
