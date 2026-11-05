@@ -75,6 +75,23 @@ public final class ParityTests {
         });
     }
 
+    /** Max health split into its parts: level base + DragonMineZ + bond (+ anything else). */
+    private static String parts(PartyBotEntity b) {
+        var a = b.getAttribute(Attributes.MAX_HEALTH);
+        StringBuilder sb = new StringBuilder("maxHp=" + b.getMaxHealth() + " = level " + a.getBaseValue());
+        for (var m : a.getModifiers()) sb.append(" + ").append(m.getName()).append(" ").append(Math.round(m.getAmount()));
+        return sb.toString();
+    }
+
+    /** The bond modifier is on it with its full amount, and max health is all the parts added up. */
+    private static boolean stacked(PartyBotEntity b) {
+        var a = b.getAttribute(Attributes.MAX_HEALTH);
+        var bond = a.getModifier(Bonds.BOT_HEALTH_ID);
+        double sum = a.getBaseValue();
+        for (var m : a.getModifiers()) sum += m.getAmount();
+        return bond != null && Math.abs(bond.getAmount() - Bonds.hearts(Bonds.best(b)) * 2.0) < 0.01 && Math.abs(sum - b.getMaxHealth()) < 0.01;
+    }
+
     private static String f(float v) { return String.format(java.util.Locale.ROOT, "%.2f", v); }
 
     public static void build(Minecraft mc, List<Step> l, String focus) {
@@ -114,13 +131,14 @@ public final class ParityTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity b = bot(p);
             if (b == null) return;
-            log("after 1.5 s (DmzBotStats 1 s refresh, Bonds 5 s refresh): maxHp=" + b.getMaxHealth() + " hp=" + b.getHealth() + " -> " + (Math.abs(b.getMaxHealth() - HP[2]) < 0.01 && Math.abs(b.getHealth() - HP[3]) < 0.5 ? "PASS" : "FAIL"));
+            log("after 1.5 s (DmzBotStats 1 s refresh, Bonds 5 s refresh): " + parts(b) + " hp=" + b.getHealth() + " -> " + (stacked(b) && b.getHealth() >= HP[3] - 0.5F ? "PASS" : "FAIL"));
+            HP[4] = b.getMaxHealth(); HP[5] = b.getHealth();
             CompoundTag rec = b.record();                                         // re-add / relog: a saved record spawns it again
             b.discard();
             PartyBotEntity n = PartyBots.spawn(p, CharacterType.RHALIX, rec);
             BOT[0] = n;
-            log("re-added from record: maxHp=" + (n == null ? -1 : n.getMaxHealth()) + " hp=" + (n == null ? -1 : n.getHealth()) + " (was " + HP[2] + " / " + HP[3] + ") -> "
-                    + (n != null && Math.abs(n.getMaxHealth() - HP[2]) < 0.01 && Math.abs(n.getHealth() - HP[3]) < 0.5 ? "PASS" : "FAIL"));
+            log("re-added from record: " + (n == null ? "none" : parts(n)) + " hp=" + (n == null ? -1 : n.getHealth()) + " (was " + HP[4] + " / " + HP[5] + ") -> "
+                    + (n != null && stacked(n) && Math.abs(n.getMaxHealth() - HP[4]) < 0.01 && Math.abs(n.getHealth() - HP[5]) < 0.5 ? "PASS" : "FAIL"));
         }), 30));
         // ---- 2. bot synergy (Partners: Rhalix + Mikiko)
         l.add(new Step(null, () -> UiTest.server(p -> {
