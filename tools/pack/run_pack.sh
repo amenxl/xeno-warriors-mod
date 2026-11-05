@@ -48,9 +48,10 @@ echo "PACK starting the dedicated server"
 (cd "$S" && XW_SELFTEST=1 XW_PACKTEST=1 timeout 1500 bash ./run.sh nogui < /dev/null > "$ROOT/server.log" 2>&1) || true
 cp "$S/logs/latest.log" "$OUT/server-latest.log" 2>/dev/null || true
 cp "$S/logs/debug.log" "$OUT/server-debug.log" 2>/dev/null || true
-mkdir -p "$OUT/crash" && cp "$S"/crash-reports/*.txt "$OUT/crash/" 2>/dev/null || true
+for f in "$S"/crash-reports/*.txt; do [ -f "$f" ] && cp "$f" "$OUT/server-$(basename "$f")"; done
 python3 -I tools/pack/scan_log.py "$S/logs/latest.log" "$S/logs/debug.log" > "$OUT/pack-report-server.txt" 2>&1 || true
-grep -E "^PACK-SCAN" "$OUT/pack-report-server.txt"
+head -c 30000 "$OUT/pack-report-server.txt"
+for f in "$S"/crash-reports/*.txt; do [ -f "$f" ] && head -80 "$f"; done
 grep -E "XW-SELFTEST|XW-TEST pack" "$ROOT/server.log" | head -40
 # (the Recarnet region files, for the selftest release)
 mkdir -p run && rm -rf run/world && cp -r "$S/world" run/world 2>/dev/null || true
@@ -75,9 +76,10 @@ XW_UITEST=1 XW_UITEST_FOCUS=${XW_UITEST_FOCUS:-pack} XW_UITEST_WORLD=uitest XW_P
   --resolution 1280x720 -u XwTester > "$ROOT/client.log" 2>&1 || true
 cp "$C/logs/latest.log" "$OUT/client-latest.log" 2>/dev/null || true
 cp "$C/logs/debug.log" "$OUT/client-debug.log" 2>/dev/null || true
-cp "$C"/crash-reports/*.txt "$OUT/crash/" 2>/dev/null || true
+for f in "$C"/crash-reports/*.txt; do [ -f "$f" ] && cp "$f" "$OUT/client-$(basename "$f")"; done
 mkdir -p run/screenshots && cp "$C"/screenshots/*.png run/screenshots/ 2>/dev/null || true
 python3 -I tools/pack/scan_log.py "$C/logs/latest.log" "$C/logs/debug.log" > "$OUT/pack-report-client.txt" 2>&1 || true
-grep -E "^PACK-SCAN" "$OUT/pack-report-client.txt"
+head -c 40000 "$OUT/pack-report-client.txt"
+for f in "$C"/crash-reports/*.txt; do [ -f "$f" ] && head -80 "$f"; done
 grep -E "XW-UITEST (start|done)|XW-TEST pack" "$ROOT/client.log" | head -150
 grep -q "XW-UITEST done" "$ROOT/client.log"

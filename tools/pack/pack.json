@@ -8,7 +8,7 @@
     {"name": "Collective", "file": "collective-1.20.1-8.73.jar", "match": "8.73", "modrinth": ["collective"], "search": "collective", "side": "both"},
     {"name": "Copper Age Backport", "file": "copperagebackport-forge-1.20.1-0.1.5.1-pre.jar", "match": "0.1.5.1", "modrinth": ["copper-age-backport", "copperagebackport"], "search": "copper age backport", "curseforge": "copper age backport", "side": "both"},
     {"name": "Curios API", "file": "curios-forge-5.14.1+1.20.1.jar", "match": "5.14.1", "modrinth": ["curios"], "search": "curios", "side": "both"},
-    {"name": "DragonMineZ x Epic Fight bridge", "file": "dmzefbridge-1.0.0.jar", "match": "1.0.0", "modrinth": ["dmzefbridge", "dragonminez-epic-fight-bridge", "dmz-ef-bridge"], "search": "dragonminez epic fight bridge", "curseforge": "dragonminez epic fight bridge", "side": "both"},
+    {"name": "DragonMineZ x Epic Fight bridge", "file": "dmzefbridge-1.0.0.jar", "match": "1.0.0", "modrinth": ["dmzefbridge", "dragonminez-epic-fight-bridge", "dmz-ef-bridge"], "search": "dragonminez epic fight bridge", "curseforge": "dragonminez epic fight bridge", "cfslug": ["dragonminez-epic-fight-bridge", "dmzefbridge", "dmz-ef-bridge", "dragonminez-x-epic-fight-bridge"], "side": "both"},
     {"name": "DragonMineZ", "file": "dragonminez-2.1.3.jar", "match": "2.1.3", "modrinth": ["dragonminez"], "search": "dragonminez", "side": "both"},
     {"name": "Elytra Slot", "file": "elytraslot-forge-6.4.4+1.20.1.jar", "match": "6.4.4", "modrinth": ["elytra-slot", "elytraslot"], "search": "elytra slot", "side": "both"},
     {"name": "Embeddium", "file": "embeddium-0.3.31+mc1.20.1.jar", "match": "0.3.31", "modrinth": ["embeddium"], "search": "embeddium", "side": "client"},

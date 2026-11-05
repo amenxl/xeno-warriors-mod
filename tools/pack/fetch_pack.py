@@ -75,11 +75,24 @@ def find_modrinth(m):
     return None
 
 
+def cf_url(fid, name):
+    return f"https://mediafilez.forgecdn.net/files/{fid // 1000}/{fid % 1000}/{urllib.parse.quote(name)}"
+
+
 def find_curseforge(m):
     q = m.get("curseforge")
     if not q:
         return None
     want = m["file"].lower()
+    for slug in m.get("cfslug", []):                       # CFWidget: a CurseForge project's files by slug, no API key
+        try:
+            files = jget(f"https://api.cfwidget.com/minecraft/mc-mods/{urllib.parse.quote(slug)}").get("files", [])
+        except Exception as e:
+            print(f"  cfwidget {slug}: {e}")
+            continue
+        for f in files:
+            if str(f.get("name", "")).lower() == want:
+                return "exact", f"curseforge:{slug} file {f['id']}", cf_url(int(f["id"]), f["name"]), f["name"]
     try:
         hits = jget("https://www.curseforge.com/api/v1/mods/search?gameId=432&index=0&classId=6&pageSize=20&sortField=1&filterText=" + urllib.parse.quote(q))["data"]
     except Exception as e:
@@ -94,8 +107,7 @@ def find_curseforge(m):
             for f in files:
                 if f.get("fileName", "").lower() == want:
                     fid = int(f["id"])
-                    url = f"https://mediafilez.forgecdn.net/files/{fid // 1000}/{fid % 1000}/{urllib.parse.quote(f['fileName'])}"
-                    return "exact", f"curseforge:{h.get('slug', h['id'])} file {fid}", url, f["fileName"]
+                    return "exact", f"curseforge:{h.get('slug', h['id'])} file {fid}", cf_url(fid, f["fileName"]), f["fileName"]
             if len(files) < 50:
                 break
     return None
