@@ -141,7 +141,7 @@ public final class BotQuestTests {
     /** Defeats targets of the bot's mission (by the bot, or by the player) until it's done (or 30 kills). */
     private static void defeat(ServerPlayer p, PartyBotEntity b, String key, boolean byBot, String what) {
         int kills = 0;
-        while (kills < 30 && !DmzBotQuests.status(b, key, 0).startsWith("status=SUCCESS")) {
+        while (kills < 60 && !DmzBotQuests.status(b, key, 0).startsWith("status=SUCCESS")) {
             LivingEntity le = target(p, key, b);
             if (le == null) { log(what + ": no target"); break; }
             if (le instanceof Mob m) m.setNoAi(true);

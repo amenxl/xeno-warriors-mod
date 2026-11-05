@@ -560,6 +560,7 @@ public final class DmzBotQuests {
     private static String pick(Data d, String key) throws Exception {
         if ((Boolean) m(d.pqd, "isQuestAccepted", key)) { note(d.key + " is already on " + key); return null; }
         if (eligible(d, key)) return key;
+        note(d.key + " can't take " + key + " (" + why + ")");
         Object q = quest(key);
         List<String> next = new ArrayList<>();
         if (q != null && (Boolean) m(q, "isSagaQuest")) {
@@ -573,13 +574,21 @@ public final class DmzBotQuests {
             String giver = (String) m(q, "getQuestGiver");
             if (giver != null && !giver.isBlank()) next.addAll((List<String>) registry.getMethod("getQuestIdsByGiver", String.class).invoke(null, giver));
         }
-        for (String k : next) if (!k.equals(key) && eligible(d, k)) return k;
-        note(d.key + " has no mission it can start with " + key);
+        List<String> whyNot = new ArrayList<>();
+        for (String k : next) {
+            if (k.equals(key)) continue;
+            if (eligible(d, k)) return k;
+            if (whyNot.size() < 3 && !why.equals("done or on it")) whyNot.add(k + ": " + why);
+        }
+        note(d.key + " has no mission it can start with " + key + " " + whyNot);
         return null;
     }
 
     /** Could the bot start this one now (DragonMineZ's own checks on its data, except where it is - it's with you)? */
+    private static String why;
+
     private static boolean eligible(Data d, String key) {
+        why = "done or on it";
         try {
             Object q = quest(key);
             if (q == null || !typeEnabled(q)) return false;
@@ -592,10 +601,11 @@ public final class DmzBotQuests {
                 int idx = ((List<?>) m(saga, "getQuests")).indexOf(q);
                 ok = idx >= 0 && (Boolean) avail.getMethod("isSagaQuestAvailable", q.getClass(), saga.getClass(), int.class, statsData).invoke(null, q, saga, idx, d.sd);
             } else ok = (Boolean) avail.getMethod("isAvailable", q.getClass(), statsData).invoke(null, q, d.sd);
-            if (!ok) return false;
+            if (!ok) { why = "not available yet"; return false; }
             Object blocker = avail.getMethod("describeNonPositionalStartBlocker", q.getClass(), String.class, Player.class, statsData).invoke(null, q, key, d.owner, d.sd);
+            if (blocker != null) why = blocker instanceof Component c ? c.getString() : String.valueOf(blocker);
             return blocker == null;
-        } catch (Throwable t) { return false; }
+        } catch (Throwable t) { why = String.valueOf(t); return false; }
     }
 
     /** Starts it on the bot's data like DragonMineZ does (objectives sized for your party); its enemies are summoned unless it's yours too. */
