@@ -32,6 +32,9 @@ public final class DmzKiSenseLink {
 
     private DmzKiSenseLink() {}
 
+    /** (Tests) how many times DragonMineZ's grey-out pass was skipped (see DragonMineZNoGreyMixin). */
+    public static int greySkipped;
+
     private static boolean ready() {
         if (loaded == null) loaded = ModList.get() != null && ModList.get().isLoaded("dragonminez");
         if (!loaded || broken) return false;

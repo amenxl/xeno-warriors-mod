@@ -830,5 +830,8 @@
   "skill.xenowarriors.you_second_wind.short": "SW",
   "skill.xenowarriors.you_second_wind.desc": "A burst of health and speed - a big one when you're below 40% health.",
   "entity.xenowarriors.thrown_hekublade": "Thrown Hekublade",
-  "entity.xenowarriors.team_ult": "Gravity Fox Fire"
+  "entity.xenowarriors.team_ult": "Gravity Fox Fire",
+  "item.xenowarriors.blaster_rifle": "Blaster Rifle",
+  "item.xenowarriors.burst_cannon": "Burst Cannon",
+  "item.xenowarriors.blaster_mortar": "Blaster Mortar"
 }

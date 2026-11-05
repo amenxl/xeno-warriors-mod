@@ -225,6 +225,15 @@ public final class ModItems {
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL,
                     0x14081F, 0xD77BFF, new Item.Properties()));
 
+    /** Ki guns like DragonMineZ's Blaster Cannon: registered (craftable, in the creative tab, carried by mobs) only with DragonMineZ. */
+    private static final boolean DMZ = net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
+    public static final RegistryObject<Item> BLASTER_RIFLE = DMZ ? ITEMS.register("blaster_rifle",
+            () -> new DmzGunItem(com.xenowarriors.compat.DmzGuns.Kind.RIFLE, new Item.Properties())) : null;
+    public static final RegistryObject<Item> BURST_CANNON = DMZ ? ITEMS.register("burst_cannon",
+            () -> new DmzGunItem(com.xenowarriors.compat.DmzGuns.Kind.BURST, new Item.Properties())) : null;
+    public static final RegistryObject<Item> BLASTER_MORTAR = DMZ ? ITEMS.register("blaster_mortar",
+            () -> new DmzGunItem(com.xenowarriors.compat.DmzGuns.Kind.MORTAR, new Item.Properties().rarity(net.minecraft.world.item.Rarity.UNCOMMON))) : null;
+
     public static final DeferredRegister<net.minecraft.world.item.CreativeModeTab> TABS =
             DeferredRegister.create(net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB, XenoWarriors.MOD_ID);
 

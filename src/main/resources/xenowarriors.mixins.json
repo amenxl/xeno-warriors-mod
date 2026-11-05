@@ -47,6 +47,7 @@
     "compat.DragonMineZAttackMixin",
     "compat.DragonMineZKiSenseMixin",
     "compat.DragonMineZKiSenseBPMixin",
+    "compat.DragonMineZNoGreyMixin",
     "compat.EpicFightTargetOutlineMixin",
     "compat.EpicFightLockOnFilterMixin",
     "UltimaSightMixin",

@@ -35,6 +35,8 @@ public final class KhHud implements IGuiOverlay {
     private static float shownHp = -1, chip = -1;
     private static int chipDelay;
     private static float menuFade;
+    /** The top of the Blazing Wind HUD last frame (GUI pixels; -1 = not drawn). */
+    public static int top = -1;
 
     public static boolean active() {
         Minecraft mc = Minecraft.getInstance();
@@ -95,6 +97,7 @@ public final class KhHud implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics g, float partial, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
+        top = -1;
         if (!active() || mc.options.hideGui || mc.player.isSpectator()) return;
         var p = mc.player;
         Font font = mc.font;
@@ -125,6 +128,7 @@ public final class KhHud implements IGuiOverlay {
             boolean dbz0 = DmzHud.read(p);
             int[] at = BlazingHud.render(g, mc, font, type, width, height, lift, hp, max, chip, low, flash, dbz0,
                     HudFaces.face(p.getUUID(), hp, max, HudFaces.allOut(p), false));
+            top = at[1] - (dbz0 ? 28 : 18);                                       // (how high it reaches: DmzHudLayout keeps DragonMineZ's panels above it)
             if (type == CharacterType.ULTIMA) {         // his output %, above the emblem
                 int pc = UltimaClient.percent(p.getId());
                 boolean ov = UltimaClient.overload(p.getId());
