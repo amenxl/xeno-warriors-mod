@@ -102,6 +102,9 @@ public final class PartyBots {
     /** (Tests) how many bot records wait for this owner. */
     public static int waitingFor(UUID owner) { int n = 0; for (var e : LEFT_BEHIND) if (e.getKey().equals(owner)) n++; return n; }
 
+    /** (Tests) forget what this server run knows about the player (as a restart would). */
+    public static void resetForCrashTest(ServerPlayer p) {}
+
     /** Players with bots but no party still get the party cards (them + their bots). */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
