@@ -132,7 +132,7 @@ public final class SeasonHuntTests {
         botBuffs(l);
         sweep(l, focus);
         l.add(new Step(null, () -> UiTest.server(p -> { clearBots(p); clearDummies(p); Seasons.set(p.server, 1);
-            log("done: " + FAILS[0] + " failed checks"); })), 20));
+            log("done: " + FAILS[0] + " failed checks"); }), 20));
     }
 
     // ---- 1 + 2: Season 1 locks, then the same after unlocking
@@ -154,10 +154,10 @@ public final class SeasonHuntTests {
         }), 10));
         // outfits: a Season 3 one is refused, a Season 1 one goes on
         l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(3)), 10));
-        l.add(new Step(null, () -> UiTest.server(p -> check("S1 Mikiko Season 3 outfit refused: outfit " + outfit(p) + " (expect 0)", outfit(p) == 0))), 2));
+        l.add(new Step(null, () -> UiTest.server(p -> check("S1 Mikiko Season 3 outfit refused: outfit " + outfit(p) + " (expect 0)", outfit(p) == 0)), 2));
         l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(1)), 10));
         l.add(new Step(null, () -> UiTest.server(p -> { check("S1 Mikiko Origins 1 outfit allowed: outfit " + outfit(p) + " (expect 1)", outfit(p) == 1);
-            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0); })), 2));
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0); }), 2));
         // Rhalix's wires and Lunar Form
         l.add(new Step(null, () -> UiTest.server(p -> {
             CharacterManager.setCharacter(p, CharacterType.RHALIX);
@@ -166,7 +166,7 @@ public final class SeasonHuntTests {
             com.xenowarriors.lunar.LunarForm.setUnlocked(p, true);
             p.serverLevel().setDayTime(18000);
         }), 50));
-        l.add(new Step(null, () -> UiTest.server(p -> check("S1 Lunar Form stays off at night (trial passed): active " + com.xenowarriors.lunar.LunarForm.active(p), !com.xenowarriors.lunar.LunarForm.active(p)))), 2));
+        l.add(new Step(null, () -> UiTest.server(p -> check("S1 Lunar Form stays off at night (trial passed): active " + com.xenowarriors.lunar.LunarForm.active(p), !com.xenowarriors.lunar.LunarForm.active(p))), 2));
         // the creative tab
         l.add(new Step(null, () -> {
             CreativeModeTabs.tryRebuildTabContents(mc.player.connection.enabledFeatures(), false, mc.level.registryAccess());
@@ -178,7 +178,7 @@ public final class SeasonHuntTests {
         // ---- unlocked: everything works
         l.add(new Step(null, () -> UiTest.server(p -> Seasons.set(p.server, 3)), 20));
         l.add(new Step(null, () -> UiTest.server(p -> check("S3 Lunar Form turns on at night: active " + com.xenowarriors.lunar.LunarForm.active(p) + ", wires style " + com.xenowarriors.forms.WeaponForms.style(p),
-                com.xenowarriors.lunar.LunarForm.active(p) && com.xenowarriors.forms.WeaponForms.style(p) == com.xenowarriors.forms.Form.Style.WIRE))), 40));
+                com.xenowarriors.lunar.LunarForm.active(p) && com.xenowarriors.forms.WeaponForms.style(p) == com.xenowarriors.forms.Form.Style.WIRE)), 40));
         l.add(new Step(null, () -> {
             CreativeModeTabs.tryRebuildTabContents(mc.player.connection.enabledFeatures(), false, mc.level.registryAccess());
             CreativeModeTabs.tryRebuildTabContents(mc.player.connection.enabledFeatures(), true, mc.level.registryAccess());
@@ -439,6 +439,6 @@ public final class SeasonHuntTests {
                 }), 2));
             }
         }
-        l.add(new Step(null, () -> UiTest.server(p -> { p.setGameMode(GameType.CREATIVE); log("sweep: " + hurt[0] + " of " + n[0] + " player skills touched the ally bot"); })), 5));
+        l.add(new Step(null, () -> UiTest.server(p -> { p.setGameMode(GameType.CREATIVE); log("sweep: " + hurt[0] + " of " + n[0] + " player skills touched the ally bot"); }), 5));
     }
 }
