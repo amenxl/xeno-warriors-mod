@@ -179,6 +179,7 @@ public class HumanNpcEntity extends PathfinderMob {
         goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.PHONE, 60, 3, 12));
         goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.BRIEFCASE, 70, 3, 10));
         goalSelector.addGoal(3, new NpcRangedGoal(this, NpcRangedGoal.Kind.KI, 90, 4, 18));
+        goalSelector.addGoal(3, new com.xenowarriors.npc.rebuild.RebuildGoal(this));   // putting their village back together
         goalSelector.addGoal(4, new HumanWorkGoal(this));      // chopping, mining, crafting, building their hut
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.75));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
