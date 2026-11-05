@@ -219,6 +219,7 @@ public final class MpSelfTest {
             reset();
             for (P p : PLAYERS) { p.p.setGameMode(GameType.SURVIVAL); p.p.removeAllEffects(); }
             ServerPlayer v = two[0].p;
+            for (PartyBotEntity b : PartyBots.bots(one[0].p)) b.discard();               // (the bots would revive them before the warp)
             v.invulnerableTime = 0;
             var z = EntityType.ZOMBIE.create(lv);
             if (z != null) { z.moveTo(v.getX() + 1, v.getY(), v.getZ(), 0F, 0F); v.hurt(lv.damageSources().mobAttack(z), 1000F); }
