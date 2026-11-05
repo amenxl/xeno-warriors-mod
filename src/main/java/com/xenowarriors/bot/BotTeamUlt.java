@@ -78,9 +78,9 @@ public final class BotTeamUlt {
     public static boolean tick(PartyBotEntity b, LivingEntity target) {
         if (!pairCharacter(b)) return false;
         if (TeamUltimate.busy(b)) return true;
-        UUID asked = WAITING.get(b.getUUID());
-        if (asked != null) {                                                    // waiting for an answer: no other skills (it keeps the Karma)
-            ServerPlayer p = b.getServer() == null ? null : b.getServer().getPlayerList().getPlayer(asked);
+        UUID waitingOn = WAITING.get(b.getUUID());
+        if (waitingOn != null) {                                                    // waiting for an answer: no other skills (it keeps the Karma)
+            ServerPlayer p = b.getServer() == null ? null : b.getServer().getPlayerList().getPlayer(waitingOn);
             Object[] pend = p == null ? null : TeamUltimate.pending(p);
             if (pend != null && b.getUUID().equals(pend[0])) return true;
             WAITING.remove(b.getUUID());
