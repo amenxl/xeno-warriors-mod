@@ -311,7 +311,6 @@ public final class VillageRebuild {
         double bestScore = Double.MAX_VALUE;
         for (int i = v.pending.nextSetBit(0); i >= 0 && scanned < PICK_SCAN; i = v.pending.nextSetBit(i + 1), scanned++) {
             BlockPos p = v.pos(i);
-            if (firstY != Integer.MIN_VALUE && p.getY() > firstY + 6) break;        // (sorted bottom-up: higher ones can wait)
             if (!l.isLoaded(p) || taken(v, i) || v.skipUntil.get(i) > now) continue;
             if (!needs(l, v, i)) { v.pending.clear(i); continue; }
             BlockState s = v.state(i);
@@ -320,14 +319,19 @@ public final class VillageRebuild {
                 if (lo >= 0 && v.pending.get(lo)) continue;                          // (goes in with its lower half)
             }
             if (!supported(v, p)) continue;
+            double d2 = w.distanceToSqr(p.getX() + .5, p.getY() + .5, p.getZ() + .5);
+            if (d2 > 40 * 40) continue;                                             // (too far to walk to: someone closer)
             if (firstY == Integer.MIN_VALUE) firstY = p.getY();
-            double score = w.distanceToSqr(p.getX() + .5, p.getY() + .5, p.getZ() + .5) + (p.getY() - firstY) * (p.getY() - firstY) * 24.0;
+            double score = d2 + (p.getY() - firstY) * 6.0;   // (close by, a little lower first)
             if (score < bestScore) { bestScore = score; best = i; }
         }
         return best;
     }
 
-    private static final double REACH = 4.6, FAR_REACH = 7.5;
+    /** How far they can set a block from: normally, after trying to get closer for 8 s, after 20 s (roof tops nobody can climb to). */
+    private static final double REACH = 4.6, FAR_REACH = 7.5, LONG_REACH = 11.0;
+
+    private static double reach(long tried) { return tried > 400 ? LONG_REACH : tried > 160 ? FAR_REACH : REACH; }
 
     /** One tick of one worker. False: done (released). */
     private static boolean work(Job j) {
@@ -339,8 +343,7 @@ public final class VillageRebuild {
         BlockPos p = j.v.pos(j.idx);
         Vec3 c = Vec3.atCenterOf(p);
         double dist = j.w.getEyePosition().distanceTo(c);
-        boolean stuck = now - j.since > 160;
-        double reach = stuck ? FAR_REACH : REACH;
+        double reach = reach(now - j.since);
         j.w.getLookControl().setLookAt(c.x, c.y, c.z);
         if (j.w instanceof Villager v && now % 10 == 0) {                // (a villager's brain walks it; a townsperson's RebuildGoal walks them)
             v.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(p, 0.6F, 2));
@@ -356,8 +359,10 @@ public final class VillageRebuild {
                 j.v.skipUntil.put(j.idx, now + 60);
                 if (!repick(j, now)) { stopWalking(j.w); return false; }
             }
-        } else if (now - j.since > 600) {                         // can't get there: someone else, later
-            j.v.skipUntil.put(j.idx, now + 1200);
+        } else if (now - j.since > 600) {                         // can't get there: someone else, later (and longer each time)
+            int f = j.v.fails.merge(j.idx, 1, Integer::sum);
+            j.v.skipUntil.put(j.idx, now + 600L * (1L << Math.min(f, 5)));
+            j.last = "unreachable";
             if (!repick(j, now)) { stopWalking(j.w); return false; }
         }
         return true;
@@ -385,7 +390,7 @@ public final class VillageRebuild {
 
     public static boolean inReach(Mob w, BlockPos p) {
         Job j = JOBS.get(w.getId());
-        double reach = j != null && j.l.getGameTime() - j.since > 160 ? FAR_REACH : REACH;
+        double reach = j == null ? REACH : reach(j.l.getGameTime() - j.since);
         return w.getEyePosition().distanceTo(Vec3.atCenterOf(p)) <= reach - 0.6;
     }
 

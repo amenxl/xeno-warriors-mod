@@ -112,6 +112,7 @@ public final class RebuildData extends SavedData {
         int cursor;
         public int restored;
         final it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap skipUntil = new it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap();
+        final it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap fails = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
 
         Village(int id, BlockPos anchor, BoundingBox box, String kind, int[] rel, short[] st, BlockState[] palette) {
             this.id = id; this.anchor = anchor; this.box = box; this.kind = kind; this.rel = rel; this.st = st; this.palette = palette;

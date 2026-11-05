@@ -39,7 +39,12 @@ public class RebuildGoal extends Goal {
         if (VillageRebuild.inReach(m, p)) { m.getNavigation().stop(); return; }
         if (--repath <= 0 || m.getNavigation().isDone()) {
             repath = 20;
-            m.getNavigation().moveTo(p.getX() + .5, p.getY(), p.getZ() + .5, 0.75);
+            net.minecraft.world.phys.Vec3 to = net.minecraft.world.phys.Vec3.atBottomCenterOf(p);
+            if (m.position().distanceTo(to) > 20) {                    // (paths only reach so far: head that way first)
+                net.minecraft.world.phys.Vec3 step = net.minecraft.world.entity.ai.util.DefaultRandomPos.getPosTowards(m, 16, 6, to, Math.PI / 3);
+                if (step != null) to = step;
+            }
+            m.getNavigation().moveTo(to.x, to.y, to.z, 0.75);
         }
     }
 }

@@ -151,7 +151,7 @@ public final class RebuildTests {
         }), 6);
         step("after_blast", () -> {}, 2);
         // ---- watch them put it back
-        int every = 100, rounds = 54;
+        int every = 100, rounds = 66;
         for (int r = 1; r <= rounds; r++) {
             int round = r;
             step(round == 4 ? "mid1" : round == 10 ? "mid2" : null, () -> server(p -> progress(p.serverLevel(), round * every / 20)), every);
@@ -173,7 +173,13 @@ public final class RebuildTests {
         mc.execute(() -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); if (mc.player != null) { mc.player.setYRot(yaw); mc.player.setXRot(pitch); } });
     }
 
+    /** The same block - or both plain ground (grass under a rebuilt floor turns to dirt on its own). */
+    private static boolean same(BlockState want, BlockState cur) {
+        return cur.is(want.getBlock()) || (want.is(net.minecraft.tags.BlockTags.DIRT) && cur.is(net.minecraft.tags.BlockTags.DIRT));
+    }
+
     private static boolean sameExact(BlockState want, BlockState cur) {
+        if (want.is(net.minecraft.tags.BlockTags.DIRT)) return cur.is(net.minecraft.tags.BlockTags.DIRT);
         if (want.getBlock() instanceof CropBlock) return cur.is(want.getBlock());           // (replanted: age starts over)
         if (want.hasProperty(BlockStateProperties.OPEN)) { want = want.setValue(BlockStateProperties.OPEN, false); if (cur.hasProperty(BlockStateProperties.OPEN)) cur = cur.setValue(BlockStateProperties.OPEN, false); }
         return want == cur;
@@ -186,7 +192,7 @@ public final class RebuildTests {
             if (i == goldIdx) continue;
             n++;
             BlockState cur = l.getBlockState(village.pos(i)), want = village.state(i);
-            if (cur.is(want.getBlock())) { same++; if (sameExact(want, cur)) exact++; }
+            if (same(want, cur)) { same++; if (sameExact(want, cur)) exact++; }
         }
         int[] k = VillageRebuild.workerKinds(village);
         log("t=" + sec + "s restored " + same + "/" + n + " (" + pct(same, n) + ") exact " + exact + " workers humans=" + k[0] + " villagers=" + k[1] + " pending=" + village.pendingCount());
@@ -203,7 +209,7 @@ public final class RebuildTests {
             n++;
             BlockPos q = village.pos(i);
             BlockState cur = l.getBlockState(q), want = village.state(i);
-            if (cur.is(want.getBlock())) { same++; if (sameExact(want, cur)) exact++; else if (bad.size() < 8) bad.add(q.toShortString() + " want " + want + " got " + cur); if (want == cur) exactRaw++; }
+            if (same(want, cur)) { same++; if (sameExact(want, cur)) exact++; else if (bad.size() < 8) bad.add(q.toShortString() + " want " + want + " got " + cur); if (want == cur) exactRaw++; }
             else if (bad.size() < 8) bad.add(q.toShortString() + " want " + want + " got " + cur);
         }
         log("final restored " + same + "/" + n + " (" + pct(same, n) + "), exact state " + exact + "/" + n + " (" + pct(exact, n) + ", raw incl. door open/crop age " + exactRaw + "), first complete at "
