@@ -123,6 +123,9 @@ def main():
         if side == "server" and m.get("side") == "client":
             rows.append((name, "client-only", "-", m["file"], "left out of the dedicated server"))
             continue
+        if m["file"] in os.environ.get("PACK_LEAVE_OUT", "").split(","):     # (to bisect: leave these jars out)
+            rows.append((name, "left out", "-", m["file"], "PACK_LEAVE_OUT"))
+            continue
         if m.get("skip"):
             rows.append((name, "SKIPPED", "-", m["file"], m["skip"]))
             continue
