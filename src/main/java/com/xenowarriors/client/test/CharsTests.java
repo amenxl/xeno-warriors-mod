@@ -145,8 +145,11 @@ public final class CharsTests {
             w.getItem().finishUsingItem(w, p.level(), p);
             int[] after = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> new int[]{d.statLevel[0], d.statLevel[1], d.statLevel[2], d.miningLevel, d.craftLevel, d.smeltLevel}).orElse(new int[0]);
             log("wings mikiko stats speed/attack/defense/mining/craft/smelt " + java.util.Arrays.toString(before) + " -> " + java.util.Arrays.toString(after));
-            var use = w.getItem().use(p.level(), p, InteractionHand.MAIN_HAND);
+            hold(p, new ItemStack(com.xenowarriors.item.ModItems.SKYLANDER_WINGS.get()));
+            var use = p.getMainHandItem().getItem().use(p.level(), p, InteractionHand.MAIN_HAND);
             log("wings mikiko can eat=" + use.getResult().consumesAction());
+            p.stopUsingItem();
+            p.getInventory().clearContent();
         }), 20);
         character(l, CharacterType.GARRY);
         l.add(null, () -> server(p -> {
@@ -260,7 +263,8 @@ public final class CharsTests {
         character(l, CharacterType.MIKIKO);
         int[] before = new int[1];
         l.add(null, () -> server(p -> {
-            p.setGameMode(GameType.SURVIVAL);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 600, 4));   // (the owner just watches)
+            p.serverLevel().setDayTime(18000);                                  // (no burning zombies)
             com.xenowarriors.karma.Karma.add(p, 100F);
             com.xenowarriors.soul.SoulSplit.setLevel(p, 30);
             before[0] = com.xenowarriors.soul.SoulSkills.casts;
@@ -278,8 +282,11 @@ public final class CharsTests {
             log("soul split started=" + started + " level=" + com.xenowarriors.soul.SoulSkills.abilityLevel(p, "soul_splitter"));
         }), 300);
         l.add(null, () -> server(p -> {
+            var souls = p.serverLevel().getEntitiesOfClass(com.xenowarriors.soul.SoulEntity.class, p.getBoundingBox().inflate(40));
             log("soul skill casts in 15s: " + (com.xenowarriors.soul.SoulSkills.casts - before[0]) + " last=" + com.xenowarriors.soul.SoulSkills.lastSkill
-                    + " owner hp=" + p.getHealth() + "/" + p.getMaxHealth());
+                    + " owner hp=" + p.getHealth() + "/" + p.getMaxHealth() + " souls=" + souls.size()
+                    + (souls.isEmpty() ? "" : " target=" + souls.get(0).getTarget()));
+            p.serverLevel().setDayTime(6000);
             if (com.xenowarriors.soul.SoulSplit.active(p)) com.xenowarriors.soul.SoulSplit.end(p, null);
             for (var z : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(30))) z.discard();
             p.setGameMode(GameType.CREATIVE);
