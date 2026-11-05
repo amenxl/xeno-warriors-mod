@@ -247,10 +247,10 @@ public final class CharsTests {
                 boolean rode = com.xenowarriors.mikiko.BladeRideJump.ride(p);
                 log("ride blade " + c[0] + " charLevel " + com.xenowarriors.stats.Stats.characterLevel(p) + " (flight at " + com.xenowarriors.mikiko.WindFlight.LEVEL
                         + ", canFly=" + com.xenowarriors.mikiko.WindFlight.canFly(p) + "): rode=" + rode + " vehicle=" + (p.getVehicle() == null ? "none" : p.getVehicle().getType().toShortString()));
-            }), 25);
+            }), c == cases[0] ? 2 : 25);
             if (c == cases[0]) {
-                l.add(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 3);
-                l.add("chars_blade_ride", () -> {}, 5);
+                l.add(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(20F); }, 4);
+                l.add("chars_blade_ride", () -> {}, 20);
             }
             l.add(null, () -> server(p -> { p.stopRiding(); p.setGameMode(GameType.CREATIVE); }), 20);
         }
