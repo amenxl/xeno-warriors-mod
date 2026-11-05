@@ -103,8 +103,7 @@ public final class DmzBotStats {
         float before = b.getMaxHealth();
         set(hp, HP_ID, "DragonMineZ health", bonus);
         set(dmg, DMG_ID, "DragonMineZ melee", add);
-        if (b.getHealth() > b.getMaxHealth()) b.setHealth(b.getMaxHealth());
-        if (b.tickCount < 5 && before < b.getMaxHealth()) b.setHealth(b.getMaxHealth());   // (just out: at full health)
+        b.maxHealthChanged(before);                                            // (in range; a relogged bot gets its saved health back; a fresh one starts full)
         String now = Math.round(b.getMaxHealth()) + "/" + Math.round(dmg.getValue() * 10) / 10.0;
         if (!now.equals(LAST.put(b.getUUID(), now)))
             note(b.character().getId() + " maxHp " + Math.round(before) + " -> " + Math.round(b.getMaxHealth()) + " (dmz +" + Math.round(bonus) + ", a player of it: "
