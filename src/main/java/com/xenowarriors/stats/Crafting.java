@@ -83,6 +83,7 @@ public final class Crafting {
         }
         if (up) levelUp(p, "Crafting level " + d.craftLevel + "! " + Math.round(doubleChance(d.craftLevel) * 100)
                 + "% chance to craft double.");
+        if (up) com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.CRAFTING);
     }
 
     private static void addSmeltXp(ServerPlayer p, float xp) {
@@ -97,6 +98,7 @@ public final class Crafting {
         }
         if (up) levelUp(p, "Smelting level " + d.smeltLevel + "! Your furnaces cook "
                 + Math.round(Stat.effective(d.smeltLevel) * SMELT_SPEED_PER_LEVEL * 100) + "% faster.");
+        if (up) com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.SMELTING);
     }
 
     private static void levelUp(ServerPlayer p, String text) {

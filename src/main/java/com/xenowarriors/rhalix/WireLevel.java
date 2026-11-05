@@ -43,6 +43,13 @@ public final class WireLevel {
         keep(p).putFloat(XP, 0F);
     }
 
+    /** Adds whole levels (a Stat Boost), keeping the XP toward the next one. */
+    public static void addLevels(ServerPlayer p, int n) {
+        int lv = Math.max(1, Math.min(MAX, level(p) + Math.max(0, n)));
+        keep(p).putInt(LV, lv);
+        if (lv >= MAX) keep(p).putFloat(XP, 0F);
+    }
+
     public static void addXp(ServerPlayer p, float amount) {
         if (amount <= 0 || ModCapabilities.getType(p) != CharacterType.RHALIX) return;
         int lv = level(p);
@@ -56,6 +63,7 @@ public final class WireLevel {
             p.sendSystemMessage(Component.literal("Rhalix's wires reached level " + lv + "!").withStyle(ChatFormatting.LIGHT_PURPLE));
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1F, 0.8F);
             com.xenowarriors.forms.WeaponForms.announceUnlocks(p, before, lv);
+            com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.WIRES);
         }
     }
 }

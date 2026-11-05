@@ -56,6 +56,7 @@ public class XenoWarriors {
         ModItems.ITEMS.register(modBus);
         com.xenowarriors.forms.FormItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
+        com.xenowarriors.statboost.StatBoosts.register(modBus);
         com.xenowarriors.world.AddDiscLootModifier.SERIALIZERS.register(modBus);
         com.xenowarriors.fox.ModMenus.MENUS.register(modBus);
         ModSounds.SOUNDS.register(modBus);

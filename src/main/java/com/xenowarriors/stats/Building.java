@@ -167,6 +167,7 @@ public final class Building {
             if (reachUp || saveUp) com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), ModCapabilities.getType(p).ordinal(), -1,
                     "Building level " + lv, reachUp ? "Block reach +" + reach(lv) : pct(saveChance(lv)) + " chance to keep blocks", "normal");
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, reachUp ? 0.9F : 1.3F);
+            com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.BUILDING);
         }
     }
 
@@ -191,6 +192,7 @@ public final class Building {
         if (lv >= MAX_LEVEL) xp = 0;
         c.putInt("lv", lv); c.putFloat("xp", xp);
         r.put(k, c);
+        if (lv > before) com.xenowarriors.statboost.StatBoosts.botLeveledUp(b, o, com.xenowarriors.statboost.BoostStat.BUILDING);
         if (lv > before) o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal(": Building level " + lv
                 + " (reach +" + reach(lv) + ", " + pct(saveChance(lv)) + " keep)")).withStyle(ChatFormatting.GREEN), true);
     }
