@@ -20,6 +20,12 @@ import java.util.Iterator;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class PoseGuard {
     private static final Deque<PoseStack> OPEN = new ArrayDeque<>();
+    /**
+     * Mobs another mod draws itself from inside RenderLivingEvent.Pre (Epic Fight: at normal priority, then it cancels
+     * the event). Whole-body transforms (knocked down, squished, pulled into the blade) go on at high priority for them,
+     * and are closed again in a cancelled Pre, since no Post follows.
+     */
+    public static java.util.function.Predicate<net.minecraft.world.entity.LivingEntity> otherModDraws = e -> false;
     private static boolean warned;
 
     private PoseGuard() {}

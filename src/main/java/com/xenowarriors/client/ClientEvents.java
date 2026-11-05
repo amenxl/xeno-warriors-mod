@@ -108,10 +108,22 @@ public final class ClientEvents {
     /** (tests) how many times someone was drawn squished. */
     public static int squishedDraws;
 
+    /** (a mob Epic Fight draws itself, at normal priority: squished before it does - see PoseGuard.otherModDraws) */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
+    public static void onRenderLivingPreEarly(net.minecraftforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
+        if (com.xenowarriors.client.PoseGuard.otherModDraws.test(event.getEntity())) onRenderLivingPre(event);
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
+    public static void onRenderLivingPreDone(net.minecraftforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
+        if (event.isCanceled() && SQUISHED.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
+    }
+
     /** Gravity Compress squashes its target flat and makes it shake. */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderLivingPre(net.minecraftforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
         net.minecraft.world.entity.LivingEntity e = event.getEntity();
+        if (SQUISHED.contains(e.getId())) return;                            // (already squished, early)
         float s = ClientSkillState.squish(e.getId());
         if (s <= 0F) return;
         float t = e.tickCount + event.getPartialTick();

@@ -60,6 +60,21 @@ public final class EpicFightCompat {
             }
         };
         com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
+        // Epic Fight draws its mobs from inside RenderLivingEvent.Pre and cancels it: our whole-body poses go on first
+        com.xenowarriors.client.PoseGuard.otherModDraws = EpicFightCompat::drawsMob;
+        // its third-person camera skips vanilla's camera setup (and our cutscene / vehicle camera at its end): put ours
+        // on once it has built its own
+        try {
+            yesman.epicfight.api.client.event.EpicFightClientHooks.Camera.BUILD_TRANSFORM_POST.registerEvent(e -> {
+                net.minecraft.client.Camera cam = e.getCamera();
+                if (cam != null && cam.getEntity() != null && (Object) cam instanceof com.xenowarriors.client.XwCamera ours) {
+                    ours.xenowarriors$applyOurs(cam.getEntity(), cam.isDetached(), e.getPartialTick());
+                    cameraPosts++;
+                }
+            }, "xenowarriors", -97_311);    // (its hooks keep one listener per priority number: an odd, low one - last, and nobody else's)
+        } catch (Throwable t) {
+            com.xenowarriors.XenoWarriors.LOGGER.warn("Epic Fight camera hook unavailable: {}", t.toString());
+        }
         // Mikiko and Rhalix never take Epic Fight's fists-up guard: they show their own fighting stance instead
         com.xenowarriors.client.AttackHooks.externalGuard = p -> ownStance(p) && ownWeapon(p) && guarding(p);
         com.xenowarriors.client.AttackHooks.externalFace = EpicFightCompat::face;
@@ -89,7 +104,24 @@ public final class EpicFightCompat {
         };
     }
 
-    private static final java.util.Map<Integer, Object[]> LAST = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());   // id -> {animation, elapsed}
+    /** (tests) times our camera was put on after Epic Fight built its own. */
+    public static int cameraPosts;
+
+    /** A mob (not a player: those go through RenderEpicFightPlayerEvent) Epic Fight draws itself this frame. */
+    private static boolean drawsMob(net.minecraft.world.entity.LivingEntity e) {
+        if (e instanceof net.minecraft.world.entity.player.Player) return false;
+        try {
+            var engine = yesman.epicfight.client.ClientEngine.getInstance().renderEngine;
+            if (engine == null || !engine.hasRendererFor(e)) return false;
+            var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(e,
+                    yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch.class);
+            return patch != null && patch.overrideRender();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static final java.util.Map<Integer, Object[]> LAST =com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());   // id -> {animation, elapsed}
     private static final java.util.Map<Integer, Integer> STARTED = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
     private static final java.util.Map<Integer, Float> HIT = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
     private static int battleRequests;

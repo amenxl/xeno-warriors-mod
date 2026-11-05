@@ -139,7 +139,7 @@ public final class HuntEfTests {
             }); }, 20));
         l.add(new Step(null, () -> { startCam(1); UiTest.server(p -> log("gravity barrage used=" + new com.xenowarriors.skill.rhalix.GravityBarrageSkill().use(p))); }, 45));
         l.add(new Step("huntef_" + tag + "_barrage_cam", () -> log("cutscene active=" + com.xenowarriors.client.UltimateCutscene.active()
-                + " camera type " + mc.options.getCameraType() + (ef() ? " tps=" + Ef.tps() : "")), 40));
+                + " camera type " + mc.options.getCameraType() + (ef() ? " tps=" + Ef.tps() + " camera hook calls " + Ef.cameraPosts() : "")), 40));
         l.add(new Step(null, () -> {
             boolean ok = frames > 10 && maxOff < 0.05;
             log("cutscene camera: frames " + frames + ", max distance from the cutscene's camera " + f(maxOff) + " blocks, max yaw off " + f(maxAng)
@@ -238,6 +238,10 @@ public final class HuntEfTests {
                 var p = patch();
                 return "battle=" + (p != null && p.isEpicFightMode()) + " tpsType=" + yesman.epicfight.config.ClientConfig.getCameraMode();
             } catch (Throwable t) { return "error " + t; }
+        }
+
+        static int cameraPosts() {
+            try { return (int) com.xenowarriors.client.compat.epicfight.EpicFightCompat.class.getField("cameraPosts").get(null); } catch (Throwable t) { return -1; }
         }
 
         static boolean tps() {

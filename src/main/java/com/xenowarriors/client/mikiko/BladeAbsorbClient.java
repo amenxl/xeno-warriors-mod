@@ -133,9 +133,21 @@ public final class BladeAbsorbClient {
 
     private static final Map<Integer, Boolean> PUSHED = com.xenowarriors.client.ClientReset.track(new HashMap<>());
 
+    /** (a mob Epic Fight draws itself, at normal priority: pulled in before it does - see PoseGuard.otherModDraws) */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
+    public static void onRenderPreEarly(RenderLivingEvent.Pre<?, ?> event) {
+        if (com.xenowarriors.client.PoseGuard.otherModDraws.test(event.getEntity())) onRenderPre(event);
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
+    public static void onRenderPreDone(RenderLivingEvent.Pre<?, ?> event) {
+        if (event.isCanceled() && PUSHED.remove(event.getEntity().getId()) != null) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
+    }
+
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
         LivingEntity e = event.getEntity();
+        if (PUSHED.containsKey(e.getId())) return;                            // (already pulled in, early)
         Absorb a = ACTIVE.get(e.getId());
         if (a == null) return;
         Minecraft mc = Minecraft.getInstance();
