@@ -20,7 +20,8 @@ public final class BlockPose {
     private BlockPose() {}
 
     private static float weight(Player p, float age) {
-        boolean on = com.xenowarriors.client.compat.DmzCompat.blocking(p);
+        boolean on = com.xenowarriors.client.compat.DmzCompat.blocking(p)
+                || (p instanceof AbstractClientPlayer cp && ClientCharacterData.get(cp) == CharacterType.RHALIX && AttackHooks.externalGuard.test(p));   // Epic Fight's guard: his own
         float[] w = W.computeIfAbsent(p.getId(), k -> new float[]{0F, age});
         float dt = Mth.clamp(age - w[1], 0F, 3F);
         w[1] = age;

@@ -60,6 +60,8 @@ public final class EpicFightCompat {
             }
         };
         com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
+        // Mikiko and Rhalix never take Epic Fight's fists-up guard: they show their own fighting stance instead
+        com.xenowarriors.client.AttackHooks.externalGuard = p -> ownStance(p) && ownWeapon(p) && guarding(p);
         com.xenowarriors.client.AttackHooks.externalFace = EpicFightCompat::face;
         com.xenowarriors.client.AttackHooks.externalStanceFace = p -> {
             var patch = patch(p);
@@ -310,7 +312,9 @@ public final class EpicFightCompat {
     private static boolean efDraws(AbstractClientPlayer p, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch) {
         boolean action = Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION));
         boolean own = ownWeapon(p);
-        if (action) return !(own && basicAttack(currentAnimation(patch)));    // their own combos; Epic Fight's other actions
+        Object anim = currentAnimation(patch);
+        if (own && ownStance(p) && (guarding(p) || !efOnly(anim))) return false;   // no fists-up pose of Epic Fight's: ours
+        if (action) return !(own && basicAttack(anim));    // their own combos; Epic Fight's other actions
         boolean special = com.xenowarriors.client.FlightTracker.isFlying(p) || p.isPassenger() || p.isSleeping();
         return !own && !special && !com.xenowarriors.client.DiscTracker.dancing(p);   // another weapon: its stance (unless dancing)
     }
@@ -322,6 +326,26 @@ public final class EpicFightCompat {
         Object anim = currentAnimation(patch);
         return "battle=" + patch.isEpicFightMode() + " action=" + Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION))
                 + " anim=" + anim + " efDraws=" + efDraws(p, patch) + " guard=" + guarding(p);
+    }
+
+    /** Characters with their own fighting stance (Mikiko and Rhalix): Epic Fight's bare-handed poses aren't used on them. */
+    private static boolean ownStance(net.minecraft.world.entity.player.Player p) {
+        CharacterType t = ClientCharacterData.get(p);
+        return t == CharacterType.MIKIKO || t == CharacterType.RHALIX;
+    }
+
+    /**
+     * What only Epic Fight can show for Mikiko and Rhalix with bare hands or the Hekublade: dodges and rolls, being hit
+     * or knocked down, and its skills / special attacks. Anything else (its combat idle with the fists up, a guard,
+     * a transition between them) is drawn with their own animations.
+     */
+    private static boolean efOnly(Object anim) {
+        if (anim == null) return false;
+        String path = (anim.getClass().getSimpleName() + " " + anim).toLowerCase(java.util.Locale.ROOT);
+        if (path.contains("guard")) return false;
+        if (path.contains("dodge") || path.contains("roll") || path.contains("step") || path.contains("knockdown")
+                || path.contains("hit") || path.contains("stun") || path.contains("fall") || path.contains("death")) return true;
+        return anim instanceof yesman.epicfight.api.animation.types.AttackAnimation;
     }
 
     /** Epic Fight's guard (or another fists-up stance) is playing. */

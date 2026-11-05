@@ -22,7 +22,7 @@ public final class Busy {
 
     /** Busy: doing something (see {@link #action}), or another idle animation is showing (see Idles). */
     public static boolean busy(Player p) {
-        return action(p);
+        return action(p) || Idles.any(p);
     }
 
     /** Doing something that isn't an idle animation (these always win over idles). */
@@ -35,7 +35,11 @@ public final class Busy {
                 || AttackHooks.externalBusy.test(p)
                 || KarmaFocusClient.focusing(p)
                 || ArrowPullClient.active(p)
-                || RainIdle.active(p)
+                || com.xenowarriors.client.EntityPoses.posed(p)                       // our cast / clash / work poses
+                || com.xenowarriors.client.combo.ComboClient.swing(p) != null         // a combo swing
+                || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)
+                || AttackHooks.externalGuard.test(p)
+                || com.xenowarriors.client.party.PartyClient.knockedOut(p)
                 || com.xenowarriors.client.mikiko.CombatStance.wanted(p) != com.xenowarriors.client.mikiko.CombatStance.NONE   // on guard
                 || (efWeapon(p) && !DiscTracker.anyNear(p));
     }

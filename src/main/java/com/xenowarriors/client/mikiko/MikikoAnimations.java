@@ -311,7 +311,8 @@ public final class MikikoAnimations {
                 || Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) > 0.01
                 || !p.onGround() || p.isCrouching() || p.swinging || p.hurtTime > 0 || p.isUsingItem()
                 || p.isPassenger() || p.isSleeping() || p.isSwimming() || p.isFallFlying() || s.move != null
-                || ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.Busy.busy(p);
+                || ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.Busy.action(p)
+                || com.xenowarriors.client.Idles.taken(p, com.xenowarriors.client.Idles.MIKIKO);   // (dancing to Garry, the rain...: no idles of his own on top)
         s.still = moving ? 0 : s.still + 1;
         if (!Hekublade.isBlade(p.getMainHandItem()) || s.move != null || s.swordTired > 0.5F) s.backSlung = false;
         else if (p.isSprinting() && p.onGround() && s.run > 0.35F) s.backSlung = true;
@@ -404,6 +405,19 @@ public final class MikikoAnimations {
             int c = (s.still - SIT_AFTER) % FIRE_CYCLE;
             if (c >= 40 && c < 200) MikikoEffects.fireShow(level, p, c - 40);
         }
+        // one body animation at a time: sitting, his stretches, the song dances... hold the body while they show
+        if (s.sit > 0.01F || s.groove > 0F || s.hype > 0F || s.discW > 0F || s.alert > 0F || s.robot > 0F || s.vibe > 0F
+                || s.poison > 0F || s.tired > 0F || geckoIdleShowing(p, s))
+            com.xenowarriors.client.Idles.hold(p, com.xenowarriors.client.Idles.MIKIKO);
+    }
+
+    /** One of his GeckoLib standing idles (stretch, scratch, kicking the dirt) is playing now (same timing as apply). */
+    private static boolean geckoIdleShowing(AbstractClientPlayer p, State s) {
+        if (s.still < LOOK_AROUND_AFTER || s.sit >= 0.5F || Hekublade.isBlade(p.getMainHandItem())) return false;
+        int since = s.still - LOOK_AROUND_AFTER;
+        String[] idles = com.xenowarriors.client.CalmTracker.longCalm(p) ? CALM_IDLES : IDLES;
+        String idle = idles[Math.floorMod(since / IDLE_CYCLE + p.getId(), idles.length)];
+        return since % IDLE_CYCLE <= GeoAnims.length(idle);
     }
 
     private static void tryDoubleJump(ClientLevel level, net.minecraft.client.player.LocalPlayer p, State s, int now) {

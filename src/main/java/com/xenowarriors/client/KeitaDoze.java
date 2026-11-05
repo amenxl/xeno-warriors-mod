@@ -32,8 +32,9 @@ public final class KeitaDoze {
         for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!keita(p)) { STILL.remove(p.getId()); continue; }
             int[] s = STILL.computeIfAbsent(p.getId(), k -> new int[1]);
-            boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p) && p.hurtTime == 0 && !p.isUsingItem();
+            boolean calm = Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.action(p) && !Idles.taken(p, Idles.DOZE) && p.hurtTime == 0 && !p.isUsingItem();
             s[0] = calm ? s[0] + 1 : 0;
+            if (s[0] >= AFTER) Idles.hold(p, Idles.DOZE);
             if (s[0] > AFTER + 20 && s[0] % 30 == 0)
                 mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.NOTE, p.getX() + 0.3, p.getY() + 2.3, p.getZ(), 0.6, 0, 0);
         }
