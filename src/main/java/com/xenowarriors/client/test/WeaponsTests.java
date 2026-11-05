@@ -99,7 +99,8 @@ public final class WeaponsTests {
     private static void arena(ServerPlayer p) {
         var level = p.serverLevel();
         if (HOME[1] == 0) {
-            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p.blockPosition());
+            BlockPos at = HOME[0] != 0 || HOME[2] != 0 ? BlockPos.containing(HOME[0], 64, HOME[2]) : p.blockPosition();
+            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
             HOME[0] = top.getX() + 0.5; HOME[1] = top.getY() + 1; HOME[2] = top.getZ() + 0.5;
         }
         int y0 = (int) HOME[1];
@@ -133,6 +134,12 @@ public final class WeaponsTests {
             }
             mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = true;
         }, 5);
+    }
+
+    /** The local player facing south (+Z), level - the way the cameras expect. */
+    private static void face(Minecraft mc) {
+        var p = mc.player;
+        p.setYRot(0); p.yRotO = 0; p.setXRot(0); p.xRotO = 0; p.yBodyRot = 0; p.yBodyRotO = 0; p.setYHeadRot(0); p.yHeadRotO = 0;
     }
 
     private static void uncamera(Minecraft mc, MikikoTests.Steps l) {
@@ -351,6 +358,7 @@ public final class WeaponsTests {
             camera(mc, l, -1.8, -0.15, 1.6, -131.6F, 6F);
             for (Form f : new Form[]{Form.PISTOL, Form.RIFLE, Form.SHOTGUN}) {
                 l.add(null, () -> server(p -> { p.setYRot(0); p.setYHeadRot(0); p.setXRot(0); WeaponForms.summon(p, f, false); }), 45);
+                l.add(null, () -> face(mc), 3);
                 l.add("weapons_hand_" + s.name().toLowerCase() + "_" + f.name().toLowerCase(), () -> {}, 3);
             }
             // first person, aiming the rifle
@@ -394,6 +402,7 @@ public final class WeaponsTests {
             camera(mc, l, -1.8, -0.15, 1.6, -131.6F, 6F);
             for (Form f : new Form[]{Form.PICKAXE, Form.AXE, Form.SHOVEL, Form.HOE}) {
                 l.add(null, () -> server(p -> { p.setYRot(0); p.setYHeadRot(0); WeaponForms.summon(p, f, false); }), 45);
+                l.add(null, () -> face(mc), 3);
                 l.add("weapons_tool_" + s.name().toLowerCase() + "_" + f.name().toLowerCase(), () -> {}, 3);
             }
             if (s == Form.Style.WIRE) {
@@ -448,6 +457,7 @@ public final class WeaponsTests {
         l.add("weapons_umbrella_rain_back", () -> {}, 10);
         l.add(null, () -> log("umbrella client: canopies drawn " + FormsFx.canopiesDrawn + ", rain columns stopped at the canopy " + (FormsFx.rainColumnsBlocked - cols[0])), 3);
         uncamera(mc, l);
+        l.add(null, () -> server(p -> com.xenowarriors.mikiko.Netsu.stop(p)), 30);
         l.add(null, () -> { mc.player.setXRot(-60); }, 10);
         l.add("weapons_umbrella_rain_firstperson_up", () -> {}, 5);
         // and without it, for comparison
