@@ -92,12 +92,20 @@ public final class Misc3Tests {
         p.connection.teleport(p.getX() + dx, p.getY(), p.getZ(), p.getYRot(), p.getXRot());
     }
 
-    private static String dist(ServerPlayer p) {
-        Mob fox = find(p, foxId), ch = find(p, chickId);
-        return "fox " + (fox == null ? "gone" : f(fox.distanceTo(p))) + ", chicken " + (ch == null ? "gone" : f(ch.distanceTo(p)));
+    /** The pets' current bodies (a pet called back from far away may get a new one). */
+    private static void refresh(ServerPlayer p) {
+        if (!FoxPets.records(p).isEmpty() && FoxPets.records(p).getCompound(0).hasUUID("uuid")) foxId = FoxPets.records(p).getCompound(0).getUUID("uuid");
+        if (!WingPets.records(p).isEmpty() && WingPets.records(p).getCompound(0).hasUUID("uuid")) chickId = WingPets.records(p).getCompound(0).getUUID("uuid");
     }
 
-    private static boolean near(ServerPlayer p, UUID id) { Mob m = find(p, id); return m != null && m.distanceTo(p) <= 6; }
+    private static String dist(ServerPlayer p) {
+        refresh(p);
+        Mob fox = find(p, foxId), ch = find(p, chickId);
+        String wr = WingPets.records(p).isEmpty() ? "" : " [chicken rec dead=" + WingPets.records(p).getCompound(0).getBoolean("dead") + " gen=" + WingPets.records(p).getCompound(0).getInt("gen") + "]";
+        return wr + " fox " + (fox == null ? "gone" : f(fox.distanceTo(p))) + ", chicken " + (ch == null ? "gone" : f(ch.distanceTo(p)));
+    }
+
+    private static boolean near(ServerPlayer p, boolean fox) { refresh(p); Mob m = find(p, fox ? foxId : chickId); return m != null && m.distanceTo(p) <= 6; }
 
     private static void whistle(Minecraft mc) {
         // a fox (Mikiko tames it) and a chicken (Rhalix tames it)
@@ -141,7 +149,7 @@ public final class Misc3Tests {
             p.getCooldowns().removeCooldown(w.getItem());
             w.getItem().use(p.serverLevel(), p, InteractionHand.MAIN_HAND);
         }), 10);
-        step("whistle_kaeru", () -> server(p -> check("pet whistle item as Kaeru calls fox + winged", near(p, foxId) && near(p, chickId),
+        step("whistle_kaeru", () -> server(p -> check("pet whistle item as Kaeru calls fox + winged", near(p, true) && near(p, false),
                 dist(p) + " (answered: " + FoxPets.lastWhistle + ") item name " + new ItemStack(com.xenowarriors.item.ModItems.FOX_WHISTLE.get()).getHoverName().getString())), 10);
         // Rhalix, through the Pets menu's whistle button: foxes answer him too now
         step(null, () -> CHAR.accept(CharacterType.RHALIX), 20);
@@ -150,13 +158,13 @@ public final class Misc3Tests {
             log("before the Pets-menu whistle (Rhalix): " + dist(p));
             com.xenowarriors.pet.PetCare.action(p, 0, 0, com.xenowarriors.pet.PetCare.WHISTLE, 0, null);
         }), 10);
-        step(null, () -> server(p -> check("pets menu whistle as Rhalix calls the fox too", near(p, foxId) && near(p, chickId), dist(p) + " (answered: " + FoxPets.lastWhistle + ")")), 10);
+        step(null, () -> server(p -> check("pets menu whistle as Rhalix calls the fox too", near(p, true) && near(p, false), dist(p) + " (answered: " + FoxPets.lastWhistle + ")")), 10);
         // Mikiko, /xeno fox call: the chicken answers her too
         step(null, () -> CHAR.accept(CharacterType.MIKIKO), 20);
         step(null, () -> server(p -> { farAway(p, 40); }), 20);
         step(null, () -> server(p -> p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno fox call")), 10);
         step(null, () -> server(p -> {
-            check("/xeno fox call as Mikiko calls the chicken too", near(p, foxId) && near(p, chickId), dist(p) + " (answered: " + FoxPets.lastWhistle + ")");
+            check("/xeno fox call as Mikiko calls the chicken too", near(p, true) && near(p, false), dist(p) + " (answered: " + FoxPets.lastWhistle + ")");
             Mob fox = find(p, foxId), ch = find(p, chickId);
             if (fox != null) fox.setNoAi(false);
             if (ch != null) ch.setNoAi(false);
@@ -210,7 +218,7 @@ public final class Misc3Tests {
             l.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, p.server);
             l.getGameRules().getRule(GameRules.RULE_MOBGRIEFING).set(true, p.server);
             VillageRebuild.speed = 4;
-            BlockPos c = p.blockPosition().offset(400, 0, 0);
+            BlockPos c = p.blockPosition();
             p.getAbilities().flying = true; p.onUpdateAbilities();
             p.connection.teleport(c.getX() + .5, 120, c.getZ() + .5, 0F, 60F);
         }); }, 60);
@@ -446,12 +454,12 @@ public final class Misc3Tests {
                 if (k == DmzGuns.Kind.MORTAR) p.connection.teleport(b.x + 2, b.y, b.z, 0F, 0F);   // (next to where it lands)
                 else p.connection.teleport(mid.x, mid.y, mid.z, 0F, 0F);
                 shots0 = BotRanged.blasterShots; held0 = BotRanged.blasterHeld;
-            }), 5);
+            }), k == DmzGuns.Kind.MORTAR ? 120 : 60);
             step(null, () -> server(p -> {
                 int shots = BotRanged.blasterShots - shots0, heldN = BotRanged.blasterHeld - held0;
                 check(k + " holds fire with its owner in the way", shots == 0 && heldN > 0, shots + " shots, held " + heldN + " times, owner at " + f(p.distanceTo(bot)) + " from the bot");
                 p.connection.teleport(bot.getX() + 6, bot.getY(), bot.getZ() - 3, 30F, 10F);
-            }), k == DmzGuns.Kind.MORTAR ? 120 : 60);
+            }), 5);
         }
         // a nearly-spent rifle: it fires until it breaks, then it's gone (durability is its ammo)
         step(null, () -> server(p -> {
