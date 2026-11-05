@@ -57,7 +57,7 @@ public final class RhalixComboFx {
         int start = Integer.MIN_VALUE, hit = -2; boolean heavy; int done;   // effects of this swing already spawned (bits)
         float puddle; int puddleHold;
     }
-    private static final Map<Integer, Track> TRACKS = ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Track> TRACKS = ClientReset.perLife(new HashMap<>());
     private static boolean warned;
 
     private RhalixComboFx() {}

@@ -86,7 +86,7 @@ final class MikikoEffects {
     private static final DustParticleOptions ORANGE = new DustParticleOptions(new Vector3f(1.0F, 0.55F, 0.08F), 1.1F);
     private static final DustParticleOptions WHITE = new DustParticleOptions(new Vector3f(1.0F, 0.97F, 0.92F), 0.9F);
     private static final DustParticleOptions[] STRANDS = {RED, ORANGE, WHITE};
-    private static final java.util.Map<Integer, int[]> SUMMONS = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());   // id -> {start tick, length}
+    private static final java.util.Map<Integer, int[]> SUMMONS = com.xenowarriors.client.ClientReset.perLife(new java.util.HashMap<>());   // id -> {start tick, length}
 
     /** quick = the short version used when the blade flashes in mid-combo. */
     static void startSummon(Player p, boolean quick) {
@@ -95,7 +95,7 @@ final class MikikoEffects {
     }
 
     // ---- the little "XL" (AmenXL Mikiko) that pops up over his hand as the blade forms ----
-    private static final java.util.Map<Integer, int[]> XL = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());   // id -> {show tick, quick}
+    private static final java.util.Map<Integer, int[]> XL = com.xenowarriors.client.ClientReset.perLife(new java.util.HashMap<>());   // id -> {show tick, quick}
     private static final int XL_LIFE = 28;
 
     // ---- little z's floating up while he sleeps ----

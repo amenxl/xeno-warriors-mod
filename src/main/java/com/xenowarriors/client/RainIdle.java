@@ -26,7 +26,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class RainIdle {
     private static final int START_AFTER = 80, CYCLE = 420, LENGTH = 110;
-    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {ticks standing in the rain}
+    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());   // id -> {ticks standing in the rain}
 
     private RainIdle() {}
 

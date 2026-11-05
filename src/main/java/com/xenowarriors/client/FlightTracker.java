@@ -12,7 +12,7 @@ import java.util.Map;
  * while and not falling fast" (or gliding with an elytra) as flying.
  */
 public final class FlightTracker {
-    private static final Map<Integer, Integer> AIR_TICKS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Integer> AIR_TICKS = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     private FlightTracker() {}
 

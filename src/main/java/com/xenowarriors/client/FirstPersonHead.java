@@ -33,6 +33,15 @@ public final class FirstPersonHead {
                 && !ClientCharacterData.isPreviewing() && ClientCharacterData.get(p) != CharacterType.NONE;
     }
 
+    /**
+     * No whole-body moves (tipped over, lifted, spun, diving...) on this draw: your own body seen from inside it, or a
+     * menu's preview of the player (the inventory) - there a knocked-down or diving body spilled out of its box over
+     * the slots.
+     */
+    public static boolean noWholeBody(AbstractClientPlayer p) {
+        return inGui || ownFirstPerson(p);
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPre(RenderPlayerEvent.Pre event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !ownFirstPerson(p)) return;

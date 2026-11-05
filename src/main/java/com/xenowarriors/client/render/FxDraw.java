@@ -21,7 +21,7 @@ public final class FxDraw {
     private FxDraw() {}
 
     public static VertexConsumer glow(MultiBufferSource buffers) {
-        return buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE));
+        return buffers.getBuffer(com.xenowarriors.client.compat.ShaderCompat.glow(WHITE));
     }
 
     /**

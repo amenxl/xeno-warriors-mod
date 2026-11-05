@@ -104,7 +104,7 @@ public final class ClientEvents {
         }
     }
 
-    private static final java.util.Set<Integer> SQUISHED = new java.util.HashSet<>();
+    private static final java.util.Set<Integer> SQUISHED = ClientReset.perLifeSet(new java.util.HashSet<>());
     /** (tests) how many times someone was drawn squished. */
     public static int squishedDraws;
 

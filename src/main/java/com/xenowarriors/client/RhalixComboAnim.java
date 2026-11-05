@@ -412,7 +412,7 @@ public final class RhalixComboAnim {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !rhalix(p)) return;
-        if (FirstPersonHead.ownFirstPerson(p) || ClientCharacterData.standStill) return;
+        if (FirstPersonHead.noWholeBody(p) || ClientCharacterData.standStill) return;
         float[] b = bodyMotion(p, event.getPartialTick());
         if (b == null) return;
         PoseStack pose = event.getPoseStack();

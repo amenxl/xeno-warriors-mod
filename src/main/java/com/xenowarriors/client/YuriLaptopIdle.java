@@ -34,7 +34,7 @@ import java.util.Map;
 public final class YuriLaptopIdle {
     private static final int AFTER = 100;
     private static final ResourceLocation TEX = XenoWarriors.id("textures/entity/holo_laptop.png");
-    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     private YuriLaptopIdle() {}
 
@@ -121,7 +121,7 @@ public final class YuriLaptopIdle {
         if (t < 18F) return;
         float s = sm((t - 18F) / 6F);
         float flicker = 0.85F + 0.15F * Mth.sin(t * 0.7F);
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentEmissive(TEX));   // see-through, glowing
+        VertexConsumer vc = buffers.getBuffer(com.xenowarriors.client.compat.ShaderCompat.glow(TEX));   // see-through, glowing
         pose.pushPose();
         pose.translate(0F, 10.4F / 16F, -9.0F / 16F);              // in front of her, at hand height
         pose.scale(s, s, s);

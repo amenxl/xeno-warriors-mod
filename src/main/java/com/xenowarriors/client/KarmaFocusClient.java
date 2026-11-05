@@ -31,8 +31,8 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KarmaFocusClient {
     private static final int HAND_TO_HEAD = 70;
-    private static final Map<Integer, float[]> W = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {weight, prev, on, ticks focusing}
-    private static final Set<Integer> LIFTED = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
+    private static final Map<Integer, float[]> W = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());   // id -> {weight, prev, on, ticks focusing}
+    private static final Set<Integer> LIFTED = com.xenowarriors.client.ClientReset.perLifeSet(new HashSet<>());
 
     private KarmaFocusClient() {}
 
@@ -149,7 +149,7 @@ public final class KarmaFocusClient {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (event.isCanceled() || !(event.getEntity() instanceof AbstractClientPlayer p) || !rhalix(p)
-                || FirstPersonHead.ownFirstPerson(p)) return;
+                || FirstPersonHead.noWholeBody(p)) return;
         float w = weight(p);
         if (w <= 0F) return;
         var pose = event.getPoseStack();

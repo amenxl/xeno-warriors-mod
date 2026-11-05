@@ -42,8 +42,8 @@ public final class ComboClient {
     public record Swing(ComboStyle style, int hit, boolean heavy, int start, int duration) {
         public float progress(float age) { return (age - start) / duration; }
     }
-    private static final Map<Integer, Swing> SWINGS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
-    private static final Map<Integer, Integer> STARTED_AT = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> client tick a combo swing began
+    private static final Map<Integer, Swing> SWINGS = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
+    private static final Map<Integer, Integer> STARTED_AT = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());   // id -> client tick a combo swing began
 
     // your own string
     private static Swing cur;
@@ -54,6 +54,26 @@ public final class ComboClient {
     private static int ticks;
 
     private ComboClient() {}
+
+    static {
+        // you respawned or went through a portal: your tick count starts again from 0, so a swing cut off by it
+        // would never end (no more combos, walking slowed) - start clean
+        com.xenowarriors.client.ClientReset.onNewLife(id -> {
+            LocalPlayer p = Minecraft.getInstance().player;
+            if (p != null && p.getId() == id) resetOwn();
+        });
+    }
+
+    /** (tests) your own swing is still running (it holds your walking back and the next hit waits on it). */
+    public static boolean committed() { return cur != null; }
+
+    /** Forgets your own string (a new life, or the tests). */
+    public static void resetOwn() {
+        cur = null; struck = false; queued = false; queuedHeavy = false;
+        lastHit = -1; lastEnd = -1000; lockUntil = 0; lastWasEnder = false; lastStyle = null;
+        holding = false; testHoldUntil = -1; queuedSpecial = -1; autoString = false;
+        rushTarget = -1; rushUntil = 0; hoverTarget = -1; slamAt = -1;
+    }
 
     // ------------------------------------------------------------------ queries for the animation code
 

@@ -12,7 +12,7 @@ public final class ClientSkillState {
     private static final int[] COOLDOWN_TOTAL = new int[6];
     private static final Map<UUID, Long> KISHI_SEEN = new HashMap<>();
     private static final Map<UUID, Integer> KISHI_LEVEL = new HashMap<>();
-    private static final Map<Integer, SkillAnim> ANIMS = new HashMap<>();
+    private static final Map<Integer, SkillAnim> ANIMS = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     /** A skill animation a player is playing: which one, when it started (their tick count), and if they were in the air. */
     public record SkillAnim(int anim, int startTick, boolean airborne) {}

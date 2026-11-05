@@ -35,9 +35,9 @@ public final class RhalixWingsClient {
     private record State(boolean out, long changed, boolean animate) {}
 
     private static final Map<UUID, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
-    private static final Map<Integer, float[]> HOVER = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {now, before}
+    private static final Map<Integer, float[]> HOVER = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());   // id -> {now, before}
     /** Dancing to music: id -> {gravity dance, before, sad vibe, before, start tick, still ticks, smoke, before, smoke start}. */
-    private static final Map<Integer, float[]> DANCE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, float[]> DANCE = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     public static float gravityDance(Player p, float partial) {
         float[] d = DANCE.get(p.getId());
@@ -96,7 +96,7 @@ public final class RhalixWingsClient {
         return danceTime(p, age);
     }
 
-    private static final Map<Integer, float[]> SUPER = com.xenowarriors.client.ClientReset.track(new HashMap<>());      // id -> {now, before}
+    private static final Map<Integer, float[]> SUPER = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());      // id -> {now, before}
 
     /** 0..1: flying forward fast enough for the Superman pose. */
     public static float superman(Player p, float partial) {
@@ -274,7 +274,7 @@ public final class RhalixWingsClient {
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
-        if (p instanceof AbstractClientPlayer fp && FirstPersonHead.ownFirstPerson(fp)) return;   // (see MikikoAnimations)
+        if (p instanceof AbstractClientPlayer fp && FirstPersonHead.noWholeBody(fp)) return;   // (see MikikoAnimations)
         float w = gravityDance(p, event.getPartialTick());
         float hw = hyped(p, event.getPartialTick());
         float sw = ClientCharacterData.winged(p) ? superman(p, event.getPartialTick()) : 0F;

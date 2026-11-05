@@ -100,9 +100,9 @@ public final class MikikoAnimations {
     private static final int IDLE_CYCLE = 240;
     private static boolean lastJumpDown;
 
-    private static final Map<Integer, State> STATES = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, State> STATES = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
     private static final Set<Integer> POISONED = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
-    private static final Set<Integer> TRANSFORMED = com.xenowarriors.client.ClientReset.trackAll(new HashSet<>());
+    private static final Set<Integer> TRANSFORMED = com.xenowarriors.client.ClientReset.perLifeSet(new HashSet<>());
     private static final Random RANDOM = new Random();
 
     private MikikoAnimations() {}
@@ -1257,7 +1257,7 @@ public final class MikikoAnimations {
     @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onDivePre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         float d = event.isCanceled() || (event.getEntity() instanceof AbstractClientPlayer fp
-                && com.xenowarriors.client.FirstPersonHead.ownFirstPerson(fp)) ? 0F : dive(event.getEntity(), event.getPartialTick());
+                && com.xenowarriors.client.FirstPersonHead.noWholeBody(fp)) ? 0F : dive(event.getEntity(), event.getPartialTick());
         if (d <= 0F) return;
         var pose = event.getPoseStack();
         com.xenowarriors.client.PoseGuard.push(pose);
@@ -1275,7 +1275,7 @@ public final class MikikoAnimations {
         if (DIVING.remove(event.getEntity().getId())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
-    private static final java.util.Set<Integer> DIVING = com.xenowarriors.client.ClientReset.trackAll(new java.util.HashSet<>());
+    private static final java.util.Set<Integer> DIVING = com.xenowarriors.client.ClientReset.perLifeSet(new java.util.HashSet<>());
 
     /** Slams into the crouch instantly, holds it, then rises. */
     private static float landWeight(float t) {
@@ -1592,7 +1592,7 @@ public final class MikikoAnimations {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !isMikiko(p)) return;
         // your own body seen from inside it (first-person body view): the camera doesn't move with these whole-body
         // moves, so they'd pull the body away from the view
-        if (com.xenowarriors.client.FirstPersonHead.ownFirstPerson(p)) return;
+        if (com.xenowarriors.client.FirstPersonHead.noWholeBody(p)) return;
         if (com.xenowarriors.client.ClientCharacterData.standStill) return;    // a menu head-shot: standing, not sat on the floor
         if (p.isSleeping()) {
             // roll from lying on his back onto his side (the pillow side), around the length of his body

@@ -24,7 +24,7 @@ public final class SurfPose {
     private static final int COMBO_TIMEOUT = 30;
     private static final Random RANDOM = new Random();
     /** id -> {combo, step, last attack tick, move start tick, move index or -1} */
-    private static final Map<Integer, int[]> STATE = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, int[]> STATE = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     private SurfPose() {}
 
