@@ -132,7 +132,12 @@ public final class YuriSkills {
         @Override public int getKarmaCost() { return 30; }
         @Override public boolean use(ServerPlayer p) {
             say(p, "God loves us... NOW WAKE UP OR ELSE WE'RE ALL GONNA DIE!");
-            for (ServerPlayer m : com.xenowarriors.party.Parties.members(p)) {
+            // her party: herself, the players with her and the party bots (a Yuri bot's stand-in has no party of its own: its owner and their bots)
+            List<LivingEntity> team = new ArrayList<>();
+            team.add(p);
+            for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(14)))
+                if (e != p && e != com.xenowarriors.combat.Allies.actor(p) && (e instanceof ServerPlayer || e instanceof com.xenowarriors.bot.PartyBotEntity) && SkillTargeting.isFriend(p, e)) team.add(e);
+            for (LivingEntity m : team) {
                 if (m.level() != p.level() || m.distanceToSqr(p) > 14 * 14) continue;
                 m.heal(8F);
                 m.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 120, 1));

@@ -254,6 +254,8 @@ public final class ModItems {
                                     for (int color : PhoneItem.COLORS) out.accept(PhoneItem.make(item, st, color));
                             } else if (item == com.xenowarriors.boss.ZombieSaiyans.SPAWN_EGG.get() && !com.xenowarriors.boss.ZombieSaiyans.dmz()) {
                                 // (the Zombie Saiyan is a DragonMineZ boss: its egg only shows with DragonMineZ)
+                            } else if (item == AURORA_MEDICINE.get() && !com.xenowarriors.character.Seasons.unlockedForTab(2)) {
+                                // (the Aurora virus is Season 2: its medicine shows once Season 2 is unlocked, like the Season 2 stat boosts)
                             } else if (item == KARMA_HOODIE.get()) {
                                 for (int color : KarmaHoodieItem.PRESETS) out.accept(KarmaHoodieItem.colored(item, color));
                             } else {

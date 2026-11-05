@@ -65,6 +65,14 @@ public final class Seasons extends SavedData {
         cached = s.unlocked;
         s.setDirty();
         // tell everyone online right away (season-locked skills, outfits, guide pages and the creative tab), not on their next relog
-        for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) com.xenowarriors.skill.SkillManager.syncLoadout(p);
+        for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) {
+            com.xenowarriors.skill.SkillManager.syncLoadout(p);
+            // locked again: an outfit from that season goes back to the default look now (not only at the next login)
+            boolean[] changed = {false};
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+                if (d.outfit > 0 && ModCapabilities.getType(p).outfitSeason(d.outfit) > s.unlocked) { d.outfit = 0; changed[0] = true; }
+            });
+            if (changed[0]) CharacterManager.syncToTrackingAndSelf(p);
+        }
     }
 }

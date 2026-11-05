@@ -6,7 +6,7 @@
       "pages": [
         {
           "title": "Welcome, warrior",
-          "text": "You play as a character from Xeno Warriors Recarnet, each with their own skills, ultimate, fighting style, outfits and stats.\n## Choosing a character\n- The first time you join you pick a warrior. Switch any time: main menu > Character Select, or /xeno choose.\n- Each character keeps their own levels, loadout, inventory, faction standing and ability levels.\n- Season 2 and 3 characters and content stay locked until an operator runs /xeno season unlock 2 (or 3), so nothing spoils the show."
+          "text": "You play as a character from Xeno Warriors Recarnet, each with their own skills, ultimate, fighting style, outfits and stats.\n## Choosing a character\n- The first time you join you pick a warrior. Switch any time: main menu > Character Select, or /xeno choose.\n- Each character keeps their own levels, loadout, inventory, faction standing and ability levels.\n- Switching ends the old character's stances and takeovers (Boxing Stance, Persephone, Zane's Projection, Hekublade Scatter blades still in the air...). Potion effects from skills stay.\n- Season 2 and 3 characters and content stay locked until an operator runs /xeno season unlock 2 (or 3), so nothing spoils the show. /xeno season lock locks them again: a Season 2/3 character can't use skills, its ultimate or KA, and Season 2/3 outfits come off."
         },
         {
           "title": "Keys",

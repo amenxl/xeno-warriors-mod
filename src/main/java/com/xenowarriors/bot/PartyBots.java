@@ -625,12 +625,62 @@ public final class PartyBots {
     /** The bot's stand-in player (for the tests). */
     public static FakePlayer standIn(PartyBotEntity b) { return fake(b); }
 
+    /**
+     * The UUID a bot's skill states are kept under: its stand-in player's (the stand-in is the one that used the skill).
+     * Anything else: its own UUID. Lets a skill's timed state (Kyrie's boxing, Lexy's Persephone...) find a bot.
+     */
+    public static UUID skillKey(Entity e) {
+        if (e instanceof PartyBotEntity b && b.ownerId() != null) return standInId(b);
+        return e.getUUID();
+    }
+
+    private static UUID standInId(PartyBotEntity b) { return UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.character().getId()).getBytes()); }
+
+    /**
+     * The owner of a bot whose stand-in player has this UUID, or null. A skill entity a bot made (a Kishi dome...) only
+     * remembers the stand-in's UUID - this puts it on the owner's side (see Allies.sameSide).
+     */
+    public static UUID ownerOfStandIn(UUID fakeId) {
+        UUID bot = fakeId == null ? null : FAKE_TO_BOT.get(fakeId);
+        if (bot == null) return null;
+        for (var e : LIVE.entrySet()) for (PartyBotEntity b : e.getValue()) if (b.getUUID().equals(bot)) return e.getKey();
+        return null;
+    }
+
+    /** Every live party bot on this server (for skill states that tick per user). */
+    public static List<PartyBotEntity> allLive() {
+        List<PartyBotEntity> out = new ArrayList<>();
+        for (Set<PartyBotEntity> s : LIVE.values()) for (PartyBotEntity b : s) if (b.isAlive() && !b.isRemoved()) out.add(b);
+        return out;
+    }
+
+    /**
+     * Whether a bot may use this pool skill: its story season is unlocked in the world and the bot is strong enough
+     * (a pick its owner made in creative, or before the season was locked again, doesn't count - as for the ultimate).
+     */
+    public static boolean botMay(PartyBotEntity b, int poolIndex) {
+        SkillPool.Entry e = SkillPool.entry(b.character(), poolIndex);
+        return e != null && SkillPool.available(e, b.botLevel(), false, com.xenowarriors.character.Seasons.highest(b.getServer()));
+    }
+
+    /** The skill a bot uses from this slot of its owner's loadout: a pick it may not use falls back to the default skill there (or none). */
+    public static Skill botSkill(PartyBotEntity b, int[] loadout, int slot) {
+        if (slot < com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && loadout != null && slot < loadout.length && !botMay(b, loadout[slot])) {
+            int def = SkillPool.defaultLoadout()[slot];
+            if (!botMay(b, def)) return null;
+            int[] l = loadout.clone();
+            l[slot] = def;
+            return SkillPool.inSlot(b.character(), l, slot);
+        }
+        return SkillPool.inSlot(b.character(), loadout, slot);
+    }
+
     private static FakePlayer fake(PartyBotEntity b) {
         ServerLevel s = (ServerLevel) b.level();
         FakePlayer f = FAKES.get(b.getUUID());
         if (f == null || f.level() != s) {
             String name = ("xwbot_" + b.character().getId() + "_" + b.getUUID().toString().substring(0, 4));
-            f = FakePlayerFactory.get(s, new GameProfile(UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.character().getId()).getBytes()), name.substring(0, Math.min(16, name.length()))));   // (one per owner + character: the factory's cache stays small)
+            f = FakePlayerFactory.get(s, new GameProfile(standInId(b), name.substring(0, Math.min(16, name.length()))));   // (one per owner + character: the factory's cache stays small)
             FAKES.put(b.getUUID(), f);
             FAKE_TO_BOT.put(f.getUUID(), b.getUUID());
         }
@@ -664,6 +714,7 @@ public final class PartyBots {
         if (BotTeamUlt.tick(b, target)) return;                                  // a team ultimate with its partner (or asking its player for one)
         if (!b.sparring() && !strong(b, target)) return;                         // save the Karma for enemies that matter
         if (b.journey() && com.xenowarriors.journey.Journey.noSkills(b.owner())) return;   // ("No skills" battle: teammates fight with basic attacks too)
+        if (!com.xenowarriors.character.Seasons.unlocked(b.getServer(), b.character().season())) return;   // (its season locked again: no skills, like a player of it)
         double dist = b.distanceTo(target);
         if (dist > 20) return;
         if (com.xenowarriors.compat.DmzBotKi.tryFire(b, target, () -> fake(b), false)) return;   // (with DragonMineZ: sometimes one of its equipped ki techniques instead)
@@ -679,7 +730,7 @@ public final class PartyBots {
         if (slot == 4 && (b.getHealth() > b.getMaxHealth() * 0.6F || b.karma < 60)) slot = b.getRandom().nextInt(4);    // ultimates when it matters
         if (slot == 4 && BotTeamUlt.saveUltimate(b)) slot = b.getRandom().nextInt(4);   // (saving it for a team ultimate with its partner)
         if (now < b.skillReady[slot]) return;
-        Skill skill = SkillPool.inSlot(b.character(), loadout, slot);
+        Skill skill = botSkill(b, loadout, slot);                                // (not a skill from a locked season, or above the bot's level)
         if (skill == null) return;
         float cost = com.xenowarriors.skill.SkillLevels.costFor(b, skill.getId(), skill.getKarmaCost());   // (the owner's ability level for this character)
         if (com.xenowarriors.party.Synergy.has(b, com.xenowarriors.party.Synergy.OLD_FRIENDS))                // Old Friends: cheaper skills, as for a player

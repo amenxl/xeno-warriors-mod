@@ -41,6 +41,9 @@ public class HekubarrierSkill implements Skill {
 
     public static boolean active(LivingEntity e) { return ACTIVE.containsKey(e.getUUID()); }
 
+    /** Switched characters: the ring of blades goes with Kaeru. */
+    public static void clear(UUID id) { ACTIVE.remove(id); }
+
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;

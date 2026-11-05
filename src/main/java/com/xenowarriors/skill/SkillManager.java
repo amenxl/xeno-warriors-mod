@@ -148,6 +148,14 @@ public final class SkillManager {
         return player.server.overworld().getGameTime();
     }
 
+    /** Playing a character from a season that's locked (again) in this world: says so, and true. */
+    private static boolean seasonLocked(ServerPlayer player) {
+        CharacterType me = ModCapabilities.getType(player);
+        if (me == CharacterType.NONE || com.xenowarriors.character.Seasons.unlocked(player.server, me.season())) return false;
+        player.displayClientMessage(Component.literal("Season " + me.season() + " content is locked").withStyle(net.minecraft.ChatFormatting.RED), true);
+        return true;
+    }
+
     public static void useSkill(ServerPlayer player, int slot) {
         com.xenowarriors.combat.SkillContext.run(player, () -> useSkillNow(player, slot));   // (everything it does counts as skill damage)
     }
@@ -156,8 +164,11 @@ public final class SkillManager {
         if (com.xenowarriors.party.Duels.cantAct(player)) return;          // down, or a seed
         if (com.xenowarriors.item.PhoneItem.onCall(player)) return;          // hang up first      // can't do anything while knocked out
         if (com.xenowarriors.ka.Clashes.inClash(player)) return;          // busy clashing
-        if (slot == SUPER_SLOT) { useSuper(player); return; }
+        // a character whose season was locked again (by /xeno season lock) while someone played them: no skills, ultimate or KA
+        boolean seasonLocked = seasonLocked(player);
+        if (slot == SUPER_SLOT) { if (!seasonLocked) useSuper(player); return; }
         if (player.isSpectator() && com.xenowarriors.kaeru.KaeruSoul.inBlade(player)) { com.xenowarriors.kaeru.KaeruSoul.castOut(player); return; }
+        if (seasonLocked) return;
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
         // the team ultimate (sneak + ultimate key with your partner close by), or joining one you were asked to
         if (slot == ULTIMATE_SLOT && com.xenowarriors.party.TeamUltimate.onUltimateKey(player)) return;

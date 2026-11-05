@@ -49,7 +49,14 @@ public final class SpState {
     private SpState() {}
 
     static long now(Entity e) { return e.level().getGameTime(); }
-    static boolean on(Map<UUID, Long> m, Entity e) { Long t = m.get(e.getUUID()); return t != null && t > now(e); }
+    /** (a party bot's states are kept under its stand-in player's UUID - the stand-in is who used the skill) */
+    static boolean on(Map<UUID, Long> m, Entity e) { Long t = m.get(com.xenowarriors.bot.PartyBots.skillKey(e)); return t != null && t > now(e); }
+
+    /** Switched characters: this player's timed stances, fields and takeovers end (they belong to the character who used them). */
+    public static void clear(UUID id) {
+        GRAVITY_FIELD.remove(id); WIND_WALL.remove(id); BOXING.remove(id); KNOCKOUT.remove(id); PERSEPHONE.remove(id);
+        WOUNDS.values().removeIf(w -> w.owner().equals(id));
+    }
 
     public static boolean boxing(Entity e) { return on(BOXING, e); }
     public static boolean knockout(Entity e) { return on(KNOCKOUT, e); }
@@ -114,13 +121,15 @@ public final class SpState {
                 w.level().sendParticles(new DustParticleOptions(new Vector3f(0.7F, 0.02F, 0.05F), 1.0F), t.getX(), t.getY() + t.getBbHeight() * 0.6, t.getZ(), 5, 0.2, 0.3, 0.2, 0);
             }
         }
-        // fields that catch projectiles
-        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+        // fields that catch projectiles (a player's, or a party bot's)
+        List<LivingEntity> users = new ArrayList<>(server.getPlayerList().getPlayers());
+        if (!GRAVITY_FIELD.isEmpty() || !WIND_WALL.isEmpty()) users.addAll(com.xenowarriors.bot.PartyBots.allLive());
+        for (LivingEntity p : users) {
             boolean grav = on(GRAVITY_FIELD, p), wind = on(WIND_WALL, p);
             if (!grav && !wind) continue;
-            ServerLevel l = p.serverLevel();
+            ServerLevel l = (ServerLevel) p.level();
             for (Projectile pr : l.getEntitiesOfClass(Projectile.class, p.getBoundingBox().inflate(grav ? 5 : 3.5))) {
-                if (pr.getOwner() == p) continue;
+                if (pr.getOwner() == p || com.xenowarriors.combat.Allies.isAlly(p, pr)) continue;     // (not their own side's shots)
                 if (grav) {                                              // Kyrie: stopped dead in the air
                     pr.setDeltaMovement(Vec3.ZERO); pr.setNoGravity(true); pr.hurtMarked = true; FROZEN.add(pr.getId());
                     if (l.getGameTime() % 4 == 0) l.sendParticles(ParticleTypes.REVERSE_PORTAL, pr.getX(), pr.getY(), pr.getZ(), 2, 0.05, 0.05, 0.05, 0);
@@ -149,6 +158,7 @@ public final class SpState {
                     if (e == null) continue;
                     boolean held = false;
                     for (ServerPlayer p : l.players()) if (on(GRAVITY_FIELD, p) && p.distanceToSqr(e) < 36) held = true;
+                    for (var b : com.xenowarriors.bot.PartyBots.allLive()) if (b.level() == l && on(GRAVITY_FIELD, b) && b.distanceToSqr(e) < 36) held = true;
                     if (!held) { e.setNoGravity(false); it.remove(); }
                 }
             }
@@ -158,7 +168,8 @@ public final class SpState {
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public static void onHurt(LivingHurtEvent event) {
         Entity src = event.getSource().getEntity();
-        if (src instanceof ServerPlayer p) {
+        if (src instanceof ServerPlayer || src instanceof com.xenowarriors.bot.PartyBotEntity) {                  // (a party bot's own blows count too)
+            LivingEntity p = (LivingEntity) src;
             if (boxing(p) && event.getSource().getDirectEntity() == p) event.setAmount(event.getAmount() * 1.6F);   // Kyrie's boxing
             if (persephone(p)) event.setAmount(event.getAmount() * 1.8F);                                         // Persephone's strength
             // Sam's knockout mode: a blow that would finish them knocks them out instead
@@ -169,11 +180,11 @@ public final class SpState {
                 t.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 4));
                 t.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 120, 0));
                 if (t instanceof net.minecraft.world.entity.Mob m) { m.setTarget(null); m.getNavigation().stop(); }
-                p.serverLevel().sendParticles(ParticleTypes.CRIT, t.getX(), t.getY() + t.getBbHeight() + 0.2, t.getZ(), 12, 0.3, 0.1, 0.3, 0.1);
-                p.displayClientMessage(Component.literal("Knocked out!").withStyle(ChatFormatting.YELLOW), true);
+                ((ServerLevel) p.level()).sendParticles(ParticleTypes.CRIT, t.getX(), t.getY() + t.getBbHeight() + 0.2, t.getZ(), 12, 0.3, 0.1, 0.3, 0.1);
+                if (p instanceof ServerPlayer sp) sp.displayClientMessage(Component.literal("Knocked out!").withStyle(ChatFormatting.YELLOW), true);
             }
         }
-        if (event.getEntity() instanceof ServerPlayer v && persephone(v)) event.setAmount(event.getAmount() * 0.7F);
+        if ((event.getEntity() instanceof ServerPlayer || event.getEntity() instanceof com.xenowarriors.bot.PartyBotEntity) && persephone(event.getEntity()))event.setAmount(event.getAmount() * 0.7F);
     }
 
     /** Vampire Cut wounds won't heal. */

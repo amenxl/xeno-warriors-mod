@@ -113,6 +113,7 @@ public final class BotSupport {
         if (now < NEXT_HEAL.getOrDefault(b.getUUID(), 0L)) return;
         ServerPlayer o = b.owner();
         if (b.journey() && com.xenowarriors.journey.Journey.noSkills(o)) return;
+        if (!com.xenowarriors.character.Seasons.unlocked(l.getServer(), b.character().season())) return;   // (Season 2 locked again)
         LivingEntity who = needsHeal(b, l);
         if (who == null) return;
         com.xenowarriors.skill.Skill skill = new com.xenowarriors.skill.kaeru.FoxHealSkill();

@@ -40,6 +40,16 @@ public record SelectCharacterPacket(CharacterType type) {
             ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);
             return;
         }
+        // Ai-oni and Rhalix never share a party - a party bot counts too (adding the bot is refused the same way)
+        if (msg.type == CharacterType.AIONI || msg.type == CharacterType.RHALIX) {
+            CharacterType never = msg.type == CharacterType.AIONI ? CharacterType.RHALIX : CharacterType.AIONI;
+            for (ServerPlayer m : com.xenowarriors.party.Parties.members(player))
+                for (var b : com.xenowarriors.bot.PartyBots.bots(m)) if (b.character() == never) {
+                    player.displayClientMessage(net.minecraft.network.chat.Component.literal("Ai-oni and Rhalix can never be in the same party - " + never.getDisplayName().getString() + " is a bot teammate (dismiss them first)").withStyle(net.minecraft.ChatFormatting.RED), true);
+                    ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);
+                    return;
+                }
+        }
         ServerPlayer other = com.xenowarriors.character.CharacterLock.takenBy(player, msg.type);
         if (other != null) {
             if (com.xenowarriors.character.CharacterLock.anyFree(player)) {
