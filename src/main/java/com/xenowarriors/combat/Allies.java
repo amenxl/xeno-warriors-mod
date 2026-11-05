@@ -57,6 +57,9 @@ public final class Allies {
 
     /** Same side: the same player, or players in the same party. */
     public static boolean sameSide(UUID a, UUID b) {
+        UUID ra = com.xenowarriors.soul.SoulSkills.ownerOfStandIn(a), rb = com.xenowarriors.soul.SoulSkills.ownerOfStandIn(b);   // (a soul's skill stand-in: its owner's side)
+        if (ra != null) a = ra;
+        if (rb != null) b = rb;
         return a != null && b != null && (a.equals(b) || Parties.sameParty(a, b));
     }
 
