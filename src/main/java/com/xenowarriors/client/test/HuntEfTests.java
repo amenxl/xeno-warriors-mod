@@ -129,39 +129,51 @@ public final class HuntEfTests {
             UiTest.server(HuntEfTests::arena); }, 50));
         l.add(new Step(null, () -> log("start: epic fight loaded=" + ef() + (ef() ? ", " + Ef.info() : "")), 2));
 
-        // ---- 1. Gravity Barrage's cutscene camera (it switches to third person back, which Epic Fight builds itself)
-        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); look(mc, 0F, 5F);
-            UiTest.server(p -> {
-                p.connection.teleport(origin.x, origin.y, origin.z, 0F, 5F);
-                for (int i = 0; i < 3; i++) { Zombie z = zombie(p, origin.add(-2 + i * 2, 0, 6 + i)); z.setNoAi(true); }
-                com.xenowarriors.skill.SkillManager.resetCooldowns(p);
-                com.xenowarriors.karma.Karma.add(p, 300);
-            }); }, 20));
-        l.add(new Step(null, () -> { startCam(1); UiTest.server(p -> log("gravity barrage used=" + new com.xenowarriors.skill.rhalix.GravityBarrageSkill().use(p))); }, 45));
-        l.add(new Step("huntef_" + tag + "_barrage_cam", () -> log("cutscene active=" + com.xenowarriors.client.UltimateCutscene.active()
-                + " camera type " + mc.options.getCameraType() + (ef() ? " tps=" + Ef.tps() + " camera hook calls " + Ef.cameraPosts() : "")), 40));
-        l.add(new Step(null, () -> {
-            boolean ok = frames > 10 && maxOff < 0.05;
-            log("cutscene camera: frames " + frames + ", max distance from the cutscene's camera " + f(maxOff) + " blocks, max yaw off " + f(maxAng)
-                    + " -> " + (ok ? "PASS" : "FAIL"));
-            camMode = 0; }, 110));
-        l.add(new Step(null, () -> log("after cutscene: active=" + com.xenowarriors.client.UltimateCutscene.active() + " camera " + mc.options.getCameraType()), 5));
+        // ---- 1. Gravity Barrage's cutscene camera (it switches to third person back); with Epic Fight: as it is, while its
+        //         lock-on holds a target (its lock-on camera), and with its camera mode on "always" (its shoulder camera)
+        String[] variants = ef() ? new String[]{"plain", "eflockon", "efalways"} : new String[]{"plain"};
+        for (String v : variants) {
+            l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); look(mc, 0F, 5F);
+                UiTest.server(p -> {
+                    arena(p);
+                    p.connection.teleport(origin.x, origin.y, origin.z, 0F, 5F);
+                    for (int i = 0; i < 3; i++) { Zombie z = zombie(p, origin.add(-2 + i * 2, 0, 6 + i)); if (i == 1) dummy = z.getId(); }
+                    com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+                    com.xenowarriors.karma.Karma.add(p, 300);
+                }); }, 20));
+            if (v.equals("eflockon")) l.add(new Step(null, () -> { look(mc, 0F, 5F); Ef.lockOn(true); }, 6));
+            if (v.equals("efalways")) l.add(new Step(null, () -> Ef.cameraAlways(true), 2));
+            l.add(new Step(null, () -> { log("barrage " + v + ": " + (ef() ? Ef.info() + ", lock-on " + Ef.lockOn() : "")); startCam(1);
+                UiTest.server(p -> log("gravity barrage used=" + new com.xenowarriors.skill.rhalix.GravityBarrageSkill().use(p))); }, 45));
+            l.add(new Step("huntef_" + tag + "_barrage_" + v, () -> log("barrage " + v + ": cutscene active=" + com.xenowarriors.client.UltimateCutscene.active()
+                    + " camera type " + mc.options.getCameraType() + (ef() ? " tps=" + Ef.tps() + " lock-on " + Ef.lockOn() + " camera hook calls " + Ef.cameraPosts() : "")), 40));
+            l.add(new Step(null, () -> {
+                boolean ok = frames > 10 && maxOff < 0.05;
+                log("cutscene camera " + v + ": frames " + frames + ", max distance from the cutscene's camera " + f(maxOff) + " blocks, max yaw off " + f(maxAng)
+                        + " -> " + (ok ? "PASS" : "FAIL"));
+                camMode = 0; }, 110));
+            l.add(new Step(null, () -> { if (ef()) { Ef.lockOn(false); Ef.cameraAlways(false); } log("after cutscene: active=" + com.xenowarriors.client.UltimateCutscene.active() + " camera " + mc.options.getCameraType()); }, 5));
+        }
 
-        // ---- 2. the vehicle camera in third person
-        l.add(new Step(null, () -> UiTest.server(p -> {
-            arena(p);
-            var v = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.CAR).get().create(p.serverLevel());
-            v.moveTo(origin.x, origin.y, origin.z + 2, 0, 0);
-            p.serverLevel().addFreshEntity(v);
-            p.startRiding(v, true);
-        }), 40));
-        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); look(mc, 0F, 10F); startCam(2); }, 30));
-        l.add(new Step("huntef_" + tag + "_car_cam", () -> {
-            double avg = frames == 0 ? 0 : sumDist / frames;
-            log("vehicle camera: riding " + (mc.player.getVehicle() == null ? "nothing" : mc.player.getVehicle().getType().toShortString())
-                    + ", frames " + frames + ", camera " + f(avg) + " blocks from the eyes (vanilla 4, ours backs off to ~7.5) -> " + (avg > 6.0 ? "PASS" : "FAIL"));
-            camMode = 0; }, 3));
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.server(p -> { p.stopRiding(); arena(p); }); }, 30));
+        // ---- 2. the vehicle camera in third person (with Epic Fight: also with its "always" shoulder camera)
+        for (String v : variants) {
+            if (v.equals("eflockon")) continue;
+            l.add(new Step(null, () -> UiTest.server(p -> {
+                arena(p);
+                var car = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.CAR).get().create(p.serverLevel());
+                car.moveTo(origin.x, origin.y, origin.z + 2, 0, 0);
+                p.serverLevel().addFreshEntity(car);
+                p.startRiding(car, true);
+            }), 40));
+            l.add(new Step(null, () -> { if (v.equals("efalways")) Ef.cameraAlways(true);
+                mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); look(mc, 0F, 10F); startCam(2); }, 30));
+            l.add(new Step("huntef_" + tag + "_car_" + v, () -> {
+                double avg = frames == 0 ? 0 : sumDist / frames;
+                log("vehicle camera " + v + ": riding " + (mc.player.getVehicle() == null ? "nothing" : mc.player.getVehicle().getType().toShortString())
+                        + (ef() ? " tps=" + Ef.tps() : "") + ", frames " + frames + ", camera " + f(avg) + " blocks from the eyes (vanilla 4, ours backs off to ~7.5) -> " + (avg > 6.0 ? "PASS" : "FAIL"));
+                camMode = 0; }, 3));
+            l.add(new Step(null, () -> { if (ef()) Ef.cameraAlways(false); mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.server(p -> { p.stopRiding(); arena(p); }); }, 30));
+        }
 
         // ---- 3. knocked down and squished, on a mob Epic Fight draws itself (a zombie)
         int[] c = new int[8];
@@ -268,6 +280,19 @@ public final class HuntEfTests {
                 var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(e, yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch.class);
                 return yesman.epicfight.client.ClientEngine.getInstance().renderEngine.hasRendererFor(e) && patch != null && patch.overrideRender();
             } catch (Throwable t) { return false; }
+        }
+
+        static void lockOn(boolean on) {
+            try { yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance().setLockOn(on); } catch (Throwable t) { log("lock-on: " + t); }
+        }
+
+        private static Object savedMode;
+
+        static void cameraAlways(boolean on) {
+            try {
+                if (on) { savedMode = yesman.epicfight.config.ClientConfig.cameraMode; yesman.epicfight.config.ClientConfig.cameraMode = yesman.epicfight.config.ClientConfig.TPSType.ALWAYS; }
+                else if (savedMode != null) { yesman.epicfight.config.ClientConfig.cameraMode = (yesman.epicfight.config.ClientConfig.TPSType) savedMode; savedMode = null; }
+            } catch (Throwable t) { log("camera mode: " + t); }
         }
 
         static String lockOn() {
