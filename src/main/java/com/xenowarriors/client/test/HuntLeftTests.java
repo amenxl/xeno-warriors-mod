@@ -119,6 +119,15 @@ public final class HuntLeftTests {
         camFrames++;
     }
 
+    private static int watchId = -1, preSeen, preCancelled;
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
+    public static void onPre(net.minecraftforge.client.event.RenderLivingEvent.Pre<?, ?> event) {
+        if (event.getEntity().getId() != watchId) return;
+        preSeen++;
+        if (event.isCanceled()) preCancelled++;
+    }
+
     public static void build(Minecraft mc, List<Step> l, String focus) {
         String tag = ef() ? "ef" : "noef";
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); UiTest.character(CharacterType.KAERU); UiTest.server(p -> { clearBots(p); arena(p); }); }, 50));
@@ -170,12 +179,16 @@ public final class HuntLeftTests {
         l.add(new Step(null, () -> { Ef.battle(true); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); look(mc, 0F, 0F); }, 30));
         int[] c = new int[2];
         l.add(new Step("huntleft_ef_squish_off", () -> log("squish: " + Ef.draw(mc.player)), 2));
-        l.add(new Step(null, () -> { c[0] = com.xenowarriors.client.ClientEvents.squishedDraws; com.xenowarriors.client.ClientSkillState.markSquish(mc.player.getId(), 1F); }, 1));
+        l.add(new Step(null, () -> { c[0] = com.xenowarriors.client.ClientEvents.squishedDraws; preSeen = 0; preCancelled = 0; watchId = mc.player.getId(); com.xenowarriors.client.ClientSkillState.markSquish(mc.player.getId(), 1F); }, 1));
         for (int i = 0; i < 14; i++) l.add(new Step(i == 10 ? "huntleft_ef_squish_on" : null, () -> com.xenowarriors.client.ClientSkillState.markSquish(mc.player.getId(), 1F), 1));
         l.add(new Step(null, () -> {
             int n = com.xenowarriors.client.ClientEvents.squishedDraws - c[0];
-            log("squish on an Epic Fight-drawn player: " + Ef.draw(mc.player) + ", drawn squished " + n + " times -> " + (n > 5 ? "PASS" : "FAIL"));
-            mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
+            log("squish on an Epic Fight-drawn player: " + Ef.draw(mc.player) + ", drawn squished " + n + " times (render events " + preSeen + ", cancelled by Epic Fight " + preCancelled + ") -> " + (n > 5 ? "PASS" : "FAIL"));
+            watchId = -1; Ef.battle(false); }, 30));
+        // control: the same squish outside battle mode (vanilla drawing)
+        l.add(new Step("huntleft_ef_squish_vanilla_off", () -> log("squish control: battle=" + Ef.battleOn()), 2));
+        for (int i = 0; i < 12; i++) l.add(new Step(i == 10 ? "huntleft_ef_squish_vanilla_on" : null, () -> com.xenowarriors.client.ClientSkillState.markSquish(mc.player.getId(), 1F), 1));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
 
         // ---- 3. Rhalix's held attack, then battle mode before it's let go
         l.add(new Step(null, () -> { Ef.battle(false); UiTest.server(p -> { arena(p); p.getInventory().clearContent(); zombie(p, origin.add(0, 0, 2.5)); }); }, 30));
