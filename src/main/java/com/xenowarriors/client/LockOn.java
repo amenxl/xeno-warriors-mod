@@ -133,7 +133,7 @@ public final class LockOn {
 
     private static boolean lockable(LivingEntity e) {
         return e.isAlive() && !(e instanceof ArmorStand) && !(e instanceof Player p && p.isSpectator()) && (!e.isInvisible() || UltimaSight.local())   // (Ultima sees the invisible)
-                && attackable(e);
+                && (attackable(e) || com.xenowarriors.client.party.ReviveWarpClient.downedAlly(e));   // (a teammate who's down: lock on to warp to them)
     }
 
     /** NPCs that can't be fought: DragonMineZ's masters (Goku, Gohan...), quest people, the Nimbus and space pods. */
@@ -283,6 +283,7 @@ public final class LockOn {
         Matrix4f m = pose.last().pose();
         Matrix3f n = pose.last().normal();
         float a = 0.9F * pop;
+        reviveColour = com.xenowarriors.client.party.ReviveWarpClient.downedAlly(target);   // green brackets: a teammate to revive
         for (int i = 0; i < 4; i++) {
             float ang = i * (float) Math.PI / 2F;
             float c = Mth.cos(ang), s = Mth.sin(ang);
@@ -299,6 +300,8 @@ public final class LockOn {
         buffers.endBatch();
     }
 
+    private static boolean reviveColour;
+
     private static void corner(VertexConsumer vc, Matrix4f m, Matrix3f n, float c, float s, float size, float a) {
         float len = size * 0.4F, w = size * 0.07F;
         // corner point at (size, size) rotated by (c, s)
@@ -307,7 +310,8 @@ public final class LockOn {
             float[][] pts = {{b[0], b[1]}, {b[2], b[1]}, {b[2], b[3]}, {b[0], b[3]}};
             for (float[] p : pts) {
                 float x = p[0] * c - p[1] * s, y = p[0] * s + p[1] * c;
-                FxDraw.vertex(vc, m, n, x, y, 0, 1F, 0.35F, 0.25F, a, 0, 0, 1);
+                if (reviveColour) FxDraw.vertex(vc, m, n, x, y, 0, 0.3F, 1F, 0.45F, a, 0, 0, 1);
+                else FxDraw.vertex(vc, m, n, x, y, 0, 1F, 0.35F, 0.25F, a, 0, 0, 1);
             }
         }
     }

@@ -291,6 +291,30 @@ public class GravityBarrageEntity extends Entity {
         return out;
     }
 
+    /**
+     * Rhalix was hit mid-cutscene: the barrage lands all at once - every volley still to come and the pebble burst hit
+     * their targets right now in one go - and the cutscene ends so he can defend himself (nothing is refunded).
+     */
+    public boolean interrupt(ServerPlayer owner) {
+        if (isRemoved() || level().isClientSide || tickCount > DETONATE) return false;
+        ServerLevel server = (ServerLevel) level();
+        int left = 0;
+        for (int v = 0; v < VOLLEYS; v++) if (BARRAGE + v * VOLLEY_EVERY + IMPACT_IN_VOLLEY > tickCount) left++;
+        float dmg = left * VOLLEY_DAMAGE + MAX_PEBBLE_DAMAGE;
+        for (LivingEntity t : targets()) {
+            t.invulnerableTime = 0;
+            t.hurt(ModDamageTypes.gravityBarrage(server, this, owner), dmg);
+            Vec3 c = t.getBoundingBox().getCenter();
+            server.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.COBBLESTONE.defaultBlockState()), c.x, c.y, c.z, 40, 0.5, 0.5, 0.5, 0.35);
+            server.sendParticles(ParticleTypes.EXPLOSION, c.x, c.y, c.z, 1, 0, 0, 0, 0);
+        }
+        server.playSound(null, center().x, center().y, center().z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 0.8F);
+        com.xenowarriors.XenoWarriors.LOGGER.info("Gravity Barrage cut short at tick {}: {} volleys + pebbles landed at once ({} dmg each)", tickCount, left, dmg);
+        finish(owner);
+        owner.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOW_FALLING, 60, 0, false, false));
+        return true;
+    }
+
     private void finish(ServerPlayer owner) {
         if (owner != null) {
             owner.getPersistentData().remove(SkillEvents.ULT_UNTIL);

@@ -139,6 +139,8 @@ public final class ClientModEvents {
         event.registerAboveAll("character_level", new LevelHud());
         event.registerAboveAll("journey", new com.xenowarriors.client.journey.JourneyHud());
         event.registerAboveAll("karma_scan", new KarmaScanClient());
+        event.registerAboveAll("fox_king", new com.xenowarriors.client.mikiko.FoxKingClient.Overlay());
+        event.registerAboveAll("revive_warp", new com.xenowarriors.client.party.ReviveWarpClient.Overlay());
     }
 
     @SubscribeEvent

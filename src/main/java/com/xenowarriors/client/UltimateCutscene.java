@@ -49,7 +49,7 @@ public final class UltimateCutscene {
         for (Entity e : mc.level.entitiesForRendering()) {
             if (e instanceof GravityBarrageEntity u && u.isAlive() && u.ownerId() == mc.player.getId()) return u;
             if (e instanceof com.xenowarriors.entity.BlazingWindEntity w && w.isAlive() && w.ownerId() == mc.player.getId()
-                    && w.tickCount < com.xenowarriors.entity.BlazingWindEntity.CUTSCENE_END) return w;
+                    && w.tickCount < com.xenowarriors.entity.BlazingWindEntity.CUTSCENE_END && !w.cutsceneCut()) return w;
         }
         return null;
     }

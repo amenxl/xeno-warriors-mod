@@ -580,6 +580,10 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Practice", Math.min(me.senseUses(), 100) + "/100", -1F, 0});
         if (type == CharacterType.MIKIKO) {
             rows.add(new Object[]{"Hekublade", lvStr(me.bladeLevel()), me.bladeXp(), 0xFF7A1A});
+            float fm = com.xenowarriors.client.mikiko.FoxKingClient.mastery;     // Fox King mastery: the bar fills to 100, the form lasts longer
+            rows.add(new Object[]{"Fox King", fm >= 100 ? "MAX" : (int) fm + "/100", fm / 100F, 0xE8361C});
+            int fs = com.xenowarriors.mikiko.FoxKing.duration(fm) / 20;
+            rows.add(new Object[]{"Form time", fs / 60 + ":" + String.format("%02d", fs % 60), -1F, 0});
             rows.add(new Object[]{"Foxes", String.valueOf(me.pets()), -1F, 0});
             rows.add(new Object[]{"Sealed", String.valueOf(me.sealed()), -1F, 0});
             rows.add(new Object[]{"Blade time", me.cooldownLeft() > 0 ? "locked" : BladeLevel.fmt(me.realmLeft()), -1F, 0});

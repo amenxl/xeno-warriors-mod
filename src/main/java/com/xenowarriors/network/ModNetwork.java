@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "70";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "71";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -496,6 +496,12 @@ public final class ModNetwork {
                 .encoder(WireFxPacket::encode).decoder(WireFxPacket::decode).consumerMainThread(WireFxPacket::handle).add();
         CHANNEL.messageBuilder(DmzWishPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (a bot summoned the dragon: its wish menu opens for you)
                 .encoder(DmzWishPacket::encode).decoder(DmzWishPacket::decode).consumerMainThread(DmzWishPacket::handle).add();
+        CHANNEL.messageBuilder(FoxMasteryPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(FoxMasteryPacket::encode).decoder(FoxMasteryPacket::decode).consumerMainThread(FoxMasteryPacket::handle).add();
+        CHANNEL.messageBuilder(ReviveWarpPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ReviveWarpPacket::encode).decoder(ReviveWarpPacket::decode).consumerMainThread(ReviveWarpPacket::handle).add();
+        CHANNEL.messageBuilder(KarmaShieldPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(KarmaShieldPacket::encode).decoder(KarmaShieldPacket::decode).consumerMainThread(KarmaShieldPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {
