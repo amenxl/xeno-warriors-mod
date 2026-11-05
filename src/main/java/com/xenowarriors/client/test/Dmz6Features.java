@@ -88,10 +88,13 @@ final class Dmz6Features {
             call(ch, "setRace", "saiyan");
             call(d, "updateTransformationSkillLimits", "saiyan");
             Object sk = call(d, "getSkills");
-            if (!Boolean.TRUE.equals(call(sk, "hasSkill", "superform"))) call(sk, "registerDefaultSkill", "superform", 0);
-            log("bot superform max " + call(sk, "getMaxSkillLevel", "superform"));
-            call(sk, "setSkillLevel", "superform", 3);
-            if (!Integer.valueOf(3).equals(call(sk, "getSkillLevel", "superform"))) call(sk, "addSkillLevel", "superform", 3);
+            StringBuilder all = new StringBuilder();
+            if (call(sk, "getAllSkills") instanceof Map<?, ?> m) for (Object k : m.keySet()) {
+                Object max = call(sk, "getMaxSkillLevel", k);
+                all.append(k).append("(max ").append(max).append(") ");
+                if (String.valueOf(k).toLowerCase(Locale.ROOT).contains("super") && max instanceof Integer mx && mx > 0) call(sk, "setSkillLevel", k, Math.min(3, mx));
+            }
+            log("bot skills " + all);
             call(ch, "setSelectedFormGroup", "supersaiyan");
             Object st = call(d, "getStats");
             for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"}) call(st, m, 60);
@@ -271,6 +274,8 @@ final class Dmz6Features {
         step(null, () -> server(p -> {
             Vec3 at = at(p);
             int drops = 0, n = 30;
+            log("gun drops: doMobLoot=" + p.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT));
+            p.level().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT).set(true, p.server);
             for (int i = 0; i < n; i++) {
                 var z = EntityType.ZOMBIE.create(p.serverLevel());
                 z.moveTo(at.x + 10, at.y, at.z - 10, 0, 0); z.setNoAi(true);
@@ -322,7 +327,7 @@ final class Dmz6Features {
                 for (int i = 0; i < 12 && made < 3; i++) if (DmzSkylanders.spawn(l, p.blockPosition().offset(4 + i, 0, 6 - i), true) != null) made++;
                 log("world " + l.dimension().location() + " skylanders spawned " + made + " (natural spawner is in DmzSkylanders.onTick)");
                 if (w.equals("namek")) {
-                    var z = EntityType.ZOMBIE.create(l);
+                    var z = EntityType.HUSK.create(l);                         // (doesn't burn in the sun)
                     BlockPos zp = l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p.blockPosition().offset(12, 0, 12));
                     z.moveTo(zp.getX() + 0.5, zp.getY(), zp.getZ() + 0.5, 0, 0); z.setPersistenceRequired();
                     l.addFreshEntity(z);
@@ -330,7 +335,7 @@ final class Dmz6Features {
                 }
                 p.setYRot(-45); p.setXRot(10);
                 dump();
-            }), 80);
+            }), 160);
             step("dmz6_skylanders_" + w, () -> { mc.setScreen(null); server(p -> {
                 for (var sk : p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.SkylanderEntity.class, p.getBoundingBox().inflate(48)))
                     log("world " + w + " skylander " + ForgeRegistries.ITEMS.getKey(sk.getMainHandItem().getItem()) + " target=" + (sk.getTarget() == null ? "-" : sk.getTarget().getType().getDescriptionId())
