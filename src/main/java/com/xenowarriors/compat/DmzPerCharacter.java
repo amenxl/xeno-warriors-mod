@@ -271,6 +271,9 @@ public final class DmzPerCharacter {
         }
     }
 
+    /** (For the tests) as after a crash: the server forgets the menu was open (the swapped data stays until checkView). */
+    public static void forgetOpenForTest(Player p) { VIEWING.remove(p.getUUID()); }
+
     /** Is a bot's data in this player's capability with its menu open (this server run)? */
     public static boolean viewOpen(Player p) { return VIEWING.containsKey(p.getUUID()); }
 
