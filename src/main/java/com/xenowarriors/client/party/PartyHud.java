@@ -44,7 +44,8 @@ public class PartyHud implements IGuiOverlay {
         int members = Math.max(0, PartyClient.members().size() - 1);
         boolean ki = PartyKiClient.any();                                    // (DragonMineZ: a ki bar under the Karma bar)
         int rowH = ki ? 36 : 30, frameB = ki ? 29 : 23;
-        int top = (int) Mth.clamp(height / 2F - 34, 40, Math.max(40, height - 150 - members * rowH * sc));
+        int minTop = com.xenowarriors.client.DmzHud.on() ? 52 : 40;          // (with DragonMineZ: under its own HUD in the top-left corner)
+        int top = (int) Mth.clamp(height / 2F - 34, minTop, Math.max(minTop, height - 150 - members * rowH * sc));
         int x = Math.round(5 / sc), y = Math.round(top / sc);
         shownTop = top - 2;
         for (PartySyncPacket.Member m : PartyClient.members()) {

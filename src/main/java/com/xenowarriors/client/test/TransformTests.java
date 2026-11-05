@@ -109,7 +109,8 @@ public final class TransformTests {
     static Mob dummyFoe(ServerPlayer p, Vec3 at, boolean strong) {
         var z = (strong ? EntityType.HUSK : EntityType.ZOMBIE).create(p.serverLevel());
         z.moveTo(at.x, at.y, at.z, 180, 0);
-        z.setNoAi(true); z.setPersistenceRequired(); z.setInvulnerable(true);
+        z.setNoAi(true); z.setPersistenceRequired();             // (not invulnerable: bots ignore what can't be hurt)
+        z.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 9, false, false));
         if (strong) {
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(400);
             z.setHealth(400); z.getPersistentData().putBoolean("xw_miniboss", true);
@@ -306,7 +307,7 @@ public final class TransformTests {
         step(null, () -> server(p -> { for (PartyBotEntity b : PartyBots.bots(p)) if (DMZ) DmzBotPower.setKiForTest(b, 0.2F); }), 20);
         step(null, () -> log("after a ki change: packets=" + PartyKiClient.received + " " + PartyKiClient.dump()), 3);
         step(null, () -> {}, 40);
-        step(null, () -> log("2 s later, nothing changed: packets=" + PartyKiClient.received), 3);
+        step(null, () -> log("2 s later: packets=" + PartyKiClient.received + " (sent only when someone's ki number changed; at most 4/s)"), 3);
         step(null, () -> com.xenowarriors.client.ClientSettings.setHudStyle("kh"), 3);
     }
 }
