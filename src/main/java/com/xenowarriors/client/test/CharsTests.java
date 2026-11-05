@@ -145,8 +145,11 @@ public final class CharsTests {
             w.getItem().finishUsingItem(w, p.level(), p);
             int[] after = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> new int[]{d.statLevel[0], d.statLevel[1], d.statLevel[2], d.miningLevel, d.craftLevel, d.smeltLevel}).orElse(new int[0]);
             log("wings mikiko stats speed/attack/defense/mining/craft/smelt " + java.util.Arrays.toString(before) + " -> " + java.util.Arrays.toString(after));
-            var use = w.getItem().use(p.level(), p, InteractionHand.MAIN_HAND);
+            hold(p, new ItemStack(com.xenowarriors.item.ModItems.SKYLANDER_WINGS.get()));
+            var use = p.getMainHandItem().getItem().use(p.level(), p, InteractionHand.MAIN_HAND);
             log("wings mikiko can eat=" + use.getResult().consumesAction());
+            p.stopUsingItem();
+            p.getInventory().clearContent();
         }), 20);
         character(l, CharacterType.GARRY);
         l.add(null, () -> server(p -> {
@@ -244,10 +247,10 @@ public final class CharsTests {
                 boolean rode = com.xenowarriors.mikiko.BladeRideJump.ride(p);
                 log("ride blade " + c[0] + " charLevel " + com.xenowarriors.stats.Stats.characterLevel(p) + " (flight at " + com.xenowarriors.mikiko.WindFlight.LEVEL
                         + ", canFly=" + com.xenowarriors.mikiko.WindFlight.canFly(p) + "): rode=" + rode + " vehicle=" + (p.getVehicle() == null ? "none" : p.getVehicle().getType().toShortString()));
-            }), 25);
+            }), c == cases[0] ? 2 : 25);
             if (c == cases[0]) {
-                l.add(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 3);
-                l.add("chars_blade_ride", () -> {}, 5);
+                l.add(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(20F); }, 4);
+                l.add("chars_blade_ride", () -> {}, 20);
             }
             l.add(null, () -> server(p -> { p.stopRiding(); p.setGameMode(GameType.CREATIVE); }), 20);
         }
@@ -260,7 +263,8 @@ public final class CharsTests {
         character(l, CharacterType.MIKIKO);
         int[] before = new int[1];
         l.add(null, () -> server(p -> {
-            p.setGameMode(GameType.SURVIVAL);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 600, 4));   // (the owner just watches)
+            p.serverLevel().setDayTime(18000);                                  // (no burning zombies)
             com.xenowarriors.karma.Karma.add(p, 100F);
             com.xenowarriors.soul.SoulSplit.setLevel(p, 30);
             before[0] = com.xenowarriors.soul.SoulSkills.casts;
@@ -278,8 +282,11 @@ public final class CharsTests {
             log("soul split started=" + started + " level=" + com.xenowarriors.soul.SoulSkills.abilityLevel(p, "soul_splitter"));
         }), 300);
         l.add(null, () -> server(p -> {
+            var souls = p.serverLevel().getEntitiesOfClass(com.xenowarriors.soul.SoulEntity.class, p.getBoundingBox().inflate(40));
             log("soul skill casts in 15s: " + (com.xenowarriors.soul.SoulSkills.casts - before[0]) + " last=" + com.xenowarriors.soul.SoulSkills.lastSkill
-                    + " owner hp=" + p.getHealth() + "/" + p.getMaxHealth());
+                    + " owner hp=" + p.getHealth() + "/" + p.getMaxHealth() + " souls=" + souls.size()
+                    + (souls.isEmpty() ? "" : " target=" + souls.get(0).getTarget()));
+            p.serverLevel().setDayTime(6000);
             if (com.xenowarriors.soul.SoulSplit.active(p)) com.xenowarriors.soul.SoulSplit.end(p, null);
             for (var z : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(30))) z.discard();
             p.setGameMode(GameType.CREATIVE);
@@ -333,8 +340,9 @@ public final class CharsTests {
         for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX}) {
             character(l, t);
             l.add(null, () -> { server(p -> hold(p, ItemStack.EMPTY)); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"); }, 20);
-            l.add(null, () -> { front(mc, 0F); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"); }, 6);
-            l.add("chars_ef_guard_" + t.getId(), () -> { front(mc, 0F); log("ef " + t.getId() + " guard: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)); }, 3);
+            for (int i = 0; i < 4; i++) l.add(null, () -> { front(mc, 0F); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"); }, 1);   // (held: Epic Fight drops a guard nobody's holding)
+            l.add(null, () -> log("ef " + t.getId() + " guard: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 0);
+            l.add("chars_ef_guard_" + t.getId(), () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"), 1);
             l.add(null, () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"), 30);
             l.add("chars_ef_idle_" + t.getId(), () -> { front(mc, 0F); log("ef " + t.getId() + " idle: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)); }, 3);
         }
@@ -346,6 +354,7 @@ public final class CharsTests {
         for (CharacterType t : new CharacterType[]{CharacterType.TECHNICA, CharacterType.GARRY}) {
             character(l, t);
             l.add(null, () -> server(p -> {
+                p.setGameMode(GameType.SURVIVAL);                               // (no gun XP in creative)
                 log("gun " + t.getId() + " tacz=" + com.xenowarriors.compat.GunLevel.on() + " level=" + com.xenowarriors.compat.GunLevel.level(p)
                         + " damage x" + com.xenowarriors.compat.GunLevel.multiplier(p));
                 com.xenowarriors.compat.GunLevel.addXp(p, 500F);

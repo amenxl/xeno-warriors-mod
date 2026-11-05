@@ -18,7 +18,7 @@ public final class EfTest {
         @SuppressWarnings("unchecked")
         static yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation> guard() {
             try {
-                for (String n : new String[]{"BIPED_COMMON_GUARD", "FIST_GUARD", "BIPED_GUARD", "SWORD_GUARD"}) {
+                for (String n : new String[]{"BIPED_COMMON_GUARD", "FIST_GUARD", "BIPED_GUARD", "COMMON_GUARD", "SWORD_GUARD"}) {
                     try {
                         Object v = yesman.epicfight.gameasset.Animations.class.getField(n).get(null);
                         if (v != null) { com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST ef guard anim {}", n); return (yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) v; }
