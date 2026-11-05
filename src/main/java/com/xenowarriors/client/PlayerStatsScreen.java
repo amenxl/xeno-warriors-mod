@@ -87,8 +87,17 @@ public class PlayerStatsScreen extends Screen {
         return (width - cardW()) / 2;
     }
 
+    /** The game HUD behind the menu: hidden (its party cards showed through the Warriors list), except on Settings to see the HUD style. */
+    private Boolean hudWas;
+
+    @Override
+    public void removed() {
+        if (hudWas != null) { minecraft.options.hideGui = hudWas; hudWas = null; }
+    }
+
     @Override
     protected void init() {
+        if (hudWas == null) hudWas = minecraft.options.hideGui;
         // tabs: four across, as wide as fits
         int tabsN = com.xenowarriors.client.PacketScreens.collectionUnlocked ? 5 : 4;
         int gap = 4, tw = Math.min(110, (Math.max(cardW(), Math.min(width - 8, 4 * 100)) - gap * (tabsN - 1)) / tabsN), tx = (width - (tw * tabsN + gap * (tabsN - 1))) / 2;
@@ -205,6 +214,7 @@ public class PlayerStatsScreen extends Screen {
     }
 
     private void updateButtons() {
+        if (hudWas != null && minecraft != null) minecraft.options.hideGui = hudWas || tab != 3;
         for (var e : setBaseY.entrySet()) {
             int y = e.getValue() - setScroll;
             e.getKey().setY(y);

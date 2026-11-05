@@ -411,7 +411,7 @@ public final class HuntUiTests {
                 .append(button("[Decline]", "/xeno party decline", net.minecraft.ChatFormatting.RED)))), 5));
         shot.accept("chat_buttons", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")));
         // starving face, Karma Sense
-        l.add(new Step(null, () -> server(p -> { p.setGameMode(GameType.SURVIVAL); p.getFoodData().setFoodLevel(0); }), 30));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { p.setGameMode(GameType.SURVIVAL); p.getFoodData().setFoodLevel(0); }); }, 30));
         l.add(new Step(pre + "hud_starving", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> { p.getFoodData().setFoodLevel(20); p.setGameMode(GameType.CREATIVE);
             for (int i = 0; i < 3; i++) { var c = net.minecraft.world.entity.EntityType.CHICKEN.create(p.serverLevel()); if (c != null) { c.moveTo(p.getX() - 2 + i * 2, p.getY(), p.getZ() + 5); p.serverLevel().addFreshEntity(c); } } }), 20));
