@@ -6,8 +6,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -29,18 +28,24 @@ import org.joml.Vector3f;
 import java.util.List;
 
 /**
- * A gun made from the Hekublade or Rhalix's wires. Works without TACZ: hitscan shots (use / right click, hold to keep
- * firing), infinite ammo, but it wears out - the durability grows with the gun level - and once it breaks there's a
- * wait before another gun can be summoned. Hits feed the gun level (and its damage bonus).
+ * A gun made from the Hekublade or Rhalix's wires. Works without TACZ but handles like a TACZ gun: left click fires,
+ * hold right click to aim down the sights (see {@link GunSpec} and client/forms/GunClient). Hitscan shots, infinite
+ * ammo, but it wears out - the durability grows with the gun level - and once it breaks there's a wait before another
+ * gun can be summoned. Hits feed the gun level (and its damage bonus).
  * <ul>
- * <li>Pistol: quick shots, mid range.</li>
- * <li>Rifle: slow, hard-hitting, long range, pierces one target.</li>
- * <li>Shotgun: 7 pellets in a spread, short range.</li>
+ * <li>Pistol: semi-auto, mid range.</li>
+ * <li>Rifle: full auto, long range, scoped, pierces one target.</li>
+ * <li>Shotgun: pump action, 7 pellets in a spread, short range.</li>
  * </ul>
  * Hekublade guns sometimes set what they hit on fire; wire guns snag it (a moment of Slowness).
  */
 public class FormGunItem extends Item implements FormItems.Summoned, com.xenowarriors.item.Guns.Marker {
     public static final String DUR = "xw_dur", DUR_MAX = "xw_dur_max";
+    /** Players aiming down the sights right now (server side). */
+    private static final java.util.Set<java.util.UUID> AIMING = new java.util.HashSet<>();
+    /** Test numbers: the mean angle (degrees) the last shot's bullets left the line of sight by, and whether it was aimed. */
+    public static float LAST_DEV;
+    public static boolean LAST_AIMED;
     private final Form.Style style;
     private final Form form;
 
@@ -52,14 +57,12 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
 
     @Override public Form.Style style() { return style; }
     @Override public Form form() { return form; }
+    public GunSpec spec() { return GunSpec.of(form); }
 
-    /** {damage, cooldown ticks, range, pellets, spread} */
+    /** {damage, ticks between shots, range, pellets, pellet cone (hip, degrees)} */
     public static float[] stats(Form f) {
-        return switch (f) {
-            case RIFLE -> new float[]{13F, 18, 80, 1, 0F};
-            case SHOTGUN -> new float[]{3.2F, 20, 18, 7, 0.11F};
-            default -> new float[]{5F, 5, 40, 1, 0.012F};
-        };
+        GunSpec g = GunSpec.of(f);
+        return new float[]{g.damage, g.interval, g.range, g.pellets, g.pelletHip};
     }
 
     /** Shots it holds before it breaks: 40 + 3 per gun level (190 at 50, 1,540 at 500), up to 5,000. */
@@ -75,42 +78,125 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
     @Override public int getBarColor(ItemStack stack) { return style == Form.Style.HEKU ? 0xFF7A1A : 0xB04CFF; }
     @Override public boolean isFoil(ItemStack stack) { return false; }
 
+    /** Left click shoots - it never digs. */
+    @Override
+    public boolean canAttackBlock(net.minecraft.world.level.block.state.BlockState state, Level level, net.minecraft.core.BlockPos pos, Player player) { return false; }
+
+    /** No arm swing (the gun has its own recoil). */
+    @Override
+    public boolean onEntitySwing(ItemStack stack, LivingEntity entity) { return true; }
+
+    /** The durability ticking down isn't a new item: no re-equip bob on every shot. */
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
+        return slotChanged || oldStack.getItem() != newStack.getItem();
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tip, TooltipFlag flag) {
+        GunSpec g = spec();
         tip.add(Component.literal("Ammo: unlimited").withStyle(ChatFormatting.AQUA));
+        tip.add(Component.literal(g.fireModeLabel() + ", " + g.rpm() + " RPM" + (g.pellets > 1 ? ", " + g.pellets + " pellets" : "")).withStyle(ChatFormatting.GRAY));
+        tip.add(Component.literal("Left click: fire - hold right click: aim").withStyle(ChatFormatting.DARK_GRAY));
         if (isBarVisible(stack)) tip.add(Component.literal("Durability: " + dur(stack) + " / " + durMax(stack)).withStyle(ChatFormatting.GRAY));
         FormTools.tooltip(stack, tip, style);
     }
 
+    /** Right click aims (handled on the client, like TACZ) - it doesn't fire. */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(stack);
-        if (!level.isClientSide && player instanceof ServerPlayer sp) fire(sp, stack);
-        return InteractionResultHolder.consume(stack);
+        return InteractionResultHolder.pass(player.getItemInHand(hand));
     }
 
-    /** One shot (or one shotgun blast). Returns how many targets were hit. */
+    // ------------------------------------------------------------------ aiming down the sights (server side: who's aimed)
+
+    public static boolean aiming(Player p) { return AIMING.contains(p.getUUID()); }
+
+    /** Aim in / out (from the client); everyone around sees the aim pose and hears it. */
+    public static void setAiming(ServerPlayer p, boolean on) {
+        if (on && !(p.getMainHandItem().getItem() instanceof FormGunItem)) on = false;
+        boolean changed = on ? AIMING.add(p.getUUID()) : AIMING.remove(p.getUUID());
+        if (!changed) return;
+        com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(
+                new com.xenowarriors.network.WireFxPacket(p.getId(), com.xenowarriors.network.WireFxPacket.AIM, -1, on ? 1 : 0), p);
+        GunSounds.aim(p.level(), p, p.getX(), p.getY(), p.getZ(), on);
+    }
+
+    /** Every tick: aim ends when the gun leaves the hand. */
+    public static void tickAim(ServerPlayer p) {
+        if (AIMING.contains(p.getUUID()) && (!(p.getMainHandItem().getItem() instanceof FormGunItem) || !p.isAlive())) setAiming(p, false);
+    }
+
+    public static void forget(java.util.UUID id) { AIMING.remove(id); RATE.remove(id); }
+
+    // ------------------------------------------------------------------ shooting
+
+    /** Fire rate on the server: {shots in hand (up to 2), game time last topped up}. */
+    private static final java.util.Map<java.util.UUID, double[]> RATE = new java.util.HashMap<>();
+
+    /**
+     * May this player fire now? One shot per {@code interval} ticks on average, with one shot of slack so packets that
+     * arrive bunched up (network jitter) aren't dropped - the client already timed them.
+     */
+    private static boolean rate(ServerPlayer p, GunSpec g) {
+        long now = p.serverLevel().getGameTime();
+        double[] r = RATE.computeIfAbsent(p.getUUID(), k -> new double[]{2, now});
+        r[0] = Math.min(2.0, r[0] + (now - r[1]) / (double) g.interval);
+        r[1] = now;
+        if (r[0] < 0.999) return false;
+        r[0] -= 1.0;
+        return true;
+    }
+
+    /** One shot where the player looks, aimed if they're aiming (tests; uses the item cooldown, which a test can clear). */
     public int fire(ServerPlayer p, ItemStack stack) {
-        if (com.xenowarriors.party.Duels.cantAct(p) || p.getCooldowns().isOnCooldown(this)) return 0;
-        float[] st = stats(form);
-        p.getCooldowns().addCooldown(this, (int) st[1]);
+        if (p.getCooldowns().isOnCooldown(this)) return 0;
+        p.getCooldowns().addCooldown(this, Math.max(1, spec().interval - 1));
+        boolean a = aiming(p);
+        return shoot(p, stack, a, a ? spec().adsSpread : spec().hipSpread, p.getXRot(), p.getYRot());
+    }
+
+    /** A shot from the client (GunActionPacket), held to the gun's fire rate. */
+    public int fire(ServerPlayer p, ItemStack stack, boolean aimed, float spread, float pitch, float yaw) {
+        if (com.xenowarriors.party.Duels.cantAct(p) || p.isSpectator() || !rate(p, spec())) return 0;
+        return shoot(p, stack, aimed, spread, pitch, yaw);
+    }
+
+    /**
+     * One shot (or one shotgun blast) toward pitch / yaw (what the client saw; the server's own view if that's far off)
+     * with the client's spread (clamped to what the gun can have). Returns how many targets were hit.
+     */
+    private int shoot(ServerPlayer p, ItemStack stack, boolean aimed, float spread, float pitch, float yaw) {
+        if (com.xenowarriors.party.Duels.cantAct(p) || p.isSpectator()) return 0;
+        GunSpec g = spec();
         ServerLevel level = p.serverLevel();
-        Vec3 eye = p.getEyePosition(), look = p.getViewVector(1F);
-        int gun = com.xenowarriors.compat.GunLevel.level(p);
-        float dmg = st[0] * com.xenowarriors.compat.GunLevel.multiplier(p) * (1F + com.xenowarriors.stats.Stat.effective(WeaponForms.weaponLevel(p)) * 0.005F);
+        if (Math.abs(Mth.wrapDegrees(yaw - p.getYRot())) > 30F || Math.abs(pitch - p.getXRot()) > 30F) { pitch = p.getXRot(); yaw = p.getYRot(); }
+        Vec3 eye = p.getEyePosition(), look = Vec3.directionFromRotation(pitch, yaw);
+        aimed = aimed && aiming(p);
+        spread = Mth.clamp(spread, g.adsSpread * 0.5F, g.maxSpread());
+        float pellet = aimed ? g.pelletAds : g.pelletHip;
+        float dmg = g.damage * com.xenowarriors.compat.GunLevel.multiplier(p) * (1F + com.xenowarriors.stats.Stat.effective(WeaponForms.weaponLevel(p)) * 0.005F);
         int hits = 0;
-        for (int i = 0; i < (int) st[3]; i++) {
-            Vec3 dir = look.add(p.getRandom().nextGaussian() * st[4], p.getRandom().nextGaussian() * st[4], p.getRandom().nextGaussian() * st[4]).normalize();
-            hits += ray(p, level, eye, dir, st[2], dmg, form == Form.RIFLE ? 2 : 1);
+        int[] kills = {0};
+        double dev = 0;
+        Vec3 aimDir = GunSpec.cone(look, spread, p.getRandom());
+        for (int i = 0; i < g.pellets; i++) {
+            Vec3 dir = GunSpec.cone(aimDir, pellet, p.getRandom());
+            dev += Math.toDegrees(Math.acos(Mth.clamp(dir.dot(look), -1.0, 1.0)));
+            hits += ray(p, level, eye, dir, g.range, dmg, g.pierce, aimed, kills);
         }
-        // muzzle flash + sound
-        Vec3 muzzle = eye.add(look.scale(0.9)).add(0, -0.15, 0);
-        if (style == Form.Style.HEKU) level.sendParticles(ParticleTypes.FLAME, muzzle.x, muzzle.y, muzzle.z, 4, 0.04, 0.04, 0.04, 0.02);
-        else level.sendParticles(ParticleTypes.REVERSE_PORTAL, muzzle.x, muzzle.y, muzzle.z, 6, 0.05, 0.05, 0.05, 0.03);
-        level.playSound(null, p.getX(), p.getY(), p.getZ(), form == Form.SHOTGUN ? SoundEvents.GENERIC_EXPLODE : SoundEvents.FIREWORK_ROCKET_BLAST,
-                SoundSource.PLAYERS, form == Form.SHOTGUN ? 0.5F : 0.8F, form == Form.RIFLE ? 0.6F : form == Form.SHOTGUN ? 1.6F : 1.4F);
-        com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.WireFxPacket(p.getId(), com.xenowarriors.network.WireFxPacket.RECOIL, -1, 0), p);
+        LAST_DEV = (float) (dev / g.pellets);
+        LAST_AIMED = aimed;
+        // muzzle flash + sound for everyone else (the shooter's own client shows its flash and plays the sound at once)
+        Vec3 muzzle = eye.add(look.scale(0.9)).add(0, aimed ? -0.05 : -0.15, 0);
+        if (style == Form.Style.HEKU) others(level, p, ParticleTypes.FLAME, muzzle, 4, 0.04, 0.02);
+        else others(level, p, ParticleTypes.REVERSE_PORTAL, muzzle, 6, 0.05, 0.03);
+        others(level, p, ParticleTypes.SMOKE, muzzle, 2, 0.03, 0.01);
+        GunSounds.shot(level, p, p.getX(), p.getEyeY(), p.getZ(), form, style);
+        com.xenowarriors.network.ModNetwork.sendToTrackingAndSelf(
+                new com.xenowarriors.network.WireFxPacket(p.getId(), com.xenowarriors.network.WireFxPacket.RECOIL, -1, form.ordinal()), p);
+        if (hits > 0) com.xenowarriors.network.ModNetwork.sendToPlayer(
+                new com.xenowarriors.network.WireFxPacket(p.getId(), com.xenowarriors.network.WireFxPacket.HIT, -1, kills[0] > 0 ? 1 : 0), p);
         // wear: one point a shot; broken = gone, and a wait before the next gun
         if (!p.isCreative() || WeaponForms.testWear) {
             var tag = stack.getOrCreateTag();
@@ -122,17 +208,22 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
         return hits;
     }
 
-    private int ray(ServerPlayer p, ServerLevel level, Vec3 from, Vec3 dir, float range, float dmg, int pierce) {
+    private static void others(ServerLevel level, ServerPlayer p, net.minecraft.core.particles.ParticleOptions o, Vec3 at, int n, double d, double speed) {
+        for (ServerPlayer other : level.players()) if (other != p) level.sendParticles(other, o, false, at.x, at.y, at.z, n, d, d, d, speed);
+    }
+
+    private int ray(ServerPlayer p, ServerLevel level, Vec3 from, Vec3 dir, float range, float dmg, int pierce, boolean aimed, int[] kills) {
         Vec3 end = from.add(dir.scale(range));
         BlockHitResult bh = level.clip(new ClipContext(from, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
         if (bh.getType() != HitResult.Type.MISS) end = bh.getLocation();
+        final Vec3 rayEnd = end;
         List<Entity> found = level.getEntities(p, new AABB(from, end).inflate(1.0),
                 e -> e instanceof LivingEntity && e.isAlive() && com.xenowarriors.skill.SkillTargeting.canTarget(p, e));
         found.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(from)));
         int hits = 0;
         Vec3 stop = end;
         for (Entity e : found) {
-            var hit = e.getBoundingBox().inflate(0.3).clip(from, end);
+            var hit = e.getBoundingBox().inflate(0.3).clip(from, rayEnd);
             if (hit.isEmpty()) continue;
             LivingEntity t = (LivingEntity) e;
             t.invulnerableTime = 0;
@@ -142,15 +233,21 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
                 com.xenowarriors.compat.GunLevel.addXp(p, Math.min(dmg, t.getHealth() + 1F));
                 if (style == Form.Style.HEKU) com.xenowarriors.mikiko.Hekublade.rollFire(t, 3);
                 else t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 1, false, true));
-                if (!t.isAlive()) com.xenowarriors.compat.GunLevel.addXp(p, com.xenowarriors.compat.GunLevel.KILL_XP);
+                if (!t.isAlive()) { com.xenowarriors.compat.GunLevel.addXp(p, com.xenowarriors.compat.GunLevel.KILL_XP); kills[0]++; }
+                Vec3 at = hit.get();
+                level.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 3, 0.05, 0.05, 0.05, 0.15);
             }
             stop = hit.get();
             if (--pierce <= 0) break;
         }
         if (pierce > 0) stop = end;
-        tracer(level, from.add(dir.scale(0.8)).add(0, -0.12, 0), stop);
-        if (bh.getType() != HitResult.Type.MISS && pierce > 0)
+        tracer(level, from.add(dir.scale(0.8)).add(0, aimed ? -0.06 : -0.12, 0), stop);
+        if (bh.getType() != HitResult.Type.MISS && pierce > 0) {                // bullet impact: sparks, block chips, a puff
             level.sendParticles(style == Form.Style.HEKU ? ParticleTypes.SMALL_FLAME : ParticleTypes.WITCH, end.x, end.y, end.z, 3, 0.05, 0.05, 0.05, 0.01);
+            var state = level.getBlockState(bh.getBlockPos());
+            if (!state.isAir()) level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, state), end.x, end.y, end.z, 6, 0.05, 0.05, 0.05, 0.12);
+            level.sendParticles(ParticleTypes.SMOKE, end.x, end.y, end.z, 2, 0.03, 0.03, 0.03, 0.01);
+        }
         return hits;
     }
 

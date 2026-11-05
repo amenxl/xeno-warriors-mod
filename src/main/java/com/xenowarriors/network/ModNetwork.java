@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "80";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "81";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -504,6 +504,8 @@ public final class ModNetwork {
                 .encoder(KarmaShieldPacket::encode).decoder(KarmaShieldPacket::decode).consumerMainThread(KarmaShieldPacket::handle).add();
         CHANNEL.messageBuilder(PartyKiPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (DragonMineZ: party members' ki for the party HUD)
                 .encoder(PartyKiPacket::encode).decoder(PartyKiPacket::decode).consumerMainThread(PartyKiPacket::handle).add();
+        CHANNEL.messageBuilder(GunActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)   // (summoned guns: aim in / out, a shot)
+                .encoder(GunActionPacket::encode).decoder(GunActionPacket::decode).consumerMainThread(GunActionPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

@@ -112,6 +112,7 @@ public final class FormsClient {
             mash();
             return;
         }
+        if (GunClient.onClick(event)) return;                                  // (a summoned gun: left click fires, right click aims)
         if (!holdingWires(mc) || event.getHand() != InteractionHand.MAIN_HAND) return;
         if (event.isAttack()) {
             if (mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult b && b.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return;   // (digging)
