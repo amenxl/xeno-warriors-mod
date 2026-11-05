@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       extra:
-        description: 'Other mods to load from Modrinth (e.g. ef,tacz or dmz) - also switches to Forge 47.4.0'
+        description: 'Other mods to load from Modrinth (e.g. ef,tacz or dmz) - also switches to Forge 47.4.0; "pack" = the real mod pack'
+        required: false
+        default: ''
+      leave_out:
+        description: 'pack only: jar names from tools/pack/pack.json to leave out (comma separated), to bisect a problem'
         required: false
         default: ''
 
@@ -22,7 +26,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      # extra "pack": the user's real mod pack (server-side mods) on a real Forge server install (tools/pack/run_pack.sh)
+      - name: Pack server (real Forge install with the user's mod pack)
+        if: ${{ github.event.inputs.extra == 'pack' }}
+        env:
+          XW_SELFTEST_R: "8"
+          XW_SELFTEST_VR: "11"
+          PACK_LEAVE_OUT: ${{ github.event.inputs.leave_out }}
+        run: bash tools/pack/run_pack.sh server || true
       - name: Run server
+        if: ${{ github.event.inputs.extra != 'pack' }}
         env:
           XW_SELFTEST: "1"
           XW_SELFTEST_R: "8"

@@ -62,6 +62,21 @@ Everyone gets the **Xeno Warriors Guide** book the first time they join (craft a
 
 The other mods this one builds against are downloaded from their official sources on the first build. They aren't stored in this repo.
 
+## Testing
+All tests run in GitHub Actions (Actions tab → pick the workflow → **Run workflow**, or `gh api -X POST repos/<owner>/<repo>/actions/workflows/<file>/dispatches -f ref=<branch> -f "inputs[...]=..."`). Results are published as a pre-release named after the test.
+
+- **UI test** (`uitest.yml`, input `focus`): starts the game on a virtual screen, runs the test set named by `focus` (see `client/UiTest.java` and `client/test/`) and publishes screenshots and logs to the release `uitest-<focus>`. A focus starting with `dmz`, `ef` or containing `tacz` also loads DragonMineZ, Epic Fight or TaCZ.
+- **Server self-test** (`selftest.yml`, input `extra`): starts a dedicated server, generates Recarnet and checks it, then stops. Look for `XW-SELFTEST OK` in `server.log` of the release `selftest` (or `selftest-<extra>`).
+
+### Real mod pack test (`pack`)
+Checks the mod inside the full mod pack it's played with, listed in `tools/pack/pack.json` (exact versions, Forge 47.4.20). Unlike the other tests it uses the **real reobfuscated jar on a real Forge install**, not the dev environment, so it catches mixin conflicts and refmap problems the way players would hit them. The other mods are downloaded at test time from Modrinth (or CurseForge's CDN / the author's maven) and never stored in the repo; Essential is skipped because it can't run headless.
+
+- **Client:** run `uitest.yml` with `focus` = `pack`. A dedicated server with the pack's server-side mods makes a world, then the real client joins it with the whole pack and runs `client/test/PackTests.java`: every character, every Xeno Warriors menu, Mikiko's and Rhalix's skills and ultimates, bots, Karma Sense, every gun form aimed and fired, placing and breaking blocks, a Journey, the DragonMineZ menu and a team ultimate. Each check logs `XW-TEST pack ... PASS/FAIL`, ending with `XW-TEST pack summary pass=N fail=N`.
+- **With shaders:** `focus` = `packshaders` runs the same test with an Oculus shader pack switched on (MakeUp - Ultra Fast from Modrinth).
+- **Dedicated server:** run `selftest.yml` with `extra` = `pack` (optional `leave_out` = jar names to leave out, to bisect a problem) (server-side mods only); look for `XW-SELFTEST OK` and the `XW-SELFTEST mods loaded` line.
+- **What to read in the release:** `mods-client.tsv` / `mods-server.tsv` (each mod: exact file, near version, client-only or skipped, and where it came from), `pack-report-client.txt` / `pack-report-server.txt` (every ERROR/FATAL line, mixin problem, Xeno Warriors warning and stack trace through our code, with a `PACK-SCAN` summary line per log), the full Forge logs, crash reports and screenshots.
+- To change the pack, edit `tools/pack/pack.json`. Locally you can run `bash tools/pack/run_pack.sh server` (needs Java 17 and Python 3) or `client` (also needs `xvfb-run`).
+
 ## Credits and license
 *Xeno Warriors Recarnet*, its characters, story and art belong to **Recarnetwork Gacha**.
 

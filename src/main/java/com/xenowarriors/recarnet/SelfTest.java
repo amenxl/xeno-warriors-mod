@@ -21,6 +21,12 @@ public final class SelfTest {
         MinecraftServer server = event.getServer();
         try {
             com.xenowarriors.character.Seasons.set(server, 3);
+            if (System.getenv("XW_PACKTEST") != null) {                  // (the pack test: which mods this server really loaded)
+                java.util.List<String> mods = new java.util.ArrayList<>();
+                net.minecraftforge.fml.ModList.get().forEachModContainer((id, c) -> mods.add(id + " " + c.getModInfo().getVersion()));
+                mods.sort(String::compareTo);
+                XenoWarriors.LOGGER.info("XW-SELFTEST mods loaded ({}): {}", mods.size(), String.join(", ", mods));
+            }
             ServerLevel rec = server.getLevel(Recarnet.LEVEL);
             if (rec == null) { XenoWarriors.LOGGER.error("XW-SELFTEST FAIL: no Recarnet level"); server.halt(false); return; }
             int r = Integer.parseInt(System.getenv().getOrDefault("XW_SELFTEST_R", "15"));
