@@ -120,7 +120,7 @@ public final class GovShop {
         if (!p.addItem(it)) p.drop(it, false);
         p.level().playSound(null, p.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.BLOCKS, 0.8F, 1.6F);
         p.displayClientMessage(Component.literal("Purchased: " + o.name).withStyle(ChatFormatting.AQUA), true);
-        if (p.getRandom().nextInt(2) == 0) com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.GOV, 3);
+        if (p.getRandom().nextInt(2) == 0) com.xenowarriors.faction.RepRules.GOV_BUY.apply(p);
         open(p);
     }
 }

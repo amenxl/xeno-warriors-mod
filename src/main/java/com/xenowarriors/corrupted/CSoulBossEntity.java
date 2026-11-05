@@ -95,8 +95,7 @@ public class CSoulBossEntity extends Monster {
         double a = tickCount * (enraged ? 0.05 : 0.03);
         double r = distanceTo(target) < 6 ? 7 : 5;
         // over something that can fly it keeps above it; over someone who can't, it stays low enough to be hit
-        boolean targetFlies = (target instanceof Player tp && (tp.getAbilities().flying || tp.getAbilities().mayfly)) || target.isNoGravity()
-                || target.isFallFlying();
+        boolean targetFlies = SoulAltitude.flying(target);   // (actually flying - one who only could fly but walks keeps it low)
         double lift = targetFlies ? 3.5 : 0.8;
         Vec3 want = target.position().add(Math.cos(a) * r, lift, Math.sin(a) * r);
         if (!targetFlies) want = new Vec3(want.x, Math.min(want.y, Math.max(ground, target.getY()) + 1.2), want.z);
@@ -160,6 +159,7 @@ public class CSoulBossEntity extends Monster {
     @Override
     public void aiStep() {
         super.aiStep();
+        if (!level().isClientSide) SoulAltitude.tick(this);
         if (level().isClientSide) {
             for (int i = 0; i < (enraged() ? 4 : 2); i++) {
                 level().addParticle(ParticleTypes.WITCH, getRandomX(1.0), getY() + random.nextDouble() * getBbHeight(), getRandomZ(1.0), 0, 0, 0);
@@ -194,6 +194,16 @@ public class CSoulBossEntity extends Monster {
     @Override
     public boolean removeWhenFarAway(double distance) {
         return !getPersistentData().getBoolean(com.xenowarriors.s3.DistortionEntity.TAG) && super.removeWhenFarAway(distance);   // (wild ones despawn like any monster)
+    }
+
+    /** The C-Soul always leaves a handful of Corrupted Shards (4-7, plus one per Looting level). */
+    public static final int SHARDS_MIN = 4, SHARDS_EXTRA = 3;
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        super.dropCustomDeathLoot(source, looting, recentlyHit);
+        int n = SHARDS_MIN + random.nextInt(SHARDS_EXTRA + 1) + looting;
+        spawnAtLocation(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.CORRUPTED_SHARD.get(), n));
     }
 
     @Override

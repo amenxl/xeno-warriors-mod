@@ -164,7 +164,9 @@ public final class HealingPods {
         BlockState st = l.getBlockState(s.at.pos());
         if (pod(st)) HealingPodBlock.set(l, s.at.pos(), true, false);
         Entity e = l.getEntity(s.who);
-        if (e == null) { ServerPlayer p = server.getPlayerList().getPlayer(s.who); if (p != null && p.level() == l) e = p; }
+        // (a player who left this dimension mid-rest - e.g. retreating from a Journey's healing step - still gets the
+        // "held still" speed modifier taken off, or they'd be stuck unable to walk; they just don't step out of the pod)
+        if (e == null) e = server.getPlayerList().getPlayer(s.who);
         if (e instanceof LivingEntity le) {
             var sp = le.getAttribute(Attributes.MOVEMENT_SPEED);
             if (sp != null) sp.removeModifier(STILL);

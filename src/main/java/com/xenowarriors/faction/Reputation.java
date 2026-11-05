@@ -137,15 +137,23 @@ public final class Reputation {
         if (dead.level().isClientSide || com.xenowarriors.vr.Vr.inVr(dead) || com.xenowarriors.tower.Tower.is(dead.level())) return;
         ServerPlayer p = com.xenowarriors.collection.Collection.credit(e.getSource().getEntity());
         if (p == null) return;
-        if (dead instanceof com.xenowarriors.gov.GovAgentEntity) { add(p, Faction.GOV, -25); add(p, Faction.SR, 5); }
-        else if (dead instanceof com.xenowarriors.sr.SrMemberEntity) { add(p, Faction.SR, -25); add(p, Faction.GOV, 5); add(p, Faction.SKY, 5); }
-        else if (dead instanceof com.xenowarriors.npc.SkylanderEntity s) add(p, Faction.SKY, s.guardian() ? -60 : -40);
+        if (dead instanceof com.xenowarriors.gov.GovAgentEntity) { RepRules.GOV_KILL_AGENT.apply(p); RepRules.SR_KILL_AGENT.apply(p); }
+        else if (dead instanceof com.xenowarriors.sr.SrMemberEntity) { RepRules.SR_KILL_MEMBER.apply(p); RepRules.GOV_KILL_SR.apply(p); RepRules.SKY_KILL_SR.apply(p); }
+        else if (dead instanceof com.xenowarriors.npc.SkylanderEntity s) add(p, Faction.SKY, s.guardian() ? RepRules.SKY_KILL_SKYLANDER.delta * 3 / 2 : RepRules.SKY_KILL_SKYLANDER.delta);
         else if (dead instanceof com.xenowarriors.npc.HumanNpcEntity h) {
-            if (h.raider() || (h.skyHater() && h.getTarget() instanceof com.xenowarriors.npc.SkylanderEntity)) { add(p, Faction.TOWN, 8); add(p, Faction.SKY, 5); }
-            else if (h.carriesSoul()) add(p, Faction.TOWN, 5);
-            else add(p, Faction.TOWN, -50);
+            if (h.raider() || (h.skyHater() && h.getTarget() instanceof com.xenowarriors.npc.SkylanderEntity)) { RepRules.TOWN_RAIDER.apply(p); RepRules.SKY_RAIDER.apply(p); }
+            else if (h.carriesSoul()) RepRules.TOWN_SOUL.apply(p);
+            else RepRules.TOWN_KILL_PERSON.apply(p);
         }
-        else if (dead instanceof Villager) add(p, Faction.TOWN, -40);
+        else if (dead instanceof Villager) RepRules.TOWN_KILL_VILLAGER.apply(p);
+        else if (dead instanceof com.xenowarriors.s3.OrderAssassinEntity) RepRules.GOV_KILL_ORDER.apply(p);
+        else if (dead instanceof com.xenowarriors.corrupted.CorruptedVillagerEntity || dead instanceof com.xenowarriors.corrupted.CorruptedSoulEntity
+                || dead instanceof com.xenowarriors.corrupted.CSoulBossEntity || com.xenowarriors.corrupted.CorruptedAnimals.isCorrupted(dead)) {
+            RepRules.GOV_CORRUPTION.apply(p); RepRules.TOWN_CORRUPTION.apply(p);
+        }
+        // defending a Gov agent: whatever was fighting one
+        if (!(dead instanceof com.xenowarriors.gov.GovAgentEntity) && dead instanceof net.minecraft.world.entity.Mob m && m.getTarget() instanceof com.xenowarriors.gov.GovAgentEntity)
+            RepRules.GOV_HELP_AGENT.apply(p);
     }
 
     @SubscribeEvent
@@ -157,7 +165,45 @@ public final class Reputation {
         if (root.getInt("xw_rep_trade_n") >= 10) return;            // (at most +10 a day from trading)
         root.putInt("xw_rep_trade_n", root.getInt("xw_rep_trade_n") + 1);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
-        add(p, Faction.TOWN, 1);
+        RepRules.TOWN_TRADE.apply(p);
+    }
+
+    // ---------------------------------------------------------------- donating / returning at a Gov terminal
+
+    /** Government gear you can hand back, and the share of its shop price you get back for it. */
+    private static boolean govGear(net.minecraft.world.item.ItemStack s) {
+        return s.is(com.xenowarriors.gov.GovItems.KEYCARD.get()) || s.is(com.xenowarriors.gov.GovItems.SPEED_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.JUMP_MOD.get())
+                || s.is(com.xenowarriors.gov.GovItems.SCANNER_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.PLATING_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get());
+    }
+
+    /** Sneak + right-click a Gov terminal holding emeralds, data shards or Gov gear: donate / hand it back for standing. */
+    @SubscribeEvent
+    public static void onTerminal(PlayerInteractEvent.RightClickBlock e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || !p.isShiftKeyDown() || e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
+        if (!p.level().getBlockState(e.getPos()).is(com.xenowarriors.gov.GovItems.TERMINAL.get())) return;
+        net.minecraft.world.item.ItemStack s = p.getMainHandItem();
+        boolean emerald = s.is(net.minecraft.world.item.Items.EMERALD), shard = s.is(com.xenowarriors.item.ModItems.DATA_SHARD.get()), gear = govGear(s);
+        if (!emerald && !shard && !gear) return;
+        e.setCanceled(true);
+        e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+        if (com.xenowarriors.gov.GovFacilities.wanted(p)) {
+            p.displayClientMessage(Component.literal("WANTED - the terminal won't take anything from you.").withStyle(ChatFormatting.RED), true);
+            return;
+        }
+        int n = gear ? 1 : Math.min(s.getCount(), emerald ? 16 : 4);
+        int got = gear ? RepRules.GOV_RETURN.apply(p) : RepRules.GOV_DONATE.apply(p, emerald ? n : n * 5);
+        if (got <= 0) {
+            p.displayClientMessage(Component.literal("The Government thanks you - that's all the goodwill it'll give today.").withStyle(ChatFormatting.YELLOW), true);
+            return;
+        }
+        net.minecraft.world.item.Item handed = s.getItem();
+        if (!p.isCreative()) s.shrink(emerald ? Math.min(n, Math.max(1, got)) : shard ? Math.min(n, Math.max(1, (got + 4) / 5)) : 1);
+        long back = 0;
+        if (gear) for (var o : com.xenowarriors.gov.GovShop.OFFERS) if (o.make().get().getItem() == handed) { back = o.price() / 5; break; }    // (a fifth of its price back)
+        if (back > 0) com.xenowarriors.economy.Money.add(p, back, true);
+        p.level().playSound(null, e.getPos(), net.minecraft.sounds.SoundEvents.NOTE_BLOCK_CHIME.value(), net.minecraft.sounds.SoundSource.BLOCKS, 0.8F, 1.8F);
+        p.displayClientMessage(Component.literal((gear ? "Government property returned" : "Donation received") + ": +" + got + " Government standing"
+                + (back > 0 ? ", +" + com.xenowarriors.economy.Money.fmt(back) + " Money" : "")).withStyle(ChatFormatting.AQUA), true);
     }
 
     /** Villagers price their trades from your Townsfolk standing (through their own gossip), and won't trade if you're hated. */

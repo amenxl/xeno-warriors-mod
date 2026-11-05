@@ -29,7 +29,18 @@ public enum ComboStyle {
     /** Spears and tridents: 4 long-reaching thrusts and sweeps. */
     SPEAR(new int[]{10, 10, 11, 14}, new float[]{1F, 1F, 1.05F, 1.5F}, 17, 1.2F, 1.4F, false),
     /** Pickaxes, shovels, hoes and other tools: a clumsy 3-hit string. */
-    TOOL(new int[]{10, 10, 13}, new float[]{1F, 1F, 1.5F}, 16, 0F, 1.1F, false);
+    TOOL(new int[]{10, 10, 13}, new float[]{1F, 1F, 1.5F}, 16, 0F, 1.1F, false),
+    /**
+     * Rhalix's own bare-hand string (his Lunar form too): a shadow rush-in and rising claw, a low lunge, a crescent
+     * slash, the crow wing, a gravity whirl that knocks them down, a reaping grab that lifts them, the raven launcher and
+     * a gravity burst that blasts them away (see combat/RhalixComboServer, client/RhalixComboAnim, client/RhalixComboFx).
+     */
+    RHALIX(new int[]{12, 7, 7, 7, 10, 9, 9, 13}, new float[]{1F, 0.8F, 0.9F, 0.9F, 1.15F, 1F, 1.25F, 2F}, 15, 0.3F, 2.2F, false),
+    /**
+     * ...and his air string, attacking from a normal jump (not wing flight): a rising leap up beside them, two mid-air
+     * slashes and a close strike, then the spike slam that drives them down into the ground (he drops after them).
+     */
+    RHALIX_AIR(new int[]{9, 7, 6, 9, 12}, new float[]{1F, 0.9F, 0.9F, 1.15F, 1.9F}, 14, 0.6F, 1.5F, false);
 
     public final int[] durations;
     public final float[] weights;
@@ -56,7 +67,26 @@ public enum ComboStyle {
 
     public int length() { return durations.length; }
 
+    /** Rhalix's ground and air strings count as one (a hop or a landing mid-swing doesn't void the hit). */
+    public static boolean same(ComboStyle a, ComboStyle b) {
+        return a == b || (a == RHALIX || a == RHALIX_AIR) && (b == RHALIX || b == RHALIX_AIR);
+    }
+
+    public boolean rhalix() { return this == RHALIX || this == RHALIX_AIR; }
+
+    /**
+     * Rhalix's charged moves, sent as these hit numbers (outside the string): the half-charged Ki Burst (attack held
+     * ~half a second on the ground: a point-blank burst from his palm that pops them up) and the fully charged
+     * Rising Leap (held a second: he leaps up at someone in the air and goes on into his air string).
+     */
+    public static final int BURST = 20, LEAP = 21;
+    /** Added to a Rhalix hit his client starts: it's one of his air string's. */
+    public static final int AIR_FLAG = 100;
+
+    public boolean special(int hit) { return rhalix() && (hit == BURST || hit == LEAP); }
+
     public int duration(int hit, boolean heavy) {
+        if (!heavy && special(hit)) return hit == BURST ? 11 : 12;
         return heavy ? heavyDuration : durations[Math.floorMod(hit, durations.length)];
     }
 
@@ -74,6 +104,7 @@ public enum ComboStyle {
         float t = 0F, w = 0F;
         for (int i = 0; i < durations.length; i++) { t += cancel(durations[i]); w += weights[i]; }
         float k = 1.1F * speed * t / (20F * w);
+        if (special(hit)) return clamp((hit == BURST ? 1.05F : 1.0F) * k);
         return clamp(weights[Math.floorMod(hit, weights.length)] * k);
     }
 
@@ -104,7 +135,13 @@ public enum ComboStyle {
         if (id.contains("dagger") || id.contains("knife")) return QUICK_BLADE;
         boolean weapon = held.getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND).containsKey(Attributes.ATTACK_DAMAGE);
         if (weapon) return speed <= 0.95 ? HEAVY : speed >= 2.0 ? QUICK_BLADE : SWORD;
-        // bare hands or a non-weapon: fists (Mikiko has his own fist combo)
+        // bare hands or a non-weapon: fists (Mikiko and Rhalix have their own fist combos)
+        if (held.isEmpty() && character == CharacterType.RHALIX) {
+            boolean flying = user instanceof net.minecraft.world.entity.player.Player pl ? pl.getAbilities().flying : user.isNoGravity();
+            if (flying || user.isFallFlying()) return FIST;                          // (wing flight keeps its own attacks)
+            boolean jumping = !user.onGround() && !user.isInWater() && !user.isPassenger() && !user.onClimbable();
+            return jumping ? RHALIX_AIR : RHALIX;
+        }
         return character == CharacterType.MIKIKO && held.isEmpty() ? MIKIKO : FIST;
     }
 }

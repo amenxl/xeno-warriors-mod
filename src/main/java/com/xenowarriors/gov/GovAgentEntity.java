@@ -73,6 +73,11 @@ public class GovAgentEntity extends PathfinderMob {
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new GunGoal());
+        // riding in a vehicle (the patrol truck): a guard with no gun drawn fires his sidearm from the seat
+        goalSelector.addGoal(1, new com.xenowarriors.npc.NpcRangedGoal(this, com.xenowarriors.npc.NpcRangedGoal.Kind.BULLET, 22, 1.5, 20) {
+            @Override public boolean canUse() { return guard() && !hasGun() && getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity && super.canUse(); }
+            @Override public boolean canContinueToUse() { return canUse(); }
+        });
         goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.15, true) { @Override public boolean canUse() { return guard() && !hasGun() && super.canUse(); } });
         goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 10F, 1.0, 1.35, p -> !guard() && GovFacilities.wanted((Player) p)));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6));

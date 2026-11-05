@@ -115,7 +115,9 @@ public final class Bounties {
         var r = p.getRandom();
         give(p, new ItemStack(Items.EMERALD, 3 + tier * 4 + r.nextInt(4)));
         long paid = (300L + tier * 400L + r.nextInt(100)) * (100 + payBonus(p)) / 100;
-        com.xenowarriors.faction.Reputation.add(p, com.xenowarriors.faction.Faction.TOWN, 20);
+        com.xenowarriors.faction.RepRules.TOWN_BOUNTY.apply(p);
+        String bid = b.getString("id");                                        // hunting the Government's enemies pleases it too
+        if (bid.equals("xenowarriors:sr_member") || bid.equals("xenowarriors:corrupted_villager") || bid.equals("xenowarriors:order_assassin")) com.xenowarriors.faction.RepRules.GOV_BOUNTY.apply(p);
         com.xenowarriors.economy.Money.add(p, paid, true);
         com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), -1, "Bounty complete",
                 "+" + com.xenowarriors.economy.Money.fmt(paid) + " Money" + net.minecraft.world.entity.EntityType.byString(b.getString("id")).map(et -> " - " + b.getInt("need") + " " + et.getDescription().getString()).orElse(""), "");

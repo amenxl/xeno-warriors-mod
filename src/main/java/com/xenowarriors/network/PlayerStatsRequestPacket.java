@@ -53,7 +53,8 @@ public record PlayerStatsRequestPacket() {
                 d == null ? 0 : com.xenowarriors.mikiko.BladeLevel.maxTicks(d.bladeLevel),
                 d == null ? 0 : (int) Math.max(0, d.realmCooldownUntil - sender.server.overworld().getGameTime()),
                 com.xenowarriors.stats.Crafting.craftLevel(sender), com.xenowarriors.stats.Crafting.craftProgress(sender),
-                com.xenowarriors.stats.Crafting.smeltLevel(sender), com.xenowarriors.stats.Crafting.smeltProgress(sender));
+                com.xenowarriors.stats.Crafting.smeltLevel(sender), com.xenowarriors.stats.Crafting.smeltProgress(sender),
+                com.xenowarriors.stats.Appetite.level(sender), com.xenowarriors.stats.Appetite.progress(sender));
         ModNetwork.sendToPlayer(new PlayerStatsPacket(list, me), sender);
     }
 }

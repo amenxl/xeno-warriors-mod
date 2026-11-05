@@ -84,6 +84,7 @@ public class CorruptedSoulEntity extends Monster {
             }
             return;
         }
+        if (sinking == 0) SoulAltitude.tick(this);
         if (sinking > 0) {
             sinkTick();
         } else if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition()) && !getPersistentData().getBoolean(com.xenowarriors.s3.DistortionEntity.TAG) && !com.xenowarriors.vr.Vr.inVr(this)) {   // Distortion souls don't fear the sun
@@ -134,6 +135,16 @@ public class CorruptedSoulEntity extends Monster {
         }
         playSound(SoundEvents.SOUL_ESCAPE, 1F, 0.8F);
         discard();
+    }
+
+    /** Chance a soul leaves a Corrupted Shard behind when it's killed (each Looting level adds a bit). */
+    public static final float SHARD_CHANCE = 0.35F, SHARD_LOOTING = 0.1F;
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        super.dropCustomDeathLoot(source, looting, recentlyHit);
+        if (recentlyHit && random.nextFloat() < SHARD_CHANCE + SHARD_LOOTING * looting)
+            spawnAtLocation(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.CORRUPTED_SHARD.get()));
     }
 
     @Override

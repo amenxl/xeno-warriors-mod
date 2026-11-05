@@ -21,6 +21,8 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Stagger {
     private static final int LOCK_HITS = 9, LOCK_WINDOW = 60, IMMUNE = 40;
+    /** Rhalix's ground & air mix strings are longer: 16 hits in 5 seconds before they shrug it off. */
+    private static final int LONG_HITS = 16, LONG_WINDOW = 100;
     /** id -> {stagger until, window start, hits in window, immune until} (game time). */
     private static final Map<Integer, long[]> S = new HashMap<>();
 
@@ -31,14 +33,23 @@ public final class Stagger {
     }
 
     /** A combo hit landed. big = a finisher or heavy. */
-    public static void hit(LivingEntity t, int ticks, boolean big) {
+    public static void hit(LivingEntity t, int ticks, boolean big) { hit(t, ticks, big, false); }
+
+    /** @param longChain one of Rhalix's mix strings (a longer chain allowed before they shrug it off) */
+    public static void hit(LivingEntity t, int ticks, boolean big, boolean longChain) {
         long now = t.level().getGameTime();
         long[] s = S.computeIfAbsent(t.getId(), k -> new long[]{0, now, 0, 0});
         if (now < s[3]) return;                                         // shrugging it off
-        if (now - s[1] > LOCK_WINDOW) { s[1] = now; s[2] = 0; }
-        if (++s[2] >= LOCK_HITS) { s[3] = now + IMMUNE; s[0] = 0; s[2] = 0; return; }
+        if (now - s[1] > (longChain ? LONG_WINDOW : LOCK_WINDOW)) { s[1] = now; s[2] = 0; }
+        if (++s[2] >= (longChain ? LONG_HITS : LOCK_HITS)) { s[3] = now + IMMUNE; s[0] = 0; s[2] = 0; return; }
         if (boss(t)) { if (!big) return; ticks /= 2; }
         s[0] = Math.max(s[0], now + ticks);
+    }
+
+    /** Shrugging off hitstun right now (after too many hits in a row): no knockdowns, launches or juggles either. */
+    public static boolean immune(Entity e) {
+        long[] s = S.get(e.getId());
+        return s != null && e.level().getGameTime() < s[3];
     }
 
     public static boolean staggered(Entity e) {
@@ -70,6 +81,6 @@ public final class Stagger {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.getServer().getTickCount() % 200 != 0) return;
         long now = event.getServer().overworld().getGameTime();
-        S.values().removeIf(s -> now - Math.max(s[0], Math.max(s[1] + LOCK_WINDOW, s[3])) > 200);
+        S.values().removeIf(s -> now - Math.max(s[0], Math.max(s[1] + LONG_WINDOW, s[3])) > 200);
     }
 }

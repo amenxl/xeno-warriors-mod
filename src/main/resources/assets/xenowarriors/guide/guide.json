@@ -1,0 +1,176 @@
+{
+  "_readme": "The Xeno Warriors Guide (guide book item + the Guide tab in the main menu). When you add or change a feature, add or update its page here. Text: '\\n' for new lines, lines starting '- ' are bullets, '## ' a sub-heading. {key:NAME} shows the player's key for key.xenowarriors.NAME. A chapter or page with \"requires\": \"<modid>\" only shows when that mod is installed; \"season\": N only once Season N is unlocked.",
+  "chapters": [
+    {
+      "title": "Basics",
+      "pages": [
+        {
+          "title": "Welcome, warrior",
+          "text": "You play as a character from Xeno Warriors Recarnet, each with their own skills, ultimate, fighting style, outfits and stats.\n## Choosing a character\n- The first time you join you pick a warrior. Switch any time: main menu > Character Select, or /xeno choose.\n- Each character keeps their own levels, loadout, inventory, faction standing and ability levels.\n- Season 2 and 3 characters and content stay locked until an operator runs /xeno season unlock 2 (or 3), so nothing spoils the show."
+        },
+        {
+          "title": "Keys",
+          "text": "Change any of these in Options > Controls > Key Binds > Xeno Warriors.\n- Skills 1-4: {key:skill_ctrl1}, {key:skill_ctrl2}, {key:skill_ctrl3}, {key:skill_ctrl4}\n- Ultimate: {key:ultimate_ctrl5}\n- KA / super ultimate: {key:super_ultimate_ctrl6}\n- Lock on: {key:lock_on}\n- Karma Sensing: {key:karma_sense}\n- Main menu (stats, party, factions, guide...): {key:stats_menu}\n- Transform (Fox King / Demon's Remnants): {key:fox_king}\n- Accept / decline a request card: {key:accept_request} / {key:decline_request}\n- Hood up / down: {key:toggle_hood}"
+        },
+        {
+          "title": "Karma",
+          "text": "Karma is the energy every skill runs on (Zane calls his mana, Ultima his Data, but it's the same bar).\n- Every skill costs Karma on top of its cooldown.\n- It refills slowly by itself, much faster while you crouch and stand still to focus, fully after a night's sleep, and with Karma Potions.\n- Karma Sensing ({key:karma_sense}) lets you feel every living thing's Karma nearby: they glow through walls for a few seconds. Range and time grow with practice. A Karma-reducing hoodie hides you from it."
+        },
+        {
+          "title": "The main menu",
+          "text": "Press {key:stats_menu} for the main menu:\n- Character Select and Character Customization (stats, skill loadout and ability tiers, outfits, KA / last resort)\n- Party (your team, bots, synergy and bond)\n- Pets, Factions, Journey, Warriors (everyone online), Settings (cel-shading, HUD style, Karma Sensing, combat)\n- Guide: this book."
+        }
+      ]
+    },
+    {
+      "title": "Combat",
+      "pages": [
+        {
+          "title": "Combos and heavy hits",
+          "text": "What you hold decides your combo, for players and bots alike.\n- Left click to chain hits. Clicking early only queues the next one, so timing beats spamming.\n- The last hit of a string is a finisher that knocks enemies away.\n- Sneak + left click: a slow heavy hit that launches and breaks shields.\n- A perfectly chained string is a little stronger than plain vanilla hits with the same weapon."
+        },
+        {
+          "title": "Skills and ultimates",
+          "text": "- Every character has 4 skill slots and an ultimate. Pick them in Character Customization > Skills: click a slot, then a skill card.\n- More skills (and sometimes other ultimates) unlock at higher Character Levels.\n- Skills level up as you use them, with tier upgrades: see Progression > Ability levels and tiers.\n- Mikiko and Rhalix's last resort is the Xeno Blast ({key:super_ultimate_ctrl6}): a short charge, then a huge blast that pours out ALL your Karma (at least 10). The more Karma, the harder it hits - and your Karma won't come back for 30 seconds."
+        },
+        {
+          "title": "KAs",
+          "text": "A KA is a character's super ultimate ({key:super_ultimate_ctrl6}) - Kaeru's Change, Max's Vampire Cut, Logan's Redirect, Zane's Projection, Keita's KA and more.\n- Every KA has a price that gets worse the more you use it; too many uses close together burn it out for a while.\n- Character Customization > KAs shows yours, and the KA & Element Guide explains every one."
+        },
+        {
+          "title": "Clashes",
+          "text": "Fire a blast skill at an enemy charging their own blast at you (or two players fire at each other within half a second) and the blasts lock together between you.\n- Mash left click to push. NPCs push with their Karma.\n- Whoever gets pushed back eats both blasts.\n- With DragonMineZ, your blasts can clash with ki attacks too."
+        },
+        {
+          "title": "Lock-on",
+          "text": "Press {key:lock_on} to lock onto whatever is closest to your crosshair: your view stays turned to it, a reticle spins on it and its health shows at the top of the screen. Press again to let go; it also lets go if the target dies, gets too far or stays out of sight. Some moves (Mikiko's rope blade throw) home in on your lock-on target."
+        },
+        {
+          "title": "Team attacks",
+          "text": "## Team ultimate: Gravity Fox Fire\nMikiko and Rhalix in the same party, within 12 blocks:\n- One of them sneaks and presses the ultimate key ({key:ultimate_ctrl5}).\n- The other gets a request: press the ultimate key (or {key:accept_request}) to join.\n- Rhalix slams down a Kishi dome that pins the enemies, then Mikiko's fox fire storms through it, ending in one big blast. It uses both ultimates' cooldowns and Karma from both.\n## Synergies\nSome characters simply fight better together - see Party & Bots > Synergy and bond."
+        }
+      ]
+    },
+    {
+      "title": "Party & Bots",
+      "pages": [
+        {
+          "title": "Parties",
+          "text": "- Parties hold up to 4 (players and bots together, 3 bots each at most).\n- Invite: right-click a player with an empty hand, or /xeno party invite <name>. Accept from the request card ({key:accept_request}) or the chat message.\n- Party members see each other's health and Karma and can't hurt each other (except in a battle you both agreed to).\n- Ai-oni and Rhalix can never be in the same party."
+        },
+        {
+          "title": "Bot teammates",
+          "text": "- Add one: main menu > Party > an empty slot > Add bot, or /xeno bot. A bot is one of your other characters, with your saved stats and loadout for them (and your ability levels).\n- Click a bot in the Party menu for its options: Mode (Neutral, Aggressive, Mining), Bot menu (its gear, offhand and bag) and Dismiss.\n- Bots fight with combos and their skills, drink potions, and walk to healing pods when they're hurt.\n- Party Swap (Party menu): when a bot is lost, another of your characters takes its place."
+        },
+        {
+          "title": "Going down and reviving",
+          "text": "- With a party or bot teammates, you go down instead of dying (unless you carry a totem). A red circle appears around you.\n- A teammate (player or bot) standing in the circle for 2 seconds revives you; the ring fills with green. Bots get downed and revived the same way.\n- When you're revived you get 10 seconds of invincibility and a shockwave that stuns the enemies nearby.\n- If nobody is left who could come for you, you bleed out after 10 seconds. /xeno giveup respawns you straight away."
+        },
+        {
+          "title": "Synergy and bond",
+          "text": "Certain characters in the same party and within 24 blocks get a synergy (bots count, so you can try it solo): Partners (Rhalix + Mikiko), Skyland Bond (Rhalix + Sky Patrol / Kyrie), Goofy Rivals (Mikiko + Ultima), Soul Link (Mikiko + Kaeru), Brothers (Stevie + Garry), Tenjo Siblings (Yuri + Ultima), Old Friends (Zane + Mikiko), Married (Max + Technica).\n## Bond\n- Every teammate character has a bond level with yours, 0 to 100. It grows a little just by being together, much faster fighting side by side, with every kill one of you makes, and a lot with every revive.\n- Higher bond = stronger synergy (double at bond 100), and a synergy's downside fades out - Soul Link's shared death is gone at bond 50.\n- Every 10 levels of your best bond with someone in your party: +5 max hearts (+300 with DragonMineZ).\n- The Party menu shows your bond with everyone, the active synergies, and [S] opens the Team Synergy panel."
+        }
+      ]
+    },
+    {
+      "title": "Characters",
+      "pages": [
+        {
+          "title": "Mikiko",
+          "text": "The Fox King, fire and wind.\n- Hekublade: summon / put away with {key:summon_blade}. Nobody else can keep it. Upgrade its edge at a Karma Altar with Sky Crystals or Corrupted Shards.\n- Everything he defeats with it is sealed inside. Step into the Hekublade realm with {key:hekublade_realm} (blade in hand) to walk among the sealed souls - right-click one to free it.\n- Aerial blade combo: launch, juggle, and spike them into the ground.\n- Fox King mode ({key:fox_king}): +50% max Karma, faster and stronger.\n- His fire cooks the raw food he carries. At Character Level 50 he can fly on the wind (double-tap jump).\n- He tames foxes with rabbit meat (2 at most); the Fox Whistle calls them back.\n- He's wanted by Aurora's Government: hide your face (a hood or helmet) at Gov terminals."
+        },
+        {
+          "title": "Rhalix",
+          "text": "Gravity and wings.\n- Wings out / away with {key:toggle_wings}; fly by double-tapping jump - but only so high above the ground.\n- Kishi, his gravity, pins enemies; it's half of the Gravity Fox Fire team ultimate with Mikiko.\n- Demon's Remnants ({key:fox_king}): his eyes glow red and he's stronger, faster and tougher for 90 seconds.\n- Season 2: the Lunar form (pass the Lunar trial by meditating under a full moon).\n- He tames bats, parrots, chickens and bees as winged companions."
+        },
+        {
+          "title": "Kaeru",
+          "season": 2,
+          "text": "- She can go into Mikiko's Hekublade (sneak + {key:summon_blade} near him) and watch through it; any skill key casts her soul out into the world (half strength, limited range).\n- Her KA, Change: become any creature you aim at, or (sneaking) the block you look at, for 60 seconds. Every Change wears on her, and too many burn it out.\n- Soul Splitter: split your soul off to fight beside you; your health, damage and Karma are shared between the souls."
+        },
+        {
+          "title": "Ultima",
+          "season": 2,
+          "text": "- Power Output: he starts at 25% and ramps to 45%, 70% and 100% the longer a fight goes (faster with Output Surge). Each step fights differently: dodges, flying blasts, heavy slams, then everything at max. Overload (super slot) goes past 100% - and burns him up.\n- He runs on Data, not food: absorb Data Shards (from Data Ore) for Data and a little healing.\n- Data Sense ({key:karma_sense}) scans for living things AND ores - but C-souls and Corrupted Ore crash it.\n- With DragonMineZ he can tame the Xenoverse Robot with Data Shards."
+        },
+        {
+          "title": "Yuri, Technica and the rest",
+          "text": "- Yuri (Season 2): the hacker - everything runs off her holographic laptop (Virus Upload and more). With Ultima: Tenjo Siblings synergy.\n- Technica: the inventor - twin Uzis (explosive and gravity rounds), gravity boots, a visor and a wing cloak.\n- Max: daggers, the Wind element, Vampire Cut KA. Lexy: freakish strength. Kyrie: rapier, boxing and Gravity. Sam: bat, Clear Space and time bombs.\n- Stevie and Garry: the Disco Dojo brothers (Brother Blast hits much harder together).\n- Logan, Kill and Keita: the Sky Rebellion. Zane (Season 3): Fire, Ice and Thunder spells from his Magical Orb.\n- You: build your own characters (10 slots) with a race and element."
+        }
+      ]
+    },
+    {
+      "title": "Modes",
+      "pages": [
+        {
+          "title": "Journey",
+          "text": "Main menu > Journey. You and one partner (or alone) pick a party of 8 and walk a floating path: battles, scenario battles, healing pods and a boss at the end.\n- Before each battle choose who to bring; when the one you're playing goes down, the next tags in.\n- Health carries over and nothing heals you mid-battle: heal and revive at the Heal/Enhance shop with Journey Coins.\n- Difficulties Easy, Normal, Hard, Insane, Xeno: beat one to open the next. Clearing pays Money."
+        },
+        {
+          "title": "Tower",
+          "text": "Opened from the Collection (the book at the Mountain Village Element School). Arena floors with waves of enemies you haven't finished in your Collection.\n- Clear every wave to go up. Kills only save to your Collection at a checkpoint: floor 10, then every 10 floors.\n- Every 10 floors: a bigger arena, more Collection credit per kill and tougher enemies.\n- Your party can come. Healing is limited on each floor."
+        },
+        {
+          "title": "VR",
+          "text": "Yuri's VR room (a VR console, or /xeno vr): the room reshapes itself into an outdoor place. Free training against VR Ultima, plus challenges with rules (a certain character, a small party, no healing, a time limit) and a reward for the first clear. Nothing in VR is real: no drops, no Collection or bounty kills, and losing just ends the session."
+        }
+      ]
+    },
+    {
+      "title": "World",
+      "pages": [
+        {
+          "title": "The Recarnet",
+          "text": "The show's world, a dimension of its own. Hold right-click with a Recarnet Pass to travel there and back.\n- Sky islands with Skylanders, Government facilities, Order hideouts, human towns (people, not villagers) and Sky Haters.\n- Season 2: Aurora City at its center, inside its wall."
+        },
+        {
+          "title": "Factions",
+          "text": "Your standing with the Government, the Sky Rebellion, the Sky Patrol & Skylanders and the Townsfolk, -1000 to 1000, separately for each character.\n- It changes Gov terminal and villager prices, whether a group attacks you on sight, and bounty pay.\n- Main menu > Factions > click a faction for every way to raise or lower it.\n- Government: donate emeralds or data shards and hand back Gov gear at a Gov terminal (sneak + right-click it with them), defend Gov agents, hunt the Sky Rebellion and the Order, clear corruption. Getting caught in a facility or hurting agents makes them hate you."
+        },
+        {
+          "title": "Government",
+          "text": "- Gov Supply Terminal: Government gear for Money (prices follow your standing). It face-scans you.\n- Facilities: break things or open containers with staff around and you're wanted - every guard comes for you.\n- Healing pods: stand inside to heal and wash bad effects away. Bots and NPCs use them too.\n- Karma Scanner visor: see anyone's Karma Level."
+        },
+        {
+          "title": "Bounties, Collection and Money",
+          "text": "- Bounty boards (village plazas, or craft one): three bounties a day for emeralds, Money, stat XP and sometimes something rare.\n- The Collection counts every enemy type you defeat (bots' and pets' kills count): every 100 of one gives a stat boost.\n- Money comes from enemies and bounties, carried as Money notes."
+        },
+        {
+          "title": "Gear and gadgets",
+          "text": "- Karma Altar: upgrade the Hekublade's edge.\n- Vehicles: buy them at a vehicle dealer for emeralds.\n- Room technology: pulls you and the enemies near you into a copy of the area, so the fight can't wreck the real world. It ends when the enemies are gone or you leave.\n- Phones: right-click to take a call (you can't fight until you hang up).\n- Karma Hoodie / SR Hoodie: hide your Karma (and from the Sky Rebellion)."
+        }
+      ]
+    },
+    {
+      "title": "Progression",
+      "pages": [
+        {
+          "title": "Levels and stats",
+          "text": "No skill tree: you get better at what you do.\n- Speed (sprinting), Attack (dealing damage), Defense (taking hits). Together they make your Character Level, which gives max hearts and unlocks skills.\n- Mining, Crafting and Smelting level up on their own.\n- Each character has their own levels."
+        },
+        {
+          "title": "Ability levels and tiers",
+          "text": "Every skill and ultimate levels up the more you use it (per character).\n- Level 1 to 10 in each tier: every level takes 3% off its Karma cost and cooldown (-27% at level 10).\n- At level 10 an Upgrade button appears on the skill's card in Character Customization > Skills. The next tier hits much harder (x1.3 damage per tier) but costs more Karma and has a longer cooldown, until you level it to 10 again.\n- 10 tiers. The tier shows on the skill bar (T2, T3...) and every card shows its tier, level and progress.\n- Bots use your levels for their character."
+        },
+        {
+          "title": "Appetite (hunger level)",
+          "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting, regeneration and starving work like normal: they follow the top layer."
+        },
+        {
+          "title": "Bond",
+          "text": "Fighting beside the same teammates raises your bond with them (see Party & Bots > Synergy and bond): stronger synergies, no synergy downsides from bond 50, and +5 max hearts per 10 levels of your best party bond."
+        }
+      ]
+    },
+    {
+      "title": "DragonMineZ",
+      "requires": "dragonminez",
+      "pages": [
+        {
+          "title": "Playing with DragonMineZ",
+          "text": "- Every character has their own DragonMineZ character (race, stats, forms, techniques). A new one opens the race picker.\n- Xeno Warriors skills hit as hard as your DragonMineZ stats say: energy skills follow your Ki damage, physical ones your Strike.\n- Fighting as Mikiko or Rhalix trains your DragonMineZ stats too.\n- Your blasts can clash with ki attacks.\n- Bots use the ki techniques their character has equipped.\n- Bond hearts are much bigger: +300 max hearts per 10 bond levels."
+        }
+      ]
+    }
+  ]
+}

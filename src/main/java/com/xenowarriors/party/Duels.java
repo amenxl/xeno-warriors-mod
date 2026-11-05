@@ -168,6 +168,7 @@ public final class Duels {
         title(p, "REVIVED", ChatFormatting.GREEN, "by " + ReviveCircle.name(by));
         if (by instanceof ServerPlayer bp) bp.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
         com.xenowarriors.bot.ReviveAftermath.revived(p);                       // (10 s invincible, and a shockwave that stuns the enemies about)
+        Bonds.revived(p, by);                                                    // (a revive brings you closer)
     }
 
     /** Ran out of time (or gave up): they die for real. */

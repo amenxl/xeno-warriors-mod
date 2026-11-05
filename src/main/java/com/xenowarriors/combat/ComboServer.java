@@ -38,6 +38,8 @@ public final class ComboServer {
     public static final class Ctx {
         public final LivingEntity attacker; public final ComboStyle style; public final int hit; public final boolean heavy, finisher;
         public final float mult; boolean landed;
+        /** The damage it came to (after the combo multiplier, before armor). */
+        public float dealt;
         Ctx(LivingEntity a, ComboStyle s, int hit, boolean heavy, float mult) {
             attacker = a; style = s; this.hit = hit; this.heavy = heavy; finisher = !heavy && hit == s.length() - 1; this.mult = mult;
         }
@@ -67,12 +69,15 @@ public final class ComboServer {
     public static void start(ServerPlayer p, int hit, boolean heavy) {
         ComboStyle style = ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p));
         if (style == null || !p.isAlive() || p.isSpectator()) return;
+        // Rhalix: his client says which string (ground or air) - its idea of being on the ground is the right one
+        if (style.rhalix()) style = hit >= ComboStyle.AIR_FLAG ? ComboStyle.RHALIX_AIR : ComboStyle.RHALIX;
+        if (hit >= ComboStyle.AIR_FLAG) hit -= ComboStyle.AIR_FLAG;
         int now = p.tickCount;
         int[] prev = STARTED.get(p.getUUID());
         if (prev != null && prev[0] == style.ordinal()) {
             // no faster than the combo allows (some slack for lag)
             int need = ComboStyle.cancel(style.duration(prev[1], prev[2] != 0));
-            if (now - prev[3] < need * 0.6F) return;
+            if (now - prev[3] < need * 0.6F) { dbg(p, "start refused (too soon): hit " + hit + " " + (now - prev[3]) + " ticks after hit " + prev[1]); return; }
         }
         STARTED.put(p.getUUID(), new int[]{style.ordinal(), hit, heavy ? 1 : 0, now});
         ModNetwork.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> p), new ComboSwingPacket(p.getId(), style.ordinal(), hit, heavy));
@@ -81,15 +86,15 @@ public final class ComboServer {
     /** The player's swing reached its strike: hit this target. */
     public static void strike(ServerPlayer p, int targetId, int hit, boolean heavy) {
         int[] st = STARTED.get(p.getUUID());
-        if (st == null || st[1] != hit || (st[2] != 0) != heavy) return;
+        if (st == null || st[1] != hit || (st[2] != 0) != heavy) { dbg(p, "strike refused: hit " + hit + " but started " + (st == null ? "nothing" : String.valueOf(st[1]))); return; }
         ComboStyle style = ComboStyle.values()[st[0]];
-        if (ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)) != style) return;
-        if (p.tickCount - st[3] < ComboStyle.windup(style.duration(hit, heavy)) - 3) return;
+        if (!ComboStyle.same(ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)), style)) { dbg(p, "strike refused: style now " + ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)) + " vs " + style); return; }
+        if (p.tickCount - st[3] < ComboStyle.windup(style.duration(hit, heavy)) - 3) { dbg(p, "strike refused: too early"); return; }
         st[1] = -99;                                                        // one strike per swing
         Entity e = p.level().getEntity(targetId);
         if (!(e instanceof LivingEntity t) || !t.isAlive() || t == p) return;
         double reach = p.getEntityReach() + style.reachBonus + 1.0;
-        if (p.distanceToSqr(t) > (reach + t.getBbWidth()) * (reach + t.getBbWidth()) || !p.hasLineOfSight(t)) return;
+        if (p.distanceToSqr(t) > (reach + t.getBbWidth()) * (reach + t.getBbWidth()) || !p.hasLineOfSight(t)) { dbg(p, "strike refused: out of reach " + Math.sqrt(p.distanceToSqr(t))); return; }
         float mult = style.multiplier(hit, heavy, p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
         Ctx c = new Ctx(p, style, hit, heavy, mult);
         CTX.set(c);
@@ -100,7 +105,15 @@ public final class ComboServer {
         } finally {
             CTX.remove();
         }
+        if (!c.landed) dbg(p, "strike didn't land: hit " + hit + " on " + t.getType().getDescriptionId() + " hurtTime " + t.hurtTime + " invul " + t.invulnerableTime);
         after(c, t);
+    }
+
+    private static final boolean TEST = System.getenv("XW_UITEST_FOCUS") != null;
+
+    private static void dbg(ServerPlayer p, String s) {
+        if (TEST && ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)) != null
+                && ComboStyle.of(p, p.getMainHandItem(), ModCapabilities.getType(p)).rhalix()) XenoWarriors.LOGGER.info("XW-TEST rhalixcombo server " + s + " (tick " + p.tickCount + ")");
     }
 
     @SubscribeEvent
@@ -124,6 +137,7 @@ public final class ComboServer {
     /** Stagger, and the finisher's / heavy's send-off. */
     private static void after(Ctx c, LivingEntity t) {
         if (!c.landed || !(t.level() instanceof ServerLevel l)) return;
+        if (c.style.rhalix() && RhalixComboServer.after(c, t, l)) return;      // his own send-offs
         Vec3 dir = Vec3.directionFromRotation(0, c.attacker.getYRot());     // the way the hit is thrown
         double y = t.getY() + t.getBbHeight() * 0.6;
         if (c.heavy) {
@@ -150,8 +164,9 @@ public final class ComboServer {
         Ctx c = CTX.get();
         if (c == null || event.getSource().getEntity() != c.attacker) return;
         c.landed = true;
-        if (c.style.ownDamage && !c.heavy) return;
+        if (c.style.ownDamage && !c.heavy) { c.dealt = event.getAmount(); return; }
         event.setAmount(event.getAmount() * c.mult);
+        c.dealt = event.getAmount();
     }
 
     /** Light hits barely push (so the next hit connects), finishers knock them away, heavies launch (done after). */

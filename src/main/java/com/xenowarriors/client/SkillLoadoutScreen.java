@@ -107,7 +107,7 @@ public class SkillLoadoutScreen extends Screen {
             if (pic) { SkillIcons.draw(g, e.skill().getId(), x + 5, y + 4, 32); if (!open) g.fill(x + 5, y + 4, x + 37, y + 36, 0xA0101018); }
             int tx = pic ? x + 41 : x + 8;
             g.drawString(font, seasonOk ? font.plainSubstrByWidth(e.skill().getName().getString(), x + CARD_W - 4 - tx) : "???", tx, y + 6, open ? 0xFFFFFF : 0x777777);
-            String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
+            String line = !seasonOk ? "Season " + e.season() + " content" : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Equipped in slot " + (at + 1) : UltimaAnim.resource() + " " + com.xenowarriors.client.ClientSkillLevels.cost(e.skill().getId(), e.skill().getKarmaCost()) + "  CD " + com.xenowarriors.client.ClientSkillLevels.cooldown(e.skill().getId(), e.skill().getCooldownTicks()) / 20 + "s  T" + com.xenowarriors.client.ClientSkillLevels.tier(e.skill().getId()) + " Lv" + com.xenowarriors.client.ClientSkillLevels.level(e.skill().getId());
             g.drawString(font, font.plainSubstrByWidth(line, x + CARD_W - 4 - tx), tx, y + 20, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over && my >= 100 && my < height - 28) hover = !seasonOk ? "??? - Season " + e.season() + " content\nLocked so nothing gets spoiled. An operator can unlock it with /xeno season unlock " + e.season() : e.skill().getName().getString() + "\n" + desc(e.skill()) + (!seasonOk ? "\nSeason " + e.season() + " content - locked (no spoilers). An operator can unlock it with /xeno season unlock " + e.season() : open ? "" : "\nUnlocks at Character Level " + e.unlockLevel());
         }
@@ -188,9 +188,10 @@ public class SkillLoadoutScreen extends Screen {
 
     public static String desc(Skill s) {
         String k = "skill.xenowarriors." + s.getId() + ".desc", h = "skill.xenowarriors." + s.getId() + ".how";
-        String cd = s.getCooldownTicks() < 20 ? "none" : s.getCooldownTicks() / 20 + "s";
-        String stats = UltimaAnim.resource() + " " + s.getKarmaCost() + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
-        return stats + "\n\n" + (I18n.exists(k) ? I18n.get(k) : "") + (I18n.exists(h) ? "\n\nHow: " + I18n.get(h) : "");
+        int cdt = com.xenowarriors.client.ClientSkillLevels.cooldown(s.getId(), s.getCooldownTicks());     // (with its ability level)
+        String cd = cdt < 20 ? "none" : cdt / 20 + "s";
+        String stats = UltimaAnim.resource() + " " + com.xenowarriors.client.ClientSkillLevels.cost(s.getId(), s.getKarmaCost()) + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
+        return stats + "\n" + com.xenowarriors.client.ClientSkillLevels.describe(s.getId()) + "\n\n" + (I18n.exists(k) ? I18n.get(k) : "") + (I18n.exists(h) ? "\n\nHow: " + I18n.get(h) : "");
     }
 
     @Override
