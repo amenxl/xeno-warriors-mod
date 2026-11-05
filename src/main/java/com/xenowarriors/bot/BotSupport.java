@@ -127,7 +127,7 @@ public final class BotSupport {
             if (s != null && s.getId().equals(skill.getId()) && now < b.skillReady[i]) return;
         }
         float before = who.getHealth();
-        boolean downed = who instanceof Player pl && com.xenowarriors.party.Duels.isDowned(pl);
+        boolean downed = PartyBots.isDown(who);
         if (!PartyBots.castAt(b, skill, who)) { NEXT_HEAL.put(b.getUUID(), now + 60); return; }
         b.karma -= cost;
         long ready = now + Math.max(40, com.xenowarriors.skill.SkillLevels.cooldownFor(b, skill.getId(), skill.getCooldownTicks()));
@@ -149,6 +149,7 @@ public final class BotSupport {
             if (e instanceof Player p && (p.isSpectator() || p instanceof net.minecraftforge.common.util.FakePlayer)) continue;
             if (!com.xenowarriors.combat.Allies.isAlly(b, e) || com.xenowarriors.combat.Allies.opponents(b, e)) continue;
             if (e instanceof Player p && com.xenowarriors.party.Duels.isDowned(p)) return e;
+            if (e instanceof PartyBotEntity m && m.downed()) { if (best == null || !PartyBots.isDown(best)) best = e; worst = -1F; continue; }   // (a downed player still comes first)
             float f = e.getHealth() / e.getMaxHealth();
             if (f < worst) { worst = f; best = e; }
         }

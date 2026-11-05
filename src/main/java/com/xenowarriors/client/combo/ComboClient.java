@@ -135,6 +135,9 @@ public final class ComboClient {
     /** Ticks the attack button has been held (Rhalix charging), or -1. */
     public static int charge() { return holding ? ticks - holdStart : -1; }
 
+    /** (tests) Rhalix charges dropped because Epic Fight's battle mode took over the clicks. */
+    public static int chargesCancelled;
+
     /** The UI test: as if the attack button were pressed now and held for this many ticks. */
     public static void testHold(int holdTicks) {
         holding = true; holdStart = ticks; testHoldUntil = ticks + holdTicks;
@@ -145,6 +148,12 @@ public final class ComboClient {
     private static void holdTick(Minecraft mc, LocalPlayer p) {
         if (!holding) return;
         int held = ticks - holdStart;
+        if (AttackHooks.externalCombat.test(p)) {                                // switched to Epic Fight's battle mode mid-charge: its clicks now
+            holding = false; testHoldUntil = -1; queued = false; queuedSpecial = -1;
+            chargesCancelled++;
+            com.xenowarriors.client.RhalixComboFx.log("charge cancelled after " + held + " ticks: Epic Fight battle mode");
+            return;
+        }
         if (styleFor(p) != ComboStyle.RHALIX) { holding = false; queued = true; queuedHeavy = false; return; }   // (left the ground: a plain click)
         if (attackDown(mc)) {
             if (held >= KISHI_HOLD && p.isSprinting() && cur == null && com.xenowarriors.client.KishiWarpClient.ready()) {
@@ -179,6 +188,7 @@ public final class ComboClient {
 
     private static void tryStart(LocalPlayer p) {
         if (!queued) return;
+        if (AttackHooks.externalCombat.test(p)) { queued = false; queuedSpecial = -1; return; }   // (a click left over from before battle mode)
         int now = p.tickCount;
         if (cur != null && now - cur.start() < ComboStyle.cancel(cur.duration())) return;   // not yet: it waits its turn
         if (cur != null && lastWasEnderOf(cur)) return;                          // a finisher/heavy plays out in full

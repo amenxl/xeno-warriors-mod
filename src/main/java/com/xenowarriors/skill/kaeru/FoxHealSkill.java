@@ -12,7 +12,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Kaeru - Fox Heal: revives a downed or knocked-out teammate nearby (no karma cost for them, no crouching wait);
+ * Kaeru - Fox Heal: revives a downed or knocked-out teammate nearby (a player or a bot teammate) (no karma cost for them, no crouching wait);
  * if nobody's down, heals the most hurt ally near her (or herself) a lot, and cleanses poison and wither.
  */
 public class FoxHealSkill implements Skill {
@@ -31,11 +31,21 @@ public class FoxHealSkill implements Skill {
                 return true;
             }
         }
+        // a downed bot teammate: back up too (the nearest one)
+        com.xenowarriors.bot.PartyBotEntity down = null;
+        for (var b : p.serverLevel().getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, p.getBoundingBox().inflate(8),
+                b -> b.downed() && b.isAlive() && b.distanceToSqr(p) <= 8 * 8 && com.xenowarriors.skill.SkillTargeting.isFriend(p, b)))
+            if (down == null || b.distanceToSqr(p) < down.distanceToSqr(p)) down = b;
+        if (down != null) {
+            com.xenowarriors.party.ReviveCircle.foxRevive(down, p);
+            fx(down);
+            return true;
+        }
         LivingEntity best = p;
         float worst = p.getHealth() / p.getMaxHealth();
         for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(8))) {
             boolean ally = com.xenowarriors.skill.SkillTargeting.isFriend(p, e);     // (party, pets, bots, souls)
-            if (!ally || e == p) continue;
+            if (!ally || e == p || e instanceof com.xenowarriors.bot.PartyBotEntity b && b.downed()) continue;
             float f = e.getHealth() / e.getMaxHealth();
             if (f < worst) { worst = f; best = e; }
         }

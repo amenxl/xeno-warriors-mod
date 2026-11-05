@@ -59,6 +59,19 @@ public final class EpicFightCompat {
                 return null;
             }
         };
+        // our own lock-on (outside battle mode) with its separate third-person camera ("always"): the camera turns to the target too
+        com.xenowarriors.client.LockOn.externalCamera = (wantYaw, wantPitch, f) -> {
+            try {
+                var api = yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance();
+                if (api == null || api.isLockingOnTarget() || !api.isTPSMode()) return;
+                float yaw = api.getCameraYRot() + net.minecraft.util.Mth.wrapDegrees(wantYaw - api.getCameraYRot()) * f;
+                float pitch = net.minecraft.util.Mth.clamp(api.getCameraXRot() + (wantPitch - api.getCameraXRot()) * f, -90F, 90F);
+                api.setCameraRotations(pitch, yaw, true);
+                lockOnCameraTurns++;
+            } catch (Throwable t) {
+                // (an Epic Fight without this camera API: the character still turns)
+            }
+        };
         com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
         // Epic Fight draws its mobs from inside RenderLivingEvent.Pre and cancels it: our whole-body poses go on first
         com.xenowarriors.client.PoseGuard.otherModDraws = EpicFightCompat::drawsMob;
@@ -106,10 +119,24 @@ public final class EpicFightCompat {
 
     /** (tests) times our camera was put on after Epic Fight built its own. */
     public static int cameraPosts;
+    /** (tests) frames our lock-on turned Epic Fight's own third-person camera. */
+    public static int lockOnCameraTurns;
 
-    /** A mob (not a player: those go through RenderEpicFightPlayerEvent) Epic Fight draws itself this frame. */
+    /**
+     * Something Epic Fight draws itself this frame (from inside RenderLivingEvent.Pre, then cancelling it). A player:
+     * whether it drew them last time (its RenderEpicFightPlayerEvent, which it only asks once it's drawing, after our
+     * early transforms went on).
+     */
     private static boolean drawsMob(net.minecraft.world.entity.LivingEntity e) {
-        if (e instanceof net.minecraft.world.entity.player.Player) return false;
+        if (e instanceof net.minecraft.world.entity.player.Player) {
+            if (!Boolean.TRUE.equals(EF_DREW.get(e.getId()))) return false;
+            try {
+                var engine = yesman.epicfight.client.ClientEngine.getInstance().renderEngine;
+                return engine != null && engine.hasRendererFor(e);
+            } catch (Throwable t) {
+                return false;
+            }
+        }
         try {
             var engine = yesman.epicfight.client.ClientEngine.getInstance().renderEngine;
             if (engine == null || !engine.hasRendererFor(e)) return false;
@@ -316,7 +343,18 @@ public final class EpicFightCompat {
      * DragonMineZ forms it draws itself (Oozaru, giant forms) stay DragonMineZ's. The M menu setting hands
      * everything to Epic Fight.
      */
+    /** Player id -> whether Epic Fight drew them last frame (see drawsMob). */
+    private static final java.util.Map<Integer, Boolean> EF_DREW = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
+
     private static void onRenderPlayer(RenderEpicFightPlayerEvent event) {
+        decideRender(event);
+        if (event.getPlayerPatch().getOriginal() instanceof net.minecraft.world.entity.player.Player p) {
+            if (EF_DREW.size() > 256) EF_DREW.clear();
+            EF_DREW.put(p.getId(), event.getShouldRender());
+        }
+    }
+
+    private static void decideRender(RenderEpicFightPlayerEvent event) {
         if (!(event.getPlayerPatch().getOriginal() instanceof AbstractClientPlayer p)) return;
         if (ClientCharacterData.get(p) == CharacterType.NONE) return;
         if (ModList.get().isLoaded("dragonminez")
