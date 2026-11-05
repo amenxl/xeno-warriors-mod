@@ -53,7 +53,7 @@ public final class CharacterManager {
     /** A character with no DragonMineZ character yet: pick their Dragon Ball race (a moment later, once they've switched). */
     private static void pickDmzRace(ServerPlayer player, String name) {
         player.sendSystemMessage(Component.literal("Pick " + name + "'s Dragon Ball race - every warrior has their own DragonMineZ character.").withStyle(net.minecraft.ChatFormatting.GOLD));
-        com.xenowarriors.skill.ServerScheduler.later(20, () -> { if (player.isAlive()) ModNetwork.sendToPlayer(new com.xenowarriors.network.DmzRacePickPacket(), player); });
+        com.xenowarriors.skill.ServerScheduler.later(20, () -> { if (player.isAlive() && !com.xenowarriors.compat.DmzPerCharacter.created(player)) ModNetwork.sendToPlayer(new com.xenowarriors.network.DmzRacePickPacket(), player); });
     }
 
     /** Play one of their You characters (slot 0-9; it must exist). */

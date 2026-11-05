@@ -50,6 +50,11 @@ public record SelectCharacterPacket(CharacterType type) {
                     return;
                 }
         }
+        if (msg.type.getId().equals(com.xenowarriors.compat.DmzFusion.fusedChar(player))) {   // (it would come back as a bot when the fusion ends: two of them)
+            player.displayClientMessage(net.minecraft.network.chat.Component.literal("You're fused with " + msg.type.getDisplayName().getString() + " right now - wait for the fusion to end").withStyle(net.minecraft.ChatFormatting.RED), true);
+            ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);
+            return;
+        }
         ServerPlayer other = com.xenowarriors.character.CharacterLock.takenBy(player, msg.type);
         if (other != null) {
             if (com.xenowarriors.character.CharacterLock.anyFree(player)) {

@@ -189,7 +189,16 @@ public final class DmzDragonBalls {
         return true;
     }
 
-    private static boolean ok(PartyBotEntity b) { return b.isAlive() && !b.isRemoved() && !b.downed() && BUSY.containsKey(b.getUUID()); }
+    /** (Tests) is this bot in the middle of putting the balls down (so it won't start again)? */
+    public static boolean busyForTest(UUID bot) { return BUSY.containsKey(bot); }
+
+    private static boolean ok(PartyBotEntity b) {
+        if (!BUSY.containsKey(b.getUUID())) return false;
+        if (b.isAlive() && !b.isRemoved() && !b.downed()) return true;
+        BUSY.remove(b.getUUID());                                               // (knocked down or gone half-way: it can try again later, not never)
+        note(b.character().getId() + " stopped putting the balls down (" + (b.downed() ? "knocked down" : "gone") + ")");
+        return false;
+    }
 
     private static void place(PartyBotEntity b, ServerPlayer o, BallSet set, ServerLevel level, BlockPos pos, int star) {
         if (!ok(b)) return;
@@ -210,7 +219,12 @@ public final class DmzDragonBalls {
                 st = st.setValue(dp, Direction.fromYRot(b.getYRot()).getOpposite());
         } catch (Throwable ignored) {}
         level.setBlock(pos, st, Block.UPDATE_ALL);
-        MinecraftForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(snap, level.getBlockState(pos.below()), b));   // (DragonMineZ's tracking / radar)
+        if (MinecraftForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(snap, level.getBlockState(pos.below()), b))) {   // (DragonMineZ's tracking / radar - and a protected spot says no)
+            snap.restore(true, false);
+            BUSY.remove(b.getUUID());
+            note("placing star " + star + " at " + pos.toShortString() + " wasn't allowed - stopped");
+            return;
+        }
         b.inventory.removeItem(s, 1);
         level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_PLACE, SoundSource.NEUTRAL, 1F, 0.8F + star * 0.06F);
         note("placed " + star + "-star (" + ForgeRegistries.BLOCKS.getKey(block) + ") at " + pos.toShortString());
@@ -221,6 +235,10 @@ public final class DmzDragonBalls {
         BUSY.remove(b.getUUID());
         BlockState st = level.getBlockState(pos);
         if (st.isAir()) { note("summon: the last ball is gone"); return; }
+        if (o.hasDisconnected() || o.level() != level || o.distanceToSqr(Vec3.atCenterOf(pos)) > 48 * 48) {   // (the dragon is called by - and for - you: not from another world)
+            note("summon: " + o.getGameProfile().getName() + " isn't here - the balls are left for them");
+            return;
+        }
         // DragonMineZ's own summoning: right-clicking a ball with all seven nearby - the owner is the one who summons
         var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
         Set<Integer> before = new HashSet<>();

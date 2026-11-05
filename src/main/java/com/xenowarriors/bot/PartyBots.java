@@ -251,6 +251,8 @@ public final class PartyBots {
         for (CharacterType t : CharacterType.PLAYABLE) if (p.getPersistentData().getLong(REJOIN + t.getId()) > now) cooling.add(t.getId());
         for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
         int waiting = waitingFor(p.getUUID());
+        String fusedWith = com.xenowarriors.compat.DmzFusion.fusedChar(p);     // (the bot you're fused with is still on the team)
+        if (fusedWith != null) { taken.add(fusedWith); waiting++; }
         int free = Math.max(0, Math.min(MAX_BOTS - bots(p).size() - waiting, Parties.MAX_SIZE - partySize(p) - waiting));   // (up to 3: you plus three makes a full party)
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free), p);
     }
@@ -262,6 +264,8 @@ public final class PartyBots {
         Set<String> taken = new HashSet<>();
         for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
         for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
+        String fusedWith = com.xenowarriors.compat.DmzFusion.fusedChar(p);     // (so is the bot you're fused with: no second copy of it)
+        if (fusedWith != null) { taken.add(fusedWith); free--; }
         for (String id : ids) {
             CharacterType t = CharacterType.byId(id);
             if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (4 people and bots).").withStyle(ChatFormatting.RED)); return; }
@@ -499,6 +503,15 @@ public final class PartyBots {
             forgetFake(b.getUUID()); b.discard();
         }
         CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        persisted.put(STASH, list);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+    }
+
+    /** One bot's record added to the ones waiting at home (back with the rest after a Journey). */
+    public static void stashRecord(ServerPlayer p, CompoundTag record) {
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        ListTag list = persisted.getList(STASH, 10);
+        list.add(record);
         persisted.put(STASH, list);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
     }

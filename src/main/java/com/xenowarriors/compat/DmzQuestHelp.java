@@ -146,8 +146,14 @@ public final class DmzQuestHelp {
                 if (type == null || !storyOnly(p.serverLevel(), type)) continue;
                 CompoundTag done = summoned(p);
                 String id = o.key + "#" + o.index;
-                if (done.getBoolean(id)) continue;
-                done.putBoolean(id, true);
+                long now = p.server.overworld().getGameTime();
+                if (done.contains(id)) {                                        // summoned before: again only if they were all lost (despawned, killed by
+                    long at = done.getLong(id);                                 // something else, never arrived) - or the objective could never be finished
+                    if (now >= at && now - at < RESUMMON_TICKS) continue;
+                    if (p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL || alive(p, o.key, o.index) > 0) continue;
+                    note("the summons for " + id + " were lost - summoning again");
+                }
+                done.putLong(id, now);
                 int n = Math.max(1, Math.min(5, o.required - o.progress));
                 double hp = ((Number) m(o.objective, "getHealth")).doubleValue();
                 p.displayClientMessage(Component.literal("Your mission's target has sensed your ki... ").append(type.getDescription()).append(" is coming!")
@@ -159,6 +165,17 @@ public final class DmzQuestHelp {
                 }
             } catch (Throwable t) { XenoWarriors.LOGGER.warn("DragonMineZ mission summon failed", t); }
         }
+    }
+
+    /** How long after summoning an objective's enemies before they may be summoned again (if all of them are gone). */
+    public static int RESUMMON_TICKS = 20 * 90;
+
+    /** This player's summons for this objective still about (in their world, within 160 blocks). */
+    static int alive(ServerPlayer p, String key, int index) {
+        String owner = p.getStringUUID();
+        return p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(160), e -> e.isAlive() && e.getPersistentData().getBoolean("xw_quest_summon")
+                && key.equals(e.getPersistentData().getString("dmz_quest_key")) && e.getPersistentData().getInt("dmz_quest_objective_index") == index
+                && owner.equals(e.getPersistentData().getString("dmz_quest_owner"))).size();
     }
 
     private static CompoundTag summoned(ServerPlayer p) {

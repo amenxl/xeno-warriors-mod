@@ -288,6 +288,44 @@ public final class DmzFusion {
         } catch (Throwable t) { return "? " + t; }
     }
 
+    /**
+     * DragonMineZ's side of ending it: your look and stats back, its fused flags cleared, its cooldown. Only touches a
+     * fusion that is one of ours (fused with yourself as the "partner"), so it's safe to call on any DMZ data.
+     */
+    private static void undoDmz(ServerPlayer p, Object me) {
+        if (me == null) return;
+        try {
+            Object status = getStatus.invoke(me);
+            if (!ours(p, status)) return;
+            removeBonuses.invoke(getBonus.invoke(me), "FusionBonus");
+            Object look = getOrigAppearance.invoke(status);
+            if (look instanceof CompoundTag t && !t.isEmpty()) loadAppearance.invoke(getCharacter.invoke(me), t);
+            int cd = cfg(cooldownSec, 600) * 20;
+            addCooldown.invoke(getCooldowns.invoke(me), "FusionCooldown", cd);
+            clearState.invoke(null, me);
+            MobEffect fx = effect(fusedEffect), cdFx = effect(cdEffect);
+            if (fx != null) p.removeEffect(fx);
+            if (cdFx != null && p.isAlive()) p.addEffect(new MobEffectInstance(cdFx, cd, 0, false, false, true));
+            p.refreshDisplayName();
+            p.refreshTabListName();
+            DmzPerCharacter.syncAll(p);
+        } catch (Throwable t) { XenoWarriors.LOGGER.warn("Ending a bot fusion didn't fully work", t); }
+    }
+
+    /** Is this DMZ status a bot fusion of ours (fused, with the player themself as the "partner")? */
+    private static boolean ours(ServerPlayer p, Object status) {
+        try {
+            if (!(Boolean) isFused.invoke(status)) return false;
+            return p.getUUID().equals(status.getClass().getMethod("getFusionPartnerUUID").invoke(status));
+        } catch (Throwable t) { return false; }
+    }
+
+    /** The character id of the bot you're fused with right now (it's away, but still on your team), or null. */
+    public static String fusedChar(Player p) {
+        CompoundTag keep = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        return keep.contains(KEY) ? keep.getCompound(KEY).getString("char") : null;
+    }
+
     /** Ends the fusion: your look and stats back, DragonMineZ's cooldown, the bot back beside you. */
     public static void end(ServerPlayer p, String why, boolean ranOut) {
         CompoundTag keep = persisted(p);
@@ -295,25 +333,16 @@ public final class DmzFusion {
         CompoundTag rec = keep.getCompound(KEY);
         keep.remove(KEY);
         Object me = ready() ? DmzPerCharacter.live(p) : null;
-        if (me != null) {
-            try {
-                Object status = getStatus.invoke(me);
-                removeBonuses.invoke(getBonus.invoke(me), "FusionBonus");
-                Object look = getOrigAppearance.invoke(status);
-                if (look instanceof CompoundTag t && !t.isEmpty()) loadAppearance.invoke(getCharacter.invoke(me), t);
-                int cd = cfg(cooldownSec, 600) * 20;
-                addCooldown.invoke(getCooldowns.invoke(me), "FusionCooldown", cd);
-                clearState.invoke(null, me);
-                MobEffect fx = effect(fusedEffect), cdFx = effect(cdEffect);
-                if (fx != null) p.removeEffect(fx);
-                if (cdFx != null && p.isAlive()) p.addEffect(new MobEffectInstance(cdFx, cd, 0, false, false, true));
-                p.refreshDisplayName();
-                p.refreshTabListName();
-                DmzPerCharacter.syncAll(p);
-            } catch (Throwable t) { XenoWarriors.LOGGER.warn("Ending a bot fusion didn't fully work", t); }
-        }
+        undoDmz(p, me);
         CompoundTag bot = rec.getCompound("bot");
         ItemStack earring = rec.contains("earring") ? ItemStack.of(rec.getCompound("earring")) : ItemStack.EMPTY;
+        if (com.xenowarriors.journey.Journey.inRun(p)) {                     // (no bots on a Journey: it waits at home with the others)
+            PartyBots.stashRecord(p, bot);
+            if (!earring.isEmpty() && !ranOut && !p.getInventory().add(earring)) p.drop(earring, false);
+            p.sendSystemMessage(Component.literal("The fusion wore off (" + why + "). Your teammate waits for you at home.").withStyle(ChatFormatting.GOLD));
+            note("ended (" + why + ") on a Journey: bot stashed");
+            return;
+        }
         PartyBotEntity b = PartyBots.spawn(p, CharacterType.byId(rec.getString("char")), bot);
         if (b != null) {
             if (!earring.isEmpty() && !ranOut) b.inventory.addItem(earring);            // (a full fusion breaks the earrings, as in DragonMineZ)
@@ -331,6 +360,7 @@ public final class DmzFusion {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 10 != 0 || !fused(p)) return;
         long left = left(p);
         if (left <= 0) { end(p, "time's up", true); return; }
+        if (com.xenowarriors.journey.Journey.inRun(p)) { end(p, "a Journey began", false); return; }   // (a Journey is you and your partner only)
         Object me = ready() ? DmzPerCharacter.live(p) : null;
         try {
             if (me == null || !(Boolean) isFused.invoke(getStatus.invoke(me))) { end(p, "the fusion was undone", false); return; }
@@ -346,6 +376,30 @@ public final class DmzFusion {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
         if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && fused(p)) end(p, "logged out", false);   // (before the bots are saved, so it's among them)
+    }
+
+    /**
+     * DragonMineZ ends a fusion when your game mode changes by knocking out the fusion partner - and with a bot, that's
+     * you. So a change of game mode ends it here first (it just wears off).
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onGameMode(PlayerEvent.PlayerChangeGameModeEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && fused(p) && e.getNewGameMode() != e.getCurrentGameMode())
+            end(p, "your game mode changed", false);
+    }
+
+    /**
+     * Logging in fused (the game closed without a clean logout): DragonMineZ's own login check would end the fusion by
+     * knocking out the partner - you. Its fused state is undone before it looks; the bot comes back a moment later
+     * (onLogin). Also clears a fused state of ours left in the DMZ data without our record.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onLoginFirst(PlayerEvent.PlayerLoggedInEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || p instanceof FakePlayer || !ready()) return;
+        Object me = DmzPerCharacter.live(p);
+        try { if (me == null || !ours(p, getStatus.invoke(me))) return; } catch (Throwable t) { return; }
+        undoDmz(p, me);
+        note("login: undid a bot fusion left in " + p.getGameProfile().getName() + "'s DragonMineZ data (record kept=" + fused(p) + ")");
     }
 
     @SubscribeEvent
