@@ -43,7 +43,7 @@ import java.util.*;
  *       same one if it can, else its own next available one (its enemies are summoned like yours). A chat line says
  *       what each started. Bots never start one at any other time.</li>
  *   <li>Location objectives count while you (or a party member) are there; "talk to" objectives when you talk to that
- *       person; missions that end at a person are handed in for the bot once everything else is done; story
+ *       person; missions handed in to a person are handed in for the bot when you talk to them (DmzTalkNpcs brings them to you); story
  *       fighters that never spawn by themselves are summoned for its objectives like for yours (DmzQuestHelp).</li>
  * </ul>
  * The progress lives in the bot's saved DMZ character, so it stays over relogs and re-adding the bot. All by
@@ -56,8 +56,8 @@ public final class DmzBotQuests {
     private static final String K = "dmz_quest_key", I = "dmz_quest_objective_index", O = "dmz_quest_owner", SUMMONED = "xw_dmz_bot_qsum";
     private static Boolean loaded;
     private static boolean broken, listening;
-    private static Class<?> pqdClass, registry, service, killObj, talkObj, locHelper, avail, statsData;
-    private static Method unlocked, spawnKill, isLocation, locationMet, resolve, turnInReady, needsTurnIn;
+    static Class<?> pqdClass, registry, service, killObj, talkObj, locHelper, avail, statsData;
+    static Method unlocked, spawnKill, isLocation, locationMet, resolve, turnInReady, needsTurnIn;
 
     /** (For the tests) what happened, newest last. */
     public static final List<String> LOG = Collections.synchronizedList(new ArrayList<>());
@@ -105,15 +105,16 @@ public final class DmzBotQuests {
         }
     }
 
-    private static Object m(Object o, String name, Object... args) throws Exception {
+    static Object m(Object o, String name, Object... args) throws Exception {
         for (Method mm : o.getClass().getMethods())
             if (mm.getName().equals(name) && mm.getParameterCount() == args.length) {
+                if (!java.lang.reflect.Modifier.isPublic(mm.getDeclaringClass().getModifiers())) mm.trySetAccessible();   // (a private record's accessors)
                 try { return mm.invoke(o, args); } catch (IllegalArgumentException wrongOverload) { /* try the next one */ }
             }
         throw new NoSuchMethodException(o.getClass().getSimpleName() + "." + name);
     }
 
-    private static Object quest(String key) {
+    static Object quest(String key) {
         try { return registry.getMethod("getQuest", String.class).invoke(null, key); } catch (Throwable t) { return null; }
     }
 
@@ -131,7 +132,7 @@ public final class DmzBotQuests {
         return Component.literal(key);
     }
 
-    private static boolean typeEnabled(Object q) {
+    static boolean typeEnabled(Object q) {
         try {
             Object cfg = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getServerConfig").invoke(null);
             Object g = m(cfg, "getGameplay");
@@ -212,12 +213,12 @@ public final class DmzBotQuests {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<String> accepted(Object pqd) throws Exception {
+    static List<String> accepted(Object pqd) throws Exception {
         return new ArrayList<>((Set<String>) m(pqd, "getAcceptedQuestIds"));
     }
 
-    private static int progress(Object pqd, String key, int i) throws Exception { return (Integer) m(pqd, "getObjectiveProgress", key, i); }
-    private static int required(Object q, Object pqd, String key, int i) throws Exception { return (Integer) m(q, "getObjectiveRequired", pqd, key, i); }
+    static int progress(Object pqd, String key, int i) throws Exception { return (Integer) m(pqd, "getObjectiveProgress", key, i); }
+    static int required(Object q, Object pqd, String key, int i) throws Exception { return (Integer) m(q, "getObjectiveRequired", pqd, key, i); }
 
     private static boolean firstOpen(Object pqd, String key, Object q, int index) throws Exception {
         for (int i = 0; i < index; i++) if (progress(pqd, key, i) < required(q, pqd, key, i)) return false;
@@ -274,7 +275,7 @@ public final class DmzBotQuests {
                 note("kill counted for " + d.key + " (" + d.owner.getGameProfile().getName() + "'s bot) on " + key + "#" + i + ": " + (prog + 1) + "/" + req
                         + " - " + ForgeRegistries.ENTITY_TYPES.getKey(dead.getType()) + " defeated by " + (ownKill ? "the bot" : src == null ? "?" : src.getName().getString()));
             }
-            if (counted) { changed = true; complete(d, key, q); }
+            if (counted) { changed = true; complete(d, key, q, null); }
         }
         if (changed) d.commit();
     }
@@ -288,12 +289,15 @@ public final class DmzBotQuests {
         return tagsMatch || (typeMatches && !hasTags && "ANY_MATCHING".equals(String.valueOf(m(obj, "getCountMode"))));
     }
 
-    /** All done? Then the bot completes it (one that ends at a person is handed in for it) and gets the rewards. */
-    private static boolean complete(Data d, String key, Object q) throws Exception {
+    /**
+     * All done? Then the bot completes it and gets the rewards. One that ends by handing it in to a person completes
+     * when you talk to that person ({@code talkedTo}: their id) - DmzTalkNpcs brings them to you.
+     */
+    static boolean complete(Data d, String key, Object q, String talkedTo) throws Exception {
         if ((Boolean) m(d.pqd, "isQuestCompleted", key)) return false;
         List<?> objs = (List<?>) m(q, "getObjectives");
         if ((Boolean) needsTurnIn.invoke(null, q)) {
-            if (!(Boolean) turnInReady.invoke(null, d.pqd, key, q)) return false;
+            if (talkedTo == null || !talkedTo.equals(m(q, "getTurnIn")) || !(Boolean) turnInReady.invoke(null, d.pqd, key, q)) return false;
             for (int i = 0; i < objs.size(); i++) if (talkObj.isInstance(objs.get(i))) m(d.pqd, "setObjectiveProgress", key, i, required(q, d.pqd, key, i));
         } else {
             for (int i = 0; i < objs.size(); i++) if (progress(d.pqd, key, i) < required(q, d.pqd, key, i)) return false;
@@ -429,7 +433,7 @@ public final class DmzBotQuests {
                 } else if (killObj.isInstance(obj)) summonStory(d, p, key, i, obj, prog, req);
                 if (!parallel) break;
             }
-            if (complete(d, key, q)) changed = true;
+            if (complete(d, key, q, null)) changed = true;
         }
         if (changed) d.commit();
     }
@@ -473,7 +477,11 @@ public final class DmzBotQuests {
                 boolean changed = false;
                 for (String key : accepted(d.pqd)) {
                     Object q = quest(key);
-                    if (q == null || (Boolean) m(d.pqd, "isQuestCompleted", key) || (Boolean) needsTurnIn.invoke(null, q)) continue;
+                    if (q == null || (Boolean) m(d.pqd, "isQuestCompleted", key)) continue;
+                    if ((Boolean) needsTurnIn.invoke(null, q)) {                     // (handed in to this person: done)
+                        if (complete(d, key, q, npc)) { changed = true; note("handed in " + key + " to " + npc + " for " + d.key); }
+                        continue;
+                    }
                     List<?> objs = (List<?>) m(q, "getObjectives");
                     boolean parallel = (Boolean) m(q, "isParallelObjectives"), counted = false;
                     for (int i = 0; i < objs.size(); i++) {
@@ -482,7 +490,7 @@ public final class DmzBotQuests {
                         if (prog >= required(q, d.pqd, key, i) || (!parallel && !firstOpen(d.pqd, key, q, i))) continue;
                         if (talkObj.isInstance(obj) && npc.equals(m(obj, "getNpcId"))) { m(d.pqd, "setObjectiveProgress", key, i, prog + 1); counted = true; }
                     }
-                    if (counted) { changed = true; note("talked to " + npc + " for " + d.key + " " + key); complete(d, key, q); }
+                    if (counted) { changed = true; note("talked to " + npc + " for " + d.key + " " + key); complete(d, key, q, npc); }
                 }
                 if (changed) d.commit();
             } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ mission didn't count a talk", t); }
