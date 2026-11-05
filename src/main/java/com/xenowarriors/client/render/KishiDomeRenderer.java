@@ -46,7 +46,7 @@ public class KishiDomeRenderer extends EntityRenderer<KishiDomeEntity> {
         float red = 0.92F - 0.08F * level, green = 0.88F - 0.14F * level, blue = 1.0F;
         float power = 0.7F + 0.15F * level;
 
-        VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE));
+        VertexConsumer vc = buffers.getBuffer(com.xenowarriors.client.compat.ShaderCompat.glow(WHITE));
         PoseStack.Pose pose = poseStack.last();
         Matrix4f m = pose.pose();
         Matrix3f n = pose.normal();

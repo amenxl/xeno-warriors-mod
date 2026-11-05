@@ -72,6 +72,7 @@ public final class HuntAnimTests {
             l.add(new Step(null, () -> { com.xenowarriors.client.ClientReset.testOff = false; com.xenowarriors.client.ClientReset.resetAll(); }, 5));
             stuck(mc, l);
         }
+        if (all || f.contains("fx")) fx(mc, l);
         if (all || f.contains("gal")) gallery(mc, l);
         if (all || f.contains("gear")) gear(mc, l);
         if (all || f.contains("pose")) poses(mc, l);
@@ -350,6 +351,30 @@ public final class HuntAnimTests {
         l.add(new Step(null, () -> com.xenowarriors.client.ClientReset.resetAll(), 5));
         snap(mc, l, "after-reset");
         l.add(new Step(null, () -> server(p -> { p.setGameMode(GameType.CREATIVE); home(p); }), 10));
+    }
+
+    // ------------------------------------------------------------------ skill effects, normal and as drawn for shader packs
+
+    private static void fx(Minecraft mc, List<Step> l) {
+        for (boolean shader : new boolean[]{false, true}) {
+            for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX}) {
+                for (int slot : new int[]{0, com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT}) {
+                    String name = "huntanim_fx_" + t.getId() + "_skill" + slot + (shader ? "_shaderdraw" : "");
+                    setChar(l, t, 0);
+                    l.add(new Step(null, () -> { com.xenowarriors.client.compat.ShaderCompat.forceForTest = shader; server(p -> {
+                        home(p); p.setGameMode(GameType.SURVIVAL);
+                        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 30, 4, false, false));
+                        com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+                        p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(1000F));
+                        com.xenowarriors.karma.Karma.sync(p, p.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null));
+                    }); me(mc); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); face(mc); mc.player.setXRot(15F); }, 10));
+                    l.add(new Step(null, () -> { face(mc); mc.player.setXRot(15F); com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.UseSkillPacket(slot)); }, 25));
+                    l.add(new Step(name, () -> log("fx " + name + " karma=" + com.xenowarriors.client.ClientSkillState.karma()), 2));
+                    l.add(new Step(null, () -> server(p -> { com.xenowarriors.skill.SkillManager.resetCooldowns(p); p.setGameMode(GameType.CREATIVE); }), 80));
+                }
+            }
+        }
+        l.add(new Step(null, () -> com.xenowarriors.client.compat.ShaderCompat.forceForTest = false, 2));
     }
 
     // ------------------------------------------------------------------ 2. gallery: every character and outfit
