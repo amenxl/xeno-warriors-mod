@@ -99,6 +99,15 @@ public class PartyBotEntity extends PathfinderMob {
     private boolean unreachableCache; private int unreachableAt = -100; private LivingEntity unreachableFor;
     /** Cliff edges it stopped at (tests). */
     public int edgeStops;
+    /** Times its owner's tick brought it over from far behind (tests). */
+    public int catchUps;
+    /** Something it's off doing for a minute (a furnace, handing something over, fetching): see BotErrands. */
+    public BotErrands.Errand errand;
+    boolean busyElsewhere() { return errand != null; }
+    /** When it was last hurt (its own clock); shield guards (ticks left of this one, how many raised, blows stopped, swaps); Data Shards it absorbed. */
+    public int lastHurtAt = -100000, guardTicks, guards, shieldBlocks, shieldSwaps, shardAt = -100000, shardsUsed;
+    /** Ores/logs it's off getting for a craft it has in mind (see BotCrafting.gatherTarget), and how many more. */
+    boolean gathering; public int gathered;
 
     public boolean drinking() { return drinkTicks >= 0; }
     public boolean selfFlyingForTest() { return selfFlying; }
@@ -146,15 +155,34 @@ public class PartyBotEntity extends PathfinderMob {
     // ---------------------------------------------------------------- state
 
     @Override
-    public void onAddedToWorld() { super.onAddedToWorld(); PartyBots.track(this, true); }
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+        if (stranded) { if (!level().isClientSide) PartyBots.STRANDED.add(this); return; }   // (its record already went to the waiting list: this copy goes)
+        PartyBots.track(this, true);
+    }
+
+    /** Its chunk dropped out of the world under it (owner teleported, respawned or flew off far): it's on the waiting list instead. */
+    boolean stranded;
 
     @Override
     public void onRemovedFromWorld() {
         super.onRemovedFromWorld();
         PartyBots.track(this, false);
-        if (!level().isClientSide && getRemovalReason() == RemovalReason.UNLOADED_TO_CHUNK && ownerId() != null && !journey()) PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));   // owner teleported far away
-        if (!level().isClientSide && getRemovalReason() != null && getRemovalReason().shouldDestroy()) PartyBots.forgetFake(getUUID());
+        // Owner went far away: the chunk stops being tracked first (no removal reason yet), and is only unloaded - without
+        // saving a bot, see shouldBeSaved - later. Either way it waits for its owner, things and all (it used to be lost
+        // here with everything it carried, and re-adding it then found that character's save empty).
+        RemovalReason why = getRemovalReason();
+        if (!level().isClientSide && !stranded && ownerId() != null && !journey() && (why == null || why == RemovalReason.UNLOADED_TO_CHUNK)) {
+            stranded = true;
+            PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));
+            if (why == null) PartyBots.STRANDED.add(this);                       // (the entity itself goes next tick: never two of it)
+            PartyBots.testLog(this, "stranded (" + (why == null ? "chunk left the world" : "chunk unloaded") + ") - on the waiting list");
+        }
+        if (!level().isClientSide && why != null && why.shouldDestroy()) PartyBots.forgetFake(getUUID());
     }
+
+    /** Never through a portal on its own (it follows its owner between worlds, see PartyBots.teleportNear). */
+    @Override public boolean canChangeDimensions() { return false; }
 
     public CharacterType character() { return CharacterType.byId(entityData.get(CHAR)); }
     public void setCharacter(CharacterType t) { entityData.set(CHAR, t.getId()); }
@@ -205,6 +233,7 @@ public class PartyBotEntity extends PathfinderMob {
         goalSelector.addGoal(5, new FlyChase());                                                        // fliers: up to what they can't walk to
         goalSelector.addGoal(6, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
         goalSelector.addGoal(7, new MineGoal());
+        goalSelector.addGoal(7, new BotErrands(this));                                                  // (quiet times: furnaces, handing things over, Ultima's shards, Yuri's look about)
         goalSelector.addGoal(8, new FollowOwner());
         goalSelector.addGoal(9, new FlyAbout());
         goalSelector.addGoal(10, new WanderNearOwner());
@@ -224,13 +253,32 @@ public class PartyBotEntity extends PathfinderMob {
     /** Flying alongside the owner right now (gravity stays off). */
     boolean flyingWithOwner;
 
+    /** The owner is in trouble right now: just hurt, being attacked, or low. */
+    public static boolean ownerInDanger(ServerPlayer o) {
+        return o.hurtTime > 0 || (o.getLastHurtByMob() != null && o.tickCount - o.getLastHurtByMobTimestamp() < 100) || o.getHealth() < o.getMaxHealth() * 0.4F;
+    }
+
+    /** How far it roams before coming back: fliers range out to 32 blocks (back fast when the owner is attacked), walkers 8. */
+    public double leash() {
+        ServerPlayer o = owner();
+        return canFly() && !journey() && o != null && !ownerInDanger(o) && !(o.getAbilities().flying || o.isFallFlying()) ? FLIER_LEASH : 8;
+    }
+    public static final double FLIER_LEASH = 32;
+
     class FollowOwner extends Goal {
         FollowOwner() { setFlags(EnumSet.of(Flag.MOVE)); }
         @Override public boolean canUse() {
             ServerPlayer o = owner();
-            return o != null && !downed() && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 8 * 8;
+            if (o == null || downed() || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || busyElsewhere()) return false;
+            double l = leash();
+            return distanceToSqr(o) > l * l;
         }
-        @Override public boolean canContinueToUse() { ServerPlayer o = owner(); return o != null && getTarget() == null && mineTarget == null && reviving == null && !isPassenger() && distanceToSqr(o) > 4 * 4; }
+        @Override public boolean canContinueToUse() {
+            ServerPlayer o = owner();
+            if (o == null || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || busyElsewhere()) return false;
+            double l = leash() > 8 ? 12 : 4;
+            return distanceToSqr(o) > l * l || o.level() != level();
+        }
         @Override public void stop() { getNavigation().stop(); flyingWithOwner = false; BotMoves.land(PartyBotEntity.this); stuck = 0; if (isNoGravity() && !isVehicle()) { setNoGravity(false); } }
         private int stuck; private Vec3 lastPos = Vec3.ZERO;
         @Override public void tick() {
@@ -257,8 +305,15 @@ public class PartyBotEntity extends PathfinderMob {
                     else { BotMoves.flyTo(PartyBotEntity.this, o.position().add(0, 1.2, 0).add(position().subtract(o.position()).multiply(1, 0, 1).normalize().scale(1.2)), d2 > 12 * 12 ? 0.8 : 0.5); getLookControl().setLookAt(o); return; }
                 }
             }
+            // a flier a long way off (it was ranging about, or the owner's in trouble): back through the air, fast
+            if (canFly() && d2 > 16 * 16 && d2 < 56 * 56) {
+                BotMoves.flyTo(PartyBotEntity.this, o.position().add(0, 1.5, 0), ownerInDanger(o) ? 1.0 : 0.8);
+                getLookControl().setLookAt(o);
+                return;
+            }
             if (isNoGravity() && !isVehicle() && !selfFlying) setNoGravity(false);
-            if (d2 > 28 * 28 || (d2 > 12 * 12 && !canFly() && o.onGround() && getNavigation().isDone() && tickCount % 20 == 0)) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
+            double tp = canFly() ? 56 : 28;
+            if (d2 > tp * tp || (d2 > 12 * 12 && !canFly() && o.onGround() && getNavigation().isDone() && tickCount % 20 == 0)) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
             if (o.getVehicle() != null && tickCount % 10 == 0 && PartyBots.boardWith(PartyBotEntity.this, o)) return;
             getNavigation().moveTo(o, d2 > 14 * 14 ? 1.4 : d2 > 10 * 10 ? 1.2 : 1.0);
             getLookControl().setLookAt(o);
@@ -274,8 +329,9 @@ public class PartyBotEntity extends PathfinderMob {
             if (PartyBots.airborne(o) || o.getAbilities().flying) return false;
             if (--wanderWait > 0) return false;
             wanderWait = 60 + getRandom().nextInt(140);
-            if (distanceToSqr(o) > 8 * 8) return false;
-            double a = getRandom().nextDouble() * Math.PI * 2, r = 2.5 + getRandom().nextDouble() * 4;
+            double l = leash();
+            if (distanceToSqr(o) > l * l || busyElsewhere()) return false;
+            double a = getRandom().nextDouble() * Math.PI * 2, r = l > 8 ? 4 + getRandom().nextDouble() * 18 : 2.5 + getRandom().nextDouble() * 4;   // (fliers range further)
             Vec3 to = o.position().add(Math.cos(a) * r, 0, Math.sin(a) * r);
             BlockPos bp = BlockPos.containing(to);
             if (!level().getBlockState(bp).isAir() || !level().getBlockState(bp.below()).isSolid()) return false;
@@ -375,7 +431,7 @@ public class PartyBotEntity extends PathfinderMob {
 
     /** Now and then a flier takes a turn about the sky: up off the ground, a lap or two around its owner, and back down. */
     class FlyAbout extends Goal {
-        private int t, dur; private double ang, turn; private boolean landing;
+        private int t, dur; private double ang, turn, radius = 4.5; private boolean landing;
         public FlyAbout() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         private boolean calm() {
             ServerPlayer o = owner();
@@ -394,14 +450,16 @@ public class PartyBotEntity extends PathfinderMob {
         }
         @Override public boolean canContinueToUse() {
             ServerPlayer o = owner();
-            return calm() && distanceToSqr(o) < 14 * 14 && t < dur + 120 && !(landing && onGround() && t > 5);
+            double far = leash() + 6;
+            return calm() && distanceToSqr(o) < far * far && t < dur + 120 && !(landing && onGround() && t > 5);
         }
         @Override public boolean requiresUpdateEveryTick() { return true; }
         @Override public void start() {
             ServerPlayer o = owner();
             t = 0; dur = 120 + getRandom().nextInt(80); landing = false;
             ang = Math.atan2(getZ() - o.getZ(), getX() - o.getX());
-            turn = getRandom().nextBoolean() ? 0.045 : -0.045;
+            radius = leash() > 8 ? 7 + getRandom().nextDouble() * 12 : 4.5;    // (a wide loop out over the area, when nothing's up)
+            turn = (getRandom().nextBoolean() ? 0.045 : -0.045) * 4.5 / radius * 1.6;
             flourishes++; flourishPeak = 0; flourishFar = 0;
             ((ServerLevel) level()).sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, getX(), getY() + 0.1, getZ(), 8, 0.3, 0.05, 0.3, 0.05);
         }
@@ -416,7 +474,7 @@ public class PartyBotEntity extends PathfinderMob {
             if (!landing) {
                 ang += turn;
                 double h = Math.min(5.0, t * 0.1) + Math.sin(t * 0.08) * 0.6;
-                Vec3 goal = o.position().add(Math.cos(ang) * 4.5, h, Math.sin(ang) * 4.5);
+                Vec3 goal = o.position().add(Math.cos(ang) * radius, h, Math.sin(ang) * radius);
                 if (!level().noCollision(PartyBotEntity.this, getBoundingBox().move(goal.subtract(position())))) goal = goal.add(0, 1.5, 0);
                 BotMoves.flyTo(PartyBotEntity.this, goal, 0.42);
             } else {                                                            // back down beside them
@@ -572,6 +630,8 @@ public class PartyBotEntity extends PathfinderMob {
         if (tickCount % 10 == 0) pickUpItems();
         tickEating();
         BotPotions.tick(this);
+        BotShield.tick(this);
+        if (tickCount % 20 == 3) BotErrands.absorbTick(this);
         tickMoves();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         if (tickCount % 20 == 0) BotGear.tickIdle(this);                         // (puts its weapon away after a fight; crafting ideas)
@@ -680,6 +740,7 @@ public class PartyBotEntity extends PathfinderMob {
         if (downed() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !(sparring() && src.getEntity() == owner())) return false;
         boolean r = super.hurt(src, amount);
+        if (r) lastHurtAt = tickCount;
         if (r && src.getEntity() instanceof LivingEntity att && !(src.getEntity() == owner() && sparring())) { relayTarget = att; relayUntil = level().getGameTime() + 200; }
         return r;
     }
@@ -750,6 +811,18 @@ public class PartyBotEntity extends PathfinderMob {
         boolean hit = super.doHurtTarget(t);
         if (hit && !level().isClientSide) BotGear.wear(this);
         return hit;
+    }
+
+    /** A blow stopped by its shield: the shield wears, as a player's does (and breaks when it's done). */
+    @Override
+    protected void hurtCurrentlyUsedShield(float amount) {
+        shieldBlocks++;
+        PartyBots.testLog(this, "shield blocked " + String.format(java.util.Locale.ROOT, "%.1f", amount) + " damage (blocks " + shieldBlocks + ")");
+        ItemStack s = getUseItem();
+        if (amount < 3F || !BotErrands.isShield(s) || !s.isDamageableItem()) return;
+        InteractionHand hand = getUsedItemHand();
+        s.hurtAndBreak(1 + net.minecraft.util.Mth.floor(amount), this, e -> e.broadcastBreakEvent(hand));
+        if (s.isEmpty()) { setItemSlot(hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND, ItemStack.EMPTY); stopUsingItem(); }
     }
 
     @Override protected void dropEquipment() {}

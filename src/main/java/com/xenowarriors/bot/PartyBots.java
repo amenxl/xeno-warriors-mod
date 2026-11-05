@@ -91,11 +91,25 @@ public final class PartyBots {
 
     private static final Set<UUID> SOLO_SYNCED = new HashSet<>();
     static final List<Map.Entry<UUID, CompoundTag>> LEFT_BEHIND = new ArrayList<>();
+    /** Bots whose chunk left the world (their records are in LEFT_BEHIND): discarded next server tick. */
+    static final List<PartyBotEntity> STRANDED = new ArrayList<>();
+
+    /** (UI tests) a "XW-TEST bots5 ..." line. */
+    public static void testLog(PartyBotEntity b, String s) {
+        if (System.getenv("XW_UITEST") != null) XenoWarriors.LOGGER.info("XW-TEST bots5 {} {}", b == null ? "-" : b.character().getId(), s);
+    }
+
+    /** (Tests) how many bot records wait for this owner. */
+    public static int waitingFor(UUID owner) { int n = 0; for (var e : LEFT_BEHIND) if (e.getKey().equals(owner)) n++; return n; }
 
     /** Players with bots but no party still get the party cards (them + their bots). */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        if (!STRANDED.isEmpty()) {                                                // (their records are on the waiting list: the old copies go)
+            for (PartyBotEntity b : new ArrayList<>(STRANDED)) if (!b.isRemoved()) { forgetFake(b.getUUID()); b.discard(); }
+            STRANDED.clear();
+        }
         if (!LEFT_BEHIND.isEmpty()) {
             List<Map.Entry<UUID, CompoundTag>> list = new ArrayList<>(LEFT_BEHIND);
             LEFT_BEHIND.clear();
@@ -104,6 +118,7 @@ public final class PartyBots {
                 if (o == null) { LEFT_BEHIND.add(e); continue; }                    // (owner offline: kept for when they're back)
                 CharacterType ct = CharacterType.byId(e.getValue().getString("char"));
                 if (!canFollowTo(ct, o.level())) { LEFT_BEHIND.add(e); continue; }          // (waits outside the Hekublade)
+                if (!o.isAlive() || com.xenowarriors.journey.Journey.inLobbyOrRun(o) || placeNear(o, ct.skylander() || ct == CharacterType.ULTIMA || ct == CharacterType.MIKIKO) == null) { LEFT_BEHIND.add(e); continue; }   // (dead, on a Journey, or high in the air over nothing: once there's ground)
                 if (bots(o).stream().noneMatch(b -> b.character() == ct)) spawn(o, ct, e.getValue());
                 else homeFromRecord(o, e.getValue());                               // (that character came back another way meanwhile: its things go home, not into thin air)
             }
@@ -203,7 +218,7 @@ public final class PartyBots {
             b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, arm[4]);
             b.getPersistentData().put("xw_inv_kept", saved);
         }
-        teleportNear(b, p);
+        if (!teleportNear(b, p)) b.moveTo(p.getX(), p.getY(), p.getZ(), p.getYRot(), 0);   // (nowhere to stand: beside them, never at the world's origin)
         b.setYRot(p.getYRot());
         p.serverLevel().addFreshEntity(b);
         p.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, b.getX(), b.getY() + 1, b.getZ(), 12, .3, .5, .3, .02);
@@ -406,33 +421,88 @@ public final class PartyBots {
         p.displayClientMessage(Component.literal("Your bot teammates are back.").withStyle(ChatFormatting.AQUA), true);
     }
 
-    public static void teleportNear(PartyBotEntity b, ServerPlayer o) {
-        double a = b.getRandom().nextDouble() * Math.PI * 2;
+    /** Moves the bot next to its owner (another world: a fresh copy there, things and all). False when there was nowhere to put it. */
+    public static boolean teleportNear(PartyBotEntity b, ServerPlayer o) {
         if (b.level() != o.level()) {
-            if (b.journey()) { b.discard(); return; }
-            if (!canFollowTo(b.character(), o.level())) return;                       // (waits outside the Hekublade)
+            if (b.journey()) { b.discard(); return true; }
+            if (!canFollowTo(b.character(), o.level())) return false;                 // (waits outside the Hekublade)
             CompoundTag rec = b.record();
             CharacterType t = b.character();
+            forgetFake(b.getUUID());
             b.discard();
             spawn(o, t, rec);
-            return;
+            return true;
         }
-        // somewhere to stand near them (never into a block, lava or thin air)
+        Vec3 at = placeNear(o, b.canFly());
+        if (at == null) return false;
+        if (b.isPassenger() && b.getVehicle() != o.getVehicle()) b.stopRiding();
+        b.moveTo(at.x, at.y, at.z, b.getYRot(), 0);
+        b.getNavigation().stop();
+        b.fallDistance = 0;
+        b.setDeltaMovement(Vec3.ZERO);
+        return true;
+    }
+
+    /**
+     * Somewhere a bot can be put by its owner: a free spot to stand 2-3 blocks off (never into a block, lava or thin
+     * air); flying, the ground under them (up to 64 blocks down); a flier can also just be put in the air beside them.
+     * Null: nowhere yet (high over the void or open ocean, for a walker).
+     */
+    static Vec3 placeNear(ServerPlayer o, boolean flier) {
+        net.minecraft.world.level.Level l = o.level();
+        double a = o.getRandom().nextDouble() * Math.PI * 2;
         for (int i = 0; i < 8; i++) {
             double ang = a + i * Math.PI / 4, r = 2 + (i % 2);
             BlockPos at = BlockPos.containing(o.getX() + Math.cos(ang) * r, o.getY(), o.getZ() + Math.sin(ang) * r);
-            for (int dy = 0; dy >= -3; dy--) {
-                BlockPos q = at.offset(0, dy, 0);
-                if (b.level().getBlockState(q).isAir() && b.level().getBlockState(q.above()).isAir() && b.level().getBlockState(q.below()).isSolid()
-                        && !b.level().getBlockState(q.below()).is(net.minecraft.world.level.block.Blocks.LAVA) && !b.level().getBlockState(q.below()).is(net.minecraft.world.level.block.Blocks.MAGMA_BLOCK)) {
-                    b.moveTo(q.getX() + 0.5, q.getY(), q.getZ() + 0.5, b.getYRot(), 0);
-                    b.getNavigation().stop();
-                    b.fallDistance = 0;
-                    return;
-                }
+            for (int dy = 0; dy >= -3; dy--) { BlockPos q = at.offset(0, dy, 0); if (standable(l, q)) return Vec3.atBottomCenterOf(q); }
+        }
+        if (o.onGround()) return o.position();
+        BlockPos below = o.blockPosition();                                      // (in the air, on elytra or in a flying vehicle: the ground under them)
+        for (int dy = 1; dy <= 64 && below.getY() - dy > l.getMinBuildHeight(); dy++) {
+            BlockPos q = below.below(dy);
+            if (standable(l, q)) return Vec3.atBottomCenterOf(q);
+            if (!l.getBlockState(q).isAir() && !l.getFluidState(q).isEmpty()) { if (l.getFluidState(q).is(net.minecraft.tags.FluidTags.WATER) && l.getBlockState(q.above()).isAir()) return Vec3.atBottomCenterOf(q.above()); break; }
+            if (!l.getBlockState(q).getCollisionShape(l, q).isEmpty()) break;
+        }
+        if (flier) {
+            Vec3 side = o.position().add(o.getLookAngle().multiply(-2.5, 0, -2.5));
+            if (l.noCollision(new net.minecraft.world.phys.AABB(side, side.add(0.6, 1.8, 0.6)).move(-0.3, 0, -0.3))) return side;
+        }
+        return null;
+    }
+
+    private static boolean standable(net.minecraft.world.level.Level l, BlockPos q) {
+        BlockState under = l.getBlockState(q.below());
+        return l.getBlockState(q).isAir() && l.getBlockState(q.above()).isAir() && under.isSolid()
+                && !under.is(net.minecraft.world.level.block.Blocks.LAVA) && !under.is(net.minecraft.world.level.block.Blocks.MAGMA_BLOCK);
+    }
+
+    /**
+     * Twice a second, from the owner's tick: a bot that's fallen far behind (fast travel, elytra, a vehicle, a respawn,
+     * an ender pearl) or whose chunk has stopped ticking - where it would stand frozen until the chunk unloads - is
+     * brought over. With nowhere to put it yet it goes on the waiting list (things and all) until there is.
+     */
+    static void catchUp(ServerPlayer o) {
+        for (PartyBotEntity b : bots(o)) {
+            if (b.journey() || b.isRemoved() || b.stranded) continue;
+            if (b.level() != o.level()) {                                        // (its own tick does this - unless it isn't ticking)
+                if (o.isAlive() && canFollowTo(b.character(), o.level())) teleportNear(b, o);
+                continue;
+            }
+            boolean ticking = ((ServerLevel) b.level()).isPositionEntityTicking(b.blockPosition());
+            double far = b.canFly() ? 64 : 48, d2 = b.distanceToSqr(o);
+            if (ticking && d2 < far * far) continue;
+            if (b.isPassenger() && b.getVehicle() == o.getVehicle()) continue;   // (riding along with them)
+            if (b.downed()) { if (!ticking) { testLog(b, "left behind while down - goes home"); bleedOut(b); } continue; }
+            if (!o.isAlive()) continue;
+            if (teleportNear(b, o)) { b.catchUps++; testLog(b, "caught up (" + (ticking ? "far" : "chunk not ticking") + ", " + (int) Math.sqrt(d2) + " blocks)"); continue; }
+            if (!ticking) {                                                      // nowhere to put it, and it can't wait where it is: it waits on the list
+                b.stranded = true;
+                LEFT_BEHIND.add(Map.entry(o.getUUID(), b.record()));
+                forgetFake(b.getUUID()); b.discard();
+                testLog(b, "nowhere to stand by the owner yet - waiting list");
             }
         }
-        if (o.onGround()) { b.moveTo(o.getX(), o.getY(), o.getZ(), b.getYRot(), 0); b.getNavigation().stop(); b.fallDistance = 0; }
     }
 
     // ---------------------------------------------------------------- skills (through a stand-in player)
@@ -812,6 +882,7 @@ public final class PartyBots {
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p instanceof FakePlayer) return;
         if (p.tickCount % 10 == 0) for (PartyBotEntity b : bots(p)) unboard(b, p);
+        if (p.tickCount % 10 == 7) catchUp(p);
         // standing right by you when you get in (the follow goal only runs when they're further off): they hop in too
         if (p.tickCount % 10 == 5 && p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity)
             for (PartyBotEntity b : bots(p)) if (b.getTarget() == null && !b.isPassenger() && b.level() == p.level()) boardWith(b, p);
@@ -869,7 +940,7 @@ public final class PartyBots {
     /** Bots waiting for an offline owner belong to this world (saved with it, see BotLimbo): none turn up (doubled) in the next save opened (singleplayer). */
     @SubscribeEvent
     public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
-        LEFT_BEHIND.clear(); PENDING_HOME.clear(); ANIM_SENT.clear();
+        LEFT_BEHIND.clear(); PENDING_HOME.clear(); ANIM_SENT.clear(); STRANDED.clear(); BotErrands.clear();
     }
 
     /** The things of bots that went home while this owner was away, into their saves (taken off the list first: handed over once). */

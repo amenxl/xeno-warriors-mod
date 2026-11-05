@@ -95,28 +95,46 @@ public class BotMenu extends AbstractContainerMenu {
         if (bot != null && player instanceof net.minecraft.server.level.ServerPlayer sp && sp.getUUID().equals(bot.ownerId())) BotCrafting.bagClosed(bot, sp);   // (you may have just handed it what it needed)
     }
 
-    /** The bot's equipment, read and written straight on the bot (server side). */
-    public static class GearContainer extends SimpleContainer {
+    /**
+     * The bot's equipment, read and written straight on the bot (server side) - live, never a copy: the bot changes
+     * what it holds and wears while the menu is open (a weapon out for a fight, a shield, armour it crafted), and a
+     * copy written back on the next click used to undo that (the new piece gone, the old one doubled).
+     */
+    public static class GearContainer implements Container {
         private final PartyBotEntity bot;
-        private boolean loading;
 
-        public GearContainer(PartyBotEntity bot) {
-            super(GEAR);
-            this.bot = bot;
-            loading = true;
-            for (int i = 0; i < GEAR; i++) super.setItem(i, bot.getItemBySlot(GEAR_SLOTS[i]).copy());
-            loading = false;
+        public GearContainer(PartyBotEntity bot) { this.bot = bot; }
+
+        @Override public int getContainerSize() { return GEAR; }
+        @Override public boolean isEmpty() { for (EquipmentSlot es : GEAR_SLOTS) if (!bot.getItemBySlot(es).isEmpty()) return false; return true; }
+        @Override public ItemStack getItem(int i) { return i < 0 || i >= GEAR ? ItemStack.EMPTY : bot.getItemBySlot(GEAR_SLOTS[i]); }
+
+        @Override public ItemStack removeItem(int i, int n) {
+            ItemStack s = getItem(i);
+            if (s.isEmpty() || n <= 0) return ItemStack.EMPTY;
+            ItemStack out = s.split(n);
+            bot.setItemSlot(GEAR_SLOTS[i], s.isEmpty() ? ItemStack.EMPTY : s);
+            picked(i);
+            return out;
         }
 
-        @Override
-        public void setChanged() {
-            super.setChanged();
-            if (loading) return;
-            for (int i = 0; i < GEAR; i++) bot.setItemSlot(GEAR_SLOTS[i], getItem(i).copy());
-            bot.handPicked = bot.tickCount;                                       // (what you put in its hand stays a while)
+        @Override public ItemStack removeItemNoUpdate(int i) {
+            ItemStack s = getItem(i);
+            if (s.isEmpty()) return ItemStack.EMPTY;
+            bot.setItemSlot(GEAR_SLOTS[i], ItemStack.EMPTY);
+            return s;
         }
 
-        @Override
-        public boolean stillValid(Player p) { return bot.isAlive() && bot.distanceToSqr(p) < 10 * 10; }
+        @Override public void setItem(int i, ItemStack s) {
+            if (i < 0 || i >= GEAR) return;
+            bot.setItemSlot(GEAR_SLOTS[i], s);
+            picked(i);
+        }
+
+        private void picked(int i) { if (GEAR_SLOTS[i] == EquipmentSlot.MAINHAND || GEAR_SLOTS[i] == EquipmentSlot.OFFHAND) bot.handPicked = bot.tickCount; }   // (what you put in its hands stays a while)
+
+        @Override public void setChanged() {}
+        @Override public void clearContent() { for (EquipmentSlot es : GEAR_SLOTS) bot.setItemSlot(es, ItemStack.EMPTY); }
+        @Override public boolean stillValid(Player p) { return bot.isAlive() && bot.distanceToSqr(p) < 10 * 10; }
     }
 }

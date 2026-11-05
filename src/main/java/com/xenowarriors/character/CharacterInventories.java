@@ -160,6 +160,19 @@ public final class CharacterInventories {
                     if (free < 0) { give(p, ItemStack.of(it)); continue; } it.putByte("Slot", (byte) free); slot = free; }
                 used.add(slot); merged.add(it);
             }
+            // ...and its ender chest and XP too (they used to be dropped here: only the bag was merged)
+            ListTag oldEnder = old.getList("ender", net.minecraft.nbt.Tag.TAG_COMPOUND), newEnder = t.getList("ender", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            java.util.Set<Integer> eused = new java.util.HashSet<>();
+            for (int i = 0; i < oldEnder.size(); i++) eused.add(oldEnder.getCompound(i).getByte("Slot") & 255);
+            for (int i = 0; i < newEnder.size(); i++) {
+                CompoundTag it = newEnder.getCompound(i).copy();
+                int free = -1; for (int s = 0; s < 27; s++) if (!eused.contains(s)) { free = s; break; }
+                if (free < 0) { give(p, ItemStack.of(it)); continue; }
+                it.putByte("Slot", (byte) free); eused.add(free); oldEnder.add(it);
+            }
+            old.put("ender", oldEnder);
+            if (t.getInt("xp_total") > 0) old.putInt("xp_total", old.getInt("xp_total") + t.getInt("xp_total"));
+            if (t.getInt("xp_level") > old.getInt("xp_level")) { old.putInt("xp_level", t.getInt("xp_level")); old.putFloat("xp_progress", t.getFloat("xp_progress")); }
             t = old; t.put("inv", merged);
             root.put(key, t);
             put(p, root);
