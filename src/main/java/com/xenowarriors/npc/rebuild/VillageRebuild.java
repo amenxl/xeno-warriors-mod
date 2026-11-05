@@ -309,6 +309,7 @@ public final class VillageRebuild {
     private static int pick(ServerLevel l, RebuildData.Village v, Mob w, long now) {
         int best = -1, firstY = Integer.MIN_VALUE, scanned = 0;
         double bestScore = Double.MAX_VALUE;
+        double far = w instanceof Villager ? 40 * 40 : 96 * 96;                    // (townsfolk walk long ways in steps - see RebuildGoal)
         for (int i = v.pending.nextSetBit(0); i >= 0 && scanned < PICK_SCAN; i = v.pending.nextSetBit(i + 1), scanned++) {
             BlockPos p = v.pos(i);
             if (!l.isLoaded(p) || taken(v, i) || v.skipUntil.get(i) > now) continue;
@@ -320,7 +321,7 @@ public final class VillageRebuild {
             }
             if (!supported(v, p)) continue;
             double d2 = w.distanceToSqr(p.getX() + .5, p.getY() + .5, p.getZ() + .5);
-            if (d2 > 40 * 40) continue;                                             // (too far to walk to: someone closer)
+            if (d2 > far) continue;                                                 // (too far to walk to: someone closer)
             if (firstY == Integer.MIN_VALUE) firstY = p.getY();
             double score = d2 + (p.getY() - firstY) * 6.0;   // (close by, a little lower first)
             if (score < bestScore) { bestScore = score; best = i; }
