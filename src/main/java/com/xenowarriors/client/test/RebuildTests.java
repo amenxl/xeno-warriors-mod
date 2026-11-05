@@ -148,7 +148,7 @@ public final class RebuildTests {
             if (goldIdx >= 0) { gold = village.pos(goldIdx); l.setBlock(gold, Blocks.GOLD_BLOCK.defaultBlockState(), 3); }
             log("blast missing=" + BLAST.size() + " (village pending " + pending + " of " + village.size() + ")" + " player block at "
                     + (gold == null ? "none" : gold.toShortString() + " instead of " + village.state(goldIdx).getBlock().getName().getString()));
-        }), 6);
+        }), 40);
         step("after_blast", () -> {}, 2);
         // ---- watch them put it back
         int every = 100, rounds = 66;

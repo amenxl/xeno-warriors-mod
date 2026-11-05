@@ -281,14 +281,18 @@ public final class VillageRebuild {
         AABB area = new AABB(v.box.minX() - 16, v.box.minY() - 8, v.box.minZ() - 16, v.box.maxX() + 17, v.box.maxY() + 9, v.box.maxZ() + 17);
         List<Mob> cands = new ArrayList<>(l.getEntitiesOfClass(Mob.class, area, m -> (m instanceof HumanNpcEntity || m instanceof Villager) && !JOBS.containsKey(m.getId())));
         long now = l.getGameTime();
+        cands.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(v.anchor.getX(), v.anchor.getY(), v.anchor.getZ())));
+        int busy = 0, none = 0, tried = 0;
         for (Mob w : cands) {
-            if (working >= want) break;
-            if (!canWork(w, l)) continue;
+            if (working >= want || tried >= 16) break;
+            if (!canWork(w, l)) { busy++; continue; }
+            tried++;
             int i = pick(l, v, w, now);
-            if (i < 0) return;                                  // nothing open to anyone right now
+            if (i < 0) { none++; continue; }                   // nothing open this one can get to
             JOBS.put(w.getId(), new Job(w, l, v, i, now));
             working++;
         }
+        lastAssign = "candidates " + cands.size() + ", busy " + busy + ", no spot " + none;
     }
 
     private static boolean taken(RebuildData.Village v, int i) {
@@ -403,11 +407,11 @@ public final class VillageRebuild {
     }
 
     /** Who's rebuilding this village right now: [humans, villagers] (tests). */
-    private static String why = "";
+    private static String why = "", lastAssign = "";
 
     /** What each worker of this village is doing (tests). */
     public static String debug(RebuildData.Village v) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("[" + lastAssign + "] ");
         for (Job j : JOBS.values()) if (j.v == v) {
             BlockPos p = j.idx >= 0 ? v.pos(j.idx) : null;
             sb.append(j.w instanceof Villager ? "V" : "H").append('@').append(j.w.blockPosition().toShortString()).append("->")
