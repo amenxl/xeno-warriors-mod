@@ -42,7 +42,7 @@ public final class GunfeelTests {
 
     private static String f2(double d) { return String.format(Locale.ROOT, "%.2f", d); }
 
-    public static boolean handles(String focus) { return focus != null && focus.startsWith("gunfeel"); }
+    public static boolean handles(String focus) { return focus != null && (focus.startsWith("gunfeel") || focus.equals("efgunfeel")); }
 
     private static void server(java.util.function.Consumer<ServerPlayer> f) {
         UiTest.server(p -> { try { f.accept(p); } catch (Throwable t) { log("step error " + t); XenoWarriors.LOGGER.error("XW-TEST gunfeel", t); } });

@@ -3,18 +3,28 @@ package com.xenowarriors.mixin;
 import com.xenowarriors.client.forms.GunClient;
 import net.minecraft.client.MouseHandler;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Aiming a summoned gun down the sights turns the mouse down with the zoom (like TACZ guns). Optional
- * ({@code require = 0}): if another mod changes this spot, aiming still works, just at full sensitivity.
+ * Aiming a summoned gun down the sights turns the mouse down with the zoom (like TACZ guns).
+ * Scales the mouse movement gathered for this frame at the start of turnPlayer, so it never touches
+ * the LocalPlayer.turn call that other mods (e.g. Epic Fight) redirect - an @ModifyArg there crashed
+ * the game on load in a real modpack. Optional: if it can't apply, aiming works at full sensitivity.
  */
 @Mixin(MouseHandler.class)
 public abstract class MouseHandlerGunMixin {
-    @ModifyArg(method = "turnPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;turn(DD)V"), index = 0, require = 0)
-    private double xenowarriors$gunYaw(double yaw) { return yaw * GunClient.sensitivity(); }
+    @Shadow private double accumulatedDX;
+    @Shadow private double accumulatedDY;
 
-    @ModifyArg(method = "turnPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;turn(DD)V"), index = 1, require = 0)
-    private double xenowarriors$gunPitch(double pitch) { return pitch * GunClient.sensitivity(); }
+    @Inject(method = "turnPlayer", at = @At("HEAD"), require = 0)
+    private void xenowarriors$gunSensitivity(CallbackInfo ci) {
+        double s = GunClient.sensitivity();
+        if (s != 1.0) {
+            this.accumulatedDX *= s;
+            this.accumulatedDY *= s;
+        }
+    }
 }
