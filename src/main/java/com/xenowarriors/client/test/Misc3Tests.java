@@ -386,6 +386,7 @@ public final class Misc3Tests {
     private static int shots0, held0;
     private static Object killer;
     private static String killedBy = "-";
+    private static boolean killTest;
 
     private static ItemStack gun(DmzGuns.Kind k) {
         for (var it : DmzGuns.items()) if (DmzGuns.kindOf(new ItemStack(it)) == k) return new ItemStack(it);
@@ -433,6 +434,10 @@ public final class Misc3Tests {
             bot.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 4, false, false));
             bot.moveTo(at.x, at.y, at.z, 0, 0);
             p.connection.teleport(at.x + 6, at.y, at.z - 3, 30F, 10F);
+            // (only blaster shots hurt the kill-test target: the bot's own skills and ki techniques would race the gun to it)
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.living.LivingAttackEvent e) -> {
+                if (killTest && e.getEntity() == target && (e.getSource().getDirectEntity() == null || !e.getSource().getDirectEntity().getClass().getSimpleName().equals("KiBlastEntity"))) e.setCanceled(true);
+            });
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.living.LivingDeathEvent e) -> {
                 if (e.getEntity() == target) { killer = e.getSource().getEntity(); killedBy = e.getSource().getDirectEntity() == null ? "-" : e.getSource().getDirectEntity().getClass().getSimpleName(); }
             });
@@ -462,6 +467,7 @@ public final class Misc3Tests {
                 double max = k == DmzGuns.Kind.RIFLE ? 20.0 / k.cooldown : 20.0 / k.cooldown + 0.05;   // (never faster than a player can)
                 check(k + " fire rate within the player's", rate <= max + 0.01, f(rate) + "/s, player max " + f(max) + "/s");
                 // now the owner steps into the line of fire
+                for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, bot.getBoundingBox().inflate(64), e -> e.getClass().getSimpleName().startsWith("Ki"))) e.discard();   // (blasts already in the air)
                 Vec3 a = bot.position(), b = target.position();
                 Vec3 mid = a.add(b).scale(0.5);
                 p.getAbilities().flying = false; p.onUpdateAbilities();
@@ -493,6 +499,7 @@ public final class Misc3Tests {
             if (bot == null) return;
             stage(p, DmzGuns.Kind.BURST, false);
             killer = null;
+            killTest = true;
             target(p, 12, 6F);
         }), 120);
         step("bot_kill", () -> server(p -> {
