@@ -146,7 +146,7 @@ public final class DmzTests {
             log("bot race picked again (should be null): " + DmzBots.ensureRace(b));
             log("passive TP per 5 s = " + DmzBots.passive());
         }); }, 40);
-        step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b == null) return; tp0[0] = DmzBots.tp(b); t0[0] = p.level().getGameTime(); log("bot TP at start " + tp0[0]); }), 5);
+        step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b == null) return; tp0[0] = DmzBots.tp(b); t0[0] = p.level().getGameTime(); log("bot TP at start " + tp0[0]); }), 20 * 60);
         step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b == null) return;
             float now = DmzBots.tp(b);
             log("bot TP after " + (p.level().getGameTime() - t0[0]) / 20 + " s: " + now + " (gained " + (now - tp0[0]) + ")");
@@ -156,7 +156,7 @@ public final class DmzTests {
             float before = DmzBots.tp(b);
             z.hurt(b.damageSources().mobAttack(b), 10000F);
             log("bot kill TP: " + before + " -> " + DmzBots.tp(b) + " (zombie, DMZ formula " + DmzBots.killTp(z) + ")");
-        }), 20 * 60);
+        }), 10);
         // 3: its Dragon Ball menu
         step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b == null) return;
             DmzBots.giveTp(b, 5000);
@@ -268,7 +268,7 @@ public final class DmzTests {
             // kill one: it counts for the objective
             if (!near.isEmpty() && near.get(0) instanceof LivingEntity le) { le.hurt(p.damageSources().playerAttack(p), 1.0E7F); log("summon: killed one -> " + DmzQuests.progress(p, q[1][0], Integer.parseInt(q[1][1]))); }
             for (var e : near) e.discard();
-        }), 20 * 9);
+        }), 20 * 14);
         // 6: mission items from kills
         step(null, () -> server(p -> {
             if (q[2] == null) { log("items: no item objective found"); return; }
@@ -328,14 +328,21 @@ public final class DmzTests {
             DmzKaioken.poll(p);
             Object ch = call(data(p), "getCharacter");
             log("kaioken live: setActiveStackForm " + call(ch, "setActiveStackForm", "kaioken", "x2") + " active=" + call(ch, "getActiveStackFormGroup") + "/" + call(ch, "getActiveStackForm")
-                    + " mastery " + DmzKaioken.mastery(p, "x2"));
+                    + " mastery " + DmzKaioken.mastery(p, "x2") + " passive/5s " + passive5());
         }); }, 10);
         step(null, () -> server(p -> {
             Object ch = call(data(p), "getCharacter");
-            log("kaioken live after 10 s: active=" + call(ch, "getActiveStackFormGroup") + "/" + call(ch, "getActiveStackForm") + " mastery " + DmzKaioken.mastery(p, "x2")
+            log("kaioken live after 20 s: active=" + call(ch, "getActiveStackFormGroup") + "/" + call(ch, "getActiveStackForm") + " mastery " + DmzKaioken.mastery(p, "x2")
                     + " bonus given " + DmzKaioken.GIVEN.get(p.getGameProfile().getName()));
             call(ch, "clearActiveStackForm");
-        }), 200);
+        }), 400);
+    }
+
+    private static Object passive5() {
+        try {
+            Object fd = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getStackForm", String.class, String.class).invoke(null, "kaioken", "x2");
+            return fd == null ? "no form" : call(fd, "getPassiveMasteryEveryFiveSeconds");
+        } catch (Throwable t) { return "?" + t; }
     }
 
     private static void add(ServerPlayer p, double amt) {
@@ -369,7 +376,7 @@ public final class DmzTests {
             for (PartyBotEntity b : PartyBots.bots(p)) b.discard();
             Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.teleportTo(at.x, at.y, at.z - 12);
-            p.serverLevel().setDayTime(18000);
+            p.serverLevel().setDayTime(6000);
             var z = ZombieSaiyans.ZOMBIE_SAIYAN.get().create(p.serverLevel());
             z.moveTo(at.x, at.y, at.z, 180F, 0F);
             z.setYHeadRot(180F); z.yBodyRot = 180F;
@@ -378,15 +385,19 @@ public final class DmzTests {
             ID[0] = z.getId();
             log("saiyan spawned: hp " + z.getMaxHealth() + " lv " + z.getPersistentData().getInt("xw_lvl") + " ki kit " + DmzBossKi.kit() + " egg in registry " + ForgeRegistries.ITEMS.getKey(ZombieSaiyans.SPAWN_EGG.get()));
         }); }, 30);
-        camera(mc, 0, 0.2, -3.6, 0F, 2F);
+        camera(mc, 0, 0.3, -3.0, 0F, 4F);
         String[] names = {"base", "ssj1", "ssj2", "ssj3", "ssj4"};
         for (int f = 0; f <= 4; f++) {
             final int ff = f;
             step(null, () -> server(p -> { var z = saiyan(p); if (z != null) { z.setFormForTest(ff); z.setYRot(180F); z.setYHeadRot(180F); z.yBodyRot = 180F; } }), 30);
             step("dmz5_saiyan_" + names[f], () -> {}, 3);
         }
-        camera(mc, 3.2, 0.6, -2.4, 50F, 8F);
+        camera(mc, 3.0, 0.6, -2.0, 55F, 8F);
         step("dmz5_saiyan_ssj4_side", () -> {}, 10);
+        step(null, () -> server(p -> { var z = saiyan(p); if (z != null) z.setFormForTest(3); }), 20);
+        step("dmz5_saiyan_ssj3_side", () -> {}, 3);
+        camera(mc, 2.0, 0.6, 3.0, 145F, 8F);
+        step("dmz5_saiyan_ssj3_back", () -> {}, 10);
         step(null, () -> server(p -> { var z = saiyan(p); if (z != null) { z.setFormForTest(3); z.knockOutForTest(); } }), 20);
         camera(mc, 2.5, 1.4, -2.5, 45F, 30F);
         step("dmz5_saiyan_knocked_out", () -> {}, 10);
@@ -418,8 +429,8 @@ public final class DmzTests {
             log("fight: 'killing' blow at " + ZombieSaiyanEntity.formName(z.form()) + " -> ko " + z.ko() + " alive " + z.isAlive() + " hp " + z.getHealth()); }), 20);
         step("dmz5_saiyan_fight_scream", () -> server(p -> { var z = saiyan(p); if (z != null) log("fight: after KO -> form " + z.form() + " act " + z.act() + " ko " + z.ko()); }), 45);
         step("dmz5_saiyan_fight_ssj4", () -> server(p -> { var z = saiyan(p); if (z != null) log("fight: revived -> form " + z.form() + " hp " + Math.round(z.getHealth()) + "/" + Math.round(z.getMaxHealth())
-                + " dmg " + z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) + " ki " + z.kiKindForTest()); }), 60);
-        step(null, () -> server(p -> { var z = saiyan(p); if (z != null) log("fight: SSJ4 after a while: ki " + z.kiKindForTest() + " target " + (z.getTarget() == null ? "-" : z.getTarget().getName().getString())
+                + " dmg " + z.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) + " ki " + z.kiKindForTest()); }), 40);
+        step(null, () -> server(p -> { var z = saiyan(p); if (z != null) log("fight: SSJ4 after a while: form " + z.form() + " hp " + Math.round(z.getHealth()) + "/" + Math.round(z.getMaxHealth()) + " ki " + z.kiKindForTest() + " target " + (z.getTarget() == null ? "-" : z.getTarget().getName().getString())
                 + " player hp " + p.getHealth()); dumpLogs(); }), 100);
         step(null, () -> server(p -> { var z = saiyan(p); if (z == null) return;
             ZombieSaiyans.ARMOR_CHANCE = 1F;
