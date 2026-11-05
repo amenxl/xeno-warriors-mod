@@ -417,6 +417,8 @@ public final class SeasonHuntTests {
                     if (!ok) FAILS[0]++;
                 }), 2));
             }
+            // (Persephone drains Lexy herself 20 s later: let that land before the owner is watched again)
+            if (t == CharacterType.LEXY) l.add(new Step(null, () -> {}, 400));
             // a bot of this character uses each of its skills, its owner beside it
             l.add(new Step(null, () -> UiTest.server(p -> {
                 clearBots(p); clearDummies(p);

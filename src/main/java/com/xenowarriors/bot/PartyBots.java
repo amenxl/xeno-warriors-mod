@@ -636,6 +636,17 @@ public final class PartyBots {
 
     private static UUID standInId(PartyBotEntity b) { return UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.character().getId()).getBytes()); }
 
+    /**
+     * The owner of a bot whose stand-in player has this UUID, or null. A skill entity a bot made (a Kishi dome...) only
+     * remembers the stand-in's UUID - this puts it on the owner's side (see Allies.sameSide).
+     */
+    public static UUID ownerOfStandIn(UUID fakeId) {
+        UUID bot = fakeId == null ? null : FAKE_TO_BOT.get(fakeId);
+        if (bot == null) return null;
+        for (var e : LIVE.entrySet()) for (PartyBotEntity b : e.getValue()) if (b.getUUID().equals(bot)) return e.getKey();
+        return null;
+    }
+
     /** Every live party bot on this server (for skill states that tick per user). */
     public static List<PartyBotEntity> allLive() {
         List<PartyBotEntity> out = new ArrayList<>();
