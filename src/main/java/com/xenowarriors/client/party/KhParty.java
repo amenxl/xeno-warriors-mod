@@ -36,13 +36,15 @@ public class KhParty implements IGuiOverlay {
         var font = mc.font;
         g.drawString(font, "PARTY", x + 2, y, 0xC8E1FF, true);
         y += 10;
+        boolean ki = PartyKiClient.any();
+        int ch = CARD_H + (ki ? 7 : 0);                                      // (DragonMineZ: a ki bar under the Karma bar)
         for (PartySyncPacket.Member m : PartyClient.members()) {
             if (m.id().equals(mc.player.getUUID())) continue;
             CharacterType type = CharacterType.values()[Math.max(0, Math.min(CharacterType.values().length - 1, m.type()))];
             int col = type.getColor();
-            g.fill(x, y, x + CARD_W, y + CARD_H, 0xFF0A0A12);
-            g.fill(x + 1, y + 1, x + CARD_W - 1, y + CARD_H - 1, col);
-            g.fill(x + 2, y + 2, x + CARD_W - 2, y + CARD_H - 2, 0xF0121422);
+            g.fill(x, y, x + CARD_W, y + ch, 0xFF0A0A12);
+            g.fill(x + 1, y + 1, x + CARD_W - 1, y + ch - 1, col);
+            g.fill(x + 2, y + 2, x + CARD_W - 2, y + ch - 2, 0xF0121422);
             HudFaces.health(m.id(), m.health(), m.maxHealth());
             boolean low = m.maxHealth() > 0 && m.health() / m.maxHealth() < 0.3F;
             if (type != CharacterType.NONE) {
@@ -53,8 +55,8 @@ public class KhParty implements IGuiOverlay {
             }
             KhHud.small(g, font, m.name(), x + 30, y + 4, 0xFFFFFF, 0.65F);
             if (m.bot()) {                                   // bot teammates get a little BOT tag on their portrait
-                g.fill(x + 2, y + CARD_H - 9, x + 20, y + CARD_H - 2, 0xE0303A50);
-                KhHud.small(g, font, "BOT", x + 4, y + CARD_H - 8, 0x9FE0FF, 0.5F);
+                g.fill(x + 2, y + ch - 9, x + 20, y + ch - 2, 0xE0303A50);
+                KhHud.small(g, font, "BOT", x + 4, y + ch - 8, 0x9FE0FF, 0.5F);
             }
             String info;
             if (m.knockedOut()) info = "DOWN";
@@ -69,7 +71,14 @@ public class KhParty implements IGuiOverlay {
             String hpN = PartyHud.nums(m.health(), m.maxHealth()), kpN = PartyHud.nums(m.karma(), m.maxKarma());   // (the numbers, right of the bars)
             KhHud.small(g, font, hpN, x + CARD_W - 4 - font.width(hpN) * 0.5F, y + 12.5F, 0xE6FFE6, 0.5F);
             KhHud.small(g, font, kpN, x + CARD_W - 4 - font.width(kpN) * 0.5F, y + 19.5F, 0xC8DCFF, 0.5F);
-            if (m.knockedOut()) g.fill(x + 2, y + 2, x + CARD_W - 2, y + CARD_H - 2, 0x55800000);
+            float[] kk = ki ? PartyKiClient.of(m.id()) : null;
+            if (kk != null) {
+                String kiN = PartyHud.nums(kk[0], kk[1]);
+                KhHud.small(g, font, "KI", x + 29, y + 26.5F, 0xFFE08A, 0.45F);
+                KhHud.bar(g, x + 38, y + 27, CARD_W - 72, 3, PartyKiClient.frac(kk), PartyKiClient.KI_COLOR, 0);
+                KhHud.small(g, font, kiN, x + CARD_W - 4 - font.width(kiN) * 0.5F, y + 26.5F, 0xFFF0C8, 0.5F);
+            }
+            if (m.knockedOut()) g.fill(x + 2, y + 2, x + CARD_W - 2, y + ch - 2, 0x55800000);
             // a short chat line from them
             String b = HudFaces.bubble(m.id());
             if (b != null) {
@@ -77,7 +86,7 @@ public class KhParty implements IGuiOverlay {
                 g.fill(x - bw - 3, y + 6, x - 3, y + 16, 0xF0FAFAFF);
                 KhHud.small(g, font, b, x - bw, y + 8, 0x14141E, 0.6F);
             }
-            y += CARD_H + 3;
+            y += ch + 3;
         }
         height = y;
     }
@@ -88,7 +97,8 @@ public class KhParty implements IGuiOverlay {
     private static void blazing(GuiGraphics g, Minecraft mc, int width, int screenH) {
         var font = mc.font;
         float s = 0.8F;
-        int cw = Math.round(112 * s), ch = Math.round(78 * s) + 9;
+        boolean ki = PartyKiClient.any();
+        int cw = Math.round(112 * s), ch = Math.round(78 * s) + 9 + (ki ? 8 : 0);   // (DragonMineZ: a ki row under each card)
         int right = width - 4, bottom = com.xenowarriors.client.BlazingHud.top(screenH) - 16;
         int x = right - cw, y = bottom - ch;
         for (PartySyncPacket.Member m : PartyClient.members()) {
@@ -123,6 +133,16 @@ public class KhParty implements IGuiOverlay {
             g.fill(30, 71, 30 + Math.round(67 * net.minecraft.util.Mth.clamp(m.xp(), 0, 1)), 73, 0xFFE8E8F0);
             if (m.bot()) KhHud.small(g, font, "BOT", 6, 60, 0x9FE0FF, 0.7F);
             if (m.knockedOut()) { g.fill(2, 2, 110, 76, 0x66800000); KhHud.small(g, font, "DOWN", 40, 64, 0xFF5A5A, 0.9F); }
+            float[] kk = ki ? PartyKiClient.of(m.id()) : null;
+            if (kk != null) {                                                // (ki: under the card, the bar and its numbers)
+                g.fill(2, 79, 110, 88, 0xC0101018);
+                KhHud.small(g, font, "KI", 5, 80.5F, 0xFFE08A, 0.7F);
+                g.fill(18, 82, 66, 86, PartyKiClient.KI_BACK);
+                g.fill(18, 82, 18 + Math.round(48 * PartyKiClient.frac(kk)), 86, PartyKiClient.KI_COLOR);
+                String kn = PartyHud.nums(kk[0], kk[1]);
+                float kns = font.width(kn) > 56 ? 0.55F : 0.7F;
+                KhHud.small(g, font, kn, 108 - font.width(kn) * kns, 80.5F, 0xFFF0C8, kns);
+            }
             g.pose().popPose();
             // name above, and how far away they are
             String nm = m.name();
