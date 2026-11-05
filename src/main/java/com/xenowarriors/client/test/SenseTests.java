@@ -156,6 +156,13 @@ public final class SenseTests {
         l.add(new Step(null, () -> mc.setScreen(null), 3));
         // answered on the request card with the Accept key (Y)
         l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(com.xenowarriors.client.ModKeyMappings.ACCEPT_REQUEST.getKey()), 15));
+        // (another mod may hold the same key in KeyMapping's map - e.g. with DragonMineZ - then the chat button's command instead)
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            PartyBotEntity b = bot(p, CharacterType.KAERU);
+            if (b == null || BotCrafting.offerToken(b) == 0) { log("craft request answered with the Y key"); return; }
+            log("craft request: Y key didn't reach the card here - using the [Give 1 & craft] button's command");
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack(), "xenobot give " + b.getId() + " " + BotCrafting.offerToken(b));
+        }), 10));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity b = bot(p, CharacterType.KAERU);
             if (b == null) return;
