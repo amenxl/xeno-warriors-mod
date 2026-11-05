@@ -99,7 +99,7 @@ public final class StatBoosts {
     /** Tests: fixed rolls (0..1) in place of the random ones (null = random). */
     public static Float testRoll, testStatRoll;
     /** Tests: counts of drops by source. */
-    public static int testMobDrops, testDirtDrops, testLevelUpDrops;
+    public static int testMobDrops, testDirtDrops, testLevelUpDrops, testDirtSkipped;
     /** While a boost is being applied: its levels never roll the level-up drop. */
     private static int applying;
 
@@ -222,6 +222,8 @@ public final class StatBoosts {
         if (p.isCreative() || p.isSpectator() || !(event.getLevel() instanceof ServerLevel l)) return;
         if (!dirtLike(event.getState()) || !shovel(p.getMainHandItem())) return;
         if (com.xenowarriors.character.ModCapabilities.getType(p) == com.xenowarriors.character.CharacterType.NONE) return;
+        // dirt they just put down themselves: no roll (place + dig on one spot was an endless boost farm)
+        if (com.xenowarriors.stats.Building.placedRecently(p.getUUID(), l, event.getPos())) { testDirtSkipped++; return; }
         RandomSource r = p.getRandom();
         float roll = roll(r);
         if (roll >= DIRT_CHANCE) return;

@@ -115,7 +115,7 @@ public final class WeaponForms {
             stack.getOrCreateTag().putInt(FormTools.LV, weaponLevel(p));
             if (f.gun()) {
                 int d = FormGunItem.durabilityFor(com.xenowarriors.compat.GunLevel.level(p));
-                stack.getTag().putInt(FormGunItem.DUR, d);
+                stack.getTag().putInt(FormGunItem.DUR, Math.max(1, d - wornShots(p, f)));
                 stack.getTag().putInt(FormGunItem.DUR_MAX, d);
             }
             if (!com.xenowarriors.mikiko.Hekublade.place(p, stack)) return false;
@@ -153,8 +153,43 @@ public final class WeaponForms {
     /** Takes every summoned form out of an inventory (not the Hekublade itself). */
     public static int removeForms(Container c) {
         int n = 0;
-        for (int i = 0; i < c.getContainerSize(); i++) if (FormItems.isForm(c.getItem(i))) { c.setItem(i, ItemStack.EMPTY); n++; }
+        for (int i = 0; i < c.getContainerSize(); i++) if (FormItems.isForm(c.getItem(i))) {
+            if (c instanceof Inventory inv && inv.player instanceof ServerPlayer sp) rememberWear(sp, c.getItem(i));
+            c.setItem(i, ItemStack.EMPTY);
+            n++;
+        }
         return n;
+    }
+
+    // ------------------------------------------------------------------ gun wear survives putting the gun away
+
+    /** Per gun form: {"u": shots used, "t": game time put away}. */
+    public static final String WEAR = "xw_gun_wear";
+
+    /**
+     * A worn gun put away (or swapped for another form) comes back just as worn - otherwise put away + summon again
+     * was a free repair and the broken-gun wait never came. Rested as long as that wait, it's fresh again.
+     */
+    static void rememberWear(ServerPlayer p, ItemStack st) {
+        if (!(st.getItem() instanceof FormGunItem g) || !st.hasTag() || !st.getTag().contains(FormGunItem.DUR)) return;
+        int used = FormGunItem.durMax(st) - FormGunItem.dur(st);
+        net.minecraft.nbt.CompoundTag all = p.getPersistentData().getCompound(WEAR);
+        if (used <= 0 || FormGunItem.dur(st) <= 0) all.remove(g.form().name());          // (fresh, or broken: the wait is its own price)
+        else {
+            net.minecraft.nbt.CompoundTag e = new net.minecraft.nbt.CompoundTag();
+            e.putInt("u", used);
+            e.putLong("t", p.serverLevel().getGameTime());
+            all.put(g.form().name(), e);
+        }
+        p.getPersistentData().put(WEAR, all);
+    }
+
+    /** Shots already used on this gun form (0 once it has rested {@link #GUN_BREAK_COOLDOWN}). */
+    public static int wornShots(ServerPlayer p, Form f) {
+        net.minecraft.nbt.CompoundTag e = p.getPersistentData().getCompound(WEAR).getCompound(f.name());
+        if (e.isEmpty()) return 0;
+        long since = p.serverLevel().getGameTime() - e.getLong("t");
+        return since < 0 || since >= GUN_BREAK_COOLDOWN ? 0 : e.getInt("u");
     }
 
     public static boolean anyOut(ServerPlayer p) {

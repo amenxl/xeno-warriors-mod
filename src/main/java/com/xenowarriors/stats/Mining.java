@@ -73,6 +73,8 @@ public final class Mining {
         BlockState state = event.getState();
         float hardness = state.getDestroySpeed(event.getLevel(), event.getPos());
         if (hardness <= 0F) return;                       // grass, flowers, torches: no XP
+        if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel l
+                && com.xenowarriors.stats.Building.placedRecently(p.getUUID(), l, event.getPos())) return;   // (just placed it themselves: place + break isn't mining)
         float xp = Math.min(4F, 0.4F + hardness * 0.5F);
         if (state.is(Tags.Blocks.ORES)) xp *= 3F;
         addXp(p, xp);

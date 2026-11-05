@@ -158,7 +158,7 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
 
     /** A shot from the client (GunActionPacket), held to the gun's fire rate. */
     public int fire(ServerPlayer p, ItemStack stack, boolean aimed, float spread, float pitch, float yaw) {
-        if (com.xenowarriors.party.Duels.cantAct(p) || p.isSpectator() || !rate(p, spec())) return 0;
+        if (!p.isAlive() || p.isSleeping() || com.xenowarriors.party.Duels.cantAct(p) || p.isSpectator() || !rate(p, spec())) return 0;   // (no shots from the death screen or a bed)
         return shoot(p, stack, aimed, spread, pitch, yaw);
     }
 
@@ -227,10 +227,12 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
             if (hit.isEmpty()) continue;
             LivingEntity t = (LivingEntity) e;
             t.invulnerableTime = 0;
+            float hpBefore = t.getHealth() + t.getAbsorptionAmount();
             if (t.hurt(p.damageSources().playerAttack(p), dmg)) {
                 hits++;
                 WeaponForms.HITS++;
-                com.xenowarriors.compat.GunLevel.addXp(p, Math.min(dmg, t.getHealth() + 1F));
+                // XP for the damage really done (a hit that does nothing - resistance, shields - trains nothing)
+                com.xenowarriors.compat.GunLevel.addXp(p, Math.min(dmg, Math.max(0F, hpBefore - t.getHealth() - t.getAbsorptionAmount())));
                 if (style == Form.Style.HEKU) com.xenowarriors.mikiko.Hekublade.rollFire(t, 3);
                 else t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 1, false, true));
                 if (!t.isAlive()) { com.xenowarriors.compat.GunLevel.addXp(p, com.xenowarriors.compat.GunLevel.KILL_XP); kills[0]++; }

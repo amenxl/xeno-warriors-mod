@@ -178,12 +178,8 @@ public class GravityBarrageEntity extends Entity {
         // keep Rhalix safe and allowed to hover during the cutscene
         owner.fallDistance = 0F;
         if (tickCount == 1) {
-            hadMayfly = owner.getAbilities().mayfly;
             owner.getPersistentData().putLong(SkillEvents.ULT_UNTIL, server.getGameTime() + END + 2);
-            if (!hadMayfly) {
-                owner.getAbilities().mayfly = true;
-                owner.onUpdateAbilities();
-            }
+            hadMayfly = com.xenowarriors.skill.CutsceneFlight.lend(owner);
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1.5F, 0.7F);
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.5F, 0.5F);
         }
@@ -318,11 +314,7 @@ public class GravityBarrageEntity extends Entity {
     private void finish(ServerPlayer owner) {
         if (owner != null) {
             owner.getPersistentData().remove(SkillEvents.ULT_UNTIL);
-            if (!hadMayfly && !owner.isCreative() && !owner.isSpectator()) {
-                owner.getAbilities().mayfly = false;
-                owner.getAbilities().flying = false;
-                owner.onUpdateAbilities();
-            }
+            com.xenowarriors.skill.CutsceneFlight.release(owner, hadMayfly);
             owner.fallDistance = 0F;
         }
         discard();

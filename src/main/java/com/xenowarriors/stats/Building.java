@@ -151,6 +151,15 @@ public final class Building {
         return last == null || now - last >= SAME_SPOT_COOLDOWN || now < last;
     }
 
+    /** True if {@code who} placed a block at this spot in the last minute (doesn't count as placing it again). */
+    public static boolean placedRecently(UUID who, ServerLevel l, BlockPos pos) {
+        LinkedHashMap<Long, Long> m = RECENT.get(who);
+        if (m == null) return false;
+        Long last = m.get(pos.asLong() * 31L + l.dimension().location().hashCode());
+        long now = l.getGameTime();
+        return last != null && now >= last && now - last < SAME_SPOT_COOLDOWN;
+    }
+
     public static void addXp(ServerPlayer p, float amount) {
         if (amount <= 0 || p.isCreative() || p.isSpectator()) return;
         int lv = level(p);

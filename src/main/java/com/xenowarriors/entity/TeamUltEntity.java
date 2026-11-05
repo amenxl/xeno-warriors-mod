@@ -235,15 +235,9 @@ public class TeamUltEntity extends Entity {
         int t = tickCount;
         for (LivingEntity p : new LivingEntity[]{r, m}) p.fallDistance = 0F;
         if (t == 1) {
-            rhalixMayfly = r instanceof ServerPlayer rp && rp.getAbilities().mayfly;
-            mikikoMayfly = m instanceof ServerPlayer mp && mp.getAbilities().mayfly;
-            for (LivingEntity p : new LivingEntity[]{r, m}) {
-                p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, level.getGameTime() + end() + 2);
-                if (p instanceof ServerPlayer sp && !sp.getAbilities().mayfly) {
-                    sp.getAbilities().mayfly = true;
-                    sp.onUpdateAbilities();
-                }
-            }
+            for (LivingEntity p : new LivingEntity[]{r, m}) p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, level.getGameTime() + end() + 2);
+            rhalixMayfly = r instanceof ServerPlayer rp && com.xenowarriors.skill.CutsceneFlight.lend(rp);
+            mikikoMayfly = m instanceof ServerPlayer mp && com.xenowarriors.skill.CutsceneFlight.lend(mp);
             if (judgment()) {
                 lastRhalixDamage = 0; lastMikikoDamage = 0; lastHeld = 0;
                 anim(r, SkillAnimPacket.RAISE, true);
@@ -497,11 +491,7 @@ public class TeamUltEntity extends Entity {
             b.setDeltaMovement(Vec3.ZERO);
             return;
         }
-        if (e instanceof ServerPlayer p && !hadMayfly && !p.isCreative() && !p.isSpectator()) {
-            p.getAbilities().mayfly = false;
-            p.getAbilities().flying = false;
-            p.onUpdateAbilities();
-        }
+        if (e instanceof ServerPlayer p) com.xenowarriors.skill.CutsceneFlight.release(p, hadMayfly);
     }
 
     @Override
