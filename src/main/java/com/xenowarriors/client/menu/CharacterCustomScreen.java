@@ -549,6 +549,8 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Mining", lvStr(me.mining()), me.miningXp(), 0xE0C070});
         rows.add(new Object[]{"Crafting", lvStr(me.craft()), me.craftXp(), 0xC08A50});
         rows.add(new Object[]{"Smelting", lvStr(me.smelt()), me.smeltXp(), 0xFF8A3A});
+        if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0)   // (TACZ guns installed)
+            rows.add(new Object[]{"Guns", lvStr(com.xenowarriors.network.GunLevelPacket.clientLevel), com.xenowarriors.network.GunLevelPacket.clientProgress, 0xB0B8C8});
         rows.add(new Object[]{"Sensing", me.senseRange() + "b, " + me.senseSeconds() + "s", -1F, 0});
         rows.add(new Object[]{"Practice", Math.min(me.senseUses(), 100) + "/100", -1F, 0});
         if (type == CharacterType.MIKIKO) {

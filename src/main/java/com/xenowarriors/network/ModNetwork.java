@@ -473,6 +473,8 @@ public final class ModNetwork {
                 .encoder(DmzFxPacket::encode).decoder(DmzFxPacket::decode).consumerMainThread(DmzFxPacket::handle).add();
         CHANNEL.messageBuilder(BladeRideJumpPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(BladeRideJumpPacket::encode).decoder(BladeRideJumpPacket::decode).consumerMainThread(BladeRideJumpPacket::handle).add();
+        CHANNEL.messageBuilder(GunLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(GunLevelPacket::encode).decoder(GunLevelPacket::decode).consumerMainThread(GunLevelPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {
