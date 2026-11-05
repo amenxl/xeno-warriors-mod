@@ -169,16 +169,16 @@ public final class GunfeelTests {
         l.add(new Step(null, () -> { face(mc, 2F); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 12));
         l.add(new Step("gunfeel_" + name + "_hip", () -> { face(mc, 2F); log(name + " hip: held " + held(mc) + ", " + state(mc)); }, 3));
         if (f == Form.PISTOL && style == Form.Style.HEKU) {                     // a shot from the hip: flash, kick, tracer
-            l.add(new Step(null, () -> { face(mc, 2F); GunClient.testClick(); }, 1));
+            l.add(new Step(null, () -> { face(mc, 2F); GunClient.testClick(); GunClient.testSince = 0.7F; }, 1));
             l.add(new Step("gunfeel_" + name + "_hip_fire", () -> log(name + " hip shot: flashes drawn " + GunClient.flashesDrawn), 1));
-            l.add(new Step(null, () -> face(mc, 2F), 10));
+            l.add(new Step(null, () -> { GunClient.testSince = -1F; face(mc, 2F); }, 10));
         }
         l.add(new Step(null, () -> { face(mc, 2F); GunClient.testAim = true; }, 12));
         l.add(new Step("gunfeel_" + name + "_ads", () -> { face(mc, 2F); log(name + " aimed: " + state(mc) + ", scopes drawn " + GunClient.scopesDrawn); }, 3));
         if (f == Form.SHOTGUN || f == Form.RIFLE && style == Form.Style.WIRE) {   // a shot while aimed
-            l.add(new Step(null, () -> { face(mc, 2F); GunClient.testClick(); }, 1));
+            l.add(new Step(null, () -> { face(mc, 2F); GunClient.testClick(); GunClient.testSince = 0.7F; }, 1));
             l.add(new Step("gunfeel_" + name + "_ads_fire", () -> {}, 1));
-            l.add(new Step(null, () -> face(mc, 2F), 18));
+            l.add(new Step(null, () -> { GunClient.testSince = -1F; face(mc, 2F); }, 18));
         }
         l.add(new Step(null, () -> GunClient.testAim = false, 8));
         l.add(new Step(null, () -> log(name + " back to hip: " + state(mc)), 2));

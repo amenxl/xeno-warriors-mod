@@ -67,6 +67,8 @@ public final class GunClient {
     public static Boolean testAim, testTrigger;
     /** How long a muzzle flash shows (ticks); tests hold it longer for the stills. */
     public static float flashTicks = 1.6F;
+    /** Tests: draw the gun this many ticks after a shot (kick + flash held still for a screenshot; CI renders few frames a second). -1 = off. */
+    public static float testSince = -1F;
     private static final net.minecraft.resources.ResourceLocation FLASH = new net.minecraft.resources.ResourceLocation("textures/particle/flash.png");
     /** Test numbers. */
     public static int shotsSent, aimPackets, sensCalls, viewModelsDrawn, crosshairsDrawn, scopesDrawn, hitMarkers, flashesDrawn;
@@ -421,7 +423,7 @@ public final class GunClient {
         float x = Mth.lerp(a, hx, 0F), y = Mth.lerp(a, hy, 0F) - equip * 0.6F, z = Mth.lerp(a, hz, -s.aimDist);
         float pivY = a * (s.sightY / 16F - 0.5F), pivZ = a * (s.sightZ / 16F - 0.5F);
         // the shot: kick back and up, settling over a few ticks; the shotgun's pump after it
-        float since = ticks - lastShot + pt;
+        float since = testSince >= 0F ? testSince : ticks - lastShot + pt;
         float kickT = s == GunSpec.SHOTGUN ? 5F : s == GunSpec.RIFLE ? 2.5F : 3.5F;
         float k = since < 0F ? 0F : Math.max(0F, 1F - since / kickT);
         k = k * k;
