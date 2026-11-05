@@ -43,6 +43,29 @@ public class GuideScreen extends Screen {
 
     private final List<Chapter> chapters = load();
     private int chapter, page, scroll;
+    /**
+     * The chapter list scrolls when the open chapter has more pages than fit in its column (Characters, Progression
+     * and DragonMineZ ran off the bottom of the screen, out of reach of the mouse).
+     */
+    private int listScroll;
+    private static final int LIST_BOTTOM = VH - 6;
+
+    private int listHeight() {
+        int h = chapters.size() * 12;
+        if (!chapters.isEmpty()) h += chapters.get(chapter).pages().size() * 9;
+        return h;
+    }
+
+    private int maxListScroll() { return Math.max(0, listHeight() - (LIST_BOTTOM - TOP)); }
+
+    /** Keeps the open page's row in view. */
+    private void followPage() {
+        int y = (chapter + 1) * 12 + page * 9;            // the page row's top, from the top of the list
+        int view = LIST_BOTTOM - TOP;
+        if (y - listScroll < 0) listScroll = y - 12;
+        else if (y + 9 - listScroll > view) listScroll = y + 9 - view;
+        listScroll = Mth.clamp(listScroll, 0, maxListScroll());
+    }
 
     public GuideScreen(Screen parent) { super(Component.literal("Guide")); this.parent = parent; }
 
@@ -105,6 +128,7 @@ public class GuideScreen extends Screen {
         page = Mth.clamp(p, 0, chapters.get(chapter).pages().size() - 1);
         scroll = 0;
         turned = net.minecraft.Util.getMillis();
+        followPage();
     }
 
     /** UI test: the title of the page showing. */
@@ -144,6 +168,7 @@ public class GuideScreen extends Screen {
         float s = scale(); float[] o = origin();
         double vx = (mx - o[0]) / s;
         if (vx > TEXT_X - 4) scroll = Math.max(0, scroll - (int) Math.signum(d) * 12);
+        else listScroll = Mth.clamp(listScroll - (int) Math.signum(d) * 18, 0, maxListScroll());   // (the chapter list)
         return true;
     }
 
@@ -153,8 +178,9 @@ public class GuideScreen extends Screen {
         double vx = (mx - o[0]) / s, vy = (my - o[1]) / s;
         if (vx < 30 && vy < 22) { onClose(); return true; }
         // chapter list (with the open chapter's pages under it)
-        int y = TOP;
-        for (int c = 0; c < chapters.size(); c++) {
+        int y = TOP - listScroll;
+        boolean inList = vy >= TOP - 2 && vy < LIST_BOTTOM;
+        for (int c = 0; c < chapters.size() && inList; c++) {
             if (vx >= 6 && vx < LIST_W && vy >= y && vy < y + 12) { show(c, 0); click(); return true; }
             y += 12;
             if (c == chapter) for (int p = 0; p < chapters.get(c).pages().size(); p++) {
@@ -195,7 +221,9 @@ public class GuideScreen extends Screen {
 
         // chapters
         g.fill(4, TOP - 4, LIST_W + 2, VH - 4, 0xE0141418);
-        int y = TOP;
+        listScroll = Mth.clamp(listScroll, 0, maxListScroll());
+        g.enableScissor((int) (o[0] + 4 * s), (int) (o[1] + (TOP - 3) * s), (int) (o[0] + (LIST_W + 2) * s), (int) (o[1] + LIST_BOTTOM * s));
+        int y = TOP - listScroll;
         for (int c = 0; c < chapters.size(); c++) {
             boolean sel = c == chapter, hov = vx >= 6 && vx < LIST_W && vy >= y && vy < y + 12;
             if (sel) g.fill(6, y - 1, LIST_W, y + 11, 0xFF000000 | dark(col));
@@ -208,6 +236,11 @@ public class GuideScreen extends Screen {
                 sc(g, (ps ? "▸ " : "  ") + font.plainSubstrByWidth(t, (int) ((LIST_W - 22) / 0.65F)), 13, y + 1.5F, 0.65F, ps ? light(col) : ph ? 0xE0E0FF : 0x8A8A9A);
                 y += 9;
             }
+        }
+        g.disableScissor();
+        if (maxListScroll() > 0) {                     // more chapters above / below: a little arrow on the list's edge
+            if (listScroll > 0) sc(g, "▲", LIST_W - 8, TOP - 3, 0.6F, 0x8899AA);
+            if (listScroll < maxListScroll()) sc(g, "▼", LIST_W - 8, LIST_BOTTOM - 5, 0.6F, 0x8899AA);
         }
 
         // the page

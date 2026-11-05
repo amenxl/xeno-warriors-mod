@@ -47,6 +47,8 @@ import static com.xenowarriors.client.portrait.PortraitScreen.*;
  */
 public class CharacterCustomScreen extends Screen {
     private static final int VW = 220, VH = 184;
+    /** (UI test) show the Building row's tooltip without the mouse over it. */
+    public static boolean testBuildingTip;
     private final Screen parent;
     private int tab;                       // 0 stats, 1 skills, 2 outfits, 3 KA
     private PlayerStatsPacket.Entry self;
@@ -519,7 +521,7 @@ public class CharacterCustomScreen extends Screen {
         g.fill(5, 15, 10, 20, 0xFF000000 | col);
         g.drawString(font, group, 13, 14, 0xD0D0DC, false);
         String name = type == CharacterType.NONE ? "Choose a warrior" : ClientCharacterData.name(minecraft.player).toUpperCase(java.util.Locale.ROOT);
-        scaled(g, name, 5, 26, 2F, 0xFFFFFF);
+        scaled(g, name, 5, 26, type == CharacterType.NONE ? 1.5F : 2F, 0xFFFFFF);   // ("Choose a warrior" ran into the emblem at 2x)
         // the team's logo (Freedom Fighters, Sky Patrol...), or an emblem with their initial for teams without one
         if (type != CharacterType.NONE && aff.length > 0) {
             RenderSystem.enableBlend();
@@ -576,7 +578,10 @@ public class CharacterCustomScreen extends Screen {
         if (type != CharacterType.ULTIMA) rows.add(new Object[]{"Appetite", (me.appetite() >= com.xenowarriors.stats.Appetite.MAX_LEVEL ? "MAX" : "Lv " + me.appetite())
                 + "  x" + (com.xenowarriors.stats.Appetite.layers(me.appetite()) + 1), me.appetiteXp(), 0xE8D020});
         rows.add(new Object[]{"Building", lvStr(me.building()), me.buildingXp(), 0x7FD46A});     // (hover: its reach / keep-a-block bonuses)
-        if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0)   // (TACZ guns installed)
+        if (com.xenowarriors.client.forms.FormsClient.style() == com.xenowarriors.forms.Form.Style.WIRE)   // (Rhalix's wires, Season 2: the guide says their level shows here)
+            rows.add(new Object[]{"Wires", lvStr(com.xenowarriors.client.forms.FormsClient.weaponLevel()), com.xenowarriors.client.forms.FormsClient.weaponProgress(), 0xB05CFF});
+        if ((net.minecraftforge.fml.ModList.get().isLoaded("tacz") || com.xenowarriors.client.forms.FormsClient.style() != null)
+                && com.xenowarriors.network.GunLevelPacket.clientLevel > 0)   // (TACZ guns installed, or Mikiko / Rhalix, who make guns)
             rows.add(new Object[]{"Guns", lvStr(com.xenowarriors.network.GunLevelPacket.clientLevel), com.xenowarriors.network.GunLevelPacket.clientProgress, 0xB0B8C8});
         rows.add(new Object[]{"Sensing", me.senseRange() + "b, " + me.senseSeconds() + "s", -1F, 0});
         rows.add(new Object[]{"Practice", Math.min(me.senseUses(), 100) + "/100", -1F, 0});
@@ -609,7 +614,7 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, (String) o[0], x + 4, ty, 0.85F, 0xB8B8C8);
             String v = (String) o[1];
             scaled(g, v, x + colW - 4 - font.width(v) * 0.85F, ty, 0.85F, 0xFFFFFF);
-            if ("Building".equals(o[0]) && inBox(mx, my, x, yi, colW, hh))
+            if ("Building".equals(o[0]) && (testBuildingTip || inBox(mx, my, x, yi, colW, hh)))
                 tip = com.xenowarriors.client.PlayerStatsScreen.buildingTip(me.building()).stream().map(Component::getString).toList();
         }
         String[] bl = blade();

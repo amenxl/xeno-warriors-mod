@@ -22,6 +22,15 @@ public record RequestPopupPacket(String title, String text, String accept, Strin
         return new RequestPopupPacket(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readInt());
     }
 
+    /**
+     * Tells the client a request was answered some other way (its chat button, a typed command, the ultimate key), so
+     * the card showing it goes instead of hanging on until it times out. {@code command} is the accept or decline
+     * command, as on the card ("/xeno party accept").
+     */
+    public static void dismiss(net.minecraft.server.level.ServerPlayer p, String command) {
+        ModNetwork.sendToPlayer(new RequestPopupPacket("", "", command, "", 0, 0), p);
+    }
+
     public static void handle(RequestPopupPacket m, Supplier<NetworkEvent.Context> ctx) {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.xenowarriors.client.RequestPopups.show(m));
         ctx.get().setPacketHandled(true);

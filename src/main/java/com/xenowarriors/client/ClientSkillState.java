@@ -105,7 +105,35 @@ public final class ClientSkillState {
     public static int[] fullLoadout() { return com.xenowarriors.skill.SkillPool.withUltimate(loadout, ultimate); }
     public static int level() { return level; }
     private static int season = 1;
-    public static void setSeason(int s) { season = Math.max(1, s); }
+    public static void setSeason(int s) {
+        int n = Math.max(1, s);
+        boolean changed = n != season;
+        season = n;
+        com.xenowarriors.character.Seasons.client = n;
+        if (changed) refreshCreativeTabs();          // (Season 2 stat boosts appear / go without a relog)
+    }
+
+    /**
+     * Rebuilds the creative tabs if they've been built already (vanilla only rebuilds them when permissions or
+     * features change, so a season unlocked mid-game never showed until a relog).
+     */
+    private static void refreshCreativeTabs() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        try {
+            boolean built = false;
+            for (java.lang.reflect.Field f : net.minecraft.world.item.CreativeModeTabs.class.getDeclaredFields()) {
+                if (!java.lang.reflect.Modifier.isStatic(f.getModifiers()) || f.getType() != net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters.class) continue;
+                f.setAccessible(true);
+                built |= f.get(null) != null;
+                f.set(null, null);
+            }
+            if (built) net.minecraft.world.item.CreativeModeTabs.tryRebuildTabContents(mc.player.connection.enabledFeatures(),
+                    mc.player.canUseGameMasterBlocks() && mc.options.operatorItemsTab().get(), mc.level.registryAccess());
+        } catch (Throwable t) {
+            com.xenowarriors.XenoWarriors.LOGGER.warn("Couldn't refresh the creative tabs: {}", t.toString());
+        }
+    }
     public static int season() { return season; }
     private static String ka = "";
     public static void setKa(String k) { ka = k == null ? "" : k; }
@@ -193,6 +221,7 @@ public final class ClientSkillState {
         level = 0;
         ultimate = 0;
         season = 1;
+        com.xenowarriors.character.Seasons.client = 1;
         ka = "";
     }
 }

@@ -28,9 +28,18 @@ public final class RequestPopups {
 
     private RequestPopups() {}
 
+    /** (UI test) cards still showing. */
+    public static int testCount() { Minecraft mc = Minecraft.getInstance(); top(mc); return CARDS.size(); }
+    /** (UI test) clear every card. */
+    public static void testClear() { CARDS.clear(); }
+
     public static void show(RequestPopupPacket req) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
+        if (req.ticks() <= 0) {                                          // the server's "answered": the card for that command goes
+            CARDS.removeIf(c -> c.req.accept().equals(req.accept()) || (!c.req.decline().isEmpty() && c.req.decline().equals(req.accept())));
+            return;
+        }
         CARDS.removeIf(c -> c.req.accept().equals(req.accept()));       // a newer one of the same kind replaces it
         CARDS.addFirst(new Card(req, mc.level.getGameTime()));
         if (mc.player != null) mc.player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 0.8F, 1.6F);

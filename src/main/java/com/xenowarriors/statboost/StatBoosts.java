@@ -121,7 +121,7 @@ public final class StatBoosts {
         List<ItemStack> l = new ArrayList<>();
         for (BoostTier t : BoostTier.values())
             for (BoostStat s : BoostStat.values())
-                if (s.season() <= 1 || com.xenowarriors.character.Seasons.unlockedForWorldgen(s.season())) l.add(stack(s, t));
+                if (s.season() <= 1 || com.xenowarriors.character.Seasons.unlockedForTab(s.season())) l.add(stack(s, t));
         return l;
     }
 

@@ -232,6 +232,7 @@ public final class TeamUltimate {
 
     public static void join(ServerPlayer p) {
         Request r = PENDING.remove(p.getUUID());
+        if (r != null) com.xenowarriors.network.RequestPopupPacket.dismiss(p, "/xeno teamult join");   // (answered with the ultimate key: the card goes)
         if (r == null || p.level().getGameTime() > r.expires) {
             p.displayClientMessage(Component.literal("No team ultimate to join right now").withStyle(ChatFormatting.GRAY), true);
             return;

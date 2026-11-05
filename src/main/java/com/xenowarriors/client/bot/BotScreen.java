@@ -17,7 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
 public class BotScreen extends Screen {
     private static final int W = 236;
     private static final boolean DMZ = com.xenowarriors.client.compat.DmzMenu.available();
-    private static final int H = DMZ ? 218 : 196;
+    private static final int H = DMZ ? 236 : 214;            // (room for the two hint lines under the buttons)
     private final OpenBotMenuPacket m;
     private final CharacterType type;
     private int mode;
@@ -91,10 +91,10 @@ public class BotScreen extends Screen {
             case PartyBotEntity.AGGRESSIVE -> "Attacks any hostile mob near you";
             default -> type == CharacterType.ULTIMA ? "Data Sense: finds and mines ore" : "Karma Sense: finds and mines ore";
         };
-        if (!showPets) {
-            g.pose().pushPose(); g.pose().translate(x + 8, y + H - 12, 0); g.pose().scale(0.7F, 0.7F, 1F);
+        if (!showPets) {                     // both under the buttons, full width (they ran under the Inventory / Leave party buttons)
+            g.pose().pushPose(); g.pose().translate(x + 8, y + H - 11, 0); g.pose().scale(0.7F, 0.7F, 1F);
             g.drawString(font, hint, 0, 0, 0x8899AA, false); g.pose().popPose();
-            g.pose().pushPose(); g.pose().translate(x + 8, y + 28, 0); g.pose().scale(0.7F, 0.7F, 1F);
+            g.pose().pushPose(); g.pose().translate(x + 8, y + H - 19, 0); g.pose().scale(0.7F, 0.7F, 1F);
             g.drawString(font, "Sneak + right-click with armour to dress them", 0, 0, 0x8899AA, false); g.pose().popPose();
         }
         super.render(g, mx, my, pt);
