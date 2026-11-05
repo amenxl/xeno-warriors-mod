@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -50,7 +51,9 @@ public final class BotCrafting {
 
     public static final int STATION_RANGE = 6;
     /** How often a bot looks (ticks), how long the same idea stays quiet after it was mentioned, after a "No thanks", and how long an offer stands. */
-    public static final int CHECK_EVERY = 100, REPEAT_COOLDOWN = 5 * 60 * 20, DECLINE_COOLDOWN = 20 * 60 * 20, OFFER_TICKS = 30 * 20;
+    public static final int CHECK_EVERY = 100, REPEAT_COOLDOWN = 5 * 60 * 20, DECLINE_COOLDOWN = 20 * 60 * 20, OFFER_TICKS = 30 * 20, REPAIR_COOLDOWN = 15 * 60 * 20;
+    /** A repair is only suggested once it's this worn (under 25% durability left). */
+    public static final float REPAIR_AT = 0.75F;
 
     /** What a bot could do: craft (a recipe), or repair (an item in a slot). */
     public static final class Idea {
@@ -64,6 +67,7 @@ public final class BotCrafting {
         final int slot;                        // repair: the bag slot (or -1 - 6 for gear, see GEAR)
         final int material;                    // repair: how many materials it uses
         int token;
+        public boolean makesTable;             // craft: it makes itself a crafting table first (none about)
         Idea(String kind, ResourceLocation recipe, ItemStack result, int missing, Component missingWhat, ItemStack missingItem, float gain, int slot, int material) {
             this.kind = kind; this.recipe = recipe; this.result = result; this.missing = missing; this.missingWhat = missingWhat; this.missingItem = missingItem;
             this.gain = gain; this.slot = slot; this.material = material;
@@ -87,6 +91,8 @@ public final class BotCrafting {
         ServerPlayer o = b.owner();
         if (o == null || o.level() != b.level() || o.distanceToSqr(b) > 32 * 32) return;
         if (b.getLastHurtByMobTimestamp() > 0 && b.tickCount - b.getLastHurtByMobTimestamp() < 200) return;   // (just been in a fight)
+        String danger = BotErrands.danger(b);                                   // (never asks in a fight or in danger: enemies about, hurt, in lava, the owner fighting...)
+        if (danger != null) { if (b.tickCount % 400 == 0) PartyBots.testLog(b, "craft: no offers now - " + danger); b.offersHeld++; return; }
         long now = b.level().getGameTime();
         Long until = OFFER_UNTIL.get(b.getUUID());
         if (until != null && until > now) return;                              // (already asked: waiting for an answer)
@@ -96,7 +102,7 @@ public final class BotCrafting {
 
     /** You closed its bag: a look right away (cooldowns still apply). */
     public static void bagClosed(PartyBotEntity b, ServerPlayer o) {
-        if (b.downed() || b.journey() || b.sparring() || b.getTarget() != null) return;
+        if (b.downed() || b.journey() || b.sparring() || b.getTarget() != null || BotErrands.danger(b) != null) return;
         Long until = OFFER_UNTIL.get(b.getUUID());
         if (until != null && until > b.level().getGameTime()) return;
         suggest(b, o, false);
@@ -115,6 +121,10 @@ public final class BotCrafting {
         }
         if (pick == null) return null;
         q.put(pick.key(), now + REPEAT_COOLDOWN);
+        if (!pick.kind.equals("craft")) {                                        // repairs: much rarer - once in 15 minutes per item, either way it's asked
+            String item = String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(pick.result.getItem()));
+            for (String k : new String[]{"repair_combine", "repair_anvil"}) for (int m = 0; m <= 1; m++) q.put(k + ":" + item + ":" + m, now + REPAIR_COOLDOWN);
+        }
         tell(b, o, pick);
         return pick;
     }
@@ -124,21 +134,28 @@ public final class BotCrafting {
         List<Idea> out = new ArrayList<>();
         if (!(b.level() instanceof ServerLevel s)) return out;
         boolean table = hasStation(b, Items.CRAFTING_TABLE, Blocks.CRAFTING_TABLE);
-        for (CraftingRecipe r : candidates(s)) {
+        boolean full = freeSlots(b.inventory) == 0;                             // (a full bag: nothing new made - it would only end up on the ground)
+        for (CraftingRecipe r : full ? List.<CraftingRecipe>of() : candidates(s)) {
             ItemStack res = r.getResultItem(s.registryAccess());
             float gain = gain(b, res);
             if (gain <= 0F) continue;
             List<Ingredient> ing = new ArrayList<>();
             for (Ingredient i : r.getIngredients()) if (!i.isEmpty()) ing.add(i);
             if (ing.isEmpty()) continue;
-            List<Ingredient> missing = match(b, ing, null);
-            boolean big = !r.canCraftInDimensions(2, 2);
-            int short_ = missing.size() + (big && !table ? 1 : 0);
+            List<Ingredient> missing = match(b.inventory, ing, null);
+            boolean big = !r.canCraftInDimensions(2, 2), selfTable = false;
+            if (big && !table && missing.isEmpty()) {                            // no table about: it can make its own from its planks or a log, if that still leaves it enough
+                SimpleContainer copy = copyOf(b.inventory);
+                if (makeTable(copy) && match(copy, ing, null).isEmpty()) selfTable = true;
+            }
+            int short_ = missing.size() + (big && !table && !selfTable ? 1 : 0);
             if (short_ > 1) continue;
             Component what = null; ItemStack whatItem = ItemStack.EMPTY;
             if (!missing.isEmpty()) { whatItem = firstItem(missing.get(0)); what = whatItem.getHoverName(); }
-            else if (big && !table) { whatItem = new ItemStack(Items.CRAFTING_TABLE); what = Component.literal("a crafting table (in its bag or close by)"); }
-            out.add(new Idea("craft", r.getId(), res.copy(), short_, what, whatItem, gain, -1, 0));
+            else if (big && !table && !selfTable) { whatItem = new ItemStack(Items.CRAFTING_TABLE); what = Component.literal("a crafting table (in its bag or close by)"); }
+            Idea idea = new Idea("craft", r.getId(), res.copy(), short_, what, whatItem, gain, -1, 0);
+            idea.makesTable = selfTable;
+            out.add(idea);
         }
         repairs(b, out);
         return out;
@@ -214,10 +231,10 @@ public final class BotCrafting {
     // ---------------------------------------------------------------- ingredients
 
     /** Matches ingredients to its bag (taking them if take is set). Returns the ones it doesn't have. */
-    private static List<Ingredient> match(PartyBotEntity b, List<Ingredient> ing, List<ItemStack> take) {
-        int n = b.inventory.getContainerSize();
+    private static List<Ingredient> match(net.minecraft.world.Container inv, List<Ingredient> ing, List<ItemStack> take) {
+        int n = inv.getContainerSize();
         int[] left = new int[n];
-        for (int i = 0; i < n; i++) left[i] = b.inventory.getItem(i).getCount();
+        for (int i = 0; i < n; i++) left[i] = inv.getItem(i).getCount();
         // ingredients that accept fewer kinds first (so a "any planks" doesn't eat the only oak for an oak-only slot)
         List<Ingredient> order = new ArrayList<>(ing);
         order.sort(Comparator.comparingInt(x -> x.getItems().length));
@@ -225,20 +242,131 @@ public final class BotCrafting {
         int[] used = new int[n];
         for (Ingredient x : order) {
             int found = -1;
-            for (int i = 0; i < n; i++) if (left[i] > 0 && x.test(b.inventory.getItem(i))) { found = i; break; }
+            for (int i = 0; i < n; i++) if (left[i] > 0 && x.test(inv.getItem(i))) { found = i; break; }
             if (found < 0) { missing.add(x); continue; }
             left[found]--; used[found]++;
         }
         if (take != null && missing.isEmpty()) {
             for (int i = 0; i < n; i++) if (used[i] > 0) {
-                ItemStack s = b.inventory.getItem(i);
+                ItemStack s = inv.getItem(i);
                 ItemStack rem = s.hasCraftingRemainingItem() ? s.getCraftingRemainingItem().copyWithCount(used[i]) : ItemStack.EMPTY;
                 s.shrink(used[i]);
-                if (s.isEmpty()) b.inventory.setItem(i, ItemStack.EMPTY);
+                if (s.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
                 if (!rem.isEmpty()) take.add(rem);                            // (buckets and the like come back)
             }
         }
         return missing;
+    }
+
+    static int freeSlots(net.minecraft.world.Container inv) { int n = 0; for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).isEmpty()) n++; return n; }
+
+    private static SimpleContainer copyOf(net.minecraft.world.Container inv) {
+        SimpleContainer c = new SimpleContainer(inv.getContainerSize());
+        for (int i = 0; i < inv.getContainerSize(); i++) c.setItem(i, inv.getItem(i).copy());
+        return c;
+    }
+
+    /** Makes a crafting table in this bag, as a player would: 4 planks (any kind), or a log (its 4 planks). False if it has neither. */
+    static boolean makeTable(net.minecraft.world.Container inv) {
+        int planks = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(net.minecraft.tags.ItemTags.PLANKS)) planks += inv.getItem(i).getCount();
+        if (planks >= 4) {
+            int need = 4;
+            for (int i = 0; i < inv.getContainerSize() && need > 0; i++) {
+                ItemStack s = inv.getItem(i);
+                if (!s.is(net.minecraft.tags.ItemTags.PLANKS)) continue;
+                int t = Math.min(need, s.getCount()); s.shrink(t); need -= t;
+                if (s.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+            }
+        } else {
+            int log = -1;
+            for (int i = 0; i < inv.getContainerSize() && log < 0; i++) if (inv.getItem(i).is(net.minecraft.tags.ItemTags.LOGS_THAT_BURN) || inv.getItem(i).is(net.minecraft.tags.ItemTags.LOGS)) log = i;
+            if (log < 0) return false;
+            inv.getItem(log).shrink(1);
+            if (inv.getItem(log).isEmpty()) inv.setItem(log, ItemStack.EMPTY);
+        }
+        ItemStack table = new ItemStack(Items.CRAFTING_TABLE);
+        for (int i = 0; i < inv.getContainerSize() && !table.isEmpty(); i++) {
+            ItemStack s = inv.getItem(i);
+            if (s.isEmpty()) { inv.setItem(i, table); table = ItemStack.EMPTY; }
+            else if (s.is(Items.CRAFTING_TABLE) && s.getCount() < s.getMaxStackSize()) { s.grow(1); table = ItemStack.EMPTY; }
+        }
+        return table.isEmpty();
+    }
+
+    // ---------------------------------------------------------------- 6. getting what it's short of itself
+
+    /** Raw ore it would have to smelt for this ingot (counts toward what it has). */
+    private static Item rawFor(Item ingot) {
+        return ingot == Items.IRON_INGOT ? Items.RAW_IRON : ingot == Items.GOLD_INGOT ? Items.RAW_GOLD : ingot == Items.COPPER_INGOT ? Items.RAW_COPPER : null;
+    }
+
+    /** The ore that gives this (iron ore for iron ingots, diamond ore for diamonds...), or null. */
+    private static net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> oreFor(Item it) {
+        if (it == Items.IRON_INGOT || it == Items.RAW_IRON) return net.minecraftforge.common.Tags.Blocks.ORES_IRON;
+        if (it == Items.GOLD_INGOT || it == Items.RAW_GOLD) return net.minecraftforge.common.Tags.Blocks.ORES_GOLD;
+        if (it == Items.COPPER_INGOT || it == Items.RAW_COPPER) return net.minecraftforge.common.Tags.Blocks.ORES_COPPER;
+        if (it == Items.DIAMOND) return net.minecraftforge.common.Tags.Blocks.ORES_DIAMOND;
+        if (it == Items.EMERALD) return net.minecraftforge.common.Tags.Blocks.ORES_EMERALD;
+        if (it == Items.COAL) return net.minecraftforge.common.Tags.Blocks.ORES_COAL;
+        return null;
+    }
+
+    /** What it's going for: an upgrade 1-3 of one ore's worth short (counting raw ore it already has to smell), and how many. */
+    public record Need(ResourceLocation recipe, ItemStack result, Item item, net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> ore, int more) {}
+
+    public static Need shortfall(PartyBotEntity b) {
+        if (!(b.level() instanceof ServerLevel s) || freeSlots(b.inventory) == 0) return null;
+        boolean table = hasStation(b, Items.CRAFTING_TABLE, Blocks.CRAFTING_TABLE) || makeTable(copyOf(b.inventory));
+        Need best = null; float bestGain = 0F;
+        for (CraftingRecipe r : candidates(s)) {
+            if (!r.canCraftInDimensions(2, 2) && !table) continue;
+            ItemStack res = r.getResultItem(s.registryAccess());
+            float gain = gain(b, res);
+            if (gain <= 0F) continue;
+            List<Ingredient> ing = new ArrayList<>();
+            for (Ingredient i : r.getIngredients()) if (!i.isEmpty()) ing.add(i);
+            List<Ingredient> missing = match(b.inventory, ing, null);
+            if (missing.isEmpty() || missing.size() > 3) continue;
+            Item kind = null; boolean same = true;
+            for (Ingredient m : missing) {
+                Item k = null;
+                for (ItemStack x : m.getItems()) if (oreFor(x.getItem()) != null) { k = x.getItem(); break; }
+                if (k == null || kind != null && k != kind) { same = false; break; }
+                kind = k;
+            }
+            if (!same || kind == null) continue;
+            Item raw = rawFor(kind);
+            int more = missing.size() - (raw == null ? 0 : b.inventory.countItem(raw));   // (raw ore in its bag only wants a furnace)
+            if (more <= 0) continue;
+            if (best == null || more < best.more() || more == best.more() && gain > bestGain) { best = new Need(r.getId(), res.copy(), kind, oreFor(kind), more); bestGain = gain; }
+        }
+        return best;
+    }
+
+    /**
+     * Out of a fight, not in mining mode: the nearest exposed ore of what it's short of for an upgrade, within 10 blocks
+     * of it and 16 of its owner, if it has a pickaxe that gets the ore out. Null: nothing to go for.
+     */
+    public static BlockPos gatherTarget(PartyBotEntity b, ServerPlayer o) {
+        if (b.mode() == PartyBotEntity.MINING || b.journey() || b.isPassenger() || BotErrands.danger(b) != null || !com.xenowarriors.modes.ModeRules.canGrief(b.level())) return null;
+        Need need = shortfall(b);
+        if (need == null) return null;
+        BlockPos c = b.blockPosition(), best = null; double bd = 1e9;
+        for (BlockPos p : BlockPos.betweenClosed(c.offset(-10, -5, -10), c.offset(10, 5, 10))) {
+            BlockState st = b.level().getBlockState(p);
+            if (!st.is(need.ore()) || p.distSqr(o.blockPosition()) > 16 * 16 || b.unreachable(p) || !PartyBots.exposed(b, p)) continue;
+            double d = p.distSqr(c);
+            if (d < bd && hasToolFor(b, st)) { bd = d; best = p.immutable(); }
+        }
+        if (best != null) PartyBots.testLog(b, "gather: short " + need.more() + " " + BotErrands.id(new ItemStack(need.item())) + " for " + BotErrands.id(need.result()) + " - mining the ore at " + best.toShortString());
+        return best;
+    }
+
+    private static boolean hasToolFor(PartyBotEntity b, BlockState st) {
+        if (b.getMainHandItem().isCorrectToolForDrops(st)) return true;
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) if (b.inventory.getItem(i).isCorrectToolForDrops(st)) return true;
+        return false;
     }
 
     /** A crafting table / anvil in its bag, or placed near it. */
@@ -265,7 +393,7 @@ public final class BotCrafting {
 
     private static ItemStack at(PartyBotEntity b, int slot) { return slot < 0 ? b.getItemBySlot(GEAR[-slot - 1]) : b.inventory.getItem(slot); }
 
-    private static boolean worn(ItemStack s) { return s.isDamageableItem() && s.isDamaged() && s.getDamageValue() >= s.getMaxDamage() * 0.4F; }
+    private static boolean worn(ItemStack s) { return s.isDamageableItem() && s.isDamaged() && s.getDamageValue() >= s.getMaxDamage() * REPAIR_AT; }
 
     private static void repairs(PartyBotEntity b, List<Idea> out) {
         List<Integer> slots = new ArrayList<>();
@@ -328,7 +456,7 @@ public final class BotCrafting {
             OFFER_UNTIL.put(b.getUUID(), b.level().getGameTime() + OFFER_TICKS);
             String how = i.kind.equals("craft") ? "can craft " : "can repair their ";
             msg.append(Component.literal(" " + how).withStyle(ChatFormatting.WHITE)).append(Component.empty().append(what).withStyle(ChatFormatting.GOLD))
-                    .append(Component.literal(i.kind.equals("craft") ? " for themselves from their bag. " : i.kind.equals("repair_combine")
+                    .append(Component.literal(i.kind.equals("craft") ? " for themselves from their bag" + (i.makesTable ? " (they'll make a crafting table first)" : "") + ". " : i.kind.equals("repair_combine")
                             ? " by combining it with another one. " : " with " + i.material + " repair material at the anvil. ").withStyle(ChatFormatting.WHITE))
                     .append(button(i.kind.equals("craft") ? "[Craft]" : "[Repair]", "/xenobot craft " + b.getId() + " " + i.token, ChatFormatting.GREEN))
                     .append(Component.literal(" "))
@@ -459,11 +587,20 @@ public final class BotCrafting {
         if (!(b.level() instanceof ServerLevel s)) return null;
         var opt = s.getRecipeManager().byKey(i.recipe);
         if (opt.isEmpty() || !(opt.get() instanceof CraftingRecipe r)) return null;
-        if (!r.canCraftInDimensions(2, 2) && !hasStation(b, Items.CRAFTING_TABLE, Blocks.CRAFTING_TABLE)) return null;
+        if (freeSlots(b.inventory) == 0 && !b.inventory.canAddItem(r.getResultItem(s.registryAccess()))) return null;   // (a full bag: nothing more made)
         List<Ingredient> ing = new ArrayList<>();
         for (Ingredient x : r.getIngredients()) if (!x.isEmpty()) ing.add(x);
+        if (!r.canCraftInDimensions(2, 2) && !hasStation(b, Items.CRAFTING_TABLE, Blocks.CRAFTING_TABLE)) {
+            SimpleContainer copy = copyOf(b.inventory);                          // its own table first (none about) - if that leaves it enough
+            if (!makeTable(copy) || !match(copy, ing, null).isEmpty() || !makeTable(b.inventory)) return null;
+            b.tablesMade++;
+            ServerPlayer o = b.owner();
+            if (o != null) o.sendSystemMessage(Component.literal("").append(b.label()).append(" made themselves a crafting table.").withStyle(ChatFormatting.GRAY));
+            log(b, "made a crafting table");
+            PartyBots.testLog(b, "made itself a crafting table for " + BotErrands.id(i.result));
+        }
         List<ItemStack> back = new ArrayList<>();
-        if (!match(b, ing, back).isEmpty()) return null;
+        if (!match(b.inventory, ing, back).isEmpty()) return null;
         ItemStack res = r.getResultItem(s.registryAccess()).copy();
         res.onCraftedBy(b.level(), PartyBots.standIn(b), res.getCount());
         for (ItemStack x : back) put(b, x);

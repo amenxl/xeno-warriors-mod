@@ -108,6 +108,8 @@ public class PartyBotEntity extends PathfinderMob {
     public int lastHurtAt = -100000, guardTicks, guards, shieldBlocks, shieldSwaps, shardAt = -100000, shardsUsed;
     /** Ores/logs it's off getting for a craft it has in mind (see BotCrafting.gatherTarget), and how many more. */
     boolean gathering; public int gathered;
+    /** (Tests) crafting looks held back because it wasn't safe; crafting tables it made itself. */
+    public int offersHeld, tablesMade, seatShots;
 
     public boolean drinking() { return drinkTicks >= 0; }
     public boolean selfFlyingForTest() { return selfFlying; }
@@ -563,16 +565,24 @@ public class PartyBotEntity extends PathfinderMob {
     /** Mining mode: senses ore near you (Karma Sense, or Data Sense for Ultima) and digs it out into its bag. */
     /** Mine mode: ore it senses near you, and trees (the whole trunk comes down), with the best tool it has. */
     class MineGoal extends Goal {
-        int dig, need, lastLook, lastTreeLook = -1000, walking;
+        int dig, need, lastLook, lastTreeLook = -1000, walking, lastGatherLook = -1000;
         double closest;
         @Override public boolean requiresUpdateEveryTick() { return true; }     // (digging and its timers count real ticks)
         MineGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
         @Override public boolean canUse() {
             // (the goal selector asks every other tick on its own clock: a tickCount % 20 test could never line up)
-            if (mode() != MINING || downed() || getTarget() != null || tickCount - lastLook < 10) return false;
+            if (downed() || getTarget() != null || tickCount - lastLook < 10) return false;
             lastLook = tickCount;
             ServerPlayer o = owner();
             if (o == null || o.level() != level() || !com.xenowarriors.modes.ModeRules.canGrief(level())) return false;
+            if (mode() != MINING) {                                             // not mining: only ore it's short of for an upgrade it has in mind, close by
+                if (tickCount - lastGatherLook < 100 || errand != null || journey()) return false;
+                lastGatherLook = tickCount;
+                mineTarget = BotCrafting.gatherTarget(PartyBotEntity.this, o);
+                gathering = mineTarget != null;
+                return gathering;
+            }
+            gathering = false;
             mineTarget = PartyBots.findOre(PartyBotEntity.this, o);
             if (mineTarget == null && tickCount - lastTreeLook >= 40) {         // no ore: a tree (looked for less often - it's a bigger search)
                 lastTreeLook = tickCount;
@@ -581,9 +591,14 @@ public class PartyBotEntity extends PathfinderMob {
             return mineTarget != null;
         }
         private boolean breakable(BlockState s) { return PartyBots.isOre(s) || BotGear.isLog(s); }
-        @Override public boolean canContinueToUse() { return mineTarget != null && mode() == MINING && !downed() && getTarget() == null && breakable(level().getBlockState(mineTarget)); }
+        @Override public boolean canContinueToUse() {
+            if (mineTarget == null || downed() || getTarget() != null || !breakable(level().getBlockState(mineTarget))) return false;
+            if (mode() == MINING) return true;
+            ServerPlayer o = owner();                                           // (getting ore for a craft: never in a fight or far from its owner)
+            return gathering && o != null && o.level() == level() && o.distanceToSqr(PartyBotEntity.this) < 20 * 20 && (tickCount % 10 != 0 || BotErrands.danger(PartyBotEntity.this) == null);
+        }
         @Override public void start() { dig = 0; need = 0; walking = 0; closest = 1e9; }
-        @Override public void stop() { if (mineTarget != null) level().destroyBlockProgress(getId(), mineTarget, -1); mineTarget = null; }
+        @Override public void stop() { if (mineTarget != null) level().destroyBlockProgress(getId(), mineTarget, -1); mineTarget = null; gathering = false; }
         @Override public void tick() {
             if (mineTarget == null) return;
             getLookControl().setLookAt(Vec3.atCenterOf(mineTarget));
@@ -608,6 +623,7 @@ public class PartyBotEntity extends PathfinderMob {
                 level().destroyBlockProgress(getId(), mineTarget, -1);
                 if (BotGear.isLog(st)) BotGear.fellTree(PartyBotEntity.this, mineTarget);
                 else { PartyBots.mine(PartyBotEntity.this, mineTarget); BotGear.wear(PartyBotEntity.this); }
+                if (gathering) { gathered++; PartyBots.testLog(PartyBotEntity.this, "gather: mined " + net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(st.getBlock()).getPath() + " (" + gathered + " so far)"); }
                 mineTarget = null;
             }
         }

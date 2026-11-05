@@ -70,16 +70,24 @@ public final class BotRanged extends Goal {
         return pick;
     }
 
+    /** In a seat: a mod vehicle, a boat, a minecart or any mount. */
+    static boolean inVehicle(PartyBotEntity b) {
+        var v = b.getVehicle();
+        return v != null && !(v instanceof net.minecraft.world.entity.player.Player);
+    }
+
     private ItemStack at(int s) { return s == -1 ? b.getMainHandItem() : s >= 0 ? b.inventory.getItem(s) : ItemStack.EMPTY; }
 
     /** Worth shooting at: far off, out of reach, or the ranged weapon beats its melee anyway. */
     private boolean wanted(double slack) {
         LivingEntity t = b.getTarget();
-        if (t == null || !t.isAlive() || b.downed() || b.isPassenger() || b.eating() || b.drinking()) return false;
+        if (t == null || !t.isAlive() || b.downed() || b.eating() || b.drinking()) return false;
+        if (b.isPassenger() && !inVehicle(b)) return false;                      // (being carried by someone: hands full)
         slot = bestRanged(b);
         if (slot == -2) return false;
         double d = b.distanceTo(t);
         if (d > 40) return false;
+        if (inVehicle(b)) return d > 1.5;                                        // riding along: it shoots from its seat (it can't get out to swing)
         if (b.targetUnreachable() || d > 8 - slack) return true;
         return d > 3 && score(at(slot)) > meleeScore(b);
     }
@@ -120,8 +128,9 @@ public final class BotRanged extends Goal {
         b.getLookControl().setLookAt(t, 30F, 30F);
         double d = b.distanceTo(t);
         boolean see = b.getSensing().hasLineOfSight(t);
-        // keep a good distance: close in when it can't see them or they're far, back off when they're right there
-        if (!see || d > 18) { if (b.tickCount % 10 == 0) b.getNavigation().moveTo(t, 1.15); }
+        // keep a good distance: close in when it can't see them or they're far, back off when they're right there (not from a seat: the driver drives)
+        if (b.isPassenger()) b.getNavigation().stop();
+        else if (!see || d > 18) { if (b.tickCount % 10 == 0) b.getNavigation().moveTo(t, 1.15); }
         else if (d < 4.5 && !b.targetUnreachable()) {
             Vec3 away = b.position().add(b.position().subtract(t.position()).normalize().scale(4));
             if (b.tickCount % 10 == 0 && BotMoves.dropAt(b.level(), away.x, (int) Math.floor(b.getY()), away.z) < BotMoves.CLIFF) b.getNavigation().moveTo(away.x, away.y, away.z, 1.15);
@@ -163,6 +172,7 @@ public final class BotRanged extends Goal {
         b.level().playSound(null, b.getX(), b.getY(), b.getZ(), kind == CROSSBOW ? SoundEvents.CROSSBOW_SHOOT : SoundEvents.ARROW_SHOOT, SoundSource.NEUTRAL, 1F, 1F / (b.getRandom().nextFloat() * 0.4F + 0.8F));
         b.level().addFreshEntity(arrow);
         b.shots++;
+        if (inVehicle(b)) { b.seatShots++; if (b.seatShots % 5 == 1) PartyBots.testLog(b, "shot from its seat in " + b.getVehicle().getType().getDescription().getString() + " (" + b.seatShots + " so far)"); }
         BotGear.wear(b);
     }
 
@@ -174,6 +184,6 @@ public final class BotRanged extends Goal {
         aim(t);
         Vec3 d = t.getBoundingBox().getCenter().subtract(b.getEyePosition());
         float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
-        if (com.xenowarriors.compat.TaczGuns.shoot(b, pitch, yaw)) b.shots++;
+        if (com.xenowarriors.compat.TaczGuns.shoot(b, pitch, yaw)) { b.shots++; if (inVehicle(b)) b.seatShots++; }
     }
 }
