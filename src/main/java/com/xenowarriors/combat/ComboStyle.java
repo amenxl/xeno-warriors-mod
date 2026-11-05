@@ -123,7 +123,7 @@ public enum ComboStyle {
     /** The combo for what this person holds, or null if it isn't a melee attack (bows, crossbows...). */
     public static ComboStyle of(LivingEntity user, ItemStack held, CharacterType character) {
         Item it = held.getItem();
-        if (it instanceof ProjectileWeaponItem) return null;
+        if (it instanceof ProjectileWeaponItem || com.xenowarriors.item.Guns.isGun(held)) return null;   // (a gun: you shoot, no combo string)
         if (it instanceof TridentItem) return SPEAR;
         String id = String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(it));
         if (id.contains("spear") || id.contains("lance") || id.contains("halberd") || id.contains("glaive") || id.contains("pike")) return SPEAR;

@@ -17,6 +17,17 @@ public enum TowerMod {
     /** (UI tests) force the next floor's twist. */
     public static TowerMod forceNext;
 
+    /** (UI tests) force the next floor's Famished roll. */
+    public static Boolean forceFamished;
+
+    /** Chance a floor is Famished (hunger drains faster): none below floor 10, then +3% every 10 floors, up to 40%. */
+    public static float famishedChance(int floor) { return floor < 10 ? 0F : Math.min(0.40F, 0.03F * (floor / 10)); }
+
+    static boolean famished(int floor, net.minecraft.util.RandomSource r) {
+        if (forceFamished != null) { boolean f = forceFamished; forceFamished = null; return f; }
+        return r.nextFloat() < famishedChance(floor);
+    }
+
     static TowerMod roll(int floor, net.minecraft.util.RandomSource r) {
         if (forceNext != null) { TowerMod m = forceNext; forceNext = null; return m; }
         if (floor < 3 || floor % 10 == 0 || r.nextInt(5) >= 2) return NONE;

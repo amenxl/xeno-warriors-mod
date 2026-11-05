@@ -22,7 +22,8 @@ import java.util.EnumSet;
 /**
  * Bows, crossbows and (with TACZ) guns: a bot that carries one uses it against enemies that are far off or out of
  * reach (up a pillar, flying), or when it hits harder than its best melee weapon. Bots never run out: a bow needs no
- * arrows (it shoots the kind in its bag if it has some, without using them up) and a gun's magazine stays full.
+ * arrows (it shoots the kind in its bag if it has some, without using them up) and a gun is reloaded for free - but it
+ * does have to reload when the magazine runs dry (as long as that gun takes), and it fires in capped bursts.
  * Its arrows can't be picked up, so they're not a free arrow farm.
  */
 public final class BotRanged extends Goal {
@@ -117,7 +118,7 @@ public final class BotRanged extends Goal {
             slot = -1;
         }
         kind = kindOf(b.getMainHandItem());
-        if (kind == GUN) { com.xenowarriors.compat.TaczGuns.draw(b); drawn = 12; }
+        if (kind == GUN) { com.xenowarriors.compat.TaczGuns.draw(b); drawn = 12; if (reloading <= 0) rounds = -1; }   // (re-read: it may be another gun)
     }
 
     @Override public void tick() {
@@ -176,14 +177,66 @@ public final class BotRanged extends Goal {
         BotGear.wear(b);
     }
 
-    /** Bursts of fire, the magazine kept full (TaczGuns tops it up), short pauses between bursts. */
+    /** The gun's magazine, reload time and fire rate (from its TACZ data), read when it's drawn. */
+    private int magSize = 30, reloadTicks = 50, shotGap = 6, rounds = -1, reloading, sinceShot, burstLeft;
+    /** (tests) reloads done and the gap it keeps between shots. */
+    int reloads;
+
+    /**
+     * Short bursts at a capped fire rate, then a breather; when the magazine runs dry it stops and reloads (as long
+     * as that gun takes). It never runs out of ammo - the reload fills it up again.
+     */
     private void gun(LivingEntity t) {
-        if (drawn > 0) { drawn--; return; }
-        burst = (burst + 1) % 50;
-        if (burst >= 24 || b.tickCount % 3 != 0) return;
+        ItemStack g = b.getMainHandItem();
+        if (drawn > 0) {
+            if (--drawn == 0 || rounds < 0) {
+                int[] st = com.xenowarriors.compat.TaczGuns.stats(g);
+                magSize = Math.max(1, st[0]); reloadTicks = Math.max(20, st[1]);
+                shotGap = Math.max(MIN_GAP, Math.round(1200F / Math.max(60, st[2])));   // (never faster than about 3 a second)
+                if (rounds < 0) rounds = Math.max(0, Math.min(magSize, com.xenowarriors.compat.TaczGuns.ammo(g)));
+                if (rounds == 0) startReload(g);
+                PartyBots.testLog(b, "gun drawn: magazine " + magSize + ", reload " + reloadTicks + " ticks, a shot every " + shotGap + " ticks, " + rounds + " in it");
+            }
+            return;
+        }
+        sinceShot++;
+        if (reloading > 0) {
+            if (--reloading == 0) {
+                rounds = magSize;
+                com.xenowarriors.compat.TaczGuns.setAmmo(g, magSize);
+                reloads++;
+                b.level().playSound(null, b.getX(), b.getY(), b.getZ(), SoundEvents.CROSSBOW_LOADING_END, SoundSource.NEUTRAL, 0.8F, 1.3F);
+                PartyBots.testLog(b, "reloaded (" + reloads + " so far)");
+                burstLeft = 0; sinceShot = 0;
+            }
+            return;
+        }
+        if (sinceShot < shotGap) return;
+        if (burstLeft <= 0) {                                                   // a breather between bursts
+            if (sinceShot < shotGap + BURST_PAUSE) return;
+            burstLeft = 3 + b.getRandom().nextInt(3);
+        }
         aim(t);
         Vec3 d = t.getBoundingBox().getCenter().subtract(b.getEyePosition());
         float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
-        if (com.xenowarriors.compat.TaczGuns.shoot(b, pitch, yaw)) { b.shots++; if (inVehicle(b)) b.seatShots++; }
+        if (com.xenowarriors.compat.TaczGuns.ammo(g) <= 0 && rounds > 0) com.xenowarriors.compat.TaczGuns.setAmmo(g, rounds);   // (something else emptied it)
+        if (com.xenowarriors.compat.TaczGuns.shoot(b, pitch, yaw, false)) {
+            b.shots++; if (inVehicle(b)) b.seatShots++;
+            if (b.shots % 10 == 1) PartyBots.testLog(b, "gun shot " + b.shots + " (" + sinceShot + " ticks after the last, " + (rounds - 1) + " left)");
+            sinceShot = 0; burstLeft--;
+            rounds--;
+            if (rounds <= 0) startReload(g);
+        }
+    }
+
+    /** Fastest a bot fires (ticks between shots), and the pause between bursts. */
+    static final int MIN_GAP = 6, BURST_PAUSE = 14;
+
+    private void startReload(ItemStack g) {
+        reloading = reloadTicks;
+        rounds = 0;
+        com.xenowarriors.compat.TaczGuns.reload(b);                             // (TACZ's own reload, for its animation, if it'll do one)
+        b.level().playSound(null, b.getX(), b.getY(), b.getZ(), SoundEvents.ARMOR_EQUIP_IRON, SoundSource.NEUTRAL, 0.9F, 0.8F);
+        PartyBots.testLog(b, "magazine empty - reloading for " + reloadTicks + " ticks");
     }
 }

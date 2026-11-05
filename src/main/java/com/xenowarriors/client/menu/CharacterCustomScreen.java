@@ -237,7 +237,8 @@ public class CharacterCustomScreen extends Screen {
         }
         float[] c = card();
         double vx = (mx - c[0]) / c[2], vy = (my - c[1]) / c[2];
-        if (tab == 0 && blade() != null && inBox(vx, vy, VW / 2 - 50, VH - 18, 100, 14)) {
+        if (tab == 0 && blade() != null && inBox(vx, vy, VW / 2 - 60, VH - 18, 120, 14)) {
+            if (blade()[1].equals(MAGNET)) { testToggleMagnet(); click(); return true; }
             if (minecraft.player != null) minecraft.player.connection.sendCommand(blade()[1]);
             if (blade()[1].endsWith("realm")) minecraft.setScreen(null);
             return true;
@@ -302,7 +303,17 @@ public class CharacterCustomScreen extends Screen {
         if (me == null) return null;
         if (me.prisoner()) return new String[]{"Ask to be freed", "xeno blade plea"};
         if (type() == CharacterType.MIKIKO && !me.inRealm()) return new String[]{"Enter the Hekublade", "xeno blade realm"};
+        if (type() == CharacterType.RHALIX)                                                  // his passive: dropped things drift to him
+            return new String[]{"Gravity Magnet: " + (com.xenowarriors.client.ClientOptions.get(com.xenowarriors.stats.PlayerOptions.MAGNET) ? "ON" : "OFF"), MAGNET};
         return null;
+    }
+
+    private static final String MAGNET = "!magnet";
+
+    /** Rhalix's Gravity Magnet on/off (the Stats tab button; the UI test calls it too). */
+    public void testToggleMagnet() {
+        boolean on = !com.xenowarriors.client.ClientOptions.get(com.xenowarriors.stats.PlayerOptions.MAGNET);
+        com.xenowarriors.client.ClientOptions.set(com.xenowarriors.stats.PlayerOptions.MAGNET, on);
     }
 
     private static boolean inBox(double x, double y, float bx, float by, float bw, float bh) { return x >= bx && x < bx + bw && y >= by && y < by + bh; }
@@ -595,7 +606,7 @@ public class CharacterCustomScreen extends Screen {
         }
         String[] bl = blade();
         if (bl != null) {
-            g.fill(VW / 2 - 50, VH - 18, VW / 2 + 50, VH - 4, 0xFF000000 | col);
+            g.fill(VW / 2 - 60, VH - 18, VW / 2 + 60, VH - 4, 0xFF000000 | col);
             g.drawCenteredString(font, bl[0], VW / 2, VH - 15, 0xFFFFFF);
         }
     }

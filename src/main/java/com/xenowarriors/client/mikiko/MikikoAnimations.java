@@ -260,7 +260,7 @@ public final class MikikoAnimations {
                         || Minecraft.getInstance().options.keyUse.isDown()));     // (right-clicking someone or something isn't an attack either)
         s.heldItem = heldNow.getItem();
         s.heldCount = heldNow.getCount();
-        boolean swingStart = !dropped && p.swinging && p.swingingArm == InteractionHand.MAIN_HAND
+        boolean swingStart = !dropped && p.swinging && p.swingingArm == InteractionHand.MAIN_HAND && !com.xenowarriors.item.Guns.isGun(heldNow)
                 && (!s.lastSwinging || p.swingTime < s.lastSwingTime);
         s.lastSwinging = p.swinging;
         s.lastSwingTime = p.swingTime;

@@ -651,6 +651,7 @@ public class PartyBotEntity extends PathfinderMob {
         BotPotions.tick(this);
         BotShield.tick(this);
         if (tickCount % 20 == 3) BotErrands.absorbTick(this);
+        if (tickCount % 20 == 11) BotSupport.tick(this);                         // (torches in the dark; Kaeru's Fox Heal)
         tickMoves();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         if (tickCount % 20 == 0) BotGear.tickIdle(this);                         // (puts its weapon away after a fight; crafting ideas)

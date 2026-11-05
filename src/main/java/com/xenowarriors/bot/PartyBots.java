@@ -513,6 +513,7 @@ public final class PartyBots {
         if (f != null) FAKE_TO_BOT.remove(f.getUUID());
         com.xenowarriors.compat.DmzBotKi.forget(bot);
         BotCrafting.forget(bot);                                                  // (an offer to a bot that's gone: logout, owner away)
+        BotSupport.forget(bot);
         ANIM_SENT.remove(bot);
     }
 
@@ -597,6 +598,25 @@ public final class PartyBots {
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
             if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);   // (a skill without one of its own)
         } else b.skillReady[slot] = now + 60;
+    }
+
+    /** A support skill (Kaeru's Fox Heal) used facing someone: true if it went off (its body animation plays, as with trySkill). */
+    static boolean castAt(PartyBotEntity b, Skill skill, LivingEntity at) {
+        FakePlayer f = fake(b);
+        Vec3 d = at.getBoundingBox().getCenter().subtract(b.getEyePosition());
+        float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+        f.moveTo(b.getX(), b.getY(), b.getZ(), yaw, pitch);
+        f.setYHeadRot(yaw);
+        f.setOnGround(b.onGround());
+        ANIM_SENT.remove(b.getUUID());
+        boolean used = standInUse(b, f, skill);
+        if (used) {
+            b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());
+            if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
+            if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);
+        }
+        return used;
     }
 
     /** The stand-in uses the skill. It mirrors the bot's state first, so what the skill does to its user lands on the bot (see toBot). */
