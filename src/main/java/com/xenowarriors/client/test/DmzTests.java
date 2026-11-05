@@ -394,7 +394,8 @@ public final class DmzTests {
             });
         }
         step(null, () -> { noDmzScreen(mc); mc.setScreen(null); server(p -> {
-            for (PartyBotEntity b : PartyBots.bots(p)) b.discard();
+            for (PartyBotEntity b : PartyBots.bots(p)) PartyBots.action(p, b.getId(), PartyBots.ACT_DISMISS, 0);   // (sent home, so it doesn't come back)
+            for (PartyBotEntity b : p.serverLevel().getEntitiesOfClass(PartyBotEntity.class, p.getBoundingBox().inflate(64))) b.discard();
             protect(p);
             Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.teleportTo(at.x, at.y, at.z - 12);
