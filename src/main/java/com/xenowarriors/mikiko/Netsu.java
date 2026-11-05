@@ -180,4 +180,11 @@ public final class Netsu {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer p && END.containsKey(p.getUUID())) stop(p);
     }
+
+    /** Someone who comes into view of him while he's burning sees the flames too (it was only sent when it started). */
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer viewer && active(target))
+            ModNetwork.sendToPlayer(new NetsuPacket(target.getId(), (int) Math.max(1, remaining(target))), viewer);
+    }
 }
