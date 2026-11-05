@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class RecipeUnlocks {
     private RecipeUnlocks() {}
 
-    public static final ResourceLocation[] KNOWN = {XenoWarriors.id("fox_whistle"), XenoWarriors.id("fox_whistle_feather")};
+    public static final ResourceLocation[] KNOWN = {XenoWarriors.id("fox_whistle"), XenoWarriors.id("fox_whistle_feather"), XenoWarriors.id("hamburger")};
 
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
