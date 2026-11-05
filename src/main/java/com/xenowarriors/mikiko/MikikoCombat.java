@@ -111,6 +111,15 @@ public final class MikikoCombat {
         }
     }
 
+    /** Starving: the food bar (nearly) empty - the starving face. Not in creative, nor for those who don't eat. */
+    public static boolean starving(net.minecraft.world.entity.player.Player p) {
+        if (p.getAbilities().invulnerable || ModCapabilities.getType(p) == CharacterType.ULTIMA) return false;
+        return p.getFoodData().getFoodLevel() <= STARVING_FOOD;
+    }
+
+    /** At or under this much food (of 20) you look like you're starving. */
+    public static final int STARVING_FOOD = 2;
+
     /** Tell nearby players when a character is poisoned/weakened (poison pose, sick face). */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -118,7 +127,8 @@ public final class MikikoCombat {
         if (ModCapabilities.getType(player) == CharacterType.NONE) return;
         int flags = (player.hasEffect(MobEffects.POISON) ? PoisonStatePacket.POISON : 0)
                 | (player.hasEffect(MobEffects.WEAKNESS) ? PoisonStatePacket.WEAKNESS : 0)
-                | (player.hasEffect(MobEffects.HUNGER) ? PoisonStatePacket.HUNGER : 0);
+                | (player.hasEffect(MobEffects.HUNGER) ? PoisonStatePacket.HUNGER : 0)
+                | (starving(player) ? PoisonStatePacket.STARVING : 0);
         Integer before = STATUS.put(player.getUUID(), flags);
         // send on change, and every 2s while affected so players who walk up see it too
         if (before == null || before != flags || (flags != 0 && player.tickCount % 40 == 0)) {

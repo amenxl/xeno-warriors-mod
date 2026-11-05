@@ -84,11 +84,20 @@ public final class HudFaces {
         if (allOut) return "rage";
         if (s != null && clock < s.talkUntil) return (clock / 4) % 2 == 0 ? "shout" : "normal";
         if (voice(id) > 0) return voice(id) >= 3 || (clock / 3) % 2 == 0 ? "shout" : "normal";   // talking in voice chat: the portrait talks too
+        if (starving(id)) return (clock + id.hashCode() % 50) % 90 < 3 ? "blink" : "starving";   // sunken-eyed, pale (falls back to exhausted)
         if (s != null && clock < s.bigHitUntil) return "damage1";
         if (s != null && clock < s.hitUntil) return "hurt";
         if (max > 0 && hp / max <= 0.25F) return "exhausted";
         if ((clock + id.hashCode() % 50) % 90 < 3) return "blink";
         return "normal";
+    }
+
+    /** That player (you, or a party member near enough to be seen) is starving. */
+    private static boolean starving(UUID id) {
+        var mc = Minecraft.getInstance();
+        if (mc.level == null) return false;
+        Player p = mc.level.getPlayerByUUID(id);
+        return p != null && ClientSkillState.starving(p);
     }
 
     /** How open their mouth is in voice chat right now (0 = quiet). */
@@ -106,12 +115,35 @@ public final class HudFaces {
 
     /** The same portrait without its own rim (for the Blazing Wind emblem, whose ring frames it). */
     public static ResourceLocation bare(CharacterType type, String face) {
-        return XenoWarriors.id("textures/gui/hud/portrait_" + type.getId() + "_" + face + "_bare.png");
+        return portrait("textures/gui/hud/portrait_" + type.getId() + "_", face, "_bare.png");
     }
 
     public static ResourceLocation texture(CharacterType type, String face) {
-        return XenoWarriors.id("textures/gui/hud/portrait_" + type.getId() + "_" + face + ".png");
+        return portrait("textures/gui/hud/portrait_" + type.getId() + "_", face, ".png");
     }
+
+    /** A face this portrait set may not have, and the one to show instead. */
+    private static final Map<String, String> FALLBACK = Map.of("starving", "exhausted", "exhausted", "normal");
+    private static final Map<String, ResourceLocation> RESOLVED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The portrait for that face - or the closest one this character has (never the missing-texture checkerboard). */
+    private static ResourceLocation portrait(String prefix, String face, String suffix) {
+        String key = prefix + face + suffix;
+        ResourceLocation r = RESOLVED.get(key);
+        if (r != null) return r;
+        var rm = Minecraft.getInstance().getResourceManager();
+        String f = face;
+        r = XenoWarriors.id(prefix + face + suffix);
+        for (int hops = 0; f != null && hops < 3; hops++, f = FALLBACK.get(f)) {
+            ResourceLocation c = XenoWarriors.id(prefix + f + suffix);
+            if (rm.getResource(c).isPresent()) { r = c; break; }
+        }
+        RESOLVED.put(key, r);
+        return r;
+    }
+
+    /** Resource packs changed: look the portraits up again. */
+    public static void clearCache() { RESOLVED.clear(); }
 
     public static int clock() { return clock; }
 

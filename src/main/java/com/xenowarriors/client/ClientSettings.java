@@ -95,6 +95,14 @@ public final class ClientSettings {
 
     public static void setDrawnFaces(boolean on) { props().setProperty("drawn_faces", String.valueOf(on)); save(); }
 
+    /** Speed above 100: step up blocks without jumping (one more block every 100 levels). On by default. */
+    public static boolean autoStep() { return !"false".equals(props().getProperty("auto_step", "true")); }
+
+    public static void setAutoStep(boolean on) {
+        props().setProperty("auto_step", String.valueOf(on)); save();
+        ClientOptions.set(com.xenowarriors.stats.PlayerOptions.AUTO_STEP, on);     // (the server applies the step height)
+    }
+
     public static boolean celShading() { return "true".equals(props().getProperty("cel_shading", "false")); }
 
     public static void setCelShading(boolean on) { props().setProperty("cel_shading", String.valueOf(on)); save(); }
