@@ -274,6 +274,8 @@ final class Dmz6Features {
         step(null, () -> server(p -> {
             Vec3 at = at(p);
             int drops = 0, n = 30;
+            java.util.function.ToIntFunction<ServerPlayer> held = pl -> { int c = 0; for (ItemStack st : pl.getInventory().items) if (DmzGuns.kindOf(st) != null) c++; return c; };
+            int before = held.applyAsInt(p);
             log("gun drops: doMobLoot=" + p.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT));
             p.level().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT).set(true, p.server);
             for (int i = 0; i < n; i++) {
@@ -298,6 +300,9 @@ final class Dmz6Features {
                 ie.discard();
             }
             log("gun drops: items on the ground " + any);
+            int picked = held.applyAsInt(p) - before;                          // (dropped ones near you get pulled in and picked up at once)
+            drops += Math.max(0, picked);
+            log("gun drops: picked up by the player " + picked);
             log("gun drops: " + drops + "/" + n + " armed zombies killed by the player dropped their gun");
         }), 20);
     }
