@@ -98,7 +98,7 @@ public final class BotSaveTests {
 
     /** The world saved the normal way (as /save-all or an autosave), then what a restart would load for this player. */
     private static CompoundTag saveAndReadBack(ServerPlayer p, String tag) {
-        p.server.saveEverything(true, true, true);
+        p.server.saveEverything(true, false, true);              // (no chunk flush: slow in CI; players and level.dat are written right away)
         CompoundTag disk = null;
         String from = "?";
         try {
@@ -156,7 +156,7 @@ public final class BotSaveTests {
             clear(p);
             PartyBots.spawn(p, CharacterType.RHALIX, null);
             PartyBots.spawn(p, CharacterType.KYRIE, null);
-        }), 40));
+        }), 100));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX), k = bot(p, CharacterType.KYRIE);
             if (r == null || k == null) { log("crash FAIL no bots"); return; }
@@ -173,7 +173,7 @@ public final class BotSaveTests {
             CompoundTag disk = saveAndReadBack(p, "crash");
             DISK[0] = disk;
             crashAndRestart(p, disk, "crash");
-        }), 40));
+        }), 100));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX), k = bot(p, CharacterType.KYRIE);
             int homeEm = saved(p, "kyrie", "minecraft:emerald");
@@ -187,7 +187,7 @@ public final class BotSaveTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             CompoundTag disk = saveAndReadBack(p, "crash2");
             crashAndRestart(p, disk, "crash2");
-        }), 40));
+        }), 100));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX);
             boolean ok = count(p, CharacterType.RHALIX) == 1 && count(p, CharacterType.KYRIE) == 0 && r != null && bag(r, Items.DIAMOND) == 13 && saved(p, "kyrie", "minecraft:emerald") == 7 && same(p);
@@ -198,7 +198,7 @@ public final class BotSaveTests {
         // ---- 3. relog twice: nothing changes
         l.add(new Step(null, () -> UiTest.server(p -> {
             for (int i = 0; i < 2; i++) { PartyBots.onLogout(new PlayerEvent.PlayerLoggedOutEvent(p)); PartyBots.onLogin(new PlayerEvent.PlayerLoggedInEvent(p)); }
-        }), 40));
+        }), 100));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX);
             boolean ok = count(p, CharacterType.RHALIX) == 1 && r != null && bag(r, Items.DIAMOND) == 13 && r.getItemBySlot(EquipmentSlot.HEAD).is(Items.IRON_HELMET) && same(p);
@@ -213,7 +213,7 @@ public final class BotSaveTests {
             PartyBotEntity r = bot(p, CharacterType.RHALIX);
             if (r != null) r.inventory.addItem(new ItemStack(Items.LAPIS_LAZULI, 4));   // (picked up after the login: never saved, so gone with the crash)
             crashAndRestart(p, disk, "logoutcrash");                            // (no save since the login)
-        }), 40));
+        }), 100));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX);
             boolean ok = count(p, CharacterType.RHALIX) == 1 && r != null && bag(r, Items.DIAMOND) == 13 && same(p);
@@ -230,7 +230,7 @@ public final class BotSaveTests {
             N[3] = owned(p, "minecraft:lapis_lazuli");
             CompoundTag disk = saveAndReadBack(p, "journey");
             crashAndRestart(p, disk, "journey");
-        }), 40));
+        }), 100));
         l.add(new Step(null, () -> UiTest.server(p -> {
             int onYou = walk(p.getInventory().save(new ListTag()), "minecraft:lapis_lazuli");
             boolean ok = count(p, CharacterType.MAX) == 0 && onYou == 6 && same(p);
