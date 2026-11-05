@@ -105,6 +105,8 @@ public final class ClientEvents {
     }
 
     private static final java.util.Set<Integer> SQUISHED = new java.util.HashSet<>();
+    /** (tests) how many times someone was drawn squished. */
+    public static int squishedDraws;
 
     /** Gravity Compress squashes its target flat and makes it shake. */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
@@ -118,6 +120,7 @@ public final class ClientEvents {
         pose.translate(Math.sin(t * 5.1) * 0.035 * s, 0, Math.cos(t * 4.3) * 0.035 * s);
         pose.scale(1F + 0.14F * s, 1F - 0.24F * s, 1F + 0.14F * s);
         SQUISHED.add(e.getId());
+        squishedDraws++;
     }
 
     @SubscribeEvent

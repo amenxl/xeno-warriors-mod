@@ -28,6 +28,9 @@ public final class KnockdownClient {
     /** Who was drawn lying down this frame (for the stars): {entity, how far over 0..1}. */
     static final List<Object[]> DOWN = new ArrayList<>();
 
+    /** (tests) how many times someone was drawn tipped over. */
+    public static int tipped;
+
     private KnockdownClient() {}
 
     /** How far over they are right now (0 standing .. 1 flat on their back). */
@@ -48,6 +51,7 @@ public final class KnockdownClient {
         PoseStack pose = event.getPoseStack();
         PoseGuard.push(pose);
         TIPPED.add(e.getId());
+        tipped++;
         float yaw = Mth.rotLerp(event.getPartialTick(), e.yBodyRotO, e.yBodyRot);
         float t = e.tickCount + event.getPartialTick();
         pose.mulPose(Axis.YP.rotationDegrees(-yaw));
