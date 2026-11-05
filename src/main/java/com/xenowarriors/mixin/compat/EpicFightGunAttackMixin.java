@@ -7,8 +7,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Epic Fight: with a summoned gun in hand the attack button only shoots - no Epic Fight swing / combo. Its battle mode
- * plays a basic attack (and eats the vanilla attack click) only when this says yes, so it says no while a gun is held.
+ * Epic Fight: when the left click is ours (a summoned gun shoots, a clash push, a wire bind to break, Rhalix's wires
+ * whip, a phone call, knocked out - see client/OurClicks) there's no Epic Fight swing / combo. Its battle mode plays a
+ * basic attack (and eats the vanilla attack click) only when this says yes, so it says no then.
  * (HEAD inject on Epic Fight's own method: nothing else hooks it; skipped quietly when Epic Fight isn't there.)
  */
 @Pseudo
@@ -16,9 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class EpicFightGunAttackMixin {
     @Inject(method = "canPlayAttackAnimation", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private void xenowarriors$gunOnlyShoots(CallbackInfoReturnable<Boolean> cir) {
-        if (com.xenowarriors.client.forms.GunClient.held(net.minecraft.client.Minecraft.getInstance().player) != null) {
-            com.xenowarriors.client.forms.GunClient.efSwingsBlocked++;
-            cir.setReturnValue(false);
-        }
+        if (com.xenowarriors.client.OurClicks.attack(net.minecraft.client.Minecraft.getInstance().player)) cir.setReturnValue(false);
     }
 }

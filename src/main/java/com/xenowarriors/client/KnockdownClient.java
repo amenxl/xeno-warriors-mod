@@ -28,6 +28,9 @@ public final class KnockdownClient {
     /** Who was drawn lying down this frame (for the stars): {entity, how far over 0..1}. */
     static final List<Object[]> DOWN = new ArrayList<>();
 
+    /** (tests) how many times someone was drawn tipped over. */
+    public static int tipped;
+
     private KnockdownClient() {}
 
     /** How far over they are right now (0 standing .. 1 flat on their back). */
@@ -40,14 +43,28 @@ public final class KnockdownClient {
 
     private static float smooth(float x) { x = Mth.clamp(x, 0F, 1F); return x * x * (3F - 2F * x); }
 
+    /** A mob Epic Fight draws itself (in this event, at normal priority): tipped over before it does. */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onPreEarly(RenderLivingEvent.Pre<?, ?> event) {
+        if (PoseGuard.otherModDraws.test(event.getEntity())) onPre(event);
+    }
+
+    /** It was drawn (and the event cancelled) by the other mod: no "after" event comes, so close the transform here. */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onPreDone(RenderLivingEvent.Pre<?, ?> event) {
+        if (event.isCanceled() && TIPPED.remove(event.getEntity().getId())) PoseGuard.pop(event.getPoseStack());
+    }
+
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onPre(RenderLivingEvent.Pre<?, ?> event) {
         LivingEntity e = event.getEntity();
+        if (TIPPED.contains(e.getId())) return;                               // (already tipped, early)
         float w = down(e, event.getPartialTick());
         if (w <= 0F) return;
         PoseStack pose = event.getPoseStack();
         PoseGuard.push(pose);
         TIPPED.add(e.getId());
+        tipped++;
         float yaw = Mth.rotLerp(event.getPartialTick(), e.yBodyRotO, e.yBodyRot);
         float t = e.tickCount + event.getPartialTick();
         pose.mulPose(Axis.YP.rotationDegrees(-yaw));

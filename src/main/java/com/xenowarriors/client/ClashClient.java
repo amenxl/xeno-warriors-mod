@@ -19,6 +19,8 @@ public final class ClashClient implements IGuiOverlay {
     private static float pos = 0.5F, shown = 0.5F;
     private static int ticks;
     private static String opponent = "";
+    /** (tests) clash pushes sent. */
+    public static int pushes;
 
     public static void set(boolean a, float p, int t, String o) { active = a; pos = p; ticks = t; opponent = o; if (!a) shown = 0.5F; }
 
@@ -27,7 +29,7 @@ public final class ClashClient implements IGuiOverlay {
     @SubscribeEvent
     public static void onClick(InputEvent.InteractionKeyMappingTriggered event) {
         if (!active) return;
-        if (event.isAttack()) ModNetwork.sendToServer(new ClashPushPacket());
+        if (event.isAttack()) { ModNetwork.sendToServer(new ClashPushPacket()); pushes++; }
         event.setCanceled(true);
         event.setSwingHand(event.isAttack());
     }

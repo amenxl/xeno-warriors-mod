@@ -8,16 +8,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Epic Fight: its guard is on the right mouse button too - with a summoned gun in hand that button aims down the sights,
- * so no guard stance. (HEAD inject on Epic Fight's own private method; skipped quietly when Epic Fight isn't there.)
+ * with Rhalix's wires it binds, so no guard stance; and nobody knocked out, in a clash or held in a wire bind guards
+ * or dodges (see client/OurClicks). (HEAD injects on Epic Fight's own private methods; skipped quietly when Epic Fight
+ * isn't there.)
  */
 @Pseudo
 @Mixin(targets = "yesman.epicfight.client.events.engine.ControlEngine", remap = false)
 public abstract class EpicFightGunGuardMixin {
     @Inject(method = "maybeGuard", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private void xenowarriors$gunAimsNotGuards(CallbackInfo ci) {
-        if (com.xenowarriors.client.forms.GunClient.held(net.minecraft.client.Minecraft.getInstance().player) != null) {
-            com.xenowarriors.client.forms.GunClient.efGuardsBlocked++;
-            ci.cancel();
-        }
+        if (com.xenowarriors.client.OurClicks.guard(net.minecraft.client.Minecraft.getInstance().player)) ci.cancel();
+    }
+
+    @Inject(method = "maybeDodge", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private void xenowarriors$noDodgeWhenDown(CallbackInfo ci) {
+        if (com.xenowarriors.client.OurClicks.dodge(net.minecraft.client.Minecraft.getInstance().player)) ci.cancel();
     }
 }

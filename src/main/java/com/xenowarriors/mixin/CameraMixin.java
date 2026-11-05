@@ -10,9 +10,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Lets the ultimate cutscene take over the camera. */
+/**
+ * Lets the ultimate cutscenes take over the camera, and backs the third-person camera off behind vehicles. Also
+ * reachable as {@link com.xenowarriors.client.XwCamera} for mods that build the camera themselves (Epic Fight's
+ * third-person camera skips vanilla's setup, so this TAIL never runs then: its own hook calls us instead).
+ */
 @Mixin(Camera.class)
-public abstract class CameraMixin {
+public abstract class CameraMixin implements com.xenowarriors.client.XwCamera {
     @Shadow private boolean detached;
 
     @Shadow protected abstract void setRotation(float yRot, float xRot);
@@ -23,22 +27,24 @@ public abstract class CameraMixin {
 
     @Shadow protected abstract void move(double distanceOffset, double verticalOffset, double horizontalOffset);
 
-    /** Vehicles: the third-person camera backs off (so the car isn't filling the screen) and sits a little higher. */
     @Inject(method = "setup", at = @At("TAIL"))
-    private void xenowarriors$vehicleCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
-                                            float partialTick, CallbackInfo ci) {
-        if (!(entity.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity v)) return;
-        if (detached) {
-            double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
-            move(-getMaxZoom(extra), 0.6, 0.0);
-        } else {
-            move(0.0, v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.75, 0.0);   // eyes above the hood
-        }
+    private void xenowarriors$ourCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
+                                        float partialTick, CallbackInfo ci) {
+        xenowarriors$applyOurs(entity, detached, partialTick);
     }
 
-    @Inject(method = "setup", at = @At("TAIL"))
-    private void xenowarriors$cutsceneCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
-                                             float partialTick, CallbackInfo ci) {
+    @Override
+    public void xenowarriors$applyOurs(Entity entity, boolean detached, float partialTick) {
+        // vehicles: the third-person camera backs off (so the car isn't filling the screen) and sits a little higher
+        if (entity != null && entity.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity v) {
+            if (detached) {
+                double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
+                move(-getMaxZoom(extra), 0.6, 0.0);
+            } else {
+                move(0.0, v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.75, 0.0);   // eyes above the hood
+            }
+        }
+        // the cutscenes
         double[] cam = UltimateCutscene.camera(partialTick);
         if (cam == null) cam = com.xenowarriors.client.TeamUltCutscene.camera(partialTick);
         if (cam == null) return;
