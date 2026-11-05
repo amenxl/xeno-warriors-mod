@@ -354,6 +354,7 @@ public final class CharsTests {
         for (CharacterType t : new CharacterType[]{CharacterType.TECHNICA, CharacterType.GARRY}) {
             character(l, t);
             l.add(null, () -> server(p -> {
+                p.setGameMode(GameType.SURVIVAL);                               // (no gun XP in creative)
                 log("gun " + t.getId() + " tacz=" + com.xenowarriors.compat.GunLevel.on() + " level=" + com.xenowarriors.compat.GunLevel.level(p)
                         + " damage x" + com.xenowarriors.compat.GunLevel.multiplier(p));
                 com.xenowarriors.compat.GunLevel.addXp(p, 500F);
