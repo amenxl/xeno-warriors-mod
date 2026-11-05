@@ -123,8 +123,26 @@ public final class Dmz6Tests {
             zid[0] = z.getId();
             com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
         }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.guiScale().set(0); mc.resizeDisplay(); }, 60);
+        // DragonMineZ's own panels on screen: a tracked mission, and its technique bar (set to the right side) as if its key were held
+        step(null, () -> { mc.setScreen(null); server(p -> {
+            var qs = com.xenowarriors.compat.DmzQuests.dimensionQuests();
+            if (qs.isEmpty()) { log("no quest to track"); return; }
+            String id = qs.get(0)[0];
+            com.xenowarriors.compat.DmzQuests.accept(p, id);
+            Object qd = call(DmzPerCharacter.live(p), "getPlayerQuestData");
+            call(qd, "setTrackedQuestId", id);
+            DmzPerCharacter.syncAll(p);
+            log("tracking quest " + id + " -> " + call(qd, "getTrackedQuestId"));
+        });
+            try {
+                Object cfg = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getUserConfig").invoke(null);
+                cfg.getClass().getMethod("setTechniqueHotbarRightSide", Boolean.class).invoke(cfg, Boolean.TRUE);
+            } catch (Throwable t) { log("technique bar right side FAILED " + t); }
+            com.xenowarriors.client.compat.DmzHudLayout.forceTechniqueBarForTest = true;
+            com.xenowarriors.client.compat.DmzHudLayout.offForTest = tag.equals("before");
+        }, 40);
         step(null, () -> mc.setScreen(null), 20);
-        step("dmz6hud_854_" + tag, () -> { mc.setScreen(null); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
+        step("dmz6hud_854_" + tag, () -> { mc.setScreen(null); log("layout " + com.xenowarriors.client.compat.DmzHudLayout.lastShift + " ourTop=" + com.xenowarriors.client.KhHud.top); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
         // sensing: Karma Sensing drives DragonMineZ's Ki Sense search (which used to grey the screen out)
         step(null, () -> {
             com.xenowarriors.client.KarmaSense.sensed(new int[]{zid[0]}, new int[]{5}, 400, true, new int[0], new int[]{30}, new int[]{2}, true, false);
@@ -137,6 +155,6 @@ public final class Dmz6Tests {
         step("dmz6hud_1080_" + tag, () -> { mc.setScreen(null); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
         step(null, () -> { mc.options.guiScale().set(3); mc.resizeDisplay(); }, 20);
         step("dmz6hud_1080g3_" + tag, () -> mc.setScreen(null), 3);
-        step(null, () -> { try { mc.getWindow().setWindowed(854, 480); } catch (Throwable t) { log("resize failed " + t); } mc.options.guiScale().set(0); mc.resizeDisplay(); }, 20);
+        step(null, () -> { com.xenowarriors.client.compat.DmzHudLayout.forceTechniqueBarForTest = false; try { mc.getWindow().setWindowed(854, 480); } catch (Throwable t) { log("resize failed " + t); } mc.options.guiScale().set(0); mc.resizeDisplay(); }, 20);
     }
 }
