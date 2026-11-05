@@ -215,7 +215,7 @@ public final class HuntUiTests {
         // the chapter list must fit its column: chapters at 12, the open chapter's pages at 9, in 191 rows (30..221)
         int worst = 0; String worstName = "";
         for (var c : chapters) { int h = chapters.size() * 12 + c.pages().size() * 9; if (h > worst) { worst = h; worstName = c.title(); } }
-        log("guide list height (worst: " + worstName + " open) " + worst + " of 191 -> " + (worst <= 191 ? "fits" : "OVERFLOWS"));
+        log("guide list height (worst: " + worstName + " open) " + worst + " of 191 -> " + (worst <= 191 ? "fits" : "taller than the column: needs the list scroll"));
     }
 
     // ------------------------------------------------------------------ 4. probes

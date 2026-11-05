@@ -17,7 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
 public class BotScreen extends Screen {
     private static final int W = 236;
     private static final boolean DMZ = com.xenowarriors.client.compat.DmzMenu.available();
-    private static final int H = DMZ ? 218 : 196;
+    private static final int H = DMZ ? 236 : 214;            // (room for the two hint lines under the buttons)
     private final OpenBotMenuPacket m;
     private final CharacterType type;
     private int mode;
