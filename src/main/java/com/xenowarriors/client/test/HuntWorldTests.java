@@ -257,8 +257,9 @@ public final class HuntWorldTests {
                 vehicle = v.getId();
                 p.startRiding(v, true);
                 log("fly " + k.id + ": flight allowed on the server=" + p.server.isFlightAllowed());
-            }), 20);
-            step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.keyJump.setDown(true); }, 30);
+            }), 40);
+            step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.keyJump.setDown(true);
+                log("fly " + k.id + ": client riding " + (mc.player.getVehicle() == null ? "nothing" : mc.player.getVehicle().getType().toShortString())); }, 30);
             step(null, () -> mc.options.keyJump.setDown(false), 5);
             for (int i = 0; i < 6; i++) { int ii = i; step(ii == 2 ? k.id + "_hover" : null, () -> sample("fly " + k.id + " hovering t" + (ii * 15)), 15); }
             step(null, () -> server(p -> log("fly " + k.id + ": max float ticks " + maxFloat[0] + " (vanilla kicks above 80) -> " + (maxFloat[0] > 40 ? "WOULD BE KICKED" : "ok"))), 2);
