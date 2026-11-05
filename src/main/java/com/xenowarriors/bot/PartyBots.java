@@ -711,7 +711,7 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8;
 
     public static void action(ServerPlayer p, int botId, int action, int arg) {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
@@ -749,6 +749,11 @@ public final class PartyBots {
                 p.displayClientMessage(Component.literal("").append(b.label()).append(" left the party (their things are kept for when you play them).").withStyle(ChatFormatting.GRAY), true);
             }
             case ACT_MENU -> interact(b, p);
+            case ACT_DMZ -> {                                                     // (with DragonMineZ: its DMZ character's menu)
+                if (com.xenowarriors.compat.DmzPerCharacter.beginView(p, b))
+                    com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.BotDmzPacket(com.xenowarriors.network.BotDmzPacket.OPEN, b.label().getString()), p);
+                else p.displayClientMessage(Component.literal("").append(b.label()).append("'s Dragon Ball character can't be opened right now").withStyle(ChatFormatting.GRAY), true);
+            }
             default -> {}
         }
     }

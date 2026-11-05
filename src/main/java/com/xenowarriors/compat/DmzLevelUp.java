@@ -74,7 +74,7 @@ public final class DmzLevelUp {
     }
 
     private static String key(ServerPlayer p) {
-        String k = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getString("xw_dmz_live");
+        String k = DmzPerCharacter.bookKey(p);                                    // (a bot's while its DMZ menu is open)
         return k.isEmpty() ? "_" : k;
     }
 

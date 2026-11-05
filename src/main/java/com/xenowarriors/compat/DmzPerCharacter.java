@@ -94,6 +94,7 @@ public final class DmzPerCharacter {
     public static boolean switchTo(ServerPlayer p, String current, String to) {
         if (!ready() || p instanceof net.minecraftforge.common.util.FakePlayer) return false;
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) return false;          // (a Journey swaps characters for battles only)
+        endView(p, "character switch");                                             // (a bot's DMZ menu still open: put it back first)
         CompoundTag keep = persisted(p);
         String from = keep.getString(LIVE);
         if (from.isEmpty() && current != null && !current.isEmpty() && !current.equals(com.xenowarriors.character.CharacterType.NONE.getId())) from = current;
@@ -140,6 +141,145 @@ public final class DmzPerCharacter {
         }
         CompoundTag all = keep.getCompound(ROOT);
         return all.contains(key) ? all.getCompound(key) : null;
+    }
+
+    // ------------------------------------------------------------------ bots' DragonMineZ characters
+
+    private static final String VIEW = "xw_dmz_view";
+    /** Owners whose bot's DMZ character is in their capability right now (this server run), with when it started. */
+    private static final java.util.Map<java.util.UUID, Long> VIEWING = new java.util.HashMap<>();
+
+    /** The key a bot's DragonMineZ character is saved under (like its inventory: its character id, or "you&lt;slot&gt;"). */
+    public static String botKey(com.xenowarriors.bot.PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        if (o == null) return b.character().getId();
+        return o.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER)
+                .map(d -> com.xenowarriors.character.PlayerCharacter.key(b.character(), d.youSlot)).orElse(b.character().getId());
+    }
+
+    /** The bot character whose DMZ data is in the owner's capability right now (its menu is open), or null. */
+    public static String viewing(Player p) {
+        CompoundTag keep = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        return keep.contains(VIEW) ? keep.getCompound(VIEW).getString("key") : null;
+    }
+
+    /** Whose DMZ data DmzLevelUp should book points for: the bot's while its menu is open, else the one being played. */
+    public static String bookKey(Player p) {
+        String v = viewing(p);
+        return v != null ? v : p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getString(LIVE);
+    }
+
+    /** Is this key the character the owner is playing (so its DMZ data is the live one)? */
+    public static boolean isLive(Player p, String key) {
+        return key != null && key.equals(p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getString(LIVE));
+    }
+
+    /** Puts a whole DMZ character tag away under this key (a bot's, made off-screen). Never over the live or open one. */
+    public static boolean store(ServerPlayer owner, String key, CompoundTag tag) {
+        if (!ready() || owner == null || key == null || tag == null || isLive(owner, key) || key.equals(viewing(owner))) return false;
+        CompoundTag keep = persisted(owner);
+        CompoundTag all = keep.getCompound(ROOT);
+        all.put(key, tag);
+        keep.put(ROOT, all);
+        return true;
+    }
+
+    /** The owner's live StatsData (the capability object), or null. */
+    public static Object live(Player p) {
+        if (!ready()) return null;
+        try { return p.getCapability(cap).resolve().orElse(null); } catch (Throwable t) { return null; }
+    }
+
+    /** A blank StatsData for this (stand-in) player, for building a bot's character off to the side. */
+    public static Object blank(Player standIn) {
+        if (!ready()) return null;
+        try { return fresh.newInstance(standIn); } catch (Throwable t) { return null; }
+    }
+
+    public static CompoundTag saveData(Object data) {
+        try { return (CompoundTag) save.invoke(data); } catch (Throwable t) { return null; }
+    }
+
+    public static boolean loadData(Object data, CompoundTag tag) {
+        try { load.invoke(data, tag); return true; } catch (Throwable t) { return false; }
+    }
+
+    public static boolean createdData(Object data) {
+        try { return (Boolean) isCreated.invoke(getStatus.invoke(data)); } catch (Throwable t) { return true; }
+    }
+
+    /**
+     * The owner opens a bot's DragonMineZ menu: the bot's DMZ character goes into the owner's capability (the owner's
+     * own is kept safe in their saved data until it comes back), so DragonMineZ's own screens show and change the
+     * bot's character - points spent, missions taken. {@link #endView} puts everything back. True when it's swapped in.
+     */
+    public static boolean beginView(ServerPlayer p, com.xenowarriors.bot.PartyBotEntity b) {
+        if (!ready() || p instanceof net.minecraftforge.common.util.FakePlayer) return false;
+        String key = botKey(b);
+        if (key.equals(viewing(p))) return true;
+        endView(p, "another bot");
+        if (isLive(p, key)) return false;
+        DmzBots.ensureRace(b);                                                  // (a bot always has one: picked at random if need be)
+        CompoundTag keep = persisted(p);
+        CompoundTag all = keep.getCompound(ROOT);
+        if (!all.contains(key)) return false;
+        try {
+            Object data = p.getCapability(cap).resolve().orElse(null);
+            if (data == null) return false;
+            DmzLevelUp.poll(p);                                                 // (the owner's own book is up to date first)
+            CompoundTag view = new CompoundTag();
+            view.putString("key", key);
+            view.put("own", ((CompoundTag) save.invoke(data)).copy());
+            view.putFloat("hp", p.getHealth());
+            keep.put(VIEW, view);                                               // saved first: a crash from here on still finds the owner's own
+            load.invoke(data, all.getCompound(key).copy());
+            VIEWING.put(p.getUUID(), p.level().getGameTime());
+            sync(p);
+            XenoWarriors.LOGGER.info("XW dmz bot menu: {} opened {}'s DragonMineZ character", p.getGameProfile().getName(), key);
+            return true;
+        } catch (Throwable t) {
+            XenoWarriors.LOGGER.warn("Couldn't open a bot's DragonMineZ character", t);
+            endView(p, "failed");
+            return false;
+        }
+    }
+
+    /** Puts the owner's own DragonMineZ character back (saving the bot's, with whatever was changed). Safe to call any time. */
+    public static void endView(ServerPlayer p, String why) {
+        if (!ready()) return;
+        CompoundTag keep = persisted(p);
+        VIEWING.remove(p.getUUID());
+        if (!keep.contains(VIEW)) return;
+        CompoundTag view = keep.getCompound(VIEW);
+        try {
+            Object data = p.getCapability(cap).resolve().orElse(null);
+            if (data == null) return;
+            String key = view.getString("key");
+            DmzLevelUp.poll(p);                                                 // (the bot's level-up bonus, booked under its key)
+            CompoundTag all = keep.getCompound(ROOT);
+            all.put(key, ((CompoundTag) save.invoke(data)).copy());
+            keep.put(ROOT, all);
+            load.invoke(data, view.getCompound("own").copy());
+            keep.remove(VIEW);
+            sync(p);
+            p.setHealth(Math.min(p.getMaxHealth(), Math.max(1F, view.getFloat("hp"))));
+            if (!why.equals("menu closed") && !why.equals("logged out") && !why.equals("server stopping") && p.connection != null)   // (its screen would show - and spend - your own now)
+                com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.BotDmzPacket(com.xenowarriors.network.BotDmzPacket.CLOSED, key), p);
+            XenoWarriors.LOGGER.info("XW dmz bot menu: {} back to their own DragonMineZ character ({})", p.getGameProfile().getName(), why);
+        } catch (Throwable t) {
+            XenoWarriors.LOGGER.warn("Couldn't put a bot's DragonMineZ character back", t);
+        }
+    }
+
+    /** Is a bot's data in this player's capability with its menu open (this server run)? */
+    public static boolean viewOpen(Player p) { return VIEWING.containsKey(p.getUUID()); }
+
+    /** Every second (DmzBots): a view left over from a crash or a lost close packet is put back; none lasts over 10 minutes. */
+    static void checkView(ServerPlayer p) {
+        if (viewing(p) == null) { VIEWING.remove(p.getUUID()); return; }
+        Long at = VIEWING.get(p.getUUID());
+        if (at == null) endView(p, "left over");                                // (from before a restart)
+        else if (p.level().getGameTime() - at > 20 * 60 * 10 || p.level().getGameTime() < at) endView(p, "timed out");
     }
 
     /** Sends DragonMineZ's own stats sync for this player (after changing their stats or points). */
