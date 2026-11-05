@@ -44,7 +44,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         // baked from its own fresh copy of the model, so Epic Fight's baker never touches (and can't disturb) the
         // model the normal renderer animates - wings, coat, hair
         boolean hood = live.hoodUp != null && com.xenowarriors.client.mikiko.HoodClient.up(player);
-        SkinnedMesh[] mesh = (hood ? BAKED_HOOD : BAKED).computeIfAbsent(live, m -> bake(freshCopy(player, m), hood));
+        boolean legacy = legacyWings;
+        SkinnedMesh[] mesh = (hood ? BAKED_HOOD : legacy ? BAKED_LEGACY : BAKED).computeIfAbsent(live, m -> bake(freshCopy(player, m), hood, legacy));
         DetailModel model = live;
         if (mesh == null) {
             FAILED.add(live);
@@ -59,8 +60,12 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(CharacterDetailLayer.faceTexture(player)), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
-        if (live.hasWings()) wings(patch, player, live, pose, buffers, light, overlay, poses, partial);
+        if (live.hasWings() && !legacy) wings(patch, player, live, pose, buffers, light, overlay, poses, partial);
     }
+
+    /** (UI test, before/after) the old way: wings baked into the mesh in one pose. */
+    public static boolean legacyWings;
+    private static final Map<DetailModel, SkinnedMesh[]> BAKED_LEGACY = new IdentityHashMap<>();
 
     /** (tests) wing draws done on Epic Fight's skeleton. */
     public static int wingDraws;
@@ -123,10 +128,10 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
 
     /** Bakes any detail model (the townsfolk's too) for Epic Fight: {details, face}; null if it failed. */
     static SkinnedMesh[] bakeModel(DetailModel model) {
-        return bake(model, false);
+        return bake(model, false, false);
     }
 
-    private static SkinnedMesh[] bake(DetailModel model, boolean hood) {
+    private static SkinnedMesh[] bake(DetailModel model, boolean hood, boolean legacy) {
         try {
             // rest pose: no copied player pose, no blown hair or swinging coat
             model.root.getAllParts().forEach(p -> {
@@ -135,8 +140,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 p.yScale = 1F;
             });
             // the rain hood: a second copy is baked with it up (hood_down hidden, hair that would poke through tucked in)
-            if (model.rightWing != null) model.rightWing.visible = false;      // (wings: drawn live on the chest bone, see wings())
-            if (model.leftWing != null) model.leftWing.visible = false;
+            if (model.rightWing != null) model.rightWing.visible = legacy;     // (wings: drawn live on the chest bone, see wings())
+            if (model.leftWing != null) model.leftWing.visible = legacy;
             if (model.hoodUp != null) model.hoodUp.visible = hood;
             if (model.hoodDown != null) model.hoodDown.visible = !hood;
             if (hood) for (ModelPart strand : model.hoodPokers) strand.visible = false;

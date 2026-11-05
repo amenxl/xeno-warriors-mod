@@ -177,7 +177,7 @@ public final class Batch3Tests {
         l.add(null, () -> server(p -> { var b = bot(p, CharacterType.KAERU, 0, 0); if (b != null) b.moveTo(box[0] - 4.5, box[1], box[2] - 4.5); p.teleportTo(box[0] - 4.5, box[1], box[2] - 3.5); }), 60);
         l.add(null, () -> server(p -> { var b = bot(p, CharacterType.KAERU, 0, 0); if (b != null) b.moveTo(box[0] - 3.5, box[1], box[2] - 4.5); }), 60);
         l.add(null, () -> server(p -> log("torch after moving: " + count(p, box) + " torches in the room (spaced: none where it was already lit), kaeru has " + torchesLeft(p, CharacterType.KAERU) + " left")), 5);
-        camera(mc, l, -3.5, 0.6, 3.0);
+        camera(mc, l, 6.0, 0.6, 6.0);
         l.add("batch3_torch_room", () -> {}, 5);
         uncamera(mc, l);
         // in the Tower (a mode arena) it never does
@@ -456,9 +456,13 @@ public final class Batch3Tests {
     // ------------------------------------------------------------------ 6. Rhalix's wings (under Epic Fight)
 
     /** An invisible armor stand to film from, at this offset from the player, looking at them. */
-    static void camera(Minecraft mc, MikikoTests.Steps l, double dx, double dy, double dz) {
+    static void camera(Minecraft mc, MikikoTests.Steps l, double dx, double dy, double dz) { camera(mc, l, dx, dy, dz, 0); }
+
+    /** ... looking at a spot {@code aimZ} blocks south of them. */
+    static void camera(Minecraft mc, MikikoTests.Steps l, double dx, double dy, double dz, double aimZ) {
         int[] id = {-1};
-        float yaw = (float) Math.toDegrees(Math.atan2(dx, -dz)), pitch = (float) Math.toDegrees(Math.atan2(dy + 0.7, Math.sqrt(dx * dx + dz * dz)));   // (the stand's eyes are 1.8 up)
+        double ez = dz - aimZ;
+        float yaw = (float) Math.toDegrees(Math.atan2(dx, -ez)), pitch = (float) Math.toDegrees(Math.atan2(dy + 0.7, Math.sqrt(dx * dx + ez * ez)));   // (the stand's eyes are 1.8 up)
         l.add(null, () -> server(p -> {
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(40), a -> a.getTags().contains("xw_b3_cam")).forEach(a -> a.discard());
             var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
@@ -480,23 +484,27 @@ public final class Batch3Tests {
 
     private static void wings(Minecraft mc, MikikoTests.Steps l, boolean ef) {
         character(l, CharacterType.RHALIX);
+        double[] home = new double[3];
         l.add(null, () -> server(p -> {
             hold(p, ItemStack.EMPTY); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             var c = p.blockPosition();
+            home[0] = c.getX() + 0.5; home[1] = c.getY(); home[2] = c.getZ() + 0.5;
             for (int dx = -7; dx <= 7; dx++) for (int dz = -7; dz <= 9; dz++) for (int dy = 0; dy <= 4; dy++) p.serverLevel().setBlock(c.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
             p.teleportTo(c.getX() + 0.5, c.getY(), c.getZ() + 0.5); p.setYRot(0F); p.setYHeadRot(0F); p.yBodyRot = 0F;
         }), 10);
         boolean wasWhole = com.xenowarriors.client.ClientSettings.efWholeBattleMode();
         if (ef) l.add(null, () -> com.xenowarriors.client.ClientSettings.setEfWholeBattleMode(true), 2);   // (Epic Fight draws him all the time, its own moves too)
-        String[] anims = ef ? new String[]{"none", "ef:FIST_AUTO1", "ef:BIPED_ROLL_FORWARD", "ef:BIPED_STEP_LEFT", "pole1"} : new String[]{"none"};
-        double[][] cams = {{-2.6, 0.0, -2.6}, {4.2, -0.4, 1.2}};               // behind his left shoulder; his right side
+        String[] anims = ef ? new String[]{"none", "ef:BIPED_ROLL_FORWARD", "ef:BIPED_STEP_LEFT", "ef:BIPED_STEP_BACKWARD"} : new String[]{"none"};
+        double[][] cams = {{-3.2, 0.6, -4.5}, {6.5, 0.2, 1.5}};                // behind his left shoulder; his right side (looking 1.5 ahead of him: the roll goes that way)
         for (int ci = 0; ci < cams.length; ci++) {
             final int cam = ci;
-            camera(mc, l, cams[ci][0], cams[ci][1], cams[ci][2]);
-            for (String a : anims) {
-                String n = a.replace("ef:", "").toLowerCase(java.util.Locale.ROOT);
+            camera(mc, l, cams[ci][0], cams[ci][1], cams[ci][2], 1.5);
+            for (String a0 : ef ? new String[]{"old:", ""} : new String[]{""}) for (String a1 : anims) {
+                String a = a1; boolean old = !a0.isEmpty();
+                String n = (old ? "old_" : "") + a.replace("ef:", "").toLowerCase(java.util.Locale.ROOT);
+                if (ef) l.add(null, () -> setLegacy(old), 1);
                 l.add(null, () -> {
-                    server(p -> { p.teleportTo(Math.floor(p.getX()) + 0.5, p.getY(), Math.floor(p.getZ()) + 0.5); p.setYRot(0F); p.setYHeadRot(0F); p.yBodyRot = 0F; });
+                    server(p -> { p.teleportTo(home[0], home[1], home[2]); p.setYRot(0F); p.setYHeadRot(0F); p.yBodyRot = 0F; });
                     mc.player.setYRot(0F); mc.player.yBodyRot = 0F; mc.player.setYHeadRot(0F);
                     com.xenowarriors.client.RhalixWingsClient.set(mc.player.getUUID(), true, false);
                 }, 8);
@@ -511,7 +519,12 @@ public final class Batch3Tests {
             }
         }
         uncamera(mc, l);
-        if (ef) l.add(null, () -> com.xenowarriors.client.ClientSettings.setEfWholeBattleMode(wasWhole), 2);
+        if (ef) l.add(null, () -> { setLegacy(false); com.xenowarriors.client.ClientSettings.setEfWholeBattleMode(wasWhole); }, 2);
+    }
+
+    /** The wing fix off (the old baked wings) or on, for before/after shots. */
+    private static void setLegacy(boolean on) {
+        try { com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.class.getField("legacyWings").setBoolean(null, on); } catch (Throwable ignored) {}
     }
 
     /** Epic Fight's wing draws so far (-1 before the fix / without Epic Fight). */
