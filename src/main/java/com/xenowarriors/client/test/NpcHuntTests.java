@@ -228,6 +228,55 @@ public final class NpcHuntTests {
         l.add(new Step(null, () -> UiTest.server(p -> log("phone: on a pretend call=" + com.xenowarriors.item.PhoneItem.onCall(p))), 5));
         l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.PhoneActionPacket(1, new UUID(0, 0))), 20));
         l.add(new Step(null, () -> UiTest.server(p -> log("phone: hung up, still on call=" + com.xenowarriors.item.PhoneItem.onCall(p) + ok(!com.xenowarriors.item.PhoneItem.onCall(p)))), 5));
+        // 8. Journey enemies (tagged xw_journey): killing Gov agents / SR members there doesn't move your real standing
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            for (var f : com.xenowarriors.faction.Faction.values()) if (f != com.xenowarriors.faction.Faction.TOWN) com.xenowarriors.faction.Reputation.set(p, f, 0);
+            ServerLevel lv = p.serverLevel();
+            var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(lv);
+            g.moveTo(p.getX() + 10, p.getY(), p.getZ() + 4, 0, 0);
+            g.setup(true, 1, g.blockPosition());
+            g.setNoAi(true);
+            g.getPersistentData().putBoolean("xw_journey", true);
+            lv.addFreshEntity(g);
+            var sr = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(lv);
+            sr.moveTo(p.getX() - 10, p.getY(), p.getZ() + 4, 0, 0);
+            sr.setup(0, sr.blockPosition());
+            sr.setNoAi(true);
+            sr.getPersistentData().putBoolean("xw_journey", true);
+            lv.addFreshEntity(sr);
+            for (int i = 0; i < 6; i++) { g.hurt(p.damageSources().playerAttack(p), 100000F); sr.hurt(p.damageSources().playerAttack(p), 100000F); }
+            log("journey foes: gov agent dead=" + !g.isAlive() + " sr member dead=" + !sr.isAlive());
+        }), 10));
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            int gov = com.xenowarriors.faction.Reputation.get(p, com.xenowarriors.faction.Faction.GOV);
+            int srr = com.xenowarriors.faction.Reputation.get(p, com.xenowarriors.faction.Faction.SR);
+            int sky = com.xenowarriors.faction.Reputation.get(p, com.xenowarriors.faction.Faction.SKY);
+            // (the hit itself still counts as "caught" here: the test isn't inside a real Journey run, so -30 Gov from that is expected)
+            log("journey kills standing: gov=" + gov + " sr=" + srr + " sky=" + sky + ok(srr == 0 && sky == 0 && gov == com.xenowarriors.faction.RepRules.GOV_CAUGHT.delta));
+            for (var f : com.xenowarriors.faction.Faction.values()) if (f != com.xenowarriors.faction.Faction.TOWN) com.xenowarriors.faction.Reputation.set(p, f, 0);
+            p.getPersistentData().remove("xw_gov_wanted_until");
+        }), 5));
+
+        // 9. the Pet Whistle item, as Mikiko, also calls back a winged companion that flew off ("calls all your pets")
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            CompoundTag rec = new CompoundTag();
+            rec.putUUID("uuid", UUID.randomUUID());
+            rec.putString("name", "Buddy");
+            rec.putString("type", "minecraft:chicken");
+            rec.putInt("gen", 0);
+            rec.putBoolean("dead", true);
+            rec.putLong("awayUntil", 0);
+            rec.putBoolean("readyTold", true);
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(c -> c.wingPets.add(rec));
+            ItemStack w = new ItemStack(com.xenowarriors.item.ModItems.FOX_WHISTLE.get());
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, w);
+            w.getItem().use(p.level(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        }), 20));
+        l.add(new Step("npchunt_whistle", () -> UiTest.server(p -> {
+            int n = p.serverLevel().getEntitiesOfClass(Chicken.class, p.getBoundingBox().inflate(16), c -> c.isAlive() && com.xenowarriors.wing.WingPets.isOwnedBy(c, p)).size();
+            int foxes = ownedFoxes(p);
+            log("pet whistle item as Mikiko: winged companions back=" + n + " foxes=" + foxes + ok(n == 1 && foxes == 1));
+        }), 5));
         l.add(new Step(null, () -> log("done"), 5));
     }
 }
