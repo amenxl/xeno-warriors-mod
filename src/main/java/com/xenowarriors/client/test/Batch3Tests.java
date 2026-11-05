@@ -354,6 +354,17 @@ public final class Batch3Tests {
         return e.maxUpStep() + (a == null ? 0 : a.getValue());
     }
 
+    /** (test) holds the local player on this spot every tick (null = off). */
+    static double[] pin;
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent e) {
+        var pl = Minecraft.getInstance().player;
+        if (e.phase != net.minecraftforge.event.TickEvent.Phase.END || pin == null || pl == null) return;
+        pl.setPos(pin[0], pin[1], pin[2]);
+        pl.setDeltaMovement(0, Math.min(0, pl.getDeltaMovement().y), 0);
+    }
+
     /** (test) ticks left holding "forward" for the local player, and whether it jumped meanwhile. */
     public static int walk;
     static boolean jumped;
@@ -506,10 +517,11 @@ public final class Batch3Tests {
         boolean wasWhole = com.xenowarriors.client.ClientSettings.efWholeBattleMode();
         if (ef) l.add(null, () -> com.xenowarriors.client.ClientSettings.setEfWholeBattleMode(true), 2);   // (Epic Fight draws him all the time, its own moves too)
         String[] anims = ef ? new String[]{"none", "ef:BIPED_ROLL_FORWARD", "ef:BIPED_STEP_LEFT", "ef:BIPED_STEP_BACKWARD"} : new String[]{"none"};
-        double[][] cams = {{-3.2, 0.6, -4.5}, {6.5, 0.2, 1.5}};                // behind his left shoulder; his right side (looking 1.5 ahead of him: the roll goes that way)
+        double[][] cams = {{-2.4, 0.3, -2.8}, {3.6, -0.1, 0.0}};                // behind his left shoulder; his right side
         for (int ci = 0; ci < cams.length; ci++) {
             final int cam = ci;
-            camera(mc, l, cams[ci][0], cams[ci][1], cams[ci][2], 1.5);
+            camera(mc, l, cams[ci][0], cams[ci][1], cams[ci][2], 0);
+            l.add(null, () -> pin = new double[]{home[0], home[1], home[2]}, 1);   // (kept on the spot: the dodges would carry him out of the picture)
             for (String a0 : ef ? new String[]{"old:", ""} : new String[]{""}) for (String a1 : anims) {
                 String a = a1; boolean old = !a0.isEmpty();
                 String n = (old ? "old_" : "") + a.replace("ef:", "").toLowerCase(java.util.Locale.ROOT);
@@ -520,15 +532,16 @@ public final class Batch3Tests {
                     com.xenowarriors.client.RhalixWingsClient.set(mc.player.getUUID(), true, false);
                 }, 8);
                 l.add(null, () -> { if (ef) com.xenowarriors.compat.epicfight.EfTest.play(mc.player, a); }, 2);
-                for (int k = 0; k < 3; k++) {
+                for (int k = 0; k < 4; k++) {
                     String shot = "batch3_wings_c" + cam + "_" + n + "_" + k;
                     l.add(shot, () -> { com.xenowarriors.client.RhalixWingsClient.set(mc.player.getUUID(), true, false);
                         log("wings " + shot + " grow=" + com.xenowarriors.client.RhalixWingsClient.grow(mc.player, 0F)
-                                + (ef ? " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player) + " efWingDraws=" + efWingDraws() : "")); }, 3);
+                                + (ef ? " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player) + " efWingDraws=" + efWingDraws() : "")); }, 2);
                 }
                 l.add(null, () -> { if (ef) com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"); }, 16);
             }
         }
+        l.add(null, () -> pin = null, 1);
         uncamera(mc, l);
         if (ef) l.add(null, () -> { setLegacy(false); com.xenowarriors.client.ClientSettings.setEfWholeBattleMode(wasWhole); }, 2);
     }
