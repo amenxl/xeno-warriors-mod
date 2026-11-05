@@ -568,7 +568,7 @@ public final class HuntPerfTests {
     private static void phase(Minecraft mc, Adder l, String name, Consumer<ServerPlayer> each) {
         double[] acc = new double[8];   // sum mspt, worst mspt, sum fps, min fps, entities, n, srv alloc, cli alloc
         long[] alloc0 = new long[2];
-        long[] dmz0 = new long[2];
+        long[] dmz0 = new long[3];
         long[] t0 = new long[1];
         acc[3] = Double.MAX_VALUE;
         l.add(null, () -> {
@@ -579,7 +579,7 @@ public final class HuntPerfTests {
             MinecraftServer s = mc.getSingleplayerServer();
             if (s != null) java.util.Arrays.fill(s.tickTimes, 0L);
             alloc0[0] = allocated(SRV.target); alloc0[1] = allocated(CLI.target);
-            dmz0[0] = com.xenowarriors.compat.DmzPerCharacter.loadsForTest; dmz0[1] = com.xenowarriors.compat.DmzPerCharacter.savesForTest;
+            dmz0[0] = com.xenowarriors.compat.DmzPerCharacter.loadsForTest; dmz0[1] = com.xenowarriors.compat.DmzPerCharacter.savesForTest; dmz0[2] = com.xenowarriors.compat.DmzBotQuests.peekParses;
             t0[0] = System.nanoTime();
         }, 100);
         for (int i = 1; i <= 6; i++) {
@@ -610,7 +610,7 @@ public final class HuntPerfTests {
             long loads = com.xenowarriors.compat.DmzPerCharacter.loadsForTest - dmz0[0], saves = com.xenowarriors.compat.DmzPerCharacter.savesForTest - dmz0[1];
             log(name + " summary mspt_avg=" + f(mspt) + " mspt_worst=" + f(acc[1]) + " fps_avg=" + f(fps)
                     + " server_alloc_MB_s=" + f(sa / 1e6 / secs) + " client_alloc_MB_s=" + f(ca / 1e6 / secs)
-                    + " dmz_char_loads_per_s=" + f(loads / secs) + " dmz_char_saves_per_s=" + f(saves / secs));
+                    + " dmz_char_loads_per_s=" + f(loads / secs) + " dmz_char_saves_per_s=" + f(saves / secs) + " dmz_mission_parses_per_s=" + f((com.xenowarriors.compat.DmzBotQuests.peekParses - dmz0[2]) / secs));
             double xs = SRV.dump(name, "server", mspt, "tick", 25);
             double xc = CLI.dump(name, "client", fps <= 0 ? 0 : 1000.0 / fps, "frame", 20);
             drainTwo();

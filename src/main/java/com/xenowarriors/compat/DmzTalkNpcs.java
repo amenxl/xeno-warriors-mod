@@ -69,8 +69,8 @@ public final class DmzTalkNpcs {
             }
             for (PartyBotEntity b : PartyBots.bots(p)) {
                 if (b.journey()) continue;
-                DmzBotQuests.Data d = DmzBotQuests.open(b, true);
-                if (d != null && !d.live) needsOf(d.pqd, d.key, out);
+                Object pqd = DmzBotQuests.peek(b);                                   // (its mission data only, cached: not its whole DMZ character)
+                if (pqd != null) needsOf(pqd, DmzPerCharacter.botKey(b), out);
             }
         } catch (Throwable t) { XenoWarriors.LOGGER.warn("Couldn't read DragonMineZ missions for their talk objectives", t); }
         return out;

@@ -105,17 +105,36 @@ public final class DmzBotQuests {
         }
     }
 
+    /** The methods m() may call, by class and "name/argument count" (getMethods() copies the whole list on every call). */
+    private static final Map<Class<?>, Map<String, Method[]>> METHODS = new java.util.concurrent.ConcurrentHashMap<>();
+
     static Object m(Object o, String name, Object... args) throws Exception {
-        for (Method mm : o.getClass().getMethods())
-            if (mm.getName().equals(name) && mm.getParameterCount() == args.length) {
-                if (!java.lang.reflect.Modifier.isPublic(mm.getDeclaringClass().getModifiers())) mm.trySetAccessible();   // (a private record's accessors)
-                try { return mm.invoke(o, args); } catch (IllegalArgumentException wrongOverload) { /* try the next one */ }
-            }
+        Map<String, Method[]> byName = METHODS.computeIfAbsent(o.getClass(), c -> new java.util.concurrent.ConcurrentHashMap<>());
+        String k = name + "/" + args.length;
+        Method[] cands = byName.get(k);
+        if (cands == null) {
+            List<Method> l = new ArrayList<>();
+            for (Method mm : o.getClass().getMethods())
+                if (mm.getName().equals(name) && mm.getParameterCount() == args.length) {
+                    if (!java.lang.reflect.Modifier.isPublic(mm.getDeclaringClass().getModifiers())) mm.trySetAccessible();   // (a private record's accessors)
+                    l.add(mm);
+                }
+            cands = l.toArray(new Method[0]);
+            byName.put(k, cands);
+        }
+        for (Method mm : cands) {
+            try { return mm.invoke(o, args); } catch (IllegalArgumentException wrongOverload) { /* try the next one */ }
+        }
         throw new NoSuchMethodException(o.getClass().getSimpleName() + "." + name);
     }
 
+    private static Method getQuest, serverConfig, partyMembers;
+
     static Object quest(String key) {
-        try { return registry.getMethod("getQuest", String.class).invoke(null, key); } catch (Throwable t) { return null; }
+        try {
+            if (getQuest == null) getQuest = registry.getMethod("getQuest", String.class);
+            return getQuest.invoke(null, key);
+        } catch (Throwable t) { return null; }
     }
 
     private static Object saga(String key) {
@@ -134,7 +153,8 @@ public final class DmzBotQuests {
 
     static boolean typeEnabled(Object q) {
         try {
-            Object cfg = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getServerConfig").invoke(null);
+            if (serverConfig == null) serverConfig = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getServerConfig");
+            Object cfg = serverConfig.invoke(null);
             Object g = m(cfg, "getGameplay");
             if ((Boolean) m(q, "isSagaQuest")) return Boolean.TRUE.equals(m(g, "getStoryModeEnabled"));
             if ((Boolean) m(q, "isSideQuest")) return Boolean.TRUE.equals(m(g, "getSideQuestsEnabled"));
@@ -146,7 +166,8 @@ public final class DmzBotQuests {
     @SuppressWarnings("unchecked")
     static List<ServerPlayer> party(ServerPlayer p) {
         try {
-            List<ServerPlayer> l = (List<ServerPlayer>) Class.forName("com.dragonminez.common.quest.PartyManager").getMethod("getAllPartyMembers", ServerPlayer.class).invoke(null, p);
+            if (partyMembers == null) partyMembers = Class.forName("com.dragonminez.common.quest.PartyManager").getMethod("getAllPartyMembers", ServerPlayer.class);
+            List<ServerPlayer> l = (List<ServerPlayer>) partyMembers.invoke(null, p);
             if (l != null && !l.isEmpty()) {
                 List<ServerPlayer> out = new ArrayList<>();
                 for (ServerPlayer s : l) if (s != null && !(s instanceof FakePlayer) && !out.contains(s)) out.add(s);
@@ -212,6 +233,55 @@ public final class DmzBotQuests {
         }
     }
 
+    // ------------------------------------------------------------------ a cheap look: just the mission data, cached
+
+    private record Peek(CompoundTag src, int hash, Object pqd) {}
+    private static final Map<PartyBotEntity, Peek> PEEKS = new WeakHashMap<>();
+
+    /** Is the bot's Dragon Ball menu open (its data live in its owner's capability)? */
+    private static boolean viewed(PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        return o != null && DmzPerCharacter.botKey(b).equals(DmzPerCharacter.viewing(o));
+    }
+
+    /**
+     * The bot's saved mission data on its own - read only - or null when it has no mission going, no DMZ character,
+     * or it's the one being played / its menu is open. Parsed again only when the saved missions changed, so the
+     * once-a-second checks (here and in DmzTalkNpcs) and every kill don't load the bot's whole DMZ character.
+     */
+    static Object peek(PartyBotEntity b) {
+        if (!ready()) return null;
+        ServerPlayer o = b.owner();
+        if (o == null || o instanceof FakePlayer) return null;
+        String key = DmzPerCharacter.botKey(b);
+        if (DmzPerCharacter.isLive(o, key) || key.equals(DmzPerCharacter.viewing(o))) return null;
+        CompoundTag tag = DmzPerCharacter.saved(o, key);
+        if (tag == null || !tag.getCompound("Status").getBoolean("HasCreatedChar") || !tag.contains("PlayerQuestData")) { PEEKS.remove(b); return null; }
+        CompoundTag q = tag.getCompound("PlayerQuestData");
+        int h = q.hashCode();
+        Peek pk = PEEKS.get(b);
+        if (pk == null || pk.src != q || pk.hash != h) {
+            Object pqd = null;
+            try {
+                Object fresh = pqdClass.getConstructor().newInstance();
+                m(fresh, "deserializeNBT", q.copy());
+                if (!((Set<?>) m(fresh, "getAcceptedQuestIds")).isEmpty()) pqd = fresh;
+            } catch (Throwable t) { pqd = null; }
+            pk = new Peek(q, h, pqd);
+            PEEKS.put(b, pk);
+            peekParses++;
+        }
+        return pk.pqd;
+    }
+
+    /** (For the perf test) how often peek() had to parse the mission data again. */
+    public static long peekParses;
+
+    /** Might open(b, true) give anything? (Its menu is open, or it has a mission going.) */
+    private static boolean mayBeActive(PartyBotEntity b) {
+        return viewed(b) || peek(b) != null;
+    }
+
     @SuppressWarnings("unchecked")
     static List<String> accepted(Object pqd) throws Exception {
         return new ArrayList<>((Set<String>) m(pqd, "getAcceptedQuestIds"));
@@ -249,7 +319,7 @@ public final class DmzBotQuests {
         boolean dmzCountedLive = killerBot == null || DmzPerCharacter.viewing(killerBot.owner()) == null;
         for (ServerPlayer r : party) {
             for (PartyBotEntity b : PartyBots.bots(r)) {
-                if (b.journey()) continue;
+                if (b.journey() || !mayBeActive(b)) continue;
                 Data d = open(b, true);
                 if (d == null || (d.live && dmzCountedLive)) continue;
                 try { creditKill(d, dead, owners, src, b == killerBot); }
@@ -405,10 +475,49 @@ public final class DmzBotQuests {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 20 != 7 || !ready()) return;
         for (PartyBotEntity b : PartyBots.bots(p)) {
             if (b.journey()) continue;
-            Data d = open(b, true);
-            if (d == null || d.live) continue;                                       // (an open menu: DragonMineZ ticks its missions itself)
-            try { tickMissions(d, p); } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ missions failed to update", t); }
+            Object pqd = peek(b);                                                    // (null: none going, or an open menu - DragonMineZ ticks its missions itself)
+            if (pqd == null) continue;
+            try {
+                if (!changes(b, pqd, p)) continue;                                   // (nothing to write: no need to load its whole DMZ character)
+                Data d = open(b, true);
+                if (d == null || d.live) continue;
+                tickMissions(d, p);
+            } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ missions failed to update", t); }
         }
+    }
+
+    /**
+     * tickMissions without changing anything (on the cached mission data): would it change a location objective or
+     * complete a mission? Story fighters are summoned here already (tickMissions does that the same way; it's once only).
+     */
+    private static boolean changes(PartyBotEntity b, Object pqd, ServerPlayer p) throws Exception {
+        String bkey = DmzPerCharacter.botKey(b);
+        List<ServerPlayer> party = null;
+        for (String key : accepted(pqd)) {
+            Object q = quest(key);
+            if (q == null || (Boolean) m(pqd, "isQuestCompleted", key) || !typeEnabled(q)) continue;
+            List<?> objs = (List<?>) m(q, "getObjectives");
+            boolean parallel = (Boolean) m(q, "isParallelObjectives");
+            for (int i = 0; i < objs.size(); i++) {
+                Object obj = objs.get(i);
+                int prog = progress(pqd, key, i), req = required(q, pqd, key, i);
+                if (prog >= req) continue;
+                if (!parallel && !firstOpen(pqd, key, q, i)) break;
+                if ((Boolean) isLocation.invoke(null, obj)) {
+                    if (party == null) party = party(p);
+                    boolean there = false;
+                    for (ServerPlayer s : party) if ((Boolean) locationMet.invoke(null, s, obj)) { there = true; break; }
+                    if ((there ? 1 : 0) != prog) return true;
+                } else if (killObj.isInstance(obj)) summonStory(b, bkey, p, key, i, obj, prog, req);
+                if (!parallel) break;
+            }
+            if (!(Boolean) needsTurnIn.invoke(null, q)) {                            // (complete() would finish it)
+                boolean all = true;
+                for (int i = 0; i < objs.size() && all; i++) if (progress(pqd, key, i) < required(q, pqd, key, i)) all = false;
+                if (all) return true;
+            }
+        }
+        return false;
     }
 
     private static void tickMissions(Data d, ServerPlayer p) throws Exception {
@@ -430,7 +539,7 @@ public final class DmzBotQuests {
                     for (ServerPlayer s : party) if ((Boolean) locationMet.invoke(null, s, obj)) { there = true; break; }
                     int want = there ? 1 : 0;
                     if (want != prog) { m(d.pqd, "setObjectiveProgress", key, i, want); changed = true; note("location " + key + "#" + i + " -> " + want + " for " + d.key); }
-                } else if (killObj.isInstance(obj)) summonStory(d, p, key, i, obj, prog, req);
+                } else if (killObj.isInstance(obj)) summonStory(d.bot, d.key, p, key, i, obj, prog, req);
                 if (!parallel) break;
             }
             if (complete(d, key, q, null)) changed = true;
@@ -439,13 +548,13 @@ public final class DmzBotQuests {
     }
 
     /** A story fighter the bot must defeat never spawns by itself: summon it near you once (unless yours already was for the same objective). */
-    private static void summonStory(Data d, ServerPlayer p, String key, int index, Object obj, int prog, int req) throws Exception {
+    private static void summonStory(PartyBotEntity bot, String botKey, ServerPlayer p, String key, int index, Object obj, int prog, int req) throws Exception {
         if ((Boolean) m(obj, "isTag") || !"NATURAL".equals(String.valueOf(m(obj, "getSpawnMode")))) return;
         EntityType<?> type = (EntityType<?>) m(obj, "resolveEntityType");
         if (type == null || !DmzQuestHelp.storyOnly(p.serverLevel(), type)) return;
         CompoundTag keep = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         CompoundTag done = keep.getCompound(SUMMONED);
-        String id = d.key + "|" + key + "#" + index;
+        String id = botKey + "|" + key + "#" + index;
         if (done.getBoolean(id)) return;
         done.putBoolean(id, true);
         keep.put(SUMMONED, done);
@@ -453,9 +562,9 @@ public final class DmzBotQuests {
         for (DmzQuestHelp.Open mine : DmzQuestHelp.open(p)) if (mine.key().equals(key) && mine.index() == index) return;   // (yours come for both of you)
         int n = Math.max(1, Math.min(5, req - prog));
         double hp = ((Number) m(obj, "getHealth")).doubleValue();
-        p.displayClientMessage(Component.empty().append(d.bot.character().getDisplayName()).append("'s mission target is coming: ").append(type.getDescription())
+        p.displayClientMessage(Component.empty().append(bot.character().getDisplayName()).append("'s mission target is coming: ").append(type.getDescription())
                 .withStyle(ChatFormatting.GOLD), false);
-        note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + d.key + " " + key + "#" + index);
+        note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + botKey + " " + key + "#" + index);
         for (int k = 0; k < n; k++) com.xenowarriors.skill.ServerScheduler.later(100 + k * 30, () -> DmzQuestHelp.summon(p, type, key, index, hp));
     }
 
@@ -470,7 +579,7 @@ public final class DmzBotQuests {
         } catch (Throwable ignored) {}
         if (npc == null) return;
         for (ServerPlayer r : party(p)) for (PartyBotEntity b : PartyBots.bots(r)) {
-            if (b.journey()) continue;
+            if (b.journey() || !mayBeActive(b)) continue;
             Data d = open(b, true);
             if (d == null || d.live) continue;
             try {
