@@ -325,7 +325,7 @@ public final class Bots5Tests {
         }), 160));
         l.add(new Step("bots5_flier_range", () -> server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX), k = bot(p, CharacterType.KAERU);
-            log("follow after 8s calm: rhalix dist=" + (r == null ? "-" : f1(r.distanceTo(p))) + " (stays out: " + (r != null && r.distanceTo(p) > 14) + ") kaeru dist=" + (k == null ? "-" : f1(k.distanceTo(p))) + " (came back: " + (k != null && k.distanceTo(p) < 10) + ")");
+            log("follow after 8s calm: rhalix dist=" + (r == null ? "-" : f1(r.distanceTo(p))) + " (not called back: " + (r != null && r.distanceTo(p) > 6 && !r.goalsForTest().contains("FollowOwner")) + ", goals " + (r == null ? "-" : r.goalsForTest()) + ") kaeru dist=" + (k == null ? "-" : f1(k.distanceTo(p))) + " (came back: " + (k != null && k.distanceTo(p) < 10) + ")");
             if (r != null) { r.moveTo(X + 24.5, Y, Z + 0.5); r.getNavigation().stop(); }
             // the owner is attacked: a (harmless, untouchable) zombie hits them
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
@@ -620,7 +620,8 @@ public final class Bots5Tests {
         l.add(new Step(null, () -> server(p -> {
             PartyBotEntity y = bot(p, CharacterType.YURI);
             if (y == null) return;
-            log("yuri with a zombie 14 blocks off: looks=" + y.yuriLooks + " (no new look)");
+            var zs = p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(60), m -> m.getTags().contains(TAG) && m instanceof net.minecraft.world.entity.monster.Zombie);
+            log("yuri with a zombie " + (zs.isEmpty() ? "?" : f1(zs.get(0).distanceTo(y))) + " blocks off: looks=" + y.yuriLooks + " (no new look)");
             p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(60), m -> m.getTags().contains(TAG)).forEach(Entity::discard);
             for (int dx = 0; dx < 3; dx++) { p.serverLevel().setBlock(new BlockPos(X + 14 + dx, Y, Z - 10), Blocks.AIR.defaultBlockState(), 3); p.serverLevel().setBlock(new BlockPos(X + 14 + dx, Y - 1, Z - 10), Blocks.SMOOTH_STONE.defaultBlockState(), 3); }
         }), 10));

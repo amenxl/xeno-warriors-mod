@@ -61,7 +61,7 @@ public final class BotShield {
             if (m instanceof Creeper c && c.getSwellDir() > 0 && d2 < 5 * 5) return m.position();                // (about to blow)
             if (m.getTarget() != b) continue;
             if (m.isUsingItem() && d2 < 24 * 24 && b.hasLineOfSight(m)) return m.getEyePosition();               // (a bow drawn on it)
-            if (d2 < 3.2 * 3.2 && m.isAggressive() && (b.tickCount % 24 < 9 || m == t && b.tickCount - b.lastHurtAt < 15)) return m.getEyePosition();   // (right there swinging: a guard between its own hits)
+            if (d2 < 3.2 * 3.2 && m.isAggressive() && (b.tickCount % 30 < 6 || m == t && b.tickCount - b.lastHurtAt < 15)) return m.getEyePosition();   // (right there swinging: a guard between its own hits)
         }
         return null;
     }
@@ -76,7 +76,7 @@ public final class BotShield {
         Vec3 from = b.tickCount % 2 == 0 || blocking ? threat(b) : null;
         if (from != null) {
             if (!blocking) { b.startUsingItem(InteractionHand.OFF_HAND); b.guards++; }
-            b.guardTicks = 12;
+            b.guardTicks = 8;
             Vec3 d = from.subtract(b.position());
             float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));            // (face it: a shield only stops what's in front)
             b.setYRot(yaw); b.yBodyRot = yaw; b.yHeadRot = yaw;
