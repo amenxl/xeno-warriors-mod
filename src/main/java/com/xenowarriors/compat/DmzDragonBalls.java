@@ -253,6 +253,7 @@ public final class DmzDragonBalls {
     /** (Tests) gives the bot all seven balls of the set usable where it is. */
     public static String giveSetForTest(PartyBotEntity b) {
         if (!ready() || !(b.level() instanceof ServerLevel level)) return null;
+        note("give set: world " + level.dimension().location() + " earth works=" + worksHere(SETS[0], level) + " namek works=" + worksHere(SETS[1], level));
         for (BallSet s : SETS) {
             if (!worksHere(s, level)) continue;
             for (int star = 7; star >= 1; star--) b.inventory.addItem(new ItemStack(ball(s, star)));   // (out of order on purpose)

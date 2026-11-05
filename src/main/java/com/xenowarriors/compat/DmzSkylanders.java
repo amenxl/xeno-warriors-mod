@@ -69,7 +69,7 @@ public final class DmzSkylanders {
     /** An armed Skylander on the ground at (the surface by) at. Null if there was nowhere to stand. */
     public static SkylanderEntity spawn(ServerLevel level, BlockPos at, boolean persistent) {
         if (!level.isLoaded(at)) return null;
-        BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
+        BlockPos top = standable(level, at) ? at : level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);   // (right there if there's floor, else the surface)
         if (top.getY() <= level.getMinBuildHeight() + 1 || !level.getBlockState(top.below()).isFaceSturdy(level, top.below(), net.minecraft.core.Direction.UP)
                 || !level.isEmptyBlock(top) || !level.isEmptyBlock(top.above()) || !level.getFluidState(top.below()).isEmpty()) return null;
         SkylanderEntity sk = ModNpcs.SKYLANDER.get().create(level);
@@ -89,6 +89,10 @@ public final class DmzSkylanders {
         LOG.add(s);
         XenoWarriors.LOGGER.info("XW dmz skylanders: spawned {}", s);
         return sk;
+    }
+
+    private static boolean standable(ServerLevel l, BlockPos at) {
+        return l.isEmptyBlock(at) && l.isEmptyBlock(at.above()) && l.getBlockState(at.below()).isFaceSturdy(l, at.below(), net.minecraft.core.Direction.UP);
     }
 
     /** Mostly rifles; burst cannons often; the odd mortar. */

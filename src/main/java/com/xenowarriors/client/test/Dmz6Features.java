@@ -78,6 +78,7 @@ final class Dmz6Features {
             if (b == null) { log("bot spawn FAILED"); return; }
             b.moveTo(at.x + 2, at.y, at.z + 2, 0, 0);
             BOT[0] = b;
+            b.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 3, false, false));
             log("bot race " + DmzBots.ensureRace(b));
             String key = DmzPerCharacter.botKey(b);
             CompoundTag tag = DmzPerCharacter.saved(p, key);
@@ -85,8 +86,12 @@ final class Dmz6Features {
             if (tag == null || d == null || !DmzPerCharacter.loadData(d, tag.copy())) { log("bot DMZ data FAILED"); return; }
             Object ch = call(d, "getCharacter");
             call(ch, "setRace", "saiyan");
+            call(d, "updateTransformationSkillLimits", "saiyan");
             Object sk = call(d, "getSkills");
+            if (!Boolean.TRUE.equals(call(sk, "hasSkill", "superform"))) call(sk, "registerDefaultSkill", "superform", 0);
+            log("bot superform max " + call(sk, "getMaxSkillLevel", "superform"));
             call(sk, "setSkillLevel", "superform", 3);
+            if (!Integer.valueOf(3).equals(call(sk, "getSkillLevel", "superform"))) call(sk, "addSkillLevel", "superform", 3);
             call(ch, "setSelectedFormGroup", "supersaiyan");
             Object st = call(d, "getStats");
             for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"}) call(st, m, 60);
@@ -115,8 +120,9 @@ final class Dmz6Features {
             log("fusion fused=" + DmzFusion.fused(p) + " left=" + DmzFusion.left(p) + " bots now " + PartyBots.bots(p).size());
             dump();
         }), 40);
-        step(null, () -> view(mc, true), 20);
-        step("dmz6_fusion_potara", () -> server(p -> log("fusion display name " + p.getDisplayName().getString() + " | " + DmzFusion.statsLine(DmzPerCharacter.live(p)))), 3);
+        step(null, () -> { mc.setScreen(null); view(mc, true); }, 20);
+        step("dmz6_fusion_potara", () -> { mc.setScreen(null); server(p -> {}); }, 3);
+        step(null, () -> server(p -> log("fusion display name " + p.getDisplayName().getString() + " | " + DmzFusion.statsLine(DmzPerCharacter.live(p)))), 3);
         step(null, () -> view(mc, false), 60);
         step(null, () -> server(p -> {                                         // DragonMineZ's own tick has run a while: still fused?
             log("fusion after 3 s: fused=" + DmzFusion.fused(p) + " left=" + DmzFusion.left(p) + " dmz " + DmzFusion.statsLine(DmzPerCharacter.live(p)));
@@ -127,7 +133,7 @@ final class Dmz6Features {
             log("fusion ended: bot back=" + (b != null) + " earrings left=" + ear + " | " + DmzFusion.statsLine(DmzPerCharacter.live(p)) + " | name " + p.getDisplayName().getString());
             dump();
         }), 20);
-        step("dmz6_fusion_after", () -> {}, 3);
+        step("dmz6_fusion_after", () -> mc.setScreen(null), 3);
         // the dance: the bot knows it; the cooldown is cleared for the test
         step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b == null) return;
             log("fusion refused while on cooldown: " + DmzFusion.whyNot(p, b));
@@ -143,14 +149,13 @@ final class Dmz6Features {
             log("dance fused=" + DmzFusion.fused(p) + " | " + DmzFusion.statsLine(DmzPerCharacter.live(p)));
             dump();
         }), 30);
-        step(null, () -> view(mc, true), 10);
-        step("dmz6_fusion_dance", () -> {}, 3);
+        step(null, () -> { mc.setScreen(null); view(mc, true); }, 10);
+        step("dmz6_fusion_dance", () -> mc.setScreen(null), 3);
         step(null, () -> server(p -> {
-            p.kill();                                                           // (ends it early: the bot comes back)
+            DmzFusion.end(p, "test: knocked out", false);                      // (ended early - as on dying, which sends you to DragonMineZ's Otherworld)
         }), 30);
-        step(null, () -> { if (mc.player != null && mc.player.isDeadOrDying()) mc.player.respawn(); mc.setScreen(null); }, 60);
         step(null, () -> server(p -> {
-            log("dance after dying: fused=" + DmzFusion.fused(p) + " bots=" + PartyBots.bots(p).size() + " | " + DmzFusion.statsLine(DmzPerCharacter.live(p)));
+            log("dance ended early: fused=" + DmzFusion.fused(p) + " bots=" + PartyBots.bots(p).size() + " | " + DmzFusion.statsLine(DmzPerCharacter.live(p)));
             BOT[0] = null; bot(p);
             Vec3 at = at(p); p.teleportTo(at.x, at.y, at.z); protect(p);
             PartyBotEntity b = bot(p); if (b != null) b.moveTo(at.x + 2, at.y, at.z + 2);
@@ -169,7 +174,8 @@ final class Dmz6Features {
             p.setYRot(-45); p.setXRot(15);
             log("power start: " + DmzBotPower.state(b));
         }); }, 50);
-        step("dmz6_bot_charging", () -> server(p -> { PartyBotEntity b = bot(p); if (b != null) log("power charging: " + DmzBotPower.state(b)); dump(); }), 3);
+        step("dmz6_bot_charging", () -> { mc.setScreen(null); server(p -> {}); }, 3);
+        step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b != null) log("power charging: " + DmzBotPower.state(b)); dump(); }), 3);
         step(null, () -> {}, 200);
         step(null, () -> server(p -> { PartyBotEntity b = bot(p); if (b == null) return;
             log("power after 10 s: " + DmzBotPower.state(b));
@@ -270,7 +276,9 @@ final class Dmz6Features {
                 z.moveTo(at.x + 10, at.y, at.z - 10, 0, 0); z.setNoAi(true);
                 z.setItemSlot(EquipmentSlot.MAINHAND, DmzGuns.random(z.getRandom()));
                 p.serverLevel().addFreshEntity(z);
-                z.hurt(p.damageSources().playerAttack(p), 10000F);
+                z.setLastHurtByPlayer(p);                                       // (killed by the player: equipment can drop)
+                z.kill();
+                if (z.isAlive()) log("gun drops: zombie still alive");
             }
             for (ItemEntity ie : p.serverLevel().getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(at.x + 10, at.y, at.z - 10, at.x + 10, at.y, at.z - 10).inflate(4)))
                 if (DmzGuns.kindOf(ie.getItem()) != null) { drops++; ie.discard(); }
@@ -293,10 +301,18 @@ final class Dmz6Features {
             step(null, () -> { mc.setScreen(null); server(p -> {
                 ServerLevel l = p.server.getLevel(ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, new ResourceLocation("dragonminez", w)));
                 if (l == null) { log("world " + w + " missing"); return; }
-                BlockPos top = l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(0, 0, 0));
-                l.getChunk(top);
-                top = l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(0, 0, 0));
-                p.teleportTo(l, 0.5, Math.max(top.getY(), l.getMinBuildHeight() + 2) + 1, 0.5, 0, 10);
+                BlockPos top = null;
+                search:
+                for (int r = 0; r <= 6; r++)                                   // (dry land near the middle: Namek has a lot of sea)
+                    for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) {
+                        if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                        BlockPos c = new BlockPos(dx * 24, 0, dz * 24);
+                        l.getChunk(c);
+                        BlockPos t = l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, c);
+                        if (t.getY() > l.getMinBuildHeight() + 2 && l.getFluidState(t.below()).isEmpty() && l.getBlockState(t.below()).isSolid()) { top = t; break search; }
+                    }
+                if (top == null) top = l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, BlockPos.ZERO);
+                p.teleportTo(l, top.getX() + 0.5, Math.max(top.getY(), l.getMinBuildHeight() + 2), top.getZ() + 0.5, 0, 10);
                 protect(p);
                 log("world " + w + " at " + p.blockPosition().toShortString());
             }); }, 120);
@@ -315,12 +331,12 @@ final class Dmz6Features {
                 p.setYRot(-45); p.setXRot(10);
                 dump();
             }), 80);
-            step("dmz6_skylanders_" + w, () -> server(p -> {
+            step("dmz6_skylanders_" + w, () -> { mc.setScreen(null); server(p -> {
                 for (var sk : p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.SkylanderEntity.class, p.getBoundingBox().inflate(48)))
                     log("world " + w + " skylander " + ForgeRegistries.ITEMS.getKey(sk.getMainHandItem().getItem()) + " target=" + (sk.getTarget() == null ? "-" : sk.getTarget().getType().getDescriptionId())
                             + " flying=" + sk.flying() + " at " + sk.blockPosition().toShortString());
                 dump();
-            }), 3);
+            }); }, 3);
         }
         step(null, () -> server(p -> {
             ServerLevel o = p.server.overworld();
