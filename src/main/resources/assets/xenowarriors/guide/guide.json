@@ -258,7 +258,7 @@
         },
         {
           "title": "Bots and DragonMineZ",
-          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives.\n- A bot is as tough and strong as its Dragon Ball character: its Vitality adds to its max health, its Resistance cuts the hits it takes, its Strength is its punch, and its Ki / Strike damage power its skills - just like a player of that character. Out of a fight it heals at DragonMineZ's regen rate."
+          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (3x DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives.\n- A bot is as tough and strong as its Dragon Ball character: its Vitality adds to its max health, its Resistance cuts the hits it takes, its Strength is its punch, and its Ki / Strike damage power its skills - just like a player of that character. Out of a fight it heals at DragonMineZ's regen rate."
         },
         {
           "title": "Mission help",

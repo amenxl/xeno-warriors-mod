@@ -223,10 +223,13 @@ public final class DmzBots {
         return made(tag) ? tag.getCompound("Resources").getFloat("TrainingPointsF") : -1;
     }
 
-    /** DragonMineZ's passive TP (every 5 s), or a modest 2 if its config turned it off. */
+    /** Bots' passive TP multiplier over DragonMineZ's own passive gain (user asked for more). */
+    public static final int BOT_PASSIVE_MULT = 3;
+
+    /** A bot's passive TP (every 5 s): 3x DragonMineZ's passive TP, or 6 if its config turned it off. */
     public static int passive() {
         Number n = cfg(passiveTp);
-        return n == null || n.intValue() <= 0 ? 2 : n.intValue();
+        return (n == null || n.intValue() <= 0 ? 2 : n.intValue()) * BOT_PASSIVE_MULT;
     }
 
     /** TP for a kill, DragonMineZ's way: the victim's max health x its TP ratio, plus its TP per hit. */
