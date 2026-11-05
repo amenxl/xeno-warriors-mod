@@ -302,7 +302,10 @@ public final class EpicFightCompat {
             return;
         }
         if (ClientSettings.efWholeBattleMode()) {
-            event.setShouldRender(true);
+            // (even with everything handed to Epic Fight: Mikiko and Rhalix never stand in its fists-up idle or guard)
+            Object anim = currentAnimation(event.getPlayerPatch());
+            String path = anim == null ? "" : String.valueOf(anim).toLowerCase(java.util.Locale.ROOT);
+            event.setShouldRender(!(ownStance(p) && ownWeapon(p) && (guarding(p) || path.contains("/idle"))));
             return;
         }
         event.setShouldRender(efDraws(p, event.getPlayerPatch()));
