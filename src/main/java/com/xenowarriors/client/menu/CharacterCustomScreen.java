@@ -561,6 +561,8 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Mining", lvStr(me.mining()), me.miningXp(), 0xE0C070});
         rows.add(new Object[]{"Crafting", lvStr(me.craft()), me.craftXp(), 0xC08A50});
         rows.add(new Object[]{"Smelting", lvStr(me.smelt()), me.smeltXp(), 0xFF8A3A});
+        if (type != CharacterType.ULTIMA) rows.add(new Object[]{"Appetite", (me.appetite() >= com.xenowarriors.stats.Appetite.MAX_LEVEL ? "MAX" : "Lv " + me.appetite())
+                + "  x" + (com.xenowarriors.stats.Appetite.layers(me.appetite()) + 1), me.appetiteXp(), 0xE8D020});
         rows.add(new Object[]{"Sensing", me.senseRange() + "b, " + me.senseSeconds() + "s", -1F, 0});
         rows.add(new Object[]{"Practice", Math.min(me.senseUses(), 100) + "/100", -1F, 0});
         if (type == CharacterType.MIKIKO) {

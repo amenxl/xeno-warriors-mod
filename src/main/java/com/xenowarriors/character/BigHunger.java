@@ -28,7 +28,21 @@ public final class BigHunger {
             case MIKIKO -> 200;
             case RHALIX -> 60;
             default -> 20;
-        };
+        } + com.xenowarriors.stats.Appetite.extraFood(p);          // (+20 per extra layer from the Appetite level)
+    }
+
+    /** Extra food (e.g. the Appetite bonus): into the big stomach if there is one, else onto the bar. */
+    public static void addFood(ServerPlayer p, int points, float saturation) {
+        var food = p.getFoodData();
+        if (points > 0) {
+            int max = max(p);
+            if (max > 20) {
+                var d = p.getPersistentData();
+                int total = d.contains(TOTAL) ? d.getInt(TOTAL) : food.getFoodLevel();
+                d.putInt(TOTAL, Math.min(max, total + points));
+            } else food.setFoodLevel(Math.min(20, food.getFoodLevel() + points));
+        }
+        if (saturation > 0) food.setSaturation(Math.min(food.getFoodLevel(), food.getSaturationLevel() + saturation));
     }
 
     public static boolean noHunger(Player p) { return ModCapabilities.getType(p) == CharacterType.ULTIMA || com.xenowarriors.you.YouRaces.noHunger(p); }

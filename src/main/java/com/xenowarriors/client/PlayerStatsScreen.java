@@ -436,6 +436,7 @@ public class PlayerStatsScreen extends Screen {
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Mining", me.mining(), me.miningXp(), Stat.MAX_LEVEL, 0xE0C070); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Crafting", me.craft(), me.craftXp(), Stat.MAX_LEVEL, 0xC08A50); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Smelting", me.smelt(), me.smeltXp(), Stat.MAX_LEVEL, 0xFF8A3A); cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Appetite", me.appetite(), me.appetiteXp(), com.xenowarriors.stats.Appetite.MAX_LEVEL, 0xE8D020); cy += 12;
         if (mikiko) {
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Hekublade", me.bladeLevel(), me.bladeXp(), BladeLevel.MAX, 0xFF7A1A);
             cy += 12;

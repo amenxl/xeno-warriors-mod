@@ -29,6 +29,18 @@ public final class BigHungerHud {
 
     public static int total() { return total; }
     public static int max() { return max; }
+    /** More than one layer of hunger bars to show (and we know the total). */
+    public static boolean layered() { return max > 20 && total >= 0; }
+    /** The layer being eaten from (0 = the first). */
+    public static int layer() { return total <= 0 ? 0 : (total - 1) / 20; }
+    /** How full the layer being eaten from is, 0..1. */
+    public static float layerFill() { return total <= 0 ? 0F : (total - layer() * 20) / 20F; }
+    /** That layer's colour (ARGB), or {@code fallback} for the first one. */
+    public static int layerColor(int fallback) { return layer() == 0 ? fallback : 0xFF000000 | TIER[layer() % TIER.length]; }
+    /** "x2/3": the layer and how many there are. */
+    public static String layerLabel() { return "x" + (layer() + 1) + "/" + layers(); }
+    /** Layers of hunger bars (20 points each). */
+    public static int layers() { return Math.max(1, (max + 19) / 20); }
 
     @SubscribeEvent
     public static void onOverlay(RenderGuiOverlayEvent.Pre event) {
@@ -42,7 +54,7 @@ public final class BigHungerHud {
             drawSun(event.getGuiGraphics(), mc, com.xenowarriors.client.you.YouClient.sun / (float) com.xenowarriors.you.YouRaces.SUN_MAX);
             return;
         }
-        if (max <= 20 || total < 0 || (t != CharacterType.MIKIKO && t != CharacterType.RHALIX)) return;
+        if (max <= 20 || total < 0) return;                            // (Mikiko, Rhalix, and anyone with extra layers from their Appetite level)
         if (event.isCanceled()) return;
         event.setCanceled(true);
         draw(event.getGuiGraphics(), mc);
@@ -76,16 +88,16 @@ public final class BigHungerHud {
             int pts = i * 2;
             int col;
             int u;
-            if (pts + 2 <= inTier) { col = TIER[tier]; u = 52; }                       // full in this bar's color
-            else if (pts + 1 == inTier) { col = TIER[tier]; u = 61; }                   // half
-            else if (tier > 0) { col = TIER[tier - 1]; u = 52; }                       // under it: the bar below, full
+            if (pts + 2 <= inTier) { col = TIER[tier % TIER.length]; u = 52; }                       // full in this bar's color
+            else if (pts + 1 == inTier) { col = TIER[tier % TIER.length]; u = 61; }                   // half
+            else if (tier > 0) { col = TIER[(tier - 1) % TIER.length]; u = 52; }                       // under it: the bar below, full
             else continue;
             float r = ((col >> 16) & 255) / 255F, gg = ((col >> 8) & 255) / 255F, b = (col & 255) / 255F;
             RenderSystem.setShaderColor(r, gg, b, 1F);
             g.blit(ICONS, x, y, u, 27, 9, 9);
             RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         }
-        String label = "x" + (tier + 1);
-        g.drawString(mc.font, label, right - 80 - mc.font.width(label) - 3, top + 1, 0xFF000000 | TIER[tier], true);
+        String label = "x" + (tier + 1) + "/" + layers();             // (the layer being eaten from, out of all of them)
+        g.drawString(mc.font, label, right - 80 - mc.font.width(label) - 3, top + 1, 0xFF000000 | TIER[tier % TIER.length], true);
     }
 }
