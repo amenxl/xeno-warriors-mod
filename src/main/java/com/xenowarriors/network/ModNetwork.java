@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "63";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "64";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -471,6 +471,8 @@ public final class ModNetwork {
                 .encoder(PartySwapPacket::encode).decoder(PartySwapPacket::decode).consumerMainThread(PartySwapPacket::handle).add();
         CHANNEL.messageBuilder(DmzFxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(DmzFxPacket::encode).decoder(DmzFxPacket::decode).consumerMainThread(DmzFxPacket::handle).add();
+        CHANNEL.messageBuilder(SkillLevelsPacket.class, id++)                   // (both ways: ability levels, and a tier upgrade)
+                .encoder(SkillLevelsPacket::encode).decoder(SkillLevelsPacket::decode).consumerMainThread(SkillLevelsPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

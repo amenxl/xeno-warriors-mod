@@ -188,9 +188,10 @@ public class SkillLoadoutScreen extends Screen {
 
     public static String desc(Skill s) {
         String k = "skill.xenowarriors." + s.getId() + ".desc", h = "skill.xenowarriors." + s.getId() + ".how";
-        String cd = s.getCooldownTicks() < 20 ? "none" : s.getCooldownTicks() / 20 + "s";
-        String stats = UltimaAnim.resource() + " " + s.getKarmaCost() + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
-        return stats + "\n\n" + (I18n.exists(k) ? I18n.get(k) : "") + (I18n.exists(h) ? "\n\nHow: " + I18n.get(h) : "");
+        int cdt = com.xenowarriors.client.ClientSkillLevels.cooldown(s.getId(), s.getCooldownTicks());     // (with its ability level)
+        String cd = cdt < 20 ? "none" : cdt / 20 + "s";
+        String stats = UltimaAnim.resource() + " " + com.xenowarriors.client.ClientSkillLevels.cost(s.getId(), s.getKarmaCost()) + "   Cooldown " + cd + (s.clashColor() >= 0 ? "   Can clash" : "");
+        return stats + "\n" + com.xenowarriors.client.ClientSkillLevels.describe(s.getId()) + "\n\n" + (I18n.exists(k) ? I18n.get(k) : "") + (I18n.exists(h) ? "\n\nHow: " + I18n.get(h) : "");
     }
 
     @Override

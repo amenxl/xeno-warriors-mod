@@ -137,6 +137,7 @@ public final class SkillManager {
         CharacterType type = ModCapabilities.getType(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d ->
                 ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadoutWithUlt(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka, com.xenowarriors.character.Seasons.highest(player.server)), player));
+        SkillLevels.sync(player);                                             // (this character's ability levels)
     }
 
     /** Last skill someone used near each player, for Mikiko's True Empathy: {skill, game time}. */
@@ -188,7 +189,7 @@ public final class SkillManager {
                         skill.getName(), (remaining + 19) / 20), true);
                 return;
             }
-            int cost = skill.getKarmaCost(player);
+            int cost = SkillLevels.costFor(player, skill.getId(), skill.getKarmaCost(player));   // (ability level / tier)
             if (com.xenowarriors.party.Synergy.has(player, com.xenowarriors.party.Synergy.OLD_FRIENDS)) cost = Math.round(cost * 0.75F);   // Old Friends: Zane + Mikiko
             if (!Karma.has(player, cost)) {
                 Karma.notEnough(player, cost);
@@ -196,7 +197,8 @@ public final class SkillManager {
             }
             // a blast aimed at someone charging their own: CLASH instead
             boolean clash = skill.clashColor() >= 0 && skill.clashesOnUse() && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
-            if (clash || skill.use(player)) {
+            if (clash || com.xenowarriors.combat.SkillContext.callSkill(player, skill.getId(), () -> skill.use(player))) {
+                SkillLevels.used(player, skill);
                 com.xenowarriors.journey.Journey.onSkill(player);
                 Integer gen = SkillAnimPacket.GENERIC.get(skill.getId());          // newer skills: a general move to go with them
                 if (gen != null && !clash) ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), gen, !player.onGround()), player);
@@ -209,7 +211,7 @@ public final class SkillManager {
                 if (slot != ULTIMATE_SLOT && !(skill instanceof com.xenowarriors.skill.mikiko.TrueEmpathySkill))
                     for (ServerPlayer o : player.serverLevel().players())
                         if (o != player && o.distanceToSqr(player) < 24 * 24) WITNESSED.put(o.getUUID(), new Object[]{skill, now(player)});
-                int cooldown = skill.getCooldownTicks();
+                int cooldown = SkillLevels.cooldownFor(player, skill.getId(), skill.getCooldownTicks());
                 data.cooldownEnd[slot] = now(player) + cooldown;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(slot, cooldown, cooldown), player);
             }
