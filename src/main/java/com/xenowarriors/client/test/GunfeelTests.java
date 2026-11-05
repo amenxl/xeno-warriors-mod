@@ -7,6 +7,7 @@ import com.xenowarriors.client.UiTest;
 import com.xenowarriors.client.UiTest.Step;
 import com.xenowarriors.client.forms.FormsFx;
 import com.xenowarriors.client.forms.GunClient;
+import com.xenowarriors.compat.epicfight.EfGunCheck;
 import com.xenowarriors.forms.Form;
 import com.xenowarriors.forms.FormGunItem;
 import com.xenowarriors.forms.GunSpec;
@@ -61,7 +62,9 @@ public final class GunfeelTests {
                 log("spec " + s + ": mode " + s.mode + ", " + s.rpm() + " rpm (every " + s.interval + " ticks), hip " + s.hipSpread + " deg, aimed " + s.adsSpread
                         + " deg, pellets " + s.pellets + " (cone " + s.pelletHip + "/" + s.pelletAds + "), zoom x" + s.zoom);
         }, 2));
+        if (EfGunCheck.loaded()) l.add(new Step(null, () -> { EfGunCheck.battleMode(); log("ef: battle mode on, " + EfGunCheck.info()); }, 5));
         for (Form f : new Form[]{Form.PISTOL, Form.RIFLE, Form.SHOTGUN}) views(mc, l, Form.Style.HEKU, f);
+        if (EfGunCheck.loaded()) efClicks(mc, l);
         fireModes(mc, l);
         spreadTest(mc, l);
         feel(mc, l);
@@ -167,7 +170,10 @@ public final class GunfeelTests {
         String name = (style == Form.Style.HEKU ? "heku_" : "wire_") + f.name().toLowerCase(Locale.ROOT);
         summon(mc, l, f);
         l.add(new Step(null, () -> { face(mc, 2F); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 12));
-        l.add(new Step("gunfeel_" + name + "_hip", () -> { face(mc, 2F); log(name + " hip: held " + held(mc) + ", " + state(mc)); }, 3));
+        int[] vm = new int[1];
+        l.add(new Step("gunfeel_" + name + "_hip", () -> { face(mc, 2F); vm[0] = GunClient.viewModelsDrawn;
+            log(name + " hip: held " + held(mc) + ", " + state(mc) + (EfGunCheck.loaded() ? ", ef " + EfGunCheck.info() : "")); }, 3));
+        l.add(new Step(null, () -> log(name + " view models drawn over 3 frames-ticks: " + (GunClient.viewModelsDrawn - vm[0])), 1));
         if (f == Form.PISTOL && style == Form.Style.HEKU) {                     // a shot from the hip: flash, kick, tracer
             l.add(new Step(null, () -> { face(mc, 2F); GunClient.testClick(); GunClient.testSince = 0.7F; }, 1));
             l.add(new Step("gunfeel_" + name + "_hip_fire", () -> log(name + " hip shot: flashes drawn " + GunClient.flashesDrawn), 1));
@@ -182,6 +188,47 @@ public final class GunfeelTests {
         }
         l.add(new Step(null, () -> GunClient.testAim = false, 8));
         l.add(new Step(null, () -> log(name + " back to hip: " + state(mc)), 2));
+    }
+
+    // ------------------------------------------------------------------ with Epic Fight: real mouse clicks shoot / aim, never swing / guard
+
+    /** Holds (or lets go of) every key mapping on the same key as {@code base} (Epic Fight's attack / guard share the mouse buttons). */
+    private static void press(Minecraft mc, net.minecraft.client.KeyMapping base, boolean down) {
+        for (net.minecraft.client.KeyMapping k : mc.options.keyMappings) {
+            if (!k.getKey().equals(base.getKey())) continue;
+            k.setDown(down);
+            if (down) try {                                                     // one click queued (clickCount: KeyMapping's only int field)
+                for (var fld : net.minecraft.client.KeyMapping.class.getDeclaredFields())
+                    if (fld.getType() == int.class && !java.lang.reflect.Modifier.isStatic(fld.getModifiers())) { fld.setAccessible(true); fld.setInt(k, fld.getInt(k) + 1); }
+            } catch (Throwable t) { log("press: " + t); }
+        }
+    }
+
+    private static void efClicks(Minecraft mc, List<Step> l) {
+        int[] c = new int[8];
+        boolean[] swung = new boolean[2];
+        // control: an empty hand in battle mode - a click is an Epic Fight punch (proves the check below can see one)
+        l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; server(p -> p.getInventory().clearContent()); }, 10));
+        l.add(new Step(null, () -> { face(mc, 2F); EfGunCheck.battleMode(); swung[0] = false; press(mc, mc.options.keyAttack, true); }, 1));
+        l.add(new Step(null, () -> press(mc, mc.options.keyAttack, false), 1));
+        for (int i = 0; i < 10; i++) l.add(new Step(null, () -> swung[0] |= EfGunCheck.attacking(), 1));
+        l.add(new Step(null, () -> log("ef control: empty-hand click in battle mode -> Epic Fight attack " + swung[0]), 15));
+        // the gun: the same real click only shoots
+        summon(mc, l, Form.PISTOL);
+        l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; face(mc, 2F); EfGunCheck.battleMode();
+            c[0] = GunClient.shotsSent; c[1] = GunClient.efSwingsBlocked; swung[1] = false; mc.player.swinging = false;
+            log("ef gun in hand: " + EfGunCheck.info()); press(mc, mc.options.keyAttack, true); }, 1));
+        l.add(new Step(null, () -> { swung[1] |= EfGunCheck.attacking() || mc.player.swinging; press(mc, mc.options.keyAttack, false); }, 1));
+        for (int i = 0; i < 10; i++) l.add(new Step(null, () -> swung[1] |= EfGunCheck.attacking() || mc.player.swinging, 1));
+        l.add(new Step(null, () -> log("ef gun click: shots " + (GunClient.shotsSent - c[0]) + ", Epic Fight attack/arm swing " + swung[1]
+                + ", swings blocked " + (GunClient.efSwingsBlocked - c[1])), 3));
+        // right button: aims down the sights (no Epic Fight guard)
+        l.add(new Step(null, () -> { face(mc, 2F); c[2] = GunClient.efGuardsBlocked; press(mc, mc.options.keyUse, true); }, 14));
+        l.add(new Step("gunfeel_ef_pistol_ads_realkey", () -> { face(mc, 2F); c[3] = GunClient.viewModelsDrawn;
+            log("ef right button held: aim " + f2(GunClient.aimProgress(1F)) + ", guards blocked " + (GunClient.efGuardsBlocked - c[2])
+                    + ", Epic Fight action " + EfGunCheck.attacking() + ", " + state(mc)); }, 3));
+        l.add(new Step(null, () -> { log("ef aimed view models drawn: " + (GunClient.viewModelsDrawn - c[3])); press(mc, mc.options.keyUse, false); }, 10));
+        l.add(new Step(null, () -> { GunClient.testAim = false; GunClient.testTrigger = false; }, 2));
     }
 
     // ------------------------------------------------------------------ fire modes and rates

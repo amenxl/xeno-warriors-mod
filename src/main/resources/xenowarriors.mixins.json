@@ -53,7 +53,9 @@
     "compat.EpicFightLockOnFilterMixin",
     "UltimaSightMixin",
     "LevelRendererRainMixin",
-    "MouseHandlerGunMixin"
+    "MouseHandlerGunMixin",
+    "compat.EpicFightGunAttackMixin",
+    "compat.EpicFightGunGuardMixin"
   ],
   "injectors": {
     "defaultRequire": 1

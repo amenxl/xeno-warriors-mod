@@ -72,6 +72,8 @@ public final class GunClient {
     private static final net.minecraft.resources.ResourceLocation FLASH = new net.minecraft.resources.ResourceLocation("textures/particle/flash.png");
     /** Test numbers. */
     public static int shotsSent, aimPackets, sensCalls, viewModelsDrawn, crosshairsDrawn, scopesDrawn, hitMarkers, flashesDrawn;
+    /** Epic Fight swings / guards skipped because a gun was in hand (compat.EpicFightGun*Mixin). */
+    public static int efSwingsBlocked, efGuardsBlocked;
     public static float lastFov = 70F, lastSpread, lastMoveScale = 1F, lastSens = 1F;
     public static final float[] lastView = new float[3];
 
