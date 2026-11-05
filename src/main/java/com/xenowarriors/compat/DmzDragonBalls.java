@@ -189,6 +189,9 @@ public final class DmzDragonBalls {
         return true;
     }
 
+    /** (Tests) is this bot in the middle of putting the balls down (so it won't start again)? */
+    public static boolean busyForTest(UUID bot) { return BUSY.containsKey(bot); }
+
     private static boolean ok(PartyBotEntity b) { return b.isAlive() && !b.isRemoved() && !b.downed() && BUSY.containsKey(b.getUUID()); }
 
     private static void place(PartyBotEntity b, ServerPlayer o, BallSet set, ServerLevel level, BlockPos pos, int star) {
