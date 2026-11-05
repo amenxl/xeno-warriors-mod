@@ -556,7 +556,7 @@ public class CharacterCustomScreen extends Screen {
             rows.add(new Object[]{"Foxes", String.valueOf(me.pets()), -1F, 0});
             rows.add(new Object[]{"Sealed", String.valueOf(me.sealed()), -1F, 0});
             rows.add(new Object[]{"Blade time", me.cooldownLeft() > 0 ? "locked" : BladeLevel.fmt(me.realmLeft()), -1F, 0});
-            rows.add(new Object[]{"Wind flight", lv >= 50 ? me.flightMinutes() + " min" : "Lv 50", -1F, 0});
+            rows.add(new Object[]{"Wind flight", lv >= com.xenowarriors.mikiko.WindFlight.LEVEL ? me.flightMinutes() + " min" : "Lv " + com.xenowarriors.mikiko.WindFlight.LEVEL, -1F, 0});
         } else if (type == CharacterType.RHALIX) {
             rows.add(new Object[]{"Companions", String.valueOf(me.pets()), -1F, 0});
         }
