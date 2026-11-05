@@ -166,7 +166,8 @@ public final class DmzStatsTests {
             b.lastHurtAt = -100000;
             log("bot set to half health " + r(b.getHealth()) + " for the regen check");
         }); }, 80);
-        step("dmzstats_party_" + stats, () -> { noDmzScreen(mc); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+        step(null, () -> { mc.setScreen(null); server(p -> { PartyBotEntity b = BOT[0]; if (b != null) { b.moveTo(AT.x + 1.5, AT.y, AT.z + 3, 180, 0); p.teleportTo(AT.x, AT.y, AT.z); p.setYRot(0); p.setXRot(10); } }); }, 5);
+        step("dmzstats_party_" + stats, () -> { noDmzScreen(mc); mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
             if (mc.level != null && BOT[0] != null && mc.level.getEntity(BOT[0].getId()) instanceof LivingEntity cb) log("client sees the bot at " + r(cb.getHealth()) + "/" + r(cb.getMaxHealth()));
             server(p -> { PartyBotEntity b = BOT[0]; if (b != null) log("regen after ~5 s out of a fight: " + r(b.getHealth()) + "/" + r(b.getMaxHealth())); });
         }, 100);
@@ -213,11 +214,11 @@ public final class DmzStatsTests {
             }
             tgt[0] = z;
             SoulSplit.lastSkillHit = "";
-        }); }, 40);
-        step("dmzstats_soul_" + stats, () -> { noDmzScreen(mc); mc.options.hideGui = false; server(p -> {
+        }); }, 240);                                                      // (12 s of the souls fighting it)
+        step("dmzstats_soul_" + stats, () -> { noDmzScreen(mc); mc.setScreen(null); mc.options.hideGui = false; server(p -> {
             log("soul skills: casts so far " + SoulSkills.casts + " last " + SoulSkills.lastSkill + " why " + SoulSkills.lastWhy + " | last soul skill hit " + SoulSplit.lastSkillHit);
             for (SoulEntity s : p.serverLevel().getEntitiesOfClass(SoulEntity.class, p.getBoundingBox().inflate(30), s -> p.getUUID().equals(s.ownerId()))) log("soul target " + (s.getTarget() == null ? null : s.getTarget().getType().getDescriptionId()) + " hp " + r(s.getHealth()));
             if (tgt[0] != null) tgt[0].discard();
-        }); }, 200);
+        }); }, 20);
     }
 }
