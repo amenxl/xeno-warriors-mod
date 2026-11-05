@@ -96,7 +96,7 @@ public final class RoomTech {
             p.getPersistentData().putLong(NEXT, p.serverLevel().getGameTime() + COOLDOWN);
         }
         ServerLevel room = p.server.getLevel(LEVEL);
-        if (room == null) { p.sendSystemMessage(Component.literal("The Room dimension isn't loaded.").withStyle(ChatFormatting.RED)); return; }
+        if (room == null) { p.sendSystemMessage(Component.literal("The Room dimension isn't loaded.").withStyle(ChatFormatting.RED)); return false; }
         ServerLevel src = p.serverLevel();
         int slot = 0;
         while (ROOMS.containsKey(slot)) slot++;
