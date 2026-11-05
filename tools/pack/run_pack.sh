@@ -95,6 +95,8 @@ wait $CPID 2>/dev/null || true
 cp "$C/logs/latest.log" "$OUT/client-latest.log" 2>/dev/null || true
 cp "$C/logs/debug.log" "$OUT/client-debug.log" 2>/dev/null || true
 for f in "$C"/crash-reports/*.txt; do [ -f "$f" ] && cp "$f" "$OUT/client-$(basename "$f")"; done
+for f in "$C"/hs_err_pid*.log; do [ -f "$f" ] && { cp "$f" "$OUT/client-$(basename "$f")"; echo "PACK the client JVM crashed:"; head -40 "$f"; grep -m5 -E "^(C|J)  " "$f"; }; done
+tail -5 "$ROOT/client.log"
 mkdir -p run/screenshots && cp "$C"/screenshots/*.png run/screenshots/ 2>/dev/null || true
 python3 -I tools/pack/scan_log.py "$C/logs/latest.log" "$C/logs/debug.log" > "$OUT/pack-report-client.txt" 2>&1 || true
 head -c 40000 "$OUT/pack-report-client.txt"
