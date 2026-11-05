@@ -326,6 +326,22 @@ public final class NpcHuntTests {
                     + ok(!h.isAlive() && paidTown == 0 && paidRaider > 0));
             com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.TOWN, 0);
         }), 10));
+        // 12. the fox falls while its owner is in another dimension: it still "ran away" (cool-down before the whistle works)
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            ServerLevel ow = p.serverLevel();
+            Fox f = myFox(p);
+            if (f == null) { log("away death: no fox FAIL"); return; }
+            double x = p.getX(), y = p.getY(), z = p.getZ();
+            ServerLevel nether = p.server.getLevel(net.minecraft.world.level.Level.NETHER);
+            p.teleportTo(nether, 0.5, 200, 0.5, 0, 0);
+            f.hurt(ow.damageSources().generic(), 100000F);
+            CompoundTag rec = FoxPets.records(p).getCompound(0);
+            boolean dead = rec.getBoolean("dead");
+            p.teleportTo(ow, x, y, z, 0, 0);
+            FoxPets.whistle(p);
+            int back = ownedFoxes(p);
+            log("away death: fox died=" + !f.isAlive() + " marked ran away=" + dead + " whistle right after brought back=" + back + ok(!f.isAlive() && dead && back == 0));
+        }), 10));
         l.add(new Step(null, () -> log("done"), 5));
     }
 }

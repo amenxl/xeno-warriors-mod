@@ -347,7 +347,8 @@ public final class WingPets {
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity dead = event.getEntity();
-        if (dead.level().isClientSide || !winged(dead) || !(dead instanceof Mob mob) || !(owner(mob) instanceof ServerPlayer p)) return;
+        if (dead.level().isClientSide || !winged(dead) || !(dead instanceof Mob mob) || ownerOf(mob) == null || mob.getServer() == null
+                || !(mob.getServer().getPlayerList().getPlayer(ownerOf(mob)) instanceof ServerPlayer p)) return;     // (owner online anywhere, see FoxPets.onDeath)
         CompoundTag rec = record(p, mob.getUUID());
         if (rec == null) return;
         snapshot(mob, rec);
