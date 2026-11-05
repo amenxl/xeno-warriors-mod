@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Umbrella {
-    public static final double GLIDE_FALL = -0.12, DRIFT = 0.035, MAX_DRIFT = 0.32;
+    public static final double GLIDE_FALL = -0.12, DRIFT = 0.03, MAX_DRIFT = 0.2;
     /** Canopy: centred this high over the feet, this wide (radius, blocks). */
     public static final double HEIGHT = 2.55, RADIUS = 1.15;
 

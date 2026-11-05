@@ -148,7 +148,7 @@ public final class FormsFx {
         long t = now();
         WHIP.values().removeIf(w -> t - w[0] > WHIP_T + 2);
         RECOIL.values().removeIf(r -> t - r > RECOIL_T + 2);
-        BINDS.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+        BINDS.values().removeIf(b -> mc.level.getEntity((int) b[0]) == null);       // (the binder may be out of sight: the bound one still sees the prompt)
         for (Player p : mc.level.players()) {
             var held = p.getMainHandItem();
             if (!(held.getItem() instanceof FormItems.Summoned s) || (p.tickCount + p.getId()) % 5 != 0) continue;
