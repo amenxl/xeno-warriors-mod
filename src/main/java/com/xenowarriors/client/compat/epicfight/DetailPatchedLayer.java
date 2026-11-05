@@ -59,7 +59,43 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(CharacterDetailLayer.faceTexture(player)), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
+        if (live.hasWings()) wings(patch, player, live, pose, buffers, light, overlay, poses, partial);
     }
+
+    /** (tests) wing draws done on Epic Fight's skeleton. */
+    public static int wingDraws;
+
+    /**
+     * Rhalix's wings aren't baked into the mesh (baked, they were frozen in one spread pose, always out, and pulled
+     * about by the arm bones): they're drawn live, posed exactly as without Epic Fight (out/away, beating, folded),
+     * fixed to Epic Fight's animated chest bone - so they stay on his back through every attack, roll and step.
+     */
+    private static void wings(AbstractClientPlayerPatch<AbstractClientPlayer> patch, AbstractClientPlayer player, DetailModel live, PoseStack pose,
+                              MultiBufferSource buffers, int light, int overlay, OpenMatrix4f[] poses, float partial) {
+        float age = player.tickCount + partial;
+        boolean preview = com.xenowarriors.client.ClientCharacterData.isPreviewing();
+        boolean flying = com.xenowarriors.client.FlightTracker.isFlying(player);
+        boolean falling = !player.onGround() && !player.isInWater() && player.fallDistance > 1.5F;
+        boolean kishi = com.xenowarriors.client.ClientSkillState.isCastingKishi(player.getUUID());
+        float spread = Math.max(com.xenowarriors.client.SkillAnimations.wingSpread(player, age), com.xenowarriors.client.KarmaFocusClient.wingSpread(player));
+        com.xenowarriors.client.RhalixWingsClient.pose(live, player, preview, flying, falling, kishi, spread, age);
+        if (!live.rightWing.visible && !live.leftWing.visible) return;
+        int chest = patch.getArmature() instanceof yesman.epicfight.model.armature.HumanoidArmature h ? h.chest.getId() : 8;
+        if (chest < 0 || chest >= poses.length) return;
+        // vanilla model space (y down, x mirrored, 1/16 block units inside ModelPart) onto the chest bone: the same
+        // mapping Epic Fight uses for the elytra, at the player model's scale
+        OpenMatrix4f m = new OpenMatrix4f().scale(new yesman.epicfight.api.utils.math.Vec3f(-WING_SCALE, -WING_SCALE, WING_SCALE))
+                .translate(new yesman.epicfight.api.utils.math.Vec3f(0F, -0.5F, -0.1F)).mulFront(poses[chest]);
+        pose.pushPose();
+        yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
+        var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(CharacterDetailLayer.detailTexture(player)));
+        live.rightWing.render(pose, vc, light, overlay);
+        live.leftWing.render(pose, vc, light, overlay);
+        pose.popPose();
+        wingDraws++;
+    }
+
+    private static final float WING_SCALE = 0.9375F;
 
     private static DetailModel freshCopy(AbstractClientPlayer player, DetailModel live) {
         // limbs left whole: Epic Fight bends knees and elbows itself, and cuts our pre-split halves and joint
@@ -99,6 +135,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 p.yScale = 1F;
             });
             // the rain hood: a second copy is baked with it up (hood_down hidden, hair that would poke through tucked in)
+            if (model.rightWing != null) model.rightWing.visible = false;      // (wings: drawn live on the chest bone, see wings())
+            if (model.leftWing != null) model.leftWing.visible = false;
             if (model.hoodUp != null) model.hoodUp.visible = hood;
             if (model.hoodDown != null) model.hoodDown.visible = !hood;
             if (hood) for (ModelPart strand : model.hoodPokers) strand.visible = false;
