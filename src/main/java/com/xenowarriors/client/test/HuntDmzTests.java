@@ -47,6 +47,11 @@ public final class HuntDmzTests {
     public static void build(Minecraft mc, String focus, Dmz6Tests.Adder steps, Consumer<Consumer<ServerPlayer>> server, Consumer<CharacterType> character, Consumer<String> log) {
         S = steps; SERVER = server; LOG = log; CHAR = character;
         setup(mc);
+        if (focus.startsWith("dmzhdj")) {                                      // (a Journey opened while fused)
+            journey(mc);
+            step(null, () -> server(p -> log("done")), 20);
+            return;
+        }
         if (focus.startsWith("dmzhdballs")) {                                  // (the Dragon Balls and mission summons only)
             balls(mc);
             questSummons(mc);
@@ -313,6 +318,37 @@ public final class HuntDmzTests {
                 log("switch: STUCK fused DMZ state on Mikiko cleared by the test");
             }
             while (count(p, CharacterType.RHALIX) > 1) { PartyBotEntity x = bot(p, CharacterType.RHALIX); PartyBots.forgetFake(x.getUUID()); x.discard(); }
+            dump();
+        }); }, 20);
+    }
+
+    // ---------------------------------------------------------------- fusion 5: a Journey opened while fused
+
+    private static void journey(Minecraft mc) {
+        step(null, () -> server(p -> {
+            boolean f = fuse(p);
+            log("journey: fused=" + f + " rhalix bots=" + count(p, CharacterType.RHALIX));
+            com.xenowarriors.journey.Journey.setCleared(p, 3);
+            com.xenowarriors.journey.Journey.open(p);
+            for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.LOGAN})
+                com.xenowarriors.journey.Journey.action(p, 1, t.ordinal(), 0);
+            com.xenowarriors.journey.Journey.action(p, 2, 1, 0);
+            com.xenowarriors.journey.Journey.action(p, 11, 0, 0);
+            com.xenowarriors.journey.Journey.action(p, 4, 0, 0);
+            log("journey: started, in run=" + com.xenowarriors.journey.Journey.inRun(p) + " ourFused=" + DmzFusion.fused(p));
+        }), 30);
+        step(null, () -> { mc.setScreen(null); server(p -> {
+            var st = p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG).getList("xw_bots_stash", 10);
+            log("journey: 1.5 s in: inRun=" + com.xenowarriors.journey.Journey.inRun(p) + " ourFused=" + DmzFusion.fused(p) + " rhalix bots out=" + count(p, CharacterType.RHALIX) + " stashed=" + st.size() + " | " + own(p));
+            if (DmzFusion.fused(p)) {                                           // (still fused on the Journey: its time runs out there)
+                DmzFusion.end(p, "test: time's up", true);
+                log("journey: fusion ran out during the Journey -> rhalix bots out=" + count(p, CharacterType.RHALIX) + " inRun=" + com.xenowarriors.journey.Journey.inRun(p));
+            }
+            dump();
+            com.xenowarriors.journey.Journey.leave(p, "test", true);
+        }); }, 60);
+        step(null, () -> { mc.setScreen(null); server(p -> {
+            log("journey: after leaving: in=" + com.xenowarriors.journey.Journey.inLobbyOrRun(p) + " rhalix bots out=" + count(p, CharacterType.RHALIX));
             dump();
         }); }, 20);
     }
