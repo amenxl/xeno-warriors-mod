@@ -179,13 +179,14 @@ public final class HuntLeftTests {
 
         // ---- 3. Rhalix's held attack, then battle mode before it's let go
         l.add(new Step(null, () -> { Ef.battle(false); UiTest.server(p -> { arena(p); p.getInventory().clearContent(); zombie(p, origin.add(0, 0, 2.5)); }); }, 30));
-        String[][] rounds = {{"leap", "22", "3", "0"}, {"burst", "12", "3", "0"}, {"kishi", "12", "2", "1"}};
+        String[][] rounds = {{"leap", "34", "3", "0"}, {"burst", "12", "3", "0"}, {"kishi", "12", "2", "1"}};
         for (String[] r : rounds) {
             String name = r[0];
             int hold = Integer.parseInt(r[1]), switchAt = Integer.parseInt(r[2]);
             boolean run = r[3].equals("1");
             boolean[] seen = new boolean[3];       // burst, leap, kishi
             int[] cc = new int[1];
+            int[] onAt = {-1};
             l.add(new Step(null, () -> { Ef.battle(false); look(mc, 0F, 8F); log("charge " + name + ": battle=" + Ef.battleOn() + ", rhalix=" + (com.xenowarriors.client.ClientCharacterData.getLocal() == CharacterType.RHALIX)); }, 25));
             l.add(new Step(null, () -> {
                 cc[0] = intField("com.xenowarriors.client.combo.ComboClient", "chargesCancelled");
@@ -196,6 +197,7 @@ public final class HuntLeftTests {
                 int tt = t;
                 l.add(new Step(null, () -> {
                     if (tt == switchAt) Ef.battle(true);
+                    if (onAt[0] < 0 && Ef.battleOn()) onAt[0] = tt;
                     if (run && tt == 14) { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(false); }
                     var s = com.xenowarriors.client.combo.ComboClient.swing(mc.player);
                     if (s != null && s.hit() == com.xenowarriors.combat.ComboStyle.BURST) seen[0] = true;
@@ -206,7 +208,7 @@ public final class HuntLeftTests {
             l.add(new Step(null, () -> {
                 boolean any = seen[0] || seen[1] || seen[2];
                 int cancelled = intField("com.xenowarriors.client.combo.ComboClient", "chargesCancelled");
-                log("charge " + name + " (held " + hold + " ticks, battle mode on at tick " + switchAt + "): battle=" + Ef.battleOn() + ", ki burst " + seen[0] + ", rising leap " + seen[1]
+                log("charge " + name + " (held " + hold + " ticks, battle mode on at tick " + switchAt + ", took effect at tick " + onAt[0] + "): battle=" + Ef.battleOn() + ", ki burst " + seen[0] + ", rising leap " + seen[1]
                         + ", kishi warp " + seen[2] + ", charges cancelled " + (cancelled < 0 ? "n/a" : String.valueOf(cancelled - cc[0])) + " -> " + (any ? "FAIL" : "PASS"));
                 Ef.battle(false);
             }, 30));
