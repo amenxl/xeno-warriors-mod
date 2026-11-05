@@ -187,7 +187,7 @@ public final class DmzQuestHelp {
         return null;
     }
 
-    private static void summon(ServerPlayer p, EntityType<?> type, String key, int index, double hp) {
+    static void summon(ServerPlayer p, EntityType<?> type, String key, int index, double hp) {
         if (!p.isAlive() || p.hasDisconnected()) return;
         BlockPos at = safeSpot(p, type);
         if (at == null) at = p.blockPosition();

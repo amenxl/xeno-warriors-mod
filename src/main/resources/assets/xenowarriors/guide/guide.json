@@ -266,7 +266,15 @@
         },
         {
           "title": "Bots and DragonMineZ",
-          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (3x DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives.\n- A bot is as tough and strong as its Dragon Ball character: its Vitality adds to its max health, its Resistance cuts the hits it takes, its Strength is its punch, and its Ki / Strike damage power its skills - just like a player of that character. Out of a fight it heals at DragonMineZ's regen rate."
+          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (3x DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, start its own missions (see Bots' own missions). Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives.\n- A bot is as tough and strong as its Dragon Ball character: its Vitality adds to its max health, its Resistance cuts the hits it takes, its Strength is its punch, and its Ki / Strike damage power its skills - just like a player of that character. Out of a fight it heals at DragonMineZ's regen rate."
+        },
+        {
+          "title": "Bots' own missions",
+          "text": "- A mission started from a bot's Dragon Ball menu is the bot's own. When its target is defeated - by the bot, by you, or by anyone in your DragonMineZ party - it counts for the bot. When it's done, the bot completes it and gets the rewards: TP, alignment, skills, techniques and forms go to its Dragon Ball character, items go in its bag.\n- Your own mission only counts if you're on the same one (then you both do).\n- When you start a mission, each bot with a Dragon Ball character starts one too: the same one if it can, otherwise its own next one (its enemies come like yours). A chat line tells you what each bot started. Bots never start missions any other time.\n- Its places count while you're there, and its talk / hand-in steps count when you talk to that person.\n- Its missions are saved with its character: they're still there after you log out or re-add the bot."
+        },
+        {
+          "title": "Talk-to missions",
+          "text": "- When all that's left of a mission (yours or a bot's) is talking to someone - a quest NPC or a master - they come to you: a copy appears near you, in any world.\n- Talk to them as usual to finish it. Then they vanish in a puff of smoke.\n- They also leave if the mission is finished or dropped some other way, after 10 minutes, or when you log out. They're never kept in the world.\n- Not if the real one is already within 32 blocks."
         },
         {
           "title": "Mission help",
