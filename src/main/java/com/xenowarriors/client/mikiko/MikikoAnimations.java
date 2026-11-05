@@ -1257,7 +1257,7 @@ public final class MikikoAnimations {
     @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onDivePre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         float d = event.isCanceled() || (event.getEntity() instanceof AbstractClientPlayer fp
-                && com.xenowarriors.client.FirstPersonHead.ownFirstPerson(fp)) ? 0F : dive(event.getEntity(), event.getPartialTick());
+                && com.xenowarriors.client.FirstPersonHead.noWholeBody(fp)) ? 0F : dive(event.getEntity(), event.getPartialTick());
         if (d <= 0F) return;
         var pose = event.getPoseStack();
         com.xenowarriors.client.PoseGuard.push(pose);
@@ -1592,7 +1592,7 @@ public final class MikikoAnimations {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !isMikiko(p)) return;
         // your own body seen from inside it (first-person body view): the camera doesn't move with these whole-body
         // moves, so they'd pull the body away from the view
-        if (com.xenowarriors.client.FirstPersonHead.ownFirstPerson(p)) return;
+        if (com.xenowarriors.client.FirstPersonHead.noWholeBody(p)) return;
         if (com.xenowarriors.client.ClientCharacterData.standStill) return;    // a menu head-shot: standing, not sat on the floor
         if (p.isSleeping()) {
             // roll from lying on his back onto his side (the pillow side), around the length of his body

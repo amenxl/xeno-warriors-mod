@@ -60,7 +60,7 @@ public final class KnockdownClient {
         LivingEntity e = event.getEntity();
         if (TIPPED.contains(e.getId())) return;                               // (already tipped, early)
         // your own body seen from inside it (DragonMineZ's first-person body): the camera doesn't go over with it
-        if (e instanceof net.minecraft.client.player.AbstractClientPlayer cp && FirstPersonHead.ownFirstPerson(cp)) return;
+        if (e instanceof net.minecraft.client.player.AbstractClientPlayer cp && FirstPersonHead.noWholeBody(cp)) return;
         float w = down(e, event.getPartialTick());
         if (w <= 0F) return;
         PoseStack pose = event.getPoseStack();

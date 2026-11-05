@@ -149,7 +149,7 @@ public final class KarmaFocusClient {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
         if (event.isCanceled() || !(event.getEntity() instanceof AbstractClientPlayer p) || !rhalix(p)
-                || FirstPersonHead.ownFirstPerson(p)) return;
+                || FirstPersonHead.noWholeBody(p)) return;
         float w = weight(p);
         if (w <= 0F) return;
         var pose = event.getPoseStack();

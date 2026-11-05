@@ -100,7 +100,7 @@ public final class FoxRun {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
-        if (event.isCanceled() || !(event.getEntity() instanceof AbstractClientPlayer p) || FirstPersonHead.ownFirstPerson(p)) return;
+        if (event.isCanceled() || !(event.getEntity() instanceof AbstractClientPlayer p) || FirstPersonHead.noWholeBody(p)) return;
         float w = weight(p);
         if (w <= 0F) return;
         var pose = event.getPoseStack();

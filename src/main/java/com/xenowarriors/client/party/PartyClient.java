@@ -148,7 +148,7 @@ public final class PartyClient {
         Player p = event.getEntity();
         if (!knockedOut(p)) return;
         // your own body seen from inside it (DragonMineZ's first-person body): the camera doesn't lie down with it
-        if (p instanceof net.minecraft.client.player.AbstractClientPlayer cp && com.xenowarriors.client.FirstPersonHead.ownFirstPerson(cp)) return;
+        if (p instanceof net.minecraft.client.player.AbstractClientPlayer cp && com.xenowarriors.client.FirstPersonHead.noWholeBody(cp)) return;
         PoseStack pose = event.getPoseStack();
         com.xenowarriors.client.PoseGuard.push(pose);
         LAID.add(p.getId());

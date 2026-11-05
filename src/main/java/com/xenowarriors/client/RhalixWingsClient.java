@@ -274,7 +274,7 @@ public final class RhalixWingsClient {
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(net.minecraftforge.client.event.RenderPlayerEvent.Pre event) {
         Player p = event.getEntity();
-        if (p instanceof AbstractClientPlayer fp && FirstPersonHead.ownFirstPerson(fp)) return;   // (see MikikoAnimations)
+        if (p instanceof AbstractClientPlayer fp && FirstPersonHead.noWholeBody(fp)) return;   // (see MikikoAnimations)
         float w = gravityDance(p, event.getPartialTick());
         float hw = hyped(p, event.getPartialTick());
         float sw = ClientCharacterData.winged(p) ? superman(p, event.getPartialTick()) : 0F;
