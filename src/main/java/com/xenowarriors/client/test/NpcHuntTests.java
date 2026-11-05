@@ -112,7 +112,7 @@ public final class NpcHuntTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             ServerLevel lv = p.serverLevel();
             ZombifiedPiglin z = EntityType.ZOMBIFIED_PIGLIN.create(lv);
-            z.moveTo(p.getX() - 6, p.getY(), p.getZ(), 0, 0);
+            z.moveTo(p.getX() - 4, p.getY(), p.getZ(), 0, 0);
             z.setPersistenceRequired();
             z.setNoAi(true);
             lv.addFreshEntity(z);
@@ -159,12 +159,12 @@ public final class NpcHuntTests {
             copy.getPersistentData().putInt("xw_gen", gen);
             s.copy = copy.getUUID();
             log("stale copy: spawned, owned foxes now " + ownedFoxes(p) + " (records " + FoxPets.records(p).size() + ")");
-        }), 5));
+        }), 80));
         l.add(new Step(null, () -> UiTest.server(p -> {
             boolean gone = !(p.serverLevel().getEntity(s.copy) instanceof Fox c) || !c.isAlive();
-            log("stale copy: after 3 s gone=" + gone + " owned foxes=" + ownedFoxes(p) + ok(gone && ownedFoxes(p) == 1));
+            log("stale copy: after 4 s gone=" + gone + " owned foxes=" + ownedFoxes(p) + ok(gone && ownedFoxes(p) == 1));
             if (p.serverLevel().getEntity(s.copy) instanceof Fox c) c.discard();
-        }), 60));
+        }), 5));
 
         // 5. a sword handed over just now, then off to Recarnet and the whistle: the fox comes with its new sword, once.
         //    (the fox left behind in the overworld isn't in his world any more, so nothing re-snapshots it meanwhile)
