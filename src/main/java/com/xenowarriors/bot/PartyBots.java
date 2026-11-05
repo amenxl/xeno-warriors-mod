@@ -507,6 +507,15 @@ public final class PartyBots {
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
     }
 
+    /** One bot's record added to the ones waiting at home (back with the rest after a Journey). */
+    public static void stashRecord(ServerPlayer p, CompoundTag record) {
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        ListTag list = persisted.getList(STASH, 10);
+        list.add(record);
+        persisted.put(STASH, list);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+    }
+
     public static void unstash(ServerPlayer p) {
         CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         ListTag list = persisted.getList(STASH, 10);

@@ -336,6 +336,13 @@ public final class DmzFusion {
         undoDmz(p, me);
         CompoundTag bot = rec.getCompound("bot");
         ItemStack earring = rec.contains("earring") ? ItemStack.of(rec.getCompound("earring")) : ItemStack.EMPTY;
+        if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) {               // (no bots on a Journey: it waits at home with the others)
+            PartyBots.stashRecord(p, bot);
+            if (!earring.isEmpty() && !ranOut && !p.getInventory().add(earring)) p.drop(earring, false);
+            p.sendSystemMessage(Component.literal("The fusion wore off (" + why + "). Your teammate waits for you at home.").withStyle(ChatFormatting.GOLD));
+            note("ended (" + why + ") on a Journey: bot stashed");
+            return;
+        }
         PartyBotEntity b = PartyBots.spawn(p, CharacterType.byId(rec.getString("char")), bot);
         if (b != null) {
             if (!earring.isEmpty() && !ranOut) b.inventory.addItem(earring);            // (a full fusion breaks the earrings, as in DragonMineZ)
@@ -353,6 +360,7 @@ public final class DmzFusion {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 10 != 0 || !fused(p)) return;
         long left = left(p);
         if (left <= 0) { end(p, "time's up", true); return; }
+        if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { end(p, "a Journey began", false); return; }   // (a Journey is you and your partner only)
         Object me = ready() ? DmzPerCharacter.live(p) : null;
         try {
             if (me == null || !(Boolean) isFused.invoke(getStatus.invoke(me))) { end(p, "the fusion was undone", false); return; }
