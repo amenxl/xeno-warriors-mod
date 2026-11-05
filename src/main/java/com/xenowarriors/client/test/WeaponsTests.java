@@ -247,7 +247,7 @@ public final class WeaponsTests {
         l.add(null, () -> {
             List<ItemStack> t = stacks(Form.Style.HEKU, Form.PICKAXE, Form.AXE, Form.SHOVEL, Form.HOE, Form.UMBRELLA);
             t.addAll(stacks(Form.Style.WIRE, Form.PICKAXE, Form.AXE, Form.SHOVEL, Form.HOE, Form.WIRES, Form.WIRE_SWORD));
-            mc.setScreen(new Gallery(t, 6, 4F));
+            mc.setScreen(new Gallery(t, 4, 3.4F));
         }, 10);
         l.add("weapons_gallery_tools", () -> {}, 5);
         l.add(null, () -> mc.setScreen(null), 5);
@@ -348,16 +348,16 @@ public final class WeaponsTests {
             character(l, s == Form.Style.HEKU ? CharacterType.MIKIKO : CharacterType.RHALIX);
             l.add(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 2); arena(p); levels(p, 300, 50, 50); p.getInventory().clearContent();
                 p.getPersistentData().remove(WeaponForms.BROKEN); p.setXRot(0); }), 10);
-            camera(mc, l, -2.6, 1.3, 1.2, -90F, 8F);
+            camera(mc, l, -1.8, -0.15, 1.6, -131.6F, 6F);
             for (Form f : new Form[]{Form.PISTOL, Form.RIFLE, Form.SHOTGUN}) {
-                l.add(null, () -> server(p -> { p.setYRot(0); p.setYHeadRot(0); p.setXRot(0); WeaponForms.summon(p, f, false); }), 20);
+                l.add(null, () -> server(p -> { p.setYRot(0); p.setYHeadRot(0); p.setXRot(0); WeaponForms.summon(p, f, false); }), 45);
                 l.add("weapons_hand_" + s.name().toLowerCase() + "_" + f.name().toLowerCase(), () -> {}, 3);
             }
             // first person, aiming the rifle
             l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
-                server(p -> WeaponForms.summon(p, Form.RIFLE, false)); }, 15);
+                server(p -> WeaponForms.summon(p, Form.RIFLE, false)); }, 45);
             l.add("weapons_fp_" + s.name().toLowerCase() + "_rifle", () -> {}, 3);
-            l.add(null, () -> server(p -> WeaponForms.summon(p, Form.PISTOL, false)), 15);
+            l.add(null, () -> server(p -> WeaponForms.summon(p, Form.PISTOL, false)), 45);
             l.add("weapons_fp_" + s.name().toLowerCase() + "_pistol", () -> {}, 3);
             uncamera(mc, l);
         }
@@ -391,13 +391,13 @@ public final class WeaponsTests {
                 log("tools " + s + " tossing it: item entities nearby " + p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
                         p.getBoundingBox().inflate(4), e -> FormItems.isForm(e.getItem())).size());
             }), 10);
-            camera(mc, l, -2.4, 1.2, 1.4, -100F, 10F);
+            camera(mc, l, -1.8, -0.15, 1.6, -131.6F, 6F);
             for (Form f : new Form[]{Form.PICKAXE, Form.AXE, Form.SHOVEL, Form.HOE}) {
-                l.add(null, () -> server(p -> { p.setYRot(0); p.setYHeadRot(0); WeaponForms.summon(p, f, false); }), 15);
+                l.add(null, () -> server(p -> { p.setYRot(0); p.setYHeadRot(0); WeaponForms.summon(p, f, false); }), 45);
                 l.add("weapons_tool_" + s.name().toLowerCase() + "_" + f.name().toLowerCase(), () -> {}, 3);
             }
             if (s == Form.Style.WIRE) {
-                l.add(null, () -> server(p -> WeaponForms.summon(p, Form.WIRE_SWORD, false)), 15);
+                l.add(null, () -> server(p -> WeaponForms.summon(p, Form.WIRE_SWORD, false)), 45);
                 l.add("weapons_tool_wire_sword", () -> {}, 3);
             }
             uncamera(mc, l);
@@ -415,6 +415,12 @@ public final class WeaponsTests {
     private static void umbrella(Minecraft mc, MikikoTests.Steps l) {
         character(l, CharacterType.MIKIKO);
         long[] r = new long[4];
+        l.add(null, () -> server(p -> {
+            var found = p.serverLevel().findClosestBiome3d(h -> h.value().hasPrecipitation() && h.value().getBaseTemperature() > 0.3F && h.value().getBaseTemperature() < 1.0F
+                    && !h.is(net.minecraft.tags.BiomeTags.IS_OCEAN) && !h.is(net.minecraft.tags.BiomeTags.IS_RIVER), p.blockPosition(), 4000, 32, 64);
+            log("umbrella rainy biome: " + (found == null ? "none found" : found.getSecond().unwrapKey().map(k -> k.location().toString()).orElse("?") + " at " + found.getFirst()));
+            if (found != null) { HOME[0] = found.getFirst().getX() + 0.5; HOME[1] = 0; HOME[2] = found.getFirst().getZ() + 0.5; }
+        }), 20);
         l.add(null, () -> server(p -> { arena(p); p.getInventory().clearContent(); levels(p, 300, 0, 1);
             p.serverLevel().setWeatherParameters(0, 20 * 600, true, false);
             p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.statLevel[2] = 100); }), 60);

@@ -234,7 +234,7 @@ public final class FormsFx {
                 float s = i / 16F;
                 pts[i] = h.scale((1 - s) * (1 - s)).add(ctrl.scale(2 * (1 - s) * s)).add(tip.scale(s * s));
             }
-            ribbon(pose, buffers, cam, pts, 0.05F, 0.18F, 0.05F, 0.3F, 0.95F * fade, 0.18F, 0.55F, 0.2F, 1F, 0.45F * fade);
+            ribbon(pose, buffers, cam, pts, 0.075F, 0.2F, 0.06F, 0.32F, 0.95F * fade, 0.26F, 0.6F, 0.25F, 1F, 0.5F * fade);
         }
     }
 
