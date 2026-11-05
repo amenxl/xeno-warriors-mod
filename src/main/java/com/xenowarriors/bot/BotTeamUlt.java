@@ -25,6 +25,8 @@ import java.util.UUID;
 public final class BotTeamUlt {
     public static final int ASK_COOLDOWN = 30 * 20, PLAYER_COOLDOWN = 15 * 20;
     private static final Map<UUID, Long> NEXT_ASK = new HashMap<>(), PLAYER_NEXT = new HashMap<>();
+    /** Bots waiting for their player's answer: who they asked (they keep their Karma for it meanwhile). */
+    private static final Map<UUID, UUID> WAITING = new HashMap<>();
     /** (tests) requests sent and bot + bot team ultimates started. */
     public static int asked, botPairs;
 
@@ -44,6 +46,7 @@ public final class BotTeamUlt {
         b.karma = 100F;
         b.skillReady[SkillManager.ULTIMATE_SLOT] = 0;
         NEXT_ASK.remove(b.getUUID());
+        WAITING.remove(b.getUUID());
         if (b.owner() != null) PLAYER_NEXT.remove(b.owner().getUUID());
     }
 
@@ -75,6 +78,13 @@ public final class BotTeamUlt {
     public static boolean tick(PartyBotEntity b, LivingEntity target) {
         if (!pairCharacter(b)) return false;
         if (TeamUltimate.busy(b)) return true;
+        UUID asked = WAITING.get(b.getUUID());
+        if (asked != null) {                                                    // waiting for an answer: no other skills (it keeps the Karma)
+            ServerPlayer p = b.getServer() == null ? null : b.getServer().getPlayerList().getPlayer(asked);
+            Object[] pend = p == null ? null : TeamUltimate.pending(p);
+            if (pend != null && b.getUUID().equals(pend[0])) return true;
+            WAITING.remove(b.getUUID());
+        }
         if (b.sparring() || b.journey() || !ultReady(b, TeamUltimate.KARMA) || target == null || !worthIt(b, target)) return false;
         long now = b.level().getGameTime();
         for (LivingEntity o : TeamUltimate.partners(b)) {
@@ -90,6 +100,7 @@ public final class BotTeamUlt {
             if (o instanceof ServerPlayer p) {
                 if (now < NEXT_ASK.getOrDefault(b.getUUID(), 0L) || now < PLAYER_NEXT.getOrDefault(p.getUUID(), 0L) || TeamUltimate.pending(p) != null) return false;
                 TeamUltimate.ask(b, p, k);
+                WAITING.put(b.getUUID(), p.getUUID());
                 NEXT_ASK.put(b.getUUID(), now + ASK_COOLDOWN);
                 PLAYER_NEXT.put(p.getUUID(), now + PLAYER_COOLDOWN);
                 asked++;
@@ -100,5 +111,5 @@ public final class BotTeamUlt {
         return false;
     }
 
-    public static void forget(UUID bot) { NEXT_ASK.remove(bot); }
+    public static void forget(UUID bot) { NEXT_ASK.remove(bot); WAITING.remove(bot); }
 }

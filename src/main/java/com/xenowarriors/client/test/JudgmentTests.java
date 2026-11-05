@@ -161,7 +161,7 @@ public final class JudgmentTests {
             log("husks avg dist to point " + f(avgDist(origin.add(0, 1, 9))) + "(from aim spot) / before " + f(D[0]) + " -> " + f(after) + " -> " + (after >= 0 && after < 2.5 ? "PASS" : "FAIL"));
             log("allies moved: wolf " + f(w) + " blocks (was " + f(A[0].distanceTo(c)) + " from the point), bot " + f(b) + " blocks -> "
                     + (w < 0.5 && b < 0.5 ? "PASS" : "FAIL"));
-        }), 50));
+        }), 66));
         l.add(new Step(null, () -> UiTest.server(p -> {
             log("collapsed: open=" + JudgmentAbsorptionSkill.open() + " husk hp " + f(D[3]) + " -> " + f(huskHp()) + " pulled=" + JudgmentAbsorptionSkill.lastPulled
                     + " -> " + (JudgmentAbsorptionSkill.open() == 0 && huskHp() < D[3] - 1 ? "PASS" : "FAIL"));
@@ -221,11 +221,12 @@ public final class JudgmentTests {
             Object[] pend = TeamUltimate.pending(p);
             log("bot request: did=" + did + " pending=" + (pend == null ? "none" : ((TeamUltimate.Kind) pend[1]).title + " from bot=" + bot.getUUID().equals(pend[0]))
                     + " -> " + (did && pend != null && bot.getUUID().equals(pend[0]) ? "PASS" : "FAIL"));
-            boolean again = BotTeamUlt.tick(bot, HUSKS.get(0));
-            log("asks again at once: " + again + " asked " + (BotTeamUlt.asked - askedBefore) + " time(s) -> " + (!again && BotTeamUlt.asked - askedBefore == 1 ? "PASS" : "FAIL"));
+            BotTeamUlt.tick(bot, HUSKS.get(0));
+            log("asks again at once: asked " + (BotTeamUlt.asked - askedBefore) + " time(s) -> " + (BotTeamUlt.asked - askedBefore == 1 ? "PASS" : "FAIL"));
         }), 14));
         l.add(new Step("judg_request", () -> {}, 4));
         l.add(new Step(null, () -> UiTest.server(p -> {
+            log("bot still ready when the player answers: karma=" + (bot == null ? -1 : f(bot.karma)) + " ready=" + (bot != null && TeamUltimate.ready(bot, false)));
             boolean took = TeamUltimate.onUltimateKey(p);                       // the player answers with the ultimate key
             var u = p.serverLevel().getEntitiesOfClass(TeamUltEntity.class, p.getBoundingBox().inflate(40));
             log("player accepts with the ultimate key: handled=" + took + " team ult running=" + u.size() + " kind=" + (u.isEmpty() ? "-" : u.get(0).kind())
