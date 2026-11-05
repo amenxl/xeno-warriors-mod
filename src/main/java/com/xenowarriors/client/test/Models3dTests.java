@@ -89,7 +89,8 @@ public final class Models3dTests {
         String tag = ef ? "efm3d_" : "m3d_";
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             UiTest.character(CharacterType.MIKIKO); }, 40));
-        l.add(new Step(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 2); arena(p); p.getInventory().clearContent(); }), 20));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 2); arena(p); dmzMade(p); p.getInventory().clearContent(); }), 20));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step(null, () -> log("start: epic fight " + EfGunCheck.loaded() + ", dragonminez " + net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")
                 + ", embeddium " + net.minecraftforge.fml.ModList.get().isLoaded("embeddium") + ", oculus " + net.minecraftforge.fml.ModList.get().isLoaded("oculus")), 2));
         if (ef) l.add(new Step(null, () -> { EfGunCheck.battleMode(); log("ef: battle mode on"); }, 5));
@@ -99,7 +100,8 @@ public final class Models3dTests {
             if (e.who != who[0]) {
                 who[0] = e.who;
                 l.add(new Step(null, () -> { UiTest.character(e.who); }, 40));
-                l.add(new Step(null, () -> server(p -> { arena(p); p.getInventory().clearContent(); }), 15));
+                l.add(new Step(null, () -> server(p -> { arena(p); dmzMade(p); p.getInventory().clearContent(); }), 15));
+                l.add(new Step(null, () -> mc.setScreen(null), 5));
                 if (ef) l.add(new Step(null, EfGunCheck::battleMode, 5));
             }
             one(mc, l, e, tag, ef);
@@ -214,6 +216,11 @@ public final class Models3dTests {
         p.setYRot(0F); p.yRotO = 0F; p.setYHeadRot(0F); p.yHeadRotO = 0F; p.yBodyRot = 0F; p.yBodyRotO = 0F;
         p.setXRot(pitch); p.xRotO = pitch;
         p.setDeltaMovement(0, p.getDeltaMovement().y, 0);
+    }
+
+    /** With DragonMineZ: a made (Human) DMZ character, so its race screen doesn't cover the stills. */
+    private static void dmzMade(ServerPlayer p) {
+        if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) DmzTests.make(p, "human");
     }
 
     private static void cleanup(ServerPlayer p) {
