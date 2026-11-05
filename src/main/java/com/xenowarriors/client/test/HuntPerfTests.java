@@ -326,6 +326,32 @@ public final class HuntPerfTests {
 
     private static Map<String, Integer> SNAP;
 
+    /** Static maps/sets of the mod (initialized classes) that still hold this player's UUID / entity id / name as a key or element. */
+    private static List<String> keyedBy(UUID id, int eid, String name) {
+        List<String> out = new ArrayList<>();
+        if (shouldInit == null) return out;
+        ClassLoader cl = XenoWarriors.class.getClassLoader();
+        for (String cn : classNames()) {
+            try {
+                Class<?> c = Class.forName(cn, false, cl);
+                if ((Boolean) shouldInit.invoke(unsafe, c)) continue;
+                for (Field fl : c.getDeclaredFields()) {
+                    if (!Modifier.isStatic(fl.getModifiers()) || !fl.trySetAccessible()) continue;
+                    Object v = fl.get(null);
+                    Collection<?> keys = v instanceof Map<?, ?> m ? new ArrayList<>(m.keySet()) : v instanceof Set<?> st ? new ArrayList<>(st) : null;
+                    if (keys == null) continue;
+                    for (Object k : keys) {
+                        if (id.equals(k) || name.equals(k) || id.toString().equals(k) || (k instanceof Integer i && i == eid && !cn.contains(".client."))) {
+                            out.add(c.getSimpleName() + "." + fl.getName() + " (" + k + ")");
+                            break;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
+        return out;
+    }
+
     private static void compare(String what, Map<String, Integer> before, Map<String, Integer> after, int threshold) {
         int grown = 0;
         for (var e : after.entrySet()) {
@@ -565,6 +591,14 @@ public final class HuntPerfTests {
     private static final List<String> SUMMARY = new ArrayList<>();
 
     /** 30 s of measuring: a line every 5 s, then the tables. {@code each} runs on the server every 5 s. */
+    private static void noScreen(Minecraft mc) {
+        Dmz6Tests.noDmzScreen(mc);
+        if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) {
+            log("closing screen " + mc.screen.getClass().getSimpleName());
+            mc.setScreen(null);
+        }
+    }
+
     private static void phase(Minecraft mc, Adder l, String name, Consumer<ServerPlayer> each) {
         double[] acc = new double[8];   // sum mspt, worst mspt, sum fps, min fps, entities, n, srv alloc, cli alloc
         long[] alloc0 = new long[2];
@@ -572,7 +606,7 @@ public final class HuntPerfTests {
         long[] t0 = new long[1];
         acc[3] = Double.MAX_VALUE;
         l.add(null, () -> {
-            Dmz6Tests.noDmzScreen(mc);
+            noScreen(mc);
             if (each != null) server(each);
             SRV.reset(); CLI.reset(); SRV.on = true; CLI.on = true;
             TO_P1.reset(); FROM_P1.reset(); TO_P2.reset();
@@ -585,7 +619,7 @@ public final class HuntPerfTests {
         for (int i = 1; i <= 6; i++) {
             int sec = i * 5;
             l.add(null, () -> {
-                Dmz6Tests.noDmzScreen(mc);
+                noScreen(mc);
                 MinecraftServer s = mc.getSingleplayerServer();
                 if (s == null) return;
                 long worst = 0; double sum = 0; int n = 0;
@@ -644,43 +678,34 @@ public final class HuntPerfTests {
                 drain();
                 log("mp party packets: to_p1=" + toP1().xwKinds() + " to_p2=" + toP2().xwKinds());
                 toP1().reset(); toP2().reset();
-                // Karma Sense: shared with a party member close by
-                if (com.xenowarriors.karma.KarmaSensing.holding(p)) com.xenowarriors.karma.KarmaSensing.release(p);
-            }), 120);
-            l.add(null, () -> server(p -> {
-                ServerPlayer two = two();
-                if (two == null) return;
-                toP1().reset(); toP2().reset();
-                com.xenowarriors.karma.Karma.add(p, 200);
-                com.xenowarriors.karma.KarmaSensing.use(p, true);
-            }), 10);
+                sense(p);                                                  // (still holding Karma Sense from the mp scene)
+            }), 100);
             l.add(null, () -> server(p -> {
                 drain();
                 long a = toP1().get("xw:KarmaSensedPacket"), b = toP2().get("xw:KarmaSensedPacket");
-                log("mp karma sense: to_p1=" + a + " to_p2(party, 4 blocks)=" + b + ((a > 0 && b > 0) ? " OK" : " FAIL") + " | p2 kinds=" + toP2().xwKinds());
-                com.xenowarriors.karma.KarmaSensing.release(p);
-            }), 10);
-            // the second player moves 200 blocks away: nothing of yours that only you or those near you should get
-            l.add(null, () -> server(p -> {
+                log("mp karma sense held 5s: to_p1=" + a + " to_p2(party, 4 blocks)=" + b + ((a > 0 && b > 0) ? " OK" : " FAIL") + " holding=" + com.xenowarriors.karma.KarmaSensing.holding(p));
                 ServerPlayer two = two();
                 if (two == null) return;
                 two.teleportTo(p.serverLevel(), p.getX() + 300, p.getY() + 40, p.getZ(), 0F, 0F);
                 two.getAbilities().flying = true; two.getAbilities().mayfly = true; two.onUpdateAbilities();
-            }), 100);
+            }), 60);
+            // the second player 300 blocks away: nothing of yours that only you or those near you should get
             l.add(null, () -> server(p -> {
                 drain(); toP1().reset(); toP2().reset();
-                com.xenowarriors.karma.Karma.add(p, 200);
-                com.xenowarriors.karma.KarmaSensing.use(p, true);
+                sense(p);
                 com.xenowarriors.skill.SkillManager.useSkill(p, 0);
                 com.xenowarriors.skill.SkillManager.useSkill(p, 1);
-            }), 60);
+            }), 100);
             l.add(null, () -> server(p -> {
                 drain();
                 log("mp far away (300 blocks): to_p2 kinds=" + toP2().xwKinds() + " sensed_to_p2=" + toP2().get("xw:KarmaSensedPacket")
-                        + (toP2().get("xw:KarmaSensedPacket") == 0 ? " OK" : " FAIL") + " | to_p1 kinds=" + toP1().xwKinds());
+                        + (toP2().get("xw:KarmaSensedPacket") == 0 ? " OK" : " FAIL") + " | to_p1 kinds=" + toP1().xwKinds() + " sensed_to_p1=" + toP1().get("xw:KarmaSensedPacket"));
                 com.xenowarriors.karma.KarmaSensing.release(p);
                 ServerPlayer two = two();
-                if (two != null) two.teleportTo(p.serverLevel(), p.getX() + 4, p.getY(), p.getZ() + 4, 0F, 0F);
+                if (two != null) {
+                    two.getAbilities().flying = false; two.getAbilities().mayfly = false; two.onUpdateAbilities();
+                    two.teleportTo(p.serverLevel(), p.getX() + 4, p.getY(), p.getZ() + 4, 0F, 0F);
+                }
             }), 80);
             // a team ultimate between the two players (Rhalix = the second player, Mikiko = you)
             l.add(null, () -> server(p -> {
@@ -703,7 +728,12 @@ public final class HuntPerfTests {
                 p.setGameMode(GameType.SURVIVAL); two.setGameMode(GameType.SURVIVAL);
                 drain(); toP1().reset(); toP2().reset();
                 two.removeAllEffects();
-                two.hurt(p.damageSources().playerAttack(p), 1000F);
+                two.invulnerableTime = 0;
+                net.minecraft.world.entity.Entity z = EntityType.ZOMBIE.create(p.serverLevel());
+                if (z instanceof net.minecraft.world.entity.LivingEntity le) {
+                    le.moveTo(two.getX() + 1, two.getY(), two.getZ(), 0F, 0F);
+                    two.hurt(p.serverLevel().damageSources().mobAttack(le), 1000F);
+                }
                 log("mp p2 hit hard: alive=" + two.isAlive() + " hp=" + two.getHealth() + " downed=" + com.xenowarriors.party.Duels.isDowned(two) + " knocked_out=" + com.xenowarriors.party.Duels.isKnockedOut(two));
             }), 40);
             l.add("hperf_p2down", () -> server(p -> {
@@ -716,8 +746,12 @@ public final class HuntPerfTests {
                 ServerPlayer two = two();
                 if (two == null) return;
                 Map<String, Integer> before = statics();
+                UUID id2 = two.getUUID();
+                int eid2 = two.getId();
+                String name2 = two.getGameProfile().getName();
                 two.connection.onDisconnect(net.minecraft.network.chat.Component.literal("hperf test over"));
                 TWO = null;
+                for (String k : keyedBy(id2, eid2, name2)) log("mp after logout still keyed by p2: " + k);
                 Map<String, Integer> after = statics();
                 for (var e : before.entrySet()) {
                     int a = after.getOrDefault(e.getKey(), 0);

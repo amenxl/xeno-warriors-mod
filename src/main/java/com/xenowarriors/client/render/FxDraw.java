@@ -30,9 +30,14 @@ public final class FxDraw {
      */
     public static void sphere(PoseStack pose, VertexConsumer vc, float radius, float r, float g, float b,
                               float alpha, float age, float bandSpeed) {
+        sphere(pose, vc, radius, r, g, b, alpha, age, bandSpeed, 18, 36);
+    }
+
+    /** The same with fewer bands and segments (something small and far off doesn't need the full 18 x 36). */
+    public static void sphere(PoseStack pose, VertexConsumer vc, float radius, float r, float g, float b,
+                              float alpha, float age, float bandSpeed, int stacks, int slices) {
         Matrix4f m = pose.last().pose();
         Matrix3f n = pose.last().normal();
-        int stacks = 18, slices = 36;
         for (int i = 0; i < stacks; i++) {
             float v0 = (float) i / stacks, v1 = (float) (i + 1) / stacks;
             float lat0 = (v0 - 0.5F) * PI, lat1 = (v1 - 0.5F) * PI;
