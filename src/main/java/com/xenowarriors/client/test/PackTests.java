@@ -249,7 +249,8 @@ public final class PackTests {
                 server(p -> {
                     var sk = SkillManager.get(p, s);
                     float now = Karma.get(p);
-                    check(who.getId() + " skill " + s + " (" + (sk == null ? "none" : sk.getId()) + ")", cd > 0 && now < k[0], "client cooldown " + cd + " ticks, karma " + f(k[0]) + " -> " + f(now));
+                    check(who.getId() + " skill " + s + " (" + (sk == null ? "none" : sk.getId()) + ")", now < k[0] && (cd > 0 || sk != null && sk.getCooldownTicks() <= 10),   // (a tiny cooldown can be over already at low FPS)
+                            "client cooldown " + cd + " ticks, karma " + f(k[0]) + " -> " + f(now));
                 });
             }, 22));
             l.add(new Step(s == 0 || s == SkillManager.ULTIMATE_SLOT ? "pack_" + who.getId() + "_skill" + s : null, () -> {}, 60));
