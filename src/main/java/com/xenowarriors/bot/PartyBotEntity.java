@@ -109,7 +109,7 @@ public class PartyBotEntity extends PathfinderMob {
     /** Ores/logs it's off getting for a craft it has in mind (see BotCrafting.gatherTarget), and how many more. */
     boolean gathering; public int gathered;
     /** (Tests) crafting looks held back because it wasn't safe; crafting tables it made itself. */
-    public int offersHeld, tablesMade, seatShots;
+    public int offersHeld, tablesMade, seatShots, autoCrafted;
     /** Yuri: when she next looks about for hamburger makings, and how often she has. */
     public int yuriNext = 300 + (int) (Math.random() * 300), yuriLooks;
 

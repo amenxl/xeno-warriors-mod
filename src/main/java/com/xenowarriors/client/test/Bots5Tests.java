@@ -415,7 +415,7 @@ public final class Bots5Tests {
         l.add(new Step(null, () -> server(p -> {
             PartyBotEntity b = bot(p, CharacterType.KAERU);
             if (b == null) return;
-            log("craft once safe (11 s): offer token=" + BotCrafting.offerToken(b) + " (offered: " + (BotCrafting.offerToken(b) > 0) + ") danger=" + com.xenowarriors.bot.BotErrands.danger(b));
+            log("craft once safe (11 s): crafted by itself=" + b.autoCrafted + " (crafted: " + (b.autoCrafted > 0) + ", no offer: " + (BotCrafting.offerToken(b) == 0) + ") danger=" + com.xenowarriors.bot.BotErrands.danger(b));
             // repairs: 60% worn is no longer worth a word; 80% is, then not again for 15 minutes
             BotCrafting.clearQuiet(b);
             b.inventory.clearContent();

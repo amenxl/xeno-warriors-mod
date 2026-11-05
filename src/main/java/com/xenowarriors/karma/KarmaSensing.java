@@ -50,6 +50,42 @@ public final class KarmaSensing {
         return (int) Math.max(1, Math.min(150, Math.round(score)));
     }
 
+    /** A boss: tagged forge:bosses, one of the game's own bosses, or one of ours (mini/tower bosses, Zombie Saiyans, Corrupted Soul boss, SR). */
+    public static boolean boss(LivingEntity e) {
+        return e.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES)
+                || e instanceof net.minecraft.world.entity.boss.wither.WitherBoss || e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
+                || e instanceof net.minecraft.world.entity.monster.warden.Warden || e instanceof net.minecraft.world.entity.monster.ElderGuardian
+                || e instanceof com.xenowarriors.corrupted.CSoulBossEntity || e instanceof com.xenowarriors.boss.ZombieSaiyanEntity
+                || e instanceof com.xenowarriors.sr.SrMemberEntity
+                || com.xenowarriors.boss.MiniBosses.is(e) || com.xenowarriors.tower.TowerBosses.isBoss(e);
+    }
+
+    /**
+     * How strong something really is, uncapped (for the size of its aura): the larger of its Xeno Warriors level
+     * (Character Level / a bot's level) and a rating from max health, attack and armor; times the square root of its
+     * DragonMineZ damage multiplier when that's installed (players and bots); bosses count 2.5x and at least 120.
+     * A fresh player is about 6, a zombie 9, an iron golem 40, the Wither ~210, the Warden ~390.
+     */
+    public static float strength(LivingEntity e) {
+        double atk = e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
+                ? e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) : 0;
+        double s = (e.getMaxHealth() + atk * 4 + e.getArmorValue() * 2) / 4.0;
+        net.minecraft.world.entity.player.Player dmzOf = null;
+        if (e instanceof ServerPlayer p) {
+            if (!(p instanceof net.minecraftforge.common.util.FakePlayer)) s = Math.max(s, com.xenowarriors.stats.Stats.characterLevel(p));
+            dmzOf = p;
+        } else if (e instanceof com.xenowarriors.bot.PartyBotEntity b) {
+            s = Math.max(s, b.botLevel());
+            try { dmzOf = com.xenowarriors.bot.PartyBots.standIn(b); } catch (Throwable ignored) {}
+        }
+        if (dmzOf != null) {
+            double m = Math.max(com.xenowarriors.compat.DmzScaling.multiplier(dmzOf, true), com.xenowarriors.compat.DmzScaling.multiplier(dmzOf, false));
+            if (Double.isFinite(m) && m > 1) s *= Math.sqrt(Math.min(m, 400));
+        }
+        if (boss(e)) s = Math.max(120, s * 2.5);
+        return (float) Math.max(1, Math.min(100000, s));
+    }
+
     public static int uses(ServerPlayer p) {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.senseUses).orElse(0);
     }
@@ -242,11 +278,15 @@ public final class KarmaSensing {
         int[] damage = found.stream().mapToInt(e -> e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
                 ? (int) Math.round(e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 10) : 0).toArray();
         int[] armor = found.stream().mapToInt(LivingEntity::getArmorValue).toArray();
-        KarmaSensedPacket packet = new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS || overflow, souls, damage, armor, first, (float) RADIUS, overflow);
-        ModNetwork.sendToPlayer(packet, player);
+        // how strong each one really is (x10) and which are bosses: their aura's size, next to each viewer's own strength
+        int[] might = found.stream().mapToInt(e -> e instanceof Player p && HoodieItem.wearing(p) ? -1 : Math.round(strength(e) * 10)).toArray();
+        int[] bosses = found.stream().filter(KarmaSensing::boss).mapToInt(LivingEntity::getId).toArray();
+        ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS || overflow, souls, damage, armor, first, (float) RADIUS, overflow,
+                might, bosses, strength(player)), player);
         // party members close by (64 blocks) see what you sense too
         for (ServerPlayer m : partyNearby(player)) {
-            ModNetwork.sendToPlayer(packet, m);
+            ModNetwork.sendToPlayer(new KarmaSensedPacket(ids, levels, DURATION, uses >= READ_LEVELS || overflow, souls, damage, armor, first, (float) RADIUS, overflow,
+                    might, bosses, strength(m)), m);
             if (first) m.displayClientMessage(Component.literal(player.getName().getString() + " is sharing their Karma Sensing with you")
                     .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
         }

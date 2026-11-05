@@ -29,21 +29,21 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.*;
 
 /**
- * Bot teammates craft themselves better gear and fix what they have - with your OK.
+ * Bot teammates craft themselves better gear and fix what they have - on their own.
  *
  * <p>Every few seconds out of a fight a bot looks through its bag against the game's real crafting recipes for armour,
  * swords, axes and pickaxes better than the best it has (worn, in hand or in the bag). Rules:
  * <ul>
  *   <li>Recipes that fit a 2x2 grid it can always make; 3x3 ones need a crafting table - one in its bag, or a placed
- *   one within {@value #STATION_RANGE} blocks of it.</li>
- *   <li>Repairs: worn armour or its best weapon/tool under 60% durability. Two damaged copies of the same unenchanted
+ *   one within {@value #STATION_RANGE} blocks of it (or it makes its own from planks/a log).</li>
+ *   <li>Repairs: worn armour or its best weapon/tool under 25% durability. Two damaged copies of the same unenchanted
  *   item combine (the crafting-grid repair: both durabilities plus 5%). Otherwise, with an anvil (in its bag or within
  *   {@value #STATION_RANGE} blocks) and the item's repair material, each material mends a quarter, enchantments kept.</li>
  * </ul>
- * When it can do one, the owner is asked (chat buttons and a request card): [Craft]/[Repair] or [No thanks]. When it's
- * exactly one item short (or only missing the table/anvil), the owner gets a hint - with a [Give 1 & craft] button
- * when they have that item on them. On OK it uses up the ingredients from its own bag, makes the item and puts it on
- * if it's better. Each suggestion has a cooldown, and a "No thanks" is remembered for a while.
+ * When it can do one it just does it (only when it's safe and its bag isn't full) and tells you what it made. When it's
+ * exactly one item short (or only missing the table/anvil) it asks you for that item - but only when you actually have
+ * one on you ([Give 1 &amp; craft] / [No thanks]); otherwise it says nothing and goes to get it itself (ore it can mine:
+ * see {@link #gatherTarget}) or drops the idea. Each idea has a cooldown, and a "No thanks" is remembered for a while.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class BotCrafting {
@@ -91,11 +91,11 @@ public final class BotCrafting {
         ServerPlayer o = b.owner();
         if (o == null || o.level() != b.level() || o.distanceToSqr(b) > 32 * 32) return;
         if (b.getLastHurtByMobTimestamp() > 0 && b.tickCount - b.getLastHurtByMobTimestamp() < 200) return;   // (just been in a fight)
-        String danger = BotErrands.danger(b);                                   // (never asks in a fight or in danger: enemies about, hurt, in lava, the owner fighting...)
+        String danger = BotErrands.danger(b);                                   // (never crafts or asks in a fight or in danger: enemies about, hurt, in lava, the owner fighting...)
         if (danger != null) { if (b.tickCount % 400 == 0) PartyBots.testLog(b, "craft: no offers now - " + danger); b.offersHeld++; return; }
         long now = b.level().getGameTime();
         Long until = OFFER_UNTIL.get(b.getUUID());
-        if (until != null && until > now) return;                              // (already asked: waiting for an answer)
+        if (until != null && until > now) return;                              // (asked you for an item: waiting for an answer)
         log(b, "periodic look at tick " + b.tickCount);
         suggest(b, o, false);
     }
@@ -108,24 +108,34 @@ public final class BotCrafting {
         suggest(b, o, false);
     }
 
-    /** Look now and tell the owner about the best idea that isn't on cooldown (force: ignore cooldowns - for tests). Returns it, or null. */
+    /**
+     * Look now: the best idea that isn't on cooldown. One it can do now it simply does; one it's an item short of it
+     * asks the owner for - only if the owner has that item on them (ideas for items they don't have are skipped
+     * silently). force: ignore cooldowns (tests). Returns the idea acted on, or null.
+     */
     public static Idea suggest(PartyBotEntity b, ServerPlayer o, boolean force) {
         long now = b.level().getGameTime();
         List<Idea> ideas = ideas(b);
         Map<String, Long> q = quiet(b);
         q.values().removeIf(t -> t <= now);
         Idea pick = null;
+        int skipped = 0;
         for (Idea i : ideas) {
             if (!force && q.getOrDefault(i.key(), 0L) > now) continue;
+            if (i.missing > 0 && (i.missingItem.isEmpty() || o == null || !ownerHas(o, i.missingItem))) { skipped++; continue; }   // (you don't have it: no asking)
             if (pick == null || i.missing < pick.missing || i.missing == pick.missing && i.gain > pick.gain) pick = i;
         }
+        if (skipped > 0) log(b, "not asking for " + skipped + " idea(s) - the owner doesn't have the item");
         if (pick == null) return null;
         q.put(pick.key(), now + REPEAT_COOLDOWN);
-        if (!pick.kind.equals("craft")) {                                        // repairs: much rarer - once in 15 minutes per item, either way it's asked
+        if (!pick.kind.equals("craft")) {                                        // repairs: much rarer - once in 15 minutes per item
             String item = String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(pick.result.getItem()));
             for (String k : new String[]{"repair_combine", "repair_anvil"}) for (int m = 0; m <= 1; m++) q.put(k + ":" + item + ":" + m, now + REPAIR_COOLDOWN);
         }
-        tell(b, o, pick);
+        if (pick.missing == 0) {                                                 // it can: no asking, it just does it
+            log(b, "auto " + pick.key());
+            do_(b, o, pick, true);
+        } else tell(b, o, pick);
         return pick;
     }
 
@@ -447,48 +457,32 @@ public final class BotCrafting {
 
     private static String verb(Idea i) { return i.kind.equals("craft") ? "craft" : "repair"; }
 
+    /** One short of something the owner has on them: asks for it ([Give 1 & ...] / [No thanks]). */
     private static void tell(PartyBotEntity b, ServerPlayer o, Idea i) {
+        if (o == null || i.missingItem.isEmpty() || !ownerHas(o, i.missingItem)) return;
         Component what = i.result.getHoverName();
         MutableComponent msg = Component.literal("").append(b.label()).withStyle(ChatFormatting.AQUA);
-        if (i.missing == 0) {
-            i.token = nextToken++;
-            OFFERS.put(b.getUUID(), i);
-            OFFER_UNTIL.put(b.getUUID(), b.level().getGameTime() + OFFER_TICKS);
-            String how = i.kind.equals("craft") ? "can craft " : "can repair their ";
-            msg.append(Component.literal(" " + how).withStyle(ChatFormatting.WHITE)).append(Component.empty().append(what).withStyle(ChatFormatting.GOLD))
-                    .append(Component.literal(i.kind.equals("craft") ? " for themselves from their bag" + (i.makesTable ? " (they'll make a crafting table first)" : "") + ". " : i.kind.equals("repair_combine")
-                            ? " by combining it with another one. " : " with " + i.material + " repair material at the anvil. ").withStyle(ChatFormatting.WHITE))
-                    .append(button(i.kind.equals("craft") ? "[Craft]" : "[Repair]", "/xenobot craft " + b.getId() + " " + i.token, ChatFormatting.GREEN))
-                    .append(Component.literal(" "))
-                    .append(button("[No thanks]", "/xenobot nocraft " + b.getId() + " " + i.token, ChatFormatting.RED));
-            o.sendSystemMessage(msg);
-            o.level().playSound(null, o.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.6F, 1.5F);
-            com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " wants to " + verb(i),
-                    (i.kind.equals("craft") ? "Craft " : "Repair ") + what.getString() + " from their own bag?", "/xenobot craft " + b.getId() + " " + i.token,
-                    "/xenobot nocraft " + b.getId() + " " + i.token, OFFER_TICKS, 0xFF000000 | b.character().getColor()), o);
-            log(b, "offer " + i.key() + " token=" + i.token);
-            return;
-        }
-        // one short: a hint, and a way to hand it over if you have one
         msg.append(Component.literal(" needs one more: ").withStyle(ChatFormatting.WHITE)).append(Component.empty().append(i.missingWhat).withStyle(ChatFormatting.YELLOW))
                 .append(Component.literal(" to " + verb(i) + " ").withStyle(ChatFormatting.WHITE)).append(Component.empty().append(what).withStyle(ChatFormatting.GOLD))
                 .append(Component.literal(". ").withStyle(ChatFormatting.WHITE));
-        boolean canGive = !i.missingItem.isEmpty() && ownerHas(o, i.missingItem);
-        if (canGive) {
-            i.token = nextToken++;
-            OFFERS.put(b.getUUID(), i);
-            OFFER_UNTIL.put(b.getUUID(), b.level().getGameTime() + OFFER_TICKS);
-            msg.append(button("[Give 1 & " + verb(i) + "]", "/xenobot give " + b.getId() + " " + i.token, ChatFormatting.GREEN)).append(Component.literal(" "))
-                    .append(button("[No thanks]", "/xenobot nocraft " + b.getId() + " " + i.token, ChatFormatting.RED));
-            com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " is one short",
-                    "Give 1 " + i.missingWhat.getString() + " so they can " + verb(i) + " " + what.getString() + "?", "/xenobot give " + b.getId() + " " + i.token,
-                    "/xenobot nocraft " + b.getId() + " " + i.token, OFFER_TICKS, 0xFFFFD24A), o);
-        } else msg.append(Component.literal("(put it in their bag and they'll ask again)").withStyle(ChatFormatting.GRAY));
+        i.token = nextToken++;
+        OFFERS.put(b.getUUID(), i);
+        OFFER_UNTIL.put(b.getUUID(), b.level().getGameTime() + OFFER_TICKS);
+        requests++;
+        msg.append(button("[Give 1 & " + verb(i) + "]", "/xenobot give " + b.getId() + " " + i.token, ChatFormatting.GREEN)).append(Component.literal(" "))
+                .append(button("[No thanks]", "/xenobot nocraft " + b.getId() + " " + i.token, ChatFormatting.RED));
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " is one short",
+                "Give 1 " + i.missingWhat.getString() + " so they can " + verb(i) + " " + what.getString() + "?", "/xenobot give " + b.getId() + " " + i.token,
+                "/xenobot nocraft " + b.getId() + " " + i.token, OFFER_TICKS, 0xFFFFD24A), o);
         o.sendSystemMessage(msg);
-        log(b, "hint " + i.key() + " short=" + i.missingWhat.getString() + " give=" + canGive);
+        o.level().playSound(null, o.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.6F, 1.5F);
+        log(b, "request " + i.key() + " short=" + i.missingWhat.getString() + " token=" + i.token);
     }
 
-    private static boolean ownerHas(ServerPlayer o, ItemStack s) {
+    /** (Tests) how many item requests bots have sent their owners since the game started. */
+    public static int requests;
+
+    static boolean ownerHas(ServerPlayer o, ItemStack s) {
         for (int i = 0; i < o.getInventory().getContainerSize(); i++) if (ItemStack.isSameItem(o.getInventory().getItem(i), s)) return true;
         return false;
     }
@@ -544,7 +538,7 @@ public final class BotCrafting {
             Idea now = null;
             for (Idea x : ideas(b)) if (x.missing == 0 && x.kind.equals(i.kind) && ItemStack.isSameItem(x.result, i.result)) { now = x; break; }
             if (now == null) { OFFERS.remove(b.getUUID()); OFFER_UNTIL.remove(b.getUUID()); p.displayClientMessage(Component.literal("").append(b.label()).append(" still can't make it.").withStyle(ChatFormatting.GRAY), true); return; }
-            do_(b, p, now);
+            do_(b, p, now, false);
             return;
         }
         p.displayClientMessage(Component.literal("You don't have one.").withStyle(ChatFormatting.GRAY), true);
@@ -555,32 +549,34 @@ public final class BotCrafting {
         PartyBotEntity b = offerBot(p, botId, token, false);
         if (b == null) return;
         Idea i = OFFERS.get(b.getUUID());
-        if (i.missing != 0) { give(p, botId, token); return; }
-        do_(b, p, i);
+        if (i.missing != 0) { give(p, botId, token); return; }   // (only item requests are offered now - crafting itself needs no OK)
+        do_(b, p, i, false);
     }
 
-    private static void do_(PartyBotEntity b, ServerPlayer p, Idea i) {
+    /** Makes/repairs it. auto: it decided by itself (no "doesn't have what it takes" grumble if the bag changed). p may be null. */
+    private static void do_(PartyBotEntity b, ServerPlayer p, Idea i, boolean auto) {
         OFFERS.remove(b.getUUID());
         OFFER_UNTIL.remove(b.getUUID());
-        if (b.downed()) { p.displayClientMessage(Component.literal("").append(b.label()).append(" is down right now.").withStyle(ChatFormatting.RED), true); return; }
+        if (b.downed()) { if (p != null && !auto) p.displayClientMessage(Component.literal("").append(b.label()).append(" is down right now.").withStyle(ChatFormatting.RED), true); return; }
         ItemStack made = switch (i.kind) {
             case "craft" -> craft(b, i);
             case "repair_combine" -> combine(b, i);
             default -> anvilRepair(b, i);
         };
         if (made == null || made.isEmpty()) {
-            p.displayClientMessage(Component.literal("").append(b.label()).append(" doesn't have what it takes any more.").withStyle(ChatFormatting.GRAY), true);
+            if (p != null && !auto) p.displayClientMessage(Component.literal("").append(b.label()).append(" doesn't have what it takes any more.").withStyle(ChatFormatting.GRAY), true);
             log(b, "failed " + i.key());
             return;
         }
+        if (i.kind.equals("craft")) b.autoCrafted++;
         b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         b.level().playSound(null, b.blockPosition(), i.kind.equals("craft") ? SoundEvents.VILLAGER_WORK_TOOLSMITH : SoundEvents.ANVIL_USE, SoundSource.NEUTRAL, 0.7F, 1.1F);
         if (made.getItem() instanceof ArmorItem) PartyBots.wearBestArmour(b);
         boolean wearing = false;
         for (EquipmentSlot es : EquipmentSlot.values()) if (b.getItemBySlot(es) == made || ItemStack.isSameItemSameTags(b.getItemBySlot(es), made) && es.getType() == EquipmentSlot.Type.ARMOR) wearing = true;
-        p.sendSystemMessage(Component.literal("").append(b.label()).append(i.kind.equals("craft") ? " crafted " : " repaired ").append(made.getHoverName())
+        if (p != null) p.sendSystemMessage(Component.literal("").append(b.label()).append(i.kind.equals("craft") ? " crafted " : " repaired ").append(made.getHoverName())
                 .append(wearing ? " and put it on." : ".").withStyle(ChatFormatting.AQUA));
-        log(b, "done " + i.key() + " wearing=" + wearing + " chest=" + net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(b.getItemBySlot(EquipmentSlot.CHEST).getItem()));
+        log(b, "done " + i.key() + " auto=" + auto + " wearing=" + wearing + " chest=" + net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(b.getItemBySlot(EquipmentSlot.CHEST).getItem()));
     }
 
     private static ItemStack craft(PartyBotEntity b, Idea i) {

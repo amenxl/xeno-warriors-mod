@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Client side of Karma Sensing: sensed entities get a glowing outline you can see through walls,
- * colored by what they are (hostile red, players violet, animals green, others gold), plus a purple
- * pulse across the screen and a ring of light rolling out from you.
+ * Client side of Karma Sensing: sensed entities get a glowing outline and a big flickering aura you can see through
+ * walls, colored by what they are (hostile red, players violet, animals green, others gold), plus a purple pulse across
+ * the screen and a ring of light rolling out from you. The aura's size shows how strong each one is next to you: weaker
+ * things a modest glow around them, your equals a tall one, and anything far stronger (or a boss) a giant blazing
+ * column you can't miss.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KarmaSense {
@@ -71,7 +73,21 @@ public final class KarmaSense {
         return lv != null && lv >= 0 && com.xenowarriors.client.LevelHud.level() > lv;
     }
 
+    private static final Map<Integer, Float> MIGHT = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // entity id -> real strength (see KarmaSensing.strength)
+    private static final java.util.Set<Integer> BOSSES = com.xenowarriors.client.ClientReset.trackAll(new java.util.HashSet<>());
+    private static float selfMight = 1F;
+
     public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor, boolean first, boolean allStats) {
+        sensed(ids, levels, duration, readLevels, souls, damage, armor, first, allStats, new int[0], new int[0], 0F);
+    }
+
+    public static void sensed(int[] ids, int[] levels, int duration, boolean readLevels, int[] souls, int[] damage, int[] armor, boolean first, boolean allStats,
+                              int[] might, int[] bosses, float self) {
+        MIGHT.clear();
+        for (int i = 0; i < ids.length && i < might.length; i++) MIGHT.put(ids[i], might[i] / 10F);
+        BOSSES.clear();
+        for (int id : bosses) BOSSES.add(id);
+        selfMight = self > 0 ? self : 0F;
         KarmaSense.allStats = allStats;
         STATS.clear();
         for (int i = 0; i < ids.length && i < damage.length && i < armor.length; i++) STATS.put(ids[i], new int[]{damage[i], armor[i]});
@@ -142,6 +158,8 @@ public final class KarmaSense {
         DATA.values().removeIf(until -> until < now);
         LEVELS.keySet().removeIf(id -> !SENSED.containsKey(id));
         STATS.keySet().removeIf(id -> !SENSED.containsKey(id));
+        MIGHT.keySet().removeIf(id -> !SENSED.containsKey(id));
+        BOSSES.removeIf(id -> !SENSED.containsKey(id));
         // (with DragonMineZ its own Ki Sense auras show them instead, in these colors - see DmzKiSenseLink)
         if (now % 3 == 0 && !com.xenowarriors.client.compat.DmzKiSenseLink.karmaDriven()) auras(mc);
         TRACKED.values().removeIf(until -> until < now);
@@ -193,6 +211,155 @@ public final class KarmaSense {
                         e.getY() + r.nextDouble() * height, e.getZ() + (r.nextDouble() - 0.5) * radius, 0, 0.15, 0);
             }
         }
+    }
+
+    // ------------------------------------------------------------------ the big auras
+
+    /** (Tests / screenshots) true: no big auras - only the old outline and sparks. */
+    public static boolean aurasOff;
+    /** (Tests) auras drawn in the last frame. */
+    public static int aurasDrawn;
+    private static boolean auraWarned;
+    /** Most auras drawn at once (nearest first would need a sort; these are simply the first ones in range). */
+    public static final int MAX_AURAS = 256;
+    public static final double AURA_RANGE = 192;
+
+    /** How strong it is next to you (1 = your equal; above 1 stronger). Bosses never read below 6x. -1: unknown / masked. */
+    public static float relative(Entity e) {
+        Integer lv = LEVELS.get(e.getId());
+        if (lv != null && lv < 0) return -1F;
+        Float m = MIGHT.get(e.getId());
+        float rel;
+        if (m != null && m > 0 && selfMight > 0) rel = m / selfMight;
+        else if (lv != null) rel = lv / (float) Math.max(1, com.xenowarriors.client.LevelHud.level());   // (no strength sent: by level)
+        else return -1F;
+        if (BOSSES.contains(e.getId())) rel = Math.max(rel, 6F);
+        return rel;
+    }
+
+    /** Sensed as a boss. */
+    public static boolean boss(Entity e) { return BOSSES.contains(e.getId()); }
+
+    /**
+     * The aura around a sensed thing: {radius, height, strength 0-1}. Everything gets a clear glow at least a body
+     * wide; it grows with how strong the thing is next to you (log scale: a quarter of you or less = 0, your equal
+     * ~0.33, 4x you ~0.67, 16x you or a boss ~0.85-1), up to a ~7-block-wide, ~15-block-tall blaze.
+     */
+    public static float[] auraSize(Entity e) {
+        float rel = relative(e);
+        boolean faint = rel < 0;
+        float t = faint ? 0F : Mth.clamp((float) ((Math.log(Math.max(1e-3, rel)) / Math.log(2) + 2) / 6.0), 0F, 1F);
+        if (!faint && boss(e)) t = Math.max(t, 0.85F);
+        float radius = e.getBbWidth() * 0.5F + 0.9F + 0.8F * t + 4.8F * t * t;
+        float height = e.getBbHeight() * (1.5F + 0.4F * t) + 1.0F + 11F * t * t;
+        if (faint) { radius *= 0.7F; height *= 0.8F; }
+        return new float[]{radius, height, faint ? -1F : t};
+    }
+
+    @SubscribeEvent
+    public static void onRenderAuras(net.minecraftforge.client.event.RenderLevelStageEvent event) {
+        if (event.getStage() != net.minecraftforge.client.event.RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || SENSED.isEmpty()) { aurasDrawn = 0; return; }
+        if (aurasOff) { aurasDrawn = 0; return; }
+        float pt = event.getPartialTick();
+        long gt = mc.level.getGameTime();
+        float time = gt + pt;
+        net.minecraft.world.phys.Vec3 cam = event.getCamera().getPosition();
+        var pose = event.getPoseStack();
+        pose.pushPose();
+        pose.translate(-cam.x, -cam.y, -cam.z);
+        org.joml.Matrix4f m = pose.last().pose();
+        java.util.List<Entity> list = new java.util.ArrayList<>();
+        for (Map.Entry<Integer, Long> en : SENSED.entrySet()) {
+            if (en.getValue() < gt || list.size() >= MAX_AURAS) continue;
+            Entity e = mc.level.getEntity(en.getKey());
+            if (e == null || !e.isAlive() || e == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
+            if (e.distanceToSqr(cam) > AURA_RANGE * AURA_RANGE) continue;
+            list.add(e);
+        }
+        int drawn = 0;
+        if (!list.isEmpty()) {
+            com.mojang.blaze3d.systems.RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionColorShader);
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            com.mojang.blaze3d.systems.RenderSystem.disableCull();
+            com.mojang.blaze3d.systems.RenderSystem.depthMask(false);
+            com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();          // (seen through walls, like the outline)
+            // pass 0: a soft tint (shows on bright sky too); pass 1: the glow itself (additive)
+            for (int pass = 0; pass < 2; pass++) {
+                if (pass == 0) com.mojang.blaze3d.systems.RenderSystem.blendFunc(com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA, com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+                else com.mojang.blaze3d.systems.RenderSystem.blendFunc(com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA, com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE);
+                var bb = com.mojang.blaze3d.vertex.Tesselator.getInstance().getBuilder();
+                bb.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.TRIANGLES, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR);
+                for (Entity e : list) {
+                    try { aura(bb, m, e, cam, pt, time, pass == 1); if (pass == 1) drawn++; }
+                    catch (RuntimeException ex) { if (!auraWarned) { auraWarned = true; XenoWarriors.LOGGER.error("Karma aura draw failed", ex); } }
+                }
+                com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(bb.end());
+            }
+            com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+            com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
+            com.mojang.blaze3d.systems.RenderSystem.depthMask(true);
+            com.mojang.blaze3d.systems.RenderSystem.enableCull();
+            com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+        }
+        pose.popPose();
+        aurasDrawn = drawn;
+    }
+
+    private static final int SEG = 36;
+
+    /** One aura: a camera-facing (upright) flame of rings - a dim middle, a bright band, fading out to flickering tongues. */
+    private static void aura(com.mojang.blaze3d.vertex.BufferBuilder bb, org.joml.Matrix4f m, Entity e, net.minecraft.world.phys.Vec3 cam, float pt, float time, boolean glow) {
+        float[] size = auraSize(e);
+        float radius = size[0], height = size[1], t = Math.max(0F, size[2]);
+        boolean faint = size[2] < 0;
+        double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()), z = Mth.lerp(pt, e.zo, e.getZ());
+        double dx = x - cam.x, dz = z - cam.z, len = Math.sqrt(dx * dx + dz * dz);
+        float rx, rz;
+        if (len < 1e-3) { rx = 1; rz = 0; } else { rx = (float) (-dz / len); rz = (float) (dx / len); }
+        int c = color(e);
+        float r = ((c >> 16) & 255) / 255F, g = ((c >> 8) & 255) / 255F, b = (c & 255) / 255F;
+        float hot = Mth.clamp((t - 0.55F) * 1.6F, 0F, 0.7F);                     // the strongest burn white-hot inside
+        float ir = r + (1 - r) * hot, ig = g + (1 - g) * hot, ib = b + (1 - b) * hot;
+        float seed = (e.getId() * 0.6180339F) % 1F * 20F;
+        float pulse = 1F + 0.18F * t * Mth.sin(time * (0.25F + 0.2F * t) + seed);
+        float a = faint ? 0.18F : (0.42F + 0.4F * t) * pulse;
+        if (!glow) a *= faint ? 0.3F : 0.35F;
+        float cy = height * 0.42F, hh = height * 0.58F;
+        float[] scale = {0.5F, 0.8F, 1F};
+        float[] alpha = {a * 0.9F, a * 0.75F, 0F};
+        float[][] col = {{ir, ig, ib}, {r, g, b}, {r, g, b}};
+        float[][] px = new float[3][SEG + 1], py = new float[3][SEG + 1];
+        for (int k = 0; k < 3; k++) for (int i = 0; i <= SEG; i++) {
+            float th = (float) (i * Math.PI * 2 / SEG);
+            float s = Mth.sin(th), co = Mth.cos(th);
+            float wob = 1F + 0.08F * Mth.sin(th * 7 + time * 0.35F + seed) + 0.05F * Mth.sin(th * 3 - time * 0.21F);
+            float tongue = s > 0 ? 0.45F * s * s * s * (0.55F + 0.45F * Mth.sin(th * 9 - time * (0.5F + 0.4F * t) + seed)) * (k == 0 ? 0.6F : 1F) : 0F;
+            px[k][i] = co * radius * scale[k] * wob;
+            py[k][i] = cy + s * hh * scale[k] * (s > 0 ? 1F + tongue : 0.8F);
+        }
+        float ca = a * 0.35F;
+        for (int i = 0; i < SEG; i++) {
+            // the middle: dim, so what's inside still shows
+            v(bb, m, x, y + cy, z, rx, rz, 0, 0, ir, ig, ib, ca);
+            v(bb, m, x, y, z, rx, rz, px[0][i], py[0][i], ir, ig, ib, alpha[0]);
+            v(bb, m, x, y, z, rx, rz, px[0][i + 1], py[0][i + 1], ir, ig, ib, alpha[0]);
+            for (int k = 0; k < 2; k++) {
+                float[] c0 = col[k], c1 = col[k + 1];
+                v(bb, m, x, y, z, rx, rz, px[k][i], py[k][i], c0[0], c0[1], c0[2], alpha[k]);
+                v(bb, m, x, y, z, rx, rz, px[k + 1][i], py[k + 1][i], c1[0], c1[1], c1[2], alpha[k + 1]);
+                v(bb, m, x, y, z, rx, rz, px[k + 1][i + 1], py[k + 1][i + 1], c1[0], c1[1], c1[2], alpha[k + 1]);
+                v(bb, m, x, y, z, rx, rz, px[k][i], py[k][i], c0[0], c0[1], c0[2], alpha[k]);
+                v(bb, m, x, y, z, rx, rz, px[k + 1][i + 1], py[k + 1][i + 1], c1[0], c1[1], c1[2], alpha[k + 1]);
+                v(bb, m, x, y, z, rx, rz, px[k][i + 1], py[k][i + 1], c0[0], c0[1], c0[2], alpha[k]);
+            }
+        }
+    }
+
+    private static void v(com.mojang.blaze3d.vertex.BufferBuilder bb, org.joml.Matrix4f m, double x, double y, double z, float rx, float rz, float u, float h,
+                          float r, float g, float b, float a) {
+        bb.vertex(m, (float) (x + rx * u), (float) (y + h), (float) (z + rz * u)).color(r, g, b, Mth.clamp(a, 0F, 1F)).endVertex();
     }
 
     /** At higher Karma Sensing, "Lv N" floats over everything sensed, visible through walls. */
