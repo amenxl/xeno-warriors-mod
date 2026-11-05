@@ -529,6 +529,7 @@ public final class PartyBots {
         com.xenowarriors.compat.DmzBotKi.forget(bot);
         BotCrafting.forget(bot);                                                  // (an offer to a bot that's gone: logout, owner away)
         BotSupport.forget(bot);
+        BotForms.forget(bot);
         ANIM_SENT.remove(bot);
     }
 

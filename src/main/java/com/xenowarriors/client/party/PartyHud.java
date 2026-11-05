@@ -10,7 +10,8 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /**
- * Classic HUD: your party members down the left side (name, health bar and Karma bar, each with its numbers), and
+ * Classic HUD: your party members down the left side (name, health bar and Karma bar - and with DragonMineZ a ki
+ * bar - each with its numbers), and
  * your own health in numbers beside the hearts.
  */
 public class PartyHud implements IGuiOverlay {
@@ -41,7 +42,10 @@ public class PartyHud implements IGuiOverlay {
         g.pose().scale(sc, sc, 1F);
         // left side, kept above the chat area (bottom ~150 px) and under the top-left corner other mods use
         int members = Math.max(0, PartyClient.members().size() - 1);
-        int top = (int) Mth.clamp(height / 2F - 34, 40, Math.max(40, height - 150 - members * 30 * sc));
+        boolean ki = PartyKiClient.any();                                    // (DragonMineZ: a ki bar under the Karma bar)
+        int rowH = ki ? 36 : 30, frameB = ki ? 29 : 23;
+        int minTop = com.xenowarriors.client.DmzHud.on() ? 52 : 40;          // (with DragonMineZ: under its own HUD in the top-left corner)
+        int top = (int) Mth.clamp(height / 2F - 34, minTop, Math.max(minTop, height - 150 - members * rowH * sc));
         int x = Math.round(5 / sc), y = Math.round(top / sc);
         shownTop = top - 2;
         for (PartySyncPacket.Member m : PartyClient.members()) {
@@ -49,8 +53,8 @@ public class PartyHud implements IGuiOverlay {
             CharacterType type = CharacterType.values()[Mth.clamp(m.type(), 0, CharacterType.values().length - 1)];
             int color = type == CharacterType.NONE ? 0xFFFFFFFF : type.getColor() | 0xFF000000;
             int w = 100, bw = w - 3 - 36;                                   // (the bars, their numbers to the right)
-            g.fill(x - 2, y - 2, x + w + 2, y + 23, 0x80101018);
-            g.fill(x - 2, y - 2, x, y + 23, color);
+            g.fill(x - 2, y - 2, x + w + 2, y + frameB, 0x80101018);
+            g.fill(x - 2, y - 2, x, y + frameB, color);
             String name = (m.leader() ? "★ " : "") + m.name() + (m.knockedOut() ? "  KO" : "");
             if (font.width(name) > w - 3) name = font.plainSubstrByWidth(name, Math.max(0, w - 3 - font.width("…"))).stripTrailing() + "…";
             g.drawString(font, name, x + 3, y, m.knockedOut() ? 0xFF6A5A : 0xFFFFFF);
@@ -62,7 +66,13 @@ public class PartyHud implements IGuiOverlay {
             g.fill(x + 3, y + 18, x + 3 + bw, y + 21, 0xFF141A3A);
             g.fill(x + 3, y + 18, x + 3 + Math.round(bw * k), y + 21, 0xFF6A8CFF);
             com.xenowarriors.client.KhHud.small(g, font, nums(m.karma(), m.maxKarma()), x + 6 + bw, y + 17, 0xFFB8C8FF, 0.7F);
-            y += 30;
+            float[] kk = ki ? PartyKiClient.of(m.id()) : null;
+            if (kk != null) {
+                g.fill(x + 3, y + 24, x + 3 + bw, y + 27, PartyKiClient.KI_BACK);
+                g.fill(x + 3, y + 24, x + 3 + Math.round(bw * PartyKiClient.frac(kk)), y + 27, PartyKiClient.KI_COLOR);
+                com.xenowarriors.client.KhHud.small(g, font, nums(kk[0], kk[1]), x + 6 + bw, y + 23, PartyKiClient.KI_TEXT, 0.7F);
+            }
+            y += rowH;
         }
         g.pose().popPose();
     }

@@ -42,6 +42,9 @@ import java.util.*;
  *       stepped up as far as they go). Forms drain ki like they do for players; out of ki, or once the fight is over,
  *       it reverts.</li>
  *   <li>Its melee hits scale with its DragonMineZ melee damage the same way: stronger in a form / at full power.</li>
+ *   <li>Following your lead: when you transform (see BotForms), each bot near you transforms too a moment later if a
+ *       fight is on or close by and it has the ki (no strong enemy needed), and stays in its form while you stay in
+ *       yours. Out of a fight its power release follows yours (never under 50%).</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -65,6 +68,7 @@ public final class DmzBotPower {
         long lastFight = -100000, chargedAt;
         double restMelee;
         String formShown = "";
+        long followAt, followUntil = -1;  // (you just transformed: it follows your lead in this window, see BotForms)
     }
 
     private static final Map<UUID, Power> POWER = new HashMap<>();
@@ -210,6 +214,9 @@ public final class DmzBotPower {
         LivingEntity danger = threat(b, o);
         if (fighting || danger != null || (b.getLastHurtByMob() != null && b.tickCount - b.getLastHurtByMobTimestamp() < 60)) p.lastFight = now;
         boolean inFight = now - p.lastFight < 40;
+        boolean following = now >= p.followAt && now < p.followUntil;
+        boolean ownerFormed = playerForm(o) != null;
+        int ownerRelease = playerRelease(o);
         try {
             float max = num(maxEnergy, st);
             if (max <= 0) return;
@@ -225,10 +232,20 @@ public final class DmzBotPower {
                     }
                 }
                 LivingEntity foe = danger != null ? danger : target;
-                if (p.form == null && foe != null && (strong(b, foe) || fighting) && p.energy > 0.15F) transform(b, o, st, p);
-            } else if (now - p.lastFight > CALM_TICKS) {
-                if (p.form != null) revert(b, o, st, p, "the fight's over");
-                if (p.release > BASE_RELEASE) { p.release = BASE_RELEASE; note(b.character().getId() + " powers down to " + BASE_RELEASE + "%"); }
+                if (p.form == null && foe != null && (strong(b, foe) || fighting) && p.energy > 0.15F) transform(b, o, st, p, "");
+            } else {
+                // power release: follows yours out of a fight (50% at least)
+                int want = Math.max(BASE_RELEASE, Math.min(100, Math.round(ownerRelease / 5F) * 5));
+                if (p.release < want) {
+                    p.release = Math.min(want, p.release + 25);
+                    aura(level, b, st, 6);
+                    if (p.release == want) note(b.character().getId() + " powers up to " + want + "% with " + o.getGameProfile().getName());
+                } else if (now - p.lastFight > CALM_TICKS && p.release > want) { p.release = want; note(b.character().getId() + " powers down to " + want + "%"); }
+                if (now - p.lastFight > CALM_TICKS && p.form != null && !ownerFormed) revert(b, o, st, p, "the fight's over");
+            }
+            // you transformed: it follows (a fight on or close by, and the ki for it - no strong enemy needed)
+            if (following && p.form == null && p.energy > 0.08F && com.xenowarriors.bot.BotForms.nearCombat(b, o)) {
+                if (transform(b, o, st, p, " following " + o.getGameProfile().getName())) p.followUntil = -1;
             }
             // ki: forms drain it, charging refills it fast, resting slowly
             if (p.form != null) {
@@ -259,7 +276,7 @@ public final class DmzBotPower {
         } catch (Throwable t) { fail(t); }
     }
 
-    private static void transform(PartyBotEntity b, ServerPlayer o, Object st, Power p) throws Exception {
+    private static boolean transform(PartyBotEntity b, ServerPlayer o, Object st, Power p, String why) throws Exception {
         Object ch = getCharacter.invoke(st);
         if (ensureSelected != null) ensureSelected.invoke(null, st);           // (a form picked to go into, as DragonMineZ does for players: the first one it has)
         String lastGroup = null, last = null;
@@ -274,11 +291,11 @@ public final class DmzBotPower {
         }
         if (last == null) {
             if (!"none".equals(p.formShown)) { p.formShown = "none"; note(b.character().getId() + " has no form to transform into"); }
-            return;
+            return false;
         }
         p.group = lastGroup; p.form = last;
         double m = num(melee, st);
-        note(b.character().getId() + " transforms into " + last + " (" + lastGroup + ") kiDmg=" + Math.round(num(kiDamage, st) * 10) / 10.0
+        note(b.character().getId() + " transforms into " + last + " (" + lastGroup + ")" + why + " kiDmg=" + Math.round(num(kiDamage, st) * 10) / 10.0
                 + " melee x" + Math.round(m / Math.max(0.01, p.restMelee) * 100) / 100.0);
         if (b.level() instanceof ServerLevel level) {
             level.sendParticles(ParticleTypes.FLASH, b.getX(), b.getY() + 1, b.getZ(), 1, 0, 0, 0, 0);
@@ -286,6 +303,7 @@ public final class DmzBotPower {
             level.playSound(null, b.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.NEUTRAL, 0.6F, 1.6F);
         }
         o.displayClientMessage(Component.literal("").append(b.label()).append(" transforms: " + pretty(last) + "!").withStyle(ChatFormatting.GOLD), true);
+        return true;
     }
 
     private static void revert(PartyBotEntity b, ServerPlayer o, Object st, Power p, String why) throws Exception {
@@ -326,6 +344,57 @@ public final class DmzBotPower {
     /** A bot is gone: forget it. */
     public static void forget(UUID bot) { POWER.remove(bot); }
 
+    // ---------------------------------------------------------------- following the player
+
+    /** You transformed (BotForms): this bot may follow into its best form between these game times. */
+    public static void follow(PartyBotEntity b, long at, long until) {
+        if (!ready()) return;
+        Power p = POWER.computeIfAbsent(b.getUUID(), u -> new Power());
+        p.followAt = at; p.followUntil = until;
+    }
+
+    /** The player's DragonMineZ form right now (null = base form, or no DragonMineZ). */
+    public static String playerForm(ServerPlayer o) {
+        if (o == null || !ready()) return null;
+        try {
+            Object d = DmzPerCharacter.live(o);
+            if (d == null) return null;
+            Object f = activeForm.invoke(getCharacter.invoke(d));
+            String s = f == null ? "" : f.toString();
+            return s.isEmpty() || s.equalsIgnoreCase("base") || s.equalsIgnoreCase("none") ? null : s;
+        } catch (Throwable t) { return null; }
+    }
+
+    /** The player's DragonMineZ power release (%), or 0. */
+    public static int playerRelease(ServerPlayer o) {
+        if (o == null || !ready()) return 0;
+        try {
+            Object d = DmzPerCharacter.live(o);
+            return d == null ? 0 : ((Number) getRelease.invoke(getResources.invoke(d))).intValue();
+        } catch (Throwable t) { return 0; }
+    }
+
+    /** Its ki now and its most, or null (no DragonMineZ, no character read yet). */
+    public static float[] ki(PartyBotEntity b) {
+        if (!ready()) return null;
+        Power p = POWER.get(b.getUUID());
+        Object st = stats(b);
+        if (p == null || st == null) return null;
+        float max = num(maxEnergy, st);
+        return max <= 0 ? null : new float[]{Math.max(0, p.energy) * max, max};
+    }
+
+    /** A player's DragonMineZ ki now and their most, or null. */
+    public static float[] playerKi(ServerPlayer o) {
+        if (o == null || !ready()) return null;
+        try {
+            Object d = DmzPerCharacter.live(o);
+            if (d == null) return null;
+            float max = num(maxEnergy, d);
+            return max <= 0 ? null : new float[]{num(getEnergy, getResources.invoke(d)), max};
+        } catch (Throwable t) { return null; }
+    }
+
     /** Its DragonMineZ melee damage at rest (base form, 50% release - what its hits are scaled up from), or 0. */
     static double restMelee(PartyBotEntity b) { Power p = POWER.get(b.getUUID()); return p == null ? 0 : p.restMelee; }
 
@@ -335,7 +404,8 @@ public final class DmzBotPower {
     public static String state(PartyBotEntity b) {
         Power p = POWER.get(b.getUUID());
         if (p == null) return "none";
-        return "ki=" + pct(Math.max(0, p.energy)) + " release=" + p.release + "% form=" + p.form + " charging=" + p.charging;
+        return "ki=" + pct(Math.max(0, p.energy)) + " release=" + p.release + "% form=" + p.form + " charging=" + p.charging
+                + (p.followUntil > 0 ? " follow=" + p.followAt + ".." + p.followUntil : "");
     }
 
     /** (Tests) sets its ki (fraction). */
