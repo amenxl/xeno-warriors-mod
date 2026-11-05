@@ -108,18 +108,44 @@ public final class SeasonHuntTests {
             if (DMG.containsKey(e.getEntity().getUUID()) && !e.isCanceled()) {
                 DMG.merge(e.getEntity().getUUID(), e.getAmount(), Float::sum);
                 var src = e.getSource();
-                String who = src.getEntity() == null ? "-" : src.getEntity().getType().toShortString() + (src.getEntity() instanceof PartyBotEntity b ? "(" + b.character().getId() + ")" : "");
-                SOURCES.add(src.getMsgId() + "/" + who);
+                SOURCES.add(src.getMsgId() + "/" + describe(src.getEntity(), e.getEntity()) + (src.getDirectEntity() != null && src.getDirectEntity() != src.getEntity() ? " via " + describe(src.getDirectEntity(), e.getEntity()) : "")
+                        + String.format(Locale.ROOT, " %.1f", e.getAmount()));
             }
         });
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Added.class, e -> {
             List<String> l = BAD_FX.get(e.getEntity().getUUID());
             if (l != null && e.getEffectInstance().getEffect().getCategory() == MobEffectCategory.HARMFUL) l.add(e.getEffectInstance().getEffect().getDescriptionId().replace("effect.minecraft.", "")
-                    + (e.getEffectSource() == null ? "" : "@" + e.getEffectSource().getType().toShortString()));
+                    + "@" + describe(e.getEffectSource(), e.getEntity()));
         });
     }
 
     private static final Set<String> SOURCES = new LinkedHashSet<>();
+
+    /**
+     * Who did it: type, short UUID, namespace (xenowarriors / dragonminez / minecraft), a bot (or a bot's stand-in) with its
+     * character, an ally of the victim or not, and how far away it is.
+     */
+    private static String describe(net.minecraft.world.entity.Entity a, LivingEntity victim) {
+        if (a == null) return "-";
+        var id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(a.getType());
+        String s = (id == null ? a.getType().toShortString() : id.toString()) + "#" + a.getUUID().toString().substring(0, 8);
+        if (a instanceof PartyBotEntity b) s += "[bot " + b.character().getId() + "]";
+        PartyBotEntity standIn = a instanceof net.minecraft.world.entity.player.Player ? PartyBots.botOf(a) : null;
+        if (standIn != null) s += "[stand-in of bot " + standIn.character().getId() + "]";
+        if (a instanceof net.minecraftforge.common.util.FakePlayer && standIn == null) s += "[fake " + ((net.minecraft.world.entity.player.Player) a).getGameProfile().getName() + "]";
+        if (a instanceof net.minecraft.world.entity.Mob m && m.getTarget() != null) s += "[targets " + m.getTarget().getType().toShortString() + "]";
+        s += com.xenowarriors.combat.Allies.isAlly(a, victim) ? "[ally]" : "[foe]";
+        return s + String.format(Locale.ROOT, "@%.0fm", a.distanceTo(victim));
+    }
+
+    /** (DMZ world mobs that wander into the arena are logged once per step) */
+    private static String strays(ServerPlayer p) {
+        List<String> out = new ArrayList<>();
+        for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(32),
+                m -> !(m instanceof PartyBotEntity) && !m.getTags().contains("xw_hs") && m.isAlive()))
+            out.add(describe(m, p));
+        return out.toString();
+    }
 
     private static void watch(LivingEntity e) { DMG.put(e.getUUID(), 0F); BAD_FX.put(e.getUUID(), new ArrayList<>()); SOURCES.clear(); }
 
@@ -424,7 +450,7 @@ public final class SeasonHuntTests {
                     boolean ok = d <= 0 && fx.isEmpty();
                     n[0]++;
                     if (!ok) hurt[0]++;
-                    log(String.format(Locale.ROOT, "player %s %s: ally bot dmg %.1f, harmful fx %s, own dmg %.1f%s -> %s", t.getId(), s == null ? "?" : s.getId(), d, fx, own, ok ? "" : " from " + SOURCES, pass(ok)));
+                    log(String.format(Locale.ROOT, "player %s %s: ally bot dmg %.1f, harmful fx %s, own dmg %.1f%s -> %s", t.getId(), s == null ? "?" : s.getId(), d, fx, own, ok ? "" : " from " + SOURCES + " mobs near: " + strays(p), pass(ok)));
                     if (!ok) FAILS[0]++;
                 }), 2));
             }
@@ -468,7 +494,7 @@ public final class SeasonHuntTests {
                     List<String> fx = BAD_FX.getOrDefault(p.getUUID(), List.of());
                     boolean ok = d <= 0 && fx.isEmpty();
                     if (!ok) FAILS[0]++;
-                    log(String.format(Locale.ROOT, "bot %s %s: used %s, owner dmg %.1f, harmful fx %s%s -> %s", t.getId(), KEEP[2], KEEP[3], d, fx, ok ? "" : " from " + SOURCES, pass(ok)));
+                    log(String.format(Locale.ROOT, "bot %s %s: used %s, owner dmg %.1f, harmful fx %s%s -> %s", t.getId(), KEEP[2], KEEP[3], d, fx, ok ? "" : " from " + SOURCES + " mobs near: " + strays(p), pass(ok)));
                 }), 2));
             }
         }
