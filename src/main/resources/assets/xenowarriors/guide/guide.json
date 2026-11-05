@@ -84,7 +84,7 @@
         },
         {
           "title": "Synergy and bond",
-          "text": "Certain characters in the same party and within 24 blocks get a synergy (bots count, so you can try it solo): Partners (Rhalix + Mikiko), Skyland Bond (Rhalix + Sky Patrol / Kyrie), Goofy Rivals (Mikiko + Ultima), Soul Link (Mikiko + Kaeru), Brothers (Stevie + Garry), Tenjo Siblings (Yuri + Ultima), Old Friends (Zane + Mikiko), Married (Max + Technica).\n## Bond\n- Every teammate character has a bond level with yours, 0 to 100. It grows a little just by being together, much faster fighting side by side, with every kill one of you makes, and a lot with every revive.\n- Higher bond = stronger synergy (double at bond 100), and a synergy's downside fades out - Soul Link's shared death is gone at bond 50.\n- Every 10 levels of your best bond with someone in your party: +5 max hearts (+300 with DragonMineZ).\n- Bots share it: each bot has its own bond with its teammates (its character's, the one you'll have when you play it) and gets the same bonus hearts from its best bond, on top of its level health. Bots get their synergies too (damage, Soul Link's lighter hits, faster Karma, Old Friends' cheaper skills).\n## Bots are treated like players\nA bot uses its own character's stats, all kept in your save for that character: Character Level hearts, Attack and Defense levels, ability tiers and levels (its skill uses level them up), Appetite (food heals it more), gun level, fall damage and DragonMineZ stats. What it earns is waiting for you when you play that character.\n- The Party menu shows your bond with everyone, the active synergies, and [S] opens the Team Synergy panel."
+          "text": "Certain characters in the same party and within 24 blocks get a synergy (bots count, so you can try it solo): Partners (Rhalix + Mikiko), Skyland Bond (Rhalix + Sky Patrol / Kyrie), Goofy Rivals (Mikiko + Ultima), Soul Link (Mikiko + Kaeru), Brothers (Stevie + Garry), Tenjo Siblings (Yuri + Ultima), Old Friends (Zane + Mikiko), Married (Max + Technica).\n## Bond\n- Every teammate character has a bond level with yours, 0 to 100. It grows a little just by being together, much faster fighting side by side, with every kill one of you makes, and a lot with every revive.\n- Higher bond = stronger synergy (double at bond 100), and a synergy's downside fades out - Soul Link's shared death is gone at bond 50.\n- Every 10 levels of your best bond with someone in your party: +5 max hearts (+300 with DragonMineZ).\n- Bots share it: each bot has its own bond with its teammates (its character's, the one you'll have when you play it) and gets the same bonus hearts from its best bond, on top of its level health. Bots get their synergies too (damage, Soul Link's lighter hits, faster Karma, Old Friends' cheaper skills).\n## Bots are treated like players\nA bot uses its own character's stats, all kept in your save for that character: Character Level hearts, Attack and Defense levels, ability tiers and levels (its skill uses level them up), Appetite (food heals it more), Building (the torches and Dragon Balls it places), gun level, fall damage and DragonMineZ stats. What it earns is waiting for you when you play that character.\n- The Party menu shows your bond with everyone, the active synergies, and [S] opens the Team Synergy panel."
         }
       ]
     },
@@ -212,7 +212,7 @@
       "pages": [
         {
           "title": "Levels and stats",
-          "text": "No skill tree: you get better at what you do.\n- Speed (sprinting), Attack (dealing damage), Defense (taking hits). Together they make your Character Level, which gives max hearts and unlocks skills.\n- Mining, Crafting and Smelting level up on their own.\n- Each character has their own levels."
+          "text": "No skill tree: you get better at what you do.\n- Speed (sprinting), Attack (dealing damage), Defense (taking hits). Together they make your Character Level, which gives max hearts and unlocks skills.\n- Mining, Crafting, Smelting and Building level up on their own.\n- Each character has their own levels."
         },
         {
           "title": "Speed: stepping up blocks",
@@ -225,6 +225,10 @@
         {
           "title": "Appetite (hunger level)",
           "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting, regeneration and starving work like normal: they follow the top layer."
+        },
+        {
+          "title": "Building",
+          "text": "The more blocks you place, the more your Building levels up (per character; it doesn't change your Character Level).\n- Every 10 levels: +1 block of reach for placing, breaking and using blocks (not for attacks). Up to +8 blocks at level 80.\n- Every 20 levels: +0.1% chance a block you place isn't used up (survival only). Up to 50% at level 10,000.\n- A normal block gives 1 XP, one that breaks instantly (torches, flowers, seeds) a quarter. Placing on a spot you already placed on in the last minute gives nothing, so placing and breaking one block doesn't level it.\n- Bots level their character's Building too, from the torches and Dragon Balls they place.\n- Hover Building in the stats screen to see your reach and keep chance."
         },
         {
           "title": "Starving",

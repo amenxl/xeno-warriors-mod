@@ -521,7 +521,7 @@ public final class XenoCommands {
                             .executes(ctx -> setStat(ctx, st, EntityArgument.getPlayers(ctx, "targets"))))));
         }
         // the other stats live under /xeno stat too
-        for (String sk : new String[]{"mining", "crafting", "smelting"}) {
+        for (String sk : new String[]{"mining", "crafting", "smelting", "building"}) {
             int max = sk.equals("mining") ? com.xenowarriors.stats.Mining.MAX_LEVEL : com.xenowarriors.stats.Crafting.MAX_LEVEL;
             stat.then(Commands.literal(sk).then(Commands.argument("level", IntegerArgumentType.integer(0, max))
                     .executes(ctx -> setSkill(ctx, sk, List.of(ctx.getSource().getPlayerOrException())))
@@ -549,7 +549,7 @@ public final class XenoCommands {
                                 .executes(ctx -> setLevel(ctx, EntityArgument.getPlayers(ctx, "targets"))))));
 
         var skill = Commands.literal("skill").requires(s -> s.hasPermission(2));
-        for (String sk : new String[]{"mining", "crafting", "smelting"}) {
+        for (String sk : new String[]{"mining", "crafting", "smelting", "building"}) {
             int max = sk.equals("mining") ? com.xenowarriors.stats.Mining.MAX_LEVEL : com.xenowarriors.stats.Crafting.MAX_LEVEL;
             skill.then(Commands.literal(sk).then(Commands.argument("level", IntegerArgumentType.integer(0, max))
                     .executes(ctx -> setSkill(ctx, sk, List.of(ctx.getSource().getPlayerOrException())))
@@ -622,7 +622,8 @@ public final class XenoCommands {
         if (type == CharacterType.RHALIX) say(ctx, gray("Winged companions: " + com.xenowarriors.wing.WingPets.count(p) + " / " + com.xenowarriors.wing.WingPets.MAX));
         if (type == CharacterType.MIKIKO) say(ctx, gray("Foxes: " + FoxPets.describe(p).size() + " / " + FoxPets.MAX_FOXES));
         p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
-            say(ctx, gray("Mining: Lv " + d.miningLevel + "   Crafting: Lv " + d.craftLevel + "   Smelting: Lv " + d.smeltLevel));
+            say(ctx, gray("Mining: Lv " + d.miningLevel + "   Crafting: Lv " + d.craftLevel + "   Smelting: Lv " + d.smeltLevel
+                    + "   Building: Lv " + com.xenowarriors.stats.Building.level(p)));
             if (type == CharacterType.MIKIKO) {
                 say(ctx, gray("Hekublade: Lv " + d.bladeLevel + " / " + com.xenowarriors.mikiko.BladeLevel.MAX + "   sealed: " + d.sealed.size()));
                 say(ctx, gray("Fox King: " + (com.xenowarriors.mikiko.FoxKing.active(p) ? "active" : "ready (N)")));
@@ -676,9 +677,11 @@ public final class XenoCommands {
                 switch (skill) {
                     case "mining" -> { d.miningLevel = level; d.miningXp = 0; }
                     case "crafting" -> { d.craftLevel = level; d.craftXp = 0; }
+                    case "building" -> {}
                     default -> { d.smeltLevel = level; d.smeltXp = 0; }
                 }
             });
+            if (skill.equals("building")) com.xenowarriors.stats.Building.set(p, level, 0);   // (per character, like Appetite)
             if (skill.equals("mining")) com.xenowarriors.stats.Mining.sync(p);
             ctx.getSource().sendSuccess(() -> gold(p.getName().getString() + "'s " + skill + " is now level " + level), true);
         }

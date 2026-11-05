@@ -68,6 +68,7 @@ public final class BotSupport {
         if (slot == -2) return;
         BlockPos at = place(l, feet);
         if (at == null) return;
+        com.xenowarriors.stats.Building.botPlaced(b, at, l.getBlockState(at));     // (its character's Building level)
         ItemStack s = slot == -1 ? b.getOffhandItem() : b.inventory.getItem(slot);
         s.shrink(1);
         if (slot >= 0 && s.isEmpty()) b.inventory.setItem(slot, ItemStack.EMPTY);

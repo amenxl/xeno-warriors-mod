@@ -21,7 +21,8 @@
     "StructurePlacementMixin",
     "ChunkGeneratorStructureStateAccessor",
     "PlayerSkyWalkMixin",
-    "ServerGamePacketListenerAccessor"
+    "ServerGamePacketListenerAccessor",
+    "BlockItemSaveMixin"
   ],
   "client": [
     "AbstractClientPlayerMixin",

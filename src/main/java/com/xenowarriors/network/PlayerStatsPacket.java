@@ -17,7 +17,8 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
     public record Me(float speedXp, float attackXp, float defenseXp, int senseRange, int senseSeconds, int senseUses,
                      int sealed, boolean inRealm, boolean prisoner, int pets, int flightMinutes, int mining, float miningXp,
                      int bladeLevel, float bladeXp, int realmLeft, int realmMax, int cooldownLeft,
-                     int craft, float craftXp, int smelt, float smeltXp, int appetite, float appetiteXp) {}
+                     int craft, float craftXp, int smelt, float smeltXp, int appetite, float appetiteXp,
+                     int building, float buildingXp) {}
 
     public static void encode(PlayerStatsPacket m, FriendlyByteBuf buf) {
         buf.writeCollection(m.players, (b, e) -> {
@@ -59,6 +60,8 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
         buf.writeFloat(me.smeltXp());
         buf.writeVarInt(me.appetite());
         buf.writeFloat(me.appetiteXp());
+        buf.writeVarInt(me.building());
+        buf.writeFloat(me.buildingXp());
     }
 
     public static PlayerStatsPacket decode(FriendlyByteBuf buf) {
@@ -67,7 +70,8 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
         Me me = new Me(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                 buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readFloat(),
                 buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
-                buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat());
+                buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat(),
+                buf.readVarInt(), buf.readFloat());
         return new PlayerStatsPacket(list, me);
     }
 

@@ -31,6 +31,11 @@ public class PlayerStatsScreen extends Screen {
 
     /** (UI test) open on this tab. */
     public static void presetTab(int t) { tab = t; }
+    /** (UI test) show the Building tooltip without the mouse over it. */
+    public static boolean testBuildingTip;
+    /** Where the Building row was drawn (screen space) for its tooltip: x0, y0, x1, y1. */
+    private final int[] buildingRow = new int[4];
+    private int buildingLevel = -1;
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
@@ -287,6 +292,24 @@ public class PlayerStatsScreen extends Screen {
         String money = "Money: " + com.xenowarriors.economy.Money.fmt(ClientMoney.get());
         g.drawString(font, money, width - font.width(money) - 8, height - 12, 0x7CE07C);
         super.render(g, mouseX, mouseY, partialTick);
+        if (tab == 1 && buildingLevel >= 0 && (testBuildingTip || (mouseX >= buildingRow[0] && mouseX < buildingRow[2] && mouseY >= buildingRow[1] && mouseY < buildingRow[3])))
+            g.renderComponentTooltip(font, buildingTip(buildingLevel), testBuildingTip ? buildingRow[0] + 20 : mouseX, testBuildingTip ? buildingRow[3] + 12 : mouseY);
+    }
+
+    /** The Building row's tooltip: what its level gives now and when the next bonus comes. */
+    public static List<Component> buildingTip(int lv) {
+        List<Component> t = new ArrayList<>();
+        t.add(Component.literal("Building").withStyle(net.minecraft.ChatFormatting.GREEN));
+        t.add(Component.literal("Levels up from the blocks you place.").withStyle(net.minecraft.ChatFormatting.GRAY));
+        int reach = com.xenowarriors.stats.Building.reach(lv);
+        t.add(Component.literal("Block reach: +" + reach + (reach == 1 ? " block" : " blocks")
+                + (reach >= com.xenowarriors.stats.Building.MAX_REACH ? " (max)" : "  (next at Lv " + (reach + 1) * com.xenowarriors.stats.Building.LEVELS_PER_REACH + ")")));
+        float save = com.xenowarriors.stats.Building.saveChance(lv);
+        int nextSave = (lv / com.xenowarriors.stats.Building.LEVELS_PER_SAVE + 1) * com.xenowarriors.stats.Building.LEVELS_PER_SAVE;
+        t.add(Component.literal("Keep a placed block: " + com.xenowarriors.stats.Building.pct(save)
+                + (save >= com.xenowarriors.stats.Building.MAX_SAVE ? " (max)" : "  (next at Lv " + commas(nextSave) + ")")));
+        t.add(Component.literal("+1 reach every 10 levels (up to +8), +0.1% keep chance every 20 (up to 50%).").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+        return t;
     }
 
     // ------------------------------------------------------------------ helpers
@@ -404,7 +427,7 @@ public class PlayerStatsScreen extends Screen {
         }
         boolean wires = com.xenowarriors.client.forms.FormsClient.style() == com.xenowarriors.forms.Form.Style.WIRE;
         boolean guns = net.minecraftforge.fml.ModList.get().isLoaded("tacz") || com.xenowarriors.client.forms.FormsClient.style() != null;   // (TACZ, or Hekublade / wire guns)
-        int statRows = 7 + (mikiko ? 1 : 0) + (wires ? 1 : 0) + (guns && com.xenowarriors.network.GunLevelPacket.clientLevel > 0 ? 1 : 0);
+        int statRows = 8 + (mikiko ? 1 : 0) + (wires ? 1 : 0) + (guns && com.xenowarriors.network.GunLevelPacket.clientLevel > 0 ? 1 : 0);
         int gridRows = (items.size() + 1) / 2;
         int content = 34 + 12 + statRows * 12 + 10 + 12 + gridRows * 22 + 8;
         int availTop = 28, availBottom = (realm.visible || plea.visible) ? height - 52 : height - 18;
@@ -442,6 +465,13 @@ public class PlayerStatsScreen extends Screen {
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Crafting", me.craft(), me.craftXp(), Stat.MAX_LEVEL, 0xC08A50); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Smelting", me.smelt(), me.smeltXp(), Stat.MAX_LEVEL, 0xFF8A3A); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Appetite", me.appetite(), me.appetiteXp(), com.xenowarriors.stats.Appetite.MAX_LEVEL, 0xE8D020); cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Building", me.building(), me.buildingXp(), com.xenowarriors.stats.Building.MAX_LEVEL, 0x7FD46A);
+        buildingLevel = me.building();                     // (hover the row: what it gives - see render)
+        buildingRow[0] = Math.round(width / 2F + (x + PAD - width / 2F) * scale);
+        buildingRow[2] = Math.round(width / 2F + (right - width / 2F) * scale);
+        buildingRow[1] = Math.round(availTop + (cy - 1 - availTop) * scale);
+        buildingRow[3] = Math.round(availTop + (cy + 10 - availTop) * scale);
+        cy += 12;
         if (mikiko) {
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Hekublade", me.bladeLevel(), me.bladeXp(), BladeLevel.MAX, 0xFF7A1A);
             cy += 12;

@@ -420,7 +420,7 @@ public class CharacterCustomScreen extends Screen {
         g.pose().pushPose();
         g.pose().translate((1F - tabT) * 16F * tabDir, 0, 0);            // a new tab's content slides in
         switch (tab) {
-            case 0 -> statsTab(g, type, col);
+            case 0 -> tip = statsTab(g, type, col, vmx, vmy);
             case 1 -> tip = skillsTab(g, type, col, vmx, vmy);
             case 2 -> outfitsTab(g, type, col, vmx, vmy);
             default -> kaTab(g, col, vmx, vmy);
@@ -546,8 +546,9 @@ public class CharacterCustomScreen extends Screen {
         g.fill(4, 48, VW - 4, 49, 0xFF2E2E38);
     }
 
-    private void statsTab(GuiGraphics g, CharacterType type, int col) {
-        if (self == null || me == null) { g.drawCenteredString(font, "Loading...", VW / 2, 90, 0xA0A0B0); return; }
+    private List<String> statsTab(GuiGraphics g, CharacterType type, int col, double mx, double my) {
+        if (self == null || me == null) { g.drawCenteredString(font, "Loading...", VW / 2, 90, 0xA0A0B0); return null; }
+        List<String> tip = null;
         // level row
         int lv = Math.max(1, self.level());
         pill(g, 4, 53, 120, 15);
@@ -574,6 +575,7 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Smelting", lvStr(me.smelt()), me.smeltXp(), 0xFF8A3A});
         if (type != CharacterType.ULTIMA) rows.add(new Object[]{"Appetite", (me.appetite() >= com.xenowarriors.stats.Appetite.MAX_LEVEL ? "MAX" : "Lv " + me.appetite())
                 + "  x" + (com.xenowarriors.stats.Appetite.layers(me.appetite()) + 1), me.appetiteXp(), 0xE8D020});
+        rows.add(new Object[]{"Building", lvStr(me.building()), me.buildingXp(), 0x7FD46A});     // (hover: its reach / keep-a-block bonuses)
         if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0)   // (TACZ guns installed)
             rows.add(new Object[]{"Guns", lvStr(com.xenowarriors.network.GunLevelPacket.clientLevel), com.xenowarriors.network.GunLevelPacket.clientProgress, 0xB0B8C8});
         rows.add(new Object[]{"Sensing", me.senseRange() + "b, " + me.senseSeconds() + "s", -1F, 0});
@@ -607,12 +609,15 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, (String) o[0], x + 4, ty, 0.85F, 0xB8B8C8);
             String v = (String) o[1];
             scaled(g, v, x + colW - 4 - font.width(v) * 0.85F, ty, 0.85F, 0xFFFFFF);
+            if ("Building".equals(o[0]) && inBox(mx, my, x, yi, colW, hh))
+                tip = com.xenowarriors.client.PlayerStatsScreen.buildingTip(me.building()).stream().map(Component::getString).toList();
         }
         String[] bl = blade();
         if (bl != null) {
             g.fill(VW / 2 - 60, VH - 18, VW / 2 + 60, VH - 4, 0xFF000000 | col);
             g.drawCenteredString(font, bl[0], VW / 2, VH - 15, 0xFFFFFF);
         }
+        return tip;
     }
 
     private static String lvStr(int l) { return l >= Stat.MAX_LEVEL ? "MAX" : "Lv " + String.format("%,d", l); }
