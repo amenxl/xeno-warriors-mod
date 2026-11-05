@@ -441,6 +441,11 @@ public class PlayerStatsScreen extends Screen {
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Hekublade", me.bladeLevel(), me.bladeXp(), BladeLevel.MAX, 0xFF7A1A);
             cy += 12;
         }
+        if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0) {   // (TACZ guns installed)
+            statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Guns", com.xenowarriors.network.GunLevelPacket.clientLevel,
+                    com.xenowarriors.network.GunLevelPacket.clientProgress, com.xenowarriors.compat.GunLevel.MAX, 0xB0B8C8);
+            cy += 12;
+        }
 
         // status grid: two columns of label over value
         cy += 8;

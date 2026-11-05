@@ -36,7 +36,7 @@ public final class RainIdle {
         if (!p.level().isRainingAt(p.blockPosition().above()) || p.isUnderWater() || p.isPassenger() || p.isSleeping()) return false;
         if (com.xenowarriors.client.mikiko.HoodClient.wearingHoodie(p)) return false;     // hood's got it covered
         return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && p.onGround() && !p.swinging && !p.isUsingItem()
-                && p.hurtTime == 0 && !p.isCrouching();
+                && p.hurtTime == 0 && !p.isCrouching() && !Busy.action(p) && !Idles.taken(p, Idles.RAIN);
     }
 
     @SubscribeEvent
@@ -47,6 +47,7 @@ public final class RainIdle {
         for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             if (!wanted(p)) { STILL.remove(p.getId()); continue; }
             STILL.computeIfAbsent(p.getId(), k -> new int[1])[0]++;
+            if (weight(p) > 0F) Idles.hold(p, Idles.RAIN);
         }
     }
 

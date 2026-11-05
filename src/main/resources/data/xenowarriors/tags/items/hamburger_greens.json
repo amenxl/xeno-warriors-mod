@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:dried_kelp",
+    "minecraft:kelp",
+    "minecraft:fern",
+    "minecraft:grass",
+    "minecraft:seagrass"
+  ]
+}

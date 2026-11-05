@@ -47,6 +47,10 @@ public final class ModItems {
     public static final RegistryObject<Item> CORRUPTED_SHARD = ITEMS.register("corrupted_shard", () -> new Item(new Item.Properties()));
     /** Garry's microphone (he pulls it out to beatbox). */
     public static final RegistryObject<Item> MICROPHONE = ITEMS.register("microphone", () -> new Item(new Item.Properties().stacksTo(1)));
+    /** Skylander Wings (dropped by Skylanders): Mikiko eats them for +10 to every stat. */
+    public static final RegistryObject<Item> SKYLANDER_WINGS = ITEMS.register("skylander_wings", () -> new SkylanderWingsItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.RARE)));
+    /** A hamburger: 40% health + Regeneration II (crafted, or cooked by Yuri). */
+    public static final RegistryObject<Item> HAMBURGER = ITEMS.register("hamburger", () -> new HamburgerItem(new Item.Properties().stacksTo(16)));
     /** Fox PJs: a fox onesie made with Fox Shards (+5% running speed per piece; fits every character over any outfit). */
     public static final RegistryObject<Item> FOX_PJS_HOOD = ITEMS.register("fox_pjs_hood", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
     public static final RegistryObject<Item> FOX_PJS_TOP = ITEMS.register("fox_pjs_top", () -> new FoxPjsItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));

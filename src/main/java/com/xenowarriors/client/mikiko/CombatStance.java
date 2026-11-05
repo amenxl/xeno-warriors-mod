@@ -46,6 +46,8 @@ public final class CombatStance {
         if (com.xenowarriors.client.ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.compat.DmzCompat.charging(p)
                 || com.xenowarriors.client.compat.DmzCompat.blocking(p) || com.xenowarriors.client.SurfPose.surfing(p)) return NONE;
         if (p instanceof AbstractClientPlayer cp && com.xenowarriors.client.FlightTracker.isFlying(cp)) return NONE;
+        if (com.xenowarriors.client.AttackHooks.externalGuard.test(p))                  // Epic Fight guarding: his own stance, not its fists-up pose
+            return p.getMainHandItem().isEmpty() ? FISTS : Hekublade.isBlade(p.getMainHandItem()) ? SWORD : NONE;
         if (Surroundings.of(p) != Surroundings.ENEMIES || com.xenowarriors.client.KarmaFocusClient.focusing(p)) return NONE;
         if (p.getMainHandItem().isEmpty()) return FISTS;
         if (Hekublade.isBlade(p.getMainHandItem())) return SWORD;

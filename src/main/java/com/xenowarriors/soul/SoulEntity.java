@@ -117,6 +117,7 @@ public class SoulEntity extends PathfinderMob {
             if (distanceToSqr(o) > SoulSplit.LEASH * SoulSplit.LEASH) { SoulSplit.soulGone(this, true); return; }
             if (tickCount % 4 == 0) l.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 1.0, getZ(), 1, 0.25, 0.5, 0.25, 0.005);
             if (character() == CharacterType.RHALIX && getTarget() != null && --castCd <= 0) { castCd = 70; RhalixSoulArts.cast(this, getTarget(), soulLevel); }
+            if (getTarget() != null && tickCount % 5 == 0) SoulSkills.tick(this, o, getTarget());   // a strong Soul Splitter: the owner's skills too
             fly(o);
         }
     }
@@ -186,10 +187,12 @@ public class SoulEntity extends PathfinderMob {
     @Override
     public void die(DamageSource src) {
         super.die(src);
+        if (!level().isClientSide) SoulSkills.forget(this);
         if (!level().isClientSide) SoulSplit.soulGone(this, false);
     }
 
     @Override protected void dropAllDeathLoot(DamageSource src) {}
+    @Override public void remove(RemovalReason r) { if (!level().isClientSide) SoulSkills.forget(this); super.remove(r); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean shouldBeSaved() { return false; }
     @Override public boolean canBeLeashed(Player p) { return false; }

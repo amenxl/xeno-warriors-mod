@@ -80,6 +80,17 @@ public final class TaczGuns {
         } catch (Throwable t) { broken = true; return false; }
     }
 
+    /** Rounds in the magazine (-1 if not a gun / unknown). */
+    public static int ammo(ItemStack g) {
+        if (!isGun(g)) return -1;
+        try { return (int) getAmmo.invoke(g.getItem(), g); } catch (Throwable t) { return -1; }
+    }
+
+    public static void setAmmo(ItemStack g, int n) {
+        if (!isGun(g)) return;
+        try { setAmmoCount.invoke(g.getItem(), g, n); } catch (Throwable ignored) {}
+    }
+
     /** Is this one of TACZ's bullets? */
     public static boolean isBullet(Entity e) { return e != null && e.getClass().getName().startsWith("com.tacz.guns.entity"); }
 }

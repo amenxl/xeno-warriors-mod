@@ -145,6 +145,8 @@ public final class MikikoAnimations {
         int vibeTicks;
         int jumpStart = -100;
         boolean doubleJumped;
+        /** Third jump sent this time in the air (the Hekublade ride, see BladeRideJump). */
+        boolean rideJumped;
         int airTicks;
         double peakY = Double.NaN;
         int landStart = -100;
@@ -215,7 +217,7 @@ public final class MikikoAnimations {
                 && s.peakY - p.getY() > DIVE_AFTER && p.getY() - p.yo < -0.45;
         s.diveO = s.dive;
         s.dive = approach(s.dive, diving ? 1F : 0F, diving ? 0.06F : 0.25F);
-        if (p.onGround() || p.isInWater() || p.onClimbable()) s.doubleJumped = false;
+        if (p.onGround() || p.isInWater() || p.onClimbable()) { s.doubleJumped = false; s.rideJumped = false; }
         if (p == Minecraft.getInstance().player) tryDoubleJump(level, (net.minecraft.client.player.LocalPlayer) p, s, now);
         // other players' flight is guessed from air time, so wait a bit longer to not mistake a big jump for flying
         boolean flying = FlightTracker.isFlying(p) && !p.isFallFlying() && !p.onGround()
@@ -309,7 +311,8 @@ public final class MikikoAnimations {
                 || Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) > 0.01
                 || !p.onGround() || p.isCrouching() || p.swinging || p.hurtTime > 0 || p.isUsingItem()
                 || p.isPassenger() || p.isSleeping() || p.isSwimming() || p.isFallFlying() || s.move != null
-                || ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.Busy.busy(p);
+                || ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.Busy.action(p)
+                || com.xenowarriors.client.Idles.taken(p, com.xenowarriors.client.Idles.MIKIKO);   // (dancing to Garry, the rain...: no idles of his own on top)
         s.still = moving ? 0 : s.still + 1;
         if (!Hekublade.isBlade(p.getMainHandItem()) || s.move != null || s.swordTired > 0.5F) s.backSlung = false;
         else if (p.isSprinting() && p.onGround() && s.run > 0.35F) s.backSlung = true;
@@ -402,6 +405,19 @@ public final class MikikoAnimations {
             int c = (s.still - SIT_AFTER) % FIRE_CYCLE;
             if (c >= 40 && c < 200) MikikoEffects.fireShow(level, p, c - 40);
         }
+        // one body animation at a time: sitting, his stretches, the song dances... hold the body while they show
+        if (s.sit > 0.01F || s.groove > 0F || s.hype > 0F || s.discW > 0F || s.alert > 0F || s.robot > 0F || s.vibe > 0F
+                || s.poison > 0F || s.tired > 0F || geckoIdleShowing(p, s))
+            com.xenowarriors.client.Idles.hold(p, com.xenowarriors.client.Idles.MIKIKO);
+    }
+
+    /** One of his GeckoLib standing idles (stretch, scratch, kicking the dirt) is playing now (same timing as apply). */
+    private static boolean geckoIdleShowing(AbstractClientPlayer p, State s) {
+        if (s.still < LOOK_AROUND_AFTER || s.sit >= 0.5F || Hekublade.isBlade(p.getMainHandItem())) return false;
+        int since = s.still - LOOK_AROUND_AFTER;
+        String[] idles = com.xenowarriors.client.CalmTracker.longCalm(p) ? CALM_IDLES : IDLES;
+        String idle = idles[Math.floorMod(since / IDLE_CYCLE + p.getId(), idles.length)];
+        return since % IDLE_CYCLE <= GeoAnims.length(idle);
     }
 
     private static void tryDoubleJump(ClientLevel level, net.minecraft.client.player.LocalPlayer p, State s, int now) {
@@ -409,6 +425,14 @@ public final class MikikoAnimations {
         boolean down = mc.options.keyJump.isDown();
         boolean pressed = down && !lastJumpDown;
         lastJumpDown = down;
+        // the third jump: with a strong Hekublade (and no flight yet) he rides the blade - the server decides
+        if (pressed && s.doubleJumped && !s.rideJumped && now - s.jumpStart >= 3 && !p.onGround() && !p.getAbilities().mayfly
+                && !p.isFallFlying() && !p.isInWater() && !p.isPassenger() && mc.screen == null
+                && !com.xenowarriors.client.UltimateCutscene.active()) {
+            s.rideJumped = true;
+            com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.BladeRideJumpPacket());
+            return;
+        }
         if (!pressed || s.doubleJumped || s.airTicks < 2 || p.onGround() || p.getAbilities().flying || p.getAbilities().mayfly
                 || p.isFallFlying() || p.isInWater() || p.isInLava() || p.onClimbable() || p.isPassenger()
                 || com.xenowarriors.client.UltimateCutscene.active() || mc.screen != null) return;

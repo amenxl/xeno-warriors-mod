@@ -42,7 +42,7 @@ public final class GarryBeatbox {
     }
 
     private static boolean calm(AbstractClientPlayer p) {
-        return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p)
+        return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.action(p) && !Idles.taken(p, Idles.GARRY)
                 && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
                 && p.getMainHandItem().isEmpty() && p.hurtTime == 0;
     }
@@ -94,6 +94,7 @@ public final class GarryBeatbox {
             int[] s = STILL.computeIfAbsent(p.getId(), k -> new int[2]);
             if (calm(p)) s[0]++;
             else { if (s[0] > 0) s[1] = (int) ((mc.level.getGameTime() / 20) & 0xFFFF); s[0] = 0; }
+            if (t == CharacterType.GARRY ? time(p, 0F) >= 0F : face(p) != null) Idles.hold(p, Idles.GARRY);   // beatboxing / dancing: the body's taken
             if (t != CharacterType.GARRY) continue;
             float bt = time(p, 0F);
             if (bt < 0) continue;
@@ -169,11 +170,20 @@ public final class GarryBeatbox {
         float shake = Mth.sin(age * 2.6F) * 0.05F;
         set(m.rightArm, -0.6F + shake, 0.1F, 0.35F, w);
         set(m.leftArm, -0.6F - shake, -0.1F, -0.35F, w);
-        LimbBend.extraElbows(p, 1.4F * w, 1.4F * w);
+        elbows(m, p, -1.9F, -1.9F, w);                                    // fists up (forearms bend forward, never back)
         m.body.xRot = Mth.lerp(w, m.body.xRot, -0.12F);
         if (other != null) m.head.yRot = Mth.lerp(w, m.head.yRot, lookAt(p, other));
         m.head.xRot = Mth.lerp(w, m.head.xRot, -0.1F);
         LimbBend.extraKnees(p, 0.2F * w, 0.2F * w);
+    }
+
+    /**
+     * Sets the elbows to these total bends (negative = forearm up / forward). LimbBend already bends the elbow from how
+     * far forward the upper arm is; this adds only what's missing, so the forearm ends up where the move wants it
+     * (adding a fixed amount on top doubled the bend, or - positive - bent the arm backwards at the elbow).
+     */
+    private static void elbows(HumanoidModel<?> m, Player p, float right, float left, float w) {
+        LimbBend.extraElbows(p, (right - LimbBend.elbow(m.rightArm.xRot)) * w, (left - LimbBend.elbow(m.leftArm.xRot)) * w);
     }
 
     /** Old-school dancing on Garry's beat: each dancer has their move. */
@@ -185,21 +195,22 @@ public final class GarryBeatbox {
                 float s = Mth.sin(a);
                 set(m.rightLeg, -0.6F * s, 0F, 0F, w); set(m.leftLeg, 0.6F * s, 0F, 0F, w);
                 set(m.rightArm, -0.9F + 0.6F * s, 0F, 0.1F, w); set(m.leftArm, -0.9F - 0.6F * s, 0F, -0.1F, w);
-                LimbBend.extraElbows(p, 1.2F * w, 1.2F * w);
+                elbows(m, p, -1.35F, -1.35F, w);
                 LimbBend.extraKnees(p, Math.max(0F, s) * 0.9F * w, Math.max(0F, -s) * 0.9F * w);
             }
             case 1 -> {                                                   // the cabbage patch: fists circling in front
                 set(m.rightArm, -1.3F + 0.35F * Mth.sin(a), -0.3F, 0.35F * Mth.cos(a), w);
                 set(m.leftArm, -1.3F + 0.35F * Mth.sin(a), 0.3F, 0.35F * Mth.cos(a), w);
-                LimbBend.extraElbows(p, 1.5F * w, 1.5F * w);
+                elbows(m, p, -1.6F, -1.6F, w);
                 m.body.yRot = Mth.lerp(w, m.body.yRot, 0.25F * Mth.sin(a));
                 LimbBend.extraKnees(p, 0.3F * w * Math.abs(Mth.cos(a)), 0.3F * w * Math.abs(Mth.cos(a)));
             }
             default -> {                                                  // the robot: stiff, snapping between poses
                 int k = Math.floorMod((int) (beatT / 6F), 4);
-                float[][] P = {{-1.57F, 0F, 0F, 0F}, {0F, 0F, -1.57F, 0F}, {-1.57F, 1.57F, 0F, 0F}, {0F, 0F, 0F, 1.57F}};
+                // {right arm, right elbow, left arm, left elbow}: elbows bend the forearm up / forward, like a real arm
+                float[][] P = {{-1.57F, 0F, 0F, 0F}, {0F, 0F, -1.57F, 0F}, {-1.57F, -1.57F, 0F, 0F}, {0F, 0F, 0F, -1.57F}};
                 set(m.rightArm, P[k][0], 0F, 0F, w); set(m.leftArm, P[k][2], 0F, 0F, w);
-                LimbBend.extraElbows(p, P[k][1] * w, P[k][3] * w);
+                elbows(m, p, P[k][1], P[k][3], w);
                 m.head.yRot = Mth.lerp(w, m.head.yRot, (k % 2 == 0 ? 0.5F : -0.5F));
             }
         }

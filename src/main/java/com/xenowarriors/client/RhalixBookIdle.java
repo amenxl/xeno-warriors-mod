@@ -47,7 +47,7 @@ public final class RhalixBookIdle {
     }
 
     private static boolean calm(AbstractClientPlayer p) {
-        return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.busy(p)
+        return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && !p.swinging && p.onGround() && !Busy.action(p) && !Idles.taken(p, Idles.BOOK)
                 && !p.isCrouching() && !p.isPassenger() && !p.isUsingItem() && !FlightTracker.isFlying(p) && !p.isSleeping()
                 && p.getMainHandItem().isEmpty() && !RhalixWingsClient.busy(p) && p.hurtTime == 0;
     }
@@ -61,6 +61,7 @@ public final class RhalixBookIdle {
             if (!hasBook(p)) { STILL.remove(p.getId()); continue; }
             int[] s = STILL.computeIfAbsent(p.getId(), k -> new int[1]);
             s[0] = calm(p) ? s[0] + 1 : 0;
+            if (s[0] >= AFTER) Idles.hold(p, Idles.BOOK);
             float t = s[0] - AFTER;
             int appear = ClientCharacterData.rhalixOutfit(p) == ClientCharacterData.RHALIX_ORIGINS_1 ? 34 : 4;
             if (t >= appear && t < appear + 5) puff(mc, p);

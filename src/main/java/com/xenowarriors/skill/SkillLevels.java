@@ -100,6 +100,9 @@ public final class SkillLevels {
     /** A character is gone for good (a deleted You): its ability levels go too. */
     public static void forget(Player p, String charKey) { root(p).remove(charKey); }
 
+    /** (tests) sets a skill's tier and level for the character this player is playing. */
+    public static void setForTest(Player p, String skillId, int tier, int level) { put(p, charKey(p), skillId, new int[]{tier, level, 0}); }
+
     // ---------------------------------------------------------------- accessors (for other systems)
 
     /** Tier 1-10 of a skill for the character this player is playing. */

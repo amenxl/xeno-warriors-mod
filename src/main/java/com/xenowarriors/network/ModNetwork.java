@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "65";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "66";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -477,6 +477,10 @@ public final class ModNetwork {
                 .encoder(KishiFxPacket::encode).decoder(KishiFxPacket::decode).consumerMainThread(KishiFxPacket::handle).add();
         CHANNEL.messageBuilder(SkillLevelsPacket.class, id++)                   // (both ways: ability levels, and a tier upgrade)
                 .encoder(SkillLevelsPacket::encode).decoder(SkillLevelsPacket::decode).consumerMainThread(SkillLevelsPacket::handle).add();
+        CHANNEL.messageBuilder(BladeRideJumpPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(BladeRideJumpPacket::encode).decoder(BladeRideJumpPacket::decode).consumerMainThread(BladeRideJumpPacket::handle).add();
+        CHANNEL.messageBuilder(GunLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(GunLevelPacket::encode).decoder(GunLevelPacket::decode).consumerMainThread(GunLevelPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

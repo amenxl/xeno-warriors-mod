@@ -14,6 +14,8 @@ public final class AttackHooks {
     public static Predicate<Player> externalBusy = p -> false;
     /** The other mod is running this player's combat right now (Epic Fight battle mode): our combo system stands aside. */
     public static Predicate<Player> externalCombat = p -> false;
+    /** The other mod has them guarding (Epic Fight's fists-up guard): we show our own fighting stance instead. */
+    public static Predicate<Player> externalGuard = p -> false;
     /** Face for what Epic Fight is playing on them right now (attacks, guarding, dodging, getting hit...), or null. */
     public static java.util.function.Function<Player, String> externalFace = p -> null;
     /** Face while just standing in an Epic Fight weapon's battle stance, or null. */

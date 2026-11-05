@@ -563,6 +563,8 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Smelting", lvStr(me.smelt()), me.smeltXp(), 0xFF8A3A});
         if (type != CharacterType.ULTIMA) rows.add(new Object[]{"Appetite", (me.appetite() >= com.xenowarriors.stats.Appetite.MAX_LEVEL ? "MAX" : "Lv " + me.appetite())
                 + "  x" + (com.xenowarriors.stats.Appetite.layers(me.appetite()) + 1), me.appetiteXp(), 0xE8D020});
+        if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0)   // (TACZ guns installed)
+            rows.add(new Object[]{"Guns", lvStr(com.xenowarriors.network.GunLevelPacket.clientLevel), com.xenowarriors.network.GunLevelPacket.clientProgress, 0xB0B8C8});
         rows.add(new Object[]{"Sensing", me.senseRange() + "b, " + me.senseSeconds() + "s", -1F, 0});
         rows.add(new Object[]{"Practice", Math.min(me.senseUses(), 100) + "/100", -1F, 0});
         if (type == CharacterType.MIKIKO) {
@@ -570,7 +572,7 @@ public class CharacterCustomScreen extends Screen {
             rows.add(new Object[]{"Foxes", String.valueOf(me.pets()), -1F, 0});
             rows.add(new Object[]{"Sealed", String.valueOf(me.sealed()), -1F, 0});
             rows.add(new Object[]{"Blade time", me.cooldownLeft() > 0 ? "locked" : BladeLevel.fmt(me.realmLeft()), -1F, 0});
-            rows.add(new Object[]{"Wind flight", lv >= 50 ? me.flightMinutes() + " min" : "Lv 50", -1F, 0});
+            rows.add(new Object[]{"Wind flight", lv >= com.xenowarriors.mikiko.WindFlight.LEVEL ? me.flightMinutes() + " min" : "Lv " + com.xenowarriors.mikiko.WindFlight.LEVEL, -1F, 0});
         } else if (type == CharacterType.RHALIX) {
             rows.add(new Object[]{"Companions", String.valueOf(me.pets()), -1F, 0});
         }
