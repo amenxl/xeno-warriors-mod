@@ -95,7 +95,7 @@ public final class BigHunger {
         var d = p.getPersistentData();
         int last = d.contains(LAST) ? d.getInt(LAST) : p.getFoodData().getFoodLevel();
         int gainedOnBar = p.getFoodData().getFoodLevel() - last;
-        int total = (d.contains(TOTAL) ? d.getInt(TOTAL) : last) + fp.getNutrition() - gainedOnBar + gainedOnBar;
+        int total = d.contains(TOTAL) ? d.getInt(TOTAL) + fp.getNutrition() : p.getFoodData().getFoodLevel();   // (no stomach yet: the bar already holds this meal - don't count it twice)
         d.putInt(TOTAL, Math.min(max(p), total));
         d.putInt(LAST, p.getFoodData().getFoodLevel());                // the bar change is already counted
     }

@@ -56,6 +56,7 @@ public final class BigHungerHud {
         }
         if (max <= 20 || total < 0) return;                            // (Mikiko, Rhalix, and anyone with extra layers from their Appetite level)
         if (event.isCanceled()) return;
+        if (KhHud.active() && !ClientSettings.vanillaBars()) { event.setCanceled(true); return; }   // (the Blazing / KH HUD shows food itself)
         event.setCanceled(true);
         draw(event.getGuiGraphics(), mc);
     }
@@ -97,7 +98,11 @@ public final class BigHungerHud {
             g.blit(ICONS, x, y, u, 27, 9, 9);
             RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         }
-        String label = "x" + (tier + 1) + "/" + layers();             // (the layer being eaten from, out of all of them)
-        g.drawString(mc.font, label, right - 80 - mc.font.width(label) - 3, top + 1, 0xFF000000 | TIER[tier % TIER.length], true);
+        String label = "x" + (tier + 1) + "/" + layers();             // (the layer being eaten from, out of all of them), small, just above the row's left end
+        g.pose().pushPose();
+        g.pose().translate(right - 80, top - 5, 0);
+        g.pose().scale(0.6F, 0.6F, 1F);
+        g.drawString(mc.font, label, 0, 0, 0xFF000000 | TIER[tier % TIER.length], true);
+        g.pose().popPose();
     }
 }

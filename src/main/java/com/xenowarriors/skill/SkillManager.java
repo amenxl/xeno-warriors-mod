@@ -198,7 +198,6 @@ public final class SkillManager {
             // a blast aimed at someone charging their own: CLASH instead
             boolean clash = skill.clashColor() >= 0 && skill.clashesOnUse() && com.xenowarriors.ka.Clashes.tryStart(player, skill.clashColor());
             if (clash || com.xenowarriors.combat.SkillContext.callSkill(player, skill.getId(), () -> skill.use(player))) {
-                SkillLevels.used(player, skill);
                 com.xenowarriors.journey.Journey.onSkill(player);
                 Integer gen = SkillAnimPacket.GENERIC.get(skill.getId());          // newer skills: a general move to go with them
                 if (gen != null && !clash) ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), gen, !player.onGround()), player);
@@ -214,6 +213,7 @@ public final class SkillManager {
                 int cooldown = SkillLevels.cooldownFor(player, skill.getId(), skill.getCooldownTicks());
                 data.cooldownEnd[slot] = now(player) + cooldown;
                 ModNetwork.sendToPlayer(new SkillCooldownPacket(slot, cooldown, cooldown), player);
+                SkillLevels.used(player, skill);                                // (one use toward its next ability level - after this use's cost and cooldown)
             }
         });
     }

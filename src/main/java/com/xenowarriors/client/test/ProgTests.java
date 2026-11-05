@@ -147,7 +147,7 @@ public final class ProgTests {
             Appetite.set(p, 50, 0);
             p.getFoodData().setFoodLevel(4);
             eat(p, new ItemStack(Items.COOKED_BEEF));
-            log("appetite lv50 steak: food=" + p.getFoodData().getFoodLevel() + " (expect 4+8+4=16) layers=" + Appetite.layers(p) + " max=" + BigHunger.max(p) + " (expect 120)");
+            log("appetite lv50 steak: stomach=" + BigHunger.total(p) + " (expect 4+8+4=16) layers=" + Appetite.layers(p) + " max=" + BigHunger.max(p) + " (expect 120)");
             Appetite.set(p, 9, Appetite.needed(9) - 1);
             eat(p, new ItemStack(Items.COOKED_BEEF));
             log("appetite level-up from food: lv=" + Appetite.level(p) + " layers=" + Appetite.layers(p));
@@ -280,7 +280,7 @@ public final class ProgTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             boolean has = false;
             for (ItemStack s : p.getInventory().items) if (s.is(com.xenowarriors.item.ModItems.GUIDE_BOOK.get())) has = true;
-            log("guide book given on first join=" + has);
+            log("guide book in this character's inventory=" + has + " (it goes to whoever you were on first join; characters have their own inventories)");
         }), 5));
         l.add(new Step(null, () -> {
             var g = new com.xenowarriors.client.menu.GuideScreen(null);

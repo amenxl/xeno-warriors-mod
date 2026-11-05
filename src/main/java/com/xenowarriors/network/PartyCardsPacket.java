@@ -28,7 +28,7 @@ public record PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader
      * A synergy for the party menu. state: 2 = active now, 1 = your character is part of it but the partner isn't here,
      * 0 = not one for your character. bond: the bond behind it (for an active one).
      */
-    public record Syn(String name, String members, String effect, String downside, int state, int bond) {}
+    public record Syn(String name, String members, String effect, String downside, int state, int bond, String needs) {}
 
     public PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader) { this(cards, inParty, leader, List.of(), 0, 0); }
 
@@ -42,7 +42,7 @@ public record PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader
             b.writeVarInt(c.bond + 1); b.writeFloat(c.bondXp);
         }
         b.writeVarInt(m.synergies.size());
-        for (Syn y : m.synergies) { b.writeUtf(y.name); b.writeUtf(y.members); b.writeUtf(y.effect); b.writeUtf(y.downside); b.writeVarInt(y.state); b.writeVarInt(y.bond); }
+        for (Syn y : m.synergies) { b.writeUtf(y.name); b.writeUtf(y.members); b.writeUtf(y.effect); b.writeUtf(y.downside); b.writeVarInt(y.state); b.writeVarInt(y.bond); b.writeUtf(y.needs); }
         b.writeVarInt(m.bondHearts); b.writeVarInt(m.bestBond);
     }
 
@@ -59,7 +59,7 @@ public record PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader
         }
         int sn = b.readVarInt();
         List<Syn> syn = new ArrayList<>(Math.min(sn, 64));
-        for (int i = 0; i < sn; i++) syn.add(new Syn(b.readUtf(), b.readUtf(), b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt()));
+        for (int i = 0; i < sn; i++) syn.add(new Syn(b.readUtf(), b.readUtf(), b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt(), b.readUtf()));
         return new PartyCardsPacket(l, in, lead, syn, b.readVarInt(), b.readVarInt());
     }
 
@@ -106,7 +106,9 @@ public record PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader
             if (!on && state == 1) for (String c : d.partnersFor(mine)) bond = Math.max(bond, com.xenowarriors.party.Bonds.level(me, c));   // (what it'd be)
             String down = d.downside() == null ? "" : com.xenowarriors.party.Bonds.downside(bond) <= 0 ? "(" + d.downside() + " - gone: bond " + com.xenowarriors.party.Bonds.NO_DOWNSIDE + "+)"
                     : d.downside() + " (" + Math.round(com.xenowarriors.party.Bonds.downside(bond) * 100) + "% - gone at bond " + com.xenowarriors.party.Bonds.NO_DOWNSIDE + ")";
-            out.add(new Syn(d.name(), d.members(), com.xenowarriors.party.Synergy.effect(d.name(), bond), down, state, bond));
+            List<String> need = new ArrayList<>();
+            for (String c : d.partnersFor(mine)) need.add(com.xenowarriors.character.CharacterType.byId(c).getDisplayName().getString());
+            out.add(new Syn(d.name(), d.members(), com.xenowarriors.party.Synergy.effect(d.name(), bond), down, state, bond, need.size() > 2 ? need.get(0) + " or another" : String.join(" or ", need)));
         }
         out.sort((a, b) -> Integer.compare(b.state(), a.state()));
         return out;

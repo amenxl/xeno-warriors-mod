@@ -280,8 +280,8 @@ public class PartySetupScreen extends Screen {
             StringBuilder on = new StringBuilder();
             for (PartyCardsPacket.Syn y : last.synergies()) if (y.state() == 2) on.append(on.length() == 0 ? "" : "   ").append("\u2726 ").append(y.name()).append(" (bond ").append(y.bond()).append(")");
             String line = on.length() == 0 ? "No synergy active - press S to see which teammates would make one" : "Synergy: " + on;
-            g.drawCenteredString(font, line, width / 2, 24, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
-            if (last.bondHearts() > 0) g.drawCenteredString(font, "Best bond " + last.bestBond() + ": +" + last.bondHearts() + " max hearts", width / 2, 35, 0xFFFF9AD8);
+            g.drawCenteredString(font, line, width / 2, 46, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
+            if (last.bondHearts() > 0) g.drawCenteredString(font, "Best bond " + last.bestBond() + ": +" + last.bondHearts() + " max hearts", width / 2, 57, 0xFFFF9AD8);
         }
         // bottom bar
         int by = height - 16;
@@ -290,39 +290,50 @@ public class PartySetupScreen extends Screen {
         if (synergyOpen) synergyPanel(g);
     }
 
+    private void small(GuiGraphics g, String t, float x, float y, float k, int c) { small(g, t, x, y, k, c, 10000); }
+
+    private void small(GuiGraphics g, String t, float x, float y, float k, int c, int maxW) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(k, k, 1F);
+        g.drawString(font, font.plainSubstrByWidth(t, (int) (maxW / k)), 0, 0, c, false);
+        g.pose().popPose();
+    }
+
     /** The Team Synergy panel: every synergy, whether it's on, what it does at your bond, and its downside fading out. */
     private void synergyPanel(GuiGraphics g) {
         g.pose().pushPose();
         g.pose().translate(0, 0, 300);
         List<PartyCardsPacket.Syn> list = last == null ? List.of() : last.synergies();
-        int pw = Math.min(420, width - 24), rowH = 27, ph = Math.min(height - 60, 46 + list.size() * rowH);
-        int px = (width - pw) / 2, py = 46;
+        int pw = Math.min(600, width - 24), px = (width - pw) / 2, py = 46;
+        String help = "Bond grows by fighting together, kills and revives. Higher bond = stronger synergy; downsides fade out by bond " + com.xenowarriors.party.Bonds.NO_DOWNSIDE + ".";
+        var helpLines = font.split(Component.literal(help), pw - 16);
+        int cols = pw >= 380 ? 2 : 1, rowH = 31, rows = (list.size() + cols - 1) / cols;
+        int head = 20 + helpLines.size() * 9 + 4;
+        int ph = Math.min(height - py - 20, head + Math.max(1, rows) * rowH + 4);
         g.fill(px - 2, py - 2, px + pw + 2, py + ph + 2, 0xFF8C78E8);
         g.fill(px, py, px + pw, py + ph, 0xF0101030);
         g.drawString(font, "TEAM SYNERGY", px + 8, py + 6, 0xFFFFFFFF);
         String hb = last == null ? "" : "Best bond in party: " + last.bestBond() + "  \u2192  +" + last.bondHearts() + " max hearts (+" + com.xenowarriors.party.Bonds.heartsPer10() + " per 10 bond)";
         g.drawString(font, hb, px + pw - 8 - font.width(hb), py + 6, 0xFFFF9AD8);
-        String help = "Bond grows by fighting together, kills and revives. Higher bond = stronger synergy; downsides fade out by bond " + com.xenowarriors.party.Bonds.NO_DOWNSIDE + ".";
         int hy = py + 18;
-        for (var l : font.split(Component.literal(help), pw - 16)) { g.drawString(font, l, px + 8, hy, 0xFF9AA0C8, false); hy += 9; }
-        int y = Math.max(py + 40, hy + 3);
-        if (list.isEmpty()) g.drawString(font, "Loading...", px + 8, y, 0xFF9AA0C8);
-        for (PartyCardsPacket.Syn s : list) {
-            if (y + rowH > py + ph) break;
+        for (var l : helpLines) { g.drawString(font, l, px + 8, hy, 0xFF9AA0C8, false); hy += 9; }
+        if (list.isEmpty()) g.drawString(font, "Loading...", px + 8, py + head, 0xFF9AA0C8);
+        int cw = (pw - 12) / cols;
+        for (int i = 0; i < list.size(); i++) {
+            PartyCardsPacket.Syn s = list.get(i);
+            int x = px + 6 + (i % cols) * cw, y = py + head + (i / cols) * rowH, w = cw - 4;
+            if (y + rowH - 3 > py + ph) break;
             int dot = s.state() == 2 ? 0xFF50F080 : s.state() == 1 ? 0xFFF0C040 : 0xFF505070;
-            g.fill(px + 6, y, px + pw - 6, y + rowH - 3, s.state() == 2 ? 0xC0183A28 : 0xC01A1A36);
-            g.fill(px + 6, y, px + 9, y + rowH - 3, dot);
-            String state = s.state() == 2 ? "ACTIVE  \u2665 bond " + s.bond() : s.state() == 1 ? "needs " + s.members() + "  (bond " + s.bond() + ")" : "not for your character";
-            g.drawString(font, s.name(), px + 13, y + 2, s.state() == 0 ? 0xFF8A8AA8 : 0xFFFFFFFF);
-            g.drawString(font, s.members(), px + 18 + font.width(s.name()), y + 2, 0xFF9AA0C8);
-            g.drawString(font, state, px + pw - 10 - font.width(state), y + 2, dot);
-            String eff = s.effect();
-            if (!s.downside().isEmpty()) eff += "   \u26a0 " + s.downside();
-            g.pose().pushPose();
-            g.pose().translate(px + 13, y + 13, 0);
-            g.pose().scale(0.8F, 0.8F, 1F);
-            g.drawString(font, font.plainSubstrByWidth(eff, (int) ((pw - 24) / 0.8F)), 0, 0, s.state() == 0 ? 0xFF707090 : s.downside().startsWith("(") || s.downside().isEmpty() ? 0xFFD8E0FF : 0xFFFFB0A0);
-            g.pose().popPose();
+            g.fill(x, y, x + w, y + rowH - 3, s.state() == 2 ? 0xC0183A28 : 0xC01A1A36);
+            g.fill(x, y, x + 3, y + rowH - 3, dot);
+            String state = s.state() == 2 ? "ACTIVE \u2665 " + s.bond() : s.state() == 1 ? "needs " + s.needs() + " (bond " + s.bond() + ")" : "not for you";
+            g.drawString(font, s.name(), x + 7, y + 2, s.state() == 0 ? 0xFF8A8AA8 : 0xFFFFFFFF);
+            small(g, state, x + w - 4 - font.width(state) * 0.75F, y + 3, 0.75F, dot);
+            small(g, s.members() + ":  " + s.effect(), x + 7, y + 12, 0.7F, s.state() == 0 ? 0xFF707090 : 0xFFD8E0FF, w - 10);
+            if (!s.downside().isEmpty()) small(g, "\u26a0 " + s.downside(), x + 7, y + 20, 0.7F, s.downside().startsWith("(") ? 0xFF8A8AA8 : 0xFFFFB0A0, w - 10);
+        }
+        g.pose().popPose();
             y += rowH;
         }
         g.pose().popPose();
