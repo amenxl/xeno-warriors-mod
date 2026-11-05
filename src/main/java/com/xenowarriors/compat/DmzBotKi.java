@@ -126,7 +126,7 @@ public final class DmzBotKi {
     }
 
     /** A bot is gone: forget its kit. */
-    public static void forget(UUID bot) { KITS.remove(bot); }
+    public static void forget(UUID bot) { KITS.remove(bot); DmzBotPower.forget(bot); }
 
     private static Kit kit(PartyBotEntity b, java.util.function.Supplier<Player> standIn) {
         ServerPlayer o = b.owner();
@@ -157,8 +157,16 @@ public final class DmzBotKi {
                 k.techniques.add(t);
             }
             k.stats = stats;
+            DmzBotPower.loaded(b, stats);                                           // (its ki, release and form go into the fresh copy)
         } catch (Throwable t) { fail(t); }
         return k;
+    }
+
+    /** The bot's DMZ character copy it fights with (re-read now and then), or null. */
+    static Object statsFor(PartyBotEntity b) {
+        if (!ready()) return null;
+        Kit k = kit(b, () -> com.xenowarriors.bot.PartyBots.standIn(b));
+        return k == null ? null : k.stats;
     }
 
     private static boolean isLive(ServerPlayer o, String key) {
@@ -213,6 +221,7 @@ public final class DmzBotKi {
             String id = (String) techId.invoke(tech);
             int cd = Math.max(MIN_GAP, Math.min(20 * 60, (Integer) cooldown.invoke(tech)));
             int cast = (Boolean) instant.invoke(tech) ? 1 : Math.max(8, Math.min(MAX_CAST, (Integer) castTime.invoke(tech)));
+            if (!DmzBotPower.spend(b, k.stats, tech, id)) { k.ready.put(id, now + MIN_GAP); return false; }   // (its ki pays for it)
             aim(b, target);
             boolean started = (Boolean) execute.invoke(null, b, level, tech, k.stats, 0F);   // (charging in its hands; a plain blast flies at once)
             note("start " + id + " ok=" + started + " cast=" + cast + " cd=" + cd + " target=" + target.getType().getDescriptionId());
@@ -248,6 +257,7 @@ public final class DmzBotKi {
             try { cfg = Math.max(0.0, ((Number) cfgDamageMult.invoke(strikeConfig.invoke(techConfig.invoke(null), id))).doubleValue()); } catch (Throwable ignored) {}
             double total = ((Number) strikeDamage.invoke(k.stats)).doubleValue() * ((Number) sDamageMult.invoke(tech)).doubleValue() * cfg;
             if (!(total > 0)) { k.ready.put(id, now + MIN_GAP); return false; }
+            if (!DmzBotPower.spend(b, k.stats, tech, id)) { k.ready.put(id, now + MIN_GAP); return false; }
             int duration = Math.max(20, (Integer) sDuration.invoke(tech)), hits = Math.max(1, (int) Math.ceil(duration / 10.0));
             float perHit = (float) (total * 0.65 / hits), last = (float) (total * 0.35);
             int cd = Math.max(MIN_GAP, Math.min(20 * 60, (Integer) sCooldown.invoke(tech)));

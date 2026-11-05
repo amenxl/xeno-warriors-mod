@@ -1,0 +1,28 @@
+{
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "dragonminez"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "GGK",
+    "  I"
+  ],
+  "key": {
+    "G": {
+      "item": "dragonminez:gete_ingot"
+    },
+    "K": {
+      "item": "dragonminez:ki_battery"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "xenowarriors:blaster_rifle"
+  }
+}

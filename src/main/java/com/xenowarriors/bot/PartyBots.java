@@ -791,7 +791,7 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9;
 
     public static void action(ServerPlayer p, int botId, int action, int arg) {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
@@ -834,6 +834,7 @@ public final class PartyBots {
                     com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.BotDmzPacket(com.xenowarriors.network.BotDmzPacket.OPEN, b.label().getString()), p);
                 else p.displayClientMessage(Component.literal("").append(b.label()).append("'s Dragon Ball character can't be opened right now").withStyle(ChatFormatting.GRAY), true);
             }
+            case ACT_FUSE -> com.xenowarriors.compat.DmzFusion.fuse(p, b);      // (with DragonMineZ: Potara earrings in its bag, or it knows the Fusion Dance)
             default -> {}
         }
     }

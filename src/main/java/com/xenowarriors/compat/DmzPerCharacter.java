@@ -291,6 +291,9 @@ public final class DmzPerCharacter {
         try { sendTracking.invoke(null, statsSync.newInstance(p), p); } catch (Throwable ignored) {}
     }
 
+    /** Sends all of DragonMineZ's syncs for this player (stats, look, progression): after changing their look. */
+    public static void syncAll(ServerPlayer p) { if (ready()) sync(p); }
+
     /** Tell everyone who can see them (and them) about their DMZ data. */
     private static void sync(ServerPlayer p) {
         for (Constructor<?> c : new Constructor<?>[]{statsSync, appearanceSync, progressionSync}) {

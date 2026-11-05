@@ -215,6 +215,30 @@
         {
           "title": "The Zombie Saiyan",
           "text": "- A rare boss that comes out at night in the Overworld. It also has a spawn egg.\n- As you wear it down it goes Super Saiyan, then Super Saiyan 2 (lightning), then Super Saiyan 3 (long hair). It uses combos, dashes, ki blasts and the Kamehameha.\n- Beat it as a Super Saiyan 3 and it collapses. Then it gets back up screaming, throws everyone back, and returns fully healed as a Super Saiyan 4.\n- It grows with your DragonMineZ power. Drops: diamonds, emeralds, Senzu Beans, Karma items, and sometimes a piece of Goku armor with every enchantment."
+        },
+        {
+          "title": "Fusing with a bot",
+          "text": "Bot menu > Fuse: you and the bot become one fighter, the DragonMineZ way.\n- Potara: the bot needs Potara earrings (any color) in its bag. The stronger fusion.\n- Fusion Dance: the bot's Dragon Ball character knows the Fusion Dance skill.\n- You take on the fused look and name, and DragonMineZ's fusion bonus: the bot's stats are added to yours (more for Potara, and more the closer your strengths are).\n- It lasts DragonMineZ's fusion time (its config). The bot steps out of the world while you're fused and comes back, with all its things, when it ends.\n- A Potara fusion that runs its full time breaks the earrings. If you're knocked out or log out first, the fusion ends early and the earrings go back in the bot's bag.\n- Afterwards there's DragonMineZ's fusion cooldown before you can fuse again."
+        },
+        {
+          "title": "Bots and the Dragon Balls",
+          "text": "Give a bot all seven Dragon Balls of a set (put them in its bag) where that set works: Earth's on the Overworld, Namek's on Namek.\n- When there's no fight going on, it finds a flat, open spot near you and puts them down in a ring, one-star to seven-star, in order.\n- Then it calls the dragon for you. The dragon is yours: the wish menu opens for you and you pick the wish.\n- It needs a flat 5x5 spot with room above it; if there's none it tells you and tries again later."
+        },
+        {
+          "title": "Blaster guns",
+          "text": "Ki guns in the style of the Blaster Cannon, firing DragonMineZ ki blasts.\n- Blaster Rifle: hold right-click for rapid fire (small blasts). Craft: 2 Gete Ingots + a Ki Battery in the top row, an Iron Ingot below the battery.\n- Burst Cannon: three quick blasts per shot. Craft: 2 Ki Batteries, 3 Gete Ingots, a Block of Redstone and an Iron Ingot.\n- Blaster Mortar: one huge, slow blast with a long reload. Craft: a Blaster Cannon surrounded by Gete Ingots, a Ki Battery on top and an Iron Ingot below.\n- Some of DragonMineZ's soldiers carry them, and armed Skylanders too. Mobs holding one shoot it, and sometimes drop it when you beat them."
+        },
+        {
+          "title": "Skylanders in other worlds",
+          "text": "Skylanders turn up on Namek (most often), in the Otherworld and on the Sacred World of the Kai.\n- They carry Blaster guns and shoot them at what they fight.\n- They're still Skylanders: friendly unless the Sky faction hates you, and they fight the monsters there.\n- Beat one and it may drop its gun."
+        },
+        {
+          "title": "Bots: ki, full power and forms",
+          "text": "- A bot's ki techniques cost ki from its own Dragon Ball character. Out of ki, it can't use them.\n- Low on ki and somewhere safe, it stops and charges (aura and all) until it's full.\n- When a fight starts it powers up to 100% release, and against a strong enemy (a boss, a story fighter, anything tougher than it) it transforms into the best form its character has unlocked.\n- Forms drain its ki. Once the fight is over it reverts and powers back down to 50%.\n- Full power and forms make its hits stronger too, following its Dragon Ball stats."
+        },
+        {
+          "title": "Screen and sensing",
+          "text": "- With the Blazing Wind HUD on, DragonMineZ's own health/ki/stamina bars are hidden: the HUD shows your Ki, stamina, form and power release instead.\n- DragonMineZ's technique bar, mission tracker and other panels are moved so they don't sit on top of the HUD.\n- Sensing (Karma Sensing or Ki Sense) no longer turns the screen black and white: you still see the auras, outlines and readings, in full color."
         }
       ]
     }
