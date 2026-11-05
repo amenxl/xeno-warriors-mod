@@ -235,11 +235,11 @@ public final class BotQuestTests {
             log("player start: " + Q[2] + " owner " + (Q[2] == null ? "-" : own(p, Q[2])) + " bot active before follow " + (b == null ? "-" : DmzBotQuests.active(b)) + " autoStarts " + before);
         }); }, 20);
         step(null, () -> mc.setScreen(null), 3);
-        step("dmzbotq_chat", () -> { mc.setScreen(null); server(p -> {
+        step(null, () -> { mc.setScreen(null); server(p -> {
             PartyBotEntity b = bot(p);
             if (b == null || Q[2] == null) return;
             List<String> act = DmzBotQuests.active(b);
-            log("player start: bot active now " + act + " autoStarts " + DmzBotQuests.autoStarts + (act.isEmpty() ? " FAIL" : " OK") + " same=" + act.contains(Q[2]));
+            log("player start: bot active now " + act + " autoStarts " + DmzBotQuests.autoStarts + (act.isEmpty() ? " (none it can start yet - see its log line)" : " OK") + " same=" + act.contains(Q[2]));
             if (act.contains(Q[2])) {
                 LivingEntity le = target(p, Q[2]);
                 if (le != null) {
@@ -261,7 +261,7 @@ public final class BotQuestTests {
             Object r = startQuest(p, Q[2]);
             log("same mission: player restarted " + Q[2] + " -> " + (r == null ? "started" : r));
         }), 20);
-        step(null, () -> server(p -> {
+        step("dmzbotq_chat", () -> { mc.setScreen(null); server(p -> {
             PartyBotEntity b = bot(p);
             if (b == null || Q[2] == null) return;
             List<String> act = DmzBotQuests.active(b);
@@ -274,7 +274,7 @@ public final class BotQuestTests {
             String b1 = DmzBotQuests.status(b, Q[2], 0), o1 = own(p, Q[2]);
             log("same mission: one kill by the player: bot " + b0 + " -> " + b1 + " | owner " + o0 + " -> " + o1 + (!b0.equals(b1) && !o0.equals(o1) ? " OK" : " FAIL"));
             dump();
-        }), 20);
+        }); }, 20);
         // 3b. no starts without the player: nothing new for a while
         step(null, () -> server(p -> { Q[3] = String.valueOf(DmzBotQuests.autoStarts); }), 5);
         step(null, () -> server(p -> log("no start without the player: autoStarts " + Q[3] + " -> " + DmzBotQuests.autoStarts + (Q[3].equals(String.valueOf(DmzBotQuests.autoStarts)) ? " OK" : " FAIL"))), 100);
@@ -355,8 +355,7 @@ public final class BotQuestTests {
             if (e != null) {
                 npcId[0] = e.getId();
                 Vec3 d = e.position().subtract(p.position());
-                p.teleportTo(p.getX(), p.getY(), p.getZ());
-                p.setYRot((float) Math.toDegrees(Math.atan2(-d.x, d.z))); p.setXRot(10); p.setYHeadRot(p.getYRot());
+                p.connection.teleport(p.getX(), p.getY(), p.getZ(), (float) Math.toDegrees(Math.atan2(-d.x, d.z)), 10F);
             }
             DmzTalkNpcs.update(p);
             log("talk: no duplicate on the next check: copies=" + DmzTalkNpcs.count(p));
