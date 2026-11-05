@@ -176,8 +176,9 @@ public class BlazingWindEntity extends Entity {
             return;
         }
         ServerLevel server = (ServerLevel) level();
-        Player p = entityData.get(OWNER).map(server::getPlayerByUUID).orElse(null);
-        if (p == null && ownerRef != null && !ownerRef.isRemoved() && ownerRef.level() == server) p = ownerRef;   // (a bot's stand-in: not in the player list)
+        Player found = entityData.get(OWNER).map(server::getPlayerByUUID).orElse(null);
+        if (found == null && ownerRef != null && !ownerRef.isRemoved() && ownerRef.level() == server) found = ownerRef;   // (a bot's stand-in: not in the player list)
+        final Player p = found;
         if (tickCount > endAt() || p == null) {
             discard();
             return;
