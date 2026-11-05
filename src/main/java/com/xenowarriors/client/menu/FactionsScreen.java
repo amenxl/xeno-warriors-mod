@@ -26,6 +26,12 @@ public class FactionsScreen extends Screen {
 
     public FactionsScreen(Screen parent) { super(Component.literal("Factions")); this.parent = parent; }
 
+    /** The faction whose "how to raise / lower" page is open, or null for the list. */
+    private Faction detail;
+
+    /** UI test: open a faction's how-to page (null = back to the list). */
+    public void testDetail(Faction f) { detail = f; opened = net.minecraft.Util.getMillis(); }
+
     public static void open(Screen parent) {
         RepPacket.CLIENT = new int[0];                     // (don't show the last character's numbers while we wait)
         Minecraft.getInstance().setScreen(new FactionsScreen(parent));
@@ -37,9 +43,14 @@ public class FactionsScreen extends Screen {
     @Override public boolean isPauseScreen() { return false; }
     @Override public void onClose() { minecraft.setScreen(parent); }
 
+    private void click() {
+        minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.4F, 0.3F));
+    }
+
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
         if (ModKeyMappings.STATS_MENU.matches(key, scan)) { minecraft.setScreen(null); return true; }
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE && detail != null) { testDetail(null); return true; }
         return super.keyPressed(key, scan, mods);
     }
 
@@ -49,7 +60,13 @@ public class FactionsScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         float s = scale(); float[] o = origin();
-        if ((mx - o[0]) / s < 30 && (my - o[1]) / s < 22) { onClose(); return true; }
+        double vx = (mx - o[0]) / s, vy = (my - o[1]) / s;
+        if (vx < 30 && vy < 22) { if (detail != null) testDetail(null); else onClose(); return true; }
+        if (detail != null) { testDetail(null); return true; }           // (anywhere on the page: back to the list)
+        for (Faction f : Faction.values()) {
+            int y = 28 + f.ordinal() * 48;
+            if (vx >= 8 && vx < VW - 8 && vy >= y && vy < y + 44) { testDetail(f); click(); return true; }
+        }
         return super.mouseClicked(mx, my, button);
     }
 
@@ -74,7 +91,7 @@ public class FactionsScreen extends Screen {
 
     private static String moves(Faction f) {
         return switch (f) {
-            case GOV -> "Down: fighting Gov agents, getting caught.  Up: Terminal purchases, fighting the Rebellion.";
+            case GOV -> "Down: fighting Gov agents, getting caught.  Up: donating / returning gear at a terminal, defending agents, bounties, fighting the Rebellion.";
             case SR -> "Down: fighting SR members.  Up: fighting Gov agents.";
             case SKY -> "Down: hurting Skylanders.  Up: stopping Sky Hater sieges and raiders, fighting the Rebellion.";
             case TOWN -> "Down: hurting townsfolk or villagers.  Up: bounties, defending raids, trading, clearing corruption.";
@@ -106,6 +123,7 @@ public class FactionsScreen extends Screen {
         sc(g, who, VW - 6 - font.width(who) * 0.6F, 10, 0.6F, 0x9A9AAA);
 
         int[] v = RepPacket.CLIENT;
+        if (detail != null) { detailPage(g, detail, v, vx, vy); g.pose().popPose(); return; }
         float anim = Math.min(1F, (net.minecraft.Util.getMillis() - opened) / 500F);
         for (Faction f : Faction.values()) {
             int i = f.ordinal();
@@ -138,9 +156,58 @@ public class FactionsScreen extends Screen {
             g.fill(at - 1, by - 3, at + 2, by + 8, 0xFFFFFFFF);
             sc(g, effect(f, t), 84, y + 26, 0.7F, 0xE0E0E8);
             sc(g, moves(f), 84, y + 35, 0.6F, 0x8A8A9A);
+            boolean hov = vx >= 8 && vx < VW - 8 && vy >= y && vy < y + 44;
+            String more = "How to raise / lower \u25b8";
+            sc(g, more, VW - 14 - font.width(more) * 0.6F, y + 26, 0.6F, hov ? 0xFFFFFF : 0x000000 | light(f.color));
+            if (hov) box(g, 8, y, VW - 8, y + 44, 0xFF000000 | f.color);
             g.pose().popPose();
         }
         g.pose().popPose();
+    }
+
+    private static int light(int c) {
+        int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+        return ((r + (255 - r) / 3) << 16) | ((g + (255 - g) / 3) << 8) | (b + (255 - b) / 3);
+    }
+
+    /** One faction's page: where you stand, what it means, and every way to raise or lower it (from faction/RepRules). */
+    private void detailPage(GuiGraphics g, Faction f, int[] v, double vx, double vy) {
+        int val = f.ordinal() < v.length ? v[f.ordinal()] : 0;
+        Reputation.Tier t = Reputation.Tier.of(val);
+        float in = Math.min(1F, (net.minecraft.Util.getMillis() - opened) / 250F);
+        g.pose().pushPose();
+        g.pose().translate((1F - in) * 24F, 0, 0);
+        g.fill(8, 26, VW - 8, VH - 6, 0xF0181820);
+        g.fill(8, 26, 11, VH - 6, 0xFF000000 | f.color);
+        if (f.logo != null) g.blit(new ResourceLocation(com.xenowarriors.XenoWarriors.MOD_ID, "textures/gui/" + f.logo + ".png"), 15, 30, 64, 32, 0, 0, 256, 128, 256, 128);
+        sc(g, f.title.toUpperCase(java.util.Locale.ROOT), 84, 31, 1.4F, 0xFFFFFF);
+        String tt = t.title + "  (" + val + ")";
+        g.drawString(font, tt, VW - 14 - font.width(tt), 32, 0xFF000000 | t.color, false);
+        sc(g, effect(f, t), 84, 46, 0.7F, 0xE0E0E8);
+        int y = 68;
+        y = list(g, "HOW TO RAISE IT", com.xenowarriors.faction.RepRules.lines(f, true), y, 0x7FE07F);
+        y = list(g, "HOW TO LOWER IT (what makes them hate you)", com.xenowarriors.faction.RepRules.lines(f, false), y + 4, 0xFF7070);
+        sc(g, "Tiers: Hated  -600  Hostile  -150  Unfriendly  -50  Neutral  +50  Friendly  +400  Honored  +750  Revered   (-1000 to 1000, per character)", 14, VH - 24, 0.55F, 0x8A8A9A);
+        sc(g, "Click or Esc: back to all factions", 14, VH - 15, 0.6F, 0x9A9AAA);
+        g.pose().popPose();
+    }
+
+    private int list(GuiGraphics g, String head, java.util.List<String> lines, int y, int color) {
+        sc(g, head, 14, y, 0.75F, color);
+        y += 9;
+        if (lines.isEmpty()) { sc(g, "-", 18, y, 0.65F, 0x8A8A9A); return y + 8; }
+        for (String l : lines) {
+            for (var part : font.split(Component.literal(l), (int) ((VW - 34) / 0.65F))) {
+                if (y > VH - 32) return y;
+                g.pose().pushPose();
+                g.pose().translate(18, y, 0);
+                g.pose().scale(0.65F, 0.65F, 1F);
+                g.drawString(font, part, 0, 0, 0xE0E0E8, false);
+                g.pose().popPose();
+                y += 7;
+            }
+        }
+        return y;
     }
 
     private static void box(GuiGraphics g, int x0, int y0, int x1, int y1, int c) {

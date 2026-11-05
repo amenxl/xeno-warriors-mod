@@ -61,6 +61,7 @@ public class CharacterCustomScreen extends Screen {
     public static void open(Screen parent) {
         Minecraft.getInstance().setScreen(new CharacterCustomScreen(parent));
         ModNetwork.sendToServer(new PlayerStatsRequestPacket());
+        ModNetwork.sendToServer(new com.xenowarriors.network.SkillLevelsPacket("", List.of()));   // (ability levels)
     }
 
     /** (UI test) show this tab. */
@@ -195,6 +196,13 @@ public class CharacterCustomScreen extends Screen {
     private List<SkillPool.Entry> ultChoices() { return minecraft.player == null ? List.of() : SkillPool.ultimates(minecraft.player); }
     private int ultCardStart() { int n = SkillPool.of(minecraft.player).size(); return n + (n % 2); }
 
+    /** The "upgrade to the next tier" button on a level-10 skill card (virtual units, relative to the card). */
+    private static final int UP_W = 24, UP_H = 9;
+    private static boolean overUpgrade(double vx, double vy, int x, int y) { return inBox(vx, vy, x + CARD_W - UP_W - 2, y + CARD_H - UP_H - 1, UP_W, UP_H); }
+
+    /** UI test: press the upgrade button on this skill's card. */
+    public void testUpgrade(String id) { ModNetwork.sendToServer(new com.xenowarriors.network.SkillLevelsPacket(id, List.of())); }
+
     private int maxSkillScroll() {
         int rows = (ultCardStart() + (ultChoices().size() > 1 ? ultChoices().size() : 0) + 1) / 2;
         return Math.max(0, rows * (CARD_H + 3) - (VH - LIST_Y - 2));
@@ -242,6 +250,8 @@ public class CharacterCustomScreen extends Screen {
                 for (int i = 0; i < pool.size(); i++) {
                     if (!inBox(vx, vy, skillX(i), skillY(i), CARD_W, CARD_H)) continue;
                     if (!SkillPool.available(pool.get(i), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;
+                    String sid = pool.get(i).skill().getId();
+                    if (com.xenowarriors.client.ClientSkillLevels.canUpgrade(sid) && overUpgrade(vx, vy, skillX(i), skillY(i))) { testUpgrade(sid); click(); return true; }
                     ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(selectedSlot, i));
                     int[] l = ClientSkillState.loadout().clone();
                     for (int k = 0; k < l.length; k++) if (l[k] == i) l[k] = l[selectedSlot];
@@ -257,6 +267,8 @@ public class CharacterCustomScreen extends Screen {
                     int i = ultCardStart() + k;
                     if (!inBox(vx, vy, skillX(i), skillY(i), CARD_W, CARD_H)) continue;
                     if (!SkillPool.available(ults.get(k), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;
+                    String uid = ults.get(k).skill().getId();
+                    if (com.xenowarriors.client.ClientSkillLevels.canUpgrade(uid) && overUpgrade(vx, vy, skillX(i), skillY(i))) { testUpgrade(uid); click(); return true; }
                     ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(SkillManager.ULTIMATE_SLOT, k));
                     ClientSkillState.setUltimate(k);
                     click();
@@ -549,6 +561,8 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Mining", lvStr(me.mining()), me.miningXp(), 0xE0C070});
         rows.add(new Object[]{"Crafting", lvStr(me.craft()), me.craftXp(), 0xC08A50});
         rows.add(new Object[]{"Smelting", lvStr(me.smelt()), me.smeltXp(), 0xFF8A3A});
+        if (type != CharacterType.ULTIMA) rows.add(new Object[]{"Appetite", (me.appetite() >= com.xenowarriors.stats.Appetite.MAX_LEVEL ? "MAX" : "Lv " + me.appetite())
+                + "  x" + (com.xenowarriors.stats.Appetite.layers(me.appetite()) + 1), me.appetiteXp(), 0xE8D020});
         if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0)   // (TACZ guns installed)
             rows.add(new Object[]{"Guns", lvStr(com.xenowarriors.network.GunLevelPacket.clientLevel), com.xenowarriors.network.GunLevelPacket.clientProgress, 0xB0B8C8});
         rows.add(new Object[]{"Sensing", me.senseRange() + "b, " + me.senseSeconds() + "s", -1F, 0});
@@ -638,9 +652,12 @@ public class CharacterCustomScreen extends Screen {
             boolean pic = seasonOk && com.xenowarriors.client.SkillIcons.get(e.skill().getId()) != null;
             if (pic) { com.xenowarriors.client.SkillIcons.draw(g, e.skill().getId(), x + 3, y + 1, CARD_H - 2); if (!open) g.fill(x + 3, y + 1, x + CARD_H + 1, y + CARD_H - 1, 0xA0101018); }
             int tx = pic ? x + CARD_H + 3 : x + 5;
-            scaled(g, ell(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
-            String line = !seasonOk ? "Season " + e.season() : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Slot " + (at + 1) : UltimaAnim.resource() + " " + e.skill().getKarmaCost() + "  CD " + e.skill().getCooldownTicks() / 20 + "s";
-            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
+            scaled(g, ell(nm, (int) ((x + CARD_W - 25 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
+            String sid = e.skill().getId();
+            String line = !seasonOk ? "Season " + e.season() : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Slot " + (at + 1)
+                    : UltimaAnim.resource() + " " + com.xenowarriors.client.ClientSkillLevels.cost(sid, e.skill().getKarmaCost()) + "  CD " + com.xenowarriors.client.ClientSkillLevels.cooldown(sid, e.skill().getCooldownTicks()) / 20 + "s";
+            boolean up = open && levelBadge(g, sid, x, y, mx, my);
+            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx - (up ? UP_W : 0)) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
             if (over) tip = !seasonOk ? List.of("???", "Season " + e.season() + " content (locked, no spoilers)")
                     : lines(e.skill().getName().getString(), SkillLoadoutScreen.desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel()));
         }
@@ -662,9 +679,10 @@ public class CharacterCustomScreen extends Screen {
             if (pic) { com.xenowarriors.client.SkillIcons.draw(g, e.skill().getId(), x + 3, y + 1, CARD_H - 2); if (!open) g.fill(x + 3, y + 1, x + CARD_H + 1, y + CARD_H - 1, 0xA0101018); }
             int tx = pic ? x + CARD_H + 3 : x + 5;
             String nm = seasonOk ? e.skill().getName().getString() : "???";
-            scaled(g, ell(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFE8A0 : 0x777777);
+            scaled(g, ell(nm, (int) ((x + CARD_W - 25 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFE8A0 : 0x777777);
             String line = !seasonOk ? "Season " + e.season() : !open ? "🔒 Unlocks at Lv " + e.unlockLevel() : on ? "Ultimate - equipped" : "Ultimate - click to equip";
-            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : on ? 0xFFD24A : 0x99AABB);
+            boolean up = open && levelBadge(g, e.skill().getId(), x, y, mx, my);
+            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx - (up ? UP_W : 0)) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : on ? 0xFFD24A : 0x99AABB);
             if (over) tip = !seasonOk ? List.of("???", "Season " + e.season() + " content (locked, no spoilers)")
                     : lines(e.skill().getName().getString() + " (ultimate)", SkillLoadoutScreen.desc(e.skill()) + (open ? "" : "\nUnlocks at Character Level " + e.unlockLevel()));
         }
@@ -677,6 +695,27 @@ public class CharacterCustomScreen extends Screen {
             g.pose().popPose();
         }
         return tip;
+    }
+
+    /**
+     * A skill card's ability level: "T2 Lv7" top right, a thin XP bar along the bottom, and (at level 10) the button to
+     * upgrade it to the next tier. Returns true when the button is drawn.
+     */
+    private boolean levelBadge(GuiGraphics g, String id, int x, int y, double mx, double my) {
+        int[] v = com.xenowarriors.client.ClientSkillLevels.of(id);
+        String b = "T" + v[0] + " Lv" + v[1];
+        int col = v[0] >= 7 ? 0xFF7AF0 : v[0] >= 4 ? 0xFFB040 : v[0] >= 2 ? 0xFFD24A : 0xA8B8C8;
+        scaled(g, b, x + CARD_W - 3 - font.width(b) * 0.6F, y + 2.5F, 0.6F, col);
+        float pr = com.xenowarriors.client.ClientSkillLevels.progress(id);
+        g.fill(x + 2, y + CARD_H - 1, x + 2 + Math.round((CARD_W - 2) * pr), y + CARD_H, 0xFF000000 | (v[1] >= com.xenowarriors.skill.SkillLevels.MAX_LEVEL ? 0xFFD24A : 0x55C8FF));
+        if (!com.xenowarriors.client.ClientSkillLevels.canUpgrade(id)) return false;
+        int bx = x + CARD_W - UP_W - 2, by = y + CARD_H - UP_H - 1;
+        boolean hov = my >= LIST_Y && inBox(mx, my, bx, by, UP_W, UP_H);
+        float pulse = 0.5F + 0.5F * Mth.sin(net.minecraft.Util.getMillis() / 180F);
+        g.fill(bx, by, bx + UP_W, by + UP_H, hov ? 0xFFFFE070 : 0xFF000000 | ((int) (0xB0 + 0x40 * pulse) << 16) | ((int) (0x80 + 0x30 * pulse) << 8) | 0x20);
+        String t = "\u25b2 T" + (v[0] + 1);
+        scaled(g, t, bx + UP_W / 2F - font.width(t) * 0.3F, by + 1.8F, 0.6F, 0x201000);
+        return true;
     }
 
     /** Cut a string to a width, with "…" when it had to be shortened. */

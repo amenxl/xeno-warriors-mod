@@ -63,6 +63,7 @@ public class MainMenuScreen extends Screen {
                 if (!com.xenowarriors.client.compat.DmzMenu.open() && minecraft.player != null)
                     minecraft.player.displayClientMessage(Component.literal("Couldn't open the DragonMineZ menu."), true);
             }));
+        l.add(new Entry("Guide", "How to play: combat, team attacks, party and bots, characters, modes, the world and progression.", () -> GuideScreen.open(this)));   // (last, so the others keep their places)
         entries = List.copyOf(l);
     }
 

@@ -29,17 +29,17 @@ public final class ComboAnim {
         if (!(e instanceof AbstractClientPlayer p)) return false;
         CharacterType t = ClientCharacterData.get(p);
         return (t == CharacterType.MIKIKO || t == CharacterType.RHALIX)
-                && (s == ComboStyle.FIST || s == ComboStyle.MIKIKO || s == ComboStyle.SWORD || s == ComboStyle.QUICK_BLADE);
+                && (s == ComboStyle.FIST || s == ComboStyle.MIKIKO || s == ComboStyle.SWORD || s == ComboStyle.QUICK_BLADE || s.rhalix());
     }
 
     public static Move move(ComboStyle s, int hit, boolean heavy) {
         if (heavy) return switch (s) {
-            case FIST, MIKIKO -> Move.UPPERCUT_L;
+            case FIST, MIKIKO, RHALIX, RHALIX_AIR -> Move.UPPERCUT_L;
             case HEAVY, TOOL -> Move.BLADE_DOWN;
             default -> Move.BLADE_UP;
         };
         Move[] set = switch (s) {
-            case FIST, MIKIKO -> FIST;
+            case FIST, MIKIKO, RHALIX, RHALIX_AIR -> FIST;
             case QUICK_BLADE -> QUICK;
             case SWORD -> SWORD;
             case HEAVY -> HEAVY;

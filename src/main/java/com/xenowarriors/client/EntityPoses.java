@@ -41,6 +41,14 @@ public final class EntityPoses {
         return s != null && e.tickCount - s.start <= s.ticks;
     }
 
+    /** {ticks into it, how long it lasts} if the entity is in this lasting state right now, else null. */
+    public static float[] state(Entity e, int pose, float partial) {
+        P s = STATE.get(e.getId());
+        if (s == null || s.pose != pose) return null;
+        float t = e.tickCount - s.start + partial;
+        return t < 0 || t > s.ticks ? null : new float[]{t, s.ticks};
+    }
+
     public static float actionTime(Entity e, float partial) {
         P p = ACTION.get(e.getId());
         return p == null ? 0 : (e.tickCount - p.start + partial) / Math.max(1, p.ticks);

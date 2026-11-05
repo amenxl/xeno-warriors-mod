@@ -36,6 +36,8 @@ public class VehicleItem extends Item {
     public void appendHoverText(ItemStack s, Level level, List<Component> tip, TooltipFlag flag) {
         tip.add(Component.literal("Use on the ground to park it. Sneak + right-click it to pick it back up.").withStyle(net.minecraft.ChatFormatting.GRAY));
         tip.add(Component.literal(kind.seats + " seats").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+        if (kind.upgraded()) tip.add(Component.literal("Mk II: " + Math.round(kind.maxSpeed * 72) + " km/h, " + kind.health + " health"
+                + (kind.hovers() ? " - flies (Jump to lift off, Sprint key to come down)" : "")).withStyle(net.minecraft.ChatFormatting.AQUA));
     }
 
     @Override

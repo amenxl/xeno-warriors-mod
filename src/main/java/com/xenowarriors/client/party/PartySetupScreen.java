@@ -56,6 +56,16 @@ public class PartySetupScreen extends Screen {
 
     private static Component swapLabel() { return Component.literal("Party Swap: " + (swapOn ? "ON" : "OFF")); }
 
+    /** The Team Synergy panel (synergies for this party, their bond levels, and the bond hearts) is open. */
+    private boolean synergyOpen;
+    private Button synergyButton;
+
+    private Component synergyLabel() { return Component.literal(synergyOpen ? "Close Synergy" : "Synergy & Bond [S]"); }
+
+    /** UI test: open / close the synergy panel. */
+    public void testSynergy(boolean open) { synergyOpen = open; if (synergyButton != null) synergyButton.setMessage(synergyLabel()); }
+    public static PartyCardsPacket lastCards() { return last; }
+
     @Override
     protected void init() {
         request();
@@ -63,6 +73,10 @@ public class PartySetupScreen extends Screen {
         addRenderableWidget(Button.builder(swapLabel(), b -> { swapOn = !swapOn; ModNetwork.sendToServer(new com.xenowarriors.network.PartySwapPacket(swapOn)); b.setMessage(swapLabel()); })
                 .bounds(width - 122, 24, 110, 18)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("When one of your bot teammates is lost (not revived in time), another of your characters joins in their place to keep the party full.")))
+                .build());
+        synergyButton = addRenderableWidget(Button.builder(synergyLabel(), b -> testSynergy(!synergyOpen))
+                .bounds(12, 24, 110, 18)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Which team synergies your party has (or could have), what they do, and your bond with each teammate.")))
                 .build());
     }
 
@@ -138,6 +152,7 @@ public class PartySetupScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (super.mouseClicked(mx, my, button)) return true;
+        if (synergyOpen) return true;                                  // (the panel covers the slots)
         if (my > height * 0.18 && my < feetY() + 14) {
             for (int i = 0; i < SLOTS; i++) if (Math.abs(mx - slotX(i)) < width * 0.1) { selected = selected == i ? -1 : i; rebuild(); return true; }
         }
@@ -146,6 +161,7 @@ public class PartySetupScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
+        if (key == GLFW.GLFW_KEY_S) { testSynergy(!synergyOpen); return true; }
         if (key == GLFW.GLFW_KEY_A) { addBot(); return true; }
         if (key == GLFW.GLFW_KEY_I) { invite(); return true; }
         return super.keyPressed(key, scan, mods);
@@ -220,6 +236,14 @@ public class PartySetupScreen extends Screen {
                 g.drawString(font, name, x - nw / 2 + 12, top, 0xFFFFFFFF);
                 g.drawCenteredString(font, "Lv. " + c.level(), x, top + 11, 0xFFD8E4FF);
                 int py = top + 24;
+                if (c.bond() >= 0) {                                          // your bond with them, and how close the next level is
+                    String bl = "\u2665 Bond " + c.bond() + (c.bond() >= com.xenowarriors.party.Bonds.MAX ? " MAX" : "");
+                    g.drawCenteredString(font, bl, x, py, 0xFFFF9AD8);
+                    int bw2 = 40;
+                    g.fill(x - bw2 / 2, py + 9, x + bw2 / 2, py + 11, 0xFF2A2050);
+                    g.fill(x - bw2 / 2, py + 9, x - bw2 / 2 + Math.round(bw2 * Mth.clamp(c.bondXp(), 0F, 1F)), py + 11, 0xFFFF7AC8);
+                    py += 14;
+                }
                 List<String> pets = c.pets();
                 for (int k = 0; k < Math.min(3, pets.size()); k++) {
                     String p = pets.get(k);
@@ -251,9 +275,64 @@ public class PartySetupScreen extends Screen {
             int dx = width / 2 - 30 + i * 20;
             g.drawString(font, i < cs.size() ? "◆" : "◇", dx, 10, i == selected ? 0xFFFFFFFF : 0xFFB8C0F0);
         }
+        // the active synergies, in a line under the top bar
+        if (last != null && !synergyOpen) {
+            StringBuilder on = new StringBuilder();
+            for (PartyCardsPacket.Syn y : last.synergies()) if (y.state() == 2) on.append(on.length() == 0 ? "" : "   ").append("\u2726 ").append(y.name()).append(" (bond ").append(y.bond()).append(")");
+            String line = on.length() == 0 ? "No synergy active - press S to see which teammates would make one" : "Synergy: " + on;
+            g.drawCenteredString(font, line, width / 2, 46, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
+            if (last.bondHearts() > 0) g.drawCenteredString(font, "Best bond " + last.bestBond() + ": +" + last.bondHearts() + " max hearts", width / 2, 57, 0xFFFF9AD8);
+        }
         // bottom bar
         int by = height - 16;
-        g.drawString(font, "[A] Add bot    [I] Invite    [Click] Options    [Esc] Leave", 12, by, 0xFFE0E4FF);
+        g.drawString(font, "[A] Add bot    [I] Invite    [S] Synergy    [Click] Options    [Esc] Leave", 12, by, 0xFFE0E4FF);
         super.render(g, mx, my, pt);
+        if (synergyOpen) synergyPanel(g);
+    }
+
+    private void small(GuiGraphics g, String t, float x, float y, float k, int c) { small(g, t, x, y, k, c, 10000); }
+
+    private void small(GuiGraphics g, String t, float x, float y, float k, int c, int maxW) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(k, k, 1F);
+        g.drawString(font, font.plainSubstrByWidth(t, (int) (maxW / k)), 0, 0, c, false);
+        g.pose().popPose();
+    }
+
+    /** The Team Synergy panel: every synergy, whether it's on, what it does at your bond, and its downside fading out. */
+    private void synergyPanel(GuiGraphics g) {
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 300);
+        List<PartyCardsPacket.Syn> list = last == null ? List.of() : last.synergies();
+        int pw = Math.min(600, width - 24), px = (width - pw) / 2, py = 46;
+        String help = "Bond grows by fighting together, kills and revives. Higher bond = stronger synergy; downsides fade out by bond " + com.xenowarriors.party.Bonds.NO_DOWNSIDE + ".";
+        var helpLines = font.split(Component.literal(help), pw - 16);
+        int cols = pw >= 380 ? 2 : 1, rowH = 31, rows = (list.size() + cols - 1) / cols;
+        int head = 20 + helpLines.size() * 9 + 4;
+        int ph = Math.min(height - py - 20, head + Math.max(1, rows) * rowH + 4);
+        g.fill(px - 2, py - 2, px + pw + 2, py + ph + 2, 0xFF8C78E8);
+        g.fill(px, py, px + pw, py + ph, 0xF0101030);
+        g.drawString(font, "TEAM SYNERGY", px + 8, py + 6, 0xFFFFFFFF);
+        String hb = last == null ? "" : "Best bond in party: " + last.bestBond() + "  \u2192  +" + last.bondHearts() + " max hearts (+" + com.xenowarriors.party.Bonds.heartsPer10() + " per 10 bond)";
+        g.drawString(font, hb, px + pw - 8 - font.width(hb), py + 6, 0xFFFF9AD8);
+        int hy = py + 18;
+        for (var l : helpLines) { g.drawString(font, l, px + 8, hy, 0xFF9AA0C8, false); hy += 9; }
+        if (list.isEmpty()) g.drawString(font, "Loading...", px + 8, py + head, 0xFF9AA0C8);
+        int cw = (pw - 12) / cols;
+        for (int i = 0; i < list.size(); i++) {
+            PartyCardsPacket.Syn s = list.get(i);
+            int x = px + 6 + (i % cols) * cw, y = py + head + (i / cols) * rowH, w = cw - 4;
+            if (y + rowH - 3 > py + ph) break;
+            int dot = s.state() == 2 ? 0xFF50F080 : s.state() == 1 ? 0xFFF0C040 : 0xFF505070;
+            g.fill(x, y, x + w, y + rowH - 3, s.state() == 2 ? 0xC0183A28 : 0xC01A1A36);
+            g.fill(x, y, x + 3, y + rowH - 3, dot);
+            String state = s.state() == 2 ? "ACTIVE \u2665 " + s.bond() : s.state() == 1 ? "needs " + s.needs() + " (bond " + s.bond() + ")" : "not for you";
+            g.drawString(font, s.name(), x + 7, y + 2, s.state() == 0 ? 0xFF8A8AA8 : 0xFFFFFFFF);
+            small(g, state, x + w - 4 - font.width(state) * 0.75F, y + 3, 0.75F, dot);
+            small(g, s.members() + ":  " + s.effect(), x + 7, y + 12, 0.7F, s.state() == 0 ? 0xFF707090 : 0xFFD8E0FF, w - 10);
+            if (!s.downside().isEmpty()) small(g, "\u26a0 " + s.downside(), x + 7, y + 20, 0.7F, s.downside().startsWith("(") ? 0xFF8A8AA8 : 0xFFFFB0A0, w - 10);
+        }
+        g.pose().popPose();
     }
 }

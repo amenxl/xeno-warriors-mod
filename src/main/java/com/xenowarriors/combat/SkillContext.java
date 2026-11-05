@@ -12,6 +12,17 @@ public final class SkillContext {
 
     private static Entity caster;
     private static int depth;
+    /** The id of the skill running (null when unknown - a KA, a Xeno Blast...), for its ability tier (skill/SkillLevels). */
+    private static String skill;
+
+    public static String skill() { return depth > 0 ? skill : null; }
+
+    /** Runs {@code s} as {@code who}'s skill {@code id}. */
+    public static <T> T callSkill(Entity who, String id, java.util.function.Supplier<T> s) {
+        String was = skill;
+        skill = id;
+        try { return call(who, s); } finally { skill = was; }
+    }
 
     /** Who's casting, or null outside a skill. (Server thread only.) */
     public static Entity caster() { return depth > 0 ? caster : null; }
@@ -37,6 +48,7 @@ public final class SkillContext {
     public static Runnable carry(Runnable r) {
         Entity who = caster();
         if (who == null) return r;
-        return () -> run(who, r);
+        String sk = skill;
+        return () -> { String was = skill; skill = sk; try { run(who, r); } finally { skill = was; } };
     }
 }

@@ -45,9 +45,18 @@ public class SkillHudOverlay implements IGuiOverlay {
                 if (!SkillIcons.draw(g, skill.getId(), x, top, SIZE)) g.drawCenteredString(font, shortName, x + SIZE / 2, top + 4, 0xFFFFFF);
 
                 // not enough Karma: tint the slot blue and show the cost in red
-                boolean canAfford = mc.player.isCreative() || ClientSkillState.karma() >= skill.getKarmaCost();
+                int realCost = ClientSkillLevels.cost(skill.getId(), skill.getKarmaCost());       // (with its ability level)
+                boolean canAfford = mc.player.isCreative() || ClientSkillState.karma() >= realCost;
                 if (!canAfford) g.fill(x, top, x + SIZE, top + SIZE, 0x66203A8A);
-                String cost = String.valueOf(skill.getKarmaCost());
+                String cost = String.valueOf(realCost);
+                int tier = ClientSkillLevels.tier(skill.getId());
+                if (tier > 1) {                                             // its ability tier, top left
+                    g.pose().pushPose();
+                    g.pose().translate(x + 1.5F, top + 1.5F, 0);
+                    g.pose().scale(0.55F, 0.55F, 1F);
+                    g.drawString(font, "T" + tier, 0, 0, ClientSkillLevels.canUpgrade(skill.getId()) ? 0xFFE070 : 0xFFB040);
+                    g.pose().popPose();
+                }
                 g.pose().pushPose();
                 g.pose().translate(x + 1.5F, top + SIZE - 6, 0);
                 g.pose().scale(0.6F, 0.6F, 1F);

@@ -37,16 +37,16 @@ public final class ModTools {
         };
     }
 
-    public static final RegistryObject<Item> SKY_SWORD = ModItems.ITEMS.register("sky_sword", () -> new SwordItem(SKY, 3, -2.3F, new Item.Properties()));
-    public static final RegistryObject<Item> SKY_PICKAXE = ModItems.ITEMS.register("sky_pickaxe", () -> new PickaxeItem(SKY, 1, -2.8F, new Item.Properties()));
-    public static final RegistryObject<Item> SKY_AXE = ModItems.ITEMS.register("sky_axe", () -> new AxeItem(SKY, 5F, -3F, new Item.Properties()));
-    public static final RegistryObject<Item> SKY_SHOVEL = ModItems.ITEMS.register("sky_shovel", () -> new ShovelItem(SKY, 1.5F, -3F, new Item.Properties()));
-    public static final RegistryObject<Item> SKY_HOE = ModItems.ITEMS.register("sky_hoe", () -> new HoeItem(SKY, -4, 0F, new Item.Properties()));
-    public static final RegistryObject<Item> CORRUPTED_SWORD = ModItems.ITEMS.register("corrupted_sword", () -> new SwordItem(CORRUPTED, 3, -2.4F, new Item.Properties()));
-    public static final RegistryObject<Item> CORRUPTED_PICKAXE = ModItems.ITEMS.register("corrupted_pickaxe", () -> new PickaxeItem(CORRUPTED, 1, -2.8F, new Item.Properties()));
-    public static final RegistryObject<Item> CORRUPTED_AXE = ModItems.ITEMS.register("corrupted_axe", () -> new AxeItem(CORRUPTED, 5.5F, -3.05F, new Item.Properties()));
-    public static final RegistryObject<Item> CORRUPTED_SHOVEL = ModItems.ITEMS.register("corrupted_shovel", () -> new ShovelItem(CORRUPTED, 1.5F, -3F, new Item.Properties()));
-    public static final RegistryObject<Item> CORRUPTED_HOE = ModItems.ITEMS.register("corrupted_hoe", () -> new HoeItem(CORRUPTED, -3, 0F, new Item.Properties()));
+    public static final RegistryObject<Item> SKY_SWORD = ModItems.ITEMS.register("sky_sword", () -> new SwordItem(SKY, 3, -2.3F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> SKY_PICKAXE = ModItems.ITEMS.register("sky_pickaxe", () -> new PickaxeItem(SKY, 1, -2.8F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> SKY_AXE = ModItems.ITEMS.register("sky_axe", () -> new AxeItem(SKY, 5F, -3F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> SKY_SHOVEL = ModItems.ITEMS.register("sky_shovel", () -> new ShovelItem(SKY, 1.5F, -3F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> SKY_HOE = ModItems.ITEMS.register("sky_hoe", () -> new HoeItem(SKY, -4, 0F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> CORRUPTED_SWORD = ModItems.ITEMS.register("corrupted_sword", () -> new SwordItem(CORRUPTED, 3, -2.4F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> CORRUPTED_PICKAXE = ModItems.ITEMS.register("corrupted_pickaxe", () -> new PickaxeItem(CORRUPTED, 1, -2.8F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> CORRUPTED_AXE = ModItems.ITEMS.register("corrupted_axe", () -> new AxeItem(CORRUPTED, 5.5F, -3.05F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> CORRUPTED_SHOVEL = ModItems.ITEMS.register("corrupted_shovel", () -> new ShovelItem(CORRUPTED, 1.5F, -3F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
+    public static final RegistryObject<Item> CORRUPTED_HOE = ModItems.ITEMS.register("corrupted_hoe", () -> new HoeItem(CORRUPTED, -3, 0F, new Item.Properties()) { @Override public int getMaxDamage(ItemStack s) { return com.xenowarriors.altar.GearUpgrades.maxDamage(s, super.getMaxDamage(s)); } });
 
     private ModTools() {}
 

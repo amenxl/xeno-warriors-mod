@@ -79,8 +79,9 @@ public final class BlazingHud {
             float sun = com.xenowarriors.client.you.YouClient.sun / (float) com.xenowarriors.you.YouRaces.SUN_MAX;
             row(g, font, "hg", ex + 2, y, bw, 4, sun, 0, sun > 0.15F ? 0xFFFFD040 : 0xFF806020, 0xFFA08A10, "SUN");
         } else if (type != CharacterType.ULTIMA) {                     // (Ultima doesn't get hungry)
-            float food = BigHungerHud.max() > 20 && BigHungerHud.total() >= 0 ? BigHungerHud.total() / (float) BigHungerHud.max() : p.getFoodData().getFoodLevel() / 20F;
-            row(g, font, "hg", ex + 2, y, bw, 4, food, 0, 0xFFE8D020, 0xFFA08A10, "");
+            if (BigHungerHud.layered())                                // layers of hunger bars: the one being eaten from, in its colour
+                row(g, font, "hg", ex + 2, y, bw, 4, BigHungerHud.layerFill(), BigHungerHud.layer() > 0 ? 1F : 0F, BigHungerHud.layerColor(0xFFE8D020), 0xFFA08A10, BigHungerHud.layerLabel());
+            else row(g, font, "hg", ex + 2, y, bw, 4, p.getFoodData().getFoodLevel() / 20F, 0, 0xFFE8D020, 0xFFA08A10, "");
         }
         // LV plate under the emblem, and the EXP bar
         int lvY = ey + H - 5;

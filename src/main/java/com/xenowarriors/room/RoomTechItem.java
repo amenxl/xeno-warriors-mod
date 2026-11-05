@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-/** Room Technology (creative only for now): right-click to open a Room around you, right-click again to leave it. */
+/** Room Technology: right-click to open a Room around you, right-click again to leave it. In survival it costs Karma and has a cooldown. */
 public class RoomTechItem extends Item {
     public RoomTechItem(Properties p) { super(p); }
 
@@ -21,8 +21,7 @@ public class RoomTechItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player p, InteractionHand hand) {
         ItemStack st = p.getItemInHand(hand);
         if (level.isClientSide) return InteractionResultHolder.success(st);
-        if (!p.isCreative()) { p.displayClientMessage(Component.literal("Room Technology is creative-only for now").withStyle(ChatFormatting.RED), true); return InteractionResultHolder.fail(st); }
-        RoomTech.use((ServerPlayer) p);
+        RoomTech.use((ServerPlayer) p);                // (survival: Karma, enemies nearby, and a minute between Rooms - leaving is always free)
         p.getCooldowns().addCooldown(this, 40);
         return InteractionResultHolder.success(st);
     }
@@ -33,6 +32,7 @@ public class RoomTechItem extends Item {
     public void appendHoverText(ItemStack s, Level l, List<Component> tip, TooltipFlag f) {
         tip.add(Component.literal("Right-click: copy the area into a Room and pull nearby enemies in").withStyle(ChatFormatting.GRAY));
         tip.add(Component.literal("Right-click again (or clear it) to return").withStyle(ChatFormatting.GRAY));
-        tip.add(Component.literal("Creative only").withStyle(ChatFormatting.DARK_AQUA));
+        tip.add(Component.literal("Survival: " + (int) RoomTech.KARMA + " Karma, needs enemies nearby, 1 min cooldown").withStyle(ChatFormatting.DARK_AQUA));
+        tip.add(Component.literal("Nothing mined in the Room comes back - it's only a copy").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

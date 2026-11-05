@@ -28,7 +28,21 @@ public final class BigHunger {
             case MIKIKO -> 200;
             case RHALIX -> 60;
             default -> 20;
-        };
+        } + com.xenowarriors.stats.Appetite.extraFood(p);          // (+20 per extra layer from the Appetite level)
+    }
+
+    /** Extra food (e.g. the Appetite bonus): into the big stomach if there is one, else onto the bar. */
+    public static void addFood(ServerPlayer p, int points, float saturation) {
+        var food = p.getFoodData();
+        if (points > 0) {
+            int max = max(p);
+            if (max > 20) {
+                var d = p.getPersistentData();
+                int total = d.contains(TOTAL) ? d.getInt(TOTAL) : food.getFoodLevel();
+                d.putInt(TOTAL, Math.min(max, total + points));
+            } else food.setFoodLevel(Math.min(20, food.getFoodLevel() + points));
+        }
+        if (saturation > 0) food.setSaturation(Math.min(food.getFoodLevel(), food.getSaturationLevel() + saturation));
     }
 
     public static boolean noHunger(Player p) { return ModCapabilities.getType(p) == CharacterType.ULTIMA || com.xenowarriors.you.YouRaces.noHunger(p); }
@@ -81,7 +95,7 @@ public final class BigHunger {
         var d = p.getPersistentData();
         int last = d.contains(LAST) ? d.getInt(LAST) : p.getFoodData().getFoodLevel();
         int gainedOnBar = p.getFoodData().getFoodLevel() - last;
-        int total = (d.contains(TOTAL) ? d.getInt(TOTAL) : last) + fp.getNutrition() - gainedOnBar + gainedOnBar;
+        int total = d.contains(TOTAL) ? d.getInt(TOTAL) + fp.getNutrition() : p.getFoodData().getFoodLevel();   // (no stomach yet: the bar already holds this meal - don't count it twice)
         d.putInt(TOTAL, Math.min(max(p), total));
         d.putInt(LAST, p.getFoodData().getFoodLevel());                // the bar change is already counted
     }
