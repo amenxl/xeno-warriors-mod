@@ -957,7 +957,10 @@ public final class FoxPets {
             if (fox != null) {
                 wake(fox);
                 fox.setTarget(null);
-                if (fox.distanceTo(p) > 4) FoxFollowOwnerGoal.teleportNear(fox, p);
+                if (fox.distanceTo(p) > 4 && !FoxFollowOwnerGoal.teleportNear(fox, p) && !com.xenowarriors.party.PetRest.resting(fox)) {
+                    fox.moveTo(p.getX(), p.getY(), p.getZ(), fox.getYRot(), 0);   // (no open ground beside you - flying, a ledge: right where you are)
+                    fox.getNavigation().stop(); fox.fallDistance = 0;
+                }
                 continue;
             }
             // dead, in another dimension, or stuck far away: it comes back to him

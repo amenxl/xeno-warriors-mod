@@ -276,9 +276,19 @@ public final class WingPets {
     public static void teleportNear(Mob mob, Entity owner) {
         if (com.xenowarriors.party.PetRest.resting(mob)) return;            // staying behind (party pet limit)
         Vec3 o = owner.position();
-        double a = mob.getRandom().nextDouble() * Math.PI * 2;
         double y = mob instanceof Bat || mob instanceof Bee || mob instanceof Parrot ? o.y + 1.8 : o.y;
-        mob.moveTo(o.x + Math.cos(a) * 2, y, o.z + Math.sin(a) * 2, mob.getYRot(), mob.getXRot());
+        double a0 = mob.getRandom().nextDouble() * Math.PI * 2;
+        for (int i = 0; i < 8; i++) {                                         // (somewhere it fits: never inside a wall, where it would suffocate)
+            double a = a0 + i * Math.PI / 4, x = o.x + Math.cos(a) * 2, z = o.z + Math.sin(a) * 2;
+            for (double yy : new double[]{y, o.y}) {
+                if (mob.level().noCollision(mob, mob.getDimensions(mob.getPose()).makeBoundingBox(x, yy, z))) {
+                    mob.moveTo(x, yy, z, mob.getYRot(), mob.getXRot());
+                    mob.getNavigation().stop();
+                    return;
+                }
+            }
+        }
+        mob.moveTo(o.x, o.y, o.z, mob.getYRot(), mob.getXRot());               // (no room around: right where the owner is)
         mob.getNavigation().stop();
     }
 
