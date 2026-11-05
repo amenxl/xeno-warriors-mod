@@ -52,7 +52,7 @@ public final class RebuildTests {
     private static void wait(int t) { S.add(null, () -> {}, t); }
     private static String pct(int a, int b) { return b == 0 ? "-" : String.format("%.1f%%", 100.0 * a / b); }
 
-    private static BlockPos center, bell, blast, gold;
+    private static BlockPos center, bell, blast, gold, near, off;
     private static RebuildData.Village village;
     private static final List<Integer> BLAST = new ArrayList<>();
     private static int goldIdx = -1, firstFull = -1;
@@ -158,6 +158,43 @@ public final class RebuildTests {
         }
         step(null, () -> server(p -> finalCheck(p.serverLevel())), 4);
         step("after", () -> {}, 2);
+        // ---- a player standing right by a gap: left until they move off; and with the gamerule off: left alone
+        step(null, () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            near = off = null;
+            for (int i : BLAST) {
+                BlockPos q = village.pos(i);
+                if (i == goldIdx || !village.state(i).isSolidRender(l, q) || q.getY() < blast.getY() || !l.getBlockState(q.above()).isAir() && near != null) continue;
+                if (near == null) near = q; else if (off == null && q.distSqr(near) > 9) off = q;
+            }
+            if (near == null) { log("near-player test: no spot"); return; }
+            l.setBlock(near, Blocks.AIR.defaultBlockState(), 3);
+            p.getAbilities().flying = true; p.onUpdateAbilities();
+            p.connection.teleport(near.getX() + .5, near.getY() + 1.2, near.getZ() + 2.0, 180F, 30F);
+            log("near-player: removed " + near.toShortString() + ", player " + String.format("%.1f", Math.sqrt(p.distanceToSqr(near.getX() + .5, near.getY() + .5, near.getZ() + .5))) + " blocks away");
+        }), 400);
+        step("near_player", () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            if (near == null) return;
+            log("near-player after 20s: " + (l.getBlockState(near).isAir() ? "still open (OK)" : "FILLED " + l.getBlockState(near)));
+            look(p, mc, blast, 15, 9);
+        }), 2);
+        step(null, () -> {}, 600);
+        step(null, () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            if (near != null) log("near-player 30s after they left: " + (l.getBlockState(near).is(village.state(village.index(near)).getBlock()) ? "rebuilt (OK)" : "still " + l.getBlockState(near)));
+            l.getGameRules().getRule(VillageRebuild.RULE).set(false, p.server);
+            if (off != null) { l.setBlock(off, Blocks.AIR.defaultBlockState(), 3); log("gamerule off: removed " + off.toShortString()); }
+        }), 600);
+        step(null, () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            if (off != null) log("gamerule off after 30s: " + (l.getBlockState(off).isAir() ? "still open (OK)" : "FILLED"));
+            l.getGameRules().getRule(VillageRebuild.RULE).set(true, p.server);
+        }), 600);
+        step(null, () -> server(p -> {
+            ServerLevel l = p.serverLevel();
+            if (off != null) log("gamerule back on, 30s later: " + (l.getBlockState(off).isAir() ? "still open" : "rebuilt (OK)"));
+        }), 2);
         // a closer look from the other side
         step(null, () -> server(p -> { if (blast != null) look(p, mc, blast, -12, 6); }), 30);
         step("after_close", () -> {}, 2);
