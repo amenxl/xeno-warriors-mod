@@ -191,9 +191,10 @@ public final class RebuildTests {
             if (off != null) log("gamerule off after 30s: " + (l.getBlockState(off).isAir() ? "still open (OK)" : "FILLED"));
             l.getGameRules().getRule(VillageRebuild.RULE).set(true, p.server);
         }), 600);
+        step(null, () -> server(p -> log("gamerule back on, 30s: " + (off != null && p.serverLevel().getBlockState(off).isAir() ? "still open" : "rebuilt") + " jobs: " + VillageRebuild.debug(village))), 600);
         step(null, () -> server(p -> {
             ServerLevel l = p.serverLevel();
-            if (off != null) log("gamerule back on, 30s later: " + (l.getBlockState(off).isAir() ? "still open" : "rebuilt (OK)"));
+            if (off != null) log("gamerule back on, 60s later: " + (l.getBlockState(off).isAir() ? "still open" : "rebuilt (OK)"));
         }), 2);
         // a closer look from the other side
         step(null, () -> server(p -> { if (blast != null) look(p, mc, blast, -12, 6); }), 30);
