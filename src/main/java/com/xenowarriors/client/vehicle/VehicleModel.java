@@ -11,9 +11,9 @@ import software.bernie.geckolib.model.GeoModel;
 
 /** Vehicle models: wheels roll with the distance driven, rotors spin up when someone's flying. */
 public class VehicleModel extends GeoModel<VehicleEntity> {
-    @Override public ResourceLocation getModelResource(VehicleEntity e) { return XenoWarriors.id("geo/" + e.kind.id + ".geo.json"); }
+    @Override public ResourceLocation getModelResource(VehicleEntity e) { return XenoWarriors.id("geo/" + e.kind.model + ".geo.json"); }
     @Override public ResourceLocation getTextureResource(VehicleEntity e) { return XenoWarriors.id("textures/entity/vehicle/" + e.kind.id + "_" + e.kind.variant(e.variant()) + ".png"); }
-    @Override public ResourceLocation getAnimationResource(VehicleEntity e) { return XenoWarriors.id("animations/" + e.kind.id + ".animation.json"); }
+    @Override public ResourceLocation getAnimationResource(VehicleEntity e) { return XenoWarriors.id("animations/" + e.kind.model + ".animation.json"); }
 
     @Override
     public void setCustomAnimations(VehicleEntity e, long id, AnimationState<VehicleEntity> state) {
@@ -23,7 +23,7 @@ public class VehicleModel extends GeoModel<VehicleEntity> {
             CoreGeoBone bone = getAnimationProcessor().getBone(b);
             if (bone != null) bone.setRotX(wheel);
         }
-        if (e.kind == VehicleKind.HELICOPTER) {
+        if (e.kind.heli()) {
             float rotor = Mth.lerp(pt, e.rotorRotO, e.rotorRot);
             CoreGeoBone main = getAnimationProcessor().getBone("rotor");
             if (main != null) main.setRotY(rotor);
