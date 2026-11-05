@@ -1,0 +1,10 @@
+{
+ "parent": "xenowarriors:item/forms/gun_pistol",
+ "textures": {
+  "steel": "xenowarriors:item/forms/heku_gun_steel",
+  "dark": "xenowarriors:item/forms/heku_gun_dark",
+  "glow": "xenowarriors:item/forms/heku_gun_glow",
+  "accent": "xenowarriors:item/forms/heku_gun_accent",
+  "grip": "xenowarriors:item/forms/heku_gun_grip"
+ }
+}

@@ -96,6 +96,7 @@ public final class UiTest {
         if ("mikiko".equals(System.getenv("XW_UITEST_FOCUS"))) { mikikoCombo(mc, l); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("mikiko")) { com.xenowarriors.client.test.MikikoTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("rhalix")) { com.xenowarriors.client.test.RhalixTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^dmz", "").startsWith("weapons")) { com.xenowarriors.client.test.WeaponsTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^(ef|tacz)", "").startsWith("chars5")) { com.xenowarriors.client.test.CharsTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^ef", "").startsWith("batch3")) { com.xenowarriors.client.test.Batch3Tests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if ("combo".equals(System.getenv("XW_UITEST_FOCUS"))) { combos(mc, l); return l; }

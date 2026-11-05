@@ -38,6 +38,7 @@ public final class BladeChannelClient {
 
     /** Called from the key handling instead of sending the summon at once. */
     public static void keyTick(Minecraft mc) {
+        if (com.xenowarriors.client.forms.FormsClient.keyTick(mc)) return;     // the form wheel (more than one form unlocked / Rhalix's wires)
         // Kaeru: a press summons/puts away the blade, sneak + press goes back into it (no channelling)
         boolean kaeru = mc.player != null && ClientCharacterData.getLocal() == CharacterType.KAERU && mc.screen == null;
         if (kaeru) {

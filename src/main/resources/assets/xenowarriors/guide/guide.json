@@ -96,6 +96,19 @@
           "text": "The Fox King, fire and wind.\n- Hekublade: summon / put away with {key:summon_blade}. Nobody else can keep it. Upgrade its edge at a Karma Altar with Sky Crystals or Corrupted Shards.\n- Everything he defeats with it is sealed inside. Step into the Hekublade realm with {key:hekublade_realm} (blade in hand) to walk among the sealed souls - right-click one to free it.\n- Aerial blade combo: launch, juggle, and spike them into the ground.\n- Fox King mode ({key:fox_king}): +50% max Karma, faster and stronger.\n- His fire cooks the raw food he carries. At Character Level 50 he can fly on the wind (double-tap jump).\n- He tames foxes with rabbit meat (2 at most); the Fox Whistle calls them back.\n- He's wanted by Aurora's Government: hide your face (a hood or helmet) at Gov terminals."
         },
         {
+          "title": "Mikiko's weapon forms",
+          "text": "Mikiko can turn his Hekublade into other things as it levels up.\n- Tap {key:summon_blade}: the Hekublade (or whatever form is out) in / away.\n- Hold {key:summon_blade}: a wheel of forms opens while power gathers. Point at one and let go to summon it. Held for the full 2 seconds it's the powered-up summon (+damage for 30 seconds), like the old hold-summon. Let go in the middle to cancel. (With only the Hekublade unlocked, holding works as before.)\n## What unlocks when\n- Shovel: Hekublade level 20 + Mining level 10\n- Hoe: Hekublade level 50\n- Guns (pistol, rifle, shotgun): Hekublade level 50 + gun level 50\n- Axe: Hekublade level 60 + Mining level 30\n- Pickaxe: Hekublade level 80 + Mining level 50\n- Heku-umbrella: Hekublade level 300\n## The Heku-umbrella\n- Held up over his head, it keeps the rain off. Rain puts out Netsu three times as fast - not under the umbrella.\n- Fall with it out to glide: slow, drifting forward, no fall damage.\nLike the blade, forms can't be dropped or stored, and summoning one sends the others away. See 'Summoned guns and tools'."
+        },
+        {
+          "title": "Rhalix's wires",
+          "season": 2,
+          "text": "Once Season 2 is unlocked Rhalix fights with his wires too. They have their own level (shown in the stats screen), raised by using them.\n- Tap {key:summon_blade}: wires out / away. Hold it: the wheel of what to make out of them (same as Mikiko's: let go on one, a full charge powers it up).\n## The wires\n- Attack: he swings them round - everything in front of him up to 4 blocks away gets hit.\n- Lock on ({key:lock_on}) and hold use: the wires bind the target and turn red. They can't move, and their Karma drains (their Ki with DragonMineZ; a mob loses a little health). Up to 8 seconds, then 20 seconds before the next bind.\n- A player caught in a bind can mash attack to break free.\n## What else he can make\n- Wire Sword: any time.\n- Guns: wires level 50 + gun level 50.\n- Shovel: wires 20 + Mining 10. Hoe: wires 50. Axe: wires 60 + Mining 30. Pickaxe: wires 80 + Mining 50."
+        },
+        {
+          "title": "Summoned guns and tools",
+          "text": "The guns and tools Mikiko and Rhalix make from their weapons (no other mods needed).\n## Guns\n- Use (right click) to fire; hold it to keep firing. Pistol: quick. Rifle: slow, hard-hitting, long range, goes through one target. Shotgun: a spread of pellets, short range.\n- Infinite ammo - but each shot wears the gun. More gun level, more durability (190 shots at gun level 50, 1,540 at 500).\n- When one breaks there's a 30-second wait before another gun can be summoned (the wheel shows it).\n- Hekublade guns can set what they hit on fire; wire guns snag it (a moment of Slowness).\n- Hits train your gun level.\n## Tools\n- Better than diamond (netherite-tier), never break, and dig faster the higher the weapon level."
+        },
+        {
           "title": "Rhalix",
           "text": "Gravity and wings.\n- Wings out / away with {key:toggle_wings}; fly by double-tapping jump - but only so high above the ground.\n- Kishi, his gravity, pins enemies; it's half of the Gravity Fox Fire team ultimate with Mikiko.\n- Demon's Remnants ({key:fox_king}): his eyes glow red and he's stronger, faster and tougher for 90 seconds.\n- Season 2: the Lunar form (pass the Lunar trial by meditating under a full moon).\n- He tames bats, parrots, chickens and bees as winged companions."
         },
@@ -219,8 +232,7 @@
         },
         {
           "title": "Gun level",
-          "requires": "tacz",
-          "text": "With TACZ installed every character has a gun level (shown in the stats screens).\n- It goes up by hitting things with TACZ guns (XP = damage dealt, more for a kill).\n- Each level adds 0.2% gun damage, up to +150%.\n- At gun level 500 your magazine never runs dry.\n- Technica is the gunsmith: her gun level starts at 100 and her guns hit 25% harder on top."
+          "text": "Every character has a gun level (shown in the stats screens with TACZ installed, and for Mikiko and Rhalix, who can make guns).\n- It goes up by hitting things with guns: TACZ guns, and the guns Mikiko and Rhalix summon from their weapons (XP = damage dealt, more for a kill).\n- Without TACZ, bows and crossbows train it too (half XP).\n- Each level adds 0.2% gun damage, up to +150%.\n- More gun level, more durability for summoned guns. With TACZ: at gun level 500 your magazine never runs dry.\n- Technica is the gunsmith: her gun level starts at 100 and her guns hit 25% harder on top."
         }
       ]
     },

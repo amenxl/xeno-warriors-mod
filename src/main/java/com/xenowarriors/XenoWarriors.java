@@ -54,6 +54,7 @@ public class XenoWarriors {
         com.xenowarriors.corrupted.CorruptionBlocks.init();
         com.xenowarriors.sky.ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
+        com.xenowarriors.forms.FormItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);
         com.xenowarriors.world.AddDiscLootModifier.SERIALIZERS.register(modBus);
         com.xenowarriors.fox.ModMenus.MENUS.register(modBus);

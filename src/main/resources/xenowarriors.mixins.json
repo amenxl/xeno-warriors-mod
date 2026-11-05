@@ -50,7 +50,8 @@
     "compat.DragonMineZNoGreyMixin",
     "compat.EpicFightTargetOutlineMixin",
     "compat.EpicFightLockOnFilterMixin",
-    "UltimaSightMixin"
+    "UltimaSightMixin",
+    "LevelRendererRainMixin"
   ],
   "injectors": {
     "defaultRequire": 1

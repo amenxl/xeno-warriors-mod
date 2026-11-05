@@ -33,7 +33,7 @@ public final class RainIdle {
     private static boolean wanted(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
         if (type != CharacterType.MIKIKO && type != CharacterType.RHALIX) return false;
-        if (!p.level().isRainingAt(p.blockPosition().above()) || p.isUnderWater() || p.isPassenger() || p.isSleeping()) return false;
+        if (!p.level().isRainingAt(p.blockPosition().above()) || p.isUnderWater() || p.isPassenger() || p.isSleeping() || com.xenowarriors.forms.Umbrella.covers(p)) return false;
         if (com.xenowarriors.client.mikiko.HoodClient.wearingHoodie(p)) return false;     // hood's got it covered
         return Math.abs(p.getX() - p.xo) + Math.abs(p.getZ() - p.zo) < 0.02 && p.onGround() && !p.swinging && !p.isUsingItem()
                 && p.hurtTime == 0 && !p.isCrouching() && !Busy.action(p) && !Idles.taken(p, Idles.RAIN);

@@ -56,6 +56,7 @@ public final class BladeLevel {
         if (d == null || d.bladeLevel >= MAX || amount <= 0) return;
         d.bladeXp += amount;
         boolean up = false;
+        int before = d.bladeLevel;
         while (d.bladeLevel < MAX && d.bladeXp >= needed(d.bladeLevel)) {
             d.bladeXp -= needed(d.bladeLevel);
             d.bladeLevel++;
@@ -66,6 +67,7 @@ public final class BladeLevel {
             p.sendSystemMessage(Component.literal("The Hekublade reached level " + d.bladeLevel + "! You can stay inside for "
                     + fmt(maxTicks(d.bladeLevel)) + ".").withStyle(ChatFormatting.GOLD));
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.2F, 1.3F);
+            com.xenowarriors.forms.WeaponForms.announceUnlocks(p, before, d.bladeLevel);
         }
     }
 

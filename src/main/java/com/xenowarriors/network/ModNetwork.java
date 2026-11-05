@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "69";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "70";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -485,6 +485,15 @@ public final class ModNetwork {
                 .encoder(BotDmzPacket::encode).decoder(BotDmzPacket::decode).consumerMainThread(BotDmzPacket::handle).add();
         CHANNEL.messageBuilder(PlayerOptionPacket.class, id++)                  // (both ways: Gravity Magnet / auto step-up on or off)
                 .encoder(PlayerOptionPacket::encode).decoder(PlayerOptionPacket::decode).consumerMainThread(PlayerOptionPacket::handle).add();
+        // weapon forms (Hekublade / Rhalix's wires: guns, tools, umbrella, whip and bind)
+        CHANNEL.messageBuilder(WeaponFormsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WeaponFormsPacket::encode).decoder(WeaponFormsPacket::decode).consumerMainThread(WeaponFormsPacket::handle).add();
+        CHANNEL.messageBuilder(FormPickPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(FormPickPacket::encode).decoder(FormPickPacket::decode).consumerMainThread(FormPickPacket::handle).add();
+        CHANNEL.messageBuilder(WireActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(WireActionPacket::encode).decoder(WireActionPacket::decode).consumerMainThread(WireActionPacket::handle).add();
+        CHANNEL.messageBuilder(WireFxPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(WireFxPacket::encode).decoder(WireFxPacket::decode).consumerMainThread(WireFxPacket::handle).add();
         CHANNEL.messageBuilder(DmzWishPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (a bot summoned the dragon: its wish menu opens for you)
                 .encoder(DmzWishPacket::encode).decoder(DmzWishPacket::decode).consumerMainThread(DmzWishPacket::handle).add();
     }
