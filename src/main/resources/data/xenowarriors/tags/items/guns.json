@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    {"id": "tacz:modern_kinetic_gun", "required": false},
+    {"id": "dragonminez:blaster_cannon", "required": false},
+    {"id": "xenowarriors:blaster_rifle", "required": false},
+    {"id": "xenowarriors:burst_cannon", "required": false},
+    {"id": "xenowarriors:blaster_mortar", "required": false}
+  ]
+}

@@ -89,6 +89,8 @@ public final class Journey {
         /** Over (cleared or failed): everyone's being sent home together - nobody "left" it. */
         boolean ending;
         Scenario scenario = Scenario.NONE; Foe foe = Foe.MIXED; Challenge challenge = Challenge.NO_DOWNS; boolean challengeOk;
+        /** Famished: hunger drains faster this battle (likelier the harder the difficulty). */
+        boolean famished;
         long chooseUntil, spawnAt, battleStart, battleEnd;
         /** On a healing step: when everyone's out of the pods (0 = not resting). */
         long podUntil;
@@ -334,6 +336,15 @@ public final class Journey {
         openBridges(r);
         syncAll(server, r, OPEN_NONE);
     }
+
+    /** (UI tests) force the next battle's Famished roll. */
+    public static Boolean forceFamished;
+
+    /** Chance a battle is Famished, by difficulty: Easy none, Normal 5%, Hard 15%, Insane 25%, Xeno 40%. */
+    public static float famishedChance(int diff) { return new float[]{0F, 0.05F, 0.15F, 0.25F, 0.40F}[Math.max(0, Math.min(4, diff))]; }
+
+    /** (tests) is this player's battle Famished? */
+    public static boolean famished(ServerPlayer p) { Run r = p == null ? null : BY.get(p.getUUID()); return r != null && r.phase == BATTLE && r.famished; }
 
     static String stageName(Run r) { return JourneyRules.DIFF[r.diff].charAt(0) + JourneyRules.DIFF[r.diff].substring(1).toLowerCase() + " Stage " + (r.stage + 1); }
 
@@ -685,6 +696,8 @@ public final class Journey {
         r.phase = BATTLE;
         r.powerUp = r.powerNext; r.powerNext = false;
         r.challengeOk = true;
+        r.famished = forceFamished != null ? forceFamished : tl.getRandom().nextFloat() < famishedChance(r.diff);
+        forceFamished = null;
         r.enemyHp = 0;
         r.alive.clear(); r.seen.clear();
         r.waves = boss ? 1 : r.diff >= 3 ? 2 : 1;
@@ -722,6 +735,7 @@ public final class Journey {
             String what = boss ? "BOSS" : r.scenario != Scenario.NONE ? r.scenario.title.toUpperCase() : (r.kind() == JourneyRules.DBZ ? "DBZ BATTLE " : "BATTLE ") + r.row();
             title(p, what, "Challenge: " + challengeText(r) + (r.challengeOk ? "" : "  (missed)"), boss ? 0xC040FF : JourneyRules.STEP_COLOR[r.kind()]);
             if (r.powerUp) p.displayClientMessage(msg("Power Up: +30% damage this battle", ChatFormatting.GOLD), true);
+            if (r.famished) p.sendSystemMessage(msg("Famished: your hunger drains faster this battle.", ChatFormatting.GOLD));
         }
         tl.playSound(null, c, SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 2F, 1.2F);
         syncAll(server, r, OPEN_NONE);
@@ -807,6 +821,8 @@ public final class Journey {
     private static void battleTick(MinecraftServer server, ServerLevel tl, Run r, long now) {
         BlockPos c = JourneyWorld.arena(r.slot);
         List<ServerPlayer> fs = fighters(server, r);
+        if (r.famished && now % 20 == 0 && now >= r.battleStart)                 // Famished: kept hungry all battle
+            for (ServerPlayer p : fs) p.addEffect(new MobEffectInstance(MobEffects.HUNGER, 60, r.diff >= 4 ? 1 : 0, false, false, true));
         List<LivingEntity> targets = new ArrayList<>(fs);
         for (Member mb : r.members) for (var e : new ArrayList<>(mb.bots.entrySet())) {
             Entity en = tl.getEntity(e.getKey());
@@ -1333,6 +1349,7 @@ public final class Journey {
             t.putString("ruleText", r.scenario.rule.text);
             t.putString("challenge", challengeText(r));
             t.putBoolean("challengeOk", r.challengeOk);
+            t.putBoolean("famished", r.famished);
             long now = server.getLevel(Tower.LEVEL) == null ? 0 : server.getLevel(Tower.LEVEL).getGameTime();
             t.putInt("chooseLeft", (int) Math.max(0, (r.chooseUntil - now) / 20));
             t.putInt("time", (int) Math.max(0, (now - r.battleStart) / 20));

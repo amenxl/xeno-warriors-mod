@@ -20,7 +20,7 @@ import java.util.List;
  * DragonMineZ's own ki blasts. The Blaster Rifle fires while you hold right-click; the Burst Cannon fires three
  * quick blasts; the Blaster Mortar charges a huge one. Skylanders in DragonMineZ's worlds carry them.
  */
-public class DmzGunItem extends Item {
+public class DmzGunItem extends Item implements Guns.Marker {
     private final DmzGuns.Kind kind;
 
     public DmzGunItem(DmzGuns.Kind kind, Properties props) {

@@ -76,6 +76,7 @@ public final class ClientReset {
         public static void onRegister(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
             event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm -> {
                 com.xenowarriors.client.render.CharacterDetailLayer.clearFaceCache();
+                HudFaces.clearCache();
                 com.xenowarriors.client.cel.Cel.clear();
                 SkillIcons.clear();
             });

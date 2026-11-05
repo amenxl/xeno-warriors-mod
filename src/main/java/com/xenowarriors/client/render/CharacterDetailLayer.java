@@ -138,7 +138,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     private static final java.util.Map<String, java.util.Map<String, net.minecraft.resources.ResourceLocation>> FACES = new java.util.concurrent.ConcurrentHashMap<>();
     /** A close expression for sets that don't have one (the drawn faces, Rhalix's Demon/Lunar faces lack a few). */
     private static final java.util.Map<String, String> FACE_FALLBACK = java.util.Map.of("shocked", "hurt", "determined", "focused",
-            "smirk", "smug", "laugh", "grin", "pout", "annoyed", "blush", "happy", "love", "happy");
+            "smirk", "smug", "laugh", "grin", "pout", "annoyed", "blush", "happy", "love", "happy", "starving", "exhausted", "starving2", "starving");
 
     /**
      * textures/entity/character/&lt;set&gt;_face_&lt;expr&gt;.png - or a close expression, or the plain &lt;set&gt;_face.png when
@@ -204,6 +204,12 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return (p.tickCount % 40) < 22 ? "snore" : "sleep";   // snores in time with the z's
         }
         if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
+        if (ClientSkillState.starving(p) && !(p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT)) {
+            // starving: sunken eyes, pale, mouth hanging open (breathing weakly), the odd slow blink
+            int st = (p.tickCount + p.getId() * 11) % 100;
+            if (st < 4) return "blink";
+            return (st / 16) % 2 == 0 ? "starving" : "starving2";
+        }
         if (p.hurtTime > 0) return p.getHealth() < p.getMaxHealth() * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
         String beat = com.xenowarriors.client.GarryBeatbox.face(p);
         if (beat != null) return beat;

@@ -37,6 +37,15 @@ public final class DashGuard {
         return com.xenowarriors.client.combo.ComboClient.assistTarget(p);   // not locked on: whoever the combo is hitting
     }
 
+    /** (tests) how many dashes went ahead, and whether the last one was skipped (nobody to reach). */
+    public static int dashes;
+    public static boolean lastSkipped;
+
+    /** The dash (about fwd * CARRY blocks) plus an arm's reach gets the hit to them. */
+    public static boolean reaches(LocalPlayer p, LivingEntity t, double fwd) {
+        return gap(p, t) <= fwd * CARRY + 2.2 && Math.abs(t.getY() - p.getY()) < 2.5 && p.hasLineOfSight(t);
+    }
+
     /** Space left between the two of them, flat. */
     private static double gap(LocalPlayer p, LivingEntity t) {
         double d = Math.hypot(t.getX() - p.getX(), t.getZ() - p.getZ());
@@ -45,13 +54,15 @@ public final class DashGuard {
 
     /** A combo dash forward ({@code fwd} speed, {@code up} hop) - aimed at and stopping short of the lock-on target. */
     public static void dash(LocalPlayer p, double fwd, double up) {
-        Vec3 v = p.getDeltaMovement();
         LivingEntity t = target(p);
-        if (t == null) {
-            float yaw = p.getYRot() * Mth.DEG_TO_RAD;
-            p.setDeltaMovement(v.x * 0.3 - Mth.sin(yaw) * fwd, up, v.z * 0.3 + Mth.cos(yaw) * fwd);
+        // only into someone the hit will land on: swinging at the air (or at someone too far off) he stays where he is
+        if (t == null || !reaches(p, t, fwd)) {
+            lastSkipped = true;
+            com.xenowarriors.client.RhalixComboFx.log("dash skipped: " + (t == null ? "no target" : String.format(java.util.Locale.ROOT, "target %.1f away", gap(p, t))));
             return;
         }
+        lastSkipped = false;
+        dashes++;
         Vec3 dir = new Vec3(t.getX() - p.getX(), 0, t.getZ() - p.getZ());
         dir = dir.lengthSqr() < 1.0E-4 ? Vec3.directionFromRotation(0, p.getYRot()) : dir.normalize();
         double room = Math.max(0, gap(p, t) - STOP);

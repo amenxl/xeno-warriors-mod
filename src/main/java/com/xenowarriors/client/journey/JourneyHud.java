@@ -63,6 +63,7 @@ public class JourneyHud implements IGuiOverlay {
             int sec = st.getInt("time");
             String info = String.format("%d:%02d", sec / 60, sec % 60) + "   enemies " + st.getInt("enemies") + (st.getInt("waves") > 0 ? "  +" + st.getInt("waves") + " wave" : "");
             JourneyScreen.sc(g, font, info, 6, ly + 8, 0.6F, 0xC0C8D0);
+            if (st.getBoolean("famished")) JourneyScreen.sc(g, font, "\u26a0 FAMISHED - hunger drains faster", 6, ly + 16, 0.6F, 0xFF8A40);   // (an active modifier)
         } else if (phase == 2) {
             String s = "Choosing your team... " + st.getInt("chooseLeft") + "s  (Main Menu > Journey)";
             JourneyScreen.sc(g, font, s, rx - font.width(s) * 0.7F, 6, 0.7F, 0xFFD040);
