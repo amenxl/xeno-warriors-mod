@@ -265,6 +265,7 @@ public final class PartyBots {
             c.putIntArray("lv", lv); c.putFloat("x" + i, xp);
             d.charStats.put(t.getId(), c);
             if (up) {
+                com.xenowarriors.statboost.StatBoosts.botLeveledUp(b, o, com.xenowarriors.statboost.BoostStat.of(stat));
                 int before = b.botLevel();
                 b.applyLevel(levelFor(o, t));
                 if (b.botLevel() > before) o.displayClientMessage(Component.literal("").append(b.label()).append(" reached level " + b.botLevel() + "!").withStyle(ChatFormatting.GOLD), true);

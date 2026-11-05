@@ -68,6 +68,7 @@ public final class BladeLevel {
                     + fmt(maxTicks(d.bladeLevel)) + ".").withStyle(ChatFormatting.GOLD));
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.2F, 1.3F);
             com.xenowarriors.forms.WeaponForms.announceUnlocks(p, before, d.bladeLevel);
+            com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.HEKUBLADE);
         }
     }
 

@@ -1,0 +1,1 @@
+{"parent": "minecraft:item/generated", "textures": {"layer0": "xenowarriors:item/stat_boost/tier_1", "layer1": "xenowarriors:item/stat_boost/icon_smelting"}}

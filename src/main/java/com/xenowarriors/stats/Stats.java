@@ -116,6 +116,7 @@ public final class Stats {
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_LEVELUP,
                         SoundSource.PLAYERS, 0.5F, 1.4F);
                 if (stat == Stat.SPEED) applySpeed(player, d);
+                com.xenowarriors.statboost.StatBoosts.leveledUp(player, com.xenowarriors.statboost.BoostStat.of(stat));
             }
         });
         int after = characterLevel(player);

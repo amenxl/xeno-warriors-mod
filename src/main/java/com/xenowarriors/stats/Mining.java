@@ -94,6 +94,7 @@ public final class Mining {
                         + Math.round((multiplier(d.miningLevel, false) - 1) * 100) + "% faster ("
                         + Math.round((multiplier(d.miningLevel, true) - 1) * 100) + "% with bare hands).").withStyle(ChatFormatting.AQUA));
                 p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 1.4F);
+                com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.MINING);
             }
         });
         sync(p);

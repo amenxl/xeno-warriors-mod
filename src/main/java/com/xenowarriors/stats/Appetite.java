@@ -56,6 +56,9 @@ public final class Appetite {
         return lv >= MAX_LEVEL ? 1F : Math.min(1F, root(p).getCompound(charKey(p)).getFloat("xp") / needed(lv));
     }
 
+    /** Raw XP toward the next level (Stat Boosts keep it when they add levels). */
+    public static float xp(Player p) { return root(p).getCompound(charKey(p)).getFloat("xp"); }
+
     /** Extra layers of hunger bars (one per 10 levels). */
     public static int layers(int level) { return Math.min(MAX_LEVEL, level) / LEVELS_PER_LAYER; }
     public static int layers(Player p) { return layers(level(p)); }
@@ -95,6 +98,7 @@ public final class Appetite {
         if (lv >= MAX_LEVEL) xp = 0;
         c.putInt("lv", lv); c.putFloat("xp", xp);
         r.put(k, c);
+        if (lv > before) com.xenowarriors.statboost.StatBoosts.botLeveledUp(b, o, com.xenowarriors.statboost.BoostStat.APPETITE);
         if (lv > before) o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal(": Appetite level " + lv + " (food +" + Math.round(bonus(lv) * 100) + "%)")).withStyle(ChatFormatting.GOLD), true);
     }
 
@@ -122,6 +126,7 @@ public final class Appetite {
             if (layer) com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), ModCapabilities.getType(p).ordinal(), -1,
                     "Bigger appetite!", "+1 layer of hunger bars", "normal");
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.8F, layer ? 0.7F : 1.2F);
+            com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.APPETITE);
         }
     }
 

@@ -68,6 +68,14 @@ public final class GunLevel {
 
     public static float xp(Player p) { return keep(p).getFloat(XP + key(p)); }
 
+    /** Adds whole levels (a Stat Boost), keeping the XP toward the next one. */
+    public static void addLevels(ServerPlayer p, int n) {
+        int lv = Math.max(1, Math.min(MAX, level(p) + Math.max(0, n)));
+        keep(p).putInt(LV + key(p), lv);
+        if (lv >= MAX) keep(p).putFloat(XP + key(p), 0F);
+        sync(p);
+    }
+
     /** XP from one level to the next. */
     public static float needed(int level) { return 10F + level * 0.5F; }
 
@@ -105,6 +113,7 @@ public final class GunLevel {
         while (lv < MAX && xp >= needed(lv)) { xp -= needed(lv); lv++; }
         keep(o).putInt(LV + k, lv);
         keep(o).putFloat(XP + k, xp);
+        if (lv != before) com.xenowarriors.statboost.StatBoosts.botLeveledUp(b, o, com.xenowarriors.statboost.BoostStat.GUNS);
         if (lv != before) o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal(": gun level " + lv)).withStyle(ChatFormatting.GOLD), true);
     }
 
@@ -135,6 +144,7 @@ public final class GunLevel {
             p.displayClientMessage(Component.literal("Gun level " + lv + (lv >= INFINITE && before < INFINITE ? " - unlimited ammo!" : ""))
                     .withStyle(ChatFormatting.GOLD), true);
             sync(p);
+            com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.GUNS);
         }
     }
 
