@@ -102,6 +102,7 @@ public final class DmzTalkNpcs {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 20 != 13 || !DmzBotQuests.ready()) return;
+        if (DmzPerCharacter.viewing(p) != null) return;                          // (a bot's menu is open: its data is in yours for now)
         update(p);
     }
 
