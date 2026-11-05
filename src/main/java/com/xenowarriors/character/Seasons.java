@@ -26,6 +26,15 @@ public final class Seasons extends SavedData {
      */
     public static boolean unlockedForWorldgen(int season) { return cached >= season; }
 
+    /**
+     * The season this game's client was told by the server it's on (set by the client; stays 1 in a dedicated
+     * server's own JVM). The creative tab reads it: on a dedicated server the client never has {@link #cached}.
+     */
+    public static volatile int client = 1;
+
+    /** For the creative tab (client side): unlocked as far as this game knows - its own server's setting, or what the server sent. */
+    public static boolean unlockedForTab(int season) { return cached >= season || client >= season; }
+
     /** Reads this world's setting as its overworld loads (before any chunk of it generates). */
     public static void read(net.minecraft.server.level.ServerLevel overworld) {
         cached = overworld.getDataStorage().computeIfAbsent(Seasons::load, Seasons::new, "xenowarriors_seasons").unlocked;
@@ -55,5 +64,7 @@ public final class Seasons extends SavedData {
         s.unlocked = Math.max(1, Math.min(3, season));
         cached = s.unlocked;
         s.setDirty();
+        // tell everyone online right away (season-locked skills, outfits, guide pages and the creative tab), not on their next relog
+        for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) com.xenowarriors.skill.SkillManager.syncLoadout(p);
     }
 }
