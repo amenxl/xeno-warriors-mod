@@ -102,8 +102,76 @@ public final class PartyBots {
     /** (Tests) how many bot records wait for this owner. */
     public static int waitingFor(UUID owner) { int n = 0; for (var e : LEFT_BEHIND) if (e.getKey().equals(owner)) n++; return n; }
 
+    // ---------------------------------------------------------------- surviving a crash
+
+    /**
+     * The owner's live bots, written into their saved player data: right before the player is written to disk (see
+     * mixin.PlayerSaveSnapshotMixin - every autosave, /save-all, logout) and every second as a fallback. A bot is never
+     * saved with the world (shouldBeSaved), so without this a crash or a killed server lost everything bots carried.
+     * The snapshot sits in the same file as the character inventories it was checked out of, so the two are always
+     * from the same moment: a restart brings the bots back exactly as that save had them, never twice (it's taken off
+     * at login, as the logout records are).
+     */
+    private static final String LIVE_SNAPSHOT = "xw_bots_live";
+    /** Owners whose bots this server run has brought back at login (until they log out): only they get a snapshot. */
+    private static final Set<UUID> READY = new HashSet<>();
+    private static boolean hookSeen;
+
+    /** Called (by the mixin) right before any player is written out. Never throws: saving must not fail because of bots. */
+    public static void beforePlayerSave(ServerPlayer p) {
+        try {
+            if (p.getServer() == null || !p.getServer().isSameThread()) return;
+            if (!hookSeen && READY.contains(p.getUUID())) { hookSeen = true; XenoWarriors.LOGGER.info("XW bots: live bots are written into the owner's save before each player save"); }
+            snapshot(p);
+        } catch (Throwable t) {
+            XenoWarriors.LOGGER.warn("Couldn't write bot teammates into {}'s save", p.getGameProfile().getName(), t);
+        }
+    }
+
+    /** The owner's bots as records in their persisted data (a downed one marked: it goes home, as at a logout). */
+    static void snapshot(ServerPlayer p) {
+        if (p instanceof FakePlayer || !READY.contains(p.getUUID())) return;
+        ListTag list = new ListTag();
+        for (PartyBotEntity b : bots(p)) {
+            CompoundTag r;
+            if (b.journey()) {                                                   // (a Journey teammate: only its finds, which come to you)
+                r = new CompoundTag();
+                r.putString("char", b.character().getId());
+                r.putBoolean("journey", true);
+                r.put("inv", b.inventory.createTag());
+            } else {
+                r = b.record();
+                if (b.downed()) r.putBoolean("down", true);
+            }
+            list.add(r);
+        }
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        if (list.isEmpty()) persisted.remove(LIVE_SNAPSHOT); else persisted.put(LIVE_SNAPSHOT, list);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+    }
+
+    /** A record from the logout list or a crash snapshot, back at login. */
+    private static void restore(ServerPlayer p, CompoundTag rec) {
+        if (rec.getBoolean("journey")) {                                         // (its finds come to you, as at a logout)
+            ListTag inv = rec.getList("inv", 10);
+            for (int i = 0; i < inv.size(); i++) { ItemStack it = ItemStack.of(inv.getCompound(i)); if (!it.isEmpty() && !p.getInventory().add(it)) p.drop(it, false); }
+            return;
+        }
+        if (rec.getBoolean("down")) { homeFromRecord(p, rec); return; }          // (down when the server went: it went home, as at a logout)
+        CharacterType ct = CharacterType.byId(rec.getString("char"));
+        if (ct == CharacterType.NONE) { homeFromRecord(p, rec); return; }
+        if (!canFollowTo(ct, p.level()) || com.xenowarriors.journey.Journey.inLobbyOrRun(p) || bots(p).stream().anyMatch(b -> b.character() == ct)) {
+            LEFT_BEHIND.add(Map.entry(p.getUUID(), rec));                         // (waits outside the Hekublade / until the Journey's over - see onServerTick)
+            return;
+        }
+        spawn(p, ct, rec);
+    }
+
     /** (Tests) forget what this server run knows about the player (as a restart would). */
-    public static void resetForCrashTest(ServerPlayer p) {}
+    public static void resetForCrashTest(ServerPlayer p) { READY.remove(p.getUUID()); }
+
+    /** (Tests) the bot records in this player's crash snapshot right now. */
+    public static int snapshotSize(ServerPlayer p) { return p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getList(LIVE_SNAPSHOT, 10).size(); }
 
     /** Players with bots but no party still get the party cards (them + their bots). */
     @SubscribeEvent
@@ -126,6 +194,8 @@ public final class PartyBots {
                 else homeFromRecord(o, e.getValue());                               // (that character came back another way meanwhile: its things go home, not into thin air)
             }
         }
+        if (event.getServer().getTickCount() % 20 == 7)                          // (the save hook keeps it exact; this is the fallback)
+            for (ServerPlayer p : event.getServer().getPlayerList().getPlayers()) snapshot(p);
         if (event.getServer().getTickCount() % 10 != 5) return;
         for (ServerPlayer p : event.getServer().getPlayerList().getPlayers()) {
             if (Parties.inParty(p)) { SOLO_SYNCED.remove(p.getUUID()); continue; }
@@ -995,6 +1065,10 @@ public final class PartyBots {
         }
         for (var it = LEFT_BEHIND.iterator(); it.hasNext(); ) { var e = it.next(); if (e.getKey().equals(p.getUUID())) { list.add(e.getValue()); it.remove(); } }   // (waiting ones too)
         p.getPersistentData().put(RECORDS, list);
+        READY.remove(p.getUUID());                                               // (they're all in the logout records now: no snapshot beside them)
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        persisted.remove(LIVE_SNAPSHOT);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
     }
 
     /** What was waiting for offline owners when this world was last saved (BotLimbo) comes back. */
@@ -1017,7 +1091,7 @@ public final class PartyBots {
     /** Bots waiting for an offline owner belong to this world (saved with it, see BotLimbo): none turn up (doubled) in the next save opened (singleplayer). */
     @SubscribeEvent
     public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) {
-        LEFT_BEHIND.clear(); PENDING_HOME.clear(); ANIM_SENT.clear(); STRANDED.clear(); BotErrands.clear();
+        LEFT_BEHIND.clear(); PENDING_HOME.clear(); ANIM_SENT.clear(); STRANDED.clear(); BotErrands.clear(); READY.clear();
     }
 
     /** The things of bots that went home while this owner was away, into their saves (taken off the list first: handed over once). */
@@ -1034,7 +1108,24 @@ public final class PartyBots {
         deliverPending(p);                                                        // (bots that went home while you were away)
         ListTag list = p.getPersistentData().getList(RECORDS, 10);
         p.getPersistentData().remove(RECORDS);
-        for (int i = 0; i < list.size(); i++) spawn(p, CharacterType.byId(list.getCompound(i).getString("char")), list.getCompound(i));
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        ListTag crash = persisted.getList(LIVE_SNAPSHOT, 10);
+        persisted.remove(LIVE_SNAPSHOT);                                          // (taken off before anything comes back: handed over once)
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+        boolean already = !READY.add(p.getUUID());                                // (a second login event this run: its bots are still out)
+        if (list.isEmpty() && !crash.isEmpty() && !already) {                    // no clean logout last time: the server went down with them out
+            list = crash;
+            XenoWarriors.LOGGER.info("XW bots: {}'s {} bot teammate(s) back from their save (the server stopped without a logout)", p.getGameProfile().getName(), crash.size());
+        }
+        // The logout list is newer than the world's waiting list (a player is saved as they log out, the world a little
+        // later): a stopped server can leave an older copy of the same bot waiting there. One copy only - this one.
+        Set<String> back = new HashSet<>();
+        for (int i = 0; i < list.size(); i++) if (!list.getCompound(i).getBoolean("journey")) back.add(list.getCompound(i).getString("char"));
+        int stale = 0;
+        for (var it = LEFT_BEHIND.iterator(); it.hasNext(); ) { var e = it.next(); if (e.getKey().equals(p.getUUID()) && back.contains(e.getValue().getString("char"))) { it.remove(); stale++; } }
+        if (stale > 0) XenoWarriors.LOGGER.info("XW bots: dropped {} older waiting copy(ies) of {}'s bots", stale, p.getGameProfile().getName());
+        for (int i = 0; i < list.size(); i++) restore(p, list.getCompound(i));
+        snapshot(p);
         if (!com.xenowarriors.journey.Journey.inLobbyOrRun(p)) unstash(p);      // (a Journey that ended while they were away)
     }
 

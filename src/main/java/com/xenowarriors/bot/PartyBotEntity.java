@@ -961,6 +961,7 @@ public class PartyBotEntity extends PathfinderMob {
         t.putString("char", entityData.get(CHAR));
         t.putInt("mode", mode());
         t.putFloat("hp", getHealth());
+        t.putFloat("karma", karma);
         t.put("inv", inventory.createTag());
         t.put("armour", armourTag());
         if (getPersistentData().contains("xw_inv_kept")) t.put("kept", getPersistentData().getCompound("xw_inv_kept"));   // (that character's ender chest and XP)
@@ -978,5 +979,6 @@ public class PartyBotEntity extends PathfinderMob {
             loadedRecord = true;
         }
         if (t.contains("kept")) getPersistentData().put("xw_inv_kept", t.getCompound("kept"));
+        if (t.contains("karma")) { float k = t.getFloat("karma"); if (Float.isFinite(k)) karma = Math.max(0F, Math.min(100F, k)); }
     }
 }
