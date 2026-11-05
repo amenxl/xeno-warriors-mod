@@ -102,7 +102,16 @@ public final class JudgmentTests {
         // ---- set up: Rhalix in survival on open ground, nothing around
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); UiTest.character(CharacterType.RHALIX);
             UiTest.server(p -> { p.setGameMode(GameType.SURVIVAL); p.serverLevel().setDayTime(6000); p.setHealth(p.getMaxHealth()); clearArea(p);
-                JudgmentAbsorptionSkill.clear(); }); }, 40));
+                JudgmentAbsorptionSkill.clear();
+                // a flat arena up in the air (the same ground every run): 41 x 41 stone, open sky above
+                var l0 = p.serverLevel();
+                net.minecraft.core.BlockPos base = net.minecraft.core.BlockPos.containing(p.getX(), 150, p.getZ());
+                for (int x = -20; x <= 20; x++) for (int z = -14; z <= 26; z++) {
+                    l0.setBlock(base.offset(x, -1, z), net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+                    for (int y = 0; y < 14; y++) l0.setBlock(base.offset(x, y, z), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                }
+                p.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 0F, 0F);
+                p.fallDistance = 0; }); }, 40));
         // ---- 1. locked below Character Level 30, unlocked at 30 (Season 1: no season unlock needed)
         l.add(new Step(null, () -> UiTest.server(p -> {
             int idx = jaIndex();
