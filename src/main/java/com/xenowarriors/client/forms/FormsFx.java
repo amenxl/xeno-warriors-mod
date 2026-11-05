@@ -49,6 +49,8 @@ public final class FormsFx {
     public static final int WHIP_T = 8, RECOIL_T = 5;
     private static final Map<Integer, long[]> WHIP = com.xenowarriors.client.ClientReset.track(new HashMap<>());     // id -> {start, side}
     private static final Map<Integer, Long> RECOIL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    /** Players aiming a summoned gun down the sights (from the server). */
+    private static final java.util.Set<Integer> AIMING = com.xenowarriors.client.ClientReset.trackAll(new java.util.HashSet<>());
     /** Rhalix id -> {target id, mash 0-100, start}. */
     private static final Map<Integer, long[]> BINDS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     /** Test counters. */
@@ -71,7 +73,9 @@ public final class FormsFx {
                 BINDS.put(m.entity(), new long[]{m.target(), m.extra(), b != null && b[0] == m.target() ? b[2] : now()});
             }
             case WireFxPacket.UNBIND -> BINDS.remove(m.entity());
-            case WireFxPacket.RECOIL -> RECOIL.put(m.entity(), now());
+            case WireFxPacket.RECOIL -> { RECOIL.put(m.entity(), now()); GunClient.remoteShot(m.entity(), m.extra()); }
+            case WireFxPacket.AIM -> { if (m.extra() == 1) AIMING.add(m.entity()); else AIMING.remove(m.entity()); }
+            case WireFxPacket.HIT -> GunClient.hitMarker(m.extra() == 1);
             case WireFxPacket.SUMMON -> {
                 if (mc.level.getEntity(m.entity()) instanceof Player p) {
                     Vec3 h = hand(p, 1F, true);
@@ -337,19 +341,33 @@ public final class FormsFx {
             m.rightArm.xRot = -2.75F + Mth.sin(age * 0.08F) * 0.03F; m.rightArm.yRot = 0F; m.rightArm.zRot = 0.04F;
             return;
         }
-        if (held instanceof FormGunItem g) {                                    // aiming down the sights
+        if (held instanceof FormGunItem g) {                                    // hip: gun held low at the chest; aimed: raised to the eye
             Long rc = RECOIL.get(p.getId());
             float kick = rc == null ? 0F : (1F - Mth.clamp((t - rc + pt) / RECOIL_T, 0F, 1F)) * 0.35F;
-            m.rightArm.xRot = -(float) Math.PI / 2F + m.head.xRot - kick;
-            m.rightArm.yRot = m.head.yRot - 0.06F;
+            float aim = aimPose(p, pt);
+            float half = (float) Math.PI / 2F;
+            m.rightArm.xRot = Mth.lerp(aim, -half * 0.62F + m.head.xRot * 0.5F, -half + m.head.xRot) - kick;
+            m.rightArm.yRot = Mth.lerp(aim, -0.12F + m.head.yRot * 0.6F, m.head.yRot - 0.06F);
             m.rightArm.zRot = 0F;
             if (g.form() != Form.PISTOL) {                                       // long guns: the other hand under the barrel
-                m.leftArm.xRot = -(float) Math.PI / 2F + m.head.xRot - kick * 0.6F;
-                m.leftArm.yRot = m.head.yRot + 0.55F;
+                m.leftArm.xRot = Mth.lerp(aim, -half * 0.55F + m.head.xRot * 0.5F, -half + m.head.xRot) - kick * 0.6F;
+                m.leftArm.yRot = Mth.lerp(aim, 0.6F + m.head.yRot * 0.6F, m.head.yRot + 0.55F);
+                m.leftArm.zRot = 0F;
+            } else if (aim > 0F) {                                               // pistol aimed: both hands on it
+                m.leftArm.xRot = Mth.lerp(aim, m.leftArm.xRot, -half + m.head.xRot);
+                m.leftArm.yRot = Mth.lerp(aim, m.leftArm.yRot, m.head.yRot + 0.45F);
                 m.leftArm.zRot = 0F;
             }
         }
     }
+
+    /** 0 = hip, 1 = aiming down the sights (the local player blends; others go by what the server says). */
+    public static float aimPose(Player p, float pt) {
+        if (p == Minecraft.getInstance().player) return GunClient.aimProgress(pt);
+        return AIMING.contains(p.getId()) ? 1F : 0F;
+    }
+
+    public static boolean remoteAiming(int id) { return AIMING.contains(id); }
 
     // ------------------------------------------------------------------ the canopy model
 

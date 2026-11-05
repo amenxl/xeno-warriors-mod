@@ -240,6 +240,7 @@ public final class WeaponForms {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p)) return;
+        FormGunItem.tickAim(p);
         Integer ch = RHALIX_CHANNEL.get(p.getUUID());
         if (ch != null) {
             int t = p.tickCount - ch;
@@ -288,6 +289,7 @@ public final class WeaponForms {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         SENT.remove(event.getEntity().getUUID());
         RHALIX_CHANNEL.remove(event.getEntity().getUUID());
+        FormGunItem.forget(event.getEntity().getUUID());
     }
 
     // ------------------------------------------------------------------ can't be dropped, stored or hung up

@@ -52,7 +52,8 @@
     "compat.EpicFightTargetOutlineMixin",
     "compat.EpicFightLockOnFilterMixin",
     "UltimaSightMixin",
-    "LevelRendererRainMixin"
+    "LevelRendererRainMixin",
+    "MouseHandlerGunMixin"
   ],
   "injectors": {
     "defaultRequire": 1
