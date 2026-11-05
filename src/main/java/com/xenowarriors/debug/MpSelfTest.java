@@ -176,7 +176,7 @@ public final class MpSelfTest {
         });
         // every character's skills on the first player, the second one beside them
         for (CharacterType c : CharacterType.PLAYABLE) {
-            if (c == CharacterType.RHALIX) continue;                                   // (the second player is him)
+            if (c == CharacterType.RHALIX || c == CharacterType.AIONI) continue;      // (the second player is Rhalix - and Ai-oni can't be partied with him: her turn comes last)
             at(t += 40, "skills " + c.getId(), () -> {
                 ServerPlayer p = one[0].p;
                 CharacterManager.setCharacter(p, c);
@@ -196,6 +196,10 @@ public final class MpSelfTest {
             log("after every skill: errors=" + errors + " xw kinds to one=" + kinds(one[0]) + " to two=" + kinds(two[0]));
             reset();
             CharacterManager.setCharacter(one[0].p, CharacterType.MIKIKO);
+            one[0].p.teleportTo(lv, base.getX() + 0.5, base.getY(), base.getZ() + 0.5, 0F, 0F);
+            two[0].p.teleportTo(lv, base.getX() + 4.5, base.getY(), base.getZ() + 4.5, 0F, 0F);
+            if (!com.xenowarriors.party.Parties.sameParty(one[0].p, two[0].p)) { com.xenowarriors.party.Parties.invite(one[0].p, two[0].p); com.xenowarriors.party.Parties.accept(two[0].p); }
+            log("back together: same party=" + com.xenowarriors.party.Parties.sameParty(one[0].p, two[0].p) + " distance=" + Math.round(one[0].p.distanceTo(two[0].p)));
             for (P p : PLAYERS) { p.p.setGameMode(GameType.SURVIVAL); com.xenowarriors.karma.Karma.add(p.p, 500); }
             com.xenowarriors.karma.KarmaSensing.use(one[0].p, true);
         });
@@ -218,7 +222,7 @@ public final class MpSelfTest {
             v.invulnerableTime = 0;
             var z = EntityType.ZOMBIE.create(lv);
             if (z != null) { z.moveTo(v.getX() + 1, v.getY(), v.getZ(), 0F, 0F); v.hurt(lv.damageSources().mobAttack(z), 1000F); }
-            log("second player hit: alive=" + v.isAlive() + " downed=" + com.xenowarriors.party.Duels.isDowned(v));
+            log("second player hit: alive=" + v.isAlive() + " downed=" + com.xenowarriors.party.Duels.isDowned(v) + " same party=" + com.xenowarriors.party.Parties.sameParty(one[0].p, v));
         });
         at(t += 20, "revive warp", () -> {
             drain();
@@ -236,7 +240,15 @@ public final class MpSelfTest {
             log("after the warp: downed=" + com.xenowarriors.party.Duels.isDowned(two[0].p) + " to_one=" + kinds(one[0]) + " to_two=" + kinds(two[0]));
             reset();
         });
-        at(t += 20, "leave", () -> {
+        at(t += 20, "skills aioni", () -> {
+            ServerPlayer p = one[0].p;
+            CharacterManager.setCharacter(p, CharacterType.AIONI);
+            ready(p);
+            for (int s = 0; s < SkillManager.SLOTS; s++) { SkillManager.useSkill(p, s); ready(p); }
+            SkillManager.useSkill(p, SkillManager.SUPER_SLOT);
+        });
+        at(t += 40, "leave", () -> {
+            log("with Ai-oni and Rhalix: same party=" + com.xenowarriors.party.Parties.sameParty(one[0].p, two[0].p) + " - never, by design");
             ServerPlayer v = two[0].p;
             v.connection.onDisconnect(net.minecraft.network.chat.Component.literal("mp self-test over"));
             log("second player left: players=" + srv.getPlayerList().getPlayerCount() + " party=" + com.xenowarriors.party.Parties.members(one[0].p).size());
