@@ -159,6 +159,10 @@ def main():
         for r in rows:
             f.write("\t".join(r) + "\n")
     print(open(report).read())
+    kinds = [r[1] for r in rows]
+    print(f"PACK mods {side}: {len(rows)} listed, exact={kinds.count('exact')} near={kinds.count('near')} "
+          f"client-only={kinds.count('client-only')} skipped={kinds.count('SKIPPED')} left-out={kinds.count('left out')}"
+          + ("".join(f"\nPACK not exact: {r[0]} ({r[1]}) {r[3]} {r[4]}" for r in rows if r[1] in ('near', 'SKIPPED'))))
 
 
 if __name__ == "__main__":

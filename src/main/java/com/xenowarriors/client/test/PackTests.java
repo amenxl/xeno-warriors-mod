@@ -51,26 +51,26 @@ public final class PackTests {
 
     private static int pass, fail;
     private static final List<String> FAILED = new ArrayList<>();
-    private static final double[] HOME = new double[3];
+    static final double[] HOME = new double[3];
 
     public static boolean handles(String focus) { return focus != null && focus.startsWith("pack"); }
 
     static void log(String s) { XenoWarriors.LOGGER.info("XW-TEST pack " + s); }
 
-    private static void check(String what, boolean ok, String detail) {
+    static void check(String what, boolean ok, String detail) {
         if (ok) pass++; else { fail++; FAILED.add(what); }
         log(what + ": " + detail + " -> " + (ok ? "PASS" : "FAIL"));
     }
 
-    private static String f(double d) { return String.format(Locale.ROOT, "%.1f", d); }
+    static String f(double d) { return String.format(Locale.ROOT, "%.1f", d); }
 
     private static String screen(Minecraft mc) { return mc.screen == null ? "none" : mc.screen.getClass().getName(); }
 
-    private static void server(java.util.function.Consumer<ServerPlayer> f) {
+    static void server(java.util.function.Consumer<ServerPlayer> f) {
         UiTest.server(p -> { try { f.accept(p); } catch (Throwable t) { check("server step", false, String.valueOf(t)); XenoWarriors.LOGGER.error("XW-TEST pack", t); } });
     }
 
-    private static void client(String what, Runnable r) {
+    static void client(String what, Runnable r) {
         try { r.run(); } catch (Throwable t) { check(what, false, String.valueOf(t)); XenoWarriors.LOGGER.error("XW-TEST pack " + what, t); }
     }
 
@@ -120,6 +120,7 @@ public final class PackTests {
         journey(mc, l);
         dmz(mc, l);
         teamUlt(mc, l);
+        PackCullTests.build(mc, l);        // EntityCulling / Clumps: effects through walls, health orbs, XP
         l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
         l.add(new Step("pack_end", () -> log("summary pass=" + pass + " fail=" + fail + (FAILED.isEmpty() ? "" : " failed=" + FAILED)), 2));
     }
@@ -143,7 +144,7 @@ public final class PackTests {
     }
 
     /** A flat stone floor high up (same place every time), open sky, full health, day. */
-    private static void arena(ServerPlayer p) {
+    static void arena(ServerPlayer p) {
         var level = p.serverLevel();
         if (HOME[1] == 0) { HOME[0] = Math.floor(p.getX()) + 0.5; HOME[1] = 140; HOME[2] = Math.floor(p.getZ()) + 0.5; }
         BlockPos base = BlockPos.containing(HOME[0], HOME[1], HOME[2]);
@@ -158,13 +159,13 @@ public final class PackTests {
         level.setDayTime(6000);
     }
 
-    private static void clear(ServerPlayer p) {
+    static void clear(ServerPlayer p) {
         p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(64), e -> e.getTags().contains("xw_pack")).forEach(e -> e.discard());
         for (var b : new ArrayList<>(com.xenowarriors.bot.PartyBots.bots(p))) b.discard();
         p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(64)).forEach(e -> e.discard());
     }
 
-    private static LivingEntity husk(ServerPlayer p, double dx, double dz) {
+    static LivingEntity husk(ServerPlayer p, double dx, double dz) {
         var h = EntityType.HUSK.create(p.serverLevel());
         h.moveTo(HOME[0] + dx, HOME[1], HOME[2] + dz, 180F, 0F);
         h.setNoAi(true);

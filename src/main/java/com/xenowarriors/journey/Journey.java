@@ -1003,7 +1003,7 @@ public final class Journey {
         int i = 0;
         for (Entity e : tl.getEntitiesOfClass(Entity.class, JourneyWorld.area(r.slot), e -> e instanceof net.minecraft.world.entity.item.ItemEntity || e instanceof net.minecraft.world.entity.ExperienceOrb)) {
             ServerPlayer p = who.get(i++ % who.size());
-            if (e instanceof net.minecraft.world.entity.ExperienceOrb orb) { p.giveExperiencePoints(orb.getValue()); orb.discard(); continue; }
+            if (e instanceof net.minecraft.world.entity.ExperienceOrb orb) { com.xenowarriors.pickup.XpOrbs.giveAll(p, orb); continue; }   // (all of it: stacked / Clumps-merged orbs hold more than getValue())
             net.minecraft.world.item.ItemStack s = ((net.minecraft.world.entity.item.ItemEntity) e).getItem().copy();
             e.discard();
             if (!p.getInventory().add(s) && !s.isEmpty()) {
