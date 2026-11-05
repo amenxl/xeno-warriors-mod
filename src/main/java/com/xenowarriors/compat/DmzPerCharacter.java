@@ -196,11 +196,16 @@ public final class DmzPerCharacter {
         try { return fresh.newInstance(standIn); } catch (Throwable t) { return null; }
     }
 
+    /** (For the perf test) how many whole DMZ characters were saved / loaded off-screen. */
+    public static long savesForTest, loadsForTest;
+
     public static CompoundTag saveData(Object data) {
+        savesForTest++;
         try { return (CompoundTag) save.invoke(data); } catch (Throwable t) { return null; }
     }
 
     public static boolean loadData(Object data, CompoundTag tag) {
+        loadsForTest++;
         try { load.invoke(data, tag); return true; } catch (Throwable t) { return false; }
     }
 

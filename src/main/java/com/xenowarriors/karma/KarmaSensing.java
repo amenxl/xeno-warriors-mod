@@ -197,14 +197,22 @@ public final class KarmaSensing {
         var level = p.serverLevel();
         java.util.List<Long> found = new java.util.ArrayList<>();
         int r = (int) radius, cx = p.blockPosition().getX() >> 4, cz = p.blockPosition().getZ() >> 4, cr = (r >> 4) + 1;
+        int px = p.blockPosition().getX(), py = p.blockPosition().getY(), pz = p.blockPosition().getZ();
+        double r2 = radius * radius;
         for (int dx = -cr; dx <= cr && found.size() < 96; dx++) for (int dz = -cr; dz <= cr && found.size() < 96; dz++) {
+            // (a chunk column wholly out of reach: nothing in it could count - skip it before looking at its blocks)
+            int x0 = (cx + dx) << 4, z0 = (cz + dz) << 4;
+            long hx = Math.max(0, Math.max(x0 - px, px - (x0 + 15))), hz = Math.max(0, Math.max(z0 - pz, pz - (z0 + 15)));
+            if (hx * hx + hz * hz > r2) continue;
             var chunk = level.getChunkSource().getChunkNow(cx + dx, cz + dz);
             if (chunk == null) continue;
             var sections = chunk.getSections();
             for (int i = 0; i < sections.length && found.size() < 96; i++) {
                 var sec = sections[i];
-                if (sec == null || sec.hasOnlyAir() || !sec.maybeHas(s -> s.is(ore) || s.is(dark))) continue;
                 int baseY = level.getSectionYFromSectionIndex(i) << 4;
+                long hy = Math.max(0, Math.max(baseY - py, py - (baseY + 15)));
+                if (hx * hx + hy * hy + hz * hz > r2) continue;                  // (same for a section above or below the reach)
+                if (sec == null || sec.hasOnlyAir() || !sec.maybeHas(s -> s.is(ore) || s.is(dark))) continue;
                 for (int y = 0; y < 16; y++) for (int z = 0; z < 16; z++) for (int x = 0; x < 16; x++) {
                     var st = sec.getBlockState(x, y, z);
                     boolean sky = st.is(ore), corrupt = st.is(dark);

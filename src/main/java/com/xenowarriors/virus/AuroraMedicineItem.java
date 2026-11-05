@@ -38,7 +38,7 @@ public class AuroraMedicineItem extends Item {
                 p.displayClientMessage(Component.literal(had ? "You can breathe again." : "You won't catch the Aurora virus for a while.").withStyle(ChatFormatting.AQUA), true);
                 if (!p.isCreative()) stack.shrink(1);
             }
-            e.playSound(SoundEvents.HONEY_DRINK, 1F, 1.2F);
+            level.playSound(null, e.getX(), e.getY(), e.getZ(), SoundEvents.HONEY_DRINK, e.getSoundSource(), 1F, 1.2F);   // (a player's own playSound on the server skips that player: they heard nothing)
         }
         return stack;
     }
