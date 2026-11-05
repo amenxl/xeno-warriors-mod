@@ -65,6 +65,17 @@ cp "$XW" "$C/mods/"
 cp -r "$S/world" "$C/saves/uitest"
 # no first-run screens; keep running without window focus
 printf "onboardAccessibility:false\npauseOnLostFocus:false\nnarrator:0\ntutorialStep:none\nskipMultiplayerWarning:true\njoinedFirstServer:true\nrenderDistance:8\nsimulationDistance:8\nsoundCategory_master:0.0\n" > "$C/options.txt"
+# focus "packshaders": the same with an Oculus shader pack on (MakeUp - Ultra Fast from Modrinth; PACK_SHADER = another slug)
+case "${XW_UITEST_FOCUS:-pack}" in *shaders*)
+  SLUG=${PACK_SHADER:-makeup-ultra-fast-shaders}
+  mkdir -p "$C/shaderpacks" "$C/config"
+  SURL=$(curl -fsSL -A "amenxl/xeno-warriors-mod pack-test (CI)" "https://api.modrinth.com/v2/project/$SLUG/version?game_versions=%5B%22$MC%22%5D" \
+    | python3 -I -c 'import json,sys; v=json.load(sys.stdin)[0]; f=next((x for x in v["files"] if x["primary"]), v["files"][0]); print(f["url"] + " " + f["filename"])')
+  SFILE=${SURL#* }
+  curl -fsSL -o "$C/shaderpacks/$SFILE" "${SURL%% *}" && echo "PACK shader pack: $SFILE"
+  printf "enableShaders=true\nshaderPack=%s\n" "$SFILE" | tee "$C/config/oculus.properties" > "$C/config/iris.properties"
+  ;;
+esac
 python3 -m pip install -q "portablemc>=4.3,<5" || { echo "PACK can't install portablemc"; exit 1; }
 PMC="python3 -m portablemc --main-dir $P/mc --work-dir $C"
 echo "PACK installing the Forge client"
