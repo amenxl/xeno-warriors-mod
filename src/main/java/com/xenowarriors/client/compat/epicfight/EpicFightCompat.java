@@ -348,7 +348,8 @@ public final class EpicFightCompat {
 
     private static void onRenderPlayer(RenderEpicFightPlayerEvent event) {
         decideRender(event);
-        if (event.getPlayerPatch().getOriginal() instanceof net.minecraft.world.entity.player.Player p) {
+        var p = event.getPlayerPatch().getOriginal();
+        if (p != null) {
             if (EF_DREW.size() > 256) EF_DREW.clear();
             EF_DREW.put(p.getId(), event.getShouldRender());
         }
