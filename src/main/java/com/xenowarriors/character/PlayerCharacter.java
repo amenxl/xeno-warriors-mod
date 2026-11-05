@@ -40,6 +40,8 @@ public class PlayerCharacter {
     public int miningLevel;
     /** The Hekublade's own level (1-50) and progress; higher = longer stays inside it. */
     public int bladeLevel = 1;
+    /** Mikiko's Fox King mastery, 0..100: the more he uses the form, the longer it lasts (FoxKing). */
+    public float foxMastery;
     public float bladeXp;
     /** Karma Altar upgrades on the Hekublade: Sky Edge and Dark Edge, 0-3 each. */
     public int bladeSky, bladeDark;
@@ -123,6 +125,7 @@ public class PlayerCharacter {
         this.prisonerOf = other.prisonerOf;
         this.miningLevel = other.miningLevel;
         this.bladeLevel = other.bladeLevel;
+        this.foxMastery = other.foxMastery;
         this.bladeXp = other.bladeXp;
         this.bladeSky = other.bladeSky;
         this.bladeDark = other.bladeDark;
@@ -163,6 +166,7 @@ public class PlayerCharacter {
         tag.putString("ka", ka);
         tag.putInt("mining_level", miningLevel);
         tag.putInt("blade_level", bladeLevel);
+        tag.putFloat("fox_mastery", foxMastery);
         tag.putFloat("blade_xp", bladeXp);
         tag.putInt("blade_sky", bladeSky);
         tag.putInt("blade_dark", bladeDark);
@@ -201,6 +205,7 @@ public class PlayerCharacter {
         this.ka = tag.getString("ka");
         this.miningLevel = tag.getInt("mining_level");
         this.bladeLevel = Math.max(1, tag.getInt("blade_level"));
+        this.foxMastery = Math.max(0F, Math.min(100F, tag.getFloat("fox_mastery")));
         this.bladeXp = tag.getFloat("blade_xp");
         this.bladeSky = tag.getInt("blade_sky");
         this.bladeDark = tag.getInt("blade_dark");

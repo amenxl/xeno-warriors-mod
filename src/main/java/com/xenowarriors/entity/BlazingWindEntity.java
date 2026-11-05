@@ -50,6 +50,8 @@ public class BlazingWindEntity extends Entity {
     private static final EntityDataAccessor<Float> START_X = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> START_Y = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> START_Z = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.FLOAT);
+    /** Mikiko was hit mid-cutscene: the camera is his again (the tornado itself carries on). */
+    private static final EntityDataAccessor<Boolean> CUT = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.BOOLEAN);
 
     private double groundY;
 
@@ -82,7 +84,21 @@ public class BlazingWindEntity extends Entity {
         entityData.define(START_X, 0F);
         entityData.define(START_Y, 0F);
         entityData.define(START_Z, 0F);
+        entityData.define(CUT, false);
     }
+
+    /** True once the cutscene was cut short by a hit. */
+    public boolean cutsceneCut() { return entityData.get(CUT); }
+
+    /** Hit during the cutscene: the cinematic part ends now, the tornado keeps going on its own. */
+    public boolean cutCutscene(ServerPlayer owner) {
+        if (cutsceneCut() || tickCount >= CUTSCENE_END) return false;
+        entityData.set(CUT, true);
+        owner.getPersistentData().remove(SkillEvents.ULT_UNTIL);
+        return true;
+    }
+
+    public UUID ownerUuid() { return entityData.get(OWNER).orElse(null); }
 
     public int ownerId() { return entityData.get(OWNER_ID); }
     public Vec3 dir() { return new Vec3(entityData.get(DIR_X), 0, entityData.get(DIR_Z)); }
@@ -131,7 +147,7 @@ public class BlazingWindEntity extends Entity {
             discard();
             return;
         }
-        if (tickCount == 1) p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, server.getGameTime() + CUTSCENE_END);
+        if (tickCount == 1 && !cutsceneCut()) p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, server.getGameTime() + CUTSCENE_END);
         // follow the ground
         Vec3 c = centerAt(tickCount);
         groundY = ground(server, c.x, groundY, c.z);

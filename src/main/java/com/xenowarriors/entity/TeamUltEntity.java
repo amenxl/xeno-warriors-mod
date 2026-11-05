@@ -250,6 +250,37 @@ public class TeamUltEntity extends Entity {
         }
     }
 
+    /**
+     * One of them was hit mid-cutscene: the rest of the storm and the finale land at once on everyone pinned in the
+     * dome, and the cutscene ends for both so they can defend themselves (nothing is refunded).
+     */
+    public boolean interrupt() {
+        if (isRemoved() || level().isClientSide || tickCount > FINALE) return false;
+        ServerLevel level = (ServerLevel) level();
+        ServerPlayer r = player(rhalixId()), m = player(mikikoId());
+        if (r == null || m == null) { finish(r, m); return true; }
+        int storms = 0;
+        for (int t = Math.max(TOP, tickCount + 1); t < DIVE; t++) if (t % 6 == 0) storms++;
+        float dmg = storms * STORM_DAMAGE + FINALE_DAMAGE;
+        Vec3 c = position();
+        for (LivingEntity e : inside(r, m)) {
+            e.invulnerableTime = 0;
+            e.hurt(ModDamageTypes.source(level, ModDamageTypes.FIRE_BLITZ, m, m), dmg);
+            e.setSecondsOnFire(5);
+            Vec3 out = e.position().subtract(c);
+            out = out.lengthSqr() < 0.01 ? new Vec3(0, 0, 1) : out.normalize();
+            e.setDeltaMovement(out.x * 1.1, 0.8, out.z * 1.1);
+            e.hurtMarked = true;
+        }
+        level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, c.x, c.y + 1, c.z, 1, 0, 0, 0, 0);
+        level.playSound(null, c.x, c.y, c.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2F, 0.7F);
+        com.xenowarriors.XenoWarriors.LOGGER.info("Team ultimate cut short at tick {}: {} storm hits + finale landed at once ({} dmg)", tickCount, storms, dmg);
+        finish(r, m);
+        for (ServerPlayer p : new ServerPlayer[]{r, m})
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOW_FALLING, 60, 0, false, false));
+        return true;
+    }
+
     private void finish(ServerPlayer r, ServerPlayer m) {
         if (r != null) restore(r, rhalixMayfly);
         if (m != null) restore(m, mikikoMayfly);

@@ -81,6 +81,7 @@ public final class UiTest {
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("modes")) { com.xenowarriors.client.test.ModesTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("bots5")) { com.xenowarriors.client.test.Bots5Tests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^dmz", "").startsWith("bugs2")) { com.xenowarriors.client.test.SecurityTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("revive")) { com.xenowarriors.client.test.ReviveTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("prog")) { com.xenowarriors.client.test.ProgTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }

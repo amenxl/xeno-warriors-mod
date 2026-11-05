@@ -172,6 +172,22 @@ public final class XenoBlast {
     }
 
     /** Whether this player is in their Xeno Blast cutscene right now. */
+    /**
+     * The caster was hit during the cutscene: their camera and controls come back now and they're free to move; the
+     * blast itself still charges and fires at its normal moment the way they face (nothing is refunded). Clashes
+     * aren't interrupted.
+     */
+    public static boolean interrupt(ServerPlayer p) {
+        Cast c = castOf(p);
+        if (c == null || c.cancelled || c.rival != null || c.age() >= CUTSCENE || !casting(p)) return false;
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.XenoCutscenePacket(p.getId(), false, 0, 0, 0, 0, 0, 0), p);
+        com.xenowarriors.combat.Frozen.release(p);
+        p.getPersistentData().remove(CASTING);
+        p.getPersistentData().remove(SkillEvents.ULT_UNTIL);
+        com.xenowarriors.XenoWarriors.LOGGER.info("Xeno Blast cutscene cut short for {} at age {} (the blast still fires at {})", p.getGameProfile().getName(), c.age(), RELEASE);
+        return true;
+    }
+
     public static boolean casting(ServerPlayer p) { return p.getPersistentData().getLong(CASTING) > p.level().getGameTime(); }
 
     private XenoBlast() {}

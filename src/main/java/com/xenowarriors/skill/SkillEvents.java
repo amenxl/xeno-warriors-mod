@@ -18,7 +18,10 @@ public final class SkillEvents {
     @SubscribeEvent
     public static void onAttacked(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
         LivingEntity e = event.getEntity();
-        if (e.getPersistentData().getLong(ULT_UNTIL) >= e.level().getGameTime()) event.setCanceled(true);
+        if (e.getPersistentData().getLong(ULT_UNTIL) < e.level().getGameTime()) return;
+        // an enemy got a hit in during an ultimate / Xeno Blast cutscene: the cutscene ends and the hit lands
+        if (e instanceof net.minecraft.server.level.ServerPlayer sp && CutsceneBreak.byEnemy(sp, event.getSource()) && CutsceneBreak.interrupt(sp, event.getSource())) return;
+        event.setCanceled(true);
     }
 
     /** Kishi / gravity skills: nobody can jump inside a gravity dome or while rooted. */

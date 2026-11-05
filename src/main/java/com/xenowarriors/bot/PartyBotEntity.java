@@ -503,7 +503,7 @@ public class PartyBotEntity extends PathfinderMob {
             return reviving != null;
         }
         @Override public boolean canContinueToUse() { return reviving != null && reviving.isAlive() && !downed() && PartyBots.isDown(reviving) && reviving.distanceToSqr(PartyBotEntity.this) < 40 * 40; }
-        private int stalled, going; private double closest;
+        private int stalled, going, warpReady; private double closest;
         @Override public boolean requiresUpdateEveryTick() { return true; }     // (its timers count real ticks)
         @Override public void start() { stalled = 0; going = 0; closest = 1e9; }
         @Override public void stop() { reviving = null; }
@@ -512,6 +512,13 @@ public class PartyBotEntity extends PathfinderMob {
             setTarget(null);
             getLookControl().setLookAt(reviving);
             double d2 = distanceToSqr(reviving);
+            // Rhalix warps straight to them (30 Karma) and shields them both while he revives
+            if (character() == CharacterType.RHALIX && karma >= com.xenowarriors.party.ReviveWarp.COST && tickCount >= warpReady
+                    && d2 > com.xenowarriors.party.ReviveWarp.BOT_MIN_DIST * com.xenowarriors.party.ReviveWarp.BOT_MIN_DIST
+                    && d2 <= com.xenowarriors.party.ReviveWarp.RANGE * com.xenowarriors.party.ReviveWarp.RANGE) {
+                warpReady = tickCount + 100;
+                if (com.xenowarriors.party.ReviveWarp.warp(PartyBotEntity.this, reviving)) { getNavigation().stop(); return; }
+            }
             if (d2 > 1.4 * 1.4) {
                 if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(reviving.getX(), reviving.getY(), reviving.getZ(), 1.35);
                 if (d2 < closest - 0.25) { closest = d2; stalled = 0; } else stalled++;
