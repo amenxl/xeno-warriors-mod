@@ -402,11 +402,11 @@ public final class HuntAnimTests {
 
     private static void firstPersonDown(Minecraft mc, List<Step> l) {
         setChar(l, CharacterType.RHALIX, 0);
-        l.add(new Step(null, () -> { me(mc); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = true; face(mc); mc.player.setXRot(60F);
+        l.add(new Step(null, () -> { mc.setScreen(null); me(mc); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = true; face(mc); mc.player.setXRot(60F);
             server(p -> { home(p); p.setGameMode(GameType.SURVIVAL); }); }, 15));
-        l.add(new Step("huntanim_fpko_standing", () -> {}, 2));
+        l.add(new Step("huntanim_fpko_standing", () -> mc.setScreen(null), 2));
         l.add(new Step(null, () -> server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KNOCKDOWN, 200)), 25));
-        l.add(new Step("huntanim_fpko_knockdown", () -> { face(mc); mc.player.setXRot(60F); log("fpko knockdown " + snapshot(mc) + " drawnTipped=" + com.xenowarriors.client.KnockdownClient.tipped); }, 2));
+        l.add(new Step("huntanim_fpko_knockdown", () -> { mc.setScreen(null); face(mc); mc.player.setXRot(60F); log("fpko knockdown " + snapshot(mc) + " drawnTipped=" + com.xenowarriors.client.KnockdownClient.tipped); }, 2));
         l.add(new Step(null, () -> server(p -> { com.xenowarriors.anim.Poses.clearState(p); p.setGameMode(GameType.CREATIVE); }), 10));
     }
 
@@ -423,6 +423,8 @@ public final class HuntAnimTests {
         l.add(new Step(null, () -> { close.run(); server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KNOCKDOWN, 200)); }, 25));
         l.add(new Step(null, open, 6));
         l.add(new Step("huntanim_inv_rhalix_knockdown", () -> log("inv knockdown " + snapshot(mc)), 2));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 8));
+        l.add(new Step("huntanim_inv_rhalix_knockdown_select", () -> {}, 2));
         l.add(new Step(null, () -> { close.run(); server(com.xenowarriors.anim.Poses::clearState); }, 10));
         // flying with the wings out
         l.add(new Step(null, () -> server(p -> { p.teleportTo(p.getX(), p.getY() + 5, p.getZ()); p.getAbilities().mayfly = true; p.getAbilities().flying = true; p.onUpdateAbilities(); }), 30));
