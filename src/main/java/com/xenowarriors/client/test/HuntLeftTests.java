@@ -161,6 +161,9 @@ public final class HuntLeftTests {
 
         if (!ef()) { l.add(new Step(null, () -> log("done"), 5)); return; }
 
+        // (our "always battle mode" setting would flip battle mode back on by itself every second: off for these checks)
+        boolean[] always = new boolean[1];
+        l.add(new Step(null, () -> { always[0] = com.xenowarriors.client.ClientSettings.efAlwaysBattle(); com.xenowarriors.client.ClientSettings.setEfAlwaysBattle(false); }, 2));
         // ---- 2. squished while Epic Fight draws the player (battle mode, an axe: Epic Fight's stance)
         l.add(new Step(null, () -> { UiTest.character(CharacterType.RHALIX); UiTest.server(p -> { arena(p); p.getInventory().clearContent(); p.getInventory().selected = 0;
             p.getInventory().setItem(0, new ItemStack(Items.IRON_AXE)); }); }, 40));
@@ -221,7 +224,7 @@ public final class HuntLeftTests {
             if (com.xenowarriors.client.LockOn.target() != null) com.xenowarriors.client.LockOn.toggle();
             com.xenowarriors.client.LockOn.toggle();
             var t = com.xenowarriors.client.LockOn.target();
-            log("lock-on: ours " + (t == null ? "none" : t.getType().toShortString()) + ", epic fight tps=" + Ef.tps() + ", its lock-on " + Ef.lockOn());
+            log("lock-on: battle=" + Ef.battleOn() + ", ours " + (t == null ? "none" : t.getType().toShortString()) + ", epic fight tps=" + Ef.tps() + ", its lock-on " + Ef.lockOn());
         }, 10));
         int[] turns = new int[1];
         l.add(new Step(null, () -> { turns[0] = intField("com.xenowarriors.client.compat.epicfight.EpicFightCompat", "lockOnCameraTurns"); camFrames = 0; camWatch = true;
@@ -238,6 +241,7 @@ public final class HuntLeftTests {
             camWatch = false;
         }, 3));
         l.add(new Step(null, () -> { if (com.xenowarriors.client.LockOn.target() != null) com.xenowarriors.client.LockOn.toggle(); Ef.cameraAlways(false);
+            com.xenowarriors.client.ClientSettings.setEfAlwaysBattle(always[0]);
             mc.options.setCameraType(CameraType.FIRST_PERSON); log("done"); }, 5));
     }
 
