@@ -334,8 +334,5 @@ public class PartySetupScreen extends Screen {
             if (!s.downside().isEmpty()) small(g, "\u26a0 " + s.downside(), x + 7, y + 20, 0.7F, s.downside().startsWith("(") ? 0xFF8A8AA8 : 0xFFFFB0A0, w - 10);
         }
         g.pose().popPose();
-            y += rowH;
-        }
-        g.pose().popPose();
     }
 }
