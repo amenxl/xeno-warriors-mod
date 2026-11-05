@@ -336,19 +336,19 @@ public final class HuntDmzTests {
             com.xenowarriors.journey.Journey.action(p, 11, 0, 0);
             com.xenowarriors.journey.Journey.action(p, 4, 0, 0);
             log("journey: started, in run=" + com.xenowarriors.journey.Journey.inRun(p) + " ourFused=" + DmzFusion.fused(p));
-        }), 30);
+        }), 100);
         step(null, () -> { mc.setScreen(null); server(p -> {
             var st = p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG).getList("xw_bots_stash", 10);
-            log("journey: 1.5 s in: inRun=" + com.xenowarriors.journey.Journey.inRun(p) + " ourFused=" + DmzFusion.fused(p) + " rhalix bots out=" + count(p, CharacterType.RHALIX) + " stashed=" + st.size() + " | " + own(p));
+            log("journey: 5 s in: inRun=" + com.xenowarriors.journey.Journey.inRun(p) + " ourFused=" + DmzFusion.fused(p) + " rhalix bots out=" + count(p, CharacterType.RHALIX) + " stashed=" + st.size() + " | " + own(p));
             if (DmzFusion.fused(p)) {                                           // (still fused on the Journey: its time runs out there)
                 DmzFusion.end(p, "test: time's up", true);
                 log("journey: fusion ran out during the Journey -> rhalix bots out=" + count(p, CharacterType.RHALIX) + " inRun=" + com.xenowarriors.journey.Journey.inRun(p));
             }
             dump();
             com.xenowarriors.journey.Journey.leave(p, "test", true);
-        }); }, 60);
+        }); }, 120);
         step(null, () -> { mc.setScreen(null); server(p -> {
-            log("journey: after leaving: in=" + com.xenowarriors.journey.Journey.inLobbyOrRun(p) + " rhalix bots out=" + count(p, CharacterType.RHALIX));
+            log("journey: after leaving: in=" + com.xenowarriors.journey.Journey.inLobbyOrRun(p) + " rhalix bots out=" + count(p, CharacterType.RHALIX) + " stash left=" + p.getPersistentData().getCompound(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG).getList("xw_bots_stash", 10).size());
             dump();
         }); }, 20);
     }
