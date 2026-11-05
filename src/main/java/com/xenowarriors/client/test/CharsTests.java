@@ -267,6 +267,7 @@ public final class CharsTests {
             p.serverLevel().setDayTime(18000);                                  // (no burning zombies)
             com.xenowarriors.karma.Karma.add(p, 100F);
             com.xenowarriors.soul.SoulSplit.setLevel(p, 30);
+            com.xenowarriors.skill.SkillLevels.setForTest(p, "soul_splitter", 3, 5);   // ability level 25
             before[0] = com.xenowarriors.soul.SoulSkills.casts;
             boolean started = com.xenowarriors.soul.SoulSplit.start(p);
             for (int i = 0; i < 3; i++) {

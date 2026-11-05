@@ -96,6 +96,27 @@
         {
           "title": "Yuri, Technica and the rest",
           "text": "- Yuri (Season 2): the hacker - everything runs off her holographic laptop (Virus Upload and more). With Ultima: Tenjo Siblings synergy.\n- Technica: the inventor - twin Uzis (explosive and gravity rounds), gravity boots, a visor and a wing cloak.\n- Max: daggers, the Wind element, Vampire Cut KA. Lexy: freakish strength. Kyrie: rapier, boxing and Gravity. Sam: bat, Clear Space and time bombs.\n- Stevie and Garry: the Disco Dojo brothers (Brother Blast hits much harder together).\n- Logan, Kill and Keita: the Sky Rebellion. Zane (Season 3): Fire, Ice and Thunder spells from his Magical Orb.\n- You: build your own characters (10 slots) with a race and element."
+        },
+        {
+          "title": "Falling, wings and fire",
+          "text": "## Fall damage\n- Anyone with wings (Rhalix, the Skylanders, a winged You character - not a demon in human form) and Mikiko take no fall damage.\n- Everyone else takes 75% less. Party bots too.\n## Fire in your hands\n- Anyone with the element of fire (a fire You character, anyone given fire, and Mikiko always) can right-click a stick to light it into a torch. Sneak to use the block as normal instead."
+        },
+        {
+          "title": "Mikiko: triple jump and flight",
+          "text": "- Mikiko learns wind flight at Character Level 150 (it used to be 50).\n- Until then he double jumps. With his Hekublade at level 30 or more, jump a third time in mid-air and the Hekublade appears under his feet: he rides it like Hekublade Scatter's blade-surf (a stronger blade rides longer).\n- Once he can fly, the third jump is gone (double-tap jump flies instead)."
+        },
+        {
+          "title": "Skylander Wings",
+          "text": "- Skylanders drop their wings when killed: one in four, guardians half the time (not wingless ones).\n- Only Mikiko eats them: each pair gives +10 levels to every stat - Speed, Attack, Defense, Mining, Crafting and Smelting.\n- For anyone else they're a trophy."
+        },
+        {
+          "title": "Hamburgers",
+          "text": "- Craft one from bread, cooked beef and something green (kelp, dried kelp, fern, grass or seagrass).\n- Yuri cooks them: sneak + right-click holding bread or cooked beef - one bread and one cooked beef make two burgers, no greens needed. Her bot looks for the ingredients too.\n- A burger heals 40% of your health and gives Regeneration II for 5 seconds.\n- Then a wait before the next: Mikiko 5 seconds, Rhalix 3 seconds, everyone else 10 (the hotbar shows it)."
+        },
+        {
+          "title": "Curing the Aurora virus",
+          "season": 2,
+          "text": "- Yuri and Technica can cure the Aurora virus for anyone in their party.\n- Sneak + right-click an infected party member (a player or a bot) with an empty hand: a quick treatment, the virus is gone and they're immune for 5 minutes.\n- Their bots do it by themselves for anyone infected close by.\n- 30 seconds between cures."
         }
       ]
     },
@@ -159,6 +180,15 @@
         {
           "title": "Bond",
           "text": "Fighting beside the same teammates raises your bond with them (see Party & Bots > Synergy and bond): stronger synergies, no synergy downsides from bond 50, and +5 max hearts per 10 levels of your best party bond."
+        },
+        {
+          "title": "Soul Splitter skills",
+          "text": "- Once the Soul Splitter ability reaches level 21 (tier 3), your split-off soul fights with your own skills too - the ones in slots 1-4 of your loadout, never your ultimate or a KA.\n- The higher the level, the more often it casts (every 6 seconds at first, down to 2.5)."
+        },
+        {
+          "title": "Gun level",
+          "requires": "tacz",
+          "text": "With TACZ installed every character has a gun level (shown in the stats screens).\n- It goes up by hitting things with TACZ guns (XP = damage dealt, more for a kill).\n- Each level adds 0.2% gun damage, up to +150%.\n- At gun level 500 your magazine never runs dry.\n- Technica is the gunsmith: her gun level starts at 100 and her guns hit 25% harder on top."
         }
       ]
     },

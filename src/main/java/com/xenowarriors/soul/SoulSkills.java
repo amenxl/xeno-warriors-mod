@@ -21,15 +21,15 @@ import java.util.UUID;
  * A strong Soul Splitter: once its level reaches {@link #SKILLS_AT}, the split-off soul fights with its owner's own
  * skills (slots 1-4 of their loadout - never the ultimate, never a KA, never Soul Splitter itself), cast through a
  * stand-in player that copies the owner (like the party bots do). The higher the level, the more often it casts.
- * <p>The level comes from {@link #abilityLevel} - a hook the per-ability level system can replace
- * ({@link #ABILITY_LEVEL}); until then it is the Soul Splitter's own level (see SoulSplit.level).
+ * <p>The level is the Soul Splitter ability's level (SkillLevels.abilityLevel, 1-100: tier 3 = 21+), through the
+ * {@link #ABILITY_LEVEL} hook.
  */
 public final class SoulSkills {
-    public static final int SKILLS_AT = 20;
+    public static final int SKILLS_AT = 21;              // (Soul Splitter tier 3)
     public static final String SKILL_ID = "soul_splitter";
 
     /** The level of one of a player's abilities, by skill id. Replace this to wire in per-ability levels. */
-    public static java.util.function.ToIntBiFunction<ServerPlayer, String> ABILITY_LEVEL = (p, id) -> SKILL_ID.equals(id) ? SoulSplit.level(p) : 0;
+    public static java.util.function.ToIntBiFunction<ServerPlayer, String> ABILITY_LEVEL = com.xenowarriors.skill.SkillLevels::abilityLevel;   // (1-100: tier and level)
 
     public static int abilityLevel(ServerPlayer p, String skillId) {
         try { return ABILITY_LEVEL.applyAsInt(p, skillId); } catch (Throwable t) { return SoulSplit.level(p); }
