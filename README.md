@@ -51,6 +51,11 @@ Change any of these in Options → Controls → Key Binds → Xeno Warriors.
 - `/xeno party menu`: open the party menu
 - `/xeno help`: list everything else
 
+## In-game guide
+Everyone gets the **Xeno Warriors Guide** book the first time they join (craft another from a book and paper). The same pages are under **Guide** in the main menu (M).
+
+**When you add or change a feature, add or update its entry in the guide data file:** `src/main/resources/assets/xenowarriors/guide/guide.json` (chapters → pages; `{key:NAME}` shows the player's key, `"requires"` hides a page without that mod, `"season"` hides it until that season is unlocked). Ways to raise or lower faction standing go in `faction/RepRules.java`; the Factions screen lists them from there.
+
 ## Building from source
 - On Windows, double-click **BUILD-MOD.bat**.
 - Anywhere else, install Java 17 and run `./gradlew build`. The jar ends up in `build/libs/`.

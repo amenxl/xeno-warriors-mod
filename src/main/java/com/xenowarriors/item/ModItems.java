@@ -117,6 +117,8 @@ public final class ModItems {
     public static final RegistryObject<Item> COLLECTION_BOOK = ITEMS.register("collection_book", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.COLLECTION_BOOK.get(), new Item.Properties()));
     public static final RegistryObject<Item> DATA_ORE = ITEMS.register("data_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.DATA_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> DATA_SHARD = ITEMS.register("data_shard", () -> new com.xenowarriors.ultima.DataShardItem(new Item.Properties()));
+    /** The Xeno Warriors Guide (how to play; the same pages as the main menu's Guide). */
+    public static final RegistryObject<Item> GUIDE_BOOK = ITEMS.register("guide_book", () -> new GuideBookItem(new Item.Properties().stacksTo(1)));
     /** Human modification chip (Gov C2 tech) - made from Data Shards; for modded characters like Kyle later. */
     public static final RegistryObject<Item> MOD_CHIP = ITEMS.register("mod_chip", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> ROOM_TECH = ITEMS.register("room_tech", () -> new com.xenowarriors.room.RoomTechItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));

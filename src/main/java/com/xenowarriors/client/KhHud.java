@@ -171,7 +171,11 @@ public final class KhHud implements IGuiOverlay {
             String fl = DmzHud.form + "  " + DmzHud.powerRelease + "%";
             small(g, font, fl, px + size / 2F - font.width(fl) * 0.275F, py - 7, 0xFFD25A, 0.55F);
         } else if (type != CharacterType.ULTIMA) {                     // Ultima has no hunger
-            bar(g, bx + 16, y, bw - 16, 3, BigHungerHud.max() > 20 && BigHungerHud.total() >= 0 ? BigHungerHud.total() / (float) BigHungerHud.max() : p.getFoodData().getFoodLevel() / 20F, 0xFFF0AA50, 0);
+            if (BigHungerHud.layered()) {                              // layers of hunger bars: the one being eaten from, in its colour
+                bar(g, bx + 16, y, bw - 16, 3, BigHungerHud.layerFill(), BigHungerHud.layerColor(0xFFF0AA50), 0);
+                String ll = BigHungerHud.layerLabel();
+                small(g, font, ll, bx + bw - font.width(ll) * 0.45F, y - 5, 0xF5D2A0, 0.45F);
+            } else bar(g, bx + 16, y, bw - 16, 3, p.getFoodData().getFoodLevel() / 20F, 0xFFF0AA50, 0);
             small(g, font, "FOOD", bx - 6, y - 1, 0xF5D2A0, 0.45F);
         }
         // XP toward the next level: a thin cyan line under the bars
