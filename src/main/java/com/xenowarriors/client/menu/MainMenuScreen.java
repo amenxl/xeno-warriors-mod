@@ -70,6 +70,11 @@ public class MainMenuScreen extends Screen {
     /** (UI test) highlight this entry. */
     public void select(int i) { selected = Mth.clamp(i, 0, entries.size() - 1); }
 
+    /** (UI test) how many entries, and each one's name. */
+    public int entryCount() { return entries.size(); }
+
+    public String entryName(int i) { return entries.get(i).name(); }
+
     public void receive(List<PlayerStatsPacket.Entry> list) {
         for (PlayerStatsPacket.Entry e : list) if (e.self()) self = e;
     }

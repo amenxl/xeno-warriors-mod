@@ -27,7 +27,16 @@ jobs:
           java-version: 17
       - name: Install virtual screen + software OpenGL
         run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri > /dev/null
+      # focus "pack...": the user's real mod pack (tools/pack/run_pack.sh) instead of the dev environment
+      - name: Pack test (real Forge install with the user's mod pack)
+        if: ${{ startsWith(github.event.inputs.focus, 'pack') }}
+        env:
+          XW_SELFTEST_R: "1"
+          XW_SELFTEST_VR: "0"
+          XW_UITEST_FOCUS: ${{ github.event.inputs.focus }}
+        run: bash tools/pack/run_pack.sh client
       - name: Make a world (server)
+        if: ${{ !startsWith(github.event.inputs.focus, 'pack') }}
         env:
           XW_SELFTEST: "1"
           XW_SELFTEST_R: "1"
@@ -40,6 +49,7 @@ jobs:
           mkdir -p run/saves && cp -r run/world run/saves/uitest
           ls run/saves/uitest
       - name: Run the client
+        if: ${{ !startsWith(github.event.inputs.focus, 'pack') }}
         env:
           XW_UITEST: "1"
           XW_UITEST_FOCUS: ${{ github.event.inputs.focus }}
@@ -58,6 +68,7 @@ jobs:
         run: |
           mkdir -p out
           cp client.log out/ || true
+          (cd packrun/client/mods 2>/dev/null && ls > $GITHUB_WORKSPACE/out/mods-loaded-client.txt) || true
           tail -c 400000 server.log > out/server.log || true
           if ls run/screenshots/xw_anim_* >/dev/null 2>&1; then (cd run/screenshots && zip -q ../../out/anim.zip xw_anim_*.png && rm xw_anim_*.png); fi
           if ls run/screenshots/xw_allanim_* >/dev/null 2>&1; then (cd run/screenshots && zip -q ../../out/allanim.zip xw_allanim_*.png && rm xw_allanim_*.png); fi
