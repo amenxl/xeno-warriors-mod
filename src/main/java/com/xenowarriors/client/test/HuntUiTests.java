@@ -91,6 +91,15 @@ public final class HuntUiTests {
 
     // ------------------------------------------------------------------ state helpers
 
+    /** With DragonMineZ: no race picker popping up over the shots. */
+    private static void dmzOk(ServerPlayer p) {
+        if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+    }
+
+    private static void noDmzScreen(Minecraft mc) {
+        if (mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez")) mc.setScreen(null);
+    }
+
     private static void clearBots(ServerPlayer p) {
         for (PartyBotEntity b : new ArrayList<>(PartyBots.bots(p))) { PartyBots.checkIn(b, p); PartyBots.forgetFake(b.getUUID()); b.discard(); }
         for (CharacterType t : CharacterType.PLAYABLE) p.getPersistentData().remove("xw_bot_rejoin_" + t.getId());
@@ -367,7 +376,7 @@ public final class HuntUiTests {
     private static void shots(Minecraft mc, List<Step> l, int w, int h, int gs) {
         String pre = "huntui_" + w + "g" + gs + "_";
         l.add(new Step(null, () -> { mc.setScreen(null); window(mc, w, h, gs); ClientSettings.setHudStyle("blazing");
-            server(p -> { CharacterManager.setCharacter(p, CharacterType.MIKIKO); p.setYRot(0); p.setXRot(10); p.getFoodData().setFoodLevel(20);
+            server(p -> { CharacterManager.setCharacter(p, CharacterType.MIKIKO); dmzOk(p); p.setYRot(0); p.setXRot(10); p.getFoodData().setFoodLevel(20);
                 if (PartyBots.bots(p).size() < 2) { clearBots(p); PartyBots.spawn(p, CharacterType.RHALIX, null); PartyBots.spawn(p, CharacterType.KAERU, null); } }); }, 50));
         l.add(new Step(null, () -> log("window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()
                 + " scaled " + mc.getWindow().getGuiScaledWidth() + "x" + mc.getWindow().getGuiScaledHeight()), 2));
@@ -402,6 +411,7 @@ public final class HuntUiTests {
                 if (r != null) com.xenowarriors.party.TeamUltimate.ask(r, p, com.xenowarriors.party.TeamUltimate.Kind.BLAZING_JUDGMENT);
                 com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket("Party Invite", "Tester invited you to their party!", "/xeno party accept", "/xeno party decline", 600, 0xFF6CC4FF), p);
             }); }, 30));
+            l.add(new Step(null, () -> noDmzScreen(mc), 3));
             l.add(new Step(pre + "hud_" + style, () -> {}, 3));
         }
         l.add(new Step(null, () -> { RequestPopups.testClear(); ClientSettings.setHudStyle("blazing"); }, 3));
@@ -412,16 +422,18 @@ public final class HuntUiTests {
         shot.accept("chat_buttons", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")));
         // starving face, Karma Sense
         l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { p.setGameMode(GameType.SURVIVAL); p.getFoodData().setFoodLevel(0); }); }, 30));
+        l.add(new Step(null, () -> noDmzScreen(mc), 3));
         l.add(new Step(pre + "hud_starving", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> { p.getFoodData().setFoodLevel(20); p.setGameMode(GameType.CREATIVE);
             for (int i = 0; i < 3; i++) { var c = net.minecraft.world.entity.EntityType.CHICKEN.create(p.serverLevel()); if (c != null) { c.moveTo(p.getX() - 2 + i * 2, p.getY(), p.getZ() + 5); p.serverLevel().addFreshEntity(c); } } }), 20));
         l.add(new Step(null, () -> com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(true, true, 12)), 8));
+        l.add(new Step(null, () -> noDmzScreen(mc), 2));
         l.add(new Step(pre + "hud_sense", () -> log("sense active=" + com.xenowarriors.client.KarmaSense.active()), 3));
         l.add(new Step(null, () -> com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(false, false, 0)), 5));
         if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) {
-            l.add(new Step(null, () -> { mc.setScreen(null); ClientSettings.setHudStyle("kh"); }, 15));
+            l.add(new Step(null, () -> { noDmzScreen(mc); mc.setScreen(null); ClientSettings.setHudStyle("kh"); }, 15));
             l.add(new Step(pre + "hud_kh_dmz", () -> {}, 3));
-            l.add(new Step(null, () -> ClientSettings.setHudStyle("classic"), 15));
+            l.add(new Step(null, () -> { noDmzScreen(mc); ClientSettings.setHudStyle("classic"); }, 15));
             l.add(new Step(pre + "hud_classic_dmz", () -> {}, 3));
             l.add(new Step(null, () -> ClientSettings.setHudStyle("blazing"), 5));
         }
