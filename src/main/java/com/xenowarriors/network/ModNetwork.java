@@ -8,11 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-<<<<<<< HEAD
-    private static final String VERSION = "74";      // (bump whenever packets are added or moved)
-=======
-    private static final String VERSION = "72";      // (bump whenever packets are added or moved)
->>>>>>> origin/wt/sense
+    private static final String VERSION = "75";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
