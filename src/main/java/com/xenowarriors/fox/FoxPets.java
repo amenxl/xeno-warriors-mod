@@ -650,7 +650,7 @@ public final class FoxPets {
         // (its owner online anywhere: one that falls while he's in another dimension still counts as having run away -
         // otherwise the whistle would bring it straight back with no cool-down)
         if (dead instanceof Fox fox && ownerOf(fox) != null && fox.getServer() != null
-                && fox.getServer().getPlayerList().getPlayer(ownerOf(fox)) instanceof ServerPlayer p) {
+                && (Object) fox.getServer().getPlayerList().getPlayer(ownerOf(fox)) instanceof ServerPlayer p) {
             CompoundTag rec = record(p, fox.getUUID());
             if (rec != null) {
                 snapshot(fox, rec);
