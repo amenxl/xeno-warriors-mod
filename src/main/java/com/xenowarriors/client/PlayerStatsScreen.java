@@ -437,7 +437,9 @@ public class PlayerStatsScreen extends Screen {
         }
         boolean wires = com.xenowarriors.client.forms.FormsClient.style() == com.xenowarriors.forms.Form.Style.WIRE;
         boolean guns = net.minecraftforge.fml.ModList.get().isLoaded("tacz") || com.xenowarriors.client.forms.FormsClient.style() != null;   // (TACZ, or Hekublade / wire guns)
-        int statRows = 8 + (mikiko ? 1 : 0) + (wires ? 1 : 0) + (guns && com.xenowarriors.network.GunLevelPacket.clientLevel > 0 ? 1 : 0);
+        int towerLv = Math.max(1, com.xenowarriors.network.TowerLevelPacket.clientLevel);
+        items.add(new String[]{"Kill multiplier", com.xenowarriors.tower.TowerLevel.fmt(com.xenowarriors.tower.TowerLevel.mult(towerLv)) + " (Tower Lv " + towerLv + ")", "D98CFF"});
+        int statRows = 9 + (mikiko ? 1 : 0) + (wires ? 1 : 0) + (guns && com.xenowarriors.network.GunLevelPacket.clientLevel > 0 ? 1 : 0);
         int gridRows = (items.size() + 1) / 2;
         int content = 34 + 12 + statRows * 12 + 10 + 12 + gridRows * 22 + 8;
         int availTop = 28, availBottom = (realm.visible || plea.visible) ? height - 52 : height - 18;
@@ -481,6 +483,9 @@ public class PlayerStatsScreen extends Screen {
         buildingRow[2] = Math.round(width / 2F + (right - width / 2F) * scale);
         buildingRow[1] = Math.round(availTop + (cy - 1 - availTop) * scale);
         buildingRow[3] = Math.round(availTop + (cy + 10 - availTop) * scale);
+        cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Tower", towerLv, com.xenowarriors.network.TowerLevelPacket.clientProgress,
+                com.xenowarriors.tower.TowerLevel.MAX_LEVEL, 0xB45CFF);                          // (per player: its kill multiplier is in STATUS below)
         cy += 12;
         if (mikiko) {
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Hekublade", me.bladeLevel(), me.bladeXp(), BladeLevel.MAX, 0xFF7A1A);

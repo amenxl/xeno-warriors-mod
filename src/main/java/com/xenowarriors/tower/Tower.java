@@ -49,7 +49,8 @@ import java.util.*;
  * 10-19 ... up to x100) and the enemies take a step up on top of the per-floor scaling. Everything that spawns goes
  * for you and your bots, even endermen, piglins, wolves and iron golems. A safety protocol clears a wave nobody has
  * fought for 2 minutes (stragglers stuck in walls) so the floor can go on. The bar at the top of the screen shows the
- * floor, wave, kill multiplier and enemies left.
+ * floor, wave, kill multiplier and enemies left; under it, your Tower Level bar (see {@link TowerLevel}: the more you
+ * play the Tower the higher it gets, and it multiplies what your kills count everywhere - with the floor's in here).
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Tower {
@@ -176,10 +177,12 @@ public final class Tower {
         TowerBosses.addPlayer(p, r.center);
         BY_PLAYER.put(p.getUUID(), r);
         hud(r).addPlayer(p);
+        TowerLevel.showBar(p);
         double a = r.players.size() * 1.6;
         p.teleportTo(tl, r.center.getX() + .5 + Math.cos(a) * 3, Y + 1, r.center.getZ() + .5 + Math.sin(a) * 3, p.getYRot(), 0);
         p.sendSystemMessage(msg("TOWER - kills here save to your Collection at floor " + CHECKPOINT + ", then every " + CHECKPOINT + " floors. "
                 + "You can heal " + (int) (HEAL_PER_FLOOR / 2) + " hearts per floor.", ChatFormatting.AQUA));
+        p.sendSystemMessage(TowerLevel.describe(p));
     }
 
     /** Can't go up while downed, inside (or sealed in) a Hekublade, or when the world is on Peaceful (nothing would fight back). */
@@ -203,6 +206,7 @@ public final class Tower {
         if (p.getUUID().equals(r.leader)) for (UUID id : r.players) if (!id.equals(p.getUUID())) { r.leader = id; break; }   // (someone else leads now)
         TowerBosses.removePlayer(p);
         if (r.hud != null) r.hud.removePlayer(p);
+        TowerLevel.hideBar(p);
         r.players.remove(p.getUUID());
         CompoundTag lost = r.pending.remove(p.getUUID());
         r.healLeft.remove(p.getUUID());
@@ -300,12 +304,17 @@ public final class Tower {
         p.sendSystemMessage(msg("Tower checkpoint: " + saved + " kills saved to your Collection", ChatFormatting.GOLD));
     }
 
-    /** Called by the Collection for every kill: true if it's held for the next checkpoint. */
+    /**
+     * Called by the Collection for every kill: true if it's held for the next checkpoint. One kill counts for the
+     * floor's multiplier times your Tower Level's (see {@link TowerLevel#killValue}), and gives Tower XP.
+     */
     public static boolean pending(ServerPlayer p, String id) {
         Run r = BY_PLAYER.get(p.getUUID());
         if (r == null || !is(p.level())) return false;
         CompoundTag t = r.pending.computeIfAbsent(p.getUUID(), k -> new CompoundTag());
-        t.putInt(id, t.getInt(id) + mult(r.floor));             // (the kill multiplier: one kill counts as more every 10 floors)
+        long n = (long) t.getInt(id) + TowerLevel.killValue(p, mult(r.floor));
+        t.putInt(id, (int) Math.min(Collection.MAX, n));           // (more than one enemy's Collection holds could never count)
+        TowerLevel.addXp(p, TowerLevel.XP_KILL, "a kill");
         return true;
     }
 
@@ -435,7 +444,14 @@ public final class Tower {
             else if (r.state == 1 && r.alive.isEmpty()) {
                 r.wave++;
                 r.state = 0;
-                if (r.wave >= r.waves) {
+                boolean floorDone = r.wave >= r.waves;
+                for (UUID id : r.players) {                          // Tower XP: the wave, and the floor when it's the last one
+                    ServerPlayer p = server.getPlayerList().getPlayer(id);
+                    if (p == null) continue;
+                    long xp = TowerLevel.XP_WAVE + (floorDone ? TowerLevel.floorXp(r.floor) + (r.bossFloor && !r.safety ? TowerLevel.bossXp(r.floor) : 0) : 0);
+                    TowerLevel.addXp(p, xp, floorDone ? "floor " + r.floor + " cleared" : "a wave");
+                }
+                if (floorDone) {
                     vacuum(tl, r, server);
                     for (UUID id : r.players) {
                         ServerPlayer p = server.getPlayerList().getPlayer(id);
@@ -504,7 +520,12 @@ public final class Tower {
         bar.setName(name);
         bar.setColor(r.bossFloor ? net.minecraft.world.BossEvent.BossBarColor.RED : k > 1 ? net.minecraft.world.BossEvent.BossBarColor.YELLOW : net.minecraft.world.BossEvent.BossBarColor.BLUE);
         bar.setProgress(r.state == 1 && r.waveSize > 0 ? Math.max(0F, Math.min(1F, r.alive.size() / (float) r.waveSize)) : r.state == 2 ? 0F : 1F);
-        for (UUID id : r.players) { ServerPlayer p = server.getPlayerList().getPlayer(id); if (p != null && !bar.getPlayers().contains(p)) bar.addPlayer(p); }
+        for (UUID id : r.players) {
+            ServerPlayer p = server.getPlayerList().getPlayer(id);
+            if (p == null) continue;
+            if (!bar.getPlayers().contains(p)) bar.addPlayer(p);
+            TowerLevel.updateBar(p);                                 // (your Tower Level bar under it: what kills count for you here)
+        }
     }
 
     /** (tests) a player's run: floor, radius, multiplier, state, enemies left, ticks since combat. */

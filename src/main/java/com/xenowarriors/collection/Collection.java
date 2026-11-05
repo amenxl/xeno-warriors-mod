@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * The Collection (the book at the Mountain Village Element School): every hostile enemy and how many you've defeated,
- * up to 1000 each. Every 100 defeats: a random stat boost (a level in Speed, Attack or Defense - and with DragonMineZ,
+ * up to 1000 each (one kill counts for your Tower Level's kill multiplier: x2 at Tower Lv 10, x4 at 20 ...). Every 100 defeats: a random stat boost (a level in Speed, Attack or Defense - and with DragonMineZ,
  * +2 to a random DragonMineZ stat too). Your pets' and bots' kills count for you.
  * Opening the book once adds the Collection (and Tower mode) to your menu. Kills made in the Tower only count once a
  * Tower checkpoint (every 10 floors) saves them.
@@ -67,15 +67,15 @@ public final class Collection {
         if (p == null) return;
         var id = ForgeRegistries.ENTITY_TYPES.getKey(dead.getType());
         if (id == null) return;
-        if (com.xenowarriors.tower.Tower.pending(p, id.toString())) return;     // in the Tower: held until a checkpoint
-        add(p, id.toString(), 1);
+        if (com.xenowarriors.tower.Tower.pending(p, id.toString())) return;     // in the Tower: held until a checkpoint (x floor x Tower Level)
+        add(p, id.toString(), com.xenowarriors.tower.TowerLevel.killValue(p, 1));   // (the Tower Level's kill multiplier counts out here too)
     }
 
     /** Adds kills (capped at 1000 per enemy); returns how many counted. */
     public static int add(ServerPlayer p, String id, int n) {
         CompoundTag root = root(p);
         CompoundTag k = root.getCompound(KEY);
-        int had = k.getInt(id), now = Math.min(MAX, had + n), added = now - had;
+        int had = k.getInt(id), now = (int) Math.min(MAX, (long) had + n), added = now - had;   // (long: a huge n can't overflow)
         if (added <= 0) return 0;
         k.putInt(id, now);
         root.put(KEY, k);

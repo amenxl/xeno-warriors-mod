@@ -360,6 +360,9 @@ public final class XenoCommands {
                 .then(Commands.literal("leave").executes(ctx -> { com.xenowarriors.tower.Tower.leave(ctx.getSource().getPlayerOrException(), "You left the Tower"); return 1; }))
                 .then(Commands.literal("join").executes(ctx -> { com.xenowarriors.tower.Tower.joinParty(ctx.getSource().getPlayerOrException()); return 1; }))
                 .then(Commands.literal("top").executes(ctx -> { com.xenowarriors.tower.TowerBoard.show(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("level").executes(ctx -> { var p = ctx.getSource().getPlayerOrException(); p.sendSystemMessage(com.xenowarriors.tower.TowerLevel.describe(p)); return com.xenowarriors.tower.TowerLevel.level(p); })
+                        .then(Commands.literal("set").requires(s -> s.hasPermission(2)).then(Commands.argument("level", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, com.xenowarriors.tower.TowerLevel.MAX_LEVEL))
+                                .executes(ctx -> { var p = ctx.getSource().getPlayerOrException(); com.xenowarriors.tower.TowerLevel.set(p, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "level"), 0); p.sendSystemMessage(com.xenowarriors.tower.TowerLevel.describe(p)); return 1; }))))
                 .then(Commands.literal("resetmap").requires(s -> s.hasPermission(2)).executes(ctx -> {
                     int n = com.xenowarriors.tower.Tower.resetMap(ctx.getSource().getPlayerOrException());
                     ctx.getSource().sendSuccess(() -> Component.literal(n == 0 ? "No Tower runs going on" : "Rebuilt " + n + " Tower arena" + (n == 1 ? "" : "s")), true);

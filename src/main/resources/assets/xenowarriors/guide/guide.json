@@ -170,7 +170,7 @@
         },
         {
           "title": "Tower",
-          "text": "Opened from the Collection (the book at the Mountain Village Element School). Arena floors with waves of enemies you haven't finished in your Collection.\n- Clear every wave to go up. Kills only save to your Collection at a checkpoint: floor 10, then every 10 floors.\n- Every 10 floors: a bigger arena, more Collection credit per kill and tougher enemies.\n- Your party can come. Healing is limited on each floor."
+          "text": "Opened from the Collection (the book at the Mountain Village Element School). Arena floors with waves of enemies you haven't finished in your Collection.\n- Clear every wave to go up. Kills only save to your Collection at a checkpoint: floor 10, then every 10 floors.\n- Every 10 floors: a bigger arena, more Collection credit per kill (x1 on floors 1-9, x2 on 10-19, x3 on 20-29...) and tougher enemies.\n- Your party can come. Healing is limited on each floor.\n## Tower Level\n- Playing the Tower levels up your Tower Level (yours as a player, the same whichever character you play): Tower XP for every kill (your bots' and pets' kills too), every wave, every floor cleared (more the higher the floor) and a big bonus for beating a boss floor.\n- Every 10 Tower Levels your kills count double in your Collection, in the Tower or anywhere else: x2 at level 10, x4 at 20, x8 at 30, x16 at 40...\n- In the Tower it multiplies with the floor's: Tower Level 20 (x4) on floor 25 (x3) = every kill counts x12.\n- It only multiplies Collection kills (and so the Collection's every-100 stat boosts) - not Money, bounties or drops.\n- The purple bar under the Tower bar shows your Tower Level, progress and what your kills count right now. It's also in the stats screen (Tower row, and Kill multiplier under Status), and /xeno tower level."
         },
         {
           "title": "Famished",
@@ -233,6 +233,10 @@
         {
           "title": "Building",
           "text": "The more blocks you place, the more your Building levels up (per character; it doesn't change your Character Level).\n- Every 10 levels: +1 block of reach for placing, breaking and using blocks (not for attacks). Up to +8 blocks at level 80.\n- Every 20 levels: +0.1% chance a block you place isn't used up (survival only). Up to 50% at level 10,000.\n- A normal block gives 1 XP, one that breaks instantly (torches, flowers, seeds) a quarter. Placing on a spot you already placed on in the last minute gives nothing, so placing and breaking one block doesn't level it.\n- Bots level their character's Building too, from the torches and Dragon Balls they place.\n- Hover Building in the stats screen to see your reach and keep chance."
+        },
+        {
+          "title": "Tower Level",
+          "text": "One level for you as a player (not per character) that goes up the more you play the Tower (Modes > Tower).\n- Tower XP: 1 per kill in a run (your bots' and pets' kills count for you), 3 per wave, 10 + the floor number for each floor cleared, and 25 + twice the floor for beating a boss floor.\n- Level 10 takes 2,340 XP (about 7 runs to floor 10, or 2-3 runs to floor 20). Level 20: 8,740. Level 30: 19,140.\n## Kill multiplier\n- Every 10 levels it doubles how much one kill counts in your Collection - everywhere, not just in the Tower: x1 below 10, x2 at 10, x4 at 20, x8 at 30, x16 at 40, and so on.\n- In the Tower it multiplies with the floor's multiplier (x6 with Tower Level 10 on floor 25).\n- It counts Collection kills only (and the stat boosts every 100 of them). No enemy's Collection goes past 1000.\n- See it: stats screen > Tower row and Kill multiplier, the purple bar in the Tower, or /xeno tower level."
         },
         {
           "title": "Stat Boosts",
