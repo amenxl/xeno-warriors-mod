@@ -278,15 +278,26 @@ final class Dmz6Features {
             p.level().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT).set(true, p.server);
             for (int i = 0; i < n; i++) {
                 var z = EntityType.ZOMBIE.create(p.serverLevel());
-                z.moveTo(at.x + 10, at.y, at.z - 10, 0, 0); z.setNoAi(true);
+                z.moveTo(at.x + 3, at.y, at.z - 3, 0, 0); z.setNoAi(true);
                 z.setItemSlot(EquipmentSlot.MAINHAND, DmzGuns.random(z.getRandom()));
                 p.serverLevel().addFreshEntity(z);
                 z.setLastHurtByPlayer(p);                                       // (killed by the player: equipment can drop)
+                if (i == 0) {
+                    Object ch = "?";
+                    for (String f : new String[]{"handDropChances", "f_21347_"})
+                        try { var fld = Mob.class.getDeclaredField(f); fld.setAccessible(true); ch = java.util.Arrays.toString((float[]) fld.get(z)); break; } catch (Throwable ignored) {}
+                    log("gun drops: zombie holds " + ForgeRegistries.ITEMS.getKey(z.getMainHandItem().getItem()) + " hand drop chances " + ch);
+                }
                 z.kill();
                 if (z.isAlive()) log("gun drops: zombie still alive");
             }
-            for (ItemEntity ie : p.serverLevel().getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(at.x + 10, at.y, at.z - 10, at.x + 10, at.y, at.z - 10).inflate(4)))
-                if (DmzGuns.kindOf(ie.getItem()) != null) { drops++; ie.discard(); }
+            int any = 0;
+            for (ItemEntity ie : p.serverLevel().getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(at.x + 3, at.y, at.z - 3, at.x + 3, at.y, at.z - 3).inflate(6))) {
+                any++;
+                if (DmzGuns.kindOf(ie.getItem()) != null) drops++;
+                ie.discard();
+            }
+            log("gun drops: items on the ground " + any);
             log("gun drops: " + drops + "/" + n + " armed zombies killed by the player dropped their gun");
         }), 20);
     }

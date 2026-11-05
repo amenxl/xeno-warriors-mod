@@ -54,7 +54,7 @@ public final class DmzBotPower {
     private static Boolean loaded;
     private static boolean broken;
     private static Method getResources, getCharacter, maxEnergy, regen, drain, melee, kiDamage, getEnergy, setEnergy, getRelease, setRelease;
-    private static Method setActiveForm, clearActiveForm, activeForm, activeGroup, auraColor, nextForm, targetGroup, formName, techCost;
+    private static Method setActiveForm, clearActiveForm, activeForm, activeGroup, auraColor, nextForm, targetGroup, formName, techCost, ensureSelected;
 
     /** A bot's power state (kept while it's out; read into its DMZ copy whenever that's re-read). */
     static final class Power {
@@ -105,6 +105,7 @@ public final class DmzBotPower {
             nextForm = th.getMethod("getNextAvailableForm", sd);
             targetGroup = th.getMethod("getTransformTargetGroup", sd);
             formName = nextForm.getReturnType().getMethod("getName");
+            try { ensureSelected = th.getMethod("ensureSelectedFormDefault", sd); } catch (Throwable ignored) {}
             try { techCost = Class.forName("com.dragonminez.common.stats.techniques.KiAttackData").getMethod("getCalculatedCost", sd); } catch (Throwable ignored) {}
             setRelease = r.getMethod("setPowerRelease", int.class);
             return true;
@@ -260,6 +261,7 @@ public final class DmzBotPower {
 
     private static void transform(PartyBotEntity b, ServerPlayer o, Object st, Power p) throws Exception {
         Object ch = getCharacter.invoke(st);
+        if (ensureSelected != null) ensureSelected.invoke(null, st);           // (a form picked to go into, as DragonMineZ does for players: the first one it has)
         String lastGroup = null, last = null;
         for (int i = 0; i < 10; i++) {                                         // (step up as far as its unlocked forms go)
             Object fd = nextForm.invoke(null, st);
