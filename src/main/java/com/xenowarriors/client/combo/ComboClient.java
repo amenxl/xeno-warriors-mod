@@ -288,7 +288,7 @@ public final class ComboClient {
 
     /** The Rising Leap (attack held fully, on the ground): a jump straight up at someone in the air, or just up. */
     private static void leap(LocalPlayer p) {
-        LivingEntity t = airPick(p, 6.5);
+        LivingEntity t = airPick(p, 8.0);
         if (p.level().getEntity(lastTarget) instanceof LivingEntity lt)
             com.xenowarriors.client.RhalixComboFx.log(String.format("leap: last target %s %.1f away, %.1f up, on ground %s", lt.getType().getDescriptionId(), p.distanceTo(lt), lt.getY() - p.getY(), lt.onGround()));
         Vec3 v;
@@ -411,7 +411,7 @@ public final class ComboClient {
         if (!struck && now - cur.start() >= ComboStyle.windup(cur.duration())) {
             struck = true;
             LivingEntity t = target(p, cur.style());
-            if (t == null && cur.style().rhalix() && (cur.style().special(cur.hit()) || cur.style() == ComboStyle.RHALIX_AIR))
+            if (t == null && cur.style().rhalix() && (cur.style().special(cur.hit()) || cur.style() == ComboStyle.RHALIX_AIR || cur.hit() >= 5))   // (and the grab, launcher and burst follow them up)
                 t = airPick(p, cur.hit() == ComboStyle.BURST ? 4.3 : 4.8);       // (his burst and his air moves reach a bit further)
             if (t != null) { lastTarget = t.getId(); ModNetwork.sendToServer(new ComboHitPacket(t.getId(), cur.hit(), cur.heavy())); }
         }
