@@ -166,12 +166,19 @@ public final class NpcHuntTests {
             if (p.serverLevel().getEntity(s.copy) instanceof Fox c) c.discard();
         }), 60));
 
-        // 5. a sword handed over just now, then off to Recarnet and the whistle: the fox comes with its new sword, once
+        // 5. a sword handed over just now, then off to Recarnet and the whistle: the fox comes with its new sword, once.
+        //    (the fox left behind in the overworld isn't in his world any more, so nothing re-snapshots it meanwhile)
         l.add(new Step(null, () -> UiTest.server(p -> {
             if (p.serverLevel().getEntity(s.fox) instanceof Fox f) f.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_SWORD));
-            com.xenowarriors.recarnet.RecarnetEvents.travel(p);        // (right away: no 5-second snapshot in between)
+            com.xenowarriors.recarnet.RecarnetEvents.travel(p);
             log("travel: now in " + p.level().dimension().location());
+        }), 200));
+        for (int i = 0; i < 20; i++) l.add(new Step(null, () -> {}, 30));     // (Recarnet's terrain loading)
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            log("recarnet loaded: client screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName()));
             FoxPets.whistle(p);
+        }), 20));
+        l.add(new Step(null, () -> UiTest.server(p -> {
             Fox f = myFox(p);
             String held = f == null ? "-" : net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(f.getMainHandItem().getItem()).toString();
             log("whistle in Recarnet: fox here=" + (f != null) + " holds " + held + " owned foxes everywhere=" + ownedFoxes(p)
@@ -181,7 +188,7 @@ public final class NpcHuntTests {
             Villager v = EntityType.VILLAGER.create(p.serverLevel());
             v.moveTo(p.getX() + 3, p.getY(), p.getZ() + 3, 0, 0);
             p.serverLevel().addFreshEntity(v);
-        }), 10));
+        }), 20));
         l.add(new Step("npchunt_recarnet_fox", () -> UiTest.server(p -> {
             int villagers = p.serverLevel().getEntitiesOfClass(Villager.class, p.getBoundingBox().inflate(8)).size();
             int humans = p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(6)).size();
@@ -277,6 +284,37 @@ public final class NpcHuntTests {
             int foxes = ownedFoxes(p);
             log("pet whistle item as Mikiko: winged companions back=" + n + " foxes=" + foxes + ok(n == 1 && foxes == 1));
         }), 5));
+        // 11. Money for kills: a town fighter busy with a zombie isn't an enemy (no pay); a raider is (pay). As Rhalix (Mikiko can't hurt townsfolk)
+        long[] m0 = new long[1];
+        l.add(new Step(null, () -> UiTest.character(CharacterType.RHALIX), 30));
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            ServerLevel lv = p.serverLevel();
+            m0[0] = com.xenowarriors.economy.Money.get(p);
+            var z = EntityType.ZOMBIE.create(lv);
+            z.moveTo(p.getX() + 8, p.getY(), p.getZ() - 6, 0, 0);
+            z.setNoAi(true);
+            lv.addFreshEntity(z);
+            var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(lv);
+            h.moveTo(p.getX() + 6, p.getY(), p.getZ() - 6, 0, 0);
+            h.setNoAi(true);
+            lv.addFreshEntity(h);
+            h.setTarget(z);
+            h.setAggressive(true);
+            h.hurt(p.damageSources().playerAttack(p), 100000F);
+            long paidTown = com.xenowarriors.economy.Money.get(p) - m0[0];
+            var r = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(lv);
+            r.moveTo(p.getX() + 6, p.getY(), p.getZ() - 8, 0, 0);
+            r.setNoAi(true);
+            lv.addFreshEntity(r);
+            r.makeRaider(false);
+            long before = com.xenowarriors.economy.Money.get(p);
+            r.hurt(p.damageSources().playerAttack(p), 100000F);
+            long paidRaider = com.xenowarriors.economy.Money.get(p) - before;
+            z.discard();
+            log("kill money: town fighter (busy with a zombie) dead=" + !h.isAlive() + " paid=" + paidTown + ", raider dead=" + !r.isAlive() + " paid=" + paidRaider
+                    + ok(!h.isAlive() && paidTown == 0 && paidRaider > 0));
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.TOWN, 0);
+        }), 10));
         l.add(new Step(null, () -> log("done"), 5));
     }
 }
