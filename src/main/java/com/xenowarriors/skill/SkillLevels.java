@@ -101,7 +101,7 @@ public final class SkillLevels {
     public static void forget(Player p, String charKey) { root(p).remove(charKey); }
 
     /** (tests) sets a skill's tier and level for the character this player is playing. */
-    public static void setForTest(Player p, String skillId, int tier, int level) { put(p, charKey(p), skillId, new int[]{tier, level}); }
+    public static void setForTest(Player p, String skillId, int tier, int level) { put(p, charKey(p), skillId, new int[]{tier, level, 0}); }
 
     // ---------------------------------------------------------------- accessors (for other systems)
 
