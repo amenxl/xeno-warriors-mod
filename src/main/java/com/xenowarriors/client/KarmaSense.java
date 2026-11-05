@@ -268,7 +268,7 @@ public final class KarmaSense {
         net.minecraft.world.phys.Vec3 cam = event.getCamera().getPosition();
         var pose = event.getPoseStack();
         pose.pushPose();
-        pose.translate(-cam.x, -cam.y, -cam.z);
+        // (vertices are made relative to the camera in aura(): world coordinates as floats shake far from 0,0)
         org.joml.Matrix4f m = pose.last().pose();
         java.util.List<Entity> list = new java.util.ArrayList<>();
         for (Map.Entry<Integer, Long> en : SENSED.entrySet()) {
@@ -340,6 +340,7 @@ public final class KarmaSense {
             py[k][i] = cy + s * hh * scale[k] * (s > 0 ? 1F + tongue : 0.8F);
         }
         float ca = a * 0.35F;
+        x -= cam.x; y -= cam.y; z -= cam.z;
         for (int i = 0; i < SEG; i++) {
             // the middle: dim, so what's inside still shows
             v(bb, m, x, y + cy, z, rx, rz, 0, 0, ir, ig, ib, ca);

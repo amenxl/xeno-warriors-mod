@@ -182,6 +182,11 @@ public final class FoxKing {
         if (p.tickCount % 20 == 0) {
             gain(p, GAIN_PER_SECOND);
             sync(p);
+            // (coming back from the End makes a new player: its speed / attack boosts would be missing for the rest of the form)
+            var spd = p.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (spd != null && spd.getModifier(SPEED_ID) == null) set(spd, SPEED_ID, SPEED);
+            var atk = p.getAttribute(Attributes.ATTACK_DAMAGE);
+            if (atk != null && atk.getModifier(ATTACK_ID) == null) set(atk, ATTACK_ID, attack(mastery(p)));
             p.addEffect(new MobEffectInstance(MobEffects.JUMP, 40, 2, false, false, false));   // jump about 2 blocks higher
             long left = (END.get(p.getUUID()) - p.level().getGameTime()) / 20;
             if (left <= 10) p.displayClientMessage(Component.literal("Fox King: " + left + "s").withStyle(ChatFormatting.GOLD), true);
