@@ -47,6 +47,12 @@ public final class HuntDmzTests {
     public static void build(Minecraft mc, String focus, Dmz6Tests.Adder steps, Consumer<Consumer<ServerPlayer>> server, Consumer<CharacterType> character, Consumer<String> log) {
         S = steps; SERVER = server; LOG = log; CHAR = character;
         setup(mc);
+        if (focus.startsWith("dmzhdballs")) {                                  // (the Dragon Balls and mission summons only)
+            balls(mc);
+            questSummons(mc);
+            step(null, () -> server(p -> log("done")), 20);
+            return;
+        }
         if (!focus.startsWith("dmzhdhud")) {
             fusionGameMode(mc);
             fusionCrashLogin(mc);
@@ -155,7 +161,10 @@ public final class HuntDmzTests {
         return DmzFusion.fused(p);
     }
 
-    static String own(ServerPlayer p) { return DmzFusion.statsLine(DmzPerCharacter.live(p)); }
+    static String own(ServerPlayer p) { DmzFusion.durationTicks(); return DmzFusion.statsLine(DmzPerCharacter.live(p)); }
+
+    /** Back to the test spot in the Overworld (a knock-out sends you to DragonMineZ's Otherworld). */
+    static void home(ServerPlayer p) { Vec3 at = at(p); p.teleportTo(p.server.overworld(), at.x, at.y, at.z, 0, 0); }
 
     static String gm(ServerPlayer p) { return p.gameMode.getGameModeForPlayer().getName(); }
 
@@ -217,7 +226,7 @@ public final class HuntDmzTests {
         step(null, () -> { respawnIfDead(mc); server(p -> {
             log("gamemode: later alive=" + p.isAlive() + " fused=" + DmzFusion.fused(p) + " rhalix bots=" + count(p, CharacterType.RHALIX) + " | " + own(p));
             p.setGameMode(GameType.SURVIVAL);
-            Vec3 at = at(p); p.teleportTo(at.x, at.y, at.z); protect(p);
+            home(p); protect(p);
             dump();
         }); }, 30);
     }
@@ -242,7 +251,7 @@ public final class HuntDmzTests {
         step(null, () -> respawnIfDead(mc), 30);
         step(null, () -> { respawnIfDead(mc); server(p -> {
             log("crashlogin: 3 s later alive=" + p.isAlive() + " fused=" + DmzFusion.fused(p) + " rhalix bots=" + count(p, CharacterType.RHALIX) + " | " + own(p));
-            Vec3 at = at(p); p.teleportTo(at.x, at.y, at.z); protect(p); p.setGameMode(GameType.SURVIVAL);
+            home(p); protect(p); p.setGameMode(GameType.SURVIVAL);
             dump();
         }); }, 30);
     }
@@ -359,11 +368,13 @@ public final class HuntDmzTests {
 
     private static void balls(Minecraft mc) {
         step(null, () -> server(p -> {
+            Vec3 at = at(p);
+            p.teleportTo(p.server.overworld(), at.x - 4, at.y, at.z - 4, 0, 0);
+            PartyBotEntity old = bot(p, CharacterType.RHALIX);
+            if (old != null && old.level() != p.level()) PartyBots.action(p, old.getId(), PartyBots.ACT_DISMISS, 0);
             PartyBotEntity b = ensureBot(p, CharacterType.RHALIX);
             if (b == null) return;
             clearHostiles(p);
-            Vec3 at = at(p);
-            p.teleportTo(at.x - 4, at.y, at.z - 4);
             b.moveTo(at.x + 1, at.y, at.z + 1, 0, 0);
             log("balls1: set " + DmzDragonBalls.giveSetForTest(b) + " started=" + DmzDragonBalls.start(b, p, null, p.serverLevel(), true));
         }), 50);
@@ -473,10 +484,11 @@ public final class HuntDmzTests {
             if (q[0] == null) return;
             try { DmzQuestHelp.class.getField("RESUMMON_TICKS").setInt(null, 300); log("summon: re-summon wait set to 300 ticks"); } catch (Throwable t) { log("summon: no re-summon setting (" + t.getClass().getSimpleName() + ")"); }
             DmzQuestHelp.resetSummonedForTest(p);
-            Vec3 at = at(p); p.teleportTo(at.x, at.y, at.z); protect(p);
+            home(p); protect(p);
+            for (PartyBotEntity b : new ArrayList<>(PartyBots.bots(p))) PartyBots.action(p, b.getId(), PartyBots.ACT_DISMISS, 0);   // (no bot to kill them off)
             DmzQuests.accept(p, q[0][0]);
             log("summon: accepted " + q[0][0] + " " + DmzQuests.progress(p, q[0][0], Integer.parseInt(q[0][1])));
-        }); }, 20 * 10);
+        }); }, 20 * 17);
         step(null, () -> server(p -> {
             if (q[0] == null) return;
             dump();
@@ -502,7 +514,7 @@ public final class HuntDmzTests {
         step(null, () -> server(p -> {
             clearHostiles(p);
             Vec3 at = at(p);
-            p.teleportTo(at.x, at.y, at.z);
+            p.teleportTo(p.server.overworld(), at.x, at.y, at.z, 0, 0);
             for (int f : new int[]{0, 4}) {
                 var z = com.xenowarriors.boss.ZombieSaiyans.ZOMBIE_SAIYAN.get().create(p.serverLevel());
                 if (z == null) { log("saiyan: create FAILED"); return; }
@@ -555,7 +567,7 @@ public final class HuntDmzTests {
         step(null, () -> { noDmzScreen(mc); server(p -> {
             make(p, "saiyan", 40);
             Vec3 at = at(p);
-            p.teleportTo(at.x, at.y, at.z);
+            p.teleportTo(p.server.overworld(), at.x, at.y, at.z, 0, 0);
             p.setYRot(0); p.setXRot(8);
             p.setGameMode(GameType.SURVIVAL);
             clearHostiles(p);
