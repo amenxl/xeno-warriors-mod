@@ -61,7 +61,7 @@ public final class DmzBotView {
         if (name == null || !e.getScreen().getClass().getName().startsWith("com.dragonminez")) return;
         var g = e.getGuiGraphics();
         var font = Minecraft.getInstance().font;
-        String s = "Bot: " + name + "'s Dragon Ball character";
+        String s = name + "'s Dragon Ball character";
         int w = font.width(s) + 12, x = (e.getScreen().width - w) / 2;
         g.pose().pushPose();
         g.pose().translate(0, 0, 400);
