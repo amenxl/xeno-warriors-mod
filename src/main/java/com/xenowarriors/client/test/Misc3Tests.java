@@ -412,6 +412,7 @@ public final class Misc3Tests {
             p.setGameMode(GameType.CREATIVE);
             Vec3 at = Dmz6Tests.at(p);
             Dmz6Tests.protect(p); Dmz6Tests.clearHostiles(p);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);      // (no race picker over the shots)
             p.level().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, p.server);
             p.serverLevel().setDayTime(6000);
             log("dmz on=" + DmzGuns.on() + " guns " + DmzGuns.items());
@@ -434,7 +435,8 @@ public final class Misc3Tests {
                 hp0[0] = target.getHealth();
                 PartyBots.testLog(bot, "misc3 " + k + " staged");
             }); }, k == DmzGuns.Kind.MORTAR ? 220 : 120);
-            step("bot_" + k.name().toLowerCase(Locale.ROOT), () -> {}, 2);
+            step(null, () -> Dmz6Tests.noDmzScreen(mc), 3);
+            step("bot_" + k.name().toLowerCase(Locale.ROOT), () -> Dmz6Tests.noDmzScreen(mc), 2);
             step(null, () -> server(p -> {
                 if (bot == null || target == null) return;
                 ItemStack h = held();
@@ -468,7 +470,7 @@ public final class Misc3Tests {
             ItemStack h = held();
             h.setDamageValue(h.getMaxDamage() - 3);
             target(p, 12, 300F);
-        }), 100);
+        }), 200);
         step(null, () -> server(p -> {
             boolean any = DmzGuns.kindOf(held()) != null;
             for (int i = 0; bot != null && i < bot.inventory.getContainerSize(); i++) if (DmzGuns.kindOf(bot.inventory.getItem(i)) != null) any = true;
