@@ -94,14 +94,29 @@ public final class SrSkills {
     }
 
     /** Royal Guard: he stands his ground like he did for King Arling - hard to hurt or move for 6 seconds. */
+    static final UUID GUARD_KB = UUID.fromString("5c1f3e7a-8a2b-4d0e-9b61-7d2f0a4c9e11");
+
+    /** Players saved mid-Royal Guard by an older version kept a knockback resistance base of 1.0 (a player's is 0): put it back. */
+    @SubscribeEvent
+    public static void onLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) {
+        var kb = e.getEntity().getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE);
+        if (kb != null && kb.getBaseValue() == 1.0) kb.setBaseValue(0.0);
+    }
+
     public static class RoyalGuard implements Skill {
         @Override public String getId() { return "royal_guard"; }
         @Override public int getCooldownTicks() { return 25 * 20; }
         @Override public int getKarmaCost() { return 20; }
         @Override public boolean use(ServerPlayer p) {
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120, 2));
-            p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0);
-            ServerScheduler.later(120, () -> p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0.0));
+            // a temporary (unsaved) modifier, not the base value: the base is saved with the player, so a logout in those
+            // 6 seconds used to keep the knockback immunity on every character for good
+            var kb = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE);
+            if (kb != null) {
+                kb.removeModifier(GUARD_KB);
+                kb.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(GUARD_KB, "Royal Guard", 1.0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+                ServerScheduler.later(120, () -> kb.removeModifier(GUARD_KB));
+            }
             p.serverLevel().sendParticles(GOLD, p.getX(), p.getY() + 1, p.getZ(), 30, 0.5, 0.8, 0.5, 0);
             p.level().playSound(null, p.blockPosition(), SoundEvents.ARMOR_EQUIP_NETHERITE, SoundSource.PLAYERS, 1F, 0.8F);
             return true;

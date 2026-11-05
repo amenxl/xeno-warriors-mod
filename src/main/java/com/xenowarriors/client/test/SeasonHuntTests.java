@@ -198,6 +198,14 @@ public final class SeasonHuntTests {
             PartyBots.add(p, new String[]{"kaeru", "zane"});
             check("S3 Kaeru + Zane bots join: " + PartyBots.bots(p).size(), PartyBots.bots(p).size() == 2);
             clearBots(p);
+            PartyBots.spawn(p, CharacterType.RHALIX, null);
+        }), 10));
+        // Ai-oni is never in a party with Rhalix: not even with a Rhalix bot
+        l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.SelectCharacterPacket(CharacterType.AIONI)), 20));
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            check("S3 with a Rhalix bot, picking Ai-oni is refused: now " + ModCapabilities.getType(p).getId() + " (expect mikiko)", ModCapabilities.getType(p) == CharacterType.MIKIKO);
+            CharacterManager.setCharacter(p, CharacterType.MIKIKO);
+            clearBots(p);
         }), 10));
     }
 
@@ -290,6 +298,18 @@ public final class SeasonHuntTests {
             on = feign(p);
             CharacterManager.setCharacter(p, CharacterType.MIKIKO);
             check("switch: Kill's Play Weak (" + on + ", next hit x3) ends: " + feign(p), on && !feign(p));
+
+            // Logan's Royal Guard: knockback immunity for 6 s must not be saved with the player (a logout then kept it for good)
+            CharacterManager.setCharacter(p, CharacterType.LOGAN);
+            var kb = p.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+            new com.xenowarriors.skill.ffr.SrSkills.RoyalGuard().use(p);
+            net.minecraft.nbt.CompoundTag saved = new net.minecraft.nbt.CompoundTag();
+            p.saveWithoutId(saved);
+            double savedBase = -1;
+            for (net.minecraft.nbt.Tag t : saved.getList("Attributes", 10))
+                if (((net.minecraft.nbt.CompoundTag) t).getString("Name").equals("minecraft:generic.knockback_resistance")) savedBase = ((net.minecraft.nbt.CompoundTag) t).getDouble("Base");
+            check("Royal Guard: knockback resistance now " + kb.getValue() + " (expect 1.0), saved base " + savedBase + " (expect 0.0)", kb.getValue() >= 1.0 && savedBase == 0.0);
+            CharacterManager.setCharacter(p, CharacterType.MIKIKO);
 
             SkillManager.resetCooldowns(p);
             p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setLoadout(CharacterType.MIKIKO, SkillPool.defaultLoadout()));
