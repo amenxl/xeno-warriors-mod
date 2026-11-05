@@ -93,7 +93,7 @@ public final class HuntCombatTests {
 
     public static void build(net.minecraft.client.Minecraft mc, List<Step> l, String focus) {
         // ---- arena: a stone floor up in the air, open sky, survival
-        l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); UiTest.character(CharacterType.RHALIX);
+        l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); UiTest.character(CharacterType.MIKIKO);   // (Mikiko below flight level: he can't fly on his own, so any flight left is the bug)
             server(p -> { p.setGameMode(GameType.SURVIVAL); p.serverLevel().setDayTime(6000); clearArea(p);
                 p.server.getGameRules().getRule(GameRules.RULE_KEEPINVENTORY).set(true, p.server);
                 ServerLevel l0 = p.serverLevel();
@@ -108,10 +108,10 @@ public final class HuntCombatTests {
 
         // ---- 1. Blazing Judgment, the player leaves for the Nether in the middle: flight must not stay
         l.add(new Step(null, () -> server(p -> {
-            stats(p, 10, 10, 10);
+            stats(p, 10, 10, 10);                                                // (level 30, far below wind flight)
             p.getAbilities().mayfly = false; p.getAbilities().flying = false; p.onUpdateAbilities();
             for (int i = 0; i < 4; i++) husk(p, origin.add(Math.cos(i) * 3, 0, 10 + Math.sin(i) * 3), 200);
-            bot = PartyBots.spawn(p, CharacterType.MIKIKO, null);
+            bot = PartyBots.spawn(p, CharacterType.RHALIX, null);
             if (bot != null) bot.moveTo(origin.x + 3, origin.y, origin.z, 0, 0);
         }), 30));
         l.add(new Step(null, () -> server(p -> {
@@ -181,9 +181,9 @@ public final class HuntCombatTests {
         }), 10));
         l.add(new Step(null, () -> server(p -> {
             // rested as long as the broken-gun wait: fresh again
+            WeaponForms.removeForms(p.getInventory());
             var wear = p.getPersistentData().getCompound("xw_gun_wear").getCompound(Form.PISTOL.name());
             if (!wear.isEmpty()) wear.putLong("t", p.serverLevel().getGameTime() - WeaponForms.GUN_BREAK_COOLDOWN - 1);
-            WeaponForms.removeForms(p.getInventory());
             WeaponForms.summon(p, Form.PISTOL, false);
             int d = FormGunItem.dur(p.getMainHandItem());
             log("after resting " + WeaponForms.GUN_BREAK_COOLDOWN / 20 + "s: durability " + d + "/" + (int) D[1] + " -> " + pf(d == (int) D[1]));
@@ -304,6 +304,7 @@ public final class HuntCombatTests {
 
         // ---- 6. gun XP: only for damage really done
         l.add(new Step(null, () -> server(p -> {
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.bladeLevel = 60);   // (guns need the blade level)
             husk = husk(p, origin.add(0, 0, 5), 200);
             husk.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 2000, 4));
             p.getPersistentData().remove(WeaponForms.BROKEN);
@@ -317,6 +318,7 @@ public final class HuntCombatTests {
             int lv0 = com.xenowarriors.compat.GunLevel.level(p);
             int hits = 0;
             ItemStack g = p.getMainHandItem();
+            if (!(g.getItem() instanceof FormGunItem)) { log("gun xp: no gun in hand (" + g + ") -> FAIL"); return; }
             for (int i = 0; i < 5; i++) { p.getCooldowns().removeCooldown(g.getItem()); hits += ((FormGunItem) g.getItem()).fire(p, g); }
             float x1 = com.xenowarriors.compat.GunLevel.xp(p);
             log("5 shots at a Resistance V husk: hits " + hits + ", hp " + f(husk.getHealth()) + "/200, gun xp " + f(x0) + " -> " + f(x1)
