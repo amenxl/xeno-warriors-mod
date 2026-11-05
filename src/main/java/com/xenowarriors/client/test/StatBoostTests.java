@@ -118,10 +118,12 @@ public final class StatBoostTests {
         if (hp > 0) { m.getAttribute(Attributes.MAX_HEALTH).setBaseValue(hp); m.setHealth((float) hp); }
         l.addFreshEntity(m);
         groundBoosts(l, m.getBoundingBox().inflate(4), true);
+        groundBoosts(l, p.getBoundingBox().inflate(3), true);
         var src = killer instanceof ServerPlayer sp ? l.damageSources().playerAttack(sp) : l.damageSources().mobAttack(killer);
         for (int i = 0; i < 5 && m.isAlive(); i++) { m.invulnerableTime = 0; m.hurt(src, 1.0E7F); }
         if (m.isAlive()) { log("could not kill " + type + " -> FAIL"); m.discard(); }
         List<StatBoostItem> r = groundBoosts(l, new AABB(at).inflate(5), true);
+        r.addAll(groundBoosts(l, p.getBoundingBox().inflate(3), true));    // (Mikiko's kills are absorbed: their drops land at his feet)
         m.discard();
         return r;
     }
