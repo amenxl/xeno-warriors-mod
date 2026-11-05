@@ -84,7 +84,7 @@
         },
         {
           "title": "Synergy and bond",
-          "text": "Certain characters in the same party and within 24 blocks get a synergy (bots count, so you can try it solo): Partners (Rhalix + Mikiko), Skyland Bond (Rhalix + Sky Patrol / Kyrie), Goofy Rivals (Mikiko + Ultima), Soul Link (Mikiko + Kaeru), Brothers (Stevie + Garry), Tenjo Siblings (Yuri + Ultima), Old Friends (Zane + Mikiko), Married (Max + Technica).\n## Bond\n- Every teammate character has a bond level with yours, 0 to 100. It grows a little just by being together, much faster fighting side by side, with every kill one of you makes, and a lot with every revive.\n- Higher bond = stronger synergy (double at bond 100), and a synergy's downside fades out - Soul Link's shared death is gone at bond 50.\n- Every 10 levels of your best bond with someone in your party: +5 max hearts (+300 with DragonMineZ).\n- The Party menu shows your bond with everyone, the active synergies, and [S] opens the Team Synergy panel."
+          "text": "Certain characters in the same party and within 24 blocks get a synergy (bots count, so you can try it solo): Partners (Rhalix + Mikiko), Skyland Bond (Rhalix + Sky Patrol / Kyrie), Goofy Rivals (Mikiko + Ultima), Soul Link (Mikiko + Kaeru), Brothers (Stevie + Garry), Tenjo Siblings (Yuri + Ultima), Old Friends (Zane + Mikiko), Married (Max + Technica).\n## Bond\n- Every teammate character has a bond level with yours, 0 to 100. It grows a little just by being together, much faster fighting side by side, with every kill one of you makes, and a lot with every revive.\n- Higher bond = stronger synergy (double at bond 100), and a synergy's downside fades out - Soul Link's shared death is gone at bond 50.\n- Every 10 levels of your best bond with someone in your party: +5 max hearts (+300 with DragonMineZ).\n- Bots share it: each bot has its own bond with its teammates (its character's, the one you'll have when you play it) and gets the same bonus hearts from its best bond, on top of its level health. Bots get their synergies too (damage, Soul Link's lighter hits, faster Karma, Old Friends' cheaper skills).\n## Bots are treated like players\nA bot uses its own character's stats, all kept in your save for that character: Character Level hearts, Attack and Defense levels, ability tiers and levels (its skill uses level them up), Appetite (food heals it more), gun level, fall damage and DragonMineZ stats. What it earns is waiting for you when you play that character.\n- The Party menu shows your bond with everyone, the active synergies, and [S] opens the Team Synergy panel."
         }
       ]
     },
@@ -232,7 +232,7 @@
         },
         {
           "title": "Bond",
-          "text": "Fighting beside the same teammates raises your bond with them (see Party & Bots > Synergy and bond): stronger synergies, no synergy downsides from bond 50, and +5 max hearts per 10 levels of your best party bond."
+          "text": "Fighting beside the same teammates raises your bond with them (see Party & Bots > Synergy and bond): stronger synergies, no synergy downsides from bond 50, and +5 max hearts per 10 levels of your best party bond - your bots get the same bond hearts from their own best bond."
         },
         {
           "title": "Soul Splitter skills",

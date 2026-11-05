@@ -210,6 +210,7 @@ public final class PartyBots {
         b.setOwner(p.getUUID());
         b.applyLevel(levelFor(p, t));
         com.xenowarriors.compat.DmzBotStats.apply(b);                           // (with DragonMineZ: its character's health and strength, before its saved health goes back in)
+        com.xenowarriors.party.Bonds.applyHealth(b);                            // (its bond hearts too, like its owner's - also before the saved health)
         if (record != null) b.loadRecord(record);
         else {                                                                   // a fresh teammate: their own inventory, as you left it
             CompoundTag saved = com.xenowarriors.character.CharacterInventories.checkOut(p, t.getId());
@@ -236,8 +237,20 @@ public final class PartyBots {
         }).orElse(1);
     }
 
+    /** A bot's own level of one stat (Speed / Attack / Defense): its owner's saved stats for that character, as levelFor. */
+    public static int statLevel(PartyBotEntity b, Stat stat) {
+        ServerPlayer o = b.owner();
+        if (o == null) return 0;
+        CharacterType t = b.character();
+        return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
+            int[] lv = d.getType() == t ? d.statLevel : d.charStats.getCompound(t.getId()).getIntArray("lv");
+            int i = stat.ordinal();
+            return i < lv.length ? Math.max(0, lv[i]) : 0;
+        }).orElse(0);
+    }
+
     /** XP the bot earns goes to the owner's saved stats for that character (so switching to it keeps the level). */
-    static void addXp(PartyBotEntity b, Stat stat, float amount) {
+    public static void addXp(PartyBotEntity b, Stat stat, float amount) {
         ServerPlayer o = b.owner();
         if (o == null || amount <= 0) return;
         CharacterType t = b.character();
@@ -581,6 +594,8 @@ public final class PartyBots {
         Skill skill = SkillPool.inSlot(b.character(), loadout, slot);
         if (skill == null) return;
         float cost = com.xenowarriors.skill.SkillLevels.costFor(b, skill.getId(), skill.getKarmaCost());   // (the owner's ability level for this character)
+        if (com.xenowarriors.party.Synergy.has(b, com.xenowarriors.party.Synergy.OLD_FRIENDS))                // Old Friends: cheaper skills, as for a player
+            cost = Math.round(cost * (1F - Math.min(0.5F, 0.25F * com.xenowarriors.party.Synergy.strength(b, com.xenowarriors.party.Synergy.OLD_FRIENDS))));
         if (b.karma < cost) return;
         FakePlayer f = fake(b);
         Vec3 eye = b.getEyePosition(), to = target.getBoundingBox().getCenter();
@@ -594,6 +609,7 @@ public final class PartyBots {
         if (used) {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, com.xenowarriors.skill.SkillLevels.cooldownFor(b, skill.getId(), skill.getCooldownTicks()));
+            com.xenowarriors.skill.SkillLevels.used(b, skill);                    // (its uses level the skill up, like a player's: its character's ability levels)
             b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());   // the same body animation a player gets for it
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
@@ -612,6 +628,7 @@ public final class PartyBots {
         ANIM_SENT.remove(b.getUUID());
         boolean used = standInUse(b, f, skill);
         if (used) {
+            com.xenowarriors.skill.SkillLevels.used(b, skill);
             b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
@@ -892,15 +909,20 @@ public final class PartyBots {
         if (event.getSource().getEntity() instanceof ServerPlayer hitter && !(hitter instanceof FakePlayer) && !(event.getEntity() instanceof Player)
                 && Parties.inParty(hitter) && !event.isCanceled()) {
             float xp = Math.min(event.getAmount(), event.getEntity().getHealth()) * 0.3F;
-            for (ServerPlayer m : Parties.members(hitter))
+            for (ServerPlayer m : Parties.members(hitter)) {
                 if (m != hitter && m.level() == hitter.level() && m.distanceToSqr(hitter) < 48 * 48) com.xenowarriors.stats.Stats.addXp(m, Stat.ATTACK, xp);
+                for (PartyBotEntity mb : bots(m)) if (mb.level() == hitter.level() && mb.distanceToSqr(hitter) < 48 * 48) addXp(mb, Stat.ATTACK, xp);   // (bots share it like players)
+            }
         }
         if (attacker != null && attacker != event.getEntity()) {
-            float lvBonus = 1F + Stat.ATTACK.bonus(Math.min(Stat.MAX_LEVEL, attacker.botLevel() / 3));
+            float lvBonus = 1F + Stat.ATTACK.bonus(statLevel(attacker, Stat.ATTACK));   // (its character's own Attack level, the same bonus a player of it gets)
             if (event.getSource().getEntity() instanceof PartyBotEntity && !com.xenowarriors.ka.DmzKi.isKi(event.getSource().getDirectEntity())) event.setAmount(event.getAmount() * lvBonus);   // (its DMZ ki attacks hit as hard as its DMZ character, like skills)
             addXp(attacker, Stat.ATTACK, Math.min(event.getAmount(), event.getEntity().getHealth()));
         }
-        if (event.getEntity() instanceof PartyBotEntity b && event.getSource().getEntity() instanceof LivingEntity) addXp(b, Stat.DEFENSE, event.getAmount());
+        if (event.getEntity() instanceof PartyBotEntity b && event.getSource().getEntity() instanceof LivingEntity src && src != b) {
+            event.setAmount(event.getAmount() * (1F - Stat.DEFENSE.bonus(statLevel(b, Stat.DEFENSE))));   // its Defense level, like a player's
+            addXp(b, Stat.DEFENSE, event.getAmount());
+        }
         // sparring: the owner can't go below 1 HP - that's the bot's win
         if (event.getEntity() instanceof ServerPlayer p && attacker != null && attacker.sparring() && p == attacker.owner() && p.getHealth() - event.getAmount() < 2F) {
             event.setCanceled(true);

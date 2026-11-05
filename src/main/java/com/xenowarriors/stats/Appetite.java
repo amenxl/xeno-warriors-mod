@@ -24,6 +24,9 @@ import net.minecraftforge.fml.common.Mod;
  * The extra layers go into the same big stomach Mikiko and Rhalix use (character/BigHunger): the real food bar only
  * shows the top 20 points, so sprinting, regeneration and starving keep working like vanilla.
  * Separate from Speed/Attack/Defense (it doesn't change the Character Level).
+ * <p>Bots have it too, per character in their owner's save (the same record as when the owner plays that character):
+ * the food a bot eats levels it, and its level makes food heal it more by the same +1% a level. (Bots have no hunger
+ * bar, so the extra layers only matter once you play that character.)
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Appetite {
@@ -62,6 +65,38 @@ public final class Appetite {
 
     /** How much more food gives at a level (0.25 = +25%). */
     public static float bonus(int level) { return Math.min(MAX_LEVEL, level) * PER_LEVEL; }
+
+    // ---------------------------------------------------------------- bots
+
+    private static String botKey(com.xenowarriors.bot.PartyBotEntity b, ServerPlayer o) {
+        return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key(b.character())).orElse(b.character().getId());
+    }
+
+    /** A bot's Appetite level (its character's, in its owner's save; 0 without its owner online). */
+    public static int level(com.xenowarriors.bot.PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        return o == null ? 0 : Math.max(0, Math.min(MAX_LEVEL, root(o).getCompound(botKey(b, o)).getInt("lv")));
+    }
+
+    public static float bonus(com.xenowarriors.bot.PartyBotEntity b) { return bonus(level(b)); }
+
+    /** Food a bot ate: XP toward its character's Appetite (its owner hears when it goes up). */
+    public static void addXp(com.xenowarriors.bot.PartyBotEntity b, float amount) {
+        ServerPlayer o = b.owner();
+        if (o == null || amount <= 0 || b.journey()) return;
+        String k = botKey(b, o);
+        CompoundTag r = root(o);
+        CompoundTag c = r.getCompound(k);
+        int lv = Math.max(0, Math.min(MAX_LEVEL, c.getInt("lv")));
+        if (lv >= MAX_LEVEL) return;
+        int before = lv;
+        float xp = c.getFloat("xp") + amount;
+        while (lv < MAX_LEVEL && xp >= needed(lv)) { xp -= needed(lv); lv++; }
+        if (lv >= MAX_LEVEL) xp = 0;
+        c.putInt("lv", lv); c.putFloat("xp", xp);
+        r.put(k, c);
+        if (lv > before) o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal(": Appetite level " + lv + " (food +" + Math.round(bonus(lv) * 100) + "%)")).withStyle(ChatFormatting.GOLD), true);
+    }
 
     public static void set(ServerPlayer p, int level, float xp) {
         CompoundTag r = root(p);

@@ -214,7 +214,7 @@ public class PartyBotEntity extends PathfinderMob {
     /** Apply this character's level (from the owner's saved stats for it). */
     public void applyLevel(int level) {
         entityData.set(LEVEL, Math.max(1, level));
-        double hp = 20 + 2 * Math.min(60, level / 10) + level * 0.15;
+        double hp = 20 + 2 * com.xenowarriors.stats.Stats.bonusHearts(level);   // (the same hearts a player of this Character Level gets)
         var a = getAttribute(Attributes.MAX_HEALTH); if (a != null) a.setBaseValue(hp);
         var d = getAttribute(Attributes.ATTACK_DAMAGE); if (d != null) d.setBaseValue(4 + level * 0.12);
         var s = getAttribute(Attributes.MOVEMENT_SPEED); if (s != null) s.setBaseValue(0.32 + Math.min(0.15, level * 0.0015));
@@ -727,7 +727,8 @@ public class PartyBotEntity extends PathfinderMob {
                 ItemStack food = inventory.getItem(eatSlot);
                 var props = food.getFoodProperties(this);
                 float heal = props == null ? 2F : props.getNutrition() * 1.2F + props.getSaturationModifier() * 4F;
-                heal(Math.max(2F, heal));
+                heal(Math.max(2F, heal) * (1F + com.xenowarriors.stats.Appetite.bonus(this)));   // (its Appetite level: food does more, like for a player)
+                if (props != null) com.xenowarriors.stats.Appetite.addXp(this, props.getNutrition());
                 if (props != null) for (var eff : props.getEffects()) if (getRandom().nextFloat() < eff.getSecond()) addEffect(new net.minecraft.world.effect.MobEffectInstance(eff.getFirst()));
                 ItemStack rest = food.getCraftingRemainingItem();
                 food.shrink(1);

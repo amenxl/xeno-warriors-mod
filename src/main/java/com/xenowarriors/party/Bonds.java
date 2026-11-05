@@ -37,6 +37,9 @@ import java.util.UUID;
  *   <li>Their downsides fade with it, and are gone at bond {@link #NO_DOWNSIDE} (Soul Link's shared death).</li>
  *   <li>Every 10 bond levels of your highest bond with someone in your party: +{@link #HEARTS_PER_10} max hearts
  *       (+{@link #DMZ_HEARTS_PER_10} with DragonMineZ, whose health values are far bigger), so at most +50 hearts.</li>
+ *   <li>Bots get the same: a bot's bond with each teammate is its character's own (kept in its owner's save, under that
+ *       character - the same record the owner gets when they play it), or that teammate's bond with it if higher; its
+ *       best bond gives it the same bonus hearts, on top of its level health and DragonMineZ's health bonus.</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -45,6 +48,8 @@ public final class Bonds {
     public static final float NEAR_XP = 0.25F, COMBAT_XP = 1.5F, KILL_XP = 6F, REVIVE_XP = 25F;
     private static final String KEY = "xw_bond";
     private static final UUID HEALTH_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e31");
+    /** The same bonus on a bot (its own id, so it stacks with its level health and DmzBotStats' DragonMineZ health). */
+    public static final UUID BOT_HEALTH_ID = UUID.fromString("6f3c1f0e-8a3b-4c51-9a1e-5b7d2a9c0e32");
     private static Boolean dmz;
 
     private Bonds() {}
@@ -92,27 +97,18 @@ public final class Bonds {
         mine.put(partnerChar, t);
         r.put(me(p), mine);
         applyHealth(p);
+        applyTeamBots(p);
     }
 
     /** Bond XP with a teammate character (both ways happen separately: each player keeps their own side). */
     public static void addXp(ServerPlayer p, String partnerChar, float amount) {
         if (amount <= 0 || partnerChar == null || partnerChar.equals("none") || p instanceof net.minecraftforge.common.util.FakePlayer) return;
-        int lv = level(p, partnerChar);
-        if (lv >= MAX) return;
-        float xp = root(p).getCompound(me(p)).getCompound(partnerChar).getFloat("xp") + amount;
-        int before = lv;
-        while (lv < MAX && xp >= needed(lv)) { xp -= needed(lv); lv++; }
-        if (lv >= MAX) xp = 0;
-        CompoundTag r = root(p);
-        CompoundTag mine = r.getCompound(me(p));
-        CompoundTag t = new CompoundTag();
-        t.putInt("lv", lv); t.putFloat("xp", xp);
-        mine.put(partnerChar, t);
-        r.put(me(p), mine);
+        int before = level(p, partnerChar);
+        int lv = grow(p, me(p), partnerChar, amount);
         if (lv > before) {
             String who = com.xenowarriors.character.CharacterType.byId(partnerChar).getDisplayName().getString();
             boolean tens = lv / 10 > before / 10;
-            p.displayClientMessage(Component.literal("Bond with " + who + ": " + lv + (tens ? "  - synergy stronger, more max hearts" : "")
+            p.displayClientMessage(Component.literal("Bond with " + who + ": " + lv + (tens ? "  - synergy stronger, more max hearts (you and your bots)" : "")
                     + (before < NO_DOWNSIDE && lv >= NO_DOWNSIDE ? "  - synergy downsides gone!" : "")).withStyle(ChatFormatting.LIGHT_PURPLE), !tens);
             if (tens) {
                 p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1F, 1.2F);
@@ -120,6 +116,91 @@ public final class Bonds {
                         "Bond " + lv, "You and " + who + " fight better together", "normal");
             }
             applyHealth(p);
+            if (tens) applyTeamBots(p);
+        }
+    }
+
+    /** Adds bond XP to one record ({@code charKey}'s bond with {@code partnerChar}) in this player's save. The new level. */
+    private static int grow(ServerPlayer p, String charKey, String partnerChar, float amount) {
+        CompoundTag r = root(p);
+        CompoundTag mine = r.getCompound(charKey);
+        CompoundTag old = mine.getCompound(partnerChar);
+        int lv = Math.max(0, Math.min(MAX, old.getInt("lv")));
+        if (lv >= MAX) return lv;
+        float xp = old.getFloat("xp") + amount;
+        while (lv < MAX && xp >= needed(lv)) { xp -= needed(lv); lv++; }
+        if (lv >= MAX) xp = 0;
+        CompoundTag t = new CompoundTag();
+        t.putInt("lv", lv); t.putFloat("xp", xp);
+        mine.put(partnerChar, t);
+        r.put(charKey, mine);
+        return lv;
+    }
+
+    // ---------------------------------------------------------------- bots: the same bonds, from their side
+
+    /** The save key of a bot's character in its owner's save. */
+    private static String botKey(PartyBotEntity b, ServerPlayer o) {
+        return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key(b.character())).orElse(b.character().getId());
+    }
+
+    /** The bot character's own bond with this teammate character (kept in the owner's save, under the bot's character). */
+    public static int botOwn(PartyBotEntity b, String partnerChar) {
+        ServerPlayer o = b.owner();
+        if (o == null || partnerChar == null || partnerChar.equals("none")) return 0;
+        return Math.max(0, Math.min(MAX, root(o).getCompound(botKey(b, o)).getCompound(partnerChar).getInt("lv")));
+    }
+
+    /** A bot's bond with a teammate: its own side, or the teammate's side (a player's bond with it) if that's higher. */
+    public static int botLevel(PartyBotEntity b, Entity partner) {
+        int lv = botOwn(b, charOf(partner));
+        if (partner instanceof ServerPlayer m && !(m instanceof net.minecraftforge.common.util.FakePlayer)) lv = Math.max(lv, level(m, charOf(b)));
+        return lv;
+    }
+
+    /** Everyone on a bot's team right now (its owner, the party players and all their bots), not the bot itself. */
+    public static List<LivingEntity> team(PartyBotEntity b) {
+        List<LivingEntity> out = new java.util.ArrayList<>();
+        ServerPlayer o = b.owner();
+        if (o == null) return out;
+        for (ServerPlayer m : Parties.inParty(o) ? Parties.members(o) : List.of(o)) {
+            out.add(m);
+            for (PartyBotEntity x : PartyBots.bots(m)) if (x != b) out.add(x);
+        }
+        return out;
+    }
+
+    /** A bot's highest bond with anyone on its team now (this sets its bonus hearts, like {@link #best(ServerPlayer)}). */
+    public static int best(PartyBotEntity b) {
+        int best = 0;
+        for (LivingEntity e : team(b)) best = Math.max(best, botLevel(b, e));
+        return best;
+    }
+
+    /** (Tests / commands) sets the bot character's own bond with a teammate character. */
+    public static void setBot(PartyBotEntity b, String partnerChar, int level, float xp) {
+        ServerPlayer o = b.owner();
+        if (o == null) return;
+        CompoundTag r = root(o);
+        CompoundTag mine = r.getCompound(botKey(b, o));
+        CompoundTag t = new CompoundTag();
+        t.putInt("lv", Math.max(0, Math.min(MAX, level)));
+        t.putFloat("xp", Math.max(0F, xp));
+        mine.put(partnerChar, t);
+        r.put(botKey(b, o), mine);
+        applyHealth(b);
+    }
+
+    /** Bond XP for the bot's side (quiet, but for every 10 levels, which its owner hears about). */
+    public static void addXp(PartyBotEntity b, String partnerChar, float amount) {
+        ServerPlayer o = b.owner();
+        if (o == null || amount <= 0 || partnerChar == null || partnerChar.equals("none") || b.journey()) return;
+        int before = botOwn(b, partnerChar);
+        int lv = grow(o, botKey(b, o), partnerChar, amount);
+        if (lv / 10 > before / 10) {
+            o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal("'s bond with "
+                    + com.xenowarriors.character.CharacterType.byId(partnerChar).getDisplayName().getString() + ": " + lv + "  - more max hearts")).withStyle(ChatFormatting.LIGHT_PURPLE), true);
+            applyHealth(b);
         }
     }
 
@@ -173,6 +254,39 @@ public final class Bonds {
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
     }
 
+    private static final java.util.Map<UUID, Integer> BOT_APPLIED = new java.util.HashMap<>();
+
+    /**
+     * A bot's bond hearts: a modifier of its own on its max health, so it adds to its level health (PartyBotEntity
+     * .applyLevel sets the base) and DragonMineZ's health bonus (DmzBotStats, another modifier) without either
+     * replacing it. Applied on spawn (before a saved record's health goes back in, so a re-added or relogged bot keeps
+     * its health), on every bond change that matters, and every 5 s.
+     */
+    public static void applyHealth(PartyBotEntity b) {
+        if (b.level().isClientSide) return;
+        AttributeInstance hp = b.getAttribute(Attributes.MAX_HEALTH);
+        if (hp == null) return;
+        int best = best(b), hearts = hearts(best);
+        AttributeModifier cur = hp.getModifier(BOT_HEALTH_ID);
+        if (cur != null ? Math.abs(cur.getAmount() - hearts * 2.0) < 1.0E-4 : hearts <= 0) return;
+        float before = b.getMaxHealth();
+        hp.removeModifier(BOT_HEALTH_ID);
+        if (hearts > 0) hp.addTransientModifier(new AttributeModifier(BOT_HEALTH_ID, "Xeno Warriors bond", hearts * 2.0, AttributeModifier.Operation.ADDITION));
+        if (b.getHealth() > b.getMaxHealth()) b.setHealth(b.getMaxHealth());
+        if (b.tickCount < 5 && before < b.getMaxHealth()) b.setHealth(b.getMaxHealth());   // (just out: at full health)
+        Integer was = BOT_APPLIED.put(b.getUUID(), hearts);
+        if (was == null || was != hearts)
+            XenoWarriors.LOGGER.info("XW bond hearts: {} bot best bond {} -> +{} hearts, maxHp {} -> {}", b.character().getId(), best, hearts, Math.round(before), Math.round(b.getMaxHealth()));
+    }
+
+    /** Every bot on this player's team (their bonds with this player's character may have changed). */
+    public static void applyTeamBots(ServerPlayer p) {
+        for (ServerPlayer m : Parties.inParty(p) ? Parties.members(p) : List.of(p))
+            for (PartyBotEntity b : PartyBots.bots(m)) applyHealth(b);
+    }
+
+    public static void forget(UUID bot) { BOT_APPLIED.remove(bot); }
+
     // ---------------------------------------------------------------- what grows it
 
     private static boolean fighting(LivingEntity e, int now) {
@@ -184,12 +298,17 @@ public final class Bonds {
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 20 != 0 || p.isSpectator()) return;
         if (p instanceof net.minecraftforge.common.util.FakePlayer) return;
-        if (p.tickCount % 100 == 0) applyHealth(p);
+        if (p.tickCount % 100 == 0) { applyHealth(p); for (PartyBotEntity b : PartyBots.bots(p)) applyHealth(b); }
         if (!p.isAlive() || com.xenowarriors.vr.Vr.inVr(p)) return;
         boolean fight = fighting(p, p.tickCount);
         for (LivingEntity e : Synergy.partners(p)) {
             boolean together = fight || fighting(e, e.tickCount);
             addXp(p, charOf(e), together ? COMBAT_XP : NEAR_XP);
+        }
+        for (PartyBotEntity b : PartyBots.bots(p)) {                            // (its bots grow their own side the same way)
+            if (b.downed() || b.journey()) continue;
+            boolean bf = fighting(b, b.tickCount);
+            for (LivingEntity e : Synergy.partners(b)) addXp(b, charOf(e), bf || fighting(e, e.tickCount) ? COMBAT_XP : NEAR_XP);
         }
     }
 
@@ -208,6 +327,12 @@ public final class Bonds {
             List<LivingEntity> ps = Synergy.partners(p);
             if (p != k && !ps.contains(k)) continue;
             for (LivingEntity o : ps) addXp(p, charOf(o), KILL_XP);
+            for (PartyBotEntity b : PartyBots.bots(p)) {                         // (its bots: the same, their own side)
+                if (b.downed() || b.level() != dead.level() || b.distanceToSqr(dead) > 32 * 32) continue;
+                List<LivingEntity> bs = Synergy.partners(b);
+                if (b != k && !bs.contains(k)) continue;
+                for (LivingEntity o : bs) addXp(b, charOf(o), KILL_XP);
+            }
         }
     }
 
@@ -217,5 +342,7 @@ public final class Bonds {
         if (downed instanceof ServerPlayer d) addXp(d, charOf(helper), REVIVE_XP);
         if (helper instanceof ServerPlayer h) addXp(h, charOf(downed), REVIVE_XP);
         if (downed instanceof PartyBotEntity b && b.owner() != null && b.owner() != helper) addXp(b.owner(), charOf(b), REVIVE_XP / 2);
+        if (downed instanceof PartyBotEntity b) addXp(b, charOf(helper), REVIVE_XP);           // (bots keep their own side too)
+        if (helper instanceof PartyBotEntity b) addXp(b, charOf(downed), REVIVE_XP);
     }
 }

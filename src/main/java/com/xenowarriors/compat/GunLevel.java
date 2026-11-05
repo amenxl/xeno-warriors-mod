@@ -25,6 +25,9 @@ import net.minecraftforge.fml.common.Mod;
  * installed - with bows and crossbows (half XP). Each level adds a little gun damage (+0.2%, up to +150%), and at
  * level {@link #INFINITE} the magazine never runs dry. Technica is the Sky Patrol's gunsmith: her gun level starts at
  * {@link #TECHNICA_START} and her guns hit {@link #TECHNICA_BONUS} harder on top.
+ * <p>Bots the same: a bot's gun level is its character's (kept in its owner's save - the one the owner gets playing
+ * it), its TACZ shots (or bow shots without TACZ) get the same damage bonus and train it the same way. (Bots already
+ * reload for free, so the unlimited-ammo perk changes nothing for them.)
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class GunLevel {
@@ -75,6 +78,49 @@ public final class GunLevel {
         return m;
     }
 
+    // ---------------------------------------------------------------- bots
+
+    /** A bot's gun level (its character's, in its owner's save). */
+    public static int level(com.xenowarriors.bot.PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        if (o == null) return start(b.character());
+        String lk = LV + b.character().getId();
+        return keep(o).contains(lk) ? keep(o).getInt(lk) : start(b.character());
+    }
+
+    public static float multiplier(com.xenowarriors.bot.PartyBotEntity b) {
+        float m = 1F + Math.min(MAX_BONUS, level(b) * PER_LEVEL);
+        if (b.character() == CharacterType.TECHNICA) m += TECHNICA_BONUS;
+        return m;
+    }
+
+    public static void addXp(com.xenowarriors.bot.PartyBotEntity b, float amount) {
+        ServerPlayer o = b.owner();
+        if (o == null || amount <= 0 || b.journey()) return;
+        int lv = level(b);
+        if (lv >= MAX) return;
+        String k = b.character().getId();
+        float xp = keep(o).getFloat(XP + k) + amount;
+        int before = lv;
+        while (lv < MAX && xp >= needed(lv)) { xp -= needed(lv); lv++; }
+        keep(o).putInt(LV + k, lv);
+        keep(o).putFloat(XP + k, xp);
+        if (lv != before) o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal(": gun level " + lv)).withStyle(ChatFormatting.GOLD), true);
+    }
+
+    /** (Tests) a bot's shot: what it does after its gun level, and the XP it earns. */
+    public static float botShot(com.xenowarriors.bot.PartyBotEntity b, net.minecraft.world.entity.LivingEntity target, float amount) {
+        float a = amount * multiplier(b);
+        addXp(b, Math.min(a, target.getHealth() + 1F));
+        return a;
+    }
+
+    private static com.xenowarriors.bot.PartyBotEntity botShooter(net.minecraft.world.damagesource.DamageSource src) {
+        if (!(src.getEntity() instanceof com.xenowarriors.bot.PartyBotEntity b)) return null;
+        if (on()) return TaczGuns.isBullet(src.getDirectEntity()) ? b : null;
+        return src.getDirectEntity() instanceof net.minecraft.world.entity.projectile.AbstractArrow ? b : null;
+    }
+
     public static void addXp(ServerPlayer p, float amount) {
         if (amount <= 0 || p.isCreative() || p.isSpectator() || ModCapabilities.getType(p) == CharacterType.NONE) return;
         int lv = level(p);
@@ -104,6 +150,12 @@ public final class GunLevel {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onHurt(LivingHurtEvent event) {
+        com.xenowarriors.bot.PartyBotEntity bot = botShooter(event.getSource());
+        if (bot != null && bot != event.getEntity()) {                            // a bot's shot: its own gun level (bows: XP only, half, as for players)
+            if (on()) event.setAmount(botShot(bot, event.getEntity(), event.getAmount()));
+            else addXp(bot, Math.min(event.getAmount(), event.getEntity().getHealth() + 1F) * 0.5F);
+            return;
+        }
         if (!on()) {
             // without TACZ: bows and crossbows train it instead (half XP), so the summoned Hekublade / wire guns
             // (gun level 50) can still be reached - those guns add their own XP (FormGunItem)
@@ -122,6 +174,8 @@ public final class GunLevel {
     @SubscribeEvent
     public static void onKill(LivingDeathEvent event) {
         if (!on()) return;
+        com.xenowarriors.bot.PartyBotEntity bot = botShooter(event.getSource());
+        if (bot != null) addXp(bot, KILL_XP);
         ServerPlayer p = shooter(event.getSource());
         if (p != null) addXp(p, KILL_XP);
     }

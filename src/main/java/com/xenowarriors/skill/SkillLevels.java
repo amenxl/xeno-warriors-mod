@@ -33,7 +33,8 @@ import java.util.List;
  *       with a longer cooldown ({@link #COOLDOWN_PER_TIER}x). Levelling that tier to 10 brings cost and cooldown down again.</li>
  *   <li>10 tiers; tier 10 level 10 is the top (overall ability level 100).</li>
  * </ul>
- * Party bots use their owner's levels for that character. Stored in the player's persisted data, so it survives death.
+ * Party bots use their owner's levels for that character, and their uses level it up the same way (the tier upgrade
+ * itself stays the owner's choice, made while playing that character). Stored in the player's persisted data, so it survives death.
  * The damage multiplier is applied to anything a skill hurts while it runs (combat/SkillContext carries the skill id).
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -161,6 +162,24 @@ public final class SkillLevels {
         }
         put(p, ck, id, v);
         sync(p);
+    }
+
+    /** A bot used a skill (it went off): one use toward its character's next level, in its owner's save (as a player's). */
+    public static void used(PartyBotEntity b, Skill skill) {
+        ServerPlayer o = b == null ? null : b.owner();
+        if (o == null || skill == null || b.journey()) return;
+        String ck = charKey(o, b.character()), id = skill.getId();
+        int[] v = get(o, ck, id);
+        if (v[1] >= MAX_LEVEL) return;
+        v[2]++;
+        if (v[2] >= needed(v[0], v[1])) {
+            v[2] = 0;
+            v[1]++;
+            String name = skill.getName().getString();
+            o.displayClientMessage(Component.literal("").append(b.label()).append(Component.literal(": " + name + " - Tier " + v[0] + " Lv " + v[1]
+                    + (v[1] >= MAX_LEVEL && v[0] < MAX_TIER ? " (play " + b.character().getDisplayName().getString() + " to upgrade its tier)" : ""))).withStyle(ChatFormatting.AQUA), true);
+        }
+        put(o, ck, id, v);
     }
 
     /** Upgrade a level-10 skill to its next tier (from the Character Customization skill card). */

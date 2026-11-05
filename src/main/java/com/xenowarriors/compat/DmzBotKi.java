@@ -126,7 +126,7 @@ public final class DmzBotKi {
     }
 
     /** A bot is gone: forget its kit. */
-    public static void forget(UUID bot) { KITS.remove(bot); DmzBotPower.forget(bot); DmzBotStats.forget(bot); }
+    public static void forget(UUID bot) { KITS.remove(bot); DmzBotPower.forget(bot); DmzBotStats.forget(bot); com.xenowarriors.party.Bonds.forget(bot); }
 
     private static Kit kit(PartyBotEntity b, java.util.function.Supplier<Player> standIn) {
         ServerPlayer o = b.owner();

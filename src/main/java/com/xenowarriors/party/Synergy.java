@@ -37,6 +37,9 @@ import java.util.*;
  *  Soul Link (Mikiko + Kaeru)          - both +20% damage and take 15% less; Karma comes back faster. But if one of them
  *                                         fully dies, the other dies too.
  * Characters that aren't playable yet (Kyrie, the Sky Patrol) are already listed so the bond works once they're added.
+ * <p>Bots get their synergies the same way, from their own teammates near them and their own bonds (Bonds.botLevel):
+ * the damage bonuses on everything they hit (melee and skills), Soul Link's lighter hits, faster Karma, Old Friends'
+ * cheaper skills, Married's heals and Goofy Rivals' kill streaks.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Synergy {
@@ -46,12 +49,41 @@ public final class Synergy {
     /** Sky Patrol members (by character id) - for when they become playable. */
     public static final Set<String> SKY_PATROL = Set.of("sam", "lexy", "max", "technica");
     private static final Map<UUID, Set<String>> ACTIVE = new HashMap<>();
+    /** The same for bots (by bot UUID). */
+    private static final Map<UUID, Set<String>> BOT_ACTIVE = new HashMap<>();
     private static final Map<UUID, int[]> RIVAL = new HashMap<>();      // {stacks, ticks left}
     private static final Set<UUID> DYING = new HashSet<>();
 
     private Synergy() {}
 
     public static Set<String> of(ServerPlayer p) { return ACTIVE.getOrDefault(p.getUUID(), Set.of()); }
+    public static Set<String> of(PartyBotEntity b) { return BOT_ACTIVE.getOrDefault(b.getUUID(), Set.of()); }
+    public static boolean has(PartyBotEntity b, String s) { return of(b).contains(s); }
+
+    /** A bot's synergy strength: from its best bond with a teammate near it who completes the synergy. */
+    public static int bond(PartyBotEntity b, String s) {
+        Def d = def(s);
+        if (d == null) return 0;
+        Set<String> need = d.partnersFor(id(b));
+        int best = 0;
+        for (LivingEntity e : partners(b)) if (need.contains(id(e))) best = Math.max(best, Bonds.botLevel(b, e));
+        return best;
+    }
+
+    public static float strength(PartyBotEntity b, String s) { return Bonds.strength(bond(b, s)); }
+
+    /** A bot's teammates close enough to count (its owner, the party players and their bots), not the bot itself. */
+    public static List<LivingEntity> partners(PartyBotEntity b) {
+        List<LivingEntity> out = new ArrayList<>();
+        ServerPlayer o = b.owner();
+        if (o == null) return out;
+        for (ServerPlayer m : new LinkedHashSet<>(Parties.members(o))) {
+            if (m.level() == b.level() && m.distanceToSqr(b) < RANGE * RANGE && m.isAlive() && !m.isSpectator()) out.add(m);
+            for (PartyBotEntity x : PartyBots.bots(m))
+                if (x != b && x.level() == b.level() && x.distanceToSqr(b) < RANGE * RANGE && x.isAlive() && !x.downed()) out.add(x);
+        }
+        return out;
+    }
 
     /**
      * Every synergy, for the party menu: its name, the characters it needs (any of {@code a} with any of {@code b}),
@@ -135,10 +167,19 @@ public final class Synergy {
     }
 
     private static Set<String> compute(ServerPlayer p) {
-        Set<String> s = new LinkedHashSet<>();
-        String me = id(p);
         List<String> them = new ArrayList<>();
         for (LivingEntity e : partners(p)) them.add(id(e));
+        return compute(id(p), them);
+    }
+
+    private static Set<String> compute(PartyBotEntity b) {
+        List<String> them = new ArrayList<>();
+        for (LivingEntity e : partners(b)) them.add(id(e));
+        return compute(id(b), them);
+    }
+
+    private static Set<String> compute(String me, List<String> them) {
+        Set<String> s = new LinkedHashSet<>();
         if (pair(me, them, "rhalix", "mikiko")) s.add(PARTNERS);
         if (me.equals("rhalix") && (them.contains("kyrie") || them.stream().anyMatch(SKY_PATROL::contains))) s.add(SKYLAND);
         if ((SKY_PATROL.contains(me) || me.equals("kyrie")) && them.contains("rhalix")) s.add(SKYLAND);
@@ -168,6 +209,12 @@ public final class Synergy {
         return n;
     }
 
+    private static int skyPatrolCount(PartyBotEntity b) {
+        int n = 0;
+        for (LivingEntity e : partners(b)) if (SKY_PATROL.contains(id(e))) n++;
+        return n;
+    }
+
     // ------------------------------------------------------------------ ticking
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -188,6 +235,20 @@ public final class Synergy {
                 p.serverLevel().sendParticles(now.contains(SOUL_LINK) ? ParticleTypes.SOUL : ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 2.1, p.getZ(), 2, 0.2, 0.1, 0.2, 0.01);
         }
         ACTIVE.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null);
+        // bots: the same synergies from their side
+        Set<UUID> seen = new HashSet<>();
+        for (ServerPlayer o : server.getPlayerList().getPlayers()) {
+            for (PartyBotEntity b : PartyBots.bots(o)) {
+                seen.add(b.getUUID());
+                Set<String> now = b.downed() ? Set.of() : compute(b);
+                if (now.isEmpty()) { BOT_ACTIVE.remove(b.getUUID()); continue; }
+                BOT_ACTIVE.put(b.getUUID(), now);
+                if (now.contains(PARTNERS)) b.karma = Math.min(100F, b.karma + 0.75F * strength(b, PARTNERS));
+                if (now.contains(SOUL_LINK)) b.karma = Math.min(100F, b.karma + 0.75F * strength(b, SOUL_LINK));
+                if (now.contains(OLD_FRIENDS)) b.karma = Math.min(100F, b.karma + 0.5F);
+            }
+        }
+        BOT_ACTIVE.keySet().retainAll(seen);
     }
 
     private static void announce(ServerPlayer p, String s) {
@@ -240,19 +301,52 @@ public final class Synergy {
             if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0] * strength(a, GOOFY);
             if (mult != 1F) event.setAmount(event.getAmount() * mult);
         }
+        PartyBotEntity ab = PartyBots.botOf(event.getSource().getEntity());           // a bot's hit (melee, or a skill through its stand-in)
+        if (ab != null && ab != event.getEntity()) {
+            Set<String> s = of(ab);
+            float mult = 1F;
+            if (s.contains(PARTNERS)) mult += 0.15F * strength(ab, PARTNERS);
+            if (s.contains(SKYLAND)) mult += (skyPatrolCount(ab) >= 3 ? 0.2F : 0.1F) * strength(ab, SKYLAND);
+            if (s.contains(SOUL_LINK)) mult += 0.2F * strength(ab, SOUL_LINK);
+            if (s.contains(BROTHERS)) mult += 0.15F * strength(ab, BROTHERS);
+            if (s.contains(TENJO) && ab.character() == CharacterType.ULTIMA) mult += 0.15F * strength(ab, TENJO);
+            if (s.contains(MARRIED) && !(event.getEntity() instanceof ServerPlayer)) {
+                float heal = 0.5F * strength(ab, MARRIED);
+                for (LivingEntity e : partners(ab)) {
+                    String pid = id(e);
+                    if ((pid.equals("max") || pid.equals("technica")) && !pid.equals(id(ab))) e.heal(heal);
+                }
+            }
+            int[] r = RIVAL.get(ab.getUUID());
+            if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0] * strength(ab, GOOFY);
+            if (mult != 1F) {
+                event.setAmount(event.getAmount() * mult);
+                if (TEST_LOG) XenoWarriors.LOGGER.info("XW-TEST parity bot synergy {} x{} {}", ab.character().getId(), String.format(java.util.Locale.ROOT, "%.3f", mult), s);
+            }
+        }
         if (event.getEntity() instanceof ServerPlayer v && has(v, SOUL_LINK)) event.setAmount(event.getAmount() * (1F - Math.min(0.5F, 0.15F * strength(v, SOUL_LINK))));
+        if (event.getEntity() instanceof PartyBotEntity vb && has(vb, SOUL_LINK)) event.setAmount(event.getAmount() * (1F - Math.min(0.5F, 0.15F * strength(vb, SOUL_LINK))));
     }
+
+    /** (Tests) log every bot synergy bonus. */
+    public static boolean TEST_LOG;
 
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onDeath(LivingDeathEvent event) {
         if (event.isCanceled()) return;                         // (after the Hekublade seal and the modes have had their say)
         // a rival's kill fires the other one up
-        if (event.getSource().getEntity() instanceof ServerPlayer killer && has(killer, GOOFY) && !(event.getEntity() instanceof ServerPlayer)) {
-            for (LivingEntity e : partners(killer)) {
-                if (!(e instanceof ServerPlayer o) || !has(o, GOOFY)) continue;
-                int[] r = RIVAL.computeIfAbsent(o.getUUID(), k -> new int[2]);
+        PartyBotEntity kb = PartyBots.botOf(event.getSource().getEntity());
+        LivingEntity killer = kb != null ? kb : event.getSource().getEntity() instanceof ServerPlayer kp ? kp : null;
+        boolean goofy = killer instanceof ServerPlayer kp2 ? has(kp2, GOOFY) : kb != null && has(kb, GOOFY);
+        if (killer != null && goofy && !(event.getEntity() instanceof ServerPlayer) && !(event.getEntity() instanceof PartyBotEntity)) {
+            List<LivingEntity> rivals = killer instanceof ServerPlayer kp3 ? partners(kp3) : partners(kb);
+            String who = killer instanceof PartyBotEntity bk ? bk.label().getString() : killer.getName().getString();
+            for (LivingEntity e : rivals) {
+                boolean on = e instanceof ServerPlayer o ? has(o, GOOFY) : e instanceof PartyBotEntity ob && has(ob, GOOFY);
+                if (!on || id(e).equals(id(killer))) continue;
+                int[] r = RIVAL.computeIfAbsent(e.getUUID(), k -> new int[2]);
                 r[0] = Math.min(5, r[0] + 1); r[1] = 400;
-                o.displayClientMessage(Component.literal(killer.getName().getString() + " got one! Rivalry +" + (r[0] * 5) + "% damage").withStyle(ChatFormatting.GREEN), true);
+                if (e instanceof ServerPlayer o) o.displayClientMessage(Component.literal(who + " got one! Rivalry +" + (r[0] * 5) + "% damage").withStyle(ChatFormatting.GREEN), true);
             }
         }
         // Soul Link: if one fully dies, so does the other
