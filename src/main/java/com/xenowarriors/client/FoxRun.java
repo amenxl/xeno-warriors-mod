@@ -24,8 +24,8 @@ import java.util.Set;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class FoxRun {
-    private static final Map<Integer, float[]> W = new HashMap<>();   // id -> {weight, previous weight}
-    private static final Set<Integer> TIPPED = new HashSet<>();
+    private static final Map<Integer, float[]> W = ClientReset.perLife(new HashMap<>());   // id -> {weight, previous weight}
+    private static final Set<Integer> TIPPED = ClientReset.perLifeSet(new HashSet<>());
     private static final float TILT = 78F;
 
     private FoxRun() {}

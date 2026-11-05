@@ -34,7 +34,7 @@ import java.util.Map;
 public final class YuriLaptopIdle {
     private static final int AFTER = 100;
     private static final ResourceLocation TEX = XenoWarriors.id("textures/entity/holo_laptop.png");
-    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     private YuriLaptopIdle() {}
 

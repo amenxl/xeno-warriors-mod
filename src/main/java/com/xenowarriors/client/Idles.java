@@ -16,7 +16,7 @@ public final class Idles {
     public static final String MIKIKO = "mikiko", GARRY = "garry_beatbox", DOZE = "keita_doze", LAPTOP = "yuri_laptop",
             BOOK = "rhalix_book", RAIN = "rain";
     private static final int LINGER = 3;               // ticks a hold lasts without being renewed
-    private static final Map<Integer, Object[]> HOLD = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {who, tick}
+    private static final Map<Integer, Object[]> HOLD = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());   // id -> {who, tick}
 
     private Idles() {}
 

@@ -131,7 +131,7 @@ public final class BladeAbsorbClient {
         }
     }
 
-    private static final Map<Integer, Boolean> PUSHED = com.xenowarriors.client.ClientReset.track(new HashMap<>());
+    private static final Map<Integer, Boolean> PUSHED = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     /** (a mob Epic Fight draws itself, at normal priority: pulled in before it does - see PoseGuard.otherModDraws) */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)

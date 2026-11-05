@@ -29,6 +29,47 @@ public final class ClientReset {
     /** Registers a per-world map (emptied on logout); returns it. */
     public static synchronized <T extends Map<?, ?>> T track(T map) { MAPS.add(map); return map; }
 
+    /**
+     * Animation timelines keyed by entity id (an attack, a pose, an idle, a jump...), stamped with the entity's tick
+     * count. A player who respawns or changes dimension comes back with the same id but a tick count starting again
+     * from 0 (you, and other players as you see them), so a move cut off by death or a portal never "ended" and
+     * stayed stuck on them - frozen mid-attack, slowed, no new combo, idles blocked. These are emptied for an entity
+     * whenever it (re)appears in the world, and on logout like the others.
+     */
+    private static final List<Map<Integer, ?>> LIFE_MAPS = new ArrayList<>();
+    private static final List<Collection<Integer>> LIFE_SETS = new ArrayList<>();
+    private static final List<java.util.function.IntConsumer> LIFE_HOOKS = new ArrayList<>();
+
+    /** A per-entity animation timeline map: emptied for an entity when it appears again (and on logout). */
+    public static synchronized <T extends Map<Integer, ?>> T perLife(T map) { LIFE_MAPS.add(map); MAPS.add(map); return map; }
+
+    /** A per-entity animation set: emptied for an entity when it appears again (and on logout). */
+    public static synchronized <T extends Collection<Integer>> T perLifeSet(T c) { LIFE_SETS.add(c); COLLECTIONS.add(c); return c; }
+
+    /** Something else to run (with the entity id) when an entity appears again (respawn, dimension change). */
+    public static synchronized void onNewLife(java.util.function.IntConsumer r) { LIFE_HOOKS.add(r); }
+
+    /** (tests) how many entities had their animation timelines forgotten on (re)appearing. */
+    public static int newLives;
+    /** (tests) the old behaviour, for before/after pictures. */
+    public static boolean testOff;
+
+    /** Forgets every animation timeline of this entity id. */
+    public static synchronized void newLife(int id) {
+        if (testOff) return;
+        newLives++;
+        for (Map<Integer, ?> m : LIFE_MAPS) m.remove(id);
+        for (Collection<Integer> c : LIFE_SETS) c.remove(id);
+        for (java.util.function.IntConsumer r : LIFE_HOOKS) {
+            try { r.accept(id); } catch (RuntimeException e) { XenoWarriors.LOGGER.warn("ClientReset: a new-life hook failed", e); }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide() && event.getEntity() instanceof net.minecraft.world.entity.LivingEntity) newLife(event.getEntity().getId());
+    }
+
     /** Registers a per-world set/list (emptied on logout); returns it. */
     public static synchronized <T extends Collection<?>> T trackAll(T c) { COLLECTIONS.add(c); return c; }
 

@@ -33,7 +33,7 @@ public final class GarryBeatbox {
     private static final int AFTER = 140, MIC = 12, RANGE = 8;
     /** Copy sessions: Stevie copies from COPY, Garry notices at CAUGHT, they square up until CALM, back to it at RESUME. */
     private static final int COPY = 90, CAUGHT = 170, CALM = 270, RESUME = 310;
-    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // id -> {ticks still, session seed}
+    private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());   // id -> {ticks still, session seed}
 
     private GarryBeatbox() {}
 

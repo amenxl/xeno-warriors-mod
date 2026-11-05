@@ -24,7 +24,7 @@ import java.util.Set;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class KnockdownClient {
-    private static final Set<Integer> TIPPED = ClientReset.trackAll(new HashSet<>());
+    private static final Set<Integer> TIPPED = ClientReset.perLifeSet(new HashSet<>());
     /** Who was drawn lying down this frame (for the stars): {entity, how far over 0..1}. */
     static final List<Object[]> DOWN = new ArrayList<>();
 

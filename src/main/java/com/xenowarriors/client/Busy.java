@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Player;
 public final class Busy {
     private Busy() {}
 
-    private static final java.util.Map<Integer, Object[]> HELD = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());   // id -> {item, tick it changed}
+    private static final java.util.Map<Integer, Object[]> HELD = com.xenowarriors.client.ClientReset.perLife(new java.util.HashMap<>());   // id -> {item, tick it changed}
 
     /** Just switched what's in hand (a weapon, another weapon, bare fists): idles start over from the beginning. */
     public static boolean justSwitched(Player p) {

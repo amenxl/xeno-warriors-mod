@@ -51,6 +51,7 @@ public final class HuntAnimTests {
 
     private static final double[] HOME = new double[3];
     private static final int[] CAM = {-1};
+    private static String SUF = "";
 
     public static void build(Minecraft mc, List<Step> l, String focus) {
         String f = focus.replaceFirst("^(dmz|ef)", "").replaceFirst("^huntanim", "");
@@ -62,7 +63,15 @@ public final class HuntAnimTests {
             dmzOk(p);
             clearBots(p);
         }); }, 20));
-        if (all || f.contains("stuck")) stuck(mc, l);
+        if (all || f.contains("stuck")) {
+            // first the old behaviour (per-life reset off) for "before" pictures, then as it is now
+            SUF = "_before";
+            l.add(new Step(null, () -> com.xenowarriors.client.ClientReset.testOff = true, 1));
+            stuck(mc, l);
+            SUF = "";
+            l.add(new Step(null, () -> { com.xenowarriors.client.ClientReset.testOff = false; com.xenowarriors.client.ClientReset.resetAll(); }, 5));
+            stuck(mc, l);
+        }
         if (all || f.contains("gal")) gallery(mc, l);
         if (all || f.contains("gear")) gear(mc, l);
         if (all || f.contains("pose")) poses(mc, l);
@@ -87,7 +96,14 @@ public final class HuntAnimTests {
             p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = outfit);
             CharacterManager.syncToTrackingAndSelf(p);
             dmzOk(p);
+            clearSky(p);
         }), 30));
+    }
+
+    /** Daytime, no rain (the long runs outlast the clear weather the test world starts with). */
+    private static void clearSky(ServerPlayer p) {
+        p.server.overworld().setWeatherParameters(24000, 0, false, false);
+        p.server.overworld().setDayTime(6000);
     }
 
     private static void home(ServerPlayer p) {
@@ -192,7 +208,19 @@ public final class HuntAnimTests {
     }
 
     private static void snap(Minecraft mc, List<Step> l, String tag) {
-        l.add(new Step(null, () -> log("stuck " + tag + ": " + snapshot(mc)), 1));
+        String suf = SUF; l.add(new Step(null, () -> log("stuck" + suf + " " + tag + ": " + snapshot(mc)), 1));
+    }
+
+    /** Nothing left playing on you (no swing, no attack, no pose), and walking isn't held back. */
+    private static void check(Minecraft mc, List<Step> l, String what) {
+        String suf = SUF;
+        l.add(new Step(null, () -> {
+            var p = mc.player;
+            boolean stuck = com.xenowarriors.client.combo.ComboClient.swing(p) != null || com.xenowarriors.client.mikiko.MikikoAnimations.attacking(p)
+                    || com.xenowarriors.client.RhalixCombatAnim.attacking(p) || com.xenowarriors.client.RhalixComboAnim.playing(p, 0F) != null
+                    || com.xenowarriors.client.EntityPoses.posed(p) || com.xenowarriors.client.Busy.action(p) || com.xenowarriors.client.combo.ComboClient.committed();
+            log("check" + suf + " " + what + ": " + (stuck ? "FAIL" : "PASS") + " (newLives=" + com.xenowarriors.client.ClientReset.newLives + ")");
+        }, 1));
     }
 
     private static void thirdFront(Minecraft mc) {
@@ -206,36 +234,36 @@ public final class HuntAnimTests {
         snap(mc, l, "rhalix-start");
         for (int i = 0; i < 4; i++) l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 3));
         snap(mc, l, "rhalix-midcombo");
-        l.add(new Step("huntanim_stuck_rhalix_midcombo", () -> {}, 1));
+        l.add(new Step("huntanim_stuck" + SUF + "_rhalix_midcombo", () -> {}, 1));
         kill(mc, l);
-        l.add(new Step("huntanim_stuck_rhalix_after_death", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_rhalix_after_death", () -> thirdFront(mc), 2));
         snap(mc, l, "rhalix-after-death");
         // ---- Rhalix: Ki Burst hold, then the nether mid-move
         l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.testHold(10); }, 6));
         snap(mc, l, "rhalix-kiburst");
         toNether(l);
-        l.add(new Step("huntanim_stuck_rhalix_nether", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_rhalix_nether", () -> thirdFront(mc), 2));
         snap(mc, l, "rhalix-nether");
         back(l);
         // ---- Rhalix flying with wings, then killed in the air
         l.add(new Step(null, () -> server(p -> { p.setGameMode(GameType.SURVIVAL); p.teleportTo(p.getX(), p.getY() + 6, p.getZ());
             p.getAbilities().mayfly = true; p.getAbilities().flying = true; p.onUpdateAbilities(); }), 30));
-        l.add(new Step("huntanim_stuck_rhalix_flying", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_rhalix_flying", () -> thirdFront(mc), 2));
         snap(mc, l, "rhalix-flying");
         kill(mc, l);
-        l.add(new Step("huntanim_stuck_rhalix_after_flydeath", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_rhalix_after_flydeath", () -> thirdFront(mc), 2));
         snap(mc, l, "rhalix-after-flydeath");
         // ---- knocked down (Gravity Whirl's pose) on yourself, then killed
         l.add(new Step(null, () -> server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KNOCKDOWN, 200)), 20));
-        l.add(new Step("huntanim_stuck_knockdown", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_knockdown", () -> thirdFront(mc), 2));
         snap(mc, l, "knockdown");
         kill(mc, l);
-        l.add(new Step("huntanim_stuck_after_knockdown_death", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_after_knockdown_death", () -> thirdFront(mc), 2));
         snap(mc, l, "after-knockdown-death");
         // ---- knocked down, then the nether
         l.add(new Step(null, () -> server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KNOCKDOWN, 200)), 10));
         toNether(l);
-        l.add(new Step("huntanim_stuck_knockdown_nether", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_knockdown_nether", () -> thirdFront(mc), 2));
         snap(mc, l, "knockdown-nether");
         back(l);
         l.add(new Step(null, () -> server(com.xenowarriors.anim.Poses::clearState), 5));
@@ -244,22 +272,22 @@ public final class HuntAnimTests {
         l.add(new Step(null, () -> { thirdFront(mc); server(p -> { home(p); p.setGameMode(GameType.SURVIVAL);
             p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(1000F));
             com.xenowarriors.mikiko.Netsu.start(p); }); }, 20));
-        l.add(new Step("huntanim_stuck_netsu", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_netsu", () -> thirdFront(mc), 2));
         snap(mc, l, "netsu");
         toNether(l);
-        l.add(new Step("huntanim_stuck_netsu_nether", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_netsu_nether", () -> thirdFront(mc), 2));
         snap(mc, l, "netsu-nether");
         back(l);
         kill(mc, l);
-        l.add(new Step("huntanim_stuck_netsu_after_death", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_netsu_after_death", () -> thirdFront(mc), 2));
         snap(mc, l, "netsu-after-death");
         // ---- Mikiko: Fox King, then death
         l.add(new Step(null, () -> server(p -> { p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(1000F));
             com.xenowarriors.mikiko.FoxKing.resetCooldown(p); com.xenowarriors.mikiko.FoxKing.toggle(p); }), 30));
-        l.add(new Step("huntanim_stuck_foxking", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_foxking", () -> thirdFront(mc), 2));
         snap(mc, l, "foxking");
         kill(mc, l);
-        l.add(new Step("huntanim_stuck_foxking_after_death", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_foxking_after_death", () -> thirdFront(mc), 2));
         snap(mc, l, "foxking-after-death");
         // ---- Mikiko: riding his blade, then the nether / death
         l.add(new Step(null, () -> server(p -> {
@@ -271,24 +299,52 @@ public final class HuntAnimTests {
             p.level().addFreshEntity(b);
             b.surf(p);
         }), 15));
-        l.add(new Step("huntanim_stuck_bladeride", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_bladeride", () -> thirdFront(mc), 2));
         snap(mc, l, "bladeride");
         kill(mc, l);
-        l.add(new Step("huntanim_stuck_bladeride_after_death", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_bladeride_after_death", () -> thirdFront(mc), 2));
         snap(mc, l, "bladeride-after-death");
         // ---- Mikiko: a combo string, then the nether
         for (int i = 0; i < 4; i++) l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 3));
         snap(mc, l, "mikiko-midcombo");
         toNether(l);
-        l.add(new Step("huntanim_stuck_mikiko_combo_nether", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_mikiko_combo_nether", () -> thirdFront(mc), 2));
         snap(mc, l, "mikiko-combo-nether");
+        check(mc, l, "mikiko combo cut off by the nether");
         back(l);
+        // ---- Rhalix: a hit, then straight through a "portal"; and with instant respawn, killed mid-swing
+        setChar(l, CharacterType.RHALIX, 0);
+        for (int i = 0; i < 2; i++) l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 1));
+        l.add(new Step(null, () -> com.xenowarriors.client.combo.ComboClient.press(false), 1));
+        snap(mc, l, "rhalix-press");
+        toNether(l);
+        l.add(new Step("huntanim_stuck" + SUF + "_rhalix_combo_nether", () -> thirdFront(mc), 2));
+        snap(mc, l, "rhalix-combo-nether");
+        check(mc, l, "rhalix combo cut off by the nether");
+        back(l);
+        l.add(new Step(null, () -> server(p -> p.server.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(true, p.server)), 5));
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO}) {
+            setChar(l, t, 0);
+            l.add(new Step(null, () -> { thirdFront(mc); server(p -> { p.setGameMode(GameType.SURVIVAL); home(p); }); }, 10));
+            for (int i = 0; i < 3; i++) l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 2));
+            l.add(new Step(null, () -> server(p -> { p.removeAllEffects(); p.hurt(p.damageSources().genericKill(), 10000F); }), 2));
+            l.add(new Step(null, () -> { if (mc.player != null && mc.player.isDeadOrDying()) mc.player.respawn(); }, 30));
+            l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { home(p); p.setGameMode(GameType.CREATIVE); }); }, 20));
+            l.add(new Step("huntanim_stuck" + SUF + "_" + t.getId() + "_instant_respawn", () -> thirdFront(mc), 2));
+            snap(mc, l, t.getId() + "-instant-respawn");
+            check(mc, l, t.getId() + " combo cut off by an instant respawn");
+            // and a new string starts at once
+            l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 2));
+            String suf = SUF;
+            l.add(new Step(null, () -> log("check" + suf + " " + t.getId() + " new combo after respawn: " + (com.xenowarriors.client.combo.ComboClient.swing(mc.player) != null ? "PASS" : "FAIL")), 1));
+        }
+        l.add(new Step(null, () -> server(p -> p.server.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(false, p.server)), 5));
         // ---- sitting idle (stand still a long time), then hurt
         l.add(new Step(null, () -> { thirdFront(mc); server(p -> { p.setGameMode(GameType.SURVIVAL); home(p); }); }, 700));
-        l.add(new Step("huntanim_stuck_mikiko_idle", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_mikiko_idle", () -> thirdFront(mc), 2));
         snap(mc, l, "mikiko-idle");
         l.add(new Step(null, () -> server(p -> p.hurt(p.damageSources().generic(), 2F)), 10));
-        l.add(new Step("huntanim_stuck_mikiko_idle_hurt", () -> thirdFront(mc), 2));
+        l.add(new Step("huntanim_stuck" + SUF + "_mikiko_idle_hurt", () -> thirdFront(mc), 2));
         snap(mc, l, "mikiko-idle-hurt");
         // ---- relog-like reset (the client's per-world caches emptied) while posed
         l.add(new Step(null, () -> com.xenowarriors.client.ClientReset.resetAll(), 5));
@@ -372,6 +428,7 @@ public final class HuntAnimTests {
                 p.startSleeping(head);
             }), 20));
             cam(mc, l, 1.0, 1.2, 1.2, 160F, 35F);
+            l.add(new Step(null, () -> { if (mc.screen != null) mc.setScreen(null); }, 3));
             l.add(new Step("huntanim_pose_" + n + "_sleep", () -> log("pose " + n + " sleeping=" + mc.player.isSleeping() + " " + snapshot(mc)), 3));
             l.add(new Step(null, () -> server(p -> { p.stopSleeping(); BlockPos foot = BlockPos.containing(HOME[0], HOME[1], HOME[2]).east(2);
                 p.serverLevel().setBlock(foot, Blocks.AIR.defaultBlockState(), 3); p.serverLevel().setBlock(foot.south(), Blocks.AIR.defaultBlockState(), 3); home(p); }), 15));
@@ -389,19 +446,21 @@ public final class HuntAnimTests {
             // swimming in water
             l.add(new Step(null, () -> server(p -> {
                 BlockPos c = BlockPos.containing(HOME[0], HOME[1], HOME[2]).west(6);
-                for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
-                    p.serverLevel().setBlock(c.offset(dx, -2, dz), Blocks.STONE.defaultBlockState(), 3);
-                    p.serverLevel().setBlock(c.offset(dx, -1, dz), Blocks.WATER.defaultBlockState(), 3);
-                    p.serverLevel().setBlock(c.offset(dx, 0, dz), Blocks.WATER.defaultBlockState(), 3);
+                p.setGameMode(GameType.SURVIVAL);
+                p.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 20 * 30, 0, false, false));
+                for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 8; dz++) {
+                    p.serverLevel().setBlock(c.offset(dx, -4, dz), Blocks.STONE.defaultBlockState(), 3);
+                    for (int dy = -3; dy <= 0; dy++) p.serverLevel().setBlock(c.offset(dx, dy, dz), Blocks.WATER.defaultBlockState(), 3);
                 }
-                p.teleportTo(c.getX() + 0.5, c.getY() - 0.6, c.getZ() + 0.5);
+                p.teleportTo(c.getX() + 0.5, c.getY() - 2.5, c.getZ() + 0.5);
             }), 10));
-            l.add(new Step(null, () -> { face(mc); mc.player.setSprinting(true); mc.options.keySprint.setDown(true); mc.options.keyUp.setDown(true); }, 6));
-            l.add(new Step(null, () -> { me(mc); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.keyUp.setDown(false); }, 2));
+            l.add(new Step(null, () -> { face(mc); mc.player.setXRot(10F); mc.options.keySprint.setDown(true); mc.options.keyUp.setDown(true); mc.player.setSprinting(true); }, 8));
+            l.add(new Step(null, () -> { me(mc); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setXRot(10F); }, 3));
             l.add(new Step("huntanim_pose_" + n + "_swim", () -> log("pose " + n + " swim pose=" + mc.player.getPose() + " swimming=" + mc.player.isSwimming()), 2));
-            l.add(new Step(null, () -> { mc.options.keySprint.setDown(false); mc.player.setSprinting(false); server(p -> {
+            l.add(new Step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(false); mc.player.setSprinting(false); server(p -> {
                 BlockPos c = BlockPos.containing(HOME[0], HOME[1], HOME[2]).west(6);
-                for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) for (int dy = -1; dy <= 0; dy++) p.serverLevel().setBlock(c.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 3);
+                p.setGameMode(GameType.CREATIVE);
+                for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 8; dz++) for (int dy = -3; dy <= 0; dy++) p.serverLevel().setBlock(c.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 3);
                 home(p); }); }, 10));
             // gliding with an elytra
             l.add(new Step(null, () -> server(p -> {
