@@ -361,12 +361,12 @@ public final class VillageRebuild {
                 j.next = now + (20 + l.random.nextInt(20)) / Math.max(1, speed);
                 if (!repick(j, now)) { stopWalking(j.w); return false; }
             } else if (r == Place.WAIT) {
-                j.v.skipUntil.put(j.idx, now + 60);
+                j.v.skipUntil.put(j.idx, now + 30);
                 if (!repick(j, now)) { stopWalking(j.w); return false; }
             }
         } else if (now - j.since > 600) {                         // can't get there: someone else, later (and longer each time)
             int f = j.v.fails.merge(j.idx, 1, Integer::sum);
-            j.v.skipUntil.put(j.idx, now + 600L * (1L << Math.min(f, 5)));
+            j.v.skipUntil.put(j.idx, now + 300L * (1L << Math.min(f, 6)));
             j.last = "unreachable";
             if (!repick(j, now)) { stopWalking(j.w); return false; }
         }
@@ -452,7 +452,14 @@ public final class VillageRebuild {
     private static boolean clear(ServerLevel l, BlockPos p, BlockState s) {
         if (l.getNearestPlayer(p.getX() + .5, p.getY() + .5, p.getZ() + .5, 3.0, EntitySelector.NO_SPECTATORS) != null) return false;
         if (s.getCollisionShape(l, p).isEmpty()) return true;
-        return l.getEntitiesOfClass(Entity.class, new AABB(p), e -> !(e instanceof ItemEntity) && !(e instanceof ExperienceOrb) && !(e instanceof Projectile) && !e.isSpectator()).isEmpty();
+        List<Entity> in = l.getEntitiesOfClass(Entity.class, new AABB(p), e -> !(e instanceof ItemEntity) && !(e instanceof ExperienceOrb) && !(e instanceof Projectile) && !e.isSpectator());
+        for (Entity e : in) if (e instanceof Mob m && (m instanceof HumanNpcEntity || m instanceof Villager || m instanceof net.minecraft.world.entity.animal.Animal)) {
+            double dx = m.getX() - (p.getX() + .5), dz = m.getZ() - (p.getZ() + .5), len = Math.sqrt(dx * dx + dz * dz);   // "excuse me": step out of the way
+            if (len < 0.05) { double a = l.random.nextDouble() * Math.PI * 2; dx = Math.cos(a); dz = Math.sin(a); len = 1; }
+            m.setDeltaMovement(dx / len * 0.35, 0.1, dz / len * 0.35);
+            m.hurtMarked = true;
+        }
+        return in.isEmpty();
     }
 
     private static Place place(ServerLevel l, RebuildData.Village v, int i, Mob w) {
