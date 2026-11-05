@@ -59,7 +59,7 @@ import java.util.UUID;
  *   <li>Feed a wild fox raw or cooked rabbit to tame it (a 1 in 3 chance per piece). He can keep 2.</li>
  *   <li>Right-click your fox to name it. Sneak + right-click to carry it on your back.</li>
  *   <li>Foxes follow him, help him fight and level up from fighting, getting hurt and running with him.</li>
- *   <li>If a fox dies (or gets lost), the Fox Whistle calls it back.</li>
+ *   <li>If a fox dies (or gets lost), the Pet Whistle calls it back.</li>
  *   <li>Stand still for a while (40-350 s) and they'll run happy laps around you.</li>
  * </ul>
  * Each fox is a record in the player's data {uuid, name, level, xp, gen, dead, back, data} and the fox
@@ -659,7 +659,7 @@ public final class FoxPets {
                 com.xenowarriors.pet.PetCare.ranAway(p, rec);
                 com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, fox.getUUID(), 0, 0, "Pet ran away", rec.getString("name") + " fled the fight. Back in " + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + ".", "");
                 p.sendSystemMessage(Component.literal(rec.getString("name") + " ran away! They'll be ready to come back in "
-                        + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
+                        + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Pet Whistle.")
                         .withStyle(ChatFormatting.GOLD));
                 fx(fox, FoxFxPacket.RUN_AWAY);
             }
@@ -923,20 +923,28 @@ public final class FoxPets {
 
     // ---------------------------------------------------------------- the whistle
 
+    /**
+     * The Pet Whistle (the item, the Pets menu's button, /xeno fox call): every pet this player has answers - their
+     * foxes and their winged companions, whoever they're playing right now (pets belong to the player).
+     */
     public static void whistle(ServerPlayer p) {
-        if (ModCapabilities.getType(p) == CharacterType.RHALIX) {
-            com.xenowarriors.wing.WingPets.whistle(p);      // Rhalix's winged companions answer it too
+        boolean foxes = !pets(p).isEmpty(), wings = !com.xenowarriors.wing.WingPets.records(p).isEmpty();
+        lastWhistle = (foxes ? "foxes " + pets(p).size() : "") + (wings ? (foxes ? ", " : "") + "winged " + com.xenowarriors.wing.WingPets.records(p).size() : "");
+        if (!foxes && !wings) {
+            say(p, ModCapabilities.getType(p) == CharacterType.MIKIKO ? "You don't have any pets yet. Tame a fox with rabbit meat!"
+                    : ModCapabilities.getType(p) == CharacterType.RHALIX ? "You don't have any pets yet. Tame a bat, parrot, chicken or bee!"
+                    : "You don't have any pets yet.");
             return;
         }
-        if (ModCapabilities.getType(p) != CharacterType.MIKIKO) {
-            say(p, "Only Mikiko's foxes answer this whistle.");
-            return;
-        }
+        if (foxes) whistleFoxes(p);
+        if (wings) com.xenowarriors.wing.WingPets.whistle(p);
+    }
+
+    /** (tests) who answered the last whistle. */
+    public static String lastWhistle = "";
+
+    private static void whistleFoxes(ServerPlayer p) {
         ListTag pets = pets(p);
-        if (pets.isEmpty()) {
-            say(p, "You don't have any foxes yet. Tame one with rabbit meat!");
-            return;
-        }
         putDown(p);
         int revived = 0;
         for (Tag t : pets) {

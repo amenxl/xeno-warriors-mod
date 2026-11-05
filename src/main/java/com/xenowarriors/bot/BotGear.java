@@ -179,6 +179,7 @@ public final class BotGear {
                 ItemStack left = b.inventory.addItem(d);
                 if (!left.isEmpty()) { Block.popResource(s, p, left); PartyBots.notifyFull(b); }
             }
+            com.xenowarriors.npc.rebuild.VillageRebuild.playerDug(s, p);       // (its owner's dig: a village won't put it back)
             s.destroyBlock(p, false, b);
             felled++;
             if (felled % 4 == 1) wear(b);

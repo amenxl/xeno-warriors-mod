@@ -16,7 +16,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-/** The Pet Whistle (was the Fox Whistle): calls your pets to you, sets down the one on his back, and brings back any that fell. */
+/** The Pet Whistle (registry id "fox_whistle", kept so old saves keep theirs; it used to call only Mikiko's foxes): calls your pets to you, sets down the one on his back, and brings back any that fell. */
 public class FoxWhistleItem extends Item {
     public FoxWhistleItem(Properties props) {
         super(props);
@@ -29,10 +29,7 @@ public class FoxWhistleItem extends Item {
             level.playSound(null, sp.blockPosition(), SoundEvents.NOTE_BLOCK_FLUTE.value(), SoundSource.PLAYERS, 1F, 1.6F);
             ServerScheduler.later(4, () -> level.playSound(null, sp.blockPosition(), SoundEvents.NOTE_BLOCK_FLUTE.value(),
                     SoundSource.PLAYERS, 1F, 2.0F));
-            FoxPets.whistle(sp);      // (Rhalix: his winged companions)
-            // everyone else's winged companions answer too (as the Pets menu's whistle already did)
-            if (com.xenowarriors.character.ModCapabilities.getType(sp) != com.xenowarriors.character.CharacterType.RHALIX
-                    && !com.xenowarriors.wing.WingPets.records(sp).isEmpty()) com.xenowarriors.wing.WingPets.whistle(sp);
+            FoxPets.whistle(sp);      // every pet the player has (foxes and winged companions), whoever they're playing
         }
         player.getCooldowns().addCooldown(this, 60);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);

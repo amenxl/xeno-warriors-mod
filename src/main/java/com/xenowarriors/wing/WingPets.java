@@ -53,7 +53,7 @@ import java.util.UUID;
 /**
  * Rhalix's winged companions: he can tame bats (berries, melon, apples), parrots and chickens (seeds) and
  * bees (flowers) - two at most. They follow him (bats circle around his head), can be named by right-clicking,
- * can't be hurt by him, and if one dies the Fox Whistle calls it back.
+ * can't be hurt by him, and if one dies the Pet Whistle calls it back.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class WingPets {
@@ -356,7 +356,7 @@ public final class WingPets {
         com.xenowarriors.pet.PetCare.ranAway(p, rec);
         com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, mob.getUUID(), 0, 1, "Pet flew away", rec.getString("name") + " fled the fight. Back in " + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + ".", "");
         p.sendSystemMessage(Component.literal(rec.getString("name") + " flew away! They'll be ready to come back in "
-                + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
+                + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Pet Whistle.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
     }
 

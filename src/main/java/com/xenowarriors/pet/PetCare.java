@@ -63,7 +63,7 @@ public final class PetCare {
                 rec.putBoolean("readyTold", true);
                 if (!rec.contains("awayUntil")) continue;                 // ran away before cool-downs existed
                 com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.PET, rec.hasUUID("uuid") ? rec.getUUID("uuid") : p.getUUID(), 0, kind,
-                        "Ready to come back", rec.getString("name") + " calmed down. Use the Fox Whistle!", "");
+                        "Ready to come back", rec.getString("name") + " calmed down. Use the Pet Whistle!", "");
             }
         }
     }
@@ -193,8 +193,7 @@ public final class PetCare {
 
     public static void action(ServerPlayer p, int kind, int index, int action, int arg, String text) {
         if (action == WHISTLE) {
-            FoxPets.whistle(p);
-            if (com.xenowarriors.character.ModCapabilities.getType(p) != com.xenowarriors.character.CharacterType.RHALIX && !WingPets.records(p).isEmpty()) WingPets.whistle(p);
+            FoxPets.whistle(p);                                               // (every pet: foxes and winged companions, any character)
         } else {
             ListTag list = kind == 0 ? FoxPets.records(p) : WingPets.records(p);
             if (index < 0 || index >= list.size()) return;

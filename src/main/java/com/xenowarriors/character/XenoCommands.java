@@ -64,7 +64,7 @@ public final class XenoCommands {
                     {"/xeno sealed", "Mikiko: who's sealed in your Hekublade"},
                     {"/xeno foxking", "Mikiko: Fox King mode (same as N)"},
                     {"/xeno foxes", "Mikiko: list your foxes"},
-                    {"/xeno fox call", "call your foxes (like the whistle)"},
+                    {"/xeno fox call", "call all your pets (like the Pet Whistle)"},
                     {"/xeno fox release <name>", "let a fox go back to the wild"},
                     {"/xeno fox heal", "heal your foxes (op)"},
                     {"/xeno fox setlevel <level> [name]", "set fox levels (op)"},

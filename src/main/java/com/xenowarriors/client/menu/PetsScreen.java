@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * Pets (from the main menu): every fox and winged companion you have - level, health, where they are and, if they ran
- * away from a fight, how long until the Fox Whistle can call them back. Pick one to rename it, change its skin, open
+ * away from a fight, how long until the Pet Whistle can call them back. Pick one to rename it, change its skin, open
  * its bag, or whistle everyone back. Laid out on a 400x225 grid scaled to the window, in your character's colour.
  */
 public class PetsScreen extends Screen {

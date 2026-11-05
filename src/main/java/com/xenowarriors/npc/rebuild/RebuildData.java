@@ -105,6 +105,8 @@ public final class RebuildData extends SavedData {
         final short[] st;
         final BlockState[] palette;
         long lastSeen;
+        /** Spots a player (or their bots, pets, TNT) dug out: theirs now, never put back - unless the block turns up there again. Saved. */
+        final BitSet dug = new BitSet();
         // ---- runtime only
         final BitSet pending = new BitSet();
         final BitSet queued = new BitSet();
@@ -139,6 +141,8 @@ public final class RebuildData extends SavedData {
         }
 
         public boolean isPending(int i) { return pending.get(i); }
+        public boolean isDug(int i) { return dug.get(i); }
+        public int dugCount() { return dug.cardinality(); }
 
         CompoundTag write() {
             CompoundTag t = new CompoundTag();
@@ -154,6 +158,7 @@ public final class RebuildData extends SavedData {
             for (BlockState b : palette) pal.add(NbtUtils.writeBlockState(b));
             t.put("palette", pal);
             t.putLong("seen", lastSeen);
+            if (!dug.isEmpty()) t.putLongArray("dug", dug.toLongArray());
             return t;
         }
 
@@ -173,6 +178,7 @@ public final class RebuildData extends SavedData {
             }
             Village v = new Village(t.getInt("id"), BlockPos.of(t.getLong("anchor")), new BoundingBox(b[0], b[1], b[2], b[3], b[4], b[5]), t.getString("kind"), rel, st, palette);
             v.lastSeen = t.getLong("seen");
+            if (t.contains("dug")) { BitSet d = BitSet.valueOf(t.getLongArray("dug")); d.clear(rel.length, Math.max(rel.length, d.length())); v.dug.or(d); }
             return v;
         }
     }
