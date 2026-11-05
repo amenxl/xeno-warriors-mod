@@ -340,8 +340,9 @@ public final class CharsTests {
         for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX}) {
             character(l, t);
             l.add(null, () -> { server(p -> hold(p, ItemStack.EMPTY)); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"); }, 20);
-            l.add(null, () -> { front(mc, 0F); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"); }, 6);
-            l.add("chars_ef_guard_" + t.getId(), () -> { front(mc, 0F); log("ef " + t.getId() + " guard: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)); }, 3);
+            for (int i = 0; i < 4; i++) l.add(null, () -> { front(mc, 0F); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"); }, 1);   // (held: Epic Fight drops a guard nobody's holding)
+            l.add(null, () -> log("ef " + t.getId() + " guard: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 0);
+            l.add("chars_ef_guard_" + t.getId(), () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"), 1);
             l.add(null, () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"), 30);
             l.add("chars_ef_idle_" + t.getId(), () -> { front(mc, 0F); log("ef " + t.getId() + " idle: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)); }, 3);
         }
