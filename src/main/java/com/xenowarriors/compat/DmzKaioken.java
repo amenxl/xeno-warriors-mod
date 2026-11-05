@@ -130,6 +130,16 @@ public final class DmzKaioken {
         return given;
     }
 
+    /**
+     * What was seen is forgotten on logout: the next world (or a world restored from a backup) can have her at another
+     * mastery, and the difference isn't a gain to multiply.
+     */
+    @SubscribeEvent
+    public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
+        SEEN.remove(e.getEntity().getUUID());
+        GIVEN.remove(e.getEntity().getGameProfile().getName());
+    }
+
     /** (For the tests) forget what was seen, so the next poll starts counting from now. */
     public static void resetForTest(ServerPlayer p) { SEEN.remove(p.getUUID()); GIVEN.remove(p.getGameProfile().getName()); }
 }

@@ -95,6 +95,7 @@ public final class DmzPerCharacter {
         if (!ready() || p instanceof net.minecraftforge.common.util.FakePlayer) return false;
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) return false;          // (a Journey swaps characters for battles only)
         endView(p, "character switch");                                             // (a bot's DMZ menu still open: put it back first)
+        if (DmzFusion.fused(p)) DmzFusion.end(p, "you switched characters", false);   // (or the fused look and stats would be saved with the old one for good)
         CompoundTag keep = persisted(p);
         String from = keep.getString(LIVE);
         if (from.isEmpty() && current != null && !current.isEmpty() && !current.equals(com.xenowarriors.character.CharacterType.NONE.getId())) from = current;
@@ -220,6 +221,7 @@ public final class DmzPerCharacter {
      */
     public static boolean beginView(ServerPlayer p, com.xenowarriors.bot.PartyBotEntity b) {
         if (!ready() || p instanceof net.minecraftforge.common.util.FakePlayer) return false;
+        if (DmzFusion.fused(p)) return false;                                   // (your fused DMZ data would be put away with the fusion still on - and stay)
         String key = botKey(b);
         if (key.equals(viewing(p))) return true;
         endView(p, "another bot");

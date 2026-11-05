@@ -355,7 +355,8 @@ public class ZombieSaiyanEntity extends Monster {
     @Override
     protected void dropCustomDeathLoot(DamageSource src, int looting, boolean hit) {
         super.dropCustomDeathLoot(src, looting, hit);
-        ZombieSaiyans.dropLoot(this, src);
+        if (form() == SSJ4) ZombieSaiyans.dropLoot(this, src);                 // (only beaten for real: not /kill or the void in an earlier form)
+        else ZombieSaiyans.note("died as " + formName(form()) + " (" + src.getMsgId() + ") - no loot");
     }
 
     @Override
