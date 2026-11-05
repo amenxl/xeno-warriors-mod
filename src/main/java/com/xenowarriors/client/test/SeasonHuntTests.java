@@ -405,8 +405,32 @@ public final class SeasonHuntTests {
     // ---- 7: every skill, player and bot, with an ally close by
     private static final CharacterType[] ALL = CharacterType.PLAYABLE;
 
+    private static final int[] CLEARED = {0};
+
+    /**
+     * The arena is kept clear of the world's own hostile mobs: in a long run night falls and Corrupted Souls (and a
+     * Distortion, Season 3 being unlocked) wander up and attack the watched player - that was the "owner hurt" noise.
+     */
+    private static void clearStrays(ServerPlayer p) {
+        for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(64),
+                m -> !(m instanceof PartyBotEntity) && !m.getTags().contains("xw_hs") && m.isAlive()
+                        && (m instanceof net.minecraft.world.entity.monster.Enemy || m.getTarget() instanceof net.minecraft.world.entity.player.Player))) {
+            CLEARED[0]++;
+            m.discard();
+        }
+        for (var pr : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.projectile.Projectile.class, p.getBoundingBox().inflate(64),
+                pr -> pr.getOwner() == null || !(pr.getOwner() instanceof net.minecraft.world.entity.player.Player || pr.getOwner() instanceof PartyBotEntity))) pr.discard();
+    }
+
     private static void sweep(List<Step> l, String focus) {
         int[] hurt = {0}, n = {0};
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            log("arena before the sweep: " + strays(p));
+            cmd(p, "gamerule doMobSpawning false");
+            cmd(p, "gamerule doDaylightCycle false");
+            p.serverLevel().setDayTime(6000);
+            clearStrays(p);
+        }), 10));
         for (CharacterType t : ALL) {
             int skills = SkillPool.of(t).size();
             l.add(new Step(null, () -> UiTest.server(p -> {
@@ -425,7 +449,7 @@ public final class SeasonHuntTests {
                 l.add(new Step(null, () -> UiTest.server(p -> {
                     PartyBotEntity ally = (PartyBotEntity) KEEP[1];
                     Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
-                    clearDummies(p);
+                    clearDummies(p); clearStrays(p);
                     p.setHealth(p.getMaxHealth()); p.removeAllEffects();
                     p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 200, 4, false, false));
                     p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(d.karmaMax); Arrays.fill(d.cooldownEnd, 0); });
@@ -476,7 +500,7 @@ public final class SeasonHuntTests {
                     PartyBotEntity b = (PartyBotEntity) KEEP[1];
                     if (b == null || b.isRemoved()) return;
                     Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
-                    clearDummies(p);
+                    clearDummies(p); clearStrays(p);
                     p.teleportTo(at.x, at.y, at.z);
                     p.setHealth(p.getMaxHealth()); p.removeAllEffects();
                     b.setHealth(b.getMaxHealth()); b.removeAllEffects(); b.karma = 100F;
@@ -498,6 +522,6 @@ public final class SeasonHuntTests {
                 }), 2));
             }
         }
-        l.add(new Step(null, () -> UiTest.server(p -> { p.setGameMode(GameType.CREATIVE); log("sweep: " + hurt[0] + " of " + n[0] + " player skills touched the ally bot"); }), 5));
+        l.add(new Step(null, () -> UiTest.server(p -> { p.setGameMode(GameType.CREATIVE); log("sweep: " + hurt[0] + " of " + n[0] + " player skills touched the ally bot; stray world mobs cleared from the arena: " + CLEARED[0]); cmd(p, "gamerule doMobSpawning true"); cmd(p, "gamerule doDaylightCycle true"); }), 5));
     }
 }
