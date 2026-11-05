@@ -44,6 +44,12 @@ public class VehicleItem extends Item {
     public InteractionResult useOn(UseOnContext c) {
         Level level = c.getLevel();
         if (level.isClientSide) return InteractionResult.SUCCESS;
+        // not in the modes' arenas (the Tower / Journey dimension, VR): they're cleared when a run ends, and the
+        // vehicle with them - no building there anyway (operators in creative still can, like blocks)
+        if (com.xenowarriors.modes.ModeRules.arena(level) && (c.getPlayer() == null || !(c.getPlayer().isCreative() && c.getPlayer().hasPermissions(2)))) {
+            if (c.getPlayer() != null) c.getPlayer().displayClientMessage(Component.literal("Vehicles can't be parked here.").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return InteractionResult.FAIL;
+        }
         BlockPos at = c.getClickedPos().relative(c.getClickedFace());
         VehicleEntity v = Vehicles.TYPES.get(kind).get().create(level);
         if (v == null) return InteractionResult.FAIL;

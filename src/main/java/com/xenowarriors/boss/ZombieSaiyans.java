@@ -193,9 +193,10 @@ public final class ZombieSaiyans {
         List<ItemStack> l = loot(new Random(z.getRandom().nextLong()));
         StringBuilder sb = new StringBuilder();
         for (ItemStack st : l) {
-            ItemEntity it = new ItemEntity(level, z.getX(), z.getY() + 0.5, z.getZ(), st);
-            it.setDefaultPickUpDelay();
-            level.addFreshEntity(it);
+            // (through the death drops, like its loot table's: LivingDropsEvent sees them - so a Room keeps them, and
+            // other mods' drop handling works - where a plain new item entity was dropped by a Room as a copied block's)
+            ItemEntity it = z.spawnAtLocation(st, 0.5F);
+            if (it == null) continue;
             sb.append(st.getCount()).append("x").append(ForgeRegistries.ITEMS.getKey(st.getItem()).getPath()).append(st.isEnchanted() ? "(enchanted)" : "").append(' ');
         }
         note("defeated as " + ZombieSaiyanEntity.formName(z.form()) + " by " + (src.getEntity() == null ? "?" : src.getEntity().getName().getString()) + "; drops: " + sb.toString().trim());
