@@ -209,6 +209,7 @@ public final class PartyBots {
         b.setCharacter(t);
         b.setOwner(p.getUUID());
         b.applyLevel(levelFor(p, t));
+        com.xenowarriors.compat.DmzBotStats.apply(b);                           // (with DragonMineZ: its character's health and strength, before its saved health goes back in)
         if (record != null) b.loadRecord(record);
         else {                                                                   // a fresh teammate: their own inventory, as you left it
             CompoundTag saved = com.xenowarriors.character.CharacterInventories.checkOut(p, t.getId());

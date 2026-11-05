@@ -326,6 +326,9 @@ public final class DmzBotPower {
     /** A bot is gone: forget it. */
     public static void forget(UUID bot) { POWER.remove(bot); }
 
+    /** Its DragonMineZ melee damage at rest (base form, 50% release - what its hits are scaled up from), or 0. */
+    static double restMelee(PartyBotEntity b) { Power p = POWER.get(b.getUUID()); return p == null ? 0 : p.restMelee; }
+
     // ---------------------------------------------------------------- tests
 
     /** (Tests) "ki=..% release=..% form=.. charging=..". */

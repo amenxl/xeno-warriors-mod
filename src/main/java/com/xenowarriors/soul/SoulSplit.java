@@ -34,7 +34,9 @@ import java.util.*;
  *  Rhalix - 1 soul; at level 10 it throws his gravity slams, at level 25 his wire lashes too.
  *  Kaeru  - out of the Hekublade: 1 soul like Rhalix. (In the blade she casts HERSELF out instead - see KaeruSoul.)
  * While split, your health, damage and Karma (and Ki with DragonMineZ) are divided by the number of souls (at least 2),
- * and given back when the souls come home. Wander more than 48 blocks from a soul and it fades and finds its way back.
+ * and given back when the souls come home. Each soul gets that share of you: health (your max health, DragonMineZ's
+ * included), its blows (your Attack level and DragonMineZ melee damage), its skills (your Attack and DragonMineZ ki /
+ * strike damage), its toughness (Defense, DragonMineZ defense) and a share of your Speed. Wander more than 48 blocks from a soul and it fades and finds its way back.
  * The Soul Splitter stat levels up by keeping souls out and by what they defeat.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -121,8 +123,16 @@ public final class SoulSplit {
         });
         float ki = com.xenowarriors.compat.DmzPetKi.ki(p)[0];
         if (ki > 0 && com.xenowarriors.compat.DmzPetKi.setKi(p, ki / d)) s.kiStash = ki - ki / d;
-        // the souls
-        float dmg = (float) Math.max(5.0, p.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2.0) / d;
+        // the souls: each gets its share (1/d - half with one soul) of your Xeno Warriors and DragonMineZ strength
+        double[] dmz = com.xenowarriors.compat.DmzBotStats.playerStats(p);         // {DMZ health bonus, DMZ melee damage} (0s without it)
+        double atk = (1.0 + Stat.ATTACK.bonus(com.xenowarriors.stats.Stats.level(p, Stat.ATTACK))) * com.xenowarriors.you.YouRaces.damageMult(p);   // (your Attack level)
+        double ownerHit = Math.max(5.0, Math.max(p.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2.0, dmz[1]) * atk);   // (your blow: its DMZ melee damage, or your hand doubled - souls can't hold weapons)
+        float dmg = (float) (ownerHit / d);
+        double speed = 0.34 * (1.0 + Math.min(0.6, Stat.SPEED.bonus(com.xenowarriors.stats.Stats.level(p, Stat.SPEED)) / d));
+        lastStats = "owner maxHp=" + Math.round(fullHp) + " dmzHpBonus=" + Math.round(dmz[0]) + " dmzMelee=" + Math.round(dmz[1] * 10) / 10.0 + " xwAtk=x" + Math.round(atk * 100) / 100.0
+                + " ownerHit=" + Math.round(ownerHit * 10) / 10.0 + " | soul (1/" + d + ") maxHp=" + Math.round(Math.max(6.0, fullHp / d)) + " dmg=" + Math.round(dmg * 10) / 10.0
+                + " speed=" + Math.round(speed * 1000) / 1000.0 + " defLv/" + d + " ki/skill dmg x" + Math.round(com.xenowarriors.compat.DmzScaling.skillMultiplier(p, false) * 100) / 100.0 + "/" + d;
+        XenoWarriors.LOGGER.info("XW-SOUL stats {}: {}", p.getName().getString(), lastStats);
         for (int i = 0; i < n; i++) {
             SoulEntity e = SoulEntities.SOUL.get().create(l);
             if (e == null) continue;
@@ -132,6 +142,7 @@ public final class SoulSplit {
             e.getAttribute(Attributes.MAX_HEALTH).setBaseValue(Math.max(6.0, fullHp / d));
             e.setHealth(e.getMaxHealth());
             e.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(dmg);
+            e.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(speed);
             e.setCustomName(Component.literal(p.getName().getString() + "'s soul").withStyle(ChatFormatting.AQUA));
             l.addFreshEntity(e);
             s.souls.add(e);
@@ -201,11 +212,35 @@ public final class SoulSplit {
         }
     }
 
-    /** Your own blows are divided while split. */
+    /** (Tests) the last split's numbers, and the last soul skill hit / hit on a soul. */
+    public static String lastStats = "", lastSkillHit = "", lastSoulHurt = "";
+
+    /**
+     * Your own blows are divided while split. The souls' skills (cast through a stand-in with your stats and, with
+     * DragonMineZ, your ki / strike damage - see DmzScaling) are divided the same way. Hits on a soul are cut by its
+     * share of your Defense (and DragonMineZ defense).
+     */
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onHurt(LivingHurtEvent event) {
-        if (event.getSource().getEntity() instanceof ServerPlayer p && active(p) && !(event.getEntity() instanceof SoulEntity))
+        Entity src = event.getSource().getEntity();
+        if (src instanceof ServerPlayer p && active(p) && !(event.getEntity() instanceof SoulEntity))
             event.setAmount(event.getAmount() / divisor(p));
+        else if (src instanceof net.minecraftforge.common.util.FakePlayer f && SoulSkills.ownerOfStandIn(f.getUUID()) != null && f.getServer() != null) {
+            ServerPlayer o = f.getServer().getPlayerList().getPlayer(SoulSkills.ownerOfStandIn(f.getUUID()));
+            int d = Math.max(2, o == null ? 2 : divisor(o));
+            float before = event.getAmount();
+            event.setAmount(before / d);
+            lastSkillHit = Math.round(before * 100) / 100.0 + " -> " + Math.round(event.getAmount() * 100) / 100.0 + " (1/" + d + ")";
+        }
+        if (event.getEntity() instanceof SoulEntity soul && src != null && soul.owner() != null) {
+            ServerPlayer o = soul.owner();
+            int d = Math.max(2, divisor(o));
+            float a = event.getAmount(), v = a * (1F - Stat.DEFENSE.bonus(com.xenowarriors.stats.Stats.level(o, Stat.DEFENSE)) / d);
+            float m = com.xenowarriors.compat.DmzBotStats.playerMitigated(o, v);
+            v -= (v - m) / d;
+            event.setAmount(v);
+            lastSoulHurt = Math.round(a * 100) / 100.0 + " -> " + Math.round(v * 100) / 100.0;
+        }
     }
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)

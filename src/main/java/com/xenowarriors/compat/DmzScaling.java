@@ -56,11 +56,28 @@ public final class DmzScaling {
         return true;
     }
 
+    /**
+     * Whose DragonMineZ character a hit by this player counts with: a party bot's stand-in uses the bot's own DMZ
+     * character, a Soul Splitter soul's stand-in its owner's (the soul's share is divided in SoulSplit); anyone else their own.
+     */
+    private static Object dataFor(Player p) {
+        if (p instanceof net.minecraftforge.common.util.FakePlayer) {
+            com.xenowarriors.bot.PartyBotEntity bot = com.xenowarriors.bot.PartyBots.botOf(p);
+            if (bot != null) return DmzBotKi.statsFor(bot);
+            java.util.UUID owner = com.xenowarriors.soul.SoulSkills.ownerOfStandIn(p.getUUID());
+            if (owner != null && p.getServer() != null) {
+                Player o = p.getServer().getPlayerList().getPlayer(owner);
+                if (o != null) p = o;
+            }
+        }
+        return p.getCapability(cap).resolve().orElse(null);
+    }
+
     /** The caster's skill damage multiplier for this kind of skill (1 = unchanged). */
     public static double multiplier(Player p, boolean physical) {
         if (!ready()) return 1.0;
         try {
-            Object data = p.getCapability(cap).resolve().orElse(null);
+            Object data = dataFor(p);
             if (data == null) return 1.0;
             double v = ((Number) (physical ? strikeDamage : kiDamage).invoke(data)).doubleValue();
             return Double.isFinite(v) ? Math.max(1.0, v / REFERENCE) : 1.0;
@@ -96,7 +113,7 @@ public final class DmzScaling {
     public static double[] raw(Player p) {
         if (!ready()) return new double[]{0, 0};
         try {
-            Object data = p.getCapability(cap).resolve().orElse(null);
+            Object data = dataFor(p);
             if (data == null) return new double[]{0, 0};
             return new double[]{((Number) kiDamage.invoke(data)).doubleValue(), ((Number) strikeDamage.invoke(data)).doubleValue()};
         } catch (Throwable t) { return new double[]{0, 0}; }

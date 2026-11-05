@@ -119,7 +119,7 @@
         {
           "title": "Kaeru",
           "season": 2,
-          "text": "- She can go into Mikiko's Hekublade (sneak + {key:summon_blade} near him) and watch through it; any skill key casts her soul out into the world (half strength, limited range).\n- Her KA, Change: become any creature you aim at, or (sneaking) the block you look at, for 60 seconds. Every Change wears on her, and too many burn it out.\n- Soul Splitter: split your soul off to fight beside you; your health, damage and Karma are shared between the souls."
+          "text": "- She can go into Mikiko's Hekublade (sneak + {key:summon_blade} near him) and watch through it; any skill key casts her soul out into the world (half strength, limited range).\n- Her KA, Change: become any creature you aim at, or (sneaking) the block you look at, for 60 seconds. Every Change wears on her, and too many burn it out.\n- Soul Splitter: split your soul off to fight beside you; your health, damage and Karma are shared between the souls. Each soul gets its share of your stats - half of your health, Attack, Defense and (with DragonMineZ) your Dragon Ball health, melee and ki damage with one soul."
         },
         {
           "title": "Ultima",
@@ -250,7 +250,7 @@
         },
         {
           "title": "Bots and DragonMineZ",
-          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives."
+          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives.\n- A bot is as tough and strong as its Dragon Ball character: its Vitality adds to its max health, its Resistance cuts the hits it takes, its Strength is its punch, and its Ki / Strike damage power its skills - just like a player of that character. Out of a fight it heals at DragonMineZ's regen rate."
         },
         {
           "title": "Mission help",
