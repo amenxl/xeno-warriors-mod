@@ -110,13 +110,18 @@ public final class BotQuestTests {
     private static String own(ServerPlayer p, String key) { return DmzQuests.progress(p, key, 0); }
 
     /** The targets DragonMineZ summoned for this mission near the player, or one of the kind made fresh (NATURAL). */
-    private static LivingEntity target(ServerPlayer p, String key) {
+    private static LivingEntity target(ServerPlayer p, String key) { return target(p, key, null); }
+
+    private static LivingEntity target(ServerPlayer p, String key, PartyBotEntity b) {
+        int want = b == null ? -1 : DmzBotQuests.openObjective(b, key);
         for (Entity e : p.serverLevel().getEntities((Entity) null, p.getBoundingBox().inflate(48), x -> key.equals(x.getPersistentData().getString("dmz_quest_key"))))
             if (e instanceof LivingEntity le && le.isAlive()) return le;
         Object q = allQuests().get(key);
         List<?> objs = (List<?>) call(q, "getObjectives");
         if (objs == null) return null;
-        for (Object o : objs) {
+        for (int i = 0; i < objs.size(); i++) {
+            Object o = objs.get(i);
+            if (want >= 0 && i != want) continue;
             if ("QUEST".equals(String.valueOf(call(o, "getSpawnMode")))) continue;
             EntityType<?> t = (EntityType<?>) call(o, "resolveEntityType");
             Entity e = t == null ? null : t.create(p.serverLevel());
@@ -137,7 +142,7 @@ public final class BotQuestTests {
     private static void defeat(ServerPlayer p, PartyBotEntity b, String key, boolean byBot, String what) {
         int kills = 0;
         while (kills < 30 && !DmzBotQuests.status(b, key, 0).startsWith("status=SUCCESS")) {
-            LivingEntity le = target(p, key);
+            LivingEntity le = target(p, key, b);
             if (le == null) { log(what + ": no target"); break; }
             if (le instanceof Mob m) m.setNoAi(true);
             kill(le, byBot ? b.damageSources().mobAttack(b) : p.damageSources().playerAttack(p));
@@ -224,8 +229,7 @@ public final class BotQuestTests {
         step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
             PartyBotEntity b = bot(p);
             Set<String> skip = new HashSet<>();
-            if (Q[0] != null) skip.add(Q[0]);
-            if (Q[1] != null) skip.add(Q[1]);
+            for (var m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(64), m -> m.getPersistentData().contains("dmz_quest_key"))) m.discard();
             int before = DmzBotQuests.autoStarts;
             Q[2] = startFirst(p, killQuests(), skip);
             log("player start: " + Q[2] + " owner " + (Q[2] == null ? "-" : own(p, Q[2])) + " bot active before follow " + (b == null ? "-" : DmzBotQuests.active(b)) + " autoStarts " + before);
@@ -246,6 +250,30 @@ public final class BotQuestTests {
             }
             dump();
         }), 40);
+        // 3c. the bot can do yours: it takes the same one, and one kill counts for both
+        step(null, () -> server(p -> {
+            PartyBotEntity b = bot(p);
+            if (b == null || Q[2] == null) return;
+            for (var m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(64), m -> m.getPersistentData().contains("dmz_quest_key"))) m.discard();
+            DmzBotQuests.resetForTest(b);
+            call(pqd(p), "resetQuest", Q[2]);
+            Object r = startQuest(p, Q[2]);
+            log("same mission: player restarted " + Q[2] + " -> " + (r == null ? "started" : r));
+        }), 20);
+        step(null, () -> server(p -> {
+            PartyBotEntity b = bot(p);
+            if (b == null || Q[2] == null) return;
+            List<String> act = DmzBotQuests.active(b);
+            log("same mission: bot active " + act + (act.contains(Q[2]) ? " OK" : " FAIL"));
+            LivingEntity le = target(p, Q[2]);
+            if (le == null || !act.contains(Q[2])) { log("same mission: no target"); return; }
+            String b0 = DmzBotQuests.status(b, Q[2], 0), o0 = own(p, Q[2]);
+            if (le instanceof Mob m) m.setNoAi(true);
+            kill(le, p.damageSources().playerAttack(p));
+            String b1 = DmzBotQuests.status(b, Q[2], 0), o1 = own(p, Q[2]);
+            log("same mission: one kill by the player: bot " + b0 + " -> " + b1 + " | owner " + o0 + " -> " + o1 + (!b0.equals(b1) && !o0.equals(o1) ? " OK" : " FAIL"));
+            dump();
+        }), 20);
         // 3b. no starts without the player: nothing new for a while
         step(null, () -> server(p -> { Q[3] = String.valueOf(DmzBotQuests.autoStarts); }), 5);
         step(null, () -> server(p -> log("no start without the player: autoStarts " + Q[3] + " -> " + DmzBotQuests.autoStarts + (Q[3].equals(String.valueOf(DmzBotQuests.autoStarts)) ? " OK" : " FAIL"))), 100);

@@ -628,6 +628,18 @@ public final class DmzBotQuests {
         } catch (Throwable t) { return "? " + t; }
     }
 
+    /** The bot's first objective of this mission not done yet (-1 = none / no data). */
+    public static int openObjective(PartyBotEntity b, String key) {
+        Data d = open(b, false);
+        Object q = quest(key);
+        if (d == null || q == null) return -1;
+        try {
+            int n = ((List<?>) m(q, "getObjectives")).size();
+            for (int i = 0; i < n; i++) if (progress(d.pqd, key, i) < required(q, d.pqd, key, i)) return i;
+        } catch (Throwable ignored) {}
+        return -1;
+    }
+
     /** A bot's accepted missions (its saved data). */
     public static List<String> active(PartyBotEntity b) {
         Data d = open(b, false);
