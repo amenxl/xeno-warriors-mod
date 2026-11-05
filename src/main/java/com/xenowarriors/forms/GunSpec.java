@@ -15,10 +15,10 @@ import net.minecraft.world.phys.Vec3;
  * </ul>
  */
 public enum GunSpec {
-    //       mode            ticks dmg   range pellets pierce  hip   ads   pellet hip/ads  zoom   kick yaw   bloom  sightY zRear  dispY dispZ muzzleY muzzleZ
-    PISTOL(Mode.SEMI, 4, 5.0F, 40, 1, 1, 2.0F, 0.2F, 0F, 0F, 1.25F, 1.6F, 0.6F, 0.6F, 11.15F, 11.6F, 4.5F, 1F, 9.1F, 1.7F),
-    RIFLE(Mode.AUTO, 3, 3.5F, 80, 1, 2, 2.6F, 0.12F, 0F, 0F, 2.5F, 0.85F, 0.45F, 0.35F, 11.95F, 10F, 4F, 0F, 9.0F, -7.5F),
-    SHOTGUN(Mode.PUMP, 16, 3.2F, 18, 7, 1, 1.4F, 0.4F, 5.5F, 3.8F, 1.15F, 4.2F, 1.2F, 1.2F, 10.4F, 11F, 4F, 0F, 9.2F, -5.1F);
+    //       mode            ticks dmg   range pellets pierce  hip   ads   pellet hip/ads  zoom   kick yaw   bloom  sightY sightZ dispY dispZ muzzleY muzzleZ aimDist aimTilt
+    PISTOL(Mode.SEMI, 4, 5.0F, 40, 1, 1, 2.0F, 0.2F, 0F, 0F, 1.25F, 1.6F, 0.6F, 0.6F, 11.0F, 3.75F, 4.5F, 1F, 9.1F, 1.7F, 0.62F, 2.5F),
+    RIFLE(Mode.AUTO, 3, 3.5F, 80, 1, 2, 2.6F, 0.12F, 0F, 0F, 2.5F, 0.85F, 0.45F, 0.35F, 11.95F, 6F, 4F, 0F, 9.0F, -7.5F, 0.5F, 0F),
+    SHOTGUN(Mode.PUMP, 16, 3.2F, 18, 7, 1, 1.4F, 0.4F, 5.5F, 3.8F, 1.15F, 4.2F, 1.2F, 1.2F, 10.3F, -4.3F, 4F, 0F, 9.2F, -5.1F, 0.95F, 0F);
 
     /** SEMI: one shot a click. AUTO: fires while held. PUMP: one shot a click, with a pump between. */
     public enum Mode { SEMI, AUTO, PUMP }
@@ -34,16 +34,20 @@ public enum GunSpec {
     public final float zoom;
     /** Camera kick per shot (degrees up, max sideways) and the spread each shot adds (degrees, hip fire). */
     public final float kick, kickYaw, bloom;
-    /** The model: sight line height and the rear of the sight (model pixels), the first-person display offset, the muzzle. */
-    public final float sightY, zRear, dispY, dispZ, muzzleY, muzzleZ;
+    /**
+     * The model (pixels): the point you aim over (front sight top / scope lens), the first-person display offset, the
+     * muzzle; aimed, that point sits on the middle of the screen this far away (blocks), the gun tilted up this much
+     * (degrees) so the rear sight drops just under the front one.
+     */
+    public final float sightY, sightZ, dispY, dispZ, muzzleY, muzzleZ, aimDist, aimTilt;
 
     GunSpec(Mode mode, int interval, float damage, float range, int pellets, int pierce, float hipSpread, float adsSpread,
             float pelletHip, float pelletAds, float zoom, float kick, float kickYaw, float bloom,
-            float sightY, float zRear, float dispY, float dispZ, float muzzleY, float muzzleZ) {
+            float sightY, float sightZ, float dispY, float dispZ, float muzzleY, float muzzleZ, float aimDist, float aimTilt) {
         this.mode = mode; this.interval = interval; this.damage = damage; this.range = range; this.pellets = pellets; this.pierce = pierce;
         this.hipSpread = hipSpread; this.adsSpread = adsSpread; this.pelletHip = pelletHip; this.pelletAds = pelletAds;
         this.zoom = zoom; this.kick = kick; this.kickYaw = kickYaw; this.bloom = bloom;
-        this.sightY = sightY; this.zRear = zRear; this.dispY = dispY; this.dispZ = dispZ; this.muzzleY = muzzleY; this.muzzleZ = muzzleZ;
+        this.sightY = sightY; this.sightZ = sightZ; this.aimDist = aimDist; this.aimTilt = aimTilt; this.dispY = dispY; this.dispZ = dispZ; this.muzzleY = muzzleY; this.muzzleZ = muzzleZ;
     }
 
     /** Time to aim in / out (TACZ guns: 0.13-0.16 s). */

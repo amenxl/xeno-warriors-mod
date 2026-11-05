@@ -1,6 +1,5 @@
 package com.xenowarriors.client.forms;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -19,7 +18,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -60,7 +58,6 @@ import org.joml.Matrix4f;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class GunClient {
-    private static final ResourceLocation SCOPE = new ResourceLocation("textures/misc/spyglass_scope.png");
     private static boolean aimWanted, aimSent, trigWas, aimKeyWas, hitKill;
     private static float aim, aimO, bloom, recoilPitch, recoilYaw, recover;
     private static int ticks, cooldown, queued, lastShot = -100, hitAt = -100, flashSeed;
@@ -68,6 +65,8 @@ public final class GunClient {
 
     /** Tests: force aim / trigger (null = the real keys). */
     public static Boolean testAim, testTrigger;
+    /** How long a muzzle flash shows (ticks); tests hold it longer for the stills. */
+    public static float flashTicks = 1.6F;
     /** Test numbers. */
     public static int shotsSent, aimPackets, sensCalls, viewModelsDrawn, crosshairsDrawn, scopesDrawn, hitMarkers, flashesDrawn;
     public static float lastFov = 70F, lastSpread, lastMoveScale = 1F, lastSens = 1F;
@@ -378,14 +377,20 @@ public final class GunClient {
     private static void scope(GuiGraphics g, int w, int h, Form.Style style, float a) {
         scopesDrawn++;
         int size = Math.round(Math.min(w, h) * Mth.lerp((a - 0.85F) / 0.15F, 1.25F, 1.0F));
-        int x = (w - size) / 2, y = (h - size) / 2;
-        RenderSystem.enableBlend();
-        g.blit(SCOPE, x, y, -90, 0F, 0F, size, size, size, size);
-        g.fill(0, 0, w, y, 0xFF000000);
-        g.fill(0, y + size, w, h, 0xFF000000);
-        g.fill(0, y, x, y + size, 0xFF000000);
-        g.fill(x + size, y, w, y + size, 0xFF000000);
-        int col = style == Form.Style.HEKU ? 0xE0FF7A1A : 0xE0B04CFF, cx = w / 2, cy = h / 2, r = size / 2 - 6;
+        int cx = w / 2, cy = h / 2, rad = size / 2;
+        // black all round a round window, a soft dark rim just inside it
+        for (int row = 0; row < h; row++) {
+            int dy = Math.abs(row - cy);
+            if (dy >= rad) { g.fill(0, row, w, row + 1, 0xFF000000); continue; }
+            int half = (int) Math.sqrt((double) rad * rad - (double) dy * dy);
+            g.fill(0, row, cx - half, row + 1, 0xFF000000);
+            g.fill(cx + half, row, w, row + 1, 0xFF000000);
+            int rim = Math.max(2, rad / 14);
+            int inner = dy >= rad - rim ? 0 : (int) Math.sqrt((double) (rad - rim) * (rad - rim) - (double) dy * dy);
+            g.fill(cx - half, row, cx - inner, row + 1, 0xB0000000);
+            g.fill(cx + inner, row, cx + half, row + 1, 0xB0000000);
+        }
+        int col = style == Form.Style.HEKU ? 0xE0FF7A1A : 0xE0B04CFF, r = rad - 6;
         g.fill(cx - r, cy, cx - 4, cy + 1, col);
         g.fill(cx + 5, cy, cx + r, cy + 1, col);
         g.fill(cx, cy + 5, cx + 1, cy + r, col);
@@ -409,10 +414,11 @@ public final class GunClient {
         float a = aimProgress(pt), equip = event.getEquipProgress();
         PoseStack ps = event.getPoseStack();
         ps.pushPose();
-        // hip: where the item model's own first-person display puts it; aimed: the sight line on the middle of the screen
+        // hip: where the item model's own first-person display puts it (turning about the model's middle); aimed: the
+        // front sight / scope lens (the pivot) right on the middle of the screen, the gun tilted so the rear sight drops under it
         float hx = 0.56F - 0.25F, hy = -0.52F + s.dispY / 16F, hz = -0.72F + s.dispZ / 16F;
-        float ax = 0F, ay = -0.75F * (s.sightY / 16F - 0.5F), az = -0.30F - 0.75F * (s.zRear / 16F - 0.5F);
-        float x = Mth.lerp(a, hx, ax), y = Mth.lerp(a, hy, ay) - equip * 0.6F, z = Mth.lerp(a, hz, az);
+        float x = Mth.lerp(a, hx, 0F), y = Mth.lerp(a, hy, 0F) - equip * 0.6F, z = Mth.lerp(a, hz, -s.aimDist);
+        float pivY = a * (s.sightY / 16F - 0.5F), pivZ = a * (s.sightZ / 16F - 0.5F);
         // the shot: kick back and up, settling over a few ticks; the shotgun's pump after it
         float since = ticks - lastShot + pt;
         float kickT = s == GunSpec.SHOTGUN ? 5F : s == GunSpec.RIFLE ? 2.5F : 3.5F;
@@ -422,7 +428,7 @@ public final class GunClient {
         float rise = (s == GunSpec.SHOTGUN ? 11F : s == GunSpec.RIFLE ? 3F : 8F) * (1F - a * 0.6F);
         ps.translate(x, y + 0.015F * k, z + back * k);
         ps.mulPose(Axis.YP.rotationDegrees(Mth.lerp(a, 4F, 0F)));
-        ps.mulPose(Axis.XP.rotationDegrees(rise * k));
+        ps.mulPose(Axis.XP.rotationDegrees(rise * k + s.aimTilt * a));
         if (s.mode == GunSpec.Mode.PUMP) {
             float u = (since - 4F) / 9F;
             if (u > 0F && u < 1F) {
@@ -432,18 +438,19 @@ public final class GunClient {
             }
         }
         ps.scale(0.75F, 0.75F, 0.75F);
+        ps.translate(0F, -pivY, -pivZ);
         lastView[0] = x; lastView[1] = y; lastView[2] = z;
         mc.getEntityRenderDispatcher().getItemInHandRenderer().renderItem(p, event.getItemStack(), ItemDisplayContext.NONE, false, ps,
                 event.getMultiBufferSource(), event.getPackedLight());
         viewModelsDrawn++;
-        if (since >= 0F && since < 1.6F) flash(ps, event.getMultiBufferSource(), s, g.style(), since);
+        if (since >= 0F && since < flashTicks) flash(ps, event.getMultiBufferSource(), s, g.style(), since);
         ps.popPose();
     }
 
     /** The muzzle flash: a bright star at the end of the barrel for a tick or two. */
     private static void flash(PoseStack ps, MultiBufferSource buffers, GunSpec s, Form.Style style, float since) {
         flashesDrawn++;
-        float life = 1F - since / 1.6F;
+        float life = 1F - Math.min(since / flashTicks, 0.6F);
         float my = s.muzzleY / 16F - 0.5F, mz = s.muzzleZ / 16F - 0.5F - 0.03F;
         ps.pushPose();
         ps.translate(0F, my, mz);

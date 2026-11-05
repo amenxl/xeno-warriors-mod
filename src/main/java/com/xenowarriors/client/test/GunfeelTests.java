@@ -50,6 +50,7 @@ public final class GunfeelTests {
 
     public static void build(Minecraft mc, List<Step> l, String focus) {
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            GunClient.flashTicks = 8F;                                          // (so the stills catch the muzzle flash)
             UiTest.character(CharacterType.MIKIKO); }, 40));
         l.add(new Step(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 2); arena(p); levels(p, 60); p.getInventory().clearContent();
             p.getPersistentData().remove(WeaponForms.BROKEN); }), 20));
@@ -73,7 +74,7 @@ public final class GunfeelTests {
         views(mc, l, Form.Style.WIRE, Form.RIFLE);
         wiresStill(mc, l);
         tacz(mc, l);
-        l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; server(p -> { clearDummies(p); p.getInventory().clearContent(); }); log("done"); }, 10));
+        l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; GunClient.flashTicks = 1.6F; server(p -> { clearDummies(p); p.getInventory().clearContent(); }); log("done"); }, 10));
     }
 
     // ------------------------------------------------------------------ setup
@@ -257,11 +258,24 @@ public final class GunfeelTests {
 
     private static void thirdPerson(Minecraft mc, List<Step> l) {
         summon(mc, l, Form.RIFLE);
-        l.add(new Step(null, () -> { face(mc, 0F); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.options.hideGui = true; }, 15));
+        int[] cam = {-1};
+        float yaw = -110F;                                                      // (from in front of the player, off to his left)
+        l.add(new Step(null, () -> server(p -> {
+            var a = EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(HOME[0] - 3.0, HOME[1] + 0.1, HOME[2] + 1.1, yaw, 8F); a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(yaw);
+            a.addTag("xw_gf_cam");
+            p.serverLevel().addFreshEntity(a); cam[0] = a.getId();
+        }), 12));
+        l.add(new Step(null, () -> { face(mc, 0F); mc.options.hideGui = true;
+            if (mc.level.getEntity(cam[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand a) {
+                a.setYRot(yaw); a.yRotO = yaw; a.setXRot(8F); a.xRotO = 8F; a.setYHeadRot(yaw); a.yHeadRotO = yaw; mc.setCameraEntity(a);
+            } else mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 10));
         l.add(new Step("gunfeel_3p_hip_rifle", () -> face(mc, 0F), 3));
         l.add(new Step(null, () -> { face(mc, 0F); GunClient.testAim = true; }, 12));
-        l.add(new Step("gunfeel_3p_aim_rifle", () -> { face(mc, 0F); log("third person aimed: fov unchanged " + f2(GunClient.lastFov) + ", pose aim " + f2(FormsFx.aimPose(mc.player, 1F))); }, 3));
-        l.add(new Step(null, () -> { GunClient.testAim = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 8));
+        l.add(new Step("gunfeel_3p_aim_rifle", () -> { face(mc, 0F); log("third person aimed: pose aim " + f2(FormsFx.aimPose(mc.player, 1F))); }, 3));
+        l.add(new Step(null, () -> { GunClient.testAim = false; mc.setCameraEntity(mc.player); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false;
+            server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(20),
+                    a -> a.getTags().contains("xw_gf_cam")).forEach(a -> a.discard())); }, 8));
     }
 
     // ------------------------------------------------------------------ durability still wears and breaks
