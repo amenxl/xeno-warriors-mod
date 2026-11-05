@@ -76,6 +76,7 @@ public final class UiTest {
             if (System.getenv("XW_UITEST_FOCUS") != null && !System.getenv("XW_UITEST_FOCUS").isEmpty() && !"bats".equals(System.getenv("XW_UITEST_FOCUS"))) p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, p.getBoundingBox().inflate(64), m -> !(m instanceof com.xenowarriors.sr.SrMemberEntity)).forEach(m -> m.discard());
         }), 20));
+        if (com.xenowarriors.client.test.DmzTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.DmzTests.build(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d)), UiTest::server, UiTest::character, UiTest::log); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("modes")) { com.xenowarriors.client.test.ModesTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("bots5")) { com.xenowarriors.client.test.Bots5Tests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^dmz", "").startsWith("bugs2")) { com.xenowarriors.client.test.SecurityTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
@@ -96,6 +97,7 @@ public final class UiTest {
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("rhalix")) { com.xenowarriors.client.test.RhalixTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^dmz", "").startsWith("weapons")) { com.xenowarriors.client.test.WeaponsTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^(ef|tacz)", "").startsWith("chars5")) { com.xenowarriors.client.test.CharsTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^ef", "").startsWith("batch3")) { com.xenowarriors.client.test.Batch3Tests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if ("combo".equals(System.getenv("XW_UITEST_FOCUS"))) { combos(mc, l); return l; }
         if ("s3fits".equals(System.getenv("XW_UITEST_FOCUS"))) { s3Outfits(mc, l); return l; }
         if ("ores".equals(System.getenv("XW_UITEST_FOCUS"))) { oresAndPjs(mc, l); return l; }

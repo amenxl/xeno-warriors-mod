@@ -39,7 +39,7 @@ import java.util.List;
  * </ul>
  * Hekublade guns sometimes set what they hit on fire; wire guns snag it (a moment of Slowness).
  */
-public class FormGunItem extends Item implements FormItems.Summoned {
+public class FormGunItem extends Item implements FormItems.Summoned, com.xenowarriors.item.Guns.Marker {
     public static final String DUR = "xw_dur", DUR_MAX = "xw_dur_max";
     private final Form.Style style;
     private final Form form;

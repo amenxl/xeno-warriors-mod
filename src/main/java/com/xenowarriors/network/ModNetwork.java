@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "67";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "69";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -481,6 +481,10 @@ public final class ModNetwork {
                 .encoder(BladeRideJumpPacket::encode).decoder(BladeRideJumpPacket::decode).consumerMainThread(BladeRideJumpPacket::handle).add();
         CHANNEL.messageBuilder(GunLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(GunLevelPacket::encode).decoder(GunLevelPacket::decode).consumerMainThread(GunLevelPacket::handle).add();
+        CHANNEL.messageBuilder(BotDmzPacket.class, id++)                        // (both ways: a bot's DragonMineZ menu)
+                .encoder(BotDmzPacket::encode).decoder(BotDmzPacket::decode).consumerMainThread(BotDmzPacket::handle).add();
+        CHANNEL.messageBuilder(PlayerOptionPacket.class, id++)                  // (both ways: Gravity Magnet / auto step-up on or off)
+                .encoder(PlayerOptionPacket::encode).decoder(PlayerOptionPacket::decode).consumerMainThread(PlayerOptionPacket::handle).add();
         // weapon forms (Hekublade / Rhalix's wires: guns, tools, umbrella, whip and bind)
         CHANNEL.messageBuilder(WeaponFormsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(WeaponFormsPacket::encode).decoder(WeaponFormsPacket::decode).consumerMainThread(WeaponFormsPacket::handle).add();

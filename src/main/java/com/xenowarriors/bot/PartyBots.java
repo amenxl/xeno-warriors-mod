@@ -513,6 +513,7 @@ public final class PartyBots {
         if (f != null) FAKE_TO_BOT.remove(f.getUUID());
         com.xenowarriors.compat.DmzBotKi.forget(bot);
         BotCrafting.forget(bot);                                                  // (an offer to a bot that's gone: logout, owner away)
+        BotSupport.forget(bot);
         ANIM_SENT.remove(bot);
     }
 
@@ -597,6 +598,25 @@ public final class PartyBots {
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
             if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);   // (a skill without one of its own)
         } else b.skillReady[slot] = now + 60;
+    }
+
+    /** A support skill (Kaeru's Fox Heal) used facing someone: true if it went off (its body animation plays, as with trySkill). */
+    static boolean castAt(PartyBotEntity b, Skill skill, LivingEntity at) {
+        FakePlayer f = fake(b);
+        Vec3 d = at.getBoundingBox().getCenter().subtract(b.getEyePosition());
+        float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+        f.moveTo(b.getX(), b.getY(), b.getZ(), yaw, pitch);
+        f.setYHeadRot(yaw);
+        f.setOnGround(b.onGround());
+        ANIM_SENT.remove(b.getUUID());
+        boolean used = standInUse(b, f, skill);
+        if (used) {
+            b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());
+            if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
+            if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);
+        }
+        return used;
     }
 
     /** The stand-in uses the skill. It mirrors the bot's state first, so what the skill does to its user lands on the bot (see toBot). */
@@ -791,7 +811,7 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8;
 
     public static void action(ServerPlayer p, int botId, int action, int arg) {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
@@ -829,6 +849,11 @@ public final class PartyBots {
                 p.displayClientMessage(Component.literal("").append(b.label()).append(" left the party (their things are kept for when you play them).").withStyle(ChatFormatting.GRAY), true);
             }
             case ACT_MENU -> interact(b, p);
+            case ACT_DMZ -> {                                                     // (with DragonMineZ: its DMZ character's menu)
+                if (com.xenowarriors.compat.DmzPerCharacter.beginView(p, b))
+                    com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.BotDmzPacket(com.xenowarriors.network.BotDmzPacket.OPEN, b.label().getString()), p);
+                else p.displayClientMessage(Component.literal("").append(b.label()).append("'s Dragon Ball character can't be opened right now").withStyle(ChatFormatting.GRAY), true);
+            }
             default -> {}
         }
     }

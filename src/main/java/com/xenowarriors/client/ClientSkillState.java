@@ -68,6 +68,12 @@ public final class ClientSkillState {
         return (STATUS.getOrDefault(p.getId(), 0) & 4) != 0;
     }
 
+    /** Starving (food nearly gone) - exact for your own player, from the server for others. */
+    public static boolean starving(net.minecraft.world.entity.player.Player p) {
+        if (p == Minecraft.getInstance().player) return com.xenowarriors.mikiko.MikikoCombat.starving(p);
+        return (STATUS.getOrDefault(p.getId(), 0) & com.xenowarriors.network.PoisonStatePacket.STARVING) != 0;
+    }
+
     private static final Map<Integer, Integer> FLIGHT = com.xenowarriors.client.ClientReset.track(new HashMap<>());   // entity id -> total flight ticks
 
     public static void setFlightSkill(int entityId, int ticks) {

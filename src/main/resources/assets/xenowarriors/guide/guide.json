@@ -30,6 +30,10 @@
           "text": "What you hold decides your combo, for players and bots alike.\n- Left click to chain hits. Clicking early only queues the next one, so timing beats spamming.\n- The last hit of a string is a finisher that knocks enemies away.\n- Sneak + left click: a slow heavy hit that launches and breaks shields.\n- A perfectly chained string is a little stronger than plain vanilla hits with the same weapon."
         },
         {
+          "title": "Guns and dashing in",
+          "text": "## Guns\n- Holding a gun (TACZ guns, or any gun from this mod) your clicks never start a combo string: you stand still and shoot, the gun's own aim and fire.\n## Dashing in\n- Mikiko's and Rhalix's combos only dash or step forward when the hit will land: someone you're aiming at, locked on to, or right in front of you, close enough to reach.\n- Swinging at the air (or at someone too far off) you stay where you are - no dashing around. Rhalix's Kishi Warp (hold attack while running) still goes the distance."
+        },
+        {
           "title": "Skills and ultimates",
           "text": "- Every character has 4 skill slots and an ultimate. Pick them in Character Customization > Skills: click a slot, then a skill card.\n- More skills (and sometimes other ultimates) unlock at higher Character Levels.\n- Skills level up as you use them, with tier upgrades: see Progression > Ability levels and tiers.\n- Mikiko and Rhalix's last resort is the Xeno Blast ({key:super_ultimate_ctrl6}): a short charge, then a huge blast that pours out ALL your Karma (at least 10). The more Karma, the harder it hits - and your Karma won't come back for 30 seconds."
         },
@@ -59,8 +63,16 @@
           "text": "- Parties hold up to 4 (players and bots together, 3 bots each at most).\n- Invite: right-click a player with an empty hand, or /xeno party invite <name>. Accept from the request card ({key:accept_request}) or the chat message.\n- Party members see each other's health and Karma and can't hurt each other (except in a battle you both agreed to).\n- Ai-oni and Rhalix can never be in the same party."
         },
         {
+          "title": "Party HUD",
+          "text": "Every HUD style (Blazing Wind, Modern and Classic) shows your party members with their health and Karma bars, each with its numbers (current/max).\n- Your own health and Karma bars show their numbers too (Classic: health beside the hearts, Karma over the skill slots)."
+        },
+        {
           "title": "Bot teammates",
           "text": "- Add one: main menu > Party > an empty slot > Add bot, or /xeno bot. A bot is one of your other characters, with your saved stats and loadout for them (and your ability levels).\n- Click a bot in the Party menu for its options: Mode (Neutral, Aggressive, Mining), Bot menu (its gear, offhand and bag) and Dismiss.\n- Bots fight with combos and their skills, drink potions, and walk to healing pods when they're hurt.\n- Party Swap (Party menu): when a bot is lost, another of your characters takes its place.\n- Bots keep everything they carry: going down, bleeding out, dismissing, logging out, a Journey, another dimension or you travelling far away. Add them back and their things are all there."
+        },
+        {
+          "title": "Bots: torches, guns and healing",
+          "text": "## Torches\n- A bot teammate with torches in its bag lights up dark places as you explore (caves and the like): a torch on a wall or the floor wherever it's darker than light level 7, so they end up spaced out. Never in the Tower, Journey, VR or rooms.\n## Guns\n- Bots never run out of ammo, but they reload when the magazine is empty (as long as that gun takes to reload) and fire in short bursts at a capped rate - no endless stream of bullets.\n## Kaeru's Fox Heal\n- Kaeru as a bot uses Fox Heal on party members near her (8 blocks) who are under half health or downed - you, other players in your party, or your other bots.\n- It costs her Karma and has its normal cooldown (shared with Fox Heal in her loadout)."
         },
         {
           "title": "Bots on their own",
@@ -99,6 +111,10 @@
         {
           "title": "Rhalix",
           "text": "Gravity and wings.\n- Wings out / away with {key:toggle_wings}; fly by double-tapping jump - but only so high above the ground.\n- Kishi, his gravity, pins enemies; it's half of the Gravity Fox Fire team ultimate with Mikiko.\n- Demon's Remnants ({key:fox_king}): his eyes glow red and he's stronger, faster and tougher for 90 seconds.\n- Season 2: the Lunar form (pass the Lunar trial by meditating under a full moon).\n- He tames bats, parrots, chickens and bees as winged companions."
+        },
+        {
+          "title": "Rhalix: Gravity Magnet",
+          "text": "Rhalix's passive: dropped items and XP orbs within 10 blocks drift to him, trailing a faint purple glow.\n- Turn it on or off on the Stats tab of his Character Customization menu (on by default; it's saved for you).\n- It leaves alone what another player has only just thrown (for 2 seconds), and does nothing in VR.\n- A Rhalix bot teammate does it too - things come to the bot."
         },
         {
           "title": "Kaeru",
@@ -149,6 +165,10 @@
           "text": "Opened from the Collection (the book at the Mountain Village Element School). Arena floors with waves of enemies you haven't finished in your Collection.\n- Clear every wave to go up. Kills only save to your Collection at a checkpoint: floor 10, then every 10 floors.\n- Every 10 floors: a bigger arena, more Collection credit per kill and tougher enemies.\n- Your party can come. Healing is limited on each floor."
         },
         {
+          "title": "Famished",
+          "text": "A modifier that makes your hunger bar go down faster (the Hunger effect, all fight long).\n- Tower: none below floor 10, then a 3% chance a floor is Famished for every 10 floors climbed, up to 40%. It shows in the Tower bar at the top (\"Famished\") and in chat.\n- Journey: a chance each battle by difficulty - Easy never, Normal 5%, Hard 15%, Insane 25%, Xeno 40%. It shows under the battle info (top left).\n- Bring food!"
+        },
+        {
           "title": "VR",
           "text": "Yuri's VR room (a VR console, or /xeno vr): the room reshapes itself into an outdoor place. Free training against VR Ultima, plus challenges with rules (a certain character, a small party, no healing, a time limit) and a reward for the first clear. Nothing in VR is real: no drops, no Collection or bounty kills, and losing just ends the session."
         }
@@ -187,12 +207,20 @@
           "text": "No skill tree: you get better at what you do.\n- Speed (sprinting), Attack (dealing damage), Defense (taking hits). Together they make your Character Level, which gives max hearts and unlocks skills.\n- Mining, Crafting and Smelting level up on their own.\n- Each character has their own levels."
         },
         {
+          "title": "Speed: stepping up blocks",
+          "text": "- With your Speed stat above 100 you step straight up a full block without jumping. Above 200 it's two blocks, above 300 three, and so on: one more block every 100 levels.\n- Don't want it? Main menu > Settings > Movement: Auto step-up."
+        },
+        {
           "title": "Ability levels and tiers",
           "text": "Every skill and ultimate levels up the more you use it (per character).\n- Level 1 to 10 in each tier: every level takes 3% off its Karma cost and cooldown (-27% at level 10).\n- At level 10 an Upgrade button appears on the skill's card in Character Customization > Skills. The next tier hits much harder (x1.3 damage per tier) but costs more Karma and has a longer cooldown, until you level it to 10 again.\n- 10 tiers. The tier shows on the skill bar (T2, T3...) and every card shows its tier, level and progress.\n- Bots use your levels for their character."
         },
         {
           "title": "Appetite (hunger level)",
           "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting, regeneration and starving work like normal: they follow the top layer."
+        },
+        {
+          "title": "Starving",
+          "text": "- With your food bar (nearly) empty your character looks it: sunken eyes, pale, mouth hanging open - on your character and on the HUD portrait. Everyone else sees it too.\n- Eat something and the face goes back to normal."
         },
         {
           "title": "Bond",
@@ -215,6 +243,18 @@
         {
           "title": "Playing with DragonMineZ",
           "text": "- Every character has their own DragonMineZ character (race, stats, forms, techniques). A new one opens the race picker.\n- Xeno Warriors skills hit as hard as your DragonMineZ stats say: energy skills follow your Ki damage, physical ones your Strike.\n- Fighting as Mikiko or Rhalix trains your DragonMineZ stats too.\n- Your blasts can clash with ki attacks.\n- Bots use the ki techniques their character has equipped.\n- Bond hearts are much bigger: +300 max hearts per 10 bond levels."
+        },
+        {
+          "title": "Bots and DragonMineZ",
+          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives."
+        },
+        {
+          "title": "Mission help",
+          "text": "- If a mission wants you to beat a story fighter that never turns up by itself, it's summoned near you a few seconds after the objective starts (once per objective).\n- If a mission needs items, every hostile mob you or your bots kill has a 30% chance to drop one, until you have enough.\n- Mikiko masters Kaioken 20 times faster than anyone else."
+        },
+        {
+          "title": "The Zombie Saiyan",
+          "text": "- A rare boss that comes out at night in the Overworld. It also has a spawn egg.\n- As you wear it down it goes Super Saiyan, then Super Saiyan 2 (lightning), then Super Saiyan 3 (long hair). It uses combos, dashes, ki blasts and the Kamehameha.\n- Beat it as a Super Saiyan 3 and it collapses. Then it gets back up screaming, throws everyone back, and returns fully healed as a Super Saiyan 4.\n- It grows with your DragonMineZ power. Drops: diamonds, emeralds, Senzu Beans, Karma items, and sometimes a piece of Goku armor with every enchantment."
         }
       ]
     }

@@ -69,7 +69,7 @@ public final class BlazingHud {
         row(g, font, "hp", ex + 3, y0, bw, 6, hp / max, chip / max, low ? (flash ? 0xFFFF5040 : 0xFFD03A30) : 0xFFE04868, 0xFFC81E3C,
                 Math.round(hp) + " / " + Math.round(max));
         row(g, font, kp, ex - 4, y0 + 15, bw, 5, karma / kmax, 0, sealed > 0 ? 0xFF6A5A70 : kc, 0xFF000000 | darker(kc),
-                sealed > 0 ? "DRAINED " + sealed + "s" : String.valueOf(Math.round(karma)));
+                sealed > 0 ? "DRAINED " + sealed + "s" : Math.round(karma) + " / " + Math.round(kmax));
         int y = y0 + 30;
         if (dbz) {                                                     // (the form line above; KI and ST take the EXP bar's place below)
             String fl = DmzHud.form + "  " + DmzHud.powerRelease + "%";

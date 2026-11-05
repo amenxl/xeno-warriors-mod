@@ -243,6 +243,8 @@ public final class ModItems {
                             if (item == PHONE.get()) {
                                 for (int st = 0; st < PhoneItem.STYLES.length; st++)
                                     for (int color : PhoneItem.COLORS) out.accept(PhoneItem.make(item, st, color));
+                            } else if (item == com.xenowarriors.boss.ZombieSaiyans.SPAWN_EGG.get() && !com.xenowarriors.boss.ZombieSaiyans.dmz()) {
+                                // (the Zombie Saiyan is a DragonMineZ boss: its egg only shows with DragonMineZ)
                             } else if (item == KARMA_HOODIE.get()) {
                                 for (int color : KarmaHoodieItem.PRESETS) out.accept(KarmaHoodieItem.colored(item, color));
                             } else {

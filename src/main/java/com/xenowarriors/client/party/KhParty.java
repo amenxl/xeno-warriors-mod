@@ -64,8 +64,11 @@ public class KhParty implements IGuiOverlay {
                 info = type.getDisplayName().getString() + (dist >= 0 ? "  " + Math.round(dist) + "m" : "  far");
             }
             KhHud.small(g, font, info, x + CARD_W - 4 - font.width(info) * 0.55F, y + 4.5F, m.knockedOut() ? 0xFF5A5A : 0xBEBED2, 0.55F);
-            KhHud.bar(g, x + 30, y + 12, CARD_W - 40, 5, m.maxHealth() > 0 ? m.health() / m.maxHealth() : 0, low ? 0xFFD03A30 : 0xFF46D75A, 0);
-            KhHud.bar(g, x + 34, y + 20, CARD_W - 44, 3, m.maxKarma() > 0 ? m.karma() / m.maxKarma() : 0, 0xFF5A96FF, 0);
+            KhHud.bar(g, x + 30, y + 12, CARD_W - 64, 5, m.maxHealth() > 0 ? m.health() / m.maxHealth() : 0, low ? 0xFFD03A30 : 0xFF46D75A, 0);
+            KhHud.bar(g, x + 34, y + 20, CARD_W - 68, 3, m.maxKarma() > 0 ? m.karma() / m.maxKarma() : 0, 0xFF5A96FF, 0);
+            String hpN = PartyHud.nums(m.health(), m.maxHealth()), kpN = PartyHud.nums(m.karma(), m.maxKarma());   // (the numbers, right of the bars)
+            KhHud.small(g, font, hpN, x + CARD_W - 4 - font.width(hpN) * 0.5F, y + 12.5F, 0xE6FFE6, 0.5F);
+            KhHud.small(g, font, kpN, x + CARD_W - 4 - font.width(kpN) * 0.5F, y + 19.5F, 0xC8DCFF, 0.5F);
             if (m.knockedOut()) g.fill(x + 2, y + 2, x + CARD_W - 2, y + CARD_H - 2, 0x55800000);
             // a short chat line from them
             String b = HudFaces.bubble(m.id());
@@ -105,14 +108,16 @@ public class KhParty implements IGuiOverlay {
                 else com.xenowarriors.client.HudHead.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, 5, 26, 36, flash);
             }
             KhHud.small(g, font, String.valueOf(Math.max(1, m.level())), 27, 11, 0xFFFFFF, 1F);
-            String hp = String.valueOf(Math.round(m.health()));
-            KhHud.small(g, font, hp, 99 - font.width(hp) * 0.85F, 22, 0xFFFFFF, 0.85F);
+            String hp = PartyHud.nums(m.health(), m.maxHealth());              // (current / max)
+            float hs = font.width(hp) > 56 ? 0.62F : 0.75F;
+            KhHud.small(g, font, hp, 99 - font.width(hp) * hs, 23, 0xFFFFFF, hs);
             float hf = m.maxHealth() > 0 ? m.health() / m.maxHealth() : 0;
             g.fill(51, 33, 51 + Math.round(47 * net.minecraft.util.Mth.clamp(hf, 0, 1)), 37, low ? 0xFFE04040 : 0xFF40D8B0);
             if (type == CharacterType.ZANE || type == CharacterType.ULTIMA)
                 g.blit(com.xenowarriors.XenoWarriors.id("textures/gui/hud/blazing_" + (type == CharacterType.ZANE ? "mp" : "dp") + ".png"), 45, 40, 22, 22, 0, 0, 64, 64, 64, 64);
-            String kp = String.valueOf(Math.round(m.karma()));
-            KhHud.small(g, font, kp, 99 - font.width(kp) * 0.85F, 44, 0xFFFFFF, 0.85F);
+            String kp = PartyHud.nums(m.karma(), m.maxKarma());
+            float ks = font.width(kp) > 56 ? 0.62F : 0.75F;
+            KhHud.small(g, font, kp, 99 - font.width(kp) * ks, 45, 0xFFFFFF, ks);
             float kf = m.maxKarma() > 0 ? m.karma() / m.maxKarma() : 0;
             g.fill(51, 56, 51 + Math.round(47 * net.minecraft.util.Mth.clamp(kf, 0, 1)), 60, 0xFF60C850);
             g.fill(30, 71, 30 + Math.round(67 * net.minecraft.util.Mth.clamp(m.xp(), 0, 1)), 73, 0xFFE8E8F0);

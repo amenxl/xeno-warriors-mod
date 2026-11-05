@@ -80,6 +80,8 @@ public final class Tower {
         final Set<UUID> lateJoin = new HashSet<>();
         List<String> pool = List.of();
         TowerMod mod = TowerMod.NONE;
+        /** Famished: hunger drains faster on this floor (the higher you climb, the likelier). */
+        boolean famished;
         boolean bossFloor, safety;
         int radius = ARENA_R, waveSize;
         long lastCombat;
@@ -260,6 +262,7 @@ public final class Tower {
         r.state = 0;
         ServerLevel tl = server.getLevel(LEVEL);
         r.mod = tl == null ? TowerMod.NONE : TowerMod.roll(r.floor, tl.getRandom());
+        r.famished = tl != null && TowerMod.famished(r.floor, tl.getRandom());
         r.safety = false;
         boolean grew = false;
         if (tl != null && radius(r.floor) != r.radius) { r.radius = radius(r.floor); ensureArena(tl, r); grew = true; }
@@ -276,6 +279,7 @@ public final class Tower {
                     : checkpoint ? "Checkpoint - Collection saved!" : r.waves + " waves  -  " + (int) (HEAL_PER_FLOOR / 2) + " hearts of healing";
             title(p, (r.bossFloor ? "BOSS " : "") + "FLOOR " + r.floor, sub);
             if (r.mod != TowerMod.NONE) p.sendSystemMessage(msg("Floor " + r.floor + ": " + r.mod.title + " - " + r.mod.desc, ChatFormatting.LIGHT_PURPLE));
+            if (r.famished) p.sendSystemMessage(msg("Floor " + r.floor + ": Famished - your hunger drains faster on this floor", ChatFormatting.GOLD));
             if (r.floor % 10 == 0)
                 p.sendSystemMessage(msg("Floor " + r.floor + ": " + (grew ? "the arena grew (radius " + r.radius + "), " : "") + "kills now count x" + mult(r.floor) + " and the enemies got stronger!", ChatFormatting.GOLD));
             if (checkpoint) save(p, r);
@@ -494,7 +498,10 @@ public final class Tower {
         String wave = r.bossFloor ? "BOSS" : r.state == 2 ? "cleared" : "wave " + Math.min(r.waves, r.wave + 1) + "/" + r.waves;
         String left = r.state == 1 ? "  •  " + r.alive.size() + " left" : "";
         int k = mult(r.floor);
-        bar.setName(Component.literal("Floor " + r.floor + "  •  " + wave + "  •  Kills x" + k + left).withStyle(k > 1 ? ChatFormatting.GOLD : ChatFormatting.AQUA));
+        Component name = Component.literal("Floor " + r.floor + "  •  " + wave + "  •  Kills x" + k + left).withStyle(k > 1 ? ChatFormatting.GOLD : ChatFormatting.AQUA);
+        if (r.mod != TowerMod.NONE) name = name.copy().append(Component.literal("  •  " + r.mod.title).withStyle(ChatFormatting.LIGHT_PURPLE));
+        if (r.famished) name = name.copy().append(Component.literal("  •  Famished").withStyle(ChatFormatting.RED));   // (an active modifier)
+        bar.setName(name);
         bar.setColor(r.bossFloor ? net.minecraft.world.BossEvent.BossBarColor.RED : k > 1 ? net.minecraft.world.BossEvent.BossBarColor.YELLOW : net.minecraft.world.BossEvent.BossBarColor.BLUE);
         bar.setProgress(r.state == 1 && r.waveSize > 0 ? Math.max(0F, Math.min(1F, r.alive.size() / (float) r.waveSize)) : r.state == 2 ? 0F : 1F);
         for (UUID id : r.players) { ServerPlayer p = server.getPlayerList().getPlayer(id); if (p != null && !bar.getPlayers().contains(p)) bar.addPlayer(p); }
@@ -505,7 +512,7 @@ public final class Tower {
         Run r = BY_PLAYER.get(p.getUUID());
         if (r == null) return "no run";
         return "floor=" + r.floor + " radius=" + r.radius + " mult=x" + mult(r.floor) + " state=" + r.state + " wave=" + (r.wave + 1) + "/" + r.waves + " alive=" + r.alive.size()
-                + " sinceCombat=" + (p.serverLevel().getGameTime() - r.lastCombat) + " safety=" + r.safety;
+                + " sinceCombat=" + (p.serverLevel().getGameTime() - r.lastCombat) + " safety=" + r.safety + " mod=" + r.mod + " famished=" + r.famished;
     }
 
     /** (tests) this run's arena centre. */
@@ -538,10 +545,11 @@ public final class Tower {
 
     /** The floor's twist, kept up every second. */
     private static void modEffects(MinecraftServer server, ServerLevel tl, Run r) {
-        if (r.mod == TowerMod.NONE || r.state == 2) return;
+        if ((r.mod == TowerMod.NONE && !r.famished) || r.state == 2) return;
         for (UUID id : r.players) {
             ServerPlayer p = server.getPlayerList().getPlayer(id);
             if (p == null || p.level() != tl) continue;
+            if (r.famished) p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.HUNGER, 60, r.floor >= 100 ? 1 : 0, false, false, true));
             switch (r.mod) {
                 case LOW_GRAVITY -> { p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.SLOW_FALLING, 40, 0, false, false));
                                       p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.JUMP, 40, 2, false, false)); }
