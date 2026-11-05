@@ -73,6 +73,7 @@ public final class HuntAnimTests {
             stuck(mc, l);
         }
         if (all || f.contains("fx")) fx(mc, l);
+        if (all || f.contains("inv")) inventory(mc, l);
         if (all || f.contains("gal")) gallery(mc, l);
         if (all || f.contains("gear")) gear(mc, l);
         if (all || f.contains("pose")) poses(mc, l);
@@ -377,6 +378,44 @@ public final class HuntAnimTests {
         l.add(new Step(null, () -> com.xenowarriors.client.compat.ShaderCompat.forceForTest = false, 2));
     }
 
+    // ------------------------------------------------------------------ the inventory's player preview in odd states
+
+    private static void inventory(Minecraft mc, List<Step> l) {
+        Runnable open = () -> { me(mc); mc.options.hideGui = false; mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)); };
+        Runnable close = () -> { mc.setScreen(null); mc.options.hideGui = true; };
+        setChar(l, CharacterType.RHALIX, 0);
+        l.add(new Step(null, () -> server(p -> { home(p); p.setGameMode(GameType.SURVIVAL); p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 120, 4, false, false)); }), 10));
+        l.add(new Step(null, open, 10));
+        l.add(new Step("huntanim_inv_rhalix_plain", () -> {}, 2));
+        // knocked down
+        l.add(new Step(null, () -> { close.run(); server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KNOCKDOWN, 200)); }, 25));
+        l.add(new Step(null, open, 6));
+        l.add(new Step("huntanim_inv_rhalix_knockdown", () -> log("inv knockdown " + snapshot(mc)), 2));
+        l.add(new Step(null, () -> { close.run(); server(com.xenowarriors.anim.Poses::clearState); }, 10));
+        // flying with the wings out
+        l.add(new Step(null, () -> server(p -> { p.teleportTo(p.getX(), p.getY() + 5, p.getZ()); p.getAbilities().mayfly = true; p.getAbilities().flying = true; p.onUpdateAbilities(); }), 30));
+        l.add(new Step(null, open, 6));
+        l.add(new Step("huntanim_inv_rhalix_flying", () -> log("inv flying " + snapshot(mc)), 2));
+        // mid combo
+        l.add(new Step(null, () -> { close.run(); server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); home(p); }); }, 30));
+        l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 3));
+        l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 3));
+        l.add(new Step(null, open, 1));
+        l.add(new Step("huntanim_inv_rhalix_combo", () -> log("inv combo " + snapshot(mc)), 1));
+        l.add(new Step(null, close, 20));
+        // Mikiko diving from high up
+        setChar(l, CharacterType.MIKIKO, 0);
+        l.add(new Step(null, () -> server(p -> { p.setGameMode(GameType.SURVIVAL); p.teleportTo(p.getX(), p.getY() + 40, p.getZ()); }), 32));
+        l.add(new Step(null, open, 1));
+        l.add(new Step("huntanim_inv_mikiko_dive", () -> log("inv dive " + snapshot(mc)), 1));
+        l.add(new Step(null, () -> { close.run(); server(p -> { home(p); p.fallDistance = 0; }); }, 20));
+        // Mikiko crawling
+        l.add(new Step(null, () -> server(p -> { home(p); p.serverLevel().setBlock(p.blockPosition().above(), Blocks.GLASS.defaultBlockState(), 3); p.setPose(net.minecraft.world.entity.Pose.SWIMMING); }), 15));
+        l.add(new Step(null, open, 6));
+        l.add(new Step("huntanim_inv_mikiko_crawl", () -> {}, 2));
+        l.add(new Step(null, () -> { close.run(); server(p -> { p.serverLevel().setBlock(BlockPos.containing(HOME[0], HOME[1] + 1, HOME[2]), Blocks.AIR.defaultBlockState(), 3); p.setGameMode(GameType.CREATIVE); home(p); }); }, 10));
+    }
+
     // ------------------------------------------------------------------ 2. gallery: every character and outfit
 
     private static void gallery(Minecraft mc, List<Step> l) {
@@ -450,12 +489,15 @@ public final class HuntAnimTests {
                 BlockPos foot = p.blockPosition().east(2), head = foot.south();
                 p.serverLevel().setBlock(foot, Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.FOOT), 3);
                 p.serverLevel().setBlock(head, Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH).setValue(BedBlock.PART, BedPart.HEAD), 3);
+                p.server.overworld().setDayTime(18000);          // (in daytime you're woken up at once)
+                p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 20 * 20, 0, false, false));
                 p.startSleeping(head);
             }), 20));
             cam(mc, l, 1.0, 1.2, 1.2, 160F, 35F);
-            l.add(new Step(null, () -> { if (mc.screen != null) mc.setScreen(null); }, 3));
+            l.add(new Step(null, () -> mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.HIDDEN), 3));
             l.add(new Step("huntanim_pose_" + n + "_sleep", () -> log("pose " + n + " sleeping=" + mc.player.isSleeping() + " " + snapshot(mc)), 3));
-            l.add(new Step(null, () -> server(p -> { p.stopSleeping(); BlockPos foot = BlockPos.containing(HOME[0], HOME[1], HOME[2]).east(2);
+            l.add(new Step(null, () -> mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.FULL), 1));
+            l.add(new Step(null, () -> server(p -> { p.stopSleeping(); clearSky(p); p.removeEffect(MobEffects.NIGHT_VISION); BlockPos foot = BlockPos.containing(HOME[0], HOME[1], HOME[2]).east(2);
                 p.serverLevel().setBlock(foot, Blocks.AIR.defaultBlockState(), 3); p.serverLevel().setBlock(foot.south(), Blocks.AIR.defaultBlockState(), 3); home(p); }), 15));
             // in a boat
             l.add(new Step(null, () -> server(p -> {
