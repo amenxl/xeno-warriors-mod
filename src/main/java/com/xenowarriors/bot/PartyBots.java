@@ -714,6 +714,16 @@ public final class PartyBots {
     /** (Tests) runs out its downed timer now. */
     public static void bleedOutForTest(PartyBotEntity b) { bleedOut(b); }
 
+    /** A downed bot whose chunk left the world (its owner went far): its things go home and it recovers, as from a bleed-out (no world changes: called as it leaves). */
+    static void strandedDown(PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        if (o != null) {
+            o.getPersistentData().putLong(REJOIN + b.character().getId(), o.level().getGameTime() + REJOIN_COOLDOWN);
+            o.displayClientMessage(Component.literal("").append(b.label()).append(" was left behind while down and went home to recover (5 min). They keep all their things.").withStyle(ChatFormatting.GRAY), false);
+        }
+        checkIn(b, o);
+    }
+
     static void bleedOut(PartyBotEntity b) {
         ServerPlayer o = b.owner();
         if (o != null) {

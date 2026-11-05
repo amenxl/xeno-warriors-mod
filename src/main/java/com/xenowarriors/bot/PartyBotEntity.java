@@ -178,7 +178,8 @@ public class PartyBotEntity extends PathfinderMob {
         RemovalReason why = getRemovalReason();
         if (!level().isClientSide && !stranded && ownerId() != null && !journey() && (why == null || why == RemovalReason.UNLOADED_TO_CHUNK)) {
             stranded = true;
-            PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));
+            if (downed()) PartyBots.strandedDown(this);                          // (left lying there: it goes home, as if it bled out)
+            else PartyBots.LEFT_BEHIND.add(Map.entry(ownerId(), record()));
             if (why == null) PartyBots.STRANDED.add(this);                       // (the entity itself goes next tick: never two of it)
             PartyBots.testLog(this, "stranded (" + (why == null ? "chunk left the world" : "chunk unloaded") + ") - on the waiting list");
         }
