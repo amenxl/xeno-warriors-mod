@@ -320,12 +320,31 @@ public final class DmzBotQuests {
         for (ServerPlayer r : party) {
             for (PartyBotEntity b : PartyBots.bots(r)) {
                 if (b.journey() || !mayBeActive(b)) continue;
+                Object pq = peek(b);                                                 // (null: its menu is open - the live data, as before)
+                try { if (pq != null && !killCounts(pq, dead, owners)) continue; }  // (counts for none of its missions: nothing to load)
+                catch (Throwable t) { /* look properly below */ }
                 Data d = open(b, true);
                 if (d == null || (d.live && dmzCountedLive)) continue;
                 try { creditKill(d, dead, owners, src, b == killerBot); }
                 catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ mission didn't count a kill", t); }
             }
         }
+    }
+
+    /** Would creditKill count this kill for any of these missions? (Read only; the same tests.) */
+    private static boolean killCounts(Object pqd, LivingEntity dead, Set<String> owners) throws Exception {
+        for (String key : accepted(pqd)) {
+            Object q = quest(key);
+            if (q == null || (Boolean) m(pqd, "isQuestCompleted", key) || !typeEnabled(q)) continue;
+            List<?> objs = (List<?>) m(q, "getObjectives");
+            for (int i = 0; i < objs.size(); i++) {
+                Object obj = objs.get(i);
+                if (!killObj.isInstance(obj)) continue;
+                if (progress(pqd, key, i) >= required(q, pqd, key, i) || !(Boolean) unlocked.invoke(null, pqd, key, q, i) || !matches(dead, key, i, obj, owners)) continue;
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void creditKill(Data d, LivingEntity dead, Set<String> owners, Entity src, boolean ownKill) throws Exception {
