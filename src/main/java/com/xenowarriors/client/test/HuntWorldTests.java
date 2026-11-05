@@ -44,10 +44,10 @@ public final class HuntWorldTests {
         S = steps; SERVER = server; LOG = log; CHAR = character;
         start(mc);
         String part = focus.substring(2);
+        if (part.isEmpty() || part.contains("fly")) fly(mc);
         if (part.isEmpty() || part.contains("loot")) roomLoot(mc);
         if (part.isEmpty() || part.contains("back")) roomBack(mc);
         if (part.isEmpty() || part.contains("park")) park(mc);
-        if (part.isEmpty() || part.contains("fly")) fly(mc);
         step(null, () -> log("done"), 5);
     }
 
@@ -257,7 +257,7 @@ public final class HuntWorldTests {
                 vehicle = v.getId();
                 p.startRiding(v, true);
                 log("fly " + k.id + ": flight allowed on the server=" + p.server.isFlightAllowed());
-            }), 40);
+            }), 60);
             step(null, () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.keyJump.setDown(true);
                 log("fly " + k.id + ": client riding " + (mc.player.getVehicle() == null ? "nothing" : mc.player.getVehicle().getType().toShortString())); }, 30);
             step(null, () -> mc.options.keyJump.setDown(false), 5);
