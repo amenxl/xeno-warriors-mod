@@ -123,19 +123,20 @@ public final class Dmz6Tests {
             zid[0] = z.getId();
             com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.RHALIX, null);
         }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.guiScale().set(0); mc.resizeDisplay(); }, 60);
-        step("dmz6hud_854_" + tag, () -> { noDmzScreen(mc); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
+        step(null, () -> mc.setScreen(null), 20);
+        step("dmz6hud_854_" + tag, () -> { mc.setScreen(null); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
         // sensing: Karma Sensing drives DragonMineZ's Ki Sense search (which used to grey the screen out)
         step(null, () -> {
             com.xenowarriors.client.KarmaSense.sensed(new int[]{zid[0]}, new int[]{5}, 400, true, new int[0], new int[]{30}, new int[]{2}, true, false);
         }, 30);
-        step("dmz6_sense_854_" + tag, () -> log("sense " + tag + " karma active=" + com.xenowarriors.client.KarmaSense.active()
-                + " dmz linked=" + com.xenowarriors.client.compat.DmzKiSenseLink.karmaDriven()), 3);
+        step("dmz6_sense_854_" + tag, () -> { mc.setScreen(null); log("sense " + tag + " karma active=" + com.xenowarriors.client.KarmaSense.active()
+                + " dmz linked=" + com.xenowarriors.client.compat.DmzKiSenseLink.karmaDriven() + " grey passes skipped=" + com.xenowarriors.client.compat.DmzKiSenseLink.greySkipped); }, 3);
         step(null, () -> { try { mc.getWindow().setWindowed(1920, 1080); } catch (Throwable t) { log("resize failed " + t); } mc.options.guiScale().set(0); mc.resizeDisplay(); }, 40);
-        step("dmz6_sense_1080_" + tag, () -> {}, 3);
+        step("dmz6_sense_1080_" + tag, () -> mc.setScreen(null), 3);
         step(null, () -> {}, 400);                                              // (the sensing runs out)
-        step("dmz6hud_1080_" + tag, () -> { noDmzScreen(mc); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
+        step("dmz6hud_1080_" + tag, () -> { mc.setScreen(null); log("hud " + tag + " window " + mc.getWindow().getWidth() + "x" + mc.getWindow().getHeight() + " gui " + mc.getWindow().getGuiScale()); }, 3);
         step(null, () -> { mc.options.guiScale().set(3); mc.resizeDisplay(); }, 20);
-        step("dmz6hud_1080g3_" + tag, () -> {}, 3);
+        step("dmz6hud_1080g3_" + tag, () -> mc.setScreen(null), 3);
         step(null, () -> { try { mc.getWindow().setWindowed(854, 480); } catch (Throwable t) { log("resize failed " + t); } mc.options.guiScale().set(0); mc.resizeDisplay(); }, 20);
     }
 }
