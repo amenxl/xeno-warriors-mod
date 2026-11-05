@@ -522,7 +522,8 @@ public final class HuntPerfTests {
         var bots = PartyBots.bots(p);
         int made = 0;
         for (int i = 0; i < 50; i++) {
-            if (!((i % 2 == 0 ? EntityType.ZOMBIE : EntityType.SKELETON).create(lv) instanceof Mob m)) continue;
+            net.minecraft.world.entity.Entity made0 = (i % 2 == 0 ? EntityType.ZOMBIE : EntityType.SKELETON).create(lv);
+            if (!(made0 instanceof Mob m)) continue;
             m.moveTo(p.getX() + lv.random.nextInt(21) - 10, p.getY(), p.getZ() + lv.random.nextInt(21) - 10, 0F, 0F);
             m.finalizeSpawn(lv, lv.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.COMMAND, null, null);
             m.addTag("xw_perf");
