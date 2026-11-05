@@ -38,7 +38,8 @@ public final class SkillPool {
                 new Entry(new KishiSkill(), 0), new Entry(new EarthWaveSkill(), 0),
                 new Entry(new GravityCompressSkill(), 0), new Entry(new BangSkill(), 0),
                 new Entry(new com.xenowarriors.skill.rhalix.MoonReflectSkill(), 25, 2), new Entry(new KaReleaseSkill(), 60, 3),
-                new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 10, 2)));
+                new Entry(new com.xenowarriors.soul.SoulSplitterSkill(), 10, 2),
+                new Entry(new JudgmentAbsorptionSkill(), JudgmentAbsorptionSkill.UNLOCK_LEVEL)));   // (Season 1; added last so saved loadout numbers stay put)
         ULTIMATE.put(CharacterType.RHALIX, new GravityBarrageSkill());
         POOL.put(CharacterType.ULTIMA, List.of(
                 new Entry(new com.xenowarriors.skill.ultima.AttackPredictionSkill(), 0, 2), new Entry(new com.xenowarriors.skill.ultima.EnergyBlastSkill(), 0, 2),
