@@ -56,6 +56,16 @@ public class PartySetupScreen extends Screen {
 
     private static Component swapLabel() { return Component.literal("Party Swap: " + (swapOn ? "ON" : "OFF")); }
 
+    /** The Team Synergy panel (synergies for this party, their bond levels, and the bond hearts) is open. */
+    private boolean synergyOpen;
+    private Button synergyButton;
+
+    private Component synergyLabel() { return Component.literal(synergyOpen ? "Close Synergy" : "Synergy & Bond [S]"); }
+
+    /** UI test: open / close the synergy panel. */
+    public void testSynergy(boolean open) { synergyOpen = open; if (synergyButton != null) synergyButton.setMessage(synergyLabel()); }
+    public static PartyCardsPacket lastCards() { return last; }
+
     @Override
     protected void init() {
         request();
@@ -63,6 +73,10 @@ public class PartySetupScreen extends Screen {
         addRenderableWidget(Button.builder(swapLabel(), b -> { swapOn = !swapOn; ModNetwork.sendToServer(new com.xenowarriors.network.PartySwapPacket(swapOn)); b.setMessage(swapLabel()); })
                 .bounds(width - 122, 24, 110, 18)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("When one of your bot teammates is lost (not revived in time), another of your characters joins in their place to keep the party full.")))
+                .build());
+        synergyButton = addRenderableWidget(Button.builder(synergyLabel(), b -> testSynergy(!synergyOpen))
+                .bounds(12, 24, 110, 18)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Which team synergies your party has (or could have), what they do, and your bond with each teammate.")))
                 .build());
     }
 
@@ -138,6 +152,7 @@ public class PartySetupScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (super.mouseClicked(mx, my, button)) return true;
+        if (synergyOpen) return true;                                  // (the panel covers the slots)
         if (my > height * 0.18 && my < feetY() + 14) {
             for (int i = 0; i < SLOTS; i++) if (Math.abs(mx - slotX(i)) < width * 0.1) { selected = selected == i ? -1 : i; rebuild(); return true; }
         }
@@ -146,6 +161,7 @@ public class PartySetupScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
+        if (key == GLFW.GLFW_KEY_S) { testSynergy(!synergyOpen); return true; }
         if (key == GLFW.GLFW_KEY_A) { addBot(); return true; }
         if (key == GLFW.GLFW_KEY_I) { invite(); return true; }
         return super.keyPressed(key, scan, mods);
@@ -220,6 +236,14 @@ public class PartySetupScreen extends Screen {
                 g.drawString(font, name, x - nw / 2 + 12, top, 0xFFFFFFFF);
                 g.drawCenteredString(font, "Lv. " + c.level(), x, top + 11, 0xFFD8E4FF);
                 int py = top + 24;
+                if (c.bond() >= 0) {                                          // your bond with them, and how close the next level is
+                    String bl = "\u2665 Bond " + c.bond() + (c.bond() >= com.xenowarriors.party.Bonds.MAX ? " MAX" : "");
+                    g.drawCenteredString(font, bl, x, py, 0xFFFF9AD8);
+                    int bw2 = 40;
+                    g.fill(x - bw2 / 2, py + 9, x + bw2 / 2, py + 11, 0xFF2A2050);
+                    g.fill(x - bw2 / 2, py + 9, x - bw2 / 2 + Math.round(bw2 * Mth.clamp(c.bondXp(), 0F, 1F)), py + 11, 0xFFFF7AC8);
+                    py += 14;
+                }
                 List<String> pets = c.pets();
                 for (int k = 0; k < Math.min(3, pets.size()); k++) {
                     String p = pets.get(k);
@@ -251,9 +275,56 @@ public class PartySetupScreen extends Screen {
             int dx = width / 2 - 30 + i * 20;
             g.drawString(font, i < cs.size() ? "◆" : "◇", dx, 10, i == selected ? 0xFFFFFFFF : 0xFFB8C0F0);
         }
+        // the active synergies, in a line under the top bar
+        if (last != null && !synergyOpen) {
+            StringBuilder on = new StringBuilder();
+            for (PartyCardsPacket.Syn y : last.synergies()) if (y.state() == 2) on.append(on.length() == 0 ? "" : "   ").append("\u2726 ").append(y.name()).append(" (bond ").append(y.bond()).append(")");
+            String line = on.length() == 0 ? "No synergy active - press S to see which teammates would make one" : "Synergy: " + on;
+            g.drawCenteredString(font, line, width / 2, 24, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
+            if (last.bondHearts() > 0) g.drawCenteredString(font, "Best bond " + last.bestBond() + ": +" + last.bondHearts() + " max hearts", width / 2, 35, 0xFFFF9AD8);
+        }
         // bottom bar
         int by = height - 16;
-        g.drawString(font, "[A] Add bot    [I] Invite    [Click] Options    [Esc] Leave", 12, by, 0xFFE0E4FF);
+        g.drawString(font, "[A] Add bot    [I] Invite    [S] Synergy    [Click] Options    [Esc] Leave", 12, by, 0xFFE0E4FF);
         super.render(g, mx, my, pt);
+        if (synergyOpen) synergyPanel(g);
+    }
+
+    /** The Team Synergy panel: every synergy, whether it's on, what it does at your bond, and its downside fading out. */
+    private void synergyPanel(GuiGraphics g) {
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 300);
+        List<PartyCardsPacket.Syn> list = last == null ? List.of() : last.synergies();
+        int pw = Math.min(420, width - 24), rowH = 27, ph = Math.min(height - 60, 46 + list.size() * rowH);
+        int px = (width - pw) / 2, py = 46;
+        g.fill(px - 2, py - 2, px + pw + 2, py + ph + 2, 0xFF8C78E8);
+        g.fill(px, py, px + pw, py + ph, 0xF0101030);
+        g.drawString(font, "TEAM SYNERGY", px + 8, py + 6, 0xFFFFFFFF);
+        String hb = last == null ? "" : "Best bond in party: " + last.bestBond() + "  \u2192  +" + last.bondHearts() + " max hearts (+" + com.xenowarriors.party.Bonds.heartsPer10() + " per 10 bond)";
+        g.drawString(font, hb, px + pw - 8 - font.width(hb), py + 6, 0xFFFF9AD8);
+        String help = "Bond grows by fighting together, kills and revives. Higher bond = stronger synergy; downsides fade out by bond " + com.xenowarriors.party.Bonds.NO_DOWNSIDE + ".";
+        int hy = py + 18;
+        for (var l : font.split(Component.literal(help), pw - 16)) { g.drawString(font, l, px + 8, hy, 0xFF9AA0C8, false); hy += 9; }
+        int y = Math.max(py + 40, hy + 3);
+        if (list.isEmpty()) g.drawString(font, "Loading...", px + 8, y, 0xFF9AA0C8);
+        for (PartyCardsPacket.Syn s : list) {
+            if (y + rowH > py + ph) break;
+            int dot = s.state() == 2 ? 0xFF50F080 : s.state() == 1 ? 0xFFF0C040 : 0xFF505070;
+            g.fill(px + 6, y, px + pw - 6, y + rowH - 3, s.state() == 2 ? 0xC0183A28 : 0xC01A1A36);
+            g.fill(px + 6, y, px + 9, y + rowH - 3, dot);
+            String state = s.state() == 2 ? "ACTIVE  \u2665 bond " + s.bond() : s.state() == 1 ? "needs " + s.members() + "  (bond " + s.bond() + ")" : "not for your character";
+            g.drawString(font, s.name(), px + 13, y + 2, s.state() == 0 ? 0xFF8A8AA8 : 0xFFFFFFFF);
+            g.drawString(font, s.members(), px + 18 + font.width(s.name()), y + 2, 0xFF9AA0C8);
+            g.drawString(font, state, px + pw - 10 - font.width(state), y + 2, dot);
+            String eff = s.effect();
+            if (!s.downside().isEmpty()) eff += "   \u26a0 " + s.downside();
+            g.pose().pushPose();
+            g.pose().translate(px + 13, y + 13, 0);
+            g.pose().scale(0.8F, 0.8F, 1F);
+            g.drawString(font, font.plainSubstrByWidth(eff, (int) ((pw - 24) / 0.8F)), 0, 0, s.state() == 0 ? 0xFF707090 : s.downside().startsWith("(") || s.downside().isEmpty() ? 0xFFD8E0FF : 0xFFFFB0A0);
+            g.pose().popPose();
+            y += rowH;
+        }
+        g.pose().popPose();
     }
 }

@@ -190,7 +190,7 @@ public final class SkillManager {
                 return;
             }
             int cost = SkillLevels.costFor(player, skill.getId(), skill.getKarmaCost(player));   // (ability level / tier)
-            if (com.xenowarriors.party.Synergy.has(player, com.xenowarriors.party.Synergy.OLD_FRIENDS)) cost = Math.round(cost * 0.75F);   // Old Friends: Zane + Mikiko
+            if (com.xenowarriors.party.Synergy.has(player, com.xenowarriors.party.Synergy.OLD_FRIENDS)) cost = Math.round(cost * (1F - Math.min(0.5F, 0.25F * com.xenowarriors.party.Synergy.strength(player, com.xenowarriors.party.Synergy.OLD_FRIENDS))));   // Old Friends: Zane + Mikiko (stronger with the bond)
             if (!Karma.has(player, cost)) {
                 Karma.notEnough(player, cost);
                 return;

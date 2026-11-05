@@ -52,16 +52,75 @@ public final class Synergy {
     private Synergy() {}
 
     public static Set<String> of(ServerPlayer p) { return ACTIVE.getOrDefault(p.getUUID(), Set.of()); }
+
+    /**
+     * Every synergy, for the party menu: its name, the characters it needs (any of {@code a} with any of {@code b}),
+     * what it does at bond 0 (the numbers scale with the bond, see {@link #effect}), and its downside (null if none).
+     */
+    public record Def(String name, Set<String> a, Set<String> b, String members, String downside) {
+        public boolean involves(String c) { return a.contains(c) || b.contains(c); }
+        /** The characters that complete it for {@code c}. */
+        public Set<String> partnersFor(String c) {
+            Set<String> s = new LinkedHashSet<>();
+            if (a.contains(c)) s.addAll(b);
+            if (b.contains(c)) s.addAll(a);
+            return s;
+        }
+    }
+
+    private static final Set<String> SKY_ALL = Set.of("kyrie", "sam", "lexy", "max", "technica");
+    public static final List<Def> DEFS = List.of(
+            new Def(PARTNERS, Set.of("rhalix"), Set.of("mikiko"), "Rhalix + Mikiko", null),
+            new Def(SKYLAND, Set.of("rhalix"), SKY_ALL, "Rhalix + Sky Patrol / Kyrie", null),
+            new Def(GOOFY, Set.of("mikiko"), Set.of("ultima"), "Mikiko + Ultima", null),
+            new Def(SOUL_LINK, Set.of("mikiko"), Set.of("kaeru"), "Mikiko + Kaeru", "If one of you fully dies, so does the other"),
+            new Def(BROTHERS, Set.of("stevie"), Set.of("garry"), "Stevie + Garry", null),
+            new Def(TENJO, Set.of("yuri"), Set.of("ultima"), "Yuri + Ultima", null),
+            new Def(OLD_FRIENDS, Set.of("zane"), Set.of("mikiko"), "Zane + Mikiko", null),
+            new Def(MARRIED, Set.of("max"), Set.of("technica"), "Max + Technica", null));
+
+    public static Def def(String name) { for (Def d : DEFS) if (d.name.equals(name)) return d; return null; }
+
+    /** What a synergy does at this bond level (the numbers grow with it). */
+    public static String effect(String s, int bond) {
+        float k = Bonds.strength(bond);
+        return switch (s) {
+            case PARTNERS -> "+" + pct(0.15F * k) + " damage, faster Karma";
+            case SKYLAND -> "+" + pct(0.10F * k) + " damage (+" + pct(0.20F * k) + " with 3+ of the Sky Patrol)";
+            case GOOFY -> "Rival kills fire you up (+" + pct(0.05F * k) + " damage each, up to 5), random goofing-off bonuses";
+            case SOUL_LINK -> "+" + pct(0.20F * k) + " damage, -" + pct(Math.min(0.5F, 0.15F * k)) + " damage taken, faster Karma";
+            case BROTHERS -> "+" + pct(0.15F * k) + " damage, Brother Blast hits much harder together";
+            case TENJO -> "Ultima +" + pct(0.15F * k) + " damage, Yuri's hacks last longer";
+            case OLD_FRIENDS -> "Skills cost " + pct(Math.min(0.5F, 0.25F * k)) + " less, faster Karma";
+            case MARRIED -> "Your hits heal your partner (" + String.format(java.util.Locale.ROOT, "%.1f", 0.5F * k) + " HP each)";
+            default -> "";
+        };
+    }
+
+    private static String pct(float f) { return Math.round(f * 100) + "%"; }
+
+    /** The bond behind an active synergy: your best bond with a teammate who completes it. */
+    public static int bond(ServerPlayer p, String s) {
+        Def d = def(s);
+        if (d == null) return 0;
+        Set<String> need = d.partnersFor(id(p));
+        int best = 0;
+        for (LivingEntity e : partners(p)) if (need.contains(id(e))) best = Math.max(best, Bonds.level(p, id(e)));
+        return best;
+    }
+
+    /** How strongly a synergy works for this player right now (1 = base, 2 = bond 100). */
+    public static float strength(ServerPlayer p, String s) { return Bonds.strength(bond(p, s)); }
     public static boolean has(ServerPlayer p, String s) { return of(p).contains(s); }
 
-    private static String id(LivingEntity e) {
+    static String id(LivingEntity e) {
         if (e instanceof ServerPlayer p) return ModCapabilities.getType(p).getId();
         if (e instanceof PartyBotEntity b) return b.character().getId();
         return "none";
     }
 
     /** Party members (players and bots) close enough to count, not including p. */
-    private static List<LivingEntity> partners(ServerPlayer p) {
+    public static List<LivingEntity> partners(ServerPlayer p) {
         List<LivingEntity> out = new ArrayList<>();
         Set<ServerPlayer> people = new LinkedHashSet<>(Parties.members(p));
         for (ServerPlayer m : people) {
@@ -122,7 +181,8 @@ public final class Synergy {
             Set<String> before = ACTIVE.getOrDefault(p.getUUID(), Set.of());
             for (String s : now) if (!before.contains(s)) announce(p, s);
             if (now.isEmpty()) ACTIVE.remove(p.getUUID()); else ACTIVE.put(p.getUUID(), now);
-            if (now.contains(PARTNERS) || now.contains(SOUL_LINK)) com.xenowarriors.karma.Karma.add(p, 0.75F);
+            if (now.contains(PARTNERS)) com.xenowarriors.karma.Karma.add(p, 0.75F * strength(p, PARTNERS));
+            if (now.contains(SOUL_LINK)) com.xenowarriors.karma.Karma.add(p, 0.75F * strength(p, SOUL_LINK));
             if (now.contains(GOOFY) && p.getRandom().nextInt(45) == 0) goof(p);
             if (!now.isEmpty() && server.getTickCount() % 60 == 0)
                 p.serverLevel().sendParticles(now.contains(SOUL_LINK) ? ParticleTypes.SOUL : ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 2.1, p.getZ(), 2, 0.2, 0.1, 0.2, 0.01);
@@ -131,17 +191,10 @@ public final class Synergy {
     }
 
     private static void announce(ServerPlayer p, String s) {
-        String what = switch (s) {
-            case PARTNERS -> "+15% damage, faster Karma";
-            case SKYLAND -> "+10% damage";
-            case GOOFY -> "rival kills fire you up, expect some goofing off";
-            case SOUL_LINK -> "+20% damage, -15% damage taken, faster Karma - but if one of you dies, so does the other";
-            case BROTHERS -> "+15% damage, and Brother Blast hits much harder together";
-            case TENJO -> "Ultima +15% damage, Yuri's hacks last longer";
-            case OLD_FRIENDS -> "skills cost 25% less";
-            case MARRIED -> "your hits heal your partner a little";
-            default -> "";
-        };
+        int bond = bond(p, s);
+        Def d = def(s);
+        String what = effect(s, bond) + (d != null && d.downside() != null && Bonds.downside(bond) > 0 ? " - but: " + d.downside().toLowerCase(java.util.Locale.ROOT)
+                + (bond > 0 ? " (" + Math.round(Bonds.downside(bond) * 100) + "% chance, gone at bond " + Bonds.NO_DOWNSIDE + ")" : "") : "") + "  [bond " + bond + "]";
         p.displayClientMessage(Component.literal("Synergy - " + s + ": ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                 .append(Component.literal(what).withStyle(ChatFormatting.YELLOW)), true);
     }
@@ -170,23 +223,24 @@ public final class Synergy {
     public static void onHurt(LivingHurtEvent event) {
         if (event.getSource().getEntity() instanceof ServerPlayer a) {
             Set<String> s = of(a);
-            float mult = 1F;
-            if (s.contains(PARTNERS)) mult += 0.15F;
-            if (s.contains(SKYLAND)) mult += skyPatrolCount(a) >= 3 ? 0.2F : 0.1F;
-            if (s.contains(SOUL_LINK)) mult += 0.2F;
-            if (s.contains(BROTHERS)) mult += 0.15F;
-            if (s.contains(TENJO) && ModCapabilities.getType(a) == CharacterType.ULTIMA) mult += 0.15F;
+            float mult = 1F;                                         // (each bonus x the bond's strength: 1x at bond 0, 2x at 100)
+            if (s.contains(PARTNERS)) mult += 0.15F * strength(a, PARTNERS);
+            if (s.contains(SKYLAND)) mult += (skyPatrolCount(a) >= 3 ? 0.2F : 0.1F) * strength(a, SKYLAND);
+            if (s.contains(SOUL_LINK)) mult += 0.2F * strength(a, SOUL_LINK);
+            if (s.contains(BROTHERS)) mult += 0.15F * strength(a, BROTHERS);
+            if (s.contains(TENJO) && ModCapabilities.getType(a) == CharacterType.ULTIMA) mult += 0.15F * strength(a, TENJO);
             if (s.contains(MARRIED) && !(event.getEntity() instanceof ServerPlayer)) {
+                float heal = 0.5F * strength(a, MARRIED);
                 for (LivingEntity e : partners(a)) {
                     String pid = id(e);
-                    if ((pid.equals("max") || pid.equals("technica")) && !pid.equals(id(a))) e.heal(0.5F);
+                    if ((pid.equals("max") || pid.equals("technica")) && !pid.equals(id(a))) e.heal(heal);
                 }
             }
             int[] r = RIVAL.get(a.getUUID());
-            if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0];
+            if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0] * strength(a, GOOFY);
             if (mult != 1F) event.setAmount(event.getAmount() * mult);
         }
-        if (event.getEntity() instanceof ServerPlayer v && has(v, SOUL_LINK)) event.setAmount(event.getAmount() * 0.85F);
+        if (event.getEntity() instanceof ServerPlayer v && has(v, SOUL_LINK)) event.setAmount(event.getAmount() * (1F - Math.min(0.5F, 0.15F * strength(v, SOUL_LINK))));
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
@@ -211,6 +265,12 @@ public final class Synergy {
             boolean link = (t == CharacterType.MIKIKO && ot == CharacterType.KAERU && linked(o, dead))
                     || (t == CharacterType.KAERU && ot == CharacterType.MIKIKO && linked(dead, o));
             if (!link) continue;
+            // the bond softens it: a chance to hold on, and none of it from bond 50 (Bonds.NO_DOWNSIDE)
+            float risk = Bonds.downside(Bonds.level(o, t.getId()));
+            if (risk <= 0F || o.getRandom().nextFloat() >= risk) {
+                o.displayClientMessage(Component.literal("Your bond with " + dead.getName().getString() + " held - the soul link didn't drag you down.").withStyle(ChatFormatting.LIGHT_PURPLE), false);
+                continue;
+            }
             // a tick later, once every death handler is done: if the death was taken back (sealed, downed), nothing happens
             com.xenowarriors.skill.ServerScheduler.later(1, () -> { if (dead.isDeadOrDying() || !dead.isAlive()) sever(dead, o); });
         }
