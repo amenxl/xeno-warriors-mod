@@ -72,19 +72,11 @@ public final class RebuildTests {
                 l.getGameRules().getRule(GameRules.RULE_MOBGRIEFING).set(true, p.server);
                 log("gamerule xwVillageRebuild=" + l.getGameRules().getBoolean(VillageRebuild.RULE));
                 BlockPos c = p.blockPosition();
-                int gy = Math.max(c.getY(), l.getSeaLevel() + 2);
-                center = new BlockPos(c.getX(), gy, c.getZ());
-                for (int x = -56; x <= 56; x++) for (int z = -56; z <= 56; z++) {
-                    for (int y = -4; y <= 32; y++) {
-                        BlockState s = y < -1 ? Blocks.DIRT.defaultBlockState() : y == -1 ? Blocks.GRASS_BLOCK.defaultBlockState() : Blocks.AIR.defaultBlockState();
-                        BlockPos q = center.offset(x, y, z);
-                        if (l.getBlockState(q) != s) l.setBlock(q, s, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
-                    }
-                }
+                center = l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, c);   // (where /place puts it: the generator's ground)
                 l.getEntitiesOfClass(net.minecraft.world.entity.Entity.class, new AABB(center).inflate(70), e -> !(e instanceof net.minecraft.world.entity.player.Player)).forEach(e -> e.discard());
                 p.getAbilities().flying = true; p.onUpdateAbilities();
                 p.connection.teleport(center.getX() + .5, center.getY() + 30, center.getZ() + .5, 0F, 60F);
-                log("ground at " + center.toShortString());
+                log("place at " + center.toShortString());
             });
         }, 60);
         step(null, () -> server(p -> {
@@ -198,6 +190,7 @@ public final class RebuildTests {
         }
         int[] k = VillageRebuild.workerKinds(village);
         log("t=" + sec + "s restored " + same + "/" + n + " (" + pct(same, n) + ") exact " + exact + " workers humans=" + k[0] + " villagers=" + k[1] + " pending=" + village.pendingCount());
+        if (sec % 15 == 0 || sec <= 10) log("  jobs: " + VillageRebuild.debug(village));
         if (same == n && firstFull < 0) { firstFull = sec; log("COMPLETE after " + sec + "s"); }
     }
 

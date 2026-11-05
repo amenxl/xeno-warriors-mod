@@ -80,6 +80,7 @@ public final class VillageRebuild {
     private static final class Job {
         final Mob w; final ServerLevel l; final RebuildData.Village v;
         int idx; long since, next, checked;
+        String last = "walking";
         Job(Mob w, ServerLevel l, RebuildData.Village v, int idx, long now) { this.w = w; this.l = l; this.v = v; this.idx = idx; since = now; next = now + 10; }
     }
 
@@ -347,6 +348,7 @@ public final class VillageRebuild {
         }
         if (dist <= reach && now >= j.next) {
             Place r = place(l, j.v, j.idx, j.w);
+            j.last = r == Place.WAIT ? "wait:" + why : r.name();
             if (r == Place.DONE) {
                 j.next = now + (20 + l.random.nextInt(20)) / Math.max(1, speed);
                 if (!repick(j, now)) { stopWalking(j.w); return false; }
@@ -395,6 +397,20 @@ public final class VillageRebuild {
     }
 
     /** Who's rebuilding this village right now: [humans, villagers] (tests). */
+    private static String why = "";
+
+    /** What each worker of this village is doing (tests). */
+    public static String debug(RebuildData.Village v) {
+        StringBuilder sb = new StringBuilder();
+        for (Job j : JOBS.values()) if (j.v == v) {
+            BlockPos p = j.idx >= 0 ? v.pos(j.idx) : null;
+            sb.append(j.w instanceof Villager ? "V" : "H").append('@').append(j.w.blockPosition().toShortString()).append("->")
+              .append(p == null ? "-" : p.toShortString() + " " + v.state(j.idx).getBlock().getName().getString())
+              .append(String.format(" d=%.1f ", p == null ? -1 : j.w.getEyePosition().distanceTo(Vec3.atCenterOf(p)))).append(j.last).append("; ");
+        }
+        return sb.toString();
+    }
+
     public static int[] workerKinds(RebuildData.Village v) {
         int[] n = new int[2];
         for (Job j : JOBS.values()) if (j.v == v) n[j.w instanceof Villager ? 1 : 0]++;
@@ -440,9 +456,8 @@ public final class VillageRebuild {
         boolean lowerFirst = q == null || q.getY() >= p.getY();
         BlockPos a = lowerFirst ? p : q, b = lowerFirst ? q : p;
         BlockState sa = lowerFirst ? s : s2, sb = lowerFirst ? s2 : s;
-        if (!sa.canSurvive(l, a))
-            return Place.WAIT;                                 // (a torch with no wall yet, a door with no floor)
-        if (!clear(l, a, sa) || (b != null && !clear(l, b, sb))) return Place.WAIT;
+        if (!sa.canSurvive(l, a)) { why = "survive"; return Place.WAIT; }
+        if (!clear(l, a, sa) || (b != null && !clear(l, b, sb))) { why = "blocked"; return Place.WAIT; }
         if (b != null) {
             l.setBlock(a, sa, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             l.setBlock(b, sb, Block.UPDATE_ALL);
