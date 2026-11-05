@@ -1,8 +1,8 @@
 package com.xenowarriors.client;
 
+import com.xenowarriors.altar.GearUpgrades;
 import com.xenowarriors.altar.KarmaAltarMenu;
 import com.xenowarriors.mikiko.BladeUpgrades;
-import com.xenowarriors.mikiko.Hekublade;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -35,7 +35,7 @@ public class KarmaAltarScreen extends AbstractContainerScreen<KarmaAltarMenu> {
     protected void containerTick() {
         super.containerTick();
         int lvl = menu.currentLevel();
-        upgrade.active = lvl >= 0 && lvl < BladeUpgrades.MAX && menu.material().getCount() >= BladeUpgrades.MATERIALS[lvl];
+        upgrade.active = lvl >= 0 && lvl < menu.maxLevel() && menu.material().getCount() >= menu.materialsNeeded(lvl);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class KarmaAltarScreen extends AbstractContainerScreen<KarmaAltarMenu> {
             g.fill(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF0E0C16);
         }
         Slot blade = menu.slots.get(KarmaAltarMenu.BLADE), mat = menu.slots.get(KarmaAltarMenu.MATERIAL);
-        if (!blade.hasItem()) g.drawCenteredString(font, "⚔", x + blade.x + 8, y + blade.y + 4, 0xFF6A5A40);
+        if (!blade.hasItem()) g.drawCenteredString(font, "⛏", x + blade.x + 8, y + blade.y + 4, 0xFF6A5A40);
         if (!mat.hasItem()) g.drawCenteredString(font, "✦", x + mat.x + 8, y + mat.y + 4, 0xFF5A4A70);
         g.drawCenteredString(font, "+", x + 71, y + 39, 0xFF8080A0);
     }
@@ -66,28 +66,36 @@ public class KarmaAltarScreen extends AbstractContainerScreen<KarmaAltarMenu> {
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
         g.drawString(font, title, 8, 6, 0xFFE0C0FF, false);
-        ItemStack b = menu.blade();
-        int sky = Hekublade.isBlade(b) ? BladeUpgrades.sky(b) : 0, dark = Hekublade.isBlade(b) ? BladeUpgrades.dark(b) : 0;
-        g.drawString(font, "Sky Edge " + pips(sky), 8, 18, SKY, false);
-        g.drawString(font, "Dark Edge " + pips(dark), 92, 18, DARK, false);
+        ItemStack it = menu.item();
+        String target = menu.targetKind();
+        if ("gear".equals(target)) {
+            boolean sk = "sky".equals(GearUpgrades.path(it));
+            g.drawString(font, (sk ? "Sky Forged " : "Dark Forged ") + pips(GearUpgrades.level(it), GearUpgrades.MAX), 8, 18, sk ? SKY : DARK, false);
+        } else if (menu.mikiko()) {
+            // his blade's edges, read from him (no need to put the blade in)
+            g.drawString(font, "Sky Edge " + pips(menu.bladeSky(), BladeUpgrades.MAX), 8, 18, SKY, false);
+            g.drawString(font, "Dark Edge " + pips(menu.bladeDark(), BladeUpgrades.MAX), 92, 18, DARK, false);
+        } else g.drawString(font, "Forge Sky / Corrupted gear", 8, 18, 0xFFB0A0D0, false);
         int lvl = menu.currentLevel();
         String line;
         int color = 0xA0A0B0;
-        if (!Hekublade.isBlade(b)) line = "Place the Hekublade";
-        else if (KarmaAltarMenu.path(menu.material()) == null) line = "Add Sky Crystals or Corrupted Shards";
-        else if (lvl >= BladeUpgrades.MAX) line = "This edge is maxed";
+        String mat = KarmaAltarMenu.path(menu.material());
+        if (target == null) line = it.isEmpty() ? "Put in Sky or Corrupted gear" : "That can't be upgraded here";
+        else if (mat == null) line = "gear".equals(target) ? ("sky".equals(GearUpgrades.path(it)) ? "Add Sky Crystals" : "Add Corrupted Shards")
+                : "Add Sky Crystals or Shards for the blade";
+        else if (lvl < 0) line = "sky".equals(GearUpgrades.path(it)) ? "Sky gear takes Sky Crystals" : "Corrupted gear takes Shards";
+        else if (lvl >= menu.maxLevel()) line = "gear".equals(target) ? "This is fully forged" : "This edge is maxed";
         else {
-            boolean sk = "sky".equals(KarmaAltarMenu.path(menu.material()));
-            line = "Lv " + (lvl + 1) + ": " + BladeUpgrades.MATERIALS[lvl] + "x, " + BladeUpgrades.KARMA[lvl] + " Karma";
-            color = sk ? SKY : DARK;
+            line = ("blade".equals(target) ? "Hekublade " : "") + "Lv " + (lvl + 1) + ": " + menu.materialsNeeded(lvl) + "x, " + menu.karmaNeeded(lvl) + " Karma";
+            color = "sky".equals(mat) ? SKY : DARK;
         }
         g.drawString(font, line, 8, 58, color, false);
         g.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xA0A0B0, false);
     }
 
-    private static String pips(int n) {
+    private static String pips(int n, int max) {
         StringBuilder s = new StringBuilder();
-        for (int i = 0; i < BladeUpgrades.MAX; i++) s.append(i < n ? '◆' : '◇');
+        for (int i = 0; i < max; i++) s.append(i < n ? '◆' : '◇');
         return s.toString();
     }
 
@@ -96,7 +104,10 @@ public class KarmaAltarScreen extends AbstractContainerScreen<KarmaAltarMenu> {
         super.renderTooltip(g, mouseX, mouseY);
         if (upgrade.isHovered()) {
             String p = KarmaAltarMenu.path(menu.material());
-            Component tip = "sky".equals(p) ? Component.literal("Sky Edge: more damage, much more vs flying targets; hits lift them")
+            boolean gear = "gear".equals(menu.targetKind());
+            Component tip = gear ? Component.literal("+" + (int) GearUpgrades.DAMAGE + " damage (weapons), +" + Math.round(GearUpgrades.DIG * 100)
+                    + "% digging (tools), +" + Math.round(GearUpgrades.DURABILITY * 100) + "% durability, full repair")
+                    : "sky".equals(p) ? Component.literal("Sky Edge: more damage, much more vs flying targets; hits lift them")
                     : "dark".equals(p) ? Component.literal("Dark Edge: more damage and life drain; level 3 withers")
                     : Component.literal("Needs a material");
             g.renderTooltip(font, tip, mouseX, mouseY);

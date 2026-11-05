@@ -63,11 +63,38 @@ public final class RoomTech {
 
     public static boolean is(Level l) { return l.dimension() == LEVEL; }
 
-    public static void use(ServerPlayer p) {
-        if (com.xenowarriors.journey.Journey.inRun(p)) { p.displayClientMessage(Component.literal("Not on a Journey").withStyle(ChatFormatting.GRAY), true); return; }
+    /** Survival: opening a Room costs this much Karma, and there has to be at least one enemy around to pull in. */
+    public static final float KARMA = 40F;
+    /** Survival: ticks before the next Room can be opened (from when you open one). */
+    public static final int COOLDOWN = 1200;
+    /** Items in a Room that may go back with you: what mobs (and players) dropped when they died, and what players threw. */
+    private static final String KEEP = "xw_room_keep", NEXT = "xw_room_next";
+
+    /** Whether this player has a Room open right now. */
+    public static boolean open(ServerPlayer p) { return BY_PLAYER.containsKey(p.getUUID()); }
+
+    /** Opens a Room (or leaves the one you're in). Returns true if a new Room was opened. */
+    public static boolean use(ServerPlayer p) {
+        if (com.xenowarriors.journey.Journey.inRun(p)) { p.displayClientMessage(Component.literal("Not on a Journey").withStyle(ChatFormatting.GRAY), true); return false; }
         Room existing = BY_PLAYER.get(p.getUUID());
-        if (existing != null) { close(p.server, existing, "You left the Room."); return; }
-        if (is(p.level())) return;
+        if (existing != null) { close(p.server, existing, "You left the Room."); return false; }
+        if (is(p.level())) return false;
+        if (com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p)) {
+            p.displayClientMessage(Component.literal("The Room can't copy this place").withStyle(ChatFormatting.GRAY), true); return false;
+        }
+        boolean survival = !p.isCreative() && !p.isSpectator();
+        if (survival) {
+            AABB around = new AABB(p.blockPosition()).inflate(R, 8, R);
+            boolean any = !p.serverLevel().getEntitiesOfClass(Mob.class, around, m -> m instanceof Enemy && m.isAlive() && !m.isPassenger()
+                    && m.canChangeDimensions() && !m.getTags().contains("xw_blade_anchor")).isEmpty();
+            if (!any) { p.displayClientMessage(Component.literal("No enemies nearby to pull into a Room").withStyle(ChatFormatting.GRAY), true); return false; }
+            long wait = p.getPersistentData().getLong(NEXT) - p.serverLevel().getGameTime();
+            if (wait > 0 && wait <= COOLDOWN) {
+                p.displayClientMessage(Component.literal("Room Technology is recharging (" + (wait + 19) / 20 + "s)").withStyle(ChatFormatting.GRAY), true); return false;
+            }
+            if (!com.xenowarriors.karma.Karma.trySpend(p, KARMA)) return false;
+            p.getPersistentData().putLong(NEXT, p.serverLevel().getGameTime() + COOLDOWN);
+        }
         ServerLevel room = p.server.getLevel(LEVEL);
         if (room == null) { p.sendSystemMessage(Component.literal("The Room dimension isn't loaded.").withStyle(ChatFormatting.RED)); return; }
         ServerLevel src = p.serverLevel();
@@ -90,6 +117,7 @@ public final class RoomTech {
         src.playSound(null, r.origin, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1F, 1.6F);
         move(p, room, toRoom(r, p.position()), p.getYRot());
         p.displayClientMessage(Component.literal("ROOM • " + r.enemies.size() + " enem" + (r.enemies.size() == 1 ? "y" : "ies") + " pulled in").withStyle(ChatFormatting.AQUA), true);
+        return true;
     }
 
     private static Vec3 toRoom(Room r, Vec3 pos) { return pos.subtract(Vec3.atLowerCornerOf(r.origin)).add(Vec3.atLowerCornerOf(r.center)); }
@@ -142,7 +170,8 @@ public final class RoomTech {
         AABB area = new AABB(r.center).inflate(R + 2, UP + DOWN + 4, R + 2);
         // survivors, drops and XP go back with you
         for (Entity e : room.getEntitiesOfClass(Entity.class, area, e -> !(e instanceof ServerPlayer)))
-            if (e instanceof ItemEntity || e instanceof ExperienceOrb || (e instanceof LivingEntity le && le.isAlive())) move(e, back, fromRoom(r, e.position()), e.getYRot());
+            if ((e instanceof ItemEntity && e.getPersistentData().getBoolean(KEEP)) || e instanceof ExperienceOrb || (e instanceof LivingEntity le && le.isAlive()))
+                move(e, back, fromRoom(r, e.position()), e.getYRot());
             else e.discard();
         ServerPlayer p = server.getPlayerList().getPlayer(r.player);
         if (p != null && is(p.level()) && p.isAlive()) {
@@ -177,6 +206,39 @@ public final class RoomTech {
                 else if (now - r.clearedAt >= 60) close(server, r, "Room cleared.");
             }
         }
+    }
+
+    // ------------------------------------------------------------------ survival: the copy is only a copy
+    // Everything in a Room is a copy of the real world, so nothing taken out of its blocks may come back with you
+    // (mining a copied diamond block would make diamonds from nothing): broken blocks drop nothing, explosions just
+    // clear blocks, and only what the fighters dropped (and items players threw) goes back when the Room closes.
+
+    @SubscribeEvent
+    public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (is(event.getEntity().level())) for (ItemEntity it : event.getDrops()) it.getPersistentData().putBoolean(KEEP, true);
+    }
+
+    @SubscribeEvent
+    public static void onToss(net.minecraftforge.event.entity.item.ItemTossEvent event) {
+        if (is(event.getEntity().level())) event.getEntity().getPersistentData().putBoolean(KEEP, true);
+    }
+
+    @SubscribeEvent
+    public static void onJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide() || !is(event.getLevel()) || event.loadedFromDisk()) return;
+        if (event.getEntity() instanceof ItemEntity it && !it.getPersistentData().getBoolean(KEEP)) event.setCanceled(true);   // (dropped by a copied block)
+    }
+
+    @SubscribeEvent
+    public static void onBreak(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+        if (event.getLevel() instanceof Level l && is(l)) event.setExpToDrop(0);
+    }
+
+    @SubscribeEvent
+    public static void onExplode(net.minecraftforge.event.level.ExplosionEvent.Detonate event) {
+        if (!is(event.getLevel())) return;
+        for (BlockPos b : event.getAffectedBlocks()) if (!event.getLevel().getBlockState(b).is(Blocks.BARRIER)) event.getLevel().setBlock(b, Blocks.AIR.defaultBlockState(), 3);
+        event.getAffectedBlocks().clear();
     }
 
     /** Logged in inside a Room that's gone (e.g. after a restart): back to spawn. */
