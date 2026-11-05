@@ -283,6 +283,7 @@ final class Dmz6Features {
                 z.moveTo(at.x + 3, at.y, at.z - 3, 0, 0); z.setNoAi(true);
                 z.setItemSlot(EquipmentSlot.MAINHAND, DmzGuns.random(z.getRandom()));
                 p.serverLevel().addFreshEntity(z);
+                z.tickCount = 100;                                              // (setLastHurtByPlayer stamps the hit with its age: a brand-new mob's 0 would read as "not hit by a player")
                 z.setLastHurtByPlayer(p);                                       // (killed by the player: equipment can drop)
                 if (i == 0) {
                     Object ch = "?";
