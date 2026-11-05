@@ -234,7 +234,8 @@ public final class BotQuestTests {
             Q[2] = startFirst(p, killQuests(), skip);
             log("player start: " + Q[2] + " owner " + (Q[2] == null ? "-" : own(p, Q[2])) + " bot active before follow " + (b == null ? "-" : DmzBotQuests.active(b)) + " autoStarts " + before);
         }); }, 20);
-        step("dmzbotq_chat", () -> server(p -> {
+        step(null, () -> mc.setScreen(null), 3);
+        step("dmzbotq_chat", () -> { mc.setScreen(null); server(p -> {
             PartyBotEntity b = bot(p);
             if (b == null || Q[2] == null) return;
             List<String> act = DmzBotQuests.active(b);
@@ -249,7 +250,7 @@ public final class BotQuestTests {
                 }
             }
             dump();
-        }), 40);
+        }); }, 40);
         // 3c. the bot can do yours: it takes the same one, and one kill counts for both
         step(null, () -> server(p -> {
             PartyBotEntity b = bot(p);
@@ -360,7 +361,8 @@ public final class BotQuestTests {
             DmzTalkNpcs.update(p);
             log("talk: no duplicate on the next check: copies=" + DmzTalkNpcs.count(p));
         }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 40);
-        step("dmzbotq_npc", () -> {}, 5);
+        step(null, () -> mc.setScreen(null), 10);
+        step("dmzbotq_npc", () -> mc.setScreen(null), 3);
         step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
             String[] t = tq[0] != null ? tq[0] : tq[1];
             if (t == null) return;
@@ -371,7 +373,7 @@ public final class BotQuestTests {
             DmzTalkNpcs.update(p);
             log("talk: copy gone=" + e.isRemoved() + " copies=" + DmzTalkNpcs.count(p) + (e.isRemoved() && String.valueOf(own(p, t[0])).contains("completed=true") ? " OK" : " FAIL"));
         }); }, 20);
-        step("dmzbotq_npc_gone", () -> Dmz6Tests.noDmzScreen(mc), 10);
+        step("dmzbotq_npc_gone", () -> mc.setScreen(null), 10);
         // the same for the bot's own mission: the person comes to the owner; talking to them hands it in for the bot
         step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
             PartyBotEntity b = bot(p);
