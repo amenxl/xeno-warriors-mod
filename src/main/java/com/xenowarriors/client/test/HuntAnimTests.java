@@ -75,6 +75,7 @@ public final class HuntAnimTests {
         if (all || f.contains("fx")) fx(mc, l);
         if (all || f.contains("inv")) inventory(mc, l);
         if (all || f.contains("track")) tracking(mc, l);
+        if (all || f.contains("fpko")) firstPersonDown(mc, l);
         if (all || f.contains("gal")) gallery(mc, l);
         if (all || f.contains("gear")) gear(mc, l);
         if (all || f.contains("pose")) poses(mc, l);
@@ -395,6 +396,18 @@ public final class HuntAnimTests {
         l.add(new Step(null, () -> log("check netsu seen by someone coming into view: "
                 + (com.xenowarriors.client.ClientSkillState.netsuActive(mc.player.getId()) ? "PASS" : "FAIL")), 2));
         l.add(new Step(null, () -> server(p -> { com.xenowarriors.mikiko.Netsu.stop(p); p.setGameMode(GameType.CREATIVE); }), 10));
+    }
+
+    // ------------------------------------------------------------------ first person while knocked down (DragonMineZ draws your body)
+
+    private static void firstPersonDown(Minecraft mc, List<Step> l) {
+        setChar(l, CharacterType.RHALIX, 0);
+        l.add(new Step(null, () -> { me(mc); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = true; face(mc); mc.player.setXRot(60F);
+            server(p -> { home(p); p.setGameMode(GameType.SURVIVAL); }); }, 15));
+        l.add(new Step("huntanim_fpko_standing", () -> {}, 2));
+        l.add(new Step(null, () -> server(p -> com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KNOCKDOWN, 200)), 25));
+        l.add(new Step("huntanim_fpko_knockdown", () -> { face(mc); mc.player.setXRot(60F); log("fpko knockdown " + snapshot(mc) + " drawnTipped=" + com.xenowarriors.client.KnockdownClient.tipped); }, 2));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.anim.Poses.clearState(p); p.setGameMode(GameType.CREATIVE); }), 10));
     }
 
     // ------------------------------------------------------------------ the inventory's player preview in odd states
