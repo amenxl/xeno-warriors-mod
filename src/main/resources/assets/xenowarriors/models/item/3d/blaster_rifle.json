@@ -1,0 +1,1293 @@
+{
+ "credit": "Xeno Warriors Recarnet - 3D held model (gen_models.py)",
+ "gui_light": "front",
+ "render_type": "minecraft:cutout",
+ "texture_size": [
+  16,
+  16
+ ],
+ "textures": {
+  "steel": "xenowarriors:item/3d/dmz_gun_steel",
+  "dark": "xenowarriors:item/3d/dmz_gun_dark",
+  "grip": "xenowarriors:item/3d/dmz_gun_grip",
+  "glow": "xenowarriors:item/3d/dmz_glow_cyan",
+  "particle": "xenowarriors:item/3d/dmz_gun_steel"
+ },
+ "display": {
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    1.2,
+    -2.6
+   ],
+   "scale": [
+    0.7,
+    0.7,
+    0.7
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    1.2,
+    -2.6
+   ],
+   "scale": [
+    0.7,
+    0.7,
+    0.7
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    4,
+    0
+   ],
+   "translation": [
+    -4,
+    4,
+    0
+   ],
+   "scale": [
+    0.75,
+    0.75,
+    0.75
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    -4,
+    0
+   ],
+   "translation": [
+    -4,
+    4,
+    0
+   ],
+   "scale": [
+    0.75,
+    0.75,
+    0.75
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.45,
+    0.45,
+    0.45
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    -90,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.7,
+    0.7,
+    0.7
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    -90,
+    0
+   ],
+   "translation": [
+    0,
+    6,
+    0
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  },
+  "gui": {
+   "rotation": [
+    15,
+    -90,
+    0
+   ],
+   "translation": [
+    0.5,
+    1,
+    0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "elements": [
+  {
+   "from": [
+    7.0,
+    7.4,
+    3.5
+   ],
+   "to": [
+    9.0,
+    10.6,
+    11.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      0.0,
+      7.25,
+      3.2
+     ],
+     "texture": "#steel"
+    },
+    "south": {
+     "uv": [
+      7.0,
+      11.2,
+      9.0,
+      14.4
+     ],
+     "texture": "#steel"
+    },
+    "east": {
+     "uv": [
+      4.0,
+      11.2,
+      12.0,
+      14.4
+     ],
+     "texture": "#steel"
+    },
+    "west": {
+     "uv": [
+      1.0,
+      0.0,
+      9.0,
+      3.2
+     ],
+     "texture": "#steel"
+    },
+    "up": {
+     "uv": [
+      3.5,
+      7.0,
+      5.5,
+      15.0
+     ],
+     "texture": "#steel"
+    },
+    "down": {
+     "uv": [
+      10.5,
+      1.0,
+      12.5,
+      9.0
+     ],
+     "texture": "#steel"
+    }
+   },
+   "name": "receiver"
+  },
+  {
+   "from": [
+    6.9,
+    8.6,
+    4.5
+   ],
+   "to": [
+    9.1,
+    9.2,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      13.8,
+      3.85,
+      16.0,
+      4.45
+     ],
+     "texture": "#glow"
+    },
+    "south": {
+     "uv": [
+      3.45,
+      13.47,
+      5.65,
+      14.07
+     ],
+     "texture": "#glow"
+    },
+    "east": {
+     "uv": [
+      5.0,
+      5.78,
+      11.0,
+      6.38
+     ],
+     "texture": "#glow"
+    },
+    "west": {
+     "uv": [
+      6.25,
+      15.4,
+      12.25,
+      16.0
+     ],
+     "texture": "#glow"
+    },
+    "up": {
+     "uv": [
+      3.45,
+      6.25,
+      5.65,
+      12.25
+     ],
+     "texture": "#glow"
+    },
+    "down": {
+     "uv": [
+      8.62,
+      1.25,
+      10.82,
+      7.25
+     ],
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "side_glow"
+  },
+  {
+   "from": [
+    7.2,
+    7.6,
+    -1.0
+   ],
+   "to": [
+    8.8,
+    10.2,
+    3.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.4,
+      5.03,
+      7.0,
+      7.62
+     ],
+     "texture": "#dark"
+    },
+    "south": {
+     "uv": [
+      12.6,
+      13.4,
+      14.2,
+      16.0
+     ],
+     "texture": "#dark"
+    },
+    "east": {
+     "uv": [
+      8.62,
+      13.4,
+      13.12,
+      16.0
+     ],
+     "texture": "#dark"
+    },
+    "west": {
+     "uv": [
+      2.88,
+      0.0,
+      7.38,
+      2.6
+     ],
+     "texture": "#dark"
+    },
+    "up": {
+     "uv": [
+      3.6,
+      2.88,
+      5.2,
+      7.38
+     ],
+     "texture": "#dark"
+    },
+    "down": {
+     "uv": [
+      0.0,
+      8.62,
+      1.6,
+      13.12
+     ],
+     "texture": "#dark"
+    }
+   },
+   "name": "handguard"
+  },
+  {
+   "from": [
+    7.05,
+    7.8,
+    -0.5
+   ],
+   "to": [
+    8.95,
+    10.0,
+    0.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0.0,
+      0.0,
+      1.9,
+      2.2
+     ],
+     "texture": "#glow"
+    },
+    "south": {
+     "uv": [
+      0.0,
+      10.35,
+      1.9,
+      12.55
+     ],
+     "texture": "#glow"
+    },
+    "east": {
+     "uv": [
+      15.5,
+      10.35,
+      16.0,
+      12.55
+     ],
+     "texture": "#glow"
+    },
+    "west": {
+     "uv": [
+      11.62,
+      13.8,
+      12.12,
+      16.0
+     ],
+     "texture": "#glow"
+    },
+    "up": {
+     "uv": [
+      3.53,
+      9.69,
+      5.42,
+      10.19
+     ],
+     "texture": "#glow"
+    },
+    "down": {
+     "uv": [
+      14.1,
+      7.75,
+      16.0,
+      8.25
+     ],
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "coil"
+  },
+  {
+   "from": [
+    7.05,
+    7.8,
+    1.0
+   ],
+   "to": [
+    8.95,
+    10.0,
+    1.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      10.58,
+      13.8,
+      12.48,
+      16.0
+     ],
+     "texture": "#glow"
+    },
+    "south": {
+     "uv": [
+      3.53,
+      12.08,
+      5.42,
+      14.28
+     ],
+     "texture": "#glow"
+    },
+    "east": {
+     "uv": [
+      1.94,
+      0.0,
+      2.44,
+      2.2
+     ],
+     "texture": "#glow"
+    },
+    "west": {
+     "uv": [
+      11.62,
+      1.73,
+      12.12,
+      3.93
+     ],
+     "texture": "#glow"
+    },
+    "up": {
+     "uv": [
+      7.05,
+      5.81,
+      8.95,
+      6.31
+     ],
+     "texture": "#glow"
+    },
+    "down": {
+     "uv": [
+      8.81,
+      15.5,
+      10.71,
+      16.0
+     ],
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "coil"
+  },
+  {
+   "from": [
+    7.05,
+    7.8,
+    2.5
+   ],
+   "to": [
+    8.95,
+    10.0,
+    3.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1.76,
+      3.45,
+      3.66,
+      5.65
+     ],
+     "texture": "#glow"
+    },
+    "south": {
+     "uv": [
+      8.81,
+      8.62,
+      10.71,
+      10.82
+     ],
+     "texture": "#glow"
+    },
+    "east": {
+     "uv": [
+      5.81,
+      12.08,
+      6.31,
+      14.28
+     ],
+     "texture": "#glow"
+    },
+    "west": {
+     "uv": [
+      7.75,
+      8.62,
+      8.25,
+      10.82
+     ],
+     "texture": "#glow"
+    },
+    "up": {
+     "uv": [
+      14.1,
+      7.75,
+      16.0,
+      8.25
+     ],
+     "texture": "#glow"
+    },
+    "down": {
+     "uv": [
+      8.81,
+      1.94,
+      10.71,
+      2.44
+     ],
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "coil"
+  },
+  {
+   "from": [
+    7.55,
+    8.4,
+    -7.0
+   ],
+   "to": [
+    8.45,
+    9.3,
+    -1.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      15.1,
+      11.32,
+      16.0,
+      12.22
+     ],
+     "texture": "#dark"
+    },
+    "south": {
+     "uv": [
+      15.1,
+      3.77,
+      16.0,
+      4.68
+     ],
+     "texture": "#dark"
+    },
+    "east": {
+     "uv": [
+      2.5,
+      3.77,
+      8.5,
+      4.68
+     ],
+     "texture": "#dark"
+    },
+    "west": {
+     "uv": [
+      2.5,
+      13.21,
+      8.5,
+      14.11
+     ],
+     "texture": "#dark"
+    },
+    "up": {
+     "uv": [
+      15.1,
+      5.0,
+      16.0,
+      11.0
+     ],
+     "texture": "#dark"
+    },
+    "down": {
+     "uv": [
+      9.44,
+      10.0,
+      10.34,
+      16.0
+     ],
+     "texture": "#dark"
+    }
+   },
+   "name": "barrel"
+  },
+  {
+   "from": [
+    7.2,
+    8.05,
+    -8.0
+   ],
+   "to": [
+    8.8,
+    9.65,
+    -7.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0.0,
+      7.2,
+      1.6,
+      8.8
+     ],
+     "texture": "#steel"
+    },
+    "south": {
+     "uv": [
+      1.8,
+      12.6,
+      3.4,
+      14.2
+     ],
+     "texture": "#steel"
+    },
+    "east": {
+     "uv": [
+      1.88,
+      7.2,
+      2.88,
+      8.8
+     ],
+     "texture": "#steel"
+    },
+    "west": {
+     "uv": [
+      13.12,
+      10.8,
+      14.12,
+      12.4
+     ],
+     "texture": "#steel"
+    },
+    "up": {
+     "uv": [
+      14.4,
+      11.25,
+      16.0,
+      12.25
+     ],
+     "texture": "#steel"
+    },
+    "down": {
+     "uv": [
+      1.8,
+      13.12,
+      3.4,
+      14.12
+     ],
+     "texture": "#steel"
+    }
+   },
+   "name": "emitter"
+  },
+  {
+   "from": [
+    7.5,
+    8.35,
+    -8.1
+   ],
+   "to": [
+    8.5,
+    9.35,
+    -8.0
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1.88,
+      0.0,
+      2.88,
+      1.0
+     ],
+     "texture": "#glow"
+    },
+    "south": {
+     "uv": [
+      3.75,
+      3.75,
+      4.75,
+      4.75
+     ],
+     "texture": "#glow"
+    },
+    "east": {
+     "uv": [
+      13.78,
+      11.25,
+      14.03,
+      12.25
+     ],
+     "texture": "#glow"
+    },
+    "west": {
+     "uv": [
+      1.97,
+      13.12,
+      2.22,
+      14.12
+     ],
+     "texture": "#glow"
+    },
+    "up": {
+     "uv": [
+      1.88,
+      3.94,
+      2.88,
+      4.19
+     ],
+     "texture": "#glow"
+    },
+    "down": {
+     "uv": [
+      9.38,
+      1.97,
+      10.38,
+      2.22
+     ],
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "muzzle"
+  },
+  {
+   "from": [
+    7.3,
+    7.0,
+    11.5
+   ],
+   "to": [
+    8.7,
+    9.8,
+    17.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0.0,
+      0.0,
+      1.4,
+      2.8
+     ],
+     "texture": "#dark"
+    },
+    "south": {
+     "uv": [
+      10.95,
+      4.95,
+      12.35,
+      7.75
+     ],
+     "texture": "#dark"
+    },
+    "east": {
+     "uv": [
+      8.75,
+      13.2,
+      14.75,
+      16.0
+     ],
+     "texture": "#dark"
+    },
+    "west": {
+     "uv": [
+      2.5,
+      8.25,
+      8.5,
+      11.05
+     ],
+     "texture": "#dark"
+    },
+    "up": {
+     "uv": [
+      5.48,
+      8.75,
+      6.88,
+      14.75
+     ],
+     "texture": "#dark"
+    },
+    "down": {
+     "uv": [
+      14.6,
+      2.5,
+      16.0,
+      8.5
+     ],
+     "texture": "#dark"
+    }
+   },
+   "name": "stock"
+  },
+  {
+   "from": [
+    7.2,
+    6.4,
+    16.6
+   ],
+   "to": [
+    8.8,
+    10.2,
+    17.8
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0.0,
+      3.05,
+      1.6,
+      6.85
+     ],
+     "texture": "#grip"
+    },
+    "south": {
+     "uv": [
+      12.6,
+      1.53,
+      14.2,
+      5.32
+     ],
+     "texture": "#grip"
+    },
+    "east": {
+     "uv": [
+      12.95,
+      9.15,
+      14.15,
+      12.95
+     ],
+     "texture": "#grip"
+    },
+    "west": {
+     "uv": [
+      14.8,
+      6.1,
+      16.0,
+      9.9
+     ],
+     "texture": "#grip"
+    },
+    "up": {
+     "uv": [
+      12.6,
+      1.85,
+      14.2,
+      3.05
+     ],
+     "texture": "#grip"
+    },
+    "down": {
+     "uv": [
+      7.2,
+      9.25,
+      8.8,
+      10.45
+     ],
+     "texture": "#grip"
+    }
+   },
+   "name": "butt"
+  },
+  {
+   "from": [
+    7.4,
+    3.2,
+    6.0
+   ],
+   "to": [
+    8.6,
+    7.4,
+    8.4
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      12.95,
+      5.9,
+      14.15,
+      10.1
+     ],
+     "texture": "#grip"
+    },
+    "south": {
+     "uv": [
+      5.55,
+      4.43,
+      6.75,
+      8.62
+     ],
+     "texture": "#grip"
+    },
+    "east": {
+     "uv": [
+      11.9,
+      1.48,
+      14.3,
+      5.68
+     ],
+     "texture": "#grip"
+    },
+    "west": {
+     "uv": [
+      0.0,
+      0.0,
+      2.4,
+      4.2
+     ],
+     "texture": "#grip"
+    },
+    "up": {
+     "uv": [
+      3.7,
+      8.5,
+      4.9,
+      10.9
+     ],
+     "texture": "#grip"
+    },
+    "down": {
+     "uv": [
+      9.25,
+      13.6,
+      10.45,
+      16.0
+     ],
+     "texture": "#grip"
+    }
+   },
+   "rotation": {
+    "angle": 22.5,
+    "axis": "x",
+    "origin": [
+     8,
+     7.4,
+     7
+    ]
+   },
+   "name": "grip"
+  },
+  {
+   "from": [
+    7.6,
+    6.4,
+    8.4
+   ],
+   "to": [
+    8.4,
+    7.4,
+    9.8
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      13.3,
+      7.5,
+      14.1,
+      8.5
+     ],
+     "texture": "#dark"
+    },
+    "south": {
+     "uv": [
+      1.9,
+      7.5,
+      2.7,
+      8.5
+     ],
+     "texture": "#dark"
+    },
+    "east": {
+     "uv": [
+      5.47,
+      0.0,
+      6.88,
+      1.0
+     ],
+     "texture": "#dark"
+    },
+    "west": {
+     "uv": [
+      10.95,
+      1.88,
+      12.35,
+      2.88
+     ],
+     "texture": "#dark"
+    },
+    "up": {
+     "uv": [
+      0.0,
+      7.3,
+      0.8,
+      8.7
+     ],
+     "texture": "#dark"
+    },
+    "down": {
+     "uv": [
+      1.9,
+      3.65,
+      2.7,
+      5.05
+     ],
+     "texture": "#dark"
+    }
+   },
+   "name": "guard"
+  },
+  {
+   "from": [
+    7.5,
+    10.6,
+    4.5
+   ],
+   "to": [
+    8.5,
+    11.2,
+    10.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      13.12,
+      1.93,
+      14.12,
+      2.52
+     ],
+     "texture": "#dark"
+    },
+    "south": {
+     "uv": [
+      0.0,
+      11.55,
+      1.0,
+      12.15
+     ],
+     "texture": "#dark"
+    },
+    "east": {
+     "uv": [
+      10.0,
+      7.7,
+      16.0,
+      8.3
+     ],
+     "texture": "#dark"
+    },
+    "west": {
+     "uv": [
+      1.25,
+      0.0,
+      7.25,
+      0.6
+     ],
+     "texture": "#dark"
+    },
+    "up": {
+     "uv": [
+      0.0,
+      5.0,
+      1.0,
+      11.0
+     ],
+     "texture": "#dark"
+    },
+    "down": {
+     "uv": [
+      9.38,
+      10.0,
+      10.38,
+      16.0
+     ],
+     "texture": "#dark"
+    }
+   },
+   "name": "rail"
+  },
+  {
+   "from": [
+    7.3,
+    11.2,
+    5.5
+   ],
+   "to": [
+    8.7,
+    12.4,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.48,
+      0.0,
+      6.88,
+      1.2
+     ],
+     "texture": "#steel"
+    },
+    "south": {
+     "uv": [
+      7.3,
+      1.85,
+      8.7,
+      3.05
+     ],
+     "texture": "#steel"
+    },
+    "east": {
+     "uv": [
+      3.0,
+      12.95,
+      7.0,
+      14.15
+     ],
+     "texture": "#steel"
+    },
+    "west": {
+     "uv": [
+      9.0,
+      1.85,
+      13.0,
+      3.05
+     ],
+     "texture": "#steel"
+    },
+    "up": {
+     "uv": [
+      7.3,
+      10.5,
+      8.7,
+      14.5
+     ],
+     "texture": "#steel"
+    },
+    "down": {
+     "uv": [
+      7.3,
+      10.5,
+      8.7,
+      14.5
+     ],
+     "texture": "#steel"
+    }
+   },
+   "name": "scope"
+  },
+  {
+   "from": [
+    7.5,
+    11.4,
+    5.4
+   ],
+   "to": [
+    8.5,
+    12.2,
+    5.5
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      13.12,
+      7.6,
+      14.12,
+      8.4
+     ],
+     "texture": "#glow"
+    },
+    "south": {
+     "uv": [
+      1.88,
+      7.6,
+      2.88,
+      8.4
+     ],
+     "texture": "#glow"
+    },
+    "east": {
+     "uv": [
+      9.84,
+      15.2,
+      10.09,
+      16.0
+     ],
+     "texture": "#glow"
+    },
+    "west": {
+     "uv": [
+      15.75,
+      3.8,
+      16.0,
+      4.6
+     ],
+     "texture": "#glow"
+    },
+    "up": {
+     "uv": [
+      0.0,
+      3.94,
+      1.0,
+      4.19
+     ],
+     "texture": "#glow"
+    },
+    "down": {
+     "uv": [
+      0.0,
+      0.0,
+      1.0,
+      0.25
+     ],
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "lens"
+  }
+ ]
+}

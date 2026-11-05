@@ -1,4 +1,19 @@
 {
-  "parent": "minecraft:item/handheld",
-  "textures": { "layer0": "xenowarriors:item/blaster_rifle" }
+ "loader": "forge:separate_transforms",
+ "gui_light": "front",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "particle": "xenowarriors:item/blaster_rifle"
+ },
+ "base": {
+  "parent": "xenowarriors:item/3d/blaster_rifle"
+ },
+ "perspectives": {
+  "gui": {
+   "parent": "minecraft:item/generated",
+   "textures": {
+    "layer0": "xenowarriors:item/blaster_rifle"
+   }
+  }
+ }
 }

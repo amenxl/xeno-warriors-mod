@@ -1,6 +1,19 @@
 {
- "parent": "minecraft:item/handheld",
+ "loader": "forge:separate_transforms",
+ "gui_light": "front",
+ "render_type": "minecraft:cutout",
  "textures": {
-  "layer0": "xenowarriors:item/forms/heku_pickaxe"
+  "particle": "xenowarriors:item/forms/heku_pickaxe"
+ },
+ "base": {
+  "parent": "xenowarriors:item/3d/heku_pickaxe"
+ },
+ "perspectives": {
+  "gui": {
+   "parent": "minecraft:item/generated",
+   "textures": {
+    "layer0": "xenowarriors:item/forms/heku_pickaxe"
+   }
+  }
  }
 }
