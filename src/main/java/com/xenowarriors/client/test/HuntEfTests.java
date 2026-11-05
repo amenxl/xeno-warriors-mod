@@ -118,6 +118,7 @@ public final class HuntEfTests {
         z.moveTo(at.x, at.y, at.z, 180F, 0F);
         z.setNoAi(true);
         z.setPersistenceRequired();
+        z.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));   // (no burning in the sun)
         z.setYBodyRot(180F); z.setYHeadRot(180F);
         p.serverLevel().addFreshEntity(z);
         return z;
@@ -216,6 +217,9 @@ public final class HuntEfTests {
             // knocked out: no attacks at all
             clickCheck(mc, l, "knocked out", () -> com.xenowarriors.client.party.PartyClient.setKnockedOut(mc.player.getUUID(), 200),
                     () -> com.xenowarriors.client.party.PartyClient.setKnockedOut(mc.player.getUUID(), 0), () -> "knocked out " + com.xenowarriors.client.party.PartyClient.knockedOut(mc.player));
+            clickCheck(mc, l, "clash again", () -> { c[2] = com.xenowarriors.client.ClashClient.pushes; com.xenowarriors.client.ClashClient.set(true, 0.5F, 0, "Test"); },
+                    () -> com.xenowarriors.client.ClashClient.set(false, 0.5F, 0, ""),
+                    () -> "clash pushes " + (com.xenowarriors.client.ClashClient.pushes - c[2]) + " active " + com.xenowarriors.client.ClashClient.active());
 
             // ---- 5. lock-on key in battle mode: Epic Fight's lock-on, ours follows it
             l.add(new Step(null, () -> UiTest.server(p -> { Zombie z = zombie(p, origin.add(0, 0, 6)); dummy = z.getId(); }), 20));
@@ -233,10 +237,24 @@ public final class HuntEfTests {
     /** One left click in battle mode: did Epic Fight swing, and what did our side get? */
     private static void clickCheck(Minecraft mc, List<Step> l, String what, Runnable before, Runnable after, java.util.function.Supplier<String> result) {
         boolean[] swung = new boolean[1];
-        l.add(new Step(null, () -> { look(mc, 0F, 2F); before.run(); swung[0] = false; mc.player.swinging = false; press(mc, mc.options.keyAttack, true); }, 1));
+        int[] seen = new int[2];
+        l.add(new Step(null, () -> { look(mc, 0F, 2F); before.run(); swung[0] = false; mc.player.swinging = false; seen[0] = attackEvents; seen[1] = com.xenowarriors.client.OurClicks.attacksKept;
+            press(mc, mc.options.keyAttack, true); }, 1));
         l.add(new Step(null, () -> { swung[0] |= Ef.attacking(); press(mc, mc.options.keyAttack, false); }, 1));
         for (int i = 0; i < 10; i++) l.add(new Step(null, () -> swung[0] |= Ef.attacking(), 1));
-        l.add(new Step(null, () -> { log("battle-mode click, " + what + ": epic fight attack " + swung[0] + ", " + result.get()); after.run(); }, 25));
+        l.add(new Step(null, () -> { log("battle-mode click, " + what + ": epic fight attack " + swung[0] + ", " + result.get()
+                + " (attack click events " + (attackEvents - seen[0]) + ", kept-for-us checks " + (com.xenowarriors.client.OurClicks.attacksKept - seen[1])
+                + ", canceled " + attackCanceled + ")"); after.run(); }, 25));
+    }
+
+    private static int attackEvents;
+    private static boolean attackCanceled;
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
+    public static void onClick(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+        if (!event.isAttack()) return;
+        attackEvents++;
+        attackCanceled = event.isCanceled();
     }
 
     /** Epic Fight calls (only reached when it's installed). */
