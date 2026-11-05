@@ -70,12 +70,12 @@ public final class BotShield {
     static void tick(PartyBotEntity b) {
         if (b.tickCount % 40 == 13) pickBest(b);
         ItemStack off = b.getOffhandItem();
-        boolean blocking = b.isUsingItem() && b.getUsedItemHand() == InteractionHand.OFFHAND;
+        boolean blocking = b.isUsingItem() && b.getUsedItemHand() == InteractionHand.OFF_HAND;
         boolean can = BotErrands.isShield(off) && !b.downed() && !b.rangedActive && !b.eating() && !b.drinking() && !b.sparring() && b.reviving == null;
         if (!can) { if (blocking) b.stopUsingItem(); b.guardTicks = 0; return; }
         Vec3 from = b.tickCount % 2 == 0 || blocking ? threat(b) : null;
         if (from != null) {
-            if (!blocking) { b.startUsingItem(InteractionHand.OFFHAND); b.guards++; }
+            if (!blocking) { b.startUsingItem(InteractionHand.OFF_HAND); b.guards++; }
             b.guardTicks = 12;
             Vec3 d = from.subtract(b.position());
             float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));            // (face it: a shield only stops what's in front)

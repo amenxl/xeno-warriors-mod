@@ -110,6 +110,8 @@ public class PartyBotEntity extends PathfinderMob {
     boolean gathering; public int gathered;
     /** (Tests) crafting looks held back because it wasn't safe; crafting tables it made itself. */
     public int offersHeld, tablesMade, seatShots;
+    /** Yuri: when she next looks about for hamburger makings, and how often she has. */
+    public int yuriNext = 300 + (int) (Math.random() * 300), yuriLooks;
 
     public boolean drinking() { return drinkTicks >= 0; }
     public boolean selfFlyingForTest() { return selfFlying; }

@@ -62,13 +62,12 @@ public final class BotErrands extends Goal {
 
     private final PartyBotEntity b;
     private int lastLook, nextGive, nextFurnace, nextShardJob, walked;
-    public int nextYuri;
     private double closest;
 
     BotErrands(PartyBotEntity b) {
         this.b = b;
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
-        nextGive = 40 + (int) (Math.random() * 60); nextFurnace = 60; nextYuri = 300 + (int) (Math.random() * 300);
+        nextGive = 40 + (int) (Math.random() * 60); nextFurnace = 60;
     }
 
     // ---------------------------------------------------------------- is it quiet?
@@ -159,7 +158,7 @@ public final class BotErrands extends Goal {
         if (b.character() == CharacterType.ULTIMA) e = robotJob(o);
         if (e == null) e = collectJob();
         if (e == null && b.tickCount >= nextGive) { nextGive = b.tickCount + 100; e = giveJob(o); }
-        if (e == null && b.character() == CharacterType.YURI && b.tickCount >= nextYuri) { nextYuri = b.tickCount + 600 + b.getRandom().nextInt(600); e = yuriLook(o); }
+        if (e == null && b.character() == CharacterType.YURI && b.tickCount >= b.yuriNext) { b.yuriNext = b.tickCount + 600 + b.getRandom().nextInt(600); e = yuriLook(o); }
         if (e == null && b.tickCount >= nextFurnace) { nextFurnace = b.tickCount + 60; e = furnaceJob(o); }
         return e;
     }
@@ -569,7 +568,8 @@ public final class BotErrands extends Goal {
 
     /** Every 30-60 s with no enemies about: hamburger makings lying near (she fetches them), or a field of wheat or cows (she says where). */
     Errand yuriLook(ServerPlayer o) {
-        if (enemyNear(b, 16)) return null;
+        if (enemyNear(b, 16)) { PartyBots.testLog(b, "yuri: enemies about - no looking around"); return null; }
+        b.yuriLooks++;
         PartyBots.testLog(b, "yuri looks about for hamburger makings");
         ItemEntity near = null; double nd = 1e9;
         for (ItemEntity it : b.level().getEntitiesOfClass(ItemEntity.class, b.getBoundingBox().inflate(16, 6, 16), ItemEntity::isAlive)) {
