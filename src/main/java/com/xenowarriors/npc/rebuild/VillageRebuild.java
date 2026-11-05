@@ -300,13 +300,27 @@ public final class VillageRebuild {
         return false;
     }
 
-    /** No gap left under it (straight below or diagonally below): so it's built from the bottom up and nothing floats. */
-    private static boolean supported(RebuildData.Village v, BlockPos p) {
-        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
-            int j = v.index(p.offset(dx, -1, dz));
-            if (j >= 0 && v.pending.get(j)) return false;
+    /**
+     * Built from the bottom up so nothing floats: the spot right under it isn't still waiting, and nothing waits
+     * diagonally under it either - unless it can hang on to a block beside it that's already there (a wall going up
+     * next to a corner whose bit of crater nobody can get at yet).
+     */
+    private static boolean supported(ServerLevel l, RebuildData.Village v, BlockPos p) {
+        int below = v.index(p.below());
+        if (below >= 0 && v.pending.get(below)) return false;
+        boolean diag = false;
+        for (int dx = -1; dx <= 1 && !diag; dx++) for (int dz = -1; dz <= 1; dz++) {
+            int j = (dx | dz) == 0 ? -1 : v.index(p.offset(dx, -1, dz));
+            if (j >= 0 && v.pending.get(j)) { diag = true; break; }
         }
-        return true;
+        if (!diag) return true;
+        if (!l.getBlockState(p.below()).isAir()) return true;
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            BlockPos q = p.relative(d);
+            int j = v.index(q);
+            if ((j < 0 || !v.pending.get(j)) && l.getBlockState(q).isSolidRender(l, q)) return true;
+        }
+        return false;
     }
 
     /** The best open spot for this worker: low first, then close by. -1: none. */
@@ -323,7 +337,7 @@ public final class VillageRebuild {
                 int lo = v.index(p.below());
                 if (lo >= 0 && v.pending.get(lo)) continue;                          // (goes in with its lower half)
             }
-            if (!supported(v, p)) continue;
+            if (!supported(l, v, p)) continue;
             double d2 = w.distanceToSqr(p.getX() + .5, p.getY() + .5, p.getZ() + .5);
             if (d2 > far) continue;                                                 // (too far to walk to: someone closer)
             if (firstY == Integer.MIN_VALUE) firstY = p.getY();
