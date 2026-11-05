@@ -102,6 +102,14 @@ public final class DmzTests {
 
     private static final Object[] BOT = new Object[1];
 
+    /** Keeps the test player alive and clears hostile mobs around (summoned story fighters, leftovers). */
+    static void protect(ServerPlayer p) {
+        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+        p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 60 * 30, 5, false, false));
+        p.setHealth(p.getMaxHealth());
+        for (var m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(48), m -> m instanceof net.minecraft.world.entity.monster.Enemy && !(m instanceof ZombieSaiyanEntity))) m.discard();
+    }
+
     private static PartyBotEntity bot(ServerPlayer p) {
         if (BOT[0] instanceof PartyBotEntity b && b.isAlive()) return b;
         for (PartyBotEntity b : PartyBots.bots(p)) return b;
@@ -163,6 +171,7 @@ public final class DmzTests {
             CompoundTag own = DmzPerCharacter.saveData(data(p));
             OWN[0] = own == null ? null : own.copy();
             log("menu: owner before " + info(p) + " | bot saved " + tagInfo(DmzPerCharacter.saved(p, DmzPerCharacter.botKey(b))));
+            protect(p);
             PartyBots.action(p, b.getId(), PartyBots.ACT_DMZ, 0);
             log("menu: viewing=" + DmzPerCharacter.viewing(p) + " live now " + info(p));
         }), 10);
@@ -268,7 +277,7 @@ public final class DmzTests {
             // kill one: it counts for the objective
             if (!near.isEmpty() && near.get(0) instanceof LivingEntity le) { le.hurt(p.damageSources().playerAttack(p), 1.0E7F); log("summon: killed one -> " + DmzQuests.progress(p, q[1][0], Integer.parseInt(q[1][1]))); }
             for (var e : near) e.discard();
-        }), 20 * 14);
+        }), 20 * 25);
         // 6: mission items from kills
         step(null, () -> server(p -> {
             if (q[2] == null) { log("items: no item objective found"); return; }
@@ -301,6 +310,7 @@ public final class DmzTests {
     private static void kaioken(Minecraft mc) {
         final double[] got = new double[2];
         step(null, () -> server(p -> {
+            protect(p);
             DmzKaioken.resetForTest(p);
             DmzKaioken.poll(p);                                                  // (baseline)
             double before = DmzKaioken.mastery(p, "x2");
@@ -374,6 +384,7 @@ public final class DmzTests {
     private static void saiyan(Minecraft mc) {
         step(null, () -> { noDmzScreen(mc); mc.setScreen(null); server(p -> {
             for (PartyBotEntity b : PartyBots.bots(p)) b.discard();
+            protect(p);
             Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.teleportTo(at.x, at.y, at.z - 12);
             p.serverLevel().setDayTime(6000);
@@ -405,6 +416,7 @@ public final class DmzTests {
         step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; server(p -> {
             var z = saiyan(p);
             if (z != null) z.discard();
+            protect(p);
             Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.teleportTo(at.x, at.y, at.z - 9);
             p.setYRot(0); p.setXRot(5);

@@ -268,7 +268,10 @@ public final class DmzBots {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttack(LivingAttackEvent e) {
         if (e.getEntity().level().isClientSide) return;
-        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && DmzPerCharacter.viewing(p) != null) DmzPerCharacter.endView(p, "hit");
+        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && e.getSource().getEntity() instanceof LivingEntity by && by != p
+                && DmzPerCharacter.viewing(p) != null) {                             // (attacked by something - not a fall, fire or the like)
+            DmzPerCharacter.endView(p, "hit by " + by.getType().getDescriptionId());
+        }
         if (e.getSource().getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && DmzPerCharacter.viewing(p) != null) DmzPerCharacter.endView(p, "attacked");
     }
 
