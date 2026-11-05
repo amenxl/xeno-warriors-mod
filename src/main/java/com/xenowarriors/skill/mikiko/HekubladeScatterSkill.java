@@ -26,6 +26,12 @@ public class HekubladeScatterSkill implements Skill {
     private static final int COOLDOWN = 14 * 20;
     private static final Map<UUID, List<HekubladeShardEntity>> ACTIVE = new HashMap<>();
 
+    /** Switched characters: the blades still waiting in the air go (the next character can't fire them). */
+    public static void clear(UUID id) {
+        List<HekubladeShardEntity> blades = ACTIVE.remove(id);
+        if (blades != null) for (HekubladeShardEntity b : blades) if (!b.isRemoved() && !b.fired()) b.discard();
+    }
+
     @Override
     public String getId() { return "hekublade_scatter"; }
 

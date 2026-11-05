@@ -22,7 +22,7 @@ public class ScentTrackSkill implements Skill {
         if (t == null) {
             double best = Double.MAX_VALUE;
             for (LivingEntity e : p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(64))) {
-                if (e == p || !(e instanceof net.minecraft.world.entity.monster.Enemy || e instanceof ServerPlayer)) continue;
+                if (e == p || !(e instanceof net.minecraft.world.entity.monster.Enemy || e instanceof ServerPlayer) || !com.xenowarriors.skill.SkillTargeting.canTarget(p, e)) continue;   // (never her own party)
                 double d = e.distanceToSqr(p);
                 if (d < best) { best = d; t = e; }
             }

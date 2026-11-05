@@ -31,6 +31,7 @@ public final class CharacterManager {
     public static void setCharacter(ServerPlayer player, CharacterType type) {
         if (com.xenowarriors.mikiko.HekubladeRealm.inRealm(player) && !com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(player)) com.xenowarriors.mikiko.HekubladeRealm.leave(player);   // (only Mikiko can open the way out)
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);               // (Kaeru inside a blade would be stuck a spectator)
+        if (ModCapabilities.getType(player) != type) com.xenowarriors.skill.SwitchCleanup.onSwitch(player);   // (the old character's stances, fields and takeovers end)
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             CharacterInventories.switchTo(player, data.key(), data.key(type));   // each character has its own inventory
             if (type != CharacterType.NONE && com.xenowarriors.compat.DmzPerCharacter.switchTo(player, data.key(), data.key(type))) pickDmzRace(player, type.getDisplayName().getString());   // ...and their own DragonMineZ character
@@ -65,6 +66,7 @@ public final class CharacterManager {
         }
         if (com.xenowarriors.mikiko.HekubladeRealm.inRealm(player) && !com.xenowarriors.mikiko.HekubladeRealm.isPrisoner(player)) com.xenowarriors.mikiko.HekubladeRealm.leave(player);   // (only Mikiko can open the way out)
         com.xenowarriors.kaeru.KaeruSoul.forceOut(player);
+        com.xenowarriors.skill.SwitchCleanup.onSwitch(player);
         String from = d.key();
         CharacterInventories.switchTo(player, from, PlayerCharacter.key(CharacterType.YOU, slot));
         if (com.xenowarriors.compat.DmzPerCharacter.switchTo(player, from, PlayerCharacter.key(CharacterType.YOU, slot))) pickDmzRace(player, d.youSlots[slot].name);

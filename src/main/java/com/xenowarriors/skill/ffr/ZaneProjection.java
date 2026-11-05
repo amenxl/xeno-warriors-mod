@@ -30,6 +30,9 @@ public final class ZaneProjection {
 
     public static boolean active(Entity e) { Long t = ACTIVE.get(e.getUUID()); return t != null && t > e.level().getGameTime(); }
 
+    /** Switched characters: the projection ends (whoever he switched to is really there). */
+    public static void clear(UUID id) { ACTIVE.remove(id); }
+
     public static boolean use(ServerPlayer p) {
         if (active(p)) return false;
         if (!p.isCreative() && !com.xenowarriors.karma.Karma.trySpend(p, COST)) return false;

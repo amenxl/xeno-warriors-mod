@@ -38,6 +38,11 @@ public final class SrSkills {
 
     static long now(ServerPlayer p) { return p.level().getGameTime(); }
     static boolean on(Map<UUID, Long> m, ServerPlayer p) { Long t = m.get(p.getUUID()); return t != null && t > now(p); }
+    /** (a party bot's states are kept under its stand-in player's UUID - the stand-in is who used the skill) */
+    static boolean on(Map<UUID, Long> m, LivingEntity e) { Long t = m.get(com.xenowarriors.bot.PartyBots.skillKey(e)); return t != null && t > e.level().getGameTime(); }
+
+    /** Switched characters: Logan's Redirect, Kill's Play Weak and Devil Unleashed end with the character who used them. */
+    public static void clear(UUID id) { REDIRECT.remove(id); FEIGN.remove(id); DEVIL_MODE.remove(id); }
 
     static void dashSlash(ServerPlayer p, float dmg, DustParticleOptions trail) {
         Vec3 dir = p.getLookAngle().multiply(1, 0.2, 1).normalize();
@@ -333,8 +338,10 @@ public final class SrSkills {
 
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent e) {
-        if (e.getSource().getEntity() instanceof ServerPlayer p && e.getSource().getDirectEntity() == p) {
-            if (on(FEIGN, p)) { e.setAmount(e.getAmount() * 3F); FEIGN.remove(p.getUUID()); }
+        var src = e.getSource().getEntity();
+        if ((src instanceof ServerPlayer || src instanceof com.xenowarriors.bot.PartyBotEntity) && e.getSource().getDirectEntity() == src) {   // (a party bot's own blows count too)
+            LivingEntity p = (LivingEntity) src;
+            if (on(FEIGN, p)) { e.setAmount(e.getAmount() * 3F); FEIGN.remove(com.xenowarriors.bot.PartyBots.skillKey(p)); }
             if (on(DEVIL_MODE, p)) e.getEntity().addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 1));
         }
     }
