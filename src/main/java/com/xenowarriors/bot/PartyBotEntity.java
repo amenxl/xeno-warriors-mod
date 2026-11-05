@@ -646,6 +646,7 @@ public class PartyBotEntity extends PathfinderMob {
         super.aiStep();
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
+        if (pendingHp >= 0 && tickCount > 200) pendingHp = -1;                  // (what didn't come back by now stays as it is)
         if (downed()) {
             if (++downedTicks > PartyBots.BLEED_OUT) { PartyBots.bleedOut(this); return; }
             if (tickCount % 10 == 0) ((ServerLevel) level()).sendParticles(net.minecraft.core.particles.ParticleTypes.DAMAGE_INDICATOR, getX(), getY() + 0.5, getZ(), 1, .3, .1, .3, 0);
@@ -768,7 +769,7 @@ public class PartyBotEntity extends PathfinderMob {
         if (downed() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !(sparring() && src.getEntity() == owner())) return false;
         boolean r = super.hurt(src, amount);
-        if (r) lastHurtAt = tickCount;
+        if (r) { lastHurtAt = tickCount; pendingHp = -1; }
         if (r && src.getEntity() instanceof LivingEntity att && !(src.getEntity() == owner() && sparring())) { relayTarget = att; relayUntil = level().getGameTime() + 200; }
         return r;
     }
@@ -788,6 +789,27 @@ public class PartyBotEntity extends PathfinderMob {
         if (!level().isClientSide && !journey()) { PartyBots.checkIn(this, owner()); com.xenowarriors.party.PartySwap.botLost(owner(), character()); }   // (the void, /kill: their things go home first)
         super.die(src);
     }
+
+    /**
+     * Health from a saved record (relog, re-add, back from a Journey) that its max health couldn't hold yet - its bond
+     * hearts come from teammates (the owner's other bots) who spawn a moment after it. It gets that health back as its
+     * max health rises, in its first 10 seconds and until it's hurt. -1: none.
+     */
+    float pendingHp = -1;
+    /** It came back from a saved record (its health is the saved one, not a fresh full bar). */
+    boolean loadedRecord;
+
+    /** Its max health just changed (bond hearts, DragonMineZ health): keep its health in range, give back saved health, top up a brand-new bot. */
+    public void maxHealthChanged(float before) {
+        if (getHealth() > getMaxHealth()) setHealth(getMaxHealth());
+        if (pendingHp >= 0) {
+            if (getHealth() < pendingHp) setHealth(Math.min(pendingHp, getMaxHealth()));
+            if (getHealth() >= pendingHp - 0.01F) pendingHp = -1;
+        } else if (tickCount < 5 && !loadedRecord && before < getMaxHealth()) setHealth(getMaxHealth());   // (just out, fresh: at full health)
+    }
+
+    /** (Tests) saved health still waiting to be given back. */
+    public float pendingHpForTest() { return pendingHp; }
 
     public void revive() {
         entityData.set(DOWNED, false); setHealth(getMaxHealth() * 0.4F); downedTicks = 0; com.xenowarriors.party.ReviveCircle.forget(getUUID());
@@ -949,7 +971,12 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.set(MODE, t.getInt("mode"));
         if (t.contains("inv")) inventory.fromTag(t.getList("inv", 10));
         if (t.contains("armour")) loadArmour(t.getList("armour", 10));
-        if (t.contains("hp")) setHealth(Math.max(1F, t.getFloat("hp")));
+        if (t.contains("hp")) {
+            float raw = t.getFloat("hp"), hp = Float.isFinite(raw) ? Math.max(1F, raw) : getMaxHealth();   // (a broken number never becomes its health)
+            setHealth(hp);
+            if (hp > getHealth() + 0.01F) pendingHp = hp;  // (more than its max holds yet: a bond partner isn't back yet - see maxHealthChanged)
+            loadedRecord = true;
+        }
         if (t.contains("kept")) getPersistentData().put("xw_inv_kept", t.getCompound("kept"));
     }
 }

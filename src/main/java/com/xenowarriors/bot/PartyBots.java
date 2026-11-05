@@ -176,14 +176,16 @@ public final class PartyBots {
         List<String> cooling = new ArrayList<>();
         long now = p.level().getGameTime();
         for (CharacterType t : CharacterType.PLAYABLE) if (p.getPersistentData().getLong(REJOIN + t.getId()) > now) cooling.add(t.getId());
-        int free = Math.max(0, Math.min(MAX_BOTS, Parties.MAX_SIZE - partySize(p)));   // (up to 3: you plus three makes a full party)
+        for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
+        int waiting = waitingFor(p.getUUID());
+        int free = Math.max(0, Math.min(MAX_BOTS - bots(p).size() - waiting, Parties.MAX_SIZE - partySize(p) - waiting));   // (up to 3: you plus three makes a full party)
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free), p);
     }
 
     public static void add(ServerPlayer p, String[] ids) {
         if (!p.isAlive() || com.xenowarriors.vr.Vr.is(p.level())) return;   // (not from the death screen or inside VR)
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { p.sendSystemMessage(Component.literal("No bot teammates on a Journey - it's just you and your partner.").withStyle(ChatFormatting.RED)); return; }
-        int free = Parties.MAX_SIZE - partySize(p);
+        int free = Parties.MAX_SIZE - partySize(p) - waitingFor(p.getUUID());     // (ones waiting outside the Hekublade still take their place)
         Set<String> taken = new HashSet<>();
         for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
         for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
@@ -191,6 +193,7 @@ public final class PartyBots {
             CharacterType t = CharacterType.byId(id);
             if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (4 people and bots).").withStyle(ChatFormatting.RED)); return; }
             if (t == CharacterType.NONE || !Arrays.asList(CharacterType.PLAYABLE).contains(t) || taken.contains(id)) continue;
+            if (!canFollowTo(t, p.level())) { p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " can't come into the Hekublade (only Kaeru can).").withStyle(ChatFormatting.RED)); continue; }
             if ((t == CharacterType.AIONI && taken.contains("rhalix")) || (t == CharacterType.RHALIX && taken.contains("aioni"))) {
                 p.sendSystemMessage(Component.literal("Ai-oni and Rhalix can never be in the same party.").withStyle(ChatFormatting.RED)); continue; }
             if (com.xenowarriors.character.Seasons.highest(p.server) < t.season()) { p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is Season " + t.season() + " content.").withStyle(ChatFormatting.RED)); continue; }
@@ -223,6 +226,7 @@ public final class PartyBots {
         if (!teleportNear(b, p)) b.moveTo(p.getX(), p.getY(), p.getZ(), p.getYRot(), 0);   // (nowhere to stand: beside them, never at the world's origin)
         b.setYRot(p.getYRot());
         p.serverLevel().addFreshEntity(b);
+        com.xenowarriors.party.Bonds.applyTeamBots(p);                          // (the bots back before it: their bond hearts with it come in now - with their saved health)
         p.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, b.getX(), b.getY() + 1, b.getZ(), 12, .3, .5, .3, .02);
         if (record == null) p.sendSystemMessage(Component.literal("").append(b.label()).append(" joined your party (level " + b.botLevel() + ").").withStyle(ChatFormatting.AQUA));
         return b;
@@ -440,6 +444,11 @@ public final class PartyBots {
     public static boolean teleportNear(PartyBotEntity b, ServerPlayer o) {
         if (b.level() != o.level()) {
             if (b.journey()) { b.discard(); return true; }
+            if (b.downed()) {                                                     // (left lying there: it goes home to recover, as when left behind in this world - never back up for free)
+                testLog(b, "left behind while down (owner changed world) - goes home");
+                bleedOut(b);
+                return true;
+            }
             if (!canFollowTo(b.character(), o.level())) return false;                 // (waits outside the Hekublade)
             CompoundTag rec = b.record();
             CharacterType t = b.character();
@@ -530,6 +539,8 @@ public final class PartyBots {
         BotCrafting.forget(bot);                                                  // (an offer to a bot that's gone: logout, owner away)
         BotSupport.forget(bot);
         BotForms.forget(bot);
+        BotTeamUlt.forget(bot);
+        com.xenowarriors.party.ReviveCircle.forget(bot);
         ANIM_SENT.remove(bot);
     }
 

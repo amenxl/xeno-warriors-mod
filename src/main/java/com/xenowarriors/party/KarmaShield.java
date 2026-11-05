@@ -81,7 +81,7 @@ public final class KarmaShield {
         ACTIVE.removeIf(s -> {
             s.age++;
             boolean revived = !PartyBots.isDown(s.downed);
-            if (s.age > MAX_TICKS || !s.owner.isAlive() || s.owner.isRemoved() || s.owner.level() != s.downed.level() || revived
+            if (s.age > MAX_TICKS || !s.owner.isAlive() || s.owner.isRemoved() || s.downed.isRemoved() || s.owner.level() != s.downed.level() || revived   // (a downed bot that bled out and went home: nobody left to guard)
                     || s.owner.position().distanceToSqr(s.center) > (R + 1.5) * (R + 1.5)) {
                 XenoWarriors.LOGGER.info("Karma shield down after {} ticks ({}), stopped {} projectiles, pushed {}", s.age, revived ? "revived" : "ended", blockedProjectiles, pushed);
                 off(s);
@@ -113,6 +113,10 @@ public final class KarmaShield {
             return false;
         });
     }
+
+    /** Shields are this world's (their entities go with it): none carry into the next save opened (singleplayer). */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) { ACTIVE.clear(); }
 
     /** Nothing from outside gets through to the two inside. */
     @SubscribeEvent

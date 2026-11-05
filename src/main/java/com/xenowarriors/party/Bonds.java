@@ -239,16 +239,13 @@ public final class Bonds {
         return best;
     }
 
-    private static final java.util.Map<UUID, Integer> APPLIED = new java.util.HashMap<>();
 
     public static void applyHealth(ServerPlayer p) {
         AttributeInstance hp = p.getAttribute(Attributes.MAX_HEALTH);
         if (hp == null) return;
         int hearts = hearts(best(p));
-        Integer was = APPLIED.get(p.getUUID());
         AttributeModifier cur = hp.getModifier(HEALTH_ID);
-        if (was != null && was == hearts && (cur != null) == (hearts > 0)) return;
-        APPLIED.put(p.getUUID(), hearts);
+        if (cur != null ? Math.abs(cur.getAmount() - hearts * 2.0) < 1.0E-4 : hearts <= 0) return;   // (what's on the player itself: a stale note from another world or life never hides a wrong amount)
         hp.removeModifier(HEALTH_ID);
         if (hearts > 0) hp.addPermanentModifier(new AttributeModifier(HEALTH_ID, "Xeno Warriors bond", hearts * 2.0, AttributeModifier.Operation.ADDITION));
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
@@ -272,8 +269,7 @@ public final class Bonds {
         float before = b.getMaxHealth();
         hp.removeModifier(BOT_HEALTH_ID);
         if (hearts > 0) hp.addTransientModifier(new AttributeModifier(BOT_HEALTH_ID, "Xeno Warriors bond", hearts * 2.0, AttributeModifier.Operation.ADDITION));
-        if (b.getHealth() > b.getMaxHealth()) b.setHealth(b.getMaxHealth());
-        if (b.tickCount < 5 && before < b.getMaxHealth()) b.setHealth(b.getMaxHealth());   // (just out: at full health)
+        b.maxHealthChanged(before);                                            // (in range; a relogged bot gets its saved health back; a fresh one starts full)
         Integer was = BOT_APPLIED.put(b.getUUID(), hearts);
         if (was == null || was != hearts)
             XenoWarriors.LOGGER.info("XW bond hearts: {} bot best bond {} -> +{} hearts, maxHp {} -> {}", b.character().getId(), best, hearts, Math.round(before), Math.round(b.getMaxHealth()));
