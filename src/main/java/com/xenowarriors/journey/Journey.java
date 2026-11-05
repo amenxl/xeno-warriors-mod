@@ -86,6 +86,8 @@ public final class Journey {
         /** Bridge blocks per link (from step id * 1000 + to step id), so a route that closes can take its bridge away. */
         final Map<Integer, List<BlockPos>> bridges = new HashMap<>();
         boolean cleared = true, powerUp, powerNext;
+        /** Over (cleared or failed): everyone's being sent home together - nobody "left" it. */
+        boolean ending;
         Scenario scenario = Scenario.NONE; Foe foe = Foe.MIXED; Challenge challenge = Challenge.NO_DOWNS; boolean challengeOk;
         long chooseUntil, spawnAt, battleStart, battleEnd;
         /** On a healing step: when everyone's out of the pods (0 = not resting). */
@@ -352,7 +354,7 @@ public final class Journey {
         ModNetwork.sendToPlayer(new JourneyStatePacket(new CompoundTag(), OPEN_NONE), p);
         if (r.members.isEmpty()) { close(p.server, r); return; }
         if (r.host.equals(p.getUUID())) r.host = r.members.get(0).id;
-        for (Member o : r.members) {
+        if (!r.ending) for (Member o : r.members) {
             ServerPlayer op = p.server.getPlayerList().getPlayer(o.id);
             if (op != null) op.sendSystemMessage(msg(p.getGameProfile().getName() + " left the Journey" + (r.phase != LOBBY ? " - their characters went with them" : ""), ChatFormatting.YELLOW));
         }
@@ -363,8 +365,15 @@ public final class Journey {
     }
 
     private static void restore(ServerPlayer p, Member m) {
-        if (m.karma >= 0) { float k = m.karma; com.xenowarriors.skill.ServerScheduler.later(2, () -> p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(k); })); }
         restore(p, m.original, m.mode, m.back == null ? null : m.back.dim(), m.back == null ? null : m.back.pos(), m.back == null ? 0F : m.back.yRot());
+        if (m.karma >= 0) {
+            // the Karma you had before the journey (battles fill it up): now - a player logging out mid-run is saved right
+            // after this, so a later-only reset never reached them and they kept the full bar - and again once the
+            // character switch has settled
+            float k = m.karma;
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(k));
+            com.xenowarriors.skill.ServerScheduler.later(2, () -> { if (!p.hasDisconnected()) p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(k)); });
+        }
     }
 
     /** Back to who you were (the select screen if that character's taken now, or you had none), your game mode and where you were. */
@@ -403,6 +412,7 @@ public final class Journey {
             CompoundTag t = new CompoundTag();
             t.putInt("char", m.original.ordinal());
             t.putInt("mode", m.mode.getId());
+            if (m.karma >= 0) t.putFloat("karma", m.karma);
             if (m.back != null) {
                 t.putString("dim", m.back.dim().location().toString());
                 t.putDouble("x", m.back.pos().x); t.putDouble("y", m.back.pos().y); t.putDouble("z", m.back.pos().z); t.putFloat("yRot", m.back.yRot());
@@ -426,6 +436,7 @@ public final class Journey {
             pos = null;
         }
         restore(p, (t.getInt("char") >= 0 && t.getInt("char") < CharacterType.values().length ? CharacterType.values()[t.getInt("char")] : CharacterType.NONE), GameType.byId(t.getInt("mode")), dim, pos, t.getFloat("yRot"));
+        if (t.contains("karma")) { float k = t.getFloat("karma"); p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(k)); }
         p.sendSystemMessage(msg("Your last Journey ended when the server stopped - you're back where you started it.", ChatFormatting.GRAY));
     }
 
@@ -704,7 +715,7 @@ public final class Journey {
             p.clearFire();
             applyBoosts(p, r, true);
             p.setHealth(Math.max(1F, p.getMaxHealth() * r.hp.getOrDefault(m.active, 1F)));
-            if (m.karma < 0) m.karma = com.xenowarriors.karma.Karma.get(p);      // (remembered once, given back at the end)
+            if (m.karma < 0) { m.karma = com.xenowarriors.karma.Karma.get(p); setBack(p, m); }     // (remembered once, given back at the end - kept on you too, for a crash)
             com.xenowarriors.karma.Karma.add(p, 100000F);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 4, false, false));
             for (int i = 1; i < m.chosen.size(); i++) spawnBot(p, r, m, m.chosen.get(i));
@@ -944,6 +955,7 @@ public final class Journey {
     }
 
     private static void finished(MinecraftServer server, Run r) {
+        r.ending = true;
         handOutDrops(server, r);
         long money = Math.round(JourneyRules.REWARD[r.diff] * JourneyRules.STAGE_PAY[r.stage]);
         int idx = r.diff * JourneyRules.STAGES + r.stage;
@@ -987,6 +999,7 @@ public final class Journey {
 
     private static void failed(MinecraftServer server, Run r) {
         r.phase = IDLE;
+        r.ending = true;
         for (Member m : new ArrayList<>(r.members)) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
             if (p == null) continue;

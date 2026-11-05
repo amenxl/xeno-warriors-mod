@@ -508,7 +508,7 @@ public final class PartyBots {
         if (now < b.skillReady[slot]) return;
         Skill skill = SkillPool.inSlot(b.character(), loadout, slot);
         if (skill == null) return;
-        float cost = skill.getKarmaCost();
+        float cost = com.xenowarriors.skill.SkillLevels.costFor(b, skill.getId(), skill.getKarmaCost());   // (the owner's ability level for this character)
         if (b.karma < cost) return;
         FakePlayer f = fake(b);
         Vec3 eye = b.getEyePosition(), to = target.getBoundingBox().getCenter();
@@ -521,7 +521,7 @@ public final class PartyBots {
         boolean used = standInUse(b, f, skill);
         if (used) {
             b.karma -= cost;
-            b.skillReady[slot] = now + Math.max(40, skill.getCooldownTicks());
+            b.skillReady[slot] = now + Math.max(40, com.xenowarriors.skill.SkillLevels.cooldownFor(b, skill.getId(), skill.getCooldownTicks()));
             b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());   // the same body animation a player gets for it
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
@@ -537,7 +537,7 @@ public final class PartyBots {
         float h0 = f.getHealth();
         Vec3 at0 = f.position();
         boolean used;
-        try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); } catch (Throwable t) { used = false; }
+        try { used = com.xenowarriors.combat.SkillContext.callSkill(f, skill.getId(), () -> skill.use(f)); } catch (Throwable t) { used = false; }
         toBot(b, f, h0, at0);
         return used;
     }

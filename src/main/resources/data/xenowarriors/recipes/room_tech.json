@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "DGD",
+  "GEG",
+  "DGD"
+ ],
+ "key": {
+  "D": {
+   "item": "xenowarriors:data_shard"
+  },
+  "G": {
+   "item": "minecraft:light_blue_stained_glass"
+  },
+  "E": {
+   "item": "minecraft:ender_eye"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:room_tech"
+ }
+}

@@ -29,10 +29,10 @@ public abstract class CameraMixin {
                                             float partialTick, CallbackInfo ci) {
         if (!(entity.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity v)) return;
         if (detached) {
-            double extra = v.kind == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
+            double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
             move(-getMaxZoom(extra), 0.6, 0.0);
         } else {
-            move(0.0, v.kind == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.75, 0.0);   // eyes above the hood
+            move(0.0, v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.75, 0.0);   // eyes above the hood
         }
     }
 

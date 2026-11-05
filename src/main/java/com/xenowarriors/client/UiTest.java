@@ -79,6 +79,7 @@ public final class UiTest {
         if (com.xenowarriors.client.test.DmzTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.DmzTests.build(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d)), UiTest::server, UiTest::character, UiTest::log); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("modes")) { com.xenowarriors.client.test.ModesTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").replaceFirst("^dmz", "").startsWith("bugs2")) { com.xenowarriors.client.test.SecurityTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
+        if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("prog")) { com.xenowarriors.client.test.ProgTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
         if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
@@ -172,6 +173,7 @@ public final class UiTest {
         if ("uisweep".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, false); return l; }
         if ("uisweep2".equals(System.getenv("XW_UITEST_FOCUS"))) { uiSweep(mc, l, true); return l; }
         if ("efcal".equals(System.getenv("XW_UITEST_FOCUS"))) { efCal(mc, l); return l; }
+        if (com.xenowarriors.client.test.World5Tests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.World5Tests.build(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d)), UiTest::server, UiTest::character, UiTest::log); return l; }
         if (com.xenowarriors.client.test.WorldTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.WorldTests.build(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d)), UiTest::server, UiTest::character, UiTest::log); return l; }
         if ("townsfolk".equals(System.getenv("XW_UITEST_FOCUS"))) { townsfolk(mc, l); return l; }
         if ("dmzoutfits".equals(System.getenv("XW_UITEST_FOCUS"))) { dmzOutfits(mc, l); return l; }

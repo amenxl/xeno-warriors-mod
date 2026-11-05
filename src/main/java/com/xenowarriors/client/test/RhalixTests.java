@@ -109,6 +109,7 @@ public final class RhalixTests {
     }
 
     public static void run(Minecraft mc, String focus, Steps l) {
+        if (focus.startsWith("rhalixcombo")) { RhalixComboTests.run(mc, focus, l); return; }      // his combo moves
         double[] home = new double[3];
         l.add(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null); }, 5);
         l.add(null, () -> server(p -> {

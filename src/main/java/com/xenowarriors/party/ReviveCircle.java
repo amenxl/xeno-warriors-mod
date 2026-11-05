@@ -84,6 +84,7 @@ public final class ReviveCircle {
             if (progress >= TICKS) {
                 BOT_PROGRESS.remove(b.getUUID());
                 b.revive();
+                Bonds.revived(b, helper);
                 l.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, b.getX(), b.getY() + 1, b.getZ(), 30, 0.4, 0.6, 0.4, 0.2);
                 l.playSound(null, b.blockPosition(), net.minecraft.sounds.SoundEvents.TOTEM_USE, net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
                 ServerPlayer o = b.owner();

@@ -13,13 +13,22 @@ public final class VehicleFx {
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         boolean lodestone = net.minecraftforge.fml.ModList.get().isLoaded("lodestone");
         double moving = v.getDeltaMovement().horizontalDistance() + Math.abs(v.getX() - v.xo) + Math.abs(v.getZ() - v.zo);
-        if (v.kind != VehicleKind.HELICOPTER && v.getControllingPassenger() != null && v.tickCount % 3 == 0) {
-            double back = (v.kind == VehicleKind.GOV_TRUCK ? 2.6 : v.kind == VehicleKind.CAR ? 1.85 : 0.9) * v.kind.scale;
+        if (!v.kind.heli() && v.getControllingPassenger() != null && v.tickCount % 3 == 0) {
+            double back = (v.kind.base() == VehicleKind.GOV_TRUCK ? 2.6 : v.kind.base() == VehicleKind.CAR ? 1.85 : 0.9) * v.kind.scale;
             double x = v.getX() - fx * back, z = v.getZ() - fz * back, y = v.getY() + 0.35;
             if (lodestone) com.xenowarriors.client.compat.lodestone.LodestoneFx.exhaust(level, x, y, z, moving);
             else level.addParticle(ParticleTypes.SMOKE, x, y, z, -fx * 0.02, 0.02, -fz * 0.02);
         }
-        if (v.kind == VehicleKind.HELICOPTER && v.rotorSpin > 0.8F) {
+        if (v.kind.hovers() && v.airborne()) {
+            // Mk II flying: thrusters under it (cyan, like its trim)
+            double rx = -fz, rz = fx, half = v.kind.width * 0.32, len = v.kind.width * 0.45;
+            for (int s = -1; s <= 1; s += 2) for (int e = -1; e <= 1; e += 2) {
+                if (v.getRandom().nextInt(2) != 0) continue;
+                double x = v.getX() + rx * half * s + fx * len * e, z = v.getZ() + rz * half * s + fz * len * e;
+                level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, x, v.getY() + 0.05, z, 0, -0.12, 0);
+            }
+        }
+        if (v.kind.heli() && v.rotorSpin > 0.8F) {
             // rotor wash: dust ring on the ground under it when it's low
             int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(v.getX()), (int) Math.floor(v.getZ()));
             double h = v.getY() - ground;

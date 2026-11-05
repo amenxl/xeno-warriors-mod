@@ -159,6 +159,13 @@ public class GovFacilityFeature extends Feature<NoneFeatureConfiguration> {
                 driver.finalizeSpawn(l, l.getCurrentDifficultyAt(park), MobSpawnType.STRUCTURE, null, null);
                 driver.setup(true, r.nextInt(2), b);
                 driver.startRiding(truck, true);
+                GovAgentEntity gunner = GovEntities.GOV_AGENT.get().create(l.getLevel());     // and one riding shotgun (shoots from the seat)
+                if (gunner != null) {
+                    gunner.moveTo(park.getX() + 0.5, gy, park.getZ() + 0.5, 180F, 0);
+                    gunner.finalizeSpawn(l, l.getCurrentDifficultyAt(park), MobSpawnType.STRUCTURE, null, null);
+                    gunner.setup(true, r.nextInt(2), b);
+                    gunner.startRiding(truck, true);
+                }
                 l.addFreshEntityWithPassengers(truck);
             }
         }

@@ -53,13 +53,13 @@ public class VehicleEntity extends Mob implements GeoEntity {
     public VehicleEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
         this.kind = Vehicles.kindOf(type);
-        setMaxUpStep(kind == VehicleKind.MOTORBIKE ? 1.0F : 1.1F);
+        setMaxUpStep(kind.base() == VehicleKind.MOTORBIKE ? 1.0F : 1.1F);
         setPersistenceRequired();
     }
 
     public static AttributeSupplier.Builder attributes(VehicleKind k) {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, k.health).add(Attributes.MOVEMENT_SPEED, 0.2)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, k == VehicleKind.GOV_TRUCK ? 14 : 6);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, k.base() == VehicleKind.GOV_TRUCK ? 14 : 6);
     }
 
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); }
@@ -172,7 +172,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (p.isSecondaryUseActive()) {                                   // pack it up
-            if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && kind == VehicleKind.GOV_TRUCK))) {   // (a seized Gov truck can be wrecked for iron, not packed up)
+            if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && kind.base() == VehicleKind.GOV_TRUCK))) {   // (a seized Gov truck can be wrecked for iron, not packed up)
                 p.displayClientMessage(Component.literal("That's not your " + kind.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
                 return InteractionResult.CONSUME;
             }
@@ -189,8 +189,9 @@ public class VehicleEntity extends Mob implements GeoEntity {
         }
         if (canAddPassenger(p)) {
             p.startRiding(this);
-            if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind == VehicleKind.HELICOPTER
+            if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind.heli()
                     ? "W/S speed, look to turn, Jump to climb, Sprint key to descend, Sneak to get out"
+                    : kind.hovers() ? "W/S speed, A/D steer, Jump to fly up, Sprint key to come down, Sneak to get out"
                     : "W/S speed and brake, A/D steer, Sneak to get out").withStyle(ChatFormatting.GRAY), true);
             else if (p.getVehicle() == this && seatOf(p).type() != VehicleKind.SeatType.SIT)
                 p.displayClientMessage(Component.literal(seatOf(p).type() == VehicleKind.SeatType.HANG
@@ -210,16 +211,63 @@ public class VehicleEntity extends Mob implements GeoEntity {
         double target = fwd > 0 ? kind.maxSpeed : fwd < 0 ? -kind.maxSpeed * 0.4 : 0;
         double a = fwd == 0 ? kind.accel * 0.6 : (Math.signum(target - speed) != Math.signum(speed) && speed != 0 ? kind.accel * 2.2 : kind.accel);
         speed += Mth.clamp(target - speed, -a, a);
-        if (kind == VehicleKind.HELICOPTER) {
-            setYRot(Mth.rotLerp(0.12F, getYRot(), p.getYRot()));
+        // Only the side that moves it (the driver's game) turns it: the server gets the driver's yaw with the position, and
+        // turning it again here made it face further round than it was going (and jitter for everyone watching).
+        boolean local = isControlledByLocalInstance();
+        if (kind.heli()) {
+            if (local) setYRot(Mth.rotLerp(0.12F, getYRot(), p.getYRot()));
             double want = level().isClientSide ? (VehicleControls.up ? 0.32 : VehicleControls.down ? -0.32 : 0) : climb;
             climb += Mth.clamp(want - climb, -0.04, 0.04);
         } else {
-            float grip = (float) Math.min(1.0, Math.abs(speed) / 0.15);
-            setYRot(getYRot() - (float) side * (kind == VehicleKind.MOTORBIKE ? 4.5F : kind == VehicleKind.GOV_TRUCK ? 2.4F : 3.4F) * grip * (speed < 0 ? -1 : 1));
+            if (kind.hovers() && level().isClientSide) {
+                // Mk II: Jump lifts it off and climbs, the Sprint key brings it down; in the air it holds its height
+                if (VehicleControls.up && !hovering) hovering = true;
+                if (hovering && onGround() && !VehicleControls.up && climb <= 0) hovering = false;      // (set down: drives again)
+                double want = !hovering ? 0 : VehicleControls.up ? 0.3 : VehicleControls.down ? -0.3 : 0;
+                climb += Mth.clamp(want - climb, -0.04, 0.04);
+            }
+            float grip = hovering ? 1F : (float) Math.min(1.0, Math.abs(speed) / 0.15);
+            if (local) setYRot(getYRot() - (float) side * (kind.base() == VehicleKind.MOTORBIKE ? 4.5F : kind.base() == VehicleKind.GOV_TRUCK ? 2.4F : 3.4F) * grip * (speed < 0 ? -1 : 1));
         }
-        yRotO = getYRot(); yBodyRot = getYRot(); yHeadRot = getYRot();
+        yBodyRot = getYRot(); yHeadRot = getYRot();
         setXRot(0);
+    }
+
+    /** Mk II land vehicles: flying right now (driver's side). */
+    private boolean hovering;
+
+    /** Always faces where it's going: no body turning on its own like a mob's (that's what drew it sideways). */
+    @Override
+    protected float tickHeadTurn(float yaw, float amount) {
+        yBodyRot = getYRot();
+        yHeadRot = getYRot();
+        return amount;
+    }
+
+    /** In the air in a Mk II car, bike or truck (or a helicopter): drawn tilting with its motion. */
+    public boolean airborne() {
+        return (kind.heli() || kind.hovers()) && !onGround() && groundBelow() != 0;
+    }
+
+    // client: how far it's tilted (degrees; pitch + is nose down, roll + is right side down) for the renderer
+    public float pitchTilt, pitchTiltO, rollTilt, rollTiltO;
+
+    private void tilt() {
+        pitchTiltO = pitchTilt; rollTiltO = rollTilt;
+        float yaw = getYRot() * Mth.DEG_TO_RAD;
+        double hs = (getX() - xo) * -Mth.sin(yaw) + (getZ() - zo) * Mth.cos(yaw), dy = getY() - yo;
+        float turn = Mth.wrapDegrees(getYRot() - yRotO);
+        float pitch, roll;
+        if (airborne()) {
+            pitch = (float) Mth.clamp(hs * 22, -10, 16) - (float) Mth.clamp(dy * 20, -6, 6);     // nose down flying forward, up when climbing
+            roll = Mth.clamp(turn * 2.2F, -22F, 22F);                                             // banks into turns
+        } else {
+            // up a step or a slope: nose up (rear up when reversing up it)
+            pitch = Math.abs(hs) > 0.04 && Math.abs(dy) < 1.2 ? Mth.clamp((float) -Math.toDegrees(Math.atan(dy / hs)), -20F, 20F) : 0;
+            roll = kind.base() == VehicleKind.MOTORBIKE ? Mth.clamp(turn * 2.5F, -14F, 14F) : Mth.clamp(turn * 0.5F, -3F, 3F);   // the bike leans, cars sway a little
+        }
+        pitchTilt += (pitch - pitchTilt) * 0.2F;
+        rollTilt += (roll - rollTilt) * 0.2F;
     }
 
     @Override protected Vec3 getRiddenInput(Player p, Vec3 in) { return Vec3.ZERO; }
@@ -229,15 +277,20 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     @Override
     public void travel(Vec3 in) {
-        if (!driven() && kind != VehicleKind.HELICOPTER) { speed *= 0.9; super.travel(Vec3.ZERO); return; }
+        if (!driven()) hovering = false;
+        if (!driven() && !kind.heli()) { setNoGravity(false); speed *= 0.9; super.travel(Vec3.ZERO); return; }
         float yaw = getYRot() * Mth.DEG_TO_RAD;
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         Vec3 v = getDeltaMovement();
         double y;
-        if (kind == VehicleKind.HELICOPTER) {
+        if (kind.heli()) {
             if (driven()) { setNoGravity(true); y = climb; }
             else { setNoGravity(false); speed *= 0.95; y = onGround() ? 0 : Math.max(v.y - 0.04, -0.18); }    // autorotates down gently
+        } else if (hovering) {
+            setNoGravity(true);                                          // Mk II flying: holds its height, Jump/Sprint key to climb/descend
+            y = climb;
         } else {
+            setNoGravity(false);
             y = onGround() ? -0.08 : Math.max(v.y - 0.08, -1.5) * 0.98;
             if (isInWater()) { speed *= 0.9; y = Math.min(0.02, y + 0.1); }
         }
@@ -247,7 +300,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
             if (!level().isClientSide) level().playSound(null, blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.NEUTRAL, 0.5F, 0.7F);
             speed *= 0.3;
         } else if (horizontalCollision) speed *= 0.6;
-        setDeltaMovement(move.x, onGround() && kind != VehicleKind.HELICOPTER ? 0 : y, move.z);
+        setDeltaMovement(move.x, onGround() && !kind.heli() && !hovering ? 0 : y, move.z);
         calculateEntityAnimation(false);
     }
 
@@ -265,29 +318,40 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (level().isClientSide) {
             wheelRotO = wheelRot; rotorRotO = rotorRot;
             double hs = (getX() - xo) * -Mth.sin(getYRot() * Mth.DEG_TO_RAD) + (getZ() - zo) * Mth.cos(getYRot() * Mth.DEG_TO_RAD);
-            wheelRot += (float) (hs / ((kind == VehicleKind.GOV_TRUCK ? 0.44 : 0.33) * kind.scale));
+            wheelRot += (float) (hs / ((kind.base() == VehicleKind.GOV_TRUCK ? 0.44 : 0.33) * kind.scale));
+            tilt();
             float targetSpin = driven() || !onGround() ? 1.6F : 0F;
             rotorSpin += (targetSpin - rotorSpin) * 0.03F;
             rotorRot += rotorSpin;
             VehicleFx.tick(this);
         } else {
-            if (driven() && tickCount % (kind == VehicleKind.HELICOPTER ? 5 : 9) == 0) {
-                if (kind == VehicleKind.HELICOPTER)
+            if (driven() && tickCount % (kind.heli() ? 5 : 9) == 0) {
+                if (kind.heli())
                     level().playSound(null, blockPosition(), SoundEvents.PHANTOM_FLAP, SoundSource.NEUTRAL, 0.7F, 0.45F);
                 else
                     level().playSound(null, blockPosition(), SoundEvents.MINECART_RIDING, SoundSource.NEUTRAL, 0.12F,
-                            (kind == VehicleKind.GOV_TRUCK ? 0.4F : kind == VehicleKind.MOTORBIKE ? 0.9F : 0.6F) + (float) Math.abs(getDeltaMovement().horizontalDistance()) * 0.8F);
+                            (kind.base() == VehicleKind.GOV_TRUCK ? 0.4F : kind.base() == VehicleKind.MOTORBIKE ? 0.9F : 0.6F) + (float) Math.abs(getDeltaMovement().horizontalDistance()) * 0.8F);
             }
         }
     }
 
-    /** A Government guard driving the truck: slow loops around its post; gets out to fight anyone wanted nearby. */
+    /**
+     * A Government guard driving the truck: slow loops around its post. Someone wanted nearby: it stops and the guards
+     * in it shoot from their seats; once they're right up close, the guards get out to fight.
+     */
     private void patrol() {
         if (home == null) home = position();
         var g = (com.xenowarriors.gov.GovAgentEntity) getFirstPassenger();
-        Player threat = level().getNearestPlayer(this, 12);
-        if (threat != null && com.xenowarriors.gov.GovFacilities.wanted(threat)) {
-            g.stopRiding(); g.setTarget(threat); speed = 0; return;
+        Player threat = level().getNearestPlayer(this, 20);
+        if (threat != null && com.xenowarriors.gov.GovFacilities.wanted(threat) && !threat.isCreative() && !threat.isSpectator()) {
+            speed += Mth.clamp(-speed, -0.04, 0.04);                       // brakes
+            boolean close = distanceTo(threat) < kind.width / 2 + 3;
+            for (Entity e : new java.util.ArrayList<>(getPassengers()))
+                if (e instanceof com.xenowarriors.gov.GovAgentEntity a) {
+                    if (close) a.stopRiding();
+                    a.setTarget(threat);
+                }
+            return;
         }
         if (patrolTarget == null || patrolTarget.distanceToSqr(position()) < 9 || random.nextInt(600) == 0) {
             double a = random.nextDouble() * Math.PI * 2, r = 8 + random.nextDouble() * 14;
@@ -311,7 +375,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         ((ServerLevel) level()).sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1, getZ(), 30, 0.8, 0.6, 0.8, 0.02);
         ((ServerLevel) level()).sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 1, getZ(), 3, 0.5, 0.3, 0.5, 0);
         level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.NEUTRAL, 0.8F, 1.2F);
-        if (owner != null || kind != VehicleKind.GOV_TRUCK) spawnAtLocation(VehicleItem.make(kind, variant()));
+        if (owner != null || kind.base() != VehicleKind.GOV_TRUCK) spawnAtLocation(VehicleItem.make(kind, variant()));
         else spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
         discard();
         return true;
