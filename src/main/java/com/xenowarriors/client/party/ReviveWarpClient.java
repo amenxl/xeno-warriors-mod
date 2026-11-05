@@ -140,6 +140,10 @@ public final class ReviveWarpClient {
             g.pose().scale(1.5F, 1.5F, 1F);
             g.drawCenteredString(mc.font, "REVIVE", 0, 0, col);
             g.pose().popPose();
+            if (t.distanceTo(mc.player) < com.xenowarriors.party.ReviveCircle.RADIUS) {      // already there: just stay in the circle
+                g.drawCenteredString(mc.font, "In their circle - reviving...", width / 2, y + 15, 0x9CFFB0);
+                return;
+            }
             String key = mc.options.keyUse.getTranslatedKeyMessage().getString();
             String hint = "Hold " + key + " to warp to them (" + Math.round(com.xenowarriors.party.ReviveWarp.COST) + " Karma)";
             g.drawCenteredString(mc.font, hint, width / 2, y + 15, 0xD8D8E0);

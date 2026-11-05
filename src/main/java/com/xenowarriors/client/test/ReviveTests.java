@@ -123,8 +123,8 @@ public final class ReviveTests {
         l.add(new Step(null, () -> server(ReviveTests::arena), 30));
         boolean all = focus.equals("revive");
         if (all || focus.equals("revive_fox")) fox(mc, l);
+        if (all || focus.equals("revive_cut")) cutscenes(mc, l);       // (before the warp tests: a revive leaves you 10 s invincible)
         if (all || focus.equals("revive_warp")) warp(mc, l);
-        if (all || focus.equals("revive_cut")) cutscenes(mc, l);
         l.add(new Step(null, () -> log("done"), 5));
     }
 
@@ -231,7 +231,8 @@ public final class ReviveTests {
             log("warp mikiko: result=" + ReviveWarp.last + " karma " + f1(KW[0]) + " -> " + f1(Karma.get(p)) + " (expect -30) dist to bot now=" + (b == null ? "?" : f1(b.distanceTo(p)))
                     + " shield=" + KarmaShield.active(p));
         }), 3));
-        l.add(new Step(null, () -> server(p -> { PartyBotEntity b = botNear(p, CharacterType.KAERU); log("after 2.5s in the circle: bot downed=" + (b != null && b.downed())); }), 50));
+        l.add(new Step(null, () -> {}, 50));
+        l.add(new Step(null, () -> server(p -> { PartyBotEntity b = botNear(p, CharacterType.KAERU); log("after 2.5s in the circle: bot downed=" + (b != null && b.downed())); }), 3));
         // b: refused with 20 Karma
         l.add(new Step(null, () -> server(p -> { home(p, 0, 0, 0, 8); karma(p, 20); downBot(p, CharacterType.KAERU, 0, 18); }), 15));
         l.add(new Step(null, () -> lockOnto(mc), 5));
@@ -266,8 +267,10 @@ public final class ReviveTests {
         l.add(new Step("revive_shield", () -> log("client shields=" + ReviveWarpClient.shields()), 12));
         l.add(new Step("revive_shield_after", () -> server(p -> log("shield after the arrow: blocked projectiles +" + (KarmaShield.blockedProjectiles - KW[2]) + " arrows left="
                 + p.serverLevel().getEntitiesOfClass(Arrow.class, p.getBoundingBox().inflate(20)).size() + " health " + f1(KW[3]) + " -> " + f1(p.getHealth()) + " shield=" + KarmaShield.active(p))), 3));
+        l.add(new Step(null, () -> {}, 40));
         l.add(new Step(null, () -> server(p -> { PartyBotEntity b = botNear(p, CharacterType.KAERU);
-            log("after the revive: bot downed=" + (b != null && b.downed()) + " shield still up=" + KarmaShield.active(p) + " client shields=" + ReviveWarpClient.shields()); }), 45));
+            log("after the revive: bot downed=" + (b != null && b.downed()) + " shield still up=" + KarmaShield.active(p)); }), 5));
+        l.add(new Step(null, () -> log("client shields after the revive=" + ReviveWarpClient.shields()), 3));
         // d: the Rhalix bot warps to its downed owner by itself
         l.add(new Step(null, () -> { if (LockOn.target() != null) LockOn.toggle(); UiTest.character(CharacterType.MIKIKO); }, 25));
         l.add(new Step(null, () -> server(p -> {
@@ -290,7 +293,10 @@ public final class ReviveTests {
             log("rhalix bot: dist to downed player=" + (r == null ? "?" : f1(r.distanceTo(p))) + " karma=" + (r == null ? "?" : f1(r.karma)) + " shield=" + (r != null && KarmaShield.active(r))
                     + " last=" + ReviveWarp.last);
         }); }, 3));
-        l.add(new Step(null, () -> server(p -> log("after: player downed=" + Duels.isDowned(p) + " client shields=" + ReviveWarpClient.shields())), 60));
+        l.add(new Step("revive_bot_shield_wide", () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 15));
+        l.add(new Step(null, () -> {}, 40));
+        l.add(new Step(null, () -> server(p -> log("after: player downed=" + Duels.isDowned(p) + " shield=" + KarmaShield.blockedHits)), 5));
+        l.add(new Step(null, () -> log("client shields after=" + ReviveWarpClient.shields()), 3));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); server(ReviveTests::clearAll); }, 10));
     }
 
@@ -324,6 +330,7 @@ public final class ReviveTests {
             HIT[0] = p.level().getGameTime();
             Mob a = attacker(p);
             p.invulnerableTime = 0;
+            if (a != null) com.xenowarriors.combat.Frozen.release(a);          // (caught in the Xeno Blast's freeze it couldn't attack at all)
             if (a != null) p.hurt(p.damageSources().mobAttack(a), 3F);
             log("cut " + name + ": hit at " + HIT[0] + " -> interrupted=" + (CutsceneBreak.lastAt == HIT[0]) + " what=" + CutsceneBreak.lastWhat + " health " + f1(HP[1]) + " -> " + f1(p.getHealth()));
         }), 0));

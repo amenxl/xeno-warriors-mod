@@ -51,7 +51,7 @@ public final class FoxKingClient {
             Minecraft mc = Minecraft.getInstance();
             int left = left();
             if (left <= 0 || mc.player == null || mc.options.hideGui || !active(mc.player)) return;
-            int w = 90, x = width / 2 - w / 2, y = height - 76;
+            int w = 90, x = width / 2 - w / 2, y = height - 98;      // (above the action bar message)
             float frac = Mth.clamp(left / (float) total, 0F, 1F);
             int s = (left + 19) / 20;
             String time = "FOX KING  " + s / 60 + ":" + String.format("%02d", s % 60);
