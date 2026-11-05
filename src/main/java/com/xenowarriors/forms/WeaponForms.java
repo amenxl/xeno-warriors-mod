@@ -320,10 +320,21 @@ public final class WeaponForms {
         if (event.getEntity() instanceof ServerPlayer p) sync(p, true);
     }
 
+    /**
+     * Someone with a summoned gun comes into view: whether they're aiming down the sights (viewers only hear about aim
+     * changes, so one out of view missed them - the pose stayed stuck, or never showed).
+     */
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getTarget() instanceof ServerPlayer t && style(t) != null && event.getEntity() instanceof ServerPlayer viewer)
+            ModNetwork.sendToPlayer(new WireFxPacket(t.getId(), WireFxPacket.AIM, -1, FormGunItem.aiming(t) ? 1 : 0), viewer);
+    }
+
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         SENT.remove(event.getEntity().getUUID());
         RHALIX_CHANNEL.remove(event.getEntity().getUUID());
+        if (event.getEntity() instanceof ServerPlayer p && FormGunItem.aiming(p)) FormGunItem.setAiming(p, false);   // (others would keep seeing the aim pose on that id)
         FormGunItem.forget(event.getEntity().getUUID());
     }
 

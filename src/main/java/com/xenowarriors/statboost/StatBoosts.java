@@ -183,6 +183,7 @@ public final class StatBoosts {
         if (victim.level().isClientSide || event.isCanceled() || victim instanceof Player || victim instanceof PartyBotEntity) return;
         if (!(victim instanceof Enemy) && !com.xenowarriors.karma.KarmaSensing.boss(victim)) return;
         Entity src = event.getSource().getEntity();
+        if (src instanceof FakePlayer fp) { PartyBotEntity b = com.xenowarriors.bot.PartyBots.botOf(fp); if (b != null) src = b; }   // (a bot's skill hits as its stand-in)
         ServerPlayer owner;
         LivingEntity killer;
         if (src instanceof ServerPlayer p && !(p instanceof FakePlayer) && !p.isSpectator()) { owner = p; killer = p; }
