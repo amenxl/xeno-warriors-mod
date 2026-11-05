@@ -70,6 +70,8 @@ public class JudgmentAbsorptionSkill implements Skill {
         Vec3 eye = p.getEyePosition(), end = eye.add(p.getViewVector(1F).scale(range * 0.6));
         var hit = p.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
         Vec3 v = hit.getType() == HitResult.Type.MISS ? end : hit.getLocation().subtract(p.getViewVector(1F).scale(0.5));
+        var down = p.level().clip(new ClipContext(v, v.subtract(0, 8, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));   // (over open ground: down to it)
+        if (down.getType() != HitResult.Type.MISS) v = down.getLocation();
         return v.add(0, 1.2, 0);
     }
 

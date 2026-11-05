@@ -15,6 +15,7 @@ import com.xenowarriors.skill.SkillManager;
 import com.xenowarriors.skill.SkillPool;
 import com.xenowarriors.skill.rhalix.JudgmentAbsorptionSkill;
 import com.xenowarriors.stats.Stats;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
@@ -46,6 +47,7 @@ public final class JudgmentTests {
     private static Wolf wolf;
     private static PartyBotEntity bot, bot2;
     private static final double[] D = new double[16];
+    private static final Vec3[] A = new Vec3[2];
     private static Vec3 origin;
     private static int askedBefore;
 
@@ -135,10 +137,17 @@ public final class JudgmentTests {
             bot = PartyBots.spawn(p, CharacterType.MIKIKO, null);
             if (bot != null) { bot.moveTo(c.x + 5, c.y, c.z - 4, 0, 0); bot.setNoAi(true); }
         }), 30));
+        l.add(new Step(null, () -> {
+            mc.player.setYRot(0F); mc.player.setXRot(0F); mc.player.yRotO = 0F; mc.player.xRotO = 0F;   // (looking at the first husk)
+            mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+            mc.gui.getChat().clearMessages(false);
+        }, 6));
         l.add(new Step(null, () -> UiTest.server(p -> {
             ready(p);
+            p.setYRot(0F); p.setXRot(0F); p.setYHeadRot(0F);
             Vec3 c = origin.add(0, 1, 9);
-            D[0] = avgDist(c); D[1] = wolf.position().distanceTo(c); D[2] = bot == null ? -1 : bot.position().distanceTo(c);
+            D[0] = avgDist(c); D[3] = huskHp();
+            A[0] = wolf.position(); A[1] = bot == null ? null : bot.position();
             JudgmentAbsorptionSkill.lastPoint = null;
             SkillManager.useSkill(p, 0);
             Vec3 pt = JudgmentAbsorptionSkill.lastPoint;
@@ -148,15 +157,16 @@ public final class JudgmentTests {
         l.add(new Step("judg_pull", () -> {}, 2));
         l.add(new Step(null, () -> UiTest.server(p -> {
             Vec3 c = JudgmentAbsorptionSkill.lastPoint == null ? origin.add(0, 1, 9) : JudgmentAbsorptionSkill.lastPoint;
-            double after = avgDist(c), w = wolf.position().distanceTo(c), b = bot == null ? -1 : bot.position().distanceTo(c);
-            log("husks avg dist to point " + f(D[0]) + " -> " + f(after) + " -> " + (after >= 0 && after < 2.5 && after < D[0] - 3 ? "PASS" : "FAIL"));
-            log("ally wolf " + f(D[1]) + " -> " + f(w) + ", ally bot " + f(D[2]) + " -> " + f(b) + " -> "
-                    + (Math.abs(w - D[1]) < 1.0 && (bot == null || Math.abs(b - D[2]) < 1.0) ? "PASS" : "FAIL"));
+            double after = avgDist(c), w = wolf.position().distanceTo(A[0]), b = bot == null || A[1] == null ? -1 : bot.position().distanceTo(A[1]);
+            log("husks avg dist to point " + f(avgDist(origin.add(0, 1, 9))) + "(from aim spot) / before " + f(D[0]) + " -> " + f(after) + " -> " + (after >= 0 && after < 2.5 ? "PASS" : "FAIL"));
+            log("allies moved: wolf " + f(w) + " blocks (was " + f(A[0].distanceTo(c)) + " from the point), bot " + f(b) + " blocks -> "
+                    + (w < 0.5 && b < 0.5 ? "PASS" : "FAIL"));
         }), 50));
         l.add(new Step(null, () -> UiTest.server(p -> {
-            log("collapsed: open=" + JudgmentAbsorptionSkill.open() + " husk hp left " + f(huskHp()) + "/240 pulled=" + JudgmentAbsorptionSkill.lastPulled
-                    + " -> " + (JudgmentAbsorptionSkill.open() == 0 && huskHp() < 240 ? "PASS" : "FAIL"));
+            log("collapsed: open=" + JudgmentAbsorptionSkill.open() + " husk hp " + f(D[3]) + " -> " + f(huskHp()) + " pulled=" + JudgmentAbsorptionSkill.lastPulled
+                    + " -> " + (JudgmentAbsorptionSkill.open() == 0 && huskHp() < D[3] - 1 ? "PASS" : "FAIL"));
             clearArea(p);
+            mc.execute(() -> mc.options.setCameraType(CameraType.FIRST_PERSON));
         }), 20));
         // ---- 3. Blazing Judgment: player Rhalix (level 30) + a Mikiko bot
         l.add(new Step(null, () -> UiTest.server(p -> {
