@@ -32,7 +32,7 @@ public class BlazingWindRenderer extends EntityRenderer<BlazingWindEntity> {
         float age = e.tickCount + partialTick;
         float h = e.height(age), r = e.radius(age);
         if (h < 0.2F) return;
-        float alpha = age > BlazingWindEntity.BURST ? 1F - BlazingWindEntity.smooth((age - BlazingWindEntity.BURST) / 15F) : 1F;
+        float alpha = age > e.burstAt() ? 1F - BlazingWindEntity.smooth((age - e.burstAt()) / 15F) : 1F;
         for (int i = 0; i < BANDS; i++) {
             float k = i / (float) (BANDS - 1);
             float y = k * h;

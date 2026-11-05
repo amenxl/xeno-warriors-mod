@@ -105,7 +105,7 @@ public class JudgmentAbsorptionSkill implements Skill {
                 continue;
             }
             final Point pt = p;
-            SkillContext.callSkill(p.caster, ID, () -> { tickPull(pt.level, pt.caster, pt.c, RADIUS, pt.age, CRUSH_DAMAGE); return true; });
+            SkillContext.callSkill(p.caster, ID, () -> { tickPull(pt.level, pt.caster, pt.c, RADIUS, pt.age, CRUSH_DAMAGE, e -> true); return true; });
         }
     }
 
@@ -118,10 +118,10 @@ public class JudgmentAbsorptionSkill implements Skill {
      * core (bosses feel it less), loose items / XP and enemies' projectiles drift in too, and the swirl is drawn.
      * {@code crush} damage every 10 ticks to whoever is held in the core (0 = none). Returns the enemies it holds.
      */
-    public static List<LivingEntity> tickPull(ServerLevel level, Entity caster, Vec3 c, double radius, int age, float crush) {
+    public static List<LivingEntity> tickPull(ServerLevel level, Entity caster, Vec3 c, double radius, int age, float crush, java.util.function.Predicate<LivingEntity> also) {
         AABB box = new AABB(c, c).inflate(radius);
         List<LivingEntity> held = new ArrayList<>();
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> SkillTargeting.canTarget(caster, e))) {
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, box, e -> SkillTargeting.canTarget(caster, e) && also.test(e))) {
             Vec3 mid = e.position().add(0, e.getBbHeight() * 0.5, 0);
             Vec3 d = c.subtract(mid);
             double dist = d.length();
