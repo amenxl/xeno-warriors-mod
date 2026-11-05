@@ -303,16 +303,34 @@ public final class EpicFightCompat {
             event.setShouldRender(true);
             return;
         }
-        var patch = event.getPlayerPatch();
+        event.setShouldRender(efDraws(p, event.getPlayerPatch()));
+    }
+
+    /** In battle mode (with the whole-battle-mode setting off): does Epic Fight draw this player right now? */
+    private static boolean efDraws(AbstractClientPlayer p, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> patch) {
         boolean action = Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION));
         boolean own = ownWeapon(p);
-        boolean ef;
-        if (action) {
-            ef = !(own && basicAttack(currentAnimation(patch)));    // their own combos; Epic Fight's other actions
-        } else {
-            boolean special = com.xenowarriors.client.FlightTracker.isFlying(p) || p.isPassenger() || p.isSleeping();
-            ef = !own && !special && !com.xenowarriors.client.DiscTracker.dancing(p);   // another weapon: its stance (unless dancing)
-        }
-        event.setShouldRender(ef);
+        if (action) return !(own && basicAttack(currentAnimation(patch)));    // their own combos; Epic Fight's other actions
+        boolean special = com.xenowarriors.client.FlightTracker.isFlying(p) || p.isPassenger() || p.isSleeping();
+        return !own && !special && !com.xenowarriors.client.DiscTracker.dancing(p);   // another weapon: its stance (unless dancing)
+    }
+
+    /** (tests) what's deciding how this player is drawn. */
+    public static String debugDraw(AbstractClientPlayer p) {
+        var patch = patch(p);
+        if (patch == null) return "no patch";
+        Object anim = currentAnimation(patch);
+        return "battle=" + patch.isEpicFightMode() + " action=" + Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION))
+                + " anim=" + anim + " efDraws=" + efDraws(p, patch) + " guard=" + guarding(p);
+    }
+
+    /** Epic Fight's guard (or another fists-up stance) is playing. */
+    public static boolean guarding(net.minecraft.world.entity.player.Player p) {
+        var patch = patch(p);
+        if (patch == null || !patch.isEpicFightMode()) return false;
+        Object anim = currentAnimation(patch);
+        if (anim == null) return false;
+        String path = (anim.getClass().getSimpleName() + " " + anim).toLowerCase(java.util.Locale.ROOT);
+        return path.contains("guard") && !path.contains("hit") && !path.contains("break");
     }
 }

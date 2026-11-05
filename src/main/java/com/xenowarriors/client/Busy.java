@@ -20,7 +20,13 @@ public final class Busy {
         return Math.abs(p.tickCount - (Integer) h[1]) < 3;
     }
 
+    /** Busy: doing something (see {@link #action}), or another idle animation is showing (see Idles). */
     public static boolean busy(Player p) {
+        return action(p);
+    }
+
+    /** Doing something that isn't an idle animation (these always win over idles). */
+    public static boolean action(Player p) {
         return justSwitched(p) || com.xenowarriors.client.compat.DmzCompat.charging(p)
                 || com.xenowarriors.client.compat.DmzCompat.blocking(p)
                 || ChargePose.weight(p) > 0.02F

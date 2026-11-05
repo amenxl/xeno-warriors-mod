@@ -14,6 +14,27 @@ public final class EfTest {
     }
 
     private static final class Impl {
+        /** Epic Fight's bare-handed guard (whatever its field is called in this version). */
+        @SuppressWarnings("unchecked")
+        static yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation> guard() {
+            try {
+                for (String n : new String[]{"BIPED_COMMON_GUARD", "FIST_GUARD", "BIPED_GUARD", "SWORD_GUARD"}) {
+                    try {
+                        Object v = yesman.epicfight.gameasset.Animations.class.getField(n).get(null);
+                        if (v != null) { com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST ef guard anim {}", n); return (yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) v; }
+                    } catch (NoSuchFieldException ignored) {}
+                }
+                java.util.List<String> names = new java.util.ArrayList<>();
+                for (var fld : yesman.epicfight.gameasset.Animations.class.getFields()) if (fld.getName().contains("GUARD")) names.add(fld.getName());
+                com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST ef guard fields {}", names);
+                for (String n : names) if (!n.contains("HIT") && !n.contains("PARRY")) {
+                    Object v = yesman.epicfight.gameasset.Animations.class.getField(n).get(null);
+                    if (v instanceof yesman.epicfight.api.asset.AssetAccessor<?>) return (yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) v;
+                }
+            } catch (Throwable t) { com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST ef guard lookup failed {}", t.toString()); }
+            return null;
+        }
+
         static void play(net.minecraft.world.entity.LivingEntity p, String which) {
             LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(p, LivingEntityPatch.class);
             yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation> anim = switch (which) {
@@ -23,6 +44,7 @@ public final class EfTest {
             if (patch instanceof yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch<?> pp)
                 pp.toMode("mining".equals(which) ? yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.PlayerMode.VANILLA
                         : yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.PlayerMode.EPICFIGHT, true);     // its skeleton only shows in battle mode
+            if ("guard".equals(which)) anim = guard();
             if (patch != null && anim != null) patch.playAnimationSynchronized(anim, 0F);
             com.xenowarriors.XenoWarriors.LOGGER.info("XW-TEST ef play {} patch={} anim={}", which, patch, anim);
         }
