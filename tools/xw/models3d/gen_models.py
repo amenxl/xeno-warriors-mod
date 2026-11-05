@@ -112,8 +112,8 @@ def tool_display():
     return {
         'thirdperson_righthand': {'rotation': [0, -90, 10], 'translation': [0, 4.0, 0.5], 'scale': [0.85, 0.85, 0.85]},
         'thirdperson_lefthand': {'rotation': [0, 90, -10], 'translation': [0, 4.0, 0.5], 'scale': [0.85, 0.85, 0.85]},
-        'firstperson_righthand': {'rotation': [0, -90, -20], 'translation': [1.13, 3.2, 1.13], 'scale': [0.68, 0.68, 0.68]},
-        'firstperson_lefthand': {'rotation': [0, 90, 20], 'translation': [1.13, 3.2, 1.13], 'scale': [0.68, 0.68, 0.68]},
+        'firstperson_righthand': {'rotation': [0, -90, -20], 'translation': [1.13, 2.6, 1.13], 'scale': [0.6, 0.6, 0.6]},
+        'firstperson_lefthand': {'rotation': [0, 90, 20], 'translation': [1.13, 2.6, 1.13], 'scale': [0.6, 0.6, 0.6]},
         'ground': {'rotation': [0, 0, -45], 'translation': [0, 2, 0], 'scale': [0.5, 0.5, 0.5]},
         'fixed': {'rotation': [0, 180, -45], 'translation': [0, 0, 0], 'scale': [0.85, 0.85, 0.85]},
         'head': {'rotation': [0, 180, -45], 'translation': [0, 13, 7], 'scale': [1, 1, 1]},
@@ -340,7 +340,7 @@ def blaster_mortar():
 
 def write(name, els, mats, display, sprite):
     base = {'credit': 'Xeno Warriors Recarnet - 3D held model (gen_models.py)', 'gui_light': 'front', 'render_type': 'minecraft:cutout',
-            'texture_size': [16, 16], 'textures': dict(mats, particle=mats.get('head', mats.get('steel'))), 'display': display, 'elements': els}
+            'texture_size': [16, 16], 'textures': dict(mats, particle=mats.get('head') or mats.get('steel') or next(iter(mats.values()))), 'display': display, 'elements': els}
     os.makedirs(os.path.join(ASSETS, 'models', 'item', '3d'), exist_ok=True)
     with open(os.path.join(ASSETS, 'models', 'item', '3d', name + '.json'), 'w') as f:
         json.dump(base, f, indent=1)
