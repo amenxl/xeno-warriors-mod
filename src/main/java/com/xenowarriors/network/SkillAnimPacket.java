@@ -32,7 +32,7 @@ public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
     static {
         String[][] m = {
             {"CAST", "gravity_fetch", "no_milk", "wind_of_sorrow", "clear_space", "ticking_time_bomb", "iron_grip", "bar_thief", "fire_spell", "thunder_flash",
-                     "lights_out", "scent_track", "attack_prediction", "thunder_spell"},
+                     "lights_out", "scent_track", "attack_prediction", "thunder_spell", "judgment_absorption"},
             {"SLASH", "rapier_thrust", "dagger_flurry", "rapid_vampire_slice", "impale"},
             {"DASH", "wing_rush", "knight_charge", "devil_dash", "lazy_slash"},
             {"SHOOT", "explosive_rounds", "gravity_rounds", "tech_barrage", "karma_blast", "brother_blast", "energy_blast", "full_output_beam"},

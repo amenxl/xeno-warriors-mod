@@ -66,8 +66,12 @@ public class KishiDomeEntity extends Entity {
         KishiDomeEntity dome = new KishiDomeEntity(ModEntities.KISHI_DOME.get(), level);
         dome.setPos(pos);
         dome.entityData.set(OWNER, Optional.of(owner.getUUID()));
+        dome.ownerRef = owner;
         return dome;
     }
+
+    /** The caster when it isn't in the player list (a bot's stand-in), so the dome isn't dropped at once. */
+    private Player ownerRef;
 
     @Override
     protected void defineSynchedData() {
@@ -127,6 +131,7 @@ public class KishiDomeEntity extends Entity {
 
     private void serverTick() {
         Player owner = getOwnerId() == null ? null : level().getPlayerByUUID(getOwnerId());
+        if (owner == null && ownerRef != null && !ownerRef.isRemoved() && ownerRef.level() == level()) owner = ownerRef;
         if (tickCount > DURATION || owner == null || !owner.isAlive()) {
             level().playSound(null, getX(), getY(), getZ(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 1F, 0.6F);
             discard();

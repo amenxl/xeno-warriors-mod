@@ -52,6 +52,11 @@ public class BlazingWindEntity extends Entity {
     private static final EntityDataAccessor<Float> START_Z = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.FLOAT);
     /** Mikiko was hit mid-cutscene: the camera is his again (the tornado itself carries on). */
     private static final EntityDataAccessor<Boolean> CUT = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.BOOLEAN);
+    /** A team ultimate's tornado (Blazing Judgment): it stands still where it was made, bursts at BURST_AT, and the team ultimate deals the damage. */
+    private static final EntityDataAccessor<Boolean> STILL = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> BURST_AT = SynchedEntityData.defineId(BlazingWindEntity.class, EntityDataSerializers.INT);
+    /** The caster when it isn't a real online player (a bot's stand-in), so it isn't dropped for having no owner. */
+    private Player ownerRef;
 
     private double groundY;
 
@@ -71,9 +76,35 @@ public class BlazingWindEntity extends Entity {
         e.entityData.set(START_Y, (float) owner.getY());
         e.entityData.set(START_Z, (float) owner.getZ());
         e.groundY = owner.getY();
+        e.ownerRef = owner;
         e.setPos(e.centerAt(0));
         return e;
     }
+
+    /**
+     * A tornado standing still on {@code center} (Blazing Judgment): no cutscene of its own, it bursts {@code burstAt}
+     * ticks in. {@code shownBy}: the entity the wind gathers around while it forms (Mikiko, or her bot).
+     */
+    public static BlazingWindEntity createStill(Player owner, net.minecraft.world.entity.Entity shownBy, Vec3 center, int burstAt) {
+        BlazingWindEntity e = new BlazingWindEntity(ModEntities.BLAZING_WIND.get(), owner.level());
+        e.entityData.set(OWNER, Optional.of(owner.getUUID()));
+        e.entityData.set(OWNER_ID, shownBy.getId());
+        e.entityData.set(START_X, (float) center.x);
+        e.entityData.set(START_Y, (float) center.y);
+        e.entityData.set(START_Z, (float) center.z);
+        e.entityData.set(STILL, true);
+        e.entityData.set(CUT, true);                                            // (never Mikiko's own ultimate cutscene)
+        e.entityData.set(BURST_AT, burstAt);
+        e.groundY = center.y;
+        e.ownerRef = owner;
+        e.setPos(center);
+        return e;
+    }
+
+    public boolean still() { return entityData.get(STILL); }
+    /** When it bursts apart, and when it's gone. */
+    public int burstAt() { return entityData.get(BURST_AT); }
+    public int endAt() { return burstAt() + (END - BURST); }
 
     @Override
     protected void defineSynchedData() {
@@ -85,6 +116,8 @@ public class BlazingWindEntity extends Entity {
         entityData.define(START_Y, 0F);
         entityData.define(START_Z, 0F);
         entityData.define(CUT, false);
+        entityData.define(STILL, false);
+        entityData.define(BURST_AT, BURST);
     }
 
     /** True once the cutscene was cut short by a hit. */
@@ -106,6 +139,7 @@ public class BlazingWindEntity extends Entity {
 
     /** How far in front of Mikiko the tornado is at a moment in time. */
     public float distance(float age) {
+        if (still()) return 0F;
         float push = age < SEND ? 0F : age < MOVE ? smooth((age - SEND) / (MOVE - SEND)) * 2.5F : 2.5F + (Math.min(age, BURST) - MOVE) * SPEED;
         return 4.5F + push;
     }
@@ -119,13 +153,13 @@ public class BlazingWindEntity extends Entity {
     /** Height and radius of the funnel at a moment (it spins up, then shrinks away when it bursts). */
     public float height(float age) {
         float grow = smooth(age / (SEND - 4F));
-        float fade = age > BURST ? 1F - smooth((age - BURST) / (END - BURST)) : 1F;
+        float fade = age > burstAt() ? 1F - smooth((age - burstAt()) / (END - BURST)) : 1F;
         return MAX_HEIGHT * grow * fade;
     }
 
     public float radius(float age) {
         float grow = smooth((age - 4F) / (SEND - 4F));
-        float burst = age > BURST ? 1F + (age - BURST) / (END - BURST) * 1.5F : 1F;
+        float burst = age > burstAt() ? 1F + (age - burstAt()) / (END - BURST) * 1.5F : 1F;
         return Math.max(0.3F, MAX_RADIUS * grow) * burst;
     }
 
@@ -142,11 +176,14 @@ public class BlazingWindEntity extends Entity {
             return;
         }
         ServerLevel server = (ServerLevel) level();
-        Player p = entityData.get(OWNER).map(server::getPlayerByUUID).orElse(null);
-        if (tickCount > END || p == null) {
+        Player found = entityData.get(OWNER).map(server::getPlayerByUUID).orElse(null);
+        if (found == null && ownerRef != null && !ownerRef.isRemoved() && ownerRef.level() == server) found = ownerRef;   // (a bot's stand-in: not in the player list)
+        final Player p = found;
+        if (tickCount > endAt() || p == null) {
             discard();
             return;
         }
+        if (still()) { stillTick(server); return; }
         if (tickCount == 1 && !cutsceneCut()) p.getPersistentData().putLong(SkillEvents.ULT_UNTIL, server.getGameTime() + CUTSCENE_END);
         // follow the ground
         Vec3 c = centerAt(tickCount);
@@ -203,6 +240,17 @@ public class BlazingWindEntity extends Entity {
         }
     }
 
+    /** The team ultimate's tornado: just the sound and the look (the team ultimate pulls and burns). */
+    private void stillTick(ServerLevel server) {
+        if (tickCount % 16 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 0.8F, 0.5F);
+        if (tickCount % 20 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.5F, 0.6F);
+        if (tickCount % 24 == 0) server.playSound(null, getX(), getY() + 3, getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.6F, 0.4F);
+        if (tickCount == burstAt()) {
+            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 2, getZ(), 1, 0, 0, 0, 0);
+            server.sendParticles(ParticleTypes.FLAME, getX(), getY() + 3, getZ(), 160, 3, 3, 3, 0.35);
+        }
+    }
+
     private static double ground(Level level, double x, double y, double z) {
         BlockPos.MutableBlockPos pos = BlockPos.containing(x, y + 4, z).mutable();
         for (int i = 0; i < 12; i++) {
@@ -233,7 +281,7 @@ public class BlazingWindEntity extends Entity {
                     -Math.cos(a) * 0.3, 0.05, -Math.sin(a) * 0.3);
         }
         // wind gathering around Mikiko while it forms
-        if (tickCount < SEND) {
+        if (tickCount < SEND && !still()) {
             Entity o = level().getEntity(ownerId());
             if (o != null) {
                 for (int i = 0; i < 4; i++) {

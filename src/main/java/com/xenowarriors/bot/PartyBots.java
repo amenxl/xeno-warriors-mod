@@ -575,6 +575,7 @@ public final class PartyBots {
 
     static void trySkill(PartyBotEntity b, LivingEntity target) {
         if (b.sparring() && b.getRandom().nextInt(3) != 0) return;
+        if (BotTeamUlt.tick(b, target)) return;                                  // a team ultimate with its partner (or asking its player for one)
         if (!b.sparring() && !strong(b, target)) return;                         // save the Karma for enemies that matter
         if (b.journey() && com.xenowarriors.journey.Journey.noSkills(b.owner())) return;   // ("No skills" battle: teammates fight with basic attacks too)
         double dist = b.distanceTo(target);
@@ -590,6 +591,7 @@ public final class PartyBots {
         }
         int slot = b.getRandom().nextInt(5);
         if (slot == 4 && (b.getHealth() > b.getMaxHealth() * 0.6F || b.karma < 60)) slot = b.getRandom().nextInt(4);    // ultimates when it matters
+        if (slot == 4 && BotTeamUlt.saveUltimate(b)) slot = b.getRandom().nextInt(4);   // (saving it for a team ultimate with its partner)
         if (now < b.skillReady[slot]) return;
         Skill skill = SkillPool.inSlot(b.character(), loadout, slot);
         if (skill == null) return;
