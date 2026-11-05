@@ -69,6 +69,9 @@ public final class LockOn {
     /** Hands the lock-on key to that mod when it's in charge (Epic Fight battle mode); false = we handle it. */
     public static java.util.function.BooleanSupplier externalToggle = () -> false;
     private static boolean external;
+    /** Another mod's own camera that doesn't follow the player's view (Epic Fight's third-person "always" camera): turned toward the target too. */
+    public interface ExternalCamera { void turn(float wantYaw, float wantPitch, float amount); }
+    public static ExternalCamera externalCamera = (y, x, f) -> {};
     private static int unseen;
     private static int lockedAt;
     private static float shownHealth = -1;
@@ -257,6 +260,7 @@ public final class LockOn {
         p.setXRot(pitch);
         p.yRotO = yaw;
         p.xRotO = pitch;
+        externalCamera.turn(wantYaw, wantPitch, f);
     }
 
     /** Spinning red brackets around the locked target. */

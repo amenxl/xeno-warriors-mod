@@ -51,6 +51,22 @@ public final class ReviveCircle {
         return null;
     }
 
+    /** Kaeru's Fox Heal brings a downed bot teammate straight back up (no circle wait), like it does a downed player. */
+    public static void foxRevive(PartyBotEntity b, LivingEntity by) {
+        if (!b.downed()) return;
+        LivingEntity who = com.xenowarriors.combat.Allies.actor(by) instanceof LivingEntity a ? a : by;   // (a bot's stand-in: the bot)
+        BOT_PROGRESS.remove(b.getUUID());
+        b.revive();
+        Bonds.revived(b, who);
+        ServerLevel l = (ServerLevel) b.level();
+        l.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, b.getX(), b.getY() + 1, b.getZ(), 30, 0.4, 0.6, 0.4, 0.2);
+        l.playSound(null, b.blockPosition(), net.minecraft.sounds.SoundEvents.TOTEM_USE, net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
+        ServerPlayer o = b.owner();
+        if (o != null) o.displayClientMessage(Component.literal("").append(b.label()).append(" is back up! (revived by " + name(who) + ")").withStyle(ChatFormatting.GREEN), true);
+        if (who instanceof ServerPlayer hp && hp != o && !(hp instanceof net.minecraftforge.common.util.FakePlayer))
+            hp.displayClientMessage(Component.literal("You revived ").append(b.label()).append("!").withStyle(ChatFormatting.GREEN), true);
+    }
+
     /** Draws the ring (every few ticks): red dots, green where the revive has got to. */
     public static void draw(ServerLevel l, Vec3 at, int progress) {
         int n = 24, lit = Math.round(n * Math.min(1F, progress / (float) TICKS));
