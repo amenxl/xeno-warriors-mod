@@ -105,15 +105,23 @@ public final class SeasonHuntTests {
         if (listening) return;
         listening = true;
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, LivingDamageEvent.class, e -> {
-            if (DMG.containsKey(e.getEntity().getUUID()) && !e.isCanceled()) DMG.merge(e.getEntity().getUUID(), e.getAmount(), Float::sum);
+            if (DMG.containsKey(e.getEntity().getUUID()) && !e.isCanceled()) {
+                DMG.merge(e.getEntity().getUUID(), e.getAmount(), Float::sum);
+                var src = e.getSource();
+                String who = src.getEntity() == null ? "-" : src.getEntity().getType().toShortString() + (src.getEntity() instanceof PartyBotEntity b ? "(" + b.character().getId() + ")" : "");
+                SOURCES.add(src.getMsgId() + "/" + who);
+            }
         });
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, false, MobEffectEvent.Added.class, e -> {
             List<String> l = BAD_FX.get(e.getEntity().getUUID());
-            if (l != null && e.getEffectInstance().getEffect().getCategory() == MobEffectCategory.HARMFUL) l.add(e.getEffectInstance().getEffect().getDescriptionId().replace("effect.minecraft.", ""));
+            if (l != null && e.getEffectInstance().getEffect().getCategory() == MobEffectCategory.HARMFUL) l.add(e.getEffectInstance().getEffect().getDescriptionId().replace("effect.minecraft.", "")
+                    + (e.getEffectSource() == null ? "" : "@" + e.getEffectSource().getType().toShortString()));
         });
     }
 
-    private static void watch(LivingEntity e) { DMG.put(e.getUUID(), 0F); BAD_FX.put(e.getUUID(), new ArrayList<>()); }
+    private static final Set<String> SOURCES = new LinkedHashSet<>();
+
+    private static void watch(LivingEntity e) { DMG.put(e.getUUID(), 0F); BAD_FX.put(e.getUUID(), new ArrayList<>()); SOURCES.clear(); }
 
     // ------------------------------------------------------------------ the run
 
@@ -125,11 +133,14 @@ public final class SeasonHuntTests {
             UiTest.server(p -> { clearBots(p); p.setGameMode(GameType.CREATIVE); p.serverLevel().setDayTime(6000); com.xenowarriors.modes.SwitchRules.clearCombat(p);
                 Seasons.set(p.server, 1); CharacterManager.setCharacter(p, CharacterType.MIKIKO); }); }, 40));
 
-        locks(mc, l);
-        relock(mc, l);
-        botSkills(l);
-        switching(l);
-        botBuffs(l);
+        if (focus.contains("sweep")) l.add(new Step(null, () -> UiTest.server(p -> Seasons.set(p.server, 3)), 10));   // ("...sweep": just the skill sweep)
+        else {
+            locks(mc, l);
+            relock(mc, l);
+            botSkills(l);
+            switching(l);
+            botBuffs(l);
+        }
         sweep(l, focus);
         l.add(new Step(null, () -> UiTest.server(p -> { clearBots(p); clearDummies(p); Seasons.set(p.server, 1);
             log("done: " + FAILS[0] + " failed checks"); }), 20));
@@ -413,7 +424,7 @@ public final class SeasonHuntTests {
                     boolean ok = d <= 0 && fx.isEmpty();
                     n[0]++;
                     if (!ok) hurt[0]++;
-                    log(String.format(Locale.ROOT, "player %s %s: ally bot dmg %.1f, harmful fx %s, own dmg %.1f -> %s", t.getId(), s == null ? "?" : s.getId(), d, fx, own, pass(ok)));
+                    log(String.format(Locale.ROOT, "player %s %s: ally bot dmg %.1f, harmful fx %s, own dmg %.1f%s -> %s", t.getId(), s == null ? "?" : s.getId(), d, fx, own, ok ? "" : " from " + SOURCES, pass(ok)));
                     if (!ok) FAILS[0]++;
                 }), 2));
             }
@@ -457,7 +468,7 @@ public final class SeasonHuntTests {
                     List<String> fx = BAD_FX.getOrDefault(p.getUUID(), List.of());
                     boolean ok = d <= 0 && fx.isEmpty();
                     if (!ok) FAILS[0]++;
-                    log(String.format(Locale.ROOT, "bot %s %s: used %s, owner dmg %.1f, harmful fx %s -> %s", t.getId(), KEEP[2], KEEP[3], d, fx, pass(ok)));
+                    log(String.format(Locale.ROOT, "bot %s %s: used %s, owner dmg %.1f, harmful fx %s%s -> %s", t.getId(), KEEP[2], KEEP[3], d, fx, ok ? "" : " from " + SOURCES, pass(ok)));
                 }), 2));
             }
         }
