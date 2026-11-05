@@ -97,7 +97,8 @@ public final class HuntBotsTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity n = bot(p, CharacterType.RHALIX);
             if (n == null) { log("relog FAIL no rhalix after relog"); return; }
-            boolean ok = Math.abs(n.getMaxHealth() - HP[1]) < 0.01F && n.getHealth() >= HP[0] - 0.5F && n.getHealth() <= HP[0] + 0.5F;
+            // (its saved health back - not cut to its level health, not refilled; with DragonMineZ its max can grow a little meanwhile - a DMZ character made for it - and it regenerates a bit)
+            boolean ok = n.getMaxHealth() >= HP[1] - 0.01F && n.getHealth() >= HP[0] - 0.5F && n.getHealth() <= HP[0] + Math.max(0.5F, n.getMaxHealth() * 0.01F);
             log("relog after 2 s: rhalix hp=" + f(n.getHealth()) + "/" + f(n.getMaxHealth()) + " (was " + f(HP[0]) + "/" + f(HP[1]) + ") -> " + (ok ? "PASS" : "FAIL"));
         }), 10));
 
