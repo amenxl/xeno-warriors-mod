@@ -112,7 +112,7 @@ public final class NpcHuntTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             ServerLevel lv = p.serverLevel();
             ZombifiedPiglin z = EntityType.ZOMBIFIED_PIGLIN.create(lv);
-            z.moveTo(p.getX() - 6, p.getY(), p.getZ(), 0, 0);
+            z.moveTo(p.getX() - 4, p.getY(), p.getZ(), 0, 0);
             z.setPersistenceRequired();
             z.setNoAi(true);
             lv.addFreshEntity(z);
@@ -159,12 +159,12 @@ public final class NpcHuntTests {
             copy.getPersistentData().putInt("xw_gen", gen);
             s.copy = copy.getUUID();
             log("stale copy: spawned, owned foxes now " + ownedFoxes(p) + " (records " + FoxPets.records(p).size() + ")");
-        }), 5));
+        }), 80));
         l.add(new Step(null, () -> UiTest.server(p -> {
             boolean gone = !(p.serverLevel().getEntity(s.copy) instanceof Fox c) || !c.isAlive();
-            log("stale copy: after 3 s gone=" + gone + " owned foxes=" + ownedFoxes(p) + ok(gone && ownedFoxes(p) == 1));
+            log("stale copy: after 4 s gone=" + gone + " owned foxes=" + ownedFoxes(p) + ok(gone && ownedFoxes(p) == 1));
             if (p.serverLevel().getEntity(s.copy) instanceof Fox c) c.discard();
-        }), 60));
+        }), 5));
 
         // 5. a sword handed over just now, then off to Recarnet and the whistle: the fox comes with its new sword, once.
         //    (the fox left behind in the overworld isn't in his world any more, so nothing re-snapshots it meanwhile)
@@ -314,6 +314,22 @@ public final class NpcHuntTests {
             log("kill money: town fighter (busy with a zombie) dead=" + !h.isAlive() + " paid=" + paidTown + ", raider dead=" + !r.isAlive() + " paid=" + paidRaider
                     + ok(!h.isAlive() && paidTown == 0 && paidRaider > 0));
             com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.TOWN, 0);
+        }), 10));
+        // 12. the fox falls while its owner is in another dimension: it still "ran away" (cool-down before the whistle works)
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            ServerLevel ow = p.serverLevel();
+            Fox f = myFox(p);
+            if (f == null) { log("away death: no fox FAIL"); return; }
+            double x = p.getX(), y = p.getY(), z = p.getZ();
+            ServerLevel nether = p.server.getLevel(net.minecraft.world.level.Level.NETHER);
+            p.teleportTo(nether, 0.5, 200, 0.5, 0, 0);
+            f.hurt(ow.damageSources().generic(), 100000F);
+            CompoundTag rec = FoxPets.records(p).getCompound(0);
+            boolean dead = rec.getBoolean("dead");
+            p.teleportTo(ow, x, y, z, 0, 0);
+            FoxPets.whistle(p);
+            int back = ownedFoxes(p);
+            log("away death: fox died=" + !f.isAlive() + " marked ran away=" + dead + " whistle right after brought back=" + back + ok(!f.isAlive() && dead && back == 0));
         }), 10));
         l.add(new Step(null, () -> log("done"), 5));
     }
