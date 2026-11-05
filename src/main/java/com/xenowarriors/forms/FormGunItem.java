@@ -127,24 +127,48 @@ public class FormGunItem extends Item implements FormItems.Summoned, com.xenowar
         if (AIMING.contains(p.getUUID()) && (!(p.getMainHandItem().getItem() instanceof FormGunItem) || !p.isAlive())) setAiming(p, false);
     }
 
-    public static void forget(java.util.UUID id) { AIMING.remove(id); }
+    public static void forget(java.util.UUID id) { AIMING.remove(id); RATE.remove(id); }
 
     // ------------------------------------------------------------------ shooting
 
-    /** One shot where the player looks, aimed if they're aiming (tests, and anything without a client). */
+    /** Fire rate on the server: {shots in hand (up to 2), game time last topped up}. */
+    private static final java.util.Map<java.util.UUID, double[]> RATE = new java.util.HashMap<>();
+
+    /**
+     * May this player fire now? One shot per {@code interval} ticks on average, with one shot of slack so packets that
+     * arrive bunched up (network jitter) aren't dropped - the client already timed them.
+     */
+    private static boolean rate(ServerPlayer p, GunSpec g) {
+        long now = p.serverLevel().getGameTime();
+        double[] r = RATE.computeIfAbsent(p.getUUID(), k -> new double[]{2, now});
+        r[0] = Math.min(2.0, r[0] + (now - r[1]) / (double) g.interval);
+        r[1] = now;
+        if (r[0] < 0.999) return false;
+        r[0] -= 1.0;
+        return true;
+    }
+
+    /** One shot where the player looks, aimed if they're aiming (tests; uses the item cooldown, which a test can clear). */
     public int fire(ServerPlayer p, ItemStack stack) {
+        if (p.getCooldowns().isOnCooldown(this)) return 0;
+        p.getCooldowns().addCooldown(this, Math.max(1, spec().interval - 1));
         boolean a = aiming(p);
-        return fire(p, stack, a, a ? spec().adsSpread : spec().hipSpread, p.getXRot(), p.getYRot());
+        return shoot(p, stack, a, a ? spec().adsSpread : spec().hipSpread, p.getXRot(), p.getYRot());
+    }
+
+    /** A shot from the client (GunActionPacket), held to the gun's fire rate. */
+    public int fire(ServerPlayer p, ItemStack stack, boolean aimed, float spread, float pitch, float yaw) {
+        if (com.xenowarriors.party.Duels.cantAct(p) || p.isSpectator() || !rate(p, spec())) return 0;
+        return shoot(p, stack, aimed, spread, pitch, yaw);
     }
 
     /**
      * One shot (or one shotgun blast) toward pitch / yaw (what the client saw; the server's own view if that's far off)
      * with the client's spread (clamped to what the gun can have). Returns how many targets were hit.
      */
-    public int fire(ServerPlayer p, ItemStack stack, boolean aimed, float spread, float pitch, float yaw) {
-        if (com.xenowarriors.party.Duels.cantAct(p) || p.getCooldowns().isOnCooldown(this) || p.isSpectator()) return 0;
+    private int shoot(ServerPlayer p, ItemStack stack, boolean aimed, float spread, float pitch, float yaw) {
+        if (com.xenowarriors.party.Duels.cantAct(p) || p.isSpectator()) return 0;
         GunSpec g = spec();
-        p.getCooldowns().addCooldown(this, Math.max(1, g.interval - 1));        // (a tick of slack for network timing)
         ServerLevel level = p.serverLevel();
         if (Math.abs(Mth.wrapDegrees(yaw - p.getYRot())) > 30F || Math.abs(pitch - p.getXRot()) > 30F) { pitch = p.getXRot(); yaw = p.getYRot(); }
         Vec3 eye = p.getEyePosition(), look = Vec3.directionFromRotation(pitch, yaw);

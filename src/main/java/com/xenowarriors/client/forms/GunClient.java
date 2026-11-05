@@ -67,6 +67,7 @@ public final class GunClient {
     public static Boolean testAim, testTrigger;
     /** How long a muzzle flash shows (ticks); tests hold it longer for the stills. */
     public static float flashTicks = 1.6F;
+    private static final net.minecraft.resources.ResourceLocation FLASH = new net.minecraft.resources.ResourceLocation("textures/particle/flash.png");
     /** Test numbers. */
     public static int shotsSent, aimPackets, sensCalls, viewModelsDrawn, crosshairsDrawn, scopesDrawn, hitMarkers, flashesDrawn;
     public static float lastFov = 70F, lastSpread, lastMoveScale = 1F, lastSens = 1F;
@@ -456,31 +457,27 @@ public final class GunClient {
         ps.translate(0F, my, mz);
         ps.mulPose(Axis.ZP.rotationDegrees(flashSeed));
         Matrix4f m = ps.last().pose();
-        VertexConsumer vc = buffers.getBuffer(RenderType.debugQuads());
-        float r = (s == GunSpec.SHOTGUN ? 0.3F : s == GunSpec.RIFLE ? 0.22F : 0.18F) * (0.6F + 0.4F * life);
-        float[] outer = style == Form.Style.HEKU ? new float[]{1F, 0.55F, 0.12F} : new float[]{0.72F, 0.32F, 1F};
-        int al = Math.round(200 * life);
-        diamond(vc, m, r, 0F, outer, al);
-        diamond(vc, m, r * 0.7F, (float) Math.PI / 4F, outer, al);
-        diamond(vc, m, r * 0.38F, 0F, new float[]{1F, 0.95F, 0.75F}, Math.round(240 * life));
-        // and a short cone of fire along the barrel, seen from the side
-        quad(vc, m, 0F, -r * 0.25F, 0F, 0F, r * 0.25F, 0F, 0F, 0F, -r * 1.6F, outer, al);
+        org.joml.Matrix3f n = ps.last().normal();
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentEmissive(FLASH));
+        float r = (s == GunSpec.SHOTGUN ? 0.32F : s == GunSpec.RIFLE ? 0.24F : 0.2F) * (0.6F + 0.4F * life);
+        float[] outer = style == Form.Style.HEKU ? new float[]{1F, 0.6F, 0.2F} : new float[]{0.8F, 0.45F, 1F};
+        sprite(vc, m, n, r, 0F, outer, life);
+        sprite(vc, m, n, r * 0.75F, 45F, outer, life);
+        sprite(vc, m, n, r * 0.4F, 20F, new float[]{1F, 0.97F, 0.85F}, life);
         ps.popPose();
     }
 
-    private static void diamond(VertexConsumer vc, Matrix4f m, float r, float rot, float[] c, int a) {
-        for (int i = 0; i < 4; i++) {
-            double t = rot + i * Math.PI / 2;
-            float x = (float) (Math.cos(t) * r), y = (float) (Math.sin(t) * r);
-            vc.vertex(m, x, y, 0F).color(c[0], c[1], c[2], a / 255F).endVertex();
-        }
-    }
-
-    private static void quad(VertexConsumer vc, Matrix4f m, float x1, float y1, float z1, float x2, float y2, float z2, float tx, float ty, float tz, float[] c, int a) {
-        vc.vertex(m, x1, y1, z1).color(c[0], c[1], c[2], a / 255F).endVertex();
-        vc.vertex(m, x2, y2, z2).color(c[0], c[1], c[2], a / 255F).endVertex();
-        vc.vertex(m, tx, ty, tz).color(c[0], c[1], c[2], 0F).endVertex();
-        vc.vertex(m, tx, ty, tz).color(c[0], c[1], c[2], 0F).endVertex();
+    /** One square of the flash texture, facing back down the barrel (both sides drawn), full bright. */
+    private static void sprite(VertexConsumer vc, Matrix4f m, org.joml.Matrix3f n, float r, float rotDeg, float[] c, float a) {
+        float cs = Mth.cos(rotDeg * Mth.DEG_TO_RAD) * r, sn = Mth.sin(rotDeg * Mth.DEG_TO_RAD) * r;
+        float[][] q = {{-cs + sn, -sn - cs, 0, 1}, {cs + sn, sn - cs, 1, 1}, {cs - sn, sn + cs, 1, 0}, {-cs - sn, -sn + cs, 0, 0}};
+        for (int side = 0; side < 2; side++)
+            for (int i = 0; i < 4; i++) {
+                float[] v = q[side == 0 ? i : 3 - i];
+                vc.vertex(m, v[0], v[1], 0F).color(c[0], c[1], c[2], a).uv(v[2], v[3])
+                        .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY).uv2(0xF000F0)
+                        .normal(n, 0F, 0F, side == 0 ? 1F : -1F).endVertex();
+            }
     }
 
     // ------------------------------------------------------------------ tests
