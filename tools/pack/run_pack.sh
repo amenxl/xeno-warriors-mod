@@ -73,7 +73,14 @@ SCREEN="1280x720x24"
 echo "PACK starting the client"
 XW_UITEST=1 XW_UITEST_FOCUS=${XW_UITEST_FOCUS:-pack} XW_UITEST_WORLD=uitest XW_PACKTEST=1 LIBGL_ALWAYS_SOFTWARE=1 \
   timeout 2400 xvfb-run -a -s "-screen 0 $SCREEN" $PMC start "forge:$MC-$FORGE" --jvm "$JAVA" --jvm-args="-Xmx4G -XX:+UseG1GC" \
-  --resolution 1280x720 -u XwTester > "$ROOT/client.log" 2>&1 || true
+  --resolution 1280x720 -u XwTester > "$ROOT/client.log" 2>&1 &
+CPID=$!
+# a crash during loading leaves Forge's error screen open: stop as soon as a crash report appears
+while kill -0 $CPID 2>/dev/null; do
+  if ls "$C"/crash-reports/*.txt > /dev/null 2>&1; then echo "PACK client crashed, stopping it"; sleep 15; pkill -f "$P/mc" ; sleep 5; kill $CPID 2>/dev/null; break; fi
+  sleep 10
+done
+wait $CPID 2>/dev/null || true
 cp "$C/logs/latest.log" "$OUT/client-latest.log" 2>/dev/null || true
 cp "$C/logs/debug.log" "$OUT/client-debug.log" 2>/dev/null || true
 for f in "$C"/crash-reports/*.txt; do [ -f "$f" ] && cp "$f" "$OUT/client-$(basename "$f")"; done
