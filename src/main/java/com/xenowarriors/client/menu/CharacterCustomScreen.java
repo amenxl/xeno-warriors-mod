@@ -47,6 +47,8 @@ import static com.xenowarriors.client.portrait.PortraitScreen.*;
  */
 public class CharacterCustomScreen extends Screen {
     private static final int VW = 220, VH = 184;
+    /** (UI test) show the Building row's tooltip without the mouse over it. */
+    public static boolean testBuildingTip;
     private final Screen parent;
     private int tab;                       // 0 stats, 1 skills, 2 outfits, 3 KA
     private PlayerStatsPacket.Entry self;
@@ -609,7 +611,7 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, (String) o[0], x + 4, ty, 0.85F, 0xB8B8C8);
             String v = (String) o[1];
             scaled(g, v, x + colW - 4 - font.width(v) * 0.85F, ty, 0.85F, 0xFFFFFF);
-            if ("Building".equals(o[0]) && inBox(mx, my, x, yi, colW, hh))
+            if ("Building".equals(o[0]) && (testBuildingTip || inBox(mx, my, x, yi, colW, hh)))
                 tip = com.xenowarriors.client.PlayerStatsScreen.buildingTip(me.building()).stream().map(Component::getString).toList();
         }
         String[] bl = blade();

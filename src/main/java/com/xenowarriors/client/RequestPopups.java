@@ -28,6 +28,11 @@ public final class RequestPopups {
 
     private RequestPopups() {}
 
+    /** (UI test) cards still showing. */
+    public static int testCount() { Minecraft mc = Minecraft.getInstance(); top(mc); return CARDS.size(); }
+    /** (UI test) clear every card. */
+    public static void testClear() { CARDS.clear(); }
+
     public static void show(RequestPopupPacket req) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;

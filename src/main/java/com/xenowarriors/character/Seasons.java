@@ -47,6 +47,9 @@ public final class Seasons extends SavedData {
 
     public static int highest(MinecraftServer server) { return get(server).unlocked; }
 
+    /** (UI test) forget the setting read in this JVM, as a dedicated server's client never has it. */
+    public static void testForgetCached() { cached = 1; }
+
     public static void set(MinecraftServer server, int season) {
         Seasons s = get(server);
         s.unlocked = Math.max(1, Math.min(3, season));
