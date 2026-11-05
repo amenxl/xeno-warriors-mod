@@ -491,7 +491,7 @@ public final class PartyBots {
             }
             boolean ticking = ((ServerLevel) b.level()).isPositionEntityTicking(b.blockPosition());
             double far = b.canFly() ? 64 : 48, d2 = b.distanceToSqr(o);
-            if (ticking && d2 < far * far) continue;
+            if ((ticking || d2 < 16 * 16) && d2 < far * far) continue;           // (right by them: their own chunks may just not be ticking yet, after a teleport)
             if (b.isPassenger() && b.getVehicle() == o.getVehicle()) continue;   // (riding along with them)
             if (b.downed()) { if (!ticking) { testLog(b, "left behind while down - goes home"); bleedOut(b); } continue; }
             if (!o.isAlive()) continue;

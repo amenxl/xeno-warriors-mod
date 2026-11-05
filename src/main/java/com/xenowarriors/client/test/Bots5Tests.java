@@ -474,8 +474,8 @@ public final class Bots5Tests {
             var fox = EntityType.FOX.create(p.serverLevel());
             if (fox != null) {
                 fox.moveTo(X + 0.5, Y, Z - 6.5, 0, 0); fox.addTag(TAG); fox.setPersistenceRequired(); fox.setNoAi(true);
-                fox.getPersistentData().putUUID("xw_owner", p.getUUID());
                 p.serverLevel().addFreshEntity(fox);
+                com.xenowarriors.fox.FoxPets.tameNow(p, fox);                    // (a real pet: one with a record)
             }
             log("share start: rhalix has diamond+iron+stone swords, 2 shields, 10 bread, 1 iron; kaeru has a wooden sword, 3 iron (boots need 4), 65% HP, no food; a fox with nothing in its mouth");
         }), 400));
