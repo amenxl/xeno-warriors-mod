@@ -199,12 +199,15 @@ public final class Building {
     public static void onPlace(BlockEvent.EntityPlaceEvent e) {
         if (e.isCanceled() || !(e.getLevel() instanceof ServerLevel l)) return;
         Entity who = e.getEntity();
+        // (what's there now: for a non-player Forge's getPlacedBlock() is the block that was replaced)
+        BlockState st = l.getBlockState(e.getPos());
+        if (st.isAir()) st = e.getPlacedBlock();
         if (who instanceof ServerPlayer p) {
             if (p instanceof FakePlayer || p.isCreative() || p.isSpectator()) return;
-            float xp = xpFor(e.getPlacedBlock(), l, e.getPos());
+            float xp = xpFor(st, l, e.getPos());
             if (xp > 0 && freshSpot(p.getUUID(), l, e.getPos())) addXp(p, xp);
         } else if (who instanceof PartyBotEntity b) {
-            botPlaced(b, e.getPos(), e.getPlacedBlock());      // (Dragon Balls post this event for their bot)
+            botPlaced(b, e.getPos(), st);      // (Dragon Balls post this event for their bot)
         }
     }
 
