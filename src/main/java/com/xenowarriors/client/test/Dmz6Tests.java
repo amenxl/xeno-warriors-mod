@@ -90,6 +90,18 @@ public final class Dmz6Tests {
         for (var m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(64), m -> m instanceof net.minecraft.world.entity.monster.Enemy)) m.discard();
     }
 
+    /** A mission with a kill objective (stays open while it's tracked: dimension ones complete at once in tests). */
+    static String killQuest() {
+        try {
+            Class<?> type = Class.forName("com.dragonminez.common.quest.QuestObjective$ObjectiveType");
+            Object kill = null;
+            for (Object c : type.getEnumConstants()) if (c.toString().equals("KILL")) kill = c;
+            Class<?> reg = Class.forName("com.dragonminez.common.quest.QuestRegistry");
+            var ids = (java.util.List<?>) reg.getMethod("getQuestIdsByObjectiveType", type).invoke(null, kill);
+            return ids.isEmpty() ? null : String.valueOf(ids.get(0));
+        } catch (Throwable t) { log("kill quest lookup failed " + t); return null; }
+    }
+
     private static Vec3 AT;
     static Vec3 at(ServerPlayer p) { if (AT == null) AT = com.xenowarriors.debug.SkillTestRunner.arena(p); return AT; }
 
@@ -125,9 +137,8 @@ public final class Dmz6Tests {
         }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.guiScale().set(0); mc.resizeDisplay(); }, 60);
         // DragonMineZ's own panels on screen: a tracked mission, and its technique bar (set to the right side) as if its key were held
         step(null, () -> { mc.setScreen(null); server(p -> {
-            var qs = com.xenowarriors.compat.DmzQuests.dimensionQuests();
-            if (qs.isEmpty()) { log("no quest to track"); return; }
-            String id = qs.get(0)[0];
+            String id = killQuest();
+            if (id == null) { log("no quest to track"); return; }
             com.xenowarriors.compat.DmzQuests.accept(p, id);
             Object qd = call(DmzPerCharacter.live(p), "getPlayerQuestData");
             call(qd, "setTrackedQuestId", id);

@@ -18,7 +18,8 @@ import java.lang.reflect.Method;
  *   <li>Its health / ki / stamina bars are already hidden while our HUD shows them (KhHud) - that HUD reads the same
  *       DragonMineZ numbers, and adds the form and power release.</li>
  *   <li>Its tracked-mission panel (top right, where our party cards are) moves to the top left.</li>
- *   <li>Its technique bar, when it's set to the right side of the screen, sits above our HUD instead of across it.</li>
+ *   <li>Its technique bar, when it's set to the right side of the screen (where our HUD is), is drawn on the left side
+ *       instead (DragonMineZ's own left-side layout) while our HUD is showing.</li>
  * </ul>
  * Done by shifting where those overlays draw (their own drawing, untouched); nothing changes in DragonMineZ's config.
  */
@@ -27,8 +28,8 @@ public final class DmzHudLayout {
     private DmzHudLayout() {}
 
     private static Boolean loaded;
-    private static Method userConfig, rightSide, drawBar;
-    private static boolean shifted;
+    private static Method userConfig, rightSide, setRightSide, drawBar;
+    private static boolean shifted, flipped;
     /** (Tests) draw the technique bar as if its key were held; and how it was last shifted. */
     public static boolean forceTechniqueBarForTest, offForTest;
     public static String lastShift = "";
@@ -39,6 +40,7 @@ public final class DmzHudLayout {
             if (loaded) try {
                 userConfig = Class.forName("com.dragonminez.common.config.ConfigManager").getMethod("getUserConfig");
                 rightSide = userConfig.getReturnType().getMethod("getTechniqueHotbarRightSide");
+                setRightSide = userConfig.getReturnType().getMethod("setTechniqueHotbarRightSide", Boolean.class);
             } catch (Throwable t) { userConfig = null; }
         }
         return loaded;
@@ -48,9 +50,15 @@ public final class DmzHudLayout {
         try { return Boolean.TRUE.equals(rightSide.invoke(userConfig.invoke(null))); } catch (Throwable t) { return false; }
     }
 
+    /** Sets DragonMineZ's "technique bar on the right" for the next draw only (put back right after it). */
+    private static void side(boolean right) {
+        try { setRightSide.invoke(userConfig.invoke(null), right); } catch (Throwable ignored) {}
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void pre(RenderGuiOverlayEvent.Pre e) {
         shifted = false;
+        if (flipped) { side(true); flipped = false; }
         if (e.isCanceled() || !on()) return;
         var id = e.getOverlay().id();
         if (!id.getNamespace().equals("dragonminez") || !KhHud.active()) return;
@@ -59,10 +67,8 @@ public final class DmzHudLayout {
         switch (id.getPath()) {
             case "tracked_quest_hud" -> dx = -(w - 200);                       // (its panel is 180 wide at width-190: to x=10)
             case "techniquehud" -> {
-                if (techniquesRight() || forceTechniqueBarForTest) {
-                    int top = KhHud.top >= 0 ? KhHud.top : h - 80;
-                    dy = Math.min(0, (top - 4) - (h - 51));                    // (its rows end 51 px from the bottom: they end above our HUD now)
-                }
+                if (techniquesRight() && !offForTest) { side(false); flipped = true; lastShift = "techniquehud drawn on the left"; }   // (put back in post)
+                if (!forceTechniqueBarForTest) return;
             }
             default -> { return; }
         }
@@ -76,12 +82,14 @@ public final class DmzHudLayout {
             drawTechniquesForTest(e, w, h);
             e.getGuiGraphics().pose().popPose();
             shifted = false;
+            if (flipped) { side(true); flipped = false; }
             e.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void post(RenderGuiOverlayEvent.Post e) {
+        if (flipped && e.getOverlay().id().getPath().equals("techniquehud")) { side(true); flipped = false; }
         if (!shifted) return;
         shifted = false;
         e.getGuiGraphics().pose().popPose();
