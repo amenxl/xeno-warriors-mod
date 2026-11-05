@@ -50,10 +50,13 @@ import java.util.*;
 /**
  * Villages rebuild themselves. The first time a village is seen (its bell; in Recarnet, the beds of its towns; a
  * townsperson's hut) its buildings are recorded block by block (VillageSnapshot). When something breaks them -
- * explosions, mobs, fire, players digging - the spots are noticed (block events, plus a slow sweep that looks at a few
+ * explosions, mobs, fire, raids - the spots are noticed (block events, plus a slow sweep that looks at a few
  * positions a tick for whatever slipped past) and the people living there put it back the way it was: in the daytime,
  * with no monsters about, townsfolk and villagers walk over and set the blocks back one at a time (a swing, the
  * block's sound, a puff of its particles), from the bottom up, exact block states, door and bed halves together.
+ * What players dig out stays dug: a block a player breaks (or their party bots, pets, or an explosion they set off -
+ * TNT they lit, their skills) is theirs, and that spot is never filled again - unless the same block turns up there
+ * again (put back by hand), after which it's looked after as before.
  * Only gaps are filled (air, fire, flowing water or lava, grass or snow that blew in): a different block somebody put
  * there is left alone. Chests and other containers come back empty, crops come back as fresh plantings. Nothing is
  * placed into an entity or within 3 blocks of a player. Gamerule xwVillageRebuild (on by default); never in the modes'
@@ -97,12 +100,13 @@ public final class VillageRebuild {
             DATA.remove(l.dimension());
             SCANS.remove(l.dimension());
             JOBS.values().removeIf(j -> j.l == l);
+            AFTERMATH.removeIf(o -> o[0] == l);
         }
     }
 
     /** Nothing carries over into the next world (singleplayer: same JVM, another save - its villages may sit where this one's rejected anchors were). */
     @SubscribeEvent
-    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent e) { REJECTED.clear(); SCANS.clear(); JOBS.clear(); DATA.clear(); }
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent e) { REJECTED.clear(); SCANS.clear(); JOBS.clear(); DATA.clear(); AFTERMATH.clear(); }
 
     public static RebuildData data(ServerLevel l) { return DATA.get(l.dimension()); }
 
@@ -124,6 +128,70 @@ public final class VillageRebuild {
         }
     }
 
+    /** Spots players dug, to look around once the tick is over (whatever fell off with them: a torch, a carpet, a door's other half). */
+    private static final List<Object[]> AFTERMATH = new ArrayList<>();
+
+    /**
+     * A player (or their bot, pet, or an explosion they caused) took the block out of this spot: it's theirs, the
+     * village won't put it back. Call before or right after the block is removed.
+     */
+    public static void playerDug(Level level, BlockPos p) {
+        if (!(level instanceof ServerLevel l)) return;
+        RebuildData d = DATA.get(l.dimension());
+        if (d == null) return;
+        List<RebuildData.Village> vs = d.inChunk(p.getX() >> 4, p.getZ() >> 4);
+        if (vs == null) return;
+        boolean any = false;
+        for (RebuildData.Village v : vs) {
+            int i = v.index(p);
+            if (i < 0) continue;
+            dig(v, i);
+            BlockPos q = partner(v.state(i), p);                              // (a door's or bed's other half goes with it)
+            int qi = q == null ? -1 : v.index(q);
+            if (qi >= 0 && v.state(qi).is(v.state(i).getBlock())) dig(v, qi);
+            any = true;
+        }
+        if (any) { d.setDirty(); if (AFTERMATH.size() < 4096) AFTERMATH.add(new Object[]{l, p.immutable()}); }
+    }
+
+    private static void dig(RebuildData.Village v, int i) {
+        v.dug.set(i);
+        v.pending.clear(i);
+        dugTotal++;
+    }
+
+    /** (tests) spots marked as dug by players since the server started. */
+    public static int dugTotal;
+
+    /** Whether a player (or something acting for one: their bot, pet, a projectile or TNT they set off) is behind this. */
+    public static boolean byPlayer(Entity e) {
+        return e != null && com.xenowarriors.combat.Allies.side(e) != null;
+    }
+
+    /** Next to a spot players dug: what can't stay up without it (a torch on that wall) went with it - theirs too. */
+    private static void aftermath() {
+        if (AFTERMATH.isEmpty()) return;
+        List<Object[]> todo = new ArrayList<>(AFTERMATH);
+        AFTERMATH.clear();
+        for (Object[] o : todo) {
+            ServerLevel l = (ServerLevel) o[0];
+            BlockPos p = (BlockPos) o[1];
+            RebuildData d = DATA.get(l.dimension());
+            if (d == null || !l.isLoaded(p)) continue;
+            List<RebuildData.Village> vs = d.inChunk(p.getX() >> 4, p.getZ() >> 4);
+            if (vs == null) continue;
+            for (Direction dir : Direction.values()) {
+                BlockPos n = p.relative(dir);
+                if (!l.isLoaded(n)) continue;
+                for (RebuildData.Village v : vs) {
+                    int j = v.index(n);
+                    if (j < 0 || v.dug.get(j) || !needs(l, v, j)) continue;
+                    if (!fresh(v.state(j)).canSurvive(l, n)) { dig(v, j); d.setDirty(); }
+                }
+            }
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onNeighbor(BlockEvent.NeighborNotifyEvent e) {
         if (e.getLevel() instanceof Level l) mark(l, e.getPos());           // (most block changes: fire burning out, endermen, pistons...)
@@ -131,12 +199,20 @@ public final class VillageRebuild {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onBreak(BlockEvent.BreakEvent e) {
-        if (!e.isCanceled() && e.getLevel() instanceof Level l) mark(l, e.getPos());
+        if (e.isCanceled() || !(e.getLevel() instanceof Level l)) return;
+        if (e.getPlayer() != null) playerDug(l, e.getPos());                  // (a player digging: theirs - see playerDug)
+        mark(l, e.getPos());
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onExplode(ExplosionEvent.Detonate e) {
-        for (BlockPos p : e.getAffectedBlocks()) mark(e.getLevel(), p);
+        Entity src = e.getExplosion().getIndirectSourceEntity();
+        if (src == null) src = e.getExplosion().getExploder();
+        boolean player = byPlayer(src);                                        // (TNT a player lit, their skills, their bots' and pets' blasts - not a creeper's or a ghast's)
+        for (BlockPos p : e.getAffectedBlocks()) {
+            if (player && !e.getLevel().getBlockState(p).isAir()) playerDug(e.getLevel(), p);
+            mark(e.getLevel(), p);
+        }
     }
 
     /**
@@ -145,6 +221,10 @@ public final class VillageRebuild {
      */
     static boolean needs(ServerLevel l, RebuildData.Village v, int i) {
         BlockState want = v.state(i), cur = l.getBlockState(v.pos(i));
+        if (v.dug.get(i)) {                                                     // a player dug it out: theirs - unless it's back
+            if (cur.is(want.getBlock())) { v.dug.clear(i); RebuildData d = DATA.get(l.dimension()); if (d != null) d.setDirty(); }
+            return false;
+        }
         if (cur.is(want.getBlock())) return false;
         if (cur.isAir() || cur.is(BlockTags.FIRE)) return true;
         if (cur.getBlock() instanceof LiquidBlock) return !(want.getBlock() instanceof LiquidBlock);
@@ -170,6 +250,7 @@ public final class VillageRebuild {
         if (e.phase != TickEvent.Phase.END) return;
         MinecraftServer server = e.getServer();
         long tick = server.getTickCount();
+        aftermath();
         for (ServerLevel l : server.getAllLevels()) {
             RebuildData d = DATA.get(l.dimension());
             if (d == null) continue;

@@ -25,10 +25,14 @@ import java.util.EnumSet;
  * arrows (it shoots the kind in its bag if it has some, without using them up) and a gun is reloaded for free - but it
  * does have to reload when the magazine runs dry (as long as that gun takes), and it fires in capped bursts.
  * Its arrows can't be picked up, so they're not a free arrow farm.
+ * With DragonMineZ, the Blaster Rifle, Burst Cannon and Blaster Mortar too: each at its own fire rate and range, one
+ * use of durability a shot (a burst, for the Burst Cannon) exactly as for a player - so the durability is its ammo and
+ * the gun breaks when it runs out - and never while one of its own side is in the line of fire (or, for the Mortar,
+ * close to where it lands).
  */
 public final class BotRanged extends Goal {
     /** Kinds of ranged weapon. */
-    static final int NONE = 0, BOW = 1, CROSSBOW = 2, GUN = 3;
+    static final int NONE = 0, BOW = 1, CROSSBOW = 2, GUN = 3, BLASTER = 4;
     private final PartyBotEntity b;
     private int charge, cooldown, burst, slot, kind, drawn;
 
@@ -37,6 +41,7 @@ public final class BotRanged extends Goal {
     static int kindOf(ItemStack s) {
         if (s.isEmpty()) return NONE;
         if (com.xenowarriors.compat.TaczGuns.isGun(s)) return GUN;
+        if (com.xenowarriors.compat.DmzGuns.kindOf(s) != null) return BLASTER;
         if (s.getItem() instanceof CrossbowItem) return CROSSBOW;
         if (s.getItem() instanceof BowItem) return BOW;
         return NONE;
@@ -48,6 +53,11 @@ public final class BotRanged extends Goal {
             case BOW -> 6F + 1.5F * s.getEnchantmentLevel(Enchantments.POWER_ARROWS);
             case CROSSBOW -> 7F + 1.5F * s.getEnchantmentLevel(Enchantments.QUICK_CHARGE) + s.getEnchantmentLevel(Enchantments.PIERCING);
             case GUN -> 25F;
+            case BLASTER -> !com.xenowarriors.compat.DmzGuns.on() ? 0F : switch (com.xenowarriors.compat.DmzGuns.kindOf(s)) {
+                case RIFLE -> 18F;                                                  // (4 a shot, a shot every 4 ticks, in volleys)
+                case BURST -> 14F;                                                  // (3 x 8 every 1.8 s)
+                case MORTAR -> 12F;                                                 // (28 and a blast, every 5 s)
+            };
             default -> 0F;
         };
     }
@@ -139,6 +149,7 @@ public final class BotRanged extends Goal {
         if (cooldown > 0) { cooldown--; return; }
         if (!see) { if (b.isUsingItem()) b.stopUsingItem(); charge = 0; return; }
         if (kind == GUN) { gun(t); return; }
+        if (kind == BLASTER) { blaster(t, d); return; }
         if (!b.isUsingItem()) b.startUsingItem(InteractionHand.MAIN_HAND);       // (draws the bow / loads the crossbow, as players do)
         int need = kind == CROSSBOW ? Math.max(10, 25 - 5 * b.getMainHandItem().getEnchantmentLevel(Enchantments.QUICK_CHARGE)) : 20;
         if (++charge < need) return;
@@ -227,6 +238,52 @@ public final class BotRanged extends Goal {
             rounds--;
             if (rounds <= 0) startReload(g);
         }
+    }
+
+    // ---------------------------------------------------------------- DragonMineZ Blaster guns
+
+    /** (tests) blaster shots fired by bots, and times one held its fire because someone on its side was in the way. */
+    public static int blasterShots, blasterHeld;
+    /** (tests) the last few blaster shots: "KIND tick distance durabilityLeft". */
+    public static final java.util.List<String> BLASTER_LOG = java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+    private int volley;
+
+    /** How far each one is worth firing from (the Mortar's big slow blast: not up close either - it would catch the bot). */
+    static double blasterRange(com.xenowarriors.compat.DmzGuns.Kind k) { return k == com.xenowarriors.compat.DmzGuns.Kind.MORTAR ? 24 : 28; }
+
+    private void blaster(LivingEntity t, double d) {
+        ItemStack g = b.getMainHandItem();
+        com.xenowarriors.compat.DmzGuns.Kind k = com.xenowarriors.compat.DmzGuns.kindOf(g);
+        if (k == null || !com.xenowarriors.compat.DmzGuns.on()) return;
+        if (d > blasterRange(k) || (k == com.xenowarriors.compat.DmzGuns.Kind.MORTAR && d < 5)) return;
+        aim(t);
+        if (!clearShot(t, k)) { blasterHeld++; cooldown = 5; return; }
+        com.xenowarriors.compat.DmzGuns.fire(b, k, t);                         // (faces it and fires, the way a player's shot goes)
+        b.shots++;
+        if (inVehicle(b)) b.seatShots++;
+        g.hurtAndBreak(1, b, e -> e.broadcastBreakEvent(EquipmentSlot.MAINHAND));   // one use a shot (a burst), like a player's
+        blasterShots++;
+        if (BLASTER_LOG.size() > 40) BLASTER_LOG.remove(0);
+        BLASTER_LOG.add(k.name() + " t=" + b.tickCount + " d=" + String.format("%.1f", d) + " left=" + (g.isEmpty() ? 0 : g.getMaxDamage() - g.getDamageValue()));
+        if (blasterShots % 5 == 1) PartyBots.testLog(b, "blaster " + k + " shot (" + blasterShots + " so far, " + (g.isEmpty() ? "broke" : (g.getMaxDamage() - g.getDamageValue()) + " uses left") + ")");
+        if (k.held) {                                                           // the rifle: a shot every few ticks, in volleys
+            cooldown = k.cooldown - 1;
+            if (++volley >= 6) { volley = 0; cooldown = 20; }
+        } else cooldown = k.cooldown - 1;                                       // (the same reload a player waits)
+    }
+
+    /** Nobody on its side between it and the target (nor, for the Mortar, standing near where it lands). */
+    boolean clearShot(LivingEntity t, com.xenowarriors.compat.DmzGuns.Kind k) {
+        Vec3 from = b.getEyePosition(), to = t.getBoundingBox().getCenter();
+        double pad = 0.3 + k.size * 0.5;
+        var level = b.level();
+        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(from, to).inflate(pad + 0.5),
+                e -> e != b && e != t && e.isAlive() && !e.isSpectator() && com.xenowarriors.combat.Allies.isAlly(b, e)))
+            if (e.getBoundingBox().inflate(pad).clip(from, to).isPresent() || e.getBoundingBox().inflate(pad).contains(from)) return false;
+        if (k == com.xenowarriors.compat.DmzGuns.Kind.MORTAR)
+            return level.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(4),
+                    e -> e != b && e != t && e.isAlive() && !e.isSpectator() && com.xenowarriors.combat.Allies.isAlly(b, e)).isEmpty();
+        return true;
     }
 
     /** Fastest a bot fires (ticks between shots), and the pause between bursts. */

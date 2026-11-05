@@ -870,6 +870,7 @@ public final class PartyBots {
         if (!isOre(st) || !com.xenowarriors.modes.ModeRules.canGrief(s)) return;
         ItemStack tool = b.getMainHandItem().isCorrectToolForDrops(st) ? b.getMainHandItem() : new ItemStack(Items.DIAMOND_PICKAXE);   // (its own pickaxe - Fortune and all - or its bare Karma)
         List<ItemStack> drops = Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, tool);
+        com.xenowarriors.npc.rebuild.VillageRebuild.playerDug(s, pos);       // (its owner's dig: a village won't put it back)
         s.destroyBlock(pos, false, b);
         for (ItemStack d : drops) {
             ItemStack left = b.inventory.addItem(d);

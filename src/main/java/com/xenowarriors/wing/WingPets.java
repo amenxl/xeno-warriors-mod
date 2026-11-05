@@ -53,7 +53,7 @@ import java.util.UUID;
 /**
  * Rhalix's winged companions: he can tame bats (berries, melon, apples), parrots and chickens (seeds) and
  * bees (flowers) - two at most. They follow him (bats circle around his head), can be named by right-clicking,
- * can't be hurt by him, and if one dies the Fox Whistle calls it back.
+ * can't be hurt by him, and if one dies the Pet Whistle calls it back.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class WingPets {
@@ -276,9 +276,19 @@ public final class WingPets {
     public static void teleportNear(Mob mob, Entity owner) {
         if (com.xenowarriors.party.PetRest.resting(mob)) return;            // staying behind (party pet limit)
         Vec3 o = owner.position();
-        double a = mob.getRandom().nextDouble() * Math.PI * 2;
         double y = mob instanceof Bat || mob instanceof Bee || mob instanceof Parrot ? o.y + 1.8 : o.y;
-        mob.moveTo(o.x + Math.cos(a) * 2, y, o.z + Math.sin(a) * 2, mob.getYRot(), mob.getXRot());
+        double a0 = mob.getRandom().nextDouble() * Math.PI * 2;
+        for (int i = 0; i < 8; i++) {                                         // (somewhere it fits: never inside a wall, where it would suffocate)
+            double a = a0 + i * Math.PI / 4, x = o.x + Math.cos(a) * 2, z = o.z + Math.sin(a) * 2;
+            for (double yy : new double[]{y, o.y}) {
+                if (mob.level().noCollision(mob, mob.getDimensions(mob.getPose()).makeBoundingBox(x, yy, z))) {
+                    mob.moveTo(x, yy, z, mob.getYRot(), mob.getXRot());
+                    mob.getNavigation().stop();
+                    return;
+                }
+            }
+        }
+        mob.moveTo(o.x, o.y, o.z, mob.getYRot(), mob.getXRot());               // (no room around: right where the owner is)
         mob.getNavigation().stop();
     }
 
@@ -356,7 +366,7 @@ public final class WingPets {
         com.xenowarriors.pet.PetCare.ranAway(p, rec);
         com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.DANGER, mob.getUUID(), 0, 1, "Pet flew away", rec.getString("name") + " fled the fight. Back in " + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + ".", "");
         p.sendSystemMessage(Component.literal(rec.getString("name") + " flew away! They'll be ready to come back in "
-                + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Fox Whistle.")
+                + com.xenowarriors.pet.PetCare.fmt(com.xenowarriors.pet.PetCare.COOLDOWN) + " - then use the Pet Whistle.")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
     }
 
