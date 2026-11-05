@@ -258,7 +258,9 @@ public final class RoomTech {
     /** Logging out inside your Room closes it first: you (and what's left in it) go back where you opened it, and that's what's saved. */
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p && BY_PLAYER.get(p.getUUID()) instanceof Room r) close(p.server, r, "The Room closed.");
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        Room r = BY_PLAYER.get(p.getUUID());
+        if (r != null) close(p.server, r, "The Room closed.");
     }
 
     /** Nothing carries over into the next world (singleplayer: same JVM, another save). */
