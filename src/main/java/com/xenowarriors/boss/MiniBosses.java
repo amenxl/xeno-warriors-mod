@@ -189,6 +189,23 @@ public final class MiniBosses {
         if (!(event.getEntity() instanceof Mob m) || !is(m) || !(m.level() instanceof ServerLevel l)) return;
         ServerBossEvent b = BARS.remove(m.getUUID());
         if (b != null) b.removeAllPlayers();
+        l.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, m.getX(), m.getY() + 1, m.getZ(), 40, .5, .8, .5, .3);
+        l.playSound(null, m.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.HOSTILE, 1F, 1F);
+        ServerPlayer p = com.xenowarriors.collection.Collection.credit(event.getSource().getEntity());
+        if (p == null) return;
+        for (Stat s : Stat.values()) Stats.addXp(p, s, s.needed(Stats.level(p, s)) * 0.5F);
+        String name = m.getCustomName() == null ? m.getName().getString() : m.getCustomName().getString();
+        for (ServerPlayer o : l.players()) if (o.distanceToSqr(m) < 64 * 64)
+            o.sendSystemMessage(Component.literal(p.getName().getString() + " defeated " + name + "!").withStyle(ChatFormatting.GOLD));
+    }
+
+    /**
+     * Its loot goes in with its death drops (so a Room keeps it, and the doMobLoot rule and other mods' drop handling
+     * apply) - it used to be dropped straight into the world on death, where a Room threw it away as a copied block's.
+     */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
+    public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (!(event.getEntity() instanceof Mob m) || !is(m) || !(m.level() instanceof ServerLevel l)) return;
         var r = m.getRandom();
         List<ItemStack> loot = new ArrayList<>();
         loot.add(new ItemStack(Items.EMERALD, 6 + r.nextInt(10)));
@@ -200,14 +217,10 @@ public final class MiniBosses {
             loot.add(EnchantmentHelper.enchantItem(r, gear[r.nextInt(gear.length)], 20 + r.nextInt(15), false));
         }
         if (r.nextFloat() < 0.15F) loot.add(new ItemStack(Items.DIAMOND, 1 + r.nextInt(2)));
-        for (ItemStack s : loot) l.addFreshEntity(new ItemEntity(l, m.getX(), m.getY() + .5, m.getZ(), s));
-        l.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, m.getX(), m.getY() + 1, m.getZ(), 40, .5, .8, .5, .3);
-        l.playSound(null, m.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.HOSTILE, 1F, 1F);
-        ServerPlayer p = com.xenowarriors.collection.Collection.credit(event.getSource().getEntity());
-        if (p == null) return;
-        for (Stat s : Stat.values()) Stats.addXp(p, s, s.needed(Stats.level(p, s)) * 0.5F);
-        String name = m.getCustomName() == null ? m.getName().getString() : m.getCustomName().getString();
-        for (ServerPlayer o : l.players()) if (o.distanceToSqr(m) < 64 * 64)
-            o.sendSystemMessage(Component.literal(p.getName().getString() + " defeated " + name + "!").withStyle(ChatFormatting.GOLD));
+        for (ItemStack s : loot) {
+            ItemEntity it = new ItemEntity(l, m.getX(), m.getY() + .5, m.getZ(), s);
+            it.setDefaultPickUpDelay();
+            event.getDrops().add(it);
+        }
     }
 }

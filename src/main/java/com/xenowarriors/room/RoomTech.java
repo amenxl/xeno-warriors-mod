@@ -107,6 +107,7 @@ public final class RoomTech {
         copy(src, room, r);
         ROOMS.put(slot, r);
         BY_PLAYER.put(p.getUUID(), r);
+        setBack(p, r);
         // pull in the enemies around you
         List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m instanceof Enemy && m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor"));
         for (Mob m : mobs) {
@@ -162,6 +163,18 @@ public final class RoomTech {
         });
     }
 
+    /** Where to send you back, kept on you too (so a server stop or crash while you're in a Room still gets you home). */
+    private static final String BACK = "xw_room_back";
+
+    private static void setBack(ServerPlayer p, Room r) {
+        if (r == null) { p.getPersistentData().remove(BACK); return; }
+        net.minecraft.nbt.CompoundTag t = new net.minecraft.nbt.CompoundTag();
+        t.putString("dim", r.from.location().toString());
+        t.putDouble("x", r.back.x); t.putDouble("y", r.back.y); t.putDouble("z", r.back.z);
+        t.putFloat("yRot", r.yRot); t.putFloat("xRot", r.xRot);
+        p.getPersistentData().put(BACK, t);
+    }
+
     private static void close(MinecraftServer server, Room r, String why) {
         ROOMS.remove(r.slot);
         BY_PLAYER.remove(r.player);
@@ -174,6 +187,7 @@ public final class RoomTech {
                 move(e, back, fromRoom(r, e.position()), e.getYRot());
             else e.discard();
         ServerPlayer p = server.getPlayerList().getPlayer(r.player);
+        if (p != null) setBack(p, null);                       // (offline: kept, so their login puts them back)
         if (p != null && is(p.level()) && p.isAlive()) {
             p.teleportTo(back, r.back.x, r.back.y, r.back.z, r.yRot, r.xRot);
             p.displayClientMessage(Component.literal(why).withStyle(ChatFormatting.AQUA), true);
@@ -241,10 +255,28 @@ public final class RoomTech {
         event.getAffectedBlocks().clear();
     }
 
-    /** Logged in inside a Room that's gone (e.g. after a restart): back to spawn. */
+    /** Logging out inside your Room closes it first: you (and what's left in it) go back where you opened it, and that's what's saved. */
+    @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p && BY_PLAYER.get(p.getUUID()) instanceof Room r) close(p.server, r, "The Room closed.");
+    }
+
+    /** Nothing carries over into the next world (singleplayer: same JVM, another save). */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent event) { ROOMS.clear(); BY_PLAYER.clear(); }
+
+    /** Logged in inside a Room that's gone (e.g. after a crash): back where you opened it (or to spawn, if that's unknown). */
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer p && is(p.level()) && !BY_PLAYER.containsKey(p.getUUID())) {
+            net.minecraft.nbt.CompoundTag t = p.getPersistentData().getCompound(BACK);
+            p.getPersistentData().remove(BACK);
+            ServerLevel to = t.contains("dim") ? p.server.getLevel(ResourceKey.create(Registries.DIMENSION, new net.minecraft.resources.ResourceLocation(t.getString("dim")))) : null;
+            if (to != null && !is(to)) {
+                p.teleportTo(to, t.getDouble("x"), t.getDouble("y"), t.getDouble("z"), t.getFloat("yRot"), t.getFloat("xRot"));
+                p.displayClientMessage(Component.literal("The Room closed while you were away - you're back where you opened it.").withStyle(ChatFormatting.AQUA), false);
+                return;
+            }
             ServerLevel ow = p.server.overworld();
             BlockPos s = p.getRespawnPosition() != null && p.getRespawnDimension() == Level.OVERWORLD ? p.getRespawnPosition() : ow.getSharedSpawnPos();
             p.teleportTo(ow, s.getX() + .5, s.getY() + 1, s.getZ() + .5, p.getYRot(), 0);

@@ -207,6 +207,10 @@ public class VehicleEntity extends Mob implements GeoEntity {
     @Override
     protected void tickRidden(Player p, Vec3 input) {
         super.tickRidden(p, input);
+        // The server never moves a player-driven vehicle (the driver's game does), so it never saw the no-gravity flag
+        // the driver's side sets while flying - and vanilla kicks a driver "floating a vehicle too long" (4 s) on any
+        // server without allow-flight (a dedicated server's default) unless the vehicle has no gravity there.
+        if (!level().isClientSide && (kind.heli() || kind.hovers()) && !isNoGravity()) setNoGravity(true);
         double fwd = p.zza, side = p.xxa;
         double target = fwd > 0 ? kind.maxSpeed : fwd < 0 ? -kind.maxSpeed * 0.4 : 0;
         double a = fwd == 0 ? kind.accel * 0.6 : (Math.signum(target - speed) != Math.signum(speed) && speed != 0 ? kind.accel * 2.2 : kind.accel);

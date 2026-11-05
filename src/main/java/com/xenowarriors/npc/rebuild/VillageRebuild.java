@@ -100,6 +100,10 @@ public final class VillageRebuild {
         }
     }
 
+    /** Nothing carries over into the next world (singleplayer: same JVM, another save - its villages may sit where this one's rejected anchors were). */
+    @SubscribeEvent
+    public static void onServerStopped(net.minecraftforge.event.server.ServerStoppedEvent e) { REJECTED.clear(); SCANS.clear(); JOBS.clear(); DATA.clear(); }
+
     public static RebuildData data(ServerLevel l) { return DATA.get(l.dimension()); }
 
     public static boolean enabled(ServerLevel l) {
