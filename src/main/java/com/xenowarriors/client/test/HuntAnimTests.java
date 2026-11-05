@@ -74,6 +74,7 @@ public final class HuntAnimTests {
         }
         if (all || f.contains("fx")) fx(mc, l);
         if (all || f.contains("inv")) inventory(mc, l);
+        if (all || f.contains("track")) tracking(mc, l);
         if (all || f.contains("gal")) gallery(mc, l);
         if (all || f.contains("gear")) gear(mc, l);
         if (all || f.contains("pose")) poses(mc, l);
@@ -376,6 +377,24 @@ public final class HuntAnimTests {
             }
         }
         l.add(new Step(null, () -> com.xenowarriors.client.compat.ShaderCompat.forceForTest = false, 2));
+    }
+
+    // ------------------------------------------------------------------ someone coming into view of a burning Mikiko
+
+    /**
+     * There's no second player here, so: Netsu on, the client forgets it (as a player who wasn't in range when it
+     * started would never have heard of it), then "start tracking" is fired as it is when someone comes into view.
+     */
+    private static void tracking(Minecraft mc, List<Step> l) {
+        setChar(l, CharacterType.MIKIKO, 0);
+        l.add(new Step(null, () -> server(p -> { home(p); p.setGameMode(GameType.SURVIVAL);
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(1000F)); com.xenowarriors.mikiko.Netsu.start(p); }), 10));
+        l.add(new Step(null, () -> { com.xenowarriors.client.ClientSkillState.setNetsu(mc.player.getId(), 0);
+            log("track netsu forgotten on the client: active=" + com.xenowarriors.client.ClientSkillState.netsuActive(mc.player.getId())); }, 2));
+        l.add(new Step(null, () -> server(p -> net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerEvent.StartTracking(p, p))), 10));
+        l.add(new Step(null, () -> log("check netsu seen by someone coming into view: "
+                + (com.xenowarriors.client.ClientSkillState.netsuActive(mc.player.getId()) ? "PASS" : "FAIL")), 2));
+        l.add(new Step(null, () -> server(p -> { com.xenowarriors.mikiko.Netsu.stop(p); p.setGameMode(GameType.CREATIVE); }), 10));
     }
 
     // ------------------------------------------------------------------ the inventory's player preview in odd states
