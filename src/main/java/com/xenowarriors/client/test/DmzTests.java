@@ -266,18 +266,18 @@ public final class DmzTests {
             DmzQuestHelp.resetSummonedForTest(p);
             DmzQuests.accept(p, q[1][0]);
             log("summon: accepted " + q[1][0] + " " + DmzQuests.progress(p, q[1][0], Integer.parseInt(q[1][1])) + " wants " + q[1][2]);
-        }), 20);
+        }), 20 * 14);
         step("dmz5_summoned", () -> server(p -> {
             dumpLogs();
             if (q[1] == null) return;
             var t = ForgeRegistries.ENTITY_TYPES.getValue(new net.minecraft.resources.ResourceLocation(q[1][2]));
-            var near = p.serverLevel().getEntities(t, p.getBoundingBox().inflate(24), e -> e.getPersistentData().getBoolean("xw_quest_summon"));
+            var near = p.serverLevel().getEntities(t, p.getBoundingBox().inflate(64), e -> e.getPersistentData().getBoolean("xw_quest_summon"));
             log("summon: " + near.size() + " x " + q[1][2] + " near the player; tags " + (near.isEmpty() ? "-" : near.get(0).getPersistentData().getString("dmz_quest_key") + "#" + near.get(0).getPersistentData().getInt("dmz_quest_objective_index")));
             for (var e : near) if (e instanceof Mob m) { m.setNoAi(true); m.lookAt(p, 180, 0); }
             // kill one: it counts for the objective
             if (!near.isEmpty() && near.get(0) instanceof LivingEntity le) { le.hurt(p.damageSources().playerAttack(p), 1.0E7F); log("summon: killed one -> " + DmzQuests.progress(p, q[1][0], Integer.parseInt(q[1][1]))); }
             for (var e : near) e.discard();
-        }), 20 * 25);
+        }), 40);
         // 6: mission items from kills
         step(null, () -> server(p -> {
             if (q[2] == null) { log("items: no item objective found"); return; }
@@ -381,7 +381,18 @@ public final class DmzTests {
         return p.serverLevel().getEntity(ID[0]) instanceof ZombieSaiyanEntity z ? z : null;
     }
 
+    private static boolean guarded;
+
     private static void saiyan(Minecraft mc) {
+        if (!guarded) {                                                          // (its hits go through DragonMineZ's damage: the test player just can't die)
+            guarded = true;
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, false, net.minecraftforge.event.entity.living.LivingDamageEvent.class, e -> {
+                if (e.getEntity() instanceof ServerPlayer p && !(p instanceof net.minecraftforge.common.util.FakePlayer) && p.getHealth() - e.getAmount() < 4F) { e.setAmount(Math.max(0, p.getHealth() - 4F)); }
+            });
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, false, net.minecraftforge.event.entity.living.LivingDeathEvent.class, e -> {
+                if (e.getEntity() instanceof ServerPlayer p && !(p instanceof net.minecraftforge.common.util.FakePlayer)) { e.setCanceled(true); p.setHealth(p.getMaxHealth()); log("guard: the test player would have died (" + e.getSource().getMsgId() + ")"); }
+            });
+        }
         step(null, () -> { noDmzScreen(mc); mc.setScreen(null); server(p -> {
             for (PartyBotEntity b : PartyBots.bots(p)) b.discard();
             protect(p);
