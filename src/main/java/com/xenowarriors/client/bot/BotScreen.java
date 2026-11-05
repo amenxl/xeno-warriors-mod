@@ -15,7 +15,9 @@ import net.minecraft.world.entity.LivingEntity;
 
 /** A bot teammate's menu: its bag, its pets (summon them), fly me, spar, its mode, and dismiss. */
 public class BotScreen extends Screen {
-    private static final int W = 236, H = 196;
+    private static final int W = 236;
+    private static final boolean DMZ = com.xenowarriors.client.compat.DmzMenu.available();
+    private static final int H = DMZ ? 218 : 196;
     private final OpenBotMenuPacket m;
     private final CharacterType type;
     private int mode;
@@ -53,7 +55,8 @@ public class BotScreen extends Screen {
         carry.active = minecraft.player != null && com.xenowarriors.client.ClientCharacterData.winged(minecraft.player);
         addRenderableWidget(Button.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 88, bw, 20).build());
         addRenderableWidget(Button.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, y + 140, bw, 20).build());
+        if (DMZ) addRenderableWidget(Button.builder(Component.literal("Dragon Ball"), b -> send(PartyBots.ACT_DMZ, 0)).bounds(x, y + 132, bw, 20).build());   // (its DragonMineZ character: points, missions)
+        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, y + (DMZ ? 162 : 140), bw, 20).build());
     }
 
     private int missing;

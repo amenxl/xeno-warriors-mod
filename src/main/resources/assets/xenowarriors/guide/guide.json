@@ -203,6 +203,18 @@
         {
           "title": "Playing with DragonMineZ",
           "text": "- Every character has their own DragonMineZ character (race, stats, forms, techniques). A new one opens the race picker.\n- Xeno Warriors skills hit as hard as your DragonMineZ stats say: energy skills follow your Ki damage, physical ones your Strike.\n- Fighting as Mikiko or Rhalix trains your DragonMineZ stats too.\n- Your blasts can clash with ki attacks.\n- Bots use the ki techniques their character has equipped.\n- Bond hearts are much bigger: +300 max hearts per 10 bond levels."
+        },
+        {
+          "title": "Bots and DragonMineZ",
+          "text": "- A bot with no Dragon Ball character gets a random race and class, saved for that character.\n- Bots earn TP while they're out with you (DragonMineZ's passive TP), plus TP for every kill.\n- Bot menu > Dragon Ball: opens DragonMineZ's menu on the bot's character. Spend its points, take missions. Yours comes back when you close it (or log out, get hit, or change character).\n- Your bots' kills count for your missions' kill objectives."
+        },
+        {
+          "title": "Mission help",
+          "text": "- If a mission wants you to beat a story fighter that never turns up by itself, it's summoned near you a few seconds after the objective starts (once per objective).\n- If a mission needs items, every hostile mob you or your bots kill has a 30% chance to drop one, until you have enough.\n- Mikiko masters Kaioken 20 times faster than anyone else."
+        },
+        {
+          "title": "The Zombie Saiyan",
+          "text": "- A rare boss that comes out at night in the Overworld. It also has a spawn egg.\n- As you wear it down it goes Super Saiyan, then Super Saiyan 2 (lightning), then Super Saiyan 3 (long hair). It uses combos, dashes, ki blasts and the Kamehameha.\n- Beat it as a Super Saiyan 3 and it collapses. Then it gets back up screaming, throws everyone back, and returns fully healed as a Super Saiyan 4.\n- It grows with your DragonMineZ power. Drops: diamonds, emeralds, Senzu Beans, Karma items, and sometimes a piece of Goku armor with every enchantment."
         }
       ]
     }
