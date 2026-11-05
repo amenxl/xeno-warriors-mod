@@ -48,6 +48,7 @@ public final class SoulSplit {
     static final class Split {
         final List<SoulEntity> souls = new ArrayList<>();
         int divisor; float karmaStash, kiStash; long end;
+        double kiDamage, strikeDamage;                  // (the owner's DragonMineZ ki / strike damage when they split: the souls' skills use it)
     }
 
     private SoulSplit() {}
@@ -99,6 +100,8 @@ public final class SoulSplit {
 
     public static boolean active(Player p) { return ACTIVE.containsKey(p.getUUID()); }
     public static int divisor(Player p) { Split s = ACTIVE.get(p.getUUID()); return s == null ? 1 : s.divisor; }
+    /** The owner's DragonMineZ {ki, strike} damage their souls' skills hit with (null if not split). */
+    public static double[] soulDamage(UUID owner) { Split s = owner == null ? null : ACTIVE.get(owner); return s == null ? null : new double[]{s.kiDamage, s.strikeDamage}; }
 
     // ------------------------------------------------------------------ splitting
     public static boolean start(ServerPlayer p) {
@@ -124,14 +127,16 @@ public final class SoulSplit {
         float ki = com.xenowarriors.compat.DmzPetKi.ki(p)[0];
         if (ki > 0 && com.xenowarriors.compat.DmzPetKi.setKi(p, ki / d)) s.kiStash = ki - ki / d;
         // the souls: each gets its share (1/d - half with one soul) of your Xeno Warriors and DragonMineZ strength
-        double[] dmz = com.xenowarriors.compat.DmzBotStats.playerStats(p);         // {DMZ health bonus, DMZ melee damage} (0s without it)
+        double[] dmz = com.xenowarriors.compat.DmzBotStats.playerStats(p);         // {DMZ health bonus, melee, ki, strike damage} (0s without it)
+        s.kiDamage = dmz[2]; s.strikeDamage = dmz[3];
         double atk = (1.0 + Stat.ATTACK.bonus(com.xenowarriors.stats.Stats.level(p, Stat.ATTACK))) * com.xenowarriors.you.YouRaces.damageMult(p);   // (your Attack level)
         double ownerHit = Math.max(5.0, Math.max(p.getAttributeValue(Attributes.ATTACK_DAMAGE) * 2.0, dmz[1]) * atk);   // (your blow: its DMZ melee damage, or your hand doubled - souls can't hold weapons)
         float dmg = (float) (ownerHit / d);
         double speed = 0.34 * (1.0 + Math.min(0.6, Stat.SPEED.bonus(com.xenowarriors.stats.Stats.level(p, Stat.SPEED)) / d));
         lastStats = "owner maxHp=" + Math.round(fullHp) + " dmzHpBonus=" + Math.round(dmz[0]) + " dmzMelee=" + Math.round(dmz[1] * 10) / 10.0 + " xwAtk=x" + Math.round(atk * 100) / 100.0
                 + " ownerHit=" + Math.round(ownerHit * 10) / 10.0 + " | soul (1/" + d + ") maxHp=" + Math.round(Math.max(6.0, fullHp / d)) + " dmg=" + Math.round(dmg * 10) / 10.0
-                + " speed=" + Math.round(speed * 1000) / 1000.0 + " defLv/" + d + " ki/skill dmg x" + Math.round(com.xenowarriors.compat.DmzScaling.skillMultiplier(p, false) * 100) / 100.0 + "/" + d;
+                + " speed=" + Math.round(speed * 1000) / 1000.0 + " defLv/" + d + " skills: dmz ki " + Math.round(dmz[2] * 10) / 10.0 + " (x" + Math.round(com.xenowarriors.compat.DmzScaling.curve(dmz[2] / 10.0) * 100) / 100.0
+                + ") strike " + Math.round(dmz[3] * 10) / 10.0 + " (x" + Math.round(com.xenowarriors.compat.DmzScaling.curve(dmz[3] / 10.0) * 100) / 100.0 + "), then /" + d;
         XenoWarriors.LOGGER.info("XW-SOUL stats {}: {}", p.getName().getString(), lastStats);
         for (int i = 0; i < n; i++) {
             SoulEntity e = SoulEntities.SOUL.get().create(l);

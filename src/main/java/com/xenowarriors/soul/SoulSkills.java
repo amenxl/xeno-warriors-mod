@@ -41,6 +41,8 @@ public final class SoulSkills {
     /** Casts so far (tests). */
     public static int casts;
     public static String lastSkill;
+    /** (Tests) why the last try did or didn't cast. */
+    public static String lastWhy = "";
 
     private SoulSkills() {}
 
@@ -89,7 +91,7 @@ public final class SoulSkills {
     public static boolean tick(SoulEntity soul, ServerPlayer o, LivingEntity target) {
         if (o == null || target == null || !target.isAlive()) return false;
         int lvl = abilityLevel(o, SKILL_ID);
-        if (lvl < SKILLS_AT || soul.distanceTo(target) > 18) return false;
+        if (lvl < SKILLS_AT || soul.distanceTo(target) > 18) { lastWhy = "level " + lvl + " / distance " + Math.round(soul.distanceTo(target)); return false; }
         long now = soul.level().getGameTime();
         long[] ready = READY.computeIfAbsent(soul.getUUID(), k -> new long[]{now + 40, 0, 0, 0, 0});
         if (now < ready[0]) return false;
@@ -98,7 +100,7 @@ public final class SoulSkills {
         if (now < ready[1 + slot]) { ready[0] = now + 10; return false; }
         FakePlayer f = standIn(soul, o);
         Skill skill = SkillPool.inSlot(f, loadout, slot);
-        if (!allowed(skill)) { ready[1 + slot] = now + 200; ready[0] = now + 10; return false; }
+        if (!allowed(skill)) { lastWhy = "slot " + slot + " not allowed: " + (skill == null ? null : skill.getId()); ready[1 + slot] = now + 200; ready[0] = now + 10; return false; }
         Vec3 eye = soul.getEyePosition(), to = target.getBoundingBox().getCenter(), d = to.subtract(eye);
         float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
         f.moveTo(soul.getX(), soul.getY(), soul.getZ(), yaw, pitch);
@@ -108,7 +110,9 @@ public final class SoulSkills {
         f.setDeltaMovement(Vec3.ZERO);
         f.setHealth(f.getMaxHealth());
         boolean used;
-        try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); } catch (Throwable t) { used = false; }
+        String why;
+        try { used = com.xenowarriors.combat.SkillContext.call(f, () -> skill.use(f)); why = skill.getId() + " used=" + used; } catch (Throwable t) { used = false; why = skill.getId() + " threw " + t; }
+        lastWhy = why;
         f.removeAllEffects();                                                       // (self-buffs would never wear off on it)
         ready[0] = now + interval(lvl);
         ready[1 + slot] = now + Math.max(60, skill.getCooldownTicks());

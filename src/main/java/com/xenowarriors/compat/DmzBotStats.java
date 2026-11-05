@@ -48,7 +48,7 @@ public final class DmzBotStats {
 
     private static Boolean loaded;
     private static boolean broken;
-    private static Method healthBonus, melee, mitigate, regen;
+    private static Method healthBonus, melee, mitigate, regen, kiDmg, strikeDmg, resources, getRelease, setRelease;
     private static Capability<?> cap;
 
     /** (For the tests) what happened, newest last. */
@@ -71,6 +71,11 @@ public final class DmzBotStats {
             melee = sd.getMethod("getMeleeDamage");
             regen = sd.getMethod("getHealthRegenPerSecond");
             cap = (Capability<?>) Class.forName("com.dragonminez.common.stats.StatsCapability").getField("INSTANCE").get(null);
+            kiDmg = sd.getMethod("getKiDamage");
+            strikeDmg = sd.getMethod("getStrikeDamage");
+            resources = sd.getMethod("getResources");
+            getRelease = resources.getReturnType().getMethod("getPowerRelease");
+            setRelease = resources.getReturnType().getMethod("setPowerRelease", int.class);
             mitigate = sd.getMethod("calculatePostMitigationDamage", double.class, boolean.class, double.class);
             return true;
         } catch (Throwable t) {
@@ -170,10 +175,29 @@ public final class DmzBotStats {
         try { return p.getCapability(cap).resolve().orElse(null); } catch (Throwable t) { return null; }
     }
 
-    /** {DragonMineZ health bonus, melee damage} of this player's live character ({0, 0} without DragonMineZ). */
+    /** Bots fight from this power release at rest (DmzBotPower); a soul's share is read at least there too. */
+    public static final int REST_RELEASE = 50;
+
+    /**
+     * {DragonMineZ health bonus, melee damage, ki damage, strike damage} of this player's live character, the damage
+     * read at their power release or {@link #REST_RELEASE}%, whichever is higher (a fresh player idles at a few %).
+     * {0, 0, 0, 0} without DragonMineZ.
+     */
     public static double[] playerStats(Player p) {
         Object d = data(p);
-        return d == null ? new double[]{0, 0} : new double[]{Math.max(0, num(healthBonus, d)), Math.max(0, num(melee, d))};
+        if (d == null) return new double[]{0, 0, 0, 0};
+        Object res = null;
+        int was = -1;
+        try {
+            res = resources.invoke(d);
+            was = ((Number) getRelease.invoke(res)).intValue();
+            if (was < REST_RELEASE) setRelease.invoke(res, REST_RELEASE);              // (put straight back below)
+        } catch (Throwable t) { was = -1; }
+        try {
+            return new double[]{Math.max(0, num(healthBonus, d)), Math.max(0, num(melee, d)), Math.max(0, num(kiDmg, d)), Math.max(0, num(strikeDmg, d))};
+        } finally {
+            if (was >= 0 && was < REST_RELEASE) try { setRelease.invoke(res, was); } catch (Throwable ignored) {}
+        }
     }
 
     /** A hit of {@code amount} after this player's DragonMineZ mitigation (unchanged without). */

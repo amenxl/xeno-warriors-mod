@@ -77,6 +77,8 @@ public final class DmzScaling {
     public static double multiplier(Player p, boolean physical) {
         if (!ready()) return 1.0;
         try {
+            double[] soul = p instanceof net.minecraftforge.common.util.FakePlayer ? com.xenowarriors.soul.SoulSplit.soulDamage(com.xenowarriors.soul.SoulSkills.ownerOfStandIn(p.getUUID())) : null;
+            if (soul != null) return Math.max(1.0, (physical ? soul[1] : soul[0]) / REFERENCE);   // (a soul's skills: its owner's at the split, divided in SoulSplit)
             Object data = dataFor(p);
             if (data == null) return 1.0;
             double v = ((Number) (physical ? strikeDamage : kiDamage).invoke(data)).doubleValue();

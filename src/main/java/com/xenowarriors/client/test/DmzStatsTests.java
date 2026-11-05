@@ -96,6 +96,7 @@ public final class DmzStatsTests {
         call(call(d, "getStatus"), "setHasCreatedCharacter", true);
         Object st = call(d, "getStats");
         for (String m : new String[]{"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"}) call(st, m, stats);
+        call(call(d, "getResources"), "setPowerRelease", 50);               // (the release bots rest at: same footing for the comparison)
         DmzPerCharacter.syncStats(p);
     }
 
@@ -135,6 +136,7 @@ public final class DmzStatsTests {
             double[] own = DmzBotStats.playerStats(p);
             double ownMod = 0;
             for (var m : p.getAttribute(Attributes.MAX_HEALTH).getModifiers()) if (m.getName().contains("DMZ")) ownMod += m.getAmount();
+            log("owner release now " + call(call(DmzPerCharacter.live(p), "getResources"), "getPowerRelease") + "%");
             log("owner (player, same DMZ character): maxHp " + r(p.getMaxHealth()) + " DMZ health modifier " + r(ownMod) + " getHealthBonus " + r(own[0]) + " meleeDamage " + r(own[1])
                     + " => a player of it has 20 + " + r(own[0]) + " = " + r(20 + own[0]) + " + XW hearts");
             log("bot AFTER: maxHp " + r(b.getMaxHealth()) + " = level health " + r(b.getAttribute(Attributes.MAX_HEALTH).getBaseValue()) + " + DMZ " + r(b.getMaxHealth() - b.getAttribute(Attributes.MAX_HEALTH).getBaseValue())
@@ -186,9 +188,9 @@ public final class DmzStatsTests {
             double[] own = DmzBotStats.playerStats(p);
             Zombie z = dummy(p, AT.add(-4, 0, 3), 100000);
             float h0 = z.getHealth();
-            p.resetAttackStrengthTicker();
             p.attack(z);
             float ownerPunch = h0 - z.getHealth();
+            log("owner release " + (DMZ ? call(call(DmzPerCharacter.live(p), "getResources"), "getPowerRelease") : "-") + "%");
             log("owner maxHp " + r(fullHp) + " DMZ {healthBonus, melee} " + r(own[0]) + ", " + r(own[1]) + " | owner punch on a zombie " + r(ownerPunch)
                     + " | owner skill multiplier ki x" + r(DmzScaling.skillMultiplier(p, false)) + " strike x" + r(DmzScaling.skillMultiplier(p, true)));
             SoulSplit.start(p);
@@ -213,7 +215,8 @@ public final class DmzStatsTests {
             SoulSplit.lastSkillHit = "";
         }); }, 40);
         step("dmzstats_soul_" + stats, () -> { noDmzScreen(mc); mc.options.hideGui = false; server(p -> {
-            log("soul skills: casts so far " + SoulSkills.casts + " last " + SoulSkills.lastSkill + " | last soul skill hit " + SoulSplit.lastSkillHit);
+            log("soul skills: casts so far " + SoulSkills.casts + " last " + SoulSkills.lastSkill + " why " + SoulSkills.lastWhy + " | last soul skill hit " + SoulSplit.lastSkillHit);
+            for (SoulEntity s : p.serverLevel().getEntitiesOfClass(SoulEntity.class, p.getBoundingBox().inflate(30), s -> p.getUUID().equals(s.ownerId()))) log("soul target " + (s.getTarget() == null ? null : s.getTarget().getType().getDescriptionId()) + " hp " + r(s.getHealth()));
             if (tgt[0] != null) tgt[0].discard();
         }); }, 200);
     }
