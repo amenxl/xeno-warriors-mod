@@ -47,6 +47,7 @@ public final class SelfTest {
         } catch (Throwable t) {
             XenoWarriors.LOGGER.error("XW-SELFTEST FAIL", t);
         }
+        if (com.xenowarriors.debug.MpSelfTest.wanted()) { com.xenowarriors.debug.MpSelfTest.start(server); return; }   // (two players on this server first; it stops when done)
         server.halt(false);
     }
 
