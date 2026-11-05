@@ -153,11 +153,9 @@ public final class SenseTests {
         }), 10));
         l.add(new Step(null, () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")), 10));
         l.add(new Step("sense_craft_request", () -> {}, 3));
-        l.add(new Step(null, () -> { mc.setScreen(null); UiTest.server(p -> {
-            PartyBotEntity b = bot(p, CharacterType.KAERU);
-            if (b == null) return;
-            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack(), "xenobot give " + b.getId() + " " + BotCrafting.offerToken(b));
-        }); }, 10));
+        l.add(new Step(null, () -> mc.setScreen(null), 3));
+        // answered on the request card with the Accept key (Y)
+        l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(com.xenowarriors.client.ModKeyMappings.ACCEPT_REQUEST.getKey()), 15));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity b = bot(p, CharacterType.KAERU);
             if (b == null) return;
@@ -181,16 +179,16 @@ public final class SenseTests {
     }
 
     private static void aura(Minecraft mc, List<Step> l, boolean dmz) {
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.server(p -> {
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.noToasts(mc); mc.gui.getChat().clearMessages(false); UiTest.server(p -> {
             clearAll(p);
             p.getInventory().clearContent();
             ServerLevel lv = p.serverLevel();
-            p.teleportTo(lv, X + 0.5, Y, Z + 0.5, 0, -8);
+            p.teleportTo(lv, X + 0.5, Y, Z + 0.5, 8, -14);
             // a wall in front of the chicken: it's sensed through it
             fill(lv, X - 6, Y, Z + 5, X - 2, Y + 2, Z + 5, Blocks.STONE_BRICKS.defaultBlockState());
             var c = mob(p, EntityType.CHICKEN, X - 3.5, Z + 7.5);
             var z = mob(p, EntityType.ZOMBIE, X + 0.5, Z + 9.5);
-            var w = mob(p, EntityType.WITHER, X + 6.5, Z + 18.5);
+            var w = mob(p, EntityType.WITHER, X + 10.5, Z + 24.5);
             IDS[0] = c == null ? -1 : c.getId(); IDS[1] = z == null ? -1 : z.getId(); IDS[2] = w == null ? -1 : w.getId();
             log("aura setup: chicken (behind a wall), zombie, Wither (boss); you=" + f1(com.xenowarriors.karma.KarmaSensing.strength(p))
                     + " chicken=" + (c == null ? "-" : f1(com.xenowarriors.karma.KarmaSensing.strength(c))) + " zombie=" + (z == null ? "-" : f1(com.xenowarriors.karma.KarmaSensing.strength(z)))
@@ -202,7 +200,7 @@ public final class SenseTests {
             com.xenowarriors.karma.KarmaSensing.release(p);
         }), 30));
         // before: the old look (outline + sparks only)
-        l.add(new Step(null, () -> KarmaSense.aurasOff = true, 5));
+        l.add(new Step(null, () -> { KarmaSense.aurasOff = true; UiTest.noToasts(mc); mc.gui.getChat().clearMessages(false); }, 5));
         l.add(new Step("sense_aura_before" + (dmz ? "_dmz" : ""), () -> {}, 3));
         l.add(new Step(null, () -> KarmaSense.aurasOff = false, 4));
         l.add(new Step("sense_aura_after" + (dmz ? "_dmz" : ""), () -> {}, 3));
@@ -223,7 +221,7 @@ public final class SenseTests {
                     + " -> " + (pass ? "PASS" : "FAIL"));
         }, 3));
         // third person, from behind and above: the scale of it
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); UiTest.server(p -> p.teleportTo(p.serverLevel(), X + 0.5, Y, Z - 4.5, 0, 5)); }, 8));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); UiTest.server(p -> p.teleportTo(p.serverLevel(), X - 2.5, Y + 1, Z - 9.5, 12, -6)); }, 8));
         l.add(new Step("sense_aura_after_wide" + (dmz ? "_dmz" : ""), () -> {}, 3));
         // at night
         l.add(new Step(null, () -> UiTest.server(p -> p.serverLevel().setDayTime(18000)), 10));

@@ -250,8 +250,8 @@ public final class KarmaSense {
         boolean faint = rel < 0;
         float t = faint ? 0F : Mth.clamp((float) ((Math.log(Math.max(1e-3, rel)) / Math.log(2) + 2) / 6.0), 0F, 1F);
         if (!faint && boss(e)) t = Math.max(t, 0.85F);
-        float radius = e.getBbWidth() * 0.5F + 0.7F + 0.8F * t + 4.8F * t * t;
-        float height = e.getBbHeight() * (1.35F + 0.5F * t) + 0.6F + 11F * t * t;
+        float radius = e.getBbWidth() * 0.5F + 0.9F + 0.8F * t + 4.8F * t * t;
+        float height = e.getBbHeight() * (1.5F + 0.4F * t) + 1.0F + 11F * t * t;
         if (faint) { radius *= 0.7F; height *= 0.8F; }
         return new float[]{radius, height, faint ? -1F : t};
     }
