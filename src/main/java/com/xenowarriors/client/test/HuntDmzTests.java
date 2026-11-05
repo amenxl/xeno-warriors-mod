@@ -427,9 +427,9 @@ public final class HuntDmzTests {
     /** Any Dragon Ball blocks around: broken and given back to the bot. */
     static void pickUpBalls(ServerPlayer p, PartyBotEntity b) {
         var l = (net.minecraft.server.level.ServerLevel) b.level();
-        var c = b.blockPosition();
+        var c = net.minecraft.core.BlockPos.containing(at(p));                  // (around the test spot: a downed bot may have been moved)
         int n = 0;
-        for (var pos : net.minecraft.core.BlockPos.betweenClosed(c.offset(-8, -3, -8), c.offset(8, 3, 8))) {
+        for (var pos : net.minecraft.core.BlockPos.betweenClosed(c.offset(-14, -3, -14), c.offset(14, 3, 14))) {
             var id = ForgeRegistries.BLOCKS.getKey(l.getBlockState(pos).getBlock());
             if (id != null && id.getNamespace().equals("dragonminez") && id.getPath().startsWith("dball")) {
                 var item = ForgeRegistries.ITEMS.getValue(id);
