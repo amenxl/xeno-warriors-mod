@@ -93,11 +93,18 @@ public final class SenseTests {
         return b;
     }
 
+    private static void noDmzScreen(Minecraft mc) {
+        if (mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez")) mc.setScreen(null);
+    }
+
     public static void build(Minecraft mc, List<Step> l, String focus) {
         String f = focus.replaceFirst("^dmz", "");
         boolean all = f.equals("sense");
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); mc.options.hideGui = false; UiTest.character(CharacterType.MIKIKO); UiTest.hold(null);
             UiTest.server(SenseTests::arena); }, 40));
+        // (DragonMineZ: its character creator would sit on top of everything - count the character as made)
+        l.add(new Step(null, () -> { UiTest.server(com.xenowarriors.compat.DmzPerCharacter::markCreatedForTest); noDmzScreen(mc); }, 20));
+        l.add(new Step(null, () -> noDmzScreen(mc), 5));
         if (all || f.equals("sense_craft")) craft(mc, l);
         if (all || f.equals("sense_aura")) aura(mc, l, focus.startsWith("dmz"));
         l.add(new Step(null, () -> UiTest.server(p -> { clearAll(p); log("done"); }), 10));
@@ -186,7 +193,7 @@ public final class SenseTests {
     }
 
     private static void aura(Minecraft mc, List<Step> l, boolean dmz) {
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.noToasts(mc); mc.gui.getChat().clearMessages(false); UiTest.server(p -> {
+        l.add(new Step(null, () -> { noDmzScreen(mc); mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.noToasts(mc); mc.gui.getChat().clearMessages(false); UiTest.server(p -> {
             clearAll(p);
             p.getInventory().clearContent();
             ServerLevel lv = p.serverLevel();
@@ -207,7 +214,7 @@ public final class SenseTests {
             com.xenowarriors.karma.KarmaSensing.release(p);
         }), 30));
         // before: the old look (outline + sparks only)
-        l.add(new Step(null, () -> { KarmaSense.aurasOff = true; UiTest.noToasts(mc); mc.gui.getChat().clearMessages(false); }, 5));
+        l.add(new Step(null, () -> { KarmaSense.aurasOff = true; noDmzScreen(mc); UiTest.noToasts(mc); mc.gui.getChat().clearMessages(false); }, 5));
         l.add(new Step("sense_aura_before" + (dmz ? "_dmz" : ""), () -> {}, 3));
         l.add(new Step(null, () -> KarmaSense.aurasOff = false, 4));
         l.add(new Step("sense_aura_after" + (dmz ? "_dmz" : ""), () -> {}, 3));
