@@ -275,7 +275,12 @@ public final class DmzTests {
             log("summon: " + near.size() + " x " + q[1][2] + " near the player; tags " + (near.isEmpty() ? "-" : near.get(0).getPersistentData().getString("dmz_quest_key") + "#" + near.get(0).getPersistentData().getInt("dmz_quest_objective_index")));
             for (var e : near) if (e instanceof Mob m) { m.setNoAi(true); m.lookAt(p, 180, 0); }
             // kill one: it counts for the objective
-            if (!near.isEmpty() && near.get(0) instanceof LivingEntity le) { le.hurt(p.damageSources().playerAttack(p), 1.0E7F); log("summon: killed one -> " + DmzQuests.progress(p, q[1][0], Integer.parseInt(q[1][1]))); }
+            if (!near.isEmpty() && near.get(0) instanceof LivingEntity le) {
+                int n = 0;
+                while (le.isAlive() && n++ < 40) { le.invulnerableTime = 0; le.hurt(p.damageSources().playerAttack(p), 1.0E7F); }
+                if (le.isAlive()) le.kill();
+                log("summon: killed one (" + n + " hits, dead=" + le.isDeadOrDying() + ") -> " + DmzQuests.progress(p, q[1][0], Integer.parseInt(q[1][1])));
+            }
             for (var e : near) e.discard();
         }), 40);
         // 6: mission items from kills
@@ -458,7 +463,7 @@ public final class DmzTests {
                 + " player hp " + p.getHealth()); dumpLogs(); }), 100);
         step(null, () -> server(p -> { var z = saiyan(p); if (z == null) return;
             ZombieSaiyans.ARMOR_CHANCE = 1F;
-            for (int i = 0; i < 3 && z.isAlive(); i++) { z.invulnerableTime = 0; z.hurt(p.damageSources().playerAttack(p), z.getMaxHealth() * 0.6F); }
+            for (int i = 0; i < 12 && z.isAlive(); i++) { z.invulnerableTime = 0; z.hurt(p.damageSources().magic(), z.getMaxHealth() * 0.6F); }
             log("fight: final blows -> alive " + z.isAlive() + " dead " + z.isDeadOrDying());
         }), 10);
         step("dmz5_saiyan_loot", () -> server(p -> {
