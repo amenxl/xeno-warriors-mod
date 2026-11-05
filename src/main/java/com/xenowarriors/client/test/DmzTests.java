@@ -101,6 +101,10 @@ public final class DmzTests {
     }
 
     private static final Object[] BOT = new Object[1];
+    private static Vec3 AT;
+
+    /** The test floor's start (SkillTestRunner.arena also moves the player there, so it's called only once). */
+    static Vec3 at(ServerPlayer p) { if (AT == null) AT = com.xenowarriors.debug.SkillTestRunner.arena(p); return AT; }
 
     /** Keeps the test player alive and clears hostile mobs around (summoned story fighters, leftovers). */
     static void protect(ServerPlayer p) {
@@ -124,7 +128,7 @@ public final class DmzTests {
         step(null, () -> { noDmzScreen(mc); server(p -> {
             make(p, "saiyan");
             log("story mode " + DmzQuests.storyMode(true));
-            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            AT = com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
             p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 60 * 30, 5, false, false));
@@ -142,7 +146,7 @@ public final class DmzTests {
         final float[] tp0 = new float[1];
         final long[] t0 = new long[1];
         step(null, () -> { noDmzScreen(mc); server(p -> {
-            Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            Vec3 at = at(p);
             PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
             if (b == null) { log("bot spawn FAILED"); return; }
             b.moveTo(at.x + 2, at.y, at.z + 2, 0, 0);
@@ -289,7 +293,7 @@ public final class DmzTests {
             DmzQuests.accept(p, q[2][0]);
             log("items: accepted " + q[2][0] + " needs " + DmzQuestHelp.needs(p));
             int rolls0 = DmzQuestHelp.itemRolls, drops0 = DmzQuestHelp.itemDrops;
-            Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            Vec3 at = at(p);
             int n = 100;
             for (int i = 0; i < n; i++) {
                 var z = EntityType.ZOMBIE.create(p.serverLevel());
@@ -373,7 +377,7 @@ public final class DmzTests {
         step(null, () -> server(p -> {
             if (CAM[0] >= 0 && p.serverLevel().getEntity(CAM[0]) != null) p.serverLevel().getEntity(CAM[0]).discard();
             var a = EntityType.ARMOR_STAND.create(p.serverLevel());
-            Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            Vec3 at = at(p);
             a.moveTo(at.x + dx, at.y + dy, at.z + dz, yaw, pitch); a.setNoGravity(true); a.setInvisible(true);
             p.serverLevel().addFreshEntity(a); CAM[0] = a.getId();
         }), 10);
@@ -402,7 +406,7 @@ public final class DmzTests {
             for (PartyBotEntity b : PartyBots.bots(p)) PartyBots.action(p, b.getId(), PartyBots.ACT_DISMISS, 0);   // (sent home, so it doesn't come back)
             for (PartyBotEntity b : p.serverLevel().getEntitiesOfClass(PartyBotEntity.class, p.getBoundingBox().inflate(64))) b.discard();
             protect(p);
-            Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            Vec3 at = at(p);
             p.teleportTo(at.x, at.y, at.z - 12);
             p.serverLevel().setDayTime(6000);
             var z = ZombieSaiyans.ZOMBIE_SAIYAN.get().create(p.serverLevel());
@@ -434,7 +438,7 @@ public final class DmzTests {
             var z = saiyan(p);
             if (z != null) z.discard();
             protect(p);
-            Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+            Vec3 at = at(p);
             p.teleportTo(at.x, at.y, at.z - 9);
             p.setYRot(0); p.setXRot(5);
             var n = ZombieSaiyans.ZOMBIE_SAIYAN.get().create(p.serverLevel());
