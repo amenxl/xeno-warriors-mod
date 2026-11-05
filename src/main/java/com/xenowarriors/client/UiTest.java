@@ -76,6 +76,7 @@ public final class UiTest {
             if (System.getenv("XW_UITEST_FOCUS") != null && !System.getenv("XW_UITEST_FOCUS").isEmpty() && !"bats".equals(System.getenv("XW_UITEST_FOCUS"))) p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, p.getBoundingBox().inflate(64), m -> !(m instanceof com.xenowarriors.sr.SrMemberEntity)).forEach(m -> m.discard());
         }), 20));
+        if (com.xenowarriors.client.test.StatBoostTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.StatBoostTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.BuildingTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.BuildingTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.ParityTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.ParityTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.DmzStatsTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.DmzStatsTests.build(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d)), UiTest::server, UiTest::character, UiTest::log); return l; }
