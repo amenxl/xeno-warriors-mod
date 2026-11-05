@@ -73,7 +73,10 @@ public final class Money {
         if (dead.level().isClientSide || !((Object) com.xenowarriors.collection.Collection.credit(e.getSource().getEntity()) instanceof ServerPlayer p) || dead instanceof Player
                 || com.xenowarriors.vr.Vr.inVr(dead)) return;   // (VR enemies are training, not loot)
         boolean foe = dead instanceof Enemy
-                || (dead instanceof com.xenowarriors.npc.HumanNpcEntity h && (h.raider() || h.isAggressive()))
+                // (a townsperson only counts when they were a raider, possessed, or fighting you or your side - not a town
+                // fighter who was busy holding down a possessed neighbour)
+                || (dead instanceof com.xenowarriors.npc.HumanNpcEntity h && (h.raider() || h.possessed() || (h.skyHater() && h.getTarget() != null)
+                        || (h.getTarget() != null && com.xenowarriors.combat.Allies.isAlly(p, h.getTarget()))))
                 || dead instanceof com.xenowarriors.sr.SrMemberEntity;
         if (!foe) return;
         // from its natural health (not what levels/DragonMineZ piled on), with a little for its level

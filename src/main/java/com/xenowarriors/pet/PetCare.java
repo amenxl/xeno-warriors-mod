@@ -133,6 +133,9 @@ public final class PetCare {
     public static void onTarget(LivingChangeTargetEvent event) {
         LivingEntity target = event.getNewTarget();
         if (target == null || target.level().isClientSide || !(event.getEntity() instanceof Mob mob)) return;
+        // a pet never goes after its own side: a fox hunting chickens leaves a winged companion chicken alone (yours or a
+        // party member's), and nobody's pet picks a fight with your bots, party or their pets (a duel still allows it)
+        if (ownerOfPet(mob) != null && com.xenowarriors.combat.Allies.isAlly(mob, target)) { event.setNewTarget(null); return; }
         Player owner = ownerOfPet(target);
         if (owner == null || ownerOfPet(mob) != null) return;              // not a pet, or a pet vs pet
         // one decision per enemy for a few seconds, so it doesn't re-roll every time it looks around

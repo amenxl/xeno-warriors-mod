@@ -29,7 +29,10 @@ public class FoxWhistleItem extends Item {
             level.playSound(null, sp.blockPosition(), SoundEvents.NOTE_BLOCK_FLUTE.value(), SoundSource.PLAYERS, 1F, 1.6F);
             ServerScheduler.later(4, () -> level.playSound(null, sp.blockPosition(), SoundEvents.NOTE_BLOCK_FLUTE.value(),
                     SoundSource.PLAYERS, 1F, 2.0F));
-            FoxPets.whistle(sp);
+            FoxPets.whistle(sp);      // (Rhalix: his winged companions)
+            // everyone else's winged companions answer too (as the Pets menu's whistle already did)
+            if (com.xenowarriors.character.ModCapabilities.getType(sp) != com.xenowarriors.character.CharacterType.RHALIX
+                    && !com.xenowarriors.wing.WingPets.records(sp).isEmpty()) com.xenowarriors.wing.WingPets.whistle(sp);
         }
         player.getCooldowns().addCooldown(this, 60);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);

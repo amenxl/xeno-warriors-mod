@@ -49,7 +49,8 @@ public final class PhoneCalls {
         if (!hasPhone(to)) { from.displayClientMessage(msg(to.getName().getString() + " doesn't have a phone on them", ChatFormatting.GRAY), true); return; }
         if (CALLS.containsKey(toId) || RINGING.containsKey(toId)) { from.displayClientMessage(msg(to.getName().getString() + " is busy", ChatFormatting.GRAY), true); return; }
         RINGING.put(toId, new Ring(from.getUUID(), from.level().getGameTime() + RING_TICKS));
-        from.displayClientMessage(msg("Calling " + to.getName().getString() + "...", ChatFormatting.AQUA), true);
+        setOnCall(from, true);                                             // (phone to the ear while it rings: right-click hangs up)
+        from.displayClientMessage(msg("Calling " + to.getName().getString() + "... (right-click to hang up)", ChatFormatting.AQUA), true);
         ModNetwork.sendToPlayer(new RequestPopupPacket("Incoming Call", from.getName().getString() + " is calling you!",
                 "/xeno phone answer", "/xeno phone decline", RING_TICKS, 0xFF5AD2FF), to);
     }
@@ -74,7 +75,32 @@ public final class PhoneCalls {
         Ring r = RINGING.remove(to.getUUID());
         if (r == null) return;
         ServerPlayer from = to.server.getPlayerList().getPlayer(r.from);
-        if (from != null) from.displayClientMessage(msg(to.getName().getString() + " declined the call", ChatFormatting.GRAY), true);
+        if (from != null) {
+            if (!CALLS.containsKey(from.getUUID())) setOnCall(from, false);
+            from.displayClientMessage(msg(to.getName().getString() + " declined the call", ChatFormatting.GRAY), true);
+        }
+    }
+
+    /** The caller hung up (or put the phone away) before anyone answered: the ringing stops. */
+    private static void cancelRinging(MinecraftServer server, UUID caller, String name) {
+        RINGING.entrySet().removeIf(e -> {
+            if (!e.getValue().from().equals(caller)) return false;
+            ServerPlayer to = server.getPlayerList().getPlayer(e.getKey());
+            if (to != null) to.displayClientMessage(msg("Missed call from " + name, ChatFormatting.GRAY), true);
+            return true;
+        });
+    }
+
+    /** (tests) Whether someone's call to another player is still ringing. */
+    public static boolean ringingFrom(UUID caller) {
+        for (Ring r : RINGING.values()) if (r.from().equals(caller)) return true;
+        return false;
+    }
+
+    /** (tests) Starts a ring from {@code from} to {@code toId} without needing that player online. */
+    public static void testRing(ServerPlayer from, UUID toId) {
+        RINGING.put(toId, new Ring(from.getUUID(), from.level().getGameTime() + RING_TICKS));
+        setOnCall(from, true);
     }
 
     /** Which phone they're talking on (0 smartphone, 1 flip, 2 brick). */
@@ -90,6 +116,7 @@ public final class PhoneCalls {
     public static void hangUp(ServerPlayer p) {
         UUID other = CALLS.remove(p.getUUID());
         setOnCall(p, false);
+        cancelRinging(p.server, p.getUUID(), p.getName().getString());   // (hanging up while it's still ringing)
         if (other == null) return;
         CALLS.remove(other);
         ServerPlayer o = p.server.getPlayerList().getPlayer(other);
@@ -137,9 +164,18 @@ public final class PhoneCalls {
         RINGING.entrySet().removeIf(e -> {
             if (now <= e.getValue().until) return false;
             ServerPlayer from = server.getPlayerList().getPlayer(e.getValue().from);
-            if (from != null) from.displayClientMessage(msg("No answer", ChatFormatting.GRAY), true);
+            if (from != null) {
+                if (!CALLS.containsKey(from.getUUID())) setOnCall(from, false);
+                from.displayClientMessage(msg("No answer", ChatFormatting.GRAY), true);
+            }
             return true;
         });
+        // the caller left or put the phone away while it was ringing: it stops
+        for (Ring r : new java.util.ArrayList<>(RINGING.values())) {
+            ServerPlayer from = server.getPlayerList().getPlayer(r.from());
+            if (from == null) cancelRinging(server, r.from(), "someone");
+            else if (!PhoneItem.onCall(from)) cancelRinging(server, r.from(), from.getName().getString());
+        }
         // put the phone away: the call drops
         for (UUID id : new java.util.ArrayList<>(CALLS.keySet())) {
             ServerPlayer p = server.getPlayerList().getPlayer(id);

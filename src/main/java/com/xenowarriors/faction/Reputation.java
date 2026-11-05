@@ -134,7 +134,8 @@ public final class Reputation {
     @SubscribeEvent
     public static void onKill(LivingDeathEvent e) {
         LivingEntity dead = e.getEntity();
-        if (dead.level().isClientSide || com.xenowarriors.vr.Vr.inVr(dead) || com.xenowarriors.tower.Tower.is(dead.level())) return;
+        if (dead.level().isClientSide || com.xenowarriors.vr.Vr.inVr(dead) || com.xenowarriors.tower.Tower.is(dead.level())
+                || dead.getPersistentData().getBoolean("xw_journey")) return;      // (a Journey's Gov agents / SR members are its enemies, not the real factions')
         ServerPlayer p = com.xenowarriors.collection.Collection.credit(e.getSource().getEntity());
         if (p == null) return;
         if (dead instanceof com.xenowarriors.gov.GovAgentEntity) { RepRules.GOV_KILL_AGENT.apply(p); RepRules.SR_KILL_AGENT.apply(p); }

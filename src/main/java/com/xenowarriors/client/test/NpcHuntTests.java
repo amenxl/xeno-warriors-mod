@@ -277,6 +277,48 @@ public final class NpcHuntTests {
             int foxes = ownedFoxes(p);
             log("pet whistle item as Mikiko: winged companions back=" + n + " foxes=" + foxes + ok(n == 1 && foxes == 1));
         }), 5));
+        // 10. calling someone and hanging up before they answer: the ringing stops
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(com.xenowarriors.item.ModItems.PHONE.get()));
+            com.xenowarriors.item.PhoneCalls.testRing(p, UUID.randomUUID());
+            log("phone ringing out: ringing=" + com.xenowarriors.item.PhoneCalls.ringingFrom(p.getUUID()) + " phone at ear=" + com.xenowarriors.item.PhoneItem.onCall(p));
+        }), 20));
+        l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.PhoneActionPacket(1, new UUID(0, 0))), 20));   // (what right-clicking the phone sends)
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            boolean ringing = com.xenowarriors.item.PhoneCalls.ringingFrom(p.getUUID());
+            log("phone hung up while ringing: still ringing=" + ringing + " phone at ear=" + com.xenowarriors.item.PhoneItem.onCall(p) + ok(!ringing && !com.xenowarriors.item.PhoneItem.onCall(p)));
+        }), 5));
+        // 11. Money for kills: a town fighter busy with a zombie isn't an enemy (no pay); a raider is (pay). As Rhalix (Mikiko can't hurt townsfolk)
+        long[] m0 = new long[1];
+        l.add(new Step(null, () -> UiTest.character(CharacterType.RHALIX), 30));
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            ServerLevel lv = p.serverLevel();
+            m0[0] = com.xenowarriors.economy.Money.get(p);
+            var z = EntityType.ZOMBIE.create(lv);
+            z.moveTo(p.getX() + 8, p.getY(), p.getZ() - 6, 0, 0);
+            z.setNoAi(true);
+            lv.addFreshEntity(z);
+            var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(lv);
+            h.moveTo(p.getX() + 6, p.getY(), p.getZ() - 6, 0, 0);
+            h.setNoAi(true);
+            lv.addFreshEntity(h);
+            h.setTarget(z);
+            h.setAggressive(true);
+            h.hurt(p.damageSources().playerAttack(p), 100000F);
+            long paidTown = com.xenowarriors.economy.Money.get(p) - m0[0];
+            var r = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(lv);
+            r.moveTo(p.getX() + 6, p.getY(), p.getZ() - 8, 0, 0);
+            r.setNoAi(true);
+            lv.addFreshEntity(r);
+            r.makeRaider(false);
+            long before = com.xenowarriors.economy.Money.get(p);
+            r.hurt(p.damageSources().playerAttack(p), 100000F);
+            long paidRaider = com.xenowarriors.economy.Money.get(p) - before;
+            z.discard();
+            log("kill money: town fighter (busy with a zombie) dead=" + !h.isAlive() + " paid=" + paidTown + ", raider dead=" + !r.isAlive() + " paid=" + paidRaider
+                    + ok(!h.isAlive() && paidTown == 0 && paidRaider > 0));
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.TOWN, 0);
+        }), 10));
         l.add(new Step(null, () -> log("done"), 5));
     }
 }

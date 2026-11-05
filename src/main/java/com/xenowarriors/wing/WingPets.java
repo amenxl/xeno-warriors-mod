@@ -288,6 +288,12 @@ public final class WingPets {
         if (p.tickCount % 5 == 0 && ModCapabilities.getType(p) == CharacterType.RHALIX) curiousBats(p);
         ListTag pets = pets(p);
         if (pets.isEmpty()) return;
+        if (p.tickCount % 40 == 0) {     // an old copy that loaded while he was offline (see FoxPets.dropStaleCopies)
+            for (Mob m : p.serverLevel().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(48), m -> winged(m) && isOwnedBy(m, p))) {
+                CompoundTag rec = record(p, m.getUUID());
+                if (rec == null || rec.getBoolean("dead") || rec.getInt("gen") != m.getPersistentData().getInt(GEN)) m.discard();
+            }
+        }
         for (int i = 0; i < pets.size(); i++) {
             CompoundTag rec = pets.getCompound(i);
             if (rec.getBoolean("dead") || !rec.hasUUID("uuid")) continue;
@@ -370,7 +376,7 @@ public final class WingPets {
             }
             if (!rec.getBoolean("dead") && rec.hasUUID("uuid")) {
                 for (ServerLevel level : p.server.getAllLevels()) {
-                    if (level.getEntity(rec.getUUID("uuid")) instanceof Mob old) old.discard();
+                    if (level.getEntity(rec.getUUID("uuid")) instanceof Mob old) { if (old.isAlive()) snapshot(old, rec); old.discard(); }
                 }
             }
             boolean wasDead = rec.getBoolean("dead");
@@ -459,6 +465,7 @@ public final class WingPets {
     private static final java.util.Set<CompoundTag> OPEN_BAGS = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
     private static void openBag(ServerPlayer p, Mob mob, CompoundTag rec) {
+        if (p.containerMenu != p.inventoryMenu) p.closeContainer();     // (an open bag closes first, so its closing can't unmark this one)
         net.minecraft.world.SimpleContainer c = bag(rec);
         OPEN_BAGS.add(rec);
         c.addListener(changed -> saveBag(rec, changed));

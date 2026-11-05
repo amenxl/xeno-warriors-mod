@@ -717,6 +717,7 @@ public final class FoxPets {
         rideAlong(p, s);
 
         if (p.tickCount % 20 != 0) return;
+        if (p.tickCount % 40 == 0) dropStaleCopies(p);
         for (Tag t : pets) {
             CompoundTag rec = (CompoundTag) t;
             if (rec.getBoolean("dead") || rec.getBoolean("back") || !rec.hasUUID("uuid")) continue;
@@ -732,7 +733,11 @@ public final class FoxPets {
                     && (fox.getTarget() == null || !fox.getTarget().isAlive())) {
                 net.minecraft.world.entity.monster.Monster enemy = p.serverLevel().getNearestEntity(
                         net.minecraft.world.entity.monster.Monster.class,
-                        net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat().range(12), fox,
+                        net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat().range(12)
+                                // (not his side - a party member's tamed robot - and not a calm neutral mob: poking a
+                                // zombified piglin or an enderman would bring the whole lot down on him)
+                                .selector(e -> !com.xenowarriors.combat.Allies.isAlly(p, e)
+                                        && !(e instanceof net.minecraft.world.entity.NeutralMob n && !n.isAngry())), fox,
                         p.getX(), p.getY(), p.getZ(), p.getBoundingBox().inflate(12, 4, 12));
                 if (enemy != null && !(enemy instanceof net.minecraft.world.entity.monster.Creeper)) {
                     wake(fox);
@@ -753,6 +758,18 @@ public final class FoxPets {
 
     private static void snapshot(Fox fox, CompoundTag rec) {
         rec.put("data", fox.saveWithoutId(new CompoundTag()));
+    }
+
+    /**
+     * An old copy of one of his foxes that loaded while he was offline (another player walked by its chunk after it had
+     * been whistled back elsewhere) slipped past the check on joining the world: once he's around, it goes too - or
+     * he'd have two of the same fox, sword and armor included.
+     */
+    private static void dropStaleCopies(ServerPlayer p) {
+        for (Fox f : p.serverLevel().getEntitiesOfClass(Fox.class, p.getBoundingBox().inflate(48), f -> isOwnedBy(f, p))) {
+            CompoundTag rec = record(p, f.getUUID());
+            if (rec == null || rec.getBoolean("dead") || rec.getBoolean("back") || rec.getInt("gen") != f.getPersistentData().getInt(GEN)) f.discard();
+        }
     }
 
     // ---------------------------------------------------------------- on his back
@@ -860,6 +877,9 @@ public final class FoxPets {
         CompoundTag rec = record(p, foxId);
         Fox fox = findLoaded(p, foxId);
         if (rec == null || fox == null || fox.distanceTo(p) > 10) return;
+        // (a bag already open is closed first - its closing would otherwise mark this one as shut while it's open, and
+        // the fox would stuff food into the bag behind the open screen's back, to be overwritten when it saves)
+        if (p.containerMenu != p.inventoryMenu) p.closeContainer();
         int slots = FoxSkins.bagSlots(rec.getInt("level")), rows = slots / 9;
         net.minecraft.world.SimpleContainer storage = new net.minecraft.world.SimpleContainer(slots) {
             @Override
@@ -932,7 +952,8 @@ public final class FoxPets {
             // dead, in another dimension, or stuck far away: it comes back to him
             if (!rec.getBoolean("dead") && rec.hasUUID("uuid")) {
                 for (ServerLevel level : p.server.getAllLevels()) {
-                    if (level.getEntity(rec.getUUID("uuid")) instanceof Fox old) old.discard();
+                    // (its latest state first: a sword or armor it got in the last few seconds comes along)
+                    if (level.getEntity(rec.getUUID("uuid")) instanceof Fox old) { if (old.isAlive()) snapshot(old, rec); old.discard(); }
                 }
             }
             boolean wasDead = rec.getBoolean("dead");

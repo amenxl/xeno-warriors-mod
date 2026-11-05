@@ -191,7 +191,7 @@
         },
         {
           "title": "Factions",
-          "text": "Your standing with the Government, the Sky Rebellion, the Sky Patrol & Skylanders and the Townsfolk, -1000 to 1000, separately for each character.\n- It changes Gov terminal and villager prices, whether a group attacks you on sight, and bounty pay.\n- Main menu > Factions > click a faction for every way to raise or lower it.\n- Government: donate emeralds or data shards and hand back Gov gear at a Gov terminal (sneak + right-click it with them), defend Gov agents, hunt the Sky Rebellion and the Order, clear corruption. Getting caught in a facility or hurting agents makes them hate you."
+          "text": "Your standing with the Government, the Sky Rebellion, the Sky Patrol & Skylanders and the Townsfolk, -1000 to 1000, separately for each character.\n- It changes Gov terminal and villager prices, whether a group attacks you on sight, and bounty pay.\n- Main menu > Factions > click a faction for every way to raise or lower it.\n- Government: donate emeralds or data shards and hand back Gov gear at a Gov terminal (sneak + right-click it with them), defend Gov agents, hunt the Sky Rebellion and the Order, clear corruption. Getting caught in a facility or hurting agents makes them hate you.\n- Fights in the Tower, VR or a Journey are training: the Gov agents and Sky Rebellion members there don't change your real standing."
         },
         {
           "title": "Government",
@@ -207,7 +207,7 @@
         },
         {
           "title": "Gear and gadgets",
-          "text": "- Karma Altar: upgrade the Hekublade's edge.\n- Vehicles: buy them at a vehicle dealer for emeralds (they can't be parked in the Tower, Journey or VR arenas).\n- Room technology: pulls you and the enemies near you into a copy of the area, so the fight can't wreck the real world. It ends when the enemies are gone or you leave (logging out closes it too - you come back where you opened it).\n- Phones: right-click to take a call (you can't fight until you hang up).\n- Karma Hoodie / SR Hoodie: hide your Karma (and from the Sky Rebellion)."
+          "text": "- Karma Altar: upgrade the Hekublade's edge.\n- Vehicles: buy them at a vehicle dealer for emeralds (they can't be parked in the Tower, Journey or VR arenas).\n- Room technology: pulls you and the enemies near you into a copy of the area, so the fight can't wreck the real world. It ends when the enemies are gone or you leave (logging out closes it too - you come back where you opened it).\n- Phones: right-click to take a call (you can't fight until you hang up). Calling someone, the phone goes to your ear while it rings - right-click to hang up before they answer.\n- Karma Hoodie / SR Hoodie: hide your Karma (and from the Sky Rebellion)."
         }
       ]
     },
