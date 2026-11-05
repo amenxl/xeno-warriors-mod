@@ -76,14 +76,17 @@ public final class PackTests {
 
     // ------------------------------------------------------------------ the real Forge client: load the test world from the title screen
 
-    private static boolean loading;
+    private static boolean loading, running, allowDmz;
 
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || loading) return;
+        if (event.phase != TickEvent.Phase.END) return;
+        Minecraft mc = Minecraft.getInstance();
+        // DragonMineZ asks each new character for a race (its picker keeps opening): out of the way, except for the DMZ menu checks
+        if (running && !allowDmz && mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez")) mc.setScreen(null);
+        if (loading) return;
         String world = System.getenv("XW_UITEST_WORLD");
         if (world == null || world.isEmpty()) return;
-        Minecraft mc = Minecraft.getInstance();
         if (mc.level == null && mc.screen instanceof net.minecraft.client.gui.screens.TitleScreen) {
             loading = true;
             XenoWarriors.LOGGER.info("XW-UITEST loading world '{}' from the title screen", world);
@@ -94,6 +97,7 @@ public final class PackTests {
     // ------------------------------------------------------------------ the test
 
     public static void build(Minecraft mc, List<Step> l, String focus) {
+        running = true;
         l.add(new Step(null, () -> client("mods", () -> {
             List<String> mods = new ArrayList<>();
             ModList.get().forEachModContainer((id, c) -> mods.add(id + " " + c.getModInfo().getVersion()));
@@ -210,12 +214,14 @@ public final class PackTests {
             int ii = i;
             String nm = new com.xenowarriors.client.menu.MainMenuScreen().entryName(i).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_");
             menu(mc, l, "main_" + nm, () -> {
+                allowDmz = nm.contains("dragon");
                 var m = new com.xenowarriors.client.menu.MainMenuScreen();
                 mc.setScreen(m);
                 m.select(ii);
                 m.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
             }, 35);
         }
+        l.add(new Step(null, () -> allowDmz = false, 1));
         menu(mc, l, "select", () -> mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()), 20);
         for (int t = 0; t < 4; t++) { int tt = t; menu(mc, l, "stats_tab" + t, () -> com.xenowarriors.client.PlayerStatsScreen.openTab(null, tt), 25); }
         menu(mc, l, "skills", () -> mc.setScreen(new com.xenowarriors.client.SkillLoadoutScreen(null)), 20);
@@ -232,22 +238,23 @@ public final class PackTests {
 
     private static void skills(Minecraft mc, List<Step> l, CharacterType who) {
         l.add(new Step(null, () -> { mc.setScreen(null); UiTest.character(who); UiTest.hold(null); }, 30));
-        l.add(new Step(null, () -> server(p -> { arena(p); levels(p); clear(p); husk(p, -2, 6); husk(p, 2, 7); husk(p, 0, 9); }), 20));
+        l.add(new Step(null, () -> server(p -> { arena(p); levels(p); clear(p); p.setGameMode(GameType.SURVIVAL); husk(p, -2, 6); husk(p, 2, 7); husk(p, 0, 9); }), 20));
         for (int slot = 0; slot <= SkillManager.ULTIMATE_SLOT; slot++) {
             int s = slot;
             float[] k = new float[1];
             l.add(new Step(null, () -> { face(mc); server(p -> { ready(p); k[0] = Karma.get(p); }); }, 8));
-            l.add(new Step(null, () -> client("skill", () -> { face(mc); ModNetwork.sendToServer(new com.xenowarriors.network.UseSkillPacket(s)); }), 25));
-            l.add(new Step(s == 0 || s == SkillManager.ULTIMATE_SLOT ? "pack_" + who.getId() + "_skill" + s : null, () -> {
+            l.add(new Step(null, () -> client("skill", () -> { face(mc); ModNetwork.sendToServer(new com.xenowarriors.network.UseSkillPacket(s)); }), 3));
+            l.add(new Step(null, () -> {                                    // (right away: Bang's cooldown is only 7 ticks)
                 int cd = ClientSkillState.cooldownTicks(s);
                 server(p -> {
                     var sk = SkillManager.get(p, s);
-                    log(who.getId() + " slot " + s + " = " + (sk == null ? "none" : sk.getId()) + ", karma " + f(k[0]) + " -> " + f(Karma.get(p)));
+                    float now = Karma.get(p);
+                    check(who.getId() + " skill " + s + " (" + (sk == null ? "none" : sk.getId()) + ")", cd > 0 && now < k[0], "client cooldown " + cd + " ticks, karma " + f(k[0]) + " -> " + f(now));
                 });
-                check(who.getId() + " skill " + s, cd > 0, "client cooldown " + cd + " ticks");
-            }, 60));
+            }, 22));
+            l.add(new Step(s == 0 || s == SkillManager.ULTIMATE_SLOT ? "pack_" + who.getId() + "_skill" + s : null, () -> {}, 60));
         }
-        l.add(new Step(null, () -> server(p -> { SkillManager.resetCooldowns(p); clear(p); }), 40));
+        l.add(new Step(null, () -> server(p -> { SkillManager.resetCooldowns(p); clear(p); p.setGameMode(GameType.CREATIVE); }), 40));
     }
 
     // ------------------------------------------------------------------ 4. bots
@@ -275,11 +282,11 @@ public final class PackTests {
 
     private static void sense(Minecraft mc, List<Step> l) {
         float[] k = new float[1];
-        l.add(new Step(null, () -> server(p -> { ready(p); husk(p, 4, 14); k[0] = Karma.get(p); }), 15));
+        l.add(new Step(null, () -> { mc.setScreen(null); server(p -> { p.setGameMode(GameType.SURVIVAL); ready(p); husk(p, 4, 14); k[0] = Karma.get(p); }); }, 15));
         l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(true, true, mc.options.getEffectiveRenderDistance())), 30));
         l.add(new Step("pack_sense", () -> server(p -> check("karma sense", Karma.get(p) < k[0], "karma " + f(k[0]) + " -> " + f(Karma.get(p)))), 3));
         l.add(new Step(null, () -> ModNetwork.sendToServer(new com.xenowarriors.network.KarmaSensePacket(false, false, 0)), 20));
-        l.add(new Step(null, () -> server(PackTests::clear), 10));
+        l.add(new Step(null, () -> server(p -> { clear(p); p.setGameMode(GameType.CREATIVE); }), 10));
     }
 
     // ------------------------------------------------------------------ 6. every gun form: summon, aim, shoot
@@ -301,7 +308,8 @@ public final class PackTests {
                 check("summon " + nm, ok[0] && g != null, "summoned=" + ok[0] + " held " + mc.player.getMainHandItem().getItem());
                 face(mc); GunClient.testAim = true;
             }), 15));
-            l.add(new Step(null, () -> { face(mc); shots[0] = GunClient.shotsSent; GunClient.testClick(); }, 12));
+            l.add(new Step(null, () -> { face(mc); shots[0] = GunClient.shotsSent; GunClient.testTrigger = true; GunClient.testClick(); }, 6));
+            l.add(new Step(null, () -> { face(mc); GunClient.testTrigger = false; }, 6));
             l.add(new Step("pack_gun_" + nm, () -> client("gun fire " + nm, () -> {
                 check("aim " + nm, GunClient.aiming() && GunClient.aimProgress(1F) > 0.3F, "aiming=" + GunClient.aiming() + " progress " + f(GunClient.aimProgress(1F)) + " fov " + f(GunClient.lastFov));
                 check("shoot " + nm, GunClient.shotsSent > shots[0], "shots sent " + shots[0] + " -> " + GunClient.shotsSent);
@@ -366,9 +374,9 @@ public final class PackTests {
         boolean has = ModList.get().isLoaded("dragonminez");
         l.add(new Step(null, () -> { mc.setScreen(null); log("dragonminez loaded=" + has + " menu available=" + com.xenowarriors.client.compat.DmzMenu.available()); }, 5));
         if (!has) return;
-        l.add(new Step(null, () -> client("dmz menu", () -> log("DmzMenu.open -> " + com.xenowarriors.client.compat.DmzMenu.open())), 30));
+        l.add(new Step(null, () -> client("dmz menu", () -> { allowDmz = true; log("DmzMenu.open -> " + com.xenowarriors.client.compat.DmzMenu.open()); }), 30));
         l.add(new Step("pack_dmz_menu", () -> check("dmz menu", mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez"), "screen " + screen(mc)), 2));
-        l.add(new Step(null, () -> mc.setScreen(null), 10));
+        l.add(new Step(null, () -> { allowDmz = false; mc.setScreen(null); }, 10));
     }
 
     // ------------------------------------------------------------------ 10. a team ultimate (Rhalix + a Mikiko bot: Blazing Judgment)
