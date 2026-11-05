@@ -177,7 +177,8 @@ public final class Batch3Tests {
         l.add(null, () -> server(p -> { var b = bot(p, CharacterType.KAERU, 0, 0); if (b != null) b.moveTo(box[0] - 4.5, box[1], box[2] - 4.5); p.teleportTo(box[0] - 4.5, box[1], box[2] - 3.5); }), 60);
         l.add(null, () -> server(p -> { var b = bot(p, CharacterType.KAERU, 0, 0); if (b != null) b.moveTo(box[0] - 3.5, box[1], box[2] - 4.5); }), 60);
         l.add(null, () -> server(p -> log("torch after moving: " + count(p, box) + " torches in the room (spaced: none where it was already lit), kaeru has " + torchesLeft(p, CharacterType.KAERU) + " left")), 5);
-        camera(mc, l, 6.0, 0.6, 6.0);
+        l.add(null, () -> server(p -> p.teleportTo(box[0] - 0.5, box[1], box[2] - 0.5)), 10);
+        camera(mc, l, 4.0, 0.8, 4.0, -2.0);
         l.add("batch3_torch_room", () -> {}, 5);
         uncamera(mc, l);
         // in the Tower (a mode arena) it never does
@@ -289,9 +290,10 @@ public final class Batch3Tests {
             for (var id : ids) { var e = p.serverLevel().getEntity(id); sb.append(e == null ? " picked-up" : " " + f1(e.distanceTo(p))); }
             return sb.toString();
         };
-        l.add(null, () -> { drop.run(); server(p -> log("magnet on: dropped at" + where.apply(p))); }, 4);
-        camera(mc, l, 5.0, 2.5, -6.0);
-        l.add("batch3_magnet_pull", () -> server(p -> log("magnet on after 1s:" + where.apply(p))), 12);
+        camera(mc, l, 3.5, 1.2, -4.5, 1.0);
+        l.add(null, () -> { drop.run(); server(p -> log("magnet on: dropped at" + where.apply(p))); }, 7);
+        l.add("batch3_magnet_pull", () -> server(p -> log("magnet on after 0.35s:" + where.apply(p))), 1);
+        l.add(null, () -> server(p -> log("magnet on after 1s:" + where.apply(p))), 12);
         l.add(null, () -> server(p -> log("magnet on after 2s:" + where.apply(p) + " (pulled ticks " + com.xenowarriors.rhalix.GravityMagnet.pulled + ")")), 30);
         uncamera(mc, l);
         // off: they stay where they fall
@@ -304,11 +306,11 @@ public final class Batch3Tests {
             clearBots(p); com.xenowarriors.stats.PlayerOptions.set(p, com.xenowarriors.stats.PlayerOptions.MAGNET, true);
             var b = bot(p, CharacterType.RHALIX, 0, 0);
             if (b == null) return;
-            b.moveTo(p.getX() + 10, p.getY(), p.getZ() + 10); b.setNoAi(true);
+            b.moveTo(p.getX() + 3, p.getY(), p.getZ()); b.setNoAi(true);
             ids.clear();
-            var it = new net.minecraft.world.entity.item.ItemEntity(p.serverLevel(), b.getX() + 6, b.getY() + 0.2, b.getZ() + 2, new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 2));
+            var it = new net.minecraft.world.entity.item.ItemEntity(p.serverLevel(), b.getX() + 7, b.getY() + 0.2, b.getZ() + 1, new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 2));
             it.setPickUpDelay(10000); it.addTag("xw_b3"); p.serverLevel().addFreshEntity(it); ids.add(it.getUUID());
-            log("magnet bot: item " + f1(it.distanceTo(b)) + " from the Rhalix bot");
+            log("magnet bot: item " + f1(it.distanceTo(b)) + " from the Rhalix bot, " + f1(it.distanceTo(p)) + " from you (a Mikiko: no magnet)");
         }), 40);
         l.add(null, () -> server(p -> {
             var b = bot(p, CharacterType.RHALIX, 0, 0);
@@ -371,10 +373,14 @@ public final class Batch3Tests {
         for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KAERU, CharacterType.LOGAN, CharacterType.TECHNICA}) {
             character(l, t);
             l.add(null, () -> server(p -> { clearBots(p); hold(p, ItemStack.EMPTY); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.getFoodData().setFoodLevel(0); p.setHealth(p.getMaxHealth()); }), 30);
-            l.add(null, () -> { view(mc, CameraType.THIRD_PERSON_FRONT, 180F, 5F); mc.options.hideGui = false; }, 25);
+            l.add(null, () -> { view(mc, CameraType.THIRD_PERSON_FRONT, 0F, 0F); mc.options.hideGui = false; }, 20);
+            l.add("batch3_starving_hud_" + t.getId(), () -> {}, 2);
+            l.add(null, () -> server(p -> { p.setYRot(0F); p.setYHeadRot(0F); p.yBodyRot = 0F; p.setXRot(0F); }), 3);
+            camera(mc, l, 0, -0.12, 1.3, 0, 2F);
             l.add("batch3_starving_" + t.getId(), () -> log("starving " + t.getId() + ": food " + mc.player.getFoodData().getFoodLevel() + " starving=" + com.xenowarriors.client.ClientSkillState.starving(mc.player)
                     + " face=" + com.xenowarriors.client.render.CharacterDetailLayer.faceTexture(mc.player) + " hud=" + com.xenowarriors.client.HudFaces.face(mc.player.getUUID(), mc.player.getHealth(), mc.player.getMaxHealth(), false, false)
                     + " portrait=" + com.xenowarriors.client.HudFaces.texture(t, "starving")), 2);
+            uncamera(mc, l);
             l.add(null, () -> server(p -> { p.getFoodData().setFoodLevel(20); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); }), 20);
             l.add(null, () -> log("fed " + t.getId() + ": starving=" + com.xenowarriors.client.ClientSkillState.starving(mc.player) + " face=" + com.xenowarriors.client.render.CharacterDetailLayer.faceTexture(mc.player)), 2);
         }
@@ -397,10 +403,10 @@ public final class Batch3Tests {
             log("famished tower floor 60 rolled " + hits + "/2000 (" + Math.round(hits / 20F) + "%)");
         }, 3);
         l.add(null, () -> server(p -> { p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); com.xenowarriors.tower.Tower.enter(p); }), 80);
-        l.add(null, () -> server(p -> { com.xenowarriors.tower.TowerMod.forceFamished = true; com.xenowarriors.tower.Tower.skipTo(p, 30); }), 110);
+        l.add(null, () -> server(p -> { com.xenowarriors.tower.TowerMod.forceFamished = true; com.xenowarriors.tower.Tower.skipTo(p, 32); }), 110);
         l.add("batch3_famished_tower", () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             server(p -> log("famished tower: " + com.xenowarriors.tower.Tower.testInfo(p) + " hunger effect=" + p.hasEffect(net.minecraft.world.effect.MobEffects.HUNGER))); }, 3);
-        l.add(null, () -> server(p -> { com.xenowarriors.tower.TowerMod.forceFamished = false; com.xenowarriors.tower.Tower.skipTo(p, 31); }), 110);
+        l.add(null, () -> server(p -> { com.xenowarriors.tower.TowerMod.forceFamished = false; com.xenowarriors.tower.Tower.skipTo(p, 33); }), 110);
         l.add(null, () -> server(p -> log("famished tower next floor: " + com.xenowarriors.tower.Tower.testInfo(p) + " hunger effect=" + p.hasEffect(net.minecraft.world.effect.MobEffects.HUNGER))), 60);
         l.add(null, () -> server(p -> log("famished tower 3s later: hunger effect=" + p.hasEffect(net.minecraft.world.effect.MobEffects.HUNGER))), 3);
         l.add(null, () -> server(p -> { com.xenowarriors.tower.Tower.leave(p, "test over"); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); }), 60);
@@ -460,9 +466,14 @@ public final class Batch3Tests {
 
     /** ... looking at a spot {@code aimZ} blocks south of them. */
     static void camera(Minecraft mc, MikikoTests.Steps l, double dx, double dy, double dz, double aimZ) {
+        double ez = dz - aimZ;
+        camera(mc, l, dx, dy, dz, aimZ, (float) Math.toDegrees(Math.atan2(dy + 0.7, Math.sqrt(dx * dx + ez * ez))));   // (the stand's eyes are 1.8 up)
+    }
+
+    static void camera(Minecraft mc, MikikoTests.Steps l, double dx, double dy, double dz, double aimZ, float pitch) {
         int[] id = {-1};
         double ez = dz - aimZ;
-        float yaw = (float) Math.toDegrees(Math.atan2(dx, -ez)), pitch = (float) Math.toDegrees(Math.atan2(dy + 0.7, Math.sqrt(dx * dx + ez * ez)));   // (the stand's eyes are 1.8 up)
+        float yaw = (float) Math.toDegrees(Math.atan2(dx, -ez));
         l.add(null, () -> server(p -> {
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, p.getBoundingBox().inflate(40), a -> a.getTags().contains("xw_b3_cam")).forEach(a -> a.discard());
             var a = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
