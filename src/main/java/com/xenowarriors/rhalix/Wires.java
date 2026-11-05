@@ -167,7 +167,7 @@ public final class Wires {
     private static String drain(Bind b) {
         LivingEntity t = b.target;
         float[] ki = com.xenowarriors.compat.DmzPetKi.ki(t);
-        if (ki[1] > 0) {
+        if (ki[1] > 0 && ki[0] > 0.5F) {                                     // (Ki first with DragonMineZ; once it's empty, their Karma)
             float take = ki[1] * KI_DRAIN;
             com.xenowarriors.compat.DmzPetKi.setKi(t, Math.max(0, ki[0] - take));
             return String.format("ki %.1f -> %.1f", ki[0], com.xenowarriors.compat.DmzPetKi.ki(t)[0]);

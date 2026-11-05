@@ -561,6 +561,7 @@ public final class WeaponsTests {
             rh[0] = f;
             Wires.LOG.clear();
             com.xenowarriors.karma.Karma.add(p, 200);
+            com.xenowarriors.compat.DmzPetKi.setKi(p, com.xenowarriors.compat.DmzPetKi.ki(p)[1]);
             float[] ki = com.xenowarriors.compat.DmzPetKi.ki(p);
             log("mash: a second player (Rhalix) binds Mikiko: " + Wires.startBind(f, p.getId()) + ", karma " + com.xenowarriors.karma.Karma.get(p)
                     + ", ki " + ki[0] + "/" + ki[1] + (dmz ? " (DragonMineZ)" : ""));
