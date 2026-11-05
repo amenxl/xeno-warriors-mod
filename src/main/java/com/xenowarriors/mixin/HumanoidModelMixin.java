@@ -65,6 +65,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.RainIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.mikiko.HoodClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.mikiko.RopeBladeClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.forms.FormsFx.pose((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // weapon forms: guns, wires, umbrella
                 com.xenowarriors.client.ChargePose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.ClimbPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.SurfPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);

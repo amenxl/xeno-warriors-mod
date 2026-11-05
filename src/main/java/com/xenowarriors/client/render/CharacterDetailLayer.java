@@ -259,7 +259,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         var pos = p.blockPosition();
         boolean snowing = p.level().isRaining() && p.level().canSeeSky(pos) && p.level().getBiome(pos).value().coldEnoughToSnow(pos);
         if (p.getTicksFrozen() > 0 || snowing) return "freezing";
-        if (p.level().isRainingAt(pos.above()) && !p.isUnderWater() && !com.xenowarriors.client.mikiko.HoodClient.wearingHoodie(p)) {
+        if (p.level().isRainingAt(pos.above()) && !p.isUnderWater() && !com.xenowarriors.client.mikiko.HoodClient.wearingHoodie(p) && !com.xenowarriors.forms.Umbrella.covers(p)) {
             // caught in the rain: soaked, drops running down the face (two frames so they drip)
             int bt = p.tickCount + p.getId() * 37;
             if (bt % 97 < 3) return "blink";

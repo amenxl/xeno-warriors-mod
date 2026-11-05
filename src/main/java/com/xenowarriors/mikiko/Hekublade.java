@@ -74,6 +74,11 @@ public final class Hekublade {
         }
         if ((type != CharacterType.MIKIKO && type != CharacterType.KAERU) || player.isSpectator()) return;
         if (RopeBlade.blockSummon(player)) return;                        // thrown and still on its way back
+        if (type == CharacterType.MIKIKO && com.xenowarriors.forms.WeaponForms.removeForms(player.getInventory()) > 0) {   // a gun, tool or umbrella out: put it away
+            com.xenowarriors.forms.WeaponForms.awayFx(player, com.xenowarriors.forms.Form.Style.HEKU);
+            com.xenowarriors.forms.WeaponForms.sync(player, true);
+            return;
+        }
         if (removeAll(player.getInventory()) > 0) {
             effects(player, false);
             return;
@@ -83,6 +88,15 @@ public final class Hekublade {
             player.displayClientMessage(Component.literal(other.getName().getString() + " is holding the Hekublade").withStyle(net.minecraft.ChatFormatting.RED), true);
             return;
         }
+        if (!place(player, com.xenowarriors.mikiko.BladeUpgrades.apply(player, new ItemStack(ModItems.HEKUBLADE.get())))) return;
+        effects(player, true);
+    }
+
+    /**
+     * Puts a summoned weapon in the player's hand: the selected slot if it's free, otherwise another free hotbar slot,
+     * otherwise the held item moves into the backpack to make room. False (with a message) if there's no room at all.
+     */
+    public static boolean place(ServerPlayer player, ItemStack stack) {
         Inventory inv = player.getInventory();
         // use the selected slot if it's free, otherwise another free hotbar slot,
         // otherwise move the held item into the backpack to make room
@@ -101,15 +115,15 @@ public final class Hekublade {
                 }
                 if (spare < 0) {
                     player.displayClientMessage(Component.translatable("message.xenowarriors.hekublade.full"), true);
-                    return;
+                    return false;
                 }
                 inv.items.set(spare, inv.getSelected().copy());
                 inv.items.set(inv.selected, ItemStack.EMPTY);
             }
         }
-        inv.items.set(inv.selected, com.xenowarriors.mikiko.BladeUpgrades.apply(player, new ItemStack(ModItems.HEKUBLADE.get())));
+        inv.items.set(inv.selected, stack);
         inv.setChanged();
-        effects(player, true);
+        return true;
     }
 
     private static void effects(ServerPlayer player, boolean summon) {

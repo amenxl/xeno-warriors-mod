@@ -68,6 +68,20 @@ public final class Netsu {
         }
     }
     private static final Map<UUID, Long> END = new HashMap<>();
+    private static final java.util.Set<UUID> RAIN_WARNED = new java.util.HashSet<>();
+    /** Extra ticks of Netsu the rain burns off each tick (3x as fast in total). */
+    public static final int RAIN_EXTRA = 2;
+
+    /** Rain falling on him (not under cover, not under the Heku-umbrella). */
+    public static boolean rainedOn(Player p) {
+        return p.level().isRainingAt(p.blockPosition().above()) && !p.isUnderWater() && !com.xenowarriors.forms.Umbrella.covers(p);
+    }
+
+    /** Ticks of Netsu left (0 when it's out). */
+    public static long remaining(Player p) {
+        Long end = END.get(p.getUUID());
+        return end == null ? 0 : Math.max(0, end - p.level().getGameTime());
+    }
     private static final Map<Integer, Long> TOUCH_COOLDOWN = new HashMap<>();
 
     private Netsu() {}
@@ -95,6 +109,7 @@ public final class Netsu {
 
     public static void stop(ServerPlayer p) {
         END.remove(p.getUUID());
+        RAIN_WARNED.remove(p.getUUID());
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(SPEED_ID);
         boost(p, false);
@@ -113,6 +128,23 @@ public final class Netsu {
             return;
         }
         long now = p.level().getGameTime();
+        // rain puts it out three times as fast - unless he's under the Heku-umbrella
+        if (rainedOn(p)) {
+            END.put(p.getUUID(), END.get(p.getUUID()) - RAIN_EXTRA);
+            if (now % 4 == 0) ((net.minecraft.server.level.ServerLevel) p.level()).sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+                    p.getX(), p.getY() + 1.6, p.getZ(), 2, 0.3, 0.3, 0.3, 0.01);
+            if (now % 20 == 0) {
+                p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.3F, 1.8F);
+                ModNetwork.sendToTrackingAndSelf(new NetsuPacket(p.getId(), (int) Math.max(1, remaining(p))), p);
+                if (!RAIN_WARNED.contains(p.getUUID())) {
+                    RAIN_WARNED.add(p.getUUID());
+                    p.displayClientMessage(Component.literal("The rain is putting out your Netsu! Get under cover"
+                            + (com.xenowarriors.mikiko.BladeLevel.level(p) >= com.xenowarriors.forms.Form.UMBRELLA.weaponLevel ? " or open the Heku-umbrella" : ""))
+                            .withStyle(net.minecraft.ChatFormatting.AQUA), true);
+                }
+            }
+            if (!active(p)) { stop(p); return; }
+        }
         // burning (visually) without normal fire damage - Netsu's own cost is the slow self-damage below
         p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, false, false, false));
         p.setRemainingFireTicks(Math.max(p.getRemainingFireTicks(), 10));

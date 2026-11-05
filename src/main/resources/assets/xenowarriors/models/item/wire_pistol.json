@@ -1,0 +1,10 @@
+{
+ "parent": "xenowarriors:item/forms/gun_pistol",
+ "textures": {
+  "steel": "xenowarriors:item/forms/wire_gun_steel",
+  "dark": "xenowarriors:item/forms/wire_gun_dark",
+  "glow": "xenowarriors:item/forms/wire_gun_glow",
+  "accent": "xenowarriors:item/forms/wire_gun_accent",
+  "grip": "xenowarriors:item/forms/wire_gun_grip"
+ }
+}

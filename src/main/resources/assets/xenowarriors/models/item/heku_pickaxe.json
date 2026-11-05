@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "layer0": "xenowarriors:item/forms/heku_pickaxe"
+ }
+}

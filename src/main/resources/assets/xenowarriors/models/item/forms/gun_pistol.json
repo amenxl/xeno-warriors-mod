@@ -1,0 +1,614 @@
+{
+ "gui_light": "front",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "particle": "#steel"
+ },
+ "display": {
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    1.6,
+    -1.4
+   ],
+   "scale": [
+    0.7,
+    0.7,
+    0.7
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    1.6,
+    -1.4
+   ],
+   "scale": [
+    0.7,
+    0.7,
+    0.7
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    4,
+    0
+   ],
+   "translation": [
+    0,
+    1.5,
+    1
+   ],
+   "scale": [
+    0.75,
+    0.75,
+    0.75
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    -4,
+    0
+   ],
+   "translation": [
+    0,
+    1.5,
+    1
+   ],
+   "scale": [
+    0.75,
+    0.75,
+    0.75
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.45,
+    0.45,
+    0.45
+   ]
+  },
+  "gui": {
+   "rotation": [
+    15,
+    -90,
+    0
+   ],
+   "translation": [
+    0.5,
+    1,
+    0
+   ],
+   "scale": [
+    1.25,
+    1.25,
+    1.25
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    -90,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.7,
+    0.7,
+    0.7
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    -90,
+    0
+   ],
+   "translation": [
+    0,
+    6,
+    0
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  }
+ },
+ "elements": [
+  {
+   "from": [
+    7,
+    8,
+    3
+   ],
+   "to": [
+    9,
+    10.5,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    }
+   },
+   "name": "slide"
+  },
+  {
+   "from": [
+    6.95,
+    9.1,
+    4
+   ],
+   "to": [
+    9.05,
+    9.6,
+    11
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glow"
+    },
+    "south": {
+     "texture": "#glow"
+    },
+    "east": {
+     "texture": "#glow"
+    },
+    "west": {
+     "texture": "#glow"
+    },
+    "up": {
+     "texture": "#glow"
+    },
+    "down": {
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "runes"
+  },
+  {
+   "from": [
+    7.25,
+    7,
+    4
+   ],
+   "to": [
+    8.75,
+    8,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark"
+    },
+    "south": {
+     "texture": "#dark"
+    },
+    "east": {
+     "texture": "#dark"
+    },
+    "west": {
+     "texture": "#dark"
+    },
+    "up": {
+     "texture": "#dark"
+    },
+    "down": {
+     "texture": "#dark"
+    }
+   },
+   "name": "frame"
+  },
+  {
+   "from": [
+    7.5,
+    8.6,
+    1.8
+   ],
+   "to": [
+    8.5,
+    9.6,
+    3
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark"
+    },
+    "south": {
+     "texture": "#dark"
+    },
+    "east": {
+     "texture": "#dark"
+    },
+    "west": {
+     "texture": "#dark"
+    },
+    "up": {
+     "texture": "#dark"
+    },
+    "down": {
+     "texture": "#dark"
+    }
+   },
+   "name": "muzzle"
+  },
+  {
+   "from": [
+    7.6,
+    8.85,
+    1.7
+   ],
+   "to": [
+    8.4,
+    9.35,
+    1.8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glow"
+    },
+    "south": {
+     "texture": "#glow"
+    },
+    "east": {
+     "texture": "#glow"
+    },
+    "west": {
+     "texture": "#glow"
+    },
+    "up": {
+     "texture": "#glow"
+    },
+    "down": {
+     "texture": "#glow"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "bore"
+  },
+  {
+   "from": [
+    7.25,
+    3,
+    9.6
+   ],
+   "to": [
+    8.75,
+    7.2,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#grip"
+    },
+    "south": {
+     "texture": "#grip"
+    },
+    "east": {
+     "texture": "#grip"
+    },
+    "west": {
+     "texture": "#grip"
+    },
+    "up": {
+     "texture": "#grip"
+    },
+    "down": {
+     "texture": "#grip"
+    }
+   },
+   "rotation": {
+    "angle": -22.5,
+    "axis": "x",
+    "origin": [
+     8,
+     7,
+     11
+    ]
+   },
+   "name": "grip"
+  },
+  {
+   "from": [
+    7.15,
+    4.2,
+    10.0
+   ],
+   "to": [
+    8.85,
+    5.4,
+    11.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#accent"
+    },
+    "south": {
+     "texture": "#accent"
+    },
+    "east": {
+     "texture": "#accent"
+    },
+    "west": {
+     "texture": "#accent"
+    },
+    "up": {
+     "texture": "#accent"
+    },
+    "down": {
+     "texture": "#accent"
+    }
+   },
+   "rotation": {
+    "angle": -22.5,
+    "axis": "x",
+    "origin": [
+     8,
+     7,
+     11
+    ]
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "crystal"
+  },
+  {
+   "from": [
+    7.6,
+    5.9,
+    7
+   ],
+   "to": [
+    8.4,
+    6.4,
+    9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark"
+    },
+    "south": {
+     "texture": "#dark"
+    },
+    "east": {
+     "texture": "#dark"
+    },
+    "west": {
+     "texture": "#dark"
+    },
+    "up": {
+     "texture": "#dark"
+    },
+    "down": {
+     "texture": "#dark"
+    }
+   },
+   "name": "guard"
+  },
+  {
+   "from": [
+    7.6,
+    6.4,
+    7
+   ],
+   "to": [
+    8.4,
+    7,
+    7.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark"
+    },
+    "south": {
+     "texture": "#dark"
+    },
+    "east": {
+     "texture": "#dark"
+    },
+    "west": {
+     "texture": "#dark"
+    },
+    "up": {
+     "texture": "#dark"
+    },
+    "down": {
+     "texture": "#dark"
+    }
+   },
+   "name": "guard_front"
+  },
+  {
+   "from": [
+    7.8,
+    6.6,
+    8.6
+   ],
+   "to": [
+    8.2,
+    7.2,
+    9.1
+   ],
+   "faces": {
+    "north": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    }
+   },
+   "name": "trigger"
+  },
+  {
+   "from": [
+    7.5,
+    10.5,
+    10.6
+   ],
+   "to": [
+    8.5,
+    11.1,
+    11.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark"
+    },
+    "south": {
+     "texture": "#dark"
+    },
+    "east": {
+     "texture": "#dark"
+    },
+    "west": {
+     "texture": "#dark"
+    },
+    "up": {
+     "texture": "#dark"
+    },
+    "down": {
+     "texture": "#dark"
+    }
+   },
+   "name": "rear_sight"
+  },
+  {
+   "from": [
+    7.7,
+    10.5,
+    3.4
+   ],
+   "to": [
+    8.3,
+    11.0,
+    4.1
+   ],
+   "faces": {
+    "north": {
+     "texture": "#accent"
+    },
+    "south": {
+     "texture": "#accent"
+    },
+    "east": {
+     "texture": "#accent"
+    },
+    "west": {
+     "texture": "#accent"
+    },
+    "up": {
+     "texture": "#accent"
+    },
+    "down": {
+     "texture": "#accent"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "front_sight"
+  },
+  {
+   "from": [
+    6.85,
+    8.1,
+    5.5
+   ],
+   "to": [
+    9.15,
+    10.4,
+    6.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#accent"
+    },
+    "south": {
+     "texture": "#accent"
+    },
+    "east": {
+     "texture": "#accent"
+    },
+    "west": {
+     "texture": "#accent"
+    },
+    "up": {
+     "texture": "#accent"
+    },
+    "down": {
+     "texture": "#accent"
+    }
+   },
+   "forge_data": {
+    "block_light": 15,
+    "sky_light": 15
+   },
+   "name": "band"
+  }
+ ]
+}

@@ -20,8 +20,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Gun level (only with TACZ installed): every character has one, per character, raised by hitting things with
- * TACZ guns (XP = damage dealt, a bonus per kill). Each level adds a little gun damage (+0.2%, up to +150%), and at
+ * Gun level: every character has one, per character, raised by hitting things with TACZ guns (XP = damage dealt, a
+ * bonus per kill), with the guns Mikiko and Rhalix summon from their weapons (no TACZ needed) and - when TACZ isn't
+ * installed - with bows and crossbows (half XP). Each level adds a little gun damage (+0.2%, up to +150%), and at
  * level {@link #INFINITE} the magazine never runs dry. Technica is the Sky Patrol's gunsmith: her gun level starts at
  * {@link #TECHNICA_START} and her guns hit {@link #TECHNICA_BONUS} harder on top.
  */
@@ -92,7 +93,7 @@ public final class GunLevel {
     }
 
     public static void sync(ServerPlayer p) {
-        if (!on() || p instanceof net.minecraftforge.common.util.FakePlayer) return;
+        if (p instanceof net.minecraftforge.common.util.FakePlayer) return;
         int lv = level(p);
         com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.GunLevelPacket(lv, Math.min(1F, xp(p) / needed(lv))), p);
     }
@@ -103,7 +104,14 @@ public final class GunLevel {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onHurt(LivingHurtEvent event) {
-        if (!on()) return;
+        if (!on()) {
+            // without TACZ: bows and crossbows train it instead (half XP), so the summoned Hekublade / wire guns
+            // (gun level 50) can still be reached - those guns add their own XP (FormGunItem)
+            if (event.getSource().getDirectEntity() instanceof net.minecraft.world.entity.projectile.AbstractArrow
+                    && event.getSource().getEntity() instanceof ServerPlayer a && a != event.getEntity())
+                addXp(a, Math.min(event.getAmount(), event.getEntity().getHealth() + 1F) * 0.5F);
+            return;
+        }
         ServerPlayer p = shooter(event.getSource());
         if (p == null || p == event.getEntity()) return;
         float m = multiplier(p);
@@ -121,8 +129,9 @@ public final class GunLevel {
     /** Unlimited ammo: the magazine is kept as full as it's ever been seen. */
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 2 != 0 || !on()) return;
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % 2 != 0) return;
         if (p.tickCount % 100 == 0) sync(p);                       // (keeps the shown level right after a character switch)
+        if (!on()) return;
         ItemStack g = p.getMainHandItem();
         if (!TaczGuns.isGun(g)) return;
         int ammo = TaczGuns.ammo(g);

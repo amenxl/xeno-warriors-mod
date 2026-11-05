@@ -399,7 +399,9 @@ public class PlayerStatsScreen extends Screen {
         } else if (type == CharacterType.RHALIX) {
             items.add(new String[]{"Winged companions", String.valueOf(me.pets()), "C77DFF"});
         }
-        int statRows = 6 + (mikiko ? 1 : 0);
+        boolean wires = com.xenowarriors.client.forms.FormsClient.style() == com.xenowarriors.forms.Form.Style.WIRE;
+        boolean guns = net.minecraftforge.fml.ModList.get().isLoaded("tacz") || com.xenowarriors.client.forms.FormsClient.style() != null;   // (TACZ, or Hekublade / wire guns)
+        int statRows = 7 + (mikiko ? 1 : 0) + (wires ? 1 : 0) + (guns && com.xenowarriors.network.GunLevelPacket.clientLevel > 0 ? 1 : 0);
         int gridRows = (items.size() + 1) / 2;
         int content = 34 + 12 + statRows * 12 + 10 + 12 + gridRows * 22 + 8;
         int availTop = 28, availBottom = (realm.visible || plea.visible) ? height - 52 : height - 18;
@@ -441,7 +443,12 @@ public class PlayerStatsScreen extends Screen {
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Hekublade", me.bladeLevel(), me.bladeXp(), BladeLevel.MAX, 0xFF7A1A);
             cy += 12;
         }
-        if (net.minecraftforge.fml.ModList.get().isLoaded("tacz") && com.xenowarriors.network.GunLevelPacket.clientLevel > 0) {   // (TACZ guns installed)
+        if (wires) {
+            statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Wires", com.xenowarriors.client.forms.FormsClient.weaponLevel(),
+                    com.xenowarriors.client.forms.FormsClient.weaponProgress(), com.xenowarriors.rhalix.WireLevel.MAX, 0xB05CFF);
+            cy += 12;
+        }
+        if (guns && com.xenowarriors.network.GunLevelPacket.clientLevel > 0) {   // (TACZ guns installed, or a character who makes guns)
             statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Guns", com.xenowarriors.network.GunLevelPacket.clientLevel,
                     com.xenowarriors.network.GunLevelPacket.clientProgress, com.xenowarriors.compat.GunLevel.MAX, 0xB0B8C8);
             cy += 12;
