@@ -31,7 +31,8 @@ import java.util.*;
  * dimension, so you can talk to them right there. Talking to them works exactly like the real one (it's the same kind
  * of entity with the same id); when the mission is done (or abandoned, or finished elsewhere), after 10 minutes, or
  * when you log out, they vanish in a puff of smoke. Not when the real one is already within 32 blocks; one per
- * mission; never saved into the world. Works for your bots' own missions too (they come to you, the owner).
+ * mission; never saved into the world. Works for your bots' own missions too (they come to you, the owner, as soon as
+ * the talk is the bot's next objective - the bot walks over and talks to them itself, see DmzBotTalk, or you can).
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class DmzTalkNpcs {
@@ -80,19 +81,7 @@ public final class DmzTalkNpcs {
         for (String key : DmzBotQuests.accepted(pqd)) {
             Object q = DmzBotQuests.quest(key);
             if (q == null || (Boolean) DmzBotQuests.m(pqd, "isQuestCompleted", key) || !DmzBotQuests.typeEnabled(q)) continue;
-            String npc = null;
-            if ((Boolean) DmzBotQuests.needsTurnIn.invoke(null, q)) {
-                if ((Boolean) DmzBotQuests.turnInReady.invoke(null, pqd, key, q)) npc = (String) DmzBotQuests.m(q, "getTurnIn");
-            } else {
-                List<?> objs = (List<?>) DmzBotQuests.m(q, "getObjectives");
-                boolean otherOpen = false;
-                for (int i = 0; i < objs.size(); i++) {
-                    if (DmzBotQuests.progress(pqd, key, i) >= DmzBotQuests.required(q, pqd, key, i)) continue;
-                    if (DmzBotQuests.talkObj.isInstance(objs.get(i))) { if (npc == null) npc = (String) DmzBotQuests.m(objs.get(i), "getNpcId"); }
-                    else otherOpen = true;
-                }
-                if (otherOpen) npc = null;                                            // (only once the talk is all that's left)
-            }
+            String npc = DmzBotQuests.waitingOn(pqd, key, q, bot == null);         // (yours: once the talk is all that's left; a bot's: when it's next - it may walk over itself)
             if (npc != null && !npc.isBlank()) out.add(new Need((bot == null ? "" : bot + "|") + key, key, npc, bot));
         }
     }
@@ -163,7 +152,7 @@ public final class DmzTalkNpcs {
         l.playSound(null, e.blockPosition(), SoundEvents.CHICKEN_EGG, SoundSource.NEUTRAL, 0.8F, 0.6F);
     }
 
-    private static String idOf(Entity e) {
+    static String idOf(Entity e) {
         try {
             for (String m : new String[]{"getNpcId", "getMasterName"})
                 for (var mm : e.getClass().getMethods()) if (mm.getName().equals(m) && mm.getParameterCount() == 0) return (String) mm.invoke(e);
@@ -286,6 +275,16 @@ public final class DmzTalkNpcs {
         Map<String, Temp> m = TEMPS.get(p.getUUID());
         Temp t = m == null ? null : m.get(id);
         return t == null ? null : t.e;
+    }
+
+    /** (Tests) a "real" one (not a copy: never sent away), standing at this spot - e.g. Dende somewhere away from the Lookout. */
+    public static Entity realForTest(ServerPlayer p, String npc, double x, double y, double z) {
+        Entity e = create(p, npc);
+        if (e == null) return null;
+        e.getPersistentData().remove(TAG);
+        e.getPersistentData().remove(TAG + "_owner");
+        e.moveTo(x, y, z, e.getYRot(), 0F);                                         // (stays put: no AI, like the copies)
+        return e;
     }
 
     public static int count(ServerPlayer p) {

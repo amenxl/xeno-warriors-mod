@@ -15,6 +15,10 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_KI_VISUALS;
     /** DragonMineZ's structures in the Recarnet dimension too (off: overworld only). */
     public static final ForgeConfigSpec.BooleanValue DMZ_STRUCTURES_IN_RECARNET;
+    /** DragonMineZ movie missions: "be at Kami's Lookout" counts as met anywhere. */
+    public static final ForgeConfigSpec.BooleanValue DMZ_MOVIES_ANYWHERE;
+    /** Bot teammates walk up to DragonMineZ NPCs and talk to them for their own missions. */
+    public static final ForgeConfigSpec.BooleanValue DMZ_BOTS_TALK;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -29,6 +33,12 @@ public final class XwConfig {
         DMZ_STRUCTURES_IN_RECARNET = b.comment("DragonMineZ's own structures (Kame House, Goku's house...) also generate in the Recarnet dimension.",
                         "Off: they stay in the overworld - Recarnet uses the overworld's biomes, so DragonMineZ would otherwise plan and force-place them there too.")
                 .define("structuresInRecarnet", false);
+        DMZ_MOVIES_ANYWHERE = b.comment("DragonMineZ's movie missions (the Movies saga and the movie side missions) don't need you at Kami's Lookout:",
+                        "its 'be at Kami's Lookout' start requirement and objective count as met anywhere. Everything else (level, order) stays.")
+                .define("moviesWithoutLookout", true);
+        DMZ_BOTS_TALK = b.comment("Bot teammates walk up to DragonMineZ NPCs (Dende, the masters...) and talk to them themselves for their own missions:",
+                        "'talk to' objectives, handing missions in, and taking a mission from its giver when you start yours.")
+                .define("botsTalkToNpcs", true);
         b.pop();
         SPEC = b.build();
     }
