@@ -252,7 +252,9 @@ public final class DmzMovieTests {
             PartyBotEntity b = bot(p);
             if (b == null) return;
             List<String> act = DmzBotQuests.active(b);
-            log("take: takes " + N[2] + " -> " + DmzBotQuests.botTakes + " bot active " + act + (DmzBotQuests.botTakes > N[2] && act.contains(K[1]) ? " OK" : act.contains(K[1]) ? " (started without walking)" : " FAIL"));
+            String st = DmzBotQuests.status(b, K[1], 0);                             // (it may have done it and handed it in to Dende already)
+            boolean has = act.contains(K[1]) || st.startsWith("status=SUCCESS");
+            log("take: takes " + N[2] + " -> " + DmzBotQuests.botTakes + " bot active " + act + " " + st + (DmzBotQuests.botTakes > N[2] && has ? " OK" : has ? " (started without walking)" : " FAIL"));
             dump();
         }); }, 20);
 

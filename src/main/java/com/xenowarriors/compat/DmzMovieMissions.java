@@ -125,13 +125,13 @@ public final class DmzMovieMissions {
             for (Method qm : new Method[]{allQuests, clientQuests}) {
                 Map<?, ?> m = (Map<?, ?>) qm.invoke(null);
                 if (m == null) continue;
-                h = h * 31 + System.identityHashCode(m) + m.size();
-                for (Map.Entry<?, ?> e : m.entrySet()) all.add(new Object[]{e.getKey(), e.getValue()});
+                h = h * 31 + m.size();                                                 // (the registry may hand out a new map each time: go by its quests)
+                for (Map.Entry<?, ?> e : m.entrySet()) { all.add(new Object[]{e.getKey(), e.getValue()}); h = h * 31 + System.identityHashCode(e.getValue()); }
             }
             for (Method sm : new Method[]{allSagas, clientSagas}) {
                 Map<?, ?> m = (Map<?, ?>) sm.invoke(null);
                 if (m == null) continue;
-                h = h * 31 + System.identityHashCode(m) + m.size();
+                h = h * 31 + m.size();
                 Object movies = m.get(SAGA);
                 if (movies != null) for (Object q : (List<?>) call(movies, "getQuests")) {
                     h = h * 31 + System.identityHashCode(q);
