@@ -176,24 +176,25 @@ final class PackCullTests {
     private static void orbs(Minecraft mc, List<Step> l) {
         int[] before = new int[1];
         float[] hp = new float[1];
+        // (at full health first: orbs only drift to someone who's hurt, so they wait to be seen even at shader FPS)
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p); discardAll(p, HealthOrbEntity.class);
             p.setGameMode(GameType.SURVIVAL);
             p.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
-            p.setHealth(p.getMaxHealth() * 0.5F);
-            hp[0] = p.getHealth();
+            p.setHealth(p.getMaxHealth());
             before[0] = HealthOrbs.collectedCount;
             LivingEntity h = PackTests.husk(p, 0, 4);
             HealthOrbs.drop(p.serverLevel(), h);
             HealthOrbs.drop(p.serverLevel(), h);
             h.discard();
-        }), 4));
+        }), 30));
         l.add(new Step("pack_cull_orbs", () -> PackTests.client("cull orbs seen", () -> {
             look(mc, 20F);
             var seen = mc.level.getEntitiesOfClass(HealthOrbEntity.class, mc.player.getBoundingBox().inflate(16));
             PackTests.check("health orbs on the client", !seen.isEmpty() && seen.stream().noneMatch(PackCullTests::hidden),
                     seen.size() + " orbs, " + (seen.isEmpty() ? "-" : state(seen.get(0))));
-        }), 80));
+        }), 3));
+        l.add(new Step(null, () -> PackTests.server(p -> { p.setHealth(p.getMaxHealth() * 0.5F); hp[0] = p.getHealth(); }), 80));
         l.add(new Step(null, () -> PackTests.server(p -> {
             int got = HealthOrbs.collectedCount - before[0];
             PackTests.check("health orbs picked up", got == 2 && p.getHealth() > hp[0],
