@@ -370,7 +370,7 @@ public final class DmzFusion {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeath(LivingDeathEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && fused(p)) end(p, "you were knocked out", false);
+        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && fused(p) && !InventoryTotem.saves(p, e.getSource())) end(p, "you were knocked out", false);   // (an inventory totem saves them: not knocked out)
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

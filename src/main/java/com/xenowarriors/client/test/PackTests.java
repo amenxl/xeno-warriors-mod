@@ -121,6 +121,8 @@ public final class PackTests {
         dmz(mc, l);
         teamUlt(mc, l);
         PackCullTests.build(mc, l);        // EntityCulling / Clumps: effects through walls, health orbs, XP
+        PackTotemTests.build(mc, l);       // Inventory Totem vs. the downed system and the Xeno Blast
+        PackTooltipTests.build(mc, l);     // Equipment Compare / Iceberg: every item's tooltip, comparisons
         l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
         l.add(new Step("pack_end", () -> log("summary pass=" + pass + " fail=" + fail + (FAILED.isEmpty() ? "" : " failed=" + FAILED)), 2));
     }

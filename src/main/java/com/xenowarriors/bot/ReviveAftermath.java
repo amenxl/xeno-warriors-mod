@@ -187,6 +187,9 @@ public final class ReviveAftermath {
         l.playSound(null, who.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8F, 1.6F);
     }
 
+    /** (tests) the back-up invincibility ends now. */
+    public static void testClear(Entity e) { INVULN.remove(e.getUUID()); }
+
     public static boolean invulnerable(Entity e) {
         Long t = INVULN.get(e.getUUID());
         return t != null && e.level().getGameTime() < t;

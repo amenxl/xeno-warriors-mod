@@ -342,7 +342,8 @@ public final class Duels {
             return;
         }
         // in a party (or with bot teammates): go down instead of dying, so someone can revive you
-        if (hasTeam(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()) {
+        if (hasTeam(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()
+                && !com.xenowarriors.compat.InventoryTotem.saves(p, event.getSource())) {   // (a totem anywhere, with Inventory Totem: used at death, like one in hand)
             event.setCanceled(true);
             down(p);
         }
@@ -351,6 +352,8 @@ public final class Duels {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        // Inventory Totem: a totem anywhere saves you here, before anything else reacts to the death (a hand totem is used before it)
+        if (!isKnockedOut(p) && com.xenowarriors.compat.InventoryTotem.use(p, event.getSource())) { event.setCanceled(true); return; }
         if (com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(p.level()) || com.xenowarriors.vr.Vr.inVr(p)) return;   // (the modes handle their own knock-outs)
         if (ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
             event.setCanceled(true);

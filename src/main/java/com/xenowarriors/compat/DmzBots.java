@@ -288,7 +288,7 @@ public final class DmzBots {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDeathFirst(LivingDeathEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer)) DmzPerCharacter.endView(p, "died");
+        if (e.getEntity() instanceof ServerPlayer p && !(p instanceof FakePlayer) && !InventoryTotem.saves(p, e.getSource())) DmzPerCharacter.endView(p, "died");   // (not when an inventory totem saves them)
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
