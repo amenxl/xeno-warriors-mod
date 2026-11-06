@@ -811,7 +811,7 @@ public final class DmzBotQuests {
     private static String pick(Data d, String key) throws Exception {
         if ((Boolean) m(d.pqd, "isQuestAccepted", key)) { note(d.key + " is already on " + key); return null; }
         if (TAKES.containsKey(d.bot.getUUID())) { note(d.key + " is still on its way to take " + TAKES.get(d.bot.getUUID()).key); return null; }
-        if (eligible(d, key)) return key;
+        if (eligible(d, key) || DmzBotTraining.trainFor(d, key)) return key;   // (only its level in the way: it trains up first)
         note(d.key + " can't take " + key + " (" + why + ")");
         Object q = quest(key);
         List<String> next = new ArrayList<>();
@@ -832,14 +832,16 @@ public final class DmzBotQuests {
             if (eligible(d, k)) return k;
             if (whyNot.size() < 3 && !why.equals("done or on it")) whyNot.add(k + ": " + why);
         }
+        String trained = DmzBotTraining.trainForNext(d, key, next);
+        if (trained != null) return trained;
         note(d.key + " has no mission it can start with " + key + " " + whyNot);
         return null;
     }
 
     /** Could the bot start this one now (DragonMineZ's own checks on its data, except where it is - it's with you)? */
-    private static String why;
+    static String why;
 
-    private static boolean eligible(Data d, String key) {
+    static boolean eligible(Data d, String key) {
         why = "done or on it";
         try {
             Object q = quest(key);
