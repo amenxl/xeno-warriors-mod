@@ -277,6 +277,16 @@ public final class DmzTalkNpcs {
         return t == null ? null : t.e;
     }
 
+    /** (Tests) a "real" one (not a copy: never sent away), standing at this spot - e.g. Dende somewhere away from the Lookout. */
+    public static Entity realForTest(ServerPlayer p, String npc, double x, double y, double z) {
+        Entity e = create(p, npc);
+        if (e == null) return null;
+        e.getPersistentData().remove(TAG);
+        e.getPersistentData().remove(TAG + "_owner");
+        e.moveTo(x, y, z, e.getYRot(), 0F);                                         // (stays put: no AI, like the copies)
+        return e;
+    }
+
     public static int count(ServerPlayer p) {
         Map<String, Temp> m = TEMPS.get(p.getUUID());
         return m == null ? 0 : (int) m.values().stream().map(Temp::e).distinct().filter(Entity::isAlive).count();
