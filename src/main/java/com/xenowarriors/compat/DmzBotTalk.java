@@ -86,7 +86,7 @@ public final class DmzBotTalk extends Goal {
     }
 
     @Override public void tick() {
-        if (to == null || job == null) return;
+        if (to == null || job == null || done) return;                             // (goals are re-checked only every other tick: talk once)
         b.getLookControl().setLookAt(to, 30F, 30F);
         double d2 = b.distanceToSqr(to);
         if (d2 > 2.8 * 2.8) {
