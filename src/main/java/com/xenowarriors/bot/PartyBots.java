@@ -294,7 +294,8 @@ public final class PartyBots {
         if (record != null) b.loadRecord(record);
         else {                                                                   // a fresh teammate: their own inventory, as you left it
             CompoundTag saved = com.xenowarriors.character.CharacterInventories.checkOut(p, t.getId());
-            b.inventory.fromTag(com.xenowarriors.character.CharacterInventories.mainItems(saved));
+            for (ItemStack lost : b.inventory.loadBag(com.xenowarriors.character.CharacterInventories.mainItems(saved))) if (!p.getInventory().add(lost)) p.drop(lost, false);
+            for (ItemStack lost : b.inventory.loadExtra(BotBags.take(p, t.getId()))) if (!p.getInventory().add(lost)) p.drop(lost, false);   // (its extra tabs, waiting for it in your save)
             ItemStack[] arm = com.xenowarriors.character.CharacterInventories.armour(saved);
             for (int i = 0; i < 4; i++) b.setItemSlot(com.xenowarriors.character.CharacterInventories.ARMOUR_SLOTS[i], arm[i]);
             b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, arm[4]);
@@ -369,7 +370,9 @@ public final class PartyBots {
             ItemStack held = BotGear.stowHand(b);                                // (what's in its hand goes home too)
             CompoundTag kept = b.getPersistentData().getCompound("xw_inv_kept").copy();
             if (!held.isEmpty() && !intoEnder(kept, held) && !o.getInventory().add(held)) o.drop(held, false);   // (bag full: its ender chest, then you)
-            com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), b.inventory.createTag(), b.armour(),
+            BotBags.store(o, b.character().getId(), b.inventory.extraTag());   // (its extra tabs wait in your save - never in the character's own inventory)
+            ListTag bag = b.inventory.bagTag();
+            com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), bag, b.armour(),
                     b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), kept);
         }
         // everything went home: nothing left on it to drop or count twice
@@ -390,6 +393,7 @@ public final class PartyBots {
         ItemStack off = arm.size() > 4 ? ItemStack.of(arm.getCompound(4)) : ItemStack.EMPTY;
         ItemStack hand = arm.size() > 5 ? ItemStack.of(arm.getCompound(5)) : ItemStack.EMPTY;
         CompoundTag kept = rec.getCompound("kept").copy();
+        BotBags.store(o, rec.getString("char"), rec.getList("xbag", 10));        // (its extra tabs wait in your save)
         if (!hand.isEmpty()) {
             if (inv.size() < 36) inv.add(hand.save(new CompoundTag()));
             else if (!intoEnder(kept, hand) && !o.getInventory().add(hand)) o.drop(hand, false);

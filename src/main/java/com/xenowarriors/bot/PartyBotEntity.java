@@ -46,8 +46,12 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DOWNED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
-    /** Its bag: the character's own inventory (36 slots, like a player's main inventory). */
-    public final SimpleContainer inventory = new SimpleContainer(36);
+    /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
+    public final BotInventory inventory = new BotInventory();
+    /** When to tidy its things next (a few seconds after they changed; 0 = nothing pending - see BotBags). */
+    int tidyAt;
+    /** Tidying right now (its own moves don't schedule another). */
+    boolean sorting;
     /** Eating: ticks left on the current bite, and the slot being eaten from. */
     int eatTicks = -1, eatSlot = -1;
     /** Reviving: who it's standing by. */
@@ -138,6 +142,7 @@ public class PartyBotEntity extends PathfinderMob {
         super(type, level);
         setPersistenceRequired();
         setCanPickUpLoot(false);
+        inventory.addListener(c -> { if (!sorting && !level().isClientSide) tidyAt = tickCount + 100; });   // (its things changed: tidy up in a few seconds)
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -664,6 +669,7 @@ public class PartyBotEntity extends PathfinderMob {
         tickMoves();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         if (tickCount % 20 == 0) BotGear.tickIdle(this);                         // (puts its weapon away after a fight; crafting ideas)
+        if (tickCount % 20 == 15) BotBags.tick(this);                            // (keeps its things tidy when it's idle)
         ServerPlayer o = owner();
         if (o == null && ownerId() == null) { if (tickCount > 100 && !isNoAi()) { PartyBots.forgetFake(getUUID()); discard(); } return; }   // (nobody's bot, e.g. summoned by command: it goes; a no-AI display one stays)
         if (o == null && tickCount > 100 && tickCount % 40 == 0) { if (!journey()) PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }   // owner gone: kept until they're back
@@ -925,7 +931,8 @@ public class PartyBotEntity extends PathfinderMob {
         if (ownerId() != null) t.putUUID("Owner", ownerId());
         t.putInt("Mode", mode());
         t.putFloat("BotKarma", karma);
-        t.put("Inv", inventory.createTag());
+        t.put("Inv", inventory.bagTag());
+        t.put("XInv", inventory.extraTag());
         t.put("Armour", armourTag());
     }
 
@@ -952,7 +959,8 @@ public class PartyBotEntity extends PathfinderMob {
         if (t.hasUUID("Owner")) setOwner(t.getUUID("Owner"));
         entityData.set(MODE, t.getInt("Mode"));
         karma = t.getFloat("BotKarma");
-        if (t.contains("Inv")) inventory.fromTag(t.getList("Inv", 10));
+        if (t.contains("Inv")) inventory.loadBag(t.getList("Inv", 10));
+        if (t.contains("XInv")) { inventory.clearExtra(); inventory.loadExtra(t.getList("XInv", 10)); }
         if (t.contains("Armour")) loadArmour(t.getList("Armour", 10));
     }
 
@@ -963,7 +971,9 @@ public class PartyBotEntity extends PathfinderMob {
         t.putInt("mode", mode());
         t.putFloat("hp", getHealth());
         t.putFloat("karma", karma);
-        t.put("inv", inventory.createTag());
+        t.put("inv", inventory.bagTag());
+        ListTag x = inventory.extraTag();
+        if (!x.isEmpty()) t.put("xbag", x);                                      // (its extra tabs: only while it's a bot - see BotBags)
         t.put("armour", armourTag());
         if (getPersistentData().contains("xw_inv_kept")) t.put("kept", getPersistentData().getCompound("xw_inv_kept"));   // (that character's ender chest and XP)
         return t;
@@ -971,7 +981,8 @@ public class PartyBotEntity extends PathfinderMob {
 
     public void loadRecord(CompoundTag t) {
         entityData.set(MODE, t.getInt("mode"));
-        if (t.contains("inv")) inventory.fromTag(t.getList("inv", 10));
+        if (t.contains("inv")) inventory.loadBag(t.getList("inv", 10));
+        if (t.contains("xbag")) { inventory.clearExtra(); inventory.loadExtra(t.getList("xbag", 10)); }
         if (t.contains("armour")) loadArmour(t.getList("armour", 10));
         if (t.contains("hp")) {
             float raw = t.getFloat("hp"), hp = Float.isFinite(raw) ? Math.max(1F, raw) : getMaxHealth();   // (a broken number never becomes its health)

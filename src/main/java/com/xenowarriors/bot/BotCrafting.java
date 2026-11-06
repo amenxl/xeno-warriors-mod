@@ -81,6 +81,12 @@ public final class BotCrafting {
     private static final Map<String, Map<String, Long>> QUIET = new HashMap<>();
     private static int nextToken = 1;
 
+    /** Waiting for its owner's answer to an offer (its bag stays as it is meanwhile - see BotBags). */
+    static boolean offering(PartyBotEntity b) {
+        Long until = OFFER_UNTIL.get(b.getUUID());
+        return OFFERS.containsKey(b.getUUID()) && until != null && until > b.level().getGameTime();
+    }
+
     private static Map<String, Long> quiet(PartyBotEntity b) { return QUIET.computeIfAbsent(b.ownerId() + "/" + b.character().getId(), k -> new HashMap<>()); }
 
     // ---------------------------------------------------------------- the periodic look

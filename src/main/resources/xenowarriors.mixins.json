@@ -15,6 +15,7 @@
     "FurnaceSpeedMixin",
     "compat.DragonMineZQuestBiomeMixin",
     "compat.DragonMineZQuestDimensionMixin",
+    "compat.DragonMineZQuestItemsMixin",
     "compat.DragonMineZMovieLookoutMixin",
     "compat.DragonMineZMovieConditionMixin",
     "compat.DragonMineZStructurePlanMixin",

@@ -58,7 +58,7 @@ public final class DmzBotQuests {
     private static final String K = "dmz_quest_key", I = "dmz_quest_objective_index", O = "dmz_quest_owner", SUMMONED = "xw_dmz_bot_qsum";
     private static Boolean loaded;
     private static boolean broken, listening;
-    static Class<?> pqdClass, registry, service, killObj, talkObj, locHelper, avail, statsData;
+    static Class<?> pqdClass, registry, service, killObj, talkObj, itemObj, locHelper, avail, statsData;
     static Method unlocked, spawnKill, isLocation, locationMet, resolve, turnInReady, needsTurnIn;
 
     /** (For the tests) what happened, newest last. */
@@ -82,6 +82,7 @@ public final class DmzBotQuests {
             service = Class.forName("com.dragonminez.common.quest.QuestService");
             killObj = Class.forName("com.dragonminez.common.quest.objectives.KillObjective");
             talkObj = Class.forName("com.dragonminez.common.quest.objectives.TalkToObjective");
+            try { itemObj = Class.forName("com.dragonminez.common.quest.objectives.ItemObjective"); } catch (Throwable t) { itemObj = null; }
             locHelper = Class.forName("com.dragonminez.common.quest.QuestLocationHelper");
             avail = Class.forName("com.dragonminez.common.quest.QuestAvailabilityChecker");
             statsData = Class.forName("com.dragonminez.common.stats.StatsData");
@@ -530,6 +531,8 @@ public final class DmzBotQuests {
                     boolean there = false;
                     for (ServerPlayer s : party) if ((Boolean) locationMet.invoke(null, s, obj)) { there = true; break; }
                     if ((there ? 1 : 0) != prog) return true;
+                } else if (itemObj != null && itemObj.isInstance(obj)) {              // (items: its things, yours and your other bots' - see DmzItemMissions)
+                    if (Math.min(DmzItemMissions.forBot(b, (String) m(obj, "getItemId")), req) != prog) return true;
                 } else if (killObj.isInstance(obj)) summonStory(b, bkey, p, key, i, obj, prog, req);
                 if (!parallel) break;
             }
@@ -561,6 +564,9 @@ public final class DmzBotQuests {
                     for (ServerPlayer s : party) if ((Boolean) locationMet.invoke(null, s, obj)) { there = true; break; }
                     int want = there ? 1 : 0;
                     if (want != prog) { m(d.pqd, "setObjectiveProgress", key, i, want); changed = true; note("location " + key + "#" + i + " -> " + want + " for " + d.key); }
+                } else if (itemObj != null && itemObj.isInstance(obj)) {              // (like DragonMineZ: how many you have - counted, never taken)
+                    int want = Math.min(DmzItemMissions.forBot(d.bot, (String) m(obj, "getItemId")), req);
+                    if (want != prog) { m(d.pqd, "setObjectiveProgress", key, i, want); changed = true; note("items " + key + "#" + i + " -> " + want + "/" + req + " for " + d.key); }
                 } else if (killObj.isInstance(obj)) summonStory(d.bot, d.key, p, key, i, obj, prog, req);
                 if (!parallel) break;
             }
