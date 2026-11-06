@@ -206,10 +206,18 @@ public final class DmzBotTraining {
         return new DmzBotQuests.Data(d.bot, d.owner, d.key, false, sd, m(sd, "getPlayerQuestData"), null);
     }
 
-    /** Would it start this mission at that level (all else as it is)? Tried on a copy with unlimited TP. */
+    /**
+     * Would it start this mission at that level (all else as it is)? Tried on a copy with unlimited TP. DragonMineZ
+     * 2.1 keeps the six stats as attributes of the player entity - the bot's stand-in, shared by every copy of its
+     * data - so the bot's real stats are put back on the stand-in afterwards.
+     */
     static boolean levelOnly(DmzBotQuests.Data d, String key, int target) {
         String why = DmzBotQuests.why;                                             // (the caller's reason stays what it was)
+        CompoundTag mine = null;
         try {
+            CompoundTag all = DmzPerCharacter.saveData(d.sd);
+            mine = all == null ? null : all.getCompound("Stats").copy();
+            if (mine == null) return false;
             DmzBotQuests.Data s = scratch(d);
             if (s == null) return false;
             Object res = m(s.sd, "getResources");
@@ -220,7 +228,10 @@ public final class DmzBotTraining {
         } catch (Throwable t) {
             XenoWarriors.LOGGER.warn("Couldn't check a bot's DragonMineZ mission level", t);
             return false;
-        } finally { DmzBotQuests.why = why; }
+        } finally {
+            DmzBotQuests.why = why;
+            if (mine != null) try { m(m(d.sd, "getStats"), "load", mine); } catch (Throwable t) { XenoWarriors.LOGGER.warn("Couldn't put a bot's DragonMineZ stats back", t); }
+        }
     }
 
     // ------------------------------------------------------------------ when the bot starts a mission with you

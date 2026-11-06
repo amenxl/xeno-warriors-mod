@@ -56,12 +56,19 @@ public final class BotTrainingTests {
 
     private static Object pqd(ServerPlayer p) { return call(DmzPerCharacter.live(p), "getPlayerQuestData"); }
 
-    /** The player's own DragonMineZ stats and TP (what must never change here). */
+    /** The player's own DragonMineZ stats and free points (what must never change here; their TP only grows by DragonMineZ's passive TP). */
     private static String mine(ServerPlayer p) {
         CompoundTag t = DmzPerCharacter.saveData(DmzPerCharacter.live(p));
-        return t == null ? "-" : "stats " + t.getCompound("Stats") + " TP " + t.getCompound("Resources").getFloat("TrainingPointsF")
-                + " AP " + t.getCompound("Resources").getInt("PendingAttributePoints");
+        return t == null ? "-" : "stats " + t.getCompound("Stats") + " AP " + t.getCompound("Resources").getInt("PendingAttributePoints");
     }
+
+    private static float myTp(ServerPlayer p) {
+        CompoundTag t = DmzPerCharacter.saveData(DmzPerCharacter.live(p));
+        return t == null ? -1 : t.getCompound("Resources").getFloat("TrainingPointsF");
+    }
+
+    private static boolean untouched(ServerPlayer p) { return mine(p).equals(MINE0) && myTp(p) >= TP0; }
+    private static float TP0;
 
     private static String snap(PartyBotEntity b) {
         float[] s = DmzBotTraining.snapshot(b);
@@ -128,10 +135,10 @@ public final class BotTrainingTests {
             CompoundTag tag = DmzPerCharacter.saved(p, DmzPerCharacter.botKey(b));
             STATS0 = tag == null ? null : tag.getCompound("Stats").copy();
             T = target();
-            MINE0 = mine(p);
+            MINE0 = mine(p); TP0 = myTp(p);
             check("setup", STATS0 != null && T != null, "bot " + DmzPerCharacter.botKey(b) + " " + snap(b) + " class/split " + DmzBotTraining.splitForTest(b)
                     + " | mission " + (T == null ? "-" : T[0] + " needs level " + DmzBotTraining.requiredLevelForTest(T[0]) + " after " + Arrays.toString(done())));
-            log("player " + MINE0);
+            log("player " + MINE0 + " TP " + TP0);
         }); }, 20);
 
         // 1. enough TP: the player starts the mission -> the bot trains up to its level (DragonMineZ's price) and starts it too
@@ -154,7 +161,7 @@ public final class BotTrainingTests {
                     + " | stats " + DmzBotTraining.statsForTest(b) + " | started " + started + " active " + act);
             check("enough TP: trained", DmzBotTraining.trainings == t0 + 1 && A[4] >= need && A[0] < need, "level " + (int) A[0] + " -> " + (int) A[4] + " (needs " + need + ")");
             check("enough TP: started the mission", act.contains(T[0]) || started.stream().anyMatch(x -> x.contains(T[0])), String.valueOf(started));
-            check("enough TP: player untouched", mine(p).equals(MINE0), mine(p));
+            check("enough TP: player untouched", untouched(p), mine(p) + " TP " + TP0 + " -> " + myTp(p));
             check("enough TP: health refreshed", b.getMaxHealth() >= A[3], A[3] + " -> " + b.getMaxHealth());
             dump();
         }); }, 10);
@@ -185,7 +192,7 @@ public final class BotTrainingTests {
             log("short of TP: gave " + give + " -> level " + (int) s0[0] + " -> " + (int) s1[0] + " TP " + s0[2] + " -> " + s1[2] + " next point costs " + next + " | started " + started);
             check("short of TP: spent what it could", s1[0] < need && s1[1] > s0[1] && s1[2] < next, "level " + (int) s1[0] + "/" + need + ", " + s1[2] + " TP left < " + next);
             check("short of TP: didn't start it", !act.contains(T[0]), "active " + act);
-            check("short of TP: player untouched", mine(p).equals(MINE0), mine(p));
+            check("short of TP: player untouched", untouched(p), mine(p) + " TP " + TP0 + " -> " + myTp(p));
             dump();
         }); }, 30);
 
@@ -221,7 +228,7 @@ public final class BotTrainingTests {
             check("ready by itself: didn't start anything", DmzBotQuests.active(b).isEmpty(), "active " + DmzBotQuests.active(b));
             try { log("ready: again -> " + DmzBotTraining.ready(b, p, true)); } catch (Throwable t) { check("ready again", false, String.valueOf(t)); }
             check("ready by itself: no more spent", DmzBotTraining.snapshot(b)[2] == s[2], snap(b));
-            check("ready by itself: player untouched", mine(p).equals(MINE0), mine(p));
+            check("ready by itself: player untouched", untouched(p), mine(p) + " TP " + TP0 + " -> " + myTp(p));
             dump();
         }); }, 10);
 
