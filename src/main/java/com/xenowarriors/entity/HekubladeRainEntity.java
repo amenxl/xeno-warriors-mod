@@ -43,6 +43,7 @@ public class HekubladeRainEntity extends Entity {
 
     public HekubladeRainEntity(EntityType<? extends HekubladeRainEntity> type, Level level) {
         super(type, level);
+        this.noCulling = true;        // (a big effect drawn far past its small box: never culled - vanilla or EntityCulling)
         this.noPhysics = true;
     }
 

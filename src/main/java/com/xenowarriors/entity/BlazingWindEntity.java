@@ -62,6 +62,7 @@ public class BlazingWindEntity extends Entity {
 
     public BlazingWindEntity(EntityType<? extends BlazingWindEntity> type, Level level) {
         super(type, level);
+        this.noCulling = true;        // (a big effect drawn far past its small box: never culled - vanilla or EntityCulling)
         this.noPhysics = true;
     }
 

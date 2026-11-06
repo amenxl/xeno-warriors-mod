@@ -40,6 +40,7 @@ public class ThrownHekubladeEntity extends Entity {
 
     public ThrownHekubladeEntity(EntityType<? extends ThrownHekubladeEntity> type, Level level) {
         super(type, level);
+        this.noCulling = true;        // (a big effect drawn far past its small box: never culled - vanilla or EntityCulling)
         this.noPhysics = true;
     }
 

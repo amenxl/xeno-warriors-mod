@@ -145,9 +145,9 @@ final class PackCullTests {
             var w = BlazingWindEntity.createStill(p, p, new Vec3(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2] + 12), 600);
             p.serverLevel().addFreshEntity(w);
         }), 70));
-        l.add(new Step(null, () -> look(mc, -20F), 30));
+        l.add(new Step(null, () -> look(mc, -32F), 30));
         l.add(new Step("pack_cull_wind_wall", () -> PackTests.client("cull wind", () -> {
-            look(mc, -20F);
+            look(mc, -32F);
             BlazingWindEntity w = near(mc, BlazingWindEntity.class, 40);
             PackTests.check("cull blazing wind behind its origin", w != null && !hidden(w),
                     "tornado base behind a 5-high wall, funnel height " + (w == null ? "-" : PackTests.f(w.height(w.tickCount))) + ": " + state(w));

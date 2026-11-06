@@ -59,6 +59,7 @@ public class KishiDomeEntity extends Entity {
 
     public KishiDomeEntity(EntityType<? extends KishiDomeEntity> type, Level level) {
         super(type, level);
+        this.noCulling = true;        // (a big effect drawn far past its small box: never culled - vanilla or EntityCulling)
         this.noPhysics = true;
     }
 

@@ -61,6 +61,7 @@ public class EarthWaveEntity extends Entity {
 
     public EarthWaveEntity(EntityType<? extends EarthWaveEntity> type, Level level) {
         super(type, level);
+        this.noCulling = true;        // (a big effect drawn far past its small box: never culled - vanilla or EntityCulling)
         this.noPhysics = true;
     }
 

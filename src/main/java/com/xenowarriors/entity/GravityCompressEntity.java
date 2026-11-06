@@ -50,6 +50,7 @@ public class GravityCompressEntity extends Entity {
 
     public GravityCompressEntity(EntityType<? extends GravityCompressEntity> type, Level level) {
         super(type, level);
+        this.noCulling = true;        // (a big effect drawn far past its small box: never culled - vanilla or EntityCulling)
         this.noPhysics = true;
     }
 
