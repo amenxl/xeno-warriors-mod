@@ -373,6 +373,7 @@ public final class BotBagTests {
         for (EquipmentSlot es : EquipmentSlot.values()) r.setItemSlot(es, ItemStack.EMPTY);
         r.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE));
         r.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+        r.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.SHIELD));               // (one worn: the one in the bag stays a spare)
         int[] cob = {0, 5, 10, 40, 50, 60, 80, 90, 100, 104};
         for (int s : cob) r.inventory.setItem(s, new ItemStack(Items.COBBLESTONE, 20));
         r.inventory.setItem(70, new ItemStack(Items.DIAMOND_SWORD));
@@ -388,7 +389,7 @@ public final class BotBagTests {
         r.inventory.setItem(111, new ItemStack(Items.TOTEM_OF_UNDYING));
         r.inventory.setItem(12, new ItemStack(Items.DIRT, 30));
         r.inventory.setItem(13, new ItemStack(Items.OAK_LOG, 12));
-        r.inventory.setItem(115, new ItemStack(Items.FLOWER_POT, 3));
+        r.inventory.setItem(115, new ItemStack(Items.PAPER, 3));
         r.inventory.setItem(116, new ItemStack(Items.COAL, 11));
         r.inventory.setItem(64, new ItemStack(Items.APPLE, 2));
     }
