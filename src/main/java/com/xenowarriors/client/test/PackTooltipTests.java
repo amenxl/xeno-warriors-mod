@@ -49,7 +49,7 @@ public final class PackTooltipTests {
 
     @SubscribeEvent
     public static void onRender(ScreenEvent.Render.Post event) {
-        if (!on || !(event.getScreen() instanceof InventoryScreen)) return;
+        if (!on || !(event.getScreen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) return;   // (the survival or creative inventory)
         Minecraft mc = Minecraft.getInstance();
         int x = event.getScreen().width / 2 - 40, y = event.getScreen().height / 2 - 30;
         if (!QUEUE.isEmpty()) {
@@ -71,6 +71,7 @@ public final class PackTooltipTests {
 
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> PackTests.server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);         // (the survival inventory, the way players see it)
             p.setItemSlot(EquipmentSlot.CHEST, new ItemStack(ModItems.SKY_CHESTPLATE.get()));
             p.getInventory().selected = 0;
             p.getInventory().setItem(0, new ItemStack(ModItems.SENJU_BLADE.get()));
@@ -86,7 +87,7 @@ public final class PackTooltipTests {
         }), 5));
         for (int k = 0; k < 40; k++) l.add(new Step(null, () -> {}, 5));       // (software rendering: a few frames a second)
         l.add(new Step(null, () -> PackTests.client("tooltip all", () -> {
-            if (!(mc.screen instanceof InventoryScreen)) { mc.setScreen(new InventoryScreen(mc.player)); compare(true); }
+            if (!(mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>)) { mc.setScreen(new InventoryScreen(mc.player)); compare(true); }
             PackTests.check("tooltip every item", QUEUE.isEmpty() && drawn == total && ERRORS.isEmpty(),
                     "drawn " + drawn + "/" + total + " left=" + QUEUE.size() + " errors=" + ERRORS.size() + (ERRORS.isEmpty() ? "" : " " + ERRORS.subList(0, Math.min(5, ERRORS.size()))));
             show = new ItemStack(ModItems.FLOWER_CHESTPLATE.get());
@@ -95,10 +96,10 @@ public final class PackTooltipTests {
         l.add(new Step(null, () -> show = new ItemStack(ModItems.HEKUBLADE.get()), 30));
         l.add(new Step("pack_tooltip_sword", () -> {}, 2));
         l.add(new Step(null, () -> PackTests.client("tooltip end", () -> {
-            PackTests.check("tooltip comparisons drawn", ERRORS.isEmpty() && mc.screen instanceof InventoryScreen, "errors=" + ERRORS + " screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName()));
+            PackTests.check("tooltip comparisons drawn", ERRORS.isEmpty() && mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>, "errors=" + ERRORS + " screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName()));
             on = false; show = ItemStack.EMPTY; compare(false);
             mc.setScreen(null);
         }), 5));
-        l.add(new Step(null, () -> PackTests.server(p -> { p.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY); p.getInventory().setItem(0, ItemStack.EMPTY); }), 5));
+        l.add(new Step(null, () -> PackTests.server(p -> { p.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY); p.getInventory().setItem(0, ItemStack.EMPTY); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); }), 5));
     }
 }
