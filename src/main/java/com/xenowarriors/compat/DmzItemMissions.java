@@ -59,4 +59,51 @@ public final class DmzItemMissions {
         }
         return n;
     }
+
+    // ------------------------------------------------------------------ for the tests (reflection; DragonMineZ only)
+
+    private static Object call(Object o, String name, Object... args) throws Exception {
+        for (var mm : o.getClass().getMethods()) if (mm.getName().equals(name) && mm.getParameterCount() == args.length) {
+            try { return mm.invoke(o, args); } catch (IllegalArgumentException wrong) { /* next */ }
+        }
+        throw new NoSuchMethodException(name);
+    }
+
+    private static Object pqd(ServerPlayer p) throws Exception {
+        var cap = (net.minecraftforge.common.capabilities.Capability<?>) Class.forName("com.dragonminez.common.stats.StatsCapability").getField("INSTANCE").get(null);
+        Object d = p.getCapability(cap).resolve().orElse(null);
+        return d == null ? null : call(d, "getPlayerQuestData");
+    }
+
+    private static Object quest(String key) throws Exception {
+        return Class.forName("com.dragonminez.common.quest.QuestRegistry").getMethod("getQuest", String.class).invoke(null, key);
+    }
+
+    /** UI test: missions with an item objective: {quest, objective index, item id, objectives in the quest, base count}. */
+    public static java.util.List<String[]> itemQuests() {
+        java.util.List<String[]> out = new java.util.ArrayList<>();
+        try {
+            Class<?> type = Class.forName("com.dragonminez.common.quest.QuestObjective$ObjectiveType");
+            Object item = null;
+            for (Object c : type.getEnumConstants()) if (c.toString().equals("ITEM")) item = c;
+            @SuppressWarnings("unchecked")
+            var ids = (java.util.List<String>) Class.forName("com.dragonminez.common.quest.QuestRegistry").getMethod("getQuestIdsByObjectiveType", type).invoke(null, item);
+            for (String id : ids) {
+                Object q = quest(id);
+                if (q == null) continue;
+                var objs = (java.util.List<?>) call(q, "getObjectives");
+                for (int i = 0; i < objs.size(); i++) if (objs.get(i).getClass().getSimpleName().equals("ItemObjective"))
+                    out.add(new String[]{id, String.valueOf(i), String.valueOf(call(objs.get(i), "getItemId")), String.valueOf(objs.size()), String.valueOf(call(objs.get(i), "getCount"))});
+            }
+        } catch (Throwable t) { com.xenowarriors.XenoWarriors.LOGGER.warn("XW-TEST item quests lookup failed", t); }
+        return out;
+    }
+
+    /** UI test: progress and required count of a player's mission objective ({-1,-1} on failure). */
+    public static int[] objective(ServerPlayer p, String key, int i) {
+        try {
+            Object d = pqd(p), q = quest(key);
+            return new int[]{(Integer) call(d, "getObjectiveProgress", key, i), (Integer) call(q, "getObjectiveRequired", d, key, i)};
+        } catch (Throwable t) { return new int[]{-1, -1}; }
+    }
 }

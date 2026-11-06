@@ -914,6 +914,13 @@ public final class DmzBotQuests {
         try { return d == null ? List.of() : accepted(d.pqd); } catch (Throwable t) { return List.of(); }
     }
 
+    /** UI test: the bot takes this mission (as from its menu; nothing summoned). */
+    public static boolean startForTest(PartyBotEntity b, String key) {
+        Data d = open(b, false);
+        if (d == null || quest(key) == null) return false;
+        try { start(d, key, 1, false); return true; } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-TEST bot mission start", t); return false; }
+    }
+
     /** Wipes a bot's mission data (test start). */
     public static void resetForTest(PartyBotEntity b) {
         Data d = open(b, false);
