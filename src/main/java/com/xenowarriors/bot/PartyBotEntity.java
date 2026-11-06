@@ -239,6 +239,7 @@ public class PartyBotEntity extends PathfinderMob {
         goalSelector.addGoal(6, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
         goalSelector.addGoal(7, new MineGoal());
         goalSelector.addGoal(7, new BotErrands(this));                                                  // (quiet times: furnaces, handing things over, Ultima's shards, Yuri's look about)
+        goalSelector.addGoal(7, new com.xenowarriors.compat.DmzBotTalk(this));                          // (DragonMineZ: walks up to the people its own missions wait on)
         goalSelector.addGoal(8, new FollowOwner());
         goalSelector.addGoal(9, new FlyAbout());
         goalSelector.addGoal(10, new WanderNearOwner());

@@ -41,9 +41,11 @@ import java.util.*;
  *       item rewards go in its bag). Your own mission only counts when you're on that mission too (then both do).</li>
  *   <li>When you start a mission yourself, each of your bots with a DMZ character starts one at the same time: the
  *       same one if it can, else its own next available one (its enemies are summoned like yours). A chat line says
- *       what each started. Bots never start one at any other time.</li>
+ *       what each started. When that mission's giver is close by, the bot walks over and takes it from them (started
+ *       anyway after 30 s). Bots never start one at any other time.</li>
  *   <li>Location objectives count while you (or a party member) are there; "talk to" objectives when you talk to that
- *       person; missions handed in to a person are handed in for the bot when you talk to them (DmzTalkNpcs brings them to you); story
+ *       person; missions handed in to a person are handed in for the bot when you talk to them (DmzTalkNpcs brings them to you),
+ *       or the bot walks up to them and talks to them itself (DmzBotTalk); story
  *       fighters that never spawn by themselves are summoned for its objectives like for yours (DmzQuestHelp).</li>
  * </ul>
  * The progress lives in the bot's saved DMZ character, so it stays over relogs and re-adding the bot. All by
@@ -492,6 +494,7 @@ public final class DmzBotQuests {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 20 != 7 || !ready()) return;
+        expireTakes(p);
         for (PartyBotEntity b : PartyBots.bots(p)) {
             if (b.journey()) continue;
             Object pqd = peek(b);                                                    // (null: none going, or an open menu - DragonMineZ ticks its missions itself)
@@ -590,40 +593,151 @@ public final class DmzBotQuests {
     @SubscribeEvent
     public static void onInteract(PlayerInteractEvent.EntityInteract e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || p instanceof FakePlayer || e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !ready()) return;
-        String npc = null;
-        try {
-            String cls = e.getTarget().getClass().getName();
-            if (cls.endsWith("QuestNPCEntity") || hasMethod(e.getTarget(), "getNpcId")) npc = (String) m(e.getTarget(), "getNpcId");
-            else if (cls.endsWith("MastersEntity")) npc = (String) m(e.getTarget(), "getMasterName");
-        } catch (Throwable ignored) {}
+        String npc = npcId(e.getTarget());
         if (npc == null) return;
         for (ServerPlayer r : party(p)) for (PartyBotEntity b : PartyBots.bots(r)) {
             if (b.journey() || !mayBeActive(b)) continue;
             Data d = open(b, true);
             if (d == null || d.live) continue;
-            try {
-                boolean changed = false;
-                for (String key : accepted(d.pqd)) {
-                    Object q = quest(key);
-                    if (q == null || (Boolean) m(d.pqd, "isQuestCompleted", key)) continue;
-                    if ((Boolean) needsTurnIn.invoke(null, q)) {                     // (handed in to this person: done)
-                        if (complete(d, key, q, npc)) { changed = true; note("handed in " + key + " to " + npc + " for " + d.key); }
-                        continue;
-                    }
-                    List<?> objs = (List<?>) m(q, "getObjectives");
-                    boolean parallel = (Boolean) m(q, "isParallelObjectives"), counted = false;
-                    for (int i = 0; i < objs.size(); i++) {
-                        Object obj = objs.get(i);
-                        int prog = progress(d.pqd, key, i);
-                        if (prog >= required(q, d.pqd, key, i) || (!parallel && !firstOpen(d.pqd, key, q, i))) continue;
-                        if (talkObj.isInstance(obj) && npc.equals(m(obj, "getNpcId"))) { m(d.pqd, "setObjectiveProgress", key, i, prog + 1); counted = true; }
-                    }
-                    if (counted) { changed = true; note("talked to " + npc + " for " + d.key + " " + key); complete(d, key, q, npc); }
-                }
-                if (changed) d.commit();
-            } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ mission didn't count a talk", t); }
+            try { if (talkWith(d, npc)) d.commit(); }
+            catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ mission didn't count a talk", t); }
         }
     }
+
+    /** The DragonMineZ NPC / master id of this entity (what its "talk to" objectives name), or null. */
+    static String npcId(Entity e) {
+        try {
+            String cls = e.getClass().getName();
+            if (cls.endsWith("QuestNPCEntity") || hasMethod(e, "getNpcId")) return (String) m(e, "getNpcId");
+            if (cls.endsWith("MastersEntity") || hasMethod(e, "getMasterName")) return (String) m(e, "getMasterName");
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    /** The bot talked to this person: its "talk to" objectives for them count, and missions handed in to them complete. True = changed. */
+    private static boolean talkWith(Data d, String npc) throws Exception {
+        boolean changed = false;
+        for (String key : accepted(d.pqd)) {
+            Object q = quest(key);
+            if (q == null || (Boolean) m(d.pqd, "isQuestCompleted", key)) continue;
+            if ((Boolean) needsTurnIn.invoke(null, q)) {                             // (handed in to this person: done)
+                if (complete(d, key, q, npc)) { changed = true; note("handed in " + key + " to " + npc + " for " + d.key); }
+                continue;
+            }
+            List<?> objs = (List<?>) m(q, "getObjectives");
+            boolean parallel = (Boolean) m(q, "isParallelObjectives"), counted = false;
+            for (int i = 0; i < objs.size(); i++) {
+                Object obj = objs.get(i);
+                int prog = progress(d.pqd, key, i);
+                if (prog >= required(q, d.pqd, key, i) || (!parallel && !firstOpen(d.pqd, key, q, i))) continue;
+                if (talkObj.isInstance(obj) && npc.equals(m(obj, "getNpcId"))) { m(d.pqd, "setObjectiveProgress", key, i, prog + 1); counted = true; }
+            }
+            if (counted) { changed = true; note("talked to " + npc + " for " + d.key + " " + key); complete(d, key, q, npc); }
+        }
+        return changed;
+    }
+
+    /**
+     * Who this mission waits on the bot (or you) to talk to right now, or null: the person it's handed in to once it's
+     * ready, or the person of its current "talk to" objective. onlyLeft: only when that talk is all that's left.
+     */
+    static String waitingOn(Object pqd, String key, Object q, boolean onlyLeft) throws Exception {
+        if ((Boolean) needsTurnIn.invoke(null, q))
+            return (Boolean) turnInReady.invoke(null, pqd, key, q) ? (String) m(q, "getTurnIn") : null;
+        List<?> objs = (List<?>) m(q, "getObjectives");
+        boolean parallel = (Boolean) m(q, "isParallelObjectives");
+        String npc = null;
+        boolean otherOpen = false;
+        for (int i = 0; i < objs.size(); i++) {
+            if (progress(pqd, key, i) >= required(q, pqd, key, i)) continue;
+            boolean current = parallel || firstOpen(pqd, key, q, i);
+            if (talkObj.isInstance(objs.get(i)) && current) { if (npc == null) npc = (String) m(objs.get(i), "getNpcId"); }
+            else otherOpen = true;
+        }
+        return onlyLeft && otherOpen ? null : npc;
+    }
+
+    // ------------------------------------------------------------------ 1c: the bot talks to them itself (DmzBotTalk walks it there)
+
+    /** What the bot should go and talk to someone for: {mission key, person's id, "talk" / "turnin" / "take"}, the waiting take first. */
+    public static List<String[]> talkJobs(PartyBotEntity b) {
+        List<String[]> out = new ArrayList<>();
+        if (!ready()) return out;
+        Take t = TAKES.get(b.getUUID());
+        if (t != null) out.add(new String[]{t.key, t.giver, "take"});
+        Object pqd = peek(b);
+        if (pqd == null) return out;
+        try {
+            for (String key : accepted(pqd)) {
+                Object q = quest(key);
+                if (q == null || (Boolean) m(pqd, "isQuestCompleted", key) || !typeEnabled(q)) continue;
+                String npc = waitingOn(pqd, key, q, false);
+                if (npc != null && !npc.isBlank()) out.add(new String[]{key, npc, (Boolean) needsTurnIn.invoke(null, q) ? "turnin" : "talk"});
+            }
+        } catch (Throwable t2) { XenoWarriors.LOGGER.warn("Couldn't read a bot's DragonMineZ missions for its talks", t2); }
+        return out;
+    }
+
+    /** The bot reached this person and talks to them, exactly as your talking to them would count for it. True = something counted. */
+    public static boolean botTalked(PartyBotEntity b, Entity person) {
+        String npc = npcId(person);
+        if (npc == null || !ready()) return false;
+        Data d = open(b, true);
+        if (d == null || d.live) return false;
+        try {
+            if (!talkWith(d, npc)) return false;
+            d.commit();
+            botTalks++;
+            note(d.key + " talked to " + npc + " itself" + (person.getPersistentData().getBoolean(DmzTalkNpcs.TAG) ? " (the copy that came)" : " (the real one)"));
+            d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" talked to ").append(person.getDisplayName())
+                    .withStyle(ChatFormatting.AQUA), false);
+            return true;
+        } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ talk failed", t); return false; }
+    }
+
+    /** (For the tests) talks / takes the bots did by walking up to someone themselves. */
+    public static int botTalks, botTakes;
+
+    /** A mission the bot goes to take from its giver (who's close by) when you start yours; started anyway after 30 s. */
+    private record Take(UUID owner, String key, String giver, int partySize, boolean spawn, long until) {}
+    private static final Map<UUID, Take> TAKES = new java.util.concurrent.ConcurrentHashMap<>();
+    public static int TAKE_WAIT = 20 * 30;
+
+    /** The bot reached the giver: it takes the mission now. */
+    public static boolean botTook(PartyBotEntity b, Entity giver) {
+        Take t = TAKES.remove(b.getUUID());
+        return t != null && takeNow(b, t, giver);
+    }
+
+    private static boolean takeNow(PartyBotEntity b, Take t, Entity giver) {
+        Data d = open(b, false);
+        if (d == null || d.live) return false;
+        try {
+            if (!eligible(d, t.key)) { note(d.key + " can't take " + t.key + " any more (" + why + ")"); return false; }
+            start(d, t.key, t.partySize, t.spawn);
+            if (giver != null) botTakes++;
+            d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName())
+                    .append(Component.literal(giver != null ? " took " : " started: "))
+                    .append(title(t.key)).append(giver != null ? Component.literal(" from ").append(giver.getDisplayName()) : Component.empty())
+                    .withStyle(ChatFormatting.AQUA), false);
+            note(d.key + (giver != null ? " took " + t.key + " from " + t.giver + " itself" : " started " + t.key + " (didn't get to " + t.giver + " in time)"));
+            return true;
+        } catch (Throwable e) { XenoWarriors.LOGGER.warn("A bot couldn't take its DragonMineZ mission", e); return false; }
+    }
+
+    /** Takes that waited too long (the bot fighting, or the giver out of reach) start anyway; the bot gone: dropped. */
+    private static void expireTakes(ServerPlayer p) {
+        if (TAKES.isEmpty()) return;
+        long now = p.level().getGameTime();
+        for (PartyBotEntity b : PartyBots.bots(p)) {
+            Take t = TAKES.get(b.getUUID());
+            if (t != null && (now > t.until || now < t.until - TAKE_WAIT - 20) && TAKES.remove(b.getUUID(), t)) takeNow(b, t, null);
+        }
+        TAKES.values().removeIf(t -> t.owner.equals(p.getUUID()) && now > t.until + 200);   // (its bot isn't here any more)
+    }
+
+    /** (For the tests) "mission<-giver" the bot is on its way to take, or null. */
+    public static String takingForTest(PartyBotEntity b) { Take t = TAKES.get(b.getUUID()); return t == null ? null : t.key + "<-" + t.giver; }
 
     private static boolean hasMethod(Object o, String name) {
         for (Method mm : o.getClass().getMethods()) if (mm.getName().equals(name) && mm.getParameterCount() == 0) return true;
@@ -673,9 +787,18 @@ public final class DmzBotQuests {
                 if (d == null || d.live) continue;
                 String pick = pick(d, key);
                 if (pick == null) continue;
+                Entity giver = DmzBotTalk.giverNearby(b, quest(pick));
+                if (!line.getSiblings().isEmpty()) line.append(Component.literal("  |  "));
+                if (giver != null) {                                                  // (it walks over and takes it from them - DmzBotTalk)
+                    String gid = npcId(giver);
+                    TAKES.put(b.getUUID(), new Take(p.getUUID(), pick, gid, partySize, !pick.equals(key), p.level().getGameTime() + TAKE_WAIT));
+                    out.add(d.key + "=" + pick + " (from " + gid + ")");
+                    note(d.key + " goes to " + gid + " to take " + pick);
+                    line.append(b.character().getDisplayName()).append(" goes to ").append(giver.getDisplayName()).append(" for: ").append(title(pick));
+                    continue;
+                }
                 start(d, pick, partySize, !pick.equals(key));
                 out.add(d.key + "=" + pick);
-                if (!line.getSiblings().isEmpty()) line.append(Component.literal("  |  "));
                 line.append(b.character().getDisplayName()).append(" started: ").append(title(pick));
             }
             if (!line.getSiblings().isEmpty()) p.displayClientMessage(line.withStyle(ChatFormatting.AQUA), false);
@@ -687,6 +810,7 @@ public final class DmzBotQuests {
     @SuppressWarnings("unchecked")
     private static String pick(Data d, String key) throws Exception {
         if ((Boolean) m(d.pqd, "isQuestAccepted", key)) { note(d.key + " is already on " + key); return null; }
+        if (TAKES.containsKey(d.bot.getUUID())) { note(d.key + " is still on its way to take " + TAKES.get(d.bot.getUUID()).key); return null; }
         if (eligible(d, key)) return key;
         note(d.key + " can't take " + key + " (" + why + ")");
         Object q = quest(key);
