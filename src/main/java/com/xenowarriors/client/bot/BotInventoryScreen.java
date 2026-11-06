@@ -28,6 +28,12 @@ public class BotInventoryScreen extends AbstractContainerScreen<BotMenu> {
     }
 
     /** Tab button i: x offset and width (relative to the screen's left). */
+    @Override
+    protected void init() {
+        super.init();
+        topPos = Math.max(topPos, Math.min(-TAB_Y + 2, height - imageHeight));   // (room above it for the tab row on a small window)
+    }
+
     private int tabX(int i) { return 30 + i * 42; }
     private static int tabW(int i) { return i == 0 ? 28 : 40; }
     private int sortX() { return imageWidth - 34; }

@@ -169,7 +169,7 @@ public final class BotBagTests {
                     "screen=" + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName()) + (s == null ? "" : " hasTabs=" + s.getMenu().hasTabs() + " tab=" + s.getMenu().tab()));
             check("player's own inventory has no extra tabs", mc.player.inventoryMenu.slots.size() == 46, "inventory menu slots=" + mc.player.inventoryMenu.slots.size());
         }, 5));
-        l.add(new Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) s.press(2); }, 10));
+        l.add(new Step(null, () -> { mc.getToasts().clear(); BotInventoryScreen s = screen(mc); if (s != null) s.press(2); }, 10));
         l.add(new Step("botbag_tab_extra2", () -> {
             BotInventoryScreen s = screen(mc);
             if (s == null) { check("tab 2", false, "screen gone"); return; }
@@ -339,13 +339,13 @@ public final class BotBagTests {
             PartyBotEntity r = bot(p, CharacterType.RHALIX);
             check("no tidying while its inventory is open", BotBags.sorts == N[0], "sorts " + N[0] + " -> " + BotBags.sorts + " (open " + (r != null && r.inventory.beingViewed()) + ")");
         }), 5));
-        l.add(new Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) s.press(1); }, 10));
+        l.add(new Step(null, () -> { mc.getToasts().clear(); BotInventoryScreen s = screen(mc); if (s != null) s.press(1); }, 10));
         l.add(new Step("botbag_before_sort_extra1", () -> {}, 3));
-        l.add(new Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) { s.press(0); s.press(BotMenu.SORT); } }, 15));
+        l.add(new Step(null, () -> { mc.getToasts().clear(); BotInventoryScreen s = screen(mc); if (s != null) { s.press(0); s.press(BotMenu.SORT); } }, 15));
         l.add(new Step("botbag_after_sort_bag", () -> UiTest.server(p -> verifySorted(bot(p, CharacterType.RHALIX), "Sort button")), 5));
-        l.add(new Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) s.press(1); }, 10));
+        l.add(new Step(null, () -> { mc.getToasts().clear(); BotInventoryScreen s = screen(mc); if (s != null) s.press(1); }, 10));
         l.add(new Step("botbag_after_sort_extra1", () -> {}, 3));
-        l.add(new Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) s.press(2); }, 10));
+        l.add(new Step(null, () -> { mc.getToasts().clear(); BotInventoryScreen s = screen(mc); if (s != null) s.press(2); }, 10));
         l.add(new Step("botbag_after_sort_extra2", () -> {}, 3));
         l.add(new Step(null, () -> UiTest.server(p -> {
             p.closeContainer();
