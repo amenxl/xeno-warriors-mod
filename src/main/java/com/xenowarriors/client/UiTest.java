@@ -86,6 +86,7 @@ public final class UiTest {
         if (com.xenowarriors.client.test.StatBoostTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.StatBoostTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.BuildingTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.BuildingTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.HuntCombatTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.HuntCombatTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
+        if (com.xenowarriors.client.test.UltAskTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.UltAskTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.JudgmentTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.JudgmentTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.BotSaveTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.BotSaveTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.SeasonHuntTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.SeasonHuntTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }

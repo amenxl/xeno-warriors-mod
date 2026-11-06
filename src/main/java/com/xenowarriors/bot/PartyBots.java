@@ -741,7 +741,7 @@ public final class PartyBots {
         }
         int slot = b.getRandom().nextInt(5);
         if (slot == 4 && (b.getHealth() > b.getMaxHealth() * 0.6F || b.karma < 60)) slot = b.getRandom().nextInt(4);    // ultimates when it matters
-        if (slot == 4 && BotTeamUlt.saveUltimate(b)) slot = b.getRandom().nextInt(4);   // (saving it for a team ultimate with its partner)
+        if (slot == 4 && BotTeamUlt.saveUltimate(b, target)) slot = b.getRandom().nextInt(4);   // (saving it for a team ultimate with its partner)
         if (now < b.skillReady[slot]) return;
         Skill skill = botSkill(b, loadout, slot);                                // (not a skill from a locked season, or above the bot's level)
         if (skill == null) return;

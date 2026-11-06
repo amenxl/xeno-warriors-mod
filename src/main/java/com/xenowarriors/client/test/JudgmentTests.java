@@ -216,7 +216,7 @@ public final class JudgmentTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             p.connection.teleport(origin.x, origin.y, origin.z, 0F, 0F);
             Vec3 c = origin.add(0, 0, 9);
-            for (int i = 0; i < 4; i++) husk(p, c.add(i - 1.5, 0, i % 2), 200);
+            for (int i = 0; i < 7; i++) husk(p, c.add(i - 3, 0, i % 2), 200);   // (a crowd: bots only ask in a big fight)
             bot = PartyBots.spawn(p, CharacterType.RHALIX, null);
             if (bot != null) { bot.moveTo(origin.x - 3, origin.y, origin.z, 0, 0); bot.applyLevel(30); }
         }), 30));
@@ -248,7 +248,7 @@ public final class JudgmentTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             p.connection.teleport(origin.x, origin.y, origin.z - 6, 0F, 0F);
             Vec3 c = origin.add(0, 0, 9);
-            for (int i = 0; i < 4; i++) husk(p, c.add(Math.cos(i * 1.6) * 5, 0, Math.sin(i * 1.6) * 5), 200);
+            for (int i = 0; i < 7; i++) husk(p, c.add(Math.cos(i * 0.9) * 5, 0, Math.sin(i * 0.9) * 5), 200);   // (a crowd: bots only team up in a big fight)
             bot = PartyBots.spawn(p, CharacterType.RHALIX, null);
             bot2 = PartyBots.spawn(p, CharacterType.MIKIKO, null);
             if (bot != null) { bot.moveTo(origin.x - 2, origin.y, origin.z, 0, 0); bot.applyLevel(30); }
