@@ -382,7 +382,7 @@ public final class BotCrafting {
     private static boolean hasToolFor(PartyBotEntity b, BlockState st) {
         if (b.getMainHandItem().isCorrectToolForDrops(st)) return true;
         for (int i = 0; i < b.inventory.getContainerSize(); i++) if (b.inventory.getItem(i).isCorrectToolForDrops(st)) return true;
-        return false;
+        return com.xenowarriors.stats.HandMining.botCanHarvest(b, st);     // (or bare hands with a high enough Mining level)
     }
 
     /** A crafting table / anvil in its bag, or placed near it. */

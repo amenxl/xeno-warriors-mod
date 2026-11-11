@@ -130,7 +130,7 @@ public final class BotGear {
     /** Ticks to break a block with what it's holding (bare hands still get there, just slowly). */
     public static int digTicks(PartyBotEntity b, BlockPos pos, BlockState st) {
         float hard = Math.max(0.5F, st.getDestroySpeed(b.level(), pos));
-        float speed = Math.max(1F, b.getMainHandItem().getDestroySpeed(st));
+        float speed = com.xenowarriors.stats.HandMining.botSpeed(b, st);    // (its tool's speed, or its bare hands' at its Mining level)
         return Math.max(8, Math.min(40, Math.round(hard * 30F / speed)));
     }
 

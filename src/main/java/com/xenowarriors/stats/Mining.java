@@ -19,7 +19,8 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * Mining skill: the more blocks you break, the faster you break them - with any tool, and even more so with your
- * bare hands. Level 0-50: +4% mining speed per level (3x at 50), and bare hands get another +5% per level.
+ * bare hands. Level 0-50: +4% mining speed per level (3x at 50), and bare hands get another +5% per level. Bare hands
+ * also count as a better and better pickaxe (drops and speed) as the level goes up: see {@link HandMining}.
  * Separate from Speed/Attack/Defense, so it doesn't count toward Character Level.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -63,8 +64,9 @@ public final class Mining {
     public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
         int level = level(event.getEntity());
         if (level <= 0) return;
-        boolean hand = event.getEntity().getMainHandItem().isEmpty();
-        event.setNewSpeed(event.getNewSpeed() * multiplier(level, hand));
+        BlockState st = event.getState();
+        if (HandMining.bareHand(event.getEntity().getMainHandItem(), st)) event.setNewSpeed(HandMining.handSpeed(event.getEntity(), st, event.getNewSpeed()));   // (bare hands: a pickaxe-tier of their own, see HandMining)
+        else event.setNewSpeed(event.getNewSpeed() * multiplier(level, false));
     }
 
     @SubscribeEvent
@@ -85,6 +87,7 @@ public final class Mining {
             if (d.miningLevel >= MAX_LEVEL) return;
             d.miningXp += amount;
             boolean up = false;
+            int before = d.miningLevel;
             while (d.miningLevel < MAX_LEVEL && d.miningXp >= needed(d.miningLevel)) {
                 d.miningXp -= needed(d.miningLevel);
                 d.miningLevel++;
@@ -97,6 +100,7 @@ public final class Mining {
                         + Math.round((multiplier(d.miningLevel, true) - 1) * 100) + "% with bare hands).").withStyle(ChatFormatting.AQUA));
                 p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 1.4F);
                 com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.MINING);
+                HandMining.leveled(p, before, d.miningLevel);
             }
         });
         sync(p);

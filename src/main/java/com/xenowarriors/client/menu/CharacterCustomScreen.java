@@ -572,7 +572,7 @@ public class CharacterCustomScreen extends Screen {
         rows.add(new Object[]{"Attack", lvStr(self.attack()), me.attackXp(), 0xFF7744});
         rows.add(new Object[]{"Defense", lvStr(self.defense()), me.defenseXp(), 0x88DD66});
         rows.add(new Object[]{"Speed", lvStr(self.speed()), me.speedXp(), 0x55DDFF});
-        rows.add(new Object[]{"Mining", lvStr(me.mining()), me.miningXp(), 0xE0C070});
+        rows.add(new Object[]{"Mining", lvStr(me.mining()), me.miningXp(), 0xE0C070});        // (hover: what your bare hands mine like)
         rows.add(new Object[]{"Crafting", lvStr(me.craft()), me.craftXp(), 0xC08A50});
         rows.add(new Object[]{"Smelting", lvStr(me.smelt()), me.smeltXp(), 0xFF8A3A});
         if (type != CharacterType.ULTIMA) rows.add(new Object[]{"Appetite", (me.appetite() >= com.xenowarriors.stats.Appetite.MAX_LEVEL ? "MAX" : "Lv " + me.appetite())
@@ -616,6 +616,8 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, v, x + colW - 4 - font.width(v) * 0.85F, ty, 0.85F, 0xFFFFFF);
             if ("Building".equals(o[0]) && (testBuildingTip || inBox(mx, my, x, yi, colW, hh)))
                 tip = com.xenowarriors.client.PlayerStatsScreen.buildingTip(me.building()).stream().map(Component::getString).toList();
+            if ("Mining".equals(o[0]) && !testBuildingTip && (com.xenowarriors.client.PlayerStatsScreen.testMiningTip || inBox(mx, my, x, yi, colW, hh)))
+                tip = com.xenowarriors.client.PlayerStatsScreen.miningTip(me.mining()).stream().map(Component::getString).toList();
         }
         String[] bl = blade();
         if (bl != null) {
