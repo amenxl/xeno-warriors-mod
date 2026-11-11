@@ -332,7 +332,51 @@ public final class KishiGravTests {
 
     // ------------------------------------------------------------------ inside the real-pack test
 
+    private static String where(ServerPlayer p) {
+        return p.level().dimension().location() + " alive=" + p.isAlive() + " mode=" + p.gameMode.getGameModeForPlayer().getName() + " at " + p.blockPosition();
+    }
+
+    /** A dome's effect on a husk and on the player wherever the player is now (log only: the Otherworld after a knock-out...). */
+    private static KishiDomeEntity probeDome, probePlayerDome;
+    private static Husk probeHusk;
+
+    private static void respawn(Minecraft mc) {
+        if (mc.player != null && (mc.player.isDeadOrDying() || mc.screen instanceof net.minecraft.client.gui.screens.DeathScreen)) {
+            PackTests.log("kishi: respawning after a death");
+            mc.player.respawn();
+        }
+        mc.setScreen(null);
+    }
+
     public static void pack(Minecraft mc, List<Step> l) {
+        // ---- whatever state the steps before left: a death (the Xeno Dragon's bomb sends you to DragonMineZ's Otherworld)...
+        l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> {
+            PackTests.log("kishi before: " + where(p));
+            probeDome = probePlayerDome = null; probeHusk = null;
+            if (p.level() != p.server.overworld() && p.isAlive()) {
+                Vec3 at = p.position();
+                probeHusk = EntityType.HUSK.create(p.serverLevel());
+                probeHusk.moveTo(at.x, at.y, at.z + 6, 180, 0);
+                probeHusk.setNoAi(true);
+                probeHusk.addTag("xw_pack");
+                boolean added = p.serverLevel().addFreshEntity(probeHusk);
+                probeDome = dome(p, enemy(p.serverLevel()), at.add(0, 0, 6), 80, 1);
+                probePlayerDome = dome(p, enemy(p.serverLevel()), at, 40, 1);
+                PackTests.log("kishi probe in " + p.level().dimension().location() + ": husk added=" + added);
+            }
+        }); }, 30));
+        l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> {
+            if (probeDome != null) {
+                PackTests.log("kishi probe result: husk removed=" + probeHusk.isRemoved() + " husk mod=" + PackTests.f(DmzKishiGravity.speedModifier(probeHusk))
+                        + " dome removed=" + probeDome.isRemoved() + " age=" + probeDome.tickCount + " playerDome removed=" + probePlayerDome.isRemoved()
+                        + " affects player=" + probePlayerDome.affects(p) + " mark=" + PackTests.f(DmzKishiGravity.extraFor(p)) + " dmz G=" + PackTests.f(dmzGravity(p))
+                        + " foe alive=" + enemy(p.serverLevel()).isAlive() + " foe removed=" + enemy(p.serverLevel()).isRemoved() + " " + where(p));
+                probeDome.discard(); probePlayerDome.discard(); probeHusk.discard();
+            }
+            // ...so start clean: alive, in the Overworld, on the arena, survival
+            if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
+            p.setHealth(p.getMaxHealth());
+        }); }, 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.clear(p);
             PackTests.arena(p);
@@ -341,6 +385,7 @@ public final class KishiGravTests {
             H[0] = (Husk) PackTests.husk(p, 0, 10);
             D[0] = dome(p, enemy(p.serverLevel()), O.add(0, 0, 10), 80, 1);
             enemyDome = dome(p, enemy(p.serverLevel()), O, 40, 1);
+            PackTests.log("kishi setup: " + where(p));
         }), 30));
         l.add(new Step("pack_kishigrav", () -> {
             boolean dmz = dmz();
@@ -348,10 +393,11 @@ public final class KishiGravTests {
             PackTests.server(p -> {
                 double mod = DmzKishiGravity.speedModifier(H[0]);
                 PackTests.check("kishi dmz gravity on a mob", !dmz || Math.abs(mod + DmzKishiGravity.movePenalty(80)) < 0.01,
-                        "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod));
+                        "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod) + " husk removed=" + H[0].isRemoved() + " dome removed=" + D[0].isRemoved());
                 double serverG = dmz ? dmzGravity(p) : -1;
                 PackTests.check("kishi dmz gravity on a player", !dmz || (serverG >= 39.9 && clientG >= 39.9),
-                        "server=" + PackTests.f(serverG) + " client=" + PackTests.f(clientG) + " mixinLive=" + DmzKishiGravity.mixinLive + " " + DmzKishiGravity.selfTest());
+                        "server=" + PackTests.f(serverG) + " client=" + PackTests.f(clientG) + " dome removed=" + enemyDome.isRemoved() + " " + where(p)
+                        + " mixinLive=" + DmzKishiGravity.mixinLive + " " + DmzKishiGravity.selfTest());
                 D[0].discard(); enemyDome.discard();
                 p.setGameMode(GameType.CREATIVE);
                 PackTests.clear(p);
