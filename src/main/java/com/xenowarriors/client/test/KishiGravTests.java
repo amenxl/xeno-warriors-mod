@@ -298,6 +298,8 @@ public final class KishiGravTests {
             KishiDomeEntity d = null;
             for (KishiDomeEntity k : p.serverLevel().getEntitiesOfClass(KishiDomeEntity.class, p.getBoundingBox().inflate(30))) if (f.getUUID().equals(k.getOwnerId())) d = k;
             D[0] = d;
+            log("rhalix bot cast facing: standIn yRot=" + f(f.getYRot()) + " xRot=" + f(f.getXRot()) + " dome at " + (d == null ? "-" : d.position().subtract(O)));
+            if (d != null && !d.isInside(H[0])) H[0].teleportTo(d.getX(), d.getY(), d.getZ());   // (the enemy stands in the bot's dome either way)
             double want = dmz ? DmzKishiGravity.gravityFor(f, 1) : 0;
             log("rhalix bot kishi: used=" + used + " dome=" + (d != null) + " bot level=" + rbot.botLevel() + " inputs=" + java.util.Arrays.toString(DmzKishiGravity.inputs(f))
                     + " G=" + (d == null ? -1 : d.gravity()) + " want=" + want + " -> " + pf(used && d != null && Math.abs(d.gravity() - want) < 0.01 && (!dmz || d.gravity() >= 10)));
