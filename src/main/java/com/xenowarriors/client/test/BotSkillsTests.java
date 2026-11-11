@@ -121,6 +121,12 @@ public final class BotSkillsTests {
         p.connection.teleport(x, y, z, yaw, pitch);
     }
 
+    /** No stray monsters about (a night spawn would keep the bot from walking off to a master). */
+    private static void clearMobs(ServerPlayer p) {
+        for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(64), x -> x instanceof net.minecraft.world.entity.monster.Enemy)) m.discard();
+        p.serverLevel().setDayTime(6000);
+    }
+
     private static String[] T;
     private static CompoundTag STATS0;
     private static final Object[] ST = new Object[4];
@@ -193,6 +199,7 @@ public final class BotSkillsTests {
             DmzBotTechniques.setupForTest(b, c, false, 80);
             A[1] = DmzBotTechniques.learned;
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
+            clearMobs(p);
             b.setNoAi(false);
             DmzBotMasters.lookNowForTest(b);
             cam(p, at.x + 6, at.y + 9, at.z + 9, 180F, 45F);
@@ -279,6 +286,7 @@ public final class BotSkillsTests {
             A[5] = DmzBotTechniques.learned;
             check("goku: can't fly before", !b.canFly(), "canFly " + b.canFly());
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
+            clearMobs(p);
             b.setNoAi(false);
             DmzBotMasters.lookNowForTest(b);
             cam(p, at.x + 6, at.y + 9, at.z + 9, 180F, 45F);
