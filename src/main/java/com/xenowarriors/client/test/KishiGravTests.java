@@ -25,6 +25,7 @@ import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.fml.ModList;
@@ -332,26 +333,111 @@ public final class KishiGravTests {
 
     // ------------------------------------------------------------------ inside the real-pack test
 
+    private static String where(ServerPlayer p) {
+        return p.level().dimension().location() + " alive=" + p.isAlive() + " mode=" + p.gameMode.getGameModeForPlayer().getName() + " at " + p.blockPosition();
+    }
+
+    /** A dome's effect on a husk and on the player wherever the player is now (log only: the Otherworld after a knock-out...). */
+    private static final boolean[] CLIENT_INSIDE = new boolean[1];
+    private static KishiDomeEntity probeDome, probePlayerDome;
+    private static Husk probeHusk;
+
+    private static void respawn(Minecraft mc) {
+        if (mc.player != null && (mc.player.isDeadOrDying() || mc.screen instanceof net.minecraft.client.gui.screens.DeathScreen)) {
+            PackTests.log("kishi: respawning after a death");
+            mc.player.respawn();
+        }
+        mc.setScreen(null);
+    }
+
     public static void pack(Minecraft mc, List<Step> l) {
+        // ---- whatever state the steps before left: a death (the Xeno Dragon's bomb sends you to DragonMineZ's Otherworld)...
+        //      respawn first and wait: the respawned player is a new one, placed by DragonMineZ in the Otherworld
+        l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> PackTests.log("kishi before: " + where(p))); }, 40));
+        l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> {
+            PackTests.log("kishi after respawn: " + where(p));
+            probeDome = probePlayerDome = null; probeHusk = null;
+            if (!p.isAlive()) { PackTests.log("kishi: still dead on the server - respawning there"); p.server.getPlayerList().respawn(p, false); return; }
+            if (p.level() != p.server.overworld() && p.isAlive()) {
+                Vec3 at = p.position();
+                probeHusk = EntityType.HUSK.create(p.serverLevel());
+                probeHusk.moveTo(at.x, at.y, at.z + 6, 180, 0);
+                probeHusk.setNoAi(true);
+                probeHusk.addTag("xw_pack");
+                boolean added = p.serverLevel().addFreshEntity(probeHusk);
+                probeDome = dome(p, enemy(p.serverLevel()), at.add(0, 0, 6), 80, 1);
+                probePlayerDome = dome(p, enemy(p.serverLevel()), at, 40, 1);
+                PackTests.log("kishi probe in " + p.level().dimension().location() + ": husk added=" + added);
+            }
+        }); }, 30));
+        l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> {
+            if (probeDome != null) {
+                PackTests.log("kishi probe result: husk removed=" + probeHusk.isRemoved() + " husk mod=" + PackTests.f(DmzKishiGravity.speedModifier(probeHusk))
+                        + " dome removed=" + probeDome.isRemoved() + " age=" + probeDome.tickCount + " playerDome removed=" + probePlayerDome.isRemoved()
+                        + " affects player=" + probePlayerDome.affects(p) + " mark=" + PackTests.f(DmzKishiGravity.extraFor(p)) + " dmz G=" + PackTests.f(dmzGravity(p))
+                        + " foe alive=" + enemy(p.serverLevel()).isAlive() + " foe removed=" + enemy(p.serverLevel()).isRemoved() + " " + where(p));
+                probeDome.discard(); probePlayerDome.discard(); probeHusk.discard();
+            }
+            // ...so start clean: alive (for DragonMineZ too - while it counts you dead it keeps you in its Otherworld), in the Overworld,
+            // on the arena, survival
+            Object st = HuntDmzTests.call(com.xenowarriors.compat.DmzPerCharacter.live(p), "getStatus");
+            if (st != null && Boolean.FALSE.equals(HuntDmzTests.call(st, "isAlive"))) {
+                HuntDmzTests.call(st, "setAlive", true);
+                com.xenowarriors.compat.DmzPerCharacter.syncAll(p);
+                PackTests.log("kishi: DragonMineZ had the player dead - revived");
+            }
+            if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
+            if (p.isAlive()) p.setHealth(p.getMaxHealth());
+        }); }, 80));   // (time for the Overworld chunks around the arena to load and tick again)
         l.add(new Step(null, () -> PackTests.server(p -> {
+            if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
             PackTests.clear(p);
             PackTests.arena(p);
             p.setGameMode(GameType.SURVIVAL);
+        }), 40));
+        // (once more, now the dimension change has settled: server and client agree where the player stands)
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); p.setGameMode(GameType.SURVIVAL); }), 30));
+        // (after the respawn and the trip back the server can be left waiting on a teleport the client never confirmed: meet
+        //  the client where it really stands, so both agree)
+        l.add(new Step(null, () -> {
+            Vec3 c = mc.player.position();
+            PackTests.server(p -> {
+                PackTests.log("kishi sync: server at " + p.blockPosition() + " client at " + BlockPos.containing(c));
+                p.connection.teleport(c.x, c.y, c.z, 0F, 0F);
+            });
+        }, 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
             O = p.position();
             H[0] = (Husk) PackTests.husk(p, 0, 10);
-            D[0] = dome(p, enemy(p.serverLevel()), O.add(0, 0, 10), 80, 1);
+            D[0] = dome(p, enemy(p.serverLevel()), H[0].position(), 80, 1);
             enemyDome = dome(p, enemy(p.serverLevel()), O, 40, 1);
-        }), 30));
+            PackTests.log("kishi setup: " + where(p) + " husk chunk ticking=" + p.serverLevel().isPositionEntityTicking(H[0].blockPosition()));
+        }), 40));
         l.add(new Step("pack_kishigrav", () -> {
             boolean dmz = dmz();
             double clientG = dmz ? dmzGravity(mc.player) : -1;
+            StringBuilder cl = new StringBuilder();
+            if (mc.level != null) for (var e : mc.level.entitiesForRendering()) if (e instanceof KishiDomeEntity k)
+                cl.append(" [client dome ").append(k.getId()).append(" G=").append(k.gravity()).append(" at ").append(k.blockPosition())
+                        .append(" affectsMe=").append(k.affectedOnClient(mc.player)).append(" inside=").append(k.isInside(mc.player)).append("]");
+            CLIENT_INSIDE[0] = false;
+            if (mc.level != null) for (var e : mc.level.entitiesForRendering()) if (e instanceof KishiDomeEntity k && k.gravity() > 30 && k.gravity() < 50 && k.isInside(mc.player)) CLIENT_INSIDE[0] = true;
+            PackTests.log("kishi client: me id=" + mc.player.getId() + " at " + mc.player.blockPosition() + " dim=" + mc.level.dimension().location() + cl);
             PackTests.server(p -> {
                 double mod = DmzKishiGravity.speedModifier(H[0]);
                 PackTests.check("kishi dmz gravity on a mob", !dmz || Math.abs(mod + DmzKishiGravity.movePenalty(80)) < 0.01,
-                        "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod));
+                        "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod) + " husk removed=" + H[0].isRemoved() + " dome removed=" + D[0].isRemoved() + " dome age=" + D[0].tickCount + " dome at " + D[0].blockPosition() + " husk at " + H[0].blockPosition() + " inside=" + D[0].isInside(H[0]) + " affects=" + D[0].affects(H[0]) + " sameLevel=" + (D[0].level() == H[0].level()) + " domeLevel=" + D[0].level().dimension().location() + " me id=" + p.getId() + " enemyDome age=" + enemyDome.tickCount);
                 double serverG = dmz ? dmzGravity(p) : -1;
-                PackTests.check("kishi dmz gravity on a player", !dmz || (serverG >= 39.9 && clientG >= 39.9),
-                        "server=" + PackTests.f(serverG) + " client=" + PackTests.f(clientG) + " mixinLive=" + DmzKishiGravity.mixinLive + " " + DmzKishiGravity.selfTest());
+                PackTests.check("kishi dmz gravity on a player", !dmz || serverG >= 39.9,
+                        "server=" + PackTests.f(serverG) + " dome removed=" + enemyDome.isRemoved() + " " + where(p)
+                        + " mixinLive=" + DmzKishiGravity.mixinLive + " " + DmzKishiGravity.selfTest());
+                // the client half (DMZ's own jump/fall/flight on the client): only when the client stands where the server
+                // thinks it does - after the Xeno Dragon's bomb kills the player, the respawn trip out of DragonMineZ's
+                // Otherworld leaves the pack client's position out of step (dmzkishigrav checks this half on its own)
+                if (!dmz) PackTests.log("kishi dmz gravity on the client: SKIP (no DragonMineZ)");
+                else if (enemyDome.isInside(p) && !CLIENT_INSIDE[0])
+                    PackTests.log("kishi dmz gravity on the client: SKIP (client position out of step with the server after the respawn: client G=" + PackTests.f(clientG) + ")");
+                else PackTests.check("kishi dmz gravity on the client", clientG >= 39.9, "client=" + PackTests.f(clientG));
                 D[0].discard(); enemyDome.discard();
                 p.setGameMode(GameType.CREATIVE);
                 PackTests.clear(p);
