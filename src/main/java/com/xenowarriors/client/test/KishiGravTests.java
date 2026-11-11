@@ -355,6 +355,7 @@ public final class KishiGravTests {
         l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> {
             PackTests.log("kishi after respawn: " + where(p));
             probeDome = probePlayerDome = null; probeHusk = null;
+            if (!p.isAlive()) { PackTests.log("kishi: still dead on the server - respawning there"); p.server.getPlayerList().respawn(p, false); return; }
             if (p.level() != p.server.overworld() && p.isAlive()) {
                 Vec3 at = p.position();
                 probeHusk = EntityType.HUSK.create(p.serverLevel());
@@ -375,7 +376,14 @@ public final class KishiGravTests {
                         + " foe alive=" + enemy(p.serverLevel()).isAlive() + " foe removed=" + enemy(p.serverLevel()).isRemoved() + " " + where(p));
                 probeDome.discard(); probePlayerDome.discard(); probeHusk.discard();
             }
-            // ...so start clean: alive, in the Overworld, on the arena, survival
+            // ...so start clean: alive (for DragonMineZ too - while it counts you dead it keeps you in its Otherworld), in the Overworld,
+            // on the arena, survival
+            Object st = HuntDmzTests.call(com.xenowarriors.compat.DmzPerCharacter.live(p), "getStatus");
+            if (st != null && Boolean.FALSE.equals(HuntDmzTests.call(st, "isAlive"))) {
+                HuntDmzTests.call(st, "setAlive", true);
+                com.xenowarriors.compat.DmzPerCharacter.syncAll(p);
+                PackTests.log("kishi: DragonMineZ had the player dead - revived");
+            }
             if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
             if (p.isAlive()) p.setHealth(p.getMaxHealth());
         }); }, 30));
