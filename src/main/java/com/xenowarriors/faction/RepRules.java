@@ -25,9 +25,11 @@ public enum RepRules {
     GOV_RETURN(Faction.GOV, 12, 60, "Returning Gov equipment (keycards, human mods, Karma Scanners): sneak + right-click a Gov terminal with it - you get some Money back"),
     GOV_BOUNTY(Faction.GOV, 15, 0, "Completing bounties on the Sky Rebellion, corrupted villagers or the Order"),
     GOV_CORRUPTION(Faction.GOV, 2, 30, "Clearing corruption: defeating corrupted creatures"),
+    GOV_RAID(Faction.GOV, 40, 0, "Fighting off every wave of a Government raid sent after you (they back off - and you get some Money)"),
     // ---- Sky Rebellion
     SR_KILL_MEMBER(Faction.SR, -25, 0, "Fighting / killing Sky Rebellion members"),
     SR_KILL_AGENT(Faction.SR, 5, 0, "Defeating Government agents"),
+    SR_RAID(Faction.SR, 40, 0, "Fighting off every wave of a Sky Rebellion raid sent after you"),
     // ---- Sky Patrol & Skylanders
     SKY_KILL_SKYLANDER(Faction.SKY, -40, 0, "Hurting or killing Skylanders (-60 for a guardian)"),
     SKY_KILL_SR(Faction.SKY, 5, 0, "Defeating Sky Rebellion members"),
@@ -41,7 +43,8 @@ public enum RepRules {
     TOWN_RAID(Faction.TOWN, 40, 0, "Defending a village from a Sky Hater raid"),
     TOWN_BOUNTY(Faction.TOWN, 20, 0, "Completing bounties (bounty board)"),
     TOWN_TRADE(Faction.TOWN, 1, 10, "Trading with villagers (now and then)"),
-    TOWN_CORRUPTION(Faction.TOWN, 2, 30, "Clearing corruption: defeating corrupted creatures");
+    TOWN_CORRUPTION(Faction.TOWN, 2, 30, "Clearing corruption: defeating corrupted creatures"),
+    TOWN_RAID_HELD(Faction.TOWN, 40, 0, "Fighting off every wave of an angry Townsfolk raid sent after you");
 
     public final Faction faction;
     public final int delta, dailyCap;

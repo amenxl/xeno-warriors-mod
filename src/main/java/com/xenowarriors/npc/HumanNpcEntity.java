@@ -138,6 +138,35 @@ public class HumanNpcEntity extends PathfinderMob {
         setPersistenceRequired();
     }
 
+    /**
+     * Angry townsfolk in a faction raid on someone the Townsfolk hate: armed (pitchforks, axes, a torch in the other
+     * hand), and only there to fight - no chopping, mining or rebuilding (they never touch blocks).
+     */
+    public void makeMilitia(boolean captain) {
+        entityData.set(FIGHTER, true);
+        entityData.set(SKY_HATER, false);
+        goalSelector.removeAllGoals(g -> g instanceof HumanWorkGoal || g instanceof com.xenowarriors.npc.rebuild.RebuildGoal);
+        Item[] arms = {Items.TRIDENT, Items.TRIDENT, Items.IRON_AXE, Items.STONE_AXE, Items.STONE_SWORD, Items.WOODEN_SWORD, Items.IRON_SWORD};
+        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(captain ? Items.IRON_SWORD : arms[random.nextInt(arms.length)]));
+        if (captain || random.nextFloat() < 0.5F) setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.TORCH));
+        setDropChance(EquipmentSlot.MAINHAND, 0F);
+        setDropChance(EquipmentSlot.OFFHAND, 0F);
+        setCustomName(Component.literal(captain ? "Militia Captain" : "Angry Townsfolk").withStyle(captain ? ChatFormatting.GOLD : ChatFormatting.DARK_GREEN));
+        if (captain) {
+            setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+            setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+            setDropChance(EquipmentSlot.HEAD, 0F);
+            setDropChance(EquipmentSlot.CHEST, 0F);
+            var hp = getAttribute(Attributes.MAX_HEALTH);
+            if (hp != null) hp.setBaseValue(50);
+            var dmg = getAttribute(Attributes.ATTACK_DAMAGE);
+            if (dmg != null) dmg.setBaseValue(5);
+            setHealth(getMaxHealth());
+        }
+        setCanPickUpLoot(false);
+        setPersistenceRequired();
+    }
+
     /** Hates Skylanders: goes for their wings (red armband). */
     public boolean skyHater() { return entityData.get(SKY_HATER); }
 

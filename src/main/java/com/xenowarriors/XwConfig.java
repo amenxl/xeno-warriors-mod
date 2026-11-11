@@ -23,6 +23,8 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_BOTS_TALK;
     /** Beaten Ender Dragons turn into the Xeno Dragon boss. */
     public static final ForgeConfigSpec.BooleanValue XENO_DRAGON;
+    /** Faction raids: the Government, the Sky Rebellion and the Townsfolk come after players they hate (also gamerule xwFactionRaids). */
+    public static final ForgeConfigSpec.BooleanValue FACTION_RAIDS, GOV_RAIDS, SR_RAIDS, TOWN_RAIDS;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -49,6 +51,14 @@ public final class XwConfig {
                 .define("botsTalkToNpcs", true);
         XENO_DRAGON = b.comment("When an Ender Dragon is beaten, it turns into the Xeno Dragon (a Saiyan-form boss up to Super Saiyan God, then Ultra Instinct).")
                 .define("xenoDragon", true);
+        b.pop();
+        b.push("raids");
+        FACTION_RAIDS = b.comment("Factions that hate you (Hostile or Hated standing) now and then send a raid after you, in the Overworld or Recarnet.",
+                        "Also switchable per world with the gamerule xwFactionRaids. The Sky Patrol & Skylanders never raid.")
+                .define("factionRaids", true);
+        GOV_RAIDS = b.comment("Government raids: helicopters and armored convoys full of soldiers.").define("governmentRaids", true);
+        SR_RAIDS = b.comment("Sky Rebellion raids: rebels diving out of the sky on their wings.").define("skyRebellionRaids", true);
+        TOWN_RAIDS = b.comment("Townsfolk raids: an angry militia from the nearest town.").define("townsfolkRaids", true);
         b.pop();
         SPEC = b.build();
     }
