@@ -481,7 +481,13 @@ public final class RaidTests {
             PackTests.clear(p);
             FactionRaids.testFast = true;
             endAll();
-            // (earlier pack steps can leave the player in another dimension - DragonMineZ's Otherworld - where raids never happen)
+            // (earlier pack steps can leave the player dead to DragonMineZ, in its Otherworld - where raids never happen - and it pulls
+            //  a dead player straight back there: alive again first, then home to the Overworld)
+            try {
+                Object d = com.xenowarriors.compat.DmzPerCharacter.live(p);
+                Object st = d == null ? null : d.getClass().getMethod("getStatus").invoke(d);
+                if (st != null) st.getClass().getMethod("setAlive", boolean.class).invoke(st, true);
+            } catch (Throwable ignored) {}
             p.teleportTo(p.server.overworld(), PackTests.HOME[0] + 300, 200, PackTests.HOME[2], 0F, 0F);
         }), 60));
         for (int part = 0; part < 4; part++) { int fp = part; l.add(new Step(null, () -> PackTests.server(p -> stage(p, fp)), 10)); }
