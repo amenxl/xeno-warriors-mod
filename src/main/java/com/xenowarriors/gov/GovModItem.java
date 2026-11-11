@@ -64,14 +64,20 @@ public class GovModItem extends Item {
         tip.add(Component.literal("10 minutes - right-click to inject").withStyle(ChatFormatting.DARK_AQUA));
     }
 
-    /** Scanner Eye: every 2 seconds, mark enemies within 24 blocks so they glow through walls. Jump Boosters: no fall damage. */
+    /** Scanner Eye's reach: 24 blocks, or half a worn Karma Scanner's range if that's more (Advanced 32, Elite 48, Omni 64). */
+    public static double eyeRadius(Player p) {
+        KarmaScanner.Item k = KarmaScanner.worn(p);
+        return k == null ? 24 : Math.max(24, k.tier.range / 2);
+    }
+
+    /** Scanner Eye: every 2 seconds, mark enemies within 24 blocks (more with a stronger Karma Scanner on) so they glow through walls. Jump Boosters: no fall damage. */
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p.tickCount % 40 != 0) return;
         if (p.getPersistentData().getLong(SCAN) <= p.level().getGameTime()) return;
         ServerLevel l = p.serverLevel();
         // (only the user sees them glow: the outline is drawn on their screen alone)
-        int[] ids = l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(24),
+        int[] ids = l.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(eyeRadius(p)),
                 t -> t != p && (t instanceof net.minecraft.world.entity.monster.Enemy || t instanceof GovAgentEntity)).stream().limit(256).mapToInt(LivingEntity::getId).toArray();
         com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.ScannerGlowPacket(ids), p);
     }

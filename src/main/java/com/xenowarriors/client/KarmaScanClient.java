@@ -40,14 +40,19 @@ public class KarmaScanClient implements IGuiOverlay {
         if (mc.options.hideGui || mc.player == null) return;
         Font font = mc.font;
         long now = net.minecraft.Util.getMillis();
-        boolean visor = mc.player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof KarmaScanner.Item;
-        // the lens over the left eye (first person only)
+        var headStack = mc.player.getItemBySlot(EquipmentSlot.HEAD);
+        KarmaScanner.Item worn = headStack.getItem() instanceof KarmaScanner.Item k ? k : null;
+        boolean visor = worn != null;
+        int lens = visor ? worn.getColor(headStack) & 0xFFFFFF : 0x50FF80;
+        // the lens over one eye (both for the Elite and Omni), first person only, in the lens colour
         if (visor && mc.options.getCameraType() == CameraType.FIRST_PERSON) {
-            int x0 = Math.round(width * 0.30F), y0 = Math.round(height * 0.30F), x1 = Math.round(width * 0.46F), y1 = Math.round(height * 0.56F);   // (a small lens over the left eye)
-            g.fill(x0, y0, x1, y1, 0x1A30FF60);
-            g.fill(x0, y0, x1, y0 + 1, 0x9050FF80); g.fill(x0, y1 - 1, x1, y1, 0x9050FF80);
-            g.fill(x0, y0, x0 + 1, y1, 0x9050FF80); g.fill(x1 - 1, y0, x1, y1, 0x9050FF80);
-            for (int y = y0 + 3; y < y1; y += 4) g.fill(x0 + 1, y, x1 - 1, y + 1, 0x1030FF60);          // scan lines
+            boolean wide = worn.tier.ordinal() >= KarmaScanner.Tier.ELITE.ordinal();
+            int x0 = Math.round(width * 0.30F), y0 = Math.round(height * 0.30F), x1 = Math.round(width * (wide ? 0.70F : 0.46F)), y1 = Math.round(height * 0.56F);
+            int edge = 0x90000000 | lens, tint = 0x1A000000 | lens;
+            g.fill(x0, y0, x1, y1, tint);
+            g.fill(x0, y0, x1, y0 + 1, edge); g.fill(x0, y1 - 1, x1, y1, edge);
+            g.fill(x0, y0, x0 + 1, y1, edge); g.fill(x1 - 1, y0, x1, y1, edge);
+            for (int y = y0 + 3; y < y1; y += 4) g.fill(x0 + 1, y, x1 - 1, y + 1, 0x10000000 | lens);          // scan lines
         }
         // overload: ERROR and cracks for 2 seconds
         if (now - brokeAt < 2000) {
@@ -78,8 +83,10 @@ public class KarmaScanClient implements IGuiOverlay {
         if (target < 0 || !(visor || tech || ch == com.xenowarriors.character.CharacterType.YURI || ch == com.xenowarriors.character.CharacterType.ULTIMA)) return;
         Entity e = mc.level.getEntity(target);
         if (e == null) return;
-        int col = mode == KarmaScanner.YURI ? 0x3AD04A : mode == KarmaScanner.ULTIMA ? 0x1FE07A : mode == KarmaScanner.TECHNICA ? 0xFF7AC0 : 0x50FF80;
-        String who = mode == KarmaScanner.YURI ? "YURI'S HACK" : mode == KarmaScanner.ULTIMA ? "ULTIMA ANALYSIS" : mode == KarmaScanner.TECHNICA ? "TECH'S GOGGLES" : "GOV SCANNER";
+        int col = mode == KarmaScanner.YURI ? 0x3AD04A : mode == KarmaScanner.ULTIMA ? 0x1FE07A : mode == KarmaScanner.TECHNICA ? 0xFF7AC0 : lensHud(lens);
+        String who = mode == KarmaScanner.YURI ? "YURI'S HACK" : mode == KarmaScanner.ULTIMA ? "ULTIMA ANALYSIS" : mode == KarmaScanner.TECHNICA ? "TECH'S GOGGLES"
+                : worn != null ? worn.tier.hud : "GOV SCANNER";
+        long cap = worn == null ? KarmaScanner.CAPACITY : worn.tier.capacity;
         float t = Mth.clamp((now - shownAt) / 700F, 0F, 1F);
         long shown = (long) (value * (t * t * (3 - 2 * t)));
         if (t < 1F) shown = shown / 7 * 7 + (now / 30) % 7;                     // (digits rolling while it reads)
@@ -89,8 +96,23 @@ public class KarmaScanClient implements IGuiOverlay {
         sc(g, font, who + "  -  KARMA LEVEL", x, y, 0.55F, col);
         sc(g, font, name, x, y + 6, 0.7F, 0xFFFFFF);
         String num = KarmaLevel.fmt(Math.max(0, shown));
-        sc(g, font, num, x, y + 15, 1.4F, value > KarmaScanner.CAPACITY && mode == KarmaScanner.VISOR ? 0xFF5050 : col);
+        int w = Math.max(118, Math.round(font.width(num) * 1.4F) + 6);
+        if (w > 118) g.fill(x + 118, y - 3, x + w, y + 31, 0x80001008);              // (the Omni's huge numbers: a wider panel)
+        sc(g, font, num, x, y + 15, 1.4F, value > cap && mode == KarmaScanner.VISOR ? 0xFF5050 : col);
     }
+
+    /** A dark lens (black dye) still needs a readable HUD: lift it towards grey-white. */
+    private static int lensHud(int c) {
+        int r = c >> 16 & 255, gg = c >> 8 & 255, b = c & 255;
+        if (Math.max(r, Math.max(gg, b)) >= 120) return c;
+        return (Math.min(255, r + 140) << 16) | (Math.min(255, gg + 140) << 8) | Math.min(255, b + 150);
+    }
+
+    /** The last reading on screen (tests): {target entity id, value, mode}. */
+    public static long[] lastReading() { return new long[]{target, value, mode}; }
+
+    /** When the visor last blew apart on this screen (tests), in Util.getMillis() time. */
+    public static long brokeAt() { return brokeAt; }
 
     private static void sc(GuiGraphics g, Font font, String s, float x, float y, float k, int c) {
         g.pose().pushPose();
