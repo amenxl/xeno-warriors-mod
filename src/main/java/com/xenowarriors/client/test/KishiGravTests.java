@@ -350,8 +350,10 @@ public final class KishiGravTests {
 
     public static void pack(Minecraft mc, List<Step> l) {
         // ---- whatever state the steps before left: a death (the Xeno Dragon's bomb sends you to DragonMineZ's Otherworld)...
+        //      respawn first and wait: the respawned player is a new one, placed by DragonMineZ in the Otherworld
+        l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> PackTests.log("kishi before: " + where(p))); }, 40));
         l.add(new Step(null, () -> { respawn(mc); PackTests.server(p -> {
-            PackTests.log("kishi before: " + where(p));
+            PackTests.log("kishi after respawn: " + where(p));
             probeDome = probePlayerDome = null; probeHusk = null;
             if (p.level() != p.server.overworld() && p.isAlive()) {
                 Vec3 at = p.position();
@@ -375,9 +377,10 @@ public final class KishiGravTests {
             }
             // ...so start clean: alive, in the Overworld, on the arena, survival
             if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
-            p.setHealth(p.getMaxHealth());
+            if (p.isAlive()) p.setHealth(p.getMaxHealth());
         }); }, 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
+            if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
             PackTests.clear(p);
             PackTests.arena(p);
             p.setGameMode(GameType.SURVIVAL);
