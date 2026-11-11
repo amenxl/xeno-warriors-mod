@@ -43,7 +43,10 @@ public final class DmzBotTalk extends Goal {
 
     private static boolean on() { return XwConfig.get(XwConfig.DMZ_BOTS_TALK) && DmzBotQuests.ready(); }
 
-    private boolean free() {
+    private boolean free() { return free(b); }
+
+    /** Quiet enough to walk off and talk to someone: its owner close by, no errand, no fight or danger, not on a journey. */
+    static boolean free(PartyBotEntity b) {
         ServerPlayer o = b.owner();
         return o != null && o.level() == b.level() && o.distanceToSqr(b) < 64 * 64 && !b.journey() && !b.isPassenger() && !b.isNoAi()
                 && b.errand == null && BotErrands.danger(b) == null;
@@ -124,7 +127,7 @@ public final class DmzBotTalk extends Goal {
         return null;
     }
 
-    private static boolean reachable(PartyBotEntity b, Entity e) {
+    static boolean reachable(PartyBotEntity b, Entity e) {
         try {
             Path p = b.getNavigation().createPath(e, 1);
             if (p != null && p.canReach()) return true;

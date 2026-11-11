@@ -234,6 +234,44 @@ public final class DmzBotTraining {
         }
     }
 
+    /**
+     * The TP this bot must keep for its next mission's level: what reaching it would cost (DragonMineZ's price, tried
+     * on a copy), for the first next step that only its level blocks - the same one {@link #ready} trains for. 0 = none.
+     * Its new ki attacks and techniques from masters ({@link DmzBotTechniques}) are only bought with TP above this.
+     */
+    static float reserve(DmzBotQuests.Data d) {
+        if (d == null) return 0;
+        String why = DmzBotQuests.why;
+        try {
+            Object own = DmzPerCharacter.live(d.owner);
+            Object ownQ = own == null || d.live ? null : m(own, "getPlayerQuestData");
+            List<String> next = new ArrayList<>();
+            if (ownQ != null) next.addAll(nextSteps(ownQ));
+            for (String k : nextSteps(d.pqd)) if (!next.contains(k)) next.add(k);
+            int lv = level(d.sd);
+            for (String k : next) {
+                if ((Boolean) m(d.pqd, "isQuestCompleted", k) || "ACCEPTED".equals(String.valueOf(m(d.pqd, "getQuestStatus", k)))) continue;
+                if (DmzBotQuests.eligible(d, k)) continue;
+                int need = requiredLevel(DmzBotQuests.quest(k));
+                if (need <= lv || !levelOnly(d, k, need)) continue;
+                CompoundTag mine = DmzPerCharacter.saveData(d.sd).getCompound("Stats").copy();
+                try {
+                    DmzBotQuests.Data s = scratch(d);
+                    if (s == null) return 0;
+                    m(m(s.sd, "getResources"), "setTrainingPoints", 1.0E9F);
+                    Result r = train(s.sd, need);
+                    return r.reached() ? r.tpSpent : Float.MAX_VALUE;              // (a level it can never buy: keep it all)
+                } finally {
+                    try { m(m(d.sd, "getStats"), "load", mine); } catch (Throwable t) { XenoWarriors.LOGGER.warn("Couldn't put a bot's DragonMineZ stats back", t); }
+                }
+            }
+        } catch (Throwable t) {
+            XenoWarriors.LOGGER.warn("Couldn't work out a bot's DragonMineZ training reserve", t);
+            return Float.MAX_VALUE;                                                 // (unsure: spend nothing)
+        } finally { DmzBotQuests.why = why; }
+        return 0;
+    }
+
     // ------------------------------------------------------------------ when the bot starts a mission with you
 
     /** The Data whose mission start found a level-only block in this pick (so trainForNext doesn't spend twice). */

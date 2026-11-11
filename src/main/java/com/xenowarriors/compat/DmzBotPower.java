@@ -173,6 +173,19 @@ public final class DmzBotPower {
         return true;
     }
 
+    /** {ki it has, ki this technique costs} - the same sums as {@link #spend}, nothing spent; null = no ki rule. */
+    static float[] kiCost(PartyBotEntity b, Object stats, Object tech) {
+        if (!ready() || stats == null) return null;
+        float max = num(maxEnergy, stats);
+        if (max <= 0) return null;
+        Power p = POWER.get(b.getUUID());
+        float cost = techCost != null ? num(techCost, tech, stats) : max * 0.12F;
+        if (!(cost > 0)) cost = max * 0.08F;
+        return new float[]{(p == null || p.energy < 0 ? 1F : p.energy) * max, cost};
+    }
+
+    static float maxKi(Object stats) { return !ready() || stats == null ? 0 : num(maxEnergy, stats); }
+
     private static String pct(float f) { return Math.round(f * 100) + "%"; }
 
     // ---------------------------------------------------------------- fights
