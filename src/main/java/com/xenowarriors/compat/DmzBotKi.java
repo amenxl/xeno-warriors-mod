@@ -100,6 +100,8 @@ public final class DmzBotKi {
         final Map<String, Long> ready = new HashMap<>();
         long nextAny;
         boolean charging;
+        int equipped;
+        String last;
     }
 
     private static final Map<UUID, Kit> KITS = new HashMap<>();
@@ -126,7 +128,7 @@ public final class DmzBotKi {
     }
 
     /** A bot is gone: forget its kit. */
-    public static void forget(UUID bot) { KITS.remove(bot); DmzBotPower.forget(bot); DmzBotStats.forget(bot); com.xenowarriors.party.Bonds.forget(bot); }
+    public static void forget(UUID bot) { KITS.remove(bot); USES.remove(bot); DmzBotPower.forget(bot); DmzBotStats.forget(bot); com.xenowarriors.party.Bonds.forget(bot); }
 
     private static Kit kit(PartyBotEntity b, java.util.function.Supplier<Player> standIn) {
         ServerPlayer o = b.owner();
@@ -149,12 +151,17 @@ public final class DmzBotKi {
             Object tech = getTechniques.invoke(stats);
             String[] slots = (String[]) equipped.invoke(tech);
             Map<?, ?> all = (Map<?, ?>) unlocked.invoke(tech);
-            if (slots != null) for (String id : slots) {
-                if (id == null || id.isEmpty()) continue;
+            // every technique it knows - not just the ones in its slots: a bot has no keys to bind (its slots stay as they are for its menu)
+            List<String> ids = new ArrayList<>();
+            if (slots != null) for (String id : slots) if (id != null && !id.isEmpty() && !ids.contains(id)) ids.add(id);
+            for (Object id : all.keySet()) if (id instanceof String sid && !ids.contains(sid)) ids.add(sid);
+            k.equipped = 0;
+            for (String id : ids) {
                 Object t = all.get(id);
-                if (strikeData != null && strikeData.isInstance(t)) { k.techniques.add(t); continue; }   // ki melee
-                if (!kiData.isInstance(t) || !usable(t)) continue;
+                boolean ok = strikeData != null && strikeData.isInstance(t) || kiData.isInstance(t) && usable(t);   // (ki melee, or a ki attack)
+                if (!ok) continue;
                 k.techniques.add(t);
+                if (slots != null && Arrays.asList(slots).contains(id)) k.equipped++;
             }
             k.stats = stats;
             DmzBotPower.loaded(b, stats);                                           // (its ki, release and form go into the fresh copy)
@@ -174,7 +181,8 @@ public final class DmzBotKi {
     }
 
     /** Attacks only: no healing, no barriers, no fake moons. */
-    private static boolean usable(Object t) {
+    static boolean usable(Object t) {
+        if (utility == null && !ready()) return false;
         try {
             String u = String.valueOf(utility.invoke(t)), type = String.valueOf(kiType.invoke(t)), id = String.valueOf(techId.invoke(t));
             return !u.contains("HEAL") && !type.contains("BARRIER") && !id.equals("fake_moon");
@@ -215,8 +223,9 @@ public final class DmzBotKi {
             try { if (now >= k.ready.getOrDefault((String) techId.invoke(t), 0L)) ready.add(t); } catch (Throwable ignored) {}
         }
         if (ready.isEmpty()) return false;
-        Object tech = ready.get(b.getRandom().nextInt(ready.size()));
-        if (isStrike(tech)) return strike(b, target, tech, k, now);
+        Object tech = pick(b, target, k, ready);
+        if (tech == null) return false;
+        if (isStrike(tech)) { boolean s = strike(b, target, tech, k, now); if (s) used(b, k, tech); return s; }
         try {
             String id = (String) techId.invoke(tech);
             int cd = Math.max(MIN_GAP, Math.min(20 * 60, (Integer) cooldown.invoke(tech)));
@@ -226,6 +235,7 @@ public final class DmzBotKi {
             boolean started = (Boolean) execute.invoke(null, b, level, tech, k.stats, 0F);   // (charging in its hands; a plain blast flies at once)
             note("start " + id + " ok=" + started + " cast=" + cast + " cd=" + cd + " target=" + target.getType().getDescriptionId());
             if (!started) { k.nextAny = now + MIN_GAP; return false; }
+            used(b, k, tech);
             k.ready.put(id, now + cd);
             k.nextAny = now + Math.max(MIN_GAP, cast + 20);
             k.charging = true;
@@ -236,6 +246,63 @@ public final class DmzBotKi {
             com.xenowarriors.skill.ServerScheduler.later(cast, () -> release(b, target, tech, kk, stats, id));
             return true;
         } catch (Throwable t) { fail(t); return false; }
+    }
+
+    private static void used(PartyBotEntity b, Kit k, Object tech) {
+        try { String id = (String) techId.invoke(tech); k.last = id; USES.computeIfAbsent(b.getUUID(), u -> new LinkedHashMap<>()).merge(id, 1, Integer::sum); } catch (Throwable ignored) {}
+    }
+
+    /** (For the tests) how many times each bot started each of its techniques. */
+    public static final Map<UUID, Map<String, Integer>> USES = new HashMap<>();
+
+    /**
+     * Which of its ready techniques fits now (a weighted pick, so it still mixes them up): ki melee up close, beams and
+     * waves from range, explosions only when they're right there, a giant ball for a strong enemy at a distance; the
+     * hard-hitting ones for strong enemies, the cheap ones for weak ones; nothing it hasn't the ki for; and not the
+     * same one twice in a row if it has others.
+     */
+    private static Object pick(PartyBotEntity b, LivingEntity target, Kit k, List<Object> ready) {
+        double dist = b.distanceTo(target);
+        boolean strongT = DmzBotPower.strong(b, target);
+        float max = DmzBotPower.maxKi(k.stats);
+        List<Object> pool = new ArrayList<>();
+        List<Double> w = new ArrayList<>();
+        double sum = 0;
+        for (Object t : ready) {
+            float[] ki = DmzBotPower.kiCost(b, k.stats, t);                          // {has, costs}
+            if (ki != null && ki[0] < ki[1]) continue;                                 // (can't pay for it now)
+            double s;
+            float dmg = 1F;
+            if (isStrike(t)) {
+                s = dist <= 6 ? 3.0 : 1.2;
+                try { dmg = ((Number) sDamageMult.invoke(t)).floatValue(); } catch (Throwable ignored) {}
+            } else {
+                String type;
+                try { type = String.valueOf(kiType.invoke(t)); dmg = ((Number) kiData.getMethod("getActualDamageMultiplier").invoke(t)).floatValue(); } catch (Throwable e) { type = "?"; }
+                s = switch (type) {
+                    case "BEAM", "WAVE", "LASER" -> dist > 6 ? 2.6 : 1.3;
+                    case "GIANT_BALL" -> strongT && dist > 8 ? 2.6 : 0.4;
+                    case "EXPLOSION", "AREA" -> dist <= 5 ? 2.6 : 0.15;
+                    case "SMALL_BALL", "BARRAGE" -> strongT ? 1.4 : 2.4;
+                    default -> 2.0;                                                    // (medium balls, discs...)
+                };
+            }
+            if (strongT) s *= 1 + 0.35 * Math.min(4, Math.max(0, dmg));               // (big hitters for strong enemies)
+            else if (ki != null && max > 0) s /= 1 + 2.0 * ki[1] / max;                // (cheap ones for the small fry)
+            try { if (ready.size() > 1 && techId.invoke(t).equals(k.last)) s *= 0.35; } catch (Throwable ignored) {}
+            if (!(s > 0)) continue;
+            pool.add(t); w.add(s); sum += s;
+        }
+        if (pool.isEmpty()) return null;
+        double r = b.getRandom().nextDouble() * sum;
+        for (int i = 0; i < pool.size(); i++) { r -= w.get(i); if (r <= 0) return pool.get(i); }
+        return pool.get(pool.size() - 1);
+    }
+
+    /** (For the tests) how many of its techniques it fights with, and how many of those sit in its equipped slots. */
+    public static int[] countsForTest(PartyBotEntity b) {
+        Kit k = KITS.get(b.getUUID());
+        return k == null ? new int[]{0, 0} : new int[]{k.techniques.size(), k.equipped};
     }
 
     // ---------------------------------------------------------------- ki melee
