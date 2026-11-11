@@ -124,6 +124,9 @@ public final class VehicleV2Tests {
                 p.addEffect(new MobEffectInstance(MobEffects.SATURATION, 20 * 1800, 0, false, false));
                 p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.bladeLevel = 60; d.bladeXp = 0; });
                 com.xenowarriors.compat.GunLevel.setLevel(p, 50);
+                if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) {     // (a made DragonMineZ character: an unmade one can't move)
+                    TransformTests.makeDmz(p, "human", 40); com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+                }
                 WeaponForms.sync(p, true);
                 log("start: base " + b.toShortString() + " ef=" + ef() + " dmz=" + net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")
                         + " tacz=" + com.xenowarriors.compat.TaczGuns.available());
