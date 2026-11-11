@@ -20,6 +20,7 @@
     "compat.DragonMineZMovieConditionMixin",
     "compat.DragonMineZStructurePlanMixin",
     "compat.DragonMineZStructureRepairMixin",
+    "compat.DragonMineZGravityMixin",
     "ChunkGeneratorStructureMixin",
     "StructurePlacementMixin",
     "ChunkGeneratorStructureStateAccessor",

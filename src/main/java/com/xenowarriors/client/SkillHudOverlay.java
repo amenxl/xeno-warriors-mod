@@ -132,7 +132,9 @@ public class SkillHudOverlay implements IGuiOverlay {
         // Kishi gravity level while the dome is up
         int kishi = ClientSkillState.kishiLevel(mc.player.getUUID());
         if (kishi > 0) {
-            g.drawString(font, Component.translatable("hud.xenowarriors.kishi_level", kishi),
+            float kg = ClientSkillState.kishiGravity(mc.player.getUUID());
+            g.drawString(font, kg > 0 ? Component.translatable("hud.xenowarriors.kishi_level_g", kishi, Math.round(kg))
+                            : Component.translatable("hud.xenowarriors.kishi_level", kishi),
                     left, barTop - 18, 0xD9C8FF);
         }
     }
