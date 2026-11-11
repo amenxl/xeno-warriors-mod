@@ -228,12 +228,13 @@ def seat(m, bone, x0, x1, y0, top, z_front, z_back, back_top, col=SEAT):
     m.box(bone, [x0, y0, z_front], [x1, top, z_back], col, {'top': stitch})
     m.box(bone, [x0, top, z_back], [x1, back_top, z_back + 2], col, {'front': lambda x, y: SEAT2 if int(y * 5) % 2 else col})
     w = (x1 - x0) * 0.25
-    m.box(bone, [x0 + w, back_top, z_back + 0.5], [x1 - w, back_top + 3, z_back + 1.5], col)
+    m.box('fp' if 'fp' in m.bones else bone, [x0 + w, back_top, z_back + 0.5], [x1 - w, back_top + 3, z_back + 1.5], col)
 
 
 # ------------------------------------------------------------ the car (scale 1.45; seats: front hips z -0.8, rear z 11.2, hips y 6.3)
 def car():
     m = Model('car', 256)
+    m.bone('fp', [0, 0, 0])                                                    # (hidden for its riders in first person)
     B, B2, S, T = 'BODY', 'BODY2', 'STRIPE', 'TRIM'
     # floor pan and sills
     m.box('root', [-13, 3, -27], [13, 4.5, 27], CARPET, {'bottom': (30, 30, 34)})
@@ -269,23 +270,23 @@ def car():
     m.sym('root', [5, 4.2, 29.5], [6.5, 5.6, 32], (90, 92, 100))              # exhaust (right)
     # cabin: pillars, roof, see-through windows
     for z0, z1 in ((-10, -8.5), (4, 5.5), (16.5, 18)):
-        m.sym('root', [12, 12.5, z0], [13.5, 21.5, z1], B, {'top': B2})
-    m.box('root', [-13, 21, -10.5], [13, 22.5, 18], B, {'top': lambda x, y: B2 if abs(x - .5) < .2 else B, 'bottom': (70, 68, 72)})   # roof
-    m.box('root', [-12, 12.5, -9.8], [12, 21, -9.2], 'DTRIM', {'front': glass, 'back': glass})              # windshield
-    m.box('root', [-12, 12.5, 17.2], [12, 21, 17.8], 'DTRIM', {'front': glass, 'back': glass})              # rear window
-    m.sym('root', [12.9, 12.5, -8.5], [13.3, 21, 4], 'DTRIM', {'right': glass, 'left': glass})              # side windows (front doors)
-    m.sym('root', [12.9, 12.5, 5.5], [13.3, 21, 16.5], 'DTRIM', {'right': glass, 'left': glass})            # (back doors)
-    m.sym('root', [13.5, 13.5, -9.5], [16, 15.5, -7], B, {'front': (190, 200, 210), 'back': (190, 200, 210)})    # mirrors
+        m.sym('fp', [12, 12.5, z0], [13.5, 21.5, z1], B, {'top': B2})
+    m.box('fp', [-13, 21, -10.5], [13, 22.5, 18], B, {'top': lambda x, y: B2 if abs(x - .5) < .2 else B, 'bottom': (70, 68, 72)})   # roof
+    m.box('fp', [-12, 12.5, -9.8], [12, 21, -9.2], 'DTRIM', {'front': glass, 'back': glass})              # windshield
+    m.box('fp', [-12, 12.5, 17.2], [12, 21, 17.8], 'DTRIM', {'front': glass, 'back': glass})              # rear window
+    m.sym('fp', [12.9, 12.5, -8.5], [13.3, 21, 4], 'DTRIM', {'right': glass, 'left': glass})              # side windows (front doors)
+    m.sym('fp', [12.9, 12.5, 5.5], [13.3, 21, 16.5], 'DTRIM', {'right': glass, 'left': glass})            # (back doors)
+    m.sym('fp', [13.5, 13.5, -9.5], [16, 15.5, -7], B, {'front': (190, 200, 210), 'back': (190, 200, 210)})    # mirrors
     # interior: dashboard (glowing dials), steering wheel (driver: left), seats
     def dash_back(x, y):
         if .3 < y < .7 and (abs(x - .22) < .07 or abs(x - .35) < .07): return (70, 200, 255)
         if .3 < y < .7 and .55 < x < .75: return (40, 120, 70)
         return DASH
-    m.box('root', [-12.5, 9.5, -10], [12.5, 13, -6.5], DASH, {'back': dash_back},
+    m.box('root', [-12.5, 9.5, -10], [12.5, 11.8, -6.5], DASH, {'back': dash_back},
           glow={'back': lambda x, y: (70, 200, 255) if .3 < y < .7 and (abs(x - .22) < .07 or abs(x - .35) < .07) else (40, 160, 90) if .3 < y < .7 and .55 < x < .75 else None})
     m.box('root', [-6.6, 10.5, -6.5], [-5.4, 11.5, -5.4], DASH)                # steering column
     ring = lambda x, y: DASH if math.hypot(x - .5, y - .5) > .34 or abs(x - .5) < .08 else None
-    m.box('root', [-8.5, 9.5, -5.4], [-3.5, 14.5, -4.8], DASH, {'front': ring, 'back': ring})
+    m.box('root', [-8.5, 8.8, -5.4], [-3.5, 13.3, -4.8], DASH, {'front': ring, 'back': ring})
     m.box('root', [-1, 4.5, -10], [1, 9, 2], DASH)                               # centre console, gear stick
     m.box('root', [-0.4, 9, -2], [0.4, 11, -1.2], (20, 20, 24))
     seat(m, 'root', -10, -2.5, 4.5, 5.2, -6, 1.5, 15)                             # front seats
@@ -303,6 +304,7 @@ def car():
 # ------------------------------------------------------------ the motorbike (scale 1.3; rider hips y ~14.5 at z 2.4, pillion z 9.6)
 def bike():
     m = Model('motorbike', 128)
+    m.bone('fp', [0, 0, 0])                                                    # (hidden for its riders in first person)
     B, B2, S, T = 'BODY', 'BODY2', 'STRIPE', 'TRIM'
     m.box('root', [-2.5, 6, -9], [2.5, 11, 6], (54, 54, 60), {'right': lambda x, y: (90, 92, 100) if int(y * 6) % 2 else (54, 54, 60),
           'left': lambda x, y: (90, 92, 100) if int(y * 6) % 2 else (54, 54, 60)})          # engine (fins)
@@ -320,7 +322,7 @@ def bike():
     m.sym('root', [4.4, 21, -16], [6.6, 22.5, -14.5], (190, 200, 210))
     m.box('root', [-2.8, 13.5, -19], [2.8, 18, -15.5], B, {'front': lambda x, y: HEAD if math.hypot(x - .5, y - .5) < .32 else B},
           glow={'front': lambda x, y: HEADG if math.hypot(x - .5, y - .5) < .32 else None})   # headlight cowl
-    m.box('root', [-2.4, 18, -17.5], [2.4, 21, -16.8], 'DTRIM', {'front': tinted, 'back': tinted})   # windscreen
+    m.box('fp', [-2.4, 18, -17.5], [2.4, 21, -16.8], 'DTRIM', {'front': tinted, 'back': tinted})   # windscreen
     m.box('root', [-1.4, 16.5, -15.5], [1.4, 18, -14.5], (20, 20, 24), {'back': lambda x, y: (70, 200, 255) if .3 < x < .7 else (20, 20, 24)},
           glow={'back': lambda x, y: (70, 200, 255) if .3 < x < .7 else None})   # speedo
     m.box('root', [-2.2, 12, -21], [2.2, 13, -12], B)                          # front mudguard
@@ -337,30 +339,31 @@ def bike():
 # ------------------------------------------------------------ the helicopter (scale 1.45; seat rows z -9.6 / 1.9 / 12.8, hips y ~10)
 def heli():
     m = Model('helicopter', 512)
+    m.bone('fp', [0, 0, 0])                                                    # (hidden for its riders in first person)
     B, B2, S, T = 'BODY', 'BODY2', 'STRIPE', 'TRIM'
     m.box('root', [-12, 5, -16], [12, 6.5, 16], (60, 62, 70))                  # cabin floor
     m.box('root', [-12, 6.5, -16], [12, 8.5, 16], CARPET, {'right': B, 'left': B, 'front': B, 'back': B})
     # cabin walls: the front doors are glass, the back is an open sliding doorway
     side = lambda x, y: S if .1 < y < .2 else B
-    m.sym('root', [11, 8.5, -6], [12, 26, -4.5], B)                             # door pillars
+    m.sym('fp', [11, 8.5, -6], [12, 26, -4.5], B)                             # door pillars
     m.sym('root', [11, 8.5, 14], [12, 26, 16], B, {'right': side, 'left': side})
     m.sym('root', [11, 8.5, -16], [12, 12, -6], B, {'right': side, 'left': side})        # front door, lower
-    m.sym('root', [11.2, 12, -15], [11.8, 25, -6], 'DTRIM', {'right': glass, 'left': glass})   # front door window
+    m.sym('fp', [11.2, 12, -15], [11.8, 25, -6], 'DTRIM', {'right': glass, 'left': glass})   # front door window
     m.sym('root', [11.4, 8.5, 12], [12.6, 25, 15], B, {'right': lambda x, y: (30, 30, 34) if abs(x - .5) < .1 else B, 'left': lambda x, y: (30, 30, 34) if abs(x - .5) < .1 else B})   # slid-back door
-    m.sym('root', [11.6, 24.5, -14], [12.4, 25.2, 15], (40, 40, 44))           # door rail
-    m.box('root', [-12, 26, -16], [12, 28, 16], B, {'top': B2})                  # roof
+    m.sym('fp', [11.6, 24.5, -14], [12.4, 25.2, 15], (40, 40, 44))           # door rail
+    m.box('fp', [-12, 26, -16], [12, 28, 16], B, {'top': B2})                  # roof
     m.box('root', [-12, 8.5, 16], [12, 26, 18], B, {'back': B2})                 # back wall
     # nose: a glass bubble, the instrument panel under it
     m.box('root', [-11, 5, -23], [11, 12, -16], B, {'front': lambda x, y: S if .1 < y < .25 else B})   # nose (lower)
-    m.box('root', [-10, 12, -22.6], [10, 24, -22], 'DTRIM', {'front': glass, 'back': glass})           # windscreen
-    m.sym('root', [10, 12, -22.6], [11, 24, -16], 'DTRIM', {'right': glass, 'left': glass})            # side bubble panes
-    m.box('root', [-11, 24, -22.6], [11, 26, -16], B, {'top': B2})               # brow
+    m.box('fp', [-10, 12, -22.6], [10, 24, -22], 'DTRIM', {'front': glass, 'back': glass})           # windscreen
+    m.sym('fp', [10, 12, -22.6], [11, 24, -16], 'DTRIM', {'right': glass, 'left': glass})            # side bubble panes
+    m.box('fp', [-11, 24, -22.6], [11, 26, -16], B, {'top': B2})               # brow
     m.box('root', [-11, 12, -23], [11, 13, -16], B)                              # sill
-    m.box('root', [-1, 24, -23], [1, 26, -22.6], B)                              # centre frame
+    m.box('fp', [-1, 24, -23], [1, 26, -22.6], B)                              # centre frame
     def panel(x, y):
         if .3 < y < .75 and int(x * 8) % 2 == 0: return (70, 200, 255)
         return DASH
-    m.box('root', [-10, 12, -20], [10, 16, -16.5], DASH, {'back': panel}, glow={'back': lambda x, y: (70, 200, 255) if .3 < y < .75 and int(x * 8) % 2 == 0 else None})
+    m.box('root', [-10, 12, -20], [10, 14.5, -16.5], DASH, {'back': panel}, glow={'back': lambda x, y: (70, 200, 255) if .3 < y < .75 and int(x * 8) % 2 == 0 else None})
     m.sym('root', [5.5, 8.5, -14], [6.5, 14, -13], DASH)                          # cyclic sticks
     # seats: pilot + co-pilot, two rows behind
     for z_f, z_b in ((-14, -7.6), (-4, 3.9), (7, 14)):
@@ -402,6 +405,7 @@ def heli():
 # ------------------------------------------------------------ the Gov armored truck (scale 1.35; cab seats z -23.2, crew z -3.2, hips y ~8.7)
 def truck():
     m = Model('gov_truck', 512)
+    m.bone('fp', [0, 0, 0])                                                    # (hidden for its riders in first person)
     B, B2, S, T = 'BODY', 'BODY2', 'STRIPE', 'TRIM'
     RED = (180, 20, 24)
     def armor(x, y):
@@ -414,8 +418,8 @@ def truck():
     m.box('root', [-15, 7.5, -38], [15, 8, 38], CARPET)
     # cargo / crew box: walls with firing ports, rear doors, roof (the riders on top stand on it)
     port = lambda x, y: (20, 20, 24) if .3 < y < .42 and (.15 < x < .35 or .6 < x < .8) else armor(x, y)
-    m.sym('root', [15.5, 7.5, -14], [17, 34, 40], B, {'right': port, 'left': port, 'top': B2})
-    m.box('root', [-17, 34, -14], [17, 36, 40], B2, {'top': lambda x, y: (56, 58, 64) if (x * 8) % 1 < .05 else B2})
+    m.sym('fp', [15.5, 7.5, -14], [17, 34, 40], B, {'right': port, 'left': port, 'top': B2})
+    m.box('fp', [-17, 34, -14], [17, 36, 40], B2, {'top': lambda x, y: (56, 58, 64) if (x * 8) % 1 < .05 else B2})
     def rear(x, y):
         if abs(x - .5) < .01: return (30, 30, 34)
         if .2 < y < .3 and (.2 < x < .4 or .6 < x < .8): return tinted(((x - .2) % .2) * 5, (y - .2) * 10) or (20, 20, 24)
@@ -425,7 +429,7 @@ def truck():
         return B
     m.box('root', [-15.5, 7.5, 38.5], [15.5, 34, 40], B, {'back': rear, 'front': (60, 62, 68)},
           glow={'back': lambda x, y: TAILG if y > .82 and (x < .1 or x > .9) else None})
-    m.box('root', [-15.5, 26, -14], [15.5, 34, -13], B, {'back': (60, 62, 68)})                      # bulkhead (upper; the crew sees the cab)
+    m.box('fp', [-15.5, 26, -14], [15.5, 34, -13], B, {'back': (60, 62, 68)})                      # bulkhead (upper; the crew sees the cab)
     # cab: armored, slit windscreen, side windows, roof with the light bar
     def cab_front(x, y):
         if y > .62 and (x < .16 or x > .84): return B
@@ -433,30 +437,30 @@ def truck():
         if .45 < y < .52: return RED
         return B
     m.box('root', [-16, 7.5, -42], [16, 18, -34], B, {'front': cab_front, 'right': armor, 'left': armor, 'top': B2})   # engine block (lower front)
-    m.sym('root', [15.5, 18, -40], [16.5, 30, -14], B, {'right': lambda x, y: armor(x, y) if not (y < .5 and .1 < x < .85) else None, 'left': lambda x, y: armor(x, y) if not (y < .5 and .15 < x < .9) else None})
-    m.sym('root', [15.7, 23.5, -38], [16.3, 29, -16], 'DTRIM', {'right': tinted, 'left': tinted})       # side windows
+    m.sym('fp', [15.5, 18, -40], [16.5, 30, -14], B, {'right': lambda x, y: armor(x, y) if not (y < .5 and .1 < x < .85) else None, 'left': lambda x, y: armor(x, y) if not (y < .5 and .15 < x < .9) else None})
+    m.sym('fp', [15.7, 23.5, -38], [16.3, 29, -16], 'DTRIM', {'right': tinted, 'left': tinted})       # side windows
     m.box('root', [-16, 18, -40], [16, 19.5, -39], B)                                                  # under the windscreen
-    m.box('root', [-14, 19.5, -40.2], [14, 29, -39.6], 'DTRIM', {'front': tinted, 'back': tinted})    # windscreen
-    m.box('root', [-16, 29, -41], [16, 31, -14], B, {'top': B2})                                       # cab roof
-    m.box('root', [-6, 31, -36], [6, 32.5, -32], RED, {'top': lambda x, y: (40, 120, 255) if x > .5 else (255, 40, 40)},
+    m.box('fp', [-14, 19.5, -40.2], [14, 29, -39.6], 'DTRIM', {'front': tinted, 'back': tinted})    # windscreen
+    m.box('fp', [-16, 29, -41], [16, 31, -14], B, {'top': B2})                                       # cab roof
+    m.box('fp', [-6, 31, -36], [6, 32.5, -32], RED, {'top': lambda x, y: (40, 120, 255) if x > .5 else (255, 40, 40)},
           glow={'top': lambda x, y: (60, 140, 255) if x > .5 else (255, 40, 40), 'front': lambda x, y: (60, 140, 255) if x > .5 else (255, 40, 40)})   # light bar
     m.sym('root', [10, 13, -42.6], [14.5, 17, -42], HEAD, glow={'front': HEADG})                      # headlights
     m.box('root', [-18, 7, -45], [18, 11, -42], (40, 40, 44))                                          # bull bar
     for x in (-13, -5, 3, 11): m.box('root', [x, 11, -44.5], [x + 2, 20, -42.5], (40, 40, 44))
     m.box('root', [-12, 21, -41.5], [12, 23, -40.2], (40, 40, 44))
-    m.sym('root', [16.5, 22, -38], [19, 25, -36], (40, 40, 44), {'front': (190, 200, 210)})          # mirrors
+    m.sym('fp', [16.5, 22, -38], [19, 25, -36], (40, 40, 44), {'front': (190, 200, 210)})          # mirrors
     # interior: dash, wheel (left), cab seats, the crew benches along the walls
-    m.box('root', [-15, 14, -39], [15, 18.5, -36], DASH, {'back': lambda x, y: (70, 200, 255) if .4 < y < .7 and .15 < x < .35 else DASH},
+    m.box('root', [-15, 14, -39], [15, 17, -36], DASH, {'back': lambda x, y: (70, 200, 255) if .4 < y < .7 and .15 < x < .35 else DASH},
           glow={'back': lambda x, y: (70, 200, 255) if .4 < y < .7 and .15 < x < .35 else None})
     ring = lambda x, y: DASH if math.hypot(x - .5, y - .5) > .34 or abs(x - .5) < .08 else None
-    m.box('root', [-10, 13.5, -34.5], [-4, 19.5, -33.8], DASH, {'front': ring, 'back': ring})
+    m.box('root', [-10, 12.5, -34.5], [-4, 17.5, -33.8], DASH, {'front': ring, 'back': ring})
     seat(m, 'root', -12, -3, 8, 9.5, -30, -21, 22, col=(52, 56, 48))
     seat(m, 'root', 3, 12, 8, 9.5, -30, -21, 22, col=(52, 56, 48))
     seat(m, 'root', -14, -2, 8, 9.5, -8, 1, 22, col=(52, 56, 48))
     seat(m, 'root', 2, 14, 8, 9.5, -8, 1, 22, col=(52, 56, 48))
     m.sym('root', [11, 8, 6], [15.5, 12, 36], (52, 56, 48))                                            # benches
-    m.box('root', [-17.2, 34, -14], [17.2, 35, -13], T)                                                # (edge trim)
-    m.box('root', [-5, 36, 4], [5, 37.5, 14], (30, 30, 34))                                            # roof hatch
+    m.box('fp', [-17.2, 34, -14], [17.2, 35, -13], T)                                                # (edge trim)
+    m.box('fp', [-5, 36, 4], [5, 37.5, 14], (30, 30, 34))                                            # roof hatch
     for i, (x, z) in enumerate([(-16, -27), (16, -27), (-16, 27), (16, 27)]):
         wheel(m, ['wheel_fl', 'wheel_fr', 'wheel_rl', 'wheel_rr'][i], x + (0.5 if x < 0 else -0.5), 7, z, 7, 6, -1 if x < 0 else 1, spokes=6)
     for x, z in [(-16, -27), (16, -27), (-16, 27), (16, 27)]:
