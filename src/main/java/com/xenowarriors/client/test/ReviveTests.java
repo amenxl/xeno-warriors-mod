@@ -331,7 +331,7 @@ public final class ReviveTests {
             Mob a = attacker(p);
             p.invulnerableTime = 0;
             if (a != null) com.xenowarriors.combat.Frozen.release(a);          // (caught in the Xeno Blast's freeze it couldn't attack at all)
-            if (a != null) p.hurt(p.damageSources().mobAttack(a), 3F);
+            if (a != null) for (int k = 0; k < CutsceneBreak.HITS; k++) { p.invulnerableTime = 0; p.hurt(p.damageSources().mobAttack(a), 0.5F); }   // (the guard: 3 hits)
             log("cut " + name + ": hit at " + HIT[0] + " -> interrupted=" + (CutsceneBreak.lastAt == HIT[0]) + " what=" + CutsceneBreak.lastWhat + " health " + f1(HP[1]) + " -> " + f1(p.getHealth()));
         }), 0));
         final int[] seen = {-1};

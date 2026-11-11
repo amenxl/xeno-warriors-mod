@@ -45,6 +45,10 @@ public class GovAgentEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> GUARD = SynchedEntityData.defineId(GovAgentEntity.class, EntityDataSerializers.BOOLEAN);
     private BlockPos post;
     private int phaseHits, dashCd, attackModeAt = -1;
+    /** Panic (its Karma Scanner broke): runs from `panicFrom` until this game time. */
+    private long panicUntil;
+    private java.util.UUID panicFrom;
+    private Vec3 panicFromPos;
 
     public GovAgentEntity(EntityType<? extends GovAgentEntity> type, Level level) {
         super(type, level);
@@ -72,20 +76,24 @@ public class GovAgentEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new PanicRunGoal());
         goalSelector.addGoal(1, new GunGoal());
         // riding in a vehicle (the patrol truck): a guard with no gun drawn fires his sidearm from the seat
         goalSelector.addGoal(1, new com.xenowarriors.npc.NpcRangedGoal(this, com.xenowarriors.npc.NpcRangedGoal.Kind.BULLET, 22, 1.5, 20) {
-            @Override public boolean canUse() { return guard() && !hasGun() && getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity && super.canUse(); }
+            @Override public boolean canUse() { return guard() && !hasGun() && !panicking() && getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity && super.canUse(); }
             @Override public boolean canContinueToUse() { return canUse(); }
         });
-        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.15, true) { @Override public boolean canUse() { return guard() && !hasGun() && super.canUse(); } });
+        goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.15, true) {
+            @Override public boolean canUse() { return guard() && !hasGun() && !panicking() && super.canUse(); }
+            @Override public boolean canContinueToUse() { return !panicking() && super.canContinueToUse(); }
+        });
         goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Player.class, 10F, 1.0, 1.35, p -> !guard() && GovFacilities.wanted((Player) p)));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6));
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8F));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
-        targetSelector.addGoal(1, new HurtByTargetGoal(this) { @Override public boolean canUse() { return guard() && super.canUse(); } }.setAlertOthers(GovAgentEntity.class));
+        targetSelector.addGoal(1, new HurtByTargetGoal(this) { @Override public boolean canUse() { return guard() && !panicking() && super.canUse(); } }.setAlertOthers(GovAgentEntity.class));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                p -> guard() && (GovFacilities.wanted((Player) p) || com.xenowarriors.faction.Reputation.hostile((Player) p, com.xenowarriors.faction.Faction.GOV))));
+                p -> guard() && !panicking() && (GovFacilities.wanted((Player) p) || com.xenowarriors.faction.Reputation.hostile((Player) p, com.xenowarriors.faction.Faction.GOV))));
     }
 
     /** (Tower boss) a Government Commander: every human mod but Phase, much tougher. */
@@ -101,6 +109,47 @@ public class GovAgentEntity extends PathfinderMob {
         setDropChance(EquipmentSlot.MAINHAND, 0F);
         setHealth(getMaxHealth());
         restrictTo(blockPosition(), 40);
+        GovScanning.give(this, KarmaScanner.Tier.ELITE, random.nextBoolean() ? -1 : KarmaScanner.BLACK);     // (Commanders: an Elite scanner)
+    }
+
+    // ---------------------------------------------------------------- panic (its Karma Scanner broke)
+
+    public boolean panicking() { return panicUntil > level().getGameTime(); }
+
+    /** Drop the fight and run from `from` for `ticks`. */
+    public void panic(LivingEntity from, int ticks) {
+        panicUntil = level().getGameTime() + ticks;
+        panicFrom = from == null ? null : from.getUUID();
+        panicFromPos = from == null ? position() : from.position();
+        setTarget(null);
+        setLastHurtByMob(null);
+        setAggressive(false);
+        getNavigation().stop();
+        clearRestriction();                      // (it runs past its post)
+    }
+
+    /** Runs flat out away from what broke its scanner, sweating, until the panic wears off; then back to its post. */
+    private class PanicRunGoal extends net.minecraft.world.entity.ai.goal.Goal {
+        PanicRunGoal() { setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.TARGET)); }
+        @Override public boolean canUse() { return panicking(); }
+        @Override public void start() { run(); }
+        @Override public void stop() {
+            getNavigation().stop();
+            if (post != null) restrictTo(post, 20);
+        }
+        @Override public void tick() {
+            setTarget(null);
+            if (level() instanceof ServerLevel l && panicFrom != null && l.getEntity(panicFrom) instanceof LivingEntity f) panicFromPos = f.position();
+            if (getNavigation().isDone() || tickCount % 20 == 0) run();
+            if (tickCount % 6 == 0 && level() instanceof ServerLevel l)
+                l.sendParticles(ParticleTypes.SPLASH, getX(), getEyeY() + 0.2, getZ(), 4, 0.2, 0.1, 0.2, 0.05);   // (sweating)
+        }
+        private void run() {
+            Vec3 from = panicFromPos == null ? position() : panicFromPos;
+            Vec3 to = net.minecraft.world.entity.ai.util.DefaultRandomPos.getPosAway(GovAgentEntity.this, 16, 7, from);
+            if (to == null) { Vec3 d = position().subtract(from); d = d.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : d.normalize(); to = position().add(d.scale(10)); }
+            getNavigation().moveTo(to.x, to.y, to.z, 1.5);
+        }
     }
 
     /** A worker or guard with its modifications. */
@@ -162,7 +211,7 @@ public class GovAgentEntity extends PathfinderMob {
     /** Keeps 6-16 blocks away and fires in bursts while it can see its target. */
     private class GunGoal extends net.minecraft.world.entity.ai.goal.Goal {
         GunGoal() { setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK)); }
-        @Override public boolean canUse() { return guard() && hasGun() && getTarget() != null && getTarget().isAlive(); }
+        @Override public boolean canUse() { return guard() && hasGun() && !panicking() && getTarget() != null && getTarget().isAlive(); }
         private int aim;
         @Override public void start() { aim = 0; }
         @Override public void stop() { getNavigation().stop(); }
@@ -195,6 +244,8 @@ public class GovAgentEntity extends PathfinderMob {
         if (level().isClientSide) return;
         ServerLevel l = (ServerLevel) level();
         if (tickCount == 10) armWithGun();
+        if (tickCount == 12) GovScanning.equip(this);
+        GovScanning.tick(this);
         if (tickCount == 20 && hasGun()) { com.xenowarriors.compat.TaczGuns.draw(this); gunDrawn = true; }
         LivingEntity t = getTarget();
         if (dashCd > 0) dashCd--;
@@ -243,6 +294,7 @@ public class GovAgentEntity extends PathfinderMob {
             if (src.getEntity() instanceof Player p) GovFacilities.makeWanted(p, "attacked Government staff");
         }
         boolean r = super.hurt(src, amount);
+        if (r && !level().isClientSide && isAlive()) GovScanning.onHurt(this, src, amount);
         // ATTACK MODE: at half health he switches it on
         if (r && has(ATTACK_MODE) && attackModeAt < 0 && getHealth() < getMaxHealth() / 2) {
             attackModeAt = tickCount;
@@ -267,6 +319,7 @@ public class GovAgentEntity extends PathfinderMob {
         tag.putInt("Mods", mods());
         tag.putBoolean("Guard", guard());
         if (post != null) tag.putLong("Post", post.asLong());
+        if (panicking()) tag.putLong("PanicUntil", panicUntil);
     }
 
     @Override
@@ -276,6 +329,7 @@ public class GovAgentEntity extends PathfinderMob {
         entityData.set(MODS, tag.getInt("Mods"));
         entityData.set(GUARD, tag.getBoolean("Guard"));
         if (tag.contains("Post")) { post = BlockPos.of(tag.getLong("Post")); restrictTo(post, 20); }
+        if (tag.contains("PanicUntil")) { panicUntil = tag.getLong("PanicUntil"); clearRestriction(); }
     }
 
     @Override
