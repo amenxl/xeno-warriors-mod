@@ -299,8 +299,8 @@ public final class VehicleV2Tests {
         step(null, () -> { VehicleEntity v = clientVehicle(mc); c[0] = view(mc); c[1] = v == null ? 0 : v.getYRot(); mc.options.keyRight.setDown(true); }, 20);
         step("car_steer_right", () -> { VehicleEntity v = clientVehicle(mc); mc.options.keyRight.setDown(false);
             float dv = Mth.wrapDegrees(view(mc) - c[0]), dy = v == null ? 0 : Mth.wrapDegrees(v.getYRot() - c[1]);
-            check("car D steers right (view and car)", dv < -15F && dy < -15F && Math.abs(Mth.wrapDegrees(view(mc) - v.getYRot())) < 15F,
-                    "view turned " + f(dv) + ", car turned " + f(dy) + " (negative = right)"); }, 2);
+            check("car D steers right (view and car)", dv > 15F && dy > 15F && Math.abs(Mth.wrapDegrees(view(mc) - v.getYRot())) < 15F,
+                    "view turned " + f(dv) + ", car turned " + f(dy) + " (positive = right)"); }, 2);
         step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keyDown.setDown(true); }, 50);
         step(null, () -> { VehicleEntity v = clientVehicle(mc); mc.options.keyDown.setDown(false);
             double dx = v.getX() - v.xo, dz = v.getZ() - v.zo;
@@ -319,27 +319,49 @@ public final class VehicleV2Tests {
         step(null, () -> server(VehicleV2Tests::home), 10);
     }
 
-    /** Someone in the front seat who isn't driving (a mob), the player beside them: the player's look never turns it. */
+    /**
+     * An NPC at the wheel (a husk tagged as a driver, sent somewhere with npcDriveTo) and a party bot riding along that
+     * keeps looking 90 degrees off to the side: the car heads for the spot facing where it's going; the passenger's look
+     * never turns it. (A player is always put in the driver's seat when they get in with mobs - vanilla - so a player
+     * passenger only happens with two players; their game never moves the car: isControlledByLocalInstance.)
+     */
     private static void passenger(Minecraft mc) {
-        int[] ids = new int[2];
+        int[] ids = new int[3];
+        double[] worst = new double[3];
         step(null, () -> server(p -> {
             home(p);
-            VehicleEntity v = spawn(p, VehicleKind.CAR, 0, -24, 0F);
-            vehicle = v.getId();
+            VehicleEntity v = spawn(p, VehicleKind.CAR, -10, -24, 0F);
+            vehicle = v.getId(); ids[0] = v.getId();
             var h = EntityType.HUSK.create(p.serverLevel());
-            h.moveTo(v.position()); h.setNoAi(true); h.setPersistenceRequired(); h.setInvulnerable(true); h.addTag(TAG);
+            h.moveTo(v.position()); h.setNoAi(true); h.setPersistenceRequired(); h.setInvulnerable(true); h.addTag(TAG); h.addTag(VehicleEntity.NPC_DRIVER_TAG);
             p.serverLevel().addFreshEntity(h);
             h.startRiding(v, true);
-            p.startRiding(v, true);
-            ids[0] = h.getId();
-            log("passenger: seats " + v.getPassengers().size() + ", player seat " + v.getPassengers().indexOf(p) + ", driver " + v.getControllingPassenger());
-        }), 25);
-        float[] y0 = new float[1];
-        step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); VehicleEntity v = clientVehicle(mc); y0[0] = v == null ? 0 : v.getYRot(); setView(mc, 90F); mc.options.keyLeft.setDown(true); mc.options.keyUp.setDown(true); }, 30);
-        step("passenger_look", () -> { mc.options.keyLeft.setDown(false); mc.options.keyUp.setDown(false); VehicleEntity v = clientVehicle(mc), sv = serverVehicle(mc);
-            float d = v == null ? 999 : Math.abs(Mth.wrapDegrees(v.getYRot() - y0[0]));
-            check("a passenger doesn't steer", d < 1F && (sv == null || Math.abs(Mth.wrapDegrees(sv.getYRot() - y0[0])) < 1F),
-                    "looked 90 deg away and held W+A for 1.5 s: car turned " + f(d) + " deg (server " + (sv == null ? "?" : f(Mth.wrapDegrees(sv.getYRot() - y0[0]))) + ")"); }, 2);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b != null) { b.moveTo(v.getX() + 2, v.getY(), v.getZ(), 0, 0); b.startRiding(v, true); ids[1] = b.getId(); }
+            v.npcDriveTo(new Vec3(base.getX() + 14.5, base.getY(), base.getZ() + 10.5), 0.6);
+            log("npc driver: driving=" + v.npcDriving() + " controller " + v.getControllingPassenger() + ", bot riding " + (b != null && b.getVehicle() == v));
+            p.connection.teleport(base.getX() + 0.5, base.getY() + 8, base.getZ() - 34, 0F, 30F);
+        }), 10);
+        step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5);
+        for (int i = 0; i < 40; i++) {
+            int ii = i;
+            step(i == 25 ? "npc_driver" : null, () -> server(p -> {
+                if (!(p.serverLevel().getEntity(ids[0]) instanceof VehicleEntity v)) return;
+                if (p.serverLevel().getEntity(ids[1]) instanceof PartyBotEntity b) { b.setYRot(v.getYRot() + 90F); b.setYHeadRot(v.getYRot() + 90F); }
+                double dx = v.getX() - v.xo, dz = v.getZ() - v.zo;
+                if (Math.hypot(dx, dz) > 0.05) {
+                    double heading = Math.toDegrees(Math.atan2(dz, dx)) - 90;
+                    worst[0] = Math.max(worst[0], Math.abs(Mth.wrapDegrees((float) heading - v.getYRot())));
+                }
+                if (ii > 0) worst[1] = Math.max(worst[1], Math.abs(Mth.wrapDegrees(v.getYRot() - v.yRotO)));
+                if (ii == 39) {
+                    Vec3 d = v.npcDestination();
+                    double left = d == null ? -1 : Math.hypot(d.x - v.getX(), d.z - v.getZ());
+                    check("an NPC driver faces where it's going", worst[0] < 25 && worst[1] <= 7.01, "motion vs facing at most " + f(worst[0]) + " deg, turn at most " + f(worst[1]) + " deg/tick");
+                    check("an NPC driver gets there (a passenger looking away doesn't steer)", left >= 0 && left < 5, f(left) + " blocks from the spot after 4 s");
+                }
+            }), 2);
+        }
         step(null, () -> server(VehicleV2Tests::home), 10);
     }
 
@@ -368,6 +390,9 @@ public final class VehicleV2Tests {
     // ================================================================== 2. shooting from vehicles
 
     private static final AtomicInteger PROJ = new AtomicInteger();
+    /** Damage dealt (after armor etc.) per entity id, server side - mobs heal and get rescaled, so health alone lies. */
+    private static final java.util.Map<Integer, Float> DMG = new java.util.concurrent.ConcurrentHashMap<>();
+    private static float dmg(int id) { return DMG.getOrDefault(id, 0F); }
     private static boolean listening;
     private static int shooterId = -1;
 
@@ -400,10 +425,13 @@ public final class VehicleV2Tests {
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.EntityJoinLevelEvent e) -> {
                 if (!e.getLevel().isClientSide() && e.getEntity() instanceof net.minecraft.world.entity.projectile.Projectile pr && pr.getOwner() != null && pr.getOwner().getId() == shooterId) PROJ.incrementAndGet();
             });
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.living.LivingDamageEvent e) -> {
+                if (!e.getEntity().level().isClientSide) DMG.merge(e.getEntity().getId(), e.getAmount(), Float::sum);
+            });
         }
         step(null, () -> server(p -> { home(p); p.setGameMode(GameType.SURVIVAL); p.getInventory().clearContent(); p.getPersistentData().remove(WeaponForms.BROKEN); }), 10);
         gunFrom(mc, "car driver's seat", VehicleKind.CAR, 0, false);
-        gunFrom(mc, "car back seat (past the rider in front)", VehicleKind.CAR, 2, false);
+        gunFrom(mc, "motorbike", VehicleKind.MOTORBIKE, 0, false);
         gunFrom(mc, "helicopter pilot's seat", VehicleKind.HELICOPTER, 0, true);
         gunFrom(mc, "car mk2 flying", VehicleKind.CAR_MK2, 0, true);
         if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) blasterFrom(mc);
@@ -456,9 +484,9 @@ public final class VehicleV2Tests {
         for (int i = 0; i < 10; i++) step(i == 3 ? "shoot_" + label.replaceAll("[^a-z0-9]+", "_") : null, () -> { aimAt(mc, center(mc, ids[5])); GunClient.testTrigger = !GunClient.testTrigger; }, 4);
         step(null, () -> { GunClient.testTrigger = false; sent[1] = GunClient.shotsSent - sent[0]; }, 10);
         step(null, () -> server(p -> {
-            float lost = hp0[5] - hp(p, ids[5]), veh = hp0[0] - hp(p, ids[0]);
+            float lost = dmg(ids[5]), veh = hp0[0] - hp(p, ids[0]);
             float riders = 0;
-            for (int i = 1; i <= seat; i++) riders += hp0[i] - hp(p, ids[i]);
+            for (int i = 1; i <= seat; i++) riders += dmg(ids[i]);
             check("player fires a summoned gun from the " + label, sent[1] >= 3 && WeaponForms.SHOTS >= 3 && lost > 0 && veh == 0 && riders == 0,
                     "client sent " + sent[1] + " shots, server fired " + WeaponForms.SHOTS + ", target lost " + f(lost) + " HP, vehicle lost " + f(veh) + ", riders lost " + f(riders));
             p.getInventory().clearContent();
@@ -484,7 +512,7 @@ public final class VehicleV2Tests {
         for (int i = 0; i < 3; i++) step(i == 1 ? "shoot_blaster_car" : null, () -> { aimAt(mc, center(mc, ids[1]));
             server(p -> com.xenowarriors.compat.DmzGuns.fire(p, com.xenowarriors.compat.DmzGuns.Kind.BURST, null)); }, 20);
         step(null, () -> server(p -> {
-            float lost = hp0[1] - hp(p, ids[1]), veh = hp0[0] - hp(p, ids[0]);
+            float lost = dmg(ids[1]), veh = hp0[0] - hp(p, ids[0]);
             check("player fires a Blaster from the car", lost > 0 && veh == 0, "target lost " + f(lost) + " HP, car lost " + f(veh) + " (ki blasts on: " + com.xenowarriors.compat.DmzGuns.on() + ")");
             p.getInventory().clearContent();
         }), 5);
@@ -512,7 +540,7 @@ public final class VehicleV2Tests {
                 float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
                 if (com.xenowarriors.compat.TaczGuns.shoot(p, pitch, yaw)) n[0]++; }); }, 8);
         step(null, () -> server(p -> {
-            float lost = hp0[1] - hp(p, ids[1]), veh = hp0[0] - hp(p, ids[0]);
+            float lost = dmg(ids[1]), veh = hp0[0] - hp(p, ids[0]);
             check("player fires a TACZ gun from the car", n[0] > 0 && lost > 0 && veh == 0, n[0] + " shots, target lost " + f(lost) + " HP, car lost " + f(veh));
             p.getInventory().clearContent();
         }), 5);
@@ -538,7 +566,7 @@ public final class VehicleV2Tests {
         for (int i = 0; i < 6; i++) step(null, () -> { aimAt(mc, center(mc, ids[1]));
             net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()); net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey()); }, 5);
         step(null, () -> server(p -> {
-            float lost = hp0[1] - hp(p, ids[1]), veh = hp0[0] - hp(p, ids[0]);
+            float lost = dmg(ids[1]), veh = hp0[0] - hp(p, ids[0]);
             check("a non-gun item fires nothing from a seat", PROJ.get() == 0 && GunClient.shotsSent == c[0] && lost == 0 && veh == 0,
                     "projectiles " + PROJ.get() + ", gun shots " + (GunClient.shotsSent - c[0]) + ", target lost " + f(lost) + ", car lost " + f(veh));
             p.getInventory().clearContent();
@@ -568,19 +596,24 @@ public final class VehicleV2Tests {
             gun[0] = String.valueOf(g.getItem());
             b.setItemSlot(EquipmentSlot.MAINHAND, g);
             b.handPicked = b.tickCount;
+            var vil = EntityType.VILLAGER.create(p.serverLevel());                // (front passenger seat taken: the bot gets the seat behind you)
+            vil.moveTo(v.position()); vil.setNoAi(true); vil.setPersistenceRequired(); vil.addTag(TAG);
+            p.serverLevel().addFreshEntity(vil);
+            vil.startRiding(v, true);
             b.startRiding(v, true);
             ids[1] = b.getId();
-            var d = dummy(p, new Vec3(v.getX(), base.getY(), v.getZ() + 16));
+            Vec3 seatAt = b.position();
+            var d = dummy(p, new Vec3(seatAt.x, base.getY(), v.getZ() + 16));     // (straight ahead of the bot: the line runs through you)
             ids[2] = d.getId();
             b.setTarget(d);
             hp0[0] = v.getHealth(); hp0[1] = p.getHealth(); hp0[2] = d.getHealth();
             log("bot passenger: rhalix seat " + v.getPassengers().indexOf(b) + " with " + gun[0] + ", you driving=" + (v.getControllingPassenger() == p));
         }), 30);
-        step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.hideGui = false; setView(mc, 0F); }, 60);
+        step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.hideGui = false; setView(mc, 0F); DMG.clear(); }, 60);
         step("bot_passenger_shooting", () -> server(p -> { if (p.serverLevel().getEntity(ids[1]) instanceof Mob b && p.serverLevel().getEntity(ids[2]) instanceof LivingEntity d && b.getTarget() == null) b.setTarget(d); }), 60);
         step(null, () -> server(p -> {
             PartyBotEntity b = p.serverLevel().getEntity(ids[1]) instanceof PartyBotEntity pb ? pb : null;
-            float veh = hp0[0] - hp(p, ids[0]), me = hp0[1] - p.getHealth(), lost = hp0[2] - hp(p, ids[2]);
+            float veh = hp0[0] - hp(p, ids[0]), me = dmg(p.getId()), lost = dmg(ids[2]);
             check("a bot passenger shoots from its seat (" + gun[0] + ")", b != null && b.isPassenger() && b.seatShots > 0 && lost > 0 && veh == 0 && me == 0,
                     "seated " + (b != null && b.isPassenger()) + ", shots from the seat " + (b == null ? 0 : b.seatShots) + ", target lost " + f(lost)
                             + " HP, car lost " + f(veh) + ", driver lost " + f(me));
