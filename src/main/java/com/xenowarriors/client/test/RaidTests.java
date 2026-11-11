@@ -160,7 +160,7 @@ public final class RaidTests {
         UiTest.server(p -> { p.setYRot(yaw); p.setYHeadRot(yaw); });
     }
 
-    static volatile Vec3 focus;
+    static volatile Vec3 look;
 
     private static Vec3 nearest(ServerPlayer p, java.util.function.Predicate<Entity> what) {
         Entity best = null;
@@ -258,16 +258,16 @@ public final class RaidTests {
             check("gov wave 1: helicopters packed with soldiers + a convoy", r.wave == 1 && helis >= 1 && aboardHeli >= 6 && grounds >= 1 && aboardGround >= 2,
                     "wave=" + r.wave + "/" + r.waves + " helis=" + helis + " (" + aboardHeli + " aboard) ground=" + grounds + " (" + aboardGround + " aboard) soldiers=" + r.alive().size()
                     + " karmaScanners=" + scanners + " bar='" + r.bar().getName().getString() + "'");
-            focus = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v));
+            look = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v));
         }), 2));
-        l.add(new Step(null, () -> lookAt(mc, focus), 30));
-        l.add(new Step(null, () -> UiTest.server(p -> focus = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v))), 2));
-        l.add(new Step("raids_gov_helis", () -> lookAt(mc, focus), 2));
-        l.add(new Step(null, () -> UiTest.server(p -> focus = nearest(p, e -> e instanceof VehicleEntity v && !v.kind.heli() && FactionRaids.isRaider(v))), 60));
-        l.add(new Step(null, () -> lookAt(mc, focus), 3));
-        l.add(new Step("raids_gov_convoy", () -> lookAt(mc, focus), 2));
-        l.add(new Step(null, () -> UiTest.server(p -> focus = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v))), 60));
-        l.add(new Step("raids_gov_drop", () -> lookAt(mc, focus), 2));
+        l.add(new Step(null, () -> lookAt(mc, look), 30));
+        l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v))), 2));
+        l.add(new Step("raids_gov_helis", () -> lookAt(mc, look), 2));
+        l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && !v.kind.heli() && FactionRaids.isRaider(v))), 60));
+        l.add(new Step(null, () -> lookAt(mc, look), 3));
+        l.add(new Step("raids_gov_convoy", () -> lookAt(mc, look), 2));
+        l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v))), 60));
+        l.add(new Step("raids_gov_drop", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> {}, 120));
         l.add(new Step(null, () -> UiTest.server(p -> {
             Raid r = FactionRaids.raidOn(p);
@@ -319,9 +319,9 @@ public final class RaidTests {
             Raid r = FactionRaids.start(p, Kind.SR, true);
             check("sky rebellion raid starts", r != null && r.kind == Kind.SR, "raid=" + (r != null));
         }), 60));
-        l.add(new Step(null, () -> UiTest.server(p -> focus = nearest(p, e -> e instanceof SrMemberEntity && FactionRaids.isRaider(e))), 15));
-        l.add(new Step(null, () -> lookAt(mc, focus), 3));
-        l.add(new Step("raids_sr", () -> lookAt(mc, focus), 2));
+        l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof SrMemberEntity && FactionRaids.isRaider(e))), 15));
+        l.add(new Step(null, () -> lookAt(mc, look), 3));
+        l.add(new Step("raids_sr", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> {}, 140));
         l.add(new Step(null, () -> UiTest.server(p -> {
             Raid r = FactionRaids.raidOn(p);
@@ -355,9 +355,9 @@ public final class RaidTests {
             Raid r = FactionRaids.start(p, Kind.TOWN, true);
             check("townsfolk raid starts", r != null && r.kind == Kind.TOWN, "raid=" + (r != null));
         }), 60));
-        l.add(new Step(null, () -> UiTest.server(p -> focus = nearest(p, e -> e instanceof HumanNpcEntity && FactionRaids.isRaider(e))), 60));
-        l.add(new Step(null, () -> lookAt(mc, focus), 3));
-        l.add(new Step("raids_town", () -> lookAt(mc, focus), 2));
+        l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof HumanNpcEntity && FactionRaids.isRaider(e))), 60));
+        l.add(new Step(null, () -> lookAt(mc, look), 3));
+        l.add(new Step("raids_town", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> {}, 160));
         l.add(new Step(null, () -> UiTest.server(p -> {
             Raid r = FactionRaids.raidOn(p);
@@ -456,8 +456,8 @@ public final class RaidTests {
             Raid r = FactionRaids.check(p, 0.0);
             PackTests.check("raids: bad standing + roll starts a Government raid", r != null && r.kind == Kind.GOV, "raid=" + (r == null ? "none" : r.kind));
         }), 260));
-        l.add(new Step(null, () -> PackTests.server(p -> focus = nearest(p, e -> e instanceof VehicleEntity v && FactionRaids.isRaider(v))), 2));
-        l.add(new Step("pack_raids_gov", () -> lookAt(mc, focus), 2));
+        l.add(new Step(null, () -> PackTests.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && FactionRaids.isRaider(v))), 2));
+        l.add(new Step("pack_raids_gov", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> PackTests.server(p -> {
             Raid r = FactionRaids.raidOn(p);
             int helis = 0, aboard = 0, guns = 0;
