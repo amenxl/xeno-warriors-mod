@@ -448,7 +448,10 @@ public final class DmzBotTechniques {
     }
 
     /** Test setup: the bot's techniques and skills (null = keep) and its TP; its equipped slots emptied; its creation timer reset. */
-    public static boolean setupForTest(PartyBotEntity b, float tp, boolean wipeTechniques) {
+    public static boolean setupForTest(PartyBotEntity b, float tp, boolean wipeTechniques) { return setupForTest(b, tp, wipeTechniques, -1); }
+
+    /** The same, also setting its alignment (0-100; -1 = keep). Its own creation timer is set to now (only forced ones for 8 minutes). */
+    public static boolean setupForTest(PartyBotEntity b, float tp, boolean wipeTechniques, int alignment) {
         DmzBotQuests.Data d = DmzBotQuests.open(b, false);
         if (d == null || d.live || !ready()) return false;
         try {
@@ -464,11 +467,15 @@ public final class DmzBotTechniques {
             String[] slots = (String[]) m(tech, "getEquippedSlots");
             if (slots != null) Arrays.fill(slots, "");
             m(m(d.sd, "getResources"), "setTrainingPoints", tp);
+            if (alignment >= 0) m(m(d.sd, "getResources"), "setAlignment", alignment);
             save(d, "Techniques", "Skills", "Resources");
-            b.getPersistentData().remove(LAST);
+            b.getPersistentData().putLong(LAST, b.level().getGameTime());
             return true;
         } catch (Throwable t) { XenoWarriors.LOGGER.warn("setupForTest", t); return false; }
     }
+
+    /** (Tests) it may make one by itself at its next look (its creation timer cleared). */
+    public static void allowCreateForTest(PartyBotEntity b) { b.getPersistentData().remove(LAST); }
 
     /** (Tests) a bot character's name, as its techniques' author. */
     public static String authorForTest(PartyBotEntity b) { return botName(b); }

@@ -225,8 +225,7 @@ public final class DmzBotKi {
         if (ready.isEmpty()) return false;
         Object tech = pick(b, target, k, ready);
         if (tech == null) return false;
-        try { String pid = (String) techId.invoke(tech); k.last = pid; USES.computeIfAbsent(b.getUUID(), u -> new LinkedHashMap<>()).merge(pid, 1, Integer::sum); } catch (Throwable ignored) {}
-        if (isStrike(tech)) return strike(b, target, tech, k, now);
+        if (isStrike(tech)) { boolean s = strike(b, target, tech, k, now); if (s) used(b, k, tech); return s; }
         try {
             String id = (String) techId.invoke(tech);
             int cd = Math.max(MIN_GAP, Math.min(20 * 60, (Integer) cooldown.invoke(tech)));
@@ -236,6 +235,7 @@ public final class DmzBotKi {
             boolean started = (Boolean) execute.invoke(null, b, level, tech, k.stats, 0F);   // (charging in its hands; a plain blast flies at once)
             note("start " + id + " ok=" + started + " cast=" + cast + " cd=" + cd + " target=" + target.getType().getDescriptionId());
             if (!started) { k.nextAny = now + MIN_GAP; return false; }
+            used(b, k, tech);
             k.ready.put(id, now + cd);
             k.nextAny = now + Math.max(MIN_GAP, cast + 20);
             k.charging = true;
@@ -246,6 +246,10 @@ public final class DmzBotKi {
             com.xenowarriors.skill.ServerScheduler.later(cast, () -> release(b, target, tech, kk, stats, id));
             return true;
         } catch (Throwable t) { fail(t); return false; }
+    }
+
+    private static void used(PartyBotEntity b, Kit k, Object tech) {
+        try { String id = (String) techId.invoke(tech); k.last = id; USES.computeIfAbsent(b.getUUID(), u -> new LinkedHashMap<>()).merge(id, 1, Integer::sum); } catch (Throwable ignored) {}
     }
 
     /** (For the tests) how many times each bot started each of its techniques. */
