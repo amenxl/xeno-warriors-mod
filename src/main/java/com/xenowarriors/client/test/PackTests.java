@@ -125,9 +125,10 @@ public final class PackTests {
         PackTotemTests.build(mc, l);       // Inventory Totem vs. the downed system and the Xeno Blast
         PackTooltipTests.build(mc, l);     // Equipment Compare / Iceberg: every item's tooltip, comparisons
         PackBotBagTests.build(mc, l);      // a bot's extra tabs and tidying with the pack's inventory mods
+        RaidTests.pack(mc, l);        // faction raids: a Government raid's helicopters and convoy shooting from their seats, SR and Townsfolk raids
+        //   (before the Xeno Dragon: its bomb knocks the player out to DragonMineZ's Otherworld)
         PackXenoDragonTests.build(mc, l);  // the Xeno Dragon from a /killed Ender Dragon, its forms and Dragon Bomb
         KishiGravTests.pack(mc, l);   // Kishi as DragonMineZ gravity
-        RaidTests.pack(mc, l);        // faction raids: a Government raid's helicopters and convoy shooting from their seats, SR and Townsfolk raids
         l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
         l.add(new Step("pack_end", () -> log("summary pass=" + pass + " fail=" + fail + (FAILED.isEmpty() ? "" : " failed=" + FAILED)), 2));
     }
