@@ -585,7 +585,7 @@ public final class DmzBotQuests {
         String id = botKey + "|" + key + "#" + index;
         if (t.biome()) {                                                         // these again once the last group is gone (a story fighter: once)
             long now = p.server.overworld().getGameTime(), at = done.getLong(id);
-            if (done.contains(id) && (now >= at && now - at < DmzQuestHelp.BIOME_RESUMMON_TICKS || DmzQuestHelp.alive(p, key, index) > 0
+            if (done.contains(id) && (now >= at && now - at < DmzQuestHelp.ARRIVAL_TICKS + DmzQuestHelp.BIOME_RESUMMON_TICKS || DmzQuestHelp.alive(p, key, index) > 0
                     || p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL)) return;
             done.putLong(id, now);
         } else {

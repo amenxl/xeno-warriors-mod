@@ -148,7 +148,7 @@ public final class DmzQuestHelp {
                 long now = p.server.overworld().getGameTime();
                 if (done.contains(id)) {                                        // summoned before: again only if they were all lost (despawned, killed by
                     long at = done.getLong(id);                                 // something else, never arrived) - or the objective could never be finished
-                    if (now >= at && now - at < (t.biome() ? BIOME_RESUMMON_TICKS : RESUMMON_TICKS)) continue;
+                    if (now >= at && now - at < (t.biome() ? ARRIVAL_TICKS + BIOME_RESUMMON_TICKS : RESUMMON_TICKS)) continue;   // (a group takes up to ARRIVAL_TICKS to all turn up)
                     if (p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL || alive(p, o.key, o.index) > 0) continue;
                     note((t.biome() ? "the last ones for " : "the summons for ") + id + (t.biome() ? " are gone - more come" : " were lost - summoning again"));
                 }
@@ -171,6 +171,8 @@ public final class DmzQuestHelp {
     public static int RESUMMON_TICKS = 20 * 90;
     /** The same for enemies that came because they don't live in your biome (the next group once the last is gone). */
     public static int BIOME_RESUMMON_TICKS = 20 * 10;
+    /** The last of a group (up to 5, one every 1.5 s after 5 s) is here this long after it was called. */
+    public static final int ARRIVAL_TICKS = 100 + 4 * 30 + 20;
 
     /** What to summon for a kill objective: {@code biome} = it lives only in other biomes (missionsIgnoreBiomes); else a story fighter. */
     record Target(EntityType<?> type, boolean biome) {}

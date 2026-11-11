@@ -203,7 +203,7 @@ public final class DmzBiomeTests {
         }), 20);
 
         // 2. its bandits don't live in a mushroom field: they come to you; defeat them (rounds until the count is done)
-        for (int round = 0; round < 4; round++) {
+        for (int round = 0; round < 6; round++) {
             final int rn = round;
             step(rn == 0 ? "dmzbiome_bandits_came" : null, () -> server(p -> {
                 int alive = p.serverLevel().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(80), x -> x.isAlive() && Q.equals(x.getPersistentData().getString("dmz_quest_key"))).size();
@@ -219,6 +219,9 @@ public final class DmzBiomeTests {
             int req = 0;
             try { req = (Integer) call(quest(Q), "getObjectiveRequired", pqd(p), Q, 0); } catch (Throwable ignored) {}
             check("your kills done outside their biome", you.contains("objective0=" + req) && req > 0, you + " (needs " + req + ")");
+            int came = 0;
+            synchronized (DmzQuestHelp.LOG) { for (String x : DmzQuestHelp.LOG) if (x.startsWith("summoned dragonminez:bandit")) came++; }
+            check("only as many came as needed", came == req, came + " bandits came for " + req);
             check("the bot's kills done outside their biome", bs.contains("obj0=" + bs.replaceAll(".*obj0=\\d+/(\\d+).*", "$1") + "/"), bs);
             DmzTalkNpcs.update(p);
         }), 40);
@@ -226,7 +229,7 @@ public final class DmzBiomeTests {
         step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
             Entity e = DmzTalkNpcs.tempFor(p, Q);
             log("talk: Yamcha came=" + (e != null));
-            if (e != null) net.minecraftforge.common.ForgeHooks.onInteractEntity(p, e, InteractionHand.MAIN_HAND);
+            if (e != null) p.interactOn(e, InteractionHand.MAIN_HAND);   // (as a right-click: the event, then the NPC itself)
         }); }, 30);
         step("dmzbiome_done", () -> { mc.setScreen(null); server(p -> {
             String pr = DmzQuests.progress(p, Q, 1);
@@ -241,7 +244,7 @@ public final class DmzBiomeTests {
             DmzTalkNpcs.update(p);
             Entity e = DmzTalkNpcs.tempFor(p, DmzPerCharacter.botKey(b) + "|" + Q);
             log("bot talk: Yamcha came for the bot=" + (e != null) + " " + DmzBotQuests.status(b, Q, 1));
-            if (e != null) net.minecraftforge.common.ForgeHooks.onInteractEntity(p, e, InteractionHand.MAIN_HAND);
+            if (e != null) p.interactOn(e, InteractionHand.MAIN_HAND);   // (as a right-click: the event, then the NPC itself)
         }); }, 30);
         step(null, () -> server(p -> {
             PartyBotEntity b = bot(p);
