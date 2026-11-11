@@ -145,8 +145,15 @@ public final class DmzBiomeTests {
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             quiet(p);
             String was = biomeHere(p);
-            int r = p.server.getCommands().performPrefixedCommand(p.server.createCommandSourceStack().withPosition(p.position()).withLevel(p.serverLevel()),
-                    "fillbiome ~-16 ~-3 ~-16 ~16 ~3 ~16 minecraft:mushroom_fields");
+            int r = 0;                                                          // (as /fillbiome does it: the chunks around you become a mushroom field)
+            var mush = p.server.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getHolderOrThrow(net.minecraft.world.level.biome.Biomes.MUSHROOM_FIELDS);
+            var sampler = p.serverLevel().getChunkSource().randomState().sampler();
+            for (int cx = -3; cx <= 3; cx++) for (int cz = -3; cz <= 3; cz++) {
+                var ch = p.serverLevel().getChunk((p.getBlockX() >> 4) + cx, (p.getBlockZ() >> 4) + cz);
+                ch.fillBiomesFromNoise((x, y, z, s) -> mush, sampler);
+                ch.setUnsaved(true);
+                r++;
+            }
             log("setup: story mode " + DmzQuests.storyMode(true) + " at " + at + " in " + p.level().dimension().location() + " biome " + was + " -> " + biomeHere(p) + " (fillbiome " + r + ")"
                     + " missionsIgnoreBiomes=" + XwConfig.get(XwConfig.DMZ_MISSIONS_IGNORE_BIOMES));
             DmzQuestHelp.BIOME_RESUMMON_TICKS = 40;
