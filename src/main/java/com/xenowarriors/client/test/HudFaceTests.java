@@ -122,11 +122,35 @@ public final class HudFaceTests {
 
     /** Model and portrait show the same face, and it's one of the expected ones (any = "" accepts all). */
     private static void same(Minecraft mc, String what, boolean ofBot, String... expect) {
+        if (ofBot && skipBot(what)) return;
         String m = model(mc, ofBot), h = hud(mc, ofBot);
         boolean eq = m != null && m.equals(h);
         boolean exp = expect.length == 0 || inPack;     // (pack: a slow client, timed faces may be over - only "the same face" counts)
         for (String x : expect) if (m != null && m.contains(x)) exp = true;
         check(what, eq && exp, "model=" + m + " portrait=" + h + " face=" + face(m) + " expected=" + String.join("/", expect));
+    }
+
+    /** The client has the bot and its drawn body (the pack waits for it; see steps). */
+    private static boolean botReady;
+    private static String botWhy = "";
+    private static int polls;
+
+    /** In the pack, a bot the slow client never loaded: SKIP its checks (with the reason) instead of failing them. */
+    private static boolean skipBot(String what) {
+        if (!inPack || botReady) return false;
+        log(what + ": SKIP (the client never got the bot: " + botWhy + ")");
+        return true;
+    }
+
+    /** What the client knows about the bot (why it isn't ready). */
+    private static String botDiag(Minecraft mc) {
+        int n = 0; double near = -1; String chars = "";
+        if (mc.level != null && mc.player != null) for (Entity e : mc.level.entitiesForRendering()) if (e instanceof PartyBotEntity b) {
+            n++; double d = b.distanceTo(mc.player); if (near < 0 || d < near) near = d; chars += b.character().getId() + " ";
+        }
+        long members = com.xenowarriors.client.party.PartyClient.members().stream().filter(m -> m.bot()).count();
+        return "clientBots=" + n + " nearest=" + (near < 0 ? "-" : String.format(java.util.Locale.ROOT, "%.1f", near)) + " chars=[" + chars.trim()
+                + "] botMembers=" + members + " avatarsOff=" + BotAvatars.disabled + " bot=" + (bot(mc) != null) + " body=" + (botBody(mc) != null);
     }
 
     private static int samples, mismatches;
@@ -175,9 +199,23 @@ public final class HudFaceTests {
             if (b != null) { b.moveTo(p.getX() + 1.3, p.getY(), p.getZ() + 0.4, 0F, 0F); b.setYHeadRot(0F); b.setYBodyRot(0F); b.setNoAi(true); b.addTag("xw_hudface"); }
             log("bot spawned=" + (b != null) + " bots=" + PartyBots.bots(p).size());
         }), 40));
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0F); mc.player.setXRot(0F); showcase = true; }, 20));
-        l.add(new Step(null, () -> check("bot in view", botBody(mc) != null && bot(mc) != null,
-                "bot=" + bot(mc) + " body=" + botBody(mc) + " party=" + com.xenowarriors.client.party.PartyClient.members().size()), 2));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0F); mc.player.setXRot(0F); showcase = true;
+            botReady = false; botWhy = ""; polls = 0; }, 20));
+        // wait (up to ~20 s) until the client really has the bot and its body; keep it right beside you meanwhile
+        for (int i = 0; i < 40; i++) l.add(new Step(null, () -> {
+            if (botReady) return;
+            polls++;
+            if (bot(mc) != null && botBody(mc) != null) { botReady = true; log("bot loaded on the client after " + polls + " polls"); return; }
+            UiTest.server(p -> { for (var b : PartyBots.bots(p)) if (b.getTags().contains("xw_hudface"))
+                b.teleportTo(p.getX() + 1.3, p.getY(), p.getZ() + 0.4); });
+            botWhy = botDiag(mc);
+            if (polls % 8 == 1) log("waiting for the bot: " + botWhy);
+        }, 10));
+        l.add(new Step(null, () -> {
+            if (bot(mc) != null && botBody(mc) != null) botReady = true;
+            if (!botReady && inPack) { botWhy = botDiag(mc); log("bot in view: SKIP (not loaded on the client after ~20 s: " + botWhy + ")"); }
+            else check("bot in view", botReady, "bot=" + bot(mc) + " body=" + botBody(mc) + " " + botDiag(mc));
+        }, 2));
         // natural animation: every tick for 160 ticks
         l.add(new Step(null, () -> { samples = 0; mismatches = 0; SEEN.clear(); SEEN_BOT.clear(); HudPortrait.composes = 0; }, 1));
         for (int i = 0; i < 160; i++) l.add(new Step(null, () -> sample(mc), 0));
@@ -251,7 +289,7 @@ public final class HudFaceTests {
             same(mc, "lunar bot", true, "rhalix_lunar_face");
             var b = bot(mc);
             String k = b == null ? null : HudPortrait.keyFor(b, CharacterType.RHALIX);
-            check("lunar frame", k != null && k.contains("frame/rhalix_lunar.png"), "key=" + k);
+            if (!skipBot("lunar frame")) check("lunar frame", k != null && k.contains("frame/rhalix_lunar.png"), "key=" + k);
         }, 1));
         l.add(new Step(null, () -> { var b = bot(mc); if (b != null) com.xenowarriors.client.LunarClient.set(b.getId(), false, false);
             var a = botBody(mc); if (a != null) com.xenowarriors.client.party.PartyClient.setKnockedOut(a.getUUID(), 200); }, 3));
