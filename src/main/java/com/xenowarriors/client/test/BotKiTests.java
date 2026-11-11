@@ -58,8 +58,17 @@ public final class BotKiTests {
     /** The player's own DragonMineZ techniques, skills and stats (must never change here; their TP only grows). */
     private static String mine(ServerPlayer p) {
         CompoundTag t = DmzPerCharacter.saveData(DmzPerCharacter.live(p));
-        return t == null ? "-" : "tech " + t.getCompound("Techniques").getList("UnlockedTechniques", 10).size() + " " + t.getCompound("Techniques").getCompound("EquippedSlots")
-                + " skills " + t.getCompound("Skills").hashCode() + " stats " + t.getCompound("Stats").hashCode();
+        if (t == null) return "-";
+        List<String> sk = new ArrayList<>();
+        var list = t.getCompound("Skills").getList("SkillsList", 10);
+        for (int i = 0; i < list.size(); i++) sk.add(list.getCompound(i).toString());
+        Collections.sort(sk);
+        return "tech " + t.getCompound("Techniques").getList("UnlockedTechniques", 10).size() + " " + t.getCompound("Techniques").getCompound("EquippedSlots")
+                + " skills " + sk.size() + "/" + sk.hashCode() + " stats " + t.getCompound("Stats").hashCode();
+    }
+    private static String skillsOf(ServerPlayer p) {
+        CompoundTag t = DmzPerCharacter.saveData(DmzPerCharacter.live(p));
+        return t == null ? "-" : t.getCompound("Skills").toString();
     }
     private static float myTp(ServerPlayer p) {
         CompoundTag t = DmzPerCharacter.saveData(DmzPerCharacter.live(p));
@@ -243,7 +252,7 @@ public final class BotKiTests {
             Entity g = DmzTalkNpcs.realForTest(p, "goku", at.x + 12, at.y, at.z);
             ST[1] = g;
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
-            p.connection.teleport(at.x + 6, at.y + 3, at.z - 8, 0F, 15F);
+            p.connection.teleport(at.x + 6, at.y + 3, at.z + 10, 180F, 15F);       // (looking at the bot and Goku side by side)
             List<String> teach = DmzBotTechniques.teachesForTest("goku");
             int min = Integer.MAX_VALUE;
             StringBuilder costs = new StringBuilder();
@@ -251,7 +260,7 @@ public final class BotKiTests {
             A[0] = min;
             log("goku: " + (g == null ? "none" : DmzBotTechniques.masterForTest(g) + " at " + g.blockPosition().toShortString()) + " teaches " + costs);
             check("goku spawned", g != null && "goku".equals(DmzBotTechniques.masterForTest(g)), String.valueOf(g));
-            DmzBotTechniques.setupForTest(b, min - 1F, true, 80);
+            DmzBotTechniques.setupForTest(b, min - 300F, true, 80);                   // (well short: it earns passive TP while it waits)
             A[5] = DmzBotTechniques.learned;
             b.setNoAi(false);
             DmzBotMasters.lookNowForTest(b);
@@ -260,10 +269,11 @@ public final class BotKiTests {
         step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
             PartyBotEntity b = bot(p);
             if (b == null) return;
-            check("master, too little TP: learned nothing", tp(b) >= A[0] - 1F && DmzBotTechniques.learned == A[5] && !DmzBotTechniques.knownForTest(b).contains("kamehameha"), "TP " + tp(b) + " (+ passive TP) known " + DmzBotTechniques.knownForTest(b));
+            check("master, too little TP: learned nothing", tp(b) >= A[0] - 300F && DmzBotTechniques.learned == A[5] && !DmzBotTechniques.knownForTest(b).contains("kamehameha"), "TP " + tp(b) + " (+ passive TP) known " + DmzBotTechniques.knownForTest(b));
             int k = DmzBotTechniques.costForTest(b, "kamehameha"), f = DmzBotTechniques.costForTest(b, "dragon_fist");
             A[1] = k; A[2] = f;
             DmzBotTechniques.setupForTest(b, k + f, true, 20);                        // (enough TP, but Goku won't teach an alignment of 20)
+            A[5] = DmzBotTechniques.learned;
             DmzBotMasters.lookNowForTest(b);
             log("low alignment: lesson " + DmzBotTechniques.lessonForTest(b, "goku"));
         }); }, 160);
@@ -356,6 +366,7 @@ public final class BotKiTests {
             PartyBotEntity b = bot(p);
             if (b == null) return;
             String known = DmzBotTechniques.knownForTest(b);
+            String sk0 = skillsOf(p);
             boolean open = DmzPerCharacter.beginView(p, b);
             Object live = DmzPerCharacter.live(p);
             Object m = call(call(live, "getTechniques"), "getUnlockedTechniques");
@@ -364,6 +375,8 @@ public final class BotKiTests {
             boolean all = m instanceof Map<?, ?> mm2 && mm2.keySet().stream().allMatch(x -> known.contains(String.valueOf(x)));
             check("menu: opens on the bot with all its techniques", open && n >= 4 && all, "open " + open + " live " + n + " | saved " + known);
             check("menu: player untouched after", untouched(p), mine(p) + " TP " + TP0 + " -> " + myTp(p));
+            String sk1 = skillsOf(p);
+            if (!sk0.equals(sk1)) log("menu: player's skills before " + sk0 + " | after " + sk1);
         }); }, 20);
 
         // 7. by itself: with its timer cleared it makes one at its next look (every 10 s)

@@ -50,7 +50,7 @@ public final class DmzBotTechniques {
     private static Boolean loaded;
     private static boolean broken;
     private static Class<?> kiData, strikeData, kiType, utility, secondary;
-    private static Method generateId, normalize, minDmg, maxDmg, defSize, defSpeed, defPen, predefinedId, skillsConfig;
+    private static Method generateId, normalize, minDmg, maxDmg, defSize, defSpeed, defPen, maxSize, maxSpeed, maxPen, predefinedId, skillsConfig;
     private static Method computeTpCost, raceAllowed, refreshMax, unlockIfPresent, alignmentBlocker;
     private static java.lang.reflect.Constructor<?> purchase;
     private static Object purchaseAction;
@@ -87,6 +87,9 @@ public final class DmzBotTechniques {
             defSize = kiData.getMethod("getDefaultSizeForType", kiType);
             defSpeed = kiData.getMethod("getDefaultSpeedForType", kiType);
             defPen = kiData.getMethod("getDefaultArmorPenForType", kiType);
+            maxSize = kiData.getMethod("getMaxSizeForType", kiType);
+            maxSpeed = kiData.getMethod("getMaxSpeedForType", kiType);
+            maxPen = kiData.getMethod("getMaxArmorPenForType", kiType);
             Class<?> pre = Class.forName("com.dragonminez.common.stats.techniques.PredefinedTechniques");
             predefinedId = pre.getMethod("isPredefinedTechniqueId", String.class);
             registry = (Map<?, ?>) pre.getField("REGISTRY").get(null);
@@ -175,6 +178,11 @@ public final class DmzBotTechniques {
      * owner's checks), with its derived cast time, cooldown and TP price worked out.
      */
     private static Object build(String name, String author, Object type, float damage, int color) throws Exception {
+        return build(name, author, type, damage, -1, -1, -1, color);
+    }
+
+    /** The same, with its size, speed and armor penetration (negative = DragonMineZ's default for the kind). */
+    private static Object build(String name, String author, Object type, float damage, float size, float speed, int pen, int color) throws Exception {
         Object t = kiData.getConstructor().newInstance();
         String n = name == null || name.trim().isEmpty() ? "New Skill" : name.trim();
         if (n.length() > 64) n = n.substring(0, 64);
@@ -183,8 +191,8 @@ public final class DmzBotTechniques {
         m(t, "setId", generateId.invoke(null, author, n));
         m(t, "setKiType", type);
         m(t, "setUtility", enumOf(utility, "DAMAGE"));                              // (attacks only: no healing)
-        float[] s = (float[]) normalize.invoke(null, type, damage, ((Number) defSize.invoke(null, type)).floatValue(),
-                ((Number) defSpeed.invoke(null, type)).floatValue(), ((Number) defPen.invoke(null, type)).intValue());
+        float[] s = (float[]) normalize.invoke(null, type, damage, size >= 0 ? size : ((Number) defSize.invoke(null, type)).floatValue(),
+                speed >= 0 ? speed : ((Number) defSpeed.invoke(null, type)).floatValue(), pen >= 0 ? pen : ((Number) defPen.invoke(null, type)).intValue());
         m(t, "setDamageMultiplier", s[0]);
         m(t, "setSize", s[1]);
         m(t, "setSpeed", s[2]);
@@ -248,13 +256,25 @@ public final class DmzBotTechniques {
                 float mid = (dmg + hi) / 2;
                 if (price(build("x", author, type, mid, color)) <= budget) dmg = mid; else hi = mid;
             }
+            // then, with what's left of the budget: armor penetration, speed, size - each to DragonMineZ's top for the kind if it can pay for it
+            float size = -1, speed = -1;
+            int pen = -1;
+            String extras = "";
+            if (dmg >= hi - 1.0E-4F) {
+                int mp = ((Number) maxPen.invoke(null, type)).intValue();
+                if (mp > ((Number) defPen.invoke(null, type)).intValue() && price(build("x", author, type, dmg, size, speed, mp, color)) <= budget) { pen = mp; extras += " +pen"; }
+                float ms = ((Number) maxSpeed.invoke(null, type)).floatValue();
+                if (ms > ((Number) defSpeed.invoke(null, type)).floatValue() && price(build("x", author, type, dmg, size, ms, pen, color)) <= budget) { speed = ms; extras += " +speed"; }
+                float mz = ((Number) maxSize.invoke(null, type)).floatValue();
+                if (mz > ((Number) defSize.invoke(null, type)).floatValue() && price(build("x", author, type, dmg, mz, speed, pen, color)) <= budget) { size = mz; extras += " +size"; }
+            }
             Map<?, ?> all = unlocked(d.sd);
             Object tech = null;
             Random r = new Random(b.getUUID().getLeastSignificantBits() ^ mine.size() * 31L ^ now);
             String[] nouns = NOUNS.getOrDefault(kindName, new String[]{"Blast"});
             for (int tries = 0; tries < 40 && tech == null; tries++) {
                 String name = author + "'s " + WORDS[r.nextInt(WORDS.length)] + " " + nouns[r.nextInt(nouns.length)];
-                Object t = build(name, author, type, dmg, color);
+                Object t = build(name, author, type, dmg, size, speed, pen, color);
                 if (!all.containsKey(m(t, "getId"))) tech = t;
             }
             if (tech == null) return "no free name";
@@ -271,6 +291,7 @@ public final class DmzBotTechniques {
             created++;
             String name = (String) m(tech, "getName");
             String what = d.key + " (" + c + ") made " + name + " [" + id + "] " + kindName + " dmg x" + String.format(Locale.ROOT, "%.2f", ((Number) m(tech, "getDamageMultiplier")).floatValue())
+                    + " size " + m(tech, "getSize") + " speed " + m(tech, "getSpeed") + " pen " + m(tech, "getArmorPenetration") + extras
                     + " cast " + m(tech, "getCastTime") + " cd " + m(tech, "getCooldown") + " for " + cost + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ", budget " + Math.round(budget) + ")";
             note(what);
             d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" created a new ki attack: ")
@@ -405,12 +426,13 @@ public final class DmzBotTechniques {
             learned++;
             String tname = skill;
             try { Object t = unlocked(d.sd).get(skill); if (t != null) tname = (String) m(t, "getName"); } catch (Throwable ignored) {}
-            if (tname == null || tname.isBlank() || tname.equals(skill)) tname = DmzBotPower.pretty(skill);
+            Component shown = tname == null || tname.isBlank() || tname.equals(skill) ? Component.literal(DmzBotPower.pretty(skill))
+                    : tname.startsWith("technique.") ? Component.translatableWithFallback(tname, DmzBotPower.pretty(skill)) : Component.literal(tname);   // (DragonMineZ's own: a lang key)
             note(d.key + " learned " + skill + " (" + (isStrike(skill) ? "STRIKE" : "KI") + ", technique " + (got ? "added" : "MISSING") + ") from " + master
                     + " for " + c + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ")");
             Component who = masterEntity != null ? masterEntity.getDisplayName() : Component.literal(DmzBotPower.pretty(master));
             d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" learned ")
-                    .append(Component.literal(tname).withStyle(ChatFormatting.GOLD)).append(" from ").append(who)
+                    .append(shown.copy().withStyle(ChatFormatting.GOLD)).append(" from ").append(who)
                     .append(" (" + String.format(Locale.US, "%,d TP", c) + ")").withStyle(ChatFormatting.AQUA), false);
             return true;
         } catch (Throwable t) {
