@@ -287,6 +287,8 @@ public final class KishiGravTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             if (rbot == null) { log("rhalix bot: none spawned -> FAIL"); return; }
             FakePlayer f = PartyBots.standIn(rbot);
+            log("rhalix bot before: at " + rbot.position().subtract(O) + " yRot=" + f(rbot.getYRot()) + " husk at " + H[0].position().subtract(O) + " alive=" + H[0].isAlive());
+            rbot.setYRot(0F); rbot.setYHeadRot(0F); rbot.yBodyRot = 0F;
             boolean used = PartyBots.useForTest(rbot, new KishiSkill());
             KishiDomeEntity d = null;
             for (KishiDomeEntity k : p.serverLevel().getEntitiesOfClass(KishiDomeEntity.class, p.getBoundingBox().inflate(30))) if (f.getUUID().equals(k.getOwnerId())) d = k;
