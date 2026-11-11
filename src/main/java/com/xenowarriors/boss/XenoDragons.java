@@ -352,14 +352,17 @@ public final class XenoDragons {
         scanDragons();
         processPending();
         StringBuilder sb = new StringBuilder("dmz=" + dmz() + " xeno appeared=" + (transformed - before));
-        for (Entity e : end.getAllEntities()) {
-            if (!(e instanceof XenoDragonEntity x)) continue;
-            sb.append(" at ").append(x.blockPosition().toShortString()).append(" lands ").append(x.home() == null ? "-" : x.home().toShortString());
+        for (Entity e : end.getAllEntities()) if (e instanceof XenoDragonEntity old) old.discard();
+        XenoDragonEntity x = XENO_DRAGON.get().create(end);                     // (its forms and a Dragon Bomb, on the server only)
+        if (x != null) {
+            x.moveTo(14, 70, 0, 0, 0);
+            end.addFreshEntity(x);
             sb.append(" speeds");
             for (int f = XenoDragonEntity.BASE; f <= XenoDragonEntity.UI; f++) { x.setFormForTest(f); sb.append(' ').append(XenoDragonEntity.fmt(x.speed())); }
+            sb.append(" hp ").append(Math.round(x.getMaxHealth())).append(" dmg ").append(XenoDragonEntity.fmt(x.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)));
             DragonBombEntity b = DRAGON_BOMB.get().create(end);
-            if (b != null) { b.moveTo(x.getX(), x.getY() + 6, x.getZ()); end.addFreshEntity(b); b.throwAt(x.position()); b.discard(); }
-            sb.append(" bomb ok");
+            if (b != null) { b.moveTo(x.getX(), x.getY() + 6, x.getZ()); end.addFreshEntity(b); b.throwAt(x.position()); b.discard(); sb.append(" bomb ok"); }
+            sb.append(" loot ").append(loot(new Random(1)).size()).append(" stacks");
             x.discard();
         }
         return sb.toString();
