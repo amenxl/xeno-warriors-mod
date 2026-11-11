@@ -419,6 +419,7 @@ public final class ScannerTests {
         // colour variants and the tiers, on Gov guards standing still
         l.add(new Step(null, () -> server(p -> {
             cleanup(p); p.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY); atHome(p, 0F); p.setGameMode(GameType.CREATIVE);
+            p.teleportTo(p.serverLevel(), HOME[0] + 12, HOME[1], HOME[2] - 6, 0F, 0F);          // (out of the camera's way)
             for (int i = 0; i < 6; i++) {
                 var g = still(p, -3.1 + i * 1.24, 3.2);
                 GovScanning.give(g, KarmaScanner.Tier.ELITE, KarmaScanner.COLORS[i]);
@@ -470,6 +471,14 @@ public final class ScannerTests {
     }
 
     private static final int[] CAM = {-1};
+
+    /** Turns the (client) player toward guard IDS[0]. */
+    private static void faceGuard(Minecraft mc) {
+        if (mc.player == null || mc.level == null || !(mc.level.getEntity(IDS[0]) instanceof LivingEntity g)) return;
+        double dx = g.getX() - mc.player.getX(), dz = g.getZ() - mc.player.getZ(), dy = g.getEyeY() - mc.player.getEyeY();
+        float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        mc.player.setYRot(yaw); mc.player.yRotO = yaw; mc.player.setXRot(pitch); mc.player.xRotO = pitch; mc.player.setYHeadRot(yaw);
+    }
 
     /** Looks through an invisible armor stand at `from` (relative to HOME, its eyes) toward `at`. */
     private static void cam(Minecraft mc, List<Step> l, double[] from, double[] at, int wait) {
@@ -537,30 +546,36 @@ public final class ScannerTests {
             IDS[0] = g.getId();
             V[3] = KarmaLevel.of(p);
         }); }, 70));
-        l.add(new Step("scanners_soldier_scanning", () -> server(p -> {
+        l.add(new Step(null, () -> faceGuard(mc), 3));
+        l.add(new Step("scanners_soldier_scanning", () -> {}, 1));
+        l.add(new Step(null, () -> server(p -> {
             var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[0]);
             long read = g == null ? -1 : g.getPersistentData().getLong(GovScanning.LAST_READ);
             check("guard reads with an Omni", g != null && g.getTarget() == p && read == V[3] && g.getItemBySlot(EquipmentSlot.HEAD).is(GovItems.OMNI_KARMA_SCANNER.get()),
                     "player Karma Level " + KarmaLevel.fmt(V[3]) + ", guard read " + KarmaLevel.fmt(read) + ", target=" + (g == null ? null : g.getTarget()) + ", distance " + (g == null ? "-" : f(g.distanceTo(p))));
             if (g != null) GovScanning.give(g, KarmaScanner.Tier.BASIC, KarmaScanner.RED);   // now a basic one: 50,000 is far too little
-        }), 75));
-        l.add(new Step("scanners_soldier_overload", () -> server(p -> {
+            D[0] = -1; D[1] = -1; D[2] = 0;
+        }), 2));
+        // watch it for 4 seconds, turned toward it: the bang, then it running
+        for (int i = 0; i < 8; i++) {
+            int k = i;
+            l.add(new Step(null, () -> { faceGuard(mc); server(p -> {
+                var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[0]);
+                if (g == null) return;
+                double d = g.distanceTo(p);
+                if (g.panicking() && D[0] < 0) { D[0] = d; D[2] = g.getTarget() == null && g.getItemBySlot(EquipmentSlot.HEAD).isEmpty() ? 1 : 0; }
+                if (g.panicking()) D[1] = d;
+                if (g.getTarget() != null || g.isAggressive()) D[2] = 0;
+                log("guard t+" + (k * 10) + " ticks: distance " + f(d) + ", helmet " + g.getItemBySlot(EquipmentSlot.HEAD) + ", panicking " + g.panicking() + ", target " + (g.getTarget() != null));
+            }); }, 9));
+            l.add(new Step("scanners_soldier_t" + (k * 10), () -> faceGuard(mc), 1));
+        }
+        l.add(new Step(null, () -> server(p -> {
             var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[0]);
-            D[0] = g == null ? -1 : g.distanceTo(p);
-            check("guard scanner overloads", g != null && g.getItemBySlot(EquipmentSlot.HEAD).isEmpty() && g.panicking() && g.getTarget() == null,
-                    "player " + KarmaLevel.fmt(V[3]) + " > 50,000: helmet=" + (g == null ? "-" : g.getItemBySlot(EquipmentSlot.HEAD)) + ", panicking=" + (g != null && g.panicking())
-                            + ", target=" + (g == null ? null : g.getTarget()) + ", distance " + f(D[0]));
-        }), 40));
-        l.add(new Step(null, () -> server(p -> { var g = p.serverLevel().getEntity(IDS[0]); D[1] = g == null ? -1 : g.distanceTo(p); }), 40));
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> {
-            var g = p.serverLevel().getEntity(IDS[0]);
-            if (g != null) { double dx = g.getX() - p.getX(), dz = g.getZ() - p.getZ(); float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90); p.setYRot(yaw); p.setYHeadRot(yaw); p.setXRot(5F); }
-        }); }, 4));
-        l.add(new Step("scanners_soldier_flee", () -> server(p -> {
-            var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[0]);
-            D[2] = g == null ? -1 : g.distanceTo(p);
-            check("guard flees", g != null && D[1] > D[0] + 2 && D[2] > D[1] && g.getTarget() == null && !g.isAggressive() && g.panicking(),
-                    "distance " + f(D[0]) + " -> " + f(D[1]) + " -> " + f(D[2]) + " over 4 s, target=" + (g == null ? null : g.getTarget()) + ", aggressive=" + (g != null && g.isAggressive()));
+            check("guard scanner overloads", D[0] >= 0 && g != null && g.getItemBySlot(EquipmentSlot.HEAD).isEmpty(),
+                    "player " + KarmaLevel.fmt(V[3]) + " > 50,000: helmet=" + (g == null ? "-" : g.getItemBySlot(EquipmentSlot.HEAD)) + ", panicked at distance " + f(D[0]));
+            check("guard flees", g != null && D[0] >= 0 && D[1] > D[0] + 5 && D[2] == 1 && g.getTarget() == null && !g.isAggressive() && g.panicking(),
+                    "distance " + f(D[0]) + " when it broke -> " + f(D[1]) + " after, never targeting or attacking since=" + (D[2] == 1));
         }), 3));
         // worn out by hits: the same panic
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
@@ -572,7 +587,7 @@ public final class ScannerTests {
         }); }, 20));
         l.add(new Step(null, () -> server(p -> {
             var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[1]);
-            if (g != null) { g.invulnerableTime = 0; g.hurt(p.damageSources().playerAttack(p), 4F); }
+            if (g != null) { g.invulnerableTime = 0; g.hurt(p.damageSources().generic(), 4F); }      // (no attacker: a Phase-mod guard would let a hit pass through)
         }), 10));
         l.add(new Step(null, () -> server(p -> {
             var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[1]);
