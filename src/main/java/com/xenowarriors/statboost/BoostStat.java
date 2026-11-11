@@ -116,6 +116,7 @@ public enum BoostStat {
                 d.miningLevel = after;
                 if (after >= max()) d.miningXp = 0;
                 com.xenowarriors.stats.Mining.sync(p);
+                com.xenowarriors.stats.HandMining.leveled(p, before, after);
             }
             case CRAFTING -> {
                 if (d == null) return 0;

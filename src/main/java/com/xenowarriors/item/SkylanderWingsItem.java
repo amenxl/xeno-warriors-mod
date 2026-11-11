@@ -66,7 +66,9 @@ public class SkylanderWingsItem extends Item {
     public static void grant(ServerPlayer p) {
         p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
             for (int i = 0; i < d.statLevel.length; i++) d.statLevel[i] = Math.min(Stat.MAX_LEVEL, d.statLevel[i] + LEVELS);
+            int m0 = d.miningLevel;
             d.miningLevel = Math.min(Stat.MAX_LEVEL, d.miningLevel + LEVELS);
+            com.xenowarriors.stats.HandMining.leveled(p, m0, d.miningLevel);
             d.craftLevel = Math.min(Stat.MAX_LEVEL, d.craftLevel + LEVELS);
             d.smeltLevel = Math.min(Stat.MAX_LEVEL, d.smeltLevel + LEVELS);
         });

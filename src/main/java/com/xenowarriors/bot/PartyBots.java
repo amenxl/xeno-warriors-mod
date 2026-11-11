@@ -845,7 +845,7 @@ public final class PartyBots {
             BlockState s = b.level().getBlockState(p);
             if (s.is(com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get())) { if (ultima) return null; continue; }   // Data Sense can't read it
             if (!isOre(s)) continue;
-            if (exposed(b, p) && !b.unreachable(p)) {                            // (buried ore it can't get to isn't a target)
+            if (exposed(b, p) && !b.unreachable(p) && com.xenowarriors.stats.HandMining.botCanHarvest(b, s)) {   // (buried ore it can't get to, or can't get anything out of, isn't a target)
                 double dd = p.distSqr(b.blockPosition());
                 if (dd < bd) { bd = dd; best = p.immutable(); }
             }
@@ -872,8 +872,8 @@ public final class PartyBots {
         ServerLevel s = (ServerLevel) b.level();
         BlockState st = s.getBlockState(pos);
         if (!isOre(st) || !com.xenowarriors.modes.ModeRules.canGrief(s)) return;
-        ItemStack tool = b.getMainHandItem().isCorrectToolForDrops(st) ? b.getMainHandItem() : new ItemStack(Items.DIAMOND_PICKAXE);   // (its own pickaxe - Fortune and all - or its bare Karma)
-        List<ItemStack> drops = Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, tool);
+        ItemStack tool = com.xenowarriors.stats.HandMining.botTool(b, st);   // (its own pickaxe - Fortune and all - or its bare hands at its Mining level's pickaxe-tier)
+        List<ItemStack> drops = tool.isEmpty() && st.requiresCorrectToolForDrops() ? List.of() : Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, tool);
         com.xenowarriors.npc.rebuild.VillageRebuild.playerDug(s, pos);       // (its owner's dig: a village won't put it back)
         s.destroyBlock(pos, false, b);
         for (ItemStack d : drops) {

@@ -35,6 +35,11 @@ public class PlayerStatsScreen extends Screen {
     public static boolean testBuildingTip;
     /** Where the Building row was drawn (screen space) for its tooltip: x0, y0, x1, y1. */
     private final int[] buildingRow = new int[4];
+    /** (UI test) show the Mining tooltip without the mouse over it. */
+    public static boolean testMiningTip;
+    /** The same for the Mining row. */
+    private final int[] miningRow = new int[4];
+    private int miningLevel = -1;
     private int buildingLevel = -1;
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
@@ -304,6 +309,21 @@ public class PlayerStatsScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
         if (tab == 1 && buildingLevel >= 0 && (testBuildingTip || (mouseX >= buildingRow[0] && mouseX < buildingRow[2] && mouseY >= buildingRow[1] && mouseY < buildingRow[3])))
             g.renderComponentTooltip(font, buildingTip(buildingLevel), testBuildingTip ? buildingRow[0] + 20 : mouseX, testBuildingTip ? buildingRow[3] + 12 : mouseY);
+        else if (tab == 1 && miningLevel >= 0 && (testMiningTip || (mouseX >= miningRow[0] && mouseX < miningRow[2] && mouseY >= miningRow[1] && mouseY < miningRow[3])))
+            g.renderComponentTooltip(font, miningTip(miningLevel), testMiningTip ? miningRow[0] + 20 : mouseX, testMiningTip ? miningRow[3] + 12 : mouseY);
+    }
+
+    /** The Mining row's tooltip: the speed bonus and what pickaxe your bare hands count as. */
+    public static List<Component> miningTip(int lv) {
+        List<Component> t = new ArrayList<>();
+        t.add(Component.literal("Mining").withStyle(net.minecraft.ChatFormatting.GOLD));
+        t.add(Component.literal("Levels up from the blocks you break.").withStyle(net.minecraft.ChatFormatting.GRAY));
+        t.add(Component.literal("Mining speed: +" + Math.round((com.xenowarriors.stats.Mining.multiplier(lv, false) - 1) * 100) + "% with any tool"));
+        t.add(Component.literal("Bare hands mine like: " + com.xenowarriors.stats.HandMining.describe(lv)).withStyle(net.minecraft.ChatFormatting.YELLOW));
+        t.add(Component.literal("Bare-hand dig speed: x" + String.format(java.util.Locale.ROOT, "%.1f", com.xenowarriors.stats.HandMining.speedFactor(lv,
+                net.minecraft.world.level.block.Blocks.STONE.defaultBlockState())) + " on stone"));
+        t.add(Component.literal("Wooden Lv 5, Stone 15, Iron 40, Diamond 100, Netherite 250 (Efficiency I-V by Lv 1,000).").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+        return t;
     }
 
     /** The Building row's tooltip: what its level gives now and when the next bonus comes. */
@@ -473,7 +493,13 @@ public class PlayerStatsScreen extends Screen {
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Speed", self.speed(), me.speedXp(), Stat.MAX_LEVEL, 0x55DDFF); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Attack", self.attack(), me.attackXp(), Stat.MAX_LEVEL, 0xFF7744); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Defense", self.defense(), me.defenseXp(), Stat.MAX_LEVEL, 0x88DD66); cy += 12;
-        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Mining", me.mining(), me.miningXp(), Stat.MAX_LEVEL, 0xE0C070); cy += 12;
+        statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Mining", me.mining(), me.miningXp(), Stat.MAX_LEVEL, 0xE0C070);
+        miningLevel = me.mining();                         // (hover the row: what your bare hands mine like - see render)
+        miningRow[0] = Math.round(width / 2F + (x + PAD - width / 2F) * scale);
+        miningRow[2] = Math.round(width / 2F + (right - width / 2F) * scale);
+        miningRow[1] = Math.round(availTop + (cy - 1 - availTop) * scale);
+        miningRow[3] = Math.round(availTop + (cy + 10 - availTop) * scale);
+        cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Crafting", me.craft(), me.craftXp(), Stat.MAX_LEVEL, 0xC08A50); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Smelting", me.smelt(), me.smeltXp(), Stat.MAX_LEVEL, 0xFF8A3A); cy += 12;
         statRow(g, x + PAD, cy, labelW, lvColW, barX, barW, right, "Appetite", me.appetite(), me.appetiteXp(), com.xenowarriors.stats.Appetite.MAX_LEVEL, 0xE8D020); cy += 12;
