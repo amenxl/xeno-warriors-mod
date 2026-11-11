@@ -135,9 +135,33 @@ public final class XenoDragons {
         PENDING.add(new Pending(level, d.position(), d.getUUID()));
     }
 
+    /** Every Ender Dragon in a world (weakly held): one /killed in a part of the world that isn't ticking never "leaves" it. */
+    private static final Set<EnderDragon> DRAGONS = Collections.newSetFromMap(new WeakHashMap<>());
+
+    @SubscribeEvent
+    public static void onJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent e) {
+        if (e.getEntity() instanceof EnderDragon d && e.getLevel() instanceof ServerLevel) synchronized (DRAGONS) { DRAGONS.add(d); }
+    }
+
+    /** Dragons gone (KILLED) that the leave event didn't report. */
+    public static void scanDragons() {
+        synchronized (DRAGONS) {
+            if (DRAGONS.isEmpty()) return;
+            for (Iterator<EnderDragon> it = DRAGONS.iterator(); it.hasNext(); ) {
+                EnderDragon d = it.next();
+                if (!d.isRemoved()) continue;
+                it.remove();
+                if (d.getRemovalReason() == Entity.RemovalReason.KILLED && d.level() instanceof ServerLevel level && enabled() && DONE.add(d.getUUID()))
+                    PENDING.add(new Pending(level, d.position(), d.getUUID()));
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent e) {
-        if (e.phase == TickEvent.Phase.END) processPending();
+        if (e.phase != TickEvent.Phase.END) return;
+        scanDragons();
+        processPending();
     }
 
     /** Turns the dragons that just went into Xeno Dragons. */
@@ -272,6 +296,8 @@ public final class XenoDragons {
 
     /** Chance of a +100 Stat Boost on top of the guaranteed +10 (and the usual boss roll). */
     public static float HUNDRED_CHANCE = 0.3F;
+    /** (For the tests) where the last loot came down. */
+    public static Vec3 lastLootAt;
 
     static void dropLoot(XenoDragonEntity x, DamageSource src) {
         if (!(x.level() instanceof ServerLevel)) return;
@@ -288,6 +314,13 @@ public final class XenoDragons {
             boosts.add(com.xenowarriors.statboost.StatBoosts.stack(pool.get(r.nextInt(pool.size())), com.xenowarriors.statboost.BoostTier.TEN));
             if (r.nextFloat() < HUNDRED_CHANCE) boosts.add(com.xenowarriors.statboost.StatBoosts.stack(pool.get(r.nextInt(pool.size())), com.xenowarriors.statboost.BoostTier.HUNDRED));
         }
+        // (beaten over the void: the loot lands where it came down on the island instead)
+        ServerLevel level = (ServerLevel) x.level();
+        if (x.home() != null && level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x.getBlockX(), x.getBlockZ()) <= level.getMinBuildHeight() + 1) {
+            x.setPos(x.home().getX() + 0.5, x.home().getY() + 0.5, x.home().getZ() + 0.5);
+            note("beaten over the void: loot dropped at " + x.home().toShortString());
+        }
+        lastLootAt = x.position();
         StringBuilder sb = new StringBuilder();
         for (ItemStack st : l) {
             ItemEntity it = x.spawnAtLocation(st, 0.5F);
@@ -316,6 +349,7 @@ public final class XenoDragons {
         end.addFreshEntity(d);
         int before = transformed;
         d.kill();
+        scanDragons();
         processPending();
         StringBuilder sb = new StringBuilder("dmz=" + dmz() + " xeno appeared=" + (transformed - before));
         for (Entity e : end.getAllEntities()) {

@@ -641,8 +641,8 @@ public class XenoDragonEntity extends Monster {
     // ---------------------------------------------------------------- End Crystals (from Super Saiyan 2, and again as a god)
 
     private void summonCrystals(ServerLevel level) {
-        int made = 0;
-        for (int i = 0; i < 12 && made < 2; i++) {
+        int made = 0, want = 2 - crystals.size();                                 // (two at most at a time)
+        for (int i = 0; i < 12 && made < want; i++) {
             double ang = random.nextDouble() * Math.PI * 2, r = 7 + random.nextDouble() * 3;
             double x = getX() + Math.cos(ang) * r, z = getZ() + Math.sin(ang) * r;
             if (level.dimension() == Level.END && x * x + z * z < 8 * 8) continue;      // (never on the exit portal's crystal spots)

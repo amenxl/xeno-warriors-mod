@@ -46,7 +46,7 @@ public final class XenoDragonTests {
     private static final List<String> FAILED = new ArrayList<>();
     private static final int[] ID = {-1}, CAM = {-1};
     private static Vec3 AT;
-    private static boolean guarded;
+    private static boolean guarded, closer;
 
     private static void log(String s) { LOG.accept("xenodragon " + s); }
     private static void server(Consumer<ServerPlayer> f) { SERVER.accept(p -> { try { f.accept(p); } catch (Throwable t) { check("server step", false, String.valueOf(t)); com.xenowarriors.XenoWarriors.LOGGER.error("XW-TEST xenodragon", t); } }); }
@@ -77,6 +77,13 @@ public final class XenoDragonTests {
             log("setup dmz=" + XenoDragons.dmz() + " enabled=" + XenoDragons.enabled());
         }); }, 40);
         guard();
+        if (!closer) {                                                          // (DragonMineZ's race picker / the character menu: out of the way the whole time)
+            closer = true;
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ClientTickEvent e) -> {
+                if (e.phase == net.minecraftforge.event.TickEvent.Phase.END && mc.screen != null && mc.level != null
+                        && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) mc.setScreen(null);
+            });
+        }
         if (dmz) stills(mc);
         end(mc, dmz);
         if (dmz) fight(mc);
@@ -389,10 +396,12 @@ public final class XenoDragonTests {
         step("xd_loot", () -> server(p -> {
             dump();
             Map<String, Integer> got = new TreeMap<>();
-            for (ItemEntity it : p.serverLevel().getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(40)))
+            Vec3 lp = XenoDragons.lastLootAt != null ? XenoDragons.lastLootAt : p.position();
+            log("loot came down at " + BlockPos.containing(lp).toShortString() + " (player at " + p.blockPosition().toShortString() + ")");
+            for (ItemEntity it : p.serverLevel().getEntitiesOfClass(ItemEntity.class, new AABB(lp, lp).inflate(24)))
                 got.merge(ForgeRegistries.ITEMS.getKey(it.getItem().getItem()).toString(), it.getItem().getCount(), Integer::sum);
             int xp = 0;
-            for (ExperienceOrb o : p.serverLevel().getEntitiesOfClass(ExperienceOrb.class, p.getBoundingBox().inflate(40))) xp += o.getValue();
+            for (ExperienceOrb o : p.serverLevel().getEntitiesOfClass(ExperienceOrb.class, new AABB(lp, lp).inflate(24))) xp += o.getValue();
             int scales = got.getOrDefault("xenowarriors:xeno_dragon_scale", 0);
             check("final defeat in UI drops loot once", XenoDragons.lootDrops == 1 && scales >= 4 && scales <= 6, "lootDrops " + XenoDragons.lootDrops + " scales " + scales + " xp " + xp + " items " + got);
             check("no xeno dragon left", xenoCount(p.serverLevel()) == 0, "left " + xenoCount(p.serverLevel()));
