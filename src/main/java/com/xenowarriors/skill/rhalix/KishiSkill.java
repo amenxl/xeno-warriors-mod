@@ -64,7 +64,9 @@ public class KishiSkill implements Skill {
                     SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 1.2F, 0.5F + 0.15F * level);
             player.level().playSound(null, dome.getX(), dome.getY(), dome.getZ(),
                     SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.5F, 0.4F);
-            player.displayClientMessage(Component.translatable("message.xenowarriors.kishi.level", level), true);
+            player.displayClientMessage(dome.gravity() > 0
+                    ? Component.translatable("message.xenowarriors.kishi.level_g", level, Math.round(dome.gravity()))
+                    : Component.translatable("message.xenowarriors.kishi.level", level), true);
         } else {
             player.displayClientMessage(Component.translatable("message.xenowarriors.kishi.max"), true);
         }
@@ -87,7 +89,9 @@ public class KishiSkill implements Skill {
                 SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.5F, 0.6F);
         player.level().playSound(null, target.x, target.y, target.z,
                 SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 0.7F, 0.5F);
-        player.displayClientMessage(Component.translatable("message.xenowarriors.kishi.cast"), true);
+        player.displayClientMessage(dome.gravity() > 0
+                ? Component.translatable("message.xenowarriors.kishi.cast_g", Math.round(dome.gravity()))
+                : Component.translatable("message.xenowarriors.kishi.cast"), true);
         return true;
     }
 
@@ -109,8 +113,9 @@ public class KishiSkill implements Skill {
         Vec3 limit = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
 
         AABB search = player.getBoundingBox().expandTowards(look.scale(RANGE)).inflate(1.0);
+        net.minecraft.world.entity.Entity self = com.xenowarriors.bot.PartyBots.botOf(player);   // (a bot's stand-in stands inside the bot: not its own target)
         EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(player, eye, limit, search,
-                e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && e != player,
+                e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && e != player && e != self,
                 eye.distanceToSqr(limit));
 
         if (entityHit != null) return entityHit.getEntity().position();

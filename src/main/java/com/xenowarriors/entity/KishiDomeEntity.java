@@ -54,6 +54,12 @@ public class KishiDomeEntity extends Entity {
             SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> OWNER =
             SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    /** With DragonMineZ: the dome's gravity in G (0 = no DragonMineZ: the normal Kishi). See compat.DmzKishiGravity. */
+    private static final EntityDataAccessor<Float> GRAVITY_G =
+            SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.FLOAT);
+    /** With DragonMineZ: the players the server weighs down (so each client applies DMZ's jump/fall/flight to itself). */
+    private static final EntityDataAccessor<CompoundTag> AFFECTED =
+            SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     private final Map<Integer, Integer> ticksInside = new HashMap<>();
 
@@ -68,6 +74,7 @@ public class KishiDomeEntity extends Entity {
         dome.setPos(pos);
         dome.entityData.set(OWNER, Optional.of(owner.getUUID()));
         dome.ownerRef = owner;
+        dome.updateGravity();
         return dome;
     }
 
@@ -78,9 +85,26 @@ public class KishiDomeEntity extends Entity {
     protected void defineSynchedData() {
         entityData.define(GRAVITY_LEVEL, 1);
         entityData.define(OWNER, Optional.empty());
+        entityData.define(GRAVITY_G, 0F);
+        entityData.define(AFFECTED, new CompoundTag());
     }
 
     public int getGravityLevel() { return entityData.get(GRAVITY_LEVEL); }
+
+    /** The dome's gravity in G with DragonMineZ (e.g. 40), or 0 without it. */
+    public float gravity() { return entityData.get(GRAVITY_G); }
+
+    /** (server) works out the G for the caster's levels and this gravity level (DragonMineZ only). */
+    private void updateGravity() {
+        if (level().isClientSide || !com.xenowarriors.compat.DmzKishiGravity.on()) return;
+        Player caster = ownerRef;
+        if ((caster == null || caster.isRemoved()) && getOwnerId() != null) caster = level().getPlayerByUUID(getOwnerId());
+        if (caster == null) return;
+        entityData.set(GRAVITY_G, (float) com.xenowarriors.compat.DmzKishiGravity.gravityFor(caster, getGravityLevel()));
+    }
+
+    /** (tests) set the dome's G directly. */
+    public void setGravityForTest(float g) { entityData.set(GRAVITY_G, g); }
 
     public float radius() { return RADIUS + RADIUS_PER_LEVEL * (getGravityLevel() - 1); }
 
@@ -105,6 +129,7 @@ public class KishiDomeEntity extends Entity {
         int level = getGravityLevel();
         if (level >= MAX_LEVEL) return false;
         entityData.set(GRAVITY_LEVEL, level + 1);
+        updateGravity();
         return true;
     }
 
@@ -121,6 +146,13 @@ public class KishiDomeEntity extends Entity {
         if (com.xenowarriors.combat.Allies.isAlly(level(), getOwnerId(), e)) return false;   // (allies aren't weighed down)
         if (e instanceof Player p && (p.isCreative() || p.isSpectator())) return false;
         return isInside(e);
+    }
+
+    /** (client, DragonMineZ) whether the server is weighing this player down. */
+    public boolean affectedOnClient(Entity e) {
+        int[] ids = entityData.get(AFFECTED).getIntArray("p");
+        for (int id : ids) if (id == e.getId()) return isInside(e);
+        return false;
     }
 
     @Override
@@ -143,8 +175,16 @@ public class KishiDomeEntity extends Entity {
         float r = radius();
         AABB area = new AABB(getX() - r, getY() - 1, getZ() - r, getX() + r, getY() + height(), getZ() + r);
 
+        float g = gravity();
+        java.util.Set<Integer> seen = new java.util.HashSet<>();
         for (LivingEntity target : level().getEntitiesOfClass(LivingEntity.class, area, this::affects)) {
             int ticks = ticksInside.merge(target.getId(), 1, Integer::sum);
+            seen.add(target.getId());
+            if (g > 0) {
+                dmzGravity(target, g, ticks);
+                hurtTick(target, owner, level, ticks);
+                continue;
+            }
 
             // heavy: slowed down
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, SLOWNESS[level - 1],
@@ -164,6 +204,84 @@ public class KishiDomeEntity extends Entity {
                 target.hurtMarked = true;
             }
 
+            hurtTick(target, owner, level, ticks);
+        }
+        if (g > 0) afterDmzTick(seen);
+    }
+
+    // ---------------------------------------------------------------- DragonMineZ gravity (see compat.DmzKishiGravity)
+
+    /** Things this dome is weighing down DMZ-style (entity ids), so they're let go when they leave or it ends. */
+    private final java.util.Set<Integer> weighed = new java.util.HashSet<>();
+    /** (tests) the last net G per entity id. */
+    public final Map<Integer, Double> lastNet = new HashMap<>();
+
+    private void dmzGravity(LivingEntity target, float g, int ticks) {
+        double net = com.xenowarriors.compat.DmzKishiGravity.net(target, g);
+        lastNet.put(target.getId(), net);
+        boolean first = weighed.add(target.getId());
+        boolean dmzPlayer = target instanceof Player && com.xenowarriors.compat.DmzKishiGravity.dmzHandlesPlayers();
+        Vec3 v = target.getDeltaMovement();
+        boolean changed = false;
+        if (dmzPlayer) {
+            // DragonMineZ applies its own gravity to the player (movement, attacks, stats, falls, ki flight)
+            com.xenowarriors.compat.DmzKishiGravity.mark((Player) target, g);
+            if (first && target instanceof net.minecraft.server.level.ServerPlayer sp) com.xenowarriors.compat.DmzKishiGravity.refreshDmz(sp);
+        } else {
+            com.xenowarriors.compat.DmzKishiGravity.applyPenalties(target, net);
+            if (!target.onGround()) {
+                double extra = com.xenowarriors.compat.DmzKishiGravity.fallExtra(net);
+                if (extra > 0) { v = v.add(0, -extra, 0); changed = true; }
+            }
+        }
+        if (target instanceof Player player && net > 0) {        // (no vanilla flying / elytra under real gravity)
+            if (player.getAbilities().flying) { player.getAbilities().flying = false; player.onUpdateAbilities(); }
+            if (player.isFallFlying()) player.stopFallFlying();
+        }
+        if (net >= com.xenowarriors.compat.DmzKishiGravity.hardStop() && !target.onGround() && v.y > -0.8) {   // (hard stop: pinned down)
+            v = new Vec3(v.x * 0.5, -0.8, v.z * 0.5);
+            changed = true;
+        }
+        if (changed) { target.setDeltaMovement(v); target.hurtMarked = true; }
+        if (ticks % 20 == 0) com.xenowarriors.compat.DmzKishiGravity.drain(target, net);
+    }
+
+    private void afterDmzTick(java.util.Set<Integer> seen) {
+        java.util.List<Integer> players = new java.util.ArrayList<>();
+        for (java.util.Iterator<Integer> it = weighed.iterator(); it.hasNext(); ) {
+            int id = it.next();
+            Entity e = level().getEntity(id);
+            if (seen.contains(id) && e != null) { if (e instanceof Player) players.add(id); continue; }
+            it.remove();
+            lastNet.remove(id);
+            ticksInside.remove(id);
+            letGo(e);
+        }
+        int[] ids = players.stream().mapToInt(Integer::intValue).sorted().toArray();
+        if (!java.util.Arrays.equals(ids, entityData.get(AFFECTED).getIntArray("p"))) {
+            CompoundTag t = new CompoundTag();
+            t.putIntArray("p", ids);
+            entityData.set(AFFECTED, t);
+        }
+    }
+
+    private static void letGo(Entity e) {
+        if (!(e instanceof LivingEntity le)) return;
+        com.xenowarriors.compat.DmzKishiGravity.clearPenalties(le);
+        if (e instanceof net.minecraft.server.level.ServerPlayer sp) com.xenowarriors.compat.DmzKishiGravity.release(sp);
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!level().isClientSide) {
+            for (int id : weighed) letGo(level().getEntity(id));
+            weighed.clear();
+        }
+        super.remove(reason);
+    }
+
+    private void hurtTick(LivingEntity target, Player owner, int level, int ticks) {
+        {
             // damage once a second, growing the longer they stay in
             if (ticks % 20 == 0) {
                 int seconds = ticks / 20 - 1;
@@ -191,7 +309,8 @@ public class KishiDomeEntity extends Entity {
                         getZ() + Math.sin(angle) * RADIUS, Math.cos(angle) * 0.15, 0.02, Math.sin(angle) * 0.15);
             }
         }
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSkillState.markKishi(getOwnerId(), level));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSkillState.markKishi(getOwnerId(), level, gravity()));
+        if (gravity() > 0) for (Player p : level().players()) if (affectedOnClient(p)) com.xenowarriors.compat.DmzKishiGravity.mark(p, gravity());
 
         // particles pressing down inside the dome
         for (int i = 0; i < (2 + level * 2) * (RADIUS * RADIUS / 9F); i++) {

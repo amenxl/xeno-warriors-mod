@@ -36,6 +36,16 @@ public final class SkillEvents {
         }
         for (KishiDomeEntity dome : entity.level().getEntitiesOfClass(KishiDomeEntity.class,
                 entity.getBoundingBox().inflate(KishiDomeEntity.MAX_RADIUS + 1, KishiDomeEntity.MAX_HEIGHT, KishiDomeEntity.MAX_RADIUS + 1))) {
+            if (dome.gravity() > 0) {
+                // DragonMineZ gravity: the jump is cut by DMZ's jump penalty for this G (none left from 75 net G)
+                if (entity.level().isClientSide ? dome.affectedOnClient(entity) : dome.affects(entity)) {
+                    double f = com.xenowarriors.compat.DmzKishiGravity.jumpFactor(com.xenowarriors.compat.DmzKishiGravity.net(entity, dome.gravity()));
+                    Vec3 v = entity.getDeltaMovement();
+                    entity.setDeltaMovement(v.x, v.y > 0 ? v.y * f : v.y, v.z);
+                    return;
+                }
+                continue;
+            }
             if (dome.affects(entity)) {
                 Vec3 v = entity.getDeltaMovement();
                 entity.setDeltaMovement(v.x, Math.min(v.y, 0), v.z);

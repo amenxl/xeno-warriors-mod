@@ -12,6 +12,7 @@ public final class ClientSkillState {
     private static final int[] COOLDOWN_TOTAL = new int[6];
     private static final Map<UUID, Long> KISHI_SEEN = new HashMap<>();
     private static final Map<UUID, Integer> KISHI_LEVEL = new HashMap<>();
+    private static final Map<UUID, Float> KISHI_G = new HashMap<>();
     private static final Map<Integer, SkillAnim> ANIMS = com.xenowarriors.client.ClientReset.perLife(new HashMap<>());
 
     /** A skill animation a player is playing: which one, when it started (their tick count), and if they were in the air. */
@@ -170,10 +171,19 @@ public final class ClientSkillState {
     }
 
     /** Called every tick by a Kishi dome so we know its owner is casting it. */
-    public static void markKishi(UUID owner, int level) {
+    public static void markKishi(UUID owner, int level) { markKishi(owner, level, 0F); }
+
+    /** The same, with the dome's DragonMineZ gravity in G (0 without DragonMineZ). */
+    public static void markKishi(UUID owner, int level, float g) {
         if (owner == null) return;
         KISHI_SEEN.put(owner, now());
         KISHI_LEVEL.put(owner, level);
+        KISHI_G.put(owner, g);
+    }
+
+    /** The G of this player's Kishi while it's up (0 = none, or no DragonMineZ). */
+    public static float kishiGravity(UUID player) {
+        return isCastingKishi(player) ? KISHI_G.getOrDefault(player, 0F) : 0F;
     }
 
     public static boolean isCastingKishi(UUID player) {
@@ -215,6 +225,7 @@ public final class ClientSkillState {
         java.util.Arrays.fill(COOLDOWN_TOTAL, 0);
         KISHI_SEEN.clear();
         KISHI_LEVEL.clear();
+        KISHI_G.clear();
         FLIGHT.clear();
         // the next server sends its own loadout/season; until then nothing from the last world (e.g. Season 2 unlocked)
         loadout = com.xenowarriors.skill.SkillPool.defaultLoadout();

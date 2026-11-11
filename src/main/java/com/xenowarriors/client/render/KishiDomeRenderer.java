@@ -68,6 +68,23 @@ public class KishiDomeRenderer extends EntityRenderer<KishiDomeEntity> {
         flatRing(vc, m, n, r - 0.3F, r + 0.15F, bottom + 0.03F, red, green, blue, 0.65F * power * alpha);
         flatRing(vc, m, n, 0F, r, h, red, green, blue, 0.12F * alpha);
 
+        // with DragonMineZ: its gravity over the top, "Kishi 40G"
+        float g = dome.gravity();
+        if (g > 0 && alpha > 0.1F) {
+            poseStack.pushPose();
+            poseStack.translate(0, h + 0.7F, 0);
+            poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
+            float s = 0.06F + 0.01F * level;
+            poseStack.scale(-s, -s, s);
+            String text = net.minecraft.network.chat.Component.translatable("entity.xenowarriors.kishi_dome.gravity", Math.round(g)).getString();
+            var font = getFont();
+            float x = -font.width(text) / 2F;
+            int a = Mth.clamp((int) (alpha * 255), 8, 255);
+            font.drawInBatch(text, x, 0, (a << 24) | 0xE6D8FF, true, poseStack.last().pose(), buffers,
+                    net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0x60000000, LightTexture.FULL_BRIGHT);
+            poseStack.popPose();
+        }
+
         super.render(dome, yaw, partialTick, poseStack, buffers, light);
     }
 
