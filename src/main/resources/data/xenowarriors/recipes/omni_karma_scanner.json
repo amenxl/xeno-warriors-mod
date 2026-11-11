@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "pattern": [
+  "XNX",
+  "DSD",
+  "XCX"
+ ],
+ "key": {
+  "X": { "item": "xenowarriors:xeno_dragon_scale" },
+  "N": { "item": "minecraft:nether_star" },
+  "D": { "item": "xenowarriors:data_shard" },
+  "S": { "item": "xenowarriors:elite_karma_scanner" },
+  "C": { "item": "xenowarriors:mod_chip" }
+ },
+ "result": { "item": "xenowarriors:omni_karma_scanner" }
+}

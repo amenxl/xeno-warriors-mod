@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "98";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "99";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -508,6 +508,8 @@ public final class ModNetwork {
                 .encoder(GunActionPacket::encode).decoder(GunActionPacket::decode).consumerMainThread(GunActionPacket::handle).add();
         CHANNEL.messageBuilder(TowerLevelPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (your Tower Level, for the stats menu)
                 .encoder(TowerLevelPacket::encode).decoder(TowerLevelPacket::decode).consumerMainThread(TowerLevelPacket::handle).add();
+        CHANNEL.messageBuilder(CutsceneGuardPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (a hit on your cutscene's guard: Guard x/3)
+                .encoder(CutsceneGuardPacket::encode).decoder(CutsceneGuardPacket::decode).consumerMainThread(CutsceneGuardPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

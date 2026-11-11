@@ -26,8 +26,17 @@ import java.util.function.Supplier;
  */
 public final class GovShop {
     /** season: the story season it's from (2/3 stay off the shelf until /xeno season unlock). */
-    public record Offer(String name, String desc, long price, Supplier<ItemStack> make, int season) {
+    /** need: the Government standing it takes to buy it (UNFRIENDLY = anyone they serve). */
+    public record Offer(String name, String desc, long price, Supplier<ItemStack> make, int season, com.xenowarriors.faction.Reputation.Tier need) {
+        public Offer(String name, String desc, long price, Supplier<ItemStack> make, int season) { this(name, desc, price, make, season, com.xenowarriors.faction.Reputation.Tier.UNFRIENDLY); }
         public Offer(String name, String desc, long price, Supplier<ItemStack> make) { this(name, desc, price, make, 1); }
+    }
+
+    /** The standing tier behind a discount the terminal shows (the client only gets the discount). */
+    public static com.xenowarriors.faction.Reputation.Tier tierOf(int discount) {
+        return discount >= 30 ? com.xenowarriors.faction.Reputation.Tier.REVERED : discount >= 20 ? com.xenowarriors.faction.Reputation.Tier.HONORED
+                : discount >= 10 ? com.xenowarriors.faction.Reputation.Tier.FRIENDLY : discount >= 0 ? com.xenowarriors.faction.Reputation.Tier.NEUTRAL
+                : com.xenowarriors.faction.Reputation.Tier.UNFRIENDLY;
     }
 
     public static final List<Offer> OFFERS = List.of(
@@ -42,7 +51,19 @@ public final class GovShop {
             new Offer("Mod Chip", "Government tech part", 250, () -> new ItemStack(com.xenowarriors.item.ModItems.MOD_CHIP.get())),
             new Offer("Facility Map", "Finds the nearest Gov facility", 300, () -> new ItemStack(com.xenowarriors.item.ModItems.FACILITY_MAP.get())),
             new Offer("Gov Keycard", "Opens a facility vault", 2500, () -> new ItemStack(GovItems.KEYCARD.get())),
-            new Offer("Healing Pod", "The facility pod, for your base", 8000, () -> new ItemStack(com.xenowarriors.item.ModItems.HEALING_POD.get())));
+            new Offer("Healing Pod", "The facility pod, for your base", 8000, () -> new ItemStack(com.xenowarriors.item.ModItems.HEALING_POD.get())),
+            // the stronger Karma Scanners: for people the Government trusts (added at the end so older offer numbers stay put)
+            new Offer("Advanced Karma Scanner", "Visor: overloads above 5,000,000, reads 64 blocks out", 6000,
+                    () -> new ItemStack(GovItems.ADVANCED_KARMA_SCANNER.get()), 1, com.xenowarriors.faction.Reputation.Tier.FRIENDLY),
+            new Offer("Elite Karma Scanner", "Visor: overloads above 500,000,000, reads 96 blocks out", 40000,
+                    () -> new ItemStack(GovItems.ELITE_KARMA_SCANNER.get()), 1, com.xenowarriors.faction.Reputation.Tier.HONORED),
+            new Offer("Omni Karma Scanner", "Visor: NO LIMIT - reads any Karma Level, never breaks, 128 blocks", 250000,
+                    () -> new ItemStack(GovItems.OMNI_KARMA_SCANNER.get()), 1, com.xenowarriors.faction.Reputation.Tier.REVERED));
+
+    /** Can this player buy this offer with their Government standing? (creative: always) */
+    public static boolean standingOk(ServerPlayer p, Offer o) {
+        return p.isCreative() || com.xenowarriors.faction.Reputation.tier(p, com.xenowarriors.faction.Faction.GOV).atLeast(o.need());
+    }
 
     private GovShop() {}
 
@@ -109,6 +130,10 @@ public final class GovShop {
         Offer o = OFFERS.get(idx);
         if (!com.xenowarriors.character.Seasons.unlocked(p.server, o.season())) {
             p.displayClientMessage(Component.literal("Season " + o.season() + " content - locked (/xeno season unlock " + o.season() + ")").withStyle(ChatFormatting.RED), true);
+            return;
+        }
+        if (!standingOk(p, o)) {
+            p.displayClientMessage(Component.literal("Restricted - needs " + o.need().title + " standing with the Government").withStyle(ChatFormatting.RED), true);
             return;
         }
         long cost = price(p, o);

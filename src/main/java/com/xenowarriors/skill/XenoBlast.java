@@ -177,6 +177,12 @@ public final class XenoBlast {
      * blast itself still charges and fires at its normal moment the way they face (nothing is refunded). Clashes
      * aren't interrupted.
      */
+    /** Whether {@link #interrupt} would cut this caster's cutscene now (CutsceneBreak's guard). */
+    public static boolean interruptible(ServerPlayer p) {
+        Cast c = castOf(p);
+        return c != null && !c.cancelled && c.rival == null && c.age() < CUTSCENE && casting(p);
+    }
+
     public static boolean interrupt(ServerPlayer p) {
         Cast c = castOf(p);
         if (c == null || c.cancelled || c.rival != null || c.age() >= CUTSCENE || !casting(p)) return false;
