@@ -108,6 +108,7 @@ public final class PackTests {
         }), 2));
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); arena(p); levels(p); }); }, 30));
+        if (focus.startsWith("packscanners")) { ScannerTests.build(mc, l, focus); return; }      // (the Karma Scanner tests alone, in the real pack)
         characters(mc, l);
         menus(mc, l);
         skills(mc, l, CharacterType.MIKIKO);

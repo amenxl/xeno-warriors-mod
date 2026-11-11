@@ -24,7 +24,19 @@ public final class GovItems {
     public static final RegistryObject<Item> JUMP_MOD = ModItems.ITEMS.register("jump_mod", () -> new GovModItem(GovModItem.JUMP, new Item.Properties().stacksTo(16)));
     public static final RegistryObject<Item> SCANNER_MOD = ModItems.ITEMS.register("scanner_mod", () -> new GovModItem(GovModItem.SCANNER, new Item.Properties().stacksTo(16)));
     /** The Karma Scanner visor (worn on your head): Karma Levels of whoever you look at. */
-    public static final RegistryObject<Item> KARMA_SCANNER = ModItems.ITEMS.register("karma_scanner", () -> new KarmaScanner.Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> KARMA_SCANNER = ModItems.ITEMS.register("karma_scanner", () -> new KarmaScanner.Item(KarmaScanner.Tier.BASIC, new Item.Properties().stacksTo(1)));
+    /** The stronger tiers: Advanced (5 million, 64 blocks), Elite (500 million, 96), Omni (no limit, 128, never breaks). */
+    public static final RegistryObject<Item> ADVANCED_KARMA_SCANNER = ModItems.ITEMS.register("advanced_karma_scanner",
+            () -> new KarmaScanner.Item(KarmaScanner.Tier.ADVANCED, new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
+    public static final RegistryObject<Item> ELITE_KARMA_SCANNER = ModItems.ITEMS.register("elite_karma_scanner",
+            () -> new KarmaScanner.Item(KarmaScanner.Tier.ELITE, new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE)));
+    public static final RegistryObject<Item> OMNI_KARMA_SCANNER = ModItems.ITEMS.register("omni_karma_scanner",
+            () -> new KarmaScanner.Item(KarmaScanner.Tier.OMNI, new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
+
+    /** The scanner item for a tier. */
+    public static Item scanner(KarmaScanner.Tier t) {
+        return switch (t) { case BASIC -> KARMA_SCANNER.get(); case ADVANCED -> ADVANCED_KARMA_SCANNER.get(); case ELITE -> ELITE_KARMA_SCANNER.get(); case OMNI -> OMNI_KARMA_SCANNER.get(); };
+    }
     public static final RegistryObject<Item> PLATING_MOD = ModItems.ITEMS.register("plating_mod", () -> new GovModItem(GovModItem.PLATING, new Item.Properties().stacksTo(16)));
 
     private GovItems() {}

@@ -31,7 +31,8 @@ import net.minecraft.world.phys.Vec3;
  * at most 40. Helicopters = 1 + (wave-1)/2 + 1 if Hated (max 3), each carrying ~55% of the soldiers between them
  * (4 to 10 aboard: 6 in the cabin, 4 hanging off the skids); armored trucks / Mk II cars = 1 + wave/2 + 1 with company
  * (max 3) carry the rest. Helicopters start ~60 blocks out at +16, ground vehicles ~40 blocks out. Mk II helicopters
- * from wave 3 (or when Hated), an Armored Truck Mk II and the Commander on the last wave. About 1 in 3 wear Karma Scanners.</li>
+ * from wave 3 (or when Hated), an Armored Truck Mk II and the Commander on the last wave. They wear their Karma Scanners
+ * (and flee for a while when one breaks).</li>
  * <li>Sky Rebellion: 4 + 2 per wave + 2 if Hated + 3 per extra fighter (max 24), diving from 18-24 blocks up, 16-26 out;
  * Logan, Kill or Keita leads the last wave.</li>
  * <li>Townsfolk: 5 + 2 per wave + 2 if Hated + 3 per extra fighter (max 24) on foot, 26-34 blocks out, from the
@@ -156,10 +157,7 @@ public final class RaidSpawns {
             g.makeCommander(90 + 30 * r.severity, 9 + 2 * r.severity);
             g.setCustomName(Component.literal("Government Commander").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
             g.setCustomNameVisible(true);
-        } else if (l.random.nextFloat() < 0.35F) {                      // Karma Scanner visors
-            g.setItemSlot(EquipmentSlot.HEAD, new ItemStack(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get()));
-            g.setDropChance(EquipmentSlot.HEAD, 0F);
-        }
+        }                                                               // (Karma Scanners: every guard rolls its own - see gov.GovScanning)
         g.clearRestriction();
         reach(g);
         g.setDropChance(EquipmentSlot.MAINHAND, 0F);

@@ -272,7 +272,7 @@ public final class RaidTests {
             for (VehicleEntity v : r.vehicleList()) {
                 if (v.kind.heli()) { helis++; aboardHeli += v.getPassengers().size(); } else { grounds++; aboardGround += v.getPassengers().size(); }
             }
-            for (LivingEntity e : r.alive()) if (e.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get())) scanners++;
+            for (LivingEntity e : r.alive()) if (e.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item) scanners++;
             check("gov wave 1: helicopters packed with soldiers + a convoy", r.wave == 1 && helis >= 1 && aboardHeli >= 6 && grounds >= 1 && aboardGround >= 2,
                     "wave=" + r.wave + "/" + r.waves + " helis=" + helis + " (" + aboardHeli + " aboard) ground=" + grounds + " (" + aboardGround + " aboard) soldiers=" + r.alive().size()
                     + " karmaScanners=" + scanners + " bar='" + r.bar().getName().getString() + "'");
@@ -306,6 +306,12 @@ public final class RaidTests {
             check("seated soldiers' shots reach the player", SEATED[0] > 0, "seatedAttacks=" + SEATED[0]);
             check("helicopter dropped its squad, soldiers out fighting", phaseHeli >= 1 && onFoot >= 4 && ATTACKS[0] > 0,
                     "heliPhase=" + phaseHeli + " onFoot=" + onFoot + " attacks=" + ATTACKS[0]);
+            int scanned = 0, panicking = 0;
+            for (LivingEntity e : r.alive()) if (e instanceof GovAgentEntity g) {
+                if (g.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item) scanned++;
+                if (g.panicking()) panicking++;
+            }
+            check("raid soldiers wear Karma Scanners (the guards' own roll)", scanned >= r.alive().size() / 2, "withScanner=" + scanned + "/" + r.alive().size() + " panicking=" + panicking);
             LivingEntity bt = bot == null ? null : bot.getTarget();
             check("bot fights the raiders", bot != null && bot.isAlive() && (botHits > 0 || (bt != null && FactionRaids.isRaider(bt))),
                     "bot=" + (bot == null ? "none" : "alive=" + bot.isAlive() + " downed=" + bot.downed() + " hp=" + f(bot.getHealth())) + " target=" + (bt == null ? "none" : bt.getType().toShortString()) + " hitsOnRaiders=" + botHits);
@@ -475,7 +481,8 @@ public final class RaidTests {
             PackTests.clear(p);
             FactionRaids.testFast = true;
             endAll();
-            p.connection.teleport(PackTests.HOME[0] + 300, 200, PackTests.HOME[2], 0F, 0F);
+            // (earlier pack steps can leave the player in another dimension - DragonMineZ's Otherworld - where raids never happen)
+            p.teleportTo(p.server.overworld(), PackTests.HOME[0] + 300, 200, PackTests.HOME[2], 0F, 0F);
         }), 60));
         for (int part = 0; part < 4; part++) { int fp = part; l.add(new Step(null, () -> PackTests.server(p -> stage(p, fp)), 10)); }
         l.add(new Step(null, () -> PackTests.server(p -> {

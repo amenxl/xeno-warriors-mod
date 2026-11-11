@@ -218,6 +218,11 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         for (EquipmentSlot slot : SLOTS) {
             ItemStack stack = player.getItemBySlot(slot);
             if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) continue;
+            // a Karma Scanner: its own 3D visor on the head (not a fitted helmet)
+            if (stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item) {
+                ScannerVisorModel.render(pose, buffers, light, overlay, parent.head, stack);
+                continue;
+            }
             // other mods' armor (DragonMineZ's gis and armors...): worn as that mod made it, its own model and texture
             // (the Fox PJs are a skin-layout onesie too: worn the same way over any outfit)
             if (foreign(stack) || stack.getItem() instanceof com.xenowarriors.item.SkinLayoutArmor) {
