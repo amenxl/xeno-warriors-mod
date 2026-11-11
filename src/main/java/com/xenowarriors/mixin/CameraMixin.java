@@ -40,9 +40,8 @@ public abstract class CameraMixin implements com.xenowarriors.client.XwCamera {
             if (detached) {
                 double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
                 move(-getMaxZoom(extra), 0.6, 0.0);
-            } else {
-                move(0.0, v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 0.15 : 0.75, 0.0);   // eyes above the hood
             }
+            // (first person: the seats sit the driver's eyes at the windscreen, looking out over the dash - no lift needed)
         }
         // the cutscenes
         double[] cam = UltimateCutscene.camera(partialTick);

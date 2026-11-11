@@ -48,6 +48,8 @@ public class VehicleEntity extends Mob implements GeoEntity {
     private double speed, climb;
     // client: wheel and rotor angles for the renderer
     public float wheelRot, wheelRotO, rotorRot, rotorRotO, rotorSpin;
+    /** client: how far the front wheels are turned (degrees), for the renderer */
+    public float steer, steerO;
     // trucks: the guard's patrol
     private Vec3 home, patrolTarget;
 
@@ -418,6 +420,8 @@ public class VehicleEntity extends Mob implements GeoEntity {
             double hs = (getX() - xo) * -Mth.sin(getYRot() * Mth.DEG_TO_RAD) + (getZ() - zo) * Mth.cos(getYRot() * Mth.DEG_TO_RAD);
             wheelRot += (float) (hs / ((kind.base() == VehicleKind.GOV_TRUCK ? 0.44 : 0.33) * kind.scale));
             tilt();
+            steerO = steer;
+            steer += (Mth.clamp(Mth.wrapDegrees(getYRot() - yRotO) * 4F, -28F, 28F) - steer) * 0.35F;
             float targetSpin = driven() || !onGround() ? 1.6F : 0F;
             rotorSpin += (targetSpin - rotorSpin) * 0.03F;
             rotorRot += rotorSpin;
