@@ -86,6 +86,7 @@ public final class UiTest {
         if (com.xenowarriors.client.test.HuntUiTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.HuntUiTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.HuntEfTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.HuntEfTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.BotTrainingTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.BotTrainingTests.build(mc, l::add, System.getenv("XW_UITEST_FOCUS")); return l; }
+        if (com.xenowarriors.client.test.BotSkillsTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.BotSkillsTests.build(mc, l::add, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.BotKiTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.BotKiTests.build(mc, l::add, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.KishiGravTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.KishiGravTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if (com.xenowarriors.client.test.HudFaceTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.HudFaceTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }

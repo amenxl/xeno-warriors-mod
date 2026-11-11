@@ -52,10 +52,13 @@ public final class DmzBotMasters extends Goal {
     @Override public boolean canUse() {
         if (b.tickCount < nextLook) return false;
         nextLook = b.tickCount + LOOK_EVERY;
-        if (!on() || !DmzBotTalk.free(b) || b.getTarget() != null) return false;
-        if (b.owner() == null || DmzPerCharacter.viewing(b.owner()) != null) return false;   // (its Dragon Ball menu open: its TP is yours to spend)
+        if (!on() || b.owner() == null || DmzPerCharacter.viewing(b.owner()) != null) return false;   // (its Dragon Ball menu open: its TP is yours to spend)
         List<Entity> ms = masters();
         if (ms.isEmpty()) return false;
+        if (!DmzBotTalk.free(b) || b.getTarget() != null) {
+            PartyBots.testLog(b, "dmz master: " + ms.size() + " near, not now (" + com.xenowarriors.bot.BotErrands.danger(b) + ", errand " + b.errand + ")");
+            return false;
+        }
         var tag = DmzPerCharacter.saved(b.owner(), DmzPerCharacter.botKey(b));
         if (tag == null) return false;
         int sig = Objects.hash(tag.getCompound("Resources").getFloat("TrainingPointsF"), tag.getCompound("Techniques").hashCode(), tag.getCompound("Stats").hashCode(),
@@ -71,7 +74,7 @@ public final class DmzBotMasters extends Goal {
                 StringBuilder why = new StringBuilder();
                 String s = DmzBotTechniques.lesson(d, name, why);
                 if (s == null) continue;
-                if (e.distanceToSqr(b) > 2.8 * 2.8 && !DmzBotTalk.reachable(b, e)) { resting.put(name, b.tickCount + RETRY); continue; }
+                if (e.distanceToSqr(b) > 2.8 * 2.8 && !DmzBotTalk.reachable(b, e)) { resting.put(name, b.tickCount + RETRY); PartyBots.testLog(b, "dmz master: can't walk to " + name); continue; }
                 to = e; master = name; skill = s;
                 return true;
             }
@@ -93,7 +96,8 @@ public final class DmzBotMasters extends Goal {
     @Override public void stop() {
         if (!done && master != null) {
             resting.put(master, b.tickCount + RETRY);
-            PartyBots.testLog(b, "dmz master: gave up on " + master + " for now");
+            PartyBots.testLog(b, "dmz master: gave up on " + master + " for now (alive " + (to != null && to.isAlive()) + " time " + (b.tickCount < until) + " free " + DmzBotTalk.free(b)
+                    + " errand " + b.errand + " danger " + com.xenowarriors.bot.BotErrands.danger(b) + " target " + b.getTarget() + " stuck " + stuck + ")");
         }
         b.getNavigation().stop();
         to = null; master = null; skill = null; done = false;

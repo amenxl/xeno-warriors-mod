@@ -46,6 +46,7 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DOWNED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DMZ_FLY = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
     /** When to tidy its things next (a few seconds after they changed; 0 = nothing pending - see BotBags). */
@@ -119,6 +120,12 @@ public class PartyBotEntity extends PathfinderMob {
 
     public boolean drinking() { return drinkTicks >= 0; }
     public boolean selfFlyingForTest() { return selfFlying; }
+    /** Flying right now (after its owner, on a lap of the sky, or with no ground under it while it can fly). */
+    public boolean airborneFlying() {
+        if (onGround() || isPassenger() || isInWater()) return false;
+        if (isNoGravity() || flyingWithOwner || selfFlying) return true;
+        return canFly() && level().getBlockState(blockPosition().below(2)).isAir() && level().getBlockState(blockPosition().below()).isAir();
+    }
     /** (Tests) take a turn about the sky now. */
     public void flourishNow() { nextFlourish = tickCount; }
 
@@ -159,6 +166,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(LEVEL, 1);
         entityData.define(DOWNED, false);
         entityData.define(SPAR, false);
+        entityData.define(DMZ_FLY, false);
     }
 
     // ---------------------------------------------------------------- state
@@ -214,7 +222,14 @@ public class PartyBotEntity extends PathfinderMob {
         return PartyBots.friendly(this, e) && !(sparring() && e == owner());
     }
 
-    public boolean canFly() { CharacterType t = character(); return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }
+    public boolean canFly() { return naturalFlier() || entityData.get(DMZ_FLY); }
+
+    /** Its character flies by itself (Skylanders, Ultima, Mikiko). */
+    public boolean naturalFlier() { CharacterType t = character(); return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }
+
+    /** With DragonMineZ: it has learned Fly (and has the ki for it) - it flies like the fliers do (DmzBotSkills keeps this up to date). */
+    public boolean dmzFly() { return entityData.get(DMZ_FLY); }
+    public void setDmzFly(boolean on) { if (entityData.get(DMZ_FLY) != on) entityData.set(DMZ_FLY, on); }
 
     /** Apply this character's level (from the owner's saved stats for it). */
     public void applyLevel(int level) {

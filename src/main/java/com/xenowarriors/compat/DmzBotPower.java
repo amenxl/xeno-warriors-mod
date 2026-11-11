@@ -58,12 +58,17 @@ public final class DmzBotPower {
     private static boolean broken;
     private static Method getResources, getCharacter, maxEnergy, regen, drain, melee, kiDamage, getEnergy, setEnergy, getRelease, setRelease;
     private static Method setActiveForm, clearActiveForm, activeForm, activeGroup, auraColor, nextForm, targetGroup, formName, techCost, ensureSelected;
+    // Kaioken (DragonMineZ's "stack" forms): optional
+    private static Method setStack, clearStack, activeStack, selectedStackGroup, nextStack, ensureStack, healthDrain, activeFormData, formStackable, stackFormData;
 
     /** A bot's power state (kept while it's out; read into its DMZ copy whenever that's re-read). */
     static final class Power {
         float energy = -1;               // (fraction of its max ki; -1 = take its saved one)
         int release = BASE_RELEASE;
         String group, form;              // (null = base form)
+        String stackGroup, stack;        // (Kaioken: null = none)
+        boolean stackRested = true;      // (dropped it for low health: not again until it's back over 60%)
+        float kaiokenDrained;
         boolean charging;
         long lastFight = -100000, chargedAt;
         double restMelee;
@@ -112,6 +117,18 @@ public final class DmzBotPower {
             try { ensureSelected = th.getMethod("ensureSelectedFormDefault", sd); } catch (Throwable ignored) {}
             try { techCost = Class.forName("com.dragonminez.common.stats.techniques.KiAttackData").getMethod("getCalculatedCost", sd); } catch (Throwable ignored) {}
             setRelease = r.getMethod("setPowerRelease", int.class);
+            try {
+                setStack = ch.getMethod("setActiveStackForm", String.class, String.class);
+                clearStack = ch.getMethod("clearActiveStackForm");
+                activeStack = ch.getMethod("getActiveStackForm");
+                selectedStackGroup = ch.getMethod("getSelectedStackFormGroup");
+                activeFormData = ch.getMethod("getActiveFormData");
+                stackFormData = ch.getMethod("getActiveStackFormData");
+                nextStack = th.getMethod("getNextAvailableStackForm", sd);
+                ensureStack = th.getMethod("ensureSelectedStackFormDefault", sd);
+                healthDrain = nextStack.getReturnType().getMethod("getHealthDrain");
+                formStackable = nextStack.getReturnType().getMethod("getFormStackable");
+            } catch (Throwable t) { setStack = null; XenoWarriors.LOGGER.warn("Bots won't use Kaioken (DragonMineZ's API changed?)", t); }
             return true;
         } catch (Throwable t) {
             broken = true; setRelease = null;
@@ -133,6 +150,7 @@ public final class DmzBotPower {
         try {
             Object res = getResources.invoke(stats), ch = getCharacter.invoke(stats);
             clearActiveForm.invoke(ch);
+            if (clearStack != null) clearStack.invoke(ch);
             setRelease.invoke(res, BASE_RELEASE);
             p.restMelee = num(melee, stats);
             float max = num(maxEnergy, stats);
@@ -147,6 +165,7 @@ public final class DmzBotPower {
         setEnergy.invoke(res, p.energy * num(maxEnergy, stats));
         setRelease.invoke(res, p.release);
         if (p.form != null) setActiveForm.invoke(ch, p.group, p.form); else clearActiveForm.invoke(ch);
+        if (setStack != null) { if (p.stack != null) setStack.invoke(ch, p.stackGroup, p.stack); else clearStack.invoke(ch); }
     }
 
     private static void fail(Throwable t) {
@@ -264,6 +283,7 @@ public final class DmzBotPower {
                 } else if (now - p.lastFight > CALM_TICKS && p.release > want) { p.release = want; note(b.character().getId() + " powers down to " + want + "%"); }
                 if (now - p.lastFight > CALM_TICKS && p.form != null && !ownerFormed) revert(b, o, st, p, "the fight's over");
             }
+            kaioken(b, o, st, p, inFight, inFight ? (danger != null ? danger : target) : null);
             // you transformed: it follows (a fight on or close by, and the ki for it - no strong enemy needed)
             if (following && p.form == null && p.energy > 0.08F && com.xenowarriors.bot.BotForms.nearCombat(b, o)) {
                 if (transform(b, o, st, p, " following " + o.getGameProfile().getName())) p.followUntil = -1;
@@ -292,7 +312,8 @@ public final class DmzBotPower {
                         note(b.character().getId() + " fully charged after " + (now - p.chargedAt) / 20 + " s");
                     }
                 }
-            } else if (!inFight && p.energy < 1F) p.energy = Math.min(1F, p.energy + Math.max(0.002F, num(regen, st, false) / 2F / max));
+            } else if (!inFight && p.energy < 1F && !(b.dmzFly() && !b.naturalFlier() && DmzBotSkills.flying(b)))   // (no resting regen while it flies on its ki)
+                p.energy = Math.min(1F, p.energy + Math.max(0.002F, num(regen, st, false) / 2F / max));
             write(p, st);
         } catch (Throwable t) { fail(t); }
     }
@@ -327,6 +348,82 @@ public final class DmzBotPower {
         return true;
     }
 
+    // ---------------------------------------------------------------- Kaioken
+
+    /** Health share it goes into Kaioken above, and drops it below. */
+    static final float KAIOKEN_ON = 0.6F, KAIOKEN_OFF = 0.35F;
+
+    /**
+     * Kaioken (a DragonMineZ "stack" form, unlocked by its Kaioken skill level: x2 at level 1 ... x20 at level 5):
+     * against a strong enemy with over 60% health it goes as high as its skill allows, the way DragonMineZ's stack-form
+     * key steps a player up (getNextAvailableStackForm) - on top of a form only if that form is stackable. Every second
+     * it costs the form's health drain (x2: 3% of its max health); under 35% health, or when the fight's over, it drops
+     * it, and it doesn't go back in until it's over 60% again.
+     */
+    private static void kaioken(PartyBotEntity b, ServerPlayer o, Object st, Power p, boolean inFight, LivingEntity foe) throws Exception {
+        if (setStack == null) return;
+        float hp = b.getHealth() / Math.max(1F, b.getMaxHealth());
+        if (hp >= KAIOKEN_ON) p.stackRested = true;
+        Object ch = getCharacter.invoke(st);
+        if (p.stack != null) {
+            if (!inFight) { dropStack(b, st, p, "the fight's over"); return; }
+            if (hp < KAIOKEN_OFF) { p.stackRested = false; dropStack(b, st, p, "low health " + Math.round(hp * 100) + "%"); o.displayClientMessage(Component.literal("").append(b.label()).append(" drops Kaioken").withStyle(ChatFormatting.GRAY), true); return; }
+            if (b.tickCount % 20 < 10) {                                          // (once a second)
+                Object fd = stackFormData.invoke(ch);
+                double d = fd == null ? 0 : ((Number) healthDrain.invoke(fd)).doubleValue();
+                if (d > 0) { b.setHealth(Math.max(1F, b.getHealth() - (float) (b.getMaxHealth() * d))); p.kaiokenDrained += (float) (b.getMaxHealth() * d); }
+                if (b.level() instanceof ServerLevel level) level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.1F, 0.1F), 1.8F), b.getX(), b.getY() + 0.9, b.getZ(), 10, 0.4, 0.7, 0.4, 0.02);
+            }
+            return;
+        }
+        if (!inFight || foe == null || !strong(b, foe) || hp < KAIOKEN_ON || !p.stackRested) return;
+        if (p.form != null) {                                                     // (on top of a form: only a stackable one)
+            Object af = activeFormData.invoke(ch);
+            Object ok = af == null ? null : formStackable.invoke(af);
+            if (!(ok instanceof Boolean bo && bo)) return;
+        }
+        ensureStack.invoke(null, st);
+        String group = null, last = null;
+        for (int i = 0; i < 8; i++) {
+            Object fd = nextStack.invoke(null, st);
+            if (fd == null) break;
+            String name = (String) formName.invoke(fd), g = (String) selectedStackGroup.invoke(ch);
+            if (name == null || name.isEmpty() || name.equals(last)) break;
+            setStack.invoke(ch, g, name);
+            if (!name.equals(activeStack.invoke(ch))) break;
+            group = g; last = name;
+        }
+        if (last == null) return;
+        p.stackGroup = group; p.stack = last;
+        kaiokens++;
+        note(b.character().getId() + " goes Kaioken " + last + " (" + group + ") vs " + foe.getType().getDescriptionId() + " at " + Math.round(hp * 100) + "% health, melee x"
+                + Math.round(num(melee, st) / Math.max(0.01, p.restMelee) * 100) / 100.0);
+        if (b.level() instanceof ServerLevel level) {
+            level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.1F, 0.1F), 2.2F), b.getX(), b.getY() + 0.9, b.getZ(), 50, 0.5, 0.9, 0.5, 0.05);
+            level.playSound(null, b.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.NEUTRAL, 0.8F, 0.7F);
+        }
+        o.displayClientMessage(Component.literal("").append(b.label()).append(" Kaioken " + last + "!").withStyle(ChatFormatting.RED), true);
+    }
+
+    private static void dropStack(PartyBotEntity b, Object st, Power p, String why) throws Exception {
+        clearStack.invoke(getCharacter.invoke(st));
+        note(b.character().getId() + " drops Kaioken " + p.stack + " (" + why + ")");
+        p.stack = null; p.stackGroup = null;
+    }
+
+    /** Its ki now, as a share of its max (-1 = not known yet). */
+    static float kiFraction(PartyBotEntity b) { Power p = POWER.get(b.getUUID()); return p == null || p.energy < 0 ? -1 : p.energy; }
+
+    /** Spends this share of its max ki (for flying); written into its DragonMineZ copy at its next half-second tick. */
+    static void useKi(PartyBotEntity b, float share) { Power p = POWER.get(b.getUUID()); if (p != null && p.energy >= 0) p.energy = Math.max(0, p.energy - share); }
+
+    /** (Tests) Kaioken uses so far. */
+    public static int kaiokens;
+
+    /** (Tests) its Kaioken form now (null = none) and the health it has cost it. */
+    public static String kaiokenForTest(PartyBotEntity b) { Power p = POWER.get(b.getUUID()); return p == null ? null : p.stack; }
+    public static float kaiokenDrainForTest(PartyBotEntity b) { Power p = POWER.get(b.getUUID()); return p == null ? 0 : p.kaiokenDrained; }
+
     private static void revert(PartyBotEntity b, ServerPlayer o, Object st, Power p, String why) throws Exception {
         clearActiveForm.invoke(getCharacter.invoke(st));
         note(b.character().getId() + " reverts from " + p.form + " (" + why + ")");
@@ -355,7 +452,7 @@ public final class DmzBotPower {
     public static void onHurt(LivingHurtEvent e) {
         if (!(e.getSource().getEntity() instanceof PartyBotEntity b) || e.getSource().getDirectEntity() != b || !ready()) return;
         Power p = POWER.get(b.getUUID());
-        if (p == null || p.restMelee <= 0 || (p.form == null && p.release <= BASE_RELEASE)) return;
+        if (p == null || p.restMelee <= 0 || (p.form == null && p.stack == null && p.release <= BASE_RELEASE)) return;
         Object st = stats(b);
         if (st == null) return;
         double ratio = Math.max(0.5, Math.min(6.0, num(melee, st) / p.restMelee));
@@ -425,7 +522,7 @@ public final class DmzBotPower {
     public static String state(PartyBotEntity b) {
         Power p = POWER.get(b.getUUID());
         if (p == null) return "none";
-        return "ki=" + pct(Math.max(0, p.energy)) + " release=" + p.release + "% form=" + p.form + " charging=" + p.charging
+        return "ki=" + pct(Math.max(0, p.energy)) + " release=" + p.release + "% form=" + p.form + " kaioken=" + p.stack + " charging=" + p.charging
                 + (p.followUntil > 0 ? " follow=" + p.followAt + ".." + p.followUntil : "");
     }
 
