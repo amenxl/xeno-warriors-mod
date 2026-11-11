@@ -109,6 +109,10 @@ public final class ClientModEvents {
                 com.xenowarriors.item.ModItems.KARMA_HOODIE.get());
         event.register((stack, layer) -> layer == 0 ? com.xenowarriors.item.PhoneItem.color(stack) | 0xFF000000 : -1,
                 com.xenowarriors.item.ModItems.PHONE.get());
+        // the Karma Scanners: lens and lights in their dye colour (icon layer 0, and the 3D model's tinted faces)
+        event.register((stack, layer) -> layer == 0 && stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item k ? k.getColor(stack) | 0xFF000000 : -1,
+                com.xenowarriors.gov.GovItems.KARMA_SCANNER.get(), com.xenowarriors.gov.GovItems.ADVANCED_KARMA_SCANNER.get(),
+                com.xenowarriors.gov.GovItems.ELITE_KARMA_SCANNER.get(), com.xenowarriors.gov.GovItems.OMNI_KARMA_SCANNER.get());
     }
 
     /** Extra Hekublade models (the sword and each crystal, drawn separately so the crystals can move). */
