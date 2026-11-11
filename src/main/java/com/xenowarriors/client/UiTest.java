@@ -124,6 +124,7 @@ public final class UiTest {
         if (System.getenv("XW_UITEST_FOCUS") != null && System.getenv("XW_UITEST_FOCUS").startsWith("prog")) { com.xenowarriors.client.test.ProgTests.build(mc, l, System.getenv("XW_UITEST_FOCUS")); return l; }
         if ("sr".equals(System.getenv("XW_UITEST_FOCUS"))) { srGallery(mc, l); return l; }
         if ("anim".equals(System.getenv("XW_UITEST_FOCUS"))) { srAnims(mc, l); return l; }
+        if (com.xenowarriors.client.test.SigWeaponTests.handles(System.getenv("XW_UITEST_FOCUS"))) { com.xenowarriors.client.test.SigWeaponTests.run(mc, System.getenv("XW_UITEST_FOCUS"), (n, a, d) -> l.add(new Step(n, a, d))); return l; }
         if ("bats".equals(System.getenv("XW_UITEST_FOCUS"))) { bats(mc, l); return l; }
         if ("vehicles".equals(System.getenv("XW_UITEST_FOCUS"))) { vehicles(mc, l); return l; }
         if ("kaeru".equals(System.getenv("XW_UITEST_FOCUS"))) { kaeru(mc, l); return l; }

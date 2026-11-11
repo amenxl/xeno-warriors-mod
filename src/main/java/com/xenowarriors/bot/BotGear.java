@@ -60,6 +60,7 @@ public final class BotGear {
     /** In a fight: the strongest weapon it has. */
     public static void holdBestWeapon(PartyBotEntity b) {
         if (handLocked(b)) return;
+        if (summonSignature(b)) return;
         ItemStack hand = b.getMainHandItem();
         float best = weaponScore(b, hand);
         int pick = -1;
@@ -68,6 +69,37 @@ public final class BotGear {
             if (sc > best) { best = sc; pick = i; }
         }
         if (pick >= 0) swap(b, pick);
+    }
+
+    /** A bag weapon must beat the summoned show weapon by this much before the bot leaves it for the bag one. */
+    public static final float SIGNATURE_MARGIN = 2.0F;
+
+    /**
+     * A bot of a character with a show weapon (Max's knife, Sam's bat, ...) summons it for a fight and keeps it in hand
+     * unless a bag weapon is much stronger. True = it holds its own weapon (nothing else to choose).
+     */
+    private static boolean summonSignature(PartyBotEntity b) {
+        net.minecraft.world.item.Item it = com.xenowarriors.forms.SignatureWeapons.itemOf(b.character());
+        if (it == null || b.level().isClientSide) return false;
+        ItemStack hand = b.getMainHandItem();
+        boolean inHand = com.xenowarriors.forms.SignatureWeapons.isSummoned(hand);
+        ItemStack sig = inHand ? hand : com.xenowarriors.forms.SignatureWeapons.make(b.character());
+        float sigScore = weaponScore(b, sig);
+        if (sigScore <= 0F) return false;                                    // (a microphone is no weapon)
+        if (!inHand && b.getServer() != null && !com.xenowarriors.character.Seasons.unlocked(b.getServer(), b.character().season())) return false;
+        float bag = inHand ? 0F : weaponScore(b, hand);
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) bag = Math.max(bag, weaponScore(b, b.inventory.getItem(i)));
+        if (bag > sigScore * SIGNATURE_MARGIN) {                             // a much stronger weapon in the bag: that one
+            if (inHand) { b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY); com.xenowarriors.forms.SignatureWeapons.awayFx(b, b.character()); }
+            return false;
+        }
+        if (inHand) return true;
+        ItemStack left = hand.isEmpty() ? ItemStack.EMPTY : b.inventory.addItem(hand.copy());
+        if (!left.isEmpty()) return false;                                   // (no room to put the old one away)
+        b.setItemSlot(EquipmentSlot.MAINHAND, sig);
+        b.setDropChance(EquipmentSlot.MAINHAND, 0F);
+        com.xenowarriors.forms.SignatureWeapons.summonFx(b, b.character());
+        return true;
     }
 
     /** Breaking a block: the best tool for it (an axe for logs, a pickaxe for ore). */
@@ -87,6 +119,7 @@ public final class BotGear {
     /** What's in its hand goes into the bag slot, and that slot's item into its hand. */
     private static void swap(PartyBotEntity b, int slot) {
         ItemStack hand = b.getMainHandItem().copy();
+        if (com.xenowarriors.forms.SignatureWeapons.isSummoned(hand)) hand = ItemStack.EMPTY;      // (a summoned weapon never goes in the bag)
         b.setItemSlot(EquipmentSlot.MAINHAND, b.inventory.getItem(slot).copy());
         b.inventory.setItem(slot, hand);
     }
@@ -95,6 +128,7 @@ public final class BotGear {
     public static ItemStack stowHand(PartyBotEntity b) {
         ItemStack hand = b.getMainHandItem();
         if (hand.isEmpty()) return ItemStack.EMPTY;
+        if (com.xenowarriors.forms.SignatureWeapons.isSummoned(hand)) { b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY); return ItemStack.EMPTY; }
         ItemStack left = b.inventory.addItem(hand.copy());
         b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         return left;
@@ -112,6 +146,12 @@ public final class BotGear {
                 || b.hurtTime > 0 || handLocked(b);
         if (busy || !LAST_BUSY.containsKey(b)) LAST_BUSY.put(b, b.tickCount);
         ItemStack hand = b.getMainHandItem();
+        com.xenowarriors.forms.SignatureWeapons.strip(b.inventory);              // (never in the bag)
+        if (!busy && b.tickCount - LAST_BUSY.get(b) > 15 * 20 && com.xenowarriors.forms.SignatureWeapons.isSummoned(hand)) {
+            b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);                // out of the fight: it puts its summoned weapon away
+            com.xenowarriors.forms.SignatureWeapons.awayFx(b, b.character());
+            hand = ItemStack.EMPTY;
+        }
         if (!busy && !hand.isEmpty() && b.tickCount - LAST_BUSY.get(b) > 15 * 20 && !b.journey()
                 && (hand.isDamageableItem() || weaponScore(b, hand) > 0F)) {
             ItemStack left = b.inventory.addItem(hand.copy());

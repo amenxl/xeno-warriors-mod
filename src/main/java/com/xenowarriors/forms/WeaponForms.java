@@ -199,6 +199,7 @@ public final class WeaponForms {
 
     /** Rhalix's tap of the summon key: wires out / everything away. (Mikiko's goes through Hekublade.toggle.) */
     public static void tap(ServerPlayer p) {
+        if (SignatureWeapons.toggle(p)) return;                                  // Max's knife, Sam's bat... (tap = summon / put away)
         Form.Style s = style(p);
         if (s == null) return;
         if (s == Form.Style.HEKU) { com.xenowarriors.mikiko.Hekublade.toggle(p); return; }

@@ -47,6 +47,13 @@ public final class BladeChannelClient {
             kaeruWas = d;
             return;
         }
+        // everyone with a show weapon (Max's knife, Sam's bat...): a press summons / puts it away (the server decides)
+        if (mc.player != null && mc.screen == null && com.xenowarriors.forms.SignatureWeapons.has(ClientCharacterData.getLocal())) {
+            boolean d = ModKeyMappings.SUMMON_BLADE.isDown();
+            if (d && !kaeruWas) ModNetwork.sendToServer(new com.xenowarriors.network.FormPickPacket(com.xenowarriors.network.FormPickPacket.TAP, -1));
+            kaeruWas = d;
+            return;
+        }
         boolean mikiko = mc.player != null && ClientCharacterData.getLocal() == CharacterType.MIKIKO && mc.screen == null;
         boolean down = mikiko && ModKeyMappings.SUMMON_BLADE.isDown();
         if (down) {
