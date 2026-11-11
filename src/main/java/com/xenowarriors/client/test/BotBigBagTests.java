@@ -154,8 +154,8 @@ final class BotBigBagTests {
             check("menu slots", m.slots.size() == BotMenu.GEAR + 54 + 36, "slots=" + m.slots.size());
             int active = 0; for (int i = BotMenu.GEAR; i < BotMenu.GEAR + 54; i++) if (m.slots.get(i).isActive()) active++;
             check("bag tab shows 36", m.tab() == 0 && active == 36 && m.slots.get(BotMenu.GEAR + 35).getItem().is(Items.STICK), "active=" + active + " slot 36=" + m.slots.get(BotMenu.GEAR + 35).getItem());
-            s.press(1);
         }, 10));
+        l.accept(new UiTest.Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) s.press(1); }, 10));
         l.accept(new UiTest.Step("botbig_extra1_854", () -> {
             BotInventoryScreen s = screen(mc);
             if (s == null) { check("extra tab", false, "screen gone"); return; }
@@ -166,8 +166,8 @@ final class BotBigBagTests {
                     "active=" + active + " slot 1=" + m.slots.get(BotMenu.GEAR).getItem() + " slot 28=" + s28 + " slot 54=" + s54);
             int bottom = 0; for (var sl : m.slots) bottom = Math.max(bottom, s.getGuiTop() + sl.y + 16);
             check("every slot on screen", bottom <= mc.getWindow().getGuiScaledHeight(), "lowest slot ends at " + bottom + " of " + mc.getWindow().getGuiScaledHeight());
-            s.press(3);
         }, 10));
+        l.accept(new UiTest.Step(null, () -> { BotInventoryScreen s = screen(mc); if (s != null) s.press(3); }, 10));
         l.accept(new UiTest.Step("botbig_extra3_854", () -> {
             BotInventoryScreen s = screen(mc);
             if (s == null) return;
@@ -251,9 +251,9 @@ final class BotBigBagTests {
             if (r == null) return;
             r.inventory.clearContent();
             for (int i = 0; i < BotInventory.SIZE - 1; i++) r.inventory.setItem(i, new ItemStack(Items.COBBLESTONE, 64));
-            ItemStack left = r.inventory.addItem(new ItemStack(Items.DIRT, 70));
-            check("the last slot (tab 3, 54) takes pickups", r.inventory.getItem(BotInventory.SIZE - 1).is(Items.DIRT) && r.inventory.getItem(BotInventory.SIZE - 1).getCount() == 64 && left.getCount() == 6,
-                    "last slot=" + r.inventory.getItem(BotInventory.SIZE - 1) + " didn't fit=" + left.getCount());
+            ItemStack left = r.inventory.addItem(new ItemStack(Items.DIRT, 64)), more = r.inventory.addItem(new ItemStack(Items.DIRT, 1));   // (one stack at a time, like a pickup)
+            check("the last slot (tab 3, 54) takes pickups", r.inventory.getItem(BotInventory.SIZE - 1).is(Items.DIRT) && r.inventory.getItem(BotInventory.SIZE - 1).getCount() == 64 && left.isEmpty() && more.getCount() == 1,
+                    "last slot=" + r.inventory.getItem(BotInventory.SIZE - 1) + " didn't fit=" + left.getCount() + " then full: " + more.getCount() + " left over");
             r.inventory.clearContent();
             for (int i = 0; i < 100; i++) r.inventory.setItem(i < 30 ? i : BotInventory.BAG + (i * 7) % BotInventory.EXTRA, new ItemStack(i % 2 == 0 ? Items.COBBLESTONE : Items.DIRT, 64));
             HOLD[1] = BotBags.census(r.inventory);

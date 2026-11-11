@@ -113,7 +113,7 @@ public class BotInventoryScreen extends AbstractContainerScreen<BotMenu> {
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
         g.drawString(font, title, titleLabelX, 6, 0x9AE6FF, false);
         if (menu.tab() > 0) {                                                    // (after the name, if there's room before the Sort button)
-            String t = "- extra tab " + menu.tab() + " (bot only)";
+            String t = "(bot-only tab)";
             int tx = titleLabelX + font.width(title) + 5;
             if (tx + font.width(t) < sortX() - 3) g.drawString(font, t, tx, 6, 0x80A0B0, false);
         } else if (menu.hasTabs()) g.drawString(font, "Its own bag (goes home with it)", 30, 18 + 4 * 18 + 5, 0x80A0B0, false);

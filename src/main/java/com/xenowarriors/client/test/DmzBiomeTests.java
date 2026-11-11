@@ -146,7 +146,7 @@ public final class DmzBiomeTests {
             quiet(p);
             String was = biomeHere(p);
             int r = p.server.getCommands().performPrefixedCommand(p.server.createCommandSourceStack().withPosition(p.position()).withLevel(p.serverLevel()),
-                    "fillbiome ~-48 ~-24 ~-48 ~48 ~24 ~48 minecraft:mushroom_fields");
+                    "fillbiome ~-16 ~-3 ~-16 ~16 ~3 ~16 minecraft:mushroom_fields");
             log("setup: story mode " + DmzQuests.storyMode(true) + " at " + at + " in " + p.level().dimension().location() + " biome " + was + " -> " + biomeHere(p) + " (fillbiome " + r + ")"
                     + " missionsIgnoreBiomes=" + XwConfig.get(XwConfig.DMZ_MISSIONS_IGNORE_BIOMES));
             DmzQuestHelp.BIOME_RESUMMON_TICKS = 40;
