@@ -192,12 +192,14 @@ public final class HudFaceTests {
             var at = p.blockPosition();
             p.serverLevel().setBlock(at, net.minecraft.world.level.block.Blocks.RED_BED.defaultBlockState()
                     .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD), 3);
+            p.serverLevel().setDayTime(18000);                    // (and at night: by day it wakes you too)
             p.startSleeping(at);
         }), 6));
         l.add(new Step(shot + "_sleep", () -> { mc.setScreen(null); same(mc, "asleep you", false, "_snore", "_sleep"); }, 1));
         l.add(new Step(null, () -> UiTest.server(p -> {
             var at = p.getSleepingPos().orElse(p.blockPosition());
             p.stopSleeping();
+            p.serverLevel().setDayTime(6000);
             if (p.serverLevel().getBlockState(at).getBlock() instanceof net.minecraft.world.level.block.BedBlock)
                 p.serverLevel().setBlock(at, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
         }), 6));
