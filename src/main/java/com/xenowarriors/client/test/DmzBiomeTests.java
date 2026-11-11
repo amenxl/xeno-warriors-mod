@@ -231,6 +231,11 @@ public final class DmzBiomeTests {
             log("talk: Yamcha came=" + (e != null));
             if (e != null) p.interactOn(e, InteractionHand.MAIN_HAND);   // (as a right-click: the event, then the NPC itself)
         }); }, 30);
+        step(null, () -> server(p -> {                                         // (the dialogue's "hand in" choice: what its button sends)
+            if (DmzQuests.progress(p, Q, 1).contains("completed=true")) return;
+            Object r = stat("com.dragonminez.common.quest.QuestService", "turnInQuest", new Class<?>[]{ServerPlayer.class, String.class, String.class}, p, Q, "yamcha");
+            log("talk: hand in to Yamcha -> " + (r instanceof net.minecraft.network.chat.Component c ? c.getString() : r));
+        }), 30);
         step("dmzbiome_done", () -> { mc.setScreen(null); server(p -> {
             String pr = DmzQuests.progress(p, Q, 1);
             check("your desert mission completed in a mushroom field", pr.contains("completed=true") || pr.contains("COMPLETED") || pr.contains("objective1=1"), pr + " biome " + biomeHere(p));
