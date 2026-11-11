@@ -118,6 +118,7 @@ public final class ClientReset {
             event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm -> {
                 com.xenowarriors.client.render.CharacterDetailLayer.clearFaceCache();
                 HudFaces.clearCache();
+                HudPortrait.clear();
                 com.xenowarriors.client.cel.Cel.clear();
                 SkillIcons.clear();
             });

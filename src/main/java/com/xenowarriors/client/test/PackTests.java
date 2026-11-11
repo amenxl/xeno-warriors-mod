@@ -126,6 +126,7 @@ public final class PackTests {
         PackBotBagTests.build(mc, l);      // a bot's extra tabs and tidying with the pack's inventory mods
         PackXenoDragonTests.build(mc, l);  // the Xeno Dragon from a /killed Ender Dragon, its forms and Dragon Bomb
         KishiGravTests.pack(mc, l);   // Kishi as DragonMineZ gravity
+        HudFaceTests.pack(mc, l);     // HUD portraits show the face the model is making
         l.add(new Step(null, () -> { GunClient.testAim = null; GunClient.testTrigger = null; mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 20));
         l.add(new Step("pack_end", () -> log("summary pass=" + pass + " fail=" + fail + (FAILED.isEmpty() ? "" : " failed=" + FAILED)), 2));
     }

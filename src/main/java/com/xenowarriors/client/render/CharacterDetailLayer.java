@@ -172,16 +172,59 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     public static void clearFaceCache() { FACES.clear(); }
 
     public static net.minecraft.resources.ResourceLocation faceTexture(AbstractClientPlayer p) {
-        if (ClientCharacterData.get(p) == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(p.getId()))
-            return face(drawn(CharacterType.ULTIMA) ? "ultima_drawn" : "ultima", "overload");
+        return faceFrame(p, new FaceFrame()).face;
+    }
+
+    /**
+     * Everything drawn on a player's face this frame: the face texture (expression, blink, Demon/Lunar eyes, drawn set,
+     * overload), the battle-damage layer over it and the talking mouth. The model and the HUD portraits
+     * (client/HudPortrait) both read it, so the portrait always shows exactly the face the model is wearing.
+     */
+    public static final class FaceFrame {
+        public net.minecraft.resources.ResourceLocation face, damage, mouth;
+        /** The expression ("blink", "hurt"...; null = the plain face). */
+        public String expr;
+        /** Kaeru's Change: a dark silhouette with glowing eyes (face is the silhouette's eyes). */
+        public boolean silhouette;
+    }
+
+    /** Fills {@code f} with the face this player shows right now (see FaceFrame) and returns it. */
+    public static FaceFrame faceFrame(AbstractClientPlayer p, FaceFrame f) {
         CharacterType type = ClientCharacterData.get(p);
+        f.damage = null; f.mouth = null; f.expr = null;
+        f.silhouette = com.xenowarriors.client.kaeru.ChangeClient.silhouette(p.getId());
+        if (f.silhouette) { f.face = com.xenowarriors.client.kaeru.ChangeClient.SIL_FACE; return f; }
         String expr = expression(p, type);
-        if (drawn(type)) return face(type.getId() + "_drawn", expr);
-        if (type == CharacterType.RHALIX && com.xenowarriors.client.DemonClient.active(p.getId()) && !com.xenowarriors.client.LunarClient.active(p.getId()))   // Demon's Remnants: glowing red eyes
-            return face("rhalix_demon", expr);
-        if (type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId()))      // Lunar: crescents on his cheeks
-            return face("rhalix_lunar", expr);
-        return expr == null ? type.getFaceTexture() : face(type.getId(), expr);
+        f.expr = expr;
+        boolean dr = drawn(type);
+        String fp = dr ? type.getId() + "_drawn" : type.getId();
+        if (type == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(p.getId())) f.face = face(fp, "overload");
+        else if (!dr && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId()))      // Lunar: crescents on his cheeks
+            f.face = face("rhalix_lunar", expr);
+        else if (!dr && type == CharacterType.RHALIX && com.xenowarriors.client.DemonClient.active(p.getId()))     // Demon's Remnants: glowing red eyes
+            f.face = face("rhalix_demon", expr);
+        else f.face = expr == null ? baseFace(type) : face(fp, expr);
+        int damage = damageLevel(p);
+        if (damage > 0 && !ClientCharacterData.isPreviewing())
+            f.damage = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_damage" + damage + ".png");
+        int mouth = talkingMouth(p, expr);          // talking in voice chat (or just sent a chat line): the mouth over the face
+        if (mouth > 0) f.mouth = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_mouth_" + mouth + ".png");
+        return f;
+    }
+
+    /**
+     * Which HUD portrait frame (textures/gui/hud/frame/, made by tools/xw/hud/portrait_frames.py) matches this player's
+     * head right now: their outfit, Fox King or Lunar look, then the hood up, Yuri's glasses or Technica's goggles down.
+     * Returns {look, look + toggle} (the second is null when nothing is toggled).
+     */
+    public static String[] portraitLook(AbstractClientPlayer p, CharacterType type) {
+        String look = ClientCharacterData.outfit(p) > 0 ? outfitName(p, type)
+                : foxActive(p, type) ? "mikiko_foxking" : lunar(p, type) ? "rhalix_lunar" : type.getId();
+        String toggle = null;
+        if (com.xenowarriors.client.mikiko.HoodClient.up(p)) toggle = "_hood";
+        else if (type == CharacterType.YURI && com.xenowarriors.client.YuriLaptopIdle.glasses(p)) toggle = "_glasses";
+        else if (type == CharacterType.TECHNICA && com.xenowarriors.client.TechGoggles.down(p)) toggle = "_goggles";
+        return new String[]{look, toggle == null ? null : look + toggle};
     }
 
     /**
@@ -414,6 +457,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (p == net.minecraft.client.Minecraft.getInstance().player) {
             mouth = Math.max(mouth, com.xenowarriors.voice.VoiceLevels.mouth(com.xenowarriors.voice.VoiceLevels.LOCAL));
         }
+        // just sent a chat line: the mouth flaps for a moment (as the HUD portrait always did; now the model does too)
+        if (mouth == 0 && com.xenowarriors.client.HudFaces.talking(p.getUUID())) mouth = (com.xenowarriors.client.HudFaces.clock() / 4) % 2 == 0 ? 3 : 0;
         return mouth;
     }
 
@@ -601,29 +646,26 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
         if (model.faceRoot != null && !noHead) {
             model.faceHead.copyFrom(parent.head);
-            String expr = expression(player, type);
-            boolean dr = drawn(type);
-            String fp = dr ? type.getId() + "_drawn" : type.getId();
-            var faceTexture = type == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(player.getId())
-                    ? face(fp, "overload")
-                    : expr == null ? baseFace(type)
-                    : face(fp, expr);
-            VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(faceTexture));
+            FaceFrame ff = faceFrame(player, FRAME);       // (the same face the HUD portrait shows)
+            if (recordFaces) RENDERED.put(player.getId(), ff.face + "|" + ff.damage + "|" + ff.mouth);
+            VertexConsumer faceBuffer = buffers.getBuffer(RenderType.entityCutoutNoCull(ff.face));
             renderFace(model, parent, player, poseStack, faceBuffer, packedLight, overlay);
 
-            if (damage > 0 && !ClientCharacterData.isPreviewing()) {
-                renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityTranslucent(com.xenowarriors.XenoWarriors.id(
-                        "textures/entity/character/" + fp + "_face_damage" + damage + ".png"))), packedLight, overlay);
-            }
+            if (ff.damage != null)
+                renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityTranslucent(ff.damage)), packedLight, overlay);
 
             // talking in voice chat: an animated mouth drawn over the face
-            int mouth = talkingMouth(player, expr);
-            if (mouth > 0) {
-                var mouthTexture = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_mouth_" + mouth + ".png");
-                renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(mouthTexture)), packedLight, overlay);
-            }
+            if (ff.mouth != null)
+                renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(ff.mouth)), packedLight, overlay);
         }
     }
+
+    /** UI test: the face each model last drew (entity id -> "face|damage|mouth"), recorded only while this is on. */
+    public static boolean recordFaces;
+    public static final java.util.Map<Integer, String> RENDERED = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
+
+    /** Reused for the model's own face each frame (render thread only). */
+    private static final FaceFrame FRAME = new FaceFrame();
 
     /** The face (or a layer over it) on the head. */
     private static void renderFace(DetailModel model, PlayerModel<AbstractClientPlayer> parent, AbstractClientPlayer player, PoseStack pose,

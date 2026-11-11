@@ -50,7 +50,10 @@ public class KhParty implements IGuiOverlay {
             if (type != CharacterType.NONE) {
                 String face = HudFaces.face(m.id(), m.health(), m.maxHealth(), false, m.knockedOut());
                 boolean flash = low && (HudFaces.clock() / 6) % 2 == 0;
-                if (HudFaces.hasArt(type)) KhHud.portrait(g, HudFaces.texture(type, face), x + 1, y + 1, 26, flash);
+                if (HudFaces.hasArt(type)) {                 // (their model's face right now, when they're in view)
+                    if (!com.xenowarriors.client.HudPortrait.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, x + 1, y + 1, 26, flash))
+                        KhHud.portrait(g, HudFaces.texture(type, face), x + 1, y + 1, 26, flash);
+                }
                 else com.xenowarriors.client.HudHead.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, x + 1, y + 1, 26, flash);
             }
             KhHud.small(g, font, m.name(), x + 30, y + 4, 0xFFFFFF, 0.65F);
@@ -114,7 +117,10 @@ public class KhParty implements IGuiOverlay {
             boolean low = m.maxHealth() > 0 && m.health() / m.maxHealth() < 0.3F, flash = low && (HudFaces.clock() / 6) % 2 == 0;
             if (type != CharacterType.NONE) {
                 String face = HudFaces.face(m.id(), m.health(), m.maxHealth(), false, m.knockedOut());
-                if (HudFaces.hasArt(type)) KhHud.portrait(g, HudFaces.texture(type, face), 3, 24, 40, flash);
+                if (HudFaces.hasArt(type)) {
+                    if (!com.xenowarriors.client.HudPortrait.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, 3, 24, 40, flash))
+                        KhHud.portrait(g, HudFaces.texture(type, face), 3, 24, 40, flash);
+                }
                 else com.xenowarriors.client.HudHead.draw(g, com.xenowarriors.client.HudHead.find(m.id()), type, 5, 26, 36, flash);
             }
             KhHud.small(g, font, String.valueOf(Math.max(1, m.level())), 27, 11, 0xFFFFFF, 1F);

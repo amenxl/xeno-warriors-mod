@@ -190,7 +190,9 @@ public final class KhHud implements IGuiOverlay {
 
         // portrait + level badge + name
         String face = HudFaces.face(p.getUUID(), hp, max, HudFaces.allOut(p), false);
-        if (HudFaces.hasArt(type)) portrait(g, HudFaces.texture(type, face), px, py, size, flash);
+        if (HudFaces.hasArt(type)) {                 // (the face your model is making right now; the drawn set if it can't be shown)
+            if (!HudPortrait.draw(g, p, type, px, py, size, flash)) portrait(g, HudFaces.texture(type, face), px, py, size, flash);
+        }
         else HudHead.draw(g, p, type, px, py, size, flash);
         g.blit(BADGE, px - 3, py + size - 15, 16, 16, 0, 0, 32, 32, 32, 32);
         String lv = String.valueOf(LevelHud.level());
