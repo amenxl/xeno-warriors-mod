@@ -19,9 +19,12 @@ public class VehicleModel extends GeoModel<VehicleEntity> {
     public void setCustomAnimations(VehicleEntity e, long id, AnimationState<VehicleEntity> state) {
         float pt = state.getPartialTick();
         float wheel = Mth.lerp(pt, e.wheelRotO, e.wheelRot);
+        float steer = Mth.lerp(pt, e.steerO, e.steer) * Mth.DEG_TO_RAD;
         for (String b : new String[]{"wheel_fl", "wheel_fr", "wheel_rl", "wheel_rr", "wheel_f", "wheel_r"}) {
             CoreGeoBone bone = getAnimationProcessor().getBone(b);
-            if (bone != null) bone.setRotX(wheel);
+            if (bone == null) continue;
+            bone.setRotX(-wheel);                                       // (rolling forward: the tops go toward the nose, -z)
+            bone.setRotY(b.equals("wheel_fl") || b.equals("wheel_fr") || b.equals("wheel_f") ? -steer : 0F);  // front wheels turn into the turn (+ steer = turning right)
         }
         if (e.kind.heli()) {
             float rotor = Mth.lerp(pt, e.rotorRotO, e.rotorRot);
