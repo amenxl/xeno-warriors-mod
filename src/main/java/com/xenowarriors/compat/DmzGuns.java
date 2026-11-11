@@ -97,6 +97,11 @@ public final class DmzGuns {
                 try {
                     Object blast = blastNew.newInstance(level, shooter);
                     (kind.large ? setupLarge : setup).invoke(blast, shooter, kind.damage, kind.speed, kind.color, kind.border, 0xFFFFFF, kind.size, kind.cast);   // (it adds itself to the world)
+                    // fired from a vehicle seat: starts just outside the vehicle and its riders (it would burst on them)
+                    if (blast instanceof net.minecraft.world.entity.Entity be && shooter.getRootVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity) {
+                        Vec3 out = com.xenowarriors.vehicle.VehicleShots.clearOfVehicle(shooter, be.position(), shooter.getViewVector(1F), kind.size);
+                        if (out != null) be.setPos(out.x, out.y, out.z);
+                    }
                     level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(), kind.large ? SoundEvents.FIRECHARGE_USE : SoundEvents.BLAZE_SHOOT,
                             SoundSource.PLAYERS, kind.large ? 1F : 0.5F, kind == Kind.RIFLE ? 1.6F : 1.1F);
                     note(kind.name() + " " + net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(shooter.getType()) + " dmg=" + kind.damage + " size=" + kind.size

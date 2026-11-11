@@ -81,6 +81,10 @@ public final class VehicleV2Tests {
 
     public static void build(Minecraft mc, List<Step> l, String focus) {
         L = l;
+        // DragonMineZ keeps asking a new character for a race (its picker eats the keys): out of the way
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ClientTickEvent e) -> {
+            if (e.phase == net.minecraftforge.event.TickEvent.Phase.START && mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez")) mc.setScreen(null);
+        });
         String part = focus.replaceFirst("^(dmz|ef|pack)", "").substring("vehv2".length());
         boolean all = part.isEmpty();
         start(mc);
