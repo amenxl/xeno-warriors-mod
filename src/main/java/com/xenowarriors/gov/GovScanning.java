@@ -60,11 +60,12 @@ public final class GovScanning {
         g.setItemSlot(EquipmentSlot.HEAD, s);
         g.setDropChance(EquipmentSlot.HEAD, tier == KarmaScanner.Tier.BASIC ? 0.08F : 0.04F);
         g.getPersistentData().putBoolean(ROLLED, true);
+        g.getPersistentData().remove(LAST_WHO);          // (a new scanner takes a fresh reading)
     }
 
     /** Every 10 ticks (server): scan someone, maybe overload. */
     public static void tick(GovAgentEntity g) {
-        if (!(g.level() instanceof ServerLevel l) || g.tickCount % 10 != 0 || g.panicking()) return;
+        if (!(g.level() instanceof ServerLevel l) || g.tickCount % 10 != 0 || g.panicking() || g.isNoAi()) return;    // (no-AI props don't scan)
         KarmaScanner.Item k = KarmaScanner.worn(g);
         if (k == null) return;
         LivingEntity who = subject(g, k.tier.range);

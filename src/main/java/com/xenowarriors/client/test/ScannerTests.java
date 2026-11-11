@@ -403,36 +403,36 @@ public final class ScannerTests {
             CharacterType c = (CharacterType) w[0];
             KarmaScanner.Tier t = (KarmaScanner.Tier) w[1];
             if (c != cur[0]) { cur[0] = c; l.add(new Step(null, () -> UiTest.character(c), 40)); l.add(new Step(null, () -> { mc.setScreen(null); if (ef) com.xenowarriors.compat.epicfight.EfGunCheck.battleMode(); }, 5)); }
-            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
-                server(p -> { atHome(p, 0F); p.setXRot(-8F); p.setItemSlot(EquipmentSlot.HEAD, new ItemStack(GovItems.scanner(t))); }); ScannerVisorModel.uses = 0; }, 14));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true;
+                server(p -> { cleanup(p); atHome(p, 0F); p.setItemSlot(EquipmentSlot.HEAD, new ItemStack(GovItems.scanner(t))); }); ScannerVisorModel.uses = 0; }, 10));
+            // close up: three-quarter front, then the right side (earpiece, arm, antenna)
+            cam(mc, l, new double[]{-1.0, 0.15, 1.7}, new double[]{0, 1.55, 0}, 12);
             l.add(new Step("scanners_worn_" + c.getId() + "_" + t.id, () -> check("worn render " + c.getId() + " " + t.id, ScannerVisorModel.uses > 0,
                     ScannerVisorModel.uses + " visor model uses while on screen (" + (c == CharacterType.NONE ? "vanilla armor layer" : "character armor layer") + ")"), 3));
-            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); server(p -> p.setYRot(-60F)); }, 8));
-            if (t == KarmaScanner.Tier.ELITE || t == KarmaScanner.Tier.OMNI) l.add(new Step("scanners_worn_" + c.getId() + "_" + t.id + "_side", () -> {}, 3));
+            if (t == KarmaScanner.Tier.ELITE || t == KarmaScanner.Tier.OMNI || c == CharacterType.NONE) {
+                cam(mc, l, new double[]{-1.9, 0.1, 0.4}, new double[]{0, 1.55, 0}, 8);
+                l.add(new Step("scanners_worn_" + c.getId() + "_" + t.id + "_side", () -> {}, 3));
+            }
+            l.add(new Step(null, () -> uncam(mc), 3));
         }
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; UiTest.character(CharacterType.RHALIX); }, 40));
-        // colour variants and tiers on armor stands; the 3D item in frames and on the ground
+        l.add(new Step(null, () -> { uncam(mc); mc.options.hideGui = false; UiTest.character(CharacterType.RHALIX); }, 40));
+        // colour variants and the tiers, on Gov guards standing still
         l.add(new Step(null, () -> server(p -> {
-            cleanup(p); p.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY); atHome(p, 0F); p.setXRot(10F);
-            var lv = p.serverLevel();
+            cleanup(p); p.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY); atHome(p, 0F); p.setGameMode(GameType.CREATIVE);
             for (int i = 0; i < 6; i++) {
-                ArmorStand a = EntityType.ARMOR_STAND.create(lv);
-                a.moveTo(HOME[0] - 3.75 + i * 1.5, HOME[1], HOME[2] + 4.5, 180F, 0F); a.setYHeadRot(180F); a.setYBodyRot(180F); a.addTag("xw_sct");
-                a.setItemSlot(EquipmentSlot.HEAD, KarmaScanner.colored(GovItems.ELITE_KARMA_SCANNER.get(), KarmaScanner.COLORS[i]));
-                lv.addFreshEntity(a);
+                var g = still(p, -3.1 + i * 1.24, 3.2);
+                GovScanning.give(g, KarmaScanner.Tier.ELITE, KarmaScanner.COLORS[i]);
             }
-            for (int i = 0; i < 4; i++) {
-                ArmorStand a = EntityType.ARMOR_STAND.create(lv);
-                a.moveTo(HOME[0] - 3 + i * 2, HOME[1], HOME[2] + 7.5, 180F, 0F); a.setYHeadRot(180F); a.setYBodyRot(180F); a.addTag("xw_sct");
-                a.setItemSlot(EquipmentSlot.HEAD, new ItemStack(GovItems.scanner(TIERS[i])));
-                lv.addFreshEntity(a);
-            }
-        }), 20));
-        l.add(new Step(null, () -> { mc.options.hideGui = true; server(p -> { atHome(p, 0F); p.setXRot(8F); }); }, 8));
+        }), 25));
+        cam(mc, l, new double[]{0, 0.25, 0.0}, new double[]{0, 1.6, 3.2}, 10);
         l.add(new Step("scanners_colors", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> {
-            p.teleportTo(p.serverLevel(), HOME[0], HOME[1], HOME[2] + 5.6, 0F, 10F); p.setYRot(0F); p.setXRot(12F); p.setYHeadRot(0F); }), 8));
-        l.add(new Step("scanners_tiers_close", () -> {}, 3));
+            cleanup(p);
+            for (int i = 0; i < 4; i++) { var g = still(p, -1.95 + i * 1.3, 2.6); GovScanning.give(g, TIERS[i], -1); }
+        }), 20));
+        cam(mc, l, new double[]{-0.4, 0.2, 0.3}, new double[]{0, 1.6, 2.6}, 10);
+        l.add(new Step("scanners_tiers", () -> {}, 3));
+        l.add(new Step(null, () -> { uncam(mc); mc.options.hideGui = false; server(ScannerTests::cleanup); }, 5));
         l.add(new Step(null, () -> server(p -> {
             cleanup(p); atHome(p, 0F); p.setXRot(20F);
             var lv = p.serverLevel();
@@ -458,6 +458,41 @@ public final class ScannerTests {
         }), 5));
     }
 
+    /** A guard that stands still facing the player (-z), for the stills. */
+    private static GovAgentEntity still(ServerPlayer p, double dx, double dz) {
+        var g = guard(p, dx, dz, true);
+        g.setNoAi(true); face(g, 180F);
+        return g;
+    }
+
+    private static void face(LivingEntity g, float yaw) {
+        g.setYRot(yaw); g.yRotO = yaw; g.setYBodyRot(yaw); g.yBodyRotO = yaw; g.setYHeadRot(yaw); g.yHeadRotO = yaw;
+    }
+
+    private static final int[] CAM = {-1};
+
+    /** Looks through an invisible armor stand at `from` (relative to HOME, its eyes) toward `at`. */
+    private static void cam(Minecraft mc, List<Step> l, double[] from, double[] at, int wait) {
+        double dx = at[0] - from[0], dy = at[1] - (from[1] + 1.55), dz = at[2] - from[2];
+        float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        l.add(new Step(null, () -> server(p -> {
+            for (var e : p.serverLevel().getEntities((net.minecraft.world.entity.Entity) null, p.getBoundingBox().inflate(40), e -> e.getTags().contains("xw_sct_cam"))) e.discard();
+            ArmorStand a = EntityType.ARMOR_STAND.create(p.serverLevel());
+            a.moveTo(HOME[0] + from[0], HOME[1] + from[1] + 1.55 - 1.7875, HOME[2] + from[2], yaw, pitch);
+            a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(yaw); a.addTag("xw_sct_cam");
+            p.serverLevel().addFreshEntity(a); CAM[0] = a.getId();
+        }), 6));
+        l.add(new Step(null, () -> { mc.options.hideGui = true;
+            if (mc.level.getEntity(CAM[0]) instanceof ArmorStand a) {
+                a.setYRot(yaw); a.yRotO = yaw; a.setXRot(pitch); a.xRotO = pitch; a.setYHeadRot(yaw); a.yHeadRotO = yaw; mc.setCameraEntity(a);
+            } }, wait));
+    }
+
+    private static void uncam(Minecraft mc) {
+        mc.setCameraEntity(mc.player); mc.options.setCameraType(CameraType.FIRST_PERSON);
+        UiTest.server(p -> { for (var e : p.serverLevel().getEntities((net.minecraft.world.entity.Entity) null, p.getBoundingBox().inflate(40), e -> e.getTags().contains("xw_sct_cam"))) e.discard(); });
+    }
+
     // ------------------------------------------------------------------ Gov guards
 
     private static GovAgentEntity guard(ServerPlayer p, double dx, double dz, boolean isGuard) {
@@ -475,7 +510,7 @@ public final class ScannerTests {
             cleanup(p); atHome(p, 0F); p.setGameMode(GameType.CREATIVE); p.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
             for (int i = 0; i < 6; i++) IDS[i] = guard(p, -5 + i * 2, 6, true).getId();
             var c = guard(p, 0, 9, true); c.makeCommander(200, 12); IDS[6] = c.getId();
-            for (int i = 0; i <= 6; i++) ((GovAgentEntity) p.serverLevel().getEntity(IDS[i])).setNoAi(true);
+            for (int i = 0; i <= 6; i++) { var g = (GovAgentEntity) p.serverLevel().getEntity(IDS[i]); g.setNoAi(true); face(g, 180F); }
         }), 30));
         l.add(new Step(null, () -> server(p -> {
             int with = 0; StringBuilder b = new StringBuilder();
@@ -493,7 +528,7 @@ public final class ScannerTests {
         // a guard scans a player too strong for its basic scanner: it blows apart, the guard drops the fight and runs
         l.add(new Step(null, () -> { mc.options.hideGui = false; server(p -> {
             cleanup(p); atHome(p, 0F); p.setGameMode(GameType.SURVIVAL);
-            p.getAbilities().invulnerable = true; p.onUpdateAbilities();
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 60, 3, false, false));
             p.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1024); p.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(20); p.setHealth(p.getMaxHealth());
             GovFacilities.makeWanted(p, "were caught in a test");
             var g = guard(p, 0, 7, true);
@@ -545,7 +580,7 @@ public final class ScannerTests {
                     "helmet=" + (g == null ? "-" : g.getItemBySlot(EquipmentSlot.HEAD)) + ", panicking=" + (g != null && g.panicking()));
             // put the player back as they were
             p.getAttribute(Attributes.MAX_HEALTH).setBaseValue(20); p.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(1); p.setHealth(20);
-            p.getAbilities().invulnerable = false; p.onUpdateAbilities();
+            p.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE);
             p.getPersistentData().remove("xw_gov_wanted_until");
             cleanup(p);
         }), 5));
