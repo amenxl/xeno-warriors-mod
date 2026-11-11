@@ -174,13 +174,13 @@ public final class BotBagTests {
             BotInventoryScreen s = screen(mc);
             if (s == null) { check("tab 2", false, "screen gone"); return; }
             BotMenu m = s.getMenu();
-            Slot first = m.slots.get(BotMenu.GEAR), hidden = m.slots.get(BotMenu.GEAR + 30);
-            check("tab 2 shows extra tab 2", m.tab() == 2 && first.getItem().is(Items.DIAMOND) && first.getItem().getCount() == 20 && !hidden.isActive(),
-                    "tab=" + m.tab() + " first slot=" + first.getItem() + " 4th row active=" + hidden.isActive());
+            Slot first = m.slots.get(BotMenu.GEAR), last = m.slots.get(BotMenu.GEAR + BotInventory.TAB - 1);
+            check("tab 2 shows extra tab 2", m.tab() == 2 && first.getItem().is(Items.DIAMOND) && first.getItem().getCount() == 20 && last.isActive(),
+                    "tab=" + m.tab() + " first slot=" + first.getItem() + " slot " + BotInventory.TAB + " active=" + last.isActive());
             int from = -1;
             for (Slot sl : m.slots) if (sl.container == mc.player.getInventory() && sl.getContainerSlot() == 9) from = sl.index;
             mc.gameMode.handleInventoryMouseClick(m.containerId, from, 0, ClickType.QUICK_MOVE, mc.player);    // (shift-click your 7 gold in)
-            mc.gameMode.handleInventoryMouseClick(m.containerId, BotMenu.GEAR + 30, 0, ClickType.PICKUP, mc.player);   // (a hidden slot: nothing)
+            mc.gameMode.handleInventoryMouseClick(m.containerId, BotMenu.GEAR + 30, 0, ClickType.PICKUP, mc.player);   // (tab 2's empty slot 31 - not the bag's)
         }, 10));
         l.add(new Step(null, () -> UiTest.server(p -> {
             PartyBotEntity r = bot(p, CharacterType.RHALIX);

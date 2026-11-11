@@ -11,7 +11,9 @@ import net.minecraft.world.inventory.Slot;
 
 /**
  * A bot teammate's things: armour, offhand and hand on the left, its bag - or one of its three extra tabs (only a bot
- * has them) - then your inventory. Tab buttons along the top of the bag; "Sort" tidies its things now.
+ * has them; 54 slots each, six rows like a double chest) - then your inventory. Tab buttons along the top of the bag;
+ * "Sort" tidies its things now. 222 tall like vanilla's double chest, plus the tab row above it: fits a 240-high
+ * window (854x480 at GUI scale 2).
  */
 public class BotInventoryScreen extends AbstractContainerScreen<BotMenu> {
     private static final int ACCENT = 0xFF40D0FF;
@@ -110,7 +112,11 @@ public class BotInventoryScreen extends AbstractContainerScreen<BotMenu> {
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
         g.drawString(font, title, titleLabelX, 6, 0x9AE6FF, false);
-        if (menu.tab() > 0) g.drawString(font, "Extra tab " + menu.tab() + " (bot only)", 30, 18 + 3 * 18 + 5, 0x80A0B0, false);
+        if (menu.tab() > 0) {                                                    // (after the name, if there's room before the Sort button)
+            String t = "(bot-only tab)";
+            int tx = titleLabelX + font.width(title) + 5;
+            if (tx + font.width(t) < sortX() - 3) g.drawString(font, t, tx, 6, 0x80A0B0, false);
+        } else if (menu.hasTabs()) g.drawString(font, "Its own bag (goes home with it)", 30, 18 + 4 * 18 + 5, 0x80A0B0, false);
         g.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xA0A0B0, false);
     }
 }

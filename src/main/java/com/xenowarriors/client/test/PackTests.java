@@ -383,6 +383,10 @@ public final class PackTests {
         l.add(new Step(null, () -> client("dmz menu", () -> { allowDmz = true; log("DmzMenu.open -> " + com.xenowarriors.client.compat.DmzMenu.open()); }), 30));
         l.add(new Step("pack_dmz_menu", () -> check("dmz menu", mc.screen != null && mc.screen.getClass().getName().startsWith("com.dragonminez"), "screen " + screen(mc)), 2));
         l.add(new Step(null, () -> { allowDmz = false; mc.setScreen(null); }, 10));
+        l.add(new Step(null, () -> server(p -> check("dmz missions ignore biomes", "true".equals(com.xenowarriors.compat.DmzQuests.matchesBiome(p, "minecraft:mushroom_fields"))
+                && "true".equals(com.xenowarriors.compat.DmzQuests.biomeObjectiveMet(p, "dragonminez:ajissa_plains")),
+                "gates=" + com.xenowarriors.compat.DmzQuests.biomeGates().size() + " matchesBiome=" + com.xenowarriors.compat.DmzQuests.matchesBiome(p, "minecraft:mushroom_fields")
+                        + " biome objective=" + com.xenowarriors.compat.DmzQuests.biomeObjectiveMet(p, "dragonminez:ajissa_plains"))), 5));
     }
 
     // ------------------------------------------------------------------ 10. a team ultimate (Rhalix + a Mikiko bot: Blazing Judgment)
