@@ -1,0 +1,16 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "pattern": [
+  "CAC",
+  "DSD",
+  "CAC"
+ ],
+ "key": {
+  "C": { "item": "xenowarriors:mod_chip" },
+  "A": { "item": "minecraft:amethyst_shard" },
+  "D": { "item": "minecraft:diamond" },
+  "S": { "item": "xenowarriors:advanced_karma_scanner" }
+ },
+ "result": { "item": "xenowarriors:elite_karma_scanner" }
+}
