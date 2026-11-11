@@ -151,8 +151,16 @@ public final class XenoDragonTests {
             XenoDragonEntity x = xeno(p);
             Vec3 c = x != null ? x.position().add(0, 2.0, 0) : p.position();
             float yr = x != null ? x.getYRot() : 0;
-            double a = Math.toRadians(yr + angle);
-            Vec3 eye = c.add(-Math.sin(a) * dist, height, Math.cos(a) * dist);
+            Vec3 eye = null;
+            for (double off : new double[]{0, 45, -45, 90, -90, 135, -135, 180}) {   // (the first angle with a clear view: no pillar, not inside the ground)
+                double a = Math.toRadians(yr + angle + off);
+                Vec3 e = c.add(-Math.sin(a) * dist, height, Math.cos(a) * dist);
+                int gy = p.serverLevel().getHeight(Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(e.x), (int) Math.floor(e.z));
+                if (e.y < gy + 1.2) e = new Vec3(e.x, gy + 1.2, e.z);
+                var hit = p.serverLevel().clip(new net.minecraft.world.level.ClipContext(e, c, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, x != null ? x : p));
+                if (eye == null) eye = e;
+                if (hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) { eye = e; break; }
+            }
             placeCam(p, eye, c);
         });
     }
@@ -165,13 +173,14 @@ public final class XenoDragonTests {
         step(null, () -> server(p -> {
             XenoDragonEntity x = XenoDragons.XENO_DRAGON.get().create(p.serverLevel());
             x.moveTo(AT.x, AT.y, AT.z + 8, 180F, 0F);
+            p.teleportTo(AT.x + 12, AT.y, AT.z - 6);
             x.setYHeadRot(180F); x.yBodyRot = 180F;
             x.setNoAi(true); x.setPersistenceRequired();
             p.serverLevel().addFreshEntity(x);
             ID[0] = x.getId();
             log("still: spawned hp " + x.getMaxHealth() + " size " + x.getBbWidth() + "x" + x.getBbHeight());
         }), 20);
-        camOnXeno(mc, 0, 8.5, 0.4);
+        camOnXeno(mc, 0, 6.8, 0.2);
         String[] names = {"base", "ssj", "ssj2", "ssj3", "ssg", "ui"};
         double[] speeds = new double[6];
         for (int i = 0; i <= 5; i++) {
@@ -237,7 +246,13 @@ public final class XenoDragonTests {
             end.addFreshEntity(d);
             DRAGON[0] = d;
         }), 10);
-        step(null, () -> server(p -> { if (DRAGON[0] instanceof EnderDragon d) d.kill(); }), 10);
+        step(null, () -> server(p -> { if (DRAGON[0] instanceof EnderDragon d) d.kill(); }), 6);
+        if (dmz) {
+            cameraAt(mc, p -> placeCam(p, new Vec3(30, 89, 11), new Vec3(30, 91.5, 0)));
+            step("xd_end_emerging", () -> {}, 14);
+            step("xd_end_emerging2", () -> {}, 20);
+            playerCam(mc);
+        }
         step(null, () -> server(p -> {
             ServerLevel end = endLevel(p);
             int n = xenoCount(end);
@@ -292,10 +307,7 @@ public final class XenoDragonTests {
             dump();
         }), 5);
         if (dmz) {
-            camOnXeno(mc, 0, 9, 1.0);
-            step("xd_end_emerging", () -> {}, 5);
             step(null, () -> {}, 60);
-            playerCam(mc);
             step(null, () -> server(p -> {
                 var x = xeno(p);
                 if (x == null) { check("xeno landed", false, "none"); return; }
@@ -387,7 +399,9 @@ public final class XenoDragonTests {
         step(null, () -> server(p -> { var x = xeno(p); if (x == null) return;
             check("ultra instinct dodges some hits", x.dodges - D0[0] > 0 && x.dodges - D0[0] < 16, "dodged " + (x.dodges - D0[0]) + " of 16"); }), 2);
         // the final defeat: loot once
+        final int[] INV = {0};
         step(null, () -> server(p -> { var x = xeno(p); if (x == null) return;
+            INV[0] = p.getInventory().countItem(XenoDragons.SCALE.get());
             for (int i = 0; i < 20 && x.isAlive(); i++) { x.invulnerableTime = 0; x.hurt(p.damageSources().playerAttack(p), x.getMaxHealth()); }
             if (x.isAlive()) for (int i = 0; i < 10 && x.isAlive(); i++) { x.invulnerableTime = 0; x.hurt(p.damageSources().magic(), x.getMaxHealth()); }
             log("final blows: alive " + x.isAlive() + " dying " + x.isDeadOrDying());
@@ -402,7 +416,9 @@ public final class XenoDragonTests {
                 got.merge(ForgeRegistries.ITEMS.getKey(it.getItem().getItem()).toString(), it.getItem().getCount(), Integer::sum);
             int xp = 0;
             for (ExperienceOrb o : p.serverLevel().getEntitiesOfClass(ExperienceOrb.class, new AABB(lp, lp).inflate(24))) xp += o.getValue();
-            int scales = got.getOrDefault("xenowarriors:xeno_dragon_scale", 0);
+            int picked = p.getInventory().countItem(XenoDragons.SCALE.get()) - INV[0];
+            int scales = got.getOrDefault("xenowarriors:xeno_dragon_scale", 0) + picked;
+            log("picked up by the player: " + picked + " scales");
             check("final defeat in UI drops loot once", XenoDragons.lootDrops == 1 && scales >= 4 && scales <= 6, "lootDrops " + XenoDragons.lootDrops + " scales " + scales + " xp " + xp + " items " + got);
             check("no xeno dragon left", xenoCount(p.serverLevel()) == 0, "left " + xenoCount(p.serverLevel()));
             check("exit portal still there", PORTAL[0] >= 9, "portal blocks " + PORTAL[0]);
