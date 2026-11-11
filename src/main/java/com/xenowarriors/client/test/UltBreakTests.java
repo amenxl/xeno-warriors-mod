@@ -146,9 +146,14 @@ public final class UltBreakTests {
         l.add(new Step(null, () -> UiTest.server(p -> { CutsceneBreak.forceRoll = null; p.setHealth(p.getMaxHealth()); }), 170));   // (let it end either way)
     }
 
+    private static boolean DMZ;
+
     public static void build(Minecraft mc, List<Step> l, String focus) {
+        DMZ = focus.startsWith("dmz");
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); UiTest.character(CharacterType.RHALIX); mc.options.setCameraType(CameraType.FIRST_PERSON);
+            if (DMZ) TransformTests.noDmzScreen(mc);
             UiTest.server(p -> {
+                if (DMZ) { TransformTests.makeDmz(p, "saiyan", 40); com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p); }
                 p.setGameMode(GameType.SURVIVAL);
                 p.serverLevel().setDayTime(6000);
                 var l0 = p.serverLevel();
