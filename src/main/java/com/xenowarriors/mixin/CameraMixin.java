@@ -40,6 +40,12 @@ public abstract class CameraMixin implements com.xenowarriors.client.XwCamera {
             if (detached) {
                 double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
                 move(-getMaxZoom(extra), 0.6, 0.0);
+            } else if (entity instanceof net.minecraft.world.entity.LivingEntity le && com.xenowarriors.client.vehicle.VehicleRiderPose.onBike(le)
+                    && v.getPassengers().indexOf(le) == 0) {
+                // on the motorbike the rider leans over the tank: the eyes go with the head, forward and down
+                float yaw = v.getYRot() * net.minecraft.util.Mth.DEG_TO_RAD;
+                var at = ((net.minecraft.client.Camera) (Object) this).getPosition();
+                setPosition(at.x - net.minecraft.util.Mth.sin(yaw) * 0.42, at.y - 0.2, at.z + net.minecraft.util.Mth.cos(yaw) * 0.42);
             }
             // (first person: the seats sit the driver's eyes at the windscreen, looking out over the dash - no lift needed)
         }
