@@ -19,9 +19,24 @@ public final class SkillEvents {
     public static void onAttacked(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
         LivingEntity e = event.getEntity();
         if (e.getPersistentData().getLong(ULT_UNTIL) < e.level().getGameTime()) return;
-        // an enemy got a hit in during an ultimate / Xeno Blast cutscene: the cutscene ends and the hit lands
-        if (e instanceof net.minecraft.server.level.ServerPlayer sp && CutsceneBreak.byEnemy(sp, event.getSource()) && CutsceneBreak.interrupt(sp, event.getSource())) return;
+        // an enemy got a hit in during an ultimate / Xeno Blast cutscene: the hit lands and counts against the guard
+        // (CutsceneBreak.onHit, once its damage is known); enough of them end the cutscene
+        if (e instanceof net.minecraft.server.level.ServerPlayer sp && CutsceneBreak.byEnemy(sp, event.getSource()) && CutsceneBreak.breakable(sp)) return;
         event.setCanceled(true);
+    }
+
+    /** The damage an enemy's hit did during a cutscene, after every reduction (DragonMineZ's too): the cutscene guard. */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onDamaged(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp)) return;
+        if (sp.getPersistentData().getLong(ULT_UNTIL) < sp.level().getGameTime()) return;
+        if (CutsceneBreak.byEnemy(sp, event.getSource()) && CutsceneBreak.breakable(sp)) CutsceneBreak.onHit(sp, event.getSource(), event.getAmount());
+    }
+
+    /** A hit the cutscene guard shrugged off doesn't knock you out of the cutscene's path. */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
+    public static void onKnockback(net.minecraftforge.event.entity.living.LivingKnockBackEvent event) {
+        if (CutsceneBreak.guarding(event.getEntity())) event.setCanceled(true);
     }
 
     /** Kishi / gravity skills: nobody can jump inside a gravity dome or while rooted. */

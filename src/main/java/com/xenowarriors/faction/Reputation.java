@@ -174,7 +174,7 @@ public final class Reputation {
     /** Government gear you can hand back, and the share of its shop price you get back for it. */
     private static boolean govGear(net.minecraft.world.item.ItemStack s) {
         return s.is(com.xenowarriors.gov.GovItems.KEYCARD.get()) || s.is(com.xenowarriors.gov.GovItems.SPEED_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.JUMP_MOD.get())
-                || s.is(com.xenowarriors.gov.GovItems.SCANNER_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.PLATING_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.KARMA_SCANNER.get());
+                || s.is(com.xenowarriors.gov.GovItems.SCANNER_MOD.get()) || s.is(com.xenowarriors.gov.GovItems.PLATING_MOD.get()) || s.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item;
     }
 
     /** Sneak + right-click a Gov terminal holding emeralds, data shards or Gov gear: donate / hand it back for standing. */

@@ -1,0 +1,20 @@
+{
+ "loader": "forge:separate_transforms",
+ "gui_light": "front",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "particle": "xenowarriors:item/omni_karma_scanner"
+ },
+ "base": {
+  "parent": "xenowarriors:item/3d/omni_karma_scanner"
+ },
+ "perspectives": {
+  "gui": {
+   "parent": "minecraft:item/generated",
+   "textures": {
+    "layer0": "xenowarriors:item/omni_karma_scanner_lens",
+    "layer1": "xenowarriors:item/omni_karma_scanner"
+   }
+  }
+ }
+}
