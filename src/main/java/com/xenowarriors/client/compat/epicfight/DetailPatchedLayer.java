@@ -57,11 +57,20 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
         if (mesh[1] != null) {
-            mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(CharacterDetailLayer.faceTexture(player)), light,
+            // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
+            CharacterDetailLayer.FaceFrame ff = CharacterDetailLayer.faceFrame(player, FACE);
+            if (CharacterDetailLayer.recordFaces) CharacterDetailLayer.RENDERED.put(player.getId(), ff.face + "|" + ff.damage + "|" + ff.mouth);
+            mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(ff.face), light,
+                    1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+            if (ff.damage != null) mesh[1].draw(pose, buffers, RenderType.entityTranslucent(ff.damage), light,
+                    1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+            if (ff.mouth != null) mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(ff.mouth), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
         if (live.hasWings() && !legacy) wings(patch, player, live, pose, buffers, light, overlay, poses, partial);
     }
+
+    private static final CharacterDetailLayer.FaceFrame FACE = new CharacterDetailLayer.FaceFrame();
 
     /** (UI test, before/after) the old way: wings baked into the mesh in one pose. */
     public static boolean legacyWings;
