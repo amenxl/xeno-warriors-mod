@@ -217,7 +217,7 @@ public final class KishiGravTests {
 
         // ---- 3. three husks: no dome / light dome / heavy dome (DMZ: 10G and 80G; plain: gravity level 1 and 3)
         l.add(new Step(null, () -> UiTest.server(p -> {
-            p.connection.teleport(O.x, O.y + 1, O.z - 12, 0F, -4F);
+            p.connection.teleport(O.x, O.y, O.z - 5, 0F, -10F);
             FakePlayer foe = enemy(p.serverLevel());
             foe.moveTo(O.x, O.y, O.z - 30);
             for (int i = 0; i < 3; i++) H[i] = husk(p, O.add(-8 + 8 * i, 0, 10));
@@ -234,7 +234,7 @@ public final class KishiGravTests {
             // these domes' owner is someone else: the player's side is the wolf's and bot's, not the foe's
             D[1].setGravityForTest(dmz ? 10 : 0);
         }), 20));
-        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0F); mc.player.setXRot(-4F); }, 4));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0F); mc.player.setXRot(-10F); }, 4));
         l.add(new Step("kishigrav_domes", () -> {}, 2));
         // the jumps are sampled on the server's own ticks (the CI client runs far slower than the server)
         l.add(new Step(null, () -> UiTest.server(p -> {
