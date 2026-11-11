@@ -74,14 +74,14 @@ public class KishiDomeRenderer extends EntityRenderer<KishiDomeEntity> {
             poseStack.pushPose();
             poseStack.translate(0, h + 0.7F, 0);
             poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
-            float s = 0.035F + 0.006F * level;
+            float s = 0.06F + 0.01F * level;
             poseStack.scale(-s, -s, s);
             String text = net.minecraft.network.chat.Component.translatable("entity.xenowarriors.kishi_dome.gravity", Math.round(g)).getString();
             var font = getFont();
             float x = -font.width(text) / 2F;
             int a = Mth.clamp((int) (alpha * 255), 8, 255);
             font.drawInBatch(text, x, 0, (a << 24) | 0xE6D8FF, true, poseStack.last().pose(), buffers,
-                    net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0x40000000, LightTexture.FULL_BRIGHT);
+                    net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0x60000000, LightTexture.FULL_BRIGHT);
             poseStack.popPose();
         }
 
