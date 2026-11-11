@@ -227,7 +227,7 @@ public final class Misc5Tests {
         }), 3));
         l.add(new Step(null, () -> UiTest.server(p -> { Vr.action(p, 2, 0); survival(p); }), 40));
         // Journey battle
-        CharacterType[] picks = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY};
+        CharacterType[] picks = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY, CharacterType.MAX, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.LOGAN};   // (solo: 8)
         l.add(new Step(null, () -> UiTest.server(p -> {
             survival(p);
             Journey.setCleared(p, 2);
@@ -236,6 +236,7 @@ public final class Misc5Tests {
             Journey.action(p, 2, 0, 0);
             Journey.action(p, 11, 0, 0);
             Journey.action(p, 4, 0, 0);
+            log("journey started: " + Journey.testPhase(p));
         }), 80));
         l.add(new Step(null, () -> { mc.setScreen(null); UiTest.server(p -> Journey.testJump(p, com.xenowarriors.journey.JourneyRules.BATTLE)); }, 30));
         l.add(new Step(null, () -> UiTest.server(p -> { Journey.action(p, 6, CharacterType.MIKIKO.ordinal(), 0); Journey.action(p, 7, 0, 0); }), 100));
@@ -258,6 +259,7 @@ public final class Misc5Tests {
         if (g == null) return null;
         g.moveTo(p.getX() + dx, p.getY(), p.getZ() + dz, 0, 0);
         g.setup(true, 1, g.blockPosition());
+        g.makeCommander(40F, 5F);                       // (every modification - SPEED dashes and JUMP leaps included - but not a Tower boss)
         GovScanning.give(g, KarmaScanner.Tier.BASIC, -1);
         p.serverLevel().addFreshEntity(g);
         return g;

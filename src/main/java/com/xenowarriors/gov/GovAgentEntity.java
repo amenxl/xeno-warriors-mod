@@ -275,7 +275,7 @@ public class GovAgentEntity extends PathfinderMob {
         if (tickCount == 20 && hasGun()) { com.xenowarriors.compat.TaczGuns.draw(this); gunDrawn = true; }
         LivingEntity t = getTarget();
         if (dashCd > 0) dashCd--;
-        if (t != null && t.isAlive()) {
+        if (t != null && t.isAlive() && !panicking()) {          // (panicking: no dashes / leaps at anyone - in the Tower and Journey arenas re-aim everything at you every few ticks)
             double dist = distanceTo(t);
             // SPEED: a burst across the room
             if (has(SPEED) && dashCd == 0 && dist > 4 && dist < 14) {
