@@ -338,6 +338,7 @@ public final class KishiGravTests {
     }
 
     /** A dome's effect on a husk and on the player wherever the player is now (log only: the Otherworld after a knock-out...). */
+    private static final boolean[] CLIENT_INSIDE = new boolean[1];
     private static KishiDomeEntity probeDome, probePlayerDome;
     private static Husk probeHusk;
 
@@ -419,15 +420,24 @@ public final class KishiGravTests {
             if (mc.level != null) for (var e : mc.level.entitiesForRendering()) if (e instanceof KishiDomeEntity k)
                 cl.append(" [client dome ").append(k.getId()).append(" G=").append(k.gravity()).append(" at ").append(k.blockPosition())
                         .append(" affectsMe=").append(k.affectedOnClient(mc.player)).append(" inside=").append(k.isInside(mc.player)).append("]");
+            CLIENT_INSIDE[0] = false;
+            if (mc.level != null) for (var e : mc.level.entitiesForRendering()) if (e instanceof KishiDomeEntity k && k.gravity() > 30 && k.gravity() < 50 && k.isInside(mc.player)) CLIENT_INSIDE[0] = true;
             PackTests.log("kishi client: me id=" + mc.player.getId() + " at " + mc.player.blockPosition() + " dim=" + mc.level.dimension().location() + cl);
             PackTests.server(p -> {
                 double mod = DmzKishiGravity.speedModifier(H[0]);
                 PackTests.check("kishi dmz gravity on a mob", !dmz || Math.abs(mod + DmzKishiGravity.movePenalty(80)) < 0.01,
                         "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod) + " husk removed=" + H[0].isRemoved() + " dome removed=" + D[0].isRemoved() + " dome age=" + D[0].tickCount + " dome at " + D[0].blockPosition() + " husk at " + H[0].blockPosition() + " inside=" + D[0].isInside(H[0]) + " affects=" + D[0].affects(H[0]) + " sameLevel=" + (D[0].level() == H[0].level()) + " domeLevel=" + D[0].level().dimension().location() + " me id=" + p.getId() + " enemyDome age=" + enemyDome.tickCount);
                 double serverG = dmz ? dmzGravity(p) : -1;
-                PackTests.check("kishi dmz gravity on a player", !dmz || (serverG >= 39.9 && clientG >= 39.9),
-                        "server=" + PackTests.f(serverG) + " client=" + PackTests.f(clientG) + " dome removed=" + enemyDome.isRemoved() + " " + where(p)
+                PackTests.check("kishi dmz gravity on a player", !dmz || serverG >= 39.9,
+                        "server=" + PackTests.f(serverG) + " dome removed=" + enemyDome.isRemoved() + " " + where(p)
                         + " mixinLive=" + DmzKishiGravity.mixinLive + " " + DmzKishiGravity.selfTest());
+                // the client half (DMZ's own jump/fall/flight on the client): only when the client stands where the server
+                // thinks it does - after the Xeno Dragon's bomb kills the player, the respawn trip out of DragonMineZ's
+                // Otherworld leaves the pack client's position out of step (dmzkishigrav checks this half on its own)
+                if (!dmz) PackTests.log("kishi dmz gravity on the client: SKIP (no DragonMineZ)");
+                else if (enemyDome.isInside(p) && !CLIENT_INSIDE[0])
+                    PackTests.log("kishi dmz gravity on the client: SKIP (client position out of step with the server after the respawn: client G=" + PackTests.f(clientG) + ")");
+                else PackTests.check("kishi dmz gravity on the client", clientG >= 39.9, "client=" + PackTests.f(clientG));
                 D[0].discard(); enemyDome.discard();
                 p.setGameMode(GameType.CREATIVE);
                 PackTests.clear(p);
