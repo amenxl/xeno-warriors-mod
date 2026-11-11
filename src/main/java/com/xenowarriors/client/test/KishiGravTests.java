@@ -401,10 +401,15 @@ public final class KishiGravTests {
         l.add(new Step("pack_kishigrav", () -> {
             boolean dmz = dmz();
             double clientG = dmz ? dmzGravity(mc.player) : -1;
+            StringBuilder cl = new StringBuilder();
+            if (mc.level != null) for (var e : mc.level.entitiesForRendering()) if (e instanceof KishiDomeEntity k)
+                cl.append(" [client dome ").append(k.getId()).append(" G=").append(k.gravity()).append(" at ").append(k.blockPosition())
+                        .append(" affectsMe=").append(k.affectedOnClient(mc.player)).append(" inside=").append(k.isInside(mc.player)).append("]");
+            PackTests.log("kishi client: me id=" + mc.player.getId() + " at " + mc.player.blockPosition() + " dim=" + mc.level.dimension().location() + cl);
             PackTests.server(p -> {
                 double mod = DmzKishiGravity.speedModifier(H[0]);
                 PackTests.check("kishi dmz gravity on a mob", !dmz || Math.abs(mod + DmzKishiGravity.movePenalty(80)) < 0.01,
-                        "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod) + " husk removed=" + H[0].isRemoved() + " dome removed=" + D[0].isRemoved());
+                        "dmz=" + dmz + " G=" + D[0].gravity() + " husk speed modifier=" + PackTests.f(mod) + " husk removed=" + H[0].isRemoved() + " dome removed=" + D[0].isRemoved() + " dome age=" + D[0].tickCount + " dome at " + D[0].blockPosition() + " husk at " + H[0].blockPosition() + " inside=" + D[0].isInside(H[0]) + " affects=" + D[0].affects(H[0]) + " sameLevel=" + (D[0].level() == H[0].level()) + " domeLevel=" + D[0].level().dimension().location() + " me id=" + p.getId() + " enemyDome age=" + enemyDome.tickCount);
                 double serverG = dmz ? dmzGravity(p) : -1;
                 PackTests.check("kishi dmz gravity on a player", !dmz || (serverG >= 39.9 && clientG >= 39.9),
                         "server=" + PackTests.f(serverG) + " client=" + PackTests.f(clientG) + " dome removed=" + enemyDome.isRemoved() + " " + where(p)
