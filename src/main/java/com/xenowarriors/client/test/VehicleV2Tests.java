@@ -221,7 +221,8 @@ public final class VehicleV2Tests {
         step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(cam); setView(mc, 0F); mc.player.setXRot(10F); if (fly) mc.options.keyJump.setDown(true); }, fly ? 45 : 5);
         step(null, () -> { mc.options.keyJump.setDown(false); mc.options.keyUp.setDown(true); }, 20);
         List<float[]> s = new ArrayList<>();                // client yaw, server yaw, view
-        step(null, () -> { VehicleEntity v = clientVehicle(mc); s.clear();
+        int[] tc = new int[2];
+        step(null, () -> { VehicleEntity v = clientVehicle(mc); s.clear(); if (v != null) { tc[0] = v.tickCount; tc[1] = v.localTurns; }
             log(label + ": before the turn, view " + f(view(mc)) + " vehicle " + (v == null ? "?" : f(v.getYRot())) + " tps camera=" + tpsCam());
             setView(mc, view(mc) + 90F); }, 1);
         for (int i = 0; i < 40; i++) {
@@ -229,7 +230,7 @@ public final class VehicleV2Tests {
             step(i == 6 ? "turn_" + label.replaceAll("[^a-z0-9]+", "_") : null, () -> {
                 VehicleEntity v = clientVehicle(mc), sv = serverVehicle(mc);
                 s.add(new float[]{v == null ? Float.NaN : v.getYRot(), sv == null ? Float.NaN : sv.getYRot(), view(mc)});
-                if (ii == 39) judgeFlick(label, s);
+                if (ii == 39) { judgeFlick(label, s); if (v != null) log(label + ": " + (v.tickCount - tc[0]) + " vehicle ticks, " + (v.localTurns - tc[1]) + " turns by the driver's game over 40 samples"); }
             }, 1);
         }
         // a steady mouse sweep back left (4 degrees a tick for 30 ticks), then let it settle
@@ -634,7 +635,7 @@ public final class VehicleV2Tests {
                 id[0] = v.getId(); vehicle = v.getId();
                 p.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() + 0.5 - 20, 0F, 0F);
             }), 30);
-            double far = k.width * 1.9 + 3;
+            double far = k.width * 1.3 + 2.5;
             // front three-quarter, side, back three-quarter (empty)
             camera(mc, cam, () -> view3(id[0], 25F, far, 0.32));
             step("model_" + k.id + "_front34", () -> {}, 3);

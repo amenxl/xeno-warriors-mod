@@ -284,6 +284,8 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     /** Who drove last tick (the driver's game): a new driver gets their view turned to face forward in the seat. */
     private int lastDriver = -1;
+    /** (tests) times the driver's game turned it. */
+    public int localTurns;
     /** Helicopter: sideways speed (A/D), blocks a tick, + = right. */
     private double strafe;
 
@@ -324,7 +326,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
             if (local && side != 0 && grip > 0)
                 turnView(p, -(float) side * (kind.base() == VehicleKind.MOTORBIKE ? 4.5F : kind.base() == VehicleKind.GOV_TRUCK ? 2.4F : 3.4F) * grip * (speed < 0 ? -1 : 1));
         }
-        if (local) turnToward(viewYaw(p), turnRate());                     // faces where its driver looks
+        if (local) { turnToward(viewYaw(p), turnRate()); localTurns++; }   // faces where its driver looks
         yBodyRot = getYRot(); yHeadRot = getYRot();
         setXRot(0);
     }
