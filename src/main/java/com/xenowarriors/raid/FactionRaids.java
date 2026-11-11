@@ -328,6 +328,7 @@ public final class FactionRaids {
             }
         }
         for (Raid r : new ArrayList<>(RAIDS)) {
+            if (r.ended != null) continue;            // (ended between ticks - a command, a death: its bar must not come back)
             try { tick(r); }
             catch (Throwable t) { XenoWarriors.LOGGER.error("[raids] tick failed - calling it off", t); end(r, false, "error"); }
         }
@@ -463,6 +464,7 @@ public final class FactionRaids {
         r.won = won;
         r.bar.removeAllPlayers();
         BY_ID.remove(r.id);
+        RAIDS.remove(r);
         ServerPlayer t = r.targetPlayer();
         // clear out what it brought (raiders in unloaded chunks go when their chunk loads: see onJoin)
         for (UUID u : r.vehicles) {
