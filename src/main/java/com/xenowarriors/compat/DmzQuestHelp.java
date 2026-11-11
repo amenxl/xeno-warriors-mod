@@ -140,25 +140,25 @@ public final class DmzQuestHelp {
         for (Open o : open(p)) {
             try {
                 if (!killObj.isInstance(o.objective)) continue;
-                if ((Boolean) m(o.objective, "isTag")) continue;
-                if (!"NATURAL".equals(String.valueOf(m(o.objective, "getSpawnMode")))) continue;   // (QUEST mode: DragonMineZ summons them itself)
-                EntityType<?> type = (EntityType<?>) m(o.objective, "resolveEntityType");
-                if (type == null || !storyOnly(p.serverLevel(), type)) continue;
+                Target t = target(p, o.objective);
+                if (t == null) continue;
+                EntityType<?> type = t.type();
                 CompoundTag done = summoned(p);
                 String id = o.key + "#" + o.index;
                 long now = p.server.overworld().getGameTime();
                 if (done.contains(id)) {                                        // summoned before: again only if they were all lost (despawned, killed by
                     long at = done.getLong(id);                                 // something else, never arrived) - or the objective could never be finished
-                    if (now >= at && now - at < RESUMMON_TICKS) continue;
+                    if (now >= at && now - at < (t.biome() ? BIOME_RESUMMON_TICKS : RESUMMON_TICKS)) continue;
                     if (p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL || alive(p, o.key, o.index) > 0) continue;
-                    note("the summons for " + id + " were lost - summoning again");
+                    note((t.biome() ? "the last ones for " : "the summons for ") + id + (t.biome() ? " are gone - more come" : " were lost - summoning again"));
                 }
                 done.putLong(id, now);
                 int n = Math.max(1, Math.min(5, o.required - o.progress));
                 double hp = ((Number) m(o.objective, "getHealth")).doubleValue();
-                p.displayClientMessage(Component.literal("Your mission's target has sensed your ki... ").append(type.getDescription()).append(" is coming!")
-                        .withStyle(ChatFormatting.GOLD), false);
-                note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + id + " (" + o.progress + "/" + o.required + ") near " + p.getGameProfile().getName());
+                p.displayClientMessage((t.biome() ? Component.literal("Your mission's targets don't live around here, so they came to you: ").append(type.getDescription())
+                        : Component.literal("Your mission's target has sensed your ki... ").append(type.getDescription()).append(" is coming!")).withStyle(ChatFormatting.GOLD), false);
+                note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + id + " (" + o.progress + "/" + o.required + ") near " + p.getGameProfile().getName()
+                        + (t.biome() ? " (they only live in other biomes)" : ""));
                 for (int k = 0; k < n; k++) {
                     int idx = o.index; String key = o.key;
                     com.xenowarriors.skill.ServerScheduler.later(100 + k * 30, () -> summon(p, type, key, idx, hp));
@@ -169,6 +169,61 @@ public final class DmzQuestHelp {
 
     /** How long after summoning an objective's enemies before they may be summoned again (if all of them are gone). */
     public static int RESUMMON_TICKS = 20 * 90;
+    /** The same for enemies that came because they don't live in your biome (the next group once the last is gone). */
+    public static int BIOME_RESUMMON_TICKS = 20 * 10;
+
+    /** What to summon for a kill objective: {@code biome} = it lives only in other biomes (missionsIgnoreBiomes); else a story fighter. */
+    record Target(EntityType<?> type, boolean biome) {}
+
+    /**
+     * A "defeat N" objective whose enemies won't turn up where you are by themselves (null: they will, or DragonMineZ
+     * summons them itself): one of DragonMineZ's story fighters (they never spawn naturally), or - missionsIgnoreBiomes -
+     * a kind that spawns naturally only in other biomes than the one you're in (bandits in deserts, Red Ribbon
+     * robots in rocky land, Frieza's soldiers on Namek...). Ones that spawn by structures or events (blazes, iron
+     * golems, pillagers, phantoms) aren't biome spawns, so they're left as they are.
+     */
+    static Target target(ServerPlayer p, Object objective) throws Exception {
+        if (!"NATURAL".equals(String.valueOf(m(objective, "getSpawnMode")))) return null;   // (QUEST mode: DragonMineZ summons them itself)
+        List<EntityType<?>> kinds = new ArrayList<>();
+        if ((Boolean) m(objective, "isTag")) {
+            String id = String.valueOf(m(objective, "getEntityId"));
+            if (id.startsWith("#")) id = id.substring(1);
+            var tags = ForgeRegistries.ENTITY_TYPES.tags();
+            ResourceLocation rl = ResourceLocation.tryParse(id);
+            if (tags != null && rl != null) for (EntityType<?> t : tags.getTag(tags.createTagKey(rl))) kinds.add(t);
+        } else {
+            EntityType<?> type = (EntityType<?>) m(objective, "resolveEntityType");
+            if (type == null) return null;
+            if (storyOnly(p.serverLevel(), type)) return new Target(type, false);
+            kinds.add(type);
+        }
+        if (kinds.isEmpty() || !com.xenowarriors.XwConfig.get(com.xenowarriors.XwConfig.DMZ_MISSIONS_IGNORE_BIOMES)) return null;
+        var here = p.serverLevel().getBiome(p.blockPosition()).value().getMobSettings();
+        EntityType<?> elsewhere = null;
+        for (EntityType<?> t : kinds) {
+            if (spawnsIn(here, t)) return null;                                  // (they can turn up right here)
+            if (elsewhere == null && spawnsSomewhere(p.server, t)) elsewhere = t;
+        }
+        return elsewhere == null ? null : new Target(elsewhere, true);
+    }
+
+    private static boolean spawnsIn(net.minecraft.world.level.biome.MobSpawnSettings s, EntityType<?> type) {
+        for (net.minecraft.world.entity.MobCategory c : net.minecraft.world.entity.MobCategory.values())
+            for (var d : s.getMobs(c).unwrap()) if (d.type == type) return true;
+        return false;
+    }
+
+    private static final Map<EntityType<?>, Boolean> SPAWNS_SOMEWHERE = new HashMap<>();
+    private static java.lang.ref.WeakReference<net.minecraft.server.MinecraftServer> spawnsFor = new java.lang.ref.WeakReference<>(null);
+
+    /** Does this kind spawn naturally in any biome of this world (any dimension)? */
+    static boolean spawnsSomewhere(net.minecraft.server.MinecraftServer server, EntityType<?> type) {
+        if (spawnsFor.get() != server) { SPAWNS_SOMEWHERE.clear(); spawnsFor = new java.lang.ref.WeakReference<>(server); }
+        return SPAWNS_SOMEWHERE.computeIfAbsent(type, t -> {
+            for (var b : server.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME)) if (spawnsIn(b.getMobSettings(), t)) return true;
+            return false;
+        });
+    }
 
     /** This player's summons for this objective still about (in their world, within 160 blocks). */
     static int alive(ServerPlayer p, String key, int index) {

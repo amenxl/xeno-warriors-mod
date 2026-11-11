@@ -17,6 +17,8 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_STRUCTURES_IN_RECARNET;
     /** DragonMineZ movie missions: "be at Kami's Lookout" counts as met anywhere. */
     public static final ForgeConfigSpec.BooleanValue DMZ_MOVIES_ANYWHERE;
+    /** DragonMineZ missions: no biome needed to start them or to finish them (anyone's, bots' too). */
+    public static final ForgeConfigSpec.BooleanValue DMZ_MISSIONS_IGNORE_BIOMES;
     /** Bot teammates walk up to DragonMineZ NPCs and talk to them for their own missions. */
     public static final ForgeConfigSpec.BooleanValue DMZ_BOTS_TALK;
 
@@ -36,6 +38,10 @@ public final class XwConfig {
         DMZ_MOVIES_ANYWHERE = b.comment("DragonMineZ's movie missions (the Movies saga and the movie side missions) don't need you at Kami's Lookout:",
                         "its 'be at Kami's Lookout' start requirement and objective count as met anywhere. Everything else (level, order) stays.")
                 .define("moviesWithoutLookout", true);
+        DMZ_MISSIONS_IGNORE_BIOMES = b.comment("DragonMineZ missions don't need you in a particular biome: 'be in biome X' start requirements and",
+                        "'go to biome X' objectives count as met anywhere, and enemies a mission wants that only live in other biomes",
+                        "(desert bandits, Red Ribbon robots...) come to you when you're somewhere they don't spawn. Bots' missions too.")
+                .define("missionsIgnoreBiomes", true);
         DMZ_BOTS_TALK = b.comment("Bot teammates walk up to DragonMineZ NPCs (Dende, the masters...) and talk to them themselves for their own missions:",
                         "'talk to' objectives, handing missions in, and taking a mission from its giver when you start yours.")
                 .define("botsTalkToNpcs", true);

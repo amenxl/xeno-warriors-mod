@@ -577,22 +577,29 @@ public final class DmzBotQuests {
 
     /** A story fighter the bot must defeat never spawns by itself: summon it near you once (unless yours already was for the same objective). */
     private static void summonStory(PartyBotEntity bot, String botKey, ServerPlayer p, String key, int index, Object obj, int prog, int req) throws Exception {
-        if ((Boolean) m(obj, "isTag") || !"NATURAL".equals(String.valueOf(m(obj, "getSpawnMode")))) return;
-        EntityType<?> type = (EntityType<?>) m(obj, "resolveEntityType");
-        if (type == null || !DmzQuestHelp.storyOnly(p.serverLevel(), type)) return;
+        DmzQuestHelp.Target t = DmzQuestHelp.target(p, obj);                    // (also: missionsIgnoreBiomes - ones that only live in other biomes)
+        if (t == null) return;
+        EntityType<?> type = t.type();
         CompoundTag keep = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         CompoundTag done = keep.getCompound(SUMMONED);
         String id = botKey + "|" + key + "#" + index;
-        if (done.getBoolean(id)) return;
-        done.putBoolean(id, true);
+        if (t.biome()) {                                                         // these again once the last group is gone (a story fighter: once)
+            long now = p.server.overworld().getGameTime(), at = done.getLong(id);
+            if (done.contains(id) && (now >= at && now - at < DmzQuestHelp.BIOME_RESUMMON_TICKS || DmzQuestHelp.alive(p, key, index) > 0
+                    || p.level().getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL)) return;
+            done.putLong(id, now);
+        } else {
+            if (done.getBoolean(id)) return;
+            done.putBoolean(id, true);
+        }
         keep.put(SUMMONED, done);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, keep);
         for (DmzQuestHelp.Open mine : DmzQuestHelp.open(p)) if (mine.key().equals(key) && mine.index() == index) return;   // (yours come for both of you)
         int n = Math.max(1, Math.min(5, req - prog));
         double hp = ((Number) m(obj, "getHealth")).doubleValue();
-        p.displayClientMessage(Component.empty().append(bot.character().getDisplayName()).append("'s mission target is coming: ").append(type.getDescription())
-                .withStyle(ChatFormatting.GOLD), false);
-        note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + botKey + " " + key + "#" + index);
+        p.displayClientMessage(Component.empty().append(bot.character().getDisplayName()).append(t.biome() ? "'s mission targets don't live around here, so they came: " : "'s mission target is coming: ")
+                .append(type.getDescription()).withStyle(ChatFormatting.GOLD), false);
+        note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + botKey + " " + key + "#" + index + (t.biome() ? " (they only live in other biomes)" : ""));
         for (int k = 0; k < n; k++) com.xenowarriors.skill.ServerScheduler.later(100 + k * 30, () -> DmzQuestHelp.summon(p, type, key, index, hp));
     }
 
@@ -931,4 +938,11 @@ public final class DmzBotQuests {
     }
 
     public static boolean listeningForTest() { return listening; }
+
+    /** UI test: could the bot start this mission now? "true" or why not. */
+    public static String eligibleForTest(PartyBotEntity b, String key) {
+        Data d = open(b, false);
+        if (d == null) return "no data";
+        return eligible(d, key) ? "true" : why;
+    }
 }

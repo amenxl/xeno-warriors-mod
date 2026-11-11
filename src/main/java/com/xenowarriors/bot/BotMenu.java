@@ -18,12 +18,12 @@ import net.minecraft.world.item.ItemStack;
  * in a column on the left; its bag - or one of its three extra tabs (see {@link BotInventory}), picked with the tab
  * buttons; then your inventory. The gear slots are the bot's own equipment.
  *
- * The bag area is 36 slots that show the tab picked: the bag (36) or an extra tab (27 - the last row is hidden). The
- * tab lives on the server (a menu button, synced back as data), so the client never guesses what's in a tab.
+ * The bag area is 54 slots (six rows, like a double chest) that show the tab picked: an extra tab (all 54) or the bag
+ * (36 - the last two rows are hidden). The tab lives on the server (a menu button, synced back as data), so the client never guesses what's in a tab.
  */
 public class BotMenu extends AbstractContainerMenu {
     public static final EquipmentSlot[] GEAR_SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.OFFHAND, EquipmentSlot.MAINHAND};
-    public static final int GEAR = GEAR_SLOTS.length, ROWS = 4;
+    public static final int GEAR = GEAR_SLOTS.length, ROWS = 6;
     /** Menu buttons: 0-3 pick the tab (bag, extra 1-3); SORT tidies its things now. */
     public static final int SORT = 10;
     public final int botId;
@@ -80,8 +80,8 @@ public class BotMenu extends AbstractContainerMenu {
         });
     }
 
-    /** Is this bag-area slot in use on the tab shown? (An extra tab has 27 slots: the last row is hidden.) */
-    private boolean shown(int k) { return tab == 0 || k < BotInventory.TAB; }
+    /** Is this bag-area slot in use on the tab shown? (The bag has 36 slots: the last two rows are hidden.) */
+    private boolean shown(int k) { return k < (tab == 0 ? BotInventory.BAG : BotInventory.TAB); }
 
     public static int playerTop() { return 18 + Math.max(ROWS, GEAR) * 18 + 14; }
 
@@ -148,7 +148,7 @@ public class BotMenu extends AbstractContainerMenu {
         TabView(BotInventory inv) { this.inv = inv; }
         private int at(int i) {
             if (i < 0 || i >= ROWS * 9) return -1;
-            if (tab == 0) return i;
+            if (tab == 0) return i < BotInventory.BAG ? i : -1;
             return i < BotInventory.TAB ? BotInventory.tabStart(tab) + i : -1;
         }
         @Override public int getContainerSize() { return ROWS * 9; }

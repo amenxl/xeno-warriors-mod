@@ -22,6 +22,64 @@ public final class DmzQuests {
 
     public static int waivedCount() { return waived; }
 
+    private static int biomesWaived;
+
+    /** (from the mixins, missionsIgnoreBiomes) a "you must be in biome X" check was answered yes. */
+    public static void noteBiomeWaived(String what, String biome) {
+        if (biomesWaived++ < 3 || biomesWaived % 500 == 0)
+            XenoWarriors.LOGGER.info("XW dmz quests: {} biome {} counted as met ({} so far)", what, biome, biomesWaived);
+    }
+
+    public static int biomeWaivedCount() { return biomesWaived; }
+
+    /** UI test: every mission with a biome in it: {id, "start" or "objective #i", biome}. */
+    public static java.util.List<String[]> biomeGates() {
+        java.util.List<String[]> out = new java.util.ArrayList<>();
+        try {
+            Class<?> reg = Class.forName("com.dragonminez.common.quest.QuestRegistry");
+            @SuppressWarnings("unchecked")
+            var all = (java.util.Map<String, ?>) reg.getMethod("getAllQuests").invoke(null);
+            for (var en : all.entrySet()) {
+                Object q = en.getValue();
+                biomeConditions(en.getKey(), "start", q.getClass().getMethod("getStartRequirements").invoke(q), out);
+                biomeConditions(en.getKey(), "prerequisite", q.getClass().getMethod("getPrerequisites").invoke(q), out);
+                var objs = (java.util.List<?>) q.getClass().getMethod("getObjectives").invoke(q);
+                for (int i = 0; i < objs.size(); i++) {
+                    Object o = objs.get(i);
+                    if (o.getClass().getSimpleName().equals("BiomeObjective"))
+                        out.add(new String[]{en.getKey(), "objective #" + i, String.valueOf(o.getClass().getMethod("getBiomeId").invoke(o))});
+                }
+            }
+        } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-TEST dmz biome quests lookup failed", t); }
+        return out;
+    }
+
+    private static void biomeConditions(String id, String what, Object group, java.util.List<String[]> out) throws Exception {
+        if (group == null) return;
+        for (Object c : (java.util.List<?>) group.getClass().getMethod("conditions").invoke(group)) {
+            if ((Boolean) c.getClass().getMethod("isNestedGroup").invoke(c)) biomeConditions(id, what, c.getClass().getMethod("getNested").invoke(c), out);
+            else if ("BIOME".equals(String.valueOf(c.getClass().getMethod("getType").invoke(c))))
+                out.add(new String[]{id, what, String.valueOf(c.getClass().getMethod("getBiomeId").invoke(c))});
+        }
+    }
+
+    /** UI test: QuestLocationHelper.matchesBiome straight, where the player stands. */
+    public static String matchesBiome(ServerPlayer p, String biome) {
+        try {
+            return String.valueOf(Class.forName("com.dragonminez.common.quest.QuestLocationHelper").getMethod("matchesBiome", Level.class, net.minecraft.core.BlockPos.class, String.class)
+                    .invoke(null, p.level(), p.blockPosition(), biome));
+        } catch (Throwable t) { return "? " + t; }
+    }
+
+    /** UI test: would a "go to this biome" objective count as reached where the player stands? */
+    public static String biomeObjectiveMet(ServerPlayer p, String biome) {
+        try {
+            Object o = Class.forName("com.dragonminez.common.quest.objectives.BiomeObjective").getConstructor(String.class).newInstance(biome);
+            Class<?> obj = Class.forName("com.dragonminez.common.quest.QuestObjective");
+            return String.valueOf(Class.forName("com.dragonminez.common.quest.QuestLocationHelper").getMethod("isLocationConditionMet", ServerPlayer.class, obj).invoke(null, p, o));
+        } catch (Throwable t) { return "? " + t; }
+    }
+
     private static Object data(ServerPlayer p) throws Exception {
         var cap = (net.minecraftforge.common.capabilities.Capability<?>) Class.forName("com.dragonminez.common.stats.StatsCapability").getField("INSTANCE").get(null);
         return p.getCapability(cap).resolve().orElse(null);
