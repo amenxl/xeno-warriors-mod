@@ -278,7 +278,8 @@ public final class BotRanged extends Goal {
         double pad = 0.3 + k.size * 0.5;
         var level = b.level();
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(from, to).inflate(pad + 0.5),
-                e -> e != b && e != t && e.isAlive() && !e.isSpectator() && com.xenowarriors.combat.Allies.isAlly(b, e)))
+                e -> e != b && e != t && e.isAlive() && !e.isSpectator() && com.xenowarriors.combat.Allies.isAlly(b, e)
+                        && !(b.isPassenger() && e.getRootVehicle() == b.getRootVehicle())))    // (riding together: its shots fly out past them)
             if (e.getBoundingBox().inflate(pad).clip(from, to).isPresent() || e.getBoundingBox().inflate(pad).contains(from)) return false;
         if (k == com.xenowarriors.compat.DmzGuns.Kind.MORTAR)
             return level.getEntitiesOfClass(LivingEntity.class, t.getBoundingBox().inflate(4),

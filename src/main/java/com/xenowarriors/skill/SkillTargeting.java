@@ -29,6 +29,7 @@ public final class SkillTargeting {
     public static boolean canTarget(Entity owner, Entity e) {
         if (!(e instanceof LivingEntity living) || !living.isAlive() || e == owner || e instanceof ArmorStand) return false;
         if (e instanceof Player p && (p.isCreative() || p.isSpectator())) return false;
+        if (owner.isPassenger() && e.getRootVehicle() == owner.getRootVehicle()) return false;     // (your own vehicle and whoever rides in it)
         if (com.xenowarriors.combat.Allies.isAlly(owner, e)) return false;
         if (e instanceof Player down && com.xenowarriors.party.Duels.isKnockedOut(down)) return false;
         return true;

@@ -72,6 +72,23 @@ public final class EpicFightCompat {
                 // (an Epic Fight without this camera API: the character still turns)
             }
         };
+        // driving: its third-person camera turns on its own (the player's yaw stays put), so the vehicle follows the camera
+        com.xenowarriors.vehicle.VehicleEntity.driverView = new com.xenowarriors.vehicle.VehicleEntity.DriverView() {
+            @Override public float yaw(net.minecraft.world.entity.player.Player p) {
+                try {
+                    var api = yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance();
+                    return api != null && p == net.minecraft.client.Minecraft.getInstance().player && api.isTPSMode() ? api.getCameraYRot() : Float.NaN;
+                } catch (Throwable t) { return Float.NaN; }
+            }
+            @Override public boolean turn(net.minecraft.world.entity.player.Player p, float degrees) {
+                try {
+                    var api = yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance();
+                    if (api == null || p != net.minecraft.client.Minecraft.getInstance().player || !api.isTPSMode()) return false;
+                    api.setCameraRotations(api.getCameraXRot(), api.getCameraYRot() + degrees, true);
+                    return true;
+                } catch (Throwable t) { return false; }
+            }
+        };
         com.xenowarriors.client.AttackHooks.externalHitTicks = p -> HIT.getOrDefault(p.getId(), -1F);
         // Epic Fight draws its mobs from inside RenderLivingEvent.Pre and cancels it: our whole-body poses go on first
         com.xenowarriors.client.PoseGuard.otherModDraws = EpicFightCompat::drawsMob;
