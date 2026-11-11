@@ -72,7 +72,7 @@ public final class FoxAuraClient {
 
     private static boolean shown(Player p, Minecraft mc) {
         return !p.isInvisible() && !p.isSpectator() && p.distanceToSqr(mc.gameRenderer.getMainCamera().getPosition()) < RANGE * RANGE
-                && !FirstPersonHead.ownFirstPerson(p);
+                && !(p instanceof AbstractClientPlayer cp && FirstPersonHead.ownFirstPerson(cp));
     }
 
     // ---------------------------------------------------------------- the aura in the world
