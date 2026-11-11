@@ -430,7 +430,7 @@ public final class ScannerTests {
                 GovScanning.give(g, KarmaScanner.Tier.ELITE, KarmaScanner.COLORS[i]);
             }
         }), 25));
-        cam(mc, l, new double[]{0, 0.25, 0.0}, new double[]{0, 1.6, 3.2}, 10);
+        cam(mc, l, new double[]{0, 0.6, -0.6}, new double[]{0, 1.45, 3.2}, 10);
         l.add(new Step("scanners_colors", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> {
             cleanup(p);
@@ -468,6 +468,7 @@ public final class ScannerTests {
     private static GovAgentEntity still(ServerPlayer p, double dx, double dz) {
         var g = guard(p, dx, dz, true);
         g.setNoAi(true); face(g, 180F);
+        g.removeEffect(net.minecraft.world.effect.MobEffects.INVISIBILITY);         // (a Phase-mod guard would show only its visor)
         return g;
     }
 
