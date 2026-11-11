@@ -280,7 +280,7 @@ public final class FactionRaids {
         data(p).putLong("xw_raid_cd_any", now + COOLDOWN_ANY);
         data(p).putLong("xw_raid_cd_" + k.key(), now + COOLDOWN_LOSS);   // (raised to the win cooldown if they beat it)
         warn(r, p);
-        XenoWarriors.LOGGER.info("[raids] {} on {} (standing {}, {} waves)", k.title, p.getName().getString(), rep, r.waves);
+        XenoWarriors.LOGGER.info("[raids] {} on {} (standing {}, {} waves, bar {})", k.title, p.getName().getString(), rep, r.waves, r.bar.getId());
         return r;
     }
 
@@ -294,6 +294,8 @@ public final class FactionRaids {
         for (ServerPlayer q : r.level.players()) {
             if (q.distanceToSqr(t) > AREA * AREA) continue;
             boolean target = q == t;
+            r.bar.addPlayer(q);                                                 // (the raid bar shows from the first moment)
+            r.fought.add(q.getUUID());
             q.connection.send(new ClientboundSetTitlesAnimationPacket(10, 60, 20));
             q.connection.send(new ClientboundSetTitleTextPacket(Component.literal(w[0]).withStyle(r.kind.style, ChatFormatting.BOLD)));
             q.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(target ? w[1] : t.getName().getString() + " is being raided - help them!").withStyle(ChatFormatting.GRAY)));
@@ -301,6 +303,8 @@ public final class FactionRaids {
             com.xenowarriors.network.PopupPacket.send(q, com.xenowarriors.network.PopupPacket.DANGER, q.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), -1,
                     r.kind.title + "!", target ? w[2] + " Survive every wave." : w[2], "");
         }
+        r.bar.setName(Component.literal(r.kind.title + " - incoming!").withStyle(r.kind.style, ChatFormatting.BOLD));
+        r.bar.setProgress(0F);
         r.level.playSound(null, t.blockPosition(), SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 64F, r.kind == Kind.SR ? 0.7F : 1F);
         if (r.kind == Kind.TOWN) r.level.playSound(null, t.blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.HOSTILE, 4F, 1F);
     }
@@ -475,7 +479,7 @@ public final class FactionRaids {
         }
         long now = r.level.getGameTime();
         if (t != null) data(t).putLong("xw_raid_cd_" + r.kind.key(), now + (won ? COOLDOWN_WIN : COOLDOWN_LOSS));
-        XenoWarriors.LOGGER.info("[raids] {} ended: {} (wave {}/{})", r.kind.title, why, r.wave, r.waves);
+        XenoWarriors.LOGGER.info("[raids] {} ended: {} (wave {}/{}, bar {} players left {})", r.kind.title, why, r.wave, r.waves, r.bar.getId(), r.bar.getPlayers().size());
         if (!won) {
             String line = switch (why) {
                 case "died" -> "The raiders pull back - they got what they came for.";

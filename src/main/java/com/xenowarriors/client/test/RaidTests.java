@@ -73,6 +73,8 @@ public final class RaidTests {
     static int shotsDriver, shotsPassenger, shotsHeli, shotsGround;
     /** Attacks on the player by raiders (any / while seated in a vehicle), by faction. */
     static final int[] ATTACKS = new int[3], SEATED = new int[3];
+    /** Hits by a party bot on raiders. */
+    static int botHits;
 
     private static void listen() {
         if (listening) return;
@@ -84,6 +86,8 @@ public final class RaidTests {
             if (v.kind.heli()) shotsHeli++; else shotsGround++;
         });
         MinecraftForge.EVENT_BUS.addListener((LivingAttackEvent e) -> {
+            if (!e.getEntity().level().isClientSide && FactionRaids.isRaider(e.getEntity())
+                    && (e.getSource().getEntity() instanceof PartyBotEntity || PartyBots.botOf(e.getSource().getEntity()) != null)) botHits++;
             if (e.getEntity().level().isClientSide || !(e.getEntity() instanceof ServerPlayer)) return;
             Entity src = e.getSource().getEntity();
             Raid r = src == null ? null : FactionRaids.of(src);
@@ -94,7 +98,7 @@ public final class RaidTests {
     }
 
     private static void resetCounters() {
-        shotsDriver = shotsPassenger = shotsHeli = shotsGround = 0;
+        shotsDriver = shotsPassenger = shotsHeli = shotsGround = botHits = 0;
         java.util.Arrays.fill(ATTACKS, 0);
         java.util.Arrays.fill(SEATED, 0);
     }
@@ -187,6 +191,22 @@ public final class RaidTests {
         return false;
     }
 
+    /** The boss bars the client is showing right now (names and ids). */
+    static String clientBars(Minecraft mc) {
+        try {
+            Object overlay = mc.gui.getBossOverlay();
+            for (var fld : overlay.getClass().getDeclaredFields()) {
+                if (!java.util.Map.class.isAssignableFrom(fld.getType())) continue;
+                fld.setAccessible(true);
+                StringBuilder sb = new StringBuilder();
+                for (var e : ((java.util.Map<?, ?>) fld.get(overlay)).entrySet())
+                    sb.append('[').append(e.getKey()).append(' ').append(((net.minecraft.world.BossEvent) e.getValue()).getName().getString()).append(']');
+                return sb.toString();
+            }
+        } catch (Throwable t) { return "? " + t; }
+        return "?";
+    }
+
     // ---------------------------------------------------------------- the test
 
     private static int repBefore;
@@ -241,8 +261,6 @@ public final class RaidTests {
         // ---- 2. a Government raid (Hostile: 3 waves) with a bot along
         l.add(new Step(null, () -> UiTest.server(p -> {
             resetCounters();
-            bot = PartyBots.spawn(p, CharacterType.MIKIKO, null);
-            if (bot != null) bot.moveTo(O.x + 2, O.y, O.z + 1, 0, 0);
             Raid r = FactionRaids.start(p, Kind.GOV, true);
             check("government raid starts with a warning", r != null && r.wave == 0 && r.bar().getPlayers().contains(p),
                     "raid=" + (r != null) + " bar=" + (r != null ? r.bar().getName().getString() : "-"));
@@ -260,7 +278,7 @@ public final class RaidTests {
                     + " karmaScanners=" + scanners + " bar='" + r.bar().getName().getString() + "'");
             look = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v));
         }), 2));
-        l.add(new Step(null, () -> lookAt(mc, look), 30));
+        l.add(new Step(null, () -> lookAt(mc, look), 60));
         l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v))), 2));
         l.add(new Step("raids_gov_helis", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && !v.kind.heli() && FactionRaids.isRaider(v))), 60));
@@ -268,7 +286,13 @@ public final class RaidTests {
         l.add(new Step("raids_gov_convoy", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && v.kind.heli() && FactionRaids.isRaider(v))), 60));
         l.add(new Step("raids_gov_drop", () -> lookAt(mc, look), 2));
-        l.add(new Step(null, () -> {}, 120));
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            bot = PartyBots.spawn(p, CharacterType.MIKIKO, null);
+            if (bot != null) {
+                bot.moveTo(O.x + 2, O.y, O.z + 1, 0, 0);
+                bot.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 600, 10, false, false));   // (so it isn't shot down before it can fight)
+            }
+        }), 160));
         l.add(new Step(null, () -> UiTest.server(p -> {
             Raid r = FactionRaids.raidOn(p);
             if (r == null) { check("gov shooting", false, "no raid"); return; }
@@ -283,7 +307,8 @@ public final class RaidTests {
             check("helicopter dropped its squad, soldiers out fighting", phaseHeli >= 1 && onFoot >= 4 && ATTACKS[0] > 0,
                     "heliPhase=" + phaseHeli + " onFoot=" + onFoot + " attacks=" + ATTACKS[0]);
             LivingEntity bt = bot == null ? null : bot.getTarget();
-            check("bot fights the raiders", bt != null && FactionRaids.isRaider(bt), "botTarget=" + (bt == null ? "none" : bt.getType().toShortString()));
+            check("bot fights the raiders", bot != null && bot.isAlive() && (botHits > 0 || (bt != null && FactionRaids.isRaider(bt))),
+                    "bot=" + (bot == null ? "none" : "alive=" + bot.isAlive() + " downed=" + bot.downed() + " hp=" + f(bot.getHealth())) + " target=" + (bt == null ? "none" : bt.getType().toShortString()) + " hitsOnRaiders=" + botHits);
             repBefore = Reputation.get(p, Faction.GOV);
             killWave(p);
         }), 2));
@@ -319,6 +344,7 @@ public final class RaidTests {
             Raid r = FactionRaids.start(p, Kind.SR, true);
             check("sky rebellion raid starts", r != null && r.kind == Kind.SR, "raid=" + (r != null));
         }), 60));
+        l.add(new Step(null, () -> log("client bars after the Government raid: " + clientBars(mc)), 2));
         l.add(new Step(null, () -> UiTest.server(p -> look = nearest(p, e -> e instanceof SrMemberEntity && FactionRaids.isRaider(e))), 15));
         l.add(new Step(null, () -> lookAt(mc, look), 3));
         l.add(new Step("raids_sr", () -> lookAt(mc, look), 2));
@@ -343,6 +369,7 @@ public final class RaidTests {
         }), 2));
         l.add(new Step(null, () -> {}, 60));
         l.add(new Step(null, () -> UiTest.server(p -> {
+            log("raids still listed: " + FactionRaids.active().size());
             check("sr raid won and cleared", FactionRaids.raidOn(p) == null && tagged(p, 128) == 0 && Reputation.get(p, Faction.SR) == -300 + FactionRaids.WIN_REP,
                     "leftover=" + tagged(p, 128) + " sr=" + Reputation.get(p, Faction.SR));
             p.getInventory().clearContent();
@@ -427,6 +454,10 @@ public final class RaidTests {
             }
             check("no blocks broken or placed by raiders", broken == 0 && placed == 0, "floor broken=" + broken + " blocks placed=" + placed);
         }), 2));
+        l.add(new Step(null, () -> {
+            String bars = clientBars(mc);
+            check("no raid bar left on screen", !bars.contains("Raid"), "client bars=" + bars);
+        }, 2));
         l.add(new Step(null, () -> UiTest.server(p -> {
             endAll();
             FactionRaids.testFast = false;
