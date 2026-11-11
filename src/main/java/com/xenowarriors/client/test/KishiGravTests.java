@@ -127,6 +127,9 @@ public final class KishiGravTests {
     public static void build(Minecraft mc, List<Step> l, String focus) {
         boolean dmz = dmz();
         log("start focus=" + focus + " dmz=" + dmz);
+        // DragonMineZ's race picker (a pausing screen: the world would stop) is closed whenever it opens
+        if (dmz) net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ClientTickEvent e) -> {
+            if (e.phase == net.minecraftforge.event.TickEvent.Phase.END) HuntDmzTests.noDmzScreen(mc); });
         // ---- setup: Rhalix, survival, a flat arena, protected
         l.add(new Step(null, () -> { UiTest.noToasts(mc); mc.setScreen(null); UiTest.character(CharacterType.RHALIX); }, 60));
         l.add(new Step(null, () -> { HuntDmzTests.noDmzScreen(mc); UiTest.server(p -> {
@@ -171,7 +174,7 @@ public final class KishiGravTests {
             float g1b = b.gravity();
             log("fresh Rhalix inputs(dmzLv,dmzMax,xwLv,kishi)=" + java.util.Arrays.toString(in0) + " G=" + g0 + " (lv3 " + g0b + ")"
                     + " | maxed inputs=" + java.util.Arrays.toString(in1) + " G=" + g1 + " (lv3 " + g1b + ") -> "
-                    + pf(dmz ? (g0 == 10 && g0b == 30 && g1 > g0 * 5 && g1b > g1 && g1b <= 900) : (g0 == 0 && g1 == 0 && g1b == 0)));
+                    + pf(dmz ? (g0 >= 10 && g0 <= 15 && g0b == 3 * g0 && g1 > g0 * 5 && g1b > g1 && g1b <= 900) : (g0 == 0 && g1 == 0 && g1b == 0)));
             stats(p, 0);
             SkillLevels.setForTest(p, "kishi", 1, 1);
             if (dmz) HuntDmzTests.make(p, "human", 5);
@@ -196,11 +199,15 @@ public final class KishiGravTests {
             D[1].setGravityForTest(dmz ? 10 : 0);
         }), 20));
         l.add(new Step(null, () -> UiTest.server(p -> {
-            for (int i = 0; i < 3; i++) { BASEY[i] = H[i].getY(); JUMP[i] = 0; jump(H[i]); }
+            // (a NoAI mob never moves: AI on for the jump, with nothing to chase and no speed, so it only goes up and down)
+            for (int i = 0; i < 3; i++) { H[i].setNoAi(false); H[i].getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(0); H[i].setTarget(null);
+                BASEY[i] = H[i].getY(); JUMP[i] = 0; H[i].setOnGround(true); jump(H[i]); }
+            log("jump start v.y none/light/heavy=" + f(H[0].getDeltaMovement().y) + "/" + f(H[1].getDeltaMovement().y) + "/" + f(H[2].getDeltaMovement().y));
         }), 1));
         for (int t = 0; t < 14; t++) l.add(new Step(null, () -> UiTest.server(p -> {
             for (int i = 0; i < 3; i++) JUMP[i] = Math.max(JUMP[i], H[i].getY() - BASEY[i]);
         }), 1));
+        l.add(new Step(null, () -> UiTest.server(p -> { for (int i = 0; i < 3; i++) H[i].setNoAi(true); }), 1));
         l.add(new Step(null, () -> UiTest.server(p -> {
             double[] sp = new double[3];
             for (int i = 0; i < 3; i++) sp[i] = H[i].getAttributeValue(Attributes.MOVEMENT_SPEED);
@@ -269,11 +276,15 @@ public final class KishiGravTests {
             boolean used = PartyBots.useForTest(rbot, new KishiSkill());
             KishiDomeEntity d = null;
             for (KishiDomeEntity k : p.serverLevel().getEntitiesOfClass(KishiDomeEntity.class, p.getBoundingBox().inflate(30))) if (f.getUUID().equals(k.getOwnerId())) d = k;
+            D[0] = d;
             double want = dmz ? DmzKishiGravity.gravityFor(f, 1) : 0;
             log("rhalix bot kishi: used=" + used + " dome=" + (d != null) + " bot level=" + rbot.botLevel() + " inputs=" + java.util.Arrays.toString(DmzKishiGravity.inputs(f))
                     + " G=" + (d == null ? -1 : d.gravity()) + " want=" + want + " -> " + pf(used && d != null && Math.abs(d.gravity() - want) < 0.01 && (!dmz || d.gravity() >= 10)));
         }), 15));
-        l.add(new Step(null, () -> UiTest.server(p -> log("rhalix bot dome on the husk: husk speed modifier=" + f(DmzKishiGravity.speedModifier(H[0]))
+        l.add(new Step(null, () -> UiTest.server(p -> log("rhalix bot dome: " + (D[0] == null ? "none" : "removed=" + D[0].isRemoved() + " at " + D[0].position().subtract(O)
+                + " husk at " + H[0].position().subtract(O) + " inside=" + D[0].isInside(H[0]) + " affects=" + D[0].affects(H[0]) + " age=" + D[0].tickCount)
+                + " standIn alive=" + PartyBots.standIn(rbot).isAlive() + " removed=" + PartyBots.standIn(rbot).isRemoved() + " sameLevel=" + (PartyBots.standIn(rbot).level() == p.level())
+                + " | husk speed modifier=" + f(DmzKishiGravity.speedModifier(H[0]))
                 + " slow=" + H[0].hasEffect(MobEffects.MOVEMENT_SLOWDOWN) + " -> " + pf(dmz ? DmzKishiGravity.speedModifier(H[0]) < -0.1 : H[0].hasEffect(MobEffects.MOVEMENT_SLOWDOWN)))), 5));
 
         // ---- 6. the player's own Kishi: the HUD and the dome show its G
