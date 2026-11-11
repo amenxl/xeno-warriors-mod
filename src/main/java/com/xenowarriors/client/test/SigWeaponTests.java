@@ -248,7 +248,7 @@ public final class SigWeaponTests {
             double[][] at = {{-1, 0}, {-3, 0}, {-5, 0}};   // (bots stand left of the player, spread out)
             int i = 0;
             for (CharacterType t : new CharacterType[]{CharacterType.LOGAN, CharacterType.MAX, CharacterType.SAM}) {
-                var b = spawnBot(p, t, at[i][0] + 2.5, 0.0);
+                var b = spawnBot(p, t, at[i][0] + 0.5, 0.0);
                 if (b != null) {
                     b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, SignatureWeapons.make(t));
                     b.setNoAi(true);
@@ -260,7 +260,7 @@ public final class SigWeaponTests {
         int[] cam = {-1};
         l.add(null, () -> server(p -> {
             var a = EntityType.ARMOR_STAND.create(p.serverLevel());
-            a.moveTo(HOME[0] - 0.5, HOME[1] + 1.2, HOME[2] + 5.0, 180, 4);
+            a.moveTo(HOME[0] - 1.5, HOME[1] + 1.2, HOME[2] + 5.0, 180, 4);
             a.setNoGravity(true); a.setInvisible(true); a.setYHeadRot(180); a.addTag("xw_sigw_cam");
             p.serverLevel().addFreshEntity(a); cam[0] = a.getId();
         }), 12);
