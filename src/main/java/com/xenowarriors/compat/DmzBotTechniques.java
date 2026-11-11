@@ -44,6 +44,8 @@ public final class DmzBotTechniques {
     /** Ticks between two ki attacks a bot makes (8 minutes); techniques it makes, at most; share of its spare TP one may cost. */
     public static final int CREATE_GAP = 20 * 60 * 8, MAX_CREATED = 6;
     public static final float BUDGET_SHARE = 0.5F;
+    /** One of its own attacks may cost at most this share of its max ki to throw (so it can use it in a fight). */
+    public static final float KI_SHARE = 0.5F;
     public static final double MASTER_REACH = 40;
     private static final String LAST = "xw_dmz_ki_created_at", TRIED = "xw_dmz_ki_tried_at";
     private static final int RETRY = 20 * 60;
@@ -243,34 +245,52 @@ public final class DmzBotTechniques {
             String[] kinds = KINDS.getOrDefault(c, DEFAULT_KINDS);
             Set<String> have = new HashSet<>();
             for (Object t : mine) have.add(String.valueOf(m(t, "getKiType")));
-            String kindName = kinds[mine.size() % kinds.length];
-            for (String k : kinds) if (!have.contains(k)) { kindName = k; break; }
-            Object type = kind(kindName);
             int color = b.character().getColor();
-            float lo = ((Number) minDmg.invoke(null, type)).floatValue(), hi = ((Number) maxDmg.invoke(null, type)).floatValue();
-            int cheapest = price(build("x", author, type, lo, color));
-            if (cheapest > budget) {
-                String out = "can't afford a " + kindName + " yet: cheapest " + cheapest + " TP, budget " + Math.round(budget) + " (TP " + sp[0] + ", keeps " + (sp[1] >= Float.MAX_VALUE / 2 ? "all" : String.valueOf(sp[1])) + ")";
+            float kiMax = DmzBotPower.maxKi(d.sd), kiCap = kiMax * KI_SHARE;
+            // the kinds it would make, the ones it hasn't made yet first; the first it can afford - in TP and in ki to throw it - is made
+            List<String> order = new ArrayList<>();
+            for (String k : kinds) if (!have.contains(k)) order.add(k);
+            for (int i = 0; i < kinds.length; i++) { String k = kinds[(mine.size() + i) % kinds.length]; if (!order.contains(k)) order.add(k); }
+            String kindName = null, why = null;
+            Object type = null;
+            float lo = 0, hi = 0;
+            for (String k : order) {
+                Object ty = kind(k);
+                float l = ((Number) minDmg.invoke(null, ty)).floatValue();
+                Object cheap = build("x", author, ty, l, color);
+                if (price(cheap) > budget) { if (why == null) why = "can't afford a " + k + " yet: cheapest " + price(cheap) + " TP, budget " + Math.round(budget)
+                        + " (TP " + sp[0] + ", keeps " + (sp[1] >= Float.MAX_VALUE / 2 ? "all" : String.valueOf(sp[1])) + ")"; continue; }
+                if (kiMax > 0 && DmzBotPower.kiCostOf(cheap, d.sd) > kiCap) { if (why == null) why = "a " + k + " costs more ki (" + Math.round(DmzBotPower.kiCostOf(cheap, d.sd)) + ") than it could throw (" + Math.round(kiCap) + " of " + Math.round(kiMax) + ")"; continue; }
+                kindName = k; type = ty; lo = l; hi = ((Number) maxDmg.invoke(null, ty)).floatValue();
+                break;
+            }
+            if (type == null) {
+                String out = why == null ? "nothing it can make" : why;
                 if (force) note(d.key + ": " + out);
                 return out;
             }
-            float dmg = lo;                                                          // (the strongest one half its spare TP buys)
-            if (price(build("x", author, type, hi, color)) <= budget) dmg = hi;
+            final Object fType = type;
+            final float fBudget = budget;
+            java.util.function.Predicate<Object> fits = t -> {
+                try { return price(t) <= fBudget && (kiMax <= 0 || DmzBotPower.kiCostOf(t, d.sd) <= kiCap); } catch (Exception e) { return false; }
+            };
+            float dmg = lo, top = hi;                                                // (the strongest one half its spare TP buys - and its ki can throw)
+            if (fits.test(build("x", author, type, hi, color))) dmg = hi;
             else for (int i = 0; i < 24; i++) {
                 float mid = (dmg + hi) / 2;
-                if (price(build("x", author, type, mid, color)) <= budget) dmg = mid; else hi = mid;
+                if (fits.test(build("x", author, type, mid, color))) dmg = mid; else hi = mid;
             }
-            // then, with what's left of the budget: armor penetration, speed, size - each to DragonMineZ's top for the kind if it can pay for it
+            // then, with what's left: armor penetration, speed, size - each to DragonMineZ's top for the kind if it can pay for it
             float size = -1, speed = -1;
             int pen = -1;
             String extras = "";
-            if (dmg >= hi - 1.0E-4F) {
-                int mp = ((Number) maxPen.invoke(null, type)).intValue();
-                if (mp > ((Number) defPen.invoke(null, type)).intValue() && price(build("x", author, type, dmg, size, speed, mp, color)) <= budget) { pen = mp; extras += " +pen"; }
-                float ms = ((Number) maxSpeed.invoke(null, type)).floatValue();
-                if (ms > ((Number) defSpeed.invoke(null, type)).floatValue() && price(build("x", author, type, dmg, size, ms, pen, color)) <= budget) { speed = ms; extras += " +speed"; }
-                float mz = ((Number) maxSize.invoke(null, type)).floatValue();
-                if (mz > ((Number) defSize.invoke(null, type)).floatValue() && price(build("x", author, type, dmg, mz, speed, pen, color)) <= budget) { size = mz; extras += " +size"; }
+            if (dmg >= top - 1.0E-4F) {
+                int mp = ((Number) maxPen.invoke(null, fType)).intValue();
+                if (mp > ((Number) defPen.invoke(null, fType)).intValue() && fits.test(build("x", author, type, dmg, size, speed, mp, color))) { pen = mp; extras += " +pen"; }
+                float ms = ((Number) maxSpeed.invoke(null, fType)).floatValue();
+                if (ms > ((Number) defSpeed.invoke(null, fType)).floatValue() && fits.test(build("x", author, type, dmg, size, ms, pen, color))) { speed = ms; extras += " +speed"; }
+                float mz = ((Number) maxSize.invoke(null, fType)).floatValue();
+                if (mz > ((Number) defSize.invoke(null, fType)).floatValue() && fits.test(build("x", author, type, dmg, mz, speed, pen, color))) { size = mz; extras += " +size"; }
             }
             Map<?, ?> all = unlocked(d.sd);
             Object tech = null;
@@ -296,7 +316,7 @@ public final class DmzBotTechniques {
             String name = (String) m(tech, "getName");
             String what = d.key + " (" + c + ") made " + name + " [" + id + "] " + kindName + " dmg x" + String.format(Locale.ROOT, "%.2f", ((Number) m(tech, "getDamageMultiplier")).floatValue())
                     + " size " + m(tech, "getSize") + " speed " + m(tech, "getSpeed") + " pen " + m(tech, "getArmorPenetration") + extras
-                    + " cast " + m(tech, "getCastTime") + " cd " + m(tech, "getCooldown") + " for " + cost + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ", budget " + Math.round(budget) + ")";
+                    + " cast " + m(tech, "getCastTime") + " cd " + m(tech, "getCooldown") + " ki " + Math.round(DmzBotPower.kiCostOf(tech, d.sd)) + "/" + Math.round(kiMax) + " for " + cost + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ", budget " + Math.round(budget) + ")";
             note(what);
             d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" created a new ki attack: ")
                     .append(Component.literal(name).withStyle(ChatFormatting.GOLD)).append(" (" + pretty(kindName) + ", " + String.format(Locale.US, "%,d TP", cost) + ")")

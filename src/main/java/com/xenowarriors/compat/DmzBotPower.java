@@ -184,6 +184,14 @@ public final class DmzBotPower {
         return new float[]{(p == null || p.energy < 0 ? 1F : p.energy) * max, cost};
     }
 
+    /** The ki a technique costs this character (DragonMineZ's getCalculatedCost; as {@link #spend} reckons it). */
+    static float kiCostOf(Object tech, Object stats) {
+        if (!ready() || stats == null) return 0;
+        float max = num(maxEnergy, stats);
+        float cost = techCost != null ? num(techCost, tech, stats) : max * 0.12F;
+        return cost > 0 ? cost : max * 0.08F;
+    }
+
     static float maxKi(Object stats) { return !ready() || stats == null ? 0 : num(maxEnergy, stats); }
 
     private static String pct(float f) { return Math.round(f * 100) + "%"; }
