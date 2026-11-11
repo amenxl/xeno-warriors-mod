@@ -154,15 +154,15 @@ public class XenoDragonRenderer extends MobRenderer<XenoDragonEntity, XenoDragon
 
     /** Registration (client, mod bus). */
     @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static final class Reg {
+    public static final class XenoDragonReg {
         @SubscribeEvent
-        public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
+        public static void xenoDragonRenderers(EntityRenderersEvent.RegisterRenderers e) {
             e.registerEntityRenderer(com.xenowarriors.boss.XenoDragons.XENO_DRAGON.get(), XenoDragonRenderer::new);
             e.registerEntityRenderer(com.xenowarriors.boss.XenoDragons.DRAGON_BOMB.get(), DragonBombRenderer::new);
         }
 
         @SubscribeEvent
-        public static void layers(EntityRenderersEvent.RegisterLayerDefinitions e) {
+        public static void xenoDragonLayers(EntityRenderersEvent.RegisterLayerDefinitions e) {
             e.registerLayerDefinition(XenoDragonModel.LAYER, XenoDragonModel::create);
             e.registerLayerDefinition(XenoDragonCrestModel.LAYER, XenoDragonCrestModel::create);
         }

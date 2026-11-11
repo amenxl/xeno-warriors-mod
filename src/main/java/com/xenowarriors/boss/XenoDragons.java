@@ -100,9 +100,9 @@ public final class XenoDragons {
     }
 
     @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static final class Attrs {
+    public static final class XenoDragonAttrs {
         @SubscribeEvent
-        public static void attributes(EntityAttributeCreationEvent event) {
+        public static void xenoDragonAttributes(EntityAttributeCreationEvent event) {
             event.put(XENO_DRAGON.get(), XenoDragonEntity.createAttributes().build());
         }
     }
