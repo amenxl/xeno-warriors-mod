@@ -81,7 +81,7 @@ public final class DmzBotSkills {
         if (can && !b.naturalFlier()) {
             float ki = DmzBotPower.kiFraction(b);
             if (ki >= 0) {
-                boolean airborne = !b.onGround() && b.isNoGravity() && !b.isPassenger();
+                boolean airborne = flying(b);
                 if (airborne) DmzBotPower.useKi(b, FLY_KI / 2F / (1F + 0.15F * (lv - 1)));   // (half a second of flight)
                 ki = DmzBotPower.kiFraction(b);
                 if (ki < FLY_STOP && GROUNDED.add(b.getUUID())) note(b.character().getId() + " lands: out of ki for flying (" + Math.round(ki * 100) + "%)");
@@ -95,6 +95,9 @@ public final class DmzBotSkills {
         }
         b.setDmzFly(can);
     }
+
+    /** Up in the air on its own (not standing, riding or swimming) - flying, for a bot that has Fly. */
+    public static boolean flying(PartyBotEntity b) { return !b.onGround() && !b.isPassenger() && !b.isInWater() && (b.isNoGravity() || b.fallDistance == 0); }
 
     /** A bot is gone. */
     public static void forget(UUID bot) { FLY_LEVEL.remove(bot); GROUNDED.remove(bot); }

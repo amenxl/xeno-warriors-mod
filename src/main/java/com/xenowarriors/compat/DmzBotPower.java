@@ -312,7 +312,7 @@ public final class DmzBotPower {
                         note(b.character().getId() + " fully charged after " + (now - p.chargedAt) / 20 + " s");
                     }
                 }
-            } else if (!inFight && p.energy < 1F && !(b.dmzFly() && !b.naturalFlier() && !b.onGround() && b.isNoGravity()))   // (no resting regen while it flies on its ki)
+            } else if (!inFight && p.energy < 1F && !(b.dmzFly() && !b.naturalFlier() && DmzBotSkills.flying(b)))   // (no resting regen while it flies on its ki)
                 p.energy = Math.min(1F, p.energy + Math.max(0.002F, num(regen, st, false) / 2F / max));
             write(p, st);
         } catch (Throwable t) { fail(t); }
