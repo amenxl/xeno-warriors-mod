@@ -95,6 +95,18 @@ public final class RaidTests {
             ATTACKS[r.kind.ordinal()]++;
             if (src.getVehicle() instanceof VehicleEntity) SEATED[r.kind.ordinal()]++;
         });
+        // the tester must live through the raid tests: a raid squad can still kill them through Resistance (DragonMineZ's own
+        // damage, a slow CI server letting a whole wave hit at once) - dead, the raid ends and DragonMineZ sends them to its
+        // Otherworld, where nothing later in the pack run can spawn near them
+        MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingDamageEvent e) -> {
+            if (FactionRaids.testFast && e.getEntity() instanceof ServerPlayer p && e.getAmount() >= p.getHealth() - 1F) e.setAmount(Math.max(0F, p.getHealth() - 1F));
+        });
+        MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, (net.minecraftforge.event.entity.living.LivingDeathEvent e) -> {
+            if (!FactionRaids.testFast || !(e.getEntity() instanceof ServerPlayer p)) return;
+            e.setCanceled(true);
+            p.setHealth(p.getMaxHealth());
+            UiTest.log("raids: (test) the tester would have died to " + e.getSource().getMsgId() + " - kept alive");
+        });
     }
 
     private static void resetCounters() {
