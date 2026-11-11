@@ -76,8 +76,11 @@ public final class HudFaceTests {
             g.fill(2, y - 2, 196, y + 92, 0xC0101018);
             HudHead.draw(g, body, t, 6, y + 2, 86, false, 0.5F, 1.1F, true, 0F);   // the model itself (live render)
             HudPortrait.draw(g, le, t, 104, y + 2, 86, false);                    // the portrait
+            g.pose().pushPose();
+            g.pose().translate(0, 0, 400);                                         // (in front of the 3D head)
             g.drawString(mc.font, "model", 8, y + 80, 0xFFFFFF, true);
             g.drawString(mc.font, "portrait", 106, y + 80, 0xFFFFFF, true);
+            g.pose().popPose();
             y += 98;
         }
     }
@@ -185,9 +188,19 @@ public final class HudFaceTests {
         l.add(new Step(shot + "_starving", () -> same(mc, "starving you", false, "_starving", "_blink"), 1));
         l.add(new Step(null, () -> UiTest.server(p -> p.getFoodData().setFoodLevel(20)), 4));
         // asleep
-        l.add(new Step(null, () -> UiTest.server(p -> p.startSleeping(p.blockPosition())), 6));
+        l.add(new Step(null, () -> UiTest.server(p -> {           // (in a real bed: without one the game wakes you straight away)
+            var at = p.blockPosition();
+            p.serverLevel().setBlock(at, net.minecraft.world.level.block.Blocks.RED_BED.defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.BedBlock.PART, net.minecraft.world.level.block.state.properties.BedPart.HEAD), 3);
+            p.startSleeping(at);
+        }), 6));
         l.add(new Step(shot + "_sleep", () -> { mc.setScreen(null); same(mc, "asleep you", false, "_snore", "_sleep"); }, 1));
-        l.add(new Step(null, () -> UiTest.server(p -> p.stopSleeping()), 6));
+        l.add(new Step(null, () -> UiTest.server(p -> {
+            var at = p.getSleepingPos().orElse(p.blockPosition());
+            p.stopSleeping();
+            if (p.serverLevel().getBlockState(at).getBlock() instanceof net.minecraft.world.level.block.BedBlock)
+                p.serverLevel().setBlock(at, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        }), 6));
         // knocked out
         l.add(new Step(null, () -> { mc.setScreen(null); com.xenowarriors.client.party.PartyClient.setKnockedOut(mc.player.getUUID(), 200); }, 3));
         l.add(new Step(shot + "_down", () -> same(mc, "knocked out you", false, "_dizzy"), 1));
