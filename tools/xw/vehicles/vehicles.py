@@ -443,7 +443,7 @@ def truck():
     m.box('root', [-16, 7.5, -42], [16, 18, -34], B, {'front': cab_front, 'right': armor, 'left': armor, 'top': B2})   # engine block (lower front)
     m.sym('fp', [15.5, 18, -40], [16.5, 30, -14], B, {'right': lambda x, y: armor(x, y) if not (y < .5 and .1 < x < .85) else None, 'left': lambda x, y: armor(x, y) if not (y < .5 and .15 < x < .9) else None})
     m.sym('fp', [15.7, 23.5, -38], [16.3, 29, -16], 'DTRIM', {'right': tinted, 'left': tinted})       # side windows
-    m.box('root', [-16, 18, -40], [16, 19.5, -39], B)                                                  # under the windscreen
+    m.box('fp', [-16, 18, -40], [16, 19.5, -39], B)                                                  # under the windscreen
     m.box('fp', [-14, 19.5, -40.2], [14, 29, -39.6], 'DTRIM', {'front': tinted, 'back': tinted})    # windscreen
     m.box('fp', [-16, 29, -41], [16, 31, -14], B, {'top': B2})                                       # cab roof
     m.box('fp', [-6, 31, -36], [6, 32.5, -32], RED, {'top': lambda x, y: (40, 120, 255) if x > .5 else (255, 40, 40)},
@@ -451,7 +451,7 @@ def truck():
     m.sym('root', [10, 13, -42.6], [14.5, 17, -42], HEAD, glow={'front': HEADG})                      # headlights
     m.box('root', [-18, 7, -45], [18, 11, -42], (40, 40, 44))                                          # bull bar
     for x in (-13, -5, 3, 11): m.box('root', [x, 11, -44.5], [x + 2, 20, -42.5], (40, 40, 44))
-    m.box('root', [-12, 21, -41.5], [12, 23, -40.2], (40, 40, 44))
+    m.box('fp', [-12, 21, -41.5], [12, 23, -40.2], (40, 40, 44))
     m.sym('fp', [16.5, 22, -38], [19, 25, -36], (40, 40, 44), {'front': (190, 200, 210)})          # mirrors
     # interior: dash, wheel (left), cab seats, the crew benches along the walls
     m.box('root', [-15, 14, -39], [15, 17, -36], DASH, {'back': lambda x, y: (70, 200, 255) if .4 < y < .7 and .15 < x < .35 else DASH},

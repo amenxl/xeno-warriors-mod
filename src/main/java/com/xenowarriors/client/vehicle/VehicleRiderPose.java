@@ -78,7 +78,7 @@ public final class VehicleRiderPose {
     /** (tests) times a motorbike pose was put on. */
     public static int bikePoses;
     /** The motorbike riding pose is on. */
-    public static boolean BIKE_POSE = false;
+    public static boolean BIKE_POSE = true;
 
     /** Points a limb (resting straight down along +y from its pivot) at a spot in the model's space (+y down, -z forward). */
     private static void aim(net.minecraft.client.model.geom.ModelPart part, float tx, float ty, float tz) {
