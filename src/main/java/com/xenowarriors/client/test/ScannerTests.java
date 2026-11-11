@@ -402,6 +402,11 @@ public final class ScannerTests {
         for (Object[] w : who) {
             CharacterType c = (CharacterType) w[0];
             KarmaScanner.Tier t = (KarmaScanner.Tier) w[1];
+            if (c == CharacterType.NONE && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) {
+                // (with DragonMineZ a plain, character-less player is drawn by DragonMineZ's own race body, not the vanilla armor layer)
+                l.add(new Step(null, () -> log("worn on a plain player: skipped with DragonMineZ (its race renderer draws character-less players)"), 1));
+                continue;
+            }
             if (c != cur[0]) { cur[0] = c; l.add(new Step(null, () -> UiTest.character(c), 40)); l.add(new Step(null, () -> { mc.setScreen(null); if (ef) com.xenowarriors.compat.epicfight.EfGunCheck.battleMode(); }, 5)); }
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true;
                 server(p -> { cleanup(p); atHome(p, 0F); p.setItemSlot(EquipmentSlot.HEAD, new ItemStack(GovItems.scanner(t))); }); ScannerVisorModel.uses = 0; }, 10));
