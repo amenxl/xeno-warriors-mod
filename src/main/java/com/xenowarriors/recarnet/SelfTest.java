@@ -48,6 +48,7 @@ public final class SelfTest {
             XenoWarriors.LOGGER.info("XW-SELFTEST gov agents {} order assassins {}", gov, order);
             try { modePodCheck(server); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST pod check failed", t); }
             try { XenoWarriors.LOGGER.info("XW-SELFTEST bot limbo restart: {}", com.xenowarriors.bot.BotLimbo.selfTest(server)); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST bot limbo check failed", t); }
+            try { XenoWarriors.LOGGER.info("XW-SELFTEST xeno dragon: {}", com.xenowarriors.boss.XenoDragons.selfTest(server)); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST xeno dragon check failed", t); }
             server.saveAllChunks(false, true, true);
             XenoWarriors.LOGGER.info("XW-SELFTEST OK");
         } catch (Throwable t) {

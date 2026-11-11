@@ -55,7 +55,7 @@ public final class KarmaSensing {
         return e.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES)
                 || e instanceof net.minecraft.world.entity.boss.wither.WitherBoss || e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
                 || e instanceof net.minecraft.world.entity.monster.warden.Warden || e instanceof net.minecraft.world.entity.monster.ElderGuardian
-                || e instanceof com.xenowarriors.corrupted.CSoulBossEntity || e instanceof com.xenowarriors.boss.ZombieSaiyanEntity
+                || e instanceof com.xenowarriors.corrupted.CSoulBossEntity || e instanceof com.xenowarriors.boss.ZombieSaiyanEntity || e instanceof com.xenowarriors.boss.XenoDragonEntity
                 || e instanceof com.xenowarriors.sr.SrMemberEntity
                 || com.xenowarriors.boss.MiniBosses.is(e) || com.xenowarriors.tower.TowerBosses.isBoss(e);
     }

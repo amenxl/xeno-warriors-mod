@@ -19,6 +19,8 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_MOVIES_ANYWHERE;
     /** Bot teammates walk up to DragonMineZ NPCs and talk to them for their own missions. */
     public static final ForgeConfigSpec.BooleanValue DMZ_BOTS_TALK;
+    /** Beaten Ender Dragons turn into the Xeno Dragon boss. */
+    public static final ForgeConfigSpec.BooleanValue XENO_DRAGON;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -39,6 +41,8 @@ public final class XwConfig {
         DMZ_BOTS_TALK = b.comment("Bot teammates walk up to DragonMineZ NPCs (Dende, the masters...) and talk to them themselves for their own missions:",
                         "'talk to' objectives, handing missions in, and taking a mission from its giver when you start yours.")
                 .define("botsTalkToNpcs", true);
+        XENO_DRAGON = b.comment("When an Ender Dragon is beaten, it turns into the Xeno Dragon (a Saiyan-form boss up to Super Saiyan God, then Ultra Instinct).")
+                .define("xenoDragon", true);
         b.pop();
         SPEC = b.build();
     }
