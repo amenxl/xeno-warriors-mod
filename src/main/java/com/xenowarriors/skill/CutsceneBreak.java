@@ -122,7 +122,7 @@ public final class CutsceneBreak {
         if (reason != null) {
             lastGuard = "broken: " + reason + info;
             boolean cut = interrupt(p, src);
-            if (cut) com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.CutsceneGuardPacket(2, hits, HITS, Math.round(chance * 100)), p);
+            if (cut) send(p, 2, hits, chance);
             return cut;
         }
         lastGuard = (counted ? "counted " : "resisted ") + hits + "/" + HITS + info;
@@ -135,9 +135,14 @@ public final class CutsceneBreak {
             level.sendParticles(ParticleTypes.ENCHANTED_HIT, c.x, c.y, c.z, 16, 0.5, 0.7, 0.5, 0.25);
             level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1F, 1.1F);
         }
-        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.CutsceneGuardPacket(counted ? 1 : 0, hits, HITS, Math.round(chance * 100)), p);
+        send(p, counted ? 1 : 0, hits, chance);
         com.xenowarriors.XenoWarriors.LOGGER.debug("Cutscene guard for {}: {}", p.getGameProfile().getName(), lastGuard);
         return false;
+    }
+
+    private static void send(ServerPlayer p, int state, int hits, float chance) {
+        if (p instanceof net.minecraftforge.common.util.FakePlayer) return;          // (a bot's stand-in skill player has no client)
+        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.CutsceneGuardPacket(state, hits, HITS, Math.round(chance * 100)), p);
     }
 
     private static String pct(float f) { return Math.round(f * 1000) / 10.0 + "%"; }
