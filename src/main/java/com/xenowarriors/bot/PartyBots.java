@@ -809,7 +809,7 @@ public final class PartyBots {
     /** (tests) the bot uses this skill through its stand-in, standing where it is. */
     public static boolean useForTest(PartyBotEntity b, Skill skill) {
         FakePlayer f = fake(b);
-        f.moveTo(b.getX(), b.getY(), b.getZ(), b.getYRot(), 0F);
+        f.moveTo(b.getX(), b.getY(), b.getZ(), b.getYRot(), b.getXRot());   // (its own facing; 0 pitch unless a test tilts it)
         return standInUse(b, f, skill);
     }
 

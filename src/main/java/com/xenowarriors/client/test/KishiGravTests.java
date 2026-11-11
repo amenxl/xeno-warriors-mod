@@ -289,6 +289,11 @@ public final class KishiGravTests {
             FakePlayer f = PartyBots.standIn(rbot);
             log("rhalix bot before: at " + rbot.position().subtract(O) + " yRot=" + f(rbot.getYRot()) + " husk at " + H[0].position().subtract(O) + " alive=" + H[0].isAlive());
             rbot.setYRot(0F); rbot.setYHeadRot(0F); rbot.yBodyRot = 0F;
+            // aimed at the husk's middle from the stand-in's eyes, the way a bot aims a skill (a DMZ race can be taller)
+            f.moveTo(rbot.getX(), rbot.getY(), rbot.getZ(), 0F, 0F);
+            Vec3 dv = H[0].getBoundingBox().getCenter().subtract(f.getEyePosition());
+            rbot.setXRot((float) -Math.toDegrees(Math.atan2(dv.y, Math.sqrt(dv.x * dv.x + dv.z * dv.z))));
+            log("rhalix bot aim: standIn eye height=" + f(f.getEyeHeight()) + " pitch=" + f(rbot.getXRot()));
             boolean used = PartyBots.useForTest(rbot, new KishiSkill());
             KishiDomeEntity d = null;
             for (KishiDomeEntity k : p.serverLevel().getEntitiesOfClass(KishiDomeEntity.class, p.getBoundingBox().inflate(30))) if (f.getUUID().equals(k.getOwnerId())) d = k;
