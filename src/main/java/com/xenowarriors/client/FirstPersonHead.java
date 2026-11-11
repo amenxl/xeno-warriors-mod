@@ -45,7 +45,8 @@ public final class FirstPersonHead {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPre(RenderPlayerEvent.Pre event) {
         if (!(event.getEntity() instanceof AbstractClientPlayer p) || !ownFirstPerson(p)) return;
-        if (p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity) { event.setCanceled(true); return; }   // (driving: the camera sits above your head - don't draw yourself)
+        // in a vehicle seat you aren't drawn in first person - except on the motorbike: there you see your arms on the bars
+        if (p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity && !com.xenowarriors.client.vehicle.VehicleRiderPose.onBike(p)) { event.setCanceled(true); return; }
         var m = event.getRenderer().getModel();
         m.head.visible = false;
         m.hat.visible = false;

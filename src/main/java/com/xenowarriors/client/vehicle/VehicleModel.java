@@ -37,6 +37,8 @@ public class VehicleModel extends GeoModel<VehicleEntity> {
             bone.setRotX(-wheel);                                       // (rolling forward: the tops go toward the nose, -z)
             bone.setRotY(b.equals("wheel_fl") || b.equals("wheel_fr") || b.equals("wheel_f") ? -steer : 0F);  // front wheels turn into the turn (+ steer = turning right)
         }
+        CoreGeoBone bars = getAnimationProcessor().getBone("bars");
+        if (bars != null) bars.setRotY(-steer);                          // the bike's bars turn with its front wheel
         if (e.kind.heli()) {
             float rotor = Mth.lerp(pt, e.rotorRotO, e.rotorRot);
             CoreGeoBone main = getAnimationProcessor().getBone("rotor");

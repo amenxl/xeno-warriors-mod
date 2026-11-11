@@ -305,6 +305,7 @@ def car():
 def bike():
     m = Model('motorbike', 128)
     m.bone('fp', [0, 0, 0])                                                    # (hidden for its riders in first person)
+    m.bone('bars', [0, 0, -15.5])                                              # fork, bars, cowl: turn with the front wheel
     B, B2, S, T = 'BODY', 'BODY2', 'STRIPE', 'TRIM'
     m.box('root', [-2.5, 6, -9], [2.5, 11, 6], (54, 54, 60), {'right': lambda x, y: (90, 92, 100) if int(y * 6) % 2 else (54, 54, 60),
           'left': lambda x, y: (90, 92, 100) if int(y * 6) % 2 else (54, 54, 60)})          # engine (fins)
@@ -315,20 +316,23 @@ def bike():
     m.box('root', [-3, 13.2, 7.5], [3, 13.8, 13], (24, 22, 26))               # (pillion step up)
     m.box('root', [-3.2, 10.5, 9], [3.2, 13, 15], B, {'right': lambda x, y: S if .4 < y < .6 else B, 'left': lambda x, y: S if .4 < y < .6 else B})   # tail
     m.box('root', [-2, 10.8, 15], [2, 12.4, 15.6], TAIL, glow={'back': TAILG})   # tail light
-    m.sym('root', [0.7, 7, -17], [1.7, 16, -14], T)                            # fork tubes
-    m.box('root', [-7.5, 17, -15.5], [7.5, 18, -14.5], (40, 40, 44))           # handlebar
-    m.sym('root', [6, 16.6, -16], [8.5, 18.4, -14], (24, 24, 28))              # grips
-    m.sym('root', [5, 18, -15.5], [5.8, 21, -14.7], (40, 40, 44))              # mirror stalks
-    m.sym('root', [4.4, 21, -16], [6.6, 22.5, -14.5], (190, 200, 210))
-    m.box('root', [-2.8, 13.5, -19], [2.8, 18, -15.5], B, {'front': lambda x, y: HEAD if math.hypot(x - .5, y - .5) < .32 else B},
+    m.sym('bars', [0.7, 7, -17], [1.7, 16, -14], T)                            # fork tubes
+    m.box('bars', [-6, 17, -15.5], [6, 18, -14.5], (40, 40, 44))               # handlebar
+    m.sym('bars', [5.2, 17.2, -15], [6.2, 18.2, -12.5], (40, 40, 44))          # (bars sweep back to the rider)
+    m.sym('bars', [6, 16.9, -13.5], [8.5, 18.5, -11.5], (24, 24, 28))          # grips
+    m.sym('bars', [4.4, 18, -15.5], [5.2, 21, -14.7], (40, 40, 44))            # mirror stalks
+    m.sym('bars', [3.8, 21, -16], [6, 22.5, -14.5], (190, 200, 210))
+    m.box('bars', [-2.8, 13.5, -19], [2.8, 18, -15.5], B, {'front': lambda x, y: HEAD if math.hypot(x - .5, y - .5) < .32 else B},
           glow={'front': lambda x, y: HEADG if math.hypot(x - .5, y - .5) < .32 else None})   # headlight cowl
-    m.box('fp', [-2.4, 18, -17.5], [2.4, 21, -16.8], 'DTRIM', {'front': tinted, 'back': tinted})   # windscreen
-    m.box('root', [-1.4, 16.5, -15.5], [1.4, 18, -14.5], (20, 20, 24), {'back': lambda x, y: (70, 200, 255) if .3 < x < .7 else (20, 20, 24)},
+    m.box('bars', [-2.4, 18, -17.5], [2.4, 21, -16.8], 'DTRIM', {'front': tinted, 'back': tinted})   # windscreen
+    m.box('bars', [-1.4, 16.5, -15.5], [1.4, 18, -14.5], (20, 20, 24), {'back': lambda x, y: (70, 200, 255) if .3 < x < .7 else (20, 20, 24)},
           glow={'back': lambda x, y: (70, 200, 255) if .3 < x < .7 else None})   # speedo
     m.box('root', [-2.2, 12, -21], [2.2, 13, -12], B)                          # front mudguard
     m.box('root', [-2.4, 12.6, 13], [2.4, 13.4, 19], B)                        # rear mudguard
     m.box('root', [3, 5, 2], [5, 7, 17], T, {'back': (30, 30, 34)})            # exhaust (right)
-    m.sym('root', [2.5, 6.5, 0], [6, 7.2, 2], (40, 40, 44))                    # foot pegs
+    m.sym('root', [2.5, 6.5, -5], [6, 7.2, -3], (40, 40, 44))                  # foot pegs (under the rider's feet)
+    m.sym('root', [2.5, 7.5, 9], [5.5, 8.2, 11], (40, 40, 44))                 # pillion pegs
+    m.sym('root', [3.2, 13, 11], [3.8, 14.5, 15], T)                           # grab rails (the pillion holds on)
     m.sym('root', [1.9, 5.2, 4], [2.9, 7, 13], (40, 40, 44))                  # swingarm
     m.box('root', [-3, 9, -12], [3, 14, -10.5], (50, 52, 58), {'front': lambda x, y: (30, 30, 34) if int(y * 8) % 2 else (80, 82, 90)})   # radiator
     wheel(m, 'wheel_f', 0, 6, -15, 6, 3, 1, spokes=6, both=True)

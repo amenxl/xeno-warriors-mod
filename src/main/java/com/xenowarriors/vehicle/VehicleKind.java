@@ -79,7 +79,7 @@ public enum VehicleKind {
             case "car" -> new double[][]{{-0.39, 0.137, 0.0, 0}, {0.39, 0.137, 0.0, 0}, {-0.38, 0.137, -0.75, 0}, {0.38, 0.137, -0.75, 0},
                     {-0.32, 1.41, -0.25, 1}, {0.32, 1.41, -0.25, 1}};
             // rider and pillion, then 2 standing on the back
-            case "motorbike" -> new double[][]{{0, 0.605, -0.25, 0}, {0, 0.64, -0.66, 0},
+            case "motorbike" -> new double[][]{{0, 0.605, 0.0, 0}, {0, 0.64, -0.66, 0},
                     {-0.2, 0.83, -0.92, 1}, {0.2, 0.83, -0.92, 1}};
             // 6 in the cabin (three rows), then 4 hanging from the skids (two a side) - the rotor's on top, so nobody stands there
             case "helicopter" -> new double[][]{{-0.39, 0.36, 0.54, 0}, {0.39, 0.36, 0.54, 0}, {-0.39, 0.36, -0.18, 0}, {0.39, 0.36, -0.18, 0},

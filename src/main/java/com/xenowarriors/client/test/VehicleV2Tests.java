@@ -91,6 +91,7 @@ public final class VehicleV2Tests {
         if (all || part.contains("models")) models(mc);
         if (all || part.contains("face")) facing(mc);
         if (all || part.contains("shoot")) shooting(mc);
+        if (all || part.contains("bike")) bikes(mc);
         step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keyDown.setDown(false); mc.options.keyLeft.setDown(false); mc.options.keyRight.setDown(false);
             mc.options.keyJump.setDown(false); mc.options.keySprint.setDown(false); GunClient.testTrigger = null; GunClient.testAim = null;
             mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
@@ -692,6 +693,86 @@ public final class VehicleV2Tests {
             step("model_" + k.id + "_driver3p", () -> {}, 2);
             step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(VehicleV2Tests::home); }, 10);
         }
+    }
+
+    // ================================================================== 4. riding the motorbike
+
+    /** The local player's model limbs after the last draw (degrees): body lean, right arm, right leg. */
+    private static String limbs(Minecraft mc) {
+        if (!(mc.getEntityRenderDispatcher().getRenderer(mc.player) instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> lr)
+                || !(lr.getModel() instanceof net.minecraft.client.model.HumanoidModel<?> m)) return "?";
+        return "body lean " + f(Math.toDegrees(m.body.xRot)) + ", right arm " + f(Math.toDegrees(m.rightArm.xRot)) + "/" + f(Math.toDegrees(m.rightArm.yRot))
+                + ", right leg " + f(Math.toDegrees(m.rightLeg.xRot)) + "/" + f(Math.toDegrees(m.rightLeg.yRot)) + ", riding flag " + m.riding;
+    }
+
+    /**
+     * Motorbike riding pose: the player riding (side, front three-quarter, leaning into a turn, first person), a bot
+     * on the back holding on, an NPC riding one with a bot behind. With Epic Fight in battle mode in the ef runs.
+     */
+    private static void bikes(Minecraft mc) {
+        int[] cam = {-1, 0, 0};
+        int[] id = new int[3];
+        int[] c0 = new int[2];
+        if (ef()) step(null, () -> { com.xenowarriors.compat.epicfight.EfGunCheck.battleMode(); log("bike: epic fight battle mode, " + Ef.info()); }, 10);
+        step(null, () -> server(p -> {
+            home(p);
+            p.setGameMode(GameType.CREATIVE);
+            VehicleEntity v = spawn(p, VehicleKind.MOTORBIKE_MK2, 0, 0, 0F);
+            id[0] = v.getId(); vehicle = v.getId();
+            p.startRiding(v, true);
+        }), 25);
+        step(null, () -> { c0[0] = com.xenowarriors.client.vehicle.VehicleRiderPose.bikePoses; c0[1] = com.xenowarriors.client.vehicle.BikeFirstPerson.drawn;
+            mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); setView(mc, 0F); mc.player.setXRot(5F); }, 10);
+        camera(mc, cam, () -> view3(id[0], 90F, 4.2, 0.12));
+        step("bike_ride_side", () -> log("bike rider (parked): " + limbs(mc)), 3);
+        camera(mc, cam, () -> view3(id[0], 30F, 4.5, 0.3));
+        step("bike_ride_front34", () -> {}, 3);
+        cameraOff(mc);
+        // leaning into a turn: riding round to the right, seen from behind (the third-person camera)
+        step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.options.hideGui = true; mc.options.keyUp.setDown(true); }, 25);
+        step(null, () -> mc.options.keyRight.setDown(true), 12);
+        step("bike_turning", () -> { VehicleEntity v = clientVehicle(mc);
+            log("bike turning: roll " + (v == null ? "?" : f(v.rollTilt)) + " deg, steer " + (v == null ? "?" : f(v.steer)) + " deg, " + limbs(mc)); }, 1);
+        step(null, () -> { mc.options.keyRight.setDown(false); mc.options.keyUp.setDown(false); }, 30);
+        // first person: arms on the bars below
+        step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); setView(mc, view(mc)); mc.player.setXRot(28F); }, 15);
+        step("bike_first_person", () -> {
+            int poses = com.xenowarriors.client.vehicle.VehicleRiderPose.bikePoses - c0[0], fp = com.xenowarriors.client.vehicle.BikeFirstPerson.drawn - c0[1];
+            check("motorbike riding pose (player)", poses > 20 && fp > 5, "bike poses drawn " + poses + ", own body drawn in first person " + fp + " frames; " + limbs(mc)); }, 2);
+        step(null, () -> { mc.player.setXRot(5F); }, 5);
+        step("bike_first_person_ahead", () -> {}, 2);
+        // a bot on the back
+        step(null, () -> server(p -> {
+            if (!(p.serverLevel().getEntity(id[0]) instanceof VehicleEntity v)) return;
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b == null) { log("bike: no bot"); return; }
+            b.moveTo(v.getX() + 1, v.getY(), v.getZ(), 0, 0);
+            b.startRiding(v, true);
+            id[1] = b.getId();
+            log("bike pillion: rhalix riding=" + (b.getVehicle() == v) + " seat " + v.getPassengers().indexOf(b));
+        }), 20);
+        step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); setView(mc, 0F); }, 10);
+        camera(mc, cam, () -> view3(id[0], 75F, 4.6, 0.2));
+        step("bike_pillion", () -> {}, 3);
+        cameraOff(mc);
+        // an NPC riding (a husk at the bars) with a bot behind, driving off somewhere
+        step(null, () -> server(p -> {
+            home(p);
+            VehicleEntity v = spawn(p, VehicleKind.MOTORBIKE, 0, 0, 0F);
+            id[2] = v.getId(); vehicle = v.getId();
+            var h = EntityType.HUSK.create(p.serverLevel());
+            h.moveTo(v.position()); h.setNoAi(true); h.setPersistenceRequired(); h.setInvulnerable(true); h.addTag(TAG); h.addTag(VehicleEntity.NPC_DRIVER_TAG);
+            p.serverLevel().addFreshEntity(h);
+            h.startRiding(v, true);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b != null) { b.moveTo(v.getX() + 1, v.getY(), v.getZ(), 0, 0); b.startRiding(v, true); }
+            v.npcDriveTo(new Vec3(v.getX() + 14, v.getY(), v.getZ() + 18), 0.35);
+            p.connection.teleport(base.getX() + 0.5, base.getY(), base.getZ() - 12.5, 0F, 0F);
+        }), 30);
+        camera(mc, cam, () -> view3(id[2], 70F, 5.5, 0.25));
+        step("bike_npc_rider", () -> {}, 3);
+        cameraOff(mc);
+        step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(VehicleV2Tests::home); }, 10);
     }
 
     private static void clearRiders(ServerPlayer p) {
