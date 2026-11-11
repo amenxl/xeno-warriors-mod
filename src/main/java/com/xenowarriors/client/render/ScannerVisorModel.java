@@ -33,7 +33,11 @@ public final class ScannerVisorModel {
     private static HumanoidModel<LivingEntity>[] newArray() { return new HumanoidModel[KarmaScanner.Tier.values().length]; }
 
     /** The model for a tier (built once). */
+    /** How many times a visor model was handed out for drawing (tests). */
+    public static int uses;
+
     public static HumanoidModel<LivingEntity> get(KarmaScanner.Tier t) {
+        uses++;
         HumanoidModel<LivingEntity> m = MODELS[t.ordinal()];
         if (m == null) MODELS[t.ordinal()] = m = new HumanoidModel<>(layer(t).bakeRoot());
         return m;
