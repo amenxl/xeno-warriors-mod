@@ -386,7 +386,7 @@ public final class KishiGravTests {
             }
             if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
             if (p.isAlive()) p.setHealth(p.getMaxHealth());
-        }); }, 30));
+        }); }, 80));   // (time for the Overworld chunks around the arena to load and tick again)
         l.add(new Step(null, () -> PackTests.server(p -> {
             if (p.level() != p.server.overworld()) p.teleportTo(p.server.overworld(), PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
             PackTests.clear(p);
@@ -396,8 +396,8 @@ public final class KishiGravTests {
             H[0] = (Husk) PackTests.husk(p, 0, 10);
             D[0] = dome(p, enemy(p.serverLevel()), O.add(0, 0, 10), 80, 1);
             enemyDome = dome(p, enemy(p.serverLevel()), O, 40, 1);
-            PackTests.log("kishi setup: " + where(p));
-        }), 30));
+            PackTests.log("kishi setup: " + where(p) + " husk chunk ticking=" + p.serverLevel().isPositionEntityTicking(H[0].blockPosition()));
+        }), 40));
         l.add(new Step("pack_kishigrav", () -> {
             boolean dmz = dmz();
             double clientG = dmz ? dmzGravity(mc.player) : -1;
