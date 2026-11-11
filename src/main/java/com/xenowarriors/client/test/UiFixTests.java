@@ -172,6 +172,7 @@ public final class UiFixTests {
     private static void fox(Minecraft mc) {
         boolean[] hid = new boolean[1];
         step(null, () -> server(p -> {
+            for (PartyBotEntity b : new java.util.ArrayList<>(PartyBots.bots(p))) { PartyBots.forgetFake(b.getUUID()); b.discard(); }   // (clear view)
             HuntDmzTests.make(p, "human", 40);
             form(p, "human", "shiyoken");
             Object ch = call(DmzPerCharacter.live(p), "getCharacter");
