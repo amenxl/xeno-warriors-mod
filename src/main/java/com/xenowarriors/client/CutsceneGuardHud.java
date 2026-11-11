@@ -10,7 +10,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * "GUARD 1/3" under the cutscene letterbox for a moment after an enemy's hit during your cutscene (skill.CutsceneBreak):
+ * "GUARD 1/3" at the top under the cutscene letterbox for a moment after an enemy's hit during your cutscene (skill.CutsceneBreak):
  * pips for the hits that counted, "RESISTED" when your Defense shrugged one off, "GUARD BROKEN" when it ends the cutscene.
  * Drawn after the HUD (the cutscenes hide every HUD overlay but their own).
  */
@@ -38,7 +38,7 @@ public final class CutsceneGuardHud {
         int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
         float fade = age < SHOW_MS - 400 ? 1F : (SHOW_MS - age) / 400F;
         int a = Math.max(8, Math.round(255 * fade)) << 24;
-        int cy = h * 2 / 3;
+        int cy = h / 6 + 6;                                              // (top middle, under the letterbox bar: clear of the ultimate's title)
         String title = m.state() == 2 ? "GUARD BROKEN" : "GUARD " + m.hits() + "/" + m.need();
         int col = m.state() == 2 ? 0xFF5544 : m.state() == 1 ? 0xFFBB44 : 0x88DDFF;
         g.pose().pushPose();
