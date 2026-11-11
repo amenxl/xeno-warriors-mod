@@ -51,6 +51,7 @@ public final class PopupFeed implements IGuiOverlay {
     private static final long NEWS_LIFE = 6000;
     /** (tests) news cards / chat lines shown since start. */
     public static int newsCards, newsChat;
+    public static String lastNewsChat = "";
 
     public static void push(int style, UUID subject, int type, int pet, String title, String text, String face) {
         long now = Util.getMillis();
@@ -60,6 +61,7 @@ public final class PopupFeed implements IGuiOverlay {
                 net.minecraft.ChatFormatting c = net.minecraft.ChatFormatting.getByName(face);
                 mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal(text).withStyle(c == null || !c.isColor() ? net.minecraft.ChatFormatting.AQUA : c));
                 newsChat++;
+                lastNewsChat = text;
                 return;
             }
             for (Pop p : NEWS) if (p.text.equals(text) && now - p.born < 3000) return;

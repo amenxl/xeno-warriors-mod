@@ -47,7 +47,7 @@ public final class UiFixTests {
         S = steps; SERVER = server; LOG = log; CHAR = character;
         boolean dmz = net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
         step(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null);
-            CHAR.accept(CharacterType.RHALIX); }, 60);
+            CHAR.accept(CharacterType.MIKIKO); }, 60);
         preview(mc);
         if (dmz) {
             step(null, () -> { HuntDmzTests.noDmzScreen(mc); server(p -> {
@@ -92,7 +92,7 @@ public final class UiFixTests {
     private static void news(Minecraft mc) {
         int[] before = new int[2];
         step(null, () -> {
-            CHAR.accept(CharacterType.MIKIKO);
+            HuntDmzTests.noDmzScreen(mc);
             ClientSettings.setDmzNewsInChat(false);
             before[0] = PopupFeed.newsCards; before[1] = PopupFeed.newsChat;
         }, 40);
@@ -103,7 +103,7 @@ public final class UiFixTests {
             DmzNews.bot(p, b, "Mission complete", Component.literal("Rhalix (bot) completed: Saiyan Saga - Raditz (+2,000 TP)").withStyle(net.minecraft.ChatFormatting.GOLD));
             log("news: sent " + DmzNews.sent + " last=" + DmzNews.last);
         }), 8);
-        step("uifix_news", () -> {}, 3);
+        step("uifix_news", () -> HuntDmzTests.noDmzScreen(mc), 3);
         step(null, () -> {
             int cards = PopupFeed.newsCards - before[0], chat = PopupFeed.newsChat - before[1];
             log("news: popups=" + cards + " shown=" + PopupFeed.newsShown() + " chat=" + chat + " (expect 3/3/0) -> " + (cards == 3 && chat == 0 ? "PASS" : "FAIL"));
@@ -112,8 +112,7 @@ public final class UiFixTests {
         }, 10);
         step(null, () -> {
             int chat = PopupFeed.newsChat - before[1];
-            var msgs = mc.gui.getChat().getRecentChat();
-            String lastChat = msgs.isEmpty() ? "" : msgs.get(msgs.size() - 1);
+            String lastChat = PopupFeed.lastNewsChat;
             log("news: with the chat setting: chat=" + chat + " last chat line='" + lastChat + "' -> " + (chat == 1 && lastChat.contains("talked to Goku") ? "PASS" : "FAIL"));
             ClientSettings.setDmzNewsInChat(false);
         }, 10);
@@ -153,24 +152,36 @@ public final class UiFixTests {
 
     // ---------------------------------------------------------------- 4: the Shiyoken fox aura
 
+    /** Puts the live DMZ character in this form, with full ki and power release (so DragonMineZ keeps it on). */
+    static void form(ServerPlayer p, String race, String form) {
+        Object d = DmzPerCharacter.live(p);
+        Object ch = call(d, "getCharacter"), res = call(d, "getResources");
+        call(ch, "setRace", race);
+        if (form == null) call(ch, "clearActiveForm"); else call(ch, "setActiveForm", "legendaryforms", form);
+        call(res, "setPowerRelease", 100);
+        call(res, "setCurrentEnergy", 1.0E6F);
+        DmzPerCharacter.syncAll(p);
+    }
+
     private static void fox(Minecraft mc) {
         boolean[] hid = new boolean[1];
         step(null, () -> server(p -> {
             HuntDmzTests.make(p, "human", 40);
+            form(p, "human", "shiyoken");
             Object ch = call(DmzPerCharacter.live(p), "getCharacter");
-            call(ch, "setActiveForm", "legendaryforms", "shiyoken");
-            DmzPerCharacter.syncAll(p);
             p.serverLevel().setDayTime(18000);
             p.setYRot(0); p.setXRot(0);
             log("fox: server form=" + call(ch, "getActiveForm") + " race=" + call(ch, "getRaceName"));
         }), 30);
+        for (int i = 0; i < 3; i++) step(null, () -> server(p -> form(p, "human", "shiyoken")), 5);
         step(null, () -> {
+            HuntDmzTests.noDmzScreen(mc);
             hid[0] = mc.options.hideGui;
             mc.options.hideGui = true;
             mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
-            String form = com.xenowarriors.client.compat.DmzForms.form(mc.player), race = com.xenowarriors.client.compat.DmzForms.race(mc.player);
+            String fm = com.xenowarriors.client.compat.DmzForms.form(mc.player), race = com.xenowarriors.client.compat.DmzForms.race(mc.player);
             int lvl = FoxAuraClient.level(mc.player);
-            log("fox: client form=" + form + " race=" + race + " level=" + lvl + " (expect 1) -> " + (lvl == 1 ? "PASS" : "FAIL"));
+            log("fox: client form=" + fm + " race=" + race + " level=" + lvl + " (expect 1) -> " + (lvl == 1 ? "PASS" : "FAIL"));
             if (lvl != 1) FoxAuraClient.forceLevel = 1;           // (DragonMineZ undid the form: still show the look)
         }, 20);
         step("uifix_fox1", () -> {}, 3);
@@ -178,12 +189,9 @@ public final class UiFixTests {
             log("fox: level 1 drew auras=" + FoxAuraClient.drawnAuras + " foxes=" + FoxAuraClient.drawnFoxes + " orbs=" + FoxAuraClient.drawnOrbs
                     + " heads=" + FoxAuraClient.drawnHeads + " trim=" + FoxAuraClient.trimDrawn + " -> " + (FoxAuraClient.drawnFoxes == 4 && FoxAuraClient.drawnOrbs == 0 ? "PASS" : "FAIL"));
             FoxAuraClient.forceLevel = -1;
-            server(p -> {
-                Object ch = call(DmzPerCharacter.live(p), "getCharacter");
-                call(ch, "setActiveForm", "legendaryforms", "shin_shiyoken");
-                DmzPerCharacter.syncAll(p);
-            });
+            server(p -> form(p, "human", "shin_shiyoken"));
         }, 5);
+        for (int i = 0; i < 3; i++) step(null, () -> server(p -> form(p, "human", "shin_shiyoken")), 5);
         step(null, () -> {
             int lvl = FoxAuraClient.level(mc.player);
             log("fox: shin shiyoken level=" + lvl + " (expect 2) -> " + (lvl == 2 ? "PASS" : "FAIL"));
@@ -195,12 +203,9 @@ public final class UiFixTests {
                     + " -> " + (FoxAuraClient.drawnFoxes == 7 && FoxAuraClient.drawnOrbs == 5 && FoxAuraClient.drawnHeads == 1 ? "PASS" : "FAIL"));
             FoxAuraClient.forceLevel = -1;
             // not Human: no fox aura
-            server(p -> {
-                Object ch = call(DmzPerCharacter.live(p), "getCharacter");
-                call(ch, "setRace", "saiyan");
-                DmzPerCharacter.syncAll(p);
-            });
+            server(p -> form(p, "saiyan", "shin_shiyoken"));
         }, 5);
+        for (int i = 0; i < 3; i++) step(null, () -> server(p -> form(p, "saiyan", "shin_shiyoken")), 5);
         step(null, () -> {
             int lvl = FoxAuraClient.level(mc.player);
             log("fox: as a Saiyan level=" + lvl + " (expect 0) -> " + (lvl == 0 ? "PASS" : "FAIL"));
@@ -209,7 +214,7 @@ public final class UiFixTests {
             log("fox: level() cost " + (System.nanoTime() - t0) / 1000 + " ns per call");
             mc.options.hideGui = hid[0];
             mc.options.setCameraType(CameraType.FIRST_PERSON);
-            server(p -> { Object ch = call(DmzPerCharacter.live(p), "getCharacter"); call(ch, "clearActiveForm"); DmzPerCharacter.syncAll(p); });
+            server(p -> form(p, "human", null));
         }, 20);
     }
 }
