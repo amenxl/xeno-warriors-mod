@@ -392,9 +392,13 @@ public final class KishiGravTests {
             PackTests.clear(p);
             PackTests.arena(p);
             p.setGameMode(GameType.SURVIVAL);
+        }), 40));
+        // (once more, now the dimension change has settled: server and client agree where the player stands)
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); p.setGameMode(GameType.SURVIVAL); }), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
             O = p.position();
             H[0] = (Husk) PackTests.husk(p, 0, 10);
-            D[0] = dome(p, enemy(p.serverLevel()), H[0].position(), 80, 1);   // (on the husk: right after a dimension change the player can stand off the arena spot)
+            D[0] = dome(p, enemy(p.serverLevel()), H[0].position(), 80, 1);
             enemyDome = dome(p, enemy(p.serverLevel()), O, 40, 1);
             PackTests.log("kishi setup: " + where(p) + " husk chunk ticking=" + p.serverLevel().isPositionEntityTicking(H[0].blockPosition()));
         }), 40));
