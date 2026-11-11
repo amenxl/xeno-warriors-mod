@@ -18,6 +18,9 @@ public class VrScreen extends Screen {
 
     public VrScreen(OpenVrPacket m) { super(Component.literal("VR Console")); this.m = m; }
 
+    /** (tests) what the server sent. */
+    public OpenVrPacket data() { return m; }
+
     private int x0() { return (width - W) / 2; }
     private int y0() { return Math.max(10, height / 2 - 125); }
 
@@ -44,7 +47,7 @@ public class VrScreen extends Screen {
             String rules = c.desc() + "\nParty: " + (c.partyMin() == c.partyMax() ? c.partyMin() : c.partyMin() + "-" + c.partyMax())
                     + (c.character() != null ? "\nCharacter: " + c.character().getDisplayName().getString() : "")
                     + (c.noHeal() ? "\nNo healing" : "") + (c.timeLimit() > 0 ? "\nTime limit: " + c.timeLimit() + "s" : "")
-                    + "\nArena: " + Vr.ENVS[c.env()].name() + (done ? "\n(cleared - smaller rewards now)" : "\nFirst clear: big rewards");
+                    + "\nArena: " + Vr.ENVS[c.env()].name() + (done ? "\n(cleared - repeats pay 3-5 emeralds, " + m.dailyLeft() + " of " + m.dailyCap() + " left today)" : "\nFirst clear: big rewards");
             b.setTooltip(Tooltip.create(Component.literal(rules)));
             addRenderableWidget(b);
         }
@@ -53,7 +56,7 @@ public class VrScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderBackground(g);
-        int x = x0(), y = y0(), h = m.inSession() ? 80 : 60 + 26 + ((Vr.CHALLENGES.length + 1) / 2) * 24 + 10;
+        int x = x0(), y = y0(), h = m.inSession() ? 80 : 60 + 26 + ((Vr.CHALLENGES.length + 1) / 2) * 24 + 10 + 24;
         g.fill(x - 2, y - 2, x + W + 2, y + h + 2, 0xFF3AF0A0);
         g.fill(x, y, x + W, y + h, 0xF00C1A16);
         for (int k = 0; k < h; k += 4) g.fill(x, y + k, x + W, y + k + 1, 0x1030FFA0);          // scanlines
@@ -61,6 +64,11 @@ public class VrScreen extends Screen {
         if (m.inSession()) { g.drawCenteredString(font, "You're in VR right now.", x + W / 2, y + 30, 0xFFCCFFE8); super.render(g, mx, my, pt); return; }
         g.drawString(font, "Free training (VR Ultima runs at 20%):", x + 8, y + 26, 0xFFB8F0D8, false);
         g.drawString(font, "Challenges (hover for the rules):", x + 8, y + 26 + 40, 0xFFB8F0D8, false);
+        int by = y + h - 25;                                                               // the daily cap on repeat payouts
+        boolean out = m.dailyLeft() <= 0;
+        g.drawString(font, "Repeat-clear emeralds left today: " + m.dailyLeft() + " / " + m.dailyCap(), x + 8, by, out ? 0xFFFFB060 : 0xFFB8F0D8, false);
+        g.drawString(font, (out ? "Daily limit reached - resets in " : "Resets in ") + Vr.fmtReset(m.resetTicks()) + " (next in-game day)",
+                x + 8, by + 11, 0xFF8FC8B0, false);
         super.render(g, mx, my, pt);
     }
 

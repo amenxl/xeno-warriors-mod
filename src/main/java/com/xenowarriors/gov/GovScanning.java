@@ -21,7 +21,9 @@ import org.joml.Vector3f;
  * scans whoever it's fighting, or a player it can see nearby: a beam of light from the lens, a beep, and the person
  * scanned is told their reading. The overload rule is the same as yours: read someone past its capacity and it blows
  * apart - and the guard PANICS and runs (GovAgentEntity's panic goal) instead of fighting. A scanner worn out by hits
- * breaks the same way.
+ * breaks the same way. In a training fight (Tower, Journey, VR) the guard panics too, runs for 3-5 seconds and then
+ * vanishes (teleports out) - it counts as gone for the wave, but it's no kill: no drops, XP or Collection credit. A
+ * Tower / Journey boss (a Gov Commander) shrugs it off and keeps fighting instead, so a boss floor can't be skipped.
  */
 public final class GovScanning {
     private GovScanning() {}
@@ -29,6 +31,8 @@ public final class GovScanning {
     public static final String ROLLED = "xw_scanner_rolled", LAST_READ = "xw_scan_last", LAST_WHO = "xw_scan_who";
     /** How long a guard panics after its scanner breaks (ticks). */
     public static final int PANIC_TICKS = 20 * 15;
+    /** In a training fight: how long a guard flees before it vanishes (3-5 s). */
+    public static final int VANISH_MIN = 60, VANISH_SPREAD = 41;
 
     /** Give a guard its scanner (once per guard; also for guards from before scanners). */
     public static void equip(GovAgentEntity g) {
@@ -113,7 +117,7 @@ public final class GovScanning {
     /** Read someone too strong: the scanner blows apart and the guard panics. */
     public static void overload(GovAgentEntity g, LivingEntity who, KarmaScanner.Tier tier, long v) {
         KarmaScanner.blowUp(g, tier);
-        if (training(g)) {          // (Tower, Journey, VR: the fight is the point - they shrug it off and keep going)
+        if (training(g) && boss(g)) {          // (a Tower / Journey boss: shrugs it off and keeps going)
             say(g, "Scanner's fried... doesn't matter - take them down!");
             return;
         }
@@ -121,17 +125,27 @@ public final class GovScanning {
         say(g, line);
         if (who instanceof ServerPlayer p)
             p.displayClientMessage(Component.literal(g.getName().getString() + "'s " + tier.title + " overloaded on your Karma Level!").withStyle(ChatFormatting.GOLD), true);
-        g.panic(who, PANIC_TICKS);
+        flee(g, who);
     }
 
     /** A guard's scanner worn through by hits: same panic. */
     public static void wornOut(GovAgentEntity g, LivingEntity from) {
-        if (training(g)) return;
+        if (training(g) && boss(g)) return;
         say(g, "My scanner's busted - I can't read them! Fall back!");
-        g.panic(from, PANIC_TICKS);
+        flee(g, from);
     }
 
-    /** A training fight (Tower, Journey, VR arenas): no running away there. */
+    /** Panic: out in the world it runs for 15 s and goes back to its post; in a training fight it runs 3-5 s and vanishes. */
+    private static void flee(GovAgentEntity g, LivingEntity from) {
+        if (g.vanishing()) return;
+        if (training(g)) g.panicAndVanish(from, VANISH_MIN + g.getRandom().nextInt(VANISH_SPREAD));
+        else g.panic(from, PANIC_TICKS);
+    }
+
+    /** A Tower / Journey boss (Gov Commander). */
+    static boolean boss(GovAgentEntity g) { return com.xenowarriors.tower.TowerBosses.isBoss(g); }
+
+    /** A training fight (Tower, Journey, VR arenas): a panicking guard vanishes there instead of running back to its post. */
     public static boolean training(GovAgentEntity g) {
         var t = g.getPersistentData();
         return t.getBoolean("xw_journey") || t.getBoolean("xw_tower") || com.xenowarriors.modes.ModeRules.arena(g.level());

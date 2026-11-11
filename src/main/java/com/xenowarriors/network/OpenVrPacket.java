@@ -7,12 +7,16 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Server -> player: open the VR console (which challenges you've cleared, whether you're in VR now). */
-public record OpenVrPacket(boolean[] done, boolean inSession) {
-    public static void encode(OpenVrPacket m, FriendlyByteBuf b) { b.writeVarInt(m.done.length); for (boolean d : m.done) b.writeBoolean(d); b.writeBoolean(m.inSession); }
+/** Server -> player: open the VR console (which challenges you've cleared, whether you're in VR now, the repeat emeralds left today). */
+public record OpenVrPacket(boolean[] done, boolean inSession, int dailyLeft, int dailyCap, long resetTicks) {
+    public static void encode(OpenVrPacket m, FriendlyByteBuf b) {
+        b.writeVarInt(m.done.length); for (boolean d : m.done) b.writeBoolean(d); b.writeBoolean(m.inSession);
+        b.writeVarInt(m.dailyLeft); b.writeVarInt(m.dailyCap); b.writeVarLong(m.resetTicks);
+    }
     public static OpenVrPacket decode(FriendlyByteBuf b) {
         boolean[] d = new boolean[Math.min(64, b.readVarInt())]; for (int i = 0; i < d.length; i++) d[i] = b.readBoolean();
-        return new OpenVrPacket(d, b.readBoolean());
+        boolean in = b.readBoolean();
+        return new OpenVrPacket(d, in, b.readVarInt(), b.readVarInt(), b.readVarLong());
     }
     public static void handle(OpenVrPacket m, Supplier<NetworkEvent.Context> ctx) {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.xenowarriors.client.PacketScreens.openVr(m));

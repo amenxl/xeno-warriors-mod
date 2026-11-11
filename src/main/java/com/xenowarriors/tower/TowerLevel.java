@@ -28,8 +28,9 @@ import java.util.UUID;
  * not Money, bounties or drops. Your bots' and pets' kills count for you, as they always do in the Collection.
  * <p>Tower XP (each player in the run gets their own): {@link #XP_KILL} per kill credited to you in a run (your bots'
  * and pets' too), {@link #XP_WAVE} per wave cleared, 10 + the floor for each floor cleared, and 25 + 2x the floor on
- * top for beating a boss floor. XP to go from level n to n+1: 100 + 40 (n - 1). That's 2,340 XP to level 10 (a solo run
- * to floor 10 gives about 345 XP, one to floor 20 about 985: so about 7 runs to floor 10, or 2-3 to floor 20), 8,740 to level 20, 19,140 to level 30, 33,540 to level 40.
+ * top for beating a boss floor. XP to go from level n to n+1: 35 + 15 (n - 1) (v0.222: was 100 + 40 (n - 1), about 2.7x
+ * slower). That's 855 XP to level 10 (a solo run to floor 10 gives about 345 XP, one to floor 20 about 985: so 2-3 runs
+ * to floor 10, or 1 to floor 20), 3,230 to level 20 (about 3-4 runs to floor 20), 7,105 to level 30, 12,480 to level 40.
  * <p>While you're in a run a second bar under the Tower bar shows your level, progress and what your kills count.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -44,7 +45,7 @@ public final class TowerLevel {
     // ---------------------------------------------------------------- numbers
 
     /** XP to go from this level to the next. */
-    public static long needed(int level) { return 100L + 40L * Math.max(0, level - 1); }
+    public static long needed(int level) { return 35L + 15L * Math.max(0, level - 1); }
 
     /** Total XP from level 1 to reach this level (for the guide / tests). */
     public static long totalTo(int level) { long t = 0; for (int l = 1; l < level; l++) t += needed(l); return t; }
@@ -169,7 +170,20 @@ public final class TowerLevel {
 
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) sync(p);
+        if (event.getEntity() instanceof ServerPlayer p) { normalize(p); sync(p); }
+    }
+
+    /**
+     * Saves from before the cheaper curve (v0.222) can hold more XP than the new curve needs for the next level: level
+     * them up quietly so the bar never shows over 100%. (Levels already reached are kept as they are.)
+     */
+    public static void normalize(ServerPlayer p) {
+        int lv = level(p);
+        long xp = xp(p);
+        if (lv >= MAX_LEVEL || xp < needed(lv)) return;
+        while (lv < MAX_LEVEL && xp >= needed(lv)) { xp -= needed(lv); lv++; }
+        if (lv >= MAX_LEVEL) xp = 0;
+        set(p, lv, xp);
     }
 
     @SubscribeEvent

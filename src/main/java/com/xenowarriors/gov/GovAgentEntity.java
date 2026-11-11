@@ -49,6 +49,8 @@ public class GovAgentEntity extends PathfinderMob {
     private long panicUntil;
     private java.util.UUID panicFrom;
     private Vec3 panicFromPos;
+    /** In a training fight (Tower, Journey, VR) a guard whose scanner broke flees, then vanishes at this game time (-1: not). */
+    private long vanishAt = -1;
 
     public GovAgentEntity(EntityType<? extends GovAgentEntity> type, Level level) {
         super(type, level);
@@ -126,6 +128,29 @@ public class GovAgentEntity extends PathfinderMob {
         setAggressive(false);
         getNavigation().stop();
         clearRestriction();                      // (it runs past its post)
+    }
+
+    /**
+     * Panic in a training fight: flee from `from` for `ticks`, then teleport out of the fight (see {@link #vanish}). The
+     * wave / floor / battle counts it as gone, like a defeat - but it's no kill: no drops, XP or Collection credit.
+     */
+    public void panicAndVanish(LivingEntity from, int ticks) {
+        panic(from, ticks + 40);
+        vanishAt = level().getGameTime() + ticks;
+    }
+
+    public boolean vanishing() { return vanishAt >= 0; }
+
+    /** Poof: gone from the fight (discarded, so no death drops or XP). */
+    public void vanish() {
+        vanishAt = -1;
+        if (level() instanceof ServerLevel l) {
+            l.sendParticles(ParticleTypes.POOF, getX(), getY() + 1, getZ(), 24, 0.35, 0.6, 0.35, 0.04);
+            l.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 1, getZ(), 30, 0.3, 0.8, 0.3, 0.1);
+            l.playSound(null, blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.9F, 1.3F);
+            com.xenowarriors.XenoWarriors.LOGGER.info("Gov: {} fled a training fight and vanished at {}", getName().getString(), blockPosition().toShortString());
+        }
+        discard();
     }
 
     /** Runs flat out away from what broke its scanner, sweating, until the panic wears off; then back to its post. */
@@ -245,6 +270,7 @@ public class GovAgentEntity extends PathfinderMob {
         ServerLevel l = (ServerLevel) level();
         if (tickCount == 10) armWithGun();
         if (tickCount == 12) GovScanning.equip(this);
+        if (vanishAt >= 0 && l.getGameTime() >= vanishAt && isAlive()) { vanish(); return; }
         GovScanning.tick(this);
         if (tickCount == 20 && hasGun()) { com.xenowarriors.compat.TaczGuns.draw(this); gunDrawn = true; }
         LivingEntity t = getTarget();
@@ -320,6 +346,7 @@ public class GovAgentEntity extends PathfinderMob {
         tag.putBoolean("Guard", guard());
         if (post != null) tag.putLong("Post", post.asLong());
         if (panicking()) tag.putLong("PanicUntil", panicUntil);
+        if (vanishAt >= 0) tag.putLong("VanishAt", vanishAt);
     }
 
     @Override
@@ -330,6 +357,7 @@ public class GovAgentEntity extends PathfinderMob {
         entityData.set(GUARD, tag.getBoolean("Guard"));
         if (tag.contains("Post")) { post = BlockPos.of(tag.getLong("Post")); restrictTo(post, 20); }
         if (tag.contains("PanicUntil")) { panicUntil = tag.getLong("PanicUntil"); clearRestriction(); }
+        if (tag.contains("VanishAt")) vanishAt = tag.getLong("VanishAt");
     }
 
     @Override
