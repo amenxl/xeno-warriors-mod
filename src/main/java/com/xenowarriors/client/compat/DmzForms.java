@@ -140,6 +140,7 @@ public final class DmzForms {
     }
 
     private static Form info(Player p) {
+        if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;   // previews: the character as it is, not your form
         String f = form(p);
         if (f == null) return null;
         Form known = FORMS.get(f);
