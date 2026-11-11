@@ -118,6 +118,8 @@ public final class FactionRaids {
         final Map<UUID, Integer> unloaded = new HashMap<>();
         public int wave, waveSize, age, nextWaveAt, failedSpawns;
         public String ended;
+        /** Won: the standing line the target was shown. */
+        public String result;
         public boolean won;
 
         Raid(Kind kind, ServerLevel level, ServerPlayer target, int severity) {
@@ -346,6 +348,10 @@ public final class FactionRaids {
             catch (Throwable t) { XenoWarriors.LOGGER.error("[raids] tick failed - calling it off", t); end(r, false, "error"); }
         }
         RAIDS.removeIf(r -> r.ended != null);
+        if (!LINGER.isEmpty()) {
+            long now = server.overworld().getGameTime();
+            LINGER.entrySet().removeIf(en -> { if (now < en.getValue()) return false; en.getKey().removeAllPlayers(); return true; });
+        }
     }
 
     private static void tick(Raid r) {
@@ -507,16 +513,33 @@ public final class FactionRaids {
                 q.sendSystemMessage(Component.literal(r.kind.title + " over: " + line).withStyle(ChatFormatting.GRAY));
             return;
         }
-        // won: they back off a little, and everyone who fought gets something
+        // won: they back off - the target wins back some standing (and is told exactly how much), everyone who fought gets something
+        Component standing = null;
         if (t != null) {
             RepRules rule = switch (r.kind) { case GOV -> RepRules.GOV_RAID; case SR -> RepRules.SR_RAID; case TOWN -> RepRules.TOWN_RAID_HELD; };
+            int before = Reputation.get(t, r.kind.faction);
             rule.apply(t);
+            int after = Reputation.get(t, r.kind.faction);
+            standing = standingLine(r.kind.faction, before, after);
+            r.result = standing.getString();
+            lastResult = r.result;
             if (r.kind == Kind.GOV) com.xenowarriors.economy.Money.add(t, 150L + 50L * r.wave, true);
         }
+        // the raid bar stays up a few seconds with the result
+        r.bar.setName(Component.literal("Raid repelled! ").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
+                .append(standing != null ? standing : Component.literal(r.kind.title + " beaten").withStyle(r.kind.style)));
+        r.bar.setProgress(0F);
+        r.bar.setColor(BossEvent.BossBarColor.GREEN);
         for (UUID u : r.fought) {
             if (!(r.level.getPlayerByUUID(u) instanceof ServerPlayer q) || (t != null && q.distanceToSqr(t) > AREA * AREA)) continue;
-            q.sendSystemMessage(Component.literal("You fought off the " + r.kind.title + "! " + (q == t ? "The " + r.kind.faction.title + " back off - for now." : ""))
-                    .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+            r.bar.addPlayer(q);
+            q.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
+            q.connection.send(new ClientboundSetTitleTextPacket(Component.literal("Raid repelled!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)));
+            q.connection.send(new ClientboundSetSubtitleTextPacket(q == t && standing != null ? standing
+                    : Component.literal("You helped " + (t == null ? "them" : t.getName().getString()) + " fight off the " + r.kind.title).withStyle(ChatFormatting.GRAY)));
+            q.sendSystemMessage(Component.literal("Raid repelled! ").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
+                    .append(q == t && standing != null ? standing.copy().append(Component.literal(" - the " + r.kind.faction.title + " back off, for now.").withStyle(ChatFormatting.GRAY))
+                            : Component.literal("You helped fight off the " + r.kind.title + ".").withStyle(ChatFormatting.GRAY)));
             r.level.playSound(null, q.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1F, 1F);
             for (ItemStack s : loot(r)) {
                 ItemEntity it = new ItemEntity(r.level, q.getX(), q.getY() + 1.2, q.getZ(), s);
@@ -524,6 +547,25 @@ public final class FactionRaids {
                 r.level.addFreshEntity(it);
             }
         }
+        if (!r.bar.getPlayers().isEmpty()) LINGER.put(r.bar, r.level.getGameTime() + 160);      // (8 s)
+    }
+
+    /** Raid bars showing their result for a few seconds after a win (removed at that game time). */
+    static final Map<ServerBossEvent, Long> LINGER = new HashMap<>();
+    /** (Tests) the standing line of the last raid won. */
+    public static String lastResult;
+
+    /**
+     * "Government standing +40 (now: Hostile -120)" in the faction's colour, plus "Hated -> Hostile" when the tier
+     * changes.
+     */
+    public static Component standingLine(Faction f, int before, int after) {
+        Reputation.Tier tb = Reputation.Tier.of(before), ta = Reputation.Tier.of(after);
+        int d = after - before;
+        var c = Component.literal(f.title + " standing " + (d >= 0 ? "+" : "") + d + " (now: " + ta.title + " " + after + ")")
+                .withStyle(s -> s.withColor(net.minecraft.network.chat.TextColor.fromRgb(f.color)));
+        if (tb != ta) c.append(Component.literal(" - " + tb.title + " \u2192 " + ta.title + "!").withStyle(s -> s.withColor(net.minecraft.network.chat.TextColor.fromRgb(ta.color)).withBold(true)));
+        return c;
     }
 
     private static List<ItemStack> loot(Raid r) {
@@ -581,6 +623,8 @@ public final class FactionRaids {
     @SubscribeEvent
     public static void onStop(ServerStoppingEvent e) {
         for (Raid r : RAIDS) r.bar.removeAllPlayers();
+        for (ServerBossEvent b : LINGER.keySet()) b.removeAllPlayers();
+        LINGER.clear();
         RAIDS.clear();
         BY_ID.clear();
     }

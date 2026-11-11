@@ -337,11 +337,20 @@ public final class RaidTests {
         l.add(new Step(null, () -> UiTest.server(p -> {
             Raid r = FactionRaids.raidOn(p);
             int rep = Reputation.get(p, Faction.GOV);
+            String res = FactionRaids.lastResult;
+            check("win tells the standing gained", res != null && res.contains("Government standing +" + FactionRaids.WIN_REP) && res.contains("(now: " + Reputation.Tier.of(rep).title + " " + rep + ")"),
+                    "line='" + res + "'");
+            String tierLine = FactionRaids.standingLine(Faction.SR, -620, -580).getString();
+            check("win line names a tier change (Hated -> Hostile)", tierLine.contains("Hated \u2192 Hostile") && tierLine.contains("+40"), "line='" + tierLine + "'");
             check("winning ends it: standing back, everything cleared", r == null && rep == repBefore + FactionRaids.WIN_REP && tagged(p, 128) == 0,
                     "raidOn=" + (r != null) + " gov " + repBefore + " -> " + rep + " leftover raid entities=" + tagged(p, 128));
             if (bot != null) bot.discard();
             p.getInventory().clearContent();
         }), 2));
+        l.add(new Step("raids_gov_won", () -> {
+            String bars = clientBars(mc);
+            check("raid bar shows the result after a win", bars.contains("Raid repelled!") && bars.contains("standing +" + FactionRaids.WIN_REP), "client bars=" + bars);
+        }, 2));
 
         // ---- 3. a Sky Rebellion raid
         l.add(new Step(null, () -> UiTest.server(p -> {
