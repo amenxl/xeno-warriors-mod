@@ -141,6 +141,7 @@ public final class KhHud implements IGuiOverlay {
             g.blit(ORB, ox, oy, 14, 14, 0, 0, 32, 32, 32, 32);
             String kl0 = ka0 == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka0.title().substring(0, 1);
             small(g, font, kl0, ox + 7 - font.width(kl0) * 0.3F, oy + 4, ka0 == null ? 0xB070FF : ka0.color, 0.6F);
+            kishiLine(g, font, mc, at[3], at[4] - 24);
             effects(g, mc, at[3], at[4] - 14, width - 4);
             bubble(g, font, p, at[0], at[1]);
             commandMenu(g, mc, font, type, height, partial);
@@ -211,12 +212,23 @@ public final class KhHud implements IGuiOverlay {
         String kl = ka == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka.title().substring(0, 1);
         small(g, font, kl, px - 13 - font.width(kl) * 0.3F, py + size - 12, ka == null ? 0xB070FF : ka.color, 0.6F);
 
+        kishiLine(g, font, mc, bx, by - 24);
         effects(g, mc, bx, by - 14, px + size);
         bubble(g, font, p, px, py);
         commandMenu(g, mc, font, type, height, partial);
     }
 
     /** Potion effects in a row above the health bars. */
+    /** While your Kishi is up: its gravity level (and with DragonMineZ its G), like the classic HUD shows it. */
+    private static void kishiLine(GuiGraphics g, Font font, Minecraft mc, int x, int y) {
+        int kishi = ClientSkillState.kishiLevel(mc.player.getUUID());
+        if (kishi <= 0) return;
+        float kg = ClientSkillState.kishiGravity(mc.player.getUUID());
+        String t = (kg > 0 ? net.minecraft.network.chat.Component.translatable("hud.xenowarriors.kishi_level_g", kishi, Math.round(kg))
+                : net.minecraft.network.chat.Component.translatable("hud.xenowarriors.kishi_level", kishi)).getString();
+        small(g, font, t, x, y, 0xD9C8FF, 0.75F);
+    }
+
     private static void effects(GuiGraphics g, Minecraft mc, int left, int y, int right) {
         List<MobEffectInstance> list = new ArrayList<>();
         for (MobEffectInstance e : mc.player.getActiveEffects()) if (e.showIcon()) list.add(e);
