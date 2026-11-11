@@ -93,7 +93,8 @@ public final class DmzBotMasters extends Goal {
     @Override public void stop() {
         if (!done && master != null) {
             resting.put(master, b.tickCount + RETRY);
-            PartyBots.testLog(b, "dmz master: gave up on " + master + " for now");
+            PartyBots.testLog(b, "dmz master: gave up on " + master + " for now (alive " + (to != null && to.isAlive()) + " time " + (b.tickCount < until) + " free " + DmzBotTalk.free(b)
+                    + " errand " + b.errand + " danger " + com.xenowarriors.bot.BotErrands.danger(b) + " target " + b.getTarget() + " stuck " + stuck + ")");
         }
         b.getNavigation().stop();
         to = null; master = null; skill = null; done = false;
