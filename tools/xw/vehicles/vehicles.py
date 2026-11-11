@@ -192,15 +192,34 @@ def hubcap(spokes=5):
     return f
 
 
-def wheel(m, name, cx, cy, cz, r, wdt, side, spokes=5):
-    """A tyre (round sides, tread) with a hubcap on its outer face, in its own bone (spins with its x rotation)."""
+def tire_face(r, half_z, half_y):
+    """A tyre's side seen on a box half_z x half_y (blocks of the wheel's radius r): round tread, chrome rim, dark hub."""
+    def f(x, y):
+        zz, yy = (x - .5) * 2 * half_z, (y - .5) * 2 * half_y
+        q = math.hypot(zz, yy) / r
+        if q > 1.0: return None
+        if q > .93: return TIRE2
+        if q > .62: return TIRE
+        if q > .5: return 'TRIM'
+        return (58, 60, 66)
+    return f
+
+
+def wheel(m, name, cx, cy, cz, r, wdt, side, spokes=5, both=False):
+    """A tyre - two crossed boxes, so it reads round from the side - with a hubcap on its outer face (both faces for a
+    bike), in its own bone (spins with its x rotation, the front ones steer with y)."""
     m.bone(name, [cx, cy, cz])
     x0, x1 = sorted([cx - side * wdt / 2, cx + side * wdt / 2])
-    m.box(name, [x0, cy - r, cz - r], [x1, cy + r, cz + r], TIRE, {'right': tire_side, 'left': tire_side, 'front': tread, 'back': tread, 'top': tread, 'bottom': tread})
-    hc = r * 0.68
-    ox = x1 if side > 0 else x0
-    m.box(name, [ox - (0 if side > 0 else 0.4), cy - hc, cz - hc], [ox + (0.4 if side > 0 else 0), cy + hc, cz + hc], 'TRIM',
-          {'right': hubcap(spokes), 'left': hubcap(spokes), 'front': 'TRIM', 'back': 'TRIM', 'top': 'TRIM', 'bottom': 'TRIM'})
+    k = 0.58
+    m.box(name, [x0, cy - r * k, cz - r], [x1, cy + r * k, cz + r], TIRE,
+          {'right': tire_face(r, r, r * k), 'left': tire_face(r, r, r * k), 'front': tread, 'back': tread, 'top': tread, 'bottom': tread})
+    m.box(name, [x0 + 0.05, cy - r, cz - r * k], [x1 - 0.05, cy + r, cz + r * k], TIRE,
+          {'right': tire_face(r, r * k, r), 'left': tire_face(r, r * k, r), 'front': tread, 'back': tread, 'top': tread, 'bottom': tread})
+    hc = r * 0.5
+    for sd in ((1, -1) if both else (side,)):
+        ox = x1 if sd > 0 else x0
+        m.box(name, [ox - (0 if sd > 0 else 0.4), cy - hc, cz - hc], [ox + (0.4 if sd > 0 else 0), cy + hc, cz + hc], 'TRIM',
+              {'right': hubcap(spokes), 'left': hubcap(spokes), 'front': 'TRIM', 'back': 'TRIM', 'top': 'TRIM', 'bottom': 'TRIM'})
 
 
 def seat(m, bone, x0, x1, y0, top, z_front, z_back, back_top, col=SEAT):
@@ -264,9 +283,9 @@ def car():
         return DASH
     m.box('root', [-12.5, 9.5, -10], [12.5, 13, -6.5], DASH, {'back': dash_back},
           glow={'back': lambda x, y: (70, 200, 255) if .3 < y < .7 and (abs(x - .22) < .07 or abs(x - .35) < .07) else (40, 160, 90) if .3 < y < .7 and .55 < x < .75 else None})
-    m.box('root', [-6.6, 11, -6.5], [-5.4, 12.2, -4.5], DASH)                  # steering column
+    m.box('root', [-6.6, 10.5, -6.5], [-5.4, 11.5, -5.4], DASH)                # steering column
     ring = lambda x, y: DASH if math.hypot(x - .5, y - .5) > .34 or abs(x - .5) < .08 else None
-    m.box('root', [-9.5, 10, -4.6], [-2.5, 17, -3.8], DASH, {'front': ring, 'back': ring})
+    m.box('root', [-8.5, 9.5, -5.4], [-3.5, 14.5, -4.8], DASH, {'front': ring, 'back': ring})
     m.box('root', [-1, 4.5, -10], [1, 9, 2], DASH)                               # centre console, gear stick
     m.box('root', [-0.4, 9, -2], [0.4, 11, -1.2], (20, 20, 24))
     seat(m, 'root', -10, -2.5, 4.5, 5.2, -6, 1.5, 15)                             # front seats
@@ -308,8 +327,10 @@ def bike():
     m.box('root', [-2.4, 12.6, 13], [2.4, 13.4, 19], B)                        # rear mudguard
     m.box('root', [3, 5, 2], [5, 7, 17], T, {'back': (30, 30, 34)})            # exhaust (right)
     m.sym('root', [2.5, 6.5, 0], [6, 7.2, 2], (40, 40, 44))                    # foot pegs
-    wheel(m, 'wheel_f', 0, 6, -15, 6, 3, 1, spokes=6)
-    wheel(m, 'wheel_r', 0, 6, 13, 6, 3.6, 1, spokes=6)
+    m.sym('root', [1.9, 5.2, 4], [2.9, 7, 13], (40, 40, 44))                  # swingarm
+    m.box('root', [-3, 9, -12], [3, 14, -10.5], (50, 52, 58), {'front': lambda x, y: (30, 30, 34) if int(y * 8) % 2 else (80, 82, 90)})   # radiator
+    wheel(m, 'wheel_f', 0, 6, -15, 6, 3, 1, spokes=6, both=True)
+    wheel(m, 'wheel_r', 0, 6, 13, 6, 3.6, 1, spokes=6, both=True)
     return m
 
 
@@ -428,7 +449,7 @@ def truck():
     m.box('root', [-15, 14, -39], [15, 18.5, -36], DASH, {'back': lambda x, y: (70, 200, 255) if .4 < y < .7 and .15 < x < .35 else DASH},
           glow={'back': lambda x, y: (70, 200, 255) if .4 < y < .7 and .15 < x < .35 else None})
     ring = lambda x, y: DASH if math.hypot(x - .5, y - .5) > .34 or abs(x - .5) < .08 else None
-    m.box('root', [-11, 15, -34.5], [-3, 23, -33.7], DASH, {'front': ring, 'back': ring})
+    m.box('root', [-10, 13.5, -34.5], [-4, 19.5, -33.8], DASH, {'front': ring, 'back': ring})
     seat(m, 'root', -12, -3, 8, 9.5, -30, -21, 22, col=(52, 56, 48))
     seat(m, 'root', 3, 12, 8, 9.5, -30, -21, 22, col=(52, 56, 48))
     seat(m, 'root', -14, -2, 8, 9.5, -8, 1, 22, col=(52, 56, 48))
