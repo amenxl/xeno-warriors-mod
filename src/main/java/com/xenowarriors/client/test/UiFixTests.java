@@ -41,6 +41,12 @@ public final class UiFixTests {
     static void server(Consumer<ServerPlayer> f) { SERVER.accept(f); }
     static void step(String shot, Runnable a, int delay) { S.add(shot, a, delay); }
 
+    /** DragonMineZ's screens, and the select screen the login asked for (it waits until no screen is open). */
+    static void closeScreens(Minecraft mc) {
+        HuntDmzTests.noDmzScreen(mc);
+        if (mc.screen instanceof com.xenowarriors.client.screen.CharacterSelectScreen) mc.setScreen(null);
+    }
+
     static Object call(Object o, String m, Object... args) { return HuntDmzTests.call(o, m, args); }
 
     public static void build(Minecraft mc, String focus, Dmz6Tests.Adder steps, Consumer<Consumer<ServerPlayer>> server, Consumer<CharacterType> character, Consumer<String> log) {
@@ -50,7 +56,7 @@ public final class UiFixTests {
             CHAR.accept(CharacterType.MIKIKO); }, 60);
         preview(mc);
         if (dmz) {
-            step(null, () -> { HuntDmzTests.noDmzScreen(mc); server(p -> {
+            step(null, () -> { closeScreens(mc); server(p -> {
                 HuntDmzTests.make(p, "saiyan", 40);
                 DmzPerCharacter.markCreatedForTest(p);
                 HuntDmzTests.protect(p);
@@ -92,7 +98,7 @@ public final class UiFixTests {
     private static void news(Minecraft mc) {
         int[] before = new int[2];
         step(null, () -> {
-            HuntDmzTests.noDmzScreen(mc);
+            closeScreens(mc);
             ClientSettings.setDmzNewsInChat(false);
             before[0] = PopupFeed.newsCards; before[1] = PopupFeed.newsChat;
         }, 40);
@@ -103,7 +109,7 @@ public final class UiFixTests {
             DmzNews.bot(p, b, "Mission complete", Component.literal("Rhalix (bot) completed: Saiyan Saga - Raditz (+2,000 TP)").withStyle(net.minecraft.ChatFormatting.GOLD));
             log("news: sent " + DmzNews.sent + " last=" + DmzNews.last);
         }), 8);
-        step("uifix_news", () -> HuntDmzTests.noDmzScreen(mc), 3);
+        step("uifix_news", () -> closeScreens(mc), 3);
         step(null, () -> {
             int cards = PopupFeed.newsCards - before[0], chat = PopupFeed.newsChat - before[1];
             log("news: popups=" + cards + " shown=" + PopupFeed.newsShown() + " chat=" + chat + " (expect 3/3/0) -> " + (cards == 3 && chat == 0 ? "PASS" : "FAIL"));
@@ -175,7 +181,7 @@ public final class UiFixTests {
         }), 30);
         for (int i = 0; i < 3; i++) step(null, () -> server(p -> form(p, "human", "shiyoken")), 5);
         step(null, () -> {
-            HuntDmzTests.noDmzScreen(mc);
+            closeScreens(mc);
             hid[0] = mc.options.hideGui;
             mc.options.hideGui = true;
             mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
@@ -184,7 +190,7 @@ public final class UiFixTests {
             log("fox: client form=" + fm + " race=" + race + " level=" + lvl + " (expect 1) -> " + (lvl == 1 ? "PASS" : "FAIL"));
             if (lvl != 1) FoxAuraClient.forceLevel = 1;           // (DragonMineZ undid the form: still show the look)
         }, 20);
-        step("uifix_fox1", () -> {}, 3);
+        step("uifix_fox1", () -> closeScreens(mc), 3);
         step(null, () -> {
             log("fox: level 1 drew auras=" + FoxAuraClient.drawnAuras + " foxes=" + FoxAuraClient.drawnFoxes + " orbs=" + FoxAuraClient.drawnOrbs
                     + " heads=" + FoxAuraClient.drawnHeads + " trim=" + FoxAuraClient.trimDrawn + " -> " + (FoxAuraClient.drawnFoxes == 4 && FoxAuraClient.drawnOrbs == 0 ? "PASS" : "FAIL"));
@@ -193,11 +199,12 @@ public final class UiFixTests {
         }, 5);
         for (int i = 0; i < 3; i++) step(null, () -> server(p -> form(p, "human", "shin_shiyoken")), 5);
         step(null, () -> {
+            closeScreens(mc);
             int lvl = FoxAuraClient.level(mc.player);
             log("fox: shin shiyoken level=" + lvl + " (expect 2) -> " + (lvl == 2 ? "PASS" : "FAIL"));
             if (lvl != 2) FoxAuraClient.forceLevel = 2;
         }, 20);
-        step("uifix_fox2", () -> {}, 3);
+        step("uifix_fox2", () -> closeScreens(mc), 3);
         step(null, () -> {
             log("fox: level 2 drew foxes=" + FoxAuraClient.drawnFoxes + " orbs=" + FoxAuraClient.drawnOrbs + " heads=" + FoxAuraClient.drawnHeads
                     + " -> " + (FoxAuraClient.drawnFoxes == 7 && FoxAuraClient.drawnOrbs == 5 && FoxAuraClient.drawnHeads == 1 ? "PASS" : "FAIL"));
