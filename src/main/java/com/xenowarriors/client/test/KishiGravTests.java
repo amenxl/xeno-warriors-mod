@@ -25,6 +25,7 @@ import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.fml.ModList;
@@ -395,6 +396,15 @@ public final class KishiGravTests {
         }), 40));
         // (once more, now the dimension change has settled: server and client agree where the player stands)
         l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); p.setGameMode(GameType.SURVIVAL); }), 30));
+        // (after the respawn and the trip back the server can be left waiting on a teleport the client never confirmed: meet
+        //  the client where it really stands, so both agree)
+        l.add(new Step(null, () -> {
+            Vec3 c = mc.player.position();
+            PackTests.server(p -> {
+                PackTests.log("kishi sync: server at " + p.blockPosition() + " client at " + BlockPos.containing(c));
+                p.connection.teleport(c.x, c.y, c.z, 0F, 0F);
+            });
+        }, 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
             O = p.position();
             H[0] = (Husk) PackTests.husk(p, 0, 10);
