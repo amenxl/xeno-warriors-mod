@@ -171,20 +171,20 @@ public final class UltBreakTests {
             int[] defs = {0, 10, 50, 100, 200, 500, 1000, 3000, 10000, Stat.MAX_LEVEL};
             java.util.Random r = new java.util.Random(42);
             StringBuilder sb = new StringBuilder();
-            double prevAvg = 0; boolean mono = true;
+            float prevC = 2F; boolean mono = true;
             for (int d : defs) {
                 float c = CutsceneBreak.countChance(d);
                 long total = 0; int runs = 20000;
                 for (int i = 0; i < runs; i++) { int counted = 0, n = 0; while (counted < CutsceneBreak.HITS) { n++; if (r.nextFloat() < c) counted++; } total += n; }
                 double avg = total / (double) runs;
-                if (avg + 1e-9 < prevAvg) mono = false;
-                prevAvg = avg;
+                if (c > prevC) mono = false;
+                prevC = c;
                 sb.append(String.format(Locale.ROOT, " D%d: chance %.1f%% avgHits %.2f;", d, c * 100, avg));
             }
             log("formula:" + sb);
             float c0 = CutsceneBreak.countChance(0), cMax = CutsceneBreak.countChance(Stat.MAX_LEVEL);
             result("formula", c0 == 1F && Math.abs(cMax - CutsceneBreak.FLOOR) < 1e-4 && mono && CutsceneBreak.countChance(200) < CutsceneBreak.countChance(50),
-                    "chance(0)=" + f(c0) + " chance(max)=" + f(cMax) + " floor " + CutsceneBreak.FLOOR + " non-decreasing hits=" + mono);
+                    "chance(0)=" + f(c0) + " chance(max)=" + f(cMax) + " floor " + CutsceneBreak.FLOOR + " chance never rises with Defense=" + mono);
         }, 2));
 
         // ---- 1. Defense 0: two small hits don't cut it, the third does
@@ -222,11 +222,11 @@ public final class UltBreakTests {
             boolean c = hit(p, 0.25F);
             result("big_hit", c && CutsceneBreak.lastGuard.contains("big hit"), "one 25% hit cut=" + c + " (" + CutsceneBreak.lastGuard + ")");
         }, null);
-        // ---- 4. cumulative damage: 12% hits at max Defense, rolls never count -> the 3rd (36% total) cuts it
+        // ---- 4. cumulative damage: ~14% hits at max Defense, rolls never count -> the 3rd (~40% total) cuts it
         barrage(mc, l, "heavy", Stat.MAX_LEVEL, p -> {
             CutsceneBreak.forceRoll = 0.99F;
-            boolean a = hit(p, 0.12F), b = hit(p, 0.12F), c = hit(p, 0.12F);
-            result("heavy_total", !a && !b && c && CutsceneBreak.lastGuard.contains("heavy damage"), "12% hits cut " + a + "/" + b + "/" + c + " (" + CutsceneBreak.lastGuard + ")");
+            boolean a = hit(p, 0.14F), b = hit(p, 0.14F), c = hit(p, 0.14F);
+            result("heavy_total", !a && !b && c && CutsceneBreak.lastGuard.contains("heavy damage"), "14% hits cut " + a + "/" + b + "/" + c + " (" + CutsceneBreak.lastGuard + ")");
         }, null);
 
         // ---- 5. team ultimate with a Mikiko bot: the bot can't be hit; the player's guard holds 2 hits, the 3rd cuts it
@@ -245,7 +245,9 @@ public final class UltBreakTests {
             SkillManager.resetCooldowns(p);
             Karma.add(p, 200);
             p.setHealth(p.getMaxHealth());
-            if (bot != null) BotTeamUlt.readyForTest(bot);
+            if (bot != null) { bot.moveTo(origin.x + 3, origin.y, origin.z, 0, 0); bot.getNavigation().stop(); BotTeamUlt.readyForTest(bot); }
+            log("team: bot=" + (bot == null ? "none" : bot.character() + " alive=" + bot.isAlive() + " dist " + f(bot.distanceTo(p)) + " sparring=" + bot.sparring() + " downed=" + bot.downed())
+                    + " player busy=" + TeamUltimate.busy(p) + " partners=" + TeamUltimate.partners(p).size());
             p.setShiftKeyDown(true);
             boolean took = TeamUltimate.onUltimateKey(p);
             p.setShiftKeyDown(false);
