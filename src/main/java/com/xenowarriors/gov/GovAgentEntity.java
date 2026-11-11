@@ -141,6 +141,13 @@ public class GovAgentEntity extends PathfinderMob {
 
     public boolean vanishing() { return vanishAt >= 0; }
 
+    /** A panicking guard takes no new target (the Tower and Journey arenas re-aim every enemy at you every few ticks). */
+    @Override
+    public void setTarget(LivingEntity t) {
+        if (t != null && panicking()) return;
+        super.setTarget(t);
+    }
+
     /** Poof: gone from the fight (discarded, so no death drops or XP). */
     public void vanish() {
         vanishAt = -1;

@@ -56,7 +56,7 @@ public class VrScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderBackground(g);
-        int x = x0(), y = y0(), h = m.inSession() ? 80 : 60 + 26 + ((Vr.CHALLENGES.length + 1) / 2) * 24 + 10 + 24;
+        int x = x0(), y = y0(), h = m.inSession() ? 80 : 60 + 26 + ((Vr.CHALLENGES.length + 1) / 2) * 24 + 10 + 6;
         g.fill(x - 2, y - 2, x + W + 2, y + h + 2, 0xFF3AF0A0);
         g.fill(x, y, x + W, y + h, 0xF00C1A16);
         for (int k = 0; k < h; k += 4) g.fill(x, y + k, x + W, y + k + 1, 0x1030FFA0);          // scanlines
@@ -64,11 +64,11 @@ public class VrScreen extends Screen {
         if (m.inSession()) { g.drawCenteredString(font, "You're in VR right now.", x + W / 2, y + 30, 0xFFCCFFE8); super.render(g, mx, my, pt); return; }
         g.drawString(font, "Free training (VR Ultima runs at 20%):", x + 8, y + 26, 0xFFB8F0D8, false);
         g.drawString(font, "Challenges (hover for the rules):", x + 8, y + 26 + 40, 0xFFB8F0D8, false);
-        int by = y + h - 25;                                                               // the daily cap on repeat payouts
-        boolean out = m.dailyLeft() <= 0;
-        g.drawString(font, "Repeat-clear emeralds left today: " + m.dailyLeft() + " / " + m.dailyCap(), x + 8, by, out ? 0xFFFFB060 : 0xFFB8F0D8, false);
-        g.drawString(font, (out ? "Daily limit reached - resets in " : "Resets in ") + Vr.fmtReset(m.resetTicks()) + " (next in-game day)",
-                x + 8, by + 11, 0xFF8FC8B0, false);
+        boolean out = m.dailyLeft() <= 0;                                                  // the daily cap on repeat payouts (one line: fits a small window)
+        String when = Vr.fmtReset(m.resetTicks());
+        String line = out ? "Daily VR reward limit reached - resets in " + when : "Repeat emeralds left today: " + m.dailyLeft() + "/" + m.dailyCap() + " - resets in " + when;
+        if (font.width(line) > W - 12) line = out ? "Daily limit reached - resets in " + when : "Repeat emeralds: " + m.dailyLeft() + "/" + m.dailyCap() + " (resets " + when + ")";
+        g.drawCenteredString(font, line, x + W / 2, y + h - 13, out ? 0xFFFFB060 : 0xFFB8F0D8);
         super.render(g, mx, my, pt);
     }
 
