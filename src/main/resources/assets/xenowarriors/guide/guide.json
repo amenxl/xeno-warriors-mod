@@ -64,7 +64,7 @@
         },
         {
           "title": "Party HUD",
-          "text": "Every HUD style (Blazing Wind, Modern and Classic) shows your party members with their health and Karma bars, each with its numbers (current/max).\n- Your own health and Karma bars show their numbers too (Classic: health beside the hearts, Karma over the skill slots).\n- With DragonMineZ: each member also gets a ki bar (yellow) with its numbers (current/max) - players and bots alike."
+          "text": "Every HUD style (Blazing Wind, Modern and Classic) shows your party members with their health and Karma bars, each with its numbers (current/max).\n- Your own health and Karma bars show their numbers too (Classic: health beside the hearts, Karma over the skill slots).\n- With DragonMineZ: each member also gets a ki bar (yellow) with its numbers (current/max) - players and bots alike.\n## Live portraits\n- The round portraits (yours, and your party members' and bots' when they're in view) make the same face as the character in the world, frame by frame: blinks, expressions, talking (voice chat or a chat line), battle damage, sleeping, knocked out, starving, Demon's Remnants and Lunar eyes, Fox King's hair, outfits, hoods, glasses and goggles, and a DragonMineZ form's hair colour.\n- A member who's too far away to be seen shows their drawn portrait instead."
         },
         {
           "title": "Bot teammates",
