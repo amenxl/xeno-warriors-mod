@@ -253,7 +253,8 @@ public final class BotKiTests {
             ST[1] = g;
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
             p.connection.teleport(at.x + 6, at.y + 9, at.z + 9, 180F, 45F);        // (from above: the bot and Goku side by side)
-            List<String> teach = DmzBotTechniques.teachesForTest("goku");
+            List<String> teach = new ArrayList<>(DmzBotTechniques.teachesForTest("goku"));
+            teach.addAll(DmzBotTechniques.teachesSkillsForTest("goku"));             // (Fly too: the cheapest of all)
             int min = Integer.MAX_VALUE;
             StringBuilder costs = new StringBuilder();
             for (String s : teach) { int c = DmzBotTechniques.costForTest(b, s); costs.append(s).append('=').append(c).append(' '); if (c >= 0) min = Math.min(min, c); }

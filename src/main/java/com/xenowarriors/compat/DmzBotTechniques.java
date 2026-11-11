@@ -340,6 +340,63 @@ public final class DmzBotTechniques {
         for (PartyBotEntity b : PartyBots.bots(p)) {
             if (b.journey() || b.getTarget() != null) continue;                          // (not mid-fight)
             try { create(b, false); } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot couldn't make a DragonMineZ ki attack", t); }
+            try { upgrade(b, false); } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot couldn't level up a DragonMineZ skill", t); }
+        }
+    }
+
+    // ------------------------------------------------------------------ skill levels
+
+    private static final String UPGRADED = "xw_dmz_skill_up_at";
+    /** Ticks between two skill levels a bot buys by itself (2 minutes). */
+    public static final int UPGRADE_GAP = 20 * 60 * 2;
+    /** (Tests) skill levels bought so far. */
+    public static int upgrades;
+
+    /**
+     * Buys the next level of one skill it has, as DragonMineZ's skill menu does for a player (UpdateSkillC2S UPGRADE:
+     * DragonMineZ's price for that level, not past its max level, Potential Unlock's level-10 stop) - with at most half
+     * its spare TP, Kaioken first, then Fly, then the rest (in {@link #BOT_SKILLS} order). One level per call.
+     */
+    public static String upgrade(PartyBotEntity b, boolean force) {
+        if (!ready()) return "off";
+        long now = b.level().getGameTime(), last = b.getPersistentData().getLong(UPGRADED);
+        if (!force && last > 0 && now >= last && now - last < UPGRADE_GAP) return "too soon";
+        DmzBotQuests.Data d = DmzBotQuests.open(b, false);
+        if (d == null || d.live) return "no data";
+        try {
+            float[] sp = spare(d);
+            float budget = sp[2] * BUDGET_SHARE;
+            Object skills = m(d.sd, "getSkills");
+            StringBuilder why = new StringBuilder();
+            for (String s : BOT_SKILLS) {
+                Object sk = m(skills, "getSkill", s);
+                if (sk == null) continue;
+                int lv = ((Number) m(sk, "getLevel")).intValue();
+                if (lv <= 0) continue;                                              // (a skill is bought from a master first)
+                refreshMax.invoke(null, d.sd, s, sk);
+                if ((Boolean) m(sk, "isMaxLevel")) { why.append(s).append(" max; "); continue; }
+                if (s.equals("potentialunlock") && lv == 10) { why.append(s).append(" stops at 10; "); continue; }
+                int c = ((Number) computeTpCost.invoke(null, d.sd, s, lv)).intValue();
+                if (c < 0 || c > budget) { why.append(s).append(" ").append(c).append(" TP; "); continue; }
+                float before = tp(d.sd);
+                if (before < c) continue;
+                m(m(d.sd, "getResources"), "removeTrainingPoints", (float) c);
+                m(sk, "addLevel", 1);
+                save(d, "Skills", "Resources");
+                b.getPersistentData().putLong(UPGRADED, now);
+                upgrades++;
+                DmzBotSkills.refresh(b);
+                int nl = ((Number) m(sk, "getLevel")).intValue();
+                note(d.key + " raised " + s + " to level " + nl + " for " + c + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ")");
+                d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" trained ")
+                        .append(Component.translatableWithFallback("skill.dragonminez." + s, DmzBotPower.pretty(s)).withStyle(ChatFormatting.GOLD))
+                        .append(" to level " + nl + " (" + String.format(Locale.US, "%,d TP", c) + ")").withStyle(ChatFormatting.AQUA), false);
+                return "raised " + s + " to " + nl + " for " + c;
+            }
+            return "nothing to raise (" + why + "budget " + Math.round(budget) + ")";
+        } catch (Throwable t) {
+            XenoWarriors.LOGGER.warn("A bot couldn't level up a DragonMineZ skill", t);
+            return "error " + t;
         }
     }
 
@@ -380,6 +437,38 @@ public final class DmzBotTechniques {
 
     static boolean isStrike(String skill) { return strikeRegistry != null && strikeRegistry.containsKey(skill); }
 
+    /**
+     * The DragonMineZ skills (not attacks) a bot buys from masters, most wanted first: Fly and Kaioken (it uses them -
+     * {@link DmzBotSkills}, {@link DmzBotPower}), then the ones that work through its stats. Not Jump, Sprint, Ki Sense,
+     * Instant Transmission or Fusion (they do nothing for a bot), nor forms.
+     */
+    public static final List<String> BOT_SKILLS = List.of("fly", "kaioken", "potentialunlock", "kiboost", "kiprotection", "kicontrol", "kimanipulation",
+            "ki_infusion", "defense_penetration", "healing_reduction", "meditation");
+
+    /** The skills from {@link #BOT_SKILLS} this master sells (DragonMineZ's offerings), in the bots' order. */
+    @SuppressWarnings("unchecked")
+    static List<String> teachesSkills(String master) {
+        List<String> out = new ArrayList<>();
+        if (!ready() || master == null) return out;
+        try {
+            Object cfg = skillsConfig.invoke(null);
+            List<String> list = ((Map<String, List<String>>) m(cfg, "getSkillOfferings")).get(master.toLowerCase(Locale.ROOT));
+            if (list == null) return out;
+            for (String s : BOT_SKILLS) if (list.contains(s) && !registry.containsKey(s) && !strikeRegistry.containsKey(s)) out.add(s);
+        } catch (Throwable t) { XenoWarriors.LOGGER.warn("Couldn't read a DragonMineZ master's skills", t); }
+        return out;
+    }
+
+    static boolean isSkill(String s) { return BOT_SKILLS.contains(s) && (registry == null || !registry.containsKey(s)) && !isStrike(s); }
+
+    /** How many of {@link #BOT_SKILLS} its character has (level 1 or more). */
+    private static int skillCount(Object sd) throws Exception {
+        Object skills = m(sd, "getSkills");
+        int n = 0;
+        for (String s : BOT_SKILLS) if (((Number) m(skills, "getSkillLevel", s)).intValue() > 0) n++;
+        return n;
+    }
+
     /** DragonMineZ's price for learning this skill (computeTpCost at level 0); -1 = can't be bought. */
     static int cost(Object sd, String skill) throws Exception { return ((Number) computeTpCost.invoke(null, sd, skill, 0)).intValue(); }
 
@@ -405,23 +494,29 @@ public final class DmzBotTechniques {
     }
 
     /**
-     * The technique the bot would learn from this master now, or null: the first (in the master's order) it can afford
-     * with spare TP, preferring the kind (ki or strike) it knows fewer of.
+     * What the bot would learn from this master now, or null: of the ki attacks, strike moves and skills it can afford
+     * with spare TP, the kind it has fewest of (ties: ki attack, strike move, skill) - the first of that kind in the
+     * master's order (skills: Fly and Kaioken first).
      */
     static String lesson(DmzBotQuests.Data d, String master, StringBuilder why) throws Exception {
         float spare = spare(d)[2];
-        int ki = 0, strike = 0;
-        for (Object t : unlocked(d.sd).values()) if (strikeData.isInstance(t)) strike++; else ki++;
-        String first = null, other = null;
-        for (String s : teaches(master)) {
+        int[] have = new int[3];                                                    // ki, strike, skill
+        for (Object t : unlocked(d.sd).values()) if (strikeData.isInstance(t)) have[1]++; else have[0]++;
+        have[2] = skillCount(d.sd);
+        String[] best = new String[3];
+        List<String> all = new ArrayList<>(teaches(master));
+        all.addAll(teachesSkills(master));
+        for (String s : all) {
             String no = cantLearn(d, master, s, spare);
             if (why != null) why.append(s).append(no == null ? " ok" : " (" + no + ")").append("; ");
             if (no != null) continue;
-            boolean wanted = isStrike(s) ? strike < ki : ki <= strike;
-            if (wanted && first == null) first = s;
-            if (other == null) other = s;
+            int k = isSkill(s) ? 2 : isStrike(s) ? 1 : 0;
+            if (best[k] == null) best[k] = s;
         }
-        return first != null ? first : other;
+        String pick = null;
+        int fewest = Integer.MAX_VALUE;
+        for (int k = 0; k < 3; k++) if (best[k] != null && have[k] < fewest) { fewest = have[k]; pick = best[k]; }
+        return pick;
     }
 
     /**
@@ -450,9 +545,12 @@ public final class DmzBotTechniques {
             learned++;
             String tname = skill;
             try { Object t = unlocked(d.sd).get(skill); if (t != null) tname = (String) m(t, "getName"); } catch (Throwable ignored) {}
-            Component shown = tname == null || tname.isBlank() || tname.equals(skill) ? Component.literal(DmzBotPower.pretty(skill))
+            boolean sk1 = isSkill(skill);
+            Component shown = sk1 ? Component.translatableWithFallback("skill.dragonminez." + skill, DmzBotPower.pretty(skill))
+                    : tname == null || tname.isBlank() || tname.equals(skill) ? Component.literal(DmzBotPower.pretty(skill))
                     : tname.startsWith("technique.") ? Component.translatableWithFallback(tname, DmzBotPower.pretty(skill)) : Component.literal(tname);   // (DragonMineZ's own: a lang key)
-            note(d.key + " learned " + skill + " (" + (isStrike(skill) ? "STRIKE" : "KI") + ", technique " + (got ? "added" : "MISSING") + ") from " + master
+            if (sk1) DmzBotSkills.refresh(b);
+            note(d.key + " learned " + skill + " (" + (sk1 ? "SKILL level " + m(skills, "getSkillLevel", skill) : (isStrike(skill) ? "STRIKE" : "KI") + ", technique " + (got ? "added" : "MISSING")) + ") from " + master
                     + " for " + c + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ")");
             Component who = masterEntity != null ? masterEntity.getDisplayName() : Component.literal(DmzBotPower.pretty(master));
             d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" learned ")
@@ -528,6 +626,29 @@ public final class DmzBotTechniques {
 
     /** (Tests) is this one of DragonMineZ's masters, and its name. */
     public static String masterForTest(Entity e) { return masterName(e); }
+
+    /** (Tests) the skills this master sells that bots would learn. */
+    public static List<String> teachesSkillsForTest(String master) { return teachesSkills(master); }
+
+    /** (Tests) a skill's level in the bot's saved character. */
+    public static int skillLevelForTest(PartyBotEntity b, String skill) {
+        ServerPlayer o = b.owner();
+        return o == null ? 0 : DmzBotSkills.level(DmzPerCharacter.saved(o, DmzPerCharacter.botKey(b)), skill);
+    }
+
+    /** (Tests) wipes these skills from the bot's saved character (and its skill-level timer). */
+    public static boolean wipeSkillsForTest(PartyBotEntity b) {
+        DmzBotQuests.Data d = DmzBotQuests.open(b, false);
+        if (d == null || d.live || !ready()) return false;
+        try {
+            Object skills = m(d.sd, "getSkills");
+            for (String s : BOT_SKILLS) if ((Boolean) m(skills, "hasSkill", s)) m(skills, "removeSkill", s);
+            save(d, "Skills");
+            b.getPersistentData().remove(UPGRADED);
+            DmzBotSkills.refresh(b);
+            return true;
+        } catch (Throwable t) { return false; }
+    }
 
     /** (Tests) what this master teaches that bots would learn. */
     public static List<String> teachesForTest(String master) { return teaches(master); }
