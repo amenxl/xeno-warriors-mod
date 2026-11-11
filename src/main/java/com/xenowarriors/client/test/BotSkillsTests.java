@@ -114,6 +114,13 @@ public final class BotSkillsTests {
         return null;
     }
 
+    /** Puts the camera (the player) somewhere - hovering, so a fall never counts as the owner being in danger. */
+    private static void cam(ServerPlayer p, double x, double y, double z, float yaw, float pitch) {
+        p.getAbilities().flying = true; p.onUpdateAbilities();
+        p.fallDistance = 0;
+        p.connection.teleport(x, y, z, yaw, pitch);
+    }
+
     private static String[] T;
     private static CompoundTag STATS0;
     private static final Object[] ST = new Object[4];
@@ -188,7 +195,7 @@ public final class BotSkillsTests {
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
             b.setNoAi(false);
             DmzBotMasters.lookNowForTest(b);
-            p.connection.teleport(at.x + 6, at.y + 9, at.z + 9, 180F, 45F);
+            cam(p, at.x + 6, at.y + 9, at.z + 9, 180F, 45F);
             log("king kai: kaioken costs " + c + " | lesson " + DmzBotTechniques.lessonForTest(b, "kingkai"));
         }); }, 200);
         step("botskills_kaioken_learned", () -> mc.setScreen(null), 40);
@@ -222,7 +229,7 @@ public final class BotSkillsTests {
             ST[2] = z;
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
             b.setHealth(b.getMaxHealth());
-            p.connection.teleport(at.x - 8, at.y + 2, at.z + 3, -90F, 10F);
+            cam(p, at.x - 8, at.y + 2, at.z + 3, -90F, 10F);
             A[2] = DmzBotPower.kaiokens;
         }); }, 30);
         step(null, () -> server(p -> {
@@ -274,7 +281,7 @@ public final class BotSkillsTests {
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
             b.setNoAi(false);
             DmzBotMasters.lookNowForTest(b);
-            p.connection.teleport(at.x + 6, at.y + 9, at.z + 9, 180F, 45F);
+            cam(p, at.x + 6, at.y + 9, at.z + 9, 180F, 45F);
             log("goku: fly costs " + c + " | lesson " + DmzBotTechniques.lessonForTest(b, "goku"));
         }); }, 220);
         step("botskills_fly_learned", () -> mc.setScreen(null), 20);
@@ -289,7 +296,7 @@ public final class BotSkillsTests {
             // the owner takes off and flies away, up high
             Vec3 at = com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.getAbilities().flying = true; p.onUpdateAbilities();
-            p.connection.teleport(at.x - 6, at.y + 14, at.z - 16, 180F, 20F);
+            cam(p, at.x - 6, at.y + 14, at.z - 16, 180F, 20F);
             DmzBotPower.setKiForTest(b, 1F);
             A[6] = (float) at.y;
         }); }, 60);
