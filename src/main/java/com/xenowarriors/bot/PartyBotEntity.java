@@ -120,6 +120,12 @@ public class PartyBotEntity extends PathfinderMob {
 
     public boolean drinking() { return drinkTicks >= 0; }
     public boolean selfFlyingForTest() { return selfFlying; }
+    /** Flying right now (after its owner, on a lap of the sky, or with no ground under it while it can fly). */
+    public boolean airborneFlying() {
+        if (onGround() || isPassenger() || isInWater()) return false;
+        if (isNoGravity() || flyingWithOwner || selfFlying) return true;
+        return canFly() && level().getBlockState(blockPosition().below(2)).isAir() && level().getBlockState(blockPosition().below()).isAir();
+    }
     /** (Tests) take a turn about the sky now. */
     public void flourishNow() { nextFlourish = tickCount; }
 

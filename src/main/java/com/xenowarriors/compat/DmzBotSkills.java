@@ -97,7 +97,7 @@ public final class DmzBotSkills {
     }
 
     /** Up in the air on its own (not standing, riding or swimming) - flying, for a bot that has Fly. */
-    public static boolean flying(PartyBotEntity b) { return !b.onGround() && !b.isPassenger() && !b.isInWater() && (b.isNoGravity() || b.fallDistance == 0); }
+    public static boolean flying(PartyBotEntity b) { return b.airborneFlying(); }
 
     /** A bot is gone. */
     public static void forget(UUID bot) { FLY_LEVEL.remove(bot); GROUNDED.remove(bot); }
