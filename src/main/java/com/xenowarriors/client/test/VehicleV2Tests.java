@@ -640,7 +640,7 @@ public final class VehicleV2Tests {
             float veh = hp0[0] - hp(p, ids[0]), me = dmg(p.getId()), lost = dmg(ids[2]);
             check("a bot passenger shoots from its seat (" + gun[0] + ")", b != null && b.isPassenger() && b.seatShots > 0 && lost > 0 && veh == 0 && me == 0,
                     "seated " + (b != null && b.isPassenger()) + ", shots from the seat " + (b == null ? 0 : b.seatShots) + ", target lost " + f(lost)
-                            + " HP, car lost " + f(veh) + ", driver lost " + f(me));
+                            + " HP, car lost " + f(veh) + " (last hurt: " + (p.serverLevel().getEntity(ids[0]) instanceof VehicleEntity cv ? cv.lastHurtBy : "?") + "), driver lost " + f(me));
         }), 5);
         step(null, () -> server(VehicleV2Tests::home), 10);
     }

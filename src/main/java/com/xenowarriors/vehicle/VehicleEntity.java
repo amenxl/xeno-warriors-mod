@@ -468,10 +468,14 @@ public class VehicleEntity extends Mob implements GeoEntity {
         speed += Mth.clamp(0.12 - speed, -0.01, 0.01);
     }
 
+    /** (tests) what last hurt it. */
+    public String lastHurtBy = "nothing";
+
     @Override
     public boolean hurt(DamageSource src, float amount) {
         if (level().isClientSide || isRemoved() || isInvulnerableTo(src)) return false;   // (already wrecked this tick: a second hit drops no second item)
         if (src.getEntity() != null && hasPassenger(src.getEntity())) return false;          // (no shooting your own ride)
+        lastHurtBy = src.getMsgId() + " by " + (src.getEntity() == null ? "-" : src.getEntity().getType().toShortString()) + " direct " + (src.getDirectEntity() == null ? "-" : src.getDirectEntity().getType().toShortString());
         float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : 0.6F);
         if (hp > 0) { setHealth(hp); level().playSound(null, blockPosition(), SoundEvents.IRON_GOLEM_HURT, SoundSource.NEUTRAL, 0.5F, 1.4F); return true; }
         // wrecked: it bursts into smoke and drops back into its item (bought vehicles aren't lost for good)
