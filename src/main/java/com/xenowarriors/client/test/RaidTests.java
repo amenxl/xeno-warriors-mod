@@ -484,6 +484,8 @@ public final class RaidTests {
             FactionRaids.clearCooldowns(p);
             resetCounters();
             Reputation.set(p, Faction.GOV, -300);
+            PackTests.log("raids: start blocked by '" + FactionRaids.blocked(p) + "' dim=" + p.level().dimension().location() + " mode=" + p.gameMode.getGameModeForPlayer()
+                    + " difficulty=" + p.level().getDifficulty() + " hostile=" + Reputation.hostile(p, Faction.GOV) + " eligible=" + FactionRaids.eligible(p, Kind.GOV));
             Raid r = FactionRaids.check(p, 0.0);
             PackTests.check("raids: bad standing + roll starts a Government raid", r != null && r.kind == Kind.GOV, "raid=" + (r == null ? "none" : r.kind));
         }), 260));

@@ -180,6 +180,19 @@ public final class FactionRaids {
         return !com.xenowarriors.modes.ModeRules.inMode(p) && !com.xenowarriors.journey.Journey.inLobbyOrRun(p) && !com.xenowarriors.vr.Vr.inVr(p);
     }
 
+    /** Why no raid can start on this player right now ("" if one can, standing and cooldowns aside). */
+    public static String blocked(ServerPlayer p) {
+        List<String> why = new ArrayList<>();
+        if (p.level().getDifficulty() == Difficulty.PEACEFUL) why.add("peaceful");
+        if (p.level().dimension() != Level.OVERWORLD && !com.xenowarriors.recarnet.Recarnet.is(p.level())) why.add("dimension " + p.level().dimension().location());
+        if (com.xenowarriors.journey.Journey.inRun(p)) why.add("in a Journey run");
+        else if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) why.add("in a Journey lobby");
+        if (com.xenowarriors.tower.Tower.is(p.level())) why.add("in the Tower");
+        if (com.xenowarriors.vr.Vr.inVr(p)) why.add("in VR");
+        if (raidOn(p) != null) why.add("a raid is already on");
+        return String.join(", ", why);
+    }
+
     private static CompoundTag data(Player p) {
         CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
@@ -604,7 +617,8 @@ public final class FactionRaids {
                         + Math.round(chance(rep) * 100) + "% per check" + (cd > 0 ? ", cooldown " + cd / 1200 + " min" : "") + (enabled(p.server, k) ? "" : " [off]")), false);
             }
             Raid r = raidOn(p);
-            ctx.getSource().sendSuccess(() -> Component.literal(r == null ? "No raid on you." : r.kind.title + " on you: wave " + r.wave + "/" + r.waves), false);
+            String b = blocked(p);
+            ctx.getSource().sendSuccess(() -> Component.literal(r == null ? "No raid on you." + (b.isEmpty() ? "" : " (none can start: " + b + ")") : r.kind.title + " on you: wave " + r.wave + "/" + r.waves), false);
             return 1;
         }));
         e.getDispatcher().register(Commands.literal("xeno").then(raid));
