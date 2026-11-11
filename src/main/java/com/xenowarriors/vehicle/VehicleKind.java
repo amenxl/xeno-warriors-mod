@@ -75,19 +75,19 @@ public enum VehicleKind {
     // x, y, z (model blocks, before scaling), type (0 sit, 1 stand on top, 2 hang on the rail)
     private double[][] rawSeats() {
         return switch (model) {          // (by id: an enum switch here would read values() before the constants exist)
-            // 4 inside, then 2 standing on the roof
-            case "car" -> new double[][]{{-0.38, -0.05, 0.05, 0}, {0.38, -0.05, 0.05, 0}, {-0.38, -0.05, -0.7, 0}, {0.38, -0.05, -0.7, 0},
-                    {-0.32, 1.38, -0.25, 1}, {0.32, 1.38, -0.25, 1}};
+            // 4 inside, then 2 standing on the roof (seats match the v2 model: a seated rider's hips are ~0.28 up from the spot)
+            case "car" -> new double[][]{{-0.39, 0.137, 0.0, 0}, {0.39, 0.137, 0.0, 0}, {-0.38, 0.137, -0.75, 0}, {0.38, 0.137, -0.75, 0},
+                    {-0.32, 1.41, -0.25, 1}, {0.32, 1.41, -0.25, 1}};
             // rider and pillion, then 2 standing on the back
-            case "motorbike" -> new double[][]{{0, 0.45, -0.15, 0}, {0, 0.5, -0.6, 0},
-                    {-0.2, 0.95, -0.92, 1}, {0.2, 0.95, -0.92, 1}};
+            case "motorbike" -> new double[][]{{0, 0.605, -0.25, 0}, {0, 0.64, -0.66, 0},
+                    {-0.2, 0.83, -0.92, 1}, {0.2, 0.83, -0.92, 1}};
             // 6 in the cabin (three rows), then 4 hanging from the skids (two a side) - the rotor's on top, so nobody stands there
-            case "helicopter" -> new double[][]{{-0.38, 0.2, 0.6, 0}, {0.38, 0.2, 0.6, 0}, {-0.38, 0.2, -0.12, 0}, {0.38, 0.2, -0.12, 0},
-                    {-0.38, 0.2, -0.8, 0}, {0.38, 0.2, -0.8, 0},
+            case "helicopter" -> new double[][]{{-0.39, 0.36, 0.54, 0}, {0.39, 0.36, 0.54, 0}, {-0.39, 0.36, -0.18, 0}, {0.39, 0.36, -0.18, 0},
+                    {-0.39, 0.36, -0.81, 0}, {0.39, 0.36, -0.81, 0},
                     {-0.98, HANG_Y, 0.45, 2}, {0.98, HANG_Y, 0.45, 2}, {-0.98, HANG_Y, -0.45, 2}, {0.98, HANG_Y, -0.45, 2}};
             // 4 in the cab, then 4 standing on the cargo box
-            default -> new double[][]{{-0.45, 0.25, 1.45, 0}, {0.45, 0.25, 1.45, 0}, {-0.5, 0.25, 0.2, 0}, {0.5, 0.25, 0.2, 0},
-                    {-0.45, 2.13, -0.5, 1}, {0.45, 2.13, -0.5, 1}, {-0.45, 2.13, -1.6, 1}, {0.45, 2.13, -1.6, 1}};
+            default -> new double[][]{{-0.47, 0.385, 1.375, 0}, {0.47, 0.385, 1.375, 0}, {-0.5, 0.385, 0.0, 0}, {0.5, 0.385, 0.0, 0},
+                    {-0.45, 2.25, -0.5, 1}, {0.45, 2.25, -0.5, 1}, {-0.45, 2.25, -1.6, 1}, {0.45, 2.25, -1.6, 1}};
         };
     }
 

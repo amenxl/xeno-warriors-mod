@@ -33,9 +33,10 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.UUID;
 
 /**
- * A vehicle: car, motorbike, helicopter or armored truck. Right-click to get in (the first seat drives), W/S to
- * speed up and brake/reverse, A/D to steer; the helicopter climbs with jump and comes down with the sprint key, and
- * turns where you look. Sneak + right-click (the owner) puts it back in your inventory. Government trucks are driven
+ * A vehicle: car, motorbike, helicopter or armored truck. Right-click to get in (the first seat drives); it turns to
+ * face where its driver looks (smoothly, at its own turn rate), W/S speed up and brake/reverse, A/D steer (they swing
+ * the driver's view round) or, in the helicopter, slide sideways; the helicopter climbs with jump and comes down with
+ * the sprint key. Sneak + right-click (the owner) puts it back in your inventory. Government trucks are driven
  * by guards on patrol - get in and the guard's thrown out (and you're wanted).
  */
 public class VehicleEntity extends Mob implements GeoEntity {
@@ -47,6 +48,8 @@ public class VehicleEntity extends Mob implements GeoEntity {
     private double speed, climb;
     // client: wheel and rotor angles for the renderer
     public float wheelRot, wheelRotO, rotorRot, rotorRotO, rotorSpin;
+    /** client: how far the front wheels are turned (degrees), for the renderer */
+    public float steer, steerO;
     // trucks: the guard's patrol
     private Vec3 home, patrolTarget;
 
@@ -126,9 +129,43 @@ public class VehicleEntity extends Mob implements GeoEntity {
     @Override
     public LivingEntity getControllingPassenger() {
         Entity first = getFirstPassenger();
-        if (first instanceof Player p) return p;
-        if (first instanceof com.xenowarriors.gov.GovAgentEntity g) return g;
-        return null;
+        return first instanceof LivingEntity le && canDrive(first) ? le : null;
+    }
+
+    // ------------------------------------------------------------------ NPC drivers (the API other systems use)
+
+    /** Tag a mob with this before it gets in first, and it drives (Gov guards always can). */
+    public static final String NPC_DRIVER_TAG = "xw_vehicle_driver";
+
+    /** Who can drive from the first seat: players, Government guards, and mobs tagged NPC_DRIVER_TAG. */
+    public static boolean canDrive(Entity e) {
+        return e instanceof Player || e instanceof com.xenowarriors.gov.GovAgentEntity || (e instanceof Mob && e.getTags().contains(NPC_DRIVER_TAG));
+    }
+
+    /** An NPC (not a player) is at the wheel. */
+    public boolean npcDriving() { Entity f = getFirstPassenger(); return f instanceof Mob && canDrive(f); }
+
+    private Vec3 npcDest;
+    private double npcSpeed;
+
+    /**
+     * NPC driver: head for `dest` at up to `speedFraction` of its top speed (it faces where it's going, turning at its
+     * turn rate, and slows to a stop within a few blocks); a helicopter also climbs or comes down to dest's height.
+     * Null stops it (a Gov guard goes back to its patrol). Server side; does nothing while a player drives.
+     */
+    public void npcDriveTo(Vec3 dest, double speedFraction) { npcDest = dest; npcSpeed = Mth.clamp(speedFraction, 0, 1); }
+
+    public Vec3 npcDestination() { return npcDest; }
+
+    private void npcDrive() {
+        Vec3 to = npcDest.subtract(position());
+        double flat = Math.sqrt(to.x * to.x + to.z * to.z);
+        if (flat > 1.5) turnToward((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90F, turnRate());
+        float off = Math.abs(Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90F - getYRot()));
+        double want = flat < 3 ? 0 : kind.maxSpeed * npcSpeed * Math.min(1.0, flat / 12) * (off > 60 ? 0.3 : 1);
+        speed += Mth.clamp(want - speed, -kind.accel * 2, kind.accel);
+        if (kind.heli()) climb += Mth.clamp(Mth.clamp(to.y * 0.1, -0.3, 0.3) - climb, -0.04, 0.04);
+        yBodyRot = getYRot(); yHeadRot = getYRot();
     }
 
     private boolean guardDriving() { return getFirstPassenger() instanceof com.xenowarriors.gov.GovAgentEntity; }
@@ -190,9 +227,9 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (canAddPassenger(p)) {
             p.startRiding(this);
             if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind.heli()
-                    ? "W/S speed, look to turn, Jump to climb, Sprint key to descend, Sneak to get out"
-                    : kind.hovers() ? "W/S speed, A/D steer, Jump to fly up, Sprint key to come down, Sneak to get out"
-                    : "W/S speed and brake, A/D steer, Sneak to get out").withStyle(ChatFormatting.GRAY), true);
+                    ? "It turns where you look - W/S speed, A/D slide sideways, Jump to climb, Sprint key to descend, Sneak to get out"
+                    : kind.hovers() ? "It turns where you look (or A/D) - W/S speed, Jump to fly up, Sprint key to come down, Sneak to get out"
+                    : "It turns where you look (or A/D) - W/S speed and brake, Sneak to get out").withStyle(ChatFormatting.GRAY), true);
             else if (p.getVehicle() == this && seatOf(p).type() != VehicleKind.SeatType.SIT)
                 p.displayClientMessage(Component.literal(seatOf(p).type() == VehicleKind.SeatType.HANG
                         ? "No seats left - you're hanging on to the rail (Sneak to let go)" : "No seats left - you're riding on top (Sneak to get off)")
@@ -203,6 +240,52 @@ public class VehicleEntity extends Mob implements GeoEntity {
     }
 
     // ------------------------------------------------------------------ driving (runs on the driver's client)
+
+    // ------------------------------------------------------------------ where the driver looks
+
+    /**
+     * Where a driver is looking and how to turn their view - the player's own yaw, unless another mod runs the camera on
+     * its own (Epic Fight's third-person camera: set by its compat on the client). Only the driver's own game asks.
+     */
+    public interface DriverView {
+        /** The yaw the driver is looking along, or NaN to use the player's own. */
+        float yaw(Player p);
+        /** Turn the driver's view by this many degrees (A/D steering); false = turn the player instead. */
+        boolean turn(Player p, float degrees);
+    }
+    public static volatile DriverView driverView;
+
+    public static float viewYaw(Player p) {
+        DriverView v = driverView;
+        float y = v == null ? Float.NaN : v.yaw(p);
+        return Float.isNaN(y) ? p.getYRot() : y;
+    }
+
+    private static void turnView(Player p, float degrees) {
+        DriverView v = driverView;
+        if (v != null && v.turn(p, degrees)) return;
+        p.setYRot(p.getYRot() + degrees);
+        p.yHeadRot = p.getYRot();
+    }
+
+    /** The most it turns in a tick toward where its driver looks (degrees): a short turn, so it never snaps round. */
+    public float turnRate() {
+        if (kind.heli() || hovering) return 7F;
+        float r = switch (kind.base()) { case MOTORBIKE -> 9F; case GOV_TRUCK -> 4.5F; default -> 6.5F; };
+        return Math.abs(speed) < 0.05 ? r * 0.6F : r;                  // (parked: it turns on the spot, a bit slower)
+    }
+
+    /** Turns toward `yaw`: most of the way there smoothly (35% of what's left a tick), never more than the turn rate. */
+    private void turnToward(float yaw, float rate) {
+        float d = Mth.wrapDegrees(yaw - getYRot());
+        float step = Math.abs(d) < 0.05F ? d : Mth.clamp(d * 0.35F, -rate, rate);
+        setYRot(getYRot() + step);
+    }
+
+    /** Who drove last tick (the driver's game): a new driver gets their view turned to face forward in the seat. */
+    private int lastDriver = -1;
+    /** Helicopter: sideways speed (A/D), blocks a tick, + = right. */
+    private double strafe;
 
     @Override
     protected void tickRidden(Player p, Vec3 input) {
@@ -218,11 +301,17 @@ public class VehicleEntity extends Mob implements GeoEntity {
         // Only the side that moves it (the driver's game) turns it: the server gets the driver's yaw with the position, and
         // turning it again here made it face further round than it was going (and jitter for everyone watching).
         boolean local = isControlledByLocalInstance();
+        if (local && lastDriver != p.getId()) {                           // just got in: face forward in the seat
+            lastDriver = p.getId();
+            turnView(p, Mth.wrapDegrees(getYRot() - viewYaw(p)));
+        }
         if (kind.heli()) {
-            if (local) setYRot(Mth.rotLerp(0.12F, getYRot(), p.getYRot()));
             double want = level().isClientSide ? (VehicleControls.up ? 0.32 : VehicleControls.down ? -0.32 : 0) : climb;
             climb += Mth.clamp(want - climb, -0.04, 0.04);
+            double sw = -side * kind.maxSpeed * 0.45;                      // A/D: slides sideways (A = left)
+            strafe += Mth.clamp(sw - strafe, -kind.accel * 1.5, kind.accel * 1.5);
         } else {
+            strafe = 0;
             if (kind.hovers() && level().isClientSide) {
                 // Mk II: Jump lifts it off and climbs, the Sprint key brings it down; in the air it holds its height
                 if (VehicleControls.up && !hovering) hovering = true;
@@ -230,9 +319,12 @@ public class VehicleEntity extends Mob implements GeoEntity {
                 double want = !hovering ? 0 : VehicleControls.up ? 0.3 : VehicleControls.down ? -0.3 : 0;
                 climb += Mth.clamp(want - climb, -0.04, 0.04);
             }
+            // A/D steer: they swing the driver's view round (the camera turns with the car), and the car follows the view
             float grip = hovering ? 1F : (float) Math.min(1.0, Math.abs(speed) / 0.15);
-            if (local) setYRot(getYRot() - (float) side * (kind.base() == VehicleKind.MOTORBIKE ? 4.5F : kind.base() == VehicleKind.GOV_TRUCK ? 2.4F : 3.4F) * grip * (speed < 0 ? -1 : 1));
+            if (local && side != 0 && grip > 0)
+                turnView(p, -(float) side * (kind.base() == VehicleKind.MOTORBIKE ? 4.5F : kind.base() == VehicleKind.GOV_TRUCK ? 2.4F : 3.4F) * grip * (speed < 0 ? -1 : 1));
         }
+        if (local) turnToward(viewYaw(p), turnRate());                     // faces where its driver looks
         yBodyRot = getYRot(); yHeadRot = getYRot();
         setXRot(0);
     }
@@ -298,7 +390,10 @@ public class VehicleEntity extends Mob implements GeoEntity {
             y = onGround() ? -0.08 : Math.max(v.y - 0.08, -1.5) * 0.98;
             if (isInWater()) { speed *= 0.9; y = Math.min(0.02, y + 0.1); }
         }
-        Vec3 move = new Vec3(fx * speed, y, fz * speed);
+        double rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);                    // (its right)
+        double st = kind.heli() && driven() ? strafe : 0;
+        if (!driven()) strafe = 0;
+        Vec3 move = new Vec3(fx * speed + rx * st, y, fz * speed + rz * st);
         move(MoverType.SELF, move);
         if (horizontalCollision && Math.abs(speed) > 0.35) {                     // crash
             if (!level().isClientSide) level().playSound(null, blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.NEUTRAL, 0.5F, 0.7F);
@@ -312,7 +407,8 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     @Override
     public void aiStep() {
-        if (!level().isClientSide && guardDriving() && !com.xenowarriors.raid.RaidPilot.drive(this)) patrol();      // (a faction raid's vehicles drive themselves at their target)
+        if (!level().isClientSide && npcDriving()) { if (npcDest != null) npcDrive(); else if (guardDriving()) patrol(); }
+        if (!driven()) lastDriver = -1;
         super.aiStep();
     }
 
@@ -324,6 +420,8 @@ public class VehicleEntity extends Mob implements GeoEntity {
             double hs = (getX() - xo) * -Mth.sin(getYRot() * Mth.DEG_TO_RAD) + (getZ() - zo) * Mth.cos(getYRot() * Mth.DEG_TO_RAD);
             wheelRot += (float) (hs / ((kind.base() == VehicleKind.GOV_TRUCK ? 0.44 : 0.33) * kind.scale));
             tilt();
+            steerO = steer;
+            steer += (Mth.clamp(Mth.wrapDegrees(getYRot() - yRotO) * 4F, -28F, 28F) - steer) * 0.35F;
             float targetSpin = driven() || !onGround() ? 1.6F : 0F;
             rotorSpin += (targetSpin - rotorSpin) * 0.03F;
             rotorRot += rotorSpin;
@@ -366,18 +464,6 @@ public class VehicleEntity extends Mob implements GeoEntity {
         setYRot(Mth.approachDegrees(getYRot(), want, 3F));
         yBodyRot = getYRot(); yHeadRot = getYRot();
         speed += Mth.clamp(0.12 - speed, -0.01, 0.01);
-    }
-
-    /**
-     * An AI driver that isn't on patrol (a faction raid's convoys and helicopters, see raid.RaidPilot): turn toward a
-     * heading (at most {@code turn} degrees a tick), ease toward a speed and (flying) a climb rate.
-     */
-    public void autopilot(float yaw, float turn, double wantSpeed, double wantClimb) {
-        setYRot(Mth.approachDegrees(getYRot(), yaw, turn));
-        yBodyRot = getYRot(); yHeadRot = getYRot();
-        double a = kind.accel * 2;
-        speed += Mth.clamp(wantSpeed - speed, -a, a);
-        climb += Mth.clamp(wantClimb - climb, -0.04, 0.04);
     }
 
     @Override

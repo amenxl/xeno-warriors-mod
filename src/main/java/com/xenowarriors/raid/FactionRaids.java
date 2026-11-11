@@ -348,6 +348,7 @@ public final class FactionRaids {
         for (ServerPlayer q : new ArrayList<>(r.bar.getPlayers())) if (!near.contains(q)) r.bar.removePlayer(q);
         for (ServerPlayer q : near) { r.bar.addPlayer(q); r.fought.add(q.getUUID()); }
 
+        for (UUID u : r.vehicles) if (r.level.getEntity(u) instanceof com.xenowarriors.vehicle.VehicleEntity v && v.isAlive()) RaidPilot.drive(v, t);
         if (r.wave == 0) {                                                  // the warning
             int warn = testFast ? 30 : WARN_TICKS;
             r.bar.setName(Component.literal(r.kind.title + " - incoming!").withStyle(r.kind.style, ChatFormatting.BOLD));

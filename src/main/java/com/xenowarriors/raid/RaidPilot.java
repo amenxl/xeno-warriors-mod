@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The soldiers driving a raid's vehicles (called from the vehicle while a Gov soldier is at the wheel):
+ * The soldiers driving a raid's vehicles (each tick from the raid, through the vehicle's NPC driver API):
  * <ul>
  * <li>Helicopters fly in ~14 blocks over the ground, come down to ~6.5 over the target, and everyone but the pilot and
  * the door gunner drops out (slow-falling, "rappelling"). Then it circles the fight ~15 blocks out and ~11 up while
@@ -32,17 +32,14 @@ public final class RaidPilot {
 
     public static final String PHASE = "xw_raid_phase", TIME = "xw_raid_time", HALT = "xw_raid_halt", STUCK = "xw_raid_stuck";
 
-    /** Drives a raid vehicle this tick. False if it isn't a raid vehicle (the guard's normal patrol runs). */
-    public static boolean drive(VehicleEntity v) {
+    /** Steers a raid vehicle with a soldier at the wheel (every tick, from the raid; uses the vehicle's NPC driver API). */
+    public static void drive(VehicleEntity v, ServerPlayer t) {
+        if (!v.npcDriving()) return;
         CompoundTag tag = v.getPersistentData();
-        if (!tag.hasUUID(FactionRaids.TAG)) return false;
-        FactionRaids.Raid r = FactionRaids.of(v);
-        ServerPlayer t = r == null ? null : r.targetPlayer();
-        if (t == null || t.level() != v.level()) { v.autopilot(v.getYRot(), 0F, 0, v.kind.heli() ? -0.05 : 0); return true; }
+        if (t == null || t.level() != v.level()) { v.npcDriveTo(v.position(), 0); return; }
         int time = tag.getInt(TIME) + 1;
         tag.putInt(TIME, time);
         if (v.kind.heli()) heli(v, t, tag, time); else ground(v, t, tag, time);
-        return true;
     }
 
     private static void heli(VehicleEntity v, ServerPlayer t, CompoundTag tag, int time) {
@@ -52,13 +49,11 @@ public final class RaidPilot {
         float yaw = v.getYRot() * Mth.DEG_TO_RAD;
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         double floor = Math.max(RaidSpawns.surface(l, v.getX(), v.getZ()), RaidSpawns.surface(l, v.getX() + fx * 8, v.getZ() + fz * 8));
+        double cruise = Math.min(1.0, 0.55 / v.kind.maxSpeed);
         if (tag.getInt(PHASE) == 0) {
             double tg = Math.max(floor, RaidSpawns.surface(l, t.getX(), t.getZ()));
             double alt = d > 26 ? tg + 14 : tg + 6.5;
-            double sp = d > 26 ? Math.min(v.kind.maxSpeed * 0.8, 0.55) : Mth.clamp((d - 4) * 0.025, 0, 0.3);
-            if (v.getY() < floor + 3) sp *= 0.3;                              // (clear the trees first)
-            double climb = Mth.clamp((alt - v.getY()) * 0.08, -0.25, 0.3);
-            v.autopilot(RaidSpawns.yawTo(v.position(), t.position()), 5F, sp, climb);
+            v.npcDriveTo(new Vec3(t.getX(), alt, t.getZ()), cruise);
             double above = v.getY() - Math.max(floor, RaidSpawns.surface(l, t.getX(), t.getZ()));
             if ((d < 10 && above < 9) || time > 700) {
                 unload(v, t, 2, true);
@@ -68,27 +63,23 @@ public final class RaidPilot {
         }
         // circling the fight, the pilot and door gunner shooting
         Vec3 from = v.position().subtract(t.position());
-        double ang = Math.atan2(from.z, from.x) + 0.35;
+        double ang = Math.atan2(from.z, from.x) + 0.6;
         Vec3 dest = t.position().add(Math.cos(ang) * 15, 0, Math.sin(ang) * 15);
         double alt = Math.max(floor, RaidSpawns.surface(l, dest.x, dest.z)) + 11;
-        v.autopilot(RaidSpawns.yawTo(v.position(), dest), 6F, 0.28, Mth.clamp((alt - v.getY()) * 0.08, -0.2, 0.25));
+        v.npcDriveTo(new Vec3(dest.x, alt, dest.z), Math.min(1.0, 0.3 / v.kind.maxSpeed));
     }
 
     private static void ground(VehicleEntity v, ServerPlayer t, CompoundTag tag, int time) {
-        Vec3 to = t.position().subtract(v.position());
-        double d = to.horizontalDistance();
-        float want = RaidSpawns.yawTo(v.position(), t.position());
-        float diff = Math.abs(Mth.wrapDegrees(want - v.getYRot()));
+        double d = t.position().subtract(v.position()).horizontalDistance();
         int halt = tag.getInt(HALT), stuck = tag.getInt(STUCK);
-        double sp;
-        if (d > 18) { sp = Math.min(v.kind.maxSpeed * 0.75, 0.45) * (diff > 60 ? 0.35 : 1); halt = 0; }
-        else { sp = 0; halt++; }                                              // pulled up: everyone shoots from their seats
+        if (d > 18) { v.npcDriveTo(t.position(), Math.min(1.0, 0.45 / v.kind.maxSpeed)); halt = 0; }
+        else { v.npcDriveTo(v.position(), 0); halt++; }                   // pulled up: everyone shoots from their seats
         if (v.horizontalCollision && Math.abs(v.speed()) < 0.08 && d > 18) stuck++; else stuck = Math.max(0, stuck - 1);
         tag.putInt(HALT, halt);
         tag.putInt(STUCK, stuck);
-        v.autopilot(want, 4F, sp, 0);
         if (halt > 120 || d < 7 || stuck > 50 || time > 900) {
             unload(v, t, 0, false);
+            v.npcDriveTo(null, 0);
             tag.putInt(PHASE, 1);
         }
     }
