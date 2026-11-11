@@ -209,7 +209,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (p.isSecondaryUseActive()) {                                   // pack it up
-            if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && kind.base() == VehicleKind.GOV_TRUCK))) {   // (a seized Gov truck can be wrecked for iron, not packed up)
+            if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && (kind.base() == VehicleKind.GOV_TRUCK || com.xenowarriors.raid.FactionRaids.isRaider(this))))) {   // (nor a raid's vehicles)   // (a seized Gov truck can be wrecked for iron, not packed up)
                 p.displayClientMessage(Component.literal("That's not your " + kind.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
                 return InteractionResult.CONSUME;
             }
@@ -475,6 +475,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
     public boolean hurt(DamageSource src, float amount) {
         if (level().isClientSide || isRemoved() || isInvulnerableTo(src)) return false;   // (already wrecked this tick: a second hit drops no second item)
         if (src.getEntity() != null && hasPassenger(src.getEntity())) return false;          // (no shooting your own ride)
+        if (com.xenowarriors.raid.FactionRaids.sameRaid(this, src.getEntity())) return false;   // (nor your own raid's)
         lastHurtBy = src.getMsgId() + " by " + (src.getEntity() == null ? "-" : src.getEntity().getType().toShortString()) + " direct " + (src.getDirectEntity() == null ? "-" : src.getDirectEntity().getType().toShortString());
         float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : 0.6F);
         if (hp > 0) { setHealth(hp); level().playSound(null, blockPosition(), SoundEvents.IRON_GOLEM_HURT, SoundSource.NEUTRAL, 0.5F, 1.4F); return true; }
@@ -483,7 +484,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         ((ServerLevel) level()).sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1, getZ(), 30, 0.8, 0.6, 0.8, 0.02);
         ((ServerLevel) level()).sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 1, getZ(), 3, 0.5, 0.3, 0.5, 0);
         level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.NEUTRAL, 0.8F, 1.2F);
-        if (owner != null || kind.base() != VehicleKind.GOV_TRUCK) spawnAtLocation(VehicleItem.make(kind, variant()));
+        if (owner != null || (kind.base() != VehicleKind.GOV_TRUCK && !com.xenowarriors.raid.FactionRaids.isRaider(this))) spawnAtLocation(VehicleItem.make(kind, variant()));
         else spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
         discard();
         return true;
