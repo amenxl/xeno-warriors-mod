@@ -80,7 +80,7 @@ public final class DmzForms {
     private static Boolean loaded;
     private static boolean broken;
     private static Capability<?> cap;
-    private static Method getCharacter, getActiveForm, getActiveStackForm, getCustomModel;
+    private static Method getCharacter, getActiveForm, getActiveStackForm, getCustomModel, getRace;
 
     private DmzForms() {}
 
@@ -95,6 +95,7 @@ public final class DmzForms {
                 Class<?> ch = getCharacter.getReturnType();
                 getActiveForm = ch.getMethod("getActiveForm");
                 try { getActiveStackForm = ch.getMethod("getActiveStackForm"); } catch (NoSuchMethodException ignored) {}
+                try { getRace = ch.getMethod("getRaceName"); } catch (NoSuchMethodException ignored) {}
             } catch (Throwable t) {
                 broken = true;
                 return false;
@@ -120,6 +121,24 @@ public final class DmzForms {
         return call(p, getActiveForm);
     }
 
+    /** DragonMineZ race ("human", "saiyan"...), or null. */
+    public static String race(Player p) {
+        return call(p, getRace);
+    }
+
+    /**
+     * Mikiko's fox aura level from DragonMineZ's Human "Shiyoken" forms: 0 none, 1 Shiyoken, 2 Shin Shiyoken,
+     * 3 Chou Shiyoken (drawn as the second level, bigger). Only for Mikiko with the Human race.
+     */
+    public static int shiyokenLevel(Player p) {
+        if (!(p instanceof AbstractClientPlayer cp) || ClientCharacterData.get(cp) != CharacterType.MIKIKO) return 0;
+        String f = form(p);
+        if (f == null || !f.contains("shiyoken")) return 0;
+        String r = race(p);
+        if (r != null && !r.contains("human")) return 0;
+        return f.startsWith("chou") ? 3 : f.startsWith("shin") ? 2 : 1;
+    }
+
     private static Form info(Player p) {
         String f = form(p);
         if (f == null) return null;
@@ -134,6 +153,7 @@ public final class DmzForms {
     /** This Xeno Warriors player is in a form DragonMineZ should draw (Oozaru, giant forms...). */
     public static boolean dmzDraws(Player p) {
         if (!ours(p) || giantFox(p)) return false;
+        if (ClientCharacterData.isPreviewing() && p == net.minecraft.client.Minecraft.getInstance().player) return false;   // previews: the character, not your form
         // Ai-oni (for now): DragonMineZ draws and animates her (its body, attacks and animations), with her
         // 3D details still put on by DragonMineZ's layer forwarder
         if (ClientCharacterData.get((AbstractClientPlayer) p) == CharacterType.AIONI && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return true;
@@ -144,6 +164,7 @@ public final class DmzForms {
     /** Mikiko as an Oozaru becomes a giant fox instead of a great ape (drawn by GiantFox). */
     public static boolean giantFox(Player p) {
         if (!(p instanceof AbstractClientPlayer cp) || ClientCharacterData.get(cp) != CharacterType.MIKIKO) return false;
+        if (ClientCharacterData.isPreviewing() && p == net.minecraft.client.Minecraft.getInstance().player) return false;
         String f = form(p);
         return "oozaru".equals(f) || "goldenoozaru".equals(f);
     }

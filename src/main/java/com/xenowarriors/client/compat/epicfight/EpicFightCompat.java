@@ -375,6 +375,10 @@ public final class EpicFightCompat {
     private static void decideRender(RenderEpicFightPlayerEvent event) {
         if (!(event.getPlayerPatch().getOriginal() instanceof AbstractClientPlayer p)) return;
         if (ClientCharacterData.get(p) == CharacterType.NONE) return;
+        if (ClientCharacterData.isPreviewing() && com.xenowarriors.client.FirstPersonHead.inGui) {   // character previews: never the player's live animation
+            event.setShouldRender(false);
+            return;
+        }
         if (ModList.get().isLoaded("dragonminez")
                 && (com.xenowarriors.client.compat.DmzForms.dmzDraws(p) || com.xenowarriors.client.compat.DmzForms.giantFox(p))) {
             event.setShouldRender(false);

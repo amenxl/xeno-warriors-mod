@@ -200,6 +200,7 @@ public final class ClientModEvents {
                 renderer.addLayer(new com.xenowarriors.client.render.CharacterArmorLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.fox.FoxBackLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));
+                renderer.addLayer(new com.xenowarriors.client.mikiko.FoxAuraClient.TrimLayer(renderer));   // Shiyoken fire lines
             }
         }
     }

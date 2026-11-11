@@ -318,9 +318,9 @@ public final class DmzBotTechniques {
                     + " size " + m(tech, "getSize") + " speed " + m(tech, "getSpeed") + " pen " + m(tech, "getArmorPenetration") + extras
                     + " cast " + m(tech, "getCastTime") + " cd " + m(tech, "getCooldown") + " ki " + Math.round(DmzBotPower.kiCostOf(tech, d.sd)) + "/" + Math.round(kiMax) + " for " + cost + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ", budget " + Math.round(budget) + ")";
             note(what);
-            d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" created a new ki attack: ")
+            DmzNews.bot(d.owner, b, "New ki attack", Component.empty().append(b.character().getDisplayName()).append(" created a new ki attack: ")
                     .append(Component.literal(name).withStyle(ChatFormatting.GOLD)).append(" (" + pretty(kindName) + ", " + String.format(Locale.US, "%,d TP", cost) + ")")
-                    .withStyle(ChatFormatting.AQUA), false);
+                    .withStyle(ChatFormatting.AQUA));
             return "made " + id + " for " + cost;
         } catch (Throwable t) {
             XenoWarriors.LOGGER.warn("A bot couldn't make a DragonMineZ ki attack", t);
@@ -455,9 +455,9 @@ public final class DmzBotTechniques {
             note(d.key + " learned " + skill + " (" + (isStrike(skill) ? "STRIKE" : "KI") + ", technique " + (got ? "added" : "MISSING") + ") from " + master
                     + " for " + c + " TP (TP " + before + " -> " + tp(d.sd) + ", kept " + sp[1] + ")");
             Component who = masterEntity != null ? masterEntity.getDisplayName() : Component.literal(DmzBotPower.pretty(master));
-            d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" learned ")
+            DmzNews.bot(d.owner, b, "Technique learned", Component.empty().append(b.character().getDisplayName()).append(" learned ")
                     .append(shown.copy().withStyle(ChatFormatting.GOLD)).append(" from ").append(who)
-                    .append(" (" + String.format(Locale.US, "%,d TP", c) + ")").withStyle(ChatFormatting.AQUA), false);
+                    .append(" (" + String.format(Locale.US, "%,d TP", c) + ")").withStyle(ChatFormatting.AQUA));
             return true;
         } catch (Throwable t) {
             XenoWarriors.LOGGER.warn("A bot couldn't learn a DragonMineZ technique", t);

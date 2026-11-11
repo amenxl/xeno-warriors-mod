@@ -240,7 +240,8 @@ public final class DmzFusion {
             String name = (String) buildName.invoke(null, p.getGameProfile().getName(), botName, type);
             setName.invoke(status, name);
             mixAppearance.invoke(null, me, them);
-            applyStats.invoke(null, me, them, type, mine, theirs);
+            removeBonuses.invoke(getBonus.invoke(me), "FusionBonus");                // (a stale one left by a crash would stack on top)
+            applyStats.invoke(null, me, them, type, mine, theirs);                   // DragonMineZ's own player + player maths, the bot as the partner
             int dur = durationTicks();
             setTimer.invoke(status, dur + 1200);                                     // (we end it; its own timer never gets there)
             MobEffect fusedFx = effect(fusedEffect);
@@ -266,14 +267,64 @@ public final class DmzFusion {
             DmzPerCharacter.syncAll(p);
             p.sendSystemMessage(Component.literal("You fused with " + botName + "! You are " + name + " ("
                     + (POTARA.equals(type) ? "Potara" : "Fusion Dance") + ", " + dur / 20 + " s).").withStyle(ChatFormatting.GOLD));
+            lastCheck = checkStats(me, them, type, mine, theirs);
             note("fused " + p.getGameProfile().getName() + " + " + b.character().getId() + " = " + name + " type=" + type + " totals " + mine + "+" + theirs
-                    + " for " + dur + " ticks; " + statsLine(me));
+                    + " for " + dur + " ticks; " + statsLine(me) + "; DMZ formula check: " + lastCheck);
             return true;
         } catch (Throwable t) {
             XenoWarriors.LOGGER.warn("Fusing with a bot failed", t);
             note("FAILED " + t);
             return false;
         }
+    }
+
+    // ---------------------------------------------------------------- the stat check
+
+    /** (Tests / logs) the last fusion's check against DragonMineZ's player + player formula. */
+    public static String lastCheck = "";
+
+    /**
+     * DragonMineZ's own player + player fusion maths (FusionLogic.calculateAndApplyStats, 2.1.3), worked out here on
+     * its own: ratio = min(totals) / max(totals); multiplier = low + ratio * (high - low) with Potara 1.75-2.5 and the
+     * Fusion Dance 1.25-2.0; for every stat in the server's fusionBoosts list the leader gets the PARTNER's base stat x
+     * multiplier as a "FusionBonus" (RES is split into DEF and STM). The partner here is the bot's own DragonMineZ
+     * character. Returns "OK ..." when what's on the leader matches, "MISMATCH ..." otherwise.
+     */
+    public static String checkStats(Object leader, Object partner, String type, int mine, int theirs) {
+        try {
+            double ratio = Math.max(mine, theirs) <= 0 ? 0D : (double) Math.min(mine, theirs) / Math.max(mine, theirs);
+            double lo = POTARA.equals(type) ? 1.75 : 1.25, hi = POTARA.equals(type) ? 2.5 : 2.0;
+            double mult = lo + ratio * (hi - lo);
+            String[] boosts = (String[]) gameplay.getReturnType().getMethod("getFusionBoosts").invoke(gameplay.invoke(serverConfig.invoke(null)));
+            Object stats = getStats.invoke(partner), bonus = getBonus.invoke(leader);
+            StringBuilder sb = new StringBuilder();
+            boolean ok = true;
+            for (String stat : boosts) {
+                String getter = switch (stat) {
+                    case "STR" -> "getStrength"; case "SKP" -> "getStrikePower"; case "RES" -> "getResistance";
+                    case "VIT" -> "getVitality"; case "PWR" -> "getKiPower"; case "ENE" -> "getEnergy"; default -> null;
+                };
+                int base = getter == null ? 0 : (Integer) stats.getClass().getMethod(getter).invoke(stats);
+                double want = base * mult, got = fusionBonus(bonus, "RES".equalsIgnoreCase(stat) ? "DEF" : stat);
+                boolean same = Math.abs(want - got) < 0.01;
+                ok &= same;
+                sb.append(' ').append(stat).append('=').append(String.format(java.util.Locale.US, "%.2f/%.2f", want, got));
+            }
+            return (ok ? "OK" : "MISMATCH") + String.format(java.util.Locale.US, " x%.4f (totals %d,%d)", mult, mine, theirs) + sb;
+        } catch (Throwable t) {
+            return "check failed: " + t;
+        }
+    }
+
+    /** The FusionBonus value DragonMineZ holds on this stat. */
+    private static double fusionBonus(Object bonus, String stat) throws Exception {
+        double sum = 0;
+        Object list = bonus.getClass().getMethod("getBonuses", String.class).invoke(bonus, stat);
+        if (list instanceof java.util.List<?> l)
+            for (Object sb : l) {
+                if ("FusionBonus".equals(sb.getClass().getField("name").get(sb))) sum += (Double) sb.getClass().getField("value").get(sb);
+            }
+        return sum;
     }
 
     /** (Logs) the player's DMZ fused state and stats. */

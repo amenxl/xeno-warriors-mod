@@ -155,8 +155,8 @@ public final class DmzQuestHelp {
                 done.putLong(id, now);
                 int n = Math.max(1, Math.min(5, o.required - o.progress));
                 double hp = ((Number) m(o.objective, "getHealth")).doubleValue();
-                p.displayClientMessage((t.biome() ? Component.literal("Your mission's targets don't live around here, so they came to you: ").append(type.getDescription())
-                        : Component.literal("Your mission's target has sensed your ki... ").append(type.getDescription()).append(" is coming!")).withStyle(ChatFormatting.GOLD), false);
+                DmzNews.self(p, "Mission target", (t.biome() ? Component.literal("Your mission's targets don't live around here, so they came to you: ").append(type.getDescription())
+                        : Component.literal("Your mission's target has sensed your ki... ").append(type.getDescription()).append(" is coming!")).withStyle(ChatFormatting.GOLD));
                 note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + id + " (" + o.progress + "/" + o.required + ") near " + p.getGameProfile().getName()
                         + (t.biome() ? " (they only live in other biomes)" : ""));
                 for (int k = 0; k < n; k++) {
