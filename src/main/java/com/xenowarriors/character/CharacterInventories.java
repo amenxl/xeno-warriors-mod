@@ -50,6 +50,9 @@ public final class CharacterInventories {
 
     public static boolean has(Player p, String key) { return root(p).contains(key); }
 
+    /** Replaces a character's save (bot.OffDuty: what an off-duty character found goes into its own inventory). */
+    public static void putSaved(Player p, String key, CompoundTag t) { CompoundTag root = root(p); root.put(key, t); put(p, root); }
+
     /** A character is gone for good (a deleted You): whatever it had saved is handed to the player (dropped if full), and its save is cleared. */
     public static void forget(ServerPlayer p, String key) {
         com.xenowarriors.bot.BotBags.forget(p, key);                    // (its extra bot tabs too)

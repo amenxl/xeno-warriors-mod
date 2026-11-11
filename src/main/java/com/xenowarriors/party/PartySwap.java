@@ -84,7 +84,7 @@ public final class PartySwap {
             o.displayClientMessage(Component.literal("Party Swap is recharging").withStyle(ChatFormatting.GRAY), true);
             return;
         }
-        if (PartyBots.partySize(o) >= Parties.MAX_SIZE || PartyBots.bots(o).size() >= PartyBots.MAX_BOTS) return;
+        if (PartyBots.partySize(o) >= Parties.limit() || PartyBots.bots(o).size() >= Parties.limit() - 1) return;
         CharacterType t = pick(o, lost);
         if (t == null) { o.displayClientMessage(Component.literal("Party Swap: none of your other characters can come in right now").withStyle(ChatFormatting.GRAY), false); return; }
         PartyBotEntity b = PartyBots.spawn(o, t, null);

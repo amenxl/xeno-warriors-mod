@@ -60,7 +60,7 @@
       "pages": [
         {
           "title": "Parties",
-          "text": "- Parties hold up to 4 (players and bots together, 3 bots each at most).\n- Invite: right-click a player with an empty hand, or /xeno party invite <name>. Accept from the request card ({key:accept_request}) or the chat message (answering in chat clears the card too).\n- Party members see each other's health and Karma and can't hurt each other (except in a battle you both agreed to).\n- Ai-oni and Rhalix can never be in the same party."
+          "text": "- Parties hold up to 4 (players and bots together, 3 bots each at most). In creative, /xeno partylimit <1-16> changes that for the world.\n- Invite: right-click a player with an empty hand, or /xeno party invite <name>. Accept from the request card ({key:accept_request}) or the chat message (answering in chat clears the card too).\n- Party members see each other's health and Karma and can't hurt each other (except in a battle you both agreed to).\n- Ai-oni and Rhalix can never be in the same party."
         },
         {
           "title": "Party HUD",
@@ -69,6 +69,10 @@
         {
           "title": "Bot teammates",
           "text": "- Add one: main menu > Party > an empty slot > Add bot, or /xeno bot. A bot is one of your other characters, with your saved stats and loadout for them (and your ability levels).\n- Click a bot in the Party menu for its options: Mode (Neutral, Aggressive, Mining), Bot menu (its gear, offhand and bag) and Dismiss.\n- Bots fight with combos and their skills, drink potions, and walk to healing pods when they're hurt.\n- Rhalix and Mikiko bots do team ultimates (Gravity Fox Fire, Blazing Judgment) with each other, and ask you for one when you're both ready - but only against a lot of enemies or a very strong one. Press the ultimate key to join (Combat > Team attacks).\n- Party Swap (Party menu): when a bot is lost, another of your characters takes its place.\n- Bots keep everything they carry: going down, bleeding out, dismissing, logging out, a Journey, another dimension or you travelling far away. (A bot that's down when you go to another dimension or far away isn't brought along: it goes home to recover for 5 minutes, things and all.) Add them back and their things are all there.\n- Even if the game or server crashes: your bots are saved with you at every autosave, so they come back with what they had then (like your own inventory does)."
+        },
+        {
+          "title": "Bots off duty",
+          "text": "Characters that aren't on your team get on with their own lives while you play (a minute at a time, while you're online):\n- Training (Attack and Defense; with DragonMineZ also TP for its own Dragon Ball character), relaxing (after going down a lot lately, or after a long time with you), out at a party (two or three of them together), their own DMZ missions (with DragonMineZ: TP), mining (ore into their own bag - rarer ores the higher your Mining level, never once the bag and extra tabs are full; it adds to your Mining level), chopping wood, building (Building XP).\n- The bot pick screen (/xeno bot) shows what each is up to, with a little animated badge.\n- Busy ones can't join - unless your bond with them is 60+: then they drop it and come. They bring what they got (it's in their bag) and their new levels.\n- With a bond of 50+, right-click a card to give them a job (mining, wood, training, DMZ missions, building, relax) - they keep at it until you call them back (or add them).\n- A teammate you have a bond under 30 with may wander off to train after 20 quiet minutes (never in a fight, a Journey, the Tower or VR).\n- Season-locked characters do nothing until unlocked. In creative, /xeno offduty off (or on) turns it all off or on for the world."
         },
         {
           "title": "Bots' extra bag",

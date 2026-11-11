@@ -168,7 +168,7 @@ public final class Tower {
         if (r.floor > 0) r.lateJoin.add(p.getUUID());
         int people = 0;
         for (UUID id : r.players) { ServerPlayer m = p.server.getPlayerList().getPlayer(id); people += 1 + (m == null ? 0 : com.xenowarriors.bot.PartyBots.bots(m).size()); }
-        if (people + 1 > com.xenowarriors.party.Parties.MAX_SIZE) { p.displayClientMessage(msg("That Tower run is full (4 people and bots)", ChatFormatting.RED), true); return; }
+        if (people + 1 > com.xenowarriors.party.Parties.limit()) { p.displayClientMessage(msg("That Tower run is full (" + com.xenowarriors.party.Parties.limit() + " people and bots)", ChatFormatting.RED), true); return; }
         ServerLevel tl = p.server.getLevel(LEVEL);
         if (tl == null) return;
         r.players.add(p.getUUID());
