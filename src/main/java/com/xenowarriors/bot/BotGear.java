@@ -72,7 +72,7 @@ public final class BotGear {
     }
 
     /** A bag weapon must beat the summoned show weapon by this much before the bot leaves it for the bag one. */
-    public static final float SIGNATURE_MARGIN = 2.5F;
+    public static final float SIGNATURE_MARGIN = 2.0F;
 
     /**
      * A bot of a character with a show weapon (Max's knife, Sam's bat, ...) summons it for a fight and keeps it in hand

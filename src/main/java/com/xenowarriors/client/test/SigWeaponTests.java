@@ -149,6 +149,7 @@ public final class SigWeaponTests {
                 MinecraftForge.EVENT_BUS.post(ev);
                 log(t.getId() + " death drops after filter: " + ev.getDrops().size() + " (only the apple stays)");
                 SignatureWeapons.toggle(p);
+                if (summoned(p) == 0) SignatureWeapons.toggle(p);
                 log(t.getId() + " before death: inv=" + summoned(p));
                 MinecraftForge.EVENT_BUS.post(new LivingDeathEvent(p, p.damageSources().generic()));
                 log(t.getId() + " after death: inv=" + summoned(p));
@@ -243,11 +244,11 @@ public final class SigWeaponTests {
         l.add(null, () -> server(p -> {
             p.getInventory().clearContent();
             SignatureWeapons.toggle(p);
-            p.teleportTo(p.serverLevel(), HOME[0] + 2, HOME[1], HOME[2], 0F, 0F);
-            double[][] at = {{-1.5, 0}, {-3.5, 0}, {0.5, 0}};
+            p.teleportTo(p.serverLevel(), HOME[0] + 1.5, HOME[1], HOME[2], 0F, 0F);
+            double[][] at = {{-1, 0}, {-3, 0}, {-5, 0}};   // (bots stand left of the player, spread out)
             int i = 0;
             for (CharacterType t : new CharacterType[]{CharacterType.LOGAN, CharacterType.MAX, CharacterType.SAM}) {
-                var b = spawnBot(p, t, at[i][0] + 2, 0.0);
+                var b = spawnBot(p, t, at[i][0] + 2.5, 0.0);
                 if (b != null) {
                     b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, SignatureWeapons.make(t));
                     b.setNoAi(true);
