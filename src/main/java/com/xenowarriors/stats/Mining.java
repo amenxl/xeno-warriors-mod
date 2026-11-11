@@ -96,8 +96,9 @@ public final class Mining {
             if (d.miningLevel >= MAX_LEVEL) d.miningXp = 0;
             if (up) {
                 p.sendSystemMessage(Component.literal("Mining level " + d.miningLevel + "! You mine "
-                        + Math.round((multiplier(d.miningLevel, false) - 1) * 100) + "% faster ("
-                        + Math.round((multiplier(d.miningLevel, true) - 1) * 100) + "% with bare hands).").withStyle(ChatFormatting.AQUA));
+                        + Math.round((multiplier(d.miningLevel, false) - 1) * 100) + "% faster with tools (bare hands: x"
+                        + String.format(java.util.Locale.ROOT, "%.1f", HandMining.speedFactor(d.miningLevel, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()))
+                        + " on stone).").withStyle(ChatFormatting.AQUA));
                 p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 1.4F);
                 com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.MINING);
                 HandMining.leveled(p, before, d.miningLevel);
