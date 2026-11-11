@@ -94,8 +94,8 @@ public final class ClientCharacterData {
     }
 
     /** Used by the selection screen to draw the local player as each character. */
-    public static void beginPreview(CharacterType type) { preview = type; }
-    public static void endPreview() { preview = null; }
+    public static void beginPreview(CharacterType type) { preview = type; PreviewPose.strip(); }   // (none of the player's armor / held items)
+    public static void endPreview() { preview = null; PreviewPose.restore(); }
     public static boolean isPreviewing() { return preview != null; }
 
     /** Set while a small head-and-shoulders card is drawn: a plain standing pose, no idles (Mikiko sitting down hid his face). */
@@ -106,5 +106,6 @@ public final class ClientCharacterData {
         OUTFITS.clear();
         YOU.clear();
         preview = null;
+        PreviewPose.restore();
     }
 }

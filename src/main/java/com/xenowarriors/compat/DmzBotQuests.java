@@ -399,8 +399,8 @@ public final class DmzBotQuests {
         String got = claim(d, key, q);
         completions++;
         note("mission complete for " + d.key + ": " + key + " rewards " + got);
-        d.owner.displayClientMessage(Component.empty().append(d.bot.character().getDisplayName()).append(" completed: ").append(title(key))
-                .append(got.isEmpty() ? "" : " (" + got + ")").withStyle(ChatFormatting.GOLD), false);
+        DmzNews.bot(d.owner, d.bot, "Mission complete", Component.empty().append(d.bot.character().getDisplayName()).append(" completed: ").append(title(key))
+                .append(got.isEmpty() ? "" : " (" + got + ")").withStyle(ChatFormatting.GOLD));
         return true;
     }
 
@@ -597,8 +597,8 @@ public final class DmzBotQuests {
         for (DmzQuestHelp.Open mine : DmzQuestHelp.open(p)) if (mine.key().equals(key) && mine.index() == index) return;   // (yours come for both of you)
         int n = Math.max(1, Math.min(5, req - prog));
         double hp = ((Number) m(obj, "getHealth")).doubleValue();
-        p.displayClientMessage(Component.empty().append(bot.character().getDisplayName()).append(t.biome() ? "'s mission targets don't live around here, so they came: " : "'s mission target is coming: ")
-                .append(type.getDescription()).withStyle(ChatFormatting.GOLD), false);
+        DmzNews.bot(p, bot, "Mission target", Component.empty().append(bot.character().getDisplayName()).append(t.biome() ? "'s mission targets don't live around here, so they came: " : "'s mission target is coming: ")
+                .append(type.getDescription()).withStyle(ChatFormatting.GOLD));
         note("summoning " + n + " x " + ForgeRegistries.ENTITY_TYPES.getKey(type) + " for " + botKey + " " + key + "#" + index + (t.biome() ? " (they only live in other biomes)" : ""));
         for (int k = 0; k < n; k++) com.xenowarriors.skill.ServerScheduler.later(100 + k * 30, () -> DmzQuestHelp.summon(p, type, key, index, hp));
     }
@@ -702,8 +702,8 @@ public final class DmzBotQuests {
             d.commit();
             botTalks++;
             note(d.key + " talked to " + npc + " itself" + (person.getPersistentData().getBoolean(DmzTalkNpcs.TAG) ? " (the copy that came)" : " (the real one)"));
-            d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName()).append(" talked to ").append(person.getDisplayName())
-                    .withStyle(ChatFormatting.AQUA), false);
+            DmzNews.bot(d.owner, b, "Bot talked", Component.empty().append(b.character().getDisplayName()).append(" talked to ").append(person.getDisplayName())
+                    .withStyle(ChatFormatting.AQUA));
             return true;
         } catch (Throwable t) { XenoWarriors.LOGGER.warn("A bot's DragonMineZ talk failed", t); return false; }
     }
@@ -729,10 +729,10 @@ public final class DmzBotQuests {
             if (!eligible(d, t.key)) { note(d.key + " can't take " + t.key + " any more (" + why + ")"); return false; }
             start(d, t.key, t.partySize, t.spawn);
             if (giver != null) botTakes++;
-            d.owner.displayClientMessage(Component.empty().append(b.character().getDisplayName())
+            DmzNews.bot(d.owner, b, "Bot mission", Component.empty().append(b.character().getDisplayName())
                     .append(Component.literal(giver != null ? " took " : " started: "))
                     .append(title(t.key)).append(giver != null ? Component.literal(" from ").append(giver.getDisplayName()) : Component.empty())
-                    .withStyle(ChatFormatting.AQUA), false);
+                    .withStyle(ChatFormatting.AQUA));
             note(d.key + (giver != null ? " took " + t.key + " from " + t.giver + " itself" : " started " + t.key + " (didn't get to " + t.giver + " in time)"));
             return true;
         } catch (Throwable e) { XenoWarriors.LOGGER.warn("A bot couldn't take its DragonMineZ mission", e); return false; }
@@ -814,7 +814,7 @@ public final class DmzBotQuests {
                 out.add(d.key + "=" + pick);
                 line.append(b.character().getDisplayName()).append(" started: ").append(title(pick));
             }
-            if (!line.getSiblings().isEmpty()) p.displayClientMessage(line.withStyle(ChatFormatting.AQUA), false);
+            if (!line.getSiblings().isEmpty()) DmzNews.self(p, "Bot missions", line.withStyle(ChatFormatting.AQUA));
         } catch (Throwable t) { XenoWarriors.LOGGER.warn("Bots couldn't start DragonMineZ missions", t); }
         return out;
     }

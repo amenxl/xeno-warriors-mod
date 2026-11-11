@@ -44,8 +44,32 @@ public final class PopupFeed implements IGuiOverlay {
 
     private static final List<Pop> POPS = com.xenowarriors.client.ClientReset.trackAll(new ArrayList<>());     // oldest first
 
+    /** The small news cards (DragonMineZ bot / mission news): their own little stack, so they never push the real
+     *  alerts out. Up to 4, see-through, no sound. */
+    private static final List<Pop> NEWS = com.xenowarriors.client.ClientReset.trackAll(new ArrayList<>());
+    private static final int NEWS_MAX = 4;
+    private static final long NEWS_LIFE = 6000;
+    /** (tests) news cards / chat lines shown since start. */
+    public static int newsCards, newsChat;
+    public static String lastNewsChat = "";
+
     public static void push(int style, UUID subject, int type, int pet, String title, String text, String face) {
         long now = Util.getMillis();
+        if (style == PopupPacket.NEWS) {
+            Minecraft mc = Minecraft.getInstance();
+            if (ClientSettings.dmzNewsInChat()) {             // (the setting: in chat, as it used to be)
+                net.minecraft.ChatFormatting c = net.minecraft.ChatFormatting.getByName(face);
+                mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal(text).withStyle(c == null || !c.isColor() ? net.minecraft.ChatFormatting.AQUA : c));
+                newsChat++;
+                lastNewsChat = text;
+                return;
+            }
+            for (Pop p : NEWS) if (p.text.equals(text) && now - p.born < 3000) return;
+            NEWS.add(new Pop(style, subject, type, pet, title, text, face, now));
+            while (NEWS.size() > NEWS_MAX) NEWS.remove(0);
+            newsCards++;
+            return;
+        }
         // the same news twice in a row (e.g. a re-sync): skip
         for (Pop p : POPS) if (p.subject.equals(subject) && p.title.equals(title) && now - p.born < 3000) return;
         POPS.add(new Pop(style, subject, type, pet, title, text, face, now));
@@ -88,7 +112,10 @@ public final class PopupFeed implements IGuiOverlay {
         primed = true;
     }
 
-    public static void reset() { SEEN.clear(); POPS.clear(); primed = false; }
+    public static void reset() { SEEN.clear(); POPS.clear(); NEWS.clear(); primed = false; }
+
+    /** (tests) how many news cards are up right now. */
+    public static int newsShown() { return NEWS.size(); }
 
     // ------------------------------------------------------------------ drawing
 
@@ -105,7 +132,7 @@ public final class PopupFeed implements IGuiOverlay {
     @Override
     public void render(ForgeGui gui, GuiGraphics g, float partial, int width, int height) {
         Minecraft mc = Minecraft.getInstance();
-        if (POPS.isEmpty() || mc.player == null || mc.options.hideGui) return;
+        if (POPS.isEmpty() && NEWS.isEmpty() || mc.player == null || mc.options.hideGui) return;
         long now = Util.getMillis();
         Font font = mc.font;
         int w = 150, h = 26, gap = 9;
@@ -125,6 +152,55 @@ public final class PopupFeed implements IGuiOverlay {
             int x = Math.round(6 - (1F - slide) * (w + 20));
             int y = Math.round(baseY - (i + 1) * (h + gap));          // oldest at the bottom, each new one above the last
             drawPop(g, font, p, x, y, w, h, alpha);
+        }
+        // the news cards: smaller and see-through, stacked above the alerts
+        int top = Math.round(baseY - POPS.size() * (h + gap)) - 4;
+        int nh = 17, ngap = 3, nw = 168;
+        int m = NEWS.size();
+        for (int i = m - 1; i >= 0; i--) {
+            Pop p = NEWS.get(i);
+            int age = (int) (now - p.born), depth = m - 1 - i;
+            long life = NEWS_LIFE - depth * 900L;
+            if (age > life) { NEWS.remove(i); continue; }
+            float alpha = Mth.clamp((life - age) / (float) FADE, 0F, 1F) * (depth == 0 ? 0.62F : 0.5F);
+            float slide = ease(Mth.clamp(age / (float) SLIDE, 0F, 1F));
+            int x = Math.round(4 - (1F - slide) * (nw + 10));
+            int y = top - (m - i) * (nh + ngap);
+            if (y < 2) continue;
+            drawNews(g, font, p, x, y, nw, nh, alpha);
+        }
+    }
+
+    /** A compact news card: thin translucent strip, a little face, the title and up to two small lines. */
+    private static void drawNews(GuiGraphics g, Font font, Pop p, int x, int y, int w, int h, float a) {
+        int back = Math.round(a * 0.7F * 255) << 24;
+        g.fill(x, y, x + w, y + h, back | 0x0C1420);
+        g.fill(x, y, x + 2, y + h, Math.round(a * 255) << 24 | 0x5FC8FF);
+        int ta = Math.max(5, Math.round(a * 255)) << 24;
+        int tx = x + 4;
+        CharacterType t = CharacterType.values()[Mth.clamp(p.type, 0, CharacterType.values().length - 1)];
+        if (t != CharacterType.NONE && a > 0.25F) {
+            try {
+                if (HudFaces.hasArt(t)) KhHud.portrait(g, HudFaces.texture(t, "normal"), x + 3, y + 1, h - 2, false);
+                else HudHead.draw(g, HudHead.find(p.subject), t, x + 3, y + 1, h - 2, false);
+            } catch (Throwable ignored) {}
+            tx = x + h + 3;
+        }
+        int avail = x + w - 3 - tx;
+        g.pose().pushPose();
+        g.pose().translate(tx, y + 2F, 0);
+        g.pose().scale(0.5F, 0.5F, 1F);
+        g.drawString(font, p.title.toUpperCase(java.util.Locale.ROOT), 0, 0, ta | 0xFFE7A0, false);
+        g.pose().popPose();
+        var lines = font.getSplitter().splitLines(p.text, (int) (avail / 0.55F), net.minecraft.network.chat.Style.EMPTY);
+        for (int i = 0; i < Math.min(2, lines.size()); i++) {
+            String s = lines.get(i).getString();
+            if (i == 1 && lines.size() > 2) s = font.plainSubstrByWidth(s, (int) (avail / 0.55F) - font.width("\u2026")).stripTrailing() + "\u2026";
+            g.pose().pushPose();
+            g.pose().translate(tx, y + 7F + i * 5F, 0);
+            g.pose().scale(0.55F, 0.55F, 1F);
+            g.drawString(font, s, 0, 0, ta | 0xFFFFFF, false);
+            g.pose().popPose();
         }
     }
 

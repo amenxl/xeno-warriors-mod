@@ -128,9 +128,9 @@ public final class DmzTalkNpcs {
             temps.put(n.id, new Temp(e, n.npc, now));
             poof(e);
             Component who = e.getDisplayName();
-            p.displayClientMessage(Component.empty().append(who).append(" came to see you - talk to them to finish ")
+            DmzNews.self(p, "Mission", Component.empty().append(who).append(" came to see you - talk to them to finish ")
                     .append(n.bot == null ? Component.literal("") : Component.literal(n.bot + "'s "))
-                    .append(DmzBotQuests.title(n.quest)).append(".").withStyle(ChatFormatting.GOLD), false);
+                    .append(DmzBotQuests.title(n.quest)).append(".").withStyle(ChatFormatting.GOLD));
             note("brought " + n.npc + " (" + ForgeRegistries.ENTITY_TYPES.getKey(e.getType()) + ") to " + p.getGameProfile().getName() + " for " + n.id
                     + String.format(Locale.ROOT, " at %.1f blocks", Math.sqrt(e.distanceToSqr(p))));
         }

@@ -44,7 +44,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces, autoStep;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces, autoStep, dmzNews;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -139,8 +139,10 @@ public class PlayerStatsScreen extends Screen {
         vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 186, bw / 2 - 2, 20).build());
         skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 186, bw / 2 - 2, 20).build());
         autoStep = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setAutoStep(!ClientSettings.autoStep()); updateButtons(); }).bounds(bx, SET_TOP + 226, bw, 20).build());
+        dmzNews = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDmzNewsInChat(!ClientSettings.dmzNewsInChat()); updateButtons(); })
+                .bounds(bx, SET_TOP + dmzTop() + 16, bw, 20).build());
         setBaseY.clear();
-        for (Button b : new Button[]{senseFriendly, efMode, efBattle, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways, autoStep}) setBaseY.put(b, b.getY());
+        for (Button b : new Button[]{senseFriendly, efMode, efBattle, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways, autoStep, dmzNews}) setBaseY.put(b, b.getY());
         if (players.isEmpty()) ModNetwork.sendToServer(new PlayerStatsRequestPacket());     // (opened some other way: ask for the list)
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
@@ -163,7 +165,10 @@ public class PlayerStatsScreen extends Screen {
     private final java.util.Map<Button, Integer> setBaseY = new java.util.HashMap<>();
     private int setScroll;
 
-    private int settingsHeight() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 316 : 254; }
+    private int settingsHeight() { return dmzTop() + (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez") ? 42 : 4); }
+
+    /** Where the DragonMineZ section starts (after Epic Fight's, if that's there). */
+    private static int dmzTop() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 312 : 250; }
 
     private int maxSetScroll() { return Math.max(0, SET_TOP + settingsHeight() + 6 - (height - FOOT)); }
     private static final int FOOT = 16;          // the "Esc to close / Money" line at the bottom
@@ -241,6 +246,8 @@ public class PlayerStatsScreen extends Screen {
         skillsAlways.setMessage(Component.literal("Skills: " + (ClientSettings.skillsAlways() ? "Always" : "Hold Ctrl")));
         vanillaBars.active = skillsAlways.active = ClientSettings.khHud();
         autoStep.visible = tab == 3;
+        dmzNews.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
+        dmzNews.setMessage(Component.literal("Bot / mission news: " + (ClientSettings.dmzNewsInChat() ? "In chat" : "Pop-ups")));
         autoStep.setMessage(Component.literal("Auto step-up (Speed 100+): " + (ClientSettings.autoStep() ? "ON" : "OFF")));
         efMode.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
         efBattle.visible = efMode.visible;
@@ -582,6 +589,10 @@ public class PlayerStatsScreen extends Screen {
         if (ef) {
             g.fill(x + PAD, y + 250, x + w - PAD, y + 251, 0x30FFFFFF);
             small(g, "EPIC FIGHT", x + PAD, y + 254, SECTION);
+        }
+        if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) {
+            g.fill(x + PAD, y + dmzTop(), x + w - PAD, y + dmzTop() + 1, 0x30FFFFFF);
+            small(g, "DRAGONMINEZ", x + PAD, y + dmzTop() + 4, SECTION);
         }
         g.disableScissor();
         if (maxSetScroll() > 0) g.drawString(font, setScroll < maxSetScroll() ? "\u25bc scroll" : "\u25b2 scroll", x + w - 52, Math.min(height - FOOT - 10, y + h - 10), 0x8899AA, false);

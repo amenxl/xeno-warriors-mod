@@ -15,6 +15,8 @@ import java.util.function.Supplier;
  */
 public record PopupPacket(int style, UUID subject, int type, int pet, String title, String text, String face) {
     public static final int INFO = 0, DANGER = 1, REQUEST = 2, GOOD = 3, PET = 4;
+    /** Small, see-through news card (DragonMineZ bot / mission news); face = the chat colour if the player wants it in chat. */
+    public static final int NEWS = 5;
 
     public static void send(ServerPlayer to, int style, UUID subject, int type, int pet, String title, String text, String face) {
         ModNetwork.sendToPlayer(new PopupPacket(style, subject, type, pet, title, text, face), to);

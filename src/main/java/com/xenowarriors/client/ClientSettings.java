@@ -106,4 +106,9 @@ public final class ClientSettings {
     public static boolean celShading() { return "true".equals(props().getProperty("cel_shading", "false")); }
 
     public static void setCelShading(boolean on) { props().setProperty("cel_shading", String.valueOf(on)); save(); }
+
+    /** DragonMineZ bot / mission news (bots training, learning, missions...): small pop-ups (default) or chat lines. */
+    public static boolean dmzNewsInChat() { return "true".equals(props().getProperty("dmz_news_chat", "false")); }
+
+    public static void setDmzNewsInChat(boolean on) { props().setProperty("dmz_news_chat", String.valueOf(on)); save(); }
 }

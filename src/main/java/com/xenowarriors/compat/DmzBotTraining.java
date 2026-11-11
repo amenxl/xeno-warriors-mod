@@ -321,9 +321,9 @@ public final class DmzBotTraining {
                 + (r.reached() ? "" : " - stopped: " + r.stop);
         if (r.points == 0) {
             note("nothing bought: " + what);
-            if (tellShort) d.owner.displayClientMessage(Component.empty().append(d.bot.character().getDisplayName())
+            if (tellShort) DmzNews.bot(d.owner, d.bot, "Training", Component.empty().append(d.bot.character().getDisplayName())
                     .append(" needs DragonMineZ level " + need + " for ").append(DmzBotQuests.title(key))
-                    .append(" (level " + r.levelBefore + ", not enough TP yet)").withStyle(ChatFormatting.GRAY), false);
+                    .append(" (level " + r.levelBefore + ", not enough TP yet)").withStyle(ChatFormatting.GRAY));
             return null;
         }
         d.touched.add("Stats"); d.touched.add("Resources");
@@ -341,7 +341,7 @@ public final class DmzBotTraining {
                 ? Component.empty().append(d.bot.character().getDisplayName()).append(" trained up to level " + r.levelAfter + " (spent " + cost + ")").withStyle(ChatFormatting.AQUA)
                 : Component.empty().append(d.bot.character().getDisplayName()).append(" trained to level " + r.levelAfter + " (spent " + cost + ") - needs level " + need + " for ")
                         .append(DmzBotQuests.title(key)).append(", not enough TP yet").withStyle(ChatFormatting.GRAY);
-        if (r.reached() || tellShort) d.owner.displayClientMessage(line, false);
+        if (r.reached() || tellShort) DmzNews.bot(d.owner, d.bot, "Training", line);
         return r;
     }
 
