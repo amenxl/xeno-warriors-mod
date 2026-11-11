@@ -113,8 +113,9 @@ public class KishiSkill implements Skill {
         Vec3 limit = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
 
         AABB search = player.getBoundingBox().expandTowards(look.scale(RANGE)).inflate(1.0);
+        net.minecraft.world.entity.Entity self = com.xenowarriors.bot.PartyBots.botOf(player);   // (a bot's stand-in stands inside the bot: not its own target)
         EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(player, eye, limit, search,
-                e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && e != player,
+                e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && e != player && e != self,
                 eye.distanceToSqr(limit));
 
         if (entityHit != null) return entityHit.getEntity().position();

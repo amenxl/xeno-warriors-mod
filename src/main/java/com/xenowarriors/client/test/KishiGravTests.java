@@ -124,9 +124,44 @@ public final class KishiGravTests {
         return v instanceof Number n ? n.floatValue() : -1;
     }
 
+    private static ServerPlayer SAMPLER;
+    private static int SAMPLE;
+    private static boolean listening;
+
+    private static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent e) {
+        if (e.phase != net.minecraftforge.event.TickEvent.Phase.END || SAMPLE <= 0 || SAMPLER == null) return;
+        for (int i = 0; i < 3; i++) JUMP[i] = Math.max(JUMP[i], H[i].getY() - BASEY[i]);
+        if (--SAMPLE > 0) return;
+        for (int i = 0; i < 3; i++) H[i].setNoAi(true);
+        try { check3(SAMPLER); } catch (Throwable t) { log("check failed " + t + " -> FAIL"); }
+    }
+
+    private static void check3(ServerPlayer p) {
+        boolean dmz = dmz();
+            double[] sp = new double[3];
+            for (int i = 0; i < 3; i++) sp[i] = H[i].getAttributeValue(Attributes.MOVEMENT_SPEED);
+            log("domes G: light=" + D[1].gravity() + " (lv" + D[1].getGravityLevel() + ") heavy=" + D[2].gravity() + " (lv" + D[2].getGravityLevel() + ")"
+                    + " net light=" + D[1].lastNet.get(H[1].getId()) + " heavy=" + D[2].lastNet.get(H[2].getId()));
+            log("husk speed none/light/heavy=" + f(sp[0]) + "/" + f(sp[1]) + "/" + f(sp[2]) + " modifiers light=" + f(DmzKishiGravity.speedModifier(H[1]))
+                    + " heavy=" + f(DmzKishiGravity.speedModifier(H[2])) + " -> "
+                    + pf(dmz ? (sp[2] < sp[1] && sp[1] < sp[0] && Math.abs(DmzKishiGravity.speedModifier(H[1]) + DmzKishiGravity.movePenalty(10)) < 0.01
+                                && Math.abs(DmzKishiGravity.speedModifier(H[2]) + DmzKishiGravity.movePenalty(80)) < 0.01)
+                             : (H[1].hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && H[2].hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && sp[2] <= sp[1] && sp[1] < sp[0]
+                                && DmzKishiGravity.speedModifier(H[1]) == 0)));
+            log("husk jump height none/light/heavy=" + f(JUMP[0]) + "/" + f(JUMP[1]) + "/" + f(JUMP[2]) + " -> "
+                    + pf(dmz ? (JUMP[0] > 1.0 && JUMP[1] < JUMP[0] * 0.6 && JUMP[1] > JUMP[2] && JUMP[2] < 0.1)
+                             : (JUMP[0] > 1.0 && JUMP[1] < 0.05 && JUMP[2] < 0.05)));
+            double wSpeed = wolf.getAttributeValue(Attributes.MOVEMENT_SPEED), wBase = wolf.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue();
+            boolean botOk = ally == null || (!ally.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && DmzKishiGravity.speedModifier(ally) == 0 && !D[2].lastNet.containsKey(ally.getId()));
+            log("allies in the heavy dome: wolf inside=" + D[2].isInside(wolf) + " speed " + f(wSpeed) + "/" + f(wBase) + " slow=" + wolf.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)
+                    + " weighed=" + D[2].lastNet.containsKey(wolf.getId()) + " bot inside=" + (ally != null && D[2].isInside(ally)) + " ok=" + botOk + " -> "
+                    + pf(D[2].isInside(wolf) && Math.abs(wSpeed - wBase) < 1e-6 && !wolf.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && !D[2].lastNet.containsKey(wolf.getId()) && botOk));
+    }
+
     public static void build(Minecraft mc, List<Step> l, String focus) {
         boolean dmz = dmz();
         log("start focus=" + focus + " dmz=" + dmz);
+        if (!listening) { listening = true; net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(KishiGravTests::onServerTick); }
         // DragonMineZ's race picker (a pausing screen: the world would stop) is closed whenever it opens
         if (dmz) net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ClientTickEvent e) -> {
             if (e.phase == net.minecraftforge.event.TickEvent.Phase.END) HuntDmzTests.noDmzScreen(mc); });
@@ -182,6 +217,7 @@ public final class KishiGravTests {
 
         // ---- 3. three husks: no dome / light dome / heavy dome (DMZ: 10G and 80G; plain: gravity level 1 and 3)
         l.add(new Step(null, () -> UiTest.server(p -> {
+            p.connection.teleport(O.x, O.y + 1, O.z - 4, 0F, 12F);
             FakePlayer foe = enemy(p.serverLevel());
             foe.moveTo(O.x, O.y, O.z - 30);
             for (int i = 0; i < 3; i++) H[i] = husk(p, O.add(-8 + 8 * i, 0, 10));
@@ -198,39 +234,17 @@ public final class KishiGravTests {
             // these domes' owner is someone else: the player's side is the wolf's and bot's, not the foe's
             D[1].setGravityForTest(dmz ? 10 : 0);
         }), 20));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0F); mc.player.setXRot(12F); }, 4));
+        l.add(new Step("kishigrav_domes", () -> {}, 2));
+        // the jumps are sampled on the server's own ticks (the CI client runs far slower than the server)
         l.add(new Step(null, () -> UiTest.server(p -> {
-            // (a NoAI mob never moves: AI on for the jump, with nothing to chase and no speed, so it only goes up and down)
+            // (a NoAI mob never moves: AI on for the jump, with nothing to chase, so it only goes up and down)
             for (int i = 0; i < 3; i++) { H[i].setNoAi(false); H[i].getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(0); H[i].setTarget(null);
                 BASEY[i] = H[i].getY(); JUMP[i] = 0; H[i].setOnGround(true); jump(H[i]); }
             log("jump start v.y none/light/heavy=" + f(H[0].getDeltaMovement().y) + "/" + f(H[1].getDeltaMovement().y) + "/" + f(H[2].getDeltaMovement().y));
-        }), 1));
-        for (int t = 0; t < 14; t++) l.add(new Step(null, () -> UiTest.server(p -> {
-            for (int i = 0; i < 3; i++) JUMP[i] = Math.max(JUMP[i], H[i].getY() - BASEY[i]);
-        }), 1));
-        l.add(new Step(null, () -> UiTest.server(p -> { for (int i = 0; i < 3; i++) H[i].setNoAi(true); }), 1));
-        l.add(new Step(null, () -> UiTest.server(p -> {
-            double[] sp = new double[3];
-            for (int i = 0; i < 3; i++) sp[i] = H[i].getAttributeValue(Attributes.MOVEMENT_SPEED);
-            log("domes G: light=" + D[1].gravity() + " (lv" + D[1].getGravityLevel() + ") heavy=" + D[2].gravity() + " (lv" + D[2].getGravityLevel() + ")"
-                    + " net light=" + D[1].lastNet.get(H[1].getId()) + " heavy=" + D[2].lastNet.get(H[2].getId()));
-            log("husk speed none/light/heavy=" + f(sp[0]) + "/" + f(sp[1]) + "/" + f(sp[2]) + " modifiers light=" + f(DmzKishiGravity.speedModifier(H[1]))
-                    + " heavy=" + f(DmzKishiGravity.speedModifier(H[2])) + " -> "
-                    + pf(dmz ? (sp[2] < sp[1] && sp[1] < sp[0] && Math.abs(DmzKishiGravity.speedModifier(H[1]) + DmzKishiGravity.movePenalty(10)) < 0.01
-                                && Math.abs(DmzKishiGravity.speedModifier(H[2]) + DmzKishiGravity.movePenalty(80)) < 0.01)
-                             : (H[1].hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && H[2].hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && sp[2] <= sp[1] && sp[1] < sp[0]
-                                && DmzKishiGravity.speedModifier(H[1]) == 0)));
-            log("husk jump height none/light/heavy=" + f(JUMP[0]) + "/" + f(JUMP[1]) + "/" + f(JUMP[2]) + " -> "
-                    + pf(dmz ? (JUMP[0] > 1.0 && JUMP[1] < JUMP[0] * 0.6 && JUMP[1] > JUMP[2] && JUMP[2] < 0.1)
-                             : (JUMP[0] > 1.0 && JUMP[1] < 0.05 && JUMP[2] < 0.05)));
-            double wSpeed = wolf.getAttributeValue(Attributes.MOVEMENT_SPEED), wBase = wolf.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue();
-            boolean botOk = ally == null || (!ally.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && DmzKishiGravity.speedModifier(ally) == 0 && !D[2].lastNet.containsKey(ally.getId()));
-            log("allies in the heavy dome: wolf inside=" + D[2].isInside(wolf) + " speed " + f(wSpeed) + "/" + f(wBase) + " slow=" + wolf.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)
-                    + " weighed=" + D[2].lastNet.containsKey(wolf.getId()) + " bot inside=" + (ally != null && D[2].isInside(ally)) + " ok=" + botOk + " -> "
-                    + pf(D[2].isInside(wolf) && Math.abs(wSpeed - wBase) < 1e-6 && !wolf.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && !D[2].lastNet.containsKey(wolf.getId()) && botOk));
-            p.connection.teleport(O.x, O.y + 1, O.z - 4, 0F, 12F);
-        }), 2));
-        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 6));
-        l.add(new Step("kishigrav_domes", () -> {}, 2));
+            SAMPLER = p;
+            SAMPLE = 15;
+        }), 40));
         // the husks are let go when the domes end (no leftover penalty)
         l.add(new Step(null, () -> UiTest.server(p -> { for (KishiDomeEntity d : D) if (d != null) d.discard(); }), 3));
         l.add(new Step(null, () -> UiTest.server(p -> {
