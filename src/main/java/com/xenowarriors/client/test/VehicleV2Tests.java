@@ -229,7 +229,7 @@ public final class VehicleV2Tests {
             int ii = i;
             step(i == 6 ? "turn_" + label.replaceAll("[^a-z0-9]+", "_") : null, () -> {
                 VehicleEntity v = clientVehicle(mc), sv = serverVehicle(mc);
-                s.add(new float[]{v == null ? Float.NaN : v.getYRot(), sv == null ? Float.NaN : sv.getYRot(), view(mc)});
+                s.add(new float[]{v == null ? Float.NaN : v.getYRot(), sv == null ? Float.NaN : sv.getYRot(), view(mc), v == null ? 0 : v.tickCount - tc[0]});
                 if (ii == 39) { judgeFlick(label, s); if (v != null) log(label + ": " + (v.tickCount - tc[0]) + " vehicle ticks, " + (v.localTurns - tc[1]) + " turns by the driver's game over 40 samples"); }
             }, 1);
         }
@@ -253,9 +253,9 @@ public final class VehicleV2Tests {
         for (int i = 0; i < s.size(); i++) {
             float[] r = s.get(i);
             float err = Math.abs(Mth.wrapDegrees(r[2] - r[0]));
-            if (reach < 0 && err < 5F) reach = i + 1;
+            if (reach < 0 && err < 5F) reach = (int) r[3];
             if (i > 0) {
-                float d = Mth.wrapDegrees(r[0] - s.get(i - 1)[0]);
+                float d = Mth.wrapDegrees(r[0] - s.get(i - 1)[0]) / Math.max(1F, r[3] - s.get(i - 1)[3]);   // (per tick: a sample spans 2+ ticks)
                 maxStep = Math.max(maxStep, Math.abs(d));
                 if (Math.abs(d) > 0.3F && Math.abs(lastD) > 0.3F && Math.signum(d) != Math.signum(lastD)) flips++;
                 if (Math.abs(d) > 0.3F) lastD = d;
@@ -297,7 +297,16 @@ public final class VehicleV2Tests {
         float[] c = new float[6];
         ride(VehicleKind.CAR, 0, -24);
         step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); setView(mc, 0F); mc.options.keyUp.setDown(true); }, 25);
-        step(null, () -> { VehicleEntity v = clientVehicle(mc); c[0] = view(mc); c[1] = v == null ? 0 : v.getYRot(); mc.options.keyRight.setDown(true); }, 20);
+        step(null, () -> { VehicleEntity v = clientVehicle(mc); c[0] = view(mc); c[1] = v == null ? 0 : v.getYRot(); mc.options.keyRight.setDown(true); }, 8);
+        // a look at the front wheels mid-turn (from ahead of it and above: they should point to its right, the left of the picture)
+        int[] wcam = {-1, 0, 0};
+        camera(mc, wcam, () -> { VehicleEntity v = clientVehicle(mc);
+            if (v == null) return new double[]{base.getX(), base.getY() + 3, base.getZ(), 0, 20};
+            float a = v.getYRot() * Mth.DEG_TO_RAD; double fx = -Mth.sin(a), fz = Mth.cos(a);
+            double x = v.getX() + fx * 7, z = v.getZ() + fz * 7, y = v.getY() + 4;
+            return new double[]{x, y - 1.62, z, v.getYRot() + 180F, 30F}; });
+        step("car_wheels_steering_right", () -> {}, 1);
+        cameraOff(mc);
         step("car_steer_right", () -> { VehicleEntity v = clientVehicle(mc); mc.options.keyRight.setDown(false);
             float dv = Mth.wrapDegrees(view(mc) - c[0]), dy = v == null ? 0 : Mth.wrapDegrees(v.getYRot() - c[1]);
             check("car D steers right (view and car)", dv > 15F && dy > 15F && Math.abs(Mth.wrapDegrees(view(mc) - v.getYRot())) < 15F,
@@ -485,6 +494,13 @@ public final class VehicleV2Tests {
         for (int i = 0; i < 10; i++) step(i == 3 ? "shoot_" + label.replaceAll("[^a-z0-9]+", "_") : null, () -> { aimAt(mc, center(mc, ids[5])); GunClient.testTrigger = !GunClient.testTrigger; }, 4);
         step(null, () -> { GunClient.testTrigger = false; sent[1] = GunClient.shotsSent - sent[0]; }, 10);
         step(null, () -> server(p -> {
+            Entity tg = p.serverLevel().getEntity(ids[5]);
+            if (tg != null) {
+                Vec3 to = tg.getBoundingBox().getCenter().subtract(p.getEyePosition());
+                double ang = Math.toDegrees(Math.acos(Mth.clamp(to.normalize().dot(p.getViewVector(1F)), -1, 1)));
+                log(label + ": server eye " + f(p.getEyePosition().y - base.getY()) + " up, view yaw " + f(p.getYRot()) + " pitch " + f(p.getXRot())
+                        + ", target " + f(to.length()) + " blocks off, " + f(ang) + " deg off the crosshair, target at " + tg.blockPosition().toShortString() + " vehicle at " + (p.getVehicle() == null ? "none" : p.getVehicle().blockPosition().toShortString()));
+            }
             float lost = dmg(ids[5]), veh = hp0[0] - hp(p, ids[0]);
             float riders = 0;
             for (int i = 1; i <= seat; i++) riders += dmg(ids[i]);
