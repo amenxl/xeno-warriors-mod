@@ -37,6 +37,9 @@ import java.util.UUID;
 public final class Parties {
     public static final int MAX_SIZE = 4, MAX_PETS = 4;
 
+    /** The party size (players + bots) for this world: MAX_SIZE unless changed with /xeno partylimit (bot.OffDuty). */
+    public static int limit() { return com.xenowarriors.bot.OffDuty.partyLimit(); }
+
     /** Pets one player keeps (Mikiko's foxes + Rhalix's winged companions + Ultima's robots). */
     public static int pets(ServerPlayer p) { return com.xenowarriors.fox.FoxPets.count(p) + com.xenowarriors.wing.WingPets.count(p) + com.xenowarriors.ultima.RobotPets.count(p); }
 
@@ -132,8 +135,8 @@ public final class Parties {
             return;
         }
         Party party = BY_PLAYER.get(from.getUUID());
-        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(to).size() > MAX_SIZE) {
-            from.sendSystemMessage(msg("Your party is full (" + MAX_SIZE + " players and bots)."));
+        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(to).size() > limit()) {
+            from.sendSystemMessage(msg("Your party is full (" + limit() + " players and bots)."));
             return;
         }
         INVITES.put(to.getUUID(), new Invite(from.getUUID(), from.level().getGameTime() + INVITE_TICKS));
@@ -165,7 +168,7 @@ public final class Parties {
             p.sendSystemMessage(msg("Ai-oni and Rhalix can never be in the same party."));
             return;
         }
-        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > MAX_SIZE) {   // (checked first: a full party leaves both sides as they were)
+        if (com.xenowarriors.bot.PartyBots.partySize(from) + 1 + com.xenowarriors.bot.PartyBots.bots(p).size() > limit()) {   // (checked first: a full party leaves both sides as they were)
             p.sendSystemMessage(msg("That party is full (players and bots count)."));
             return;
         }

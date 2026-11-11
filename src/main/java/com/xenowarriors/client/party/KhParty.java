@@ -101,8 +101,14 @@ public class KhParty implements IGuiOverlay {
         var font = mc.font;
         float s = 0.8F;
         boolean ki = PartyKiClient.any();
-        int cw = Math.round(112 * s), ch = Math.round(78 * s) + 9 + (ki ? 8 : 0);   // (DragonMineZ: a ki row under each card)
         int right = width - 4, bottom = com.xenowarriors.client.BlazingHud.top(screenH) - 16;
+        int others = Math.max(0, PartyClient.members().size() - 1);
+        for (; others > 3 && s > 0.4F; s -= 0.05F) {                          // (a big party - /xeno partylimit: smaller cards until they all fit)
+            int w = Math.round(112 * s) + 4, h = Math.round(78 * s) + 9 + (ki ? 8 : 0) + 2;
+            int cols = Math.max(1, (right - (width / 2 + 8)) / w);
+            if ((others + cols - 1) / cols * h <= bottom - 4) break;
+        }
+        int cw = Math.round(112 * s), ch = Math.round(78 * s) + 9 + (ki ? 8 : 0);   // (DragonMineZ: a ki row under each card)
         int x = right - cw, y = bottom - ch;
         for (PartySyncPacket.Member m : PartyClient.members()) {
             if (m.id().equals(mc.player.getUUID())) continue;

@@ -206,6 +206,23 @@ public final class Building {
                 + " (reach +" + reach(lv) + ", " + pct(saveChance(lv)) + " keep)")).withStyle(ChatFormatting.GREEN), true);
     }
 
+    /** An off-duty character's Building XP (bot.OffDuty: no entity), under its save key. Quiet. */
+    public static void addXp(ServerPlayer o, String key, float amount) {
+        if (amount <= 0) return;
+        CompoundTag r = root(o);
+        CompoundTag c = r.getCompound(key);
+        int lv = clamp(c.getInt("lv"));
+        if (lv >= MAX_LEVEL) return;
+        float xp = c.getFloat("xp") + amount;
+        while (lv < MAX_LEVEL && xp >= needed(lv)) { xp -= needed(lv); lv++; }
+        if (lv >= MAX_LEVEL) xp = 0;
+        c.putInt("lv", lv); c.putFloat("xp", xp);
+        r.put(key, c);
+    }
+
+    /** A character's Building level by its save key. */
+    public static int level(ServerPlayer o, String key) { return clamp(root(o).getCompound(key).getInt("lv")); }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlace(BlockEvent.EntityPlaceEvent e) {
         if (e.isCanceled() || !(e.getLevel() instanceof ServerLevel l)) return;

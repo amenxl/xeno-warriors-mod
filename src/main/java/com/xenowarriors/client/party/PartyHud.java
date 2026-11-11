@@ -37,14 +37,14 @@ public class PartyHud implements IGuiOverlay {
         }
         if (PartyClient.members().size() < 2) return;
         // drawn at 70% size so it doesn't take up much of the screen
-        float sc = 0.7F;
-        g.pose().pushPose();
-        g.pose().scale(sc, sc, 1F);
         // left side, kept above the chat area (bottom ~150 px) and under the top-left corner other mods use
         int members = Math.max(0, PartyClient.members().size() - 1);
         boolean ki = PartyKiClient.any();                                    // (DragonMineZ: a ki bar under the Karma bar)
         int rowH = ki ? 36 : 30, frameB = ki ? 29 : 23;
         int minTop = com.xenowarriors.client.DmzHud.on() ? 52 : 40;          // (with DragonMineZ: under its own HUD in the top-left corner)
+        float sc = members <= 3 ? 0.7F : Mth.clamp((height - 150F - minTop) / Math.max(1, members * rowH), 0.35F, 0.7F);   // (70%; smaller for a big party - /xeno partylimit)
+        g.pose().pushPose();
+        g.pose().scale(sc, sc, 1F);
         int top = (int) Mth.clamp(height / 2F - 34, minTop, Math.max(minTop, height - 150 - members * rowH * sc));
         int x = Math.round(5 / sc), y = Math.round(top / sc);
         shownTop = top - 2;

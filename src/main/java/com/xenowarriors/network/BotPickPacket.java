@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 public record BotPickPacket(String[] ids) {
     public static void encode(BotPickPacket m, FriendlyByteBuf b) { b.writeVarInt(m.ids.length); for (String s : m.ids) b.writeUtf(s, 32); }
     public static BotPickPacket decode(FriendlyByteBuf b) {
-        String[] ids = new String[Math.min(2, b.readVarInt())];
+        String[] ids = new String[Math.min(16, b.readVarInt())];
         for (int i = 0; i < ids.length; i++) ids[i] = b.readUtf(32);
         return new BotPickPacket(ids);
     }

@@ -253,14 +253,15 @@ public final class PartyBots {
         int waiting = waitingFor(p.getUUID());
         String fusedWith = com.xenowarriors.compat.DmzFusion.fusedChar(p);     // (the bot you're fused with is still on the team)
         if (fusedWith != null) { taken.add(fusedWith); waiting++; }
-        int free = Math.max(0, Math.min(MAX_BOTS - bots(p).size() - waiting, Parties.MAX_SIZE - partySize(p) - waiting));   // (up to 3: you plus three makes a full party)
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free), p);
+        int limit = Parties.limit();
+        int free = Math.max(0, Math.min(limit - 1 - bots(p).size() - waiting, limit - partySize(p) - waiting));   // (you plus the rest makes a full party: 4 unless /xeno partylimit)
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free, limit, OffDuty.forPick(p)), p);
     }
 
     public static void add(ServerPlayer p, String[] ids) {
         if (!p.isAlive() || com.xenowarriors.vr.Vr.is(p.level())) return;   // (not from the death screen or inside VR)
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { p.sendSystemMessage(Component.literal("No bot teammates on a Journey - it's just you and your partner.").withStyle(ChatFormatting.RED)); return; }
-        int free = Parties.MAX_SIZE - partySize(p) - waitingFor(p.getUUID());     // (ones waiting outside the Hekublade still take their place)
+        int free = Parties.limit() - partySize(p) - waitingFor(p.getUUID());     // (ones waiting outside the Hekublade still take their place)
         Set<String> taken = new HashSet<>();
         for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
         for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
@@ -268,7 +269,7 @@ public final class PartyBots {
         if (fusedWith != null) { taken.add(fusedWith); free--; }
         for (String id : ids) {
             CharacterType t = CharacterType.byId(id);
-            if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (4 people and bots).").withStyle(ChatFormatting.RED)); return; }
+            if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (" + Parties.limit() + " people and bots).").withStyle(ChatFormatting.RED)); return; }
             if (t == CharacterType.NONE || !Arrays.asList(CharacterType.PLAYABLE).contains(t) || taken.contains(id)) continue;
             if (!canFollowTo(t, p.level())) { p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " can't come into the Hekublade (only Kaeru can).").withStyle(ChatFormatting.RED)); continue; }
             if ((t == CharacterType.AIONI && taken.contains("rhalix")) || (t == CharacterType.RHALIX && taken.contains("aioni"))) {
@@ -277,7 +278,8 @@ public final class PartyBots {
             if (p.getPersistentData().getLong(REJOIN + id) > p.level().getGameTime()) {
                 p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is still recovering - try again later.").withStyle(ChatFormatting.RED)); continue;
             }
-            spawn(p, t, null);
+            if (!OffDuty.mayJoin(p, t)) continue;                              // (busy off duty: only a high bond calls them back)
+            if (spawn(p, t, null) != null) OffDuty.joined(p, t);
             taken.add(id);
             free--;
         }
@@ -901,6 +903,7 @@ public final class PartyBots {
     // ---------------------------------------------------------------- going down
 
     static void downed(PartyBotEntity b) {
+        OffDuty.downed(b);                                                       // (downed a lot: it rests afterwards)
         ServerPlayer o = b.owner();
         if (o != null) o.displayClientMessage(Component.literal("").append(b.label()).append(" is down! Stand in their circle for 2 seconds to revive them (30s)").withStyle(ChatFormatting.RED), false);
         b.level().playSound(null, b.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, 1F, 0.6F);
