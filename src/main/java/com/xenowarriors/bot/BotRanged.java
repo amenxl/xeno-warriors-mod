@@ -123,6 +123,7 @@ public final class BotRanged extends Goal {
     private void equip() {
         if (slot >= 0) {
             ItemStack hand = b.getMainHandItem().copy();
+            if (com.xenowarriors.forms.SignatureWeapons.isSummoned(hand)) hand = ItemStack.EMPTY;
             b.setItemSlot(EquipmentSlot.MAINHAND, b.inventory.getItem(slot).copy());
             b.inventory.setItem(slot, hand);
             slot = -1;

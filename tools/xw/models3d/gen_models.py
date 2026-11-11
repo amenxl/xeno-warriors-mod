@@ -136,23 +136,60 @@ def gun_display():
 
 # ------------------------------------------------------------------ the shapes (upright, head at the top)
 
+def wire_sword():
+    """Rhalix's wire sword, ~1.5x the old one: a long dark blade with a glowing groove, wire wound round its base in a
+    spiral, a hooked guard with claws, a wrapped two-handed grip and a loose wire tail."""
+    els = []
+    handle(els, -2.6, 4.2, 'wire', w=1.5)
+    # guard: a bar with a glowing core, one arm hooked up and over (a claw), the other hooked down
+    cbox(els, 8, 4.2, 5.6, 8.6, 2.2, 'dark', name='guard')
+    cbox(els, 8, 4.5, 5.3, 2.2, 2.5, 'glow', name='guard_core')
+    box(els, [3.4, 5.6, 7.2], [4.8, 7.4, 8.8], 'dark', name='hook_l_up')
+    box(els, [3.4, 7.4, 7.5], [5.8, 8.4, 8.5], 'dark', rot=(22.5, 'z', (3.4, 7.4, 8)), name='hook_l_claw')
+    box(els, [5.2, 8.0, 7.7], [5.8, 8.8, 8.3], 'edge', name='hook_l_tip')
+    box(els, [11.2, 2.6, 7.2], [12.6, 4.2, 8.8], 'dark', name='hook_r_down')
+    box(els, [10.2, 1.8, 7.5], [12.6, 2.8, 8.5], 'dark', rot=(22.5, 'z', (12.6, 2.8, 8)), name='hook_r_claw')
+    box(els, [10.2, 1.4, 7.7], [10.8, 2.2, 8.3], 'edge', name='hook_r_tip')
+    # blade: wide at the base, tapering to a long point; bevelled edges; a glowing groove down the middle
+    cbox(els, 8, 5.6, 14.0, 3.4, 1.1, 'head', name='blade_base')
+    cbox(els, 8, 14.0, 20.0, 3.0, 1.0, 'head', name='blade_mid')
+    cbox(els, 8, 20.0, 24.0, 2.4, 0.9, 'head', name='blade_upper')
+    cbox(els, 8, 24.0, 25.6, 1.8, 0.8, 'head', name='tip1')
+    cbox(els, 8, 25.6, 26.8, 1.1, 0.6, 'edge', name='tip2')
+    cbox(els, 8, 26.8, 27.6, 0.5, 0.4, 'edge', name='tip3')
+    for x, y0, y1 in ((6.15, 6.0, 14.0), (9.85, 6.0, 14.0), (6.4, 14.0, 20.0), (9.6, 14.0, 20.0), (6.75, 20.0, 24.0), (9.25, 20.0, 24.0)):
+        cbox(els, x, y0, y1, 0.5, 0.7, 'edge', name='edge')
+    cbox(els, 8, 6.2, 23.0, 0.9, 1.16, 'dark', name='groove')
+    cbox(els, 8, 6.6, 22.6, 0.4, 1.22, 'glow', name='groove_glow')
+    # wire wound up the base of the blade in a slanted spiral (alternating glowing and plain turns), a few loose turns higher up
+    y, k = 6.0, 0
+    while y + 0.4 < 15.5:
+        box(els, [8 - 2.15, y, 8 - 0.95], [8 + 2.15, y + 0.4, 8 + 0.95], 'glow' if k % 2 == 0 else 'wrap', rot=(22.5, 'z', (8, y + 0.2, 8)), name='coil')
+        y += 1.15; k += 1
+    for yy in (18.0, 21.0):
+        box(els, [8 - 1.7, yy, 8 - 0.8], [8 + 1.7, yy + 0.3, 8 + 0.8], 'wrap', rot=(-22.5, 'z', (8, yy + 0.15, 8)), name='coil_loose')
+    # a wire loop hanging off the guard (the end trailing behind the hand)
+    box(els, [7.6, 3.6, 8.8], [8.4, 5.0, 9.8], 'wrap', rot=(22.5, 'x', (8, 4.3, 8.8)), name='guard_loop')
+    return els
+
+
+def wire_sword_display():
+    """The wire sword is long: smaller in the hand so the tip stays in view, shifted so the grip sits in the fist."""
+    d = tool_display()
+    d['thirdperson_righthand'] = {'rotation': [0, -90, 10], 'translation': [0, 5.2, 0.5], 'scale': [0.7, 0.7, 0.7]}
+    d['thirdperson_lefthand'] = {'rotation': [0, 90, -10], 'translation': [0, 5.2, 0.5], 'scale': [0.7, 0.7, 0.7]}
+    d['firstperson_righthand'] = {'rotation': [0, -90, -20], 'translation': [1.13, 3.4, 1.13], 'scale': [0.5, 0.5, 0.5]}
+    d['firstperson_lefthand'] = {'rotation': [0, 90, 20], 'translation': [1.13, 3.4, 1.13], 'scale': [0.5, 0.5, 0.5]}
+    d['ground'] = {'rotation': [0, 0, -45], 'translation': [0, 2, 0], 'scale': [0.4, 0.4, 0.4]}
+    d['fixed'] = {'rotation': [0, 180, -45], 'translation': [0, 0, 0], 'scale': [0.6, 0.6, 0.6]}
+    return d
+
+
 def sword(style):
     els = []
-    handle(els, -2.0, 3.6, style, w=1.3)
     if style == 'wire':
-        # Rhalix's wire sword: a dark narrow blade wound with wire, hooked guard
-        cbox(els, 8, 3.6, 4.9, 6.5, 1.8, 'dark', name='guard')
-        box(els, [4.2, 4.9, 7.3], [5.2, 6.4, 8.7], 'dark', name='guard_hook_l')
-        box(els, [10.8, 2.3, 7.3], [11.8, 3.6, 8.7], 'dark', name='guard_hook_r')
-        cbox(els, 8, 3.9, 4.6, 1.2, 2.0, 'glow', name='guard_core')
-        cbox(els, 8, 4.9, 17.6, 2.4, 0.9, 'head', name='blade')
-        cbox(els, 6.55, 5.4, 17.2, 0.5, 0.5, 'edge', name='edge_l')
-        cbox(els, 9.45, 5.4, 17.2, 0.5, 0.5, 'edge', name='edge_r')
-        cbox(els, 8, 5.4, 16.0, 0.5, 1.05, 'glow', name='fuller')
-        wire_coil(els, 5.2, 9.5, w=2.4)
-        cbox(els, 8, 17.6, 18.6, 1.8, 0.8, 'head', name='tip1')
-        cbox(els, 8, 18.6, 19.6, 1.0, 0.6, 'edge', name='tip2')
-        return els
+        return wire_sword()
+    handle(els, -2.0, 3.6, style, w=1.3)
     if style == 'demon':
         # demonite: broad serrated red blade, horned guard, ember fuller
         cbox(els, 8, 3.6, 5.0, 7.0, 2.2, 'dark', name='guard')
@@ -370,7 +407,7 @@ for prefix, style, mats, sprite_dir, kinds in (
         ('corrupted', 'corr', CORR, '', ('sword', 'pickaxe', 'axe', 'shovel', 'hoe'))):
     for k in kinds:
         els = TOOLS[k](style)
-        write(prefix + '_' + k, els, used(mats, els), tool_display(), T(sprite_dir + prefix + '_' + k))
+        write(prefix + '_' + k, els, used(mats, els), wire_sword_display() if (prefix, k) == ('wire', 'sword') else tool_display(), T(sprite_dir + prefix + '_' + k))
 els = sword('demon'); write('demonite_sword', els, used(DEMON, els), tool_display(), T('demonite_sword'))
 els = rhalix_wires(); write('rhalix_wires', els, used(WIRE, els), tool_display(), T('forms/rhalix_wires'))
 DMZ = dict(steel=T('3d/dmz_gun_steel'), dark=T('3d/dmz_gun_dark'), grip=T('3d/dmz_gun_grip'))
