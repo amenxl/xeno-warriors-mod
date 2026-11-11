@@ -1494,6 +1494,13 @@ public final class Journey {
         return r.here();
     }
 
+    /** (UI test) this player's run phase (LOBBY / IDLE / CHOOSING / BATTLE) and active character, e.g. "3 MIKIKO"; "none" without a run. */
+    public static String testPhase(ServerPlayer p) {
+        Run r = BY.get(p.getUUID());
+        Member m = r == null ? null : r.member(p.getUUID());
+        return r == null ? "none" : r.phase + " " + (m == null ? "-" : m.active.name());
+    }
+
     /** (UI test) the arena centre of this player's journey. */
     public static BlockPos testArena(ServerPlayer p) { Run r = BY.get(p.getUUID()); return r == null ? null : JourneyWorld.arena(r.slot); }
 }

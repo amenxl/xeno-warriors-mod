@@ -50,7 +50,14 @@ import java.util.*;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Vr {
     public static final ResourceKey<Level> LEVEL = ResourceKey.create(Registries.DIMENSION, XenoWarriors.id("vr"));
-    public static final String TAG = "xw_vr", DONE = "xw_vr_done";
+    public static final String TAG = "xw_vr", DONE = "xw_vr_done", DAILY = "xw_vr_daily";
+    /**
+     * Repeat clears (a challenge you've already cleared once) pay 3-5 emeralds, but only up to this many emeralds per
+     * player per in-game day (24,000 ticks = 20 minutes, the day turns over at dawn - sleeping through the night counts
+     * as a new day). After that repeats still work and still give their small stat XP, just no more emeralds.
+     * First clears are never limited.
+     */
+    public static final int DAILY_EMERALDS = 15;
     static final int R = 18, SPACING = 512, Y = 100;
 
     /** Environments: name, floor, accent, decoration. */
@@ -113,8 +120,51 @@ public final class Vr {
         CompoundTag t = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(DONE);
         boolean[] done = new boolean[CHALLENGES.length];
         for (int i = 0; i < done.length; i++) done[i] = t.getBoolean(CHALLENGES[i].name);
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenVrPacket(done, BY_PLAYER.containsKey(p.getUUID())), p);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenVrPacket(done, BY_PLAYER.containsKey(p.getUUID()), dailyLeft(p), DAILY_EMERALDS, ticksToReset(p.server)), p);
     }
+
+    // ------------------------------------------------------------------------------------------------ the daily cap on repeat payouts
+
+    /** Which in-game day it is (the overworld's day counter; it changes at dawn, or when the night is slept through). */
+    public static long day(MinecraftServer server) { return Math.floorDiv(server.overworld().getDayTime(), 24000L); }
+
+    /** Game ticks until the next in-game day (dawn). */
+    public static long ticksToReset(MinecraftServer server) { return 24000L - Math.floorMod(server.overworld().getDayTime(), 24000L); }
+
+    /** "8m 20s" (real time at 20 ticks a second). */
+    public static String fmtReset(long ticks) {
+        long sec = Math.max(1, (ticks + 19) / 20);
+        return (sec >= 60 ? sec / 60 + "m " : "") + sec % 60 + "s";
+    }
+
+    private static CompoundTag dailyTag(ServerPlayer p) {
+        CompoundTag t = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(DAILY);
+        if (!t.contains("day") || t.getLong("day") != day(p.server)) { t = new CompoundTag(); t.putLong("day", day(p.server)); t.putInt("got", 0); }   // (a new day - or time was set back)
+        return t;
+    }
+
+    /** Emeralds this player can still earn from VR repeat clears today. */
+    public static int dailyLeft(ServerPlayer p) { return Math.max(0, DAILY_EMERALDS - dailyTag(p).getInt("got")); }
+
+    /** Sets how many repeat emeralds this player has earned today (also used by tests). */
+    public static void setDailyGot(ServerPlayer p, int got) {
+        CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag t = dailyTag(p);
+        t.putInt("got", Math.max(0, got));
+        root.put(DAILY, t);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
+    }
+
+    /** Takes up to {@code want} emeralds out of today's allowance; returns how many may be paid. */
+    private static int takeDaily(ServerPlayer p, int want) {
+        int got = dailyTag(p).getInt("got");
+        int pay = Math.max(0, Math.min(want, DAILY_EMERALDS - got));
+        setDailyGot(p, got + pay);
+        return pay;
+    }
+
+    /** (tests) pays out a clear of challenge i exactly as winning it does. */
+    public static void testReward(ServerPlayer p, int i) { reward(p, CHALLENGES[i]); }
 
     /** Why someone can't go into VR right now (a way out of a Journey, a Tower floor, a duel, the Hekublade...), or null. */
     private static String busy(ServerPlayer p) {
@@ -285,14 +335,15 @@ public final class Vr {
         }
     }
 
-    private static void reward(ServerPlayer p, Challenge c) {
+    static void reward(ServerPlayer p, Challenge c) {
         CompoundTag root = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
         CompoundTag done = root.getCompound(DONE);
         boolean first = !done.getBoolean(c.name);
         done.putBoolean(c.name, true); root.put(DONE, done);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, root);
         var r = p.getRandom();
-        give(p, new ItemStack(Items.EMERALD, first ? 12 + r.nextInt(8) : 3 + r.nextInt(3)));
+        int emeralds = first ? 12 + r.nextInt(8) : takeDaily(p, 3 + r.nextInt(3));     // repeat clears: capped per in-game day
+        if (emeralds > 0) give(p, new ItemStack(Items.EMERALD, emeralds));
         for (var st : com.xenowarriors.stats.Stat.values())
             com.xenowarriors.stats.Stats.addXp(p, st, st.needed(com.xenowarriors.stats.Stats.level(p, st)) * (first ? 0.6F : 0.15F));
         if (first) {
@@ -301,7 +352,11 @@ public final class Vr {
             if (shard != null) give(p, new ItemStack(shard, 2));
             if (pot != null) give(p, new ItemStack(pot));
         }
-        p.sendSystemMessage(msg((first ? "First clear! " : "Cleared again. ") + c.name + " - rewards added.", ChatFormatting.GOLD));
+        p.sendSystemMessage(msg((first ? "First clear! " : "Cleared again. ") + c.name + " - rewards added"
+                + (first ? "." : emeralds > 0 ? " (+" + emeralds + " emeralds, " + dailyLeft(p) + " left today)." : " (training only)."), ChatFormatting.GOLD));
+        if (!first && dailyLeft(p) <= 0)
+            p.sendSystemMessage(msg("Daily VR reward limit reached - resets in " + fmtReset(ticksToReset(p.server))
+                    + ". You can still replay challenges for training, and first clears always pay.", ChatFormatting.YELLOW));
         p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1F, 1.2F);
     }
 
