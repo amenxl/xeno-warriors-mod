@@ -61,7 +61,7 @@ public final class BotKiTests {
         if (t == null) return "-";
         List<String> sk = new ArrayList<>();
         var list = t.getCompound("Skills").getList("SkillsList", 10);
-        for (int i = 0; i < list.size(); i++) sk.add(list.getCompound(i).toString());
+        for (int i = 0; i < list.size(); i++) if (list.getCompound(i).getInt("Level") > 0) sk.add(list.getCompound(i).toString());   // (DragonMineZ adds its race's form skills at level 0 on any load)
         Collections.sort(sk);
         return "tech " + t.getCompound("Techniques").getList("UnlockedTechniques", 10).size() + " " + t.getCompound("Techniques").getCompound("EquippedSlots")
                 + " skills " + sk.size() + "/" + sk.hashCode() + " stats " + t.getCompound("Stats").hashCode();
@@ -252,7 +252,7 @@ public final class BotKiTests {
             Entity g = DmzTalkNpcs.realForTest(p, "goku", at.x + 12, at.y, at.z);
             ST[1] = g;
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
-            p.connection.teleport(at.x + 6, at.y + 3, at.z + 10, 180F, 15F);       // (looking at the bot and Goku side by side)
+            p.connection.teleport(at.x + 6, at.y + 9, at.z + 9, 180F, 45F);        // (from above: the bot and Goku side by side)
             List<String> teach = DmzBotTechniques.teachesForTest("goku");
             int min = Integer.MAX_VALUE;
             StringBuilder costs = new StringBuilder();

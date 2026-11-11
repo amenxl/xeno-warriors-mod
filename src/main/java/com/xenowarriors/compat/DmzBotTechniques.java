@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * With DragonMineZ: bot teammates get new ki techniques of their own, with their own TP.
  * <ul>
- *   <li><b>Their own ki attacks.</b> Every 10 s each bot looks at its spare TP - what it has above what its next
+ *   <li><b>Their own ki attacks.</b> About once a minute (out of a fight) each bot looks at its spare TP - what it has above what its next
  *       mission's level still costs ({@link DmzBotTraining#reserve}: training always comes first). With enough of it,
  *       and at most one every {@link #CREATE_GAP} ticks, it makes a new ki attack in DragonMineZ's own technique
  *       creator, the way its CreateTechniqueC2S does for a player: same parameter rules (normalizeStatsForType), same
@@ -45,7 +45,8 @@ public final class DmzBotTechniques {
     public static final int CREATE_GAP = 20 * 60 * 8, MAX_CREATED = 6;
     public static final float BUDGET_SHARE = 0.5F;
     public static final double MASTER_REACH = 40;
-    private static final String LAST = "xw_dmz_ki_created_at";
+    private static final String LAST = "xw_dmz_ki_created_at", TRIED = "xw_dmz_ki_tried_at";
+    private static final int RETRY = 20 * 60;
 
     private static Boolean loaded;
     private static boolean broken;
@@ -227,6 +228,9 @@ public final class DmzBotTechniques {
         long now = b.level().getGameTime();
         long last = b.getPersistentData().getLong(LAST);
         if (!force && last > 0 && now >= last && now - last < CREATE_GAP) return "too soon";
+        long tried = b.getPersistentData().getLong(TRIED);
+        if (!force && tried > 0 && now >= tried && now - tried < RETRY) return "looked a moment ago";
+        if (!force) b.getPersistentData().putLong(TRIED, now);                          // (its TP and reserve are looked at once a minute at most)
         DmzBotQuests.Data d = DmzBotQuests.open(b, false);
         if (d == null || d.live) return "no data";
         try {
@@ -497,7 +501,7 @@ public final class DmzBotTechniques {
     }
 
     /** (Tests) it may make one by itself at its next look (its creation timer cleared). */
-    public static void allowCreateForTest(PartyBotEntity b) { b.getPersistentData().remove(LAST); }
+    public static void allowCreateForTest(PartyBotEntity b) { b.getPersistentData().remove(LAST); b.getPersistentData().remove(TRIED); }
 
     /** (Tests) a bot character's name, as its techniques' author. */
     public static String authorForTest(PartyBotEntity b) { return botName(b); }
