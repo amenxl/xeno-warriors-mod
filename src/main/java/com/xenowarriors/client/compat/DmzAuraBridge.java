@@ -19,6 +19,8 @@ public final class DmzAuraBridge {
     private static boolean tried, broken;
     /** (Tests / logs) why the last try didn't queue anything. */
     public static String lastWhy = "";
+    /** While set, our renderer mixin lets DragonMineZ hand out its renderer for one of our players (only to read its model). */
+    public static boolean lookingUp;
     private static Method getAny;
     private static Method getTP, getGeoModel, getModelResource, getBakedModel, addAura, addSpark;
     private static Method getStatus, isAuraActive, isPermanentAura;
@@ -78,8 +80,10 @@ public final class DmzAuraBridge {
     public static boolean queue(AbstractClientPlayer p, PoseStack pose, float partial, int light) {
         if (!works()) return false;
         try {
-            Object renderer = getTP.invoke(null, p);
-            if (renderer == null) renderer = getAny.invoke(null, p);
+            Object renderer;
+            lookingUp = true;
+            try { renderer = getTP.invoke(null, p); if (renderer == null) renderer = getAny.invoke(null, p); }
+            finally { lookingUp = false; }
             if (renderer == null) { lastWhy = "no DragonMineZ renderer for this player"; return false; }
             Object model = getGeoModel.invoke(renderer);
             Object res = getModelResource.invoke(model, p);
