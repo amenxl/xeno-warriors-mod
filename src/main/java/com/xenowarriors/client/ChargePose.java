@@ -66,12 +66,7 @@ public final class ChargePose {
         Vector3f c1 = mikiko ? new Vector3f(1F, 0.35F, 0.1F) : k;
         Vector3f c2 = mikiko ? new Vector3f(1F, 0.75F, 0.2F) : new Vector3f(Math.min(1F, k.x + 0.3F), Math.min(1F, k.y + 0.3F), Math.min(1F, k.z + 0.3F));
         float grow = Math.min(1F, t / 30F);
-        int n = 1 + Math.round(grow * 2);              // a few motes - the DbzAura shell carries the look
-        for (int i = 0; i < n; i++) {
-            double a = r.nextDouble() * Math.PI * 2, rad = 0.45 + r.nextDouble() * (0.3 + grow * 0.4);
-            mc.level.addParticle(new DustParticleOptions(r.nextBoolean() ? c1 : c2, 0.8F + grow * 0.6F),
-                    p.getX() + Math.cos(a) * rad, p.getY() + r.nextDouble() * 0.4, p.getZ() + Math.sin(a) * rad, 0, 0.12 + grow * 0.1, 0);
-        }
+        // (no dust motes: the Dragon Ball aura shell - DbzAura - carries the look)
         if (mikiko && r.nextInt(3) == 0) {
             mc.level.addParticle(ParticleTypes.FLAME, p.getX() + (r.nextDouble() - 0.5) * 1.2, p.getY() + 0.1,
                     p.getZ() + (r.nextDouble() - 0.5) * 1.2, 0, 0.08, 0);
@@ -80,12 +75,7 @@ public final class ChargePose {
             mc.level.addParticle(ParticleTypes.WITCH, p.getX() + (r.nextDouble() - 0.5) * 1.2, p.getY() + r.nextDouble() * 2,
                     p.getZ() + (r.nextDouble() - 0.5) * 1.2, 0, 0.05, 0);
         }
-        // dust kicked up off the ground once it builds
-        if (grow > 0.5F && p.onGround() && r.nextInt(2) == 0) {
-            double a = r.nextDouble() * Math.PI * 2;
-            mc.level.addParticle(ParticleTypes.CLOUD, p.getX() + Math.cos(a) * 1.2, p.getY() + 0.05, p.getZ() + Math.sin(a) * 1.2,
-                    Math.cos(a) * 0.08, 0.01, Math.sin(a) * 0.08);
-        }
+    }
     }
 
     /** Applied last in setupAnim, blended over whatever else was posing them. */
@@ -154,13 +144,7 @@ public final class ChargePose {
     private static void motionFx(Minecraft mc, AbstractClientPlayer p, boolean mikiko) {
         var r = p.getRandom();
         Vector3f c = mikiko ? new Vector3f(1F, 0.45F, 0.1F) : new Vector3f(0.75F, 0.35F, 1F);
-        double speed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
-        if (speed > 0.08) {
-            for (int i = 0; i < 3; i++) {
-                mc.level.addParticle(new DustParticleOptions(c, 1.2F), p.xo + (r.nextDouble() - 0.5) * 0.6,
-                        p.getY() + r.nextDouble() * 1.8, p.zo + (r.nextDouble() - 0.5) * 0.6, 0, 0.02, 0);
-            }
-        }
+        // (no smoky trail while charging on the run: the aura shell goes with them)
         if (p.swinging && p.swingTime == 1) {
             float yaw = p.getYRot() * Mth.DEG_TO_RAD;
             double fx = p.getX() - Mth.sin(yaw) * 1.3, fz = p.getZ() + Mth.cos(yaw) * 1.3;

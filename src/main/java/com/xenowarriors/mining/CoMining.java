@@ -49,6 +49,12 @@ public final class CoMining {
     private static final Map<UUID, BlockPos> BOT_POS = new HashMap<>();
     /** player -> {block, helpers} last worked out (the server's own dig speed uses it) */
     private static final Map<UUID, Help> HELP = new HashMap<>();
+    /** When each digger last swung (dig) and last had the block in their crosshair: a click that never got its "stop"
+     *  (a quick tap, a menu opened mid-dig, a combo click on a block) would otherwise leave them "digging" forever -
+     *  and their bots swinging at it (the stuck attack animation). */
+    private static final Map<UUID, Long> SWUNG = new HashMap<>(), LOOKED = new HashMap<>();
+    private static final Map<UUID, Long> TEST_HOLD = new HashMap<>();
+    static final int STALE_SWING = 30, STALE_LOOK = 20;
     record Help(BlockPos pos, int helpers) {}
 
     public static float multiplier(int helpers) { return 1F + PER_HELPER * Math.min(MAX_HELPERS, Math.max(0, helpers)); }
@@ -68,7 +74,7 @@ public final class CoMining {
     public static void onLeftClick(PlayerInteractEvent.LeftClickBlock e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || p instanceof FakePlayer) return;
         switch (e.getAction()) {
-            case START -> { if (!e.isCanceled()) MINING.put(p.getUUID(), e.getPos().immutable()); }
+            case START -> { if (!e.isCanceled()) { MINING.put(p.getUUID(), e.getPos().immutable()); long t = p.level().getGameTime(); SWUNG.put(p.getUUID(), t); LOOKED.put(p.getUUID(), t); } }
             case STOP, ABORT -> stop(p);
             default -> {}
         }
@@ -81,6 +87,7 @@ public final class CoMining {
 
     private static void stop(ServerPlayer p) {
         MINING.remove(p.getUUID());
+        SWUNG.remove(p.getUUID()); LOOKED.remove(p.getUUID()); TEST_HOLD.remove(p.getUUID());
         Help h = HELP.remove(p.getUUID());
         if (h != null && h.helpers > 0) ModNetwork.sendToPlayer(new CoMinePacket(BlockPos.ZERO, 0), p);
     }
@@ -119,6 +126,13 @@ public final class CoMining {
             if (p == null || !p.isAlive()) { MINING.remove(id); HELP.remove(id); continue; }
             BlockPos pos = MINING.get(id);
             if (p.level().getBlockState(pos).isAir() || p.distanceToSqr(Vec3.atCenterOf(pos)) > 8 * 8) { stop(p); continue; }
+            long now = p.level().getGameTime();
+            Long hold = TEST_HOLD.get(id);
+            if (hold == null || now > hold) {                                    // (still really digging: swinging at it, crosshair on it)
+                if (p.swinging || p.swingTime > 0) SWUNG.put(id, now);
+                if (lookingAt(p, pos)) LOOKED.put(id, now);
+                if (now - SWUNG.getOrDefault(id, now) > STALE_SWING || now - LOOKED.getOrDefault(id, now) > STALE_LOOK) { stop(p); continue; }
+            }
             int n = helpers(p);
             Help old = HELP.get(id);
             if (old == null || old.helpers != n || !old.pos.equals(pos)) {
@@ -131,7 +145,10 @@ public final class CoMining {
     }
 
     @SubscribeEvent
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) { MINING.remove(e.getEntity().getUUID()); HELP.remove(e.getEntity().getUUID()); }
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
+        UUID id = e.getEntity().getUUID();
+        MINING.remove(id); HELP.remove(id); SWUNG.remove(id); LOOKED.remove(id); TEST_HOLD.remove(id);
+    }
 
     /** Server side: the dig speed with the helpers (the client does the same from {@link CoMinePacket}). */
     @SubscribeEvent
@@ -182,6 +199,12 @@ public final class CoMining {
 
     /** (Tests) */
     public static int helpersForTest(ServerPlayer p) { Help h = HELP.get(p.getUUID()); return h == null ? 0 : h.helpers; }
-    public static void startForTest(ServerPlayer p, BlockPos pos) { MINING.put(p.getUUID(), pos.immutable()); }
+    public static void startForTest(ServerPlayer p, BlockPos pos) { startForTest(p, pos, 400); }
+    /** As if they started digging it; held (no swing / look checks) this many ticks - 0 for a stale click. */
+    public static void startForTest(ServerPlayer p, BlockPos pos, int hold) {
+        long t = p.level().getGameTime();
+        MINING.put(p.getUUID(), pos.immutable()); SWUNG.put(p.getUUID(), t); LOOKED.put(p.getUUID(), t);
+        if (hold > 0) TEST_HOLD.put(p.getUUID(), t + hold); else TEST_HOLD.remove(p.getUUID());
+    }
     public static void stopForTest(ServerPlayer p) { stop(p); }
 }

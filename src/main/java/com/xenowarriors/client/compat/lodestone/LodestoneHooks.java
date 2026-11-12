@@ -30,13 +30,9 @@ public final class LodestoneHooks {
         for (Entity e : mc.level.entitiesForRendering()) {
             if (e.distanceToSqr(mc.player) > 64 * 64) continue;
             if (e instanceof Player p) {
-                float charge = com.xenowarriors.client.ChargePose.weight((net.minecraft.client.player.AbstractClientPlayer) p);
-                if (charge > 0.05F && t % 2 == 0) {
-                    var type = com.xenowarriors.client.ClientCharacterData.get((net.minecraft.client.player.AbstractClientPlayer) p);
-                    LodestoneFx.aura(mc.level, p.getX(), p.getY(), p.getZ(), type.getColor(), charge);
-                }
+                // (powering up: the Dragon Ball aura shell only - no smoky wisps)
             } else if (e instanceof com.xenowarriors.sr.SrMemberEntity sr) {
-                if (sr.demon() && t % 3 == 0) LodestoneFx.aura(mc.level, sr.getX(), sr.getY(), sr.getZ(), 0x8A0D1A, 0.8F);
+                if (sr.demon()) com.xenowarriors.client.DbzAura.mark(sr.getId(), 0x8A0D1A, 3);
                 if (sr.redirecting()) LodestoneFx.spinRing(mc.level, sr.getX(), sr.getY(), sr.getZ(), 0xFFD940, t);
             } else if (e instanceof com.xenowarriors.npc.KiBlastEntity || e instanceof com.xenowarriors.corrupted.SoulBoltEntity) {
                 LodestoneFx.trail(mc.level, e.position().add(0, e.getBbHeight() / 2, 0), e instanceof com.xenowarriors.corrupted.SoulBoltEntity ? 0x7A20C8 : 0xFFE070);

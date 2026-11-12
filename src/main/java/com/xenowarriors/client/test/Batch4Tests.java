@@ -55,7 +55,62 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("ender")) enderSaiyan(mc, l);
         if (dmz && (f.isEmpty() || f.contains("bagmerge"))) bagMerge(mc, l);
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
+        if (f.isEmpty() || f.contains("sparlock")) sparLock(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ lock on to a bot you're sparring
+
+    private static void sparLock(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b != null) { b.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180, 0); b.setMode(PartyBotEntity.NEUTRAL); }
+        }), 30);
+        boolean[] before = new boolean[1];
+        l.add(null, () -> {
+            var b = mc.level.getEntitiesOfClass(PartyBotEntity.class, mc.player.getBoundingBox().inflate(10)).stream().findFirst().orElse(null);
+            before[0] = b != null && com.xenowarriors.client.LockOn.attackable(b);
+            server(p -> { for (PartyBotEntity x : PartyBots.bots(p)) PartyBots.action(p, x.getId(), PartyBots.ACT_SPAR, 0); });
+        }, 20);
+        l.add(null, () -> {
+            var b = mc.level.getEntitiesOfClass(PartyBotEntity.class, mc.player.getBoundingBox().inflate(10)).stream().findFirst().orElse(null);
+            boolean during = b != null && com.xenowarriors.client.LockOn.attackable(b);
+            log("sparlock: lockable before " + before[0] + ", while sparring you " + during + " -> " + (!before[0] && during ? "PASS" : "FAIL"));
+            server(p -> { for (PartyBotEntity x : PartyBots.bots(p)) x.setSparring(false); });
+        }, 10);
+        l.add(null, () -> {
+            var b = mc.level.getEntitiesOfClass(PartyBotEntity.class, mc.player.getBoundingBox().inflate(10)).stream().findFirst().orElse(null);
+            boolean after = b != null && com.xenowarriors.client.LockOn.attackable(b);
+            log("sparlock: spar over -> lockable " + after + " -> " + (!after ? "PASS" : "FAIL"));
+            server(Batch3Tests::clearBots);
+        }, 5);
+    }
+
+    // ------------------------------------------------------------------ DragonMineZ's own aura on our characters
+
+    private static void dmzAura(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        int[] q = new int[1];
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> { DmzTests.make(p, "saiyan"); p.teleportTo(p.getX(), p.getY(), p.getZ()); }); }, 40);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            setForm(p, "supersaiyan", "supersaiyan");
+            Dmz6Tests.call(Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"), "setAuraActive", true);
+            DmzPerCharacter.syncStats(p);
+            q[0] = com.xenowarriors.client.compat.DmzAuraBridge.queued;
+        }), 30);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 20);
+        l.add("batch4_dmzaura", () -> {}, 5);
+        l.add(null, () -> {
+            int n = com.xenowarriors.client.compat.DmzAuraBridge.queued - q[0];
+            log("dmzaura: aura on -> DragonMineZ aura queued " + n + " times, bridge works " + com.xenowarriors.client.compat.DmzAuraBridge.works() + " -> " + (n > 0 ? "PASS" : "FAIL"));
+            server(p -> { Dmz6Tests.call(Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"), "setAuraActive", false); setForm(p, null, null); });
+        }, 5);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 20);
+        l.add("batch4_dmzaura_off", () -> {}, 5);
     }
 
     // ------------------------------------------------------------------ form faces and the SSJ4 look
@@ -140,6 +195,13 @@ public final class Batch4Tests {
         l.add(null, () -> server(p -> {
             int n = com.xenowarriors.mining.CoMining.helpersForTest(p);
             log("comine: stopped digging -> helpers " + n + " -> " + (n == 0 ? "PASS" : "FAIL"));
+            p.setYRot(180); p.connection.teleport(p.getX(), p.getY(), p.getZ(), 180, 0);   // (looking away, not swinging)
+            com.xenowarriors.mining.CoMining.startForTest(p, DIG[0], 0);          // a click that never got its "stop"
+        }), 60);
+        l.add(null, () -> server(p -> {
+            boolean gone = com.xenowarriors.mining.CoMining.digging(p) == null;
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            log("comine: a stale click (no swinging, looking away) is dropped: " + gone + ", bot swinging " + (b != null && b.swinging) + " -> " + (gone && (b == null || !b.swinging) ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
         }), 10);
     }

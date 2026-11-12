@@ -47,7 +47,7 @@
         },
         {
           "title": "Lock-on",
-          "text": "Press {key:lock_on} to lock onto whatever is closest to your crosshair: your view stays turned to it, a reticle spins on it and its health shows at the top of the screen. Press again to let go; it also lets go if the target dies, gets too far or stays out of sight. Some moves (Mikiko's rope blade throw) home in on your lock-on target."
+          "text": "Press {key:lock_on} to lock onto whatever is closest to your crosshair: your view stays turned to it, a reticle spins on it and its health shows at the top of the screen. Press again to let go; it also lets go if the target dies, gets too far or stays out of sight. Some moves (Mikiko's rope blade throw) home in on your lock-on target.\n- Your own bots can be locked on to while you're sparring them."
         },
         {
           "title": "Team attacks",
@@ -80,7 +80,7 @@
         },
         {
           "title": "Sparring in quiet times",
-          "text": "When you and your bots aren't fighting (nothing hostile nearby for a while), now and then:\n- A bot asks you to spar - a request card: press Accept (Y) to spar it, Decline (X) for not now. It's the same friendly fight as Spar in its menu: nobody goes down.\n- Or two of your bots spar each other: a real fight until one is down to 30% health, or a minute is up (a draw). If an enemy turns up they stop at once.\n- Sparring gives Speed, Attack and Defense XP - and with DragonMineZ, Dragon Ball TP: about what 8 levels of a training minigame pay (3 after your first big spar in 30 minutes), less for the loser. Bots sparring each other both get theirs."
+          "text": "When you and your bots aren't fighting (nothing hostile nearby for a while), now and then:\n- A bot asks you to spar - a request card: press Accept (Y) to spar it, Decline (X) for not now. It's the same friendly fight as Spar in its menu: nobody goes down.\n- Or two of your bots spar each other: a real fight until one is down to 30% health, or a minute is up (a draw). If an enemy turns up they stop at once.\n- Sparring gives Speed, Attack and Defense XP - and with DragonMineZ, Dragon Ball TP: about what 8 levels of a training minigame pay (3 after your first big spar in 30 minutes), less for the loser. Bots sparring each other both get theirs.\n- While you're sparring a bot (you asked it, or it asked and you said yes), you can lock on to it like an enemy. When the spar ends, it's a teammate again and the lock lets go."
         },
         {
           "title": "Party time!",
@@ -206,6 +206,10 @@
         {
           "title": "Faces when hurt",
           "text": "Every playable character (you or a bot) shows how hard a hit was on their face:\n- A light hit (under 8% of their health): a wince with a bead of sweat.\n- A normal hit: the hurt face (under half health it flickers with a shocked look).\n- A big hit (20% of their health or more), or any hit when they're down under a quarter: eyes wide, tears streaming and cheeks flushed.\n- Their Super Saiyan, Lunar, Demon's Remnants and drawn-style faces have them too."
+        },
+        {
+          "title": "Auras",
+          "text": "Powering up, Karma focus and transformations show a Dragon Ball aura - no more smoky dust clouds:\n- Powering up and Karma focus: a flame aura in your character's Karma colour.\n- With DragonMineZ, when your aura is on (powering up, or a form with a permanent aura) your character gets DragonMineZ's own aura and lightning, just like a DragonMineZ player.\n- Bots get the flame aura (in their form's colour) when they power up, transform or go Kaioken (red)."
         }
       ]
     },
@@ -288,7 +292,7 @@
         },
         {
           "title": "Mining together",
-          "text": "Dig a block together and it breaks faster.\n- Another player helps when they're close to you (within 6 blocks) and are mining the same block - looking right at it. They get the same boost on their own digging.\n- Your bots help in any mode, not only Mining mode: when you dig a block close to them and they aren't fighting, they step up beside it, look at it and dig along. They always stand to the side - never between you and the block - so they never get in your view.\n- Each helper makes you dig 60% faster (at most 4 helpers: 3.4x). The action bar shows how many are helping."
+          "text": "Dig a block together and it breaks faster.\n- Another player helps when they're close to you (within 6 blocks) and are mining the same block - looking right at it. They get the same boost on their own digging.\n- Your bots help in any mode, not only Mining mode: when you dig a block close to them and they aren't fighting, they step up beside it, look at it and dig along. They always stand to the side - never between you and the block - so they never get in your view.\n- Each helper makes you dig 60% faster (at most 4 helpers: 3.4x). The action bar shows how many are helping.\n- Bots only help while you're really digging (swinging at the block with it in your crosshair). Stop for a moment or look away and they stop too, so they don't keep swinging at nothing."
         },
         {
           "title": "Speed: stepping up blocks",

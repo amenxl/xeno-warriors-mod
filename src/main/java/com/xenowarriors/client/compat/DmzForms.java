@@ -5,7 +5,6 @@ import com.xenowarriors.character.CharacterType;
 import com.xenowarriors.client.ClientCharacterData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderPlayerEvent;
@@ -265,26 +264,24 @@ public final class DmzForms {
         if (ours(event.getEntity())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
     }
 
-    @SubscribeEvent
-    public static void onTick(TickEvent.ClientTickEvent event) {
+    /**
+     * The aura of a form (or of powering up) on a Xeno Warriors player we draw: DragonMineZ's own aura when it would
+     * show one; without it (or if it can't be queued), our Dragon Ball style flame shell in the form's colour. (It
+     * used to be a cloud of dust motes - those are gone.)
+     */
+    static int auraFor(AbstractClientPlayer p) {
+        if (!ours(p) || dmzDraws(p) || giantFox(p)) return -1;
+        return auraColor(p);
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
+    public static void onRenderAura(RenderPlayerEvent.Post event) {
+        if (!(event.getEntity() instanceof AbstractClientPlayer p) || !ready() || !ours(p) || dmzDraws(p) || giantFox(p)) return;
         Minecraft mc = Minecraft.getInstance();
-        if (event.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused() || !ready()) return;
-        for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
-            if (!ours(p) || dmzDraws(p) || giantFox(p)) continue;
-            int c = auraColor(p);
-            if (c < 0 || (p == mc.player && mc.options.getCameraType().isFirstPerson())) continue;
-            boolean strong = DmzCompat.aura(p) || DmzCompat.charging(p);
-            var dust = new DustParticleOptions(new Vector3f(((c >> 16) & 255) / 255F, ((c >> 8) & 255) / 255F, (c & 255) / 255F),
-                    strong ? 1.3F : 0.8F);
-            var r = p.getRandom();
-            int n = strong ? 4 : (p.tickCount % 3 == 0 ? 1 : 0);
-            Form f = info(p);
-            double size = f == null ? 1 : f.scale();
-            for (int i = 0; i < n; i++) {
-                double a = r.nextDouble() * Math.PI * 2, rad = (0.45 + r.nextDouble() * 0.35) * size;
-                mc.level.addParticle(dust, p.getX() + Math.cos(a) * rad, p.getY() + r.nextDouble() * 1.8 * size,
-                        p.getZ() + Math.sin(a) * rad, 0, strong ? 0.12 : 0.05, 0);
-            }
-        }
+        if (p == mc.player && mc.options.getCameraType().isFirstPerson()) return;
+        boolean on = DmzAuraBridge.auraOn(p);
+        if (on && DmzAuraBridge.queue(p, event.getPoseStack(), event.getPartialTick(), event.getPackedLight())) return;
+        int c = auraColor(p);
+        if (c >= 0 && (on || DmzCompat.charging(p))) com.xenowarriors.client.DbzAura.mark(p.getId(), c, 2);
     }
 }

@@ -79,12 +79,7 @@ public final class KarmaFocusClient {
         boolean mikiko = ClientCharacterData.get(p) == CharacterType.MIKIKO;
         int rgb = ClientCharacterData.get(p).getColor();
         Vector3f c = mikiko ? new Vector3f(1F, 0.4F, 0.15F) : new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F);
-        var r = p.getRandom();
-        for (int i = 0; i < (p.getRandom().nextInt(3) == 0 ? 1 : 0); i++) {
-        double a = r.nextDouble() * Math.PI * 2, rad = 0.6 + r.nextDouble() * 0.4;
-        mc.level.addParticle(new DustParticleOptions(c, 1.2F), p.getX() + Math.cos(a) * rad, p.getY() + r.nextDouble() * 1.6 + (mikiko ? 0 : 0.6),
-                p.getZ() + Math.sin(a) * rad, 0, 0.03, 0);
-        }
+        // (no dust motes any more: the Dragon Ball aura shell - DbzAura - shows the focus)
     }
 
     private static boolean rhalix(Player p) {

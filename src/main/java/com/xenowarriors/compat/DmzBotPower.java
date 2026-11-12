@@ -375,7 +375,7 @@ public final class DmzBotPower {
                 double d = fd == null || com.xenowarriors.kaioken.KaiokenGuard.guarded(b) ? 0 : ((Number) healthDrain.invoke(fd)).doubleValue();   // (a Crimson Heart Seed: no cost)
                 if (d > 0 && hp - d < KAIOKEN_OFF) { p.stackRested = false; dropStack(b, st, p, "next second would take it under " + Math.round(KAIOKEN_OFF * 100) + "%"); return; }
                 if (d > 0) { b.setHealth(Math.max(1F, b.getHealth() - (float) (b.getMaxHealth() * d))); p.kaiokenDrained += (float) (b.getMaxHealth() * d); }
-                if (b.level() instanceof ServerLevel level) level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.1F, 0.1F), 1.8F), b.getX(), b.getY() + 0.9, b.getZ(), 10, 0.4, 0.7, 0.4, 0.02);
+                auraMark(b, 0xFF1A1A);                                            // (Kaioken's red aura)
             }
             return;
         }
@@ -407,7 +407,7 @@ public final class DmzBotPower {
         note(b.character().getId() + " goes Kaioken " + last + " (" + group + ") vs " + foe.getType().getDescriptionId() + " at " + Math.round(hp * 100) + "% health, melee x"
                 + Math.round(num(melee, st) / Math.max(0.01, p.restMelee) * 100) / 100.0);
         if (b.level() instanceof ServerLevel level) {
-            level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.1F, 0.1F), 2.2F), b.getX(), b.getY() + 0.9, b.getZ(), 50, 0.5, 0.9, 0.5, 0.05);
+            auraMark(b, 0xFF1A1A);
             level.playSound(null, b.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.NEUTRAL, 0.8F, 0.7F);
         }
         o.displayClientMessage(Component.literal("").append(b.label()).append(" Kaioken " + last + "!").withStyle(ChatFormatting.RED), true);
@@ -444,14 +444,17 @@ public final class DmzBotPower {
         return sb.toString().trim();
     }
 
+    private static void auraMark(PartyBotEntity b, int rgb) {
+        com.xenowarriors.network.ModNetwork.sendToTrackingEntityAndSelf(new com.xenowarriors.network.AuraMarkPacket(b.getId(), rgb), b);
+    }
+
     /** Its aura: DragonMineZ's aura color for its character, rising round it. */
     private static void aura(ServerLevel level, PartyBotEntity b, Object st, int n) {
         int rgb = 0xFFE27A;
         try { String c = String.valueOf(auraColor.invoke(getCharacter.invoke(st))).replace("#", ""); if (!c.isEmpty() && !c.equals("null")) rgb = Integer.parseInt(c, 16); } catch (Throwable ignored) {}
         Power p = POWER.get(b.getUUID());
         if (p != null && p.form != null && p.form.toLowerCase(Locale.ROOT).contains("super")) rgb = 0xFFE040;
-        var dust = new DustParticleOptions(new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F), 1.6F);
-        level.sendParticles(dust, b.getX(), b.getY() + 0.9, b.getZ(), n, 0.35, 0.7, 0.35, 0.02);
+        auraMark(b, rgb);                                                        // the Dragon Ball aura shell (no dust cloud)
         level.sendParticles(ParticleTypes.END_ROD, b.getX(), b.getY() + 0.2, b.getZ(), Math.max(1, n / 5), 0.3, 0.1, 0.3, 0.05);
     }
 

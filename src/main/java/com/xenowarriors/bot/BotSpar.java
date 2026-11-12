@@ -88,6 +88,7 @@ public final class BotSpar {
         long end = a.level().getGameTime() + MAX_SPAR;
         a.sparFoe = b.getUUID(); b.sparFoe = a.getUUID();
         a.setSparring(true); b.setSparring(true);
+        a.setSparringBot(true); b.setSparringBot(true);
         a.setTarget(b); b.setTarget(a);
         BOT_SPAR.put(a.getUUID(), end); BOT_SPAR.put(b.getUUID(), end);
         started++;

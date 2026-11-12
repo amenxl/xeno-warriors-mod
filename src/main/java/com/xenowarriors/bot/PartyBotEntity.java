@@ -46,6 +46,7 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DOWNED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> SPAR_BOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (its spar is with another bot, not you)
     private static final EntityDataAccessor<Boolean> DMZ_FLY = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
@@ -166,6 +167,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(LEVEL, 1);
         entityData.define(DOWNED, false);
         entityData.define(SPAR, false);
+        entityData.define(SPAR_BOT, false);
         entityData.define(DMZ_FLY, false);
     }
 
@@ -215,7 +217,10 @@ public class PartyBotEntity extends PathfinderMob {
     /** The bot it's sparring (BotSpar), null when it spars you or doesn't spar. */
     public UUID sparFoe;
     public boolean sparring() { return entityData.get(SPAR); }
-    public void setSparring(boolean b) { entityData.set(SPAR, b); if (!b) setTarget(null); }
+    public void setSparring(boolean b) { entityData.set(SPAR, b); if (!b) { setTarget(null); entityData.set(SPAR_BOT, false); } }
+    /** Sparring with you (its owner) - you asked, or it did and you said yes - not with another bot: you can lock on to it. */
+    public boolean sparringOwner() { return sparring() && !entityData.get(SPAR_BOT); }
+    public void setSparringBot(boolean b) { entityData.set(SPAR_BOT, b); }
     /** Its side: owner, party, their pets and bots (so DragonMineZ ki attacks it throws pass them by) - not the owner while sparring. */
     @Override
     public boolean isAlliedTo(Entity e) {

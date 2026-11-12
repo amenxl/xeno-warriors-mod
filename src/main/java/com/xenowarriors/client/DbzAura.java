@@ -44,10 +44,13 @@ public final class DbzAura {
 
     private DbzAura() {}
 
-    public static void mark(int id, int rgb) {
+    public static void mark(int id, int rgb) { mark(id, rgb, 30); }
+
+    /** Show the aura on this entity for this many ticks (re-mark it to keep it up). */
+    public static void mark(int id, int rgb, int ticks) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        MARKS.put(id, new long[]{rgb, mc.level.getGameTime() + 30});
+        MARKS.put(id, new long[]{rgb, mc.level.getGameTime() + ticks});
     }
 
     /** The aura colour a character powers up with. */
@@ -62,12 +65,14 @@ public final class DbzAura {
         if (mc.level == null || e.isInvisible()) return;
         float partial = event.getPartialTick();
         float age = e.tickCount + partial;
-        int rgb; float strength, size, speed;
+        int rgb = 0; float strength = 0, size = 0, speed = 0;
+        boolean got = false;
         if (e instanceof AbstractClientPlayer p) {
             if (FirstPersonHead.ownFirstPerson(p)) return;
             CharacterType t = ClientCharacterData.get(p);
             if (t == CharacterType.NONE) return;
             float charge = ChargePose.weight(p), focus = KarmaFocusClient.weight(p);
+            got = true;
             if (charge > 0.01F) {
                 rgb = color(t);
                 strength = charge;
@@ -78,8 +83,9 @@ public final class DbzAura {
                 strength = 0.6F * focus;
                 size = 0.8F;
                 speed = 0.35F;
-            } else return;
-        } else {
+            } else got = false;
+        }
+        if (!got) {                                                              // marked: an element mob, a demon, a form's aura
             long[] m = MARKS.get(e.getId());
             if (m == null) return;
             if (m[1] < mc.level.getGameTime()) { MARKS.remove(e.getId()); return; }
