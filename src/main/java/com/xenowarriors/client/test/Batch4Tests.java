@@ -90,6 +90,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("techbike")) techBike(mc, l);
         if (f.isEmpty() || f.contains("rps")) rps(mc, l);
         if (f.isEmpty() || f.contains("towerpods")) towerPods(mc, l);
+        if (f.isEmpty() || f.contains("xenoblasts")) xenoBlasts(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
@@ -1653,6 +1654,64 @@ public final class Batch4Tests {
                     + " -> " + (used && s0 != null && s1 != null && s1[1] > s0[1] && left == 1 ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
         }); }, 20);
+    }
+
+    private static void xenoBlasts(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        net.minecraft.world.entity.LivingEntity[] dummy = new net.minecraft.world.entity.LivingEntity[1];
+        // a Rhalix bot, low, uses his last resort
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            b[0] = botAt(p, CharacterType.RHALIX, 3, 0);
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(p.getX() + 3, p.getY(), p.getZ() + 12, 180, 0); g.setNoAi(true);
+            p.serverLevel().addFreshEntity(g); dummy[0] = g;
+            b[0].karma = 100; b[0].setHealth(b[0].getMaxHealth() * 0.2F); b[0].setTarget(g);
+            boolean went = com.xenowarriors.skill.XenoBlast.botLastResort(b[0], g);
+            log("xenoblasts: Rhalix bot at 20% health uses his last resort " + went + " (karma now " + Math.round(b[0].karma) + ") -> " + (went && b[0].karma == 0 ? "PASS" : "FAIL"));
+        }), 20 * 4);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 5);
+        l.add("batch4_xeno_bot_lastresort", () -> {}, 3);
+        l.add(null, () -> server(p -> { b[0].setHealth(b[0].getMaxHealth()); b[0].setTarget(null); }), 20 * 9);
+        // the team Xeno Blast: you (Mikiko) and the Rhalix bot - he does his own Xeno Blast, the shockwave hits hard
+        float[] hp = new float[1];
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.karma.Karma.unlockForTest(p);
+            b[0].teleportTo(p.getX() + 2, p.getY(), p.getZ());
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(p.getX() + 20, p.getY(), p.getZ() + 20, 0, 0); g.setNoAi(true);
+            g.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(2000); g.setHealth(2000);
+            p.serverLevel().addFreshEntity(g); dummy[0] = g; hp[0] = 2000;
+            int t0 = com.xenowarriors.skill.XenoBlast.teamBlasts;
+            boolean used = com.xenowarriors.skill.XenoBlast.use(p);
+            log("xenoblasts: team Xeno Blast started " + used + " (team " + (com.xenowarriors.skill.XenoBlast.teamBlasts - t0) + ")");
+        }), 20 * 6);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 5);
+        l.add("batch4_xeno_team_charge", () -> {}, 3);
+        l.add(null, () -> {}, 20 * 8);
+        l.add(null, () -> server(p -> {
+            float lost = hp[0] - dummy[0].getHealth();
+            log("xenoblasts: team shockwave took " + Math.round(lost) + " off a 2000-health golem 20 blocks out (team x" + com.xenowarriors.skill.XenoBlast.TEAM_MULT + ") -> " + (lost > 0 ? "PASS" : "FAIL"));
+            dummy[0].discard();
+            Batch3Tests.clearBots(p);
+        }), 20 * 4);
+        // Mikiko at level 30,000: Soul Splitter Xeno Blast
+        l.add(null, () -> server(p -> {
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { for (int i = 0; i < 3; i++) d.statLevel[i] = com.xenowarriors.stats.Stat.MAX_LEVEL; });
+            com.xenowarriors.karma.Karma.unlockForTest(p);
+            int s0 = com.xenowarriors.skill.XenoBlast.soulBlasts;
+            boolean used = com.xenowarriors.skill.XenoBlast.use(p);
+            log("xenoblasts: Mikiko level " + com.xenowarriors.stats.Stats.characterLevel(p) + " - Soul Splitter Xeno Blast " + (com.xenowarriors.skill.XenoBlast.soulBlasts - s0) + " -> " + (used && com.xenowarriors.skill.XenoBlast.soulBlasts > s0 ? "PASS" : "FAIL"));
+        }), 20 * 3);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 5);
+        l.add("batch4_xeno_soul_charge", () -> {}, 3);
+        l.add(null, () -> {}, 20 * 7);
+        l.add("batch4_xeno_soul_fire", () -> {}, 3);
+        l.add(null, () -> server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { for (int i = 0; i < 3; i++) d.statLevel[i] = 1; })), 20 * 12);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
     private static void towerPods(Minecraft mc, MikikoTests.Steps l) {

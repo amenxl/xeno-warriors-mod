@@ -110,7 +110,7 @@ public final class Tower {
     private static void maybePod(ServerLevel tl, Run r, MinecraftServer server) {
         if (r.floor < 2 || !(forcePods || (r.floor - 1) % 10 == 0 || tl.random.nextFloat() < POD_CHANCE)) return;
         double a = tl.random.nextDouble() * Math.PI * 2, d = r.radius * 0.55;
-        BlockPos at = BlockPos.containing(r.center.getX() + 0.5 + Math.cos(a) * d, Y, r.center.getZ() + 0.5 + Math.sin(a) * d);
+        BlockPos at = BlockPos.containing(r.center.getX() + 0.5 + Math.cos(a) * d, Y + 1, r.center.getZ() + 0.5 + Math.sin(a) * d);   // (on the floor: its top is at Y)
         if (!tl.getBlockState(at).isAir() || !tl.getBlockState(at.above()).isAir()) return;
         net.minecraft.core.Direction face = net.minecraft.core.Direction.getNearest(r.center.getX() - at.getX(), 0, r.center.getZ() - at.getZ());
         BlockState pod = com.xenowarriors.sky.ModBlocks.HEALING_POD.get().defaultBlockState().setValue(com.xenowarriors.gov.HealingPodBlock.FACING, face);

@@ -65,6 +65,9 @@ public final class Karma {
         com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.KarmaLockPacket(ticks), player);
     }
 
+    /** (Tests) lifts the lock. */
+    public static void unlockForTest(ServerPlayer player) { player.getPersistentData().remove(LOCK); }
+
     public static boolean regenLocked(ServerPlayer player) {
         return player.getPersistentData().getLong(LOCK) > player.server.overworld().getGameTime();
     }

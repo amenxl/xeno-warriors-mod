@@ -106,9 +106,10 @@ public final class HealingPods {
         if (c != null && c > l.getGameTime()) return "The pod is recharging - " + Math.max(1, (c - l.getGameTime()) / 20) + "s";
         if (!e.isAlive()) return "";
         if (e instanceof ServerPlayer p && com.xenowarriors.party.Duels.isKnockedOut(p)) return "You can't get in while you're down";
-        // the modes have their own healing rules (a Journey heals only at its own steps, the Tower per floor, VR challenges):
+        // the modes have their own healing rules (a Journey heals only at its own steps, VR challenges):
         // a pod there (a Journey step's, left standing) doesn't work on its own
-        if (fixed <= 0 && (com.xenowarriors.tower.Tower.is(l) || com.xenowarriors.vr.Vr.is(l))) return "The pod doesn't work here";
+        // (the Tower's own pods - the ones that turn up on a floor, or placed there in creative - do work: their healing isn't counted)
+        if (fixed <= 0 && com.xenowarriors.vr.Vr.is(l)) return "The pod doesn't work here";
         if (e.isPassenger()) e.stopRiding();
         RESERVED.remove(k);
         Session s = new Session(k, e.getUUID(), l.getGameTime(), fixed, done);

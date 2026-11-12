@@ -805,6 +805,7 @@ public final class PartyBots {
     static void trySkill(PartyBotEntity b, LivingEntity target) {
         if (b.sparring() && b.getRandom().nextInt(3) != 0) return;
         if (BotTeamUlt.tick(b, target)) return;                                  // a team ultimate with its partner (or asking its player for one)
+        if (!b.sparring() && b.getHealth() < b.getMaxHealth() * 0.3F && strong(b, target) && com.xenowarriors.skill.XenoBlast.botLastResort(b, target)) return;   // (low: its last resort)
         if (!b.sparring() && !strong(b, target)) return;                         // save the Karma for enemies that matter
         if (!b.sparring() && hitsToKill(b, target) <= 5) return;                  // (a few plain hits would do it: no skill, not even a ki technique)
         if (!b.sparring()) {                                                      // (the more bots in the party, the less each one reaches for skills)

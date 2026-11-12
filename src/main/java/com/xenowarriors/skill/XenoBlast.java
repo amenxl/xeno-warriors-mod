@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -202,13 +203,13 @@ public final class XenoBlast {
     public static boolean has(CharacterType t) { return t == CharacterType.MIKIKO || t == CharacterType.RHALIX; }
 
     /** The solid DragonMine Z style visuals (client.KiFx), for everyone who can see it. */
-    private static void fx(ServerPlayer src, int kind, int other, boolean rh, Vec3 at, Vec3 dir, float size, int life) {
+    private static void fx(Entity src, int kind, int other, boolean rh, Vec3 at, Vec3 dir, float size, int life) {
         com.xenowarriors.network.ModNetwork.sendToTrackingEntityAndSelf(new com.xenowarriors.network.XenoFxPacket(src.getId(), kind, other, rh,
                 (float) at.x, (float) at.y, (float) at.z, (float) dir.x, (float) dir.y, (float) dir.z, size, life), src);
     }
     private static final int FX_CHARGE = 0, FX_BEAM = 1, FX_ORB = 2, FX_BURST = 3, FX_CLASH = 4, FX_SHOT = 5, FX_STOP = 6;
 
-    private static Vec3 right(ServerPlayer p) {
+    private static Vec3 right(Entity p) {
         return Vec3.directionFromRotation(0, p.getYRot() + 90F);
     }
 
@@ -216,45 +217,48 @@ public final class XenoBlast {
      * Mikiko (from the art): energy cupped at his hip, then both hands thrust out in a lunge and a huge beam pours out -
      * white-yellow core, orange body, red edge - spreading wider the further it goes.
      */
-    private static void fireBeam(ServerPlayer p, ServerLevel l, float dmg, double width) {
+    private static void fireBeam(ServerPlayer p, ServerLevel l, float dmg, double width) { fireBeam(p, p, l, dmg, width); }
+
+    /** ... let go from {@code o}'s body (a bot or a soul at the caster's side): the hits are the caster's. */
+    private static void fireBeam(ServerPlayer p, LivingEntity o, ServerLevel l, float dmg, double width) {
         Vector3f white = new Vector3f(1F, 0.97F, 0.8F), yellow = new Vector3f(1F, 0.85F, 0.25F), orange = new Vector3f(1F, 0.5F, 0.1F), red = new Vector3f(0.95F, 0.12F, 0.05F);
-        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.XENO_MIKIKO, CUTSCENE);
-        l.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.6F);
-        fx(p, FX_CHARGE, 0, false, Vec3.ZERO, Vec3.ZERO, 0.55F + (float) width * 0.14F, RELEASE);
+        com.xenowarriors.anim.Poses.play(o, com.xenowarriors.anim.Poses.XENO_MIKIKO, CUTSCENE);
+        l.playSound(null, o.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.6F);
+        fx(o, FX_CHARGE, 0, false, Vec3.ZERO, Vec3.ZERO, 0.55F + (float) width * 0.14F, RELEASE);
         for (int i = 0; i < RELEASE; i += 2) {
             int ii = i;
             ServerScheduler.later(i, () -> {
-                if (!p.isAlive() || !live(p)) return;
+                if (!o.isAlive() || !live(p)) return;
                 float f = ii / (float) RELEASE;                  // grows the whole way
-                Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
-                Vec3 h = p.position().add(0, 0.95, 0).add(right(p).scale(-0.45)).add(look.scale(-0.35));     // cupped at the hip
+                Vec3 look = Vec3.directionFromRotation(0, o.getYRot());
+                Vec3 h = o.position().add(0, 0.95, 0).add(right(o).scale(-0.45)).add(look.scale(-0.35));     // cupped at the hip
                 for (int k = 0; k < 4; k++) {          // sparks pulled in
                     double a = ii * 0.35 + k * Math.PI / 2, r = 2.4 - (ii % 20) * 0.1;
                     l.sendParticles(new DustParticleOptions(k % 2 == 0 ? yellow : red, 0.9F), h.x + Math.cos(a) * r, h.y + Math.sin(a * 1.7) * r * 0.5, h.z + Math.sin(a) * r, 1, 0, 0, 0, 0);
                 }
-                if (ii % 20 == 0) l.playSound(null, p.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.5F, 0.5F + f);
-                if (ii % 40 == 0) l.playSound(null, p.blockPosition(), SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 1F, 0.6F + f * 0.8F);
+                if (ii % 20 == 0) l.playSound(null, o.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.5F, 0.5F + f);
+                if (ii % 40 == 0) l.playSound(null, o.blockPosition(), SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 1F, 0.6F + f * 0.8F);
             });
         }
         ServerScheduler.later(RELEASE, () -> {
-            if (!p.isAlive() || !live(p) || clashed(p)) return;
-            l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.85F);
-            l.playSound(null, p.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4F, 0.5F);
-            fx(p, FX_BEAM, 0, false, Vec3.ZERO, Vec3.ZERO, (float) width, 70);
+            if (!o.isAlive() || !live(p) || clashed(p)) return;
+            l.playSound(null, o.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6F, 0.85F);
+            l.playSound(null, o.blockPosition(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.4F, 0.5F);
+            fx(o, FX_BEAM, 0, false, Vec3.ZERO, Vec3.ZERO, (float) width, 70);
             Set<Integer> hit = new HashSet<>();
             landOnFrozen(p, l, hit, e -> { e.hurt(p.damageSources().indirectMagic(p, p), dmgFor(p, e, dmg)); e.setSecondsOnFire(5);
-                e.push(p.getLookAngle().x * 1.8, 0.45, p.getLookAngle().z * 1.8); e.hurtMarked = true;
+                e.push(o.getLookAngle().x * 1.8, 0.45, o.getLookAngle().z * 1.8); e.hurtMarked = true;
                 l.sendParticles(ParticleTypes.EXPLOSION, e.getX(), e.getY() + e.getBbHeight() / 2, e.getZ(), 1, 0, 0, 0, 0); });
             ServerScheduler.later(10, () -> {                                    // where the beam lands, it blows up
-                if (!p.isAlive() || !live(p)) return;
-                Vec3 s = p.getEyePosition().subtract(0, 0.4, 0), d = p.getLookAngle();
-                var clip = l.clip(new net.minecraft.world.level.ClipContext(s, s.add(d.scale(RANGE)), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+                if (!o.isAlive() || !live(p)) return;
+                Vec3 s = o.getEyePosition().subtract(0, 0.4, 0), d = o.getLookAngle();
+                var clip = l.clip(new net.minecraft.world.level.ClipContext(s, s.add(d.scale(RANGE)), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, o));
                 Vec3 at = clip.getLocation();
                 double radius = burstRadius(width);
                 l.playSound(null, BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2F, 0.55F);
                 l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, (int) Math.max(2, radius / 2), radius * 0.4, radius * 0.3, radius * 0.4, 0);
                 l.sendParticles(ParticleTypes.FLAME, at.x, at.y + 1, at.z, 80, radius * 0.4, radius * 0.3, radius * 0.4, 0.15);
-                fx(p, FX_BURST, 0, false, at, Vec3.ZERO, (float) radius * 1.2F, 20);
+                fx(o, FX_BURST, 0, false, at, Vec3.ZERO, (float) radius * 1.2F, 20);
                 for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(radius), e -> SkillTargeting.canTarget(p, e))) {
                     if (hit.contains(e.getId()) || e.position().add(0, e.getBbHeight() / 2, 0).distanceTo(at) > radius + e.getBbWidth()) continue;
                     hit.add(e.getId());
@@ -265,8 +269,8 @@ public final class XenoBlast {
                 }
             });
             for (int k = 0; k < 70; k++) ServerScheduler.later(k, () -> {       // a long, huge beam
-                if (!p.isAlive() || !live(p)) return;
-                Vec3 s = p.getEyePosition().subtract(0, 0.4, 0).add(p.getLookAngle().scale(0.9)), d = p.getLookAngle();
+                if (!o.isAlive() || !live(p)) return;
+                Vec3 s = o.getEyePosition().subtract(0, 0.4, 0).add(o.getLookAngle().scale(0.9)), d = o.getLookAngle();
                 Vec3 up = Math.abs(d.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
                 Vec3 u = d.cross(up).normalize(), v = d.cross(u).normalize();
                 for (int j = 1; j <= RANGE; j++) {
@@ -297,31 +301,34 @@ public final class XenoBlast {
      * Rhalix (from the art): side-on, pointing a finger - a black orb of dark gravity crackling with purple lightning
      * forms on his fingertip, shoots out trailing purple light rays, and bursts on the first thing it hits.
      */
-    private static void darkOrb(ServerPlayer p, ServerLevel l, float dmg, double width) {
+    private static void darkOrb(ServerPlayer p, ServerLevel l, float dmg, double width) { darkOrb(p, p, l, dmg, width); }
+
+    /** ... let go from {@code o}'s body (a bot or a soul at the caster's side): the hits are the caster's. */
+    private static void darkOrb(ServerPlayer p, LivingEntity o, ServerLevel l, float dmg, double width) {
         Vector3f black = new Vector3f(0.07F, 0.0F, 0.1F), purple = new Vector3f(0.78F, 0.35F, 1F), pink = new Vector3f(1F, 0.55F, 1F);
         int charge = RELEASE;
-        com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.XENO_RHALIX, CUTSCENE);
-        l.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.4F);
-        java.util.function.Supplier<Vec3> fingertip = () -> p.getEyePosition().subtract(0, 0.3, 0).add(p.getLookAngle().scale(1.3)).add(right(p).scale(0.25));
-        fx(p, FX_CHARGE, 0, true, Vec3.ZERO, Vec3.ZERO, 0.9F + (float) width * 0.18F, charge);
+        com.xenowarriors.anim.Poses.play(o, com.xenowarriors.anim.Poses.XENO_RHALIX, CUTSCENE);
+        l.playSound(null, o.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.4F, 0.4F);
+        java.util.function.Supplier<Vec3> fingertip = () -> o.getEyePosition().subtract(0, 0.3, 0).add(o.getLookAngle().scale(1.3)).add(right(o).scale(0.25));
+        fx(o, FX_CHARGE, 0, true, Vec3.ZERO, Vec3.ZERO, 0.9F + (float) width * 0.18F, charge);
         for (int i = 0; i < charge; i += 2) {
             int ii = i;
             ServerScheduler.later(i, () -> {
-                if (!p.isAlive() || !live(p)) return;
+                if (!o.isAlive() || !live(p)) return;
                 float f = ii / (float) charge;
                 Vec3 h = fingertip.get();
                 float sz = 0.8F + f * 3.2F;                     // the orb swells the whole time (drawn solid on the client - KiFx)
                 l.sendParticles(ParticleTypes.ELECTRIC_SPARK, h.x, h.y, h.z, 2, sz * 0.12, sz * 0.12, sz * 0.12, 0.15);
-                if (ii % 20 == 0) l.playSound(null, p.blockPosition(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 0.6F, 0.5F + f);
-                if (ii % 30 == 0) l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1F, 0.7F + f * 0.5F);
+                if (ii % 20 == 0) l.playSound(null, o.blockPosition(), SoundEvents.RESPAWN_ANCHOR_CHARGE, SoundSource.PLAYERS, 0.6F, 0.5F + f);
+                if (ii % 30 == 0) l.playSound(null, o.blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1F, 0.7F + f * 0.5F);
             });
         }
         ServerScheduler.later(charge, () -> {
-            if (!p.isAlive() || !live(p) || clashed(p)) return;
-            l.playSound(null, p.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5F, 0.55F);
-            Vec3 d = p.getLookAngle();
+            if (!o.isAlive() || !live(p) || clashed(p)) return;
+            l.playSound(null, o.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5F, 0.55F);
+            Vec3 d = o.getLookAngle();
             Vec3[] pos = {fingertip.get()};
-            fx(p, FX_ORB, 0, true, pos[0], d, 1.3F + (float) width * 0.18F, 60);
+            fx(o, FX_ORB, 0, true, pos[0], d, 1.3F + (float) width * 0.18F, 60);
             boolean[] done = {false};
             double hitR = 0.9 + width * 0.3;
             for (int k = 0; k < 60; k++) {
@@ -331,12 +338,12 @@ public final class XenoBlast {
                     Vec3 from = pos[0], to = from.add(d.scale(ORB_SPEED));          // slow and heavy, for the camera
                     // light rays streaking out behind it, and a trail
                     l.sendParticles(ParticleTypes.ELECTRIC_SPARK, to.x, to.y, to.z, 3, 0.4, 0.4, 0.4, 0.15);
-                    var clip = l.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+                    var clip = l.clip(new net.minecraft.world.level.ClipContext(from, to, net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, o));
                     Vec3 end = clip.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK ? clip.getLocation() : to;
                     boolean struck = clip.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK || kk == 59
                             || !l.getEntitiesOfClass(LivingEntity.class, new AABB(from, end).inflate(hitR), e -> SkillTargeting.canTarget(p, e)).isEmpty();
                     pos[0] = end;
-                    if (struck) { done[0] = true; burst(p, l, end, dmg, burstRadius(width), black, purple, pink); }
+                    if (struck) { done[0] = true; burst(p, o, l, end, dmg, burstRadius(width), black, purple, pink); }
                 });
             }
         });
@@ -359,11 +366,13 @@ public final class XenoBlast {
     }
 
     /** The orb bursting: a sphere of dark energy and long purple rays; hurts everything nearby. */
-    private static void burst(ServerPlayer p, ServerLevel l, Vec3 at, float dmg, double radius, Vector3f black, Vector3f purple, Vector3f pink) {
+    private static void burst(ServerPlayer p, ServerLevel l, Vec3 at, float dmg, double radius, Vector3f black, Vector3f purple, Vector3f pink) { burst(p, p, l, at, dmg, radius, black, purple, pink); }
+
+    private static void burst(ServerPlayer p, Entity o, ServerLevel l, Vec3 at, float dmg, double radius, Vector3f black, Vector3f purple, Vector3f pink) {
         l.playSound(null, BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 0.6F);
         l.playSound(null, BlockPos.containing(at), SoundEvents.WITHER_BREAK_BLOCK, SoundSource.PLAYERS, 0.8F, 0.7F);
         l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, 1, 0, 0, 0, 0);
-        fx(p, FX_BURST, 0, true, at, Vec3.ZERO, (float) radius * 1.2F, 20);
+        fx(o, FX_BURST, 0, true, at, Vec3.ZERO, (float) radius * 1.2F, 20);
         l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, (int) Math.max(2, radius / 2), radius * 0.4, radius * 0.3, radius * 0.4, 0);   // (a big blast, a big cloud)
         java.util.Random r = new java.util.Random();
         for (int ray = 0; ray < 6; ray++) {
@@ -632,8 +641,86 @@ public final class XenoBlast {
         for (ServerPlayer w : watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(pkt, w);
         LivingEntity partner = partner(p, rhalix);
         if (partner != null) team(p, partner, l, dmg, width, rhalix);
+        if (!rhalix && type == CharacterType.MIKIKO && com.xenowarriors.stats.Stats.characterLevel(p) >= SOUL_BLAST_LEVEL) soulBlast(p, l, dmg, width);
         if (rhalix) darkOrb(p, l, dmg, width);
         else fireBeam(p, l, dmg, width);
+        return true;
+    }
+
+    // ---- Mikiko at Character Level 30,000: Soul Splitter Xeno Blast
+
+    public static final int SOUL_BLAST_LEVEL = 30000, SOUL_BLAST_SOULS = 3;
+    /** (Tests) soul Xeno Blasts. */
+    public static int soulBlasts;
+
+    /**
+     * Mikiko at Character Level 30,000 or more: his Xeno Blast splits his soul - three souls step out beside and behind
+     * him and every one of them lets go of a Xeno Blast with him, four beams at once (full strength each). They fade
+     * when it's over.
+     */
+    private static void soulBlast(ServerPlayer p, ServerLevel l, float dmg, double width) {
+        soulBlasts++;
+        Component line = Component.literal("SOUL SPLITTER - XENO BLAST x" + (SOUL_BLAST_SOULS + 1) + "!").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
+        for (ServerPlayer o : l.players()) if (o.distanceToSqr(p) < 64 * 64) o.displayClientMessage(line, false);
+        Vec3 side = right(p), back = Vec3.directionFromRotation(0, p.getYRot()).scale(-1);
+        Vec3[] at = {side.scale(2.2), side.scale(-2.2), back.scale(2.0).add(side.scale(1.1)), back.scale(2.0).add(side.scale(-1.1))};
+        for (int i = 0; i < SOUL_BLAST_SOULS; i++) {
+            com.xenowarriors.soul.SoulEntity e = com.xenowarriors.soul.SoulEntities.SOUL.get().create(l);
+            if (e == null) continue;
+            Vec3 q = p.position().add(at[i]);
+            e.moveTo(q.x, p.getY(), q.z, p.getYRot(), p.getXRot());
+            e.setYHeadRot(p.getYRot()); e.yBodyRot = p.getYRot();
+            e.setCharacter(CharacterType.MIKIKO); e.setOwner(p.getUUID());
+            e.setNoAi(true); e.setInvulnerable(true);
+            e.setCustomName(Component.literal(p.getName().getString() + "'s soul").withStyle(ChatFormatting.AQUA));
+            l.addFreshEntity(e);
+            l.sendParticles(ParticleTypes.SOUL, e.getX(), e.getY() + 1, e.getZ(), 20, 0.3, 0.6, 0.3, 0.04);
+            com.xenowarriors.combat.Frozen.freeze(e, CUTSCENE);
+            int k = i;
+            ServerScheduler.later(2 + k * 3, () -> { if (e.isAlive()) fireBeam(p, e, l, dmg, width); });
+            ServerScheduler.later(CUTSCENE + 10, () -> {
+                if (!e.isRemoved()) { l.sendParticles(ParticleTypes.SOUL, e.getX(), e.getY() + 1, e.getZ(), 16, 0.3, 0.6, 0.3, 0.03); e.discard(); }
+            });
+        }
+        l.playSound(null, p.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.5F, 0.8F);
+    }
+
+    // ---- a bot's last resort
+
+    /** (Tests) bots' last-resort Xeno Blasts. */
+    public static int botBlasts;
+    private static final String BOT_NEXT = "xw_bot_xeno_next";
+    public static final int BOT_GAP = 20 * 60 * 3, BOT_MIN_KARMA = 40;
+
+    /**
+     * A Mikiko or Rhalix bot, low on health in a real fight: its last resort - everything it has left goes into a
+     * Xeno Blast at what it's fighting (its pose, the charge, the beam / orb; enemies close by are held still while it
+     * charges, as yours does). Its Karma's empty after, and it won't do it again for {@link #BOT_GAP} ticks. True if it went.
+     */
+    public static boolean botLastResort(com.xenowarriors.bot.PartyBotEntity b, LivingEntity target) {
+        if (!has(b.character()) || b.karma < BOT_MIN_KARMA || target == null || !target.isAlive() || !(b.level() instanceof ServerLevel l)) return false;
+        long now = l.getGameTime();
+        if (now < b.getPersistentData().getLong(BOT_NEXT)) return false;
+        ServerPlayer stand = com.xenowarriors.bot.PartyBots.standIn(b);           // (the hits are the bot's: its stand-in)
+        if (stand == null) return false;
+        b.getPersistentData().putLong(BOT_NEXT, now + BOT_GAP);
+        float power = b.karma;
+        b.karma = 0;
+        float dmg = dmgOf(power);
+        double width = widthOf(power);
+        boolean rhalix = b.character() == CharacterType.RHALIX;
+        Vec3 d = target.getBoundingBox().getCenter().subtract(b.getEyePosition());
+        float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F), pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+        b.setYRot(yaw); b.setYHeadRot(yaw); b.yBodyRot = yaw; b.setXRot(pitch);
+        stand.moveTo(b.getX(), b.getY(), b.getZ(), yaw, pitch);
+        b.getNavigation().stop();
+        com.xenowarriors.combat.Frozen.freeze(b, RELEASE + 20);
+        for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, b.getBoundingBox().inflate(FREEZE_RANGE), e -> e != b && SkillTargeting.canTarget(stand, e)))
+            com.xenowarriors.combat.Frozen.freeze(e, RELEASE + 20);
+        Component line = Component.empty().append(b.label()).append(Component.literal(": XENO BLAST!").withStyle(rhalix ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.GOLD, ChatFormatting.BOLD));
+        for (ServerPlayer o : l.players()) if (o.distanceToSqr(b) < 64 * 64) o.displayClientMessage(line, false);
+        if (rhalix) darkOrb(stand, b, l, dmg, width); else fireBeam(stand, b, l, dmg, width);
+        botBlasts++;
         return true;
     }
 
@@ -641,6 +728,8 @@ public final class XenoBlast {
 
     /** How far the team blast's shockwave reaches (all around them). */
     public static final double TEAM_RADIUS = 40;
+    /** The team shockwave's damage, times one Xeno Blast's. */
+    public static final float TEAM_MULT = 4F;
     /** (Tests) team blasts, and enemies the last one hit. */
     public static int teamBlasts, lastTeamHits;
 
@@ -671,6 +760,10 @@ public final class XenoBlast {
         Component line = Component.literal("TEAM XENO BLAST!").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
         for (ServerPlayer o : l.players()) if (o.distanceToSqr(p) < 64 * 64) o.displayClientMessage(line, false);
         if (partner instanceof ServerPlayer sp) ServerScheduler.later(2, () -> { if (rhalix) fireBeam(sp, l, dmg, width); else darkOrb(sp, l, dmg, width); });
+        else ServerScheduler.later(2, () -> {                                  // a bot partner: its own Xeno Blast too - its pose, its charge, its beam / orb (the hits are the caster's)
+            if (!partner.isAlive()) return;
+            if (rhalix) fireBeam(p, partner, l, dmg, width); else darkOrb(p, partner, l, dmg, width);
+        });
         ServerScheduler.later(RELEASE, () -> {
             Cast c = CASTS.get(p.getId());
             if (c != null && (c.cancelled || c.rival != null)) return;             // (stopped, or a clash)
@@ -695,7 +788,7 @@ public final class XenoBlast {
                 if (dist > TEAM_RADIUS) continue;
                 float f = (float) Math.max(0.5, 1 - dist / (TEAM_RADIUS * 1.5));
                 e.invulnerableTime = 0;
-                e.hurt(p.damageSources().playerAttack(p), dmgFor(p, e, dmg * 1.2F * f));
+                e.hurt(p.damageSources().playerAttack(p), dmgFor(p, e, dmg * TEAM_MULT * f));   // (both of them at once: it hits far harder)
                 Vec3 push = e.position().subtract(at).multiply(1, 0, 1);
                 push = push.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : push.normalize();
                 e.setDeltaMovement(push.scale(1.4).add(0, 0.6, 0)); e.hurtMarked = true;
