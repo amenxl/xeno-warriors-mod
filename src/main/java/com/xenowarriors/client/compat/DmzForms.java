@@ -154,7 +154,7 @@ public final class DmzForms {
     public static String faceSet(Player p) {
         if (!(p instanceof AbstractClientPlayer cp)) return null;
         CharacterType t = ClientCharacterData.get(cp);
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE) return null;
+        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE && t != CharacterType.YURI) return null;
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;
         String f = form(p);
         if (f == null) return null;
@@ -170,14 +170,15 @@ public final class DmzForms {
 
     /** In their own Super Saiyan 4 with the top off: Mikiko and Rhalix (Kyrie keeps her clothes on). */
     public static boolean ssj4Shirtless(Player p) {
-        return ssj4Own(p) && ClientCharacterData.get((AbstractClientPlayer) p) != CharacterType.KYRIE;
+        CharacterType t = ClientCharacterData.get((AbstractClientPlayer) p);
+        return ssj4Own(p) && t != CharacterType.KYRIE && t != CharacterType.YURI;
     }
 
     /** Mikiko, Rhalix or Kyrie in Super Saiyan 4: drawn by Xeno Warriors with the custom SSJ4 hair, eyes and aura. */
     public static boolean ssj4Own(Player p) {
         if (!(p instanceof AbstractClientPlayer cp)) return false;
         CharacterType t = ClientCharacterData.get(cp);
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE) return false;
+        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE && t != CharacterType.YURI) return false;
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return false;
         return "supersaiyan4".equals(form(p));
     }

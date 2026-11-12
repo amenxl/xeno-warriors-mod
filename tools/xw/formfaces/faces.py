@@ -98,7 +98,7 @@ def make(src, dst, form):
     out.save(dst)
 
 n = 0
-for who in ('rhalix', 'mikiko', 'kyrie'):
+for who in ('rhalix', 'mikiko', 'kyrie', 'yuri'):
     VIOLET = who == 'kyrie'
     for f in sorted(glob.glob(CH + who + '_face*.png')):
         if '_damage' in f: continue

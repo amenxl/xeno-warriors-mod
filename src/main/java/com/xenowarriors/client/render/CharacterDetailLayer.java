@@ -64,11 +64,31 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
     }
 
+    private static DetailModel shiyoModel;
+    private static boolean shiyoTried;
+    public static final net.minecraft.resources.ResourceLocation SHIYO_TEX = com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_shiyoken_details.png");
+    public static final net.minecraft.resources.ResourceLocation SHIYO_SKIN = com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_shiyoken.png");
+
+    /**
+     * Mikiko in DragonMineZ's Shiyoken forms wears his Shiyoken outfit (tools/xw/outfits/mikiko_shiyoken.py) - a black
+     * hoodie with a fire swirl and flames - whatever outfit he had on (not in Fox King mode, not fused).
+     */
+    public static boolean shiyokenOutfit(AbstractClientPlayer p, CharacterType type) {
+        return type == CharacterType.MIKIKO && !foxActive(p, type) && com.xenowarriors.client.FusionLook.of(p) == null
+                && com.xenowarriors.client.mikiko.FoxAuraClient.level(p) > 0 && !(ClientCharacterData.isPreviewing() && com.xenowarriors.client.mikiko.FoxAuraClient.forceLevel < 0);
+    }
+
+    private static DetailModel shiyokenModel() {
+        if (!shiyoTried) { shiyoTried = true; shiyoModel = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/mikiko_shiyoken.json"); }
+        return shiyoModel;
+    }
+
     /** The detail model this player shows right now (Fox King Mikiko has his own), or null. */
     public static DetailModel detailModel(AbstractClientPlayer p) {
         if (instance == null) return null;
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return instance.foxKing;
+        if (shiyokenOutfit(p, type) && shiyokenModel() != null) return shiyokenModel();
         if (lunar(p, type) && instance.lunarModel != null) return instance.lunarModel;      // crescent-moon wings
         var fl = com.xenowarriors.client.FusionLook.of(p);
         if (fl != null && fl.model() != null) return fl.model();                                // a fusion: its own model
@@ -82,7 +102,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         CharacterType type = ClientCharacterData.get(p);
         var fl = com.xenowarriors.client.FusionLook.of(p);
         if (fl != null) return fl.modelPath();
-        String name = isFoxKing(p, type) ? "mikiko_foxking" : lunar(p, type) ? "rhalix_lunar" : outfitName(p, type);
+        String name = isFoxKing(p, type) ? "mikiko_foxking" : shiyokenOutfit(p, type) ? "mikiko_shiyoken" : lunar(p, type) ? "rhalix_lunar" : outfitName(p, type);
         return "/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + name + ".json";
     }
 
@@ -124,6 +144,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         var fl = com.xenowarriors.client.FusionLook.of(p);
         if (fl != null) return fl.details();
         if (isFoxKing(p, type)) return FOX_KING_TEX;
+        if (shiyokenOutfit(p, type)) return SHIYO_TEX;
         int o = ClientCharacterData.outfit(p);
         if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId())) return LUNAR_TEX;
         return o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
@@ -276,6 +297,16 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (h[1] == 2) return "hurt_heavy";
         if (h[1] == 0) return "wince";
         return hp < max * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
+    }
+
+    private static DetailModel yuriSsj;
+    private static boolean yuriSsjTried;
+    private static final net.minecraft.resources.ResourceLocation YURI_SSJ_TEX = com.xenowarriors.XenoWarriors.id("textures/entity/character/yuri_ssjhair.png");
+
+    /** Yuri's Super Saiyan hair (tools/xw/dmzhair/yuri_ssj_hair.py), loaded the first time it's needed. */
+    private static DetailModel yuriSsjHair() {
+        if (!yuriSsjTried) { yuriSsjTried = true; yuriSsj = DetailModel.loadPath("/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/yuri_ssjhair.json"); }
+        return yuriSsj;
     }
 
     /** A face forced on a menu portrait (the off-duty cards: what they're busy doing), set only around that draw. */
@@ -519,6 +550,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         DetailModel om = outfit > 0 ? outfitModel(player, type) : null;
         if (om != null) model = om;
         else outfit = 0;
+        if (shiyokenOutfit(player, type) && shiyokenModel() != null) { model = shiyokenModel(); outfit = 1; }   // Shiyoken: his fire outfit (over any outfit)
         var fusionModel = com.xenowarriors.client.FusionLook.of(player);
         if (fusionModel != null && fusionModel.model() != null) { model = fusionModel.model(); outfit = 0; king = false; }   // a fusion: its own model
         if (model == null) return;
@@ -663,12 +695,21 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
         if (fusionLook != null) formHair = -1;                                              // (a fusion keeps its own hair colours)
-        if (formHair >= 0 && model.hair == null && type == CharacterType.KYRIE) {     // (Kyrie's hair is the head's own strands: the whole head with the mask, only the hair shows)
+        if (formHair >= 0 && model.hair == null && (type == CharacterType.KYRIE || type == CharacterType.YURI)) {   // (Kyrie's hair is the head's own strands, Yuri's bob the head's own cubes: the whole head with the mask, only the hair shows)
             float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
+            String mask = type == CharacterType.KYRIE ? "kyrie_details_hairmask" : outfit > 0 ? "yuri_c1pjs_details_hairmask" : "yuri_details_hairmask";
             poseStack.pushPose();
             model.root.translateAndRotate(poseStack);
-            model.head.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id("textures/entity/character/kyrie_details_hairmask.png"))),
+            model.head.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id("textures/entity/character/" + mask + ".png"))),
                     packedLight, overlay, hr, hg, hb, 1F);
+            if (type == CharacterType.YURI && !noHead) {                            // Yuri: her Super Saiyan hair over the bob, styled for the form
+                DetailModel sh = yuriSsjHair();
+                if (sh != null && sh.hair != null) {
+                    sh.animateHair(windS, windF, ageInTicks, shownStyle, ssjWeight);
+                    model.head.translateAndRotate(poseStack);
+                    sh.hair.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(YURI_SSJ_TEX)), packedLight, overlay, hr, hg, hb, 1F);
+                }
+            }
             poseStack.popPose();
         }
         if (formHair >= 0 && model.hair != null) {

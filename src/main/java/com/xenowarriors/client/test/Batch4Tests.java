@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * UI tests for batch 4 (focus "batch4..." / "dmzbatch4..." with DragonMineZ; words after "batch4" pick parts):
@@ -72,10 +73,291 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("phonecall")) phoneCall(mc, l);
         if (f.isEmpty() || f.contains("offduty")) offDutyCards(mc, l);
         if (f.isEmpty() || f.contains("wirehit")) wireHit(mc, l);
+        if (f.isEmpty() || f.contains("regen")) regen(mc, l);
+        if (f.isEmpty() || f.contains("picnic")) picnic(mc, l);
+        if (f.isEmpty() || f.contains("autodecline")) autoDecline(mc, l);
+        if (f.isEmpty() || f.contains("switchq")) switchQueue(mc, l);
+        if (f.isEmpty() || f.contains("toggles")) toggles(mc, l);
+        if (f.isEmpty() || f.contains("rlclick")) rlClick(mc, l);
+        if (f.isEmpty() || f.contains("shiyo")) shiyoken(mc, l);
+        if (f.isEmpty() || f.contains("dmzgun")) dmzGun(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("radar"))) radarCraft(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("yurissj"))) yuriForms(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
 
     // ------------------------------------------------------------------ 2v2 spars; bot outfits; phoning busy teammates; off-duty cards; wires
+
+    // ------------------------------------------------------------------ batch 5: regen, picnics, requests, switching, toggles, R+L click, looks
+
+    private static void regen(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        float[] hp = new float[4];
+        l.add(null, () -> server(p -> {
+            p.getPersistentData().putInt("xw_food_total", 20); p.getPersistentData().putInt("xw_food_last", 19);   // (one full bar)
+            p.getFoodData().setFoodLevel(19); p.getFoodData().setSaturation(0F);
+            p.setHealth(4F); hp[0] = p.getHealth();
+        }), 2);
+        l.add(null, () -> server(p -> {
+            hp[1] = p.getHealth();
+            p.getPersistentData().putInt("xw_food_total", 100); p.getPersistentData().putInt("xw_food_last", 19);   // (five full bars)
+            p.setHealth(4F); hp[2] = p.getHealth();
+        }), 120);
+        l.add(null, () -> server(p -> {
+            hp[3] = p.getHealth();
+            float one = hp[1] - hp[0], five = hp[3] - hp[2];
+            log("regen: full base bar healed " + one + " in 6 s, five full bars " + five + " (intervals " + com.xenowarriors.character.BigHunger.regenInterval(1) + "/" + com.xenowarriors.character.BigHunger.regenInterval(5) + " ticks) -> "
+                    + (one >= 2F && five >= one * 2.5F ? "PASS" : "FAIL"));
+            p.setHealth(p.getMaxHealth());
+        }), 120);
+    }
+
+    private static void picnic(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[2];
+        float[] bond = new float[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            b[0] = botAt(p, CharacterType.RHALIX, 2, 3); b[1] = botAt(p, CharacterType.KYRIE, -2, 3);
+            bond[0] = com.xenowarriors.party.Bonds.level(p, "rhalix") + com.xenowarriors.party.Bonds.progress(p, "rhalix");
+            com.xenowarriors.bot.BotPicnic.ask(b[0], p);
+        }), 20);
+        l.add("batch4_picnic_ask", () -> {}, 5);
+        l.add(null, () -> server(p -> p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack(), "xenopicnic yes " + b[0].getId())), 10);
+        l.add(null, () -> server(p -> {
+            var basket = com.xenowarriors.bot.BotPicnic.basketForTest(p);
+            int blocks = com.xenowarriors.bot.BotPicnic.blocksForTest(p);
+            int food = 0;
+            if (basket != null && p.level().getBlockEntity(basket) instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity be)
+                for (int i = 0; i < be.getContainerSize(); i++) food += be.getItem(i).getCount();
+            log("picnic: on " + com.xenowarriors.bot.BotPicnic.active(p) + ", table blocks " + blocks + ", food in the basket " + food + " -> " + (com.xenowarriors.bot.BotPicnic.active(p) && blocks >= 9 && food > 20 ? "PASS" : "FAIL"));
+            p.setHealth(10F);
+            p.getFoodData().setFoodLevel(10);
+            ItemStack bread = new ItemStack(net.minecraft.world.item.Items.BREAD);
+            net.minecraftforge.event.ForgeEventFactory.onItemUseFinish(p, bread, 0, bread.copy());
+            log("picnic: eating at the picnic heals - regeneration " + p.hasEffect(MobEffects.REGENERATION) + " -> " + (p.hasEffect(MobEffects.REGENERATION) ? "PASS" : "FAIL"));
+        }), 60);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 30, 30), 20);
+        l.add("batch4_picnic_table", () -> {}, 5);
+        l.add(null, () -> server(p -> {
+            var basket = com.xenowarriors.bot.BotPicnic.basketForTest(p);
+            com.xenowarriors.bot.BotPicnic.endForTest(p);
+            boolean gone = basket != null && p.level().getBlockState(basket).isAir();
+            float got = com.xenowarriors.party.Bonds.level(p, "rhalix") + com.xenowarriors.party.Bonds.progress(p, "rhalix") - bond[0];
+            log("picnic: over -> packed away " + gone + ", bond with Rhalix +" + got + " -> " + (gone && !com.xenowarriors.bot.BotPicnic.active(p) && (got > 0 || com.xenowarriors.party.Bonds.level(p, "rhalix") > 0) ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void autoDecline(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        int[] before = new int[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            b[0] = botAt(p, CharacterType.RHALIX, 2, 3);
+            before[0] = com.xenowarriors.bot.BotRequests.autoDeclined;
+            com.xenowarriors.bot.BotSpar.ask(b[0], p);
+        }), 20);
+        l.add(null, () -> server(p -> {
+            boolean waiting = com.xenowarriors.bot.BotRequests.waiting(p);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0); z.setNoAi(true); p.serverLevel().addFreshEntity(z);
+            z.setTarget(p);
+            p.invulnerableTime = 0;
+            p.hurt(p.damageSources().mobAttack(z), 1F);
+            boolean declined = com.xenowarriors.bot.BotRequests.autoDeclined > before[0] && !com.xenowarriors.bot.BotRequests.waiting(p);
+            log("autodecline: spar card waiting " + waiting + ", a zombie hits you -> called off " + declined + " -> " + (waiting && declined ? "PASS" : "FAIL"));
+            z.discard();
+            Batch3Tests.clearBots(p);
+        }), 10);
+    }
+
+    private static void switchQueue(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            long now = p.server.overworld().getGameTime(), m = com.xenowarriors.bot.OffDuty.MINUTE;
+            com.xenowarriors.party.Bonds.set(p, "kyrie", 10, 0); com.xenowarriors.party.Bonds.set(p, "max", 70, 0); com.xenowarriors.party.Bonds.set(p, "sam", 70, 0);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.KYRIE, com.xenowarriors.bot.OffDuty.Act.TRAINING, now + 3 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.MAX, com.xenowarriors.bot.OffDuty.Act.MINING, now + 9 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.SAM, com.xenowarriors.bot.OffDuty.Act.DRAGON_BALLS, now + 9 * m, null);
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack(), "xeno choose");
+        }), 30);
+        l.add(null, () -> { if (!(mc.screen instanceof com.xenowarriors.client.screen.CharacterSelectScreen)) mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen());
+            com.xenowarriors.client.screen.CharacterSelectScreen.focusForTest(CharacterType.KYRIE); mc.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen()); }, 20);
+        l.add("batch4_switch_select", () -> {}, 5);
+        l.add(null, () -> { com.xenowarriors.client.screen.CharacterSelectScreen.focusForTest(null); mc.setScreen(null); server(p -> {
+            com.xenowarriors.network.SelectCharacterPacket.select(p, CharacterType.SAM);       // (bond 70, but hunting Dragon Balls)
+            boolean samQueued = com.xenowarriors.bot.SwitchQueue.queued(p) == CharacterType.SAM && com.xenowarriors.character.ModCapabilities.getType(p) == CharacterType.MIKIKO;
+            com.xenowarriors.network.SelectCharacterPacket.select(p, CharacterType.KYRIE);     // (bond 10: queued)
+            boolean kyrieQueued = com.xenowarriors.bot.SwitchQueue.queued(p) == CharacterType.KYRIE && com.xenowarriors.character.ModCapabilities.getType(p) == CharacterType.MIKIKO;
+            log("switchq: Sam on a Dragon Ball hunt (bond 70) queued " + samQueued + ", Kyrie busy (bond 10) queued " + kyrieQueued + " -> " + (samQueued && kyrieQueued ? "PASS" : "FAIL"));
+            com.xenowarriors.bot.SwitchQueue.clear(p);
+            com.xenowarriors.network.SelectCharacterPacket.select(p, CharacterType.MAX);       // (bond 70, mining: drops it)
+            boolean maxNow = com.xenowarriors.character.ModCapabilities.getType(p) == CharacterType.MAX && com.xenowarriors.bot.OffDuty.act(p, CharacterType.MAX) == com.xenowarriors.bot.OffDuty.Act.NONE;
+            log("switchq: Max busy mining with bond 70 -> switched now " + maxNow + " -> " + (maxNow ? "PASS" : "FAIL"));
+            com.xenowarriors.network.SelectCharacterPacket.select(p, CharacterType.KYRIE);     // queue Kyrie again, then she finishes
+            long now = p.server.overworld().getGameTime();
+            com.xenowarriors.bot.OffDuty.simulate(p, CharacterType.KYRIE, 5, now, p.getRandom());
+        }); }, 40);
+        l.add(null, () -> server(p -> {
+            boolean switched = com.xenowarriors.character.ModCapabilities.getType(p) == CharacterType.KYRIE;
+            log("switchq: Kyrie done -> switched to her by the queue " + switched + " -> " + (switched ? "PASS" : "FAIL"));
+        }), 5);
+    }
+
+    private static void toggles(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); com.xenowarriors.karma.Karma.add(p, 300); }), 10);
+        l.add(null, () -> { ToggleWheelShot.open(mc); }, 15);
+        l.add("batch4_toggle_wheel", () -> {}, 5);
+        l.add(null, () -> { mc.setScreen(null); server(p -> {
+            com.xenowarriors.toggle.Toggles.setEnabled(p, com.xenowarriors.toggle.Toggles.Entry.FOX_KING, false);
+            com.xenowarriors.network.FoxKingTogglePacket.press(p);
+            boolean blocked = !com.xenowarriors.mikiko.FoxKing.active(p);
+            com.xenowarriors.toggle.Toggles.setEnabled(p, com.xenowarriors.toggle.Toggles.Entry.FOX_KING, true);
+            log("toggles: Fox King switched off -> the key does nothing " + blocked + " -> " + (blocked ? "PASS" : "FAIL"));
+            com.xenowarriors.toggle.Toggles.use(p, com.xenowarriors.toggle.Toggles.Entry.NETSU);
+            boolean lit = com.xenowarriors.mikiko.Netsu.active(p);
+            com.xenowarriors.toggle.Toggles.use(p, com.xenowarriors.toggle.Toggles.Entry.NETSU);
+            log("toggles: Netsu from the wheel lit " + lit + ", again: out " + !com.xenowarriors.mikiko.Netsu.active(p) + " -> " + (lit && !com.xenowarriors.mikiko.Netsu.active(p) ? "PASS" : "FAIL"));
+            com.xenowarriors.toggle.Toggles.use(p, com.xenowarriors.toggle.Toggles.Entry.TRUE_EMPATHY);
+            boolean on = com.xenowarriors.toggle.Toggles.enabled(p, com.xenowarriors.toggle.Toggles.Entry.TRUE_EMPATHY);
+            p.getPersistentData().putLongArray("xenowarriors_empathy_strain", new long[]{p.level().getGameTime() - 40, p.level().getGameTime() - 20});
+            p.getPersistentData().remove("xw_empathy_passive_next");
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0); z.setNoAi(true); p.serverLevel().addFreshEntity(z); z.setTarget(p); z.addTag("xw_te_test");
+            log("toggles: True Empathy passive switched on " + on);
+        }); }, 10);
+        l.add(null, () -> server(p -> {
+            boolean off = !com.xenowarriors.toggle.Toggles.enabled(p, com.xenowarriors.toggle.Toggles.Entry.TRUE_EMPATHY);
+            log("toggles: True Empathy read the zombie by itself - third use in 90 s -> switched itself off " + off + " -> " + (off ? "PASS" : "FAIL"));
+            for (var z : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(10), x -> x.getTags().contains("xw_te_test"))) z.discard();
+            p.removeAllEffects(); p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+        }), 30);
+        l.add(null, () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(null), 20);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen s) s.tab(4); }, 25);
+        l.add("batch4_custom_passives", () -> {}, 5);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen s) s.tab(5); }, 25);
+        l.add("batch4_custom_rlclick", () -> {}, 5);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen s) s.tab(0); }, 15);
+        l.add("batch4_custom_stats", () -> {}, 5);
+        l.add(null, () -> { mc.setScreen(null); server(p -> p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL)); }, 5);
+    }
+
+    /** (the wheel needs its own class only so the test can open it the same way the key does) */
+    private static final class ToggleWheelShot {
+        static void open(Minecraft mc) { com.xenowarriors.client.ToggleWheelScreen.testHover = "netsu"; mc.setScreen(new com.xenowarriors.client.ToggleWheelScreen(true)); }
+    }
+
+    private static void rlClick(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+            com.xenowarriors.toggle.Toggles.setRl(p, "fire_blitz");
+            p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(net.minecraft.world.item.Items.SHIELD));
+            p.startUsingItem(net.minecraft.world.InteractionHand.OFF_HAND);
+        }), 10);
+        l.add(null, () -> server(p -> {
+            boolean blocking = p.isUsingItem();
+            com.xenowarriors.toggle.Toggles.useRl(p);
+            var fb = new com.xenowarriors.skill.mikiko.FireBlitzSkill();
+            long left = com.xenowarriors.skill.SkillManager.freeCooldownLeft(p, fb);
+            int full = com.xenowarriors.skill.SkillLevels.cooldownFor(p, "fire_blitz", fb.getCooldownTicks());
+            boolean ok = blocking && !p.isUsingItem() && left > 0 && left <= Math.round(full * 0.8F) + 1;
+            log("rlclick: blocking " + blocking + " -> Fire Blitz by right+left click, block stopped " + !p.isUsingItem() + ", cooldown " + left + "/" + full + " ticks -> " + (ok ? "PASS" : "FAIL"));
+            p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        }), 10);
+    }
+
+    private static void shiyoken(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        for (int o : new int[]{0, 1, 3}) {
+            l.add(null, () -> server(p -> { p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = o); com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p); }), 10);
+            l.add(null, () -> { com.xenowarriors.client.mikiko.FoxAuraClient.forceLevel = 1; Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 8); }, 30);
+            l.add("batch4_shiyoken_outfit" + o, () -> {
+                boolean skin = mc.player.getSkinTextureLocation().getPath().contains("mikiko_shiyoken");
+                boolean model = com.xenowarriors.client.render.CharacterDetailLayer.detailModelPath(mc.player).endsWith("mikiko_shiyoken.json");
+                log("shiyoken: outfit " + o + " in Shiyoken -> its fire outfit (skin " + skin + ", model " + model + ") -> " + (skin && model ? "PASS" : "FAIL"));
+            }, 3);
+        }
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 150, 10), 20);
+        l.add("batch4_shiyoken_back", () -> {}, 3);
+        l.add(null, () -> { com.xenowarriors.client.mikiko.FoxAuraClient.forceLevel = -1; server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0)); }, 10);
+        l.add("batch4_shiyoken_off", () -> {
+            boolean back = !mc.player.getSkinTextureLocation().getPath().contains("shiyoken");
+            log("shiyoken: out of the form -> his own clothes again " + back + " -> " + (back ? "PASS" : "FAIL"));
+            mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+        }, 3);
+    }
+
+    private static void dmzGun(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        l.add(null, () -> server(p -> {
+            float xp0 = com.xenowarriors.compat.GunLevel.xp(p); int lv0 = com.xenowarriors.compat.GunLevel.level(p);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0); z.setNoAi(true); p.serverLevel().addFreshEntity(z);
+            var shot = new net.minecraft.world.entity.projectile.Snowball(p.serverLevel(), p);
+            com.xenowarriors.compat.DmzGunWeapons.markForTest(shot);
+            float hp = z.getHealth();
+            z.invulnerableTime = 0;
+            z.hurt(p.damageSources().thrown(shot, p), 4F);
+            float dealt = hp - z.getHealth();
+            boolean trained = com.xenowarriors.compat.GunLevel.level(p) > lv0 || com.xenowarriors.compat.GunLevel.xp(p) > xp0;
+            log("dmzgun: a Blaster Cannon / Merus' Laser shot (4 dmg) dealt " + dealt + " (x" + com.xenowarriors.compat.GunLevel.multiplier(p) + "), gun XP up " + trained + " -> " + (trained && dealt >= 4F ? "PASS" : "FAIL"));
+            z.discard();
+        }), 10);
+    }
+
+    private static void radarCraft(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            b[0] = botAt(p, CharacterType.RHALIX, 2, 3);
+            for (var r : p.serverLevel().getRecipeManager().getAllRecipesFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING)) {
+                ItemStack res = r.getResultItem(p.serverLevel().registryAccess());
+                if (!"dragonminez:dball_radar".equals(String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(res.getItem())))) continue;
+                for (var ing : r.getIngredients()) if (!ing.isEmpty()) b[0].inventory.addItem(ing.getItems()[0].copyWithCount(1));
+                b[0].inventory.addItem(new ItemStack(net.minecraft.world.item.Items.OAK_PLANKS, 8));
+                break;
+            }
+            int before = com.xenowarriors.bot.BotCrafting.radarCrafts;
+            var made = com.xenowarriors.bot.BotCrafting.radarCraft(b[0], p);
+            boolean has = false;
+            for (int i = 0; i < b[0].inventory.getContainerSize(); i++) has |= com.xenowarriors.compat.DmzBotRadar.isRadar(b[0].inventory.getItem(i));
+            log("radar: bot with the parts made " + (made == null ? "nothing" : made.getHoverName().getString()) + ", has a radar " + has + " -> " + (made != null && has && com.xenowarriors.bot.BotCrafting.radarCrafts == before + 1 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 20);
+    }
+
+    private static void yuriForms(Minecraft mc, MikikoTests.Steps l) {
+        String[][] forms = {{"supersaiyan", "supersaiyan"}, {"supersaiyan", "supersaiyan2"}, {"supersaiyan", "supersaiyan3"}, {"supersaiyan", "supersaiyan4"}, {"legendaryforms", "ssjfullpower"}};
+        l.add(null, () -> server(p -> com.xenowarriors.character.Seasons.set(p.server, Math.max(2, com.xenowarriors.character.Seasons.highest(p.server)))), 5);
+        Batch3Tests.character(l, CharacterType.YURI);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> { DmzTests.make(p, "saiyan"); p.teleportTo(p.getX(), p.getY(), p.getZ()); }); }, 40);
+        for (String[] fm : forms) {
+            l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> setForm(p, fm[0], fm[1])); }, 10);
+            l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 25, 8); }, 60);
+            l.add("batch4_yuri_" + fm[1], () -> {
+                var me = mc.player;
+                String set = com.xenowarriors.client.compat.DmzForms.faceSet(me);
+                int hair = com.xenowarriors.client.compat.DmzForms.hairStyle(me), col = com.xenowarriors.client.compat.DmzForms.hairColor(me);
+                boolean clothed = !me.getSkinTextureLocation().getPath().endsWith("_ssj4.png");
+                String want = switch (fm[1]) { case "supersaiyan3" -> "ssj3"; case "supersaiyan4" -> "ssj4"; case "ssjfullpower" -> "lssj"; default -> "ssj"; };
+                boolean ok = want.equals(set) && hair > 0 && col >= 0 && clothed;
+                log("yurissj " + fm[1] + ": faces=" + set + " hair style=" + hair + " colour=" + Integer.toHexString(col) + " keeps clothes " + clothed + " -> " + (ok ? "PASS" : "FAIL"));
+            }, 3);
+        }
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 160, 10), 20);
+        l.add("batch4_yuri_ssj4_back", () -> {}, 3);
+        l.add(null, () -> server(p -> setForm(p, null, null)), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
 
     private static PartyBotEntity botAt(ServerPlayer p, CharacterType t, double dx, double dz) {
         PartyBotEntity b = PartyBots.spawn(p, t, null);
