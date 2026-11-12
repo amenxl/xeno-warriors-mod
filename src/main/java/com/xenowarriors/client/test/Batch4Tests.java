@@ -98,8 +98,7 @@ public final class Batch4Tests {
         }), 20);
         l.add("batch4_teamspar_ask", () -> {}, 5);
         l.add(null, () -> server(p -> {
-            p.connection.handleChatCommand(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket("xenospar team yes " + b[0].getId() + " " + b[1].getId() + " " + b[2].getId(),
-                    java.time.Instant.now(), 0L, net.minecraft.network.chat.ArgumentSignatures.EMPTY, new net.minecraft.network.chat.LastSeenMessages.Update(0, new java.util.BitSet())));
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack(), "xenospar team yes " + b[0].getId() + " " + b[1].getId() + " " + b[2].getId());
         }), 10);
         l.add(null, () -> server(p -> {
             boolean started = com.xenowarriors.bot.BotSpar.teamMatchFor(p);
