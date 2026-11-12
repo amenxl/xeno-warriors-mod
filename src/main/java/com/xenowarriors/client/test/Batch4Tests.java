@@ -1827,6 +1827,7 @@ public final class Batch4Tests {
             net.minecraft.server.level.ServerLevel w = p.server.getLevel(com.xenowarriors.kaiplanet.KaiPlanet.OTHERWORLD);
             if (w == null) { log("kaibuilder: no Otherworld -> FAIL"); return; }
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);      // (no race picker over the shots)
             p.teleportTo(w, 66.5, 196, 1092.5, 200, 20);
         }), 20 * 4);
         // he turns up (the blueprint is read, then about 10 s)
@@ -1840,7 +1841,7 @@ public final class Batch4Tests {
             log("kaibuilder: holes already on the planet when we got here: " + already);
         }), 20);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 8), 5);
-        l.add("batch4_kai_builder_home", () -> {}, 3);
+        l.add("batch4_kai_builder_home", () -> mc.setScreen(null), 3);
         // a crater (dug) and a blast, with a gold block someone put in one of the holes
         l.add(null, () -> server(p -> {
             net.minecraft.server.level.ServerLevel w = p.serverLevel();
@@ -1862,7 +1863,7 @@ public final class Batch4Tests {
             log("kaibuilder: dug a crater (" + removed[0] + " blocks) at " + c.toShortString() + ", blasted " + removed[1] + " at " + e.toShortString() + ", gold block in a hole");
         }), 20 * 3);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 250, 25), 5);
-        l.add("batch4_kai_builder_working", () -> {}, 3);
+        l.add("batch4_kai_builder_working", () -> mc.setScreen(null), 3);
         l.add(null, () -> {}, 20 * 20);
         l.add(null, () -> server(p -> {
             net.minecraft.server.level.ServerLevel w = p.serverLevel();
@@ -1875,7 +1876,7 @@ public final class Batch4Tests {
                     + " -> " + (left == 0 && goldStays && removed[0] + removed[1] > 10 ? "PASS" : "FAIL"));
         }), 20);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 250, 25), 5);
-        l.add("batch4_kai_builder_fixed", () -> {}, 3);
+        l.add("batch4_kai_builder_fixed", () -> mc.setScreen(null), 3);
         // can't be hurt; sent far off the planet -> teleports back
         int[] tp0 = new int[1];
         l.add(null, () -> server(p -> {
