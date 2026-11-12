@@ -1911,15 +1911,14 @@ public final class Batch4Tests {
             for (CharacterType x : who) com.xenowarriors.party.Bonds.set(p, x.getId(), 70, 0);
             for (int i = 0; i < 5; i++) b[i] = botAt(p, who[i], -6 + i * 3, 4 + (i % 2) * 3);
         }), 30);
-        l.add(null, () -> server(p -> b[0].die(p.damageSources().generic())), 10);
-        l.add(null, () -> {}, 20 * 2);
-        l.add(null, () -> server(p -> {
-            int going = 0;
-            for (int i = 1; i < 5; i++) if (b[i].goalsForTest().contains("Revive") || b[i].distanceTo(b[0]) < 2.2) going++;
+        int[] most = new int[1];
+        l.add(null, () -> server(p -> b[0].die(p.damageSources().generic())), 2);
+        for (int k = 0; k < 12; k++) l.add(null, () -> server(p -> {             // (watched every few ticks: four of them revive fast)
             int rev = 0;
             for (int i = 1; i < 5; i++) if (com.xenowarriors.bot.PartyBots.revivingForTest(b[i]) == b[0]) rev++;
-            log("spread revive: " + b[0].character().getId() + " down, 4 bots up -> reviving " + rev + " (want " + com.xenowarriors.bot.PartyBots.reviversFor(4) + ") -> " + (rev == 2 ? "PASS" : "FAIL"));
-        }), 5);
+            most[0] = Math.max(most[0], rev);
+        }), 4);
+        l.add(null, () -> server(p -> log("spread revive: " + b[0].character().getId() + " down, 4 bots up -> at most " + most[0] + " reviving at once (want " + com.xenowarriors.bot.PartyBots.reviversFor(4) + ") -> " + (most[0] == 2 ? "PASS" : "FAIL"))), 5);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 30), 5);
         l.add("batch4_spread_revive", () -> {}, 3);
         // your target: about half of them go
@@ -1945,7 +1944,7 @@ public final class Batch4Tests {
         l.add(null, () -> server(p -> {
             BlockPos c = p.blockPosition();
             for (int i = 0; i < 5; i++) { BlockPos o = c.offset(-8 + i * 4, 0, -6); p.level().setBlock(o, net.minecraft.world.level.block.Blocks.COAL_ORE.defaultBlockState(), 3); ores.add(o); }
-            for (int i = 1; i < 4; i++) { b[i].teleportTo(c.getX() + 0.5 + (i - 2), c.getY(), c.getZ() - 2.5); b[i].setMode(PartyBotEntity.MINING); }
+            for (int i = 1; i < 4; i++) { b[i].teleportTo(c.getX() + 0.5 + (i - 2), c.getY(), c.getZ() - 2.5); b[i].setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.IRON_PICKAXE)); b[i].setMode(PartyBotEntity.MINING); }
             b[0].setMode(PartyBotEntity.NEUTRAL); b[4].setMode(PartyBotEntity.NEUTRAL);
         }), 20);
         java.util.Set<BlockPos> picked = new java.util.HashSet<>();

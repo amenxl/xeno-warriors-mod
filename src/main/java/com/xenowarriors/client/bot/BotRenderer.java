@@ -57,6 +57,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
             if (a != null) {
                 a.sync(e);
                 var r = net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(a);
+                PoseStack.Pose base = pose.last();
                 pose.pushPose();
                 try {
                     r.render(a, yaw, pt, pose, buffers, light);
@@ -70,15 +71,16 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
                     else if (failures == 1) XenoWarriors.LOGGER.warn("Drawing a bot as its character failed this frame (skipped)", t);
                     return;
                 } finally {
-                    pose.popPose();
+                    com.xenowarriors.client.render.PoseGuard.restore(pose, base);   // (all the way back: a renderer that threw may have left its own pushes on the stack)
                 }
             }
         }
         boolean g = com.xenowarriors.client.FemaleBody.is(e.character(), "");
         this.model = g ? girl : wide;
         com.xenowarriors.client.FemaleBody.npcGirl = g;
+        PoseStack.Pose base = pose.last();
         try { super.render(e, yaw, pt, pose, buffers, light); }
-        catch (Throwable t) { if (!plainWarned) { plainWarned = true; XenoWarriors.LOGGER.warn("Drawing a bot's plain look failed (another mod's overlay?) - skipped", t); } }   // (never a crash: Epic Fight's health bar has no data for bots)
+        catch (Throwable t) { com.xenowarriors.client.render.PoseGuard.restore(pose, base); if (!plainWarned) { plainWarned = true; XenoWarriors.LOGGER.warn("Drawing a bot's plain look failed (another mod's overlay?) - skipped", t); } }   // (never a crash: Epic Fight's health bar has no data for bots)
         finally { com.xenowarriors.client.FemaleBody.npcGirl = false; this.model = wide; }
     }
 
