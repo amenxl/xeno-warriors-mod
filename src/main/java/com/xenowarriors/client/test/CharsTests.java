@@ -62,6 +62,7 @@ public final class CharsTests {
         String f = focus.replaceFirst("^(ef|tacz)", "").replaceFirst("^chars5", "");
         boolean all = f.isEmpty() || f.contains("all");
         l.add(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null); }, 5);
+        if (f.contains("labcoat")) { labcoat(mc, l); return; }
         if (all || f.contains("dance")) dance(mc, l);
         if (all || f.contains("idle")) idle(mc, l);
         if (focus.startsWith("ef")) ef(mc, l);
@@ -375,6 +376,21 @@ public final class CharsTests {
         l.add(null, () -> { mc.options.hideGui = false; com.xenowarriors.client.PlayerStatsScreen.openTab(null, 1); }, 30);
         l.add("chars_gun_stats", () -> log("gun client level shown=" + com.xenowarriors.network.GunLevelPacket.clientLevel), 5);
         l.add(null, () -> { mc.setScreen(null); server(p -> { p.getInventory().clearContent(); p.setGameMode(GameType.CREATIVE); }); }, 5);
+    }
+
+    // ------------------------------------------------------------------ Yuri's and Technica's lab coats over the chest
+
+    private static void labcoat(Minecraft mc, MikikoTests.Steps l) {
+        for (CharacterType t : new CharacterType[]{CharacterType.TECHNICA, CharacterType.YURI}) {
+            character(l, t);
+            l.add(null, () -> server(p -> { p.getInventory().clearContent(); p.setYRot(0); p.setYHeadRot(0); p.setYBodyRot(0); p.setXRot(0); }), 10);
+            Batch3Tests.camera(mc, l, 1.1, 0.1, 1.9);
+            l.add("chars_labcoat_" + t.getId() + "_front", () -> {}, 10);
+            Batch3Tests.camera(mc, l, 2.2, -0.1, 0.25);
+            l.add("chars_labcoat_" + t.getId() + "_side", () -> {}, 10);
+            Batch3Tests.uncamera(mc, l);
+        }
+        l.add(null, () -> { mc.options.hideGui = false; log("labcoat done"); }, 5);
     }
 
     /** (unused) */

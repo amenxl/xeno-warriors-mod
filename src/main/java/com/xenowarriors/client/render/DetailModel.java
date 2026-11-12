@@ -539,6 +539,13 @@ public class DetailModel {
             // thin plates (logos, buttons, trims) stay whole and where they are when they sit near the hips, so a
             // logo across the waistline isn't broken in two (it just stands a hair proud of the narrowed shell)
             boolean plate = sz[2] <= 0.3F || sz[0] <= 0.3F;
+            // a long plate down the front (a lab coat's front panels, its lapels): cut at the bust and the waist, so the
+            // part over the chest rides out over her bust and only the part at the waist draws in (as one piece its middle
+            // sat in the waist, pulling the whole panel in behind her chest)
+            if (plate && f[2] + sz[2] < -1.9F && sz[1] > 4F && f[1] < 3F && f[1] + sz[1] > 5F) {
+                frontPanel(builder, u, v, f, sz, w0, w1);
+                continue;
+            }
             if (plate) {
                 float mid = f[1] + sz[1] / 2F;
                 if (mid > w0 && mid < w1) refit(f, sz, 0F, com.xenowarriors.client.FemaleBody.WAIST_X, com.xenowarriors.client.FemaleBody.WAIST_Z);
@@ -574,6 +581,38 @@ public class DetailModel {
         }
         noRefit();
         return builder;
+    }
+
+    /** See femaleBody: a front panel cut where the bust starts and ends and at the waist, each piece placed for its height. */
+    private static void frontPanel(CubeListBuilder builder, int u, int v, float[] f, float[] sz, float w0, float w1) {
+        float top = f[1], bottom = f[1] + sz[1];
+        java.util.List<Integer> cuts = new java.util.ArrayList<>();
+        for (float b : new float[]{1.6F, 4.6F, w0, w1}) {
+            int k = Math.round(b - top);                       // whole pixels, so the texture lines up
+            if (k >= 1 && top + k < bottom - 0.5F && !cuts.contains(k)) cuts.add(k);
+        }
+        java.util.Collections.sort(cuts);
+        cuts.add(-1);
+        float prevZ = Float.NaN, prevDX = 0F;
+        int start = 0;
+        for (int c : cuts) {
+            float y0 = top + start, y1 = c < 0 ? bottom : top + c;
+            float mid = (y0 + y1) / 2F;
+            if (mid > 1.2F && mid < 4.9F) { noRefit(); curDZ = -com.xenowarriors.client.FemaleBody.BUST_OUT; }
+            else if (mid > w0 && mid < w1) refit(f, sz, 0F, com.xenowarriors.client.FemaleBody.WAIST_X, com.xenowarriors.client.FemaleBody.WAIST_Z);
+            else noRefit();
+            builder.texOffs(u, v + start).addBox(f[0] + curDX, y0, f[2] + curDZ, sz[0], y1 - y0, sz[2], def());
+            float z = f[2] + curDZ;
+            if (!Float.isNaN(prevZ) && Math.abs(z - prevZ) > 0.05F && sz[0] >= 1.5F) {
+                // close the step between the two pieces (seen from the side it would be a gap)
+                float zs = Math.min(z, prevZ), ze = Math.max(z, prevZ) + sz[2];
+                float x0 = f[0] + Math.min(curDX, prevDX);
+                builder.texOffs(u, v + start).addBox(x0, y0 - 0.06F, zs, sz[0], 0.12F, ze - zs, def(0F));
+            }
+            prevZ = z; prevDX = curDX;
+            start = c;
+        }
+        noRefit();
     }
 
     public static DetailModel loadWhole(String path) {
