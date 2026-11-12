@@ -2366,6 +2366,8 @@ public final class Batch4Tests {
             var soul = (net.minecraft.world.entity.Mob) m[4];
             var cast = (net.minecraft.world.entity.Mob) m[0];
             var ves = (net.minecraft.world.entity.Mob) m[1];
+            log("triangle: (soul alive " + soul.isAlive() + " removed " + soul.isRemoved() + " noAi " + soul.isNoAi() + " at " + soul.blockPosition().toShortString() + "; caster alive " + cast.isAlive() + " noAi " + cast.isNoAi()
+                    + " at " + cast.blockPosition().toShortString() + " running " + cast.targetSelector.getRunningGoals().map(g -> g.getGoal().getClass().getSimpleName()).toList() + ", sees soul " + cast.hasLineOfSight(soul) + ")");
             log("triangle: a C-soul ignores a disguised Cynic Dancer (target " + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ") -> " + (soul.getTarget() != ves ? "PASS" : "FAIL"));
             log("triangle: the Spell Caster goes for the C-soul (" + (cast.getTarget() == null ? "none" : cast.getTarget().getName().getString()) + ") -> " + (cast.getTarget() == soul ? "PASS" : "FAIL"));
             ves.setNoAi(false);
@@ -2398,6 +2400,11 @@ public final class Batch4Tests {
             p.getPersistentData().putInt("xw_t_f", com.xenowarriors.foes.VesselEntity.finishers);
             p.getPersistentData().putInt("xw_t_g", com.xenowarriors.foes.VesselEntity.grabs);
             p.getPersistentData().putInt("xw_t_s", com.xenowarriors.foes.VesselEntity.slams);
+            ((com.xenowarriors.foes.VesselEntity) m[1]).grabLaterForTest();
+        }), 3);
+        settle(l, 60);
+        l.add(null, () -> server(p -> {
+            log("cynic: (combo hits so far " + com.xenowarriors.foes.VesselEntity.comboHits + ", finishers " + (com.xenowarriors.foes.VesselEntity.finishers - p.getPersistentData().getInt("xw_t_f")) + ")");
             ((com.xenowarriors.foes.VesselEntity) m[1]).grabSoonForTest();
         }), 3);
         settle(l, 12);

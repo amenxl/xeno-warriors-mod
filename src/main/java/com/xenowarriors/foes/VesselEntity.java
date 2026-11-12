@@ -243,5 +243,6 @@ public class VesselEntity extends PathfinderMob implements Enemy {
     /** (Tests) */
     public void fuseNowForTest() { if (state() == HOST) startFusing(); fuseTicks = FUSE_TICKS - 1; }
     public void grabSoonForTest() { grabCd = 1; }
+    public void grabLaterForTest() { grabCd = 9999; }
     public boolean holding() { return grabbed >= 0; }
 }
