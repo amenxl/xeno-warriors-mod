@@ -2439,9 +2439,9 @@ public final class Batch4Tests {
             try {
                 var type = com.xenowarriors.vehicle.Vehicles.TYPES.values().iterator().next().get();
                 var e = type.create(mc.level);
-                var r = (software.bernie.geckolib.renderer.GeoEntityRenderer) mc.getEntityRenderDispatcher().getRenderer(e);
+                var r = (software.bernie.geckolib.renderer.GeoEntityRenderer<com.xenowarriors.vehicle.VehicleEntity>) mc.getEntityRenderDispatcher().getRenderer(e);
                 var model = r.getGeoModel().getBakedModel(r.getGeoModel().getModelResource(e));
-                var bone = (software.bernie.geckolib.cache.object.GeoBone) model.topLevelBones().get(0);
+                var bone = model.topLevelBones().get(0);
                 var rt = net.minecraft.client.renderer.RenderType.entityCutoutNoCull(r.getTextureLocation(e));
                 var buffers = net.minecraft.client.renderer.MultiBufferSource.immediate(new com.mojang.blaze3d.vertex.BufferBuilder(4096));
                 var vc = buffers.getBuffer(rt);
