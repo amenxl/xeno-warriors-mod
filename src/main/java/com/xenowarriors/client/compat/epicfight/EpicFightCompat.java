@@ -346,6 +346,17 @@ public final class EpicFightCompat {
     private static void onModifyRenderers(PatchedRenderersEvent.Modify event) {
         if (event.get(EntityType.PLAYER) instanceof PatchedLivingEntityRenderer renderer) {
             renderer.addCustomLayer(new DetailPatchedLayer());
+            // our fitted armor on Epic Fight's skeleton, and Epic Fight's blocky vanilla armor kept off our characters
+            renderer.addPatchedLayer(com.xenowarriors.client.render.CharacterArmorLayer.class, new ArmorPatchedLayer());
+            try {
+                java.lang.reflect.Field f = PatchedLivingEntityRenderer.class.getDeclaredField("patchedLayers");
+                f.setAccessible(true);
+                Object old = ((java.util.Map<?, ?>) f.get(renderer)).get(net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer.class);
+                if (old instanceof yesman.epicfight.client.renderer.patched.layer.PatchedLayer<?, ?, ?, ?> pl && !(old instanceof ArmorPatchedLayer.VanillaFilter))
+                    renderer.addPatchedLayer(net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer.class, new ArmorPatchedLayer.VanillaFilter(pl));
+            } catch (Throwable t) {
+                com.xenowarriors.XenoWarriors.LOGGER.warn("XW: couldn't keep Epic Fight's armor off our characters", t);
+            }
         }
     }
 

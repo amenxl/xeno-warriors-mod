@@ -42,8 +42,57 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     private final Map<CharacterType, Map<String, DetailModel>> vanillaModels = new EnumMap<>(CharacterType.class);
     private static final ResourceLocation CORRUPTED_TEX = XenoWarriors.id("textures/entity/character/corrupted_armor.png");
 
+    private static CharacterArmorLayer instance;
+
+    /** What our layer draws for this slot: the fitted model (its file, for Epic Fight's own baked copy), texture, tint, shimmer. */
+    public record Pick(String path, ResourceLocation tex, float[] color, boolean foil, boolean noLeftArm) {}
+
+    /**
+     * The fitted armor piece this player shows in this slot, or null (nothing, another mod's armor, a scanner visor -
+     * those are drawn their own way). Used by Epic Fight's battle-mode renderer, which bakes the same piece onto its skeleton.
+     */
+    public static Pick pick(AbstractClientPlayer player, EquipmentSlot slot) {
+        CharacterArmorLayer L = instance;
+        if (L == null) return null;
+        CharacterType type = ClientCharacterData.get(player);
+        ItemStack stack = player.getItemBySlot(slot);
+        if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) return null;
+        if (stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item || foreign(stack) || stack.getItem() instanceof com.xenowarriors.item.SkinLayoutArmor) return null;
+        String base = "/assets/" + XenoWarriors.MOD_ID + "/models/armor/" + type.getId() + "_";
+        boolean sr = stack.getItem() instanceof com.xenowarriors.item.SrHoodieItem;
+        boolean hoodie = stack.getItem() instanceof com.xenowarriors.item.KarmaHoodieItem;
+        boolean sky = stack.getItem() instanceof com.xenowarriors.sky.SkyArmorItem;
+        boolean corrupt = stack.getItem() instanceof com.xenowarriors.sky.CorruptedArmorItem;
+        String path = base + slotName(slot);
+        DetailModel m = L.models.get(type) == null ? null : L.models.get(type).get(slot);
+        if (hoodie) { m = L.hoodies.get(type); path = base + "hoodie"; }
+        if (sr) { m = L.srHoodies.get(type); path = base + "sr_hoodie"; }
+        if (sky && L.skyModels.get(type) != null) { m = L.skyModels.get(type).get(slot); path = base + "sky_" + slotName(slot); }
+        if (corrupt && L.corruptedModels.get(type) != null) { m = L.corruptedModels.get(type).get(slot); path = base + "corrupted_" + slotName(slot); }
+        String mat = vanillaMat(armor);
+        DetailModel vm = mat == null || L.vanillaModels.get(type) == null ? null : L.vanillaModels.get(type).get(mat + "_" + slotName(slot));
+        if (vm != null && !hoodie && !sr && !sky && !corrupt) { m = vm; path = base + mat + "_" + slotName(slot); } else mat = null;
+        if (m == null) return null;
+        float[] c = sr || sky || corrupt || (mat != null && !mat.equals("leather")) ? new float[]{1F, 1F, 1F} : tint(stack, armor);
+        ResourceLocation tex = sky ? SKY_TEX : corrupt ? CORRUPTED_TEX
+                : mat != null ? XenoWarriors.id("textures/entity/character/vanilla_" + mat + ".png") : XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor.png");
+        if ((hoodie || sr) && stack.isDamageableItem() && stack.getMaxDamage() > 0) {
+            float worn = stack.getDamageValue() / (float) stack.getMaxDamage();
+            if (worn >= 0.75F) tex = XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor_torn.png");
+            else if (worn >= 0.5F) tex = XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor_worn.png");
+        }
+        return new Pick(path + ".json", tex, c, stack.hasFoil(), type == CharacterType.MIKIKO);
+    }
+
+    /** Is this armor drawn by our fitted layer (not another mod's, not a visor)? */
+    public static boolean ours(ItemStack stack) {
+        return stack.getItem() instanceof ArmorItem && !(stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item) && !foreign(stack)
+                && !(stack.getItem() instanceof com.xenowarriors.item.SkinLayoutArmor);
+    }
+
     public CharacterArmorLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
+        instance = this;
         for (CharacterType type : CharacterType.PLAYABLE) {
             Map<EquipmentSlot, DetailModel> bySlot = new EnumMap<>(EquipmentSlot.class);
             for (EquipmentSlot slot : SLOTS) {

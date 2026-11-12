@@ -134,7 +134,9 @@ public final class Batch4Tests {
                 l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 8), 4);
                 l.add("batch4_efgear_" + t.getId() + "_" + it[0] + "_back", () -> { mc.options.hideGui = false; }, 3);
             }
-            l.add(null, () -> server(p -> { for (var s : net.minecraft.world.entity.EquipmentSlot.values()) p.setItemSlot(s, net.minecraft.world.item.ItemStack.EMPTY); log("efgear " + p.getName().getString() + " done"); }), 5);
+            l.add(null, () -> server(p -> { for (var s : net.minecraft.world.entity.EquipmentSlot.values()) p.setItemSlot(s, net.minecraft.world.item.ItemStack.EMPTY);
+                log("efgear " + p.getName().getString() + " done: our armor drawn on Epic Fight's skeleton " + com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.drawn + " times -> "
+                        + (com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.drawn > 0 ? "PASS" : "FAIL")); }), 5);
         }
     }
 

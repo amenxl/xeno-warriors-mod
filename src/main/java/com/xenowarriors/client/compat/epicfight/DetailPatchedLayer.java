@@ -92,7 +92,9 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         boolean falling = !player.onGround() && !player.isInWater() && player.fallDistance > 1.5F;
         boolean kishi = com.xenowarriors.client.ClientSkillState.isCastingKishi(player.getUUID());
         float spread = Math.max(com.xenowarriors.client.SkillAnimations.wingSpread(player, age), com.xenowarriors.client.KarmaFocusClient.wingSpread(player));
-        com.xenowarriors.client.RhalixWingsClient.pose(live, player, preview, flying, falling, kishi, spread, age);
+        com.xenowarriors.client.RhalixWingsClient.onEfSkeleton = true;
+        try { com.xenowarriors.client.RhalixWingsClient.pose(live, player, preview, flying, falling, kishi, spread, age); }
+        finally { com.xenowarriors.client.RhalixWingsClient.onEfSkeleton = false; }
         if (!live.rightWing.visible && !live.leftWing.visible) return;
         int chest = patch.getArmature() instanceof yesman.epicfight.model.armature.HumanoidArmature h ? h.chest.getId() : 8;
         if (chest < 0 || chest >= poses.length) return;
@@ -138,6 +140,21 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     /** Bakes any detail model (the townsfolk's too) for Epic Fight: {details, face}; null if it failed. */
     static SkinnedMesh[] bakeModel(DetailModel model) {
         return bake(model, false, false);
+    }
+
+    /** Baked with its left arm left off (Mikiko wears nothing on his left arm, so his shoulder plate shows). */
+    static SkinnedMesh[] bakeModelHiding(DetailModel model, boolean noLeftArm) {
+        if (!noLeftArm) return bake(model, false, false);
+        try {
+            model.root.getAllParts().forEach(p -> { p.resetPose(); p.visible = true; p.yScale = 1F; });
+            SkinnedMesh m = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(
+                    humanoid(model.head, model.body, model.rightArm, empty(), model.rightLeg, model.leftLeg));
+            if (m != null) m.initialize();
+            return new SkinnedMesh[]{m, null};
+        } catch (Throwable t) {
+            XenoWarriors.LOGGER.error("Couldn't prepare Xeno Warriors armor for Epic Fight", t);
+            return null;
+        }
     }
 
     private static SkinnedMesh[] bake(DetailModel model, boolean hood, boolean legacy) {

@@ -147,6 +147,9 @@ public final class RhalixWingsClient {
         return 1F - smooth((t - 4F) / 14F);
     }
 
+    /** (Epic Fight's battle-mode layer sets this while it poses the wings on its chest bone.) */
+    public static boolean onEfSkeleton;
+
     /** Called by the detail layer each frame to pose the wings. */
     public static void pose(DetailModel model, AbstractClientPlayer p, boolean preview, boolean flying, boolean falling,
                             boolean kishi, float skillSpread, float age) {
@@ -212,7 +215,7 @@ public final class RhalixWingsClient {
             spread = Math.max(spread, 0.4F * (1F - smooth(t / 10F)));
         }
         // his combo moves: the wings fold in close behind him, out of the way
-        float combo = RhalixComboAnim.wingSpread(p, partial);
+        float combo = onEfSkeleton ? 0F : RhalixComboAnim.wingSpread(p, partial);   // (on Epic Fight's skeleton the fold pulled a wing off his back)
         if (combo > 0F) { spread *= 1F - combo; flap *= 1F - combo; tuck = Mth.lerp(combo, tuck, 0.8F); }
         // rain shelter: wings swung forward and wrapped around him, tips raised over his head
         float shelter = RainIdle.shelter(p);
