@@ -748,7 +748,7 @@ public final class PartyBots {
     /** The skill a bot uses from this slot of its owner's loadout: a pick it may not use falls back to the default skill there (or none). */
     public static Skill botSkill(PartyBotEntity b, int[] loadout, int slot) {
         if (slot < com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && loadout != null && slot < loadout.length && !botMay(b, loadout[slot])) {
-            int def = SkillPool.defaultLoadout()[slot];
+            int def = SkillPool.defaultLoadout(b.character())[slot];
             if (!botMay(b, def)) return null;
             int[] l = loadout.clone();
             l[slot] = def;
@@ -818,7 +818,7 @@ public final class PartyBots {
         if (com.xenowarriors.compat.DmzBotKi.tryFire(b, target, () -> fake(b), false)) return;   // (with DragonMineZ: sometimes one of its equipped ki techniques instead)
         long now = b.level().getGameTime();
         ServerPlayer o = b.owner();
-        int[] loadout = o == null ? SkillPool.defaultLoadout() : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout());   // (with the ultimate picked for that character)
+        int[] loadout = o == null ? SkillPool.defaultLoadout(b.character()) : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout(b.character()));   // (with the ultimate picked for that character)
         if (loadout.length > com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] > 0) {    // (the picked one only once the bot itself is strong enough - a pick made in creative doesn't count)
             var ults = SkillPool.ultimates(b.character());
             int c = loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT];

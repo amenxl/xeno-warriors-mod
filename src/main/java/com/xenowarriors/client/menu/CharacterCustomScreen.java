@@ -206,7 +206,9 @@ public class CharacterCustomScreen extends Screen {
     private int skillY(int i) { return LIST_Y + (i / 2) * (CARD_H + 3) - skillScroll; }
     /** The ultimates to pick between (a card each after the skills, on a new row) - only shown when there's a choice. */
     private List<SkillPool.Entry> ultChoices() { return minecraft.player == null ? List.of() : SkillPool.ultimates(minecraft.player); }
-    private int ultCardStart() { int n = SkillPool.of(minecraft.player).size(); return n + (n % 2); }
+    private int ultCardStart() { int n = menu().size(); return n + (n % 2); }
+    /** The pool indices on the skill cards (the right+left click skills live in their own tab). */
+    private List<Integer> menu() { return SkillPool.menuIndices(type(), SkillPool.of(minecraft.player)); }
 
     /** The "upgrade to the next tier" button on a level-10 skill card (virtual units, relative to the card). */
     private static final int UP_W = 24, UP_H = 9;
@@ -261,12 +263,14 @@ public class CharacterCustomScreen extends Screen {
             for (int s = 0; s < SkillManager.ULTIMATE_SLOT; s++)
                 if (inBox(vx, vy, slotX(s), SLOT_Y, SLOT, SLOT)) { selectedSlot = s; click(); return true; }
             List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
+            List<Integer> shown = menu();
             if (vy >= LIST_Y && vy < VH)
-                for (int i = 0; i < pool.size(); i++) {
-                    if (!inBox(vx, vy, skillX(i), skillY(i), CARD_W, CARD_H)) continue;
+                for (int k = 0; k < shown.size(); k++) {
+                    int i = shown.get(k);
+                    if (!inBox(vx, vy, skillX(k), skillY(k), CARD_W, CARD_H)) continue;
                     if (!SkillPool.available(pool.get(i), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;
                     String sid = pool.get(i).skill().getId();
-                    if (com.xenowarriors.client.ClientSkillLevels.canUpgrade(sid) && overUpgrade(vx, vy, skillX(i), skillY(i))) { testUpgrade(sid); click(); return true; }
+                    if (com.xenowarriors.client.ClientSkillLevels.canUpgrade(sid) && overUpgrade(vx, vy, skillX(k), skillY(k))) { testUpgrade(sid); click(); return true; }
                     ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(selectedSlot, i));
                     int[] l = ClientSkillState.loadout().clone();
                     for (int k = 0; k < l.length; k++) if (l[k] == i) l[k] = l[selectedSlot];
@@ -679,12 +683,14 @@ public class CharacterCustomScreen extends Screen {
             if (sk != null && inBox(mx, my, x, y, SLOT, SLOT)) tip = lines(sk.getName().getString() + (ult ? " (ultimate)" : ""), SkillLoadoutScreen.desc(sk));
         }
         List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
+        List<Integer> shown = menu();
         skillScroll = Math.min(skillScroll, maxSkillScroll());
         float[] c = card();
         g.enableScissor((int) c[0], (int) (c[1] + LIST_Y * c[2]), (int) (c[0] + VW * c[2]), (int) (c[1] + VH * c[2]));
-        for (int i = 0; i < pool.size(); i++) {
+        for (int k = 0; k < shown.size(); k++) {
+            int i = shown.get(k);
             SkillPool.Entry e = pool.get(i);
-            int x = skillX(i) + Math.round((1F - rowIn(i / 2 + 2)) * 18F), y = skillY(i);
+            int x = skillX(k) + Math.round((1F - rowIn(k / 2 + 2)) * 18F), y = skillY(k);
             if (y + CARD_H < LIST_Y || y > VH) continue;
             boolean seasonOk = ClientSkillState.season() >= e.season();
             boolean open = seasonOk && SkillPool.unlocked(e, ClientSkillState.level(), creative());

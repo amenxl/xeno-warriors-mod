@@ -24,6 +24,7 @@ import java.util.Map;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NpcDetailPatchedLayer extends PatchedLayer {
     private static final Map<String, SkinnedMesh[]> BAKED = new HashMap<>();
+    private static final Map<String, SkinnedMesh> OUT = new HashMap<>();
 
     private static String look(LivingEntity e) {
         if (e instanceof HumanNpcEntity h) return NpcLooks.human(h.variant());
@@ -52,6 +53,20 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
             ResourceLocation face = NpcRenderer.tex(key + (darkened ? "_face_dark" : "_face"));
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
             if (possessed) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+        }
+        if (com.xenowarriors.client.cel.Cel.on()) {                              // cel-shading: the ink outline, as without Epic Fight
+            float ink = com.xenowarriors.client.cel.CelOutline.INK;
+            var rt = com.xenowarriors.client.cel.CelRenderTypes.OUTLINE;
+            SkinnedMesh body = DetailPatchedLayer.bodyOutline(DetailPatchedLayer.slim(entity));
+            if (body != null) body.draw(pose, buffers, rt, light, ink, ink, ink, 1F, overlay, patch.getArmature(), poses);
+            if (!OUT.containsKey(key)) OUT.put(key, ((java.util.function.Function<String, SkinnedMesh>) k -> {
+                DetailModel m = DetailModel.loadWhole("/assets/" + XenoWarriors.MOD_ID + "/models/detail/npc/" + k + ".json");
+                DetailModel o = m == null ? null : m.outlineCopy();
+                SkinnedMesh[] b = o == null ? null : DetailPatchedLayer.bakeModel(o);
+                return b == null ? null : b[0];
+            }).apply(key));
+            SkinnedMesh det = OUT.get(key);
+            if (det != null) det.draw(pose, buffers, rt, light, ink, ink, ink, 1F, overlay, patch.getArmature(), poses);
         }
         // SR members' wings (only while they've summoned them to fly)
         if (entity instanceof com.xenowarriors.sr.SrMemberEntity sr && sr.wings()) {

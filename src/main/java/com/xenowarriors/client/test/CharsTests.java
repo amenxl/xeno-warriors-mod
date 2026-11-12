@@ -63,6 +63,7 @@ public final class CharsTests {
         boolean all = f.isEmpty() || f.contains("all");
         l.add(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null); }, 5);
         if (f.contains("labcoat")) { labcoat(mc, l); return; }
+        if (f.contains("armor")) { armor(mc, l, focus.startsWith("ef")); return; }
         if (all || f.contains("dance")) dance(mc, l);
         if (all || f.contains("idle")) idle(mc, l);
         if (focus.startsWith("ef")) ef(mc, l);
@@ -391,6 +392,43 @@ public final class CharsTests {
             Batch3Tests.uncamera(mc, l);
         }
         l.add(null, () -> { mc.options.hideGui = false; log("labcoat done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ armor and the ink outline (with / without Epic Fight)
+
+    private static void armor(Minecraft mc, MikikoTests.Steps l, boolean ef) {
+        String tag = ef ? "ef" : "plain";
+        l.add(null, () -> com.xenowarriors.client.cel.Cel.force = true, 1);
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.KYRIE}) {
+            character(l, t);
+            String[][] sets = t == CharacterType.MIKIKO ? new String[][]{{"none"}, {"iron"}, {"leather"}, {"diamond"}} : new String[][]{{"none"}};
+            for (String[] set : sets) {
+                String m = set[0];
+                l.add(null, () -> server(p -> {
+                    p.getInventory().clearContent();
+                    hold(p, ItemStack.EMPTY);
+                    var it = switch (m) {
+                        case "iron" -> new net.minecraft.world.item.Item[]{Items.IRON_HELMET, Items.IRON_CHESTPLATE, Items.IRON_LEGGINGS, Items.IRON_BOOTS};
+                        case "leather" -> new net.minecraft.world.item.Item[]{Items.LEATHER_HELMET, Items.LEATHER_CHESTPLATE, Items.LEATHER_LEGGINGS, Items.LEATHER_BOOTS};
+                        case "diamond" -> new net.minecraft.world.item.Item[]{Items.DIAMOND_HELMET, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_LEGGINGS, Items.DIAMOND_BOOTS};
+                        default -> new net.minecraft.world.item.Item[0];
+                    };
+                    net.minecraft.world.entity.EquipmentSlot[] slots = {net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET};
+                    for (int i = 0; i < it.length; i++) p.setItemSlot(slots[i], new ItemStack(it[i]));
+                }), 15);
+                if (ef) l.add(null, () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"), 10);
+                for (float yaw : new float[]{0F, 90F, 180F}) {
+                    String n = "chars_armor_" + tag + "_" + t.getId() + "_" + m + "_" + (int) yaw;
+                    l.add(n, () -> { front(mc, yaw); if (ef) log("armor " + n + " outlines=" + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws + " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)); }, 8);
+                }
+                if (ef && m.equals("iron")) {                                   // an Epic Fight animation playing
+                    for (int i = 0; i < 4; i++) l.add(null, () -> { front(mc, 30F); com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"); }, 1);
+                    l.add("chars_armor_ef_" + t.getId() + "_guard", () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "guard"), 1);
+                    l.add(null, () -> com.xenowarriors.compat.epicfight.EfTest.play(mc.player, "none"), 10);
+                }
+            }
+        }
+        l.add(null, () -> { server(p -> p.getInventory().clearContent()); com.xenowarriors.client.cel.Cel.force = false; mc.options.hideGui = false; log("armor done"); }, 5);
     }
 
     /** (unused) */

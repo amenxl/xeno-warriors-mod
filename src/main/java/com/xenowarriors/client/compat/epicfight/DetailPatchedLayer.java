@@ -67,7 +67,57 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (ff.mouth != null) mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(ff.mouth), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
+        if (com.xenowarriors.client.cel.Cel.on() && !firstPerson(player)) {         // cel-shading: the thick ink outline, as without Epic Fight
+            float ink = com.xenowarriors.client.cel.CelOutline.INK;
+            var rt = com.xenowarriors.client.cel.CelRenderTypes.OUTLINE;
+            SkinnedMesh body = bodyOutline(slim(player));
+            if (body != null) { body.draw(pose, buffers, rt, light, ink, ink, ink, 1F, overlay, patch.getArmature(), poses); outlineDraws++; }
+            Map<DetailModel, SkinnedMesh> outs = hood ? OUT_HOOD : OUT;
+            if (!outs.containsKey(live)) {
+                DetailModel o = freshCopy(player, live).outlineCopy();
+                SkinnedMesh[] b = o == null ? null : bake(o, hood, false);
+                outs.put(live, b == null ? null : b[0]);
+            }
+            SkinnedMesh det = outs.get(live);
+            if (det != null) det.draw(pose, buffers, rt, light, ink, ink, ink, 1F, overlay, patch.getArmature(), poses);
+        }
         if (live.hasWings() && !legacy) wings(patch, player, live, pose, buffers, light, overlay, poses, partial);
+    }
+
+    private static final Map<DetailModel, SkinnedMesh> OUT = new IdentityHashMap<>(), OUT_HOOD = new IdentityHashMap<>();
+    private static final SkinnedMesh[] BODY_OUT = new SkinnedMesh[2];
+    private static final boolean[] BODY_TRIED = new boolean[2];
+    /** (tests) body outlines drawn on Epic Fight's skeleton. */
+    public static int outlineDraws;
+
+    private static boolean firstPerson(net.minecraft.world.entity.LivingEntity e) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        return e == mc.player && mc.options.getCameraType().isFirstPerson() && com.xenowarriors.client.FirstPersonHead.hidden();
+    }
+
+    /** A girl's slimmer body (her renderer's model has the chest piece). */
+    static boolean slim(net.minecraft.world.entity.LivingEntity e) {
+        var r = net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
+        return r instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> lr && lr.getModel() instanceof HumanoidModel<?> h
+                && h.body.hasChild(com.xenowarriors.client.FemaleBody.CHEST);
+    }
+
+    /** The body's ink outline (an inflated player body), baked once for Epic Fight's skeleton. */
+    static SkinnedMesh bodyOutline(boolean slim) {
+        int i = slim ? 1 : 0;
+        if (!BODY_TRIED[i]) {
+            BODY_TRIED[i] = true;
+            try {
+                var o = com.xenowarriors.client.cel.CelOutline.restBody(slim);
+                SkinnedMesh m = HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(
+                        humanoid(o.head, o.body, o.rightArm, o.leftArm, o.rightLeg, o.leftLeg));
+                if (m != null) m.initialize();
+                BODY_OUT[i] = m;
+            } catch (Throwable t) {
+                XenoWarriors.LOGGER.error("Couldn't prepare the cel outline for Epic Fight", t);
+            }
+        }
+        return BODY_OUT[i];
     }
 
     private static final CharacterDetailLayer.FaceFrame FACE = new CharacterDetailLayer.FaceFrame();
@@ -157,7 +207,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         }
     }
 
-    private static SkinnedMesh[] bake(DetailModel model, boolean hood, boolean legacy) {
+    static SkinnedMesh[] bake(DetailModel model, boolean hood, boolean legacy) {
         try {
             // rest pose: no copied player pose, no blown hair or swinging coat
             model.root.getAllParts().forEach(p -> {

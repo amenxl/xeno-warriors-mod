@@ -18,7 +18,7 @@ import java.util.WeakHashMap;
 /** Draws the cel outline around a character: their body (an inflated player model) and their 3D details. */
 public final class CelOutline {
     public static final float BODY = 0.24F, DETAIL = 0.17F;
-    private static final float INK = 0.05F;
+    public static final float INK = 0.05F;
     private static ModelPart bodyRoot;
     private static PlayerModel<LivingEntity> body, slimBody;
     private static final Map<DetailModel, DetailModel> DETAILS = new WeakHashMap<>();
@@ -46,6 +46,13 @@ public final class CelOutline {
             d.visible = s.visible;
             d.skipDraw = s.skipDraw;
         }
+    }
+
+    /** (Epic Fight) the inflated body for its own baker: the outline shell, in its rest pose. */
+    public static PlayerModel<LivingEntity> restBody(boolean slim) {
+        PlayerModel<LivingEntity> o = body(slim);
+        o.root().getAllParts().forEach(ModelPart::resetPose);
+        return o;
     }
 
     /** The body outline, matching the player model's pose this frame. */

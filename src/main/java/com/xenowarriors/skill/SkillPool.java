@@ -183,17 +183,54 @@ public final class SkillPool {
         if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(p, loadout);
         if (loadout == null || slot < 0 || slot >= loadout.length) return null;
         Entry e = entry(p, loadout[slot]);
-        return e == null ? null : e.skill();
+        return e == null || rlOnly(typeOf(p), e) ? null : e.skill();
     }
 
     public static int[] defaultLoadout() { return new int[]{0, 1, 2, 3}; }
+
+    /** A right+left click skill: not in the skill menu or the slots any more (Character Customization > R+L Click). */
+    public static boolean rlOnly(CharacterType t, Entry e) {
+        return e != null && com.xenowarriors.toggle.Toggles.rlChoices(t).contains(e.skill().getId());
+    }
+
+    /** Pool indices the skill menu shows for this character (everything but the right+left click skills). */
+    public static List<Integer> menuIndices(CharacterType t, List<Entry> pool) {
+        List<Integer> l = new java.util.ArrayList<>();
+        for (int i = 0; i < pool.size(); i++) if (!rlOnly(t, pool.get(i))) l.add(i);
+        return l;
+    }
+
+    /** The first four skills that go in slots (right+left click ones skipped); -1 = an empty slot. */
+    public static int[] defaultLoadout(CharacterType t) { return clean(t, new int[]{-1, -1, -1, -1}); }
+
+    /**
+     * A loadout without the right+left click skills: each one's slot gets the next skill that isn't equipped yet (one
+     * known from the start first), or stays empty (-1).
+     */
+    public static int[] clean(CharacterType t, int[] l) {
+        int[] out = l.clone();
+        List<Entry> pool = of(t);
+        for (int s = 0; s < out.length; s++) {
+            Entry e = out[s] >= 0 && out[s] < pool.size() ? pool.get(out[s]) : null;
+            if (e != null && !rlOnly(t, e)) continue;
+            out[s] = -1;
+            for (int pass = 0; pass < 2 && out[s] < 0; pass++)
+                for (int i = 0; i < pool.size(); i++) {
+                    if (rlOnly(t, pool.get(i)) || (pass == 0 && pool.get(i).unlockLevel() > 0)) continue;
+                    boolean used = false;
+                    for (int k = 0; k < out.length; k++) if (out[k] == i) used = true;
+                    if (!used) { out[s] = i; break; }
+                }
+        }
+        return out;
+    }
 
     /** The skill in a slot for this loadout (slot 4 = ultimate). */
     public static Skill inSlot(CharacterType type, int[] loadout, int slot) {
         if (slot == SkillManager.ULTIMATE_SLOT) return ultimate(type, loadout);
         if (loadout == null || slot < 0 || slot >= loadout.length) return null;
         Entry e = entry(type, loadout[slot]);
-        return e == null ? null : e.skill();
+        return e == null || rlOnly(type, e) ? null : e.skill();
     }
 
     public static boolean unlocked(Entry e, int level, boolean creative) {

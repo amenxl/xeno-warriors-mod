@@ -42,11 +42,14 @@ public class SkillLoadoutScreen extends Screen {
 
     private int listScroll;
 
+    /** The pool indices on the cards (right+left click skills are picked in Character Customization > R+L Click). */
+    private List<Integer> shown() { return SkillPool.menuIndices(type(), SkillPool.of(minecraft.player)); }
+
     private int cardY(int i) { return 104 + (i / cols()) * (CARD_H + 6) - listScroll; }
 
     /** How far the skill list can scroll (small windows). */
     private int maxListScroll() {
-        int n = SkillPool.of(minecraft.player).size(), rows = (n + cols() - 1) / cols();
+        int n = shown().size(), rows = (n + cols() - 1) / cols();
         return Math.max(0, 104 + rows * (CARD_H + 6) - (height - 28));
     }
 
@@ -93,9 +96,11 @@ public class SkillLoadoutScreen extends Screen {
         List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
         listScroll = Math.min(listScroll, maxListScroll());
         g.enableScissor(0, 100, width, height - 28);
-        for (int i = 0; i < pool.size(); i++) {
+        List<Integer> shown = shown();
+        for (int k = 0; k < shown.size(); k++) {
+            int i = shown.get(k);
             SkillPool.Entry e = pool.get(i);
-            int x = cardX(i), y = cardY(i);
+            int x = cardX(k), y = cardY(k);
             if (!cardVisible(y)) continue;
             boolean seasonOk = ClientSkillState.season() >= e.season();
             boolean open = seasonOk && SkillPool.unlocked(e, ClientSkillState.level(), creative());
@@ -156,8 +161,10 @@ public class SkillLoadoutScreen extends Screen {
             }
         }
         List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
-        for (int i = 0; i < pool.size(); i++) {
-            int x = cardX(i), y = cardY(i);
+        List<Integer> shown = shown();
+        for (int k = 0; k < shown.size(); k++) {
+            int i = shown.get(k);
+            int x = cardX(k), y = cardY(k);
             if (!cardVisible(y) || my < 100 || my >= height - 28) continue;
             if (mx >= x && mx < x + CARD_W && my >= y && my < y + CARD_H) {
                 if (!SkillPool.available(pool.get(i), ClientSkillState.level(), creative(), ClientSkillState.season())) return true;

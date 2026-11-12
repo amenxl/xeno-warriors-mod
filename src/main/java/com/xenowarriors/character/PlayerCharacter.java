@@ -92,7 +92,8 @@ public class PlayerCharacter {
 
     public int[] loadout(CharacterType t) {
         int[] l = loadouts.getIntArray(key(t));
-        return l.length == 4 ? l : com.xenowarriors.skill.SkillPool.defaultLoadout();
+        if (t == CharacterType.YOU) return l.length == 4 ? l : com.xenowarriors.skill.SkillPool.defaultLoadout();
+        return com.xenowarriors.skill.SkillPool.clean(t, l.length == 4 ? l : com.xenowarriors.skill.SkillPool.defaultLoadout());   // (right+left click skills never in a slot)
     }
     public void setLoadout(CharacterType t, int[] l) { loadouts.putIntArray(key(t), l.clone()); }
     /** Which of the character's ultimates is in the ultimate slot (0 = the default; see SkillPool.ultimates). */

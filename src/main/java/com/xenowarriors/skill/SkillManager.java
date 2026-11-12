@@ -58,7 +58,7 @@ public final class SkillManager {
 
     /** The default loadout's skill in a slot (for the HUD before a sync, and the team ultimate). */
     public static Skill get(CharacterType type, int slot) {
-        return SkillPool.inSlot(type, SkillPool.defaultLoadout(), slot);
+        return SkillPool.inSlot(type, SkillPool.defaultLoadout(type), slot);
     }
 
     /** This player's equipped skill in a slot. */
@@ -110,6 +110,7 @@ public final class SkillManager {
         CharacterType type = ModCapabilities.getType(player);
         SkillPool.Entry e = SkillPool.entry(player, index);
         if (e == null) return;
+        if (SkillPool.rlOnly(type, e)) { player.displayClientMessage(Component.literal("That's a right+left click skill - pick it in Character Customization > R+L Click").withStyle(net.minecraft.ChatFormatting.GRAY), true); return; }
         int level = com.xenowarriors.stats.Stats.characterLevel(player);
         int season = com.xenowarriors.character.Seasons.highest(player.server);
         if (season < e.season()) {
