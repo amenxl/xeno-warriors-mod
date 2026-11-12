@@ -2336,7 +2336,7 @@ public final class Batch4Tests {
             while (y > com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y && (lv.getBlockState(new BlockPos(6, y - 1, 6)).isAir()
                     || !lv.getBlockState(new BlockPos(6, y, 6)).isAir() || !lv.getBlockState(new BlockPos(6, y + 1, 6)).isAir())) y--;
             p.teleportTo(6.5, y, 6.5);
-            p.getAbilities().mayfly = true; p.getAbilities().flying = true; p.onUpdateAbilities();     // (stays put for the trial)
+            p.getAbilities().mayfly = true; p.getAbilities().flying = true; p.getAbilities().invulnerable = true; p.onUpdateAbilities();     // (stays put and up for the trial: this tests the waves, not a fight)
         }), 2);
         settle(l, 60);      // (the client confirms the move first)
         l.add(null, () -> server(p -> {
@@ -2358,7 +2358,9 @@ public final class Batch4Tests {
         }
         l.add(null, () -> server(p -> {
             p.server.setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
+            p.getAbilities().invulnerable = false; p.onUpdateAbilities();
             var s = com.xenowarriors.you.You.slot(p);
+            if (s == null) { log("angel: not playing Seraph any more -> FAIL"); return; }
             float dm = com.xenowarriors.you.YouRaces.damageMult(p);
             boolean eye = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(x -> x.skill().getId().equals("you_angel_eye"));
             boolean light = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(x -> x.skill().getId().equals("you_light"));
