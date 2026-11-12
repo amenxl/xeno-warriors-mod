@@ -29,7 +29,7 @@ public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel
         if (p.isInvisible() || !ClientCharacterData.winged(p)) return;
         YouSlot s = ClientCharacterData.you(p);
         if (s == null) return;
-        String style = s.race == Race.ANGEL ? "seraph" : s.demon() ? "demon" : s.path == YouSlot.PATH_SKYLANDER ? "tech"      // (made Skylanders: Technica's kind of wings)
+        String style = s.angel() ? "seraph" : s.demon() ? "demon" : s.path == YouSlot.PATH_SKYLANDER ? "tech"      // (made Skylanders: Technica's kind of wings)
                 : s.element == com.xenowarriors.ka.Element.CRYSTAL ? "crystal" : "angel";
         DetailModel m = NpcRenderer.model("wing_" + style);
         if (m == null || m.rightWing == null || m.leftWing == null) return;
@@ -42,7 +42,7 @@ public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel
         var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(NpcRenderer.tex("wing_" + style + "_details")));
         int overlay = LivingEntityRenderer.getOverlayCoords(p, 0F);
         float r, g, b;
-        if (s.race == Race.ANGEL) { r = 1F; g = 0.97F; b = 0.85F; }
+        if (s.angel()) { r = 1F; g = 0.97F; b = 0.85F; }
         else if (s.devil) { r = 0.3F; g = 0.05F; b = 0.08F; }
         else if (s.demon()) { r = 0.45F; g = 0.12F; b = 0.14F; }
         else if (s.path == YouSlot.PATH_SKYLANDER) { r = 0.92F; g = 0.92F; b = 0.96F; }

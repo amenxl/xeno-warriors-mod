@@ -49,6 +49,9 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.ROYAL_GUARD.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.kaiplanet.KaiPlanetEntities.BUILDER.get(), ctx -> com.xenowarriors.client.npc.NpcRenderer.plain(ctx, e -> "kai_builder", e -> false));
         event.registerEntityRenderer(com.xenowarriors.you.YouEntities.DEVIL_SHADOW.get(), com.xenowarriors.client.you.ShadowRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.foes.Foes.ELEMENTALIST.get(),
+                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.foes.ElementalistEntity>plain(ctx, com.xenowarriors.foes.ElementalistEntity::look, e -> false));
+        event.registerEntityRenderer(com.xenowarriors.foes.Foes.VESSEL.get(), com.xenowarriors.client.foes.VesselRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.gov.GovAgentEntity>plain(ctx, com.xenowarriors.gov.GovAgentEntity::look, e -> false));
         event.registerEntityRenderer(com.xenowarriors.s3.S3Entities.ORDER_ASSASSIN.get(),
@@ -116,6 +119,9 @@ public final class ClientModEvents {
         event.register((stack, layer) -> layer == 0 && stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item k ? k.getColor(stack) | 0xFF000000 : -1,
                 com.xenowarriors.gov.GovItems.KARMA_SCANNER.get(), com.xenowarriors.gov.GovItems.ADVANCED_KARMA_SCANNER.get(),
                 com.xenowarriors.gov.GovItems.ELITE_KARMA_SCANNER.get(), com.xenowarriors.gov.GovItems.OMNI_KARMA_SCANNER.get());
+        // Element Crystals: in their element's colour
+        event.register((stack, layer) -> { var el = com.xenowarriors.you.YouItems.element(stack); return layer == 0 && el != null ? el.color | 0xFF000000 : -1; },
+                com.xenowarriors.you.YouItems.ELEMENT_CRYSTAL.get());
     }
 
     /** Extra Hekublade models (the sword and each crystal, drawn separately so the crystals can move). */

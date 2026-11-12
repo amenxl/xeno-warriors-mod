@@ -63,7 +63,7 @@ public final class YouRaces {
         hp.removeModifier(HEALTH_ID);
         YouSlot s = You.slot(p);
         if (s == null) return;
-        double add = switch (s.shown()) { case ANGEL -> p.isCreative() ? 40 : 0; case DEVIL -> 16; case DEMON, ARTIFICIAL_DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };
+        double add = switch (s.shown()) { case ANGEL -> s.ascended ? (p.isCreative() ? 40 : 20) : p.isCreative() ? 40 : 0; case DEVIL -> 16; case DEMON, ARTIFICIAL_DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };   // (an ascended Angel: +20 in survival)
         if (add > 0) hp.addPermanentModifier(new AttributeModifier(HEALTH_ID, "You race health", add, AttributeModifier.Operation.ADDITION));
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
     }
@@ -74,7 +74,8 @@ public final class YouRaces {
         if (s == null) return 1F;
         if (s.demon()) return s.humanForm ? 1F : s.devil ? 1.3F : 1.15F;      // (a Devil: 1.3x in demon form)
         if (s.race == Race.SEEDLING && onNamek(p)) return NAMEK_DAMAGE;       // (Namek's three suns)
-        return s.race == Race.ANGEL && p.isCreative() ? 2F : 1F;
+        if (s.angel()) return p.isCreative() ? 2F : s.ascended ? 1.5F : 1F;     // (an ascended Angel: 1.5x in survival)
+        return 1F;
     }
 
     // ------------------------------------------------------------------ forms
@@ -172,7 +173,7 @@ public final class YouRaces {
         int sun = t.getInt(SUN);
         if (p.tickCount % 20 == 0) {
             boolean inSun = onNamek(p) || p.level().isDay() && p.level().canSeeSky(p.blockPosition()) && !p.level().isRaining();   // (Namek: three suns, everywhere, always)
-            sun = inSun ? Math.min(SUN_MAX, sun + 40) : Math.max(0, sun - 1);
+            sun = inSun ? Math.min(SUN_MAX, sun + (onNamek(p) ? 120 : 40)) : Math.max(0, sun - 1);   // (Namek's three suns: three times as fast)
             t.putInt(SUN, sun);
             if (p.tickCount % 60 == 0) sync(p);
             if (sun == 0 && p.tickCount % 200 == 0) p.displayClientMessage(Component.literal("You need sunlight...").withStyle(ChatFormatting.YELLOW), true);

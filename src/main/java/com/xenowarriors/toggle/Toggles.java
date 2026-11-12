@@ -66,7 +66,9 @@ public final class Toggles {
         MOD_SCANNER("mod_scanner", "Scanner Eye", Kind.PASSIVE, 0x4FB3E8, true),
         MOD_PLATING("mod_plating", "Armor Plating", Kind.PASSIVE, 0x4FB3E8, true),
         // a Devil's: your Karma can't be read or sensed (starts on)
-        KARMA_MASK("karma_mask", "Karma Mask", Kind.PASSIVE, 0x6A1020, true);
+        KARMA_MASK("karma_mask", "Karma Mask", Kind.PASSIVE, 0x6A1020, true),
+        // a second element's: the first Bolt casts the second element (starts off)
+        SWAP_ELEMENT("swap_element", "Bolt: second element", Kind.PASSIVE, 0xC8A0FF);
 
         /** Shown on the toggle wheel (the automatic ones only in Character Customization). */
         public boolean wheel() { return kind != Kind.AUTO; }
@@ -116,6 +118,7 @@ public final class Toggles {
             List<Entry> l = new ArrayList<>();
             if (s.demon()) l.add(Entry.DEVIL_UNLEASHED);
             if (s.devil) l.add(Entry.KARMA_MASK);
+            if (s.element2 != null) l.add(Entry.SWAP_ELEMENT);
             if (s.path == com.xenowarriors.you.YouSlot.PATH_MODIFIED) { l.add(Entry.MOD_SPEED); l.add(Entry.MOD_JUMP); l.add(Entry.MOD_SCANNER); l.add(Entry.MOD_PLATING); }
             return l;
         }

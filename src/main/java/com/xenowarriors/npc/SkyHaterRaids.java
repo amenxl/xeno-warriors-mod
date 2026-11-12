@@ -103,6 +103,7 @@ public final class SkyHaterRaids {
     /** One tick of a raid; true when it's over. */
     /** Is this raider part of a raid still going? (Ones left over from a raid that ended, or a restart, leave.) */
     public static boolean listed(UUID id) {
+        if (com.xenowarriors.you.YouAngel.TRIAL_RAIDERS.contains(id)) return true;   // (an Angel's trial)
         for (Raid r : RAIDS) if (r.raiders.contains(id)) return true;
         return false;
     }

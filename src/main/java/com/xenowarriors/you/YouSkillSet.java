@@ -85,8 +85,11 @@ public final class YouSkillSet {
     /** Bolt: your element, cast at what you're looking at. */
     public static final class Bolt implements Skill {
         private final Element el;
-        public Bolt(Element el) { this.el = el; }
-        @Override public String getId() { return "you_bolt"; }
+        private final boolean second;
+        public Bolt(Element el) { this(el, false); }
+        /** second: the second element's (from an Element Crystal) - its own skill. */
+        public Bolt(Element el, boolean second) { this.el = el; this.second = second; }
+        @Override public String getId() { return second ? "you_bolt2" : "you_bolt"; }
         @Override public Component getName() { return Component.literal(el.title() + " Bolt"); }
         @Override public int getCooldownTicks() { return 7 * 20; }
         @Override public int getKarmaCost() { return el.karma; }
@@ -94,7 +97,7 @@ public final class YouSkillSet {
         @Override public boolean use(ServerPlayer p) {
             LivingEntity t = SkillTargeting.aimed(p, 20, 12);
             if (t == null) return noTarget(p);
-            Elements.castFrom(p, t, el);
+            Elements.castFrom(p, t, second ? el : YouElements.boltElement(p, el));   // (the wheel can switch the first Bolt to your second element)
             return true;
         }
     }
@@ -102,8 +105,10 @@ public final class YouSkillSet {
     /** Wave: your element at everyone around you. */
     public static final class Wave implements Skill {
         private final Element el;
-        public Wave(Element el) { this.el = el; }
-        @Override public String getId() { return "you_wave"; }
+        private final boolean second;
+        public Wave(Element el) { this(el, false); }
+        public Wave(Element el, boolean second) { this.el = el; this.second = second; }
+        @Override public String getId() { return second ? "you_wave2" : "you_wave"; }
         @Override public Component getName() { return Component.literal(el.title() + " Wave"); }
         @Override public int getCooldownTicks() { return 24 * 20; }
         @Override public int getKarmaCost() { return el.karma * 2; }
@@ -171,6 +176,7 @@ public final class YouSkillSet {
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, len, 0));
             if (strong) p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, len, 0));
             YouRaces.form(p, lunar ? "lunar" : "solar", len);
+            if (strong) YouAngel.formUsed(p, lunar);                                // (path mastery: the form at its own time of day)
             p.serverLevel().sendParticles(lunar ? ParticleTypes.END_ROD : ParticleTypes.FLAME, p.getX(), p.getY() + 1, p.getZ(), 40, 0.6, 0.8, 0.6, 0.03);
             p.level().playSound(null, p.blockPosition(), lunar ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1F, lunar ? 1.4F : 0.8F);
             p.displayClientMessage(Component.literal(strong ? (lunar ? "The moon is with you." : "The sun is with you.") : (lunar ? "Lunar form - stronger at night." : "Solar form - stronger by day.")), true);

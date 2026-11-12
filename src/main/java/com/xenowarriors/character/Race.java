@@ -32,7 +32,7 @@ public enum Race {
             case SKYLANDER -> "Angel descendants with wings. You can fly (H puts the wings away), and you choose a Lunar or Solar form that empowers you at night or by day.";
             case DEMON -> "Horned and winged, with a human form to blend in (the transform key switches). Demons hit hard - and from Level 50, a demon's hunger can awaken them as a Devil.";
             case YOU -> "Made by the Government to capture and control distortions. Hardy and balanced; weaken a creature and Capture it to fight for you.";
-            case ANGEL -> "The first winged ones. Far stronger than anyone else from level 1, with seraph wings. Creative mode only for now.";
+            case ANGEL -> "The first winged ones. Far stronger than anyone else from level 1, with seraph wings. Creative mode only - in survival, a Skylander can ascend to become one.";
             default -> title;
         };
     }

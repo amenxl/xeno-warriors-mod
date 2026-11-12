@@ -587,6 +587,10 @@ public class CharacterCustomScreen extends Screen {
         var ys = ClientCharacterData.you(minecraft.player);
         rows.add(new Object[]{"Race", ys != null ? ys.shown().title + (ys.skylander() ? (ys.form == com.xenowarriors.you.YouSlot.FORM_SOLAR ? " (Solar)" : " (Lunar)") : ys.demon() && ys.humanForm ? " (human form)" : "") : com.xenowarriors.character.Race.label(type), -1F, 0});
         if (ys != null) rows.add(new Object[]{"Element", ys.element.title(), -1F, 0});
+        if (ys != null && ys.race == com.xenowarriors.character.Race.SKYLANDER && !ys.ascended) {
+            rows.add(new Object[]{"Lunar path", ys.lunarM + " / " + com.xenowarriors.you.YouAngel.MASTERY, ys.lunarM / (float) com.xenowarriors.you.YouAngel.MASTERY, 0x9AD2F2});
+            rows.add(new Object[]{"Solar path", ys.solarM + " / " + com.xenowarriors.you.YouAngel.MASTERY, ys.solarM / (float) com.xenowarriors.you.YouAngel.MASTERY, 0xFFC040});
+        }
         if (ys != null && ys.demon() && !ys.devil) rows.add(new Object[]{"Devil's Hunger", ys.hunger + " / " + com.xenowarriors.you.YouDevil.HUNGER_MAX, ys.hunger / (float) com.xenowarriors.you.YouDevil.HUNGER_MAX, 0xC0303A});
         rows.add(new Object[]{"HP", Math.round(self.health()) + " / " + Math.round(self.maxHealth()), -1F, 0});
         rows.add(new Object[]{"Karma", String.valueOf(Math.round(self.karma())), -1F, 0});

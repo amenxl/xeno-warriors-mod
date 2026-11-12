@@ -936,5 +936,19 @@
   "item.xenowarriors.bike_thrusters": "Bike Attachment: Hover Thrusters",
   "item.xenowarriors.bike_plating": "Bike Attachment: Armor Plating",
   "item.xenowarriors.bike_nitro": "Bike Attachment: Nitro Booster",
-  "block.xenowarriors.home_chest": "Home Chest"
+  "block.xenowarriors.home_chest": "Home Chest",
+  "entity.xenowarriors.elementalist": "Elementalist",
+  "entity.xenowarriors.vessel": "Vessel",
+  "item.xenowarriors.element_crystal": "Element Crystal",
+  "item.xenowarriors.demon_essence": "Demon Essence",
+  "skill.xenowarriors.you_bolt2": "Second Bolt",
+  "skill.xenowarriors.you_bolt2.short": "E2",
+  "skill.xenowarriors.you_bolt2.desc": "Your second element (from an Element Crystal), cast at what you're looking at.",
+  "skill.xenowarriors.you_bolt2.how": "Look at a target within 20 blocks.",
+  "skill.xenowarriors.you_wave2": "Second Wave",
+  "skill.xenowarriors.you_wave2.short": "W2",
+  "skill.xenowarriors.you_wave2.desc": "Your second element at everyone within 6 blocks.",
+  "skill.xenowarriors.you_angel_eye": "Angel Eye",
+  "skill.xenowarriors.you_angel_eye.short": "AE",
+  "skill.xenowarriors.you_angel_eye.desc": "For 10 seconds everyone nearby glows, and you see attacks coming: half of all hits miss you."
 }

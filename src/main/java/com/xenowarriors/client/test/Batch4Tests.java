@@ -97,6 +97,10 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("c2")) c2Paths(mc, l);
         if (f.isEmpty() || f.contains("devil")) devil(mc, l);
         if (dmz && (f.isEmpty() || f.contains("namek"))) namekSeedling(mc, l);
+        if (f.isEmpty() || f.contains("elementalist")) elementalist(mc, l);
+        if (f.isEmpty() || f.contains("vessel")) vessel(mc, l);
+        if (f.isEmpty() || f.contains("angel")) angel(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("mobgravity"))) mobGravity(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2179,6 +2183,7 @@ public final class Batch4Tests {
             if (top == null) top = w.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, BlockPos.ZERO);
             p.teleportTo(w, top.getX() + 0.5, top.getY(), top.getZ() + 0.5, 0, 10);
         }), 20 * 4);
+        l.add(null, () -> mc.setScreen(null), 20 * 12);      // (Namek's chunks generate slowly - the server falls well behind)
         l.add(null, () -> server(p -> {
             float dm = com.xenowarriors.you.YouRaces.damageMult(p), hp = p.getMaxHealth();
             boolean fx = p.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION) && p.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
@@ -2194,6 +2199,202 @@ public final class Batch4Tests {
         }), 20 * 2);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
         l.add("batch4_namek_seedling", () -> {}, 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void elementalist(Minecraft mc, MikikoTests.Steps l) {
+        com.xenowarriors.foes.ElementalistEntity[] el = new com.xenowarriors.foes.ElementalistEntity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            you(p, 4, "Ember", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.FIRE, 12);
+            var e = com.xenowarriors.foes.Foes.ELEMENTALIST.get().create(p.serverLevel());
+            e.setup(com.xenowarriors.ka.Element.ICE, com.xenowarriors.ka.Element.LIGHTNING, 1);
+            e.setNoAi(true);
+            el[0] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), e, p.blockPosition().offset(0, 0, 3));
+        }), 20);
+        l.add(null, () -> server(p -> {
+            var e = el[0];
+            var before = com.xenowarriors.ka.Elements.of(e);
+            e.getPersistentData().putLong("xw_el_cd", p.level().getGameTime() + 100);     // (as if it just cast)
+            p.getPersistentData().putString("xw_t_el", before == null ? "none" : before.id());
+        }), 15);
+        l.add(null, () -> server(p -> {
+            var e = el[0];
+            var now = com.xenowarriors.ka.Elements.of(e);
+            String before = p.getPersistentData().getString("xw_t_el");
+            log("elementalist: " + e.getName().getString() + " - " + before + " -> after a cast " + (now == null ? "none" : now.id()) + " -> " + (now != null && !now.id().equals(before) && (now == e.first() || now == e.second()) ? "PASS" : "FAIL"));
+        }), 5);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_elementalist", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> {
+            ItemStack c = com.xenowarriors.you.YouItems.crystal(com.xenowarriors.ka.Element.ICE);
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, c);
+            c.use(p.level(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
+            var s = com.xenowarriors.you.You.slot(p);
+            boolean b2 = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(x -> x.skill().getId().equals("you_bolt2"));
+            boolean w2 = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(x -> x.skill().getId().equals("you_wave2"));
+            boolean tog = com.xenowarriors.toggle.Toggles.of(p).contains(com.xenowarriors.toggle.Toggles.Entry.SWAP_ELEMENT);
+            log("elementalist: Ice Crystal used -> second element " + (s.element2 == null ? "none" : s.element2.id()) + ", Second Bolt " + b2 + ", Second Wave " + w2 + ", wheel toggle " + tog
+                    + " -> " + (s.element2 == com.xenowarriors.ka.Element.ICE && b2 && w2 && tog ? "PASS" : "FAIL"));
+            el[0].discard();
+        }), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void vessel(Minecraft mc, MikikoTests.Steps l) {
+        com.xenowarriors.foes.VesselEntity[] v = new com.xenowarriors.foes.VesselEntity[2];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            you(p, 6, "Vex", com.xenowarriors.character.Race.DEMON, com.xenowarriors.ka.Element.SHADOW, 20);
+            for (int i = 0; i < 2; i++) {
+                var e = com.xenowarriors.foes.Foes.VESSEL.get().create(p.serverLevel());
+                e.setLook(i); e.setNoAi(true);
+                v[i] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), e, p.blockPosition().offset(i == 0 ? -2 : 2, 0, 4));
+            }
+        }), 20);
+        // one: down to half -> fusing; the other fuses all the way
+        l.add(null, () -> server(p -> {
+            v[0].hurt(p.damageSources().playerAttack(p), v[0].getMaxHealth() * 0.55F);
+            v[1].fuseNowForTest();
+        }), 20);
+        l.add(null, () -> server(p -> log("vessel: at half health it fuses (state " + v[0].state() + "), the other finished fusing (state " + v[1].state() + ", " + v[1].getName().getString() + ") -> "
+                + (v[0].state() == com.xenowarriors.foes.VesselEntity.FUSING && v[1].state() == com.xenowarriors.foes.VesselEntity.FUSED ? "PASS" : "FAIL"))), 5);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_vessel_fusing", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> {
+            int st0 = com.xenowarriors.foes.VesselEntity.stopped;
+            var before = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, v[0].getBoundingBox().inflate(6)).size();
+            v[0].invulnerableTime = 0;
+            v[0].hurt(p.damageSources().playerAttack(p), 9999F);
+            int essence = 0;
+            for (var it : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, v[0].getBoundingBox().inflate(6)))
+                if (it.getItem().is(com.xenowarriors.you.YouItems.DEMON_ESSENCE.get())) essence += it.getItem().getCount();
+            log("vessel: killed while fusing -> stopped " + (com.xenowarriors.foes.VesselEntity.stopped - st0) + ", Demon Essence dropped " + essence + " -> " + (com.xenowarriors.foes.VesselEntity.stopped == st0 + 1 && essence >= 1 ? "PASS" : "FAIL"));
+            var s = com.xenowarriors.you.You.slot(p);
+            int h0 = s.hunger;
+            ItemStack es = new ItemStack(com.xenowarriors.you.YouItems.DEMON_ESSENCE.get());
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, es);
+            es.use(p.level(), p, net.minecraft.world.InteractionHand.MAIN_HAND);
+            log("vessel: Demon Essence -> Devil's Hunger " + h0 + " -> " + s.hunger + " -> " + (s.hunger == Math.min(60, h0 + 5) ? "PASS" : "FAIL"));
+            for (var it : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(12))) it.discard();
+        }), 10);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 160, 8), 10);
+        l.add("batch4_vessel_fused", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> { for (var e : v) if (e != null) e.discard(); }), 5);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void angel(Minecraft mc, MikikoTests.Steps l) {
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            var s = you(p, 3, "Seraph", com.xenowarriors.character.Race.SKYLANDER, com.xenowarriors.ka.Element.LIGHTNING, 30);
+            boolean second = com.xenowarriors.skill.SkillPool.of(p).stream().filter(x -> x.skill().getId().equals("you_lunar") || x.skill().getId().equals("you_solar")).count() == 2;
+            boolean notYet = !com.xenowarriors.you.YouAngel.ready(p, s);
+            for (int i = 0; i < 30; i++) { com.xenowarriors.you.YouAngel.formUsed(p, true); com.xenowarriors.you.YouAngel.formUsed(p, false); }
+            boolean ready = com.xenowarriors.you.YouAngel.ready(p, s);
+            log("angel: Lv " + com.xenowarriors.stats.Stats.characterLevel(p) + " Skylander - both forms " + second + ", not ready before mastery " + notYet + ", Lunar " + s.lunarM + " Solar " + s.solarM + " -> ready " + ready
+                    + " -> " + (second && notYet && ready ? "PASS" : "FAIL"));
+            var rec = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (rec != null) p.teleportTo(rec, 6.5, 140, 6.5, 0, 0);
+        }), 20 * 5);
+        l.add(null, () -> server(p -> {
+            var lv = p.serverLevel();
+            int y = com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y - 2;
+            while (y > lv.getMinBuildHeight() + 1 && (lv.getBlockState(new BlockPos(6, y - 1, 6)).isAir()
+                    || !lv.getBlockState(new BlockPos(6, y, 6)).isAir() || !lv.getBlockState(new BlockPos(6, y + 1, 6)).isAir())) y--;
+            p.teleportTo(6.5, y, 6.5);
+            p.server.setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60, 10, false, false));
+            com.xenowarriors.you.YouAngel.start(p);
+            log("angel: the trial starts - wave " + com.xenowarriors.you.YouAngel.trialWave(p) + ", " + com.xenowarriors.you.YouAngel.foesForTest(p).size() + " foes -> " + (com.xenowarriors.you.YouAngel.trialWave(p) == 1 && !com.xenowarriors.you.YouAngel.foesForTest(p).isEmpty() ? "PASS" : "FAIL"));
+        }), 30);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 12), 10);
+        l.add("batch4_angel_trial", () -> mc.setScreen(null), 3);
+        for (int w = 0; w < 3; w++) {
+            l.add(null, () -> server(p -> {
+                for (var id : com.xenowarriors.you.YouAngel.foesForTest(p))
+                    if (p.serverLevel().getEntity(id) instanceof net.minecraft.world.entity.LivingEntity e) { e.invulnerableTime = 0; e.hurt(p.damageSources().playerAttack(p), 99999F); }
+            }), 50);
+        }
+        l.add(null, () -> server(p -> {
+            p.server.setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
+            var s = com.xenowarriors.you.You.slot(p);
+            float dm = com.xenowarriors.you.YouRaces.damageMult(p);
+            boolean eye = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(x -> x.skill().getId().equals("you_angel_eye"));
+            boolean light = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(x -> x.skill().getId().equals("you_light"));
+            log("angel: three waves beaten -> ascended " + s.ascended + ", race " + s.shown().title + ", damage x" + dm + ", max hp " + Math.round(p.getMaxHealth()) + ", Angel Eye " + eye + ", Divine Light " + light
+                    + " -> " + (s.ascended && s.shown() == com.xenowarriors.character.Race.ANGEL && Math.abs(dm - 1.5F) < 0.01 && eye && light ? "PASS" : "FAIL"));
+            int f0 = com.xenowarriors.you.YouAngel.foreseen;
+            new com.xenowarriors.you.YouAngel.AngelEye().use(p);
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(p.getX() + 2, p.getY(), p.getZ()); g.setNoAi(true); p.serverLevel().addFreshEntity(g);
+            for (int i = 0; i < 20; i++) { p.invulnerableTime = 0; p.hurt(p.damageSources().mobAttack(g), 1F); }
+            g.discard();
+            int f = com.xenowarriors.you.YouAngel.foreseen - f0;
+            log("angel: Angel Eye - " + f + " of 20 hits foreseen -> " + (f >= 4 && f <= 16 ? "PASS" : "FAIL"));
+            p.heal(100);
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15), 15);
+        l.add("batch4_angel_back", () -> mc.setScreen(null), 3);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_angel_front", () -> mc.setScreen(null), 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static net.minecraft.world.entity.EntityType<?> dmzType(String field) {
+        try {
+            var ro = (net.minecraftforge.registries.RegistryObject<net.minecraft.world.entity.EntityType<?>>) Class.forName("com.dragonminez.common.init.MainEntities").getField(field).get(null);
+            return ro.get();
+        } catch (Throwable t) { log("mobgravity: no " + field + " " + t); return null; }
+    }
+
+    private static void mobGravity(Minecraft mc, MikikoTests.Steps l) {
+        net.minecraft.world.entity.Mob[] m = new net.minecraft.world.entity.Mob[3];
+        double[] home = new double[2];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            var lv = p.serverLevel();
+            var rad = dmzType("SAGA_RADITZ");
+            m[0] = rad == null ? null : (net.minecraft.world.entity.Mob) rad.create(lv);
+            m[1] = net.minecraft.world.entity.EntityType.ZOMBIE.create(lv);
+            for (int i = 0; i < 2; i++) if (m[i] != null) { m[i].moveTo(p.getX() + (i == 0 ? -2 : 2), p.getY(), p.getZ() + 4); m[i].setNoAi(true); m[i].setPersistenceRequired(); lv.addFreshEntity(m[i]); }
+            home[0] = m[1] == null ? -1 : com.xenowarriors.compat.DmzMobGravity.applyForTest(m[1]);
+            log("mobgravity: no King Kai - zombie penalty " + home[0] + " (" + com.xenowarriors.compat.DmzMobGravity.last + ") -> " + (home[0] == 0 ? "PASS" : "FAIL"));
+            var kai = dmzType("MASTER_KAIOSAMA");
+            m[2] = kai == null ? null : (net.minecraft.world.entity.Mob) kai.create(lv);
+            if (m[2] != null) { m[2].moveTo(p.getX(), p.getY(), p.getZ() + 8); m[2].setNoAi(true); lv.addFreshEntity(m[2]); }
+        }), 20 * 6);      // (the King Kais are looked for every 5 s)
+        l.add(null, () -> server(p -> {
+            if (m[1] == null || m[1].level() == null) return;
+            double z = com.xenowarriors.compat.DmzMobGravity.applyForTest(m[1]);
+            String zl = com.xenowarriors.compat.DmzMobGravity.last;
+            double zs = m[1].getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+            log("mobgravity: by King Kai - zombie penalty " + Math.round(z * 100) + "% (" + zl + "), speed " + String.format("%.3f", zs) + " -> " + (z > 0.05 && zs < 0.23 * (1 - z) + 0.01 ? "PASS" : "FAIL"));
+            if (m[0] != null) {
+                double r = com.xenowarriors.compat.DmzMobGravity.applyForTest(m[0]);
+                log("mobgravity: by King Kai - Raditz penalty " + Math.round(r * 100) + "% (" + com.xenowarriors.compat.DmzMobGravity.last + ") -> " + (r > 0 ? "PASS" : "FAIL"));
+            }
+            var gr = p.serverLevel().getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, p.getBoundingBox().inflate(30));
+            if (!gr.isEmpty()) log("mobgravity: a bot " + com.xenowarriors.compat.DmzMobGravity.applyForTest(gr.get(0)) + " " + com.xenowarriors.compat.DmzMobGravity.last);
+        }), 10);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_mob_gravity", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> { for (var e : m) if (e != null) e.discard(); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 

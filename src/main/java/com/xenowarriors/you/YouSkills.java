@@ -22,7 +22,7 @@ public final class YouSkills {
     private static final Map<String, List<SkillPool.Entry>> POOLS = new ConcurrentHashMap<>();
     private static final Map<String, Skill> ULTS = new ConcurrentHashMap<>();
 
-    private static String key(YouSlot s) { return s.race + ":" + s.element + ":" + s.form + ":" + s.path + ":" + s.devil; }
+    private static String key(YouSlot s) { return s.race + ":" + s.element + ":" + s.form + ":" + s.path + ":" + s.devil + ":" + s.element2 + ":" + s.ascended; }
 
     public static List<SkillPool.Entry> pool(YouSlot s) {
         return POOLS.computeIfAbsent(key(s), k -> build(s));
@@ -30,7 +30,7 @@ public final class YouSkills {
 
     public static Skill ultimate(YouSlot s) {
         return ULTS.computeIfAbsent(key(s), k -> s.demon() ? new com.xenowarriors.skill.ffr.SrSkills.HellclawRend()      // (Devil Unleashed: sneak + the transform key)
-                : s.race == Race.ANGEL ? new YouSkillSet.Storm(s.element, 1.6F) : new YouSkillSet.Storm(s.element, 1F));
+                : s.angel() ? new YouSkillSet.Storm(s.element, 1.6F) : new YouSkillSet.Storm(s.element, 1F));
     }
 
     private static List<SkillPool.Entry> build(YouSlot s) {
@@ -68,6 +68,9 @@ public final class YouSkills {
             default -> {}
         }
         if (s.devil) l.add(e(new YouDevil.SelfSplit(), 0));
+        if (r == Race.SKYLANDER) l.add(e(new YouSkillSet.SkyForm(s.form == YouSlot.FORM_SOLAR), YouAngel.SECOND_FORM_LEVEL));   // (a born Skylander's other path, from Lv 50)
+        if (s.element2 != null) { l.add(e(new YouSkillSet.Bolt(s.element2, true), 0)); l.add(e(new YouSkillSet.Wave(s.element2, true), 0)); }   // (an Element Crystal's)
+        if (s.ascended) { l.add(e(new YouSkillSet.DivineLight(), 0)); l.add(e(new YouAngel.AngelEye(), 0)); }
         return List.copyOf(l);
     }
 

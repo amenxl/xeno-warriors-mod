@@ -27,12 +27,19 @@ public final class YouSlot {
     public boolean devil;
     /** Devil's Hunger: kills in demon form from Level 50 on (see YouDevil). */
     public int hunger;
+    /** A second element, from an Element Crystal (null: none yet). */
+    public Element element2;
+    /** A born Skylander that ascended as an Angel (see YouAngel). */
+    public boolean ascended;
+    /** A Skylander's Lunar / Solar path mastery (forms used at their own time of day, see YouAngel). */
+    public int lunarM, solarM;
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
     /** The race they are now: the one they were made as, changed by a Government path or a Devil's awakening. */
     public Race shown() {
         if (devil) return Race.DEVIL;
+        if (ascended) return Race.ANGEL;
         return switch (path) {
             case PATH_MODIFIED -> Race.MODIFIED_HUMAN;
             case PATH_DEMON -> Race.ARTIFICIAL_DEMON;
@@ -48,7 +55,10 @@ public final class YouSlot {
     public boolean skylander() { return race == Race.SKYLANDER || path == PATH_SKYLANDER; }
 
     /** Has wings (put away or not). */
-    public boolean winged() { return race.wings() || path == PATH_DEMON || path == PATH_SKYLANDER || devil; }
+    public boolean winged() { return race.wings() || path == PATH_DEMON || path == PATH_SKYLANDER || devil || ascended; }
+
+    /** An Angel: made one in creative, or ascended (see YouAngel). */
+    public boolean angel() { return race == Race.ANGEL || ascended; }
 
     /** Wings out right now: winged, and not a demon hiding in human form. */
     public boolean wingsNow() { return winged() && !(demon() && humanForm); }
@@ -65,6 +75,10 @@ public final class YouSlot {
         t.putInt("path", path);
         t.putBoolean("devil", devil);
         t.putInt("hunger", hunger);
+        t.putString("element2", element2 == null ? "" : element2.id());
+        t.putBoolean("ascended", ascended);
+        t.putInt("lunar_m", lunarM);
+        t.putInt("solar_m", solarM);
         return t;
     }
 
@@ -79,6 +93,10 @@ public final class YouSlot {
         s.path = t.getInt("path");
         s.devil = t.getBoolean("devil");
         s.hunger = t.getInt("hunger");
+        s.element2 = Element.byId(t.getString("element2"));
+        s.ascended = t.getBoolean("ascended");
+        s.lunarM = t.getInt("lunar_m");
+        s.solarM = t.getInt("solar_m");
         return s;
     }
 
@@ -91,6 +109,10 @@ public final class YouSlot {
         buf.writeVarInt(path);
         buf.writeBoolean(devil);
         buf.writeVarInt(hunger);
+        buf.writeUtf(element2 == null ? "" : element2.id(), 16);
+        buf.writeBoolean(ascended);
+        buf.writeVarInt(lunarM);
+        buf.writeVarInt(solarM);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -103,6 +125,10 @@ public final class YouSlot {
         s.path = buf.readVarInt();
         s.devil = buf.readBoolean();
         s.hunger = buf.readVarInt();
+        s.element2 = Element.byId(buf.readUtf(16));
+        s.ascended = buf.readBoolean();
+        s.lunarM = buf.readVarInt();
+        s.solarM = buf.readVarInt();
         return s;
     }
 
