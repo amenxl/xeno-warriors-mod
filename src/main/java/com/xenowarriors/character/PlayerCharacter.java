@@ -104,7 +104,18 @@ public class PlayerCharacter {
     public float lastSyncedKarma = -1F;
 
     public CharacterType getType() { return type; }
-    public void setType(CharacterType type) { this.type = type; }
+    /** Each character's own outfit (by character key): switching characters puts away one and puts on the other's. */
+    public net.minecraft.nbt.CompoundTag outfits = new net.minecraft.nbt.CompoundTag();
+
+    public void setType(CharacterType type) {
+        if (this.type != null && this.type != type) {
+            outfits.putInt(key(this.type), outfit);                              // (this character's outfit stays with them)
+            String k = key(type);
+            outfit = outfits.contains(k) ? outfits.getInt(k) : 0;
+            if (type != null && outfit >= type.outfitKeys().length) outfit = 0;
+        }
+        this.type = type;
+    }
 
     /** Current Karma cap (Fox King mode raises it by half). Not saved. */
     public float karmaMax = Karma.MAX;
@@ -145,6 +156,7 @@ public class PlayerCharacter {
         this.backFox = other.backFox.copy();
         this.wingsOut = other.wingsOut;
         this.outfit = other.outfit;
+        this.outfits = other.outfits.copy();
         this.youSlot = other.youSlot;
         for (int i = 0; i < youSlots.length; i++) youSlots[i] = other.youSlots[i].copy();
     }
@@ -182,6 +194,7 @@ public class PlayerCharacter {
         tag.put("back_fox", backFox.copy());
         tag.putBoolean("wings_in", !wingsOut);
         tag.putInt("outfit", outfit);
+        tag.put("outfits", outfits);
         tag.putInt("torn", torn);
         tag.putInt("you_slot", youSlot);
         net.minecraft.nbt.ListTag ys = new net.minecraft.nbt.ListTag();
@@ -221,6 +234,7 @@ public class PlayerCharacter {
         this.backFox = tag.getCompound("back_fox");
         this.wingsOut = !tag.getBoolean("wings_in");
         this.outfit = tag.getInt("outfit");
+        this.outfits = tag.getCompound("outfits");
         this.torn = tag.getInt("torn");
         this.youSlot = Math.max(0, Math.min(youSlots.length - 1, tag.getInt("you_slot")));
         net.minecraft.nbt.ListTag ys = tag.getList("you_slots", net.minecraft.nbt.Tag.TAG_COMPOUND);

@@ -18,7 +18,7 @@
         },
         {
           "title": "The main menu",
-          "text": "Press {key:stats_menu} for the main menu:\n- Character Select and Character Customization (stats, skill loadout and ability tiers, outfits, KA / last resort)\n- Party (your team, bots, synergy and bond)\n- Pets, Factions, Journey, Warriors (everyone online), Settings (cel-shading, HUD style, Karma Sensing, movement, combat)\n- Guide: this book."
+          "text": "Press {key:stats_menu} for the main menu:\n- Character Select and Character Customization (stats, skill loadout and ability tiers, outfits, KA / last resort)\n- Party (your team, bots, synergy and bond)\n- Pets, Factions, Journey, Warriors (everyone online), Settings (cel-shading, HUD style, Karma Sensing, movement, combat)\n- Guide: this book.\n- Outfits are kept per character: switching characters puts on that character's own outfit (a new character starts in their usual one)."
         }
       ]
     },
@@ -127,8 +127,8 @@
           "text": "When your vehicle has no room left, a bot that can't fit takes another ride and follows you:\n- a free seat in another bot's ride,\n- Technica (as a bot) calls her own motorcycle and rides after you - and its guns shoot at whatever you're fighting,\n- or a free vehicle of yours parked nearby, which it drives.\nWhen you get out, they get out too (a motorcycle a bot called goes away again). Left far behind, their ride catches up."
         },
         {
-          "title": "Bots fishing",
-          "text": "In quiet times near water, a bot now and then goes fishing:\n- No rod? It makes one from its bag (3 sticks and 2 string; it makes itself a crafting table if it needs one).\n- It walks to the water's edge by you, casts, and reels in a few catches (the game's own fishing loot) into its bag, with a little XP.\n- A fight, danger, or you walking off: it packs up."
+          "title": "Bots fishing, hunting and taming",
+          "text": "In quiet times near water, a bot now and then goes fishing:\n- No rod? It makes one from its bag (3 sticks and 2 string; it makes itself a crafting table if it needs one).\n- It walks to the water's edge by you, casts, and reels in a few catches (the game's own fishing loot) into its bag, with a little XP.\n- A fight, danger, or you walking off: it packs up.\n## Hunting\n- Off the team, a character is sometimes busy hunting for food: they bring back meat - and what their pets take to tame (rabbit for Mikiko's foxes; seeds, berries, melon and apples for Rhalix's winged companions) - in their own bag.\n## Taming\n- On the team, a Mikiko or Rhalix bot with the right food in its bag tames pets it comes across for you (foxes for Mikiko; bats, parrots, chickens and bees for Rhalix), same chance and limits as feeding them yourself.\n- Rabbits are much more common all over the Overworld now."
         }
       ]
     },

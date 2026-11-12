@@ -22,7 +22,7 @@ public final class OffDutyIcons {
     public static int color(int act) {
         return switch (act) {
             case TRAINING -> 0xFFFF9A5A; case RELAX_DOWNED, RELAX_LONG, RELAX -> 0xFF9FC8FF; case PARTY -> 0xFFFF7FD8;
-            case DMZ -> 0xFFFFE04A; case MINING -> 0xFFD8C090; case WOOD -> 0xFFB98A50; case BUILDING -> 0xFF8BE07A; default -> 0xFFAAAAAA;
+            case DMZ -> 0xFFFFE04A; case MINING -> 0xFFD8C090; case WOOD -> 0xFFB98A50; case BUILDING -> 0xFF8BE07A; case HUNTING -> 0xFFD07A4A; default -> 0xFFAAAAAA;
         };
     }
 
@@ -42,6 +42,7 @@ public final class OffDutyIcons {
             case PARTY -> confetti(g, x, y, t);
             case DMZ -> ki(g, x, y, t);
             case BUILDING -> bricks(g, x, y, t);
+            case HUNTING -> { swing(g, new ItemStack(Items.BOW), x, y, t, 1F); chips(g, x, y, t, 0xFFB04A3A); }
             default -> {}
         }
         g.disableScissor();

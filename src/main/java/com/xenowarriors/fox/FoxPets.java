@@ -189,6 +189,11 @@ public final class FoxPets {
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
 
+    /** A Mikiko bot feeding one rabbit from its bag: tamed for its player (the same chance and limits). */
+    public static void tameFor(ServerPlayer owner, Fox fox, ItemStack stack) { tryTame(owner, fox, stack); }
+
+    public static boolean tamingFood(ItemStack s) { return isRabbit(s); }
+
     private static void tryTame(ServerPlayer p, Fox fox, ItemStack stack) {
         if (!com.xenowarriors.party.Parties.petRoom(p)) return;
         if (pets(p).size() >= MAX_FOXES) {

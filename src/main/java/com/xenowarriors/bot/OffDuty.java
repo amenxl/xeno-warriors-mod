@@ -59,7 +59,7 @@ public final class OffDuty {
     public enum Act {
         NONE(""), TRAINING("Training"), RELAX_DOWNED("Relaxing - downed a lot lately"), RELAX_LONG("Relaxing - been with you a long time"),
         RELAX("Relaxing"), PARTY("Out at a party"), DMZ("On a DMZ mission"), MINING("Mining"), WOOD("Chopping wood"), BUILDING("Building"),
-        DRAGON_BALLS("Searching for the Dragon Balls");
+        DRAGON_BALLS("Searching for the Dragon Balls"), HUNTING("Hunting for food");
         public final String label;
         Act(String label) { this.label = label; }
         public boolean relaxing() { return this == RELAX || this == RELAX_DOWNED || this == RELAX_LONG; }
@@ -215,8 +215,8 @@ public final class OffDuty {
             List<Act> pool = new ArrayList<>();
             int[] w;
             String radar = radar(p, t);
-            Act[] opts = {Act.TRAINING, Act.MINING, Act.WOOD, Act.BUILDING, Act.PARTY, Act.DMZ, Act.DRAGON_BALLS};
-            w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0, radar != null && !full ? 10 : 0};
+            Act[] opts = {Act.TRAINING, Act.MINING, Act.WOOD, Act.BUILDING, Act.PARTY, Act.DMZ, Act.DRAGON_BALLS, Act.HUNTING};
+            w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0, radar != null && !full ? 10 : 0, full ? 0 : 14};
             int sum = 0; for (int x : w) sum += x;
             int roll = r.nextInt(sum), i = 0;
             while (roll >= w[i]) roll -= w[i++];
@@ -281,11 +281,20 @@ public final class OffDuty {
                 charXp(p, t, Stat.ATTACK, 1.5F, c);
                 if (r.nextFloat() < 0.6F) find(p, t, c, new ItemStack(LOGS[r.nextInt(LOGS.length)], 1 + r.nextInt(3)));
             }
+            case HUNTING -> {                                                       // food - and what its pets would take to tame
+                if (bagFull(p, t)) { c.putBoolean("full", true); return; }
+                c.remove("full");
+                charXp(p, t, Stat.SPEED, 2F, c);
+                if (r.nextFloat() < 0.45F) find(p, t, c, new ItemStack(MEAT[r.nextInt(MEAT.length)], 1 + r.nextInt(2)));
+                Item[] tame = t == CharacterType.MIKIKO ? new Item[]{Items.RABBIT} : t == CharacterType.RHALIX ? new Item[]{Items.WHEAT_SEEDS, Items.SWEET_BERRIES, Items.MELON_SLICE, Items.APPLE} : null;
+                if (tame != null && r.nextFloat() < 0.35F) find(p, t, c, new ItemStack(tame[r.nextInt(tame.length)], 1 + r.nextInt(2)));
+            }
             default -> {}                                                            // (relaxing: nothing but rest)
         }
     }
 
     static final Item[] LOGS = {Items.OAK_LOG, Items.BIRCH_LOG, Items.SPRUCE_LOG, Items.DARK_OAK_LOG};
+    static final Item[] MEAT = {Items.BEEF, Items.PORKCHOP, Items.CHICKEN, Items.MUTTON, Items.RABBIT};
 
     /** Ores by Mining level: common ones always, the rarer ones from a level up and likelier the higher it is. */
     private record Ore(Item item, int minLevel, int weight, int max) {}
@@ -496,7 +505,7 @@ public final class OffDuty {
     private static String verb(Act a) {
         return switch (a) {
             case TRAINING -> "training"; case PARTY -> "partying"; case DMZ -> "their DMZ mission"; case MINING -> "mining";
-            case WOOD -> "chopping wood"; case BUILDING -> "building"; case DRAGON_BALLS -> "searching for the Dragon Balls"; default -> "relaxing";
+            case WOOD -> "chopping wood"; case BUILDING -> "building"; case DRAGON_BALLS -> "searching for the Dragon Balls"; case HUNTING -> "hunting for food"; default -> "relaxing";
         };
     }
 

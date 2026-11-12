@@ -182,6 +182,12 @@ public final class WingPets {
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
 
+    /** A Rhalix bot feeding one from its bag: tamed for its player (the same chance and limits). */
+    public static void tameFor(ServerPlayer owner, Mob mob, ItemStack stack) { tryTame(owner, mob, stack); }
+
+    /** Would this item tame that animal (bats, parrots, chickens, bees)? */
+    public static boolean tamingFood(Entity e, ItemStack s) { return food(e, s); }
+
     private static void tryTame(ServerPlayer p, Mob mob, ItemStack stack) {
         if (!com.xenowarriors.party.Parties.petRoom(p)) return;
         if (pets(p).size() >= MAX) {

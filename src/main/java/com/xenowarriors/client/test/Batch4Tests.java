@@ -63,6 +63,8 @@ public final class Batch4Tests {
         if (ef && f.contains("efgear")) efGear(mc, l);
         if (f.isEmpty() || f.contains("hekuteam")) hekuTeam(mc, l);
         if (f.isEmpty() || f.contains("fishing")) fishing(mc, l);
+        if (f.isEmpty() || f.contains("taming")) taming(mc, l);
+        if (f.isEmpty() || f.contains("outfits")) outfits(mc, l);
         if (dmz && (f.isEmpty() || f.contains("automission"))) autoMission(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
@@ -92,6 +94,41 @@ public final class Batch4Tests {
             log("fishing: rods made " + com.xenowarriors.bot.BotFishing.rodsMade + ", trips " + com.xenowarriors.bot.BotFishing.trips + ", catches " + com.xenowarriors.bot.BotFishing.catches
                     + " -> " + (com.xenowarriors.bot.BotFishing.rodsMade > 0 && com.xenowarriors.bot.BotFishing.catches > 0 ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
+        }), 5);
+    }
+
+    private static void taming(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.MIKIKO, null);
+            if (b == null) { log("taming: no bot -> FAIL"); return; }
+            b.moveTo(p.getX() + 1, p.getY(), p.getZ(), 0, 0); b.setMode(PartyBotEntity.NEUTRAL);
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RABBIT, 16));
+            var fox = net.minecraft.world.entity.EntityType.FOX.create(p.serverLevel());
+            fox.moveTo(p.getX() + 5, p.getY(), p.getZ() + 3, 0, 0); fox.addTag("xw_b4");
+            p.serverLevel().addFreshEntity(fox);
+        }), 600);
+        l.add(null, () -> server(p -> {
+            int pets = com.xenowarriors.fox.FoxPets.records(p).size();
+            log("taming: the Mikiko bot fed the fox " + com.xenowarriors.bot.BotTaming.tries + " times, your foxes " + pets + " -> " + (com.xenowarriors.bot.BotTaming.tries > 0 && pets > 0 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 5);
+    }
+
+    private static void outfits(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        l.add(null, () -> server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 3)), 10);
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        int[] seen = new int[3];
+        l.add(null, () -> server(p -> { seen[0] = com.xenowarriors.character.CharacterManager.outfit(p); p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 1); }), 10);
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        l.add(null, () -> server(p -> seen[1] = com.xenowarriors.character.CharacterManager.outfit(p)), 10);
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            seen[2] = com.xenowarriors.character.CharacterManager.outfit(p);
+            log("outfits: Rhalix wore S3 (3); Mikiko then had " + seen[0] + ", Rhalix back " + seen[1] + ", Mikiko back " + seen[2] + " -> " + (seen[0] == 0 && seen[1] == 3 && seen[2] == 1 ? "PASS" : "FAIL"));
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.outfit = 0; d.outfits = new net.minecraft.nbt.CompoundTag(); });
         }), 5);
     }
 
