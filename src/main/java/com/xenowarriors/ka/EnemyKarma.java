@@ -32,11 +32,17 @@ public final class EnemyKarma {
         return t.getFloat(MAX);
     }
 
-    public static float get(LivingEntity e) { max(e); return e.getPersistentData().getFloat(K); }
+    public static float get(LivingEntity e) {
+        if (e instanceof com.xenowarriors.bot.PartyBotEntity b) return b.karma;     // (a bot: its own Karma, as for its skills)
+        max(e); return e.getPersistentData().getFloat(K);
+    }
 
     public static boolean has(LivingEntity e, float amount) { return get(e) >= amount; }
 
-    public static void spend(LivingEntity e, float amount) { e.getPersistentData().putFloat(K, Math.max(0, get(e) - amount)); }
+    public static void spend(LivingEntity e, float amount) {
+        if (e instanceof com.xenowarriors.bot.PartyBotEntity b) { b.karma = Math.max(0, b.karma - amount); return; }
+        e.getPersistentData().putFloat(K, Math.max(0, get(e) - amount));
+    }
 
     /** Once a second: +1.5, like a player. */
     public static void regen(LivingEntity e) {

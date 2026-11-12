@@ -63,6 +63,7 @@ public final class YouBots {
     /** Every second: what its race does by itself. */
     public static void tick(PartyBotEntity b) {
         if (!(b.level() instanceof ServerLevel l) || b.downed()) return;
+        YouKa.botTick(b);                                                        // (its KA: rolled at Level 30, used in a fight)
         if (namekPower(b)) {                                                     // Namek's three suns
             b.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 1, true, false, true));
             b.addEffect(new MobEffectInstance(MobEffects.JUMP, 60, 1, true, false, true));

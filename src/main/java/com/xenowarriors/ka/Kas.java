@@ -61,7 +61,11 @@ public final class Kas {
     // ---------------------------------------------------------------- who has what
 
     public static Ka of(LivingEntity e) {
-        if (e instanceof ServerPlayer p) return p.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve().map(d -> Ka.byId(d.ka)).orElse(null);   // (resolve(): LazyOptional.map throws when the mapper gives null, i.e. no KA)
+        if (e instanceof ServerPlayer p) {
+            var you = com.xenowarriors.you.You.slot(p);                         // one of your own characters: its own KA (rolled at Level 30 - see YouKa)
+            if (you != null && !you.ka.isEmpty()) return Ka.byId(you.ka);
+            return p.getCapability(ModCapabilities.PLAYER_CHARACTER).resolve().map(d -> Ka.byId(d.ka)).orElse(null);
+        }   // (resolve(): LazyOptional.map throws when the mapper gives null, i.e. no KA)
         return Ka.byId(e.getPersistentData().getString(KA));
     }
 
@@ -120,6 +124,12 @@ public final class Kas {
     public static boolean usePlayer(ServerPlayer p) {
         Ka ka = of(p);
         if (ka == null) {
+            var you = com.xenowarriors.you.You.slot(p);
+            if (you != null) {
+                p.displayClientMessage(Component.literal(!you.kaRolled ? you.name + "'s KA may awaken at Level " + com.xenowarriors.you.YouKa.LEVEL + " (1 in " + com.xenowarriors.you.YouKa.CHANCE + " ever get one)"
+                        : you.name + " has no KA - only a wish to the dragon could change that").withStyle(ChatFormatting.DARK_PURPLE), true);
+                return false;
+            }
             p.displayClientMessage(Component.literal(ModCapabilities.getType(p).getDisplayName().getString() + "'s KA hasn't been revealed yet...").withStyle(ChatFormatting.DARK_PURPLE), true);
             return false;
         }

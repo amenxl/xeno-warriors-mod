@@ -56,6 +56,9 @@ public final class SkillManager {
 
     private SkillManager() {}
 
+    /** The KA the HUD's super slot shows: your own character's, or a test one. */
+    private static String kaIdOf(ServerPlayer p) { var k = com.xenowarriors.ka.Kas.of(p); return k == null ? "" : k.id(); }
+
     /** The default loadout's skill in a slot (for the HUD before a sync, and the team ultimate). */
     public static Skill get(CharacterType type, int slot) {
         return SkillPool.inSlot(type, SkillPool.defaultLoadout(type), slot);
@@ -139,7 +142,7 @@ public final class SkillManager {
     public static void syncLoadout(ServerPlayer player) {
         CharacterType type = ModCapabilities.getType(player);
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d ->
-                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadoutWithUlt(type), com.xenowarriors.stats.Stats.characterLevel(player), d.ka, com.xenowarriors.character.Seasons.highest(player.server)), player));
+                ModNetwork.sendToPlayer(new com.xenowarriors.network.SkillLoadoutPacket(d.loadoutWithUlt(type), com.xenowarriors.stats.Stats.characterLevel(player), kaIdOf(player), com.xenowarriors.character.Seasons.highest(player.server)), player));
         SkillLevels.sync(player);                                             // (this character's ability levels)
     }
 

@@ -587,6 +587,8 @@ public class CharacterCustomScreen extends Screen {
         var ys = ClientCharacterData.you(minecraft.player);
         rows.add(new Object[]{"Race", ys != null ? ys.shown().title + (ys.skylander() ? (ys.form == com.xenowarriors.you.YouSlot.FORM_SOLAR ? " (Solar)" : " (Lunar)") : ys.demon() && ys.humanForm ? " (human form)" : "") : com.xenowarriors.character.Race.label(type), -1F, 0});
         if (ys != null) rows.add(new Object[]{"Element", ys.element.title(), -1F, 0});
+        if (ys != null) { var k = com.xenowarriors.ka.Ka.byId(ys.ka);
+            rows.add(new Object[]{"KA", k != null ? k.title() + " (" + k.manipulates + ")" : ys.kaRolled ? "none" : "may awaken at Lv " + com.xenowarriors.you.YouKa.LEVEL, -1F, 0}); }
         if (ys != null && ys.race == com.xenowarriors.character.Race.SKYLANDER && !ys.ascended) {
             rows.add(new Object[]{"Lunar path", ys.lunarM + " / " + com.xenowarriors.you.YouAngel.MASTERY, ys.lunarM / (float) com.xenowarriors.you.YouAngel.MASTERY, 0x9AD2F2});
             rows.add(new Object[]{"Solar path", ys.solarM + " / " + com.xenowarriors.you.YouAngel.MASTERY, ys.solarM / (float) com.xenowarriors.you.YouAngel.MASTERY, 0xFFC040});

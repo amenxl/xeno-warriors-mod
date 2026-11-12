@@ -35,6 +35,9 @@ public final class YouSlot {
     public int lunarM, solarM;
     /** Its own look: "" = your skin, "p:<name>" = that Minecraft player's skin, "f:<sha1>" = a skin file you added (see YouSkins). */
     public String skin = "";
+    /** Its KA (a Ka id; "" = none), and whether it has had its one roll at Level 30 (1 in 3 get one - see YouKa). */
+    public String ka = "";
+    public boolean kaRolled;
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -82,6 +85,8 @@ public final class YouSlot {
         t.putInt("lunar_m", lunarM);
         t.putInt("solar_m", solarM);
         t.putString("skin", skin);
+        t.putString("ka", ka);
+        t.putBoolean("ka_rolled", kaRolled);
         return t;
     }
 
@@ -101,6 +106,8 @@ public final class YouSlot {
         s.lunarM = t.getInt("lunar_m");
         s.solarM = t.getInt("solar_m");
         s.skin = com.xenowarriors.you.YouSkins.valid(t.getString("skin")) ? t.getString("skin") : "";
+        s.ka = t.getString("ka");
+        s.kaRolled = t.getBoolean("ka_rolled");
         return s;
     }
 
@@ -118,6 +125,8 @@ public final class YouSlot {
         buf.writeVarInt(lunarM);
         buf.writeVarInt(solarM);
         buf.writeUtf(skin, 64);
+        buf.writeUtf(ka, 16);
+        buf.writeBoolean(kaRolled);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -136,6 +145,8 @@ public final class YouSlot {
         s.solarM = buf.readVarInt();
         String sk = buf.readUtf(64);
         s.skin = com.xenowarriors.you.YouSkins.valid(sk) ? sk : "";
+        s.ka = buf.readUtf(16);
+        s.kaRolled = buf.readBoolean();
         return s;
     }
 

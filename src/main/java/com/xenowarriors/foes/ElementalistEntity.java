@@ -30,7 +30,8 @@ import net.minecraft.world.level.Level;
 public class ElementalistEntity extends PathfinderMob implements Enemy {
     private static final EntityDataAccessor<String> ELS = SynchedEntityData.defineId(ElementalistEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> LOOK = SynchedEntityData.defineId(ElementalistEntity.class, EntityDataSerializers.INT);
-    public static final String[] LOOKS = {"spiky", "redhair", "messy", "gunner", "waver"};
+    /** Wizards: robes, a tall pointed hat, a staff with an orb (tools/xw/npcs/wizards.py). */
+    public static final String[] LOOKS = {"wiz_storm", "wiz_ember", "wiz_sage", "wiz_frost", "wiz_shadow"};
     private long lastCd = -1;
 
     public ElementalistEntity(EntityType<? extends PathfinderMob> type, Level level) { super(type, level); }
@@ -53,8 +54,7 @@ public class ElementalistEntity extends PathfinderMob implements Enemy {
         entityData.set(LOOK, look);
         Elements.give(this, a);
         setCustomName(Component.literal(a.title() + " / " + b.title() + " Elementalist").withStyle(st -> st.withColor(a.color)));
-        setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(random.nextBoolean() ? Items.BLAZE_ROD : Items.STICK));
-        setDropChance(EquipmentSlot.MAINHAND, 0F);
+        setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);                     // (its staff is part of its robes)
     }
 
     @Override

@@ -106,6 +106,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("rlgun")) rlGun(mc, l);
         if (f.isEmpty() || f.contains("boostbag")) boostBag(mc, l);
         if (f.isEmpty() || f.contains("partylast")) partyLasts(mc, l);
+        if (f.isEmpty() || f.contains("youka")) youKa(mc, l, dmz);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2439,6 +2440,61 @@ public final class Batch4Tests {
         int n = b.getCubes().size();
         for (var c : b.getChildBones()) n += countCubes(c);
         return n;
+    }
+
+    private static void youKa(Minecraft mc, MikikoTests.Steps l, boolean dmz) {
+        String[] first = new String[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.you.YouKa.testAwaken = false;
+            you(p, 5, "Nok", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.WATER, 12);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+        }), 60);
+        l.add(null, () -> server(p -> {
+            var s = com.xenowarriors.you.You.slot(p);
+            log("youka: Lv " + com.xenowarriors.stats.Stats.characterLevel(p) + ", the 2 in 3 roll: rolled " + s.kaRolled + ", KA '" + s.ka + "' -> " + (s.kaRolled && s.ka.isEmpty() ? "PASS" : "FAIL"));
+            com.xenowarriors.you.YouKa.testAwaken = true;
+            you(p, 4, "Kai", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.FIRE, 12);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+        }), 60);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.you.YouKa.testAwaken = null;
+            var s = com.xenowarriors.you.You.slot(p);
+            var k = com.xenowarriors.ka.Kas.of(p);
+            first[0] = s.ka;
+            log("youka: the 1 in 3 roll: rolled " + s.kaRolled + ", KA " + (k == null ? "none" : k.title()) + " -> " + (s.kaRolled && k != null ? "PASS" : "FAIL"));
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(p.getX(), p.getY(), p.getZ() + 4); g.setNoAi(true); p.serverLevel().addFreshEntity(g);
+            p.teleportTo(p.getX(), p.getY(), p.getZ()); p.setYRot(0); p.setXRot(10); p.setYHeadRot(0);
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.setKarma(100F); d.cooldownEnd[com.xenowarriors.skill.SkillManager.SUPER_SLOT] = 0; });
+        }), 10);
+        l.add(null, () -> server(p -> {
+            float k0 = com.xenowarriors.karma.Karma.get(p);
+            com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.SUPER_SLOT);
+            float k1 = com.xenowarriors.karma.Karma.get(p);
+            log("youka: the super ultimate key uses it: Karma " + k0 + " -> " + k1 + " -> " + (k1 < k0 ? "PASS" : "FAIL"));
+            int w = com.xenowarriors.you.YouKa.wish(p);
+            var s = com.xenowarriors.you.You.slot(p);
+            log("youka: a wish to the dragon gives a new KA: " + first[0] + " -> " + s.ka + " -> " + (w == 1 && !s.ka.isEmpty() && !s.ka.equals(first[0]) ? "PASS" : "FAIL"));
+            if (dmz) {
+                boolean added = com.xenowarriors.you.YouKa.addWish();
+                int lists = 0, with = 0;
+                try {
+                    var m = (java.util.Map<String, java.util.List<Object>>) Class.forName("com.dragonminez.common.wish.DragonWishRegistry").getMethod("getServerWishes").invoke(null);
+                    var nm = Class.forName("com.dragonminez.common.wish.Wish").getMethod("getName");
+                    for (var e : m.values()) { lists++; for (Object o : e) if (com.xenowarriors.you.YouKa.WISH_NAME.equals(nm.invoke(o))) { with++; break; } }
+                } catch (Throwable t) { log("youka: wish list " + t); }
+                log("youka: DragonMineZ's dragons offer the KA wish: " + with + " of " + lists + " dragons -> " + (added && lists > 0 && with == lists ? "PASS" : "FAIL"));
+                int before = com.xenowarriors.you.YouKa.wishes;
+                p.server.getCommands().performPrefixedCommand(p.server.createCommandSourceStack().withPermission(4), "xenokawish " + p.getGameProfile().getName());
+                log("youka: the wish's command grants it " + (com.xenowarriors.you.YouKa.wishes == before + 1) + " -> " + (com.xenowarriors.you.YouKa.wishes == before + 1 ? "PASS" : "FAIL"));
+            }
+            for (var g : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.IronGolem.class, p.getBoundingBox().inflate(10))) g.discard();
+        }), 10);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10); }, 5);
+        Batch3Tests.character(l, CharacterType.MIKIKO);
     }
 
     /** A party doesn't break up over a monster just standing about - only real trouble (and only after a few seconds of it). */
