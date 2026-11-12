@@ -56,9 +56,9 @@ public final class EnderSaiyans {
     }
 
     @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static final class Attrs {
+    public static final class EnderAttrs {
         @SubscribeEvent
-        public static void attributes(EntityAttributeCreationEvent event) {
+        public static void enderAttributes(EntityAttributeCreationEvent event) {
             event.put(ENDER_SAIYAN.get(), EnderSaiyanEntity.createAttributes().build());
         }
     }

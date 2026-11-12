@@ -107,14 +107,14 @@ public class EnderSaiyanRenderer extends MobRenderer<EnderSaiyanEntity, Enderman
     }
 
     @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static final class Reg {
+    public static final class EnderReg {
         @SubscribeEvent
-        public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
+        public static void enderRenderers(EntityRenderersEvent.RegisterRenderers e) {
             e.registerEntityRenderer(com.xenowarriors.boss.EnderSaiyans.ENDER_SAIYAN.get(), EnderSaiyanRenderer::new);
         }
 
         @SubscribeEvent
-        public static void layers(EntityRenderersEvent.RegisterLayerDefinitions e) {
+        public static void enderLayers(EntityRenderersEvent.RegisterLayerDefinitions e) {
             e.registerLayerDefinition(CREST_LAYER, Crest::create);
         }
     }

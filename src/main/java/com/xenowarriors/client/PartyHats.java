@@ -98,8 +98,8 @@ public final class PartyHats {
     }
 
     @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static final class Reg {
+    public static final class HatReg {
         @SubscribeEvent
-        public static void layers(EntityRenderersEvent.RegisterLayerDefinitions e) { e.registerLayerDefinition(LAYER, PartyHats::create); }
+        public static void hatLayers(EntityRenderersEvent.RegisterLayerDefinitions e) { e.registerLayerDefinition(LAYER, PartyHats::create); }
     }
 }
