@@ -104,6 +104,43 @@ final class DmzItemTests {
             giveBot(bot(p, CharacterType.KYRIE), rest);
             log.accept("dmz item mission " + Q[0] + " wants " + R[0] + "x " + pick[2] + " (progress " + o[0] + ") - one short, split: " + where(p));
         }); }, 70));
+        // the party's mission bag: a needed item picked up goes into it (not the inventory), counts, and comes out only
+        l.add(new Step(null, () -> { Dmz6Tests.noDmzScreen(mc); UiTest.server(p -> {
+            if (Q[0] == null) return;
+            com.xenowarriors.compat.MissionBag.of(p).clearContent();
+            R[1] = count(p.getInventory(), item);
+            boolean w = com.xenowarriors.compat.MissionBag.wanted(p, new ItemStack(item));
+            log.accept("mission bag: wanted=" + w);
+            var e = new net.minecraft.world.entity.item.ItemEntity(p.level(), p.getX(), p.getY() + 0.5, p.getZ(), new ItemStack(item, 1));
+            e.setNoPickUpDelay();
+            p.level().addFreshEntity(e);
+        }); }, 30));
+        l.add(new Step(null, () -> { Dmz6Tests.noDmzScreen(mc); UiTest.server(p -> {
+            if (Q[0] == null) return;
+            var bag = com.xenowarriors.compat.MissionBag.of(p);
+            int inBag = count(bag, item), inv = count(p.getInventory(), item);
+            int counted = DmzItemMissions.botItems(p, net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item).toString());
+            c.check("mission bag took the picked-up mission item", inBag == 1 && inv == R[1], "bag " + inBag + " inventory " + R[1] + " -> " + inv);
+            c.check("mission bag counts for the mission", counted >= 1, "counted " + counted);
+            com.xenowarriors.compat.MissionBag.open(p);
+            if (p.containerMenu instanceof com.xenowarriors.compat.MissionBagMenu m) {
+                boolean noPlace = !m.slots.get(0).mayPlace(new ItemStack(item));
+                p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.DIRT, 5));
+                int dirtSlot = -1;
+                for (int i = com.xenowarriors.compat.MissionBagMenu.ROWS * 9; i < m.slots.size(); i++) if (m.slots.get(i).getItem().is(net.minecraft.world.item.Items.DIRT)) dirtSlot = i;
+                ItemStack moved = dirtSlot < 0 ? ItemStack.EMPTY : m.quickMoveStack(p, dirtSlot);
+                int bagSlot = -1;
+                for (int i = 0; i < com.xenowarriors.compat.MissionBagMenu.ROWS * 9; i++) if (m.slots.get(i).getItem().is(item)) bagSlot = i;
+                ItemStack out = bagSlot < 0 ? ItemStack.EMPTY : m.quickMoveStack(p, bagSlot);
+                c.check("mission bag is take-only", noPlace && moved.isEmpty() && count(bag, net.minecraft.world.item.Items.DIRT) == 0 && !out.isEmpty()
+                        && count(bag, item) == 0 && count(p.getInventory(), item) == R[1] + 1,
+                        "noPlace=" + noPlace + " shiftIn=" + moved + " takeOut=" + out + " bag now " + count(bag, item) + " inv " + count(p.getInventory(), item));
+                p.closeContainer();
+                p.getInventory().clearOrCountMatchingItems(s -> s.is(net.minecraft.world.item.Items.DIRT), 64, p.inventoryMenu.getCraftSlots());
+            } else c.check("mission bag opens", false, "menu " + p.containerMenu);
+            p.getInventory().clearOrCountMatchingItems(s -> s.is(item), 1, p.inventoryMenu.getCraftSlots());   // back to one short
+            bag.clearContent();
+        }); }, 70));
         l.add(new Step(null, () -> { Dmz6Tests.noDmzScreen(mc); UiTest.server(p -> {
             if (Q[0] == null) return;
             int[] o = DmzItemMissions.objective(p, Q[0], 0);

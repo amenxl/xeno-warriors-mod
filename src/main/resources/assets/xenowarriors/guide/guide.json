@@ -329,6 +329,10 @@
           "text": "- If a mission wants you to beat a story fighter that never turns up by itself, it's summoned near you a few seconds after the objective starts (once per objective).\n- A mission that wants you to have items counts your bots' things too (their bag and extra tabs): split them between you and your bots however you like. Like DragonMineZ, it only counts them - nothing is taken from you or your bots.\n- A bot's own missions count its things, yours and your other bots'.\n- If a mission needs items, every hostile mob you or your bots kill has a 30% chance to drop one, until you have enough.\n- Mikiko masters Kaioken 20 times faster than anyone else."
         },
         {
+          "title": "Mission Bag",
+          "text": "Your party's bag for DragonMineZ mission items, so they don't fill up your inventory or your bots'.\n- Anything a mission still needs (yours or a bot teammate's) goes into it: drops from whatever you or your bots kill, and those items when you pick them up. A message shows how many went in.\n- 216 slots (4 pages of 54).\n- Open it from the main menu > Party > Mission Bag (or /xeno missionbag). You can take things out, but you can't put anything in.\n- What's in it counts for your missions just like your inventory does.\n- Once a mission has all it needs, more of that item goes into your inventory as usual."
+        },
+        {
           "title": "The Zombie Saiyan",
           "text": "- A rare boss that comes out at night in the Overworld. It also has a spawn egg.\n- As you wear it down it goes Super Saiyan, then Super Saiyan 2 (lightning), then Super Saiyan 3 (long hair). It uses combos, dashes, ki blasts and the Kamehameha.\n- Beat it as a Super Saiyan 3 and it collapses. Then it gets back up screaming, throws everyone back, and returns fully healed as a Super Saiyan 4.\n- It grows with your DragonMineZ power. Beaten as a Super Saiyan 4, it drops: diamonds, emeralds, Senzu Beans, Karma items, and sometimes a piece of Goku armor with every enchantment."
         },

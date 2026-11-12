@@ -40,7 +40,7 @@ public final class DmzItemMissions {
             if (p == null || p instanceof FakePlayer) return 0;
             Item it = item(itemId);
             if (it == null) return 0;
-            int n = 0;
+            int n = count(MissionBag.of(p), it);                                        // the party's mission bag
             for (PartyBotEntity b : PartyBots.bots(p)) if (b.isAlive()) n += count(b.inventory, it);
             if (n > 0) { raised++; lastExtra = n; }
             return n;
@@ -54,7 +54,7 @@ public final class DmzItemMissions {
         int n = count(b.inventory, it);
         ServerPlayer o = b.owner();
         if (o != null) {
-            n += count(o.getInventory(), it);
+            n += count(o.getInventory(), it) + count(MissionBag.of(o), it);
             for (PartyBotEntity other : PartyBots.bots(o)) if (other != b && other.isAlive()) n += count(other.inventory, it);
         }
         return n;
@@ -68,6 +68,9 @@ public final class DmzItemMissions {
         }
         throw new NoSuchMethodException(name);
     }
+
+    /** The player's DragonMineZ mission data (null without it). */
+    public static Object questData(ServerPlayer p) throws Exception { return pqd(p); }
 
     private static Object pqd(ServerPlayer p) throws Exception {
         var cap = (net.minecraftforge.common.capabilities.Capability<?>) Class.forName("com.dragonminez.common.stats.StatsCapability").getField("INSTANCE").get(null);

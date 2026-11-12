@@ -917,6 +917,35 @@ public final class DmzBotQuests {
         return -1;
     }
 
+    /**
+     * Item ids your DragonMineZ missions still want - yours and your bot teammates' (an item objective not met yet).
+     * For the party's mission bag (MissionBag): drops of these go there instead of into anyone's inventory.
+     */
+    public static Set<String> wantedItems(ServerPlayer p) {
+        Set<String> out = new HashSet<>();
+        if (!ready() || itemObj == null || p == null || p instanceof FakePlayer) return out;
+        try { addWanted(out, DmzItemMissions.questData(p)); } catch (Throwable t) { /* no missions */ }
+        for (PartyBotEntity b : PartyBots.bots(p)) {
+            try { addWanted(out, peek(b)); } catch (Throwable t) { /* skip it */ }
+        }
+        return out;
+    }
+
+    private static void addWanted(Set<String> out, Object pqd) throws Exception {
+        if (pqd == null) return;
+        for (String key : accepted(pqd)) {
+            Object q = quest(key);
+            if (q == null || (Boolean) m(pqd, "isQuestCompleted", key)) continue;
+            List<?> objs = (List<?>) m(q, "getObjectives");
+            for (int i = 0; i < objs.size(); i++) {
+                Object obj = objs.get(i);
+                if (!itemObj.isInstance(obj) || progress(pqd, key, i) >= required(q, pqd, key, i)) continue;
+                Object id = m(obj, "getItemId");
+                if (id != null) out.add(id.toString());
+            }
+        }
+    }
+
     /** A bot's accepted missions (its saved data). */
     public static List<String> active(PartyBotEntity b) {
         Data d = open(b, false);

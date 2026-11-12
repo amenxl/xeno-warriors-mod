@@ -447,6 +447,7 @@ public final class XenoCommands {
             com.xenowarriors.collection.Collection.openFromBook(ctx.getSource().getPlayerOrException());
             return 1;
         }));
+        root.then(Commands.literal("missionbag").executes(ctx -> { com.xenowarriors.compat.MissionBag.open(ctx.getSource().getPlayerOrException()); return 1; }));
         root.then(Commands.literal("bot").executes(ctx -> {
             com.xenowarriors.bot.PartyBots.openPick(ctx.getSource().getPlayerOrException());
             return 1;

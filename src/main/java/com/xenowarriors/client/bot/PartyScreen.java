@@ -54,7 +54,10 @@ public class PartyScreen extends Screen {
         }
         if (rows.isEmpty()) y += ROW;
         addRenderableWidget(Button.builder(Component.literal("Add bot teammates"), b -> { minecraft.player.connection.sendCommand("xeno bot"); })
-                .bounds(x0() + 8, y + 6, 120, 20).build());
+                .bounds(x0() + 8, y + 6, 110, 20).build());
+        if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez"))       // the party's DragonMineZ mission items
+            addRenderableWidget(Button.builder(Component.literal("Mission Bag"), b -> minecraft.player.connection.sendCommand("xeno missionbag"))
+                    .bounds(x0() + 122, y + 6, 66, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(x0() + W - 68, y + 6, 60, 20).build());
     }
 
