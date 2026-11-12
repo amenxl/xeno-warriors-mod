@@ -76,7 +76,35 @@ public final class Headlights {
             }
             update(l, v.getUUID(), want);
         }
-        for (UUID id : new ArrayList<>(LIT.keySet())) if (WHERE.get(id) == l && !seen.contains(id)) update(l, id, List.of());   // (gone)
+        for (UUID id : new ArrayList<>(LIT.keySet())) if (WHERE.get(id) == l && !seen.contains(id)) letGo(l, id);   // (gone)
+        clearLeftovers(l);
+    }
+
+    /** Light blocks of vehicles that went away, still to be taken down (by level). */
+    private static final Map<ServerLevel, Set<BlockPos>> LEFTOVER = new HashMap<>();
+
+    /**
+     * A vehicle went (or its chunk unloaded): its lights come down on a later tick, and only in loaded chunks. Never right
+     * here - a vehicle leaves while the server is unloading chunks, and touching blocks then made it load chunks in the
+     * middle of that and crash ("Exception ticking world", ConcurrentModificationException in DistanceManager).
+     */
+    private static void letGo(ServerLevel l, UUID id) {
+        List<BlockPos> had = LIT.remove(id);
+        WHERE.remove(id);
+        if (had != null && !had.isEmpty()) LEFTOVER.computeIfAbsent(l, k -> new HashSet<>()).addAll(had);
+    }
+
+    private static void clearLeftovers(ServerLevel l) {
+        Set<BlockPos> s = LEFTOVER.get(l);
+        if (s == null) return;
+        for (Iterator<BlockPos> it = s.iterator(); it.hasNext(); ) {
+            BlockPos p = it.next();
+            var ch = l.getChunkSource().getChunkNow(p.getX() >> 4, p.getZ() >> 4);   // (loaded already, or wait: never loads one)
+            if (ch == null) continue;
+            if (ch.getBlockState(p).is(Blocks.LIGHT)) l.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+            it.remove();
+        }
+        if (s.isEmpty()) LEFTOVER.remove(l);
     }
 
     private static void update(ServerLevel l, UUID id, List<BlockPos> want) {
@@ -93,12 +121,14 @@ public final class Headlights {
 
     @SubscribeEvent
     public static void onLeave(EntityLeaveLevelEvent e) {
-        if (e.getEntity() instanceof VehicleEntity v && e.getLevel() instanceof ServerLevel l) update(l, v.getUUID(), List.of());
+        if (e.getEntity() instanceof VehicleEntity v && e.getLevel() instanceof ServerLevel l) letGo(l, v.getUUID());
     }
 
     @SubscribeEvent
     public static void onStop(ServerStoppingEvent e) {
-        for (var en : new ArrayList<>(LIT.entrySet())) { ServerLevel l = WHERE.get(en.getKey()); if (l != null) update(l, en.getKey(), List.of()); }
+        for (var en : new ArrayList<>(LIT.entrySet())) { ServerLevel l = WHERE.get(en.getKey()); if (l != null) letGo(l, en.getKey()); }
+        for (ServerLevel l : new ArrayList<>(LEFTOVER.keySet())) clearLeftovers(l);
+        LEFTOVER.clear();
     }
 
     /** (Tests) lights a vehicle has down right now. */

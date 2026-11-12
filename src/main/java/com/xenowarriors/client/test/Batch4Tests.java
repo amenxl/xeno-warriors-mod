@@ -577,7 +577,12 @@ public final class Batch4Tests {
             p.stopRiding();
             for (var e : p.serverLevel().getEntitiesOfClass(com.xenowarriors.vehicle.VehicleEntity.class, p.getBoundingBox().inflate(20), x -> x.getTags().contains("xw_hl"))) e.discard();
             p.serverLevel().setDayTime(6000);
-        }), 10);
+        }), 20);
+        l.add(null, () -> server(p -> {                                         // (the car left: its lights come down a few ticks later)
+            int left = 0;
+            for (BlockPos q : BlockPos.betweenClosed(p.blockPosition().offset(-20, -4, -20), p.blockPosition().offset(20, 4, 20))) if (p.level().getBlockState(q).is(net.minecraft.world.level.block.Blocks.LIGHT)) left++;
+            log("headlight: the car's gone -> light blocks left " + left + " -> " + (left == 0 ? "PASS" : "FAIL"));
+        }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
