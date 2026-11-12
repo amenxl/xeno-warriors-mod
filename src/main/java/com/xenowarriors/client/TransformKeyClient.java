@@ -28,8 +28,10 @@ public final class TransformKeyClient {
 
     /** From the client tick (ClientEvents). */
     public static void keyTick(Minecraft mc) {
-        while (ModKeyMappings.FOX_KING.consumeClick()) { }
+        boolean clicked = false;
+        while (ModKeyMappings.FOX_KING.consumeClick()) clicked = true;
         boolean down = mc.player != null && mc.screen == null && ModKeyMappings.FOX_KING.isDown() && ClientCharacterData.getLocal() != CharacterType.NONE;
+        if (!down && held == -1 && clicked && mc.screen == null) { tap(mc); return; }   // (pressed and let go between two ticks)
         if (down) {
             if (held < 0) held = 0;
             else if (held >= 0 && ++held == HOLD) { mc.setScreen(new ToggleWheelScreen(false)); held = -2; }   // held: the wheel
@@ -62,6 +64,23 @@ public final class TransformKeyClient {
         e.setCanceled(true);
         e.setSwingHand(false);
         if (mc.player.isUsingItem()) { mc.gameMode.releaseUsingItem(mc.player); }
+        ModNetwork.sendToServer(new ToggleActionPacket(ToggleActionPacket.FIRE_RL, ""));
+        rlSent++;
+    }
+
+    /**
+     * Right+left click while something's in use (a shield up, food...): the game swallows the left click then, so it's
+     * caught here first, before the game's own key handling.
+     */
+    @SubscribeEvent
+    public static void onTickStart(net.minecraftforge.event.TickEvent.ClientTickEvent e) {
+        if (e.phase != net.minecraftforge.event.TickEvent.Phase.START) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.screen != null || mc.gameMode == null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active()) return;
+        boolean fire = false;
+        while (mc.options.keyAttack.consumeClick()) fire = true;
+        if (!fire) return;
+        if (mc.player.isUsingItem()) mc.gameMode.releaseUsingItem(mc.player);
         ModNetwork.sendToServer(new ToggleActionPacket(ToggleActionPacket.FIRE_RL, ""));
         rlSent++;
     }
