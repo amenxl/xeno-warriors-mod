@@ -97,7 +97,7 @@ public final class Batch4Tests {
             p.getPersistentData().putInt("xw_food_total", 20); p.getPersistentData().putInt("xw_food_last", 19);   // (one full bar)
             p.getFoodData().setFoodLevel(19); p.getFoodData().setSaturation(0F);
             p.setHealth(4F); hp[0] = p.getHealth();
-        }), 2);
+        }), 120);
         l.add(null, () -> server(p -> {
             hp[1] = p.getHealth();
             p.getPersistentData().putInt("xw_food_total", 100); p.getPersistentData().putInt("xw_food_last", 19);   // (five full bars)
