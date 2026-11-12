@@ -38,8 +38,8 @@ public class YouSlotsScreen extends JourneyScreen {
                 String lv = "Lv " + Math.max(1, i < YouClient.levels.length ? YouClient.levels[i] : 1);
                 sc(g, lv, x + cw - 4 - font.width(lv) * 0.55F, y + 3, 0.55F, 0xFFD24A);
                 button(g, x + 3, y + ch - 26, x + cw - 3, y + ch - 16, "SKIN: " + shortSkin(s.skin), 0x9AB8D8, true,
-                        () -> minecraft.setScreen(new YouSkinScreen(s.name, s.skin, this, k -> {
-                            YouSlot d = new YouSlot(); d.name = s.name; d.skin = k;
+                        () -> minecraft.setScreen(new YouSkinScreen(s.name, s.skin, this, chosen -> {
+                            YouSlot d = new YouSlot(); d.name = s.name; d.skin = chosen;
                             ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.SKIN, i, d));
                             minecraft.setScreen(this);
                         })));

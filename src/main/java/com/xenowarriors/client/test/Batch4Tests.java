@@ -102,6 +102,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("angel")) angel(mc, l);
         if (dmz && (f.isEmpty() || f.contains("mobgravity"))) mobGravity(mc, l);
         if (f.isEmpty() || f.contains("ownbot")) ownBot(mc, l);
+        if (f.isEmpty() || f.contains("geoguard")) geoGuard(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2429,6 +2430,34 @@ public final class Batch4Tests {
         l.add("batch4_mob_gravity", () -> mc.setScreen(null), 3);
         l.add(null, () -> server(p -> { for (var e : m) if (e != null) e.discard(); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    /** The "BufferBuilder not started" crash guard: a GeckoLib body handed an already-closed buffer draws instead of crashing. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void geoGuard(Minecraft mc, MikikoTests.Steps l) {
+        l.add(null, () -> {
+            try {
+                var type = com.xenowarriors.vehicle.Vehicles.TYPES.values().iterator().next().get();
+                var e = type.create(mc.level);
+                var r = (software.bernie.geckolib.renderer.GeoEntityRenderer) mc.getEntityRenderDispatcher().getRenderer(e);
+                var model = r.getGeoModel().getBakedModel(r.getGeoModel().getModelResource(e));
+                var bone = (software.bernie.geckolib.cache.object.GeoBone) model.topLevelBones().get(0);
+                var rt = net.minecraft.client.renderer.RenderType.entityCutoutNoCull(r.getTextureLocation(e));
+                var buffers = net.minecraft.client.renderer.MultiBufferSource.immediate(new com.mojang.blaze3d.vertex.BufferBuilder(4096));
+                var vc = buffers.getBuffer(rt);
+                buffers.endBatch();                                                    // (closed: what another mod's draw in between did)
+                int s0 = com.xenowarriors.client.GeoBufferGuard.saved;
+                String result;
+                try {
+                    r.renderRecursively(new com.mojang.blaze3d.vertex.PoseStack(), e, bone, rt, buffers, vc, false, 0F, 15728880,
+                            net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, 1F);
+                    result = "drew fine";
+                } catch (IllegalStateException ex) { result = "crashed: " + ex.getMessage(); }
+                buffers.endBatch();
+                int saved = com.xenowarriors.client.GeoBufferGuard.saved - s0;
+                log("geoguard: a GeckoLib body handed a closed buffer " + result + " (fresh buffers handed out " + saved + ") -> " + (result.equals("drew fine") && saved > 0 ? "PASS" : "FAIL"));
+            } catch (Throwable t) { log("geoguard: step error " + t + " -> FAIL"); XenoWarriors.LOGGER.error("geoguard", t); }
+        }, 10);
     }
 
     private static void ownBot(Minecraft mc, MikikoTests.Steps l) {
