@@ -1902,7 +1902,7 @@ public final class Batch4Tests {
     private static void spread(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);
         PartyBotEntity[] b = new PartyBotEntity[5];
-        CharacterType[] who = {CharacterType.RHALIX, CharacterType.KAERU, CharacterType.MAX, CharacterType.LEXY, CharacterType.SAM};
+        CharacterType[] who = {CharacterType.RHALIX, CharacterType.ZANE, CharacterType.MAX, CharacterType.LEXY, CharacterType.GARRY};   // (no Kaeru: her Fox Heal stands them up before anyone walks over)
         // reviving: one bot down, four up -> only two go
         l.add(null, () -> server(p -> {
             Batch3Tests.clearBots(p);
