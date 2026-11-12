@@ -161,8 +161,8 @@ public final class BotSpar {
         com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(a + " wants a 2v2 spar",
                 a + " & " + m + " vs you & " + y + " - everyone gets spar XP" + (PartyBots.sparBoostReady(o) ? " (XP boost ready!)" : ""),
                 "/xenospar team yes " + ids, "/xenospar team no " + ids, ASK_TICKS, 0xFFFFB040), o);
-        o.displayClientMessage(Component.empty().append(asker.label()).append(": "2v2? Me and ").append(mate.label())
-                .append(" against you and ").append(yours.label()).append("!"").withStyle(ChatFormatting.GOLD), false);
+        o.displayClientMessage(Component.empty().append(asker.label()).append(": \"2v2? Me and ").append(mate.label())
+                .append(" against you and ").append(yours.label()).append("!\"").withStyle(ChatFormatting.GOLD), false);
     }
 
     /** Starts a 2v2 (red: a + mate; blue: the owner + yours). */
@@ -377,7 +377,7 @@ public final class BotSpar {
     private static int answerTeams(ServerPlayer p, boolean yes, int a, int b, int c) {
         com.xenowarriors.network.RequestPopupPacket.dismiss(p, "/xenospar team yes " + a + " " + b + " " + c);
         if (!(p.level().getEntity(a) instanceof PartyBotEntity ba) || !(p.level().getEntity(b) instanceof PartyBotEntity bb) || !(p.level().getEntity(c) instanceof PartyBotEntity bc)) return 0;
-        if (!yes) { p.displayClientMessage(Component.empty().append(ba.label()).append(": "Aw. Another time!"").withStyle(ChatFormatting.GRAY), true); return 1; }
+        if (!yes) { p.displayClientMessage(Component.empty().append(ba.label()).append(": \"Aw. Another time!\"").withStyle(ChatFormatting.GRAY), true); return 1; }
         if (!startTeams(ba, bb, bc, p)) { p.displayClientMessage(Component.literal("They can't spar right now.").withStyle(ChatFormatting.GRAY), true); return 0; }
         return 1;
     }
