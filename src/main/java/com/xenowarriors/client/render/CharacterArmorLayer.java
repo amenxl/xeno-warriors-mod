@@ -158,6 +158,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         showFor(base, slot);
         net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
         boolean giVoxels = false;
+        lastForeign = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()) + " model " + model.getClass().getSimpleName() + (model == base ? "(base)" : "");
         String name = armor.getMaterial().getName();
         String domain = "minecraft";
         int colon = name.indexOf(':');
@@ -170,6 +171,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his.
         // A 64x32 texture is the old armor layout (Epic Fight's Stray Hat and robes...): our 64x64 cut would read the
         // wrong rows of it (the robe's cloth over the face), so that's drawn on the plain armor model, as it was made.
+        lastForeign += " tex " + tex + " old " + oldLayout(tex);
         if ((model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) && !oldLayout(tex)) {
             if (giInner == null) {
                 giInner = GiShapes.build(0.4F);         // pants: loose
@@ -249,6 +251,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
 
     /** (Tests) */
     public static int oldLayoutDrawn;
+    public static String lastForeign = "none";
+    public static int layerRuns;
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
         m.setAllVisible(false);
@@ -277,6 +281,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, float limbSwing,
                        float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+        layerRuns++;
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         Map<EquipmentSlot, DetailModel> bySlot = models.get(type);
