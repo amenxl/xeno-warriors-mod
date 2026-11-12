@@ -110,6 +110,11 @@ public final class SkillLevels {
     public static int tier(Player p, String skillId) { return get(p, charKey(p), skillId)[0]; }
     /** Level 1-10 inside its tier. */
     public static int level(Player p, String skillId) { return get(p, charKey(p), skillId)[1]; }
+    /** 0..1 of the way to its next level (1 when it's waiting for a tier upgrade or maxed). */
+    public static float progress(Player p, String skillId) {
+        int[] v = get(p, charKey(p), skillId);
+        return v[1] >= MAX_LEVEL ? 1F : Math.min(1F, v[2] / (float) needed(v[0], v[1]));
+    }
     /** Overall ability level, 1-100: (tier - 1) * 10 + level. */
     public static int abilityLevel(ServerPlayer p, String skillId) { int[] v = get(p, charKey(p), skillId); return (v[0] - 1) * MAX_LEVEL + v[1]; }
     /** The same for one of their characters (for a bot of that character). */

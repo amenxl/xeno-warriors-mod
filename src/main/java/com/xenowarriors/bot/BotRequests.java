@@ -67,7 +67,7 @@ public final class BotRequests {
     }
 
     /** An enemy hits you or one of your bots: the quiet-time requests are off. */
-    @SubscribeEvent(priority = EventPriority.MONITOR)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onHurt(LivingHurtEvent e) {
         if (e.isCanceled() || PENDING.isEmpty()) return;
         Entity src = com.xenowarriors.combat.Allies.actor(e.getSource().getEntity());

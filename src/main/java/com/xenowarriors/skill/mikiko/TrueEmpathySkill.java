@@ -49,6 +49,12 @@ public class TrueEmpathySkill implements Skill {
         return true;
     }
 
+    /** Used three times inside 90 seconds (the strain is on him). */
+    public static boolean overused(ServerPlayer p) {
+        long now = p.level().getGameTime();
+        return java.util.Arrays.stream(p.getPersistentData().getLongArray(STRAIN)).filter(t -> now - t < 90 * 20).count() >= 3;
+    }
+
     private static void strain(ServerPlayer p, long now) {
         var tag = p.getPersistentData();
         long[] uses = tag.getLongArray(STRAIN);

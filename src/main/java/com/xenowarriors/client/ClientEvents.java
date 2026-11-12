@@ -76,12 +76,8 @@ public final class ClientEvents {
                 ModNetwork.sendToServer(new UseSkillPacket(com.xenowarriors.skill.SkillManager.SUPER_SLOT));
         }
         while (ModKeyMappings.LOCK_ON.consumeClick()) LockOn.toggle();
-        while (ModKeyMappings.FOX_KING.consumeClick()) {
-            CharacterType tk = ClientCharacterData.getLocal();
-            if (mc.player != null && (tk == CharacterType.MIKIKO || tk == CharacterType.RHALIX || tk == CharacterType.KILL || tk == CharacterType.LEXY || tk == CharacterType.YOU) && !UltimateCutscene.active()) {
-                ModNetwork.sendToServer(new com.xenowarriors.network.FoxKingTogglePacket());
-            }
-        }
+        TransformKeyClient.keyTick(mc);                                         // (tap: transform; hold: the toggle wheel)
+        TransformKeyClient.ensureKnown(mc);
         while (ModKeyMappings.STATS_MENU.consumeClick()) {
             if (mc.player != null && mc.screen == null) PlayerStatsScreen.open();
         }

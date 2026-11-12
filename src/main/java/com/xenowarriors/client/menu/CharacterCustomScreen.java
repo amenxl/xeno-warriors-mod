@@ -50,7 +50,14 @@ public class CharacterCustomScreen extends Screen {
     /** (UI test) show the Building row's tooltip without the mouse over it. */
     public static boolean testBuildingTip;
     private final Screen parent;
-    private int tab;                       // 0 stats, 1 skills, 2 outfits, 3 KA
+    private int tab;                       // the position in the tab bar (what it shows: cur())
+    /** What each tab shows (ids): the bar runs Stats, Skills, Passives, R+L Click, Outfits, KAs. */
+    private static final int T_STATS = 0, T_SKILLS = 1, T_OUTFITS = 2, T_KA = 3, T_PASSIVES = 4, T_RL = 5;
+    private int[] ids() { return hasKa() ? new int[]{T_STATS, T_SKILLS, T_PASSIVES, T_RL, T_OUTFITS, T_KA} : new int[]{T_STATS, T_SKILLS, T_PASSIVES, T_RL, T_OUTFITS}; }
+    /** What the selected tab shows. */
+    private int cur() { int[] i = ids(); return i[Math.min(tab, i.length - 1)]; }
+    /** The bar position of a tab (by id; 0 if it isn't there). */
+    private int posOf(int id) { int[] i = ids(); for (int k = 0; k < i.length; k++) if (i[k] == id) return k; return 0; }
     private PlayerStatsPacket.Entry self;
     private PlayerStatsPacket.Me me;
     private int refresh, selectedSlot, skillScroll;
@@ -64,10 +71,11 @@ public class CharacterCustomScreen extends Screen {
         Minecraft.getInstance().setScreen(new CharacterCustomScreen(parent));
         ModNetwork.sendToServer(new PlayerStatsRequestPacket());
         ModNetwork.sendToServer(new com.xenowarriors.network.SkillLevelsPacket("", List.of()));   // (ability levels)
+        ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(com.xenowarriors.network.ToggleActionPacket.REQUEST, ""));   // (passives, R+L click)
     }
 
     /** (UI test) show this tab. */
-    public void tab(int t) { setTab(t); }
+    public void tab(int t) { setTab(posOf(t)); }
 
     /** UI test: click Kaeru's Hood up / Hood down card on the Outfits tab. */
     public void testClickHood() {
@@ -85,7 +93,7 @@ public class CharacterCustomScreen extends Screen {
     private float pillX = -1, pillW;
 
     /** UI test: switch tabs. */
-    public void testTab(int t) { setTab(Math.min(t, tabs() - 1)); }
+    public void testTab(int t) { setTab(posOf(t)); }
 
     private void setTab(int t) {
         if (t == tab) return;
@@ -112,7 +120,7 @@ public class CharacterCustomScreen extends Screen {
     /** The character's pose on each tab (null = their idle animation), with a little breathing sway. */
     private float[] tabPose(int tab, float t) {
         float s = Mth.sin(t * 2.2F) * 0.03F;
-        return switch (tab) {
+        return switch (tab == T_PASSIVES || tab == T_RL ? T_SKILLS : tab) {
             case 1 -> new float[]{.22F + s, .25F, 0F, 0F, .25F, -1.15F + s, .2F, 1.0F, .2F, -.6F, -.75F, -.15F, .15F, .15F, -.12F, -.3F, -1.6F, .12F, .1F};   // presenting a move
             case 3 -> new float[]{.15F, 0F, 0F, .1F, -.4F, .35F + s, -.9F, .25F, .25F - s, -.4F, .1F, .5F, .15F, -.6F, -.12F, -1.2F, -1.4F, .2F, .7F};  // gathering power
             default -> null;
@@ -134,7 +142,7 @@ public class CharacterCustomScreen extends Screen {
     /** The KAs / Last resort tab: a KA, or (Mikiko, Rhalix) the Xeno Blast. */
     private boolean hasKa() { return ClientSkillState.ka() != null || xeno(); }
     private boolean creative() { return minecraft != null && minecraft.player != null && minecraft.player.isCreative(); }
-    private int tabs() { return hasKa() ? 4 : 3; }
+    private int tabs() { return ids().length; }
 
     @Override
     public boolean isPauseScreen() { return false; }
@@ -157,6 +165,8 @@ public class CharacterCustomScreen extends Screen {
     @Override
     public void tick() {
         if (++refresh % 40 == 0) ModNetwork.sendToServer(new PlayerStatsRequestPacket());
+        if (refresh % 20 == 5 && (cur() == T_PASSIVES || cur() == T_RL))
+            ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(com.xenowarriors.network.ToggleActionPacket.REQUEST, ""));
         if (tab >= tabs()) tab = 0;
     }
 
@@ -175,7 +185,7 @@ public class CharacterCustomScreen extends Screen {
     }
 
     /** Tab widths: the long "KAs / Last resort" tab gets more room. */
-    private float tabWeight(int i) { return tabs() == 4 && i == 3 ? 1.9F : 1F; }
+    private float tabWeight(int i) { int id = ids()[i]; return id == T_KA ? 1.8F : id == T_RL || id == T_PASSIVES ? 1.25F : 1F; }
     private float tabW(int i) {
         float total = 0;
         for (int k = 0; k < tabs(); k++) total += tabWeight(k);
@@ -222,7 +232,7 @@ public class CharacterCustomScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
-        if (tab == 1) { skillScroll = Mth.clamp(skillScroll - (int) Math.signum(delta) * (CARD_H + 3), 0, maxSkillScroll()); return true; }
+        if (cur() == T_SKILLS) { skillScroll = Mth.clamp(skillScroll - (int) Math.signum(delta) * (CARD_H + 3), 0, maxSkillScroll()); return true; }
         return super.mouseScrolled(mx, my, delta);
     }
 
@@ -239,13 +249,15 @@ public class CharacterCustomScreen extends Screen {
         }
         float[] c = card();
         double vx = (mx - c[0]) / c[2], vy = (my - c[1]) / c[2];
-        if (tab == 0 && blade() != null && inBox(vx, vy, VW / 2 - 60, VH - 18, 120, 14)) {
+        if (cur() == T_STATS && blade() != null && inBox(vx, vy, VW / 2 - 60, VH - 18, 120, 14)) {
             if (blade()[1].equals(MAGNET)) { testToggleMagnet(); click(); return true; }
             if (minecraft.player != null) minecraft.player.connection.sendCommand(blade()[1]);
             if (blade()[1].endsWith("realm")) minecraft.setScreen(null);
             return true;
         }
-        if (tab == 1) {
+        if (cur() == T_PASSIVES && passivesClick(vx, vy)) return true;
+        if (cur() == T_RL && rlClick(vx, vy)) return true;
+        if (cur() == T_SKILLS) {
             for (int s = 0; s < SkillManager.ULTIMATE_SLOT; s++)
                 if (inBox(vx, vy, slotX(s), SLOT_Y, SLOT, SLOT)) { selectedSlot = s; click(); return true; }
             List<SkillPool.Entry> pool = SkillPool.of(minecraft.player);
@@ -278,7 +290,7 @@ public class CharacterCustomScreen extends Screen {
                     return true;
                 }
         }
-        if (tab == 2) {
+        if (cur() == T_OUTFITS) {
             String[] names = type().outfitNames();
             for (int i = 0; i < names.length; i++) {
                 if (!inBox(vx, vy, skillX(i), outfitY(i), CARD_W, OUTFIT_H)) continue;
@@ -296,7 +308,7 @@ public class CharacterCustomScreen extends Screen {
                 return true;
             }
         }
-        if (tab == 3 && !xeno() && inBox(vx, vy, VW / 2 - 55, VH - 18, 110, 14)) { minecraft.setScreen(new KaGuideScreen(this)); return true; }
+        if (cur() == T_KA && !xeno() && inBox(vx, vy, VW / 2 - 55, VH - 18, 110, 14)) { minecraft.setScreen(new KaGuideScreen(this)); return true; }
         return super.mouseClicked(mx, my, button);
     }
 
@@ -372,11 +384,12 @@ public class CharacterCustomScreen extends Screen {
         if (mc.player != null) {
             Cel.force = true;
             float ct = ease((now - camAt) / 600F);
-            float[] to = CAMS[Math.min(tab, CAMS.length - 1)];
+            int camId = cur() == T_PASSIVES || cur() == T_RL ? T_SKILLS : cur();
+            float[] to = CAMS[Math.min(camId, CAMS.length - 1)];
             for (int k = 0; k < 5; k++) camNow[k] = camFrom[k] + (to[k] - camFrom[k]) * ct;
             float cx = w * camNow[0] - (1F - inChar) * w * 0.15F + (mx - w / 2F) * 0.012F;   // slight parallax with the mouse
             try { PortraitScreen.drawCharacterCam(g, mc.player, type, (int) cx, (int) (h * camNow[1]), (int) (h * camNow[2]),
-                    camNow[3] + (mx - w / 2F) / w * 10F + (tab == 2 ? Mth.sin(t * 0.5F) * 35F * ct : 0F), camNow[4], tabPose(tab, t)); }   // (Outfits: slowly turns so you see it all round)
+                    camNow[3] + (mx - w / 2F) / w * 10F + (cur() == T_OUTFITS ? Mth.sin(t * 0.5F) * 35F * ct : 0F), camNow[4], tabPose(cur(), t)); }   // (Outfits: slowly turns so you see it all round)
             finally { Cel.force = false; }
         }
 
@@ -421,10 +434,12 @@ public class CharacterCustomScreen extends Screen {
         header(g, type, col);
         g.pose().pushPose();
         g.pose().translate((1F - tabT) * 16F * tabDir, 0, 0);            // a new tab's content slides in
-        switch (tab) {
-            case 0 -> tip = statsTab(g, type, col, vmx, vmy);
-            case 1 -> tip = skillsTab(g, type, col, vmx, vmy);
-            case 2 -> outfitsTab(g, type, col, vmx, vmy);
+        switch (cur()) {
+            case T_STATS -> tip = statsTab(g, type, col, vmx, vmy);
+            case T_SKILLS -> tip = skillsTab(g, type, col, vmx, vmy);
+            case T_OUTFITS -> outfitsTab(g, type, col, vmx, vmy);
+            case T_PASSIVES -> tip = passivesTab(g, type, col, vmx, vmy);
+            case T_RL -> tip = rlTab(g, type, col, vmx, vmy);
             default -> kaTab(g, col, vmx, vmy);
         }
         g.pose().popPose();
@@ -439,7 +454,9 @@ public class CharacterCustomScreen extends Screen {
         if (pillX < 0) { pillX = targetX; pillW = targetW; }
         pillX += (targetX - pillX) * 0.3F;
         pillW += (targetW - pillW) * 0.3F;
-        String[] names = hasKa() ? new String[]{"STATS", "SKILLS", "OUTFITS", "KAS / LAST RESORT"} : new String[]{"STATS", "SKILLS", "OUTFITS"};
+        String[] names = new String[tabs()];
+        for (int i = 0; i < names.length; i++) names[i] = switch (ids()[i]) {
+            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "R+L CLICK"; case T_OUTFITS -> "OUTFITS"; default -> "KAS / LAST RESORT"; };
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
         float ts = tb[3] / 15F;
@@ -681,7 +698,8 @@ public class CharacterCustomScreen extends Screen {
             int tx = pic ? x + CARD_H + 3 : x + 5;
             scaled(g, ell(nm, (int) ((x + CARD_W - 25 - tx) / 0.9F)), tx, y + 3, 0.9F, open ? 0xFFFFFF : 0x777777);
             String sid = e.skill().getId();
-            String line = !seasonOk ? "Season " + e.season() : !open ? "Unlocks at Lv " + e.unlockLevel() : at >= 0 ? "Slot " + (at + 1)
+            String line = !seasonOk ? "Season " + e.season() : !open ? "Unlocks at Lv " + e.unlockLevel() : sid.equals("true_empathy") ? (at >= 0 ? "Slot " + (at + 1) + " - toggles it" : "Passive - see Passives")
+                    : at >= 0 ? "Slot " + (at + 1)
                     : UltimaAnim.resource() + " " + com.xenowarriors.client.ClientSkillLevels.cost(sid, e.skill().getKarmaCost()) + "  CD " + com.xenowarriors.client.ClientSkillLevels.cooldown(sid, e.skill().getCooldownTicks()) / 20 + "s";
             boolean up = open && levelBadge(g, sid, x, y, mx, my);
             scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx - (up ? UP_W : 0)) / 0.75F)), tx, y + 12.5F, 0.75F, !open ? 0xAA5555 : at >= 0 ? 0x77DD88 : 0x99AABB);
@@ -743,6 +761,132 @@ public class CharacterCustomScreen extends Screen {
         String t = "\u25b2 T" + (v[0] + 1);
         scaled(g, t, bx + UP_W / 2F - font.width(t) * 0.3F, by + 1.8F, 0.6F, 0x201000);
         return true;
+    }
+
+    // ------------------------------------------------------------------ Passives and R+L Click (toggle.Toggles)
+
+    private static final int PROW_Y = 56, PROW_H = 30, SW_W = 30, SW_H = 12;
+    private int prowY(int i) { return PROW_Y + i * (PROW_H + 4); }
+
+    /** Transformations, buffs and passive skills: on / off for good, their level and mastery. */
+    private List<String> passivesTab(GuiGraphics g, CharacterType type, int col, double mx, double my) {
+        List<String> tip = null;
+        var rows = com.xenowarriors.network.TogglesPacket.CLIENT.rows();
+        if (rows.isEmpty()) {
+            scaled(g, "No transformations or passive skills", 8, 62, 0.9F, 0xA0A0B0);
+            scaled(g, "for " + type.getDisplayName().getString() + " yet.", 8, 73, 0.9F, 0xA0A0B0);
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            var r = rows.get(i);
+            int x = 4 + Math.round((1F - rowIn(i)) * 18F), y = prowY(i), w = VW - 8;
+            boolean locked = !r.locked().isEmpty(), over = inBox(mx, my, x, y, w, PROW_H);
+            g.fill(x, y, x + w, y + PROW_H, r.active() ? 0xFF000000 | dark2(r.color()) : over ? 0xFF2A2A3A : 0xFF1C1C24);
+            g.fill(x, y, x + 2, y + PROW_H, locked ? 0xFF555555 : 0xFF000000 | r.color());
+            String kind = r.kind() == 0 ? "TRANSFORMATION" : r.kind() == 1 ? "BUFF" : "PASSIVE";
+            scaled(g, kind, x + 5, y + 2.5F, 0.55F, locked ? 0x777777 : light(r.color()));
+            scaled(g, ell(r.title(), (int) ((w - SW_W - 50) / 0.95F)), x + 5, y + 8, 0.95F, locked ? 0x888888 : 0xFFFFFF);
+            // level and mastery
+            String lv = locked ? r.locked() : (r.kind() == 0 ? "Tier " + r.level() + "  •  Mastery " + Math.round(r.mastery()) + "/100"
+                    : "Lv " + r.level() + "  •  " + Math.round(r.mastery()) + "% to next");
+            scaled(g, ell(lv, (int) ((w - SW_W - 14) / 0.7F)), x + 5, y + 19, 0.7F, locked ? 0xAA5555 : 0x99AABB);
+            if (!locked) {
+                int bw = w - SW_W - 14;
+                g.fill(x + 5, y + PROW_H - 3, x + 5 + bw, y + PROW_H - 2, 0xFF2A2A34);
+                g.fill(x + 5, y + PROW_H - 3, x + 5 + Math.round(bw * Math.min(1F, r.mastery() / 100F)), y + PROW_H - 2, 0xFF000000 | (r.mastery() >= 100 ? 0xFFD24A : r.color()));
+            }
+            // the switch
+            int sx = x + w - SW_W - 5, sy = y + (PROW_H - SW_H) / 2;
+            boolean on = r.enabled(), sOver = inBox(mx, my, sx, sy, SW_W, SW_H);
+            g.fill(sx - 1, sy - 1, sx + SW_W + 1, sy + SW_H + 1, sOver && !locked ? 0xFFFFFFFF : 0xFF000000);
+            g.fill(sx, sy, sx + SW_W, sy + SW_H, locked ? 0xFF303036 : on ? 0xFF2E8A44 : 0xFF4A2A2A);
+            int knob = on ? sx + SW_W - SW_H : sx;
+            g.fill(knob + 1, sy + 1, knob + SW_H - 1, sy + SW_H - 1, locked ? 0xFF505058 : 0xFFE8E8F0);
+            scaled(g, on ? "ON" : "OFF", on ? sx + 3 : sx + SW_H + 2, sy + 3, 0.65F, locked ? 0x777777 : 0xFFFFFF);
+            if (over) tip = passiveTip(r);
+        }
+        scaled(g, "Hold the transform key in game for the quick wheel", 6, VH - 10, 0.65F, 0x8A8A9A);
+        return tip;
+    }
+
+    private static List<String> passiveTip(com.xenowarriors.network.TogglesPacket.Row r) {
+        List<String> l = new ArrayList<>();
+        l.add(r.title());
+        switch (r.title()) {
+            case "True Empathy" -> { l.add("Passive. Switched on, he copies the moves he sees and reads attacks coming at him by himself (Karma each time, every 25 s at most)."); l.add("Overused - three times inside 90 seconds - it strains him and switches itself off."); }
+            case "Netsu" -> l.add("Buff. Sets his body on fire: much faster and stronger, burns what he touches, hurts him slowly. Off: it can't be lit.");
+            default -> { l.add("Transformation (the transform key). Mastery grows while you're in it: longer, cheaper and back sooner."); l.add("Off: the transform key does nothing (the wheel too)."); }
+        }
+        if (!r.locked().isEmpty()) l.add(r.locked());
+        return l;
+    }
+
+    private boolean passivesClick(double vx, double vy) {
+        var rows = com.xenowarriors.network.TogglesPacket.CLIENT.rows();
+        for (int i = 0; i < rows.size(); i++) {
+            var r = rows.get(i);
+            int x = 4, y = prowY(i), w = VW - 8, sx = x + w - SW_W - 5, sy = y + (PROW_H - SW_H) / 2;
+            if (!inBox(vx, vy, sx - 2, sy - 2, SW_W + 4, SW_H + 4) && !inBox(vx, vy, x, y, w, PROW_H)) continue;
+            if (!r.locked().isEmpty()) return true;
+            ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(r.enabled() ? com.xenowarriors.network.ToggleActionPacket.DISABLE : com.xenowarriors.network.ToggleActionPacket.ENABLE, r.id()));
+            click();
+            return true;
+        }
+        return false;
+    }
+
+    private static final int RL_Y = 84, RL_H = 30;
+    private int rlY(int i) { return RL_Y + (i / 2) * (RL_H + 4); }
+
+    /** The right+left click skill: pick which move it is. */
+    private List<String> rlTab(GuiGraphics g, CharacterType type, int col, double mx, double my) {
+        List<String> tip = null;
+        var tp = com.xenowarriors.network.TogglesPacket.CLIENT;
+        scaled(g, "HOLD RIGHT CLICK, THEN TAP LEFT CLICK", 6, 56, 0.75F, light(col));
+        scaled(g, "Does this move instead of a swing - and stops a block.", 6, 65, 0.7F, 0xA0A0B0);
+        scaled(g, "Its cooldown is a fifth shorter than from a skill slot.", 6, 73, 0.7F, 0xA0A0B0);
+        if (tp.rl().isEmpty()) {
+            scaled(g, "No right+left click skills for " + type.getDisplayName().getString() + " yet.", 6, RL_Y + 4, 0.85F, 0x8A8A9A);
+            return null;
+        }
+        int n = tp.rl().size();
+        for (int i = 0; i <= n; i++) {                                         // (the last card: None)
+            var e = i < n ? tp.rl().get(i) : null;
+            int x = skillX(i) + Math.round((1F - rowIn(i / 2)) * 18F), y = rlY(i);
+            boolean locked = e != null && !e.locked().isEmpty(), on = e == null ? tp.rlSelected().isEmpty() : e.id().equals(tp.rlSelected());
+            boolean over = inBox(mx, my, x, y, CARD_W, RL_H);
+            g.fill(x, y, x + CARD_W, y + RL_H, on ? 0xFF000000 | dark2(col) : over && !locked ? 0xFF2A2A3A : 0xFF1C1C24);
+            g.fill(x, y, x + 2, y + RL_H, locked ? 0xFF555555 : 0xFF000000 | col);
+            if (on) outline(g, x, y, x + CARD_W, y + RL_H, 0xFF000000 | light(col));
+            boolean pic = e != null && com.xenowarriors.client.SkillIcons.get(e.id()) != null;
+            if (pic) { com.xenowarriors.client.SkillIcons.draw(g, e.id(), x + 3, y + 3, RL_H - 6); if (locked) g.fill(x + 3, y + 3, x + RL_H - 3, y + RL_H - 3, 0xA0101018); }
+            int tx = pic ? x + RL_H : x + 5;
+            String nm = e == null ? "None" : e.name();
+            scaled(g, ell(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 5, 0.9F, locked ? 0x777777 : 0xFFFFFF);
+            String line = e == null ? (on ? "Right+left click off" : "Turn it off")
+                    : locked ? e.locked() : (on ? "Equipped  •  " : "") + UltimaAnim.resource() + " " + e.cost() + "  CD " + Math.max(1, Math.round(e.cooldown() / 20F)) + "s";
+            scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.72F)), tx, y + 17, 0.72F, locked ? 0xAA5555 : on ? 0x77DD88 : 0x99AABB);
+            if (over && e != null) {
+                Skill sk = null;
+                for (SkillPool.Entry en : SkillPool.of(minecraft.player)) if (en.skill().getId().equals(e.id())) sk = en.skill();
+                tip = sk == null ? List.of(e.name()) : lines(e.name() + " (right+left click)", SkillLoadoutScreen.desc(sk));
+            }
+        }
+        return tip;
+    }
+
+    private boolean rlClick(double vx, double vy) {
+        var tp = com.xenowarriors.network.TogglesPacket.CLIENT;
+        int n = tp.rl().size();
+        if (n == 0) return false;
+        for (int i = 0; i <= n; i++) {
+            if (!inBox(vx, vy, skillX(i), rlY(i), CARD_W, RL_H)) continue;
+            var e = i < n ? tp.rl().get(i) : null;
+            if (e != null && !e.locked().isEmpty()) return true;
+            ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(com.xenowarriors.network.ToggleActionPacket.SET_RL, e == null ? "" : e.id()));
+            click();
+            return true;
+        }
+        return false;
     }
 
     /** Cut a string to a width, with "…" when it had to be shortened. */

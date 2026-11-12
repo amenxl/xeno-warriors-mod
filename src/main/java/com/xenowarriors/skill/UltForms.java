@@ -44,6 +44,9 @@ public final class UltForms {
     }
 
     /** The transform key. True if this player has one of these transformations (handled, whether it went off or not). */
+    /** Their transformation (Devil Unleashed / Persephone) is on right now. */
+    public static boolean activeNow(ServerPlayer p) { Skill s = form(p); return s != null && active(p, s); }
+
     public static boolean press(ServerPlayer p) {
         Skill s = form(p);
         if (s == null) return false;

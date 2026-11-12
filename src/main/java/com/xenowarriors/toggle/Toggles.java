@@ -1,0 +1,277 @@
+package com.xenowarriors.toggle;
+
+import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.character.CharacterType;
+import com.xenowarriors.character.ModCapabilities;
+import com.xenowarriors.network.ModNetwork;
+import com.xenowarriors.network.TogglesPacket;
+import com.xenowarriors.skill.FormMastery;
+import com.xenowarriors.skill.Skill;
+import com.xenowarriors.skill.SkillManager;
+import com.xenowarriors.skill.SkillPool;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * A character's transformations, buffs and passive skills in one place:
+ * <ul>
+ *   <li>the toggle wheel (hold the transform key) - transform, light / put out a buff, switch a passive on or off;</li>
+ *   <li>Character Customization > Passives - turn each one on or off for good, and see its level and mastery;</li>
+ *   <li>the right+left click skill (hold right click, tap left click): one move per character, picked in
+ *       Character Customization > R+L Click - Mikiko's Fire Blitz or Dance Kick, Rhalix's Bang. It stops a block,
+ *       and its cooldown is a fifth shorter than from a slot.</li>
+ * </ul>
+ * True Empathy is a passive now: switched on, Mikiko copies the moves he sees and reads attacks coming at him by
+ * himself (Karma each time); overusing it (three times inside 90 seconds) strains him - and switches it off.
+ */
+@Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public final class Toggles {
+    private Toggles() {}
+
+    public enum Kind { TRANSFORM("Transformation"), BUFF("Buff"), PASSIVE("Passive");
+        public final String title; Kind(String t) { title = t; } }
+
+    public enum Entry {
+        FOX_KING("fox_king", "Fox King", Kind.TRANSFORM, 0xFFB347),
+        DEMONS_REMNANTS("demons_remnants", "Demon's Remnants", Kind.TRANSFORM, 0xC0303A),
+        DEVIL_UNLEASHED("devil_unleashed", "Devil Unleashed", Kind.TRANSFORM, 0x8A1A2A),
+        PERSEPHONE("persephone", "Persephone", Kind.TRANSFORM, 0xE04A8A),
+        NETSU("netsu", "Netsu", Kind.BUFF, 0xFF6A1A),
+        TRUE_EMPATHY("true_empathy", "True Empathy", Kind.PASSIVE, 0xC890FF);
+
+        public final String id, title;
+        public final Kind kind;
+        public final int color;
+        Entry(String id, String title, Kind kind, int color) { this.id = id; this.title = title; this.kind = kind; this.color = color; }
+
+        public static Entry byId(String id) { for (Entry e : values()) if (e.id.equals(id)) return e; return null; }
+    }
+
+    /** The right+left click skills each character can pick from (skill ids). */
+    public static List<String> rlChoices(CharacterType t) {
+        return switch (t) {
+            case MIKIKO -> List.of("fire_blitz", "dance_kick");
+            case RHALIX -> List.of("bang");
+            default -> List.of();
+        };
+    }
+
+    public static final float RL_COOLDOWN = 0.8F;
+    private static final String ROOT = "xw_toggles", RL = "xw_rl_skill";
+
+    /** This player's entries (by who they're playing). */
+    public static List<Entry> of(Player p) {
+        CharacterType t = ModCapabilities.getType(p);
+        return switch (t) {
+            case MIKIKO -> List.of(Entry.FOX_KING, Entry.NETSU, Entry.TRUE_EMPATHY);
+            case RHALIX -> List.of(Entry.DEMONS_REMNANTS);
+            case KILL -> List.of(Entry.DEVIL_UNLEASHED);
+            case LEXY -> List.of(Entry.PERSEPHONE);
+            case YOU -> com.xenowarriors.you.You.race(p) == com.xenowarriors.character.Race.DEMON ? List.of(Entry.DEVIL_UNLEASHED) : List.of();
+            default -> List.of();
+        };
+    }
+
+    private static String charKey(Player p) {
+        return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key()).orElse(ModCapabilities.getType(p).getId());
+    }
+
+    private static CompoundTag mine(Player p) {
+        CompoundTag pers = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag root = pers.getCompound(ROOT);
+        CompoundTag me = root.getCompound(charKey(p));
+        root.put(charKey(p), me); pers.put(ROOT, root); p.getPersistentData().put(Player.PERSISTED_NBT_TAG, pers);
+        return me;
+    }
+
+    /** On: a transformation / buff may be used; a passive is running. Passives start off, the rest on. */
+    public static boolean enabled(Player p, Entry e) {
+        CompoundTag me = mine(p);
+        return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;
+    }
+
+    public static void setEnabled(ServerPlayer p, Entry e, boolean on) {
+        if (on && unavailable(p, e) != null) { p.displayClientMessage(Component.literal(unavailable(p, e)).withStyle(ChatFormatting.RED), true); return; }
+        mine(p).putBoolean(e.id, on);
+        p.displayClientMessage(Component.literal(e.title + (on ? (e.kind == Kind.PASSIVE ? " - on" : " - enabled") : (e.kind == Kind.PASSIVE ? " - off" : " - disabled")))
+                .withStyle(on ? ChatFormatting.GREEN : ChatFormatting.GRAY), true);
+        if (!on && e == Entry.NETSU && com.xenowarriors.mikiko.Netsu.active(p)) com.xenowarriors.mikiko.Netsu.stop(p);
+    }
+
+    /** Why it can't be had yet (a skill not unlocked / a locked season), or null. */
+    public static String unavailable(ServerPlayer p, Entry e) {
+        Skill s = skill(p, e);
+        if (s == null) return null;
+        for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(s.getId())) {
+            if (com.xenowarriors.character.Seasons.highest(p.server) < en.season()) return "Season " + en.season() + " content";
+            if (!SkillPool.unlocked(en, com.xenowarriors.stats.Stats.characterLevel(p), p.isCreative())) return "Unlocks at Character Level " + en.unlockLevel();
+        }
+        return null;
+    }
+
+    /** The skill behind a buff / passive (null for a transformation). */
+    static Skill skill(Player p, Entry e) {
+        String id = e == Entry.NETSU ? "netsu" : e == Entry.TRUE_EMPATHY ? "true_empathy" : null;
+        if (id == null) return null;
+        for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(id)) return en.skill();
+        return null;
+    }
+
+    public static boolean active(ServerPlayer p, Entry e) {
+        return switch (e) {
+            case FOX_KING -> com.xenowarriors.mikiko.FoxKing.active(p);
+            case DEMONS_REMNANTS -> com.xenowarriors.rhalix.DemonsRemnants.active(p);
+            case DEVIL_UNLEASHED, PERSEPHONE -> com.xenowarriors.skill.UltForms.activeNow(p);
+            case NETSU -> com.xenowarriors.mikiko.Netsu.active(p);
+            case TRUE_EMPATHY -> enabled(p, e);
+        };
+    }
+
+    /** Mastery 0-100 (transformations), or the skill's progress to its next level (buffs, passives). */
+    public static float mastery(ServerPlayer p, Entry e) {
+        return switch (e) {
+            case FOX_KING -> com.xenowarriors.mikiko.FoxKing.mastery(p);
+            case DEMONS_REMNANTS -> FormMastery.get(p, FormMastery.DEMON);
+            case DEVIL_UNLEASHED -> FormMastery.get(p, FormMastery.DEVIL);
+            case PERSEPHONE -> FormMastery.get(p, FormMastery.PERSEPHONE);
+            default -> { Skill s = skill(p, e); yield s == null ? 0F : com.xenowarriors.skill.SkillLevels.progress(p, s.getId()) * 100F; }
+        };
+    }
+
+    /** Level: a buff's / passive's ability level; a transformation's mastery tier (1, 2 at 25, 3 at 50, 4 at 75, 5 mastered). */
+    public static int level(ServerPlayer p, Entry e) {
+        if (e.kind == Kind.TRANSFORM) { float m = mastery(p, e); return m >= 100 ? 5 : m >= 75 ? 4 : m >= 50 ? 3 : m >= 25 ? 2 : 1; }
+        Skill s = skill(p, e);
+        return s == null ? 1 : com.xenowarriors.skill.SkillLevels.abilityLevel(p, s.getId());   // (tier and level together: Tier 2 Lv 3 = 13)
+    }
+
+    /** The transformation this character's transform key uses (null: none of these). */
+    public static Entry transformOf(Player p) {
+        for (Entry e : of(p)) if (e.kind == Kind.TRANSFORM) return e;
+        return null;
+    }
+
+    /** The transform key: refused (with a message) when that transformation is switched off. */
+    public static boolean transformAllowed(ServerPlayer p) {
+        Entry e = transformOf(p);
+        if (e == null || enabled(p, e)) return true;
+        p.displayClientMessage(Component.literal(e.title + " is turned off (Character Customization > Passives)").withStyle(ChatFormatting.GRAY), true);
+        return false;
+    }
+
+    /** From the toggle wheel: transform, light / put out a buff, or switch a passive on / off. */
+    public static void use(ServerPlayer p, Entry e) {
+        if (!of(p).contains(e)) return;
+        switch (e.kind) {
+            case TRANSFORM -> {
+                if (!enabled(p, e)) { transformAllowed(p); return; }
+                com.xenowarriors.network.FoxKingTogglePacket.press(p);              // (same as tapping the transform key)
+            }
+            case BUFF -> {
+                if (!enabled(p, e)) { p.displayClientMessage(Component.literal(e.title + " is turned off (Character Customization > Passives)").withStyle(ChatFormatting.GRAY), true); return; }
+                String why = unavailable(p, e);
+                if (why != null) { p.displayClientMessage(Component.literal(why).withStyle(ChatFormatting.RED), true); return; }
+                Skill s = skill(p, e);
+                if (s != null) SkillManager.useFree(p, s, 1F);                       // (lit again: puts it out - its recast)
+            }
+            case PASSIVE -> setEnabled(p, e, !enabled(p, e));
+        }
+        send(p);
+    }
+
+    // ------------------------------------------------------------------ the right+left click skill
+
+    public static String rlSkill(Player p) {
+        String id = mine(p).getString(RL);
+        List<String> ok = rlChoices(ModCapabilities.getType(p));
+        if (ok.isEmpty()) return "";
+        return ok.contains(id) ? id : id.equals("-") ? "" : ok.get(0);           // (the first one by default; "-" = none)
+    }
+
+    public static void setRl(ServerPlayer p, String id) {
+        if (!id.isEmpty() && !rlChoices(ModCapabilities.getType(p)).contains(id)) return;
+        mine(p).putString(RL, id.isEmpty() ? "-" : id);
+        send(p);
+    }
+
+    /** Hold right click, tap left click: the right+left click skill (stops a block). */
+    public static void useRl(ServerPlayer p) {
+        String id = rlSkill(p);
+        if (id.isEmpty()) return;
+        Skill s = null;
+        for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(id)) {
+            if (com.xenowarriors.character.Seasons.highest(p.server) < en.season()) { p.displayClientMessage(Component.literal("Season " + en.season() + " content is locked").withStyle(ChatFormatting.RED), true); return; }
+            if (!SkillPool.unlocked(en, com.xenowarriors.stats.Stats.characterLevel(p), p.isCreative())) { p.displayClientMessage(Component.literal("Unlocks at Character Level " + en.unlockLevel()).withStyle(ChatFormatting.RED), true); return; }
+            s = en.skill();
+        }
+        if (s == null) return;
+        if (p.isUsingItem()) p.stopUsingItem();                                  // (no more blocking)
+        SkillManager.useFree(p, s, RL_COOLDOWN);
+    }
+
+    // ------------------------------------------------------------------ what the screens get
+
+    public static void send(ServerPlayer p) {
+        if (p instanceof FakePlayer) return;
+        List<TogglesPacket.Row> rows = new ArrayList<>();
+        for (Entry e : of(p)) {
+            String why = unavailable(p, e);
+            rows.add(new TogglesPacket.Row(e.id, e.title, e.kind.ordinal(), e.color, why == null ? "" : why, enabled(p, e), active(p, e), level(p, e), mastery(p, e)));
+        }
+        List<TogglesPacket.Rl> rl = new ArrayList<>();
+        for (String id : rlChoices(ModCapabilities.getType(p))) {
+            String why = "";
+            int cd = 0;
+            for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(id)) {
+                if (com.xenowarriors.character.Seasons.highest(p.server) < en.season()) why = "Season " + en.season() + " content";
+                else if (!SkillPool.unlocked(en, com.xenowarriors.stats.Stats.characterLevel(p), p.isCreative())) why = "Unlocks at Lv " + en.unlockLevel();
+                cd = Math.round(com.xenowarriors.skill.SkillLevels.cooldownFor(p, id, en.skill().getCooldownTicks()) * RL_COOLDOWN);
+                rl.add(new TogglesPacket.Rl(id, en.skill().getName().getString(), why, cd, com.xenowarriors.skill.SkillLevels.costFor(p, id, en.skill().getKarmaCost(p))));
+            }
+        }
+        ModNetwork.sendToPlayer(new TogglesPacket(rows, rl, rlSkill(p)), p);
+    }
+
+    // ------------------------------------------------------------------ True Empathy, the passive
+
+    public static final int EMPATHY_GAP = 25 * 20;
+    private static final String EMPATHY_NEXT = "xw_empathy_passive_next";
+
+    @SubscribeEvent
+    public static void onTick(TickEvent.PlayerTickEvent ev) {
+        if (ev.phase != TickEvent.Phase.END || !(ev.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 10 != 5) return;
+        if (ModCapabilities.getType(p) != CharacterType.MIKIKO || !enabled(p, Entry.TRUE_EMPATHY)) return;
+        if (unavailable(p, Entry.TRUE_EMPATHY) != null) { mine(p).putBoolean(Entry.TRUE_EMPATHY.id, false); return; }
+        if (!p.isAlive() || com.xenowarriors.party.Duels.cantAct(p)) return;
+        long now = p.level().getGameTime();
+        if (now < p.getPersistentData().getLong(EMPATHY_NEXT)) return;
+        Object[] seen = SkillManager.WITNESSED.get(p.getUUID());
+        boolean copy = seen != null && now - (long) seen[1] < 20 * 20;
+        boolean threat = !copy && !p.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(6),
+                m -> m.isAlive() && m.getTarget() == p).isEmpty();
+        if (!copy && !threat) return;
+        Skill s = skill(p, Entry.TRUE_EMPATHY);
+        if (s == null) return;
+        int cost = com.xenowarriors.skill.SkillLevels.costFor(p, s.getId(), s.getKarmaCost(p));
+        if (!com.xenowarriors.karma.Karma.has(p, cost)) return;                  // (quietly waits for Karma)
+        if (!s.use(p)) return;
+        if (!p.isCreative()) com.xenowarriors.karma.Karma.add(p, -cost);
+        com.xenowarriors.skill.SkillLevels.used(p, s);
+        p.getPersistentData().putLong(EMPATHY_NEXT, now + EMPATHY_GAP);
+        if (com.xenowarriors.skill.mikiko.TrueEmpathySkill.overused(p)) {        // pushed too far: it switches itself off
+            mine(p).putBoolean(Entry.TRUE_EMPATHY.id, false);
+            p.displayClientMessage(Component.literal("True Empathy overused - it switched itself off. Let him rest a while.").withStyle(ChatFormatting.LIGHT_PURPLE), false);
+            send(p);
+        }
+    }
+}

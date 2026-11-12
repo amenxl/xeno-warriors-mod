@@ -12,6 +12,8 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
 
 public final class SkillManager {
     public static final int SLOTS = 5;
@@ -191,6 +193,10 @@ public final class SkillManager {
                 return;
             }
         }
+        if (skill instanceof com.xenowarriors.skill.mikiko.TrueEmpathySkill) {   // a passive now: its slot just switches it on / off
+            com.xenowarriors.toggle.Toggles.use(player, com.xenowarriors.toggle.Toggles.Entry.TRUE_EMPATHY);
+            return;
+        }
         if (skill.tryRecast(player)) return;
 
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
@@ -229,7 +235,66 @@ public final class SkillManager {
         });
     }
 
+    /** Cooldowns of skills used outside the slots (the right+left click skill, the toggle wheel): player -> skill id -> end. */
+    private static final Map<UUID, Map<String, Long>> FREE_CD = new HashMap<>();
+
+    /** Ticks left on a skill used outside the slots (0 = ready) - its slot's cooldown too, when it's also equipped. */
+    public static long freeCooldownLeft(ServerPlayer player, Skill skill) {
+        long now = now(player), left = Math.max(0, FREE_CD.getOrDefault(player.getUUID(), Map.of()).getOrDefault(skill.getId(), 0L) - now);
+        int slot = slotOf(player, skill);
+        if (slot >= 0) left = Math.max(left, player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[slot] - now).orElse(0L));
+        return left;
+    }
+
+    /** The slot (0-3) this skill is equipped in, or -1. */
+    public static int slotOf(ServerPlayer player, Skill skill) {
+        for (int i = 0; i < ULTIMATE_SLOT; i++) { Skill s = get(player, i); if (s != null && s.getId().equals(skill.getId())) return i; }
+        return -1;
+    }
+
+    /**
+     * Uses a skill that isn't fired from a slot (the right+left click skill, Netsu from the toggle wheel): the same Karma
+     * cost, ability levels and checks as from a slot, with its own cooldown times {@code cooldownMult} (shared with its
+     * slot when it's equipped as well). True when it went off.
+     */
+    public static boolean useFree(ServerPlayer player, Skill skill, float cooldownMult) {
+        boolean[] ok = {false};
+        com.xenowarriors.combat.SkillContext.run(player, () -> ok[0] = useFreeNow(player, skill, cooldownMult));
+        return ok[0];
+    }
+
+    private static boolean useFreeNow(ServerPlayer player, Skill skill, float cooldownMult) {
+        if (com.xenowarriors.party.Duels.cantAct(player) || com.xenowarriors.item.PhoneItem.onCall(player) || com.xenowarriors.ka.Clashes.inClash(player)) return false;
+        if (seasonLocked(player) || !player.isAlive() || player.isSpectator()) return false;
+        if (skill.tryRecast(player)) return true;
+        long left = freeCooldownLeft(player, skill);
+        if (left > 0) { player.displayClientMessage(Component.translatable("message.xenowarriors.cooldown", skill.getName(), (left + 19) / 20), true); return false; }
+        int cost = SkillLevels.costFor(player, skill.getId(), skill.getKarmaCost(player));
+        if (!Karma.has(player, cost)) { Karma.notEnough(player, cost); return false; }
+        if (!com.xenowarriors.combat.SkillContext.callSkill(player, skill.getId(), () -> skill.use(player))) return false;
+        com.xenowarriors.journey.Journey.onSkill(player);
+        Integer gen = SkillAnimPacket.GENERIC.get(skill.getId());
+        if (gen != null) ModNetwork.sendToTrackingAndSelf(new SkillAnimPacket(player.getId(), gen, !player.onGround()), player);
+        com.xenowarriors.XwFx.send(player.serverLevel(), com.xenowarriors.network.FxPacket.SKILL, player.getX(), player.getY(), player.getZ(), ModCapabilities.getType(player).getColor(), 1F);
+        if (!player.isCreative()) Karma.add(player, -cost);
+        com.xenowarriors.compat.DmzKiTraining.skillUsed(player);
+        com.xenowarriors.npc.HumanReactions.skillUsed(player);
+        if (!(skill instanceof com.xenowarriors.skill.mikiko.TrueEmpathySkill))
+            for (ServerPlayer o : player.serverLevel().players())
+                if (o != player && o.distanceToSqr(player) < 24 * 24) WITNESSED.put(o.getUUID(), new Object[]{skill, now(player)});
+        int cooldown = Math.round(SkillLevels.cooldownFor(player, skill.getId(), skill.getCooldownTicks()) * cooldownMult);
+        FREE_CD.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(skill.getId(), now(player) + cooldown);
+        int slot = slotOf(player, skill);
+        if (slot >= 0) player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {   // (equipped too: its slot waits as well)
+            d.cooldownEnd[slot] = Math.max(d.cooldownEnd[slot], now(player) + cooldown);
+            ModNetwork.sendToPlayer(new SkillCooldownPacket(slot, cooldown, cooldown), player);
+        });
+        SkillLevels.used(player, skill);
+        return true;
+    }
+
     public static void resetCooldowns(ServerPlayer player) {
+        FREE_CD.remove(player.getUUID());
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             for (int i = 0; i <= SUPER_SLOT; i++) {
                 data.cooldownEnd[i] = 0;
