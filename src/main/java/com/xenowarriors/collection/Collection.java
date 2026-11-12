@@ -67,7 +67,7 @@ public final class Collection {
         if (p == null) return;
         var id = ForgeRegistries.ENTITY_TYPES.getKey(dead.getType());
         if (id == null) return;
-        if (com.xenowarriors.tower.Tower.pending(p, id.toString())) return;     // in the Tower: held until a checkpoint (x floor x Tower Level)
+        if (com.xenowarriors.tower.Tower.pending(p, id.toString(), dead)) return;     // in the Tower: held until a checkpoint (x floor x Tower Level)
         add(p, id.toString(), com.xenowarriors.tower.TowerLevel.killValue(p, 1));   // (the Tower Level's kill multiplier counts out here too)
     }
 

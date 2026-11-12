@@ -308,14 +308,26 @@ public final class Tower {
      * Called by the Collection for every kill: true if it's held for the next checkpoint. One kill counts for the
      * floor's multiplier times your Tower Level's (see {@link TowerLevel#killValue}), and gives Tower XP.
      */
-    public static boolean pending(ServerPlayer p, String id) {
+    public static boolean pending(ServerPlayer p, String id) { return pending(p, id, null); }
+
+    /** Kills of a boss count {@link #BOSS_KILLS} times. */
+    public static final int BOSS_KILLS = 100;
+
+    public static boolean pending(ServerPlayer p, String id, net.minecraft.world.entity.LivingEntity dead) {
         Run r = BY_PLAYER.get(p.getUUID());
         if (r == null || !is(p.level())) return false;
         CompoundTag t = r.pending.computeIfAbsent(p.getUUID(), k -> new CompoundTag());
-        long n = (long) t.getInt(id) + TowerLevel.killValue(p, mult(r.floor));
+        boolean boss = dead != null && (TowerBosses.isBoss(dead) || com.xenowarriors.karma.KarmaSensing.boss(dead));
+        long n = (long) t.getInt(id) + (long) TowerLevel.killValue(p, mult(r.floor)) * (boss ? BOSS_KILLS : 1);   // (a boss counts for 100 kills)
         t.putInt(id, (int) Math.min(Collection.MAX, n));           // (more than one enemy's Collection holds could never count)
         TowerLevel.addXp(p, TowerLevel.XP_KILL, "a kill");
         return true;
+    }
+
+    /** A boss kind of enemy (a forge:bosses one, the game's own, or ours). */
+    static boolean bossType(EntityType<?> t) {
+        return t.is(net.minecraftforge.common.Tags.EntityTypes.BOSSES) || t == EntityType.WITHER || t == EntityType.ENDER_DRAGON || t == EntityType.WARDEN
+                || t == EntityType.ELDER_GUARDIAN || t == com.xenowarriors.boss.ZombieSaiyans.ZOMBIE_SAIYAN.get() || t == com.xenowarriors.boss.EnderSaiyans.ENDER_SAIYAN.get();
     }
 
     /** With DragonMineZ: enemies keep up with part of your power - about half on the first floors, rising to all of it by floor 50. */
@@ -358,6 +370,8 @@ public final class Tower {
             String id = r.pool.get(rnd.nextInt(r.pool.size()));
             EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(id));
             if (type == null) continue;
+            // bosses in an ordinary wave: rare, never in a floor's first wave, so there's weaker prey to get kills on first
+            if (bossType(type) && (r.wave == 0 || rnd.nextFloat() < 0.85F)) continue;
             Entity e;
             try { e = type.create(tl); } catch (Throwable t) { e = null; }
             if (!(e instanceof Mob m)) { if (e != null) e.discard(); continue; }
