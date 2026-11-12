@@ -17,8 +17,8 @@ import net.minecraftforge.common.util.FakePlayer;
  *
  * Outgrown gear wears out fast: a player (or bot teammate) using a weaker weapon or tool than the best of its kind they
  * carry loses durability faster the higher their Character Level - a wooden sword with a diamond one in the bag breaks
- * quickly. x(1 + min(19, level / 50) x how much weaker it is): at level 500 a wooden sword next to a diamond one wears
- * about 4-5 times as fast. Nothing changes when it's the best you have. (mixin.ItemStackWearMixin)
+ * quickly: an outgrown weapon breaks in about 3 hits (a third of its full durability per hit); an outgrown tool wears
+ * x(1 + min(19, level / 50) x how much weaker it is). Nothing changes when it's the best you have. (mixin.ItemStackWearMixin)
  */
 @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.xenowarriors.XenoWarriors.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
 public final class OutgrownWear {
@@ -83,6 +83,8 @@ public final class OutgrownWear {
             top = best(b.inventory, stack, 0F);
         } else return amount;
         if (top <= own * 1.05F) return amount;                                // it's the best (or as good) as you have
+        if (!(stack.getItem() instanceof DiggerItem))                          // an outgrown weapon: gone in about 3 hits, whatever your level
+            return Math.max(amount, (int) Math.ceil(stack.getMaxDamage() / 3.0));
         float gap = 1F - own / top;
         float mult = 1F + Math.min(19F, level / 50F) * gap;
         return Math.max(amount, Math.round(amount * mult));

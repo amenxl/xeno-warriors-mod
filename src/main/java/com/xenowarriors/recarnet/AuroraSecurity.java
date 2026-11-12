@@ -49,6 +49,11 @@ public final class AuroraSecurity {
         LivingEntity victim = event.getEntity();
         if (victim.level().isClientSide || !(event.getSource().getEntity() instanceof LivingEntity attacker) || attacker == victim) return;
         ServerPlayer p = side(attacker);
+        if (attacker instanceof ServerPlayer a && victim instanceof ServerPlayer v && com.xenowarriors.party.Duels.dueling(a, v)) {   // a duel counts as a battle too
+            if (p != null) PENDING.putIfAbsent(p.getUUID(), v);
+            else if (side(v) != null) PENDING.putIfAbsent(v.getUUID(), a);
+            return;
+        }
         if (p != null && hostile(victim, attacker)) { PENDING.putIfAbsent(p.getUUID(), victim); return; }
         p = side(victim);
         if (p != null && hostile(attacker, victim)) PENDING.putIfAbsent(p.getUUID(), attacker);

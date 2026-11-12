@@ -58,6 +58,8 @@ public final class RoomTech {
         boolean security;
         /** Others pulled in with you (party members): where each goes back to. */
         final Map<UUID, Vec3> guests = new HashMap<>();
+        /** A duel moved here by the security system: the other duelist (the Room closes when the duel's over). */
+        UUID duelFoe;
     }
 
     private static final Map<Integer, Room> ROOMS = new HashMap<>();
@@ -128,8 +130,9 @@ public final class RoomTech {
         java.util.Set<UUID> side = new java.util.HashSet<>();
         side.add(p.getUUID());
         List<ServerPlayer> mates = new ArrayList<>();
+        if (security && foe instanceof ServerPlayer d && d != p && d.level() == src && !BY_PLAYER.containsKey(d.getUUID())) { mates.add(d); r.duelFoe = d.getUUID(); }   // (the other duelist comes too)
         if (security) for (ServerPlayer m : com.xenowarriors.party.Parties.members(p))
-            if (m != p && m.level() == src && m.distanceToSqr(p) < (R - 2) * (R - 2) && !BY_PLAYER.containsKey(m.getUUID())) { mates.add(m); side.add(m.getUUID()); }
+            if (m != p && m != foe && m.level() == src && m.distanceToSqr(p) < (R - 2) * (R - 2) && !BY_PLAYER.containsKey(m.getUUID())) { mates.add(m); side.add(m.getUUID()); }
         List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor")
                 && (m instanceof Enemy || m == foe || security && m.getTarget() != null && (side.contains(m.getTarget().getUUID())
                     || m.getTarget() instanceof com.xenowarriors.bot.PartyBotEntity tb && side.contains(tb.ownerId()))));
@@ -294,6 +297,11 @@ public final class RoomTech {
             }
             if (now % 10 != 0) continue;
             r.enemies.removeIf(id -> !(room.getEntity(id) instanceof LivingEntity le) || !le.isAlive());
+            if (r.duelFoe != null) {                                       // a duel: open until it's decided
+                ServerPlayer d = server.getPlayerList().getPlayer(r.duelFoe);
+                if (d == null || !com.xenowarriors.party.Duels.dueling(p, d)) { if (r.clearedAt < 0) r.clearedAt = now; else if (now - r.clearedAt >= 40) close(server, r, "The duel is over."); }
+                continue;
+            }
             if (r.enemies.isEmpty()) {
                 if (r.clearedAt < 0) { r.clearedAt = now; p.displayClientMessage(Component.literal("Room cleared! Returning...").withStyle(ChatFormatting.GREEN), true); }
                 else if (now - r.clearedAt >= 60) close(server, r, "Room cleared.");

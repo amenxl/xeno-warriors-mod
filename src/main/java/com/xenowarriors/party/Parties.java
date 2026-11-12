@@ -114,6 +114,12 @@ public final class Parties {
         return party != null && p.getUUID().equals(party.leader);
     }
 
+    /** The party leader's id (their own id when not in a party). */
+    public static UUID leaderId(Player p) {
+        Party party = BY_PLAYER.get(p.getUUID());
+        return party == null || party.leader == null ? p.getUUID() : party.leader;
+    }
+
     public static boolean inParty(Player p) {
         return BY_PLAYER.containsKey(p.getUUID());
     }
@@ -183,6 +189,7 @@ public final class Parties {
         party.members.add(p.getUUID());
         BY_PLAYER.put(p.getUUID(), party);
         tell(server, party, p.getName().getString() + " joined the party!");
+        com.xenowarriors.compat.MissionBag.merge(p);                       // (their Mission Bag joins the party's)
         syncParty(server, party);
     }
 

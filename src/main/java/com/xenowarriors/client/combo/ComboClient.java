@@ -87,7 +87,10 @@ public final class ComboClient {
     public static Swing swing(Entity e) {
         Swing s = SWINGS.get(e.getId());
         if (s == null) return null;
-        if (e.tickCount - s.start() > s.duration() + 2) { SWINGS.remove(e.getId()); return null; }
+        Integer at = STARTED_AT.get(e.getId());
+        // (by the client's own clock too: a bot's stand-in body doesn't tick, so its tickCount alone never ran out -
+        //  bots kept the heavy's wind-up pose while walking about)
+        if (e.tickCount - s.start() > s.duration() + 2 || at != null && ticks - at > s.duration() + 2) { SWINGS.remove(e.getId()); return null; }
         return s;
     }
 

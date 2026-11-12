@@ -37,7 +37,8 @@ import java.util.UUID;
  * instead of filling anyone's inventory - drops from whatever you or your bots kill, and those things when you pick
  * them up. 216 slots (four pages of 54). You can take things out (main menu > Party > Mission Bag, or
  * /xeno missionbag) but not put anything in. What's in it counts for the missions like it was in your inventory
- * (DmzItemMissions). Kept in your save. DragonMineZ only.
+ * (DmzItemMissions). One bag per party (kept under its leader), the same whichever character you play; joining a
+ * party pours your bag into the party's. Saved with the world. DragonMineZ only.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class MissionBag {
@@ -58,10 +59,13 @@ public final class MissionBag {
         return loaded;
     }
 
-    /** A player's bag: saved into their save on every change. */
+    /**
+     * A bag: one per party, kept under the party leader (or the player alone) and saved with the world, so it's the
+     * same whichever character you play. Joining a party pours your own bag into the party's.
+     */
     public static final class Bag extends SimpleContainer {
         private final MinecraftServer server;
-        private final UUID owner;
+        final UUID owner;
         private boolean loading;
 
         Bag(MinecraftServer server, UUID owner) { super(SIZE); this.server = server; this.owner = owner; }
@@ -69,17 +73,26 @@ public final class MissionBag {
         @Override
         public void setChanged() {
             super.setChanged();
-            if (loading) return;
-            ServerPlayer p = server.getPlayerList().getPlayer(owner);
-            if (p != null) save(p, this);
+            if (!loading) save(server, this);
         }
 
         @Override public boolean canPlaceItem(int slot, ItemStack stack) { return false; }   // (taking out only)
     }
 
+    /** Every bag, saved with the world (bag owner -> items). */
+    public static final class Store extends net.minecraft.world.level.saveddata.SavedData {
+        final CompoundTag bags = new CompoundTag();
+        static Store load(CompoundTag t) { Store s = new Store(); s.bags.merge(t.getCompound("bags")); return s; }
+        @Override public CompoundTag save(CompoundTag t) { t.put("bags", bags.copy()); return t; }
+    }
+
+    private static Store store(MinecraftServer server) {
+        return server.overworld().getDataStorage().computeIfAbsent(Store::load, Store::new, "xw_mission_bags");
+    }
+
     private static CompoundTag persisted(Player p) { return p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG); }
 
-    private static void save(ServerPlayer p, Bag bag) {
+    private static ListTag write(SimpleContainer bag) {
         ListTag list = new ListTag();
         for (int i = 0; i < bag.getContainerSize(); i++) {
             ItemStack s = bag.getItem(i);
@@ -89,31 +102,72 @@ public final class MissionBag {
             s.save(t);
             list.add(t);
         }
-        CompoundTag per = persisted(p);
-        if (list.isEmpty()) per.remove(KEY); else per.put(KEY, list);
-        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, per);
+        return list;
     }
 
-    /** The player's bag (loaded from their save the first time). */
-    public static Bag of(ServerPlayer p) {
-        Bag bag = BAGS.get(p.getUUID());
+    private static void save(MinecraftServer server, Bag bag) {
+        Store st = store(server);
+        ListTag list = write(bag);
+        if (list.isEmpty()) st.bags.remove(bag.owner.toString()); else st.bags.put(bag.owner.toString(), list);
+        st.setDirty();
+    }
+
+    /** The bag kept under this id (loaded the first time). */
+    private static Bag bag(MinecraftServer server, UUID owner) {
+        Bag bag = BAGS.get(owner);
         if (bag != null) return bag;
-        bag = new Bag(p.server, p.getUUID());
+        bag = new Bag(server, owner);
         bag.loading = true;
-        ListTag list = persisted(p).getList(KEY, Tag.TAG_COMPOUND);
+        ListTag list = store(server).bags.getList(owner.toString(), Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag t = list.getCompound(i);
             int slot = t.getShort("Slot");
             if (slot >= 0 && slot < SIZE) bag.setItem(slot, ItemStack.of(t));
         }
         bag.loading = false;
-        BAGS.put(p.getUUID(), bag);
+        BAGS.put(owner, bag);
         return bag;
     }
 
-    /** Puts a stack into the bag (stacking first); returns what didn't fit. */
-    public static ItemStack add(ServerPlayer p, ItemStack stack) {
-        Bag bag = of(p);
+    /** The bag this player uses: their party's (kept under its leader), or their own. */
+    public static Bag of(ServerPlayer p) {
+        migrate(p);
+        return bag(p.server, com.xenowarriors.party.Parties.leaderId(p));
+    }
+
+    /** An old per-player bag (kept in the player's own save) moves into the world's store, once. */
+    private static void migrate(ServerPlayer p) {
+        CompoundTag per = persisted(p);
+        if (!per.contains(KEY)) return;
+        ListTag list = per.getList(KEY, Tag.TAG_COMPOUND);
+        per.remove(KEY);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, per);
+        Bag own = bag(p.server, p.getUUID());
+        for (int i = 0; i < list.size(); i++) addTo(own, ItemStack.of(list.getCompound(i)));
+        own.setChanged();
+    }
+
+    /** They joined a party: their own bag is poured into the party's (what doesn't fit stays in theirs). */
+    public static void merge(ServerPlayer p) {
+        if (!on()) return;
+        migrate(p);
+        UUID lead = com.xenowarriors.party.Parties.leaderId(p);
+        if (lead.equals(p.getUUID())) return;
+        Bag own = bag(p.server, p.getUUID()), party = bag(p.server, lead);
+        int moved = 0;
+        for (int i = 0; i < own.getContainerSize(); i++) {
+            ItemStack s = own.getItem(i);
+            if (s.isEmpty()) continue;
+            ItemStack left = addTo(party, s);
+            moved += s.getCount() - left.getCount();
+            own.setItem(i, left);
+        }
+        own.setChanged(); party.setChanged();
+        if (moved > 0) for (ServerPlayer m : com.xenowarriors.party.Parties.members(p))
+            m.displayClientMessage(Component.literal(p.getName().getString() + "'s Mission Bag joined the party's (" + moved + " items)").withStyle(ChatFormatting.GOLD), false);
+    }
+
+    private static ItemStack addTo(SimpleContainer bag, ItemStack stack) {
         ItemStack left = stack.copy();
         for (int i = 0; i < SIZE && !left.isEmpty(); i++) {
             ItemStack s = bag.getItem(i);
@@ -123,9 +177,14 @@ public final class MissionBag {
                 left.shrink(n);
             }
         }
-        for (int i = 0; i < SIZE && !left.isEmpty(); i++) {
-            if (bag.getItem(i).isEmpty()) { bag.setItem(i, left.copy()); left = ItemStack.EMPTY; }
-        }
+        for (int i = 0; i < SIZE && !left.isEmpty(); i++) if (bag.getItem(i).isEmpty()) { bag.setItem(i, left.copy()); left = ItemStack.EMPTY; }
+        return left;
+    }
+
+    /** Puts a stack into the bag (stacking first); returns what didn't fit. */
+    public static ItemStack add(ServerPlayer p, ItemStack stack) {
+        Bag bag = of(p);
+        ItemStack left = addTo(bag, stack);
         bag.setChanged();
         return left;
     }
@@ -198,16 +257,9 @@ public final class MissionBag {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) {
-            Bag bag = BAGS.remove(p.getUUID());
-            if (bag != null) save(p, bag);
-            WANTED.remove(p.getUUID());
-        }
+        if (event.getEntity() instanceof ServerPlayer p) WANTED.remove(p.getUUID());   // (bags are saved with the world on every change)
     }
 
     @SubscribeEvent
-    public static void onClone(PlayerEvent.Clone event) {
-        // the persisted save is copied over; keep the live bag pointing at it (saved again on its next change)
-        if (event.getEntity() instanceof ServerPlayer p) { Bag bag = BAGS.get(p.getUUID()); if (bag != null) save(p, bag); }
-    }
+    public static void onServerStop(net.minecraftforge.event.server.ServerStoppedEvent event) { BAGS.clear(); WANTED.clear(); }
 }

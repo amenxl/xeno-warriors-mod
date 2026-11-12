@@ -29,6 +29,7 @@ public class XenoWarriors {
         if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) com.xenowarriors.compat.epicfight.EfAnimations.register(modBus);
         com.xenowarriors.corrupted.ModCorrupted.init();
         com.xenowarriors.boss.ZombieSaiyans.init();
+        com.xenowarriors.boss.EnderSaiyans.init();
         com.xenowarriors.boss.XenoDragons.init();
         com.xenowarriors.npc.ModNpcs.init();
         com.xenowarriors.gov.GovEntities.init();

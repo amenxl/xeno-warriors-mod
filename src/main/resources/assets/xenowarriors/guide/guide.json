@@ -255,7 +255,7 @@
         },
         {
           "title": "Aurora Security System",
-          "text": "Aurora City is protected: when a battle starts there - you, a party member or a bot teammate hitting an enemy, or an enemy hitting one of you - the Aurora Security System moves the fight into a Room (a copy of the area around you) so the city can't be wrecked.\n- The enemies around you come along, and so do your party members and bot teammates nearby.\n- In the Room the copied buildings can be smashed - none of it is real.\n- Beat the enemies and everyone is sent back to where they were in the city.\n- Outside a battle, Aurora City is like anywhere else: you can mine and build as normal."
+          "text": "Aurora City is protected: when a battle starts there - you, a party member or a bot teammate hitting an enemy, or an enemy hitting one of you - the Aurora Security System moves the fight into a Room (a copy of the area around you) so the city can't be wrecked.\n- The enemies around you come along, and so do your party members and bot teammates nearby.\n- In the Room the copied buildings can be smashed - none of it is real.\n- Beat the enemies and everyone is sent back to where they were in the city.\n- Outside a battle, Aurora City is like anywhere else: you can mine and build as normal.\n- Duels count too: a duel started in Aurora City moves both duelists into a Room, and they're sent back when the duel's decided."
         },
         {
           "title": "Prototype Facilities",
@@ -272,7 +272,7 @@
         },
         {
           "title": "Outgrown gear wears out",
-          "text": "The stronger you get, the faster weaker gear wears out.\n- Using a weapon or tool that's weaker than the best one of its kind you're carrying (a wooden sword with a diamond sword in your inventory, a stone pickaxe with an iron one), it loses durability faster - more the higher your Character Level and the bigger the gap.\n- About 4-5 times as fast at level 500 for a wooden sword next to a diamond one; up to 20 times at the highest levels.\n- Your best one wears normally.\n- Its last three hits (before it breaks) hit harder than your best weapon would - and the hit that breaks it hits twice as hard - so using up old gear is worth it.\n- Not for guns, the weapons and tools characters summon, or anything unbreakable.\n- Bot teammates too: and in a fight they use up their weakest weapons first, so the old ones break and are gone, then fight with their best."
+          "text": "The stronger you get, the faster weaker gear wears out.\n- Using a weapon or tool that's weaker than the best one of its kind you're carrying (a wooden sword with a diamond sword in your inventory, a stone pickaxe with an iron one), it loses durability faster - more the higher your Character Level and the bigger the gap.\n- About 4-5 times as fast at level 500 for a wooden sword next to a diamond one; up to 20 times at the highest levels.\n- Your best one wears normally.\n- Its last three hits (before it breaks) hit harder than your best weapon would - and the hit that breaks it hits twice as hard - so using up old gear is worth it.\n- Not for guns, the weapons and tools characters summon, or anything unbreakable.\n- Bot teammates too: and in a fight they use up their weakest weapons first, so the old ones break and are gone, then fight with their best.\n- An outgrown weapon (a better one of its kind is in your bag) now always breaks in about 3 hits, whatever your level - and those hits hit hard."
         },
         {
           "title": "Mining and bare hands",
@@ -382,7 +382,7 @@
         },
         {
           "title": "Mission Bag",
-          "text": "Your party's bag for DragonMineZ mission items, so they don't fill up your inventory or your bots'.\n- Anything a mission still needs (yours or a bot teammate's) goes into it: drops from whatever you or your bots kill, and those items when you pick them up. A message shows how many went in.\n- 216 slots (4 pages of 54).\n- Open it from the main menu > Party > Mission Bag (or /xeno missionbag). You can take things out, but you can't put anything in.\n- What's in it counts for your missions just like your inventory does.\n- Once a mission has all it needs, more of that item goes into your inventory as usual."
+          "text": "Your party's bag for DragonMineZ mission items, so they don't fill up your inventory or your bots'.\n- Anything a mission still needs (yours or a bot teammate's) goes into it: drops from whatever you or your bots kill, and those items when you pick them up. A message shows how many went in.\n- 216 slots (4 pages of 54).\n- Open it from the main menu > Party > Mission Bag (or /xeno missionbag). You can take things out, but you can't put anything in.\n- What's in it counts for your missions just like your inventory does.\n- Once a mission has all it needs, more of that item goes into your inventory as usual.\n- One bag per party: everyone in the party shares it, and it stays the same whichever character you play. Join another party and your bag pours into theirs."
         },
         {
           "title": "TPs from Journey and the Tower",
@@ -391,6 +391,10 @@
         {
           "title": "The Zombie Saiyan",
           "text": "- A rare boss that comes out at night in the Overworld. It also has a spawn egg.\n- As you wear it down it goes Super Saiyan, then Super Saiyan 2 (lightning), then Super Saiyan 3 (long hair). It uses combos, dashes, ki blasts and the Kamehameha.\n- Beat it as a Super Saiyan 3 and it collapses. Then it gets back up screaming, throws everyone back, and returns fully healed as a Super Saiyan 4.\n- It grows with your DragonMineZ power. Beaten as a Super Saiyan 4, it drops: diamonds, emeralds, Senzu Beans, Karma items, and sometimes a piece of Goku armor with every enchantment."
+        },
+        {
+          "title": "The Ender Saiyan",
+          "text": "An Enderman that woke up a warrior's power. A rare boss: at night in the Overworld, and now and then in the End (it also has a spawn egg).\n- As you wear it down it powers up: Awakened at 75% health, Ascended at 50%, Overcharged at 25% - a crown of void crystals grows on its head and its eyes and aura change colour.\n- Beaten Overcharged, it falls apart... then pulls itself back together in its Void Form, fully healed and far stronger. Only that death is final.\n## How it fights\n- Blink strikes: it teleports behind you and hits.\n- Void bolts: purple bolts from its hands (more at a time as it powers up).\n- It rips a block out of the ground (just a copy - nothing is dug up) and hurls it.\n- Ascended and up: it pulls everyone near toward it, then blasts them back.\n- Don't look it in the eyes: it teleports right in front of you.\n- Like any Enderman it dodges arrows by teleporting, and water hurts it.\n- Void Form: shadow copies of itself lunge at you and burst.\n## Loot (Void Form only)\nEnder pearls, eyes of ender, diamonds, chorus fruit, maybe shulker shells, an elytra or netherite scrap, Karma items, and Senzu Beans and other DragonMineZ goodies. It grows with your DragonMineZ power like the Zombie Saiyan."
         },
         {
           "title": "The Xeno Dragon",
