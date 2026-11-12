@@ -48,6 +48,8 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("ultforms")) ultForms(mc, l);
         if (f.isEmpty() || f.contains("kaioken")) kaioken(mc, l);
         if (dmz && (f.isEmpty() || f.contains("botweights"))) botWeights(mc, l);
+        if (f.isEmpty() || f.contains("botai")) botAi(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
 
@@ -278,5 +280,60 @@ public final class Batch4Tests {
             log("minigames: " + start + " / " + fin + " TP " + tp0 + " -> " + tp1 + " -> " + (tp1 > tp0 ? "PASS" : "FAIL"));
             for (String s : com.xenowarriors.compat.DmzBotMinigames.LOG) log("minigames log: " + s);
         }); }, 20);
+    }
+
+    // ------------------------------------------------------------------ smarter bots, Elder Kai
+
+    private static void botAi(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b == null) { log("botai: no bot FAIL"); return; }
+            b.moveTo(p.getX() + 1, p.getY(), p.getZ() + 1, 0, 0);
+            var weak = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            weak.moveTo(p.getX(), p.getY(), p.getZ() + 30, 0, 0); weak.setNoAi(true); weak.addTag("xw_b4"); weak.setHealth(4F);
+            p.serverLevel().addFreshEntity(weak);
+            var big = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            big.moveTo(p.getX() + 2, p.getY(), p.getZ() + 30, 0, 0); big.setNoAi(true); big.addTag("xw_b4");
+            big.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(300); big.setHealth(300);
+            p.serverLevel().addFreshEntity(big);
+            int hw = PartyBots.hitsToKill(b, weak), hb = PartyBots.hitsToKill(b, big);
+            log("botai: hits to kill a weak zombie " + hw + ", a 300 hp one " + hb + " -> " + (hw <= 5 && hb > 5 ? "PASS" : "FAIL"));
+            b.setHealth(b.getMaxHealth() * 0.25F);
+            var foe = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            foe.moveTo(b.getX() + 2, b.getY(), b.getZ(), 0, 0); foe.addTag("xw_b4"); foe.setTarget(b);
+            foe.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+            p.serverLevel().addFreshEntity(foe);
+            b.setTarget(foe);
+            START[0] = b.distanceTo(foe);
+        }), 20);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            var foes = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(60), z -> z.getTarget() == b);
+            float d = b == null || foes.isEmpty() ? -1 : b.distanceTo(foes.get(0));
+            log("botai: hurt bot (25%) retreats=" + (b == null ? -1 : b.retreats) + " distance " + Batch3Tests.f1(START[0]) + " -> " + Batch3Tests.f1(d)
+                    + " -> " + (b != null && b.retreats > 0 && d > START[0] + 3 ? "PASS" : "FAIL"));
+            p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(80), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard());
+            Batch3Tests.clearBots(p);
+        }), 80);
+    }
+    private static final float[] START = new float[1];
+
+    private static void oldKai(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            DmzTests.make(p, "saiyan");
+            Object d = DmzPerCharacter.live(p);
+            Object skills = Dmz6Tests.call(d, "getSkills");
+            Dmz6Tests.call(skills, "setSkillLevel", "ultimate", 0);
+            Dmz6Tests.call(skills, "setSkillLevel", "potentialunlock", 1);
+            Dmz6Tests.call(Dmz6Tests.call(d, "getResources"), "setAlignment", 50);
+            String low = com.xenowarriors.compat.DmzOldKai.unleash(p);
+            Dmz6Tests.call(skills, "setSkillLevel", "potentialunlock", 3);
+            String ok = com.xenowarriors.compat.DmzOldKai.unleash(p);
+            Object lv = Dmz6Tests.call(skills, "getSkillLevel", "ultimate");
+            log("oldkai: Potential Unlock 1 -> " + low + "; level 3, alignment 50 -> " + ok + " (ultimate level " + lv + ") -> " + (low.startsWith("not yet") && ok.equals("unleashed") ? "PASS" : "FAIL"));
+        }); }, 30);
     }
 }
