@@ -955,7 +955,7 @@ public final class PartyBots {
     static void mine(PartyBotEntity b, BlockPos pos) {
         ServerLevel s = (ServerLevel) b.level();
         BlockState st = s.getBlockState(pos);
-        if (!isOre(st) || !com.xenowarriors.modes.ModeRules.canGrief(s)) return;
+        if (!isOre(st) || !com.xenowarriors.modes.ModeRules.canGrief(s) || com.xenowarriors.gov.ArenaProtect.protectedAt(s, pos)) return;
         ItemStack tool = com.xenowarriors.stats.HandMining.botTool(b, st);   // (its own pickaxe - Fortune and all - or its bare hands at its Mining level's pickaxe-tier)
         List<ItemStack> drops = tool.isEmpty() && st.requiresCorrectToolForDrops() ? List.of() : Block.getDrops(st, s, pos, s.getBlockEntity(pos), b, tool);
         com.xenowarriors.npc.rebuild.VillageRebuild.playerDug(s, pos);       // (its owner's dig: a village won't put it back)

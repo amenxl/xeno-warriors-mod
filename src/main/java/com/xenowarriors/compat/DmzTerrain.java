@@ -58,7 +58,8 @@ public final class DmzTerrain {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onJoin(EntityJoinLevelEvent event) {
-        if (event.getLevel().isClientSide || com.xenowarriors.modes.ModeRules.canGrief(event.getLevel())) return;
+        if (event.getLevel().isClientSide) return;
+        if (com.xenowarriors.modes.ModeRules.canGrief(event.getLevel()) && !com.xenowarriors.gov.ArenaProtect.protectedAt(event.getLevel(), event.getEntity().blockPosition())) return;   // (and Prototype U-0's arena)
         disarm(event.getEntity());
     }
 }

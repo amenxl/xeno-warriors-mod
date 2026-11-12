@@ -130,6 +130,7 @@ public class UltimaPrototypeEntity extends Monster {
         ServerLevel l = (ServerLevel) level();
         bar.setProgress(getHealth() / getMaxHealth());
         if (home != null && tickCount % 10 == 0) ArenaLock.seal(this, GovDungeons.arena(home));   // (the arena is sealed while it's fighting)
+        if (home != null && tickCount % 20 == 1) ArenaProtect.mark(this);       // (and its blocks can't be broken)
         if (tickCount % 4 == 0) l.sendParticles(limiter ? RED : STEEL, getX(), getY() + 1.1, getZ(), 1, 0.3, 0.6, 0.3, 0);
         if (!limiter && getHealth() < getMaxHealth() * 0.5F) limiterRemoved(l);
         if (grabbed != null) { tickGrab(l); return; }
@@ -344,6 +345,12 @@ public class UltimaPrototypeEntity extends Monster {
             }
         }
         return r;
+    }
+
+    @Override
+    public void remove(RemovalReason why) {
+        ArenaProtect.unmark(this);
+        super.remove(why);
     }
 
     @Override

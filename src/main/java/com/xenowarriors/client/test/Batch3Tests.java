@@ -321,6 +321,16 @@ public final class Batch3Tests {
             u.moveTo(p.getX(), p.getY(), p.getZ() + 2, 180, 0);
             u.grabForTest(p);
         }), 10);
+        l.add(null, () -> server(p -> {                                         // its arena can't be broken while it's there
+            if (a[0] == null) return;
+            var ow = p.server.overworld();
+            net.minecraft.core.BlockPos floor = p.blockPosition().below();
+            var before = ow.getBlockState(floor);
+            boolean dug = p.gameMode.destroyBlock(floor);
+            ow.explode(null, p.getX() + 3, p.getY(), p.getZ() + 3, 4F, net.minecraft.world.level.Level.ExplosionInteraction.TNT);
+            boolean still = ow.getBlockState(floor).is(before.getBlock()) && !ow.getBlockState(p.blockPosition().offset(3, -1, 3)).isAir();
+            log("protofac: arena floor survives digging (" + !dug + ") and an explosion - kept " + com.xenowarriors.gov.ArenaProtect.kept + " -> " + (still && !dug ? "PASS" : "FAIL"));
+        }), 10);
         l.add("batch3_protofac_grab", () -> server(p -> {
             if (a[0] == null) return;
             var us = p.serverLevel().getEntitiesOfClass(com.xenowarriors.gov.UltimaPrototypeEntity.class, com.xenowarriors.gov.GovDungeons.arena(a[0]).inflate(4));

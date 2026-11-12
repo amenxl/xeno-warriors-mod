@@ -230,7 +230,7 @@ public final class BotGear {
         while (!q.isEmpty() && felled < 96) {
             BlockPos p = q.poll();
             BlockState st = s.getBlockState(p);
-            if (!isLog(st)) continue;
+            if (!isLog(st) || com.xenowarriors.gov.ArenaProtect.protectedAt(s, p)) continue;
             for (ItemStack d : Block.getDrops(st, s, p, s.getBlockEntity(p), b, b.getMainHandItem())) {
                 ItemStack left = b.inventory.addItem(d);
                 if (!left.isEmpty()) { Block.popResource(s, p, left); PartyBots.notifyFull(b); }
