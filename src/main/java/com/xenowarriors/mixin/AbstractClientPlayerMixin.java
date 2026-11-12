@@ -21,6 +21,8 @@ public abstract class AbstractClientPlayerMixin {
                 cir.setReturnValue(com.xenowarriors.client.kaeru.ChangeClient.SIL_SKIN);
                 return;
             }
+            var fusion = com.xenowarriors.client.FusionLook.of((AbstractClientPlayer) (Object) this);
+            if (fusion != null) { cir.setReturnValue(fusion.skin()); return; }   // a fusion: both of them in one look
             int o = ClientCharacterData.outfit((AbstractClientPlayer) (Object) this);
             if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(((AbstractClientPlayer) (Object) this).getId())) {
                 cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png")));   // Lunar: white coat

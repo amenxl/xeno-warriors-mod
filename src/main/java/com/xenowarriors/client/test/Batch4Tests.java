@@ -56,8 +56,30 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("bagmerge"))) bagMerge(mc, l);
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
         if (f.isEmpty() || f.contains("sparlock")) sparLock(mc, l);
+        if (f.contains("fusionlook")) fusionLook(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ fusion look previews
+
+    private static void fusionLook(Minecraft mc, MikikoTests.Steps l) {
+        String[] keys = {"rhalix_mikiko_a", "rhalix_mikiko_b", "rhalix_mikiko_c", "mikiko_rhalix_a", "mikiko_rhalix_b", "mikiko_yuri_a", "mikiko_yuri_b", "yuri_mikiko_a"};
+        for (String k : keys) {
+            CharacterType base = CharacterType.valueOf(k.substring(0, k.indexOf('_')).toUpperCase());
+            Batch3Tests.character(l, base);
+            l.add(null, () -> { com.xenowarriors.client.FusionLook.preview = com.xenowarriors.client.FusionLook.LOOKS.get(k); mc.options.hideGui = true; }, 10);
+            l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 5), 15);
+            l.add("batch4_fusion_" + k, () -> {}, 5);
+            l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 5), 15);
+            l.add("batch4_fusion_" + k + "_back", () -> {}, 5);
+            l.add(null, () -> { com.xenowarriors.client.FusionLook.preview = null; mc.options.hideGui = false; log("fusionlook " + k + " shown"); }, 3);
+        }
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO, CharacterType.YURI}) {   // (the originals, to compare)
+            Batch3Tests.character(l, t);
+            l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 5); }, 15);
+            l.add("batch4_fusion_orig_" + t.getId(), () -> { mc.options.hideGui = false; }, 5);
+        }
     }
 
     // ------------------------------------------------------------------ lock on to a bot you're sparring

@@ -50,6 +50,16 @@ public final class DmzFusion {
 
     private static final String KEY = "xw_dmz_fusion";
     public static final String POTARA = "POTHALA", DANCE = "METAMORU";
+    /** The bond you need with a character to fuse with them; the higher it is, the stronger the fusion. */
+    public static final int NEED_BOND = 30;
+    /** Bond XP a second while fused (with that character). */
+    public static final float FUSED_BOND_XP = 1F;
+
+    /** How much harder a fusion hits (and how much less it takes) from the bond it was made with: x1.0 at 30, x1.5 at 100. */
+    public static float bondPower(int bond) { return 1F + Math.max(0, Math.min(100, bond) - NEED_BOND) / (float) (100 - NEED_BOND) * 0.5F; }
+
+    /** The bond this fusion was made with (0 if not fused with a bot). */
+    public static int fusedBond(Player p) { return fused(p) ? persisted(p).getCompound(KEY).getInt("bond") : 0; }
 
     private static Boolean loaded;
     private static boolean broken;
@@ -203,6 +213,8 @@ public final class DmzFusion {
         if (cd != null && p.hasEffect(cd)) return "You can't fuse again yet (fusion cooldown)";
         if (botData(b) == null) return "They don't have a Dragon Ball character yet";
         if (kind(b) == null) return "They need Potara earrings in their bag, or the Fusion Dance skill";
+        int bond = com.xenowarriors.party.Bonds.level(p, b);
+        if (bond < NEED_BOND) return "Your bond with " + b.character().getDisplayName().getString() + " is too low to fuse (" + bond + "/" + NEED_BOND + ")";
         return null;
     }
 
@@ -254,6 +266,8 @@ public final class DmzFusion {
             rec.putLong("until", now(p) + dur);
             rec.putLong("start", now(p));
             rec.putString("name", name);
+            int bond = com.xenowarriors.party.Bonds.level(p, b);
+            rec.putInt("bond", bond);
             if (!earring.isEmpty()) rec.put("earring", earring.save(new CompoundTag()));
             persisted(p).put(KEY, rec);
             var lvl = p.serverLevel();
@@ -266,7 +280,8 @@ public final class DmzFusion {
             p.refreshTabListName();
             DmzPerCharacter.syncAll(p);
             p.sendSystemMessage(Component.literal("You fused with " + botName + "! You are " + name + " ("
-                    + (POTARA.equals(type) ? "Potara" : "Fusion Dance") + ", " + dur / 20 + " s).").withStyle(ChatFormatting.GOLD));
+                    + (POTARA.equals(type) ? "Potara" : "Fusion Dance") + ", " + dur / 20 + " s; bond " + bond + ": x"
+                    + String.format(Locale.ROOT, "%.2f", bondPower(bond)) + " strength).").withStyle(ChatFormatting.GOLD));
             lastCheck = checkStats(me, them, type, mine, theirs);
             note("fused " + p.getGameProfile().getName() + " + " + b.character().getId() + " = " + name + " type=" + type + " totals " + mine + "+" + theirs
                     + " for " + dur + " ticks; " + statsLine(me) + "; DMZ formula check: " + lastCheck);
@@ -411,12 +426,23 @@ public final class DmzFusion {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 10 != 0 || !fused(p)) return;
         long left = left(p);
         if (left <= 0) { end(p, "time's up", true); return; }
+        if (p.tickCount % 20 == 0) {                                             // fused: your bond with them slowly grows
+            String c = persisted(p).getCompound(KEY).getString("char");
+            if (!c.isEmpty()) com.xenowarriors.party.Bonds.addXp(p, c, FUSED_BOND_XP);
+        }
         if (com.xenowarriors.journey.Journey.inRun(p)) { end(p, "a Journey began", false); return; }   // (a Journey is you and your partner only)
         Object me = ready() ? DmzPerCharacter.live(p) : null;
         try {
             if (me == null || !(Boolean) isFused.invoke(getStatus.invoke(me))) { end(p, "the fusion was undone", false); return; }
             setTimer.invoke(getStatus.invoke(me), (int) left + 1200);
         } catch (Throwable ignored) {}
+    }
+
+    /** A fusion's bond strength: its hits land harder and it takes less, by the bond it was made with. */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent e) {
+        if (e.getSource().getEntity() instanceof ServerPlayer p && p != e.getEntity() && fused(p)) e.setAmount(e.getAmount() * bondPower(fusedBond(p)));
+        if (e.getEntity() instanceof ServerPlayer p && fused(p)) e.setAmount(e.getAmount() / bondPower(fusedBond(p)));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

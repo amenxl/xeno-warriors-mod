@@ -597,6 +597,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (king) detailTex = FOX_KING_TEX;
         if (outfit == 0 && torn == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(player.getId())) detailTex = LUNAR_TEX;
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
+        var fusionLook = com.xenowarriors.client.FusionLook.of(player);
+        if (fusionLook != null) detailTex = fusionLook.details();
         detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
@@ -641,6 +643,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
+        if (formHair < 0 && fusionLook != null) formHair = fusionLook.hair();
         if (formHair >= 0 && model.hair == null && type == CharacterType.KYRIE) {     // (Kyrie's hair is the head's own strands: the whole head with the mask, only the hair shows)
             float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
             poseStack.pushPose();
