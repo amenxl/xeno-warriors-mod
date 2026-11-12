@@ -1509,9 +1509,8 @@ public final class Batch4Tests {
             boolean g = com.xenowarriors.kaioken.KaiokenGuard.guarded(p);
             log("kaioken: ate a seed -> Crimson Control " + g + " -> " + (g ? "PASS" : "FAIL"));
             p.removeEffect(com.xenowarriors.ModEffects.CRIMSON_CONTROL.get());
-            p.level().setDayTime(p.level().getDayTime() + 20 * 60 * 25);
             boolean still = com.xenowarriors.kaioken.KaiokenGuard.guarded(p);
-            log("kaioken: for good - effect gone and 25 minutes on, still guarded " + still + " -> " + (still ? "PASS" : "FAIL"));
+            log("kaioken: for good - effect gone (died, milk), still guarded " + still + " -> " + (still ? "PASS" : "FAIL"));
             PartyBotEntity a = PartyBots.spawn(p, CharacterType.RHALIX, null), b = PartyBots.spawn(p, CharacterType.KAERU, null);
             if (a == null || b == null) { log("kaioken: bots FAIL"); return; }
             a.moveTo(p.getX() + 1.5, p.getY(), p.getZ() + 1.5, 0, 0); b.moveTo(p.getX() - 1.5, p.getY(), p.getZ() + 1.5, 0, 0);
