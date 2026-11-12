@@ -79,6 +79,19 @@ public final class GeoAnims {
         return true;
     }
 
+    /** The whole-body yaw (radians, model sense) of an animation's "root" track at time t (ticks), or 0 if it has none. */
+    public static float rootYaw(ResourceLocation file, String name, float t) {
+        Animation anim = get(file, name);
+        if (anim == null) return 0F;
+        double time = Math.min(t, anim.length());
+        for (BoneAnimation bone : anim.boneAnimations()) {
+            if (!"root".equals(bone.boneName())) continue;
+            var y = bone.rotationKeyFrames().yKeyframes();
+            return y.isEmpty() ? 0F : (float) sample(y, time);
+        }
+        return 0F;
+    }
+
     private static ModelPart part(HumanoidModel<?> m, String bone) {
         return switch (bone) {
             case "head" -> m.head;

@@ -276,6 +276,16 @@ public final class RhalixCombatAnim {
         m.hat.copyFrom(m.head);
     }
 
+    /** Whole-body spin (degrees, model sense) of the move playing now - the spinning back kick, the sword whirl - or 0. */
+    public static float spin(Player p, float partial) {
+        State s = STATES.get(p.getId());
+        if (s == null || s.move == null || !rhalix(p)) return 0F;
+        float t = (p.tickCount + partial - s.moveStart) / s.scale;
+        float len = GeoAnims.length(GeoAnims.RHALIX, s.move);
+        if (t < 0F || t > len) return 0F;
+        return Mth.wrapDegrees(GeoAnims.rootYaw(GeoAnims.RHALIX, s.move, t) * Mth.RAD_TO_DEG);
+    }
+
     /** Flying (any speed) and fighting in the air: arms folded across his chest, his legs do the work. */
     public static void foldArms(HumanoidModel<?> m, Player p, float age) {
         State s = STATES.get(p.getId());

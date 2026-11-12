@@ -393,7 +393,10 @@ public final class RhalixComboAnim {
     public static float[] bodyMotion(Player p, float partial) {
         if (!rhalix(p)) return null;
         Object[] c = current(p, p.tickCount + partial);
-        if (c == null) return null;
+        if (c == null) {                     // his air kicks / sword moves: only a whole-body spin, if the move has one
+            float sp = RhalixCombatAnim.spin(p, partial);
+            return sp == 0F ? null : new float[]{0F, 0F, -sp, 0F, 0F};
+        }
         float[] v = (float[]) c[0];
         float w = (float) c[1];
         St st = STATES.get(p.getId());

@@ -14,6 +14,7 @@ import com.xenowarriors.rhalix.WireLevel;
 import com.xenowarriors.rhalix.Wires;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -519,6 +520,24 @@ public final class WeaponsTests {
         l.add(null, () -> FormsClient.whip(), 3);
         l.add("weapons_whip_c", () -> {}, 2);
         l.add(null, () -> log("wires client whips sent " + FormsClient.whipsSent + ", showing " + FormsFx.whipping(mc.player)), 3);
+        // Rhalix's fight animations pass 2: whole-body spins and shoulders that follow the torso
+        l.add(null, () -> {
+            var rl = com.xenowarriors.client.mikiko.GeoAnims.RHALIX;
+            float spin = com.xenowarriors.client.mikiko.GeoAnims.rootYaw(rl, "rh_spin_back_kick", 0.39F * 20F) * Mth.RAD_TO_DEG;
+            float whirl = com.xenowarriors.client.mikiko.GeoAnims.rootYaw(rl, "rh_sw_whirl", 0.42F * 20F) * Mth.RAD_TO_DEG;
+            var m = new net.minecraft.client.model.PlayerModel<net.minecraft.client.player.AbstractClientPlayer>(
+                    mc.getEntityModels().bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER), false);
+            m.rightArm.x = -5F; m.rightArm.z = 0F; m.body.yRot = 0F;
+            com.xenowarriors.client.mikiko.GeoAnims.apply(m, rl, "rh_jab_right", 0.22F * 20F, false, 1F);
+            float want = -Mth.cos(m.body.yRot) * 5F, wantZ = Mth.sin(m.body.yRot) * 5F;
+            boolean ok = Math.abs(spin) > 150F && Math.abs(whirl) > 250F && Math.abs(m.rightArm.x - want) < 0.3F && Math.abs(m.rightArm.z - wantZ) < 0.3F;
+            log(String.format("rhfight spin=%.0f whirl=%.0f jab twist=%.1f arm=(%.2f,%.2f) want=(%.2f,%.2f) ok=%s",
+                    spin, whirl, m.body.yRot * Mth.RAD_TO_DEG, m.rightArm.x, m.rightArm.z, want, wantZ, ok));
+            try (var in = mc.getResourceManager().getResource(com.xenowarriors.XenoWarriors.id("models/item/3d/rhalix_wires.json")).get().open()) {
+                var j = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
+                log("rhfight wires model elements=" + j.getAsJsonArray("elements").size());
+            } catch (Exception e) { log("rhfight wires model error " + e); }
+        }, 2);
         uncamera(mc, l);
         // the wire sword
         l.add(null, () -> server(p -> { WeaponForms.summon(p, Form.WIRE_SWORD, false); log("wires sword: held " + held(p)); clearDummies(p); }), 5);
