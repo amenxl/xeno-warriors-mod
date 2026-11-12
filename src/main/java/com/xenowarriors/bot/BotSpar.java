@@ -48,9 +48,32 @@ public final class BotSpar {
     // ------------------------------------------------------------------ quiet?
 
     static boolean quiet(ServerPlayer o) {
-        if (o.getLastHurtByMob() != null && o.tickCount - o.getLastHurtByMobTimestamp() < 20 * 30) return false;
+        if (o.getLastHurtByMob() != null && !ours(o, o.getLastHurtByMob()) && o.tickCount - o.getLastHurtByMobTimestamp() < 20 * 30) return false;
         return o.level().getEntitiesOfClass(Mob.class, o.getBoundingBox().inflate(20), m -> m.isAlive() && (m instanceof Enemy || m.getTarget() == o)
-                && !(m instanceof PartyBotEntity)).isEmpty();
+                && !ours(o, m) && !m.isNoAi()).isEmpty();
+    }
+
+    /** On your side: a bot, your (or a party member's) pet - a captured monster too. */
+    private static boolean ours(ServerPlayer o, net.minecraft.world.entity.LivingEntity m) {
+        if (m instanceof PartyBotEntity) return true;
+        UUID pet = com.xenowarriors.party.Parties.petOwner(m);
+        return pet != null && (pet.equals(o.getUUID()) || com.xenowarriors.party.Parties.sameParty(pet, o.getUUID()));
+    }
+
+    /**
+     * Real trouble right now (what breaks up a party, picnic or song - not just a monster idling nearby): you were hurt by
+     * something hostile in the last 10 seconds, or something within 20 blocks is after you, your party, your bots or pets.
+     */
+    public static boolean trouble(ServerPlayer o) {
+        var hurt = o.getLastHurtByMob();
+        if (hurt != null && hurt.isAlive() && !ours(o, hurt) && o.tickCount - o.getLastHurtByMobTimestamp() < 20 * 10) return true;
+        return !o.level().getEntitiesOfClass(Mob.class, o.getBoundingBox().inflate(20), m -> {
+            if (!m.isAlive() || m.isNoAi() || ours(o, m)) return false;
+            var t = m.getTarget();
+            if (t == null || !t.isAlive()) return false;
+            if (t == o || ours(o, t)) return true;
+            return t instanceof ServerPlayer tp && (tp == o || com.xenowarriors.party.Parties.sameParty(tp.getUUID(), o.getUUID()));
+        }).isEmpty();
     }
 
     /**

@@ -176,7 +176,7 @@ public final class BotPicnic {
     private static void picnicTick(ServerPlayer o, Picnic pc) {
         ServerLevel l = o.serverLevel();
         long now = l.getGameTime();
-        boolean fight = !BotSpar.quiet(o);
+        boolean fight = BotSpar.trouble(o);
         if (now >= pc.end || fight || !o.isAlive() || o.level() != l || o.position().distanceTo(Vec3.atCenterOf(pc.center)) > 48) { end(o, pc, !fight && now >= pc.end); return; }
         if (o.tickCount % 10 != 0) return;
         List<LivingEntity> gs = guests(o, pc);

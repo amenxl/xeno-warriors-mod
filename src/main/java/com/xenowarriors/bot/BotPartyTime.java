@@ -47,6 +47,8 @@ public final class BotPartyTime {
     private BotPartyTime() {}
 
     public static final int LENGTH = 20 * 60 * 3, GAP = 20 * 60 * 40, ASK_TICKS = 20 * 20;
+    /** A party breaks up after this long of real trouble in a row, or of you being too far away. */
+    public static final int TROUBLE_TICKS = 20 * 3, AWAY_TICKS = 20 * 10;
     public static final float BOND_TICK = 5F, BOND_END = 30F;
     private static final String LAST = "xw_party_time_at";
     /** pentatonic steps for the tune (a random, cheerful little melody - nothing in particular) */
@@ -54,6 +56,8 @@ public final class BotPartyTime {
 
     private static final class Party {
         long end; BlockPos center, cake; int note; final Set<UUID> guests = new HashSet<>();
+        /** ticks of real trouble in a row (a party only breaks up after a few seconds of it), and of you being away */
+        int trouble, away;
         /** the bot playing its jukebox (null: none), the beatboxers (Garry / Stevie bots, when there's no music) */
         UUID dj; final List<UUID> beatbox = new ArrayList<>();
         /** rap battles still to come (pairs of character ids), the one going on, its next line and when */
@@ -178,8 +182,11 @@ public final class BotPartyTime {
     private static void partyTick(ServerPlayer o, Party pt) {
         ServerLevel l = o.serverLevel();
         long now = l.getGameTime();
-        boolean fight = !BotSpar.quiet(o);
-        if (now >= pt.end || fight || !o.isAlive() || o.position().distanceTo(Vec3.atCenterOf(pt.center)) > 48) { end(o, pt, !fight && now >= pt.end); return; }
+        pt.trouble = BotSpar.trouble(o) ? pt.trouble + 1 : 0;                  // (a monster idling nearby, a pet, a bot's own scuffle: not a reason)
+        boolean far = o.position().distanceTo(Vec3.atCenterOf(pt.center)) > 48;
+        pt.away = far ? pt.away + 1 : 0;                                        // (a few seconds' slack: a knockback, a quick hop off)
+        boolean fight = pt.trouble >= TROUBLE_TICKS;
+        if (now >= pt.end || fight || !o.isAlive() || pt.away >= AWAY_TICKS) { end(o, pt, !fight && now >= pt.end); return; }
         List<LivingEntity> gs = guests(o, pt);
         if (o.tickCount % 20 == 0) {                                          // hats on (and the confetti) for everyone near
             int[] ids = gs.stream().mapToInt(LivingEntity::getId).toArray();

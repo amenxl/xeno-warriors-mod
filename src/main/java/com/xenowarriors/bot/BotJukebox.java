@@ -129,7 +129,7 @@ public final class BotJukebox {
     private static void placerTick(PartyBotEntity b, ServerLevel l, ServerPlayer o, Box box, long now) {
         boolean there = l.getBlockState(box.pos).is(Blocks.JUKEBOX);
         boolean away = b.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(box.pos)) > 16 * 16 || o.level() != l || o.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(box.pos)) > 24 * 24;
-        if (!there || away || !BotSpar.quiet(o) || b.downed()) { packUp(o); return; }
+        if (!there || away || BotSpar.trouble(o) || b.downed()) { packUp(o); return; }
         if (box.songOn() && now >= box.songEnds) endSong(l, box);
         if (!box.songOn() && now >= box.nextSong && quiet(b, o) && b.getRandom().nextInt(5) == 0 && playNext(b, l, o, box)) return;
         if (!box.songOn() && now - box.idleSince > PACK_UP && !BotPartyTime.active(o)) packUp(o);   // (nobody's put anything on for a while)
@@ -162,7 +162,7 @@ public final class BotJukebox {
             var v = l.getEntity(r.vehicle);
             boolean mine = b.getUUID().equals(r.dj);
             if (!mine) { if (bot(l, r.dj) == null) stopRadio(o, l); return false; }   // (the one playing it is gone)
-            boolean ok = v != null && v.isAlive() && b.getVehicle() == v && ride(o) != null && o.distanceTo(v) < 24 && BotSpar.quiet(o) && !b.downed();
+            boolean ok = v != null && v.isAlive() && b.getVehicle() == v && ride(o) != null && o.distanceTo(v) < 24 && !BotSpar.trouble(o) && !b.downed();
             if (!ok || now >= r.ends) { stopRadio(o, l); return false; }
             return true;
         }

@@ -105,6 +105,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("geoguard")) geoGuard(mc, l);
         if (f.isEmpty() || f.contains("rlgun")) rlGun(mc, l);
         if (f.isEmpty() || f.contains("boostbag")) boostBag(mc, l);
+        if (f.isEmpty() || f.contains("partylast")) partyLasts(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2438,6 +2439,41 @@ public final class Batch4Tests {
         int n = b.getCubes().size();
         for (var c : b.getChildBones()) n += countCubes(c);
         return n;
+    }
+
+    /** A party doesn't break up over a monster just standing about - only real trouble (and only after a few seconds of it). */
+    private static void partyLasts(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        com.xenowarriors.foes.VesselEntity[] v = new com.xenowarriors.foes.VesselEntity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.bot.PartyBots.add(p, new String[]{"kaeru"});
+            com.xenowarriors.bot.BotPartyTime.start(p);
+            var e = com.xenowarriors.foes.Foes.VESSEL.get().create(p.serverLevel());
+            v[0] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), e, p.blockPosition().offset(8, 0, 0));
+            v[0].setTarget(null);
+        }), 20);
+        settle(l, 20 * 6);
+        l.add(null, () -> server(p -> {
+            boolean on = com.xenowarriors.bot.BotPartyTime.active(p);
+            log("partylast: a monster standing about 8 blocks away for 6 s - the party goes on " + on + " -> " + (on ? "PASS" : "FAIL"));
+            if (v[0] != null) { v[0].setTarget(p); v[0].setNoAi(false); }
+        }), 2);
+        settle(l, 20);
+        l.add(null, () -> server(p -> {
+            if (v[0] != null) v[0].setTarget(p);
+            boolean on = com.xenowarriors.bot.BotPartyTime.active(p);
+            log("partylast: 1 s after it comes for you, still on (not broken up at once) " + on + " -> " + (on ? "PASS" : "FAIL"));
+        }), 2);
+        for (int i = 0; i < 5; i++) l.add(null, () -> server(p -> { if (v[0] != null && v[0].isAlive()) v[0].setTarget(p); }), 20);
+        l.add(null, () -> server(p -> {
+            boolean on = com.xenowarriors.bot.BotPartyTime.active(p);
+            log("partylast: after 5 s of it coming for you the party's broken up " + !on + " -> " + (!on ? "PASS" : "FAIL"));
+            if (v[0] != null) v[0].discard();
+            Batch3Tests.clearBots(p);
+        }), 5);
     }
 
     private static void boostBag(Minecraft mc, MikikoTests.Steps l) {
