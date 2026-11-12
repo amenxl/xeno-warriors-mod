@@ -519,6 +519,9 @@ public final class WeaponsTests {
         l.add(null, () -> {}, 10);
         l.add(null, () -> FormsClient.whip(), 3);
         l.add("weapons_whip_c", () -> {}, 2);
+        l.add("weapons_whip_d", () -> {}, 2);
+        l.add("weapons_whip_e", () -> {}, 2);
+        l.add("weapons_whip_f", () -> {}, 2);
         l.add(null, () -> log("wires client whips sent " + FormsClient.whipsSent + ", showing " + FormsFx.whipping(mc.player)), 3);
         // Rhalix's fight animations pass 2: whole-body spins and shoulders that follow the torso
         l.add(null, () -> {
