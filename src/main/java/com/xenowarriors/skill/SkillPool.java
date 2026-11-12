@@ -214,13 +214,16 @@ public final class SkillPool {
             Entry e = out[s] >= 0 && out[s] < pool.size() ? pool.get(out[s]) : null;
             if (e != null && !rlOnly(t, e)) continue;
             out[s] = -1;
-            for (int pass = 0; pass < 2 && out[s] < 0; pass++)
-                for (int i = 0; i < pool.size(); i++) {
-                    if (rlOnly(t, pool.get(i)) || (pass == 0 && pool.get(i).unlockLevel() > 0)) continue;
-                    boolean used = false;
-                    for (int k = 0; k < out.length; k++) if (out[k] == i) used = true;
-                    if (!used) { out[s] = i; break; }
-                }
+            int best = -1;                                                       // (the next free skill: Season 1 first, then the earliest unlock)
+            for (int i = 0; i < pool.size(); i++) {
+                if (rlOnly(t, pool.get(i))) continue;
+                boolean used = false;
+                for (int k = 0; k < out.length; k++) if (out[k] == i) used = true;
+                if (used) continue;
+                if (best < 0 || pool.get(i).season() < pool.get(best).season()
+                        || pool.get(i).season() == pool.get(best).season() && pool.get(i).unlockLevel() < pool.get(best).unlockLevel()) best = i;
+            }
+            out[s] = best;
         }
         return out;
     }
