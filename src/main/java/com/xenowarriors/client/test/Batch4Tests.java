@@ -67,7 +67,214 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("outfits")) outfits(mc, l);
         if (dmz && (f.isEmpty() || f.contains("automission"))) autoMission(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
+        if (f.isEmpty() || f.contains("teamspar")) teamSpar(mc, l);
+        if (f.isEmpty() || f.contains("botoutfit")) botOutfit(mc, l);
+        if (f.isEmpty() || f.contains("phonecall")) phoneCall(mc, l);
+        if (f.isEmpty() || f.contains("offduty")) offDutyCards(mc, l);
+        if (f.isEmpty() || f.contains("wirehit")) wireHit(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ 2v2 spars; bot outfits; phoning busy teammates; off-duty cards; wires
+
+    private static PartyBotEntity botAt(ServerPlayer p, CharacterType t, double dx, double dz) {
+        PartyBotEntity b = PartyBots.spawn(p, t, null);
+        if (b != null) { b.moveTo(p.getX() + dx, p.getY(), p.getZ() + dz, 180, 0); b.setMode(PartyBotEntity.NEUTRAL); b.setHealth(b.getMaxHealth()); }
+        return b;
+    }
+
+    private static boolean hit(net.minecraft.world.entity.LivingEntity victim, net.minecraft.world.damagesource.DamageSource src, float amount) {
+        victim.invulnerableTime = 0;
+        return victim.hurt(src, amount);
+    }
+
+    private static void teamSpar(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[3];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            b[0] = botAt(p, CharacterType.RHALIX, 2, 4); b[1] = botAt(p, CharacterType.MAX, -2, 4); b[2] = botAt(p, CharacterType.SAM, 0, -3);
+            com.xenowarriors.bot.BotSpar.askTeams(b[0], b[1], b[2], p);
+        }), 20);
+        l.add("batch4_teamspar_ask", () -> {}, 5);
+        l.add(null, () -> server(p -> {
+            p.connection.handleChatCommand(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket("xenospar team yes " + b[0].getId() + " " + b[1].getId() + " " + b[2].getId(),
+                    java.time.Instant.now(), 0L, net.minecraft.network.chat.ArgumentSignatures.EMPTY, new net.minecraft.network.chat.LastSeenMessages.Update(0, new java.util.BitSet())));
+        }), 10);
+        l.add(null, () -> server(p -> {
+            boolean started = com.xenowarriors.bot.BotSpar.teamMatchFor(p);
+            boolean rules = PartyBots.sparFoes(p, b[0]) && PartyBots.sparFoes(p, b[1]) && !PartyBots.sparFoes(p, b[2]) && PartyBots.sparFoes(b[2], b[0])
+                    && !PartyBots.sparFoes(b[0], b[1]) && b[0].sparringOwner() && !b[2].sparringOwner();
+            log("teamspar: accepted the card -> started " + started + ", sides right " + rules + " -> " + (started && rules ? "PASS" : "FAIL"));
+            boolean allyHit = hit(b[2], p.damageSources().playerAttack(p), 2F);
+            boolean foeHit = hit(b[0], p.damageSources().playerAttack(p), 2F);
+            boolean botBot = hit(b[1], p.damageSources().mobAttack(b[2]), 2F);
+            log("teamspar: you hit your partner " + allyHit + ", you hit a foe " + foeHit + ", your partner hit a foe " + botBot + " -> " + (!allyHit && foeHit && botBot ? "PASS" : "FAIL"));
+            hit(b[0], p.damageSources().playerAttack(p), b[0].getMaxHealth() * 2);
+            boolean out0 = !com.xenowarriors.bot.BotSpar.inMatch(b[0]) && com.xenowarriors.bot.BotSpar.teamMatchFor(p) && b[0].isAlive() && !b[0].downed();
+            log("teamspar: a foe knocked down to 30% is out, match goes on: " + out0 + " (hp " + Math.round(b[0].getHealth()) + "/" + Math.round(b[0].getMaxHealth()) + ") -> " + (out0 ? "PASS" : "FAIL"));
+        }), 60);
+        l.add("batch4_teamspar_fight", () -> {}, 5);
+        l.add(null, () -> server(p -> {
+            int fin = com.xenowarriors.bot.BotSpar.teamFinished;
+            hit(b[1], p.damageSources().mobAttack(b[2]), b[1].getMaxHealth() * 2);
+            boolean over = !com.xenowarriors.bot.BotSpar.teamMatchFor(p) && com.xenowarriors.bot.BotSpar.teamFinished == fin + 1;
+            boolean calm = !b[0].sparring() && !b[1].sparring() && !b[2].sparring() && !PartyBots.sparFoes(p, b[1]);
+            log("teamspar: last foe out -> match over " + over + ", everyone back to normal " + calm + " -> " + (over && calm ? "PASS" : "FAIL"));
+            // the 1-on-1 bot-vs-bot spar: their hits land now
+            b[0].setHealth(b[0].getMaxHealth()); b[1].setHealth(b[1].getMaxHealth());
+            com.xenowarriors.bot.BotSpar.startBots(b[0], b[1], p);
+            boolean lands = hit(b[1], p.damageSources().mobAttack(b[0]), 2F);
+            boolean youCant = !hit(b[0], p.damageSources().playerAttack(p), 2F);
+            log("teamspar: bot-vs-bot spar hit lands " + lands + ", you can't join in " + youCant + " -> " + (lands && youCant ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 10);
+    }
+
+    private static void botOutfit(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setOutfitOf(CharacterType.RHALIX, 1));
+            b[0] = botAt(p, CharacterType.RHALIX, 0, 3);
+        }), 20);
+        l.add(null, () -> {
+            var cb = mc.level.getEntitiesOfClass(PartyBotEntity.class, mc.player.getBoundingBox().inflate(10)).stream().findFirst().orElse(null);
+            int seen = cb == null ? -1 : cb.outfit();
+            log("botoutfit: you last had Rhalix in Origins 1 -> his bot wears " + seen + " (client) -> " + (seen == 1 ? "PASS" : "FAIL"));
+        }, 3);
+        l.add(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 3);
+        l.add("batch4_botoutfit_origins1", () -> {}, 10);
+        l.add(null, () -> server(p -> {
+            PartyBots.action(p, b[0].getId(), PartyBots.ACT_OUTFIT, 2);
+            int rec = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.outfitOf(CharacterType.RHALIX)).orElse(-1);
+            log("botoutfit: changed from its menu to Origins 2 -> bot " + b[0].outfit() + ", Rhalix's own outfit " + rec + " -> " + (b[0].outfit() == 2 && rec == 2 ? "PASS" : "FAIL"));
+        }), 20);
+        l.add("batch4_botoutfit_origins2", () -> {}, 5);
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        l.add(null, () -> server(p -> {
+            int o = com.xenowarriors.character.CharacterManager.outfit(p);
+            log("botoutfit: playing Rhalix afterwards wears " + o + " -> " + (o == 2 ? "PASS" : "FAIL"));
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.outfit = 0; d.outfits = new net.minecraft.nbt.CompoundTag(); });
+            Batch3Tests.clearBots(p);
+        }), 5);
+        l.add(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 3);
+    }
+
+    private static void phoneCall(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            long now = p.server.overworld().getGameTime();
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.KYRIE, com.xenowarriors.bot.OffDuty.Act.TRAINING, now + 3 * com.xenowarriors.bot.OffDuty.MINUTE, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.MAX, com.xenowarriors.bot.OffDuty.Act.MINING, now + 9 * com.xenowarriors.bot.OffDuty.MINUTE, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.SAM, com.xenowarriors.bot.OffDuty.Act.RELAX, now + 4 * com.xenowarriors.bot.OffDuty.MINUTE, null);
+            com.xenowarriors.bot.BotCalls.open(p);
+        }), 20);
+        l.add("batch4_phone_team", () -> {}, 5);
+        l.add(null, () -> {
+            boolean open = mc.screen instanceof com.xenowarriors.client.PhoneScreen;
+            log("phonecall: Teammates page open " + open + " -> " + (open ? "PASS" : "FAIL"));
+            com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.PhoneActionPacket(4, new java.util.UUID(0, CharacterType.KYRIE.ordinal())));
+        }, 15);
+        l.add("batch4_phone_called", () -> {}, 5);
+        l.add(null, () -> server(p -> {
+            boolean called = com.xenowarriors.bot.BotCalls.called(p, CharacterType.KYRIE);
+            long now = p.server.overworld().getGameTime();
+            com.xenowarriors.bot.OffDuty.simulate(p, CharacterType.KYRIE, 5, now, p.getRandom());
+            boolean joined = PartyBots.bots(p).stream().anyMatch(x -> x.character() == CharacterType.KYRIE);
+            log("phonecall: called Kyrie " + called + ", she joined when done " + joined + " -> " + (called && joined ? "PASS" : "FAIL"));
+            // a full party: she rings to say she's ready instead
+            for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.LOGAN, CharacterType.KEITA, CharacterType.GARRY, CharacterType.STEVIE})
+                if (PartyBots.room(p) > 0) PartyBots.spawn(p, t, null);
+            com.xenowarriors.bot.BotCalls.call(p, CharacterType.SAM);
+            int before = PartyBots.bots(p).size();
+            com.xenowarriors.bot.OffDuty.simulate(p, CharacterType.SAM, 6, now, p.getRandom());
+            boolean stayed = PartyBots.bots(p).size() == before && PartyBots.bots(p).stream().noneMatch(x -> x.character() == CharacterType.SAM);
+            boolean cleared = !com.xenowarriors.bot.BotCalls.called(p, CharacterType.SAM);
+            log("phonecall: party full (room " + PartyBots.room(p) + ") -> Sam didn't squeeze in " + stayed + ", rang back " + cleared + " -> " + (stayed && cleared && PartyBots.room(p) <= 0 ? "PASS" : "FAIL"));
+            mc.execute(() -> mc.setScreen(null));
+            Batch3Tests.clearBots(p);
+        }), 10);
+        l.add("batch4_phone_chat", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")), 10);
+        l.add(null, () -> mc.setScreen(null), 3);
+    }
+
+    private static void offDutyCards(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        int[] season = new int[1];
+        l.add(null, () -> server(p -> {
+            season[0] = com.xenowarriors.character.Seasons.highest(p.server);
+            com.xenowarriors.character.Seasons.set(p.server, Math.max(2, season[0]));   // (Ultima is Season 2)
+            Batch3Tests.clearBots(p);
+            long now = p.server.overworld().getGameTime(), m = com.xenowarriors.bot.OffDuty.MINUTE;
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.RHALIX, com.xenowarriors.bot.OffDuty.Act.RELAX, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.ULTIMA, com.xenowarriors.bot.OffDuty.Act.TRAINING, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.KYRIE, com.xenowarriors.bot.OffDuty.Act.TRAINING, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.MAX, com.xenowarriors.bot.OffDuty.Act.DRAGON_BALLS, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.SAM, com.xenowarriors.bot.OffDuty.Act.PARTY, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.LOGAN, com.xenowarriors.bot.OffDuty.Act.BUILDING, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.KEITA, com.xenowarriors.bot.OffDuty.Act.MINING, now + 20 * m, null);
+            com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.GARRY, com.xenowarriors.bot.OffDuty.Act.HUNTING, now + 20 * m, null);
+            PartyBots.openPick(p);
+        }), 20);
+        l.add("batch4_offduty_cards_a", () -> {}, 7);
+        l.add("batch4_offduty_cards_b", () -> {}, 13);
+        l.add(null, () -> server(p -> {
+            mc.execute(() -> mc.setScreen(null));
+            // Ultima: never relaxes (even after a long time with you), trains most of all
+            boolean tireless = com.xenowarriors.bot.OffDuty.tireless(CharacterType.ULTIMA) && !com.xenowarriors.bot.OffDuty.tireless(CharacterType.KYRIE);
+            int relax = 0, train = 0, picks = 0;
+            long now = p.server.overworld().getGameTime(), m = com.xenowarriors.bot.OffDuty.MINUTE;
+            for (int i = 0; i < 120; i++) {
+                com.xenowarriors.bot.OffDuty.setForTest(p, CharacterType.ULTIMA, com.xenowarriors.bot.OffDuty.Act.NONE, 0, null);
+                com.xenowarriors.bot.OffDuty.simulate(p, CharacterType.ULTIMA, 4, now + i * 10 * m, p.getRandom());
+                var a = com.xenowarriors.bot.OffDuty.act(p, CharacterType.ULTIMA);
+                if (a == com.xenowarriors.bot.OffDuty.Act.NONE) continue;
+                picks++;
+                if (a.relaxing() || a == com.xenowarriors.bot.OffDuty.Act.HUNTING) relax++;
+                if (a == com.xenowarriors.bot.OffDuty.Act.TRAINING) train++;
+            }
+            com.xenowarriors.party.Bonds.set(p, "ultima", 60, 0);
+            String job = com.xenowarriors.bot.OffDuty.assign(p, CharacterType.ULTIMA, "relax");
+            log("offduty: Ultima tireless " + tireless + "; " + picks + " picks: training " + train + ", relaxing/hunting " + relax + "; told to relax: '" + job + "' -> "
+                    + (tireless && relax == 0 && picks > 20 && train * 2 > picks && job.contains("training") ? "PASS" : "FAIL"));
+            com.xenowarriors.bot.OffDuty.assign(p, CharacterType.ULTIMA, "recall");
+            com.xenowarriors.character.Seasons.set(p.server, season[0]);
+        }), 5);
+    }
+
+    private static void wireHit(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.RHALIX);
+        int[] ids = new int[5], season = new int[1];
+        l.add(null, () -> server(p -> {
+            season[0] = com.xenowarriors.character.Seasons.highest(p.server);
+            com.xenowarriors.character.Seasons.set(p.server, Math.max(2, season[0]));
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.forms.WeaponForms.summon(p, com.xenowarriors.forms.Form.WIRES, false);
+            p.setYRot(0); p.setYHeadRot(0); p.setXRot(0);
+            // (facing +z) 5 ahead, 4.5 ahead-left, 3 ahead but 2.5 up, 1.2 behind (wraps round), 4 behind (missed)
+            double[][] at = {{0, 0, 5}, {-3, 0, 3.4}, {0, 2.5, 3}, {0.3, 0, -1.2}, {0, 0, -4}};
+            for (int i = 0; i < at.length; i++) {
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                z.moveTo(p.getX() + at[i][0], p.getY() + at[i][1], p.getZ() + at[i][2], 180, 0);
+                z.setNoAi(true); z.setNoGravity(true); z.setPersistenceRequired(); z.addTag("xw_wiretest");
+                p.serverLevel().addFreshEntity(z);
+                ids[i] = z.getId();
+            }
+        }), 20);
+        l.add(null, () -> server(p -> {
+            float[] hp = new float[5];
+            for (int i = 0; i < 5; i++) hp[i] = ((net.minecraft.world.entity.LivingEntity) p.level().getEntity(ids[i])).getHealth();
+            int hits = com.xenowarriors.rhalix.Wires.whip(p);
+            boolean[] got = new boolean[5];
+            for (int i = 0; i < 5; i++) got[i] = ((net.minecraft.world.entity.LivingEntity) p.level().getEntity(ids[i])).getHealth() < hp[i];
+            log("wirehit: one lash hit " + hits + " - ahead 5 " + got[0] + ", ahead-left " + got[1] + ", ahead+up " + got[2] + ", right behind " + got[3] + ", 4 behind " + got[4]
+                    + " -> " + (got[0] && got[1] && got[2] && got[3] && !got[4] ? "PASS" : "FAIL"));
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(20), z -> z.getTags().contains("xw_wiretest"))) e.discard();
+            com.xenowarriors.character.Seasons.set(p.server, season[0]);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ bots fishing; bots taking missions on their own

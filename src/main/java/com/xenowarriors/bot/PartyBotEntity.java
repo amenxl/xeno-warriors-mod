@@ -230,7 +230,7 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean isAlliedTo(Entity e) {
         if (super.isAlliedTo(e)) return true;
         if (level().isClientSide || e == null || e == this) return false;
-        return PartyBots.friendly(this, e) && !(sparring() && (e == owner() || e.getUUID().equals(sparFoe)));
+        return PartyBots.friendly(this, e) && !PartyBots.sparFoes(this, e);
     }
 
     public boolean canFly() { return naturalFlier() || entityData.get(DMZ_FLY) || entityData.get(NIMBUS); }
@@ -701,7 +701,7 @@ public class PartyBotEntity extends PathfinderMob {
 
     @Override
     public void setTarget(LivingEntity t) {
-        if (t != null && !level().isClientSide && PartyBots.friendly(this, t) && !(sparring() && t == owner())) t = null;   // (never its own side: the owner, the party, their pets, bots and souls)
+        if (t != null && !level().isClientSide && PartyBots.friendly(this, t) && !PartyBots.sparFoes(this, t)) t = null;   // (never its own side: the owner, the party, their pets, bots and souls)
         super.setTarget(untouchable(t) ? null : t);
     }
 
@@ -712,7 +712,7 @@ public class PartyBotEntity extends PathfinderMob {
             if (downed()) return false;
             ServerPlayer o = owner();
             if (o == null) return false;
-            if (sparring()) { pick = o; return true; }
+            if (sparring()) { pick = BotSpar.pick(PartyBotEntity.this); return pick != null; }
             if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget) && !untouchable(relayTarget)) { pick = relayTarget; return true; }
             if (mode() == AGGRESSIVE) {
                 pick = level().getNearestEntity(level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(16),
@@ -726,7 +726,7 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public boolean canContinueToUse() {
             LivingEntity t = getTarget();
             if (t == null || !t.isAlive() || downed() || untouchable(t)) return false;
-            if (sparring()) return t == owner();
+            if (sparring()) return PartyBots.sparFoes(PartyBotEntity.this, t);
             ServerPlayer o = owner();
             return o != null && t.distanceToSqr(o) < 40 * 40 && !PartyBots.friendly(PartyBotEntity.this, t);
         }
@@ -1038,10 +1038,10 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource src, float amount) {
         if (downed() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
-        if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !(sparring() && (src.getEntity() == owner() || src.getEntity().getUUID().equals(sparFoe)))) return false;
+        if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !PartyBots.sparFoes(this, src.getEntity())) return false;
         boolean r = super.hurt(src, amount);
         if (r) { lastHurtAt = tickCount; pendingHp = -1; }
-        if (r && src.getEntity() instanceof LivingEntity att && !(src.getEntity() == owner() && sparring())) { relayTarget = att; relayUntil = level().getGameTime() + 200; }
+        if (r && src.getEntity() instanceof LivingEntity att && !PartyBots.sparFoes(this, att)) { relayTarget = att; relayUntil = level().getGameTime() + 200; }
         return r;
     }
 
@@ -1050,6 +1050,7 @@ public class PartyBotEntity extends PathfinderMob {
     public void die(DamageSource src) {
         if (!level().isClientSide && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY) && !isRemoved()) {
             setHealth(1F);
+            if (BotSpar.inMatch(this)) { BotSpar.out(this); return; }
             if (sparring() && sparFoe != null) { PartyBotEntity f = level() instanceof ServerLevel sl && sl.getEntity(sparFoe) instanceof PartyBotEntity pf ? pf : null; BotSpar.endBots(this, f, f, owner(), "won"); return; }
             if (sparring()) { PartyBots.sparOver(this, false); return; }
             entityData.set(DOWNED, true);

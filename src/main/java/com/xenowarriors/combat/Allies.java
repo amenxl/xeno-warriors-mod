@@ -93,8 +93,7 @@ public final class Allies {
     public static boolean opponents(Entity a, Entity b) {
         a = actor(a); b = actor(b);
         if (a instanceof Player pa && b instanceof Player pb) return Duels.dueling(pa, pb);
-        if (a instanceof PartyBotEntity bot && b instanceof Player p) return bot.sparring() && p.getUUID().equals(bot.ownerId());
-        if (b instanceof PartyBotEntity bot && a instanceof Player p) return bot.sparring() && p.getUUID().equals(bot.ownerId());
+        if (a instanceof PartyBotEntity || b instanceof PartyBotEntity) { if (PartyBots.sparFoes(a, b)) return true; }   // (a spar: 1-on-1, bot vs bot, or a 2v2)
         // two players' things in a duel (their souls, pets): fair game too
         UUID sa = side(a), sb = side(b);
         if (sa != null && sb != null && !sa.equals(sb) && a.level() instanceof ServerLevel l

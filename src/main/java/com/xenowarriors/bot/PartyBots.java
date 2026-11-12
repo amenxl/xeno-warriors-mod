@@ -233,6 +233,20 @@ public final class PartyBots {
         return null;
     }
 
+    /**
+     * Two on the same side who are sparring each other right now: a bot and its owner (a 1-on-1 spar), two bots in a
+     * bot-vs-bot spar, or opponents in a 2v2 team spar ({@link BotSpar.Match}). A bot's stand-in player counts as the bot.
+     */
+    public static boolean sparFoes(Entity a, Entity b) {
+        if (a == null || b == null) return false;
+        PartyBotEntity ba = botOf(a), bb = botOf(b);
+        Entity x = ba != null ? ba : a, y = bb != null ? bb : b;
+        if (x == y) return false;
+        if (BotSpar.inMatch(x) || BotSpar.inMatch(y)) return BotSpar.teamFoes(x, y);
+        if (ba != null && ba.sparring() && (ba.sparringOwner() && y == ba.owner() || ba.sparFoe != null && ba.sparFoe.equals(y.getUUID()))) return true;
+        return bb != null && bb.sparring() && (bb.sparringOwner() && x == bb.owner() || bb.sparFoe != null && bb.sparFoe.equals(x.getUUID()));
+    }
+
     /** On the bot's side: its owner, the owner's party, their pets and the other bots. */
     public static boolean friendly(PartyBotEntity bot, Entity e) {
         UUID owner = bot.ownerId();
@@ -1105,8 +1119,8 @@ public final class PartyBots {
     public static void onAttack(LivingAttackEvent event) {
         Entity src = event.getSource().getEntity();
         PartyBotEntity bot = botOf(src);
-        if (bot != null && friendly(bot, event.getEntity()) && !(bot.sparring() && event.getEntity() == bot.owner())) { event.setCanceled(true); return; }
-        if (bot == null && src instanceof ServerPlayer p && event.getEntity() instanceof PartyBotEntity b && friendly(b, p) && !(b.sparring() && p == b.owner())) { event.setCanceled(true); return; }
+        if (bot != null && friendly(bot, event.getEntity()) && !sparFoes(bot, event.getEntity())) { event.setCanceled(true); return; }
+        if (bot == null && src instanceof ServerPlayer p && event.getEntity() instanceof PartyBotEntity b && friendly(b, p) && !sparFoes(b, p)) { event.setCanceled(true); return; }
         if (src instanceof ServerPlayer owner && !(event.getEntity() instanceof PartyBotEntity) && !(src instanceof FakePlayer)) {
             for (PartyBotEntity b : botsNear(owner)) if (!friendly(b, event.getEntity())) { b.relayTarget = event.getEntity(); b.relayUntil = owner.level().getGameTime() + 200; }
         }
@@ -1145,7 +1159,13 @@ public final class PartyBots {
             addXp(b, Stat.DEFENSE, event.getAmount());
         }
         // sparring: the owner can't go below 1 HP - that's the bot's win
-        if (event.getEntity() instanceof ServerPlayer p && attacker != null && attacker.sparring() && p == attacker.owner() && p.getHealth() - event.getAmount() < 2F) {
+        if (event.getEntity() instanceof ServerPlayer p && attacker != null && BotSpar.inMatch(p) && sparFoes(attacker, p) && p.getHealth() - event.getAmount() < 2F) {
+            event.setCanceled(true);                                              // (a 2v2: you're out of it - your side fights on)
+            p.setHealth(Math.max(p.getHealth(), 2F));
+            BotSpar.out(p);
+            return;
+        }
+        if (event.getEntity() instanceof ServerPlayer p && attacker != null && attacker.sparringOwner() && p == attacker.owner() && p.getHealth() - event.getAmount() < 2F) {
             event.setCanceled(true);
             p.setHealth(Math.max(p.getHealth(), 2F));
             sparOver(attacker, true);

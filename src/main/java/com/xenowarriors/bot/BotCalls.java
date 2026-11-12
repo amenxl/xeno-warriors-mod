@@ -41,6 +41,9 @@ public final class BotCalls {
         ModNetwork.sendToPlayer(new PhoneTeamPacket(out), p);
     }
 
+    /** Whether you've phoned this character to come when they're done (tests, screens). */
+    public static boolean called(ServerPlayer p, CharacterType t) { return OffDuty.rec(p, t).getBoolean(CALLED); }
+
     /** Ring a busy teammate: ask them to come when they're done. */
     public static void call(ServerPlayer p, CharacterType t) {
         String name = t.getDisplayName().getString();
