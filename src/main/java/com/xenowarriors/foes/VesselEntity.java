@@ -39,7 +39,7 @@ public class VesselEntity extends PathfinderMob implements Enemy {
     private static final EntityDataAccessor<Integer> LOOK = SynchedEntityData.defineId(VesselEntity.class, EntityDataSerializers.INT);
     private int fuseTicks, combo, grabCd = 60, grabT, grabbed = -1;
     /** (Tests) evolutions stopped / completed, combo finishers, grabs and slams. */
-    public static int stopped, fused, finishers, grabs, slams;
+    public static int stopped, fused, finishers, grabs, slams, comboHits;
 
     public VesselEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -109,7 +109,9 @@ public class VesselEntity extends PathfinderMob implements Enemy {
     public boolean doHurtTarget(net.minecraft.world.entity.Entity t) {
         if (state() != FUSED) return super.doHurtTarget(t);
         combo++;
+        comboHits++;
         boolean finisher = combo % 3 == 0;
+        if (t instanceof LivingEntity v && combo % 3 != 1) v.invulnerableTime = 0;   // (a combo: each hit lands)
         var dmg = getAttribute(Attributes.ATTACK_DAMAGE);
         double base = dmg.getBaseValue();
         dmg.setBaseValue(base * (finisher ? 1.6 : 0.7));                       // (light, light, heavy)

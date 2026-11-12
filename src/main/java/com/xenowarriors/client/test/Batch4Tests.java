@@ -2354,7 +2354,9 @@ public final class Batch4Tests {
             m[4].discard();
             var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(lv);
             soul.getPersistentData().putBoolean("xw_smart_soul", false);
+            soul.getPersistentData().putBoolean(com.xenowarriors.s3.DistortionEntity.TAG, true);   // (it doesn't flee the daylight)
             m[4] = com.xenowarriors.foes.Foes.placeForTest(lv, soul, m[1].blockPosition().offset(0, 0, 3));
+            m[1].setNoAi(true);                                               // (the Cynic Dancer would start the fight: the Spell Caster's choice first)
             m[2].discard();                                                   // (only the disguised one for now)
             m[3].discard();
         }), 3);
@@ -2364,8 +2366,17 @@ public final class Batch4Tests {
             var cast = (net.minecraft.world.entity.Mob) m[0];
             var ves = (net.minecraft.world.entity.Mob) m[1];
             log("triangle: a C-soul ignores a disguised Cynic Dancer (target " + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ") -> " + (soul.getTarget() != ves ? "PASS" : "FAIL"));
-            log("triangle: the Spell Caster goes for the C-soul (" + (cast.getTarget() == null ? "none" : cast.getTarget().getName().getString()) + "), the Cynic Dancer for the Spell Caster ("
-                    + (ves.getTarget() == null ? "none" : ves.getTarget().getName().getString()) + ") -> " + (cast.getTarget() == soul && ves.getTarget() == cast ? "PASS" : "FAIL"));
+            log("triangle: the Spell Caster goes for the C-soul (" + (cast.getTarget() == null ? "none" : cast.getTarget().getName().getString()) + ") -> " + (cast.getTarget() == soul ? "PASS" : "FAIL"));
+            ves.setNoAi(false);
+            soul.setNoAi(true);
+        }), 3);
+        settle(l, 40);
+        l.add(null, () -> server(p -> {
+            var cast = (net.minecraft.world.entity.Mob) m[0];
+            var ves = (net.minecraft.world.entity.Mob) m[1];
+            log("triangle: the Cynic Dancer goes for the Spell Caster (" + (ves.getTarget() == null ? "none" : ves.getTarget().getName().getString()) + ") -> " + (ves.getTarget() == cast ? "PASS" : "FAIL"));
+            ((net.minecraft.world.entity.Mob) m[4]).setNoAi(false);
+            ((net.minecraft.world.entity.Mob) m[4]).setTarget(null);
             cast.discard();
             ves.setTarget(null);
             ((com.xenowarriors.foes.VesselEntity) ves).fuseNowForTest();
@@ -2399,6 +2410,7 @@ public final class Batch4Tests {
         settle(l, 140);
         l.add(null, () -> server(p -> {
             var t = p.getPersistentData();
+            log("cynic: (target " + (((net.minecraft.world.entity.Mob) m[1]).getTarget() == null ? "none" : ((net.minecraft.world.entity.Mob) m[1]).getTarget().getName().getString()) + ", distance " + m[1].distanceTo(m[5]) + ", combo hits " + com.xenowarriors.foes.VesselEntity.comboHits + ")");
             int fi = com.xenowarriors.foes.VesselEntity.finishers - t.getInt("xw_t_f"), gr = com.xenowarriors.foes.VesselEntity.grabs - t.getInt("xw_t_g"), sl = com.xenowarriors.foes.VesselEntity.slams - t.getInt("xw_t_s");
             log("cynic: evolved - grabs " + gr + " (holding " + t.getBoolean("xw_t_h") + "), slams " + sl + ", combo finishers " + fi + " -> " + (gr >= 1 && t.getBoolean("xw_t_h") && sl >= 1 && fi >= 1 ? "PASS" : "FAIL"));
             m[1].discard();
