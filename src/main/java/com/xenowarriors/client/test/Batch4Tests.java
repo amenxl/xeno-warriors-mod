@@ -85,6 +85,7 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("yurissj"))) yuriForms(mc, l);
         if (f.isEmpty() || f.contains("hungerbar")) hungerBar(mc, l);
         if (f.isEmpty() || f.contains("botlife")) botLife(mc, l);
+        if (f.isEmpty() || f.contains("teamjukebox")) teamJukebox(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
@@ -677,7 +678,8 @@ public final class Batch4Tests {
             com.xenowarriors.bot.BotHome.placed(p, p.level(), chest[0]);
             for (int i = 0; i < b[1].inventory.getContainerSize() - 2; i++) b[1].inventory.setItem(i, new ItemStack(i % 2 == 0 ? net.minecraft.world.item.Items.COBBLESTONE : net.minecraft.world.item.Items.RAW_IRON, 32));
             b[1].inventory.setItem(0, new ItemStack(net.minecraft.world.item.Items.BREAD, 8));
-        }), 20 * 14);
+        }), 40);
+        l.add(null, () -> server(p -> { b[1].setHealth(b[1].getMaxHealth()); log("botlife home: Sam calm? " + com.xenowarriors.bot.BotErrands.danger(b[1])); }), 20 * 12);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 200, 25), 10);
         l.add("batch4_botlife_homechest", () -> {}, 3);
         l.add(null, () -> server(p -> {
@@ -774,7 +776,7 @@ public final class Batch4Tests {
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 5);
         // the bot menu's Dragon Ball button (a bot carrying a radar)
-        l.add(null, () -> mc.setScreen(new com.xenowarriors.client.bot.BotScreen(new com.xenowarriors.network.OpenBotMenuPacket(-1, "max", 0, 30, false, new String[0], new int[0], true))), 10);
+        l.add(null, () -> mc.setScreen(new com.xenowarriors.client.bot.BotScreen(new com.xenowarriors.network.OpenBotMenuPacket(-1, "max", 0, 30, false, new String[0], new int[0], true))), 2);
         l.add("batch4_botlife_radar_menu", () -> log("botlife radar: the menu offers Find the Dragon Balls -> " + (mc.screen != null && mc.screen.children().stream().anyMatch(w -> w instanceof net.minecraft.client.gui.components.Button bt && bt.getMessage().getString().contains("Dragon Balls")) ? "PASS" : "FAIL")), 2);
         l.add(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
         // the party frames: 4 in the party vs 6
@@ -1627,6 +1629,53 @@ public final class Batch4Tests {
     }
 
     // ------------------------------------------------------------------ bots picking things up, music
+
+    private static void teamJukebox(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[2];
+        int[] n0 = new int[3];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            b[0] = botAt(p, CharacterType.GARRY, 2, 2); b[1] = botAt(p, CharacterType.STEVIE, -2, 2);
+            for (PartyBotEntity x : b) { x.inventory.addItem(new ItemStack(net.minecraft.world.item.Items.JUKEBOX)); }
+            b[0].inventory.addItem(new ItemStack(net.minecraft.world.item.Items.MUSIC_DISC_CAT));
+            b[1].inventory.addItem(new ItemStack(net.minecraft.world.item.Items.MUSIC_DISC_BLOCKS));
+            n0[0] = com.xenowarriors.bot.BotJukebox.played; n0[1] = com.xenowarriors.bot.BotJukebox.newSongs;
+            n0[2] = Math.round(com.xenowarriors.party.Bonds.level(p, "garry") * 1000 + com.xenowarriors.party.Bonds.progress(p, "garry"));
+        }), 20);
+        l.add(null, () -> server(p -> {
+            String a = com.xenowarriors.bot.BotJukebox.start(b[0], p.serverLevel(), p, true);
+            String c = com.xenowarriors.bot.BotJukebox.start(b[1], p.serverLevel(), p, true);
+            int boxes = 0;
+            for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) for (int dy = -2; dy <= 2; dy++) if (p.level().getBlockState(p.blockPosition().offset(dx, dy, dz)).is(Blocks.JUKEBOX)) boxes++;
+            log("teamjukebox: first bot " + a + "; second bot " + c + "; jukeboxes down " + boxes + " -> " + (a.startsWith("playing") && !c.startsWith("playing") && boxes == 1 ? "PASS" : "FAIL"));
+            int ns = com.xenowarriors.bot.BotJukebox.newSongs - n0[1];
+            int bond = Math.round(com.xenowarriors.party.Bonds.level(p, "garry") * 1000 + com.xenowarriors.party.Bonds.progress(p, "garry"));
+            log("teamjukebox: a song you'd never heard -> new songs " + ns + ", bond with Garry " + n0[2] + " -> " + bond + " -> " + (ns == 1 && bond != n0[2] ? "PASS" : "FAIL"));
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 25), 10);
+        l.add("batch4_teamjukebox", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            boolean disc = b[0].inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_CAT) == 0;
+            com.xenowarriors.bot.BotJukebox.songOverForTest(p);
+            boolean back = b[0].inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_CAT) == 1;
+            boolean on = com.xenowarriors.bot.BotJukebox.songOn(p);
+            log("teamjukebox: song over -> stops (no loop) " + !on + ", disc back to Garry " + (disc && back) + " -> " + (!on && disc && back ? "PASS" : "FAIL"));
+            int before = com.xenowarriors.bot.BotJukebox.played;
+            for (int i = 0; i < 60 && com.xenowarriors.bot.BotJukebox.played == before; i++) com.xenowarriors.bot.BotJukebox.tick(b[1]);
+            boolean stevie = com.xenowarriors.bot.BotJukebox.playing(b[1]);
+            log("teamjukebox: Stevie puts the next song on the same jukebox " + stevie + ", jukeboxes " + com.xenowarriors.bot.BotJukebox.boxesForTest(p) + " -> " + (stevie && com.xenowarriors.bot.BotJukebox.boxesForTest(p) == 1 ? "PASS" : "FAIL"));
+            for (int i = 0; i < 60; i++) com.xenowarriors.bot.BotJukebox.tick(b[0]);
+            log("teamjukebox: while it plays nobody else puts one on (played " + (com.xenowarriors.bot.BotJukebox.played - before) + ") -> " + (com.xenowarriors.bot.BotJukebox.played - before == 1 ? "PASS" : "FAIL"));
+            com.xenowarriors.bot.BotJukebox.endForTest(b[0]);
+            log("teamjukebox: packed up -> jukebox back with Garry " + (b[0].inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) == 1) + ", Blocks disc back with Stevie " + (b[1].inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_BLOCKS) == 1)
+                    + " -> " + (b[0].inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) == 1 && b[1].inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_BLOCKS) == 1 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
 
     private static void pickupMusic(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);

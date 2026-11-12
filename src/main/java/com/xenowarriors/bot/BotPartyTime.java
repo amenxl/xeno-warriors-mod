@@ -185,10 +185,11 @@ public final class BotPartyTime {
             int left = (int) (pt.end - now);
             for (ServerPlayer p : l.players()) if (p.distanceToSqr(o) < 64 * 64) ModNetwork.sendToPlayer(new PartyHatsPacket(ids, left, pt.center), p);
         }
-        if (pt.dj != null && l.getEntity(pt.dj) instanceof PartyBotEntity dj && !BotJukebox.playing(dj)) pt.dj = null;   // (the song's over: back to the tune / beatbox)
+        boolean music = BotJukebox.songOn(o);                                  // (the team's jukebox: one song at a time - nothing else plays over it)
+        if (!music) pt.dj = null;
         boolean battling = battleTick(o, pt, gs, l, now);
-        if (!pt.beatbox.isEmpty() && pt.dj == null || battling) beat(o, pt, l);  // beatboxing (and under every rap battle)
-        else if (pt.dj == null && o.tickCount % 8 == 0) {                     // the tune: a random cheerful melody
+        if (!music && (!pt.beatbox.isEmpty() || battling)) beat(o, pt, l);    // beatboxing (and under every rap battle) - not over a song
+        else if (!music && o.tickCount % 8 == 0) {                     // the tune: a random cheerful melody
             float pitch = NOTES[Math.floorMod(pt.note + l.random.nextInt(5) - 2, NOTES.length)];
             pt.note = Math.floorMod(pt.note + l.random.nextInt(5) - 2, NOTES.length);
             l.playSound(null, pt.center, o.tickCount % 32 == 0 ? SoundEvents.NOTE_BLOCK_BASS.value() : (o.tickCount % 16 == 0 ? SoundEvents.NOTE_BLOCK_CHIME.value() : SoundEvents.NOTE_BLOCK_BELL.value()),
@@ -327,7 +328,7 @@ public final class BotPartyTime {
         PARTIES.remove(o.getUUID());
         ServerLevel l = o.serverLevel();
         if (pt.cake != null && l.getBlockState(pt.cake).is(Blocks.CAKE)) l.removeBlock(pt.cake, false);
-        if (pt.dj != null && l.getEntity(pt.dj) instanceof PartyBotEntity dj) BotJukebox.forget(dj);   // (the jukebox packed up)
+        BotJukebox.packUp(o);                                                  // (the jukebox packed up)
         for (ServerPlayer p : l.players()) if (p.distanceToSqr(o) < 64 * 64) ModNetwork.sendToPlayer(new PartyHatsPacket(new int[0], 0, pt.center), p);
         finished++;
         if (full) {

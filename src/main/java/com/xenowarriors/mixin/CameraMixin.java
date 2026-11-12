@@ -38,8 +38,10 @@ public abstract class CameraMixin implements com.xenowarriors.client.XwCamera {
         // vehicles: the third-person camera backs off (so the car isn't filling the screen) and sits a little higher
         if (entity != null && entity.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity v) {
             if (detached) {
-                double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 2.0 : 3.5;
-                move(-getMaxZoom(extra), 0.6, 0.0);
+                // well back and up, so the whole vehicle is in view while you drive (bigger ones: further still)
+                double size = Math.max(v.getBbWidth(), v.getBbHeight());
+                double extra = v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 5.0 : 6.5 + size * 1.5;
+                move(-getMaxZoom(extra), v.kind.base() == com.xenowarriors.vehicle.VehicleKind.MOTORBIKE ? 1.0 : 1.4, 0.0);
             } else if (entity instanceof net.minecraft.world.entity.LivingEntity le && com.xenowarriors.client.vehicle.VehicleRiderPose.onBike(le)
                     && v.getPassengers().indexOf(le) == 0) {
                 // on the motorbike the rider leans over the tank: the eyes go with the head, forward and down

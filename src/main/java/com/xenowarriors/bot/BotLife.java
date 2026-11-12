@@ -53,7 +53,7 @@ public final class BotLife {
     private BotLife() {}
 
     public static final int GIFT_BOND = 70, HELP_BOND = 30, HUNGRY = 10, HANG_TICKS = 20 * 30;
-    public static final float HANG_XP = 40F;
+    public static final float HANG_XP = 60F;
     private static final String FED = "xw_life_fed", GIFT = "xw_life_gift", ASKED = "xw_life_help", CALLED = "xw_life_called";
     /** (Tests) */
     public static int camps, campfires, wakes, feeds, gifts, helpAsks, hangouts, helpCalls;

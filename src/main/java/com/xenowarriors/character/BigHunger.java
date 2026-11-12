@@ -18,7 +18,7 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class BigHunger {
-    private static final String TOTAL = "xw_food_total", LAST = "xw_food_last", FRAC = "xw_food_frac";
+    private static final String TOTAL = "xw_food_total", LAST = "xw_food_last", FRAC = "xw_food_frac", SYNCED = "xw_food_synced", SYNCED_MAX = "xw_food_synced_max";
 
     private BigHunger() {}
 
@@ -80,10 +80,10 @@ public final class BigHunger {
         if (ModCapabilities.getType(p) == CharacterType.RHALIX && p.getAbilities().flying && p.tickCount % 200 == 0) total = Math.max(0, total - 1);
         int shown = total >= max ? 20 : Math.min(19, total);
         if (food.getFoodLevel() != shown) food.setFoodLevel(shown);
-        boolean changed = !d.contains(TOTAL) || d.getInt(TOTAL) != total;
         d.putInt(TOTAL, total);
         d.putInt(LAST, shown);
-        if (changed || p.tickCount % 100 == 0) sync(p, total, max);
+        // (compared with what the screen was last told - eating changes the total outside this tick, and that has to show at once too)
+        if (d.getInt(SYNCED) != total || d.getInt(SYNCED_MAX) != max || p.tickCount % 100 == 0) sync(p, total, max);
     }
 
     /**
@@ -126,7 +126,15 @@ public final class BigHunger {
         d.putInt(LAST, p.getFoodData().getFoodLevel());                // the bar change is already counted
     }
 
+    /** A fresh client knows nothing yet: tell it on its first tick. */
+    @SubscribeEvent
+    public static void onLogin(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) {
+        e.getEntity().getPersistentData().putInt(SYNCED, -1);
+    }
+
     private static void sync(ServerPlayer p, int total, int max) {
+        p.getPersistentData().putInt(SYNCED, total);
+        p.getPersistentData().putInt(SYNCED_MAX, max);
         ModNetwork.sendToPlayer(new com.xenowarriors.network.BigHungerPacket(total, max), p);
     }
 }
