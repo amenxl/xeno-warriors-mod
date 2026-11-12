@@ -51,8 +51,8 @@ public final class ZombieSaiyans {
                 }
             });
 
-    /** Chance per player per 30-second check, at night in the Overworld (about once per 3-4 in-game nights). */
-    public static float SPAWN_CHANCE = 1F / 45F;
+    /** Chance per player per 30-second check, at night in the Overworld (rare: about once every 25-30 in-game nights). */
+    public static float SPAWN_CHANCE = 1F / 360F;
 
     /** Called from the mod constructor so the entries are registered in time. */
     public static void init() {}

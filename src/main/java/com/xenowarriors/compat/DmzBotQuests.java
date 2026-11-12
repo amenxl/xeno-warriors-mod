@@ -42,7 +42,7 @@ import java.util.*;
  *   <li>When you start a mission yourself, each of your bots with a DMZ character starts one at the same time: the
  *       same one if it can, else its own next available one (its enemies are summoned like yours). A chat line says
  *       what each started. When that mission's giver is close by, the bot walks over and takes it from them (started
- *       anyway after 30 s). Bots never start one at any other time.</li>
+ *       anyway after 30 s). On their own they only take missions with no enemy or boss to fight (autoAccept).</li>
  *   <li>Location objectives count while you (or a party member) are there; "talk to" objectives when you talk to that
  *       person; missions handed in to a person are handed in for the bot when you talk to them (DmzTalkNpcs brings them to you),
  *       or the bot walks up to them and talks to them itself (DmzBotTalk); story
@@ -496,6 +496,7 @@ public final class DmzBotQuests {
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 20 != 7 || !ready()) return;
         expireTakes(p);
+        if (p.tickCount % AUTO_EVERY == AUTO_EVERY / 2 + 7) autoAccept(p);
         for (PartyBotEntity b : PartyBots.bots(p)) {
             if (b.journey()) continue;
             Object pqd = peek(b);                                                    // (null: none going, or an open menu - DragonMineZ ticks its missions itself)
@@ -782,6 +783,54 @@ public final class DmzBotQuests {
             // DragonMineZ takes the mission right after this event: the bots follow a tick later, once it's really yours
             com.xenowarriors.skill.ServerScheduler.later(1, () -> followStart(p, key));
         } catch (Throwable t) { XenoWarriors.LOGGER.warn("Bots couldn't follow a DragonMineZ mission start", t); }
+    }
+
+    /** How often (ticks) bots look for a mission to take on their own. */
+    public static final int AUTO_EVERY = 20 * 60 * 3;
+    /** (tests) missions bots took on their own. */
+    public static int autoAccepted;
+
+    /** No enemy or boss in it: no kill objectives (finding things, going places, talking to people, items, training...). */
+    static boolean peaceful(Object q) throws Exception {
+        for (Object obj : (List<?>) m(q, "getObjectives")) if (killObj.isInstance(obj)) return false;
+        return true;
+    }
+
+    /**
+     * Bots take Dragon Ball missions on their own - only ones with no enemy or boss to fight - when they have none going:
+     * the first one it can start (its saga's next, then side missions). One at a time.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<String> autoAccept(ServerPlayer p) {
+        List<String> out = new ArrayList<>();
+        if (!ready() || p.hasDisconnected() || DmzPerCharacter.viewing(p) != null) return out;
+        try {
+            List<String> keys = new ArrayList<>();
+            for (Object s : ((Map<String, Object>) registry.getMethod("getAllSagas").invoke(null)).values())
+                for (Object sq : (List<Object>) m(s, "getQuests"))
+                    keys.add((String) pqdClass.getMethod("sagaQuestKey", String.class, int.class).invoke(null, m(s, "getId"), m(sq, "getId")));
+            keys.addAll(((Map<String, Object>) registry.getMethod("getAllQuests").invoke(null)).keySet());
+            int partySize = party(p).size();
+            for (PartyBotEntity b : PartyBots.bots(p)) {
+                if (b.journey() || TAKES.containsKey(b.getUUID())) continue;
+                DmzBots.ensureRace(b);
+                Data d = open(b, false);
+                if (d == null || d.live) continue;
+                boolean busy = false;
+                for (String k : accepted(d.pqd)) if (!(Boolean) m(d.pqd, "isQuestCompleted", k)) { busy = true; break; }
+                if (busy) continue;
+                for (String k : keys) {
+                    Object q = quest(k);
+                    if (q == null || !peaceful(q) || !eligible(d, k)) continue;
+                    start(d, k, partySize, false);
+                    autoAccepted++;
+                    out.add(d.key + "=" + k);
+                    DmzNews.bot(p, b, "Bot missions", Component.empty().append(b.character().getDisplayName()).append(" took a mission on their own: ").append(title(k)).withStyle(ChatFormatting.AQUA));
+                    break;
+                }
+            }
+        } catch (Throwable t) { XenoWarriors.LOGGER.warn("Bots couldn't take DragonMineZ missions on their own", t); }
+        return out;
     }
 
     /** The player just started this mission: each of their bots with a DMZ character starts one too. Returns what was started. */

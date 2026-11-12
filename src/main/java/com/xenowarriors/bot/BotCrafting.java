@@ -103,7 +103,49 @@ public final class BotCrafting {
         Long until = OFFER_UNTIL.get(b.getUUID());
         if (until != null && until > now) return;                              // (asked you for an item: waiting for an answer)
         log(b, "periodic look at tick " + b.tickCount);
+        if (missionCraft(b, o) != null) return;                                 // (something a Dragon Ball mission needs, from what's in its bag)
         suggest(b, o, false);
+    }
+
+    /** (tests) mission items crafted. */
+    public static int missionCrafts;
+
+    /**
+     * With DragonMineZ: an item a Dragon Ball mission still wants (yours or a teammate bot's) that it can craft right now
+     * from its own bag - it crafts one, and it goes in the party's Mission Bag (or its own bag). Returns what it made, or null.
+     */
+    public static ItemStack missionCraft(PartyBotEntity b, ServerPlayer o) {
+        if (!(b.level() instanceof ServerLevel s) || o == null || !net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return null;
+        java.util.Set<String> wanted = com.xenowarriors.compat.DmzBotQuests.wantedItems(o);
+        if (wanted.isEmpty()) return null;
+        boolean table = hasStation(b, Items.CRAFTING_TABLE, Blocks.CRAFTING_TABLE);
+        for (CraftingRecipe r : s.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
+            if (r.isSpecial()) continue;
+            ItemStack res;
+            try { res = r.getResultItem(s.registryAccess()); } catch (Throwable t) { continue; }
+            if (res.isEmpty() || !wanted.contains(String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(res.getItem())))) continue;
+            List<Ingredient> ing = new ArrayList<>();
+            for (Ingredient i : r.getIngredients()) if (!i.isEmpty()) ing.add(i);
+            if (ing.isEmpty() || !match(b.inventory, ing, null).isEmpty()) continue;
+            if (!r.canCraftInDimensions(2, 2) && !table) {                        // (a 3x3 one: its own table from planks or a log, if that still leaves enough)
+                SimpleContainer copy = copyOf(b.inventory);
+                if (!makeTable(copy) || !match(copy, ing, null).isEmpty() || !makeTable(b.inventory)) continue;
+                b.tablesMade++;
+            }
+            List<ItemStack> back = new ArrayList<>();
+            if (!match(b.inventory, ing, back).isEmpty()) continue;
+            ItemStack made = res.copy();
+            made.onCraftedBy(b.level(), PartyBots.standIn(b), made.getCount());
+            for (ItemStack x : back) put(b, x);
+            ItemStack left = com.xenowarriors.compat.MissionBag.on() ? com.xenowarriors.compat.MissionBag.add(o, made.copy()) : made.copy();
+            if (!left.isEmpty()) put(b, left);
+            b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            missionCrafts++;
+            o.sendSystemMessage(Component.literal("").append(b.label()).append(" crafted ").append(made.getHoverName()).append(" for a Dragon Ball mission.").withStyle(ChatFormatting.AQUA));
+            log(b, "mission craft " + BotErrands.id(made));
+            return made;
+        }
+        return null;
     }
 
     /** You closed its bag: a look right away (cooldowns still apply). */
