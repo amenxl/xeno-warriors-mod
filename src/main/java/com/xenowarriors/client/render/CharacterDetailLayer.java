@@ -137,8 +137,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     /** set -> expression ("" = none) -> texture; filled as faces are first shown, emptied on resource reload. */
     private static final java.util.Map<String, java.util.Map<String, net.minecraft.resources.ResourceLocation>> FACES = new java.util.concurrent.ConcurrentHashMap<>();
     /** A close expression for sets that don't have one (the drawn faces, Rhalix's Demon/Lunar faces lack a few). */
-    private static final java.util.Map<String, String> FACE_FALLBACK = java.util.Map.of("shocked", "hurt", "determined", "focused",
-            "smirk", "smug", "laugh", "grin", "pout", "annoyed", "blush", "happy", "love", "happy", "starving", "exhausted", "starving2", "starving");
+    private static final java.util.Map<String, String> FACE_FALLBACK = java.util.Map.ofEntries(java.util.Map.entry("wince", "strained"), java.util.Map.entry("hurt_heavy", "panic"),
+            java.util.Map.entry("shocked", "hurt"), java.util.Map.entry("determined", "focused"),
+            java.util.Map.entry("smirk", "smug"), java.util.Map.entry("laugh", "grin"), java.util.Map.entry("pout", "annoyed"), java.util.Map.entry("blush", "happy"),
+            java.util.Map.entry("love", "happy"), java.util.Map.entry("starving", "exhausted"), java.util.Map.entry("starving2", "starving"));
 
     /**
      * textures/entity/character/&lt;set&gt;_face_&lt;expr&gt;.png - or a close expression, or the plain &lt;set&gt;_face.png when
@@ -241,6 +243,28 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return (((c >> 16) & 255) * 6 / 10 << 16) | (((c >> 8) & 255) * 6 / 10 << 8) | ((c & 255) * 6 / 10);
     }
 
+    /** per entity: {health last seen, how hard the last hit was (0 light, 1 normal, 2 heavy)} */
+    private static final java.util.Map<Integer, float[]> HURT = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
+
+    /**
+     * The hurt face for how hard they were just hit (players and bots): a light hit (under 8% of their health) a wince,
+     * a normal one the hurt face, a big one (20% or more) - or any hit while under a quarter of their health - the
+     * heavy one with tears; under half health it flickers with the shocked face. Null when they weren't just hit.
+     */
+    static String hurtFace(AbstractClientPlayer p) {
+        float[] h = HURT.computeIfAbsent(p.getId(), k -> new float[]{p.getHealth(), 1});
+        float hp = p.getHealth(), max = Math.max(1F, p.getMaxHealth());
+        if (hp < h[0] - 0.01F) {                                          // a new hit: how hard?
+            float d = (h[0] - hp) / max;
+            h[1] = d >= 0.2F || hp < max * 0.25F ? 2 : d < 0.08F ? 0 : 1;
+        }
+        h[0] = hp;
+        if (p.hurtTime <= 0) return null;
+        if (h[1] == 2) return "hurt_heavy";
+        if (h[1] == 0) return "wince";
+        return hp < max * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
+    }
+
     private static String expression(AbstractClientPlayer p, CharacterType type) {
         String pod = com.xenowarriors.client.pod.PodFace.face(p);       // resting in a healing pod: eyes closed
         if (pod != null) return pod;
@@ -255,7 +279,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             if (st < 4) return "blink";
             return (st / 16) % 2 == 0 ? "starving" : "starving2";
         }
-        if (p.hurtTime > 0) return p.getHealth() < p.getMaxHealth() * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
+        String hurt = hurtFace(p);
+        if (hurt != null) return hurt;
         String beat = com.xenowarriors.client.GarryBeatbox.face(p);
         if (beat != null) return beat;
         String doze = com.xenowarriors.client.KeitaDoze.face(p);
@@ -450,7 +475,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return hp <= 0.25F ? 2 : hp <= 0.5F ? 1 : 0;
     }
 
-    private static final java.util.Set<String> OWN_MOUTH = java.util.Set.of("sleep", "snore", "eat", "eat2", "shout", "hurt", "yawn", "panic");
+    private static final java.util.Set<String> OWN_MOUTH = java.util.Set.of("sleep", "snore", "eat", "eat2", "shout", "hurt", "yawn", "panic", "wince", "hurt_heavy");
 
     /** 0 = not talking, otherwise the mouth shape (1-5) following the voice. */
     private static int talkingMouth(AbstractClientPlayer p, String expr) {
