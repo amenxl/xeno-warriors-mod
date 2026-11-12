@@ -2433,6 +2433,12 @@ public final class Batch4Tests {
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
+    private static int countCubes(software.bernie.geckolib.cache.object.GeoBone b) {
+        int n = b.getCubes().size();
+        for (var c : b.getChildBones()) n += countCubes(c);
+        return n;
+    }
+
     /** No right+left click skill with a gun in hand (right click aims, left click shoots). */
     private static void rlGun(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);
@@ -2476,11 +2482,20 @@ public final class Batch4Tests {
                 var buffers = net.minecraft.client.renderer.MultiBufferSource.immediate(new com.mojang.blaze3d.vertex.BufferBuilder(4096));
                 var vc = buffers.getBuffer(rt);
                 buffers.endBatch();                                                    // (closed: what another mod's draw in between did)
+                String closed;
+                try { vc.vertex(0, 0, 0).color(255, 255, 255, 255).uv(0, 0).overlayCoords(0).uv2(0).normal(0, 1, 0).endVertex(); closed = "took a vertex"; }
+                catch (IllegalStateException ex) { closed = "refuses vertices (" + ex.getMessage() + ")"; }
+                boolean merged = false;
+                for (var mt : software.bernie.geckolib.renderer.GeoEntityRenderer.class.getDeclaredMethods()) if (mt.getName().contains("freshBuffer")) merged = true;
+                int cubes = 0;
+                for (var b : model.topLevelBones()) cubes += countCubes(b);
+                log("geoguard: the closed buffer " + closed + "; the guard is in GeckoLib " + merged + "; the model has " + cubes + " cubes");
                 int s0 = com.xenowarriors.client.GeoBufferGuard.saved;
                 String result;
                 try {
-                    r.renderRecursively(new com.mojang.blaze3d.vertex.PoseStack(), e, bone, rt, buffers, vc, false, 0F, 15728880,
-                            net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, 1F);
+                    for (var b : model.topLevelBones())
+                        r.renderRecursively(new com.mojang.blaze3d.vertex.PoseStack(), e, b, rt, buffers, vc, false, 0F, 15728880,
+                                net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 1F, 1F, 1F, 1F);
                     result = "drew fine";
                 } catch (IllegalStateException ex) { result = "crashed: " + ex.getMessage(); }
                 buffers.endBatch();
