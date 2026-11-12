@@ -58,7 +58,8 @@ public final class OffDuty {
 
     public enum Act {
         NONE(""), TRAINING("Training"), RELAX_DOWNED("Relaxing - downed a lot lately"), RELAX_LONG("Relaxing - been with you a long time"),
-        RELAX("Relaxing"), PARTY("Out at a party"), DMZ("On a DMZ mission"), MINING("Mining"), WOOD("Chopping wood"), BUILDING("Building");
+        RELAX("Relaxing"), PARTY("Out at a party"), DMZ("On a DMZ mission"), MINING("Mining"), WOOD("Chopping wood"), BUILDING("Building"),
+        DRAGON_BALLS("Searching for the Dragon Balls");
         public final String label;
         Act(String label) { this.label = label; }
         public boolean relaxing() { return this == RELAX || this == RELAX_DOWNED || this == RELAX_LONG; }
@@ -188,6 +189,7 @@ public final class OffDuty {
             if (want == Act.DMZ && !dmz(p, t)) want = Act.TRAINING;
             if (a != want) { a = want; c.putInt("a", a.ordinal()); }
         } else if (a != Act.NONE && now >= c.getLong("u")) {                        // (done: a few minutes to themselves)
+            if (a == Act.DRAGON_BALLS) radarDone(p, t, c);
             leaveGroup(p, t);
             a = Act.NONE;
             c.putInt("a", 0);
@@ -212,13 +214,15 @@ public final class OffDuty {
             boolean full = bagFull(p, t);
             List<Act> pool = new ArrayList<>();
             int[] w;
-            Act[] opts = {Act.TRAINING, Act.MINING, Act.WOOD, Act.BUILDING, Act.PARTY, Act.DMZ};
-            w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0};
+            String radar = radar(p, t);
+            Act[] opts = {Act.TRAINING, Act.MINING, Act.WOOD, Act.BUILDING, Act.PARTY, Act.DMZ, Act.DRAGON_BALLS};
+            w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0, radar != null && !full ? 10 : 0};
             int sum = 0; for (int x : w) sum += x;
             int roll = r.nextInt(sum), i = 0;
             while (roll >= w[i]) roll -= w[i++];
             a = opts[i];
             if (a == Act.PARTY && !startParty(p, t, now, len, r)) a = Act.TRAINING;
+            if (a == Act.DRAGON_BALLS) { len = searchMinutes(r); c.putString("radar", radar); }
         }
         c.putInt("a", a.ordinal());
         if (a != Act.PARTY) c.putLong("u", now + len * MINUTE);
@@ -408,6 +412,68 @@ public final class OffDuty {
         return in;
     }
 
+    // ---------------------------------------------------------------- out with a Dragon Radar
+
+    /** How long a Dragon Ball search takes: 20-40 minutes, 30 on average. */
+    static int searchMinutes(RandomSource r) { return 20 + r.nextInt(21); }
+
+    /** The Dragon Radar in this off-duty character's bag (its item id), or null. */
+    static String radar(ServerPlayer p, CharacterType t) {
+        if (!safeToWrite(p, t)) return null;
+        BotInventory inv = bag(p, t);
+        for (int i = 0; i < BotInventory.SIZE; i++) { String id = com.xenowarriors.compat.DmzBotRadar.radarId(inv.getItem(i)); if (id != null) return id; }
+        return null;
+    }
+
+    /** The search is over: the balls it found go into its bag. */
+    static void radarDone(ServerPlayer p, CharacterType t, CompoundTag c) {
+        String radar = c.getString("radar");
+        c.remove("radar");
+        var balls = com.xenowarriors.compat.DmzBotRadar.collect(p, radar);
+        int n = 0;
+        for (ItemStack s : balls) n += find(p, t, c, s);
+        p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + (n > 0 ? " is back from searching with " + n + " Dragon Ball" + (n == 1 ? "" : "s") + " in their bag!"
+                : " is back from searching for the Dragon Balls - empty-handed (someone else has them).")).withStyle(n > 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+    }
+
+    /** Now and then (every 5 minutes or so, out of a fight) a bot on your team carrying a Dragon Radar offers to go and look. */
+    @SubscribeEvent
+    public static void onRadarTick(net.minecraftforge.event.TickEvent.PlayerTickEvent e) {
+        if (e.phase != net.minecraftforge.event.TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof net.minecraftforge.common.util.FakePlayer || p.tickCount % 600 != 301) return;
+        for (PartyBotEntity b : PartyBots.bots(p)) {
+            if (b.getTarget() != null || b.downed() || b.journey()) continue;
+            long now = p.level().getGameTime();
+            if (now - b.getPersistentData().getLong("xw_radar_asked") < 20 * 60 * 10) continue;
+            boolean has = false;
+            for (int i = 0; i < b.inventory.getContainerSize() && !has; i++) has = com.xenowarriors.compat.DmzBotRadar.isRadar(b.inventory.getItem(i));
+            if (!has) continue;
+            b.getPersistentData().putLong("xw_radar_asked", now);
+            com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " has a Dragon Radar",
+                    "Send them " + (b.canFly() ? "flying" : "out") + " to find the Dragon Balls? (about 30 minutes - they leave the team till then)", "/xeno radar " + b.getId(), "", 20 * 20, 0xFFFFA020), p);
+            return;
+        }
+    }
+
+    /** A bot on your team with a Dragon Radar flies off to find the Dragon Balls (it leaves the team until it's done). */
+    public static String sendSearching(ServerPlayer p, PartyBotEntity b) {
+        String radar = null;
+        for (int i = 0; i < b.inventory.getContainerSize() && radar == null; i++) radar = com.xenowarriors.compat.DmzBotRadar.radarId(b.inventory.getItem(i));
+        if (radar == null) return b.character().getDisplayName().getString() + " has no Dragon Radar.";
+        if (b.journey() || b.downed() || b.getTarget() != null) return b.character().getDisplayName().getString() + " can't go right now.";
+        CharacterType t = b.character();
+        if (b.canFly() && b.level() instanceof net.minecraft.server.level.ServerLevel l)
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, b.getX(), b.getY() + 0.5, b.getZ(), 20, 0.4, 0.2, 0.4, 0.05);
+        PartyBots.checkIn(b, p);
+        b.discard();
+        CompoundTag c = rec(p, t);
+        int len = searchMinutes(p.getRandom());
+        c.putInt("a", Act.DRAGON_BALLS.ordinal());
+        c.putLong("u", p.level().getGameTime() + len * MINUTE);
+        c.putString("radar", radar);
+        c.remove("t");
+        return t.getDisplayName().getString() + (b.canFly() ? " flies off" : " heads off") + " with the Dragon Radar to find the Dragon Balls (about " + len + " minutes).";
+    }
+
     // ---------------------------------------------------------------- adding one to the team
 
     /**
@@ -430,7 +496,7 @@ public final class OffDuty {
     private static String verb(Act a) {
         return switch (a) {
             case TRAINING -> "training"; case PARTY -> "partying"; case DMZ -> "their DMZ mission"; case MINING -> "mining";
-            case WOOD -> "chopping wood"; case BUILDING -> "building"; default -> "relaxing";
+            case WOOD -> "chopping wood"; case BUILDING -> "building"; case DRAGON_BALLS -> "searching for the Dragon Balls"; default -> "relaxing";
         };
     }
 
@@ -641,6 +707,13 @@ public final class OffDuty {
                                     p.sendSystemMessage(Component.literal(msg).withStyle(ChatFormatting.AQUA));
                                     return 1;
                                 })))))
+                .then(Commands.literal("radar").then(Commands.argument("bot", IntegerArgumentType.integer()).executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    com.xenowarriors.network.RequestPopupPacket.dismiss(p, "/xeno radar " + IntegerArgumentType.getInteger(c, "bot"));
+                    if (!(p.level().getEntity(IntegerArgumentType.getInteger(c, "bot")) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId())) return 0;
+                    p.sendSystemMessage(Component.literal(sendSearching(p, b)).withStyle(ChatFormatting.GOLD));
+                    return 1;
+                })))
                 .then(Commands.literal("partylimit").then(Commands.argument("n", IntegerArgumentType.integer(1, 16))
                         .executes(c -> { if (!creative(c.getSource())) return 0; String m = runLimit((ServerPlayer) c.getSource().getEntity(), IntegerArgumentType.getInteger(c, "n")); c.getSource().sendSuccess(() -> Component.literal(m), true); return 1; }))));
     }

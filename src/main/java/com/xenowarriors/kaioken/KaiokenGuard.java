@@ -138,6 +138,11 @@ public final class KaiokenGuard {
     @SubscribeEvent
     public static void onOwnerTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer || p.tickCount % 100 != 23) return;
+        share(p);
+    }
+
+    /** Bots with a spare seed hand one each to a teammate bot nearby that has none. */
+    public static void share(ServerPlayer p) {
         var bots = PartyBots.bots(p);
         if (bots.size() < 2) return;
         for (PartyBotEntity giver : bots) {

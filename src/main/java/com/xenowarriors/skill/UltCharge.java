@@ -98,6 +98,9 @@ public final class UltCharge {
         return begin(p);
     }
 
+    /** Drops a charge without firing it (they switched characters, died...). True if there was one. */
+    public static boolean cancel(ServerPlayer p) { POWER.remove(p.getUUID()); return CHARGING.remove(p.getUUID()) != null; }
+
     /** The ultimate key let go. */
     public static void release(ServerPlayer p) {
         Charge c = CHARGING.get(p.getUUID());

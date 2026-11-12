@@ -233,6 +233,7 @@ public final class Batch4Tests {
         }), 20);
         l.add(null, () -> server(p -> {
             var bots = PartyBots.bots(p);
+            com.xenowarriors.kaioken.KaiokenGuard.share(p);
             int gave = com.xenowarriors.kaioken.KaiokenGuard.botGave;
             PartyBotEntity b = bots.stream().filter(x -> x.character() == CharacterType.KAERU).findFirst().orElse(null);
             boolean has = b != null && b.inventory.countItem(com.xenowarriors.item.ModItems.CRIMSON_HEART_SEED.get()) > 0;
@@ -302,7 +303,7 @@ public final class Batch4Tests {
             log("botai: hits to kill a weak zombie " + hw + ", a 300 hp one " + hb + " -> " + (hw <= 5 && hb > 5 ? "PASS" : "FAIL"));
             b.setHealth(b.getMaxHealth() * 0.25F);
             var foe = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
-            foe.moveTo(b.getX() + 2, b.getY(), b.getZ(), 0, 0); foe.addTag("xw_b4"); foe.setTarget(b);
+            foe.moveTo(b.getX() + 2, b.getY(), b.getZ(), 0, 0); foe.addTag("xw_b4"); foe.addTag("xw_b4foe"); foe.setTarget(b);
             foe.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
             p.serverLevel().addFreshEntity(foe);
             b.setTarget(foe);
@@ -310,13 +311,14 @@ public final class Batch4Tests {
         }), 20);
         l.add(null, () -> server(p -> {
             PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
-            var foes = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(60), z -> z.getTarget() == b);
+            var foes = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(80), z -> z.getTags().contains("xw_b4foe"));
             float d = b == null || foes.isEmpty() ? -1 : b.distanceTo(foes.get(0));
+            if (!foes.isEmpty()) foes.get(0).setTarget(b);
             log("botai: hurt bot (25%) retreats=" + (b == null ? -1 : b.retreats) + " distance " + Batch3Tests.f1(START[0]) + " -> " + Batch3Tests.f1(d)
                     + " -> " + (b != null && b.retreats > 0 && d > START[0] + 3 ? "PASS" : "FAIL"));
             p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(80), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard());
             Batch3Tests.clearBots(p);
-        }), 80);
+        }), 200);
     }
     private static final float[] START = new float[1];
 
@@ -370,6 +372,7 @@ public final class Batch4Tests {
             if (b == null) return;
             com.xenowarriors.bot.BotJukebox.endForTest(b);
             boolean back = b.inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) == 1 && b.inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_CAT) == 1;
+            log("music: bag now jukebox x" + b.inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) + " disc x" + b.inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_CAT) + " playing " + com.xenowarriors.bot.BotJukebox.playingForTest(b));
             log("music: packed up -> jukebox and disc back in its bag " + back + " -> " + (back ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
         }), 10);

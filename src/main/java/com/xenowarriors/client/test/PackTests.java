@@ -254,7 +254,9 @@ public final class PackTests {
             int s = slot;
             float[] k = new float[1];
             l.add(new Step(null, () -> { face(mc); server(p -> { ready(p); k[0] = Karma.get(p); }); }, 8));
-            l.add(new Step(null, () -> client("skill", () -> { face(mc); ModNetwork.sendToServer(new com.xenowarriors.network.UseSkillPacket(s)); }), 3));
+            l.add(new Step(null, () -> client("skill", () -> { face(mc); ModNetwork.sendToServer(new com.xenowarriors.network.UseSkillPacket(s));
+                if (s == SkillManager.ULTIMATE_SLOT) ModNetwork.sendToServer(new com.xenowarriors.network.UseSkillPacket(com.xenowarriors.skill.UltCharge.RELEASE)); }),   // (a tap: the ultimate charges its 1.5 s first)
+                    s == SkillManager.ULTIMATE_SLOT ? com.xenowarriors.skill.UltCharge.MIN + 15 : 3));
             l.add(new Step(null, () -> {                                    // (right away: Bang's cooldown is only 7 ticks)
                 int cd = ClientSkillState.cooldownTicks(s);
                 server(p -> {

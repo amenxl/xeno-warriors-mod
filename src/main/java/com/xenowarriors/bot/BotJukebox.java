@@ -124,7 +124,8 @@ public final class BotJukebox {
     private static void stop(PartyBotEntity b, ServerLevel l, Session s, boolean there) {
         PLAYING.remove(b.getUUID());
         if (there) {
-            if (l.getBlockEntity(s.pos) instanceof JukeboxBlockEntity jb) jb.setFirstItem(ItemStack.EMPTY);   // (stops the song, no disc popping out)
+            if (l.getBlockEntity(s.pos) instanceof JukeboxBlockEntity jb) jb.clearContent();             // (stops the song, no disc popping out)
+            l.levelEvent(1011, s.pos, 0);                                                                // (the music stops for everyone)
             l.removeBlock(s.pos, false);
             b.inventory.addItem(new ItemStack(Items.JUKEBOX));
             b.inventory.addItem(s.disc.copy());

@@ -23,6 +23,7 @@ public final class SwitchCleanup {
         if (com.xenowarriors.skill.sp.SpState.knockout(p)) ended.append("knockout ");
         if (com.xenowarriors.skill.ffr.ZaneProjection.active(p)) ended.append("projection ");
         if (com.xenowarriors.skill.kaeru.HekubarrierSkill.active(p)) ended.append("hekubarrier ");
+        if (com.xenowarriors.skill.UltCharge.cancel(p)) ended.append("ultimate-charge ");   // (an ultimate still charging never goes off as the new character)
         com.xenowarriors.skill.sp.SpState.clear(id);                         // Kyrie, Max, Sam, Lexy, Technica
         com.xenowarriors.skill.ffr.SrSkills.clear(id);                       // Logan, Kill
         com.xenowarriors.skill.ffr.ZaneProjection.clear(id);                 // Zane's KA
