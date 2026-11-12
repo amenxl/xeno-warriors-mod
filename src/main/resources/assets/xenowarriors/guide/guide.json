@@ -72,7 +72,7 @@
         },
         {
           "title": "Bots fight smarter",
-          "text": "- Skills are saved for fights that need them: a bot won't use a skill (its own or a Dragon Ball ki technique) on an enemy it could beat in about 5 plain hits, and the more bots in your party, the less often each one reaches for a skill.\n- Badly hurt (under 35% health) in a fight, a bot pulls back to recover instead of fighting until it goes down: fliers fly up and away, the rest run - towards you when you're away from the danger. Once it's safe (or back over 55%) it eats, or heads for a healing pod."
+          "text": "- Skills are saved for fights that need them: a bot won't use a skill (its own or a Dragon Ball ki technique) on an enemy it could beat in about 5 plain hits, and the more bots in your party, the less often each one reaches for a skill.\n- Badly hurt (under 35% health) in a fight, a bot pulls back to recover instead of fighting until it goes down: fliers fly up and away, the rest run - towards you when you're away from the danger. Once it's safe (or back over 55%) it eats, or heads for a healing pod.\n- Creepers: a bot with a bow, crossbow or gun only ever shoots them, from well back. Without one, a quick bot (Speed level 20+, or one that flies) hits and runs - one hit while the creeper isn't hissing, then straight back out of its blast; a slower one keeps its distance and leaves it to the others."
         },
         {
           "title": "Bots pick things up",
@@ -81,6 +81,10 @@
         {
           "title": "Sparring in quiet times",
           "text": "When you and your bots aren't fighting (nothing hostile nearby for a while), now and then:\n- A bot asks you to spar - a request card: press Accept (Y) to spar it, Decline (X) for not now. It's the same friendly fight as Spar in its menu: nobody goes down.\n- Or two of your bots spar each other: a real fight until one is down to 30% health, or a minute is up (a draw). If an enemy turns up they stop at once.\n- Sparring gives Speed, Attack and Defense XP - and with DragonMineZ, Dragon Ball TP: about what 8 levels of a training minigame pay (3 after your first big spar in 30 minutes), less for the loser. Bots sparring each other both get theirs."
+        },
+        {
+          "title": "Party time!",
+          "text": "Once in a while (at most every 40 minutes), when nobody's fighting, one of your bots asks to throw a party (a request card - Accept with Y).\n- For 3 minutes everyone there wears a party hat - you, party members close by and your bots.\n- Confetti rains down, fireworks go up now and then (high up - they don't hurt anyone), and a little party tune plays.\n- A cake is set out (taken away again at the end if it's still there), everyone gets Regeneration and players get some cookies.\n- The bots dance about: hops, spins and arm-waves.\n- Bonds grow: you with each bot, the bots with each other, and party members with you - a bit every 20 seconds and a good chunk when the party ends.\n- If a fight starts the party breaks up (no end bonus)."
         },
         {
           "title": "Bots and music",

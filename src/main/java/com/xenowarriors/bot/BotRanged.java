@@ -99,6 +99,7 @@ public final class BotRanged extends Goal {
         double d = b.distanceTo(t);
         if (d > 40) return false;
         if (inVehicle(b)) return d > 1.5;                                        // riding along: it shoots from its seat (it can't get out to swing)
+        if (t instanceof net.minecraft.world.entity.monster.Creeper) return true;   // (a creeper: always from range, never up close)
         if (b.targetUnreachable() || d > 8 - slack) return true;
         return d > 3 && score(at(slot)) > meleeScore(b);
     }
@@ -143,7 +144,7 @@ public final class BotRanged extends Goal {
         // keep a good distance: close in when it can't see them or they're far, back off when they're right there (not from a seat: the driver drives)
         if (b.isPassenger()) b.getNavigation().stop();
         else if (!see || d > 18) { if (b.tickCount % 10 == 0) b.getNavigation().moveTo(t, 1.15); }
-        else if (d < 4.5 && !b.targetUnreachable()) {
+        else if (d < (t instanceof net.minecraft.world.entity.monster.Creeper ? 7.5 : 4.5) && !b.targetUnreachable()) {   // (creepers: well out of their blast)
             Vec3 away = b.position().add(b.position().subtract(t.position()).normalize().scale(4));
             if (b.tickCount % 10 == 0 && BotMoves.dropAt(b.level(), away.x, (int) Math.floor(b.getY()), away.z) < BotMoves.CLIFF) b.getNavigation().moveTo(away.x, away.y, away.z, 1.15);
         } else b.getNavigation().stop();

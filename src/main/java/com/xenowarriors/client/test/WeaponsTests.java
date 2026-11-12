@@ -520,7 +520,7 @@ public final class WeaponsTests {
             held.hurtAndBreak(1, p, e -> {});
             int best = held.getDamageValue();
             log(String.format("wear: level %d, wooden sword alone %d, with a diamond sword in the bag %d, diamond (the best) %d -> %s",
-                    lv, alone, withDiamond, best, alone == 1 && withDiamond > 1 && best == 1 ? "PASS" : "FAIL"));
+                    lv, alone, withDiamond, best, alone == 1 && withDiamond >= wood.getMaxDamage() / 3 && best == 1 ? "PASS" : "FAIL"));   // (outgrown: about 3 hits)
             // its last hits hit hard: a nearly broken outgrown wooden sword against a zombie, the diamond one in the bag
             ItemStack w2 = new ItemStack(net.minecraft.world.item.Items.WOODEN_SWORD);
             w2.setDamageValue(w2.getMaxDamage() - 2);

@@ -258,6 +258,7 @@ public class PartyBotEntity extends PathfinderMob {
         goalSelector.addGoal(2, new Retreat());                                                         // (badly hurt in a fight: flies or runs off to heal instead of fighting to the end)
         goalSelector.addGoal(3, new ReviveGoal());
         goalSelector.addGoal(4, new BotRanged(this));                                                   // bows, crossbows, guns: far or out-of-reach enemies
+        goalSelector.addGoal(5, new CreeperTactics());                                                  // creepers, no ranged weapon: hit and run (if it's quick enough), else keep away
         goalSelector.addGoal(5, new FlyChase());                                                        // fliers: up to what they can't walk to
         goalSelector.addGoal(6, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
         goalSelector.addGoal(7, new CollectItems());                                                    // (loose drops nearby - first of all ones you've no room for)
@@ -377,6 +378,60 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public void start() { getNavigation().moveTo(wanderTo.x, wanderTo.y, wanderTo.z, 0.8); }
         @Override public void stop() { wanderTo = null; }
     }
+
+    /**
+     * Creepers without a ranged weapon (with one, BotRanged shoots them from well back). Quick enough (Speed level
+     * {@link #CREEPER_SPEED}+, or a flier): hit and run - in for one hit while the creeper isn't hissing, then straight
+     * back out of its blast range until it calms down, again and again. Too slow: it never goes in - it keeps its
+     * distance (and bolts if the creeper comes hissing at it), leaving it to the others.
+     */
+    class CreeperTactics extends Goal {
+        private int phase, wait;                                              // 0 going in, 1 backing off
+        CreeperTactics() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        private net.minecraft.world.entity.monster.Creeper creeper() {
+            return getTarget() instanceof net.minecraft.world.entity.monster.Creeper c && c.isAlive() && !downed() && !rangedActive && !isPassenger() ? c : null;
+        }
+        @Override public boolean canUse() { return creeper() != null; }
+        @Override public boolean canContinueToUse() { return creeper() != null; }
+        @Override public void start() { phase = 0; wait = 0; }
+        @Override public void stop() { getNavigation().stop(); }
+        boolean quick() { return canFly() || PartyBots.statLevel(PartyBotEntity.this, com.xenowarriors.stats.Stat.SPEED) >= CREEPER_SPEED; }
+        private void away(net.minecraft.world.entity.monster.Creeper c, double to) {
+            Vec3 a = position().subtract(c.position()).multiply(1, 0, 1);
+            a = a.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : a.normalize();
+            Vec3 goal = position().add(a.scale(to));
+            if (BotMoves.dropAt(level(), goal.x, (int) Math.floor(getY()), goal.z) < BotMoves.CLIFF) getNavigation().moveTo(goal.x, goal.y, goal.z, 1.45);
+            setSprinting(true);
+        }
+        @Override public void tick() {
+            var c = creeper();
+            if (c == null) return;
+            getLookControl().setLookAt(c, 30F, 30F);
+            double d = distanceTo(c);
+            boolean hissing = c.getSwellDir() > 0 || c.isIgnited();
+            if (!quick()) {                                                   // too slow to risk it: keep well away
+                if (d < 7.5 || hissing && d < 9) { if (tickCount % 6 == 0) away(c, 8); }
+                else { getNavigation().stop(); setSprinting(false); }
+                return;
+            }
+            if (phase == 0) {
+                if (hissing) { phase = 1; wait = 30; return; }                   // (it's already going: get out)
+                if (d > 2.6) { if (tickCount % 5 == 0) getNavigation().moveTo(c, 1.45); setSprinting(true); return; }
+                swing(InteractionHand.MAIN_HAND);
+                doHurtTarget(c);
+                creeperHits++;
+                phase = 1; wait = 25;                                         // one hit, then out
+                return;
+            }
+            if (d < 7 || hissing) { if (tickCount % 4 == 0) away(c, 7); }
+            else if (--wait <= 0 && !hissing) { phase = 0; setSprinting(false); }
+        }
+    }
+    /** Speed level a bot needs to go in on a creeper (hit and run). */
+    public static final int CREEPER_SPEED = 20;
+    /** (Tests) hits landed on creepers. */
+    public int creeperHits;
 
     /** Fliers: something they can't walk to (a flying enemy, one up a pillar or across a ravine) - up into the air and at it. */
     class FlyChase extends Goal {

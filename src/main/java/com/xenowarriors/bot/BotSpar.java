@@ -44,7 +44,7 @@ public final class BotSpar {
 
     // ------------------------------------------------------------------ quiet?
 
-    private static boolean quiet(ServerPlayer o) {
+    static boolean quiet(ServerPlayer o) {
         if (o.getLastHurtByMob() != null && o.tickCount - o.getLastHurtByMobTimestamp() < 20 * 30) return false;
         return o.level().getEntitiesOfClass(Mob.class, o.getBoundingBox().inflate(20), m -> m.isAlive() && (m instanceof Enemy || m.getTarget() == o)
                 && !(m instanceof PartyBotEntity)).isEmpty();

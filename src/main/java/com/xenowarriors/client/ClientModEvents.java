@@ -198,6 +198,7 @@ public final class ClientModEvents {
             PlayerRenderer renderer = event.getSkin(skin);
             if (renderer != null) {
                 renderer.addLayer(new CharacterDetailLayer(renderer));
+                renderer.addLayer(new com.xenowarriors.client.PartyHats.Layer<>(renderer));
                 renderer.addLayer(new com.xenowarriors.client.compat.FoxTailLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.you.YouWingsLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.render.CharacterArmorLayer(renderer));

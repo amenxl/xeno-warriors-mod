@@ -50,6 +50,10 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("botweights"))) botWeights(mc, l);
         if (f.isEmpty() || f.contains("botai")) botAi(mc, l);
         if (f.isEmpty() || f.contains("pickup")) pickupMusic(mc, l);
+        if (f.isEmpty() || f.contains("partytime")) partyTime(mc, l);
+        if (f.isEmpty() || f.contains("creeper")) creepers(mc, l);
+        if (f.isEmpty() || f.contains("ender")) enderSaiyan(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("bagmerge"))) bagMerge(mc, l);
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
@@ -377,4 +381,111 @@ public final class Batch4Tests {
             Batch3Tests.clearBots(p);
         }), 10);
     }
+
+    // ------------------------------------------------------------------ party time, creepers, the Ender Saiyan, the party Mission Bag
+
+    private static void partyTime(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity a = PartyBots.spawn(p, CharacterType.RHALIX, null), b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (a != null) a.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 180, 0);
+            if (b != null) b.moveTo(p.getX() - 2, p.getY(), p.getZ() + 2, 180, 0);
+            START[0] = com.xenowarriors.party.Bonds.progress(p, "rhalix") + com.xenowarriors.party.Bonds.level(p, "rhalix");
+            boolean on = com.xenowarriors.bot.BotPartyTime.start(p);
+            log("party: started " + on + " -> " + (on ? "PASS" : "FAIL"));
+        }), 30);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 60);
+        l.add("batch4_party", () -> {
+            int hats = 0;
+            for (var e : mc.level.entitiesForRendering()) if (e instanceof net.minecraft.world.entity.LivingEntity le && com.xenowarriors.client.PartyHats.wearing(le)) hats++;
+            log("party: hats on " + hats + " -> " + (hats >= 3 ? "PASS" : "FAIL"));
+        }, 3);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.bot.BotPartyTime.endForTest(p);
+            float after = com.xenowarriors.party.Bonds.progress(p, "rhalix") + com.xenowarriors.party.Bonds.level(p, "rhalix");
+            log("party: over, bond with Rhalix " + Batch3Tests.f1(START[0]) + " -> " + Batch3Tests.f1(after) + ", fireworks " + com.xenowarriors.bot.BotPartyTime.fireworks
+                    + " -> " + (after > START[0] && !com.xenowarriors.bot.BotPartyTime.active(p) ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 20);
+    }
+
+    private static void creepers(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity slow = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (slow == null) return;
+            slow.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0);
+            var c = net.minecraft.world.entity.EntityType.CREEPER.create(p.serverLevel());
+            c.moveTo(p.getX() + 3, p.getY(), p.getZ() + 4, 0, 0); c.addTag("xw_b4");
+            c.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).setBaseValue(0.0);
+            p.serverLevel().addFreshEntity(c);
+            slow.setTarget(c);
+            log("creeper: Kaeru's Speed " + PartyBots.statLevel(slow, com.xenowarriors.stats.Stat.SPEED) + " (needs " + PartyBotEntity.CREEPER_SPEED + ")");
+        }), 20);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            var cs = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Creeper.class, p.getBoundingBox().inflate(40), x -> x.getTags().contains("xw_b4"));
+            if (b == null || cs.isEmpty()) { log("creeper: setup FAIL"); return; }
+            boolean quick = PartyBots.statLevel(b, com.xenowarriors.stats.Stat.SPEED) >= PartyBotEntity.CREEPER_SPEED || b.canFly();
+            float d = b.distanceTo(cs.get(0));
+            log("creeper: " + (quick ? "quick" : "slow") + " bot, distance " + Batch3Tests.f1(d) + ", hits " + b.creeperHits + " -> "
+                    + ((quick ? b.creeperHits > 0 : d >= 6.5F && b.creeperHits == 0) ? "PASS" : "FAIL"));
+            p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(60), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard());
+            Batch3Tests.clearBots(p);
+        }), 160);
+    }
+
+    private static final Object[] ENDER = new Object[1];
+
+    private static void enderSaiyan(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            var s = com.xenowarriors.boss.EnderSaiyans.ENDER_SAIYAN.get().create(p.serverLevel());
+            s.moveTo(p.getX(), p.getY(), p.getZ() + 5, 180, 0); s.setNoAi(true); s.addTag("xw_b4");
+            p.serverLevel().addFreshEntity(s);
+            ENDER[0] = s;
+        }), 20);
+        String[] names = {"base", "awakened", "ascended", "overcharged", "void"};
+        for (int f = 0; f <= 4; f++) {
+            final int ff = f;
+            l.add(null, () -> server(p -> { if (ENDER[0] instanceof com.xenowarriors.boss.EnderSaiyanEntity s && ff > 0) s.setFormForTest(ff); }), 25);
+            l.add(null, () -> Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, -8), 5);
+            l.add("batch4_ender_" + names[f], () -> {}, 3);
+        }
+        l.add(null, () -> server(p -> {
+            if (!(ENDER[0] instanceof com.xenowarriors.boss.EnderSaiyanEntity s)) { log("ender: FAIL no boss"); return; }
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            s.setNoAi(false);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 8, p.getY(), p.getZ() + 5, 0, 0); z.setNoAi(true); z.addTag("xw_b4");
+            p.serverLevel().addFreshEntity(z);
+            s.blinkForTest(z); s.boltsForTest(z); s.throwForTest(); s.pullForTest(); s.clonesForTest(z);
+            log("ender: moves blink " + s.blinks + " bolts " + s.bolts + " pull " + s.pulls + " clones " + s.clones + " boss=" + com.xenowarriors.karma.KarmaSensing.boss(s)
+                    + " -> " + (s.bolts > 0 && s.pulls > 0 && s.clones > 0 && com.xenowarriors.karma.KarmaSensing.boss(s) ? "PASS" : "FAIL"));
+        }), 10);
+        l.add(null, () -> server(p -> {
+            if (!(ENDER[0] instanceof com.xenowarriors.boss.EnderSaiyanEntity s)) return;
+            log("ender: block thrown " + s.throwsDone + " -> " + (s.throwsDone > 0 ? "PASS" : "FAIL"));
+            p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(60), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard());
+        }), 60);
+    }
+
+    private static void bagMerge(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            var bag = com.xenowarriors.compat.MissionBag.of(p);
+            bag.clearContent();
+            com.xenowarriors.compat.MissionBag.add(p, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BONE, 5));
+            int had = bag.countItem(net.minecraft.world.item.Items.BONE);
+            CharacterManagerHop.to(p, CharacterType.RHALIX);
+            int after = com.xenowarriors.compat.MissionBag.of(p).countItem(net.minecraft.world.item.Items.BONE);
+            log("bag: 5 bones in the bag, switched to Rhalix -> still " + after + " -> " + (had == 5 && after == 5 ? "PASS" : "FAIL"));
+        }), 20);
+    }
+
+    /** (a character switch from a test) */
+    static final class CharacterManagerHop { static void to(ServerPlayer p, CharacterType t) { com.xenowarriors.character.CharacterManager.setCharacter(p, t); } }
 }

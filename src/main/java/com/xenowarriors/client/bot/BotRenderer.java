@@ -30,6 +30,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
         wide = this.model;
         girl = new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true);
         addLayer(new Details(this));
+        addLayer(new com.xenowarriors.client.PartyHats.Layer<>(this));
         addLayer(new net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer<>(this,
                 new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
                 new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)), ctx.getModelManager()));
