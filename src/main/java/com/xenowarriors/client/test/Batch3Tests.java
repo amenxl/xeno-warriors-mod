@@ -56,6 +56,7 @@ public final class Batch3Tests {
         if (all || f.contains("torch")) torches(mc, l);
         if (all || f.contains("heal")) foxHeal(mc, l);
         if (all || f.contains("hud")) hud(mc, l);
+        if (f.contains("bigparty")) bigParty(mc, l);
         if (all || f.contains("magnet")) magnet(mc, l);
         if (all || f.contains("step")) step(mc, l);
         if (all || f.contains("faces")) faces(mc, l);
@@ -262,6 +263,27 @@ public final class Batch3Tests {
             }, 2);
         }
         l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle(was); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setHealth(p.getMaxHealth()); clearBots(p); }); }, 5);
+    }
+
+    // ------------------------------------------------------------------ the party frames for a big party
+
+    private static void bigParty(Minecraft mc, MikikoTests.Steps l) {
+        character(l, CharacterType.MIKIKO);
+        String[][] sets = {{"rhalix", "kaeru", "kyrie", "lexy", "max"}, {"rhalix", "kaeru", "kyrie", "lexy", "max", "sam", "stevie", "yuri", "technica", "garry", "keita"}};
+        for (String[] ids : sets) {
+            l.add(null, () -> server(p -> {
+                clearBots(p); pad(p, 8);
+                p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+                p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno partylimit 16");
+                for (CharacterType x : CharacterType.PLAYABLE) com.xenowarriors.party.Bonds.set(p, x.getId(), 70, 0);
+                com.xenowarriors.bot.PartyBots.add(p, ids);
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            }), 80);
+            l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle("classic"); mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(10F); }, 20);
+            l.add("batch3_bigparty_" + ids.length, () -> log("bigparty bots " + ids.length + " members " + com.xenowarriors.client.party.PartyClient.members().size()), 2);
+        }
+        l.add(null, () -> server(p -> { clearBots(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno partylimit 4"); }), 5);
     }
 
     // ------------------------------------------------------------------ 8. Rhalix's Gravity Magnet
