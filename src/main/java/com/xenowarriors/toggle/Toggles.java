@@ -86,6 +86,7 @@ public final class Toggles {
             case ZANE -> List.of("fire_spell", "thunder_spell", "broom_smack");
             case YURI -> List.of("elevator_hack", "virus_upload");
             case STEVIE, GARRY -> List.of("karma_blast", "disco_kick");
+            case YOU -> List.of("you_strike", "karma_blast", "you_bolt");      // (custom characters: Karma Strike, Karma Blast, their element's Bolt - Firebolt for fire)
             default -> List.of();
         };
     }

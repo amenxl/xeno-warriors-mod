@@ -190,7 +190,7 @@ public final class SkillPool {
 
     /** A right+left click skill: not in the skill menu or the slots any more (Character Customization > R+L Click). */
     public static boolean rlOnly(CharacterType t, Entry e) {
-        return e != null && com.xenowarriors.toggle.Toggles.rlChoices(t).contains(e.skill().getId());
+        return e != null && t != CharacterType.YOU && com.xenowarriors.toggle.Toggles.rlChoices(t).contains(e.skill().getId());   // (a custom character's are its starter kit too: they stay in its skills as well)
     }
 
     /** Pool indices the skill menu shows for this character (everything but the right+left click skills). */
