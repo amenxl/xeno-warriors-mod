@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.Blocks;
 public final class Batch4Tests {
     private Batch4Tests() {}
 
-    public static boolean handles(String focus) { return focus != null && focus.replaceFirst("^dmz", "").startsWith("batch4"); }
+    public static boolean handles(String focus) { return focus != null && focus.replaceFirst("^dmz", "").replaceFirst("^ef", "").startsWith("batch4"); }
 
     static void log(String s) { XenoWarriors.LOGGER.info("XW-TEST batch4 " + s); }
 
@@ -31,7 +31,8 @@ public final class Batch4Tests {
     }
 
     public static void run(Minecraft mc, String focus, MikikoTests.Steps l) {
-        String f = focus.replaceFirst("^dmz", "").replaceFirst("^batch4", "");
+        String f = focus.replaceFirst("^dmz", "").replaceFirst("^ef", "").replaceFirst("^batch4", "");
+        boolean ef = focus.startsWith("ef");
         boolean dmz = focus.startsWith("dmz");
         l.add(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null); }, 5);
         l.add(null, () -> server(p -> {
@@ -58,9 +59,39 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("sparlock")) sparLock(mc, l);
         if (f.contains("fusionlook")) fusionLook(mc, l);
         if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);
-        if (f.isEmpty() || f.contains("bike")) technicaBike(mc, l);                      // (only when asked: design previews)
+        if (f.isEmpty() || f.contains("bike")) technicaBike(mc, l);
+        if (ef && f.contains("efgear")) efGear(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ Epic Fight: armour and held items on our characters
+
+    private static void efGear(Minecraft mc, MikikoTests.Steps l) {
+        String[][] items = {{"iron_sword", "ef:SWORD_AUTO1"}, {"diamond_axe", "ef:AXE_AUTO1"}, {"iron_pickaxe", "ef:TOOL_AUTO1"}, {"shield", "guard"}};
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO}) {
+            Batch3Tests.character(l, t);
+            l.add(null, () -> server(p -> {
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_CHESTPLATE));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_LEGGINGS));
+                p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_BOOTS));
+            }), 20);
+            for (String[] it : items) {
+                l.add(null, () -> server(p -> {
+                    var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation(it[0]));
+                    p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(item));
+                    com.xenowarriors.compat.epicfight.EfTest.play(p, "none");
+                }), 15);
+                l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 30, 8); }, 10);
+                l.add("batch4_efgear_" + t.getId() + "_" + it[0] + "_idle", () -> {}, 3);
+                l.add(null, () -> server(p -> com.xenowarriors.compat.epicfight.EfTest.play(p, it[1])), 6);
+                l.add("batch4_efgear_" + t.getId() + "_" + it[0] + "_swing", () -> {}, 3);
+                l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 8), 4);
+                l.add("batch4_efgear_" + t.getId() + "_" + it[0] + "_back", () -> { mc.options.hideGui = false; }, 3);
+            }
+            l.add(null, () -> server(p -> { for (var s : net.minecraft.world.entity.EquipmentSlot.values()) p.setItemSlot(s, net.minecraft.world.item.ItemStack.EMPTY); log("efgear " + p.getName().getString() + " done"); }), 5);
+        }
     }
 
     // ------------------------------------------------------------------ Technica's motorcycle

@@ -121,6 +121,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
+        var fl = com.xenowarriors.client.FusionLook.of(p);
+        if (fl != null) return fl.details();
         if (isFoxKing(p, type)) return FOX_KING_TEX;
         int o = ClientCharacterData.outfit(p);
         if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId())) return LUNAR_TEX;

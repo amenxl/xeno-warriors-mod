@@ -53,7 +53,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         }
         int overlay = OverlayTexture.NO_OVERLAY;
         if (mesh[0] != null) {
-            mesh[0].draw(pose, buffers, RenderType.entityCutoutNoCull(CharacterDetailLayer.detailTexture(player)), light,
+            mesh[0].draw(pose, buffers, RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player))), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
         if (mesh[1] != null) {
@@ -102,7 +102,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 .translate(new yesman.epicfight.api.utils.math.Vec3f(0F, -0.5F, -0.1F)).mulFront(poses[chest]);
         pose.pushPose();
         yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
-        var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(CharacterDetailLayer.detailTexture(player)));
+        var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player))));
         live.rightWing.render(pose, vc, light, overlay);
         live.leftWing.render(pose, vc, light, overlay);
         pose.popPose();
