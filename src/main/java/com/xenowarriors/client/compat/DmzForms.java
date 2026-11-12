@@ -117,6 +117,9 @@ public final class DmzForms {
         }
     }
 
+    /** In DragonMineZ's Kaioken (a "stack" form) right now? */
+    public static boolean kaioken(Player p) { return call(p, getActiveStackForm) != null; }
+
     public static String form(Player p) {
         return call(p, getActiveForm);
     }

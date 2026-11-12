@@ -46,6 +46,8 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("comine")) coMine(mc, l);
         if (dmz && (f.isEmpty() || f.contains("botforms"))) botForms(mc, l);
         if (f.isEmpty() || f.contains("ultforms")) ultForms(mc, l);
+        if (f.isEmpty() || f.contains("kaioken")) kaioken(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("botweights"))) botWeights(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
 
@@ -207,5 +209,74 @@ public final class Batch4Tests {
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15), 50);
         l.add("batch4_ult_maynaya", () -> {}, 3);
         l.add(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(30), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard())), 40);
+    }
+
+    // ------------------------------------------------------------------ Crimson Heart Seed, careful bots, pods
+
+    private static void kaioken(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            var seed = new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.CRIMSON_HEART_SEED.get());
+            seed.finishUsingItem(p.level(), p);
+            boolean g = com.xenowarriors.kaioken.KaiokenGuard.guarded(p);
+            log("kaioken: ate a seed -> Crimson Control " + g + " -> " + (g ? "PASS" : "FAIL"));
+            PartyBotEntity a = PartyBots.spawn(p, CharacterType.RHALIX, null), b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (a == null || b == null) { log("kaioken: bots FAIL"); return; }
+            a.moveTo(p.getX() + 1.5, p.getY(), p.getZ() + 1.5, 0, 0); b.moveTo(p.getX() - 1.5, p.getY(), p.getZ() + 1.5, 0, 0);
+            a.inventory.addItem(new net.minecraft.world.item.ItemStack(com.xenowarriors.item.ModItems.CRIMSON_HEART_SEED.get(), 3));
+            log("kaioken: bots set up; bot pod threshold " + com.xenowarriors.gov.HealingPods.BOT_LOW);
+        }), 20);
+        l.add(null, () -> server(p -> {
+            var bots = PartyBots.bots(p);
+            int gave = com.xenowarriors.kaioken.KaiokenGuard.botGave;
+            PartyBotEntity b = bots.stream().filter(x -> x.character() == CharacterType.KAERU).findFirst().orElse(null);
+            boolean has = b != null && b.inventory.countItem(com.xenowarriors.item.ModItems.CRIMSON_HEART_SEED.get()) > 0;
+            log("kaioken: a bot with spares handed one over: gave=" + gave + " Kaeru has one=" + has + " -> " + (has ? "PASS" : "FAIL"));
+            boolean ate = b != null && com.xenowarriors.kaioken.KaiokenGuard.botBeforeKaioken(b);
+            log("kaioken: Kaeru eats it before Kaioken: guarded=" + ate + " seeds left " + (b == null ? -1 : b.inventory.countItem(com.xenowarriors.item.ModItems.CRIMSON_HEART_SEED.get())) + " -> " + (ate ? "PASS" : "FAIL"));
+        }), 140);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.kaioken.KaiokenGuard.forced = true;
+            var w = net.minecraft.world.entity.EntityType.WITHER_SKELETON.create(p.serverLevel());
+            w.moveTo(p.getX(), p.getY(), p.getZ() + 3, 0, 0);
+            w.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(400);
+            w.setHealth(400); w.getPersistentData().putBoolean("xw_boss", true);
+            p.serverLevel().addFreshEntity(w);
+            int before = com.xenowarriors.kaioken.KaiokenGuard.dropped;
+            w.hurt(p.damageSources().playerAttack(p), 10000F);
+            com.xenowarriors.kaioken.KaiokenGuard.forced = false;
+            log("kaioken: boss (forced chance) dropped a seed: " + (com.xenowarriors.kaioken.KaiokenGuard.dropped > before ? "PASS" : "FAIL (boss=" + com.xenowarriors.karma.KarmaSensing.boss(w) + ")"));
+            Batch3Tests.clearBots(p);
+        }), 10);
+    }
+
+    private static void botWeights(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            Batch3Tests.clearBots(p);
+            DmzTests.make(p, "saiyan");
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b == null) { log("weights: no bot FAIL"); return; }
+            com.xenowarriors.compat.DmzBots.ensureRace(b);
+            b.setNoAi(true);
+        }); }, 40);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            if (b == null) return;
+            log("weights: before " + com.xenowarriors.compat.DmzBotWeights.stateForTest(b));
+            boolean got = com.xenowarriors.compat.DmzBotWeights.receiveForTest(b, "roshi");
+            String st = com.xenowarriors.compat.DmzBotWeights.stateForTest(b);
+            log("weights: asked Roshi -> got " + got + ", " + st + " -> " + (got && !st.contains("worn none") ? "PASS" : "FAIL"));
+            boolean again = com.xenowarriors.compat.DmzBotWeights.receiveForTest(b, "kingkai");
+            log("weights: has weights, asks King Kai again: " + again + " -> " + (!again ? "PASS" : "FAIL"));
+            com.xenowarriors.compat.DmzBotMinigames.learnAllForTest(b);
+            float tp0 = com.xenowarriors.compat.DmzBotMinigames.tpForTest(b);
+            String start = com.xenowarriors.compat.DmzBotMinigames.start(b, true);
+            String fin = com.xenowarriors.compat.DmzBotMinigames.finishForTest(b);
+            float tp1 = com.xenowarriors.compat.DmzBotMinigames.tpForTest(b);
+            log("minigames: " + start + " / " + fin + " TP " + tp0 + " -> " + tp1 + " -> " + (tp1 > tp0 ? "PASS" : "FAIL"));
+            for (String s : com.xenowarriors.compat.DmzBotMinigames.LOG) log("minigames log: " + s);
+        }); }, 20);
     }
 }

@@ -48,6 +48,8 @@ import java.util.*;
 public final class HealingPods {
     public static int SLEEP_MIN = 60, SLEEP_MAX = 240, WAKE = 25, COOLDOWN = 100, CLOSE_AFTER = 20;
     public static final float LOW = 0.35F;
+    /** Party bots go sooner: under this share of their health (out of a fight) they head for a free pod nearby. */
+    public static final float BOT_LOW = 0.8F;
     public static final int SEEK_RADIUS = 24;
     private static final UUID STILL = UUID.fromString("9e3c5a10-2b4f-4c1e-8d7a-6f5e4d3c2b11");
 
@@ -303,7 +305,7 @@ public final class HealingPods {
 
     /** Why this one shouldn't go for a pod right now (null = it may). */
     static String why(PathfinderMob m, boolean bot) {
-        if (m.getHealth() >= m.getMaxHealth() * LOW) return "healthy";
+        if (m.getHealth() >= m.getMaxHealth() * (bot ? BOT_LOW : LOW)) return "healthy";
         if (inPod(m)) return "in a pod";
         if (com.xenowarriors.tower.Tower.is(m.level()) || com.xenowarriors.vr.Vr.is(m.level())) return "in a mode";
         if (m.getPersistentData().getBoolean("xw_tower") || m.getPersistentData().getBoolean("xw_journey") || com.xenowarriors.tower.TowerBosses.isBoss(m)) return "mode enemy";

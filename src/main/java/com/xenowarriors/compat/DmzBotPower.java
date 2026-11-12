@@ -350,8 +350,10 @@ public final class DmzBotPower {
 
     // ---------------------------------------------------------------- Kaioken
 
-    /** Health share it goes into Kaioken above, and drops it below. */
-    static final float KAIOKEN_ON = 0.6F, KAIOKEN_OFF = 0.35F;
+    /** Health share it goes into Kaioken above, and drops it below (careful: it never lets Kaioken take it near death). */
+    static final float KAIOKEN_ON = 0.75F, KAIOKEN_OFF = 0.5F;
+    /** It only goes as high a Kaioken as it can hold this many seconds before dropping to KAIOKEN_OFF. */
+    static final int KAIOKEN_HOLD = 12;
 
     /**
      * Kaioken (a DragonMineZ "stack" form, unlocked by its Kaioken skill level: x2 at level 1 ... x20 at level 5):
@@ -370,13 +372,16 @@ public final class DmzBotPower {
             if (hp < KAIOKEN_OFF) { p.stackRested = false; dropStack(b, st, p, "low health " + Math.round(hp * 100) + "%"); o.displayClientMessage(Component.literal("").append(b.label()).append(" drops Kaioken").withStyle(ChatFormatting.GRAY), true); return; }
             if (b.tickCount % 20 < 10) {                                          // (once a second)
                 Object fd = stackFormData.invoke(ch);
-                double d = fd == null ? 0 : ((Number) healthDrain.invoke(fd)).doubleValue();
+                double d = fd == null || com.xenowarriors.kaioken.KaiokenGuard.guarded(b) ? 0 : ((Number) healthDrain.invoke(fd)).doubleValue();   // (a Crimson Heart Seed: no cost)
+                if (d > 0 && hp - d < KAIOKEN_OFF) { p.stackRested = false; dropStack(b, st, p, "next second would take it under " + Math.round(KAIOKEN_OFF * 100) + "%"); return; }
                 if (d > 0) { b.setHealth(Math.max(1F, b.getHealth() - (float) (b.getMaxHealth() * d))); p.kaiokenDrained += (float) (b.getMaxHealth() * d); }
                 if (b.level() instanceof ServerLevel level) level.sendParticles(new DustParticleOptions(new Vector3f(1F, 0.1F, 0.1F), 1.8F), b.getX(), b.getY() + 0.9, b.getZ(), 10, 0.4, 0.7, 0.4, 0.02);
             }
             return;
         }
-        if (!inFight || foe == null || !strong(b, foe) || hp < KAIOKEN_ON || !p.stackRested) return;
+        if (!inFight || foe == null || !strong(b, foe)) return;
+        boolean guarded = com.xenowarriors.kaioken.KaiokenGuard.botBeforeKaioken(b);   // (eats a Crimson Heart Seed first if it has one)
+        if (!guarded && (hp < KAIOKEN_ON || !p.stackRested)) return;
         if (p.form != null) {                                                     // (on top of a form: only a stackable one)
             Object af = activeFormData.invoke(ch);
             Object ok = af == null ? null : formStackable.invoke(af);
@@ -389,6 +394,9 @@ public final class DmzBotPower {
             if (fd == null) break;
             String name = (String) formName.invoke(fd), g = (String) selectedStackGroup.invoke(ch);
             if (name == null || name.isEmpty() || name.equals(last)) break;
+            double drain = healthDrain == null ? 0 : ((Number) healthDrain.invoke(fd)).doubleValue();
+            if (!guarded && last != null && hp - drain * KAIOKEN_HOLD < KAIOKEN_OFF) break;   // (careful: not a level it can't hold for a while)
+            if (!guarded && last == null && hp - drain * 4 < KAIOKEN_OFF) break;               // (not even the first if it would drop it in seconds)
             setStack.invoke(ch, g, name);
             if (!name.equals(activeStack.invoke(ch))) break;
             group = g; last = name;
@@ -490,6 +498,18 @@ public final class DmzBotPower {
             Object d = DmzPerCharacter.live(o);
             if (d == null) return null;
             Object f = activeForm.invoke(getCharacter.invoke(d));
+            String s = f == null ? "" : f.toString();
+            return s.isEmpty() || s.equalsIgnoreCase("base") || s.equalsIgnoreCase("none") ? null : s;
+        } catch (Throwable t) { return null; }
+    }
+
+    /** The player's DragonMineZ Kaioken ("stack" form) right now, or null. */
+    public static String playerStack(ServerPlayer o) {
+        if (o == null || !ready() || activeStack == null) return null;
+        try {
+            Object d = DmzPerCharacter.live(o);
+            if (d == null) return null;
+            Object f = activeStack.invoke(getCharacter.invoke(d));
             String s = f == null ? "" : f.toString();
             return s.isEmpty() || s.equalsIgnoreCase("base") || s.equalsIgnoreCase("none") ? null : s;
         } catch (Throwable t) { return null; }

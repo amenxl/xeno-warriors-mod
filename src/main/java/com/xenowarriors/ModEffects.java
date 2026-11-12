@@ -26,5 +26,11 @@ public final class ModEffects {
     public static final RegistryObject<MobEffect> VIRUS_IMMUNITY = EFFECTS.register("virus_immunity",
             () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x7FE0D0) {});
 
+    /** Ate a Crimson Heart Seed: DragonMineZ's Kaioken costs no health while it lasts (KaiokenGuard). */
+    public static final RegistryObject<MobEffect> CRIMSON_CONTROL = EFFECTS.register("crimson_control",
+            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0xE0202A) {
+                @Override public java.util.List<net.minecraft.world.item.ItemStack> getCurativeItems() { return java.util.List.of(); }   // (milk doesn't wash it out)
+            });
+
     private ModEffects() {}
 }
