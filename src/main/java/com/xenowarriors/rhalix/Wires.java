@@ -149,6 +149,8 @@ public final class Wires {
 
     /** A bound player pressed attack. */
     public static void mash(ServerPlayer bound) {
+        var proto = com.xenowarriors.gov.UltimaPrototypeEntity.holding(bound);     // (grabbed by the Ultima Prototype's cables: same mashing)
+        if (proto != null) proto.mash(bound);
         for (Bind b : new java.util.ArrayList<>(BINDS.values())) {
             if (b.target != bound) continue;
             b.mash++;

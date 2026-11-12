@@ -362,6 +362,7 @@
   "block.xenowarriors.healing_pod": "Healing Pod",
   "item.xenowarriors.healing_pod": "Healing Pod",
   "entity.xenowarriors.gov_agent": "Government Agent",
+  "entity.xenowarriors.ultima_prototype": "Ultima Prototype",
   "skill.xenowarriors.moon_reflect": "Moon Reflect",
   "skill.xenowarriors.moon_reflect.short": "MR",
   "skill.xenowarriors.moon_reflect.desc": "Lunar Form only. A silver crescent mirror wraps around Rhalix for 5 seconds: arrows and blasts fly back at whoever threw them, and half of every blow is turned back on the attacker.",

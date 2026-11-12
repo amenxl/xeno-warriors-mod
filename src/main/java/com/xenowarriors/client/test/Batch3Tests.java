@@ -59,6 +59,7 @@ public final class Batch3Tests {
         if (f.contains("bigparty")) bigParty(mc, l);
         if (f.contains("aurora")) aurora(mc, l);
         if (f.contains("ultcharge")) ultCharge(mc, l);
+        if (f.contains("protofac")) protoFacility(mc, l);
         if (all || f.contains("magnet")) magnet(mc, l);
         if (all || f.contains("step")) step(mc, l);
         if (all || f.contains("faces")) faces(mc, l);
@@ -265,6 +266,64 @@ public final class Batch3Tests {
             }, 2);
         }
         l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle(was); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setHealth(p.getMaxHealth()); clearBots(p); }); }, 5);
+    }
+
+    // ------------------------------------------------------------------ the Government Prototype Facility and the Ultima Prototype
+
+    private static void protoFacility(Minecraft mc, MikikoTests.Steps l) {
+        character(l, CharacterType.MIKIKO);
+        net.minecraft.core.BlockPos[] a = new net.minecraft.core.BlockPos[1];
+        l.add(null, () -> server(p -> {
+            clearBots(p);
+            var ow = p.server.overworld();
+            double best = Double.MAX_VALUE;
+            for (int rx = -3; rx <= 3; rx++) for (int rz = -3; rz <= 3; rz++) {
+                var b = com.xenowarriors.gov.GovDungeons.anchor(ow, ow.getSeed(), rx, rz);
+                if (b != null && b.distSqr(net.minecraft.core.BlockPos.ZERO) < best) { best = b.distSqr(net.minecraft.core.BlockPos.ZERO); a[0] = b; }
+            }
+            log("protofac: nearest facility " + a[0]);
+            if (a[0] == null) return;
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.teleportTo(ow, a[0].getX() + 0.5, a[0].getY(), a[0].getZ() + 30.5, 0, 0);   // (in the corridor: the chunks generate)
+        }), 260);
+        l.add("batch3_protofac_corridor", () -> server(p -> {
+            if (a[0] == null) return;
+            var ow = p.server.overworld();
+            boolean corridor = ow.getBlockState(a[0].offset(0, -1, 31)).is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE) || ow.getBlockState(a[0].offset(0, -1, 31)).is(net.minecraft.world.level.block.Blocks.SEA_LANTERN);
+            boolean pods = ow.getBlockState(a[0].offset(-19, 0, 10)).getBlock() instanceof com.xenowarriors.gov.HealingPodBlock;
+            int agents = ow.getEntitiesOfClass(com.xenowarriors.gov.GovAgentEntity.class, new net.minecraft.world.phys.AABB(a[0]).inflate(30, 10, 70)).size();
+            log("protofac: corridor=" + corridor + " healing pods=" + pods + " soldiers=" + agents + " -> " + (corridor && pods && agents > 0 ? "PASS" : "FAIL"));
+            p.teleportTo(ow, a[0].getX() + 0.5, a[0].getY(), a[0].getZ() + 75.5, 0, 0);       // into the arena
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setInvulnerable(true);
+        }), 60);
+        l.add("batch3_protofac_arena", () -> server(p -> {
+            if (a[0] == null) return;
+            var us = p.serverLevel().getEntitiesOfClass(com.xenowarriors.gov.UltimaPrototypeEntity.class, com.xenowarriors.gov.GovDungeons.arena(a[0]).inflate(4));
+            log("protofac: walking into the arena woke the prototype: " + us.size() + " (hp " + (us.isEmpty() ? 0 : Math.round(us.get(0).getMaxHealth())) + ") -> " + (us.size() == 1 ? "PASS" : "FAIL"));
+            if (us.isEmpty()) return;
+            var u = us.get(0);
+            u.moveTo(p.getX(), p.getY(), p.getZ() + 2, 180, 0);
+            u.grabForTest(p);
+        }), 10);
+        l.add("batch3_protofac_grab", () -> server(p -> {
+            if (a[0] == null) return;
+            var us = p.serverLevel().getEntitiesOfClass(com.xenowarriors.gov.UltimaPrototypeEntity.class, com.xenowarriors.gov.GovDungeons.arena(a[0]).inflate(4));
+            if (us.isEmpty()) return;
+            var u = us.get(0);
+            boolean held = u.grabbedForTest() == p;
+            for (int i = 0; i < com.xenowarriors.gov.UltimaPrototypeEntity.MASH; i++) com.xenowarriors.rhalix.Wires.mash(p);
+            log("protofac: grabbed=" + held + ", mashed free=" + (u.grabbedForTest() == null) + " -> " + (held && u.grabbedForTest() == null ? "PASS" : "FAIL"));
+            u.kill();
+        }), 10);
+        l.add(null, () -> server(p -> {
+            if (a[0] == null) return;
+            log("protofac: beaten=" + com.xenowarriors.gov.GovDungeons.beaten(p.serverLevel(), a[0]) + " -> " + (com.xenowarriors.gov.GovDungeons.beaten(p.serverLevel(), a[0]) ? "PASS" : "FAIL"));
+            p.setInvulnerable(false);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            var s = p.server.overworld().getSharedSpawnPos();
+            p.teleportTo(p.server.overworld(), s.getX() + 0.5, s.getY() + 1, s.getZ() + 0.5, 0, 0);
+        }), 30);
     }
 
     // ------------------------------------------------------------------ charging an ultimate

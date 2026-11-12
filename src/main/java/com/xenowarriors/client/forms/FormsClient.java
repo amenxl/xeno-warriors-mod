@@ -191,7 +191,8 @@ public final class FormsClient {
             int bw = 120, bx = w / 2 - bw / 2, by = h / 2 + 48;
             g.fill(bx - 1, by - 1, bx + bw + 1, by + 7, 0xC0000000);
             g.fill(bx, by, bx + Math.round(bw * prog / 100F), by + 6, 0xFFE03030);
-            g.drawCenteredString(mc.font, "Bound by wires - break free!", w / 2, by + 10, 0xFFB0B0);
+            boolean proto = mc.level.getEntity(FormsFx.boundBy(mc.player.getId())) instanceof com.xenowarriors.gov.UltimaPrototypeEntity;
+            g.drawCenteredString(mc.font, proto ? "Grabbed by the Ultima Prototype - break free!" : "Bound by wires - break free!", w / 2, by + 10, 0xFFB0B0);
         } else if (FormsFx.binding(mc.player.getId())) {
             long gone = mc.level.getGameTime() - FormsFx.bindStart(mc.player.getId());
             float left = Math.max(0, com.xenowarriors.rhalix.Wires.MAX_BIND - gone) / 20F;

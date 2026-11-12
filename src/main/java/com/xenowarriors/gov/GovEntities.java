@@ -14,6 +14,9 @@ public final class GovEntities {
     public static final RegistryObject<EntityType<GovAgentEntity>> GOV_AGENT = ModEntities.ENTITY_TYPES.register("gov_agent",
             () -> EntityType.Builder.<GovAgentEntity>of(GovAgentEntity::new, MobCategory.CREATURE).sized(0.6F, 1.8F).clientTrackingRange(10).build("gov_agent"));
 
+    public static final RegistryObject<EntityType<UltimaPrototypeEntity>> ULTIMA_PROTOTYPE = ModEntities.ENTITY_TYPES.register("ultima_prototype",
+            () -> EntityType.Builder.<UltimaPrototypeEntity>of(UltimaPrototypeEntity::new, MobCategory.MONSTER).sized(0.6F, 1.8F).clientTrackingRange(12).fireImmune().build("ultima_prototype"));
+
     private GovEntities() {}
 
     public static void init() {}
@@ -21,5 +24,6 @@ public final class GovEntities {
     @SubscribeEvent
     public static void attributes(EntityAttributeCreationEvent event) {
         event.put(GOV_AGENT.get(), GovAgentEntity.createAttributes().build());
+        event.put(ULTIMA_PROTOTYPE.get(), UltimaPrototypeEntity.createAttributes().build());
     }
 }

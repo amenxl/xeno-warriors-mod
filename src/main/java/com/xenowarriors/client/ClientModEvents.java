@@ -55,6 +55,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.bot.BotEntities.BOT.get(), com.xenowarriors.client.bot.BotRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.soul.SoulEntities.SOUL.get(), com.xenowarriors.client.soul.SoulRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.vr.VrEntities.VR_ULTIMA.get(), com.xenowarriors.client.vr.VrUltimaRenderer::new);
+        event.registerEntityRenderer(com.xenowarriors.gov.GovEntities.ULTIMA_PROTOTYPE.get(), com.xenowarriors.client.vr.UltimaPrototypeRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), com.xenowarriors.client.npc.SrRenderer::new);
         for (var t : com.xenowarriors.vehicle.Vehicles.TYPES.values()) event.registerEntityRenderer(t.get(), com.xenowarriors.client.vehicle.VehicleRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.THROWN.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
