@@ -86,6 +86,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("hungerbar")) hungerBar(mc, l);
         if (f.isEmpty() || f.contains("botlife")) botLife(mc, l);
         if (f.isEmpty() || f.contains("teamjukebox")) teamJukebox(mc, l);
+        if (f.isEmpty() || f.contains("boostpass")) boostPass(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
@@ -1629,6 +1630,47 @@ public final class Batch4Tests {
     }
 
     // ------------------------------------------------------------------ bots picking things up, music
+
+    private static void setBotStat(ServerPlayer p, CharacterType t, int i, int lv) {
+        p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+            var c = d.charStats.getCompound(t.getId());
+            int[] a = c.getIntArray("lv"); if (a.length != 3) a = new int[]{1, 1, 1};
+            a[i] = lv; c.putIntArray("lv", a); d.charStats.put(t.getId(), c);
+        });
+    }
+
+    private static void boostPass(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[2];
+        int max = com.xenowarriors.stats.Stat.MAX_LEVEL;
+        var atk = com.xenowarriors.statboost.BoostStat.ATTACK;
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            setBotStat(p, CharacterType.RHALIX, atk.ordinal(), max);
+            setBotStat(p, CharacterType.KYRIE, atk.ordinal(), 5);
+            b[0] = botAt(p, CharacterType.RHALIX, 2, 2); b[1] = botAt(p, CharacterType.KYRIE, -2, 2);
+            b[0].inventory.addItem(com.xenowarriors.statboost.StatBoosts.stack(atk, com.xenowarriors.statboost.BoostTier.values()[0]));
+        }), 20 * 7);
+        l.add(null, () -> server(p -> {
+            boolean gone = b[0].inventory.countItem(com.xenowarriors.statboost.StatBoosts.item(atk, com.xenowarriors.statboost.BoostTier.values()[0])) == 0;
+            log("boostpass: maxed Rhalix passed his Attack Boost to a bot " + com.xenowarriors.bot.BotBoosts.toBots + " (his gone " + gone + ") -> " + (com.xenowarriors.bot.BotBoosts.toBots > 0 && gone ? "PASS" : "FAIL"));
+            // no bot can use it, you're maxed too: he keeps it
+            setBotStat(p, CharacterType.KYRIE, atk.ordinal(), max);
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.statLevel[atk.ordinal()] = max);
+            b[0].inventory.addItem(com.xenowarriors.statboost.StatBoosts.stack(atk, com.xenowarriors.statboost.BoostTier.values()[0]));
+            b[1].inventory.clearContent();
+        }), 20 * 7);
+        l.add(null, () -> server(p -> {
+            boolean kept = b[0].inventory.countItem(com.xenowarriors.statboost.StatBoosts.item(atk, com.xenowarriors.statboost.BoostTier.values()[0])) == 1;
+            log("boostpass: everyone maxed (you too) -> he keeps it " + kept + ", given to you " + com.xenowarriors.bot.BotBoosts.toPlayer + " -> " + (kept && com.xenowarriors.bot.BotBoosts.toPlayer == 0 ? "PASS" : "FAIL"));
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.statLevel[atk.ordinal()] = 3);
+        }), 20 * 7);
+        l.add(null, () -> server(p -> {
+            boolean got = com.xenowarriors.bot.BotBoosts.toPlayer > 0;
+            log("boostpass: you can still use it (and no bot can) -> he gives it to you " + got + " -> " + (got ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 5);
+    }
 
     private static void teamJukebox(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);
