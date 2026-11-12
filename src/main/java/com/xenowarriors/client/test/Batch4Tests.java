@@ -2183,7 +2183,8 @@ public final class Batch4Tests {
             if (top == null) top = w.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, BlockPos.ZERO);
             p.teleportTo(w, top.getX() + 0.5, top.getY(), top.getZ() + 0.5, 0, 10);
         }), 20 * 4);
-        l.add(null, () -> mc.setScreen(null), 20 * 12);      // (Namek's chunks generate slowly - the server falls well behind)
+        settle(l, 60);      // (Namek's chunks generate slowly - the server falls well behind)
+        l.add(null, () -> mc.setScreen(null), 10);
         l.add(null, () -> server(p -> {
             float dm = com.xenowarriors.you.YouRaces.damageMult(p), hp = p.getMaxHealth();
             boolean fx = p.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION) && p.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
@@ -2200,6 +2201,17 @@ public final class Batch4Tests {
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
         l.add("batch4_namek_seedling", () -> {}, 3);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    /** Waits (holding the client) until the server has caught up and run this many more ticks - a lagging server otherwise runs the queued steps back to back. */
+    static void settle(MikikoTests.Steps l, int ticks) {
+        l.add(null, () -> {
+            var srv = Minecraft.getInstance().getSingleplayerServer();
+            if (srv == null) return;
+            int t0 = srv.getTickCount();
+            long end = System.currentTimeMillis() + 60000;
+            while (srv.getTickCount() < t0 + ticks && System.currentTimeMillis() < end) { try { Thread.sleep(20); } catch (InterruptedException ignored) { return; } }
+        }, 1);
     }
 
     private static void elementalist(Minecraft mc, MikikoTests.Steps l) {
@@ -2221,7 +2233,8 @@ public final class Batch4Tests {
             var before = com.xenowarriors.ka.Elements.of(e);
             e.getPersistentData().putLong("xw_el_cd", p.level().getGameTime() + 100);     // (as if it just cast)
             p.getPersistentData().putString("xw_t_el", before == null ? "none" : before.id());
-        }), 15);
+        }), 2);
+        settle(l, 12);
         l.add(null, () -> server(p -> {
             var e = el[0];
             var now = com.xenowarriors.ka.Elements.of(e);
@@ -2261,10 +2274,12 @@ public final class Batch4Tests {
             }
         }), 20);
         // one: down to half -> fusing; the other fuses all the way
+        settle(l, 5);
         l.add(null, () -> server(p -> {
-            v[0].hurt(p.damageSources().playerAttack(p), v[0].getMaxHealth() * 0.55F);
+            v[0].setHealth(v[0].getMaxHealth() * 0.45F);       // (down to under half - DragonMineZ scales a player's hits by their stats)
             v[1].fuseNowForTest();
-        }), 20);
+        }), 2);
+        settle(l, 10);
         l.add(null, () -> server(p -> log("vessel: at half health it fuses (state " + v[0].state() + "), the other finished fusing (state " + v[1].state() + ", " + v[1].getName().getString() + ") -> "
                 + (v[0].state() == com.xenowarriors.foes.VesselEntity.FUSING && v[1].state() == com.xenowarriors.foes.VesselEntity.FUSED ? "PASS" : "FAIL"))), 5);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
@@ -2273,6 +2288,7 @@ public final class Batch4Tests {
             int st0 = com.xenowarriors.foes.VesselEntity.stopped;
             var before = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, v[0].getBoundingBox().inflate(6)).size();
             v[0].invulnerableTime = 0;
+            v[0].setHealth(1F);
             v[0].hurt(p.damageSources().playerAttack(p), 9999F);
             int essence = 0;
             for (var it : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, v[0].getBoundingBox().inflate(6)))
@@ -2307,7 +2323,8 @@ public final class Batch4Tests {
                     + " -> " + (second && notYet && ready ? "PASS" : "FAIL"));
             var rec = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
             if (rec != null) p.teleportTo(rec, 6.5, 140, 6.5, 0, 0);
-        }), 20 * 5);
+        }), 20 * 2);
+        settle(l, 60);
         l.add(null, () -> server(p -> {
             var lv = p.serverLevel();
             int y = com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y - 2;
@@ -2324,8 +2341,9 @@ public final class Batch4Tests {
         for (int w = 0; w < 3; w++) {
             l.add(null, () -> server(p -> {
                 for (var id : com.xenowarriors.you.YouAngel.foesForTest(p))
-                    if (p.serverLevel().getEntity(id) instanceof net.minecraft.world.entity.LivingEntity e) { e.invulnerableTime = 0; e.hurt(p.damageSources().playerAttack(p), 99999F); }
-            }), 50);
+                    if (p.serverLevel().getEntity(id) instanceof net.minecraft.world.entity.LivingEntity e) { e.invulnerableTime = 0; e.setHealth(1F); e.hurt(p.damageSources().playerAttack(p), 99999F); }
+            }), 2);
+            settle(l, 45);
         }
         l.add(null, () -> server(p -> {
             p.server.setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
@@ -2378,7 +2396,8 @@ public final class Batch4Tests {
             var kai = dmzType("MASTER_KAIOSAMA");
             m[2] = kai == null ? null : (net.minecraft.world.entity.Mob) kai.create(lv);
             if (m[2] != null) { m[2].moveTo(p.getX(), p.getY(), p.getZ() + 8); m[2].setNoAi(true); lv.addFreshEntity(m[2]); }
-        }), 20 * 6);      // (the King Kais are looked for every 5 s)
+        }), 5);
+        settle(l, 120);      // (the King Kais are looked for every 5 s)
         l.add(null, () -> server(p -> {
             if (m[1] == null || m[1].level() == null) return;
             double z = com.xenowarriors.compat.DmzMobGravity.applyForTest(m[1]);

@@ -257,7 +257,15 @@
         },
         {
           "title": "Seedlings on Namek",
-          "text": "Seedlings (a race you can make your own character as) live on sunlight. Namek, DragonMineZ's planet, has three suns that never set - so a Seedling there is enormously powerful:\n- 2.5x damage, and hits on you do 40% less.\n- +10 hearts (topped up as you arrive), Speed II, Jump Boost II and Regeneration.\n- The Sun meter fills anywhere on Namek, day or night, under cover or not.\n- A green glow around you shows it's on.\n- It all ends as soon as you leave Namek (or while you're a seed)."
+          "text": "Seedlings (a race you can make your own character as) live on sunlight. Namek, DragonMineZ's planet, has three suns that never set - so a Seedling there is enormously powerful:\n- 2.5x damage, and hits on you do 40% less.\n- +10 hearts (topped up as you arrive), Speed II, Jump Boost II and Regeneration.\n- The Sun meter fills anywhere on Namek, day or night, under cover or not - and three times as fast as under one sun.\n- A green glow around you shows it's on.\n- It all ends as soon as you leave Namek (or while you're a seed)."
+        },
+        {
+          "title": "Element Crystals (Season 3)",
+          "text": "A character you made can learn a second element from an Element Crystal (Elementalists drop them).\n- Use the crystal (right-click) as one of your own characters: its element becomes that character's second element, for good. One per character, and not the element you already have.\n- New skills: Second Bolt and Second Wave - your second element, just like Element Bolt and Element Wave.\n- On the toggle wheel: Bolt: second element. Turn it on and your Element Bolt casts your second element instead.\n- Only your own characters can use one - the show's characters keep their elements."
+        },
+        {
+          "title": "Angel Ascension (Season 3)",
+          "text": "Skylanders descend from angels - and a Skylander you made yourself (born one) can become one.\n## Two paths\n- At Character Level 50 your character learns their other form: Lunar Form and Solar Form both.\n- Each has a mastery (0-30): it grows every time you use that form at its own time - Lunar at night, Solar by day. See them in Character Customization > Stats.\n## The prayer\n- With both paths mastered and at Character Level 80, go to the Royal Capital in Recarnet at dawn.\n- Stand still and sneak for a few seconds: you pray.\n## The trial\n- Three waves of Sky Haters and corrupted souls come for you. Beat them all to ascend. Go down or leave and it's over - pray again at another dawn.\n## An Angel\n- Seraph wings, +20 health and 1.5x damage. Sky +100.\n- Divine Light and Angel Eye (10 seconds: enemies near you glow and you see attacks coming - half of all hits miss you)."
         }
       ]
     },
@@ -324,6 +332,10 @@
         {
           "title": "Distortions (Season 3)",
           "text": "Tears in the world that C-souls pour out of.\n- Thin out its C-souls first (they shield it), then destroy it. Closing one gives XP - and with DragonMineZ a good amount of Dragon Ball TP (more for bigger ones) to everyone near.\n- A Distortion that has let a lot of enemies out is spent: it fades away on its own.\n- They're rare out in the world (a little more often for strong characters) and more common in the Distortion Field - where up to two can be open at once."
+        },
+        {
+          "title": "Elementalists and Vessels (Season 3)",
+          "text": "## Elementalists\n- Warriors with two elements that turn up at night once you're Character Level 25 (two at a time from Level 60), in the Overworld and Recarnet (not in the cities).\n- They switch element after every cast - see the name: \"Ice / Lightning Elementalist\".\n- They can drop an Element Crystal of one of their elements (about 1 in 3) and amethyst.\n## Vessels\n- Shadow Recarnet members carrying a demon. Most common near SR members, sometimes at night in Recarnet, rarely at night in the Overworld (from Character Level 15).\n- At half health the demon starts to fuse with them: 5 seconds where they stand still and take 50% more damage. Kill them then to stop it - the demon dies too and drops 1-2 Demon Essence and emeralds.\n- Too slow and it fuses: dark, with demon wings, stronger and faster. It flies after you and throws Devil Flames. A Fused Vessel only sometimes drops Demon Essence.\n- Demon Essence: a demon of your own feeds on it - +5 Devil's Hunger.\n- Rarely, a Vessel drops an SR hoodie."
         }
       ]
     },
@@ -515,6 +527,10 @@
         {
           "title": "Bots and the Flying Nimbus",
           "text": "A bot that can't fly yet (not a natural flier, and it hasn't learned DragonMineZ's Fly) goes to Master Korin when he's near (within 40 blocks, when things are quiet) and asks him for a Flying Nimbus.\n- With a Flying Nimbus (or a Black Nimbus) in its bag, it flies wherever the fliers fly, standing on the cloud.\n- Once it learns to fly by itself it stops using the cloud.\n- You can also just put a nimbus in its bag."
+        },
+        {
+          "title": "Gravity for bots and enemies",
+          "text": "DragonMineZ's gravity weighs on bots and enemies too, not just players - with the same rules:\n- The same gravity: each world's own (DragonMineZ's config), and 10x within 100 blocks of King Kai.\n- The same resistance: a bot's from its own DragonMineZ stats. An enemy's from its battle power (DragonMineZ's foes) or its health (anything else).\n- Not strong enough? They move slowly, can hardly jump and drop like stones. Summon Raditz on King Kai's planet and he trudges about at half speed - train your bots and they'll shrug it off."
         }
       ]
     }
