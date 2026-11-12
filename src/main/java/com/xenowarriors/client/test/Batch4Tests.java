@@ -107,6 +107,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("boostbag")) boostBag(mc, l);
         if (f.isEmpty() || f.contains("partylast")) partyLasts(mc, l);
         if (f.isEmpty() || f.contains("youka")) youKa(mc, l, dmz);
+        if (f.isEmpty() || f.contains("s3foes")) s3Foes(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2263,6 +2264,188 @@ public final class Batch4Tests {
                     + " -> " + (s.element2 == com.xenowarriors.ka.Element.ICE && b2 && w2 && tog ? "PASS" : "FAIL"));
             el[0].discard();
         }), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    /** Season 3's enemies: their new looks, the type triangle, the Cynic Dancer's combos and grabs, the Ancient Swordstress. */
+    private static void s3Foes(Minecraft mc, MikikoTests.Steps l) {
+        net.minecraft.world.entity.Mob[] m = new net.minecraft.world.entity.Mob[6];   // caster, cynic, evolved, swordstress, c-soul, dummy
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            var lv = p.serverLevel();
+            var c = com.xenowarriors.foes.Foes.ELEMENTALIST.get().create(lv);
+            c.setup(com.xenowarriors.ka.Element.ICE, com.xenowarriors.ka.Element.LIGHTNING, 0);
+            var v1 = com.xenowarriors.foes.Foes.VESSEL.get().create(lv);
+            var v2 = com.xenowarriors.foes.Foes.VESSEL.get().create(lv);
+            var sw = com.xenowarriors.foes.Foes.SWORDSTRESS.get().create(lv);
+            net.minecraft.world.entity.Mob[] row = {c, v1, v2, sw};
+            for (int i = 0; i < 4; i++) {
+                row[i].setNoAi(true);
+                m[i] = com.xenowarriors.foes.Foes.placeForTest(lv, row[i], p.blockPosition().offset(-3 + i * 2, 0, 4));
+                m[i].setYRot(180); m[i].yBodyRot = 180; m[i].setYHeadRot(180);
+            }
+            v2.fuseNowForTest();
+        }), 20);
+        settle(l, 8);
+        l.add(null, () -> server(p -> {
+            for (int i = 0; i < 4; i++) { m[i].setYRot(180); m[i].yBodyRot = 180; m[i].setYHeadRot(180); }
+            log("s3foes: names " + m[0].getName().getString() + " | " + m[1].getName().getString() + " | " + m[2].getName().getString() + " | " + m[3].getName().getString()
+                    + " -> " + (m[0].getName().getString().endsWith("Spell Caster") && m[1].getName().getString().equals("Cynic Dancer")
+                    && m[2].getName().getString().equals("Evolved Cynic Dancer") && m[3].getName().getString().equals("Ancient Swordstress") ? "PASS" : "FAIL"));
+            log("s3foes: looks " + ((com.xenowarriors.foes.ElementalistEntity) m[0]).look() + ", " + ((com.xenowarriors.foes.VesselEntity) m[1]).look() + ", " + ((com.xenowarriors.foes.VesselEntity) m[2]).look()
+                    + " -> " + ("spellcaster".equals(((com.xenowarriors.foes.ElementalistEntity) m[0]).look()) && "cynic_evolved".equals(((com.xenowarriors.foes.VesselEntity) m[2]).look()) ? "PASS" : "FAIL"));
+        }), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add("batch4_s3foes_row", () -> mc.setScreen(null), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 140, 15); }, 12);
+        l.add("batch4_s3foes_side", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> { for (int i = 0; i < 4; i++) { m[i].setYRot(0); m[i].yBodyRot = 0; m[i].setYHeadRot(0); } }), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add("batch4_s3foes_back", () -> mc.setScreen(null), 3);
+        // the Swordstress's poses: stuck, spinning
+        l.add(null, () -> server(p -> { for (int i = 0; i < 4; i++) { m[i].setYRot(150); m[i].yBodyRot = 150; m[i].setYHeadRot(150); } ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.STUCK); }), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add("batch4_s3foes_stuck", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.SPIN)), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add("batch4_s3foes_spin", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.LEAP)), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add("batch4_s3foes_leap", () -> mc.setScreen(null), 3);
+        // the type triangle's damage
+        l.add(null, () -> server(p -> {
+            var TT = com.xenowarriors.foes.TypeTriangle.class;
+            var lv = p.serverLevel();
+            ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.WALK);
+            var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(lv);
+            soul.setNoAi(true);
+            m[4] = com.xenowarriors.foes.Foes.placeForTest(lv, soul, p.blockPosition().offset(0, 0, 8));
+            var caster = m[0]; var vessel = m[1]; var tri = com.xenowarriors.foes.TypeTriangle.class;
+            java.util.function.BiFunction<net.minecraft.world.entity.LivingEntity, Runnable, Integer> d = (who, hit) -> {
+                int s0 = com.xenowarriors.foes.TypeTriangle.strong, w0 = com.xenowarriors.foes.TypeTriangle.weak, m0 = com.xenowarriors.foes.TypeTriangle.misses;
+                who.invulnerableTime = 0; who.setHealth(who.getMaxHealth());
+                hit.run();
+                return (com.xenowarriors.foes.TypeTriangle.strong - s0) * 100 + (com.xenowarriors.foes.TypeTriangle.weak - w0) * 10 + (com.xenowarriors.foes.TypeTriangle.misses - m0);
+            };
+            int a = d.apply(caster, () -> caster.hurt(lv.damageSources().mobAttack(vessel), 4F));
+            int b = d.apply(soul, () -> { com.xenowarriors.ka.Elements.hitting++; try { soul.hurt(lv.damageSources().mobAttack(caster), 4F); } finally { com.xenowarriors.ka.Elements.hitting--; } });
+            int c = d.apply(vessel, () -> { com.xenowarriors.ka.Elements.hitting++; try { vessel.hurt(lv.damageSources().mobAttack(caster), 4F); } finally { com.xenowarriors.ka.Elements.hitting--; } });
+            int e = d.apply(vessel, () -> vessel.hurt(lv.damageSources().mobAttack(soul), 4F));
+            com.xenowarriors.foes.TypeTriangle.testMiss = true;
+            float h0 = soul.getMaxHealth();
+            int f = d.apply(soul, () -> soul.hurt(lv.damageSources().mobAttack(vessel), 4F));
+            boolean untouched = soul.getHealth() >= h0;
+            com.xenowarriors.foes.TypeTriangle.testMiss = false;
+            int g = d.apply(soul, () -> soul.hurt(lv.damageSources().mobAttack(vessel), 4F));
+            com.xenowarriors.foes.TypeTriangle.testMiss = null;
+            int pl = d.apply(caster, () -> caster.hurt(p.damageSources().playerAttack(p), 4F));
+            log("triangle: physical on a Spell Caster " + a + ", element on a C-soul " + b + ", element on a Vessel " + c + ", C-soul on a Vessel " + e
+                    + ", a Vessel's hit on a C-soul (miss) " + f + " untouched " + untouched + " / (lands) " + g + ", a player's punch on a Spell Caster " + pl
+                    + " -> " + (a == 100 && b == 100 && c == 10 && e == 100 && f == 1 && untouched && g == 10 && pl == 100 ? "PASS" : "FAIL"));
+        }), 5);
+        // who hunts whom (the player out of it: spectator)
+        l.add(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            var lv = p.serverLevel();
+            for (int i = 0; i < 3; i++) m[i].setNoAi(false);
+            m[4].discard();
+            var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(lv);
+            soul.getPersistentData().putBoolean("xw_smart_soul", false);
+            m[4] = com.xenowarriors.foes.Foes.placeForTest(lv, soul, m[1].blockPosition().offset(0, 0, 3));
+            m[2].discard();                                                   // (only the disguised one for now)
+            m[3].discard();
+        }), 3);
+        settle(l, 80);
+        l.add(null, () -> server(p -> {
+            var soul = (net.minecraft.world.entity.Mob) m[4];
+            var cast = (net.minecraft.world.entity.Mob) m[0];
+            var ves = (net.minecraft.world.entity.Mob) m[1];
+            log("triangle: a C-soul ignores a disguised Cynic Dancer (target " + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ") -> " + (soul.getTarget() != ves ? "PASS" : "FAIL"));
+            log("triangle: the Spell Caster goes for the C-soul (" + (cast.getTarget() == null ? "none" : cast.getTarget().getName().getString()) + "), the Cynic Dancer for the Spell Caster ("
+                    + (ves.getTarget() == null ? "none" : ves.getTarget().getName().getString()) + ") -> " + (cast.getTarget() == soul && ves.getTarget() == cast ? "PASS" : "FAIL"));
+            cast.discard();
+            ves.setTarget(null);
+            ((com.xenowarriors.foes.VesselEntity) ves).fuseNowForTest();
+        }), 3);
+        settle(l, 80);
+        l.add(null, () -> server(p -> {
+            var soul = (net.minecraft.world.entity.Mob) m[4];
+            log("triangle: once it's evolved the C-soul goes for it (" + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ") -> " + (soul.getTarget() == m[1] ? "PASS" : "FAIL"));
+            soul.discard();
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            // the evolved Cynic Dancer's combos and grab, on a dummy
+            var lv = p.serverLevel();
+            var dummy = net.minecraft.world.entity.EntityType.HUSK.create(lv);
+            dummy.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000);
+            dummy.setHealth(1000); dummy.setNoAi(true); dummy.setPersistenceRequired();
+            m[5] = com.xenowarriors.foes.Foes.placeForTest(lv, dummy, m[1].blockPosition().offset(1, 0, 0));
+            ((net.minecraft.world.entity.Mob) m[1]).setTarget(dummy);
+            p.getPersistentData().putInt("xw_t_f", com.xenowarriors.foes.VesselEntity.finishers);
+            p.getPersistentData().putInt("xw_t_g", com.xenowarriors.foes.VesselEntity.grabs);
+            p.getPersistentData().putInt("xw_t_s", com.xenowarriors.foes.VesselEntity.slams);
+            ((com.xenowarriors.foes.VesselEntity) m[1]).grabSoonForTest();
+        }), 3);
+        settle(l, 12);
+        l.add(null, () -> server(p -> {
+            boolean held = ((com.xenowarriors.foes.VesselEntity) m[1]).holding();
+            p.getPersistentData().putBoolean("xw_t_h", held);
+            p.teleportTo(m[1].getX() + 4, m[1].getY(), m[1].getZ() - 3);
+        }), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 230, 8); }, 6);
+        l.add("batch4_s3foes_grab", () -> mc.setScreen(null), 3);
+        settle(l, 140);
+        l.add(null, () -> server(p -> {
+            var t = p.getPersistentData();
+            int fi = com.xenowarriors.foes.VesselEntity.finishers - t.getInt("xw_t_f"), gr = com.xenowarriors.foes.VesselEntity.grabs - t.getInt("xw_t_g"), sl = com.xenowarriors.foes.VesselEntity.slams - t.getInt("xw_t_s");
+            log("cynic: evolved - grabs " + gr + " (holding " + t.getBoolean("xw_t_h") + "), slams " + sl + ", combo finishers " + fi + " -> " + (gr >= 1 && t.getBoolean("xw_t_h") && sl >= 1 && fi >= 1 ? "PASS" : "FAIL"));
+            m[1].discard();
+            // the Ancient Swordstress: a leap, a smash, its sword stuck; then the helicopter spin and the slam
+            var lv = p.serverLevel();
+            var sw = com.xenowarriors.foes.Foes.SWORDSTRESS.get().create(lv);
+            m[3] = com.xenowarriors.foes.Foes.placeForTest(lv, sw, m[5].blockPosition().offset(7, 0, 0));
+            sw.setTarget((net.minecraft.world.entity.LivingEntity) m[5]);
+            com.xenowarriors.foes.SwordstressEntity.testStuck = true;
+            t.putInt("xw_t_l", com.xenowarriors.foes.SwordstressEntity.leaps);
+            t.putInt("xw_t_st", com.xenowarriors.foes.SwordstressEntity.stucks);
+            sw.leapNowForTest();
+        }), 3);
+        settle(l, 40);
+        l.add(null, () -> server(p -> {
+            var sw = (com.xenowarriors.foes.SwordstressEntity) m[3];
+            var t = p.getPersistentData();
+            int le = com.xenowarriors.foes.SwordstressEntity.leaps - t.getInt("xw_t_l"), st = com.xenowarriors.foes.SwordstressEntity.stucks - t.getInt("xw_t_st");
+            sw.invulnerableTime = 0;
+            float h0 = sw.getHealth();
+            sw.hurt(p.serverLevel().damageSources().mobAttack((net.minecraft.world.entity.Mob) m[5]), 4F);
+            float lost = h0 - sw.getHealth();
+            log("swordstress: leaps " + le + ", stuck " + st + " (state " + sw.state() + "), a 4-damage hit while stuck took " + lost + " -> " + (le >= 1 && st >= 1 && sw.state() == com.xenowarriors.foes.SwordstressEntity.STUCK && lost > 4F ? "PASS" : "FAIL"));
+            com.xenowarriors.foes.SwordstressEntity.testStuck = null;
+            p.teleportTo(sw.getX() + 3, sw.getY(), sw.getZ() - 5);
+        }), 3);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 210, 8); }, 6);
+        l.add("batch4_s3foes_stuckworld", () -> mc.setScreen(null), 3);
+        settle(l, 80);
+        l.add(null, () -> server(p -> {
+            var sw = (com.xenowarriors.foes.SwordstressEntity) m[3];
+            m[5].teleportTo(sw.getX() + 14, sw.getY(), sw.getZ());
+            p.getPersistentData().putInt("xw_t_sp", com.xenowarriors.foes.SwordstressEntity.spins);
+            p.getPersistentData().putInt("xw_t_sl", com.xenowarriors.foes.SwordstressEntity.slams);
+            sw.spinNowForTest();
+        }), 3);
+        settle(l, 14);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 210, 8); }, 3);
+        l.add("batch4_s3foes_spinworld", () -> mc.setScreen(null), 3);
+        settle(l, 120);
+        l.add(null, () -> server(p -> {
+            var t = p.getPersistentData();
+            int sp = com.xenowarriors.foes.SwordstressEntity.spins - t.getInt("xw_t_sp"), sl = com.xenowarriors.foes.SwordstressEntity.slams - t.getInt("xw_t_sl");
+            log("swordstress: helicopter spins " + sp + ", grab-and-slams " + sl + " -> " + (sp >= 1 && sl >= 1 ? "PASS" : "FAIL"));
+            for (var e : m) if (e != null) e.discard();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 

@@ -54,6 +54,14 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
                 new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true), look, dark);
     }
 
+    /** Like plain, with glowing eyes. */
+    public static <T extends Mob> NpcRenderer<T> glowing(EntityRendererProvider.Context ctx, Function<T, String> look) {
+        return new NpcRenderer<>(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false),
+                new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true), look, e -> false) {
+            @Override protected boolean glow(T e) { return true; }
+        };
+    }
+
     private static final ResourceLocation ARMBAND_TEX = XenoWarriors.id("textures/entity/npc/armband.png");
     private static net.minecraft.client.model.geom.ModelPart armband;
 
@@ -75,6 +83,9 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
 
     /** Per-entity tweaks before the details are drawn (wings etc.). */
     protected void prepare(T e, DetailModel m, float age) {}
+
+    /** Glowing eyes (the possessed; the Season 3 enemies). */
+    protected boolean glow(T e) { return false; }
 
     /** "_face", or another expression. */
     protected String faceSuffix(T e) { return "_face"; }
@@ -174,7 +185,7 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
                 m.faceHead.copyFrom(p.head);
                 ResourceLocation face = tex(key + (d ? "_face_dark" : faceSuffix(e)));
                 m.faceRoot.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(face)), light, overlay);
-                if (possessedLook) m.faceRoot.render(pose, buffers.getBuffer(RenderType.eyes(face)), light, overlay);    // glowing red eyes
+                if (possessedLook || glow(e)) m.faceRoot.render(pose, buffers.getBuffer(RenderType.eyes(face)), light, overlay);    // glowing red eyes
             }
             // Sky Haters wear a red armband
             if (e instanceof com.xenowarriors.npc.HumanNpcEntity h && h.skyHater()) {

@@ -19,9 +19,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * Phase 2's enemies and where they turn up (at night, out in the world - never in the modes' arenas):
- * Elementalists hunt anyone at Character Level 25+ (two at once from 60); Vessels prowl Recarnet (away from Aurora City
- * and the Royal Capital), and the Sky Rebellion's camps day and night, rarely the Overworld.
+ * Season 3's enemies and where they turn up (at night, out in the world - never in the modes' arenas):
+ * Spell Casters hunt anyone at Character Level 25+ (two at once from 60); Vessels (Cynic Dancers) prowl Recarnet (away
+ * from Aurora City and the Royal Capital), and the Sky Rebellion's camps day and night, rarely the Overworld; the Ancient
+ * Swordstress (a C-soul) comes out at night for anyone at Level 35+.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Foes {
@@ -34,6 +35,9 @@ public final class Foes {
     public static final RegistryObject<EntityType<VesselEntity>> VESSEL = ModEntities.ENTITY_TYPES.register("vessel",
             () -> EntityType.Builder.<VesselEntity>of(VesselEntity::new, MobCategory.MONSTER).sized(0.6F, 1.8F).clientTrackingRange(10).build("vessel"));
 
+    public static final RegistryObject<EntityType<SwordstressEntity>> SWORDSTRESS = ModEntities.ENTITY_TYPES.register("ancient_swordstress",
+            () -> EntityType.Builder.<SwordstressEntity>of(SwordstressEntity::new, MobCategory.MONSTER).sized(0.7F, 1.9F).clientTrackingRange(10).build("ancient_swordstress"));
+
     public static void init() {}
 
     @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -42,10 +46,11 @@ public final class Foes {
         public static void attributes(EntityAttributeCreationEvent event) {
             event.put(ELEMENTALIST.get(), ElementalistEntity.createAttributes().build());
             event.put(VESSEL.get(), VesselEntity.createAttributes().build());
+            event.put(SWORDSTRESS.get(), SwordstressEntity.createAttributes().build());
         }
     }
 
-    /** Elementalists and Vessels are Season 3 enemies (locked until /xeno season unlock). */
+    /** Spell Casters (Elementalists), Vessels and the Ancient Swordstress are Season 3 enemies (locked until /xeno season unlock). */
     public static final int SEASON = 3;
 
     @SubscribeEvent
@@ -67,6 +72,12 @@ public final class Foes {
             boolean srNear = !l.getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(96)).isEmpty();
             float vc = srNear ? 0.35F : recarnet && l.isNight() && !town ? 0.1F : over && l.isNight() ? 0.03F : 0F;
             if (lvl >= 15 && vc > 0 && l.getEntitiesOfClass(VesselEntity.class, p.getBoundingBox().inflate(64)).size() < 2 && l.random.nextFloat() < vc) spawnVessel(l, at);
+            // the Ancient Swordstress: a strong C-soul, out at night for the strong
+            if (l.isNight() && lvl >= 35 && !town && l.getEntitiesOfClass(SwordstressEntity.class, p.getBoundingBox().inflate(96)).isEmpty() && l.random.nextFloat() < (recarnet ? 0.06F : 0.03F)) {
+                BlockPos s = spot(l, at);
+                SwordstressEntity sw = s == null ? null : SWORDSTRESS.get().create(l);
+                if (sw != null) place(l, sw, s);
+            }
         }
     }
 

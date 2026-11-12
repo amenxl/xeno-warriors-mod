@@ -50,7 +50,8 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.kaiplanet.KaiPlanetEntities.BUILDER.get(), ctx -> com.xenowarriors.client.npc.NpcRenderer.plain(ctx, e -> "kai_builder", e -> false));
         event.registerEntityRenderer(com.xenowarriors.you.YouEntities.DEVIL_SHADOW.get(), com.xenowarriors.client.you.ShadowRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.foes.Foes.ELEMENTALIST.get(),
-                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.foes.ElementalistEntity>plain(ctx, com.xenowarriors.foes.ElementalistEntity::look, e -> false));
+                ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.foes.ElementalistEntity>glowing(ctx, com.xenowarriors.foes.ElementalistEntity::look));
+        event.registerEntityRenderer(com.xenowarriors.foes.Foes.SWORDSTRESS.get(), com.xenowarriors.client.foes.SwordstressRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.foes.Foes.VESSEL.get(), com.xenowarriors.client.foes.VesselRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.gov.GovAgentEntity>plain(ctx, com.xenowarriors.gov.GovAgentEntity::look, e -> false));

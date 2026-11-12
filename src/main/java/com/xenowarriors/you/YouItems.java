@@ -21,7 +21,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-/** Phase 2's drops: Element Crystals (Elementalists) and Demon Essence (Vessels). */
+/** Phase 2's drops: Element Crystals (Spell Casters) and Demon Essence (Vessels). */
 public final class YouItems {
     private YouItems() {}
     public static void init() {}
@@ -46,7 +46,7 @@ public final class YouItems {
 
         @Override
         public void appendHoverText(ItemStack s, Level l, List<Component> tip, TooltipFlag f) {
-            tip.add(Component.literal("Dropped by an Elementalist").withStyle(ChatFormatting.GRAY));
+            tip.add(Component.literal("Dropped by a Spell Caster").withStyle(ChatFormatting.GRAY));
             tip.add(Component.literal("Your own character: use it to take this as a second element").withStyle(ChatFormatting.DARK_AQUA));
         }
 

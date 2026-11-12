@@ -278,6 +278,10 @@
         {
           "title": "Your own characters' skins",
           "text": "Each character you make can have its own skin (Character Select > Your own > SKIN, or the SKIN button in the creator):\n- Your own skin (as before).\n- A player's skin: type a Minecraft name. Each game looks it up online.\n- A skin file: put a 64x64 skin PNG in the xenowarriors/skins folder of your game folder (OPEN FOLDER opens it), REFRESH, and click it. The server keeps a copy, so friends on a server see it too.\nYou wear that skin playing the character, and so does its bot."
+        },
+        {
+          "title": "Your own characters' KAs",
+          "text": "Only some people ever have a KA. Each character you make gets one roll when it reaches Character Level 30:\n- A 1 in 3 chance to awaken a KA, picked at random (the simpler ones more often than the rare ones).\n- It goes in your super ultimate slot, with its price like any KA. Character Customization > Stats shows it.\n- A bot of one of your own characters rolls too when it reaches Level 30, and uses its KA in fights.\n- No KA, or want a different one? With DragonMineZ, wish for \"Awaken a new KA\" from the dragon while playing that character: it gets a new one (never the same as before)."
         }
       ]
     },
@@ -346,8 +350,19 @@
           "text": "Tears in the world that C-souls pour out of.\n- Thin out its C-souls first (they shield it), then destroy it. Closing one gives XP - and with DragonMineZ a good amount of Dragon Ball TP (more for bigger ones) to everyone near.\n- A Distortion that has let a lot of enemies out is spent: it fades away on its own.\n- They're rare out in the world (a little more often for strong characters) and more common in the Distortion Field - where up to two can be open at once."
         },
         {
-          "title": "Elementalists and Vessels (Season 3)",
-          "text": "## Elementalists\n- Warriors with two elements that turn up at night once you're Character Level 25 (two at a time from Level 60), in the Overworld and Recarnet (not in the cities).\n- They switch element after every cast - see the name: \"Ice / Lightning Elementalist\".\n- They can drop an Element Crystal of one of their elements (about 1 in 3) and amethyst.\n## Vessels\n- Shadow Recarnet members carrying a demon. Most common near SR members, sometimes at night in Recarnet, rarely at night in the Overworld (from Character Level 15).\n- At half health the demon starts to fuse with them: 5 seconds where they stand still and take 50% more damage. Kill them then to stop it - the demon dies too and drops 1-2 Demon Essence and emeralds.\n- Too slow and it fuses: dark, with demon wings, stronger and faster. It flies after you and throws Devil Flames. A Fused Vessel only sometimes drops Demon Essence.\n- Demon Essence: a demon of your own feeds on it - +5 Devil's Hunger.\n- Rarely, a Vessel drops an SR hoodie."
+          "title": "Spell Casters and Cynic Dancers (Season 3)",
+          "season": 3,
+          "text": "## Spell Casters\n- Hooded casters with two elements (the Elementalists) that turn up at night once you're Character Level 25 (two at a time from Level 60), in the Overworld and Recarnet (not in the cities).\n- They switch element after every cast - see the name: \"Ice / Lightning Spell Caster\".\n- They can drop an Element Crystal of one of their elements (about 1 in 3) and amethyst.\n## Cynic Dancers (Vessels)\n- Hooded, shadow-black, red-eyed - they pass for C-souls so the C-souls leave them alone. Most common near Shadow Recarnet members, sometimes at night in Recarnet, rarely at night in the Overworld (from Character Level 15).\n- At half health they start to evolve: 5 seconds where they stand still and take 50% more damage. Kill them then to stop it - they drop 1-2 Demon Essence and emeralds.\n- Too slow and it evolves: white skin, a new outfit, and much stronger - fast three-hit combos (the third knocks you back) and grabs: it holds you up and slams you into the ground. Hit it hard while it's holding someone and it lets go.\n- Demon Essence: a demon of your own feeds on it - +5 Devil's Hunger.\n- Rarely, one drops an SR hoodie."
+        },
+        {
+          "title": "The Ancient Swordstress (Season 3)",
+          "season": 3,
+          "text": "A C-soul with a human shape and a giant crystal sword. It comes out at night for anyone at Character Level 35+ (Overworld and Recarnet, not the cities).\n- Its swings are slow but hit very hard.\n- It leaps at you and smashes its sword into the ground, hitting everything around where it lands.\n- Sometimes the sword gets stuck: for a few seconds it can't move or fight, and takes 75% more damage. That's your opening!\n- When you're far away (or above it) it spins its sword over its head like a helicopter, flies to you, grabs you, and slams you back into the ground.\n- It's smart enough to see through a Cynic Dancer's disguise.\n- Drops emeralds, sometimes a diamond."
+        },
+        {
+          "title": "The type triangle (Season 3)",
+          "season": 3,
+          "text": "Vessels beat Spell Casters, Spell Casters beat C-souls, and C-souls beat Vessels.\n- Spell Casters take 50% more from physical hits - melee, weapons, a Vessel's claws.\n- C-souls take 50% more from elements and magic (Element Bolt and Wave, a Spell Caster's casts).\n- Vessels take 40% less from elements and magic, and C-souls hit them 30% harder.\n- C-souls are hard for a Vessel to hit: a Vessel's hits - and yours, if you're a Demon in your demon form - miss them 30% of the time, and the rest do 20% less.\n- They fight each other when they meet: Vessels hunt Spell Casters, Spell Casters hunt C-souls, C-souls hunt Vessels. A Cynic Dancer passes for a C-soul until it evolves - only some C-souls (and the Ancient Swordstress) see through it.\n- It works for you too: fight Spell Casters up close, and use your elements on C-souls."
         }
       ]
     },

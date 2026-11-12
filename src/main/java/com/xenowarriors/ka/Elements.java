@@ -131,7 +131,15 @@ public final class Elements {
         }
     }
 
+    /** Set while an element's hit lands (foes.TypeTriangle: element hits are strong on C-souls, weak on Vessels). */
+    public static int hitting;
+
     private static void hit(LivingEntity m, LivingEntity t, float dmg) {
+        hitting++;
+        try { hit0(m, t, dmg); } finally { hitting--; }
+    }
+
+    private static void hit0(LivingEntity m, LivingEntity t, float dmg) {
         if (m instanceof Player p) t.hurt(p.damageSources().playerAttack(p), dmg * com.xenowarriors.you.YouRaces.damageMult(p));
         else if (m instanceof Mob mob) t.hurt(mob.damageSources().mobAttack(mob), dmg * com.xenowarriors.scaling.EnemyScaling.damageMult(mob));
         else t.hurt(m.damageSources().generic(), dmg);

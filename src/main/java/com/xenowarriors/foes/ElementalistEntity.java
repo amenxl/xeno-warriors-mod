@@ -23,15 +23,15 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 /**
- * An Elementalist: a rogue who already has both their elements ("everyone eventually gets two") and hunts strong
+ * A Spell Caster (the Elementalists): a rogue who already has both their elements ("everyone eventually gets two") and hunts strong
  * Karma users at night. They switch between the two after every cast - bolts, waves, charged blasts you can clash -
  * and fight hand to hand between. Beaten, they may leave an Element Crystal of one of their elements.
  */
 public class ElementalistEntity extends PathfinderMob implements Enemy {
     private static final EntityDataAccessor<String> ELS = SynchedEntityData.defineId(ElementalistEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> LOOK = SynchedEntityData.defineId(ElementalistEntity.class, EntityDataSerializers.INT);
-    /** Wizards: robes, a tall pointed hat, a staff with an orb (tools/xw/npcs/wizards.py). */
-    public static final String[] LOOKS = {"wiz_storm", "wiz_ember", "wiz_sage", "wiz_frost", "wiz_shadow"};
+    /** The Spell Caster: hooded, a shadow face with glowing button eyes and a wide grin (tools/xw/npcs/foes.py). */
+    public static final String[] LOOKS = {"spellcaster"};
     private long lastCd = -1;
 
     public ElementalistEntity(EntityType<? extends PathfinderMob> type, Level level) { super(type, level); }
@@ -53,7 +53,7 @@ public class ElementalistEntity extends PathfinderMob implements Enemy {
         entityData.set(ELS, a.id() + "," + b.id());
         entityData.set(LOOK, look);
         Elements.give(this, a);
-        setCustomName(Component.literal(a.title() + " / " + b.title() + " Elementalist").withStyle(st -> st.withColor(a.color)));
+        setCustomName(Component.literal(a.title() + " / " + b.title() + " Spell Caster").withStyle(st -> st.withColor(a.color)));
         setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);                     // (its staff is part of its robes)
     }
 
@@ -67,6 +67,9 @@ public class ElementalistEntity extends PathfinderMob implements Enemy {
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, p -> !((Player) p).isCreative() && !p.isSpectator()));
         targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, com.xenowarriors.bot.PartyBotEntity.class, 10, true, false, e -> true));
+        // (the type triangle: they hunt C-souls - their elements burn them)
+        targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, com.xenowarriors.corrupted.CorruptedSoulEntity.class, 10, true, false, e -> true));
+        targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, com.xenowarriors.corrupted.CorruptedVillagerEntity.class, 10, true, false, e -> true));
     }
 
     @Override
