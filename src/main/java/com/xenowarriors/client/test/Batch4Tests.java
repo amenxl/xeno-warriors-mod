@@ -2100,11 +2100,11 @@ public final class Batch4Tests {
         l.add(null, () -> server(p -> {
             var s = com.xenowarriors.you.You.slot(p);
             int h0 = s.hunger;
-            var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel());
-            g.moveTo(p.getX() + 2, p.getY(), p.getZ()); g.setup(true, 0, g.blockPosition()); g.setNoAi(true);
+            var g = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());       // (killed the same tick: peaceful doesn't get to clear it)
+            g.moveTo(p.getX() + 2, p.getY(), p.getZ()); g.setNoAi(true);
             p.serverLevel().addFreshEntity(g);
             g.hurt(p.damageSources().playerAttack(p), 9999F);
-            log("devil: Lv " + com.xenowarriors.stats.Stats.characterLevel(p) + " demon kills a guard -> Devil's Hunger " + h0 + " -> " + s.hunger + " -> " + (s.hunger == h0 + 1 ? "PASS" : "FAIL"));
+            log("devil: Lv " + com.xenowarriors.stats.Stats.characterLevel(p) + " demon kills a husk -> Devil's Hunger " + h0 + " -> " + s.hunger + " -> " + (s.hunger == h0 + 1 ? "PASS" : "FAIL"));
             com.xenowarriors.you.YouDevil.fillForTest(p);
             p.serverLevel().setDayTime(18000);
         }), 20);
