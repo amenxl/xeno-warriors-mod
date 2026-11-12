@@ -34,7 +34,9 @@ public final class Headlights {
 
     /** Dark enough for headlights here: little sky light (night, or under cover). Our own light blocks don't count. */
     public static boolean dark(Level l, BlockPos p) {
-        return l.getBrightness(LightLayer.SKY, p) - l.getSkyDarken() < 7;
+        long t = l.getDayTime() % 24000;
+        boolean night = l.dimensionType().hasSkyLight() && !l.dimensionType().hasFixedTime() && t > 12600 && t < 23400;
+        return night || l.getBrightness(LightLayer.SKY, p) < 8;                  // (night, or under cover: caves, tunnels)
     }
 
     /** On: dark, and someone driving. */

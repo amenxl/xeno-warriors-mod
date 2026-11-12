@@ -506,6 +506,8 @@ public final class Batch4Tests {
         l.add(null, () -> server(p -> com.xenowarriors.karma.KarmaSensing.release(p)), 5);
         Batch3Tests.character(l, CharacterType.TECHNICA);
         l.add(null, () -> server(p -> {
+            var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(p.serverLevel());   // (a fresh one: the first may have faded)
+            soul.moveTo(p.getX() + 6, p.getY(), p.getZ(), 0, 0); soul.setNoAi(true); soul.addTag("xw_ts"); p.serverLevel().addFreshEntity(soul);
             com.xenowarriors.karma.KarmaSensing.unbreakForTest(p);
             com.xenowarriors.karma.KarmaSensing.use(p, true);
             boolean broken = com.xenowarriors.karma.KarmaSensing.brokenForTest(p) && !com.xenowarriors.karma.KarmaSensing.holding(p);
