@@ -6,8 +6,21 @@ import sp_chars as S
 from sp_chars import lock, plate, hair, shell, core, Adapter, U
 from PIL import Image
 
+def rm_b_hair(f):
+    # violet hair in a high spiky ponytail with orange-tipped ends, a red band at the forehead with long tails
+    hair(f, RB1, RB2, back_len=25.0, side_len=27.5,
+         locks=[([x, 32.0, -4.7], [x * 0.18, -0.7, -0.5], 2.8, 1.8) for x in (-3.0, -1.0, 1.0, 3.0)]
+         + [([s * 4.5, 30.4, z], [s * 0.2, -1, 0.0], 3.6, 1.8) for s in (1, -1) for z in (-2.8, 0.6)])
+    f.add('head', [-1.4, 32.8, 1.6], [1.4, 34.4, 4.4], RB2)                                                   # the tie
+    for i, (dx, dy, dz) in enumerate(((0, 1, 0.5), (0.4, 0.8, 0.8), (-0.4, 0.8, 0.8), (0, 0.4, 1))):
+        lock(f, [dx * 1.5, 34.2, 3.2], [dx, dy, dz], 6.5 - i * 0.6, 2.2, (RB1, RB2, RB3), thick=1.4)         # spiky ponytail
+    f.add('head', [-4.75, 29.6, -4.8], [4.75, 30.6, 4.75], '#c41e30')                                         # red band
+    for s in (1, -1):
+        lock(f, [s * 1.0, 30.0, 4.7], [s * 0.3, -1, 0.5], 6.0, 1.0, ('#c41e30', '#a01828', '#e04050'), thick=0.3)
+
 # ====================================================================== RHALIX + MIKIKO, draft A: "storm coat"
 RA_SKIN, RA_EYE = '#7a4e36', '#c8306e'
+RB1, RB2, RB3 = '#5a2a8a', '#2a1440', '#f07a30'
 RH1, RH2, RH3 = '#9a1830', '#4a1e6a', '#e8603a'            # crimson top, violet base, ember tips
 VIO, VIOD, ORA, BLK, GOLD = '#3e2066', '#2a1446', '#f08a2a', '#16141c', '#e8c040'
 
@@ -18,17 +31,7 @@ def rm_a_paint(part, face, x, y, W, H, outer):
     return None
 
 def rm_a(f):
-    # a tall swept-back mane: crimson spikes up and back, two pointed peaks like fox ears, a long violet tail of hair
-    hair(f, RH1, RH2, back_len=24.0, side_len=27.0,
-         spikes=[([x, 32.6, z], [x * 0.12, 0.9, 0.55], ln, 2.2) for (x, z, ln) in ((-2.6, -2.0, 4.2), (0, -2.6, 4.8), (2.6, -2.0, 4.2), (-3.2, 0.6, 4.6), (3.2, 0.6, 4.6), (0, 0.8, 5.4))]
-         + [([s * 2.9, 32.8, -0.8], [s * 0.25, 1, -0.1], 3.6, 1.6) for s in (1, -1)],                       # the two "ear" peaks
-         locks=[([s * 4.4, 30.6, -3.6], [s * 0.15, -1, -0.15], 4.6, 1.9) for s in (1, -1)]
-         + [([x, 31.9, -4.7], [x * 0.1, -0.8, -0.4], 2.4, 1.7) for x in (-2.6, 0.2, 2.8)])
-    lock(f, [0, 30.4, 4.6], [0, -1, 0.35], 9.0, 2.6, (RH2, RH2, RH3), thick=1.6)                            # long tail at the back
-    for x in (-2.6, 0, 2.6):
-        f.add('head', [x - 0.3, 33.0, -2.8], [x + 0.3, 33.4, -2.4], RH3)                                    # ember tips
-    f.add('head', [-4.7, 29.0, -4.85], [4.7, 29.6, -4.65], GOLD, shade=False)                              # thin gold circlet across the brow
-    f.add('head', [-0.5, 29.0, -4.95], [0.5, 29.9, -4.75], '#ff5a3a', shade=False)                         # with a red gem
+    rm_b_hair(f)                                                                                             # (Sky Ronin's hair, as picked)
     # black bodysuit with a gold diamond
     shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.26, BLK)
     plate(f, 'body', ['...k...', '..kkk..', '.kk.kk.', 'kk...kk', '.kk.kk.', '..kkk..', '...k...'], 0.0, 22.6, -2.36, 0.36, GOLD)
@@ -62,7 +65,7 @@ def rm_a(f):
 def rm_marks(px, cm, dark):
     for y in range(20, 23): px[7, y] = (240, 120, 40, 255); px[24, y] = (150, 60, 220, 255)   # an ember mark under one eye, a violet one under the other
 
-RM_A = dict(skin=RA_SKIN, eyes=RA_EYE, hair=[RH1, RH2], paint=rm_a_paint,
+RM_A = dict(skin=RA_SKIN, eyes=RA_EYE, hair=[RB1, RB2], paint=rm_a_paint,
             brow=['.........', '..kkkkkk.', 'kk.......'],
             eye=['..kkkkkk.', 'kkkkkkkkk', '.wOOooOw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '..kkkkk..'],
             mouth=['.kkkk.'], mouth_x=13, mouth_y=25, face_extra=[rm_marks], wing=('falcon', '#3a1a5a'), fit=rm_a)
@@ -76,16 +79,7 @@ def rm_b_paint(part, face, x, y, W, H, outer):
     return None
 
 def rm_b(f):
-    # violet hair in a high spiky ponytail with orange-tipped ends, a red band at the forehead with long tails
-    hair(f, RB1, RB2, back_len=25.0, side_len=27.5,
-         locks=[([x, 32.0, -4.7], [x * 0.18, -0.7, -0.5], 2.8, 1.8) for x in (-3.0, -1.0, 1.0, 3.0)]
-         + [([s * 4.5, 30.4, z], [s * 0.2, -1, 0.0], 3.6, 1.8) for s in (1, -1) for z in (-2.8, 0.6)])
-    f.add('head', [-1.4, 32.8, 1.6], [1.4, 34.4, 4.4], RB2)                                                   # the tie
-    for i, (dx, dy, dz) in enumerate(((0, 1, 0.5), (0.4, 0.8, 0.8), (-0.4, 0.8, 0.8), (0, 0.4, 1))):
-        lock(f, [dx * 1.5, 34.2, 3.2], [dx, dy, dz], 6.5 - i * 0.6, 2.2, (RB1, RB2, RB3), thick=1.4)         # spiky ponytail
-    f.add('head', [-4.75, 29.6, -4.8], [4.75, 30.6, 4.75], '#c41e30')                                         # red band
-    for s in (1, -1):
-        lock(f, [s * 1.0, 30.0, 4.7], [s * 0.3, -1, 0.5], 6.0, 1.0, ('#c41e30', '#a01828', '#e04050'), thick=0.3)
+    rm_b_hair(f)
     # a wrapped cross-over top (cream with an orange panel and violet edges), wide black trousers, a violet obi
     shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.28, '#e8e2d6')
     for k in range(10):
