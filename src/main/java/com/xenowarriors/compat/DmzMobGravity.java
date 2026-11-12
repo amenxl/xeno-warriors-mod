@@ -144,10 +144,21 @@ public final class DmzMobGravity {
         return p;
     }
 
+    private static final Map<Class<?>, Boolean> EXEMPT = new HashMap<>();
+
+    /** DragonMineZ's own masters (King Kai lives in his gravity), Nimbus, dragons, training dummies: left as they are. */
+    static boolean exempt(LivingEntity e) {
+        return EXEMPT.computeIfAbsent(e.getClass(), c -> {
+            String n = c.getName();
+            return n.startsWith("com.dragonminez.") && (n.contains("Master") || n.contains("Nimbus") || n.contains("Shenron") || n.contains("Porunga")
+                    || n.contains("PunchMachine") || n.contains("ShadowDummy") || n.contains("DragonWish"));
+        });
+    }
+
     @SubscribeEvent
     public static void onTick(LivingEvent.LivingTickEvent ev) {
         LivingEntity e = ev.getEntity();
-        if (e.level().isClientSide || e instanceof Player || !(e instanceof Mob) || e instanceof com.xenowarriors.kaiplanet.KaiBuilderEntity) return;
+        if (e.level().isClientSide || e instanceof Player || !(e instanceof Mob) || e instanceof com.xenowarriors.kaiplanet.KaiBuilderEntity || exempt(e)) return;
         Double p = PENALTY.get(e.getId());
         if (p != null && p > 0 && !e.onGround() && !e.isNoGravity() && !e.isInWater() && e.getDeltaMovement().y < 0.1)   // (heavy: drops like a stone)
             e.setDeltaMovement(e.getDeltaMovement().add(0, -Math.min(d(maxFall), d(extraFall) * 10 * p) * 0.08, 0));
