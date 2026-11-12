@@ -81,7 +81,7 @@ public class BoostBagScreen extends Screen {
             g.fill(x + 1, y + 1, x + CELL - 1, y + CELL - 1, k == hover ? 0xFF404058 : n > 0 ? 0xFF242436 : 0xFF16161E);
             ItemStack st = StatBoosts.stack(s, t);
             g.renderItem(st, x + 4, y + 3);
-            if (n == 0) g.fill(x + 1, y + 1, x + CELL - 1, y + CELL - 1, 0xA0101018);
+            if (n == 0) { g.pose().pushPose(); g.pose().translate(0, 0, 250); g.fill(x + 1, y + 1, x + CELL - 1, y + CELL - 1, 0xB0101018); g.pose().popPose(); }   // (none: greyed out, over the icon)
             else {
                 String num = n > 999 ? (n / 1000) + "k" : String.valueOf(n);
                 g.pose().pushPose();
