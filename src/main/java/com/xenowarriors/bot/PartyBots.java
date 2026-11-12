@@ -969,6 +969,8 @@ public final class PartyBots {
         int my = com.xenowarriors.stats.Stats.characterLevel(p);
         float mult = (big ? 1F : 0.1F) * (won ? 1F : 0.6F) * Math.max(0.5F, Math.min(4F, 1F + (otherLevel - my) / 10F));
         if (big) p.getPersistentData().putLong(SPAR_LAST, now);
+        float tp = BotSpar.tp(p, won, big);                                       // (with DragonMineZ: Dragon Ball TP too)
+        if (tp >= 1) com.xenowarriors.compat.DmzTpRewards.give(p, Math.round(tp), "spar");
         for (Stat s : Stat.values()) {
             int lv = com.xenowarriors.stats.Stats.level(p, s);
             com.xenowarriors.stats.Stats.addXp(p, s, s.needed(lv) * 0.8F * mult);

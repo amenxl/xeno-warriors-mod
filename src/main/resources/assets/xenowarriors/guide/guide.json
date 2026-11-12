@@ -79,6 +79,10 @@
           "text": "- Out of a fight, bots walk over to loose drops near you and pick them up.\n- When your inventory is full, they go for what you can't carry straight away - even right next to you - and keep it in their bag for you.\n- Otherwise they leave fresh drops for you for a while (about 10 seconds) and only tidy up what's left lying around.\n- Things you threw away yourself and Stat Boosts are left alone."
         },
         {
+          "title": "Sparring in quiet times",
+          "text": "When you and your bots aren't fighting (nothing hostile nearby for a while), now and then:\n- A bot asks you to spar - a request card: press Accept (Y) to spar it, Decline (X) for not now. It's the same friendly fight as Spar in its menu: nobody goes down.\n- Or two of your bots spar each other: a real fight until one is down to 30% health, or a minute is up (a draw). If an enemy turns up they stop at once.\n- Sparring gives Speed, Attack and Defense XP - and with DragonMineZ, Dragon Ball TP: about what 8 levels of a training minigame pay (3 after your first big spar in 30 minutes), less for the loser. Bots sparring each other both get theirs."
+        },
+        {
           "title": "Bots and music",
           "text": "A bot with a music disc and a jukebox in its bag - or 8 planks and a diamond to craft one - now and then puts on some music when things are quiet: it sets the jukebox down next to you and plays the disc.\n- When the song's over, a fight starts or you wander off, it packs the jukebox and the disc back into its bag.\n- Not where blocks can't be placed (protected modes)."
         },
@@ -227,7 +231,7 @@
         },
         {
           "title": "Government",
-          "text": "- Gov Supply Terminal: Government gear for Money (prices follow your standing). It face-scans you.\n- Facilities: break things or open containers with staff around and you're wanted - every guard comes for you.\n- Healing pods: stand inside to heal and wash bad effects away. Bots and NPCs use them too.\n- Karma Scanner visors: see anyone's Karma Level (next page). Guards wear them too."
+          "text": "- Gov Supply Terminal: Government gear for Money (prices follow your standing). It face-scans you.\n- Facilities: break things or open containers with staff around and you're wanted - every guard comes for you.\n- Healing pods: stand inside to heal and wash bad effects away. They're tough - slow to break even with a good pickaxe, and explosions don't hurt them. Bots and NPCs use them too.\n- Karma Scanner visors: see anyone's Karma Level (next page). Guards wear them too."
         },
         {
           "title": "Karma Scanners",

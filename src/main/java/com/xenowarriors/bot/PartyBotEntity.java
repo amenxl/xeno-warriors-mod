@@ -212,6 +212,8 @@ public class PartyBotEntity extends PathfinderMob {
     public void setMode(int m) { entityData.set(MODE, Math.floorMod(m, 3)); mineTarget = null; setTarget(null); }
     public int botLevel() { return entityData.get(LEVEL); }
     public boolean downed() { return entityData.get(DOWNED); }
+    /** The bot it's sparring (BotSpar), null when it spars you or doesn't spar. */
+    public UUID sparFoe;
     public boolean sparring() { return entityData.get(SPAR); }
     public void setSparring(boolean b) { entityData.set(SPAR, b); if (!b) setTarget(null); }
     /** Its side: owner, party, their pets and bots (so DragonMineZ ki attacks it throws pass them by) - not the owner while sparring. */
@@ -219,7 +221,7 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean isAlliedTo(Entity e) {
         if (super.isAlliedTo(e)) return true;
         if (level().isClientSide || e == null || e == this) return false;
-        return PartyBots.friendly(this, e) && !(sparring() && e == owner());
+        return PartyBots.friendly(this, e) && !(sparring() && (e == owner() || e.getUUID().equals(sparFoe)));
     }
 
     public boolean canFly() { return naturalFlier() || entityData.get(DMZ_FLY); }
@@ -962,7 +964,7 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource src, float amount) {
         if (downed() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
-        if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !(sparring() && src.getEntity() == owner())) return false;
+        if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !(sparring() && (src.getEntity() == owner() || src.getEntity().getUUID().equals(sparFoe)))) return false;
         boolean r = super.hurt(src, amount);
         if (r) { lastHurtAt = tickCount; pendingHp = -1; }
         if (r && src.getEntity() instanceof LivingEntity att && !(src.getEntity() == owner() && sparring())) { relayTarget = att; relayUntil = level().getGameTime() + 200; }
@@ -974,6 +976,7 @@ public class PartyBotEntity extends PathfinderMob {
     public void die(DamageSource src) {
         if (!level().isClientSide && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY) && !isRemoved()) {
             setHealth(1F);
+            if (sparring() && sparFoe != null) { PartyBotEntity f = level() instanceof ServerLevel sl && sl.getEntity(sparFoe) instanceof PartyBotEntity pf ? pf : null; BotSpar.endBots(this, f, f, owner(), "won"); return; }
             if (sparring()) { PartyBots.sparOver(this, false); return; }
             entityData.set(DOWNED, true);
             downedTicks = 0;

@@ -71,7 +71,7 @@ public final class ModBlocks {
 
     /** Government healing pod (2 blocks, drawn about 2.6 tall; glows brighter with someone inside). Breaks loose only with a diamond pickaxe or better. */
     public static final RegistryObject<Block> HEALING_POD = BLOCKS.register("healing_pod", () -> new com.xenowarriors.gov.HealingPodBlock(
-            BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).strength(6F, 9F).requiresCorrectToolForDrops()
+            BlockBehaviour.Properties.of().mapColor(MapColor.SNOW).strength(30F, 1200F).requiresCorrectToolForDrops()   // (tough: slow to break, blast-proof)
                     .sound(SoundType.METAL).lightLevel(s -> s.getValue(com.xenowarriors.gov.HealingPodBlock.OCCUPIED) ? 14 : 10).noOcclusion()));
 
     private ModBlocks() {}

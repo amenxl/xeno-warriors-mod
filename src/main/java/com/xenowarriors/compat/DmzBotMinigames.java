@@ -167,6 +167,19 @@ public final class DmzBotMinigames {
         }
     }
 
+    /** DragonMineZ's training-minigame TP for one level, for this player's or bot's character (0 without one). */
+    public static float perLevelTp(net.minecraft.world.entity.LivingEntity e) {
+        if (!ready()) return 0;
+        try {
+            Object sd = e instanceof PartyBotEntity b ? DmzBotKi.statsFor(b) : e instanceof ServerPlayer p ? DmzPerCharacter.live(p) : null;
+            if (sd == null) return 0;
+            Object s = getSettings.invoke(trainingConfig.invoke(null), "control");
+            int total = ((Number) m(m(sd, "getStats"), "getTotalStats")).intValue();
+            int cost = ((Number) m(sd, "getSingleStatCost", total)).intValue();
+            return ((Number) perLevel.invoke(trainingConfig.invoke(null), cost, s)).floatValue();
+        } catch (Throwable t) { return 0; }
+    }
+
     /** (Tests) finish its game now. */
     public static String finishForTest(PartyBotEntity b) {
         Game g = PLAYING.remove(b.getUUID());
