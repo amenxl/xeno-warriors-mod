@@ -336,7 +336,7 @@
         },
         {
           "title": "Appetite (hunger level)",
-          "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting and starving work like normal: they follow the top layer.\n- Health comes back as soon as the base bar (the first layer) is full - half a heart every 2 seconds - and every extra full layer makes it faster: 2 full layers half a heart a second, 3 layers about 1.5 every second, 5 or more 2.5 every second. Each heal costs a little food, like vanilla."
+          "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting and starving work like normal: they follow the top layer.\n- Health comes back as soon as the base bar (the first layer) is full - and keeps coming down to 9 drumsticks, like vanilla - half a heart every 2 seconds - and every extra full layer makes it faster: 2 full layers half a heart a second, 3 layers about 1.5 every second, 5 or more 2.5 every second. Each heal costs a little food, like vanilla."
         },
         {
           "title": "Building",

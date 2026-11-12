@@ -88,7 +88,7 @@ public final class BigHunger {
 
     /**
      * Health regen from a full stomach: as soon as the base hunger bar (the first 20 points) is full you heal like
-     * vanilla does on a full bar, and every extra full bar on top makes it faster (1 bar: half a heart every 2 seconds,
+     * vanilla does on a full bar, and every extra full bar on top makes it faster (from 18 points on the base bar: half a heart every 2 seconds,
      * 2 bars: every second, 4 bars: twice a second...). Each heal costs food like vanilla's.
      */
     @SubscribeEvent
@@ -106,7 +106,7 @@ public final class BigHunger {
     /** How many whole hunger bars (20 points each) are full right now. */
     public static int fullBars(Player p) {
         int pts = max(p) > 20 ? total(p) : p.getFoodData().getFoodLevel();
-        return pts / 20;
+        return pts >= 18 ? Math.max(1, pts / 20) : 0;              // (like vanilla: it keeps going down to 18 points - 9 drumsticks)
     }
 
     /** Ticks between heals for this many full bars. */

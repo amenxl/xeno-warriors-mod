@@ -10,7 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -68,7 +68,7 @@ public final class BotRequests {
 
     /** An enemy hits you or one of your bots: the quiet-time requests are off. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onHurt(LivingHurtEvent e) {
+    public static void onHurt(LivingAttackEvent e) {
         if (e.isCanceled() || PENDING.isEmpty()) return;
         Entity src = com.xenowarriors.combat.Allies.actor(e.getSource().getEntity());
         if (src == null || src == e.getEntity()) return;
