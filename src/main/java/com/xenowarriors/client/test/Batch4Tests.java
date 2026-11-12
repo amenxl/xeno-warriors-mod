@@ -89,6 +89,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("boostpass")) boostPass(mc, l);
         if (f.isEmpty() || f.contains("techbike")) techBike(mc, l);
         if (f.isEmpty() || f.contains("rps")) rps(mc, l);
+        if (f.isEmpty() || f.contains("towerpods")) towerPods(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
@@ -1652,6 +1653,44 @@ public final class Batch4Tests {
                     + " -> " + (used && s0 != null && s1 != null && s1[1] > s0[1] && left == 1 ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
         }); }, 20);
+    }
+
+    private static void towerPods(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        java.util.List<BlockPos> pods = new java.util.ArrayList<>();
+        l.add(null, () -> server(p -> { Batch3Tests.clearBots(p); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); com.xenowarriors.tower.Tower.enter(p); }), 80);
+        l.add(null, () -> server(p -> { com.xenowarriors.tower.Tower.forcePods = true; com.xenowarriors.tower.Tower.skipTo(p, 5); com.xenowarriors.tower.Tower.forcePods = false; }), 20);
+        l.add(null, () -> server(p -> {
+            pods.clear(); pods.addAll(com.xenowarriors.tower.Tower.podsForTest(p, 20 * 30));
+            boolean there = !pods.isEmpty() && p.level().getBlockState(pods.get(0)).getBlock() instanceof com.xenowarriors.gov.HealingPodBlock;
+            log("towerpods: a healing pod turned up on the floor " + there + " (" + com.xenowarriors.tower.Tower.podsSpawned + ") -> " + (there ? "PASS" : "FAIL"));
+            b[0] = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b[0] != null) { b[0].moveTo(p.getX() + 2, p.getY(), p.getZ(), 0, 0); b[0].setTarget(null); b[0].setHealth(b[0].getMaxHealth() * 0.3F); }
+        }), 20 * 8);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 30), 5);
+        l.add("batch4_towerpods", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            boolean in = b[0] != null && (com.xenowarriors.gov.HealingPods.inPod(b[0]) || b[0].getHealth() > b[0].getMaxHealth() * 0.5F);
+            log("towerpods: the hurt bot used the pod " + in + " (health " + (b[0] == null ? -1 : (int) b[0].getHealth()) + ") -> " + (in ? "PASS" : "FAIL"));
+            if (b[0] != null) b[0].discard();
+            p.heal(40F);                                                          // (the floor's healing used up)
+            p.setHealth(6F);
+        }), 20 * 12);
+        float[] h = new float[1];
+        l.add(null, () -> server(p -> {
+            h[0] = p.getHealth();
+            p.heal(4F);
+            float capped = p.getHealth();
+            if (!pods.isEmpty()) com.xenowarriors.gov.HealingPods.start(p.serverLevel(), pods.get(0), p, -1, null);
+            log("towerpods: floor healing used up (heal did " + (capped - h[0]) + ") - into the pod " + com.xenowarriors.gov.HealingPods.inPod(p));
+            h[0] = capped;
+        }), 20 * 4);
+        l.add(null, () -> server(p -> {
+            log("towerpods: the pod healed you past the floor's limit: " + h[0] + " -> " + p.getHealth() + " -> " + (p.getHealth() > h[0] + 2 ? "PASS" : "FAIL"));
+            com.xenowarriors.tower.Tower.leave(p, "test over");
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 40);
     }
 
     private static void rps(Minecraft mc, MikikoTests.Steps l) {

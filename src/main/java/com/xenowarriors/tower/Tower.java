@@ -87,6 +87,42 @@ public final class Tower {
         int radius = ARENA_R, waveSize;
         long lastCombat;
         net.minecraft.server.level.ServerBossEvent hud;
+        /** Healing pods that turned up on this floor (their lower halves). */
+        final List<BlockPos> pods = new ArrayList<>();
+    }
+
+    /** How often a healing pod turns up on a floor (from floor 2; always on the floor after a boss). */
+    public static final float POD_CHANCE = 0.3F;
+    /** (Tests) every floor gets one. */
+    public static boolean forcePods;
+    /** (Tests) pods that turned up. */
+    public static int podsSpawned;
+
+    private static void clearPods(ServerLevel tl, Run r) {
+        for (BlockPos b : r.pods) {
+            if (tl.getBlockState(b.above()).getBlock() instanceof com.xenowarriors.gov.HealingPodBlock) tl.setBlock(b.above(), Blocks.AIR.defaultBlockState(), 2 | 16);
+            if (tl.getBlockState(b).getBlock() instanceof com.xenowarriors.gov.HealingPodBlock) tl.setBlock(b, Blocks.AIR.defaultBlockState(), 2 | 16);
+        }
+        r.pods.clear();
+    }
+
+    /** Now and then a healing pod turns up on the floor for the party to use (its healing isn't limited by the floor's). */
+    private static void maybePod(ServerLevel tl, Run r, MinecraftServer server) {
+        if (r.floor < 2 || !(forcePods || (r.floor - 1) % 10 == 0 || tl.random.nextFloat() < POD_CHANCE)) return;
+        double a = tl.random.nextDouble() * Math.PI * 2, d = r.radius * 0.55;
+        BlockPos at = BlockPos.containing(r.center.getX() + 0.5 + Math.cos(a) * d, Y, r.center.getZ() + 0.5 + Math.sin(a) * d);
+        if (!tl.getBlockState(at).isAir() || !tl.getBlockState(at.above()).isAir()) return;
+        net.minecraft.core.Direction face = net.minecraft.core.Direction.getNearest(r.center.getX() - at.getX(), 0, r.center.getZ() - at.getZ());
+        BlockState pod = com.xenowarriors.sky.ModBlocks.HEALING_POD.get().defaultBlockState().setValue(com.xenowarriors.gov.HealingPodBlock.FACING, face);
+        tl.setBlock(at, pod.setValue(com.xenowarriors.gov.HealingPodBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER), 2 | 16);
+        tl.setBlock(at.above(), pod.setValue(com.xenowarriors.gov.HealingPodBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), 2 | 16);
+        r.pods.add(at);
+        podsSpawned++;
+        tl.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, at.getX() + 0.5, at.getY() + 1, at.getZ() + 0.5, 20, 0.5, 1, 0.5, 0);
+        for (UUID id : r.players) {
+            ServerPlayer p = server.getPlayerList().getPlayer(id);
+            if (p != null) p.sendSystemMessage(msg("A healing pod appeared on this floor! Step in to heal (it doesn't count against the floor's healing).", ChatFormatting.GREEN));
+        }
     }
 
     private static final Map<Integer, Run> RUNS = new HashMap<>();
@@ -234,6 +270,7 @@ public final class Tower {
         if (r.hud != null) r.hud.removeAllPlayers();
         ServerLevel tl = server.getLevel(LEVEL);
         if (tl == null) return;
+        clearPods(tl, r);
         for (UUID id : r.alive) { Entity e = tl.getEntity(id); if (e != null) e.discard(); }
         for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(r.center).inflate(MAX_R + 8, 30, MAX_R + 8), e -> !(e instanceof net.minecraft.world.entity.player.Player)
                 && !(e instanceof com.xenowarriors.bot.PartyBotEntity))) e.discard();
@@ -270,6 +307,7 @@ public final class Tower {
         r.safety = false;
         boolean grew = false;
         if (tl != null && radius(r.floor) != r.radius) { r.radius = radius(r.floor); ensureArena(tl, r); grew = true; }
+        if (tl != null) { clearPods(tl, r); maybePod(tl, r, server); }
         r.nextAt = (tl == null ? 0 : tl.getGameTime()) + 80;
         if (r.floor > 1 && (r.floor - 1) % 5 == 0) r.pool = pool(r, server);         // finished ones drop out as you go
         boolean checkpoint = r.floor % CHECKPOINT == 0;
@@ -598,6 +636,14 @@ public final class Tower {
     }
 
     /** (op, testing) jump your run to this floor. */
+    /** (Tests) this player's run's pods on the floor now; holds the next wave off for a while. */
+    public static List<BlockPos> podsForTest(ServerPlayer p, int holdTicks) {
+        Run r = BY_PLAYER.get(p.getUUID());
+        if (r == null) return List.of();
+        r.nextAt = p.level().getGameTime() + holdTicks;
+        return new ArrayList<>(r.pods);
+    }
+
     public static void skipTo(ServerPlayer p, int floor) {
         Run r = BY_PLAYER.get(p.getUUID());
         if (r == null) { p.displayClientMessage(msg("You're not in the Tower", ChatFormatting.GRAY), true); return; }
@@ -633,7 +679,7 @@ public final class Tower {
     /** Healing is limited per floor. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onHeal(LivingHealEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer p) || event.isCanceled()) return;
+        if (!(event.getEntity() instanceof ServerPlayer p) || event.isCanceled() || com.xenowarriors.gov.HealingPods.podHealing) return;   // (a healing pod: not counted)
         Run r = BY_PLAYER.get(p.getUUID());
         if (r == null || !is(p.level())) return;
         float left = r.healLeft.getOrDefault(p.getUUID(), 0F);

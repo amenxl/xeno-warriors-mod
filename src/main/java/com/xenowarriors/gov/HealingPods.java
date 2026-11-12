@@ -69,6 +69,9 @@ public final class HealingPods {
 
     private static GlobalPos key(ServerLevel l, BlockPos p) { return GlobalPos.of(l.dimension(), p.immutable()); }
 
+    /** A pod is healing right now (the Tower doesn't count it against a floor's healing). */
+    public static boolean podHealing;
+
     public static boolean inUse(ServerLevel l, BlockPos base) { return SESSIONS.containsKey(key(l, base)); }
     public static boolean inPod(Entity e) { return BY.containsKey(e.getUUID()); }
     /** Asleep in a pod (not yet waking). */
@@ -225,7 +228,7 @@ public final class HealingPods {
         if (e instanceof Mob m) { m.getNavigation().stop(); if (s.wakeAt < 0) m.setTarget(null); }
         if (s.wakeAt < 0) {
             if (s.fixed <= 0 && t % 10 == 0) {
-                if (e.getHealth() < e.getMaxHealth()) e.heal(Math.max(1.5F, e.getMaxHealth() * 0.04F));
+                if (e.getHealth() < e.getMaxHealth()) { podHealing = true; try { e.heal(Math.max(1.5F, e.getMaxHealth() * 0.04F)); } finally { podHealing = false; } }
                 for (var inst : new ArrayList<>(e.getActiveEffects()))
                     if (inst.getEffect().getCategory() == MobEffectCategory.HARMFUL) e.removeEffect(inst.getEffect());
                 if (e.isOnFire()) e.clearFire();
@@ -307,7 +310,7 @@ public final class HealingPods {
     static String why(PathfinderMob m, boolean bot) {
         if (m.getHealth() >= m.getMaxHealth() * (bot ? BOT_LOW : LOW)) return "healthy";
         if (inPod(m)) return "in a pod";
-        if (com.xenowarriors.tower.Tower.is(m.level()) || com.xenowarriors.vr.Vr.is(m.level())) return "in a mode";
+        if ((com.xenowarriors.tower.Tower.is(m.level()) && !bot) || com.xenowarriors.vr.Vr.is(m.level())) return "in a mode";   // (bots use the Tower's pods - the ones that turn up, or ones placed in creative)
         if (m.getPersistentData().getBoolean("xw_tower") || m.getPersistentData().getBoolean("xw_journey") || com.xenowarriors.tower.TowerBosses.isBoss(m)) return "mode enemy";
         long since = m.tickCount - m.getLastHurtByMobTimestamp();
         if (bot) {
