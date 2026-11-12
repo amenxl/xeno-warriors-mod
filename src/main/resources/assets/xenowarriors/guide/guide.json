@@ -27,7 +27,7 @@
       "pages": [
         {
           "title": "Combos and heavy hits",
-          "text": "What you hold decides your combo, for players and bots alike.\n- Left click to chain hits. Clicking early only queues the next one, so timing beats spamming.\n- The last hit of a string is a finisher that knocks enemies away.\n- Sneak + left click: a slow heavy hit that launches and breaks shields.\n- A perfectly chained string is a little stronger than plain vanilla hits with the same weapon."
+          "text": "What you hold decides your combo, for players and bots alike.\n- Left click to chain hits. Clicking early only queues the next one, so timing beats spamming.\n- The last hit of a string is a finisher that knocks enemies away.\n- Sneak + left click: a slow heavy hit that launches and breaks shields.\n- A perfectly chained string is a little stronger than plain vanilla hits with the same weapon.\n- A hit that does no damage to you (soaked up by armor, resistance and the like) or only a scratch (half a heart or less) doesn't knock you back."
         },
         {
           "title": "Guns and dashing in",
