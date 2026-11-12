@@ -60,7 +60,7 @@ public final class YouSkills {
             case ANGEL -> { l.add(e(new YouSkillSet.DivineLight(), 0)); l.add(e(new YouSkillSet.SkyForm(true), 0)); l.add(e(new YouSkillSet.SkyForm(false), 0)); }
             case DEMON -> l.add(e(new com.xenowarriors.skill.ffr.SrSkills.DevilFlame(), 15));
             case SEEDLING -> l.add(e(new YouSkillSet.Bloom(), 10));
-            case YOU -> l.add(e(new YouSkillSet.Suppress(), 10));
+            case YOU -> { l.add(e(new YouSkillSet.Suppress(), 10)); l.add(e(new YouCapture.CaptureSkill(), 12)); }
             default -> l.add(e(new YouSkillSet.SecondWind(), 20));
         }
         return List.copyOf(l);

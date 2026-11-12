@@ -40,8 +40,8 @@ public final class Parties {
     /** The party size (players + bots) for this world: MAX_SIZE unless changed with /xeno partylimit (bot.OffDuty). */
     public static int limit() { return com.xenowarriors.bot.OffDuty.partyLimit(); }
 
-    /** Pets one player keeps (Mikiko's foxes + Rhalix's winged companions + Ultima's robots). */
-    public static int pets(ServerPlayer p) { return com.xenowarriors.fox.FoxPets.count(p) + com.xenowarriors.wing.WingPets.count(p) + com.xenowarriors.ultima.RobotPets.count(p); }
+    /** Pets one player keeps (Mikiko's foxes + Rhalix's winged companions + Ultima's robots + creatures a You captured). */
+    public static int pets(ServerPlayer p) { return com.xenowarriors.fox.FoxPets.count(p) + com.xenowarriors.wing.WingPets.count(p) + com.xenowarriors.ultima.RobotPets.count(p) + com.xenowarriors.you.YouCapture.count(p); }
 
     /** Pets the whole party keeps (a party can only have 4). */
     public static int partyPets(ServerPlayer p) { int n = 0; for (ServerPlayer m : members(p)) n += pets(m); return n; }
@@ -93,6 +93,7 @@ public final class Parties {
         if (data.hasUUID("xw_owner")) return data.getUUID("xw_owner");
         if (data.hasUUID("xw_wing_owner")) return data.getUUID("xw_wing_owner");
         if (data.hasUUID(com.xenowarriors.ultima.RobotPets.OWNER)) return data.getUUID(com.xenowarriors.ultima.RobotPets.OWNER);   // Ultima's robots
+        if (data.hasUUID(com.xenowarriors.you.YouCapture.OWNER)) return data.getUUID(com.xenowarriors.you.YouCapture.OWNER);       // the You race's captures
         if (e instanceof net.minecraft.world.entity.OwnableEntity o) return o.getOwnerUUID();
         return null;
     }

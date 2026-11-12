@@ -91,6 +91,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("rps")) rps(mc, l);
         if (f.isEmpty() || f.contains("towerpods")) towerPods(mc, l);
         if (f.isEmpty() || f.contains("xenoblasts")) xenoBlasts(mc, l);
+        if (f.isEmpty() || f.contains("capture")) capture(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
@@ -1711,6 +1712,67 @@ public final class Batch4Tests {
         l.add(null, () -> {}, 20 * 7);
         l.add("batch4_xeno_soul_fire", () -> {}, 3);
         l.add(null, () -> server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { for (int i = 0; i < 3; i++) d.statLevel[i] = 1; })), 20 * 12);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void capture(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        net.minecraft.world.entity.animal.IronGolem[] g = new net.minecraft.world.entity.animal.IronGolem[1];
+        net.minecraft.world.entity.LivingEntity[] pig = new net.minecraft.world.entity.LivingEntity[1];
+        var skill = new com.xenowarriors.you.YouCapture.CaptureSkill();
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setYRot(0); p.setXRot(10);
+            var e = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            var look = p.getLookAngle().multiply(1, 0, 1).normalize();
+            e.moveTo(p.getX() + look.x * 5, p.getY(), p.getZ() + look.z * 5, 180, 0);
+            p.serverLevel().addFreshEntity(e); g[0] = e;
+            p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, e.position().add(0, 1.4, 0));
+        }), 20 * 2);
+        l.add(null, () -> server(p -> {
+            p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, g[0].position().add(0, 1.4, 0));
+            boolean full = skill.use(p);
+            log("capture: a golem at full health can't be captured " + !full + " (" + com.xenowarriors.you.YouCapture.why(p, g[0]) + ") -> " + (!full ? "PASS" : "FAIL"));
+            g[0].setHealth(g[0].getMaxHealth() * 0.45F);
+            g[0].addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, 200, 1));
+            g[0].addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 200, 1));
+            int n0 = com.xenowarriors.party.Parties.pets(p);
+            boolean ok = skill.use(p);
+            boolean mine = p.getUUID().equals(com.xenowarriors.party.Parties.petOwner(g[0]));
+            log("capture: Suppressed at 45% -> captured " + ok + ", yours " + mine + ", healed " + Math.round(g[0].getHealth()) + "/" + Math.round(g[0].getMaxHealth()) + ", pets " + n0 + "->" + com.xenowarriors.party.Parties.pets(p)
+                    + " -> " + (ok && mine && g[0].getHealth() >= g[0].getMaxHealth() - 0.1F && com.xenowarriors.party.Parties.pets(p) == n0 + 1 ? "PASS" : "FAIL"));
+        }), 20 * 2);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 6), 5);
+        l.add("batch4_capture", () -> {}, 3);
+        // it follows: you walk off 14 blocks
+        double[] d0 = new double[1];
+        l.add(null, () -> server(p -> { p.teleportTo(p.getX() + 14, p.getY(), p.getZ()); d0[0] = g[0].distanceTo(p); }), 20 * 6);
+        l.add(null, () -> server(p -> {
+            double d = g[0].distanceTo(p);
+            log("capture: you walk off - it follows " + Math.round(d0[0]) + " -> " + Math.round(d) + " blocks -> " + (d < d0[0] - 4 ? "PASS" : "FAIL"));
+            g[0].getPersistentData().putBoolean(com.xenowarriors.you.YouCapture.SIT, true);
+            p.teleportTo(p.getX() - 14, p.getY(), p.getZ());
+            d0[0] = g[0].distanceTo(p);
+        }), 20 * 5);
+        l.add(null, () -> server(p -> {
+            double d = g[0].distanceTo(p);
+            log("capture: told to wait - it stays " + Math.round(d0[0]) + " -> " + Math.round(d) + " blocks -> " + (Math.abs(d - d0[0]) < 1.5 ? "PASS" : "FAIL"));
+            g[0].getPersistentData().putBoolean(com.xenowarriors.you.YouCapture.SIT, false);
+            var e = net.minecraft.world.entity.EntityType.PIG.create(p.serverLevel());
+            e.moveTo(p.getX() + 3, p.getY(), p.getZ() + 3, 0, 0); e.setNoAi(true);
+            e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200); e.setHealth(200);
+            p.serverLevel().addFreshEntity(e); pig[0] = e;
+            p.setLastHurtMob(e);
+        }), 20 * 5);
+        l.add(null, () -> server(p -> {
+            boolean hunt = g[0].getTarget() == pig[0], hurt = pig[0].getHealth() < 200;
+            log("capture: you hit a pig - your golem goes for it " + hunt + " (hurt " + hurt + ") and never at you " + (g[0].getTarget() != p) + " -> " + ((hunt || hurt) && g[0].getTarget() != p ? "PASS" : "FAIL"));
+            pig[0].discard();
+            com.xenowarriors.you.YouCapture.release(g[0]);
+            g[0].discard();
+        }), 20 * 2);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
