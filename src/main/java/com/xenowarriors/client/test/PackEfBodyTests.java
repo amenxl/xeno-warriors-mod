@@ -40,6 +40,19 @@ final class PackEfBodyTests {
             p.getInventory().setItem(0, new ItemStack(Items.WOODEN_AXE));
             p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0;
         }), 20));
+        // Epic Fight's Stray Hat on Mikiko (the user's picture: a stray piece by his shoulder)
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> PackTests.server(p -> {
+            var hat = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("epicfight", "stray_hat"));
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, hat == null ? ItemStack.EMPTY : new ItemStack(hat));
+            PackTests.log("efbody: stray hat " + (hat != null));
+        }), 15));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 15));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_strayhat_front", () -> {}, 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 12));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_strayhat_back", () -> {}, 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)); }, 15));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_strayhat_inventory", () -> {}, 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.setScreen(null); PackTests.server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, ItemStack.EMPTY)); }, 10));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { battle(true); mc.options.hideGui = true; mc.setScreen(null); }, 40));
         for (String side : new String[]{"back", "front"}) {
             l.add(new com.xenowarriors.client.UiTest.Step(null, () -> mc.options.setCameraType(side.equals("back") ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT), 15));
