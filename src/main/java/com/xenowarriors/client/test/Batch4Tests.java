@@ -2275,6 +2275,7 @@ public final class Batch4Tests {
             com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             com.xenowarriors.character.Seasons.set(p.server, 3);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
             var lv = p.serverLevel();
             var c = com.xenowarriors.foes.Foes.ELEMENTALIST.get().create(lv);
             c.setup(com.xenowarriors.ka.Element.ICE, com.xenowarriors.ka.Element.LIGHTNING, 0);
