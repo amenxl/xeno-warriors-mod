@@ -61,7 +61,7 @@ public class BotPickScreen extends Screen {
     public boolean busyBlocked(CharacterType t) { OpenBotPickPacket.Act a = act(t); return a != null && a.act() > 0 && !a.ordered() && a.bond() < OVERRIDE_BOND; }
     private int level(CharacterType t) { return Math.max(1, com.xenowarriors.network.CharLevelsPacket.CLIENT[t.ordinal()]); }
 
-    private int gridTop() { return 44; }
+    private int gridTop() { return 56; }
     private int gridBottom() { return height - 46; }       // room under the grid for the scroll hint
     private int gridLeft() { return (width - (cols * CW + (cols - 1) * GAP)) / 2; }
     private int count() { return ownTab ? own.size() : choices.size(); }
@@ -81,8 +81,8 @@ public class BotPickScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose()).bounds(width / 2 + 2, height - 28, 80, 20).build());
         confirm.active = !picked.isEmpty();
         // tabs: the show's characters, and your own
-        addRenderableWidget(Button.builder(Component.literal("Characters"), b -> { ownTab = false; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(6, 6, 70, 16).build()).active = ownTab;
-        addRenderableWidget(Button.builder(Component.literal("Your own (" + own.size() + ")"), b -> { ownTab = true; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(80, 6, 84, 16).build()).active = !ownTab;
+        addRenderableWidget(Button.builder(Component.literal("Characters"), b -> { ownTab = false; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(width / 2 - 88, 37, 84, 14).build()).active = ownTab;
+        addRenderableWidget(Button.builder(Component.literal("Your own (" + own.size() + ")"), b -> { ownTab = true; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(width / 2 + 4, 37, 84, 14).build()).active = !ownTab;
     }
 
     /** (Tests) show the "Your own" tab. */
