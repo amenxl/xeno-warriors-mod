@@ -14,7 +14,7 @@
         },
         {
           "title": "Karma",
-          "text": "Karma is the energy every skill runs on (Zane calls his mana, Ultima his Data, but it's the same bar).\n- Every skill costs Karma on top of its cooldown.\n- It refills slowly by itself, much faster while you crouch and stand still to focus, fully after a night's sleep, and with Karma Potions.\n- Karma Sensing ({key:karma_sense}) lets you feel every living thing's Karma nearby: they glow through walls for a few seconds, each inside an aura you can see through walls too. Range and time grow with practice. A Karma-reducing hoodie hides you from it.\n- The aura's size shows how strong something is next to you: weaker things give off a modest glow, your equals a tall one, and anything far stronger than you - and every boss - a giant blazing column (up to about 7 blocks wide and 15-20 tall) that burns white-hot in the middle. Strength counts its level, health, attack and armor (and DragonMineZ power, if installed)."
+          "text": "Karma is the energy every skill runs on (Zane calls his mana, Ultima his Data, but it's the same bar).\n- Every skill costs Karma on top of its cooldown.\n- It refills slowly by itself, much faster while you focus (hold crouch standing still - or with DragonMineZ, charge your Ki with its charge key: that charges Karma too, and crouching doesn't), fully after a night's sleep, and with Karma Potions.\n- Karma Sensing ({key:karma_sense}) lets you feel every living thing's Karma nearby: they glow through walls for a few seconds, each inside an aura you can see through walls too. Range and time grow with practice. A Karma-reducing hoodie hides you from it.\n- The aura's size shows how strong something is next to you: weaker things give off a modest glow, your equals a tall one, and anything far stronger than you - and every boss - a giant blazing column (up to about 7 blocks wide and 15-20 tall) that burns white-hot in the middle. Strength counts its level, health, attack and armor (and DragonMineZ power, if installed)."
         },
         {
           "title": "The main menu",
@@ -320,7 +320,7 @@
         },
         {
           "title": "Appetite (hunger level)",
-          "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting, regeneration and starving work like normal: they follow the top layer."
+          "text": "The more food you eat, the more your Appetite levels up.\n- Every level makes food fill you 1% more (+100% at level 100).\n- Every 10 levels you can hold another whole layer of hunger bars (20 more food points). The food bar changes colour for each layer, and 'x2/3' shows which layer you're eating from.\n- Sprinting and starving work like normal: they follow the top layer.\n- Health comes back as soon as the base bar (the first layer) is full - half a heart every 2 seconds - and every extra full layer makes it faster: 2 full layers half a heart a second, 3 layers about 1.5 every second, 5 or more 2.5 every second. Each heal costs a little food, like vanilla."
         },
         {
           "title": "Building",

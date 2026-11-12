@@ -728,7 +728,8 @@ public class PartyBotEntity extends PathfinderMob {
             if (t == null || !t.isAlive() || downed() || untouchable(t)) return false;
             if (sparring()) return PartyBots.sparFoes(PartyBotEntity.this, t);
             ServerPlayer o = owner();
-            return o != null && t.distanceToSqr(o) < 40 * 40 && !PartyBots.friendly(PartyBotEntity.this, t);
+            double r = PartyBots.chaseRange(PartyBotEntity.this);                // (out on the surface it chases a long way - 200 blocks)
+            return o != null && t.distanceToSqr(o) < r * r && !PartyBots.friendly(PartyBotEntity.this, t);
         }
     }
 
@@ -899,6 +900,7 @@ public class PartyBotEntity extends PathfinderMob {
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
         if (tickCount % 40 == 7) PartyBots.dress(this, owner());               // (its outfit: yours for that character)
+        if (tickCount % 20 == 3) PartyBots.keepChaseLoaded(this);
         if (pendingHp >= 0 && tickCount > 200) pendingHp = -1;                  // (what didn't come back by now stays as it is)
         if (downed()) {
             if (++downedTicks > PartyBots.BLEED_OUT) { PartyBots.bleedOut(this); return; }

@@ -195,6 +195,7 @@ public final class OffDuty {
             c.putInt("a", 0);
             c.putLong("u", now + MINUTE * (3 + r.nextInt(6)));
             c.remove("full");
+            if (SwitchQueue.queued(p) == t) c.putLong("u", now + MINUTE * 10);   // (you're waiting to switch to them: they don't start anything new)
             if (c.getBoolean(BotCalls.CALLED)) {                                       // (you phoned them: they come now, or ring to say they're ready)
                 c.putLong("u", now + MINUTE * 10);                                  // (and wait for you a while instead of starting something new)
                 BotCalls.done(p, t);
@@ -472,8 +473,8 @@ public final class OffDuty {
             for (int i = 0; i < b.inventory.getContainerSize() && !has; i++) has = com.xenowarriors.compat.DmzBotRadar.isRadar(b.inventory.getItem(i));
             if (!has) continue;
             b.getPersistentData().putLong("xw_radar_asked", now);
-            com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " has a Dragon Radar",
-                    "Send them " + (b.canFly() ? "flying" : "out") + " to find the Dragon Balls? (about 30 minutes - they leave the team till then)", "/xeno radar " + b.getId(), "", 20 * 20, 0xFFFFA020), p);
+            BotRequests.send(p, new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " has a Dragon Radar",
+                    "Send them " + (b.canFly() ? "flying" : "out") + " to find the Dragon Balls? (about 30 minutes - they leave the team till then)", "/xeno radar " + b.getId(), "", 20 * 20, 0xFFFFA020));
             return;
         }
     }

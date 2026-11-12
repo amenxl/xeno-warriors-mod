@@ -81,8 +81,8 @@ public final class BotSpar {
     public static void ask(PartyBotEntity b, ServerPlayer o) {
         asked++;
         String yes = "/xenospar yes " + b.getId(), no = "/xenospar no " + b.getId();
-        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " wants to spar",
-                "A friendly fight for some training? (nobody goes down)" + (PartyBots.sparBoostReady(o) ? " - spar XP boost ready!" : ""), yes, no, ASK_TICKS, 0xFFFFB040), o);
+        BotRequests.send(o, new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " wants to spar",
+                "A friendly fight for some training? (nobody goes down)" + (PartyBots.sparBoostReady(o) ? " - spar XP boost ready!" : ""), yes, no, ASK_TICKS, 0xFFFFB040));
         o.displayClientMessage(Component.empty().append(b.label()).append(": \"Hey - want to spar?\"").withStyle(ChatFormatting.GOLD), false);
     }
 
@@ -158,9 +158,9 @@ public final class BotSpar {
         teamAsked++;
         String ids = asker.getId() + " " + mate.getId() + " " + yours.getId();
         String a = asker.character().getDisplayName().getString(), m = mate.character().getDisplayName().getString(), y = yours.character().getDisplayName().getString();
-        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(a + " wants a 2v2 spar",
+        BotRequests.send(o, new com.xenowarriors.network.RequestPopupPacket(a + " wants a 2v2 spar",
                 a + " & " + m + " vs you & " + y + " - everyone gets spar XP" + (PartyBots.sparBoostReady(o) ? " (XP boost ready!)" : ""),
-                "/xenospar team yes " + ids, "/xenospar team no " + ids, ASK_TICKS, 0xFFFFB040), o);
+                "/xenospar team yes " + ids, "/xenospar team no " + ids, ASK_TICKS, 0xFFFFB040));
         o.displayClientMessage(Component.empty().append(asker.label()).append(": \"2v2? Me and ").append(mate.label())
                 .append(" against you and ").append(yours.label()).append("!\"").withStyle(ChatFormatting.GOLD), false);
     }

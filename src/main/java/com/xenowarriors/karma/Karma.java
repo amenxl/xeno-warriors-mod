@@ -25,6 +25,7 @@ public final class Karma {
     /** Per second. */
     public static final float REGEN = 1.5F;
     public static final float FOCUS_REGEN = 6F;
+    private static final boolean DMZ = net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
 
     private Karma() {}
 
@@ -86,8 +87,10 @@ public final class Karma {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) return;
         player.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(data -> {
             if (data.getType() == CharacterType.NONE || !player.isAlive()) return;
-            boolean focusing = player.isShiftKeyDown() && player.onGround()
-                    && player.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4;
+            // charging Karma: with DragonMineZ, its Ki charge key charges Karma too (crouching does nothing then);
+            // without it, hold crouch standing still
+            boolean focusing = DMZ ? com.xenowarriors.client.compat.DmzCompat.charging(player)
+                    : player.isShiftKeyDown() && player.onGround() && player.getDeltaMovement().horizontalDistanceSqr() < 1.0E-4;
             // Sky Helmet: +100 max Karma (on top of Fox King's bonus)
             float max = (com.xenowarriors.mikiko.FoxKing.active(player) ? MAX * (1 + com.xenowarriors.mikiko.FoxKing.KARMA_MAX_BONUS) : MAX)
                     + (com.xenowarriors.sky.SkyArmorItem.wearing(player, net.minecraft.world.entity.EquipmentSlot.HEAD) ? 100F : 0F)

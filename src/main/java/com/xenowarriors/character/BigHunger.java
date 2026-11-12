@@ -86,6 +86,32 @@ public final class BigHunger {
         if (changed || p.tickCount % 100 == 0) sync(p, total, max);
     }
 
+    /**
+     * Health regen from a full stomach: as soon as the base hunger bar (the first 20 points) is full you heal like
+     * vanilla does on a full bar, and every extra full bar on top makes it faster (1 bar: half a heart every 2 seconds,
+     * 2 bars: every second, 4 bars: twice a second...). Each heal costs food like vanilla's.
+     */
+    @SubscribeEvent
+    public static void onRegen(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.isSpectator() || !p.isAlive()) return;
+        if (noHunger(p) || !p.isHurt() || !p.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_NATURAL_REGENERATION)) return;
+        int bars = fullBars(p);
+        if (bars <= 0) return;
+        int every = regenInterval(bars);
+        if (p.tickCount % every != 0) return;
+        p.heal(1F);
+        p.getFoodData().addExhaustion(4F);
+    }
+
+    /** How many whole hunger bars (20 points each) are full right now. */
+    public static int fullBars(Player p) {
+        int pts = max(p) > 20 ? total(p) : p.getFoodData().getFoodLevel();
+        return pts / 20;
+    }
+
+    /** Ticks between heals for this many full bars. */
+    public static int regenInterval(int bars) { return Math.max(8, 40 / Math.max(1, bars)); }
+
     /** Food eaten while the visible bar can't hold it goes into the big stomach. */
     @SubscribeEvent
     public static void onEat(LivingEntityUseItemEvent.Finish event) {

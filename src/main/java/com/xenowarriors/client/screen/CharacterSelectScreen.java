@@ -111,7 +111,9 @@ public class CharacterSelectScreen extends Screen {
         }
         if (testFocus != null) focus = testFocus;
         if (focus == null || Group.of(focus) != group) focus = group.members.length > 0 ? group.members[0] : null;
-        Button sel = addRenderableWidget(Button.builder(Component.literal("SELECT"), b -> { if (pickable(focus)) choose(focus); })
+        var busyNow = com.xenowarriors.network.BusyCharsPacket.of(focus);
+        boolean queue = busyNow != null && !busyNow.canSwitch() && focus != ClientCharacterData.getLocal();
+        Button sel = addRenderableWidget(Button.builder(Component.literal(queue ? (busyNow.queued() ? "QUEUED" : "QUEUE") : "SELECT"), b -> { if (pickable(focus)) choose(focus); })
                 .bounds(width - 76, height - 30, 68, 22).build());
         sel.active = pickable(focus);
         // your own warriors: the You character slots
@@ -191,6 +193,18 @@ public class CharacterSelectScreen extends Screen {
             Component sub = locked(focus) ? Component.literal("Season " + focus.season() + " - /xeno season unlock " + focus.season())
                     : level(focus) > 0 ? Component.literal("").append(focus.getTitle()).append(Component.literal("   Lv." + level(focus)).withStyle(net.minecraft.ChatFormatting.GOLD)) : focus.getTitle();
             g.drawString(font, sub, 12, height - 26, locked(focus) ? 0xAA5555 : 0xCCCCCC);
+            var busy = com.xenowarriors.network.BusyCharsPacket.of(focus);
+            if (!locked(focus) && busy != null && focus != ClientCharacterData.getLocal()) {      // busy off duty: switch anyway (bond), or queue it
+                String s = busy.label() + (busy.minutes() > 0 ? " - done in ~" + busy.minutes() + " min" : "");
+                String s2 = busy.canSwitch() ? "Your bond is strong enough - they'll drop it for you"
+                        : busy.queued() ? "Queued: you'll switch when they're done (out of combat)"
+                        : busy.act() == com.xenowarriors.client.bot.OffDutyIcons.DRAGON_BALLS ? "Hunting the Dragon Balls - wait till they're done (QUEUE)"
+                        : "Busy - QUEUE to switch when they're done";
+                int sw = Math.min(width * 42 / 100, Math.max(font.width(s), font.width(s2)) + 8);
+                g.fill(12, height - 80, 12 + sw, height - 59, 0xD0000000);
+                drawLeft(g, s, 16, height - 78, sw - 8, com.xenowarriors.client.bot.OffDutyIcons.color(busy.act()));
+                drawLeft(g, s2, 16, height - 68, sw - 8, busy.canSwitch() ? 0xFFC080FF : busy.queued() ? 0xFF80E080 : 0xFFFFD070);
+            }
             String who = com.xenowarriors.network.TakenCharsPacket.who(focus);
             if (!locked(focus) && !who.isEmpty() && focus != ClientCharacterData.getLocal()) {
                 String s = taken(focus) ? who + " is playing them - pick someone else" : who + " is playing them (everyone's taken, so you can double up)";
@@ -255,6 +269,16 @@ public class CharacterSelectScreen extends Screen {
                 drawFit(g, who, c.x + c.w / 2, by + 13, c.w - 4, 0xFFDDDD);
                 if (hov) g.renderTooltip(font, Component.literal(who + " is playing " + c.type.getDisplayName().getString()), mouseX, mouseY);
             }
+            var busy = com.xenowarriors.network.BusyCharsPacket.of(c.type);
+            if (busy != null && who.isEmpty() && ClientCharacterData.getLocal() != c.type) {   // busy off duty: its badge, and BUSY / QUEUED
+                int bs = com.xenowarriors.client.bot.OffDutyIcons.SIZE;          // (the scissor inside works in screen space: drawn unscaled)
+                com.xenowarriors.client.bot.OffDutyIcons.draw(g, busy.act(), c.x + c.w - bs - 2, c.y + 2, net.minecraft.Util.getMillis());
+                String tag = busy.queued() ? "QUEUED" : busy.canSwitch() ? "BUSY" : "BUSY";
+                int bw = Math.min(c.w - 2, font.width(tag) + 6), by = c.y + c.h - 24;
+                g.fill(c.x + (c.w - bw) / 2, by, c.x + (c.w + bw) / 2, by + 11, busy.queued() ? 0xE0207A30 : busy.canSwitch() ? 0xE07A3AA8 : 0xE0505060);
+                drawFit(g, tag, c.x + c.w / 2, by + 2, bw - 2, 0xFFFFFF);
+                if (hov) g.renderTooltip(font, Component.literal(busy.label() + (busy.minutes() > 0 ? " (~" + busy.minutes() + " min)" : "")), mouseX, mouseY);
+            }
             int lv = level(c.type);
             if (lv > 0) {                                                        // your level with them, on the card
                 String ls = "Lv." + lv;
@@ -275,6 +299,16 @@ public class CharacterSelectScreen extends Screen {
         g.pose().popPose();
 
         super.render(g, mouseX, mouseY, partialTick);
+    }
+
+    /** Left-aligned, shrunk to fit {@code room}. */
+    private void drawLeft(GuiGraphics g, String s, int x, int y, int room, int color) {
+        float sc = Math.min(1F, room / (float) Math.max(1, font.width(s)));
+        g.pose().pushPose();
+        g.pose().translate(x, y + (1 - sc) * 4, 0);
+        g.pose().scale(sc, sc, 1F);
+        g.drawString(font, s, 0, 0, color);
+        g.pose().popPose();
     }
 
     private void drawFit(GuiGraphics g, String s, int cx, int y, int room, int color) {

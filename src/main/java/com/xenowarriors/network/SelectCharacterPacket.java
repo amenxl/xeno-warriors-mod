@@ -20,7 +20,15 @@ public record SelectCharacterPacket(CharacterType type) {
 
     public static void handle(SelectCharacterPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
-        if (player == null || msg.type == CharacterType.NONE || msg.type == CharacterType.YOU) return;   // (You characters go through their slots screen)
+        if (player == null) return;
+        if (msg.type != com.xenowarriors.bot.SwitchQueue.queued(player)) com.xenowarriors.bot.SwitchQueue.clear(player);   // (picking someone else forgets a queued switch)
+        select(player, msg.type);
+    }
+
+    /** Switch this player to a character (with every check: combat, season, bots, fusion, someone else playing them, busy off duty). */
+    public static void select(ServerPlayer player, CharacterType type) {
+        SelectCharacterPacket msg = new SelectCharacterPacket(type);
+        if (msg.type == CharacterType.NONE || msg.type == CharacterType.YOU) return;   // (You characters go through their slots screen)
         CharacterType now = com.xenowarriors.character.ModCapabilities.getType(player);
         if (now == msg.type) {                // picked who they already are: nothing changes (re-picking used to reset every cooldown, even mid-fight)
             CharacterManager.syncToTrackingAndSelf(player);
@@ -54,6 +62,10 @@ public record SelectCharacterPacket(CharacterType type) {
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("You're fused with " + msg.type.getDisplayName().getString() + " right now - wait for the fusion to end").withStyle(net.minecraft.ChatFormatting.RED), true);
             ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);
             return;
+        }
+        if (now != CharacterType.NONE) {                                        // busy off duty: a strong bond takes them off it, otherwise it's queued
+            String busy = com.xenowarriors.bot.SwitchQueue.check(player, msg.type);
+            if (busy != null) { player.displayClientMessage(net.minecraft.network.chat.Component.literal(busy).withStyle(net.minecraft.ChatFormatting.GOLD), false); return; }
         }
         ServerPlayer other = com.xenowarriors.character.CharacterLock.takenBy(player, msg.type);
         if (other != null) {

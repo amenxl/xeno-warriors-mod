@@ -629,9 +629,41 @@ public final class PartyBots {
      * an ender pearl) or whose chunk has stopped ticking - where it would stand frozen until the chunk unloads - is
      * brought over. With nowhere to put it yet it goes on the waiting list (things and all) until there is.
      */
+    /** How far from you a bot keeps after an enemy: 200 blocks out on the surface, 40 anywhere else (caves, other worlds). */
+    public static double chaseRange(PartyBotEntity b) {
+        return onSurface(b) ? CHASE_SURFACE : 40;
+    }
+
+    public static final double CHASE_SURFACE = 200;
+
+    /** Out under the open sky in a world with one (not in a cave, the Nether, a Hekublade...). */
+    public static boolean onSurface(net.minecraft.world.entity.Entity e) {
+        var l = e.level();
+        if (!l.dimensionType().hasSkyLight() || l.dimensionType().hasCeiling()) return false;
+        BlockPos p = e.blockPosition();
+        return l.canSeeSky(p.above()) || e.getY() >= l.getSeaLevel() - 2 && l.getBrightness(net.minecraft.world.level.LightLayer.SKY, p.above()) > 8;
+    }
+
+    /** A chase that takes it far from you: keeps the chunks around it running so it can finish the fight. */
+    private static final net.minecraft.server.level.TicketType<Integer> CHASE_TICKET = net.minecraft.server.level.TicketType.create("xenowarriors_bot_chase", Integer::compareTo, 60);
+
+    static void keepChaseLoaded(PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        LivingEntity t = b.getTarget();
+        if (o == null || t == null || !t.isAlive() || b.journey() || b.level() != o.level() || b.distanceToSqr(o) < 40 * 40 || !onSurface(b)) return;
+        ((ServerLevel) b.level()).getChunkSource().addRegionTicket(CHASE_TICKET, new net.minecraft.world.level.ChunkPos(b.blockPosition()), 2, b.getId());
+    }
+
+    /** It's off chasing something out on the surface (not lost): catching up waits. */
+    private static boolean chasing(PartyBotEntity b, ServerPlayer o) {
+        LivingEntity t = b.getTarget();
+        return t != null && t.isAlive() && !b.downed() && onSurface(b) && b.distanceToSqr(o) < CHASE_SURFACE * CHASE_SURFACE;
+    }
+
     static void catchUp(ServerPlayer o) {
         for (PartyBotEntity b : bots(o)) {
             if (b.journey() || b.isRemoved() || b.stranded) continue;
+            if (b.level() == o.level() && chasing(b, o)) continue;
             if (b.level() != o.level()) {                                        // (its own tick does this - unless it isn't ticking)
                 if (o.isAlive() && canFollowTo(b.character(), o.level())) teleportNear(b, o);
                 continue;

@@ -77,8 +77,8 @@ public final class BotPartyTime {
 
     public static void ask(PartyBotEntity b, ServerPlayer o) {
         asked++;
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " wants to throw a party!",
-                "Party hats, cake, confetti and fireworks - and everyone gets closer.", "/xenoparty yes " + b.getId(), "/xenoparty no " + b.getId(), ASK_TICKS, 0xFFFF6FD8), o);
+        BotRequests.send(o, new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " wants to throw a party!",
+                "Party hats, cake, confetti and fireworks - and everyone gets closer.", "/xenoparty yes " + b.getId(), "/xenoparty no " + b.getId(), ASK_TICKS, 0xFFFF6FD8));
         o.displayClientMessage(Component.empty().append(b.label()).append(": \"Hey - how about a party?\"").withStyle(ChatFormatting.LIGHT_PURPLE), false);
     }
 

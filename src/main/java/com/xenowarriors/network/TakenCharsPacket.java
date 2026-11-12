@@ -23,7 +23,10 @@ public record TakenCharsPacket(String[] names, boolean anyFree) {
     }
     public static void handle(TakenCharsPacket m, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer p = ctx.get().getSender();
-        if (p != null) ModNetwork.sendToPlayer(new TakenCharsPacket(com.xenowarriors.character.CharacterLock.names(p), com.xenowarriors.character.CharacterLock.anyFree(p)), p);
+        if (p != null) {
+            ModNetwork.sendToPlayer(new TakenCharsPacket(com.xenowarriors.character.CharacterLock.names(p), com.xenowarriors.character.CharacterLock.anyFree(p)), p);
+            com.xenowarriors.bot.SwitchQueue.send(p);                           // (and who's busy off duty)
+        }
         else { CLIENT = m.names; CLIENT_ANY_FREE = m.anyFree; }
         ctx.get().setPacketHandled(true);
     }

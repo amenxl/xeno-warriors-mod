@@ -104,6 +104,7 @@ public final class BotCrafting {
         if (until != null && until > now) return;                              // (asked you for an item: waiting for an answer)
         log(b, "periodic look at tick " + b.tickCount);
         if (missionCraft(b, o) != null) return;                                 // (something a Dragon Ball mission needs, from what's in its bag)
+        if (radarCraft(b, o) != null) return;                                   // (a Dragon Radar of its own, if it has the parts)
         suggest(b, o, false);
     }
 
@@ -129,6 +130,39 @@ public final class BotCrafting {
         if (!(b.level() instanceof ServerLevel s) || o == null || !net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return null;
         java.util.Set<String> wanted = com.xenowarriors.compat.DmzBotQuests.wantedItems(o);
         if (wanted.isEmpty()) return null;
+        ItemStack made = craftOneOf(b, wanted);
+        if (made == null) return null;
+        ItemStack left = com.xenowarriors.compat.MissionBag.on() ? com.xenowarriors.compat.MissionBag.add(o, made.copy()) : made.copy();
+        if (!left.isEmpty()) put(b, left);
+        missionCrafts++;
+        o.sendSystemMessage(Component.literal("").append(b.label()).append(" crafted ").append(made.getHoverName()).append(" for a Dragon Ball mission.").withStyle(ChatFormatting.AQUA));
+        log(b, "mission craft " + BotErrands.id(made));
+        return made;
+    }
+
+    /** (tests) Dragon Radars crafted. */
+    public static int radarCrafts;
+    private static final java.util.Set<String> RADAR_IDS = java.util.Set.of("dragonminez:dball_radar", "dragonminez:namekdball_radar", "dragonminez:fused_dball_radar");
+
+    /**
+     * With DragonMineZ: a bot without a Dragon Radar that has what one takes in its bag makes itself one (then it can
+     * ask to go looking for the Dragon Balls - OffDuty). Returns the radar, or null.
+     */
+    public static ItemStack radarCraft(PartyBotEntity b, ServerPlayer o) {
+        if (!(b.level() instanceof ServerLevel) || o == null || !net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return null;
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) if (com.xenowarriors.compat.DmzBotRadar.isRadar(b.inventory.getItem(i))) return null;
+        ItemStack made = craftOneOf(b, RADAR_IDS);
+        if (made == null) return null;
+        put(b, made.copy());
+        radarCrafts++;
+        o.sendSystemMessage(Component.literal("").append(b.label()).append(" made a ").append(made.getHoverName()).append(" from what was in their bag!").withStyle(ChatFormatting.GOLD));
+        log(b, "radar craft " + BotErrands.id(made));
+        return made;
+    }
+
+    /** Crafts one of these items (by id) from its bag if it can - the leftovers stay in its bag. The item made (not stored), or null. */
+    private static ItemStack craftOneOf(PartyBotEntity b, java.util.Set<String> wanted) {
+        if (!(b.level() instanceof ServerLevel s)) return null;
         boolean table = hasStation(b, Items.CRAFTING_TABLE, Blocks.CRAFTING_TABLE);
         for (CraftingRecipe r : s.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
             if (r.isSpecial()) continue;
@@ -148,12 +182,7 @@ public final class BotCrafting {
             ItemStack made = res.copy();
             made.onCraftedBy(b.level(), PartyBots.standIn(b), made.getCount());
             for (ItemStack x : back) put(b, x);
-            ItemStack left = com.xenowarriors.compat.MissionBag.on() ? com.xenowarriors.compat.MissionBag.add(o, made.copy()) : made.copy();
-            if (!left.isEmpty()) put(b, left);
             b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-            missionCrafts++;
-            o.sendSystemMessage(Component.literal("").append(b.label()).append(" crafted ").append(made.getHoverName()).append(" for a Dragon Ball mission.").withStyle(ChatFormatting.AQUA));
-            log(b, "mission craft " + BotErrands.id(made));
             return made;
         }
         return null;
@@ -530,9 +559,9 @@ public final class BotCrafting {
         requests++;
         msg.append(button("[Give 1 & " + verb(i) + "]", "/xenobot give " + b.getId() + " " + i.token, ChatFormatting.GREEN)).append(Component.literal(" "))
                 .append(button("[No thanks]", "/xenobot nocraft " + b.getId() + " " + i.token, ChatFormatting.RED));
-        com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " is one short",
+        BotRequests.send(o, new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " is one short",
                 "Give 1 " + i.missingWhat.getString() + " so they can " + verb(i) + " " + what.getString() + "?", "/xenobot give " + b.getId() + " " + i.token,
-                "/xenobot nocraft " + b.getId() + " " + i.token, OFFER_TICKS, 0xFFFFD24A), o);
+                "/xenobot nocraft " + b.getId() + " " + i.token, OFFER_TICKS, 0xFFFFD24A));
         o.sendSystemMessage(msg);
         o.level().playSound(null, o.blockPosition(), SoundEvents.NOTE_BLOCK_CHIME.value(), SoundSource.PLAYERS, 0.6F, 1.5F);
         log(b, "request " + i.key() + " short=" + i.missingWhat.getString() + " token=" + i.token);

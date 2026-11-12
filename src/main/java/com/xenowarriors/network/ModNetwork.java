@@ -518,6 +518,8 @@ public final class ModNetwork {
                 .encoder(com.xenowarriors.compat.FusionLooks.FusionLookPacket::encode).decoder(com.xenowarriors.compat.FusionLooks.FusionLookPacket::decode).consumerMainThread(com.xenowarriors.compat.FusionLooks.FusionLookPacket::handle).add();
         CHANNEL.messageBuilder(com.xenowarriors.vehicle.BikeFirePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)   // (Technica's bike guns)
                 .encoder(com.xenowarriors.vehicle.BikeFirePacket::encode).decoder(com.xenowarriors.vehicle.BikeFirePacket::decode).consumerMainThread(com.xenowarriors.vehicle.BikeFirePacket::handle).add();
+        CHANNEL.messageBuilder(BusyCharsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (character select: who's busy off duty)
+                .encoder(BusyCharsPacket::encode).decoder(BusyCharsPacket::decode).consumerMainThread(BusyCharsPacket::handle).add();
         CHANNEL.messageBuilder(PhoneTeamPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (the phone's Teammates page)
                 .encoder(PhoneTeamPacket::encode).decoder(PhoneTeamPacket::decode).consumerMainThread(PhoneTeamPacket::handle).add();
     }
