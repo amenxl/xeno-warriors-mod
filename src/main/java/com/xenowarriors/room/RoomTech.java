@@ -54,6 +54,10 @@ public final class RoomTech {
         final Set<UUID> enemies = new HashSet<>();
         int slot;
         long clearedAt = -1;
+        /** Opened by the Aurora Security System (a battle in Aurora City), not by Room Technology. */
+        boolean security;
+        /** Others pulled in with you (party members): where each goes back to. */
+        final Map<UUID, Vec3> guests = new HashMap<>();
     }
 
     private static final Map<Integer, Room> ROOMS = new HashMap<>();
@@ -95,8 +99,19 @@ public final class RoomTech {
             if (!com.xenowarriors.karma.Karma.trySpend(p, KARMA)) return false;
             p.getPersistentData().putLong(NEXT, p.serverLevel().getGameTime() + COOLDOWN);
         }
+        Room r = create(p, null, false);
+        if (r == null) return false;
+        p.displayClientMessage(Component.literal("ROOM • " + r.enemies.size() + " enem" + (r.enemies.size() == 1 ? "y" : "ies") + " pulled in").withStyle(ChatFormatting.AQUA), true);
+        return true;
+    }
+
+    /**
+     * Opens a Room around the player, free: copies the area, pulls in the enemies around (and {@code foe}), and moves
+     * the player in. With {@code security}, the party members and bot teammates nearby come too. Null if it couldn't.
+     */
+    private static Room create(ServerPlayer p, LivingEntity foe, boolean security) {
         ServerLevel room = p.server.getLevel(LEVEL);
-        if (room == null) { p.sendSystemMessage(Component.literal("The Room dimension isn't loaded.").withStyle(ChatFormatting.RED)); return false; }
+        if (room == null) { p.sendSystemMessage(Component.literal("The Room dimension isn't loaded.").withStyle(ChatFormatting.RED)); return null; }
         ServerLevel src = p.serverLevel();
         int slot = 0;
         while (ROOMS.containsKey(slot)) slot++;
@@ -108,16 +123,70 @@ public final class RoomTech {
         ROOMS.put(slot, r);
         BY_PLAYER.put(p.getUUID(), r);
         setBack(p, r);
-        // pull in the enemies around you
-        List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m instanceof Enemy && m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor"));
+        r.security = security;
+        // pull in the enemies around you (with security: anything fighting you or your party too)
+        java.util.Set<UUID> side = new java.util.HashSet<>();
+        side.add(p.getUUID());
+        List<ServerPlayer> mates = new ArrayList<>();
+        if (security) for (ServerPlayer m : com.xenowarriors.party.Parties.members(p))
+            if (m != p && m.level() == src && m.distanceToSqr(p) < (R - 2) * (R - 2) && !BY_PLAYER.containsKey(m.getUUID())) { mates.add(m); side.add(m.getUUID()); }
+        List<Mob> mobs = src.getEntitiesOfClass(Mob.class, new AABB(r.origin).inflate(R, 8, R), m -> m.isAlive() && !m.isPassenger() && !m.getTags().contains("xw_blade_anchor")
+                && (m instanceof Enemy || m == foe || security && m.getTarget() != null && (side.contains(m.getTarget().getUUID())
+                    || m.getTarget() instanceof com.xenowarriors.bot.PartyBotEntity tb && side.contains(tb.ownerId()))));
         for (Mob m : mobs) {
+            if (m instanceof com.xenowarriors.bot.PartyBotEntity) continue;
             Vec3 to = toRoom(r, m.position());
             Entity moved = move(m, room, to, m.getYRot());
             if (moved != null) r.enemies.add(moved.getUUID());
         }
+        if (foe != null && foe.isAlive() && !(foe instanceof net.minecraft.world.entity.player.Player) && foe.level() == src && !r.enemies.contains(foe.getUUID())) {
+            Entity moved = move(foe, room, toRoom(r, foe.position()), foe.getYRot());
+            if (moved != null) r.enemies.add(moved.getUUID());
+        }
+        if (security) {
+            // the party comes too: its players (each sent back where they were) and everyone's bot teammates
+            for (com.xenowarriors.bot.PartyBotEntity b : src.getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, new AABB(r.origin).inflate(R, 8, R),
+                    b -> b.isAlive() && !b.isPassenger() && side.contains(b.ownerId())))
+                move(b, room, toRoom(r, b.position()), b.getYRot());
+            for (ServerPlayer m : mates) {
+                r.guests.put(m.getUUID(), m.position());
+                net.minecraft.nbt.CompoundTag t = new net.minecraft.nbt.CompoundTag();   // (so a logout or crash still gets them home)
+                t.putString("dim", r.from.location().toString());
+                t.putDouble("x", m.getX()); t.putDouble("y", m.getY()); t.putDouble("z", m.getZ());
+                t.putFloat("yRot", m.getYRot()); t.putFloat("xRot", m.getXRot());
+                m.getPersistentData().put(BACK, t);
+                move(m, room, toRoom(r, m.position()), m.getYRot());
+            }
+        }
         src.playSound(null, r.origin, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1F, 1.6F);
         move(p, room, toRoom(r, p.position()), p.getYRot());
-        p.displayClientMessage(Component.literal("ROOM • " + r.enemies.size() + " enem" + (r.enemies.size() == 1 ? "y" : "ies") + " pulled in").withStyle(ChatFormatting.AQUA), true);
+        return r;
+    }
+
+    /** Guests in a Room (party members pulled in with its owner): who's in which. */
+    private static Room guestRoom(UUID id) {
+        for (Room r : ROOMS.values()) if (r.guests.containsKey(id)) return r;
+        return null;
+    }
+
+    /** Is this player in a Room right now (their own or as a guest)? */
+    public static boolean inAnyRoom(ServerPlayer p) { return BY_PLAYER.containsKey(p.getUUID()) || guestRoom(p.getUUID()) != null; }
+
+    public static final String SECURITY = "Aurora Security System";
+
+    /**
+     * A battle started in Aurora City (see recarnet.AuroraSecurity): the Aurora Security System moves it into a Room so
+     * the city can't be wrecked, and brings everyone back when it's over. False if it couldn't (or one's already open).
+     */
+    public static boolean auroraBattle(ServerPlayer p, LivingEntity foe) {
+        if (inAnyRoom(p) || is(p.level()) || com.xenowarriors.journey.Journey.inRun(p)) return false;
+        Room r = create(p, foe, true);
+        if (r == null) return false;
+        Component msg = Component.literal("[" + SECURITY + "] ").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)
+                .append(Component.literal("Battle detected - moving the fight to a secure Room to keep Aurora City intact.").withStyle(ChatFormatting.AQUA));
+        p.sendSystemMessage(msg);
+        for (UUID g : r.guests.keySet()) { ServerPlayer m = p.server.getPlayerList().getPlayer(g); if (m != null) m.sendSystemMessage(msg); }
+        p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(Component.literal("AURORA SECURITY").withStyle(ChatFormatting.AQUA)));
         return true;
     }
 
@@ -188,10 +257,20 @@ public final class RoomTech {
             else e.discard();
         ServerPlayer p = server.getPlayerList().getPlayer(r.player);
         if (p != null) setBack(p, null);                       // (offline: kept, so their login puts them back)
+        if (r.security) why = "[" + SECURITY + "] The battle is over - welcome back to Aurora City.";
         if (p != null && is(p.level()) && p.isAlive()) {
             p.teleportTo(back, r.back.x, r.back.y, r.back.z, r.yRot, r.xRot);
             p.displayClientMessage(Component.literal(why).withStyle(ChatFormatting.AQUA), true);
+            if (r.security) p.sendSystemMessage(Component.literal(why).withStyle(ChatFormatting.AQUA));
             back.playSound(null, p.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 1F, 1.6F);
+        }
+        for (var g : r.guests.entrySet()) {                    // party members pulled in with you: back where they were
+            ServerPlayer m = server.getPlayerList().getPlayer(g.getKey());
+            if (m != null) m.getPersistentData().remove(BACK);
+            if (m != null && is(m.level()) && m.isAlive()) {
+                m.teleportTo(back, g.getValue().x, g.getValue().y, g.getValue().z, m.getYRot(), m.getXRot());
+                if (r.security) m.sendSystemMessage(Component.literal(why).withStyle(ChatFormatting.AQUA));
+            }
         }
         clear(room, r);
     }

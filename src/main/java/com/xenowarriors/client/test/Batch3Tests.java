@@ -57,6 +57,7 @@ public final class Batch3Tests {
         if (all || f.contains("heal")) foxHeal(mc, l);
         if (all || f.contains("hud")) hud(mc, l);
         if (f.contains("bigparty")) bigParty(mc, l);
+        if (f.contains("aurora")) aurora(mc, l);
         if (all || f.contains("magnet")) magnet(mc, l);
         if (all || f.contains("step")) step(mc, l);
         if (all || f.contains("faces")) faces(mc, l);
@@ -263,6 +264,41 @@ public final class Batch3Tests {
             }, 2);
         }
         l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle(was); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setHealth(p.getMaxHealth()); clearBots(p); }); }, 5);
+    }
+
+    // ------------------------------------------------------------------ the Aurora Security System
+
+    private static void aurora(Minecraft mc, MikikoTests.Steps l) {
+        character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            clearBots(p);
+            var rec = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (rec != null) p.teleportTo(rec, 6.5, 140, 6.5, 0, 0);
+            p.getAbilities().flying = true; p.onUpdateAbilities();
+        }), 100);
+        l.add(null, () -> server(p -> {
+            var lv = p.serverLevel();
+            int y = lv.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, 6, 6);
+            p.teleportTo(lv, 6.5, y, 6.5, 0, 0);
+            p.getAbilities().flying = false; p.onUpdateAbilities();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            log("aurora: in Aurora=" + com.xenowarriors.recarnet.Recarnet.inAurora(lv, p.blockPosition()) + " at " + p.blockPosition());
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(lv);
+            z.moveTo(6.5, y, 8.5, 180, 0); z.setNoAi(true); z.addTag("xw_aurora_test");
+            lv.addFreshEntity(z);
+            p.attack(z);
+        }), 10);
+        l.add("batch3_aurora_room", () -> server(p -> log("aurora: battle moved to a Room=" + com.xenowarriors.room.RoomTech.is(p.level())
+                + " opened=" + com.xenowarriors.recarnet.AuroraSecurity.opened + " -> " + (com.xenowarriors.room.RoomTech.is(p.level()) ? "PASS" : "FAIL"))), 5);
+        l.add(null, () -> server(p -> {
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(30))) e.kill();
+        }), 110);
+        l.add("batch3_aurora_back", () -> server(p -> {
+            boolean back = com.xenowarriors.recarnet.Recarnet.inAurora(p.level(), p.blockPosition());
+            log("aurora: battle over, back in Aurora City=" + back + " -> " + (back ? "PASS" : "FAIL"));
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.teleportTo(p.server.overworld(), p.server.overworld().getSharedSpawnPos().getX() + 0.5, p.server.overworld().getSharedSpawnPos().getY() + 1, p.server.overworld().getSharedSpawnPos().getZ() + 0.5, 0, 0);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ the party frames for a big party
