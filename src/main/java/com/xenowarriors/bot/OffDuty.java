@@ -464,8 +464,17 @@ public final class OffDuty {
         var balls = com.xenowarriors.compat.DmzBotRadar.collect(p, radar);
         int n = 0;
         for (ItemStack s : balls) n += find(p, t, c, s);
-        p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + (n > 0 ? " is back from searching with " + n + " Dragon Ball" + (n == 1 ? "" : "s") + " in their bag!"
-                : " is back from searching for the Dragon Balls - empty-handed (someone else has them).")).withStyle(n > 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+        p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + (n > 0 ? (n >= balls.size() ? " is back from searching with all " + (n >= 14 ? "14 Dragon Balls (both sets)" : "7 Dragon Balls") + " in their bag!" : " is back from searching with " + n + " Dragon Ball" + (n == 1 ? "" : "s") + " in their bag (no room for the rest)!")
+                : " is back from searching for the Dragon Balls - empty-handed (no room in their bag).")).withStyle(n > 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+    }
+
+    /** (Tests) ends this character's Dragon Ball search now; returns the Dragon Balls in its bag after. */
+    public static int finishSearchForTest(ServerPlayer p, CharacterType t) {
+        radarDone(p, t, rec(p, t));
+        int n = 0;
+        ListTag inv = CharacterInventories.saved(p, t.getId()).getList("inv", Tag.TAG_COMPOUND);
+        for (int i = 0; i < inv.size(); i++) { ItemStack s = ItemStack.of(inv.getCompound(i)); var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem()); if (id != null && id.getPath().startsWith("dball") && !id.getPath().contains("radar")) n += s.getCount(); }
+        return n;
     }
 
     /** A bot on your team with a Dragon Radar flies off to find the Dragon Balls (it leaves the team until it's done). */

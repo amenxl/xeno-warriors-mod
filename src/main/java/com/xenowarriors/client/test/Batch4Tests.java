@@ -1810,6 +1810,11 @@ public final class Batch4Tests {
             }
             log("dbspeed: Speed 1 takes " + mins[0] + " min (20-40), Speed 10,000 takes " + mins[1] + " min (factor " + String.format("%.2f", com.xenowarriors.bot.OffDuty.speedFactor(10000)) + ") -> "
                     + (mins[0] >= 20 && mins[0] <= 40 && mins[1] >= 2 && mins[1] <= 8 ? "PASS" : "FAIL"));
+            // back from the search: always all 7 (even with one of them in your hands)
+            var three = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", "dball3"));
+            if (three != null) p.getInventory().add(new ItemStack(three));
+            int balls = com.xenowarriors.bot.OffDuty.finishSearchForTest(p, CharacterType.MAX);
+            log("dbspeed: Max back from the search with " + balls + " Dragon Balls (made full: " + com.xenowarriors.compat.DmzBotRadar.madeUp + ") -> " + (balls == 7 ? "PASS" : "FAIL"));
         }), 20);
     }
 

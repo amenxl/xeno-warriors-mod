@@ -18,9 +18,9 @@ import java.util.*;
 
 /**
  * With DragonMineZ: a character out with a Dragon Radar finds the Dragon Balls (OffDuty's "Searching for the Dragon
- * Balls"). When the search is over it brings back every ball of the radar's set it could find - the real ones from the
- * world (taken out of the ground and out of DragonMineZ's ball tracking, as if picked up), or ones that haven't come
- * down yet. A ball someone already holds can't be found.
+ * Balls"). When the search is over it always brings back the full set of 7 - the real ones from the world (taken out
+ * of the ground and out of DragonMineZ's ball tracking, as if picked up) or ones that haven't come down yet, and any it
+ * couldn't track down as well.
  */
 public final class DmzBotRadar {
     private DmzBotRadar() {}
@@ -64,7 +64,13 @@ public final class DmzBotRadar {
     /** The radar's item id, or null. */
     public static String radarId(ItemStack s) { return isRadar(s) ? ForgeRegistries.ITEMS.getKey(s.getItem()).toString() : null; }
 
-    /** Finds the balls this radar points to. Returns the ball items found (empty: none). */
+    /** (Tests) balls brought back that weren't out in the world (the set made full). */
+    public static int madeUp;
+
+    /**
+     * A search's finds: always a full set of 7 for each world the radar covers (the fused radar: Earth's and Namek's).
+     * The ones lying out in the world are taken from there (DragonMineZ forgets them); any it can't find there come too.
+     */
     @SuppressWarnings("unchecked")
     public static List<ItemStack> collect(ServerPlayer p, String radar) {
         List<ItemStack> out = new ArrayList<>();
@@ -93,7 +99,9 @@ public final class DmzBotRadar {
                         List<BlockPos> q = pending == null ? null : pending.get(star);
                         if (q != null && !q.isEmpty()) { q.remove(0); got = true; ((net.minecraft.world.level.saveddata.SavedData) data).setDirty(); }
                     }
-                    if (got) { out.add(new ItemStack(ball)); found++; }
+                    out.add(new ItemStack(ball));                                       // (always the full set of 7: one it couldn't track down - someone else holds it - it brings anyway)
+                    found++;
+                    if (!got) madeUp++;
                 }
                 if (!taken.isEmpty()) unregister.invoke(null, level, taken, set[0]);
             } catch (Throwable t) {
