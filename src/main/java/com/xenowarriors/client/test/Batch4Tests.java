@@ -151,10 +151,10 @@ public final class Batch4Tests {
             PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
             if (b == null) return;
             log("botforms: setup " + com.xenowarriors.compat.DmzBotForms.setupForTest(b, "saiyan", 2_000_000F));
-            int before = com.xenowarriors.compat.DmzBotForms.levelForTest(b, "superform");
+            int before = com.xenowarriors.compat.DmzBotForms.levelForTest(b, "superforms");
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 4; i++) sb.append(" | ").append(com.xenowarriors.compat.DmzBotForms.learn(b, true));
-            int after = com.xenowarriors.compat.DmzBotForms.levelForTest(b, "superform");
+            int after = com.xenowarriors.compat.DmzBotForms.levelForTest(b, "superforms");
             log("botforms: learned" + sb + " (superform " + before + " -> " + after + ") -> " + (com.xenowarriors.compat.DmzBotForms.learned >= 1 ? "PASS" : "FAIL"));
             String again = com.xenowarriors.compat.DmzBotForms.learn(b, false);
             log("botforms: right after, not forced: " + again + " -> " + (again.equals("too soon") ? "PASS" : "FAIL"));

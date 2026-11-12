@@ -131,7 +131,7 @@ public final class DmzBotForms {
                     if ((Boolean) m(sk, "isMaxLevel") && lv > 0) { why.append(s).append(" max; "); continue; }
                 }
                 int c = ((Number) computeTpCost.invoke(null, d.sd, s, lv)).intValue();
-                if (c < 0 || c > budget) { why.append(s).append(' ').append(c).append(" TP; "); continue; }
+                if (c <= 0 || c > budget) { why.append(s).append(' ').append(c).append(" TP; "); continue; }   // (a free one isn't for sale: DragonMineZ unlocks it some other way)
                 if (c < bestCost) { best = s; bestCost = c; bestLv = lv; }
             }
             if (best == null) return "nothing to learn (" + why + "budget " + Math.round(budget) + ")";
