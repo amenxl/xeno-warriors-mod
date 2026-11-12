@@ -96,6 +96,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("poseguard")) poseGuard(mc, l);
         if (f.isEmpty() || f.contains("c2")) c2Paths(mc, l);
         if (f.isEmpty() || f.contains("devil")) devil(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("namek"))) namekSeedling(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2153,6 +2154,47 @@ public final class Batch4Tests {
         l.add(null, () -> server(p -> { if (com.xenowarriors.soul.SoulSplit.active(p)) com.xenowarriors.soul.SoulSplit.end(p, null); }), 10);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
         Batch3Tests.character(l, CharacterType.MIKIKO);
+    }
+
+    private static void namekSeedling(Minecraft mc, MikikoTests.Steps l) {
+        float[] home = new float[3];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            you(p, 5, "Sprig", com.xenowarriors.character.Race.SEEDLING, com.xenowarriors.ka.Element.PLANT, 10);
+        }), 40);
+        l.add(null, () -> server(p -> { home[0] = com.xenowarriors.you.YouRaces.damageMult(p); home[1] = p.getMaxHealth(); }), 10);
+        l.add(null, () -> server(p -> {
+            var w = p.server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, new net.minecraft.resources.ResourceLocation("dragonminez", "namek")));
+            if (w == null) { log("namek: no Namek -> FAIL"); return; }
+            BlockPos top = null;
+            for (int r = 0; r <= 6 && top == null; r++) for (int dx = -r; dx <= r && top == null; dx++) for (int dz = -r; dz <= r; dz++) {
+                BlockPos c = new BlockPos(dx * 24, 0, dz * 24);
+                w.getChunk(c);
+                BlockPos t = w.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, c);
+                if (t.getY() > w.getMinBuildHeight() + 2 && w.getFluidState(t.below()).isEmpty() && w.getBlockState(t.below()).isSolid()) { top = t; break; }
+            }
+            if (top == null) top = w.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, BlockPos.ZERO);
+            p.teleportTo(w, top.getX() + 0.5, top.getY(), top.getZ() + 0.5, 0, 10);
+        }), 20 * 4);
+        l.add(null, () -> server(p -> {
+            float dm = com.xenowarriors.you.YouRaces.damageMult(p), hp = p.getMaxHealth();
+            boolean fx = p.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION) && p.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(p.getX() + 2, p.getY(), p.getZ()); g.setNoAi(true); p.serverLevel().addFreshEntity(g);
+            float h0 = p.getHealth();
+            p.invulnerableTime = 0;
+            p.hurt(p.damageSources().mobAttack(g), 10F);
+            float took = h0 - p.getHealth();
+            g.discard();
+            log("namek: Seedling at home x" + home[0] + " / " + Math.round(home[1]) + " hp -> on Namek x" + dm + " / " + Math.round(hp) + " hp, Regen + Speed " + fx + ", a 10-damage hit took " + took
+                    + " -> " + (dm == 2.5F && hp >= home[1] + 19 && fx && took < 10 ? "PASS" : "FAIL"));
+        }), 20 * 2);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_namek_seedling", () -> {}, 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
     private static void towerPods(Minecraft mc, MikikoTests.Steps l) {

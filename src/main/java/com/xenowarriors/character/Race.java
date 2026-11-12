@@ -28,7 +28,7 @@ public enum Race {
         return switch (this) {
             case HUMAN -> "The everyday people of Recarnet. No special traits, but humans grow into their element the fastest - and only humans can take a Government path later (Modified Human, Artificial Demon or Artificial Skylander).";
             case FOX_KIN -> "Fox people, like Fox Girl. Nimble healers: Fox Heal from the start, and the Kitsune attack grows through three tiers as you level.";
-            case SEEDLING -> "Plant people. You heal while in water and live on sunlight instead of food - at night, carry Sunlight. If you fall, you become a seed: 30 seconds in water and you sprout back with half your health, but an enemy can break the seed.";
+            case SEEDLING -> "Plant people. You heal while in water and live on sunlight instead of food - at night, carry Sunlight. If you fall, you become a seed: 30 seconds in water and you sprout back with half your health, but an enemy can break the seed. On Namek, under its three suns, a Seedling is enormously powerful.";
             case SKYLANDER -> "Angel descendants with wings. You can fly (H puts the wings away), and you choose a Lunar or Solar form that empowers you at night or by day.";
             case DEMON -> "Horned and winged, with a human form to blend in (the transform key switches). Demons hit hard - and from Level 50, a demon's hunger can awaken them as a Devil.";
             case YOU -> "Made by the Government to capture and control distortions. Hardy and balanced; weaken a creature and Capture it to fight for you.";

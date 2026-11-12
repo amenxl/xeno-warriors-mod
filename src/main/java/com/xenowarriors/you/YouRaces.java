@@ -73,6 +73,7 @@ public final class YouRaces {
         YouSlot s = You.slot(p);
         if (s == null) return 1F;
         if (s.demon()) return s.humanForm ? 1F : s.devil ? 1.3F : 1.15F;      // (a Devil: 1.3x in demon form)
+        if (s.race == Race.SEEDLING && onNamek(p)) return NAMEK_DAMAGE;       // (Namek's three suns)
         return s.race == Race.ANGEL && p.isCreative() ? 2F : 1F;
     }
 
@@ -120,17 +121,57 @@ public final class YouRaces {
 
     private static boolean seedling(Player p) { YouSlot s = You.slot(p); return s != null && s.race == Race.SEEDLING; }
 
+    // ------------------------------------------------------------------ seedlings on Namek
+
+    /** On DragonMineZ's Namek: three suns that never set - a Seedling there is enormously powerful. */
+    public static final float NAMEK_DAMAGE = 2.5F, NAMEK_GUARD = 0.6F;
+    public static final double NAMEK_HEALTH = 20;
+    private static final UUID NAMEK_HP_ID = UUID.fromString("5b0e8a61-3f2c-4d7e-a1c9-77f0d2e4b8a3");
+
+    public static boolean onNamek(Player p) { return p.level().dimension().location().toString().equals("dragonminez:namek"); }
+
+    /** A Seedling on Namek right now. */
+    public static boolean namekPower(Player p) { return seedling(p) && onNamek(p) && !isSeed(p); }
+
+    private static void namekTick(ServerPlayer p) {
+        boolean on = namekPower(p);
+        AttributeInstance hp = p.getAttribute(Attributes.MAX_HEALTH);
+        if (hp != null) {
+            boolean has = hp.getModifier(NAMEK_HP_ID) != null;
+            if (on && !has) { hp.addTransientModifier(new AttributeModifier(NAMEK_HP_ID, "Namek's suns", NAMEK_HEALTH, AttributeModifier.Operation.ADDITION)); p.heal((float) NAMEK_HEALTH); }
+            else if (!on && has) { hp.removeModifier(NAMEK_HP_ID); if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth()); }
+        }
+        if (!on) { p.getPersistentData().remove("xw_namek_told"); return; }
+        p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 1, true, false, true));
+        p.addEffect(new MobEffectInstance(MobEffects.JUMP, 60, 1, true, false, true));
+        p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0, true, false, true));
+        p.serverLevel().sendParticles(ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 1, p.getZ(), 4, 0.5, 0.8, 0.5, 0);
+        p.serverLevel().sendParticles(ParticleTypes.COMPOSTER, p.getX(), p.getY() + 0.2, p.getZ(), 3, 0.4, 0.1, 0.4, 0);
+        if (!p.getPersistentData().getBoolean("xw_namek_told")) {
+            p.getPersistentData().putBoolean("xw_namek_told", true);
+            p.sendSystemMessage(Component.literal("Namek's three suns pour into you - you feel enormously powerful!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+            p.level().playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1F, 1.2F);
+        }
+    }
+
+    /** Namek: hits on a Seedling there do less. */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onHurtNamek(net.minecraftforge.event.entity.living.LivingHurtEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p && namekPower(p)) e.setAmount(e.getAmount() * NAMEK_GUARD);
+    }
+
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer p)) return;
         if (!p.isDeadOrDying()) p.getPersistentData().remove("xw_seed_broken");   // (a broken seed that got taken back - downed instead - doesn't carry over)
         if (isSeed(p)) { seedTick(p); return; }
+        if (p.tickCount % 20 == 11) namekTick(p);
         if (!seedling(p) || p.isCreative() || p.isSpectator()) return;
         CompoundTag t = keep(p);
         if (!t.contains(SUN)) t.putInt(SUN, SUN_MAX);
         int sun = t.getInt(SUN);
         if (p.tickCount % 20 == 0) {
-            boolean inSun = p.level().isDay() && p.level().canSeeSky(p.blockPosition()) && !p.level().isRaining();
+            boolean inSun = onNamek(p) || p.level().isDay() && p.level().canSeeSky(p.blockPosition()) && !p.level().isRaining();   // (Namek: three suns, everywhere, always)
             sun = inSun ? Math.min(SUN_MAX, sun + 40) : Math.max(0, sun - 1);
             t.putInt(SUN, sun);
             if (p.tickCount % 60 == 0) sync(p);
