@@ -45,6 +45,9 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
         return m;
     }
 
+    private static int failures;
+    private static boolean plainWarned;
+
     /** Girl bots get the girls' slim body (see FemaleBody). */
     @Override
     public void render(PartyBotEntity e, float yaw, float pt, PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers, int light) {
@@ -58,10 +61,14 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
                 try {
                     r.render(a, yaw, pt, pose, buffers, light);
                     NimbusUnder.render(e, yaw, pt, pose, buffers, light);
+                    failures = 0;
                     return;
                 } catch (Throwable t) {
-                    BotAvatars.disabled = true;                               // (never again this session: the plain look below)
-                    XenoWarriors.LOGGER.error("Drawing a bot as its character failed - using the plain bot look", t);
+                    // (one bad frame - another mod's renderer caught mid-batch, say - skips this bot for a frame; only if it
+                    //  keeps failing do bots switch to the plain look for the session)
+                    if (++failures >= 200) { BotAvatars.disabled = true; XenoWarriors.LOGGER.error("Drawing bots as their characters keeps failing - using the plain bot look", t); }
+                    else if (failures == 1) XenoWarriors.LOGGER.warn("Drawing a bot as its character failed this frame (skipped)", t);
+                    return;
                 } finally {
                     pose.popPose();
                 }
@@ -71,6 +78,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
         this.model = g ? girl : wide;
         com.xenowarriors.client.FemaleBody.npcGirl = g;
         try { super.render(e, yaw, pt, pose, buffers, light); }
+        catch (Throwable t) { if (!plainWarned) { plainWarned = true; XenoWarriors.LOGGER.warn("Drawing a bot's plain look failed (another mod's overlay?) - skipped", t); } }   // (never a crash: Epic Fight's health bar has no data for bots)
         finally { com.xenowarriors.client.FemaleBody.npcGirl = false; this.model = wide; }
     }
 

@@ -90,6 +90,7 @@ public class UltimaPrototypeEntity extends Monster {
     }
 
     public void setHome(BlockPos a) { home = a; }
+    public BlockPos home() { return home; }
 
     /**
      * Fitted to the party that woke it: health and damage grow with their Character Levels (and bots' levels), more
@@ -128,6 +129,7 @@ public class UltimaPrototypeEntity extends Monster {
         if (level().isClientSide) return;
         ServerLevel l = (ServerLevel) level();
         bar.setProgress(getHealth() / getMaxHealth());
+        if (home != null && tickCount % 10 == 0) ArenaLock.seal(this, GovDungeons.arena(home));   // (the arena is sealed while it's fighting)
         if (tickCount % 4 == 0) l.sendParticles(limiter ? RED : STEEL, getX(), getY() + 1.1, getZ(), 1, 0.3, 0.6, 0.3, 0);
         if (!limiter && getHealth() < getMaxHealth() * 0.5F) limiterRemoved(l);
         if (grabbed != null) { tickGrab(l); return; }
@@ -348,6 +350,7 @@ public class UltimaPrototypeEntity extends Monster {
     public void die(DamageSource src) {
         if (level() instanceof ServerLevel l) {
             release(l, false);
+            ArenaLock.release(this);
             say(l, "Error... system... shutting... down.", ChatFormatting.GRAY);
             if (home != null) GovDungeons.defeated(l, home);
             for (ServerPlayer p : l.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(48))) {
