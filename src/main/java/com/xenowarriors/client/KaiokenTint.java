@@ -55,8 +55,8 @@ public final class KaiokenTint {
         Minecraft mc = Minecraft.getInstance();
         if (e.phase != TickEvent.Phase.END || mc.level == null || mc.isPaused()) return;
         var dust = new DustParticleOptions(new Vector3f(1F, 0.08F, 0.08F), 1.1F);
-        for (var pl : mc.level.players()) {
-            if (!(pl instanceof AbstractClientPlayer p) || !com.xenowarriors.client.compat.DmzForms.kaioken(p)) continue;
+        for (AbstractClientPlayer p : mc.level.players()) {
+            if (!com.xenowarriors.client.compat.DmzForms.kaioken(p)) continue;
             if (p == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
             var r = p.getRandom();
             for (int i = 0; i < 3; i++) {
