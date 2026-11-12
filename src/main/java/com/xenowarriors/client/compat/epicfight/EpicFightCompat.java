@@ -430,16 +430,17 @@ public final class EpicFightCompat {
     }
 
     /**
-     * What only Epic Fight can show for Mikiko and Rhalix with bare hands or the Hekublade: dodges and rolls, being hit
-     * or knocked down, and its skills / special attacks. Anything else (its combat idle with the fists up, a guard,
-     * a transition between them) is drawn with their own animations.
+     * What only Epic Fight can show for Mikiko and Rhalix with bare hands or the Hekublade: dodges and rolls, and its
+     * skills / special attacks. Anything else (its combat idle with the fists up, a guard, a transition between them -
+     * and its getting-hurt animations: hit flinches, stuns and knockdowns) is drawn with their own animations.
      */
     private static boolean efOnly(Object anim) {
         if (anim == null) return false;
         String path = (anim.getClass().getSimpleName() + " " + anim).toLowerCase(java.util.Locale.ROOT);
         if (path.contains("guard")) return false;
-        if (path.contains("dodge") || path.contains("roll") || path.contains("step") || path.contains("knockdown")
-                || path.contains("hit") || path.contains("stun") || path.contains("fall") || path.contains("death")) return true;
+        if (path.contains("hit") || path.contains("stun") || path.contains("knockdown") || path.contains("knock_down")
+                || path.contains("hurt") || anim instanceof yesman.epicfight.api.animation.types.HitAnimation) return false;   // (no Epic Fight hurt animations on them)
+        if (path.contains("dodge") || path.contains("roll") || path.contains("step") || path.contains("fall") || path.contains("death")) return true;
         return anim instanceof yesman.epicfight.api.animation.types.AttackAnimation;
     }
 

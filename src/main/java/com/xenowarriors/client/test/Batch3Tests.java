@@ -60,6 +60,7 @@ public final class Batch3Tests {
         if (f.contains("aurora")) aurora(mc, l);
         if (f.contains("ultcharge")) ultCharge(mc, l);
         if (f.contains("protofac")) protoFacility(mc, l);
+        if (f.contains("hurtflinch")) hurtFlinch(mc, l);
         if (all || f.contains("magnet")) magnet(mc, l);
         if (all || f.contains("step")) step(mc, l);
         if (all || f.contains("faces")) faces(mc, l);
@@ -266,6 +267,20 @@ public final class Batch3Tests {
             }, 2);
         }
         l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle(was); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setHealth(p.getMaxHealth()); clearBots(p); }); }, 5);
+    }
+
+    // ------------------------------------------------------------------ Mikiko's and Rhalix's own getting-hurt flinch
+
+    private static void hurtFlinch(Minecraft mc, MikikoTests.Steps l) {
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX}) {
+            character(l, t);
+            l.add(null, () -> server(p -> { clearBots(p); pad(p, 6); p.setYRot(0); p.setYHeadRot(0); p.setYBodyRot(0); p.setXRot(0); }), 20);
+            camera(mc, l, 1.6, 0.2, 2.4);
+            l.add("batch3_hurt_" + t.getId() + "_still", () -> {}, 5);
+            l.add(null, () -> { mc.player.hurtDuration = 10; mc.player.hurtTime = 10; }, 2);
+            l.add("batch3_hurt_" + t.getId(), () -> log("hurt flinch " + t.getId() + " hurtTime " + mc.player.hurtTime), 1);
+            uncamera(mc, l);
+        }
     }
 
     // ------------------------------------------------------------------ the Government Prototype Facility and the Ultima Prototype

@@ -78,6 +78,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.SurfPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.BlockPose.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.UltimaAnim.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.HurtFlinch.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // Mikiko's / Rhalix's own getting-hurt flinch
                 com.xenowarriors.client.PhoneClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.kaeru.KaeruClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
             }
