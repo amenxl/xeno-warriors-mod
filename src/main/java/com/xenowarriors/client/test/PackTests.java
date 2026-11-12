@@ -140,7 +140,8 @@ public final class PackTests {
     /** Levels high enough for every skill slot, the guns (both styles) and the team ultimates. */
     private static void levels(ServerPlayer p) {
         p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
-            d.statLevel[0] = 10; d.statLevel[1] = 10; d.statLevel[2] = 10; d.bladeLevel = 60; d.bladeXp = 0; });
+            d.statLevel[0] = 20; d.statLevel[1] = 20; d.statLevel[2] = 20;   // (Character Level 60: every Season 1 skill a default slot can hold is unlocked)
+            d.bladeLevel = 60; d.bladeXp = 0; });
         com.xenowarriors.rhalix.WireLevel.set(p, 60);
         com.xenowarriors.compat.GunLevel.setLevel(p, 50);
         WeaponForms.sync(p, true);
