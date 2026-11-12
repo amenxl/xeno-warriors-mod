@@ -167,8 +167,10 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         // our skin-layout armor (Fox PJs, Flower Armor) has a 64x64 skin-layout texture for characters; the 64x32 one is for vanilla bodies
         if (armor instanceof com.xenowarriors.item.SkinLayoutArmor)
             tex = new ResourceLocation(domain, String.format(java.util.Locale.ROOT, "textures/models/armor/%s_skin_layer_%d.png", name, legs ? 2 : 1));
-        // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his
-        if (model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) {
+        // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his.
+        // A 64x32 texture is the old armor layout (Epic Fight's Stray Hat and robes...): our 64x64 cut would read the
+        // wrong rows of it (the robe's cloth over the face), so that's drawn on the plain armor model, as it was made.
+        if ((model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) && !oldLayout(tex)) {
             if (giInner == null) {
                 giInner = GiShapes.build(0.4F);         // pants: loose
                 giOuter = GiShapes.build(0.62F);        // tops: looser still, over the pants
@@ -205,6 +207,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             GiShapes.setup(gi, tex, slot);          // its 3D cut: collar, gi flap, belt, cuffs (or armor plate and pads)
             model = gi;
             giVoxels = true;
+        } else if (model == base) {
+            oldLayoutDrawn++;                                   // (base is posed like him already, this slot's parts shown)
         } else if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
             ((net.minecraft.client.model.HumanoidModel) getParentModel()).copyPropertiesTo(hm);
             showFor(hm, slot);
@@ -228,6 +232,23 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                 GiAccents.render(pose, buffers, tex, stack, getParentModel(), player.walkAnimation.speed(), player.tickCount + net.minecraft.client.Minecraft.getInstance().getFrameTime(), light);
         }
     }
+
+    private static final Map<ResourceLocation, Boolean> OLD_LAYOUT = new java.util.HashMap<>();
+
+    /** Is this armor texture in the old 64x32 layout (twice as wide as tall)? */
+    public static boolean oldLayout(ResourceLocation tex) {
+        return OLD_LAYOUT.computeIfAbsent(tex, t -> {
+            try (var in = net.minecraft.client.Minecraft.getInstance().getResourceManager().open(t);
+                 var img = com.mojang.blaze3d.platform.NativeImage.read(in)) {
+                return img.getWidth() >= img.getHeight() * 2;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+    }
+
+    /** (Tests) */
+    public static int oldLayoutDrawn;
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
         m.setAllVisible(false);

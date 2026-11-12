@@ -70,8 +70,34 @@ public class DistortionEntity extends Mob {
     @Override public void knockback(double s, double x, double z) {}
     @Override protected boolean shouldDespawnInPeaceful() { return false; }
 
-    private List<CorruptedSoulEntity> souls() {
-        return level().getEntitiesOfClass(CorruptedSoulEntity.class, new AABB(blockPosition()).inflate(28), s -> s.getPersistentData().getBoolean(TAG));
+    /** (Tests) Vessels and Spell Casters that came out. */
+    public static int others;
+
+    private net.minecraft.world.entity.Mob pick(ServerLevel s) {
+        float r = random.nextFloat();
+        if (r < 0.15F) {
+            var v = com.xenowarriors.foes.Foes.VESSEL.get().create(s);
+            if (v != null) others++;
+            return v;
+        }
+        if (r < 0.27F) {
+            var e = com.xenowarriors.foes.Foes.ELEMENTALIST.get().create(s);
+            if (e == null) return null;
+            var pool = com.xenowarriors.ka.Element.HUMAN;
+            var a = pool[random.nextInt(pool.length)];
+            var b = a;
+            while (b == a) b = pool[random.nextInt(pool.length)];
+            e.setup(a, b, 0);
+            others++;
+            return e;
+        }
+        return ModCorrupted.CORRUPTED_SOUL.get().create(s);
+    }
+
+    /** What came out of it (C-souls - and Vessels and Spell Casters too). */
+    private List<net.minecraft.world.entity.Mob> souls() {
+        return level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, new AABB(blockPosition()).inflate(28), s -> s.getPersistentData().getBoolean(TAG)
+                && (s instanceof CorruptedSoulEntity || s instanceof com.xenowarriors.foes.VesselEntity || s instanceof com.xenowarriors.foes.ElementalistEntity));
     }
 
     @Override
@@ -94,10 +120,10 @@ public class DistortionEntity extends Mob {
         if (!Seasons.unlocked(s.getServer(), 3) || ++age > LIFETIME) { discard(); return; }
         if (tickCount % 40 == 0) s.playSound(null, blockPosition(), SoundEvents.PORTAL_AMBIENT, SoundSource.HOSTILE, 0.6F, 0.5F);
         if (tickCount % 100 == 20) {                                      // more C-souls pour out
-            List<CorruptedSoulEntity> have = souls();
+            List<net.minecraft.world.entity.Mob> have = souls();
             int cap = 4 + 2 * lv;
             for (int i = 0; i < lv + 1 && have.size() + i < cap; i++) {
-                CorruptedSoulEntity soul = ModCorrupted.CORRUPTED_SOUL.get().create(s);
+                net.minecraft.world.entity.Mob soul = pick(s);                 // (mostly C-souls; now and then a Vessel or a Spell Caster)
                 if (soul == null) continue;
                 soul.moveTo(getX() + random.nextGaussian() * 0.5, getY() + 1.5 + random.nextDouble(), getZ() + random.nextGaussian() * 0.5, random.nextFloat() * 360F, 0);
                 soul.getPersistentData().putBoolean(TAG, true);
@@ -154,7 +180,7 @@ public class DistortionEntity extends Mob {
             ExperienceOrb.award(s, position(), 40 * size());
             for (ServerPlayer p : s.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(48)))   // (with DragonMineZ: a good amount of Dragon Ball TP)
                 com.xenowarriors.compat.DmzTpRewards.give(p, closeTp(size()), "closing a Distortion");
-            for (CorruptedSoulEntity soul : souls()) { s.sendParticles(BLACK, soul.getX(), soul.getY(), soul.getZ(), 10, .2, .2, .2, 0); soul.discard(); }
+            for (net.minecraft.world.entity.Mob soul : souls()) { s.sendParticles(BLACK, soul.getX(), soul.getY(), soul.getZ(), 10, .2, .2, .2, 0); soul.discard(); }
             for (ServerPlayer p : s.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(48)))
                 p.displayClientMessage(Component.literal("The Distortion closes.").withStyle(ChatFormatting.LIGHT_PURPLE), true);
         }
