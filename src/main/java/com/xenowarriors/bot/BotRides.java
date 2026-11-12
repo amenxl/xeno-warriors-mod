@@ -57,6 +57,49 @@ public final class BotRides {
         return false;
     }
 
+    /** (Tests) bikes Technica bots called because they couldn't keep up / find a ride; attachments they fitted. */
+    public static int ownBikes, fitted;
+
+    /**
+     * Technica: you're riding something and she can't keep up (she's fallen behind) or can't get in (no seat, or it's
+     * not something she can ride in) - she calls her own motorcycle and follows you on it.
+     */
+    static void ownBike(PartyBotEntity b, ServerPlayer o) {
+        if (b.isPassenger() || b.downed() || b.journey() || b.getTarget() != null || b.level() != o.level() || !(b.level() instanceof ServerLevel l)) return;
+        net.minecraft.world.entity.Entity ov = o.getVehicle();
+        if (ov == null || com.xenowarriors.modes.ModeRules.arena(l)) return;
+        if (ov instanceof VehicleEntity ve && ve.kind.technica() && o.getUUID().equals(ve.owner())) return;     // (you're on her bike yourself)
+        boolean canGetIn = (ov instanceof VehicleEntity ve && room(ve)) || (ov instanceof net.minecraft.world.entity.vehicle.Boat bt && bt.getPassengers().size() < 2);
+        boolean behind = b.distanceToSqr(ov) > 14 * 14;
+        if (canGetIn && !behind) return;                                         // (she can just hop in - PartyBots.boardWith)
+        if (canGetIn && b.distanceToSqr(ov) < 5 * 5) return;
+        for (VehicleEntity v : l.getEntitiesOfClass(VehicleEntity.class, b.getBoundingBox().inflate(24), x -> x.isAlive() && follower(x, o) && room(x)))
+            if (!behind) return;                                                 // (a teammate's ride with a seat close by: overflow takes it)
+        VehicleEntity v = TechnicaBike.summon(o, b);
+        if (v == null || !v.getPassengers().isEmpty()) return;
+        v.getPersistentData().putBoolean(SUMMONED, true);
+        if (drive(b, v, o)) {
+            ownBikes++;
+            o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(b.label()).append(behind ? " can't keep up on foot - she calls her motorcycle!" : " calls her motorcycle to follow you!").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
+        }
+    }
+
+    /** Technica fits attachments from her bag to her motorcycle herself. */
+    static void upgrade(PartyBotEntity b, ServerPlayer o) {
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) {
+            net.minecraft.world.item.ItemStack s = b.inventory.getItem(i);
+            if (!(s.getItem() instanceof TechnicaBike.AttachmentItem a)) continue;
+            if (!TechnicaBike.botInstall(o, a.bit)) continue;                     // (already on: she keeps the spare)
+            s.shrink(1);
+            b.inventory.setChanged();
+            fitted++;
+            b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            b.level().playSound(null, b.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_USE, net.minecraft.sounds.SoundSource.NEUTRAL, 0.7F, 1.6F);
+            o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(b.label()).append(" fitted the " + TechnicaBike.NAMES[a.bit] + " to her motorcycle!").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
+            return;
+        }
+    }
+
     /** (Tests) as if its owner's vehicle had no room for it. */
     public static boolean boardForTest(PartyBotEntity b, ServerPlayer o) { return PartyBots.boardWith(b, o); }
 
@@ -98,6 +141,10 @@ public final class BotRides {
                     if (v.has(TechnicaBike.ROCKETS) && t.getHealth() > 30 && b.getRandom().nextInt(6) == 0) TechnicaBike.fire(b, 1, t);
                 }
             }
+        }
+        if (o.tickCount % 20 == 7) for (PartyBotEntity b : PartyBots.bots(o)) if (b.character() == com.xenowarriors.character.CharacterType.TECHNICA) {
+            if (o.tickCount % 100 == 7) upgrade(b, o);
+            ownBike(b, o);
         }
         // a motorcycle a bot summoned, now empty: it goes away
         if (o.tickCount % 20 == 2 && o.level() instanceof ServerLevel l) {

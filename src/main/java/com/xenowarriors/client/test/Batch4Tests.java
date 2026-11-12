@@ -87,6 +87,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("botlife")) botLife(mc, l);
         if (f.isEmpty() || f.contains("teamjukebox")) teamJukebox(mc, l);
         if (f.isEmpty() || f.contains("boostpass")) boostPass(mc, l);
+        if (f.isEmpty() || f.contains("techbike")) techBike(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
@@ -1630,6 +1631,39 @@ public final class Batch4Tests {
     }
 
     // ------------------------------------------------------------------ bots picking things up, music
+
+    private static void techBike(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        net.minecraft.world.entity.Entity[] car = new net.minecraft.world.entity.Entity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            com.xenowarriors.vehicle.TechnicaBike.setAttachmentsForTest(p, 1);
+            b[0] = botAt(p, CharacterType.TECHNICA, 18, 0);
+            b[0].inventory.addItem(new ItemStack(com.xenowarriors.vehicle.TechnicaBike.ATTACHMENTS[com.xenowarriors.vehicle.TechnicaBike.ROCKETS].get()));
+            var c = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.CAR).get().create(p.serverLevel());
+            c.moveTo(p.getX(), p.getY(), p.getZ() + 3, 0, 0);
+            p.serverLevel().addFreshEntity(c);
+            car[0] = c;
+            p.startRiding(c, true);
+        }), 20 * 7);
+        l.add(null, () -> server(p -> {
+            boolean onBike = b[0].getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity v && v.kind.technica();
+            log("techbike: you drive off, Technica too far behind -> she rides her own motorcycle " + onBike + " (bikes " + com.xenowarriors.bot.BotRides.ownBikes + ") -> " + (onBike ? "PASS" : "FAIL"));
+            boolean rockets = (com.xenowarriors.vehicle.TechnicaBike.attachments(p) & (1 << com.xenowarriors.vehicle.TechnicaBike.ROCKETS)) != 0;
+            boolean used = b[0].inventory.countItem(com.xenowarriors.vehicle.TechnicaBike.ATTACHMENTS[com.xenowarriors.vehicle.TechnicaBike.ROCKETS].get()) == 0;
+            log("techbike: she fitted the Rocket Pod herself " + rockets + " (item used " + used + ") -> " + (rockets && used ? "PASS" : "FAIL"));
+        }), 5);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 20), 10);
+        l.add("batch4_techbike", () -> {}, 3);
+        l.add(null, () -> server(p -> { p.stopRiding(); car[0].discard(); }), 40);
+        l.add(null, () -> server(p -> {
+            log("techbike: you get out -> she's off it " + !b[0].isPassenger() + " -> " + (!b[0].isPassenger() ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 5);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
 
     private static void setBotStat(ServerPlayer p, CharacterType t, int i, int lv) {
         p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {

@@ -280,6 +280,19 @@ public final class TechnicaBike {
     }
 
     /** (Tests) */
+    /**
+     * A Technica bot fits an attachment from its bag to its owner's motorcycle (her bike: the one her player calls too).
+     * True if it went on (false: it's already there).
+     */
+    public static boolean botInstall(Player owner, int bit) {
+        int a = attachments(owner);
+        if ((a & (1 << bit)) != 0) return false;
+        a |= 1 << bit;
+        setAttachments(owner, a);
+        if (owner instanceof ServerPlayer sp) { VehicleEntity v = out(sp); if (v != null) v.setAttachments(a); }
+        return true;
+    }
+
     public static void setAttachmentsForTest(Player owner, int a) { setAttachments(owner, a); }
     public static void forgetForTest(UUID owner) { OUT.remove(owner); }
 }
