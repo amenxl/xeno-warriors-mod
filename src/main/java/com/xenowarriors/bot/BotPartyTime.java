@@ -139,6 +139,7 @@ public final class BotPartyTime {
             }
         }
         PARTIES.put(o.getUUID(), pt);
+        BotRps.partyStarted(o, o.level().getGameTime());                        // (rock, paper, scissors: at least one game every party)
         thrown++;
         List<LivingEntity> first = guests(o, pt);
         for (LivingEntity g : first)                                          // a bot with a jukebox: Xeno Warriors music
@@ -199,6 +200,7 @@ public final class BotPartyTime {
         for (LivingEntity g : gs) if (g instanceof PartyBotEntity b && o.tickCount % 10 == b.getId() % 10
                 && !(pt.battle != null && (b.character().getId().equals(pt.battle[0]) || b.character().getId().equals(pt.battle[1])))) dance(b, pt);   // (the rappers stay put)
         if (o.tickCount % 400 == 0) bondTick(o, gs, BOND_TICK * (rappers(gs) ? RAPPERS_BONUS : 1F));
+        if (o.tickCount % 10 == 3) BotRps.tick(o, gs, now);
     }
 
     /** A beat: kick, hat, snare, hat (the beatboxers bob along). */
@@ -326,6 +328,7 @@ public final class BotPartyTime {
 
     private static void end(ServerPlayer o, Party pt, boolean full) {
         PARTIES.remove(o.getUUID());
+        BotRps.partyEnded(o);
         ServerLevel l = o.serverLevel();
         if (pt.cake != null && l.getBlockState(pt.cake).is(Blocks.CAKE)) l.removeBlock(pt.cake, false);
         BotJukebox.packUp(o);                                                  // (the jukebox packed up)

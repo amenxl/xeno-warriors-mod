@@ -522,6 +522,10 @@ public final class ModNetwork {
                 .encoder(ScentPacket::encode).decoder(ScentPacket::decode).consumerMainThread(ScentPacket::handle).add();
         CHANNEL.messageBuilder(TogglesPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (toggle wheel, Passives / R+L Click tabs)
                 .encoder(TogglesPacket::encode).decoder(TogglesPacket::decode).consumerMainThread(TogglesPacket::handle).add();
+        CHANNEL.messageBuilder(RpsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (a bot's rock, paper, scissors challenge at a party)
+                .encoder(RpsPacket::encode).decoder(RpsPacket::decode).consumerMainThread(RpsPacket::handle).add();
+        CHANNEL.messageBuilder(RpsPickPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(RpsPickPacket::encode).decoder(RpsPickPacket::decode).consumerMainThread(RpsPickPacket::handle).add();
         CHANNEL.messageBuilder(ToggleActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ToggleActionPacket::encode).decoder(ToggleActionPacket::decode).consumerMainThread(ToggleActionPacket::handle).add();
         CHANNEL.messageBuilder(BusyCharsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (character select: who's busy off duty)

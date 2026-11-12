@@ -88,6 +88,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("teamjukebox")) teamJukebox(mc, l);
         if (f.isEmpty() || f.contains("boostpass")) boostPass(mc, l);
         if (f.isEmpty() || f.contains("techbike")) techBike(mc, l);
+        if (f.isEmpty() || f.contains("rps")) rps(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
@@ -1631,6 +1632,37 @@ public final class Batch4Tests {
     }
 
     // ------------------------------------------------------------------ bots picking things up, music
+
+    private static void rps(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            botAt(p, CharacterType.GARRY, 2, 2); botAt(p, CharacterType.STEVIE, -2, 2);
+        }), 20);
+        l.add(null, () -> server(p -> {
+            boolean on = com.xenowarriors.bot.BotPartyTime.start(p);
+            log("rps: party " + on);
+            com.xenowarriors.bot.BotRps.nowForTest(p, false);
+        }), 20 * 6);
+        l.add(null, () -> server(p -> {
+            log("rps: two bots played rock, paper, scissors " + com.xenowarriors.bot.BotRps.botGames + " -> " + (com.xenowarriors.bot.BotRps.botGames > 0 ? "PASS" : "FAIL"));
+            com.xenowarriors.bot.BotRps.nowForTest(p, true);
+        }), 20);
+        l.add(null, () -> mc.options.hideGui = false, 2);
+        l.add("batch4_rps_challenge", () -> log("rps: a bot challenged you - the screen is up " + (mc.screen instanceof com.xenowarriors.client.party.RpsScreen) + " -> " + (mc.screen instanceof com.xenowarriors.client.party.RpsScreen ? "PASS" : "FAIL")), 2);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.RpsScreen r) r.pick(0); }, 15);
+        l.add("batch4_rps_result", () -> {}, 2);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.RpsScreen r) r.pick(1); }, 15);   // (a draw: again)
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.RpsScreen r) r.pick(2); }, 15);
+        l.add(null, () -> server(p -> {
+            boolean done = !com.xenowarriors.bot.BotRps.waitingForTest(p);
+            log("rps: you played (" + com.xenowarriors.bot.BotRps.playerGames + " games, " + com.xenowarriors.bot.BotRps.playerWins + " won) - it's settled " + done + " -> " + (done && com.xenowarriors.bot.BotRps.playerGames > 0 ? "PASS" : "FAIL"));
+            com.xenowarriors.bot.BotPartyTime.endForTest(p);
+            Batch3Tests.clearBots(p);
+        }), 60);
+        l.add(null, () -> mc.setScreen(null), 3);
+    }
 
     private static void techBike(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);
