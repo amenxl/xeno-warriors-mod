@@ -250,6 +250,8 @@ public final class DmzFusion {
             setType.invoke(status, type);
             String botName = b.character().getDisplayName().getString();
             String name = (String) buildName.invoke(null, p.getGameProfile().getName(), botName, type);
+            String look = FusionLooks.lookFor(com.xenowarriors.character.ModCapabilities.getType(p).getId(), b.character().getId());
+            if (look != null) name = FusionLooks.NAMES.get(look);                    // (Rhaliko, Mikuri: fusions with their own look)
             setName.invoke(status, name);
             mixAppearance.invoke(null, me, them);
             removeBonuses.invoke(getBonus.invoke(me), "FusionBonus");                // (a stale one left by a crash would stack on top)

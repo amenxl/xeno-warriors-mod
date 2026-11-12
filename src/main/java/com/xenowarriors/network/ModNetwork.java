@@ -514,6 +514,8 @@ public final class ModNetwork {
                 .encoder(PartyHatsPacket::encode).decoder(PartyHatsPacket::decode).consumerMainThread(PartyHatsPacket::handle).add();
         CHANNEL.messageBuilder(com.xenowarriors.mining.CoMinePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (mining together: helpers on your block)
                 .encoder(com.xenowarriors.mining.CoMinePacket::encode).decoder(com.xenowarriors.mining.CoMinePacket::decode).consumerMainThread(com.xenowarriors.mining.CoMinePacket::handle).add();
+        CHANNEL.messageBuilder(com.xenowarriors.compat.FusionLooks.FusionLookPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (a fused player's look)
+                .encoder(com.xenowarriors.compat.FusionLooks.FusionLookPacket::encode).decoder(com.xenowarriors.compat.FusionLooks.FusionLookPacket::decode).consumerMainThread(com.xenowarriors.compat.FusionLooks.FusionLookPacket::handle).add();
         CHANNEL.messageBuilder(com.xenowarriors.vehicle.BikeFirePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)   // (Technica's bike guns)
                 .encoder(com.xenowarriors.vehicle.BikeFirePacket::encode).decoder(com.xenowarriors.vehicle.BikeFirePacket::decode).consumerMainThread(com.xenowarriors.vehicle.BikeFirePacket::handle).add();
     }

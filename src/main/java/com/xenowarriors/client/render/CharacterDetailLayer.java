@@ -70,6 +70,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return instance.foxKing;
         if (lunar(p, type) && instance.lunarModel != null) return instance.lunarModel;      // crescent-moon wings
+        var fl = com.xenowarriors.client.FusionLook.of(p);
+        if (fl != null && fl.model() != null) return fl.model();                                // a fusion: its own model
         DetailModel om = instance.outfitModel(p, type);
         if (om != null) return om;
         return instance.models.get(type);
@@ -78,6 +80,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     /** Resource path of the detail model this player shows (for Epic Fight's own copy). */
     public static String detailModelPath(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
+        var fl = com.xenowarriors.client.FusionLook.of(p);
+        if (fl != null) return fl.modelPath();
         String name = isFoxKing(p, type) ? "mikiko_foxking" : lunar(p, type) ? "rhalix_lunar" : outfitName(p, type);
         return "/assets/" + com.xenowarriors.XenoWarriors.MOD_ID + "/models/detail/" + name + ".json";
     }
@@ -198,6 +202,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (f.silhouette) { f.face = com.xenowarriors.client.kaeru.ChangeClient.SIL_FACE; return f; }
         String expr = expression(p, type);
         f.expr = expr;
+        var fusion = com.xenowarriors.client.FusionLook.of(p);
+        if (fusion != null) {                                                                  // a fusion: its own faces (and the shared talking mouths)
+            f.face = face(fusion.id, expr);
+            int mouth = talkingMouth(p, expr);
+            if (mouth > 0) f.mouth = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fusion.id + "_mouth_" + mouth + ".png");
+            return f;
+        }
         boolean dr = drawn(type);
         String fp = dr ? type.getId() + "_drawn" : type.getId();
         if (type == CharacterType.ULTIMA && com.xenowarriors.client.UltimaClient.overload(p.getId())) f.face = face(fp, "overload");
@@ -502,6 +513,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         DetailModel om = outfit > 0 ? outfitModel(player, type) : null;
         if (om != null) model = om;
         else outfit = 0;
+        var fusionModel = com.xenowarriors.client.FusionLook.of(player);
+        if (fusionModel != null && fusionModel.model() != null) { model = fusionModel.model(); outfit = 0; king = false; }   // a fusion: its own model
         if (model == null) return;
 
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
@@ -598,7 +611,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (outfit == 0 && torn == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(player.getId())) detailTex = LUNAR_TEX;
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         var fusionLook = com.xenowarriors.client.FusionLook.of(player);
-        if (fusionLook != null) detailTex = fusionLook.details();
+        if (fusionLook != null) detailTex = com.xenowarriors.client.cel.Cel.tex(fusionLook.details());
         detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
@@ -643,7 +656,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
-        if (formHair < 0 && fusionLook != null) formHair = fusionLook.hair();
+        if (fusionLook != null) formHair = -1;                                              // (a fusion keeps its own hair colours)
         if (formHair >= 0 && model.hair == null && type == CharacterType.KYRIE) {     // (Kyrie's hair is the head's own strands: the whole head with the mask, only the hair shows)
             float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
             poseStack.pushPose();

@@ -42,7 +42,8 @@ public abstract class AbstractClientPlayerMixin {
     private void xenowarriors$characterModel(CallbackInfoReturnable<String> cir) {
         CharacterType t = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
         if (t != CharacterType.NONE && t != CharacterType.YOU) {
-            cir.setReturnValue(com.xenowarriors.client.FemaleBody.is((AbstractClientPlayer) (Object) this) ? "slim" : "default");
+            cir.setReturnValue(com.xenowarriors.client.FusionLook.of((AbstractClientPlayer) (Object) this) == null
+                    && com.xenowarriors.client.FemaleBody.is((AbstractClientPlayer) (Object) this) ? "slim" : "default");   // (fusions: the wide body)
         }
     }
 }

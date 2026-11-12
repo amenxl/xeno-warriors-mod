@@ -170,16 +170,22 @@ public final class Batch4Tests {
     // ------------------------------------------------------------------ fusion look previews
 
     private static void fusionLook(Minecraft mc, MikikoTests.Steps l) {
-        String[] keys = {"rhalix_mikiko_a", "rhalix_mikiko_b", "rhalix_mikiko_c", "mikiko_rhalix_a", "mikiko_rhalix_b", "mikiko_yuri_a", "mikiko_yuri_b", "yuri_mikiko_a"};
+        String[] keys = {"fusion_rhaliko", "fusion_mikuri"};
         for (String k : keys) {
-            CharacterType base = CharacterType.valueOf(k.substring(0, k.indexOf('_')).toUpperCase());
+            CharacterType base = k.equals("fusion_rhaliko") ? CharacterType.RHALIX : CharacterType.YURI;
             Batch3Tests.character(l, base);
             l.add(null, () -> { com.xenowarriors.client.FusionLook.preview = com.xenowarriors.client.FusionLook.LOOKS.get(k); mc.options.hideGui = true; }, 10);
             l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 5), 15);
             l.add("batch4_fusion_" + k, () -> {}, 5);
             l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 5), 15);
             l.add("batch4_fusion_" + k + "_back", () -> {}, 5);
-            l.add(null, () -> { com.xenowarriors.client.FusionLook.preview = null; mc.options.hideGui = false; log("fusionlook " + k + " shown"); }, 3);
+            l.add(null, () -> {
+                var lk = com.xenowarriors.client.FusionLook.LOOKS.get(k);
+                log("fusionlook " + k + ": model " + (lk.model() != null) + " face " + com.xenowarriors.client.render.CharacterDetailLayer.faceTexture(mc.player)
+                        + " pair rhalix+mikiko=" + com.xenowarriors.compat.FusionLooks.lookFor("mikiko", "rhalix") + " mikiko+yuri=" + com.xenowarriors.compat.FusionLooks.lookFor("yuri", "mikiko")
+                        + " -> " + (lk.model() != null && com.xenowarriors.client.render.CharacterDetailLayer.faceTexture(mc.player).getPath().contains(k) ? "PASS" : "FAIL"));
+                com.xenowarriors.client.FusionLook.preview = null; mc.options.hideGui = false;
+            }, 3);
         }
         for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO, CharacterType.YURI}) {   // (the originals, to compare)
             Batch3Tests.character(l, t);
