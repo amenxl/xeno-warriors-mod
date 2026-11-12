@@ -700,8 +700,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             String mask = type == CharacterType.KYRIE ? "kyrie_details_hairmask" : outfit > 0 ? "yuri_c1pjs_details_hairmask" : "yuri_details_hairmask";
             poseStack.pushPose();
             model.root.translateAndRotate(poseStack);
+            if (type == CharacterType.YURI) { poseStack.pushPose(); poseStack.scale(1.025F, 1.02F, 1.025F); }   // (a hair over her own bob, so the tint always shows - no flicker with the black under it)
             model.head.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id("textures/entity/character/" + mask + ".png"))),
                     packedLight, overlay, hr, hg, hb, 1F);
+            if (type == CharacterType.YURI) poseStack.popPose();
             if (type == CharacterType.YURI && !noHead) {                            // Yuri: her Super Saiyan hair over the bob, styled for the form
                 DetailModel sh = yuriSsjHair();
                 if (sh != null && sh.hair != null) {

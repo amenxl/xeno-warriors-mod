@@ -55,8 +55,12 @@ def build():
         return {'name': n, 'pivot': [0, 0, 0], 'rot': [0, 0, 0], 'children': [],
                 'cubes': [{'uv': [u, v], 'from': [round(-hi[0], 3), round(-(hi[1] - 24), 3), round(lo[2], 3)], 'size': [round(hi[i] - lo[i], 3) for i in range(3)]}]}
     cap = [box([-4.75, 32.95, -4.75], [4.75, 33.75, 4.75], L1, 'cap_top')]     # (just over her own bob's top)
-    model = {'texture_size': 128, 'bones': {'head': {'pivot': [0, 0, 0], 'cubes': [], 'children': [
-        {'name': 'hair', 'pivot': [0, 0, 0], 'rot': [0, 0, 0], 'cubes': [], 'children': cap + nodes}]}}}
+    yuri = json.load(open(RES + 'models/detail/yuri.json'))
+    bones = {'head': {'pivot': [0, 0, 0], 'cubes': [], 'children': [
+        {'name': 'hair', 'pivot': [0, 0, 0], 'rot': [0, 0, 0], 'cubes': [], 'children': cap + nodes}]}}
+    for b in ('body', 'right_arm', 'left_arm', 'right_leg', 'left_leg'):      # (the loader wants every bone, even empty)
+        bones[b] = {'pivot': yuri['bones'][b]['pivot'], 'cubes': [], 'children': []}
+    model = {'texture_size': 128, 'bones': bones}
     json.dump(model, open(RES + 'models/detail/yuri_ssjhair.json', 'w'), separators=(',', ':'))
     atlas.save(CH + 'yuri_ssjhair.png')
     return sum(len(s.cubes()) for s in st)
