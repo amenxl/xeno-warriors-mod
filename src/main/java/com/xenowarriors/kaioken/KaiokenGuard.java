@@ -90,7 +90,7 @@ public final class KaiokenGuard {
     public static void onDrops(LivingDropsEvent event) {
         LivingEntity victim = event.getEntity();
         if (victim.level().isClientSide || event.isCanceled() || victim instanceof Player || victim instanceof PartyBotEntity) return;
-        if (!com.xenowarriors.karma.KarmaSensing.boss(victim)) return;
+        if (!com.xenowarriors.karma.KarmaSensing.boss(victim) && !victim.getPersistentData().getBoolean("xw_boss") && !(victim instanceof com.xenowarriors.gov.UltimaPrototypeEntity)) return;
         Entity src = event.getSource().getEntity();
         if (src instanceof FakePlayer fp) { PartyBotEntity b = PartyBots.botOf(fp); if (b != null) src = b; }
         ServerPlayer owner = src instanceof ServerPlayer p && !(p instanceof FakePlayer) ? p : src instanceof PartyBotEntity b ? b.owner() : null;

@@ -49,6 +49,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("kaioken")) kaioken(mc, l);
         if (dmz && (f.isEmpty() || f.contains("botweights"))) botWeights(mc, l);
         if (f.isEmpty() || f.contains("botai")) botAi(mc, l);
+        if (f.isEmpty() || f.contains("pickup")) pickupMusic(mc, l);
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
@@ -240,10 +241,8 @@ public final class Batch4Tests {
         }), 140);
         l.add(null, () -> server(p -> {
             com.xenowarriors.kaioken.KaiokenGuard.forced = true;
-            var w = net.minecraft.world.entity.EntityType.WITHER_SKELETON.create(p.serverLevel());
-            w.moveTo(p.getX(), p.getY(), p.getZ() + 3, 0, 0);
-            w.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(400);
-            w.setHealth(400); w.getPersistentData().putBoolean("xw_boss", true);
+            var w = net.minecraft.world.entity.EntityType.ELDER_GUARDIAN.create(p.serverLevel());
+            w.moveTo(p.getX(), p.getY(), p.getZ() + 3, 0, 0); w.setNoAi(true);
             p.serverLevel().addFreshEntity(w);
             int before = com.xenowarriors.kaioken.KaiokenGuard.dropped;
             w.hurt(p.damageSources().playerAttack(p), 10000F);
@@ -335,5 +334,43 @@ public final class Batch4Tests {
             Object lv = Dmz6Tests.call(skills, "getSkillLevel", "ultimate");
             log("oldkai: Potential Unlock 1 -> " + low + "; level 3, alignment 50 -> " + ok + " (ultimate level " + lv + ") -> " + (low.startsWith("not yet") && ok.equals("unleashed") ? "PASS" : "FAIL"));
         }); }, 30);
+    }
+
+    // ------------------------------------------------------------------ bots picking things up, music
+
+    private static void pickupMusic(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            for (int i = 0; i < p.getInventory().items.size(); i++) p.getInventory().items.set(i, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE, 64));
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b == null) { log("pickup: no bot FAIL"); return; }
+            b.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0);
+            var it = new net.minecraft.world.entity.item.ItemEntity(p.level(), p.getX() + 1.2, p.getY(), p.getZ() + 1.2, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND, 3));
+            it.setPickUpDelay(10); it.addTag("xw_b4");
+            p.level().addFreshEntity(it);
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.MUSIC_DISC_CAT));
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_PLANKS, 8));
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND, 1));
+        }), 20);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            int dia = b == null ? -1 : b.inventory.countItem(net.minecraft.world.item.Items.DIAMOND);
+            log("pickup: your inventory full, the bot picked up the diamonds by you: bot has " + dia + " diamonds -> " + (dia >= 3 ? "PASS" : "FAIL"));
+            for (int i = 0; i < p.getInventory().items.size(); i++) p.getInventory().items.set(i, net.minecraft.world.item.ItemStack.EMPTY);
+            if (b != null) b.inventory.removeItemType(net.minecraft.world.item.Items.DIAMOND, Math.max(0, dia - 1));
+            String m = b == null ? "-" : com.xenowarriors.bot.BotJukebox.start(b, p.serverLevel(), p, true);
+            log("music: " + m + " -> " + (m.startsWith("playing") ? "PASS" : "FAIL"));
+        }), 120);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 25), 20);
+        l.add("batch4_jukebox", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            if (b == null) return;
+            com.xenowarriors.bot.BotJukebox.endForTest(b);
+            boolean back = b.inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) == 1 && b.inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_CAT) == 1;
+            log("music: packed up -> jukebox and disc back in its bag " + back + " -> " + (back ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 10);
     }
 }

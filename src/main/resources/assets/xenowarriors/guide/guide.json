@@ -75,6 +75,14 @@
           "text": "- Skills are saved for fights that need them: a bot won't use a skill (its own or a Dragon Ball ki technique) on an enemy it could beat in about 5 plain hits, and the more bots in your party, the less often each one reaches for a skill.\n- Badly hurt (under 35% health) in a fight, a bot pulls back to recover instead of fighting until it goes down: fliers fly up and away, the rest run - towards you when you're away from the danger. Once it's safe (or back over 55%) it eats, or heads for a healing pod."
         },
         {
+          "title": "Bots pick things up",
+          "text": "- Out of a fight, bots walk over to loose drops near you and pick them up.\n- When your inventory is full, they go for what you can't carry straight away - even right next to you - and keep it in their bag for you.\n- Otherwise they leave fresh drops for you for a while (about 10 seconds) and only tidy up what's left lying around.\n- Things you threw away yourself and Stat Boosts are left alone."
+        },
+        {
+          "title": "Bots and music",
+          "text": "A bot with a music disc and a jukebox in its bag - or 8 planks and a diamond to craft one - now and then puts on some music when things are quiet: it sets the jukebox down next to you and plays the disc.\n- When the song's over, a fight starts or you wander off, it packs the jukebox and the disc back into its bag.\n- Not where blocks can't be placed (protected modes)."
+        },
+        {
           "title": "Bots off duty",
           "text": "Characters that aren't on your team get on with their own lives while you play (a minute at a time, while you're online):\n- Training (Attack and Defense; with DragonMineZ also TP for its own Dragon Ball character), relaxing (after going down a lot lately, or after a long time with you), out at a party (two or three of them together), their own DMZ missions (with DragonMineZ: TP), mining (ore into their own bag - rarer ores the higher your Mining level, never once the bag and extra tabs are full; it adds to your Mining level), chopping wood, building (Building XP).\n- The bot pick screen (/xeno bot) shows what each is up to, with a little animated badge.\n- Busy ones can't join - unless your bond with them is 60+: then they drop it and come. They bring what they got (it's in their bag) and their new levels.\n- With a bond of 50+, right-click a card to give them a job (mining, wood, training, DMZ missions, building, relax) - they keep at it until you call them back (or add them).\n- A teammate you have a bond under 30 with may wander off to train after 20 quiet minutes (never in a fight, a Journey, the Tower or VR).\n- Season-locked characters do nothing until unlocked. In creative, /xeno offduty off (or on) turns it all off or on for the world."
         },

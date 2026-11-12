@@ -258,6 +258,7 @@ public class PartyBotEntity extends PathfinderMob {
         goalSelector.addGoal(4, new BotRanged(this));                                                   // bows, crossbows, guns: far or out-of-reach enemies
         goalSelector.addGoal(5, new FlyChase());                                                        // fliers: up to what they can't walk to
         goalSelector.addGoal(6, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
+        goalSelector.addGoal(7, new CollectItems());                                                    // (loose drops nearby - first of all ones you've no room for)
         goalSelector.addGoal(7, new CoMineGoal());                                                      // (helps you dig the block you're digging, in any mode)
         goalSelector.addGoal(7, new MineGoal());
         goalSelector.addGoal(7, new BotErrands(this));                                                  // (quiet times: furnaces, handing things over, Ultima's shards, Yuri's look about)
@@ -659,6 +660,40 @@ public class PartyBotEntity extends PathfinderMob {
     /** Mining mode: senses ore near you (Karma Sense, or Data Sense for Ultima) and digs it out into its bag. */
     /** Mine mode: ore it senses near you, and trees (the whole trunk comes down), with the best tool it has. */
     /**
+     * Picking things up: out of a fight, it walks over to loose drops near you and picks them up - right away when your
+     * inventory has no room for them (it carries them for you), otherwise ones lying about for a while.
+     */
+    class CollectItems extends Goal {
+        ItemEntity item; int ticks, lastLook;
+        CollectItems() { setFlags(EnumSet.of(Flag.MOVE)); }
+        @Override public boolean canUse() {
+            if (tickCount - lastLook < 20) return false;
+            lastLook = tickCount;
+            ServerPlayer o = owner();
+            if (o == null || o.level() != level() || downed() || getTarget() != null || isPassenger() || reviving != null || journey() || sparring()) return false;
+            ItemEntity best = null; double bestD = Double.MAX_VALUE;
+            for (ItemEntity it : level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(10, 4, 10), PartyBotEntity::pickable)) {
+                if (it.distanceToSqr(o) > 16 * 16 || !inventory.canAddItem(it.getItem())) continue;
+                boolean full = ownerFull(o, it.getItem());
+                if (!full && (it.getAge() < 200 || it.distanceToSqr(o) < 4 * 4)) continue;    // (you can still take it: leave it a while for you)
+                double d = it.distanceToSqr(PartyBotEntity.this) - (full ? 400 : 0);          // (ones you can't take first)
+                if (d < bestD) { bestD = d; best = it; }
+            }
+            item = best;
+            return best != null;
+        }
+        @Override public boolean canContinueToUse() { return item != null && item.isAlive() && ticks < 200 && getTarget() == null && !downed(); }
+        @Override public void start() { ticks = 0; }
+        @Override public void stop() { item = null; getNavigation().stop(); }
+        @Override public void tick() {
+            ticks++;
+            if (item == null) return;
+            if (distanceToSqr(item) > 1.2 * 1.2) { if (getNavigation().isDone() || ticks % 10 == 0) getNavigation().moveTo(item.getX(), item.getY(), item.getZ(), 1.2); }
+            else pickUpItems();
+        }
+    }
+
+    /**
      * Mining together (CoMining): its owner is digging a block close by - it steps up beside the block (never between
      * them and it), looks at it and digs along, which makes their digging faster. Any mode, out of a fight.
      */
@@ -805,7 +840,8 @@ public class PartyBotEntity extends PathfinderMob {
         tickMoves();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         if (tickCount % 20 == 0) BotGear.tickIdle(this);                         // (puts its weapon away after a fight; crafting ideas)
-        if (tickCount % 20 == 15) BotBags.tick(this);                            // (keeps its things tidy when it's idle)
+        if (tickCount % 20 == 15) BotBags.tick(this);
+        if (tickCount % 20 == 17) BotJukebox.tick(this);                       // (now and then: a jukebox and a disc from its bag, some music)                            // (keeps its things tidy when it's idle)
         ServerPlayer o = owner();
         if (o == null && ownerId() == null) { if (tickCount > 100 && !isNoAi()) { PartyBots.forgetFake(getUUID()); discard(); } return; }   // (nobody's bot, e.g. summoned by command: it goes; a no-AI display one stays)
         if (o == null && tickCount > 100 && tickCount % 40 == 0) { if (!journey()) PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }   // owner gone: kept until they're back
@@ -896,11 +932,26 @@ public class PartyBotEntity extends PathfinderMob {
 
     public boolean eating() { return eatTicks >= 0; }
 
+    /** Its player can't take this (their inventory has no room for it). */
+    static boolean ownerFull(ServerPlayer o, ItemStack s) {
+        if (o == null) return false;
+        var inv = o.getInventory();
+        return inv.getFreeSlot() < 0 && inv.getSlotWithRemainingSpace(s) < 0;
+    }
+
+    /** Worth picking up for it: not thrown by a player, not a Stat Boost, not still flying out of a block. */
+    static boolean pickable(ItemEntity it) {
+        return it.isAlive() && !it.hasPickUpDelay() && !(it.getOwner() instanceof net.minecraft.world.entity.player.Player) && it.getAge() >= 20
+                && !(it.getItem().getItem() instanceof com.xenowarriors.statboost.StatBoostItem);
+    }
+
     private void pickUpItems() {
         ServerPlayer own = owner();
-        if (own != null && own.distanceToSqr(this) < 9) return;          // (the owner's own drops are theirs)
+        boolean ownerClose = own != null && own.distanceToSqr(this) < 9;     // (the owner's own drops are theirs - unless they've no room)
         for (ItemEntity it : level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(1.5), ItemEntity::isAlive)) {
-            if (it.hasPickUpDelay() || it.getOwner() instanceof net.minecraft.world.entity.player.Player || it.getAge() < 60) continue;
+            if (it.hasPickUpDelay() || it.getOwner() instanceof net.minecraft.world.entity.player.Player || it.getAge() < 20) continue;
+            if (ownerClose && !ownerFull(own, it.getItem())) continue;
+            if (it.getAge() < 60 && !ownerFull(own, it.getItem())) continue;
             if (it.getItem().getItem() instanceof com.xenowarriors.statboost.StatBoostItem) continue;   // (Stat Boosts are yours: it only uses the ones you give it)
             ItemStack left = inventory.addItem(it.getItem().copy());
             if (left.isEmpty()) it.discard();
