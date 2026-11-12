@@ -15,7 +15,7 @@ import net.minecraft.world.item.Items;
 public final class OffDutyIcons {
     private OffDutyIcons() {}
 
-    public static final int TRAINING = 1, RELAX_DOWNED = 2, RELAX_LONG = 3, RELAX = 4, PARTY = 5, DMZ = 6, MINING = 7, WOOD = 8, BUILDING = 9;
+    public static final int TRAINING = 1, RELAX_DOWNED = 2, RELAX_LONG = 3, RELAX = 4, PARTY = 5, DMZ = 6, MINING = 7, WOOD = 8, BUILDING = 9, DRAGON_BALLS = 10, HUNTING = 11;
     public static final int SIZE = 20;
 
     /** The label's colour for an activity. */
