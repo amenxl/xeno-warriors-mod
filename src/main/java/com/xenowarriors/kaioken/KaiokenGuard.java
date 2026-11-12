@@ -61,7 +61,7 @@ public final class KaiokenGuard {
         } else if (e instanceof PartyBotEntity b && b.owner() != null) {
             var pers = b.owner().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
             var bots = pers.getCompound(BOTS);
-            bots.putBoolean(b.character().getId(), true);
+            bots.putBoolean(b.charKey(), true);
             pers.put(BOTS, bots);
             b.owner().getPersistentData().put(Player.PERSISTED_NBT_TAG, pers);
         }
@@ -75,7 +75,7 @@ public final class KaiokenGuard {
 
     public static boolean guarded(LivingEntity e) {
         if (e instanceof Player p) return p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getBoolean(FOREVER) || e.hasEffect(ModEffects.CRIMSON_CONTROL.get());
-        if (e instanceof PartyBotEntity b && b.owner() != null && b.owner().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(BOTS).getBoolean(b.character().getId())) return true;
+        if (e instanceof PartyBotEntity b && b.owner() != null && b.owner().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(BOTS).getBoolean(b.charKey())) return true;
         return e.hasEffect(ModEffects.CRIMSON_CONTROL.get());
     }
 

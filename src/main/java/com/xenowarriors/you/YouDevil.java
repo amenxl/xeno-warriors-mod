@@ -175,6 +175,7 @@ public final class YouDevil {
 
     /** Karma Mask: a Devil's Karma can't be read by scanners or sensed (switched on / off on the wheel). */
     public static boolean masked(Entity e) {
+        if (e instanceof com.xenowarriors.bot.PartyBotEntity b) { YouSlot s = b.you(); return s != null && s.devil; }   // (a Devil of yours as a bot: always masked)
         if (!(e instanceof ServerPlayer p)) return false;
         YouSlot s = You.slot(p);
         return s != null && s.devil && Toggles.enabled(p, Toggles.Entry.KARMA_MASK);

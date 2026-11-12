@@ -7,9 +7,9 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Client -> server: the You slots screen - OPEN the list, PLAY a slot, CREATE a character in a slot, DELETE a slot. */
+/** Client -> server: the You slots screen - OPEN the list, PLAY a slot, CREATE a character in a slot, DELETE a slot, SKIN: give a slot its own skin (data.skin). */
 public record YouActionPacket(int action, int slot, YouSlot data) {
-    public static final int OPEN = 0, PLAY = 1, CREATE = 2, DELETE = 3;
+    public static final int OPEN = 0, PLAY = 1, CREATE = 2, DELETE = 3, SKIN = 4;
 
     public static void encode(YouActionPacket m, FriendlyByteBuf buf) {
         buf.writeVarInt(m.action); buf.writeVarInt(m.slot);

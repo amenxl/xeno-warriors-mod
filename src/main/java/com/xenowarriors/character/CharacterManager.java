@@ -60,6 +60,11 @@ public final class CharacterManager {
     public static boolean setYou(ServerPlayer player, int slot) {
         var d = player.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
         if (d == null || slot < 0 || slot >= com.xenowarriors.you.YouSlot.SLOTS || !d.youSlots[slot].exists()) return false;
+        String key = PlayerCharacter.key(CharacterType.YOU, slot);
+        for (var b : com.xenowarriors.bot.PartyBots.bots(player)) if (b.charKey().equals(key)) {   // (it's out there as your bot: never two of it)
+            player.displayClientMessage(Component.literal(d.youSlots[slot].name + " is your bot teammate right now - dismiss them first").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return false;
+        }
         if (d.youSlots[slot].race == Race.ANGEL && !player.isCreative()) {
             player.displayClientMessage(Component.literal("Angels can only be played in creative mode for now").withStyle(net.minecraft.ChatFormatting.RED), true);
             return false;

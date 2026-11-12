@@ -68,6 +68,14 @@ public class PlayerCharacter {
 
     /** The save key for a character's own stats, loadout and standing: the show character's id, or "you&lt;slot&gt;". */
     public static String key(CharacterType t, int youSlot) { return t == CharacterType.YOU ? "you" + youSlot : t.getId(); }
+    /** The character a save key is for ("you3" = YOU). */
+    public static CharacterType typeOfKey(String k) { return k != null && k.matches("you\\d+") ? CharacterType.YOU : CharacterType.byId(k); }
+    /** The You slot of a save key ("you3" = 3), -1 for a show character. */
+    public static int slotOfKey(String k) { return k != null && k.matches("you\\d+") ? Integer.parseInt(k.substring(3)) : -1; }
+    /** That character's stat levels: live if you're playing it now, else its saved ones. */
+    public int[] levelsOf(String k) { return k.equals(key()) ? statLevel : charStats.getCompound(k).getIntArray("lv"); }
+    /** You're playing this character (by save key) right now. */
+    public boolean playing(String k) { return k.equals(key()); }
     public String key(CharacterType t) { return key(t, youSlot); }
     public String key() { return key(type, youSlot); }
 

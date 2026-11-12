@@ -220,7 +220,7 @@ public final class BotLife {
         giver.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         o.eat(o.level(), bite);                                                    // (fed: as if you'd eaten it)
         feeds++;
-        Bonds.addXp(o, giver.character().getId(), 2F);
+        Bonds.addXp(o, giver.charKey(), 2F);
         say(o, giver, (giver.character() == CharacterType.YURI && name.toLowerCase(Locale.ROOT).contains("burger") ? "Here - a burger fixes everything!" : "You look starving - eat this!") + " (" + name + ")");
     }
 
@@ -253,7 +253,7 @@ public final class BotLife {
         if (o.isSpectator() || o.isSleeping() || !BotSpar.quiet(o)) return;
         long now = now(o);
         for (PartyBotEntity b : PartyBots.bots(o)) {
-            if (!calm(b, o) || b.distanceToSqr(o) > 12 * 12 || Bonds.level(o, b.character().getId()) < GIFT_BOND) continue;
+            if (!calm(b, o) || b.distanceToSqr(o) > 12 * 12 || Bonds.level(o, b.charKey()) < GIFT_BOND) continue;
             if (!forceGift && (now < b.getPersistentData().getLong(GIFT) || b.getRandom().nextInt(12) != 0)) continue;
             b.getPersistentData().putLong(GIFT, now + 20 * 60 * 30);               // (half an hour at least till the next)
             ItemStack g = ItemStack.EMPTY;
@@ -281,7 +281,7 @@ public final class BotLife {
         for (PartyBotEntity b : PartyBots.bots(o)) if (calm(b, o) && b.distanceToSqr(o) < 24 * 24) bots.add(b);
         Collections.shuffle(bots, new Random(o.getRandom().nextLong()));
         for (PartyBotEntity a : bots) for (PartyBotEntity c : bots) {
-            if (a == c || Bonds.botOwn(a, c.character().getId()) >= HELP_BOND) continue;
+            if (a == c || Bonds.botOwn(a, c.charKey()) >= HELP_BOND) continue;
             if (o.getRandom().nextInt(3) != 0) { o.getPersistentData().putLong(ASKED, now(o) + 20 * 60 * 10); return; }
             ask(o, a, c);
             return;
@@ -331,8 +331,8 @@ public final class BotLife {
             ((ServerLevel) a.level()).sendParticles(ParticleTypes.NOTE, mid.x, a.getEyeY() + 0.5, mid.z, 2, 0.4, 0.1, 0.4, 0.5);
         if (now(o) < h.until()) return;
         HANGS.remove(o.getUUID());
-        Bonds.addXp(a, c.character().getId(), HANG_XP);
-        Bonds.addXp(c, a.character().getId(), HANG_XP);
+        Bonds.addXp(a, c.charKey(), HANG_XP);
+        Bonds.addXp(c, a.charKey(), HANG_XP);
         ((ServerLevel) a.level()).sendParticles(ParticleTypes.HEART, mid.x, a.getEyeY() + 0.5, mid.z, 6, 0.5, 0.2, 0.5, 0);
         o.displayClientMessage(Component.empty().append(a.label()).append(" and ").append(c.label()).append(" get on a little better now (bond +)").withStyle(ChatFormatting.LIGHT_PURPLE), false);
     }

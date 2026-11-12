@@ -72,7 +72,7 @@ public final class Appetite {
     // ---------------------------------------------------------------- bots
 
     private static String botKey(com.xenowarriors.bot.PartyBotEntity b, ServerPlayer o) {
-        return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key(b.character())).orElse(b.character().getId());
+        return b.charKey();
     }
 
     /** A bot's Appetite level (its character's, in its owner's save; 0 without its owner online). */

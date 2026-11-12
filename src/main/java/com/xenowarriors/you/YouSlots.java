@@ -36,7 +36,7 @@ public final class YouSlots {
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        String blocked = (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        String blocked = action == YouActionPacket.SKIN ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
             p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
@@ -44,7 +44,7 @@ public final class YouSlots {
         switch (action) {
             case YouActionPacket.PLAY -> {
                 if (d.getType() == CharacterType.YOU && d.youSlot == slot) { send(p, false); return; }   // already playing it (re-picking used to reset every cooldown)
-                if (!CharacterManager.setYou(p, slot)) p.displayClientMessage(Component.literal("That slot is empty").withStyle(ChatFormatting.RED), true);
+                if (!CharacterManager.setYou(p, slot)) { if (!d.youSlots[slot].exists()) p.displayClientMessage(Component.literal("That slot is empty").withStyle(ChatFormatting.RED), true); }
                 else send(p, false);
             }
             case YouActionPacket.CREATE -> {
@@ -55,6 +55,7 @@ public final class YouSlots {
                 s.name = data.name.trim(); s.race = data.race; s.element = data.element;
                 s.form = data.race == Race.SKYLANDER ? (data.form == YouSlot.FORM_SOLAR ? YouSlot.FORM_SOLAR : YouSlot.FORM_LUNAR) : YouSlot.FORM_NONE;
                 s.humanForm = false;
+                s.skin = YouSkins.usable(p.server, data.skin) ? data.skin : "";
                 d.charStats.remove(PlayerCharacter.key(CharacterType.YOU, slot));
                 d.loadouts.remove(PlayerCharacter.key(CharacterType.YOU, slot));
                 forgetSaves(p, PlayerCharacter.key(CharacterType.YOU, slot));
@@ -62,10 +63,24 @@ public final class YouSlots {
                 CharacterManager.setYou(p, slot);
                 send(p, false);
             }
+            case YouActionPacket.SKIN -> {
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null) return;
+                if (!YouSkins.usable(p.server, data.skin)) { p.displayClientMessage(Component.literal("That skin couldn't be used").withStyle(ChatFormatting.RED), true); return; }
+                s.skin = data.skin;
+                p.displayClientMessage(Component.literal(s.name + " now wears " + YouSkins.describe(s.skin) + ".").withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
             case YouActionPacket.DELETE -> {
                 if (!d.youSlots[slot].exists()) return;
                 if (d.getType() == CharacterType.YOU && d.youSlot == slot) {
                     p.displayClientMessage(Component.literal("Switch to another character before deleting this one").withStyle(ChatFormatting.RED), true);
+                    return;
+                }
+                String key = PlayerCharacter.key(CharacterType.YOU, slot);
+                if (com.xenowarriors.bot.PartyBots.bots(p).stream().anyMatch(b -> b.charKey().equals(key))) {
+                    p.displayClientMessage(Component.literal(d.youSlots[slot].name + " is your bot teammate right now - dismiss them first").withStyle(ChatFormatting.RED), true);
                     return;
                 }
                 String name = d.youSlots[slot].name;

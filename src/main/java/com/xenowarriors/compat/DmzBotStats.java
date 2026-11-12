@@ -106,7 +106,7 @@ public final class DmzBotStats {
         b.maxHealthChanged(before);                                            // (in range; a relogged bot gets its saved health back; a fresh one starts full)
         String now = Math.round(b.getMaxHealth()) + "/" + Math.round(dmg.getValue() * 10) / 10.0;
         if (!now.equals(LAST.put(b.getUUID(), now)))
-            note(b.character().getId() + " maxHp " + Math.round(before) + " -> " + Math.round(b.getMaxHealth()) + " (dmz +" + Math.round(bonus) + ", a player of it: "
+            note(b.charKey() + " maxHp " + Math.round(before) + " -> " + Math.round(b.getMaxHealth()) + " (dmz +" + Math.round(bonus) + ", a player of it: "
                     + Math.round(20 + bonus) + " + XW) melee " + Math.round(dmg.getValue() * 10) / 10.0 + " (dmz rest melee " + Math.round(rest * 10) / 10.0 + ")");
     }
 
@@ -158,7 +158,7 @@ public final class DmzBotStats {
         float a = e.getAmount(), m = mitigated(b, a);
         if (m != a) {
             e.setAmount(m);
-            if (TEST_LOG) note(b.character().getId() + " hit " + Math.round(a * 100) / 100.0 + " -> " + Math.round(m * 100) / 100.0 + " (DragonMineZ defense)");
+            if (TEST_LOG) note(b.charKey() + " hit " + Math.round(a * 100) / 100.0 + " -> " + Math.round(m * 100) / 100.0 + " (DragonMineZ defense)");
         }
     }
 

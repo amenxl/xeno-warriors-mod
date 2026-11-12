@@ -25,9 +25,9 @@ public class BotScreen extends Screen {
     private boolean showPets;
 
     public BotScreen(OpenBotMenuPacket m) {
-        super(Component.literal(CharacterType.byId(m.character()).getDisplayName().getString()));
+        super(Component.literal(com.xenowarriors.character.PlayerCharacter.typeOfKey(m.character()).getDisplayName().getString()));
         this.m = m;
-        this.type = CharacterType.byId(m.character());
+        this.type = com.xenowarriors.character.PlayerCharacter.typeOfKey(m.character());
         this.mode = m.mode();
         if (m.radar()) H = H0 + 22;
     }
@@ -106,9 +106,12 @@ public class BotScreen extends Screen {
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderBackground(g);
         int x = x0(), y = y0();
-        g.fill(x - 2, y - 2, x + W + 2, y + H + 2, type.getColor());
+        var ownSlot = minecraft.level != null && minecraft.level.getEntity(m.botId()) instanceof com.xenowarriors.bot.PartyBotEntity pb ? pb.you() : null;   // (one of your own characters)
+        int color = ownSlot != null ? 0xFF000000 | ownSlot.color() : type.getColor();
+        g.fill(x - 2, y - 2, x + W + 2, y + H + 2, color);
         g.fill(x, y, x + W, y + H, 0xF0101018);
-        g.drawString(font, type.getFullName(), x + 8, y + 8, type.getColor());
+        if (ownSlot != null) g.drawString(font, ownSlot.name + " - " + ownSlot.shown().title + " of " + ownSlot.element.title(), x + 8, y + 8, color);
+        else g.drawString(font, type.getFullName(), x + 8, y + 8, type.getColor());
         g.drawString(font, "Lv " + m.level() + "  • BOT", x + 8, y + 18, 0xBBBBBB);
         if (minecraft.level != null && minecraft.level.getEntity(m.botId()) instanceof LivingEntity bot)
             InventoryScreen.renderEntityInInventoryFollowsMouse(g, x + 48, y + 160, 48, (float) (x + 48 - mx), (float) (y + 80 - my), bot);

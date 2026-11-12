@@ -189,7 +189,7 @@ public final class BotForms {
         State s = STATES.computeIfAbsent(b.getUUID(), u -> new State());
         if (s.on != null) return false;
         float cost = cost(k, o);
-        if (b.karma < cost) { note(b.character().getId() + " can't afford " + k + " (" + Math.round(b.karma) + "/" + Math.round(cost) + " Karma)"); return false; }
+        if (b.karma < cost) { note(b.charKey() + " can't afford " + k + " (" + Math.round(b.karma) + "/" + Math.round(cost) + " Karma)"); return false; }
         b.karma -= cost;
         long now = level.getGameTime();
         float m = o == null ? 0 : com.xenowarriors.mikiko.FoxKing.mastery(o);
@@ -219,7 +219,7 @@ public final class BotForms {
         com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 12);
         if (o != null) o.displayClientMessage(Component.literal("").append(b.label()).append(k == Kind.FOX_KING ? " goes Fox King!" : ": Demon's Remnants!")
                 .withStyle(k == Kind.FOX_KING ? ChatFormatting.GOLD : ChatFormatting.DARK_RED), true);
-        note(b.character().getId() + " -> " + k + " " + why + " (" + (s.end - now) / 20 + " s, " + Math.round(cost(k, o)) + " Karma, karma left " + Math.round(b.karma) + ")");
+        note(b.charKey() + " -> " + k + " " + why + " (" + (s.end - now) / 20 + " s, " + Math.round(cost(k, o)) + " Karma, karma left " + Math.round(b.karma) + ")");
         return true;
     }
 
@@ -234,7 +234,7 @@ public final class BotForms {
         }
         if (k == Kind.FOX_KING) ModNetwork.sendToTrackingEntityAndSelf(new com.xenowarriors.network.FoxKingPacket(b.getId(), false), b);
         else ModNetwork.sendToTrackingEntityAndSelf(new com.xenowarriors.network.DemonStatePacket(b.getId(), false), b);
-        note(b.character().getId() + " leaves " + k + " (" + why + ")");
+        note(b.charKey() + " leaves " + k + " (" + why + ")");
     }
 
     private static void mod(PartyBotEntity b, Attribute a, UUID id, double amount, AttributeModifier.Operation op) {

@@ -50,6 +50,8 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> DMZ_FLY = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> OUTFIT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (what it wears: its owner's outfit for that character)
     private static final EntityDataAccessor<Boolean> NIMBUS = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (rides a Flying Nimbus: DmzBotNimbus)
+    private static final EntityDataAccessor<Integer> YOU_SLOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (one of its owner's own characters: which slot; -1 = a show character)
+    private static final EntityDataAccessor<CompoundTag> YOU_LOOK = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.COMPOUND_TAG);   // (that character, for drawing it: race, element, wings, skin...)
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
     /** When to tidy its things next (a few seconds after they changed; 0 = nothing pending - see BotBags). */
@@ -173,6 +175,8 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(DMZ_FLY, false);
         entityData.define(NIMBUS, false);
         entityData.define(OUTFIT, 0);
+        entityData.define(YOU_SLOT, -1);
+        entityData.define(YOU_LOOK, new CompoundTag());
     }
 
     // ---------------------------------------------------------------- state
@@ -210,6 +214,49 @@ public class PartyBotEntity extends PathfinderMob {
 
     public CharacterType character() { return CharacterType.byId(entityData.get(CHAR)); }
     public void setCharacter(CharacterType t) { entityData.set(CHAR, t.getId()); }
+
+    // ---------------------------------------------------------------- one of your own characters (YOU + a slot)
+
+    /** Which of its owner's own characters it is (-1: a show character). */
+    public int youSlot() { return character() == CharacterType.YOU ? entityData.get(YOU_SLOT) : -1; }
+    public void setYouSlot(int slot) { entityData.set(YOU_SLOT, slot); refreshYou(); }
+    /** The key its character is saved under in its owner's save: its id, or "you&lt;slot&gt;" for one of your own. */
+    public String charKey() { return com.xenowarriors.character.PlayerCharacter.key(character(), Math.max(0, entityData.get(YOU_SLOT))); }
+    /** Its character from a save key ("mikiko", "you3"). */
+    public void setCharKey(String key) {
+        setCharacter(com.xenowarriors.character.PlayerCharacter.typeOfKey(key));
+        int slot = com.xenowarriors.character.PlayerCharacter.slotOfKey(key);
+        if (slot >= 0) setYouSlot(slot);
+    }
+    /** One of its owner's own characters. */
+    public boolean ownCharacter() { return character() == CharacterType.YOU; }
+
+    /**
+     * Its own character (a You slot): on the server the owner's live slot (so what it earns - Devil's Hunger, Lunar/Solar
+     * mastery - goes into the owner's save), on clients the copy it was last sent. Null for a show character, or while the
+     * owner's away.
+     */
+    public com.xenowarriors.you.YouSlot you() {
+        if (!ownCharacter()) return null;
+        if (level().isClientSide) {
+            CompoundTag t = entityData.get(YOU_LOOK);
+            return t.isEmpty() ? null : com.xenowarriors.you.YouSlot.load(t);
+        }
+        ServerPlayer o = owner();
+        int slot = youSlot();
+        if (o == null || slot < 0 || slot >= com.xenowarriors.you.YouSlot.SLOTS) return null;
+        var s = o.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.youSlots[slot]).orElse(null);
+        return s != null && s.exists() ? s : null;
+    }
+
+    /** Sends clients its character as it is now (wings, horns, skin...) - when that changed. */
+    public void refreshYou() {
+        if (level().isClientSide || !ownCharacter()) return;
+        var s = you();
+        if (s == null) return;
+        CompoundTag t = s.save();
+        if (!t.equals(entityData.get(YOU_LOOK))) entityData.set(YOU_LOOK, t);
+    }
     public UUID ownerId() { return entityData.get(OWNER).orElse(null); }
     public void setOwner(UUID id) { PartyBots.track(this, false); entityData.set(OWNER, Optional.ofNullable(id)); if (isAddedToWorld()) PartyBots.track(this, true); }
     /** The owner, wherever they are on the server (null when offline). */
@@ -243,7 +290,11 @@ public class PartyBotEntity extends PathfinderMob {
     public void setNimbus(boolean on) { if (entityData.get(NIMBUS) != on) entityData.set(NIMBUS, on); }
 
     /** Its character flies by itself (Skylanders, Ultima, Mikiko). */
-    public boolean naturalFlier() { CharacterType t = character(); return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }
+    public boolean naturalFlier() {
+        CharacterType t = character();
+        if (t == CharacterType.YOU) { var s = you(); return s != null && s.wingsNow(); }    // (one of your own: its wings)
+        return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO;
+    }
 
     /** With DragonMineZ: it has learned Fly (and has the ki for it) - it flies like the fliers do (DmzBotSkills keeps this up to date). */
     public boolean dmzFly() { return entityData.get(DMZ_FLY); }
@@ -252,7 +303,8 @@ public class PartyBotEntity extends PathfinderMob {
     /** Apply this character's level (from the owner's saved stats for it). */
     public void applyLevel(int level) {
         entityData.set(LEVEL, Math.max(1, level));
-        double hp = 20 + 2 * com.xenowarriors.stats.Stats.bonusHearts(level);   // (the same hearts a player of this Character Level gets)
+        double hp = 20 + 2 * com.xenowarriors.stats.Stats.bonusHearts(level)   // (the same hearts a player of this Character Level gets)
+                + com.xenowarriors.you.YouBots.raceHealth(this);                 // (one of your own: its race's health, as a player of it gets)
         var a = getAttribute(Attributes.MAX_HEALTH); if (a != null) a.setBaseValue(hp);
         var d = getAttribute(Attributes.ATTACK_DAMAGE); if (d != null) d.setBaseValue(4 + level * 0.12);
         var s = getAttribute(Attributes.MOVEMENT_SPEED); if (s != null) s.setBaseValue(0.32 + Math.min(0.15, level * 0.0015));
@@ -261,6 +313,10 @@ public class PartyBotEntity extends PathfinderMob {
 
     /** "Mikiko (bot)" */
     public net.minecraft.network.chat.Component label() {
+        if (ownCharacter()) {
+            var s = you();
+            return net.minecraft.network.chat.Component.literal((s == null ? "Your warrior" : s.name) + " (bot)").withStyle(st -> st.withColor(s == null ? 0xC8A0FF : s.color()));
+        }
         return character().getDisplayName().copy().append(" (bot)");
     }
 
@@ -911,6 +967,7 @@ public class PartyBotEntity extends PathfinderMob {
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
         if (tickCount % 40 == 7) PartyBots.dress(this, owner());               // (its outfit: yours for that character)
+        if (ownCharacter() && tickCount % 20 == 11) { refreshYou(); com.xenowarriors.you.YouBots.tick(this); }   // (one of your own: its look, its race's ways)
         if (tickCount % 20 == 3) PartyBots.keepChaseLoaded(this);
         if (pendingHp >= 0 && tickCount > 200) pendingHp = -1;                  // (what didn't come back by now stays as it is)
         if (downed()) {
@@ -1206,7 +1263,7 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public void addAdditionalSaveData(CompoundTag t) {
         super.addAdditionalSaveData(t);
-        t.putString("Char", entityData.get(CHAR));
+        t.putString("Char", charKey());
         if (ownerId() != null) t.putUUID("Owner", ownerId());
         t.putInt("Mode", mode());
         t.putFloat("BotKarma", karma);
@@ -1234,7 +1291,7 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);
-        entityData.set(CHAR, t.getString("Char"));
+        setCharKey(t.getString("Char"));
         if (t.hasUUID("Owner")) setOwner(t.getUUID("Owner"));
         entityData.set(MODE, t.getInt("Mode"));
         karma = t.getFloat("BotKarma");
@@ -1246,7 +1303,7 @@ public class PartyBotEntity extends PathfinderMob {
     /** The bot as a record kept with the owner while they're offline. */
     public CompoundTag record() {
         CompoundTag t = new CompoundTag();
-        t.putString("char", entityData.get(CHAR));
+        t.putString("char", charKey());
         t.putInt("mode", mode());
         t.putFloat("hp", getHealth());
         t.putFloat("karma", karma);

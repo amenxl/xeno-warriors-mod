@@ -293,7 +293,7 @@ public final class KarmaSensing {
         final double RADIUS = Math.min(wanted, limit);
         List<LivingEntity> found = player.level().getEntitiesOfClass(LivingEntity.class, new AABB(player.blockPosition()).inflate(RADIUS),
                 e -> e != player && e.isAlive() && !(e instanceof ArmorStand) && e.distanceToSqr(player) <= RADIUS * RADIUS
-                        && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses < MASTERY) || com.xenowarriors.you.YouDevil.masked(p)))   // (a Devil's Karma Mask: not even a mastered sense finds them)
+                        && !(e instanceof Player p && (p.isSpectator() || (HoodieItem.wearing(p) && uses < MASTERY))) && !com.xenowarriors.you.YouDevil.masked(e)   // (a Devil's Karma Mask: not even a mastered sense finds them)
                         && (friendly || e instanceof Player || threat(e, player) || corrupted(e)));
         int[] ids = found.stream().mapToInt(LivingEntity::getId).toArray();
         // a fully mastered sense can feel people through a Karma-reducing hoodie - but only faintly, no level (-1)

@@ -165,18 +165,18 @@ public final class DmzDragonBalls {
     /** Starts putting the balls down (true if it found somewhere to). Tests call it with now=true (no waiting for a calm moment). */
     public static boolean start(PartyBotEntity b, ServerPlayer o, Object setOrNull, ServerLevel level, boolean test) {
         BallSet set = setOrNull instanceof BallSet s ? s : carried(b, level);
-        if (set == null) { note("no full set of usable balls on " + b.character().getId()); return false; }
+        if (set == null) { note("no full set of usable balls on " + b.charKey()); return false; }
         BlockPos c = flatSpot(level, b.blockPosition());
         long now = level.getGameTime();
         if (c == null) {
             NEXT_TRY.put(b.getUUID(), now + 600);
-            note(b.character().getId() + " found no flat spot near " + b.blockPosition().toShortString());
+            note(b.charKey() + " found no flat spot near " + b.blockPosition().toShortString());
             if (o.distanceTo(b) < 24) o.displayClientMessage(Component.literal("").append(b.label()).append(" wants a flat, open spot to put the Dragon Balls down").withStyle(ChatFormatting.GOLD), true);
             return false;
         }
         BUSY.put(b.getUUID(), now);
         NEXT_TRY.put(b.getUUID(), now + 1200);
-        note(b.character().getId() + " placing the " + set.id + " Dragon Balls around " + c.toShortString());
+        note(b.charKey() + " placing the " + set.id + " Dragon Balls around " + c.toShortString());
         o.displayClientMessage(Component.literal("").append(b.label()).append(" is gathering the Dragon Balls...").withStyle(ChatFormatting.GOLD), true);
         b.getNavigation().moveTo(c.getX() + 0.5, c.getY(), c.getZ() + 0.5, 1.0);
         BlockPos[] at = new BlockPos[7];
@@ -196,7 +196,7 @@ public final class DmzDragonBalls {
         if (!BUSY.containsKey(b.getUUID())) return false;
         if (b.isAlive() && !b.isRemoved() && !b.downed()) return true;
         BUSY.remove(b.getUUID());                                               // (knocked down or gone half-way: it can try again later, not never)
-        note(b.character().getId() + " stopped putting the balls down (" + (b.downed() ? "knocked down" : "gone") + ")");
+        note(b.charKey() + " stopped putting the balls down (" + (b.downed() ? "knocked down" : "gone") + ")");
         return false;
     }
 

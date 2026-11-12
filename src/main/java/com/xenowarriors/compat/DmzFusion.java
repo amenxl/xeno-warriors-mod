@@ -225,7 +225,7 @@ public final class DmzFusion {
         String why = whyNot(p, b);
         if (why != null) {
             p.displayClientMessage(Component.literal(why).withStyle(ChatFormatting.GRAY), true);
-            note("refused " + (b == null ? "-" : b.character().getId()) + ": " + why);
+            note("refused " + (b == null ? "-" : b.charKey()) + ": " + why);
             return false;
         }
         String type = kind(b);
@@ -263,7 +263,7 @@ public final class DmzFusion {
             // the bot is put away (its record kept in yours) for the fusion
             CompoundTag rec = new CompoundTag();
             rec.putString("type", type);
-            rec.putString("char", b.character().getId());
+            rec.putString("char", b.charKey());
             rec.put("bot", b.record());
             rec.putLong("until", now(p) + dur);
             rec.putLong("start", now(p));
@@ -285,7 +285,7 @@ public final class DmzFusion {
                     + (POTARA.equals(type) ? "Potara" : "Fusion Dance") + ", " + dur / 20 + " s; bond " + bond + ": x"
                     + String.format(Locale.ROOT, "%.2f", bondPower(bond)) + " strength).").withStyle(ChatFormatting.GOLD));
             lastCheck = checkStats(me, them, type, mine, theirs);
-            note("fused " + p.getGameProfile().getName() + " + " + b.character().getId() + " = " + name + " type=" + type + " totals " + mine + "+" + theirs
+            note("fused " + p.getGameProfile().getName() + " + " + b.charKey() + " = " + name + " type=" + type + " totals " + mine + "+" + theirs
                     + " for " + dur + " ticks; " + statsLine(me) + "; DMZ formula check: " + lastCheck);
             return true;
         } catch (Throwable t) {
@@ -411,7 +411,7 @@ public final class DmzFusion {
             note("ended (" + why + ") on a Journey: bot stashed");
             return;
         }
-        PartyBotEntity b = PartyBots.spawn(p, CharacterType.byId(rec.getString("char")), bot);
+        PartyBotEntity b = PartyBots.spawn(p, com.xenowarriors.character.PlayerCharacter.typeOfKey(rec.getString("char")), bot);
         if (b != null) {
             if (!earring.isEmpty() && !ranOut) b.inventory.addItem(earring);            // (a full fusion breaks the earrings, as in DragonMineZ)
             p.serverLevel().sendParticles(ParticleTypes.END_ROD, b.getX(), b.getY() + 1, b.getZ(), 30, .4, .8, .4, .06);

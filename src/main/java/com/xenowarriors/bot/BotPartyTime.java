@@ -69,7 +69,7 @@ public final class BotPartyTime {
     private static Map<String, LivingEntity> byChar(List<LivingEntity> gs) {
         Map<String, LivingEntity> m = new LinkedHashMap<>();
         for (LivingEntity g : gs) {
-            String c = g instanceof PartyBotEntity b ? b.character().getId() : com.xenowarriors.party.Bonds.charOf(g);
+            String c = g instanceof PartyBotEntity b ? b.charKey() : com.xenowarriors.party.Bonds.charOf(g);
             if (c != null) m.putIfAbsent(c, g);
         }
         return m;
@@ -198,7 +198,7 @@ public final class BotPartyTime {
         }
         if (l.random.nextInt(170) == 0) firework(l, pt, 1 + l.random.nextInt(2));
         for (LivingEntity g : gs) if (g instanceof PartyBotEntity b && o.tickCount % 10 == b.getId() % 10
-                && !(pt.battle != null && (b.character().getId().equals(pt.battle[0]) || b.character().getId().equals(pt.battle[1])))) dance(b, pt);   // (the rappers stay put)
+                && !(pt.battle != null && (b.charKey().equals(pt.battle[0]) || b.charKey().equals(pt.battle[1])))) dance(b, pt);   // (the rappers stay put)
         if (o.tickCount % 400 == 0) bondTick(o, gs, BOND_TICK * (rappers(gs) ? RAPPERS_BONUS : 1F));
         if (o.tickCount % 10 == 3) BotRps.tick(o, gs, now);
     }
@@ -317,8 +317,8 @@ public final class BotPartyTime {
         List<PartyBotEntity> bots = new ArrayList<>();
         for (LivingEntity g : gs) if (g instanceof PartyBotEntity b) bots.add(b);
         for (PartyBotEntity b : bots) {
-            com.xenowarriors.party.Bonds.addXp(o, b.character().getId(), xp);
-            for (PartyBotEntity b2 : bots) if (b2 != b) com.xenowarriors.party.Bonds.addXp(b, b2.character().getId(), xp);
+            com.xenowarriors.party.Bonds.addXp(o, b.charKey(), xp);
+            for (PartyBotEntity b2 : bots) if (b2 != b) com.xenowarriors.party.Bonds.addXp(b, b2.charKey(), xp);
         }
         for (LivingEntity g : gs) if (g instanceof ServerPlayer m && m != o) {     // (party members: with the host's character and each other)
             com.xenowarriors.party.Bonds.addXp(m, com.xenowarriors.party.Bonds.charOf(o), xp);

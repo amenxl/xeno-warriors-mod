@@ -16,7 +16,12 @@ public abstract class AbstractClientPlayerMixin {
     @Inject(method = "getSkinTextureLocation", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$characterSkin(CallbackInfoReturnable<ResourceLocation> cir) {
         CharacterType type = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
-        if (type != CharacterType.NONE && type != CharacterType.YOU) {
+        if (type == CharacterType.YOU) {                                    // your own character: its own skin, if it has one
+            var look = com.xenowarriors.client.you.YouLooks.of((AbstractClientPlayer) (Object) this);
+            if (look != null) cir.setReturnValue(look.tex());
+            return;
+        }
+        if (type != CharacterType.NONE) {
             if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(((AbstractClientPlayer) (Object) this).getId())) {
                 cir.setReturnValue(com.xenowarriors.client.kaeru.ChangeClient.SIL_SKIN);
                 return;
@@ -45,7 +50,12 @@ public abstract class AbstractClientPlayerMixin {
     @Inject(method = "getModelName", at = @At("HEAD"), cancellable = true)
     private void xenowarriors$characterModel(CallbackInfoReturnable<String> cir) {
         CharacterType t = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
-        if (t != CharacterType.NONE && t != CharacterType.YOU) {
+        if (t == CharacterType.YOU) {
+            var look = com.xenowarriors.client.you.YouLooks.of((AbstractClientPlayer) (Object) this);
+            if (look != null) cir.setReturnValue(look.slim() ? "slim" : "default");
+            return;
+        }
+        if (t != CharacterType.NONE) {
             cir.setReturnValue(com.xenowarriors.client.FusionLook.of((AbstractClientPlayer) (Object) this) == null
                     && com.xenowarriors.client.FemaleBody.is((AbstractClientPlayer) (Object) this) ? "slim" : "default");   // (fusions: the wide body)
         }

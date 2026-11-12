@@ -62,7 +62,7 @@ public final class DmzBotSkills {
         if (o == null) return;
         int lv = level(DmzPerCharacter.saved(o, DmzPerCharacter.botKey(b)), "fly");
         Integer old = FLY_LEVEL.put(b.getUUID(), lv);
-        if (old == null || old != lv) note(b.character().getId() + " Fly level " + lv);
+        if (old == null || old != lv) note(b.charKey() + " Fly level " + lv);
     }
 
     @SubscribeEvent
@@ -84,8 +84,8 @@ public final class DmzBotSkills {
                 boolean airborne = flying(b);
                 if (airborne) DmzBotPower.useKi(b, FLY_KI / 2F / (1F + 0.15F * (lv - 1)));   // (half a second of flight)
                 ki = DmzBotPower.kiFraction(b);
-                if (ki < FLY_STOP && GROUNDED.add(b.getUUID())) note(b.character().getId() + " lands: out of ki for flying (" + Math.round(ki * 100) + "%)");
-                if (ki >= FLY_AGAIN && GROUNDED.remove(b.getUUID())) note(b.character().getId() + " can fly again (" + Math.round(ki * 100) + "% ki)");
+                if (ki < FLY_STOP && GROUNDED.add(b.getUUID())) note(b.charKey() + " lands: out of ki for flying (" + Math.round(ki * 100) + "%)");
+                if (ki >= FLY_AGAIN && GROUNDED.remove(b.getUUID())) note(b.charKey() + " can fly again (" + Math.round(ki * 100) + "% ki)");
                 if (GROUNDED.contains(b.getUUID())) can = false;
             }
         }

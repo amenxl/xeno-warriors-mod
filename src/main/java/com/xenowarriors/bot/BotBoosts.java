@@ -60,8 +60,8 @@ public final class BotBoosts {
     public static boolean maxed(PartyBotEntity b, ServerPlayer o, BoostStat stat) {
         return switch (stat) {
             case SPEED, ATTACK, DEFENSE -> o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
-                if (d.getType() == b.character()) return stat.level(o) >= stat.max();
-                int[] lv = d.charStats.getCompound(b.character().getId()).getIntArray("lv");
+                if (d.playing(b.charKey())) return stat.level(o) >= stat.max();
+                int[] lv = d.charStats.getCompound(b.charKey()).getIntArray("lv");
                 return lv.length == 3 && lv[stat.ordinal()] >= Stat.MAX_LEVEL;
             }).orElse(true);
             case BUILDING -> com.xenowarriors.stats.Building.level(b) >= stat.max();
@@ -122,11 +122,11 @@ public final class BotBoosts {
 
     /** Adds the levels to the bot's character (its stats in the owner's save); returns how many were added. */
     static int add(PartyBotEntity b, ServerPlayer o, BoostStat stat, int n) {
-        CharacterType t = b.character();
+        String key = b.charKey();
         return switch (stat) {
             case SPEED, ATTACK, DEFENSE -> o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
-                if (d.getType() == t) return 0;                                    // (you're playing it yourself)
-                CompoundTag c = d.charStats.getCompound(t.getId());
+                if (d.playing(key)) return 0;                                      // (you're playing it yourself)
+                CompoundTag c = d.charStats.getCompound(key);
                 int[] lv = c.getIntArray("lv"); if (lv.length != 3) lv = new int[3];
                 int i = stat.ordinal();
                 int after = (int) Math.min((long) Stat.MAX_LEVEL, (long) lv[i] + n);
@@ -135,7 +135,7 @@ public final class BotBoosts {
                 lv[i] = after;
                 c.putIntArray("lv", lv);
                 if (after >= Stat.MAX_LEVEL) c.putFloat("x" + i, 0F);
-                d.charStats.put(t.getId(), c);
+                d.charStats.put(key, c);
                 return g;
             }).orElse(0);
             case BUILDING -> com.xenowarriors.stats.Building.addLevels(b, n);

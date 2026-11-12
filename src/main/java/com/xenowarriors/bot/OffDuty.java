@@ -626,13 +626,13 @@ public final class OffDuty {
     public static PartyBotEntity teamMinute(ServerPlayer p, long now, RandomSource r, boolean force) {
         if (!enabled()) return null;
         List<PartyBotEntity> bots = PartyBots.bots(p);
-        for (PartyBotEntity b : bots) if (!b.journey()) { CompoundTag c = rec(p, b.character()); c.putInt("tm", c.getInt("tm") + 1); }
+        for (PartyBotEntity b : bots) if (!b.journey() && !b.ownCharacter()) { CompoundTag c = rec(p, b.character()); c.putInt("tm", c.getInt("tm") + 1); }
         if (bots.isEmpty() || busyPlace(p) || now - lastCombat(p.getUUID()) < QUIET_MINUTES * MINUTE) return null;
         Long last = LAST_LEAVE.get(p.getUUID());
         if (last != null && now - last < LEAVE_COOLDOWN_MINUTES * MINUTE) return null;
         for (PartyBotEntity b : bots) {
-            if (b.journey() || b.downed() || b.sparring() || b.isPassenger() || b.isVehicle()) continue;
-            if (Bonds.level(p, b.character().getId()) >= LEAVE_BOND || rec(p, b.character()).getInt("tm") < QUIET_MINUTES) continue;
+            if (b.journey() || b.downed() || b.sparring() || b.isPassenger() || b.isVehicle() || b.ownCharacter()) continue;   // (your own characters don't wander off)
+            if (Bonds.level(p, b.charKey()) >= LEAVE_BOND || rec(p, b.character()).getInt("tm") < QUIET_MINUTES) continue;
             if (!force && r.nextFloat() >= 0.1F) continue;
             CharacterType t = b.character();
             PartyBots.checkIn(b, p);

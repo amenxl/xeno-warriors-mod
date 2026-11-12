@@ -19,6 +19,7 @@ public class YouCreatorScreen extends JourneyScreen {
     private Element element = Element.FIRE;
     private int form = YouSlot.FORM_LUNAR;
     private String error = "";
+    private String skin = "";
 
     public YouCreatorScreen(int slot) { super("Create your warrior"); this.slot = slot; }
 
@@ -37,10 +38,15 @@ public class YouCreatorScreen extends JourneyScreen {
             org.joml.Vector4f a = m.transform(new org.joml.Vector4f(15, 27, 0, 1)), b = m.transform(new org.joml.Vector4f(103, 169, 0, 1));
             g.enableScissor((int) Math.floor(a.x), (int) Math.floor(a.y), (int) Math.ceil(b.x), (int) Math.ceil(b.y));
             com.xenowarriors.client.ClientCharacterData.beginPreview(com.xenowarriors.character.CharacterType.YOU);
+            YouLooks.previewSkin = skin;
             try { InventoryScreen.renderEntityInInventoryFollowsMouse(g, 59, 160, 58, (float) (59 - vx), (float) (160 - 58 * 1.6F - vy), p); }
             catch (Throwable ignored) {}
-            finally { com.xenowarriors.client.ClientCharacterData.endPreview(); g.disableScissor(); }
+            finally { YouLooks.previewSkin = null; com.xenowarriors.client.ClientCharacterData.endPreview(); g.disableScissor(); }
         }
+        // its skin
+        String sk = com.xenowarriors.you.YouSkins.describe(skin);
+        button(g, 14, 172, 104, 184, "SKIN: " + (sk.length() > 14 ? sk.substring(0, 13) + "." : sk), ACCENT, true,
+                () -> minecraft.setScreen(new YouSkinScreen(name.isBlank() ? "your warrior" : name.trim(), skin, this, k -> { skin = k; minecraft.setScreen(this); })));
         // name
         sc(g, "NAME", 112, 28, 0.65F, 0x9AA8B8);
         g.fill(112, 36, 232, 50, 0xF0141C26); box(g, 112, 36, 232, 50, 0xFF000000 | (name.isEmpty() ? 0x3A4450 : col));
@@ -109,7 +115,7 @@ public class YouCreatorScreen extends JourneyScreen {
         if (!error.isEmpty()) sc(g, error, 14, VH - 16, 0.6F, 0xFF6060);
         boolean can = YouSlot.validName(name.trim());
         button(g, VW - 150, VH - 22, VW - 80, VH - 6, "CREATE", 0x60D080, can, () -> {
-            YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE;
+            YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE; s.skin = skin;
             ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.CREATE, slot, s));
         });
         button(g, VW - 70, VH - 22, VW - 10, VH - 6, "BACK", 0x9AA8B8, true, () -> minecraft.setScreen(new YouSlotsScreen()));
@@ -126,7 +132,7 @@ public class YouCreatorScreen extends JourneyScreen {
         if (key == 259 && !name.isEmpty()) { name = name.substring(0, name.length() - 1); return true; }   // backspace
         if (key == 257 || key == 335) {                                                                      // enter
             if (YouSlot.validName(name.trim())) {
-                YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE;
+                YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE; s.skin = skin;
                 ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.CREATE, slot, s));
             } else error = "Names are 2-16 letters, numbers, spaces, ' - or _";
             return true;

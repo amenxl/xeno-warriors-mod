@@ -147,7 +147,7 @@ public final class Synergy {
 
     static String id(LivingEntity e) {
         if (e instanceof ServerPlayer p) return ModCapabilities.getType(p).getId();
-        if (e instanceof PartyBotEntity b) return b.character().getId();
+        if (e instanceof PartyBotEntity b) return b.charKey();
         return "none";
     }
 
@@ -321,7 +321,7 @@ public final class Synergy {
             if (r != null && s.contains(GOOFY)) mult += 0.05F * r[0] * strength(ab, GOOFY);
             if (mult != 1F) {
                 event.setAmount(event.getAmount() * mult);
-                if (TEST_LOG) XenoWarriors.LOGGER.info("XW-TEST parity bot synergy {} x{} {}", ab.character().getId(), String.format(java.util.Locale.ROOT, "%.3f", mult), s);
+                if (TEST_LOG) XenoWarriors.LOGGER.info("XW-TEST parity bot synergy {} x{} {}", ab.charKey(), String.format(java.util.Locale.ROOT, "%.3f", mult), s);
             }
         }
         if (event.getEntity() instanceof ServerPlayer v && has(v, SOUL_LINK)) event.setAmount(event.getAmount() * (1F - Math.min(0.5F, 0.15F * strength(v, SOUL_LINK))));

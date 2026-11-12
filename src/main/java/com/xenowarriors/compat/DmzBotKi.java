@@ -133,8 +133,7 @@ public final class DmzBotKi {
     private static Kit kit(PartyBotEntity b, java.util.function.Supplier<Player> standIn) {
         ServerPlayer o = b.owner();
         if (o == null) return null;
-        String key = o.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER)
-                .map(d -> com.xenowarriors.character.PlayerCharacter.key(b.character(), d.youSlot)).orElse(b.character().getId());
+        String key = b.charKey();
         long now = b.level().getGameTime();
         Kit k = KITS.computeIfAbsent(b.getUUID(), u -> new Kit());
         boolean fresh = now - k.readAt < REFRESH && now >= k.readAt;

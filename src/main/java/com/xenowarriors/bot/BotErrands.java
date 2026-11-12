@@ -456,7 +456,7 @@ public final class BotErrands extends Goal {
         BotShield.pickBest(m);                                                   // (a shield goes straight on its arm)
         tell(o, "gave " + m.character().getDisplayName().getString() + " " + (n > 1 ? n + " " : "") + e.what.getHoverName().getString()
                 + switch (e.kind) { case "give" -> " to fight with"; case "feed" -> " to eat"; case "ingredient" -> " (they were one short)"; default -> ""; });
-        PartyBots.testLog(b, "handed " + e.kind + " " + n + "x" + id(e.what) + " to " + m.character().getId());
+        PartyBots.testLog(b, "handed " + e.kind + " " + n + "x" + id(e.what) + " to " + m.charKey());
     }
 
     private void handToFox(ServerPlayer o, Errand e) {

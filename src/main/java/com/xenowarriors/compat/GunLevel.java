@@ -92,7 +92,7 @@ public final class GunLevel {
     public static int level(com.xenowarriors.bot.PartyBotEntity b) {
         ServerPlayer o = b.owner();
         if (o == null) return start(b.character());
-        String lk = LV + b.character().getId();
+        String lk = LV + b.charKey();
         return keep(o).contains(lk) ? keep(o).getInt(lk) : start(b.character());
     }
 
@@ -107,7 +107,7 @@ public final class GunLevel {
         if (o == null || amount <= 0 || b.journey()) return;
         int lv = level(b);
         if (lv >= MAX) return;
-        String k = b.character().getId();
+        String k = b.charKey();
         float xp = keep(o).getFloat(XP + k) + amount;
         int before = lv;
         while (lv < MAX && xp >= needed(lv)) { xp -= needed(lv); lv++; }

@@ -152,10 +152,7 @@ public final class DmzPerCharacter {
 
     /** The key a bot's DragonMineZ character is saved under (like its inventory: its character id, or "you&lt;slot&gt;"). */
     public static String botKey(com.xenowarriors.bot.PartyBotEntity b) {
-        ServerPlayer o = b.owner();
-        if (o == null) return b.character().getId();
-        return o.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER)
-                .map(d -> com.xenowarriors.character.PlayerCharacter.key(b.character(), d.youSlot)).orElse(b.character().getId());
+        return b.charKey();
     }
 
     /** The bot character whose DMZ data is in the owner's capability right now (its menu is open), or null. */

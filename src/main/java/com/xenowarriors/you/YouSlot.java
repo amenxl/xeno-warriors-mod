@@ -33,6 +33,8 @@ public final class YouSlot {
     public boolean ascended;
     /** A Skylander's Lunar / Solar path mastery (forms used at their own time of day, see YouAngel). */
     public int lunarM, solarM;
+    /** Its own look: "" = your skin, "p:<name>" = that Minecraft player's skin, "f:<sha1>" = a skin file you added (see YouSkins). */
+    public String skin = "";
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -79,6 +81,7 @@ public final class YouSlot {
         t.putBoolean("ascended", ascended);
         t.putInt("lunar_m", lunarM);
         t.putInt("solar_m", solarM);
+        t.putString("skin", skin);
         return t;
     }
 
@@ -97,6 +100,7 @@ public final class YouSlot {
         s.ascended = t.getBoolean("ascended");
         s.lunarM = t.getInt("lunar_m");
         s.solarM = t.getInt("solar_m");
+        s.skin = com.xenowarriors.you.YouSkins.valid(t.getString("skin")) ? t.getString("skin") : "";
         return s;
     }
 
@@ -113,6 +117,7 @@ public final class YouSlot {
         buf.writeBoolean(ascended);
         buf.writeVarInt(lunarM);
         buf.writeVarInt(solarM);
+        buf.writeUtf(skin, 64);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -129,6 +134,8 @@ public final class YouSlot {
         s.ascended = buf.readBoolean();
         s.lunarM = buf.readVarInt();
         s.solarM = buf.readVarInt();
+        String sk = buf.readUtf(64);
+        s.skin = com.xenowarriors.you.YouSkins.valid(sk) ? sk : "";
         return s;
     }
 

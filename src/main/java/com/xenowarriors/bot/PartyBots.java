@@ -89,7 +89,7 @@ public final class PartyBots {
     public static List<com.xenowarriors.network.PartySyncPacket.Member> syncMembers(ServerPlayer owner) {
         List<com.xenowarriors.network.PartySyncPacket.Member> out = new ArrayList<>();
         for (PartyBotEntity b : bots(owner))
-            out.add(new com.xenowarriors.network.PartySyncPacket.Member(b.getUUID(), b.character().getDisplayName().getString() + " (" + owner.getName().getString() + ")",
+            out.add(new com.xenowarriors.network.PartySyncPacket.Member(b.getUUID(), (b.ownCharacter() && b.you() != null ? b.you().name : b.character().getDisplayName().getString()) + " (" + owner.getName().getString() + ")",
                     b.getHealth(), b.getMaxHealth(), b.karma, 100F, b.character().ordinal(), b.downed(), false,
                     b.getX(), b.getY(), b.getZ(), b.level().dimension().location().toString(), true, b.botLevel(), 0F));
         return out;
@@ -102,7 +102,7 @@ public final class PartyBots {
 
     /** (UI tests) a "XW-TEST bots5 ..." line. */
     public static void testLog(PartyBotEntity b, String s) {
-        if (System.getenv("XW_UITEST") != null) XenoWarriors.LOGGER.info("XW-TEST bots5 {} {}", b == null ? "-" : b.character().getId(), s);
+        if (System.getenv("XW_UITEST") != null) XenoWarriors.LOGGER.info("XW-TEST bots5 {} {}", b == null ? "-" : b.charKey(), s);
     }
 
     /** (Tests) how many bot records wait for this owner. */
@@ -142,7 +142,7 @@ public final class PartyBots {
             CompoundTag r;
             if (b.journey()) {                                                   // (a Journey teammate: only its finds, which come to you)
                 r = new CompoundTag();
-                r.putString("char", b.character().getId());
+                r.putString("char", b.charKey());
                 r.putBoolean("journey", true);
                 r.put("inv", b.inventory.createTag());
             } else {
@@ -164,9 +164,10 @@ public final class PartyBots {
             return;
         }
         if (rec.getBoolean("down")) { homeFromRecord(p, rec); return; }          // (down when the server went: it went home, as at a logout)
-        CharacterType ct = CharacterType.byId(rec.getString("char"));
-        if (ct == CharacterType.NONE) { homeFromRecord(p, rec); return; }
-        if (!canFollowTo(ct, p.level()) || com.xenowarriors.journey.Journey.inLobbyOrRun(p) || bots(p).stream().anyMatch(b -> b.character() == ct)) {
+        String key = rec.getString("char");
+        CharacterType ct = com.xenowarriors.character.PlayerCharacter.typeOfKey(key);
+        if (ct == CharacterType.NONE || ct == CharacterType.YOU && !ownExists(p, key)) { homeFromRecord(p, rec); return; }   // (one of your own you've since deleted: its things come home)
+        if (!canFollowTo(ct, p.level()) || com.xenowarriors.journey.Journey.inLobbyOrRun(p) || bots(p).stream().anyMatch(b -> b.charKey().equals(key))) {
             LEFT_BEHIND.add(Map.entry(p.getUUID(), rec));                         // (waits outside the Hekublade / until the Journey's over - see onServerTick)
             return;
         }
@@ -193,10 +194,12 @@ public final class PartyBots {
             for (var e : list) {
                 ServerPlayer o = event.getServer().getPlayerList().getPlayer(e.getKey());
                 if (o == null) { LEFT_BEHIND.add(e); continue; }                    // (owner offline: kept for when they're back)
-                CharacterType ct = CharacterType.byId(e.getValue().getString("char"));
+                String key = e.getValue().getString("char");
+                CharacterType ct = com.xenowarriors.character.PlayerCharacter.typeOfKey(key);
+                if (ct == CharacterType.YOU && !ownExists(o, key)) { homeFromRecord(o, e.getValue()); continue; }
                 if (!canFollowTo(ct, o.level())) { LEFT_BEHIND.add(e); continue; }          // (waits outside the Hekublade)
                 if (!o.isAlive() || com.xenowarriors.journey.Journey.inLobbyOrRun(o) || placeNear(o, ct.skylander() || ct == CharacterType.ULTIMA || ct == CharacterType.MIKIKO) == null) { LEFT_BEHIND.add(e); continue; }   // (dead, on a Journey, or high in the air over nothing: once there's ground)
-                if (bots(o).stream().noneMatch(b -> b.character() == ct)) spawn(o, ct, e.getValue());
+                if (bots(o).stream().noneMatch(b -> b.charKey().equals(key))) spawn(o, ct, e.getValue());
                 else homeFromRecord(o, e.getValue());                               // (that character came back another way meanwhile: its things go home, not into thin air)
             }
         }
@@ -265,17 +268,18 @@ public final class PartyBots {
     /** The pick screen: characters you're not playing and that aren't already with you. */
     public static void openPick(ServerPlayer p) {
         Set<String> taken = new HashSet<>();
-        for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
+        for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); if (m == p) taken.add(myKey(p)); for (PartyBotEntity b : bots(m)) taken.add(b.charKey()); }
         List<String> cooling = new ArrayList<>();
         long now = p.level().getGameTime();
         for (CharacterType t : CharacterType.PLAYABLE) if (p.getPersistentData().getLong(REJOIN + t.getId()) > now) cooling.add(t.getId());
+        for (int i = 0; i < com.xenowarriors.you.YouSlot.SLOTS; i++) { String k = com.xenowarriors.character.PlayerCharacter.key(CharacterType.YOU, i); if (p.getPersistentData().getLong(REJOIN + k) > now) cooling.add(k); }
         for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
         int waiting = waitingFor(p.getUUID());
         String fusedWith = com.xenowarriors.compat.DmzFusion.fusedChar(p);     // (the bot you're fused with is still on the team)
         if (fusedWith != null) { taken.add(fusedWith); waiting++; }
         int limit = Parties.limit();
         int free = Math.max(0, Math.min(limit - 1 - bots(p).size() - waiting, limit - partySize(p) - waiting));   // (you plus the rest makes a full party: 4 unless /xeno partylimit)
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free, limit, OffDuty.forPick(p)), p);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free, limit, OffDuty.forPick(p), ownForPick(p)), p);
     }
 
     /** How many more people / bots fit in this player's party right now. */
@@ -290,11 +294,20 @@ public final class PartyBots {
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { p.sendSystemMessage(Component.literal("No bot teammates on a Journey - it's just you and your partner.").withStyle(ChatFormatting.RED)); return; }
         int free = Parties.limit() - partySize(p) - waitingFor(p.getUUID());     // (ones waiting outside the Hekublade still take their place)
         Set<String> taken = new HashSet<>();
-        for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); for (PartyBotEntity b : bots(m)) taken.add(b.character().getId()); }
+        for (ServerPlayer m : Parties.members(p)) { taken.add(ModCapabilities.getType(m).getId()); if (m == p) taken.add(myKey(p)); for (PartyBotEntity b : bots(m)) taken.add(b.charKey()); }
         for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) taken.add(e.getValue().getString("char"));   // (one waiting outside the Hekublade is still on the team)
         String fusedWith = com.xenowarriors.compat.DmzFusion.fusedChar(p);     // (so is the bot you're fused with: no second copy of it)
         if (fusedWith != null) { taken.add(fusedWith); free--; }
         for (String id : ids) {
+            if (id.matches("you\\d+")) {                                         // one of your own characters
+                if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (" + Parties.limit() + " people and bots).").withStyle(ChatFormatting.RED)); return; }
+                if (taken.contains(id) || !ownExists(p, id)) continue;
+                var s = ownSlot(p, id);
+                if (p.getPersistentData().getLong(REJOIN + id) > p.level().getGameTime()) { p.sendSystemMessage(Component.literal(s.name + " is still recovering - try again later.").withStyle(ChatFormatting.RED)); continue; }
+                if (!canFollowTo(CharacterType.YOU, p.level())) { p.sendSystemMessage(Component.literal(s.name + " can't come into the Hekublade (only Kaeru can).").withStyle(ChatFormatting.RED)); continue; }
+                if (spawnKey(p, id, null) != null) { taken.add(id); free--; }
+                continue;
+            }
             CharacterType t = CharacterType.byId(id);
             if (free <= 0) { p.sendSystemMessage(Component.literal("Your party is full (" + Parties.limit() + " people and bots).").withStyle(ChatFormatting.RED)); return; }
             if (t == CharacterType.NONE || !Arrays.asList(CharacterType.PLAYABLE).contains(t) || taken.contains(id)) continue;
@@ -313,19 +326,51 @@ public final class PartyBots {
     }
 
     public static PartyBotEntity spawn(ServerPlayer p, CharacterType t, CompoundTag record) {
+        return spawnKey(p, t == CharacterType.YOU && record != null ? record.getString("char") : t.getId(), record);
+    }
+
+    /** Your save key for the character you're playing ("mikiko", "you3"). */
+    public static String myKey(ServerPlayer p) { return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(com.xenowarriors.character.PlayerCharacter::key).orElse(ModCapabilities.getType(p).getId()); }
+
+    /** One of your own characters (by save key), if it's still there. */
+    public static com.xenowarriors.you.YouSlot ownSlot(ServerPlayer p, String key) {
+        int slot = com.xenowarriors.character.PlayerCharacter.slotOfKey(key);
+        if (slot < 0 || slot >= com.xenowarriors.you.YouSlot.SLOTS) return null;
+        var s = p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.youSlots[slot]).orElse(null);
+        return s != null && s.exists() ? s : null;
+    }
+
+    public static boolean ownExists(ServerPlayer p, String key) { return ownSlot(p, key) != null; }
+
+    /** Your own characters for the pick screen. */
+    static List<com.xenowarriors.network.OpenBotPickPacket.Own> ownForPick(ServerPlayer p) {
+        List<com.xenowarriors.network.OpenBotPickPacket.Own> l = new ArrayList<>();
+        for (int i = 0; i < com.xenowarriors.you.YouSlot.SLOTS; i++) {
+            String k = com.xenowarriors.character.PlayerCharacter.key(CharacterType.YOU, i);
+            var s = ownSlot(p, k);
+            if (s != null) l.add(new com.xenowarriors.network.OpenBotPickPacket.Own(i, s.copy(), levelFor(p, k)));
+        }
+        return l;
+    }
+
+    /** A bot of this character (save key: "mikiko", or "you3" for one of your own). */
+    public static PartyBotEntity spawnKey(ServerPlayer p, String key, CompoundTag record) {
+        CharacterType t = com.xenowarriors.character.PlayerCharacter.typeOfKey(key);
+        if (t == CharacterType.YOU && !ownExists(p, key)) return null;
         PartyBotEntity b = BotEntities.BOT.get().create(p.serverLevel());
         if (b == null) return null;
         b.setCharacter(t);
         b.setOwner(p.getUUID());
+        if (t == CharacterType.YOU) b.setYouSlot(com.xenowarriors.character.PlayerCharacter.slotOfKey(key));
         dress(b, p);
-        b.applyLevel(levelFor(p, t));
+        b.applyLevel(levelFor(p, key));
         com.xenowarriors.compat.DmzBotStats.apply(b);                           // (with DragonMineZ: its character's health and strength, before its saved health goes back in)
         com.xenowarriors.party.Bonds.applyHealth(b);                            // (its bond hearts too, like its owner's - also before the saved health)
         if (record != null) b.loadRecord(record);
         else {                                                                   // a fresh teammate: their own inventory, as you left it
-            CompoundTag saved = com.xenowarriors.character.CharacterInventories.checkOut(p, t.getId());
+            CompoundTag saved = com.xenowarriors.character.CharacterInventories.checkOut(p, key);
             for (ItemStack lost : b.inventory.loadBag(com.xenowarriors.character.CharacterInventories.mainItems(saved))) if (!p.getInventory().add(lost)) p.drop(lost, false);
-            for (ItemStack lost : b.inventory.loadExtra(BotBags.take(p, t.getId()))) if (!p.getInventory().add(lost)) p.drop(lost, false);   // (its extra tabs, waiting for it in your save)
+            for (ItemStack lost : b.inventory.loadExtra(BotBags.take(p, key))) if (!p.getInventory().add(lost)) p.drop(lost, false);   // (its extra tabs, waiting for it in your save)
             ItemStack[] arm = com.xenowarriors.character.CharacterInventories.armour(saved);
             for (int i = 0; i < 4; i++) b.setItemSlot(com.xenowarriors.character.CharacterInventories.ARMOUR_SLOTS[i], arm[i]);
             b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, arm[4]);
@@ -341,9 +386,12 @@ public final class PartyBots {
     }
 
     /** The level this player has raised a character to (their own saved stats for it). */
-    public static int levelFor(ServerPlayer p, CharacterType t) {
+    public static int levelFor(ServerPlayer p, CharacterType t) { return levelFor(p, t.getId()); }
+
+    /** The same, by save key ("you3" for one of your own). */
+    public static int levelFor(ServerPlayer p, String key) {
         return p.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
-            int[] lv = d.getType() == t ? d.statLevel : d.charStats.getCompound(t.getId()).getIntArray("lv");
+            int[] lv = d.levelsOf(key);
             int sum = 0; for (int v : lv) sum += v;
             return Math.max(1, com.xenowarriors.stats.Stats.fromStats(sum));
         }).orElse(1);
@@ -352,13 +400,15 @@ public final class PartyBots {
     /** A bot's own level of one stat (Speed / Attack / Defense): its owner's saved stats for that character, as levelFor. */
     public static int statLevel(PartyBotEntity b, Stat stat) {
         ServerPlayer o = b.owner();
-        return o == null ? 0 : statLevel(o, b.character(), stat);
+        return o == null ? 0 : statLevel(o, b.charKey(), stat);
     }
 
+    public static int statLevel(ServerPlayer o, CharacterType t, Stat stat) { return statLevel(o, t.getId(), stat); }
+
     /** That character's level of one stat, from this owner's saves (on the team or not). */
-    public static int statLevel(ServerPlayer o, CharacterType t, Stat stat) {
+    public static int statLevel(ServerPlayer o, String key, Stat stat) {
         return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
-            int[] lv = d.getType() == t ? d.statLevel : d.charStats.getCompound(t.getId()).getIntArray("lv");
+            int[] lv = d.levelsOf(key);
             int i = stat.ordinal();
             return i < lv.length ? Math.max(0, lv[i]) : 0;
         }).orElse(0);
@@ -368,21 +418,21 @@ public final class PartyBots {
     public static void addXp(PartyBotEntity b, Stat stat, float amount) {
         ServerPlayer o = b.owner();
         if (o == null || amount <= 0) return;
-        CharacterType t = b.character();
+        String key = b.charKey();
         o.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
-            if (d.getType() == t) return;                                            // you're playing it yourself
-            CompoundTag c = d.charStats.getCompound(t.getId());
+            if (d.playing(key)) return;                                              // you're playing it yourself
+            CompoundTag c = d.charStats.getCompound(key);
             int[] lv = c.getIntArray("lv"); if (lv.length != 3) lv = new int[3];
             int i = stat.ordinal();
             float xp = c.getFloat("x" + i) + amount;
             boolean up = false;
             while (lv[i] < Stat.MAX_LEVEL && xp >= stat.needed(lv[i])) { xp -= stat.needed(lv[i]); lv[i]++; up = true; }
             c.putIntArray("lv", lv); c.putFloat("x" + i, xp);
-            d.charStats.put(t.getId(), c);
+            d.charStats.put(key, c);
             if (up) {
                 com.xenowarriors.statboost.StatBoosts.botLeveledUp(b, o, com.xenowarriors.statboost.BoostStat.of(stat));
                 int before = b.botLevel();
-                b.applyLevel(levelFor(o, t));
+                b.applyLevel(levelFor(o, key));
                 if (b.botLevel() > before) o.displayClientMessage(Component.literal("").append(b.label()).append(" reached level " + b.botLevel() + "!").withStyle(ChatFormatting.GOLD), true);
             }
         });
@@ -403,9 +453,9 @@ public final class PartyBots {
             ItemStack held = BotGear.stowHand(b);                                // (what's in its hand goes home too)
             CompoundTag kept = b.getPersistentData().getCompound("xw_inv_kept").copy();
             if (!held.isEmpty() && !intoEnder(kept, held) && !o.getInventory().add(held)) o.drop(held, false);   // (bag full: its ender chest, then you)
-            BotBags.store(o, b.character().getId(), b.inventory.extraTag());   // (its extra tabs wait in your save - never in the character's own inventory)
+            BotBags.store(o, b.charKey(), b.inventory.extraTag());   // (its extra tabs wait in your save - never in the character's own inventory)
             ListTag bag = b.inventory.bagTag();
-            com.xenowarriors.character.CharacterInventories.checkIn(o, b.character().getId(), bag, b.armour(),
+            com.xenowarriors.character.CharacterInventories.checkIn(o, b.charKey(), bag, b.armour(),
                     b.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND), kept);
         }
         // everything went home: nothing left on it to drop or count twice
@@ -646,7 +696,7 @@ public final class PartyBots {
         if (list.isEmpty()) return;
         persisted.remove(STASH);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
-        for (int i = 0; i < list.size(); i++) spawn(p, CharacterType.byId(list.getCompound(i).getString("char")), list.getCompound(i));
+        for (int i = 0; i < list.size(); i++) spawn(p, com.xenowarriors.character.PlayerCharacter.typeOfKey(list.getCompound(i).getString("char")), list.getCompound(i));
         p.displayClientMessage(Component.literal("Your bot teammates are back.").withStyle(ChatFormatting.AQUA), true);
     }
 
@@ -804,7 +854,7 @@ public final class PartyBots {
         return e.getUUID();
     }
 
-    private static UUID standInId(PartyBotEntity b) { return UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.character().getId()).getBytes()); }
+    private static UUID standInId(PartyBotEntity b) { return UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.charKey()).getBytes()); }
 
     /**
      * The owner of a bot whose stand-in player has this UUID, or null. A skill entity a bot made (a Kishi dome...) only
@@ -828,28 +878,37 @@ public final class PartyBots {
      * Whether a bot may use this pool skill: its story season is unlocked in the world and the bot is strong enough
      * (a pick its owner made in creative, or before the season was locked again, doesn't count - as for the ultimate).
      */
+    private static final Skill DEVIL_UNLEASHED = new com.xenowarriors.skill.ffr.SrSkills.DevilUnleashed();
+
+    /** A Demon of yours: half the time it reaches for its ultimate, it unleashes the devil instead (as you would with sneak + the transform key). */
+    private static boolean devilUnleashed(PartyBotEntity b) {
+        if (!b.ownCharacter() || b.getRandom().nextBoolean()) return false;
+        var s = b.you();
+        return s != null && s.demon() && !com.xenowarriors.skill.ffr.SrSkills.devilActive(fake(b));
+    }
+
     public static boolean botMay(PartyBotEntity b, int poolIndex) {
-        SkillPool.Entry e = SkillPool.entry(b.character(), poolIndex);
+        SkillPool.Entry e = b.ownCharacter() ? SkillPool.entry(fake(b), poolIndex) : SkillPool.entry(b.character(), poolIndex);
         return e != null && SkillPool.available(e, b.botLevel(), false, com.xenowarriors.character.Seasons.highest(b.getServer()));
     }
 
     /** The skill a bot uses from this slot of its owner's loadout: a pick it may not use falls back to the default skill there (or none). */
     public static Skill botSkill(PartyBotEntity b, int[] loadout, int slot) {
         if (slot < com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && loadout != null && slot < loadout.length && !botMay(b, loadout[slot])) {
-            int def = SkillPool.defaultLoadout(b.character())[slot];
+            int def = (b.ownCharacter() ? SkillPool.defaultLoadout() : SkillPool.defaultLoadout(b.character()))[slot];
             if (!botMay(b, def)) return null;
             int[] l = loadout.clone();
             l[slot] = def;
-            return SkillPool.inSlot(b.character(), l, slot);
+            return b.ownCharacter() ? SkillPool.inSlot(fake(b), l, slot) : SkillPool.inSlot(b.character(), l, slot);
         }
-        return SkillPool.inSlot(b.character(), loadout, slot);
+        return b.ownCharacter() ? SkillPool.inSlot(fake(b), loadout, slot) : SkillPool.inSlot(b.character(), loadout, slot);
     }
 
     static FakePlayer fake(PartyBotEntity b) {
         ServerLevel s = (ServerLevel) b.level();
         FakePlayer f = FAKES.get(b.getUUID());
         if (f == null || f.level() != s) {
-            String name = ("xwbot_" + b.character().getId() + "_" + b.getUUID().toString().substring(0, 4));
+            String name = ("xwbot_" + b.charKey() + "_" + b.getUUID().toString().substring(0, 4));
             f = FakePlayerFactory.get(s, new GameProfile(standInId(b), name.substring(0, Math.min(16, name.length()))));   // (one per owner + character: the factory's cache stays small)
             FAKES.put(b.getUUID(), f);
             FAKE_TO_BOT.put(f.getUUID(), b.getUUID());
@@ -859,11 +918,11 @@ public final class PartyBots {
         f.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
             d.setType(b.character());
             if (o != null) o.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(od -> {
-                int[] lv = od.getType() == b.character() ? od.statLevel : od.charStats.getCompound(b.character().getId()).getIntArray("lv");
+                int[] lv = od.levelsOf(b.charKey());
                 for (int i = 0; i < 3; i++) d.statLevel[i] = i < lv.length ? lv[i] : 0;
                 d.loadouts = od.loadouts.copy();
-                d.youSlot = od.youSlot;                                  // (a You owner's bots can use their skills)
-                for (int i = 0; i < d.youSlots.length; i++) d.youSlots[i] = od.youSlots[i].copy();
+                d.youSlot = b.ownCharacter() ? b.youSlot() : od.youSlot;              // (one of your own: its slot; else a You owner's, so its bots can use their skills)
+                for (int i = 0; i < d.youSlots.length; i++) d.youSlots[i] = b.ownCharacter() && i == b.youSlot() ? od.youSlots[i] : od.youSlots[i].copy();   // (its own slot is the real one: what it earns - mastery, hunger - is saved)
             });
             d.setKarma(100F);
         });
@@ -908,9 +967,10 @@ public final class PartyBots {
         if (dist > 3.5 && BotPassives.tryRl(b, target, false)) return;            // (its right+left click move, from a distance; up close it follows a hit)
         long now = b.level().getGameTime();
         ServerPlayer o = b.owner();
-        int[] loadout = o == null ? SkillPool.defaultLoadout(b.character()) : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout(b.character()));   // (with the ultimate picked for that character)
+        int[] loadout = b.ownCharacter() ? fake(b).getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(CharacterType.YOU)).orElse(SkillPool.defaultLoadout())   // (one of your own: its own loadout)
+                : o == null ? SkillPool.defaultLoadout(b.character()) : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout(b.character()));   // (with the ultimate picked for that character)
         if (loadout.length > com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] > 0) {    // (the picked one only once the bot itself is strong enough - a pick made in creative doesn't count)
-            var ults = SkillPool.ultimates(b.character());
+            var ults = b.ownCharacter() ? SkillPool.ultimates(fake(b)) : SkillPool.ultimates(b.character());
             int c = loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT];
             if (c >= ults.size() || !SkillPool.available(ults.get(c), b.botLevel(), false, com.xenowarriors.character.Seasons.highest(b.getServer()))) loadout[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] = 0;
         }
@@ -918,7 +978,7 @@ public final class PartyBots {
         if (slot == 4 && (b.getHealth() > b.getMaxHealth() * 0.6F || b.karma < 60)) slot = b.getRandom().nextInt(4);    // ultimates when it matters
         if (slot == 4 && BotTeamUlt.saveUltimate(b, target)) slot = b.getRandom().nextInt(4);   // (saving it for a team ultimate with its partner)
         if (now < b.skillReady[slot]) return;
-        Skill skill = botSkill(b, loadout, slot);                                // (not a skill from a locked season, or above the bot's level)
+        Skill skill = slot == com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT && devilUnleashed(b) ? DEVIL_UNLEASHED : botSkill(b, loadout, slot);   // (not a skill from a locked season, or above the bot's level)
         if (skill == null || BotPassives.blockedInSlot(b, skill)) return;         // (its passives and transformations work by themselves - BotPassives)
         float cost = com.xenowarriors.skill.SkillLevels.costFor(b, skill.getId(), skill.getKarmaCost());   // (the owner's ability level for this character)
         if (com.xenowarriors.party.Synergy.has(b, com.xenowarriors.party.Synergy.OLD_FRIENDS))                // Old Friends: cheaper skills, as for a player
@@ -942,6 +1002,28 @@ public final class PartyBots {
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);
             if (ANIM_SENT.remove(b.getUUID()) == null) com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.KA_BREAK, 10);   // (a skill without one of its own)
         } else b.skillReady[slot] = now + 60;
+    }
+
+    /** (Tests) the skills a bot would use from each slot of its loadout (0-3, then the ultimate). */
+    public static String skillsForTest(PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        int[] loadout = b.ownCharacter() ? fake(b).getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(CharacterType.YOU)).orElse(SkillPool.defaultLoadout())
+                : o == null ? SkillPool.defaultLoadout(b.character()) : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout(b.character()));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i <= com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT; i++) {
+            Skill sk = botSkill(b, loadout, i);
+            sb.append(i > 0 ? ", " : "").append(sk == null ? "-" : sk.getId());
+        }
+        return sb.toString();
+    }
+
+    /** (Tests) the bot uses the skill in this slot on the target now (Karma and cooldowns aside): true if it went off. */
+    public static boolean useSlotForTest(PartyBotEntity b, LivingEntity target, int slot) {
+        ServerPlayer o = b.owner();
+        int[] loadout = b.ownCharacter() ? fake(b).getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(CharacterType.YOU)).orElse(SkillPool.defaultLoadout())
+                : o == null ? SkillPool.defaultLoadout(b.character()) : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout(b.character()));
+        Skill sk = slot < 0 ? DEVIL_UNLEASHED : botSkill(b, loadout, slot);
+        return sk != null && castAt(b, sk, target);
     }
 
     /** A support skill (Kaeru's Fox Heal) used facing someone: true if it went off (its body animation plays, as with trySkill). */
@@ -1087,7 +1169,7 @@ public final class PartyBots {
     static void strandedDown(PartyBotEntity b) {
         ServerPlayer o = b.owner();
         if (o != null) {
-            o.getPersistentData().putLong(REJOIN + b.character().getId(), o.level().getGameTime() + REJOIN_COOLDOWN);
+            o.getPersistentData().putLong(REJOIN + b.charKey(), o.level().getGameTime() + REJOIN_COOLDOWN);
             o.displayClientMessage(Component.literal("").append(b.label()).append(" was left behind while down and went home to recover (5 min). They keep all their things.").withStyle(ChatFormatting.GRAY), false);
         }
         checkIn(b, o);
@@ -1096,7 +1178,7 @@ public final class PartyBots {
     static void bleedOut(PartyBotEntity b) {
         ServerPlayer o = b.owner();
         if (o != null) {
-            o.getPersistentData().putLong(REJOIN + b.character().getId(), o.level().getGameTime() + REJOIN_COOLDOWN);
+            o.getPersistentData().putLong(REJOIN + b.charKey(), o.level().getGameTime() + REJOIN_COOLDOWN);
             o.displayClientMessage(Component.literal("").append(b.label()).append(" wasn't revived and left the party to recover (5 min). They keep all their things.").withStyle(ChatFormatting.GRAY), false);
             if (b.journey()) for (int i = 0; i < b.inventory.getContainerSize(); i++) { ItemStack it = b.inventory.removeItemNoUpdate(i); if (!it.isEmpty() && !o.getInventory().add(it)) o.drop(it, false); }   // (a Journey teammate's finds come to you)
             else checkIn(b, o);                                                   // (their things wait in their own save)
@@ -1147,7 +1229,7 @@ public final class PartyBots {
         if (!p.getUUID().equals(b.ownerId())) return;
         List<String> names = new ArrayList<>(); List<Integer> ids = new ArrayList<>();
         for (LivingEntity pet : petsFor(p, b.character())) { names.add(pet.getDisplayName().getString()); ids.add(pet.getId()); }
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotMenuPacket(b.getId(), b.character().getId(), b.mode(), b.botLevel(), b.canFly(),
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotMenuPacket(b.getId(), b.charKey(), b.mode(), b.botLevel(), b.canFly(),
                 names.toArray(new String[0]), ids.stream().mapToInt(Integer::intValue).toArray(), hasRadar(b)), p);
     }
 
@@ -1428,7 +1510,7 @@ public final class PartyBots {
             for (var e : LEFT_BEHIND) if (e.getKey().equals(p.getUUID())) waiting.add(e);
             LEFT_BEHIND.removeAll(waiting);
             for (var e : waiting) {
-                if (bots(p).stream().noneMatch(b -> b.character().getId().equals(e.getValue().getString("char")))) spawn(p, CharacterType.byId(e.getValue().getString("char")), e.getValue());
+                if (bots(p).stream().noneMatch(b -> b.charKey().equals(e.getValue().getString("char")))) spawn(p, com.xenowarriors.character.PlayerCharacter.typeOfKey(e.getValue().getString("char")), e.getValue());
                 else homeFromRecord(p, e.getValue());                               // (already back another way: its things go home)
             }
         }

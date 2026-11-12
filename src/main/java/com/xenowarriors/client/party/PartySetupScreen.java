@@ -141,6 +141,7 @@ public class PartySetupScreen extends Screen {
         if (minecraft.level == null) return null;
         CharacterType ct = CharacterType.values()[Mth.clamp(c.type(), 0, CharacterType.values().length - 1)];
         if (c.mine() && !c.bot() && ct == CharacterType.YOU) return minecraft.player;     // (a You character: only you have that skin)
+        if (c.bot() && ct == CharacterType.YOU) { PartyBotEntity b = bot(c); if (b != null) return b; }   // (one of your own as a bot: the bot itself, in its own skin)
         // otherwise always a stand-in, even for yourself: real players keep their world facing and can show their back
         PartyBotEntity s = stand_ins.computeIfAbsent(i, k -> com.xenowarriors.bot.BotEntities.BOT.get().create(minecraft.level));
         if (s != null) s.setCharacter(CharacterType.values()[Mth.clamp(c.type(), 0, CharacterType.values().length - 1)]);

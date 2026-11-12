@@ -101,7 +101,7 @@ public final class Building {
     }
 
     private static String botKey(PartyBotEntity b, ServerPlayer o) {
-        return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key(b.character())).orElse(b.character().getId());
+        return b.charKey();
     }
 
     private static int clamp(int lv) { return Math.max(0, Math.min(MAX_LEVEL, lv)); }

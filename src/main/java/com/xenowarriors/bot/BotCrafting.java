@@ -87,7 +87,7 @@ public final class BotCrafting {
         return OFFERS.containsKey(b.getUUID()) && until != null && until > b.level().getGameTime();
     }
 
-    private static Map<String, Long> quiet(PartyBotEntity b) { return QUIET.computeIfAbsent(b.ownerId() + "/" + b.character().getId(), k -> new HashMap<>()); }
+    private static Map<String, Long> quiet(PartyBotEntity b) { return QUIET.computeIfAbsent(b.ownerId() + "/" + b.charKey(), k -> new HashMap<>()); }
 
     // ---------------------------------------------------------------- the periodic look
 
@@ -582,7 +582,7 @@ public final class BotCrafting {
     }
 
     private static void log(PartyBotEntity b, String s) {
-        if (System.getenv("XW_UITEST") != null) XenoWarriors.LOGGER.info("XW-TEST botgear craft {} {}", b.character().getId(), s);
+        if (System.getenv("XW_UITEST") != null) XenoWarriors.LOGGER.info("XW-TEST botgear craft {} {}", b.charKey(), s);
     }
 
     // ---------------------------------------------------------------- the answer

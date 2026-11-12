@@ -353,8 +353,8 @@ public final class BotJukebox {
         if (near.isEmpty() || o.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(at)) > 32 * 32) return;
         newSongs++;
         for (PartyBotEntity b : near) {
-            com.xenowarriors.party.Bonds.addXp(o, b.character().getId(), NEW_SONG_XP);
-            for (PartyBotEntity c : near) if (c != b) com.xenowarriors.party.Bonds.addXp(b, c.character().getId(), NEW_SONG_XP);
+            com.xenowarriors.party.Bonds.addXp(o, b.charKey(), NEW_SONG_XP);
+            for (PartyBotEntity c : near) if (c != b) com.xenowarriors.party.Bonds.addXp(b, c.charKey(), NEW_SONG_XP);
             if (b.level() instanceof ServerLevel l) l.sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE, b.getX(), b.getEyeY() + 0.6, b.getZ(), 2, 0.3, 0.1, 0.3, 0.5);
         }
         o.displayClientMessage(Component.literal("A song you've never heard before - everyone listening gets a little closer (bond +)").withStyle(ChatFormatting.LIGHT_PURPLE), false);

@@ -227,8 +227,8 @@ public final class BotPicnic {
             List<PartyBotEntity> bots = new ArrayList<>();
             for (LivingEntity g : gs) if (g instanceof PartyBotEntity b) bots.add(b);
             for (PartyBotEntity b : bots) {
-                com.xenowarriors.party.Bonds.addXp(o, b.character().getId(), BOND_END);
-                for (PartyBotEntity b2 : bots) if (b2 != b) com.xenowarriors.party.Bonds.addXp(b, b2.character().getId(), BOND_END);
+                com.xenowarriors.party.Bonds.addXp(o, b.charKey(), BOND_END);
+                for (PartyBotEntity b2 : bots) if (b2 != b) com.xenowarriors.party.Bonds.addXp(b, b2.charKey(), BOND_END);
             }
             for (LivingEntity g : gs) if (g instanceof ServerPlayer m && m != o) {
                 com.xenowarriors.party.Bonds.addXp(m, com.xenowarriors.party.Bonds.charOf(o), BOND_END);

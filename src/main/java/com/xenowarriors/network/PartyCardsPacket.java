@@ -89,8 +89,8 @@ public record PartyCardsPacket(List<Card> cards, boolean inParty, boolean leader
         }
         for (ServerPlayer p : people)
             for (PartyBotEntity b : PartyBots.bots(p))
-                cards.add(new Card(b.getUUID(), b.getId(), b.character().getDisplayName().getString(), p.getName().getString(), b.character().ordinal(),
-                        0, b.botLevel(), true, false, p == me, List.of(), com.xenowarriors.party.Bonds.level(me, b.character().getId()), com.xenowarriors.party.Bonds.progress(me, b.character().getId())));
+                cards.add(new Card(b.getUUID(), b.getId(), b.ownCharacter() && b.you() != null ? b.you().name : b.character().getDisplayName().getString(), p.getName().getString(), b.character().ordinal(),
+                        0, b.botLevel(), true, false, p == me, List.of(), com.xenowarriors.party.Bonds.level(me, b.charKey()), com.xenowarriors.party.Bonds.progress(me, b.charKey())));
         return new PartyCardsPacket(cards, Parties.inParty(me), amLeader, synergies(me), com.xenowarriors.party.Bonds.hearts(com.xenowarriors.party.Bonds.best(me)), com.xenowarriors.party.Bonds.best(me));
     }
 

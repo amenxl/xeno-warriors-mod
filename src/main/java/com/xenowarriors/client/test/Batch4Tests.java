@@ -101,6 +101,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("vessel")) vessel(mc, l);
         if (f.isEmpty() || f.contains("angel")) angel(mc, l);
         if (dmz && (f.isEmpty() || f.contains("mobgravity"))) mobGravity(mc, l);
+        if (f.isEmpty() || f.contains("ownbot")) ownBot(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2428,6 +2429,99 @@ public final class Batch4Tests {
         l.add("batch4_mob_gravity", () -> mc.setScreen(null), 3);
         l.add(null, () -> server(p -> { for (var e : m) if (e != null) e.discard(); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void ownBot(Minecraft mc, MikikoTests.Steps l) {
+        String[] sha = new String[1];
+        com.xenowarriors.bot.PartyBotEntity[] bot = new com.xenowarriors.bot.PartyBotEntity[1];
+        // a skin file of "yours" (Garry's skin, as if dropped in your skins folder), uploaded to the server
+        l.add(null, () -> {
+            try (var in = mc.getResourceManager().getResource(XenoWarriors.id("textures/entity/character/garry.png")).get().open()) {
+                byte[] b = in.readAllBytes();
+                sha[0] = com.xenowarriors.you.YouSkins.sha1(b);
+                com.xenowarriors.client.you.YouSkinClient.use(new com.xenowarriors.client.you.YouSkinClient.LocalSkin("garry", sha[0], b, null));
+            } catch (Throwable t) { log("ownbot: no skin file " + t); }
+        }, 20);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            you(p, 3, "Ruk", com.xenowarriors.character.Race.SKYLANDER, com.xenowarriors.ka.Element.WIND, 8);
+            you(p, 2, "Vexa", com.xenowarriors.character.Race.DEMON, com.xenowarriors.ka.Element.SHADOW, 20);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            boolean stored = sha[0] != null && com.xenowarriors.you.YouSkins.has(p.server, sha[0]);
+            if (stored) d.youSlots[2].skin = "f:" + sha[0];
+            log("ownbot: skin file stored on the server " + stored + " (" + com.xenowarriors.you.YouSkins.stored + " stored) -> " + (stored ? "PASS" : "FAIL"));
+            com.xenowarriors.character.CharacterManager.setCharacter(p, CharacterType.MIKIKO);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+        }), 40);
+        l.add(null, () -> server(p -> {
+            int lv = com.xenowarriors.bot.PartyBots.levelFor(p, "you2");
+            com.xenowarriors.bot.PartyBots.add(p, new String[]{"you2"});
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.charKey().equals("you2")) bot[0] = b;
+            var b = bot[0];
+            if (b == null) { log("ownbot: no bot joined -> FAIL"); return; }
+            b.setMode(com.xenowarriors.bot.PartyBotEntity.NEUTRAL);
+            b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 3, 180, 0);
+            log("ownbot: added Vexa -> " + b.label().getString() + ", key " + b.charKey() + ", level " + b.botLevel() + " (her save: " + lv + "), max hp " + Math.round(b.getMaxHealth())
+                    + ", flies " + b.naturalFlier() + ", skin " + b.you().skin.length() + " chars -> " + (b.charKey().equals("you2") && b.botLevel() == lv && b.naturalFlier() && b.you().skin.startsWith("f:") ? "PASS" : "FAIL"));
+            log("ownbot: her skills " + com.xenowarriors.bot.PartyBots.skillsForTest(b));
+        }), 30);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 200, 10); }, 30);
+        l.add(null, () -> log("ownbot: client sees her skin loaded " + (com.xenowarriors.client.you.YouSkinClient.look("f:" + sha[0]) != null) + " (files " + com.xenowarriors.client.you.YouSkinClient.filesLoaded
+                + (com.xenowarriors.client.you.YouSkinClient.lastProblem.isEmpty() ? "" : ", " + com.xenowarriors.client.you.YouSkinClient.lastProblem) + ")"), 2);
+        l.add("batch4_ownbot", () -> mc.setScreen(null), 3);
+        l.add(null, () -> server(p -> {
+            var b = bot[0];
+            if (b == null) return;
+            var g = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g.moveTo(b.getX(), b.getY(), b.getZ() + 4); g.setNoAi(true); p.serverLevel().addFreshEntity(g);
+            float h0 = g.getHealth();
+            boolean bolt = com.xenowarriors.bot.PartyBots.useSlotForTest(b, g, 2);
+            boolean devil = com.xenowarriors.bot.PartyBots.useSlotForTest(b, g, -1);
+            log("ownbot: her Element Bolt went off " + bolt + " (golem " + Math.round(h0) + " -> " + Math.round(g.getHealth()) + " hp), Devil Unleashed " + devil
+                    + " -> " + (bolt && devil ? "PASS" : "FAIL"));
+            g.discard();
+            // what she earns is hers
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            int[] before = d.charStats.getCompound("you2").getIntArray("lv").clone();
+            com.xenowarriors.bot.PartyBots.addXp(b, com.xenowarriors.stats.Stat.ATTACK, 5000F);
+            int[] after = d.charStats.getCompound("you2").getIntArray("lv");
+            log("ownbot: XP she earns goes to her save: Attack " + before[1] + " -> " + after[1] + " -> " + (after[1] > before[1] ? "PASS" : "FAIL"));
+            var s = b.you();
+            int h = s.hunger;
+            var husk = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+            husk.moveTo(b.getX() + 1, b.getY(), b.getZ()); husk.setNoAi(true); p.serverLevel().addFreshEntity(husk);
+            husk.setHealth(1F);
+            husk.hurt(b.damageSources().mobAttack(b), 9999F);
+            log("ownbot: her kill feeds her Devil's Hunger " + h + " -> " + s.hunger + " -> " + (s.hunger == h + 1 ? "PASS" : "FAIL"));
+            s.devil = true;
+            b.refreshYou();
+            long kl = com.xenowarriors.karma.KarmaLevel.of(b);
+            log("ownbot: as a Devil her Karma Mask hides her (Karma Level reads " + kl + ", masked " + com.xenowarriors.you.YouDevil.masked(b) + ") -> " + (kl <= 1 && com.xenowarriors.you.YouDevil.masked(b) ? "PASS" : "FAIL"));
+            boolean refused = !com.xenowarriors.character.CharacterManager.setYou(p, 2);
+            log("ownbot: you can't play Vexa while she's your bot " + refused + " -> " + (refused ? "PASS" : "FAIL"));
+            com.xenowarriors.bot.PartyBots.openPick(p);
+        }), 20);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.bot.BotPickScreen ps) ps.showOwn(true); }, 15);
+        l.add("batch4_ownbot_pick", () -> {}, 3);
+        l.add(null, () -> { mc.setScreen(null); server(p -> {
+            var b = bot[0];
+            if (b == null) return;
+            com.xenowarriors.bot.PartyBots.checkIn(b, p);
+            b.discard();
+            boolean played = com.xenowarriors.character.CharacterManager.setYou(p, 2);
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            var s = com.xenowarriors.you.You.slot(p);
+            log("ownbot: dismissed, then played: " + played + ", Attack " + d.statLevel[1] + ", Devil " + (s != null && s.devil) + ", hunger " + (s == null ? -1 : s.hunger)
+                    + " -> " + (played && d.statLevel[1] > 20 && s != null && s.devil ? "PASS" : "FAIL"));
+        }); }, 20);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10); }, 20);
+        l.add("batch4_ownbot_player_skin", () -> {}, 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+        Batch3Tests.character(l, CharacterType.MIKIKO);
     }
 
     private static void towerPods(Minecraft mc, MikikoTests.Steps l) {

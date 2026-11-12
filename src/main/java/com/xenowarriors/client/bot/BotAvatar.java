@@ -36,7 +36,7 @@ public class BotAvatar extends RemotePlayer {
 
     /** The same UUID as the bot's stand-in player on the server (see PartyBots.fake), or the bot's own for a display bot. */
     static UUID uuidFor(PartyBotEntity b) {
-        return b.ownerId() == null ? b.getUUID() : UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.character().getId()).getBytes());
+        return b.ownerId() == null ? b.getUUID() : UUID.nameUUIDFromBytes(("xwbot" + b.ownerId() + b.charKey()).getBytes());
     }
 
     /** Copy the bot's state (each client tick, and again right before it's drawn). */
@@ -51,6 +51,7 @@ public class BotAvatar extends RemotePlayer {
         }
         ClientCharacterData.set(getUUID(), shownAs);
         ClientCharacterData.setOutfit(getUUID(), b.outfit());                  // (the outfit you had on them)
+        if (shownAs == CharacterType.YOU) ClientCharacterData.setYou(getUUID(), b.you());   // (one of your own: its race, wings, element and skin)
         setPos(b.getX(), b.getY(), b.getZ());
         xo = b.xo; yo = b.yo; zo = b.zo;
         xOld = b.xOld; yOld = b.yOld; zOld = b.zOld;
@@ -95,6 +96,7 @@ public class BotAvatar extends RemotePlayer {
 
     /** Gone: forget what it was showing. */
     void forget() {
+        ClientCharacterData.setYou(getUUID(), null);
         ClientCharacterData.set(getUUID(), CharacterType.NONE);
         ClientCharacterData.setOutfit(getUUID(), 0);
         if (knocked) com.xenowarriors.client.party.PartyClient.setKnockedOut(getUUID(), 0);

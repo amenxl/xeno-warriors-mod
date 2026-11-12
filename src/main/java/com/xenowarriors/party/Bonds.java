@@ -71,7 +71,7 @@ public final class Bonds {
     /** The character id that a teammate counts as. */
     public static String charOf(Entity e) {
         if (e instanceof ServerPlayer p) return ModCapabilities.getType(p).getId();
-        if (e instanceof PartyBotEntity b) return b.character().getId();
+        if (e instanceof PartyBotEntity b) return b.charKey();
         return "none";
     }
 
@@ -141,7 +141,7 @@ public final class Bonds {
 
     /** The save key of a bot's character in its owner's save. */
     private static String botKey(PartyBotEntity b, ServerPlayer o) {
-        return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.key(b.character())).orElse(b.character().getId());
+        return b.charKey();
     }
 
     /** The bot character's own bond with this teammate character (kept in the owner's save, under the bot's character). */
@@ -272,7 +272,7 @@ public final class Bonds {
         b.maxHealthChanged(before);                                            // (in range; a relogged bot gets its saved health back; a fresh one starts full)
         Integer was = BOT_APPLIED.put(b.getUUID(), hearts);
         if (was == null || was != hearts)
-            XenoWarriors.LOGGER.info("XW bond hearts: {} bot best bond {} -> +{} hearts, maxHp {} -> {}", b.character().getId(), best, hearts, Math.round(before), Math.round(b.getMaxHealth()));
+            XenoWarriors.LOGGER.info("XW bond hearts: {} bot best bond {} -> +{} hearts, maxHp {} -> {}", b.charKey(), best, hearts, Math.round(before), Math.round(b.getMaxHealth()));
     }
 
     /** Every bot on this player's team (their bonds with this player's character may have changed). */

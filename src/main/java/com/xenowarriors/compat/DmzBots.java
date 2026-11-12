@@ -308,7 +308,7 @@ public final class DmzBots {
             try {
                 creditKill.invoke(null, o, dead);
                 note("quest kill credited to " + o.getGameProfile().getName() + " for " + net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(dead.getType())
-                        + " killed by bot " + b.character().getId());
+                        + " killed by bot " + b.charKey());
             } catch (Throwable t) { XenoWarriors.LOGGER.warn("Bot kill didn't count for DragonMineZ missions", t); creditKill = null; }
         }
     }

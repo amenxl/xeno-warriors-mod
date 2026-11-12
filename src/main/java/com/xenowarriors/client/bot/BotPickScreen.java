@@ -30,7 +30,12 @@ public class BotPickScreen extends Screen {
     private int menuX, menuY;
     public static String lastCommand;
     private final List<CharacterType> choices = new ArrayList<>();
-    private final LinkedHashSet<CharacterType> picked = new LinkedHashSet<>();
+    /** Picks: character ids, and "you&lt;slot&gt;" for your own characters. */
+    private final LinkedHashSet<String> picked = new LinkedHashSet<>();
+    /** Your own characters not with you already (the "Your own" tab). */
+    private final List<OpenBotPickPacket.Own> own = new ArrayList<>();
+    private boolean ownTab;
+    private OpenBotPickPacket.Own hoverOwn;
     private Button confirm;
     private int cols, scroll;
     private CharacterType hover;
@@ -43,6 +48,7 @@ public class BotPickScreen extends Screen {
         limit = m.limit();
         for (OpenBotPickPacket.Act a : m.acts()) acts.put(a.id(), a);
         for (CharacterType t : CharacterType.PLAYABLE) if (!taken.contains(t.getId())) choices.add(t);
+        for (OpenBotPickPacket.Own o : m.own()) if (!taken.contains(ownId(o))) own.add(o);
         ModNetwork.sendToServer(new com.xenowarriors.network.CharLevelsPacket(new int[0]));      // each character's level with you
     }
 
@@ -58,19 +64,40 @@ public class BotPickScreen extends Screen {
     private int gridTop() { return 44; }
     private int gridBottom() { return height - 46; }       // room under the grid for the scroll hint
     private int gridLeft() { return (width - (cols * CW + (cols - 1) * GAP)) / 2; }
-    private int rows() { return (choices.size() + cols - 1) / cols; }
+    private int count() { return ownTab ? own.size() : choices.size(); }
+    private int rows() { return (count() + cols - 1) / cols; }
+    private static String ownId(OpenBotPickPacket.Own o) { return "you" + o.slot(); }
+    private boolean ownUsable(OpenBotPickPacket.Own o) { return !cooling.contains(ownId(o)) && max > 0; }
     private int maxScroll() { return Math.max(0, rows() * (CH + GAP) - GAP - (gridBottom() - gridTop())); }
 
     @Override
     protected void init() {
-        cols = Mth.clamp((width - 24 + GAP) / (CW + GAP), 1, Math.max(1, choices.size()));
+        cols = Mth.clamp((width - 24 + GAP) / (CW + GAP), 1, Math.max(1, Math.max(choices.size(), own.size())));
         scroll = Math.min(scroll, maxScroll());
         confirm = addRenderableWidget(Button.builder(Component.literal("Add to party"), b -> {
-            ModNetwork.sendToServer(new BotPickPacket(picked.stream().map(CharacterType::getId).toArray(String[]::new)));
+            ModNetwork.sendToServer(new BotPickPacket(picked.toArray(String[]::new)));
             onClose();
         }).bounds(width / 2 - 82, height - 28, 80, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose()).bounds(width / 2 + 2, height - 28, 80, 20).build());
         confirm.active = !picked.isEmpty();
+        // tabs: the show's characters, and your own
+        addRenderableWidget(Button.builder(Component.literal("Characters"), b -> { ownTab = false; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(6, 6, 70, 16).build()).active = ownTab;
+        addRenderableWidget(Button.builder(Component.literal("Your own (" + own.size() + ")"), b -> { ownTab = true; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(80, 6, 84, 16).build()).active = !ownTab;
+    }
+
+    /** (Tests) show the "Your own" tab. */
+    public void showOwn(boolean on) { ownTab = on; scroll = 0; rebuildWidgets(); }
+    /** (Tests) pick one of your own characters. */
+    public void pickOwn(int slot) { for (OpenBotPickPacket.Own o : own) if (o.slot() == slot) toggleId(ownId(o), ownUsable(o)); }
+
+    private void toggleId(String id, boolean ok) {
+        if (!ok) return;
+        if (!picked.remove(id)) {
+            if (picked.size() >= max) picked.remove(picked.iterator().next());      // swap out the oldest pick
+            picked.add(id);
+        }
+        if (confirm != null) confirm.active = !picked.isEmpty();
+        minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2F));
     }
 
     private int[] cardAt(int i) {
@@ -78,15 +105,7 @@ public class BotPickScreen extends Screen {
         return new int[]{gridLeft() + c * (CW + GAP), gridTop() + r * (CH + GAP) - scroll};
     }
 
-    private void toggle(CharacterType t) {
-        if (!usable(t)) return;
-        if (!picked.remove(t)) {
-            if (picked.size() >= max) picked.remove(picked.iterator().next());      // swap out the oldest pick
-            picked.add(t);
-        }
-        confirm.active = !picked.isEmpty();
-        minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2F));
-    }
+    private void toggle(CharacterType t) { toggleId(t.getId(), usable(t)); }
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
@@ -97,6 +116,13 @@ public class BotPickScreen extends Screen {
             return true;
         }
         if (super.mouseClicked(mx, my, button)) return true;
+        if (ownTab) {
+            if (my >= gridTop() && my < gridBottom()) for (int i = 0; i < own.size(); i++) {
+                int[] a = cardAt(i);
+                if (mx >= a[0] && mx < a[0] + CW && my >= a[1] && my < a[1] + CH) { toggleId(ownId(own.get(i)), ownUsable(own.get(i))); return true; }
+            }
+            return false;
+        }
         if (my >= gridTop() && my < gridBottom()) for (int i = 0; i < choices.size(); i++) {
             int[] a = cardAt(i);
             if (mx >= a[0] && mx < a[0] + CW && my >= a[1] && my < a[1] + CH) {
@@ -148,6 +174,8 @@ public class BotPickScreen extends Screen {
         g.drawCenteredString(font, title, width / 2, 10, 0xFFFFFF);
         String sub = max <= 0 ? "Your party is full (" + limit + " people and bots)" : "Pick up to " + n + " - they join at the level you have them at   (" + picked.size() + "/" + n + " picked)";
         g.drawCenteredString(font, sub, width / 2, 24, max <= 0 ? 0xFF6060 : 0xAAAAAA);
+        hoverOwn = null;
+        if (ownTab) { renderOwn(g, mx, my); super.render(g, mx, my, pt); renderOwnTip(g, mx, my); return; }
         if (choices.isEmpty()) g.drawCenteredString(font, "Everyone's already in your party!", width / 2, height / 2, 0xCCCCCC);
         g.enableScissor(0, gridTop(), width, gridBottom());
         for (int i = 0; i < choices.size(); i++) {
@@ -155,7 +183,7 @@ public class BotPickScreen extends Screen {
             int[] a = cardAt(i);
             int x = a[0], y = a[1];
             if (y + CH < gridTop() || y > gridBottom()) continue;
-            boolean sel = picked.contains(t), ok = usable(t);
+            boolean sel = picked.contains(t.getId()), ok = usable(t);
             boolean hov = ok && mx >= x && mx < x + CW && my >= y && my < y + CH && my >= gridTop() && my < gridBottom();
             if (hov) hover = t;
             int col = t.getColor() & 0xFFFFFF;
@@ -227,6 +255,52 @@ public class BotPickScreen extends Screen {
             List<net.minecraft.util.FormattedCharSequence> lines = new ArrayList<>(font.split(Component.literal(hover.getFullName().getString() + "\n" + hover.getTitle().getString() + "\n" + hover.getElements().getString() + extra + "\nBond " + bond(hover)), 160));
             g.renderTooltip(font, lines, mx, my);
         }
+    }
+
+    /** The "Your own" tab: a card for each of your own characters (its head in its own skin, name, level, race and element). */
+    private void renderOwn(GuiGraphics g, int mx, int my) {
+        if (own.isEmpty()) g.drawCenteredString(font, "No characters of your own to add - make one in Character Select > Your own", width / 2, height / 2, 0xCCCCCC);
+        g.enableScissor(0, gridTop(), width, gridBottom());
+        for (int i = 0; i < own.size(); i++) {
+            OpenBotPickPacket.Own o = own.get(i);
+            int[] a = cardAt(i);
+            int x = a[0], y = a[1];
+            if (y + CH < gridTop() || y > gridBottom()) continue;
+            String id = ownId(o);
+            boolean sel = picked.contains(id), ok = ownUsable(o);
+            boolean hov = mx >= x && mx < x + CW && my >= y && my < y + CH && my >= gridTop() && my < gridBottom();
+            if (hov) hoverOwn = o;
+            int col = o.data().color() & 0xFFFFFF;
+            g.fill(x - 1, y - 1, x + CW + 1, y + CH + 1, sel ? 0xFFFFE070 : hov && ok ? 0xFF000000 | col : 0xFF000000 | mix(col, 0.45F));
+            g.fill(x, y, x + CW, y + CH, sel ? 0xF0262010 : 0xF0101016);
+            g.fill(x, y, x + CW, y + 3, 0xFF000000 | col);
+            com.xenowarriors.client.you.YouSlotsScreen.face(g, x + CW / 2 - 20, y + 8, 40, col, o.data().skin);
+            g.drawCenteredString(font, o.data().name, x + CW / 2, y + 52, 0xFF000000 | col);
+            g.drawCenteredString(font, "Lv " + Math.max(1, o.level()), x + CW / 2, y + 64, 0xFFD966);
+            String sub = o.data().shown().title + " • " + o.data().element.title();
+            g.pose().pushPose();
+            g.pose().translate(x + CW / 2F, y + 78, 0);
+            float k = Math.min(0.75F, (CW - 6) / (float) Math.max(1, font.width(sub)) * 0.75F);
+            g.pose().scale(k, k, 1F);
+            g.drawCenteredString(font, sub, 0, 0, 0xBBBBBB);
+            g.pose().popPose();
+            if (sel) g.drawCenteredString(font, "✔ PICKED", x + CW / 2, y + CH - 11, 0xFFE070);
+            if (cooling.contains(id)) {
+                g.fill(x, y, x + CW, y + CH, 0x99300000);
+                g.drawCenteredString(font, "Recovering...", x + CW / 2, y + CH - 11, 0xFF8080);
+            } else if (!ok) g.fill(x, y, x + CW, y + 82, 0x80000000);
+        }
+        g.disableScissor();
+        if (maxScroll() > 0) g.drawCenteredString(font, scroll < maxScroll() ? "▼ scroll for more" : "▲ scroll up", width / 2, gridBottom() + 2, 0x8899AA);
+        else g.drawCenteredString(font, "Your own characters fight with their own skills - and keep what they earn", width / 2, gridBottom() + 4, 0x667788);
+    }
+
+    private void renderOwnTip(GuiGraphics g, int mx, int my) {
+        if (hoverOwn == null) return;
+        var d = hoverOwn.data();
+        String tip = d.name + "\n" + d.shown().title + " of " + d.element.title() + (d.element2 != null ? " and " + d.element2.title() : "")
+                + "\nSkin: " + com.xenowarriors.you.YouSkins.describe(d.skin) + (cooling.contains(ownId(hoverOwn)) ? "\nStill recovering" : "");
+        g.renderTooltip(font, font.split(Component.literal(tip), 160), mx, my);
     }
 
     private static int mix(int c, float f) {

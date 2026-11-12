@@ -185,10 +185,10 @@ public final class DmzBotPower {
         float cost = techCost != null ? num(techCost, tech, stats) : max * 0.12F;
         if (!(cost > 0)) cost = max * 0.08F;
         float have = p.energy * max;
-        if (have < cost) { note(b.character().getId() + " too little ki for " + id + " (" + Math.round(have) + "/" + Math.round(cost) + ")"); return false; }
+        if (have < cost) { note(b.charKey() + " too little ki for " + id + " (" + Math.round(have) + "/" + Math.round(cost) + ")"); return false; }
         p.energy = (have - cost) / max;
         try { write(p, stats); } catch (Throwable t) { fail(t); }
-        note(b.character().getId() + " spent " + Math.round(cost) + " ki on " + id + " -> " + pct(p.energy));
+        note(b.charKey() + " spent " + Math.round(cost) + " ki on " + id + " -> " + pct(p.energy));
         return true;
     }
 
@@ -262,13 +262,13 @@ public final class DmzBotPower {
             if (max <= 0) return;
             // power up for a fight
             if (inFight) {
-                if (p.charging) { p.charging = false; note(b.character().getId() + " stops charging - a fight"); }
+                if (p.charging) { p.charging = false; note(b.charKey() + " stops charging - a fight"); }
                 if (p.release < 100) {
                     p.release = Math.min(100, p.release + 25);
                     aura(level, b, st, 10);
                     if (p.release == 100) {
                         level.playSound(null, b.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.NEUTRAL, 0.7F, 1.6F);
-                        note(b.character().getId() + " full power (100%) for " + (target != null ? target.getType().getDescriptionId() : danger != null ? danger.getType().getDescriptionId() : "a fight"));
+                        note(b.charKey() + " full power (100%) for " + (target != null ? target.getType().getDescriptionId() : danger != null ? danger.getType().getDescriptionId() : "a fight"));
                     }
                 }
                 LivingEntity foe = danger != null ? danger : target;
@@ -279,8 +279,8 @@ public final class DmzBotPower {
                 if (p.release < want) {
                     p.release = Math.min(want, p.release + 25);
                     aura(level, b, st, 6);
-                    if (p.release == want) note(b.character().getId() + " powers up to " + want + "% with " + o.getGameProfile().getName());
-                } else if (now - p.lastFight > CALM_TICKS && p.release > want) { p.release = want; note(b.character().getId() + " powers down to " + want + "%"); }
+                    if (p.release == want) note(b.charKey() + " powers up to " + want + "% with " + o.getGameProfile().getName());
+                } else if (now - p.lastFight > CALM_TICKS && p.release > want) { p.release = want; note(b.charKey() + " powers down to " + want + "%"); }
                 if (now - p.lastFight > CALM_TICKS && p.form != null && !ownerFormed && p.energy < 0.4F) revert(b, o, st, p, "the fight's over and its ki is low");   // (it stays in its form while it has the ki: mastery keeps growing)
             }
             kaioken(b, o, st, p, inFight, inFight ? (danger != null ? danger : target) : null);
@@ -296,7 +296,7 @@ public final class DmzBotPower {
             boolean safe = !inFight && DmzDragonBalls.calm(b, o);
             if (!p.charging && safe && p.energy < LOW) {
                 p.charging = true; p.chargedAt = now;
-                note(b.character().getId() + " charges ki at " + pct(p.energy) + " (rate " + Math.round(num(regen, st, true)) + "/s)");
+                note(b.charKey() + " charges ki at " + pct(p.energy) + " (rate " + Math.round(num(regen, st, true)) + "/s)");
                 o.displayClientMessage(Component.literal("").append(b.label()).append(" is charging ki").withStyle(ChatFormatting.YELLOW), true);
             }
             if (p.charging) {
@@ -309,7 +309,7 @@ public final class DmzBotPower {
                     p.energy = Math.min(1F, p.energy + Math.max(0.02F, num(regen, st, true) / 2F / max));
                     if (p.energy >= 1F) {
                         p.charging = false;
-                        note(b.character().getId() + " fully charged after " + (now - p.chargedAt) / 20 + " s");
+                        note(b.charKey() + " fully charged after " + (now - p.chargedAt) / 20 + " s");
                     }
                 }
             } else if (!inFight && p.energy < 1F && !(b.dmzFly() && !b.naturalFlier() && DmzBotSkills.flying(b)))   // (no resting regen while it flies on its ki)
@@ -332,12 +332,12 @@ public final class DmzBotPower {
             lastGroup = (String) activeGroup.invoke(ch); last = name;
         }
         if (last == null) {
-            if (!"none".equals(p.formShown)) { p.formShown = "none"; note(b.character().getId() + " has no form to transform into"); }
+            if (!"none".equals(p.formShown)) { p.formShown = "none"; note(b.charKey() + " has no form to transform into"); }
             return false;
         }
         p.group = lastGroup; p.form = last;
         double m = num(melee, st);
-        note(b.character().getId() + " transforms into " + last + " (" + lastGroup + ")" + why + " kiDmg=" + Math.round(num(kiDamage, st) * 10) / 10.0
+        note(b.charKey() + " transforms into " + last + " (" + lastGroup + ")" + why + " kiDmg=" + Math.round(num(kiDamage, st) * 10) / 10.0
                 + " melee x" + Math.round(m / Math.max(0.01, p.restMelee) * 100) / 100.0);
         if (b.level() instanceof ServerLevel level) {
             level.sendParticles(ParticleTypes.FLASH, b.getX(), b.getY() + 1, b.getZ(), 1, 0, 0, 0, 0);
@@ -404,7 +404,7 @@ public final class DmzBotPower {
         if (last == null) return;
         p.stackGroup = group; p.stack = last;
         kaiokens++;
-        note(b.character().getId() + " goes Kaioken " + last + " (" + group + ") vs " + foe.getType().getDescriptionId() + " at " + Math.round(hp * 100) + "% health, melee x"
+        note(b.charKey() + " goes Kaioken " + last + " (" + group + ") vs " + foe.getType().getDescriptionId() + " at " + Math.round(hp * 100) + "% health, melee x"
                 + Math.round(num(melee, st) / Math.max(0.01, p.restMelee) * 100) / 100.0);
         if (b.level() instanceof ServerLevel level) {
             auraMark(b, 0xFF1A1A);
@@ -415,7 +415,7 @@ public final class DmzBotPower {
 
     private static void dropStack(PartyBotEntity b, Object st, Power p, String why) throws Exception {
         clearStack.invoke(getCharacter.invoke(st));
-        note(b.character().getId() + " drops Kaioken " + p.stack + " (" + why + ")");
+        note(b.charKey() + " drops Kaioken " + p.stack + " (" + why + ")");
         p.stack = null; p.stackGroup = null;
     }
 
@@ -434,7 +434,7 @@ public final class DmzBotPower {
 
     private static void revert(PartyBotEntity b, ServerPlayer o, Object st, Power p, String why) throws Exception {
         clearActiveForm.invoke(getCharacter.invoke(st));
-        note(b.character().getId() + " reverts from " + p.form + " (" + why + ")");
+        note(b.charKey() + " reverts from " + p.form + " (" + why + ")");
         p.form = null; p.group = null;
     }
 
