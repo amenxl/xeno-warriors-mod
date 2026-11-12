@@ -1,7 +1,6 @@
 """
 Super Saiyan 4 bodies for Rhalix and Mikiko (textures <who>_ssj4.png): the top comes off for the transformation.
-Rhalix: bare chest and arms (pecs and abs shaded in), his trousers stay. Mikiko: bare arms and midriff with a dark red
-chest wrap (her colours), her shorts stay. Base: their normal skin; the jacket layer over the body/arms is cleared.
+Both go bare-chested (pecs and abs shaded in, bare arms); their trousers / shorts stay. Base: their normal skin; the jacket layer over the body/arms is cleared.
 """
 from collections import Counter
 from PIL import Image
@@ -55,5 +54,5 @@ def make(who, wrap, look=None):
 for look in (None, 'origins1', 'origins2', 's3'):
     make('rhalix', False, look)
 for look in (None, 'origins1', 'origins2', 's3', 's3b'):
-    make('mikiko', True, look)
+    make('mikiko', False, look)
 print('ok')

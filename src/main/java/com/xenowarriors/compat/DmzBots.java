@@ -246,7 +246,7 @@ public final class DmzBots {
         for (PartyBotEntity b : PartyBots.bots(p)) {
             if (b.journey() || b.downed()) continue;
             ensureRace(b);
-            giveTp(b, passive());
+            giveTp(b, (float) (passive() * DmzBotWeights.multiplier(b)));   // (training weights it wears: DragonMineZ's weight bonus)
         }
     }
 
@@ -300,7 +300,7 @@ public final class DmzBots {
         ServerPlayer o = b.owner();
         if (o == null || o instanceof FakePlayer) return;
         if (!b.journey()) {
-            int tp = killTp(dead);
+            int tp = (int) Math.round(killTp(dead) * DmzBotWeights.multiplier(b));
             float after = giveTp(b, tp);
             if (after >= 0) note("kill TP: " + DmzPerCharacter.botKey(b) + " +" + tp + " for " + dead.getType().getDescriptionId() + " -> " + after);
         }

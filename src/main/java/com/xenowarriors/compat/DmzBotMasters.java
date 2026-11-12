@@ -61,7 +61,7 @@ public final class DmzBotMasters extends Goal {
         }
         var tag = DmzPerCharacter.saved(b.owner(), DmzPerCharacter.botKey(b));
         if (tag == null) return false;
-        int sig = Objects.hash(tag.getCompound("Resources").getFloat("TrainingPointsF"), tag.getCompound("Techniques").hashCode(), tag.getCompound("Stats").hashCode(),
+        int sig = Objects.hash(tag.getCompound("Resources").getFloat("TrainingPointsF"), tag.getCompound("Techniques").hashCode(), tag.getCompound("Stats").hashCode(), DmzBotWeights.has(b),
                 ms.stream().map(DmzBotTechniques::masterName).toList());
         if (sig == nothingSig) return false;
         DmzBotQuests.Data d = DmzBotQuests.open(b, false);
@@ -73,6 +73,7 @@ public final class DmzBotMasters extends Goal {
                 if (rest != null && b.tickCount < rest) continue;
                 StringBuilder why = new StringBuilder();
                 String s = DmzBotTechniques.lesson(d, name, why);
+                if (s == null && DmzBotWeights.wantsFrom(b, name)) s = WEIGHTS;           // (no technique to learn, but no training weights either: ask for some)
                 if (s == null) continue;
                 if (e.distanceToSqr(b) > 2.8 * 2.8 && !DmzBotTalk.reachable(b, e)) { resting.put(name, b.tickCount + RETRY); PartyBots.testLog(b, "dmz master: can't walk to " + name); continue; }
                 to = e; master = name; skill = s;
@@ -115,7 +116,9 @@ public final class DmzBotMasters extends Goal {
         }
         b.getNavigation().stop();
         b.swing(InteractionHand.MAIN_HAND);
-        boolean ok = DmzBotTechniques.learn(b, to, master, skill);
+        boolean ok;
+        if (WEIGHTS.equals(skill)) { DmzBotQuests.Data d = DmzBotQuests.open(b, false); ok = d != null && !d.live && DmzBotWeights.receive(b, d, master); }
+        else ok = DmzBotTechniques.learn(b, to, master, skill);
         PartyBots.testLog(b, "dmz master: talked to " + master + ", learned " + skill + " = " + ok);
         done = true;
         if (ok) nextLook = b.tickCount + 40;                                         // (maybe another one from them shortly)
@@ -123,6 +126,8 @@ public final class DmzBotMasters extends Goal {
     }
 
     private static final Map<PartyBotEntity, DmzBotMasters> GOALS = new WeakHashMap<>();
+    /** (the "lesson" when it goes to ask for training weights) */
+    static final String WEIGHTS = "training weights";
 
     /** (Tests) this bot looks for a master again right away. */
     public static void lookNowForTest(PartyBotEntity b) { DmzBotMasters g = GOALS.get(b); if (g != null) { g.nextLook = 0; g.nothingSig = 0; g.resting.clear(); } }
