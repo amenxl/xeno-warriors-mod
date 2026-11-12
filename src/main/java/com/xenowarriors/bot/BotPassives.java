@@ -287,6 +287,12 @@ public final class BotPassives {
 
     // ------------------------------------------------------------------ the right+left click skill
 
+    /** (Tests) no dice roll for the right+left click move. */
+    public static boolean forceRl;
+
+    /** (Tests) its right+left click move at this target now. */
+    public static boolean rlForTest(PartyBotEntity b, LivingEntity t) { forceRl = true; try { return tryRl(b, t, false); } finally { forceRl = false; } }
+
     /** Its right+left click skill at this target, if it's ready (true if it went off). */
     static boolean tryRl(PartyBotEntity b, LivingEntity target, boolean afterHit) {
         if (target == null || !target.isAlive() || b.downed()) return false;
@@ -294,7 +300,7 @@ public final class BotPassives {
         if (!com.xenowarriors.character.Seasons.unlocked(b.getServer(), b.character().season())) return false;
         String id = Toggles.rlSkillFor(b.owner(), b.character());
         if (id.isEmpty() || !ready(b, "rl")) return false;
-        if (b.getRandom().nextFloat() >= (afterHit ? 0.3F : 0.25F)) return false;
+        if (!forceRl && b.getRandom().nextFloat() >= (afterHit ? 0.3F : 0.25F)) return false;
         Skill s = skill(b, id);
         if (s == null) return false;
         float cost = com.xenowarriors.skill.SkillLevels.costFor(b, id, s.getKarmaCost());

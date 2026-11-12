@@ -83,6 +83,8 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("dmzgun")) dmzGun(mc, l);
         if (dmz && (f.isEmpty() || f.contains("radar"))) radarCraft(mc, l);
         if (dmz && (f.isEmpty() || f.contains("yurissj"))) yuriForms(mc, l);
+        if (f.isEmpty() || f.contains("hungerbar")) hungerBar(mc, l);
+        if (f.isEmpty() || f.contains("botlife")) botLife(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
@@ -569,6 +571,227 @@ public final class Batch4Tests {
             p.serverLevel().setDayTime(6000);
         }), 10);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    // ------------------------------------------------------------------ the hunger bar after eating (how many ticks it lags)
+
+    private static void hungerBar(Minecraft mc, MikikoTests.Steps l) {
+        for (CharacterType t : new CharacterType[]{CharacterType.MIKIKO, CharacterType.KYRIE}) {
+            Batch3Tests.character(l, t);
+            int[] start = new int[1];
+            l.add(null, () -> server(p -> {
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                p.getInventory().clearContent();
+                p.getInventory().selected = 0;
+                p.getInventory().setItem(0, new ItemStack(net.minecraft.world.item.Items.COOKED_BEEF, 8));
+                if (com.xenowarriors.character.BigHunger.max(p) > 20) { p.getPersistentData().putInt("xw_food_total", 30); p.getPersistentData().putInt("xw_food_last", 10); }
+                p.getFoodData().setFoodLevel(10);
+                start[0] = com.xenowarriors.character.BigHunger.total(p);
+            }), 30);
+            int[] tick = {0}, serverAt = {-1}, hudAt = {-1}, barAt = {-1};
+            int[] hud0 = new int[2];
+            l.add(null, () -> { mc.setScreen(null); mc.options.hideGui = false; hud0[0] = com.xenowarriors.client.BigHungerHud.total(); hud0[1] = mc.player.getFoodData().getFoodLevel(); mc.options.keyUse.setDown(true); }, 1);
+            for (int i = 0; i < 70; i++) l.add(null, () -> {
+                tick[0]++;
+                var s = mc.getSingleplayerServer();
+                var sp = s == null ? null : s.getPlayerList().getPlayer(mc.player.getUUID());
+                int st = sp == null ? -1 : com.xenowarriors.character.BigHunger.total(sp);
+                if (serverAt[0] < 0 && st > start[0]) serverAt[0] = tick[0];
+                if (hudAt[0] < 0 && com.xenowarriors.client.BigHungerHud.total() > hud0[0] && com.xenowarriors.client.BigHungerHud.max() > 20) hudAt[0] = tick[0];
+                if (barAt[0] < 0 && mc.player.getFoodData().getFoodLevel() != hud0[1]) barAt[0] = tick[0];
+                if (tick[0] % 5 == 0) log("hungerbar " + t.getId() + " tick " + tick[0] + ": server total " + st + ", client stomach " + com.xenowarriors.client.BigHungerHud.total() + "/" + com.xenowarriors.client.BigHungerHud.max() + ", client bar " + mc.player.getFoodData().getFoodLevel() + ", using " + mc.player.isUsingItem());
+            }, 1);
+            l.add("batch4_hungerbar_" + t.getId(), () -> {
+                mc.options.keyUse.setDown(false);
+                boolean big = com.xenowarriors.client.BigHungerHud.max() > 20;
+                int lag = big ? (hudAt[0] < 0 ? 999 : hudAt[0] - serverAt[0]) : (barAt[0] < 0 ? 999 : barAt[0] - serverAt[0]);
+                log("hungerbar " + t.getId() + ": ate at tick " + serverAt[0] + ", the HUD showed it at tick " + (big ? hudAt[0] : barAt[0]) + " (lag " + lag + " ticks) -> " + (serverAt[0] > 0 && lag <= 3 ? "PASS" : "FAIL"));
+            }, 2);
+        }
+    }
+
+    // ------------------------------------------------------------------ bots: passives, R+L, water, Home Chest, camp, food, gifts, help
+
+    private static void botLife(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.KYRIE);
+        PartyBotEntity[] b = new PartyBotEntity[4];
+        net.minecraft.world.entity.animal.IronGolem[] g = new net.minecraft.world.entity.animal.IronGolem[1];
+        // Ultima's Attack Prediction (switched on for him) reads the hits coming at him
+        l.add(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.toggle.Toggles.setForTest(p, CharacterType.ULTIMA, com.xenowarriors.toggle.Toggles.Entry.ATTACK_PREDICTION, true);
+            b[0] = botAt(p, CharacterType.ULTIMA, 3, 3);
+            b[0].applyLevel(80); b[0].karma = 100;
+            com.xenowarriors.bot.BotPassives.resetForTest(b[0]);
+            g[0] = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            g[0].moveTo(b[0].getX() + 2, b[0].getY(), b[0].getZ(), 0, 0); g[0].setNoAi(true);
+            p.serverLevel().addFreshEntity(g[0]);
+            g[0].setTarget(b[0]);
+        }), 40);
+        l.add(null, () -> server(p -> {
+            int r0 = com.xenowarriors.bot.BotPassives.reads, d0 = com.xenowarriors.bot.BotPassives.dodges;
+            b[0].invulnerableTime = 0;
+            float hp = b[0].getHealth();
+            b[0].hurt(p.damageSources().mobAttack(g[0]), 4F);
+            log("botlife passives: Ultima bot read " + r0 + ", dodged " + (com.xenowarriors.bot.BotPassives.dodges - d0) + " hit (health " + hp + " -> " + b[0].getHealth() + ") -> "
+                    + (r0 > 0 && com.xenowarriors.bot.BotPassives.dodges > d0 && b[0].getHealth() >= hp ? "PASS" : "FAIL"));
+            com.xenowarriors.toggle.Toggles.setForTest(p, CharacterType.ULTIMA, com.xenowarriors.toggle.Toggles.Entry.ATTACK_PREDICTION, false);
+            com.xenowarriors.bot.BotPassives.resetForTest(b[0]);
+        }), 30);
+        l.add(null, () -> server(p -> {
+            int r0 = com.xenowarriors.bot.BotPassives.reads;
+            b[0].karma = 100;
+            com.xenowarriors.bot.BotPassives.resetForTest(b[0]);
+            com.xenowarriors.skill.ServerScheduler.later(30, () -> log("botlife passives: switched off -> no reads (" + (com.xenowarriors.bot.BotPassives.reads - r0) + ") -> " + (com.xenowarriors.bot.BotPassives.reads == r0 ? "PASS" : "FAIL")));
+        }), 40);
+        // the right+left click move: Ultima's Energy Blast at the golem
+        l.add(null, () -> server(p -> {
+            b[0].karma = 100;
+            boolean used = com.xenowarriors.bot.BotPassives.rlForTest(b[0], g[0]);
+            log("botlife rl: Ultima bot's right+left click move (" + com.xenowarriors.toggle.Toggles.rlSkillFor(p, CharacterType.ULTIMA) + ") went off " + used + ", karma left " + Math.round(b[0].karma) + " -> " + (used && b[0].karma < 100 ? "PASS" : "FAIL"));
+            boolean again = com.xenowarriors.bot.BotPassives.rlForTest(b[0], g[0]);
+            log("botlife rl: straight again -> cooling down (" + !again + ") -> " + (!again ? "PASS" : "FAIL"));
+            g[0].discard();
+        }), 20);
+        // Technica's Gravity Boots: dropped from 14 blocks, no fall damage
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            b[1] = botAt(p, CharacterType.TECHNICA, 4, 0);
+            b[1].applyLevel(80);
+            com.xenowarriors.bot.BotPassives.resetForTest(b[1]);
+            b[1].setHealth(b[1].getMaxHealth());
+            b[1].teleportTo(b[1].getX(), b[1].getY() + 14, b[1].getZ());
+        }), 70);
+        l.add(null, () -> server(p -> log("botlife boots: Technica bot fell 14 blocks - boots " + com.xenowarriors.bot.BotPassives.boots + ", health " + b[1].getHealth() + "/" + b[1].getMaxHealth()
+                + " -> " + (com.xenowarriors.bot.BotPassives.boots > 0 && b[1].getHealth() >= b[1].getMaxHealth() - 0.5F ? "PASS" : "FAIL"))), 5);
+        // the Home Chest: a near one (walked to) and a far one (sent home)
+        net.minecraft.core.BlockPos[] chest = new net.minecraft.core.BlockPos[2];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            b[1] = botAt(p, CharacterType.SAM, 2, 2);
+            chest[0] = p.blockPosition().offset(10, 0, -6);
+            p.level().setBlock(chest[0], com.xenowarriors.sky.ModBlocks.HOME_CHEST.get().defaultBlockState(), 3);
+            if (p.level().getBlockEntity(chest[0]) instanceof com.xenowarriors.home.HomeChestBlockEntity be) be.setOwner(p.getUUID());
+            com.xenowarriors.bot.BotHome.placed(p, p.level(), chest[0]);
+            for (int i = 0; i < b[1].inventory.getContainerSize() - 2; i++) b[1].inventory.setItem(i, new ItemStack(i % 2 == 0 ? net.minecraft.world.item.Items.COBBLESTONE : net.minecraft.world.item.Items.RAW_IRON, 32));
+            b[1].inventory.setItem(0, new ItemStack(net.minecraft.world.item.Items.BREAD, 8));
+        }), 20 * 14);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 200, 25), 10);
+        l.add("batch4_botlife_homechest", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            int in = 0;
+            if (p.level().getBlockEntity(chest[0]) instanceof com.xenowarriors.home.HomeChestBlockEntity be) for (int i = 0; i < be.getContainerSize(); i++) if (!be.getItem(i).isEmpty()) in++;
+            boolean breadKept = b[1].inventory.getItem(0).is(net.minecraft.world.item.Items.BREAD);
+            log("botlife home: walked over " + com.xenowarriors.bot.BotHome.walks + ", stacks in the chest " + in + ", kept its bread " + breadKept + " -> " + (com.xenowarriors.bot.BotHome.walks > 0 && in > 0 && breadKept ? "PASS" : "FAIL"));
+            p.level().setBlock(chest[0], net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            chest[1] = p.blockPosition().offset(90, 0, 0);
+            p.level().setBlock(chest[1], com.xenowarriors.sky.ModBlocks.HOME_CHEST.get().defaultBlockState(), 3);
+            if (p.level().getBlockEntity(chest[1]) instanceof com.xenowarriors.home.HomeChestBlockEntity be) be.setOwner(p.getUUID());
+            com.xenowarriors.bot.BotHome.placed(p, p.level(), chest[1]);
+            for (int i = 1; i < b[1].inventory.getContainerSize() - 2; i++) b[1].inventory.setItem(i, new ItemStack(net.minecraft.world.item.Items.GRAVEL, 16));
+            b[1].getPersistentData().remove("xw_home_next");
+        }), 20 * 7);
+        l.add(null, () -> server(p -> {
+            int in = 0;
+            if (p.level().getBlockEntity(chest[1]) instanceof com.xenowarriors.home.HomeChestBlockEntity be) for (int i = 0; i < be.getContainerSize(); i++) if (!be.getItem(i).isEmpty()) in++;
+            log("botlife home: far chest (90 blocks) - sent home " + com.xenowarriors.bot.BotHome.sends + ", stacks in it " + in + " -> " + (com.xenowarriors.bot.BotHome.sends > 0 && in > 0 ? "PASS" : "FAIL"));
+            p.level().setBlock(chest[1], net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        }), 5);
+        // feeding you
+        l.add(null, () -> server(p -> { p.getFoodData().setFoodLevel(6); p.getPersistentData().remove("xw_life_fed"); }), 20 * 6);
+        l.add(null, () -> server(p -> log("botlife feed: hungry -> fed " + com.xenowarriors.bot.BotLife.feeds + ", food now " + p.getFoodData().getFoodLevel() + " -> " + (com.xenowarriors.bot.BotLife.feeds > 0 && p.getFoodData().getFoodLevel() > 6 ? "PASS" : "FAIL"))), 5);
+        // a gift at bond 70+
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.party.Bonds.set(p, "sam", 80, 0);
+            int before = p.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+            com.xenowarriors.bot.BotLife.giftForTest(p);
+            int after = p.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+            log("botlife gift: bond 80 -> gifts " + com.xenowarriors.bot.BotLife.gifts + ", items " + before + " -> " + after + " -> " + (com.xenowarriors.bot.BotLife.gifts > 0 && after > before ? "PASS" : "FAIL"));
+        }), 10);
+        // asking for help: Sam and Max hang out; and bots don't spar while it's on
+        l.add(null, () -> server(p -> {
+            b[2] = botAt(p, CharacterType.MAX, -3, 2);
+            com.xenowarriors.party.Bonds.setBot(b[1], "max", 5, 0);
+            com.xenowarriors.party.Bonds.setBot(b[2], "sam", 5, 0);
+            com.xenowarriors.bot.BotLife.ask(p, b[1], b[2]);
+        }), 10);
+        l.add("batch4_botlife_help_card", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack(), "xenohelp yes " + b[1].getId() + " " + b[2].getId());
+            String ev = com.xenowarriors.bot.BotSpar.event(p);
+            log("botlife spar: during the hang-out no bot spars (" + ev + ") -> " + (ev != null ? "PASS" : "FAIL"));
+        }), 60);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.bot.BotLife.endHangForTest(p);
+            int a = com.xenowarriors.party.Bonds.botOwn(b[1], "max"), c = com.xenowarriors.party.Bonds.botOwn(b[2], "sam");
+            log("botlife help: hang-outs " + com.xenowarriors.bot.BotLife.hangouts + ", bonds Sam->Max " + a + ", Max->Sam " + c + " -> " + (com.xenowarriors.bot.BotLife.hangouts > 0 && (a > 5 || c > 5 || com.xenowarriors.party.Bonds.botOwn(b[1], "max") >= 5) ? "PASS" : "FAIL"));
+        }), 10);
+        // night camp: in bed, they gather round (and a campfire)
+        l.add(null, () -> server(p -> {
+            p.serverLevel().setDayTime(18000);
+            p.level().setBlock(p.blockPosition(), Blocks.RED_BED.defaultBlockState(), 3);
+            p.startSleeping(p.blockPosition());
+        }), 20 * 5);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 40), 10);
+        l.add("batch4_botlife_camp", () -> {}, 3);
+        net.minecraft.core.BlockPos[] fire = new net.minecraft.core.BlockPos[1];
+        l.add(null, () -> server(p -> {
+            double far = 0; for (PartyBotEntity x : com.xenowarriors.bot.PartyBots.bots(p)) far = Math.max(far, x.distanceTo(p));
+            log("botlife camp: camps " + com.xenowarriors.bot.BotLife.camps + ", campfires " + com.xenowarriors.bot.BotLife.campfires + ", furthest bot " + String.format("%.1f", far) + " -> " + (com.xenowarriors.bot.BotLife.camps > 0 && far < 6 ? "PASS" : "FAIL"));
+            p.stopSleeping();
+            p.level().setBlock(p.blockPosition(), Blocks.AIR.defaultBlockState(), 3);
+            p.serverLevel().setDayTime(6000);
+        }), 10);
+        l.add(null, () -> server(p -> {
+            boolean any = false;
+            for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) for (int dy = -2; dy <= 2; dy++) if (p.level().getBlockState(p.blockPosition().offset(dx, dy, dz)).is(net.minecraft.world.level.block.Blocks.CAMPFIRE)) any = true;
+            log("botlife camp: up again -> campfire put out " + !any + " -> " + (!any ? "PASS" : "FAIL"));
+        }), 5);
+        // swimming after you: a pool, you across it, the bot in the water
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            var lv = p.serverLevel();
+            net.minecraft.core.BlockPos c = p.blockPosition().offset(0, 0, 30);
+            for (int dx = -4; dx <= 4; dx++) for (int dz = -14; dz <= 14; dz++) {
+                lv.setBlock(c.offset(dx, -3, dz), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+                for (int dy = -2; dy <= 0; dy++) lv.setBlock(c.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.WATER.defaultBlockState(), 3);
+            }
+            p.teleportTo(c.getX() + 0.5, c.getY() + 0.2, c.getZ() + 12.5);
+            b[3] = botAt(p, CharacterType.KAERU, 0, 0);
+            b[3].teleportTo(c.getX() + 0.5, c.getY() - 0.5, c.getZ() - 12.5);
+        }), 20);
+        double[] d0 = new double[1];
+        int[] s0 = new int[1];
+        l.add(null, () -> server(p -> { d0[0] = b[3].distanceTo(p); s0[0] = com.xenowarriors.bot.BotMoves.swimStrokes; }), 20 * 6);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 180, 30), 5);
+        l.add("batch4_botlife_swim", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            double d = b[3].distanceTo(p);
+            log("botlife swim: bot swam after you " + String.format("%.1f -> %.1f", d0[0], d) + " blocks, strokes " + (com.xenowarriors.bot.BotMoves.swimStrokes - s0[0]) + " -> " + (d < d0[0] - 8 && com.xenowarriors.bot.BotMoves.swimStrokes > s0[0] ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 5);
+        // the bot menu's Dragon Ball button (a bot carrying a radar)
+        l.add(null, () -> mc.setScreen(new com.xenowarriors.client.bot.BotScreen(new com.xenowarriors.network.OpenBotMenuPacket(-1, "max", 0, 30, false, new String[0], new int[0], true))), 10);
+        l.add("batch4_botlife_radar_menu", () -> log("botlife radar: the menu offers Find the Dragon Balls -> " + (mc.screen != null && mc.screen.children().stream().anyMatch(w -> w instanceof net.minecraft.client.gui.components.Button bt && bt.getMessage().getString().contains("Dragon Balls")) ? "PASS" : "FAIL")), 2);
+        l.add(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+        // the party frames: 4 in the party vs 6
+        for (String[] ids : new String[][]{{"rhalix", "kaeru", "kyrie"}, {"rhalix", "kaeru", "max", "lexy", "sam"}}) {
+            l.add(null, () -> server(p -> {
+                Batch3Tests.clearBots(p);
+                p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno partylimit 16");
+                for (CharacterType x : CharacterType.PLAYABLE) com.xenowarriors.party.Bonds.set(p, x.getId(), 70, 0);
+                com.xenowarriors.bot.PartyBots.add(p, ids);
+            }), 80);
+            for (String style : new String[]{"classic", "kh", "blazing"}) {
+                l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle(style); mc.setScreen(null); mc.options.hideGui = false; mc.player.setXRot(10F); }, 10);
+                l.add("batch4_botlife_partyhud_" + (ids.length + 1) + "_" + style, () -> {}, 2);
+            }
+        }
+        l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle("classic"); server(p -> { Batch3Tests.clearBots(p);
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno partylimit 4"); }); }, 5);
     }
 
     private static PartyBotEntity botAt(ServerPlayer p, CharacterType t, double dx, double dz) {

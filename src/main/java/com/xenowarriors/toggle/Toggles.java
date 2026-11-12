@@ -127,6 +127,16 @@ public final class Toggles {
         return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;
     }
 
+    /** (Tests) sets the owner's on / off for a character they're not playing. */
+    public static void setForTest(Player owner, CharacterType t, Entry e, boolean on) {
+        CompoundTag pers = owner.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        CompoundTag root = pers.getCompound(ROOT);
+        String k = com.xenowarriors.character.PlayerCharacter.key(t, 0);
+        CompoundTag me = root.getCompound(k);
+        me.putBoolean(e.id, on);
+        root.put(k, me); pers.put(ROOT, root); owner.getPersistentData().put(Player.PERSISTED_NBT_TAG, pers);
+    }
+
     /** That character's bot: the right+left click skill the owner picked for it ("" = none). */
     public static String rlSkillFor(Player owner, CharacterType t) {
         List<String> ok = rlChoices(t);

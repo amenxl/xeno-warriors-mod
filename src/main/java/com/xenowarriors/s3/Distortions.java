@@ -36,11 +36,12 @@ public final class Distortions {
         if (!field && (p.tickCount + p.getId() * 37) % 1200 != 0) return;
         if ((s.dimension() != Level.OVERWORLD && !com.xenowarriors.recarnet.Recarnet.is(s)) || !Seasons.unlocked(s.getServer(), 3) || p.isSpectator()) return;
         int pw = power(p);
-        // the Distortion Field: one tears open most of the time you look around, and up to three can be about
-        float chance = field ? 0.55F : 0.025F + 0.05F * Math.min(1F, pw / 50F);
+        // the Distortion Field: one tears open fairly often, and up to two can be about (less common than before:
+        // outside it about a third as often, in it about half)
+        float chance = field ? 0.28F : 0.008F + 0.017F * Math.min(1F, pw / 50F);
         if (p.getRandom().nextFloat() > chance) return;
         var near = s.getEntitiesOfClass(DistortionEntity.class, p.getBoundingBox().inflate(field ? 64 : 160));
-        if (near.size() >= (field ? 3 : 1)) return;
+        if (near.size() >= (field ? 2 : 1)) return;
         int size = 1 + (pw > 20 || (field && p.getRandom().nextInt(3) == 0) ? 1 : 0) + ((pw > 45 || field) && p.getRandom().nextInt(field ? 4 : 2) == 0 ? 1 : 0);
         open(s, p, size);
     }

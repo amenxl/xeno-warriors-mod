@@ -63,6 +63,9 @@ public final class BotLife {
     private record Hang(UUID a, UUID b, long until) {}
     private static final Map<UUID, Hang> HANGS = new HashMap<>();
 
+    /** A night camp or a hang-out going on. */
+    public static boolean busy(ServerPlayer o) { return CAMPS.containsKey(o.getUUID()) || HANGS.containsKey(o.getUUID()); }
+
     private static long now(ServerPlayer o) { return o.level().getGameTime(); }
 
     private static boolean calm(PartyBotEntity b, ServerPlayer o) {
@@ -241,12 +244,16 @@ public final class BotLife {
         };
     }
 
+    /** (Tests) a gift now, no dice roll. */
+    public static void giftForTest(ServerPlayer o) { forceGift = true; try { gift(o); } finally { forceGift = false; } }
+    private static boolean forceGift;
+
     private static void gift(ServerPlayer o) {
         if (o.isSpectator() || o.isSleeping() || !BotSpar.quiet(o)) return;
         long now = now(o);
         for (PartyBotEntity b : PartyBots.bots(o)) {
             if (!calm(b, o) || b.distanceToSqr(o) > 12 * 12 || Bonds.level(o, b.character().getId()) < GIFT_BOND) continue;
-            if (now < b.getPersistentData().getLong(GIFT) || b.getRandom().nextInt(12) != 0) continue;
+            if (!forceGift && (now < b.getPersistentData().getLong(GIFT) || b.getRandom().nextInt(12) != 0)) continue;
             b.getPersistentData().putLong(GIFT, now + 20 * 60 * 30);               // (half an hour at least till the next)
             ItemStack g = ItemStack.EMPTY;
             for (int i = 0; i < b.inventory.getContainerSize() && g.isEmpty(); i++)

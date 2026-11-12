@@ -53,6 +53,21 @@ public final class BotSpar {
                 && !(m instanceof PartyBotEntity)).isEmpty();
     }
 
+    /**
+     * Something else is going on (a party, a picnic, a night camp or hang-out, music playing, a Journey, an arena or
+     * the Tower, a sleeping owner): bots don't start sparring each other - and stop one that's going.
+     */
+    public static String event(ServerPlayer o) {
+        if (BotPartyTime.active(o)) return "a party";
+        if (BotPicnic.active(o)) return "a picnic";
+        if (BotLife.busy(o)) return "a night camp";
+        if (o.isSleeping()) return "bedtime";
+        if (com.xenowarriors.journey.Journey.inLobbyOrRun(o)) return "a Journey";
+        if (com.xenowarriors.modes.ModeRules.arena(o.level())) return "an event";
+        for (PartyBotEntity b : PartyBots.bots(o)) if (BotJukebox.playing(b)) return "the music";
+        return null;
+    }
+
     private static boolean free(PartyBotEntity b, ServerPlayer o) {
         return !b.downed() && !b.sparring() && !b.journey() && !b.isPassenger() && b.getTarget() == null && b.getHealth() > b.getMaxHealth() * 0.8F
                 && b.level() == o.level() && b.distanceToSqr(o) < 16 * 16 && BotErrands.danger(b) == null;
@@ -65,7 +80,7 @@ public final class BotSpar {
         if (o.tickCount % 200 != 113) return;
         long now = o.level().getGameTime(), last = o.getPersistentData().getLong(LAST);
         if (last > 0 && now >= last && now - last < GAP) return;
-        if (o.isSpectator() || o.getAbilities().flying || o.getVehicle() != null || !quiet(o) || MATCHES.containsKey(o.getUUID())) return;
+        if (o.isSpectator() || o.getAbilities().flying || o.getVehicle() != null || !quiet(o) || MATCHES.containsKey(o.getUUID()) || event(o) != null) return;
         if (o.getRandom().nextInt(3) != 0) return;
         List<PartyBotEntity> free = new ArrayList<>();
         for (PartyBotEntity b : PartyBots.bots(o)) if (free(b, o)) free.add(b);
@@ -253,6 +268,8 @@ public final class BotSpar {
         for (UUID u : m.red) if (!(living(o, u) instanceof PartyBotEntity b) || !b.isAlive() || b.distanceToSqr(o) > 48 * 48) { endTeams(m, o, null, "it's off"); return; }
         for (UUID u : m.blue) if (!u.equals(o.getUUID()) && (!(living(o, u) instanceof PartyBotEntity b) || !b.isAlive() || b.distanceToSqr(o) > 48 * 48)) { endTeams(m, o, null, "it's off"); return; }
         if (!o.isAlive() || !quiet(o)) { endTeams(m, o, null, o.isAlive() ? "an enemy turned up" : "it's off"); return; }
+        String ev = event(o);
+        if (ev != null) { endTeams(m, o, null, "stopped for " + ev); return; }
         if (now >= m.end) { endTeams(m, o, null, "time's up - a draw"); return; }
         for (UUID u : m.red.size() + m.blue.size() > 0 ? concat(m.red, m.blue) : List.<UUID>of()) {
             if (m.out.contains(u) || !(living(o, u) instanceof PartyBotEntity b)) continue;
@@ -302,6 +319,8 @@ public final class BotSpar {
             if (f == null || !f.isAlive() || !b.isAlive() || f.downed() || b.downed()) { endBots(b, f, null, o, "it's off"); continue; }
             boolean danger = !quiet(o) || BotErrands.danger(b) != null;
             if (danger) { endBots(b, f, null, o, "an enemy turned up"); continue; }
+            String ev = event(o);
+            if (ev != null) { endBots(b, f, null, o, "stopped for " + ev); continue; }
             if (now >= end) { endBots(b, f, null, o, "time's up - a draw"); continue; }
             if (b.getTarget() != f) b.setTarget(f);
             if (f.getTarget() != b) f.setTarget(b);
