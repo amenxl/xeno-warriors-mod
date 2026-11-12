@@ -78,6 +78,7 @@ public final class Journey {
 
     static final class Run {
         int slot, diff, stage, phase = LOBBY, cur, jc, chSec, chHearts, waves;
+        boolean halfwayPaid;
         UUID host;
         final List<Member> members = new ArrayList<>();
         final Map<CharacterType, Float> hp = new EnumMap<>(CharacterType.class);
@@ -625,9 +626,12 @@ public final class Journey {
         int ways = 0;
         for (int to : r.node().next) if (r.map.get(to).state == JourneyMap.AHEAD) ways++;
         String next = ways > 1 ? "  The path forks - pick a route (the other one closes)." : "  The path to the next step is open.";
+        boolean halfway = r.row() >= Math.max(1, r.rows() / 2) && !r.halfwayPaid;
+        if (halfway) r.halfwayPaid = true;
         for (Member m : r.members) {
             ServerPlayer p = server.getPlayerList().getPlayer(m.id);
             if (p == null) continue;
+            if (halfway) com.xenowarriors.compat.DmzTpRewards.give(p, com.xenowarriors.compat.DmzTpRewards.journeyHalfway(r.diff, r.stage), "Journey: halfway there");
             p.sendSystemMessage(msg("Step " + r.row() + " done. ", ChatFormatting.GREEN).copy()
                     .append(Component.literal("[Heal/Enhance]").withStyle(s -> s.withColor(ChatFormatting.AQUA).withBold(true)
                             .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/xeno journey"))
@@ -982,6 +986,7 @@ public final class Journey {
             boolean first = cleared(p) <= idx;
             if (first) setCleared(p, idx + 1);
             com.xenowarriors.economy.Money.add(p, money, true);
+            com.xenowarriors.compat.DmzTpRewards.give(p, com.xenowarriors.compat.DmzTpRewards.journeyCleared(r.diff, r.stage), "Journey cleared");
             int nx = idx + 1;
             String next = nx >= 5 * JourneyRules.STAGES ? "You beat Xeno Stage 3!" : !first ? ""
                     : nx % JourneyRules.STAGES == 0 ? JourneyRules.DIFF[nx / JourneyRules.STAGES] + " difficulty unlocked!" : "Stage " + (nx % JourneyRules.STAGES + 1) + " unlocked!";

@@ -333,6 +333,10 @@
           "text": "Your party's bag for DragonMineZ mission items, so they don't fill up your inventory or your bots'.\n- Anything a mission still needs (yours or a bot teammate's) goes into it: drops from whatever you or your bots kill, and those items when you pick them up. A message shows how many went in.\n- 216 slots (4 pages of 54).\n- Open it from the main menu > Party > Mission Bag (or /xeno missionbag). You can take things out, but you can't put anything in.\n- What's in it counts for your missions just like your inventory does.\n- Once a mission has all it needs, more of that item goes into your inventory as usual."
         },
         {
+          "title": "TPs from Journey and the Tower",
+          "text": "With DragonMineZ, Journey and the Tower give your DragonMineZ character TPs too (on top of their Money and loot).\n## Journey\n- Halfway along the path: 150 x difficulty x stage TPs (difficulty 1-5, stage 1-3).\n- Clearing the stage: 500 x difficulty x stage TPs (up to 7,500 for Xeno Stage 3).\n## Tower\n- Every boss floor cleared: 20 TPs per floor (floor 10 = 200, floor 40 = 800).\n- Every 50th floor is a milestone: triple TPs (floor 50 = 3,000)."
+        },
+        {
           "title": "The Zombie Saiyan",
           "text": "- A rare boss that comes out at night in the Overworld. It also has a spawn egg.\n- As you wear it down it goes Super Saiyan, then Super Saiyan 2 (lightning), then Super Saiyan 3 (long hair). It uses combos, dashes, ki blasts and the Kamehameha.\n- Beat it as a Super Saiyan 3 and it collapses. Then it gets back up screaming, throws everyone back, and returns fully healed as a Super Saiyan 4.\n- It grows with your DragonMineZ power. Beaten as a Super Saiyan 4, it drops: diamonds, emeralds, Senzu Beans, Karma items, and sometimes a piece of Goku armor with every enchantment."
         },

@@ -40,6 +40,7 @@ public final class TowerRewards {
             for (ItemStack s : level.getServer().getLootData().getLootTable(BOSS_LOOT).getRandomItems(params)) { items++; if (!p.getInventory().add(s)) p.drop(s, false); }
         p.sendSystemMessage(Component.literal("Boss floor " + floor + " cleared! +" + com.xenowarriors.economy.Money.fmt(money) + " Money"
                 + (done > 0 ? " (incl. " + (25 * done) + " for " + done + " completed Collection entries)" : "") + ", " + items + " items").withStyle(ChatFormatting.GOLD));
+        com.xenowarriors.compat.DmzTpRewards.give(p, com.xenowarriors.compat.DmzTpRewards.towerBoss(floor), "Tower boss floor " + floor + (floor % 50 == 0 ? " - milestone x3" : ""));
         com.xenowarriors.network.PopupPacket.send(p, com.xenowarriors.network.PopupPacket.GOOD, p.getUUID(), com.xenowarriors.character.CharacterType.NONE.ordinal(), -1,
                 "Boss floor " + floor + " cleared", "+" + com.xenowarriors.economy.Money.fmt(money) + " Money and loot", "");
     }
