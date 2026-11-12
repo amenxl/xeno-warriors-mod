@@ -65,7 +65,7 @@ public final class Batch4Tests {
 
     private static void formLook(Minecraft mc, MikikoTests.Steps l) {
         String[][] forms = {{"supersaiyan", "supersaiyan"}, {"supersaiyan", "supersaiyan3"}, {"supersaiyan", "supersaiyan4"}, {"legendaryforms", "ssjfullpower"}};
-        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO}) {
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO, CharacterType.KYRIE}) {
             Batch3Tests.character(l, t);
             l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> { DmzTests.make(p, "saiyan"); p.teleportTo(p.getX(), p.getY(), p.getZ()); }); }, 40);
             for (String[] fm : forms) {
@@ -77,7 +77,8 @@ public final class Batch4Tests {
                     int hair = com.xenowarriors.client.compat.DmzForms.hairStyle(me);
                     boolean own = com.xenowarriors.client.compat.DmzForms.ssj4Own(me), dmzDraws = com.xenowarriors.client.compat.DmzForms.dmzDraws(me);
                     String want = switch (fm[1]) { case "supersaiyan3" -> "ssj3"; case "supersaiyan4" -> "ssj4"; case "ssjfullpower" -> "lssj"; default -> "ssj"; };
-                    boolean ok = want.equals(set) && (!fm[1].equals("supersaiyan4") || (own && hair == 4 && !dmzDraws && me.getSkinTextureLocation().getPath().endsWith("_ssj4.png")));
+                    boolean shirtless = t != CharacterType.KYRIE;
+                    boolean ok = want.equals(set) && (!fm[1].equals("supersaiyan4") || (own && hair == 4 && !dmzDraws && me.getSkinTextureLocation().getPath().endsWith("_ssj4.png") == shirtless));
                     log("formlook " + t.getId() + " " + fm[1] + ": form=" + form + " faces=" + set + " hair=" + hair + " ownSSJ4=" + own + " dmzDraws=" + dmzDraws
                             + " skin=" + me.getSkinTextureLocation().getPath() + " -> " + (ok ? "PASS" : "FAIL"));
                 }, 3);
