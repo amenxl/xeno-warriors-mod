@@ -21,6 +21,37 @@ public final class YouSlot {
     public int form = FORM_NONE;
     /** Demons: true while in their human form (no wings, no flight, no demon aura). */
     public boolean humanForm;
+    /** A Government path taken (Humans only, for good - see YouPaths): none, Modified Human, Artificial Demon, Artificial Skylander. */
+    public int path = PATH_NONE;
+    /** A Demon (born or made) that awakened as a Devil (see YouDevil). */
+    public boolean devil;
+    /** Devil's Hunger: kills in demon form from Level 50 on (see YouDevil). */
+    public int hunger;
+
+    public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
+
+    /** The race they are now: the one they were made as, changed by a Government path or a Devil's awakening. */
+    public Race shown() {
+        if (devil) return Race.DEVIL;
+        return switch (path) {
+            case PATH_MODIFIED -> Race.MODIFIED_HUMAN;
+            case PATH_DEMON -> Race.ARTIFICIAL_DEMON;
+            case PATH_SKYLANDER -> Race.ARTIFICIAL_SKYLANDER;
+            default -> race;
+        };
+    }
+
+    /** A demon of any kind: born one, made one, or a Devil now (the demon kit: wings, human form, Devil Unleashed). */
+    public boolean demon() { return race == Race.DEMON || path == PATH_DEMON || devil; }
+
+    /** A Skylander of any kind (born or made): Lunar / Solar form, Wing Rush. */
+    public boolean skylander() { return race == Race.SKYLANDER || path == PATH_SKYLANDER; }
+
+    /** Has wings (put away or not). */
+    public boolean winged() { return race.wings() || path == PATH_DEMON || path == PATH_SKYLANDER || devil; }
+
+    /** Wings out right now: winged, and not a demon hiding in human form. */
+    public boolean wingsNow() { return winged() && !(demon() && humanForm); }
 
     public boolean exists() { return !name.isEmpty(); }
 
@@ -31,6 +62,9 @@ public final class YouSlot {
         t.putString("element", element.id());
         t.putInt("form", form);
         t.putBoolean("human_form", humanForm);
+        t.putInt("path", path);
+        t.putBoolean("devil", devil);
+        t.putInt("hunger", hunger);
         return t;
     }
 
@@ -42,6 +76,9 @@ public final class YouSlot {
         s.element = el == null ? Element.FIRE : el;
         s.form = t.getInt("form");
         s.humanForm = t.getBoolean("human_form");
+        s.path = t.getInt("path");
+        s.devil = t.getBoolean("devil");
+        s.hunger = t.getInt("hunger");
         return s;
     }
 
@@ -51,6 +88,9 @@ public final class YouSlot {
         buf.writeEnum(element);
         buf.writeVarInt(form);
         buf.writeBoolean(humanForm);
+        buf.writeVarInt(path);
+        buf.writeBoolean(devil);
+        buf.writeVarInt(hunger);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -60,6 +100,9 @@ public final class YouSlot {
         s.element = buf.readEnum(Element.class);
         s.form = buf.readVarInt();
         s.humanForm = buf.readBoolean();
+        s.path = buf.readVarInt();
+        s.devil = buf.readBoolean();
+        s.hunger = buf.readVarInt();
         return s;
     }
 

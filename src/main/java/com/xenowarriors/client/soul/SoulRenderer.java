@@ -43,7 +43,14 @@ public class SoulRenderer extends HumanoidMobRenderer<SoulEntity, PlayerModel<So
         return m;
     }
 
-    @Override public ResourceLocation getTextureLocation(SoulEntity e) { return e.character().getSkin(); }
+    @Override public ResourceLocation getTextureLocation(SoulEntity e) {
+        if (e.character() == CharacterType.YOU && e.ownerId() != null) {         // (your own character's soul - a Devil's other half: your own skin)
+            var conn = net.minecraft.client.Minecraft.getInstance().getConnection();
+            var info = conn == null ? null : conn.getPlayerInfo(e.ownerId());
+            if (info != null) return info.getSkinLocation();
+        }
+        return e.character().getSkin();
+    }
 
     @Override
     protected RenderType getRenderType(SoulEntity e, boolean visible, boolean translucent, boolean glowing) {

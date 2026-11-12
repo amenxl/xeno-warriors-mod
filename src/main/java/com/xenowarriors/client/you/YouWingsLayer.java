@@ -29,7 +29,8 @@ public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel
         if (p.isInvisible() || !ClientCharacterData.winged(p)) return;
         YouSlot s = ClientCharacterData.you(p);
         if (s == null) return;
-        String style = switch (s.race) { case ANGEL -> "seraph"; case DEMON -> "demon"; default -> s.element == com.xenowarriors.ka.Element.CRYSTAL ? "crystal" : "angel"; };
+        String style = s.race == Race.ANGEL ? "seraph" : s.demon() ? "demon" : s.path == YouSlot.PATH_SKYLANDER ? "tech"      // (made Skylanders: Technica's kind of wings)
+                : s.element == com.xenowarriors.ka.Element.CRYSTAL ? "crystal" : "angel";
         DetailModel m = NpcRenderer.model("wing_" + style);
         if (m == null || m.rightWing == null || m.leftWing == null) return;
         boolean preview = ClientCharacterData.isPreviewing();
@@ -42,7 +43,9 @@ public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel
         int overlay = LivingEntityRenderer.getOverlayCoords(p, 0F);
         float r, g, b;
         if (s.race == Race.ANGEL) { r = 1F; g = 0.97F; b = 0.85F; }
-        else if (s.race == Race.DEMON) { r = 0.45F; g = 0.12F; b = 0.14F; }
+        else if (s.devil) { r = 0.3F; g = 0.05F; b = 0.08F; }
+        else if (s.demon()) { r = 0.45F; g = 0.12F; b = 0.14F; }
+        else if (s.path == YouSlot.PATH_SKYLANDER) { r = 0.92F; g = 0.92F; b = 0.96F; }
         else {                                                             // Skylander: white, warmed towards the element
             int c = s.element.color;
             r = 0.7F + 0.3F * ((c >> 16 & 255) / 255F); g = 0.7F + 0.3F * ((c >> 8 & 255) / 255F); b = 0.7F + 0.3F * ((c & 255) / 255F);
@@ -51,8 +54,13 @@ public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel
         if (p == net.minecraft.client.Minecraft.getInstance().player && !form.isEmpty()) {     // Lunar: silver-blue, Solar: gold
             if (form.equals("lunar")) { r = 0.75F; g = 0.85F; b = 1F; } else { r = 1F; g = 0.85F; b = 0.45F; }
         }
+        float sc = s.devil ? 1.3F : 1F;                                    // (a Devil's are bigger)
+        m.rightWing.xScale = m.rightWing.yScale = m.rightWing.zScale = sc;
+        m.leftWing.xScale = m.leftWing.yScale = m.leftWing.zScale = sc;
         m.rightWing.render(pose, vc, light, overlay, r, g, b, 1F);
         m.leftWing.render(pose, vc, light, overlay, r, g, b, 1F);
+        m.rightWing.xScale = m.rightWing.yScale = m.rightWing.zScale = 1F;
+        m.leftWing.xScale = m.leftWing.yScale = m.leftWing.zScale = 1F;
         pose.popPose();
     }
 }

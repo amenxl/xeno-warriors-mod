@@ -29,7 +29,7 @@ public final class ClientCharacterData {
         CharacterType t = get(player);
         if (t != CharacterType.YOU) return t.skylander();
         var s = YOU.get(player.getUUID());
-        return s != null && s.race.wings() && !(s.race == com.xenowarriors.character.Race.DEMON && s.humanForm);
+        return s != null && s.wingsNow();
     }
 
     /** What to call this player's character on screen. */

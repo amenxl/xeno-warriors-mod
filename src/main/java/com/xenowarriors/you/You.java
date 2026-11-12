@@ -28,7 +28,7 @@ public final class You {
     /** This player's race (their You character's, or their show character's). */
     public static Race race(Player p) {
         YouSlot s = slot(p);
-        if (s != null) return s.race;
+        if (s != null) return s.shown();
         return Race.of(p.level().isClientSide ? clientType.apply(p) : ModCapabilities.getType(p));
     }
 
@@ -53,6 +53,6 @@ public final class You {
     /** Wings right now: a winged race, and not a demon hiding in human form. */
     public static boolean wings(Player p) {
         YouSlot s = slot(p);
-        return s != null && s.race.wings() && !(s.race == Race.DEMON && s.humanForm);
+        return s != null && s.wingsNow();
     }
 }

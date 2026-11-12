@@ -48,6 +48,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.SKYLANDER.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.ROYAL_GUARD.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.kaiplanet.KaiPlanetEntities.BUILDER.get(), ctx -> com.xenowarriors.client.npc.NpcRenderer.plain(ctx, e -> "kai_builder", e -> false));
+        event.registerEntityRenderer(com.xenowarriors.you.YouEntities.DEVIL_SHADOW.get(), com.xenowarriors.client.you.ShadowRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(),
                 ctx -> com.xenowarriors.client.npc.NpcRenderer.<com.xenowarriors.gov.GovAgentEntity>plain(ctx, com.xenowarriors.gov.GovAgentEntity::look, e -> false));
         event.registerEntityRenderer(com.xenowarriors.s3.S3Entities.ORDER_ASSASSIN.get(),
@@ -202,6 +203,7 @@ public final class ClientModEvents {
                 renderer.addLayer(new com.xenowarriors.client.PartyHats.Layer<>(renderer));
                 renderer.addLayer(new com.xenowarriors.client.compat.FoxTailLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.you.YouWingsLayer(renderer));
+                renderer.addLayer(new com.xenowarriors.client.you.DevilHornsLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.render.CharacterArmorLayer(renderer));
                 renderer.addLayer(new com.xenowarriors.client.fox.FoxBackLayer(renderer, event.getEntityModels()));
                 renderer.addLayer(new com.xenowarriors.client.mikiko.MikikoBladeLayer(renderer, event.getContext().getItemInHandRenderer()));

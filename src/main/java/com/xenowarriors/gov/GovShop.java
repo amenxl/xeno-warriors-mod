@@ -114,6 +114,9 @@ public final class GovShop {
         return p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)) < 7 * 7 && p.level().getBlockState(pos).is(GovItems.TERMINAL.get());
     }
 
+    /** C2 Procedures (YouPaths): only at a terminal, and only for people the terminal would serve. */
+    public static boolean atTerminalForC2(ServerPlayer p) { return atTerminal(p) && refuse(p) == null; }
+
     public static void open(ServerPlayer p) {
         String no = refuse(p);
         if (no != null) {

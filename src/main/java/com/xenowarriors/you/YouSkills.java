@@ -22,18 +22,15 @@ public final class YouSkills {
     private static final Map<String, List<SkillPool.Entry>> POOLS = new ConcurrentHashMap<>();
     private static final Map<String, Skill> ULTS = new ConcurrentHashMap<>();
 
-    private static String key(YouSlot s) { return s.race + ":" + s.element + ":" + s.form; }
+    private static String key(YouSlot s) { return s.race + ":" + s.element + ":" + s.form + ":" + s.path + ":" + s.devil; }
 
     public static List<SkillPool.Entry> pool(YouSlot s) {
         return POOLS.computeIfAbsent(key(s), k -> build(s));
     }
 
     public static Skill ultimate(YouSlot s) {
-        return ULTS.computeIfAbsent(key(s), k -> switch (s.race) {
-            case DEMON -> new com.xenowarriors.skill.ffr.SrSkills.HellclawRend();      // (Devil Unleashed: sneak + the transform key)
-            case ANGEL -> new YouSkillSet.Storm(s.element, 1.6F);
-            default -> new YouSkillSet.Storm(s.element, 1F);
-        });
+        return ULTS.computeIfAbsent(key(s), k -> s.demon() ? new com.xenowarriors.skill.ffr.SrSkills.HellclawRend()      // (Devil Unleashed: sneak + the transform key)
+                : s.race == Race.ANGEL ? new YouSkillSet.Storm(s.element, 1.6F) : new YouSkillSet.Storm(s.element, 1F));
     }
 
     private static List<SkillPool.Entry> build(YouSlot s) {
@@ -63,6 +60,14 @@ public final class YouSkills {
             case YOU -> { l.add(e(new YouSkillSet.Suppress(), 10)); l.add(e(new YouCapture.CaptureSkill(), 12)); }
             default -> l.add(e(new YouSkillSet.SecondWind(), 20));
         }
+        // what a Government path or a Devil's awakening adds - after the rest, so saved loadouts keep their skills
+        switch (s.path) {
+            case YouSlot.PATH_MODIFIED -> l.add(e(new YouPaths.Overclock(), 0));
+            case YouSlot.PATH_DEMON -> { l.add(e(new com.xenowarriors.skill.ffr.SrSkills.DevilDash(), 0)); l.add(e(new com.xenowarriors.skill.ffr.SrSkills.DevilFlame(), 0)); }
+            case YouSlot.PATH_SKYLANDER -> { l.add(e(new LexySkills.WingRush(), 0)); l.add(e(new YouSkillSet.SkyForm(s.form != YouSlot.FORM_SOLAR), 0)); }
+            default -> {}
+        }
+        if (s.devil) l.add(e(new YouDevil.SelfSplit(), 0));
         return List.copyOf(l);
     }
 

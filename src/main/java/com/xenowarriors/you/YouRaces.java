@@ -63,7 +63,7 @@ public final class YouRaces {
         hp.removeModifier(HEALTH_ID);
         YouSlot s = You.slot(p);
         if (s == null) return;
-        double add = switch (s.race) { case ANGEL -> p.isCreative() ? 40 : 0; case DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };
+        double add = switch (s.shown()) { case ANGEL -> p.isCreative() ? 40 : 0; case DEVIL -> 16; case DEMON, ARTIFICIAL_DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };
         if (add > 0) hp.addPermanentModifier(new AttributeModifier(HEALTH_ID, "You race health", add, AttributeModifier.Operation.ADDITION));
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
     }
@@ -72,7 +72,8 @@ public final class YouRaces {
     public static float damageMult(Player p) {
         YouSlot s = You.slot(p);
         if (s == null) return 1F;
-        return switch (s.race) { case ANGEL -> p.isCreative() ? 2F : 1F; case DEMON -> s.humanForm ? 1F : 1.15F; default -> 1F; };
+        if (s.demon()) return s.humanForm ? 1F : s.devil ? 1.3F : 1.15F;      // (a Devil: 1.3x in demon form)
+        return s.race == Race.ANGEL && p.isCreative() ? 2F : 1F;
     }
 
     // ------------------------------------------------------------------ forms
@@ -92,7 +93,7 @@ public final class YouRaces {
     /** The transform key: a Demon switches between demon and human form. */
     public static boolean toggleHumanForm(ServerPlayer p) {
         YouSlot s = You.slot(p);
-        if (s == null || s.race != Race.DEMON) return false;
+        if (s == null || !s.demon()) return false;
         s.humanForm = !s.humanForm;
         p.serverLevel().sendParticles(s.humanForm ? ParticleTypes.CLOUD : ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1, p.getZ(), 30, 0.5, 0.8, 0.5, 0.03);
         p.level().playSound(null, p.blockPosition(), s.humanForm ? SoundEvents.ILLUSIONER_MIRROR_MOVE : SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.8F, s.humanForm ? 1.4F : 0.7F);

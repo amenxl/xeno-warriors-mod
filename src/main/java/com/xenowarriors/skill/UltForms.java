@@ -35,7 +35,7 @@ public final class UltForms {
         if (t == CharacterType.KILL) return DEVIL;
         if (t == CharacterType.LEXY) return PERSEPHONE;
         var s = com.xenowarriors.you.You.slot(p);
-        if (s != null && s.race == com.xenowarriors.character.Race.DEMON && p.isShiftKeyDown()) return DEVIL;
+        if (s != null && s.demon() && p.isShiftKeyDown()) return DEVIL;
         return null;
     }
 
@@ -66,6 +66,7 @@ public final class UltForms {
         if (s.use(p)) {
             READY.put(p.getUUID(), now + Math.round(s.getCooldownTicks() * FormMastery.cooldownMult(m)));
             if (s == DEVIL) com.xenowarriors.skill.ffr.SrSkills.extendDevil(p, Math.round(240 * (FormMastery.durationMult(m) - 1F)));
+            if (s == DEVIL) com.xenowarriors.you.YouDevil.trueDevil(p);          // (a Devil: True Devil Unleashed)
             com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KA_BREAK, 12);
         }
         return true;

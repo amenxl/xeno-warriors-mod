@@ -64,7 +64,11 @@ public class GovShopScreen extends Screen {
                     .bounds(x + cw - 38, y + 3, 34, 18).build());
             b.active = !locked(i) && !restricted(i) && (creative || money >= price(i));
         }
+        if (c2Button()) addRenderableWidget(Button.builder(Component.literal("C2 Procedures"), bt -> com.xenowarriors.client.screen.C2Screen.ask())   // (your own characters: the Government's paths)
+                .bounds(left() + panelW() - 100, top() - 40, 100, 18).build());
     }
+
+    private boolean c2Button() { return com.xenowarriors.client.ClientCharacterData.you(Minecraft.getInstance().player) != null; }
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {

@@ -535,6 +535,7 @@ public final class PartyBots {
      * any already on it. The rest keep to their own fights or find another enemy (not everyone piles onto one).
      */
     static void relay(ServerPlayer owner, LivingEntity t) {
+        if (t.getTags().contains(com.xenowarriors.you.YouDevil.SHADOW_TAG)) return;   // (a demon's shadow: their trial alone)
         List<PartyBotEntity> near = new ArrayList<>(botsNear(owner));
         near.removeIf(b -> friendly(b, t) || b.downed() || b.reviving != null);
         if (near.isEmpty()) return;

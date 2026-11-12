@@ -15,6 +15,7 @@ public final class KarmaLevel {
     private KarmaLevel() {}
 
     public static long of(LivingEntity e) {
+        if (com.xenowarriors.you.YouDevil.masked(e)) return 1;                  // (a Devil's Karma Mask: nothing to read)
         double hp = Math.max(1, e.getMaxHealth());
         var atkAttr = e.getAttribute(Attributes.ATTACK_DAMAGE);
         double atk = atkAttr == null ? 1 : Math.max(0, atkAttr.getValue());

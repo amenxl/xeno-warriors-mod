@@ -37,6 +37,13 @@ public final class GovItems {
     public static Item scanner(KarmaScanner.Tier t) {
         return switch (t) { case BASIC -> KARMA_SCANNER.get(); case ADVANCED -> ADVANCED_KARMA_SCANNER.get(); case ELITE -> ELITE_KARMA_SCANNER.get(); case OMNI -> OMNI_KARMA_SCANNER.get(); };
     }
+    /** The demon program card recruiter 3602 hands out in Aurora City: brings a Human to C2's Artificial Demon procedure. */
+    public static final RegistryObject<Item> DEMON_CARD = ModItems.ITEMS.register("demon_program_card", () -> new Item(new Item.Properties().stacksTo(1)) {
+        @Override public void appendHoverText(net.minecraft.world.item.ItemStack st, net.minecraft.world.level.Level l, java.util.List<net.minecraft.network.chat.Component> tip, net.minecraft.world.item.TooltipFlag f) {
+            tip.add(net.minecraft.network.chat.Component.literal("\"Five years of body training. Immune to all sickness.\"").withStyle(net.minecraft.ChatFormatting.DARK_RED, net.minecraft.ChatFormatting.ITALIC));
+            tip.add(net.minecraft.network.chat.Component.literal("Bring it to a Gov Supply Terminal: C2 Procedures > Artificial Demon").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+    });
     public static final RegistryObject<Item> PLATING_MOD = ModItems.ITEMS.register("plating_mod", () -> new GovModItem(GovModItem.PLATING, new Item.Properties().stacksTo(16)));
 
     private GovItems() {}

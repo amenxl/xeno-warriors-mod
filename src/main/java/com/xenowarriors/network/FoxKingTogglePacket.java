@@ -21,7 +21,7 @@ public record FoxKingTogglePacket() {
     /** Tapping the transform key (or Transform on the toggle wheel). */
     public static void press(net.minecraft.server.level.ServerPlayer p) {
         if (com.xenowarriors.party.Duels.cantAct(p)) return;
-        if (com.xenowarriors.character.ModCapabilities.getType(p) == com.xenowarriors.character.CharacterType.YOU && com.xenowarriors.you.You.race(p) == com.xenowarriors.character.Race.DEMON && !p.isShiftKeyDown()) {   // (a Demon You: the key swaps human / demon form)
+        if (com.xenowarriors.character.ModCapabilities.getType(p) == com.xenowarriors.character.CharacterType.YOU && com.xenowarriors.you.You.slot(p) != null && com.xenowarriors.you.You.slot(p).demon() && !p.isShiftKeyDown()) {   // (a Demon You: the key swaps human / demon form)
             com.xenowarriors.you.YouRaces.toggleHumanForm(p);
             return;
         }

@@ -17,7 +17,8 @@ public enum Race {
     SEEDLING("Seedling", 0x70D050),
     REBRINGER("Rebringer", 0xFFB060),
     ANGEL("Angel", 0xFFF2B0),                            // what Skylanders descend from; creative-only for You characters for now
-    YOU("You", 0xC8A0FF);                                // made by the Government to capture and control distortions
+    YOU("You", 0xC8A0FF),                                // made by the Government to capture and control distortions
+    ARTIFICIAL_DEMON("Artificial Demon", 0xB83A5A);      // a human the Government made into a demon (the prototype demons: Zack, Kaitlyn)
 
     /** The races a You character can be made as, in creator order. ANGEL needs creative mode. */
     public static final Race[] CREATABLE = {HUMAN, FOX_KIN, SEEDLING, SKYLANDER, DEMON, YOU, ANGEL};
@@ -25,12 +26,12 @@ public enum Race {
     /** Creator blurb: what this race is and what you get. */
     public String info() {
         return switch (this) {
-            case HUMAN -> "The everyday people of Recarnet. No special traits, but humans grow into their element the fastest and can earn Government modifications later on.";
+            case HUMAN -> "The everyday people of Recarnet. No special traits, but humans grow into their element the fastest - and only humans can take a Government path later (Modified Human, Artificial Demon or Artificial Skylander).";
             case FOX_KIN -> "Fox people, like Fox Girl. Nimble healers: Fox Heal from the start, and the Kitsune attack grows through three tiers as you level.";
             case SEEDLING -> "Plant people. You heal while in water and live on sunlight instead of food - at night, carry Sunlight. If you fall, you become a seed: 30 seconds in water and you sprout back with half your health, but an enemy can break the seed.";
             case SKYLANDER -> "Angel descendants with wings. You can fly (H puts the wings away), and you choose a Lunar or Solar form that empowers you at night or by day.";
-            case DEMON -> "Horned and winged, with a human form to blend in (the transform key switches). Demons hit hard and can one day become Devils.";
-            case YOU -> "Made by the Government to capture and control distortions. Hardy and balanced; the capture skill comes later.";
+            case DEMON -> "Horned and winged, with a human form to blend in (the transform key switches). Demons hit hard - and from Level 50, a demon's hunger can awaken them as a Devil.";
+            case YOU -> "Made by the Government to capture and control distortions. Hardy and balanced; weaken a creature and Capture it to fight for you.";
             case ANGEL -> "The first winged ones. Far stronger than anyone else from level 1, with seraph wings. Creative mode only for now.";
             default -> title;
         };
@@ -48,7 +49,7 @@ public enum Race {
     }
 
     /** Has wings and can fly (as a You character). */
-    public boolean wings() { return this == SKYLANDER || this == ANGEL || this == DEMON || skylanderKind(); }
+    public boolean wings() { return this == SKYLANDER || this == ANGEL || this == DEMON || this == ARTIFICIAL_DEMON || this == DEVIL || skylanderKind(); }
 
     public final String title;
     public final int color;
@@ -63,7 +64,7 @@ public enum Race {
         CharacterType t = ModCapabilities.getType(p);
         if (t == CharacterType.YOU) {
             var d = p.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
-            return d == null ? HUMAN : d.you().race;
+            return d == null ? HUMAN : d.you().shown();
         }
         return of(t);
     }

@@ -62,7 +62,7 @@ public final class YouCapture {
 
     /** Why this can't be captured (null: it can). */
     public static String why(ServerPlayer p, LivingEntity t) {
-        if (!(t instanceof Mob m) || t instanceof Player || t instanceof com.xenowarriors.bot.PartyBotEntity) return "That can't be captured";
+        if (!(t instanceof Mob m) || t instanceof Player || t instanceof com.xenowarriors.bot.PartyBotEntity || t instanceof DevilShadowEntity || t instanceof com.xenowarriors.kaiplanet.KaiBuilderEntity) return "That can't be captured";
         if (com.xenowarriors.party.Parties.petOwner(t) != null) return "That already belongs to someone";
         if (com.xenowarriors.karma.KarmaSensing.boss(t) || t.getPersistentData().getBoolean("xw_tower_boss") || t instanceof com.xenowarriors.gov.UltimaPrototypeEntity)
             return "Bosses are too strong to capture";

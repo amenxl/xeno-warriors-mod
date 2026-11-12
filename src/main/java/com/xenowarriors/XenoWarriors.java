@@ -38,6 +38,7 @@ public class XenoWarriors {
         com.xenowarriors.bot.BotEntities.init();
         com.xenowarriors.soul.SoulEntities.init();
         com.xenowarriors.kaiplanet.KaiPlanetEntities.init();
+        com.xenowarriors.you.YouEntities.init();
         com.xenowarriors.sr.SrEntities.init();
         com.xenowarriors.vehicle.Vehicles.init();
         com.xenowarriors.vehicle.VehicleBlocks.init();

@@ -59,7 +59,14 @@ public final class Toggles {
         GRAVITY_BOOTS("gravity_boots", "Gravity Boots", Kind.AUTO, 0x9A4AE0),
         VISOR_SCAN("visor_scan", "Visor Scan", Kind.AUTO, 0xEC5AA0),
         RESCUE_PLATFORM("rescue_platform", "Rescue Platform", Kind.AUTO, 0xFFD24A),
-        SCENT_TRACK("scent_track", "Scent Tracking", Kind.TRACK, 0xE8701C);
+        SCENT_TRACK("scent_track", "Scent Tracking", Kind.TRACK, 0xE8701C),
+        // a Modified Human's Government mods, for good (switched on / off on the wheel; they start on)
+        MOD_SPEED("mod_speed", "Speed Mod", Kind.PASSIVE, 0x4FB3E8, true),
+        MOD_JUMP("mod_jump", "Jump Boosters", Kind.PASSIVE, 0x4FB3E8, true),
+        MOD_SCANNER("mod_scanner", "Scanner Eye", Kind.PASSIVE, 0x4FB3E8, true),
+        MOD_PLATING("mod_plating", "Armor Plating", Kind.PASSIVE, 0x4FB3E8, true),
+        // a Devil's: your Karma can't be read or sensed (starts on)
+        KARMA_MASK("karma_mask", "Karma Mask", Kind.PASSIVE, 0x6A1020, true);
 
         /** Shown on the toggle wheel (the automatic ones only in Character Customization). */
         public boolean wheel() { return kind != Kind.AUTO; }
@@ -67,7 +74,13 @@ public final class Toggles {
         public final String id, title;
         public final Kind kind;
         public final int color;
-        Entry(String id, String title, Kind kind, int color) { this.id = id; this.title = title; this.kind = kind; this.color = color; }
+        /** A passive that starts switched on. */
+        public final boolean startsOn;
+        Entry(String id, String title, Kind kind, int color) { this(id, title, kind, color, false); }
+        Entry(String id, String title, Kind kind, int color, boolean startsOn) { this.id = id; this.title = title; this.kind = kind; this.color = color; this.startsOn = startsOn; }
+
+        /** On until switched off. */
+        public boolean defaultOn() { return kind != Kind.PASSIVE || startsOn; }
 
         public static Entry byId(String id) { for (Entry e : values()) if (e.id.equals(id)) return e; return null; }
     }
@@ -97,7 +110,15 @@ public final class Toggles {
     /** This player's entries (by who they're playing). */
     public static List<Entry> of(Player p) {
         CharacterType t = ModCapabilities.getType(p);
-        if (t == CharacterType.YOU) return com.xenowarriors.you.You.race(p) == com.xenowarriors.character.Race.DEMON ? List.of(Entry.DEVIL_UNLEASHED) : List.of();
+        if (t == CharacterType.YOU) {
+            var s = com.xenowarriors.you.You.slot(p);
+            if (s == null) return List.of();
+            List<Entry> l = new ArrayList<>();
+            if (s.demon()) l.add(Entry.DEVIL_UNLEASHED);
+            if (s.devil) l.add(Entry.KARMA_MASK);
+            if (s.path == com.xenowarriors.you.YouSlot.PATH_MODIFIED) { l.add(Entry.MOD_SPEED); l.add(Entry.MOD_JUMP); l.add(Entry.MOD_SCANNER); l.add(Entry.MOD_PLATING); }
+            return l;
+        }
         return of(t);
     }
 
@@ -123,9 +144,9 @@ public final class Toggles {
 
     /** That character's bot: the owner's on / off for it (what they set in Character Customization or on the wheel). */
     public static boolean enabledFor(Player owner, CharacterType t, Entry e) {
-        if (owner == null) return e.kind != Kind.PASSIVE;
+        if (owner == null) return e.defaultOn();
         CompoundTag me = settingsFor(owner, t);
-        return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;
+        return me.contains(e.id) ? me.getBoolean(e.id) : e.defaultOn();
     }
 
     /** (Tests) sets the owner's on / off for a character they're not playing. */
@@ -161,7 +182,7 @@ public final class Toggles {
     /** On: a transformation / buff may be used; a passive is running. Passives start off, the rest on. */
     public static boolean enabled(Player p, Entry e) {
         CompoundTag me = mine(p);
-        return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;   // (passives start off; the automatic ones, transformations and buffs on)
+        return me.contains(e.id) ? me.getBoolean(e.id) : e.defaultOn();   // (passives start off - but a Modified Human's mods and a Devil's mask; the automatic ones, transformations and buffs on)
     }
 
     public static void setEnabled(ServerPlayer p, Entry e, boolean on) {
@@ -174,6 +195,8 @@ public final class Toggles {
 
     /** Why it can't be had yet (a skill not unlocked / a locked season), or null. */
     public static String unavailable(ServerPlayer p, Entry e) {
+        int modAt = com.xenowarriors.you.YouPaths.modLevel(e);                  // (a Modified Human gets one mod every 10 levels from 20)
+        if (modAt > 0 && !p.isCreative() && com.xenowarriors.stats.Stats.characterLevel(p) < modAt) return "Unlocks at Character Level " + modAt;
         Skill s = skill(p, e);
         if (s == null) return null;
         for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(s.getId())) {

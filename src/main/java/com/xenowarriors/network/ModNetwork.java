@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "107";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "108";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -526,6 +526,8 @@ public final class ModNetwork {
                 .encoder(RpsPacket::encode).decoder(RpsPacket::decode).consumerMainThread(RpsPacket::handle).add();
         CHANNEL.messageBuilder(RpsPickPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(RpsPickPacket::encode).decoder(RpsPickPacket::decode).consumerMainThread(RpsPickPacket::handle).add();
+        CHANNEL.messageBuilder(C2Packet.class, id++)
+                .encoder(C2Packet::encode).decoder(C2Packet::decode).consumerMainThread(C2Packet::handle).add();
         CHANNEL.messageBuilder(ToggleActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ToggleActionPacket::encode).decoder(ToggleActionPacket::decode).consumerMainThread(ToggleActionPacket::handle).add();
         CHANNEL.messageBuilder(BusyCharsPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (character select: who's busy off duty)

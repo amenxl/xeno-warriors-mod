@@ -585,8 +585,9 @@ public class CharacterCustomScreen extends Screen {
 
         List<Object[]> rows = new ArrayList<>();      // label, value, xp (or -1), bar colour
         var ys = ClientCharacterData.you(minecraft.player);
-        rows.add(new Object[]{"Race", ys != null ? ys.race.title + (ys.race == com.xenowarriors.character.Race.SKYLANDER ? (ys.form == com.xenowarriors.you.YouSlot.FORM_SOLAR ? " (Solar)" : " (Lunar)") : ys.race == com.xenowarriors.character.Race.DEMON && ys.humanForm ? " (human form)" : "") : com.xenowarriors.character.Race.label(type), -1F, 0});
+        rows.add(new Object[]{"Race", ys != null ? ys.shown().title + (ys.skylander() ? (ys.form == com.xenowarriors.you.YouSlot.FORM_SOLAR ? " (Solar)" : " (Lunar)") : ys.demon() && ys.humanForm ? " (human form)" : "") : com.xenowarriors.character.Race.label(type), -1F, 0});
         if (ys != null) rows.add(new Object[]{"Element", ys.element.title(), -1F, 0});
+        if (ys != null && ys.demon() && !ys.devil) rows.add(new Object[]{"Devil's Hunger", ys.hunger + " / " + com.xenowarriors.you.YouDevil.HUNGER_MAX, ys.hunger / (float) com.xenowarriors.you.YouDevil.HUNGER_MAX, 0xC0303A});
         rows.add(new Object[]{"HP", Math.round(self.health()) + " / " + Math.round(self.maxHealth()), -1F, 0});
         rows.add(new Object[]{"Karma", String.valueOf(Math.round(self.karma())), -1F, 0});
         rows.add(new Object[]{"Karma Level", com.xenowarriors.karma.KarmaLevel.fmt(self.karmaLevel()), -1F, 0});
