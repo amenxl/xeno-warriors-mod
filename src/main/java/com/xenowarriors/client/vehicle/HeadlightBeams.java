@@ -28,7 +28,7 @@ public final class HeadlightBeams {
 
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent e) {
-        if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         Vec3 cam = e.getCamera().getPosition();

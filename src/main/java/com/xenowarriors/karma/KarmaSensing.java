@@ -155,6 +155,7 @@ public final class KarmaSensing {
         practice(player);
         int uses = uses(player);
         scan(player, radius(uses), duration(uses), friendly, true);
+        if (now < BROKEN.getOrDefault(player.getUUID(), 0L)) return;         // (her visor just crashed on a corrupted soul: no focusing)
         HOLDING.put(player.getUUID(), new Object[]{(int) player.level().getGameTime(), friendly});
         ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.KarmaFocusPacket(player.getId(), true), player);
     }
