@@ -119,6 +119,7 @@ public final class StatBoosts {
     /** What the creative tab shows: tier by tier, every stat (Season 2 stats once Season 2 is unlocked in this world). */
     public static List<ItemStack> tabItems() {
         List<ItemStack> l = new ArrayList<>();
+        l.add(new ItemStack(BoostBag.ITEM.get()));
         for (BoostTier t : BoostTier.values())
             for (BoostStat s : BoostStat.values())
                 if (s.season() <= 1 || com.xenowarriors.character.Seasons.unlockedForTab(s.season())) l.add(stack(s, t));
@@ -271,7 +272,7 @@ public final class StatBoosts {
     }
 
     private static void give(ServerPlayer p, ItemStack s) {
-        if (!p.getInventory().add(s)) p.drop(s, false);
+        if (!BoostBag.collect(p, s) && !p.getInventory().add(s)) p.drop(s, false);   // (your Boost Bag first)
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1F, 1.8F);
     }
 }

@@ -104,6 +104,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("ownbot")) ownBot(mc, l);
         if (f.isEmpty() || f.contains("geoguard")) geoGuard(mc, l);
         if (f.isEmpty() || f.contains("rlgun")) rlGun(mc, l);
+        if (f.isEmpty() || f.contains("boostbag")) boostBag(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2437,6 +2438,49 @@ public final class Batch4Tests {
         int n = b.getCubes().size();
         for (var c : b.getChildBones()) n += countCubes(c);
         return n;
+    }
+
+    private static void boostBag(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.getInventory().clearContent();
+            p.getInventory().setItem(8, new ItemStack(com.xenowarriors.statboost.BoostBag.ITEM.get()));
+            var a = com.xenowarriors.statboost.StatBoosts.stack(com.xenowarriors.statboost.BoostStat.ATTACK, com.xenowarriors.statboost.BoostTier.ONE); a.setCount(5);
+            p.getInventory().setItem(1, a);
+            p.getInventory().setItem(2, com.xenowarriors.statboost.StatBoosts.stack(com.xenowarriors.statboost.BoostStat.MINING, com.xenowarriors.statboost.BoostTier.TEN));
+            p.getInventory().selected = 8;
+            var bag = p.getMainHandItem();
+            bag.getItem().use(p.level(), p, net.minecraft.world.InteractionHand.MAIN_HAND);      // (loose ones go in, and it opens)
+            int in = com.xenowarriors.statboost.BoostBag.total(bag);
+            boolean loose = p.getInventory().getItem(1).isEmpty() && p.getInventory().getItem(2).isEmpty();
+            log("boostbag: right-clicked with 6 loose boosts -> " + in + " in the bag, inventory empty of them " + loose + " -> " + (in == 6 && loose ? "PASS" : "FAIL"));
+            // one on the ground, picked up
+            var drop = new net.minecraft.world.entity.item.ItemEntity(p.level(), p.getX(), p.getY(), p.getZ(), com.xenowarriors.statboost.StatBoosts.stack(com.xenowarriors.statboost.BoostStat.SPEED, com.xenowarriors.statboost.BoostTier.FIVE));
+            drop.setNoPickUpDelay();
+            p.level().addFreshEntity(drop);
+        }), 30);
+        l.add(null, () -> server(p -> {
+            var bag = com.xenowarriors.statboost.BoostBag.find(p);
+            int sp = com.xenowarriors.statboost.BoostBag.count(bag, com.xenowarriors.statboost.BoostStat.SPEED, com.xenowarriors.statboost.BoostTier.FIVE);
+            boolean none = true;
+            for (ItemStack it : p.getInventory().items) if (it.getItem() instanceof com.xenowarriors.statboost.StatBoostItem) none = false;
+            log("boostbag: a boost picked up went into the bag " + sp + " (none loose " + none + ") -> " + (sp == 1 && none ? "PASS" : "FAIL"));
+            int lv0 = com.xenowarriors.statboost.BoostStat.ATTACK.level(p);
+            int k = com.xenowarriors.statboost.BoostBag.index(com.xenowarriors.statboost.BoostStat.ATTACK, com.xenowarriors.statboost.BoostTier.ONE);
+            com.xenowarriors.statboost.BoostBag.act(p, com.xenowarriors.network.BoostBagPacket.USE, k, 1);
+            int lv1 = com.xenowarriors.statboost.BoostStat.ATTACK.level(p);
+            com.xenowarriors.statboost.BoostBag.act(p, com.xenowarriors.network.BoostBagPacket.TAKE, k, 64);
+            int out = 0;
+            for (ItemStack it : p.getInventory().items) if (it.getItem() instanceof com.xenowarriors.statboost.StatBoostItem) out += it.getCount();
+            int left = com.xenowarriors.statboost.BoostBag.count(bag, com.xenowarriors.statboost.BoostStat.ATTACK, com.xenowarriors.statboost.BoostTier.ONE);
+            log("boostbag: used one from the bag (Attack " + lv0 + " -> " + lv1 + "), took the rest out (" + out + " in inventory, " + left + " left) -> " + (lv1 == lv0 + 1 && out == 4 && left == 0 ? "PASS" : "FAIL"));
+            com.xenowarriors.statboost.BoostBag.depositAll(p, bag);
+            com.xenowarriors.statboost.BoostBag.open(p, bag);
+        }), 20);
+        l.add("batch4_boostbag", () -> {}, 3);
+        l.add(null, () -> mc.setScreen(null), 3);
     }
 
     /** No right+left click skill with a gun in hand (right click aims, left click shoots). */

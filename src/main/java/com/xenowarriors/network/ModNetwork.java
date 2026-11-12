@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "109";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "110";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -463,6 +463,8 @@ public final class ModNetwork {
                 .encoder(YouActionPacket::encode).decoder(YouActionPacket::decode).consumerMainThread(YouActionPacket::handle).add();
         CHANNEL.messageBuilder(SkinFilePacket.class, id++)                                              // (both ways: uploads / requests, and the files)
                 .encoder(SkinFilePacket::encode).decoder(SkinFilePacket::decode).consumerMainThread(SkinFilePacket::handle).add();
+        CHANNEL.messageBuilder(BoostBagPacket.class, id++)                                              // (both ways: the bag's contents, and its buttons)
+                .encoder(BoostBagPacket::encode).decoder(BoostBagPacket::decode).consumerMainThread(BoostBagPacket::handle).add();
         CHANNEL.messageBuilder(DmzRacePickPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(DmzRacePickPacket::encode).decoder(DmzRacePickPacket::decode).consumerMainThread(DmzRacePickPacket::handle).add();
         CHANNEL.messageBuilder(MenuStatePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)

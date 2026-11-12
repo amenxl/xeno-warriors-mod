@@ -40,6 +40,7 @@ public class XenoWarriors {
         com.xenowarriors.kaiplanet.KaiPlanetEntities.init();
         com.xenowarriors.you.YouEntities.init();
         com.xenowarriors.you.YouItems.init();
+        com.xenowarriors.statboost.BoostBag.init();
         com.xenowarriors.foes.Foes.init();
         com.xenowarriors.sr.SrEntities.init();
         com.xenowarriors.vehicle.Vehicles.init();

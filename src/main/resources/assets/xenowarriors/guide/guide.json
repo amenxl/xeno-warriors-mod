@@ -409,6 +409,10 @@
         {
           "title": "Gun level",
           "text": "Every character has a gun level (shown in the stats screens with TACZ installed, and for Mikiko and Rhalix, who can make guns).\n- It goes up by hitting things with guns: TACZ guns, and the guns Mikiko and Rhalix summon from their weapons (XP = damage dealt, more for a kill).\n- Without TACZ, bows and crossbows train it too (half XP).\n- With DragonMineZ, its Blaster Cannon and Merus' Laser count as guns: their shots train gun level and get its damage bonus (plain ki attacks don't).\n- Each level adds 0.2% gun damage, up to +150%.\n- More gun level, more durability for summoned guns. With TACZ: at gun level 500 your magazine never runs dry.\n- Technica is the gunsmith: her gun level starts at 100 and her guns hit 25% harder on top."
+        },
+        {
+          "title": "The Boost Bag",
+          "text": "A bag for every Stat Boost (no limit). Craft it: string on top, leather on both sides, a chest in the middle and a gold ingot at the bottom (leather in both bottom corners).\n- While it's anywhere in your inventory, boosts you pick up - and the ones a level-up hands you - go straight into it.\n- Right-click it: your loose boosts go in, and it opens - a column for each stat, a row for each tier, with how many you have.\n- Left-click a boost: take a stack out (shift: just one). Right-click: use one from the bag. Shift + right-click: use all of that kind."
         }
       ]
     },
