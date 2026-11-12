@@ -427,6 +427,7 @@ public final class Batch4Tests {
             log("autopass: Technica locks on -> Visor Scan " + (com.xenowarriors.toggle.Passives.visorScans > before) + " -> " + (com.xenowarriors.toggle.Passives.visorScans > before ? "PASS" : "FAIL"));
             z.discard();
             Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);                  // (Rescue Platform unlocks at level 30)
             PartyBotEntity a = botAt(p, CharacterType.MAX, 2, 2), b = botAt(p, CharacterType.SAM, -2, 2);
             a.die(p.damageSources().generic()); b.die(p.damageSources().generic());
         }), 10);
@@ -434,6 +435,7 @@ public final class Batch4Tests {
             long up = PartyBots.bots(p).stream().filter(x -> !x.downed()).count();
             log("autopass: two teammates down -> Rescue Platform " + com.xenowarriors.toggle.Passives.rescues + ", back up " + up + " -> " + (com.xenowarriors.toggle.Passives.rescues > 0 && up >= 2 ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         }), 20);
         // Ultima: Living Weapon on the transform key, Attack Prediction switching itself off when overused
         Batch3Tests.character(l, CharacterType.ULTIMA);
@@ -556,7 +558,7 @@ public final class Batch4Tests {
             server(p -> {
                 var v = p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity ve ? ve : null;
                 int lit = v == null ? -1 : com.xenowarriors.vehicle.Headlights.litForTest(v);
-                log("headlight: driving at night -> lights on the road " + lit + ", beams drawn " + com.xenowarriors.vehicle.HeadlightsClientCount.get() + " -> " + (lit > 0 ? "PASS" : "FAIL"));
+                log("headlight: driving at night -> lights on the road " + lit + ", beams drawn " + com.xenowarriors.client.vehicle.HeadlightBeams.drawn + " -> " + (lit > 0 ? "PASS" : "FAIL"));
             });
         }, 3);
         l.add(null, () -> server(p -> {
