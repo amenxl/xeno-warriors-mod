@@ -57,9 +57,12 @@ public final class UltForms {
             p.displayClientMessage(Component.literal(name + " is recharging (" + (ready - now + 19) / 20 + "s)").withStyle(ChatFormatting.RED), true);
             return true;
         }
-        if (!p.isCreative() && !Karma.trySpend(p, s.getKarmaCost())) return true;
+        String f = s == DEVIL ? FormMastery.DEVIL : FormMastery.PERSEPHONE;
+        float m = FormMastery.get(p, f);                                          // (its mastery: cheaper, back sooner, Devil Unleashed lasts longer)
+        if (!p.isCreative() && !Karma.trySpend(p, s.getKarmaCost() * FormMastery.costMult(m))) return true;
         if (s.use(p)) {
-            READY.put(p.getUUID(), now + s.getCooldownTicks());
+            READY.put(p.getUUID(), now + Math.round(s.getCooldownTicks() * FormMastery.cooldownMult(m)));
+            if (s == DEVIL) com.xenowarriors.skill.ffr.SrSkills.extendDevil(p, Math.round(240 * (FormMastery.durationMult(m) - 1F)));
             com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KA_BREAK, 12);
         }
         return true;

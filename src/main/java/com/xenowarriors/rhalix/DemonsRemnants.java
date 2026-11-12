@@ -56,10 +56,11 @@ public final class DemonsRemnants {
             p.displayClientMessage(Component.literal("The demon's remnants are still settling (" + (ready - now + 19) / 20 + "s)").withStyle(ChatFormatting.RED), true);
             return;
         }
-        if (!Karma.trySpend(p, COST)) return;
-        END.put(p.getUUID(), now + DURATION);
+        float m = com.xenowarriors.skill.FormMastery.get(p, com.xenowarriors.skill.FormMastery.DEMON);   // (its mastery: longer, cheaper, harder-hitting)
+        if (!Karma.trySpend(p, COST * com.xenowarriors.skill.FormMastery.costMult(m))) return;
+        END.put(p.getUUID(), now + Math.round(DURATION * com.xenowarriors.skill.FormMastery.durationMult(m)));
         mod(p.getAttribute(Attributes.MOVEMENT_SPEED), SPD, 0.25, AttributeModifier.Operation.MULTIPLY_BASE);
-        mod(p.getAttribute(Attributes.ATTACK_DAMAGE), ATK, 0.45, AttributeModifier.Operation.MULTIPLY_BASE);
+        mod(p.getAttribute(Attributes.ATTACK_DAMAGE), ATK, com.xenowarriors.skill.FormMastery.mastered(m) ? 0.7 : 0.45, AttributeModifier.Operation.MULTIPLY_BASE);
         mod(p.getAttribute(Attributes.ARMOR), ARM, 6, AttributeModifier.Operation.ADDITION);
         mod(p.getAttribute(Attributes.KNOCKBACK_RESISTANCE), KB, 0.5, AttributeModifier.Operation.ADDITION);
         sync(p, true);
@@ -80,7 +81,7 @@ public final class DemonsRemnants {
 
     private static void stop(ServerPlayer p) {
         if (END.remove(p.getUUID()) == null) return;
-        READY.put(p.getUUID(), p.level().getGameTime() + COOLDOWN);
+        READY.put(p.getUUID(), p.level().getGameTime() + Math.round(COOLDOWN * com.xenowarriors.skill.FormMastery.cooldownMult(com.xenowarriors.skill.FormMastery.get(p, com.xenowarriors.skill.FormMastery.DEMON))));
         for (var e : new Object[][]{{Attributes.MOVEMENT_SPEED, SPD}, {Attributes.ATTACK_DAMAGE, ATK}, {Attributes.ARMOR, ARM}, {Attributes.KNOCKBACK_RESISTANCE, KB}}) {
             AttributeInstance a = p.getAttribute((net.minecraft.world.entity.ai.attributes.Attribute) e[0]);
             if (a != null) a.removeModifier((UUID) e[1]);

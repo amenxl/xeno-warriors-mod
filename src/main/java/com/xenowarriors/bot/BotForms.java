@@ -50,7 +50,7 @@ public final class BotForms {
     /** After you transform, bots may follow for this long (once a fight is on or close by). */
     public static final int FOLLOW_WINDOW = 20 * 20;
     /** On their own, per check (every half second) in a fight against something strong: a small chance; badly hurt, bigger. */
-    public static final float BASE_CHANCE = 0.01F, HURT_CHANCE = 0.05F, FOLLOW_CHANCE = 0.8F;
+    public static final float BASE_CHANCE = 0.06F, HURT_CHANCE = 0.15F, FOLLOW_CHANCE = 0.8F;
 
     public enum Kind { FOX_KING, DEMONS_REMNANTS }
 
@@ -170,7 +170,7 @@ public final class BotForms {
             chance = FOLLOW_CHANCE; why = "following " + o.getGameProfile().getName() + " (" + s.followWhy + ")";
         } else {
             LivingEntity t = b.getTarget();
-            if (t == null || !t.isAlive() || b.sparring() || !PartyBots.strong(b, t)) return;
+            if (t == null || !t.isAlive() || b.sparring()) return;                    // (any fight: it likes to train its form's mastery)
             boolean hurt = b.getHealth() < b.getMaxHealth() * 0.4F;
             chance = hurt ? HURT_CHANCE : BASE_CHANCE; why = hurt ? "on its own (badly hurt)" : "on its own";
         }

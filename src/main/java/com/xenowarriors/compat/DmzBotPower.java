@@ -281,7 +281,7 @@ public final class DmzBotPower {
                     aura(level, b, st, 6);
                     if (p.release == want) note(b.character().getId() + " powers up to " + want + "% with " + o.getGameProfile().getName());
                 } else if (now - p.lastFight > CALM_TICKS && p.release > want) { p.release = want; note(b.character().getId() + " powers down to " + want + "%"); }
-                if (now - p.lastFight > CALM_TICKS && p.form != null && !ownerFormed) revert(b, o, st, p, "the fight's over");
+                if (now - p.lastFight > CALM_TICKS && p.form != null && !ownerFormed && p.energy < 0.4F) revert(b, o, st, p, "the fight's over and its ki is low");   // (it stays in its form while it has the ki: mastery keeps growing)
             }
             kaioken(b, o, st, p, inFight, inFight ? (danger != null ? danger : target) : null);
             // you transformed: it follows (a fight on or close by, and the ki for it - no strong enemy needed)

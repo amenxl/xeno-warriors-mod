@@ -44,6 +44,16 @@ public final class SrSkills {
     /** Switched characters: Logan's Redirect, Kill's Play Weak and Devil Unleashed end with the character who used them. */
     /** Is Devil Unleashed on (Kill's transformation)? */
     public static boolean devilActive(ServerPlayer p) { return on(DEVIL_MODE, p); }
+    /** Devil Unleashed lasts this many more ticks (its mastery), its boosts too. */
+    public static void extendDevil(ServerPlayer p, int ticks) {
+        Long t = DEVIL_MODE.get(p.getUUID());
+        if (t == null || ticks <= 0) return;
+        DEVIL_MODE.put(p.getUUID(), t + ticks);
+        int left = (int) (t + ticks - now(p));
+        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, left, 1));
+        p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, left, 1));
+    }
+
     public static long devilLeft(ServerPlayer p) { Long t = DEVIL_MODE.get(p.getUUID()); return t == null ? 0 : Math.max(0, t - now(p)); }
 
     public static void clear(UUID id) { REDIRECT.remove(id); FEIGN.remove(id); DEVIL_MODE.remove(id); }
