@@ -2444,35 +2444,37 @@ public final class Batch4Tests {
     /** A party doesn't break up over a monster just standing about - only real trouble (and only after a few seconds of it). */
     private static void partyLasts(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);
-        com.xenowarriors.foes.VesselEntity[] v = new com.xenowarriors.foes.VesselEntity[1];
+        com.xenowarriors.foes.VesselEntity[] v = new com.xenowarriors.foes.VesselEntity[2];
         l.add(null, () -> server(p -> {
             Batch3Tests.clearBots(p);
             com.xenowarriors.debug.SkillTestRunner.arena(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
-            com.xenowarriors.bot.PartyBots.add(p, new String[]{"kaeru"});
             com.xenowarriors.bot.BotPartyTime.start(p);
-            var e = com.xenowarriors.foes.Foes.VESSEL.get().create(p.serverLevel());
-            v[0] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), e, p.blockPosition().offset(8, 0, 0));
-            v[0].setTarget(null);
+            // your own captured monster about (a pet), and a monster that isn't doing anything (no AI: a statue, a display)
+            var pet = com.xenowarriors.foes.Foes.VESSEL.get().create(p.serverLevel());
+            pet.getPersistentData().putUUID(com.xenowarriors.you.YouCapture.OWNER, p.getUUID());
+            v[0] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), pet, p.blockPosition().offset(8, 0, 0));
+            var idle = com.xenowarriors.foes.Foes.VESSEL.get().create(p.serverLevel());
+            idle.setNoAi(true);
+            v[1] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), idle, p.blockPosition().offset(-8, 0, 0));
         }), 20);
-        settle(l, 20 * 6);
+        for (int i = 0; i < 6; i++) l.add(null, () -> server(p -> { if (v[0] != null) v[0].setTarget(null); }), 20);
         l.add(null, () -> server(p -> {
             boolean on = com.xenowarriors.bot.BotPartyTime.active(p);
-            log("partylast: a monster standing about 8 blocks away for 6 s - the party goes on " + on + " -> " + (on ? "PASS" : "FAIL"));
-            if (v[0] != null) { v[0].setTarget(p); v[0].setNoAi(false); }
+            log("partylast: your own captured monster and a monster doing nothing nearby for 6 s - the party goes on " + on + " -> " + (on ? "PASS" : "FAIL"));
+            if (v[1] != null) { v[1].setNoAi(false); v[1].setTarget(p); }
         }), 2);
         settle(l, 20);
         l.add(null, () -> server(p -> {
-            if (v[0] != null) v[0].setTarget(p);
+            if (v[1] != null) v[1].setTarget(p);
             boolean on = com.xenowarriors.bot.BotPartyTime.active(p);
-            log("partylast: 1 s after it comes for you, still on (not broken up at once) " + on + " -> " + (on ? "PASS" : "FAIL"));
+            log("partylast: 1 s after a monster comes for you, still on (not broken up at once) " + on + " -> " + (on ? "PASS" : "FAIL"));
         }), 2);
-        for (int i = 0; i < 5; i++) l.add(null, () -> server(p -> { if (v[0] != null && v[0].isAlive()) v[0].setTarget(p); }), 20);
+        for (int i = 0; i < 5; i++) l.add(null, () -> server(p -> { if (v[1] != null && v[1].isAlive()) v[1].setTarget(p); }), 20);
         l.add(null, () -> server(p -> {
             boolean on = com.xenowarriors.bot.BotPartyTime.active(p);
             log("partylast: after 5 s of it coming for you the party's broken up " + !on + " -> " + (!on ? "PASS" : "FAIL"));
-            if (v[0] != null) v[0].discard();
-            Batch3Tests.clearBots(p);
+            for (var e : v) if (e != null) e.discard();
         }), 5);
     }
 
