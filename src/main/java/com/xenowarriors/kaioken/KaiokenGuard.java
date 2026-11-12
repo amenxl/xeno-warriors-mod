@@ -32,8 +32,8 @@ import java.util.UUID;
 /**
  * The Crimson Heart Seed (a super rare boss drop) and what it does.
  * <ul>
- *   <li>Eaten: the Crimson Control effect for {@link #DURATION} ticks - DragonMineZ's Kaioken costs no health while it
- *       lasts. (DragonMineZ takes the health straight off each second; any health lost in Kaioken that no hit
+ *   <li>Eaten: for good - DragonMineZ's Kaioken never costs that player health again (kept through death and
+ *       switching characters; the Crimson Control effect icon shows it). A bot that eats one: its character, for good. (DragonMineZ takes the health straight off each second; any health lost in Kaioken that no hit
  *       explains is put back.)</li>
  *   <li>Bosses drop it: {@link #BOSS_CHANCE} per boss killed by a player or a bot.</li>
  *   <li>Bots: a bot with one in its bag eats it just before it goes Kaioken (if it isn't already under the effect),
@@ -50,11 +50,42 @@ public final class KaiokenGuard {
     public static float restored;
     public static int dropped, botAte, botGave;
 
+    private static final String FOREVER = "xw_crimson_heart", BOTS = "xw_crimson_bots";
+
+    /** Eaten: Kaioken never costs this one health again (a player; a bot: its character, in its owner's save). */
     public static void give(LivingEntity e) {
-        e.addEffect(new MobEffectInstance(ModEffects.CRIMSON_CONTROL.get(), DURATION, 0, false, true, true));
+        if (e instanceof Player p) {
+            var pers = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+            pers.putBoolean(FOREVER, true);
+            p.getPersistentData().put(Player.PERSISTED_NBT_TAG, pers);
+        } else if (e instanceof PartyBotEntity b && b.owner() != null) {
+            var pers = b.owner().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+            var bots = pers.getCompound(BOTS);
+            bots.putBoolean(b.character().getId(), true);
+            pers.put(BOTS, bots);
+            b.owner().getPersistentData().put(Player.PERSISTED_NBT_TAG, pers);
+        }
+        icon(e);
     }
 
-    public static boolean guarded(LivingEntity e) { return e.hasEffect(ModEffects.CRIMSON_CONTROL.get()); }
+    /** The effect icon (it never runs out). */
+    private static void icon(LivingEntity e) {
+        if (!e.hasEffect(ModEffects.CRIMSON_CONTROL.get())) e.addEffect(new MobEffectInstance(ModEffects.CRIMSON_CONTROL.get(), MobEffectInstance.INFINITE_DURATION, 0, false, false, true));
+    }
+
+    public static boolean guarded(LivingEntity e) {
+        if (e instanceof Player p) return p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getBoolean(FOREVER) || e.hasEffect(ModEffects.CRIMSON_CONTROL.get());
+        if (e instanceof PartyBotEntity b && b.owner() != null && b.owner().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(BOTS).getBoolean(b.character().getId())) return true;
+        return e.hasEffect(ModEffects.CRIMSON_CONTROL.get());
+    }
+
+    /** (Tests) forgets it. */
+    public static void clearForTest(Player p) {
+        var pers = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        pers.remove(FOREVER); pers.remove(BOTS);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, pers);
+        p.removeEffect(ModEffects.CRIMSON_CONTROL.get());
+    }
 
     // ------------------------------------------------------------------ players: no Kaioken health cost
 
@@ -71,6 +102,10 @@ public final class KaiokenGuard {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onTickStart(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.START || !(e.player instanceof ServerPlayer p) || p instanceof FakePlayer) return;
+        if (p.tickCount % 100 == 41 && p.isAlive() && guarded(p)) {           // (the icon back after a death / a milk bucket; and on its bots)
+            icon(p);
+            for (PartyBotEntity b : PartyBots.bots(p)) if (guarded(b)) icon(b);
+        }
         if (!guarded(p) || com.xenowarriors.compat.DmzBotPower.playerStack(p) == null) { HP.remove(p.getUUID()); return; }
         HP.put(p.getUUID(), new float[]{p.getHealth(), 0});
     }

@@ -20,8 +20,8 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * Crimson Heart Seed: a super rare boss drop. Eaten, it steadies the body for {@link KaiokenGuard#DURATION} ticks -
- * Kaioken costs no health while it lasts (the Crimson Control effect).
+ * Crimson Heart Seed: a super rare boss drop. Eaten, it steadies the body for good -
+ * Kaioken never costs health again (the Crimson Control effect shows it).
  */
 public class CrimsonHeartSeedItem extends Item {
     public CrimsonHeartSeedItem(Properties p) { super(p.rarity(Rarity.EPIC)); }
@@ -41,8 +41,7 @@ public class CrimsonHeartSeedItem extends Item {
         if (!level.isClientSide) {
             KaiokenGuard.give(e);
             if (e instanceof ServerPlayer p) {
-                p.displayClientMessage(Component.literal("Your heart beats steady and crimson - Kaioken won't cost you health for "
-                        + KaiokenGuard.DURATION / 1200 + " minutes.").withStyle(ChatFormatting.RED), true);
+                p.displayClientMessage(Component.literal("Your heart beats steady and crimson - Kaioken will never cost you health again.").withStyle(ChatFormatting.RED), true);
                 if (!p.isCreative()) stack.shrink(1);
             }
             level.playSound(null, e.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8F, 1.4F);
@@ -52,7 +51,7 @@ public class CrimsonHeartSeedItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack s, Level l, List<Component> tip, TooltipFlag f) {
-        tip.add(Component.literal("Eat it: Kaioken costs no health for " + KaiokenGuard.DURATION / 1200 + " minutes.").withStyle(ChatFormatting.RED));
+        tip.add(Component.literal("Eat it: Kaioken never costs you health again - for good.").withStyle(ChatFormatting.RED));
         tip.add(Component.literal("Super rare - only bosses drop it.").withStyle(ChatFormatting.DARK_GRAY));
     }
 }
