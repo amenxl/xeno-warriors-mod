@@ -107,6 +107,18 @@ public class PlayerCharacter {
     /** Each character's own outfit (by character key): switching characters puts away one and puts on the other's. */
     public net.minecraft.nbt.CompoundTag outfits = new net.minecraft.nbt.CompoundTag();
 
+    /** The outfit a character wears - the one you're playing, or the one kept for them (also what their bot wears). */
+    public int outfitOf(CharacterType t) {
+        if (t == type) return outfit;
+        int o = outfits.getInt(key(t));
+        return o >= 0 && o < t.outfitKeys().length ? o : 0;
+    }
+
+    /** Dress a character (yourself when it's the one you're playing). */
+    public void setOutfitOf(CharacterType t, int o) {
+        if (t == type) outfit = o; else outfits.putInt(key(t), o);
+    }
+
     public void setType(CharacterType type) {
         if (this.type != null && this.type != type) {
             outfits.putInt(key(this.type), outfit);                              // (this character's outfit stays with them)

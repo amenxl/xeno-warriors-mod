@@ -26,6 +26,27 @@ public final class OffDutyIcons {
         };
     }
 
+    /**
+     * The face their portrait wears while they're at it (cycling with the clock so it looks alive): asleep while
+     * relaxing, straining while training, laughing at a party... null when they're free.
+     */
+    public static String face(int act, boolean weights, long ms) {
+        int beat = (int) (ms / 100L);                                           // tenths of a second
+        int cyc = beat % 40;
+        return switch (act) {
+            case RELAX_DOWNED, RELAX_LONG, RELAX -> cyc < 22 ? "snore" : "sleep";
+            case TRAINING -> weights ? (cyc < 16 ? "strained" : cyc < 22 ? "fierce" : cyc < 36 ? "strained" : "determined")
+                    : (cyc < 10 ? "fierce" : cyc < 16 ? "shout" : cyc < 30 ? "determined" : cyc < 34 ? "strained" : "fierce");
+            case PARTY -> cyc < 12 ? "laugh" : cyc < 22 ? "happy" : cyc < 32 ? "sing" : "grin";
+            case DMZ -> cyc < 14 ? "determined" : cyc < 20 ? "shout" : cyc < 36 ? "focused" : "blink";
+            case MINING, WOOD -> (beat % 22) < 4 ? "strained" : cyc < 36 ? "focused" : "blink";
+            case BUILDING -> cyc < 14 ? "thinking" : cyc < 28 ? "whistle" : cyc < 37 ? "focused" : "blink";
+            case DRAGON_BALLS -> cyc < 16 ? "thinking" : cyc < 20 ? "glance_l" : cyc < 24 ? "glance_r" : cyc < 34 ? "focused" : "sparkle";
+            case HUNTING -> cyc < 18 ? "focused" : cyc < 22 ? "blink" : cyc < 32 ? "glance_l" : "smug";
+            default -> null;
+        };
+    }
+
     /** The badge, top-left corner at (x, y), SIZE square. */
     public static void draw(GuiGraphics g, int act, int x, int y, long ms) {
         if (act <= 0) return;
@@ -43,6 +64,7 @@ public final class OffDutyIcons {
             case DMZ -> ki(g, x, y, t);
             case BUILDING -> bricks(g, x, y, t);
             case HUNTING -> { swing(g, new ItemStack(Items.BOW), x, y, t, 1F); chips(g, x, y, t, 0xFFB04A3A); }
+            case DRAGON_BALLS -> radar(g, x, y, t);
             default -> {}
         }
         g.disableScissor();
@@ -78,8 +100,40 @@ public final class OffDutyIcons {
     private static void clash(GuiGraphics g, int x, int y, float t) {
         float ph = (float) Math.abs(Math.sin(t * 4F));
         item(g, new ItemStack(Items.IRON_SWORD), x + 7 + ph * 1.5F, y + 10, -20F + ph * 30F, 0.7F);
-        item(g, new ItemStack(Items.WOODEN_SWORD), x + 13 - ph * 1.5F, y + 10, 110F - ph * 30F, 0.7F);
+        item(g, new ItemStack(Items.WOODEN_SWORD), x + 13 - ph * 1.5F, y + 10, -70F - ph * 30F, 0.7F);   // the mirror of the iron one: blade up
         if (ph > 0.9F) { g.fill(x + 9, y + 4, x + 11, y + 6, 0xFFFFFFA0); g.fill(x + 8, y + 5, x + 12, y + 5 + 0, 0xFFFFFFA0); }
+    }
+
+    /**
+     * A Dragon Radar: green screen with its grid, a sweep going round, and an orange ball blipping where the sweep
+     * passes - now and then it changes spot (they're moving on to the next one).
+     */
+    private static void radar(GuiGraphics g, int x, int y, float t) {
+        int cx = x + 10, cy = y + 10;
+        g.fill(x + 2, y + 2, x + 18, y + 18, 0xFF0E3A1A);
+        g.fill(x + 3, y + 3, x + 17, y + 17, 0xFF1A6A30);
+        for (int i = 0; i < 3; i++) {                                           // the grid
+            g.fill(x + 5 + i * 5, y + 3, x + 6 + i * 5, y + 17, 0xFF2E8A44);
+            g.fill(x + 3, y + 5 + i * 5, x + 17, y + 6 + i * 5, 0xFF2E8A44);
+        }
+        float ang = t * 3.2F;
+        for (int k = 0; k < 7; k++) {                                           // the sweep line
+            int px = cx + Math.round((float) Math.cos(ang) * k), py = cy + Math.round((float) Math.sin(ang) * k);
+            g.fill(px, py, px + 1, py + 1, 0xFFA8FFB8);
+        }
+        int spot = (int) (t / 2.6F);                                            // a new ball every few sweeps
+        double ba = spot * 2.399, br = 3 + (spot * 7 % 4);
+        int bx = cx + (int) Math.round(Math.cos(ba) * br), by = cy + (int) Math.round(Math.sin(ba) * br);
+        float since = (float) ((ang - ba) % (Math.PI * 2)); if (since < 0) since += (float) (Math.PI * 2);
+        float glow = Mth.clamp(1F - since / 3.5F, 0.25F, 1F);
+        int a = Math.round(255 * glow);
+        g.fill(bx - 1, by - 1, bx + 2, by + 2, (a << 24) | 0xFF9A1A);
+        g.fill(bx, by, bx + 1, by + 1, (a << 24) | 0xFFE070);
+        if (glow > 0.8F) {                                                      // the blip ring
+            g.fill(bx - 2, by, bx - 1, by + 1, 0x90FFE070); g.fill(bx + 2, by, bx + 3, by + 1, 0x90FFE070);
+            g.fill(bx, by - 2, bx + 1, by - 1, 0x90FFE070); g.fill(bx, by + 2, bx + 1, by + 3, 0x90FFE070);
+        }
+        g.fill(cx, cy, cx + 1, cy + 1, 0xFFFFFFFF);                             // you are here
     }
 
     private static void zzz(GuiGraphics g, int x, int y, float t) {

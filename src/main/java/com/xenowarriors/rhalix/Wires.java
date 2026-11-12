@@ -41,7 +41,7 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Wires {
-    public static final double REACH = 4.0, BIND_RANGE = 12.0, BREAK_RANGE = 16.0;
+    public static final double REACH = 5.5, BIND_RANGE = 12.0, BREAK_RANGE = 16.0;
     public static final int WHIP_COOLDOWN = 10, MAX_BIND = 8 * 20, COOLDOWN = 20 * 20, MASH = 15;
     /** Drained each second: Karma (players and bots), 4% of max Ki (DragonMineZ), or health (anything else). */
     public static final float KARMA_DRAIN = 6F, KI_DRAIN = 0.04F, HEALTH_DRAIN = 1.0F;
@@ -84,13 +84,18 @@ public final class Wires {
         int hits = 0;
         for (LivingEntity e : p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(REACH + 1))) {
             if (e == p || !com.xenowarriors.skill.SkillTargeting.canTarget(p, e)) continue;
-            Vec3 to = e.getBoundingBox().getCenter().subtract(eye);
-            double dist = Math.sqrt(e.getBoundingBox().distanceToSqr(eye));
-            if (dist > REACH || to.normalize().dot(look) < 0.25) continue;        // a wide sweep in front of him
+            net.minecraft.world.phys.AABB box = e.getBoundingBox().inflate(0.6);   // wires are thin but they lash wide
+            Vec3 to = box.getCenter().subtract(eye);
+            double dist = Math.sqrt(box.distanceToSqr(eye));
+            if (dist > REACH) continue;
+            // close in, the lash wraps all round him; further out it is a wide arc in front (flat - ignores height)
+            Vec3 flat = new Vec3(to.x, 0, to.z), flatLook = new Vec3(look.x, 0, look.z);
+            double dot = flat.lengthSqr() < 1.0E-4 ? 1 : flat.normalize().dot(flatLook.normalize());
+            if (dist > 1.8 && dot < -0.1) continue;
             e.invulnerableTime = 0;
             if (e.hurt(p.damageSources().playerAttack(p), dmg)) {
                 hits++;
-                Vec3 kb = to.normalize().scale(0.35);
+                Vec3 kb = (to.lengthSqr() < 1.0E-4 ? look : to.normalize()).scale(0.35);
                 e.push(kb.x, 0.12, kb.z);
                 e.hurtMarked = true;
                 WireLevel.addXp(p, Math.min(dmg, e.getHealth() + 1F) * 0.25F);

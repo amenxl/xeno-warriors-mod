@@ -45,10 +45,12 @@ public class BotAvatar extends RemotePlayer {
         if (getId() != b.getId()) setId(b.getId());
         if (shownAs != b.character() || !java.util.Objects.equals(ownerShown, b.ownerId())) {
             ClientCharacterData.set(getUUID(), CharacterType.NONE);
+            ClientCharacterData.setOutfit(getUUID(), 0);
             setUUID(uuidFor(b));
             shownAs = b.character(); ownerShown = b.ownerId();
         }
         ClientCharacterData.set(getUUID(), shownAs);
+        ClientCharacterData.setOutfit(getUUID(), b.outfit());                  // (the outfit you had on them)
         setPos(b.getX(), b.getY(), b.getZ());
         xo = b.xo; yo = b.yo; zo = b.zo;
         xOld = b.xOld; yOld = b.yOld; zOld = b.zOld;
@@ -94,6 +96,7 @@ public class BotAvatar extends RemotePlayer {
     /** Gone: forget what it was showing. */
     void forget() {
         ClientCharacterData.set(getUUID(), CharacterType.NONE);
+        ClientCharacterData.setOutfit(getUUID(), 0);
         if (knocked) com.xenowarriors.client.party.PartyClient.setKnockedOut(getUUID(), 0);
     }
 

@@ -264,6 +264,13 @@ public final class PartyBots {
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotPickPacket(taken.toArray(new String[0]), cooling.toArray(new String[0]), free, limit, OffDuty.forPick(p)), p);
     }
 
+    /** How many more people / bots fit in this player's party right now. */
+    public static int room(ServerPlayer p) {
+        int free = Parties.limit() - partySize(p) - waitingFor(p.getUUID());
+        if (com.xenowarriors.compat.DmzFusion.fusedChar(p) != null) free--;
+        return free;
+    }
+
     public static void add(ServerPlayer p, String[] ids) {
         if (!p.isAlive() || com.xenowarriors.vr.Vr.is(p.level())) return;   // (not from the death screen or inside VR)
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(p)) { p.sendSystemMessage(Component.literal("No bot teammates on a Journey - it's just you and your partner.").withStyle(ChatFormatting.RED)); return; }
@@ -296,6 +303,7 @@ public final class PartyBots {
         if (b == null) return null;
         b.setCharacter(t);
         b.setOwner(p.getUUID());
+        dress(b, p);
         b.applyLevel(levelFor(p, t));
         com.xenowarriors.compat.DmzBotStats.apply(b);                           // (with DragonMineZ: its character's health and strength, before its saved health goes back in)
         com.xenowarriors.party.Bonds.applyHealth(b);                            // (its bond hearts too, like its owner's - also before the saved health)
@@ -1019,7 +1027,29 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9, ACT_OUTFIT = 10;
+
+    /** A bot wears the outfit you last had on that character (one outfit per character, played or as a bot). */
+    public static void dress(PartyBotEntity b, ServerPlayer owner) {
+        if (owner == null) return;
+        owner.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> b.setOutfit(d.outfitOf(b.character())));
+    }
+
+    /** Changes a bot's outfit from its menu - and that character's outfit for when you play them too. */
+    public static boolean setOutfit(ServerPlayer p, PartyBotEntity b, int o) {
+        CharacterType t = b.character();
+        o = Math.max(0, Math.min(t.outfitKeys().length - 1, o));
+        int season = t.outfitSeason(o);
+        if (!com.xenowarriors.character.Seasons.unlocked(p.server, season)) {
+            p.displayClientMessage(Component.literal("Season " + season + " outfit - locked until /xeno season unlock " + season).withStyle(ChatFormatting.RED), true);
+            return false;
+        }
+        int fo = o;
+        p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setOutfitOf(t, fo));
+        b.setOutfit(o);
+        p.displayClientMessage(Component.literal("").append(b.label()).append(" changes into: " + t.outfitNames()[o]).withStyle(ChatFormatting.AQUA), true);
+        return true;
+    }
 
     public static void action(ServerPlayer p, int botId, int action, int arg) {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
@@ -1047,6 +1077,7 @@ public final class PartyBots {
                 b.setTarget(p);
                 p.displayClientMessage(Component.literal("Spar with ").append(b.label()).append("! (nobody dies)").withStyle(ChatFormatting.GOLD), true);
             }
+            case ACT_OUTFIT -> setOutfit(p, b, arg);
             case ACT_MODE -> {
                 b.setMode(arg);
                 p.displayClientMessage(Component.literal("").append(b.label()).append(": " + PartyBotEntity.MODES[b.mode()] + " mode").withStyle(ChatFormatting.AQUA), true);

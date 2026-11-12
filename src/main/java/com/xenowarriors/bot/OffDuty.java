@@ -195,6 +195,11 @@ public final class OffDuty {
             c.putInt("a", 0);
             c.putLong("u", now + MINUTE * (3 + r.nextInt(6)));
             c.remove("full");
+            if (c.getBoolean(BotCalls.CALLED)) {                                       // (you phoned them: they come now, or ring to say they're ready)
+                c.putLong("u", now + MINUTE * 10);                                  // (and wait for you a while instead of starting something new)
+                BotCalls.done(p, t);
+                return;
+            }
         }
         if (a == Act.NONE && task.isEmpty() && now >= c.getLong("u") && r.nextFloat() < 0.35F) a = choose(p, t, c, now, r);
         if (a != Act.NONE) work(p, t, c, a, r);
@@ -205,11 +210,18 @@ public final class OffDuty {
         return n;
     }
 
+    /** Ultimate weapons and Government-modified humans (Ultima) never get tired or hungry - they never need to relax. */
+    public static boolean tireless(CharacterType t) {
+        return t.race() == com.xenowarriors.character.Race.MODIFIED_HUMAN;
+    }
+
     private static Act choose(ServerPlayer p, CharacterType t, CompoundTag c, long now, RandomSource r) {
         Act a;
         int len = 8 + r.nextInt(18);
-        if (recentDowns(c, now) >= DOWNS_FOR_REST) { a = Act.RELAX_DOWNED; c.remove("d"); }
-        else if (c.getInt("tm") >= LONG_TEAM_MINUTES) { a = Act.RELAX_LONG; c.putInt("tm", 0); }
+        boolean tireless = tireless(t);
+        if (tireless) { c.remove("d"); if (c.getInt("tm") >= LONG_TEAM_MINUTES) c.putInt("tm", 0); }   // never worn out
+        if (!tireless && recentDowns(c, now) >= DOWNS_FOR_REST) { a = Act.RELAX_DOWNED; c.remove("d"); }
+        else if (!tireless && c.getInt("tm") >= LONG_TEAM_MINUTES) { a = Act.RELAX_LONG; c.putInt("tm", 0); }
         else {
             boolean full = bagFull(p, t);
             List<Act> pool = new ArrayList<>();
@@ -217,6 +229,8 @@ public final class OffDuty {
             String radar = radar(p, t);
             Act[] opts = {Act.TRAINING, Act.MINING, Act.WOOD, Act.BUILDING, Act.PARTY, Act.DMZ, Act.DRAGON_BALLS, Act.HUNTING};
             w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0, radar != null && !full ? 10 : 0, full ? 0 : 14};
+            if (tireless) { w[7] = 0; w[4] = 4; }                                  // no need to eat; not one for parties
+            if (t == CharacterType.ULTIMA) w[0] = 110;                             // a weapon that trains (weights, mostly) almost all the time
             int sum = 0; for (int x : w) sum += x;
             int roll = r.nextInt(sum), i = 0;
             while (roll >= w[i]) roll -= w[i++];
@@ -265,7 +279,8 @@ public final class OffDuty {
     /** A minute of the activity. */
     private static void work(ServerPlayer p, CharacterType t, CompoundTag c, Act a, RandomSource r) {
         switch (a) {
-            case TRAINING -> { charXp(p, t, Stat.ATTACK, 6F, c); charXp(p, t, Stat.DEFENSE, 5F, c); if (DmzOffDuty.addTp(p, t, 3F)) gain(c, "dmz_tp", 3); }
+            case TRAINING -> { float heavy = t == CharacterType.ULTIMA ? 1.5F : 1F;   // Ultima's heavy weight sessions
+                charXp(p, t, Stat.ATTACK, 6F * heavy, c); charXp(p, t, Stat.DEFENSE, 5F * heavy, c); if (DmzOffDuty.addTp(p, t, 3F)) gain(c, "dmz_tp", 3); }
             case DMZ -> { charXp(p, t, Stat.ATTACK, 3F, c); charXp(p, t, Stat.DEFENSE, 3F, c); if (DmzOffDuty.addTp(p, t, 8F)) gain(c, "dmz_tp", 8); }
             case PARTY -> charXp(p, t, Stat.SPEED, 5F, c);
             case BUILDING -> { Building.addXp(p, key(p, t), 4F); gain(c, "building_xp", 4); }
@@ -502,6 +517,8 @@ public final class OffDuty {
         return false;
     }
 
+    static String verbOf(Act a) { return verb(a); }
+
     private static String verb(Act a) {
         return switch (a) {
             case TRAINING -> "training"; case PARTY -> "partying"; case DMZ -> "their DMZ mission"; case MINING -> "mining";
@@ -513,7 +530,7 @@ public final class OffDuty {
     public static void joined(ServerPlayer p, CharacterType t) {
         CompoundTag c = rec(p, t);
         leaveGroup(p, t);
-        c.putInt("a", 0); c.remove("t"); c.remove("full"); c.putLong("u", 0);
+        c.putInt("a", 0); c.remove("t"); c.remove("full"); c.putLong("u", 0); c.remove(BotCalls.CALLED);
         List<String> parts = new ArrayList<>();
         CompoundTag h = c.getCompound("haul");
         for (String k : h.getAllKeys()) {
@@ -549,6 +566,7 @@ public final class OffDuty {
         int bond = Bonds.level(p, t.getId());
         if (bond < ASSIGN_BOND) return "You need a bond of " + ASSIGN_BOND + "+ with " + t.getDisplayName().getString() + " to give them a job (yours is " + bond + ").";
         if (a == Act.DMZ && !dmz(p, t)) return t.getDisplayName().getString() + " has no Dragon Ball character of their own yet.";
+        if (a.relaxing() && tireless(t)) { a = Act.TRAINING; job = "training"; }   // doesn't know how to rest
         leaveGroup(p, t);
         c.putString("t", job); c.putInt("a", a.ordinal()); c.remove("full");
         return t.getDisplayName().getString() + " goes " + switch (a) { case RELAX -> "off to relax"; case TRAINING -> "training"; case DMZ -> "on DMZ missions"; default -> verb(a); } + " until you call them back.";

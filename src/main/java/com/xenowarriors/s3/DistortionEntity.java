@@ -104,6 +104,15 @@ public class DistortionEntity extends Mob {
                 soul.finalizeSpawn(s, s.getCurrentDifficultyAt(blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
                 s.addFreshEntity(soul);
                 s.sendParticles(BLACK, soul.getX(), soul.getY(), soul.getZ(), 12, 0.3, 0.3, 0.3, 0);
+                poured++;
+            }
+            if (poured >= spentAfter(lv) && (lv < 3 || released)) {             // a lot have come out of it: it's spent, and fades on its own
+                s.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 2, getZ(), 60, 0.6, 1.2, 0.6, 0.2);
+                s.playSound(null, blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.HOSTILE, 0.4F, 1.8F);
+                for (ServerPlayer p : s.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(48)))
+                    p.displayClientMessage(Component.literal("The Distortion has spent itself and fades away...").withStyle(ChatFormatting.LIGHT_PURPLE), true);
+                discard();
+                return;
             }
         }
         if (lv >= 3 && !released && age > 600) {                  // the powerful C-soul it was opening for
@@ -143,6 +152,8 @@ public class DistortionEntity extends Mob {
             s.playSound(null, blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 2F, 0.4F);
             s.playSound(null, blockPosition(), SoundEvents.ZOMBIE_VILLAGER_CURE, SoundSource.HOSTILE, 1F, 1.4F);
             ExperienceOrb.award(s, position(), 40 * size());
+            for (ServerPlayer p : s.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(48)))   // (with DragonMineZ: a good amount of Dragon Ball TP)
+                com.xenowarriors.compat.DmzTpRewards.give(p, closeTp(size()), "closing a Distortion");
             for (CorruptedSoulEntity soul : souls()) { s.sendParticles(BLACK, soul.getX(), soul.getY(), soul.getZ(), 10, .2, .2, .2, 0); soul.discard(); }
             for (ServerPlayer p : s.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(48)))
                 p.displayClientMessage(Component.literal("The Distortion closes.").withStyle(ChatFormatting.LIGHT_PURPLE), true);
@@ -151,8 +162,13 @@ public class DistortionEntity extends Mob {
     }
 
     private int age;                                                    // (saved: tickCount restarts at every reload)
+    /** C-souls it has let out so far; past {@link #spentAfter} it's spent and fades away. */
+    private int poured;
+    public static int spentAfter(int size) { return 16 + 8 * size; }
+    /** Dragon Ball TP for closing one (with DragonMineZ), by its size. */
+    public static int closeTp(int size) { return 300 + 300 * size; }
 
-    @Override public void addAdditionalSaveData(CompoundTag t) { super.addAdditionalSaveData(t); t.putInt("Size", size()); t.putBoolean("Released", released); t.putInt("Age", age); }
+    @Override public void addAdditionalSaveData(CompoundTag t) { super.addAdditionalSaveData(t); t.putInt("Size", size()); t.putBoolean("Released", released); t.putInt("Age", age); t.putInt("Poured", poured); }
     @Override public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);
         float hp = getHealth();
@@ -160,5 +176,6 @@ public class DistortionEntity extends Mob {
         if (t.contains("Health")) setHealth(Math.min(hp, getMaxHealth()));   // (damage you dealt stays dealt)
         released = t.getBoolean("Released");
         age = t.getInt("Age");
+        poured = t.getInt("Poured");
     }
 }

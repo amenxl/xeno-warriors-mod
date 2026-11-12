@@ -41,6 +41,9 @@ final class PackXenoDragonTests {
             PackTests.check("xenodragon from a killed ender dragon", x != null, x == null ? "none" : "at " + x.blockPosition().toShortString() + " lands " + x.home());
             if (x != null) { x.skipEmergeForTest(); x.addTag("xw_pack"); }
             p.setGameMode(GameType.SURVIVAL);
+            // (the dragon fights for real: keep the tester standing so the checks after it still have someone to look from)
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 20, 4, false, false));
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 20 * 20, 4, false, false));
         }), 40));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 5));
         l.add(new Step("pack_xenodragon_base", () -> {}, 30));
@@ -58,6 +61,7 @@ final class PackXenoDragonTests {
             for (var e : p.serverLevel().getEntitiesOfClass(DragonBombEntity.class, p.getBoundingBox().inflate(200))) e.discard();
             PackTests.clear(p);
             p.setGameMode(GameType.CREATIVE);
+            p.removeEffect(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE); p.removeEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
             p.setHealth(p.getMaxHealth());
         }), 10));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.FIRST_PERSON), 5));

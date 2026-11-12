@@ -169,7 +169,7 @@ public class BotPickScreen extends Screen {
                 g.drawCenteredString(font, "content", x + CW / 2, y + 70, 0xAA5555);
                 continue;
             }
-            JourneyScreen.face(g, t, x + CW / 2 - 20, y + 8, 40);
+            JourneyScreen.face(g, t, x + CW / 2 - 20, y + 8, 40, OffDutyIcons.face(actCode(t), t == CharacterType.ULTIMA, net.minecraft.Util.getMillis() + t.ordinal() * 1300L));
             String name = t.getDisplayName().getString();
             g.drawCenteredString(font, name, x + CW / 2, y + 52, 0xFF000000 | col);
             g.drawCenteredString(font, "Lv " + level(t), x + CW / 2, y + 64, 0xFFD966);
@@ -183,7 +183,7 @@ public class BotPickScreen extends Screen {
             int ac = actCode(t);
             if (ac > 0) {                                                         // (off duty: what they're up to)
                 OffDutyIcons.draw(g, ac, x + CW - OffDutyIcons.SIZE - 3, y + 6, net.minecraft.Util.getMillis());
-                String lab = act(t).label();
+                String lab = t == CharacterType.ULTIMA && ac == OffDutyIcons.TRAINING ? "Weight training" : act(t).label();
                 g.pose().pushPose();
                 g.pose().translate(x + CW / 2F, y + 87, 0);
                 float k2 = Math.min(0.62F, (CW - 4) / (float) Math.max(1, font.width(lab)));

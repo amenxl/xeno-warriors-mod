@@ -48,6 +48,7 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR_BOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (its spar is with another bot, not you)
     private static final EntityDataAccessor<Boolean> DMZ_FLY = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> OUTFIT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (what it wears: its owner's outfit for that character)
     private static final EntityDataAccessor<Boolean> NIMBUS = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (rides a Flying Nimbus: DmzBotNimbus)
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
@@ -171,6 +172,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(SPAR_BOT, false);
         entityData.define(DMZ_FLY, false);
         entityData.define(NIMBUS, false);
+        entityData.define(OUTFIT, 0);
     }
 
     // ---------------------------------------------------------------- state
@@ -235,6 +237,9 @@ public class PartyBotEntity extends PathfinderMob {
 
     /** With DragonMineZ: it can't fly by itself but has a Flying Nimbus - it flies riding the cloud. */
     public boolean nimbus() { return entityData.get(NIMBUS); }
+    /** The outfit it's wearing (an index into its character's outfitKeys). */
+    public int outfit() { return entityData.get(OUTFIT); }
+    public void setOutfit(int o) { if (entityData.get(OUTFIT) != o) entityData.set(OUTFIT, o); }
     public void setNimbus(boolean on) { if (entityData.get(NIMBUS) != on) entityData.set(NIMBUS, on); }
 
     /** Its character flies by itself (Skylanders, Ultima, Mikiko). */
@@ -893,6 +898,7 @@ public class PartyBotEntity extends PathfinderMob {
         super.aiStep();
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
+        if (tickCount % 40 == 7) PartyBots.dress(this, owner());               // (its outfit: yours for that character)
         if (pendingHp >= 0 && tickCount > 200) pendingHp = -1;                  // (what didn't come back by now stays as it is)
         if (downed()) {
             if (++downedTicks > PartyBots.BLEED_OUT) { PartyBots.bleedOut(this); return; }

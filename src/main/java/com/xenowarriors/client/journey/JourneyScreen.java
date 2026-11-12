@@ -87,6 +87,13 @@ public abstract class JourneyScreen extends Screen {
     }
 
     /** The character's head, rendered live (you as that character, so faces, hair and outfits all show), on their colour. */
+    /** The portrait wearing a given expression (null = their normal face). */
+    public static void face(GuiGraphics g, CharacterType t, int x, int y, int size, String expr) {
+        com.xenowarriors.client.render.CharacterDetailLayer.previewExpr = expr;
+        try { face(g, t, x, y, size); }
+        finally { com.xenowarriors.client.render.CharacterDetailLayer.previewExpr = null; }
+    }
+
     public static void face(GuiGraphics g, CharacterType t, int x, int y, int size) {
         if (t == CharacterType.NONE) { g.fill(x, y, x + size, y + size, 0xFF303038); return; }
         var mc = net.minecraft.client.Minecraft.getInstance();

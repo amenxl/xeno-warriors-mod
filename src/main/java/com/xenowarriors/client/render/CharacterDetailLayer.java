@@ -278,7 +278,11 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return hp < max * 0.5F && (p.getId() + p.tickCount / 10) % 2 == 0 ? "shocked" : "hurt";
     }
 
+    /** A face forced on a menu portrait (the off-duty cards: what they're busy doing), set only around that draw. */
+    public static String previewExpr;
+
     private static String expression(AbstractClientPlayer p, CharacterType type) {
+        if (previewExpr != null && ClientCharacterData.isPreviewing()) return previewExpr;
         String pod = com.xenowarriors.client.pod.PodFace.face(p);       // resting in a healing pod: eyes closed
         if (pod != null) return pod;
         if (p.isSleeping()) {

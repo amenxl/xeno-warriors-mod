@@ -17,7 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
 public class BotScreen extends Screen {
     private static final int W = 236;
     private static final boolean DMZ = com.xenowarriors.client.compat.DmzMenu.available();
-    private static final int H = DMZ ? 236 : 214;            // (room for the two hint lines under the buttons)
+    private static final int H = DMZ ? 258 : 236;            // (room for the two hint lines under the buttons)
     private final OpenBotMenuPacket m;
     private final CharacterType type;
     private int mode;
@@ -59,7 +59,17 @@ public class BotScreen extends Screen {
         if (DMZ) addRenderableWidget(Button.builder(Component.literal("Fuse"), b -> { send(PartyBots.ACT_FUSE, 0); onClose(); })    // (Potara earrings in its bag, or it knows the Fusion Dance)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Fuse with them: they need Potara earrings in their bag, or the Fusion Dance skill")))
                 .bounds(x + bw - 42, y + 132, 42, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, y + (DMZ ? 162 : 140), bw, 20).build());
+        int oy = y + (DMZ ? 154 : 132);
+        Button dress = addRenderableWidget(Button.builder(outfitLabel(), b -> {      // cycles their outfits (yours for that character too)
+            String[] names = type.outfitNames();
+            if (names.length < 2) return;
+            outfit = (outfit + 1) % names.length;
+            send(PartyBots.ACT_OUTFIT, outfit);
+            b.setMessage(outfitLabel());
+        }).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Change their outfit - it's also what they wear when you play them")))
+                .bounds(x, oy, bw, 20).build());
+        dress.active = type.outfitNames().length > 1;
+        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, oy + (DMZ ? 30 : 30), bw, 20).build());
     }
 
     private int missing;
@@ -72,6 +82,14 @@ public class BotScreen extends Screen {
         boolean gone = !(e instanceof PartyBotEntity) || e.isRemoved() || !((PartyBotEntity) e).isAlive();
         missing = gone ? missing + 1 : 0;
         if (missing > 5) onClose();
+    }
+
+    private int outfit = -1;
+
+    private Component outfitLabel() {
+        if (outfit < 0) outfit = minecraft != null && minecraft.level != null && minecraft.level.getEntity(m.botId()) instanceof PartyBotEntity b ? b.outfit() : 0;
+        String[] names = type.outfitNames();
+        return Component.literal("Outfit: " + names[Math.max(0, Math.min(names.length - 1, outfit))]);
     }
 
     private Component modeLabel() { return Component.literal("Mode: " + PartyBotEntity.MODES[mode]); }

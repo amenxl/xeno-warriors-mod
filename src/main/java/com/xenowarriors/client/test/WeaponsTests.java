@@ -557,7 +557,7 @@ public final class WeaponsTests {
         int[] ids = new int[3];
         l.add(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 2); arena(p); clearDummies(p); p.getInventory().clearContent(); levels(p, 1, 0, 1);
             WeaponForms.summon(p, Form.WIRES, false);
-            ids[0] = dummy(p, 0.6, 2.0, "2 blocks").getId(); ids[1] = dummy(p, -1.2, 3.6, "3.6 blocks").getId(); ids[2] = dummy(p, 0, 5.6, "5.6 blocks").getId();
+            ids[0] = dummy(p, 0.6, 2.0, "2 blocks").getId(); ids[1] = dummy(p, -1.2, 3.6, "3.6 blocks").getId(); ids[2] = dummy(p, 0, 7.2, "7.2 blocks (out of reach)").getId();
             p.setYRot(0); p.setYHeadRot(0); p.setXRot(5); }), 20);
         l.add(null, () -> server(p -> {
             float[] before = new float[3];
