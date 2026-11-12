@@ -2388,11 +2388,17 @@ public final class Batch4Tests {
             m[4] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), soul2, ves.blockPosition().offset(0, 0, 3));
             ves.setTarget(null);
             ((com.xenowarriors.foes.VesselEntity) ves).fuseNowForTest();
+            p.getPersistentData().putBoolean("xw_t_went", false);
         }), 3);
-        settle(l, 80);
+        for (int i = 0; i < 8; i++) {                                         // (checked every second for 8 s)
+            settle(l, 20);
+            l.add(null, () -> server(p -> { if (((net.minecraft.world.entity.Mob) m[4]).getTarget() == m[1]) p.getPersistentData().putBoolean("xw_t_went", true); }), 1);
+        }
         l.add(null, () -> server(p -> {
             var soul = (net.minecraft.world.entity.Mob) m[4];
-            log("triangle: once it's evolved the C-soul goes for it (" + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ") -> " + (soul.getTarget() == m[1] ? "PASS" : "FAIL"));
+            log("triangle: (soul alive " + soul.isAlive() + " at " + soul.blockPosition().toShortString() + ", Cynic Dancer at " + m[1].blockPosition().toShortString() + " health " + ((net.minecraft.world.entity.LivingEntity) m[1]).getHealth() + ")");
+            boolean went = p.getPersistentData().getBoolean("xw_t_went");
+            log("triangle: once it's evolved the C-soul goes for it (" + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ", went for it " + went + ") -> " + (went ? "PASS" : "FAIL"));
             soul.discard();
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             // the evolved Cynic Dancer's combos and grab, on a dummy
