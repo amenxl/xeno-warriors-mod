@@ -1669,6 +1669,20 @@ public final class Batch4Tests {
             for (int i = 0; i < 60; i++) com.xenowarriors.bot.BotJukebox.tick(b[0]);
             log("teamjukebox: while it plays nobody else puts one on (played " + (com.xenowarriors.bot.BotJukebox.played - before) + ") -> " + (com.xenowarriors.bot.BotJukebox.played - before == 1 ? "PASS" : "FAIL"));
             com.xenowarriors.bot.BotJukebox.endForTest(b[0]);
+            // the ride's music: you and Garry in a vehicle, his disc plays from it
+            var car = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.CAR).get().create(p.serverLevel());
+            car.moveTo(p.getX() + 4, p.getY(), p.getZ() + 4, 0, 0);
+            p.serverLevel().addFreshEntity(car);
+            p.startRiding(car, true);
+            b[0].startRiding(car, true);
+            int heard0 = com.xenowarriors.bot.BotJukebox.newSongs;
+            b[0].inventory.addItem(new ItemStack(net.minecraft.world.item.Items.MUSIC_DISC_MALL));
+            boolean ride = com.xenowarriors.bot.BotJukebox.radioForTest(b[0]);
+            log("teamjukebox: in a car together, Garry plays a disc for the ride " + ride + " (songs " + com.xenowarriors.bot.BotJukebox.radioSongs + ", a new one heard " + (com.xenowarriors.bot.BotJukebox.newSongs > heard0) + ") -> " + (ride ? "PASS" : "FAIL"));
+            p.stopRiding();
+            for (int i = 0; i < 3; i++) com.xenowarriors.bot.BotJukebox.tick(b[0]);
+            log("teamjukebox: you get out -> the ride's song stops " + !com.xenowarriors.bot.BotJukebox.radioOn(p) + " -> " + (!com.xenowarriors.bot.BotJukebox.radioOn(p) ? "PASS" : "FAIL"));
+            b[0].stopRiding(); car.discard();
             log("teamjukebox: packed up -> jukebox back with Garry " + (b[0].inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) == 1) + ", Blocks disc back with Stevie " + (b[1].inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_BLOCKS) == 1)
                     + " -> " + (b[0].inventory.countItem(net.minecraft.world.item.Items.JUKEBOX) == 1 && b[1].inventory.countItem(net.minecraft.world.item.Items.MUSIC_DISC_BLOCKS) == 1 ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);

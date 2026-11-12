@@ -108,6 +108,7 @@ public final class BotJukebox {
         if (!(b.level() instanceof ServerLevel l)) return;
         ServerPlayer o = b.owner();
         if (o == null) return;
+        if (radioTick(b, l, o)) return;                                              // (riding with you: the vehicle's music)
         Box box = BOXES.get(o.getUUID());
         long now = l.getGameTime();
         if (box != null) {
@@ -118,6 +119,7 @@ public final class BotJukebox {
         }
         long last = o.getPersistentData().getLong(LAST);
         if (last > 0 && now >= last && now - last < GAP) return;
+        if (radioOn(o) || b.isPassenger()) return;
         if (!quiet(b, o) || b.getRandom().nextInt(4) != 0 || !com.xenowarriors.modes.ModeRules.canGrief(l)) return;
         if (BotSpar.event(o) != null && !BotPartyTime.active(o)) return;            // (not over a picnic, a camp...)
         start(b, l, o, false);
@@ -132,6 +134,71 @@ public final class BotJukebox {
         if (!box.songOn() && now >= box.nextSong && quiet(b, o) && b.getRandom().nextInt(5) == 0 && playNext(b, l, o, box)) return;
         if (!box.songOn() && now - box.idleSince > PACK_UP && !BotPartyTime.active(o)) packUp(o);   // (nobody's put anything on for a while)
     }
+
+    // ---------------------------------------------------------------- the vehicle's music
+
+    /** A song playing in a vehicle (the sound rides along with it). */
+    private static final class Radio { int vehicle; UUID dj; String song = ""; net.minecraft.resources.ResourceLocation sound; long ends; }
+    private static final Map<UUID, Radio> RADIOS = new HashMap<>();   // by owner
+    public static final int RADIO_GAP = 20 * 60 * 2;
+    private static final String RADIO_AT = "xw_radio_at";
+    /** (Tests) songs played in vehicles. */
+    public static int radioSongs;
+
+    private static net.minecraft.world.entity.Entity ride(LivingEntity e) {
+        var v = e.getVehicle();
+        return v instanceof com.xenowarriors.vehicle.VehicleEntity || v instanceof net.minecraft.world.entity.vehicle.Boat ? v : null;
+    }
+
+    /**
+     * Riding along with you (you in a vehicle too, close by): a bot with a disc in its bag now and then puts it on -
+     * it plays from its vehicle and goes with it. One song at a time; it stops when you get out, a fight starts or the
+     * song is over. True while this bot's song is on.
+     */
+    private static boolean radioTick(PartyBotEntity b, ServerLevel l, ServerPlayer o) {
+        Radio r = RADIOS.get(o.getUUID());
+        long now = l.getGameTime();
+        if (r != null) {
+            var v = l.getEntity(r.vehicle);
+            boolean mine = b.getUUID().equals(r.dj);
+            if (!mine) { if (bot(l, r.dj) == null) stopRadio(o, l); return false; }   // (the one playing it is gone)
+            boolean ok = v != null && v.isAlive() && b.getVehicle() == v && ride(o) != null && o.distanceTo(v) < 24 && BotSpar.quiet(o) && !b.downed();
+            if (!ok || now >= r.ends) { stopRadio(o, l); return false; }
+            return true;
+        }
+        var v = ride(b);
+        if (v == null || ride(o) == null || o.distanceTo(v) > 24 || songOn(o) || !BotSpar.quiet(o) || b.getTarget() != null) return false;
+        long last = o.getPersistentData().getLong(RADIO_AT);
+        if (last > 0 && now >= last && now - last < RADIO_GAP) return false;
+        if (b.getRandom().nextInt(6) != 0) return false;
+        int d = discSlot(b, o.getPersistentData().getString("xw_radio_last"));
+        if (d < 0 || !(b.inventory.getItem(d).getItem() instanceof RecordItem rec)) return false;
+        ItemStack disc = b.inventory.getItem(d);
+        r = new Radio();
+        r.vehicle = v.getId(); r.dj = b.getUUID(); r.song = id(disc);
+        r.sound = rec.getSound().getLocation();
+        r.ends = now + rec.getLengthInTicks() + 20;
+        RADIOS.put(o.getUUID(), r);
+        o.getPersistentData().putLong(RADIO_AT, now);
+        o.getPersistentData().putString("xw_radio_last", r.song);
+        l.playSound(null, v, rec.getSound(), net.minecraft.sounds.SoundSource.RECORDS, 2.5F, 1F);   // (bound to the vehicle: it moves with it)
+        radioSongs++;
+        o.displayClientMessage(Component.empty().append(b.label()).append(" puts a song on for the ride: ").append(disc.getHoverName().copy().withStyle(ChatFormatting.LIGHT_PURPLE)), true);
+        heard(o, disc, v.blockPosition());
+        return true;
+    }
+
+    private static void stopRadio(ServerPlayer o, ServerLevel l) {
+        Radio r = RADIOS.remove(o.getUUID());
+        if (r == null) return;
+        var stop = new net.minecraft.network.protocol.game.ClientboundStopSoundPacket(r.sound, net.minecraft.sounds.SoundSource.RECORDS);
+        var v = l.getEntity(r.vehicle);
+        for (ServerPlayer p : l.players()) if (v == null || p.distanceTo(v) < 96) p.connection.send(stop);
+        o.getPersistentData().putLong(RADIO_AT, l.getGameTime());
+    }
+
+    /** A song is playing in a vehicle for this team. */
+    public static boolean radioOn(ServerPlayer o) { return RADIOS.containsKey(o.getUUID()); }
 
     // ---------------------------------------------------------------- songs
 
@@ -326,7 +393,7 @@ public final class BotJukebox {
 
     @SubscribeEvent
     public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) packUp(p);
+        if (e.getEntity() instanceof ServerPlayer p) { packUp(p); stopRadio(p, p.serverLevel()); }
     }
 
     /** (Tests) */
@@ -334,6 +401,16 @@ public final class BotJukebox {
     public static void endForTest(PartyBotEntity b) { ServerPlayer o = b.owner(); if (o != null) packUp(o); }
     /** (Tests) the song ends now; the pause is skipped. */
     public static void songOverForTest(ServerPlayer o) { Box box = BOXES.get(o.getUUID()); if (box != null && box.songOn()) { endSong(o.serverLevel(), box); box.nextSong = 0; } }
+    /** (Tests) a ride song now, no dice or wait. */
+    public static boolean radioForTest(PartyBotEntity b) {
+        ServerPlayer o = b.owner();
+        if (o == null || !(b.level() instanceof ServerLevel l)) return false;
+        o.getPersistentData().remove(RADIO_AT);
+        for (int i = 0; i < 200 && !RADIOS.containsKey(o.getUUID()); i++) radioTick(b, l, o);
+        return RADIOS.containsKey(o.getUUID());
+    }
+    public static void radioStopForTest(ServerPlayer o) { stopRadio(o, o.serverLevel()); }
+
     /** (Tests) jukeboxes standing for this team (0 or 1). */
     public static int boxesForTest(ServerPlayer o) { return BOXES.containsKey(o.getUUID()) ? 1 : 0; }
 }

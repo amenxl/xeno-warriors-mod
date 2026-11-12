@@ -64,7 +64,7 @@ public final class BotSpar {
         if (o.isSleeping()) return "bedtime";
         if (com.xenowarriors.journey.Journey.inLobbyOrRun(o)) return "a Journey";
         if (com.xenowarriors.modes.ModeRules.arena(o.level())) return "an event";
-        if (BotJukebox.songOn(o)) return "the music";
+        if (BotJukebox.songOn(o) || BotJukebox.radioOn(o)) return "the music";
         return null;
     }
 
