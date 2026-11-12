@@ -94,6 +94,8 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("capture")) capture(mc, l);
         if (f.isEmpty() || f.contains("spread")) spread(mc, l);
         if (f.isEmpty() || f.contains("poseguard")) poseGuard(mc, l);
+        if (f.isEmpty() || f.contains("c2")) c2Paths(mc, l);
+        if (f.isEmpty() || f.contains("devil")) devil(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -1983,6 +1985,174 @@ public final class Batch4Tests {
         l.add("batch4_poseguard", () -> log("poseguard: a bot's drawing failed partway " + com.xenowarriors.client.bot.BotRenderer.failedForTest + " times, game still running -> "
                 + (com.xenowarriors.client.bot.BotRenderer.failedForTest >= 5 ? "PASS" : "FAIL")), 3);
         l.add(null, () -> { com.xenowarriors.client.bot.BotRenderer.failForTest = 0; server(Batch3Tests::clearBots); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    /** A custom character of this race in slot `slot`, played now, at about this Character Level. */
+    private static com.xenowarriors.you.YouSlot you(ServerPlayer p, int slot, String name, com.xenowarriors.character.Race race, com.xenowarriors.ka.Element el, int statEach) {
+        var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+        var s = new com.xenowarriors.you.YouSlot(); s.name = name; s.race = race; s.element = el;
+        d.youSlots[slot] = s;
+        com.xenowarriors.character.CharacterManager.setYou(p, slot);
+        d.statLevel[0] = statEach; d.statLevel[1] = statEach; d.statLevel[2] = statEach;
+        com.xenowarriors.you.YouRaces.apply(p);
+        return com.xenowarriors.you.You.slot(p);
+    }
+
+    private static void c2Paths(Minecraft mc, MikikoTests.Steps l) {
+        BlockPos[] term = new BlockPos[1];
+        net.minecraft.world.entity.Entity[] rec = new net.minecraft.world.entity.Entity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            you(p, 7, "Testy", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.LIGHTNING, 15);
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.GOV, 800);
+            com.xenowarriors.economy.Money.add(p, 500000, false);
+            term[0] = p.blockPosition().offset(0, 0, 2);
+            p.level().setBlock(term[0], com.xenowarriors.gov.GovItems.TERMINAL.get().defaultBlockState(), 3);
+            com.xenowarriors.gov.GovShop.open(p, term[0]);
+        }), 30);
+        l.add(null, () -> com.xenowarriors.client.screen.C2Screen.ask(), 20);
+        l.add("batch4_c2_page", () -> log("c2: the C2 page opens " + (mc.screen instanceof com.xenowarriors.client.screen.C2Screen) + " -> " + (mc.screen instanceof com.xenowarriors.client.screen.C2Screen ? "PASS" : "FAIL")), 3);
+        l.add(null, () -> { mc.setScreen(null); server(p -> {
+            var demon = com.xenowarriors.you.YouPaths.path(com.xenowarriors.you.YouSlot.PATH_DEMON);
+            String why = com.xenowarriors.you.YouPaths.why(p, demon);
+            log("c2: Artificial Demon without a card -> \"" + why + "\" -> " + (why != null && why.contains("Card") ? "PASS" : "FAIL"));
+            rec[0] = com.xenowarriors.you.YouPaths.spawnRecruiter(p.serverLevel(), p.blockPosition());
+            if (rec[0] == null) { var r = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel()); r.moveTo(p.getX() + 2, p.getY(), p.getZ() - 2); r.setup(false, 1, r.blockPosition()); r.addTag(com.xenowarriors.you.YouPaths.RECRUITER); p.serverLevel().addFreshEntity(r); rec[0] = r; }
+            rec[0].teleportTo(p.getX() + 2, p.getY(), p.getZ() - 2);
+        }); }, 20);
+        l.add(null, () -> server(p -> {
+            int c0 = com.xenowarriors.you.YouPaths.cardsGiven;
+            p.interactOn(rec[0], net.minecraft.world.InteractionHand.MAIN_HAND);
+            boolean has = p.getInventory().contains(new ItemStack(com.xenowarriors.gov.GovItems.DEMON_CARD.get()));
+            log("c2: recruiter 3602 hands over a Demon Program Card " + has + " (given " + (com.xenowarriors.you.YouPaths.cardsGiven - c0) + ") -> " + (has ? "PASS" : "FAIL"));
+            String why = com.xenowarriors.you.YouPaths.why(p, com.xenowarriors.you.YouPaths.path(com.xenowarriors.you.YouSlot.PATH_DEMON));
+            log("c2: now the Artificial Demon path is open " + (why == null) + " (" + why + ") -> " + (why == null ? "PASS" : "FAIL"));
+        }), 10);
+        // Modified Human, through the real request (terminal, money, the wait)
+        long[] m0 = new long[1];
+        l.add(null, () -> server(p -> { m0[0] = com.xenowarriors.economy.Money.get(p); com.xenowarriors.you.YouPaths.request(p, com.xenowarriors.you.YouSlot.PATH_MODIFIED, 0); }), 40);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 0), 3);
+        l.add("batch4_c2_procedure", () -> {}, 3);
+        l.add(null, () -> {}, 20 * 5);
+        l.add(null, () -> server(p -> {
+            var s = com.xenowarriors.you.You.slot(p);
+            boolean mods = com.xenowarriors.toggle.Toggles.of(p).contains(com.xenowarriors.toggle.Toggles.Entry.MOD_SPEED);
+            boolean oc = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(e -> e.skill().getId().equals("you_overclock"));
+            boolean speed = p.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED);
+            boolean plating = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).getModifier(java.util.UUID.fromString("3c9a1f6e-2b77-4e0a-9f31-c2d1a0b7e5a1")) != null;
+            log("c2: Modified Human: race " + s.shown().title + ", paid " + (m0[0] - com.xenowarriors.economy.Money.get(p)) + ", mods on the wheel " + mods + ", Overclock " + oc + ", Speed Mod on " + speed + ", Plating (Lv " + com.xenowarriors.stats.Stats.characterLevel(p) + ", needs 50) " + plating
+                    + " -> " + (s.shown() == com.xenowarriors.character.Race.MODIFIED_HUMAN && mods && oc && speed && !plating && m0[0] > com.xenowarriors.economy.Money.get(p) ? "PASS" : "FAIL"));
+            String again = com.xenowarriors.you.YouPaths.why(p, com.xenowarriors.you.YouPaths.path(com.xenowarriors.you.YouSlot.PATH_SKYLANDER));
+            log("c2: a second path is refused (\"" + again + "\") -> " + (again != null ? "PASS" : "FAIL"));
+        }), 10);
+        // Artificial Demon
+        int[] town = new int[1];
+        l.add(null, () -> server(p -> {
+            var s = you(p, 8, "Zacky", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.FIRE, 15);
+            town[0] = com.xenowarriors.faction.Reputation.get(p, com.xenowarriors.faction.Faction.TOWN);
+            com.xenowarriors.you.YouPaths.finishForTest(p, com.xenowarriors.you.YouSlot.PATH_DEMON, 0);
+        }), 20);
+        l.add(null, () -> server(p -> {
+            var s = com.xenowarriors.you.You.slot(p);
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON, 200, 0));
+            boolean poisoned = p.hasEffect(net.minecraft.world.effect.MobEffects.POISON);
+            boolean virus = com.xenowarriors.virus.AuroraVirus.immune(p);
+            int dt = com.xenowarriors.faction.Reputation.get(p, com.xenowarriors.faction.Faction.TOWN) - town[0];
+            boolean dash = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(e -> e.skill().getId().equals("devil_dash"));
+            log("c2: Artificial Demon: race " + s.shown().title + ", wings " + com.xenowarriors.you.You.wings(p) + ", Devil Dash " + dash + ", poison " + poisoned + ", virus-immune " + virus + ", Townsfolk " + dt
+                    + " -> " + (s.shown() == com.xenowarriors.character.Race.ARTIFICIAL_DEMON && com.xenowarriors.you.You.wings(p) && dash && !poisoned && virus && dt == -100 ? "PASS" : "FAIL"));
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_c2_artificial_demon", () -> {}, 3);
+        // Artificial Skylander (Solar)
+        l.add(null, () -> server(p -> {
+            you(p, 9, "Techie", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.WIND, 15);
+            com.xenowarriors.you.YouPaths.finishForTest(p, com.xenowarriors.you.YouSlot.PATH_SKYLANDER, com.xenowarriors.you.YouSlot.FORM_SOLAR);
+        }), 20);
+        l.add(null, () -> server(p -> {
+            var s = com.xenowarriors.you.You.slot(p);
+            boolean form = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(e -> e.skill().getId().contains("solar"));
+            log("c2: Artificial Skylander: race " + s.shown().title + ", wings " + com.xenowarriors.you.You.wings(p) + ", form " + s.form + " skill " + form
+                    + " -> " + (s.shown() == com.xenowarriors.character.Race.ARTIFICIAL_SKYLANDER && com.xenowarriors.you.You.wings(p) && s.form == com.xenowarriors.you.YouSlot.FORM_SOLAR ? "PASS" : "FAIL"));
+            log("c2: skills " + com.xenowarriors.skill.SkillPool.of(p).stream().map(e -> e.skill().getId()).toList());
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_c2_artificial_skylander", () -> {}, 3);
+        l.add(null, () -> server(p -> { p.level().removeBlock(term[0], false); if (rec[0] != null) rec[0].discard(); }), 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+    }
+
+    private static void devil(Minecraft mc, MikikoTests.Steps l) {
+        net.minecraft.world.entity.LivingEntity[] sh = new net.minecraft.world.entity.LivingEntity[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            you(p, 6, "Vex", com.xenowarriors.character.Race.DEMON, com.xenowarriors.ka.Element.SHADOW, 20);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+        }), 30);
+        // the hunger: a Gov guard (no AI) killed in demon form
+        l.add(null, () -> server(p -> {
+            var s = com.xenowarriors.you.You.slot(p);
+            int h0 = s.hunger;
+            var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel());
+            g.moveTo(p.getX() + 2, p.getY(), p.getZ()); g.setup(true, 0, g.blockPosition()); g.setNoAi(true);
+            p.serverLevel().addFreshEntity(g);
+            g.hurt(p.damageSources().playerAttack(p), 9999F);
+            log("devil: Lv " + com.xenowarriors.stats.Stats.characterLevel(p) + " demon kills a guard -> Devil's Hunger " + h0 + " -> " + s.hunger + " -> " + (s.hunger == h0 + 1 ? "PASS" : "FAIL"));
+            com.xenowarriors.you.YouDevil.fillForTest(p);
+            p.serverLevel().setDayTime(18000);
+        }), 20);
+        l.add(null, () -> {}, 20 * 3);      // (the night check: once a second)
+        l.add(null, () -> server(p -> {
+            boolean d = com.xenowarriors.you.YouDevil.dueling(p);
+            if (!d) com.xenowarriors.you.YouDevil.start(p);
+            for (var e : p.serverLevel().getEntitiesOfClass(com.xenowarriors.you.DevilShadowEntity.class, p.getBoundingBox().inflate(20))) sh[0] = e;
+            log("devil: full hunger at night -> the shadow steps out by itself " + d + " (" + (sh[0] == null ? "none" : sh[0].getName().getString() + " hp " + Math.round(sh[0].getMaxHealth())) + ") -> " + (d && sh[0] != null ? "PASS" : "FAIL"));
+        }), 10);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_devil_shadow", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            if (sh[0] == null) return;
+            var golem = net.minecraft.world.entity.EntityType.IRON_GOLEM.create(p.serverLevel());
+            golem.moveTo(sh[0].getX() + 1, sh[0].getY(), sh[0].getZ()); golem.setNoAi(true); p.serverLevel().addFreshEntity(golem);
+            float h = sh[0].getHealth();
+            sh[0].hurt(sh[0].damageSources().mobAttack(golem), 20F);
+            boolean helped = sh[0].getHealth() < h;
+            golem.discard();
+            sh[0].invulnerableTime = 0;
+            sh[0].hurt(p.damageSources().playerAttack(p), 99999F);
+            log("devil: someone else's hit does nothing " + !helped + "; you beat your shadow (dead " + !sh[0].isAlive() + ") -> " + (!helped && !sh[0].isAlive() ? "PASS" : "FAIL"));
+        }), 10);
+        l.add(null, () -> {}, 40);
+        l.add(null, () -> server(p -> {
+            var s = com.xenowarriors.you.You.slot(p);
+            boolean mask = com.xenowarriors.toggle.Toggles.of(p).contains(com.xenowarriors.toggle.Toggles.Entry.KARMA_MASK);
+            long kl = com.xenowarriors.karma.KarmaLevel.of(p);
+            boolean split = com.xenowarriors.skill.SkillPool.of(p).stream().anyMatch(e -> e.skill().getId().equals("devil_self_split"));
+            float dm = com.xenowarriors.you.YouRaces.damageMult(p);
+            log("devil: awakened - race " + s.shown().title + ", devil " + s.devil + ", Karma Mask " + mask + " (Karma Level reads " + kl + "), Self-Split " + split + ", damage x" + dm + ", max hp " + Math.round(p.getMaxHealth())
+                    + " -> " + (s.devil && s.shown() == com.xenowarriors.character.Race.DEVIL && mask && kl <= 1 && split && Math.abs(dm - 1.3F) < 0.01 ? "PASS" : "FAIL"));
+            p.serverLevel().setDayTime(6000);
+        }), 10);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10), 10);
+        l.add("batch4_devil_awakened", () -> {}, 3);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15), 10);
+        l.add("batch4_devil_back", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            boolean ok = new com.xenowarriors.you.YouDevil.SelfSplit().use(p);
+            log("devil: Self-Split -> your other half " + (ok && com.xenowarriors.soul.SoulSplit.active(p)) + " -> " + (ok && com.xenowarriors.soul.SoulSplit.active(p) ? "PASS" : "FAIL"));
+        }), 30);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 150, 10), 5);
+        l.add("batch4_devil_selfsplit", () -> {}, 3);
+        l.add(null, () -> server(p -> { if (com.xenowarriors.soul.SoulSplit.active(p)) com.xenowarriors.soul.SoulSplit.end(p, null); }), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+        Batch3Tests.character(l, CharacterType.MIKIKO);
     }
 
     private static void towerPods(Minecraft mc, MikikoTests.Steps l) {
