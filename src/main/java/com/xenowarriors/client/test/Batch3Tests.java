@@ -387,7 +387,10 @@ public final class Batch3Tests {
         l.add("batch3_aurora_room", () -> server(p -> log("aurora: battle moved to a Room=" + com.xenowarriors.room.RoomTech.is(p.level())
                 + " opened=" + com.xenowarriors.recarnet.AuroraSecurity.opened + " -> " + (com.xenowarriors.room.RoomTech.is(p.level()) ? "PASS" : "FAIL"))), 5);
         l.add(null, () -> server(p -> {
-            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(30))) e.kill();
+            StringBuilder sb = new StringBuilder();
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(30),
+                    m -> m instanceof net.minecraft.world.entity.monster.Enemy || m.getTarget() == p)) { sb.append(e.getType().getDescriptionId()).append(' '); e.kill(); }
+            log("aurora: beaten in the Room: " + sb);
         }), 110);
         l.add("batch3_aurora_back", () -> server(p -> {
             boolean back = com.xenowarriors.recarnet.Recarnet.inAurora(p.level(), p.blockPosition());
