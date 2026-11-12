@@ -76,7 +76,6 @@ public final class ChargePose {
                     p.getZ() + (r.nextDouble() - 0.5) * 1.2, 0, 0.05, 0);
         }
     }
-    }
 
     /** Applied last in setupAnim, blended over whatever else was posing them. */
     public static void apply(HumanoidModel<?> m, Player p, float age) {
