@@ -296,6 +296,7 @@ public final class BotPassives {
     /** Its right+left click skill at this target, if it's ready (true if it went off). */
     static boolean tryRl(PartyBotEntity b, LivingEntity target, boolean afterHit) {
         if (target == null || !target.isAlive() || b.downed()) return false;
+        if (com.xenowarriors.item.Guns.isGun(b.getMainHandItem()) || com.xenowarriors.item.Guns.isGun(b.getOffhandItem())) return false;   // (a gun in hand: it shoots instead)
         if (b.journey() && com.xenowarriors.journey.Journey.noSkills(b.owner())) return false;
         if (!com.xenowarriors.character.Seasons.unlocked(b.getServer(), b.character().season())) return false;
         String id = Toggles.rlSkillFor(b.owner(), b.character());

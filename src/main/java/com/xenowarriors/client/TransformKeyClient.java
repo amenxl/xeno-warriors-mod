@@ -56,11 +56,16 @@ public final class TransformKeyClient {
         return rl.rl().isEmpty() || !rl.rlSelected().isEmpty();                  // (not heard yet: assume their default one)
     }
 
+    /** A gun in either hand: right click aims and left click shoots - no right+left click skill then. */
+    public static boolean holdingGun(Minecraft mc) {
+        return mc.player != null && (com.xenowarriors.item.Guns.isGun(mc.player.getMainHandItem()) || com.xenowarriors.item.Guns.isGun(mc.player.getOffhandItem()));
+    }
+
     /** Left click while right click is held: the right+left click skill instead of a swing. */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onClick(InputEvent.InteractionKeyMappingTriggered e) {
         Minecraft mc = Minecraft.getInstance();
-        if (!e.isAttack() || mc.player == null || mc.screen != null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active()) return;
+        if (!e.isAttack() || mc.player == null || mc.screen != null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active() || holdingGun(mc)) return;
         e.setCanceled(true);
         e.setSwingHand(false);
         if (mc.player.isUsingItem()) { mc.gameMode.releaseUsingItem(mc.player); }
@@ -76,7 +81,7 @@ public final class TransformKeyClient {
     public static void onTickStart(net.minecraftforge.event.TickEvent.ClientTickEvent e) {
         if (e.phase != net.minecraftforge.event.TickEvent.Phase.START) return;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.screen != null || mc.gameMode == null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active()) return;
+        if (mc.player == null || mc.screen != null || mc.gameMode == null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active() || holdingGun(mc)) return;
         boolean fire = false;
         while (mc.options.keyAttack.consumeClick()) fire = true;
         if (!fire) return;

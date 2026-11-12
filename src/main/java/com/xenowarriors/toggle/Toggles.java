@@ -308,6 +308,7 @@ public final class Toggles {
     public static void useRl(ServerPlayer p) {
         String id = rlSkill(p);
         if (id.isEmpty()) return;
+        if (com.xenowarriors.item.Guns.isGun(p.getMainHandItem()) || com.xenowarriors.item.Guns.isGun(p.getOffhandItem())) return;   // (a gun: right click aims, left click shoots)
         Skill s = null;
         for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(id)) {
             if (com.xenowarriors.character.Seasons.highest(p.server) < en.season()) { p.displayClientMessage(Component.literal("Season " + en.season() + " content is locked").withStyle(ChatFormatting.RED), true); return; }

@@ -103,6 +103,7 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("mobgravity"))) mobGravity(mc, l);
         if (f.isEmpty() || f.contains("ownbot")) ownBot(mc, l);
         if (f.isEmpty() || f.contains("geoguard")) geoGuard(mc, l);
+        if (f.isEmpty() || f.contains("rlgun")) rlGun(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2430,6 +2431,35 @@ public final class Batch4Tests {
         l.add("batch4_mob_gravity", () -> mc.setScreen(null), 3);
         l.add(null, () -> server(p -> { for (var e : m) if (e != null) e.discard(); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    /** No right+left click skill with a gun in hand (right click aims, left click shoots). */
+    private static void rlGun(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        float[] k = new float[4];
+        l.add(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            net.minecraft.world.item.Item gun = null;
+            for (var it : net.minecraftforge.registries.ForgeRegistries.ITEMS) if (com.xenowarriors.item.Guns.isGun(new ItemStack(it))) { gun = it; break; }
+            p.getInventory().selected = 0;
+            p.getInventory().setItem(0, gun == null ? ItemStack.EMPTY : new ItemStack(gun));
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(100F));
+            com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+            k[0] = com.xenowarriors.karma.Karma.get(p);
+            com.xenowarriors.toggle.Toggles.useRl(p);
+            k[1] = com.xenowarriors.karma.Karma.get(p);
+            log("rlgun: holding " + (gun == null ? "no gun!" : net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(gun)) + ", right+left click -> Karma " + k[0] + " -> " + k[1]);
+        }), 10);
+        l.add(null, () -> log("rlgun: client says a gun's in hand " + com.xenowarriors.client.TransformKeyClient.holdingGun(mc)), 2);
+        l.add(null, () -> server(p -> {
+            p.getInventory().setItem(0, ItemStack.EMPTY);
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(100F));
+            com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+            k[2] = com.xenowarriors.karma.Karma.get(p);
+            com.xenowarriors.toggle.Toggles.useRl(p);
+            k[3] = com.xenowarriors.karma.Karma.get(p);
+            log("rlgun: with a gun nothing happens (" + k[0] + " -> " + k[1] + "), bare-handed it goes off (" + k[2] + " -> " + k[3] + ") -> " + (k[1] == k[0] && k[3] < k[2] ? "PASS" : "FAIL"));
+        }), 10);
     }
 
     /** The "BufferBuilder not started" crash guard: a GeckoLib body handed an already-closed buffer draws instead of crashing. */
