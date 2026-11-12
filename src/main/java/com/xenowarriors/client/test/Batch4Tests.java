@@ -2337,6 +2337,10 @@ public final class Batch4Tests {
                     || !lv.getBlockState(new BlockPos(6, y, 6)).isAir() || !lv.getBlockState(new BlockPos(6, y + 1, 6)).isAir())) y--;
             p.teleportTo(6.5, y, 6.5);
             p.getAbilities().mayfly = true; p.getAbilities().flying = true; p.onUpdateAbilities();     // (stays put for the trial)
+        }), 2);
+        settle(l, 60);      // (the client confirms the move first)
+        l.add(null, () -> server(p -> {
+            var lv = p.serverLevel();
             p.server.setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60, 10, false, false));
             com.xenowarriors.you.YouAngel.start(p);
