@@ -13,11 +13,14 @@ import net.minecraft.world.item.TieredItem;
 import net.minecraftforge.common.util.FakePlayer;
 
 /**
+ * (Also: the last few hits of an outgrown weapon hit hard - see {@link #onHurt}.)
+ *
  * Outgrown gear wears out fast: a player (or bot teammate) using a weaker weapon or tool than the best of its kind they
  * carry loses durability faster the higher their Character Level - a wooden sword with a diamond one in the bag breaks
  * quickly. x(1 + min(19, level / 50) x how much weaker it is): at level 500 a wooden sword next to a diamond one wears
  * about 4-5 times as fast. Nothing changes when it's the best you have. (mixin.ItemStackWearMixin)
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.xenowarriors.XenoWarriors.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
 public final class OutgrownWear {
     private OutgrownWear() {}
 
@@ -51,9 +54,22 @@ public final class OutgrownWear {
         return best;
     }
 
+    /** Never for guns, the weapons and tools characters summon, or anything that doesn't wear. */
+    public static boolean excluded(ItemStack s) {
+        return s.isEmpty() || !s.isDamageableItem() || s.getMaxDamage() <= 0 || com.xenowarriors.item.Guns.isGun(s)
+                || s.getItem() instanceof com.xenowarriors.forms.FormItems.Summoned || com.xenowarriors.forms.SignatureWeapons.isSummoned(s)
+                || com.xenowarriors.mikiko.Hekublade.isBlade(s);
+    }
+
     /** The wear to apply instead of {@code amount} for this use of {@code stack} by {@code holder}. */
     public static int wear(ItemStack stack, int amount, LivingEntity holder) {
-        if (amount <= 0 || holder == null || holder.level().isClientSide) return amount;
+        int out = scaled(stack, amount, holder);
+        added += out - amount;
+        return out;
+    }
+
+    private static int scaled(ItemStack stack, int amount, LivingEntity holder) {
+        if (amount <= 0 || holder == null || holder.level().isClientSide || excluded(stack)) return amount;
         if (stack != holder.getMainHandItem() && stack != holder.getOffhandItem()) return amount;   // (armour etc. untouched)
         int level;
         float top;
@@ -69,8 +85,55 @@ public final class OutgrownWear {
         if (top <= own * 1.05F) return amount;                                // it's the best (or as good) as you have
         float gap = 1F - own / top;
         float mult = 1F + Math.min(19F, level / 50F) * gap;
-        int out = Math.max(amount, Math.round(amount * mult));
-        added += out - amount;
-        return out;
+        return Math.max(amount, Math.round(amount * mult));
+    }
+
+    // ------------------------------------------------------------------ its last hits hit hard
+
+    /** (For the tests) the last boosted hit: {damage before, after}. */
+    public static float[] lastBoost = {0F, 0F};
+
+    /** The best weapon's damage (attack damage bonus) in what this holder carries, or 0. */
+    private static float bestDamage(LivingEntity holder, ItemStack held) {
+        Container c = holder instanceof ServerPlayer p ? p.getInventory() : holder instanceof PartyBotEntity b ? b.inventory : null;
+        if (c == null) return 0F;
+        float best = 0F;
+        for (int i = 0; i < c.getContainerSize(); i++) {
+            ItemStack s = c.getItem(i);
+            if (s == held || s.isEmpty()) continue;
+            best = Math.max(best, bonus(s));
+        }
+        return best;
+    }
+
+    private static float bonus(ItemStack s) {
+        float dmg = 0F;
+        for (AttributeModifier m : s.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE))
+            if (m.getOperation() == AttributeModifier.Operation.ADDITION) dmg += (float) m.getAmount();
+        return dmg;
+    }
+
+    /**
+     * An outgrown weapon on its last three hits (it'll break within them at the rate it's wearing) hits harder than
+     * your best weapon would - x1.3 of it, and x2 on the hit that breaks it - so there's a reason to use up old gear.
+     */
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGH)
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        var src = event.getSource();
+        if (!(src.getEntity() instanceof LivingEntity holder) || src.getDirectEntity() != holder || holder.level().isClientSide) return;
+        if (!(holder instanceof ServerPlayer || holder instanceof PartyBotEntity)) return;
+        ItemStack held = holder.getMainHandItem();
+        if (excluded(held) || damage(held) <= 0F) return;
+        int per = scaled(held, 1, holder);
+        if (per <= 1) return;                                                // (not outgrown: wears normally)
+        int left = held.getMaxDamage() - held.getDamageValue();
+        if (left > per * 3) return;                                          // not on its last hits yet
+        float own = bonus(held), best = bestDamage(holder, held);
+        if (best <= own) return;
+        boolean breaking = left <= per;
+        float base = event.getAmount() - own;                               // (what the holder brings without the weapon)
+        float out = Math.max(event.getAmount(), (base + best * 1.3F) * (breaking ? 2F : 1F));
+        lastBoost = new float[]{event.getAmount(), out};
+        event.setAmount(out);
     }
 }

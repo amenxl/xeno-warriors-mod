@@ -521,6 +521,29 @@ public final class WeaponsTests {
             int best = held.getDamageValue();
             log(String.format("wear: level %d, wooden sword alone %d, with a diamond sword in the bag %d, diamond (the best) %d -> %s",
                     lv, alone, withDiamond, best, alone == 1 && withDiamond > 1 && best == 1 ? "PASS" : "FAIL"));
+            // its last hits hit hard: a nearly broken outgrown wooden sword against a zombie, the diamond one in the bag
+            ItemStack w2 = new ItemStack(net.minecraft.world.item.Items.WOODEN_SWORD);
+            w2.setDamageValue(w2.getMaxDamage() - 2);
+            p.getInventory().clearContent();
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, w2);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 1.5); z.setNoAi(true);
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(500); z.setHealth(500);
+            p.serverLevel().addFreshEntity(z);
+            com.xenowarriors.stats.OutgrownWear.lastBoost = new float[]{0F, 0F};
+            p.resetAttackStrengthTicker();
+            float hp0 = z.getHealth();
+            p.attack(z);
+            float[] lb = com.xenowarriors.stats.OutgrownWear.lastBoost;
+            boolean broke = p.getMainHandItem().isEmpty();
+            log(String.format("wear last hit: %.1f -> %.1f damage (zombie %.1f -> %.1f), broke=%s -> %s",
+                    lb[0], lb[1], hp0, z.getHealth(), broke, lb[1] > lb[0] && broke ? "PASS" : "FAIL"));
+            z.discard();
+            // a summoned/unbreakable weapon is never touched
+            ItemStack netherite = new ItemStack(net.minecraft.world.item.Items.NETHERITE_SWORD);
+            netherite.getOrCreateTag().putBoolean("Unbreakable", true);
+            log("wear unbreakable excluded: " + (com.xenowarriors.stats.OutgrownWear.excluded(netherite) ? "PASS" : "FAIL"));
             p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.statLevel[0] = keep[0]; d.statLevel[1] = keep[1]; d.statLevel[2] = keep[2]; });
             p.getInventory().clearContent();
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);

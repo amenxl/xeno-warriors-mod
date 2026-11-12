@@ -240,7 +240,7 @@
         },
         {
           "title": "Outgrown gear wears out",
-          "text": "The stronger you get, the faster weaker gear wears out.\n- Using a weapon or tool that's weaker than the best one of its kind you're carrying (a wooden sword with a diamond sword in your inventory, a stone pickaxe with an iron one), it loses durability faster - more the higher your Character Level and the bigger the gap.\n- About 4-5 times as fast at level 500 for a wooden sword next to a diamond one; up to 20 times at the highest levels.\n- Your best one wears normally.\n- Bot teammates too: and in a fight they use up their weakest weapons first, so the old ones break and are gone, then fight with their best."
+          "text": "The stronger you get, the faster weaker gear wears out.\n- Using a weapon or tool that's weaker than the best one of its kind you're carrying (a wooden sword with a diamond sword in your inventory, a stone pickaxe with an iron one), it loses durability faster - more the higher your Character Level and the bigger the gap.\n- About 4-5 times as fast at level 500 for a wooden sword next to a diamond one; up to 20 times at the highest levels.\n- Your best one wears normally.\n- Its last three hits (before it breaks) hit harder than your best weapon would - and the hit that breaks it hits twice as hard - so using up old gear is worth it.\n- Not for guns, the weapons and tools characters summon, or anything unbreakable.\n- Bot teammates too: and in a fight they use up their weakest weapons first, so the old ones break and are gone, then fight with their best."
         },
         {
           "title": "Mining and bare hands",
