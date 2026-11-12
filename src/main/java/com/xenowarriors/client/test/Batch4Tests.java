@@ -677,7 +677,7 @@ public final class Batch4Tests {
             p.level().setBlock(chest[0], com.xenowarriors.sky.ModBlocks.HOME_CHEST.get().defaultBlockState(), 3);
             if (p.level().getBlockEntity(chest[0]) instanceof com.xenowarriors.home.HomeChestBlockEntity be) be.setOwner(p.getUUID());
             com.xenowarriors.bot.BotHome.placed(p, p.level(), chest[0]);
-            for (int i = 0; i < b[1].inventory.getContainerSize() - 2; i++) b[1].inventory.setItem(i, new ItemStack(i % 2 == 0 ? net.minecraft.world.item.Items.COBBLESTONE : net.minecraft.world.item.Items.RAW_IRON, 32));
+            for (int i = 0; i < b[1].inventory.getContainerSize() - 2; i++) b[1].inventory.setItem(i, new ItemStack(i % 2 == 0 ? net.minecraft.world.item.Items.COBBLESTONE : net.minecraft.world.item.Items.RAW_IRON, 64));   // (full stacks: tidying can't free slots)
             b[1].inventory.setItem(0, new ItemStack(net.minecraft.world.item.Items.BREAD, 8));
         }), 40);
         l.add(null, () -> server(p -> { b[1].setHealth(b[1].getMaxHealth()); log("botlife home: Sam calm? " + com.xenowarriors.bot.BotErrands.danger(b[1])); }), 20 * 12);
@@ -1646,6 +1646,7 @@ public final class Batch4Tests {
         var atk = com.xenowarriors.statboost.BoostStat.ATTACK;
         l.add(null, () -> server(p -> {
             Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
             setBotStat(p, CharacterType.RHALIX, atk.ordinal(), max);
             setBotStat(p, CharacterType.KYRIE, atk.ordinal(), 5);
             b[0] = botAt(p, CharacterType.RHALIX, 2, 2); b[1] = botAt(p, CharacterType.KYRIE, -2, 2);
@@ -1678,6 +1679,7 @@ public final class Batch4Tests {
         int[] n0 = new int[3];
         l.add(null, () -> server(p -> {
             Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);                       // (dry ground)
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             b[0] = botAt(p, CharacterType.GARRY, 2, 2); b[1] = botAt(p, CharacterType.STEVIE, -2, 2);
             for (PartyBotEntity x : b) { x.inventory.addItem(new ItemStack(net.minecraft.world.item.Items.JUKEBOX)); }
