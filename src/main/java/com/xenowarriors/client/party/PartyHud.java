@@ -43,7 +43,7 @@ public class PartyHud implements IGuiOverlay {
         int rowH = ki ? 36 : 30, frameB = ki ? 29 : 23;
         int minTop = com.xenowarriors.client.DmzHud.on() ? 52 : 40;          // (with DragonMineZ: under its own HUD in the top-left corner)
         // the more people in the party, the smaller the frames (and two columns once one won't fit down the side)
-        float tier = members <= 3 ? 0.7F : members <= 5 ? 0.55F : members <= 8 ? 0.45F : 0.38F;
+        float tier = members <= 3 ? 0.7F : members <= 5 ? 0.46F : members <= 8 ? 0.38F : 0.32F;   // (more than 4 in the party: a good deal smaller)
         int cols = 1;
         float fit = (height - 150F - minTop) / Math.max(1, members * rowH);
         if (fit < 0.35F && members > 4) { cols = 2; fit = (height - 150F - minTop) / Math.max(1, ((members + 1) / 2) * rowH); }

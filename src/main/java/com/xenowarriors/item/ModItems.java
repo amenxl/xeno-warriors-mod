@@ -62,6 +62,7 @@ public final class ModItems {
     public static final RegistryObject<Item> FLOWER_LEGGINGS = ITEMS.register("flower_leggings", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> FLOWER_BOOTS = ITEMS.register("flower_boots", () -> new FlowerArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
     public static final RegistryObject<Item> FLOWER_SHIELD = ITEMS.register("flower_shield", () -> new FlowerShieldItem(new Item.Properties().durability(420)));
+    public static final RegistryObject<Item> HOME_CHEST = ITEMS.register("home_chest", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.HOME_CHEST.get(), new Item.Properties()));
     public static final RegistryObject<Item> MOONSTONE_ORE = ITEMS.register("moonstone_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.MOONSTONE_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> KARMA_CRYSTAL_ORE = ITEMS.register("karma_crystal_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.KARMA_CRYSTAL_ORE.get(), new Item.Properties()));
     public static final RegistryObject<Item> DEMONITE_ORE = ITEMS.register("demonite_ore", () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.sky.ModBlocks.DEMONITE_ORE.get(), new Item.Properties()));

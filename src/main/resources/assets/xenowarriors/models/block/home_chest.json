@@ -1,0 +1,8 @@
+{
+ "parent": "minecraft:block/orientable",
+ "textures": {
+  "top": "xenowarriors:block/home_chest_top",
+  "front": "xenowarriors:block/home_chest_front",
+  "side": "xenowarriors:block/home_chest_side"
+ }
+}

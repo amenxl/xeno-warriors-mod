@@ -14,6 +14,10 @@ import net.minecraftforge.registries.RegistryObject;
 public final class ModBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, XenoWarriors.MOD_ID);
 
+    /** The Home Chest: your bots bring their loot to the nearest one you placed (com.xenowarriors.home). */
+    public static final RegistryObject<Block> HOME_CHEST = BLOCKS.register("home_chest", () -> new com.xenowarriors.home.HomeChestBlock(
+            BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5F).sound(SoundType.WOOD).ignitedByLava()));
+
     /** Sky Ore: only in the sky islands; glows faintly; Karma Sensing can trace it. */
     public static final RegistryObject<Block> SKY_ORE = BLOCKS.register("sky_ore", () -> new DropExperienceBlock(
             BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_LIGHT_BLUE).strength(4.5F, 6F).requiresCorrectToolForDrops()

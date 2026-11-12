@@ -1,0 +1,18 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "minecraft:chest"
+  },
+  {
+   "item": "minecraft:chest"
+  },
+  {
+   "item": "minecraft:compass"
+  }
+ ],
+ "result": {
+  "item": "xenowarriors:home_chest"
+ }
+}

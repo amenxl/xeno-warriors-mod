@@ -1,6 +1,7 @@
 {
  "replace": false,
  "values": [
-  "xenowarriors:collection_book"
+  "xenowarriors:collection_book",
+  "xenowarriors:home_chest"
  ]
 }

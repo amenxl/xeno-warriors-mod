@@ -694,6 +694,7 @@ public final class PartyBots {
         BotCrafting.forget(bot);                                                  // (an offer to a bot that's gone: logout, owner away)
         BotSupport.forget(bot);
         BotForms.forget(bot);
+        BotPassives.forget(bot);
         BotTeamUlt.forget(bot);
         com.xenowarriors.party.ReviveCircle.forget(bot);
         ANIM_SENT.remove(bot);
@@ -757,7 +758,7 @@ public final class PartyBots {
         return SkillPool.inSlot(b.character(), loadout, slot);
     }
 
-    private static FakePlayer fake(PartyBotEntity b) {
+    static FakePlayer fake(PartyBotEntity b) {
         ServerLevel s = (ServerLevel) b.level();
         FakePlayer f = FAKES.get(b.getUUID());
         if (f == null || f.level() != s) {
@@ -816,6 +817,7 @@ public final class PartyBots {
         double dist = b.distanceTo(target);
         if (dist > 20) return;
         if (com.xenowarriors.compat.DmzBotKi.tryFire(b, target, () -> fake(b), false)) return;   // (with DragonMineZ: sometimes one of its equipped ki techniques instead)
+        if (dist > 3.5 && BotPassives.tryRl(b, target, false)) return;            // (its right+left click move, from a distance; up close it follows a hit)
         long now = b.level().getGameTime();
         ServerPlayer o = b.owner();
         int[] loadout = o == null ? SkillPool.defaultLoadout(b.character()) : o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.loadoutWithUlt(b.character())).orElse(SkillPool.defaultLoadout(b.character()));   // (with the ultimate picked for that character)
@@ -829,7 +831,7 @@ public final class PartyBots {
         if (slot == 4 && BotTeamUlt.saveUltimate(b, target)) slot = b.getRandom().nextInt(4);   // (saving it for a team ultimate with its partner)
         if (now < b.skillReady[slot]) return;
         Skill skill = botSkill(b, loadout, slot);                                // (not a skill from a locked season, or above the bot's level)
-        if (skill == null) return;
+        if (skill == null || BotPassives.blockedInSlot(b, skill)) return;         // (its passives and transformations work by themselves - BotPassives)
         float cost = com.xenowarriors.skill.SkillLevels.costFor(b, skill.getId(), skill.getKarmaCost());   // (the owner's ability level for this character)
         if (com.xenowarriors.party.Synergy.has(b, com.xenowarriors.party.Synergy.OLD_FRIENDS))                // Old Friends: cheaper skills, as for a player
             cost = Math.round(cost * (1F - Math.min(0.5F, 0.25F * com.xenowarriors.party.Synergy.strength(b, com.xenowarriors.party.Synergy.OLD_FRIENDS))));
@@ -1056,7 +1058,7 @@ public final class PartyBots {
         List<String> names = new ArrayList<>(); List<Integer> ids = new ArrayList<>();
         for (LivingEntity pet : petsFor(p, b.character())) { names.add(pet.getDisplayName().getString()); ids.add(pet.getId()); }
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotMenuPacket(b.getId(), b.character().getId(), b.mode(), b.botLevel(), b.canFly(),
-                names.toArray(new String[0]), ids.stream().mapToInt(Integer::intValue).toArray()), p);
+                names.toArray(new String[0]), ids.stream().mapToInt(Integer::intValue).toArray(), hasRadar(b)), p);
     }
 
     /** The owner's pets that belong to this character (Mikiko's foxes, Rhalix's winged companions). */
@@ -1073,7 +1075,13 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9, ACT_OUTFIT = 10;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9, ACT_OUTFIT = 10, ACT_RADAR = 11;
+
+    /** Carries a Dragon Radar (DragonMineZ): its menu can send it off to find the Dragon Balls. */
+    public static boolean hasRadar(PartyBotEntity b) {
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) if (com.xenowarriors.compat.DmzBotRadar.isRadar(b.inventory.getItem(i))) return true;
+        return com.xenowarriors.compat.DmzBotRadar.isRadar(b.getMainHandItem()) || com.xenowarriors.compat.DmzBotRadar.isRadar(b.getOffhandItem());
+    }
 
     /** A bot wears the outfit you last had on that character (one outfit per character, played or as a bot). */
     public static void dress(PartyBotEntity b, ServerPlayer owner) {
@@ -1124,6 +1132,7 @@ public final class PartyBots {
                 p.displayClientMessage(Component.literal("Spar with ").append(b.label()).append("! (nobody dies)").withStyle(ChatFormatting.GOLD), true);
             }
             case ACT_OUTFIT -> setOutfit(p, b, arg);
+            case ACT_RADAR -> p.displayClientMessage(Component.literal(OffDuty.sendSearching(p, b)).withStyle(ChatFormatting.GOLD), false);   // (you tell them to: they never ask any more)
             case ACT_MODE -> {
                 b.setMode(arg);
                 p.displayClientMessage(Component.literal("").append(b.label()).append(": " + PartyBotEntity.MODES[b.mode()] + " mode").withStyle(ChatFormatting.AQUA), true);
@@ -1216,7 +1225,7 @@ public final class PartyBots {
         if (p.tickCount % 10 == 0) for (PartyBotEntity b : bots(p)) unboard(b, p);
         if (p.tickCount % 10 == 7) catchUp(p);
         // standing right by you when you get in (the follow goal only runs when they're further off): they hop in too
-        if (p.tickCount % 10 == 5 && p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity)
+        if (p.tickCount % 10 == 5 && (p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity || p.getVehicle() instanceof net.minecraft.world.entity.vehicle.Boat))
             for (PartyBotEntity b : bots(p)) if (b.getTarget() == null && !b.isPassenger() && b.level() == p.level()) boardWith(b, p);
         // carried bots step down once Rhalix lands
         if (p.tickCount % 20 == 0 && p.onGround()) for (Entity pass : p.getPassengers()) if (pass instanceof PartyBotEntity b) {

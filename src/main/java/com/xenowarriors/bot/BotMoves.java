@@ -183,4 +183,26 @@ public final class BotMoves {
         float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
         b.setYRot(yaw); b.yBodyRot = yaw;
     }
+
+    /** (Tests) strokes swum after the owner. */
+    public static int swimStrokes;
+
+    /** Swimming after someone (you in the water, or in a boat): straight at them, at the surface, faster the further behind. */
+    static void swimAfter(PartyBotEntity b, Vec3 target) {
+        b.getNavigation().stop();
+        Vec3 to = target.subtract(b.position());
+        Vec3 h = new Vec3(to.x, 0, to.z);
+        double d = h.length();
+        Vec3 v = b.getDeltaMovement();
+        if (d > 0.1) v = v.add(h.scale(1 / d).scale(d > 10 ? 0.12 : 0.08));
+        boolean under = b.isEyeInFluid(FluidTags.WATER);
+        if (under || to.y > 0.6) v = new Vec3(v.x, Math.max(v.y, 0.1), v.z);      // up to the surface (air), and up to them
+        if (b.horizontalCollision) v = new Vec3(v.x, Math.max(v.y, 0.38), v.z); // a bank or a boat's side: up over it
+        double hs = Math.sqrt(v.x * v.x + v.z * v.z), cap = d > 10 ? 0.42 : 0.3;
+        if (hs > cap) v = new Vec3(v.x / hs * cap, v.y, v.z / hs * cap);
+        b.setDeltaMovement(v.x, Math.min(0.45, v.y), v.z);
+        float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+        b.setYRot(yaw); b.yBodyRot = yaw; b.setYHeadRot(yaw);
+        swimStrokes++;
+    }
 }

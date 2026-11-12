@@ -8,17 +8,22 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /** Server -> owner: open a bot teammate's menu (its mode, level, pets, whether it can fly you). */
-public record OpenBotMenuPacket(int botId, String character, int mode, int level, boolean canFly, String[] petNames, int[] petIds) {
+public record OpenBotMenuPacket(int botId, String character, int mode, int level, boolean canFly, String[] petNames, int[] petIds, boolean radar) {
+    /** (radar: it carries a Dragon Radar - the menu offers to send it looking for the Dragon Balls) */
+    public OpenBotMenuPacket(int botId, String character, int mode, int level, boolean canFly, String[] petNames, int[] petIds) {
+        this(botId, character, mode, level, canFly, petNames, petIds, false);
+    }
     public static void encode(OpenBotMenuPacket m, FriendlyByteBuf b) {
         b.writeVarInt(m.botId); b.writeUtf(m.character); b.writeVarInt(m.mode); b.writeVarInt(m.level); b.writeBoolean(m.canFly);
         b.writeVarInt(m.petNames.length);
         for (int i = 0; i < m.petNames.length; i++) { b.writeUtf(m.petNames[i]); b.writeVarInt(m.petIds[i]); }
+        b.writeBoolean(m.radar);
     }
     public static OpenBotMenuPacket decode(FriendlyByteBuf b) {
         int id = b.readVarInt(); String c = b.readUtf(); int mode = b.readVarInt(), lv = b.readVarInt(); boolean fly = b.readBoolean();
         int n = Math.min(32, b.readVarInt()); String[] names = new String[n]; int[] ids = new int[n];
         for (int i = 0; i < n; i++) { names[i] = b.readUtf(); ids[i] = b.readVarInt(); }
-        return new OpenBotMenuPacket(id, c, mode, lv, fly, names, ids);
+        return new OpenBotMenuPacket(id, c, mode, lv, fly, names, ids, b.readBoolean());
     }
     public static void handle(OpenBotMenuPacket m, Supplier<NetworkEvent.Context> ctx) {
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.xenowarriors.client.PacketScreens.openBotMenu(m));

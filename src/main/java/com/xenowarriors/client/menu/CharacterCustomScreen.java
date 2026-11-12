@@ -273,7 +273,7 @@ public class CharacterCustomScreen extends Screen {
                     if (com.xenowarriors.client.ClientSkillLevels.canUpgrade(sid) && overUpgrade(vx, vy, skillX(k), skillY(k))) { testUpgrade(sid); click(); return true; }
                     ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(selectedSlot, i));
                     int[] l = ClientSkillState.loadout().clone();
-                    for (int k = 0; k < l.length; k++) if (l[k] == i) l[k] = l[selectedSlot];
+                    for (int q = 0; q < l.length; q++) if (l[q] == i) l[q] = l[selectedSlot];
                     l[selectedSlot] = i;
                     ClientSkillState.setLoadout(l, ClientSkillState.level());
                     selectedSlot = (selectedSlot + 1) % SkillManager.ULTIMATE_SLOT;

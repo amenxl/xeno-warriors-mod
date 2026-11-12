@@ -61,7 +61,7 @@ public final class BotErrands extends Goal {
     }
 
     private final PartyBotEntity b;
-    private int lastLook, nextGive, nextFurnace, nextShardJob, walked;
+    private int lastLook, nextGive, nextFurnace, nextShardJob, walked, nextHome = 100;
     private double closest;
 
     BotErrands(PartyBotEntity b) {
@@ -100,7 +100,8 @@ public final class BotErrands extends Goal {
 
     private boolean calm() {
         ServerPlayer o = b.owner();
-        return o != null && o.level() == b.level() && o.distanceToSqr(b) < 20 * 20 && !b.journey() && !b.isPassenger() && b.mineTarget == null && b.reviving == null
+        double r = b.errand != null && "home".equals(b.errand.kind) ? BotHome.WALK + 12 : 20;   // (to the Home Chest: further from you)
+        return o != null && o.level() == b.level() && o.distanceToSqr(b) < r * r && !b.journey() && !b.isPassenger() && b.mineTarget == null && b.reviving == null
                 && !b.eating() && !b.drinking() && !b.isNoAi() && danger(b) == null;
     }
 
@@ -147,6 +148,7 @@ public final class BotErrands extends Goal {
             case "fox" -> handToFox(o, e);
             case "fetch" -> fetch(o, e);
             case "robot_tame", "robot_fix" -> robot(o, e);
+            case "home" -> BotHome.arrived(b, o, e.pos);
             default -> {}
         }
         b.errand = null;
@@ -160,6 +162,7 @@ public final class BotErrands extends Goal {
         if (e == null && b.tickCount >= nextGive) { nextGive = b.tickCount + 100; e = giveJob(o); }
         if (e == null && b.character() == CharacterType.YURI && b.tickCount >= b.yuriNext) { b.yuriNext = b.tickCount + 600 + b.getRandom().nextInt(600); e = yuriLook(o); }
         if (e == null && b.tickCount >= nextFurnace) { nextFurnace = b.tickCount + 60; e = furnaceJob(o); }
+        if (e == null && b.tickCount >= nextHome) { nextHome = b.tickCount + 200; BlockPos h = BotHome.walkTo(b); if (h != null) e = job("home", h, null, 0, 0, null, 40); }   // (a bag full of loot: to the Home Chest)
         return e;
     }
 

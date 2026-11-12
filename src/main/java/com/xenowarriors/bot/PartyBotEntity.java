@@ -366,6 +366,11 @@ public class PartyBotEntity extends PathfinderMob {
             double tp = canFly() ? 56 : 28;
             if (d2 > tp * tp || (d2 > 12 * 12 && !canFly() && o.onGround() && getNavigation().isDone() && tickCount % 20 == 0)) { PartyBots.teleportNear(PartyBotEntity.this, o); return; }
             if (o.getVehicle() != null && tickCount % 10 == 0 && PartyBots.boardWith(PartyBotEntity.this, o)) return;
+            if (isInWater() && (o.isInWater() || o.getVehicle() instanceof net.minecraft.world.entity.vehicle.Boat || d2 > 4 * 4)) {   // in the water: swims after you (or your boat)
+                BotMoves.swimAfter(PartyBotEntity.this, o.position());
+                getLookControl().setLookAt(o);
+                return;
+            }
             getNavigation().moveTo(o, d2 > 14 * 14 ? 1.4 : d2 > 10 * 10 ? 1.2 : 1.0);
             getLookControl().setLookAt(o);
         }
@@ -553,6 +558,7 @@ public class PartyBotEntity extends PathfinderMob {
             if (getAirSupply() < getMaxAirSupply() / 3) return true;                // running out of air
             ServerPlayer o = owner();
             if (o != null && o.level() == level() && o.isInWater() && o.distanceToSqr(PartyBotEntity.this) < 16 * 16) return false;   // swimming with the owner
+            if (o != null && o.level() == level() && o.getVehicle() instanceof net.minecraft.world.entity.vehicle.Boat && o.distanceToSqr(PartyBotEntity.this) < 28 * 28) return false;   // swimming after the owner's boat
             LivingEntity t = getTarget();
             if (t != null && t.isInWater()) return false;                           // fighting something in the water
             return wetTicks > 40;                                                   // otherwise no standing about in it
@@ -1134,7 +1140,7 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity t) {
         boolean hit = super.doHurtTarget(t);
-        if (hit && !level().isClientSide) BotGear.wear(this);
+        if (hit && !level().isClientSide) { BotGear.wear(this); BotPassives.afterHit(this, t); }
         return hit;
     }
 

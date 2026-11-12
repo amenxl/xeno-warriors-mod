@@ -171,7 +171,7 @@ public class SkillLoadoutScreen extends Screen {
                 ModNetwork.CHANNEL.sendToServer(new SetSkillSlotPacket(selected, i));
                 // show it right away; the server's answer confirms it
                 int[] l = ClientSkillState.loadout().clone();
-                for (int k = 0; k < l.length; k++) if (l[k] == i) l[k] = l[selected];
+                for (int q = 0; q < l.length; q++) if (l[q] == i) l[q] = l[selected];
                 l[selected] = i;
                 ClientSkillState.setLoadout(l, ClientSkillState.level());
                 selected = (selected + 1) % SkillManager.ULTIMATE_SLOT;

@@ -32,7 +32,11 @@ public class KhParty implements IGuiOverlay {
             try { blazing(g, mc, width, screenH); } finally { com.xenowarriors.client.HudFade.end(); }
             return;
         }
-        int x = width - CARD_W - 4, y = 4;
+        int others = Math.max(0, PartyClient.members().size() - 1);
+        float sc = partyScale(others);                                       // (more than 4 in the party: smaller cards)
+        g.pose().pushPose();
+        g.pose().scale(sc, sc, 1F);
+        int x = Math.round((width - 4) / sc) - CARD_W, y = Math.round(4 / sc);
         var font = mc.font;
         g.drawString(font, "PARTY", x + 2, y, 0xC8E1FF, true);
         y += 10;
@@ -91,15 +95,20 @@ public class KhParty implements IGuiOverlay {
             }
             y += ch + 3;
         }
-        height = y;
+        g.pose().popPose();
+        height = Math.round(y * sc);
     }
+
+    /** The party cards' size: full up to 4 in the party (you + 3), smaller past that. */
+    static float partyScale(int others) { return others <= 3 ? 1F : others <= 5 ? 0.75F : others <= 8 ? 0.62F : 0.5F; }
 
     private static final net.minecraft.resources.ResourceLocation CARD = com.xenowarriors.XenoWarriors.id("textures/gui/hud/blazing_party.png");
 
     /** Blazing Wind: party cards in a row just above your own gauge (name, LV, portrait, HP, KP and EXP). */
     private static void blazing(GuiGraphics g, Minecraft mc, int width, int screenH) {
         var font = mc.font;
-        float s = 0.8F;
+        int others0 = Math.max(0, PartyClient.members().size() - 1);
+        float s = others0 <= 3 ? 0.8F : others0 <= 5 ? 0.62F : 0.52F;        // (more than 4 in the party: smaller cards straight away)
         boolean ki = PartyKiClient.any();
         int right = width - 4, bottom = com.xenowarriors.client.BlazingHud.top(screenH) - 16;
         int others = Math.max(0, PartyClient.members().size() - 1);

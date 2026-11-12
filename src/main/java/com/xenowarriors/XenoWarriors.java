@@ -56,6 +56,7 @@ public class XenoWarriors {
         com.xenowarriors.sky.ModTools.init();
         com.xenowarriors.corrupted.CorruptionBlocks.init();
         com.xenowarriors.sky.ModBlocks.BLOCKS.register(modBus);
+        com.xenowarriors.home.HomeBlocks.BLOCK_ENTITIES.register(modBus);
         ModItems.ITEMS.register(modBus);
         com.xenowarriors.forms.FormItems.ITEMS.register(modBus);
         ModItems.TABS.register(modBus);

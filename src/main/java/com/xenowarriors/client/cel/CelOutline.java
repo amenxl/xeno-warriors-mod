@@ -51,7 +51,7 @@ public final class CelOutline {
     /** (Epic Fight) the inflated body for its own baker: the outline shell, in its rest pose. */
     public static PlayerModel<LivingEntity> restBody(boolean slim) {
         PlayerModel<LivingEntity> o = body(slim);
-        o.root().getAllParts().forEach(ModelPart::resetPose);
+        for (ModelPart p : new ModelPart[]{o.head, o.body, o.rightArm, o.leftArm, o.rightLeg, o.leftLeg}) p.getAllParts().forEach(ModelPart::resetPose);
         return o;
     }
 

@@ -229,7 +229,7 @@ public final class OffDuty {
             int[] w;
             String radar = radar(p, t);
             Act[] opts = {Act.TRAINING, Act.MINING, Act.WOOD, Act.BUILDING, Act.PARTY, Act.DMZ, Act.DRAGON_BALLS, Act.HUNTING};
-            w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0, radar != null && !full ? 10 : 0, full ? 0 : 14};
+            w = new int[]{25, full ? 0 : 15, full ? 0 : 15, 12, 10, dmz(p, t) ? 15 : 0, 0, full ? 0 : 14};   // (the Dragon Balls: only when you send them - right-click a bot with a Dragon Radar)
             if (tireless) { w[7] = 0; w[4] = 4; }                                  // no need to eat; not one for parties
             if (t == CharacterType.ULTIMA) w[0] = 110;                             // a weapon that trains (weights, mostly) almost all the time
             int sum = 0; for (int x : w) sum += x;
@@ -461,28 +461,12 @@ public final class OffDuty {
                 : " is back from searching for the Dragon Balls - empty-handed (someone else has them).")).withStyle(n > 0 ? ChatFormatting.GOLD : ChatFormatting.GRAY));
     }
 
-    /** Now and then (every 5 minutes or so, out of a fight) a bot on your team carrying a Dragon Radar offers to go and look. */
-    @SubscribeEvent
-    public static void onRadarTick(net.minecraftforge.event.TickEvent.PlayerTickEvent e) {
-        if (e.phase != net.minecraftforge.event.TickEvent.Phase.END || !(e.player instanceof ServerPlayer p) || p instanceof net.minecraftforge.common.util.FakePlayer || p.tickCount % 600 != 301) return;
-        for (PartyBotEntity b : PartyBots.bots(p)) {
-            if (b.getTarget() != null || b.downed() || b.journey()) continue;
-            long now = p.level().getGameTime();
-            if (now - b.getPersistentData().getLong("xw_radar_asked") < 20 * 60 * 10) continue;
-            boolean has = false;
-            for (int i = 0; i < b.inventory.getContainerSize() && !has; i++) has = com.xenowarriors.compat.DmzBotRadar.isRadar(b.inventory.getItem(i));
-            if (!has) continue;
-            b.getPersistentData().putLong("xw_radar_asked", now);
-            BotRequests.send(p, new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " has a Dragon Radar",
-                    "Send them " + (b.canFly() ? "flying" : "out") + " to find the Dragon Balls? (about 30 minutes - they leave the team till then)", "/xeno radar " + b.getId(), "", 20 * 20, 0xFFFFA020));
-            return;
-        }
-    }
-
     /** A bot on your team with a Dragon Radar flies off to find the Dragon Balls (it leaves the team until it's done). */
     public static String sendSearching(ServerPlayer p, PartyBotEntity b) {
         String radar = null;
         for (int i = 0; i < b.inventory.getContainerSize() && radar == null; i++) radar = com.xenowarriors.compat.DmzBotRadar.radarId(b.inventory.getItem(i));
+        if (radar == null) radar = com.xenowarriors.compat.DmzBotRadar.radarId(b.getMainHandItem());
+        if (radar == null) radar = com.xenowarriors.compat.DmzBotRadar.radarId(b.getOffhandItem());
         if (radar == null) return b.character().getDisplayName().getString() + " has no Dragon Radar.";
         if (b.journey() || b.downed() || b.getTarget() != null) return b.character().getDisplayName().getString() + " can't go right now.";
         CharacterType t = b.character();

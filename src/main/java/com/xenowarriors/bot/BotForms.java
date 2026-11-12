@@ -161,6 +161,7 @@ public final class BotForms {
         }
         Kind k = formOf(b.character());
         if (k == null || b.downed() || b.journey() && com.xenowarriors.journey.Journey.noSkills(o)) return;
+        if (!com.xenowarriors.toggle.Toggles.enabledFor(o, b.character(), k == Kind.FOX_KING ? com.xenowarriors.toggle.Toggles.Entry.FOX_KING : com.xenowarriors.toggle.Toggles.Entry.DEMONS_REMNANTS)) return;   // (switched off for that character: its bot doesn't either)
         if (s != null && now < s.ready) return;
         boolean follow = s != null && now >= s.followAt && now < s.followUntil;
         float chance;

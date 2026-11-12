@@ -96,6 +96,12 @@ public final class Toggles {
     /** This player's entries (by who they're playing). */
     public static List<Entry> of(Player p) {
         CharacterType t = ModCapabilities.getType(p);
+        if (t == CharacterType.YOU) return com.xenowarriors.you.You.race(p) == com.xenowarriors.character.Race.DEMON ? List.of(Entry.DEVIL_UNLEASHED) : List.of();
+        return of(t);
+    }
+
+    /** A character's entries (its bot gets the same ones). */
+    public static List<Entry> of(CharacterType t) {
         return switch (t) {
             case MIKIKO -> List.of(Entry.FOX_KING, Entry.NETSU, Entry.TRUE_EMPATHY);
             case RHALIX -> List.of(Entry.DEMONS_REMNANTS);
@@ -105,9 +111,28 @@ public final class Toggles {
             case KAERU -> List.of(Entry.SCENT_TRACK);
             case KILL -> List.of(Entry.DEVIL_UNLEASHED);
             case LEXY -> List.of(Entry.PERSEPHONE);
-            case YOU -> com.xenowarriors.you.You.race(p) == com.xenowarriors.character.Race.DEMON ? List.of(Entry.DEVIL_UNLEASHED) : List.of();
             default -> List.of();
         };
+    }
+
+    /** The owner's settings for one character (read only: nothing is written for a character they never touched). */
+    private static CompoundTag settingsFor(Player owner, CharacterType t) {
+        return owner.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG).getCompound(ROOT).getCompound(com.xenowarriors.character.PlayerCharacter.key(t, 0));
+    }
+
+    /** That character's bot: the owner's on / off for it (what they set in Character Customization or on the wheel). */
+    public static boolean enabledFor(Player owner, CharacterType t, Entry e) {
+        if (owner == null) return e.kind != Kind.PASSIVE;
+        CompoundTag me = settingsFor(owner, t);
+        return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;
+    }
+
+    /** That character's bot: the right+left click skill the owner picked for it ("" = none). */
+    public static String rlSkillFor(Player owner, CharacterType t) {
+        List<String> ok = rlChoices(t);
+        if (ok.isEmpty()) return "";
+        String id = owner == null ? "" : settingsFor(owner, t).getString(RL);
+        return ok.contains(id) ? id : id.equals("-") ? "" : ok.get(0);
     }
 
     private static String charKey(Player p) {

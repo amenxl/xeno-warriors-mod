@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "xenowarriors:block/home_chest"
+  },
+  "facing=east": {
+   "model": "xenowarriors:block/home_chest",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "xenowarriors:block/home_chest",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "xenowarriors:block/home_chest",
+   "y": 270
+  }
+ }
+}

@@ -17,7 +17,8 @@ import net.minecraft.world.entity.LivingEntity;
 public class BotScreen extends Screen {
     private static final int W = 236;
     private static final boolean DMZ = com.xenowarriors.client.compat.DmzMenu.available();
-    private static final int H = DMZ ? 258 : 236;            // (room for the two hint lines under the buttons)
+    private static final int H0 = DMZ ? 258 : 236;
+    private int H = H0;            // (room for the two hint lines under the buttons)
     private final OpenBotMenuPacket m;
     private final CharacterType type;
     private int mode;
@@ -28,6 +29,7 @@ public class BotScreen extends Screen {
         this.m = m;
         this.type = CharacterType.byId(m.character());
         this.mode = m.mode();
+        if (m.radar()) H = H0 + 22;
     }
 
     private int x0() { return (width - W) / 2; }
@@ -60,6 +62,12 @@ public class BotScreen extends Screen {
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Fuse with them: they need Potara earrings in their bag, or the Fusion Dance skill")))
                 .bounds(x + bw - 42, y + 132, 42, 20).build());
         int oy = y + (DMZ ? 154 : 132);
+        if (m.radar()) {                                                         // a Dragon Radar in its bag: send it off to find the Dragon Balls
+            addRenderableWidget(Button.builder(Component.literal("Find the Dragon Balls"), b -> { send(PartyBots.ACT_RADAR, 0); onClose(); })
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("They take their Dragon Radar and go looking (about 30 minutes - they leave the team till then)")))
+                    .bounds(x, oy, bw, 20).build());
+            oy += 22;
+        }
         Button dress = addRenderableWidget(Button.builder(outfitLabel(), b -> {      // cycles their outfits (yours for that character too)
             String[] names = type.outfitNames();
             if (names.length < 2) return;

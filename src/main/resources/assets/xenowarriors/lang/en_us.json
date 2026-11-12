@@ -923,5 +923,6 @@
   "item.xenowarriors.bike_rockets": "Bike Attachment: Rocket Pod",
   "item.xenowarriors.bike_thrusters": "Bike Attachment: Hover Thrusters",
   "item.xenowarriors.bike_plating": "Bike Attachment: Armor Plating",
-  "item.xenowarriors.bike_nitro": "Bike Attachment: Nitro Booster"
+  "item.xenowarriors.bike_nitro": "Bike Attachment: Nitro Booster",
+  "block.xenowarriors.home_chest": "Home Chest"
 }
