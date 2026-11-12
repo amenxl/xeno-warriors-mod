@@ -93,6 +93,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("xenoblasts")) xenoBlasts(mc, l);
         if (f.isEmpty() || f.contains("capture")) capture(mc, l);
         if (f.isEmpty() || f.contains("spread")) spread(mc, l);
+        if (f.isEmpty() || f.contains("poseguard")) poseGuard(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -1973,6 +1974,15 @@ public final class Batch4Tests {
             Batch3Tests.clearBots(p);
         }), 20 * 2);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void poseGuard(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> { Batch3Tests.clearBots(p); com.xenowarriors.debug.SkillTestRunner.arena(p); botAt(p, CharacterType.KAERU, 0, 4); }), 30);
+        l.add(null, () -> { Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 10); com.xenowarriors.client.bot.BotRenderer.failForTest = 20; }, 40);
+        l.add("batch4_poseguard", () -> log("poseguard: a bot's drawing failed partway " + com.xenowarriors.client.bot.BotRenderer.failedForTest + " times, game still running -> "
+                + (com.xenowarriors.client.bot.BotRenderer.failedForTest >= 5 ? "PASS" : "FAIL")), 3);
+        l.add(null, () -> { com.xenowarriors.client.bot.BotRenderer.failForTest = 0; server(Batch3Tests::clearBots); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
     private static void towerPods(Minecraft mc, MikikoTests.Steps l) {

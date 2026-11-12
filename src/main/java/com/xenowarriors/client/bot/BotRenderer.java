@@ -46,6 +46,8 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
     }
 
     private static int failures;
+    /** (Tests) the next n bot draws fail partway, leaving two pushes behind; how many did. */
+    public static int failForTest, failedForTest;
     private static boolean plainWarned;
 
     /** Girl bots get the girls' slim body (see FemaleBody). */
@@ -61,6 +63,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
                 pose.pushPose();
                 try {
                     r.render(a, yaw, pt, pose, buffers, light);
+                    if (failForTest > 0) { failForTest--; failedForTest++; pose.pushPose(); pose.pushPose(); throw new IllegalStateException("test: a renderer failing partway"); }
                     NimbusUnder.render(e, yaw, pt, pose, buffers, light);
                     failures = 0;
                     return;
