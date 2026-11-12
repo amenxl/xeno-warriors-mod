@@ -552,6 +552,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (model.coatBack != null) {
             model.animateCoat(parent.rightLeg.xRot, parent.leftLeg.xRot, parent.rightLeg.zRot, -parent.leftLeg.zRot, windS * 0.9F, windF * 1.3F, ageInTicks,
                     player.isPassenger() || parent.riding);
+            model.untwistCoat(parent.body.yRot);
         }
         int ssj = com.xenowarriors.client.compat.DmzForms.hairStyle(player);
         float ssjWeight = hairStyleWeight(player, ssj, ageInTicks);

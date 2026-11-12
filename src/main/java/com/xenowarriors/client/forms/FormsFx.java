@@ -162,7 +162,7 @@ public final class FormsFx {
                 mc.level.addParticle(p.getRandom().nextInt(3) == 0 ? ParticleTypes.SMALL_FLAME : new DustParticleOptions(new Vector3f(1F, 0.45F, 0.12F), 0.6F),
                         h.x + (Math.random() - 0.5) * 0.3, h.y + Math.random() * 0.3, h.z + (Math.random() - 0.5) * 0.3, 0, 0.01, 0);
             } else {
-                mc.level.addParticle(new DustParticleOptions(new Vector3f(0.6F, 0.2F, 1F), 0.6F),
+                mc.level.addParticle(new DustParticleOptions(held.getItem() instanceof WiresItem ? new Vector3f(0.85F, 0.86F, 0.9F) : new Vector3f(0.6F, 0.2F, 1F), 0.6F),
                         h.x + (Math.random() - 0.5) * 0.3, h.y + Math.random() * 0.3, h.z + (Math.random() - 0.5) * 0.3, 0, 0.01, 0);
             }
         }
@@ -268,7 +268,7 @@ public final class FormsFx {
                 cur = cur.add(dir(yaw, a).scale(seg)).add(0, rise * seg * 2.5, 0);
                 pts[i] = cur;
             }
-            ribbon(pose, buffers, cam, pts, 0.085F, 0.22F, 0.07F, 0.36F, 0.95F * fade, 0.28F, 0.62F, 0.25F, 1F, 0.5F * fade, 0.35F);
+            ribbon(pose, buffers, cam, pts, 0.07F, 0.82F, 0.83F, 0.86F, 0.95F * fade, 0.2F, 0.75F, 0.78F, 0.85F, 0.28F * fade, 0.35F);   // grayish-white steel, a faint sheen
             if (w == 0 && t > 0.5F && t < 0.56F && r.level().random.nextInt(2) == 0) {   // the crack at the tip
                 Vec3 tip = pts[n];
                 for (int k = 0; k < 4; k++)

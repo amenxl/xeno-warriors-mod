@@ -343,6 +343,32 @@ public class DetailModel {
         coatBack.xRot = back;
     }
 
+    private float[][] coatRest;
+
+    /**
+     * The coat hangs from the waist, below where the torso twists: when the body turns (a punch, a cut), the tails stay
+     * lined up with the legs instead of swinging round with the chest - otherwise the legs go straight through them.
+     * Call after {@link #animateCoat} with the body's yaw.
+     */
+    public void untwistCoat(float bodyYaw) {
+        if (coatBack == null) return;
+        ModelPart[] parts = {coatBack, coatFrontR, coatFrontL, coatSideR, coatSideL};
+        if (coatRest == null) {
+            coatRest = new float[parts.length][];
+            for (int i = 0; i < parts.length; i++) if (parts[i] != null) coatRest[i] = new float[]{parts[i].x, parts[i].y, parts[i].z};
+        }
+        float a = -bodyYaw * 0.85F;
+        float c = Mth.cos(a), sn = Mth.sin(a);
+        for (int i = 0; i < parts.length; i++) {
+            ModelPart q = parts[i];
+            if (q == null || coatRest[i] == null) continue;
+            float x = coatRest[i][0], z = coatRest[i][2];
+            q.x = x * c + z * sn;
+            q.z = -x * sn + z * c;
+            q.yRot = a;
+        }
+    }
+
     /** Bends this model's elbows and knees like the player model's (see LimbBend). */
     public void copyBends(net.minecraft.client.model.HumanoidModel<?> parent) {
         com.xenowarriors.client.LimbBend.copy(parent.rightArm, rightArm);
