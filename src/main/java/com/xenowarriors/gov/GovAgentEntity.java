@@ -224,6 +224,9 @@ public class GovAgentEntity extends PathfinderMob {
 
     public boolean hasGun() { return com.xenowarriors.compat.TaczGuns.isGun(getMainHandItem()); }
 
+    public static final int RANK_RIFLE = 0, RANK_HEAVY = 1, RANK_MARKSMAN = 2;
+    public int rank() { return getPersistentData().getInt("xw_gov_rank"); }
+
     public boolean skyAmmo() { return getPersistentData().getBoolean("xw_sky_ammo"); }
 
     /** Some guards carry a gun (and some of those load Sky-tech rounds). Rolled once per guard. */
@@ -231,12 +234,26 @@ public class GovAgentEntity extends PathfinderMob {
         var t = getPersistentData();
         if (t.getBoolean("xw_gun_rolled") || !guard() || !com.xenowarriors.compat.TaczGuns.available()) return;
         t.putBoolean("xw_gun_rolled", true);
-        if (random.nextFloat() >= 0.6F) return;
-        String id = com.xenowarriors.compat.TaczGuns.GOV_GUNS[random.nextInt(com.xenowarriors.compat.TaczGuns.GOV_GUNS.length)];
+        if (random.nextFloat() >= 0.7F) return;
+        // ranks: most carry a standard gun; Heavy Gunners a machine gun or shotgun, Marksmen a sniper rifle
+        float r = random.nextFloat();
+        int rank = r < 0.12F ? RANK_MARKSMAN : r < 0.3F ? RANK_HEAVY : RANK_RIFLE;
+        String id = com.xenowarriors.compat.TaczGuns.pick(rank == RANK_MARKSMAN ? com.xenowarriors.compat.TaczGuns.SNIPER_GUNS
+                : rank == RANK_HEAVY ? com.xenowarriors.compat.TaczGuns.HEAVY_GUNS : com.xenowarriors.compat.TaczGuns.GOV_GUNS, random);
+        if (id == null) return;
         net.minecraft.world.item.ItemStack g = com.xenowarriors.compat.TaczGuns.gun(id, 30);
         if (g.isEmpty()) return;
         setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, g);
-        setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0.04F);
+        // guns drop more often now - the stronger the gun, the rarer the drop
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, rank == RANK_MARKSMAN ? 0.03F : rank == RANK_HEAVY ? 0.06F : 0.15F);
+        t.putInt("xw_gov_rank", rank);
+        if (rank == RANK_HEAVY) {                                              // heavier armour, more health
+            setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(Items.IRON_CHESTPLATE));
+            setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(Items.IRON_HELMET));
+            setDropChance(net.minecraft.world.entity.EquipmentSlot.CHEST, 0F); setDropChance(net.minecraft.world.entity.EquipmentSlot.HEAD, 0F);
+            var hp = getAttribute(Attributes.MAX_HEALTH); if (hp != null) { hp.setBaseValue(hp.getBaseValue() + 20); setHealth(getMaxHealth()); }
+            setCustomName(net.minecraft.network.chat.Component.literal("Gov Heavy Gunner"));
+        } else if (rank == RANK_MARKSMAN) setCustomName(net.minecraft.network.chat.Component.literal("Gov Marksman"));
         if (random.nextFloat() < 0.35F) t.putBoolean("xw_sky_ammo", true);
     }
 
@@ -254,13 +271,16 @@ public class GovAgentEntity extends PathfinderMob {
             getLookControl().setLookAt(t, 30F, 30F);
             double dist = distanceTo(t);
             boolean see = getSensing().hasLineOfSight(t);
-            if (!see || dist > 16) getNavigation().moveTo(t, 1.0);
-            else if (dist < 6) {
+            int rank = rank();
+            double far = rank == RANK_MARKSMAN ? 30 : 16, near = rank == RANK_MARKSMAN ? 12 : rank == RANK_HEAVY ? 4 : 6;
+            if (!see || dist > far) getNavigation().moveTo(t, 1.0);
+            else if (dist < near) {
                 Vec3 away = position().add(position().subtract(t.position()).normalize().scale(5));
                 getNavigation().moveTo(away.x, away.y, away.z, 1.1);
             } else getNavigation().stop();
             burst = (burst + 1) % 60;
-            if (!see || burst >= 16 || tickCount % 4 != 0) return;           // short, slow bursts (4 shots), then a 2 s pause
+            if (rank == RANK_MARKSMAN) { if (!see || burst != 0) return; }   // one careful shot every 3 s
+            else if (!see || burst >= (rank == RANK_HEAVY ? 40 : 16) || tickCount % (rank == RANK_HEAVY ? 3 : 4) != 0) return;   // short, slow bursts (4 shots) then a 2 s pause; Heavy Gunners spray longer
             if (!gunDrawn) { com.xenowarriors.compat.TaczGuns.draw(GovAgentEntity.this); gunDrawn = true; return; }
             Vec3 d = t.getBoundingBox().getCenter().subtract(getEyePosition());
             float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F) + (random.nextFloat() - .5F) * 12F;

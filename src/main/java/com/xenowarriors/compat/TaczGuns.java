@@ -16,6 +16,33 @@ import java.util.function.Supplier;
 public final class TaczGuns {
     /** Guns Government soldiers carry (automatic/closed-bolt ones, which mobs can fire without bolting). */
     public static final String[] GOV_GUNS = {"tacz:m4a1", "tacz:hk416d", "tacz:hk_mp5a5", "tacz:ump45", "tacz:scar_l", "tacz:g36k", "tacz:p320", "tacz:m1911"};
+    /** Heavy Gunners: machine guns, battle rifles and shotguns (whichever this TACZ has). */
+    public static final String[] HEAVY_GUNS = {"tacz:m249", "tacz:rpk", "tacz:aa12", "tacz:m870", "tacz:spas_12", "tacz:scar_h", "tacz:fn_fal", "tacz:ak47"};
+    /** Marksmen: sniper and marksman rifles. */
+    public static final String[] SNIPER_GUNS = {"tacz:ai_awp", "tacz:m700", "tacz:m107", "tacz:m95", "tacz:mk14", "tacz:springfield1873"};
+    /** Skeletons that found a gun: old sidearms and shotguns. */
+    public static final String[] SKELETON_GUNS = {"tacz:m1911", "tacz:glock_17", "tacz:p320", "tacz:m870", "tacz:db_short", "tacz:hk_mp5a5"};
+
+    private static final java.util.Map<String, Boolean> EXISTS = new java.util.HashMap<>();
+
+    /** Does this TACZ (its gun packs) have a gun with this id? */
+    public static boolean exists(String id) {
+        if (!available()) return false;
+        return EXISTS.computeIfAbsent(id, k -> {
+            try {
+                Object idx = Class.forName("com.tacz.guns.api.TimelessAPI").getMethod("getCommonGunIndex", ResourceLocation.class).invoke(null, new ResourceLocation(k));
+                return idx instanceof java.util.Optional<?> o && o.isPresent();
+            } catch (Throwable t) { return false; }
+        });
+    }
+
+    /** A random gun id from the list that this TACZ has (or one of the standard Gov guns, or null). */
+    public static String pick(String[] ids, net.minecraft.util.RandomSource r) {
+        java.util.List<String> ok = new java.util.ArrayList<>();
+        for (String id : ids) if (exists(id)) ok.add(id);
+        if (ok.isEmpty()) for (String id : GOV_GUNS) if (exists(id)) ok.add(id);
+        return ok.isEmpty() ? null : ok.get(r.nextInt(ok.size()));
+    }
     private static Boolean loaded;
     private static Method create, setId, setAmmo, setBarrel, forceBuild, draw, shoot, initialData, getAmmo, setAmmoCount;
     private static Class<?> operator, igun;
