@@ -26,7 +26,7 @@ public abstract class AbstractClientPlayerMixin {
                 cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png")));   // Lunar: white coat
                 return;
             }
-            if (com.xenowarriors.client.compat.DmzForms.ssj4Own((AbstractClientPlayer) (Object) this)) {     // Super Saiyan 4: the top comes off (every outfit)
+            if (com.xenowarriors.client.compat.DmzForms.ssj4Shirtless((AbstractClientPlayer) (Object) this)) {     // Super Saiyan 4: the top comes off (every outfit)
                 cir.setReturnValue(com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + (o > 0 ? "_" + type.outfitKeys()[o] : "") + "_ssj4.png"));
                 return;
             }

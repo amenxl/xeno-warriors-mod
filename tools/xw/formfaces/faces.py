@@ -30,6 +30,8 @@ def components(cells):
         out.append(comp)
     return out
 
+VIOLET = False
+
 def analyse(px):
     skin = Counter(px[x, y][:3] for y in range(2, 30) for x in range(2, 30) if px[x, y][3]).most_common(1)[0][0]
     # irises: coloured pixels (more saturated than the skin) next to an eye white or lash
@@ -39,7 +41,8 @@ def analyse(px):
             r, g, b, a = px[x, y]
             if not a or dist((r, g, b), skin) < 60 or r + g + b < 60 or min(r, g, b) > 190: continue
             reddish = r > g * 1.8 and r > b * 1.6 and r > 110            # Rhalix's red irises (and their dark centres)
-            if not reddish and (r + g + b < 150 or sat((r, g, b)) < sat(skin) + 0.12): continue
+            bluish = VIOLET and b > r + 25 and b > g + 25                 # Kyrie's violet irises (not tears)
+            if not reddish and not bluish and (r + g + b < 150 or sat((r, g, b)) < sat(skin) + 0.12): continue
             near = any(0 <= x + dx < 32 and 0 <= y + dy < 32 and (min(px[x + dx, y + dy][:3]) > 190 or sum(px[x + dx, y + dy][:3]) < 130)
                        for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2))
             if near: iris.add((x, y))
@@ -95,7 +98,8 @@ def make(src, dst, form):
     out.save(dst)
 
 n = 0
-for who in ('rhalix', 'mikiko'):
+for who in ('rhalix', 'mikiko', 'kyrie'):
+    VIOLET = who == 'kyrie'
     for f in sorted(glob.glob(CH + who + '_face*.png')):
         if '_damage' in f: continue
         for form in ('ssj', 'ssj3', 'ssj4', 'lssj'):

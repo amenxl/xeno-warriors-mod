@@ -728,10 +728,26 @@ public final class PartyBots {
         return com.xenowarriors.karma.KarmaLevel.of(t) >= com.xenowarriors.karma.KarmaLevel.of(b) * 0.6;
     }
 
+    /** About how many of its plain hits the target has left in it. */
+    public static int hitsToKill(PartyBotEntity b, LivingEntity t) {
+        double dmg = Math.max(1.0, b.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE));
+        double dmz = com.xenowarriors.compat.DmzBotPower.restMeleeOf(b);                 // (with DragonMineZ its hits follow its melee damage)
+        if (dmz > dmg) dmg = dmz;
+        double armor = Math.min(20, t.getArmorValue());
+        dmg *= 1 - armor / 25.0;
+        return (int) Math.ceil(t.getHealth() / Math.max(0.5, dmg));
+    }
+
     static void trySkill(PartyBotEntity b, LivingEntity target) {
         if (b.sparring() && b.getRandom().nextInt(3) != 0) return;
         if (BotTeamUlt.tick(b, target)) return;                                  // a team ultimate with its partner (or asking its player for one)
         if (!b.sparring() && !strong(b, target)) return;                         // save the Karma for enemies that matter
+        if (!b.sparring() && hitsToKill(b, target) <= 5) return;                  // (a few plain hits would do it: no skill, not even a ki technique)
+        if (!b.sparring()) {                                                      // (the more bots in the party, the less each one reaches for skills)
+            ServerPlayer ow = b.owner();
+            int n = ow == null ? 1 : bots(ow).size();
+            if (n > 1 && b.getRandom().nextFloat() > 1F / (1F + 0.45F * (n - 1))) return;
+        }
         if (b.journey() && com.xenowarriors.journey.Journey.noSkills(b.owner())) return;   // ("No skills" battle: teammates fight with basic attacks too)
         if (!com.xenowarriors.character.Seasons.unlocked(b.getServer(), b.character().season())) return;   // (its season locked again: no skills, like a player of it)
         double dist = b.distanceTo(target);

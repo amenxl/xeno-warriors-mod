@@ -581,7 +581,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, so nothing clips through
         boolean giTop = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST);
         boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
-        boolean ssj4Top = com.xenowarriors.client.compat.DmzForms.ssj4Own(player);   // Super Saiyan 4: shirt / coat off
+        boolean ssj4Top = com.xenowarriors.client.compat.DmzForms.ssj4Shirtless(player);   // Super Saiyan 4: shirt / coat off
         if (giTop || giLegs || ssj4Top) model.hideOutfit(giTop || ssj4Top, giTop || ssj4Top, giLegs);
         if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(player.getId())) {      // Kaeru's Change: a dark silhouette, glowing white eyes
             model.root.render(poseStack, buffer, packedLight, overlay, 0.05F, 0.05F, 0.06F, 1F);
@@ -616,6 +616,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
+        if (formHair >= 0 && model.hair == null && type == CharacterType.KYRIE) {     // (Kyrie's hair is the head's own strands: the whole head with the mask, only the hair shows)
+            float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
+            poseStack.pushPose();
+            model.root.translateAndRotate(poseStack);
+            model.head.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id("textures/entity/character/kyrie_details_hairmask.png"))),
+                    packedLight, overlay, hr, hg, hb, 1F);
+            poseStack.popPose();
+        }
         if (formHair >= 0 && model.hair != null) {
             String atlas = king || (outfit > 0 && foxActive(player, type)) ? "mikiko_foxking" : type.getId();
             VertexConsumer hairBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(

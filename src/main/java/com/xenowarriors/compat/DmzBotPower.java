@@ -546,6 +546,8 @@ public final class DmzBotPower {
     }
 
     /** Its DragonMineZ melee damage at rest (base form, 50% release - what its hits are scaled up from), or 0. */
+    public static double restMeleeOf(PartyBotEntity b) { return restMelee(b); }
+
     static double restMelee(PartyBotEntity b) { Power p = POWER.get(b.getUUID()); return p == null ? 0 : p.restMelee; }
 
     // ---------------------------------------------------------------- tests

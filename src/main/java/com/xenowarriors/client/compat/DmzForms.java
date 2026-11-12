@@ -143,19 +143,19 @@ public final class DmzForms {
     }
 
     /**
-     * Mikiko and Rhalix's own Super Saiyan 4 (instead of DragonMineZ's body): they keep their look with a wild black
+     * Mikiko, Rhalix and Kyrie's own Super Saiyan 4 (instead of DragonMineZ's body): they keep their look with a wild dark
      * SSJ4 mane, gold eyes ringed in red and a red-gold aura.
      */
     private static final Form SSJ4_OWN = new Form(0x2A1B1B, 0xFF5A33, 1.05F, false);
 
     /**
-     * Mikiko and Rhalix's face set for their DragonMineZ form ("ssj" teal eyes, "ssj3" no eyebrows, "ssj4" gold eyes
+     * Mikiko, Rhalix and Kyrie's face set for their DragonMineZ form ("ssj" teal eyes, "ssj3" no eyebrows, "ssj4" gold eyes
      * ringed in red, "lssj" blank white eyes), or null for their normal face. Made by tools/xw/formfaces/faces.py.
      */
     public static String faceSet(Player p) {
         if (!(p instanceof AbstractClientPlayer cp)) return null;
         CharacterType t = ClientCharacterData.get(cp);
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX) return null;
+        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE) return null;
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;
         String f = form(p);
         if (f == null) return null;
@@ -169,11 +169,16 @@ public final class DmzForms {
         };
     }
 
-    /** Mikiko or Rhalix in Super Saiyan 4: drawn by Xeno Warriors with the custom SSJ4 hair, eyes and aura. */
+    /** In their own Super Saiyan 4 with the top off: Mikiko and Rhalix (Kyrie keeps her clothes on). */
+    public static boolean ssj4Shirtless(Player p) {
+        return ssj4Own(p) && ClientCharacterData.get((AbstractClientPlayer) p) != CharacterType.KYRIE;
+    }
+
+    /** Mikiko, Rhalix or Kyrie in Super Saiyan 4: drawn by Xeno Warriors with the custom SSJ4 hair, eyes and aura. */
     public static boolean ssj4Own(Player p) {
         if (!(p instanceof AbstractClientPlayer cp)) return false;
         CharacterType t = ClientCharacterData.get(cp);
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX) return false;
+        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE) return false;
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return false;
         return "supersaiyan4".equals(form(p));
     }

@@ -253,6 +253,7 @@ public class PartyBotEntity extends PathfinderMob {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new DownedGoal());
         goalSelector.addGoal(2, new EscapeLiquid());
+        goalSelector.addGoal(2, new Retreat());                                                         // (badly hurt in a fight: flies or runs off to heal instead of fighting to the end)
         goalSelector.addGoal(3, new ReviveGoal());
         goalSelector.addGoal(4, new BotRanged(this));                                                   // bows, crossbows, guns: far or out-of-reach enemies
         goalSelector.addGoal(5, new FlyChase());                                                        // fliers: up to what they can't walk to
@@ -404,6 +405,66 @@ public class PartyBotEntity extends PathfinderMob {
         }
     }
     public int airHits;
+
+    /**
+     * Badly hurt in a fight (under 35% health): it gets away to heal instead of fighting on until it goes down - a flier
+     * flies up and away, anything else runs - until it's back over 55% or nothing has come after it for a few seconds.
+     * Then it eats, or heads for a healing pod.
+     */
+    class Retreat extends Goal {
+        private int ticks, calm;
+        Retreat() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP)); }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        private LivingEntity threat() {
+            LivingEntity t = getTarget();
+            if (t != null && t.isAlive() && distanceToSqr(t) < 20 * 20) return t;
+            LivingEntity best = null;
+            for (net.minecraft.world.entity.Mob m : level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, getBoundingBox().inflate(14),
+                    m -> m.isAlive() && m.getTarget() == PartyBotEntity.this))
+                if (best == null || m.distanceToSqr(PartyBotEntity.this) < best.distanceToSqr(PartyBotEntity.this)) best = m;
+            return best;
+        }
+        private boolean able() {
+            return !downed() && !isPassenger() && !sparring() && !journey() && reviving == null && !com.xenowarriors.gov.HealingPods.inPod(PartyBotEntity.this);
+        }
+        @Override public boolean canUse() {
+            return tickCount % 5 == 0 && able() && getHealth() < getMaxHealth() * 0.35F && threat() != null;
+        }
+        @Override public boolean canContinueToUse() {
+            return able() && ticks < 20 * 20 && getHealth() < getMaxHealth() * 0.55F && calm < 60;
+        }
+        @Override public void start() {
+            ticks = 0; calm = 0;
+            retreats++;
+            ServerPlayer o = owner();
+            if (o != null) o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(label()).append(canFly() ? " flies off to recover!" : " falls back to recover!")
+                    .withStyle(net.minecraft.ChatFormatting.YELLOW), true);
+        }
+        @Override public void stop() { if (canFly() && selfFlying) BotMoves.land(PartyBotEntity.this); getNavigation().stop(); setSprinting(false); }
+        @Override public void tick() {
+            ticks++;
+            LivingEntity t = threat();
+            if (t == null || distanceToSqr(t) > 16 * 16) { calm++; if (t == null) return; } else calm = 0;
+            Vec3 away = position().subtract(t.position()).multiply(1, 0, 1);
+            away = away.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : away.normalize();
+            ServerPlayer o = owner();
+            if (o != null && o.level() == level() && o.distanceToSqr(t) > distanceToSqr(t)) {      // (toward its player when that's away from the danger)
+                Vec3 toOwner = o.position().subtract(position()).multiply(1, 0, 1);
+                if (toOwner.lengthSqr() > 4) away = away.add(toOwner.normalize().scale(0.6)).normalize();
+            }
+            if (canFly()) {
+                Vec3 goal = position().add(away.scale(8)).add(0, Math.max(0, 7 - BotMoves.heightAboveGround(PartyBotEntity.this)), 0);
+                BotMoves.flyTo(PartyBotEntity.this, goal, 0.95);
+            } else if (getNavigation().isDone() || tickCount % 10 == 0) {
+                Vec3 goal = position().add(away.scale(10));
+                getNavigation().moveTo(goal.x, goal.y, goal.z, 1.45);
+                setSprinting(true);
+            }
+            getLookControl().setLookAt(position().add(away.scale(4)).add(0, getEyeHeight(), 0));
+        }
+    }
+    /** (Tests) times it pulled back to recover. */
+    public int retreats;
 
     /** In water it doesn't need to be in (or any lava): out onto the nearest dry land, fast. */
     class EscapeLiquid extends Goal {
