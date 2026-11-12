@@ -522,6 +522,10 @@ public final class WeaponsTests {
         l.add("weapons_whip_d", () -> {}, 2);
         l.add("weapons_whip_e", () -> {}, 2);
         l.add("weapons_whip_f", () -> {}, 2);
+        l.add(null, () -> { log("whip frames drawn " + FormsFx.whipsDrawn + " gametime " + mc.level.getGameTime());
+            FormsFx.fx(new com.xenowarriors.network.WireFxPacket(mc.player.getId(), com.xenowarriors.network.WireFxPacket.WHIP, -1, 0)); }, 2);
+        l.add("weapons_whip_g", () -> {}, 3);
+        l.add("weapons_whip_h", () -> log("whip frames drawn " + FormsFx.whipsDrawn + " showing " + FormsFx.whipping(mc.player)), 2);
         l.add(null, () -> log("wires client whips sent " + FormsClient.whipsSent + ", showing " + FormsFx.whipping(mc.player)), 3);
         // Rhalix's fight animations pass 2: whole-body spins and shoulders that follow the torso
         l.add(null, () -> {

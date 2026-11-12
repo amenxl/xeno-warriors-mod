@@ -54,7 +54,7 @@ public final class FormsFx {
     /** Rhalix id -> {target id, mash 0-100, start}. */
     private static final Map<Integer, long[]> BINDS = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     /** Test counters. */
-    public static int canopiesDrawn, rainColumnsBlocked;
+    public static int canopiesDrawn, rainColumnsBlocked, whipsDrawn;
 
     private FormsFx() {}
 
@@ -243,6 +243,7 @@ public final class FormsFx {
     }
 
     private static void drawWhip(PoseStack pose, MultiBufferSource buffers, Vec3 cam, LivingEntity r, float t, boolean reverse, float pt) {
+        whipsDrawn++;
         float yaw = bodyYaw(r, pt);
         float sgn = reverse ? -1F : 1F;
         float lash = sm((t - 0.22F) / 0.36F);
