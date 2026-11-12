@@ -558,7 +558,7 @@ public final class Batch4Tests {
             server(p -> {
                 var v = p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity ve ? ve : null;
                 int lit = v == null ? -1 : com.xenowarriors.vehicle.Headlights.litForTest(v);
-                log("headlight: driving at night -> lights on the road " + lit + ", beams drawn " + com.xenowarriors.client.vehicle.HeadlightBeams.drawn + " -> " + (lit > 0 ? "PASS" : "FAIL"));
+                log("headlight: driving at night -> lights on the road " + lit + ", beams drawn " + com.xenowarriors.client.vehicle.HeadlightBeams.drawn + " -> " + (lit > 0 && com.xenowarriors.client.vehicle.HeadlightBeams.drawn > 0 ? "PASS" : "FAIL"));
             });
         }, 3);
         l.add(null, () -> server(p -> {
