@@ -28,7 +28,8 @@
     "PlayerSkyWalkMixin",
     "ServerGamePacketListenerAccessor",
     "BlockItemSaveMixin",
-    "PlayerSaveSnapshotMixin"
+    "PlayerSaveSnapshotMixin",
+    "ItemStackWearMixin"
   ],
   "client": [
     "AbstractClientPlayerMixin",

@@ -57,12 +57,27 @@ public final class BotGear {
     /** You put something in its hand from its menu: it keeps that for a while before choosing for itself. */
     private static boolean handLocked(PartyBotEntity b) { return b.tickCount - b.handPicked < 20 * 20; }
 
-    /** In a fight: the strongest weapon it has. */
+    /**
+     * In a fight: its weakest weapon that wears out goes first, so it uses up the old ones (they wear faster the higher
+     * its level - see stats.OutgrownWear) and gets rid of them; once those are gone, the strongest it has.
+     */
     public static void holdBestWeapon(PartyBotEntity b) {
         if (handLocked(b)) return;
         if (summonSignature(b)) return;
         ItemStack hand = b.getMainHandItem();
-        float best = weaponScore(b, hand);
+        float handSc = weaponScore(b, hand);
+        boolean handWears = handSc > 0F && hand.isDamageableItem();
+        float weakest = handWears ? handSc : Float.MAX_VALUE;
+        int weak = -1;
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) {
+            ItemStack s = b.inventory.getItem(i);
+            if (!s.isDamageableItem()) continue;
+            float sc = weaponScore(b, s);
+            if (sc > 0F && sc < weakest) { weakest = sc; weak = i; }
+        }
+        if (weak >= 0) { swap(b, weak); return; }
+        if (handWears) return;
+        float best = handSc;
         int pick = -1;
         for (int i = 0; i < b.inventory.getContainerSize(); i++) {
             float sc = weaponScore(b, b.inventory.getItem(i));

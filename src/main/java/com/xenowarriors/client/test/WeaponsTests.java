@@ -161,6 +161,7 @@ public final class WeaponsTests {
         if (all || f.contains("umbrella")) umbrella(mc, l);
         if (all || f.contains("glide")) glide(mc, l);
         if (all || f.contains("wires")) wires(mc, l);
+        if (all || f.contains("wear")) wear(mc, l);
         if (all || f.contains("bind")) bind(mc, l, focus.startsWith("dmz"));
         if (all || f.contains("mash")) mash(mc, l, focus.startsWith("dmz"));
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.setScreen(null); mc.options.hideGui = false; log("done"); }, 5);
@@ -492,6 +493,38 @@ public final class WeaponsTests {
         l.add(null, () -> server(p -> { WeaponForms.removeForms(p.getInventory()); hp[0] = p.getHealth(); p.teleportTo(HOME[0], HOME[1] + 12, HOME[2]); p.setDeltaMovement(0, 0, 0); }), 60);
         l.add(null, () -> server(p -> { log(String.format("glide (no umbrella, 12 blocks) health %.1f -> %.1f (fall damage %.1f)", hp[0], p.getHealth(), hp[0] - p.getHealth()));
             p.setHealth(p.getMaxHealth()); arena(p); }), 3);
+    }
+
+    // ------------------------------------------------------------------ outgrown gear wears out faster
+
+    private static void wear(Minecraft mc, MikikoTests.Steps l) {
+        l.add(null, () -> server(p -> {
+            int[] keep = new int[3];
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { keep[0] = d.statLevel[0]; keep[1] = d.statLevel[1]; keep[2] = d.statLevel[2];
+                d.statLevel[0] = 200; d.statLevel[1] = 200; d.statLevel[2] = 200; });
+            int lv = com.xenowarriors.stats.Stats.characterLevel(p);
+            p.getInventory().clearContent();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            ItemStack wood = new ItemStack(net.minecraft.world.item.Items.WOODEN_SWORD);
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, wood);
+            wood.hurtAndBreak(1, p, e -> {});
+            int alone = wood.getDamageValue();
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
+            int before = wood.getDamageValue();
+            wood.hurtAndBreak(1, p, e -> {});
+            int withDiamond = wood.getDamageValue() - before;
+            ItemStack dia = p.getInventory().items.stream().filter(s -> s.is(net.minecraft.world.item.Items.DIAMOND_SWORD)).findFirst().orElse(ItemStack.EMPTY);
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, dia.copy());
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.WOODEN_SWORD));
+            ItemStack held = p.getMainHandItem();
+            held.hurtAndBreak(1, p, e -> {});
+            int best = held.getDamageValue();
+            log(String.format("wear: level %d, wooden sword alone %d, with a diamond sword in the bag %d, diamond (the best) %d -> %s",
+                    lv, alone, withDiamond, best, alone == 1 && withDiamond > 1 && best == 1 ? "PASS" : "FAIL"));
+            p.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> { d.statLevel[0] = keep[0]; d.statLevel[1] = keep[1]; d.statLevel[2] = keep[2]; });
+            p.getInventory().clearContent();
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ Rhalix's wire whip
