@@ -10,8 +10,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-/** Server -> party members: everyone in the party with their health and Karma (empty = not in a party). */
-public record PartySyncPacket(List<Member> members) {
+/** Server -> party members: everyone in the party with their health and Karma (empty = not in a party), and the world's party limit. */
+public record PartySyncPacket(List<Member> members, int limit) {
+    /** (Server) with the world's current party limit. */
+    public PartySyncPacket(List<Member> members) { this(members, com.xenowarriors.bot.OffDuty.partyLimit()); }
+
     public record Member(UUID id, String name, float health, float maxHealth, float karma, float maxKarma, int type,
                          boolean knockedOut, boolean leader, double x, double y, double z, String dim, boolean bot, int level, float xp) {}
 
@@ -35,6 +38,7 @@ public record PartySyncPacket(List<Member> members) {
             buf.writeVarInt(x.level);
             buf.writeFloat(x.xp);
         }
+        buf.writeVarInt(m.limit);
     }
 
     public static PartySyncPacket decode(FriendlyByteBuf buf) {
@@ -44,10 +48,10 @@ public record PartySyncPacket(List<Member> members) {
             list.add(new Member(buf.readUUID(), buf.readUtf(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat(),
                     buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readUtf(), buf.readBoolean(), buf.readVarInt(), buf.readFloat()));
         }
-        return new PartySyncPacket(list);
+        return new PartySyncPacket(list, buf.readVarInt());
     }
 
     public static void handle(PartySyncPacket m, Supplier<NetworkEvent.Context> ctx) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> PartyClient.setMembers(m.members));
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> { PartyClient.setLimit(m.limit); PartyClient.setMembers(m.members); });
     }
 }

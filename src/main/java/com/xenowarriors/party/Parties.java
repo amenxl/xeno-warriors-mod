@@ -272,6 +272,17 @@ public final class Parties {
         }
     }
 
+    /** Tells everyone not in a party (or alone with no bots) the world's party limit - for the party menu. */
+    public static void sendLimit(MinecraftServer server) {
+        for (ServerPlayer p : server.getPlayerList().getPlayers())
+            if (!BY_PLAYER.containsKey(p.getUUID()) && com.xenowarriors.bot.PartyBots.bots(p).isEmpty()) ModNetwork.sendToPlayer(new PartySyncPacket(List.of()), p);
+    }
+
+    @SubscribeEvent
+    public static void onLoginLimit(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) ModNetwork.sendToPlayer(new PartySyncPacket(List.of()), p);
+    }
+
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.getServer().getTickCount() % 10 != 0) return;

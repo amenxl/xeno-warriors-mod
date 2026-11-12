@@ -624,6 +624,7 @@ public final class OffDuty {
     public static String runLimit(ServerPlayer p, int n) {
         if (!p.isCreative()) return "Creative mode only.";
         setPartyLimit(p.server, n);
+        com.xenowarriors.party.Parties.sendLimit(p.server);
         return "Party limit is now " + partyLimit() + " (players and bots).";
     }
 

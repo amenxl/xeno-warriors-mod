@@ -42,6 +42,11 @@ public final class PartyClient {
         members = list;
     }
 
+    private static int limit = 4;
+    public static void setLimit(int n) { limit = Math.max(1, n); }
+    /** How many can be in a party in this world (players and bots), as the server last said. */
+    public static int limit() { return limit; }
+
     public static List<PartySyncPacket.Member> members() {
         return members;
     }

@@ -281,6 +281,9 @@ public final class Batch3Tests {
             }), 80);
             l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle("classic"); mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(10F); }, 20);
             l.add("batch3_bigparty_" + ids.length, () -> log("bigparty bots " + ids.length + " members " + com.xenowarriors.client.party.PartyClient.members().size()), 2);
+            l.add(null, () -> mc.setScreen(new com.xenowarriors.client.bot.PartyScreen()), 10);
+            l.add("batch3_bigparty_menu_" + ids.length, () -> log("bigparty menu limit " + com.xenowarriors.client.party.PartyClient.limit()), 2);
+            l.add(null, () -> mc.setScreen(null), 2);
         }
         l.add(null, () -> server(p -> { clearBots(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
             p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno partylimit 4"); }), 5);
