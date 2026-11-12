@@ -35,7 +35,7 @@ public final class BotSpar {
     private BotSpar() {}
 
     /** Ticks between two spars started by themselves (about 5 minutes); longest bot-vs-bot spar; how long a request lasts. */
-    public static final int GAP = 20 * 60 * 5, MAX_SPAR = 20 * 60, ASK_TICKS = 20 * 20;
+    public static final int GAP = 20 * 60 * 30, MAX_SPAR = 20 * 60, ASK_TICKS = 20 * 20;
     private static final String LAST = "xw_spar_event_at";
     /** bot -> when its spar with another bot ends */
     private static final Map<UUID, Long> BOT_SPAR = new HashMap<>();
@@ -78,7 +78,7 @@ public final class BotSpar {
         asked++;
         String yes = "/xenospar yes " + b.getId(), no = "/xenospar no " + b.getId();
         com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.RequestPopupPacket(b.character().getDisplayName().getString() + " wants to spar",
-                "A friendly fight for some training? (nobody goes down)", yes, no, ASK_TICKS, 0xFFFFB040), o);
+                "A friendly fight for some training? (nobody goes down)" + (PartyBots.sparBoostReady(o) ? " - spar XP boost ready!" : ""), yes, no, ASK_TICKS, 0xFFFFB040), o);
         o.displayClientMessage(Component.empty().append(b.label()).append(": \"Hey - want to spar?\"").withStyle(ChatFormatting.GOLD), false);
     }
 

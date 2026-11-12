@@ -107,6 +107,17 @@ public final class BotCrafting {
         suggest(b, o, false);
     }
 
+    /** Crafts this recipe from its bag (making itself a table first for a 3x3 one if it must). The result, or null if it can't. */
+    public static ItemStack craftRecipe(PartyBotEntity b, ResourceLocation id) {
+        if (!(b.level() instanceof ServerLevel s)) return null;
+        var opt = s.getRecipeManager().byKey(id);
+        if (opt.isEmpty() || !(opt.get() instanceof CraftingRecipe r)) return null;
+        List<Ingredient> ing = new ArrayList<>();
+        for (Ingredient x : r.getIngredients()) if (!x.isEmpty()) ing.add(x);
+        if (!match(b.inventory, ing, null).isEmpty()) return null;
+        return craft(b, new Idea("craft", id, r.getResultItem(s.registryAccess()).copy(), 0, null, ItemStack.EMPTY, 1F, -1, 0));
+    }
+
     /** (tests) mission items crafted. */
     public static int missionCrafts;
 

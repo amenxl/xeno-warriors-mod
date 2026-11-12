@@ -53,7 +53,13 @@ import java.util.*;
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class PartyBots {
     public static final int BLEED_OUT = 30 * 20, REJOIN_COOLDOWN = 5 * 60 * 20, MAX_BOTS = 3;
-    public static final long SPAR_XP_COOLDOWN = 30L * 60 * 20;                  // hidden: big spar XP once every 30 minutes
+    public static final long SPAR_XP_COOLDOWN = 30L * 60 * 20;                  // the spar XP boost: once every 30 minutes
+
+    /** The spar XP boost is ready for this player (none in the last 30 minutes). */
+    public static boolean sparBoostReady(ServerPlayer p) {
+        long now = p.level().getGameTime(), last = p.getPersistentData().getLong(SPAR_LAST);
+        return last == 0 || now < last || now - last >= SPAR_XP_COOLDOWN;
+    }
     private static final String RECORDS = "xw_bots", REJOIN = "xw_bot_rejoin_", SPAR_LAST = "xw_spar_xp_last";
     private static final Map<UUID, UUID> FAKE_TO_BOT = new HashMap<>();
     private static final Map<UUID, FakePlayer> FAKES = new HashMap<>();
@@ -972,6 +978,9 @@ public final class PartyBots {
         int my = com.xenowarriors.stats.Stats.characterLevel(p);
         float mult = (big ? 1F : 0.1F) * (won ? 1F : 0.6F) * Math.max(0.5F, Math.min(4F, 1F + (otherLevel - my) / 10F));
         if (big) p.getPersistentData().putLong(SPAR_LAST, now);
+        long left = SPAR_XP_COOLDOWN - (now - p.getPersistentData().getLong(SPAR_LAST));
+        p.displayClientMessage(big ? Component.literal("Spar XP boost! (one every 30 minutes)").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                : Component.literal("Next spar XP boost in " + Math.max(1, left / 1200) + " min").withStyle(ChatFormatting.GRAY), false);
         float tp = BotSpar.tp(p, won, big);                                       // (with DragonMineZ: Dragon Ball TP too)
         if (tp >= 1) com.xenowarriors.compat.DmzTpRewards.give(p, Math.round(tp), "spar");
         for (Stat s : Stat.values()) {

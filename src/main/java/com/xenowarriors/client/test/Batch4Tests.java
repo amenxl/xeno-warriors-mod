@@ -61,9 +61,53 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);
         if (f.isEmpty() || f.contains("bike")) technicaBike(mc, l);
         if (ef && f.contains("efgear")) efGear(mc, l);
-        if (f.isEmpty() || f.contains("hekuteam")) hekuTeam(mc, l);                      // (only when asked: design previews)
+        if (f.isEmpty() || f.contains("hekuteam")) hekuTeam(mc, l);
+        if (f.isEmpty() || f.contains("fishing")) fishing(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("automission"))) autoMission(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ bots fishing; bots taking missions on their own
+
+    private static void fishing(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            var lv = p.serverLevel();
+            BlockPos at = p.blockPosition();
+            for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 8; dz++) { for (int dy = 0; dy <= 3; dy++) lv.setBlockAndUpdate(at.offset(dx, dy, dz), Blocks.AIR.defaultBlockState()); lv.setBlockAndUpdate(at.offset(dx, -1, dz), Blocks.GRASS_BLOCK.defaultBlockState()); }
+            for (int dx = -2; dx <= 2; dx++) for (int dz = 4; dz <= 7; dz++) { lv.setBlockAndUpdate(at.offset(dx, -1, dz), Blocks.WATER.defaultBlockState()); lv.setBlockAndUpdate(at.offset(dx, -2, dz), Blocks.WATER.defaultBlockState()); }
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b == null) { log("fishing: no bot -> FAIL"); return; }
+            b.moveTo(p.getX() + 1, p.getY(), p.getZ(), 0, 0); b.setMode(PartyBotEntity.NEUTRAL);
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK, 3));
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STRING, 2));
+            b.inventory.addItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CRAFTING_TABLE));
+            com.xenowarriors.bot.BotFishing.forceForTest = true;
+        }), 200);
+        l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 20); }, 5);
+        l.add("batch4_fishing", () -> { mc.options.hideGui = false; }, 400);
+        l.add(null, () -> server(p -> {
+            log("fishing: rods made " + com.xenowarriors.bot.BotFishing.rodsMade + ", trips " + com.xenowarriors.bot.BotFishing.trips + ", catches " + com.xenowarriors.bot.BotFishing.catches
+                    + " -> " + (com.xenowarriors.bot.BotFishing.rodsMade > 0 && com.xenowarriors.bot.BotFishing.catches > 0 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 5);
+    }
+
+    private static void autoMission(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b != null) b.moveTo(p.getX() + 1, p.getY(), p.getZ(), 0, 0);
+        }), 100);
+        l.add(null, () -> server(p -> {
+            var got = com.xenowarriors.compat.DmzBotQuests.autoAccept(p);
+            var again = com.xenowarriors.compat.DmzBotQuests.autoAccept(p);
+            log("automission: took on its own " + got + ", then (one at a time) " + again + " -> " + (!got.isEmpty() && again.isEmpty() ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ Mikiko + Kaeru: Hekublade Scatter Barrage

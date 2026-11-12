@@ -80,7 +80,7 @@
         },
         {
           "title": "Sparring in quiet times",
-          "text": "When you and your bots aren't fighting (nothing hostile nearby for a while), now and then:\n- A bot asks you to spar - a request card: press Accept (Y) to spar it, Decline (X) for not now. It's the same friendly fight as Spar in its menu: nobody goes down.\n- Or two of your bots spar each other: a real fight until one is down to 30% health, or a minute is up (a draw). If an enemy turns up they stop at once.\n- Sparring gives Speed, Attack and Defense XP - and with DragonMineZ, Dragon Ball TP: about what 8 levels of a training minigame pay (3 after your first big spar in 30 minutes), less for the loser. Bots sparring each other both get theirs.\n- While you're sparring a bot (you asked it, or it asked and you said yes), you can lock on to it like an enemy. When the spar ends, it's a teammate again and the lock lets go."
+          "text": "When you and your bots aren't fighting (nothing hostile nearby for a while), now and then:\n- A bot asks you to spar - a request card: press Accept (Y) to spar it, Decline (X) for not now. It's the same friendly fight as Spar in its menu: nobody goes down.\n- Or two of your bots spar each other: a real fight until one is down to 30% health, or a minute is up (a draw). If an enemy turns up they stop at once.\n- Sparring gives Speed, Attack and Defense XP - and with DragonMineZ, Dragon Ball TP: about what 8 levels of a training minigame pay (3 after your first big spar in 30 minutes), less for the loser. Bots sparring each other both get theirs.\n- While you're sparring a bot (you asked it, or it asked and you said yes), you can lock on to it like an enemy. When the spar ends, it's a teammate again and the lock lets go.\n- A bot asks you to spar at most once every 30 minutes.\n- Spar XP boost: the first spar every 30 minutes gives the big XP (and Dragon Ball TP); spars in between give a little. A line after each spar says the boost was used, or how long until the next one."
         },
         {
           "title": "Party time!",
@@ -125,6 +125,10 @@
         {
           "title": "Bots and full vehicles",
           "text": "When your vehicle has no room left, a bot that can't fit takes another ride and follows you:\n- a free seat in another bot's ride,\n- Technica (as a bot) calls her own motorcycle and rides after you - and its guns shoot at whatever you're fighting,\n- or a free vehicle of yours parked nearby, which it drives.\nWhen you get out, they get out too (a motorcycle a bot called goes away again). Left far behind, their ride catches up."
+        },
+        {
+          "title": "Bots fishing",
+          "text": "In quiet times near water, a bot now and then goes fishing:\n- No rod? It makes one from its bag (3 sticks and 2 string; it makes itself a crafting table if it needs one).\n- It walks to the water's edge by you, casts, and reels in a few catches (the game's own fishing loot) into its bag, with a little XP.\n- A fight, danger, or you walking off: it packs up."
         }
       ]
     },
