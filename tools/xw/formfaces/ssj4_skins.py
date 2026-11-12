@@ -17,8 +17,9 @@ def fill(px, x0, y0, x1, y1, c):
     for y in range(y0, y1):
         for x in range(x0, x1): px[x, y] = c
 
-def make(who, wrap):
-    im = Image.open(CH + who + '.png').convert('RGBA'); px = im.load()
+def make(who, wrap, look=None):
+    src = who + ('_' + look if look else '')
+    im = Image.open(CH + src + '.png').convert('RGBA'); px = im.load()
     s = skin_of(who); base, dark, light = shade(s, 1.0), shade(s, 0.82), shade(s, 1.1)
     # body: top (20-28,16-20), bottom stays, front 20-28, right 16-20, left 28-32, back 32-40; rows 20-31 (row 31 = waistband stays)
     fill(px, 20, 16, 28, 20, base)
@@ -48,8 +49,11 @@ def make(who, wrap):
         for x in (20, 27): px[x, 22] = light
         for y in range(20, 31): px[32, y] = dark; px[39, y] = dark     # back edges
         for y in range(21, 29): px[35, y] = dark if y % 3 == 0 else px[35, y]
-    im.save(CH + who + '_ssj4.png')
+    im.save(CH + src + '_ssj4.png')
 
-make('rhalix', False)
-make('mikiko', True)
+# their normal look and every outfit (the outfit keys in CharacterType)
+for look in (None, 'origins1', 'origins2', 's3'):
+    make('rhalix', False, look)
+for look in (None, 'origins1', 'origins2', 's3', 's3b'):
+    make('mikiko', True, look)
 print('ok')
