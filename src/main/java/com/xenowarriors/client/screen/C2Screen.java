@@ -84,7 +84,8 @@ public class C2Screen extends Screen {
             g.fill(x0, y, x0 + w, y + CARD_H, 0xB00E1A28);
             g.fill(x0, y, x0 + 3, y + CARD_H, ok ? 0xFF40C8FF : 0xFF5A6774);
             g.drawString(font, r.title(), x0 + 8, y + 4, ok ? 0xFFFFFFFF : 0xFFB0B8C0, false);
-            String reqs = "Lv " + r.level() + "  -  " + r.need() + " standing  -  " + com.xenowarriors.economy.Money.fmt(r.price()) + " Money" + (r.card() ? "  -  Demon Program Card" : "");
+            String reqs = "Lv " + r.level() + " - " + r.need() + " - " + com.xenowarriors.economy.Money.fmt(r.price()) + " Money" + (r.card() ? " + card" : "");
+            while (font.width(reqs) > w - 16 - font.width(r.title()) - 10 && reqs.length() > 4) reqs = reqs.substring(0, reqs.length() - 2);   // (never past the edge)
             g.drawString(font, reqs, x0 + 8 + font.width(r.title()) + 10, y + 4, 0xFF7CC8FF, false);
             List<FormattedCharSequence> lines = font.split(Component.literal(r.desc()), w - 90);
             for (int k = 0; k < Math.min(3, lines.size()); k++) g.drawString(font, lines.get(k), x0 + 8, y + 16 + k * 10, 0xFFC8D4E0, false);
