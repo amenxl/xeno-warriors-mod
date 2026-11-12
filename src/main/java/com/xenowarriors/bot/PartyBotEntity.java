@@ -781,6 +781,7 @@ public class PartyBotEntity extends PathfinderMob {
         if (own != null && own.distanceToSqr(this) < 9) return;          // (the owner's own drops are theirs)
         for (ItemEntity it : level().getEntitiesOfClass(ItemEntity.class, getBoundingBox().inflate(1.5), ItemEntity::isAlive)) {
             if (it.hasPickUpDelay() || it.getOwner() instanceof net.minecraft.world.entity.player.Player || it.getAge() < 60) continue;
+            if (it.getItem().getItem() instanceof com.xenowarriors.statboost.StatBoostItem) continue;   // (Stat Boosts are yours: it only uses the ones you give it)
             ItemStack left = inventory.addItem(it.getItem().copy());
             if (left.isEmpty()) it.discard();
             else { it.setItem(left); PartyBots.notifyFull(this); }

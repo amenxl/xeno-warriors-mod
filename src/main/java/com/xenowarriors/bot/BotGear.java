@@ -174,6 +174,7 @@ public final class BotGear {
             else if (left.getCount() != hand.getCount()) b.setItemSlot(EquipmentSlot.MAINHAND, left);
         }
         BotCrafting.tick(b);
+        BotBoosts.tick(b);                                                      // (a Stat Boost you gave it: it uses it)
     }
 
     /** One use of the held item (a hit landed, a block broken): it wears, and breaks when it's done. */

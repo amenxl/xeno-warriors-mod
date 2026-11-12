@@ -300,4 +300,20 @@ public final class Building {
             p.connection.send(new ClientboundContainerSetSlotPacket(-2, 0, slot, s.copy()));
         }
     }
+
+    /** A Stat Boost a bot used on itself: levels straight onto its character's (owner's save). Returns how many were added. */
+    public static int addLevels(PartyBotEntity b, int n) {
+        ServerPlayer o = b.owner();
+        if (o == null || n <= 0) return 0;
+        String k = botKey(b, o);
+        CompoundTag r = root(o);
+        CompoundTag c = r.getCompound(k);
+        int lv = Math.max(0, Math.min(MAX_LEVEL, c.getInt("lv")));
+        int after = (int) Math.min((long) MAX_LEVEL, (long) lv + n);
+        if (after <= lv) return 0;
+        c.putInt("lv", after);
+        if (after >= MAX_LEVEL) c.putFloat("xp", 0F);
+        r.put(k, c);
+        return after - lv;
+    }
 }

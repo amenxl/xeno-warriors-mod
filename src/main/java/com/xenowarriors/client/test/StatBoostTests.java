@@ -316,6 +316,18 @@ public final class StatBoostTests {
             boss.discard();
             log("bot (Rhalix) kills: zombie " + describe(botZ) + " owner's=" + owned + ", boss " + describe(botBoss) + " (expect +10 owned, +100) -> "
                     + pass(botZ.size() == 1 && botZ.get(0).tier == BoostTier.TEN && owned && botBoss.size() == 1 && botBoss.get(0).tier == BoostTier.HUNDRED));
+            // a boost given to the bot: it uses it on itself (Attack: its character's); a Hekublade one it keeps for you
+            int atk0 = PartyBots.statLevel(b, com.xenowarriors.stats.Stat.ATTACK);
+            b.inventory.clearContent();
+            b.inventory.setItem(0, new net.minecraft.world.item.ItemStack(StatBoosts.item(BoostStat.ATTACK, BoostTier.TEN)));
+            b.inventory.setItem(1, new net.minecraft.world.item.ItemStack(StatBoosts.item(BoostStat.HEKUBLADE, BoostTier.TEN)));
+            com.xenowarriors.bot.BotBoosts.tick(b);
+            com.xenowarriors.bot.BotBoosts.tick(b);
+            int atk1 = PartyBots.statLevel(b, com.xenowarriors.stats.Stat.ATTACK);
+            boolean kept = b.inventory.getItem(1).getItem() instanceof StatBoostItem;
+            log("bot used a given Attack +10: attack " + atk0 + " -> " + atk1 + ", Hekublade boost kept=" + kept + ", attack boost gone=" + b.inventory.getItem(0).isEmpty()
+                    + " -> " + pass(atk1 == atk0 + 10 && kept && b.inventory.getItem(0).isEmpty()));
+            b.inventory.clearContent();
             b.discard();
             // the tables themselves: +100 rarest, never from normal enemies
             StringBuilder sb = new StringBuilder();
