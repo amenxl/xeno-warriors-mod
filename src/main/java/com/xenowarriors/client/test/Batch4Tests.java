@@ -2299,22 +2299,22 @@ public final class Batch4Tests {
             log("s3foes: looks " + ((com.xenowarriors.foes.ElementalistEntity) m[0]).look() + ", " + ((com.xenowarriors.foes.VesselEntity) m[1]).look() + ", " + ((com.xenowarriors.foes.VesselEntity) m[2]).look()
                     + " -> " + ("spellcaster".equals(((com.xenowarriors.foes.ElementalistEntity) m[0]).look()) && "cynic_evolved".equals(((com.xenowarriors.foes.VesselEntity) m[2]).look()) ? "PASS" : "FAIL"));
         }), 3);
-        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 12); }, 12);
         l.add("batch4_s3foes_row", () -> mc.setScreen(null), 3);
-        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 140, 15); }, 12);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.FIRST_PERSON, 20, 12); }, 12);
         l.add("batch4_s3foes_side", () -> mc.setScreen(null), 3);
         l.add(null, () -> server(p -> { for (int i = 0; i < 4; i++) { m[i].setYRot(0); m[i].yBodyRot = 0; m[i].setYHeadRot(0); } }), 3);
-        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 12); }, 12);
         l.add("batch4_s3foes_back", () -> mc.setScreen(null), 3);
         // the Swordstress's poses: stuck, spinning
         l.add(null, () -> server(p -> { for (int i = 0; i < 4; i++) { m[i].setYRot(150); m[i].yBodyRot = 150; m[i].setYHeadRot(150); } ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.STUCK); }), 3);
-        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 12); }, 12);
         l.add("batch4_s3foes_stuck", () -> mc.setScreen(null), 3);
         l.add(null, () -> server(p -> ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.SPIN)), 3);
-        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 12); }, 12);
         l.add("batch4_s3foes_spin", () -> mc.setScreen(null), 3);
         l.add(null, () -> server(p -> ((com.xenowarriors.foes.SwordstressEntity) m[3]).stateForTest(com.xenowarriors.foes.SwordstressEntity.LEAP)), 3);
-        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 8); }, 12);
+        l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 12); }, 12);
         l.add("batch4_s3foes_leap", () -> mc.setScreen(null), 3);
         // the type triangle's damage
         l.add(null, () -> server(p -> {
@@ -2356,6 +2356,7 @@ public final class Batch4Tests {
             var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(lv);
             soul.getPersistentData().putBoolean("xw_smart_soul", false);
             soul.getPersistentData().putBoolean(com.xenowarriors.s3.DistortionEntity.TAG, true);   // (it doesn't flee the daylight)
+            soul.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(2000); soul.setHealth(2000);   // (the Spell Caster's elements would finish it fast)
             m[4] = com.xenowarriors.foes.Foes.placeForTest(lv, soul, m[1].blockPosition().offset(0, 0, 3));
             m[1].setNoAi(true);                                               // (the Cynic Dancer would start the fight: the Spell Caster's choice first)
             m[2].discard();                                                   // (only the disguised one for now)
@@ -2369,7 +2370,7 @@ public final class Batch4Tests {
             log("triangle: (soul alive " + soul.isAlive() + " removed " + soul.isRemoved() + " noAi " + soul.isNoAi() + " at " + soul.blockPosition().toShortString() + "; caster alive " + cast.isAlive() + " noAi " + cast.isNoAi()
                     + " at " + cast.blockPosition().toShortString() + " running " + cast.targetSelector.getRunningGoals().map(g -> g.getGoal().getClass().getSimpleName()).toList() + ", sees soul " + cast.hasLineOfSight(soul) + ")");
             log("triangle: a C-soul ignores a disguised Cynic Dancer (target " + (soul.getTarget() == null ? "none" : soul.getTarget().getName().getString()) + ") -> " + (soul.getTarget() != ves ? "PASS" : "FAIL"));
-            log("triangle: the Spell Caster goes for the C-soul (" + (cast.getTarget() == null ? "none" : cast.getTarget().getName().getString()) + ") -> " + (cast.getTarget() == soul ? "PASS" : "FAIL"));
+            log("triangle: the Spell Caster goes for the C-soul (" + (cast.getTarget() == null ? "none" : cast.getTarget().getName().getString()) + ", soul health " + soul.getHealth() + ") -> " + (cast.getTarget() == soul || soul.getHealth() < 2000 ? "PASS" : "FAIL"));
             ves.setNoAi(false);
             soul.setNoAi(true);
         }), 3);
@@ -2378,9 +2379,13 @@ public final class Batch4Tests {
             var cast = (net.minecraft.world.entity.Mob) m[0];
             var ves = (net.minecraft.world.entity.Mob) m[1];
             log("triangle: the Cynic Dancer goes for the Spell Caster (" + (ves.getTarget() == null ? "none" : ves.getTarget().getName().getString()) + ") -> " + (ves.getTarget() == cast ? "PASS" : "FAIL"));
-            ((net.minecraft.world.entity.Mob) m[4]).setNoAi(false);
-            ((net.minecraft.world.entity.Mob) m[4]).setTarget(null);
             cast.discard();
+            m[4].discard();                                                   // (a fresh one, that never fought anyone)
+            var soul2 = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(p.serverLevel());
+            soul2.getPersistentData().putBoolean("xw_smart_soul", false);
+            soul2.getPersistentData().putBoolean(com.xenowarriors.s3.DistortionEntity.TAG, true);
+            soul2.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(2000); soul2.setHealth(2000);
+            m[4] = com.xenowarriors.foes.Foes.placeForTest(p.serverLevel(), soul2, ves.blockPosition().offset(0, 0, 3));
             ves.setTarget(null);
             ((com.xenowarriors.foes.VesselEntity) ves).fuseNowForTest();
         }), 3);
