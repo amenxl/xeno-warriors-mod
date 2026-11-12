@@ -2331,6 +2331,7 @@ public final class Batch4Tests {
         settle(l, 60);
         l.add(null, () -> server(p -> {
             var lv = p.serverLevel();
+            lv.getChunk(0, 0);                                           // (loaded for sure before we look for the ground)
             int y = com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y - 2;
             while (y > lv.getMinBuildHeight() + 1 && (lv.getBlockState(new BlockPos(6, y - 1, 6)).isAir()
                     || !lv.getBlockState(new BlockPos(6, y, 6)).isAir() || !lv.getBlockState(new BlockPos(6, y + 1, 6)).isAir())) y--;
@@ -2339,6 +2340,7 @@ public final class Batch4Tests {
             p.server.setDifficulty(net.minecraft.world.Difficulty.NORMAL, true);
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60, 10, false, false));
             com.xenowarriors.you.YouAngel.start(p);
+            log("angel: in " + lv.dimension().location() + " at " + p.blockPosition().toShortString());
             log("angel: the trial starts - wave " + com.xenowarriors.you.YouAngel.trialWave(p) + ", " + com.xenowarriors.you.YouAngel.foesForTest(p).size() + " foes -> " + (com.xenowarriors.you.YouAngel.trialWave(p) == 1 && !com.xenowarriors.you.YouAngel.foesForTest(p).isEmpty() ? "PASS" : "FAIL"));
         }), 30);
         l.add(null, () -> { mc.setScreen(null); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 12); }, 10);

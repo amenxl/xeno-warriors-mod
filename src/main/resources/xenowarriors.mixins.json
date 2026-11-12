@@ -32,6 +32,7 @@
     "ItemStackWearMixin"
   ],
   "client": [
+    "compat.GeckoBufferGuardMixin",
     "AbstractClientPlayerMixin",
     "HumanoidModelMixin",
     "PlayerModelBendMixin",

@@ -139,6 +139,8 @@ public final class YouAngel {
         ServerLevel l = p.serverLevel();
         boolean down = com.xenowarriors.party.Duels.isDowned(p) || !p.isAlive();
         if (down || l.getGameTime() > t.until || p.position().distanceTo(t.at) > 64 || !com.xenowarriors.recarnet.Recarnet.is(l)) {
+            com.xenowarriors.XenoWarriors.LOGGER.info("Angel trial over for {}: down {}, out of time {}, {} blocks from where it began, in Recarnet {}", p.getName().getString(), down,
+                    l.getGameTime() > t.until, Math.round(p.position().distanceTo(t.at)), com.xenowarriors.recarnet.Recarnet.is(l));
             end(p, t);
             p.sendSystemMessage(Component.literal(down ? "You fell. The trial is over - pray again at another dawn." : "You left the trial. Pray again at another dawn.").withStyle(ChatFormatting.GRAY));
             return;
