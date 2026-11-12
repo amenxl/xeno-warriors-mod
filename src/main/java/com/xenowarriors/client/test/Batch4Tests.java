@@ -60,9 +60,53 @@ public final class Batch4Tests {
         if (f.contains("fusionlook")) fusionLook(mc, l);
         if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);
         if (f.isEmpty() || f.contains("bike")) technicaBike(mc, l);
-        if (ef && f.contains("efgear")) efGear(mc, l);                      // (only when asked: design previews)
+        if (ef && f.contains("efgear")) efGear(mc, l);
+        if (f.isEmpty() || f.contains("hekuteam")) hekuTeam(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ Mikiko + Kaeru: Hekublade Scatter Barrage
+
+    private static void hekuTeam(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b == null) { log("hekuteam: no bot -> FAIL"); return; }
+            b.moveTo(p.getX() + 1.5, p.getY(), p.getZ(), 0, 0); b.setMode(PartyBotEntity.NEUTRAL);
+            com.xenowarriors.bot.BotTeamUlt.readyForTest(b);
+            p.setYRot(0);
+            for (int i = 0; i < 6; i++) {
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                double a = i * Math.PI / 3;
+                z.moveTo(p.getX() + Math.cos(a) * 9, p.getY(), p.getZ() + Math.sin(a) * 9, 0, 0); z.setNoAi(true); z.addTag("xw_b4");
+                var hp = z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH); if (hp != null) hp.setBaseValue(400); z.setHealth(400);
+                p.serverLevel().addFreshEntity(z);
+            }
+        }), 40);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            var kinds = b == null ? java.util.List.of() : com.xenowarriors.party.TeamUltimate.kinds(p, b);
+            boolean partner = b != null && com.xenowarriors.party.TeamUltimate.partners(p).contains(b);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            boolean ok = b != null && com.xenowarriors.party.TeamUltimate.startNow(p, b, com.xenowarriors.party.TeamUltimate.Kind.HEKUBLADE_BARRAGE);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            log("hekuteam: Kaeru is a partner " + partner + ", kinds " + kinds + ", started " + ok + " -> " + (partner && ok ? "PASS" : "FAIL"));
+        }), 20);
+        l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 30); }, 5);
+        l.add("batch4_hekuteam_ring", () -> {}, 40);
+        l.add("batch4_hekuteam_barrage", () -> {}, 45);
+        l.add("batch4_hekuteam_finale", () -> { mc.options.hideGui = false; }, 30);
+        l.add(null, () -> server(p -> {
+            var zs = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(20), x -> x.getTags().contains("xw_b4"));
+            long hurt = zs.stream().filter(z -> z.getHealth() < 400).count();
+            long left = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Display.ItemDisplay.class, p.getBoundingBox().inflate(30), x -> x.getTags().contains("xw_hekublade_barrage")).size();
+            log("hekuteam: blades sent " + com.xenowarriors.party.HekubladeBarrage.lastShots + ", hits " + com.xenowarriors.party.HekubladeBarrage.lastHits + ", zombies hurt " + hurt + "/" + zs.size()
+                    + ", blades left over " + left + " -> " + (com.xenowarriors.party.HekubladeBarrage.lastShots >= 12 && hurt >= 5 && left == 0 ? "PASS" : "FAIL"));
+            for (var z : zs) z.discard();
+            Batch3Tests.clearBots(p);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ Epic Fight: armour and held items on our characters

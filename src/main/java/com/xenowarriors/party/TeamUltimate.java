@@ -53,7 +53,9 @@ public final class TeamUltimate {
 
     public enum Kind {
         GRAVITY_FOX_FIRE("Gravity Fox Fire", TeamUltEntity.GRAVITY_FOX_FIRE),
-        BLAZING_JUDGMENT("Blazing Judgment", TeamUltEntity.BLAZING_JUDGMENT);
+        BLAZING_JUDGMENT("Blazing Judgment", TeamUltEntity.BLAZING_JUDGMENT),
+        /** Mikiko + Kaeru (HekubladeBarrage). */
+        HEKUBLADE_BARRAGE("Hekublade Scatter Barrage", -1);
         public final String title;
         public final int id;
         Kind(String title, int id) { this.title = title; this.id = id; }
@@ -73,8 +75,15 @@ public final class TeamUltimate {
         return CharacterType.NONE;
     }
 
-    private static CharacterType want(CharacterType me) {
-        return me == CharacterType.MIKIKO ? CharacterType.RHALIX : me == CharacterType.RHALIX ? CharacterType.MIKIKO : null;
+    /** Who this character can team up with: Mikiko with Rhalix or Kaeru, Rhalix and Kaeru with Mikiko. */
+    private static java.util.Set<CharacterType> want(CharacterType me) {
+        return me == CharacterType.MIKIKO ? java.util.EnumSet.of(CharacterType.RHALIX, CharacterType.KAERU)
+                : me == CharacterType.RHALIX || me == CharacterType.KAERU ? java.util.EnumSet.of(CharacterType.MIKIKO) : java.util.EnumSet.noneOf(CharacterType.class);
+    }
+
+    /** A Mikiko and Kaeru pair (their team attack is the Hekublade Scatter Barrage). */
+    private static boolean kaeruPair(LivingEntity a, LivingEntity b) {
+        return type(a) == CharacterType.KAERU || type(b) == CharacterType.KAERU;
     }
 
     public static String name(LivingEntity e) {
@@ -88,6 +97,7 @@ public final class TeamUltimate {
 
     /** The team ultimates this pair can do (Blazing Judgment once Rhalix knows Judgment Absorption). */
     public static List<Kind> kinds(LivingEntity a, LivingEntity b) {
+        if (kaeruPair(a, b)) return List.of(Kind.HEKUBLADE_BARRAGE);
         LivingEntity rhalix = type(a) == CharacterType.RHALIX ? a : b;
         boolean judgment = rhalix instanceof ServerPlayer p && p.isCreative() || level(rhalix) >= JudgmentAbsorptionSkill.UNLOCK_LEVEL;
         return judgment ? List.of(Kind.GRAVITY_FOX_FIRE, Kind.BLAZING_JUDGMENT) : List.of(Kind.GRAVITY_FOX_FIRE);
@@ -99,13 +109,13 @@ public final class TeamUltimate {
 
     /** Partners for a team ultimate near {@code e} on its side (players in the party and their bots), nearest first. */
     public static List<LivingEntity> partners(LivingEntity e) {
-        CharacterType w = want(type(e));
+        java.util.Set<CharacterType> w = want(type(e));
         ServerPlayer anchor = e instanceof PartyBotEntity b ? b.owner() : e instanceof ServerPlayer p && !(p instanceof FakePlayer) ? p : null;
-        if (w == null || anchor == null) return List.of();
+        if (w.isEmpty() || anchor == null) return List.of();
         List<LivingEntity> out = new ArrayList<>();
         for (ServerPlayer m : Parties.members(anchor)) {
-            if (type(m) == w && near(e, m) && !m.isSpectator()) out.add(m);
-            for (PartyBotEntity b : PartyBots.bots(m)) if (b.character() == w && near(e, b) && !b.sparring()) out.add(b);
+            if (w.contains(type(m)) && near(e, m) && !m.isSpectator()) out.add(m);
+            for (PartyBotEntity b : PartyBots.bots(m)) if (w.contains(b.character()) && near(e, b) && !b.sparring()) out.add(b);
         }
         out.sort(Comparator.comparingDouble(o -> o.distanceToSqr(e)));
         return out;
@@ -258,9 +268,10 @@ public final class TeamUltimate {
 
     /** Both pay (Karma and their ultimate's cooldown) and it starts. The two must be a Rhalix and a Mikiko. */
     public static boolean startNow(LivingEntity a, LivingEntity b, Kind k) {
-        LivingEntity rhalix = type(a) == CharacterType.RHALIX ? a : b;
+        CharacterType other = k == Kind.HEKUBLADE_BARRAGE ? CharacterType.KAERU : CharacterType.RHALIX;
+        LivingEntity rhalix = type(a) == other ? a : b;                         // (Rhalix - or Kaeru for the barrage)
         LivingEntity mikiko = rhalix == a ? b : a;
-        if (type(rhalix) != CharacterType.RHALIX || type(mikiko) != CharacterType.MIKIKO) return false;
+        if (type(rhalix) != other || type(mikiko) != CharacterType.MIKIKO) return false;
         for (LivingEntity s : new LivingEntity[]{rhalix, mikiko}) {
             var skill = SkillManager.get(type(s), SkillManager.ULTIMATE_SLOT);
             int cd = skill == null ? 60 * 20 : skill.getCooldownTicks();
@@ -277,6 +288,15 @@ public final class TeamUltimate {
     }
 
     private static void start(Kind k, LivingEntity rhalix, LivingEntity mikiko) {
+        if (k == Kind.HEKUBLADE_BARRAGE) {                                     // Mikiko + Kaeru: the blades fly from where they stand
+            HekubladeBarrage.start(mikiko, rhalix);
+            for (LivingEntity s : new LivingEntity[]{rhalix, mikiko})
+                if (s instanceof ServerPlayer sp) sp.displayClientMessage(Component.literal(k.title.toUpperCase(Locale.ROOT) + "!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
+                else if (s instanceof PartyBotEntity pb && pb.owner() != null && pb.owner() != rhalix && pb.owner() != mikiko)
+                    pb.owner().displayClientMessage(Component.literal(name(mikiko) + " & " + name(rhalix) + ": " + k.title + "!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
+            XenoWarriors.LOGGER.info("XW team ult start: {} by {} + {}", k.title, name(mikiko), name(rhalix));
+            return;
+        }
         Vec3 at = target(rhalix, mikiko);
         // stand it on the ground under the target point
         net.minecraft.core.BlockPos.MutableBlockPos bp = net.minecraft.core.BlockPos.containing(at).mutable();

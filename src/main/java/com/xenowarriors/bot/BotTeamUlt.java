@@ -59,7 +59,7 @@ public final class BotTeamUlt {
     }
 
     private static boolean pairCharacter(PartyBotEntity b) {
-        return b.character() == CharacterType.RHALIX || b.character() == CharacterType.MIKIKO;
+        return b.character() == CharacterType.RHALIX || b.character() == CharacterType.MIKIKO || b.character() == CharacterType.KAERU;
     }
 
     /**
@@ -109,7 +109,7 @@ public final class BotTeamUlt {
         for (LivingEntity o : TeamUltimate.partners(b)) {
             if (!TeamUltimate.ready(o, false)) continue;
             List<TeamUltimate.Kind> kinds = TeamUltimate.kinds(b, o);
-            TeamUltimate.Kind k = kinds.size() > 1 && (TeamUltimate.foesNear(target, 8).size() >= 2 || b.getRandom().nextInt(10) < 6)
+            TeamUltimate.Kind k = kinds.contains(TeamUltimate.Kind.BLAZING_JUDGMENT) && (TeamUltimate.foesNear(target, 8).size() >= 2 || b.getRandom().nextInt(10) < 6)
                     ? TeamUltimate.Kind.BLAZING_JUDGMENT : kinds.get(b.getRandom().nextInt(kinds.size()));
             if (o instanceof PartyBotEntity ob) {
                 if (b.getRandom().nextInt(3) != 0) return false;                  // (one of the two goes first, within a second or two)
