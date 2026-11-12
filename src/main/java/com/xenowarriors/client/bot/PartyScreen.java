@@ -22,7 +22,8 @@ import java.util.List;
  * smaller rows for a big party, and two columns once one won't fit on the screen.
  */
 public class PartyScreen extends Screen {
-    private static final int CW = 260, GAP = 8;
+    private static final int GAP = 8;
+    private int CW = 260, scroll, visible;
     private final List<PartySyncPacket.Member> rows = new ArrayList<>();
     private int slots, rowH, cols, perCol;
     private boolean compact;
@@ -31,18 +32,27 @@ public class PartyScreen extends Screen {
 
     private int w() { return cols * CW + (cols - 1) * GAP; }
     private int x0() { return (width - w()) / 2; }
-    private int h() { return 40 + perCol * rowH + 30; }
+    private int head() { return compact ? 26 : 30; }
+    private int h() { return head() + 10 + visible * rowH + 30; }
     private int y0() { return Math.max(10, (height - h()) / 2); }
     private int slotX(int i) { return x0() + (i / perCol) * (CW + GAP); }
-    private int slotY(int i) { return y0() + 30 + (i % perCol) * rowH; }
+    private int slotY(int i) { return y0() + head() + (i % perCol - scroll) * rowH; }
+    private boolean shown(int i) { int r = i % perCol; return r >= scroll && r < scroll + visible; }
 
     private void layout() {
         slots = Math.max(Math.max(1, PartyClient.limit()), rows.size());
         compact = slots > 6;
-        rowH = compact ? 20 : 26;
+        rowH = compact ? 18 : 26;
         cols = 1;
+        CW = 260;
         perCol = slots;
-        if (40 + slots * rowH + 30 > height - 20 && width >= 2 * CW + GAP + 8) { cols = 2; perCol = (slots + 1) / 2; }
+        int room = height - 16 - (compact ? 26 : 30) - 40;                         // rows that fit on the screen
+        if (slots * rowH > room) {                                              // two columns (narrower if need be)
+            int cw = Math.min(260, (width - 16 - GAP) / 2);
+            if (cw >= 190) { cols = 2; CW = cw; perCol = (slots + 1) / 2; }
+        }
+        visible = Math.max(1, Math.min(perCol, room / rowH));                   // and a scroll for the rest
+        scroll = Math.max(0, Math.min(scroll, perCol - visible));
     }
 
     private PartyBotEntity myBot(PartySyncPacket.Member m) {
@@ -57,8 +67,9 @@ public class PartyScreen extends Screen {
         rows.clear();
         rows.addAll(PartyClient.members());
         layout();
-        int bh = compact ? 16 : 18, by = compact ? 2 : 2;
+        int bh = compact ? 15 : 18, by = compact ? 1 : 2;
         for (int i = 0; i < slots; i++) {
+            if (!shown(i)) continue;
             int x = slotX(i), y = slotY(i);
             if (i < rows.size()) {
                 PartyBotEntity b = myBot(rows.get(i));
@@ -76,7 +87,7 @@ public class PartyScreen extends Screen {
                         .bounds(x + CW - 70, y + by, 64, bh).build());
             }
         }
-        int y = y0() + 30 + perCol * rowH, x = x0();
+        int y = y0() + head() + visible * rowH, x = x0();
         addRenderableWidget(Button.builder(Component.literal("Add bot teammates"), b -> { minecraft.player.connection.sendCommand("xeno bot"); })
                 .bounds(x + 8, y + 6, 110, 20).build());
         if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez"))       // the party's DragonMineZ mission items
@@ -92,8 +103,13 @@ public class PartyScreen extends Screen {
         g.fill(x - 2, y - 2, x + w() + 2, y + h + 2, 0xFF6CC4FF);
         g.fill(x, y, x + w(), y + h, 0xF0101018);
         g.drawString(font, "PARTY  (" + rows.size() + "/" + PartyClient.limit() + ")", x + 8, y + 10, 0xC8E1FF);
-        if (rows.isEmpty()) g.drawString(font, "Just you. Invite people or add bot teammates.", x + 8, y + 22, 0x999999, false);
+        if (rows.isEmpty() && !compact) g.drawString(font, "Just you. Invite people or add bot teammates.", x + 8, y + 20, 0x999999, false);
+        if (visible < perCol) {
+            String more = (scroll > 0 ? "▲ " : "") + "scroll for more" + (scroll + visible < perCol ? " ▼" : "");
+            g.drawString(font, more, x + w() - 8 - font.width(more), y + 10, 0x7090A8, false);
+        }
         for (int i = 0; i < slots; i++) {
+            if (!shown(i)) continue;
             int sx = slotX(i), sy = slotY(i);
             if (i >= rows.size()) {
                 g.fill(sx + 4, sy, sx + CW - 4, sy + rowH - 3, 0x18FFFFFF);
@@ -106,17 +122,25 @@ public class PartyScreen extends Screen {
             String sub = (m.bot() ? "BOT • " : "") + t.getDisplayName().getString() + (m.knockedOut() ? " • DOWN" : "");
             if (compact) {                                                           // one line: name, then what they are
                 String name = m.name() + (m.leader() ? " ★" : "");
-                int room = CW - 130 - 10;
+                int room = CW - 130 - 6;
                 if (font.width(name) > room) name = font.plainSubstrByWidth(name, room - font.width("…")) + "…";
-                g.drawString(font, name, sx + 10, sy + 5, t.getColor());
+                g.drawString(font, name, sx + 10, sy + 4, t.getColor());
                 String small = font.plainSubstrByWidth(sub, Math.max(0, room - font.width(name) - 6));
-                if (!small.isEmpty()) g.drawString(font, small, sx + 16 + font.width(name), sy + 5, m.knockedOut() ? 0xFF6060 : 0x888888, false);
+                if (!small.isEmpty()) g.drawString(font, small, sx + 16 + font.width(name), sy + 4, m.knockedOut() ? 0xFF6060 : 0x888888, false);
             } else {
                 g.drawString(font, m.name() + (m.leader() ? " ★" : ""), sx + 10, sy + 3, t.getColor());
                 g.drawString(font, sub, sx + 10, sy + 13, m.knockedOut() ? 0xFF6060 : 0xAAAAAA, false);
             }
         }
         super.render(g, mx, my, pt);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        if (visible >= perCol) return false;
+        int s = Math.max(0, Math.min(perCol - visible, scroll - (int) Math.signum(delta)));
+        if (s != scroll) { scroll = s; rebuildWidgets(); }
+        return true;
     }
 
     @Override public boolean isPauseScreen() { return false; }
