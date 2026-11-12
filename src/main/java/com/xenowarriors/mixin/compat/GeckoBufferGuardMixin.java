@@ -28,7 +28,8 @@ public abstract class GeckoBufferGuardMixin {
                                           boolean reRender, float partial, int light, int overlay, float r, float g, float b, float a, CallbackInfo ci) {
         if (!(buffer instanceof BufferBuilder bb) || bb.building() || buffers == null || type == null) return;
         VertexConsumer fresh = buffers.getBuffer(type);
-        if (fresh == buffer || (fresh instanceof BufferBuilder fb && !fb.building())) return;      // (nothing better to hand it)
+        if (fresh == buffer) { if (bb.building()) com.xenowarriors.client.GeoBufferGuard.saved++; return; }   // (the same builder, started again: it can carry on as it is)
+        if (fresh instanceof BufferBuilder fb && !fb.building()) return;      // (nothing better to hand it)
         com.xenowarriors.client.GeoBufferGuard.saved++;
         ci.cancel();
         ((GeoEntityRenderer) (Object) this).renderRecursively(pose, animatable, bone, type, buffers, fresh, reRender, partial, light, overlay, r, g, b, a);
