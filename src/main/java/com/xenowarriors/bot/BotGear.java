@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -196,16 +197,18 @@ public final class BotGear {
 
     /** A tree near the owner: the bottom log of a trunk with natural leaves on top (never someone's log wall). */
     public static BlockPos findTree(PartyBotEntity b, net.minecraft.server.level.ServerPlayer o) {
-        BlockPos c = o.blockPosition(), best = null;
-        double bd = 1e9;
+        BlockPos c = o.blockPosition(), best = null, taken = null;
+        double bd = 1e9, td = 1e9;
+        List<BlockPos> others = PartyBots.othersDigging(b);                     // (each its own tree - a shared one only when it's the only tree)
         for (BlockPos p : BlockPos.betweenClosed(c.offset(-16, -4, -16), c.offset(16, 8, 16))) {
             BlockState s = b.level().getBlockState(p);
             if (!isLog(s) || isLog(b.level().getBlockState(p.below())) || b.unreachable(p)) continue;
-            double dd = p.distSqr(b.blockPosition());
-            if (dd >= bd || !natural(b, p)) continue;
-            bd = dd; best = p.immutable();
+            double dd = p.distSqr(b.blockPosition()), pen = PartyBots.crowd(p, others, 5);
+            if (pen < 0) { if (dd < td && natural(b, p)) { td = dd; taken = p.immutable(); } continue; }
+            if (dd + pen >= bd || !natural(b, p)) continue;
+            bd = dd + pen; best = p.immutable();
         }
-        return best;
+        return best != null ? best : taken;
     }
 
     /** Logs going up from here end in leaves that grew there (not placed by someone). */

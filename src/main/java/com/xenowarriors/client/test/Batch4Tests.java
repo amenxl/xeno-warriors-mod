@@ -92,6 +92,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("towerpods")) towerPods(mc, l);
         if (f.isEmpty() || f.contains("xenoblasts")) xenoBlasts(mc, l);
         if (f.isEmpty() || f.contains("capture")) capture(mc, l);
+        if (f.isEmpty() || f.contains("spread")) spread(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -1894,6 +1895,84 @@ public final class Batch4Tests {
             double d = b == null ? -1 : b.position().distanceTo(new net.minecraft.world.phys.Vec3(59, 120.5, 1097));
             log("kaibuilder: sent 135 blocks off the planet -> back, " + Math.round(d) + " from its middle (teleports " + (com.xenowarriors.kaiplanet.KaiPlanet.teleports - tp0[0]) + ") -> " + (b != null && d < 110 ? "PASS" : "FAIL"));
         }), 20 * 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void spread(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[5];
+        CharacterType[] who = {CharacterType.RHALIX, CharacterType.KAERU, CharacterType.MAX, CharacterType.LEXY, CharacterType.SAM};
+        // reviving: one bot down, four up -> only two go
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.server.getCommands().performPrefixedCommand(p.createCommandSourceStack().withPermission(4), "xeno partylimit 16");
+            for (CharacterType x : who) com.xenowarriors.party.Bonds.set(p, x.getId(), 70, 0);
+            for (int i = 0; i < 5; i++) b[i] = botAt(p, who[i], -6 + i * 3, 4 + (i % 2) * 3);
+        }), 30);
+        l.add(null, () -> server(p -> b[0].die(p.damageSources().generic())), 10);
+        l.add(null, () -> {}, 20 * 2);
+        l.add(null, () -> server(p -> {
+            int going = 0;
+            for (int i = 1; i < 5; i++) if (b[i].goalsForTest().contains("Revive") || b[i].distanceTo(b[0]) < 2.2) going++;
+            int rev = 0;
+            for (int i = 1; i < 5; i++) if (com.xenowarriors.bot.PartyBots.revivingForTest(b[i]) == b[0]) rev++;
+            log("spread revive: " + b[0].character().getId() + " down, 4 bots up -> reviving " + rev + " (want " + com.xenowarriors.bot.PartyBots.reviversFor(4) + ") -> " + (rev == 2 ? "PASS" : "FAIL"));
+        }), 5);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 30), 5);
+        l.add("batch4_spread_revive", () -> {}, 3);
+        // your target: about half of them go
+        net.minecraft.world.entity.LivingEntity[] g = new net.minecraft.world.entity.LivingEntity[1];
+        l.add(null, () -> server(p -> {
+            b[0].revive();
+            for (PartyBotEntity x : b) x.setMode(PartyBotEntity.NEUTRAL);
+            var e = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+            e.moveTo(p.getX(), p.getY(), p.getZ() + 10, 180, 0); e.setNoAi(true);
+            e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(500); e.setHealth(500);
+            p.serverLevel().addFreshEntity(e); g[0] = e;
+        }), 20 * 3);
+        l.add(null, () -> server(p -> {
+            g[0].invulnerableTime = 0;
+            g[0].hurt(p.damageSources().playerAttack(p), 1F);
+            int on = 0;
+            for (PartyBotEntity x : b) if (com.xenowarriors.bot.PartyBots.relayForTest(x) == g[0]) on++;
+            log("spread attack: you hit a husk, 5 bots -> after it " + on + " (want 3) -> " + (on == 3 ? "PASS" : "FAIL"));
+        }), 20);
+        l.add(null, () -> server(p -> { g[0].discard(); for (PartyBotEntity x : b) { com.xenowarriors.bot.PartyBots.clearRelayForTest(x); x.setTarget(null); } }), 20);
+        // mining: five ores apart -> each to its own
+        java.util.List<BlockPos> ores = new java.util.ArrayList<>();
+        l.add(null, () -> server(p -> {
+            BlockPos c = p.blockPosition();
+            for (int i = 0; i < 5; i++) { BlockPos o = c.offset(-8 + i * 4, 0, -6); p.level().setBlock(o, net.minecraft.world.level.block.Blocks.COAL_ORE.defaultBlockState(), 3); ores.add(o); }
+            for (int i = 1; i < 4; i++) { b[i].teleportTo(c.getX() + 0.5 + (i - 2), c.getY(), c.getZ() - 2.5); b[i].setMode(PartyBotEntity.MINING); }
+            b[0].setMode(PartyBotEntity.NEUTRAL); b[4].setMode(PartyBotEntity.NEUTRAL);
+        }), 20);
+        java.util.Set<BlockPos> picked = new java.util.HashSet<>();
+        l.add(null, () -> server(p -> { for (int i = 1; i < 4; i++) if (b[i].mineTargetForTest() != null) picked.add(b[i].mineTargetForTest()); }), 20 * 2);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 180, 35), 5);
+        l.add("batch4_spread_mining", () -> server(p -> {
+            for (int i = 1; i < 4; i++) if (b[i].mineTargetForTest() != null) picked.add(b[i].mineTargetForTest());
+            log("spread mining: 3 bots, 5 ores -> working on " + picked.size() + " different ones -> " + (picked.size() >= 3 ? "PASS" : "FAIL"));
+        }), 3);
+        l.add(null, () -> {}, 20 * 8);
+        l.add(null, () -> server(p -> {
+            int dug = 0;
+            for (BlockPos o : ores) if (p.level().getBlockState(o).isAir()) dug++;
+            // only one left: they may share it
+            BlockPos one = p.blockPosition().offset(0, 0, 6);
+            for (BlockPos o : ores) p.level().setBlock(o, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            p.level().setBlock(one, net.minecraft.world.level.block.Blocks.IRON_ORE.defaultBlockState(), 3);
+            ores.clear(); ores.add(one);
+            log("spread mining: ores dug " + dug + " of 5");
+        }), 5);
+        l.add(null, () -> server(p -> {
+            int on = 0;
+            for (int i = 1; i < 4; i++) if (ores.get(0).equals(b[i].mineTargetForTest())) on++;
+            log("spread mining: only one ore left -> bots on it " + on + " -> " + (on >= 1 ? "PASS" : "FAIL"));
+            for (PartyBotEntity x : b) x.setMode(PartyBotEntity.NEUTRAL);
+            Batch3Tests.clearBots(p);
+        }), 20 * 2);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 

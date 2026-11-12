@@ -495,10 +495,93 @@ public final class PartyBots {
         ServerPlayer o = b.owner();
         if (o == null) return null;
         LivingEntity best = null; double bd = 40 * 40;
-        for (ServerPlayer m : Parties.members(o)) if (m.level() == b.level() && com.xenowarriors.party.Duels.isDowned(m) && m.distanceToSqr(b) < bd) { best = m; bd = m.distanceToSqr(b); }
-        if (!Parties.inParty(o) && o.level() == b.level() && com.xenowarriors.party.Duels.isDowned(o) && o.distanceToSqr(b) < bd) { best = o; bd = o.distanceToSqr(b); }
-        for (ServerPlayer m : Parties.members(o)) for (PartyBotEntity ob : bots(m)) if (ob != b && ob.downed() && ob.level() == b.level() && ob.distanceToSqr(b) < bd) { best = ob; bd = ob.distanceToSqr(b); }
+        for (ServerPlayer m : Parties.members(o)) if (m.level() == b.level() && com.xenowarriors.party.Duels.isDowned(m) && m.distanceToSqr(b) < bd && reviver(b, m)) { best = m; bd = m.distanceToSqr(b); }
+        if (!Parties.inParty(o) && o.level() == b.level() && com.xenowarriors.party.Duels.isDowned(o) && o.distanceToSqr(b) < bd && reviver(b, o)) { best = o; bd = o.distanceToSqr(b); }
+        for (ServerPlayer m : Parties.members(o)) for (PartyBotEntity ob : bots(m)) if (ob != b && ob.downed() && ob.level() == b.level() && ob.distanceToSqr(b) < bd && reviver(b, ob)) { best = ob; bd = ob.distanceToSqr(b); }
         return best;
+    }
+
+    /** The bots of this one's party that could help (on their feet, here, nearby). */
+    static List<PartyBotEntity> teamBots(PartyBotEntity b, double range) {
+        List<PartyBotEntity> out = new ArrayList<>();
+        ServerPlayer o = b.owner();
+        if (o == null) return out;
+        for (ServerPlayer m : Parties.members(o)) for (PartyBotEntity ob : bots(m))
+            if (!ob.downed() && !ob.journey() && ob.level() == b.level() && ob.distanceToSqr(b) < range * range) out.add(ob);
+        if (!out.contains(b)) out.add(b);
+        return out;
+    }
+
+    /** How many of a team go to revive someone (the rest keep fighting and cover them): 1 for up to 3 bots, 2 for more. */
+    public static int reviversFor(int bots) { return bots <= 3 ? 1 : 2; }
+
+    /** Is this bot one of the few who revive them - the closest (one already on the way stays on it)? */
+    static boolean reviver(PartyBotEntity b, LivingEntity down) {
+        List<PartyBotEntity> team = teamBots(b, 48);
+        team.removeIf(x -> x == down);
+        int cap = reviversFor(team.size());
+        if (b.reviving == down) return true;
+        int going = 0;
+        for (PartyBotEntity x : team) if (x != b && x.reviving == down) going++;
+        if (going >= cap) return false;
+        double d = b.distanceToSqr(down);
+        int closer = 0;                                                          // (the closest of those not on it yet)
+        for (PartyBotEntity x : team) if (x != b && x.reviving == null && x.distanceToSqr(down) < d) closer++;
+        return closer < cap - going;
+    }
+
+    /**
+     * Who goes after something you hit (or that hit you): about half your bots - at least one - the closest to it, plus
+     * any already on it. The rest keep to their own fights or find another enemy (not everyone piles onto one).
+     */
+    static void relay(ServerPlayer owner, LivingEntity t) {
+        List<PartyBotEntity> near = new ArrayList<>(botsNear(owner));
+        near.removeIf(b -> friendly(b, t) || b.downed() || b.reviving != null);
+        if (near.isEmpty()) return;
+        int want = Math.max(1, (near.size() + 1) / 2);
+        long until = owner.level().getGameTime() + 200;
+        List<PartyBotEntity> on = new ArrayList<>();
+        for (PartyBotEntity b : near) if (b.relayTarget == t && owner.level().getGameTime() < b.relayUntil) on.add(b);
+        near.removeAll(on);
+        near.sort(java.util.Comparator.comparingDouble((PartyBotEntity b) -> b.getTarget() != null && b.getTarget() != t && b.getTarget().isAlive() ? 1 : 0)   // (ones busy with something else last)
+                .thenComparingDouble(b -> b.distanceToSqr(t)));
+        for (PartyBotEntity b : near) { if (on.size() >= want) break; on.add(b); }
+        for (PartyBotEntity b : on) { b.relayTarget = t; b.relayUntil = until; }
+        relays++;
+    }
+
+    /** (Tests) times you set your bots on something. */
+    public static int relays;
+    public static LivingEntity relayForTest(PartyBotEntity b) { return b.relayTarget != null && b.level().getGameTime() < b.relayUntil ? b.relayTarget : null; }
+    public static void clearRelayForTest(PartyBotEntity b) { b.relayTarget = null; }
+    public static LivingEntity revivingForTest(PartyBotEntity b) { return b.reviving; }
+
+    /** How many of this bot's team are after this one now (not counting it). */
+    static int onIt(PartyBotEntity b, LivingEntity t) {
+        int n = 0;
+        for (PartyBotEntity x : teamBots(b, 64)) if (x != b && x.getTarget() == t) n++;
+        return n;
+    }
+
+    /** What the other bots of the team are digging or chopping now. */
+    static List<BlockPos> othersDigging(PartyBotEntity b) {
+        List<BlockPos> out = new ArrayList<>();
+        for (PartyBotEntity x : teamBots(b, 64)) if (x != b && x.mineTarget != null) out.add(x.mineTarget);
+        return out;
+    }
+
+    /**
+     * Spreading out: 0 for a spot nobody's on, more the closer it is to where another bot is digging (in the way of
+     * a block away from a spot), and "taken" (-1) for the very block someone's on.
+     */
+    static double crowd(BlockPos p, List<BlockPos> others, double spread) {
+        double pen = 0;
+        for (BlockPos q : others) {
+            if (q.equals(p)) return -1;
+            double d2 = q.distSqr(p);
+            if (d2 < spread * spread) pen += (spread * spread - d2) * 4;
+        }
+        return pen;
     }
 
     public static boolean isDown(LivingEntity e) {
@@ -925,23 +1008,25 @@ public final class PartyBots {
 
     static BlockPos findOre(PartyBotEntity b, ServerPlayer o) {
         boolean ultima = b.character() == CharacterType.ULTIMA;
-        BlockPos c = o.blockPosition(), best = null;
-        double bd = 1e9;
+        BlockPos c = o.blockPosition(), best = null, taken = null;
+        double bd = 1e9, td = 1e9;
+        List<BlockPos> others = othersDigging(b);                              // (spread out: each to its own ore - a shared one only when it's all there is)
         List<Long> seen = new ArrayList<>(); List<Integer> kinds = new ArrayList<>();
         for (BlockPos p : BlockPos.betweenClosed(c.offset(-10, -6, -10), c.offset(10, 6, 10))) {
             BlockState s = b.level().getBlockState(p);
             if (s.is(com.xenowarriors.sky.ModBlocks.CORRUPTED_ORE.get())) { if (ultima) return null; continue; }   // Data Sense can't read it
             if (!isOre(s)) continue;
             if (exposed(b, p) && !b.unreachable(p) && com.xenowarriors.stats.HandMining.botCanHarvest(b, s)) {   // (buried ore it can't get to, or can't get anything out of, isn't a target)
-                double dd = p.distSqr(b.blockPosition());
-                if (dd < bd) { bd = dd; best = p.immutable(); }
+                double dd = p.distSqr(b.blockPosition()), pen = crowd(p, others, 4);
+                if (pen < 0) { if (dd < td) { td = dd; taken = p.immutable(); } }
+                else if (dd + pen < bd) { bd = dd + pen; best = p.immutable(); }
             }
             seen.add(p.asLong()); kinds.add(s.is(com.xenowarriors.sky.ModBlocks.DATA_ORE.get()) ? 4 : s.is(Tags.Blocks.ORES_DIAMOND) || s.is(Tags.Blocks.ORES_EMERALD) ? 3 : s.is(Tags.Blocks.ORES_GOLD) ? 1 : 0);
         }
         if (!seen.isEmpty() && b.tickCount % 200 < 20)                       // shows you the ore it senses
             ModNetwork.sendToPlayer(new com.xenowarriors.network.DataSensedPacket(new int[0], seen.stream().mapToLong(Long::longValue).toArray(),
                     kinds.stream().mapToInt(Integer::intValue).toArray(), 200, false), o);
-        return best;
+        return best != null ? best : taken;
     }
 
     /** (For tests) the ore it would pick now, and whether a block counts as open to the air. */
@@ -1167,10 +1252,10 @@ public final class PartyBots {
         if (bot != null && friendly(bot, event.getEntity()) && !sparFoes(bot, event.getEntity())) { event.setCanceled(true); return; }
         if (bot == null && src instanceof ServerPlayer p && event.getEntity() instanceof PartyBotEntity b && friendly(b, p) && !sparFoes(b, p)) { event.setCanceled(true); return; }
         if (src instanceof ServerPlayer owner && !(event.getEntity() instanceof PartyBotEntity) && !(src instanceof FakePlayer)) {
-            for (PartyBotEntity b : botsNear(owner)) if (!friendly(b, event.getEntity())) { b.relayTarget = event.getEntity(); b.relayUntil = owner.level().getGameTime() + 200; }
+            relay(owner, event.getEntity());                                     // (about half of them: see relay)
         }
         if (event.getEntity() instanceof ServerPlayer owner && src instanceof LivingEntity att && !(src instanceof FakePlayer)) {
-            for (PartyBotEntity b : botsNear(owner)) if (!friendly(b, att)) { b.relayTarget = att; b.relayUntil = owner.level().getGameTime() + 200; }
+            relay(owner, att);
         }
     }
 

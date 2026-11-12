@@ -720,10 +720,15 @@ public class PartyBotEntity extends PathfinderMob {
             if (o == null) return false;
             if (sparring()) { pick = BotSpar.pick(PartyBotEntity.this); return pick != null; }
             if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget) && !untouchable(relayTarget)) { pick = relayTarget; return true; }
-            if (mode() == AGGRESSIVE) {
-                pick = level().getNearestEntity(level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(16),
-                        m -> m instanceof Enemy && m.isAlive() && !PartyBots.friendly(PartyBotEntity.this, m) && !untouchable(m)), net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat(),
-                        PartyBotEntity.this, getX(), getY(), getZ());
+            if (mode() == AGGRESSIVE) {                                           // the nearest enemy - one fewer of the team is on first (they spread out)
+                pick = null;
+                double best = Double.MAX_VALUE;
+                for (net.minecraft.world.entity.Mob m : level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(16),
+                        m -> m instanceof Enemy && m.isAlive() && !PartyBots.friendly(PartyBotEntity.this, m) && !untouchable(m))) {
+                    if (!net.minecraft.world.entity.ai.targeting.TargetingConditions.forCombat().test(PartyBotEntity.this, m)) continue;
+                    double score = distanceToSqr(m) + PartyBots.onIt(PartyBotEntity.this, m) * 100;   // (each bot already on it: as if 10 blocks further)
+                    if (score < best) { best = score; pick = m; }
+                }
                 return pick != null;
             }
             return false;
