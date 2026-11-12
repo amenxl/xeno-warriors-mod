@@ -369,9 +369,21 @@ public final class KarmaSense {
         net.minecraft.world.entity.LivingEntity e = event.getEntity();
         Integer lv = LEVELS.get(e.getId());
         if (lv == null || !isSensed(e)) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (SOULS.contains(e.getId()) && ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.YURI) {   // her laptop can't read it
+            var pose = event.getPoseStack();
+            pose.pushPose();
+            pose.translate(0, e.getBbHeight() + 0.5, 0);
+            pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+            pose.scale(-0.03F, -0.03F, 0.03F);
+            String text = (mc.level != null && mc.level.getGameTime() % 10 < 2) ? "UNKN0WN 3NTITY" : "UNKNOWN ENTITY";   // (a glitch now and then)
+            mc.font.drawInBatch(text, -mc.font.width(text) / 2F, 0, 0xFFFF4040, false, pose.last().pose(), event.getMultiBufferSource(),
+                    net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0x80000000, net.minecraft.client.renderer.LightTexture.FULL_BRIGHT);
+            pose.popPose();
+            return;
+        }
         boolean stats = outclass(e) && STATS.containsKey(e.getId());
         if (!showLevels && !stats) return;
-        Minecraft mc = Minecraft.getInstance();
         var pose = event.getPoseStack();
         pose.pushPose();
         pose.translate(0, e.getBbHeight() + (e instanceof Player || e.hasCustomName() ? 0.85 : 0.5), 0);

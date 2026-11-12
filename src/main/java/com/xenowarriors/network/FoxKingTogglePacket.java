@@ -26,6 +26,7 @@ public record FoxKingTogglePacket() {
             return;
         }
         if (!com.xenowarriors.toggle.Toggles.transformAllowed(p)) return;          // (switched off in Character Customization > Passives)
+        if (com.xenowarriors.toggle.Passives.livingWeapon(p)) return;             // Ultima: Living Weapon
         if (com.xenowarriors.skill.UltForms.press(p)) return;    // Kill / Lexy / You (Demon, sneaking): their transformations
         com.xenowarriors.mikiko.FoxKing.toggle(p); com.xenowarriors.rhalix.DemonsRemnants.activate(p); com.xenowarriors.you.YouRaces.toggleHumanForm(p);   // each only works for its own character
     }

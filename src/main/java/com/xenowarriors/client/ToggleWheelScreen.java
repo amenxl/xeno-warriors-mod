@@ -42,7 +42,8 @@ public class ToggleWheelScreen extends Screen {
 
     @Override public boolean isPauseScreen() { return false; }
 
-    private List<TogglesPacket.Row> rows() { return TogglesPacket.CLIENT.rows(); }
+    /** What goes on the wheel (the automatic passives are switched only in Character Customization). */
+    private List<TogglesPacket.Row> rows() { return TogglesPacket.CLIENT.rows().stream().filter(r -> r.kind() != 3).toList(); }
 
     private boolean keyHeld() {
         var key = ModKeyMappings.FOX_KING.getKey();
@@ -80,7 +81,7 @@ public class ToggleWheelScreen extends Screen {
 
     private double angleOf(int i, int n) { return -Math.PI / 2 + i * Math.PI * 2 / n; }
 
-    private static String kind(int k) { return k == 0 ? "Transformation" : k == 1 ? "Buff" : "Passive"; }
+    private static String kind(int k) { return k == 0 ? "Transformation" : k == 1 ? "Buff" : k == 4 ? "Tracking" : "Passive"; }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float pt) {
@@ -127,7 +128,7 @@ public class ToggleWheelScreen extends Screen {
             int ix = Math.round((float) Math.cos(a) * rad), iy = Math.round((float) Math.sin(a) * rad);
             icon(g, r, ix, iy - 8, usable);
             fit(g, r.title(), ix, iy + 6, 70, usable ? 0xFFFFFF : 0x808080);
-            String state = !r.locked().isEmpty() ? "locked" : r.kind() == 2 ? (r.enabled() ? "ON" : "OFF") : !r.enabled() ? "disabled" : r.active() ? "active" : "";
+            String state = !r.locked().isEmpty() ? "locked" : r.kind() == 2 ? (r.enabled() ? "ON" : "OFF") : !r.enabled() ? "disabled" : r.active() ? (r.kind() == 4 ? "tracking" : "active") : "";
             if (!state.isEmpty()) fit(g, state, ix, iy + 16, 60, r.active() ? 0x7CFF7C : !r.locked().isEmpty() || !r.enabled() ? 0xC08080 : 0xC0C0C0);
         }
         g.drawCenteredString(font, n > 0 ? "let go" : "", 0, -10, 0x909090);
@@ -141,6 +142,7 @@ public class ToggleWheelScreen extends Screen {
         else if (hovered.kind() == 2) line = kind(hovered.kind()) + " - let go to switch it " + (hovered.enabled() ? "off" : "on");
         else if (!hovered.enabled()) { line = hovered.title() + " is disabled (Character Customization > Passives)"; lc = 0xFF8080; }
         else if (hovered.kind() == 1) line = "Buff - let go to " + (hovered.active() ? "put it out" : "light it");
+        else if (hovered.kind() == 4) line = "Tracking - let go to pick a scent to follow";
         else line = "Transformation - let go to transform  (mastery " + Math.round(hovered.mastery()) + ")";
         g.drawCenteredString(font, line, cx, Math.round(cy + (OUTER + 10) * scale), lc);
     }
@@ -157,6 +159,10 @@ public class ToggleWheelScreen extends Screen {
             case 1 -> {                                                        // a buff: a flame
                 g.fill(x - 3, y - 1, x + 3, y + 3, c); g.fill(x - 2, y - 4, x + 2, y - 1, c); g.fill(x - 1, y - 7, x + 1, y - 4, c);
                 g.fill(x - 1, y, x + 1, y + 2, 0xFFFFF0A0);
+            }
+            case 4 -> {                                                        // tracking: a nose / paw print
+                g.fill(x - 2, y - 1, x + 2, y + 3, c);
+                g.fill(x - 5, y - 4, x - 3, y - 2, c); g.fill(x - 1, y - 6, x + 1, y - 4, c); g.fill(x + 3, y - 4, x + 5, y - 2, c);
             }
             default -> {                                                       // a passive: an eye
                 g.fill(x - 6, y - 1, x + 6, y + 1, c); g.fill(x - 4, y - 3, x + 4, y - 1, c); g.fill(x - 4, y + 1, x + 4, y + 3, c);

@@ -21,7 +21,7 @@ public final class MaxSkills {
     private MaxSkills() {}
     static final DustParticleOptions BLOOD = new DustParticleOptions(new Vector3f(0.7F, 0.03F, 0.06F), 1.0F);
 
-    static boolean night(ServerPlayer p) { long t = p.level().getDayTime() % 24000; return t > 13000 && t < 23000; }
+    public static boolean night(ServerPlayer p) { long t = p.level().getDayTime() % 24000; return t > 13000 && t < 23000; }
 
     /** Dagger Flurry: five quick stabs on one target. */
     public static class DaggerFlurry implements Skill {

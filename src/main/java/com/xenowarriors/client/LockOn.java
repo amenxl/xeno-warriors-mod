@@ -99,10 +99,17 @@ public final class LockOn {
             return;
         }
         target = found;
+        lockedNotice(found);
         unseen = 0;
         lockedAt = mc.player.tickCount;
         shownHealth = found.getHealth();
         mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_CHIME, 1.6F, 0.9F));
+    }
+
+    /** Tells the server who you locked on to (Technica's Visor Scan passive fires on it). */
+    private static void lockedNotice(LivingEntity t) {
+        if (t != null && com.xenowarriors.client.ClientCharacterData.getLocal() == com.xenowarriors.character.CharacterType.TECHNICA)
+            com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(com.xenowarriors.network.ToggleActionPacket.LOCKED_ON, String.valueOf(t.getId())));
     }
 
     private static void release(boolean sound) {
@@ -195,6 +202,7 @@ public final class LockOn {
         if (ext != null) {
             if (target != ext) {
                 target = ext;
+                lockedNotice(ext);
                 lockedAt = mc.player.tickCount;
                 shownHealth = ext.getHealth();
             }

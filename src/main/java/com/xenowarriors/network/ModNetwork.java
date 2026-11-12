@@ -518,6 +518,8 @@ public final class ModNetwork {
                 .encoder(com.xenowarriors.compat.FusionLooks.FusionLookPacket::encode).decoder(com.xenowarriors.compat.FusionLooks.FusionLookPacket::decode).consumerMainThread(com.xenowarriors.compat.FusionLooks.FusionLookPacket::handle).add();
         CHANNEL.messageBuilder(com.xenowarriors.vehicle.BikeFirePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)   // (Technica's bike guns)
                 .encoder(com.xenowarriors.vehicle.BikeFirePacket::encode).decoder(com.xenowarriors.vehicle.BikeFirePacket::decode).consumerMainThread(com.xenowarriors.vehicle.BikeFirePacket::handle).add();
+        CHANNEL.messageBuilder(ScentPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (Kaeru's scent picker and trail)
+                .encoder(ScentPacket::encode).decoder(ScentPacket::decode).consumerMainThread(ScentPacket::handle).add();
         CHANNEL.messageBuilder(TogglesPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (toggle wheel, Passives / R+L Click tabs)
                 .encoder(TogglesPacket::encode).decoder(TogglesPacket::decode).consumerMainThread(TogglesPacket::handle).add();
         CHANNEL.messageBuilder(ToggleActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)

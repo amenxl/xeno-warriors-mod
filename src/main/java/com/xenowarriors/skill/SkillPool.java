@@ -67,7 +67,7 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.sp.MaxSkills.RapidVampireSlice(), 30)));
         ULTIMATE.put(CharacterType.MAX, new com.xenowarriors.skill.sp.MaxSkills.MoonlitGale());
         POOL.put(CharacterType.SAM, List.of(
-                new Entry(new com.xenowarriors.skill.sp.SamSkills.BatterUp(), 0), new Entry(new com.xenowarriors.skill.sp.SamSkills.ClearSpace(), 0),
+                new Entry(new com.xenowarriors.skill.sp.SamSkills.BatterUp(), 0), new Entry(new com.xenowarriors.skill.sp.SamSkills.ClearSpace(), 0, 3),
                 new Entry(new com.xenowarriors.skill.sp.SamSkills.TickingTimeBomb(), 0), new Entry(new com.xenowarriors.skill.sp.SamSkills.KnockoutMode(), 0),
                 new Entry(new com.xenowarriors.skill.sp.SamSkills.BatterShoot(), 20)));
         ULTIMATE.put(CharacterType.SAM, new com.xenowarriors.skill.sp.SamSkills.PsychoticTimeBomb());

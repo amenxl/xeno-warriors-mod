@@ -146,7 +146,11 @@ public final class KarmaSensing {
             player.displayClientMessage(Component.translatable("message.xenowarriors.karma_sense.cooldown", (ready - now + 19) / 20), true);
             return;
         }
-        if (!Karma.trySpend(player, COST)) return;
+        if (now < BROKEN.getOrDefault(player.getUUID(), 0L)) {               // (Technica's sensor, fried by a corrupted soul)
+            player.displayClientMessage(Component.literal("Sensor offline - rebooting (" + (BROKEN.get(player.getUUID()) - now + 19) / 20 + "s)").withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
+        if (!tech(player) && !Karma.trySpend(player, COST)) return;           // (Yuri and Technica sense with technology: no Karma)
         READY_AT.put(player.getUUID(), now + COOLDOWN);
         practice(player);
         int uses = uses(player);
@@ -171,7 +175,7 @@ public final class KarmaSensing {
         int held = (int) p.level().getGameTime() - (Integer) h[0];
         if (held <= 0) { if (held < -5) release(p); return; }
         if (held % 10 == 0) {
-            if (!Karma.trySpend(p, HOLD_DRAIN / 2F)) {
+            if (!tech(p) && !Karma.trySpend(p, HOLD_DRAIN / 2F)) {
                 p.displayClientMessage(Component.literal("Out of focus...").withStyle(net.minecraft.ChatFormatting.GRAY), true);
                 release(p);
                 return;
@@ -184,6 +188,19 @@ public final class KarmaSensing {
             scan(p, radius(uses) * grow, duration(uses), (Boolean) h[1], false);
         }
     }
+
+    /** Yuri and Technica sense with technology (her laptop, her visor): it costs no Karma - but corrupted souls glitch it. */
+    public static boolean tech(ServerPlayer p) {
+        CharacterType t = ModCapabilities.getType(p);
+        return t == CharacterType.YURI || t == CharacterType.TECHNICA;
+    }
+
+    /** How long a corrupted soul knocks Technica's sensing out. */
+    public static final int TECH_BROKEN = 30 * 20;
+    private static final Map<UUID, Long> BROKEN = new HashMap<>();
+    /** (Tests) */
+    public static boolean brokenForTest(ServerPlayer p) { return p.level().getGameTime() < BROKEN.getOrDefault(p.getUUID(), 0L); }
+    public static void unbreakForTest(ServerPlayer p) { BROKEN.remove(p.getUUID()); READY_AT.remove(p.getUUID()); }
 
     public static boolean holding(ServerPlayer p) {
         return HOLDING.containsKey(p.getUUID());
@@ -282,6 +299,18 @@ public final class KarmaSensing {
         int[] levels = found.stream().mapToInt(e -> e instanceof Player p && HoodieItem.wearing(p) ? -1 : power(e)).toArray();
         // anything with a corrupted soul in it (hidden ones too) feels like the soul itself
         int[] souls = found.stream().filter(KarmaSensing::corrupted).mapToInt(LivingEntity::getId).toArray();
+        if (souls.length > 0 && ModCapabilities.getType(player) == CharacterType.TECHNICA) {   // a corrupted soul: her visor can't read it - it crashes
+            long now = player.level().getGameTime();
+            BROKEN.put(player.getUUID(), now + TECH_BROKEN);
+            READY_AT.put(player.getUUID(), now + TECH_BROKEN);
+            HOLDING.remove(player.getUUID());
+            ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.KarmaFocusPacket(player.getId(), false), player);
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ITEM_BREAK, SoundSource.PLAYERS, 1F, 0.6F);
+            player.displayClientMessage(Component.literal("ERROR - signal can't be read! Visor crashed - sensing offline " + TECH_BROKEN / 20 + "s").withStyle(net.minecraft.ChatFormatting.RED), false);
+            return;
+        }
+        if (souls.length > 0 && ModCapabilities.getType(player) == CharacterType.YURI && first)   // Yuri's laptop: an error, but she keeps sensing
+            player.displayClientMessage(Component.literal("ERROR: unknown entity detected (" + souls.length + ")").withStyle(net.minecraft.ChatFormatting.RED), false);
         // their stats (shown to you if you're the stronger one): attack damage x10, defense
         int[] damage = found.stream().mapToInt(e -> e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
                 ? (int) Math.round(e.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) * 10) : 0).toArray();

@@ -21,6 +21,7 @@ public final class TechSkills {
     private TechSkills() {}
     static final DustParticleOptions TRACER = new DustParticleOptions(new Vector3f(1F, 0.55F, 0.8F), 0.6F);
     static final DustParticleOptions GRAV = new DustParticleOptions(new Vector3f(0.55F, 0.3F, 0.9F), 0.8F);
+    public static DustParticleOptions gravParticle() { return GRAV; }
 
     /** One Uzi shot at a target: a pink tracer and a hit. */
     static void shot(ServerPlayer p, LivingEntity t, float dmg, boolean gravity) {
@@ -117,7 +118,7 @@ public final class TechSkills {
     /** Rescue Platform: her watch calls the platform down - her party gathers to her, healed and floating safely down. */
     public static class RescuePlatform implements Skill {
         @Override public String getId() { return "rescue_platform"; }
-        @Override public int getCooldownTicks() { return 60 * 20; }
+        @Override public int getCooldownTicks() { return 180 * 20; }                  // (a passive now - Passives - and a long wait between)
         @Override public int getKarmaCost() { return 35; }
         @Override public boolean use(ServerPlayer p) {
             int n = 0;

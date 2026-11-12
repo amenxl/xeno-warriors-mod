@@ -193,8 +193,10 @@ public final class SkillManager {
                 return;
             }
         }
-        if (skill instanceof com.xenowarriors.skill.mikiko.TrueEmpathySkill) {   // a passive now: its slot just switches it on / off
-            com.xenowarriors.toggle.Toggles.use(player, com.xenowarriors.toggle.Toggles.Entry.TRUE_EMPATHY);
+        com.xenowarriors.toggle.Toggles.Entry asToggle = com.xenowarriors.toggle.Toggles.Entry.byId(skill.getId());
+        if (asToggle != null && com.xenowarriors.toggle.Toggles.of(player).contains(asToggle)) {   // a passive / transformation now: its slot switches it (or transforms, or opens the scent picker)
+            if (asToggle == com.xenowarriors.toggle.Toggles.Entry.LIVING_WEAPON) com.xenowarriors.toggle.Passives.livingWeapon(player);
+            else com.xenowarriors.toggle.Toggles.use(player, asToggle);
             return;
         }
         if (skill.tryRecast(player)) return;
@@ -244,6 +246,11 @@ public final class SkillManager {
         int slot = slotOf(player, skill);
         if (slot >= 0) left = Math.max(left, player.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[slot] - now).orElse(0L));
         return left;
+    }
+
+    /** Starts a skill's out-of-slot cooldown (Kaeru's scent picker). */
+    public static void setFreeCooldown(ServerPlayer player, Skill skill, int ticks) {
+        FREE_CD.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(skill.getId(), now(player) + ticks);
     }
 
     /** The slot (0-3) this skill is equipped in, or -1. */

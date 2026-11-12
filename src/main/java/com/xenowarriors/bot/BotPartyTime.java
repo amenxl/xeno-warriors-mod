@@ -52,7 +52,47 @@ public final class BotPartyTime {
     /** pentatonic steps for the tune (a random, cheerful little melody - nothing in particular) */
     private static final float[] NOTES = {0.5F, 0.561F, 0.63F, 0.749F, 0.841F, 1.0F, 1.122F, 1.26F, 1.498F, 1.682F, 2.0F};
 
-    private static final class Party { long end; BlockPos center, cake; int note; final Set<UUID> guests = new HashSet<>(); }
+    private static final class Party {
+        long end; BlockPos center, cake; int note; final Set<UUID> guests = new HashSet<>();
+        /** the bot playing its jukebox (null: none), the beatboxers (Garry / Stevie bots, when there's no music) */
+        UUID dj; final List<UUID> beatbox = new ArrayList<>();
+        /** rap battles still to come (pairs of character ids), the one going on, its next line and when */
+        final ArrayDeque<String[]> battles = new ArrayDeque<>(); String[] battle; int line; long nextLine;
+    }
+
+    /** Garry or Stevie there (as a bot or played by someone): everyone enjoys the music and the rap battles - more bond. */
+    public static final float RAPPERS_BONUS = 1.5F;
+    /** (Tests) parties with a jukebox / beatboxing, rap battles held. */
+    public static int jukeboxParties, beatboxParties, rapBattles;
+
+    /** Who's at the party by character (bots and players). */
+    private static Map<String, LivingEntity> byChar(List<LivingEntity> gs) {
+        Map<String, LivingEntity> m = new LinkedHashMap<>();
+        for (LivingEntity g : gs) {
+            String c = g instanceof PartyBotEntity b ? b.character().getId() : com.xenowarriors.party.Bonds.charOf(g);
+            if (c != null) m.putIfAbsent(c, g);
+        }
+        return m;
+    }
+
+    private static boolean rappers(List<LivingEntity> gs) { Map<String, LivingEntity> m = byChar(gs); return m.containsKey("garry") || m.containsKey("stevie"); }
+
+    /** Lines for the rap battles (original): each character's own boasts. */
+    private static final Map<String, String[]> BARS = Map.of(
+            "garry", new String[]{"Mic in my hand and the beat in my chest - step to the Dojo, you're gonna need rest!",
+                    "I drop one bar and the whole room bounces - you drop one bar and the crowd announces: nope!",
+                    "Beatbox king, every snare is a strike - your flow's so slow it needs training wheels and a bike!"},
+            "stevie", new String[]{"Little brother, big talk, but the mic don't lie - I wrote the rhymes that you're borrowing, why?",
+                    "Karma Blast flow, I light up the stage - you're still on page one, I'm turning the page!",
+                    "Disco lights on me, the crowd knows the name - you copy my moves, but it's never the same!"},
+            "mikiko", new String[]{"Hekublade sharp and my rhymes cut deeper - your spells are cheap, mine come with a keeper!",
+                    "Fox fire burning, I'm hot on the beat - Zane, take a seat, this flame can't be beat!",
+                    "Orenji pride and my karma's on fire - your broom is a joke, I'm a whole different flier!"},
+            "zane", new String[]{"Mana in my verses, I cast and I curse - you swing a big sword, but your bars got worse!",
+                    "Fire, ice, thunder - pick one, I've got three - Mikiko, you're a warm-up act for me!",
+                    "Past mages behind me, they're nodding along - you lost this battle the moment I started my song!"});
+
+    private static final String[][] PAIRS = {{"garry", "stevie"}, {"mikiko", "zane"}};
     private static final Map<UUID, Party> PARTIES = new HashMap<>();
     /** (Tests) parties asked for / thrown / finished; fireworks launched. */
     public static int asked, thrown, finished, fireworks;
@@ -100,6 +140,19 @@ public final class BotPartyTime {
         }
         PARTIES.put(o.getUUID(), pt);
         thrown++;
+        List<LivingEntity> first = guests(o, pt);
+        for (LivingEntity g : first)                                          // a bot with a jukebox: Xeno Warriors music
+            if (g instanceof PartyBotEntity b && com.xenowarriors.modes.ModeRules.canGrief(l) && BotJukebox.canPlay(b) && BotJukebox.startParty(b, l, o).startsWith("playing")) {
+                pt.dj = b.getUUID(); jukeboxParties++;
+                o.sendSystemMessage(Component.empty().append(b.label()).append(" sets up a jukebox - Xeno Warriors music!").withStyle(ChatFormatting.LIGHT_PURPLE));
+                break;
+            }
+        if (pt.dj == null) for (LivingEntity g : first)                        // no music: Garry and Stevie beatbox it
+            if (g instanceof PartyBotEntity b && (b.character() == com.xenowarriors.character.CharacterType.GARRY || b.character() == com.xenowarriors.character.CharacterType.STEVIE)) pt.beatbox.add(b.getUUID());
+        if (!pt.beatbox.isEmpty()) { beatboxParties++; o.sendSystemMessage(Component.literal("No music? No problem - the beatboxing starts!").withStyle(ChatFormatting.LIGHT_PURPLE)); }
+        Map<String, LivingEntity> who = byChar(first);
+        for (String[] pair : PAIRS) if (who.containsKey(pair[0]) && who.containsKey(pair[1])) pt.battles.add(pair);
+        if (!pt.battles.isEmpty()) pt.nextLine = l.getGameTime() + 20 * 40;    // (the first rap battle, 40 s in)
         for (LivingEntity g : guests(o, pt)) {
             g.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 60, 0, false, true));
             if (g instanceof ServerPlayer gp) gp.getInventory().add(new ItemStack(Items.COOKIE, 4));
@@ -132,16 +185,93 @@ public final class BotPartyTime {
             int left = (int) (pt.end - now);
             for (ServerPlayer p : l.players()) if (p.distanceToSqr(o) < 64 * 64) ModNetwork.sendToPlayer(new PartyHatsPacket(ids, left, pt.center), p);
         }
-        if (o.tickCount % 8 == 0) {                                           // the tune: a random cheerful melody
+        if (pt.dj != null && l.getEntity(pt.dj) instanceof PartyBotEntity dj && !BotJukebox.playing(dj)) pt.dj = null;   // (the song's over: back to the tune / beatbox)
+        boolean battling = battleTick(o, pt, gs, l, now);
+        if (!pt.beatbox.isEmpty() && pt.dj == null || battling) beat(o, pt, l);  // beatboxing (and under every rap battle)
+        else if (pt.dj == null && o.tickCount % 8 == 0) {                     // the tune: a random cheerful melody
             float pitch = NOTES[Math.floorMod(pt.note + l.random.nextInt(5) - 2, NOTES.length)];
             pt.note = Math.floorMod(pt.note + l.random.nextInt(5) - 2, NOTES.length);
             l.playSound(null, pt.center, o.tickCount % 32 == 0 ? SoundEvents.NOTE_BLOCK_BASS.value() : (o.tickCount % 16 == 0 ? SoundEvents.NOTE_BLOCK_CHIME.value() : SoundEvents.NOTE_BLOCK_BELL.value()),
                     SoundSource.RECORDS, 0.5F, pitch);
         }
         if (l.random.nextInt(170) == 0) firework(l, pt, 1 + l.random.nextInt(2));
-        for (LivingEntity g : gs) if (g instanceof PartyBotEntity b && o.tickCount % 10 == b.getId() % 10) dance(b, pt);
-        if (o.tickCount % 400 == 0) bondTick(o, gs, BOND_TICK);
+        for (LivingEntity g : gs) if (g instanceof PartyBotEntity b && o.tickCount % 10 == b.getId() % 10
+                && !(pt.battle != null && (b.character().getId().equals(pt.battle[0]) || b.character().getId().equals(pt.battle[1])))) dance(b, pt);   // (the rappers stay put)
+        if (o.tickCount % 400 == 0) bondTick(o, gs, BOND_TICK * (rappers(gs) ? RAPPERS_BONUS : 1F));
     }
+
+    /** A beat: kick, hat, snare, hat (the beatboxers bob along). */
+    private static void beat(ServerPlayer o, Party pt, ServerLevel l) {
+        if (o.tickCount % 4 != 0) return;
+        int step = (o.tickCount / 4) % 8;
+        var sound = step % 4 == 0 ? SoundEvents.NOTE_BLOCK_BASEDRUM.value() : step % 4 == 2 ? SoundEvents.NOTE_BLOCK_SNARE.value() : SoundEvents.NOTE_BLOCK_HAT.value();
+        BlockPos at = pt.center;
+        for (UUID id : pt.beatbox) if (l.getEntity(id) instanceof PartyBotEntity b) { at = b.blockPosition(); if (step % 4 == 0) b.swing(net.minecraft.world.InteractionHand.MAIN_HAND); break; }
+        l.playSound(null, at, sound, SoundSource.RECORDS, step % 4 == 0 ? 0.9F : 0.55F, step == 6 ? 1.3F : 1F);
+    }
+
+    /**
+     * A rap battle (Garry vs Stevie, Mikiko vs Zane - when both are there): they square up in the middle and trade three
+     * bars each over a beat, everyone else cheers, a winner, and everyone gets closer. True while one's on.
+     */
+    private static boolean battleTick(ServerPlayer o, Party pt, List<LivingEntity> gs, ServerLevel l, long now) {
+        if (pt.battle == null) {
+            if (pt.battles.isEmpty() || now < pt.nextLine || pt.end - now < 20 * 30) return false;
+            pt.battle = pt.battles.poll(); pt.line = 0; pt.nextLine = now + 40;
+            Map<String, LivingEntity> who = byChar(gs);
+            LivingEntity a = who.get(pt.battle[0]), b = who.get(pt.battle[1]);
+            if (a == null || b == null) { pt.battle = null; return false; }
+            say(l, o, "RAP BATTLE! " + name(a) + " vs " + name(b) + "!", ChatFormatting.GOLD);
+            rapBattles++;
+            return true;
+        }
+        Map<String, LivingEntity> who = byChar(gs);
+        LivingEntity a = who.get(pt.battle[0]), b = who.get(pt.battle[1]);
+        if (a == null || b == null) { pt.battle = null; return false; }
+        Vec3 c = Vec3.atBottomCenterOf(pt.center);                               // face to face in the middle
+        face(a, b, c.add(-1.2, 0, 0)); face(b, a, c.add(1.2, 0, 0));
+        if (now < pt.nextLine) return true;
+        if (pt.line < 6) {
+            LivingEntity mc = pt.line % 2 == 0 ? a : b;
+            String who2 = pt.line % 2 == 0 ? pt.battle[0] : pt.battle[1];
+            String[] bars = BARS.get(who2);
+            say(l, o, name(mc) + ": \"" + bars[pt.line / 2] + "\"", ChatFormatting.AQUA);
+            mc.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.NOTE, mc.getX(), mc.getY() + 2.2, mc.getZ(), 4, 0.4, 0.2, 0.4, 1);
+            for (LivingEntity g : gs) if (g != a && g != b && g instanceof PartyBotEntity cb && cb.onGround() && l.random.nextBoolean()) cb.getJumpControl().jump();   // (the crowd)
+            l.playSound(null, pt.center, SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.25F, 1.6F + l.random.nextFloat() * 0.3F);
+            pt.line++; pt.nextLine = now + 20 * 4;
+            return true;
+        }
+        LivingEntity win = l.random.nextBoolean() ? a : b;                      // the crowd decides
+        say(l, o, "The crowd goes wild - " + name(win) + " wins the rap battle!", ChatFormatting.GOLD);
+        l.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, win.getX(), win.getY() + 1, win.getZ(), 30, 0.5, 0.8, 0.5, 0.3);
+        bondTick(o, gs, BOND_TICK * 2);                                           // (everyone enjoyed that)
+        String ca = pt.battle[0], cb2 = pt.battle[1];
+        if (a instanceof PartyBotEntity ba) com.xenowarriors.party.Bonds.addXp(ba, cb2, BOND_TICK * 2);
+        if (b instanceof PartyBotEntity bb) com.xenowarriors.party.Bonds.addXp(bb, ca, BOND_TICK * 2);
+        pt.battle = null; pt.nextLine = now + 20 * 20;
+        return false;
+    }
+
+    private static void face(LivingEntity who, LivingEntity other, Vec3 spot) {
+        if (who instanceof PartyBotEntity b) {
+            if (b.position().distanceTo(spot) > 0.8) b.getNavigation().moveTo(spot.x, spot.y, spot.z, 1.0);
+            b.getLookControl().setLookAt(other, 30F, 30F);
+        }
+    }
+
+    private static String name(LivingEntity e) { return e instanceof PartyBotEntity b ? b.character().getDisplayName().getString() : e.getName().getString(); }
+
+    private static void say(ServerLevel l, ServerPlayer o, String s, ChatFormatting col) {
+        for (ServerPlayer p : l.players()) if (p.distanceToSqr(o) < 48 * 48) p.sendSystemMessage(Component.literal(s).withStyle(col));
+    }
+
+    /** (Tests) */
+    public static boolean djForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt != null && pt.dj != null; }
+    public static int beatboxersForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt == null ? -1 : pt.beatbox.size(); }
+    public static void battleNowForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); if (pt != null) pt.nextLine = 0; }
+    public static boolean battlingForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt != null && pt.battle != null; }
 
     /** The bots dance about near the middle: hops, spins and arm-waves. */
     private static void dance(PartyBotEntity b, Party pt) {
@@ -197,11 +327,12 @@ public final class BotPartyTime {
         PARTIES.remove(o.getUUID());
         ServerLevel l = o.serverLevel();
         if (pt.cake != null && l.getBlockState(pt.cake).is(Blocks.CAKE)) l.removeBlock(pt.cake, false);
+        if (pt.dj != null && l.getEntity(pt.dj) instanceof PartyBotEntity dj) BotJukebox.forget(dj);   // (the jukebox packed up)
         for (ServerPlayer p : l.players()) if (p.distanceToSqr(o) < 64 * 64) ModNetwork.sendToPlayer(new PartyHatsPacket(new int[0], 0, pt.center), p);
         finished++;
         if (full) {
             List<LivingEntity> gs = guests(o, pt);
-            bondTick(o, gs, BOND_END);
+            bondTick(o, gs, BOND_END * (rappers(gs) ? RAPPERS_BONUS : 1F));
             firework(l, pt, 4);
             o.displayClientMessage(Component.literal("What a party! Everyone there feels a lot closer.").withStyle(ChatFormatting.LIGHT_PURPLE), false);
         } else o.displayClientMessage(Component.literal("The party's broken up.").withStyle(ChatFormatting.GRAY), false);

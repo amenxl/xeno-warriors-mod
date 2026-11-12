@@ -782,7 +782,7 @@ public class CharacterCustomScreen extends Screen {
             boolean locked = !r.locked().isEmpty(), over = inBox(mx, my, x, y, w, PROW_H);
             g.fill(x, y, x + w, y + PROW_H, r.active() ? 0xFF000000 | dark2(r.color()) : over ? 0xFF2A2A3A : 0xFF1C1C24);
             g.fill(x, y, x + 2, y + PROW_H, locked ? 0xFF555555 : 0xFF000000 | r.color());
-            String kind = r.kind() == 0 ? "TRANSFORMATION" : r.kind() == 1 ? "BUFF" : "PASSIVE";
+            String kind = r.kind() == 0 ? "TRANSFORMATION" : r.kind() == 1 ? "BUFF" : r.kind() == 3 ? "PASSIVE - WORKS BY ITSELF" : r.kind() == 4 ? "TRACKING" : "PASSIVE";
             scaled(g, kind, x + 5, y + 2.5F, 0.55F, locked ? 0x777777 : light(r.color()));
             scaled(g, ell(r.title(), (int) ((w - SW_W - 50) / 0.95F)), x + 5, y + 8, 0.95F, locked ? 0x888888 : 0xFFFFFF);
             // level and mastery
@@ -814,6 +814,13 @@ public class CharacterCustomScreen extends Screen {
         switch (r.title()) {
             case "True Empathy" -> { l.add("Passive. Switched on, he copies the moves he sees and reads attacks coming at him by himself (Karma each time, every 25 s at most)."); l.add("Overused - three times inside 90 seconds - it strains him and switches itself off."); }
             case "Netsu" -> l.add("Buff. Sets his body on fire: much faster and stronger, burns what he touches, hurts him slowly. Off: it can't be lit.");
+            case "Attack Prediction" -> { l.add("Passive. Switched on, his chip reads whoever comes at him by itself (Data each time, every 20 s at most)."); l.add("Overused - three times inside 90 seconds - it overheats and switches itself off."); }
+            case "Living Weapon" -> l.add("Transformation (the transform key): every part of his body a weapon and a shield. Mastery makes it last longer and come back sooner.");
+            case "Lunar Mind" -> l.add("Works by itself, only at night: stronger, faster and healing while the moon is up.");
+            case "Gravity Boots" -> l.add("Works by itself: falling far enough to get hurt, the boots fire just before she lands - no fall damage. 20 s to recharge.");
+            case "Visor Scan" -> l.add("Works by itself: every time she locks on to someone, her visor scans them and everything moving nearby glows (every 8 s at most).");
+            case "Rescue Platform" -> l.add("Works by itself: when two or more teammates are down near her, the platform comes down, picks them up and heals the party. 3 minutes to come again.");
+            case "Scent Tracking" -> l.add("From the toggle wheel (hold the transform key): pick from everything she can smell nearby - it's highlighted through walls and its scent trail shows for 45 s.");
             default -> { l.add("Transformation (the transform key). Mastery grows while you're in it: longer, cheaper and back sooner."); l.add("Off: the transform key does nothing (the wheel too)."); }
         }
         if (!r.locked().isEmpty()) l.add(r.locked());

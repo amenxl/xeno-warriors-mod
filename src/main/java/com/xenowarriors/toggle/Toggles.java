@@ -38,7 +38,12 @@ import java.util.List;
 public final class Toggles {
     private Toggles() {}
 
-    public enum Kind { TRANSFORM("Transformation"), BUFF("Buff"), PASSIVE("Passive");
+    /**
+     * TRANSFORM: the transform key / wheel. BUFF: lit and put out from the wheel. PASSIVE: switched on / off from the wheel,
+     * starts off. AUTO: works by itself, switched on / off only in Character Customization (starts on). TRACK: the wheel
+     * opens Kaeru's scent picker.
+     */
+    public enum Kind { TRANSFORM("Transformation"), BUFF("Buff"), PASSIVE("Passive"), AUTO("Passive"), TRACK("Tracking");
         public final String title; Kind(String t) { title = t; } }
 
     public enum Entry {
@@ -47,7 +52,17 @@ public final class Toggles {
         DEVIL_UNLEASHED("devil_unleashed", "Devil Unleashed", Kind.TRANSFORM, 0x8A1A2A),
         PERSEPHONE("persephone", "Persephone", Kind.TRANSFORM, 0xE04A8A),
         NETSU("netsu", "Netsu", Kind.BUFF, 0xFF6A1A),
-        TRUE_EMPATHY("true_empathy", "True Empathy", Kind.PASSIVE, 0xC890FF);
+        TRUE_EMPATHY("true_empathy", "True Empathy", Kind.PASSIVE, 0xC890FF),
+        LIVING_WEAPON("living_weapon", "Living Weapon", Kind.TRANSFORM, 0x1FE07A),
+        ATTACK_PREDICTION("attack_prediction", "Attack Prediction", Kind.PASSIVE, 0x7AF0D0),
+        LUNAR_MIND("lunar_mind", "Lunar Mind", Kind.AUTO, 0x9AD2F2),
+        GRAVITY_BOOTS("gravity_boots", "Gravity Boots", Kind.AUTO, 0x9A4AE0),
+        VISOR_SCAN("visor_scan", "Visor Scan", Kind.AUTO, 0xEC5AA0),
+        RESCUE_PLATFORM("rescue_platform", "Rescue Platform", Kind.AUTO, 0xFFD24A),
+        SCENT_TRACK("scent_track", "Scent Tracking", Kind.TRACK, 0xE8701C);
+
+        /** Shown on the toggle wheel (the automatic ones only in Character Customization). */
+        public boolean wheel() { return kind != Kind.AUTO; }
 
         public final String id, title;
         public final Kind kind;
@@ -62,6 +77,15 @@ public final class Toggles {
         return switch (t) {
             case MIKIKO -> List.of("fire_blitz", "dance_kick");
             case RHALIX -> List.of("bang");
+            case KYRIE -> List.of("gravity_fetch");
+            case MAX -> List.of("wind_of_sorrow");
+            case SAM -> List.of("batter_up", "clear_space");
+            case TECHNICA -> List.of("explosive_rounds", "gravity_rounds");
+            case KAERU -> List.of("sound_burst");
+            case ULTIMA -> List.of("energy_blast");
+            case ZANE -> List.of("fire_spell", "thunder_spell", "broom_smack");
+            case YURI -> List.of("elevator_hack", "virus_upload");
+            case STEVIE, GARRY -> List.of("karma_blast", "disco_kick");
             default -> List.of();
         };
     }
@@ -75,6 +99,10 @@ public final class Toggles {
         return switch (t) {
             case MIKIKO -> List.of(Entry.FOX_KING, Entry.NETSU, Entry.TRUE_EMPATHY);
             case RHALIX -> List.of(Entry.DEMONS_REMNANTS);
+            case ULTIMA -> List.of(Entry.LIVING_WEAPON, Entry.ATTACK_PREDICTION);
+            case MAX -> List.of(Entry.LUNAR_MIND);
+            case TECHNICA -> List.of(Entry.GRAVITY_BOOTS, Entry.VISOR_SCAN, Entry.RESCUE_PLATFORM);
+            case KAERU -> List.of(Entry.SCENT_TRACK);
             case KILL -> List.of(Entry.DEVIL_UNLEASHED);
             case LEXY -> List.of(Entry.PERSEPHONE);
             case YOU -> com.xenowarriors.you.You.race(p) == com.xenowarriors.character.Race.DEMON ? List.of(Entry.DEVIL_UNLEASHED) : List.of();
@@ -97,7 +125,7 @@ public final class Toggles {
     /** On: a transformation / buff may be used; a passive is running. Passives start off, the rest on. */
     public static boolean enabled(Player p, Entry e) {
         CompoundTag me = mine(p);
-        return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;
+        return me.contains(e.id) ? me.getBoolean(e.id) : e.kind != Kind.PASSIVE;   // (passives start off; the automatic ones, transformations and buffs on)
     }
 
     public static void setEnabled(ServerPlayer p, Entry e, boolean on) {
@@ -121,7 +149,7 @@ public final class Toggles {
 
     /** The skill behind a buff / passive (null for a transformation). */
     static Skill skill(Player p, Entry e) {
-        String id = e == Entry.NETSU ? "netsu" : e == Entry.TRUE_EMPATHY ? "true_empathy" : null;
+        String id = e.kind == Kind.TRANSFORM && e != Entry.LIVING_WEAPON ? null : e.id;
         if (id == null) return null;
         for (SkillPool.Entry en : SkillPool.of(p)) if (en.skill().getId().equals(id)) return en.skill();
         return null;
@@ -133,7 +161,10 @@ public final class Toggles {
             case DEMONS_REMNANTS -> com.xenowarriors.rhalix.DemonsRemnants.active(p);
             case DEVIL_UNLEASHED, PERSEPHONE -> com.xenowarriors.skill.UltForms.activeNow(p);
             case NETSU -> com.xenowarriors.mikiko.Netsu.active(p);
-            case TRUE_EMPATHY -> enabled(p, e);
+            case LIVING_WEAPON -> p.getPersistentData().getLong(com.xenowarriors.skill.ultima.LivingWeaponSkill.UNTIL) > p.level().getGameTime();
+            case LUNAR_MIND -> enabled(p, e) && com.xenowarriors.skill.sp.MaxSkills.night(p);
+            case SCENT_TRACK -> Passives.tracking(p);
+            default -> enabled(p, e);
         };
     }
 
@@ -144,6 +175,7 @@ public final class Toggles {
             case DEMONS_REMNANTS -> FormMastery.get(p, FormMastery.DEMON);
             case DEVIL_UNLEASHED -> FormMastery.get(p, FormMastery.DEVIL);
             case PERSEPHONE -> FormMastery.get(p, FormMastery.PERSEPHONE);
+            case LIVING_WEAPON -> FormMastery.get(p, FormMastery.LIVING);
             default -> { Skill s = skill(p, e); yield s == null ? 0F : com.xenowarriors.skill.SkillLevels.progress(p, s.getId()) * 100F; }
         };
     }
@@ -184,7 +216,13 @@ public final class Toggles {
                 Skill s = skill(p, e);
                 if (s != null) SkillManager.useFree(p, s, 1F);                       // (lit again: puts it out - its recast)
             }
-            case PASSIVE -> setEnabled(p, e, !enabled(p, e));
+            case PASSIVE, AUTO -> setEnabled(p, e, !enabled(p, e));
+            case TRACK -> {
+                if (!enabled(p, e)) { p.displayClientMessage(Component.literal(e.title + " is turned off (Character Customization > Passives)").withStyle(ChatFormatting.GRAY), true); return; }
+                String why = unavailable(p, e);
+                if (why != null) { p.displayClientMessage(Component.literal(why).withStyle(ChatFormatting.RED), true); return; }
+                Passives.openScent(p);
+            }
         }
         send(p);
     }

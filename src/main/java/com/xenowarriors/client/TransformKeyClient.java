@@ -43,7 +43,7 @@ public final class TransformKeyClient {
 
     private static void tap(Minecraft mc) {
         CharacterType tk = ClientCharacterData.getLocal();
-        if (mc.player != null && (tk == CharacterType.MIKIKO || tk == CharacterType.RHALIX || tk == CharacterType.KILL || tk == CharacterType.LEXY || tk == CharacterType.YOU)
+        if (mc.player != null && (tk == CharacterType.MIKIKO || tk == CharacterType.RHALIX || tk == CharacterType.KILL || tk == CharacterType.LEXY || tk == CharacterType.YOU || tk == CharacterType.ULTIMA)
                 && !UltimateCutscene.active())
             ModNetwork.sendToServer(new com.xenowarriors.network.FoxKingTogglePacket());
     }
@@ -51,7 +51,7 @@ public final class TransformKeyClient {
     /** Has a right+left click skill picked (Mikiko, Rhalix). */
     private static boolean hasRl() {
         CharacterType t = ClientCharacterData.getLocal();
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX) return false;
+        if (com.xenowarriors.toggle.Toggles.rlChoices(t).isEmpty()) return false;
         var rl = com.xenowarriors.network.TogglesPacket.CLIENT;
         return rl.rl().isEmpty() || !rl.rlSelected().isEmpty();                  // (not heard yet: assume their default one)
     }
@@ -87,7 +87,7 @@ public final class TransformKeyClient {
 
     /** Right+left click: also ask for the picked skill once in a while so hasRl() is right. */
     public static void ensureKnown(Minecraft mc) {
-        if (mc.player != null && mc.player.tickCount % 200 == 37 && (ClientCharacterData.getLocal() == CharacterType.MIKIKO || ClientCharacterData.getLocal() == CharacterType.RHALIX))
+        if (mc.player != null && mc.player.tickCount % 200 == 37 && !com.xenowarriors.toggle.Toggles.rlChoices(ClientCharacterData.getLocal()).isEmpty())
             ModNetwork.sendToServer(new ToggleActionPacket(ToggleActionPacket.REQUEST, ""));
     }
 }

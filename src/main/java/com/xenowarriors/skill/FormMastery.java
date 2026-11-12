@@ -30,7 +30,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class FormMastery {
     private FormMastery() {}
 
-    public static final String DEMON = "demons_remnants", DEVIL = "devil_unleashed", PERSEPHONE = "persephone";
+    public static final String DEMON = "demons_remnants", DEVIL = "devil_unleashed", PERSEPHONE = "persephone", LIVING = "living_weapon";
     public static final float MAX = 100F, PER_SECOND = 0.05F, PER_HIT = 0.1F, PER_KILL = 0.5F;
     private static final String KEY = "xw_form_mastery";
 
@@ -50,7 +50,7 @@ public final class FormMastery {
         r.put(charKey(p), c);
     }
 
-    public static String name(String form) { return switch (form) { case DEMON -> "Demon's Remnants"; case DEVIL -> "Devil Unleashed"; default -> "Persephone"; }; }
+    public static String name(String form) { return switch (form) { case DEMON -> "Demon's Remnants"; case DEVIL -> "Devil Unleashed"; case LIVING -> "Living Weapon"; default -> "Persephone"; }; }
 
     /** Adds mastery, with a line at every 10 and at 25 / 50 / 75 / 100. */
     public static void add(ServerPlayer p, String form, float amount) {

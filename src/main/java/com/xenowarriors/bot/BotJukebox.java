@@ -28,7 +28,10 @@ public final class BotJukebox {
     public static final int GAP = 20 * 60 * 8;
     private static final String LAST = "xw_jukebox_at";
 
-    private record Session(BlockPos pos, ItemStack disc, long ends) {}
+    /** lent: a party song that isn't the bot's own disc (it goes nowhere afterwards). */
+    private record Session(BlockPos pos, ItemStack disc, long ends, boolean lent) {
+        Session(BlockPos pos, ItemStack disc, long ends) { this(pos, disc, ends, false); }
+    }
     private static final Map<UUID, Session> PLAYING = new HashMap<>();
     /** (Tests) songs played. */
     public static int played;
@@ -88,12 +91,48 @@ public final class BotJukebox {
         start(b, l, o, false);
     }
 
+    /** The Xeno Warriors songs (this mod's music discs). */
+    public static java.util.List<net.minecraft.world.item.Item> xwDiscs() {
+        java.util.List<net.minecraft.world.item.Item> l = new java.util.ArrayList<>();
+        for (var e : net.minecraftforge.registries.ForgeRegistries.ITEMS.getEntries())
+            if (e.getKey().location().getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) && e.getValue() instanceof RecordItem) l.add(e.getValue());
+        return l;
+    }
+
+    private static boolean xw(ItemStack s) {
+        return s.getItem() instanceof RecordItem && com.xenowarriors.XenoWarriors.MOD_ID.equals(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem()).getNamespace());
+    }
+
+    /** Has (or can make) a jukebox: it can play at a party. */
+    public static boolean canPlay(PartyBotEntity b) {
+        return find(b, s -> s.is(Items.JUKEBOX)) >= 0 || count(b, s -> s.is(net.minecraft.tags.ItemTags.PLANKS)) >= 8 && count(b, s -> s.is(Items.DIAMOND)) >= 1;
+    }
+
+    /**
+     * A party: it sets its jukebox down and plays Xeno Warriors music - one of its own Xeno Warriors discs, or (none of
+     * those) one of the songs anyway, just for the party. Returns what happened ("playing ..." when it did).
+     */
+    public static String startParty(PartyBotEntity b, ServerLevel l, ServerPlayer o) {
+        if (PLAYING.containsKey(b.getUUID())) return "playing already";
+        if (!jukebox(b)) return "no jukebox";
+        int own = find(b, BotJukebox::xw);
+        java.util.List<net.minecraft.world.item.Item> songs = xwDiscs();
+        if (own < 0 && songs.isEmpty()) return "no songs";
+        ItemStack disc = own >= 0 ? null : new ItemStack(songs.get(l.random.nextInt(songs.size())));
+        return place(b, l, o, own, disc);
+    }
+
     /** Puts a song on (force: no waiting, for the tests). Returns what happened. */
     public static String start(PartyBotEntity b, ServerLevel l, ServerPlayer o, boolean force) {
         if (PLAYING.containsKey(b.getUUID())) return "already playing";
         int disc = find(b, x -> x.getItem() instanceof RecordItem);
         if (disc < 0) return "no disc";
         if (!jukebox(b)) return "no jukebox";
+        return place(b, l, o, disc, null);
+    }
+
+    /** Sets the jukebox down and plays: its own disc from slot {@code disc}, or {@code lent} (not its own). */
+    private static String place(PartyBotEntity b, ServerLevel l, ServerPlayer o, int disc, ItemStack lent) {
         BlockPos spot = null;
         BlockPos at = b.blockPosition();
         for (int r = 1; r <= 2 && spot == null; r++)
@@ -106,7 +145,7 @@ public final class BotJukebox {
         if (spot == null) return "no room";
         b.getPersistentData().putLong(LAST, l.getGameTime());
         take(b, x -> x.is(Items.JUKEBOX), 1);
-        ItemStack record = b.inventory.getItem(disc).split(1);
+        ItemStack record = lent != null ? lent : b.inventory.getItem(disc).split(1);
         l.setBlockAndUpdate(spot, Blocks.JUKEBOX.defaultBlockState());
         if (l.getBlockEntity(spot) instanceof JukeboxBlockEntity jb) {
             jb.setFirstItem(record.copy());
@@ -115,7 +154,7 @@ public final class BotJukebox {
         b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         b.getLookControl().setLookAt(net.minecraft.world.phys.Vec3.atCenterOf(spot));
         int len = record.getItem() instanceof RecordItem ri ? ri.getLengthInTicks() : 20 * 120;
-        PLAYING.put(b.getUUID(), new Session(spot, record, l.getGameTime() + len + 40));
+        PLAYING.put(b.getUUID(), new Session(spot, record, l.getGameTime() + len + 40, lent != null));
         played++;
         o.displayClientMessage(Component.empty().append(b.label()).append(" puts on some music: ").append(record.getHoverName().copy().withStyle(ChatFormatting.LIGHT_PURPLE)), true);
         return "playing at " + spot.toShortString();
@@ -128,7 +167,7 @@ public final class BotJukebox {
             l.levelEvent(1011, s.pos, 0);                                                                // (the music stops for everyone)
             l.removeBlock(s.pos, false);
             b.inventory.addItem(new ItemStack(Items.JUKEBOX));
-            b.inventory.addItem(s.disc.copy());
+            if (!s.lent()) b.inventory.addItem(s.disc.copy());
         }
     }
 
@@ -137,6 +176,9 @@ public final class BotJukebox {
         Session s = PLAYING.get(b.getUUID());
         if (s != null && b.level() instanceof ServerLevel l) stop(b, l, s, l.getBlockState(s.pos).is(Blocks.JUKEBOX));
     }
+
+    /** Playing right now (a party's music). */
+    public static boolean playing(PartyBotEntity b) { return PLAYING.containsKey(b.getUUID()); }
 
     /** (Tests) */
     public static boolean playingForTest(PartyBotEntity b) { return PLAYING.containsKey(b.getUUID()); }
