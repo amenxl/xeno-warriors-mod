@@ -670,6 +670,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return;
         }
         model.root.render(poseStack, buffer, packedLight, overlay);
+        if (com.xenowarriors.client.compat.DmzForms.ssj4Own(player)) ssj4Fur(parent, poseStack, buffers, packedLight, overlay);   // Super Saiyan 4: the red fur
         if (com.xenowarriors.client.cel.Cel.on() && !noHead) {                 // cel-shading: the ink outline around him
             com.xenowarriors.client.cel.CelOutline.body(parent, poseStack, buffers, packedLight, overlay);
             com.xenowarriors.client.cel.CelOutline.details(model, poseStack, buffers, packedLight, overlay);
@@ -770,6 +771,24 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     private static final FaceFrame FRAME = new FaceFrame();
 
     /** The face (or a layer over it) on the head. */
+    /** DragonMineZ's Super Saiyan 4 fur pattern (body and arms of the skin layout), tinted SSJ4 red. */
+    private static final net.minecraft.resources.ResourceLocation SSJ4_FUR = new net.minecraft.resources.ResourceLocation("dragonminez", "textures/entity/races/humansaiyan/ssj4gt_layer1.png");
+    public static final float[] FUR = {0.66F, 0.13F, 0.16F};
+    /** (Tests) times the fur was drawn. */
+    public static int furDraws;
+
+    /**
+     * Super Saiyan 4 fur on Mikiko, Rhalix, Kyrie and Yuri: laid right on the skin of the body and arms (a decal on the
+     * same surface), so it shows wherever skin does - all over Mikiko's and Rhalix's bare top, and on the girls' arms
+     * and anywhere their clothes leave bare; their clothes stay over it.
+     */
+    private static void ssj4Fur(PlayerModel<AbstractClientPlayer> parent, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
+        VertexConsumer vc = buffers.getBuffer(RenderType.entityDecal(SSJ4_FUR));
+        for (var part : new net.minecraft.client.model.geom.ModelPart[]{parent.body, parent.rightArm, parent.leftArm})
+            if (part.visible) part.render(pose, vc, light, overlay, FUR[0], FUR[1], FUR[2], 1F);
+        furDraws++;
+    }
+
     private static void renderFace(DetailModel model, PlayerModel<AbstractClientPlayer> parent, AbstractClientPlayer player, PoseStack pose,
                                    VertexConsumer vc, int light, int overlay) {
         model.faceRoot.render(pose, vc, light, overlay);

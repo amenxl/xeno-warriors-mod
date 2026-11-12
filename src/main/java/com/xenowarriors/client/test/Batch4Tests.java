@@ -44,7 +44,7 @@ public final class Batch4Tests {
             p.level().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, p.server);
             Batch3Tests.clearBots(p);
         }), 40);
-        if (dmz && (f.isEmpty() || f.contains("formlook"))) formLook(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("formlook") || f.contains("ssj4fur"))) formLook(mc, l, f.contains("ssj4fur"));
         if (f.isEmpty() || f.contains("comine")) coMine(mc, l);
         if (dmz && (f.isEmpty() || f.contains("botforms"))) botForms(mc, l);
         if (f.isEmpty() || f.contains("ultforms")) ultForms(mc, l);
@@ -1338,9 +1338,9 @@ public final class Batch4Tests {
         DmzPerCharacter.syncStats(p);
     }
 
-    private static void formLook(Minecraft mc, MikikoTests.Steps l) {
-        String[][] forms = {{"supersaiyan", "supersaiyan"}, {"supersaiyan", "supersaiyan3"}, {"supersaiyan", "supersaiyan4"}, {"legendaryforms", "ssjfullpower"}};
-        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO, CharacterType.KYRIE}) {
+    private static void formLook(Minecraft mc, MikikoTests.Steps l, boolean ssj4Only) {
+        String[][] forms = ssj4Only ? new String[][]{{"supersaiyan", "supersaiyan4"}} : new String[][]{{"supersaiyan", "supersaiyan"}, {"supersaiyan", "supersaiyan3"}, {"supersaiyan", "supersaiyan4"}, {"legendaryforms", "ssjfullpower"}};
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO, CharacterType.KYRIE, CharacterType.YURI}) {
             Batch3Tests.character(l, t);
             l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> { DmzTests.make(p, "saiyan"); p.teleportTo(p.getX(), p.getY(), p.getZ()); }); }, 40);
             for (String[] fm : forms) {
@@ -1352,8 +1352,9 @@ public final class Batch4Tests {
                     int hair = com.xenowarriors.client.compat.DmzForms.hairStyle(me);
                     boolean own = com.xenowarriors.client.compat.DmzForms.ssj4Own(me), dmzDraws = com.xenowarriors.client.compat.DmzForms.dmzDraws(me);
                     String want = switch (fm[1]) { case "supersaiyan3" -> "ssj3"; case "supersaiyan4" -> "ssj4"; case "ssjfullpower" -> "lssj"; default -> "ssj"; };
-                    boolean shirtless = t != CharacterType.KYRIE;
+                    boolean shirtless = t != CharacterType.KYRIE && t != CharacterType.YURI;
                     boolean ok = want.equals(set) && (!fm[1].equals("supersaiyan4") || (own && hair == 4 && !dmzDraws && me.getSkinTextureLocation().getPath().endsWith("_ssj4.png") == shirtless));
+                    if (fm[1].equals("supersaiyan4")) { int fd = com.xenowarriors.client.render.CharacterDetailLayer.furDraws; log("formlook " + t.getId() + " ssj4 fur drawn " + fd + " -> " + (fd > 0 ? "PASS" : "FAIL")); com.xenowarriors.client.render.CharacterDetailLayer.furDraws = 0; }
                     log("formlook " + t.getId() + " " + fm[1] + ": form=" + form + " faces=" + set + " hair=" + hair + " ownSSJ4=" + own + " dmzDraws=" + dmzDraws
                             + " skin=" + me.getSkinTextureLocation().getPath() + " -> " + (ok ? "PASS" : "FAIL"));
                 }, 3);
