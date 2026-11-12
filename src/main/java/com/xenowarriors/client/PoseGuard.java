@@ -39,6 +39,21 @@ public final class PoseGuard {
         if (OPEN.remove(stack)) stack.popPose();       // (removes the most recent push on this stack)
     }
 
+    /** Where a pose stack stands before handing it to another mod's renderer (see restore). */
+    public record Mark(PoseStack.Pose top, int open) {}
+
+    public static Mark mark(PoseStack stack) { return new Mark(stack.last(), OPEN.size()); }
+
+    /**
+     * Back to the mark, whatever happened in between: another mod's renderer that threw partway (DragonMineZ drawing a
+     * bot, its Flying Nimbus) leaves its own pushes - and any of ours made inside it - on the stack, and the game then
+     * crashes at the end of the frame ("Pose stack not empty").
+     */
+    public static void restore(PoseStack stack, Mark m) {
+        while (OPEN.size() > m.open()) OPEN.pop();                                // (ours from inside: popped just below)
+        for (int i = 0; i < 64 && stack.last() != m.top() && !stack.clear(); i++) stack.popPose();
+    }
+
     @SubscribeEvent
     public static void onStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES || OPEN.isEmpty()) return;

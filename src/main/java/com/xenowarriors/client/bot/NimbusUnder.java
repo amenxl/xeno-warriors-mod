@@ -32,11 +32,11 @@ public final class NimbusUnder {
             cloud.xo = b.xo; cloud.yo = b.yo - 0.35; cloud.zo = b.zo;
             cloud.setYRot(b.yBodyRot); cloud.yRotO = b.yBodyRotO;
             if (cloud instanceof net.minecraft.world.entity.LivingEntity l) { l.yBodyRot = b.yBodyRot; l.yBodyRotO = b.yBodyRotO; l.tickCount = b.tickCount; }
-            var base = pose.last();
+            var base = com.xenowarriors.client.PoseGuard.mark(pose);
             pose.pushPose();
             pose.translate(0, -0.35, 0);
             try { mc.getEntityRenderDispatcher().getRenderer(cloud).render(cloud, b.yBodyRot, pt, pose, buffers, light); }
-            finally { com.xenowarriors.client.render.PoseGuard.restore(pose, base); }
+            finally { com.xenowarriors.client.PoseGuard.restore(pose, base); }
         } catch (Throwable t) {
             broken = true;
             com.xenowarriors.XenoWarriors.LOGGER.warn("XW: couldn't draw a bot's Flying Nimbus", t);
