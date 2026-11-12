@@ -313,7 +313,9 @@ public final class Batch3Tests {
         }), 100);
         l.add(null, () -> server(p -> {
             var lv = p.serverLevel();
-            int y = lv.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, 6, 6);
+            int y = com.xenowarriors.recarnet.RoyalCapitalFeature.FLOOR_Y - 2;     // (under the Royal Capital floating above: down to the city's ground)
+            while (y > lv.getMinBuildHeight() + 1 && (lv.getBlockState(new net.minecraft.core.BlockPos(6, y - 1, 6)).isAir()
+                    || !lv.getBlockState(new net.minecraft.core.BlockPos(6, y, 6)).isAir() || !lv.getBlockState(new net.minecraft.core.BlockPos(6, y + 1, 6)).isAir())) y--;
             p.teleportTo(lv, 6.5, y, 6.5, 0, 0);
             p.getAbilities().flying = false; p.onUpdateAbilities();
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
