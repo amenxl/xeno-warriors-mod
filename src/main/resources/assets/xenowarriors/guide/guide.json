@@ -455,6 +455,10 @@
         {
           "title": "Screen and sensing",
           "text": "- With the Blazing Wind HUD on, DragonMineZ's own health/ki/stamina bars are hidden: the HUD shows your Ki, stamina, form and power release instead.\n- DragonMineZ's technique bar, mission tracker and other panels are moved so they don't sit on top of the HUD.\n- Sensing (Karma Sensing or Ki Sense) no longer turns the screen black and white: you still see the auras, outlines and readings, in full color."
+        },
+        {
+          "title": "Bots and the Flying Nimbus",
+          "text": "A bot that can't fly yet (not a natural flier, and it hasn't learned DragonMineZ's Fly) goes to Master Korin when he's near (within 40 blocks, when things are quiet) and asks him for a Flying Nimbus.\n- With a Flying Nimbus (or a Black Nimbus) in its bag, it flies wherever the fliers fly, standing on the cloud.\n- Once it learns to fly by itself it stops using the cloud.\n- You can also just put a nimbus in its bag."
         }
       ]
     }

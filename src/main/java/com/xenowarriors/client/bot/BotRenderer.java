@@ -57,6 +57,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
                 pose.pushPose();
                 try {
                     r.render(a, yaw, pt, pose, buffers, light);
+                    NimbusUnder.render(e, yaw, pt, pose, buffers, light);
                     return;
                 } catch (Throwable t) {
                     BotAvatars.disabled = true;                               // (never again this session: the plain look below)

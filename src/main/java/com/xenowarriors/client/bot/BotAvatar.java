@@ -68,6 +68,8 @@ public class BotAvatar extends RemotePlayer {
         // (a mob standing still gets no movement updates, so its onGround can be stale here: check the floor under it)
         boolean ground = b.onGround() || !b.isNoGravity() && Math.abs(b.getY() - b.yo) < 0.01
                 && !b.level().noCollision(b, b.getBoundingBox().move(0, -0.08, 0).deflate(0.05, 0, 0.05));
+        boolean cloud = NimbusUnder.riding(b);                                  // (on its Flying Nimbus: standing on the cloud, not flying)
+        if (cloud) ground = true;
         setOnGround(ground);
         fallDistance = b.fallDistance;
         wasTouchingWater = b.isInWater();
@@ -78,9 +80,10 @@ public class BotAvatar extends RemotePlayer {
         var maxHp = getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
         if (maxHp != null && maxHp.getBaseValue() != b.getMaxHealth()) maxHp.setBaseValue(b.getMaxHealth());
         double dx = b.getX() - b.xo, dz = b.getZ() - b.zo;
-        boolean running = b.isSprinting() || (ground || b.isNoGravity()) && dx * dx + dz * dz > 0.2 * 0.2;   // (bots keep up at a run)
+        if (cloud) { walkAnimation.setSpeed(0F); to.xenowarriors$setSpeedOld(0F); }
+        boolean running = !cloud && (b.isSprinting() || (ground || b.isNoGravity()) && dx * dx + dz * dz > 0.2 * 0.2);   // (bots keep up at a run)
         if (isSprinting() != running) setSprinting(running);
-        getAbilities().flying = b.isNoGravity() && !ground && !b.isPassenger();
+        getAbilities().flying = b.isNoGravity() && !ground && !b.isPassenger() && !cloud;
         // downed: lying on its back, dazed, like a knocked-out player
         boolean down = b.downed();
         if (down) com.xenowarriors.client.party.PartyClient.setKnockedOut(getUUID(), 40);

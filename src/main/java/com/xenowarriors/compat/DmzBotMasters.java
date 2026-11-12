@@ -61,7 +61,7 @@ public final class DmzBotMasters extends Goal {
         }
         var tag = DmzPerCharacter.saved(b.owner(), DmzPerCharacter.botKey(b));
         if (tag == null) return false;
-        int sig = Objects.hash(tag.getCompound("Resources").getFloat("TrainingPointsF"), tag.getCompound("Techniques").hashCode(), tag.getCompound("Stats").hashCode(), DmzBotWeights.has(b),
+        int sig = Objects.hash(tag.getCompound("Resources").getFloat("TrainingPointsF"), tag.getCompound("Techniques").hashCode(), tag.getCompound("Stats").hashCode(), DmzBotWeights.has(b), DmzBotNimbus.has(b), b.dmzFly(),
                 ms.stream().map(DmzBotTechniques::masterName).toList());
         if (sig == nothingSig) return false;
         DmzBotQuests.Data d = DmzBotQuests.open(b, false);
@@ -72,7 +72,7 @@ public final class DmzBotMasters extends Goal {
                 Integer rest = resting.get(name);
                 if (rest != null && b.tickCount < rest) continue;
                 StringBuilder why = new StringBuilder();
-                String s = DmzBotTechniques.lesson(d, name, why);
+                String s = DmzBotNimbus.wantsFrom(b, name) ? NIMBUS : DmzBotTechniques.lesson(d, name, why);   // (Korin: it can't fly yet - a Flying Nimbus first)
                 if (s == null && DmzBotWeights.wantsFrom(b, name)) s = WEIGHTS;           // (no technique to learn, but no training weights either: ask for some)
                 if (s == null) continue;
                 if (e.distanceToSqr(b) > 2.8 * 2.8 && !DmzBotTalk.reachable(b, e)) { resting.put(name, b.tickCount + RETRY); PartyBots.testLog(b, "dmz master: can't walk to " + name); continue; }
@@ -117,7 +117,8 @@ public final class DmzBotMasters extends Goal {
         b.getNavigation().stop();
         b.swing(InteractionHand.MAIN_HAND);
         boolean ok;
-        if (WEIGHTS.equals(skill)) { DmzBotQuests.Data d = DmzBotQuests.open(b, false); ok = d != null && !d.live && DmzBotWeights.receive(b, d, master); }
+        if (NIMBUS.equals(skill)) { DmzBotQuests.Data d = DmzBotQuests.open(b, false); ok = d != null && !d.live && DmzBotNimbus.receive(b, d, master); }
+        else if (WEIGHTS.equals(skill)) { DmzBotQuests.Data d = DmzBotQuests.open(b, false); ok = d != null && !d.live && DmzBotWeights.receive(b, d, master); }
         else ok = DmzBotTechniques.learn(b, to, master, skill);
         PartyBots.testLog(b, "dmz master: talked to " + master + ", learned " + skill + " = " + ok);
         done = true;
@@ -127,7 +128,7 @@ public final class DmzBotMasters extends Goal {
 
     private static final Map<PartyBotEntity, DmzBotMasters> GOALS = new WeakHashMap<>();
     /** (the "lesson" when it goes to ask for training weights) */
-    static final String WEIGHTS = "training weights";
+    static final String WEIGHTS = "training weights", NIMBUS = "a Flying Nimbus";
 
     /** (Tests) this bot looks for a master again right away. */
     public static void lookNowForTest(PartyBotEntity b) { DmzBotMasters g = GOALS.get(b); if (g != null) { g.nextLook = 0; g.nothingSig = 0; g.resting.clear(); } }

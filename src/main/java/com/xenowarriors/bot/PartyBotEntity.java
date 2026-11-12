@@ -48,6 +48,7 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR_BOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (its spar is with another bot, not you)
     private static final EntityDataAccessor<Boolean> DMZ_FLY = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> NIMBUS = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (rides a Flying Nimbus: DmzBotNimbus)
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
     /** When to tidy its things next (a few seconds after they changed; 0 = nothing pending - see BotBags). */
@@ -169,6 +170,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(SPAR, false);
         entityData.define(SPAR_BOT, false);
         entityData.define(DMZ_FLY, false);
+        entityData.define(NIMBUS, false);
     }
 
     // ---------------------------------------------------------------- state
@@ -229,7 +231,11 @@ public class PartyBotEntity extends PathfinderMob {
         return PartyBots.friendly(this, e) && !(sparring() && (e == owner() || e.getUUID().equals(sparFoe)));
     }
 
-    public boolean canFly() { return naturalFlier() || entityData.get(DMZ_FLY); }
+    public boolean canFly() { return naturalFlier() || entityData.get(DMZ_FLY) || entityData.get(NIMBUS); }
+
+    /** With DragonMineZ: it can't fly by itself but has a Flying Nimbus - it flies riding the cloud. */
+    public boolean nimbus() { return entityData.get(NIMBUS); }
+    public void setNimbus(boolean on) { if (entityData.get(NIMBUS) != on) entityData.set(NIMBUS, on); }
 
     /** Its character flies by itself (Skylanders, Ultima, Mikiko). */
     public boolean naturalFlier() { CharacterType t = character(); return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO; }

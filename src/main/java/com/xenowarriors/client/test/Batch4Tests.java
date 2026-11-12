@@ -56,9 +56,38 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("bagmerge"))) bagMerge(mc, l);
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
         if (f.isEmpty() || f.contains("sparlock")) sparLock(mc, l);
-        if (f.contains("fusionlook")) fusionLook(mc, l);                      // (only when asked: design previews)
+        if (f.contains("fusionlook")) fusionLook(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ a Flying Nimbus from Korin
+
+    private static void nimbus(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        boolean[] before = new boolean[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.STEVIE, null);
+            if (b == null) { log("nimbus: no bot -> FAIL"); return; }
+            b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 3, 180, 0);
+            b.setMode(PartyBotEntity.NEUTRAL);
+            before[0] = b.canFly();
+        }), 40);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            if (b == null) return;
+            boolean got = com.xenowarriors.compat.DmzBotNimbus.receiveForTest(b);
+            boolean again = com.xenowarriors.compat.DmzBotNimbus.receiveForTest(b);
+            log("nimbus: Stevie can fly before " + before[0] + "; Korin gave a nimbus " + got + " (a second one " + again + "), rides it " + b.nimbus() + ", can fly " + b.canFly()
+                    + " -> " + (!before[0] && got && !again && b.nimbus() && b.canFly() ? "PASS" : "FAIL"));
+            b.setNoGravity(true);
+            b.moveTo(p.getX() + 1.5, p.getY() + 1.5, p.getZ() + 3, 180, 0);
+        }), 6);
+        l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 10); }, 6);
+        l.add("batch4_nimbus", () -> { mc.options.hideGui = false; }, 4);
+        l.add(null, () -> server(Batch3Tests::clearBots), 5);
     }
 
     // ------------------------------------------------------------------ fusion look previews
