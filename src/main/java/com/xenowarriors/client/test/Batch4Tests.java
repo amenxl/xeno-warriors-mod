@@ -1674,7 +1674,7 @@ public final class Batch4Tests {
             boolean in = b[0] != null && (com.xenowarriors.gov.HealingPods.inPod(b[0]) || b[0].getHealth() > b[0].getMaxHealth() * 0.5F);
             log("towerpods: the hurt bot used the pod " + in + " (health " + (b[0] == null ? -1 : (int) b[0].getHealth()) + ") -> " + (in ? "PASS" : "FAIL"));
             if (b[0] != null) b[0].discard();
-            p.heal(40F);                                                          // (the floor's healing used up)
+            p.setHealth(1F); p.heal(40F);                                          // (the floor's healing used up)
             p.setHealth(6F);
         }), 20 * 12);
         float[] h = new float[1];
