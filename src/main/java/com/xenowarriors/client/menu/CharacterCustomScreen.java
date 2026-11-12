@@ -185,7 +185,7 @@ public class CharacterCustomScreen extends Screen {
     }
 
     /** Tab widths: the long "KAs / Last resort" tab gets more room. */
-    private float tabWeight(int i) { int id = ids()[i]; return id == T_KA ? 1.8F : id == T_RL || id == T_PASSIVES ? 1.25F : 1F; }
+    private float tabWeight(int i) { int id = ids()[i]; return id == T_KA ? (xeno() ? 1.6F : 1F) : id == T_RL || id == T_PASSIVES ? 1.25F : 1F; }
     private float tabW(int i) {
         float total = 0;
         for (int k = 0; k < tabs(); k++) total += tabWeight(k);
@@ -456,7 +456,7 @@ public class CharacterCustomScreen extends Screen {
         pillW += (targetW - pillW) * 0.3F;
         String[] names = new String[tabs()];
         for (int i = 0; i < names.length; i++) names[i] = switch (ids()[i]) {
-            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "R+L CLICK"; case T_OUTFITS -> "OUTFITS"; default -> "KAS / LAST RESORT"; };
+            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "R+L CLICK"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
         float ts = tb[3] / 15F;

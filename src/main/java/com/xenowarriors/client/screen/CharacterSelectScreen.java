@@ -111,15 +111,22 @@ public class CharacterSelectScreen extends Screen {
         }
         if (testFocus != null) focus = testFocus;
         if (focus == null || Group.of(focus) != group) focus = group.members.length > 0 ? group.members[0] : null;
-        var busyNow = com.xenowarriors.network.BusyCharsPacket.of(focus);
-        boolean queue = busyNow != null && !busyNow.canSwitch() && focus != ClientCharacterData.getLocal();
-        Button sel = addRenderableWidget(Button.builder(Component.literal(queue ? (busyNow.queued() ? "QUEUED" : "QUEUE") : "SELECT"), b -> { if (pickable(focus)) choose(focus); })
+        sel = addRenderableWidget(Button.builder(Component.literal(selectLabel()), b -> { if (pickable(focus)) choose(focus); })
                 .bounds(width - 76, height - 30, 68, 22).build());
         sel.active = pickable(focus);
         // your own warriors: the You character slots
         addRenderableWidget(Button.builder(Component.literal("YOUR OWN \u2605"), b -> ModNetwork.sendToServer(new com.xenowarriors.network.YouActionPacket(com.xenowarriors.network.YouActionPacket.OPEN, 0, null)))
                 .bounds(width - 76 - 96, height - 30, 90, 22).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Make your own warrior with your Minecraft skin: pick a name, race and element. 10 slots."))).build());
         if (canClose) addRenderableWidget(Button.builder(Component.literal("<"), b -> onClose()).bounds(8, 6, 20, th).build());
+    }
+
+    private Button sel;
+
+    /** SELECT, or QUEUE / QUEUED for someone busy off duty (the busy list can arrive after the screen opens). */
+    private String selectLabel() {
+        var busyNow = com.xenowarriors.network.BusyCharsPacket.of(focus);
+        boolean queue = busyNow != null && !busyNow.canSwitch() && focus != ClientCharacterData.getLocal();
+        return queue ? (busyNow.queued() ? "QUEUED" : "QUEUE") : "SELECT";
     }
 
     private void choose(CharacterType type) {
@@ -146,6 +153,7 @@ public class CharacterSelectScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        if (sel != null && !sel.getMessage().getString().equals(selectLabel())) sel.setMessage(Component.literal(selectLabel()));
         // background: near black with faint diagonal bands in the team's colour
         g.fill(0, 0, width, height, 0xF00C0C10);
         int col = group.color & 0xFFFFFF;
