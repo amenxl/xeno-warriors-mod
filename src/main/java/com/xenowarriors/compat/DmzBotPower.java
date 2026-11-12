@@ -459,6 +459,18 @@ public final class DmzBotPower {
         e.setAmount((float) (e.getAmount() * ratio));
     }
 
+    /** {group, form} the bot is in right now, or null in its base form. */
+    static String[] formOf(PartyBotEntity b) {
+        Power p = POWER.get(b.getUUID());
+        return p == null || p.form == null ? null : new String[]{p.group, p.form};
+    }
+
+    /** DragonMineZ's data for the form the bot's fighting copy is in (FormConfig.FormData), or null. */
+    static Object activeFormData(PartyBotEntity b) {
+        if (!ready() || activeFormData == null) return null;
+        try { Object st = stats(b); return st == null ? null : activeFormData.invoke(getCharacter.invoke(st)); } catch (Throwable t) { return null; }
+    }
+
     /** A bot is gone: forget it. */
     public static void forget(UUID bot) { POWER.remove(bot); }
 

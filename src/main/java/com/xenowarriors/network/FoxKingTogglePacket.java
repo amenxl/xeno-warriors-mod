@@ -15,6 +15,8 @@ public record FoxKingTogglePacket() {
 
     public static void handle(FoxKingTogglePacket m, Supplier<NetworkEvent.Context> ctx) {
         var p = ctx.get().getSender();
-        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) { com.xenowarriors.mikiko.FoxKing.toggle(p); com.xenowarriors.rhalix.DemonsRemnants.activate(p); com.xenowarriors.you.YouRaces.toggleHumanForm(p); }   // each only works for its own character
+        if (p != null && !com.xenowarriors.party.Duels.cantAct(p)) {
+            if (com.xenowarriors.skill.UltForms.press(p)) return;    // Kill / Lexy / You (Demon, sneaking): their transformations
+            com.xenowarriors.mikiko.FoxKing.toggle(p); com.xenowarriors.rhalix.DemonsRemnants.activate(p); com.xenowarriors.you.YouRaces.toggleHumanForm(p); }   // each only works for its own character
     }
 }

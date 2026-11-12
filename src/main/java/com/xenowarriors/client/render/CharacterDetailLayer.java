@@ -203,6 +203,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             f.face = face("rhalix_lunar", expr);
         else if (!dr && type == CharacterType.RHALIX && com.xenowarriors.client.DemonClient.active(p.getId()))     // Demon's Remnants: glowing red eyes
             f.face = face("rhalix_demon", expr);
+        else if (!dr && com.xenowarriors.client.compat.DmzForms.faceSet(p) != null)       // Super Saiyan forms: teal eyes, SSJ3 no brows, SSJ4 red-ringed gold eyes...
+            f.face = face(type.getId() + "_" + com.xenowarriors.client.compat.DmzForms.faceSet(p), expr);
         else f.face = expr == null ? baseFace(type) : face(fp, expr);
         int damage = damageLevel(p);
         if (damage > 0 && !ClientCharacterData.isPreviewing())
@@ -579,7 +581,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, so nothing clips through
         boolean giTop = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST);
         boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
-        if (giTop || giLegs) model.hideOutfit(giTop, giTop, giLegs);
+        boolean ssj4Top = outfit == 0 && com.xenowarriors.client.compat.DmzForms.ssj4Own(player);   // Super Saiyan 4: shirt / coat off (Mikiko: a chest wrap, on her skin)
+        if (giTop || giLegs || ssj4Top) model.hideOutfit(giTop || ssj4Top, giTop || ssj4Top, giLegs);
         if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(player.getId())) {      // Kaeru's Change: a dark silhouette, glowing white eyes
             model.root.render(poseStack, buffer, packedLight, overlay, 0.05F, 0.05F, 0.06F, 1F);
             if (model.faceRoot != null) {
@@ -594,7 +597,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             com.xenowarriors.client.cel.CelOutline.details(model, poseStack, buffers, packedLight, overlay);
         }
         if (detailTex == LUNAR_TEX || detailTex.getPath().endsWith("rhalix_lunar_details_cel.png")) model.root.render(poseStack, buffers.getBuffer(RenderType.eyes(LUNAR_GLOW)), packedLight, overlay);   // the moons' purple glow
-        if (giTop || giLegs) model.showOutfit();
+        if (giTop || giLegs || ssj4Top) model.showOutfit();
         if (stick != 0) for (var sp : model.mouthStick) sp.visible = true;
         if (stick == 1) {
             poseStack.pushPose();

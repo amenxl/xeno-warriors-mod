@@ -60,7 +60,7 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.sp.LexySkills.FreakPunch(), 0), new Entry(new com.xenowarriors.skill.sp.LexySkills.TableBreaker(), 0),
                 new Entry(new com.xenowarriors.skill.sp.LexySkills.KarmaSurge(), 0), new Entry(new com.xenowarriors.skill.sp.LexySkills.WingRush(), 0),
                 new Entry(new com.xenowarriors.skill.sp.LexySkills.IronGrip(), 20)));
-        ULTIMATE.put(CharacterType.LEXY, new com.xenowarriors.skill.sp.LexySkills.Persephone());
+        ULTIMATE.put(CharacterType.LEXY, new com.xenowarriors.skill.sp.LexySkills.MaynayaCrash());   // (Persephone is her transformation now: UltForms)
         POOL.put(CharacterType.MAX, List.of(
                 new Entry(new com.xenowarriors.skill.sp.MaxSkills.DaggerFlurry(), 0), new Entry(new com.xenowarriors.skill.sp.MaxSkills.WindOfSorrow(), 0),
                 new Entry(new com.xenowarriors.skill.sp.MaxSkills.WindWall(), 0), new Entry(new com.xenowarriors.skill.sp.MaxSkills.LunarMind(), 0),
@@ -103,7 +103,7 @@ public final class SkillPool {
         POOL.put(CharacterType.KILL, List.of(
                 new Entry(new com.xenowarriors.skill.ffr.SrSkills.Impale(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.DevilDash(), 0),
                 new Entry(new com.xenowarriors.skill.ffr.SrSkills.PlayWeak(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.DevilFlame(), 0)));
-        ULTIMATE.put(CharacterType.KILL, new com.xenowarriors.skill.ffr.SrSkills.DevilUnleashed());
+        ULTIMATE.put(CharacterType.KILL, new com.xenowarriors.skill.ffr.SrSkills.HellclawRend());   // (Devil Unleashed is his transformation now: UltForms)
         POOL.put(CharacterType.KEITA, List.of(
                 new Entry(new com.xenowarriors.skill.ffr.SrSkills.LightsOut(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.Kneel(), 0),
                 new Entry(new com.xenowarriors.skill.ffr.SrSkills.LazySlash(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.PowerNap(), 0)));

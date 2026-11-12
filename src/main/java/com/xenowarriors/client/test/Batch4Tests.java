@@ -1,0 +1,211 @@
+package com.xenowarriors.client.test;
+
+import com.xenowarriors.XenoWarriors;
+import com.xenowarriors.bot.PartyBotEntity;
+import com.xenowarriors.bot.PartyBots;
+import com.xenowarriors.character.CharacterType;
+import com.xenowarriors.compat.DmzPerCharacter;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.block.Blocks;
+
+/**
+ * UI tests for batch 4 (focus "batch4..." / "dmzbatch4..." with DragonMineZ; words after "batch4" pick parts):
+ * "formlook" (DragonMineZ: Mikiko and Rhalix's form faces, SSJ4 hair and top), "comine" (a bot helping you dig),
+ * "botforms" (DragonMineZ: a bot learning its forms with TP), "ultforms" (Kill / Lexy: transformations on the key,
+ * new ultimates). Every result is an "XW-TEST batch4 ..." line.
+ */
+public final class Batch4Tests {
+    private Batch4Tests() {}
+
+    public static boolean handles(String focus) { return focus != null && focus.replaceFirst("^dmz", "").startsWith("batch4"); }
+
+    static void log(String s) { XenoWarriors.LOGGER.info("XW-TEST batch4 " + s); }
+
+    static void server(java.util.function.Consumer<ServerPlayer> f) {
+        Batch3Tests.server(p -> { try { f.accept(p); } catch (Throwable t) { log("step error " + t); XenoWarriors.LOGGER.error("XW-TEST batch4", t); } });
+    }
+
+    public static void run(Minecraft mc, String focus, MikikoTests.Steps l) {
+        String f = focus.replaceFirst("^dmz", "").replaceFirst("^batch4", "");
+        boolean dmz = focus.startsWith("dmz");
+        l.add(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null); }, 5);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.serverLevel().setDayTime(6000);
+            p.level().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DAYLIGHT).set(false, p.server);
+            Batch3Tests.clearBots(p);
+        }), 40);
+        if (dmz && (f.isEmpty() || f.contains("formlook"))) formLook(mc, l);
+        if (f.isEmpty() || f.contains("comine")) coMine(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("botforms"))) botForms(mc, l);
+        if (f.isEmpty() || f.contains("ultforms")) ultForms(mc, l);
+        l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ form faces and the SSJ4 look
+
+    private static void setForm(ServerPlayer p, String group, String form) {
+        Object d = DmzPerCharacter.live(p);
+        Object ch = Dmz6Tests.call(d, "getCharacter");
+        if (form == null) Dmz6Tests.call(ch, "clearActiveForm"); else Dmz6Tests.call(ch, "setActiveForm", group, form);
+        DmzPerCharacter.syncStats(p);
+    }
+
+    private static void formLook(Minecraft mc, MikikoTests.Steps l) {
+        String[][] forms = {{"supersaiyan", "supersaiyan"}, {"supersaiyan", "supersaiyan3"}, {"supersaiyan", "supersaiyan4"}, {"legendaryforms", "ssjfullpower"}};
+        for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.MIKIKO}) {
+            Batch3Tests.character(l, t);
+            l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> { DmzTests.make(p, "saiyan"); p.teleportTo(p.getX(), p.getY(), p.getZ()); }); }, 40);
+            for (String[] fm : forms) {
+                l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> setForm(p, fm[0], fm[1])); }, 10);
+                l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 8); }, 60);
+                l.add("batch4_form_" + t.getId() + "_" + fm[1], () -> {
+                    var me = mc.player;
+                    String form = com.xenowarriors.client.compat.DmzForms.form(me), set = com.xenowarriors.client.compat.DmzForms.faceSet(me);
+                    int hair = com.xenowarriors.client.compat.DmzForms.hairStyle(me);
+                    boolean own = com.xenowarriors.client.compat.DmzForms.ssj4Own(me), dmzDraws = com.xenowarriors.client.compat.DmzForms.dmzDraws(me);
+                    String want = switch (fm[1]) { case "supersaiyan3" -> "ssj3"; case "supersaiyan4" -> "ssj4"; case "ssjfullpower" -> "lssj"; default -> "ssj"; };
+                    boolean ok = want.equals(set) && (!fm[1].equals("supersaiyan4") || (own && hair == 4 && !dmzDraws && me.getSkinTextureLocation().getPath().endsWith("_ssj4.png")));
+                    log("formlook " + t.getId() + " " + fm[1] + ": form=" + form + " faces=" + set + " hair=" + hair + " ownSSJ4=" + own + " dmzDraws=" + dmzDraws
+                            + " skin=" + me.getSkinTextureLocation().getPath() + " -> " + (ok ? "PASS" : "FAIL"));
+                }, 3);
+                if (fm[1].equals("supersaiyan4")) {
+                    l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 140, 15), 20);
+                    l.add("batch4_form_" + t.getId() + "_ssj4_back", () -> {}, 3);
+                }
+            }
+            l.add(null, () -> server(p -> setForm(p, null, null)), 10);
+        }
+    }
+
+    // ------------------------------------------------------------------ mining together
+
+    private static final BlockPos[] DIG = new BlockPos[1];
+    private static final float[] SPEED = new float[1];
+
+    private static void coMine(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            BlockPos at = p.blockPosition();
+            var lv = p.serverLevel();
+            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) for (int dy = 0; dy <= 3; dy++) lv.setBlockAndUpdate(at.offset(dx, dy, dz), Blocks.AIR.defaultBlockState());
+            for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) lv.setBlockAndUpdate(at.offset(dx, -1, dz), Blocks.STONE.defaultBlockState());
+            BlockPos dig = at.offset(0, 0, 2);                                      // (a stone block right ahead of her)
+            lv.setBlockAndUpdate(dig, Blocks.STONE.defaultBlockState());
+            DIG[0] = dig;
+            p.teleportTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            p.setYRot(0); p.setXRot(25); p.setYHeadRot(0);
+            p.getInventory().selected = 0;
+            p.getInventory().setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STONE_PICKAXE));
+            SPEED[0] = p.getDigSpeed(lv.getBlockState(dig), dig);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b != null) { b.moveTo(at.getX() - 3.5, at.getY(), at.getZ() - 2.5, 0, 0); b.setMode(PartyBotEntity.NEUTRAL); }
+            com.xenowarriors.mining.CoMining.startForTest(p, dig);
+            log("comine: digging " + dig + " alone at speed " + Batch3Tests.f1(SPEED[0]) + ", bot " + (b != null));
+        }), 30);
+        l.add(null, () -> mc.player.setXRot(25), 100);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.FIRST_PERSON, 0, 25), 5);
+        l.add("batch4_comine_view", () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            int n = com.xenowarriors.mining.CoMining.helpersForTest(p);
+            float sp = p.getDigSpeed(p.level().getBlockState(DIG[0]), DIG[0]);
+            boolean inWay = b != null && com.xenowarriors.mining.CoMining.inTheWay(b, p, DIG[0]);
+            boolean ok = n >= 1 && sp > SPEED[0] * 1.4F && !inWay;
+            log("comine: bot at " + (b == null ? "-" : b.blockPosition()) + " helpers=" + n + " speed " + Batch3Tests.f1(SPEED[0]) + " -> " + Batch3Tests.f1(sp)
+                    + " bot in your view=" + inWay + " -> " + (ok ? "PASS" : "FAIL"));
+        }), 3);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 30), 5);
+        l.add("batch4_comine_side", () -> {}, 5);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.mining.CoMining.stopForTest(p);
+        }), 40);
+        l.add(null, () -> server(p -> {
+            int n = com.xenowarriors.mining.CoMining.helpersForTest(p);
+            log("comine: stopped digging -> helpers " + n + " -> " + (n == 0 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 10);
+    }
+
+    // ------------------------------------------------------------------ bots learning forms
+
+    private static void botForms(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            DmzTests.make(p, "saiyan");
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b == null) { log("botforms: no bot -> FAIL"); return; }
+            com.xenowarriors.compat.DmzBots.ensureRace(b);
+            b.setNoAi(true);
+        }); }, 40);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            if (b == null) return;
+            log("botforms: setup " + com.xenowarriors.compat.DmzBotForms.setupForTest(b, "saiyan", 2_000_000F));
+            int before = com.xenowarriors.compat.DmzBotForms.levelForTest(b, "superform");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 4; i++) sb.append(" | ").append(com.xenowarriors.compat.DmzBotForms.learn(b, true));
+            int after = com.xenowarriors.compat.DmzBotForms.levelForTest(b, "superform");
+            log("botforms: learned" + sb + " (superform " + before + " -> " + after + ") -> " + (com.xenowarriors.compat.DmzBotForms.learned >= 1 ? "PASS" : "FAIL"));
+            String again = com.xenowarriors.compat.DmzBotForms.learn(b, false);
+            log("botforms: right after, not forced: " + again + " -> " + (again.equals("too soon") ? "PASS" : "FAIL"));
+            com.xenowarriors.compat.DmzBotForms.setupForTest(b, "saiyan", 0F);
+            String broke = com.xenowarriors.compat.DmzBotForms.learn(b, true);
+            log("botforms: no TP: " + broke + " -> " + (broke.startsWith("nothing") ? "PASS" : "FAIL"));
+            for (String s : com.xenowarriors.compat.DmzBotForms.LOG) log("botforms log: " + s);
+        }); }, 20);
+    }
+
+    // ------------------------------------------------------------------ Kill / Lexy: transformations on the key
+
+    private static void ultForms(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.KILL);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.karma.Karma.add(p, 100F);
+            String ult = com.xenowarriors.skill.SkillPool.ultimate(CharacterType.KILL).getId();
+            com.xenowarriors.skill.UltForms.resetForTest(p);
+            boolean handled = com.xenowarriors.skill.UltForms.press(p);
+            boolean on = com.xenowarriors.skill.ffr.SrSkills.devilActive(p);
+            log("ultforms: Kill's ultimate=" + ult + ", transform key -> Devil Unleashed on=" + on + " -> " + (handled && on && ult.equals("hellclaw_rend") ? "PASS" : "FAIL"));
+        }), 10);
+        l.add(null, () -> server(p -> {
+            float k0 = com.xenowarriors.karma.Karma.get(p);
+            com.xenowarriors.skill.UltForms.press(p);
+            log("ultforms: pressed again while on: Karma " + k0 + " -> " + com.xenowarriors.karma.Karma.get(p) + " -> " + (com.xenowarriors.karma.Karma.get(p) == k0 ? "PASS" : "FAIL"));
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180, 0); z.setNoAi(true); p.serverLevel().addFreshEntity(z);
+            z.addTag("xw_b4");
+            boolean used = com.xenowarriors.skill.SkillPool.ultimate(CharacterType.KILL).use(p);
+            log("ultforms: Hellclaw Rend used=" + used);
+        }), 10);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15), 20);
+        l.add("batch4_ult_hellclaw", () -> {}, 3);
+        l.add(null, () -> server(p -> {
+            p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(20), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard());
+        }), 40);
+        Batch3Tests.character(l, CharacterType.LEXY);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.karma.Karma.add(p, 100F);
+            String ult = com.xenowarriors.skill.SkillPool.ultimate(CharacterType.LEXY).getId();
+            com.xenowarriors.skill.UltForms.resetForTest(p);
+            boolean handled = com.xenowarriors.skill.UltForms.press(p);
+            boolean on = com.xenowarriors.skill.sp.SpState.persephone(p);
+            log("ultforms: Lexy's ultimate=" + ult + ", transform key -> Persephone on=" + on + " -> " + (handled && on && ult.equals("maynaya_crash") ? "PASS" : "FAIL"));
+            for (int i = 0; i < 3; i++) {
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                z.moveTo(p.getX() + i * 2 - 2, p.getY(), p.getZ() + 4, 180, 0); z.setNoAi(true); z.addTag("xw_b4"); p.serverLevel().addFreshEntity(z);
+            }
+        }), 10);
+        l.add(null, () -> server(p -> log("ultforms: Maynaya Crash used=" + com.xenowarriors.skill.SkillPool.ultimate(CharacterType.LEXY).use(p))), 10);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15), 50);
+        l.add("batch4_ult_maynaya", () -> {}, 3);
+        l.add(null, () -> server(p -> p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(30), e -> e.getTags().contains("xw_b4")).forEach(e -> e.discard())), 40);
+    }
+}

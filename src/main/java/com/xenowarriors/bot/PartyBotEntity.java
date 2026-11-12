@@ -257,6 +257,7 @@ public class PartyBotEntity extends PathfinderMob {
         goalSelector.addGoal(4, new BotRanged(this));                                                   // bows, crossbows, guns: far or out-of-reach enemies
         goalSelector.addGoal(5, new FlyChase());                                                        // fliers: up to what they can't walk to
         goalSelector.addGoal(6, new com.xenowarriors.combat.BotCombo(this, 1.3, m -> ((PartyBotEntity) m).character()));   // the same combos as players
+        goalSelector.addGoal(7, new CoMineGoal());                                                      // (helps you dig the block you're digging, in any mode)
         goalSelector.addGoal(7, new MineGoal());
         goalSelector.addGoal(7, new BotErrands(this));                                                  // (quiet times: furnaces, handing things over, Ultima's shards, Yuri's look about)
         goalSelector.addGoal(7, new com.xenowarriors.compat.DmzBotTalk(this));                          // (DragonMineZ: walks up to the people its own missions wait on)
@@ -596,6 +597,64 @@ public class PartyBotEntity extends PathfinderMob {
 
     /** Mining mode: senses ore near you (Karma Sense, or Data Sense for Ultima) and digs it out into its bag. */
     /** Mine mode: ore it senses near you, and trees (the whole trunk comes down), with the best tool it has. */
+    /**
+     * Mining together (CoMining): its owner is digging a block close by - it steps up beside the block (never between
+     * them and it), looks at it and digs along, which makes their digging faster. Any mode, out of a fight.
+     */
+    class CoMineGoal extends Goal {
+        BlockPos pos, spot;
+        int stuck, lastLook;
+        CoMineGoal() { setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        private BlockPos wanted() {
+            ServerPlayer o = owner();
+            if (o == null || o.level() != level() || downed() || getTarget() != null || isPassenger() || reviving != null || journey()) return null;
+            BlockPos p = com.xenowarriors.mining.CoMining.digging(o);
+            if (p == null || level().getBlockState(p).isAir() || o.distanceToSqr(PartyBotEntity.this) > 10 * 10) return null;
+            return p;
+        }
+        @Override public boolean canUse() {
+            if (tickCount - lastLook < 5) return false;
+            lastLook = tickCount;
+            BlockPos p = wanted();
+            if (p == null) return false;
+            BlockPos s = com.xenowarriors.mining.CoMining.helpSpot(PartyBotEntity.this, owner(), p);
+            if (s == null) return false;
+            pos = p; spot = s;
+            return true;
+        }
+        @Override public boolean canContinueToUse() { return pos != null && pos.equals(wanted()) && spot != null && stuck < 80; }
+        @Override public void start() { stuck = 0; if (mineTarget != null) { level().destroyBlockProgress(getId(), mineTarget, -1); mineTarget = null; } }
+        @Override public void stop() { com.xenowarriors.mining.CoMining.botStopped(PartyBotEntity.this); pos = null; spot = null; }
+        @Override public void tick() {
+            ServerPlayer o = owner();
+            if (o == null || pos == null) return;
+            if (tickCount % 10 == 0 || com.xenowarriors.mining.CoMining.inTheWay(PartyBotEntity.this, o, pos)) {      // (the player moved: a better spot, out of their way)
+                BlockPos s = com.xenowarriors.mining.CoMining.helpSpot(PartyBotEntity.this, o, pos);
+                if (s == null) { spot = null; return; }
+                spot = s;
+            }
+            getLookControl().setLookAt(Vec3.atCenterOf(pos));
+            Vec3 feet = Vec3.atBottomCenterOf(spot);
+            if (position().distanceToSqr(feet) > 0.45 * 0.45 || com.xenowarriors.mining.CoMining.inTheWay(PartyBotEntity.this, o, pos)) {
+                com.xenowarriors.mining.CoMining.botStopped(PartyBotEntity.this);
+                stuck++;
+                if (position().distanceToSqr(feet) < 1.2 * 1.2) getMoveControl().setWantedPosition(feet.x, feet.y, feet.z, 1.0);
+                else if (getNavigation().isDone() || tickCount % 10 == 0) getNavigation().moveTo(feet.x, feet.y, feet.z, 1.15);
+                return;
+            }
+            stuck = 0;
+            getNavigation().stop();
+            if (tickCount % 6 == 0) {
+                BotGear.holdBestTool(PartyBotEntity.this, level().getBlockState(pos));
+                swing(InteractionHand.MAIN_HAND);
+                ((ServerLevel) level()).sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK, level().getBlockState(pos)),
+                        pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 3, .3, .3, .3, 0);
+            }
+            com.xenowarriors.mining.CoMining.botHelping(PartyBotEntity.this, pos);
+        }
+    }
+
     class MineGoal extends Goal {
         int dig, need, lastLook, lastTreeLook = -1000, walking, lastGatherLook = -1000;
         double closest;

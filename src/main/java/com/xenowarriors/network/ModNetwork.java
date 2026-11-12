@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "104";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "105";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -510,6 +510,8 @@ public final class ModNetwork {
                 .encoder(TowerLevelPacket::encode).decoder(TowerLevelPacket::decode).consumerMainThread(TowerLevelPacket::handle).add();
         CHANNEL.messageBuilder(CutsceneGuardPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (a hit on your cutscene's guard: Guard x/3)
                 .encoder(CutsceneGuardPacket::encode).decoder(CutsceneGuardPacket::decode).consumerMainThread(CutsceneGuardPacket::handle).add();
+        CHANNEL.messageBuilder(com.xenowarriors.mining.CoMinePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (mining together: helpers on your block)
+                .encoder(com.xenowarriors.mining.CoMinePacket::encode).decoder(com.xenowarriors.mining.CoMinePacket::decode).consumerMainThread(com.xenowarriors.mining.CoMinePacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

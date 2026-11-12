@@ -30,7 +30,7 @@ public final class YouSkills {
 
     public static Skill ultimate(YouSlot s) {
         return ULTS.computeIfAbsent(key(s), k -> switch (s.race) {
-            case DEMON -> new com.xenowarriors.skill.ffr.SrSkills.DevilUnleashed();
+            case DEMON -> new com.xenowarriors.skill.ffr.SrSkills.HellclawRend();      // (Devil Unleashed: sneak + the transform key)
             case ANGEL -> new YouSkillSet.Storm(s.element, 1.6F);
             default -> new YouSkillSet.Storm(s.element, 1F);
         });

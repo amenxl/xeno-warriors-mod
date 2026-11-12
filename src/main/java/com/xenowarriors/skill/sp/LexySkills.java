@@ -154,4 +154,68 @@ public final class LexySkills {
             return true;
         }
     }
+
+    /**
+     * Maynaya Crash (Lexy's ultimate, now that Persephone is her transformation): all of that freakish strength in one
+     * go. She blitzes up to five enemies nearby one after another with a crushing punch each, then leaps and slams the
+     * ground so hard a red shockwave tears out around her.
+     */
+    public static class MaynayaCrash implements Skill {
+        @Override public String getId() { return "maynaya_crash"; }
+        @Override public int getCooldownTicks() { return 90 * 20; }
+        @Override public int getKarmaCost() { return 50; }
+        @Override public boolean use(ServerPlayer p) {
+            ServerLevel l = p.serverLevel();
+            java.util.List<LivingEntity> foes = new java.util.ArrayList<>(SpUtil.around(p, p.position(), 12));
+            foes.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(p)));
+            if (foes.size() > 5) foes = foes.subList(0, 5);
+            p.displayClientMessage(Component.literal("Maynaya Crash!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), true);
+            l.playSound(null, p.blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 0.8F, 1.3F);
+            int i = 0;
+            for (LivingEntity t : foes) {
+                final int k = i++;
+                ServerScheduler.later(3 + k * 6, () -> {
+                    if (!p.isAlive() || !t.isAlive()) return;
+                    Vec3 d = t.position().subtract(p.position()).multiply(1, 0, 1);
+                    Vec3 dir = d.lengthSqr() < 1.0E-4 ? p.getLookAngle().multiply(1, 0, 1).normalize() : d.normalize();
+                    p.teleportTo(t.getX() - dir.x * 1.3, t.getY(), t.getZ() - dir.z * 1.3);
+                    p.setYRot((float) (Math.atan2(-dir.x, dir.z) * 180 / Math.PI)); p.hurtMarked = true;
+                    t.invulnerableTime = 0;
+                    t.hurt(p.damageSources().playerAttack(p), 11F);
+                    t.setDeltaMovement(dir.scale(1.4).add(0, 0.45, 0)); t.hurtMarked = true;
+                    p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+                    l.sendParticles(RED, t.getX(), t.getY() + 1, t.getZ(), 14, 0.3, 0.4, 0.3, 0);
+                    l.sendParticles(ParticleTypes.EXPLOSION, t.getX(), t.getY() + 1, t.getZ(), 1, 0, 0, 0, 0);
+                    l.playSound(null, t.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.5F, 1.7F);
+                });
+            }
+            int slam = 3 + foes.size() * 6 + 4;
+            ServerScheduler.later(slam, () -> { if (p.isAlive()) { p.setDeltaMovement(0, 0.9, 0); p.hurtMarked = true; } });
+            ServerScheduler.later(slam + 9, () -> { if (p.isAlive()) { p.setDeltaMovement(0, -2.2, 0); p.hurtMarked = true; } });
+            ServerScheduler.later(slam + 15, () -> {
+                if (!p.isAlive()) return;
+                p.fallDistance = 0;
+                Vec3 c = p.position();
+                for (int r = 1; r <= 7; r++) {                                      // the red shockwave ring
+                    final int rr = r;
+                    ServerScheduler.later(r, () -> {
+                        for (int k = 0; k < 16 + rr * 4; k++) {
+                            double a = k * Math.PI * 2 / (16 + rr * 4);
+                            l.sendParticles(RED, c.x + Math.cos(a) * rr, c.y + 0.2, c.z + Math.sin(a) * rr, 1, 0, 0.05, 0, 0);
+                        }
+                        crack(l, c.add(Math.cos(rr) * rr, 0, Math.sin(rr) * rr), 6);
+                    });
+                }
+                for (LivingEntity e : SpUtil.around(p, c, 7.5)) {
+                    e.invulnerableTime = 0;
+                    e.hurt(p.damageSources().playerAttack(p), 18F);
+                    Vec3 push = e.position().subtract(c).multiply(1, 0, 1);
+                    push = push.lengthSqr() < 1.0E-4 ? new Vec3(0, 0, 1) : push.normalize();
+                    e.setDeltaMovement(push.scale(1.2).add(0, 0.9, 0)); e.hurtMarked = true;
+                }
+                l.playSound(null, p.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.2F, 0.6F);
+            });
+            return true;
+        }
+    }
 }

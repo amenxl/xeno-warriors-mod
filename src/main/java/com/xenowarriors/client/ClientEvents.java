@@ -77,7 +77,8 @@ public final class ClientEvents {
         }
         while (ModKeyMappings.LOCK_ON.consumeClick()) LockOn.toggle();
         while (ModKeyMappings.FOX_KING.consumeClick()) {
-            if (mc.player != null && (ClientCharacterData.getLocal() == CharacterType.MIKIKO || ClientCharacterData.getLocal() == CharacterType.RHALIX) && !UltimateCutscene.active()) {
+            CharacterType tk = ClientCharacterData.getLocal();
+            if (mc.player != null && (tk == CharacterType.MIKIKO || tk == CharacterType.RHALIX || tk == CharacterType.KILL || tk == CharacterType.LEXY || tk == CharacterType.YOU) && !UltimateCutscene.active()) {
                 ModNetwork.sendToServer(new com.xenowarriors.network.FoxKingTogglePacket());
             }
         }

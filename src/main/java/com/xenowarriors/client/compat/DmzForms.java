@@ -139,10 +139,47 @@ public final class DmzForms {
         return f.startsWith("chou") ? 3 : f.startsWith("shin") ? 2 : 1;
     }
 
+    /**
+     * Mikiko and Rhalix's own Super Saiyan 4 (instead of DragonMineZ's body): they keep their look with a wild black
+     * SSJ4 mane, gold eyes ringed in red and a red-gold aura.
+     */
+    private static final Form SSJ4_OWN = new Form(0x2A1B1B, 0xFF5A33, 1.05F, false);
+
+    /**
+     * Mikiko and Rhalix's face set for their DragonMineZ form ("ssj" teal eyes, "ssj3" no eyebrows, "ssj4" gold eyes
+     * ringed in red, "lssj" blank white eyes), or null for their normal face. Made by tools/xw/formfaces/faces.py.
+     */
+    public static String faceSet(Player p) {
+        if (!(p instanceof AbstractClientPlayer cp)) return null;
+        CharacterType t = ClientCharacterData.get(cp);
+        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX) return null;
+        if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;
+        String f = form(p);
+        if (f == null) return null;
+        return switch (f) {
+            case "supersaiyan", "supersaiyangrade2", "supersaiyangrade3", "supersaiyanmastered", "supersaiyan2",
+                    "ikari", "ssjhybrid" -> "ssj";
+            case "supersaiyan3" -> "ssj3";
+            case "supersaiyan4" -> "ssj4";
+            case "ssjfullpower" -> "lssj";
+            default -> null;
+        };
+    }
+
+    /** Mikiko or Rhalix in Super Saiyan 4: drawn by Xeno Warriors with the custom SSJ4 hair, eyes and aura. */
+    public static boolean ssj4Own(Player p) {
+        if (!(p instanceof AbstractClientPlayer cp)) return false;
+        CharacterType t = ClientCharacterData.get(cp);
+        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX) return false;
+        if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return false;
+        return "supersaiyan4".equals(form(p));
+    }
+
     private static Form info(Player p) {
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;   // previews: the character as it is, not your form
         String f = form(p);
         if (f == null) return null;
+        if ("supersaiyan4".equals(f) && ssj4Own(p)) return SSJ4_OWN;
         Form known = FORMS.get(f);
         return known != null ? known : new Form(-1, -1, 1F, true);   // a form we don't know: let DragonMineZ draw it
     }
@@ -174,7 +211,7 @@ public final class DmzForms {
         return "goldenoozaru".equals(form(p));
     }
 
-    /** Hair style for the current form: 0 their own, 1 Super Saiyan spikes, 2 Super Saiyan 2, 3 Super Saiyan 3. */
+    /** Hair style for the current form: 0 their own, 1 Super Saiyan spikes, 2 Super Saiyan 2, 3 Super Saiyan 3, 4 SSJ4 mane. */
     public static int hairStyle(Player p) {
         String f = form(p);
         if (f == null) return 0;
@@ -183,6 +220,7 @@ public final class DmzForms {
                     "ikari", "ssjhybrid", "ssjfullpower" -> 1;
             case "supersaiyan2" -> 2;
             case "supersaiyan3" -> 3;
+            case "supersaiyan4" -> ssj4Own(p) ? 4 : 0;
             default -> 0;
         };
     }

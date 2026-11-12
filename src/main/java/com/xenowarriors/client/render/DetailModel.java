@@ -130,11 +130,13 @@ public class DetailModel {
         final org.joml.Quaternionf base;
         final org.joml.Vector3f back, side;
         final float baseX, baseY, baseZ, phase;
-        /** Super Saiyan styles (index 1, 2, 3): the strand's pose and how much longer it gets; null if it isn't hair. */
+        /** Super Saiyan styles (index 1, 2, 3, 4): the strand's pose and how much longer it gets; null if it isn't hair. */
         org.joml.Quaternionf[] style;
-        final float[] scale = {1F, 1F, 1F, 1F};
+        final float[] scale = {1F, 1F, 1F, 1F, 1F};
         /** SSJ3: how far the root moves back so the long hair falls from the back of the head */
         float back3;
+        /** SSJ4: the same for its shorter mane */
+        float back4;
         final float pivotZ;
 
         Strand(ModelPart first, org.joml.Quaternionf base, org.joml.Vector3f back, org.joml.Vector3f side, float phase) {
@@ -195,7 +197,7 @@ public class DetailModel {
         var out = new org.joml.Vector3f(x, 0F, z);
         if (out.length() < 0.6F) out.set(0F, 0F, 1F);
         out.normalize();
-        st.style = new org.joml.Quaternionf[4];
+        st.style = new org.joml.Quaternionf[5];
         // SSJ: big spikes standing up and fanning outward, swept a little back
         st.style[1] = towards(st.base, dir, new org.joml.Vector3f(out).mul(0.8F).add(0F, -1F, 0.35F));
         st.scale[1] = 1.12F;
@@ -210,6 +212,23 @@ public class DetailModel {
             st.style[3] = towards(st.base, dir, new org.joml.Vector3f(out.x * 0.22F, 1F, 0.1F + out.z * 0.08F));
             st.scale[3] = 3.2F;
             st.back3 = Math.max(0F, 4.3F - z);
+        }
+        // SSJ4: a wild, spiky black mane - shaggy bangs hanging over the forehead, spikes flaring out at the sides
+        // and a thick spiky mane falling down the back (shorter than SSJ3's)
+        float jag = ((Math.round(x * 3F) + Math.round(z * 2F)) & 1) == 0 ? 1F : -1F;   // neighbouring spikes alternate
+        if (z < -2.5F && Math.abs(x) < 2.2F) {
+            st.style[4] = towards(st.base, dir, new org.joml.Vector3f(x * 0.12F + jag * 0.12F, 1F, -0.55F));
+            st.scale[4] = 1.15F;
+        } else if (z < -2.5F) {
+            st.style[4] = towards(st.base, dir, new org.joml.Vector3f(out).mul(1F).add(0F, -0.35F + jag * 0.15F, 0.25F));
+            st.scale[4] = 1.35F;
+        } else if (z < 1.2F) {
+            st.style[4] = towards(st.base, dir, new org.joml.Vector3f(out).mul(0.95F).add(0F, -0.15F + jag * 0.3F, 0.7F));
+            st.scale[4] = 1.6F;
+        } else {
+            st.style[4] = towards(st.base, dir, new org.joml.Vector3f(out.x * 0.55F + jag * 0.1F, 1F, 0.45F + out.z * 0.15F));
+            st.scale[4] = 2.2F;
+            st.back4 = Math.max(0F, 3F - z);
         }
     }
 
@@ -248,12 +267,12 @@ public class DetailModel {
     private static final org.joml.Quaternionf STYLED = new org.joml.Quaternionf();
 
     /**
-     * @param style  0 normal, 1 Super Saiyan, 2 Super Saiyan 2, 3 Super Saiyan 3
+     * @param style  0 normal, 1 Super Saiyan, 2 Super Saiyan 2, 3 Super Saiyan 3, 4 Super Saiyan 4
      * @param weight 0..1 how far into that style the hair is (it rises when transforming)
      */
     public void animateHair(float stream, float flutter, float age, int style, float weight) {
         if (strands.isEmpty()) return;
-        boolean styling = style > 0 && style < 4 && weight > 0.004F;
+        boolean styling = style > 0 && style < 5 && weight > 0.004F;
         if (!styling && stream < 0.004F && flutter < 0.004F) {
             if (hairMoved) {
                 for (Strand s : strands) for (ModelPart p : s.parts) {
@@ -273,8 +292,8 @@ public class DetailModel {
         lastWeight = weight;
         hairMoved = true;
         if (styling) {
-            // spiked hair is stiff: the wind barely moves it (long SSJ3 hair still sways)
-            float stiff = style == 3 ? 0.4F : 0.75F;
+            // spiked hair is stiff: the wind barely moves it (long SSJ3 hair still sways, the SSJ4 mane a little)
+            float stiff = style == 3 ? 0.4F : style == 4 ? 0.55F : 0.75F;
             stream *= 1F - stiff * weight;
             flutter *= 1F - stiff * 0.6F * weight;
         }
@@ -283,6 +302,7 @@ public class DetailModel {
             float scale = 1F, pz = s.pivotZ;
             if (styling && s.style != null) {
                 if (style == 3) pz += s.back3 * weight;
+                else if (style == 4) pz += s.back4 * weight;
                 base = STYLED.set(s.base).slerp(s.style[style], weight);
                 scale = 1F + (s.scale[style] - 1F) * weight;
             }

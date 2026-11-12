@@ -42,6 +42,10 @@ public final class SrSkills {
     static boolean on(Map<UUID, Long> m, LivingEntity e) { Long t = m.get(com.xenowarriors.bot.PartyBots.skillKey(e)); return t != null && t > e.level().getGameTime(); }
 
     /** Switched characters: Logan's Redirect, Kill's Play Weak and Devil Unleashed end with the character who used them. */
+    /** Is Devil Unleashed on (Kill's transformation)? */
+    public static boolean devilActive(ServerPlayer p) { return on(DEVIL_MODE, p); }
+    public static long devilLeft(ServerPlayer p) { Long t = DEVIL_MODE.get(p.getUUID()); return t == null ? 0 : Math.max(0, t - now(p)); }
+
     public static void clear(UUID id) { REDIRECT.remove(id); FEIGN.remove(id); DEVIL_MODE.remove(id); }
 
     static void dashSlash(ServerPlayer p, float dmg, DustParticleOptions trail) {
@@ -226,6 +230,61 @@ public final class SrSkills {
             p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 240, 1));
             for (int i = 0; i < 24; i++) ServerScheduler.later(i * 10, () -> p.serverLevel().sendParticles(DEVIL, p.getX(), p.getY() + 1, p.getZ(), 12, 0.5, 0.9, 0.5, 0));
             say(p, "Devil Unleashed!", ChatFormatting.DARK_PURPLE);
+            return true;
+        }
+    }
+
+    /**
+     * Hellclaw Rend (Kill's ultimate, now that Devil Unleashed is his transformation): he lunges at the nearest enemy
+     * and rakes everything around it with six devil-claw slashes - each one cuts and withers - then the claws close
+     * in one last crushing rend that throws them back.
+     */
+    public static class HellclawRend implements Skill {
+        @Override public String getId() { return "hellclaw_rend"; }
+        @Override public int getCooldownTicks() { return 90 * 20; }
+        @Override public int getKarmaCost() { return 60; }
+        @Override public boolean use(ServerPlayer p) {
+            LivingEntity t = YuriSkills.target(p, 14);
+            Vec3 at = t != null ? t.position() : p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(3));
+            if (t != null) {
+                Vec3 d = t.position().subtract(p.position()).multiply(1, 0, 1);
+                if (d.lengthSqr() > 4) { p.teleportTo(at.x - d.normalize().x * 1.6, t.getY(), at.z - d.normalize().z * 1.6); p.hurtMarked = true; }
+            }
+            ServerLevel l = p.serverLevel();
+            say(p, "Hellclaw Rend!", ChatFormatting.DARK_PURPLE);
+            l.playSound(null, p.blockPosition(), SoundEvents.WITHER_SHOOT, SoundSource.PLAYERS, 0.8F, 0.6F);
+            for (int i = 0; i < 6; i++) {
+                final int k = i;
+                ServerScheduler.later(4 + i * 5, () -> {
+                    if (!p.isAlive()) return;
+                    double a = k * Math.PI / 3 + p.getYRot() * Math.PI / 180;
+                    for (int j = -3; j <= 3; j++) {                                  // a claw mark across the area
+                        double off = j * 0.6;
+                        l.sendParticles(DEVIL, at.x + Math.cos(a) * off, p.getY() + 1.2 + j * 0.15, at.z + Math.sin(a) * off, 2, 0.05, 0.05, 0.05, 0);
+                    }
+                    l.sendParticles(ParticleTypes.SWEEP_ATTACK, at.x, p.getY() + 1, at.z, 2, 0.8, 0.3, 0.8, 0);
+                    for (LivingEntity e : YuriSkills.around(p, at, 4.5)) {
+                        e.invulnerableTime = 0;
+                        e.hurt(p.damageSources().playerAttack(p), 5F);
+                        e.addEffect(new MobEffectInstance(MobEffects.WITHER, 80, 1));
+                    }
+                    p.swing(k % 2 == 0 ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND, true);
+                    l.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1F, 0.7F + k * 0.08F);
+                });
+            }
+            ServerScheduler.later(38, () -> {                                        // the claws close: the rend
+                if (!p.isAlive()) return;
+                l.sendParticles(DEVIL, at.x, p.getY() + 1, at.z, 80, 1.6, 0.8, 1.6, 0.05);
+                l.sendParticles(ParticleTypes.SONIC_BOOM, at.x, p.getY() + 1, at.z, 1, 0, 0, 0, 0);
+                for (LivingEntity e : YuriSkills.around(p, at, 5.5)) {
+                    e.invulnerableTime = 0;
+                    e.hurt(p.damageSources().playerAttack(p), 16F);
+                    Vec3 push = e.position().subtract(at).multiply(1, 0, 1);
+                    push = push.lengthSqr() < 1.0E-4 ? p.getLookAngle().multiply(1, 0, 1) : push.normalize();
+                    e.setDeltaMovement(push.scale(1.6).add(0, 0.5, 0)); e.hurtMarked = true;
+                }
+                l.playSound(null, p.blockPosition(), SoundEvents.WITHER_BREAK_BLOCK, SoundSource.PLAYERS, 1F, 0.7F);
+            });
             return true;
         }
     }

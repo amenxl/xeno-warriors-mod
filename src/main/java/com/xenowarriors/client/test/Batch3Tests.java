@@ -400,7 +400,7 @@ public final class Batch3Tests {
             p.attack(z);
         }), 10);
         l.add("batch3_aurora_room", () -> server(p -> log("aurora: battle moved to a Room=" + com.xenowarriors.room.RoomTech.is(p.level())
-                + " opened=" + com.xenowarriors.recarnet.AuroraSecurity.opened + " -> " + (com.xenowarriors.room.RoomTech.is(p.level()) ? "PASS" : "FAIL"))), 5);
+                + " opened=" + com.xenowarriors.recarnet.AuroraSecurity.opened + " -> " + (com.xenowarriors.room.RoomTech.is(p.level()) ? "PASS" : "FAIL"))), 40);   // (copying the city block into the Room takes the server a moment)
         l.add(null, () -> server(p -> {
             StringBuilder sb = new StringBuilder();
             for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(30),

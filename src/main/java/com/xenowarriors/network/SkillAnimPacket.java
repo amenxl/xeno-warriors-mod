@@ -33,7 +33,7 @@ public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
         String[][] m = {
             {"CAST", "gravity_fetch", "no_milk", "wind_of_sorrow", "clear_space", "ticking_time_bomb", "iron_grip", "bar_thief", "fire_spell", "thunder_flash",
                      "lights_out", "scent_track", "attack_prediction", "thunder_spell", "judgment_absorption"},
-            {"SLASH", "rapier_thrust", "dagger_flurry", "rapid_vampire_slice", "impale"},
+            {"SLASH", "rapier_thrust", "dagger_flurry", "rapid_vampire_slice", "impale", "hellclaw_rend"},
             {"DASH", "wing_rush", "knight_charge", "devil_dash", "lazy_slash"},
             {"SHOOT", "explosive_rounds", "gravity_rounds", "tech_barrage", "karma_blast", "brother_blast", "energy_blast", "full_output_beam"},
             {"RAISE", "royal_gravity", "lunar_mind", "moonlit_gale", "psychotic_time_bomb", "karma_surge", "persephone", "rescue_platform", "war_cry", "good_karma",
@@ -43,7 +43,7 @@ public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
             {"TYPE", "camera_hack", "firewall", "elevator_hack", "virus_upload", "visor_scan"},
             {"SWING", "batter_up", "batter_shoot", "broom_smack", "mass_cut"},
             {"GUARD", "bullet_stop", "boxing_stance", "wind_wall", "knockout_mode", "cloak_device", "mana_barrier", "royal_guard", "play_weak", "hekubarrier", "portal_escape"},
-            {"PUNCH", "freak_punch"},
+            {"PUNCH", "freak_punch", "maynaya_crash"},
             {"KICK", "sound_burst"}, {"SPIN_KICK", "hekubeats_finale"},
             {"DANCE_KICK", "disco_kick"}};
         for (String[] row : m) {
