@@ -13,7 +13,9 @@ public enum VehicleKind {
     CAR_MK2("car_mk2", "car", "Car Mk II", 0.88, 0.03, 100, 80, new String[]{"red", "blue", "black", "white", "yellow"}, 2.0F, 1.5F, 1.45F),
     MOTORBIKE_MK2("motorbike_mk2", "motorbike", "Motorbike Mk II", 1.05, 0.042, 55, 48, new String[]{"red", "black", "green", "orange"}, 1.0F, 1.3F, 1.3F),
     HELICOPTER_MK2("helicopter_mk2", "helicopter", "Helicopter Mk II", 1.0, 0.028, 130, 160, new String[]{"skyblue", "white", "black"}, 2.2F, 2.0F, 1.45F),
-    GOV_TRUCK_MK2("gov_truck_mk2", "gov_truck", "Armored Truck Mk II", 0.7, 0.02, 240, 128, new String[]{"gov"}, 2.3F, 2.3F, 1.35F);
+    GOV_TRUCK_MK2("gov_truck_mk2", "gov_truck", "Armored Truck Mk II", 0.7, 0.02, 240, 128, new String[]{"gov"}, 2.3F, 2.3F, 1.35F),
+    /** Technica's own pink motorcycle (not sold: she summons it with its key) - guns, and attachments she adds (TechnicaBike). */
+    TECHNICA_BIKE("technica_bike", "motorbike", "Technica's Motorcycle", 0.92, 0.036, 60, 0, new String[]{"pink"}, 1.0F, 1.3F, 1.3F);
 
     /** How a rider rides a spot: sitting inside, standing on top (when the seats are full), or hanging on a rail (helicopter). */
     public enum SeatType { SIT, STAND, HANG }
@@ -50,7 +52,13 @@ public enum VehicleKind {
     public VehicleKind base() { return byId(model); }
 
     /** A Mk II. */
-    public boolean upgraded() { return !model.equals(id); }
+    public boolean upgraded() { return !model.equals(id) && !technica(); }
+
+    /** Technica's motorcycle: its own model, guns and attachments; not at the dealer. */
+    public boolean technica() { return id.equals("technica_bike"); }
+
+    /** Its model file (Technica's bike has its own; the rest use their base vehicle's). */
+    public String geo() { return technica() ? id : model; }
 
     /** The helicopter (either mark). */
     public boolean heli() { return model.equals("helicopter"); }

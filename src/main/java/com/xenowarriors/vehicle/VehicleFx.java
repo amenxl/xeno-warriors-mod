@@ -19,7 +19,7 @@ public final class VehicleFx {
             if (lodestone) com.xenowarriors.client.compat.lodestone.LodestoneFx.exhaust(level, x, y, z, moving);
             else level.addParticle(ParticleTypes.SMOKE, x, y, z, -fx * 0.02, 0.02, -fz * 0.02);
         }
-        if (v.kind.hovers() && v.airborne()) {
+        if (v.canHover() && v.airborne()) {
             // Mk II flying: thrusters under it (cyan, like its trim)
             double rx = -fz, rz = fx, half = v.kind.width * 0.32, len = v.kind.width * 0.45;
             for (int s = -1; s <= 1; s += 2) for (int e = -1; e <= 1; e += 2) {

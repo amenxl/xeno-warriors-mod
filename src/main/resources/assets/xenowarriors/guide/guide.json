@@ -121,6 +121,10 @@
         {
           "title": "Synergy and bond",
           "text": "Certain characters in the same party and within 24 blocks get a synergy (bots count, so you can try it solo): Partners (Rhalix + Mikiko), Skyland Bond (Rhalix + Sky Patrol / Kyrie), Goofy Rivals (Mikiko + Ultima), Soul Link (Mikiko + Kaeru), Brothers (Stevie + Garry), Tenjo Siblings (Yuri + Ultima), Old Friends (Zane + Mikiko), Married (Max + Technica).\n## Bond\n- Every teammate character has a bond level with yours, 0 to 100. It grows a little just by being together, much faster fighting side by side, with every kill one of you makes, and a lot with every revive.\n- Higher bond = stronger synergy (double at bond 100), and a synergy's downside fades out - Soul Link's shared death is gone at bond 50.\n- Every 10 levels of your best bond with someone in your party: +5 max hearts (+300 with DragonMineZ).\n- Bots share it: each bot has its own bond with its teammates (its character's, the one you'll have when you play it) and gets the same bonus hearts from its best bond, on top of its level health. Bots get their synergies too (damage, Soul Link's lighter hits, faster Karma, Old Friends' cheaper skills).\n## Bots are treated like players\nA bot uses its own character's stats, all kept in your save for that character: Character Level hearts, Attack and Defense levels, ability tiers and levels (its skill uses level them up), Appetite (food heals it more), Building (the torches and Dragon Balls it places), gun level, fall damage and DragonMineZ stats. What it earns is waiting for you when you play that character.\n- The Party menu shows your bond with everyone, the active synergies, and [S] opens the Team Synergy panel."
+        },
+        {
+          "title": "Bots and full vehicles",
+          "text": "When your vehicle has no room left, a bot that can't fit takes another ride and follows you:\n- a free seat in another bot's ride,\n- Technica (as a bot) calls her own motorcycle and rides after you - and its guns shoot at whatever you're fighting,\n- or a free vehicle of yours parked nearby, which it drives.\nWhen you get out, they get out too (a motorcycle a bot called goes away again). Left far behind, their ride catches up."
         }
       ]
     },
@@ -210,6 +214,10 @@
         {
           "title": "Auras",
           "text": "Powering up, Karma focus and transformations show a Dragon Ball aura - no more smoky dust clouds:\n- Powering up and Karma focus: a flame aura in your character's Karma colour.\n- With DragonMineZ, when your aura is on (powering up, or a form with a permanent aura) your character gets DragonMineZ's own aura and lightning, just like a DragonMineZ player.\n- Bots get the flame aura (in their form's colour) when they power up, transform or go Kaioken (red)."
+        },
+        {
+          "title": "Technica's motorcycle",
+          "text": "Technica has her own pink motorcycle.\n- The first time you play her you get its key. Use the key anywhere to call the bike to you (it comes back from wherever you left it). Lost the key? Craft one: pink dye + 2 iron ingots.\n- Its guns fire while you drive: attack fires the Twin Blasters (hold to keep firing), use fires a rocket once the Rocket Pod is fitted.\n- Attachments (craft them, then use one on the bike as Technica): Rocket Pod (TNT, iron, redstone block), Hover Thrusters - it flies (phantom membranes, fireworks, a diamond), Armor Plating - twice the health (iron blocks, pink dye), Nitro Booster - a third faster (blaze powder, glass bottles, redstone block). They stay on the bike for good.\n- Sneak + right-click puts it away (no item: the key calls it back)."
         }
       ]
     },

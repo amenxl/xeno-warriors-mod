@@ -200,6 +200,8 @@ public final class CoMining {
     /** (Tests) */
     public static int helpersForTest(ServerPlayer p) { Help h = HELP.get(p.getUUID()); return h == null ? 0 : h.helpers; }
     public static void startForTest(ServerPlayer p, BlockPos pos) { startForTest(p, pos, 400); }
+    /** (Tests) this bot dug at a block in the last half second. */
+    public static boolean botHelpingForTest(PartyBotEntity b) { Long at = BOT_AT.get(b.getUUID()); return at != null && b.level().getGameTime() - at <= 10; }
     /** As if they started digging it; held (no swing / look checks) this many ticks - 0 for a stale click. */
     public static void startForTest(ServerPlayer p, BlockPos pos, int hold) {
         long t = p.level().getGameTime();

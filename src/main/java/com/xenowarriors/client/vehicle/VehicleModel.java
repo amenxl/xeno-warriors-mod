@@ -11,7 +11,7 @@ import software.bernie.geckolib.model.GeoModel;
 
 /** Vehicle models: wheels roll with the distance driven, rotors spin up when someone's flying. */
 public class VehicleModel extends GeoModel<VehicleEntity> {
-    @Override public ResourceLocation getModelResource(VehicleEntity e) { return XenoWarriors.id("geo/" + e.kind.model + ".geo.json"); }
+    @Override public ResourceLocation getModelResource(VehicleEntity e) { return XenoWarriors.id("geo/" + e.kind.geo() + ".geo.json"); }
     @Override public ResourceLocation getTextureResource(VehicleEntity e) { return XenoWarriors.id("textures/entity/vehicle/" + e.kind.id + "_" + e.kind.variant(e.variant()) + ".png"); }
     @Override public ResourceLocation getAnimationResource(VehicleEntity e) { return XenoWarriors.id("animations/" + e.kind.model + ".animation.json"); }
 
@@ -36,6 +36,12 @@ public class VehicleModel extends GeoModel<VehicleEntity> {
             if (bone == null) continue;
             bone.setRotX(-wheel);                                       // (rolling forward: the tops go toward the nose, -z)
             bone.setRotY(b.equals("wheel_fl") || b.equals("wheel_fr") || b.equals("wheel_f") ? -steer : 0F);  // front wheels turn into the turn (+ steer = turning right)
+        }
+        if (e.kind.technica()) {                                         // Technica's bike: the attachments she's put on
+            for (int i = 0; i < com.xenowarriors.vehicle.TechnicaBike.BONES.length; i++) {
+                CoreGeoBone a = getAnimationProcessor().getBone(com.xenowarriors.vehicle.TechnicaBike.BONES[i]);
+                if (a != null) a.setHidden(!e.has(i));
+            }
         }
         CoreGeoBone bars = getAnimationProcessor().getBone("bars");
         if (bars != null) bars.setRotY(-steer);                          // the bike's bars turn with its front wheel

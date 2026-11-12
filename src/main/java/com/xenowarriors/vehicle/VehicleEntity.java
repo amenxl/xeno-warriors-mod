@@ -41,6 +41,7 @@ import java.util.UUID;
  */
 public class VehicleEntity extends Mob implements GeoEntity {
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ATTACH = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);   // (Technica's bike: its attachments, TechnicaBike bits)
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     public final VehicleKind kind;
     private UUID owner;
@@ -65,7 +66,21 @@ public class VehicleEntity extends Mob implements GeoEntity {
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, k.base() == VehicleKind.GOV_TRUCK ? 14 : 6);
     }
 
-    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(ATTACH, 0); }
+
+    /** Technica's bike: its attachments (TechnicaBike bits). */
+    public int attachments() { return entityData.get(ATTACH); }
+    public boolean has(int bit) { return kind.technica() && (attachments() & (1 << bit)) != 0; }
+    public void setAttachments(int a) {
+        entityData.set(ATTACH, a);
+        var h = getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (h != null) { double want = kind.health * (has(TechnicaBike.PLATING) ? 2.0 : 1.0); if (h.getBaseValue() != want) { h.setBaseValue(want); setHealth(getMaxHealth()); } }
+    }
+    public UUID owner() { return owner; }
+    /** Top speed (Technica's Nitro adds a third). */
+    public double topSpeed() { return kind.maxSpeed * (has(TechnicaBike.NITRO) ? 1.33 : 1.0); }
+    /** Flies like the Mk IIs (or Technica's bike with its Hover Thrusters). */
+    public boolean canHover() { return kind.hovers() || has(TechnicaBike.THRUSTERS); }
 
     public int variant() { return entityData.get(VARIANT); }
     public void setVariant(int v) { entityData.set(VARIANT, Math.floorMod(v, kind.variants.length)); }
@@ -162,7 +177,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         double flat = Math.sqrt(to.x * to.x + to.z * to.z);
         if (flat > 1.5) turnToward((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90F, turnRate());
         float off = Math.abs(Mth.wrapDegrees((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90F - getYRot()));
-        double want = flat < 3 ? 0 : kind.maxSpeed * npcSpeed * Math.min(1.0, flat / 12) * (off > 60 ? 0.3 : 1);
+        double want = flat < 3 ? 0 : topSpeed() * npcSpeed * Math.min(1.0, flat / 12) * (off > 60 ? 0.3 : 1);
         speed += Mth.clamp(want - speed, -kind.accel * 2, kind.accel);
         if (kind.heli()) climb += Mth.clamp(Mth.clamp(to.y * 0.1, -0.3, 0.3) - climb, -0.04, 0.04);
         yBodyRot = getYRot(); yHeadRot = getYRot();
@@ -208,14 +223,17 @@ public class VehicleEntity extends Mob implements GeoEntity {
     protected InteractionResult mobInteract(Player p, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (level().isClientSide) return InteractionResult.SUCCESS;
+        if (kind.technica() && TechnicaBike.install(this, p, p.getMainHandItem())) return InteractionResult.CONSUME;   // (an attachment for Technica's bike)
         if (p.isSecondaryUseActive()) {                                   // pack it up
             if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && (kind.base() == VehicleKind.GOV_TRUCK || com.xenowarriors.raid.FactionRaids.isRaider(this))))) {   // (nor a raid's vehicles)   // (a seized Gov truck can be wrecked for iron, not packed up)
                 p.displayClientMessage(Component.literal("That's not your " + kind.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
                 return InteractionResult.CONSUME;
             }
             if (!getPassengers().isEmpty()) return InteractionResult.CONSUME;
-            ItemStack it = VehicleItem.make(kind, variant());
-            if (!p.addItem(it)) spawnAtLocation(it);
+            if (!kind.technica()) {                                          // (Technica's bike just goes away: her key calls it back)
+                ItemStack it = VehicleItem.make(kind, variant());
+                if (!p.addItem(it)) spawnAtLocation(it);
+            }
             discard();
             return InteractionResult.CONSUME;
         }
@@ -228,7 +246,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
             p.startRiding(this);
             if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind.heli()
                     ? "It turns where you look - W/S speed, A/D slide sideways, Jump to climb, Sprint key to descend, Sneak to get out"
-                    : kind.hovers() ? "It turns where you look (or A/D) - W/S speed, Jump to fly up, Sprint key to come down, Sneak to get out"
+                    : canHover() ? "It turns where you look (or A/D) - W/S speed, Jump to fly up, Sprint key to come down, Sneak to get out"
                     : "It turns where you look (or A/D) - W/S speed and brake, Sneak to get out").withStyle(ChatFormatting.GRAY), true);
             else if (p.getVehicle() == this && seatOf(p).type() != VehicleKind.SeatType.SIT)
                 p.displayClientMessage(Component.literal(seatOf(p).type() == VehicleKind.SeatType.HANG
@@ -295,9 +313,9 @@ public class VehicleEntity extends Mob implements GeoEntity {
         // The server never moves a player-driven vehicle (the driver's game does), so it never saw the no-gravity flag
         // the driver's side sets while flying - and vanilla kicks a driver "floating a vehicle too long" (4 s) on any
         // server without allow-flight (a dedicated server's default) unless the vehicle has no gravity there.
-        if (!level().isClientSide && (kind.heli() || kind.hovers()) && !isNoGravity()) setNoGravity(true);
+        if (!level().isClientSide && (kind.heli() || canHover()) && !isNoGravity()) setNoGravity(true);
         double fwd = p.zza, side = p.xxa;
-        double target = fwd > 0 ? kind.maxSpeed : fwd < 0 ? -kind.maxSpeed * 0.4 : 0;
+        double target = fwd > 0 ? topSpeed() : fwd < 0 ? -topSpeed() * 0.4 : 0;
         double a = fwd == 0 ? kind.accel * 0.6 : (Math.signum(target - speed) != Math.signum(speed) && speed != 0 ? kind.accel * 2.2 : kind.accel);
         speed += Mth.clamp(target - speed, -a, a);
         // Only the side that moves it (the driver's game) turns it: the server gets the driver's yaw with the position, and
@@ -310,11 +328,11 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (kind.heli()) {
             double want = level().isClientSide ? (VehicleControls.up ? 0.32 : VehicleControls.down ? -0.32 : 0) : climb;
             climb += Mth.clamp(want - climb, -0.04, 0.04);
-            double sw = -side * kind.maxSpeed * 0.45;                      // A/D: slides sideways (A = left)
+            double sw = -side * topSpeed() * 0.45;                      // A/D: slides sideways (A = left)
             strafe += Mth.clamp(sw - strafe, -kind.accel * 1.5, kind.accel * 1.5);
         } else {
             strafe = 0;
-            if (kind.hovers() && level().isClientSide) {
+            if (canHover() && level().isClientSide) {
                 // Mk II: Jump lifts it off and climbs, the Sprint key brings it down; in the air it holds its height
                 if (VehicleControls.up && !hovering) hovering = true;
                 if (hovering && onGround() && !VehicleControls.up && climb <= 0) hovering = false;      // (set down: drives again)
@@ -344,7 +362,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     /** In the air in a Mk II car, bike or truck (or a helicopter): drawn tilting with its motion. */
     public boolean airborne() {
-        return (kind.heli() || kind.hovers()) && !onGround() && groundBelow() != 0;
+        return (kind.heli() || canHover()) && !onGround() && groundBelow() != 0;
     }
 
     // client: how far it's tilted (degrees; pitch + is nose down, roll + is right side down) for the renderer
@@ -477,14 +495,15 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (src.getEntity() != null && hasPassenger(src.getEntity())) return false;          // (no shooting your own ride)
         if (com.xenowarriors.raid.FactionRaids.sameRaid(this, src.getEntity())) return false;   // (nor your own raid's)
         lastHurtBy = src.getMsgId() + " by " + (src.getEntity() == null ? "-" : src.getEntity().getType().toShortString()) + " direct " + (src.getDirectEntity() == null ? "-" : src.getDirectEntity().getType().toShortString());
-        float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : 0.6F);
+        float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : 0.6F) * (has(TechnicaBike.PLATING) ? 0.7F : 1F);
         if (hp > 0) { setHealth(hp); level().playSound(null, blockPosition(), SoundEvents.IRON_GOLEM_HURT, SoundSource.NEUTRAL, 0.5F, 1.4F); return true; }
         // wrecked: it bursts into smoke and drops back into its item (bought vehicles aren't lost for good)
         ejectPassengers();
         ((ServerLevel) level()).sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1, getZ(), 30, 0.8, 0.6, 0.8, 0.02);
         ((ServerLevel) level()).sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 1, getZ(), 3, 0.5, 0.3, 0.5, 0);
         level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.NEUTRAL, 0.8F, 1.2F);
-        if (owner != null || (kind.base() != VehicleKind.GOV_TRUCK && !com.xenowarriors.raid.FactionRaids.isRaider(this))) spawnAtLocation(VehicleItem.make(kind, variant()));
+        if (kind.technica()) { /* (Technica's bike: nothing drops - her key calls it back) */ }
+        else if (owner != null || (kind.base() != VehicleKind.GOV_TRUCK && !com.xenowarriors.raid.FactionRaids.isRaider(this))) spawnAtLocation(VehicleItem.make(kind, variant()));
         else spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
         discard();
         return true;
@@ -494,6 +513,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
     public void addAdditionalSaveData(CompoundTag t) {
         super.addAdditionalSaveData(t);
         t.putInt("Variant", variant());
+        t.putInt("Attach", attachments());
         if (owner != null) t.putUUID("Owner", owner);
         if (home != null) { t.putDouble("HomeX", home.x); t.putDouble("HomeY", home.y); t.putDouble("HomeZ", home.z); }
     }
@@ -502,6 +522,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
     public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);
         setVariant(t.getInt("Variant"));
+        if (t.contains("Attach")) setAttachments(t.getInt("Attach"));
         if (t.hasUUID("Owner")) owner = t.getUUID("Owner");
         if (t.contains("HomeX")) home = new Vec3(t.getDouble("HomeX"), t.getDouble("HomeY"), t.getDouble("HomeZ"));
     }

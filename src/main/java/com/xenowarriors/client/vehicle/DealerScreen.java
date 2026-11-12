@@ -29,7 +29,7 @@ public class DealerScreen extends Screen {
 
     private static List<VehicleKind> shown() {
         List<VehicleKind> l = new ArrayList<>();
-        for (VehicleKind k : VehicleKind.values()) if (k.upgraded() == mk2) l.add(k);
+        for (VehicleKind k : VehicleKind.values()) if (k.upgraded() == mk2 && !k.technica()) l.add(k);
         return l;
     }
 

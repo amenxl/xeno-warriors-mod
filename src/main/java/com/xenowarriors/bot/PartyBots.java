@@ -445,8 +445,11 @@ public final class PartyBots {
     /** The owner's in a vehicle (a mod vehicle or a boat) with a free seat: climb in. */
     static boolean boardWith(PartyBotEntity b, ServerPlayer o) {
         Entity v = o.getVehicle();
-        if (v == null || b.isPassenger() || b.distanceToSqr(v) > 5 * 5) return false;
+        if (v == null || b.isPassenger() || b.distanceToSqr(v) > 24 * 24) return false;
         if (b.downed() || b.reviving != null || com.xenowarriors.gov.HealingPods.inPod(b)) return false;   // (down, in someone's revive circle or resting in a pod: it stays put)
+        boolean full = v instanceof com.xenowarriors.vehicle.VehicleEntity ve && ve.getPassengers().size() >= ve.kind.seats;
+        if (full) return BotRides.overflow(b, o);                                // (no room: another ride, following you)
+        if (b.distanceToSqr(v) > 5 * 5) return false;
         if (v instanceof com.xenowarriors.vehicle.VehicleEntity || v instanceof net.minecraft.world.entity.vehicle.Boat) return b.startRiding(v, false);
         return false;
     }
@@ -608,7 +611,7 @@ public final class PartyBots {
             boolean ticking = ((ServerLevel) b.level()).isPositionEntityTicking(b.blockPosition());
             double far = b.canFly() ? 64 : 48, d2 = b.distanceToSqr(o);
             if ((ticking || d2 < 16 * 16) && d2 < far * far) continue;           // (right by them: their own chunks may just not be ticking yet, after a teleport)
-            if (b.isPassenger() && b.getVehicle() == o.getVehicle()) continue;   // (riding along with them)
+            if (b.isPassenger() && (b.getVehicle() == o.getVehicle() || b.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity)) continue;   // (riding along with them, or following in its own ride: BotRides)
             if (b.downed()) { if (!ticking) { testLog(b, "left behind while down - goes home"); bleedOut(b); } continue; }
             if (!o.isAlive()) continue;
             if (teleportNear(b, o)) { b.catchUps++; testLog(b, "caught up (" + (ticking ? "far" : "chunk not ticking") + ", " + (int) Math.sqrt(d2) + " blocks)"); continue; }

@@ -57,9 +57,86 @@ public final class Batch4Tests {
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
         if (f.isEmpty() || f.contains("sparlock")) sparLock(mc, l);
         if (f.contains("fusionlook")) fusionLook(mc, l);
-        if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);                      // (only when asked: design previews)
+        if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);
+        if (f.isEmpty() || f.contains("bike")) technicaBike(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
+    }
+
+    // ------------------------------------------------------------------ Technica's motorcycle
+
+    private static final Object[] BIKE = new Object[2];
+
+    private static void technicaBike(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.TECHNICA);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            var lv = p.serverLevel();
+            BlockPos at = p.blockPosition();
+            for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 12; dz++) { for (int dy = 0; dy <= 4; dy++) lv.setBlockAndUpdate(at.offset(dx, dy, dz), Blocks.AIR.defaultBlockState()); lv.setBlockAndUpdate(at.offset(dx, -1, dz), Blocks.STONE.defaultBlockState()); }
+            boolean key = false;
+            for (int i = 0; i < p.getInventory().getContainerSize(); i++) if (p.getInventory().getItem(i).getItem() == com.xenowarriors.vehicle.VehicleItems.ITEMS_BY_KIND.get(com.xenowarriors.vehicle.VehicleKind.TECHNICA_BIKE).get()) key = true;
+            com.xenowarriors.vehicle.TechnicaBike.setAttachmentsForTest(p, 0b11111);
+            p.setYRot(0);
+            var v = com.xenowarriors.vehicle.TechnicaBike.summon(p, p);
+            BIKE[0] = v;
+            log("bike: Technica has her key " + key + "; summoned " + (v != null) + " attachments " + (v == null ? -1 : v.attachments()) + " health " + (v == null ? 0 : v.getMaxHealth())
+                    + " top speed " + (v == null ? 0 : Math.round(v.topSpeed() * 100) / 100.0) + " flies " + (v != null && v.canHover())
+                    + " -> " + (v != null && v.attachments() == 0b11111 && v.getMaxHealth() >= 119 && v.canHover() ? "PASS" : "FAIL"));
+        }), 120);
+        l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 140, 15); }, 10);
+        l.add("batch4_bike", () -> {}, 3);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 220, 15), 10);
+        l.add("batch4_bike_back", () -> { mc.options.hideGui = false; }, 3);
+        l.add(null, () -> server(p -> {
+            if (!(BIKE[0] instanceof com.xenowarriors.vehicle.VehicleEntity v)) return;
+            p.startRiding(v, true);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(v.getX(), v.getY(), v.getZ() + 9, 180, 0); z.setNoAi(true); z.addTag("xw_b4");
+            p.serverLevel().addFreshEntity(z);
+            BIKE[1] = z;
+        }), 10);
+        l.add(null, () -> server(p -> {
+            if (!(BIKE[1] instanceof net.minecraft.world.entity.monster.Zombie z)) return;
+            float hp = z.getHealth();
+            int s0 = com.xenowarriors.vehicle.TechnicaBike.shots, r0 = com.xenowarriors.vehicle.TechnicaBike.rockets;
+            com.xenowarriors.vehicle.TechnicaBike.fire(p, 0, z);
+            com.xenowarriors.vehicle.TechnicaBike.fire(p, 1, z);
+            log("bike: driving, blasters " + (com.xenowarriors.vehicle.TechnicaBike.shots - s0) + " rockets " + (com.xenowarriors.vehicle.TechnicaBike.rockets - r0) + ", zombie " + hp + " -> " + z.getHealth()
+                    + " -> " + (z.getHealth() < hp || !z.isAlive() ? "PASS" : "FAIL"));
+        }), 5);
+        l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15); }, 8);
+        l.add("batch4_bike_ride", () -> { mc.options.hideGui = false; }, 3);
+        // a full ride: a bot that can't fit (here Technica, with Mikiko playing) calls her bike and follows
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            p.stopRiding();
+            for (var e : p.serverLevel().getEntitiesOfClass(com.xenowarriors.vehicle.VehicleEntity.class, p.getBoundingBox().inflate(30))) e.discard();
+            com.xenowarriors.vehicle.TechnicaBike.forgetForTest(p.getUUID());
+            var car = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.MOTORBIKE).get().create(p.serverLevel());
+            car.moveTo(p.getX() + 2, p.getY(), p.getZ(), 0, 0);
+            p.serverLevel().addFreshEntity(car);
+            p.startRiding(car, true);
+            for (int i = 1; i < car.kind.seats; i++) { var st = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel()); st.moveTo(car.getX(), car.getY(), car.getZ()); p.serverLevel().addFreshEntity(st); st.startRiding(car, true); st.addTag("xw_b4"); }
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.TECHNICA, null);
+            if (b != null) { b.moveTo(p.getX() - 2, p.getY(), p.getZ() - 2, 0, 0); b.setMode(PartyBotEntity.NEUTRAL); }
+        }), 60);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            boolean got = b != null && com.xenowarriors.bot.BotRides.boardForTest(b, p);
+            boolean onBike = b != null && b.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity v && v.kind.technica() && v.getFirstPassenger() == b;
+            log("bike: your motorbike is full -> Technica bot got a ride " + got + ", driving her own motorcycle " + onBike + " -> " + (onBike ? "PASS" : "FAIL"));
+        }), 10);
+        l.add(null, () -> { mc.options.hideGui = true; Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 20); }, 8);
+        l.add("batch4_bike_follow", () -> { mc.options.hideGui = false; }, 3);
+        l.add(null, () -> server(p -> p.stopRiding()), 30);
+        l.add(null, () -> server(p -> {
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            long bikes = p.serverLevel().getEntitiesOfClass(com.xenowarriors.vehicle.VehicleEntity.class, p.getBoundingBox().inflate(40), x -> x.kind.technica()).size();
+            log("bike: you got off -> bot off " + (b != null && !b.isPassenger()) + ", summoned bike gone " + (bikes == 0) + " -> " + (b != null && !b.isPassenger() && bikes == 0 ? "PASS" : "FAIL"));
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(40), x -> x.getTags().contains("xw_b4") || x instanceof com.xenowarriors.vehicle.VehicleEntity)) e.discard();
+            Batch3Tests.clearBots(p);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ a Flying Nimbus from Korin
@@ -150,6 +227,7 @@ public final class Batch4Tests {
             Batch3Tests.clearBots(p);
             setForm(p, "supersaiyan", "supersaiyan");
             Dmz6Tests.call(Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"), "setAuraActive", true);
+            Dmz6Tests.call(Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"), "setPermanentAura", true);
             DmzPerCharacter.syncStats(p);
             q[0] = com.xenowarriors.client.compat.DmzAuraBridge.queued;
         }), 30);
@@ -157,8 +235,8 @@ public final class Batch4Tests {
         l.add("batch4_dmzaura", () -> {}, 5);
         l.add(null, () -> {
             int n = com.xenowarriors.client.compat.DmzAuraBridge.queued - q[0];
-            log("dmzaura: aura on -> DragonMineZ aura queued " + n + " times, bridge works " + com.xenowarriors.client.compat.DmzAuraBridge.works() + " -> " + (n > 0 ? "PASS" : "FAIL"));
-            server(p -> { Dmz6Tests.call(Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"), "setAuraActive", false); setForm(p, null, null); });
+            log("dmzaura: aura on (client sees " + com.xenowarriors.client.compat.DmzAuraBridge.auraOn(mc.player) + ") -> DragonMineZ aura queued " + n + " times, bridge works " + com.xenowarriors.client.compat.DmzAuraBridge.works() + " -> " + (n > 0 ? "PASS" : "FAIL"));
+            server(p -> { var st = Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"); Dmz6Tests.call(st, "setAuraActive", false); Dmz6Tests.call(st, "setPermanentAura", false); setForm(p, null, null); });
         }, 5);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 20);
         l.add("batch4_dmzaura_off", () -> {}, 5);
@@ -252,7 +330,8 @@ public final class Batch4Tests {
         l.add(null, () -> server(p -> {
             boolean gone = com.xenowarriors.mining.CoMining.digging(p) == null;
             PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
-            log("comine: a stale click (no swinging, looking away) is dropped: " + gone + ", bot swinging " + (b != null && b.swinging) + " -> " + (gone && (b == null || !b.swinging) ? "PASS" : "FAIL"));
+            boolean helping = b != null && com.xenowarriors.mining.CoMining.botHelpingForTest(b);
+            log("comine: a stale click (no swinging, looking away) is dropped: " + gone + ", bot still digging at it " + helping + " -> " + (gone && !helping ? "PASS" : "FAIL"));
             Batch3Tests.clearBots(p);
         }), 10);
     }
@@ -575,10 +654,16 @@ public final class Batch4Tests {
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(p.getX() + 8, p.getY(), p.getZ() + 5, 0, 0); z.setNoAi(true); z.addTag("xw_b4");
             p.serverLevel().addFreshEntity(z);
-            s.blinkForTest(z); s.boltsForTest(z); s.throwForTest(); s.pullForTest(); s.clonesForTest(z);
+            s.blinkForTest(z); s.boltsForTest(z); s.pullForTest(); s.clonesForTest(z);
             log("ender: moves blink " + s.blinks + " bolts " + s.bolts + " pull " + s.pulls + " clones " + s.clones + " boss=" + com.xenowarriors.karma.KarmaSensing.boss(s)
                     + " -> " + (s.bolts > 0 && s.pulls > 0 && s.clones > 0 && com.xenowarriors.karma.KarmaSensing.boss(s) ? "PASS" : "FAIL"));
         }), 10);
+        l.add(null, () -> server(p -> {                                          // (the throw on its own: the pull above would cut it short)
+            if (!(ENDER[0] instanceof com.xenowarriors.boss.EnderSaiyanEntity s)) return;
+            var z = p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, s.getBoundingBox().inflate(16), x -> x.getTags().contains("xw_b4")).stream().findFirst().orElse(null);
+            if (z != null) s.setTarget(z);
+            s.throwForTest();
+        }), 40);
         l.add(null, () -> server(p -> {
             if (!(ENDER[0] instanceof com.xenowarriors.boss.EnderSaiyanEntity s)) return;
             log("ender: block thrown " + s.throwsDone + " -> " + (s.throwsDone > 0 ? "PASS" : "FAIL"));

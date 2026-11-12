@@ -917,5 +917,11 @@
   "item.xenowarriors.stat_boost_guns_5": "Guns Boost +5",
   "item.xenowarriors.stat_boost_guns_10": "Guns Boost +10",
   "item.xenowarriors.stat_boost_guns_100": "Guns Boost +100",
-  "itemGroup.xenowarriors.stat_boosts": "Xeno Warriors: Stat Boosts"
+  "itemGroup.xenowarriors.stat_boosts": "Xeno Warriors: Stat Boosts",
+  "item.xenowarriors.technica_bike": "Technica's Motorcycle Key",
+  "entity.xenowarriors.technica_bike": "Technica's Motorcycle",
+  "item.xenowarriors.bike_rockets": "Bike Attachment: Rocket Pod",
+  "item.xenowarriors.bike_thrusters": "Bike Attachment: Hover Thrusters",
+  "item.xenowarriors.bike_plating": "Bike Attachment: Armor Plating",
+  "item.xenowarriors.bike_nitro": "Bike Attachment: Nitro Booster"
 }

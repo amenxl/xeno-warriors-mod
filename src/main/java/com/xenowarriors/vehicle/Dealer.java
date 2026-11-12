@@ -30,6 +30,7 @@ public final class Dealer {
     public static void buy(ServerPlayer p, int kindIdx, int variant) {
         if (kindIdx < 0 || kindIdx >= VehicleKind.values().length) return;
         VehicleKind k = VehicleKind.values()[kindIdx];
+        if (k.technica()) return;                                            // (Technica's own: not for sale)
         var at = AT.get(p.getUUID());
         if (at == null || at.dimension() != p.level().dimension() || !at.pos().closerThan(p.blockPosition(), 10)) return;   // (only at the dealer)
         if (!p.isCreative()) {

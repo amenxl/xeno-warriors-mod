@@ -51,7 +51,7 @@ public final class DmzBotNimbus {
     }
 
     /** Korin hands it a Flying Nimbus. */
-    static boolean receive(PartyBotEntity b, DmzBotQuests.Data d, String master) {
+    static boolean receive(PartyBotEntity b, net.minecraft.server.level.ServerPlayer owner, String master) {
         if (!wantsFrom(b, master)) return false;
         Item it = ForgeRegistries.ITEMS.getValue(NIMBUS);
         if (it == null) return false;
@@ -60,7 +60,7 @@ public final class DmzBotNimbus {
         b.inventory.addItem(s);
         given++;
         refresh(b);
-        DmzNews.bot(d.owner, b, "Flying Nimbus", Component.empty().append(b.character().getDisplayName()).append(" got a ")
+        if (owner != null) DmzNews.bot(owner, b, "Flying Nimbus", Component.empty().append(b.character().getDisplayName()).append(" got a ")
                 .append(s.getHoverName().copy().withStyle(ChatFormatting.GOLD)).append(" from Korin - it can fly now").withStyle(ChatFormatting.AQUA));
         return true;
     }
@@ -74,8 +74,5 @@ public final class DmzBotNimbus {
     }
 
     /** (Tests) as if it had talked to Korin. */
-    public static boolean receiveForTest(PartyBotEntity b) {
-        DmzBotQuests.Data d = DmzBotQuests.open(b, false);
-        return d != null && receive(b, d, MASTER);
-    }
+    public static boolean receiveForTest(PartyBotEntity b) { return receive(b, b.owner(), MASTER); }
 }

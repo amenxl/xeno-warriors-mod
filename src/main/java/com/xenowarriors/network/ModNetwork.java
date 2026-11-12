@@ -8,7 +8,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class ModNetwork {
-    private static final String VERSION = "106";      // (bump whenever packets are added or moved)
+    private static final String VERSION = "107";      // (bump whenever packets are added or moved)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             XenoWarriors.id("main"), () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -514,6 +514,8 @@ public final class ModNetwork {
                 .encoder(PartyHatsPacket::encode).decoder(PartyHatsPacket::decode).consumerMainThread(PartyHatsPacket::handle).add();
         CHANNEL.messageBuilder(com.xenowarriors.mining.CoMinePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (mining together: helpers on your block)
                 .encoder(com.xenowarriors.mining.CoMinePacket::encode).decoder(com.xenowarriors.mining.CoMinePacket::decode).consumerMainThread(com.xenowarriors.mining.CoMinePacket::handle).add();
+        CHANNEL.messageBuilder(com.xenowarriors.vehicle.BikeFirePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)   // (Technica's bike guns)
+                .encoder(com.xenowarriors.vehicle.BikeFirePacket::encode).decoder(com.xenowarriors.vehicle.BikeFirePacket::decode).consumerMainThread(com.xenowarriors.vehicle.BikeFirePacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

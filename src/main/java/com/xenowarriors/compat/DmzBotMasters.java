@@ -117,7 +117,7 @@ public final class DmzBotMasters extends Goal {
         b.getNavigation().stop();
         b.swing(InteractionHand.MAIN_HAND);
         boolean ok;
-        if (NIMBUS.equals(skill)) { DmzBotQuests.Data d = DmzBotQuests.open(b, false); ok = d != null && !d.live && DmzBotNimbus.receive(b, d, master); }
+        if (NIMBUS.equals(skill)) ok = DmzBotNimbus.receive(b, b.owner(), master);
         else if (WEIGHTS.equals(skill)) { DmzBotQuests.Data d = DmzBotQuests.open(b, false); ok = d != null && !d.live && DmzBotWeights.receive(b, d, master); }
         else ok = DmzBotTechniques.learn(b, to, master, skill);
         PartyBots.testLog(b, "dmz master: talked to " + master + ", learned " + skill + " = " + ok);

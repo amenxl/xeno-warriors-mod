@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "pattern": ["ITI", "TRT", "ITI"], "key": {"I": {"item": "minecraft:iron_ingot"}, "T": {"item": "minecraft:tnt"}, "R": {"item": "minecraft:redstone_block"}}, "result": {"item": "xenowarriors:bike_rockets"}}

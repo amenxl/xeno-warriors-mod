@@ -1,0 +1,1 @@
+{"type": "minecraft:crafting_shaped", "pattern": ["PI", " I"], "key": {"P": {"item": "minecraft:pink_dye"}, "I": {"item": "minecraft:iron_ingot"}}, "result": {"item": "xenowarriors:technica_bike", "nbt": "{Variant:0}"}}

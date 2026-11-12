@@ -28,21 +28,39 @@ public class VehicleItem extends Item {
 
     @Override
     public Component getName(ItemStack s) {
+        if (kind.technica()) return Component.literal("Technica's Motorcycle Key");
         String v = kind.variant(variant(s));
         return Component.literal(kind.title + (kind.variants.length > 1 ? " (" + Character.toUpperCase(v.charAt(0)) + v.substring(1) + ")" : ""));
     }
 
     @Override
     public void appendHoverText(ItemStack s, Level level, List<Component> tip, TooltipFlag flag) {
+        if (kind.technica()) {
+            tip.add(Component.literal("Use it anywhere (as Technica) to call your pink motorcycle - it comes to you.").withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+            tip.add(Component.literal("Driving: attack fires its Twin Blasters, use fires a rocket (with the Rocket Pod). Use attachments on it to fit them.").withStyle(net.minecraft.ChatFormatting.GRAY));
+            return;
+        }
         tip.add(Component.literal("Use on the ground to park it. Sneak + right-click it to pick it back up.").withStyle(net.minecraft.ChatFormatting.GRAY));
         tip.add(Component.literal(kind.seats + " seats").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
         if (kind.upgraded()) tip.add(Component.literal("Mk II: " + Math.round(kind.maxSpeed * 72) + " km/h, " + kind.health + " health"
                 + (kind.hovers() ? " - flies (Jump to lift off, Sprint key to come down)" : "")).withStyle(net.minecraft.ChatFormatting.AQUA));
     }
 
+    /** Technica's key: used anywhere, it calls her motorcycle (the key stays). */
+    @Override
+    public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player p, net.minecraft.world.InteractionHand hand) {
+        if (!kind.technica()) return super.use(level, p, hand);
+        if (!level.isClientSide && p instanceof net.minecraft.server.level.ServerPlayer sp) TechnicaBike.useKey(sp);
+        return net.minecraft.world.InteractionResultHolder.sidedSuccess(p.getItemInHand(hand), level.isClientSide);
+    }
+
     @Override
     public InteractionResult useOn(UseOnContext c) {
         Level level = c.getLevel();
+        if (kind.technica()) {
+            if (!level.isClientSide && c.getPlayer() instanceof net.minecraft.server.level.ServerPlayer sp) TechnicaBike.useKey(sp);
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (level.isClientSide) return InteractionResult.SUCCESS;
         // not in the modes' arenas (the Tower / Journey dimension, VR): they're cleared when a run ends, and the
         // vehicle with them - no building there anyway (operators in creative still can, like blocks)
