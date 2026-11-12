@@ -171,7 +171,7 @@ public final class SkillManager {
         if (seasonLocked) return;
         if (slot < 0 || slot >= SLOTS || !player.isAlive() || player.isSpectator()) return;
         // the team ultimate (sneak + ultimate key with your partner close by), or joining one you were asked to
-        if (slot == ULTIMATE_SLOT && com.xenowarriors.party.TeamUltimate.onUltimateKey(player)) return;
+        if (slot == ULTIMATE_SLOT && !UltCharge.firing && com.xenowarriors.party.TeamUltimate.onUltimateKey(player)) return;
         CharacterType type = ModCapabilities.getType(player);
         Skill skill = get(player, slot);
         if (skill == null) {

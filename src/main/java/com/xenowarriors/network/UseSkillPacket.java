@@ -19,6 +19,12 @@ public record UseSkillPacket(int slot) {
 
     public static void handle(UseSkillPacket msg, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer player = ctx.get().getSender();
-        if (player != null) SkillManager.useSkill(player, msg.slot);
+        if (player == null) return;
+        if (msg.slot == com.xenowarriors.skill.UltCharge.RELEASE) { com.xenowarriors.skill.UltCharge.release(player); return; }   // (the ultimate key let go)
+        // the ultimate key (a player pressing it - not sneaking for a team ultimate, not answering a request): a teammate
+        // charging one nearby is joined (a team ultimate); otherwise it charges first (skill.UltCharge)
+        if (msg.slot == SkillManager.ULTIMATE_SLOT && !player.isShiftKeyDown() && com.xenowarriors.party.TeamUltimate.pending(player) == null
+                && com.xenowarriors.skill.UltCharge.keyPressed(player)) return;
+        SkillManager.useSkill(player, msg.slot);
     }
 }

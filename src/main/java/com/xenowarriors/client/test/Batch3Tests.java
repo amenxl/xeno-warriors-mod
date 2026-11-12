@@ -58,6 +58,7 @@ public final class Batch3Tests {
         if (all || f.contains("hud")) hud(mc, l);
         if (f.contains("bigparty")) bigParty(mc, l);
         if (f.contains("aurora")) aurora(mc, l);
+        if (f.contains("ultcharge")) ultCharge(mc, l);
         if (all || f.contains("magnet")) magnet(mc, l);
         if (all || f.contains("step")) step(mc, l);
         if (all || f.contains("faces")) faces(mc, l);
@@ -264,6 +265,40 @@ public final class Batch3Tests {
             }, 2);
         }
         l.add(null, () -> { com.xenowarriors.client.ClientSettings.setHudStyle(was); server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setHealth(p.getMaxHealth()); clearBots(p); }); }, 5);
+    }
+
+    // ------------------------------------------------------------------ charging an ultimate
+
+    private static void ultCharge(Minecraft mc, MikikoTests.Steps l) {
+        character(l, CharacterType.MIKIKO);
+        long[] cd = new long[1];
+        l.add(null, () -> server(p -> {
+            clearBots(p); pad(p, 8);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.cooldownEnd[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] = 0);
+            boolean b = com.xenowarriors.skill.UltCharge.begin(p);
+            log("ultcharge: tap - charging=" + b);
+        }), 5);
+        l.add(null, () -> server(com.xenowarriors.skill.UltCharge::release), 2);
+        l.add(null, () -> server(p -> {
+            boolean still = com.xenowarriors.skill.UltCharge.charging(p);
+            log("ultcharge: let go at 7 ticks, still charging (base charge) = " + still + " -> " + (still ? "PASS" : "FAIL"));
+        }), 40);
+        l.add(null, () -> server(p -> {
+            float[] last = com.xenowarriors.skill.UltCharge.last;
+            long left = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.cooldownEnd[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT]).orElse(0L) - p.server.overworld().getGameTime();
+            boolean ok = !com.xenowarriors.skill.UltCharge.charging(p) && last[0] >= com.xenowarriors.skill.UltCharge.MIN && last[1] < 1.01F && left > 0;
+            log(String.format("ultcharge: tapped ultimate fired after %.0f ticks at power %.2f, cooldown set=%s -> %s", last[0], last[1], left > 0, ok ? "PASS" : "FAIL"));
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.cooldownEnd[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] = 0);
+            com.xenowarriors.skill.UltCharge.begin(p);
+        }), 120);
+        l.add(null, () -> server(com.xenowarriors.skill.UltCharge::release), 70);      // held ~70 ticks
+        l.add(null, () -> server(p -> {
+            float[] last = com.xenowarriors.skill.UltCharge.last;
+            boolean ok = last[0] >= 65 && last[1] > 1.2F;
+            log(String.format("ultcharge: held ultimate fired after %.0f ticks at power %.2f -> %s", last[0], last[1], ok ? "PASS" : "FAIL"));
+            p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.cooldownEnd[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT] = 0);
+        }), 5);
     }
 
     // ------------------------------------------------------------------ the Aurora Security System

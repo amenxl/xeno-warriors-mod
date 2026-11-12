@@ -34,6 +34,10 @@ public final class ClientEvents {
 
     private static int slotBeforeKeys = -1;
 
+    /** The ultimate key was pressed and may still be held (its charge: skill.UltCharge). */
+
+    private static boolean ultHeld;
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         Minecraft mc = Minecraft.getInstance();
@@ -55,8 +59,15 @@ public final class ClientEvents {
                 if (XenoCutscene.frozenTarget()) { XenoCutscene.counter(slot); continue; }   // caught in a Xeno Blast: fight back
                 if (mc.player != null && ClientCharacterData.getLocal() != CharacterType.NONE && !UltimateCutscene.active()) {
                     ModNetwork.sendToServer(new UseSkillPacket(slot));
+                    if (slot == com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT) ultHeld = true;
                 }
             }
+        }
+
+        // the ultimate charges while its key is held: tell the server when it's let go
+        if (ultHeld && !ModKeyMappings.SKILLS[com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT].isDown()) {
+            ultHeld = false;
+            ModNetwork.sendToServer(new UseSkillPacket(com.xenowarriors.skill.UltCharge.RELEASE));
         }
 
         while (ModKeyMappings.SUPER_ULT.consumeClick()) {
