@@ -525,8 +525,8 @@ public final class WeaponsTests {
             ItemStack w2 = new ItemStack(net.minecraft.world.item.Items.WOODEN_SWORD);
             w2.setDamageValue(w2.getMaxDamage() - 2);
             p.getInventory().clearContent();
-            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
             p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, w2);
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));   // (after: into another slot)
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.moveTo(p.getX(), p.getY(), p.getZ() + 1.5); z.setNoAi(true);
             z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(500); z.setHealth(500);
