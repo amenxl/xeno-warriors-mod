@@ -406,7 +406,7 @@ public final class CharsTests {
                 String m = set[0];
                 l.add(null, () -> server(p -> {
                     p.getInventory().clearContent();
-                    hold(p, ItemStack.EMPTY);
+                    hold(p, ef ? new ItemStack(Items.IRON_AXE) : ItemStack.EMPTY);   // (Epic Fight draws the body with a weapon of its own in hand)
                     var it = switch (m) {
                         case "iron" -> new net.minecraft.world.item.Item[]{Items.IRON_HELMET, Items.IRON_CHESTPLATE, Items.IRON_LEGGINGS, Items.IRON_BOOTS};
                         case "leather" -> new net.minecraft.world.item.Item[]{Items.LEATHER_HELMET, Items.LEATHER_CHESTPLATE, Items.LEATHER_LEGGINGS, Items.LEATHER_BOOTS};
