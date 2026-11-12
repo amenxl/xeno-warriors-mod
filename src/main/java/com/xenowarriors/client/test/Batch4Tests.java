@@ -83,6 +83,12 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("dmzgun")) dmzGun(mc, l);
         if (dmz && (f.isEmpty() || f.contains("radar"))) radarCraft(mc, l);
         if (dmz && (f.isEmpty() || f.contains("yurissj"))) yuriForms(mc, l);
+        if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
+        if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
+        if (f.isEmpty() || f.contains("scent")) scent(mc, l);
+        if (f.isEmpty() || f.contains("techsense")) techSense(mc, l);
+        if (f.isEmpty() || f.contains("partymusic")) partyMusic(mc, l);
+        if (f.isEmpty() || f.contains("headlight")) headlights(mc, l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
 
@@ -356,6 +362,208 @@ public final class Batch4Tests {
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 160, 10), 20);
         l.add("batch4_yuri_ssj4_back", () -> {}, 3);
         l.add(null, () -> server(p -> setForm(p, null, null)), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    // ------------------------------------------------------------------ batch 6
+
+    private static void rlAll(Minecraft mc, MikikoTests.Steps l) {
+        String[][] want = {{"kyrie", "gravity_fetch"}, {"max", "wind_of_sorrow"}, {"sam", "batter_up"}, {"technica", "gravity_rounds"}, {"kaeru", "sound_burst"},
+                {"ultima", "energy_blast"}, {"zane", "broom_smack"}, {"yuri", "virus_upload"}, {"stevie", "disco_kick"}, {"garry", "karma_blast"}};
+        l.add(null, () -> server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); }), 5);
+        for (String[] w : want) {
+            Batch3Tests.character(l, CharacterType.byId(w[0]));
+            l.add(null, () -> server(p -> {
+                com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+                com.xenowarriors.karma.Karma.add(p, 300);
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                z.moveTo(p.getX(), p.getY(), p.getZ() + 3, 0, 0); z.setNoAi(true); z.addTag("xw_rl"); p.serverLevel().addFreshEntity(z);
+                p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, z.position().add(0, 1, 0));
+                com.xenowarriors.toggle.Toggles.setRl(p, w[1]);
+                boolean picked = w[1].equals(com.xenowarriors.toggle.Toggles.rlSkill(p));
+                com.xenowarriors.toggle.Toggles.useRl(p);
+                com.xenowarriors.skill.Skill s = null;
+                for (var en : com.xenowarriors.skill.SkillPool.of(p)) if (en.skill().getId().equals(w[1])) s = en.skill();
+                long left = s == null ? -1 : com.xenowarriors.skill.SkillManager.freeCooldownLeft(p, s);
+                log("rlall " + w[0] + " " + w[1] + ": picked " + picked + ", went off (cooldown " + left + ") -> " + (picked && left > 0 ? "PASS" : "FAIL"));
+                for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(20), x -> x.getTags().contains("xw_rl"))) e.discard();
+            }), 15);
+        }
+        l.add(null, () -> server(p -> { p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.removeAllEffects(); p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false)); }), 5);
+    }
+
+    private static void autoPassives(Minecraft mc, MikikoTests.Steps l) {
+        l.add(null, () -> server(p -> com.xenowarriors.character.Seasons.set(p.server, 3)), 5);
+        // Max: Lunar Mind at night
+        Batch3Tests.character(l, CharacterType.MAX);
+        l.add(null, () -> server(p -> { p.removeAllEffects(); p.serverLevel().setDayTime(18000); }), 50);
+        l.add(null, () -> server(p -> {
+            boolean night = p.hasEffect(MobEffects.DAMAGE_BOOST);
+            p.removeAllEffects(); p.serverLevel().setDayTime(6000);
+            log("autopass: Max's Lunar Mind at night " + night);
+        }), 50);
+        l.add(null, () -> server(p -> {
+            boolean day = p.hasEffect(MobEffects.DAMAGE_BOOST);
+            log("autopass: Lunar Mind only at night - by day " + day + " -> " + (!day ? "PASS" : "FAIL"));
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+        }), 5);
+        // Technica: Gravity Boots on a long fall, Visor Scan on lock-on, Rescue Platform for two downed teammates
+        Batch3Tests.character(l, CharacterType.TECHNICA);
+        float[] hp = new float[1];
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.toggle.Passives.resetForTest(p);
+            p.removeAllEffects();
+            p.setHealth(p.getMaxHealth()); hp[0] = p.getHealth();
+            p.teleportTo(p.getX(), p.getY() + 22, p.getZ());
+        }), 70);
+        l.add(null, () -> server(p -> {
+            boolean ok = p.getHealth() >= hp[0] - 0.01F;
+            log("autopass: Technica fell 22 blocks -> Gravity Boots fired " + com.xenowarriors.toggle.Passives.bootsSaved + ", health " + p.getHealth() + "/" + hp[0] + " -> " + (ok && com.xenowarriors.toggle.Passives.bootsSaved > 0 ? "PASS" : "FAIL"));
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX(), p.getY(), p.getZ() + 4, 0, 0); z.setNoAi(true); z.addTag("xw_visor"); p.serverLevel().addFreshEntity(z);
+            int before = com.xenowarriors.toggle.Passives.visorScans;
+            com.xenowarriors.toggle.Passives.lockedOn(p, z.getId());
+            log("autopass: Technica locks on -> Visor Scan " + (com.xenowarriors.toggle.Passives.visorScans > before) + " -> " + (com.xenowarriors.toggle.Passives.visorScans > before ? "PASS" : "FAIL"));
+            z.discard();
+            Batch3Tests.clearBots(p);
+            PartyBotEntity a = botAt(p, CharacterType.MAX, 2, 2), b = botAt(p, CharacterType.SAM, -2, 2);
+            a.die(p.damageSources().generic()); b.die(p.damageSources().generic());
+        }), 10);
+        l.add(null, () -> server(p -> {
+            long up = PartyBots.bots(p).stream().filter(x -> !x.downed()).count();
+            log("autopass: two teammates down -> Rescue Platform " + com.xenowarriors.toggle.Passives.rescues + ", back up " + up + " -> " + (com.xenowarriors.toggle.Passives.rescues > 0 && up >= 2 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }), 20);
+        // Ultima: Living Weapon on the transform key, Attack Prediction switching itself off when overused
+        Batch3Tests.character(l, CharacterType.ULTIMA);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            com.xenowarriors.network.FoxKingTogglePacket.press(p);
+            boolean lw = com.xenowarriors.toggle.Toggles.active(p, com.xenowarriors.toggle.Toggles.Entry.LIVING_WEAPON);
+            log("autopass: Ultima's transform key -> Living Weapon " + lw + " -> " + (lw ? "PASS" : "FAIL"));
+            com.xenowarriors.toggle.Toggles.setEnabled(p, com.xenowarriors.toggle.Toggles.Entry.ATTACK_PREDICTION, true);
+            p.getPersistentData().putLongArray("xw_predict_strain", new long[]{p.level().getGameTime() - 40, p.level().getGameTime() - 20});
+            com.xenowarriors.toggle.Passives.resetForTest(p);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0); z.setNoAi(true); z.addTag("xw_ap"); p.serverLevel().addFreshEntity(z); z.setTarget(p);
+        }), 30);
+        l.add(null, () -> server(p -> {
+            boolean off = !com.xenowarriors.toggle.Toggles.enabled(p, com.xenowarriors.toggle.Toggles.Entry.ATTACK_PREDICTION);
+            log("autopass: Attack Prediction read the zombie (" + com.xenowarriors.toggle.Passives.predictions + ") - overused -> switched itself off " + off + " -> " + (off && com.xenowarriors.toggle.Passives.predictions > 0 ? "PASS" : "FAIL"));
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Zombie.class, p.getBoundingBox().inflate(20), x -> x.getTags().contains("xw_ap"))) e.discard();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); p.removeAllEffects();
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+        }), 5);
+    }
+
+    private static void scent(Minecraft mc, MikikoTests.Steps l) {
+        l.add(null, () -> server(p -> com.xenowarriors.character.Seasons.set(p.server, 3)), 5);
+        Batch3Tests.character(l, CharacterType.KAERU);
+        l.add(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            for (int i = 0; i < 3; i++) {
+                var e = (i == 0 ? net.minecraft.world.entity.EntityType.ZOMBIE : i == 1 ? net.minecraft.world.entity.EntityType.PIG : net.minecraft.world.entity.EntityType.SHEEP).create(p.serverLevel());
+                e.moveTo(p.getX() + 6 + i * 3, p.getY(), p.getZ() + 4, 0, 0); ((net.minecraft.world.entity.Mob) e).setNoAi(true); e.addTag("xw_scent"); p.serverLevel().addFreshEntity(e);
+            }
+            com.xenowarriors.skill.SkillManager.resetCooldowns(p);
+            com.xenowarriors.toggle.Toggles.use(p, com.xenowarriors.toggle.Toggles.Entry.SCENT_TRACK);
+        }), 20);
+        l.add("batch4_scent_picker", () -> {
+            boolean open = mc.screen instanceof com.xenowarriors.client.kaeru.ScentScreen;
+            log("scent: the picker opened " + open + " -> " + (open ? "PASS" : "FAIL"));
+        }, 3);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.kaeru.ScentScreen s) s.pickFirstForTest(); }, 10);
+        l.add(null, () -> server(p -> { for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(30), x -> x.getTags().contains("xw_scent"))) { e.setNoAi(false); } }), 80);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 25), 10);
+        l.add("batch4_scent_trail", () -> {
+            boolean ok = com.xenowarriors.client.kaeru.ScentClient.target() >= 0;
+            log("scent: picked one -> tracking " + ok + ", trail points " + com.xenowarriors.client.kaeru.ScentClient.points() + " -> " + (ok ? "PASS" : "FAIL"));
+        }, 3);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(p -> {
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), x -> x.getTags().contains("xw_scent"))) e.discard();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL); }); }, 5);
+    }
+
+    private static void techSense(Minecraft mc, MikikoTests.Steps l) {
+        l.add(null, () -> server(p -> com.xenowarriors.character.Seasons.set(p.server, 3)), 5);
+        Batch3Tests.character(l, CharacterType.YURI);
+        l.add(null, () -> server(p -> {
+            var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(p.serverLevel());
+            soul.moveTo(p.getX() + 6, p.getY(), p.getZ(), 0, 0); soul.setNoAi(true); soul.addTag("xw_ts"); p.serverLevel().addFreshEntity(soul);
+            com.xenowarriors.karma.KarmaSensing.unbreakForTest(p);
+            float k0 = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.getKarma()).orElse(0F);
+            com.xenowarriors.karma.KarmaSensing.use(p, true);
+            float k1 = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.getKarma()).orElse(0F);
+            boolean ok = k1 >= k0 && com.xenowarriors.karma.KarmaSensing.holding(p) && !com.xenowarriors.karma.KarmaSensing.brokenForTest(p);
+            log("techsense: Yuri senses a corrupted soul -> no Karma (" + k0 + " -> " + k1 + "), still sensing " + com.xenowarriors.karma.KarmaSensing.holding(p) + " -> " + (ok ? "PASS" : "FAIL"));
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, -90, 10), 10);
+        l.add("batch4_techsense_yuri", () -> {}, 3);
+        l.add(null, () -> server(p -> com.xenowarriors.karma.KarmaSensing.release(p)), 5);
+        Batch3Tests.character(l, CharacterType.TECHNICA);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.karma.KarmaSensing.unbreakForTest(p);
+            com.xenowarriors.karma.KarmaSensing.use(p, true);
+            boolean broken = com.xenowarriors.karma.KarmaSensing.brokenForTest(p) && !com.xenowarriors.karma.KarmaSensing.holding(p);
+            log("techsense: Technica senses a corrupted soul -> her visor crashes, sensing offline " + broken + " -> " + (broken ? "PASS" : "FAIL"));
+            com.xenowarriors.karma.KarmaSensing.unbreakForTest(p);
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, p.getBoundingBox().inflate(20), x -> x.getTags().contains("xw_ts"))) e.discard();
+        }), 10);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void partyMusic(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            PartyBotEntity a = botAt(p, CharacterType.RHALIX, 2, 3);
+            a.inventory.addItem(new ItemStack(net.minecraft.world.item.Items.JUKEBOX));
+            com.xenowarriors.bot.BotPartyTime.start(p);
+            log("partymusic: a bot with a jukebox -> Xeno Warriors music " + com.xenowarriors.bot.BotPartyTime.djForTest(p) + " -> " + (com.xenowarriors.bot.BotPartyTime.djForTest(p) ? "PASS" : "FAIL"));
+        }), 40);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 30, 25), 10);
+        l.add("batch4_party_jukebox", () -> {}, 3);
+        l.add(null, () -> server(p -> { com.xenowarriors.bot.BotPartyTime.endForTest(p); Batch3Tests.clearBots(p); }), 20);
+        l.add(null, () -> server(p -> {
+            com.xenowarriors.character.Seasons.set(p.server, 3);
+            botAt(p, CharacterType.GARRY, 2, 3); botAt(p, CharacterType.STEVIE, -2, 3); botAt(p, CharacterType.ZANE, 0, 4);
+            com.xenowarriors.bot.BotPartyTime.start(p);
+            int bb = com.xenowarriors.bot.BotPartyTime.beatboxersForTest(p);
+            com.xenowarriors.bot.BotPartyTime.battleNowForTest(p);
+            log("partymusic: no jukebox, Garry and Stevie there -> beatboxers " + bb + " -> " + (bb == 2 ? "PASS" : "FAIL"));
+        }), 30);
+        l.add(null, () -> server(p -> {
+            boolean on = com.xenowarriors.bot.BotPartyTime.battlingForTest(p);
+            log("partymusic: rap battle Garry vs Stevie on " + on + " (battles " + com.xenowarriors.bot.BotPartyTime.rapBattles + ") -> " + (on ? "PASS" : "FAIL"));
+        }), 60);
+        l.add("batch4_party_rapbattle", () -> mc.setScreen(new net.minecraft.client.gui.screens.ChatScreen("")), 10);
+        l.add(null, () -> { mc.setScreen(null); server(p -> { com.xenowarriors.bot.BotPartyTime.endForTest(p); Batch3Tests.clearBots(p); }); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 10);
+    }
+
+    private static void headlights(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            p.serverLevel().setDayTime(18000);
+            var v = com.xenowarriors.vehicle.Vehicles.TYPES.get(com.xenowarriors.vehicle.VehicleKind.CAR).get().create(p.serverLevel());
+            v.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0, 0); v.addTag("xw_hl");
+            p.serverLevel().addFreshEntity(v);
+            p.startRiding(v, true);
+        }), 40);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 15), 20);
+        l.add("batch4_headlights", () -> {
+            server(p -> {
+                var v = p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity ve ? ve : null;
+                int lit = v == null ? -1 : com.xenowarriors.vehicle.Headlights.litForTest(v);
+                log("headlight: driving at night -> lights on the road " + lit + ", beams drawn " + com.xenowarriors.vehicle.HeadlightsClientCount.get() + " -> " + (lit > 0 ? "PASS" : "FAIL"));
+            });
+        }, 3);
+        l.add(null, () -> server(p -> {
+            p.stopRiding();
+            for (var e : p.serverLevel().getEntitiesOfClass(com.xenowarriors.vehicle.VehicleEntity.class, p.getBoundingBox().inflate(20), x -> x.getTags().contains("xw_hl"))) e.discard();
+            p.serverLevel().setDayTime(6000);
+        }), 10);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 
