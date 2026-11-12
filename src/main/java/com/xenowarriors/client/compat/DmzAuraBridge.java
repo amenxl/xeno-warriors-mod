@@ -17,6 +17,9 @@ public final class DmzAuraBridge {
     private DmzAuraBridge() {}
 
     private static boolean tried, broken;
+    /** (Tests / logs) why the last try didn't queue anything. */
+    public static String lastWhy = "";
+    private static Method getAny;
     private static Method getTP, getGeoModel, getModelResource, getBakedModel, addAura, addSpark;
     private static Method getStatus, isAuraActive, isPermanentAura;
     private static Object cap;
@@ -30,6 +33,7 @@ public final class DmzAuraBridge {
         try {
             Class<?> cache = Class.forName("com.dragonminez.client.render.DMZRendererCache");
             getTP = cache.getMethod("getTPRenderer", net.minecraft.world.entity.player.Player.class);
+            getAny = cache.getMethod("getRenderer", net.minecraft.world.entity.player.Player.class);
             Class<?> geoRenderer = Class.forName("software.bernie.geckolib.renderer.GeoRenderer");
             getGeoModel = geoRenderer.getMethod("getGeoModel");
             Class<?> geoModel = Class.forName("software.bernie.geckolib.model.GeoModel");
@@ -75,10 +79,12 @@ public final class DmzAuraBridge {
         if (!works()) return false;
         try {
             Object renderer = getTP.invoke(null, p);
-            if (renderer == null) return false;
+            if (renderer == null) renderer = getAny.invoke(null, p);
+            if (renderer == null) { lastWhy = "no DragonMineZ renderer for this player"; return false; }
             Object model = getGeoModel.invoke(renderer);
-            Object baked = getBakedModel.invoke(model, getModelResource.invoke(model, p));
-            if (baked == null) return false;
+            Object res = getModelResource.invoke(model, p);
+            Object baked = getBakedModel.invoke(model, res);
+            if (baked == null) { lastWhy = "no baked model for " + res; return false; }
             addAura.invoke(null, p, baked, pose, partial, light);
             addSpark.invoke(null, p, baked, pose, partial, light);
             queued++;

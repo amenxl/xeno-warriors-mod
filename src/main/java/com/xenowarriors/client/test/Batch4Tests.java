@@ -241,7 +241,7 @@ public final class Batch4Tests {
         l.add("batch4_dmzaura", () -> {}, 5);
         l.add(null, () -> {
             int n = com.xenowarriors.client.compat.DmzAuraBridge.queued - q[0];
-            log("dmzaura: aura on (client sees " + com.xenowarriors.client.compat.DmzAuraBridge.auraOn(mc.player) + ") -> DragonMineZ aura queued " + n + " times, bridge works " + com.xenowarriors.client.compat.DmzAuraBridge.works() + " -> " + (n > 0 ? "PASS" : "FAIL"));
+            log("dmzaura: aura on (client sees " + com.xenowarriors.client.compat.DmzAuraBridge.auraOn(mc.player) + ") -> DragonMineZ aura queued " + n + " times, bridge works " + com.xenowarriors.client.compat.DmzAuraBridge.works() + " (" + com.xenowarriors.client.compat.DmzAuraBridge.lastWhy + ") -> " + (n > 0 ? "PASS" : "FAIL"));
             server(p -> { var st = Dmz6Tests.call(DmzPerCharacter.live(p), "getStatus"); Dmz6Tests.call(st, "setAuraActive", false); Dmz6Tests.call(st, "setPermanentAura", false); setForm(p, null, null); });
         }, 5);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 10), 20);

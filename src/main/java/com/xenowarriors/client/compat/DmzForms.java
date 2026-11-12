@@ -276,10 +276,13 @@ public final class DmzForms {
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
     public static void onRenderAura(RenderPlayerEvent.Post event) {
-        if (!(event.getEntity() instanceof AbstractClientPlayer p) || !ready() || !ours(p) || dmzDraws(p) || giantFox(p)) return;
+        if (!(event.getEntity() instanceof AbstractClientPlayer p)) return;
+        if (p == Minecraft.getInstance().player) DmzAuraBridge.lastWhy = "hook: ready " + ready() + " ours " + ours(p) + " dmzDraws " + dmzDraws(p);
+        if (!ready() || !ours(p) || dmzDraws(p) || giantFox(p)) return;
         Minecraft mc = Minecraft.getInstance();
         if (p == mc.player && mc.options.getCameraType().isFirstPerson()) return;
         boolean on = DmzAuraBridge.auraOn(p);
+        if (p == mc.player) DmzAuraBridge.lastWhy = "hook reached, aura " + on;
         if (on && DmzAuraBridge.queue(p, event.getPoseStack(), event.getPartialTick(), event.getPackedLight())) return;
         int c = auraColor(p);
         if (c >= 0 && (on || DmzCompat.charging(p))) com.xenowarriors.client.DbzAura.mark(p.getId(), c, 2);
