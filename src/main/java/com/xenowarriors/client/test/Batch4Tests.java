@@ -92,6 +92,8 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("towerpods")) towerPods(mc, l);
         if (f.isEmpty() || f.contains("xenoblasts")) xenoBlasts(mc, l);
         if (f.isEmpty() || f.contains("capture")) capture(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
@@ -1778,6 +1780,114 @@ public final class Batch4Tests {
             com.xenowarriors.you.YouCapture.release(g[0]);
             g[0].discard();
         }), 20 * 2);
+        l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    private static void dbSpeed(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            var radar = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", "dball_radar"));
+            int[] mins = new int[2];
+            CharacterType[] who = {CharacterType.MAX, CharacterType.KAERU};
+            int[] speed = {1, 10000};
+            for (int k = 0; k < 2; k++) {
+                int kk = k;
+                p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> {
+                    var c = d.charStats.getCompound(who[kk].getId());
+                    int[] lv = c.getIntArray("lv"); if (lv.length != 3) lv = new int[3];
+                    lv[com.xenowarriors.stats.Stat.SPEED.ordinal()] = speed[kk];
+                    c.putIntArray("lv", lv); d.charStats.put(who[kk].getId(), c);
+                });
+                PartyBotEntity b = botAt(p, who[k], 2 + k * 2, 3);
+                b.inventory.setItem(0, new ItemStack(radar));
+                int sp = PartyBots.statLevel(b, com.xenowarriors.stats.Stat.SPEED);
+                String msg = com.xenowarriors.bot.OffDuty.sendSearching(p, b);
+                var m = java.util.regex.Pattern.compile("about (\\d+) minutes").matcher(msg);
+                mins[k] = m.find() ? Integer.parseInt(m.group(1)) : -1;
+                log("dbspeed: " + who[k].getId() + " Speed " + sp + " -> \"" + msg + "\"");
+            }
+            log("dbspeed: Speed 1 takes " + mins[0] + " min (20-40), Speed 10,000 takes " + mins[1] + " min (factor " + String.format("%.2f", com.xenowarriors.bot.OffDuty.speedFactor(10000)) + ") -> "
+                    + (mins[0] >= 20 && mins[0] <= 40 && mins[1] >= 2 && mins[1] <= 8 ? "PASS" : "FAIL"));
+        }), 20);
+    }
+
+    private static void kaiBuilder(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        BlockPos[] crater = new BlockPos[1], blast = new BlockPos[1], gold = new BlockPos[1];
+        int[] removed = new int[2];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            net.minecraft.server.level.ServerLevel w = p.server.getLevel(com.xenowarriors.kaiplanet.KaiPlanet.OTHERWORLD);
+            if (w == null) { log("kaibuilder: no Otherworld -> FAIL"); return; }
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.teleportTo(w, 66.5, 196, 1092.5, 200, 20);
+        }), 20 * 4);
+        // he turns up (the blueprint is read, then about 10 s)
+        l.add(null, () -> {}, 20 * 14);
+        l.add(null, () -> server(p -> {
+            net.minecraft.server.level.ServerLevel w = p.serverLevel();
+            var b = com.xenowarriors.kaiplanet.KaiPlanet.builderForTest(w);
+            int bp = com.xenowarriors.kaiplanet.KaiPlanet.plan() == null ? -1 : com.xenowarriors.kaiplanet.KaiPlanet.plan().size();
+            log("kaibuilder: in " + w.dimension().location() + ", blueprint " + bp + " blocks, builder " + (b == null ? "none" : b.blockPosition().toShortString()) + " (spawned " + com.xenowarriors.kaiplanet.KaiPlanet.spawned + ") -> " + (b != null && bp > 100000 ? "PASS" : "FAIL"));
+            int already = com.xenowarriors.kaiplanet.KaiPlanet.checkAllForTest(w);
+            log("kaibuilder: holes already on the planet when we got here: " + already);
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 0, 8), 5);
+        l.add("batch4_kai_builder_home", () -> {}, 3);
+        // a crater (dug) and a blast, with a gold block someone put in one of the holes
+        l.add(null, () -> server(p -> {
+            net.minecraft.server.level.ServerLevel w = p.serverLevel();
+            var plan = com.xenowarriors.kaiplanet.KaiPlanet.plan();
+            BlockPos c = w.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(70, 0, 1104)).below();
+            crater[0] = c;
+            for (BlockPos q : BlockPos.betweenClosed(c.offset(-2, -3, -2), c.offset(2, 0, 2))) if (plan.index(q) >= 0 && !w.getBlockState(q).isAir()) { w.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3); removed[0]++; }
+            gold[0] = c.offset(2, 0, 2);
+            w.setBlock(gold[0], net.minecraft.world.level.block.Blocks.GOLD_BLOCK.defaultBlockState(), 3);
+            BlockPos e = w.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(46, 0, 1108));
+            blast[0] = e;
+            int before = 0;
+            for (BlockPos q : BlockPos.betweenClosed(e.offset(-5, -5, -5), e.offset(5, 5, 5))) if (plan.index(q) >= 0 && !w.getBlockState(q).isAir()) before++;
+            w.explode(null, e.getX() + .5, e.getY(), e.getZ() + .5, 4F, net.minecraft.world.level.Level.ExplosionInteraction.BLOCK);
+            int after = 0;
+            for (BlockPos q : BlockPos.betweenClosed(e.offset(-5, -5, -5), e.offset(5, 5, 5))) if (plan.index(q) >= 0 && !w.getBlockState(q).isAir()) after++;
+            removed[1] = before - after;
+            p.teleportTo(c.getX() + 8.5, c.getY() + 6, c.getZ() + 0.5);
+            log("kaibuilder: dug a crater (" + removed[0] + " blocks) at " + c.toShortString() + ", blasted " + removed[1] + " at " + e.toShortString() + ", gold block in a hole");
+        }), 20 * 3);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 250, 25), 5);
+        l.add("batch4_kai_builder_working", () -> {}, 3);
+        l.add(null, () -> {}, 20 * 20);
+        l.add(null, () -> server(p -> {
+            net.minecraft.server.level.ServerLevel w = p.serverLevel();
+            var plan = com.xenowarriors.kaiplanet.KaiPlanet.plan();
+            int left = 0;
+            for (BlockPos[] area : new BlockPos[][]{{crater[0].offset(-2, -3, -2), crater[0].offset(2, 0, 2)}, {blast[0].offset(-5, -5, -5), blast[0].offset(5, 5, 5)}})
+                for (BlockPos q : BlockPos.betweenClosed(area[0], area[1])) { int i = plan.index(q); if (i >= 0 && !q.equals(gold[0]) && w.getBlockState(q).isAir()) left++; }
+            boolean goldStays = w.getBlockState(gold[0]).is(net.minecraft.world.level.block.Blocks.GOLD_BLOCK);
+            log("kaibuilder: after 20 s - holes left " + left + " of " + (removed[0] + removed[1]) + " (restored total " + com.xenowarriors.kaiplanet.KaiPlanet.restored + "), the gold block someone put in stays " + goldStays
+                    + " -> " + (left == 0 && goldStays && removed[0] + removed[1] > 10 ? "PASS" : "FAIL"));
+        }), 20);
+        l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_FRONT, 250, 25), 5);
+        l.add("batch4_kai_builder_fixed", () -> {}, 3);
+        // can't be hurt; sent far off the planet -> teleports back
+        int[] tp0 = new int[1];
+        l.add(null, () -> server(p -> {
+            net.minecraft.server.level.ServerLevel w = p.serverLevel();
+            var b = com.xenowarriors.kaiplanet.KaiPlanet.builderForTest(w);
+            if (b == null) { log("kaibuilder: builder gone -> FAIL"); return; }
+            float hp = b.getHealth();
+            boolean hurt = b.hurt(p.damageSources().playerAttack(p), 50F) || b.getHealth() < hp;
+            log("kaibuilder: hit for 50 - hurt " + hurt + " -> " + (!hurt ? "PASS" : "FAIL"));
+            tp0[0] = com.xenowarriors.kaiplanet.KaiPlanet.teleports;
+            b.blinkForTest(new net.minecraft.world.phys.Vec3(59 + 135, 150, 1097));
+        }), 10);
+        l.add(null, () -> server(p -> {
+            var b = com.xenowarriors.kaiplanet.KaiPlanet.builderForTest(p.serverLevel());
+            double d = b == null ? -1 : b.position().distanceTo(new net.minecraft.world.phys.Vec3(59, 120.5, 1097));
+            log("kaibuilder: sent 135 blocks off the planet -> back, " + Math.round(d) + " from its middle (teleports " + (com.xenowarriors.kaiplanet.KaiPlanet.teleports - tp0[0]) + ") -> " + (b != null && d < 110 ? "PASS" : "FAIL"));
+        }), 20 * 3);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
     }
 

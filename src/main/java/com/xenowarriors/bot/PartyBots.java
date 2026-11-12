@@ -352,8 +352,11 @@ public final class PartyBots {
     /** A bot's own level of one stat (Speed / Attack / Defense): its owner's saved stats for that character, as levelFor. */
     public static int statLevel(PartyBotEntity b, Stat stat) {
         ServerPlayer o = b.owner();
-        if (o == null) return 0;
-        CharacterType t = b.character();
+        return o == null ? 0 : statLevel(o, b.character(), stat);
+    }
+
+    /** That character's level of one stat, from this owner's saves (on the team or not). */
+    public static int statLevel(ServerPlayer o, CharacterType t, Stat stat) {
         return o.getCapability(ModCapabilities.PLAYER_CHARACTER).map(d -> {
             int[] lv = d.getType() == t ? d.statLevel : d.charStats.getCompound(t.getId()).getIntArray("lv");
             int i = stat.ordinal();

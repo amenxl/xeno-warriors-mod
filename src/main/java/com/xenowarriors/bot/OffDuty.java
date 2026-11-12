@@ -237,7 +237,7 @@ public final class OffDuty {
             while (roll >= w[i]) roll -= w[i++];
             a = opts[i];
             if (a == Act.PARTY && !startParty(p, t, now, len, r)) a = Act.TRAINING;
-            if (a == Act.DRAGON_BALLS) { len = searchMinutes(r); c.putString("radar", radar); }
+            if (a == Act.DRAGON_BALLS) { len = searchMinutes(r, PartyBots.statLevel(p, t, Stat.SPEED)); c.putString("radar", radar); }
         }
         c.putInt("a", a.ordinal());
         if (a != Act.PARTY) c.putLong("u", now + len * MINUTE);
@@ -439,8 +439,15 @@ public final class OffDuty {
 
     // ---------------------------------------------------------------- out with a Dragon Radar
 
-    /** How long a Dragon Ball search takes: 20-40 minutes, 30 on average. */
-    static int searchMinutes(RandomSource r) { return 20 + r.nextInt(21); }
+    /**
+     * How long a Dragon Ball search takes: 20-40 minutes (30 on average) for a slow one, and the higher its Speed, the
+     * faster it gets them: Speed 100 about 80% of that, 1,000 about half, 10,000 a fifth, max Speed (30,000) an eighth -
+     * never under 2 minutes.
+     */
+    static int searchMinutes(RandomSource r, int speed) { return Math.max(2, Math.round((20 + r.nextInt(21)) * speedFactor(speed))); }
+
+    /** The share of a full-length search a bot with this Speed level takes (1 = slowest). */
+    public static float speedFactor(int speed) { return (float) Math.min(1.0, 1.0 / Math.pow(1.0 + Math.max(0, speed) / 150.0, 0.4)); }
 
     /** The Dragon Radar in this off-duty character's bag (its item id), or null. */
     static String radar(ServerPlayer p, CharacterType t) {
@@ -475,12 +482,13 @@ public final class OffDuty {
         PartyBots.checkIn(b, p);
         b.discard();
         CompoundTag c = rec(p, t);
-        int len = searchMinutes(p.getRandom());
+        int speed = PartyBots.statLevel(b, Stat.SPEED);
+        int len = searchMinutes(p.getRandom(), speed);
         c.putInt("a", Act.DRAGON_BALLS.ordinal());
         c.putLong("u", p.level().getGameTime() + len * MINUTE);
         c.putString("radar", radar);
         c.remove("t");
-        return t.getDisplayName().getString() + (b.canFly() ? " flies off" : " heads off") + " with the Dragon Radar to find the Dragon Balls (about " + len + " minutes).";
+        return t.getDisplayName().getString() + (b.canFly() ? " flies off" : " heads off") + " with the Dragon Radar to find the Dragon Balls (about " + len + " minutes" + (speedFactor(speed) < 0.95F ? " - quick thanks to Speed " + speed : "") + ").";
     }
 
     // ---------------------------------------------------------------- adding one to the team
