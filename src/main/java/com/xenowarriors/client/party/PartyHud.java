@@ -42,14 +42,22 @@ public class PartyHud implements IGuiOverlay {
         boolean ki = PartyKiClient.any();                                    // (DragonMineZ: a ki bar under the Karma bar)
         int rowH = ki ? 36 : 30, frameB = ki ? 29 : 23;
         int minTop = com.xenowarriors.client.DmzHud.on() ? 52 : 40;          // (with DragonMineZ: under its own HUD in the top-left corner)
-        float sc = members <= 3 ? 0.7F : Mth.clamp((height - 150F - minTop) / Math.max(1, members * rowH), 0.35F, 0.7F);   // (70%; smaller for a big party - /xeno partylimit)
+        // the more people in the party, the smaller the frames (and two columns once one won't fit down the side)
+        float tier = members <= 3 ? 0.7F : members <= 5 ? 0.55F : members <= 8 ? 0.45F : 0.38F;
+        int cols = 1;
+        float fit = (height - 150F - minTop) / Math.max(1, members * rowH);
+        if (fit < 0.35F && members > 4) { cols = 2; fit = (height - 150F - minTop) / Math.max(1, ((members + 1) / 2) * rowH); }
+        float sc = Mth.clamp(Math.min(tier, fit), 0.3F, 0.7F);
+        int perCol = (members + cols - 1) / cols;
         g.pose().pushPose();
         g.pose().scale(sc, sc, 1F);
-        int top = (int) Mth.clamp(height / 2F - 34, minTop, Math.max(minTop, height - 150 - members * rowH * sc));
-        int x = Math.round(5 / sc), y = Math.round(top / sc);
+        int top = (int) Mth.clamp(height / 2F - 34, minTop, Math.max(minTop, height - 150 - perCol * rowH * sc));
+        int x0 = Math.round(5 / sc), x = x0, y0 = Math.round(top / sc), y = y0, n = 0;
         shownTop = top - 2;
         for (PartySyncPacket.Member m : PartyClient.members()) {
             if (m.id().equals(mc.player.getUUID())) continue;
+            if (n > 0 && n % perCol == 0) { x += 108; y = y0; }                 // (the next column)
+            n++;
             CharacterType type = CharacterType.values()[Mth.clamp(m.type(), 0, CharacterType.values().length - 1)];
             int color = type == CharacterType.NONE ? 0xFFFFFFFF : type.getColor() | 0xFF000000;
             int w = 100, bw = w - 3 - 36;                                   // (the bars, their numbers to the right)

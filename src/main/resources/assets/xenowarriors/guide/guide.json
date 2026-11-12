@@ -60,7 +60,7 @@
       "pages": [
         {
           "title": "Parties",
-          "text": "- Parties hold up to 4 (players and bots together, 3 bots each at most). In creative, /xeno partylimit <1-16> changes that for the world.\n- Invite: right-click a player with an empty hand, or /xeno party invite <name>. Accept from the request card ({key:accept_request}) or the chat message (answering in chat clears the card too).\n- Party members see each other's health and Karma and can't hurt each other (except in a battle you both agreed to).\n- Ai-oni and Rhalix can never be in the same party."
+          "text": "- Parties hold up to 4 (players and bots together, 3 bots each at most). In creative, /xeno partylimit <1-16> changes that for the world.\n- Invite: right-click a player with an empty hand, or /xeno party invite <name>. Accept from the request card ({key:accept_request}) or the chat message (answering in chat clears the card too).\n- Party members see each other's health and Karma and can't hurt each other (except in a battle you both agreed to).\n- The party frames on the left get smaller the bigger the party (4+, 6+ and 9+ members), and split into two columns when they still wouldn't fit.\n- Ai-oni and Rhalix can never be in the same party."
         },
         {
           "title": "Party HUD",
