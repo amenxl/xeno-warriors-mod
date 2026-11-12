@@ -108,6 +108,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("partylast")) partyLasts(mc, l);
         if (f.isEmpty() || f.contains("youka")) youKa(mc, l, dmz);
         if (f.isEmpty() || f.contains("s3foes")) s3Foes(mc, l);
+        if (f.isEmpty() || f.contains("duellock")) duelLock(mc, l, dmz);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2478,6 +2479,47 @@ public final class Batch4Tests {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         }), 5);
         l.add(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3);
+    }
+
+    /** A PvP battle: both lock on to each other as it starts (even party members), and DragonMineZ's party lets them hit. */
+    private static void duelLock(Minecraft mc, MikikoTests.Steps l, boolean dmz) {
+        Object[] st = new Object[2];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            var foe = net.minecraftforge.common.util.FakePlayerFactory.get(p.serverLevel(), new com.mojang.authlib.GameProfile(java.util.UUID.fromString("7d0b5a4e-1111-4c2a-9b1e-00000000d001"), "Rival"));
+            foe.moveTo(p.getX() + 1, p.getY(), p.getZ() + 5, 180, 0);
+            st[0] = foe;
+            com.xenowarriors.party.Duels.startForTest(p, foe);
+            // a zombie stands in for the rival on our side (a fake player isn't sent to clients): the lock-on packet
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.setNoAi(true);
+            z.moveTo(p.getX() + 6, p.getY(), p.getZ() + 2, 0, 0);                  // (off to the side: not what toggle would pick)
+            p.serverLevel().addFreshEntity(z);
+            st[1] = z;
+            p.setYRot(0); p.setXRot(0);
+        }), 15);
+        l.add(null, () -> server(p -> {
+            boolean got = false;
+            int before = com.xenowarriors.party.Duels.dmzPartyLetThrough;
+            if (dmz) try {
+                Class<?> pm = Class.forName("com.dragonminez.common.quest.PartyManager");
+                Object r = pm.getMethod("areInSameParty", net.minecraft.world.entity.player.Player.class, net.minecraft.world.entity.player.Player.class).invoke(null, p, st[0]);
+                got = Boolean.FALSE.equals(r) && com.xenowarriors.party.Duels.dmzPartyLetThrough == before + 1;
+            } catch (Throwable t) { log("duellock: " + t); }
+            log("duellock: DragonMineZ's party check lets the two fight (" + com.xenowarriors.party.Duels.dmzPartyLetThrough + ") -> " + (!dmz ? "SKIP" : got ? "PASS" : "FAIL"));
+            com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.DuelFoePacket(((net.minecraft.world.entity.Entity) st[1]).getId()), p);
+        }), 10);
+        l.add(null, () -> {
+            var t = com.xenowarriors.client.LockOn.target();
+            log("duellock: locked on as the battle starts (" + (t == null ? "none" : t.getName().getString()) + ") -> " + (t != null && t.getId() == ((net.minecraft.world.entity.Entity) st[1]).getId() ? "PASS" : "FAIL"));
+        }, 3);
+        l.add(null, () -> server(p -> com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.DuelFoePacket(-1), p)), 10);
+        l.add(null, () -> {
+            log("duellock: released when it ends -> " + (com.xenowarriors.client.LockOn.target() == null ? "PASS" : "FAIL"));
+            server(p -> { com.xenowarriors.party.Duels.clearForTest(p); ((net.minecraft.world.entity.Entity) st[1]).discard(); });
+        }, 5);
     }
 
     private static void vessel(Minecraft mc, MikikoTests.Steps l) {

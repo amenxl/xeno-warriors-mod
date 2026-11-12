@@ -47,7 +47,7 @@
         },
         {
           "title": "Lock-on",
-          "text": "Press {key:lock_on} to lock onto whatever is closest to your crosshair: your view stays turned to it, a reticle spins on it and its health shows at the top of the screen. Press again to let go; it also lets go if the target dies, gets too far or stays out of sight. Some moves (Mikiko's rope blade throw) home in on your lock-on target.\n- Your own bots can be locked on to while you're sparring them."
+          "text": "Press {key:lock_on} to lock onto whatever is closest to your crosshair: your view stays turned to it, a reticle spins on it and its health shows at the top of the screen. Press again to let go; it also lets go if the target dies, gets too far or stays out of sight. Some moves (Mikiko's rope blade throw) home in on your lock-on target.\n- Your own bots can be locked on to while you're sparring them.\n- In a PvP battle you're locked on to your opponent the moment it starts (even a party member), and let go when it ends."
         },
         {
           "title": "Transformations, buffs & passives",
@@ -562,6 +562,11 @@
         {
           "title": "Gravity for bots and enemies",
           "text": "DragonMineZ's gravity weighs on bots and enemies too, not just players - with the same rules:\n- The same gravity: each world's own (DragonMineZ's config), and 10x within 100 blocks of King Kai.\n- The same resistance: a bot's from its own DragonMineZ stats. An enemy's from its battle power (DragonMineZ's foes) or its health (anything else).\n- Not strong enough? They move slowly, can hardly jump and drop like stones. Summon Raditz on King Kai's planet and he trudges about at half speed - train your bots and they'll shrug it off."
+        },
+        {
+          "title": "PvP battles in a DragonMineZ party",
+          "requires": "dragonminez",
+          "text": "DragonMineZ's party stops you hurting your party members (unless its party PvP is on). A Xeno Warriors PvP battle still works between them: while you're battling each other, DragonMineZ treats you as if you weren't in the same party, so your hits and ki attacks land. When the battle ends, you're teammates again."
         }
       ]
     }

@@ -81,6 +81,25 @@ public final class Duels {
         return Component.literal(text).withStyle(ChatFormatting.GOLD);
     }
 
+    /** (Tests) a battle between these two, already fighting (no requests, no packets). */
+    public static void startForTest(Player a, Player b) {
+        Duel d = new Duel(a.getUUID(), b.getUUID());
+        d.ticks = COUNTDOWN;
+        ACTIVE.put(d.a, d);
+        ACTIVE.put(d.b, d);
+    }
+
+    public static void clearForTest(Player a) { Duel d = ACTIVE.get(a.getUUID()); if (d != null) { ACTIVE.remove(d.a); ACTIVE.remove(d.b); } }
+
+    /** (Tests) DragonMineZ party checks a battle let through. */
+    public static int dmzPartyLetThrough;
+
+    /** In a PvP battle with each other at all (the countdown too). */
+    public static boolean battling(Player a, Player b) {
+        Duel d = ACTIVE.get(a.getUUID());
+        return d != null && d.other(a.getUUID()).equals(b.getUUID());
+    }
+
     public static boolean dueling(Player a, Player b) {
         Duel d = ACTIVE.get(a.getUUID());
         return d != null && d.other(a.getUUID()).equals(b.getUUID()) && d.fighting();
@@ -228,6 +247,7 @@ public final class Duels {
         ACTIVE.put(d.b, d);
         for (ServerPlayer s : new ServerPlayer[]{from, p}) {
             s.sendSystemMessage(msg("Battle: " + from.getName().getString() + " vs " + p.getName().getString() + "!"));
+            ModNetwork.sendToPlayer(new com.xenowarriors.network.DuelFoePacket((s == from ? p : from).getId()), s);   // (locked on to each other)
         }
     }
 
@@ -252,6 +272,7 @@ public final class Duels {
         for (UUID id : new UUID[]{d.a, d.b}) {
             ServerPlayer s = server.getPlayerList().getPlayer(id);
             if (s == null) continue;
+            ModNetwork.sendToPlayer(new com.xenowarriors.network.DuelFoePacket(-1), s);
             if (winner == null) {
                 title(s, "DRAW", ChatFormatting.YELLOW, why);
             } else if (winner.equals(id)) {

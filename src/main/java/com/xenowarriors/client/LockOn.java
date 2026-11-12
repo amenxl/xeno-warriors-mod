@@ -78,6 +78,33 @@ public final class LockOn {
 
     private LockOn() {}
 
+    /** Your PvP battle opponent (entity id, -1 = none): always lockable, even a party member. */
+    private static int duelFoe = -1;
+
+    /** The server: a battle starts (lock on to them) or ends (-1). */
+    public static void duelFoe(int id) {
+        Minecraft mc = Minecraft.getInstance();
+        int was = duelFoe;
+        duelFoe = id;
+        if (mc.player == null || mc.level == null) return;
+        if (id < 0) {
+            if (target != null && target.getId() == was) release(false);
+            return;
+        }
+        if (mc.level.getEntity(id) instanceof LivingEntity foe && foe != mc.player) {
+            target = foe;
+            external = false;
+            unseen = 0;
+            lockedAt = mc.player.tickCount;
+            shownHealth = foe.getHealth();
+            duelLocks++;
+            mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_CHIME, 1.6F, 0.9F));
+        }
+    }
+
+    /** (Tests) battles that locked on. */
+    public static int duelLocks;
+
     public static LivingEntity target() {
         return target;
     }
@@ -160,6 +187,7 @@ public final class LockOn {
         Minecraft mc = Minecraft.getInstance();
         Player me = mc.player;
         if (me == null) return true;
+        if (duelFoe >= 0 && e.getId() == duelFoe) return true;                // (your battle opponent - even from your party)
         if (e.isInvulnerable() || peaceful(e)) return false;
         if (e.isInvisible() && e.hasCustomName() && e.getCustomName().getString().endsWith("'s Hekublade")) return false;   // (Mikiko's floating blade)
         // Soul Splitter souls: never your own, nor your party's (they're on your side)
