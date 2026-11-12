@@ -89,6 +89,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("boostpass")) boostPass(mc, l);
         if (f.isEmpty() || f.contains("techbike")) techBike(mc, l);
         if (f.isEmpty() || f.contains("rps")) rps(mc, l);
+        if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
@@ -710,6 +711,7 @@ public final class Batch4Tests {
         // a gift at bond 70+
         l.add(null, () -> server(p -> {
             com.xenowarriors.party.Bonds.set(p, "sam", 80, 0);
+            b[1].errand = null; b[1].setTarget(null); b[1].teleportTo(p.getX() + 2, p.getY(), p.getZ() + 1);
             int before = p.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
             com.xenowarriors.bot.BotLife.giftForTest(p);
             int after = p.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
@@ -738,7 +740,7 @@ public final class Batch4Tests {
             p.serverLevel().setDayTime(18000);
             p.level().setBlock(p.blockPosition(), Blocks.RED_BED.defaultBlockState(), 3);
             p.startSleeping(p.blockPosition());
-        }), 20 * 5);
+        }), 20 * 8);
         l.add(null, () -> Batch3Tests.view(mc, CameraType.THIRD_PERSON_BACK, 0, 40), 10);
         l.add("batch4_botlife_camp", () -> {}, 3);
         net.minecraft.core.BlockPos[] fire = new net.minecraft.core.BlockPos[1];
@@ -1632,6 +1634,25 @@ public final class Batch4Tests {
     }
 
     // ------------------------------------------------------------------ bots picking things up, music
+
+    private static void capsules(Minecraft mc, MikikoTests.Steps l) {
+        Batch3Tests.character(l, CharacterType.MIKIKO);
+        PartyBotEntity[] b = new PartyBotEntity[1];
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> { DmzTests.make(p, "saiyan"); Batch3Tests.clearBots(p); b[0] = botAt(p, CharacterType.KAERU, 2, 2); }); }, 40);
+        l.add(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            com.xenowarriors.compat.DmzBots.ensureRace(b[0]);
+            float[] s0 = com.xenowarriors.compat.DmzBotTraining.snapshot(b[0]);
+            var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", "red_capsule"));
+            b[0].inventory.addItem(new ItemStack(item, 2));
+            boolean used = false;
+            try { used = com.xenowarriors.compat.DmzBotCapsules.useOne(b[0]); } catch (Throwable t) { log("capsules: error " + t); }
+            float[] s1 = com.xenowarriors.compat.DmzBotTraining.snapshot(b[0]);
+            int left = b[0].inventory.countItem(item);
+            log("capsules: Kaeru used a red capsule " + used + ", total stats " + (s0 == null ? "?" : (int) s0[1]) + " -> " + (s1 == null ? "?" : (int) s1[1]) + ", capsules left " + left
+                    + " -> " + (used && s0 != null && s1 != null && s1[1] > s0[1] && left == 1 ? "PASS" : "FAIL"));
+            Batch3Tests.clearBots(p);
+        }); }, 20);
+    }
 
     private static void rps(Minecraft mc, MikikoTests.Steps l) {
         Batch3Tests.character(l, CharacterType.MIKIKO);

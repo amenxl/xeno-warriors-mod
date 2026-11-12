@@ -117,6 +117,7 @@ public final class BotLife {
         for (int i = 0; i < bots.size(); i++) {
             PartyBotEntity b = bots.get(i);
             if (b.downed() || b.journey() || b.level() != o.level()) continue;
+            if (b.errand != null) { b.errand = null; b.getNavigation().stop(); }   // (bedtime: errands can wait)
             if (b.getTarget() == null && !foes.isEmpty()) {                       // keeping watch: anything coming, they go for it
                 Mob near = foes.stream().filter(m -> !PartyBots.friendly(b, m)).min(Comparator.comparingDouble(m -> m.distanceToSqr(b))).orElse(null);
                 if (near != null) b.setTarget(near);
