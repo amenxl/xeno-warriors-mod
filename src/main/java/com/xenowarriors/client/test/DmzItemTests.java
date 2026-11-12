@@ -108,6 +108,8 @@ final class DmzItemTests {
         l.add(new Step(null, () -> { Dmz6Tests.noDmzScreen(mc); UiTest.server(p -> {
             if (Q[0] == null) return;
             com.xenowarriors.compat.MissionBag.of(p).clearContent();
+            // one out of your inventory first, so the one picked up into the bag keeps it one short (DragonMineZ never lowers progress)
+            p.getInventory().clearOrCountMatchingItems(s -> s.is(item), 1, p.inventoryMenu.getCraftSlots());
             R[1] = count(p.getInventory(), item);
             boolean w = com.xenowarriors.compat.MissionBag.wanted(p, new ItemStack(item));
             log.accept("mission bag: wanted=" + w);
@@ -138,8 +140,7 @@ final class DmzItemTests {
                 p.closeContainer();
                 p.getInventory().clearOrCountMatchingItems(s -> s.is(net.minecraft.world.item.Items.DIRT), 64, p.inventoryMenu.getCraftSlots());
             } else c.check("mission bag opens", false, "menu " + p.containerMenu);
-            p.getInventory().clearOrCountMatchingItems(s -> s.is(item), 1, p.inventoryMenu.getCraftSlots());   // back to one short
-            bag.clearContent();
+            bag.clearContent();                                                           // (the one taken out keeps it one short)
         }); }, 70));
         l.add(new Step(null, () -> { Dmz6Tests.noDmzScreen(mc); UiTest.server(p -> {
             if (Q[0] == null) return;
