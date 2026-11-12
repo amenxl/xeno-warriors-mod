@@ -630,8 +630,78 @@ public final class XenoBlast {
         ServerScheduler.later(CUTSCENE + 5, () -> { if (CASTS.get(p.getId()) == cast) CASTS.remove(p.getId()); });
         var pkt = new com.xenowarriors.network.XenoCutscenePacket(p.getId(), rhalix, CUTSCENE, RELEASE, p.getX(), p.getY(), p.getZ(), p.getYRot());
         for (ServerPlayer w : watchers) com.xenowarriors.network.ModNetwork.sendToPlayer(pkt, w);
+        LivingEntity partner = partner(p, rhalix);
+        if (partner != null) team(p, partner, l, dmg, width, rhalix);
         if (rhalix) darkOrb(p, l, dmg, width);
         else fireBeam(p, l, dmg, width);
         return true;
+    }
+
+    // ---- the team Xeno Blast: Mikiko and Rhalix side by side
+
+    /** How far the team blast's shockwave reaches (all around them). */
+    public static final double TEAM_RADIUS = 40;
+    /** (Tests) team blasts, and enemies the last one hit. */
+    public static int teamBlasts, lastTeamHits;
+
+    /** The other one of the pair (Mikiko for Rhalix, Rhalix for Mikiko) close by: a teammate player or a bot. */
+    static LivingEntity partner(ServerPlayer p, boolean rhalix) {
+        CharacterType want = rhalix ? CharacterType.MIKIKO : CharacterType.RHALIX;
+        LivingEntity best = null;
+        for (ServerPlayer m : com.xenowarriors.party.Parties.members(p))
+            if (m != p && m.isAlive() && m.level() == p.level() && m.distanceTo(p) < 32 && ModCapabilities.getType(m) == want && !com.xenowarriors.party.Duels.isDowned(m)) best = m;
+        if (best == null) for (com.xenowarriors.bot.PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p))
+            if (b.character() == want && b.isAlive() && !b.downed() && b.level() == p.level() && b.distanceTo(p) < 32) best = b;
+        return best;
+    }
+
+    /**
+     * Side by side: the partner steps up next to the caster and lets go too (a player fires their own Xeno Blast with it;
+     * a bot's power goes into the shockwave), and when they release a huge shockwave rolls out all around them - every
+     * enemy within {@link #TEAM_RADIUS} blocks is hit.
+     */
+    private static void team(ServerPlayer p, LivingEntity partner, ServerLevel l, float dmg, double width, boolean rhalix) {
+        teamBlasts++;
+        Vec3 side = right(p).scale(1.8);
+        partner.teleportTo(p.getX() + side.x, p.getY(), p.getZ() + side.z);
+        partner.setYRot(p.getYRot()); partner.setYHeadRot(p.getYRot());
+        if (partner instanceof net.minecraft.world.entity.Mob m) { m.getNavigation().stop(); m.yBodyRot = p.getYRot(); }
+        if (partner instanceof ServerPlayer sp) sp.connection.teleport(sp.getX(), sp.getY(), sp.getZ(), p.getYRot(), sp.getXRot());
+        com.xenowarriors.combat.Frozen.freeze(partner, RELEASE + 20);
+        Component line = Component.literal("TEAM XENO BLAST!").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
+        for (ServerPlayer o : l.players()) if (o.distanceToSqr(p) < 64 * 64) o.displayClientMessage(line, false);
+        if (partner instanceof ServerPlayer sp) ServerScheduler.later(2, () -> { if (rhalix) fireBeam(sp, l, dmg, width); else darkOrb(sp, l, dmg, width); });
+        ServerScheduler.later(RELEASE, () -> {
+            Cast c = CASTS.get(p.getId());
+            if (c != null && (c.cancelled || c.rival != null)) return;             // (stopped, or a clash)
+            Vec3 at = p.position().add(side.scale(0.5));
+            l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y + 1, at.z, 6, 3, 1, 3, 0);
+            Vector3f gold = new Vector3f(1F, 0.6F, 0.15F), purple = new Vector3f(0.65F, 0.25F, 1F);
+            for (int ring = 1; ring <= 8; ring++) {
+                final int rr = ring;
+                ServerScheduler.later(ring * 2, () -> {
+                    double rad = TEAM_RADIUS * rr / 8.0;
+                    int n = (int) (rad * 5);
+                    for (int k = 0; k < n; k++) {
+                        double a = k * Math.PI * 2 / n;
+                        l.sendParticles(new net.minecraft.core.particles.DustParticleOptions(k % 2 == 0 ? gold : purple, 2.5F), at.x + Math.cos(a) * rad, at.y + 0.6, at.z + Math.sin(a) * rad, 1, 0, 0.3, 0, 0);
+                    }
+                });
+            }
+            l.playSound(null, at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE, net.minecraft.sounds.SoundSource.PLAYERS, 4F, 0.5F);
+            int hit = 0;
+            for (LivingEntity e : l.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(TEAM_RADIUS, 16, TEAM_RADIUS), e -> e != partner && SkillTargeting.canTarget(p, e))) {
+                double dist = e.position().distanceTo(at);
+                if (dist > TEAM_RADIUS) continue;
+                float f = (float) Math.max(0.5, 1 - dist / (TEAM_RADIUS * 1.5));
+                e.invulnerableTime = 0;
+                e.hurt(p.damageSources().playerAttack(p), dmgFor(p, e, dmg * 1.2F * f));
+                Vec3 push = e.position().subtract(at).multiply(1, 0, 1);
+                push = push.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : push.normalize();
+                e.setDeltaMovement(push.scale(1.4).add(0, 0.6, 0)); e.hurtMarked = true;
+                hit++;
+            }
+            lastTeamHits = hit;
+        });
     }
 }
