@@ -118,6 +118,7 @@ final class PackEfClothesTests {
      * hit anybody.) A still zombie stands in front; the first moves of each combo are played; its health is read.
      */
     private static final StringBuilder HURTS = new StringBuilder();
+    private static String WHO_CANCELS = "";
     private static boolean listening;
 
     private static void listen() {
@@ -141,7 +142,23 @@ final class PackEfClothesTests {
             if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append("<vanilla attack");
         });
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, true, (net.minecraftforge.event.entity.player.AttackEntityEvent e) -> {
-            if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(" cancelled=" + e.isCanceled() + "> ");
+            if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) {
+                HURTS.append(" cancelled=" + e.isCanceled());
+                if (e.isCanceled() && WHO_CANCELS.isEmpty()) {
+                    // replay the event through each listener in turn to find which one cancels it
+                    try {
+                        var probe = new net.minecraftforge.event.entity.player.AttackEntityEvent(e.getEntity(), e.getTarget());
+                        var listeners = probe.getListenerList().getListeners(0);
+                        for (var li : listeners) {
+                            boolean before = probe.isCanceled();
+                            try { li.invoke(probe); } catch (Throwable ignored) {}
+                            if (!before && probe.isCanceled()) { WHO_CANCELS = String.valueOf(li); break; }
+                        }
+                        if (WHO_CANCELS.isEmpty()) WHO_CANCELS = "no single listener (" + listeners.length + " listeners)";
+                    } catch (Throwable t) { WHO_CANCELS = "probe failed " + t; }
+                }
+                HURTS.append("> ");
+            }
         });
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingDamageEvent e) -> {
             if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(String.format(java.util.Locale.ROOT, "(dmg %.2f) ", e.getAmount()));
@@ -191,7 +208,7 @@ final class PackEfClothesTests {
                 PackTests.check("efhit " + who.getId() + ": clicks out of battle mode land", now >= 0F && now < hp[0],
                         "zombie hp " + hp[0] + " -> " + now + ", aiming at " + (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult eh ? eh.getEntity() : mc.hitResult)
                         + " dummy " + z + " invulnerable " + (z != null && z.isInvulnerable()) + " difficulty " + p.level().getDifficulty() + " gamemode " + p.gameMode.getGameModeForPlayer()
-                        + " attack damage " + attackInfo(p) + " hurts " + HURTS);
+                        + " attack damage " + attackInfo(p) + " cancelled by " + WHO_CANCELS + " hurts " + HURTS);
                 HURTS.setLength(0);
                 hp[0] = now;
             }), 2));
