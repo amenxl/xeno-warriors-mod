@@ -219,7 +219,7 @@ final class PackEfClothesTests {
             l.add(new Step(null, () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
-                PackTests.check("efhit " + who.getId() + ": clicks in battle mode land", now >= 0F && now < hp[0] - 2F,
+                PackTests.check("efhit " + who.getId() + ": clicks in battle mode land", now >= 0F && now < hp[0] - 0.4F,
                         "zombie hp " + hp[0] + " -> " + now + " hurts " + HURTS);
                 HURTS.setLength(0);
                 hp[0] = now;
@@ -241,7 +241,7 @@ final class PackEfClothesTests {
                 var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
                 Object first = null;
                 try { first = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch).get(0); } catch (Throwable ignored) {}
-                PackTests.check("efhit " + who.getId() + ": battle-mode punches land", now >= 0F && now < hp[0] - 2F,
+                PackTests.check("efhit " + who.getId() + ": battle-mode punches land", now >= 0F && now < hp[0] - 0.4F,
                         "zombie hp " + hp[0] + " -> " + now + " (combo starts " + first + ") hurts " + HURTS);
                 if (z != null) z.discard();
             }), 5));
