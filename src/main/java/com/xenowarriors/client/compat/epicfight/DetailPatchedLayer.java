@@ -168,8 +168,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (m.hoodDown != null) m.hoodDown.visible = !hood;
             if (m.coatBack != null) {
                 // Rhalix's coat tails: swung by Epic Fight's thighs (forward / back, out to the side), as our renderer does
-                float[] r = legAngles(h.torso, h.thighR, poses), l = legAngles(h.torso, h.thighL, poses);
-                if (r != null && l != null) m.animateCoat(r[0], l[0], r[1], -l[1], 0F, 0F, 0F, false);
+                float[] lr = legAngles(h.torso, h.thighR, poses), ll = legAngles(h.torso, h.thighL, poses);
+                if (lr != null && ll != null) m.animateCoat(lr[0], ll[0], lr[1], -ll[1], 0F, 0F, 0F, false);
             }
             if (head) piece(h.head, m.head, null, pose, vc, light, overlay, poses);
             piece(h.chest, bodyUpper, null, pose, vc, light, overlay, poses);
