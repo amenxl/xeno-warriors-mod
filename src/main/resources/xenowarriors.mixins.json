@@ -24,6 +24,7 @@
     "compat.DragonMineZQuestDimensionMixin",
     "compat.DragonMineZQuestItemsMixin",
     "compat.DragonMineZQuestServiceItemsMixin",
+    "compat.DragonMineZMeleeApprovalMixin",
     "compat.DragonMineZMovieLookoutMixin",
     "compat.DragonMineZMovieConditionMixin",
     "compat.DragonMineZStructurePlanMixin",
