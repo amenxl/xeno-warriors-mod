@@ -26,6 +26,10 @@
       "title": "Combat",
       "pages": [
         {
+          "title": "Epic Fight",
+          "text": "Xeno Warriors needs Epic Fight (20.14 or newer).\n- The characters' own moves are Epic Fight animations now: Mikiko's punches, Bajiquan and kicks, Rhalix's gravity combo, and every skill and ultimate pose play through Epic Fight in battle mode - one body, no second one drawn under it.\n- More of the animations (idles, dances, emotes, bots and NPCs) are moving over in the next updates."
+        },
+        {
           "title": "Combos and heavy hits",
           "text": "What you hold decides your combo, for players and bots alike.\n- Left click to chain hits. Clicking early only queues the next one, so timing beats spamming.\n- The last hit of a string is a finisher that knocks enemies away.\n- Sneak + left click: a slow heavy hit that launches and breaks shields.\n- A perfectly chained string is a little stronger than plain vanilla hits with the same weapon.\n- A hit that does no damage to you (soaked up by armor, resistance and the like) or only a scratch (half a heart or less) doesn't knock you back."
         },
