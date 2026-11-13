@@ -19,10 +19,10 @@ A Minecraft **Forge 1.20.1** mod based on **Xeno Warriors Recarnet**, the YouTub
 ## Requirements
 - Minecraft **1.20.1** with **Forge 47.x**
 - **[GeckoLib](https://modrinth.com/mod/geckolib) 4.x** (required)
+- **[Epic Fight](https://modrinth.com/mod/epic-fight) 20.14 or newer** (required): it animates and draws the characters.
 
 ### Optional companion mods
 These are recommended, not required.
-- **Epic Fight**: when its battle mode is on, it takes over combat. Our models and details still show.
 - **Lodestone**: fancier particle effects.
 - **Simple Voice Chat**: characters' mouths move while they talk.
 - **DragonMineZ**: charging and blocking poses, plus a few shared animations.

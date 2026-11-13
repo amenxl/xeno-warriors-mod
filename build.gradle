@@ -124,11 +124,11 @@ dependencies {
     compileOnly files('libs/mclib-20.jar')
     // Simple Voice Chat API (optional: mouths move while people talk)
     compileOnly files('libs/voicechat-api-2.6.24.jar')
-    // Epic Fight (optional): Xeno Warriors details on its skinned player, and it hands back non-combat animation to us
+    // Epic Fight (required): it animates and draws our characters
     compileOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")
+    runtimeOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")
     compileOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")      // optional: fancier effects when Lodestone is installed
     xwExtra.each { m -> runtimeOnly fg.deobf(m.coord) }
-    if (xwExtraEnv.contains('ef')) runtimeOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")   // (Epic Fight animation tests in CI)
     if (System.getenv('XW_UITEST_LODESTONE') == '1') runtimeOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")   // (aura screenshots in CI)
 }
 
