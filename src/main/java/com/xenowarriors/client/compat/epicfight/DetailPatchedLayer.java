@@ -139,7 +139,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
 
         static Rig of(AbstractClientPlayer player) {
             try {
-                DetailModel split = DetailModel.loadPath(CharacterDetailLayer.detailModelPath(player));
+                DetailModel split = DetailModel.loadForEpicFight(CharacterDetailLayer.detailModelPath(player));
                 return split == null ? null : new Rig(split, false, false);
             } catch (Throwable t) {
                 XenoWarriors.LOGGER.error("Couldn't prepare Xeno Warriors clothes for Epic Fight", t);
@@ -297,6 +297,11 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         try { com.xenowarriors.client.RhalixWingsClient.pose(live, player, preview, flying, falling, kishi, spread, age); }
         finally { com.xenowarriors.client.RhalixWingsClient.onEfSkeleton = false; }
         if (!live.rightWing.visible && !live.leftWing.visible) return;
+        // Epic Fight's stances turn the chest (a sword's guard, a fist stance): wings folded back as far as they are out
+        // of battle mode then sat one behind the body and one edge-on (the user's videos: Max's, Sam's wings). Held a
+        // little further out here, so both stay in sight.
+        float ry = live.rightWing.yRot, ly = live.leftWing.yRot;
+        if (!flying) { live.rightWing.yRot = ry * EF_WING_FOLD; live.leftWing.yRot = ly * EF_WING_FOLD; }
         int chest = patch.getArmature() instanceof yesman.epicfight.model.armature.HumanoidArmature h ? h.chest.getId() : 8;
         if (chest < 0 || chest >= poses.length) return;
         // vanilla model space (y down, x mirrored, 1/16 block units inside ModelPart) onto the chest bone: the same
@@ -312,11 +317,14 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         if (WING_TEST != 1) live.rightWing.render(pose, vc, light, overlay);
         if (WING_TEST != 2) live.leftWing.render(pose, vc, light, overlay);
         lastWings = wingInfo(live.rightWing) + " | " + wingInfo(live.leftWing);
+        live.rightWing.yRot = ry; live.leftWing.yRot = ly;
         pose.popPose();
         wingDraws++;
     }
 
     private static final float WING_SCALE = 0.9375F;
+    /** How far back the wings fold in battle mode, against out of it. */
+    static float EF_WING_FOLD = 0.35F;
     /** (tests) the wings' pose when last drawn on Epic Fight's skeleton. */
     public static String lastWings = "";
     /** (tests) 1: leave the right wing out, 2: the left; SKIN_ONLY: draw none of the details. */

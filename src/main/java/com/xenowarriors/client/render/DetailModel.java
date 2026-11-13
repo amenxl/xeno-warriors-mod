@@ -513,6 +513,18 @@ public class DetailModel {
 
     /** Loading a girl's model: her outfit is refit to the girls' body (see FemaleBody). */
     private static boolean female;
+    /** Loading for Epic Fight's skinned body (see loadForEpicFight). */
+    private static boolean efBody;
+
+    /**
+     * The model fitted to Epic Fight's body instead of ours: a girl's clothes keep their plain shape (Epic Fight's body
+     * has no narrowed waist or slimmer legs - the narrowed clothes sank into it: Kaeru's apron and its emblem), only
+     * the arms stay slim (its slim-arm body).
+     */
+    public static DetailModel loadForEpicFight(String path) {
+        efBody = true;
+        try { return loadPath(path); } finally { efBody = false; }
+    }
     /** The current cube's refit: shift x/z and shrink x/z (applied as a deformation, so the texture still lines up). */
     private static float curDX, curDZ, curGX, curGZ;
 
@@ -538,6 +550,7 @@ public class DetailModel {
     /** A girl's limb: arms 3 wide (shrunk toward the body) and 3 deep, legs a little thinner. */
     private static void limbRefit(String bone, float[] f, float[] sz) {
         if (!female) { noRefit(); return; }
+        if (efBody && !bone.endsWith("_arm")) { noRefit(); return; }       // (Epic Fight's body: only its arms are slim)
         switch (bone) {
             case "right_arm" -> refit(f, sz, 1F, com.xenowarriors.client.FemaleBody.ARM_X, com.xenowarriors.client.FemaleBody.ARM_Z);
             case "left_arm" -> refit(f, sz, -1F, com.xenowarriors.client.FemaleBody.ARM_X, com.xenowarriors.client.FemaleBody.ARM_Z);
@@ -660,7 +673,7 @@ public class DetailModel {
                     limb(rootDef, bone.getKey(), b, p, split);
                     continue;
                 }
-                CubeListBuilder own = female && bone.getKey().equals("body") ? femaleBody(b) : limbCubes(bone.getKey(), b);
+                CubeListBuilder own = female && !efBody && bone.getKey().equals("body") ? femaleBody(b) : limbCubes(bone.getKey(), b);
                 PartDefinition part = rootDef.addOrReplaceChild(bone.getKey(), own, PartPose.offset(p[0], p[1], p[2]));
                 children(part, b);
             }

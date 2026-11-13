@@ -46,7 +46,7 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
                 // rigid pieces on the bones, cut at the elbows and knees like our own renderer (the user's video: the
                 // Karma Hoodie came out puffed up and long-sleeved when baked into a skinned mesh)
                 DetailPatchedLayer.Rig rig = RIGS.computeIfAbsent(key, k -> {
-                    DetailModel m = DetailModel.loadPath(pk.path());
+                    DetailModel m = DetailModel.loadForEpicFight(pk.path());
                     return m == null ? null : new DetailPatchedLayer.Rig(m, true, pk.noLeftArm());
                 });
                 if (rig == null) continue;
