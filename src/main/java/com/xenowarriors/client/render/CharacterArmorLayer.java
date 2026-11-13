@@ -253,6 +253,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     public static int oldLayoutDrawn;
     public static String lastForeign = "none";
     public static int layerRuns;
+    public static String lastRun = "none";
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
         m.setAllVisible(false);
@@ -285,6 +286,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         Map<EquipmentSlot, DetailModel> bySlot = models.get(type);
+        lastRun = type + " models " + (bySlot != null) + " head " + player.getItemBySlot(EquipmentSlot.HEAD).getItem().getClass().getSimpleName() + " self " + (player == net.minecraft.client.Minecraft.getInstance().player);
         if (bySlot == null) return;
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
         ResourceLocation texture = XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor.png");
