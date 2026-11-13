@@ -56,4 +56,39 @@ final class PackBakeTests {
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.log("bake: done"); }, 2));
     }
+
+    /**
+     * (focus "packbakecheck") Each rebuilt move side by side with the original: the original in vanilla mode, then the
+     * Epic Fight version in battle mode, both shot from the front at the strike (and once a third of the way in).
+     */
+    static void check(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 30));
+        l.add(new Step(null, () -> { PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p);
+            p.getInventory().selected = 0; p.getInventory().setItem(0, net.minecraft.world.item.ItemStack.EMPTY);
+            p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0); });
+            mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 30));
+        for (String name : new String[]{"jab_r", "jab_l", "chong_chui_r", "ding_zhou_r", "tiao_zhang_l", "shuang_zhang", "tie_shan_kao", "flip_kick", "kick_roundhouse"}) {
+            Move m = Move.valueOf(name.toUpperCase(java.util.Locale.ROOT));
+            int at = Math.round(m.duration * 0.4F);
+            l.add(new Step(null, () -> battle(false), 12));
+            l.add(new Step(null, () -> { mc.player.setXRot(0); com.xenowarriors.client.mikiko.MikikoAnimations.forceMoveForTest(mc.player, m); }, at));
+            l.add(new Step("pack_bake_" + name + "_old", () -> {}, m.duration + 6));
+            l.add(new Step(null, () -> battle(true), 15));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                var acc = com.xenowarriors.compat.epicfight.EfAnimations.MIKIKO.get(name);
+                var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+                if (acc != null && patch != null) patch.playAnimationSynchronized(acc, 0F);
+                else PackTests.log("bake check: no animation " + name);
+            }), at));
+            l.add(new Step("pack_bake_" + name + "_ef", () -> PackTests.log("bake check " + name + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), m.duration + 6));
+        }
+        // the real thing: Mikiko's bare-hand combo in battle mode is now his own moves, drawn by Epic Fight
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+            var c = patch == null ? null : patch.getHoldingItemCapability(net.minecraft.world.InteractionHand.MAIN_HAND).getAutoAttackMotion(patch);
+            PackTests.check("bake: Mikiko's battle-mode combo is his own rebuilt moves", c != null && !c.isEmpty()
+                    && c.get(0) == com.xenowarriors.compat.epicfight.EfAnimations.MIKIKO.get("jab_r"), "combo " + c);
+        }), 3));
+        l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+    }
 }

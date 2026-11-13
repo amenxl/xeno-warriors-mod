@@ -90,10 +90,17 @@ public final class WomMoves {
     /** (from the mixin on Epic Fight's getAutoAttackMotion) our combo in place of the original, or the original. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List override(PlayerPatch<?> patch, List original) {
-        if (!loaded() || patch == null || original == null || original.size() < 3) return original;
+        if (patch == null || original == null || original.size() < 3) return original;
         try {
             Player p = patch.getOriginal();
             if (p == null) return original;
+            List own = ownMoves(p);
+            if (own != null) {                                                        // our own characters' moves, rebuilt for Epic Fight
+                List out = new ArrayList(own);
+                out.addAll(original.subList(original.size() - 2, original.size()));
+                return out;
+            }
+            if (!loaded()) return original;
             String[] keys = movesFor(p);
             if (keys == null) return original;
             List out = new ArrayList();
@@ -124,6 +131,21 @@ public final class WomMoves {
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    /** Mikiko's bare-hand combo: his own punches and Bajiquan, baked from his animations (null if not him / not bare hands / not baked). */
+    public static final String[] MIKIKO_COMBO = {"jab_r", "jab_l", "ding_zhou_r", "tiao_zhang_l", "shuang_zhang", "tie_shan_kao"};
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    static List ownMoves(Player p) {
+        if (!p.getMainHandItem().isEmpty() || character(p) != CharacterType.MIKIKO) return null;
+        List out = new ArrayList();
+        for (String k : MIKIKO_COMBO) {
+            var acc = EfAnimations.MIKIKO.get(k);
+            if (acc == null) return null;
+            out.add(acc);
+        }
+        return out;
     }
 
     private static CharacterType character(Player p) {

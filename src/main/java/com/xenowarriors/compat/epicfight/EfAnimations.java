@@ -16,6 +16,18 @@ public final class EfAnimations {
     /** Rhalix's Z Sword: a rising gravity cleave and a crushing overhead slam. */
     public static AnimationManager.AnimationAccessor<yesman.epicfight.api.animation.types.BasicAttackAnimation> CLEAVE1, CLEAVE2;
 
+    /**
+     * Mikiko's own moves, recorded from his animations and rebuilt on Epic Fight's skeleton (tools/xw/ef/bake.py):
+     * name -> length in ticks (his strike lands 26..42% of the way in).
+     */
+    public static final String[][] MIKIKO_MOVES = {
+            {"jab_r", "7"}, {"jab_l", "7"}, {"hook_r", "8"}, {"uppercut_l", "8"}, {"chong_chui_r", "9"}, {"ding_zhou_r", "9"},
+            {"tiao_zhang_l", "9"}, {"shuang_zhang", "10"}, {"tie_shan_kao", "14"}, {"flip_kick", "13"}, {"kick_front", "9"},
+            {"kick_roundhouse", "10"}, {"kick_spin", "11"}, {"kick_side", "9"}, {"knee_flying", "9"}, {"lunge_punch_r", "9"},
+            {"lunge_punch_l", "9"}};
+    public static final java.util.Map<String, AnimationManager.AnimationAccessor<yesman.epicfight.api.animation.types.BasicAttackAnimation>> MIKIKO =
+            new java.util.LinkedHashMap<>();
+
     private EfAnimations() {}
 
     public static void register(IEventBus modBus) {
@@ -35,6 +47,10 @@ public final class EfAnimations {
             POLE3 = b.nextAccessor("biped/combat/xw_pole3", acc -> attack(acc, 0.10F, 0.25F, 0.42F, 0.70F));
             CLEAVE1 = b.nextAccessor("biped/combat/xw_cleave1", acc -> attack(acc, 0.15F, 0.35F, 0.55F, 0.85F));
             CLEAVE2 = b.nextAccessor("biped/combat/xw_cleave2", acc -> attack(acc, 0.15F, 0.50F, 0.65F, 1.00F));
+            for (String[] m : MIKIKO_MOVES) {
+                float d = Integer.parseInt(m[1]) / 20F;
+                MIKIKO.put(m[0], b.nextAccessor("biped/xw/mikiko_" + m[0], acc -> attack(acc, 0.05F, d * 0.24F, d * 0.44F, d * 0.8F)));
+            }
         });
     }
 }

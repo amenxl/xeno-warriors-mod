@@ -114,6 +114,7 @@ public final class PackTests {
         if (focus.startsWith("packremote")) { PackEfBodyTests.remote(mc, l); return; }      // (another player, as your client sees them)
         if (focus.startsWith("packxenodragon")) { PackXenoDragonTests.build(mc, l); return; }      // (the Xeno Dragon alone)
         if (focus.startsWith("packmikikofight")) { PackMikikoFightTests.build(mc, l); return; }      // (Mikiko's own combo in battle mode)
+        if (focus.startsWith("packbakecheck")) { PackBakeTests.check(mc, l); return; }      // (rebuilt moves vs the originals)
         if (focus.startsWith("packbake")) { PackBakeTests.build(mc, l); return; }      // (records our animations for Epic Fight)
         if (focus.startsWith("packkyrie")) { PackKyrieTests.build(mc, l); return; }      // (Kyrie's Season 2 outfit and rapier)
         if (focus.startsWith("packwom")) { PackWomTests.build(mc, l); return; }      // (Weapons of Miracles' moves on our characters)
