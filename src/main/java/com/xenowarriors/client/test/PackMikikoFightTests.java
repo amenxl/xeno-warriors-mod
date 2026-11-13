@@ -106,7 +106,7 @@ final class PackMikikoFightTests {
             PackTests.server(p -> p.getInventory().setItem(0, ItemStack.EMPTY)); }, 5));
         l.add(new Step(null, () -> {
             PackTests.log("mikikofight trace:" + TRACE);
-            PackTests.check("mikikofight: Mikiko's bare-hand combo in battle mode is drawn with his own moves", attackTicks > 0 && theirs == 0,
+            PackTests.check("mikikofight: Mikiko's bare-hand combo in battle mode is his own moves, drawn by Epic Fight", attackTicks > 0 && theirs > 0 && TRACE.indexOf("biped/xw/mikiko_") >= 0,
                     "attack ticks " + attackTicks + ", his own drawn " + ours + ", Epic Fight drew " + theirs + ", wom loaded " + ModList.get().isLoaded("wom"));
             battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE));
