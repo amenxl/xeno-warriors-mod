@@ -174,6 +174,7 @@ public final class LimbBend {
         }
         float[] portrait = com.xenowarriors.client.portrait.PortraitPoses.bends(entity);   // portrait hero pose: exact bends
         if (portrait != null) { er = portrait[0]; el = portrait[1]; kr = portrait[2]; kl = portrait[3]; }
+        if (com.xenowarriors.client.efbake.PoseRecorder.recording()) com.xenowarriors.client.efbake.PoseRecorder.frame(m, entity, er, el, kr, kl);
         pose(ra, er);
         pose(la, el);
         pose(rl, kr);

@@ -1490,6 +1490,15 @@ public final class MikikoAnimations {
         return m == null ? 0F : Math.max(0F, -m[0]);
     }
 
+    /** (Epic Fight baking) {lift, forward, spin, lean, roll, barrel} for this frame, or null. */
+    public static float[] bodyMotionForBake(AbstractClientPlayer p, float partial) { return bodyMotion(p, partial); }
+
+    /** (Epic Fight baking) Plays one move from the start, plainly (no hop, not wild, normal speed). */
+    public static void forceMoveForTest(Player p, Move m) {
+        State s = STATES.computeIfAbsent(p.getId(), k -> new State());
+        s.move = m; s.moveStart = p.tickCount; s.moveScale = 1F; s.hop = false; s.wild = false; s.moveBlade = m.blade;
+    }
+
     private static float[] bodyMotion(AbstractClientPlayer p, float partial) {
         State s = STATES.get(p.getId());
         if (s == null) return null;
