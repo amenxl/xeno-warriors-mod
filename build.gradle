@@ -93,7 +93,7 @@ xwLibs.each { lib ->
 // can be checked in CI. Nothing here is committed or shipped.
 def xwExtra = []
 def xwExtraEnv = System.getenv('XW_UITEST_EXTRA') ?: ''
-if (xwExtraEnv.contains('dmz')) xwExtra += [[q: 'dragonminez', match: '2.1.3'], [q: 'terrablender', match: ''], [q: 'curios', match: '']]
+if (xwExtraEnv.contains('dmz')) xwExtra += [[q: 'dragonminez', match: '2.2.1'], [q: 'terrablender', match: ''], [q: 'curios', match: '']]
 if (xwExtraEnv.contains('tacz')) xwExtra += [[q: 'tacz', match: '']]
 xwExtra.each { m ->
     File f = file("libs/xwextra-${m.q}-1.jar")

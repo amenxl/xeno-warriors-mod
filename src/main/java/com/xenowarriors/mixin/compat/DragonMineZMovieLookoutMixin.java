@@ -21,4 +21,12 @@ public abstract class DragonMineZMovieLookoutMixin {
                                                   CallbackInfoReturnable<Boolean> cir) {
         if (com.xenowarriors.compat.DmzMovieMissions.waiveObjective(objective)) cir.setReturnValue(true);
     }
+
+    /** (DragonMineZ 2.2: the check takes the player now.) */
+    @Inject(method = "isLocationConditionMet(Lnet/minecraft/world/entity/player/Player;Lcom/dragonminez/common/quest/QuestObjective;Z)Z",
+            at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private static void xenowarriors$movieLookout22(net.minecraft.world.entity.player.Player player, @Coerce Object objective, boolean fallback,
+                                                    CallbackInfoReturnable<Boolean> cir) {
+        if (com.xenowarriors.compat.DmzMovieMissions.waiveObjective(objective)) cir.setReturnValue(true);
+    }
 }

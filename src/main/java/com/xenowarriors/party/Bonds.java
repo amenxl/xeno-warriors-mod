@@ -78,8 +78,19 @@ public final class Bonds {
     /** Your current character's bond with this teammate character (0-100). */
     public static int level(Player p, String partnerChar) {
         if (partnerChar == null || partnerChar.equals("none")) return 0;
-        return Math.max(0, Math.min(MAX, root(p).getCompound(me(p)).getCompound(partnerChar).getInt("lv")));
+        return Math.max(floor(me(p), partnerChar), Math.max(0, Math.min(MAX, root(p).getCompound(me(p)).getCompound(partnerChar).getInt("lv"))));
     }
+
+    /** Bonds that start high: Stevie and Garry (Komatsu Norio's students, in the gang together) begin at 75 with each other. */
+    public static final int GANG_BOND = 75;
+
+    public static int floor(String a, String b) {
+        if (a == null || b == null) return 0;
+        String x = base(a), y = base(b);
+        return (x.equals("stevie") && y.equals("garry")) || (x.equals("garry") && y.equals("stevie")) ? GANG_BOND : 0;
+    }
+
+    private static String base(String key) { int i = key.indexOf('#'); return i < 0 ? key : key.substring(0, i); }
 
     public static float progress(Player p, String partnerChar) {
         int lv = level(p, partnerChar);
@@ -125,7 +136,7 @@ public final class Bonds {
         CompoundTag r = root(p);
         CompoundTag mine = r.getCompound(charKey);
         CompoundTag old = mine.getCompound(partnerChar);
-        int lv = Math.max(0, Math.min(MAX, old.getInt("lv")));
+        int lv = Math.max(floor(charKey, partnerChar), Math.max(0, Math.min(MAX, old.getInt("lv"))));
         if (lv >= MAX) return lv;
         float xp = old.getFloat("xp") + amount;
         while (lv < MAX && xp >= needed(lv)) { xp -= needed(lv); lv++; }
@@ -148,7 +159,7 @@ public final class Bonds {
     public static int botOwn(PartyBotEntity b, String partnerChar) {
         ServerPlayer o = b.owner();
         if (o == null || partnerChar == null || partnerChar.equals("none")) return 0;
-        return Math.max(0, Math.min(MAX, root(o).getCompound(botKey(b, o)).getCompound(partnerChar).getInt("lv")));
+        return Math.max(floor(botKey(b, o), partnerChar), Math.max(0, Math.min(MAX, root(o).getCompound(botKey(b, o)).getCompound(partnerChar).getInt("lv"))));
     }
 
     /** A bot's bond with a teammate: its own side, or the teammate's side (a player's bond with it) if that's higher. */
