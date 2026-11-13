@@ -54,6 +54,8 @@ final class PackWomTests {
             p.getInventory().selected = 0;
             var it = item == null ? null : ForgeRegistries.ITEMS.getValue(com.xenowarriors.XenoWarriors.id(item));
             p.getInventory().setItem(0, it == null ? ItemStack.EMPTY : new ItemStack(it));
+            p.setItemInHand(InteractionHand.OFF_HAND, it != null && com.xenowarriors.forms.SignatureWeapons.pair(who) && it == com.xenowarriors.forms.SignatureWeapons.itemOf(who)
+                    ? new ItemStack(it) : ItemStack.EMPTY);                     // (Lexy's claws: one in each hand)
             p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0);
         }), 15));
         l.add(new Step(null, () -> { battle(true); mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 25));
@@ -65,7 +67,7 @@ final class PackWomTests {
                 Object want = yesman.epicfight.api.animation.AnimationManager.byKey(expect[i]);
                 if (want == null || c.get(i) != want) { ok = false; break; }
             }
-            PackTests.check("wom " + name + ": " + expect.length + " Weapons of Miracles moves in the combo", ok,
+            PackTests.check("wom " + name + ": " + expect.length + " " + (expect[0].startsWith("wom:") ? "Weapons of Miracles" : "Dawn Day") + " moves in the combo", ok,
                     "combo size " + (c == null ? "none" : c.size()) + " swaps " + swaps + " missing " + WomMoves.MISSING + " first " + (c == null || c.isEmpty() ? "-" : c.get(0)));
             swing(p, 0);
         }), 6));
@@ -78,6 +80,11 @@ final class PackWomTests {
     }
 
     static void build(Minecraft mc, List<Step> l) {
+        // Epic Fight: Dawn Day: Kyrie's rapier in the Florett style, Lexy's claws (a pair) with the Hook Claws
+        if (ModList.get().isLoaded("epicfight_dd")) {
+            one(mc, l, CharacterType.KYRIE, "kyrie_rapier", WomMoves.WEAPONS.get("kyrie_rapier"));
+            one(mc, l, CharacterType.LEXY, "lexy_claws", WomMoves.WEAPONS.get("lexy_claws"));
+        } else l.add(new Step(null, () -> PackTests.log("dawn day: Epic Fight: Dawn Day not loaded - skipped"), 1));
         if (!ModList.get().isLoaded("epicfight") || !WomMoves.loaded()) {
             l.add(new Step(null, () -> PackTests.log("wom: Epic Fight or Weapons of Miracles not loaded - skipped"), 1));
             return;
@@ -87,7 +94,7 @@ final class PackWomTests {
         one(mc, l, CharacterType.KYRIE, null, WomMoves.SWIFT);
         CharacterType[] holder = {CharacterType.LOGAN, CharacterType.KEITA, CharacterType.KILL, CharacterType.ZANE, CharacterType.SAM, CharacterType.MAX, CharacterType.AIONI};
         int i = 0;
-        for (var e : WomMoves.WEAPONS.entrySet()) one(mc, l, holder[i++ % holder.length], e.getKey(), e.getValue());
+        for (var e : WomMoves.WEAPONS.entrySet()) if (e.getValue()[0].startsWith("wom:")) one(mc, l, holder[i++ % holder.length], e.getKey(), e.getValue());
         l.add(new Step(null, () -> PackTests.check("wom: every move played without crashing the game", true,
                 "WOM events skipped (they need WOM's own weapon): " + WomMoves.GUARDED), 2));
         // Mikiko keeps his own bare-hand moves

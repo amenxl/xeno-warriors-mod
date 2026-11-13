@@ -49,6 +49,11 @@ public final class WomMoves {
         WEAPONS.put("zane_broom", new String[]{C + "staff_auto_1", C + "staff_auto_2", C + "staff_auto_3"});
         WEAPONS.put("sam_bat", new String[]{C + "torment_auto_1", C + "torment_auto_2", C + "torment_auto_3", C + "torment_auto_4"});
         WEAPONS.put("max_knife", new String[]{C + "moonless_auto_1", C + "moonless_auto_2", C + "moonless_auto_3"});
+        // Epic Fight: Dawn Day (when installed): Kyrie's rapier fights in the Florett style, Lexy's claws with the Hook Claws
+        WEAPONS.put("kyrie_rapier", new String[]{"epicfight_dd:biped/combat/florett_auto1", "epicfight_dd:biped/combat/florett_auto2",
+                "epicfight_dd:biped/combat/florett_auto3", "epicfight_dd:biped/combat/florett_auto4"});
+        WEAPONS.put("lexy_claws", new String[]{"epicfight_dd:biped/combat/hookclaws_auto1", "epicfight_dd:biped/combat/hookclaws_auto2",
+                "epicfight_dd:biped/combat/hookclaws_auto3", "epicfight_dd:biped/combat/hookclaws_auto4"});
         WEAPONS.put("demonite_sword", new String[]{C + "ruine_auto_1", C + "ruine_auto_2", C + "ruine_auto_3", C + "ruine_auto_4"});
     }
 
@@ -79,13 +84,25 @@ public final class WomMoves {
     /** The moves for this player's held weapon / bare hands, or null. */
     public static String[] movesFor(Player p) {
         ItemStack main = p.getMainHandItem();
+        String[] keys;
         if (main.isEmpty()) {
             CharacterType t = character(p);
-            return t == null ? null : FISTS.get(t);
+            keys = t == null ? null : FISTS.get(t);
+        } else {
+            var id = ForgeRegistries.ITEMS.getKey(main.getItem());
+            keys = id != null && id.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(id.getPath()) : null;
         }
-        var id = ForgeRegistries.ITEMS.getKey(main.getItem());
-        return id != null && id.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(id.getPath()) : null;
+        return keys != null && modOf(keys) ? keys : null;
     }
+
+    /** The mod these moves come from is installed (Weapons of Miracles, or Epic Fight: Dawn Day). */
+    private static boolean modOf(String[] keys) {
+        String ns = keys[0].substring(0, keys[0].indexOf(':'));
+        return ModList.get() != null && ModList.get().isLoaded(ns);
+    }
+
+    /** Moves from another Epic Fight mod (their animation events may expect that mod's own weapon - see guard). */
+    static boolean foreign(String namespace) { return "wom".equals(namespace) || "epicfight_dd".equals(namespace); }
 
     /** (from the mixin on Epic Fight's getAutoAttackMotion) our combo in place of the original, or the original. */
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -100,7 +117,6 @@ public final class WomMoves {
                 out.addAll(original.subList(original.size() - 2, original.size()));
                 return out;
             }
-            if (!loaded()) return original;
             String[] keys = movesFor(p);
             if (keys == null) return original;
             List out = new ArrayList();
@@ -122,7 +138,7 @@ public final class WomMoves {
     /** A WOM animation's event threw while a player whose combo we swapped was playing it: skip it (true), or let it through. */
     public static boolean guard(Object patch, Object anim, RuntimeException e) {
         try {
-            if (!(anim instanceof yesman.epicfight.api.asset.AssetAccessor<?> a) || a.registryName() == null || !"wom".equals(a.registryName().getNamespace())) return false;
+            if (!(anim instanceof yesman.epicfight.api.asset.AssetAccessor<?> a) || a.registryName() == null || !foreign(a.registryName().getNamespace())) return false;
             if (!(patch instanceof yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch<?> lp) || !(lp.getOriginal() instanceof Player p) || (movesFor(p) == null && !SWAPPED.containsKey(p))) return false;
             GUARDED.merge(a.registryName().getPath(), 1, Integer::sum);
             if (GUARDED.size() < 64 && GUARDED.get(a.registryName().getPath()) == 1)

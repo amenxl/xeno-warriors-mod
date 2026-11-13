@@ -442,7 +442,7 @@ public final class EpicFightCompat {
 
     /** Weapons of Miracles is installed and gives this player's bare hands / weapon its moves (compat/epicfight/WomMoves): Epic Fight draws them. */
     public static boolean wom(net.minecraft.world.entity.player.Player p) {
-        return com.xenowarriors.compat.epicfight.WomMoves.loaded() && com.xenowarriors.compat.epicfight.WomMoves.movesFor(p) != null;
+        return com.xenowarriors.compat.epicfight.WomMoves.movesFor(p) != null;
     }
 
     /** (tests) skill poses played through Epic Fight, and the last error. */

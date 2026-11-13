@@ -107,6 +107,7 @@ public final class BotGear {
         for (int i = 0; i < b.inventory.getContainerSize(); i++) bag = Math.max(bag, weaponScore(b, b.inventory.getItem(i)));
         if (bag > sigScore * SIGNATURE_MARGIN) {                             // a much stronger weapon in the bag: that one
             if (inHand) { b.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY); com.xenowarriors.forms.SignatureWeapons.awayFx(b, b.character()); }
+            if (com.xenowarriors.forms.SignatureWeapons.isSummoned(b.getOffhandItem())) b.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
             return false;
         }
         if (inHand) return true;
@@ -114,6 +115,10 @@ public final class BotGear {
         if (!left.isEmpty()) return false;                                   // (no room to put the old one away)
         b.setItemSlot(EquipmentSlot.MAINHAND, sig);
         b.setDropChance(EquipmentSlot.MAINHAND, 0F);
+        if (com.xenowarriors.forms.SignatureWeapons.pair(b.character()) && b.getOffhandItem().isEmpty()) {     // (Lexy's claws: one for each hand)
+            b.setItemSlot(EquipmentSlot.OFFHAND, com.xenowarriors.forms.SignatureWeapons.make(b.character()));
+            b.setDropChance(EquipmentSlot.OFFHAND, 0F);
+        }
         com.xenowarriors.forms.SignatureWeapons.summonFx(b, b.character());
         return true;
     }

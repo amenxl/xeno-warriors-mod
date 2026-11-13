@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 
 /**
  * Every character whose show weapon exists as an item can summon it with the summon key (G): Kyrie's rapier, Max's knife, Sam's bat,
- * Logan's and Keita's blades, Zane's broom and Garry's microphone (Mikiko's Hekublade and Rhalix's wires have their own
+ * Logan's and Keita's blades, Zane's broom, Garry's microphone and Lexy's claws (a pair: the second goes in the off hand) (Mikiko's Hekublade and Rhalix's wires have their own
  * systems). A tap summons it into the hand / puts it away. The summoned copy is tagged with its owner's character:
  * it can't be dropped, stored in a container, hung up, or kept after death, a character switch or a Season lock; it
  * never wears out. Bots of these characters summon theirs in fights (see {@code BotGear}).
@@ -60,6 +60,7 @@ public final class SignatureWeapons {
             case LOGAN -> ModItems.LOGAN_BLADE::get;
             case KEITA -> ModItems.KEITA_BLADE::get;
             case KYRIE -> ModItems.KYRIE_RAPIER::get;
+            case LEXY -> ModItems.LEXY_CLAWS::get;
             case ZANE -> ModItems.ZANE_BROOM::get;
             case GARRY -> ModItems.MICROPHONE::get;
             default -> null;
@@ -68,9 +69,12 @@ public final class SignatureWeapons {
     }
 
     public static boolean has(CharacterType t) { return t != null && t != CharacterType.NONE && switch (t) {
-        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE -> true;
+        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE, LEXY -> true;
         default -> false;
     }; }
+
+    /** Weapons that come as a pair (one in each hand). */
+    public static boolean pair(CharacterType t) { return t == CharacterType.LEXY; }
 
     public static boolean isSummoned(ItemStack s) { return !s.isEmpty() && s.hasTag() && s.getTag().contains(TAG); }
 
@@ -124,6 +128,7 @@ public final class SignatureWeapons {
         if (!com.xenowarriors.character.Seasons.unlocked(p.server, t.season())) return true;      // (Season 2/3 stay locked)
         ItemStack st = make(t);
         if (st.isEmpty() || !com.xenowarriors.mikiko.Hekublade.place(p, st)) return true;
+        if (pair(t) && p.getOffhandItem().isEmpty()) p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, make(t));
         summonFx(p, t);
         return true;
     }

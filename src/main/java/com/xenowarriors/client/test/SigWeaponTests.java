@@ -52,7 +52,7 @@ public final class SigWeaponTests {
     }
 
     private static final double[] HOME = new double[3];
-    private static final CharacterType[] WHO = {CharacterType.MAX, CharacterType.SAM, CharacterType.LOGAN, CharacterType.KEITA, CharacterType.ZANE, CharacterType.GARRY, CharacterType.KYRIE};
+    private static final CharacterType[] WHO = {CharacterType.MAX, CharacterType.SAM, CharacterType.LOGAN, CharacterType.KEITA, CharacterType.ZANE, CharacterType.GARRY, CharacterType.KYRIE, CharacterType.LEXY};
 
     private static void arena(ServerPlayer p) {
         var level = p.serverLevel();
@@ -135,7 +135,8 @@ public final class SigWeaponTests {
                 boolean handled = SignatureWeapons.toggle(p);
                 ItemStack h = p.getMainHandItem();
                 log(t.getId() + " summon: handled=" + handled + " held=" + id(h) + " expected=" + id(new ItemStack(SignatureWeapons.itemOf(t)))
-                        + " summoned=" + SignatureWeapons.isSummoned(h) + " unbreakable=" + h.getTag().getBoolean("Unbreakable") + " inv=" + summoned(p));
+                        + " summoned=" + SignatureWeapons.isSummoned(h) + " unbreakable=" + h.getTag().getBoolean("Unbreakable") + " inv=" + summoned(p)
+                        + " offhand=" + (SignatureWeapons.pair(t) ? id(p.getOffhandItem()) + " (a pair)" : "-"));
                 SignatureWeapons.toggle(p);
                 log(t.getId() + " put away: inv=" + summoned(p) + " hand=" + id(p.getMainHandItem()));
                 SignatureWeapons.toggle(p);
@@ -161,7 +162,7 @@ public final class SigWeaponTests {
         }
 
         // ---- no weapon for the others (reported), and Season locks
-        for (CharacterType t : new CharacterType[]{CharacterType.LEXY, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.YURI, CharacterType.KILL, CharacterType.AIONI}) {
+        for (CharacterType t : new CharacterType[]{CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.YURI, CharacterType.KILL, CharacterType.AIONI}) {
             l.add(null, () -> log("no show weapon: " + t.getId() + " has=" + SignatureWeapons.has(t)), 1);
         }
         l.add(null, () -> server(p -> CharacterManager.setCharacter(p, CharacterType.ZANE)), 40);

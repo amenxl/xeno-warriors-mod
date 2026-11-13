@@ -111,6 +111,9 @@ public final class ModItems {
     /** Kyrie's rapier: a slender white blade with a curled purple guard and a ribbon (quick, precise thrusts). */
     public static final RegistryObject<Item> KYRIE_RAPIER = ITEMS.register("kyrie_rapier", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 3, -2.0F,
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+    /** Lexy's claws: three hooked blades over the knuckles (she summons a pair, one for each hand). */
+    public static final RegistryObject<Item> LEXY_CLAWS = ITEMS.register("lexy_claws", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 2, -1.9F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
     /** Zane's broom staff, Max's serrated knife and Sam's bat. */
     public static final RegistryObject<Item> ZANE_BROOM = ITEMS.register("zane_broom", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.IRON, 3, -2.6F,
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
@@ -304,6 +307,7 @@ public final class ModItems {
             event.accept(LOGAN_BLADE);
             event.accept(KEITA_BLADE);
             event.accept(KYRIE_RAPIER);
+            event.accept(LEXY_CLAWS);
             event.accept(ZANE_BROOM);
             event.accept(MAX_KNIFE);
             event.accept(SAM_BAT);

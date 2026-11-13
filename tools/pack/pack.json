@@ -381,6 +381,24 @@
    "side": "both"
   },
   {
+   "name": "Epic Fight: Dawn Day",
+   "file": "EpicfightDd-20.14.1.19.2.jar",
+   "match": "20.14.1.19.2",
+   "modrinth": [
+    "epic-fight-dawn-day",
+    "epicfight-dawnday",
+    "epicfight-dd",
+    "dawnday"
+   ],
+   "search": "epic fight dawn day",
+   "curseforge": "epic fight dawnday",
+   "cfslug": [
+    "epic-fight-dawn-day",
+    "epicfight-dawnday"
+   ],
+   "side": "both"
+  },
+  {
    "name": "Epic Fight: Fighting Styles",
    "file": "effs-1.1.0.jar",
    "match": "1.1.0",
