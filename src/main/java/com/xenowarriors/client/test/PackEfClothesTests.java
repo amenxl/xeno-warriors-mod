@@ -89,9 +89,13 @@ final class PackEfClothesTests {
         l.add(new Step("pack_efclothes_" + c.name + "_vanilla", () -> PackTests.log("efclothes " + c.name + " vanilla: held " + mc.player.getMainHandItem()
                 + " / " + mc.player.getOffhandItem() + ", " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 3));
         l.add(new Step(null, () -> battle(true), 30));
+        l.add(new Step(null, () -> { com.xenowarriors.client.render.CharacterDetailLayer.renders = 0;
+            com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.DEBUG_PIECES = new StringBuilder(); }, 3));
         l.add(new Step("pack_efclothes_" + c.name + "_battle", () -> PackTests.log("efclothes " + c.name + " battle: "
                 + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player) + " wings " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastWings
-                + " rig " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastRig), 3));
+                + " rig " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastRig
+                + " vanilla detail layer runs " + com.xenowarriors.client.render.CharacterDetailLayer.renders
+                + " pieces " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.DEBUG_PIECES), 3));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 12));
         l.add(new Step("pack_efclothes_" + c.name + "_back", () -> {}, 3));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); PackTests.server(PackEfClothesTests::swing); }, 6));

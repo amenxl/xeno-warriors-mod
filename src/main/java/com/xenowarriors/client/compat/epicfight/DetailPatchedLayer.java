@@ -216,6 +216,11 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             int id = joint.getId();
             if (id < 0 || id >= poses.length) return;
             OpenMatrix4f m = new OpenMatrix4f().load(poses[id]).mulBack(joint.getToOrigin()).mulBack(V2E);
+            if (DEBUG_PIECES != null && DEBUG_PIECES.length() < 900) {
+                org.joml.Vector3f o = OpenMatrix4f.exportToMojangMatrix(m).transformPosition(new org.joml.Vector3f(0F, 0.5F, 0F));
+                DEBUG_PIECES.append(String.format(java.util.Locale.ROOT, "%s(%d cubes, vis %s): body y 8px -> (%.2f,%.2f,%.2f); ",
+                        joint.getName(), cubes(part).size(), part.visible, o.x, o.y, o.z));
+            }
             pose.pushPose();
             yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
             if (parent != null) pose.translate(parent.x / 16F, parent.y / 16F, parent.z / 16F);     // (a lower half: its parent's pivot, at rest)
@@ -316,6 +321,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     public static String lastWings = "";
     /** (tests) what the last rig was built from. */
     public static String lastRig = "";
+    /** (tests) set to a builder to record where each rig piece goes on the next draw. */
+    public static StringBuilder DEBUG_PIECES;
 
     private static String wingInfo(ModelPart w) {
         return String.format(java.util.Locale.ROOT, "vis=%s pos=(%.1f,%.1f,%.1f) rot=(%.2f,%.2f,%.2f) scale=(%.2f,%.2f,%.2f) kids=%d",

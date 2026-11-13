@@ -538,9 +538,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     @Override
+    /** (tests) times this layer ran. */
+    public static int renders;
+
     public void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight, AbstractClientPlayer player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
                        float netHeadYaw, float headPitch) {
+        renders++;
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         DetailModel model = models.get(type);
