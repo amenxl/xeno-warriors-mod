@@ -10,4 +10,8 @@ final class EfClientCheck {
         return p instanceof net.minecraft.client.player.AbstractClientPlayer cp
                 && com.xenowarriors.client.ClientCharacterData.get(cp) == com.xenowarriors.character.CharacterType.RHALIX;
     }
+
+    static com.xenowarriors.character.CharacterType type(Player p) {
+        return p instanceof net.minecraft.client.player.AbstractClientPlayer cp ? com.xenowarriors.client.ClientCharacterData.get(cp) : null;
+    }
 }

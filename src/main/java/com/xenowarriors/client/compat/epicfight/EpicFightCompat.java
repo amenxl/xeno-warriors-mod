@@ -420,9 +420,14 @@ public final class EpicFightCompat {
         boolean own = ownWeapon(p);
         Object anim = currentAnimation(patch);
         if (own && ownStance(p) && (guarding(p) || !efOnly(anim))) return false;   // no fists-up pose of Epic Fight's: ours
-        if (action) return !(own && basicAttack(anim));    // their own combos; Epic Fight's other actions
+        if (action) return !(own && basicAttack(anim) && !wom(p));    // their own combos (or Weapons of Miracles' moves); Epic Fight's other actions
         boolean special = com.xenowarriors.client.FlightTracker.isFlying(p) || p.isPassenger() || p.isSleeping();
         return !own && !special && !com.xenowarriors.client.DiscTracker.dancing(p);   // another weapon: its stance (unless dancing)
+    }
+
+    /** Weapons of Miracles is installed and gives this player's bare hands / weapon its moves (compat/epicfight/WomMoves): Epic Fight draws them. */
+    public static boolean wom(net.minecraft.world.entity.player.Player p) {
+        return com.xenowarriors.compat.epicfight.WomMoves.loaded() && com.xenowarriors.compat.epicfight.WomMoves.movesFor(p) != null;
     }
 
     /** (tests) what's deciding how this player is drawn. */

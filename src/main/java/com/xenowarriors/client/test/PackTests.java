@@ -113,6 +113,7 @@ public final class PackTests {
         if (focus.startsWith("packefbody")) { PackEfBodyTests.build(mc, l); return; }
         if (focus.startsWith("packremote")) { PackEfBodyTests.remote(mc, l); return; }      // (another player, as your client sees them)
         if (focus.startsWith("packxenodragon")) { PackXenoDragonTests.build(mc, l); return; }      // (the Xeno Dragon alone)
+        if (focus.startsWith("packwom")) { PackWomTests.build(mc, l); return; }      // (Weapons of Miracles' moves on our characters)
         characters(mc, l);
         menus(mc, l);
         skills(mc, l, CharacterType.MIKIKO);
@@ -128,6 +129,7 @@ public final class PackTests {
         PackCullTests.build(mc, l);        // EntityCulling / Clumps: effects through walls, health orbs, XP
         PackEfBodyTests.build(mc, l);      // Mikiko in Epic Fight's battle mode with an axe
         PackEfBodyTests.remote(mc, l);     // another player (online), as this client sees them
+        PackWomTests.build(mc, l);         // Weapons of Miracles' moves: bare-hand styles and our weapons
         PackTotemTests.build(mc, l);       // Inventory Totem vs. the downed system and the Xeno Blast
         PackTooltipTests.build(mc, l);     // Equipment Compare / Iceberg: every item's tooltip, comparisons
         PackBotBagTests.build(mc, l);      // a bot's extra tabs and tidying with the pack's inventory mods
