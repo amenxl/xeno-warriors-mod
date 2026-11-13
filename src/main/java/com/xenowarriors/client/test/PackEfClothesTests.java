@@ -130,6 +130,16 @@ final class PackEfClothesTests {
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingHurtEvent e) -> {
             if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(String.format(java.util.Locale.ROOT, " out %.2f] ", e.getAmount()));
         });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, (net.minecraftforge.event.entity.living.LivingAttackEvent e) -> {
+            if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500)
+                HURTS.append(String.format(java.util.Locale.ROOT, "{attack %.2f %s by %s", e.getAmount(), e.getSource().getMsgId(), e.getSource().getEntity()));
+        });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, true, (net.minecraftforge.event.entity.living.LivingAttackEvent e) -> {
+            if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(" cancelled=" + e.isCanceled() + "} ");
+        });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, (net.minecraftforge.event.entity.player.AttackEntityEvent e) -> {
+            if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append("<vanilla attack> ");
+        });
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingDamageEvent e) -> {
             if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(String.format(java.util.Locale.ROOT, "(dmg %.2f) ", e.getAmount()));
         });
@@ -167,7 +177,9 @@ final class PackEfClothesTests {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
                 PackTests.check("efhit " + who.getId() + ": clicks out of battle mode land", now >= 0F && now < hp[0],
-                        "zombie hp " + hp[0] + " -> " + now + ", aiming at " + mc.hitResult + " hurts " + HURTS);
+                        "zombie hp " + hp[0] + " -> " + now + ", aiming at " + (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult eh ? eh.getEntity() : mc.hitResult)
+                        + " dummy " + z + " invulnerable " + (z != null && z.isInvulnerable()) + " difficulty " + p.level().getDifficulty() + " gamemode " + p.gameMode.getGameModeForPlayer()
+                        + " hurts " + HURTS);
                 HURTS.setLength(0);
                 hp[0] = now;
             }), 2));
