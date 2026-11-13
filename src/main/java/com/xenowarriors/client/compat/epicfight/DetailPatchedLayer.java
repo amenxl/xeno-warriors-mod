@@ -64,7 +64,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         Rig rig = RIGID && !legacy ? RIGS.computeIfAbsent(live, m -> Rig.of(player)) : null;
         if (mesh[0] != null) mesh[0].draw(pose, buffers, detailType, light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         if (rig != null) {
-            if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) rigDraws++;
+            if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
         }
         if (mesh[1] != null) {
             // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
@@ -110,6 +110,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         final DetailModel m;
         final ModelPart bodyUpper, bodyLower;
         final boolean head, noLeftArm;
+        String info = "";
         private static java.lang.reflect.Field cubesField;
 
         Rig(DetailModel m, boolean head, boolean noLeftArm) {
@@ -127,6 +128,11 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             for (String k : childNames(m.body)) (k.startsWith("coat_") ? lowKids : kids).put(k, m.body.getChild(k));
             bodyUpper = new ModelPart(up, kids);
             bodyLower = new ModelPart(low, lowKids);
+            info = "body cubes " + cubes(m.body).size() + " -> upper " + up.size() + " lower " + low.size() + " kids " + kids.keySet() + " low kids " + lowKids.keySet()
+                    + " lower y " + low.stream().map(c -> String.format(java.util.Locale.ROOT, "%.1f-%.1f", c.minY, c.maxY)).limit(6).toList()
+                    + " arms " + cubes(m.rightArm).size() + (m.rightArm.hasChild(com.xenowarriors.client.LimbBend.LOWER) ? "+" + cubes(m.rightArm.getChild(com.xenowarriors.client.LimbBend.LOWER)).size() : "")
+                    + " legs " + cubes(m.rightLeg).size() + (m.rightLeg.hasChild(com.xenowarriors.client.LimbBend.LOWER) ? "+" + cubes(m.rightLeg.getChild(com.xenowarriors.client.LimbBend.LOWER)).size() : "");
+            lastRig = info;
             bodyUpper.loadPose(m.body.getInitialPose()); bodyUpper.setInitialPose(m.body.getInitialPose());
             bodyLower.loadPose(m.body.getInitialPose()); bodyLower.setInitialPose(m.body.getInitialPose());
         }
@@ -300,11 +306,21 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player))));
         live.rightWing.render(pose, vc, light, overlay);
         live.leftWing.render(pose, vc, light, overlay);
+        lastWings = wingInfo(live.rightWing) + " | " + wingInfo(live.leftWing);
         pose.popPose();
         wingDraws++;
     }
 
     private static final float WING_SCALE = 0.9375F;
+    /** (tests) the wings' pose when last drawn on Epic Fight's skeleton. */
+    public static String lastWings = "";
+    /** (tests) what the last rig was built from. */
+    public static String lastRig = "";
+
+    private static String wingInfo(ModelPart w) {
+        return String.format(java.util.Locale.ROOT, "vis=%s pos=(%.1f,%.1f,%.1f) rot=(%.2f,%.2f,%.2f) scale=(%.2f,%.2f,%.2f) kids=%d",
+                w.visible, w.x, w.y, w.z, w.xRot, w.yRot, w.zRot, w.xScale, w.yScale, w.zScale, w.getAllParts().count());
+    }
 
     /** (tests) fox tail draws on Epic Fight's skeleton. */
     public static int tailDraws;

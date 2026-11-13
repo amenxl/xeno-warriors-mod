@@ -90,7 +90,8 @@ final class PackEfClothesTests {
                 + " / " + mc.player.getOffhandItem() + ", " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 3));
         l.add(new Step(null, () -> battle(true), 30));
         l.add(new Step("pack_efclothes_" + c.name + "_battle", () -> PackTests.log("efclothes " + c.name + " battle: "
-                + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 3));
+                + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player) + " wings " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastWings
+                + " rig " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastRig), 3));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 12));
         l.add(new Step("pack_efclothes_" + c.name + "_back", () -> {}, 3));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); PackTests.server(PackEfClothesTests::swing); }, 6));
