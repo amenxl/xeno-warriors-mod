@@ -74,6 +74,7 @@ public final class Duels {
     private static final Map<UUID, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> DOWNED_DIM = new HashMap<>();
     private static final Map<UUID, Integer> DOWNED = new HashMap<>();
     private static final Map<UUID, Integer> REVIVING = new HashMap<>();    // downed player -> revive progress
+    private static final Map<UUID, Integer> DOWNED_FOR = new HashMap<>();   // downed player -> ticks down (Second Wind)
 
     private Duels() {}
 
@@ -88,6 +89,8 @@ public final class Duels {
         ACTIVE.put(d.a, d);
         ACTIVE.put(d.b, d);
     }
+
+    public static void downForTest(ServerPlayer p) { down(p); }
 
     public static void clearForTest(Player a) { Duel d = ACTIVE.get(a.getUUID()); if (d != null) { ACTIVE.remove(d.a); ACTIVE.remove(d.b); } }
 
@@ -190,6 +193,22 @@ public final class Duels {
         if (by instanceof ServerPlayer bp) bp.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
         com.xenowarriors.bot.ReviveAftermath.revived(p);                       // (10 s invincible, and a shockwave that stuns the enemies about)
         Bonds.revived(p, by);                                                    // (a revive brings you closer)
+    }
+
+    /** Second Wind: up by themselves. */
+    private static void secondWind(ServerPlayer p) {
+        float hp = com.xenowarriors.apl.Apl.useSecondWind(p);
+        DOWNED.remove(p.getUUID());
+        DOWNED_AT.remove(p.getUUID()); DOWNED_DIM.remove(p.getUUID());
+        REVIVING.remove(p.getUUID());
+        DOWNED_FOR.remove(p.getUUID());
+        enable(p);
+        p.setHealth(Math.max(4F, hp));
+        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 60, 2, false, true));
+        p.serverLevel().sendParticles(ParticleTypes.CLOUD, p.getX(), p.getY() + 0.5, p.getZ(), 30, 0.5, 0.3, 0.5, 0.08);
+        p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_BREATH, SoundSource.PLAYERS, 1F, 0.8F);
+        ModNetwork.sendToTrackingAndSelf(new KnockoutPacket(p.getUUID(), 0), p);
+        title(p, "SECOND WIND", ChatFormatting.GREEN, "back on your feet");
     }
 
     /** Ran out of time (or gave up): they die for real. */
@@ -448,6 +467,8 @@ public final class Duels {
     private static void tickDowned(MinecraftServer server) {
         java.util.List<ServerPlayer> dying = new java.util.ArrayList<>();
         java.util.List<LivingEntity[]> revived = new java.util.ArrayList<>();
+        java.util.List<ServerPlayer> winded = new java.util.ArrayList<>();
+        DOWNED_FOR.keySet().retainAll(DOWNED.keySet());
         for (var e : DOWNED.entrySet()) {
             ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
             if (p == null) continue;
@@ -470,9 +491,14 @@ public final class Duels {
                 continue;
             }
             // a teammate (player or bot) standing in their circle fills the revive bar
+            // Second Wind (an APL ability): 5 seconds down, they get up by themselves
+            int downFor = DOWNED_FOR.merge(p.getUUID(), 1, Integer::sum);
+            if (downFor >= 100 && com.xenowarriors.apl.Apl.secondWindReady(p)) { winded.add(p); continue; }
             LivingEntity helper = ReviveCircle.helperFor(p);
-            int progress = helper == null ? 0 : REVIVING.getOrDefault(p.getUUID(), 0) + 1;
+            int was = REVIVING.getOrDefault(p.getUUID(), 0);
+            int progress = helper == null ? 0 : was + com.xenowarriors.apl.Apl.reviveGain(helper, p.level().getGameTime());
             REVIVING.put(p.getUUID(), progress);
+            if (helper != null && was == 0) com.xenowarriors.apl.Apl.reviveStarted(p, helper);   // (Revive Bubble)
             if (p.tickCount % 3 == 0) ReviveCircle.draw(p.serverLevel(), p.position(), progress);
             if (helper != null && progress > 0) {
                 ReviveCircle.show(helper, p, progress);
@@ -492,6 +518,7 @@ public final class Duels {
             }
         }
         for (LivingEntity[] r : revived) revive((ServerPlayer) r[0], r[1]);
+        for (ServerPlayer p : winded) secondWind(p);
         for (ServerPlayer p : dying) {
             p.sendSystemMessage(msg("Nobody was left to revive you..."));
             bleedOut(p);

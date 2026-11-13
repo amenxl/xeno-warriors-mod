@@ -52,8 +52,8 @@ public class CharacterCustomScreen extends Screen {
     private final Screen parent;
     private int tab;                       // the position in the tab bar (what it shows: cur())
     /** What each tab shows (ids): the bar runs Stats, Skills, Passives, R+L Click, Outfits, KAs. */
-    private static final int T_STATS = 0, T_SKILLS = 1, T_OUTFITS = 2, T_KA = 3, T_PASSIVES = 4, T_RL = 5;
-    private int[] ids() { return hasKa() ? new int[]{T_STATS, T_SKILLS, T_PASSIVES, T_RL, T_OUTFITS, T_KA} : new int[]{T_STATS, T_SKILLS, T_PASSIVES, T_RL, T_OUTFITS}; }
+    private static final int T_STATS = 0, T_SKILLS = 1, T_OUTFITS = 2, T_KA = 3, T_PASSIVES = 4, T_RL = 5, T_ABIL = 6;
+    private int[] ids() { return hasKa() ? new int[]{T_STATS, T_SKILLS, T_PASSIVES, T_RL, T_ABIL, T_OUTFITS, T_KA} : new int[]{T_STATS, T_SKILLS, T_PASSIVES, T_RL, T_ABIL, T_OUTFITS}; }
     /** What the selected tab shows. */
     private int cur() { int[] i = ids(); return i[Math.min(tab, i.length - 1)]; }
     /** The bar position of a tab (by id; 0 if it isn't there). */
@@ -72,6 +72,7 @@ public class CharacterCustomScreen extends Screen {
         ModNetwork.sendToServer(new PlayerStatsRequestPacket());
         ModNetwork.sendToServer(new com.xenowarriors.network.SkillLevelsPacket("", List.of()));   // (ability levels)
         ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(com.xenowarriors.network.ToggleActionPacket.REQUEST, ""));   // (passives, R+L click)
+        ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.REQUEST, -1));   // (abilities)
     }
 
     /** (UI test) show this tab. */
@@ -167,6 +168,7 @@ public class CharacterCustomScreen extends Screen {
         if (++refresh % 40 == 0) ModNetwork.sendToServer(new PlayerStatsRequestPacket());
         if (refresh % 20 == 5 && (cur() == T_PASSIVES || cur() == T_RL))
             ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(com.xenowarriors.network.ToggleActionPacket.REQUEST, ""));
+        if (refresh % 40 == 15 && cur() == T_ABIL) ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.REQUEST, -1));
         if (tab >= tabs()) tab = 0;
     }
 
@@ -185,7 +187,7 @@ public class CharacterCustomScreen extends Screen {
     }
 
     /** Tab widths: the long "KAs / Last resort" tab gets more room. */
-    private float tabWeight(int i) { int id = ids()[i]; return id == T_KA ? (xeno() ? 1.6F : 1F) : id == T_RL || id == T_PASSIVES ? 1.25F : 1F; }
+    private float tabWeight(int i) { int id = ids()[i]; return id == T_KA ? (xeno() ? 1.6F : 1F) : id == T_RL || id == T_PASSIVES || id == T_ABIL ? 1.25F : 1F; }
     private float tabW(int i) {
         float total = 0;
         for (int k = 0; k < tabs(); k++) total += tabWeight(k);
@@ -259,6 +261,7 @@ public class CharacterCustomScreen extends Screen {
         }
         if (cur() == T_PASSIVES && passivesClick(vx, vy)) return true;
         if (cur() == T_RL && rlClick(vx, vy)) return true;
+        if (cur() == T_ABIL && abilClick(vx, vy)) return true;
         if (cur() == T_SKILLS) {
             for (int s = 0; s < SkillManager.ULTIMATE_SLOT; s++)
                 if (inBox(vx, vy, slotX(s), SLOT_Y, SLOT, SLOT)) { selectedSlot = s; click(); return true; }
@@ -444,6 +447,7 @@ public class CharacterCustomScreen extends Screen {
             case T_OUTFITS -> outfitsTab(g, type, col, vmx, vmy);
             case T_PASSIVES -> tip = passivesTab(g, type, col, vmx, vmy);
             case T_RL -> tip = rlTab(g, type, col, vmx, vmy);
+            case T_ABIL -> tip = abilTab(g, col, vmx, vmy);
             default -> kaTab(g, col, vmx, vmy);
         }
         g.pose().popPose();
@@ -460,7 +464,7 @@ public class CharacterCustomScreen extends Screen {
         pillW += (targetW - pillW) * 0.3F;
         String[] names = new String[tabs()];
         for (int i = 0; i < names.length; i++) names[i] = switch (ids()[i]) {
-            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "R+L CLICK"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
+            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "R+L CLICK"; case T_ABIL -> "ABILITIES"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
         float ts = tb[3] / 15F;
@@ -799,10 +803,11 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, kind, x + 5, y + 2.5F, 0.55F, locked ? 0x777777 : light(r.color()));
             scaled(g, ell(r.title(), (int) ((w - SW_W - 50) / 0.95F)), x + 5, y + 8, 0.95F, locked ? 0x888888 : 0xFFFFFF);
             // level and mastery
-            String lv = locked ? r.locked() : (r.kind() == 0 ? "Tier " + r.level() + "  •  Mastery " + Math.round(r.mastery()) + "/100"
+            boolean aplRow = com.xenowarriors.apl.Apl.Ability.byId(r.id()) != null;
+            String lv = locked ? r.locked() : aplRow ? "Ability - rank " + r.level() + " (Abilities tab)" : (r.kind() == 0 ? "Tier " + r.level() + "  •  Mastery " + Math.round(r.mastery()) + "/100"
                     : "Lv " + r.level() + "  •  " + Math.round(r.mastery()) + "% to next");
             scaled(g, ell(lv, (int) ((w - SW_W - 14) / 0.7F)), x + 5, y + 19, 0.7F, locked ? 0xAA5555 : 0x99AABB);
-            if (!locked) {
+            if (!locked && !aplRow) {
                 int bw = w - SW_W - 14;
                 g.fill(x + 5, y + PROW_H - 3, x + 5 + bw, y + PROW_H - 2, 0xFF2A2A34);
                 g.fill(x + 5, y + PROW_H - 3, x + 5 + Math.round(bw * Math.min(1F, r.mastery() / 100F)), y + PROW_H - 2, 0xFF000000 | (r.mastery() >= 100 ? 0xFFD24A : r.color()));
@@ -824,6 +829,8 @@ public class CharacterCustomScreen extends Screen {
     private static List<String> passiveTip(com.xenowarriors.network.TogglesPacket.Row r) {
         List<String> l = new ArrayList<>();
         l.add(r.title());
+        var apl = com.xenowarriors.apl.Apl.Ability.byId(r.id());
+        if (apl != null) { l.add("Ability (APL): " + apl.what + "."); l.add("Off: it doesn't work until you switch it back on."); return l; }
         switch (r.title()) {
             case "True Empathy" -> { l.add("Passive. Switched on, he copies the moves he sees and reads attacks coming at him by himself (Karma each time, every 25 s at most)."); l.add("Overused - three times inside 90 seconds - it strains him and switches itself off."); }
             case "Netsu" -> l.add("Buff. Sets his body on fire: much faster and stronger, burns what he touches, hurts him slowly. Off: it can't be lit.");
@@ -853,6 +860,90 @@ public class CharacterCustomScreen extends Screen {
         }
         return false;
     }
+
+    // ------------------------------------------------------------------ the Abilities tab (APL)
+
+    private static final int AB_Y = 54, AB_H = 14;
+    private int abY(int i) { return AB_Y + i * (AB_H + 2); }
+
+    private List<String> abilTab(GuiGraphics g, int col, double mx, double my) {
+        List<String> tip = null;
+        var st = com.xenowarriors.network.AplPacket.CLIENT;
+        var all = com.xenowarriors.apl.Apl.Ability.values();
+        int avail = Math.max(0, st.earned() - st.spent());
+        for (int i = 0; i < all.length; i++) {
+            var a = all[i];
+            int rank = i < st.ranks().length ? st.ranks()[i] : 0;
+            boolean max = rank >= a.max(), afford = !max && (avail >= a.costs[rank] || creative());
+            int x = 4 + Math.round((1F - rowIn(i)) * 18F), y = abY(i), w = VW - 8;
+            boolean over = inBox(mx, my, x, y, w, AB_H);
+            g.fill(x, y, x + w, y + AB_H, over ? 0xFF2A2A3A : 0xFF1C1C24);
+            g.fill(x, y, x + 2, y + AB_H, rank > 0 ? 0xFF000000 | col : 0xFF444450);
+            scaled(g, a.title, x + 5, y + 2, 0.8F, rank > 0 ? 0xFFFFFF : 0xB8B8C4);
+            for (int k = 0; k < a.max(); k++)                                   // rank pips
+                g.fill(x + 70 + k * 6, y + 3, x + 74 + k * 6, y + 7, k < rank ? 0xFF000000 | col : 0xFF3A3A46);
+            String now = rank > 0 ? a.ranks[rank - 1] : "not learned";
+            scaled(g, ell(now, 190), x + 5, y + 9, 0.6F, rank > 0 ? 0x99CCAA : 0x8888A0);
+            // Auto Potion rank 2: its health %
+            if (a == com.xenowarriors.apl.Apl.Ability.AUTO_POTION && rank >= 2) {
+                int px = x + w - 66;
+                boolean pOver = inBox(mx, my, px, y + 2, 22, 11);
+                g.fill(px, y + 2, px + 22, y + 13, pOver ? 0xFF505064 : 0xFF34343F);
+                scaled(g, st.potionAt() + "%", px + 3, y + 4.5F, 0.65F, 0xFFFFFF);
+                if (pOver) tip = List.of("Auto Potion", "Drinks a healing potion below " + st.potionAt() + "% health.", "Click to change it (25 / 35 / 50 / 65%).");
+            }
+            // the buy / upgrade button
+            int bx = x + w - 40, by = y + 2;
+            boolean bOver = inBox(mx, my, bx, by, 36, 11);
+            g.fill(bx, by, bx + 36, by + 10, max ? 0xFF2A2A30 : afford ? (bOver ? 0xFF3FA858 : 0xFF2E8A44) : 0xFF3A2A2A);
+            String label = max ? "MAX" : (rank == 0 ? "LEARN " : "UP ") + a.costs[rank];
+            scaled(g, label, bx + 18 - font.width(label) * 0.3F, by + 2.5F, 0.6F, max ? 0x888888 : 0xFFFFFF);
+            if (over && tip == null) {
+                List<String> t = new ArrayList<>();
+                t.add(a.title);
+                t.add(a.what + ".");
+                for (int k = 0; k < a.max(); k++) t.add((k < rank ? "✔ " : "• ") + "Rank " + (k + 1) + " (" + a.costs[k] + " APL): " + a.ranks[k]);
+                if (a.toggle != null) t.add("Switch it on / off on the Passives tab or the toggle wheel.");
+                tip = t;
+            }
+        }
+        // APL and the reset
+        int fy = VH - 13;
+        scaled(g, "APL: " + avail + " to spend  (" + st.earned() + " earned - 1 per Character Level)", 6, fy + 2, 0.62F, 0xFFD24A);
+        int rx = VW - 62;
+        boolean rOver = inBox(mx, my, rx, fy, 58, 10);
+        g.fill(rx, fy, rx + 58, fy + 10, st.spent() == 0 ? 0xFF2A2A30 : rOver ? 0xFF8A4A2A : 0xFF6A3A22);
+        scaled(g, "RESET", rx + 29 - font.width("RESET") * 0.3F, fy + 2, 0.6F, st.spent() == 0 ? 0x777777 : 0xFFFFFF);
+        if (rOver) tip = List.of("Reset abilities", "Gives back all " + st.spent() + " APL spent on this character.",
+                st.spent() == 0 ? "Nothing to reset." : "Costs " + com.xenowarriors.economy.Money.fmt(st.resetCost()) + " Money.");
+        return tip;
+    }
+
+    private boolean abilClick(double vx, double vy) {
+        var st = com.xenowarriors.network.AplPacket.CLIENT;
+        var all = com.xenowarriors.apl.Apl.Ability.values();
+        for (int i = 0; i < all.length; i++) {
+            int x = 4, y = abY(i), w = VW - 8;
+            int rank = i < st.ranks().length ? st.ranks()[i] : 0;
+            if (all[i] == com.xenowarriors.apl.Apl.Ability.AUTO_POTION && rank >= 2 && inBox(vx, vy, x + w - 66, y + 2, 22, 11)) {
+                ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.POTION, i)); click(); return true;
+            }
+            if (inBox(vx, vy, x + w - 40, y + 2, 36, 11)) {
+                if (rank < all[i].max()) ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.BUY, i));
+                click();
+                return true;
+            }
+        }
+        if (inBox(vx, vy, VW - 62, VH - 13, 58, 10) && st.spent() > 0) {
+            ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.RESET, -1));
+            click();
+            return true;
+        }
+        return false;
+    }
+
+    /** (UI test) clicks an ability's learn / upgrade button. */
+    public void testBuy(int i) { ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.BUY, i)); }
 
     private static final int RL_Y = 84, RL_H = 30;
     private int rlY(int i) { return RL_Y + (i / 2) * (RL_H + 4); }

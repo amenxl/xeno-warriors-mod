@@ -428,6 +428,10 @@
         {
           "title": "The Boost Bag",
           "text": "A bag for every Stat Boost (no limit). Craft it: string on top, leather on both sides, a chest in the middle and a gold ingot at the bottom (leather in both bottom corners).\n- While it's anywhere in your inventory, boosts you pick up - and the ones a level-up hands you - go straight into it.\n- Right-click it: your loose boosts go in, and it opens - a column for each stat, a row for each tier, with how many you have.\n- Left-click a boost: take a stack out (shift: just one). Right-click: use one from the bag. Shift + right-click: use all of that kind."
+        },
+        {
+          "title": "Abilities and APL",
+          "text": "You get 1 APL (ability point) for every Character Level - each character its own, counting the levels it already has. Spend them in Character Customization > Abilities. Each rank costs more than the last.\n## The abilities\n- Revive Range (5 ranks): revive teammates from further away - up to 4.5 blocks.\n- Quick Reviver (3 ranks): revive faster - up to twice as fast.\n- Revive Bubble (3 ranks): when someone revives you, a bubble shields them from hits for 3 / 5 / 8 seconds.\n- Second Wind (3 ranks): downed, you get back up by yourself after 5 seconds - with 25 / 40 / 60% health, once every 10 / 7 / 5 minutes.\n- Steady Feet (3 ranks): 20 / 40 / 60% less knockback.\n- Auto Eat: eats the best food you carry when you get hungry (not rotten flesh, golden apples and the like).\n- Auto Potion (2 ranks): drinks a healing potion you carry below 35% health; rank 2 lets you pick the % (click it on the card).\n## Notes\n- The ones you might not always want are switched on and off on the Passives tab and the toggle wheel.\n- Bots of your characters use that character's Revive Range, Quick Reviver, Revive Bubble and Steady Feet.\n- RESET gives back every APL spent on this character, for Money (500 + 50 per APL)."
         }
       ]
     },

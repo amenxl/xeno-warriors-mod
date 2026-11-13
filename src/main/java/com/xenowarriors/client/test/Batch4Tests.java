@@ -109,6 +109,7 @@ public final class Batch4Tests {
         if (f.isEmpty() || f.contains("youka")) youKa(mc, l, dmz);
         if (f.isEmpty() || f.contains("s3foes")) s3Foes(mc, l);
         if (f.isEmpty() || f.contains("duellock")) duelLock(mc, l, dmz);
+        if (f.isEmpty() || f.contains("apl")) apl(mc, l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
@@ -2523,6 +2524,88 @@ public final class Batch4Tests {
             log("duellock: released when it ends -> " + (com.xenowarriors.client.LockOn.target() == null ? "PASS" : "FAIL"));
             server(p -> { com.xenowarriors.party.Duels.clearForTest(p); ((net.minecraft.world.entity.Entity) st[1]).discard(); });
         }, 5);
+    }
+
+    /** APL: earned by levels, spent on abilities (and reset for Money); each ability doing its job. */
+    private static void apl(Minecraft mc, MikikoTests.Steps l) {
+        var A = com.xenowarriors.apl.Apl.class;
+        net.minecraft.world.entity.Mob[] z = new net.minecraft.world.entity.Mob[1];
+        l.add(null, () -> server(p -> {
+            Batch3Tests.clearBots(p);
+            com.xenowarriors.debug.SkillTestRunner.arena(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            you(p, 7, "Apex", com.xenowarriors.character.Race.HUMAN, com.xenowarriors.ka.Element.FIRE, 30);
+            com.xenowarriors.compat.DmzPerCharacter.markCreatedForTest(p);
+            var Ab = com.xenowarriors.apl.Apl.Ability.class;
+            int lv = com.xenowarriors.stats.Stats.characterLevel(p), earned = com.xenowarriors.apl.Apl.earned(p);
+            log("apl: Character Level " + lv + " -> APL earned " + earned + " -> " + (earned == lv - 1 && earned > 0 ? "PASS" : "FAIL"));
+            // buy Steady Feet up as far as the APL goes, then one too many
+            int bought = 0; String why = null;
+            for (int i = 0; i < 3 && why == null; i++) { why = com.xenowarriors.apl.Apl.buy(p, com.xenowarriors.apl.Apl.Ability.STEADY_FEET); if (why == null) bought++; }
+            int avail = com.xenowarriors.apl.Apl.available(p);
+            log("apl: Steady Feet ranks bought " + bought + ", APL left " + avail + " (" + (why == null ? "all" : why) + ") -> "
+                    + (com.xenowarriors.apl.Apl.rank(p, com.xenowarriors.apl.Apl.Ability.STEADY_FEET) == bought && avail == earned - com.xenowarriors.apl.Apl.Ability.STEADY_FEET.spentTo(bought) ? "PASS" : "FAIL"));
+            // the reset: Money back to zero spent
+            com.xenowarriors.economy.Money.set(p, 100_000);
+            long cost = com.xenowarriors.apl.Apl.resetCost(p);
+            String r = com.xenowarriors.apl.Apl.reset(p);
+            log("apl: reset cost " + cost + " Money -> spent " + com.xenowarriors.apl.Apl.spent(p) + ", Money " + com.xenowarriors.economy.Money.get(p) + " -> "
+                    + (r == null && com.xenowarriors.apl.Apl.spent(p) == 0 && com.xenowarriors.economy.Money.get(p) == 100_000 - cost && cost > 0 ? "PASS" : "FAIL"));
+            // every ability (creative buys without the APL)
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            for (var a : com.xenowarriors.apl.Apl.Ability.values()) for (int i = 0; i < a.max(); i++) com.xenowarriors.apl.Apl.buy(p, a);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            var tog = com.xenowarriors.toggle.Toggles.of(p);
+            log("apl: switchable ones on the wheel: " + tog.stream().map(e -> e.id).toList() + " -> " + (tog.contains(com.xenowarriors.toggle.Toggles.Entry.SECOND_WIND) && tog.contains(com.xenowarriors.toggle.Toggles.Entry.AUTO_EAT) ? "PASS" : "FAIL"));
+            // Revive Range and Quick Reviver
+            double reach = com.xenowarriors.apl.Apl.reviveReach(p);
+            int g0 = 0; for (int t = 0; t < 30; t++) g0 += com.xenowarriors.apl.Apl.reviveGain(p, t);
+            log("apl: Revive Range " + reach + " blocks, Quick Reviver " + g0 + " progress in 30 ticks -> " + (Math.abs(reach - 4.5) < 0.01 && g0 == 60 ? "PASS" : "FAIL"));
+            // Steady Feet: a push
+            int st0 = com.xenowarriors.apl.Apl.steadied;
+            p.setDeltaMovement(0, 0, 0);
+            p.knockback(1.0, 1, 0);
+            double v = p.getDeltaMovement().horizontalDistance();
+            log("apl: Steady Feet - knockback " + String.format("%.2f", v) + " (1.0 without) -> " + (com.xenowarriors.apl.Apl.steadied == st0 + 1 && v < 0.5 ? "PASS" : "FAIL"));
+            // Revive Bubble: whoever starts reviving you is shielded
+            var zz = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            zz.setNoAi(true); zz.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0, 0); p.serverLevel().addFreshEntity(zz); z[0] = zz;
+            com.xenowarriors.apl.Apl.reviveStarted(p, zz);
+            float h0 = zz.getHealth();
+            zz.hurt(p.damageSources().generic(), 5F);
+            log("apl: Revive Bubble - the reviver took " + (h0 - zz.getHealth()) + " from a hit -> " + (com.xenowarriors.apl.Apl.bubbled(zz) && zz.getHealth() >= h0 ? "PASS" : "FAIL"));
+            zz.discard();
+            // Auto Eat and Auto Potion
+            p.getInventory().clearContent();
+            p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.BREAD, 4));
+            p.getInventory().add(net.minecraft.world.item.alchemy.PotionUtils.setPotion(new ItemStack(net.minecraft.world.item.Items.POTION), net.minecraft.world.item.alchemy.Potions.HEALING));
+            p.getFoodData().setFoodLevel(6);
+            p.setHealth(p.getMaxHealth() * 0.2F);
+            p.getPersistentData().putFloat("xw_t_h0", p.getHealth());
+        }), 20);
+        settle(l, 50);
+        l.add(null, () -> server(p -> {
+            int bread = 0; boolean bottle = false;
+            for (ItemStack s : p.getInventory().items) { if (s.is(net.minecraft.world.item.Items.BREAD)) bread += s.getCount(); if (s.is(net.minecraft.world.item.Items.GLASS_BOTTLE)) bottle = true; }
+            log("apl: Auto Eat - food " + p.getFoodData().getFoodLevel() + ", bread left " + bread + " -> " + (p.getFoodData().getFoodLevel() > 6 && bread < 4 ? "PASS" : "FAIL"));
+            log("apl: Auto Potion - health " + p.getPersistentData().getFloat("xw_t_h0") + " -> " + p.getHealth() + ", bottle back " + bottle + " -> " + (p.getHealth() > p.getPersistentData().getFloat("xw_t_h0") + 2 && bottle ? "PASS" : "FAIL"));
+            // Second Wind: down, alone - up again by themselves after 5 s
+            p.setHealth(p.getMaxHealth());
+            com.xenowarriors.party.Duels.downForTest(p);
+            p.getPersistentData().putBoolean("xw_t_down", com.xenowarriors.party.Duels.isDowned(p));
+        }), 3);
+        settle(l, 120);
+        l.add(null, () -> server(p -> {
+            boolean was = p.getPersistentData().getBoolean("xw_t_down");
+            log("apl: Second Wind - downed " + was + ", up again by themselves " + !com.xenowarriors.party.Duels.isDowned(p) + " (health " + p.getHealth() + ", used " + com.xenowarriors.apl.Apl.winds + ") -> "
+                    + (was && !com.xenowarriors.party.Duels.isDowned(p) && p.isAlive() && com.xenowarriors.apl.Apl.winds >= 1 ? "PASS" : "FAIL"));
+        }), 3);
+        // the tab
+        l.add(null, () -> { com.xenowarriors.client.menu.CharacterCustomScreen.open(null); }, 15);
+        l.add(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.tab(6); }, 20);
+        l.add("batch4_apl_tab", () -> {}, 3);
+        l.add(null, () -> { mc.setScreen(null); server(p -> com.xenowarriors.apl.Apl.reset(p)); }, 5);
     }
 
     private static void vessel(Minecraft mc, MikikoTests.Steps l) {

@@ -68,7 +68,13 @@ public final class Toggles {
         // a Devil's: your Karma can't be read or sensed (starts on)
         KARMA_MASK("karma_mask", "Karma Mask", Kind.PASSIVE, 0x6A1020, true),
         // a second element's: the first Bolt casts the second element (starts off)
-        SWAP_ELEMENT("swap_element", "Bolt: second element", Kind.PASSIVE, 0xC8A0FF);
+        SWAP_ELEMENT("swap_element", "Bolt: second element", Kind.PASSIVE, 0xC8A0FF),
+        // abilities bought with APL (apl.Apl): there once bought, on until switched off
+        REVIVE_BUBBLE("revive_bubble", "Revive Bubble", Kind.PASSIVE, 0x7AD8FF, true),
+        SECOND_WIND("second_wind", "Second Wind", Kind.PASSIVE, 0x8AF0A0, true),
+        STEADY_FEET("steady_feet", "Steady Feet", Kind.PASSIVE, 0xC8A070, true),
+        AUTO_EAT("auto_eat", "Auto Eat", Kind.PASSIVE, 0xF0B060, true),
+        AUTO_POTION("auto_potion", "Auto Potion", Kind.PASSIVE, 0xE060C0, true);
 
         /** Shown on the toggle wheel (the automatic ones only in Character Customization). */
         public boolean wheel() { return kind != Kind.AUTO; }
@@ -109,8 +115,15 @@ public final class Toggles {
     public static final float RL_COOLDOWN = 0.8F;
     private static final String ROOT = "xw_toggles", RL = "xw_rl_skill";
 
-    /** This player's entries (by who they're playing). */
+    /** This player's entries (by who they're playing), and the APL abilities they've bought for that character. */
     public static List<Entry> of(Player p) {
+        List<Entry> l = new ArrayList<>(base(p));
+        for (com.xenowarriors.apl.Apl.Ability a : com.xenowarriors.apl.Apl.Ability.values())
+            if (a.toggle != null && com.xenowarriors.apl.Apl.rank(p, a) > 0) { Entry e = Entry.byId(a.toggle); if (e != null) l.add(e); }
+        return l;
+    }
+
+    private static List<Entry> base(Player p) {
         CharacterType t = ModCapabilities.getType(p);
         if (t == CharacterType.YOU) {
             var s = com.xenowarriors.you.You.slot(p);
@@ -244,6 +257,8 @@ public final class Toggles {
 
     /** Level: a buff's / passive's ability level; a transformation's mastery tier (1, 2 at 25, 3 at 50, 4 at 75, 5 mastered). */
     public static int level(ServerPlayer p, Entry e) {
+        var apl = com.xenowarriors.apl.Apl.Ability.byId(e.id);
+        if (apl != null) return com.xenowarriors.apl.Apl.rank(p, apl);
         if (e.kind == Kind.TRANSFORM) { float m = mastery(p, e); return m >= 100 ? 5 : m >= 75 ? 4 : m >= 50 ? 3 : m >= 25 ? 2 : 1; }
         Skill s = skill(p, e);
         return s == null ? 1 : com.xenowarriors.skill.SkillLevels.abilityLevel(p, s.getId());   // (tier and level together: Tier 2 Lv 3 = 13)

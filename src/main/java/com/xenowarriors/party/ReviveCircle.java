@@ -33,9 +33,9 @@ public final class ReviveCircle {
     public static LivingEntity helperFor(ServerPlayer downed) {
         for (ServerPlayer other : downed.server.getPlayerList().getPlayers())
             if (other != downed && other.isAlive() && !other.isSpectator() && !Duels.isKnockedOut(other) && other.level() == downed.level()
-                    && other.distanceTo(downed) < RADIUS && other.hasLineOfSight(downed) && Parties.sameParty(downed, other)) return other;
-        for (PartyBotEntity b : downed.level().getEntitiesOfClass(PartyBotEntity.class, downed.getBoundingBox().inflate(RADIUS + 1),
-                b -> !b.downed() && !b.journey() && b.distanceTo(downed) < RADIUS && b.hasLineOfSight(downed) && PartyBots.friendly(b, downed))) return b;
+                    && other.distanceTo(downed) < com.xenowarriors.apl.Apl.reviveReach(other) && other.hasLineOfSight(downed) && Parties.sameParty(downed, other)) return other;
+        for (PartyBotEntity b : downed.level().getEntitiesOfClass(PartyBotEntity.class, downed.getBoundingBox().inflate(com.xenowarriors.apl.Apl.MAX_REACH + 1),
+                b -> !b.downed() && !b.journey() && b.distanceTo(downed) < com.xenowarriors.apl.Apl.reviveReach(b) && b.hasLineOfSight(downed) && PartyBots.friendly(b, downed))) return b;
         return null;
     }
 
@@ -44,10 +44,10 @@ public final class ReviveCircle {
         ServerPlayer o = downed.owner();
         if (o == null) return null;
         for (ServerPlayer other : o.server.getPlayerList().getPlayers())
-            if (other.isAlive() && !other.isSpectator() && !Duels.isKnockedOut(other) && other.level() == downed.level() && other.distanceTo(downed) < RADIUS
+            if (other.isAlive() && !other.isSpectator() && !Duels.isKnockedOut(other) && other.level() == downed.level() && other.distanceTo(downed) < com.xenowarriors.apl.Apl.reviveReach(other)
                     && other.hasLineOfSight(downed) && PartyBots.friendly(downed, other)) return other;
-        for (PartyBotEntity b : downed.level().getEntitiesOfClass(PartyBotEntity.class, downed.getBoundingBox().inflate(RADIUS + 1),
-                b -> b != downed && !b.downed() && !b.journey() && b.distanceTo(downed) < RADIUS && b.hasLineOfSight(downed) && PartyBots.friendly(downed, b))) return b;
+        for (PartyBotEntity b : downed.level().getEntitiesOfClass(PartyBotEntity.class, downed.getBoundingBox().inflate(com.xenowarriors.apl.Apl.MAX_REACH + 1),
+                b -> b != downed && !b.downed() && !b.journey() && b.distanceTo(downed) < com.xenowarriors.apl.Apl.reviveReach(b) && b.hasLineOfSight(downed) && PartyBots.friendly(downed, b))) return b;
         return null;
     }
 
@@ -92,13 +92,15 @@ public final class ReviveCircle {
     public static void tickBot(PartyBotEntity b) {
         ServerLevel l = (ServerLevel) b.level();
         LivingEntity helper = helperFor(b);
-        int progress = helper == null ? 0 : BOT_PROGRESS.getOrDefault(b.getUUID(), 0) + 1;
+        int was = BOT_PROGRESS.getOrDefault(b.getUUID(), 0);
+        int progress = helper == null ? 0 : was + com.xenowarriors.apl.Apl.reviveGain(helper, l.getGameTime());
         BOT_PROGRESS.put(b.getUUID(), progress);
+        if (helper != null && was == 0) com.xenowarriors.apl.Apl.reviveStarted(b, helper);
         if (b.tickCount % 3 == 0) draw(l, b.position(), progress);
         if (helper != null) {
             show(helper, b, progress);
             if (progress >= TICKS) {
-                BOT_PROGRESS.remove(b.getUUID());
+                BOT_PROGRESS.remove(b.getUUID());   
                 b.revive();
                 Bonds.revived(b, helper);
                 l.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, b.getX(), b.getY() + 1, b.getZ(), 30, 0.4, 0.6, 0.4, 0.2);
