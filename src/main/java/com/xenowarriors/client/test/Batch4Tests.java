@@ -27,6 +27,28 @@ public final class Batch4Tests {
 
     static void log(String s) { XenoWarriors.LOGGER.info("XW-TEST batch4 " + s); }
 
+    /**
+     * (Whole-batch runs) between tests: whatever a test left behind can't spoil the next - leftover enemies and bosses
+     * gone, the player back up (respawned if something killed them), healed, fed, effects cleared but the long resistance.
+     */
+    private static void between(MikikoTests.Steps l) {
+        l.add(null, () -> {
+            var mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.isDeadOrDying()) mc.player.respawn();
+        }, 20);
+        l.add(null, () -> server(p -> {
+            for (var e : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(128),
+                    m -> m instanceof net.minecraft.world.entity.monster.Enemy || com.xenowarriors.karma.KarmaSensing.boss(m))) e.discard();
+            if (com.xenowarriors.party.Duels.isKnockedOut(p)) com.xenowarriors.party.Duels.bleedOut(p);
+            p.removeAllEffects();
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 60 * 30, 10, false, false));
+            p.setHealth(p.getMaxHealth());
+            p.getFoodData().setFoodLevel(20);
+            p.clearFire();
+            if (p.isSpectator()) p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        }), 5);
+    }
+
     static void server(java.util.function.Consumer<ServerPlayer> f) {
         Batch3Tests.server(p -> { try { f.accept(p); } catch (Throwable t) { log("step error " + t); XenoWarriors.LOGGER.error("XW-TEST batch4", t); } });
     }
@@ -45,80 +67,154 @@ public final class Batch4Tests {
             Batch3Tests.clearBots(p);
         }), 40);
         if (dmz && (f.isEmpty() || f.contains("formlook") || f.contains("ssj4fur"))) formLook(mc, l, f.contains("ssj4fur"));
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("comine")) coMine(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("botforms"))) botForms(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("ultforms")) ultForms(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("kaioken")) kaioken(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("botweights"))) botWeights(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("botai")) botAi(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("pickup")) pickupMusic(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("partytime")) partyTime(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("creeper")) creepers(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("ender")) enderSaiyan(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("bagmerge"))) bagMerge(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("oldkai"))) oldKai(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("sparlock")) sparLock(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.contains("fusionlook")) fusionLook(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("nimbus"))) nimbus(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("bike")) technicaBike(mc, l);
+        if (f.isEmpty()) between(l);
         if (ef && f.contains("efgear")) efGear(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("hekuteam")) hekuTeam(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("fishing")) fishing(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("taming")) taming(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("outfits")) outfits(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("automission"))) autoMission(mc, l);                      // (only when asked: design previews)
         if (dmz && (f.isEmpty() || f.contains("dmzaura"))) dmzAura(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("teamspar")) teamSpar(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("botoutfit")) botOutfit(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("phonecall")) phoneCall(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("offduty")) offDutyCards(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("wirehit")) wireHit(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("regen")) regen(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("picnic")) picnic(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("autodecline")) autoDecline(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("switchq")) switchQueue(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("toggles")) toggles(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("rlclick")) rlClick(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("shiyo")) shiyoken(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("dmzgun")) dmzGun(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("radar"))) radarCraft(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("yurissj"))) yuriForms(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("hungerbar")) hungerBar(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("botlife")) botLife(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("teamjukebox")) teamJukebox(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("boostpass")) boostPass(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("techbike")) techBike(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("rps")) rps(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("towerpods")) towerPods(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("xenoblasts")) xenoBlasts(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("capture")) capture(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("spread")) spread(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("poseguard")) poseGuard(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("c2")) c2Paths(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("devil")) devil(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("namek"))) namekSeedling(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("elementalist")) elementalist(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("vessel")) vessel(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("angel")) angel(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("mobgravity"))) mobGravity(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("ownbot")) ownBot(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("geoguard")) geoGuard(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("rlgun")) rlGun(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("boostbag")) boostBag(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("partylast")) partyLasts(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("youka")) youKa(mc, l, dmz);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("s3foes")) s3Foes(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("duellock")) duelLock(mc, l, dmz);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("apl")) apl(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("dbspeed"))) dbSpeed(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("kaibuilder"))) kaiBuilder(mc, l);
+        if (f.isEmpty()) between(l);
         if (dmz && (f.isEmpty() || f.contains("capsules"))) capsules(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("rlall")) rlAll(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("autopass")) autoPassives(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("scent")) scent(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("techsense")) techSense(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("partymusic")) partyMusic(mc, l);
+        if (f.isEmpty()) between(l);
         if (f.isEmpty() || f.contains("headlight")) headlights(mc, l);
+        if (f.isEmpty()) between(l);
         l.add(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); server(Batch3Tests::clearBots); log("done"); }, 5);
     }
 
