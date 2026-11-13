@@ -2492,6 +2492,17 @@ public final class Batch4Tests {
             foe.moveTo(p.getX() + 1, p.getY(), p.getZ() + 5, 180, 0);
             st[0] = foe;
             com.xenowarriors.party.Duels.startForTest(p, foe);
+            // (right away: the fake rival isn't on the player list, so the battle ends on the next tick)
+            boolean got = false;
+            int before = com.xenowarriors.party.Duels.dmzPartyLetThrough;
+            if (dmz) try {
+                Class<?> pm = Class.forName("com.dragonminez.common.quest.PartyManager");
+                Object r = pm.getMethod("areInSameParty", net.minecraft.world.entity.player.Player.class, net.minecraft.world.entity.player.Player.class).invoke(null, p, foe);
+                got = Boolean.FALSE.equals(r) && com.xenowarriors.party.Duels.dmzPartyLetThrough == before + 1;
+                log("duellock: (battling " + com.xenowarriors.party.Duels.battling(p, (net.minecraft.world.entity.player.Player) foe) + ", returned " + r + ", hook calls " + com.xenowarriors.party.Duels.hookCalls + ", hook error " + com.xenowarriors.party.Duels.hookError + ")");
+            } catch (Throwable t) { log("duellock: " + t); }
+            log("duellock: DragonMineZ's party check lets the two fight (" + com.xenowarriors.party.Duels.dmzPartyLetThrough + ") -> " + (!dmz ? "SKIP" : got ? "PASS" : "FAIL"));
+
             // a zombie stands in for the rival on our side (a fake player isn't sent to clients): the lock-on packet
             var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
             z.setNoAi(true);
@@ -2501,15 +2512,6 @@ public final class Batch4Tests {
             p.setYRot(0); p.setXRot(0);
         }), 15);
         l.add(null, () -> server(p -> {
-            boolean got = false;
-            int before = com.xenowarriors.party.Duels.dmzPartyLetThrough;
-            if (dmz) try {
-                Class<?> pm = Class.forName("com.dragonminez.common.quest.PartyManager");
-                Object r = pm.getMethod("areInSameParty", net.minecraft.world.entity.player.Player.class, net.minecraft.world.entity.player.Player.class).invoke(null, p, st[0]);
-                got = Boolean.FALSE.equals(r) && com.xenowarriors.party.Duels.dmzPartyLetThrough == before + 1;
-                log("duellock: (battling " + com.xenowarriors.party.Duels.battling(p, (net.minecraft.world.entity.player.Player) st[0]) + ", returned " + r + ", hook calls " + com.xenowarriors.party.Duels.hookCalls + ", hook error " + com.xenowarriors.party.Duels.hookError + ")");
-            } catch (Throwable t) { log("duellock: " + t); }
-            log("duellock: DragonMineZ's party check lets the two fight (" + com.xenowarriors.party.Duels.dmzPartyLetThrough + ") -> " + (!dmz ? "SKIP" : got ? "PASS" : "FAIL"));
             com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.DuelFoePacket(((net.minecraft.world.entity.Entity) st[1]).getId()), p);
         }), 10);
         l.add(null, () -> {
