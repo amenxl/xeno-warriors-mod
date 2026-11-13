@@ -99,7 +99,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     static boolean slim(net.minecraft.world.entity.LivingEntity e) {
         var r = net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);
         return r instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> lr && lr.getModel() instanceof HumanoidModel<?> h
-                && h.body.hasChild(com.xenowarriors.client.FemaleBody.CHEST);
+                && (h.body.hasChild(com.xenowarriors.client.FemaleBody.CHEST) || com.xenowarriors.client.cel.CelOutline.slimArms(h));   // (or a slim skin's arms)
     }
 
     /** The body's ink outline (an inflated player body), baked once for Epic Fight's skeleton. */

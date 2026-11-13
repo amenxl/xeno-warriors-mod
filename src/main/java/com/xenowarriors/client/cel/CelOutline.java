@@ -55,9 +55,28 @@ public final class CelOutline {
         return o;
     }
 
+    private static final net.minecraft.util.RandomSource ONE = net.minecraft.util.RandomSource.create(0);
+
+    /**
+     * A slim (3-pixel arm) body: the outline must be slim too, or its wider arms stick out of his as black slabs - the
+     * "shadow body" other players saw online (a player with a slim skin draws on the slim player model).
+     */
+    public static boolean slimArms(HumanoidModel<?> parent) {
+        try {
+            ModelPart.Cube c = parent.rightArm.getRandomCube(ONE);
+            return c != null && c.maxX - c.minX < 3.5F;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** (Tests) */
+    public static boolean lastSlim;
+
     /** The body outline, matching the player model's pose this frame. */
     public static void body(HumanoidModel<?> parent, PoseStack pose, MultiBufferSource buffers, int light, int overlay) {
-        PlayerModel<LivingEntity> o = body(parent.body.hasChild(com.xenowarriors.client.FemaleBody.CHEST));
+        PlayerModel<LivingEntity> o = body(parent.body.hasChild(com.xenowarriors.client.FemaleBody.CHEST) || slimArms(parent));
+        lastSlim = o == slimBody;
         sync(parent.head, o.head); sync(parent.body, o.body);
         sync(parent.rightArm, o.rightArm); sync(parent.leftArm, o.leftArm);
         sync(parent.rightLeg, o.rightLeg); sync(parent.leftLeg, o.leftLeg);

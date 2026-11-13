@@ -90,7 +90,8 @@ final class PackEfBodyTests {
             mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.log("remote: added a remote Mikiko (patch " + remotePatch(r) + ")");
         }, 20));
-        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_vanilla", () -> PackTests.log("remote vanilla: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(rp[0])), 3));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_vanilla", () -> PackTests.log("remote vanilla: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(rp[0])
+                + " (skin model " + rp[0].getModelName() + ", cel outline slim " + com.xenowarriors.client.cel.CelOutline.lastSlim + ", cel " + com.xenowarriors.client.cel.Cel.on() + ")"), 3));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> remoteBattle(rp[0], true), 30));
         l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_battle", () -> PackTests.log("remote battle: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(rp[0])), 3));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> rp[0].setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY), 20));
