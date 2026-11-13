@@ -118,7 +118,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 4 and sys.argv[4] == "fight":
         pose = {"RightArm": [80, 10, 0], "RightForeArm": [40, 0, 0], "LeftArm": [-30, 0, -20], "LeftForeArm": [70, 0, 0],
                 "LeftLeg": [35, 0, 0], "LeftLowerLeg": [-50, 0, 0], "Head": [0, 20, 0]}
-    views = [render(geo, tex, 24, pose, yaw) for yaw in (0, 35, 90, 180)]
+    views = [render(geo, tex, 21, pose, yaw) for yaw in (0, 35, 90, 180)]
     out = Image.new("RGB", (sum(v.width for v in views), views[0].height), "white")
     x = 0
     for v in views: out.paste(v, (x, 0)); x += v.width

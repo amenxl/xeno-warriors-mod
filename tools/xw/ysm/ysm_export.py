@@ -45,12 +45,13 @@ def bcube(jfrom, size, uv, inflate=0.0):
     return c
 
 
-def faces_cube(jfrom, size, uv, v0, v1, inflate=0.0, top=True, bottom=True):
+def faces_cube(jfrom, size, uv, v0, v1, inflate=0.0, top=True, bottom=True, tex_w=None):
     """A cube with per-face UVs showing only rows v0..v1 (texture units, measured from the side faces' top edge) of a box
     layout at uv - one half of a limb cut at the elbow or knee."""
     x, y, z = jfrom
     w, h, d = size
     u, v = uv
+    w = tex_w or w            # (a slim arm: drawn 3 wide from the 4-wide skin layout)
     sv = v + d + v0
     sh = v1 - v0
     f = {"east": {"uv": [u, sv], "uv_size": [d, sh]}, "north": {"uv": [u + d, sv], "uv_size": [w, sh]},
@@ -58,12 +59,12 @@ def faces_cube(jfrom, size, uv, v0, v1, inflate=0.0, top=True, bottom=True):
          "up": {"uv": [u + d, v], "uv_size": [w, d]}, "down": {"uv": [u + d + w, v + d], "uv_size": [w, -d]}}
     if not top: f.pop("up")
     if not bottom: f.pop("down")
-    c = {"origin": [round(x, 4), round(24 - (y + h), 4), round(z, 4)], "size": [round(w, 4), round(h, 4), round(d, 4)], "uv": f}
+    c = {"origin": [round(x, 4), round(24 - (y + h), 4), round(z, 4)], "size": [round(size[0], 4), round(h, 4), round(d, 4)], "uv": f}
     if inflate: c["inflate"] = inflate
     return c
 
 
-def build(char='mikiko', outfit=None):
+def build(char='mikiko', outfit=None, anime=False):
     det = json.load(open(outfit or os.path.join(ASSETS, f'models/detail/{char}.json')))
     assert det['texture_size'] == 256
     bones = {}
@@ -100,15 +101,17 @@ def build(char='mikiko', outfit=None):
     ub = bones['UpBody']
     ub.cubes += [bcube((-4, 0, -2), (8, 12, 4), skin(16, 16)), bcube((-4, 0, -2), (8, 12, 4), skin(16, 32), 0.25)]
 
-    def limb(upper, lower, px, py, uv_base, uv_over, x0, split):
-        # Java-space: the limb is 4 x 12 x 4 at (px + x0, py, -2); cut at `split` below its pivot
+    def limb(upper, lower, px, py, uv_base, uv_over, x0, split, w=4):
+        # Java-space: the limb is w x 12 x 4 at (px + x0, py, -2); cut at `split` below its pivot
         for uv, inf in ((uv_base, 0.0), (uv_over, 0.25)):
             uv = skin(*uv)
-            bones[upper].cubes.append(faces_cube((px + x0, py, -2), (4, split, 4), uv, 0, split, inf, top=True, bottom=False))
-            bones[lower].cubes.append(faces_cube((px + x0, py + split, -2), (4, 12 - split, 4), uv, split, 12, inf, top=False, bottom=True))
+            bones[upper].cubes.append(faces_cube((px + x0, py, -2), (w, split, 4), uv, 0, split, inf, top=True, bottom=False, tex_w=4))
+            bones[lower].cubes.append(faces_cube((px + x0, py + split, -2), (w, 12 - split, 4), uv, split, 12, inf, top=False, bottom=True, tex_w=4))
 
-    limb('RightArm', 'RightForeArm', -5, 2, (40, 16), (40, 32), -3, 4)
-    limb('LeftArm', 'LeftForeArm', 5, 2, (32, 48), (48, 48), -1, 4)
+    # anime style: slim (3-wide) arms
+    arm_w = 3 if anime else 4
+    limb('RightArm', 'RightForeArm', -5, 2, (40, 16), (40, 32), -2 if anime else -3, 4, arm_w)
+    limb('LeftArm', 'LeftForeArm', 5, 2, (32, 48), (48, 48), -1, 4, arm_w)
     limb('RightLeg', 'RightLowerLeg', -1.9, 12, (0, 16), (0, 32), -2, 6)
     limb('LeftLeg', 'LeftLowerLeg', 1.9, 12, (16, 48), (0, 48), -2, 6)
 
@@ -129,17 +132,32 @@ def build(char='mikiko', outfit=None):
             'right_leg': (-1.9, 12, 0), 'left_leg': (1.9, 12, 0)}
     count = [0]
 
-    def walk(node, abs_piv, parent, split, lower):
+    def slim_x(key, f, s, depth):
+        if not anime or key not in ('right_arm', 'left_arm'): return f, s
+        if depth > 0: return [f[0] * 0.75, f[1], f[2]], [s[0] * 0.75, s[1], s[2]]
+        c_old, c_new = (-1.0, -0.5) if key == 'right_arm' else (1.0, 0.5)
+        x0 = c_new + (f[0] - c_old) * 0.75
+        return [x0, f[1], f[2]], [s[0] * 0.75, s[1], s[2]]
+
+    def walk(node, abs_piv, parent, split, lower, depth=0):
         for c in node.get('cubes', []):
-            f, s = c['from'], c['size']
+            f, s = slim_x(cur_key[0], c['from'], c['size'], depth)
             jf = (abs_piv[0] + f[0], abs_piv[1] + f[1], abs_piv[2] + f[2])
             tgt = parent
             if split and lower and parent == owner_up and (f[1] + s[1] / 2.0) >= split:
                 tgt = lower
-            bones[tgt].cubes.append(bcube(jf, s, c['uv']))
+            if s[0] != c['size'][0]:
+                bones[tgt].cubes.append(faces_cube(jf, s, c['uv'], 0, c['size'][1], tex_w=c['size'][0]))
+            else:
+                bones[tgt].cubes.append(bcube(jf, s, c['uv']))
             count[0] += 1
         for ch in node.get('children', []):
             p = ch['pivot']
+            if anime and cur_key[0] in ('right_arm', 'left_arm') and depth > 0:
+                p = [p[0] * 0.75, p[1], p[2]]
+            elif anime and cur_key[0] in ('right_arm', 'left_arm'):
+                c_old, c_new = (-1.0, -0.5) if cur_key[0] == 'right_arm' else (1.0, 0.5)
+                p = [c_new + (p[0] - c_old) * 0.75, p[1], p[2]]
             ap = (abs_piv[0] + p[0], abs_piv[1] + p[1], abs_piv[2] + p[2])
             par = parent
             if split and lower and parent == owner_up and p[1] >= split:
@@ -148,10 +166,12 @@ def build(char='mikiko', outfit=None):
             i = 1
             while name in bones: name = f"{par}_{ch['name']}_{i}"; i += 1
             add(name, ap, par, ch.get('rot', (0, 0, 0)))
-            walk(ch, ap, name, 0, None)
+            walk(ch, ap, name, 0, None, depth + 1)
 
+    cur_key = [None]
     for key, node in det['bones'].items():
         if key not in owner: continue
+        cur_key[0] = key
         up, low, split = owner[key]
         owner_up = up
         walk(node, jpiv[key], up, split, low)
@@ -182,14 +202,18 @@ def arm_geo(geo):
     return g
 
 
-def atlas(char):
+def atlas(char, anime=False):
     im = Image.new('RGBA', (ATLAS_W * SCALE, ATLAS_H * SCALE), (0, 0, 0, 0))
     d = Image.open(os.path.join(TEXDIR, f'{char}_details.png')).convert('RGBA')
     im.paste(d.resize((256 * SCALE, 256 * SCALE), Image.NEAREST), (0, 0))
     s = Image.open(os.path.join(TEXDIR, f'{char}.png')).convert('RGBA')
     im.paste(s.resize((64 * SCALE, 64 * SCALE), Image.NEAREST), (0, SKIN_V * SCALE))
     fp = os.path.join(TEXDIR, f'{char}_face.png')
-    if os.path.exists(fp):
+    if anime:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import anime_face
+        im.paste(anime_face.face(), (FACE_U * SCALE, FACE_V * SCALE))
+    elif os.path.exists(fp):
         f = Image.open(fp).convert('RGBA')          # 64 px = 16 units: exactly SCALE
         im.paste(f, (FACE_U * SCALE, FACE_V * SCALE))
     return im
@@ -198,12 +222,13 @@ def atlas(char):
 if __name__ == '__main__':
     out = sys.argv[1]
     char = sys.argv[2] if len(sys.argv) > 2 else 'mikiko'
-    geo, bones, n = build(char)
+    anime = '--anime' in sys.argv
+    geo, bones, n = build(char, anime=anime)
     d = os.path.join(out, char)
     for sub in ('models', 'textures'): os.makedirs(os.path.join(d, sub), exist_ok=True)
     json.dump(geo, open(os.path.join(d, 'models/main.json'), 'w'), indent=1)
     json.dump(arm_geo(geo), open(os.path.join(d, 'models/arm.json'), 'w'), indent=1)
-    atlas(char).save(os.path.join(d, f'textures/{char}.png'))
+    atlas(char, anime).save(os.path.join(d, f'textures/{char}.png'))
     ysm = {"spec": 2,
            "metadata": {"name": char.capitalize() + " (Xeno Warriors Recarnet)",
                         "tips": "Mikiko from the Xeno Warriors Recarnet mod. Characters by Recarnetwork Gacha.",
