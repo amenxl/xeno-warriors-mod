@@ -148,7 +148,9 @@ final class PackEfClothesTests {
                     // replay the event through each listener in turn to find which one cancels it
                     try {
                         var probe = new net.minecraftforge.event.entity.player.AttackEntityEvent(e.getEntity(), e.getTarget());
-                        var listeners = probe.getListenerList().getListeners(0);
+                        var bf = net.minecraftforge.common.MinecraftForge.EVENT_BUS.getClass().getDeclaredField("busID");
+                        bf.setAccessible(true);
+                        var listeners = probe.getListenerList().getListeners(bf.getInt(net.minecraftforge.common.MinecraftForge.EVENT_BUS));
                         for (var li : listeners) {
                             boolean before = probe.isCanceled();
                             try { li.invoke(probe); } catch (Throwable ignored) {}
