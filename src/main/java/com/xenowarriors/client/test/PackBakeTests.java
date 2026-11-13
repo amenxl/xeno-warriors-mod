@@ -152,4 +152,23 @@ final class PackBakeTests {
         }), 3));
         l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
     }
+
+    /** (focus "packbakechecks") A few skill poses: the original (vanilla mode) and the Epic Fight version (battle mode). */
+    static void checkSkills(Minecraft mc, List<Step> l) {
+        int[][] who = {{3, 1}, {1, 1}, {6, 0}, {9, 0}, {20, 0}, {24, 0}, {25, 0}, {29, 0}};   // {skill, 0 Mikiko / 1 Rhalix}
+        for (int[] w : who) {
+            int id = w[0], dur = com.xenowarriors.client.SkillAnimations.duration(id), at = Math.max(4, Math.round(dur * 0.45F));
+            l.add(new Step(null, () -> { battle(false); UiTest.character(w[1] == 0 ? CharacterType.MIKIKO : CharacterType.RHALIX); }, 30));
+            l.add(new Step(null, () -> { PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); p.getInventory().setItem(0, net.minecraft.world.item.ItemStack.EMPTY);
+                p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0); });
+                mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 20));
+            l.add(new Step("pack_bakes_" + id + "_old", () -> com.xenowarriors.client.ClientSkillState.startAnim(mc.player.getId(), id, false), at));
+            l.add(new Step(null, () -> {}, dur - at + 8));
+            l.add(new Step(null, () -> battle(true), 15));
+            l.add(new Step("pack_bakes_" + id + "_ef", () -> com.xenowarriors.client.ClientSkillState.startAnim(mc.player.getId(), id, false), at));
+            l.add(new Step(null, () -> PackTests.log("bake skill " + id + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)
+                    + " plays " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.skillPlays + " err " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.skillError), dur - at + 8));
+        }
+        l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+    }
 }
