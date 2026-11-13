@@ -66,7 +66,7 @@ public class UltimaPrototypeRenderer extends HumanoidMobRenderer<UltimaPrototype
             com.xenowarriors.client.LimbBend.copy(p.leftLeg, m.leftLeg);
             int overlay = LivingEntityRenderer.getOverlayCoords(e, 0F);
             m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(DETAILS)), light, overlay);
-            if (com.xenowarriors.client.cel.Cel.on()) {
+            if (com.xenowarriors.client.cel.Cel.outline()) {
                 com.xenowarriors.client.cel.CelOutline.body(p, pose, buffers, light, overlay);
                 com.xenowarriors.client.cel.CelOutline.details(m, pose, buffers, light, overlay);
             }

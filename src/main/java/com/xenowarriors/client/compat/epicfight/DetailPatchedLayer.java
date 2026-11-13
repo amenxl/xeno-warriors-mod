@@ -67,7 +67,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (ff.mouth != null) mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(ff.mouth), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
-        if (com.xenowarriors.client.cel.Cel.on() && !firstPerson(player)) {         // cel-shading: the thick ink outline, as without Epic Fight
+        if (com.xenowarriors.client.cel.Cel.outline() && !firstPerson(player)) {         // cel-shading: the thick ink outline, as without Epic Fight
             float ink = com.xenowarriors.client.cel.CelOutline.INK;
             var rt = com.xenowarriors.client.cel.CelRenderTypes.OUTLINE;
             SkinnedMesh body = bodyOutline(slim(player));

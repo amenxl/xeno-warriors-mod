@@ -18,7 +18,7 @@
         },
         {
           "title": "The main menu",
-          "text": "Press {key:stats_menu} for the main menu:\n- Character Select and Character Customization (stats, skill loadout and ability tiers, outfits, KA / last resort)\n- Party (your team, bots, synergy and bond)\n- Pets, Factions, Journey, Warriors (everyone online), Settings (cel-shading, HUD style, Karma Sensing, movement, combat)\n- Guide: this book.\n- Outfits are kept per character: switching characters puts on that character's own outfit (a new character starts in their usual one).\n- Bot teammates wear the outfit you last had on that character. Change it from the bot's menu (Outfit button) - that's also what they'll wear when you play them."
+          "text": "Press {key:stats_menu} for the main menu:\n- Character Select and Character Customization (stats, skill loadout and ability tiers, outfits, KA / last resort)\n- Party (your team, bots, synergy and bond)\n- Pets, Factions, Journey, Warriors (everyone online), Settings (cel-shading, HUD style, Karma Sensing, movement, combat). With a shader pack on, cel-shading keeps its flat colors but skips the black outline (shaders drew it as a dark shadow body)\n- Guide: this book.\n- Outfits are kept per character: switching characters puts on that character's own outfit (a new character starts in their usual one).\n- Bot teammates wear the outfit you last had on that character. Change it from the bot's menu (Outfit button) - that's also what they'll wear when you play them."
         }
       ]
     },

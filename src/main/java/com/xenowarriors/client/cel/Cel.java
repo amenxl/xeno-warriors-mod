@@ -21,6 +21,13 @@ public final class Cel {
 
     public static boolean on() { return force || ClientSettings.celShading(); }
 
+    /**
+     * The black ink outline around characters - not while an Oculus / Iris shader pack is on: the pack draws the
+     * outline shell (an inflated, inside-out body) as a solid black body, which showed as a dark "shadow" moving
+     * around the character (the user's video). The cel-shaded textures stay.
+     */
+    public static boolean outline() { return on() && !com.xenowarriors.client.compat.ShaderCompat.packInUse(); }
+
     /** The cel-shaded version of this texture (…_cel.png) when cel-shading is on and one exists. */
     public static ResourceLocation tex(ResourceLocation rl) {
         if (rl == null || !on()) return rl;

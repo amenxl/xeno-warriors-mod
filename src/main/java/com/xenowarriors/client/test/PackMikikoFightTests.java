@@ -94,6 +94,14 @@ final class PackMikikoFightTests {
         l.add(new Step(null, () -> press(mc, mc.options.keyAttack, true), 1));
         l.add(new Step(null, () -> press(mc, mc.options.keyAttack, false), 4));
         l.add(new Step("pack_mikikofight_sword_front", () -> PackTests.log("mikikofight sword front: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 10));
+        // with a shader pack on, no outline shell is drawn (it showed as a black shadow body under shaders)
+        l.add(new Step(null, () -> { com.xenowarriors.client.compat.ShaderCompat.forceForTest = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+            com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws = 0; }, 10));
+        l.add(new Step(null, () -> { int n = com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws;
+            com.xenowarriors.client.compat.ShaderCompat.forceForTest = false; com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws = 0;
+            PackTests.check("mikikofight: no cel outline shell under a shader pack", n == 0, "outline draws " + n); }, 10));
+        l.add(new Step(null, () -> PackTests.check("mikikofight: the cel outline is back without shaders", com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws > 0,
+                "outline draws " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws), 2));
         l.add(new Step(null, () -> { com.xenowarriors.client.cel.Cel.force = false; com.xenowarriors.client.mikiko.FoxKingClient.set(mc.player.getId(), false);
             PackTests.server(p -> p.getInventory().setItem(0, ItemStack.EMPTY)); }, 5));
         l.add(new Step(null, () -> {

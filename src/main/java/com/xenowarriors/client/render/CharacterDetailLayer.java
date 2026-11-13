@@ -671,7 +671,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         model.root.render(poseStack, buffer, packedLight, overlay);
         if (com.xenowarriors.client.compat.DmzForms.ssj4Own(player)) ssj4Fur(parent, poseStack, buffers, packedLight, overlay);   // Super Saiyan 4: the red fur
-        if (com.xenowarriors.client.cel.Cel.on() && !noHead) {                 // cel-shading: the ink outline around him
+        if (com.xenowarriors.client.cel.Cel.outline() && !noHead) {                 // cel-shading: the ink outline around him
             com.xenowarriors.client.cel.CelOutline.body(parent, poseStack, buffers, packedLight, overlay);
             com.xenowarriors.client.cel.CelOutline.details(model, poseStack, buffers, packedLight, overlay);
         }

@@ -54,7 +54,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
             if (possessed) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
-        if (com.xenowarriors.client.cel.Cel.on()) {                              // cel-shading: the ink outline, as without Epic Fight
+        if (com.xenowarriors.client.cel.Cel.outline()) {                              // cel-shading: the ink outline, as without Epic Fight
             float ink = com.xenowarriors.client.cel.CelOutline.INK;
             var rt = com.xenowarriors.client.cel.CelRenderTypes.OUTLINE;
             SkinnedMesh body = DetailPatchedLayer.bodyOutline(DetailPatchedLayer.slim(entity));

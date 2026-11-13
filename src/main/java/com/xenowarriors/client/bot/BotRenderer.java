@@ -123,7 +123,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
             m.untwistCoat(p.body.yRot);
             int overlay = LivingEntityRenderer.getOverlayCoords(e, 0F);
             m.root.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(t.getDetailTexture()))), light, overlay);
-            if (com.xenowarriors.client.cel.Cel.on()) {
+            if (com.xenowarriors.client.cel.Cel.outline()) {
                 com.xenowarriors.client.cel.CelOutline.body(p, pose, buffers, light, overlay);
                 com.xenowarriors.client.cel.CelOutline.details(m, pose, buffers, light, overlay);
             }
