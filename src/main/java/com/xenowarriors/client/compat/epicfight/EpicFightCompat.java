@@ -457,6 +457,7 @@ public final class EpicFightCompat {
      */
     private static boolean efOnly(Object anim) {
         if (anim == null) return false;
+        if (baked(anim)) return true;                                       // (our own moves rebuilt for Epic Fight: "rhalix_hit0" isn't a hurt flinch)
         String path = (anim.getClass().getSimpleName() + " " + anim).toLowerCase(java.util.Locale.ROOT);
         if (path.contains("guard")) return false;
         if (path.contains("hit") || path.contains("stun") || path.contains("knockdown") || path.contains("knock_down")
