@@ -44,7 +44,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     protected void renderLayer(AbstractClientPlayerPatch<AbstractClientPlayer> patch, AbstractClientPlayer player,
                                RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> layer, PoseStack pose,
                                MultiBufferSource buffers, int light, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partial) {
-        if (player.isInvisible()) return;
+        if (player.isInvisible() || SKIN_ONLY) return;
         tail(patch, player, pose, buffers, light, poses, partial);
         DetailModel live = CharacterDetailLayer.detailModel(player);
         if (live == null || FAILED.contains(live)) return;
@@ -309,8 +309,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         pose.pushPose();
         yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
         var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player))));
-        live.rightWing.render(pose, vc, light, overlay);
-        live.leftWing.render(pose, vc, light, overlay);
+        if (WING_TEST != 1) live.rightWing.render(pose, vc, light, overlay);
+        if (WING_TEST != 2) live.leftWing.render(pose, vc, light, overlay);
         lastWings = wingInfo(live.rightWing) + " | " + wingInfo(live.leftWing);
         pose.popPose();
         wingDraws++;
@@ -319,6 +319,9 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     private static final float WING_SCALE = 0.9375F;
     /** (tests) the wings' pose when last drawn on Epic Fight's skeleton. */
     public static String lastWings = "";
+    /** (tests) 1: leave the right wing out, 2: the left; SKIN_ONLY: draw none of the details. */
+    public static int WING_TEST;
+    public static boolean SKIN_ONLY;
     /** (tests) what the last rig was built from. */
     public static String lastRig = "";
     /** (tests) set to a builder to record where each rig piece goes on the next draw. */

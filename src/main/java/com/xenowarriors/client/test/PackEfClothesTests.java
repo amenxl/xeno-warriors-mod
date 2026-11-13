@@ -56,6 +56,15 @@ final class PackEfClothesTests {
                 new Case("kaeru", CharacterType.KAERU, 0, "minecraft:iron_sword", false, false),
                 new Case("kaeru_fists", CharacterType.KAERU, 0, null, false, false)};
         for (Case c : cases) one(mc, l, c);
+        // which wing is which (the user: one of Sam's / Max's wings hangs straight down), and Kaeru's bare skin
+        l.add(new Step(null, () -> com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.WING_TEST = 1, 1));
+        one(mc, l, new Case("sam_noright", CharacterType.SAM, 0, null, false, true));
+        l.add(new Step(null, () -> com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.WING_TEST = 2, 1));
+        one(mc, l, new Case("sam_noleft", CharacterType.SAM, 0, null, false, true));
+        l.add(new Step(null, () -> { com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.WING_TEST = 0;
+            com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.SKIN_ONLY = true; }, 1));
+        one(mc, l, new Case("kaeru_skin", CharacterType.KAERU, 0, "minecraft:iron_sword", false, false));
+        l.add(new Step(null, () -> com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.SKIN_ONLY = false, 1));
         // the old way (baked into one skinned mesh), for comparison
         l.add(new Step(null, () -> com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.RIGID = false, 1));
         one(mc, l, new Case("yuri_oldbake", CharacterType.YURI, 0, "minecraft:iron_sword", false, false));
