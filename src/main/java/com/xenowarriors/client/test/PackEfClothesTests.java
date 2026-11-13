@@ -138,11 +138,23 @@ final class PackEfClothesTests {
             if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(" cancelled=" + e.isCanceled() + "} ");
         });
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, (net.minecraftforge.event.entity.player.AttackEntityEvent e) -> {
-            if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append("<vanilla attack> ");
+            if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append("<vanilla attack");
+        });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, true, (net.minecraftforge.event.entity.player.AttackEntityEvent e) -> {
+            if (e.getTarget().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(" cancelled=" + e.isCanceled() + "> ");
         });
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingDamageEvent e) -> {
             if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(String.format(java.util.Locale.ROOT, "(dmg %.2f) ", e.getAmount()));
         });
+    }
+
+    private static String attackInfo(net.minecraft.server.level.ServerPlayer p) {
+        var a = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        if (a == null) return "none";
+        StringBuilder b = new StringBuilder(String.format(java.util.Locale.ROOT, "%.2f (base %.2f)", a.getValue(), a.getBaseValue()));
+        for (var m : a.getModifiers()) b.append(String.format(java.util.Locale.ROOT, " [%s %s %.2f]", m.getName(), m.getOperation(), m.getAmount()));
+        b.append(" strength scale ").append(p.getAttackStrengthScale(0.5F));
+        return b.toString();
     }
 
     static void hits(Minecraft mc, List<Step> l) {
@@ -179,7 +191,7 @@ final class PackEfClothesTests {
                 PackTests.check("efhit " + who.getId() + ": clicks out of battle mode land", now >= 0F && now < hp[0],
                         "zombie hp " + hp[0] + " -> " + now + ", aiming at " + (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult eh ? eh.getEntity() : mc.hitResult)
                         + " dummy " + z + " invulnerable " + (z != null && z.isInvulnerable()) + " difficulty " + p.level().getDifficulty() + " gamemode " + p.gameMode.getGameModeForPlayer()
-                        + " hurts " + HURTS);
+                        + " attack damage " + attackInfo(p) + " hurts " + HURTS);
                 HURTS.setLength(0);
                 hp[0] = now;
             }), 2));
