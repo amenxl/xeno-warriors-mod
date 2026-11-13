@@ -38,7 +38,7 @@ import org.joml.Vector3f;
 import java.util.function.Supplier;
 
 /**
- * Every character whose show weapon exists as an item can summon it with the summon key (G): Max's knife, Sam's bat,
+ * Every character whose show weapon exists as an item can summon it with the summon key (G): Kyrie's rapier, Max's knife, Sam's bat,
  * Logan's and Keita's blades, Zane's broom and Garry's microphone (Mikiko's Hekublade and Rhalix's wires have their own
  * systems). A tap summons it into the hand / puts it away. The summoned copy is tagged with its owner's character:
  * it can't be dropped, stored in a container, hung up, or kept after death, a character switch or a Season lock; it
@@ -59,6 +59,7 @@ public final class SignatureWeapons {
             case SAM -> ModItems.SAM_BAT::get;
             case LOGAN -> ModItems.LOGAN_BLADE::get;
             case KEITA -> ModItems.KEITA_BLADE::get;
+            case KYRIE -> ModItems.KYRIE_RAPIER::get;
             case ZANE -> ModItems.ZANE_BROOM::get;
             case GARRY -> ModItems.MICROPHONE::get;
             default -> null;
@@ -67,7 +68,7 @@ public final class SignatureWeapons {
     }
 
     public static boolean has(CharacterType t) { return t != null && t != CharacterType.NONE && switch (t) {
-        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY -> true;
+        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE -> true;
         default -> false;
     }; }
 

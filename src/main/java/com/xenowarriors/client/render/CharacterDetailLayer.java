@@ -698,7 +698,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (fusionLook != null) formHair = -1;                                              // (a fusion keeps its own hair colours)
         if (formHair >= 0 && model.hair == null && (type == CharacterType.KYRIE || type == CharacterType.YURI)) {   // (Kyrie's hair is the head's own strands, Yuri's bob the head's own cubes: the whole head with the mask, only the hair shows)
             float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
-            String mask = type == CharacterType.KYRIE ? "kyrie_details_hairmask" : outfit > 0 ? "yuri_c1pjs_details_hairmask" : "yuri_details_hairmask";
+            String mask = type == CharacterType.KYRIE ? (outfit > 0 ? "kyrie_s2_details_hairmask" : "kyrie_details_hairmask") : outfit > 0 ? "yuri_c1pjs_details_hairmask" : "yuri_details_hairmask";
             poseStack.pushPose();
             model.root.translateAndRotate(poseStack);
             if (type == CharacterType.YURI) { poseStack.pushPose(); poseStack.scale(1.025F, 1.02F, 1.025F); }   // (a hair over her own bob, so the tint always shows - no flicker with the black under it)

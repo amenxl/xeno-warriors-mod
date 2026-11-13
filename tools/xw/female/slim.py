@@ -16,7 +16,7 @@ def mark(path):
 
 RES = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/textures/entity/'
 GIRLS = ['kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri']
-GIRL_OUTFITS = {'max': ['royal'], 'sam': ['royal'], 'yuri': ['c1pjs']}
+GIRL_OUTFITS = {'max': ['royal'], 'sam': ['royal'], 'yuri': ['c1pjs'], 'kyrie': ['s2']}
 GIRL_NPCS = ['woman', 'girl', 'sky_lexy', 'sky_royal', 'sr_ava', 'sr_ava_demon', 'sr_persephone', 'sr_persephone_demon', 'sr_maddie', 'cynic', 'cynic_evolved']
 SKIN_SUFFIXES = ['', '_damage1', '_damage2', '_torn1', '_torn2', '_torn3']
 ARMS = [(40, 16), (32, 48), (40, 32), (48, 48)]      # right arm, left arm, right sleeve, left sleeve

@@ -191,7 +191,12 @@
         },
         {
           "title": "Show weapons",
-          "text": "Characters whose weapon is in the mod can summon it, like Mikiko's Hekublade.\n- Tap {key:summon_blade}: it appears in your hand with a little glow; tap again to put it away.\n- Max: his knife. Sam: her bat. Logan and Keita: their swords. Zane (Season 3): his broom. Garry: his microphone.\n- It can't be dropped, stored or hung up, never wears out, and vanishes when you die or switch character. The ones you find or craft are separate, ordinary items.\n- Bots of these characters summon theirs in a fight and keep it in hand unless they carry a much stronger weapon (the microphone is no weapon, so Garry's bot doesn't).\n- Characters without a weapon item yet (Kyrie, Lexy, Technica, Stevie, Yuri, Kill, Ai-oni, Senju) just don't react to the key."
+          "text": "Characters whose weapon is in the mod can summon it, like Mikiko's Hekublade.\n- Tap {key:summon_blade}: it appears in your hand with a little glow; tap again to put it away.\n- Kyrie: her rapier (white blade, curled purple guard). Max: his knife. Sam: her bat. Logan and Keita: their swords. Zane (Season 3): his broom. Garry: his microphone.\n- It can't be dropped, stored or hung up, never wears out, and vanishes when you die or switch character. The ones you find or craft are separate, ordinary items.\n- Bots of these characters summon theirs in a fight and keep it in hand unless they carry a much stronger weapon (the microphone is no weapon, so Garry's bot doesn't).\n- Characters without a weapon item yet (Kyrie, Lexy, Technica, Stevie, Yuri, Kill, Ai-oni, Senju) just don't react to the key."
+        },
+        {
+          "title": "Kyrie's Season 2 outfit",
+          "season": 2,
+          "text": "Kyrie has a Season 2 outfit (Character Customization > Outfits): a black tank top, white off-the-shoulder sleeves, a short white pleated skirt with a dotted teal-to-purple sash tied at her hip, dark knee socks with little white bows, purple flats and cross earrings.\n- Her rapier comes out with {key:summon_blade}, in any outfit."
         },
         {
           "title": "Rhalix",

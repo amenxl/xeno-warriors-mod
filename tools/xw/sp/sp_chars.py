@@ -51,6 +51,10 @@ def kyrie_paint(part, face, x, y, W, H, outer):
     return None
 
 def kyrie(f):
+    kyrie_hair(f)
+    kyrie_clothes(f)
+
+def kyrie_hair(f):
     # long side locks framing her face, a white streak at the part, two shell space-buns and a heart ahoge
     hair(f, KH1, KH2, back_len=25, side_len=26,
          locks=[([s * 3.7, 31.6, -4.55], [s * 0.1, -1, -0.1], 11.0, 2.0) for s in (1, -1)]
@@ -66,6 +70,8 @@ def kyrie(f):
         f.add('head', [cx - 1.4, 32.5, cz - 1.4], [cx + 1.4, 33.0, cz + 1.4], '#a8a0b8')    # little hair ring
     for dx, dy in ((-0.9, 0.6), (0.9, 0.6), (-0.5, 0.0), (0.5, 0.0), (0, -0.5), (-1.3, 1.1), (1.3, 1.1), (-0.5, 1.4), (0.5, 1.4)):
         f.add('head', [dx - 0.25, 33.4 + dy, -2.6], [dx + 0.25, 33.9 + dy, -2.2], KH3)     # heart ahoge
+
+def kyrie_clothes(f):
     # striped long-sleeve with the sleeves pushed up, belt, ripped black jeans, boots
     shell(f, 'body', [-4, 12.4, -2], [4, 24, 2], 0.3, K_WHT, {'front': lambda x, y: K_BLK if int(y * 11.6) % 2 == 0 else K_WHT,
                                                             'back': lambda x, y: K_BLK if int(y * 11.6) % 2 == 0 else K_WHT,
@@ -91,6 +97,70 @@ KYRIE = dict(skin=K_SKIN, eyes=K_EYE, hair=[KH1, KH2], paint=kyrie_paint,
              eye=['.kkkkkkk.', 'kkkkkkkkk', '.wdOOodw.', '.wWOpoOw.', '.wOoopOw.', '..wOOOw..', '.kkkkkk..'],
              mouth=['.rrrr.', '.rRRr.'], mouth_x=13, mouth_y=24, face_extra=[kyrie_marks],
              wing=('kyrie', '#5e3a80'), fit=kyrie)
+
+# ---------------------------------------------------------------------- KYRIE, SEASON 2
+# (the user's picture: a black tank top, white off-the-shoulder sleeves with flared cuffs, a short white pleated skirt
+#  with a black belt and a dotted teal-to-purple sash tied in a bow at her hip, bare legs, dark knee socks with a band
+#  at the top and a white band at the ankle, little white ribbon bows, dark purple flats; a cross earring)
+K2_TOP, K2_WHT, K2_WHT2, K2_SOCK, K2_SOCK2, K2_SHOE = '#1c1820', '#eeecf4', '#cfcadc', '#5a3a3a', '#2c1a22', '#2a1e34'
+K2_SASH = ['#3a6a7a', '#4a5a8a', '#6a4a9a', '#8a5ab8']
+
+def kyrie_s2_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 8: return K2_WHT                                              # (under the skirt)
+        if y == 0 and (x <= 1 or x >= W - 2): return K_SKIN                   # bare shoulders by the straps
+        return K2_TOP
+    if part in ('rarm', 'larm'):
+        if y < 2: return K_SKIN                                               # bare shoulder
+        if y >= 11: return K_SKIN                                             # hands
+        return K2_WHT
+    if part in ('rleg', 'lleg'):
+        if y < 5: return K_SKIN                                               # bare thighs
+        if y == 5: return K2_SOCK2                                            # the band at the sock top
+        if y == 10: return K2_WHT                                             # white band at the ankle
+        if y == 11: return K2_SHOE
+        return K2_SOCK
+    return None
+
+def kyrie_s2(f):
+    kyrie_hair(f)
+    for s_ in (1, -1):                                                                   # cross earrings
+        f.add('head', [s_ * 4.2 - 0.12, 26.0, -0.3], [s_ * 4.2 + 0.12, 27.6, 0.3], '#e8e8f0')
+        f.add('head', [s_ * 4.2 - 0.12, 27.0, -0.75], [s_ * 4.2 + 0.12, 27.3, 0.75], '#e8e8f0')
+    # black tank top with thin straps
+    shell(f, 'body', [-4, 15.6, -2], [4, 23.6, 2], 0.25, K2_TOP)
+    for sx in (1, -1):
+        f.add('body', [sx * 2.6 - 0.5, 23.4, -2.3], [sx * 2.6 + 0.5, 24.1, 2.3], K2_TOP)
+    # short white pleated skirt, flaring out (pleats: alternating light / shade)
+    pleat = lambda x, y: K2_WHT2 if int(x * 10) % 2 == 0 else K2_WHT
+    f.add('body', [-4.35, 13.6, -2.35], [4.35, 15.9, 2.35], K2_WHT, {'front': pleat, 'back': pleat, 'right': pleat, 'left': pleat})
+    f.add('body', [-4.8, 11.2, -2.8], [4.8, 13.8, 2.8], K2_WHT, {'front': pleat, 'back': pleat, 'right': pleat, 'left': pleat, 'bottom': K2_WHT2})
+    f.add('body', [-4.5, 15.4, -2.5], [4.5, 16.0, 2.5], '#141216')                       # black belt
+    f.add('body', [-0.5, 15.35, -2.62], [0.5, 16.05, -2.5], '#b8b8c4')                   # buckle
+    # the sash: dotted panels draped over the skirt's front-left, teal fading to purple, a big bow at her left hip
+    dots = lambda c: (lambda x, y: '#1a1a24' if (int(x * 9) + 2 * int(y * 4)) % 5 == 0 else c)
+    for i, c in enumerate(K2_SASH):
+        x0 = -4.95 + i * 0.35
+        f.add('body', [x0, 11.0 + (3 - i) * 0.5, -2.95 - i * 0.02], [x0 + 2.6, 15.6 - i * 0.3, -2.82 - i * 0.02], c,
+              {'front': dots(c), 'left': dots(c)})
+    f.add('body', [-5.15, 11.2, -2.6], [-4.85, 15.4, 0.8], K2_SASH[0], {'left': dots(K2_SASH[0])})   # round the hip
+    f.add('body', [-5.3, 14.4, -2.2], [-4.95, 16.6, -0.4], K2_SASH[2])                 # bow loops at the hip
+    f.add('body', [-5.3, 14.4, 0.2], [-4.95, 16.4, 1.8], K2_SASH[3])
+    f.add('body', [-5.4, 14.9, -0.5], [-5.0, 15.9, 0.3], '#1a1a24')                    # the knot
+    f.add('body', [-5.25, 11.6, -0.4], [-4.95, 14.6, 0.2], K2_SASH[1])                 # its tails
+    # white off-the-shoulder sleeves: loose, flaring at the wrist
+    f.both('right_arm', [3.62, 13.2, -2.38], [8.38, 21.8, 2.38], K2_WHT, {'top': K2_WHT2})
+    f.both('right_arm', [3.35, 12.2, -2.65], [8.65, 14.0, 2.65], K2_WHT, {'bottom': K_SKIN, 'front': lambda x, y: K2_WHT2 if int(x * 6) % 2 else K2_WHT})
+    f.both('right_arm', [3.5, 21.4, -2.5], [8.5, 22.0, 2.5], K2_WHT2)                    # the sleeve's top hem
+    # socks are painted on; ribbon bows at the ankles, flats
+    f.both('right_leg', [4.25, 1.6, -0.15], [4.6, 2.2, 0.15], K2_WHT)                    # bow knot
+    f.both('right_leg', [4.3, 1.9, -0.9], [4.55, 2.9, -0.15], K2_WHT2)                   # loops
+    f.both('right_leg', [4.3, 1.9, 0.15], [4.55, 2.9, 0.9], K2_WHT2)
+    f.both('right_leg', [-0.3, 0, -2.55], [4.3, 1.05, 2.35], K2_SHOE)
+    f.both('right_leg', [0.2, 0, -3.0], [3.8, 0.85, -2.5], K2_SHOE)
+    f.both('right_leg', [-0.35, 0, -3.1], [4.35, 0.25, 2.4], '#16101e')                 # soles
+
+KYRIE_S2 = dict(KYRIE, paint=kyrie_s2_paint, fit=kyrie_s2)
 
 # ====================================================================== LEXY
 L_SKIN, L_EYE = '#a2704e', '#c89048'
@@ -909,7 +979,7 @@ def sam_s3(f):
 
 SAM_S3 = dict(SAM, paint=sam_s3_paint, fit=sam_s3, mouth=['k.kk.k', '.k..k.'], mouth_x=13, mouth_y=25)
 
-CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
+CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

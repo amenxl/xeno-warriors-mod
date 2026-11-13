@@ -74,6 +74,7 @@ public enum CharacterType {
             case MIKIKO -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3", "Recarnet Season 3 (Variant 2)"};
             case RHALIX -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3"};
             case YURI -> new String[]{"Default", "C1 PJs"};
+            case KYRIE -> new String[]{"Default", "Season 2"};
             case MAX, SAM -> new String[]{"Default", "Royal Capital", "Season 3"};
             default -> new String[]{"Default"};
         };
@@ -85,7 +86,7 @@ public enum CharacterType {
         if (outfit <= 0 || outfit >= keys.length) return 1;
         String k = keys[outfit];
         if (k.startsWith("s3")) return 3;                          // (the Royal Capital disguises are Season 1: Max and Sam's first trip there with Kyrie)
-        if (k.equals("c1pjs")) return 2;
+        if (k.equals("c1pjs") || k.startsWith("s2")) return 2;
         return 1;
     }
 
@@ -94,6 +95,7 @@ public enum CharacterType {
             case MIKIKO -> new String[]{"", "origins1", "origins2", "s3", "s3b"};
             case RHALIX -> new String[]{"", "origins1", "origins2", "s3"};
             case YURI -> new String[]{"", "c1pjs"};
+            case KYRIE -> new String[]{"", "s2"};
             case MAX, SAM -> new String[]{"", "royal", "s3"};
             default -> new String[]{""};
         };

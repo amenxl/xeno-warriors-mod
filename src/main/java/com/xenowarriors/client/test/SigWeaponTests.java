@@ -52,7 +52,7 @@ public final class SigWeaponTests {
     }
 
     private static final double[] HOME = new double[3];
-    private static final CharacterType[] WHO = {CharacterType.MAX, CharacterType.SAM, CharacterType.LOGAN, CharacterType.KEITA, CharacterType.ZANE, CharacterType.GARRY};
+    private static final CharacterType[] WHO = {CharacterType.MAX, CharacterType.SAM, CharacterType.LOGAN, CharacterType.KEITA, CharacterType.ZANE, CharacterType.GARRY, CharacterType.KYRIE};
 
     private static void arena(ServerPlayer p) {
         var level = p.serverLevel();
@@ -161,7 +161,7 @@ public final class SigWeaponTests {
         }
 
         // ---- no weapon for the others (reported), and Season locks
-        for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.LEXY, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.YURI, CharacterType.KILL, CharacterType.AIONI}) {
+        for (CharacterType t : new CharacterType[]{CharacterType.LEXY, CharacterType.TECHNICA, CharacterType.STEVIE, CharacterType.YURI, CharacterType.KILL, CharacterType.AIONI}) {
             l.add(null, () -> log("no show weapon: " + t.getId() + " has=" + SignatureWeapons.has(t)), 1);
         }
         l.add(null, () -> server(p -> CharacterManager.setCharacter(p, CharacterType.ZANE)), 40);

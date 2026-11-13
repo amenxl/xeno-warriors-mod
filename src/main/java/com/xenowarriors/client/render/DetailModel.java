@@ -666,7 +666,7 @@ public class DetailModel {
             }
             DetailModel model = new DetailModel(LayerDefinition.create(mesh, size, size).bakeRoot());
             model.sourcePath = path;
-            if (path.endsWith("/kyrie.json") && model.hair == null) model.collectStrands(model.head);   // (Kyrie's hair is the head's own strands: they style for forms and blow in the wind too)
+            if ((path.endsWith("/kyrie.json") || path.endsWith("/kyrie_s2.json")) && model.hair == null) model.collectStrands(model.head);   // (Kyrie's hair is the head's own strands: they style for forms and blow in the wind too)
             model.sourceWhole = wholeLimbs;
             if (json.has("face")) {
                 JsonObject face = json.getAsJsonObject("face");
