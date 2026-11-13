@@ -84,7 +84,13 @@ final class PackMikikoFightTests {
             l.add(new Step("pack_mikikofight_sword" + h, () -> PackTests.log("mikikofight sword swing " + h + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)
                     + " vanillaRuns " + com.xenowarriors.client.render.CharacterArmorLayer.layerRuns + " " + RenderProbe.read()), 10));
         }
-        l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 6));
+        // the same with cel shading off (the outline is the suspect for the dark shapes)
+        l.add(new Step(null, () -> com.xenowarriors.client.cel.Cel.force = false, 25));
+        l.add(new Step("pack_mikikofight_sword_idle_nocel", () -> {}, 3));
+        l.add(new Step(null, () -> press(mc, mc.options.keyAttack, true), 1));
+        l.add(new Step(null, () -> press(mc, mc.options.keyAttack, false), 4));
+        l.add(new Step("pack_mikikofight_sword0_nocel", () -> {}, 10));
+        l.add(new Step(null, () -> { com.xenowarriors.client.cel.Cel.force = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 25));
         l.add(new Step(null, () -> press(mc, mc.options.keyAttack, true), 1));
         l.add(new Step(null, () -> press(mc, mc.options.keyAttack, false), 4));
         l.add(new Step("pack_mikikofight_sword_front", () -> PackTests.log("mikikofight sword front: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 10));
