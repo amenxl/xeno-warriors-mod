@@ -57,13 +57,45 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer p, float limbSwing, float limbSwingAmount,
                        float partialTick, float age, float yaw, float pitch) {
-        if (p.isInvisible()) return;
+        ResourceLocation tex = posed(tail, mid, tip, p, limbSwing, limbSwingAmount, partialTick, age);
+        if (tex == null) return;
+        pose.pushPose();
+        getParentModel().body.translateAndRotate(pose);
+        tail.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(tex)), light, LivingEntityRenderer.getOverlayCoords(p, 0F));
+        pose.popPose();
+    }
+
+    private static ModelPart efTail;
+
+    /**
+     * On Epic Fight's body (see DetailPatchedLayer): the pose stack already sits in the vanilla body's space (on Epic
+     * Fight's animated torso bone), so the tail is there in every Epic Fight animation too (the user's video: it
+     * vanished while he held a weapon).
+     */
+    public static boolean renderOnBody(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer p, float partialTick) {
+        if (efTail == null) {
+            try { efTail = net.minecraft.client.Minecraft.getInstance().getEntityModels().bakeLayer(LAYER).getChild("tail"); }
+            catch (Throwable t) { return false; }
+        }
+        ModelPart mid = efTail.getChild("mid");
+        float age = p.tickCount + partialTick;
+        ResourceLocation tex = posed(efTail, mid, mid.getChild("tip"), p, p.walkAnimation.position(partialTick),
+                Math.min(1F, p.walkAnimation.speed(partialTick)), partialTick, age);
+        if (tex == null) return false;
+        efTail.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(tex)), light, LivingEntityRenderer.getOverlayCoords(p, 0F));
+        return true;
+    }
+
+    /** Poses the tail for this frame; its texture, or null when he has no tail out. */
+    private static ResourceLocation posed(ModelPart tail, ModelPart mid, ModelPart tip, AbstractClientPlayer p, float limbSwing, float limbSwingAmount,
+                                          float partialTick, float age) {
+        if (p.isInvisible()) return null;
         var ys = ClientCharacterData.you(p);
         boolean foxKin = ys != null && ys.race == com.xenowarriors.character.Race.FOX_KIN;
-        if (!foxKin && ClientCharacterData.get(p) != CharacterType.MIKIKO) return;
+        if (!foxKin && ClientCharacterData.get(p) != CharacterType.MIKIKO) return null;
         boolean outfit = foxKin || outfitTail(p);
-        if (!outfit && !(DmzCompat.tail(p) && !DmzForms.giantFox(p))) return;
-        if (DmzForms.giantFox(p)) return;
+        if (!outfit && !(DmzCompat.tail(p) && !DmzForms.giantFox(p))) return null;
+        if (DmzForms.giantFox(p)) return null;
         float run = com.xenowarriors.client.FoxRun.weight(p);
         // sticks out behind and sways - livelier when he runs
         float sway = Mth.sin(age * 0.12F) * 0.25F + Mth.sin(limbSwing * 0.6F) * 0.3F * limbSwingAmount;
@@ -89,9 +121,6 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
         mid.yRot = sway * 0.6F;
         tip.xRot = -0.2F;
         tip.yRot = sway * 0.4F;
-        pose.pushPose();
-        getParentModel().body.translateAndRotate(pose);
-        tail.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(outfit ? RED : TEX)), light, LivingEntityRenderer.getOverlayCoords(p, 0F));
-        pose.popPose();
+        return outfit ? RED : TEX;
     }
 }

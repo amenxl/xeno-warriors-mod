@@ -107,14 +107,14 @@ public final class WomMoves {
     /** (from the mixin on Epic Fight's getAutoAttackMotion) our combo in place of the original, or the original. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List override(PlayerPatch<?> patch, List original) {
-        if (patch == null || original == null || original.size() < 3) return original;
+        if (patch == null) return original;
         try {
             Player p = patch.getOriginal();
             if (p == null) return original;
             List own = ownMoves(p);
             if (own != null) {                                                        // our own characters' moves, rebuilt for Epic Fight
                 List out = new ArrayList(own);
-                out.addAll(original.subList(original.size() - 2, original.size()));
+                out.addAll(tail(original, null));
                 return out;
             }
             String[] keys = movesFor(p);
@@ -122,13 +122,31 @@ public final class WomMoves {
             List out = new ArrayList();
             for (String k : keys) { var m = move(k); if (m != null) out.add(m); }
             if (out.isEmpty()) return original;
-            out.addAll(original.subList(original.size() - 2, original.size()));      // Epic Fight's dash and air attacks
+            out.addAll(tail(original, keys));                                          // Epic Fight's dash and air attacks
             swaps++;
             SWAPPED.put(p, Boolean.TRUE);
             return out;
         } catch (Throwable t) {
             return original;
         }
+    }
+
+    /**
+     * The dash and air attacks at the end of a combo: the original's, or - when the weapon had no combo for the way
+     * it's held (Epic Fight hands back none, and other mods then crash on it: the user's crash with Kyrie's rapier and
+     * Weapons of Harmony) - the style's own (Dawn Day's) or Epic Fight's fist ones.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static List tail(List original, String[] keys) {
+        if (original != null && original.size() >= 3) return original.subList(original.size() - 2, original.size());
+        List out = new ArrayList();
+        String base = keys != null && keys[0].startsWith("epicfight_dd:biped/combat/hookclaws") ? "epicfight_dd:biped/combat/hookclaws_" : null;
+        Object dash = base != null ? move(base + "dash") : null, air = base != null ? move(base + "airslash") : null;
+        if (dash == null) dash = move("epicfight:biped/combat/fist_dash");
+        if (air == null) air = move("epicfight:biped/combat/fist_airslash");
+        if (dash != null) out.add(dash);
+        if (air != null) out.add(air);
+        return out;
     }
 
     /** (Tests) WOM animation events skipped because they threw, by animation. */

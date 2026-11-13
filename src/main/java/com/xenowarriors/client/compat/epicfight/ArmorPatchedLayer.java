@@ -28,6 +28,7 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
         PlayerModel<AbstractClientPlayer>, RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>> {
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
     private static final Map<String, SkinnedMesh> BAKED = new HashMap<>();
+    private static final Map<String, DetailPatchedLayer.Rig> RIGS = new HashMap<>();
     /** (tests) pieces drawn on Epic Fight's skeleton. */
     public static int drawn;
 
@@ -40,6 +41,20 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
             CharacterArmorLayer.Pick pk = CharacterArmorLayer.pick(player, slot);
             if (pk == null) continue;
             String key = pk.path() + (pk.noLeftArm() ? "#noleft" : "");
+            float[] c = pk.color();
+            if (DetailPatchedLayer.RIGID) {
+                // rigid pieces on the bones, cut at the elbows and knees like our own renderer (the user's video: the
+                // Karma Hoodie came out puffed up and long-sleeved when baked into a skinned mesh)
+                DetailPatchedLayer.Rig rig = RIGS.computeIfAbsent(key, k -> {
+                    DetailModel m = DetailModel.loadPath(pk.path());
+                    return m == null ? null : new DetailPatchedLayer.Rig(m, true, pk.noLeftArm());
+                });
+                if (rig == null) continue;
+                rig.draw(patch.getArmature(), pose, buffers.getBuffer(RenderType.entityCutoutNoCull(pk.tex())), light, OverlayTexture.NO_OVERLAY, poses, false, c[0], c[1], c[2]);
+                if (pk.foil()) rig.draw(patch.getArmature(), pose, buffers.getBuffer(RenderType.armorEntityGlint()), light, OverlayTexture.NO_OVERLAY, poses, false, 1F, 1F, 1F);
+                drawn++;
+                continue;
+            }
             SkinnedMesh mesh = BAKED.computeIfAbsent(key, k -> {
                 DetailModel m = DetailModel.loadWhole(pk.path());
                 if (m == null) return null;
@@ -47,7 +62,6 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
                 return b == null ? null : b[0];
             });
             if (mesh == null) continue;
-            float[] c = pk.color();
             mesh.draw(pose, buffers, RenderType.entityCutoutNoCull(pk.tex()), light, c[0], c[1], c[2], 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
             if (pk.foil()) mesh.draw(pose, buffers, RenderType.armorEntityGlint(), light, 1F, 1F, 1F, 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
             drawn++;
