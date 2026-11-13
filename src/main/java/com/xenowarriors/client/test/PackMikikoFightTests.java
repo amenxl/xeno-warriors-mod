@@ -71,6 +71,25 @@ final class PackMikikoFightTests {
             }
         }
         l.add(new Step(null, () -> {}, 20));
+        // the user's video: Fox King Mikiko with a sword in battle mode, cel shading on, seen from behind - a dark
+        // "shadow" moving with him
+        l.add(new Step(null, () -> { RenderProbe.reset(); com.xenowarriors.client.cel.Cel.force = true; com.xenowarriors.client.mikiko.FoxKingClient.set(mc.player.getId(), true);
+            PackTests.server(p -> p.getInventory().setItem(0, new ItemStack(net.minecraft.world.item.Items.NETHERITE_SWORD)));
+            mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 25));
+        l.add(new Step("pack_mikikofight_sword_idle", () -> PackTests.log("mikikofight sword idle: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 3));
+        for (int hit = 0; hit < 3; hit++) {
+            int h = hit;
+            l.add(new Step(null, () -> press(mc, mc.options.keyAttack, true), 1));
+            l.add(new Step(null, () -> press(mc, mc.options.keyAttack, false), 4));
+            l.add(new Step("pack_mikikofight_sword" + h, () -> PackTests.log("mikikofight sword swing " + h + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)
+                    + " vanillaRuns " + com.xenowarriors.client.render.CharacterArmorLayer.layerRuns + " " + RenderProbe.read()), 10));
+        }
+        l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT), 6));
+        l.add(new Step(null, () -> press(mc, mc.options.keyAttack, true), 1));
+        l.add(new Step(null, () -> press(mc, mc.options.keyAttack, false), 4));
+        l.add(new Step("pack_mikikofight_sword_front", () -> PackTests.log("mikikofight sword front: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 10));
+        l.add(new Step(null, () -> { com.xenowarriors.client.cel.Cel.force = false; com.xenowarriors.client.mikiko.FoxKingClient.set(mc.player.getId(), false);
+            PackTests.server(p -> p.getInventory().setItem(0, ItemStack.EMPTY)); }, 5));
         l.add(new Step(null, () -> {
             PackTests.log("mikikofight trace:" + TRACE);
             PackTests.check("mikikofight: Mikiko's bare-hand combo in battle mode is drawn with his own moves", attackTicks > 0 && theirs == 0,

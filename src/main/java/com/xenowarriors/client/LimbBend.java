@@ -92,6 +92,13 @@ public final class LimbBend {
         EXTRA_ELBOWS.put(e.getId(), new float[]{right, left});
     }
 
+    private static final java.util.Map<Integer, float[]> STRAIGHT = com.xenowarriors.client.ClientReset.perLife(new java.util.HashMap<>());
+
+    /** Straighten the elbows this frame (0 = as they'd bend, 1 = locked straight), used once - straight punches. */
+    public static void straighten(net.minecraft.world.entity.Entity e, float right, float left) {
+        STRAIGHT.put(e.getId(), new float[]{right, left});
+    }
+
     /** Extra knee bend asked for by an animation this frame (relaxed standing...), used once. */
     public static void extraKnees(net.minecraft.world.entity.Entity e, float right, float left) {
         EXTRA.put(e.getId(), new float[]{right, left});
@@ -150,6 +157,11 @@ public final class LimbBend {
         if (bends && extraE != null) {
             er += extraE[0];
             el += extraE[1];
+        }
+        float[] straight = STRAIGHT.remove(entity.getId());
+        if (bends && straight != null) {
+            er *= 1F - Mth.clamp(straight[0], 0F, 1F);
+            el *= 1F - Mth.clamp(straight[1], 0F, 1F);
         }
         float[] extra = EXTRA.remove(entity.getId());
         if (bends && extra != null) {

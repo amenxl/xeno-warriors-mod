@@ -132,6 +132,15 @@ public enum Move {
         };
     }
 
+    /** A straight punch: which arm drives straight out (0 right, 1 left), locked straight at the strike; -1 = none. */
+    public int straightArm() {
+        return switch (this) {
+            case JAB_R, LUNGE_PUNCH_R, CHONG_CHUI_R, AIR_PUNCH_R -> 0;
+            case JAB_L, LUNGE_PUNCH_L, AIR_PUNCH_L -> 1;
+            default -> -1;
+        };
+    }
+
     /** A stamping step lands with this move (dust at the feet, a thud). */
     public boolean stamp() {
         return this == CHONG_CHUI_R || this == DING_ZHOU_R || this == SHUANG_ZHANG || this == TIE_SHAN_KAO;

@@ -63,16 +63,16 @@ import java.util.Set;
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class MikikoAnimations {
-    /** Two opening punches, then Leo's Bajiquan (stamping elbows and palms), always ending in Tie Shan Kao. */
+    /** Two straight opening punches (jab and cross), then Leo's Bajiquan (stamping elbows and palms), always ending in Tie Shan Kao. */
     private static final Move[][] COMBOS = {
             {Move.JAB_R, Move.JAB_L, Move.DING_ZHOU_R, Move.TIAO_ZHANG_L, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
-            {Move.HOOK_R, Move.UPPERCUT_L, Move.CHONG_CHUI_R, Move.DING_ZHOU_R, Move.TIAO_ZHANG_L, Move.TIE_SHAN_KAO},
-            {Move.JAB_L, Move.HOOK_R, Move.TIAO_ZHANG_L, Move.CHONG_CHUI_R, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
-            {Move.UPPERCUT_L, Move.JAB_R, Move.DING_ZHOU_R, Move.CHONG_CHUI_R, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
-            {Move.JAB_R, Move.UPPERCUT_L, Move.CHONG_CHUI_R, Move.TIAO_ZHANG_L, Move.DING_ZHOU_R, Move.TIE_SHAN_KAO},
+            {Move.JAB_L, Move.JAB_R, Move.CHONG_CHUI_R, Move.DING_ZHOU_R, Move.TIAO_ZHANG_L, Move.TIE_SHAN_KAO},
+            {Move.JAB_L, Move.JAB_R, Move.TIAO_ZHANG_L, Move.CHONG_CHUI_R, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
+            {Move.JAB_R, Move.JAB_L, Move.DING_ZHOU_R, Move.CHONG_CHUI_R, Move.SHUANG_ZHANG, Move.TIE_SHAN_KAO},
+            {Move.JAB_R, Move.JAB_L, Move.CHONG_CHUI_R, Move.TIAO_ZHANG_L, Move.DING_ZHOU_R, Move.TIE_SHAN_KAO},
     };
     private static final Move[] COMBO_BLADE = {Move.BLADE_H, Move.BLADE_THRUST, Move.BLADE_DOWN, Move.BLADE_UP};
-    private static final Move[] COMBO_FISTS = {Move.HOOK_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.UPPERCUT_L, Move.JAB_R, Move.KICK_SIDE};
+    private static final Move[] COMBO_FISTS = {Move.JAB_R, Move.JAB_L, Move.KICK_ROUNDHOUSE, Move.JAB_R, Move.JAB_L, Move.KICK_SIDE};
     private static final Move[] AIR_COMBO = {Move.AIR_LUNGE_SLASH, Move.AIR_FLIP_SLASH, Move.AIR_FLIP_SLASH, Move.AIR_LUNGE_SLASH};
     private static final Move[] HEKU_COMBO = {Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN, Move.KICK_ROUNDHOUSE, Move.BLADE_THRUST, Move.BLADE_SPIN};
     private static final Move[] SWORD_COMBO = {Move.BLADE_H, Move.BLADE_UP, Move.BLADE_DOWN, Move.BLADE_THRUST};
@@ -934,6 +934,12 @@ public final class MikikoAnimations {
                 if (el != null) {
                     float amt = Math.max(smooth(mp / 0.28F), smooth((mp - 0.26F) / 0.16F)) * (1F - smooth((mp - 0.72F) / 0.28F));
                     com.xenowarriors.client.LimbBend.extraElbows(player, el[0] * amt, el[1] * amt);
+                }
+                // straight punches: the punching arm locks out straight at the strike (no bent, hook-like elbow)
+                int arm = s.move.straightArm();
+                if (arm >= 0) {
+                    float lock = smooth((mp - 0.22F) / 0.14F) * (1F - smooth((mp - 0.7F) / 0.25F));
+                    com.xenowarriors.client.LimbBend.straighten(player, arm == 0 ? lock : 0F, arm == 1 ? lock : 0F);
                 }
             }
             if (s.hop && fly <= 0.05F) hopPose(model, player, mp);
