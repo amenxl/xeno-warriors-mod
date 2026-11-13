@@ -30,6 +30,12 @@ import java.util.Map;
  */
 public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, AbstractClientPlayerPatch<AbstractClientPlayer>,
         PlayerModel<AbstractClientPlayer>, RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>> {
+    /**
+     * The ink outline shell on Epic Fight's body: off. Baked onto Epic Fight's skeleton it came out as black slabs
+     * moving beside the arms (the user's videos - a dark "shadow" doing the moves). Cel-shaded textures still apply;
+     * the outline is drawn as before whenever our own renderer draws them (out of battle mode).
+     */
+    public static boolean OUTLINE_ON_EF = false;
     private static final Map<DetailModel, SkinnedMesh[]> BAKED = new IdentityHashMap<>();   // {details, face}
     private static final Map<DetailModel, SkinnedMesh[]> BAKED_HOOD = new IdentityHashMap<>();   // the same, rain hood up
     private static final java.util.Set<DetailModel> FAILED = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
@@ -67,7 +73,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (ff.mouth != null) mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(ff.mouth), light,
                     1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
-        if (com.xenowarriors.client.cel.Cel.outline() && !firstPerson(player)) {         // cel-shading: the thick ink outline, as without Epic Fight
+        if (com.xenowarriors.client.cel.Cel.outline() && OUTLINE_ON_EF && !firstPerson(player)) {         // cel-shading: the thick ink outline, as without Epic Fight
             float ink = com.xenowarriors.client.cel.CelOutline.INK;
             var rt = com.xenowarriors.client.cel.CelRenderTypes.OUTLINE;
             SkinnedMesh body = bodyOutline(slim(player));

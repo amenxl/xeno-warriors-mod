@@ -23,6 +23,12 @@ import java.util.Map;
 /** The townsfolk's 3D hair and outfits (and faces, glowing red eyes for the possessed) on Epic Fight's skinned body. */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NpcDetailPatchedLayer extends PatchedLayer {
+    /**
+     * The ink outline shell on Epic Fight's body: off. Baked onto Epic Fight's skeleton it came out as black slabs
+     * moving beside the arms (the user's videos - a dark "shadow" doing the moves). Cel-shaded textures still apply;
+     * the outline is drawn as before whenever our own renderer draws them (out of battle mode).
+     */
+    public static boolean OUTLINE_ON_EF = false;
     private static final Map<String, SkinnedMesh[]> BAKED = new HashMap<>();
     private static final Map<String, SkinnedMesh> OUT = new HashMap<>();
 
@@ -54,7 +60,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
             if (possessed) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         }
-        if (com.xenowarriors.client.cel.Cel.outline()) {                              // cel-shading: the ink outline, as without Epic Fight
+        if (com.xenowarriors.client.cel.Cel.outline() && OUTLINE_ON_EF) {                              // cel-shading: the ink outline, as without Epic Fight
             float ink = com.xenowarriors.client.cel.CelOutline.INK;
             var rt = com.xenowarriors.client.cel.CelRenderTypes.OUTLINE;
             SkinnedMesh body = DetailPatchedLayer.bodyOutline(DetailPatchedLayer.slim(entity));

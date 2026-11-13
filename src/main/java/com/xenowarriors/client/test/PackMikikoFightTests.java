@@ -100,7 +100,7 @@ final class PackMikikoFightTests {
         l.add(new Step(null, () -> { int n = com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws;
             com.xenowarriors.client.compat.ShaderCompat.forceForTest = false; com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws = 0;
             PackTests.check("mikikofight: no cel outline shell under a shader pack", n == 0, "outline draws " + n); }, 10));
-        l.add(new Step(null, () -> PackTests.check("mikikofight: the cel outline is back without shaders", com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws > 0,
+        l.add(new Step(null, () -> PackTests.check("mikikofight: no cel outline shell on Epic Fight's body (it showed as a black shadow)", com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws == 0,
                 "outline draws " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.outlineDraws), 2));
         l.add(new Step(null, () -> { com.xenowarriors.client.cel.Cel.force = false; com.xenowarriors.client.mikiko.FoxKingClient.set(mc.player.getId(), false);
             PackTests.server(p -> p.getInventory().setItem(0, ItemStack.EMPTY)); }, 5));
