@@ -2507,6 +2507,7 @@ public final class Batch4Tests {
                 Class<?> pm = Class.forName("com.dragonminez.common.quest.PartyManager");
                 Object r = pm.getMethod("areInSameParty", net.minecraft.world.entity.player.Player.class, net.minecraft.world.entity.player.Player.class).invoke(null, p, st[0]);
                 got = Boolean.FALSE.equals(r) && com.xenowarriors.party.Duels.dmzPartyLetThrough == before + 1;
+                log("duellock: (battling " + com.xenowarriors.party.Duels.battling(p, (net.minecraft.world.entity.player.Player) st[0]) + ", returned " + r + ", hook calls " + com.xenowarriors.party.Duels.hookCalls + ", hook error " + com.xenowarriors.party.Duels.hookError + ")");
             } catch (Throwable t) { log("duellock: " + t); }
             log("duellock: DragonMineZ's party check lets the two fight (" + com.xenowarriors.party.Duels.dmzPartyLetThrough + ") -> " + (!dmz ? "SKIP" : got ? "PASS" : "FAIL"));
             com.xenowarriors.network.ModNetwork.sendToPlayer(new com.xenowarriors.network.DuelFoePacket(((net.minecraft.world.entity.Entity) st[1]).getId()), p);

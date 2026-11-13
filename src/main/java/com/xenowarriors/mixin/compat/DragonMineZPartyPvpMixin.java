@@ -15,9 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class DragonMineZPartyPvpMixin {
     @Inject(method = "areInSameParty", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private static void xenowarriors$battle(net.minecraft.world.entity.player.Player a, net.minecraft.world.entity.player.Player b, CallbackInfoReturnable<Boolean> cir) {
+        com.xenowarriors.party.Duels.hookCalls++;
         if (a == null || b == null || a.level().isClientSide) return;
         try {
             if (com.xenowarriors.party.Duels.battling(a, b)) { cir.setReturnValue(false); com.xenowarriors.party.Duels.dmzPartyLetThrough++; }
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) { com.xenowarriors.party.Duels.hookError = String.valueOf(t); }
     }
 }

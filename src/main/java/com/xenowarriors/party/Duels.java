@@ -93,6 +93,8 @@ public final class Duels {
 
     /** (Tests) DragonMineZ party checks a battle let through. */
     public static int dmzPartyLetThrough;
+    public static String hookError = "none";
+    public static int hookCalls;
 
     /** In a PvP battle with each other at all (the countdown too). */
     public static boolean battling(Player a, Player b) {
