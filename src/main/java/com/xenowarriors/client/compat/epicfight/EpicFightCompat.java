@@ -112,7 +112,7 @@ public final class EpicFightCompat {
             var patch = patch(p);
             if (patch == null || !patch.isEpicFightMode() || ownWeapon(p)) return null;
             // weapon at the ready: steady and focused, a blink now and then, a confident look every so often
-            int t = (p.tickCount + p.getId() * 13) % 200;
+            int t = Math.floorMod(p.tickCount + p.getId() * 13, 200);
             if (t < 3) return "blink";
             boolean rhalix = ClientCharacterData.get(p) == CharacterType.RHALIX;
             return t > 160 ? (rhalix ? "smug" : "cool") : "focused";

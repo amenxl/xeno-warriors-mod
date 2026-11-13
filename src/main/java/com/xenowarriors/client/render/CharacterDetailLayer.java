@@ -323,7 +323,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) return "dizzy";     // knocked out in a battle
         if (ClientSkillState.starving(p) && !(p.isUsingItem() && p.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT)) {
             // starving: sunken eyes, pale, mouth hanging open (breathing weakly), the odd slow blink
-            int st = (p.tickCount + p.getId() * 11) % 100;
+            int st = Math.floorMod(p.tickCount + p.getId() * 11, 100);
             if (st < 4) return "blink";
             return (st / 16) % 2 == 0 ? "starving" : "starving2";
         }
@@ -362,7 +362,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return com.xenowarriors.client.Surroundings.of(p) == com.xenowarriors.client.Surroundings.ENEMIES ? "determined" : "strained";   // not giving up
         if (ClientSkillState.hungerEffect(p)) {
             // the Hunger effect: queasy and starving - drooling, the odd green-faced wince
-            int ht = (p.tickCount + p.getId() * 17) % 120;
+            int ht = Math.floorMod(p.tickCount + p.getId() * 17, 120);
             if (ht < 3) return "blink";
             return ht >= 90 && ht < 108 ? "sick" : (ht / 12) % 2 == 0 ? "hungry" : "hungry2";
         }
@@ -375,7 +375,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         int around = com.xenowarriors.client.Surroundings.of(p);
         if (around == com.xenowarriors.client.Surroundings.ENEMIES) {
             // enemies close by: eyes narrowed, ready to fight
-            int rt = (p.tickCount + p.getId() * 29) % 160;
+            int rt = Math.floorMod(p.tickCount + p.getId() * 29, 160);
             if (rt < 3) return "blink";
             if (type == CharacterType.RHALIX) return rt < 120 ? "focused" : "smug";        // cocky about it
             return rt < 110 ? "focused" : "concentrate";
@@ -420,16 +420,16 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         }
         if (mood == null && around == com.xenowarriors.client.Surroundings.PEOPLE && type == CharacterType.MIKIKO) {
             String[] h = {"happy", "grin", "happy", "excited", "happy", "wink"};        // glad to have company
-            mood = h[((p.tickCount + p.getId() * 41) / 60) % h.length];
+            mood = h[Math.floorMod((p.tickCount + p.getId() * 41) / 60, h.length)];   // (floorMod: stand-in players have negative ids)
         } else if (mood == null && around != com.xenowarriors.client.Surroundings.NONE) {
             String[] c = {"calm", "hum", "calm", "cool", "whistle", "smirk", "calm"};  // nothing to worry about: chilling
-            mood = c[((p.tickCount + p.getId() * 41) / 70) % c.length];
+            mood = c[Math.floorMod((p.tickCount + p.getId() * 41) / 70, c.length)];
         }
         // the people they care about: Yuri blushes around Mikiko (her crush), Max and Technica (married) light up together
         if (mood == null) {
             String heart = com.xenowarriors.client.GarryBeatbox.closeTo(p, type == CharacterType.YURI ? CharacterType.MIKIKO
                     : type == CharacterType.MAX ? CharacterType.TECHNICA : type == CharacterType.TECHNICA ? CharacterType.MAX : null, 6) ? (type == CharacterType.YURI ? "blush" : "love") : null;
-            if (heart != null && ((p.tickCount + p.getId() * 13) % 240) < 70) mood = heart;
+            if (heart != null && Math.floorMod(p.tickCount + p.getId() * 13, 240) < 70) mood = heart;
         }
         int bt = p.tickCount + p.getId() * 37;
         boolean blink = bt % 97 < 3 || (bt % 233 >= 8 && bt % 233 < 11);

@@ -40,7 +40,7 @@ public final class RhalixHungerClient {
     public static String face(Player p) {
         if (!hungry(p) && growl(p, p.tickCount) < 0F) return null;
         if (growl(p, p.tickCount) >= 0F) return (p.tickCount / 5) % 2 == 0 ? "hungry2" : "hungry";
-        return (p.tickCount + p.getId() * 13) % 90 < 30 ? "hungry2" : "hungry";
+        return Math.floorMod(p.tickCount + p.getId() * 13, 90) < 30 ? "hungry2" : "hungry";
     }
 
     public static void apply(HumanoidModel<?> m, Player p, float age) {

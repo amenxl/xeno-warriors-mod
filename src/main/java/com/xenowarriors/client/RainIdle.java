@@ -115,7 +115,7 @@ public final class RainIdle {
     public static String face(Player p) {
         if (weight(p) < 0.4F || !(p instanceof AbstractClientPlayer cp)) return null;
         if (ClientCharacterData.get(cp) == CharacterType.RHALIX) return "annoyed";
-        int t = (p.tickCount + p.getId() * 7) % 50;
+        int t = Math.floorMod(p.tickCount + p.getId() * 7, 50);
         return t < 4 ? "blink" : t < 30 ? "look_up" : "annoyed";
     }
 }

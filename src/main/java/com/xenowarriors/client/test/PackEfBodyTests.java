@@ -80,7 +80,7 @@ final class PackEfBodyTests {
             PackTests.server(p -> { p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(10); });
             var prof = new com.mojang.authlib.GameProfile(java.util.UUID.fromString("7d0b5a4e-2222-4c2a-9b1e-00000000f00d"), "Friend");
             var r = new net.minecraft.client.player.RemotePlayer(mc.level, prof);
-            r.setId(-777123);
+            r.setId(777123);
             r.moveTo(mc.player.getX(), mc.player.getY(), mc.player.getZ() + 3, 180, 0);
             r.setYHeadRot(180); r.yBodyRot = 180; r.yBodyRotO = 180; r.yHeadRotO = 180;
             r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_AXE));
