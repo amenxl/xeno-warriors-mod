@@ -99,6 +99,31 @@ final class PackBakeTests {
             }), at));
             l.add(new Step(null, () -> PackTests.log("bake check " + name + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), m.duration + 6));
         }
+        // Rhalix's combo, the same way
+        l.add(new Step(null, () -> { battle(false); UiTest.character(CharacterType.RHALIX); }, 30));
+        l.add(new Step(null, () -> PackTests.server(p -> { p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0); }), 15));
+        com.xenowarriors.combat.ComboStyle R = com.xenowarriors.combat.ComboStyle.RHALIX;
+        for (int h : new int[]{0, 2, 4, 6, 7}) {
+            String name = "hit" + h;
+            int dur = R.duration(h, false), at = Math.round(dur * 0.45F);
+            l.add(new Step(null, () -> battle(false), 12));
+            l.add(new Step("pack_bake_rhalix_" + name + "_old", () -> { mc.player.setXRot(0); com.xenowarriors.client.combo.ComboClient.forceForTest(mc.player, R, h, false); }, at));
+            l.add(new Step(null, () -> {}, dur + 6));
+            l.add(new Step(null, () -> battle(true), 15));
+            l.add(new Step("pack_bake_rhalix_" + name + "_ef", () -> PackTests.server(p -> {
+                var acc = com.xenowarriors.compat.epicfight.EfAnimations.RHALIX.get(name);
+                var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+                if (acc != null && patch != null) patch.playAnimationSynchronized(acc, 0F); else PackTests.log("bake check: no animation rhalix " + name);
+            }), at));
+            l.add(new Step(null, () -> {}, dur + 6));
+        }
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+            var c = patch == null ? null : patch.getHoldingItemCapability(net.minecraft.world.InteractionHand.MAIN_HAND).getAutoAttackMotion(patch);
+            PackTests.check("bake: Rhalix's battle-mode combo is his own rebuilt moves", c != null && !c.isEmpty()
+                    && c.get(0) == com.xenowarriors.compat.epicfight.EfAnimations.RHALIX.get("hit0"), "combo " + c);
+        }), 3));
+        l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 30));
         // the real thing: Mikiko's bare-hand combo in battle mode is now his own moves, drawn by Epic Fight
         l.add(new Step(null, () -> PackTests.server(p -> {
             var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
