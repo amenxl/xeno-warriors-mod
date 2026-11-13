@@ -253,7 +253,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     public static int oldLayoutDrawn;
     public static String lastForeign = "none";
     public static int layerRuns, selfRuns, selfAll;
-    public static final java.util.Map<String, Integer> SELF_TYPES = new java.util.TreeMap<>();
+    public static final java.util.Map<String, Integer> SELF_TYPES = new java.util.TreeMap<>(), ALL_RUNS = new java.util.TreeMap<>();
     public static String lastRun = "none";
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
@@ -285,6 +285,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
                        float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
         layerRuns++;
         if (player == net.minecraft.client.Minecraft.getInstance().player && !ClientCharacterData.isPreviewing()) selfAll++;
+        if (ALL_RUNS.size() < 40) ALL_RUNS.merge(player.getClass().getSimpleName() + ":" + ClientCharacterData.get(player) + ":" + player.getItemBySlot(EquipmentSlot.HEAD).getItem().getClass().getSimpleName()
+                + ":self=" + (player == net.minecraft.client.Minecraft.getInstance().player) + ":preview=" + ClientCharacterData.isPreviewing(), 1, Integer::sum);
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         Map<EquipmentSlot, DetailModel> bySlot = models.get(type);
