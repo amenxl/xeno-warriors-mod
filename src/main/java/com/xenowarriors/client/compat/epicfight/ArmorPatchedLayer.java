@@ -52,7 +52,52 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
             if (pk.foil()) mesh.draw(pose, buffers, RenderType.armorEntityGlint(), light, 1F, 1F, 1F, 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
             drawn++;
         }
+        // other mods' armor in the old 64x32 layout (Epic Fight's own Stray Hat...): the plain armor model on the skeleton
+        for (EquipmentSlot slot : SLOTS) {
+            ItemStack st = player.getItemBySlot(slot);
+            if (!(st.getItem() instanceof net.minecraft.world.item.ArmorItem a) || a.getEquipmentSlot() != slot || !CharacterArmorLayer.oldForeign(player, st)) continue;
+            SkinnedMesh mesh = oldArmor(slot);
+            if (mesh == null) continue;
+            float[] c = CharacterArmorLayer.tintOf(st, a);
+            mesh.draw(pose, buffers, RenderType.armorCutoutNoCull(CharacterArmorLayer.foreignTex(player, st, a, slot)), light, c[0], c[1], c[2], 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
+            if (st.hasFoil()) mesh.draw(pose, buffers, RenderType.armorEntityGlint(), light, 1F, 1F, 1F, 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
+            oldDrawn++;
+        }
     }
+
+    /** (tests) old-layout armor pieces drawn on Epic Fight's skeleton. */
+    public static int oldDrawn;
+    private static final Map<EquipmentSlot, SkinnedMesh> OLD = new java.util.EnumMap<>(EquipmentSlot.class);
+
+    /** The plain (vanilla) armor model's parts for a slot, baked for Epic Fight's skeleton (64x32 texture layout). */
+    private static SkinnedMesh oldArmor(EquipmentSlot slot) {
+        if (OLD.containsKey(slot)) return OLD.get(slot);
+        SkinnedMesh mesh = null;
+        try {
+            var set = net.minecraft.client.Minecraft.getInstance().getEntityModels();
+            var m = new net.minecraft.client.model.HumanoidModel<AbstractClientPlayer>(set.bakeLayer(slot == EquipmentSlot.LEGS
+                    ? net.minecraft.client.model.geom.ModelLayers.PLAYER_INNER_ARMOR : net.minecraft.client.model.geom.ModelLayers.PLAYER_OUTER_ARMOR));
+            m.getHead().getAllParts().forEach(net.minecraft.client.model.geom.ModelPart::resetPose);
+            boolean head = slot == EquipmentSlot.HEAD, chest = slot == EquipmentSlot.CHEST, legs = slot == EquipmentSlot.LEGS, feet = slot == EquipmentSlot.FEET;
+            Map<String, net.minecraft.client.model.geom.ModelPart> parts = new HashMap<>();
+            parts.put("head", head ? m.head : empty());
+            parts.put("hat", head ? m.hat : empty());
+            parts.put("body", chest || legs ? m.body : empty());
+            parts.put("right_arm", chest ? m.rightArm : empty());
+            parts.put("left_arm", chest ? m.leftArm : empty());
+            parts.put("right_leg", legs || feet ? m.rightLeg : empty());
+            parts.put("left_leg", legs || feet ? m.leftLeg : empty());
+            mesh = yesman.epicfight.api.client.model.transformer.HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(
+                    new net.minecraft.client.model.HumanoidModel<AbstractClientPlayer>(new net.minecraft.client.model.geom.ModelPart(java.util.List.of(), parts)));
+            if (mesh != null) mesh.initialize();
+        } catch (Throwable t) {
+            com.xenowarriors.XenoWarriors.LOGGER.error("Couldn't prepare old-layout armor for Epic Fight", t);
+        }
+        OLD.put(slot, mesh);
+        return mesh;
+    }
+
+    private static net.minecraft.client.model.geom.ModelPart empty() { return new net.minecraft.client.model.geom.ModelPart(java.util.List.of(), Map.of()); }
 
     /**
      * Epic Fight's own armor layer, but for our characters only the armor we don't draw ourselves (other mods' outfits,
@@ -77,7 +122,7 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
             try {
                 for (int i = 0; i < armor.size(); i++) {
                     kept[i] = armor.get(i);
-                    if (CharacterArmorLayer.ours(kept[i])) armor.set(i, ItemStack.EMPTY);
+                    if (CharacterArmorLayer.ours(kept[i]) || CharacterArmorLayer.oldForeign(player, kept[i])) armor.set(i, ItemStack.EMPTY);   // (old-layout armor: ours above)
                 }
                 original.renderLayer(player, patch, layer, pose, buffers, light, poses, bob, yRot, xRot, partial);
             } finally {

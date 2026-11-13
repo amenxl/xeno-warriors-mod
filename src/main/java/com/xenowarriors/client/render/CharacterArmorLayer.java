@@ -159,15 +159,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
         boolean giVoxels = false;
         lastForeign = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem()) + " model " + model.getClass().getSimpleName() + (model == base ? "(base)" : "");
-        String name = armor.getMaterial().getName();
-        String domain = "minecraft";
-        int colon = name.indexOf(':');
-        if (colon >= 0) { domain = name.substring(0, colon); name = name.substring(colon + 1); }
-        String def = String.format(java.util.Locale.ROOT, "%s:textures/models/armor/%s_layer_%d.png", domain, name, legs ? 2 : 1);
-        ResourceLocation tex = new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
-        // our skin-layout armor (Fox PJs, Flower Armor) has a 64x64 skin-layout texture for characters; the 64x32 one is for vanilla bodies
-        if (armor instanceof com.xenowarriors.item.SkinLayoutArmor)
-            tex = new ResourceLocation(domain, String.format(java.util.Locale.ROOT, "textures/models/armor/%s_skin_layer_%d.png", name, legs ? 2 : 1));
+        ResourceLocation tex = foreignTex(player, stack, armor, slot);
         // plain skin-layout outfits (vanilla-style or DragonMineZ's ArmorBaseModel): drawn on a model that bends like his.
         // A 64x32 texture is the old armor layout (Epic Fight's Stray Hat and robes...): our 64x64 cut would read the
         // wrong rows of it (the robe's cloth over the face), so that's drawn on the plain armor model, as it was made.
@@ -233,6 +225,30 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             if (slot == EquipmentSlot.CHEST)          // hand-made details for well-known outfits (capes, Saiyan flaps, sashes, scouters, earrings)
                 GiAccents.render(pose, buffers, tex, stack, getParentModel(), player.walkAnimation.speed(), player.tickCount + net.minecraft.client.Minecraft.getInstance().getFrameTime(), light);
         }
+    }
+
+    /** Another mod's armor piece's texture (as that mod gives it), or our skin-layout one. */
+    public static ResourceLocation foreignTex(net.minecraft.world.entity.LivingEntity player, ItemStack stack, ArmorItem armor, EquipmentSlot slot) {
+        boolean legs = slot == EquipmentSlot.LEGS;
+        String name = armor.getMaterial().getName();
+        String domain = "minecraft";
+        int colon = name.indexOf(':');
+        if (colon >= 0) { domain = name.substring(0, colon); name = name.substring(colon + 1); }
+        String def = String.format(java.util.Locale.ROOT, "%s:textures/models/armor/%s_layer_%d.png", domain, name, legs ? 2 : 1);
+        // our skin-layout armor (Fox PJs, Flower Armor) has a 64x64 skin-layout texture for characters; the 64x32 one is for vanilla bodies
+        if (armor instanceof com.xenowarriors.item.SkinLayoutArmor)
+            return new ResourceLocation(domain, String.format(java.util.Locale.ROOT, "textures/models/armor/%s_skin_layer_%d.png", name, legs ? 2 : 1));
+        return new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
+    }
+
+    /** Another mod's armor in the old 64x32 layout (Epic Fight's Stray Hat and robes...): drawn on the plain armor model. */
+    public static boolean oldForeign(net.minecraft.world.entity.LivingEntity player, ItemStack stack) {
+        return stack.getItem() instanceof ArmorItem a && foreign(stack) && !(a instanceof com.xenowarriors.item.SkinLayoutArmor)
+                && oldLayout(foreignTex(player, stack, a, a.getEquipmentSlot()));
+    }
+
+    public static float[] tintOf(ItemStack stack, ArmorItem armor) {
+        return armor instanceof net.minecraft.world.item.DyeableLeatherItem ? tint(stack, armor) : new float[]{1F, 1F, 1F};
     }
 
     private static final Map<ResourceLocation, Boolean> OLD_LAYOUT = new java.util.HashMap<>();
