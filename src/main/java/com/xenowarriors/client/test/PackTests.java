@@ -111,7 +111,8 @@ public final class PackTests {
         if (focus.startsWith("packscanners")) { ScannerTests.build(mc, l, focus); return; }      // (the Karma Scanner tests alone, in the real pack)
         if (focus.startsWith("packhandmine")) { HandMineTests.build(mc, l, focus); return; }      // (bare-hand mining tiers alone, with Vein Miner / Tree Harvester)
         if (focus.startsWith("packefbody")) { PackEfBodyTests.build(mc, l); return; }
-        if (focus.startsWith("packremote")) { PackEfBodyTests.remote(mc, l); return; }      // (Mikiko in Epic Fight's battle mode, alone)
+        if (focus.startsWith("packremote")) { PackEfBodyTests.remote(mc, l); return; }      // (another player, as your client sees them)
+        if (focus.startsWith("packxenodragon")) { PackXenoDragonTests.build(mc, l); return; }      // (the Xeno Dragon alone)
         characters(mc, l);
         menus(mc, l);
         skills(mc, l, CharacterType.MIKIKO);
