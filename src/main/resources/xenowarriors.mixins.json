@@ -17,6 +17,7 @@
     "compat.DragonMineZPartyPvpMixin",
     "compat.EpicFightCapabilityItemWomMixin",
     "compat.EpicFightWeaponCapabilityWomMixin",
+    "compat.EpicFightAnimationEventWomMixin",
     "compat.DragonMineZQuestBiomeMatchMixin",
     "compat.DragonMineZQuestDimensionMixin",
     "compat.DragonMineZQuestItemsMixin",

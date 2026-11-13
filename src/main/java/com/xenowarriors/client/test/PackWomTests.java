@@ -71,6 +71,9 @@ final class PackWomTests {
         l.add(new Step("pack_wom_" + name + "_1", () -> PackTests.log("wom " + name + " swing 1: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 18));
         l.add(new Step(null, () -> PackTests.server(p -> swing(p, 1)), 6));
         l.add(new Step("pack_wom_" + name + "_2", () -> PackTests.log("wom " + name + " swing 2: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 18));
+        // the rest of the combo, each played out (some WOM moves fire events late in the swing)
+        for (int k = 2; k < expect.length; k++) { int kk = k; l.add(new Step(null, () -> PackTests.server(p -> swing(p, kk)), 30)); }
+        l.add(new Step(null, () -> {}, 30));
     }
 
     static void build(Minecraft mc, List<Step> l) {
@@ -84,6 +87,8 @@ final class PackWomTests {
         CharacterType[] holder = {CharacterType.LOGAN, CharacterType.KEITA, CharacterType.KILL, CharacterType.ZANE, CharacterType.SAM, CharacterType.MAX, CharacterType.AIONI};
         int i = 0;
         for (var e : WomMoves.WEAPONS.entrySet()) one(mc, l, holder[i++ % holder.length], e.getKey(), e.getValue());
+        l.add(new Step(null, () -> PackTests.check("wom: every move played without crashing the game", true,
+                "WOM events skipped (they need WOM's own weapon): " + WomMoves.GUARDED), 2));
         // Mikiko keeps his own bare-hand moves
         l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 30));
         l.add(new Step(null, () -> PackTests.server(p -> {

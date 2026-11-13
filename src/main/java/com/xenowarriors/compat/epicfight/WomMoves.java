@@ -101,9 +101,28 @@ public final class WomMoves {
             if (out.isEmpty()) return original;
             out.addAll(original.subList(original.size() - 2, original.size()));      // Epic Fight's dash and air attacks
             swaps++;
+            SWAPPED.put(p, Boolean.TRUE);
             return out;
         } catch (Throwable t) {
             return original;
+        }
+    }
+
+    /** (Tests) WOM animation events skipped because they threw, by animation. */
+    private static final Map<Player, Boolean> SWAPPED = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+    public static final Map<String, Integer> GUARDED = new java.util.TreeMap<>();
+
+    /** A WOM animation's event threw while a player whose combo we swapped was playing it: skip it (true), or let it through. */
+    public static boolean guard(Object patch, Object anim, RuntimeException e) {
+        try {
+            if (!(anim instanceof yesman.epicfight.api.asset.AssetAccessor<?> a) || a.registryName() == null || !"wom".equals(a.registryName().getNamespace())) return false;
+            if (!(patch instanceof yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch<?> lp) || !(lp.getOriginal() instanceof Player p) || (movesFor(p) == null && !SWAPPED.containsKey(p))) return false;
+            GUARDED.merge(a.registryName().getPath(), 1, Integer::sum);
+            if (GUARDED.size() < 64 && GUARDED.get(a.registryName().getPath()) == 1)
+                com.xenowarriors.XenoWarriors.LOGGER.info("[Xeno Warriors] skipped a Weapons of Miracles animation event that needs its own weapon ({}): {}", a.registryName(), String.valueOf(e));
+            return true;
+        } catch (Throwable t) {
+            return false;
         }
     }
 
