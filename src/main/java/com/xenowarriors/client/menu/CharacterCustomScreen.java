@@ -909,7 +909,8 @@ public class CharacterCustomScreen extends Screen {
         }
         // APL and the reset
         int fy = VH - 13;
-        scaled(g, "APL: " + avail + " to spend  (" + st.earned() + " earned - 1 per Character Level)", 6, fy + 2, 0.62F, 0xFFD24A);
+        scaled(g, "APL: " + avail + " to spend  •  " + st.earned() + " earned", 6, fy + 2, 0.62F, 0xFFD24A);
+        if (inBox(mx, my, 4, fy, 120, 10)) tip = List.of("APL (ability points)", "You get 1 for every Character Level, each character its own.");
         int rx = VW - 62;
         boolean rOver = inBox(mx, my, rx, fy, 58, 10);
         g.fill(rx, fy, rx + 58, fy + 10, st.spent() == 0 ? 0xFF2A2A30 : rOver ? 0xFF8A4A2A : 0xFF6A3A22);
