@@ -71,16 +71,17 @@ final class PackBakeTests {
             Move m = Move.valueOf(name.toUpperCase(java.util.Locale.ROOT));
             int at = Math.round(m.duration * 0.4F);
             l.add(new Step(null, () -> battle(false), 12));
-            l.add(new Step(null, () -> { mc.player.setXRot(0); com.xenowarriors.client.mikiko.MikikoAnimations.forceMoveForTest(mc.player, m); }, at));
-            l.add(new Step("pack_bake_" + name + "_old", () -> {}, m.duration + 6));
+            // (a named step's shot is taken once its wait is over)
+            l.add(new Step("pack_bake_" + name + "_old", () -> { mc.player.setXRot(0); com.xenowarriors.client.mikiko.MikikoAnimations.forceMoveForTest(mc.player, m); }, at));
+            l.add(new Step(null, () -> {}, m.duration + 6));
             l.add(new Step(null, () -> battle(true), 15));
-            l.add(new Step(null, () -> PackTests.server(p -> {
+            l.add(new Step("pack_bake_" + name + "_ef", () -> PackTests.server(p -> {
                 var acc = com.xenowarriors.compat.epicfight.EfAnimations.MIKIKO.get(name);
                 var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
                 if (acc != null && patch != null) patch.playAnimationSynchronized(acc, 0F);
                 else PackTests.log("bake check: no animation " + name);
             }), at));
-            l.add(new Step("pack_bake_" + name + "_ef", () -> PackTests.log("bake check " + name + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), m.duration + 6));
+            l.add(new Step(null, () -> PackTests.log("bake check " + name + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), m.duration + 6));
         }
         // the real thing: Mikiko's bare-hand combo in battle mode is now his own moves, drawn by Epic Fight
         l.add(new Step(null, () -> PackTests.server(p -> {
