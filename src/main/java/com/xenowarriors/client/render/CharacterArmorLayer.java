@@ -203,6 +203,12 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
             giVoxels = true;
         } else if (model == base) {
             oldLayoutDrawn++;                                   // (base is posed like him already, this slot's parts shown)
+            if (slot == EquipmentSlot.HEAD) {                   // (a hat: over his hair)
+                var big = oldHeadModel();
+                getParentModel().copyPropertiesTo(big);
+                showFor(big, slot);
+                model = big;
+            }
         } else if (model != base && model instanceof net.minecraft.client.model.HumanoidModel hm) {
             ((net.minecraft.client.model.HumanoidModel) getParentModel()).copyPropertiesTo(hm);
             showFor(hm, slot);
@@ -239,6 +245,17 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         if (armor instanceof com.xenowarriors.item.SkinLayoutArmor)
             return new ResourceLocation(domain, String.format(java.util.Locale.ROOT, "textures/models/armor/%s_skin_layer_%d.png", name, legs ? 2 : 1));
         return new ResourceLocation(net.minecraftforge.client.ForgeHooksClient.getArmorTexture(player, stack, def, slot, null));
+    }
+
+    /** Hats and helmets in the old 64x32 layout sit over the characters' 3D hair: a head shell this much bigger than vanilla's. */
+    public static final float OLD_HEAD_INFLATE = 1.9F;
+    private static net.minecraft.client.model.HumanoidModel<AbstractClientPlayer> oldHead;
+
+    /** The plain armor model with a bigger head shell (old-layout hats over the hair). */
+    public static net.minecraft.client.model.HumanoidModel<AbstractClientPlayer> oldHeadModel() {
+        if (oldHead == null) oldHead = new net.minecraft.client.model.HumanoidModel<>(net.minecraft.client.model.geom.builders.LayerDefinition.create(
+                net.minecraft.client.model.HumanoidModel.createMesh(new net.minecraft.client.model.geom.builders.CubeDeformation(OLD_HEAD_INFLATE), 0F), 64, 32).bakeRoot());
+        return oldHead;
     }
 
     /** Another mod's armor in the old 64x32 layout (Epic Fight's Stray Hat and robes...): drawn on the plain armor model. */

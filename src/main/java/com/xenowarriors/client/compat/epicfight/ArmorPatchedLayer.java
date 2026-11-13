@@ -75,7 +75,9 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
         SkinnedMesh mesh = null;
         try {
             var set = net.minecraft.client.Minecraft.getInstance().getEntityModels();
-            var m = new net.minecraft.client.model.HumanoidModel<AbstractClientPlayer>(set.bakeLayer(slot == EquipmentSlot.LEGS
+            var m = slot == EquipmentSlot.HEAD ? new net.minecraft.client.model.HumanoidModel<AbstractClientPlayer>(net.minecraft.client.model.geom.builders.LayerDefinition.create(
+                    net.minecraft.client.model.HumanoidModel.createMesh(new net.minecraft.client.model.geom.builders.CubeDeformation(CharacterArmorLayer.OLD_HEAD_INFLATE), 0F), 64, 32).bakeRoot())   // (a hat: over the hair)
+                    : new net.minecraft.client.model.HumanoidModel<AbstractClientPlayer>(set.bakeLayer(slot == EquipmentSlot.LEGS
                     ? net.minecraft.client.model.geom.ModelLayers.PLAYER_INNER_ARMOR : net.minecraft.client.model.geom.ModelLayers.PLAYER_OUTER_ARMOR));
             m.getHead().getAllParts().forEach(net.minecraft.client.model.geom.ModelPart::resetPose);
             boolean head = slot == EquipmentSlot.HEAD, chest = slot == EquipmentSlot.CHEST, legs = slot == EquipmentSlot.LEGS, feet = slot == EquipmentSlot.FEET;
