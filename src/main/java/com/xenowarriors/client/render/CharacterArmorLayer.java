@@ -253,6 +253,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     public static int oldLayoutDrawn;
     public static String lastForeign = "none";
     public static int layerRuns, selfRuns, selfAll;
+    public static final java.util.Map<String, Integer> SELF_TYPES = new java.util.TreeMap<>();
     public static String lastRun = "none";
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
@@ -289,6 +290,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         Map<EquipmentSlot, DetailModel> bySlot = models.get(type);
         if (player == net.minecraft.client.Minecraft.getInstance().player && !ClientCharacterData.isPreviewing()) {
             selfRuns++;
+            SELF_TYPES.merge(type + "/" + player.getItemBySlot(EquipmentSlot.HEAD).getItem().getClass().getSimpleName(), 1, Integer::sum);
             lastRun = type + " models " + (bySlot != null) + " head " + player.getItemBySlot(EquipmentSlot.HEAD).getItem().getClass().getSimpleName()
                     + " invisible " + player.isInvisible();
         }
