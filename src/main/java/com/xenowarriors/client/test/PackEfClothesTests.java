@@ -147,7 +147,7 @@ final class PackEfClothesTests {
                 p.getInventory().selected = 0;
                 p.getInventory().setItem(0, ItemStack.EMPTY);
                 p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0);
-                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());   // (a husk: it doesn't burn in the sun)
                 if (z != null) {
                     z.moveTo(p.getX(), p.getY(), p.getZ() + 1.4, 180F, 0F);
                     z.setNoAi(true);
