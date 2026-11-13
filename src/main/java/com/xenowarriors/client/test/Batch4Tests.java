@@ -46,7 +46,13 @@ public final class Batch4Tests {
             p.getFoodData().setFoodLevel(20);
             p.clearFire();
             if (p.isSpectator()) p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            // back to the Overworld arena (a test may have left you on Namek, in the Recarnet or a Room)
+            if (p.level().dimension() != net.minecraft.world.level.Level.OVERWORLD) {
+                var at = com.xenowarriors.debug.SkillTestRunner.arena(p);
+                p.teleportTo(p.server.overworld(), at.x, at.y, at.z, 0F, 0F);
+            }
         }), 5);
+        l.add(null, () -> server(p -> com.xenowarriors.debug.SkillTestRunner.arena(p)), 10);
     }
 
     static void server(java.util.function.Consumer<ServerPlayer> f) {
