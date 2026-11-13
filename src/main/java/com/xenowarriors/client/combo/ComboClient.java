@@ -106,6 +106,12 @@ public final class ComboClient {
     }
 
     /** Someone else's swing (from the server). */
+    /** (Epic Fight baking) Starts a swing on anyone, yourself included, without any of the input handling. */
+    public static void forceForTest(Entity e, ComboStyle st, int hit, boolean heavy) {
+        SWINGS.put(e.getId(), new Swing(st, hit, heavy, e.tickCount, st.duration(hit, heavy)));
+        STARTED_AT.put(e.getId(), ticks);
+    }
+
     public static void remote(int id, int style, int hit, boolean heavy) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;

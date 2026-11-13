@@ -53,6 +53,22 @@ final class PackBakeTests {
                 com.xenowarriors.client.mikiko.MikikoAnimations.forceMoveForTest(mc.player, m); PoseRecorder.start(mc.player); }, m.duration + 3));
             l.add(new Step(null, () -> dump("mikiko_" + m.name().toLowerCase(java.util.Locale.ROOT), PoseRecorder.stop()), 6));
         }
+        // Rhalix's ground combo (8 hits), its heavy, Gravity Burst and the leap
+        l.add(new Step(null, () -> UiTest.character(CharacterType.RHALIX), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> { p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0); }), 20));
+        com.xenowarriors.combat.ComboStyle R = com.xenowarriors.combat.ComboStyle.RHALIX;
+        java.util.List<Object[]> rh = new java.util.ArrayList<>();
+        for (int h = 0; h < 8; h++) rh.add(new Object[]{"rhalix_hit" + h, h, false});
+        rh.add(new Object[]{"rhalix_heavy", 0, true});
+        rh.add(new Object[]{"rhalix_burst", com.xenowarriors.combat.ComboStyle.BURST, false});
+        rh.add(new Object[]{"rhalix_leap", com.xenowarriors.combat.ComboStyle.LEAP, false});
+        for (Object[] r : rh) {
+            String name = (String) r[0]; int hit = (Integer) r[1]; boolean heavy = (Boolean) r[2];
+            int dur = R.duration(hit, heavy);
+            l.add(new Step(null, () -> { mc.player.setXRot(0); mc.player.xRotO = 0;
+                com.xenowarriors.client.combo.ComboClient.forceForTest(mc.player, R, hit, heavy); PoseRecorder.start(mc.player); }, dur + 4));
+            l.add(new Step(null, () -> dump(name, PoseRecorder.stop()), 8));
+        }
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.log("bake: done"); }, 2));
     }
