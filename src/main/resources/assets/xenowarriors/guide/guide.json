@@ -27,7 +27,7 @@
       "pages": [
         {
           "title": "Epic Fight",
-          "text": "Xeno Warriors needs Epic Fight (20.14 or newer).\n- The characters' own moves are Epic Fight animations now: Mikiko's punches, Bajiquan and kicks, Rhalix's gravity combo, and every skill and ultimate pose play through Epic Fight in battle mode - one body, no second one drawn under it.\n- More of the animations (idles, dances, emotes, bots and NPCs) are moving over in the next updates."
+          "text": "Xeno Warriors needs Epic Fight (20.14 or newer).\n- The characters' own moves are Epic Fight animations now: Mikiko's punches, Bajiquan and kicks, Rhalix's gravity combo, and every skill and ultimate pose play through Epic Fight in battle mode - one body, no second one drawn under it.\n- More of the animations (idles, dances, emotes, bots and NPCs) are moving over in the next updates.\n## Clothes, wings and tails in battle mode\n- Coats, sleeves, skirts, hoodies and other worn clothes are drawn in pieces on Epic Fight's bones, cut at the elbows and knees the same way as out of battle mode - they look the same in every Epic Fight animation (no more boxy lab coats or floating sleeves).\n- Rhalix's coat tails swing out of the way of his legs; everyone's wings stay on their back; Mikiko's fox tail stays on in every animation.\n- Our armor (the Karma Hoodie...) is drawn the same way."
         },
         {
           "title": "Combos and heavy hits",
@@ -200,7 +200,7 @@
         },
         {
           "title": "Show weapons",
-          "text": "Characters whose weapon is in the mod can summon it, like Mikiko's Hekublade.\n- Tap {key:summon_blade}: it appears in your hand with a little glow; tap again to put it away.\n- Kyrie: her rapier (white blade, curled purple guard). Lexy: her claws, a pair (three hooked blades over each fist - the second goes in your off hand if it's free). Max: his knife. Sam: her bat. Logan and Keita: their swords. Zane (Season 3): his broom. Garry: his microphone.\n- It can't be dropped, stored or hung up, never wears out, and vanishes when you die or switch character. The ones you find or craft are separate, ordinary items.\n- Bots of these characters summon theirs in a fight and keep it in hand unless they carry a much stronger weapon (the microphone is no weapon, so Garry's bot doesn't). Lexy's bot takes both claws.\n- Characters without a weapon item yet (Technica, Stevie, Yuri, Kill, Ai-oni, Senju) just don't react to the key."
+          "text": "Characters whose weapon is in the mod can summon it, like Mikiko's Hekublade.\n- Tap {key:summon_blade}: it appears in your hand with a little glow; tap again to put it away.\n- Kyrie: her rapier (white blade, curled purple guard). Lexy: her claws, a pair of gloves with three blue claw blades over the knuckles (the second goes on your off hand if it's free). Max: his knife. Sam: her bat. Logan and Keita: their swords. Zane (Season 3): his broom. Garry: his microphone.\n- It can't be dropped, stored or hung up, never wears out, and vanishes when you die or switch character. The ones you find or craft are separate, ordinary items.\n- Bots of these characters summon theirs in a fight and keep it in hand unless they carry a much stronger weapon (the microphone is no weapon, so Garry's bot doesn't). Lexy's bot takes both claws.\n- Characters without a weapon item yet (Technica, Stevie, Yuri, Kill, Ai-oni, Senju) just don't react to the key."
         },
         {
           "title": "Kyrie's Season 2 outfit",
@@ -382,6 +382,10 @@
           "title": "The type triangle (Season 3)",
           "season": 3,
           "text": "Vessels beat Spell Casters, Spell Casters beat C-souls, and C-souls beat Vessels.\n- Spell Casters take 50% more from physical hits - melee, weapons, a Vessel's claws.\n- C-souls take 50% more from elements and magic (Element Bolt and Wave, a Spell Caster's casts).\n- Vessels take 40% less from elements and magic, and C-souls hit them 30% harder.\n- C-souls are hard for a Vessel to hit: a Vessel's hits - and yours, if you're a Demon in your demon form - miss them 30% of the time, and the rest do 20% less.\n- They fight each other when they meet: Vessels hunt Spell Casters, Spell Casters hunt C-souls, C-souls hunt Vessels. A Cynic Dancer passes for a C-soul until it evolves - only some C-souls (and the Ancient Swordstress) see through it.\n- It works for you too: fight Spell Casters up close, and use your elements on C-souls."
+        },
+        {
+          "title": "Other mods in the pack",
+          "text": "- Super Lucky Update: its knights (Knight, Dark / Elite / Hollow / Noble Knight...) spawn about one eighth as often as before. Bosses, spawn eggs and spawners are unchanged.\n- ParCool: Mikiko and Rhalix keep their own runs while fast running (ParCool's speed, stamina and every other parkour move still work).\n- Weapons of Harmony: no more crash when shooting a TaCZ gun (or holding anything without an Epic Fight combo).\n- Bots craft other mods' weapons too (Simply Swords and other modded swords, spears, daggers...) when they beat what they have.\n- Off-duty characters: in a new world they rarely start anything for the first hour (about one in thirty a minute), rising to the usual pace by the end of the second hour - most of them are free when you start.\n- DragonMineZ 2.2 and TaCZ 1.2 are supported."
         }
       ]
     },
@@ -434,7 +438,7 @@
         },
         {
           "title": "Bond",
-          "text": "Fighting beside the same teammates raises your bond with them (see Party & Bots > Synergy and bond): stronger synergies, no synergy downsides from bond 50, and +5 max hearts per 10 levels of your best party bond - your bots get the same bond hearts from their own best bond."
+          "text": "Fighting beside the same teammates raises your bond with them (see Party & Bots > Synergy and bond): stronger synergies, no synergy downsides from bond 50, and +5 max hearts per 10 levels of your best party bond - your bots get the same bond hearts from their own best bond.\n- Stevie and Garry are in Komatsu Norio's gang together: their bond with each other starts at 75."
         },
         {
           "title": "Soul Splitter skills",
