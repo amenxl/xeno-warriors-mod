@@ -120,6 +120,7 @@ public final class PackTests {
         if (focus.startsWith("packbake")) { PackBakeTests.build(mc, l); return; }      // (records our animations for Epic Fight)
         if (focus.startsWith("packkyrie")) { PackKyrieTests.build(mc, l); return; }      // (Kyrie's Season 2 outfit and rapier)
         if (focus.startsWith("packwom")) { PackWomTests.build(mc, l); return; }      // (Weapons of Miracles' moves on our characters)
+        if (focus.startsWith("packefhit")) { PackEfClothesTests.hits(mc, l); return; }      // (battle-mode punches land)
         if (focus.startsWith("packefclothes")) { PackEfClothesTests.build(mc, l); return; }      // (clothes, wings, tails and weapons in battle mode)
         characters(mc, l);
         menus(mc, l);
@@ -140,6 +141,7 @@ public final class PackTests {
         PackKyrieTests.build(mc, l);       // Kyrie's Season 2 outfit and her summoned rapier
         PackWomTests.build(mc, l);         // Weapons of Miracles' moves: bare-hand styles and our weapons
         PackEfClothesTests.build(mc, l);   // clothes, wings, tails and held weapons in battle mode
+        PackEfClothesTests.hits(mc, l);    // battle-mode punches land
         PackTotemTests.build(mc, l);       // Inventory Totem vs. the downed system and the Xeno Blast
         PackTooltipTests.build(mc, l);     // Equipment Compare / Iceberg: every item's tooltip, comparisons
         PackBotBagTests.build(mc, l);      // a bot's extra tabs and tidying with the pack's inventory mods

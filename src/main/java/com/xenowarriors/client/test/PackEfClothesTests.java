@@ -99,4 +99,74 @@ final class PackEfClothesTests {
                 + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)), 20));
         if (c.summon) l.add(new Step(null, () -> PackTests.server(p -> com.xenowarriors.forms.SignatureWeapons.toggle(p)), 5));
     }
+
+    /**
+     * (focus "packefhit", and the full pack run) Do the characters' battle-mode punches land? (the user: Mikiko couldn't
+     * hit anybody.) A still zombie stands in front; the first moves of each combo are played; its health is read.
+     */
+    static void hits(Minecraft mc, List<Step> l) {
+        for (CharacterType who : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KAERU}) {
+            float[] hp = {0F, 0F};
+            int[] zid = {-1};
+            l.add(new Step(null, () -> { UiTest.character(who); }, 30));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                PackTests.arena(p); PackTests.clear(p);
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                p.getInventory().selected = 0;
+                p.getInventory().setItem(0, ItemStack.EMPTY);
+                p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0);
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+                if (z != null) {
+                    z.moveTo(p.getX(), p.getY(), p.getZ() + 1.4, 180F, 0F);
+                    z.setNoAi(true);
+                    z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200);
+                    z.setHealth(200F);
+                    z.addTag("xw_efhit");
+                    p.serverLevel().addFreshEntity(z);
+                    zid[0] = z.getId(); hp[0] = z.getHealth();
+                }
+            }), 15));
+            // out of battle mode first: real clicks (as the attack key does)
+            l.add(new Step(null, () -> { battle(false); mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 25));
+            for (int k = 0; k < 3; k++) l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 14));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                var z = p.serverLevel().getEntity(zid[0]);
+                float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
+                PackTests.check("efhit " + who.getId() + ": clicks out of battle mode land", now >= 0F && now < hp[0],
+                        "zombie hp " + hp[0] + " -> " + now + ", aiming at " + mc.hitResult);
+                hp[0] = now;
+            }), 2));
+            l.add(new Step(null, () -> battle(true), 30));
+            for (int k = 0; k < 3; k++) l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 14));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                var z = p.serverLevel().getEntity(zid[0]);
+                float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
+                PackTests.check("efhit " + who.getId() + ": clicks in battle mode land", now >= 0F && now < hp[0],
+                        "zombie hp " + hp[0] + " -> " + now);
+                hp[0] = now;
+            }), 2));
+            for (int k = 0; k < 3; k++) {
+                int kk = k;
+                l.add(new Step(null, () -> PackTests.server(p -> {
+                    var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+                    if (patch == null) return;
+                    var c = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch);
+                    if (c == null || c.size() <= kk) return;
+                    p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0;
+                    patch.playAnimationSynchronized((yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) c.get(kk), 0F);
+                }), 16));
+            }
+            l.add(new Step("pack_efhit_" + who.getId(), () -> PackTests.server(p -> {
+                var z = p.serverLevel().getEntity(zid[0]);
+                float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
+                var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+                Object first = null;
+                try { first = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch).get(0); } catch (Throwable ignored) {}
+                PackTests.check("efhit " + who.getId() + ": battle-mode punches land", now >= 0F && now < hp[0],
+                        "zombie hp " + hp[0] + " -> " + now + " (combo starts " + first + ")");
+                if (z != null) z.discard();
+            }), 5));
+        }
+        l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 10));
+    }
 }
