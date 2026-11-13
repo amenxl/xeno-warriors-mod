@@ -34,6 +34,9 @@ public final class EfAnimations {
     public static final java.util.Map<String, AnimationManager.AnimationAccessor<yesman.epicfight.api.animation.types.BasicAttackAnimation>> RHALIX =
             new java.util.LinkedHashMap<>();
 
+    /** Skill and ultimate poses (SkillAnimPacket ids), baked: id -> animation (only the ones baked so far). */
+    public static final java.util.Map<Integer, AnimationManager.AnimationAccessor<StaticAnimation>> SKILLS = new java.util.HashMap<>();
+
     private EfAnimations() {}
 
     public static void register(IEventBus modBus) {
@@ -56,6 +59,10 @@ public final class EfAnimations {
             for (String[] m : MIKIKO_MOVES) {
                 float d = Integer.parseInt(m[1]) / 20F;
                 MIKIKO.put(m[0], b.nextAccessor("biped/xw/mikiko_" + m[0], acc -> attack(acc, 0.05F, d * 0.24F, d * 0.44F, d * 0.8F)));
+            }
+            for (int id = 0; id < 40; id++) {
+                if (EfAnimations.class.getResource("/assets/xenowarriors/animmodels/animations/biped/xw/skill_" + id + ".json") == null) continue;
+                SKILLS.put(id, b.nextAccessor("biped/xw/skill_" + id, acc -> new StaticAnimation(0.1F, false, acc, Armatures.BIPED)));
             }
             for (String[] m : RHALIX_MOVES) {
                 if (EfAnimations.class.getResource("/assets/xenowarriors/animmodels/animations/biped/xw/rhalix_" + m[0] + ".json") == null) continue;   // (not baked yet)

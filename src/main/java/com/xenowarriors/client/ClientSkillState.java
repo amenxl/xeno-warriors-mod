@@ -195,11 +195,15 @@ public final class ClientSkillState {
         return isCastingKishi(player) ? KISHI_LEVEL.getOrDefault(player, 1) : 0;
     }
 
+    /** (Epic Fight) a skill pose started on someone: plays its Epic Fight version. */
+    public static java.util.function.BiConsumer<net.minecraft.world.entity.Entity, Integer> skillStarted;
+
     public static void startAnim(int entityId, int anim, boolean airborne) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         net.minecraft.world.entity.Entity e = mc.level.getEntity(entityId);
         if (e != null) ANIMS.put(entityId, new SkillAnim(anim, e.tickCount, airborne));
+        if (e != null && skillStarted != null) skillStarted.accept(e, anim);
     }
 
     /** The skill animation a player is in the middle of, or null. */

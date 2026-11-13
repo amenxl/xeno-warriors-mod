@@ -107,6 +107,17 @@ public final class EpicFightCompat {
         }
         // Mikiko and Rhalix never take Epic Fight's fists-up guard: they show their own fighting stance instead
         com.xenowarriors.client.AttackHooks.externalGuard = p -> ownStance(p) && ownWeapon(p) && guarding(p);
+        // skill and ultimate poses: their Epic Fight versions (baked from ours), on anyone Epic Fight animates
+        com.xenowarriors.client.ClientSkillState.skillStarted = (e, anim) -> {
+            var acc = com.xenowarriors.compat.epicfight.EfAnimations.SKILLS.get(anim);
+            if (acc == null) return;
+            try {
+                var lp = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(e, yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch.class);
+                if (lp != null && lp.getClientAnimator() != null) { lp.getClientAnimator().playAnimation(acc, 0F); skillPlays++; }
+            } catch (Throwable t) {
+                skillError = String.valueOf(t);
+            }
+        };
         com.xenowarriors.client.AttackHooks.externalFace = EpicFightCompat::face;
         com.xenowarriors.client.AttackHooks.externalStanceFace = p -> {
             var patch = patch(p);
@@ -399,7 +410,10 @@ public final class EpicFightCompat {
             event.setShouldRender(false);
             return;
         }
-        if (ClientSkillState.currentAnim(p) != null || com.xenowarriors.client.EntityPoses.posed(p)          // our skill casts and poses always show
+        var skillNow = ClientSkillState.currentAnim(p);
+        boolean bakedSkill = skillNow != null && com.xenowarriors.compat.epicfight.EfAnimations.SKILLS.containsKey(skillNow.anim());
+        if (bakedSkill) { event.setShouldRender(true); return; }                                          // (its Epic Fight version plays)
+        if (skillNow != null || com.xenowarriors.client.EntityPoses.posed(p)          // our skill casts and poses always show
                 || p.getVehicle() instanceof com.xenowarriors.vehicle.VehicleEntity) {                       // (and our vehicle seats / riding on top / hanging on)
             event.setShouldRender(false);
             return;
@@ -419,6 +433,7 @@ public final class EpicFightCompat {
         boolean action = Boolean.TRUE.equals(patch.getEntityState().getState(EntityState.INACTION));
         boolean own = ownWeapon(p);
         Object anim = currentAnimation(patch);
+        if (baked(anim)) return true;                                                  // (our own animations rebuilt for Epic Fight)
         if (own && ownStance(p) && (guarding(p) || !efOnly(anim))) return false;   // no fists-up pose of Epic Fight's: ours
         if (action) return !(own && basicAttack(anim) && !wom(p) && !baked(anim));   // (our own moves rebuilt for Epic Fight: it draws them)    // their own combos (or Weapons of Miracles' moves); Epic Fight's other actions
         boolean special = com.xenowarriors.client.FlightTracker.isFlying(p) || p.isPassenger() || p.isSleeping();
@@ -429,6 +444,10 @@ public final class EpicFightCompat {
     public static boolean wom(net.minecraft.world.entity.player.Player p) {
         return com.xenowarriors.compat.epicfight.WomMoves.loaded() && com.xenowarriors.compat.epicfight.WomMoves.movesFor(p) != null;
     }
+
+    /** (tests) skill poses played through Epic Fight, and the last error. */
+    public static int skillPlays;
+    public static String skillError;
 
     /** One of our own animations rebuilt for Epic Fight (tools/xw/ef/bake.py). */
     static boolean baked(Object anim) {

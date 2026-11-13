@@ -69,8 +69,22 @@ final class PackBakeTests {
                 com.xenowarriors.client.combo.ComboClient.forceForTest(mc.player, R, hit, heavy); PoseRecorder.start(mc.player); }, dur + 4));
             l.add(new Step(null, () -> dump(name, PoseRecorder.stop()), 8));
         }
+        // skill and ultimate poses (SkillAnimPacket ids): Rhalix's on Rhalix, Mikiko's and the shared ones on Mikiko
+        skills(mc, l, CharacterType.RHALIX, new int[]{0, 1, 2, 3, 4, 5, 10});
+        skills(mc, l, CharacterType.MIKIKO, new int[]{6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31});
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.log("bake: done"); }, 2));
+    }
+
+    static void skills(Minecraft mc, List<Step> l, CharacterType who, int[] ids) {
+        l.add(new Step(null, () -> UiTest.character(who), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> { p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0); }), 20));
+        for (int id : ids) {
+            int dur = com.xenowarriors.client.SkillAnimations.duration(id);
+            l.add(new Step(null, () -> { mc.player.setXRot(0); mc.player.xRotO = 0;
+                com.xenowarriors.client.ClientSkillState.startAnim(mc.player.getId(), id, false); PoseRecorder.start(mc.player); }, dur + 2));
+            l.add(new Step(null, () -> dump("skill_" + id, PoseRecorder.stop()), 10));
+        }
     }
 
     /**
