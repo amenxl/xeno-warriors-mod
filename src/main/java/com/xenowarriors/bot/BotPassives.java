@@ -224,6 +224,7 @@ public final class BotPassives {
         while (clear < 6 && b.level().getBlockState(below.below(clear + 1)).getCollisionShape(b.level(), below.below(clear + 1)).isEmpty()) clear++;
         if (clear > Math.max(2, (int) Math.ceil(fall * 2.5))) return;
         b.fallDistance = 0F;
+        b.getPersistentData().putLong(com.xenowarriors.toggle.Passives.BOOTS_SAFE, b.level().getGameTime() + 40);   // (no fall damage at all for 2 s - other mods track falls their own way)
         b.setDeltaMovement(b.getDeltaMovement().multiply(1, 0.15, 1));
         b.hurtMarked = true;
         b.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 0, false, false));

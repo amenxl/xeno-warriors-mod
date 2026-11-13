@@ -87,6 +87,19 @@ public final class Passives {
 
     // ------------------------------------------------------------------ Technica
 
+    public static final String BOOTS_SAFE = "xw_boots_safe";
+
+    /** Just after the Gravity Boots fired (a player or her bot): the landing doesn't hurt, however the fall was counted. */
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void onFall(net.minecraftforge.event.entity.living.LivingFallEvent e) {
+        if (e.getEntity().getPersistentData().getLong(BOOTS_SAFE) >= e.getEntity().level().getGameTime()) { e.setDamageMultiplier(0F); e.setDistance(0F); }
+    }
+
+    @net.minecraftforge.eventbus.api.SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void onFallHurt(net.minecraftforge.event.entity.living.LivingAttackEvent e) {
+        if (e.getSource().is(net.minecraft.tags.DamageTypeTags.IS_FALL) && e.getEntity().getPersistentData().getLong(BOOTS_SAFE) >= e.getEntity().level().getGameTime()) e.setCanceled(true);
+    }
+
     /** About to land from a fall that would hurt: the boots fire. */
     private static void gravityBoots(ServerPlayer p) {
         if (p.onGround() || p.fallDistance < 3.6F || p.getDeltaMovement().y > -0.3 || p.getAbilities().flying || p.isFallFlying() || p.isInWater()) return;
@@ -97,6 +110,7 @@ public final class Passives {
         while (clear < 6 && p.level().getBlockState(below.below(clear + 1)).getCollisionShape(p.level(), below.below(clear + 1)).isEmpty()) clear++;
         if (clear > Math.max(2, (int) Math.ceil(fall * 2.5))) return;                 // (not yet: the ground's still a way off)
         p.fallDistance = 0F;
+        p.getPersistentData().putLong(com.xenowarriors.toggle.Passives.BOOTS_SAFE, p.level().getGameTime() + 40);   // (no fall damage at all for 2 s - other mods track falls their own way)
         p.setDeltaMovement(p.getDeltaMovement().multiply(1, 0.15, 1));
         p.hurtMarked = true;
         p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 0, false, false));
