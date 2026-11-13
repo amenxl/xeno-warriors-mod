@@ -108,7 +108,26 @@ final class PackEfClothesTests {
      * (focus "packefhit", and the full pack run) Do the characters' battle-mode punches land? (the user: Mikiko couldn't
      * hit anybody.) A still zombie stands in front; the first moves of each combo are played; its health is read.
      */
+    private static final StringBuilder HURTS = new StringBuilder();
+    private static boolean listening;
+
+    private static void listen() {
+        if (listening) return;
+        listening = true;
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.HIGHEST, (net.minecraftforge.event.entity.living.LivingHurtEvent e) -> {
+            if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500)
+                HURTS.append(String.format(java.util.Locale.ROOT, "[in %.2f %s %s", e.getAmount(), e.getSource().getMsgId(), e.getSource().getClass().getSimpleName()));
+        });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingHurtEvent e) -> {
+            if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(String.format(java.util.Locale.ROOT, " out %.2f] ", e.getAmount()));
+        });
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, (net.minecraftforge.event.entity.living.LivingDamageEvent e) -> {
+            if (e.getEntity().getTags().contains("xw_efhit") && HURTS.length() < 1500) HURTS.append(String.format(java.util.Locale.ROOT, "(dmg %.2f) ", e.getAmount()));
+        });
+    }
+
     static void hits(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, PackEfClothesTests::listen, 1));
         for (CharacterType who : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KAERU}) {
             float[] hp = {0F, 0F};
             int[] zid = {-1};
@@ -132,12 +151,15 @@ final class PackEfClothesTests {
             }), 15));
             // out of battle mode first: real clicks (as the attack key does)
             l.add(new Step(null, () -> { battle(false); mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); }, 25));
+            l.add(new Step(null, () -> PackTests.server(p -> { var z = p.serverLevel().getEntity(zid[0]);
+                if (z instanceof net.minecraft.world.entity.LivingEntity le) { le.setHealth(le.getMaxHealth()); hp[0] = le.getHealth(); } HURTS.setLength(0); }), 2));
             for (int k = 0; k < 3; k++) l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 14));
             l.add(new Step(null, () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
                 PackTests.check("efhit " + who.getId() + ": clicks out of battle mode land", now >= 0F && now < hp[0],
-                        "zombie hp " + hp[0] + " -> " + now + ", aiming at " + mc.hitResult);
+                        "zombie hp " + hp[0] + " -> " + now + ", aiming at " + mc.hitResult + " hurts " + HURTS);
+                HURTS.setLength(0);
                 hp[0] = now;
             }), 2));
             l.add(new Step(null, () -> battle(true), 30));
@@ -145,8 +167,9 @@ final class PackEfClothesTests {
             l.add(new Step(null, () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
-                PackTests.check("efhit " + who.getId() + ": clicks in battle mode land", now >= 0F && now < hp[0],
-                        "zombie hp " + hp[0] + " -> " + now);
+                PackTests.check("efhit " + who.getId() + ": clicks in battle mode land", now >= 0F && now < hp[0] - 2F,
+                        "zombie hp " + hp[0] + " -> " + now + " hurts " + HURTS);
+                HURTS.setLength(0);
                 hp[0] = now;
             }), 2));
             for (int k = 0; k < 3; k++) {
@@ -166,8 +189,8 @@ final class PackEfClothesTests {
                 var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
                 Object first = null;
                 try { first = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch).get(0); } catch (Throwable ignored) {}
-                PackTests.check("efhit " + who.getId() + ": battle-mode punches land", now >= 0F && now < hp[0],
-                        "zombie hp " + hp[0] + " -> " + now + " (combo starts " + first + ")");
+                PackTests.check("efhit " + who.getId() + ": battle-mode punches land", now >= 0F && now < hp[0] - 2F,
+                        "zombie hp " + hp[0] + " -> " + now + " (combo starts " + first + ") hurts " + HURTS);
                 if (z != null) z.discard();
             }), 5));
         }
