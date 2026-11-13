@@ -252,7 +252,7 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     /** (Tests) */
     public static int oldLayoutDrawn;
     public static String lastForeign = "none";
-    public static int layerRuns;
+    public static int layerRuns, selfRuns, selfAll;
     public static String lastRun = "none";
 
     private static void showFor(net.minecraft.client.model.HumanoidModel<?> m, EquipmentSlot slot) {
@@ -283,10 +283,15 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, float limbSwing,
                        float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
         layerRuns++;
+        if (player == net.minecraft.client.Minecraft.getInstance().player && !ClientCharacterData.isPreviewing()) selfAll++;
         if (player.isInvisible()) return;
         CharacterType type = ClientCharacterData.get(player);
         Map<EquipmentSlot, DetailModel> bySlot = models.get(type);
-        lastRun = type + " models " + (bySlot != null) + " head " + player.getItemBySlot(EquipmentSlot.HEAD).getItem().getClass().getSimpleName() + " self " + (player == net.minecraft.client.Minecraft.getInstance().player);
+        if (player == net.minecraft.client.Minecraft.getInstance().player && !ClientCharacterData.isPreviewing()) {
+            selfRuns++;
+            lastRun = type + " models " + (bySlot != null) + " head " + player.getItemBySlot(EquipmentSlot.HEAD).getItem().getClass().getSimpleName()
+                    + " invisible " + player.isInvisible();
+        }
         if (bySlot == null) return;
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
         ResourceLocation texture = XenoWarriors.id("textures/entity/character/" + type.getId() + "_armor.png");
@@ -294,6 +299,8 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
 
         for (EquipmentSlot slot : SLOTS) {
             ItemStack stack = player.getItemBySlot(slot);
+            if (slot == EquipmentSlot.HEAD && player == net.minecraft.client.Minecraft.getInstance().player && !ClientCharacterData.isPreviewing())
+                lastRun += " | head loop: " + stack.getItem().getClass().getSimpleName() + " armor " + (stack.getItem() instanceof ArmorItem) + " foreign " + foreign(stack);
             if (!(stack.getItem() instanceof ArmorItem armor) || armor.getEquipmentSlot() != slot) continue;
             // a Karma Scanner: its own 3D visor on the head (not a fitted helmet)
             if (stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item) {
