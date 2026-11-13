@@ -56,9 +56,16 @@ def frame_locals(f):
     motion = f[24:30] if len(f) >= 30 else [0] * 6
     lift, fwd, spin, lean, roll, barrel = motion
     E = lambda R: C @ R @ C.T
-    # whole-body motion about (0, 0.9, 0) in the entity-facing world
-    Rw = Ry(math.radians(spin)) @ Rx(math.radians(lean)) @ Ry(math.radians(barrel)) @ Rz(math.radians(roll))
-    Rroot = D @ Rw @ D.T
+    delta = None
+    if len(f) >= 46:                                       # the render pose change, recorded as is (4x4 column-major)
+        delta = np.array(f[30:46], float).reshape(4, 4).T
+        if np.allclose(delta, np.eye(4), atol=1e-5): delta = None
+    if delta is not None:
+        Rroot = D @ delta[:3, :3] @ D.T
+    else:
+        # whole-body motion about (0, 0.9, 0) in the entity-facing world
+        Rw = Ry(math.radians(spin)) @ Rx(math.radians(lean)) @ Ry(math.radians(barrel)) @ Rz(math.radians(roll))
+        Rroot = D @ Rw @ D.T
     part = {
         'Torso': zyx(*body), 'Head': zyx(*head),
         'Arm_R': zyx(*ra), 'Hand_R': zyx(*ra) @ Rx(er),
@@ -73,8 +80,11 @@ def frame_locals(f):
         rest_rot = rest_world(j)[:3, :3]
         if j == 'Root':
             pr = rest_world('Root')[:3, 3]
-            c = np.array([0, 0, 0.9])
-            pos = c + Rroot @ (pr - c) + np.array([0, fwd, lift])
+            if delta is not None:
+                pos = D @ (delta[:3, :3] @ (D.T @ pr) + delta[:3, 3])
+            else:
+                c = np.array([0, 0, 0.9])
+                pos = c + Rroot @ (pr - c) + np.array([0, fwd, lift])
             M = np.eye(4); M[:3, :3] = Rroot @ rest_rot; M[:3, 3] = pos
             W[j] = M
             out[j] = M
