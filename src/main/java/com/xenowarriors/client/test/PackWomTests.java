@@ -49,6 +49,7 @@ final class PackWomTests {
         String name = item == null ? "fists_" + who.name().toLowerCase(java.util.Locale.ROOT) : item;
         l.add(new Step(null, () -> UiTest.character(who), 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);      // (back on the test floor: a character change can move you)
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.getInventory().selected = 0;
             var it = item == null ? null : ForgeRegistries.ITEMS.getValue(com.xenowarriors.XenoWarriors.id(item));
