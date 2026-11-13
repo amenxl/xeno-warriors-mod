@@ -28,6 +28,12 @@ public final class EfAnimations {
     public static final java.util.Map<String, AnimationManager.AnimationAccessor<yesman.epicfight.api.animation.types.BasicAttackAnimation>> MIKIKO =
             new java.util.LinkedHashMap<>();
 
+    /** Rhalix's ground combo (hits 0..7) and its heavy, baked the same way: name -> length in ticks. */
+    public static final String[][] RHALIX_MOVES = {
+            {"hit0", "12"}, {"hit1", "7"}, {"hit2", "7"}, {"hit3", "7"}, {"hit4", "10"}, {"hit5", "9"}, {"hit6", "9"}, {"hit7", "13"}, {"heavy", "15"}};
+    public static final java.util.Map<String, AnimationManager.AnimationAccessor<yesman.epicfight.api.animation.types.BasicAttackAnimation>> RHALIX =
+            new java.util.LinkedHashMap<>();
+
     private EfAnimations() {}
 
     public static void register(IEventBus modBus) {
@@ -50,6 +56,11 @@ public final class EfAnimations {
             for (String[] m : MIKIKO_MOVES) {
                 float d = Integer.parseInt(m[1]) / 20F;
                 MIKIKO.put(m[0], b.nextAccessor("biped/xw/mikiko_" + m[0], acc -> attack(acc, 0.05F, d * 0.24F, d * 0.44F, d * 0.8F)));
+            }
+            for (String[] m : RHALIX_MOVES) {
+                if (EfAnimations.class.getResource("/assets/xenowarriors/animmodels/animations/biped/xw/rhalix_" + m[0] + ".json") == null) continue;   // (not baked yet)
+                float d = Integer.parseInt(m[1]) / 20F;
+                RHALIX.put(m[0], b.nextAccessor("biped/xw/rhalix_" + m[0], acc -> attack(acc, 0.05F, d * 0.24F, d * 0.44F, d * 0.8F)));
             }
         });
     }

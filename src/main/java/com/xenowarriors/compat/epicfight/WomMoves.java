@@ -138,15 +138,22 @@ public final class WomMoves {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     static List ownMoves(Player p) {
-        if (!p.getMainHandItem().isEmpty() || character(p) != CharacterType.MIKIKO) return null;
+        if (!p.getMainHandItem().isEmpty()) return null;
+        CharacterType t = character(p);
+        String[] keys = t == CharacterType.MIKIKO ? MIKIKO_COMBO : t == CharacterType.RHALIX ? RHALIX_COMBO : null;
+        var map = t == CharacterType.MIKIKO ? EfAnimations.MIKIKO : EfAnimations.RHALIX;
+        if (keys == null) return null;
         List out = new ArrayList();
-        for (String k : MIKIKO_COMBO) {
-            var acc = EfAnimations.MIKIKO.get(k);
+        for (String k : keys) {
+            var acc = map.get(k);
             if (acc == null) return null;
             out.add(acc);
         }
         return out;
     }
+
+    /** Rhalix's bare-hand ground combo: his eight hits, baked from his animations. */
+    public static final String[] RHALIX_COMBO = {"hit0", "hit1", "hit2", "hit3", "hit4", "hit5", "hit6", "hit7"};
 
     private static CharacterType character(Player p) {
         CharacterType t;
