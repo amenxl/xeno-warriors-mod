@@ -537,10 +537,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return mouth;
     }
 
-    @Override
     /** (tests) times this layer ran. */
     public static int renders;
 
+    @Override
     public void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight, AbstractClientPlayer player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
                        float netHeadYaw, float headPitch) {
