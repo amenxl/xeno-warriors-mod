@@ -48,7 +48,7 @@ final class PackEfBodyTests {
         }), 15));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 15));
         l.add(new com.xenowarriors.client.UiTest.Step("pack_strayhat_front", () -> PackTests.log("efbody: the Stray Hat (64x32 armor) drawn on the plain armor model " + com.xenowarriors.client.render.CharacterArmorLayer.oldLayoutDrawn
-                + " times (layer ran " + com.xenowarriors.client.render.CharacterArmorLayer.layerRuns + ", head " + mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD) + ", self runs " + com.xenowarriors.client.render.CharacterArmorLayer.selfAll + "/" + com.xenowarriors.client.render.CharacterArmorLayer.selfRuns + ", self by type/head " + com.xenowarriors.client.render.CharacterArmorLayer.SELF_TYPES + ", client says " + com.xenowarriors.client.ClientCharacterData.get(mc.player) + " local " + com.xenowarriors.client.ClientCharacterData.getLocal() + ", last self run " + com.xenowarriors.client.render.CharacterArmorLayer.lastRun + ", last foreign armor drawn: " + com.xenowarriors.client.render.CharacterArmorLayer.lastForeign + ") -> " + (com.xenowarriors.client.render.CharacterArmorLayer.oldLayoutDrawn > 0 ? "PASS" : "FAIL")), 3));
+                + " times (layer ran " + com.xenowarriors.client.render.CharacterArmorLayer.layerRuns + ", head " + mc.player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD) + ", self runs " + com.xenowarriors.client.render.CharacterArmorLayer.selfAll + "/" + com.xenowarriors.client.render.CharacterArmorLayer.selfRuns + ", renderer " + rendererInfo(mc) + ", self by type/head " + com.xenowarriors.client.render.CharacterArmorLayer.SELF_TYPES + ", client says " + com.xenowarriors.client.ClientCharacterData.get(mc.player) + " local " + com.xenowarriors.client.ClientCharacterData.getLocal() + ", last self run " + com.xenowarriors.client.render.CharacterArmorLayer.lastRun + ", last foreign armor drawn: " + com.xenowarriors.client.render.CharacterArmorLayer.lastForeign + ") -> " + (com.xenowarriors.client.render.CharacterArmorLayer.oldLayoutDrawn > 0 ? "PASS" : "FAIL")), 3));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 12));
         l.add(new com.xenowarriors.client.UiTest.Step("pack_strayhat_back", () -> {}, 3));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)); }, 15));
@@ -104,6 +104,22 @@ final class PackEfBodyTests {
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> remoteBattle(rp[0], false), 30));
         l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_vanilla_hat", () -> PackTests.log("remote vanilla + hat: last run " + com.xenowarriors.client.render.CharacterArmorLayer.lastRun + ", last foreign " + com.xenowarriors.client.render.CharacterArmorLayer.lastForeign), 3));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.level.removeEntity(rp[0].getId(), net.minecraft.world.entity.Entity.RemovalReason.DISCARDED); mc.options.hideGui = false; }, 5));
+    }
+
+    private static String rendererInfo(Minecraft mc) {
+        try {
+            var r = mc.getEntityRenderDispatcher().getRenderer(mc.player);
+            StringBuilder b = new StringBuilder(r.getClass().getName());
+            if (r instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> lr) {
+                var f = net.minecraft.client.renderer.entity.LivingEntityRenderer.class.getDeclaredFields();
+                for (var fl : f) if (java.util.List.class.isAssignableFrom(fl.getType())) {
+                    fl.setAccessible(true);
+                    var list = (java.util.List<?>) fl.get(lr);
+                    b.append(" layers ").append(list.stream().map(o -> o.getClass().getSimpleName()).toList());
+                }
+            }
+            return b.toString();
+        } catch (Throwable t) { return "? " + t; }
     }
 
     private static String remotePatch(net.minecraft.world.entity.Entity e) {
