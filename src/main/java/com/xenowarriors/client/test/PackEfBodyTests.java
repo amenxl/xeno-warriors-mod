@@ -66,4 +66,58 @@ final class PackEfBodyTests {
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> mc.options.keyUp.setDown(false), 10));
         l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 10));
     }
+
+    /**
+     * (focus "packremote", and the full pack run) Online play: another player as your client sees them - a RemotePlayer
+     * playing Mikiko beside you, in and out of Epic Fight's battle mode, with and without the Stray Hat (the user's
+     * video: an odd shadow body on the other player, and the hat's cloth over his face).
+     */
+    static void remote(Minecraft mc, List<com.xenowarriors.client.UiTest.Step> l) {
+        if (!ModList.get().isLoaded("epicfight")) return;
+        net.minecraft.client.player.RemotePlayer[] rp = new net.minecraft.client.player.RemotePlayer[1];
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> UiTest.character(CharacterType.RHALIX), 30));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> {
+            PackTests.server(p -> { p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(10); });
+            var prof = new com.mojang.authlib.GameProfile(java.util.UUID.fromString("7d0b5a4e-2222-4c2a-9b1e-00000000f00d"), "Friend");
+            var r = new net.minecraft.client.player.RemotePlayer(mc.level, prof);
+            r.setId(-777123);
+            r.moveTo(mc.player.getX(), mc.player.getY(), mc.player.getZ() + 3, 180, 0);
+            r.setYHeadRot(180); r.yBodyRot = 180; r.yBodyRotO = 180; r.yHeadRotO = 180;
+            r.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_AXE));
+            com.xenowarriors.client.ClientCharacterData.set(prof.getId(), CharacterType.MIKIKO);
+            mc.level.addPlayer(r.getId(), r);
+            rp[0] = r;
+            mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON);
+            PackTests.log("remote: added a remote Mikiko (patch " + remotePatch(r) + ")");
+        }, 20));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_vanilla", () -> PackTests.log("remote vanilla: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(rp[0])), 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> remoteBattle(rp[0], true), 30));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_battle", () -> PackTests.log("remote battle: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(rp[0])), 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> rp[0].setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY), 20));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_battle_hands", () -> PackTests.log("remote battle, bare hands: " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(rp[0])), 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> {
+            var hat = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("epicfight", "stray_hat"));
+            if (hat != null) rp[0].setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(hat));
+        }, 20));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_battle_hat", () -> PackTests.log("remote battle + hat: last run " + com.xenowarriors.client.render.CharacterArmorLayer.lastRun + ", last foreign " + com.xenowarriors.client.render.CharacterArmorLayer.lastForeign), 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> remoteBattle(rp[0], false), 30));
+        l.add(new com.xenowarriors.client.UiTest.Step("pack_remote_vanilla_hat", () -> PackTests.log("remote vanilla + hat: last run " + com.xenowarriors.client.render.CharacterArmorLayer.lastRun + ", last foreign " + com.xenowarriors.client.render.CharacterArmorLayer.lastForeign), 3));
+        l.add(new com.xenowarriors.client.UiTest.Step(null, () -> { mc.level.removeEntity(rp[0].getId(), net.minecraft.world.entity.Entity.RemovalReason.DISCARDED); mc.options.hideGui = false; }, 5));
+    }
+
+    private static String remotePatch(net.minecraft.world.entity.Entity e) {
+        try {
+            var p = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(e, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
+            return p == null ? "none" : p.getClass().getSimpleName();
+        } catch (Throwable t) { return "error " + t; }
+    }
+
+    private static void remoteBattle(net.minecraft.world.entity.Entity e, boolean on) {
+        try {
+            var p = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(e, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
+            if (p == null) { PackTests.log("remote: no patch"); return; }
+            if (on) p.toEpicFightMode(false); else p.toVanillaMode(false);
+            PackTests.log("remote: battle mode " + p.isEpicFightMode());
+        } catch (Throwable t) { PackTests.log("remote: couldn't switch battle mode " + t); }
+    }
 }

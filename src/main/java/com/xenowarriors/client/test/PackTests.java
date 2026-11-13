@@ -110,7 +110,8 @@ public final class PackTests {
             server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); arena(p); levels(p); }); }, 30));
         if (focus.startsWith("packscanners")) { ScannerTests.build(mc, l, focus); return; }      // (the Karma Scanner tests alone, in the real pack)
         if (focus.startsWith("packhandmine")) { HandMineTests.build(mc, l, focus); return; }      // (bare-hand mining tiers alone, with Vein Miner / Tree Harvester)
-        if (focus.startsWith("packefbody")) { PackEfBodyTests.build(mc, l); return; }      // (Mikiko in Epic Fight's battle mode, alone)
+        if (focus.startsWith("packefbody")) { PackEfBodyTests.build(mc, l); return; }
+        if (focus.startsWith("packremote")) { PackEfBodyTests.remote(mc, l); return; }      // (Mikiko in Epic Fight's battle mode, alone)
         characters(mc, l);
         menus(mc, l);
         skills(mc, l, CharacterType.MIKIKO);
@@ -125,6 +126,7 @@ public final class PackTests {
         teamUlt(mc, l);
         PackCullTests.build(mc, l);        // EntityCulling / Clumps: effects through walls, health orbs, XP
         PackEfBodyTests.build(mc, l);      // Mikiko in Epic Fight's battle mode with an axe
+        PackEfBodyTests.remote(mc, l);     // another player (online), as this client sees them
         PackTotemTests.build(mc, l);       // Inventory Totem vs. the downed system and the Xeno Blast
         PackTooltipTests.build(mc, l);     // Equipment Compare / Iceberg: every item's tooltip, comparisons
         PackBotBagTests.build(mc, l);      // a bot's extra tabs and tidying with the pack's inventory mods
