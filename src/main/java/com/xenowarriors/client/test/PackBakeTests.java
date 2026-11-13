@@ -77,13 +77,17 @@ final class PackBakeTests {
      * (focus "packbakecheck") Each rebuilt move side by side with the original: the original in vanilla mode, then the
      * Epic Fight version in battle mode, both shot from the front at the strike (and once a third of the way in).
      */
+    static boolean rhalixOnly;
+
+    static void checkRhalix(Minecraft mc, List<Step> l) { rhalixOnly = true; check(mc, l); }
+
     static void check(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 30));
         l.add(new Step(null, () -> { PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p);
             p.getInventory().selected = 0; p.getInventory().setItem(0, net.minecraft.world.item.ItemStack.EMPTY);
             p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0); });
             mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 30));
-        for (String name : new String[]{"jab_r", "jab_l", "chong_chui_r", "ding_zhou_r", "tiao_zhang_l", "shuang_zhang", "tie_shan_kao", "flip_kick", "kick_roundhouse"}) {
+        for (String name : rhalixOnly ? new String[0] : new String[]{"jab_r", "jab_l", "chong_chui_r", "ding_zhou_r", "tiao_zhang_l", "shuang_zhang", "tie_shan_kao", "flip_kick", "kick_roundhouse"}) {
             Move m = Move.valueOf(name.toUpperCase(java.util.Locale.ROOT));
             int at = Math.round(m.duration * 0.4F);
             l.add(new Step(null, () -> battle(false), 12));
@@ -115,7 +119,8 @@ final class PackBakeTests {
                 var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
                 if (acc != null && patch != null) patch.playAnimationSynchronized(acc, 0F); else PackTests.log("bake check: no animation rhalix " + name);
             }), at));
-            l.add(new Step(null, () -> {}, dur + 6));
+            l.add(new Step(null, () -> PackTests.log("bake check rhalix " + name + ": " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player)
+                    + " skill " + com.xenowarriors.client.ClientSkillState.currentAnim(mc.player) + " posed " + com.xenowarriors.client.EntityPoses.posed(mc.player)), dur + 6));
         }
         l.add(new Step(null, () -> PackTests.server(p -> {
             var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
