@@ -44,6 +44,7 @@ final class PackXenoDragonTests {
             // (the dragon fights for real: keep the tester standing so the checks after it still have someone to look from)
             p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 20, 4, false, false));
             p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 20 * 20, 4, false, false));
+            p.getAbilities().invulnerable = true; p.onUpdateAbilities();          // (its hits outdid the resistance: the tester died and the checks lost the dragon)
         }), 40));
         l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 5));
         l.add(new Step("pack_xenodragon_base", () -> {}, 30));
