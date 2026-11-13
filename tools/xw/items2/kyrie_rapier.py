@@ -14,7 +14,7 @@ BL, ED, GU, RI, GR, DK = [0, 0, 4, 16], [4, 0, 6, 16], [6, 0, 10, 4], [6, 4, 10,
 els = [
     {"from": [7.45, 8.4, 7.75], "to": [8.55, 31.0, 8.25], "faces": F(BL)},                     # slender blade
     {"from": [8.55, 8.4, 7.85], "to": [8.8, 31.0, 8.15], "faces": F(ED)},                      # edge
-    {"from": [7.7, 31.0, 7.8], "to": [8.4, 32.6, 8.2], "faces": F(BL)},                        # tip
+    {"from": [7.7, 31.0, 7.8], "to": [8.4, 32.0, 8.2], "faces": F(BL)},                        # tip
     {"from": [7.25, 6.6, 7.6], "to": [8.75, 8.6, 8.4], "faces": F(BL)},                        # ricasso
     {"from": [7.05, 7.3, 7.45], "to": [8.95, 8.1, 8.55], "faces": F(RI)},                      # ribbon wound round it
     {"from": [8.95, 7.7, 7.85], "to": [10.6, 8.3, 8.15], "faces": F(RI)},                      # its ends, fluttering
