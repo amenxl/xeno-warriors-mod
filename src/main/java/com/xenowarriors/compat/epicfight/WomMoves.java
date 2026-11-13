@@ -92,7 +92,8 @@ public final class WomMoves {
     public static List override(PlayerPatch<?> patch, List original) {
         if (!loaded() || patch == null || original == null || original.size() < 3) return original;
         try {
-            if (!(patch.getOriginal() instanceof Player p)) return original;
+            Player p = patch.getOriginal();
+            if (p == null) return original;
             String[] keys = movesFor(p);
             if (keys == null) return original;
             List out = new ArrayList();
