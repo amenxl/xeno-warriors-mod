@@ -34,14 +34,24 @@ public final class WomMoves {
     /** Beast: wild claws, a jump kick and a heavy finisher (Ultima, Ai-oni, Kill). */
     public static final String[] BEAST = {C + "agony_auto_1", S + "torment_berserk_auto_2", C + "agony_auto_4", C + "enderblaster_onehand_jumpkick", C + "enderblaster_twohand_tishnaw"};
     /** Swift: clean, fast strikes (Kyrie, Technica, Yuri, Zane, Logan, Keita). */
+    /**
+     * Kaeru's bare hands: "The One chosen by the Sparks Of Black" (Epic Fight: Fighting Styles' Kokusen gauntlets -
+     * the user's pick), its combo with its own dash and air attacks (see TAILS). Built from Weapons of Miracles' moves.
+     */
+    public static final String[] SPARKS = {C + "agony_auto_1", S + "torment_berserk_auto_2", C + "katana_auto_3", C + "agony_auto_4",
+            "epicfight:biped/combat/dagger_auto2", C + "enderblaster_onehand_auto_3", C + "enderblaster_onehand_jumpkick"};
+    /** A style's own dash and air attacks, in place of Epic Fight's. */
+    public static final Map<String[], String[]> TAILS = new java.util.IdentityHashMap<>();
+    static { TAILS.put(SPARKS, new String[]{S + "torment_berserk_dash", C + "enderblaster_twohand_tishnaw"}); }
     public static final String[] SWIFT = {C + "enderblaster_onehand_auto_1", C + "enderblaster_onehand_auto_2", C + "enderblaster_onehand_auto_3", C + "enderblaster_onehand_auto_4"};
 
     public static final Map<CharacterType, String[]> FISTS = new java.util.EnumMap<>(CharacterType.class);
     /** Our weapons (item id path) -> their moves. */
     public static final Map<String, String[]> WEAPONS = new java.util.LinkedHashMap<>();
     static {
-        for (CharacterType t : new CharacterType[]{CharacterType.KAERU, CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.STEVIE, CharacterType.GARRY}) FISTS.put(t, STREET);
+        for (CharacterType t : new CharacterType[]{CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.STEVIE, CharacterType.GARRY}) FISTS.put(t, STREET);
         for (CharacterType t : new CharacterType[]{CharacterType.ULTIMA, CharacterType.AIONI, CharacterType.KILL}) FISTS.put(t, BEAST);
+        FISTS.put(CharacterType.KAERU, SPARKS);
         for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.TECHNICA, CharacterType.YURI, CharacterType.ZANE, CharacterType.LOGAN, CharacterType.KEITA}) FISTS.put(t, SWIFT);
         WEAPONS.put("logan_blade", new String[]{C + "herrscher_auto_1", C + "herrscher_auto_2", C + "herrscher_auto_3"});             // the knight's sword
         WEAPONS.put("keita_blade", new String[]{C + "katana_sheathed_auto_1", C + "katana_sheathed_auto_2", C + "katana_sheathed_auto_3"});   // lazy quick-draw cuts
@@ -138,8 +148,14 @@ public final class WomMoves {
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static List tail(List original, String[] keys) {
-        if (original != null && original.size() >= 3) return original.subList(original.size() - 2, original.size());
         List out = new ArrayList();
+        String[] own = keys == null ? null : TAILS.get(keys);
+        if (own != null) {
+            for (String k : own) { var m = move(k); if (m != null) out.add(m); }
+            if (out.size() == 2) return out;
+            out.clear();
+        }
+        if (original != null && original.size() >= 3) return original.subList(original.size() - 2, original.size());
         String base = keys != null && keys[0].startsWith("epicfight_dd:biped/combat/hookclaws") ? "epicfight_dd:biped/combat/hookclaws_" : null;
         Object dash = base != null ? move(base + "dash") : null, air = base != null ? move(base + "airslash") : null;
         if (dash == null) dash = move("epicfight:biped/combat/fist_dash");

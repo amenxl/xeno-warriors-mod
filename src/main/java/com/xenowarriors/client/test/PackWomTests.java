@@ -89,7 +89,8 @@ final class PackWomTests {
             l.add(new Step(null, () -> PackTests.log("wom: Epic Fight or Weapons of Miracles not loaded - skipped"), 1));
             return;
         }
-        one(mc, l, CharacterType.KAERU, null, WomMoves.STREET);
+        one(mc, l, CharacterType.KAERU, null, WomMoves.SPARKS);
+        one(mc, l, CharacterType.MAX, null, WomMoves.STREET);
         one(mc, l, CharacterType.ULTIMA, null, WomMoves.BEAST);
         one(mc, l, CharacterType.KYRIE, null, WomMoves.SWIFT);
         CharacterType[] holder = {CharacterType.LOGAN, CharacterType.KEITA, CharacterType.KILL, CharacterType.ZANE, CharacterType.SAM, CharacterType.MAX, CharacterType.AIONI};
