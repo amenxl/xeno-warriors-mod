@@ -278,10 +278,24 @@ public final class BotCrafting {
             try { res = r.getResultItem(s.registryAccess()); } catch (Throwable t) { continue; }
             if (res.isEmpty()) continue;
             Item it = res.getItem();
-            if (it instanceof ArmorItem || it instanceof SwordItem || it instanceof AxeItem || it instanceof PickaxeItem) l.add(r);
+            if (it instanceof ArmorItem || it instanceof SwordItem || it instanceof AxeItem || it instanceof PickaxeItem || moddedWeapon(res)) l.add(r);
         }
         cache = l; cacheFor = rm;
         return l;
+    }
+
+    /**
+     * Other mods' weapons that aren't plain swords or axes (Simply Swords, Epic Fight add-ons' greatswords, spears,
+     * daggers, gauntlets...): a tiered item, or anything with an attack-damage bonus in the main hand.
+     */
+    static boolean moddedWeapon(ItemStack res) {
+        Item it = res.getItem();
+        if (it instanceof TieredItem && !(it instanceof HoeItem) && !(it instanceof ShovelItem)) return true;
+        try {
+            for (var m : res.getAttributeModifiers(EquipmentSlot.MAINHAND).get(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE))
+                if (m.getAmount() >= 2.0) return true;
+        } catch (Throwable ignored) {}
+        return false;
     }
 
     // ---------------------------------------------------------------- what's "better"

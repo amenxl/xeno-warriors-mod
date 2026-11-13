@@ -175,7 +175,9 @@ public final class OffDuty {
 
     /** (Tests) N simulated minutes for one character, from game time {@code now}. */
     public static void simulate(ServerPlayer p, CharacterType t, int minutes, long now, RandomSource r) {
-        for (int i = 0; i < minutes; i++) step(p, t, now + i * MINUTE, r);
+        SIMULATING = true;
+        try { for (int i = 0; i < minutes; i++) step(p, t, now + i * MINUTE, r); }
+        finally { SIMULATING = false; }
     }
 
     static void step(ServerPlayer p, CharacterType t, long now, RandomSource r) {
@@ -202,8 +204,27 @@ public final class OffDuty {
                 return;
             }
         }
-        if (a == Act.NONE && task.isEmpty() && now >= c.getLong("u") && r.nextFloat() < 0.35F) a = choose(p, t, c, now, r);
+        if (a == Act.NONE && task.isEmpty() && now >= c.getLong("u") && r.nextFloat() < startChance(p, now)) a = choose(p, t, c, now, r);
         if (a != Act.NONE) work(p, t, c, a, r);
+    }
+
+    /**
+     * The chance a free character starts something each minute: hardly any in a new world (the user: too many were
+     * busy right away) - about one in thirty a minute for the first hour, rising to the usual one in three by the
+     * end of the second.
+     */
+    private static boolean SIMULATING;
+
+    static float startChance(ServerPlayer p, long now) {
+        if (SIMULATING) return 0.35F;                    // (tests: the usual pace)
+        CompoundTag r = root(p);
+        if (!r.contains("start")) r.putLong("start", now);
+        long since = now - r.getLong("start");
+        if (since < 0) { r.putLong("start", now); since = 0; }
+        float hours = since / (60F * MINUTE);
+        if (hours < 1F) return 0.03F;
+        if (hours < 2F) return 0.03F + (0.35F - 0.03F) * (hours - 1F);
+        return 0.35F;
     }
 
     private static int recentDowns(CompoundTag c, long now) {

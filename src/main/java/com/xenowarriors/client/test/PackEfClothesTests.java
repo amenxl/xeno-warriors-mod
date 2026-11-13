@@ -50,7 +50,9 @@ final class PackEfClothesTests {
                 new Case("max", CharacterType.MAX, 0, null, false, true),
                 new Case("lexy", CharacterType.LEXY, 0, null, false, true),
                 new Case("mikiko_tail", CharacterType.MIKIKO, 1, "minecraft:iron_sword", false, false),
-                new Case("rhalix", CharacterType.RHALIX, 0, "minecraft:iron_sword", false, false)};
+                new Case("rhalix", CharacterType.RHALIX, 0, "minecraft:iron_sword", false, false),
+                new Case("sam", CharacterType.SAM, 0, null, false, true),
+                new Case("logan", CharacterType.LOGAN, 0, null, false, true)};
         for (Case c : cases) one(mc, l, c);
         // the old way (baked into one skinned mesh), for comparison
         l.add(new Step(null, () -> com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.RIGID = false, 1));
