@@ -17,7 +17,8 @@ public final class EfBotBodies {
     private EfBotBodies() {}
 
     private static final java.util.Map<BotAvatar, int[]> STATE = new java.util.WeakHashMap<>();   // {started, combo index, was swinging, last swing tick}
-    public static boolean off = "0".equals(System.getenv("XW_EF_BOTS"));
+    /** Off for now: bots on Epic Fight's body came out in the default skin with parts missing (the user's video). XW_EF_BOTS=1 turns it on. */
+    public static boolean off = !"1".equals(System.getenv("XW_EF_BOTS"));
     private static int errors;
     /** (Tests) bodies started, swings played, the last error. */
     public static int started, swings;
