@@ -92,18 +92,18 @@ final class PackWomTests {
         one(mc, l, CharacterType.KAERU, null, WomMoves.SPARKS);
         one(mc, l, CharacterType.MAX, null, WomMoves.STREET);
         one(mc, l, CharacterType.ULTIMA, null, WomMoves.BEAST);
-        one(mc, l, CharacterType.KYRIE, null, WomMoves.SWIFT);
+        one(mc, l, CharacterType.TECHNICA, null, WomMoves.SWIFT);
         CharacterType[] holder = {CharacterType.LOGAN, CharacterType.KEITA, CharacterType.KILL, CharacterType.ZANE, CharacterType.SAM, CharacterType.MAX, CharacterType.AIONI};
         int i = 0;
         for (var e : WomMoves.WEAPONS.entrySet()) if (e.getValue()[0].startsWith("wom:")) one(mc, l, holder[i++ % holder.length], e.getKey(), e.getValue());
         l.add(new Step(null, () -> PackTests.check("wom: every move played without crashing the game", true,
                 "WOM events skipped (they need WOM's own weapon): " + WomMoves.GUARDED), 2));
-        // Mikiko keeps his own bare-hand moves
+        // Mikiko's bare hands: Epic Fight's glove punches (his own moves are kept, switched off)
         l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
             p.getInventory().setItem(0, ItemStack.EMPTY);
             var c = combo(p);
-            PackTests.check("wom: Mikiko's bare hands keep his own moves", WomMoves.movesFor(p) == null, "combo size " + (c == null ? "none" : c.size()));
+            PackTests.check("wom: Mikiko's bare hands: Epic Fight's glove punches (the user's pick)", WomMoves.movesFor(p) == WomMoves.GLOVES, "combo size " + (c == null ? "none" : c.size()));
         }), 5));
         l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE)); }, 10));

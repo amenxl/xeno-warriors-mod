@@ -258,7 +258,7 @@ public final class HudFaceTests {
         l.add(new Step(shot + "_foxking", () -> {
             same(mc, "fox king you", false);
             String k = HudPortrait.keyFor(mc.player, CharacterType.MIKIKO);
-            check("fox king frame", k != null && k.contains("frame/mikiko_foxking.png"), "key=" + k);
+            check("fox king frame", k != null && k.contains("foxking.png"), "key=" + k);
         }, 1));
         l.add(new Step(null, () -> com.xenowarriors.client.mikiko.FoxKingClient.set(mc.player.getId(), false), 2));
         // chatting: the mouth flaps on the model and the portrait alike

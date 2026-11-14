@@ -28,7 +28,7 @@ final class PackFoeTests {
             var l2 = p.serverLevel();
             var v = com.xenowarriors.foes.Foes.VESSEL.get().create(l2);
             var s = com.xenowarriors.foes.Foes.SWORDSTRESS.get().create(l2);
-            if (v != null) { com.xenowarriors.foes.Foes.placeForTest(l2, v, p.blockPosition().offset(-1, 0, 3)); ids[0] = v.getId(); v.setTarget(p); }
+            if (v != null) { com.xenowarriors.foes.Foes.placeForTest(l2, v, p.blockPosition().offset(-1, 0, 3)); ids[0] = v.getId(); v.setTarget(p); v.setInvulnerable(true); }   // (the Swordstress hunts Dancers)
             if (s != null) { com.xenowarriors.foes.Foes.placeForTest(l2, s, p.blockPosition().offset(2, 0, 3)); ids[1] = s.getId(); s.setTarget(p); }
             com.xenowarriors.compat.SimplySwordsGear.testRoll = true;
             var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(l2);
