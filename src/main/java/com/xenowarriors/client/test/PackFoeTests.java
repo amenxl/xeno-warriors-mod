@@ -1,6 +1,7 @@
 package com.xenowarriors.client.test;
 
-import com.xenowarriors.client.test.UiTest.Step;
+import com.xenowarriors.client.UiTest;
+import com.xenowarriors.client.UiTest.Step;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
