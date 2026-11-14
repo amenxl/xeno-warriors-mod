@@ -13,8 +13,7 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * The transform key: tap it to transform (as before), hold it to open the toggle wheel of transformations, buffs and
- * passives (ToggleWheelScreen). And the right+left click skill: hold right click, tap left click - the left click
- * fires the skill instead of a swing, and the block (or whatever right click was doing) stops.
+ * passives (ToggleWheelScreen). And the middle click skill: the middle mouse button (the pick-block button) fires it.
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class TransformKeyClient {
@@ -61,11 +60,15 @@ public final class TransformKeyClient {
         return mc.player != null && (com.xenowarriors.item.Guns.isGun(mc.player.getMainHandItem()) || com.xenowarriors.item.Guns.isGun(mc.player.getOffhandItem()));
     }
 
-    /** Left click while right click is held: the right+left click skill instead of a swing. */
+    /**
+     * The middle click skill (it was hold right click + tap left click - the user moved it to the middle mouse button,
+     * Minecraft's pick-block button). In creative, pointing at a block, the middle click still picks the block.
+     */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onClick(InputEvent.InteractionKeyMappingTriggered e) {
         Minecraft mc = Minecraft.getInstance();
-        if (!e.isAttack() || mc.player == null || mc.screen != null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active() || holdingGun(mc)) return;
+        if (!e.isPickBlock() || mc.player == null || mc.screen != null || !hasRl() || UltimateCutscene.active() || holdingGun(mc)) return;
+        if (mc.player.isCreative() && mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) return;
         e.setCanceled(true);
         e.setSwingHand(false);
         if (mc.player.isUsingItem()) { mc.gameMode.releaseUsingItem(mc.player); }
@@ -73,21 +76,13 @@ public final class TransformKeyClient {
         rlSent++;
     }
 
-    /**
-     * Right+left click while something's in use (a shield up, food...): the game swallows the left click then, so it's
-     * caught here first, before the game's own key handling.
-     */
-    @SubscribeEvent
-    public static void onTickStart(net.minecraftforge.event.TickEvent.ClientTickEvent e) {
-        if (e.phase != net.minecraftforge.event.TickEvent.Phase.START) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.screen != null || mc.gameMode == null || !mc.options.keyUse.isDown() || !hasRl() || UltimateCutscene.active() || holdingGun(mc)) return;
-        boolean fire = false;
-        while (mc.options.keyAttack.consumeClick()) fire = true;
-        if (!fire) return;
-        if (mc.player.isUsingItem()) mc.gameMode.releaseUsingItem(mc.player);
-        ModNetwork.sendToServer(new ToggleActionPacket(ToggleActionPacket.FIRE_RL, ""));
-        rlSent++;
+    /** What the button is called on screens ("Middle Click" unless it's been rebound). */
+    public static String buttonName() {
+        try {
+            return Minecraft.getInstance().options.keyPickItem.getTranslatedKeyMessage().getString();
+        } catch (Throwable t) {
+            return "Middle Click";
+        }
     }
 
     /** Right+left click: also ask for the picked skill once in a while so hasRl() is right. */

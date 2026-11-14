@@ -45,12 +45,17 @@ public final class EpicFightCompat {
             var patch = mc.player == null ? null : patch(mc.player);
             if (patch == null || !patch.isEpicFightMode()) return false;
             try {
-                yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance().toggleLockOn();
-                return true;
+                var api = yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance();
+                boolean before = api.isLockingOnTarget();
+                api.toggleLockOn();
+                // Epic Fight found nothing to lock on to (or its lock-on is off): ours takes over, so it still works
+                return before || api.isLockingOnTarget();
             } catch (Throwable t) {
                 return false;
             }
         };
+        com.xenowarriors.compat.EfTargetAssist.clientLock = p -> p == net.minecraft.client.Minecraft.getInstance().player ? com.xenowarriors.client.LockOn.target() : null;
+        com.xenowarriors.compat.EfTargetAssist.clientFoe = com.xenowarriors.client.LockOn::attackable;
         com.xenowarriors.client.LockOn.externalTarget = () -> {
             try {
                 var api = yesman.epicfight.api.client.camera.EpicFightCameraAPI.getInstance();
@@ -297,6 +302,7 @@ public final class EpicFightCompat {
         if (event.phase != net.minecraftforge.event.TickEvent.Phase.START) return;
         var level = net.minecraft.client.Minecraft.getInstance().level;
         STARTED.clear();
+        HekuFire.tick();
         if (level == null) {
             LAST.clear();
             return;
@@ -331,6 +337,9 @@ public final class EpicFightCompat {
             if (fresh && basicAttack(anim) && p == net.minecraft.client.Minecraft.getInstance().player
                     && com.xenowarriors.client.mikiko.RopeBladeClient.eligible(p) && lastOfCombo(p, patch, anim)) {
                 com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.RopeLashPacket());    // Season 3 rope lash
+            }
+            if (fresh && basicAttack(anim) && p.getMainHandItem().getItem() instanceof com.xenowarriors.item.HekubladeItem) {
+                HekuFire.swing(p, hitTicks(patch, anim));                      // the broadblade swings burn
             }
             if (fresh && basicAttack(anim) && ownWeapon(p)) {
                 STARTED.put(p.getId(), p.tickCount);

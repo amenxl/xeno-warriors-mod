@@ -39,10 +39,10 @@ model('zane_broom', b, STAFF_DISP)
 KNIFE_DISP = {"gui": {"rotation": [0, 0, -45], "scale": [0.8, 0.8, 0.8]},
         "ground": {"translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5]},
         "fixed": {"rotation": [0, 0, -45], "scale": [0.8, 0.8, 0.8]},
-        "thirdperson_righthand": {"rotation": [0, -90, 40], "translation": [0, 4, -3.8], "scale": [0.85, 0.85, 0.85]},
-        "thirdperson_lefthand": {"rotation": [0, 90, -40], "translation": [0, 4, -3.8], "scale": [0.85, 0.85, 0.85]},
-        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]},
-        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 3.2, 1.13], "scale": [0.68, 0.68, 0.68]}}
+        "thirdperson_righthand": {"rotation": [0, -90, 40], "translation": [0, 2.94, -2.91], "scale": [0.62, 0.62, 0.62]},     # (smaller - the user; grip kept in the hand)
+        "thirdperson_lefthand": {"rotation": [0, 90, -40], "translation": [0, 2.94, -2.91], "scale": [0.62, 0.62, 0.62]},
+        "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 2.4, 1.13], "scale": [0.54, 0.54, 0.54]},
+        "firstperson_lefthand": {"rotation": [0, 90, -25], "translation": [1.13, 2.4, 1.13], "scale": [0.54, 0.54, 0.54]}}
 tex('max_knife', [
     (0, 0, 4, 16, lambda x, y: (84 + 6 * (x % 2), 86 + 6 * (x % 2), 92 + 6 * (x % 2), 255)),             # dark steel
     (4, 0, 6, 16, lambda x, y: (176, 180, 190, 255)),                                                    # edge

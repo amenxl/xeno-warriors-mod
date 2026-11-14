@@ -464,7 +464,7 @@ public class CharacterCustomScreen extends Screen {
         pillW += (targetW - pillW) * 0.3F;
         String[] names = new String[tabs()];
         for (int i = 0; i < names.length; i++) names[i] = switch (ids()[i]) {
-            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "R+L CLICK"; case T_ABIL -> "ABILITIES"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
+            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "MIDDLE CLICK"; case T_ABIL -> "ABILITIES"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
         float ts = tb[3] / 15F;
@@ -953,11 +953,11 @@ public class CharacterCustomScreen extends Screen {
     private List<String> rlTab(GuiGraphics g, CharacterType type, int col, double mx, double my) {
         List<String> tip = null;
         var tp = com.xenowarriors.network.TogglesPacket.CLIENT;
-        scaled(g, "HOLD RIGHT CLICK, THEN TAP LEFT CLICK", 6, 56, 0.75F, light(col));
-        scaled(g, "Does this move instead of a swing - and stops a block.", 6, 65, 0.7F, 0xA0A0B0);
+        scaled(g, com.xenowarriors.client.TransformKeyClient.buttonName().toUpperCase(java.util.Locale.ROOT) + " DOES THIS MOVE", 6, 56, 0.75F, light(col));
+        scaled(g, "(the middle mouse button - your Pick Block key)", 6, 65, 0.7F, 0xA0A0B0);
         scaled(g, "Its cooldown is a fifth shorter than from a skill slot.", 6, 73, 0.7F, 0xA0A0B0);
         if (tp.rl().isEmpty()) {
-            scaled(g, "No right+left click skills for " + type.getDisplayName().getString() + " yet.", 6, RL_Y + 4, 0.85F, 0x8A8A9A);
+            scaled(g, "No middle click skills for " + type.getDisplayName().getString() + " yet.", 6, RL_Y + 4, 0.85F, 0x8A8A9A);
             return null;
         }
         int n = tp.rl().size();
@@ -974,13 +974,13 @@ public class CharacterCustomScreen extends Screen {
             int tx = pic ? x + RL_H : x + 5;
             String nm = e == null ? "None" : e.name();
             scaled(g, ell(nm, (int) ((x + CARD_W - 3 - tx) / 0.9F)), tx, y + 5, 0.9F, locked ? 0x777777 : 0xFFFFFF);
-            String line = e == null ? (on ? "Right+left click off" : "Turn it off")
+            String line = e == null ? (on ? "Middle click off" : "Turn it off")
                     : locked ? e.locked() : (on ? "Equipped  •  " : "") + UltimaAnim.resource() + " " + e.cost() + "  CD " + Math.max(1, Math.round(e.cooldown() / 20F)) + "s";
             scaled(g, ell(line, (int) ((x + CARD_W - 3 - tx) / 0.72F)), tx, y + 17, 0.72F, locked ? 0xAA5555 : on ? 0x77DD88 : 0x99AABB);
             if (over && e != null) {
                 Skill sk = null;
                 for (SkillPool.Entry en : SkillPool.of(minecraft.player)) if (en.skill().getId().equals(e.id())) sk = en.skill();
-                tip = sk == null ? List.of(e.name()) : lines(e.name() + " (right+left click)", SkillLoadoutScreen.desc(sk));
+                tip = sk == null ? List.of(e.name()) : lines(e.name() + " (" + com.xenowarriors.client.TransformKeyClient.buttonName() + ")", SkillLoadoutScreen.desc(sk));
             }
         }
         return tip;

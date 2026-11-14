@@ -44,6 +44,33 @@ public final class WomMoves {
     public static final Map<String[], String[]> TAILS = new java.util.IdentityHashMap<>();
     static { TAILS.put(SPARKS, new String[]{S + "torment_berserk_dash", C + "enderblaster_twohand_tishnaw"}); }
     public static final String[] SWIFT = {C + "enderblaster_onehand_auto_1", C + "enderblaster_onehand_auto_2", C + "enderblaster_onehand_auto_3", C + "enderblaster_onehand_auto_4"};
+    /** Mikiko's bare hands (the user's pick for now): Epic Fight's own glove punches. */
+    public static final String[] GLOVES = {"epicfight:biped/combat/fist_auto1", "epicfight:biped/combat/fist_auto2", "epicfight:biped/combat/fist_auto3"};
+    /** Rhalix's bare hands (the user's pick for now): the Ender Blaster's strikes - no shooting (right click guards). */
+    public static final String[] ENDER = {C + "enderblaster_onehand_auto_1", C + "enderblaster_onehand_auto_2", C + "enderblaster_onehand_auto_3", C + "enderblaster_onehand_auto_4"};
+    /** Kyrie's bare hands: Epic Fight: Dawn Day's Iron Fist, its first four hits, with its own dash and air attacks. */
+    public static final String[] IRON_FIST = {"epicfight_dd:biped/combat/iron_fist_auto1", "epicfight_dd:biped/combat/iron_fist_auto2",
+            "epicfight_dd:biped/combat/iron_fist_auto3", "epicfight_dd:biped/combat/iron_fist_auto4"};
+    /** The Hekublade: EpicFight Nightfall's warrior broadblade (its idles stay Mikiko's own). */
+    public static final String[] BROADBLADE = {"efn:biped/broadblade/broadblade_auto1", "efn:biped/broadblade/broadblade_auto2", "efn:biped/broadblade/broadblade_auto3",
+            "efn:biped/broadblade/broadblade_auto4", "efn:biped/broadblade/broadblade_auto5"};
+    /** Rhalix's Wire Sword: Weapons of Harmony's Arbiter's Blade. */
+    public static final String[] ARBITER = {"woh:biped/combat/arbiters_blade/arbiters_blade_auto_1", "woh:biped/combat/arbiters_blade/arbiters_blade_auto_2",
+            "woh:biped/combat/arbiters_blade/arbiters_blade_auto_3", "woh:biped/combat/arbiters_blade/arbiters_blade_auto_4"};
+    static {
+        TAILS.put(ENDER, new String[]{C + "enderblaster_onehand_dash", C + "enderblaster_onehand_jumpkick"});
+        TAILS.put(IRON_FIST, new String[]{"epicfight_dd:biped/combat/iron_fist_dash", "epicfight_dd:biped/combat/iron_fist_airslash"});
+        TAILS.put(GLOVES, new String[]{"epicfight:biped/combat/fist_dash", "epicfight:biped/combat/fist_airslash"});
+        TAILS.put(BROADBLADE, new String[]{"efn:biped/broadblade/broadblade_dash_slash", "efn:biped/broadblade/broadblade_air_slash"});
+        TAILS.put(ARBITER, new String[]{"woh:biped/combat/arbiters_blade/arbiters_blade_auto_5", "woh:biped/combat/arbiters_blade/arbiters_blade_airslash"});
+    }
+
+    /**
+     * Mikiko's and Rhalix's own fighting styles (their own punches / Bajiquan and Rhalix's eight-hit string, baked from
+     * their animations) - kept, but switched off for now: the user picked Epic Fight's glove punches for Mikiko and the
+     * Ender Blaster for Rhalix. Their own stance and idles near enemies are still theirs. True brings the old ones back.
+     */
+    public static boolean CLASSIC_STYLES = false;
 
     public static final Map<CharacterType, String[]> FISTS = new java.util.EnumMap<>(CharacterType.class);
     /** Our weapons (item id path) -> their moves. */
@@ -52,7 +79,12 @@ public final class WomMoves {
         for (CharacterType t : new CharacterType[]{CharacterType.LEXY, CharacterType.MAX, CharacterType.SAM, CharacterType.STEVIE, CharacterType.GARRY}) FISTS.put(t, STREET);
         for (CharacterType t : new CharacterType[]{CharacterType.ULTIMA, CharacterType.AIONI, CharacterType.KILL}) FISTS.put(t, BEAST);
         FISTS.put(CharacterType.KAERU, SPARKS);
-        for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.TECHNICA, CharacterType.YURI, CharacterType.ZANE, CharacterType.LOGAN, CharacterType.KEITA}) FISTS.put(t, SWIFT);
+        for (CharacterType t : new CharacterType[]{CharacterType.TECHNICA, CharacterType.YURI, CharacterType.ZANE, CharacterType.LOGAN, CharacterType.KEITA}) FISTS.put(t, SWIFT);
+        FISTS.put(CharacterType.KYRIE, IRON_FIST);
+        FISTS.put(CharacterType.MIKIKO, GLOVES);
+        FISTS.put(CharacterType.RHALIX, ENDER);
+        WEAPONS.put("hekublade", BROADBLADE);
+        WEAPONS.put("wire_sword", ARBITER);
         WEAPONS.put("logan_blade", new String[]{C + "herrscher_auto_1", C + "herrscher_auto_2", C + "herrscher_auto_3"});             // the knight's sword
         WEAPONS.put("keita_blade", new String[]{C + "katana_sheathed_auto_1", C + "katana_sheathed_auto_2", C + "katana_sheathed_auto_3"});   // lazy quick-draw cuts
         WEAPONS.put("senju_blade", new String[]{C + "katana_auto_1", C + "katana_auto_2", C + "katana_auto_3"});
@@ -112,7 +144,7 @@ public final class WomMoves {
     }
 
     /** Moves from another Epic Fight mod (their animation events may expect that mod's own weapon - see guard). */
-    static boolean foreign(String namespace) { return "wom".equals(namespace) || "epicfight_dd".equals(namespace); }
+    static boolean foreign(String namespace) { return "wom".equals(namespace) || "epicfight_dd".equals(namespace) || "woh".equals(namespace) || "efn".equals(namespace); }
 
     /** (from the mixin on Epic Fight's getAutoAttackMotion) our combo in place of the original, or the original. */
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -121,6 +153,8 @@ public final class WomMoves {
         try {
             Player p = patch.getOriginal();
             if (p == null) return original;
+            List soul = soulrender(patch, p, original);
+            if (soul != null) return soul;
             List own = ownMoves(p);
             if (own != null) {                                                        // our own characters' moves, rebuilt for Epic Fight
                 List out = new ArrayList(own);
@@ -188,7 +222,7 @@ public final class WomMoves {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     static List ownMoves(Player p) {
-        if (!p.getMainHandItem().isEmpty()) return null;
+        if (!CLASSIC_STYLES || !p.getMainHandItem().isEmpty()) return null;
         CharacterType t = character(p);
         String[] keys = t == CharacterType.MIKIKO ? MIKIKO_COMBO : t == CharacterType.RHALIX ? RHALIX_COMBO : null;
         var map = t == CharacterType.MIKIKO ? EfAnimations.MIKIKO : EfAnimations.RHALIX;
@@ -201,6 +235,30 @@ public final class WomMoves {
         }
         return out;
     }
+
+    /**
+     * Simply Swords' Soulrender (Epicfied): holding attack sends it into its ascended style - which fights with the first
+     * four hits of Rhalix's own string (the user's pick), then the ascended style's own dash and air attacks.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    static List soulrender(PlayerPatch<?> patch, Player p, List original) {
+        var id = ForgeRegistries.ITEMS.getKey(p.getMainHandItem().getItem());
+        if (id == null || !"simplyswords".equals(id.getNamespace()) || !"soulrender".equals(id.getPath())) return null;
+        try {
+            var cap = patch.getHoldingItemCapability(net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (cap == null || cap.getStyle(patch) != yesman.epicfight.world.capabilities.item.CapabilityItem.Styles.OCHS) return null;
+        } catch (Throwable t) { return null; }
+        List out = new ArrayList();
+        for (int i = 0; i < 4; i++) {
+            var acc = EfAnimations.RHALIX.get(RHALIX_COMBO[i]);
+            if (acc == null) return null;
+            out.add(acc);
+        }
+        out.addAll(tail(original, null));
+        soulrenderSwaps++;
+        return out;
+    }
+    public static int soulrenderSwaps;
 
     /** Rhalix's bare-hand ground combo: his eight hits, baked from his animations. */
     public static final String[] RHALIX_COMBO = {"hit0", "hit1", "hit2", "hit3", "hit4", "hit5", "hit6", "hit7"};
