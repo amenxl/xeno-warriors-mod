@@ -19,6 +19,7 @@ public final class EfTargetAssist {
     public static java.util.function.Function<Player, LivingEntity> clientLock = p -> null;
     public static java.util.function.Predicate<LivingEntity> clientFoe = e -> true;
 
+    private static final java.util.Map<Player, Object[]> LAST = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
     private static final java.util.Map<Player, Object[]> CACHE = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
     public static int assists;
 
@@ -30,10 +31,38 @@ public final class EfTargetAssist {
         try {
             if (p.level().isClientSide) t = clientLock.apply(p);
             if (t == null) t = pick(p);
+            // (sticky for a moment: a lunge that carries you level with it doesn't lose it)
+            Object[] last = LAST.get(p);
+            if (t == null && last != null && p.tickCount - (int) last[0] < 15 && last[1] instanceof LivingEntity lt && lt.isAlive()
+                    && lt.distanceToSqr(p) < RANGE * RANGE) t = lt;
+            if (t != null) LAST.put(p, new Object[]{p.tickCount, t});
         } catch (Throwable ignored) {}
         CACHE.put(p, new Object[]{p.tickCount, t});
         if (t != null) assists++;
         return t;
+    }
+
+    /** (Tests) times a lunge was stopped at the enemy instead of running through it. */
+    public static int stops;
+
+    /**
+     * An attack's lunge stops at the enemy (Kyrie's Iron Fist carried her straight through and past the dummy - the
+     * hits after the first then hit nothing): the step Epic Fight is about to move the player this tick, cut short
+     * at the target.
+     */
+    public static Vec3 stopAtTarget(Player p, Vec3 step) {
+        LivingEntity t = target(p);
+        if (t == null || step == null) return step;
+        Vec3 to = new Vec3(t.getX() - p.getX(), 0, t.getZ() - p.getZ());
+        double d = to.length();
+        if (d < 1.0E-3) return step;
+        Vec3 dir = to.scale(1 / d);
+        double gap = d - (t.getBbWidth() + p.getBbWidth()) / 2 - 0.15;
+        double toward = step.x * dir.x + step.z * dir.z;
+        if (toward <= 0 || toward <= gap) return step;
+        double cut = toward - Math.max(0, gap);
+        stops++;
+        return new Vec3(step.x - dir.x * cut, step.y, step.z - dir.z * cut);
     }
 
     private static LivingEntity pick(Player p) {

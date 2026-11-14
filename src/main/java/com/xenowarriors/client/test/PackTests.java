@@ -122,6 +122,7 @@ public final class PackTests {
         if (focus.startsWith("packwom")) { PackWomTests.build(mc, l); return; }      // (Weapons of Miracles' moves on our characters)
         if (focus.startsWith("packefhitfoes")) { PackEfClothesTests.hits(mc, l); PackFoeTests.build(mc, l); return; }   // (both)
         if (focus.startsWith("packefhit")) { PackEfClothesTests.hits(mc, l); return; }      // (battle-mode punches land)
+        if (focus.startsWith("packbugs1")) { PackFistTraceTests.build(mc, l); PackEfClothesTests.hoods(mc, l); return; }   // (lunges stop at the enemy; hoodies and Kaeru's tail)
         if (focus.startsWith("packefhood")) { PackEfClothesTests.hoods(mc, l); return; }      // (hoodies and Kaeru's tail in battle mode)
         if (focus.startsWith("packfisttrace")) { PackFistTraceTests.build(mc, l); return; }      // (why Kyrie's Iron Fist misses)
         if (focus.startsWith("packfoes")) { PackFoeTests.build(mc, l); return; }      // (Season 3 foes with Epic Fight, the bow, Simply Swords gear)

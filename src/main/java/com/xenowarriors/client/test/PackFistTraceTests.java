@@ -48,7 +48,9 @@ final class PackFistTraceTests {
             l.add(new Step("pack_fisttrace_" + who.getId(), () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 PackTests.log("fisttrace " + who.getId() + " end: dummy " + (z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1)
-                        + " guarded " + com.xenowarriors.compat.epicfight.WomMoves.GUARDED);
+                        + " guarded " + com.xenowarriors.compat.epicfight.WomMoves.GUARDED + " lunge stops " + com.xenowarriors.compat.EfTargetAssist.stops);
+                PackTests.check("fisttrace " + who.getId() + ": more than one hit lands", z instanceof net.minecraft.world.entity.LivingEntity le2 && le2.getHealth() < le2.getMaxHealth() - 7F,
+                        "dummy " + (z instanceof net.minecraft.world.entity.LivingEntity le3 ? le3.getHealth() : -1));
                 if (z != null) z.discard();
             }), 4));
         }

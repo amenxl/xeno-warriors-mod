@@ -20,6 +20,7 @@
     "compat.EpicFightEquipChangeMixin",
     "compat.EpicFightPlayerTargetMixin",
     "compat.EpicFightFlyingComboMixin",
+    "compat.EpicFightLungeStopMixin",
     "compat.WohNullComboMixin",
     "compat.EpicFightAnimationEventWomMixin",
     "compat.DragonMineZQuestBiomeMatchMixin",
