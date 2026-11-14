@@ -34,6 +34,9 @@ final class PackFoeTests {
             var soul = com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL.get().create(l2);
             if (soul != null) { soul.moveTo(p.getX() + 1, p.getY() + 1.5, p.getZ() + 5, 180, 0); soul.setNoAi(true); l2.addFreshEntity(soul); ids[2] = soul.getId(); }
             com.xenowarriors.compat.SimplySwordsGear.testRoll = null;
+            ItemStack sh = soul == null ? ItemStack.EMPTY : soul.getMainHandItem();
+            var sk = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(sh.getItem());
+            PackTests.check("foes: a corrupted soul can carry a Simply Swords weapon", sk != null && sk.getNamespace().equals("simplyswords"), "holds " + sk);
             swings0[0] = com.xenowarriors.foes.FoeAnims.swings;
         }), 20));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); }, 140));
@@ -48,9 +51,6 @@ final class PackFoeTests {
             PackTests.check("foes: both on Epic Fight's body", vp != null && sp != null, "patches " + vp + " / " + sp);
             PackTests.check("foes: they swing their weapons' Epic Fight moves", com.xenowarriors.foes.FoeAnims.swings > swings0[0],
                     "swings " + (com.xenowarriors.foes.FoeAnims.swings - swings0[0]) + " player hurt? health " + p.getHealth());
-            ItemStack held = soul instanceof net.minecraft.world.entity.LivingEntity ls ? ls.getMainHandItem() : ItemStack.EMPTY;
-            var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(held.getItem());
-            PackTests.check("foes: a corrupted soul can carry a Simply Swords weapon", key != null && key.getNamespace().equals("simplyswords"), "holds " + key);
             var bow = yesman.epicfight.world.capabilities.EpicFightCapabilities.getItemStackCapability(new ItemStack(net.minecraft.world.item.Items.BOW));
             String cat = bow == null ? "none" : String.valueOf(bow.getWeaponCategory());
             PackTests.check("bow: Epic Fight's bow again (not Epic Arsenal's gun)", cat.toLowerCase(java.util.Locale.ROOT).contains("bow"), "bow category " + cat + " " + bow);
