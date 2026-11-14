@@ -125,7 +125,12 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             for (ModelPart.Cube c : cubes(m.body)) ((c.minY + c.maxY) / 2F < WAIST ? up : low).add(c);
             // the coat tails hang from the waist (they swing with the legs, see draw), everything else rides the chest
             Map<String, ModelPart> kids = new HashMap<>(), lowKids = new HashMap<>();
-            for (String k : childNames(m.body)) (k.startsWith("coat_") ? lowKids : kids).put(k, m.body.getChild(k));
+            // (and whatever hangs from the hips - Kaeru's tail, belt charms - rides the hips too: on the chest it came
+            //  away from her body whenever she twisted or bent - the user's video)
+            for (String k : childNames(m.body)) {
+                ModelPart kid = m.body.getChild(k);
+                (k.startsWith("coat_") || kid.getInitialPose().y >= WAIST ? lowKids : kids).put(k, kid);
+            }
             bodyUpper = new ModelPart(up, kids);
             bodyLower = new ModelPart(low, lowKids);
             info = "body cubes " + cubes(m.body).size() + " -> upper " + up.size() + " lower " + low.size() + " kids " + kids.keySet() + " low kids " + lowKids.keySet()
