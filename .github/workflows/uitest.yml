@@ -17,7 +17,7 @@ jobs:
   uitest:
     runs-on: ubuntu-latest
     env:
-      XW_FORGE: ${{ (startsWith(github.event.inputs.focus, 'dmz') || startsWith(github.event.inputs.focus, 'ef')) && '47.4.0' || '' }}
+      XW_FORGE: '47.4.0'   # (Epic Fight 20.14 in libs needs Forge 47.4+ for every run)
       XW_UITEST_EXTRA: ${{ (startsWith(github.event.inputs.focus, 'dmz') && 'dmz') || (contains(github.event.inputs.focus, 'tacz') && 'tacz') || (startsWith(github.event.inputs.focus, 'ef') && 'ef') || '' }}
     steps:
       - uses: actions/checkout@v4
