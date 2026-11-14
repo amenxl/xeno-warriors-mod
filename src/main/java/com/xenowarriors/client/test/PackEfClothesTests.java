@@ -46,7 +46,9 @@ final class PackEfClothesTests {
         for (Case c : new Case[]{new Case("kyrie_hoodie", CharacterType.KYRIE, 0, "minecraft:iron_sword", true, false),
                 new Case("kyrie_srhoodie", CharacterType.KYRIE, 0, "minecraft:iron_sword", true, false),
                 new Case("keita_hoodie", CharacterType.KEITA, 0, "minecraft:iron_sword", true, false),
-                new Case("kaeru", CharacterType.KAERU, 0, "minecraft:iron_sword", false, false)}) one(mc, l, c);
+                new Case("kaeru", CharacterType.KAERU, 0, "minecraft:iron_sword", false, false),
+                new Case("mikiko_dmzgi", CharacterType.MIKIKO, 0, "minecraft:iron_sword", false, false)}) one(mc, l, c);
+        l.add(new Step(null, () -> PackTests.log("efhood: DragonMineZ outfit pieces on Epic Fight's body " + com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.giDrawn), 2));
         l.add(new Step(null, () -> PackTests.log("efhood: hoodie trims drawn " + com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.trims), 2));
         l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.server(p -> { p.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY); PackTests.clear(p); }); }, 10));
@@ -102,8 +104,18 @@ final class PackEfClothesTests {
                 var it = c.held == null ? null : net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation(c.held));
                 p.getInventory().setItem(0, it == null ? ItemStack.EMPTY : new ItemStack(it));
                 p.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-                p.setItemSlot(EquipmentSlot.CHEST, !c.hoodie ? ItemStack.EMPTY : new ItemStack(c.name.contains("srhoodie")
-                        ? com.xenowarriors.item.ModItems.SR_HOODIE.get() : com.xenowarriors.item.ModItems.KARMA_HOODIE.get()));
+                ItemStack chest = !c.hoodie ? ItemStack.EMPTY : new ItemStack(c.name.contains("srhoodie")
+                        ? com.xenowarriors.item.ModItems.SR_HOODIE.get() : com.xenowarriors.item.ModItems.KARMA_HOODIE.get());
+                if (c.name.contains("dmzgi")) {                                    // (a DragonMineZ gi top and pants)
+                    for (var it2 : net.minecraftforge.registries.ForgeRegistries.ITEMS.getValues()) {
+                        var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(it2);
+                        if (key == null || !key.getNamespace().equals("dragonminez") || !(it2 instanceof net.minecraft.world.item.ArmorItem a) || !key.getPath().contains("gi")) continue;
+                        if (a.getEquipmentSlot() == EquipmentSlot.CHEST && chest.isEmpty()) chest = new ItemStack(it2);
+                        if (a.getEquipmentSlot() == EquipmentSlot.LEGS && p.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) p.setItemSlot(EquipmentSlot.LEGS, new ItemStack(it2));
+                    }
+                    PackTests.log("efclothes dmzgi: wearing " + chest + " / " + p.getItemBySlot(EquipmentSlot.LEGS));
+                } else p.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+                p.setItemSlot(EquipmentSlot.CHEST, chest);
                 if (c.summon) com.xenowarriors.forms.SignatureWeapons.toggle(p);
                 p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0);
             });
