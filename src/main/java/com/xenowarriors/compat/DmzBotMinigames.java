@@ -41,6 +41,9 @@ public final class DmzBotMinigames {
     private static Boolean loaded;
     private static boolean broken;
     private static Method trainingConfig, getSettings, perLevel, limit, multiplier, byDefault;
+    /** DragonMineZ 2.2 rewards by the minute: a bot's minigame level counts as half a minute of play. */
+    private static boolean perMinute;
+    private static final float MINUTES_PER_LEVEL = 0.5F;
 
     private record Game(String id, int levels, long ends) {}
     private static final Map<UUID, Game> PLAYING = new HashMap<>();
@@ -67,7 +70,12 @@ public final class DmzBotMinigames {
             Class<?> tc = trainingConfig.getReturnType();
             getSettings = tc.getMethod("getSettings", String.class);
             Class<?> ms = getSettings.getReturnType();
-            perLevel = tc.getMethod("computeTpsPerLevel", int.class, ms);
+            try {
+                perLevel = tc.getMethod("computeTpsPerLevel", int.class, ms);
+            } catch (NoSuchMethodException e) {
+                perLevel = tc.getMethod("computeTpsPerMinute", int.class, ms);   // (DragonMineZ 2.2: TP per minute of play)
+                perMinute = true;
+            }
             limit = ms.getMethod("getTpsLimitPerGame");
             multiplier = ms.getMethod("getRewardMultiplier");
             byDefault = ms.getMethod("isUnlockedByDefault");
@@ -126,7 +134,7 @@ public final class DmzBotMinigames {
             Object s = getSettings.invoke(trainingConfig.invoke(null), game.id);
             int total = ((Number) m(m(d.sd, "getStats"), "getTotalStats")).intValue();
             int cost = ((Number) m(d.sd, "getSingleStatCost", total)).intValue();
-            float per = ((Number) perLevel.invoke(trainingConfig.invoke(null), cost, s)).floatValue();
+            float per = ((Number) perLevel.invoke(trainingConfig.invoke(null), cost, s)).floatValue() * (perMinute ? MINUTES_PER_LEVEL : 1F);
             float tp = (float) (per * game.levels * DmzBotWeights.multiplier(b));   // (training weights it wears)
             float cap = ((Number) limit.invoke(s)).floatValue();
             if (cap > 0 && tp > cap) tp = cap;
@@ -176,7 +184,7 @@ public final class DmzBotMinigames {
             Object s = getSettings.invoke(trainingConfig.invoke(null), "control");
             int total = ((Number) m(m(sd, "getStats"), "getTotalStats")).intValue();
             int cost = ((Number) m(sd, "getSingleStatCost", total)).intValue();
-            return ((Number) perLevel.invoke(trainingConfig.invoke(null), cost, s)).floatValue();
+            return ((Number) perLevel.invoke(trainingConfig.invoke(null), cost, s)).floatValue() * (perMinute ? MINUTES_PER_LEVEL : 1F);
         } catch (Throwable t) { return 0; }
     }
 

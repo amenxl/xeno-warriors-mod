@@ -153,6 +153,7 @@ public class VesselEntity extends PathfinderMob implements Enemy {
                 l.sendParticles(ParticleTypes.SWEEP_ATTACK, v.getX(), v.getY() + 1, v.getZ(), 1, 0, 0, 0, 0);
                 l.playSound(null, blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.HOSTILE, 1F, 0.8F);
             } else l.playSound(null, blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 0.7F, 1.4F);
+            com.xenowarriors.compat.Effeks.play(l, com.xenowarriors.compat.Effeks.CLAW, v.position().add(0, v.getBbHeight() * 0.5, 0), 0.7F, getYRot());   // (AAA Particles: its dark claws)
         }
         return hit;
     }

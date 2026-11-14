@@ -53,6 +53,7 @@ public final class HekuFire {
         }
         if (f >= 0.99F) {
             double ax = c.x - Math.sin(Math.toRadians(yaw)) * 1.8, az = c.z + Math.cos(Math.toRadians(yaw)) * 1.8;
+            com.xenowarriors.compat.Effeks.play(level, com.xenowarriors.compat.Effeks.FLAME2, new Vec3(ax, c.y - 0.3, az), 0.55F, yaw);   // (AAA Particles)
             for (int i = 0; i < 8; i++)
                 level.addParticle(ParticleTypes.FLAME, ax, c.y - 0.3, az, (r.nextDouble() - 0.5) * 0.15, r.nextDouble() * 0.12, (r.nextDouble() - 0.5) * 0.15);
         }

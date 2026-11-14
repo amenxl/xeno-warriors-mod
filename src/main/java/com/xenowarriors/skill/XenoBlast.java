@@ -372,6 +372,7 @@ public final class XenoBlast {
         l.playSound(null, BlockPos.containing(at), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.6F, 0.6F);
         l.playSound(null, BlockPos.containing(at), SoundEvents.WITHER_BREAK_BLOCK, SoundSource.PLAYERS, 0.8F, 0.7F);
         l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+        com.xenowarriors.compat.Effeks.play(l, com.xenowarriors.compat.Effeks.BURST, at, (float) Math.max(1.0, radius * 0.35), 0F);   // (AAA Particles)
         fx(o, FX_BURST, 0, true, at, Vec3.ZERO, (float) radius * 1.2F, 20);
         l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y, at.z, (int) Math.max(2, radius / 2), radius * 0.4, radius * 0.3, radius * 0.4, 0);   // (a big blast, a big cloud)
         java.util.Random r = new java.util.Random();

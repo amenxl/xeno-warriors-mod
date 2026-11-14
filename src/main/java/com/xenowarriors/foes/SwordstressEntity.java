@@ -158,6 +158,7 @@ public class SwordstressEntity extends Monster {
         Vec3 f = Vec3.directionFromRotation(0, getYRot()).scale(1.6);
         l.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, l.getBlockState(blockPosition().below())), getX() + f.x, getY() + 0.1, getZ() + f.z, 50, 1.2, 0.1, 1.2, 0.15);
         l.sendParticles(ParticleTypes.EXPLOSION, getX() + f.x, getY() + 0.3, getZ() + f.z, 1, 0, 0, 0, 0);
+        com.xenowarriors.compat.Effeks.play(l, com.xenowarriors.compat.Effeks.ROCK, position().add(f.x, 0.1, f.z), 1.0F, getYRot());   // (AAA Particles: the ground breaks)
         l.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 0.8F, 1.2F);
         boolean stuck = testStuck != null ? testStuck : random.nextFloat() < STUCK_CHANCE;
         if (stuck) {

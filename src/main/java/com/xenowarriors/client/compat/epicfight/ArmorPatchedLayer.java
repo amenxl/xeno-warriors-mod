@@ -30,7 +30,7 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
     private static final Map<String, SkinnedMesh> BAKED = new HashMap<>();
     private static final Map<String, DetailPatchedLayer.Rig> RIGS = new HashMap<>();
     /** (tests) pieces drawn on Epic Fight's skeleton. */
-    public static int drawn;
+    public static int drawn, trims;
 
     @Override
     protected void renderLayer(AbstractClientPlayerPatch<AbstractClientPlayer> patch, AbstractClientPlayer player,
@@ -50,8 +50,20 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
                     return m == null ? null : new DetailPatchedLayer.Rig(m, true, pk.noLeftArm());
                 });
                 if (rig == null) continue;
-                rig.draw(patch.getArmature(), pose, buffers.getBuffer(RenderType.entityCutoutNoCull(pk.tex())), light, OverlayTexture.NO_OVERLAY, poses, false, c[0], c[1], c[2]);
-                if (pk.foil()) rig.draw(patch.getArmature(), pose, buffers.getBuffer(RenderType.armorEntityGlint()), light, OverlayTexture.NO_OVERLAY, poses, false, 1F, 1F, 1F);
+                boolean hoodie = pk.path().endsWith("_hoodie.json") && !pk.path().endsWith("_sr_hoodie.json");
+                boolean hood = hoodie && com.xenowarriors.client.mikiko.HoodClient.up(player);   // (up in the rain, down otherwise - as without Epic Fight)
+                var vc = buffers.getBuffer(RenderType.entityCutoutNoCull(pk.tex()));
+                rig.draw(patch.getArmature(), pose, vc, light, OverlayTexture.NO_OVERLAY, poses, hood, c[0], c[1], c[2]);
+                if (hoodie) {
+                    // the Karma Hoodie's trim (its white bands and design, undyed) - it was missing in battle mode
+                    String trimPath = pk.path().replace("_hoodie.json", "_hoodie_trim.json");
+                    DetailPatchedLayer.Rig trim = RIGS.computeIfAbsent(trimPath + (pk.noLeftArm() ? "#noleft" : ""), k -> {
+                        DetailModel tm = DetailModel.loadForEpicFight(trimPath);
+                        return tm == null ? null : new DetailPatchedLayer.Rig(tm, true, pk.noLeftArm());
+                    });
+                    if (trim != null) { trim.draw(patch.getArmature(), pose, vc, light, OverlayTexture.NO_OVERLAY, poses, hood, 1F, 1F, 1F); trims++; }
+                }
+                if (pk.foil()) rig.draw(patch.getArmature(), pose, buffers.getBuffer(RenderType.armorEntityGlint()), light, OverlayTexture.NO_OVERLAY, poses, hood, 1F, 1F, 1F);
                 drawn++;
                 continue;
             }

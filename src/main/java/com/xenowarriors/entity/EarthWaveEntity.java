@@ -173,6 +173,7 @@ public class EarthWaveEntity extends Entity {
         float half = halfWidth(traveled);
         server.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, surface),
                 front.x, groundY + 1.4, front.z, 14, half * 0.6, 0.5, half * 0.6, 0.15);
+        if (tickCount % 4 == 0) com.xenowarriors.compat.Effeks.play(server, com.xenowarriors.compat.Effeks.ROCK, new Vec3(front.x, groundY + 1, front.z), half * 0.5F, getYRot());   // (AAA Particles)
         if (tickCount % 3 == 0) {
             server.playSound(null, front.x, groundY + 1, front.z, SoundEvents.GRAVEL_BREAK, SoundSource.PLAYERS, 1.2F, 0.5F + random.nextFloat() * 0.2F);
             server.playSound(null, front.x, groundY + 1, front.z, SoundEvents.BASALT_BREAK, SoundSource.PLAYERS, 0.9F, 0.6F);

@@ -121,6 +121,7 @@ public class FireBlitzEntity extends Projectile {
         setDeltaMovement(Vec3.ZERO);
         level().playSound(null, getX(), getY(), getZ(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.PLAYERS, 1F, 0.7F);
         level().playSound(null, getX(), getY(), getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1F, 1.1F);
+        com.xenowarriors.compat.Effeks.play(level(), com.xenowarriors.compat.Effeks.FLAME, target.position().add(0, target.getBbHeight() * 0.5, 0), 0.6F, getYRot());
         if (getOwner() instanceof ServerPlayer owner) {
             ModNetwork.sendToPlayer(new TrackTargetPacket(target.getId(), STUCK_TIME), owner);
             owner.displayClientMessage(Component.translatable("message.xenowarriors.blitz.stuck", target.getDisplayName()), true);
@@ -135,6 +136,7 @@ public class FireBlitzEntity extends Projectile {
     private void burst() {
         if (level() instanceof ServerLevel server) {
             server.sendParticles(ParticleTypes.FLAME, getX(), getY(), getZ(), 20, 0.3, 0.3, 0.3, 0.08);
+            com.xenowarriors.compat.Effeks.play(server, com.xenowarriors.compat.Effeks.BURST_RED, position(), 0.7F, getYRot());   // (AAA Particles)
             server.sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY(), getZ(), 6, 0.2, 0.2, 0.2, 0.02);
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.8F, 1.2F);
         }

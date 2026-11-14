@@ -67,6 +67,7 @@ public final class DemonsRemnants {
         var s = p.serverLevel();
         s.playSound(null, p.blockPosition(), SoundEvents.WITHER_AMBIENT, SoundSource.PLAYERS, 0.7F, 0.6F);
         s.playSound(null, p.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1F, 0.5F);
+        com.xenowarriors.compat.Effeks.play(s, com.xenowarriors.compat.Effeks.DISORDER, p.position().add(0, 1, 0), 0.9F, p.getYRot(), p);   // (AAA Particles: the demon rising)
         Vec3 eye = p.getEyePosition();
         s.sendParticles(RED, eye.x, eye.y, eye.z, 16, 0.25, 0.1, 0.25, 0);
         com.xenowarriors.anim.Poses.play(p, com.xenowarriors.anim.Poses.KA_BREAK, 12);

@@ -172,6 +172,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (!(armature instanceof yesman.epicfight.model.armature.HumanoidArmature h)) return false;
             tint[0] = r; tint[1] = g; tint[2] = b;
             if (m.hoodDown != null) m.hoodDown.visible = !hood;
+            if (m.hoodUp != null) m.hoodUp.visible = hood;               // (it was always up in battle mode - the user's video)
             if (m.coatBack != null) {
                 // Rhalix's coat tails: swung by Epic Fight's thighs (forward / back, out to the side), as our renderer does
                 float[] lr = legAngles(h.torso, h.thighR, poses), ll = legAngles(h.torso, h.thighL, poses);

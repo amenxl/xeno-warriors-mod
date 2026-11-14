@@ -186,7 +186,11 @@ final class PackEfClothesTests {
                 new Case(CharacterType.KAERU, () -> ItemStack.EMPTY, "agony_auto_1"),
                 new Case(CharacterType.KYRIE, () -> ItemStack.EMPTY, "iron_fist_auto1"),
                 new Case(CharacterType.MIKIKO, () -> new ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get()), "broadblade_auto1"),
-                new Case(CharacterType.RHALIX, () -> new ItemStack(com.xenowarriors.forms.FormItems.WIRE_SWORD.get()), "arbiters_blade_auto_1"));
+                new Case(CharacterType.RHALIX, () -> new ItemStack(com.xenowarriors.forms.FormItems.WIRE_SWORD.get()), "arbiters_blade_auto_1"),
+                // (the user's video: Sam's bat and a wooden bat seemed to do no damage)
+                new Case(CharacterType.SAM, () -> new ItemStack(com.xenowarriors.item.ModItems.SAM_BAT.get()), "torment_auto_1"),
+                new Case(CharacterType.SAM, () -> { var it = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("epicfight_dd", "bat"));
+                    return it == null || it == net.minecraft.world.item.Items.AIR ? new ItemStack(net.minecraft.world.item.Items.STICK) : new ItemStack(it); }, ""));
         for (Case cs : cases) {
             CharacterType who = cs.who();
             String tag = who.getId() + (cs.held().get().isEmpty() ? "" : "_" + net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(cs.held().get().getItem()).getPath());

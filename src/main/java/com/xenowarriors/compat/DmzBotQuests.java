@@ -96,7 +96,8 @@ public final class DmzBotQuests {
             turnInReady = service.getMethod("isTurnInReady", pqdClass, String.class, quest);
             needsTurnIn = service.getMethod("requiresTurnInAction", quest);
             Method spawn = null;
-            for (Method mm : service.getDeclaredMethods()) if (mm.getName().equals("spawnKillObjectives") && mm.getParameterCount() == 5) spawn = mm;
+            // (DragonMineZ 2.2 dropped the quest-data argument: player, quest, party size, difficulty)
+            for (Method mm : service.getDeclaredMethods()) if (mm.getName().equals("spawnKillObjectives") && (mm.getParameterCount() == 5 || mm.getParameterCount() == 4)) spawn = mm;
             if (spawn == null) throw new NoSuchMethodException("spawnKillObjectives");
             spawn.setAccessible(true);
             spawnKill = spawn;
@@ -933,7 +934,10 @@ public final class DmzBotQuests {
         m(d.pqd, "setQuestDifficulty", key, diff);
         if (m(d.pqd, "getTrackedQuestId") == null) m(d.pqd, "setTrackedQuestId", key);
         if (spawn) {
-            try { spawnKill.invoke(null, d.owner, resolve.invoke(null, key), d.pqd, partySize, diff); }
+            try {
+                if (spawnKill.getParameterCount() == 4) spawnKill.invoke(null, d.owner, resolve.invoke(null, key), partySize, diff);
+                else spawnKill.invoke(null, d.owner, resolve.invoke(null, key), d.pqd, partySize, diff);
+            }
             catch (Throwable t) { XenoWarriors.LOGGER.warn("Couldn't summon the enemies of a bot's DragonMineZ mission", t); }
         }
         d.commit();

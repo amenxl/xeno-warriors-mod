@@ -139,6 +139,7 @@ public class GravityCompressEntity extends Entity {
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F, 0.5F);
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 1.2F, 0.6F);
             server.sendParticles(ParticleTypes.EXPLOSION, getX(), getY(), getZ(), 2, 0.3, 0.3, 0.3, 0);
+            com.xenowarriors.compat.Effeks.play(server, com.xenowarriors.compat.Effeks.BURST_BLUE, position(), 1.0F, 0F);   // (AAA Particles: the implosion)
             server.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY(), getZ(), 80, 0.2, 0.2, 0.2, 1.2);
         }
     }
