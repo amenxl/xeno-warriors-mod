@@ -352,7 +352,7 @@ public final class EpicFightCompat {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void onAddRenderers(PatchedRenderersEvent.Add event) {
         for (EntityType<?> t : java.util.List.of(com.xenowarriors.npc.ModNpcs.HUMAN.get(), com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get(),
-                com.xenowarriors.sr.SrEntities.SR_MEMBER.get())) {
+                com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), com.xenowarriors.foes.Foes.VESSEL.get(), com.xenowarriors.foes.Foes.SWORDSTRESS.get())) {
             event.addPatchedEntityRenderer(t, type -> {
                 var r = new yesman.epicfight.client.renderer.patched.entity.PHumanoidRenderer(
                         yesman.epicfight.api.client.model.Meshes.BIPED_OUTLAYER, event.getContext(), type);

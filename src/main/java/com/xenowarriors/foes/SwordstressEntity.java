@@ -51,7 +51,19 @@ public class SwordstressEntity extends Monster {
         super(type, level);
         setCustomName(Component.literal("Ancient Swordstress").withStyle(ChatFormatting.DARK_GREEN, ChatFormatting.BOLD));
         xpReward = 30;
+        arm();
     }
+
+    /** Its greatsword in hand (it used to be part of its arm's model); it only drops now and then (see the loot). */
+    private void arm() {
+        if (!getMainHandItem().is(com.xenowarriors.item.ModItems.SWORDSTRESS_GREATSWORD.get()))
+            setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(com.xenowarriors.item.ModItems.SWORDSTRESS_GREATSWORD.get()));
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0F);
+    }
+
+    /** The greatsword drop: rare (one in twenty, a bit more with Looting). */
+    public static final float SWORD_DROP = 0.05F;
+    public static int swordDrops;
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 90).add(Attributes.ATTACK_DAMAGE, 13).add(Attributes.MOVEMENT_SPEED, 0.26)
@@ -128,6 +140,7 @@ public class SwordstressEntity extends Monster {
         hasImpulse = true;
         lookAt(t, 360, 360);
         swing(InteractionHand.MAIN_HAND);
+        FoeAnims.swing(this, new String[]{"wom:biped/combat/solar_quemadura"});   // (the leap: a burning overhead)
         l.playSound(null, blockPosition(), SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 0.5F, 1.6F);
     }
 
@@ -223,6 +236,7 @@ public class SwordstressEntity extends Monster {
 
     @Override
     public boolean doHurtTarget(Entity t) {
+        FoeAnims.swing(this, FoeAnims.SOLAR);                                    // (with Epic Fight: the Aatrox greatsword's combo)
         boolean hit = super.doHurtTarget(t);
         if (hit && level() instanceof ServerLevel l) {
             l.sendParticles(ParticleTypes.SWEEP_ATTACK, t.getX(), t.getY() + 1, t.getZ(), 1, 0, 0, 0, 0);
@@ -239,6 +253,10 @@ public class SwordstressEntity extends Monster {
         if (!(src.getEntity() instanceof Player) && !(src.getEntity() instanceof com.xenowarriors.bot.PartyBotEntity)) return;
         spawnAtLocation(new ItemStack(Items.EMERALD, 2 + random.nextInt(3 + looting)));
         if (random.nextInt(3) == 0) spawnAtLocation(new ItemStack(Items.DIAMOND));
+        if (random.nextFloat() < SWORD_DROP + looting * 0.02F) {
+            spawnAtLocation(new ItemStack(com.xenowarriors.item.ModItems.SWORDSTRESS_GREATSWORD.get()));
+            swordDrops++;
+        }
     }
 
     @Override protected boolean shouldDespawnInPeaceful() { return true; }
@@ -247,7 +265,7 @@ public class SwordstressEntity extends Monster {
     public void addAdditionalSaveData(CompoundTag t) { super.addAdditionalSaveData(t); }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag t) { super.readAdditionalSaveData(t); set(WALK); }
+    public void readAdditionalSaveData(CompoundTag t) { super.readAdditionalSaveData(t); set(WALK); arm(); }
 
     /** (Tests) */
     public void leapNowForTest() { leapCd = 0; }

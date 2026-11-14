@@ -233,6 +233,20 @@ public final class ModItems {
             () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.corrupted.ModCorrupted.CORRUPTED_SOUL,
                     0x14081F, 0xD77BFF, new Item.Properties()));
 
+    // Season 3's foes: the Spell Caster (Elementalist), the Cynic Dancer (a Vessel) and the Ancient Swordstress (a C-soul)
+    public static final RegistryObject<Item> SPELLCASTER_SPAWN_EGG = ITEMS.register("spellcaster_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.foes.Foes.ELEMENTALIST, 0x2A2440, 0x8C6CFF, new Item.Properties()));
+    public static final RegistryObject<Item> CYNIC_DANCER_SPAWN_EGG = ITEMS.register("cynic_dancer_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.foes.Foes.VESSEL, 0x0C0C10, 0xD0202E, new Item.Properties()));
+    public static final RegistryObject<Item> SWORDSTRESS_SPAWN_EGG = ITEMS.register("ancient_swordstress_spawn_egg",
+            () -> new net.minecraftforge.common.ForgeSpawnEggItem(com.xenowarriors.foes.Foes.SWORDSTRESS, 0x1E3A16, 0x7EE06A, new Item.Properties()));
+    /** The Ancient Swordstress's greatsword (a rare drop): fights in the Aatrox greatsword's style with Epic Fight (wom:solar). */
+    public static final RegistryObject<Item> SWORDSTRESS_GREATSWORD = ITEMS.register("swordstress_greatsword", () -> new net.minecraft.world.item.SwordItem(
+            net.minecraft.world.item.Tiers.NETHERITE, 7, -3.0F, new Item.Properties().fireResistant().rarity(net.minecraft.world.item.Rarity.EPIC)));
+    /** The Cynic Dancer's dark claws (Weapons of Harmony's Tsume style with Epic Fight). */
+    public static final RegistryObject<Item> CYNIC_TSUME = ITEMS.register("cynic_tsume", () -> new net.minecraft.world.item.SwordItem(
+            net.minecraft.world.item.Tiers.DIAMOND, 3, -1.8F, new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
+
     /** Ki guns like DragonMineZ's Blaster Cannon: registered (craftable, in the creative tab, carried by mobs) only with DragonMineZ. */
     private static final boolean DMZ = net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
     public static final RegistryObject<Item> BLASTER_RIFLE = DMZ ? ITEMS.register("blaster_rifle",

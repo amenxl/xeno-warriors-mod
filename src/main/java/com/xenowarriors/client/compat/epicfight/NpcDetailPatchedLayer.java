@@ -36,6 +36,8 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
         if (e instanceof HumanNpcEntity h) return NpcLooks.human(h.variant());
         if (e instanceof DarkPossessedEntity d) return NpcLooks.dark(d.variant());
         if (e instanceof com.xenowarriors.sr.SrMemberEntity s) return s.look();
+        if (e instanceof com.xenowarriors.foes.VesselEntity v) return v.look();
+        if (e instanceof com.xenowarriors.foes.SwordstressEntity w) return w.look();
         return null;
     }
 
@@ -50,6 +52,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
             return m == null ? new SkinnedMesh[2] : DetailPatchedLayer.bakeModel(m);
         });
         if (mesh == null) return;
+        boolean foe = entity instanceof com.xenowarriors.foes.SwordstressEntity || entity instanceof com.xenowarriors.foes.VesselEntity v && v.state() != com.xenowarriors.foes.VesselEntity.FUSED;
         boolean possessed = entity instanceof DarkPossessedEntity || (entity instanceof HumanNpcEntity h && h.possessed());
         boolean darkened = possessed && !key.startsWith("dark_");
         int overlay = OverlayTexture.NO_OVERLAY;
@@ -58,7 +61,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
         if (mesh[1] != null) {
             ResourceLocation face = NpcRenderer.tex(key + (darkened ? "_face_dark" : "_face"));
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
-            if (possessed) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+            if (possessed || foe) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);   // (glowing eyes)
         }
         if (com.xenowarriors.client.cel.Cel.outline() && OUTLINE_ON_EF) {                              // cel-shading: the ink outline, as without Epic Fight
             float ink = com.xenowarriors.client.cel.CelOutline.INK;

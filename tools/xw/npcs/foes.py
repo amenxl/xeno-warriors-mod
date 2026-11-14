@@ -237,16 +237,7 @@ def sword_fit(f):
     f.both('right_arm', [3.6, 15.0, -2.4], [7.4, 22.0, 2.4], G2)
     f.both('right_arm', [3.2, 13.6, -2.8], [7.8, 15.6, 2.8], WH, {k: (lambda x, y: WH if (int(x * 7) + int(y * 3)) % 3 else '#dcdce4') for k in ('front', 'back', 'right', 'left')})
     f.both('right_leg', [-0.35, 0, -2.5], [4.35, 3.0, 2.35], '#0c0c10')
-    # the giant sword, in the right hand: its blade out in front, an arrow-tipped hilt behind
-    A = lambda frm, to, c, faces=None, **k: f.add('right_arm', frm, to, c, faces, **k)
-    A([5.2, 10.6, -1.8], [6.4, 12.0, 4.0], '#2a4a1e')                                       # grip
-    A([4.4, 10.2, -2.8], [7.2, 12.4, -1.8], GB)                                             # guard: a crystal knot
-    for s in (1, -1): A([5.6 + s * 1.6 - .5, 10.6, -3.2], [5.6 + s * 1.6 + .5, 12.0, -1.4], GL, rot=[0, s * 25, 0], origin=[5.6, 11.3, -2.3])
-    A([4.0, 10.1, -24.0], [7.6, 12.5, -2.8], GB, {'top': lambda x, y: GL if abs(x - .5) < .1 else GB, 'bottom': lambda x, y: GL if abs(x - .5) < .1 else GB})
-    A([4.6, 10.4, -26.0], [7.0, 12.2, -24.0], GB)                                            # the point
-    A([5.2, 10.7, -27.4], [6.4, 11.9, -26.0], GL)
-    A([5.5, 10.9, 4.0], [6.1, 11.7, 8.0], '#2a4a1e')                                        # the shaft behind
-    A([4.6, 10.6, 7.6], [7.0, 12.0, 9.0], GB); A([5.3, 10.8, 9.0], [6.3, 11.8, 10.4], GL)  # its arrow tip
+    # (its giant sword is an item it holds now - swordstress_greatsword: tools/xw/items2/swordstress_greatsword.py)
 
 CH['swordstress'] = dict(skin='#0a0a0c', eyes='#78e65a', hair=[WH, WG], paint=sword_paint,
                          brow=[''], eye=[''], mouth=[''], face_extra=[sword_face], fit=sword_fit)

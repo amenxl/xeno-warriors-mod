@@ -44,6 +44,16 @@ public class VesselEntity extends PathfinderMob implements Enemy {
     public VesselEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
         setCustomName(Component.literal("Cynic Dancer").withStyle(ChatFormatting.DARK_RED));
+        arm();
+    }
+
+    /** Its dark claws on both hands (Weapons of Harmony's Tsume style with Epic Fight). Never dropped as gear. */
+    private void arm() {
+        var claws = com.xenowarriors.item.ModItems.CYNIC_TSUME.get();
+        if (!getMainHandItem().is(claws)) setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(claws));
+        if (!getOffhandItem().is(claws)) setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, new ItemStack(claws));
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 0F);
+        setDropChance(net.minecraft.world.entity.EquipmentSlot.OFFHAND, 0F);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -86,6 +96,7 @@ public class VesselEntity extends PathfinderMob implements Enemy {
         if (level().isClientSide) {
             if (state() == FUSING) fuseTicks++;
             if (state() != HOST && tickCount % 3 == 0) level().addParticle(state() == FUSING ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.SMOKE, getRandomX(0.6), getRandomY(), getRandomZ(0.6), 0, 0.03, 0);
+            clawAura();
             return;
         }
         ServerLevel l = (ServerLevel) level();
@@ -103,10 +114,25 @@ public class VesselEntity extends PathfinderMob implements Enemy {
         if (state() == FUSED) grabTick(l);
     }
 
+    /** (client) the dark power round its claws: shadow wisps and dark red sparks at each hand. */
+    private void clawAura() {
+        if (!getMainHandItem().is(com.xenowarriors.item.ModItems.CYNIC_TSUME.get()) || tickCount % 2 != 0) return;
+        float yaw = (float) Math.toRadians(yBodyRot);
+        double fx = -Math.sin(yaw), fz = Math.cos(yaw), sx = Math.cos(yaw), sz = Math.sin(yaw);
+        var red = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.55F, 0.02F, 0.08F), 0.9F);
+        for (int side = -1; side <= 1; side += 2) {
+            double x = getX() + fx * 0.25 + sx * 0.38 * side, y = getY() + 0.75, z = getZ() + fz * 0.25 + sz * 0.38 * side;
+            level().addParticle(ParticleTypes.SMOKE, x + (random.nextDouble() - .5) * .2, y + random.nextDouble() * .2, z + (random.nextDouble() - .5) * .2, 0, 0.02, 0);
+            if (random.nextInt(3) == 0) level().addParticle(red, x, y, z, 0, 0.01, 0);
+            if (state() == FUSED && random.nextInt(4) == 0) level().addParticle(ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, 0.02, 0);
+        }
+    }
+
     // ------------------------------------------------------------------ evolved: combos and grabs
 
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity t) {
+        FoeAnims.swing(this, FoeAnims.TSUME);                                   // (with Epic Fight: the Tsume claw combo)
         if (state() != FUSED) return super.doHurtTarget(t);
         combo++;
         comboHits++;

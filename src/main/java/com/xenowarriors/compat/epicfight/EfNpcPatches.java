@@ -25,6 +25,9 @@ public final class EfNpcPatches {
         event.getTypeEntry().put(ModNpcs.DARK_POSSESSED.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.UNDEAD); });
         // the Sky Rebellion: Epic Fight's sword and fist combos, hit reactions and knockdowns
         event.getTypeEntry().put(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.ILLAGER); });
+        // Season 3's foes on Epic Fight's body: the Cynic Dancer's Tsume claws, the Ancient Swordstress's greatsword
+        event.getTypeEntry().put(com.xenowarriors.foes.Foes.VESSEL.get(), e -> () -> { armature(); return new XWFoePatch<>(Factions.UNDEAD); });
+        event.getTypeEntry().put(com.xenowarriors.foes.Foes.SWORDSTRESS.get(), e -> () -> { armature(); return new XWFoePatch<>(Factions.UNDEAD); });
         armature();
     }
 
@@ -33,6 +36,8 @@ public final class EfNpcPatches {
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.HUMAN.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.DARK_POSSESSED.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), yesman.epicfight.gameasset.Armatures.BIPED);
+        yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.foes.Foes.VESSEL.get(), yesman.epicfight.gameasset.Armatures.BIPED);
+        yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.foes.Foes.SWORDSTRESS.get(), yesman.epicfight.gameasset.Armatures.BIPED);
     }
 
     /** A named SR member's special move, as an Epic Fight skill animation. */
