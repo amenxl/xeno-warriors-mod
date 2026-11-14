@@ -87,12 +87,15 @@ public final class RequestPopups {
             int w = 186, h = 30 + lines.size() * 10 + 14;
             int x = Math.round(width - 6 - w * slide), y = HudLayout.takeTopRight(h);
             int cards = com.xenowarriors.client.party.KhParty.blazingTop();
-            if (cards > 0 && y + h > cards && PetHud.blockHeight() > 0) {    // no room under the pet cards: go beside them instead
+            if (cards > 0 && y + h > cards) {
+                // no room above the party cards (small screens, a big GUI scale): go beside the pet cards / the party
+                // column instead of over them (the UI hunt: an invite card covered the party cards at GUI scale 3)
+                int beside = PetHud.blockHeight() > 0 ? 110 : com.xenowarriors.client.party.KhParty.CARD_W + 12;
                 y = HudLayout.petTop();
-                w = Math.max(140, Math.min(186, width - 110 - 168));             // narrower on small screens: clear of the popup feed on the left
+                w = Math.max(130, Math.min(186, width - beside - 168));          // narrower on small screens: clear of the popup feed on the left
                 lines = font.split(net.minecraft.network.chat.Component.literal(c.req.text()), w - 16);
                 h = 30 + lines.size() * 10 + 14;
-                x = Math.round(width - 110 - w * slide);
+                x = Math.round(width - beside - w * slide);
             }
             int a = Math.round(fade * 230);
             g.fill(x, y, x + w, y + h, (a << 24) | 0x14121C);

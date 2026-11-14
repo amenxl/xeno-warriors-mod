@@ -464,7 +464,7 @@ public class CharacterCustomScreen extends Screen {
         pillW += (targetW - pillW) * 0.3F;
         String[] names = new String[tabs()];
         for (int i = 0; i < names.length; i++) names[i] = switch (ids()[i]) {
-            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "MIDDLE CLICK"; case T_ABIL -> "ABILITIES"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
+            case T_STATS -> "STATS"; case T_SKILLS -> "SKILLS"; case T_PASSIVES -> "PASSIVES"; case T_RL -> "MID-CLICK"; case T_ABIL -> "ABILITIES"; case T_OUTFITS -> "OUTFITS"; default -> xeno() ? "LAST RESORT" : "KAS"; };
         g.fill((int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xEE101014);
         outline(g, (int) tb[0], (int) tb[1], (int) (tb[0] + tb[2]), (int) (tb[1] + tb[3]), 0xFF3A3A44);
         float ts = tb[3] / 15F;
