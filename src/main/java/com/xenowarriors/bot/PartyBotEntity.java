@@ -984,6 +984,7 @@ public class PartyBotEntity extends PathfinderMob {
         if (tickCount % 20 == 3) BotErrands.absorbTick(this);
         if (tickCount % 20 == 11) BotSupport.tick(this);                         // (torches in the dark; Kaeru's Fox Heal)
         tickMoves();
+        personalSpace();
         if (tickCount % 40 == 0) PartyBots.wearBestArmour(this);
         if (tickCount % 20 == 0) BotGear.tickIdle(this);                         // (puts its weapon away after a fight; crafting ideas)
         if (tickCount % 20 == 15) BotBags.tick(this);
@@ -994,6 +995,28 @@ public class PartyBotEntity extends PathfinderMob {
         else if (o != null && o.level() != level() && tickCount % 20 == 0 && !journey()) {   // owner in another world (respawned, portal): follow, or wait
             if (PartyBots.canFollowTo(character(), o.level())) PartyBots.teleportNear(this, o);
             else { PartyBots.LEFT_BEHIND.add(java.util.Map.entry(ownerId(), record())); PartyBots.forgetFake(getUUID()); discard(); }
+        }
+    }
+
+    /** (Tests) times a bot stepped out of someone it was standing inside. */
+    public static int spaceNudges;
+
+    /**
+     * Never standing inside you (or another bot): two characters drawn in the same spot looked like one mixed-up
+     * character - the user's "character overlap" video. A bot that ends up overlapping someone steps out of them.
+     */
+    private void personalSpace() {
+        if (isPassenger() || isVehicle() || isInvisible() || isNoAi()) return;
+        var box = getBoundingBox();
+        for (var e : level().getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, box.inflate(0.1, 0.5, 0.1),
+                e -> e != this && (e instanceof Player || e instanceof PartyBotEntity) && !e.isSpectator() && !e.isPassenger())) {
+            double dx = getX() - e.getX(), dz = getZ() - e.getZ(), d = Math.sqrt(dx * dx + dz * dz);
+            if (d > 0.55) continue;
+            if (d < 1.0E-3) { double a = random.nextDouble() * Math.PI * 2; dx = Math.cos(a); dz = Math.sin(a); d = 1; }
+            setDeltaMovement(getDeltaMovement().add(dx / d * 0.12, 0, dz / d * 0.12));
+            hasImpulse = true;
+            spaceNudges++;
+            return;
         }
     }
 
