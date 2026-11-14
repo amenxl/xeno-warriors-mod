@@ -37,6 +37,23 @@ public abstract class HoodieItem extends ArmorItem {
         };
     }
 
+    /** (client) is this one of our characters - drawn with its own fitted hoodie (set by the client). */
+    public static java.util.function.Predicate<net.minecraft.world.entity.Entity> characterBody = e -> false;
+    private static final String NONE = "xenowarriors:textures/models/armor/empty_layer.png";
+
+    /**
+     * On our characters the hoodie is drawn by our own layers (fitted, short- or long-sleeved as it should be). Any
+     * other armor renderer - Epic Fight's, another mod's - gets an empty texture, so it can't draw the plain vanilla
+     * chestplate shape over it (the user's video: the SR hoodie suddenly long-sleeved in battle mode).
+     */
+    @Override
+    public String getArmorTexture(ItemStack stack, net.minecraft.world.entity.Entity entity, net.minecraft.world.entity.EquipmentSlot slot, String type) {
+        try { if (entity != null && characterBody.test(entity)) { emptied++; return NONE; } } catch (Throwable ignored) {}
+        return super.getArmorTexture(stack, entity, slot, type);
+    }
+    /** (Tests) times another renderer was handed the empty texture. */
+    public static int emptied;
+
     public static boolean wearing(Player player) {
         return player.getInventory().getArmor(2).getItem() instanceof HoodieItem;
     }

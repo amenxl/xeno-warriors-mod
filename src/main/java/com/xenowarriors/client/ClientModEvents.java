@@ -162,6 +162,9 @@ public final class ClientModEvents {
         // You characters: the common code reads the synced copy here on the client
         com.xenowarriors.you.You.clientSlot = p -> ClientCharacterData.you(p);
         com.xenowarriors.you.You.clientType = p -> ClientCharacterData.get(p);
+        // hoodies on our characters are drawn by our own layers only (see HoodieItem.getArmorTexture)
+        com.xenowarriors.item.HoodieItem.characterBody = e -> e instanceof net.minecraft.world.entity.player.Player p
+                && e.level().isClientSide && com.xenowarriors.client.render.CharacterArmorLayer.replacesVanilla(p);
         event.enqueueWork(() -> {
             net.minecraft.client.gui.screens.MenuScreens.register(
                     com.xenowarriors.fox.ModMenus.FOX.get(), com.xenowarriors.client.fox.FoxInventoryScreen::new);
