@@ -30,6 +30,7 @@ public final class BotAvatars {
     private static List<BotAvatar> inWorld = List.of();
     /** Off (falls back to the plain bot look) if drawing one ever fails. */
     public static boolean disabled = "0".equals(System.getenv("XW_BOT_AVATARS"));
+    private static final boolean EF = net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
 
     /** The body this bot is drawn with (made on first use). */
     public static BotAvatar of(PartyBotEntity b) {
@@ -80,6 +81,7 @@ public final class BotAvatars {
             return false;
         });
         inWorld = now;
+        if (EF) com.xenowarriors.client.compat.epicfight.EfBotBodies.tick(now);   // (bots on Epic Fight's body, like players)
     }
 
     /** No name tag over the body (bots never had one). */

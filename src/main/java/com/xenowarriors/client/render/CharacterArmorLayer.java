@@ -258,6 +258,28 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         return oldHead;
     }
 
+    private static net.minecraft.client.model.HumanoidModel<AbstractClientPlayer> probeInner, probeOuter;
+
+    /**
+     * Another mod's skin-layout outfit (DragonMineZ's gis and armors - its ArmorBaseModel - or a plain vanilla-style
+     * one with a 64x64 texture): in battle mode we draw it on Epic Fight's skeleton ourselves (ArmorPatchedLayer).
+     */
+    public static boolean skinForeign(AbstractClientPlayer player, ItemStack stack, EquipmentSlot slot) {
+        if (!(stack.getItem() instanceof ArmorItem a) || a.getEquipmentSlot() != slot || !foreign(stack) || a instanceof com.xenowarriors.item.SkinLayoutArmor) return false;
+        try {
+            if (probeInner == null) {
+                var set = net.minecraft.client.Minecraft.getInstance().getEntityModels();
+                probeInner = new net.minecraft.client.model.HumanoidModel<>(set.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER_INNER_ARMOR));
+                probeOuter = new net.minecraft.client.model.HumanoidModel<>(set.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER_OUTER_ARMOR));
+            }
+            var base = slot == EquipmentSlot.LEGS ? probeInner : probeOuter;
+            net.minecraft.client.model.Model model = net.minecraftforge.client.ForgeHooksClient.getArmorModel(player, stack, slot, base);
+            return (model == base || model.getClass().getSimpleName().equals("ArmorBaseModel")) && !oldLayout(foreignTex(player, stack, a, slot));
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     /** Another mod's armor in the old 64x32 layout (Epic Fight's Stray Hat and robes...): drawn on the plain armor model. */
     public static boolean oldForeign(net.minecraft.world.entity.LivingEntity player, ItemStack stack) {
         return stack.getItem() instanceof ArmorItem a && foreign(stack) && !(a instanceof com.xenowarriors.item.SkinLayoutArmor)

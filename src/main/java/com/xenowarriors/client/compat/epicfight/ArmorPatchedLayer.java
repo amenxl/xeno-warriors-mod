@@ -78,6 +78,19 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
             if (pk.foil()) mesh.draw(pose, buffers, RenderType.armorEntityGlint(), light, 1F, 1F, 1F, 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
             drawn++;
         }
+        // other mods' skin-layout outfits (DragonMineZ's gis and armors): their texture on a loose skin-layout body on
+        // the skeleton, like the shape we give them without Epic Fight (Epic Fight's own armor layer made a mess of them)
+        for (EquipmentSlot slot : SLOTS) {
+            ItemStack st = player.getItemBySlot(slot);
+            if (!(st.getItem() instanceof net.minecraft.world.item.ArmorItem a) || !CharacterArmorLayer.skinForeign(player, st, slot)) continue;
+            SkinnedMesh mesh = giArmor(slot);
+            if (mesh == null) continue;
+            float[] c = CharacterArmorLayer.tintOf(st, a);
+            var rt = RenderType.armorCutoutNoCull(CharacterArmorLayer.foreignTex(player, st, a, slot));
+            mesh.draw(pose, buffers, rt, light, c[0], c[1], c[2], 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
+            if (st.hasFoil()) mesh.draw(pose, buffers, RenderType.armorEntityGlint(), light, 1F, 1F, 1F, 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
+            giDrawn++;
+        }
         // other mods' armor in the old 64x32 layout (Epic Fight's own Stray Hat...): the plain armor model on the skeleton
         for (EquipmentSlot slot : SLOTS) {
             ItemStack st = player.getItemBySlot(slot);
@@ -89,6 +102,48 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
             if (st.hasFoil()) mesh.draw(pose, buffers, RenderType.armorEntityGlint(), light, 1F, 1F, 1F, 1F, OverlayTexture.NO_OVERLAY, patch.getArmature(), poses);
             oldDrawn++;
         }
+    }
+
+    /** (tests) skin-layout outfits (DragonMineZ's) drawn on Epic Fight's skeleton. */
+    public static int giDrawn;
+    private static final Map<EquipmentSlot, SkinnedMesh> GI = new java.util.EnumMap<>(EquipmentSlot.class);
+
+    /** A skin-layout (64x64) body for a slot - loose like the gi shapes without Epic Fight - baked for its skeleton. */
+    private static SkinnedMesh giArmor(EquipmentSlot slot) {
+        if (GI.containsKey(slot)) return GI.get(slot);
+        SkinnedMesh mesh = null;
+        try {
+            // the player-skin layout (64x64: the left arm and leg have their own places), loose like the gi without Epic Fight
+            float d = slot == EquipmentSlot.LEGS ? 0.4F : 0.62F;
+            var def = new net.minecraft.client.model.geom.builders.CubeDeformation(d);
+            var md = new net.minecraft.client.model.geom.builders.MeshDefinition();
+            var r = md.getRoot();
+            var CL = (java.util.function.Supplier<net.minecraft.client.model.geom.builders.CubeListBuilder>) net.minecraft.client.model.geom.builders.CubeListBuilder::create;
+            r.addOrReplaceChild("head", CL.get().texOffs(0, 0).addBox(-4, -8, -4, 8, 8, 8, def), net.minecraft.client.model.geom.PartPose.ZERO);
+            r.addOrReplaceChild("hat", CL.get().texOffs(32, 0).addBox(-4, -8, -4, 8, 8, 8, def.extend(0.5F)), net.minecraft.client.model.geom.PartPose.ZERO);
+            r.addOrReplaceChild("body", CL.get().texOffs(16, 16).addBox(-4, 0, -2, 8, 12, 4, def), net.minecraft.client.model.geom.PartPose.ZERO);
+            r.addOrReplaceChild("right_arm", CL.get().texOffs(40, 16).addBox(-3, -2, -2, 4, 12, 4, def), net.minecraft.client.model.geom.PartPose.offset(-5, 2, 0));
+            r.addOrReplaceChild("left_arm", CL.get().texOffs(32, 48).addBox(-1, -2, -2, 4, 12, 4, def), net.minecraft.client.model.geom.PartPose.offset(5, 2, 0));
+            r.addOrReplaceChild("right_leg", CL.get().texOffs(0, 16).addBox(-2, 0, -2, 4, 12, 4, def), net.minecraft.client.model.geom.PartPose.offset(-1.9F, 12, 0));
+            r.addOrReplaceChild("left_leg", CL.get().texOffs(16, 48).addBox(-2, 0, -2, 4, 12, 4, def), net.minecraft.client.model.geom.PartPose.offset(1.9F, 12, 0));
+            var root = net.minecraft.client.model.geom.builders.LayerDefinition.create(md, 64, 64).bakeRoot();
+            boolean head = slot == EquipmentSlot.HEAD, chest = slot == EquipmentSlot.CHEST, legs = slot == EquipmentSlot.LEGS, feet = slot == EquipmentSlot.FEET;
+            Map<String, net.minecraft.client.model.geom.ModelPart> parts = new HashMap<>();
+            parts.put("head", head ? root.getChild("head") : empty());
+            parts.put("hat", head ? root.getChild("hat") : empty());
+            parts.put("body", chest || legs ? root.getChild("body") : empty());
+            parts.put("right_arm", chest ? root.getChild("right_arm") : empty());
+            parts.put("left_arm", chest ? root.getChild("left_arm") : empty());
+            parts.put("right_leg", legs || feet ? root.getChild("right_leg") : empty());
+            parts.put("left_leg", legs || feet ? root.getChild("left_leg") : empty());
+            mesh = yesman.epicfight.api.client.model.transformer.HumanoidModelBaker.VANILLA_TRANSFORMER.transformArmorModel(
+                    new net.minecraft.client.model.HumanoidModel<AbstractClientPlayer>(new net.minecraft.client.model.geom.ModelPart(java.util.List.of(), parts)));
+            if (mesh != null) mesh.initialize();
+        } catch (Throwable t) {
+            com.xenowarriors.XenoWarriors.LOGGER.error("Couldn't prepare skin-layout outfits for Epic Fight", t);
+        }
+        GI.put(slot, mesh);
+        return mesh;
     }
 
     /** (tests) old-layout armor pieces drawn on Epic Fight's skeleton. */
@@ -150,7 +205,9 @@ public class ArmorPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstra
             try {
                 for (int i = 0; i < armor.size(); i++) {
                     kept[i] = armor.get(i);
-                    if (CharacterArmorLayer.ours(kept[i]) || CharacterArmorLayer.oldForeign(player, kept[i])) armor.set(i, ItemStack.EMPTY);   // (old-layout armor: ours above)
+                    EquipmentSlot sl = EquipmentSlot.byTypeAndIndex(EquipmentSlot.Type.ARMOR, i);
+                    if (CharacterArmorLayer.ours(kept[i]) || CharacterArmorLayer.oldForeign(player, kept[i])
+                            || CharacterArmorLayer.skinForeign(player, kept[i], sl)) armor.set(i, ItemStack.EMPTY);   // (old-layout and skin-layout outfits: ours above)
                 }
                 original.renderLayer(player, patch, layer, pose, buffers, light, poses, bob, yRot, xRot, partial);
             } finally {
