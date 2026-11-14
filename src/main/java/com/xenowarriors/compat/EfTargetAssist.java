@@ -52,17 +52,27 @@ public final class EfTargetAssist {
      */
     public static Vec3 stopAtTarget(Player p, Vec3 step) {
         LivingEntity t = target(p);
-        if (t == null || step == null) return step;
-        Vec3 to = new Vec3(t.getX() - p.getX(), 0, t.getZ() - p.getZ());
-        double d = to.length();
-        if (d < 1.0E-3) return step;
-        Vec3 dir = to.scale(1 / d);
-        double gap = d - (t.getBbWidth() + p.getBbWidth()) / 2 - 0.15;
-        double toward = step.x * dir.x + step.z * dir.z;
-        if (toward <= 0 || toward <= gap) return step;
-        double cut = toward - Math.max(0, gap);
+        if (t == null || step == null || t.level() != p.level()) return step;
+        double contact = (t.getBbWidth() + p.getBbWidth()) / 2 + 0.1;
+        double nx = p.getX() + step.x, nz = p.getZ() + step.z;
+        double dx = t.getX() - nx, dz = t.getZ() - nz;
+        double after = Math.sqrt(dx * dx + dz * dz);
+        double bx = t.getX() - p.getX(), bz = t.getZ() - p.getZ();
+        double before = Math.sqrt(bx * bx + bz * bz);
+        if (before > 3.5) return step;
+        Vec3 face = Vec3.directionFromRotation(0, p.getYRot());
+        boolean wasAhead = bx * face.x + bz * face.z > 0;
+        boolean passes = wasAhead && dx * face.x + dz * face.z < 0.2;           // (it would end up beside or behind you)
+        if (after >= contact && !passes) return step;
         stops++;
-        return new Vec3(step.x - dir.x * cut, step.y, step.z - dir.z * cut);
+        // as far along as stays in front of it, at arm's length
+        double lo = 0, hi = 1;
+        for (int i = 0; i < 8; i++) {
+            double m = (lo + hi) / 2, mx = t.getX() - (p.getX() + step.x * m), mz = t.getZ() - (p.getZ() + step.z * m);
+            boolean ok = Math.sqrt(mx * mx + mz * mz) >= contact && (!wasAhead || mx * face.x + mz * face.z >= 0.2);
+            if (ok) lo = m; else hi = m;
+        }
+        return new Vec3(step.x * lo, step.y, step.z * lo);
     }
 
     private static LivingEntity pick(Player p) {

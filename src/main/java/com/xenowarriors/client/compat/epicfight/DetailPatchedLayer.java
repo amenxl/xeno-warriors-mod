@@ -64,7 +64,14 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         Rig rig = RIGID && !legacy ? RIGS.computeIfAbsent(live, m -> Rig.of(player)) : null;
         if (mesh[0] != null) mesh[0].draw(pose, buffers, detailType, light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         if (rig != null) {
-            if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
+            // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, as without Epic Fight
+            boolean giTop = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST)
+                    || com.xenowarriors.client.compat.DmzForms.ssj4Shirtless(player);
+            boolean giLegs = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
+            Rig.hideTorso = giTop; Rig.hideArms = giTop; Rig.hideLegs = giLegs;
+            try {
+                if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
+            } finally { Rig.hideTorso = Rig.hideArms = Rig.hideLegs = false; }
         }
         if (mesh[1] != null) {
             // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
@@ -111,6 +118,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         final ModelPart bodyUpper, bodyLower;
         final boolean head, noLeftArm;
         String info = "";
+        /** (the character's own outfit only) parts covered by another mod's outfit, left off. */
+        static boolean hideTorso, hideArms, hideLegs;
         private static java.lang.reflect.Field cubesField;
 
         Rig(DetailModel m, boolean head, boolean noLeftArm) {
@@ -184,12 +193,18 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 if (lr != null && ll != null) m.animateCoat(lr[0], ll[0], lr[1], -ll[1], 0F, 0F, 0F, false);
             }
             if (head) piece(h.head, m.head, null, pose, vc, light, overlay, poses);
-            piece(h.chest, bodyUpper, null, pose, vc, light, overlay, poses);
-            piece(h.torso, bodyLower, null, pose, vc, light, overlay, poses);
-            limb(h.armR, h.handR, m.rightArm, pose, vc, light, overlay, poses);
-            if (!noLeftArm) limb(h.armL, h.handL, m.leftArm, pose, vc, light, overlay, poses);
-            limb(h.thighR, h.legR, m.rightLeg, pose, vc, light, overlay, poses);
-            limb(h.thighL, h.legL, m.leftLeg, pose, vc, light, overlay, poses);
+            if (!hideTorso) {
+                piece(h.chest, bodyUpper, null, pose, vc, light, overlay, poses);
+                piece(h.torso, bodyLower, null, pose, vc, light, overlay, poses);
+            }
+            if (!hideArms) {
+                limb(h.armR, h.handR, m.rightArm, pose, vc, light, overlay, poses);
+                if (!noLeftArm) limb(h.armL, h.handL, m.leftArm, pose, vc, light, overlay, poses);
+            }
+            if (!hideLegs) {
+                limb(h.thighR, h.legR, m.rightLeg, pose, vc, light, overlay, poses);
+                limb(h.thighL, h.legL, m.leftLeg, pose, vc, light, overlay, poses);
+            }
             return true;
         }
 
