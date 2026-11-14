@@ -46,10 +46,12 @@ final class PackEfClothesTests {
         for (Case c : new Case[]{new Case("kyrie_hoodie", CharacterType.KYRIE, 0, "minecraft:iron_sword", true, false),
                 new Case("kyrie_srhoodie", CharacterType.KYRIE, 0, "minecraft:iron_sword", true, false),
                 new Case("keita_hoodie", CharacterType.KEITA, 0, "minecraft:iron_sword", true, false),
+                new Case("keita_srhoodie", CharacterType.KEITA, 0, "minecraft:iron_sword", true, false),
                 new Case("kaeru", CharacterType.KAERU, 0, "minecraft:iron_sword", false, false),
                 new Case("mikiko_dmzgi", CharacterType.MIKIKO, 0, "minecraft:iron_sword", false, false)}) one(mc, l, c);
         l.add(new Step(null, () -> PackTests.log("efhood: DragonMineZ outfit pieces on Epic Fight's body " + com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.giDrawn), 2));
-        l.add(new Step(null, () -> PackTests.log("efhood: hoodie trims drawn " + com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.trims), 2));
+        l.add(new Step(null, () -> PackTests.log("efhood: hoodie trims drawn " + com.xenowarriors.client.compat.epicfight.ArmorPatchedLayer.trims
+                + ", other renderers given the empty hoodie texture " + com.xenowarriors.item.HoodieItem.emptied), 2));
         l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.server(p -> { p.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY); PackTests.clear(p); }); }, 10));
     }
