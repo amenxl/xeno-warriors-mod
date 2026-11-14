@@ -178,7 +178,18 @@ final class PackEfClothesTests {
 
     static void hits(Minecraft mc, List<Step> l) {
         l.add(new Step(null, PackEfClothesTests::listen, 1));
-        for (CharacterType who : new CharacterType[]{CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.KAERU}) {
+        // (who, what's in hand, the move their battle-mode combo must start with - the user's picks)
+        record Case(CharacterType who, java.util.function.Supplier<ItemStack> held, String first) {}
+        List<Case> cases = List.of(
+                new Case(CharacterType.MIKIKO, () -> ItemStack.EMPTY, "fist_auto1"),
+                new Case(CharacterType.RHALIX, () -> ItemStack.EMPTY, "enderblaster_onehand_auto_1"),
+                new Case(CharacterType.KAERU, () -> ItemStack.EMPTY, "agony_auto_1"),
+                new Case(CharacterType.KYRIE, () -> ItemStack.EMPTY, "iron_fist_auto1"),
+                new Case(CharacterType.MIKIKO, () -> new ItemStack(com.xenowarriors.item.ModItems.HEKUBLADE.get()), "broadblade_auto1"),
+                new Case(CharacterType.RHALIX, () -> new ItemStack(com.xenowarriors.forms.FormItems.WIRE_SWORD.get()), "arbiters_blade_auto_1"));
+        for (Case cs : cases) {
+            CharacterType who = cs.who();
+            String tag = who.getId() + (cs.held().get().isEmpty() ? "" : "_" + net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(cs.held().get().getItem()).getPath());
             float[] hp = {0F, 0F};
             int[] zid = {-1};
             l.add(new Step(null, () -> { UiTest.character(who); }, 30));
@@ -186,7 +197,7 @@ final class PackEfClothesTests {
                 PackTests.arena(p); PackTests.clear(p);
                 p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
                 p.getInventory().selected = 0;
-                p.getInventory().setItem(0, ItemStack.EMPTY);
+                p.getInventory().setItem(0, cs.held().get());
                 p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0);
                 var z = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());   // (a husk: it doesn't burn in the sun)
                 if (z != null) {
@@ -207,7 +218,7 @@ final class PackEfClothesTests {
             l.add(new Step(null, () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
-                PackTests.check("efhit " + who.getId() + ": clicks out of battle mode land", now >= 0F && now < hp[0],
+                PackTests.check("efhit " + tag + ": clicks out of battle mode land", now >= 0F && now < hp[0],
                         "zombie hp " + hp[0] + " -> " + now + ", aiming at " + (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult eh ? eh.getEntity() : mc.hitResult)
                         + " dummy " + z + " invulnerable " + (z != null && z.isInvulnerable()) + " difficulty " + p.level().getDifficulty() + " gamemode " + p.gameMode.getGameModeForPlayer()
                         + " attack damage " + attackInfo(p) + " cancelled by " + WHO_CANCELS + " hurts " + HURTS);
@@ -219,7 +230,7 @@ final class PackEfClothesTests {
             l.add(new Step(null, () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
-                PackTests.check("efhit " + who.getId() + ": clicks in battle mode land", now >= 0F && now < hp[0] - 0.4F,
+                PackTests.check("efhit " + tag + ": clicks in battle mode land", now >= 0F && now < hp[0] - 0.4F,
                         "zombie hp " + hp[0] + " -> " + now + " hurts " + HURTS);
                 HURTS.setLength(0);
                 hp[0] = now;
@@ -235,13 +246,21 @@ final class PackEfClothesTests {
                     patch.playAnimationSynchronized((yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) c.get(kk), 0F);
                 }), 16));
             }
-            l.add(new Step("pack_efhit_" + who.getId(), () -> PackTests.server(p -> {
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+                Object first = null;
+                try { first = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch).get(0); } catch (Throwable ignored) {}
+                PackTests.check("efhit " + tag + ": fights in the picked style", String.valueOf(first).contains(cs.first()),
+                        "combo starts " + first + " (want " + cs.first() + ") missing " + com.xenowarriors.compat.epicfight.WomMoves.MISSING
+                        + " target assists " + com.xenowarriors.compat.EfTargetAssist.assists + " Kaeru boosts " + com.xenowarriors.compat.FistDamage.boosted);
+            }), 1));
+            l.add(new Step("pack_efhit_" + tag, () -> PackTests.server(p -> {
                 var z = p.serverLevel().getEntity(zid[0]);
                 float now = z instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1F;
                 var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
                 Object first = null;
                 try { first = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch).get(0); } catch (Throwable ignored) {}
-                PackTests.check("efhit " + who.getId() + ": battle-mode punches land", now >= 0F && now < hp[0] - 0.4F,
+                PackTests.check("efhit " + tag + ": battle-mode punches land", now >= 0F && now < hp[0] - 0.4F,
                         "zombie hp " + hp[0] + " -> " + now + " (combo starts " + first + ") hurts " + HURTS);
                 if (z != null) z.discard();
             }), 5));
