@@ -20,10 +20,34 @@ public class XWHumanPatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
         animator.addLivingAnimation(LivingMotions.FLY, Animations.BIPED_FLYING);
     }
 
-    /** Bare hands: Epic Fight's own fist combos (it fell back to the zombie's arm swipes for an empty hand). */
+    private static yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Builder<HumanoidMobPatch<?>> fists;
+
+    /**
+     * Bare hands: Epic Fight's player fist combo (jab, jab, hook - and the dash punch from a step away). Epic Fight's own
+     * "humanoid fist" moveset for mobs is the zombie's arm swipes, which looked wrong on people.
+     */
+    static yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Builder<HumanoidMobPatch<?>> fists() {
+        if (fists == null) {
+            fists = yesman.epicfight.world.entity.ai.goal.CombatBehaviors.<HumanoidMobPatch<?>>builder()
+                    .newBehaviorSeries(yesman.epicfight.world.entity.ai.goal.CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder()
+                            .weight(100F).canBeInterrupted(true).looping(true)
+                            .nextBehavior(yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder()
+                                    .animationBehavior(Animations.FIST_AUTO1).withinEyeHeight().withinDistance(0D, 2.0D))
+                            .nextBehavior(yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder()
+                                    .animationBehavior(Animations.FIST_AUTO2).withinEyeHeight().withinDistance(0D, 2.0D))
+                            .nextBehavior(yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder()
+                                    .animationBehavior(Animations.FIST_AUTO3).withinEyeHeight().withinDistance(0D, 2.2D)))
+                    .newBehaviorSeries(yesman.epicfight.world.entity.ai.goal.CombatBehaviors.BehaviorSeries.<HumanoidMobPatch<?>>builder()
+                            .weight(25F).canBeInterrupted(false).looping(false).cooldown(80)
+                            .nextBehavior(yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Behavior.<HumanoidMobPatch<?>>builder()
+                                    .animationBehavior(Animations.FIST_DASH).withinEyeHeight().withinDistance(2.2D, 4.5D)));
+        }
+        return fists;
+    }
+
     @Override
     protected yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Builder<HumanoidMobPatch<?>> getHoldingItemWeaponMotionBuilder() {
-        if (getOriginal().getMainHandItem().isEmpty()) return yesman.epicfight.gameasset.MobCombatBehaviors.HUMANOID_FIST;
+        if (getOriginal().getMainHandItem().isEmpty()) return fists();
         return super.getHoldingItemWeaponMotionBuilder();
     }
 

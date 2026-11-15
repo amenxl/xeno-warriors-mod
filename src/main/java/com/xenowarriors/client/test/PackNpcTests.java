@@ -47,6 +47,7 @@ final class PackNpcTests {
                 new Case("possessed", p -> com.xenowarriors.npc.ModNpcs.DARK_POSSESSED.get().create(p.serverLevel()), new ItemStack(Items.IRON_AXE)),
                 new Case("sky_rebel", p -> { var s = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(p.serverLevel()); s.setup(1, p.blockPosition()); return s; }, new ItemStack(Items.IRON_SWORD)),
                 new Case("gov_melee", p -> { var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel()); g.setup(false, 1, p.blockPosition()); return g; }, new ItemStack(Items.IRON_SWORD)),
+                new Case("gov_fists", p -> { var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel()); g.setup(false, 1, p.blockPosition()); return g; }, ItemStack.EMPTY),
                 new Case("gov_gun", p -> { var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel()); g.setup(false, 1, p.blockPosition()); return g; }, null)};
         for (Case c : cases) one(mc, l, c);
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 3));
@@ -85,7 +86,8 @@ final class PackNpcTests {
             var m = p.serverLevel().getEntity(npc);
             var z = p.serverLevel().getEntity(dummy);
             float now = z instanceof LivingEntity lz ? lz.getHealth() : 0;
-            boolean attacks = ANIMS.stream().anyMatch(s -> s.contains("combat/") || s.contains("auto") || s.contains("attack"));
+            boolean attacks = ANIMS.stream().anyMatch(s -> s.contains("combat/") || s.contains("auto") || s.contains("attack"))
+                    && ANIMS.stream().noneMatch(s -> s.contains("zombie/"));         // (people punch like people, not the zombie's swipes)
             String held = m instanceof LivingEntity lm ? String.valueOf(lm.getMainHandItem()) : "-";
             PackTests.check("npcs " + c.name() + ": fights on Epic Fight's body (hits land, Epic Fight's moves)", m != null && now < hp0 && attacks,
                     "holding " + held + ", zombie hp " + hp0 + " -> " + now + ", animations " + ANIMS);
