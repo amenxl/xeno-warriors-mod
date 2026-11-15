@@ -112,6 +112,8 @@ public final class ComboClient {
         STARTED_AT.put(e.getId(), ticks);
     }
 
+    private static final boolean EF_LOADED = net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");
+
     public static void remote(int id, int style, int hit, boolean heavy) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
@@ -119,6 +121,8 @@ public final class ComboClient {
         if (e == null || e == mc.player) return;
         ComboStyle st = ComboStyle.values()[Math.floorMod(style, ComboStyle.values().length)];
         SWINGS.put(id, new Swing(st, hit, heavy, e.tickCount, st.duration(hit, heavy)));
+        if (e instanceof com.xenowarriors.bot.PartyBotEntity b && EF_LOADED)                 // a bot on Epic Fight's body: that hit of its Epic Fight combo
+            com.xenowarriors.client.compat.epicfight.EfBotBodies.comboHit(b, hit);
         STARTED_AT.put(id, ticks);
     }
 

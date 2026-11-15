@@ -45,8 +45,8 @@ public final class EfBotBodies {
                 patch.tick(new net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent(a));
                 PartyBotEntity b = a.bot();
                 boolean swinging = b.swinging;
-                if (swinging && st[2] == 0 && !b.downed()) swing(patch, a, st);
-                st[2] = swinging ? 1 : 0;
+                if (swinging && st[2] == 0 && !b.downed() && a.tickCount - st[3] > 4) swing(patch, a, st);
+                st[2] = swinging || a.tickCount - st[3] <= 4 ? 1 : 0;
                 errors = 0;
             } catch (Throwable t) {
                 lastError = String.valueOf(t);
@@ -57,6 +57,34 @@ public final class EfBotBodies {
             }
         }
     }
+
+    /**
+     * A bot's combo hit from the server (its swings in a fight come this way: the plain arm-swing packet doesn't reach a
+     * bot Epic Fight looks after). Plays that hit of the combo on its body.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static void comboHit(PartyBotEntity b, int hit) {
+        if (off || b.downed()) return;
+        BotAvatar a = com.xenowarriors.client.bot.BotAvatars.existing(b);
+        if (a == null) return;
+        try {
+            PlayerPatch patch = EpicFightCapabilities.getEntityPatch(a, PlayerPatch.class);
+            int[] st = STATE.get(a);
+            if (patch == null || st == null || st[0] == 0) return;
+            var cap = patch.getHoldingItemCapability(net.minecraft.world.InteractionHand.MAIN_HAND);
+            java.util.List list = cap == null ? null : cap.getAutoAttackMotion(patch);
+            if (list == null || list.isEmpty()) return;
+            int combo = Math.max(1, list.size() - 2);
+            boolean air = !b.onGround() && !b.isNoGravity() && list.size() >= 3;
+            int i = air ? list.size() - 1 : Math.floorMod(hit, combo);
+            st[1] = i; st[2] = 1; st[3] = a.tickCount;                         // (and the arm swing that comes with it isn't a second hit)
+            patch.getClientAnimator().playAnimation((yesman.epicfight.api.asset.AssetAccessor) list.get(i), 0F);
+            swings++; comboHits++;
+        } catch (Throwable t) { lastError = String.valueOf(t); }
+    }
+
+    /** (Tests) hits played from the bots' combo packets. */
+    public static int comboHits;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void swing(PlayerPatch patch, BotAvatar a, int[] st) {
