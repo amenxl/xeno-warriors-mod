@@ -663,7 +663,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, so nothing clips through
         boolean giTop = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST);
         boolean giLegs = CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
-        boolean ssj4Top = com.xenowarriors.client.compat.DmzForms.ssj4Shirtless(player);   // Super Saiyan 4: shirt / coat off
+        boolean ssj4Top = com.xenowarriors.client.compat.DmzForms.topOff(player);   // Super Saiyan 4: shirt / coat off
         if (giTop || giLegs || ssj4Top) model.hideOutfit(giTop || ssj4Top, giTop || ssj4Top, giLegs);
         if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(player.getId())) {      // Kaeru's Change: a dark silhouette, glowing white eyes
             model.root.render(poseStack, buffer, packedLight, overlay, 0.05F, 0.05F, 0.06F, 1F);

@@ -66,7 +66,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         if (rig != null) {
             // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, as without Epic Fight
             boolean giTop = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST)
-                    || com.xenowarriors.client.compat.DmzForms.ssj4Shirtless(player);
+                    || com.xenowarriors.client.compat.DmzForms.topOff(player);
             boolean giLegs = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
             Rig.hideTorso = giTop; Rig.hideArms = giTop; Rig.hideLegs = giLegs;
             try {

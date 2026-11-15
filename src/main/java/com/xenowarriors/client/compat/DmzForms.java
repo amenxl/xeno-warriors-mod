@@ -168,17 +168,30 @@ public final class DmzForms {
         };
     }
 
-    /** In their own Super Saiyan 4 with the top off: Mikiko and Rhalix (Kyrie keeps her clothes on). */
+    /** In their own Super Saiyan 4 with the top off: the boys (and Mikiko); the girls keep their clothes on. */
     public static boolean ssj4Shirtless(Player p) {
         CharacterType t = ClientCharacterData.get((AbstractClientPlayer) p);
-        return ssj4Own(p) && t != CharacterType.KYRIE && t != CharacterType.YURI;
+        return ssj4Own(p) && (t == CharacterType.MIKIKO || !com.xenowarriors.client.FemaleBody.is(t, ""));
     }
 
-    /** Mikiko, Rhalix or Kyrie in Super Saiyan 4: drawn by Xeno Warriors with the custom SSJ4 hair, eyes and aura. */
+    /** DragonMineZ's "Buffed" forms (Human, Glind, Namekian): every character's top comes off, big muscles (tools/xw/formfaces/form_bodies.py). */
+    public static boolean buffed(Player p) {
+        if (!(p instanceof AbstractClientPlayer cp) || !ours(p)) return false;
+        CharacterType t = ClientCharacterData.get(cp);
+        if (t == CharacterType.YOU) return false;
+        if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return false;
+        String f = form(p);
+        return "buffed".equals(f) || "buffednamek".equals(f);
+    }
+
+    /** The top's off for a form: Super Saiyan 4, or Buffed. */
+    public static boolean topOff(Player p) { return ssj4Shirtless(p) || buffed(p); }
+
+    /** A character in Super Saiyan 4: drawn by Xeno Warriors with the custom SSJ4 hair, eyes and aura. */
     public static boolean ssj4Own(Player p) {
         if (!(p instanceof AbstractClientPlayer cp)) return false;
         CharacterType t = ClientCharacterData.get(cp);
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE && t != CharacterType.YURI) return false;
+        if (t == CharacterType.NONE || t == CharacterType.YOU) return false;
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return false;
         return "supersaiyan4".equals(form(p));
     }
@@ -258,11 +271,19 @@ public final class DmzForms {
         float s = f == null || f.dmz() ? 1F : f.scale();
         com.xenowarriors.client.PoseGuard.push(event.getPoseStack());
         if (s != 1F) event.getPoseStack().scale(s, s, s);
+        if (buffed(p)) bulk(event.getRenderer().getModel(), 1.18F, 1.28F);        // Buffed: a broad chest and thick arms
     }
 
     @SubscribeEvent
     public static void onRenderPost(RenderPlayerEvent.Post event) {
         if (ours(event.getEntity())) com.xenowarriors.client.PoseGuard.pop(event.getPoseStack());
+        bulk(event.getRenderer().getModel(), 1F, 1F);
+    }
+
+    /** Widens the torso and arms (and their outer layers) of the player model. */
+    private static void bulk(net.minecraft.client.model.PlayerModel<?> m, float body, float arms) {
+        for (var part : new net.minecraft.client.model.geom.ModelPart[]{m.body, m.jacket}) { part.xScale = body; part.zScale = body * 1.06F; }
+        for (var part : new net.minecraft.client.model.geom.ModelPart[]{m.rightArm, m.leftArm, m.rightSleeve, m.leftSleeve}) { part.xScale = arms; part.zScale = arms; }
     }
 
     /**
