@@ -148,13 +148,13 @@ public final class DmzForms {
     private static final Form SSJ4_OWN = new Form(0x2A1B1B, 0xFF5A33, 1.05F, false);
 
     /**
-     * Mikiko, Rhalix and Kyrie's face set for their DragonMineZ form ("ssj" teal eyes, "ssj3" no eyebrows, "ssj4" gold eyes
+     * A character's face set for their DragonMineZ form ("ssj" teal eyes, "ssj3" no eyebrows, "ssj4" gold eyes
      * ringed in red, "lssj" blank white eyes), or null for their normal face. Made by tools/xw/formfaces/faces.py.
      */
     public static String faceSet(Player p) {
         if (!(p instanceof AbstractClientPlayer cp)) return null;
         CharacterType t = ClientCharacterData.get(cp);
-        if (t != CharacterType.MIKIKO && t != CharacterType.RHALIX && t != CharacterType.KYRIE && t != CharacterType.YURI) return null;
+        if (t == CharacterType.NONE || t == CharacterType.YOU) return null;           // (every character has the form faces now)
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;
         String f = form(p);
         if (f == null) return null;

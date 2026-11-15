@@ -1,5 +1,5 @@
 """
-DragonMineZ form faces for Mikiko and Rhalix (textures <who>_<form>_face*.png):
+DragonMineZ form faces for every character (python3 faces.py [who...]) (textures <who>_<form>_face*.png):
   ssj   Super Saiyan 1/2 (and the other Super Saiyan grades): teal-green irises
   ssj3  Super Saiyan 3: teal-green irises and no eyebrows (a heavy brow ridge shadow instead)
   ssj4  Super Saiyan 4: gold irises and the red shadow ringing the eyes
@@ -97,9 +97,11 @@ def make(src, dst, form):
             po[q] = (int(r * 0.35 + red[0] * 0.65), int(g * 0.35 + red[1] * 0.65), int(b * 0.35 + red[2] * 0.65), a)
     out.save(dst)
 
+import sys
 n = 0
-for who in ('rhalix', 'mikiko', 'kyrie', 'yuri'):
-    VIOLET = who == 'kyrie'
+WHO = sys.argv[1:] or ['rhalix', 'mikiko', 'kyrie', 'yuri']
+for who in WHO:
+    VIOLET = who in ('kyrie', 'lexy', 'zane')
     for f in sorted(glob.glob(CH + who + '_face*.png')):
         if '_damage' in f: continue
         for form in ('ssj', 'ssj3', 'ssj4', 'lssj'):
