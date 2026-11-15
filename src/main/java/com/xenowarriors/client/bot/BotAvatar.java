@@ -24,6 +24,8 @@ import java.util.UUID;
  */
 public class BotAvatar extends RemotePlayer {
     PartyBotEntity bot;
+    /** Bots are on Epic Fight's body (set by its EfBotBodies each tick). */
+    public static boolean efBodies;
     private CharacterType shownAs = CharacterType.NONE;
     private UUID ownerShown;
     private boolean knocked;
@@ -65,8 +67,8 @@ public class BotAvatar extends RemotePlayer {
         walkAnimation.setSpeed(b.walkAnimation.speed());
         to.xenowarriors$setSpeedOld(from.xenowarriors$speedOld());
         to.xenowarriors$setPosition(from.xenowarriors$position());
-        swinging = b.swinging; swingTime = b.swingTime; swingingArm = b.swingingArm;
-        attackAnim = b.attackAnim; oAttackAnim = b.oAttackAnim;
+        if (efBodies && !b.isPassenger()) { swinging = false; swingTime = 0; attackAnim = 0F; oAttackAnim = 0F; }   // (on Epic Fight's body its swings are Epic Fight's moves: no plain arm swing between them)
+        else { swinging = b.swinging; swingTime = b.swingTime; swingingArm = b.swingingArm; attackAnim = b.attackAnim; oAttackAnim = b.oAttackAnim; }
         hurtTime = b.hurtTime; hurtDuration = b.hurtDuration; deathTime = b.deathTime;
         // (a mob standing still gets no movement updates, so its onGround can be stale here: check the floor under it)
         boolean ground = b.onGround() || !b.isNoGravity() && Math.abs(b.getY() - b.yo) < 0.01

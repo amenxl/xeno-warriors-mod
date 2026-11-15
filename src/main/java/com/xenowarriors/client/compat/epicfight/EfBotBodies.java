@@ -27,6 +27,7 @@ public final class EfBotBodies {
     /** From the client tick, after the avatars copied their bots. */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static void tick(java.util.List<? extends net.minecraft.client.player.AbstractClientPlayer> avatars) {
+        com.xenowarriors.client.bot.BotAvatar.efBodies = !off;
         if (off) return;
         var mc = Minecraft.getInstance();
         if (mc.level == null || mc.isPaused()) return;
@@ -63,24 +64,25 @@ public final class EfBotBodies {
      * bot Epic Fight looks after). Plays that hit of the combo on its body.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static void comboHit(PartyBotEntity b, int hit) {
-        if (off || b.downed()) return;
+    public static boolean comboHit(PartyBotEntity b, int hit) {
+        if (off || b.downed()) return false;
         BotAvatar a = com.xenowarriors.client.bot.BotAvatars.existing(b);
-        if (a == null) return;
+        if (a == null) return false;
         try {
             PlayerPatch patch = EpicFightCapabilities.getEntityPatch(a, PlayerPatch.class);
             int[] st = STATE.get(a);
-            if (patch == null || st == null || st[0] == 0) return;
+            if (patch == null || st == null || st[0] == 0) return false;
             var cap = patch.getHoldingItemCapability(net.minecraft.world.InteractionHand.MAIN_HAND);
             java.util.List list = cap == null ? null : cap.getAutoAttackMotion(patch);
-            if (list == null || list.isEmpty()) return;
+            if (list == null || list.isEmpty()) return false;
             int combo = Math.max(1, list.size() - 2);
             boolean air = !b.onGround() && !b.isNoGravity() && list.size() >= 3;
             int i = air ? list.size() - 1 : Math.floorMod(hit, combo);
             st[1] = i; st[2] = 1; st[3] = a.tickCount;                         // (and the arm swing that comes with it isn't a second hit)
             patch.getClientAnimator().playAnimation((yesman.epicfight.api.asset.AssetAccessor) list.get(i), 0F);
             swings++; comboHits++;
-        } catch (Throwable t) { lastError = String.valueOf(t); }
+            return true;
+        } catch (Throwable t) { lastError = String.valueOf(t); return false; }
     }
 
     /** (Tests) hits played from the bots' combo packets. */

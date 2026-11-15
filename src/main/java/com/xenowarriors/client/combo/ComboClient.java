@@ -120,9 +120,12 @@ public final class ComboClient {
         Entity e = mc.level.getEntity(id);
         if (e == null || e == mc.player) return;
         ComboStyle st = ComboStyle.values()[Math.floorMod(style, ComboStyle.values().length)];
+        if (e instanceof com.xenowarriors.bot.PartyBotEntity b && EF_LOADED                  // a bot on Epic Fight's body: that hit of its Epic Fight combo,
+                && com.xenowarriors.client.compat.epicfight.EfBotBodies.comboHit(b, hit)) {   //  and not our own swing pose on top (it flipped back to an arm swing)
+            SWINGS.remove(id);
+            return;
+        }
         SWINGS.put(id, new Swing(st, hit, heavy, e.tickCount, st.duration(hit, heavy)));
-        if (e instanceof com.xenowarriors.bot.PartyBotEntity b && EF_LOADED)                 // a bot on Epic Fight's body: that hit of its Epic Fight combo
-            com.xenowarriors.client.compat.epicfight.EfBotBodies.comboHit(b, hit);
         STARTED_AT.put(id, ticks);
     }
 
