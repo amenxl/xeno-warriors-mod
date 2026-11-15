@@ -23,8 +23,11 @@ final class PackGloveTests {
         if (c == null || c.isEmpty()) return -2;
         Object a = ((yesman.epicfight.api.asset.AssetAccessor) c.get(0)).get();
         if (!(a instanceof yesman.epicfight.api.animation.types.AttackAnimation attack)) return -3;
+        LAST = c.get(0) + " patch attack speed " + patch.getAttackSpeed(InteractionHand.MAIN_HAND) + " combo " + c;
         return attack.getPlaySpeed(patch, attack);
     }
+
+    static String LAST = "";
 
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 40));
@@ -41,7 +44,7 @@ final class PackGloveTests {
             l.add(new Step(null, () -> PackTests.server(p -> {
                 SPEED[ii] = speed(p);
                 PackTests.log("glove: " + what[ii] + " held " + p.getMainHandItem() + " attack speed " + p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED)
-                        + " play speed " + SPEED[ii]);
+                        + " play speed " + SPEED[ii] + " first move " + LAST);
             }), 5));
         }
         l.add(new Step(null, () -> PackTests.check("glove: Mikiko's bare-hand punches play as fast as the glove's", SPEED[0] > 0 && SPEED[0] >= SPEED[1] - 0.01F,
