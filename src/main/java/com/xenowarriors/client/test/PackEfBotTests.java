@@ -35,6 +35,27 @@ final class PackEfBotTests {
 
     static void build(Minecraft mc, List<Step> l) {
         for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.RHALIX, CharacterType.MIKIKO}) one(mc, l, t);
+        // a real fight: the bot (on Epic Fight's body) goes for a zombie - it still lands its hits, and its swings play Epic Fight's combo
+        int[] z = {-1}; float[] hp = {0}; int[] sw = {0};
+        l.add(new Step(null, () -> { mc.setScreen(null); EfBotBodies.off = false; sw[0] = EfBotBodies.swings; PackTests.server(p -> {
+            PartyBotEntity b = bot(p, CharacterType.MIKIKO);
+            if (b == null) return;
+            b.setNoAi(false);
+            var zz = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            zz.moveTo(b.getX() + 3, b.getY(), b.getZ(), 0, 0);
+            zz.addTag("xw_pack"); zz.setPersistenceRequired();
+            zz.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200); zz.setHealth(200);
+            p.serverLevel().addFreshEntity(zz);
+            z[0] = zz.getId(); hp[0] = zz.getHealth();
+            b.setTarget(zz);
+        }); }, 160));
+        l.add(new Step("pack_efbots_fight", () -> PackTests.server(p -> {
+            var e = p.serverLevel().getEntity(z[0]);
+            float now = e instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1;
+            PackTests.check("efbots: a bot on Epic Fight's body still lands its hits", e == null || now < hp[0],
+                    "zombie hp " + hp[0] + " -> " + now + ", Epic Fight swings played " + (EfBotBodies.swings - sw[0]));
+            if (e != null) e.discard();
+        }), 3));
         l.add(new Step(null, () -> PackTests.check("efbots: bots started on Epic Fight's body and swung its combos",
                 EfBotBodies.started > 0 && EfBotBodies.swings > 0, "started " + EfBotBodies.started + " swings " + EfBotBodies.swings + " last error " + EfBotBodies.lastError), 2));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
