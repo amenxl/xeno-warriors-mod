@@ -47,4 +47,17 @@ final class PackGloveTests {
         l.add(new Step(null, () -> PackTests.check("glove: Mikiko's bare-hand punches play as fast as the glove's", SPEED[0] > 0 && SPEED[0] >= SPEED[1] - 0.01F,
                 "bare " + SPEED[0] + " glove " + SPEED[1]), 2));
     }
+
+    /** (focus "packbotrace") A new bot with no Dragon Ball race gets Human or Saiyan and its character's aura colour; with the setting off, none. */
+    static void botRace(Minecraft mc, List<Step> l) {
+        CharacterType[] who = {CharacterType.KAERU, CharacterType.YURI, CharacterType.LEXY, CharacterType.ZANE};
+        l.add(new Step(null, () -> { com.xenowarriors.client.ClientSettings.setBotRaceAuto(true); UiTest.character(CharacterType.MIKIKO); }, 40));
+        l.add(new Step(null, () -> PackTests.server(p -> { for (var t : who) com.xenowarriors.bot.PartyBots.spawn(p, t, null); }), 260));
+        l.add(new Step(null, () -> {
+            java.util.List<String> picked = new java.util.ArrayList<>();
+            for (String s : com.xenowarriors.compat.DmzBots.LOG) if (s.startsWith("race picked")) picked.add(s);
+            boolean ok = !picked.isEmpty() && picked.stream().allMatch(s -> { String r = s.substring(s.indexOf("): ") + 3).toLowerCase(); return r.startsWith("human/") || r.startsWith("saiyan/"); });
+            PackTests.check("botrace: new bots get Human or Saiyan", ok, String.valueOf(picked));
+        }, 5));
+    }
 }

@@ -124,6 +124,7 @@ public final class PackTests {
         if (focus.startsWith("packefhit")) { PackEfClothesTests.hits(mc, l); return; }      // (battle-mode punches land)
         if (focus.startsWith("packbugs1")) { PackFistTraceTests.build(mc, l); PackEfClothesTests.hoods(mc, l); return; }   // (lunges stop at the enemy; hoodies and Kaeru's tail)
         if (focus.startsWith("packnpcs")) { PackNpcTests.build(mc, l); return; }      // (people on Epic Fight's body)
+        if (focus.startsWith("packbotrace")) { PackGloveTests.botRace(mc, l); return; }      // (new bots' race auto-pick)
         if (focus.startsWith("packglove")) { PackGloveTests.build(mc, l); return; }      // (Mikiko's bare hands as fast as the glove)
         if (focus.startsWith("packefbots")) { PackEfBotTests.build(mc, l); return; }      // (bots on Epic Fight's body)
         if (focus.startsWith("packefhood")) { PackEfClothesTests.hoods(mc, l); return; }      // (hoodies and Kaeru's tail in battle mode)

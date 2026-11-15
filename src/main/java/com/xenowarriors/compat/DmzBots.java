@@ -177,7 +177,7 @@ public final class DmzBots {
             CompoundTag out = DmzPerCharacter.saveData(sd);
             if (out == null || !DmzPerCharacter.store(o, key, out)) return null;
             String picked = race + "/" + cls + "/" + gender;
-            note("race picked for " + key + " (" + o.getGameProfile().getName() + "'s bot): " + picked + " level " + call(sd, "getLevel"));
+            note("race picked for " + key + " (" + o.getGameProfile().getName() + "'s bot): " + picked + " level " + call(sd, "getLevel") + " aura " + args[args.length - 1]);
             return picked;
         } catch (Throwable t) {
             XenoWarriors.LOGGER.warn("Couldn't make a DragonMineZ character for a bot", t);
