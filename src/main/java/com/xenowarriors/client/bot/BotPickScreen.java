@@ -74,15 +74,15 @@ public class BotPickScreen extends Screen {
     protected void init() {
         cols = Mth.clamp((width - 24 + GAP) / (CW + GAP), 1, Math.max(1, Math.max(choices.size(), own.size())));
         scroll = Math.min(scroll, maxScroll());
-        confirm = addRenderableWidget(Button.builder(Component.literal("Add to party"), b -> {
+        confirm = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Add to party"), b -> {
             ModNetwork.sendToServer(new BotPickPacket(picked.toArray(String[]::new)));
             onClose();
         }).bounds(width / 2 - 82, height - 28, 80, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose()).bounds(width / 2 + 2, height - 28, 80, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Cancel"), b -> onClose()).bounds(width / 2 + 2, height - 28, 80, 20).build());
         confirm.active = !picked.isEmpty();
         // tabs: the show's characters, and your own
-        addRenderableWidget(Button.builder(Component.literal("Characters"), b -> { ownTab = false; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(width / 2 - 88, 37, 84, 14).build()).active = ownTab;
-        addRenderableWidget(Button.builder(Component.literal("Your own (" + own.size() + ")"), b -> { ownTab = true; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(width / 2 + 4, 37, 84, 14).build()).active = !ownTab;
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Characters"), b -> { ownTab = false; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(width / 2 - 88, 37, 84, 14).build()).active = ownTab;
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Your own (" + own.size() + ")"), b -> { ownTab = true; scroll = 0; menuFor = null; rebuildWidgets(); }).bounds(width / 2 + 4, 37, 84, 14).build()).active = !ownTab;
     }
 
     /** (Tests) show the "Your own" tab. */
@@ -168,7 +168,7 @@ public class BotPickScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         hover = null;
         int n = max;
         g.drawCenteredString(font, title, width / 2, 10, 0xFFFFFF);

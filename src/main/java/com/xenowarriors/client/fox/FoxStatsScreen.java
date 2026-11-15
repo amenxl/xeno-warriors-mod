@@ -33,15 +33,15 @@ public class FoxStatsScreen extends Screen {
     @Override
     protected void init() {
         int x = left(), y = top();
-        addRenderableWidget(Button.builder(Component.literal("Bag"), b ->
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Bag"), b ->
                 com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.OpenFoxBagPacket(s.fox())))
                 .bounds(x + 8, y + H - 26, 76, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Rename"),
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Rename"),
                 b -> minecraft.setScreen(new FoxNameScreen(s.fox(), s.name(), false))).bounds(x + 92, y + H - 26, 64, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Close"), b -> onClose()).bounds(x + 160, y + H - 26, 62, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Close"), b -> onClose()).bounds(x + 160, y + H - 26, 62, 20).build());
         // skin picker: < Skin >
-        addRenderableWidget(Button.builder(Component.literal("<"), b -> pickSkin(-1)).bounds(x + 92, y + 124, 16, 16).build());
-        addRenderableWidget(Button.builder(Component.literal(">"), b -> pickSkin(1)).bounds(x + W - 24, y + 124, 16, 16).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("<"), b -> pickSkin(-1)).bounds(x + 92, y + 124, 16, 16).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(">"), b -> pickSkin(1)).bounds(x + W - 24, y + 124, 16, 16).build());
     }
 
     private void pickSkin(int dir) {
@@ -64,7 +64,7 @@ public class FoxStatsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = left(), y = top();
         int accent = s.snow() ? SNOW : ORANGE;
         g.fill(x, y, x + W, y + H, 0xE0101018);

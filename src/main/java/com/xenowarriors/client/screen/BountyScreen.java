@@ -26,7 +26,7 @@ public class BountyScreen extends Screen {
         for (int i = 0; i < m.ids().length; i++) {
             int idx = i;
             boolean done = m.have()[i] >= m.need()[i];
-            Button b = Button.builder(Component.literal(m.claimed()[i] ? "Claimed" : done ? "Turn in" : "In progress"), btn -> ModNetwork.sendToServer(new BountyClaimPacket(idx)))
+            Button b = com.xenowarriors.client.menu.Flat.builder(Component.literal(m.claimed()[i] ? "Claimed" : done ? "Turn in" : "In progress"), btn -> ModNetwork.sendToServer(new BountyClaimPacket(idx)))
                     .bounds(x0() + 12 + i * 96, y0() + H - 34, 84, 18).build();
             b.active = done && !m.claimed()[i];
             addRenderableWidget(b);
@@ -35,7 +35,7 @@ public class BountyScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = x0(), y = y0();
         g.fill(x - 4, y - 4, x + W + 4, y + H + 4, 0xFF3A2614);
         g.fill(x, y, x + W, y + H, 0xFF7A5230);

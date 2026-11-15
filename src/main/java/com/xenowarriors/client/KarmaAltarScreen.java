@@ -26,7 +26,7 @@ public class KarmaAltarScreen extends AbstractContainerScreen<KarmaAltarMenu> {
     @Override
     protected void init() {
         super.init();
-        upgrade = addRenderableWidget(Button.builder(Component.literal("Upgrade"), b -> {
+        upgrade = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Upgrade"), b -> {
             if (minecraft != null && minecraft.gameMode != null) minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0);
         }).bounds(leftPos + 108, topPos + 34, 60, 18).build());
     }
@@ -40,7 +40,7 @@ public class KarmaAltarScreen extends AbstractContainerScreen<KarmaAltarMenu> {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         super.render(g, mouseX, mouseY, partialTick);
         renderTooltip(g, mouseX, mouseY);
     }

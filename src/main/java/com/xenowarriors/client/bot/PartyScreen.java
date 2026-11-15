@@ -75,30 +75,30 @@ public class PartyScreen extends Screen {
                 PartyBotEntity b = myBot(rows.get(i));
                 if (b == null) continue;
                 int id = b.getId();
-                addRenderableWidget(Button.builder(Component.literal(PartyBotEntity.MODES[b.mode()]), btn -> {
+                addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(PartyBotEntity.MODES[b.mode()]), btn -> {
                     int next = (b.mode() + 1) % 3;
                     ModNetwork.sendToServer(new BotActionPacket(id, PartyBots.ACT_MODE, next));
                     btn.setMessage(Component.literal(PartyBotEntity.MODES[next]));
                 }).bounds(x + CW - 118, y + by, 64, bh).build());
-                addRenderableWidget(Button.builder(Component.literal("Menu"), btn -> ModNetwork.sendToServer(new BotActionPacket(id, PartyBots.ACT_MENU, 0)))
+                addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Menu"), btn -> ModNetwork.sendToServer(new BotActionPacket(id, PartyBots.ACT_MENU, 0)))
                         .bounds(x + CW - 50, y + by, 44, bh).build());
             } else if (rows.size() > 0 || i == 0) {                                  // an empty slot: add a bot teammate into it
-                addRenderableWidget(Button.builder(Component.literal("+ Add bot"), b -> minecraft.player.connection.sendCommand("xeno bot"))
+                addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("+ Add bot"), b -> minecraft.player.connection.sendCommand("xeno bot"))
                         .bounds(x + CW - 70, y + by, 64, bh).build());
             }
         }
         int y = y0() + head() + visible * rowH, x = x0();
-        addRenderableWidget(Button.builder(Component.literal("Add bot teammates"), b -> { minecraft.player.connection.sendCommand("xeno bot"); })
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Add bot teammates"), b -> { minecraft.player.connection.sendCommand("xeno bot"); })
                 .bounds(x + 8, y + 6, 110, 20).build());
         if (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez"))       // the party's DragonMineZ mission items
-            addRenderableWidget(Button.builder(Component.literal("Mission Bag"), b -> minecraft.player.connection.sendCommand("xeno missionbag"))
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Mission Bag"), b -> minecraft.player.connection.sendCommand("xeno missionbag"))
                     .bounds(x + 122, y + 6, 66, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(x + w() - 68, y + 6, 60, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Done"), b -> onClose()).bounds(x + w() - 68, y + 6, 60, 20).build());
     }
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = x0(), y = y0(), h = h();
         g.fill(x - 2, y - 2, x + w() + 2, y + h + 2, 0xFF6CC4FF);
         g.fill(x, y, x + w(), y + h, 0xF0101018);

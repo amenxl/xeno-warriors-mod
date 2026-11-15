@@ -36,8 +36,8 @@ public class KaGuideScreen extends Screen {
 
     @Override
     protected void init() {
-        addRenderableWidget(Button.builder(Component.literal("KAs"), b -> { elements = false; scrollY = 0; }).bounds(width / 2 - 82, 22, 80, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("Elements"), b -> { elements = true; scrollY = 0; }).bounds(width / 2 + 2, 22, 80, 16).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("KAs"), b -> { elements = false; scrollY = 0; }).bounds(width / 2 - 82, 22, 80, 16).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Elements"), b -> { elements = true; scrollY = 0; }).bounds(width / 2 + 2, 22, 80, 16).build());
     }
 
     private int cols() { return Math.max(1, Math.min(4, (width - 20) / (CW + 6))); }
@@ -46,7 +46,7 @@ public class KaGuideScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         g.drawCenteredString(font, "KA & Element Guide", width / 2, 8, 0xFFFFFF);
         List<String> hover = null;
         int y0 = 46 - scrollY;

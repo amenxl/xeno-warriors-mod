@@ -40,8 +40,8 @@ public class FoxNameScreen extends Screen {
         box.setHighlightPos(0);
         addRenderableWidget(box);
         setInitialFocus(box);
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> done()).bounds(cx - 80, cy + 18, 78, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose()).bounds(cx + 2, cy + 18, 78, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Done"), b -> done()).bounds(cx - 80, cy + 18, 78, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Cancel"), b -> onClose()).bounds(cx + 2, cy + 18, 78, 20).build());
     }
 
     private void done() {
@@ -61,7 +61,7 @@ public class FoxNameScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int cx = width / 2, cy = height / 2;
         g.fill(cx - 92, cy - 46, cx + 92, cy + 46, 0xC0101018);
         g.fill(cx - 92, cy - 46, cx + 92, cy - 44, 0xFFFF8A2A);

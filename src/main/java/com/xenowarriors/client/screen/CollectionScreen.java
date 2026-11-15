@@ -58,13 +58,13 @@ public class CollectionScreen extends Screen {
     @Override
     protected void init() {
         int x = left(), y = top();
-        addRenderableWidget(Button.builder(Component.literal("<"), b -> page = Math.max(0, page - 1)).bounds(x + 140, y + 186, 20, 16).build());
-        addRenderableWidget(Button.builder(Component.literal(">"), b -> page = Math.min(Math.max(0, (rows.size() - 1) / PER_PAGE), page + 1)).bounds(x + 232, y + 186, 20, 16).build());
-        filterBtn = addRenderableWidget(Button.builder(Component.literal("Show: " + FILTERS[filter]), b -> {
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("<"), b -> page = Math.max(0, page - 1)).bounds(x + 140, y + 186, 20, 16).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(">"), b -> page = Math.min(Math.max(0, (rows.size() - 1) / PER_PAGE), page + 1)).bounds(x + 232, y + 186, 20, 16).build());
+        filterBtn = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Show: " + FILTERS[filter]), b -> {
             filter = (filter + 1) % FILTERS.length; applyFilter(); b.setMessage(Component.literal("Show: " + FILTERS[filter]));
         }).bounds(x + 8, y + 146, 112, 16).build());
         boolean inTower = m.floor() > 0;
-        addRenderableWidget(Button.builder(Component.literal(inTower ? "Leave Tower" : "Tower Mode"), b -> {
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(inTower ? "Leave Tower" : "Tower Mode"), b -> {
             ModNetwork.sendToServer(new CollectionActionPacket(inTower ? 2 : 1));
             onClose();
         }).bounds(x + 8, y + 166, 112, 20).build());
@@ -72,7 +72,7 @@ public class CollectionScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = left(), y = top(), total = m.total();
         g.fill(x - 4, y - 4, x + 264, y + 214, 0xFF5A3A22);                 // leather cover
         g.fill(x, y, x + 128, y + 206, 0xFFF2E8D2);                          // pages

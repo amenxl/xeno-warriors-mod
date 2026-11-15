@@ -38,7 +38,7 @@ public class DealerScreen extends Screen {
     @Override
     protected void init() {
         int x = width / 2 - 150, y = top();
-        addRenderableWidget(Button.builder(Component.literal(mk2 ? "< Standard models" : "Mk II models >"), b -> { mk2 = !mk2; rebuildWidgets(); })
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(mk2 ? "< Standard models" : "Mk II models >"), b -> { mk2 = !mk2; rebuildWidgets(); })
                 .bounds(width / 2 + 40, y - 36, 110, 16).build());
         List<VehicleKind> list = shown();
         for (int i = 0; i < list.size(); i++) {
@@ -46,8 +46,8 @@ public class DealerScreen extends Screen {
             final int idx = k.ordinal();
             int ry = y + i * ROW;
             if (k.variants.length > 1)
-                addRenderableWidget(Button.builder(Component.literal("Colour"), b -> colour[idx] = (colour[idx] + 1) % k.variants.length).bounds(x + 168, ry + 12, 56, 20).build());
-            Button buy = addRenderableWidget(Button.builder(Component.literal("Buy"), b -> ModNetwork.sendToServer(new DealerBuyPacket(idx, colour[idx])))
+                addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Colour"), b -> colour[idx] = (colour[idx] + 1) % k.variants.length).bounds(x + 168, ry + 12, 56, 20).build());
+            Button buy = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Buy"), b -> ModNetwork.sendToServer(new DealerBuyPacket(idx, colour[idx])))
                     .bounds(x + 232, ry + 12, 64, 20).build());
             boolean creative = minecraft != null && minecraft.player != null && minecraft.player.isCreative();
             buy.active = creative || emeralds >= k.price;
@@ -56,7 +56,7 @@ public class DealerScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = width / 2 - 150, y = top();
         g.drawString(font, "Aurora Motors", x, y - 34, 0xFFFFFF, false);
         g.drawString(font, "You have " + emeralds + " emeralds", x, y - 22, 0x55FF55, false);

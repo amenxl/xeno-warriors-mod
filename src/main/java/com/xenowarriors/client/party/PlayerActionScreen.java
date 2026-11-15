@@ -25,18 +25,18 @@ public class PlayerActionScreen extends Screen {
         int cx = width / 2, y = height / 2 - 30;
         boolean together = PartyClient.inMyParty(target);
         if (!together) {
-            addRenderableWidget(Button.builder(Component.literal("Invite to Party"), b -> send(PlayerActionPacket.INVITE))
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Invite to Party"), b -> send(PlayerActionPacket.INVITE))
                     .bounds(cx - 75, y, 150, 20).build());
         } else if (PartyClient.amLeader()) {
-            addRenderableWidget(Button.builder(Component.literal("Remove from Party"), b -> send(PlayerActionPacket.KICK))
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Remove from Party"), b -> send(PlayerActionPacket.KICK))
                     .bounds(cx - 75, y, 150, 20).build());
         } else {
-            addRenderableWidget(Button.builder(Component.literal("Leave Party"), b -> send(PlayerActionPacket.LEAVE))
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Leave Party"), b -> send(PlayerActionPacket.LEAVE))
                     .bounds(cx - 75, y, 150, 20).build());
         }
-        addRenderableWidget(Button.builder(Component.literal("⚔ Request PvP Battle"), b -> send(PlayerActionPacket.DUEL))
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("⚔ Request PvP Battle"), b -> send(PlayerActionPacket.DUEL))
                 .bounds(cx - 75, y + 24, 150, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Cancel"), b -> onClose()).bounds(cx - 75, y + 52, 150, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Cancel"), b -> onClose()).bounds(cx - 75, y + 52, 150, 20).build());
     }
 
     private void send(int action) {
@@ -46,7 +46,7 @@ public class PlayerActionScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int cx = width / 2, y = height / 2 - 30;
         g.fill(cx - 85, y - 26, cx + 85, y + 80, 0xC0101018);
         g.fill(cx - 85, y - 26, cx + 85, y - 24, 0xFF5CE1E6);

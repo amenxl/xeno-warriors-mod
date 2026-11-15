@@ -48,7 +48,7 @@ public class RpsScreen extends Screen {
         int bw = 70;
         for (int i = 0; i < 3; i++) {
             int k = i;
-            Button b = addRenderableWidget(Button.builder(Component.literal(HANDS[i]), x -> pick(k)).bounds(x0() + 10 + i * (bw + 5), y0() + H - 30, bw, 20).build());
+            Button b = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(HANDS[i]), x -> pick(k)).bounds(x0() + 10 + i * (bw + 5), y0() + H - 30, bw, 20).build());
             b.active = !sent && closeIn < 0;
         }
     }
@@ -69,7 +69,7 @@ public class RpsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = x0(), y = y0();
         g.fill(x - 2, y - 2, x + W + 2, y + H + 2, 0xFFFFD24A);
         g.fill(x, y, x + W, y + H, 0xF0141420);

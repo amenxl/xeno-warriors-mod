@@ -24,14 +24,14 @@ public class WingPetScreen extends Screen {
     @Override
     protected void init() {
         int cx = width / 2, y = height / 2 - 10;
-        addRenderableWidget(Button.builder(Component.literal("<"), b -> pick(-1)).bounds(cx - 80, y, 20, 20).build());
-        addRenderableWidget(Button.builder(Component.literal(">"), b -> pick(1)).bounds(cx + 60, y, 20, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Bag"), b -> {
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("<"), b -> pick(-1)).bounds(cx - 80, y, 20, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(">"), b -> pick(1)).bounds(cx + 60, y, 20, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Bag"), b -> {
             ModNetwork.sendToServer(new WingPetActionPacket(pet.pet(), WingPetActionPacket.BAG, 0));
         }).bounds(cx - 80, y + 28, 78, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Rename"), b ->
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Rename"), b ->
                 minecraft.setScreen(new FoxNameScreen(pet.pet(), pet.name(), false, "companion"))).bounds(cx + 2, y + 28, 78, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 40, y + 56, 80, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Done"), b -> onClose()).bounds(cx - 40, y + 56, 80, 20).build());
     }
 
     private void pick(int dir) {
@@ -42,7 +42,7 @@ public class WingPetScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int cx = width / 2, y = height / 2 - 10;
         g.fill(cx - 90, y - 52, cx + 90, y + 84, 0xC0101018);
         g.fill(cx - 90, y - 52, cx + 90, y - 51, 0xFFC77DFF);

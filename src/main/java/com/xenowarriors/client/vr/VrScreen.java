@@ -30,19 +30,19 @@ public class VrScreen extends Screen {
     protected void init() {
         int x = x0(), y = y0() + 26;
         if (m.inSession()) {
-            addRenderableWidget(Button.builder(Component.literal("Leave VR"), b -> send(2, 0)).bounds(x + W / 2 - 60, y + 20, 120, 20).build());
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Leave VR"), b -> send(2, 0)).bounds(x + W / 2 - 60, y + 20, 120, 20).build());
             return;
         }
-        addRenderableWidget(Button.builder(Component.literal("< " + Vr.ENVS[env].name() + " >"), b -> {
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("< " + Vr.ENVS[env].name() + " >"), b -> {
             env = (env + 1) % Vr.ENVS.length; b.setMessage(Component.literal("< " + Vr.ENVS[env].name() + " >"));
         }).bounds(x + 8, y + 12, 180, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Train vs VR Ultima"), b -> send(0, env)).bounds(x + 192, y + 12, W - 200, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Train vs VR Ultima"), b -> send(0, env)).bounds(x + 192, y + 12, W - 200, 20).build());
         int cy = y + 52;
         for (int i = 0; i < Vr.CHALLENGES.length; i++) {
             var c = Vr.CHALLENGES[i];
             int idx = i, col = i % 2, row = i / 2;
             boolean done = i < m.done().length && m.done()[i];
-            Button b = Button.builder(Component.literal((done ? "✔ " : "") + c.name()), btn -> send(1, idx))
+            Button b = com.xenowarriors.client.menu.Flat.builder(Component.literal((done ? "✔ " : "") + c.name()), btn -> send(1, idx))
                     .bounds(x + 8 + col * (W / 2 - 4), cy + row * 24, W / 2 - 12, 20).build();
             String rules = c.desc() + "\nParty: " + (c.partyMin() == c.partyMax() ? c.partyMin() : c.partyMin() + "-" + c.partyMax())
                     + (c.character() != null ? "\nCharacter: " + c.character().getDisplayName().getString() : "")
@@ -55,7 +55,7 @@ public class VrScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = x0(), y = y0(), h = m.inSession() ? 80 : 60 + 26 + ((Vr.CHALLENGES.length + 1) / 2) * 24 + 10 + 6;
         g.fill(x - 2, y - 2, x + W + 2, y + h + 2, 0xFF3AF0A0);
         g.fill(x, y, x + W, y + h, 0xF00C1A16);

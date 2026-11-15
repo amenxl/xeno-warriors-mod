@@ -107,41 +107,41 @@ public class PlayerStatsScreen extends Screen {
         int tabsN = com.xenowarriors.client.PacketScreens.collectionUnlocked ? 5 : 4;
         int gap = 4, tw = Math.min(110, (Math.max(cardW(), Math.min(width - 8, 4 * 100)) - gap * (tabsN - 1)) / tabsN), tx = (width - (tw * tabsN + gap * (tabsN - 1))) / 2;
         Screen back = parent != null ? parent : this;
-        tabPlayers = addRenderableWidget(Button.builder(Component.literal("Players"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
-        tabMe = addRenderableWidget(Button.builder(Component.literal("Customization"), b -> com.xenowarriors.client.menu.CharacterCustomScreen.open(back)).bounds(tx + (tw + gap), 6, tw, 16).build());
-        tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(3)).bounds(tx + 2 * (tw + gap), 6, tw, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("Party"), b -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(back))).bounds(tx + 3 * (tw + gap), 6, tw, 16).build());
+        tabPlayers = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Players"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
+        tabMe = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Customization"), b -> com.xenowarriors.client.menu.CharacterCustomScreen.open(back)).bounds(tx + (tw + gap), 6, tw, 16).build());
+        tabSettings = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Settings"), b -> setTab(3)).bounds(tx + 2 * (tw + gap), 6, tw, 16).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Party"), b -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(back))).bounds(tx + 3 * (tw + gap), 6, tw, 16).build());
         // (outfits, skills and KAs live in Character Customization now; the old Outfits tab stays reachable for tests)
-        tabOutfits = Button.builder(Component.literal("Outfits"), b -> setTab(2)).bounds(0, 0, 1, 1).build();
+        tabOutfits = com.xenowarriors.client.menu.Flat.builder(Component.literal("Outfits"), b -> setTab(2)).bounds(0, 0, 1, 1).build();
         tabOutfits.visible = false;
         if (com.xenowarriors.client.PacketScreens.collectionUnlocked)       // after reading the Collection Book once
-            addRenderableWidget(Button.builder(Component.literal("Collection"), b -> com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.CollectionActionPacket(0)))
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Collection"), b -> com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.CollectionActionPacket(0)))
                     .bounds(tx + 4 * (tw + gap), 6, tw, 16).build());
         // settings: Karma Sensing (with its explanation underneath), then the Epic Fight options under their heading
         int bw = Math.min(240, cardW() - 20), bx = width / 2 - bw / 2;
-        senseFriendly = addRenderableWidget(Button.builder(Component.empty(), b -> {
+        senseFriendly = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> {
             ClientSettings.setSenseFriendly(!ClientSettings.senseFriendly());
             updateButtons();
         }).bounds(bx, SET_TOP + 34, bw, 20).build());
-        efMode = addRenderableWidget(Button.builder(Component.empty(), b -> {
+        efMode = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> {
             ClientSettings.setEfWholeBattleMode(!ClientSettings.efWholeBattleMode());
             updateButtons();
         }).bounds(bx, SET_TOP + 266, bw, 20).build());
-        efBattle = addRenderableWidget(Button.builder(Component.empty(), b -> {
+        efBattle = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> {
             ClientSettings.setEfAlwaysBattle(!ClientSettings.efAlwaysBattle());
             updateButtons();
         }).bounds(bx, SET_TOP + 290, bw, 20).build());
-        celShade = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setCelShading(!ClientSettings.celShading()); updateButtons(); })
+        celShade = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setCelShading(!ClientSettings.celShading()); updateButtons(); })
                 .bounds(bx, SET_TOP + 98, bw, 20).build());
-        drawnFaces = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDrawnFaces(!ClientSettings.drawnFaces()); updateButtons(); })
+        drawnFaces = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setDrawnFaces(!ClientSettings.drawnFaces()); updateButtons(); })
                 .bounds(bx, SET_TOP + 122, bw, 20).build());
-        hudStyle = addRenderableWidget(Button.builder(Component.empty(), b -> { String s = ClientSettings.hudStyle(); ClientSettings.setHudStyle(s.equals("blazing") ? "kh" : s.equals("kh") ? "classic" : "blazing"); updateButtons(); }).bounds(bx, SET_TOP + 162, bw, 20).build());
-        vanillaBars = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 186, bw / 2 - 2, 20).build());
-        skillsAlways = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 186, bw / 2 - 2, 20).build());
-        autoStep = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setAutoStep(!ClientSettings.autoStep()); updateButtons(); }).bounds(bx, SET_TOP + 226, bw, 20).build());
-        dmzNews = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDmzNewsInChat(!ClientSettings.dmzNewsInChat()); updateButtons(); })
+        hudStyle = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { String s = ClientSettings.hudStyle(); ClientSettings.setHudStyle(s.equals("blazing") ? "kh" : s.equals("kh") ? "classic" : "blazing"); updateButtons(); }).bounds(bx, SET_TOP + 162, bw, 20).build());
+        vanillaBars = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setVanillaBars(!ClientSettings.vanillaBars()); updateButtons(); }).bounds(bx, SET_TOP + 186, bw / 2 - 2, 20).build());
+        skillsAlways = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setSkillsAlways(!ClientSettings.skillsAlways()); updateButtons(); }).bounds(bx + bw / 2 + 2, SET_TOP + 186, bw / 2 - 2, 20).build());
+        autoStep = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setAutoStep(!ClientSettings.autoStep()); updateButtons(); }).bounds(bx, SET_TOP + 226, bw, 20).build());
+        dmzNews = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setDmzNewsInChat(!ClientSettings.dmzNewsInChat()); updateButtons(); })
                 .bounds(bx, SET_TOP + dmzTop() + 16, bw, 20).build());
-        botRace = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setBotRaceAuto(!ClientSettings.botRaceAuto()); updateButtons(); })
+        botRace = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> { ClientSettings.setBotRaceAuto(!ClientSettings.botRaceAuto()); updateButtons(); })
                 .bounds(bx, SET_TOP + dmzTop() + 40, bw, 20).build());
         setBaseY.clear();
         for (Button b : new Button[]{senseFriendly, efMode, efBattle, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways, autoStep, dmzNews, botRace}) setBaseY.put(b, b.getY());
@@ -150,14 +150,14 @@ public class PlayerStatsScreen extends Screen {
         outfitButtons.clear();
         for (int i = 0; i < MAX_OUTFITS; i++) {
             final int idx = i;
-            outfitButtons.add(addRenderableWidget(Button.builder(Component.empty(), b -> chooseOutfit(idx)).bounds(0, 0, 10, 20).build()));
+            outfitButtons.add(addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.empty(), b -> chooseOutfit(idx)).bounds(0, 0, 10, 20).build()));
         }
         layoutOutfits();
-        realm = addRenderableWidget(Button.builder(Component.literal("Enter the Hekublade"), b -> {
+        realm = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Enter the Hekublade"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade realm");
             minecraft.setScreen(null);
         }).bounds(width / 2 - 75, height - 46, 150, 20).build());
-        plea = addRenderableWidget(Button.builder(Component.literal("Ask to be freed"), b -> {
+        plea = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Ask to be freed"), b -> {
             if (minecraft.player != null) minecraft.player.connection.sendCommand("xeno blade plea");
         }).bounds(width / 2 - 75, height - 46, 150, 20).build());
         updateButtons();
@@ -308,7 +308,7 @@ public class PlayerStatsScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         if (tab == 3) renderSettings(g);
         else if (tab == 2) renderOutfits(g, mouseX, mouseY);
         else if (players.isEmpty()) g.drawCenteredString(font, "Loading...", width / 2, 50, 0xAAAAAA);

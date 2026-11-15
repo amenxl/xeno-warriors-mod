@@ -40,9 +40,9 @@ public class BoostBagScreen extends Screen {
 
     @Override
     protected void init() {
-        addRenderableWidget(Button.builder(Component.literal("Put my boosts in"), b -> ModNetwork.sendToServer(new BoostBagPacket(BoostBagPacket.DEPOSIT, -1, 0, new int[0])))
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Put my boosts in"), b -> ModNetwork.sendToServer(new BoostBagPacket(BoostBagPacket.DEPOSIT, -1, 0, new int[0])))
                 .bounds(width / 2 - 104, y0() + rows() * CELL + 20, 100, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose()).bounds(width / 2 + 4, y0() + rows() * CELL + 20, 100, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Done"), b -> onClose()).bounds(width / 2 + 4, y0() + rows() * CELL + 20, 100, 20).build());
     }
 
     private int kindAt(double mx, double my) {
@@ -65,7 +65,7 @@ public class BoostBagScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x0 = x0(), y0 = y0();
         long total = 0;
         for (int c : counts) total += c;

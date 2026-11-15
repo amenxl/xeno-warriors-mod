@@ -41,34 +41,34 @@ public class BotScreen extends Screen {
     protected void init() {
         int x = x0() + 96, y = y0() + 30, bw = W - 104;
         if (showPets) {
-            if (m.petNames().length == 0) addRenderableWidget(Button.builder(Component.literal("(no pets)"), b -> {}).bounds(x, y, bw, 20).build()).active = false;
+            if (m.petNames().length == 0) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("(no pets)"), b -> {}).bounds(x, y, bw, 20).build()).active = false;
             for (int i = 0; i < Math.min(6, m.petNames().length); i++) {
                 int id = m.petIds()[i];
-                addRenderableWidget(Button.builder(Component.literal("Summon " + m.petNames()[i]), b -> { send(PartyBots.ACT_SUMMON_PET, id); onClose(); }).bounds(x, y + i * 22, bw, 20).build());
+                addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Summon " + m.petNames()[i]), b -> { send(PartyBots.ACT_SUMMON_PET, id); onClose(); }).bounds(x, y + i * 22, bw, 20).build());
             }
-            addRenderableWidget(Button.builder(Component.literal("Back"), b -> { showPets = false; rebuildWidgets(); }).bounds(x, y0() + H - 28, bw, 20).build());
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Back"), b -> { showPets = false; rebuildWidgets(); }).bounds(x, y0() + H - 28, bw, 20).build());
             return;
         }
-        addRenderableWidget(Button.builder(Component.literal("Inventory"), b -> send(PartyBots.ACT_INVENTORY, 0)).bounds(x, y, bw, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Pets (" + m.petNames().length + ")"), b -> { showPets = true; rebuildWidgets(); }).bounds(x, y + 22, bw, 20).build());
-        Button fly = addRenderableWidget(Button.builder(Component.literal("Fly me"), b -> { send(PartyBots.ACT_FLY, 0); onClose(); }).bounds(x, y + 44, bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Inventory"), b -> send(PartyBots.ACT_INVENTORY, 0)).bounds(x, y, bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Pets (" + m.petNames().length + ")"), b -> { showPets = true; rebuildWidgets(); }).bounds(x, y + 22, bw, 20).build());
+        Button fly = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Fly me"), b -> { send(PartyBots.ACT_FLY, 0); onClose(); }).bounds(x, y + 44, bw, 20).build());
         fly.active = m.canFly();
-        Button carry = addRenderableWidget(Button.builder(Component.literal("Carry them (fly)"), b -> { send(PartyBots.ACT_CARRY, 0); onClose(); }).bounds(x, y + 66, bw, 20).build());
+        Button carry = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Carry them (fly)"), b -> { send(PartyBots.ACT_CARRY, 0); onClose(); }).bounds(x, y + 66, bw, 20).build());
         carry.active = minecraft.player != null && com.xenowarriors.client.ClientCharacterData.winged(minecraft.player);
-        addRenderableWidget(Button.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 88, bw, 20).build());
-        addRenderableWidget(Button.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
-        if (DMZ) addRenderableWidget(Button.builder(Component.literal("Dragon Ball"), b -> send(PartyBots.ACT_DMZ, 0)).bounds(x, y + 132, bw - 44, 20).build());   // (its DragonMineZ character: points, missions)
-        if (DMZ) addRenderableWidget(Button.builder(Component.literal("Fuse"), b -> { send(PartyBots.ACT_FUSE, 0); onClose(); })    // (Potara earrings in its bag, or it knows the Fusion Dance)
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 88, bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
+        if (DMZ) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Dragon Ball"), b -> send(PartyBots.ACT_DMZ, 0)).bounds(x, y + 132, bw - 44, 20).build());   // (its DragonMineZ character: points, missions)
+        if (DMZ) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Fuse"), b -> { send(PartyBots.ACT_FUSE, 0); onClose(); })    // (Potara earrings in its bag, or it knows the Fusion Dance)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Fuse with them: they need Potara earrings in their bag, or the Fusion Dance skill")))
                 .bounds(x + bw - 42, y + 132, 42, 20).build());
         int oy = y + (DMZ ? 154 : 132);
         if (m.radar()) {                                                         // a Dragon Radar in its bag: send it off to find the Dragon Balls
-            addRenderableWidget(Button.builder(Component.literal("Find the Dragon Balls"), b -> { send(PartyBots.ACT_RADAR, 0); onClose(); })
+            addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Find the Dragon Balls"), b -> { send(PartyBots.ACT_RADAR, 0); onClose(); })
                     .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("They take their Dragon Radar and go looking (about 30 minutes - they leave the team till then)")))
                     .bounds(x, oy, bw, 20).build());
             oy += 22;
         }
-        Button dress = addRenderableWidget(Button.builder(outfitLabel(), b -> {      // cycles their outfits (yours for that character too)
+        Button dress = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(outfitLabel(), b -> {      // cycles their outfits (yours for that character too)
             String[] names = type.outfitNames();
             if (names.length < 2) return;
             outfit = (outfit + 1) % names.length;
@@ -77,7 +77,7 @@ public class BotScreen extends Screen {
         }).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Change their outfit - it's also what they wear when you play them")))
                 .bounds(x, oy, bw, 20).build());
         dress.active = type.outfitNames().length > 1;
-        addRenderableWidget(Button.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, oy + (DMZ ? 30 : 30), bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Leave party"), b -> { send(PartyBots.ACT_DISMISS, 0); onClose(); }).bounds(x, oy + (DMZ ? 30 : 30), bw, 20).build());
     }
 
     private int missing;
@@ -104,7 +104,7 @@ public class BotScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         int x = x0(), y = y0();
         var ownSlot = minecraft.level != null && minecraft.level.getEntity(m.botId()) instanceof com.xenowarriors.bot.PartyBotEntity pb ? pb.you() : null;   // (one of your own characters)
         int color = ownSlot != null ? 0xFF000000 | ownSlot.color() : type.getColor();

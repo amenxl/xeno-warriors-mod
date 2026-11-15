@@ -60,11 +60,11 @@ public class GovShopScreen extends Screen {
             int idx = i, c = i % COLS, r = rowOf(i);
             if (r < 0 || r >= visibleRows()) continue;
             int x = left() + 4 + c * (cw + 4), y = top() + r * ROW;
-            Button b = addRenderableWidget(Button.builder(Component.literal("Buy"), bt -> ModNetwork.sendToServer(new GovShopPacket(0, 0, idx)))
+            Button b = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Buy"), bt -> ModNetwork.sendToServer(new GovShopPacket(0, 0, idx)))
                     .bounds(x + cw - 38, y + 3, 34, 18).build());
             b.active = !locked(i) && !restricted(i) && (creative || money >= price(i));
         }
-        if (c2Button()) addRenderableWidget(Button.builder(Component.literal("C2 Procedures"), bt -> com.xenowarriors.client.screen.C2Screen.ask())   // (your own characters: the Government's paths)
+        if (c2Button()) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("C2 Procedures"), bt -> com.xenowarriors.client.screen.C2Screen.ask())   // (your own characters: the Government's paths)
                 .bounds(left() + panelW() - 100, top() - 40, 100, 18).build());
     }
 

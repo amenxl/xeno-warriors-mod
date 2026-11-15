@@ -70,11 +70,11 @@ public class PartySetupScreen extends Screen {
     protected void init() {
         request();
         rebuild();
-        addRenderableWidget(Button.builder(swapLabel(), b -> { swapOn = !swapOn; ModNetwork.sendToServer(new com.xenowarriors.network.PartySwapPacket(swapOn)); b.setMessage(swapLabel()); })
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(swapLabel(), b -> { swapOn = !swapOn; ModNetwork.sendToServer(new com.xenowarriors.network.PartySwapPacket(swapOn)); b.setMessage(swapLabel()); })
                 .bounds(width - 122, 24, 110, 18)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("When one of your bot teammates is lost (not revived in time), another of your characters joins in their place to keep the party full.")))
                 .build());
-        synergyButton = addRenderableWidget(Button.builder(synergyLabel(), b -> testSynergy(!synergyOpen))
+        synergyButton = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(synergyLabel(), b -> testSynergy(!synergyOpen))
                 .bounds(12, 24, 110, 18)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Which team synergies your party has (or could have), what they do, and your bond with each teammate.")))
                 .build());
@@ -121,7 +121,7 @@ public class PartySetupScreen extends Screen {
             int x = Mth.clamp(slotX(selected) - total / 2, 6, width - total - 6);
             for (Object[] o : list) {
                 Runnable r = (Runnable) o[1];
-                Button b = Button.builder(Component.literal((String) o[0]), btn -> { r.run(); request(); }).bounds(x, by, bw, 18).build();
+                Button b = com.xenowarriors.client.menu.Flat.builder(Component.literal((String) o[0]), btn -> { r.run(); request(); }).bounds(x, by, bw, 18).build();
                 actions.add(addRenderableWidget(b));
                 x += bw + 4;
             }
@@ -212,7 +212,7 @@ public class PartySetupScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         List<PartyCardsPacket.Card> cs = cards();
         int feet = feetY(), size = (int) Math.max(24, height * 0.2);
         for (int i = 0; i < SLOTS; i++) {

@@ -63,7 +63,7 @@ public class SkillLoadoutScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g);
+        com.xenowarriors.client.menu.Flat.background(this, g);
         CharacterType type = type();
         g.drawCenteredString(font, "Skills - pick 4 + your ultimate", width / 2, 10, 0xFFFFFF);
         g.drawCenteredString(font, "Character Level " + ClientSkillState.level() + (creative() ? "  (creative: everything unlocked)" : ""), width / 2, 22, 0xAAAAAA);
@@ -133,7 +133,7 @@ public class SkillLoadoutScreen extends Screen {
 
     @Override
     protected void init() {
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal("KA & Element Guide"),
+        addRenderableWidget(net.minecraft.client.gui.components.com.xenowarriors.client.menu.Flat.builder(Component.literal("KA & Element Guide"),
                 b -> minecraft.setScreen(new KaGuideScreen(this))).bounds(width - 124, height - 24, 116, 18).build());
     }
 
