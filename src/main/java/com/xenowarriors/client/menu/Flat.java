@@ -75,7 +75,8 @@ public final class Flat {
             g.pose().pushPose();
             g.pose().translate(getX() + width / 2F, getY() + height / 2F - 4 * k, 0);
             g.pose().scale(k, k, 1F);
-            g.drawCenteredString(font, getMessage(), 0, 0, !active ? light(c) : over ? 0x101010 : 0xFFFFFF);
+            int tc = !active ? light(c) : over ? 0x101010 : 0xFFFFFF;
+            g.drawString(font, getMessage(), -font.width(getMessage()) / 2, 0, tc, !over || !active);   // (no shadow on the light hover colour: it smudged the dark text)
             g.pose().popPose();
         }
     }
