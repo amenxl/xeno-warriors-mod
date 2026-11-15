@@ -337,6 +337,7 @@ public final class World5Tests {
             KarmaAltarMenu m = menu(p);
             if (m == null) return;
             ItemStack back = m.item().copy();
+            com.xenowarriors.karma.Karma.add(p, 1000);                        // (forging the sword to max spent nearly all of it)
             put(p, KarmaAltarMenu.ITEM, new ItemStack(com.xenowarriors.sky.ModTools.SKY_PICKAXE.get()));
             log("sky pickaxe + corrupted shards: level=" + m.currentLevel() + " upgrade ok=" + m.clickMenuButton(p, 0));
             put(p, KarmaAltarMenu.MATERIAL, new ItemStack(ModItems.SKY_CRYSTAL.get(), 3));
