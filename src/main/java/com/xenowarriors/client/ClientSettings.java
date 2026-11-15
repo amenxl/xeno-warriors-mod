@@ -103,6 +103,15 @@ public final class ClientSettings {
         ClientOptions.set(com.xenowarriors.stats.PlayerOptions.AUTO_STEP, on);     // (the server applies the step height)
     }
 
+    /** Bots without a Dragon Ball race get one when they join: Human or Saiyan, with their character's own aura colour. Off = they're left without one. */
+    public static boolean botRaceAuto() { return !"false".equals(props().getProperty("bot_race_auto", "true")); }
+
+    public static void setBotRaceAuto(boolean on) {
+        props().setProperty("bot_race_auto", String.valueOf(on));
+        save();
+        ClientOptions.set(com.xenowarriors.stats.PlayerOptions.BOT_RACE, on);
+    }
+
     public static boolean celShading() { return "true".equals(props().getProperty("cel_shading", "false")); }
 
     public static void setCelShading(boolean on) { props().setProperty("cel_shading", String.valueOf(on)); save(); }

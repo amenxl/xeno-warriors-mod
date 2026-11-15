@@ -44,7 +44,7 @@ public class PlayerStatsScreen extends Screen {
     private List<PlayerStatsPacket.Entry> players = new ArrayList<>();
     private PlayerStatsPacket.Me me;
     private int scroll, refresh;
-    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces, autoStep, dmzNews;
+    private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces, autoStep, dmzNews, botRace;
 
     public PlayerStatsScreen() {
         super(Component.literal("Warriors"));
@@ -141,8 +141,10 @@ public class PlayerStatsScreen extends Screen {
         autoStep = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setAutoStep(!ClientSettings.autoStep()); updateButtons(); }).bounds(bx, SET_TOP + 226, bw, 20).build());
         dmzNews = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setDmzNewsInChat(!ClientSettings.dmzNewsInChat()); updateButtons(); })
                 .bounds(bx, SET_TOP + dmzTop() + 16, bw, 20).build());
+        botRace = addRenderableWidget(Button.builder(Component.empty(), b -> { ClientSettings.setBotRaceAuto(!ClientSettings.botRaceAuto()); updateButtons(); })
+                .bounds(bx, SET_TOP + dmzTop() + 40, bw, 20).build());
         setBaseY.clear();
-        for (Button b : new Button[]{senseFriendly, efMode, efBattle, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways, autoStep, dmzNews}) setBaseY.put(b, b.getY());
+        for (Button b : new Button[]{senseFriendly, efMode, efBattle, celShade, drawnFaces, hudStyle, vanillaBars, skillsAlways, autoStep, dmzNews, botRace}) setBaseY.put(b, b.getY());
         if (players.isEmpty()) ModNetwork.sendToServer(new PlayerStatsRequestPacket());     // (opened some other way: ask for the list)
         // outfits: one button per outfit, beside (or, on a narrow window, under) the preview of your character
         outfitButtons.clear();
@@ -165,7 +167,7 @@ public class PlayerStatsScreen extends Screen {
     private final java.util.Map<Button, Integer> setBaseY = new java.util.HashMap<>();
     private int setScroll;
 
-    private int settingsHeight() { return dmzTop() + (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez") ? 42 : 4); }
+    private int settingsHeight() { return dmzTop() + (net.minecraftforge.fml.ModList.get().isLoaded("dragonminez") ? 66 : 4); }
 
     /** Where the DragonMineZ section starts (after Epic Fight's, if that's there). */
     private static int dmzTop() { return net.minecraftforge.fml.ModList.get().isLoaded("epicfight") ? 312 : 250; }
@@ -247,6 +249,8 @@ public class PlayerStatsScreen extends Screen {
         vanillaBars.active = skillsAlways.active = ClientSettings.khHud();
         autoStep.visible = tab == 3;
         dmzNews.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez");
+        botRace.visible = dmzNews.visible;
+        botRace.setMessage(Component.literal("New bots' race: " + (ClientSettings.botRaceAuto() ? "Auto (Human or Saiyan)" : "Off")));
         dmzNews.setMessage(Component.literal("Bot / mission news: " + (ClientSettings.dmzNewsInChat() ? "In chat" : "Pop-ups")));
         autoStep.setMessage(Component.literal("Auto step-up (Speed 100+): " + (ClientSettings.autoStep() ? "ON" : "OFF")));
         efMode.visible = tab == 3 && net.minecraftforge.fml.ModList.get().isLoaded("epicfight");

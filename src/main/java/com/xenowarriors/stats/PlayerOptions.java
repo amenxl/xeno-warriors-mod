@@ -14,13 +14,14 @@ import java.util.Map;
 
 /**
  * Per-player on/off options kept on the server (saved with the player, through death): Rhalix's Gravity Magnet (set
- * in his character menu) and auto step-up (a client setting the client tells us about on joining and when changed).
+ * in his character menu), auto step-up and bots' race auto-pick (client settings the client tells us about on joining and
+ * when changed).
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID)
 public final class PlayerOptions {
-    public static final String MAGNET = "gravity_magnet", AUTO_STEP = "auto_step";
+    public static final String MAGNET = "gravity_magnet", AUTO_STEP = "auto_step", BOT_RACE = "bot_race_auto";
     /** Every option and its default; anything else a client sends is ignored. */
-    public static final Map<String, Boolean> DEFAULTS = Map.of(MAGNET, true, AUTO_STEP, true);
+    public static final Map<String, Boolean> DEFAULTS = Map.of(MAGNET, true, AUTO_STEP, true, BOT_RACE, true);
 
     private PlayerOptions() {}
 

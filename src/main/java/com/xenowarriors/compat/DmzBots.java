@@ -108,7 +108,8 @@ public final class DmzBots {
     }
 
     /**
-     * Gives the bot a DragonMineZ character if it has none: a random loaded race and class with that race's default
+     * Gives the bot a DragonMineZ character if it has none (and its owner's "auto-pick race" setting is on): Human or
+     * Saiyan, a random class, that race's default look and the character's own aura colour
      * look. Returns "race/class" when one was made, null when it already had one (or it can't be done).
      */
     public static String ensureRace(PartyBotEntity b) {
@@ -119,6 +120,7 @@ public final class DmzBots {
         if (DmzPerCharacter.isLive(o, key) || key.equals(DmzPerCharacter.viewing(o))) return null;
         CompoundTag tag = DmzPerCharacter.saved(o, key);
         if (made(tag)) return null;
+        if (!com.xenowarriors.stats.PlayerOptions.get(o, com.xenowarriors.stats.PlayerOptions.BOT_RACE)) return null;   // (their setting: no auto-pick)
         try {
             Player stand = PartyBots.standIn(b);
             if (stand == null) return null;
@@ -130,7 +132,10 @@ public final class DmzBots {
             @SuppressWarnings("unchecked") List<String> races = new ArrayList<>((List<String>) loadedRaces.invoke(null));
             if (races.isEmpty()) return null;
             Random r = new Random(b.getRandom().nextLong());
-            String race = races.get(r.nextInt(races.size()));
+            List<String> picks = new ArrayList<>();                            // Human or Saiyan (the setting)
+            for (String rr : races) if (rr.equalsIgnoreCase("human") || rr.equalsIgnoreCase("saiyan")) picks.add(rr);
+            if (picks.isEmpty()) picks = races;
+            String race = picks.get(r.nextInt(picks.size()));
             List<String> classes = new ArrayList<>();
             Object rs = raceStats.invoke(null, race);
             if (rs != null) for (Object c : (Collection<?>) allClasses.invoke(rs)) classes.add(String.valueOf(c));
@@ -158,7 +163,7 @@ public final class DmzBots {
                     or(rc == null ? null : call(rc, "getDefaultBodyColor3"), or(call(ch, "getBodyColor3"), "")),
                     or(rc == null ? null : call(rc, "getDefaultEye1Color"), or(call(ch, "getEye1Color"), "")),
                     or(rc == null ? null : call(rc, "getDefaultEye2Color"), or(call(ch, "getEye2Color"), "")),
-                    or(rc == null ? null : call(rc, "getDefaultAuraColor"), or(call(ch, "getAuraColor"), ""))};
+                    String.format("#%06X", b.character().getColor() & 0xFFFFFF)};    // (their own aura: the character's colour)
             initialize.invoke(sd, args);
             setCreated.invoke(getStatus.invoke(sd), true);
             try {                                                                   // (like DragonMineZ's own creation: the first form picked)

@@ -33,5 +33,6 @@ public final class ClientOptions {
     public static void onJoin(ClientPlayerNetworkEvent.LoggingIn event) {
         KNOWN.clear();
         ModNetwork.sendToServer(new PlayerOptionPacket(PlayerOptions.AUTO_STEP, ClientSettings.autoStep()));
+        ModNetwork.sendToServer(new PlayerOptionPacket(PlayerOptions.BOT_RACE, ClientSettings.botRaceAuto()));
     }
 }
