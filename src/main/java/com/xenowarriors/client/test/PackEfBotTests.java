@@ -66,7 +66,7 @@ final class PackEfBotTests {
         l.add(new Step("pack_efbots_fight", () -> PackTests.server(p -> {
             var e = p.serverLevel().getEntity(z[0]);
             float now = e instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1;
-            PackTests.check("efbots: a bot on Epic Fight's body lands its hits, with Epic Fight's combo", (e == null || now < hp[0]) && EfBotBodies.swings > sw[0],
+            PackTests.check("efbots: a bot on Epic Fight's body lands its hits, with Epic Fight's combo", (e == null || now < hp[0]) && EfBotBodies.swings - sw[0] >= 3,
                     "zombie hp " + hp[0] + " -> " + now + ", Epic Fight swings played " + (EfBotBodies.swings - sw[0]) + " (combo hits " + EfBotBodies.comboHits + ")");
             if (e != null) e.discard();
         }), 3));
