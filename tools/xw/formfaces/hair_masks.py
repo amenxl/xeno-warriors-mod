@@ -15,7 +15,7 @@ ROOT = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'
 CH = ROOT + 'textures/entity/character/'
 MD = ROOT + 'models/detail/'
 LOOKS = ['kaeru', 'keita', 'sam', 'sam_royal', 'sam_s3', 'max', 'max_royal', 'max_s3', 'lexy', 'technica', 'logan', 'garry', 'zane',
-         'kill', 'stevie', 'aioni', 'ultima']
+         'stevie', 'ultima']   # (Kill and Ai-oni: what's on their heads is a hood, not hair)
 
 def lum(c): return .3 * c[0] + .59 * c[1] + .11 * c[2]
 
@@ -35,7 +35,11 @@ def hair_ref(px, skin):
 
 def match(p, r):
     lr, lp = lum(r), lum(p)
-    if lr < 45: return sum(abs(p[i] - r[i]) for i in range(3)) <= 40 and lp <= lr * 2 + 25
+    if lr < 45:
+        if sum(abs(p[i] - r[i]) for i in range(3)) <= 40 and lp <= lr * 2 + 25: return True
+        # darker / lighter shades of a dark hair (Stevie's navy spikes): same hue, within reason
+        if lp < 6 or not (0.35 <= lp / lr <= 1.8): return False
+        return sum(abs(p[i] / lp - r[i] / lr) for i in range(3)) <= 0.25
     if lp < 15: return False
     k = lp / lr
     if k < 0.4 or k > 1.7: return False
