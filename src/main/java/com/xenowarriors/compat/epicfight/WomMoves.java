@@ -45,7 +45,8 @@ public final class WomMoves {
     static { TAILS.put(SPARKS, new String[]{S + "torment_berserk_dash", C + "enderblaster_twohand_tishnaw"}); }
     public static final String[] SWIFT = {C + "enderblaster_onehand_auto_1", C + "enderblaster_onehand_auto_2", C + "enderblaster_onehand_auto_3", C + "enderblaster_onehand_auto_4"};
     /** Mikiko's bare hands (the user's pick for now): Epic Fight's own glove punches. */
-    public static final String[] GLOVES = {"epicfight:biped/combat/fist_auto1", "epicfight:biped/combat/fist_auto2", "epicfight:biped/combat/fist_auto3"};
+    public static final String[] GLOVES = {"epicfightx:biped/combat/fist_auto1", "epicfightx:biped/combat/fist_auto2", "epicfightx:biped/combat/fist_auto3",
+            "epicfightx:biped/combat/fist_auto4", "epicfightx:biped/combat/fist_auto5"};   // (the glove's own five punches, at the glove's speed - the user: bare hands were slower)
     /** Rhalix's bare hands (the user's pick for now): the Ender Blaster's strikes - no shooting (right click guards). */
     public static final String[] ENDER = {C + "enderblaster_onehand_auto_1", C + "enderblaster_onehand_auto_2", C + "enderblaster_onehand_auto_3", C + "enderblaster_onehand_auto_4"};
     /** Kyrie's bare hands: Epic Fight: Dawn Day's Iron Fist, its first four hits, with its own dash and air attacks. */
@@ -60,7 +61,7 @@ public final class WomMoves {
     static {
         TAILS.put(ENDER, new String[]{C + "enderblaster_onehand_dash", C + "enderblaster_onehand_jumpkick"});
         TAILS.put(IRON_FIST, new String[]{"epicfight_dd:biped/combat/iron_fist_dash", "epicfight_dd:biped/combat/iron_fist_airslash"});
-        TAILS.put(GLOVES, new String[]{"epicfight:biped/combat/fist_dash", "epicfight:biped/combat/fist_airslash"});
+        TAILS.put(GLOVES, new String[]{"epicfightx:biped/combat/fist_dash", "epicfightx:biped/combat/fist_airslash"});
         TAILS.put(BROADBLADE, new String[]{"efn:biped/broadblade/broadblade_dash_slash", "efn:biped/broadblade/broadblade_air_slash"});
         TAILS.put(ARBITER, new String[]{"woh:biped/combat/arbiters_blade/arbiters_blade_auto_5", "woh:biped/combat/arbiters_blade/arbiters_blade_airslash"});
     }
@@ -144,7 +145,7 @@ public final class WomMoves {
     }
 
     /** Moves from another Epic Fight mod (their animation events may expect that mod's own weapon - see guard). */
-    static boolean foreign(String namespace) { return "wom".equals(namespace) || "epicfight_dd".equals(namespace) || "woh".equals(namespace) || "efn".equals(namespace); }
+    static boolean foreign(String namespace) { return "epicfightx".equals(namespace) || "wom".equals(namespace) || "epicfight_dd".equals(namespace) || "woh".equals(namespace) || "efn".equals(namespace); }
 
     /** (from the mixin on Epic Fight's getAutoAttackMotion) our combo in place of the original, or the original. */
     @SuppressWarnings({"unchecked", "rawtypes"})
