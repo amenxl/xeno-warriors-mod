@@ -120,7 +120,11 @@ public final class DmzForms {
     /** In DragonMineZ's Kaioken (a "stack" form) right now? */
     public static boolean kaioken(Player p) { return call(p, getActiveStackForm) != null; }
 
+    /** (Tests) every Xeno Warriors character shows this DragonMineZ form ("" = none; null = off). */
+    public static String testForm;
+
     public static String form(Player p) {
+        if (testForm != null && ours(p)) return testForm.isEmpty() ? null : testForm;
         return call(p, getActiveForm);
     }
 
