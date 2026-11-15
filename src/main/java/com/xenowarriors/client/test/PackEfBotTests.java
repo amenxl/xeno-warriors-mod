@@ -48,7 +48,21 @@ final class PackEfBotTests {
             p.serverLevel().addFreshEntity(zz);
             z[0] = zz.getId(); hp[0] = zz.getHealth();
             b.setTarget(zz);
-        }); }, 160));
+        }); }, 40));
+        for (int i = 0; i < 6; i++) {
+            int ii = i;
+            l.add(new Step(i == 0 ? null : "pack_efbots_fight_" + ii, () -> {
+                var b = clientBot(mc, CharacterType.MIKIKO);
+                if (b == null || mc.player == null) return;
+                mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+                var d = b.position().subtract(mc.player.position());
+                mc.player.setYRot((float) Math.toDegrees(Math.atan2(-d.x, d.z))); mc.player.setXRot(10F);
+                var a = com.xenowarriors.client.bot.BotAvatars.existing(b);
+                PackTests.log("efbots fight " + ii + ": swinging=" + b.swinging + " combo=" + com.xenowarriors.client.combo.ComboClient.swing(b)
+                        + " posed=" + com.xenowarriors.client.EntityPoses.posed(b) + "/" + (a != null && com.xenowarriors.client.EntityPoses.posed(a))
+                        + " draw " + (a == null ? "no avatar" : com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(a)) + " comboHits " + EfBotBodies.comboHits);
+            }, 6));
+        }
         l.add(new Step("pack_efbots_fight", () -> PackTests.server(p -> {
             var e = p.serverLevel().getEntity(z[0]);
             float now = e instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1;
