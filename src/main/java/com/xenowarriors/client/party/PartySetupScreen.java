@@ -289,7 +289,7 @@ public class PartySetupScreen extends Screen {
                 if (last.bondHearts() > 0) line += "   ♥ +" + last.bondHearts() + " max hearts";
                 float k = Math.min(0.7F, (width - 20) / (float) Math.max(1, font.width(line)));
                 g.pose().pushPose();
-                g.pose().translate(width / 2F - font.width(line) * k / 2F, Math.max(30, namesTop - 9), 0);
+                g.pose().translate(width / 2F - font.width(line) * k / 2F, Math.max(42, namesTop - 7), 0);
                 g.pose().scale(k, k, 1F);
                 g.drawString(font, line, 0, 0, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
                 g.pose().popPose();
