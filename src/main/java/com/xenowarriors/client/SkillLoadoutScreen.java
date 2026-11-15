@@ -133,7 +133,7 @@ public class SkillLoadoutScreen extends Screen {
 
     @Override
     protected void init() {
-        addRenderableWidget(net.minecraft.client.gui.components.com.xenowarriors.client.menu.Flat.builder(Component.literal("KA & Element Guide"),
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("KA & Element Guide"),
                 b -> minecraft.setScreen(new KaGuideScreen(this))).bounds(width - 124, height - 24, 116, 18).build());
     }
 
