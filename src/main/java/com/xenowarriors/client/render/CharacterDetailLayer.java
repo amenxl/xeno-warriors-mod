@@ -147,8 +147,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (shiyokenOutfit(p, type)) return SHIYO_TEX;
         int o = ClientCharacterData.outfit(p);
         if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId())) return LUNAR_TEX;
-        return o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
-                : type.getDetailTexture();
+        return com.xenowarriors.client.race.FormHair.tint(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
+                : type.getDetailTexture(), p);                                   // (transformed: their own hair in the form's colour)
     }
 
     /** Drawn faces are on (the setting): Ultima's and Mikiko's faces come from their <id>_drawn_* sets. */
@@ -664,6 +664,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         var fusionLook = com.xenowarriors.client.FusionLook.of(player);
         if (fusionLook != null) detailTex = com.xenowarriors.client.cel.Cel.tex(fusionLook.details());
+        detailTex = com.xenowarriors.client.race.FormHair.tint(detailTex, player);     // transformed: their own hair turns the form's colour
         detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
@@ -730,11 +731,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             }
             poseStack.popPose();
         }
-        if (formHair >= 0 && !noHead && fusionLook == null) {               // everyone else: Super Saiyan spikes / mane over their own hair
-            var fh = com.xenowarriors.client.race.RaceLook.formHair(player, model.hair != null, parent.head);
+        if (formHair >= 0 && !noHead && fusionLook == null) {               // everyone else: their own hair took the form's colour; SSJ3 / SSJ4 grow it long
+            var fh = com.xenowarriors.client.race.RaceLook.formHair(player, model.hair != null, null);
             if (fh != null) {
                 float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
+                poseStack.pushPose();
+                parent.head.translateAndRotate(poseStack);
                 fh.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.race.RaceLook.FORM_HAIR_TEX)), packedLight, overlay, hr, hg, hb, 1F);
+                poseStack.popPose();
                 com.xenowarriors.client.race.RaceLook.formHairDraws++;
             }
         }

@@ -130,6 +130,14 @@ public class SaiyanHairModel {
         cap.visible = true;
     }
 
+    /** Only the long hair of a form (SSJ3's mane down the back, SSJ4's wild hair) - for a character whose own hair already took the form's colour. */
+    public void maneOnly(int form) {
+        root.x = 0; root.y = 0; root.z = 0; root.xRot = 0; root.yRot = 0; root.zRot = 0;
+        cap.visible = false; base.visible = false; ssj.visible = false; bang1.visible = false; bang2.visible = false;
+        ssj3.visible = form == ZombieSaiyanEntity.SSJ3;
+        ssj4.visible = form == ZombieSaiyanEntity.SSJ4;
+    }
+
     /** The whole hair, for drawing on another bone (Epic Fight's head): its own pose at rest. */
     public ModelPart root() { return root; }
 

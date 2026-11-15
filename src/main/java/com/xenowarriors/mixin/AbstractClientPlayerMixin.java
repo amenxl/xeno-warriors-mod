@@ -50,7 +50,8 @@ public abstract class AbstractClientPlayerMixin {
     /** The skin it ends up with - recoloured for their DragonMineZ race (client/race/RaceLook). */
     @org.spongepowered.asm.mixin.Unique
     private void xenowarriors$set(CallbackInfoReturnable<ResourceLocation> cir, CharacterType type, ResourceLocation tex) {
-        cir.setReturnValue(com.xenowarriors.client.race.RaceLook.tint(tex, (AbstractClientPlayer) (Object) this, type));
+        AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
+        cir.setReturnValue(com.xenowarriors.client.race.RaceLook.tint(com.xenowarriors.client.race.FormHair.tint(tex, self), self, type));
     }
 
     /** Characters use the wide (4px) arm model; the girls use the slim one (see FemaleBody). */

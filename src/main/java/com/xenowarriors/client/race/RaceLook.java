@@ -289,25 +289,18 @@ public final class RaceLook {
     public static int formHairDraws;
 
     /**
-     * Super Saiyan hair for the characters whose own hair can't take the form's shape (everyone but Mikiko, Rhalix,
-     * Kyrie and Yuri, who have their own): the upswept spikes of SSJ / SSJ2 (with its bang), SSJ3's long mane, SSJ4's
-     * wild dark hair - in the form's colour, over their own. Null when there's none to show (posed at rest).
+     * The long hair that grows with a form, for the characters without their own hair system (everyone but Mikiko,
+     * Rhalix, Kyrie and Yuri): SSJ3's mane down the back, SSJ4's wild hair - in the form's colour, growing out of their
+     * own (recoloured) hair. Null for the other forms (their own hair just changes colour: FormHair). Posed at rest.
      */
     public static com.xenowarriors.client.boss.SaiyanHairModel formHair(AbstractClientPlayer p, boolean ownHair, ModelPart head) {
         CharacterType t = ClientCharacterData.get(p);
         if (ownHair || t == CharacterType.KYRIE || t == CharacterType.YURI || t == CharacterType.NONE || t == CharacterType.YOU) return null;
-        int color = DmzForms.hairColor(p);
-        if (color < 0) return null;
-        if (FORM_HAIR == null) FORM_HAIR = new com.xenowarriors.client.boss.SaiyanHairModel(com.xenowarriors.client.boss.SaiyanHairModel.create().bakeRoot());
+        if (DmzForms.hairColor(p) < 0) return null;
         int style = DmzForms.hairStyle(p);
-        int form = switch (style) {
-            case 2 -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ2;
-            case 3 -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ3;
-            case 4 -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ4;
-            default -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ1;
-        };
-        if (head != null) FORM_HAIR.setup(head, form);
-        else { FORM_HAIR.setup(new ModelPart(java.util.List.of(), java.util.Map.of()), form); }
+        if (style != 3 && style != 4) return null;                         // (SSJ / SSJ2: their own hair just takes the colour - FormHair)
+        if (FORM_HAIR == null) FORM_HAIR = new com.xenowarriors.client.boss.SaiyanHairModel(com.xenowarriors.client.boss.SaiyanHairModel.create().bakeRoot());
+        FORM_HAIR.maneOnly(style == 3 ? com.xenowarriors.boss.ZombieSaiyanEntity.SSJ3 : com.xenowarriors.boss.ZombieSaiyanEntity.SSJ4);
         return FORM_HAIR;
     }
 }
