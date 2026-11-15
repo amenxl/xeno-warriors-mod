@@ -22,6 +22,8 @@ public final class FormHair {
     private FormHair() {}
 
     private static final Map<String, ResourceLocation> DONE = new HashMap<>();
+    /** our recoloured copies -> the texture they were made from (so the race recolour can work on top of them) */
+    private static final Map<ResourceLocation, ResourceLocation> ORIGIN = new HashMap<>();
     public static int recoloured;
 
     /** The form's hair colour for this player's own hair (RGB), or -1 to leave it. */
@@ -50,6 +52,7 @@ public final class FormHair {
                 recolor(im, m, col);
                 out = XenoWarriors.id("formhair/" + Integer.toHexString(key.hashCode()));
                 Minecraft.getInstance().getTextureManager().register(out, new DynamicTexture(im));
+                ORIGIN.put(out, tex);
                 recoloured++;
             }
         } catch (Exception e) {
@@ -59,7 +62,24 @@ public final class FormHair {
         return out;
     }
 
-    public static void clear() { DONE.clear(); }
+    public static void clear() { DONE.clear(); ORIGIN.clear(); }
+
+    /**
+     * The pixels of one of our recoloured copies (made again from its texture), for the race recolour to work on; null
+     * if {@code id} isn't one of ours. The caller closes it.
+     */
+    public static NativeImage loadRecoloured(ResourceLocation id, AbstractClientPlayer p) {
+        ResourceLocation orig = ORIGIN.get(id);
+        if (orig == null) return null;
+        ResourceLocation mask = maskFor(orig);
+        int col = color(p);
+        NativeImage src = load(orig);
+        if (src == null || mask == null || col < 0) return src;
+        try (NativeImage m = load(mask)) {
+            if (m != null && m.getWidth() == src.getWidth() && m.getHeight() == src.getHeight()) recolor(src, m, col);
+        }
+        return src;
+    }
 
     /** textures/entity/character/max_royal[_ssj4|_buff].png -> max_royal_hairmask.png; ..._details[_tornN].png -> ..._details_hairmask.png */
     private static ResourceLocation maskFor(ResourceLocation tex) {

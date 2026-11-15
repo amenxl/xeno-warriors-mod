@@ -150,7 +150,8 @@ public final class RaceLook {
         int[] r = ref(type);
         ResourceLocation out = tex;
         if (r != null) {
-            try (NativeImage src = load(tex)) {
+            NativeImage made = FormHair.loadRecoloured(tex, p);                // (their hair already in the form's colour: start from that)
+            try (NativeImage src = made != null ? made : load(tex)) {
                 if (src != null) {
                     NativeImage im = new NativeImage(src.getWidth(), src.getHeight(), true);
                     im.copyFrom(src);
