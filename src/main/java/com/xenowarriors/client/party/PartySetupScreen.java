@@ -281,8 +281,19 @@ public class PartySetupScreen extends Screen {
             StringBuilder on = new StringBuilder();
             for (PartyCardsPacket.Syn y : last.synergies()) if (y.state() == 2) on.append(on.length() == 0 ? "" : "   ").append("\u2726 ").append(y.name()).append(" (bond ").append(y.bond()).append(")");
             String line = on.length() == 0 ? "No synergy active - press S to see which teammates would make one" : "Synergy: " + on;
-            g.drawCenteredString(font, line, width / 2, 46, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
-            if (last.bondHearts() > 0) g.drawCenteredString(font, "Best bond " + last.bestBond() + ": +" + last.bondHearts() + " max hearts", width / 2, 57, 0xFFFF9AD8);
+            int namesTop = feetY() - (int) (Math.max(24, height * 0.2) * 2.25) - 30;
+            if (namesTop >= 70) {
+                g.drawCenteredString(font, line, width / 2, 46, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
+                if (last.bondHearts() > 0) g.drawCenteredString(font, "Best bond " + last.bestBond() + ": +" + last.bondHearts() + " max hearts", width / 2, 57, 0xFFFF9AD8);
+            } else {                                                          // a small window: one small line, clear of the names under it
+                if (last.bondHearts() > 0) line += "   ♥ +" + last.bondHearts() + " max hearts";
+                float k = Math.min(0.7F, (width - 20) / (float) Math.max(1, font.width(line)));
+                g.pose().pushPose();
+                g.pose().translate(width / 2F - font.width(line) * k / 2F, Math.max(30, namesTop - 9), 0);
+                g.pose().scale(k, k, 1F);
+                g.drawString(font, line, 0, 0, on.length() == 0 ? 0xFF9AA0C8 : 0xFF8CFFB0);
+                g.pose().popPose();
+            }
         }
         // bottom bar
         int by = height - 16;
