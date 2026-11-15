@@ -231,6 +231,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 ModelPart[] parts = com.xenowarriors.client.race.RaceLook.headParts(race);
                 if (parts == null) return;
                 for (int i = 0; i < parts.length; i++) {
+                    if (!com.xenowarriors.client.race.RaceLook.showPart(p, race, i)) continue;
                     setTint(com.xenowarriors.client.race.RaceLook.partColor(p, race, i));
                     piece(h.head, parts[i], null, pose, vc, light, overlay, poses);
                     com.xenowarriors.client.race.RaceLook.partsDrawn++;

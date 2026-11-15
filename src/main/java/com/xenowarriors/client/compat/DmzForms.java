@@ -67,6 +67,41 @@ public final class DmzForms {
         put("buffednamek", -1, 0x570B0B, 1.38F, false);
         put("giant", -1, -1, 3.8F, true);
         put("evilgiantnamek", -1, 0x570B0B, 4F, true);
+        // Saiyan: the false Super Saiyan and the god ritual (red hair)
+        put("falsesupersaiyan", 0xFFE89E, 0xFFD700, 1.0F, false);
+        put("supersaiyangodritual", 0xD01838, 0xFF3048, 1.0F, false);
+        // Frost Demon evolutions: our characters keep their look (horns and size by form - client/race/RaceLook)
+        put("second", -1, 0x9A40FF, 1.22F, false);
+        put("third", -1, 0x9A40FF, 1.12F, false);
+        put("final", -1, 0xB060FF, 1.0F, false);
+        put("fifth", -1, 0xC070FF, 1.3F, false);
+        put("mecha", -1, 0x80C0FF, 1.05F, false);
+        put("metal", -1, 0xC0C8D0, 1.05F, false);
+        put("metalcore", -1, 0xC0C8D0, 1.1F, false);
+        // Bio-Android stages
+        put("semiperfect", -1, 0x40D040, 1.05F, false);
+        put("perfect", -1, 0x40D040, 1.0F, false);
+        put("superperfect", -1, 0xFFD700, 1.05F, false);
+        put("ultraperfect", -1, 0xFFD700, 1.12F, false);
+        put("xeno", -1, 0x70E0FF, 1.08F, false);
+        put("xenofp", -1, 0x70E0FF, 1.12F, false);
+        put("xenomax", -1, 0x70E0FF, 1.18F, false);
+        // Majin
+        put("kid", -1, 0xFF80E0, 0.82F, false);
+        put("evil", -1, 0x8040A0, 1.0F, false);
+        put("super", -1, 0xFF80E0, 1.1F, false);                          // (also Glind's)
+        put("ultra", -1, 0xFF80E0, 1.15F, false);
+        put("innocencedemon", -1, 0xFF60C0, 1.0F, false);
+        put("superdemon", -1, 0xFF60C0, 1.12F, false);
+        put("giantinnocencedemon", -1, -1, 4F, true);
+        // Glind
+        put("outofcontrol", -1, 0xD0A0FF, 1.1F, false);
+        put("absorption", -1, 0xD0A0FF, 1.1F, false);
+        put("trueform", -1, 0xE8C8FF, 1.05F, false);
+        put("transcended", 0xFFFFFF, 0xE8E0FF, 1.05F, false);
+        put("darkking", 0x302040, 0x6020A0, 1.1F, false);
+        put("timepower_darkking", 0x302040, 0x6020A0, 1.1F, false);
+        put("timepower_realmoflight", 0xFFF6D0, 0xFFF0B0, 1.1F, false);
         // any race
         put("ultimate", -1, 0xFFFFFF, 1.0F, false);
         for (String x : new String[]{"x2", "x3", "x4", "x10", "x20"}) put(x, -1, 0xDB182C, 1.0F, false);

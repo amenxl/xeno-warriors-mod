@@ -64,6 +64,14 @@ final class PackLooksTests {
                 l.add(new Step(null, () -> { DmzForms.testForm = ""; RaceLook.testRace = ""; CharacterDetailLayer.testExpr = e; }, 8));
                 l.add(new Step("looks_" + n + "_face_" + e, () -> {}, 3));
             }
+            // the other races' forms on our characters (DragonMineZ would otherwise draw its own body)
+            String[][] raceForms = {{RaceLook.MAJIN, "evil"}, {RaceLook.MAJIN, "kid"}, {RaceLook.FROST, "final"}, {RaceLook.FROST, "metal"},
+                    {RaceLook.BIO, "perfect"}, {RaceLook.GLIND, "darkking"}, {RaceLook.SAIYAN, "supersaiyangodritual"}};
+            for (String[] rf : raceForms) {
+                l.add(new Step(null, () -> { DmzForms.testForm = rf[1]; RaceLook.testRace = rf[0]; CharacterDetailLayer.testExpr = null; }, 12));
+                l.add(new Step("looks_" + n + "_raceform_" + rf[0] + "_" + rf[1], () -> PackTests.check("looks: " + rf[1] + " drawn on our characters, not DragonMineZ's",
+                        mc.player != null && !DmzForms.dmzDraws(mc.player), rf[0] + " " + rf[1]), 3));
+            }
             // a race and a form together
             l.add(new Step(null, () -> { DmzForms.testForm = "supersaiyan"; RaceLook.testRace = RaceLook.NAMEK; CharacterDetailLayer.testExpr = "powerup"; }, 12));
             l.add(new Step("looks_" + n + "_namek_ssj_powerup", () -> {}, 3));

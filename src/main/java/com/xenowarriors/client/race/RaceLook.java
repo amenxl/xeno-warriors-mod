@@ -58,6 +58,8 @@ public final class RaceLook {
 
     /** The skin colour for a race: what they picked in DragonMineZ, else the race's usual one. */
     public static int skinColor(AbstractClientPlayer p, String race) {
+        int f = formSkin(p, race);
+        if (f >= 0) return f;
         int c = testRace != null ? -1 : DmzForms.bodyColors(p)[0];
         if (c >= 0 && c != 0xFFD3C9) return c;                              // (their pick - not the human default left over)
         return switch (race) {
@@ -68,6 +70,25 @@ public final class RaceLook {
             case GLIND -> 0xD2A3DA;
             default -> -1;
         };
+    }
+
+    /** A race's forms that change the skin: Evil / Super Demon Majin go grey, Metal and Mecha Frost Demons silver, Dark King Glind dusk-violet. */
+    private static int formSkin(AbstractClientPlayer p, String race) {
+        String f = DmzForms.form(p);
+        if (f == null) return -1;
+        return switch (race) {
+            case MAJIN -> f.equals("evil") || f.equals("superdemon") ? 0xA8A6B4 : -1;
+            case FROST -> f.equals("metal") || f.equals("metalcore") || f.equals("mecha") ? 0xC4CAD4 : -1;
+            case GLIND -> f.startsWith("darkking") || f.equals("timepower_darkking") ? 0x6A5280 : -1;
+            default -> -1;
+        };
+    }
+
+    /** Whether a race's head part shows in their form: a Frost Demon's horns go in the final evolutions. */
+    public static boolean showPart(AbstractClientPlayer p, String race, int i) {
+        if (!FROST.equals(race) || i != 0) return true;
+        String f = DmzForms.form(p);
+        return f == null || !(f.equals("final") || f.equals("fullpower") || f.equals("mecha") || f.equals("metal") || f.equals("metalcore"));
     }
 
     private static int accent(AbstractClientPlayer p, String race) {
@@ -278,7 +299,7 @@ public final class RaceLook {
         if (parts == null || !parent.head.visible) return;
         pose.pushPose();
         parent.head.translateAndRotate(pose);
-        for (int i = 0; i < parts.length; i++) draw(parts[i], pose, vc, light, overlay, partColor(p, race, i));
+        for (int i = 0; i < parts.length; i++) if (showPart(p, race, i)) draw(parts[i], pose, vc, light, overlay, partColor(p, race, i));
         pose.popPose();
     }
 
