@@ -281,4 +281,33 @@ public final class RaceLook {
         for (int i = 0; i < parts.length; i++) draw(parts[i], pose, vc, light, overlay, partColor(p, race, i));
         pose.popPose();
     }
+
+    // ------------------------------------------------------------------ transformation hair for everyone
+
+    private static com.xenowarriors.client.boss.SaiyanHairModel FORM_HAIR;
+    public static final ResourceLocation FORM_HAIR_TEX = XenoWarriors.id("textures/entity/boss/saiyan_hair.png");
+    public static int formHairDraws;
+
+    /**
+     * Super Saiyan hair for the characters whose own hair can't take the form's shape (everyone but Mikiko, Rhalix,
+     * Kyrie and Yuri, who have their own): the upswept spikes of SSJ / SSJ2 (with its bang), SSJ3's long mane, SSJ4's
+     * wild dark hair - in the form's colour, over their own. Null when there's none to show (posed at rest).
+     */
+    public static com.xenowarriors.client.boss.SaiyanHairModel formHair(AbstractClientPlayer p, boolean ownHair, ModelPart head) {
+        CharacterType t = ClientCharacterData.get(p);
+        if (ownHair || t == CharacterType.KYRIE || t == CharacterType.YURI || t == CharacterType.NONE || t == CharacterType.YOU) return null;
+        int color = DmzForms.hairColor(p);
+        if (color < 0) return null;
+        if (FORM_HAIR == null) FORM_HAIR = new com.xenowarriors.client.boss.SaiyanHairModel(com.xenowarriors.client.boss.SaiyanHairModel.create().bakeRoot());
+        int style = DmzForms.hairStyle(p);
+        int form = switch (style) {
+            case 2 -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ2;
+            case 3 -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ3;
+            case 4 -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ4;
+            default -> com.xenowarriors.boss.ZombieSaiyanEntity.SSJ1;
+        };
+        if (head != null) FORM_HAIR.setup(head, form);
+        else { FORM_HAIR.setup(new ModelPart(java.util.List.of(), java.util.Map.of()), form); }
+        return FORM_HAIR;
+    }
 }

@@ -730,6 +730,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             }
             poseStack.popPose();
         }
+        if (formHair >= 0 && !noHead && fusionLook == null) {               // everyone else: Super Saiyan spikes / mane over their own hair
+            var fh = com.xenowarriors.client.race.RaceLook.formHair(player, model.hair != null, parent.head);
+            if (fh != null) {
+                float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
+                fh.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.race.RaceLook.FORM_HAIR_TEX)), packedLight, overlay, hr, hg, hb, 1F);
+                com.xenowarriors.client.race.RaceLook.formHairDraws++;
+            }
+        }
         if (formHair >= 0 && model.hair != null) {
             String atlas = king || (outfit > 0 && foxActive(player, type)) ? "mikiko_foxking" : type.getId();
             VertexConsumer hairBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(

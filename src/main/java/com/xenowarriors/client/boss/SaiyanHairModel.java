@@ -130,6 +130,9 @@ public class SaiyanHairModel {
         cap.visible = true;
     }
 
+    /** The whole hair, for drawing on another bone (Epic Fight's head): its own pose at rest. */
+    public ModelPart root() { return root; }
+
     public void render(PoseStack pose, VertexConsumer vc, int light, int overlay, float r, float g, float b, float a) {
         root.render(pose, vc, light, overlay, r, g, b, a);
     }

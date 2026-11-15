@@ -73,6 +73,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
             } finally { Rig.hideTorso = Rig.hideArms = Rig.hideLegs = false; }
             Rig.race(player, patch.getArmature(), pose, buffers, light, overlay, poses, rig.head);   // Namekian antennae, Saiyan tail...
+            if (rig.head) Rig.formHair(player, rig.m.hair != null, patch.getArmature(), pose, buffers, light, overlay, poses);   // Super Saiyan hair
         }
         if (mesh[1] != null) {
             // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
@@ -235,6 +236,19 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                     com.xenowarriors.client.race.RaceLook.partsDrawn++;
                 }
             } finally { tint[0] = was[0]; tint[1] = was[1]; tint[2] = was[2]; }
+        }
+
+        static void formHair(AbstractClientPlayer p, boolean ownHair, yesman.epicfight.api.model.Armature armature, PoseStack pose,
+                             net.minecraft.client.renderer.MultiBufferSource buffers, int light, int overlay, OpenMatrix4f[] poses) {
+            if (!(armature instanceof yesman.epicfight.model.armature.HumanoidArmature h)) return;
+            int color = com.xenowarriors.client.compat.DmzForms.hairColor(p);
+            var fh = color < 0 ? null : com.xenowarriors.client.race.RaceLook.formHair(p, ownHair, null);
+            if (fh == null) return;
+            float[] was = tint.clone();
+            setTint(color);
+            try { piece(h.head, fh.root(), null, pose, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.client.race.RaceLook.FORM_HAIR_TEX)), light, overlay, poses); }
+            finally { tint[0] = was[0]; tint[1] = was[1]; tint[2] = was[2]; }
+            com.xenowarriors.client.race.RaceLook.formHairDraws++;
         }
 
         private static void setTint(int rgb) { tint[0] = ((rgb >> 16) & 255) / 255F; tint[1] = ((rgb >> 8) & 255) / 255F; tint[2] = (rgb & 255) / 255F; }
