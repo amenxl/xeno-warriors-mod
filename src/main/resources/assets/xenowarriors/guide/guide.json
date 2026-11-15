@@ -594,6 +594,10 @@
           "title": "PvP battles in a DragonMineZ party",
           "requires": "dragonminez",
           "text": "DragonMineZ's party stops you hurting your party members (unless its party PvP is on). A Xeno Warriors PvP battle still works between them: while you're battling each other, DragonMineZ treats you as if you weren't in the same party, so your hits and ki attacks land. When the battle ends, you're teammates again."
+        },
+        {
+          "title": "Races, forms and faces",
+          "text": "Your character keeps their own look in DragonMineZ, changed by the race and form you pick.\n## Races\n- Namekian: green skin (the colour you pick in DragonMineZ's character maker), antennae and pointed ears.\n- Majin: pink skin and the head tentacle. Frost Demon: white skin, horns and the gem on the head. Bio-Android: green spotted skin and the crest. Glind: lilac skin and small horns.\n- Saiyan: a tail round the waist while DragonMineZ shows your tail. Human: your usual look.\n- The skin colour carries over to every expression, outfit and form, and the race's parts show in Epic Fight's battle mode too.\n## Forms\n- Super Saiyan (every grade, 2, Ikari, Hybrid): gold hair and teal eyes. Super Saiyan 3: no eyebrows. Super Saiyan 4: the dark mane, gold eyes ringed in red, red fur - and the boys' tops come off.\n- Legendary (Full Power): blank glowing eyes.\n- Buffed (Human, Namekian, Glind): every character's top comes off - a broad, muscled chest, a six-pack and thick arms (the girls keep a chest wrap).\n## Faces\n- Powering up: yelling. Charging a Ki attack: focused, then yelling as it fires.\n- The training minigames: straining through Gravity, humming to the Rhythm one, thinking in Memory, concentrating in Control and Precision.\n- The God Ritual and recovering in your sleep: eyes shut. Rage, stuns and knockdowns have their own faces, and everyone screams the moment they transform."
         }
       ]
     }
