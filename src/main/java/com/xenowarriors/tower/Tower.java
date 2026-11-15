@@ -462,9 +462,14 @@ public final class Tower {
             List<LivingEntity> targets = targets(server, tl, r);
             r.alive.removeIf(id -> {
                 Entity e = tl.getEntity(id);
-                if (!(e instanceof LivingEntity le) || !le.isAlive()) return true;
+                if (!(e instanceof LivingEntity le) || !le.isAlive()) {
+                    if (e != null && TEST_LOG) XenoWarriors.LOGGER.info("Tower: {} gone from the wave ({})", e.getName().getString(), e.getRemovalReason());
+                    return true;
+                }
                 if (e.getY() < Y - 12 || e.position().distanceTo(Vec3.atCenterOf(r.center)) > r.radius + 12) {
                     if (TowerBosses.isBoss(e)) { e.teleportTo(r.center.getX() + .5, Y + 1, r.center.getZ() + .5); return false; }   // a boss can't be knocked out of the fight
+                    XenoWarriors.LOGGER.info("Tower: {} fell out / wandered off ({} blocks from the centre, y {}) - removed", e.getName().getString(),
+                            Math.round(e.position().distanceTo(Vec3.atCenterOf(r.center))), Math.round(e.getY()));
                     e.discard(); return true;                     // fell out / wandered off
                 }
                 // everything here fights you and your bots - neutral mobs too - and keeps at it
@@ -601,7 +606,11 @@ public final class Tower {
     }
 
     /** (tests) counts this mob as one of the wave's enemies (spawned by the test). */
+    /** (tests) log why wave enemies leave the count. */
+    public static boolean TEST_LOG;
+
     public static void testAdd(ServerPlayer p, Mob m) {
+        TEST_LOG = true;
         Run r = BY_PLAYER.get(p.getUUID());
         if (r == null) return;
         m.getPersistentData().putBoolean("xw_tower", true);

@@ -289,7 +289,7 @@ public final class Misc5Tests {
             if (g == null) return;
             double d = g.distanceTo(p);
             check("tower guard flees first", g.isAlive() && !g.isRemoved() && g.panicking() && g.vanishing() && g.getTarget() == null && d > G[2] + 1,
-                    "2 s after: alive=" + g.isAlive() + " panicking=" + g.panicking() + " target=" + (g.getTarget() != null) + " dist " + String.format("%.1f -> %.1f", G[2], d));
+                    "2 s after: alive=" + g.isAlive() + " removed=" + g.getRemovalReason() + " hp=" + g.getHealth() + " panicking=" + g.panicking() + " target=" + (g.getTarget() != null) + " dist " + String.format("%.1f -> %.1f", G[2], d));
             G[3] = g.getX(); G[4] = g.getY(); G[5] = g.getZ();
         }), 70));
         l.add(new Step("misc5_gov_vanished", () -> UiTest.server(p -> {
