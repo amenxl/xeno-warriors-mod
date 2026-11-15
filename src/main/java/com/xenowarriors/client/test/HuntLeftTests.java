@@ -205,6 +205,7 @@ public final class HuntLeftTests {
                 cc[0] = intField("com.xenowarriors.client.combo.ComboClient", "chargesCancelled");
                 if (run) { mc.options.keyUp.setDown(true); mc.options.keySprint.setDown(true); mc.player.setSprinting(true); }
                 com.xenowarriors.client.combo.ComboClient.testHold(hold);
+                if (switchAt <= 2) { Ef.battle(true); onAt[0] = 0; }   // (the Kishi goes at 6 ticks held, and on a slow test machine a step can be several ticks: switch with the press)
             }, 1));
             for (int t = 1; t < 40; t++) {
                 int tt = t;

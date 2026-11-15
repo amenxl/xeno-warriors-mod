@@ -340,7 +340,8 @@ public final class HuntAnimTests {
             // and a new string starts at once
             l.add(new Step(null, () -> { face(mc); com.xenowarriors.client.combo.ComboClient.press(false); }, 2));
             String suf = SUF;
-            l.add(new Step(null, () -> log("check" + suf + " " + t.getId() + " new combo after respawn: " + (com.xenowarriors.client.combo.ComboClient.swing(mc.player) != null ? "PASS" : "FAIL")), 1));
+            l.add(new Step(null, () -> log("check" + suf + " " + t.getId() + " new combo after respawn: " + (com.xenowarriors.client.combo.ComboClient.swing(mc.player) != null ? "PASS"
+                    : efBattle(mc) ? "SKIP (Epic Fight's battle mode runs the attacks, not our combo)" : "FAIL")), 1));
         }
         l.add(new Step(null, () -> server(p -> p.server.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(false, p.server)), 5));
         // ---- sitting idle (stand still a long time), then hurt
@@ -620,5 +621,11 @@ public final class HuntAnimTests {
         l.add(new Step("huntanim_bots_top", () -> {}, 3));
         l.add(new Step(null, () -> server(p -> p.serverLevel().getEntities(com.xenowarriors.bot.BotEntities.BOT.get(), b -> b.getTags().contains("xw_ha_bot")).forEach(b -> b.discard())), 10));
         l.add(new Step(null, () -> me(mc), 3));
+    }
+
+    /** In Epic Fight's battle mode (Epic Fight loaded): our own combo isn't what attacks then. */
+    private static boolean efBattle(Minecraft mc) {
+        if (mc.player == null || !net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) return false;
+        return com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player).startsWith("battle=true");
     }
 }
