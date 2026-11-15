@@ -410,6 +410,10 @@ public final class EpicFightCompat {
             event.setShouldRender(false);
             return;
         }
+        if (p instanceof com.xenowarriors.client.bot.BotAvatar && com.xenowarriors.client.FirstPersonHead.inGui) {   // a bot in its menu: our renderer (Epic Fight drew only its wings and legs there)
+            event.setShouldRender(false);
+            return;
+        }
         if (ModList.get().isLoaded("dragonminez")
                 && (com.xenowarriors.client.compat.DmzForms.dmzDraws(p) || com.xenowarriors.client.compat.DmzForms.giantFox(p))) {
             event.setShouldRender(false);
