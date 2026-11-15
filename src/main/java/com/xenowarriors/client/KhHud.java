@@ -142,6 +142,11 @@ public final class KhHud implements IGuiOverlay {
             String kl0 = ka0 == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka0.title().substring(0, 1);
             small(g, font, kl0, ox + 7 - font.width(kl0) * 0.3F, oy + 4, ka0 == null ? 0xB070FF : ka0.color, 0.6F);
             kishiLine(g, font, mc, at[3], at[4] - 24);
+            if (com.xenowarriors.client.mikiko.FoxKingClient.timerShown()) {   // the Fox King timer: with your info, not in the middle of the screen
+                int ty = at[4] - 24 - 26;
+                com.xenowarriors.client.mikiko.FoxKingClient.draw(g, width - 6, ty);
+                top = Math.min(top, ty - 2);
+            }
             effects(g, mc, at[3], at[4] - 14, width - 4);
             bubble(g, font, p, at[0], at[1]);
             commandMenu(g, mc, font, type, height, partial);
@@ -176,6 +181,12 @@ public final class KhHud implements IGuiOverlay {
             small(g, font, "STAMINA", bx - 14, y - 1, 0xC0F0B0, 0.45F);
             String fl = DmzHud.form + "  " + DmzHud.powerRelease + "%";
             small(g, font, fl, px + size / 2F - font.width(fl) * 0.275F, py - 7, 0xFFD25A, 0.55F);
+            if (type != CharacterType.ULTIMA) {                        // (food too - it was missing with DragonMineZ)
+                y += 6;
+                bar(g, bx + 16, y, bw - 16, 3, BigHungerHud.layered() ? BigHungerHud.layerFill() : p.getFoodData().getFoodLevel() / 20F,
+                        BigHungerHud.layered() ? BigHungerHud.layerColor(0xFFF0AA50) : 0xFFF0AA50, 0);
+                small(g, font, "FOOD", bx - 6, y - 1, 0xF5D2A0, 0.45F);
+            }
         } else if (type != CharacterType.ULTIMA) {                     // Ultima has no hunger
             if (BigHungerHud.layered()) {                              // layers of hunger bars: the one being eaten from, in its colour
                 bar(g, bx + 16, y, bw - 16, 3, BigHungerHud.layerFill(), BigHungerHud.layerColor(0xFFF0AA50), 0);
@@ -187,6 +198,18 @@ public final class KhHud implements IGuiOverlay {
         // XP toward the next level: a thin cyan line under the bars
         g.fill(bx + 20, y + 6, bx + bw, y + 7, 0xFF203040);
         g.fill(bx + 20, y + 6, bx + 20 + Math.round((bw - 20) * LevelHud.progress()), y + 7, 0xFF78E6FF);
+        // breath, while it's running out (underwater)
+        int air = p.getAirSupply(), airMax = Math.max(1, p.getMaxAirSupply());
+        if (air < airMax) {
+            bar(g, bx + 16, y + 10, bw - 16, 3, Math.max(0, air) / (float) airMax, air < airMax / 4 && (HudFaces.clock() / 5) % 2 == 0 ? 0xFFFFFFFF : 0xFF7ACCFF, 0);
+            small(g, font, "AIR", bx - 3, y + 9, 0xBFE8FF, 0.45F);
+        }
+        // armour, by the HP bar
+        int armor = p.getArmorValue();
+        if (armor > 0) {
+            String at = "ARMOR " + armor;
+            small(g, font, at, bx, by - 6, 0xC8D2E6, 0.5F);
+        }
 
         // portrait + level badge + name
         String face = HudFaces.face(p.getUUID(), hp, max, HudFaces.allOut(p), false);
@@ -214,8 +237,14 @@ public final class KhHud implements IGuiOverlay {
         String kl = ka == null ? (type == CharacterType.ULTIMA ? "O" : "?") : ka.title().substring(0, 1);
         small(g, font, kl, px - 13 - font.width(kl) * 0.3F, py + size - 12, ka == null ? 0xB070FF : ka.color, 0.6F);
 
-        kishiLine(g, font, mc, bx, by - 24);
-        effects(g, mc, bx, by - 14, px + size);
+        int up = armor > 0 ? 7 : 0;                                            // (room for the armour line)
+        kishiLine(g, font, mc, bx, by - 24 - up);
+        if (com.xenowarriors.client.mikiko.FoxKingClient.timerShown()) {       // the Fox King timer: with your info, not in the middle of the screen
+            int ty = by - 24 - up - 26;
+            com.xenowarriors.client.mikiko.FoxKingClient.draw(g, px + size, ty);
+            top = ty - 2;
+        }
+        effects(g, mc, bx, by - 14 - up, px + size);
         bubble(g, font, p, px, py);
         commandMenu(g, mc, font, type, height, partial);
     }

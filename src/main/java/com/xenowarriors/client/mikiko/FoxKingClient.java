@@ -44,27 +44,42 @@ public final class FoxKingClient {
 
     public static int total() { return total; }
 
-    /** The Fox King timer while you're in the form: "FOX KING 2:41" over a draining red bar, with your mastery. */
+    /** Is the Fox King timer up right now (you, in the form)? */
+    public static boolean timerShown() {
+        Minecraft mc = Minecraft.getInstance();
+        return left() > 0 && mc.player != null && !mc.options.hideGui && active(mc.player);
+    }
+
+    /**
+     * The Fox King timer: "FOX KING 2:41" over a draining red bar, with your mastery under it - 24 px tall, its right edge
+     * at `right`. Drawn with the player info HUD (KhHud), or above the hotbar without it.
+     */
+    public static void draw(GuiGraphics g, int right, int top) {
+        Minecraft mc = Minecraft.getInstance();
+        int left = left();
+        int w = 90, x = right - w;
+        float frac = Mth.clamp(left / (float) total, 0F, 1F);
+        int s = (left + 19) / 20;
+        String time = "FOX KING  " + s / 60 + ":" + String.format("%02d", s % 60);
+        g.drawString(mc.font, time, right - mc.font.width(time), top, left < 200 && (mc.level.getGameTime() / 5) % 2 == 0 ? 0xFFFFFF : 0xFF6A3A);
+        int y = top + 10;
+        g.fill(x - 1, y - 1, x + w + 1, y + 4, 0xC0101010);
+        g.fill(x, y, x + Math.round(w * frac), y + 3, 0xFFE8361C);
+        g.fill(x, y, x + Math.round(w * frac), y + 1, 0xFFFFA070);
+        String m = "Mastery " + (int) mastery + (mastery >= 100 ? " (MAX)" : "");
+        g.pose().pushPose();
+        g.pose().translate(right - mc.font.width(m) * 0.7F, y + 6, 0);
+        g.pose().scale(0.7F, 0.7F, 1F);
+        g.drawString(mc.font, m, 0, 0, 0xFFD27A);
+        g.pose().popPose();
+    }
+
+    /** Without the player info HUD: above the hotbar, by the hearts. */
     public static class Overlay implements IGuiOverlay {
         @Override
         public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
-            Minecraft mc = Minecraft.getInstance();
-            int left = left();
-            if (left <= 0 || mc.player == null || mc.options.hideGui || !active(mc.player)) return;
-            int w = 90, x = width / 2 - w / 2, y = height - 98;      // (above the action bar message)
-            float frac = Mth.clamp(left / (float) total, 0F, 1F);
-            int s = (left + 19) / 20;
-            String time = "FOX KING  " + s / 60 + ":" + String.format("%02d", s % 60);
-            g.drawCenteredString(mc.font, time, width / 2, y - 10, left < 200 && (mc.level.getGameTime() / 5) % 2 == 0 ? 0xFFFFFF : 0xFF6A3A);
-            g.fill(x - 1, y - 1, x + w + 1, y + 4, 0xC0101010);
-            g.fill(x, y, x + Math.round(w * frac), y + 3, 0xFFE8361C);
-            g.fill(x, y, x + Math.round(w * frac), y + 1, 0xFFFFA070);
-            String m = "Mastery " + (int) mastery + (mastery >= 100 ? " (MAX)" : "");
-            g.pose().pushPose();
-            g.pose().translate(width / 2F - mc.font.width(m) * 0.35F, y + 6, 0);
-            g.pose().scale(0.7F, 0.7F, 1F);
-            g.drawString(mc.font, m, 0, 0, 0xFFD27A);
-            g.pose().popPose();
+            if (!timerShown() || com.xenowarriors.client.KhHud.active()) return;
+            draw(g, width / 2 - 91 + 90, height - 72);
         }
     }
 }
