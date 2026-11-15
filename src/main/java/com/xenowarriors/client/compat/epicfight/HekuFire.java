@@ -1,7 +1,6 @@
 package com.xenowarriors.client.compat.epicfight;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -37,7 +36,7 @@ public final class HekuFire {
         }
     }
 
-    /** One step of the sweep (f: 0 -> 1 across it). */
+    /** One step of the sweep (f: 0 -> 1 across it): a few embers along the arc, and one small flame where it lands. No Minecraft flame sprites (the user: too much fire, and not the standard fire). */
     private static void arc(Player p, int side, float f) {
         var level = p.level();
         var r = level.random;
@@ -45,17 +44,17 @@ public final class HekuFire {
         double from = 70 * side, to = -70 * side;
         double a = Math.toRadians(yaw + from + (to - from) * f);
         Vec3 c = p.position().add(0, p.getBbHeight() * 0.6, 0);
-        for (double rad = 1.0; rad <= 2.4; rad += 0.35) {
+        for (double rad = 1.2; rad <= 2.4; rad += 0.6) {
+            if (r.nextInt(2) != 0) continue;
             double x = c.x - Math.sin(a) * rad, z = c.z + Math.cos(a) * rad, y = c.y + (r.nextDouble() - 0.5) * 0.3;
-            level.addParticle(ParticleTypes.FLAME, x, y, z, -Math.sin(a) * 0.04, 0.02, Math.cos(a) * 0.04);
-            if (r.nextInt(3) == 0) level.addParticle(ParticleTypes.SMALL_FLAME, x, y + 0.1, z, 0, 0.03, 0);
-            if (r.nextInt(6) == 0) level.addParticle(ParticleTypes.LAVA, x, y, z, 0, 0, 0);
+            level.addParticle(EMBER, x, y, z, -Math.sin(a) * 0.03, 0.02, Math.cos(a) * 0.03);
         }
         if (f >= 0.99F) {
             double ax = c.x - Math.sin(Math.toRadians(yaw)) * 1.8, az = c.z + Math.cos(Math.toRadians(yaw)) * 1.8;
-            com.xenowarriors.compat.Effeks.play(level, com.xenowarriors.compat.Effeks.FLAME2, new Vec3(ax, c.y - 0.3, az), 0.55F, yaw);   // (AAA Particles)
-            for (int i = 0; i < 8; i++)
-                level.addParticle(ParticleTypes.FLAME, ax, c.y - 0.3, az, (r.nextDouble() - 0.5) * 0.15, r.nextDouble() * 0.12, (r.nextDouble() - 0.5) * 0.15);
+            com.xenowarriors.compat.Effeks.play(level, com.xenowarriors.compat.Effeks.FLAME2, new Vec3(ax, c.y - 0.3, az), 0.35F, yaw);   // (AAA Particles)
         }
     }
+
+    private static final net.minecraft.core.particles.DustParticleOptions EMBER =
+            new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(1F, 0.42F, 0.08F), 0.9F);
 }

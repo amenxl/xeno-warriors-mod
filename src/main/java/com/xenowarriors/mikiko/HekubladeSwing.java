@@ -67,7 +67,8 @@ public final class HekubladeSwing {
         if (hit > 0 && p.level() instanceof ServerLevel server) {
             Vec3 at = p.position().add(flat.scale(2)).add(0, p.getBbHeight() * 0.55, 0);
             server.sendParticles(ParticleTypes.SWEEP_ATTACK, at.x, at.y, at.z, 1, 0, 0, 0, 0);
-            server.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 8, 1.0, 0.2, 1.0, 0.02);
+            server.sendParticles(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(1F, 0.42F, 0.08F), 0.9F),
+                    at.x, at.y, at.z, 4, 0.8, 0.2, 0.8, 0.02);              // (a few embers: no Minecraft flame sprites)
             server.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.9F, 1.1F);
         }
         return hit > 0;

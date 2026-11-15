@@ -11,6 +11,10 @@ import net.minecraft.world.phys.Vec3;
 
 /** Particles and sounds that make Mikiko's attacks and idle tricks pop. */
 final class MikikoEffects {
+    /** The Hekublade's swing embers (orange specks, not Minecraft's flame sprites). */
+    private static final net.minecraft.core.particles.DustParticleOptions HEKU_EMBER =
+            new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(1F, 0.42F, 0.08F), 0.9F);
+
     private MikikoEffects() {}
 
     /** The instant a move connects: slash arcs of fire (Hekublade) or sparks (sword), gusts for fists and kicks. */
@@ -65,9 +69,8 @@ final class MikikoEffects {
             }
             if (i == points / 2) mid = at;
             Vec3 drift = at.subtract(chest).normalize().scale(0.03);
-            if (blade == 2) {
-                MikikoAnimations.particle(level, ParticleTypes.FLAME, at, drift);
-                if (i % 2 == 0) MikikoAnimations.particle(level, ParticleTypes.SMALL_FLAME, at, drift.scale(2));
+            if (blade == 2) {                                                   // (a light ember trail - no Minecraft flame sprites: the user)
+                if (i % 3 == 0) MikikoAnimations.particle(level, HEKU_EMBER, at, drift);
             } else if (blade == 1) {
                 MikikoAnimations.particle(level, ParticleTypes.CRIT, at, drift);
                 if (i % 3 == 0) MikikoAnimations.particle(level, ParticleTypes.END_ROD, at, drift.scale(0.3));
@@ -77,7 +80,7 @@ final class MikikoEffects {
         }
         if (mid != null && kind != Move.Kind.THRUST) MikikoAnimations.particle(level, ParticleTypes.SWEEP_ATTACK, mid, Vec3.ZERO);
         if (blade == 2 && kind == Move.Kind.THRUST) {
-            for (int i = 0; i < 8; i++) MikikoAnimations.particle(level, ParticleTypes.FLAME, chest.add(fwd.scale(2.4)), rand(p, 0.12));
+            for (int i = 0; i < 3; i++) MikikoAnimations.particle(level, HEKU_EMBER, chest.add(fwd.scale(2.4)), rand(p, 0.08));
         }
     }
 
