@@ -496,6 +496,8 @@ public final class RaidTests {
 
     // ------------------------------------------------------------------ inside the real-pack test
 
+    private static final int[] HELIS_SEEN = {0};
+
     public static void pack(Minecraft mc, List<Step> l) {
         listen();
         l.add(new Step(null, () -> PackTests.server(p -> {
@@ -523,13 +525,19 @@ public final class RaidTests {
             Raid r = FactionRaids.check(p, 0.0);
             PackTests.check("raids: bad standing + roll starts a Government raid", r != null && r.kind == Kind.GOV, "raid=" + (r == null ? "none" : r.kind));
         }), 260));
-        l.add(new Step(null, () -> PackTests.server(p -> look = nearest(p, e -> e instanceof VehicleEntity v && FactionRaids.isRaider(v))), 2));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            look = nearest(p, e -> e instanceof VehicleEntity v && FactionRaids.isRaider(v));
+            Raid r0 = FactionRaids.raidOn(p);                                  // (the helicopters seen while the raid arrives: by the check they may have dropped their soldiers and flown off)
+            HELIS_SEEN[0] = 0;
+            if (r0 != null) for (VehicleEntity v : r0.vehicleList()) if (v.kind.heli()) HELIS_SEEN[0]++;
+        }), 2));
         l.add(new Step("pack_raids_gov", () -> lookAt(mc, look), 2));
         l.add(new Step(null, () -> PackTests.server(p -> {
             Raid r = FactionRaids.raidOn(p);
             int helis = 0, aboard = 0, guns = 0;
             if (r != null) for (VehicleEntity v : r.vehicleList()) { if (v.kind.heli()) helis++; aboard += v.getPassengers().size(); }
             if (r != null) for (LivingEntity e : r.alive()) if (e instanceof GovAgentEntity g && g.hasGun()) guns++;
+            helis = Math.max(helis, HELIS_SEEN[0]);
             PackTests.check("raids: gov helicopters + convoy, soldiers shoot from vehicles", r != null && helis >= 1 && (shotsDriver + shotsPassenger + SEATED[0]) > 0 && ATTACKS[0] > 0,
                     "helis=" + helis + " stillAboard=" + aboard + " withTaczGuns=" + guns + " shots driver/passenger=" + shotsDriver + "/" + shotsPassenger
                             + " seatedAttacks=" + SEATED[0] + " attacks=" + ATTACKS[0]);
