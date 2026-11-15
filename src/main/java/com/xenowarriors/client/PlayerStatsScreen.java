@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The M menu. "Warriors" lists every player on the server; "My Warrior" shows your own progress (stats, skills and
+ * The M menu. "Players" lists every player on the server; "My Warrior" shows your own progress (stats, skills and
  * status in tidy sections, Mikiko's Hekublade button); "Outfits" shows your character and lets you change outfit;
  * "Settings" has your options.
  * Everything is measured to fit its box: long text is shortened with "…", big numbers are shortened (22.4K), and the
@@ -47,7 +47,7 @@ public class PlayerStatsScreen extends Screen {
     private Button tabPlayers, tabMe, tabOutfits, tabSettings, realm, plea, senseFriendly, efMode, efBattle, hudStyle, vanillaBars, skillsAlways, celShade, drawnFaces, autoStep, dmzNews, botRace;
 
     public PlayerStatsScreen() {
-        super(Component.literal("Warriors"));
+        super(Component.literal("Players"));
     }
 
     /** The M key: the main menu (which opens these tabs). */
@@ -107,7 +107,7 @@ public class PlayerStatsScreen extends Screen {
         int tabsN = com.xenowarriors.client.PacketScreens.collectionUnlocked ? 5 : 4;
         int gap = 4, tw = Math.min(110, (Math.max(cardW(), Math.min(width - 8, 4 * 100)) - gap * (tabsN - 1)) / tabsN), tx = (width - (tw * tabsN + gap * (tabsN - 1))) / 2;
         Screen back = parent != null ? parent : this;
-        tabPlayers = addRenderableWidget(Button.builder(Component.literal("Warriors"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
+        tabPlayers = addRenderableWidget(Button.builder(Component.literal("Players"), b -> setTab(0)).bounds(tx, 6, tw, 16).build());
         tabMe = addRenderableWidget(Button.builder(Component.literal("Customization"), b -> com.xenowarriors.client.menu.CharacterCustomScreen.open(back)).bounds(tx + (tw + gap), 6, tw, 16).build());
         tabSettings = addRenderableWidget(Button.builder(Component.literal("Settings"), b -> setTab(3)).bounds(tx + 2 * (tw + gap), 6, tw, 16).build());
         addRenderableWidget(Button.builder(Component.literal("Party"), b -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(back))).bounds(tx + 3 * (tw + gap), 6, tw, 16).build());

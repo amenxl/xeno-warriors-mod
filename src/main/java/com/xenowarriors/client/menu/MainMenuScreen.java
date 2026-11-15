@@ -56,7 +56,7 @@ public class MainMenuScreen extends Screen {
                 new Entry("Factions", "Your standing with the Government, Sky Rebellion, Sky Patrol and Townsfolk.", () -> FactionsScreen.open(this)),
                 new Entry("Journey", "Pick a party of 8 with one partner (or alone) and fight along a path of battles. Heal/Enhance between steps.",
                         () -> com.xenowarriors.client.journey.JourneyClient.act(0, 0, 0)),
-                new Entry("Warriors", "See every warrior online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
+                new Entry("Players", "See every player online: level, stats and Karma.", () -> PlayerStatsScreen.openTab(this, 0)),
                 new Entry("Settings", "Cel-shading, HUD, Karma Sensing and combat options.", () -> PlayerStatsScreen.openTab(this, 3))));
         if (com.xenowarriors.client.compat.DmzMenu.available())          // DragonMineZ installed: its own menu
             l.add(l.size() - 1, new Entry("DragonMine Z", "Open DragonMineZ's character menu: stats, forms and skills.", () -> {
