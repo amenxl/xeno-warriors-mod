@@ -79,7 +79,7 @@ public final class DmzForms {
     private static Boolean loaded;
     private static boolean broken;
     private static Capability<?> cap;
-    private static Method getCharacter, getActiveForm, getActiveStackForm, getCustomModel, getRace;
+    private static Method getCharacter, getActiveForm, getActiveStackForm, getCustomModel, getRace, getBodyColor, getBodyColor2, getBodyColor3;
 
     private DmzForms() {}
 
@@ -95,6 +95,7 @@ public final class DmzForms {
                 getActiveForm = ch.getMethod("getActiveForm");
                 try { getActiveStackForm = ch.getMethod("getActiveStackForm"); } catch (NoSuchMethodException ignored) {}
                 try { getRace = ch.getMethod("getRaceName"); } catch (NoSuchMethodException ignored) {}
+                try { getBodyColor = ch.getMethod("getBodyColor"); getBodyColor2 = ch.getMethod("getBodyColor2"); getBodyColor3 = ch.getMethod("getBodyColor3"); } catch (NoSuchMethodException ignored) {}
             } catch (Throwable t) {
                 broken = true;
                 return false;
@@ -121,6 +122,18 @@ public final class DmzForms {
 
     public static String form(Player p) {
         return call(p, getActiveForm);
+    }
+
+    /** The body colours picked in DragonMineZ's character maker (main, second, third; RGB, -1 = none). */
+    public static int[] bodyColors(Player p) {
+        int[] out = {-1, -1, -1};
+        Method[] ms = {getBodyColor, getBodyColor2, getBodyColor3};
+        for (int i = 0; i < 3; i++) {
+            String c = call(p, ms[i]);
+            if (c == null) continue;
+            try { out[i] = Integer.parseInt(c.replace("#", "").trim(), 16) & 0xFFFFFF; } catch (NumberFormatException ignored) {}
+        }
+        return out;
     }
 
     /** DragonMineZ race ("human", "saiyan"...), or null. */

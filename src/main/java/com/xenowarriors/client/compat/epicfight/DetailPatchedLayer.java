@@ -72,6 +72,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             try {
                 if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
             } finally { Rig.hideTorso = Rig.hideArms = Rig.hideLegs = false; }
+            Rig.race(player, patch.getArmature(), pose, buffers, light, overlay, poses, rig.head);   // Namekian antennae, Saiyan tail...
         }
         if (mesh[1] != null) {
             // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
@@ -209,6 +210,34 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         }
 
         private static final float[] tint = {1F, 1F, 1F};
+
+        /** Their DragonMineZ race's parts on Epic Fight's bones: head parts on the head, the Saiyan tail on the hips. */
+        static void race(AbstractClientPlayer p, yesman.epicfight.api.model.Armature armature, PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers,
+                         int light, int overlay, OpenMatrix4f[] poses, boolean head) {
+            if (!(armature instanceof yesman.epicfight.model.armature.HumanoidArmature h)) return;
+            String race = com.xenowarriors.client.race.RaceLook.race(p);
+            if (race == null || p.isInvisible()) return;
+            var vc = buffers.getBuffer(com.xenowarriors.client.race.RaceLook.renderType());
+            float[] was = tint.clone();
+            try {
+                if (com.xenowarriors.client.race.RaceLook.SAIYAN.equals(race)) {
+                    setTint(com.xenowarriors.client.race.RaceLook.tailColor(p));
+                    piece(h.torso, com.xenowarriors.client.race.RaceLook.tail(), null, pose, vc, light, overlay, poses);
+                    com.xenowarriors.client.race.RaceLook.partsDrawn++;
+                    return;
+                }
+                if (!head) return;
+                ModelPart[] parts = com.xenowarriors.client.race.RaceLook.headParts(race);
+                if (parts == null) return;
+                for (int i = 0; i < parts.length; i++) {
+                    setTint(com.xenowarriors.client.race.RaceLook.partColor(p, race, i));
+                    piece(h.head, parts[i], null, pose, vc, light, overlay, poses);
+                    com.xenowarriors.client.race.RaceLook.partsDrawn++;
+                }
+            } finally { tint[0] = was[0]; tint[1] = was[1]; tint[2] = was[2]; }
+        }
+
+        private static void setTint(int rgb) { tint[0] = ((rgb >> 16) & 255) / 255F; tint[1] = ((rgb >> 8) & 255) / 255F; tint[2] = (rgb & 255) / 255F; }
 
         /** A thigh's swing relative to the hips, as vanilla leg angles: {xRot (negative = forward), zRot (positive = toward the body's right)}. */
         private static float[] legAngles(yesman.epicfight.api.animation.Joint torso, yesman.epicfight.api.animation.Joint thigh, OpenMatrix4f[] poses) {

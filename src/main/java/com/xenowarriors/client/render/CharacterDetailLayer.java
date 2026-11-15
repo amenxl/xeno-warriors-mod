@@ -242,6 +242,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         else if (!dr && com.xenowarriors.client.compat.DmzForms.faceSet(p) != null)       // Super Saiyan forms: teal eyes, SSJ3 no brows, SSJ4 red-ringed gold eyes...
             f.face = face(type.getId() + "_" + com.xenowarriors.client.compat.DmzForms.faceSet(p), expr);
         else f.face = expr == null ? baseFace(type) : face(fp, expr);
+        if (!dr) f.face = com.xenowarriors.client.race.RaceLook.tint(f.face, p, type);   // another DragonMineZ race: their skin colour
         int damage = damageLevel(p);
         if (damage > 0 && !ClientCharacterData.isPreviewing())
             f.damage = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_damage" + damage + ".png");
@@ -674,6 +675,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             return;
         }
         model.root.render(poseStack, buffer, packedLight, overlay);
+        if (!noHead) com.xenowarriors.client.race.RaceLook.render(player, parent, poseStack, buffers, packedLight, overlay);   // Namekian antennae, Saiyan tail...
         if (com.xenowarriors.client.compat.DmzForms.ssj4Own(player)) ssj4Fur(parent, poseStack, buffers, packedLight, overlay);   // Super Saiyan 4: the red fur
         if (com.xenowarriors.client.cel.Cel.outline() && !noHead) {                 // cel-shading: the ink outline around him
             com.xenowarriors.client.cel.CelOutline.body(parent, poseStack, buffers, packedLight, overlay);

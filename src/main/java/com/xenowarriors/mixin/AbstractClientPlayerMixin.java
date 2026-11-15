@@ -18,33 +18,39 @@ public abstract class AbstractClientPlayerMixin {
         CharacterType type = ClientCharacterData.get((AbstractClientPlayer) (Object) this);
         if (type == CharacterType.YOU) {                                    // your own character: its own skin, if it has one
             var look = com.xenowarriors.client.you.YouLooks.of((AbstractClientPlayer) (Object) this);
-            if (look != null) cir.setReturnValue(look.tex());
+            if (look != null) xenowarriors$set(cir, type, look.tex());
             return;
         }
         if (type != CharacterType.NONE) {
             if (com.xenowarriors.client.kaeru.ChangeClient.silhouette(((AbstractClientPlayer) (Object) this).getId())) {
-                cir.setReturnValue(com.xenowarriors.client.kaeru.ChangeClient.SIL_SKIN);
+                xenowarriors$set(cir, type, com.xenowarriors.client.kaeru.ChangeClient.SIL_SKIN);
                 return;
             }
             var fusion = com.xenowarriors.client.FusionLook.of((AbstractClientPlayer) (Object) this);
-            if (fusion != null) { cir.setReturnValue(fusion.skin()); return; }   // a fusion: both of them in one look
+            if (fusion != null) { xenowarriors$set(cir, type, fusion.skin()); return; }   // a fusion: both of them in one look
             int o = ClientCharacterData.outfit((AbstractClientPlayer) (Object) this);
             if (com.xenowarriors.client.render.CharacterDetailLayer.shiyokenOutfit((AbstractClientPlayer) (Object) this, type)) {   // Shiyoken: his fire outfit
-                cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.client.render.CharacterDetailLayer.SHIYO_SKIN));
+                xenowarriors$set(cir, type, com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.client.render.CharacterDetailLayer.SHIYO_SKIN));
                 return;
             }
             if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(((AbstractClientPlayer) (Object) this).getId())) {
-                cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png")));   // Lunar: white coat
+                xenowarriors$set(cir, type, com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/rhalix_lunar.png")));   // Lunar: white coat
                 return;
             }
             if (com.xenowarriors.client.compat.DmzForms.topOff((AbstractClientPlayer) (Object) this)) {     // Super Saiyan 4 / Buffed: the top comes off (every outfit)
                 String form = com.xenowarriors.client.compat.DmzForms.buffed((AbstractClientPlayer) (Object) this) ? "_buff.png" : "_ssj4.png";
-                cir.setReturnValue(com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + (o > 0 ? "_" + type.outfitKeys()[o] : "") + form));
+                xenowarriors$set(cir, type, com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + (o > 0 ? "_" + type.outfitKeys()[o] : "") + form));
                 return;
             }
-            cir.setReturnValue(com.xenowarriors.client.cel.Cel.tex(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"
+            xenowarriors$set(cir, type, com.xenowarriors.client.cel.Cel.tex(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"
                     + type.outfitKeys()[o] + ".png") : type.getSkin()));
         }
+    }
+
+    /** The skin it ends up with - recoloured for their DragonMineZ race (client/race/RaceLook). */
+    @org.spongepowered.asm.mixin.Unique
+    private void xenowarriors$set(CallbackInfoReturnable<ResourceLocation> cir, CharacterType type, ResourceLocation tex) {
+        cir.setReturnValue(com.xenowarriors.client.race.RaceLook.tint(tex, (AbstractClientPlayer) (Object) this, type));
     }
 
     /** Characters use the wide (4px) arm model; the girls use the slim one (see FemaleBody). */
