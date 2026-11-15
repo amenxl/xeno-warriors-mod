@@ -96,4 +96,23 @@ public final class DmzCompat {
     public static boolean aura(Player p) {
         return ready() && flag(p, isAuraActive);
     }
+
+    private static final java.util.Map<String, Method> FLAGS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Method NONE;
+    static { Method m = null; try { m = Object.class.getMethod("hashCode"); } catch (NoSuchMethodException ignored) {} NONE = m; }
+
+    /** Any of DragonMineZ's yes/no status flags by name ("isRageActive", "isInGodRitual"...); false if it has none. */
+    public static boolean status(Player p, String name) {
+        Object st = status(p);
+        if (st == null) return false;
+        Method m = FLAGS.computeIfAbsent(name, n -> { try { return st.getClass().getMethod(n); } catch (NoSuchMethodException e) { return NONE; } });
+        if (m == NONE || m.getReturnType() != boolean.class) return false;
+        try { return (Boolean) m.invoke(st); } catch (Throwable t) { return false; }
+    }
+
+    /** Powering up (charging Ki) - not a Ki attack. */
+    public static boolean chargingKi(Player p) { return ready() && flag(p, isChargingKi); }
+
+    /** Charging a DragonMineZ Ki attack. */
+    public static boolean chargingAttack(Player p) { return ready() && flag(p, isActionCharging); }
 }

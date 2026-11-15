@@ -48,7 +48,8 @@ public final class RaceLook {
         if (ClientCharacterData.isPreviewing() && p == Minecraft.getInstance().player) return null;
         String r = DmzForms.race(p);
         if (r == null) return null;
-        for (String k : new String[]{NAMEK, MAJIN, FROST, BIO, GLIND, SAIYAN}) if (r.contains(k)) return k;
+        if (r.contains(SAIYAN)) return com.xenowarriors.client.compat.DmzCompat.tail(p) ? SAIYAN : null;   // (the tail when DragonMineZ shows it)
+        for (String k : new String[]{NAMEK, MAJIN, FROST, BIO, GLIND}) if (r.contains(k)) return k;
         if (r.contains("namek")) return NAMEK;
         if (r.contains("frost") || r.contains("arcos")) return FROST;
         if (r.contains("android") && r.contains("bio")) return BIO;

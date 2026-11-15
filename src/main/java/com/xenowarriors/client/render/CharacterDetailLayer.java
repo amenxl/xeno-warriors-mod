@@ -167,7 +167,10 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     private static final java.util.Map<String, String> FACE_FALLBACK = java.util.Map.ofEntries(java.util.Map.entry("wince", "strained"), java.util.Map.entry("hurt_heavy", "panic"),
             java.util.Map.entry("shocked", "hurt"), java.util.Map.entry("determined", "focused"),
             java.util.Map.entry("smirk", "smug"), java.util.Map.entry("laugh", "grin"), java.util.Map.entry("pout", "annoyed"), java.util.Map.entry("blush", "happy"),
-            java.util.Map.entry("love", "happy"), java.util.Map.entry("starving", "exhausted"), java.util.Map.entry("starving2", "starving"));
+            java.util.Map.entry("love", "happy"), java.util.Map.entry("starving", "exhausted"), java.util.Map.entry("starving2", "starving"),
+            java.util.Map.entry("powerup", "shout"), java.util.Map.entry("beam", "shout"), java.util.Map.entry("strain", "strained"),
+            java.util.Map.entry("strained", "concentrate"), java.util.Map.entry("meditate", "sleep"), java.util.Map.entry("rhythm", "hum"),
+            java.util.Map.entry("transform", "shout"));
 
     /**
      * textures/entity/character/&lt;set&gt;_face_&lt;expr&gt;.png - or a close expression, or the plain &lt;set&gt;_face.png when
@@ -313,8 +316,14 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     /** A face forced on a menu portrait (the off-duty cards: what they're busy doing), set only around that draw. */
     public static String previewExpr;
 
+    /** (Tests) every character shows this expression (null = off). */
+    public static String testExpr;
+
     private static String expression(AbstractClientPlayer p, CharacterType type) {
+        if (testExpr != null) return testExpr;
         if (previewExpr != null && ClientCharacterData.isPreviewing()) return previewExpr;
+        String dmz = com.xenowarriors.client.race.DmzFaces.face(p);       // DragonMineZ moments: powering up, Ki attacks, minigames, transforming...
+        if (dmz != null) return dmz;
         String pod = com.xenowarriors.client.pod.PodFace.face(p);       // resting in a healing pod: eyes closed
         if (pod != null) return pod;
         if (p.isSleeping()) {
