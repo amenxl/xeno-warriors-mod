@@ -16,7 +16,7 @@ import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 public final class EfBotBodies {
     private EfBotBodies() {}
 
-    private static final java.util.Map<BotAvatar, int[]> STATE = new java.util.WeakHashMap<>();   // {started, combo index, was swinging, last swing tick}
+    private static final java.util.Map<BotAvatar, int[]> STATE = new java.util.WeakHashMap<>();   // {started, combo index, was swinging, last swing tick, last swing time}
     /** On (XW_EF_BOTS=0 turns it off). A bot in its menu is drawn by our renderer, not Epic Fight's (EpicFightCompat.decideRender). */
     public static boolean off = "0".equals(System.getenv("XW_EF_BOTS"));
     private static int errors;
@@ -36,7 +36,7 @@ public final class EfBotBodies {
             try {
                 PlayerPatch patch = EpicFightCapabilities.getEntityPatch(a, PlayerPatch.class);
                 if (patch == null) continue;
-                int[] st = STATE.computeIfAbsent(a, k -> new int[]{0, -1, 0, -100});
+                int[] st = STATE.computeIfAbsent(a, k -> new int[]{0, -1, 0, -100, 0});
                 if (st[0] == 0) {
                     patch.onJoinWorld(a, new net.minecraftforge.event.entity.EntityJoinLevelEvent(a, mc.level));
                     st[0] = 1;
@@ -46,8 +46,11 @@ public final class EfBotBodies {
                 patch.tick(new net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent(a));
                 PartyBotEntity b = a.bot();
                 boolean swinging = b.swinging;
-                if (swinging && st[2] == 0 && !b.downed() && a.tickCount - st[3] > 4) swing(patch, a, st);
+                // a new swing: it started swinging, or its swing started over (a bot attacking non-stop never stops "swinging")
+                boolean fresh = swinging && (st[2] == 0 || b.swingTime < st[4]);
+                if (fresh && !b.downed() && a.tickCount - st[3] > 4) swing(patch, a, st);
                 st[2] = swinging || a.tickCount - st[3] <= 4 ? 1 : 0;
+                st[4] = swinging ? b.swingTime : 0;
                 errors = 0;
             } catch (Throwable t) {
                 lastError = String.valueOf(t);
