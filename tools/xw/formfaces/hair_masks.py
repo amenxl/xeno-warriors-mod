@@ -18,6 +18,8 @@ LOOKS = ['kaeru', 'keita', 'sam', 'sam_royal', 'sam_s3', 'max', 'max_royal', 'ma
          'kill', 'stevie', 'ultima', 'kyrie', 'kyrie_s2']   # (Ai-oni: what's on her head is a hood, not hair)
 TOL = {'kyrie': 0.34, 'kyrie_s2': 0.34}   # (Kyrie's hair has a lighter purple on the 3D strands than on her head)
 tol = 0.22
+NARROW = {'kaeru'}   # (Kaeru: bright orange bits on her head that aren't hair)
+wide = True
 
 def lum(c): return .3 * c[0] + .59 * c[1] + .11 * c[2]
 
@@ -40,12 +42,13 @@ def match(p, r):
     if lr < 45:
         if sum(abs(p[i] - r[i]) for i in range(3)) <= 40 and lp <= lr * 2 + 25: return True
         # darker / lighter shades of a dark hair (Stevie's navy spikes): same hue, within reason
-        if lp < 6 or not (0.35 <= lp / lr <= 1.8): return False
+        if lp < 6 or not (0.35 <= lp / lr <= 3.2): return False       # (Ultima's teal highlights on her near-black hair)
         return sum(abs(p[i] / lp - r[i] / lr) for i in range(3)) <= 0.25
     if lp < 15: return False
     k = lp / lr
-    if k < 0.4 or k > 1.7: return False
-    return sum(abs(p[i] / lp - r[i] / lr) for i in range(3)) <= tol
+    lo, hi, t = (0.4, 1.7, tol) if not wide else (0.28, 2.0, max(tol, 0.30))   # the hair's shading and highlights
+    if k < lo or k > hi: return False
+    return sum(abs(p[i] / lp - r[i] / lr) for i in range(3)) <= t
 
 def head_cubes(bone, out):
     for c in bone.get('cubes', []): out.append(c)
@@ -57,7 +60,7 @@ def uv_boxes(c):
 
 n = 0
 for look in LOOKS:
-    who = look.split('_')[0]; tol = TOL.get(look, 0.22)
+    who = look.split('_')[0]; tol = TOL.get(look, 0.22); wide = look not in NARROW
     sk = CH + look + '.png'
     if not os.path.exists(sk): continue
     im = Image.open(sk).convert('RGBA'); px = im.load()
