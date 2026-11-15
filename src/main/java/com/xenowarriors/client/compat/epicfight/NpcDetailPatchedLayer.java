@@ -38,6 +38,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
         if (e instanceof com.xenowarriors.sr.SrMemberEntity s) return s.look();
         if (e instanceof com.xenowarriors.foes.VesselEntity v) return v.look();
         if (e instanceof com.xenowarriors.foes.SwordstressEntity w) return w.look();
+        if (e instanceof com.xenowarriors.gov.GovAgentEntity g) return g.look();
         return null;
     }
 

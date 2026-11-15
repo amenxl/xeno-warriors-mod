@@ -25,6 +25,8 @@ public final class EfNpcPatches {
         event.getTypeEntry().put(ModNpcs.DARK_POSSESSED.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.UNDEAD); });
         // the Sky Rebellion: Epic Fight's sword and fist combos, hit reactions and knockdowns
         event.getTypeEntry().put(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.ILLAGER); });
+        // Government soldiers and workers: Epic Fight's moves for their batons and blades, hit reactions and knockdowns (their guns stay ours)
+        event.getTypeEntry().put(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(), e -> () -> { armature(); return new XWHumanPatch<>(Factions.NEUTRAL); });
         // Season 3's foes on Epic Fight's body: the Cynic Dancer's Tsume claws, the Ancient Swordstress's greatsword
         event.getTypeEntry().put(com.xenowarriors.foes.Foes.VESSEL.get(), e -> () -> { armature(); return new XWFoePatch<>(Factions.UNDEAD); });
         event.getTypeEntry().put(com.xenowarriors.foes.Foes.SWORDSTRESS.get(), e -> () -> { armature(); return new XWFoePatch<>(Factions.UNDEAD); });
@@ -36,6 +38,7 @@ public final class EfNpcPatches {
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.HUMAN.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(ModNpcs.DARK_POSSESSED.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.sr.SrEntities.SR_MEMBER.get(), yesman.epicfight.gameasset.Armatures.BIPED);
+        yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.gov.GovEntities.GOV_AGENT.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.foes.Foes.VESSEL.get(), yesman.epicfight.gameasset.Armatures.BIPED);
         yesman.epicfight.gameasset.Armatures.registerEntityTypeArmature(com.xenowarriors.foes.Foes.SWORDSTRESS.get(), yesman.epicfight.gameasset.Armatures.BIPED);
     }
