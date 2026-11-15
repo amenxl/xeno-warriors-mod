@@ -5,7 +5,7 @@ the form's hair colour - their actual hair turns Super Saiyan gold (SSJ4 dark...
   skin:    the head and hat layers (rows 0-16), pixels in the hair's colour
   details: the pixels of the cubes on the head bone (from models/detail/<look>.json), in the hair's colour
 The hair colour is the commonest non-skin colour on the top / back of the head.
-Mikiko and Rhalix (their own hair groups), Kyrie and Yuri (their own masks) are left as they are.
+Mikiko and Rhalix (their own hair groups) and Yuri (her own mask) are left as they are.
 Run: python3 hair_masks.py
 """
 import json, math, os
@@ -15,7 +15,9 @@ ROOT = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'
 CH = ROOT + 'textures/entity/character/'
 MD = ROOT + 'models/detail/'
 LOOKS = ['kaeru', 'keita', 'sam', 'sam_royal', 'sam_s3', 'max', 'max_royal', 'max_s3', 'lexy', 'technica', 'logan', 'garry', 'zane',
-         'stevie', 'ultima']   # (Kill and Ai-oni: what's on their heads is a hood, not hair)
+         'kill', 'stevie', 'ultima', 'kyrie', 'kyrie_s2']   # (Ai-oni: what's on her head is a hood, not hair)
+TOL = {'kyrie': 0.34, 'kyrie_s2': 0.34}   # (Kyrie's hair has a lighter purple on the 3D strands than on her head)
+tol = 0.22
 
 def lum(c): return .3 * c[0] + .59 * c[1] + .11 * c[2]
 
@@ -43,7 +45,7 @@ def match(p, r):
     if lp < 15: return False
     k = lp / lr
     if k < 0.4 or k > 1.7: return False
-    return sum(abs(p[i] / lp - r[i] / lr) for i in range(3)) <= 0.22
+    return sum(abs(p[i] / lp - r[i] / lr) for i in range(3)) <= tol
 
 def head_cubes(bone, out):
     for c in bone.get('cubes', []): out.append(c)
@@ -55,7 +57,7 @@ def uv_boxes(c):
 
 n = 0
 for look in LOOKS:
-    who = look.split('_')[0]
+    who = look.split('_')[0]; tol = TOL.get(look, 0.22)
     sk = CH + look + '.png'
     if not os.path.exists(sk): continue
     im = Image.open(sk).convert('RGBA'); px = im.load()
