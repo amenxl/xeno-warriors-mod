@@ -712,24 +712,17 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
         if (fusionLook != null) formHair = -1;                                              // (a fusion keeps its own hair colours)
-        if (formHair >= 0 && model.hair == null && (type == CharacterType.KYRIE || type == CharacterType.YURI)) {   // (Kyrie's hair is the head's own strands, Yuri's bob the head's own cubes: the whole head with the mask, only the hair shows)
-            float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
-            String mask = type == CharacterType.KYRIE ? (outfit > 0 ? "kyrie_s2_details_hairmask" : "kyrie_details_hairmask") : outfit > 0 ? "yuri_c1pjs_details_hairmask" : "yuri_details_hairmask";
-            poseStack.pushPose();
-            model.root.translateAndRotate(poseStack);
-            if (type == CharacterType.YURI) { poseStack.pushPose(); poseStack.scale(1.025F, 1.02F, 1.025F); }   // (a hair over her own bob, so the tint always shows - no flicker with the black under it)
-            model.head.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id("textures/entity/character/" + mask + ".png"))),
-                    packedLight, overlay, hr, hg, hb, 1F);
-            if (type == CharacterType.YURI) poseStack.popPose();
-            if (type == CharacterType.YURI && !noHead) {                            // Yuri: her Super Saiyan hair over the bob, styled for the form
-                DetailModel sh = yuriSsjHair();
-                if (sh != null && sh.hair != null) {
-                    sh.animateHair(windS, windF, ageInTicks, shownStyle, ssjWeight);
-                    model.head.translateAndRotate(poseStack);
-                    sh.hair.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(YURI_SSJ_TEX)), packedLight, overlay, hr, hg, hb, 1F);
-                }
+        if (formHair >= 0 && type == CharacterType.YURI && !noHead) {      // Yuri: her own bob took the form's colour (FormHair); it rises into her Super Saiyan spikes
+            DetailModel sh = yuriSsjHair();
+            if (sh != null && sh.hair != null) {
+                float hr = ((formHair >> 16) & 255) / 255F, hg = ((formHair >> 8) & 255) / 255F, hb = (formHair & 255) / 255F;
+                poseStack.pushPose();
+                model.root.translateAndRotate(poseStack);
+                sh.animateHair(windS, windF, ageInTicks, shownStyle, ssjWeight);
+                model.head.translateAndRotate(poseStack);
+                sh.hair.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(YURI_SSJ_TEX)), packedLight, overlay, hr, hg, hb, 1F);
+                poseStack.popPose();
             }
-            poseStack.popPose();
         }
         if (formHair >= 0 && !noHead && fusionLook == null) {               // everyone else: their own hair took the form's colour; SSJ3 / SSJ4 grow it long
             var fh = com.xenowarriors.client.race.RaceLook.formHair(player, model.hair != null, null);
@@ -742,7 +735,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                 com.xenowarriors.client.race.RaceLook.formHairDraws++;
             }
         }
-        if (formHair >= 0 && model.hair != null) {
+        if (formHair >= 0 && model.hair != null && com.xenowarriors.client.race.FormHair.color(player) < 0) {   // (Mikiko / Rhalix: tinted again on top; everyone else's sheet is already recoloured)
             String atlas = king || (outfit > 0 && foxActive(player, type)) ? "mikiko_foxking" : type.getId();
             VertexConsumer hairBuf = buffers.getBuffer(RenderType.entityCutoutNoCull(com.xenowarriors.XenoWarriors.id(
                     "textures/entity/character/" + atlas + "_details_hairmask.png")));

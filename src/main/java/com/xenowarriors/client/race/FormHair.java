@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Their own hair changes colour when they transform: the pixels of a character's hair - on the skin's head and on the
  * 3D hair pieces (masks made by tools/xw/formfaces/hair_masks.py) - recoloured to the form's hair colour (Super Saiyan
- * gold, SSJ4's near-black...), keeping its shading. Mikiko, Rhalix, Kyrie and Yuri have their own hair systems.
+ * gold, SSJ4's near-black...), keeping its shading. Mikiko and Rhalix have their own hair systems.
  */
 public final class FormHair {
     private FormHair() {}
@@ -27,8 +27,7 @@ public final class FormHair {
     /** The form's hair colour for this player's own hair (RGB), or -1 to leave it. */
     public static int color(AbstractClientPlayer p) {
         CharacterType t = ClientCharacterData.get(p);
-        if (t == CharacterType.NONE || t == CharacterType.YOU || t == CharacterType.MIKIKO || t == CharacterType.RHALIX
-                || t == CharacterType.KYRIE || t == CharacterType.YURI) return -1;
+        if (t == CharacterType.NONE || t == CharacterType.YOU || t == CharacterType.MIKIKO || t == CharacterType.RHALIX) return -1;
         if (com.xenowarriors.client.FusionLook.of(p) != null) return -1;
         return DmzForms.hairColor(p);
     }
