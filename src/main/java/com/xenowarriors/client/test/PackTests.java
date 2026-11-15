@@ -183,6 +183,12 @@ public final class PackTests {
     /** A flat stone floor high up (same place every time), open sky, full health, day. */
     static void arena(ServerPlayer p) {
         var level = p.serverLevel();
+        // (no wild mobs walking in: a Cynic Dancer that spawned at night killed the tester and every test after failed)
+        level.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, p.server);
+        level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(96),
+                e -> e instanceof net.minecraft.world.entity.monster.Enemy && !e.getTags().contains("xw_pack")
+                        && !(e instanceof com.xenowarriors.bot.PartyBotEntity)).forEach(e -> e.discard());
+        if (p.isDeadOrDying()) { PackTests.log("arena: the tester was dead - respawning"); p = p.server.getPlayerList().respawn(p, false); level = p.serverLevel(); }
         if (HOME[1] == 0) { HOME[0] = Math.floor(p.getX()) + 0.5; HOME[1] = 140; HOME[2] = Math.floor(p.getZ()) + 0.5; }
         BlockPos base = BlockPos.containing(HOME[0], HOME[1], HOME[2]);
         for (int x = -16; x <= 16; x++) for (int z = -10; z <= 22; z++) {

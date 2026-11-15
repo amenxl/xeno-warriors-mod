@@ -60,6 +60,7 @@ final class PackWomTests {
         }), 15));
         l.add(new Step(null, () -> { battle(true); mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 25));
         l.add(new Step(null, () -> PackTests.server(p -> {
+            if (item == null) { p.getInventory().selected = 0; p.getInventory().setItem(0, ItemStack.EMPTY); }   // (bare hands: a first-pick gift - Technica's motorcycle key - can land in hand late)
             var c = combo(p);
             int swaps = WomMoves.swaps;
             boolean ok = c != null && c.size() == expect.length + 2;
