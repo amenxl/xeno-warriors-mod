@@ -23,9 +23,14 @@ public class XWHumanPatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
     /** Bare hands: Epic Fight's own fist combos (it fell back to the zombie's arm swipes for an empty hand). */
     @Override
     protected yesman.epicfight.world.entity.ai.goal.CombatBehaviors.Builder<HumanoidMobPatch<?>> getHoldingItemWeaponMotionBuilder() {
-        var b = super.getHoldingItemWeaponMotionBuilder();
-        if (b == null && getOriginal().getMainHandItem().isEmpty()) return yesman.epicfight.gameasset.MobCombatBehaviors.HUMANOID_FIST;
-        return b;
+        if (getOriginal().getMainHandItem().isEmpty()) return yesman.epicfight.gameasset.MobCombatBehaviors.HUMANOID_FIST;
+        return super.getHoldingItemWeaponMotionBuilder();
+    }
+
+    /** Bare hands count as armed (fists): Epic Fight's fighting AI and fist combos, not the plain mob swipe. */
+    @Override
+    public boolean isArmed() {
+        return getOriginal().getMainHandItem().isEmpty() || super.isArmed();
     }
 
     @Override
