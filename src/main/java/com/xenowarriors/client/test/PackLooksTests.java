@@ -81,6 +81,7 @@ final class PackLooksTests {
         l.add(new Step(null, () -> {
             DmzForms.testForm = null; RaceLook.testRace = null; CharacterDetailLayer.testExpr = null; EfBotBodies.off = false;
             PackTests.check("looks: race skins recoloured and race parts drawn", RaceLook.tinted > 0 && RaceLook.partsDrawn > 0, "tinted " + RaceLook.tinted + " parts " + RaceLook.partsDrawn);
+            PackTests.check("looks: their own hair recoloured for the forms", com.xenowarriors.client.race.FormHair.recoloured > 0, "hair sheets recoloured " + com.xenowarriors.client.race.FormHair.recoloured);
             PackTests.server(PackLooksTests::clear);
             mc.options.hideGui = false;
         }, 5));
