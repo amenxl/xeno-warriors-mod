@@ -113,15 +113,39 @@ public final class WomMoves {
 
     @SuppressWarnings("unchecked")
     private static AnimationManager.AnimationAccessor<? extends AttackAnimation> move(String key) {
-        if (CACHE.containsKey(key)) return CACHE.get(key);
+        var cached = CACHE.get(key);
+        if (cached != null) {
+            try { if (cached.get() instanceof AttackAnimation) return cached; } catch (Throwable ignored) {}
+            CACHE.remove(key);                                                     // (animations reloaded since: look it up again)
+        }
         AnimationManager.AnimationAccessor<? extends AttackAnimation> acc = null;
         try {
             AnimationManager.AnimationAccessor<?> a = AnimationManager.byKey(key);
             if (a != null && a.get() instanceof AttackAnimation) acc = (AnimationManager.AnimationAccessor<? extends AttackAnimation>) a;
         } catch (Throwable ignored) {}
-        if (acc == null) MISSING.add(key);
+        // a move not found isn't remembered: asked before Weapons of Miracles' animations were loaded (or while another
+        // mod - Extended Datapacks - reloads them), it used to stay missing all session and the character fought with
+        // Epic Fight's plain fists (the user's Rhalix: no Ender Blaster strikes)
+        if (acc == null) {
+            if (MISSING.add(key)) com.xenowarriors.XenoWarriors.LOGGER.info("[Xeno Warriors] combo move not loaded (yet): {}", key);
+            return null;
+        }
+        MISSING.remove(key);
         CACHE.put(key, acc);
         return acc;
+    }
+
+    /** Animations / datapacks reloaded: look the moves up again. */
+    public static void clearCache() { CACHE.clear(); }
+
+    /** (server side) /reload, a world starting: look the moves up again. */
+    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = com.xenowarriors.XenoWarriors.MOD_ID)
+    public static final class Reloads {
+        private Reloads() {}
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onReload(net.minecraftforge.event.AddReloadListenerEvent e) { clearCache(); }
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onStart(net.minecraftforge.event.server.ServerStartedEvent e) { clearCache(); }
     }
 
     /** The moves for this player's held weapon / bare hands, or null. */

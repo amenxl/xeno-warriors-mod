@@ -106,6 +106,7 @@ public final class ClientReset {
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         resetAll();
+        try { com.xenowarriors.compat.epicfight.WomMoves.clearCache(); } catch (Throwable ignored) {}   // (Epic Fight not there)
     }
 
     /** Texture lookups that check what's in the resource packs: looked up again when the packs change. */
@@ -121,6 +122,7 @@ public final class ClientReset {
                 HudPortrait.clear();
                 com.xenowarriors.client.cel.Cel.clear();
                 SkillIcons.clear();
+                com.xenowarriors.compat.epicfight.WomMoves.clearCache();
             });
         }
     }
