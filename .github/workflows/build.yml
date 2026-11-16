@@ -20,6 +20,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle          # (Forge's maven sometimes goes down - a cached setup still builds)
 
       - name: Build
         run: |
