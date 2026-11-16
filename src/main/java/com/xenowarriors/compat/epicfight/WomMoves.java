@@ -288,6 +288,39 @@ public final class WomMoves {
     /** Rhalix's bare-hand ground combo: his eight hits, baked from his animations. */
     public static final String[] RHALIX_COMBO = {"hit0", "hit1", "hit2", "hit3", "hit4", "hit5", "hit6", "hit7"};
 
+    /** (Tests) attack moves played at their own speed. */
+    public static int naturalSpeeds;
+
+    /**
+     * A borrowed bare-hand move plays at its own speed (as on the weapon it comes from). Epic Fight scales an attack by
+     * the holder's attack speed against the move's: our bare hands' attack speed is 1.4 (character/FistTempo, the
+     * pace of our own combos), so Weapons of Miracles' Ender Blaster strikes (made for 4.0) played at a third of their
+     * speed - 3 to 5 seconds a hit (Rhalix and every Street / Swift / Beast style). Mikiko's glove punches keep the
+     * glove's speed (the user's pick). Null: Epic Fight's own speed.
+     */
+    public static Float playSpeed(Object patch, Object anim) {
+        try {
+            if (!(patch instanceof PlayerPatch<?> pp) || !(anim instanceof yesman.epicfight.api.animation.types.StaticAnimation sa)) return null;
+            Player p = pp.getOriginal();
+            if (p == null || !p.getMainHandItem().isEmpty()) return null;
+            CharacterType t = character(p);
+            if (t == null || t == CharacterType.MIKIKO) return null;
+            String[] keys = FISTS.get(t);
+            if (keys == null || !modOf(keys)) return null;
+            var acc = sa.getAccessor();
+            String id = acc == null || acc.registryName() == null ? null : acc.registryName().toString();
+            if (id == null) return null;
+            boolean ours = java.util.Arrays.asList(keys).contains(id);
+            String[] tail = TAILS.get(keys);
+            if (!ours && tail != null) ours = java.util.Arrays.asList(tail).contains(id);
+            if (!ours) return null;
+            naturalSpeeds++;
+            return 1F;
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
     private static CharacterType character(Player p) {
         CharacterType t;
         if (p.level().isClientSide) t = net.minecraftforge.fml.DistExecutor.unsafeCallWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> EfClientCheck.type(p));
