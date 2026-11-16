@@ -340,10 +340,17 @@ public final class WomMoves {
         try {
             if (!(patch instanceof PlayerPatch<?> pp) || !(anim instanceof yesman.epicfight.api.animation.types.StaticAnimation sa)) return null;
             Player p = pp.getOriginal();
-            if (p == null || !p.getMainHandItem().isEmpty()) return null;
-            CharacterType t = character(p);
-            if (t == null || t == CharacterType.MIKIKO) return null;
-            String[] keys = FISTS.get(t);
+            if (p == null) return null;
+            String[] keys;
+            ItemStack main = p.getMainHandItem();
+            if (main.isEmpty()) {
+                CharacterType t = character(p);
+                if (t == null || t == CharacterType.MIKIKO) return null;
+                keys = FISTS.get(t);
+            } else {                                                                   // our weapons' borrowed moves too (the Senju Blade's katana cuts were slow, Max's knife fast)
+                var wid = ForgeRegistries.ITEMS.getKey(main.getItem());
+                keys = wid != null && wid.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(wid.getPath()) : null;
+            }
             if (keys == null || !modOf(keys)) return null;
             var acc = sa.getAccessor();
             String id = acc == null || acc.registryName() == null ? null : acc.registryName().toString();

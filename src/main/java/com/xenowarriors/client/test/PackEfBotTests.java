@@ -34,7 +34,7 @@ final class PackEfBotTests {
     }
 
     static void build(Minecraft mc, List<Step> l) {
-        for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.RHALIX, CharacterType.MIKIKO}) one(mc, l, t);
+        for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.MIKIKO, CharacterType.RHALIX}) one(mc, l, t);   // (the last one stays for the fight)
         // a real fight: the bot (on Epic Fight's body) goes for a zombie - it still lands its hits, and its swings play Epic Fight's combo
         int[] z = {-1}; float[] hp = {0}; int[] sw = {0};
         int[] ch = {0};
