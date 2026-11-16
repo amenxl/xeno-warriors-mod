@@ -137,6 +137,19 @@ public final class HudPortrait {
         }).orElse(null);
     }
 
+    /**
+     * A texture's pixels: from the mod's files, or - for the copies made in memory (another race's skin colour, a
+     * form's hair) - from the texture itself. (Those faces used to come out blank: the user's empty HUD portrait as a
+     * Namekian / Majin.)
+     */
+    private static NativeImage pixels(ResourceLocation rl) {
+        if (rl == null) return null;
+        NativeImage im = image(rl);
+        if (im != null) return im;
+        var t = Minecraft.getInstance().getTextureManager().getTexture(rl, null);
+        return t instanceof DynamicTexture d ? d.getPixels() : null;
+    }
+
     private static ResourceLocation slot(UUID who, String key, ResourceLocation frame, ResourceLocation face, ResourceLocation damage,
                                          ResourceLocation mouth, ResourceLocation hairLayer, int hair, ResourceLocation mask, boolean silhouette) {
         lastKey = key;
@@ -155,13 +168,29 @@ public final class HudPortrait {
             }
         }
         if (!key.equals(s.key)) {
-            compose(s.tex.getPixels(), image(frame), image(face), damage == null ? null : image(damage), mouth == null ? null : image(mouth),
+            compose(s.tex.getPixels(), image(frame), pixels(face), damage == null ? null : pixels(damage), mouth == null ? null : pixels(mouth),
                     hairLayer == null ? null : image(hairLayer), hair, mask == null ? null : image(mask), silhouette);
             s.tex.upload();
             s.key = key;
             composes++;
         }
         return s.id;
+    }
+
+    /** (Tests) The live portrait shows a face (not just the background) in the middle of the face area. */
+    public static boolean faceShown(LivingEntity e, CharacterType type) {
+        ResourceLocation id = texture(e, type);
+        if (id == null) return false;
+        var t = Minecraft.getInstance().getTextureManager().getTexture(id, null);
+        if (!(t instanceof DynamicTexture d) || d.getPixels() == null) return false;
+        int diff = 0;
+        int x0 = (int) (RX + RS / 4), x1 = (int) (RX + RS * 3 / 4), y0 = (int) (RY + RS / 4), y1 = (int) (RY + RS * 3 / 4);
+        for (int y = y0; y < y1; y += 2) for (int x = x0; x < x1; x += 2) {
+            int c = d.getPixels().getPixelRGBA(x, y);
+            int rgb = ((c & 255) << 16) | (c & 0xFF00) | ((c >> 16) & 255);
+            if (rgb != (BG & 0xFFFFFF)) diff++;
+        }
+        return diff > 20;
     }
 
     // ---------------------------------------------------------------- composing (NativeImage pixels are ABGR)

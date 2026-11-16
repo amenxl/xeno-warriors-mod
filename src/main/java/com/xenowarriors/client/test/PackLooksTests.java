@@ -58,7 +58,10 @@ final class PackLooksTests {
             }
             for (String r : new String[]{RaceLook.NAMEK, RaceLook.MAJIN, RaceLook.FROST, RaceLook.BIO, RaceLook.GLIND, RaceLook.SAIYAN}) {
                 l.add(new Step(null, () -> { DmzForms.testForm = ""; RaceLook.testRace = r; CharacterDetailLayer.testExpr = null; }, 12));
-                l.add(new Step("looks_" + n + "_race_" + r, () -> PackTests.log("looks race " + r + ": recoloured textures " + RaceLook.tinted + ", parts drawn " + RaceLook.partsDrawn), 3));
+                l.add(new Step("looks_" + n + "_race_" + r, () -> {
+                    PackTests.log("looks race " + r + ": recoloured textures " + RaceLook.tinted + ", parts drawn " + RaceLook.partsDrawn);
+                    if (n == 0 && mc.player != null) PackTests.check("looks: HUD portrait shows the face as a " + r, com.xenowarriors.client.HudPortrait.faceShown(mc.player, CharacterType.MIKIKO), r);
+                }, 3));
             }
             for (String e : new String[]{"powerup", "beam", "strain", "meditate", "rhythm", "transform"}) {
                 l.add(new Step(null, () -> { DmzForms.testForm = ""; RaceLook.testRace = ""; CharacterDetailLayer.testExpr = e; }, 8));
