@@ -304,7 +304,8 @@ public final class WomMoves {
             }
             if (keys == null || !modOf(keys)) return null;
             var acc = move(keys[Math.floorMod(hit, keys.length)]);
-            if (acc == null || !(acc.get() instanceof AttackAnimation a) || a.phases == null || a.phases.length == 0) return null;
+            AttackAnimation a = acc == null ? null : acc.get();
+            if (a == null || a.phases == null || a.phases.length == 0) return null;
             int strike = Math.max(2, Math.round(a.phases[0].contact * 20F));
             int next = Math.max(strike + 2, Math.round(a.phases[a.phases.length - 1].recovery * 20F));
             return new int[]{strike, Math.min(next, 40)};
