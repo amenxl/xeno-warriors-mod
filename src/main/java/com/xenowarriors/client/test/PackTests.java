@@ -123,6 +123,7 @@ public final class PackTests {
         if (focus.startsWith("packefhitfoes")) { PackEfClothesTests.hits(mc, l); PackFoeTests.build(mc, l); return; }   // (both)
         if (focus.startsWith("packefhit")) { PackEfClothesTests.hits(mc, l); return; }      // (battle-mode punches land)
         if (focus.startsWith("packbugs1")) { PackFistTraceTests.build(mc, l); PackEfClothesTests.hoods(mc, l); return; }   // (lunges stop at the enemy; hoodies and Kaeru's tail)
+        if (focus.startsWith("packoutfits")) { PackLooksTests.outfits(mc, l); return; }      // (Rhalix's outfits, pictures)
         if (focus.startsWith("packlooks")) { PackLooksTests.build(mc, l); return; }      // (pictures: forms, races, faces)
         if (focus.startsWith("packnpcs")) { PackNpcTests.build(mc, l); return; }      // (people on Epic Fight's body)
         if (focus.startsWith("packbotrace")) { PackGloveTests.botRace(mc, l); return; }      // (new bots' race auto-pick)
