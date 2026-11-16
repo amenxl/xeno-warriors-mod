@@ -37,7 +37,8 @@ final class PackEfBotTests {
         for (CharacterType t : new CharacterType[]{CharacterType.KYRIE, CharacterType.RHALIX, CharacterType.MIKIKO}) one(mc, l, t);
         // a real fight: the bot (on Epic Fight's body) goes for a zombie - it still lands its hits, and its swings play Epic Fight's combo
         int[] z = {-1}; float[] hp = {0}; int[] sw = {0};
-        l.add(new Step(null, () -> { mc.setScreen(null); EfBotBodies.off = false; sw[0] = EfBotBodies.swings; PackTests.server(p -> {
+        int[] ch = {0};
+        l.add(new Step(null, () -> { mc.setScreen(null); EfBotBodies.off = false; sw[0] = EfBotBodies.swings; EfBotBodies.PLAYED.clear(); ch[0] = com.xenowarriors.combat.BotCombo.chained; PackTests.server(p -> {
             PartyBotEntity b = bot(p, CharacterType.MIKIKO);
             if (b == null) return;
             b.setNoAi(false);
@@ -49,9 +50,9 @@ final class PackEfBotTests {
             z[0] = zz.getId(); hp[0] = zz.getHealth();
             b.setTarget(zz);
         }); }, 40));
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 14; i++) {
             int ii = i;
-            l.add(new Step(i == 0 ? null : "pack_efbots_fight_" + ii, () -> {
+            l.add(new Step(i == 0 || i % 2 == 1 ? null : "pack_efbots_fight_" + ii, () -> {
                 var b = clientBot(mc, CharacterType.MIKIKO);
                 if (b == null || mc.player == null) return;
                 mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
@@ -68,6 +69,8 @@ final class PackEfBotTests {
             float now = e instanceof net.minecraft.world.entity.LivingEntity le ? le.getHealth() : -1;
             PackTests.check("efbots: a bot on Epic Fight's body lands its hits, with Epic Fight's combo", (e == null || now < hp[0]) && EfBotBodies.swings - sw[0] >= 3,
                     "zombie hp " + hp[0] + " -> " + now + ", Epic Fight swings played " + (EfBotBodies.swings - sw[0]) + " (combo hits " + EfBotBodies.comboHits + ")");
+            PackTests.check("efbots: the bot chains its whole combo (not one hit, stop, again)", EfBotBodies.PLAYED.size() >= 3 && com.xenowarriors.combat.BotCombo.chained - ch[0] >= 4,
+                    "combo hits played " + EfBotBodies.PLAYED + ", follow-up hits " + (com.xenowarriors.combat.BotCombo.chained - ch[0]) + ", strings carried on after knockback " + com.xenowarriors.combat.BotCombo.resumed);
             if (e != null) e.discard();
         }), 3));
         l.add(new Step(null, () -> PackTests.check("efbots: bots started on Epic Fight's body and swung its combos",

@@ -67,6 +67,9 @@ public final class EfBotBodies {
      * bot Epic Fight looks after). Plays that hit of the combo on its body.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
+    /** (Tests) which hits of the combo bots played. */
+    public static final java.util.Set<Integer> PLAYED = new java.util.TreeSet<>();
+
     public static boolean comboHit(PartyBotEntity b, int hit) {
         if (off || b.downed()) return false;
         BotAvatar a = com.xenowarriors.client.bot.BotAvatars.existing(b);
@@ -81,7 +84,7 @@ public final class EfBotBodies {
             int combo = Math.max(1, list.size() - 2);
             boolean air = !b.onGround() && !b.isNoGravity() && list.size() >= 3;
             int i = air ? list.size() - 1 : Math.floorMod(hit, combo);
-            st[1] = i; st[2] = 1; st[3] = a.tickCount;                         // (and the arm swing that comes with it isn't a second hit)
+            st[1] = i; st[2] = 1; st[3] = a.tickCount; PLAYED.add(i);                         // (and the arm swing that comes with it isn't a second hit)
             patch.getClientAnimator().playAnimation((yesman.epicfight.api.asset.AssetAccessor) list.get(i), 0F);
             swings++; comboHits++;
             return true;

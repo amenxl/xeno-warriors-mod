@@ -20,6 +20,13 @@ public class BotCombo extends MeleeAttackGoal {
     private final Function<PathfinderMob, com.xenowarriors.character.CharacterType> character;
     private ComboStyle style;
     private int hit = -1, start, dur, rest;
+    /**
+     * The next hit of a string the target was knocked out of reach of: the bot steps back in and carries on with it
+     * (until this tick) instead of starting the string over - the user: bots did one attack, stopped, then did it again.
+     */
+    private int pendingHit = -1, pendingUntil;
+    /** (Tests) hits thrown past the opener, strings carried on after the target was knocked back. */
+    public static int chained, resumed;
     private boolean heavy, struck;
     /** Rhalix's Shadow Rush: dashing in on the target through the opening hit's wind-up. */
     private boolean rushing;
@@ -33,7 +40,7 @@ public class BotCombo extends MeleeAttackGoal {
     @Override
     public void stop() {
         super.stop();
-        hit = -1;
+        hit = -1; pendingHit = -1;
     }
 
     @Override
@@ -54,13 +61,23 @@ public class BotCombo extends MeleeAttackGoal {
                 boolean last = heavy || !style.special(hit) && hit >= style.length() - 1;
                 // Rhalix now and then follows his knockdown with the Ki Burst (pops them up) and carries on from the grab
                 int nextHit = style.special(hit) ? 5 : style == ComboStyle.RHALIX && hit == 4 && mob.getRandom().nextInt(3) == 0 ? ComboStyle.BURST : hit + 1;
-                if (last) { hit = -1; rest = now + 14 + mob.getRandom().nextInt(10); }        // catching their breath
+                if (last) { hit = -1; pendingHit = -1; rest = now + 14 + mob.getRandom().nextInt(10); }        // catching their breath
                 else if (distSqr <= getAttackReachSqr(target) * 1.4 + air(nextHit)) swing(nextHit, false, now);
-                else { hit = -1; rest = now + 6; }
+                else { hit = -1; pendingHit = nextHit; pendingUntil = now + 24; rest = now + 2; }   // knocked back: step in and carry on
             }
             return;
         }
         if (now < rest) return;
+        if (pendingHit >= 0) {
+            if (now > pendingUntil || style == null) pendingHit = -1;
+            else {
+                if (distSqr <= getAttackReachSqr(target) * 1.4 + air(pendingHit) && mob.hasLineOfSight(target)) {
+                    int h = pendingHit; pendingHit = -1; resumed++;
+                    swing(h, false, now);
+                } else stepIn(target, 0.32);
+                return;
+            }
+        }
         ComboStyle next = ComboStyle.of(mob, mob.getMainHandItem(), character.apply(mob));
         // ...and sends his Kishi along the ground at someone 5-14 blocks off, now and then
         if (next == ComboStyle.RHALIX && distSqr >= 5.0 * 5.0 && distSqr <= 14.0 * 14.0 && target.onGround() && mob.onGround()
@@ -99,10 +116,22 @@ public class BotCombo extends MeleeAttackGoal {
         }
     }
 
+    /** A quick step toward them (closing the gap the last hit's knockback opened). */
+    private void stepIn(LivingEntity target, double speed) {
+        if (!mob.onGround()) return;
+        Vec3 to = target.position().subtract(mob.position()).multiply(1, 0, 1);
+        if (to.length() <= 1.3) return;
+        to = to.normalize().scale(speed);
+        mob.setDeltaMovement(to.x, mob.getDeltaMovement().y, to.z);
+        mob.getLookControl().setLookAt(target, 30F, 30F);
+    }
+
     private void swing(int h, boolean hv, int now) {
         hit = h; heavy = hv; start = now; struck = false; rushing = false;
         dur = style.duration(h, hv);
+        if (h > 0) chained++;
         mob.swing(InteractionHand.MAIN_HAND);
+        if (style != ComboStyle.RHALIX && !hv && h > 0 && mob.getTarget() != null) stepIn(mob.getTarget(), 0.24);   // following the string in, like a player's lunge
         if (style == ComboStyle.RHALIX && !hv && (h == 1 || h == 5) && mob.onGround() && mob.getTarget() != null) {   // stepping in: the lunge, the follow-up
             Vec3 to = mob.getTarget().position().subtract(mob.position()).multiply(1, 0, 1);
             if (to.length() > 1.3) { to = to.normalize().scale(h == 5 ? 0.34 : 0.26); mob.setDeltaMovement(to.x, mob.getDeltaMovement().y, to.z); }
