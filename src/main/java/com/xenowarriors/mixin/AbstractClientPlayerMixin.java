@@ -39,7 +39,7 @@ public abstract class AbstractClientPlayerMixin {
             }
             if (com.xenowarriors.client.compat.DmzForms.topOff((AbstractClientPlayer) (Object) this)) {     // Super Saiyan 4 / Buffed: the top comes off (every outfit)
                 String form = com.xenowarriors.client.compat.DmzForms.buffed((AbstractClientPlayer) (Object) this) ? "_buff.png" : "_ssj4.png";
-                xenowarriors$set(cir, type, com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + (o > 0 ? "_" + type.outfitKeys()[o] : "") + form));
+                xenowarriors$set(cir, type, com.xenowarriors.client.cel.Cel.tex(com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + (o > 0 ? "_" + type.outfitKeys()[o] : "") + form)));
                 return;
             }
             xenowarriors$set(cir, type, com.xenowarriors.client.cel.Cel.tex(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + type.getId() + "_"

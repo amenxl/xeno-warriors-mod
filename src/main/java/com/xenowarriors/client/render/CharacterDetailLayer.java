@@ -147,8 +147,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (shiyokenOutfit(p, type)) return SHIYO_TEX;
         int o = ClientCharacterData.outfit(p);
         if (o == 0 && type == CharacterType.RHALIX && com.xenowarriors.client.LunarClient.active(p.getId())) return LUNAR_TEX;
-        return com.xenowarriors.client.race.FormHair.tint(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
-                : type.getDetailTexture(), p);                                   // (transformed: their own hair in the form's colour)
+        return com.xenowarriors.client.race.FormHair.tint(com.xenowarriors.client.cel.Cel.tex(o > 0 ? com.xenowarriors.XenoWarriors.id("textures/entity/character/" + outfitName(p, type) + "_details.png")
+                : type.getDetailTexture()), p);                                   // (transformed: their own hair in the form's colour)
     }
 
     /** Drawn faces are on (the setting): Ultima's and Mikiko's faces come from their <id>_drawn_* sets. */
@@ -664,8 +664,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         var fusionLook = com.xenowarriors.client.FusionLook.of(player);
         if (fusionLook != null) detailTex = com.xenowarriors.client.cel.Cel.tex(fusionLook.details());
-        detailTex = com.xenowarriors.client.race.FormHair.tint(detailTex, player);     // transformed: their own hair turns the form's colour
         detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
+        detailTex = com.xenowarriors.client.race.FormHair.tint(detailTex, player);     // transformed: their own hair turns the form's colour (cel-shaded sheets too)
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
         // Rhalix's mouth stick: in his hand or pocket during his fidget
         int stick = type == CharacterType.RHALIX && !model.mouthStick.isEmpty()
