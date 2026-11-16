@@ -334,7 +334,8 @@ public final class WomMoves {
      * the holder's attack speed against the move's: our bare hands' attack speed is 1.4 (character/FistTempo, the
      * pace of our own combos), so Weapons of Miracles' Ender Blaster strikes (made for 4.0) played at a third of their
      * speed - 3 to 5 seconds a hit (Rhalix and every Street / Swift / Beast style). Mikiko's glove punches keep the
-     * glove's speed (the user's pick). Null: Epic Fight's own speed.
+     * glove's speed (the user's pick). The least speed it plays at (a move already faster stays faster - Max's knife,
+     * the berserk hook); null: Epic Fight's own speed.
      */
     public static Float playSpeed(Object patch, Object anim) {
         try {

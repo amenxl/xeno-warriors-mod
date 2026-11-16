@@ -69,8 +69,9 @@ final class PackSpeedTests {
                 var basis = a.getProperty(yesman.epicfight.api.animation.property.AnimationProperty.AttackAnimationProperty.BASIS_ATTACK_SPEED);
                 float total = a.getTotalTime();
                 float x = basis.isPresent() ? as / basis.get() : total * as;
-                Float own = com.xenowarriors.compat.epicfight.WomMoves.playSpeed(patch, a);   // (our override: a borrowed move at its own speed)
-                float speed = own != null ? own : 1F + (x - 1F) * factor;
+                Float own = com.xenowarriors.compat.epicfight.WomMoves.playSpeed(patch, a);   // (our override: a borrowed move never slower than its own speed)
+                float speed = 1F + (x - 1F) * factor;
+                if (own != null && speed < own) speed = own;
                 String name = String.valueOf(acc.registryName()).replaceAll(".*/", "");
                 float c = a.phases.length > 0 ? a.phases[0].contact / speed : -1, r = a.phases.length > 0 ? a.phases[a.phases.length - 1].recovery / speed : -1;
                 sb.append(String.format(java.util.Locale.ROOT, " %s %.2fx %.2fs hit@%.2f next@%.2f", name, speed, total / Math.max(0.05F, speed), c, r));
