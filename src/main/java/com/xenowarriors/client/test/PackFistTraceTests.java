@@ -16,8 +16,18 @@ import java.util.List;
 final class PackFistTraceTests {
     private PackFistTraceTests() {}
 
-    static void build(Minecraft mc, List<Step> l) {
-        for (CharacterType who : new CharacterType[]{CharacterType.TECHNICA, CharacterType.KYRIE}) {
+    static void build(Minecraft mc, List<Step> l) { build(mc, l, new CharacterType[]{CharacterType.TECHNICA, CharacterType.KYRIE}); }
+
+    /** (focus "packrhalixtrace") Rhalix's bare hands in battle mode: should be the Ender Blaster's strikes. */
+    static void rhalix(Minecraft mc, List<Step> l) {
+        build(mc, l, new CharacterType[]{CharacterType.RHALIX});
+        l.add(new Step(null, () -> PackTests.check("rhalix: bare hands play the Ender Blaster's strikes", SEEN.stream().anyMatch(s -> s.contains("enderblaster")), "animations " + SEEN), 2));
+    }
+
+    static final java.util.Set<String> SEEN = new java.util.LinkedHashSet<>();
+
+    static void build(Minecraft mc, List<Step> l, CharacterType[] who0) {
+        for (CharacterType who : who0) {
             int[] zid = {-1};
             l.add(new Step(null, () -> UiTest.character(who), 30));
             l.add(new Step(null, () -> PackTests.server(p -> {
@@ -37,6 +47,8 @@ final class PackFistTraceTests {
                     zid[0] = z.getId();
                 }
             }), 15));
+            l.add(new Step(null, () -> PackTests.log("fisttrace " + who.getId() + " combo for bare hands: " + (com.xenowarriors.compat.epicfight.WomMoves.movesFor(mc.player) == null ? "none (ours not swapped in)"
+                    : java.util.Arrays.toString(com.xenowarriors.compat.epicfight.WomMoves.movesFor(mc.player)) + " missing " + com.xenowarriors.compat.epicfight.WomMoves.MISSING)), 2));
             l.add(new Step(null, () -> {
                 try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null && !pp.isEpicFightMode()) pp.toEpicFightMode(true); } catch (Throwable ignored) {}
                 mc.setScreen(null); mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
@@ -61,6 +73,7 @@ final class PackFistTraceTests {
         var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
         Object anim = null;
         try { var pl = patch.getAnimator().getPlayerFor(null); anim = pl == null ? null : pl.getRealAnimation(); } catch (Throwable ignored) {}
+        if (anim != null) SEEN.add(String.valueOf(anim));
         PackTests.log(String.format(java.util.Locale.ROOT, "fisttrace %s: pos %.2f %.2f %.2f yaw %.0f ground %s flying %s battle %s anim %s target %s dummy at %s hp %s",
                 who.getId(), p.getX(), p.getY(), p.getZ(), p.getYRot(), p.onGround(), p.getAbilities().flying, patch != null && patch.isEpicFightMode(), anim,
                 patch == null ? null : patch.getTarget(), z == null ? "-" : String.format(java.util.Locale.ROOT, "%.2f %.2f %.2f", z.getX(), z.getY(), z.getZ()),
