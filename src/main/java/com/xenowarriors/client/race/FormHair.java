@@ -85,7 +85,7 @@ public final class FormHair {
     private static ResourceLocation maskFor(ResourceLocation tex) {
         String path = tex.getPath();
         if (!tex.getNamespace().equals(XenoWarriors.MOD_ID) || !path.startsWith("textures/entity/character/") || !path.endsWith(".png")) return null;
-        String base = path.substring(0, path.length() - 4).replaceAll("_torn\\d$", "");
+        String base = path.substring(0, path.length() - 4).replaceAll("_cel$", "").replaceAll("_torn\\d$", "").replaceAll("_damage\\d$", "");
         for (String s : new String[]{"_ssj4", "_buff"}) if (base.endsWith(s)) base = base.substring(0, base.length() - s.length());
         ResourceLocation m = XenoWarriors.id(base + "_hairmask.png");
         return Minecraft.getInstance().getResourceManager().getResource(m).isPresent() ? m : null;
