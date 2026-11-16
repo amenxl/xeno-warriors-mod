@@ -102,8 +102,9 @@ final class PackLooksTests {
     static void outfits(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> UiTest.character(CharacterType.RHALIX), 40));
         l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); clear(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setYRot(0); p.setXRot(10); }), 20));
-        for (int battle = 0; battle < 2; battle++) {
-            boolean ef = battle == 1;
+        for (int battle = 0; battle < 3; battle++) {
+            boolean ef = battle == 1, cel = battle == 2;
+            l.add(new Step(null, () -> { com.xenowarriors.client.cel.Cel.force = cel; com.xenowarriors.client.cel.Cel.clear(); }, 2));
             l.add(new Step(null, () -> {
                 mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
                 try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null) { if (ef) pp.toEpicFightMode(true); else pp.toVanillaMode(true); } } catch (Throwable ignored) {}
@@ -114,10 +115,11 @@ final class PackLooksTests {
                     p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = oo);
                     com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
                 }), 20));
-                l.add(new Step("outfits_rhalix_" + oo + (ef ? "_ef" : ""), () -> {}, 3));
+                l.add(new Step("outfits_rhalix_" + oo + (ef ? "_ef" : cel ? "_cel" : ""), () -> {}, 3));
             }
         }
-        l.add(new Step(null, () -> { PackTests.server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0));
+        l.add(new Step(null, () -> { com.xenowarriors.client.cel.Cel.force = false; com.xenowarriors.client.cel.Cel.clear();
+            PackTests.server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0));
             mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
     }
 }
