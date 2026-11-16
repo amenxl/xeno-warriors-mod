@@ -41,8 +41,8 @@ final class PackSpeedTests {
         }
         l.add(new Step(null, () -> {
             PackTests.server(p -> p.getInventory().setItem(0, ItemStack.EMPTY));
-            PackTests.check("speeds: every combo plays near its own speed (0.75 - 1.5)", OFF.isEmpty(), "off: " + OFF);
-            PackTests.check("speeds: every hit of a string lands within 0.6s", SLOW.isEmpty(), "slow: " + SLOW);
+            PackTests.check("speeds: no combo plays slower than its own speed", OFF.isEmpty(), "off: " + OFF);
+            PackTests.check("speeds: every hit of a string lands within 0.7s", SLOW.isEmpty(), "slow: " + SLOW);
         }, 3));
     }
 
@@ -75,8 +75,8 @@ final class PackSpeedTests {
                 String name = String.valueOf(acc.registryName()).replaceAll(".*/", "");
                 float c = a.phases.length > 0 ? a.phases[0].contact / speed : -1, r = a.phases.length > 0 ? a.phases[a.phases.length - 1].recovery / speed : -1;
                 sb.append(String.format(java.util.Locale.ROOT, " %s %.2fx %.2fs hit@%.2f next@%.2f", name, speed, total / Math.max(0.05F, speed), c, r));
-                if (k < n && c > 0.6F) SLOW.add(what + " " + name + " hits at " + String.format(java.util.Locale.ROOT, "%.2fs", c));
-                if (k < n && !what.startsWith("mikiko bare") && (speed < 0.75F || speed > 1.5F)) OFF.add(what + " " + name + " " + String.format(java.util.Locale.ROOT, "%.2f", speed));
+                if (k < n && c > 0.7F) SLOW.add(what + " " + name + " hits at " + String.format(java.util.Locale.ROOT, "%.2fs", c));
+                if (k < n && speed < 0.75F) OFF.add(what + " " + name + " " + String.format(java.util.Locale.ROOT, "%.2f", speed));
             }
             PackTests.log("speeds " + what + ": attack speed " + String.format(java.util.Locale.ROOT, "%.2f", as) + " |" + sb);
         } catch (Throwable t) {

@@ -275,6 +275,8 @@ final class PackEfClothesTests {
                     var c = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch);
                     if (c == null || c.size() <= kk) return;
                     p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0;
+                    var zz = p.serverLevel().getEntity(zid[0]);                         // (the dummy back in front: earlier hits knock it aside)
+                    if (zz != null) { zz.teleportTo(p.getX(), p.getY(), p.getZ() + 1.4); zz.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO); }
                     patch.playAnimationSynchronized((yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) c.get(kk), 0F);
                 }), 16));
             }
