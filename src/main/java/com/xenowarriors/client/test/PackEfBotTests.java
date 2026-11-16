@@ -39,7 +39,7 @@ final class PackEfBotTests {
         int[] z = {-1}; float[] hp = {0}; int[] sw = {0};
         int[] ch = {0};
         l.add(new Step(null, () -> { mc.setScreen(null); EfBotBodies.off = false; sw[0] = EfBotBodies.swings; EfBotBodies.PLAYED.clear(); ch[0] = com.xenowarriors.combat.BotCombo.chained; PackTests.server(p -> {
-            PartyBotEntity b = bot(p, CharacterType.MIKIKO);
+            PartyBotEntity b = bot(p, CharacterType.RHALIX);
             if (b == null) return;
             b.setNoAi(false);
             var zz = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
@@ -53,7 +53,7 @@ final class PackEfBotTests {
         for (int i = 0; i < 14; i++) {
             int ii = i;
             l.add(new Step(i == 0 || i % 2 == 1 ? null : "pack_efbots_fight_" + ii, () -> {
-                var b = clientBot(mc, CharacterType.MIKIKO);
+                var b = clientBot(mc, CharacterType.RHALIX);
                 if (b == null || mc.player == null) return;
                 mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
                 var d = b.position().subtract(mc.player.position());

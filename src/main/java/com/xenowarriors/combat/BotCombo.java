@@ -25,6 +25,8 @@ public class BotCombo extends MeleeAttackGoal {
      * (until this tick) instead of starting the string over - the user: bots did one attack, stopped, then did it again.
      */
     private int pendingHit = -1, pendingUntil;
+    /** This hit's own timing (the Epic Fight move its body plays): lands at, next hit from - or -1 for our combo timing. */
+    private int strikeAt = -1, nextAt = -1;
     /** (Tests) hits thrown past the opener, strings carried on after the target was knocked back. */
     public static int chained, resumed;
     private boolean heavy, struck;
@@ -52,13 +54,14 @@ public class BotCombo extends MeleeAttackGoal {
         if (warped != null && warped == target) { style = ComboStyle.RHALIX; swing(4, false, now); return; }
         if (hit >= 0) {                                                       // mid-swing
             if (rushing && !struck) rush(target);
-            if (!struck && now - start >= ComboStyle.windup(dur)) {
+            if (!struck && now - start >= (strikeAt > 0 ? strikeAt : ComboStyle.windup(dur))) {
                 struck = true;
                 double reach = getAttackReachSqr(target) + style.reachBonus * 3 + air(hit);
                 if (distSqr <= reach && mob.hasLineOfSight(target)) ComboServer.botStrike(mob, style, hit, heavy, target);
             }
-            if (now - start >= ComboStyle.cancel(dur)) {
-                boolean last = heavy || !style.special(hit) && hit >= style.length() - 1;
+            if (now - start >= (nextAt > 0 ? nextAt : ComboStyle.cancel(dur))) {
+                int len = strikeAt > 0 ? com.xenowarriors.compat.epicfight.WomMoves.botComboLength(character.apply(mob), mob.getMainHandItem()) : -1;
+                boolean last = heavy || !style.special(hit) && hit >= (len > 0 ? len : style.length()) - 1;
                 // Rhalix now and then follows his knockdown with the Ki Burst (pops them up) and carries on from the grab
                 int nextHit = style.special(hit) ? 5 : style == ComboStyle.RHALIX && hit == 4 && mob.getRandom().nextInt(3) == 0 ? ComboStyle.BURST : hit + 1;
                 if (last) { hit = -1; pendingHit = -1; rest = now + 14 + mob.getRandom().nextInt(10); }        // catching their breath
@@ -129,6 +132,11 @@ public class BotCombo extends MeleeAttackGoal {
     private void swing(int h, boolean hv, int now) {
         hit = h; heavy = hv; start = now; struck = false; rushing = false;
         dur = style.duration(h, hv);
+        strikeAt = nextAt = -1;
+        if (!hv && !style.special(h)) {
+            int[] tm = com.xenowarriors.compat.epicfight.WomMoves.botTiming(character.apply(mob), mob.getMainHandItem(), h);
+            if (tm != null) { strikeAt = tm[0]; nextAt = tm[1]; }
+        }
         if (h > 0) chained++;
         mob.swing(InteractionHand.MAIN_HAND);
         if (style != ComboStyle.RHALIX && !hv && h > 0 && mob.getTarget() != null) stepIn(mob.getTarget(), 0.24);   // following the string in, like a player's lunge

@@ -288,6 +288,43 @@ public final class WomMoves {
     /** Rhalix's bare-hand ground combo: his eight hits, baked from his animations. */
     public static final String[] RHALIX_COMBO = {"hit0", "hit1", "hit2", "hit3", "hit4", "hit5", "hit6", "hit7"};
 
+    /**
+     * A bot's timing for one hit of its borrowed combo, in ticks: {when it lands, when the next can start} - from the
+     * move's own attack phases (played at its own speed), so the bot's string keeps pace with the move its body plays
+     * instead of cutting each one off a few ticks in. Null: no borrowed move (our own combo timing stays).
+     */
+    public static int[] botTiming(CharacterType t, ItemStack held, int hit) {
+        try {
+            if (t == null || t == CharacterType.MIKIKO && held.isEmpty()) return null;   // (Mikiko's glove punches: fast, our timing fits)
+            String[] keys;
+            if (held.isEmpty()) keys = FISTS.get(t);
+            else {
+                var id = ForgeRegistries.ITEMS.getKey(held.getItem());
+                keys = id != null && id.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(id.getPath()) : null;
+            }
+            if (keys == null || !modOf(keys)) return null;
+            var acc = move(keys[Math.floorMod(hit, keys.length)]);
+            if (acc == null || !(acc.get() instanceof AttackAnimation a) || a.phases == null || a.phases.length == 0) return null;
+            int strike = Math.max(2, Math.round(a.phases[0].contact * 20F));
+            int next = Math.max(strike + 2, Math.round(a.phases[a.phases.length - 1].recovery * 20F));
+            return new int[]{strike, Math.min(next, 40)};
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /** How many hits a bot's borrowed string has (-1: not borrowed). */
+    public static int botComboLength(CharacterType t, ItemStack held) {
+        if (t == null) return -1;
+        String[] keys;
+        if (held.isEmpty()) keys = FISTS.get(t);
+        else {
+            var id = ForgeRegistries.ITEMS.getKey(held.getItem());
+            keys = id != null && id.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(id.getPath()) : null;
+        }
+        return keys == null || !modOf(keys) ? -1 : keys.length;
+    }
+
     /** (Tests) attack moves played at their own speed. */
     public static int naturalSpeeds;
 
