@@ -106,15 +106,19 @@ public class KaGuideScreen extends Screen {
                 }
                 if (lines.size() * 10 + 10 <= height) break;
             }
-            float sc = Math.min(1F, (height - 8F) / (lines.size() * 10F + 10F));   // (still too tall for a small window: drawn smaller)
-            if (sc < 1F) {
-                g.pose().pushPose();
-                g.pose().scale(sc, sc, 1F);
-                int tw = 0; for (var ln : lines) tw = Math.max(tw, font.width(ln));
-                int tx = Math.round(Math.min(mx + 12, width - tw * sc - 8) / sc), ty = Math.round(4 / sc);
-                g.renderTooltip(font, lines, (sw, sh, x, y, w, h) -> new org.joml.Vector2i(tx, ty), tx, ty);   // (placed by hand: the usual placement clamps to the unscaled screen)
-                g.pose().popPose();
-            } else g.renderTooltip(font, lines, mx, my);
+            // placed by hand, always inside the window (the usual placement pushed a tall one off the top), and drawn
+            // smaller if it's still taller than the window
+            int tw = 0; for (var ln : lines) tw = Math.max(tw, font.width(ln));
+            int th = lines.size() * 10 + 4;
+            float sc = Math.min(1F, (height - 10F) / th);
+            int bw = Math.round(tw * sc), bh = Math.round(th * sc);
+            int bx = mx + 12 + bw + 6 > width ? Math.max(4, mx - 16 - bw) : mx + 12;
+            int by = Math.max(6, Math.min(my - 12, height - bh - 6));
+            int fx = Math.round(bx / sc), fy = Math.round(by / sc);
+            g.pose().pushPose();
+            if (sc < 1F) g.pose().scale(sc, sc, 1F);
+            g.renderTooltip(font, lines, (sw, sh, x, y, w, h) -> new org.joml.Vector2i(fx, fy), fx, fy);
+            g.pose().popPose();
         }
     }
 
