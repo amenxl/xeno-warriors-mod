@@ -15,7 +15,7 @@ def mark(path):
     m = _load(); m[os.path.basename(path)] = _md5(path); json.dump(m, open(MANIFEST, 'w'), indent=0, sort_keys=True)
 
 RES = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/textures/entity/'
-GIRLS = ['kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri']
+GIRLS = ['kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri', 'kaitlyn', 'ava', 'ava_demon', 'persephone', 'persephone_demon']
 GIRL_OUTFITS = {'max': ['royal'], 'sam': ['royal'], 'yuri': ['c1pjs'], 'kyrie': ['s2']}
 GIRL_NPCS = ['woman', 'girl', 'sky_lexy', 'sky_royal', 'sr_ava', 'sr_ava_demon', 'sr_persephone', 'sr_persephone_demon', 'sr_maddie', 'cynic', 'cynic_evolved']
 SKIN_SUFFIXES = ['', '_damage1', '_damage2', '_torn1', '_torn2', '_torn3']

@@ -55,7 +55,8 @@ def build(key):
         if expr in ('damage1', 'damage2'): continue                  # (those are battle-damage overlays, from damage_all)
         V[MAP.get(expr, 'base')].save(CH + f'{key}_face_{expr}.png')
     # the girls' skin goes slim first, then battle damage is drawn from it (tools/xw/damage/damage_all.py)
-    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim; slim.convert(CH + f'{key}.png')
+    sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/female'); import slim
+    if key not in ('kyle', 'zack', 'chase', 'senju'): slim.convert(CH + f'{key}.png')   # (the new boys stay wide)
     sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/damage'); import damage_all; damage_all.build(key)
     # every expression the game uses, plus the newer ones (tools/xw/faces/expr_more.py)
     sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/faces'); import expr_more

@@ -979,7 +979,30 @@ def sam_s3(f):
 
 SAM_S3 = dict(SAM, paint=sam_s3_paint, fit=sam_s3, mouth=['k.kk.k', '.k..k.'], mouth_x=13, mouth_y=25)
 
-CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY}
+# ====================================================================== the new seven (Nov 2026): SR's Senju, Ava and Persephone (their boss
+# looks), and Kyle, Zack, Kaitlyn and Chase (tools/xw/s3chars/new_chars.py)
+def _sr_plain(key, wing=None):
+    sp = dict(SRN.SPECS['sr_' + key]); sp.pop('name', None)
+    if wing: sp['wing'] = wing
+    else: sp.pop('wing', None)
+    sp.setdefault('eye', ['..kkkkkk.', 'kkkkkkkkk', '.wddpddw.', '.wWWoodw.', '.wWoopow.', '..wOOOw..', '..kkkkk..'])
+    sp.setdefault('brow', ['..kkkkk..', 'kk.....k.'])
+    return sp
+SENJU = _sr_plain('senju', ('falcon_small', '#2a2226'))
+AVA = _sr_plain('ava'); AVA_DEMON = _sr_plain('ava_demon')
+PERSEPHONE = _sr_plain('persephone'); PERSEPHONE_DEMON = _sr_plain('persephone_demon')
+sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/s3chars')
+import new_chars as NEW
+def _new(key):
+    sp = dict(NEW.SPECS[key]); sp.pop('name', None)
+    sp.setdefault('eye', ['..kkkkkk.', 'kkkkkkkkk', '.wddpddw.', '.wWWoodw.', '.wWoopow.', '..wOOOw..', '..kkkkk..'])
+    sp.setdefault('brow', ['..kkkkk..', 'kk.....k.'])
+    return sp
+KYLE, ZACK, KAITLYN, CHASE = _new('kyle'), _new('zack'), _new('kaitlyn'), _new('chase')
+
+CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY,
+         'senju': SENJU, 'ava': AVA, 'ava_demon': AVA_DEMON, 'persephone': PERSEPHONE, 'persephone_demon': PERSEPHONE_DEMON,
+         'kyle': KYLE, 'zack': ZACK, 'kaitlyn': KAITLYN, 'chase': CHASE}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):
