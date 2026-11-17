@@ -641,6 +641,7 @@ public final class PartyBots {
 
     /** A bot's things: armour, offhand, hand and its bag. */
     public static void openBag(ServerPlayer p, PartyBotEntity b) {
+        b.holdFor(p);
         net.minecraftforge.network.NetworkHooks.openScreen(p, new SimpleMenuProvider((id, inv, pl) -> new BotMenu(id, inv, b.inventory, new BotMenu.GearContainer(b), b), b.label()),
                 buf -> buf.writeVarInt(b.getId()));
     }
@@ -1229,6 +1230,7 @@ public final class PartyBots {
         if (!p.getUUID().equals(b.ownerId())) return;
         List<String> names = new ArrayList<>(); List<Integer> ids = new ArrayList<>();
         for (LivingEntity pet : petsFor(p, b.character())) { names.add(pet.getDisplayName().getString()); ids.add(pet.getId()); }
+        b.holdFor(p);                                                           // (it stands still while you talk to it)
         ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenBotMenuPacket(b.getId(), b.charKey(), b.mode(), b.botLevel(), b.canFly(),
                 names.toArray(new String[0]), ids.stream().mapToInt(Integer::intValue).toArray(), hasRadar(b)), p);
     }
@@ -1247,7 +1249,9 @@ public final class PartyBots {
         return out;
     }
 
-    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9, ACT_OUTFIT = 10, ACT_RADAR = 11;
+    public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9, ACT_OUTFIT = 10, ACT_RADAR = 11,
+            /** arg 1: its menu's open (it holds still), 0: closed (to the server); -1: you're kicked out of its menu (to you) */
+            ACT_HOLD = 12;
 
     /** Carries a Dragon Radar (DragonMineZ): its menu can send it off to find the Dragon Balls. */
     public static boolean hasRadar(PartyBotEntity b) {
@@ -1281,6 +1285,7 @@ public final class PartyBots {
         if (!(p.serverLevel().getEntity(botId) instanceof PartyBotEntity b) || !p.getUUID().equals(b.ownerId()) || b.distanceToSqr(p) > 32 * 32) return;
         if (b.journey()) { p.displayClientMessage(Component.literal("Journey teammates just fight - no menu in battle").withStyle(ChatFormatting.GRAY), true); return; }
         switch (action) {
+            case ACT_HOLD -> { if (arg > 0) b.holdFor(p); else b.releaseFrom(p); }
             case ACT_INVENTORY -> openBag(p, b);
             case ACT_CARRY -> {                                                   // Rhalix picks them up and flies them
                 if (!com.xenowarriors.character.RhalixWings.out(p) || !com.xenowarriors.character.RhalixFlight.winged(p)) { p.displayClientMessage(Component.literal("You need your wings out to carry someone").withStyle(ChatFormatting.GRAY), true); return; }

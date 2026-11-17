@@ -139,7 +139,8 @@ public class BotMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         bag.stopOpen(player);
-        if (bot != null && player instanceof net.minecraft.server.level.ServerPlayer sp && sp.getUUID().equals(bot.ownerId())) BotCrafting.bagClosed(bot, sp);   // (you may have just handed it what it needed)
+        if (bot != null && player instanceof net.minecraft.server.level.ServerPlayer sp && sp.getUUID().equals(bot.ownerId())) BotCrafting.bagClosed(bot, sp);
+        if (bot != null && player instanceof net.minecraft.server.level.ServerPlayer sp2) bot.getServer().execute(() -> bot.releaseFrom(sp2));   // (next tick: going back to its menu keeps it held)   // (you may have just handed it what it needed)
     }
 
     /** The bag area on the server: the bot's bag, or one of its extra tabs (by the tab shown). */

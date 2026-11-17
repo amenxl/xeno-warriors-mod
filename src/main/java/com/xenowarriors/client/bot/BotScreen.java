@@ -39,6 +39,7 @@ public class BotScreen extends Screen {
 
     @Override
     protected void init() {
+        if (opened == 0) send(PartyBots.ACT_HOLD, 1);                           // (it stands still while you talk to it)
         int x = x0() + 96, y = y0() + 30, bw = W - 104;
         if (showPets) {
             if (m.petNames().length == 0) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("(no pets)"), b -> {}).bounds(x, y, bw, 20).build()).active = false;
@@ -89,7 +90,18 @@ public class BotScreen extends Screen {
         var e = minecraft == null || minecraft.level == null ? null : minecraft.level.getEntity(m.botId());
         boolean gone = !(e instanceof PartyBotEntity) || e.isRemoved() || !((PartyBotEntity) e).isAlive();
         missing = gone ? missing + 1 : 0;
-        if (missing > 5) onClose();
+        if (missing > 5) { onClose(); return; }
+        // kicked out: it got hit (it's back in the fight) or you walked off
+        if (e instanceof PartyBotEntity pb && minecraft.player != null && (pb.hurtTime > 0 && opened > 10 || pb.distanceToSqr(minecraft.player) > 8.5 * 8.5)) onClose();
+        opened++;
+    }
+
+    private int opened;
+
+    @Override
+    public void removed() {
+        super.removed();
+        send(PartyBots.ACT_HOLD, 0);                                             // (done: it can move again - unless you went into its bag)
     }
 
     private int outfit = -1;

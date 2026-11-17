@@ -171,4 +171,51 @@ final class PackMoveTests {
             t.x = e.getX(); t.z = e.getZ(); t.yaw = yaw; t.init = true;
         }
     }
+
+    /** (focus "packbothold") Talking to a bot: it stands still until you're done or you're kicked out. */
+    static void hold(Minecraft mc, List<Step> l) {
+        int[] bid = {-1}; double[] at = new double[3];
+        l.add(new Step(null, () -> UiTest.character(CharacterType.MIKIKO), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            for (PartyBotEntity b : PartyBots.bots(p)) b.discard();
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.MAX, null);
+            if (b != null) { b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0F, 0F); bid[0] = b.getId(); }
+        }), 40));
+        // you talk to it, then step 6 blocks off (it would normally follow / wander): it stays put
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity b) { PartyBots.interact(b, p); at[0] = b.getX(); at[1] = b.getY(); at[2] = b.getZ(); p.teleportTo(p.getX() - 6, p.getY(), p.getZ()); }
+        }), 100));
+        l.add(new Step("bothold_held", () -> PackTests.server(p -> {
+            var b = p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity x ? x : null;
+            double moved = b == null ? -1 : Math.sqrt(b.distanceToSqr(at[0], at[1], at[2]));
+            PackTests.check("bothold: it stands still while you talk to it", b != null && b.held() && moved < 0.5, "held " + (b != null && b.held()) + " moved " + String.format("%.2f", moved));
+            if (b != null) PartyBots.action(p, b.getId(), PartyBots.ACT_HOLD, 0);   // (menu closed)
+        }), 100));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var b = p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity x ? x : null;
+            double moved = b == null ? -1 : Math.sqrt(b.distanceToSqr(at[0], at[1], at[2]));
+            PackTests.check("bothold: closing its menu lets it go", b != null && !b.held(), "held " + (b != null && b.held()) + " moved " + String.format("%.2f", moved));
+            if (b != null) PartyBots.openBag(p, b);                                 // its bag now, then walk off
+            p.teleportTo(p.getX() - 14, p.getY(), p.getZ());
+        }), 10));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var b = p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity x ? x : null;
+            PackTests.check("bothold: walking off kicks you out of its bag and lets it go", b != null && !b.held() && !(p.containerMenu instanceof com.xenowarriors.bot.BotMenu),
+                    "held " + (b != null && b.held()) + " menu " + p.containerMenu.getClass().getSimpleName());
+            p.teleportTo(b.getX() - 2, b.getY(), b.getZ());
+            PartyBots.interact(b, p);
+        }), 10));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var b = p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity x ? x : null;
+            if (b != null) b.hurt(p.serverLevel().damageSources().generic(), 1F);
+        }), 5));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var b = p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity x ? x : null;
+            PackTests.check("bothold: getting hit puts it back in the fight", b != null && !b.held(), "held " + (b != null && b.held()));
+            for (PartyBotEntity x : PartyBots.bots(p)) x.discard();
+            mc.setScreen(null);
+        }), 5));
+    }
 }

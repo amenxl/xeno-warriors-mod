@@ -962,8 +962,59 @@ public class PartyBotEntity extends PathfinderMob {
 
     // ---------------------------------------------------------------- life
 
+    // ------------------------------------------------------------------ held still while you talk to it
+
+    /** Who's talking to it / has its bag open: it stands still facing them until they're done. */
+    private java.util.UUID heldBy;
+    private int heldTicks;
+    /** (Tests) */
+    public boolean held() { return heldBy != null; }
+
+    /** You opened its menu or bag: it stops (walking, fighting, wandering) and faces you. */
+    public void holdFor(ServerPlayer p) {
+        if (heldBy == null) {
+            goalSelector.disableControlFlag(Goal.Flag.MOVE); goalSelector.disableControlFlag(Goal.Flag.JUMP); goalSelector.disableControlFlag(Goal.Flag.LOOK);
+            targetSelector.disableControlFlag(Goal.Flag.TARGET);
+        }
+        heldBy = p.getUUID();
+        heldTicks = 20 * 300;                                                  // (a safety net: never held for more than 5 minutes)
+        getNavigation().stop(); setTarget(null);
+    }
+
+    /** Done talking (menu closed, walked off, it got hit): back to normal. */
+    public void releaseHold() {
+        if (heldBy == null) return;
+        heldBy = null;
+        goalSelector.enableControlFlag(Goal.Flag.MOVE); goalSelector.enableControlFlag(Goal.Flag.JUMP); goalSelector.enableControlFlag(Goal.Flag.LOOK);
+        targetSelector.enableControlFlag(Goal.Flag.TARGET);
+    }
+
+    /** The menu was closed: let go - unless they went straight from its menu into its bag. */
+    public void releaseFrom(ServerPlayer p) {
+        if (heldBy == null || !heldBy.equals(p.getUUID())) return;
+        if (p.containerMenu instanceof BotMenu bm && bm.bot() == this) return;
+        releaseHold();
+    }
+
+    private void tickHold() {
+        ServerPlayer h = heldBy == null || !(level() instanceof net.minecraft.server.level.ServerLevel sl) ? null : (ServerPlayer) sl.getPlayerByUUID(heldBy);
+        if (h == null || !h.isAlive() || h.level() != level() || distanceToSqr(h) > 8 * 8 || downed() || --heldTicks <= 0) {
+            if (h != null && h.containerMenu instanceof BotMenu bm && bm.bot() == this) h.closeContainer();   // (kicked out of its bag)
+            releaseHold();
+            return;
+        }
+        getNavigation().stop();
+        setTarget(null);
+        setDeltaMovement(0, getDeltaMovement().y, 0);
+        xxa = 0; zza = 0;
+        getLookControl().setLookAt(h, 30F, 30F);
+        float yaw = (float) Math.toDegrees(Math.atan2(-(h.getX() - getX()), h.getZ() - getZ()));
+        BotMoves.face(this, yaw, 20F);
+    }
+
     @Override
     public void aiStep() {
+        if (!level().isClientSide && heldBy != null) tickHold();
         super.aiStep();
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
@@ -1131,6 +1182,11 @@ public class PartyBotEntity extends PathfinderMob {
 
     @Override
     public boolean hurt(DamageSource src, float amount) {
+        if (!level().isClientSide && heldBy != null && amount > 0 && !isInvulnerableTo(src)) {   // hit while you talk to it: it's back in the fight (and you're out of its menu)
+            ServerPlayer h = level() instanceof net.minecraft.server.level.ServerLevel sl ? (ServerPlayer) sl.getPlayerByUUID(heldBy) : null;
+            if (h != null && h.containerMenu instanceof BotMenu bm && bm.bot() == this) h.closeContainer();
+            releaseHold();
+        }
         if (downed() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         if (src.getEntity() != null && PartyBots.friendly(this, src.getEntity()) && !PartyBots.sparFoes(this, src.getEntity())) return false;
         boolean r = super.hurt(src, amount);
