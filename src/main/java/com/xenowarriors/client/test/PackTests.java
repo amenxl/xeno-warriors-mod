@@ -124,6 +124,7 @@ public final class PackTests {
         if (focus.startsWith("packefhit")) { PackEfClothesTests.hits(mc, l); return; }      // (battle-mode punches land)
         if (focus.startsWith("packbugs1")) { PackFistTraceTests.build(mc, l); PackEfClothesTests.hoods(mc, l); return; }   // (lunges stop at the enemy; hoodies and Kaeru's tail)
         if (focus.startsWith("packspeeds")) { PackSpeedTests.build(mc, l); return; }      // (how fast every combo plays)
+        if (focus.startsWith("packvr")) { PackVrTests.build(mc, l); return; }      // (Yuri's VR Room)
         if (focus.startsWith("packmoves")) { PackMoveTests.build(mc, l); return; }      // (bots and NPCs move right)
         if (focus.startsWith("packmotion")) { PackLooksTests.motion(mc, l); return; }      // (everyone walking, running, attacking)
         if (focus.startsWith("packallmodels")) { PackLooksTests.allModels(mc, l); return; }      // (every character and outfit, pictures)
