@@ -95,11 +95,16 @@ public class KaGuideScreen extends Screen {
         if (contentBottom > height) g.drawString(font, scrollY < contentBottom - height + 6 ? "\u25bc scroll" : "\u25b2 scroll", width - 52, height - 12, 0x8899AA, false);
         super.render(g, mx, my, pt);
         if (hover != null) {
-            List<FormattedCharSequence> lines = new ArrayList<>();
-            for (int i = 0; i < hover.size(); i++) {
-                String l = hover.get(i);
-                if (l.isEmpty()) { lines.add(FormattedCharSequence.EMPTY); continue; }
-                lines.addAll(font.split(Component.literal(l).withStyle(i == 0 ? ChatFormatting.YELLOW : i == 1 ? ChatFormatting.AQUA : ChatFormatting.GRAY), 240));
+            // (wider lines when it wouldn't fit the screen's height: a tall one ran off the top, over the heading)
+            List<FormattedCharSequence> lines = null;
+            for (int wrap : new int[]{240, 320, 420, Math.max(240, width - 24)}) {
+                lines = new ArrayList<>();
+                for (int i = 0; i < hover.size(); i++) {
+                    String l = hover.get(i);
+                    if (l.isEmpty()) { lines.add(FormattedCharSequence.EMPTY); continue; }
+                    lines.addAll(font.split(Component.literal(l).withStyle(i == 0 ? ChatFormatting.YELLOW : i == 1 ? ChatFormatting.AQUA : ChatFormatting.GRAY), Math.min(wrap, width - 24)));
+                }
+                if (lines.size() * 10 + 10 <= height) break;
             }
             g.renderTooltip(font, lines, mx, my);
         }
