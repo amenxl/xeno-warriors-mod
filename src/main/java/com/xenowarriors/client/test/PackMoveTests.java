@@ -183,9 +183,9 @@ final class PackMoveTests {
             PartyBotEntity b = PartyBots.spawn(p, CharacterType.MAX, null);
             if (b != null) { b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0F, 0F); bid[0] = b.getId(); }
         }), 40));
-        // you talk to it, then step 6 blocks off (it would normally follow / wander): it stays put
+        // you talk to it, then step 4 blocks back (6 from it) (it would normally follow / wander): it stays put
         l.add(new Step(null, () -> PackTests.server(p -> {
-            if (p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity b) { PartyBots.interact(b, p); at[0] = b.getX(); at[1] = b.getY(); at[2] = b.getZ(); p.teleportTo(p.getX() - 6, p.getY(), p.getZ()); }
+            if (p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity b) { PartyBots.interact(b, p); at[0] = b.getX(); at[1] = b.getY(); at[2] = b.getZ(); p.teleportTo(p.getX() - 4, p.getY(), p.getZ()); }
         }), 100));
         l.add(new Step("bothold_held", () -> PackTests.server(p -> {
             var b = p.serverLevel().getEntity(bid[0]) instanceof PartyBotEntity x ? x : null;
