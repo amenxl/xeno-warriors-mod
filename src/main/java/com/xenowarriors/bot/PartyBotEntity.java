@@ -370,7 +370,7 @@ public class PartyBotEntity extends PathfinderMob {
         ServerPlayer o = owner();
         return canFly() && !journey() && o != null && !ownerInDanger(o) && !(o.getAbilities().flying || o.isFallFlying()) ? FLIER_LEASH : 8;
     }
-    public static final double FLIER_LEASH = 32;
+    public static final double FLIER_LEASH = 16;   // (was 32: winged bots stood 15-28 blocks off and looked like they weren't following)
 
     class FollowOwner extends Goal {
         FollowOwner() { setFlags(EnumSet.of(Flag.MOVE)); }
@@ -443,7 +443,7 @@ public class PartyBotEntity extends PathfinderMob {
             wanderWait = 60 + getRandom().nextInt(140);
             double l = leash();
             if (distanceToSqr(o) > l * l || busyElsewhere()) return false;
-            double a = getRandom().nextDouble() * Math.PI * 2, r = l > 8 ? 4 + getRandom().nextDouble() * 18 : 2.5 + getRandom().nextDouble() * 4;   // (fliers range further)
+            double a = getRandom().nextDouble() * Math.PI * 2, r = l > 8 ? 3 + getRandom().nextDouble() * 8 : 2.5 + getRandom().nextDouble() * 4;   // (fliers range a little further)
             Vec3 to = o.position().add(Math.cos(a) * r, 0, Math.sin(a) * r);
             BlockPos bp = BlockPos.containing(to);
             if (!level().getBlockState(bp).isAir() || !level().getBlockState(bp.below()).isSolid()) return false;

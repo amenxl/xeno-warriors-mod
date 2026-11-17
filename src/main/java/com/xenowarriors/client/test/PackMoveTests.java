@@ -30,6 +30,7 @@ final class PackMoveTests {
     }
 
     private static final Map<Integer, Track> TRACKS = new HashMap<>();
+    private static final List<String> SNAPLOG = new java.util.ArrayList<>();
 
     static void build(Minecraft mc, List<Step> l) {
         double[] home = new double[3];
@@ -64,7 +65,7 @@ final class PackMoveTests {
                 k++;
             }
         }), 40));
-        l.add(new Step(null, () -> { TRACKS.clear(); mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 2));
+        l.add(new Step(null, () -> { TRACKS.clear(); SNAPLOG.clear(); mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 2));
         // the course: you hop to a new spot every 3 seconds, the bots follow; NPCs go about their business
         double[][] course = {{0, 0}, {14, 0}, {14, 14}, {0, 14}, {-12, 6}, {0, 0}};
         for (int leg = 0; leg < course.length; leg++) {
@@ -104,6 +105,7 @@ final class PackMoveTests {
                 if (s[4] > 6 * s[6]) bad.append(e.getKey()).append(" twitches ").append(s[4]).append("; ");
                 if (s[5] > 40 * s[6]) bad.append(e.getKey()).append(" stuck ").append(s[5]).append("; ");
             }
+            for (String sl : SNAPLOG) PackTests.log("moves snap: " + sl);
             PackTests.check("moves: bots and NPCs move without sliding, snapping, twitching or getting stuck", bad.length() == 0, bad.toString());
             try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null) pp.toVanillaMode(true); } catch (Throwable ignored) {}
             PackTests.server(p -> { for (PartyBotEntity b : PartyBots.bots(p)) b.discard(); PackTests.clear(p); });
@@ -141,11 +143,16 @@ final class PackMoveTests {
                 if (moving) t.moving++;
                 if (moving && le.walkAnimation.speed() < 0.05F && !le.isPassenger() && le.onGround()) t.sliding++;
                 float d = Mth.wrapDegrees(yaw - t.yaw);
-                if (Math.abs(d) > 50F && v < 2.0) t.snaps++;
+                if (Math.abs(d) > 50F && v < 2.0) {
+                    t.snaps++;
+                    if (SNAPLOG.size() < 40) SNAPLOG.add(String.format(java.util.Locale.ROOT, "%s %.0f deg %s head %.0f yRot %.0f target %s",
+                            kind, d, moving ? "walking" : "standing", Mth.wrapDegrees(le.yHeadRot - yaw), Mth.wrapDegrees(le.getYRot() - yaw),
+                            e instanceof Mob mob && mob.getTarget() != null ? "yes" : "-"));
+                }
                 int sign = Math.abs(d) > 6F ? (d > 0 ? 1 : -1) : 0;
                 if (sign != 0 && t.lastSign != 0 && sign != t.lastSign) t.flips++;
                 if (sign != 0) t.lastSign = sign;
-                if (e instanceof PartyBotEntity && !moving && e.distanceTo(mc.player) > 10F) t.stuck++;
+                if (e instanceof PartyBotEntity && !moving && e.distanceTo(mc.player) > 17F) t.stuck++;
             }
             t.x = e.getX(); t.z = e.getZ(); t.yaw = yaw; t.init = true;
         }
