@@ -110,7 +110,9 @@ public class KaGuideScreen extends Screen {
             if (sc < 1F) {
                 g.pose().pushPose();
                 g.pose().scale(sc, sc, 1F);
-                g.renderTooltip(font, lines, Math.round(mx / sc), Math.round(4 / sc + 12));
+                int tw = 0; for (var ln : lines) tw = Math.max(tw, font.width(ln));
+                int tx = Math.round(Math.min(mx + 12, width - tw * sc - 8) / sc), ty = Math.round(4 / sc);
+                g.renderTooltip(font, lines, (sw, sh, x, y, w, h) -> new org.joml.Vector2i(tx, ty), tx, ty);   // (placed by hand: the usual placement clamps to the unscaled screen)
                 g.pose().popPose();
             } else g.renderTooltip(font, lines, mx, my);
         }
