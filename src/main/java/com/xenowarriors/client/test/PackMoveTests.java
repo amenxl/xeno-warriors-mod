@@ -37,7 +37,9 @@ final class PackMoveTests {
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p);
             for (PartyBotEntity b : PartyBots.bots(p)) b.discard();
-            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.getAbilities().flying = false; p.onUpdateAbilities();
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 120, 4, false, false));
             home[0] = p.getX(); home[1] = p.getY(); home[2] = p.getZ();
             int i = 0;
             for (CharacterType t : new CharacterType[]{CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.MAX}) {
@@ -71,7 +73,7 @@ final class PackMoveTests {
             l.add(new Step(null, () -> PackTests.server(p -> p.teleportTo(home[0] + at[0], home[1], home[2] + at[1])), 1));
             for (int t = 0; t < 60; t++) {
                 int tt = t;
-                l.add(new Step(tt == 30 ? "moves_leg" + lg : null, () -> sample(mc), 1));
+                l.add(new Step(tt == 30 ? "moves_leg" + lg : null, () -> { sample(mc); if (tt % 20 == 19) PackTests.server(PackMoveTests::botState); }, 1));
             }
         }
         // in battle mode (Epic Fight draws the bots) the same again
@@ -107,6 +109,16 @@ final class PackMoveTests {
             PackTests.server(p -> { for (PartyBotEntity b : PartyBots.bots(p)) b.discard(); PackTests.clear(p); });
             mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
         }, 5));
+    }
+
+    /** (server) where each bot is and what it's up to. */
+    private static void botState(net.minecraft.server.level.ServerPlayer p) {
+        for (PartyBotEntity b : PartyBots.bots(p)) {
+            var g = b.goalSelector.getRunningGoals().map(w -> w.getGoal().getClass().getSimpleName()).toList();
+            PackTests.log(String.format(java.util.Locale.ROOT, "moves state %s: dist %.1f dy %.1f ground %s noGravity %s nav %s target %s goals %s",
+                    b.character().getId(), b.distanceTo(p), b.getY() - p.getY(), b.onGround(), b.isNoGravity(), b.getNavigation().isDone() ? "done" : "moving",
+                    b.getTarget() == null ? "-" : b.getTarget().getType().toShortString(), g));
+        }
     }
 
     private static void sample(Minecraft mc) {
