@@ -58,6 +58,10 @@ public class HumanNpcEntity extends PathfinderMob {
     private long possessedSince = -1;
     private boolean reported;
 
+    /** Its body turns smoothly as it sets off (no spinning round on the spot). */
+    @Override
+    protected net.minecraft.world.entity.ai.control.BodyRotationControl createBodyControl() { return new com.xenowarriors.entity.SmoothBodyControl(this); }
+
     public HumanNpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
         this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)

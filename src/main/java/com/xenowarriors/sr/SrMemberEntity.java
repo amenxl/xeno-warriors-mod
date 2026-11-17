@@ -50,6 +50,10 @@ public class SrMemberEntity extends Monster {
     private BlockPos post;
     private int leapCd;
 
+    /** Its body turns smoothly as it sets off (no spinning round on the spot). */
+    @Override
+    protected net.minecraft.world.entity.ai.control.BodyRotationControl createBodyControl() { return new com.xenowarriors.entity.SmoothBodyControl(this); }
+
     public SrMemberEntity(EntityType<? extends Monster> type, Level level) { super(type, level); this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this); }
 
     public static AttributeSupplier.Builder createAttributes() {

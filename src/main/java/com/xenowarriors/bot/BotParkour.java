@@ -111,19 +111,27 @@ public final class BotParkour {
                 return;
             }
         }
-        // running at a one-block obstacle (with a landing past it): vault over
+        // running at a one-block obstacle (with a landing past it): vault over (looked for a little way ahead, before
+        //  the path's own jump takes it up)
         Vec3 v = b.getDeltaMovement();
-        if (v.horizontalDistanceSqr() > 0.14 * 0.14) {
+        if (v.horizontalDistanceSqr() > 0.08 * 0.08) {
             Vec3 run = new Vec3(v.x, 0, v.z).normalize();
-            BlockPos front = BlockPos.containing(b.getX() + run.x * (b.getBbWidth() * 0.5 + 0.55), y, b.getZ() + run.z * (b.getBbWidth() * 0.5 + 0.55));
-            BlockPos past = BlockPos.containing(front.getX() + 0.5 + run.x, y, front.getZ() + 0.5 + run.z);
-            if (wall(l, front) == 1 && BotMoves.open(l, front.above()) && BotMoves.open(l, front.above(2)) && BotMoves.open(l, b.blockPosition().above(2))
-                    && BotMoves.open(l, past) && BotMoves.open(l, past.above()) && BotMoves.dropAt(l, past.getX() + 0.5, y, past.getZ() + 0.5) < 3) {
-                b.setDeltaMovement(run.x * 0.42, 0.52, run.z * 0.42);
-                face(b, run);
-                start(b, b.getRandom().nextBoolean() ? VAULT_R : VAULT_L, 11, run);
-                s.cd = 20;
-                return;
+            for (double reach : new double[]{0.45, 0.9, 1.35}) {
+                double r = b.getBbWidth() * 0.5 + reach;
+                BlockPos front = BlockPos.containing(b.getX() + run.x * r, y, b.getZ() + run.z * r);
+                if (front.equals(b.blockPosition())) continue;
+                if (!BotMoves.solid(l, front)) continue;
+                BlockPos past = BlockPos.containing(front.getX() + 0.5 + run.x, y, front.getZ() + 0.5 + run.z);
+                if (wall(l, front) == 1 && BotMoves.open(l, front.above()) && BotMoves.open(l, front.above(2)) && BotMoves.open(l, b.blockPosition().above(2))
+                        && BotMoves.open(l, past) && BotMoves.open(l, past.above()) && BotMoves.dropAt(l, past.getX() + 0.5, y, past.getZ() + 0.5) < 3) {
+                    double sp = Math.max(0.3, Math.min(0.45, 0.2 + reach * 0.15));
+                    b.setDeltaMovement(run.x * sp, 0.52, run.z * sp);
+                    face(b, run);
+                    start(b, b.getRandom().nextBoolean() ? VAULT_R : VAULT_L, 11, run);
+                    s.cd = 20;
+                    return;
+                }
+                break;                                                          // (something else in the way: leave it to the path)
             }
         }
         // in a fight: a slide in at the target now and then; a side-step when it swings at close range

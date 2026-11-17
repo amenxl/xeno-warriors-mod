@@ -66,6 +66,10 @@ public class SkylanderEntity extends PathfinderMob {
     public void setWorking(boolean b) { working = b; }
     private int warnedAt = -10000;
 
+    /** Its body turns smoothly as it sets off (no spinning round on the spot). */
+    @Override
+    protected net.minecraft.world.entity.ai.control.BodyRotationControl createBodyControl() { return new com.xenowarriors.entity.SmoothBodyControl(this); }
+
     public SkylanderEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
         this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)

@@ -52,6 +52,10 @@ public class GovAgentEntity extends PathfinderMob {
     /** In a training fight (Tower, Journey, VR) a guard whose scanner broke flees, then vanishes at this game time (-1: not). */
     private long vanishAt = -1;
 
+    /** Its body turns smoothly as it sets off (no spinning round on the spot). */
+    @Override
+    protected net.minecraft.world.entity.ai.control.BodyRotationControl createBodyControl() { return new com.xenowarriors.entity.SmoothBodyControl(this); }
+
     public GovAgentEntity(EntityType<? extends GovAgentEntity> type, Level level) {
         super(type, level);
         this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)
