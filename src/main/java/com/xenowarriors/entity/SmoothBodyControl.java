@@ -23,6 +23,7 @@ public class SmoothBodyControl extends BodyRotationControl {
 
     @Override
     public void clientTick() {
+        if (mob.isNoGravity()) { chase = 0; super.clientTick(); return; }   // (fliers steer their own body in the air: left alone)
         float before = mob.yBodyRot;
         double dx = mob.getX() - mob.xo, dz = mob.getZ() - mob.zo;
         boolean moving = dx * dx + dz * dz > 2.5000003E-7F;
