@@ -68,19 +68,30 @@ def zack(f):
 def kaitlyn(f):
     """Ai Oni's student: brown hair fading to blonde, a big side ponytail and two little curls on top, a black hooded
     crop jacket over a white lace crop top, a white sash tied at the front, black trousers with grey cuffs, black shoes."""
-    B1, B2, BL = '#5a3a22', '#7a5434', '#e8d088'
-    hair(f, B2, B1, back_len=24.0, side_len=25.0,
-         locks=fringe_locks(7, 31.6, 8.0, 4.6, 1.6, 0.4)
-         + [([s * 4.55, 30.4, z], [s * 0.35, -1, 0.1], 5.0, 1.6) for s in (1, -1) for z in (-2.6, 0.4)])
-    # the side ponytail (her right, out and down), fading to blonde
-    for i, (dx, dy, dz) in enumerate(((5.0, 30.6, 1.6), (6.4, 29.4, 2.2), (7.4, 27.8, 2.6), (7.8, 26.0, 2.8), (7.6, 24.2, 2.8), (7.0, 22.6, 2.6))):
-        c = (B1, B2, '#a0784c', '#c8a868', BL, BL)[i]
-        r = 1.5 - i * 0.12
-        f.add('head', [dx - r, dy - r, dz - r], [dx + r, dy + r, dz + r], c)
-    f.add('head', [4.4, 30.4, 0.8], [5.6, 31.6, 2.4], '#141216')                                    # hair tie
-    for s in (1, -1):                                                                                # the two little curls on top
-        lock(f, [s * 1.6, 33.0, -0.6], [s * 0.2, 1, 0.5], 2.6, 1.0, (B1, B1, B2), taper=(0.9, 0.7))
-        lock(f, [s * 1.9, 34.8, 0.6], [s * 0.4, -0.2, 1], 1.4, 0.9, (B1, B1, B1), taper=(0.9, 0.7))
+    B1, B2, B3, BL = '#3e3018', '#5e4c28', '#9a8648', '#dccb80'     # (dark olive brown on top, fading to blonde at the ends)
+    # a shaggy bob to her jaw (the ends blonde), long bangs with one strand down between her eyes
+    hair(f, B2, B1, back_len=25.5, side_len=26.0)
+    for x, ln, tilt in ((-3.4, 3.2, -0.2), (-2.0, 3.8, -0.1), (-0.6, 3.0, 0.0), (0.3, 5.6, 0.05), (1.6, 3.6, 0.12), (3.0, 3.0, 0.25)):
+        lock(f, [x, 32.4, -4.7], [tilt, -1, -0.35], ln, 1.5, (B2, B2, B3), taper=(0.6, 0.3))
+    for s_ in (1, -1):
+        for z, ln in ((-2.8, 6.2), (-0.6, 6.6), (1.8, 6.4), (3.8, 6.0)):
+            lock(f, [s_ * 4.6, 31.4, z], [s_ * 0.3, -1, 0.05], ln, 1.6, (B1, B3, BL), taper=(0.62, 0.3))   # down the sides, flicking out
+    for x in (-2.8, -0.9, 1.0, 2.9):
+        lock(f, [x, 31.4, 4.6], [x * 0.06, -1, 0.3], 6.2, 1.8, (B1, B3, BL), taper=(0.6, 0.3))               # the back
+    # the big side ponytail, high on her right: out and up, then falling, blonde at the end
+    lock(f, [4.4, 32.0, 1.4], [1, 0.45, 0.35], 4.6, 2.6, (B1, B2, B3), thick=1.6, taper=(0.9, 0.75))
+    lock(f, [8.2, 34.0, 2.6], [0.9, -0.5, 0.2], 4.2, 2.4, (B3, BL, BL), thick=1.4, taper=(0.75, 0.4))
+    lock(f, [7.6, 33.4, 2.2], [0.5, -1, 0.1], 4.8, 1.8, (B3, BL, BL), thick=1.2, taper=(0.7, 0.35))
+    f.add('head', [4.2, 31.0, 0.6], [5.4, 32.6, 2.2], '#141216')                                              # hair tie
+    # the two little curls sticking up: a big one over the ponytail side, a small one on the other
+    for i in range(7):
+        a_ = math.pi * (0.1 + i / 6 * 0.9)
+        cx, cy = 1.6 + 1.4 * (1 - math.cos(a_)), 33.0 + 2.4 * math.sin(a_)
+        f.add('head', [cx - 0.45, cy - 0.45, -0.9], [cx + 0.45, cy + 0.45, -0.1], B1)
+    for i in range(5):
+        a_ = math.pi * (0.1 + i / 4 * 0.85)
+        cx, cy = -2.0 - 0.9 * (1 - math.cos(a_)), 33.0 + 1.4 * math.sin(a_)
+        f.add('head', [cx - 0.4, cy - 0.4, -0.6], [cx + 0.4, cy + 0.4, 0.2], B1)
     J = '#141217'
     shell(f, 'body', [-4, 17.6, -2], [4, 24, 2], 0.22, '#f2f2f2', {'front': lambda x, y: '#d8d8dc' if y < .12 and int(x * 10) % 2 else '#f2f2f2',
                                                                  'back': None, 'left': None, 'right': None, 'top': None})   # lace crop top (only its front shows)
@@ -131,6 +142,12 @@ def chase(f):
     pants(f, J, 6.4, J, baggy=0.35)                                                                  # black shorts
     shoes(f, '#5a5a62', '#e8e8ec', 2.2, lace='#e8e8ec')
 
+def kate_face(px, cm, dark):                                  # black liner down from her eyes, a little fang, a red open grin
+    for cx in (5, 26):
+        for j in range(3): px[cx, 21 + j] = (16, 12, 14, 255)
+    for x in range(15, 18): px[x, 25] = (214, 30, 30, 255)
+    for x in range(15, 17): px[x, 26] = (214, 30, 30, 255)
+
 def bare(shirt, pantsc, shoesc, sleeve=12, pl=12):
     return clothes(shirt, sleeve, pantsc, pl, shoesc, 3)
 
@@ -141,10 +158,10 @@ SPECS = {
     'zack': dict(name='Zack', fit=zack, skin='#f0d0c4', eyes='#8a8e98', hair=['#3a1a2a', '#5a2c40'],
                  paint=bare('#151418', '#3a3a40', '#141316', 5, 6), brow=['.........', 'kkkkkkk..'],
                  mouth=['kkkkkk', '.W....'], mouth_x=13, mouth_y=24),
-    'kaitlyn': dict(name='Kaitlyn', fit=kaitlyn, skin='#d8a888', eyes='#2a1a12', hair=['#5a3a22', '#7a5434'],
+    'kaitlyn': dict(name='Kaitlyn', fit=kaitlyn, skin='#e0a890', eyes='#1a120e', hair=['#3e3018', '#5e4c28'],
                     paint=clothes('#141217', 12, '#141217', 10, '#141216', 3, extra=lambda part, face, x, y, W, H, o:
                         ('#d8a888' if part == 'body' and face in ('front', 'back', 'right', 'left') and 7 <= y <= 9 else None)),   # her bare midriff eye=['..kkkkkk.', 'kkkkkkkkk', '.kddpddk.', '.kWoppok.', '.kWoopok.', '..kOOOk..', '..kkkkk..'],
-                    mouth=['.k..k.', '..kk..', '..WW..'], mouth_x=13, mouth_y=24),
+                    mouth=['kkkkkk', 'kWkkkk', '.kkkk.'], mouth_x=13, mouth_y=24, face_extra=[kate_face]),
     'chase': dict(name='Chase', fit=chase, skin='#7a4a30', eyes='#d07a18', hair=['#0e0c10', '#1a1820'],
                   paint=bare('#141217', '#141217', '#5a5a62', 12, 6), brow=['.........', 'kkkkkk...'],
                   mouth=['.kk.'], mouth_x=14, mouth_y=25),
