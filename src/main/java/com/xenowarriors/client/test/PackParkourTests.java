@@ -107,9 +107,10 @@ final class PackParkourTests {
         }), 30));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 2));
         // a low wall it runs at (you're well past it): vault
-        stage(mc, l, id, "vault", p -> fill(p, -4, 0, 5, 4, 0, 5, true),
-                new double[]{0, 0, -4}, new double[]{0, 0, 14}, 180F, 70, BotParkour.VAULT_R,
-                (p, b) -> b.getZ() - base().getZ() > 6);
+        // (you within 12 blocks of it: further off, a bot is brought over to you when you teleport)
+        stage(mc, l, id, "vault", p -> fill(p, -4, 0, 3, 4, 0, 3, true),
+                new double[]{0, 0, -2}, new double[]{0, 0, 9}, 180F, 70, BotParkour.VAULT_R,
+                (p, b) -> b.getZ() - base().getZ() > 4);
         // a 2-high wall, you on top of it: grabs the edge and climbs up
         stage(mc, l, id, "climb", p -> fill(p, -5, 0, 4, 5, 1, 8, true),
                 new double[]{0, 0, -2}, new double[]{0, 2, 7}, 180F, 90, BotParkour.CLIMB,
