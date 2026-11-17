@@ -79,7 +79,7 @@ public final class BotShield {
             b.guardTicks = 8;
             Vec3 d = from.subtract(b.position());
             float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));            // (face it: a shield only stops what's in front)
-            b.setYRot(yaw); b.yBodyRot = yaw; b.yHeadRot = yaw;
+            BotMoves.face(b, yaw, 60F);                                          // (quick, but no snap)
             b.getLookControl().setLookAt(from.x, from.y, from.z);
         } else if (blocking && --b.guardTicks <= 0) b.stopUsingItem();
     }

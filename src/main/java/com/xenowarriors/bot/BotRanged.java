@@ -165,7 +165,7 @@ public final class BotRanged extends Goal {
         Vec3 d = t.getBoundingBox().getCenter().subtract(b.getEyePosition());
         float yaw = (float) (Math.toDegrees(Math.atan2(d.z, d.x)) - 90F);
         float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
-        b.setYRot(yaw); b.yBodyRot = yaw; b.yHeadRot = yaw; b.setXRot(pitch);
+        BotMoves.face(b, yaw, 45F); b.setXRot(pitch);
     }
 
     /** One arrow, as hard as a fully drawn player shot. Nothing is used up. */

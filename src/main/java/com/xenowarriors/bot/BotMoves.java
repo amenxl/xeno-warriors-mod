@@ -22,6 +22,17 @@ public final class BotMoves {
     // ---------------------------------------------------------------- flying
 
     /** Fly straight toward a point (gravity off while it does). speed: the most it covers a tick. */
+    /**
+     * Turn to face {@code yaw}, at most {@code max} degrees this tick (body, head and facing together): bots used to snap
+     * straight round when flying, swimming, dashing in or bracing a shield.
+     */
+    public static void face(net.minecraft.world.entity.Mob b, float yaw, float max) {
+        float y = net.minecraft.util.Mth.approachDegrees(b.getYRot(), yaw, max);
+        b.setYRot(y); b.yBodyRot = y; b.yHeadRot = y;
+    }
+
+    public static void face(net.minecraft.world.entity.Mob b, float yaw) { face(b, yaw, com.xenowarriors.entity.SmoothMoveControl.MAX_TURN); }
+
     static void flyTo(PartyBotEntity b, Vec3 goal, double speed) {
         b.getNavigation().stop();
         b.selfFlying = true;
@@ -34,8 +45,7 @@ public final class BotMoves {
         b.setDeltaMovement(b.getDeltaMovement().scale(0.5).add(v.scale(0.5)));
         b.fallDistance = 0;
         if (d.horizontalDistanceSqr() > 0.5) {
-            float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
-            b.setYRot(yaw); b.yBodyRot = yaw; b.yHeadRot = yaw;
+            face(b, (float) Math.toDegrees(Math.atan2(-d.x, d.z)));
         }
     }
 
@@ -127,7 +137,7 @@ public final class BotMoves {
                 b.setDeltaMovement(dir.x * sp, dy > 0 ? 0.52 : 0.42, dir.z * sp);
                 b.leapTicks = 20;
                 float yaw = (float) Math.toDegrees(Math.atan2(-dir.x, dir.z));
-                b.setYRot(yaw); b.yBodyRot = yaw;
+                face(b, yaw, 60F);
                 b.lastLeap = "gap " + k + " dy " + dy + " from " + b.blockPosition().toShortString();
                 return true;
             }
@@ -180,8 +190,7 @@ public final class BotMoves {
         double hs = Math.sqrt(v.x * v.x + v.z * v.z), cap = lava ? 0.32 : 0.28;
         if (hs > cap) v = new Vec3(v.x / hs * cap, v.y, v.z / hs * cap);
         b.setDeltaMovement(v.x, Math.min(0.45, v.y), v.z);
-        float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
-        b.setYRot(yaw); b.yBodyRot = yaw;
+        face(b, (float) Math.toDegrees(Math.atan2(-to.x, to.z)));
     }
 
     /** (Tests) strokes swum after the owner. */
@@ -201,8 +210,7 @@ public final class BotMoves {
         double hs = Math.sqrt(v.x * v.x + v.z * v.z), cap = d > 10 ? 0.42 : 0.3;
         if (hs > cap) v = new Vec3(v.x / hs * cap, v.y, v.z / hs * cap);
         b.setDeltaMovement(v.x, Math.min(0.45, v.y), v.z);
-        float yaw = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
-        b.setYRot(yaw); b.yBodyRot = yaw; b.setYHeadRot(yaw);
+        face(b, (float) Math.toDegrees(Math.atan2(-to.x, to.z)));
         swimStrokes++;
     }
 }

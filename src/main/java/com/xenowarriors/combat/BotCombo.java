@@ -111,7 +111,7 @@ public class BotCombo extends MeleeAttackGoal {
         double v = Math.min(1.0, (gap - 0.35) * 0.6);
         Vec3 d = to.normalize();
         mob.setDeltaMovement(d.x * v, mob.getDeltaMovement().y, d.z * v);
-        mob.setYRot((float) (Math.atan2(-d.x, d.z) * 180 / Math.PI)); mob.yBodyRot = mob.getYRot();
+        com.xenowarriors.bot.BotMoves.face(mob, (float) (Math.atan2(-d.x, d.z) * 180 / Math.PI), 60F);
         if (mob.level() instanceof net.minecraft.server.level.ServerLevel l) {          // dust kicked up off the skid
             var below = l.getBlockState(mob.blockPosition().below());
             if (!below.isAir()) l.sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK, below),

@@ -520,7 +520,7 @@ public final class PartyBots {
         b.fallDistance = 0;
         b.getLookControl().setLookAt(o);
         double yaw = Math.toDegrees(Math.atan2(-d.x, d.z));
-        if (dist > 1.5) { b.setYRot((float) yaw); b.yBodyRot = (float) yaw; }
+        if (dist > 1.5) BotMoves.face(b, (float) yaw);
     }
 
     /** The owner's in a vehicle (a mod vehicle or a boat) with a free seat: climb in. */
