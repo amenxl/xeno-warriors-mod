@@ -106,7 +106,13 @@ public class KaGuideScreen extends Screen {
                 }
                 if (lines.size() * 10 + 10 <= height) break;
             }
-            g.renderTooltip(font, lines, mx, my);
+            float sc = Math.min(1F, (height - 8F) / (lines.size() * 10F + 10F));   // (still too tall for a small window: drawn smaller)
+            if (sc < 1F) {
+                g.pose().pushPose();
+                g.pose().scale(sc, sc, 1F);
+                g.renderTooltip(font, lines, Math.round(mx / sc), Math.round(4 / sc + 12));
+                g.pose().popPose();
+            } else g.renderTooltip(font, lines, mx, my);
         }
     }
 
