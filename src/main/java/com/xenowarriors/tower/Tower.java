@@ -257,7 +257,10 @@ public final class Tower {
             if (r.players.isEmpty())
                 for (Entity e : tl.getEntitiesOfClass(Entity.class, new AABB(r.center).inflate(r.radius + 4, 12, r.radius + 4), e -> e instanceof ItemEntity || e instanceof ExperienceOrb))
                     com.xenowarriors.room.RoomTech.move(e, to, b.pos(), 0F);
-            p.teleportTo(to, b.pos().x, b.pos().y, b.pos().z, b.yRot(), 0);
+            // (another mod's dimension-change listener can throw mid-move - DragonMineZ 2.1.3 did - and that used to
+            //  abort the rest of leaving, leaving the run open; the player has already moved by then)
+            try { p.teleportTo(to, b.pos().x, b.pos().y, b.pos().z, b.yRot(), 0); }
+            catch (RuntimeException ex) { com.xenowarriors.XenoWarriors.LOGGER.warn("Another mod failed while you left the Tower (finishing anyway)", ex); }
         }
         p.sendSystemMessage(msg(why + " (best floor this run: " + Math.max(0, r.floor - (r.state == 1 ? 1 : 0)) + ")"
                 + (unsaved > 0 ? " - " + unsaved + " unsaved kills lost" : ""), ChatFormatting.GRAY));
