@@ -52,10 +52,10 @@ final class PackComboGif {
             }, 30));
             int f = 0;
             for (int k = 0; k < 7; k++) {
-                l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 1));
-                for (int t = 0; t < 5; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> {}, 1));
+                l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> { net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()); PackTests.server(p -> trace(who, p, ids[0], "click")); }, 1));
+                for (int t = 0; t < 5; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> PackTests.server(p -> trace(who, p, ids[0], "")), 1));
             }
-            for (int t = 0; t < 14; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> {}, 1));
+            for (int t = 0; t < 14; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> PackTests.server(p -> trace(who, p, ids[0], "")), 1));
             l.add(new Step(null, () -> {
                 mc.setCameraEntity(mc.player); mc.options.hideGui = false;
                 PackTests.server(p -> {
@@ -67,5 +67,17 @@ final class PackComboGif {
                 });
             }, 5));
         }
+    }
+
+    /** Each frame: the move playing (and how far in), how far apart they are, the dummy's health and whether it's flashing red. */
+    private static void trace(CharacterType who, net.minecraft.server.level.ServerPlayer p, int zid, String tag) {
+        var z = p.serverLevel().getEntity(zid);
+        var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
+        String anim = "-";
+        try { var pl = patch.getAnimator().getPlayerFor(null); if (pl != null) anim = pl.getRealAnimation() + "@" + String.format(java.util.Locale.ROOT, "%.2f", pl.getElapsedTime()); } catch (Throwable ignored) {}
+        var le = z instanceof net.minecraft.world.entity.LivingEntity x ? x : null;
+        PackTests.log(String.format(java.util.Locale.ROOT, "combotrace %s %s t%d anim %s dist %.2f hp %.1f hurt %d inv %d",
+                who.getId(), tag, p.serverLevel().getGameTime() % 100000, anim, z == null ? -1 : Math.sqrt(p.distanceToSqr(z)),
+                le == null ? -1 : le.getHealth(), le == null ? -1 : le.hurtTime, le == null ? -1 : le.invulnerableTime));
     }
 }
