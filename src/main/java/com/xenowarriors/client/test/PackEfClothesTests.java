@@ -286,6 +286,7 @@ final class PackEfClothesTests {
                 try { first = patch.getHoldingItemCapability(InteractionHand.MAIN_HAND).getAutoAttackMotion(patch).get(0); } catch (Throwable ignored) {}
                 PackTests.check("efhit " + tag + ": fights in the picked style", String.valueOf(first).contains(cs.first()),
                         "combo starts " + first + " (want " + cs.first() + ") missing " + com.xenowarriors.compat.epicfight.WomMoves.MISSING
+                        + " fallback " + com.xenowarriors.compat.epicfight.WomMoves.lastFallback + " holding " + p.getMainHandItem() + " as " + com.xenowarriors.character.ModCapabilities.getType(p)
                         + " target assists " + com.xenowarriors.compat.EfTargetAssist.assists + " Kaeru boosts " + com.xenowarriors.compat.FistDamage.boosted);
             }), 1));
             l.add(new Step("pack_efhit_" + tag, () -> PackTests.server(p -> {

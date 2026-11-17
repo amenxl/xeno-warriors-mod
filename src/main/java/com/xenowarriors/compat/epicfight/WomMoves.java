@@ -109,7 +109,10 @@ public final class WomMoves {
     /** (Tests) combos swapped, moves that wouldn't resolve. */
     public static int swaps;
     public static final java.util.Set<String> MISSING = new java.util.TreeSet<>();
-    private static final Map<String, AnimationManager.AnimationAccessor<? extends AttackAnimation>> CACHE = new HashMap<>();
+    // (both the client and the integrated server's thread look moves up: a plain HashMap could break under that)
+    private static final Map<String, AnimationManager.AnimationAccessor<? extends AttackAnimation>> CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    /** (Tests / logs) why a player's combo last fell back to Epic Fight's own. */
+    public static volatile String lastFallback = "-";
 
     @SuppressWarnings("unchecked")
     private static AnimationManager.AnimationAccessor<? extends AttackAnimation> move(String key) {
@@ -187,15 +190,19 @@ public final class WomMoves {
                 return out;
             }
             String[] keys = movesFor(p);
-            if (keys == null) return original;
+            if (keys == null) {
+                if (p.getMainHandItem().isEmpty()) lastFallback = (p.level().isClientSide ? "client" : "server") + ": no moves for " + character(p);
+                return original;
+            }
             List out = new ArrayList();
             for (String k : keys) { var m = move(k); if (m != null) out.add(m); }
-            if (out.isEmpty()) return original;
+            if (out.isEmpty()) { lastFallback = (p.level().isClientSide ? "client" : "server") + ": none of " + keys[0] + "... loaded"; return original; }
             out.addAll(tail(original, keys));                                          // Epic Fight's dash and air attacks
             swaps++;
             SWAPPED.put(p, Boolean.TRUE);
             return out;
         } catch (Throwable t) {
+            lastFallback = "error " + t;
             return original;
         }
     }
