@@ -108,7 +108,7 @@ public final class WomMoves {
 
     /** (Tests) combos swapped, moves that wouldn't resolve. */
     public static int swaps;
-    public static final java.util.Set<String> MISSING = new java.util.TreeSet<>();
+    public static final java.util.Set<String> MISSING = java.util.Collections.synchronizedSortedSet(new java.util.TreeSet<>());
     // (both the client and the integrated server's thread look moves up: a plain HashMap could break under that)
     private static final Map<String, AnimationManager.AnimationAccessor<? extends AttackAnimation>> CACHE = new java.util.concurrent.ConcurrentHashMap<>();
     /** (Tests / logs) why a player's combo last fell back to Epic Fight's own. */
