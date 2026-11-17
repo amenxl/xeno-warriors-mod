@@ -162,15 +162,27 @@ final class PackLooksTests {
                 mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
                 try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null && !pp.isEpicFightMode()) pp.toEpicFightMode(true); } catch (Throwable ignored) {}
             }, 12));
-            l.add(new Step(null, () -> mc.options.keyUp.setDown(true), 10));
-            l.add(new Step("motion_" + n + "_walk", () -> {}, 2));
-            l.add(new Step(null, () -> mc.options.keySprint.setDown(true), 10));
-            l.add(new Step("motion_" + n + "_run", () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(false); }, 12));
+            // (the test game's window has no keyboard focus, so pressing W did nothing: walk by swapping in an input that holds forward)
+            double[] from = new double[3];
+            l.add(new Step(null, () -> { from[0] = mc.player.getX(); from[2] = mc.player.getZ(); mc.player.input = new Forward(); }, 10));
+            l.add(new Step("motion_" + n + "_walk", () -> PackTests.check("motion " + n + ": walks forward", mc.player.distanceToSqr(from[0], mc.player.getY(), from[2]) > 1,
+                    String.format(java.util.Locale.ROOT, "moved %.2f", Math.sqrt(mc.player.distanceToSqr(from[0], mc.player.getY(), from[2])))), 2));
+            for (int k = 0; k < 10; k++) l.add(new Step(null, () -> mc.player.setSprinting(true), 1));
+            l.add(new Step("motion_" + n + "_run", () -> PackTests.check("motion " + n + ": runs", mc.player.isSprinting(), "sprinting " + mc.player.isSprinting()), 2));
+            l.add(new Step(null, () -> { mc.player.setSprinting(false); mc.player.input = new net.minecraft.client.player.KeyboardInput(mc.options); }, 12));
             l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 4));
             l.add(new Step("motion_" + n + "_attack", () -> {}, 2));
             l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 6));
             l.add(new Step("motion_" + n + "_attack2", () -> {}, 10));
         }
         l.add(new Step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(false); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
+    }
+
+    /** Holds forward every tick (stands in for the W key, which the unfocused test window never sees). */
+    static final class Forward extends net.minecraft.client.player.Input {
+        @Override public void tick(boolean slow, float factor) {
+            up = true; down = false; left = false; right = false; jumping = false; shiftKeyDown = false;
+            forwardImpulse = slow ? factor : 1F; leftImpulse = 0F;
+        }
     }
 }

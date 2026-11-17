@@ -85,8 +85,19 @@ final class PackMoveTests {
             l.add(new Step(null, () -> PackTests.server(p -> p.teleportTo(home[0] + at[0], home[1] + 7, home[2] + at[1])), 1));
             for (int t = 0; t < 60; t++) {
                 int tt = t;
-                l.add(new Step(tt == 30 ? "moves_fly_leg" + lg : null, () -> { sample(mc); if (tt % 20 == 19) PackTests.server(PackMoveTests::botState); }, 1));
+                l.add(new Step(tt == 30 ? "moves_fly_leg" + lg : null, () -> {
+                    if (mc.player != null && !mc.player.getAbilities().flying) { mc.player.getAbilities().flying = true; mc.player.onUpdateAbilities(); }   // (stay up)
+                    sample(mc); if (tt % 20 == 19) PackTests.server(PackMoveTests::botState);
+                }, 1));
             }
+            // end of the leg: you're still up there, and every bot has kept up (within 16 blocks)
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                StringBuilder far = new StringBuilder();
+                for (PartyBotEntity b : PartyBots.bots(p)) if (b.distanceTo(p) > 16) far.append(b.charKey()).append(' ').append(String.format(java.util.Locale.ROOT, "%.1f", b.distanceTo(p))).append("; ");
+                double up = p.getY() - home[1];
+                PackTests.check("moves fly leg " + lg + ": you stay in the air and the bots keep up", up > 4 && far.length() == 0,
+                        String.format(java.util.Locale.ROOT, "you %.1f up, flying %s; far: %s", up, p.getAbilities().flying, far));
+            }), 1));
         }
         l.add(new Step(null, () -> PackTests.server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.teleportTo(home[0], home[1], home[2]); }), 40));
