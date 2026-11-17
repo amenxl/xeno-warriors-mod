@@ -122,4 +122,32 @@ final class PackLooksTests {
             PackTests.server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0));
             mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
     }
+
+    /** (focus "packallmodels") Every character in every outfit, front and back, out of battle mode and in it. */
+    static void allModels(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); clear(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.setYRot(0); p.setXRot(10); }), 20));
+        for (CharacterType t : CharacterType.PLAYABLE) {
+            int outfits = Math.max(1, t.outfitKeys().length);
+            l.add(new Step(null, () -> UiTest.character(t), 30));
+            for (int o = 0; o < outfits; o++) {
+                int oo = o;
+                l.add(new Step(null, () -> PackTests.server(p -> {
+                    p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = oo);
+                    com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
+                }), 15));
+                for (int battle = 0; battle < 2; battle++) {
+                    boolean ef = battle == 1;
+                    l.add(new Step(null, () -> {
+                        mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                        try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null) { if (ef) pp.toEpicFightMode(true); else pp.toVanillaMode(true); } } catch (Throwable ignored) {}
+                    }, 14));
+                    l.add(new Step("models_" + t.getId() + "_" + oo + (ef ? "_ef" : "") + "_front", () -> {}, 2));
+                    l.add(new Step(null, () -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK), 8));
+                    l.add(new Step("models_" + t.getId() + "_" + oo + (ef ? "_ef" : "") + "_back", () -> {}, 2));
+                }
+            }
+            l.add(new Step(null, () -> PackTests.server(p -> p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0)), 5));
+        }
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
+    }
 }
