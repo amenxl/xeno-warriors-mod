@@ -27,13 +27,22 @@ final class PackFacesTests {
                 var e = type.create(p.serverLevel());
                 if (!(e instanceof Mob m) || e instanceof com.xenowarriors.bot.PartyBotEntity) { if (e != null) e.discard(); cur[0] = -1; return; }
                 m.moveTo(p.getX(), p.getY(), p.getZ() + 2.6 + Math.max(0, m.getBbWidth() - 0.6), 180F, 0F);
-                m.setYHeadRot(180F); m.yBodyRot = 180F;
+                m.setYRot(180F); m.setYHeadRot(180F); m.yBodyRot = 180F; m.yBodyRotO = 180F; m.yRotO = 180F;
                 m.setNoAi(true); m.addTag("xw_pack"); m.setPersistenceRequired();
                 p.serverLevel().addFreshEntity(m);
                 cur[0] = m.getId();
                 p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0F, m.getBbHeight() > 2.5F ? -12F : 4F);
             }), 25));
-            l.add(new Step("faces_" + id, () -> {}, 2));
+            l.add(new Step("faces_" + id, () -> {
+                var e = cur[0] < 0 || mc.level == null ? null : mc.level.getEntity(cur[0]);
+                if (e == null) return;
+                var r = mc.getEntityRenderDispatcher().getRenderer(e);
+                Object patch = null;
+                try { patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(e, yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch.class); } catch (Throwable ignored) {}
+                PackTests.log("faces " + id + ": renderer " + r.getClass().getSimpleName() + " ef " + (patch != null) + " yaw " + Math.round(e.getYRot()) + " body "
+                        + (e instanceof net.minecraft.world.entity.LivingEntity le ? Math.round(le.yBodyRot) : 0) + " dist " + String.format(java.util.Locale.ROOT, "%.1f", e.distanceTo(mc.player))
+                        + " ef faces " + com.xenowarriors.client.compat.epicfight.NpcDetailPatchedLayer.FACES + " no face " + com.xenowarriors.client.compat.epicfight.NpcDetailPatchedLayer.NO_FACE);
+            }, 2));
         }
         l.add(new Step(null, () -> { mc.options.hideGui = false; PackTests.server(PackTests::clear); }, 3));
     }

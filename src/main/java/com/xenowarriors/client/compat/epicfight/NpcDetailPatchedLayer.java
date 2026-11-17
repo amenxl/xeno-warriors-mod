@@ -31,6 +31,8 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
     public static boolean OUTLINE_ON_EF = false;
     private static final Map<String, SkinnedMesh[]> BAKED = new HashMap<>();
     private static final Map<String, SkinnedMesh> OUT = new HashMap<>();
+    /** (tests) faces drawn on Epic Fight's body, by look; looks drawn with no face mesh. */
+    public static final Map<String, Integer> FACES = new java.util.concurrent.ConcurrentHashMap<>(), NO_FACE = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static String look(LivingEntity e) {
         if (e instanceof HumanNpcEntity h) return NpcLooks.human(h.variant());
@@ -59,9 +61,11 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
         int overlay = OverlayTexture.NO_OVERLAY;
         if (mesh[0] != null) mesh[0].draw(pose, buffers, RenderType.entityCutoutNoCull(NpcRenderer.tex(key + (darkened ? "_dark_details" : "_details"))),
                 light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+        if (mesh[1] == null) NO_FACE.merge(key, 1, Integer::sum);
         if (mesh[1] != null) {
             ResourceLocation face = NpcRenderer.tex(key + (darkened ? "_face_dark" : "_face"));
             mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+            FACES.merge(key, 1, Integer::sum);
             if (possessed || foe) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);   // (glowing eyes)
         }
         if (com.xenowarriors.client.cel.Cel.outline() && OUTLINE_ON_EF) {                              // cel-shading: the ink outline, as without Epic Fight
