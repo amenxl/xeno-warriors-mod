@@ -125,6 +125,7 @@ public final class PackTests {
         if (focus.startsWith("packbugs1")) { PackFistTraceTests.build(mc, l); PackEfClothesTests.hoods(mc, l); return; }   // (lunges stop at the enemy; hoodies and Kaeru's tail)
         if (focus.startsWith("packspeeds")) { PackSpeedTests.build(mc, l); return; }      // (how fast every combo plays)
         if (focus.startsWith("packmoves")) { PackMoveTests.build(mc, l); return; }      // (bots and NPCs move right)
+        if (focus.startsWith("packmotion")) { PackLooksTests.motion(mc, l); return; }      // (everyone walking, running, attacking)
         if (focus.startsWith("packallmodels")) { PackLooksTests.allModels(mc, l); return; }      // (every character and outfit, pictures)
         if (focus.startsWith("packoutfits")) { PackLooksTests.outfits(mc, l); return; }      // (Rhalix's outfits, pictures)
         if (focus.startsWith("packlooks")) { PackLooksTests.build(mc, l); return; }      // (pictures: forms, races, faces)

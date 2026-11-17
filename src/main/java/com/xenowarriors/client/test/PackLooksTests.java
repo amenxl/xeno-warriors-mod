@@ -150,4 +150,27 @@ final class PackLooksTests {
         }
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
     }
+
+    /** (focus "packmotion") Every character mid-walk, mid-run and mid-attack in battle mode, from the front. */
+    static void motion(Minecraft mc, List<Step> l) {
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); clear(p); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.getAbilities().flying = false; p.onUpdateAbilities(); p.setYRot(0); p.setXRot(10); }), 20));
+        for (CharacterType t : CharacterType.PLAYABLE) {
+            String n = t.getId();
+            l.add(new Step(null, () -> { UiTest.character(t); PackTests.server(p -> { PackTests.arena(p); p.getInventory().selected = 0; p.getInventory().setItem(0, net.minecraft.world.item.ItemStack.EMPTY); p.setYRot(0); }); }, 30));
+            l.add(new Step(null, () -> {
+                mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);
+                try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null && !pp.isEpicFightMode()) pp.toEpicFightMode(true); } catch (Throwable ignored) {}
+            }, 12));
+            l.add(new Step(null, () -> mc.options.keyUp.setDown(true), 10));
+            l.add(new Step("motion_" + n + "_walk", () -> {}, 2));
+            l.add(new Step(null, () -> mc.options.keySprint.setDown(true), 10));
+            l.add(new Step("motion_" + n + "_run", () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(false); }, 12));
+            l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 4));
+            l.add(new Step("motion_" + n + "_attack", () -> {}, 2));
+            l.add(new Step(null, () -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()), 6));
+            l.add(new Step("motion_" + n + "_attack2", () -> {}, 10));
+        }
+        l.add(new Step(null, () -> { mc.options.keyUp.setDown(false); mc.options.keySprint.setDown(false); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
+    }
 }
