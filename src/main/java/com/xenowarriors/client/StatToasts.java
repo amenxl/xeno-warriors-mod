@@ -50,7 +50,15 @@ public class StatToasts implements IGuiOverlay {
         TOASTS.removeIf(t -> now - t[2] > SHOW_MS);
         Font font = mc.font;
         int y = HudLayout.topRight();               // (under the status effects and any request card)
+        // room down the right side before the Blazing Wind HUD (small windows: they ran into its bars); toasts that
+        // don't fit wait their turn (their clock doesn't start) and slide in as the earlier ones go
+        int limit = KhHud.top > 0 ? KhHud.top - 4 : height - 60;
+        int room = Math.max(1, (limit - y) / 30), shown = 0;
+        for (long[] t : TOASTS) { if (shown++ >= room) t[2] = now; }
+        for (Object[] t : FOX_TOASTS) { if (shown++ >= room) t[2] = now; }
+        shown = 0;
         for (long[] t : TOASTS) {
+            if (shown++ >= room) break;
             Stat stat = Stat.values()[(int) t[0]];
             int level = (int) t[1];
             long age = now - t[2];
@@ -77,6 +85,7 @@ public class StatToasts implements IGuiOverlay {
         }
         FOX_TOASTS.removeIf(t -> now - (long) t[2] > SHOW_MS);
         for (Object[] t : FOX_TOASTS) {
+            if (shown++ >= room) break;
             int level = (int) t[1];
             long age = now - (long) t[2];
             float in = Mth.clamp(age / (float) SLIDE_MS, 0F, 1F), out = Mth.clamp((SHOW_MS - age) / (float) SLIDE_MS, 0F, 1F);
