@@ -11,7 +11,7 @@ import net.minecraft.world.entity.ai.control.BodyRotationControl;
  * usual reach of the body.
  */
 public class SmoothBodyControl extends BodyRotationControl {
-    public static final float MAX_TURN = 30F;
+    public static final float MAX_TURN = 20F;
     private final Mob mob;
 
     public SmoothBodyControl(Mob mob) {

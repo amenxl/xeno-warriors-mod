@@ -139,7 +139,7 @@ public final class BotParkour {
         if (t != null && t.isAlive()) {
             double d = Math.sqrt(b.distanceToSqr(t));
             if (s.slideCd == 0 && d > 3.5 && d < 7 && v.horizontalDistanceSqr() > 0.12 * 0.12 && b.getRandom().nextInt(30) == 0
-                    && BotMoves.dropAt(l, b.getX() + dir.x * 2, y, b.getZ() + dir.z * 2) < 2) {
+                    && safe(l, b, dir, y, 5)) {
                 face(b, dir);
                 b.setDeltaMovement(dir.x * 0.55, 0, dir.z * 0.55);
                 start(b, SLIDE, 12, dir);
@@ -149,8 +149,8 @@ public final class BotParkour {
             if (s.dodgeCd == 0 && d < 3.2 && t.swinging && t.swingTime <= 1 && b.getRandom().nextInt(3) == 0) {
                 boolean right = b.getRandom().nextBoolean();
                 Vec3 side = new Vec3(-dir.z, 0, dir.x).scale(right ? -1 : 1);
-                if (BotMoves.dropAt(l, b.getX() + side.x * 1.5, y, b.getZ() + side.z * 1.5) < 2 && BotMoves.open(l, BlockPos.containing(b.getX() + side.x * 1.2, y, b.getZ() + side.z * 1.2))) {
-                    b.setDeltaMovement(side.x * 0.6, 0.15, side.z * 0.6);
+                if (safe(l, b, side, y, 4) && BotMoves.open(l, BlockPos.containing(b.getX() + side.x * 1.2, y, b.getZ() + side.z * 1.2))) {
+                    b.setDeltaMovement(side.x * 0.45, 0.12, side.z * 0.45);
                     start(b, right ? DODGE_R : DODGE_L, 10, side);
                     s.dodgeCd = 60;
                 }
@@ -211,6 +211,13 @@ public final class BotParkour {
         if (!on()) return;
         Vec3 v = b.getDeltaMovement();
         start(b, LEAP, 20, new Vec3(v.x, 0, v.z));
+    }
+
+    /** Ground all the way along (every half block, this many blocks out): never dodges or slides off an edge. */
+    private static boolean safe(Level l, PartyBotEntity b, Vec3 dir, int y, int blocks) {
+        for (double k = 0.5; k <= blocks; k += 0.5)
+            if (BotMoves.dropAt(l, b.getX() + dir.x * k, y, b.getZ() + dir.z * k) >= 2) return false;
+        return true;
     }
 
     /** How many solid blocks stand at this spot from its feet up (0-4). */
