@@ -39,7 +39,7 @@ final class PackComboGif {
                     s.setYHeadRot(90F);
                     s.setInvisible(true); s.setNoGravity(true); s.setInvulnerable(true);
                     p.serverLevel().addFreshEntity(s);
-                    ids[1] = s.getId();
+                    ids[1] = s.getId(); CAM[0] = s.getId();
                 }
             }), 15));
             l.add(new Step(null, () -> {
@@ -71,6 +71,8 @@ final class PackComboGif {
 
     /** With the camera on the stand, the game stops sending the player's position to the server (it only does for the
      *  entity you look through) - so the moves' steps forward never reached it and later hits whiffed. Send it ourselves. */
+    private static final int[] CAM = {-1};
+
     private static void sync(Minecraft mc) {
         var pl = mc.player;
         if (pl != null && pl.connection != null)
@@ -80,6 +82,9 @@ final class PackComboGif {
     /** Each frame: the move playing (and how far in), how far apart they are, the dummy's health and whether it's flashing red. */
     private static void trace(CharacterType who, net.minecraft.server.level.ServerPlayer p, int zid, String tag) {
         var z = p.serverLevel().getEntity(zid);
+        // the camera keeps the fight in view: beside the midpoint of the two
+        if (CAM[0] >= 0 && p.serverLevel().getEntity(CAM[0]) instanceof net.minecraft.world.entity.decoration.ArmorStand s && z != null)
+            s.moveTo(p.getX() + 4.2, p.getY() - 0.2, (p.getZ() + z.getZ()) / 2, 90F, 8F);
         var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
         String anim = "-";
         try { var pl = patch.getAnimator().getPlayerFor(null); if (pl != null) anim = pl.getRealAnimation() + "@" + String.format(java.util.Locale.ROOT, "%.2f", pl.getElapsedTime()); } catch (Throwable ignored) {}
