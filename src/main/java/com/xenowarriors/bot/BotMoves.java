@@ -71,12 +71,12 @@ public final class BotMoves {
 
     // ---------------------------------------------------------------- cliffs and gaps
 
-    private static boolean solid(Level l, BlockPos p) {
+    static boolean solid(Level l, BlockPos p) {
         BlockState s = l.getBlockState(p);
         return !s.getCollisionShape(l, p).isEmpty();
     }
 
-    private static boolean open(Level l, BlockPos p) {
+    static boolean open(Level l, BlockPos p) {
         BlockState s = l.getBlockState(p);
         return s.getCollisionShape(l, p).isEmpty() && !s.getFluidState().is(FluidTags.LAVA);
     }
@@ -139,6 +139,7 @@ public final class BotMoves {
                 float yaw = (float) Math.toDegrees(Math.atan2(-dir.x, dir.z));
                 face(b, yaw, 60F);
                 b.lastLeap = "gap " + k + " dy " + dy + " from " + b.blockPosition().toShortString();
+                BotParkour.leapt(b);                                            // (a cat leap, with ParCool)
                 return true;
             }
         }

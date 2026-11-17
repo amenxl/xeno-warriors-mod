@@ -51,6 +51,7 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> OUTFIT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (what it wears: its owner's outfit for that character)
     private static final EntityDataAccessor<Boolean> NIMBUS = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (rides a Flying Nimbus: DmzBotNimbus)
     private static final EntityDataAccessor<Integer> YOU_SLOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (one of its owner's own characters: which slot; -1 = a show character)
+    private static final EntityDataAccessor<Integer> PARKOUR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (the ParCool-style move it's doing: BotParkour)
     private static final EntityDataAccessor<CompoundTag> YOU_LOOK = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.COMPOUND_TAG);   // (that character, for drawing it: race, element, wings, skin...)
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
@@ -178,7 +179,13 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(OUTFIT, 0);
         entityData.define(YOU_SLOT, -1);
         entityData.define(YOU_LOOK, new CompoundTag());
+        entityData.define(PARKOUR, 0);
     }
+
+    /** Its parkour (server side), and the move it's doing as the clients see it. */
+    public final BotParkour.State pk = new BotParkour.State();
+    void setParkour(int packed) { entityData.set(PARKOUR, packed); }
+    public int parkour() { return entityData.get(PARKOUR); }
 
     // ---------------------------------------------------------------- state
 
@@ -1015,6 +1022,7 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public void aiStep() {
         if (!level().isClientSide && heldBy != null) tickHold();
+        if (!level().isClientSide) BotParkour.tick(this);                        // (vaults, climbs, rolls... with ParCool)
         super.aiStep();
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
@@ -1112,6 +1120,8 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public boolean causeFallDamage(float dist, float mult, DamageSource src) {
         if (canFly() && !downed()) { fallDistance = 0; return false; }
+        if (!level().isClientSide) dist = BotParkour.land(this, dist);           // (a roll as it lands: little or no harm)
+        if (dist <= 0) return false;
         return super.causeFallDamage(dist, mult, src);
     }
 

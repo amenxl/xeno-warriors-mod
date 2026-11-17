@@ -73,6 +73,7 @@ public final class BotAvatars {
             BotAvatar a = of(b);
             if (a == null) continue;
             a.sync(b);
+            com.xenowarriors.client.compat.ParcoolBots.tick(a, b);                // (its parkour moves in ParCool's poses)
             now.add(a);
         }
         // bots that left: forget them
