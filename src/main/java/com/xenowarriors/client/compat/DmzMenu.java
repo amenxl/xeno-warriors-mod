@@ -37,4 +37,26 @@ public final class DmzMenu {
             return false;
         }
     }
+
+    /** DragonMineZ's character customization (hair, body, colours) for the character you're playing, coming back to back. */
+    public static boolean openCustomization(Screen back) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!available() || mc.player == null) return false;
+        try {
+            Capability<?> cap = (Capability<?>) Class.forName("com.dragonminez.common.stats.StatsCapability").getField("INSTANCE").get(null);
+            Object data = mc.player.getCapability(cap).resolve().orElse(null);
+            if (data == null) return false;
+            Object character = data.getClass().getMethod("getCharacter").invoke(data);
+            Object status = data.getClass().getMethod("getStatus").invoke(data);
+            boolean made = (Boolean) status.getClass().getMethod("isHasCreatedCharacter").invoke(status);
+            Class<?> ch = Class.forName("com.dragonminez.common.stats.character.Character");
+            Screen s = made ? (Screen) Class.forName("com.dragonminez.client.gui.character.CharacterCustomizationScreen").getConstructor(Screen.class, ch).newInstance(back, character)
+                    : (Screen) Class.forName("com.dragonminez.client.gui.character.RaceSelectionScreen").getConstructor(ch).newInstance(character);   // (no DragonMineZ character yet: its race first)
+            mc.setScreen(s);
+            return true;
+        } catch (Throwable t) {
+            com.xenowarriors.XenoWarriors.LOGGER.warn("Couldn't open DragonMineZ's customization", t);
+            return open();
+        }
+    }
 }

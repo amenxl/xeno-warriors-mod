@@ -37,13 +37,24 @@ public class YouSlotsScreen extends JourneyScreen {
                 // level in the top-right corner (it used to sit on top of the PLAY button)
                 String lv = "Lv " + Math.max(1, i < YouClient.levels.length ? YouClient.levels[i] : 1);
                 sc(g, lv, x + cw - 4 - font.width(lv) * 0.55F, y + 3, 0.55F, 0xFFD24A);
-                button(g, x + 3, y + ch - 26, x + cw - 3, y + ch - 16, "SKIN: " + shortSkin(s.skin), 0x9AB8D8, true,
-                        () -> minecraft.setScreen(new YouSkinScreen(s.name, s.skin, this, chosen -> {
-                            YouSlot d = new YouSlot(); d.name = s.name; d.skin = chosen;
-                            ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.SKIN, i, d));
-                            minecraft.setScreen(this);
-                        })));
-                if (cur) sc(g, "PLAYING", x + cw - 4 - font.width("PLAYING") * 0.55F, y + ch - 14, 0.55F, ACCENT);
+                boolean dmz = com.xenowarriors.client.compat.DmzMenu.available();
+                Runnable skin = () -> minecraft.setScreen(new YouSkinScreen(s.name, s.skin, this, chosen -> {
+                    YouSlot d = new YouSlot(); d.name = s.name; d.skin = chosen;
+                    ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.SKIN, i, d));
+                    minecraft.setScreen(this);
+                }));
+                if (!dmz) button(g, x + 3, y + ch - 26, x + cw - 3, y + ch - 16, "SKIN: " + shortSkin(s.skin), 0x9AB8D8, true, skin);
+                else {
+                    // with DragonMineZ: our look (its own skin) or its DragonMineZ character's look
+                    button(g, x + 3, y + ch - 26, x + cw / 2 - 1, y + ch - 16, "SKIN", 0x9AB8D8, !s.dmzLook, skin);
+                    button(g, x + cw / 2 + 1, y + ch - 26, x + cw - 3, y + ch - 16, s.dmzLook ? "LOOK: DMZ" : "LOOK: XW", s.dmzLook ? 0xFFB040 : 0x9AB8D8, true, () -> {
+                        YouSlot d = new YouSlot(); d.name = s.name; d.dmzLook = !s.dmzLook;
+                        ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.DMZ_LOOK, i, d));
+                    });
+                }
+                if (cur && dmz && s.dmzLook) button(g, x + 3, y + ch - 13, x + cw - 3, y + ch - 2, "STYLE IN DMZ", 0xFFB040, true,
+                        () -> com.xenowarriors.client.compat.DmzMenu.openCustomization(this));
+                else if (cur) sc(g, "PLAYING", x + cw - 4 - font.width("PLAYING") * 0.55F, y + ch - 14, 0.55F, ACCENT);
                 else {
                     button(g, x + 3, y + ch - 13, x + cw / 2 - 1, y + ch - 2, "PLAY", ACCENT, true, () -> ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.PLAY, i, null)));
                     boolean ask = confirmDelete == i;

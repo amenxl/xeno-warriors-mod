@@ -268,6 +268,9 @@ public final class DmzForms {
         // Ai-oni (for now): DragonMineZ draws and animates her (its body, attacks and animations), with her
         // 3D details still put on by DragonMineZ's layer forwarder
         if (ClientCharacterData.get((AbstractClientPlayer) p) == CharacterType.AIONI && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return true;
+        // one of your own characters set to its DragonMineZ look (the You slots screen): DragonMineZ draws it
+        var you = ClientCharacterData.you(p);
+        if (you != null && you.dmzLook && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return true;
         Form f = info(p);
         return f != null && f.dmz();
     }

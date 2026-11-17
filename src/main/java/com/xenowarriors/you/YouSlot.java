@@ -38,6 +38,9 @@ public final class YouSlot {
     /** Its KA (a Ka id; "" = none), and whether it has had its one roll at Level 30 (1 in 3 get one - see YouKa). */
     public String ka = "";
     public boolean kaRolled;
+    /** With DragonMineZ: drawn as its DragonMineZ character (race, hair, body and colours from DragonMineZ's own
+     *  customization) instead of our look. Each character keeps its own DragonMineZ character (DmzPerCharacter). */
+    public boolean dmzLook;
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -87,6 +90,7 @@ public final class YouSlot {
         t.putString("skin", skin);
         t.putString("ka", ka);
         t.putBoolean("ka_rolled", kaRolled);
+        t.putBoolean("dmz_look", dmzLook);
         return t;
     }
 
@@ -108,6 +112,7 @@ public final class YouSlot {
         s.skin = com.xenowarriors.you.YouSkins.valid(t.getString("skin")) ? t.getString("skin") : "";
         s.ka = t.getString("ka");
         s.kaRolled = t.getBoolean("ka_rolled");
+        s.dmzLook = t.getBoolean("dmz_look");
         return s;
     }
 
@@ -127,6 +132,7 @@ public final class YouSlot {
         buf.writeUtf(skin, 64);
         buf.writeUtf(ka, 16);
         buf.writeBoolean(kaRolled);
+        buf.writeBoolean(dmzLook);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -147,6 +153,7 @@ public final class YouSlot {
         s.skin = com.xenowarriors.you.YouSkins.valid(sk) ? sk : "";
         s.ka = buf.readUtf(16);
         s.kaRolled = buf.readBoolean();
+        s.dmzLook = buf.readBoolean();
         return s;
     }
 

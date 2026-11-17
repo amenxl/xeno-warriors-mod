@@ -299,6 +299,10 @@
           "text": "Each character you make can have its own skin (Character Select > Your own > SKIN, or the SKIN button in the creator):\n- Your own skin (as before).\n- A player's skin: type a Minecraft name. Each game looks it up online.\n- A skin file: put a 64x64 skin PNG in the xenowarriors/skins folder of your game folder (OPEN FOLDER opens it), REFRESH, and click it. The server keeps a copy, so friends on a server see it too.\nYou wear that skin playing the character, and so does its bot."
         },
         {
+          "title": "Your own characters with DragonMineZ's look",
+          "text": "With DragonMineZ installed, each character you make can look like its DragonMineZ character instead (Character Select > Your own > LOOK: XW / LOOK: DMZ).\n- Every character has its own DragonMineZ character (race, stats, forms...), so each one is styled on its own.\n- On the character you're playing, STYLE IN DMZ opens DragonMineZ's customization (hair, body, colours). If it has no DragonMineZ character yet, its race picker comes first.\n- LOOK: XW switches back to its Xeno Warriors look (its own skin, race and element)."
+        },
+        {
           "title": "Your own characters' KAs",
           "text": "Only some people ever have a KA. Each character you make gets one roll when it reaches Character Level 30:\n- A 1 in 3 chance to awaken a KA, picked at random (the simpler ones more often than the rare ones).\n- It goes in your super ultimate slot, with its price like any KA. Character Customization > Stats shows it.\n- A bot of one of your own characters rolls too when it reaches Level 30, and uses its KA in fights.\n- No KA, or want a different one? With DragonMineZ, wish for \"Awaken a new KA\" from the dragon while playing that character: it gets a new one (never the same as before)."
         }

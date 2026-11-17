@@ -36,7 +36,7 @@ public final class YouSlots {
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        String blocked = action == YouActionPacket.SKIN ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
             p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
@@ -69,6 +69,15 @@ public final class YouSlots {
                 if (!YouSkins.usable(p.server, data.skin)) { p.displayClientMessage(Component.literal("That skin couldn't be used").withStyle(ChatFormatting.RED), true); return; }
                 s.skin = data.skin;
                 p.displayClientMessage(Component.literal(s.name + " now wears " + YouSkins.describe(s.skin) + ".").withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
+            case YouActionPacket.DMZ_LOOK -> {
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null) return;
+                if (!net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) { p.displayClientMessage(Component.literal("That needs DragonMineZ").withStyle(ChatFormatting.RED), true); return; }
+                s.dmzLook = data.dmzLook;
+                p.displayClientMessage(Component.literal(s.name + (s.dmzLook ? " now looks like their DragonMineZ character - style them in DragonMineZ's customization" : " has their Xeno Warriors look again")).withStyle(st -> st.withColor(s.color())), true);
                 CharacterManager.syncToTrackingAndSelf(p);
                 send(p, true);
             }
