@@ -40,10 +40,18 @@ def kyle(f):
 def zack(f):
     """Ai Oni's student: messy dark maroon hair sticking up all over, a black track jacket with white stripes down the
     sleeves and across the chest, long black fingerless gloves, grey camo shorts, white socks, black-and-white sneakers."""
-    H1, H2 = '#3a1a2a', '#5a2c40'
-    hair(f, H2, H1, back_len=26.0, side_len=27.0, spikes=crown_spikes(12, 3.6, 1.6, seed=61) + [([0.5, 33.2, -0.5], [0.2, 1, 0.2], 4.2, 1.4)],
-         locks=fringe_locks(7, 31.4, 8.0, 4.6, 1.6, 0.45)
-         + [([s * 4.6, 30.0, z], [s * 0.9, -0.6, 0.2], 3.6, 1.5) for s in (1, -1) for z in (-2.0, 1.2, 3.4)])
+    H1, H2, H3 = '#3a1a2a', '#5e3048', '#7a4462'
+    # (big and spiky: a few thin spikes standing up on top, the sides flaring out in points, pointed bangs between his eyes)
+    hair(f, H2, H1, back_len=25.0, side_len=26.0, fringe=True,
+         spikes=[([-0.6, 33.0, 0.0], [-0.15, 1, 0.1], 4.6, 0.9), ([0.6, 33.0, -0.6], [0.2, 1, -0.1], 5.4, 0.9), ([1.8, 32.8, 0.6], [0.45, 1, 0.2], 3.8, 0.9),
+                 ([-1.8, 32.8, 1.0], [-0.4, 1, 0.3], 3.4, 0.9)]
+                + [([s * 3.6, 32.2, z], [s * 1, 0.45, 0.1], 3.2, 1.6) for s in (1, -1) for z in (-2.2, 0.4, 2.8)]       # top flaring out
+                + [([x, 32.4, 3.4], [x * 0.15, 0.4, 1], 3.2, 1.6) for x in (-2.4, 0, 2.4)])                                  # and back
+    for s_ in (1, -1):                                                                                                   # the sides out in points
+        for z, y in ((-2.6, 29.6), (-0.2, 28.4), (2.2, 29.2), (4.0, 30.4)):
+            lock(f, [s_ * 4.5, y, z], [s_ * 1, -0.35, 0.15], 3.0, 1.5, (H1, H1, H2))
+    for x, ln, tilt in ((-3.0, 2.4, -0.3), (-1.4, 2.8, -0.1), (0.2, 4.2, 0.05), (1.8, 2.8, 0.2), (3.2, 2.2, 0.35)):     # the pointed bangs (one longer between his eyes)
+        lock(f, [x, 32.0, -4.8], [tilt, -1, -0.3], ln, 1.5, (H2, H2, H3))
     J, ST = '#151418', '#f0f0f2'
     shell(f, 'body', [-4, 11.4, -2], [4, 24, 2], 0.3, J, {'front': lambda x, y: ST if abs(y - .58) < .05 or (abs(x - .5) < .04 and y > .2) else J})
     f.add('body', [-1.6, 23.4, -2.6], [1.6, 24.6, -2.2], J)                                       # collar
@@ -92,11 +100,18 @@ def kaitlyn(f):
 def chase(f):
     """The old Fox King's Keeper: messy black hair, two red-and-black swords crossed on his back, a black jacket with
     red trim and red stripes on the sleeves over a white tee with a black emblem, black coat tails, black shorts, grey sneakers."""
-    H1, H2 = '#0e0c10', '#1a1820'
-    hair(f, H2, H1, back_len=25.0, side_len=26.0, spikes=crown_spikes(9, 3.0, 1.6, seed=73),
-         locks=fringe_locks(7, 31.4, 8.0, 4.6, 1.6, 0.45)
-         + [([s * 4.6, 30.2, z], [s * 0.6, -1, 0.2], 4.4, 1.5) for s in (1, -1) for z in (-2.2, 1.0, 3.4)]
-         + [([x, 30.6, 4.7], [0, -1, 0.3], 4.6, 1.8) for x in (-2.4, 0.2, 2.6)])
+    H1, H2, BR = '#0c0a0e', '#18161c', '#2e1c12'
+    # (shaggy and hanging down: long strands over his face and eyes, down the sides to his jaw, one swept up on top)
+    hair(f, H2, H1, back_len=24.0, side_len=24.0, fringe=True)
+    lock(f, [0.8, 33.0, -2.4], [0.25, 0.35, 1], 4.2, 1.6, (H2, H2, H1))                              # one swept back over the top
+    for x, ln, tilt in ((-3.6, 4.6, -0.25), (-2.2, 3.4, -0.1), (-0.4, 5.4, 0.0), (1.0, 3.6, 0.08), (2.4, 4.2, 0.2), (3.6, 4.8, 0.3)):
+        lock(f, [x, 32.4, -4.6], [tilt, -1, -0.42], ln, 1.5, (H2, H1, H1), taper=(0.55, 0.25))       # long bangs, his eyes showing between them
+    for s_ in (1, -1):
+        for z, ln in ((-2.8, 7.0), (-0.6, 7.4), (1.8, 7.0), (3.8, 6.6)):
+            lock(f, [s_ * 4.6, 31.6, z], [s_ * 0.18, -1, 0.05], ln, 1.6, (H2, H1, H1), taper=(0.6, 0.3))   # down the sides
+        lock(f, [s_ * 4.3, 29.6, -1.6], [s_ * 0.1, -1, -0.1], 4.6, 1.0, (BR, BR, H1))                     # the brown underneath
+    for x in (-2.8, -0.9, 1.0, 2.9):
+        lock(f, [x, 31.6, 4.6], [x * 0.05, -1, 0.3], 7.2, 1.8, (H2, H1, H1), taper=(0.6, 0.3))           # the back
     J, RD = '#141217', '#c41e24'
     shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.24, '#f2f2f2',
           {'front': lambda x, y: '#141217' if abs(x - .5) < .14 and abs(y - .35) < .12 and (abs(x - .5) > .06 or abs(y - .35) > .05) else '#f2f2f2',
