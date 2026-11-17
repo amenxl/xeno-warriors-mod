@@ -78,11 +78,13 @@ def kaitlyn(f):
             lock(f, [s_ * 4.6, 31.4, z], [s_ * 0.3, -1, 0.05], ln, 1.6, (B1, B3, BL), taper=(0.62, 0.3))   # down the sides, flicking out
     for x in (-2.8, -0.9, 1.0, 2.9):
         lock(f, [x, 31.4, 4.6], [x * 0.06, -1, 0.3], 6.2, 1.8, (B1, B3, BL), taper=(0.6, 0.3))               # the back
-    # the big side ponytail, high on her right: out and up, then falling, blonde at the end
-    lock(f, [4.4, 32.0, 1.4], [1, 0.45, 0.35], 4.6, 2.6, (B1, B2, B3), thick=1.6, taper=(0.9, 0.75))
-    lock(f, [8.2, 34.0, 2.6], [0.9, -0.5, 0.2], 4.2, 2.4, (B3, BL, BL), thick=1.4, taper=(0.75, 0.4))
-    lock(f, [7.6, 33.4, 2.2], [0.5, -1, 0.1], 4.8, 1.8, (B3, BL, BL), thick=1.2, taper=(0.7, 0.35))
-    f.add('head', [4.2, 31.0, 0.6], [5.4, 32.6, 2.2], '#141216')                                              # hair tie
+    # two big ponytails the same size, high on each side: out and up, then falling, blonde at the ends
+    for s_ in (1, -1):
+        lock(f, [s_ * 4.4, 32.0, 1.4], [s_ * 1, 0.45, 0.35], 4.6, 2.6, (B1, B2, B3), thick=1.6, taper=(0.9, 0.75))
+        lock(f, [s_ * 8.2, 34.0, 2.6], [s_ * 0.9, -0.5, 0.2], 4.2, 2.4, (B3, BL, BL), thick=1.4, taper=(0.75, 0.4))
+        lock(f, [s_ * 7.6, 33.4, 2.2], [s_ * 0.5, -1, 0.1], 4.8, 1.8, (B3, BL, BL), thick=1.2, taper=(0.7, 0.35))
+        x0, x1 = sorted([s_ * 4.2, s_ * 5.4])
+        f.add('head', [x0, 31.0, 0.6], [x1, 32.6, 2.2], '#141216')                                         # hair ties
     # the two little curls sticking up: a big one over the ponytail side, a small one on the other
     for i in range(7):
         a_ = math.pi * (0.1 + i / 6 * 0.9)
