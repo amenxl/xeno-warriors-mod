@@ -120,6 +120,24 @@ public final class ParcoolBots {
             default -> { }
         }
         if (doing != null) setDoing.invoke(actionGet.invoke(pk, doing), true);
+        // on Epic Fight's body (bots are, with Epic Fight): its parkour animation for the move
+        if (com.xenowarriors.client.bot.BotAvatar.efBodies && net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) {
+            String ef = switch (code) {
+                case BotParkour.VAULT_R -> "BIPED_VAULT_RIGHT";
+                case BotParkour.VAULT_L -> "BIPED_VAULT_LEFT";
+                case BotParkour.CLING -> "BIPED_CLING_START";
+                case BotParkour.CLIMB -> "BIPED_CLIMB_UP";
+                case BotParkour.WALLJUMP_R -> "BIPED_WALL_JUMP_RIGHT_START";
+                case BotParkour.WALLJUMP_L -> "BIPED_WALL_JUMP_LEFT_START";
+                case BotParkour.ROLL -> "BIPED_ROLL_FORWARD";
+                case BotParkour.SLIDE -> "BIPED_SLIDE";
+                case BotParkour.LEAP -> "BIPED_CAT_LEAP";
+                case BotParkour.DODGE_L -> "ef:BIPED_STEP_LEFT";
+                case BotParkour.DODGE_R -> "ef:BIPED_STEP_RIGHT";
+                default -> null;
+            };
+            if (ef != null) com.xenowarriors.client.compat.epicfight.EfBotBodies.parkour(bot, ef);
+        }
         if (animator != null) { setAnimator.invoke(anim, animator); APPLIED.add(animator.getClass().getSimpleName()); }
         else if (code == BotParkour.NONE || code == BotParkour.FAST_RUN) {
             Object a = animatorField.get(anim);

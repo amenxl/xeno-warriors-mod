@@ -70,6 +70,42 @@ public final class EfBotBodies {
     /** (Tests) which hits of the combo bots played. */
     public static final java.util.Set<Integer> PLAYED = new java.util.TreeSet<>();
 
+    /** (Tests) the Epic Fight parkour animations bots played, by name. */
+    public static final java.util.Set<String> PARKOUR = new java.util.LinkedHashSet<>();
+    private static final java.util.Map<String, Object> PK_ANIMS = new java.util.HashMap<>();
+
+    /**
+     * A bot's parkour move (BotParkour) on its Epic Fight body: the Epic Fight x ParCool add-on's animation for it
+     * (its vaults, climb up, wall jump, roll, slide, cat leap), else Epic Fight's own step for a dodge. Its held poses
+     * (hanging on a ledge, fast running, sliding) come from the add-on by itself once ParCool's pose is on the body.
+     * False if there was nothing to play.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static boolean parkour(PartyBotEntity b, String anim) {
+        if (off || anim == null) return false;
+        BotAvatar a = com.xenowarriors.client.bot.BotAvatars.existing(b);
+        if (a == null) return false;
+        try {
+            PlayerPatch patch = EpicFightCapabilities.getEntityPatch(a, PlayerPatch.class);
+            int[] st = STATE.get(a);
+            if (patch == null || st == null || st[0] == 0) return false;
+            Object acc = PK_ANIMS.computeIfAbsent(anim, k -> {
+                try {
+                    if (k.startsWith("ef:")) return yesman.epicfight.gameasset.Animations.class.getField(k.substring(3)).get(null);
+                    if (!net.minecraftforge.fml.ModList.get().isLoaded("epicparcool")) return null;
+                    return Class.forName("com.yesman.epicparcool.animations.ParCoolAnimations").getField(k).get(null);
+                } catch (Throwable t) { return null; }
+            });
+            if (acc == null) return false;
+            patch.getClientAnimator().playAnimation((yesman.epicfight.api.asset.AssetAccessor) acc, 0F);
+            PARKOUR.add(anim);
+            return true;
+        } catch (Throwable t) {
+            lastError = String.valueOf(t);
+            return false;
+        }
+    }
+
     public static boolean comboHit(PartyBotEntity b, int hit) {
         if (off || b.downed()) return false;
         BotAvatar a = com.xenowarriors.client.bot.BotAvatars.existing(b);

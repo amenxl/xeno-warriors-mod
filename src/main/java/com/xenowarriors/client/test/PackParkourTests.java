@@ -132,6 +132,8 @@ final class PackParkourTests {
                     && a.contains("WallJumpAnimator") && a.contains("RollAnimator") && a.contains("CatLeapAnimator");
             PackTests.check("parkour: the bot's body shows ParCool's poses (vault, cling, climb up, wall jump, roll, cat leap)", all, "poses " + a);
             PackTests.log("parkour moves started: " + java.util.Arrays.toString(BotParkour.STARTED));
+            var ef = com.xenowarriors.client.compat.epicfight.EfBotBodies.PARKOUR;
+            PackTests.check("parkour: on Epic Fight's body it plays the Epic Fight x ParCool animations", ef.contains("BIPED_CLIMB_UP") && ef.contains("BIPED_ROLL_FORWARD"), "played " + ef);
             PackTests.server(p -> { PackTests.arena(p); for (PartyBotEntity b : PartyBots.bots(p)) b.discard(); });
             mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
         }, 5));
