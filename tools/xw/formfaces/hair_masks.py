@@ -5,7 +5,8 @@ the form's hair colour - their actual hair turns Super Saiyan gold (SSJ4 dark...
   skin:    the head and hat layers (rows 0-16), pixels in the hair's colour
   details: the pixels of the cubes on the head bone (from models/detail/<look>.json), in the hair's colour
 The hair colour is the commonest non-skin colour on the top / back of the head.
-Mikiko and Rhalix (their own hair groups) and Yuri (her own mask) are left as they are.
+Mikiko and Rhalix (their own hair groups) are left as they are; Yuri's 3D hair has its own mask.
+Run only some: python3 hair_masks.py yuri yuri_c1pjs
 Run: python3 hair_masks.py
 """
 import json, math, os
@@ -15,7 +16,8 @@ ROOT = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'
 CH = ROOT + 'textures/entity/character/'
 MD = ROOT + 'models/detail/'
 LOOKS = ['kaeru', 'keita', 'sam', 'sam_royal', 'sam_s3', 'max', 'max_royal', 'max_s3', 'lexy', 'technica', 'logan', 'garry', 'zane',
-         'kill', 'stevie', 'ultima', 'kyrie', 'kyrie_s2']   # (Ai-oni: what's on her head is a hood, not hair)
+         'kill', 'stevie', 'ultima', 'kyrie', 'kyrie_s2', 'yuri', 'yuri_c1pjs']   # (Ai-oni: what's on her head is a hood, not hair)
+SKIN_ONLY = {'yuri', 'yuri_c1pjs'}   # (Yuri's 3D hair has its own mask, tools/xw/dmzhair/yuri_ssj_hair.py: only her skin's head here)
 TOL = {'kyrie': 0.34, 'kyrie_s2': 0.34}   # (Kyrie's hair has a lighter purple on the 3D strands than on her head)
 tol = 0.22
 NARROW = {'kaeru'}   # (Kaeru: bright orange bits on her head that aren't hair)
@@ -59,7 +61,8 @@ def uv_boxes(c):
     return (u, v, u + 2 * d + 2 * w, v + d + h)
 
 n = 0
-for look in LOOKS:
+import sys
+for look in (sys.argv[1:] or LOOKS):
     who = look.split('_')[0]; tol = TOL.get(look, 0.22); wide = look not in NARROW
     sk = CH + look + '.png'
     if not os.path.exists(sk): continue
@@ -73,7 +76,7 @@ for look in LOOKS:
             if p[3] > 100 and match(p[:3], ref): pm[x, y] = (255, 255, 255, 255)
     m.save(CH + look + '_hairmask.png'); n += 1
     dt, dj = CH + look + '_details.png', MD + look + '.json'
-    if os.path.exists(dt) and os.path.exists(dj):
+    if look not in SKIN_ONLY and os.path.exists(dt) and os.path.exists(dj):
         d = Image.open(dt).convert('RGBA'); pd = d.load()
         model = json.load(open(dj))
         cubes = []

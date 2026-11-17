@@ -63,6 +63,12 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         RenderType detailType = RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player)));
         Rig rig = RIGID && !legacy ? RIGS.computeIfAbsent(live, m -> Rig.of(player)) : null;
         if (mesh[0] != null) mesh[0].draw(pose, buffers, detailType, light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+        if (com.xenowarriors.client.compat.DmzForms.ssj4Own(player)) {
+            // Super Saiyan 4's red fur on Epic Fight's body too: laid on its skin (the same mesh again, as a decal)
+            var body = (slim(player) ? yesman.epicfight.api.client.model.Meshes.ALEX : yesman.epicfight.api.client.model.Meshes.BIPED).get();
+            float[] f = CharacterDetailLayer.FUR;
+            if (body != null) { body.draw(pose, buffers, RenderType.entityDecal(CharacterDetailLayer.SSJ4_FUR), light, f[0], f[1], f[2], 1F, overlay, patch.getArmature(), poses); CharacterDetailLayer.furDraws++; }
+        }
         if (rig != null) {
             // wearing another mod's outfit (DragonMineZ gis): his own clothes under it are left off, as without Epic Fight
             boolean giTop = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST)

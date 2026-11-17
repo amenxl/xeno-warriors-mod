@@ -792,7 +792,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     /** The face (or a layer over it) on the head. */
     /** DragonMineZ's Super Saiyan 4 fur pattern (body and arms of the skin layout), tinted SSJ4 red. */
-    private static final net.minecraft.resources.ResourceLocation SSJ4_FUR = new net.minecraft.resources.ResourceLocation("dragonminez", "textures/entity/races/humansaiyan/ssj4gt_layer1.png");
+    // (our own fur, tools/xw/formfaces/ssj4_fur.py: DragonMineZ 2.2 renamed the texture this used, so the fur had vanished)
+    public static final net.minecraft.resources.ResourceLocation SSJ4_FUR = com.xenowarriors.XenoWarriors.id("textures/entity/character/ssj4_fur.png");
     public static final float[] FUR = {0.66F, 0.13F, 0.16F};
     /** (Tests) times the fur was drawn. */
     public static int furDraws;

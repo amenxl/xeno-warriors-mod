@@ -70,13 +70,19 @@ def mask(model_name, atlas_name):
     mj = json.load(open(RES + 'models/detail/' + model_name + '.json'))
     atlas = Image.open(CH + atlas_name + '.png').convert('RGBA'); px = atlas.load()
     out = Image.new('RGBA', atlas.size, (0, 0, 0, 0)); po = out.load(); n = 0
-    for c in mj['bones']['head']['cubes'][:5]:                              # cap, back, two sides, fringe
+    head = mj['bones']['head']
+    cubes = list(head['cubes'][:6])                                         # cap, back, two sides, fringe, the ponytail
+    for ch in head.get('children', []):                                     # her strands (n0-n50; not the ribbon or glasses)
+        nm = ch.get('name', '')
+        if nm.startswith('n') and nm[1:].isdigit() and int(nm[1:]) <= 50: cubes += ch.get('cubes', [])
+    for c in cubes:
         w, h, d = [max(1, math.ceil(v - 1e-6)) for v in c['size']]
         u, v = c['uv']
         for x in range(u, u + 2 * d + 2 * w):
             for y in range(v, v + d + h):
                 if x >= atlas.width or y >= atlas.height or px[x, y][3] == 0: continue
                 r, g, b, a = px[x, y]
+                if max(r, g, b) - min(r, g, b) > 40 or max(r, g, b) > 90: continue   # (the red ribbon, anything not her dark hair)
                 lum = (0.3 * r + 0.59 * g + 0.11 * b) / 255
                 gv = int(255 * (0.7 + 0.3 * min(1, lum * 4)))
                 po[x, y] = (gv, gv, gv, 255); n += 1
