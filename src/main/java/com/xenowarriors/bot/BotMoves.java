@@ -63,6 +63,17 @@ public final class BotMoves {
         return hit.getType() == HitResult.Type.MISS ? 24 : from.y - hit.getLocation().y;
     }
 
+    /** Ground somewhere under this spot (within 24 blocks): somewhere a flier can come down. */
+    public static boolean groundUnder(Level l, Vec3 at) {
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos(at.x, at.y, at.z);
+        for (int i = 0; i < 24; i++) {
+            BlockState s = l.getBlockState(p);
+            if (!s.getCollisionShape(l, p).isEmpty() || !s.getFluidState().isEmpty()) return true;
+            p.move(0, -1, 0);
+        }
+        return false;
+    }
+
     /** In the air and not about to land: something a bot on foot can't hit (a flying mob, someone flying, a phantom). */
     public static boolean airborne(LivingEntity t) {
         if (t.onGround() || t.isInWater() || t.isInLava() || t.isPassenger()) return false;

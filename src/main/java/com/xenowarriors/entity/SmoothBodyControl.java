@@ -19,14 +19,27 @@ public class SmoothBodyControl extends BodyRotationControl {
         this.mob = mob;
     }
 
+    private int chase;   // (ticks left still turning to its heading after a clamped turn, even if it stops a moment)
+
     @Override
     public void clientTick() {
         float before = mob.yBodyRot;
+        double dx = mob.getX() - mob.xo, dz = mob.getZ() - mob.zo;
+        boolean moving = dx * dx + dz * dz > 2.5000003E-7F;
+        if (!moving && chase > 0) {
+            // mid-turn and it paused a tick: finish turning to its heading (not back toward its head and round again)
+            chase--;
+            mob.yBodyRot = Mth.approachDegrees(before, mob.getYRot(), MAX_TURN);
+            mob.yHeadRot = Mth.rotateIfNecessary(mob.yHeadRot, mob.yBodyRot, mob.getMaxHeadYRot());
+            if (Math.abs(Mth.wrapDegrees(mob.getYRot() - mob.yBodyRot)) < 1F) chase = 0;
+            return;
+        }
         super.clientTick();
         float d = Mth.wrapDegrees(mob.yBodyRot - before);
         if (Math.abs(d) > MAX_TURN) {
             mob.yBodyRot = before + Math.signum(d) * MAX_TURN;
             mob.yHeadRot = Mth.rotateIfNecessary(mob.yHeadRot, mob.yBodyRot, mob.getMaxHeadYRot());
-        }
+            if (moving) chase = 6;
+        } else if (moving) chase = 0;
     }
 }

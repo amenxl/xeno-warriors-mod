@@ -603,6 +603,9 @@ public class PartyBotEntity extends PathfinderMob {
             }
             if (canFly()) {
                 Vec3 goal = position().add(away.scale(8)).add(0, Math.max(0, 7 - BotMoves.heightAboveGround(PartyBotEntity.this)), 0);
+                // (not out over a drop with nothing under it - an island's edge, a floating platform: it would come down
+                //  a long way when it lands. Back over the ground, by its player if it can)
+                if (!BotMoves.groundUnder(level(), goal)) goal = o != null && o.level() == level() ? o.position().add(away.scale(3)).add(0, 4, 0) : position().subtract(away.scale(4)).add(0, 2, 0);
                 BotMoves.flyTo(PartyBotEntity.this, goal, 0.95);
             } else if (getNavigation().isDone() || tickCount % 10 == 0) {
                 Vec3 goal = position().add(away.scale(10));
