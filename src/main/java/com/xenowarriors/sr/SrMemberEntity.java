@@ -50,7 +50,7 @@ public class SrMemberEntity extends Monster {
     private BlockPos post;
     private int leapCd;
 
-    public SrMemberEntity(EntityType<? extends Monster> type, Level level) { super(type, level); }
+    public SrMemberEntity(EntityType<? extends Monster> type, Level level) { super(type, level); this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this); }
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes().add(Attributes.MAX_HEALTH, 50.0).add(Attributes.ATTACK_DAMAGE, 7.0)

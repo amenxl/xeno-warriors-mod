@@ -68,6 +68,7 @@ public class SkylanderEntity extends PathfinderMob {
 
     public SkylanderEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
+        this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)
     }
 
     public static AttributeSupplier.Builder createAttributes() {

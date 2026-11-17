@@ -152,6 +152,7 @@ public class PartyBotEntity extends PathfinderMob {
 
     public PartyBotEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
+        this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)
         setPersistenceRequired();
         setCanPickUpLoot(false);
         inventory.addListener(c -> { if (!sorting && !level().isClientSide) tidyAt = tickCount + 100; });   // (its things changed: tidy up in a few seconds)

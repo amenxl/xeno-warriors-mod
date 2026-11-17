@@ -60,6 +60,7 @@ public class HumanNpcEntity extends PathfinderMob {
 
     public HumanNpcEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
+        this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)
         setCanPickUpLoot(true);
         if (getNavigation() instanceof GroundPathNavigation nav) nav.setCanOpenDoors(true);
     }

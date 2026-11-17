@@ -54,6 +54,7 @@ public class GovAgentEntity extends PathfinderMob {
 
     public GovAgentEntity(EntityType<? extends GovAgentEntity> type, Level level) {
         super(type, level);
+        this.moveControl = new com.xenowarriors.entity.SmoothMoveControl(this);   // (no snapping round at path corners)
         setPersistenceRequired();
     }
 
