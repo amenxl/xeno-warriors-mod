@@ -26,7 +26,7 @@ final class PackMoveTests {
 
     private static final class Track {
         String kind; double x, z; float yaw; int lastSign; boolean init;
-        int ticks, moving, sliding, snaps, flips, stuck;
+        int ticks, moving, sliding, snaps, flips, stuck, far;
     }
 
     private static final Map<Integer, Track> TRACKS = new HashMap<>();
@@ -77,6 +77,19 @@ final class PackMoveTests {
                 l.add(new Step(tt == 30 ? "moves_leg" + lg : null, () -> { sample(mc); if (tt % 20 == 19) PackTests.server(PackMoveTests::botState); }, 1));
             }
         }
+        // flying: you take off and fly the course a few blocks up - the winged bots fly along
+        l.add(new Step(null, () -> PackTests.server(p -> { p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); p.getAbilities().flying = true; p.onUpdateAbilities(); }), 5));
+        for (int leg = 0; leg < 3; leg++) {
+            double[] at = course[leg + 1];
+            int lg = leg;
+            l.add(new Step(null, () -> PackTests.server(p -> p.teleportTo(home[0] + at[0], home[1] + 7, home[2] + at[1])), 1));
+            for (int t = 0; t < 60; t++) {
+                int tt = t;
+                l.add(new Step(tt == 30 ? "moves_fly_leg" + lg : null, () -> { sample(mc); if (tt % 20 == 19) PackTests.server(PackMoveTests::botState); }, 1));
+            }
+        }
+        l.add(new Step(null, () -> PackTests.server(p -> { p.getAbilities().flying = false; p.onUpdateAbilities(); p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.teleportTo(home[0], home[1], home[2]); }), 40));
         // in battle mode (Epic Fight draws the bots) the same again
         l.add(new Step(null, () -> {
             try { var pp = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch(); if (pp != null) pp.toEpicFightMode(true); } catch (Throwable ignored) {}
@@ -93,13 +106,13 @@ final class PackMoveTests {
         l.add(new Step(null, () -> {
             Map<String, int[]> sum = new java.util.TreeMap<>();
             for (Track t : TRACKS.values()) {
-                int[] s = sum.computeIfAbsent(t.kind, k -> new int[7]);
-                s[0] += t.ticks; s[1] += t.moving; s[2] += t.sliding; s[3] += t.snaps; s[4] += t.flips; s[5] += t.stuck; s[6]++;
+                int[] s = sum.computeIfAbsent(t.kind, k -> new int[8]);
+                s[0] += t.ticks; s[1] += t.moving; s[2] += t.sliding; s[3] += t.snaps; s[4] += t.flips; s[5] += t.stuck; s[6]++; s[7] += t.far;
             }
             StringBuilder bad = new StringBuilder();
             for (var e : sum.entrySet()) {
                 int[] s = e.getValue();
-                PackTests.log(String.format(java.util.Locale.ROOT, "moves %s (x%d): ticks %d moving %d sliding %d snaps %d twitches %d stuck %d", e.getKey(), s[6], s[0], s[1], s[2], s[3], s[4], s[5]));
+                PackTests.log(String.format(java.util.Locale.ROOT, "moves %s (x%d): ticks %d moving %d sliding %d snaps %d twitches %d stuck %d far %d", e.getKey(), s[6], s[0], s[1], s[2], s[3], s[4], s[5], s[7]));
                 if (s[1] > 0 && s[2] > s[1] / 5) bad.append(e.getKey()).append(" slides ").append(s[2]).append("/").append(s[1]).append("; ");
                 if (s[3] > 3 * s[6]) bad.append(e.getKey()).append(" snaps ").append(s[3]).append("; ");
                 if (s[4] > 6 * s[6]) bad.append(e.getKey()).append(" twitches ").append(s[4]).append("; ");
@@ -141,7 +154,7 @@ final class PackMoveTests {
                 double v = Math.sqrt(dx * dx + dz * dz);
                 boolean moving = v > 0.04 && v < 2.0;                          // (not a teleport)
                 if (moving) t.moving++;
-                if (moving && le.walkAnimation.speed() < 0.05F && !le.isPassenger() && le.onGround()) t.sliding++;
+                if (moving && le.walkAnimation.speed() < 0.05F && !le.isPassenger() && le.onGround() && !le.isNoGravity()) t.sliding++;
                 float d = Mth.wrapDegrees(yaw - t.yaw);
                 if (Math.abs(d) > 50F && v < 2.0) {
                     t.snaps++;
@@ -153,6 +166,7 @@ final class PackMoveTests {
                 if (sign != 0 && t.lastSign != 0 && sign != t.lastSign) t.flips++;
                 if (sign != 0) t.lastSign = sign;
                 if (e instanceof PartyBotEntity && !moving && e.distanceTo(mc.player) > 17F) t.stuck++;
+                if (e instanceof PartyBotEntity && e.distanceTo(mc.player) > 24F) t.far++;
             }
             t.x = e.getX(); t.z = e.getZ(); t.yaw = yaw; t.init = true;
         }
