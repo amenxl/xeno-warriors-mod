@@ -52,10 +52,10 @@ final class PackComboGif {
             }, 30));
             int f = 0;
             for (int k = 0; k < 7; k++) {
-                l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> { net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()); PackTests.server(p -> trace(who, p, ids[0], "click")); }, 1));
-                for (int t = 0; t < 5; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> PackTests.server(p -> trace(who, p, ids[0], "")), 1));
+                l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> { sync(mc); net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey()); PackTests.server(p -> trace(who, p, ids[0], "click")); }, 1));
+                for (int t = 0; t < 5; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> { sync(mc); PackTests.server(p -> trace(who, p, ids[0], "")); }, 1));
             }
-            for (int t = 0; t < 14; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> PackTests.server(p -> trace(who, p, ids[0], "")), 1));
+            for (int t = 0; t < 14; t++) l.add(new Step(String.format("combogif_%s_%03d", who.getId(), f++), () -> { sync(mc); PackTests.server(p -> trace(who, p, ids[0], "")); }, 1));
             l.add(new Step(null, () -> {
                 mc.setCameraEntity(mc.player); mc.options.hideGui = false;
                 PackTests.server(p -> {
@@ -67,6 +67,14 @@ final class PackComboGif {
                 });
             }, 5));
         }
+    }
+
+    /** With the camera on the stand, the game stops sending the player's position to the server (it only does for the
+     *  entity you look through) - so the moves' steps forward never reached it and later hits whiffed. Send it ourselves. */
+    private static void sync(Minecraft mc) {
+        var pl = mc.player;
+        if (pl != null && pl.connection != null)
+            pl.connection.send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(pl.getX(), pl.getY(), pl.getZ(), pl.getYRot(), pl.getXRot(), pl.onGround()));
     }
 
     /** Each frame: the move playing (and how far in), how far apart they are, the dummy's health and whether it's flashing red. */
