@@ -137,6 +137,7 @@ public final class PackTests {
         if (focus.startsWith("packglove")) { PackGloveTests.build(mc, l); return; }      // (Mikiko's bare hands as fast as the glove)
         if (focus.startsWith("packefbots")) { PackEfBotTests.build(mc, l); return; }      // (bots on Epic Fight's body)
         if (focus.startsWith("packefhood")) { PackEfClothesTests.hoods(mc, l); return; }      // (hoodies and Kaeru's tail in battle mode)
+        if (focus.startsWith("packcombogif")) { PackComboGif.build(mc, l); return; }      // (Mikiko's and Rhalix's bare-hands combo, frames for a GIF)
         if (focus.startsWith("packrhalixtrace")) { PackFistTraceTests.rhalix(mc, l); return; }      // (Rhalix's bare hands: the Ender Blaster)
         if (focus.startsWith("packfisttrace")) { PackFistTraceTests.build(mc, l); return; }      // (why Kyrie's Iron Fist misses)
         if (focus.startsWith("packfoes")) { PackFoeTests.build(mc, l); return; }      // (Season 3 foes with Epic Fight, the bow, Simply Swords gear)
