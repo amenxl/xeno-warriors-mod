@@ -513,7 +513,7 @@ public class CharacterCustomScreen extends Screen {
     private static String[][] affiliations(CharacterType t) {
         String[] XW = {"Xeno Warriors", "logo_xeno_warriors"}, FF = {"Freedom Fighters", "logo_freedom_fighters"},
                 SP = {"Sky Patrol", "logo_sky_patrol"}, GOV = {"Government", "logo_government"}, OR = {"Orenji Clan", "logo_orenji"},
-                SR = {"Sky Rebellion", "logo_sky_rebellion"}, DD = {"Disco Dojo", "logo_disco_dojo"}, DEM = {"Ai-oni's Demons", "logo_demons"};
+                SR = {"Sky Rebellion", "logo_sky_rebellion"}, DD = {"Disco Dojo", "logo_disco_dojo"}, DEM = {"Ai-oni's Demons", "logo_demons"}, WAN = {"Wanderers", "logo_wanderers"};
         return switch (t) {
             case MIKIKO -> new String[][]{XW, FF};
             case RHALIX -> new String[][]{XW, SP};
@@ -527,7 +527,10 @@ public class CharacterCustomScreen extends Screen {
             case KYRIE, SAM -> new String[][]{SP};
             case LOGAN, KILL, KEITA -> new String[][]{SR};
             case STEVIE, GARRY -> new String[][]{DD, FF};
-            case AIONI -> new String[][]{DEM};
+            case AIONI, ZACK, KAITLYN -> new String[][]{DEM};
+            case SENJU, AVA, PERSEPHONE -> new String[][]{SR};
+            case KYLE -> new String[][]{GOV};
+            case CHASE -> new String[][]{WAN};
             default -> new String[0][];
         };
     }

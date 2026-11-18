@@ -37,6 +37,8 @@ public final class SkillManager {
             else if (ct == CharacterType.LOGAN && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.ffr.SrSkills.redirect(player);   // Logan's KA: Redirect
             else if (ct == CharacterType.KEITA && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.ffr.SrSkills.believe(player);    // Keita's KA
             else if (ct == CharacterType.ZANE && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.ffr.ZaneProjection.use(player);   // Zane's KA: Projection
+            else if (ct == CharacterType.ZACK && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.nc.NcSkills.infiniteLoop(player);   // Zack's KA: Infinite Loop
+            else if (ct == CharacterType.KAITLYN && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.skill.nc.NcSkills.raisedHand(player);   // Kaitlyn's KA: Raised Hand
             else if (ct == CharacterType.KAERU && com.xenowarriors.ka.Kas.of(player) == null) went = com.xenowarriors.kaeru.KaeruChange.use(player);   // Kaeru's KA: Change
             else if (ct == CharacterType.RHALIX && com.xenowarriors.lunar.LunarForm.active(player) && !player.isShiftKeyDown()) went = com.xenowarriors.lunar.MoonFall.use(player); // Lunar: Moon Fall
             else if (com.xenowarriors.skill.XenoBlast.has(ct)) went = com.xenowarriors.skill.XenoBlast.use(player);   // Mikiko / Rhalix: last resort

@@ -50,7 +50,7 @@ public final class FormMastery {
         r.put(charKey(p), c);
     }
 
-    public static String name(String form) { return switch (form) { case DEMON -> "Demon's Remnants"; case DEVIL -> "Devil Unleashed"; case LIVING -> "Living Weapon"; default -> "Persephone"; }; }
+    public static String name(String form) { return switch (form) { case DEMON -> "Demon's Remnants"; case DEVIL -> "Devil Unleashed"; case LIVING -> "Living Weapon"; case "demon_form" -> "Demon Form"; case "heavenly_demon" -> "Heavenly Demon"; default -> "Persephone"; }; }
 
     /** Adds mastery, with a line at every 10 and at 25 / 50 / 75 / 100. */
     public static void add(ServerPlayer p, String form, float amount) {
@@ -76,7 +76,7 @@ public final class FormMastery {
         if (com.xenowarriors.rhalix.DemonsRemnants.active(p)) return DEMON;
         if (com.xenowarriors.skill.ffr.SrSkills.devilActive(p)) return DEVIL;
         if (com.xenowarriors.skill.sp.SpState.persephone(p)) return PERSEPHONE;
-        return null;
+        return null;                                                              // (the new characters' forms gain theirs in NcSkills)
     }
 
     @SubscribeEvent

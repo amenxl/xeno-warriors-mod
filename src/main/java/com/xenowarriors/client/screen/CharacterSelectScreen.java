@@ -26,11 +26,11 @@ public class CharacterSelectScreen extends Screen {
         SKY_PATROL("Sky Patrol", "logo_sky_patrol", 0x8A3AE8, new CharacterType[]{CharacterType.RHALIX, CharacterType.KYRIE, CharacterType.LEXY,
                 CharacterType.MAX, CharacterType.SAM, CharacterType.TECHNICA}),
         ORENJI("Orenji Clan", "logo_orenji", 0xE8701C, new CharacterType[]{CharacterType.MIKIKO, CharacterType.KAERU}),
-        GOVERNMENT("Government", "logo_government", 0x6A3AC8, new CharacterType[]{}, "Kyle"),
-        DEMONS("Ai-oni's Demons", "logo_demons", 0xC41E30, new CharacterType[]{CharacterType.AIONI}, "Zack", "Kaitlyn"),
-        SKY_REBELLION("Sky Rebellion", "logo_sky_rebellion", 0x9A2A2A, new CharacterType[]{CharacterType.LOGAN, CharacterType.KILL, CharacterType.KEITA}, "SR Leader"),
+        GOVERNMENT("Government", "logo_government", 0x6A3AC8, new CharacterType[]{CharacterType.KYLE}),
+        DEMONS("Ai-oni's Demons", "logo_demons", 0xC41E30, new CharacterType[]{CharacterType.AIONI, CharacterType.ZACK, CharacterType.KAITLYN}),
+        SKY_REBELLION("Sky Rebellion", "logo_sky_rebellion", 0x9A2A2A, new CharacterType[]{CharacterType.SENJU, CharacterType.LOGAN, CharacterType.KILL, CharacterType.KEITA, CharacterType.AVA, CharacterType.PERSEPHONE}),
         DISCO("Disco Dojo", "logo_disco_dojo", 0xA05AE0, new CharacterType[]{CharacterType.STEVIE, CharacterType.GARRY}),
-        WANDERERS("Wanderers", "logo_wanderers", 0x6A8AD8, new CharacterType[]{}, "Chase");
+        WANDERERS("Wanderers", "logo_wanderers", 0x6A8AD8, new CharacterType[]{CharacterType.CHASE});
 
         public final String title;
         public final ResourceLocation logo;

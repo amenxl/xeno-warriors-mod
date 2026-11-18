@@ -42,7 +42,8 @@ public final class TransformKeyClient {
 
     private static void tap(Minecraft mc) {
         CharacterType tk = ClientCharacterData.getLocal();
-        if (mc.player != null && (tk == CharacterType.MIKIKO || tk == CharacterType.RHALIX || tk == CharacterType.KILL || tk == CharacterType.LEXY || tk == CharacterType.YOU || tk == CharacterType.ULTIMA)
+        if (mc.player != null && (tk == CharacterType.MIKIKO || tk == CharacterType.RHALIX || tk == CharacterType.KILL || tk == CharacterType.LEXY || tk == CharacterType.YOU || tk == CharacterType.ULTIMA
+                || com.xenowarriors.skill.nc.NcSkills.formOf(tk) != null)
                 && !UltimateCutscene.active())
             ModNetwork.sendToServer(new com.xenowarriors.network.FoxKingTogglePacket());
     }

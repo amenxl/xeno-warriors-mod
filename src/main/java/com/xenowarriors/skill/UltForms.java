@@ -34,12 +34,15 @@ public final class UltForms {
         CharacterType t = ModCapabilities.getType(p);
         if (t == CharacterType.KILL) return DEVIL;
         if (t == CharacterType.LEXY) return PERSEPHONE;
+        var nc = com.xenowarriors.skill.nc.NcSkills.formOf(t);                  // Zack, Kaitlyn, Ava, Persephone: Demon Form; Senju: Heavenly Demon
+        if (nc != null) return nc;
         var s = com.xenowarriors.you.You.slot(p);
         if (s != null && s.demon() && p.isShiftKeyDown()) return DEVIL;
         return null;
     }
 
     private static boolean active(ServerPlayer p, Skill s) {
+        if (s instanceof com.xenowarriors.skill.nc.NcSkills.Form) return com.xenowarriors.skill.nc.NcSkills.formActive(p);
         return s == DEVIL ? com.xenowarriors.skill.ffr.SrSkills.devilActive(p) : com.xenowarriors.skill.sp.SpState.persephone(p);
     }
 
@@ -50,7 +53,7 @@ public final class UltForms {
     public static boolean press(ServerPlayer p) {
         Skill s = form(p);
         if (s == null) return false;
-        String name = s == DEVIL ? "Devil Unleashed" : "Persephone";
+        String name = s instanceof com.xenowarriors.skill.nc.NcSkills.Form ff ? ff.title : s == DEVIL ? "Devil Unleashed" : "Persephone";
         if (active(p, s)) {
             p.displayClientMessage(Component.literal(name + " can't be stopped - wait for it to fade").withStyle(ChatFormatting.DARK_RED), true);
             return true;
@@ -60,7 +63,7 @@ public final class UltForms {
             p.displayClientMessage(Component.literal(name + " is recharging (" + (ready - now + 19) / 20 + "s)").withStyle(ChatFormatting.RED), true);
             return true;
         }
-        String f = s == DEVIL ? FormMastery.DEVIL : FormMastery.PERSEPHONE;
+        String f = s instanceof com.xenowarriors.skill.nc.NcSkills.Form nf ? nf.id : s == DEVIL ? FormMastery.DEVIL : FormMastery.PERSEPHONE;
         float m = FormMastery.get(p, f);                                          // (its mastery: cheaper, back sooner, Devil Unleashed lasts longer)
         if (!p.isCreative() && !Karma.trySpend(p, s.getKarmaCost() * FormMastery.costMult(m))) return true;
         if (s.use(p)) {

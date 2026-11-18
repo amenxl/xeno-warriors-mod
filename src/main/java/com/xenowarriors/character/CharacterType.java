@@ -36,15 +36,24 @@ public enum CharacterType {
     LOGAN("logan", 0xFFE8C040),
     KILL("kill", 0xFF6A2A8A),
     KEITA("keita", 0xFF2A3AA0),
+    /** Added November 2026: Kyle (C2's modified human), Zack and Kaitlyn (Ai-oni's demons), Chase (the Keeper), Senju (the SR's
+     *  leader), and Ava and Persephone (the demon sisters of the Sky Rebellion). */
+    KYLE("kyle", 0xFF8A5AE0),
+    ZACK("zack", 0xFF7A1E2E),
+    KAITLYN("kaitlyn", 0xFFD8B040),
+    CHASE("chase", 0xFFC8282E),
+    SENJU("senju", 0xFFB89A50),
+    AVA("ava", 0xFFE0402A),
+    PERSEPHONE("persephone", 0xFF8A3AC8),
     /** A player-made warrior (see you/YouSlot): the player's own skin, a chosen name, race and element. */
     YOU("you", 0xFFC8A0FF);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA, AVA, PERSEPHONE, SENJU, KYLE, ZACK, KAITLYN, CHASE};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
-    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI || this == LOGAN || this == KILL || this == KEITA; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
+    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI || this == LOGAN || this == KILL || this == KEITA || this == SENJU; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
 
     /** The Sky Patrol members (for team synergy). */
     public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
@@ -52,7 +61,7 @@ public enum CharacterType {
     /** Their race (see Race). */
     public Race race() { return Race.of(this); }
 
-    public int season() { return this == AIONI || this == ZANE ? 3 : this == ULTIMA || this == KAERU || this == YURI ? 2 : 1; }
+    public int season() { return this == AIONI || this == ZANE || this == CHASE || this == SENJU ? 3 : this == ULTIMA || this == KAERU || this == YURI || this == KYLE || this == ZACK || this == KAITLYN ? 2 : 1; }
 
     private final String id;
     private final int color;
@@ -76,6 +85,8 @@ public enum CharacterType {
             case YURI -> new String[]{"Default", "C1 PJs"};
             case KYRIE -> new String[]{"Default", "Season 2"};
             case MAX, SAM -> new String[]{"Default", "Royal Capital", "Season 3"};
+            case AVA, PERSEPHONE -> new String[]{"Sky Rebellion"};
+            case CHASE -> new String[]{"Keeper"};
             default -> new String[]{"Default"};
         };
     }
@@ -97,8 +108,16 @@ public enum CharacterType {
             case YURI -> new String[]{"", "c1pjs"};
             case KYRIE -> new String[]{"", "s2"};
             case MAX, SAM -> new String[]{"", "royal", "s3"};
+            case AVA, PERSEPHONE -> new String[]{"", "demon"};                    // ("demon": Demon Form's look - not picked as an outfit, see formOutfit)
             default -> new String[]{""};
         };
+    }
+
+    /** The look a form puts on (Ava and Persephone's Demon Form): its outfit number, past the ones you can pick; 0 = none. */
+    public int formOutfit() {
+        String[] k = outfitKeys();
+        for (int i = outfitNames().length; i < k.length; i++) if (k[i].equals("demon")) return i;
+        return 0;
     }
 
     public String getId() { return id; }

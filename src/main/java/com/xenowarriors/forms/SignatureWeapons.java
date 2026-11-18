@@ -63,13 +63,14 @@ public final class SignatureWeapons {
             case LEXY -> ModItems.LEXY_CLAWS::get;
             case ZANE -> ModItems.ZANE_BROOM::get;
             case GARRY -> ModItems.MICROPHONE::get;
+            case SENJU -> ModItems.SENJU_BLADE::get;
             default -> null;
         };
         return s == null ? null : s.get();
     }
 
     public static boolean has(CharacterType t) { return t != null && t != CharacterType.NONE && switch (t) {
-        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE, LEXY -> true;
+        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE, LEXY, SENJU -> true;
         default -> false;
     }; }
 

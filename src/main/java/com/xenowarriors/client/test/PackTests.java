@@ -138,7 +138,8 @@ public final class PackTests {
         if (focus.startsWith("packefbots")) { PackEfBotTests.build(mc, l); return; }      // (bots on Epic Fight's body)
         if (focus.startsWith("packefhood")) { PackEfClothesTests.hoods(mc, l); return; }      // (hoodies and Kaeru's tail in battle mode)
         if (focus.startsWith("packfaces")) { PackFacesTests.build(mc, l); return; }      // (every person and foe: a picture of each face)
-        if (focus.startsWith("packparkour")) { PackParkourTests.build(mc, l); return; }      // (bots doing ParCool-style parkour)
+        if (focus.startsWith("packparkour")) { PackParkourTests.build(mc, l); return; }
+        if (focus.startsWith("packnew")) { PackNewCharsTests.build(mc, l); return; }      // (the seven new characters)      // (bots doing ParCool-style parkour)
         if (focus.startsWith("packcombogif")) { PackComboGif.build(mc, l); return; }      // (Mikiko's and Rhalix's bare-hands combo, frames for a GIF)
         if (focus.startsWith("packrhalixtrace")) { PackFistTraceTests.rhalix(mc, l); return; }      // (Rhalix's bare hands: the Ender Blaster)
         if (focus.startsWith("packfisttrace")) { PackFistTraceTests.build(mc, l); return; }      // (why Kyrie's Iron Fist misses)

@@ -108,6 +108,36 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.ffr.SrSkills.LightsOut(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.Kneel(), 0),
                 new Entry(new com.xenowarriors.skill.ffr.SrSkills.LazySlash(), 0), new Entry(new com.xenowarriors.skill.ffr.SrSkills.PowerNap(), 0)));
         ULTIMATE.put(CharacterType.KEITA, new com.xenowarriors.skill.ffr.SrSkills.MassCut());
+        // the November 2026 seven (skill/nc/NcSkills): four skills first (the default loadout), then their right+left click moves
+        POOL.put(CharacterType.KYLE, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.WillBreak(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.KylePhone(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.Interrogation(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.C2Serum(), 0, 2),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.OverrideSkill(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.ModificationSurge(), 0, 2),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.SnapShot(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.WillBreak()), 0, 2)));
+        ULTIMATE.put(CharacterType.KYLE, new com.xenowarriors.skill.nc.NcSkills.WeaponOfWill());
+        POOL.put(CharacterType.ZACK, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.ShadowSlash(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.Vanish(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.PortalStep(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.AssassinsTakedown(), 0, 2),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.KnifeThrow(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.ShadowSlash()), 0, 2)));
+        ULTIMATE.put(CharacterType.ZACK, new com.xenowarriors.skill.nc.NcSkills.PortalAmbush());
+        POOL.put(CharacterType.KAITLYN, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.FakeCry(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.DarkKarmaBurst(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonClaw(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.WalkieTalkie(), 0, 2),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.DarkKarmaBurst()), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.Taunt(), 0, 2)));
+        ULTIMATE.put(CharacterType.KAITLYN, new com.xenowarriors.skill.nc.NcSkills.DarkKarmaOverload());
+        POOL.put(CharacterType.CHASE, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.TwinBlade(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.SoulSnatch(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.Begone(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.KeepersStep(), 0, 3),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.Begone()), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.SwordDraw(), 0, 3)));
+        ULTIMATE.put(CharacterType.CHASE, new com.xenowarriors.skill.nc.NcSkills.KeepersJudgement());
+        POOL.put(CharacterType.SENJU, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.FathersBlade(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.WingGust(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonGrant(), 0, 3), new Entry(new com.xenowarriors.you.YouDevil.SelfSplit(), 0, 3),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.FathersBlade()), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonGlare(), 0, 3)));
+        ULTIMATE.put(CharacterType.SENJU, new com.xenowarriors.skill.nc.NcSkills.RebellionsEnd());
+        POOL.put(CharacterType.AVA, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.CageFighter(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.RedSlash(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.ToughBody(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.GroundPound(), 0),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.Haymaker(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.RedSlash()), 0)));
+        ULTIMATE.put(CharacterType.AVA, new com.xenowarriors.skill.nc.NcSkills.AvaUnleashed());
+        POOL.put(CharacterType.PERSEPHONE, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.ShadowVoice(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.ProtectAva(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.DarkBind(), 0), new Entry(new com.xenowarriors.skill.nc.NcSkills.ShadowStep(), 0),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.ShadowVoice()), 0)));
+        ULTIMATE.put(CharacterType.PERSEPHONE, new com.xenowarriors.skill.nc.NcSkills.SistersVengeance());
     }
 
     private SkillPool() {}

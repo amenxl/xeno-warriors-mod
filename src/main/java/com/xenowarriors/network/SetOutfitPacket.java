@@ -17,7 +17,7 @@ public record SetOutfitPacket(int outfit) {
     public static void handle(SetOutfitPacket m, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayer p = ctx.get().getSender();
         if (p == null) return;
-        int o = Math.max(0, Math.min(ModCapabilities.getType(p).outfitKeys().length - 1, m.outfit));
+        int o = Math.max(0, Math.min(ModCapabilities.getType(p).outfitNames().length - 1, m.outfit));
         int season = ModCapabilities.getType(p).outfitSeason(o);
         if (!com.xenowarriors.character.Seasons.unlocked(p.server, season)) {
             p.displayClientMessage(net.minecraft.network.chat.Component.literal("Season " + season + " outfit - locked until /xeno season unlock " + season)

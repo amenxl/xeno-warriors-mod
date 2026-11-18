@@ -13,6 +13,8 @@ CH = {  # owner colours (CharacterType)
     'kyrie': (122, 74, 216), 'lexy': (58, 74, 208), 'max': (154, 210, 242), 'sam': (42, 168, 144),
     'technica': (236, 90, 160), 'stevie': (74, 42, 154), 'garry': (42, 168, 42), 'yuri': (58, 208, 74),
     'zane': (150, 70, 200), 'logan': (230, 190, 40), 'kill': (130, 40, 160), 'keita': (60, 70, 200), 'dojo': (110, 70, 200),
+    'kyle': (138, 90, 224), 'zack': (122, 30, 46), 'kaitlyn': (216, 176, 64), 'chase': (200, 40, 46), 'senju': (184, 154, 80),
+    'ava': (224, 64, 42), 'persephone': (138, 58, 200),
 }
 FIRE, FIRE2 = (255, 140, 30), (255, 220, 80)
 GRAV, GRAV2 = (170, 70, 240), (230, 170, 255)
@@ -925,6 +927,274 @@ def _(i):
     i.arc(16, 17, 10, 30, 300, (190, 200, 255), 1)
     h = i.figure(16, Y, SLASH, scale=0.85)
     i.sword(h, 125, 9)
+
+
+# ---------------------------------------------------------------- the November 2026 seven
+C2C = (170, 110, 255); SHAD = (40, 20, 60); DK = (120, 30, 140)
+def twice(*ids):
+    def deco(f):
+        for sid, owner in ids: SPECS.append((sid, owner, f))
+        return f
+    return deco
+
+@twice(('will_break', 'kyle'), ('will_break_click', 'kyle'))
+def _(i):
+    i.figure(8, Y, POINT)
+    i.dummy(24, Y, 0.7, hit=False)
+    i.arcs(14, 13, 6, C2C, 3, -40, 40)
+    for x in (21, 25): i.down(x, 7, C2C, 0.7)
+
+@spec('kyle_phone', 'kyle')
+def _(i):
+    i.figure(9, Y, dict(fa=150, ba=-15))
+    i.rect(10, 4, 14, 11, INK); i.rect(10.8, 5, 13.2, 9.5, (120, 220, 255))
+    for x, y in ((22, 8), (27, 14), (23, 20)): i.circle(x, y, 2, outline=(255, 230, 90), w=0.9)
+
+@spec('interrogation', 'kyle')
+def _(i):
+    i.figure(9, Y, POINT)
+    i.dummy(21, Y, 0.75, hit=False)
+    i.text(24, 3, '?', (255, 230, 120)); i.text(16, 2, '?', C2C)
+
+@spec('c2_serum', 'kyle')
+def _(i):
+    i.figure(10, Y, CAST)
+    i.rect(17, 11, 26, 14, (230, 230, 240)); i.rect(18, 11.6, 23, 13.4, C2C); i.line((26, 12.5), (30, 12.5), SILVER, 0.6)
+    i.cross(25, 22, 3, HEAL)
+
+@spec('override', 'kyle')
+def _(i):
+    i.flames(X + 3, Y, 16, 20, C2C, (230, 200, 255), n=5)
+    i.figure(X + 3, Y, BOTH_UP)
+    i.up(26, 10, C2C)
+
+@spec('modification_surge', 'kyle')
+def _(i):
+    i.figure(X + 2, Y, HIP)
+    for k in range(3): i.ring(X + 2, Y - 2 - k * 7, 6, 1.6, C2C, 1.2)
+    i.up(25, 12, (200, 160, 255))
+
+@spec('snap_shot', 'kyle')
+def _(i):
+    h = i.figure(8, Y, SHOOT)
+    i.gun(h)
+    i.line((19, 13), (30, 13), (255, 240, 160), 0.8)
+
+@spec('weapon_of_will', 'kyle')
+def _(i):
+    i.circle(16, 17, 13, fill=C2C, alpha=80)
+    i.figure(16, Y, RAISE, scale=0.9)
+    for x in (4, 28): i.down(x, 10, C2C, 0.9)
+
+@twice(('shadow_slash', 'zack'), ('shadow_slash_click', 'zack'))
+def _(i):
+    i.speed(9, 14, 4, SHAD, 8)
+    h = i.figure(17, Y, DASH, lean=25)
+    i.sword(h, 70, 6, col=SILVER)
+    i.dummy(27, Y)
+
+@spec('vanish', 'zack')
+def _(i):
+    i.figure(16, Y, HIP, ghost=True)
+    for x, y in ((6, 10), (26, 8), (8, 22), (25, 21)): i.circle(x, y, 2, fill=SHAD, alpha=160)
+
+@spec('portal_step', 'zack')
+def _(i):
+    i.portal(7, 17, 4, 9); i.portal(26, 17, 4, 9)
+    i.figure(26, Y - 1, HIP, scale=0.75)
+
+@spec('assassins_takedown', 'zack')
+def _(i):
+    i.dummy(10, Y, 0.8)
+    h = i.figure(22, Y, THRUST, flip=True)
+    for k in range(3): i.circle(8 + k * 1.4, 20 + k, 0.8, fill=RED)
+
+@spec('knife_throw', 'zack')
+def _(i):
+    i.figure(8, Y, dict(fa=60, ba=-60))
+    i.line((16, 13), (26, 13), SILVER, 1.2); i.poly([(26, 11.5), (30, 13), (26, 14.5)], SILVER)
+
+@spec('portal_ambush', 'zack')
+def _(i):
+    for x, y in ((6, 9), (26, 9), (6, 24), (26, 24)): i.portal(x, y, 3, 5)
+    i.dummy(16, Y - 2, 0.6)
+    for a in (40, 140): i.line((16 - math.cos(math.radians(a)) * 8, 16 - math.sin(math.radians(a)) * 6), (16 + math.cos(math.radians(a)) * 8, 16 + math.sin(math.radians(a)) * 6), (255, 255, 255), 1)
+
+@spec('fake_cry', 'kaitlyn')
+def _(i):
+    i.figure(16, Y, dict(fa=150, ba=-150, fl=10, bl=-10))
+    for x, y in ((12, 10), (20, 11), (11, 15)): i.circle(x, y, 1.2, fill=(120, 200, 255))
+
+@twice(('dark_karma_burst', 'kaitlyn'), ('dark_karma_burst_click', 'kaitlyn'))
+def _(i):
+    i.figure(8, Y, CAST)
+    i.burst(23, 15, 8, DK, 9)
+    i.circle(23, 15, 3, fill=(20, 0, 30))
+
+@spec('demon_claw', 'kaitlyn')
+def _(i):
+    i.figure(9, Y, SLASH)
+    for k in range(3): i.arc(13 + k * 2, 18, 11, 290, 20, RED, 1.1)
+
+@spec('walkie_talkie', 'kaitlyn')
+def _(i):
+    i.figure(8, Y, dict(fa=150, ba=-15))
+    i.rect(8, 3, 11, 10, INK); i.line((10, 3), (10, 0.5), INK, 0.6)
+    i.portal(24, 18, 4, 8)
+    i.figure(25, Y - 2, SLASH, scale=0.6, col=(122, 30, 46), flip=True)
+
+@spec('taunt', 'kaitlyn')
+def _(i):
+    i.figure(16, Y, CHEER)
+    i.text(4, 4, '!', RED); i.text(25, 4, '!', RED)
+
+@spec('dark_karma_overload', 'kaitlyn')
+def _(i):
+    i.circle(16, 17, 14, fill=DK, alpha=110)
+    i.burst(16, 17, 14, (40, 0, 60), 12, 0.6)
+    i.figure(16, Y, BOTH_UP, scale=0.9)
+
+@spec('twin_blade', 'chase')
+def _(i):
+    h = i.figure(10, Y, SLASH)
+    i.sword(h, 125, 11, col=(220, 60, 60))
+    i.arc(14, 18, 12, 290, 30, (255, 255, 255), 1.1)
+    i.arc(14, 18, 9, 300, 40, (255, 120, 120), 1.1)
+
+@spec('soul_snatch', 'chase')
+def _(i):
+    i.figure(8, Y, POINT)
+    i.dummy(25, Y, 0.7)
+    for k in range(4): i.circle(22 - k * 3.5, 12 + math.sin(k) * 1.5, 1.6 - k * 0.2, fill=(120, 230, 255))
+
+@twice(('begone', 'chase'), ('begone_click', 'chase'))
+def _(i):
+    i.figure(8, Y, POINT)
+    i.arcs(15, 15, 8, (255, 255, 255), 3, -40, 40)
+    i.dummy(26, Y, 0.6)
+    i.speed(30, 12, 3, (255, 255, 255), 4)
+
+@spec('keepers_step', 'chase')
+def _(i):
+    i.figure(8, Y, HIP, ghost=True)
+    i.speed(19, 14, 3, (255, 120, 120), 8)
+    i.figure(24, Y, HIP)
+
+@spec('sword_draw', 'chase')
+def _(i):
+    h = i.figure(18, Y, DASH, lean=25)
+    i.sword(h, 80, 10, col=(220, 60, 60))
+    i.line((2, 18), (30, 18), (255, 255, 255), 0.8)
+
+@spec('keepers_judgement', 'chase')
+def _(i):
+    i.line((5, 5), (27, 27), (230, 60, 60), 2); i.line((27, 5), (5, 27), (230, 60, 60), 2)
+    i.line((5, 5), (27, 27), (255, 255, 255), 0.7); i.line((27, 5), (5, 27), (255, 255, 255), 0.7)
+    i.circle(16, 16, 5, outline=(255, 220, 120), w=1)
+
+@twice(('fathers_blade', 'senju'), ('fathers_blade_click', 'senju'))
+def _(i):
+    h = i.figure(9, Y, SLASH)
+    i.sword(h, 120, 15, col=(210, 210, 225), guard=(60, 50, 40))
+    i.arc(13, 19, 15, 280, 20, (255, 255, 255), 1.3)
+
+@spec('wing_gust', 'senju')
+def _(i):
+    i.poly([(10, 12), (2, 4), (4, 12), (1, 16), (8, 16)], (60, 50, 50))
+    i.figure(10, Y, HIP)
+    i.swirl(23, 15, 6, WIND, 2)
+
+@spec('demon_grant', 'senju')
+def _(i):
+    i.figure(8, Y, CAST)
+    i.figure(24, Y, HIP, scale=0.8, col=(200, 200, 210))
+    i.flames(24, Y, 10, 16, (90, 40, 160), (200, 120, 255), n=4)
+
+@spec('demon_glare', 'senju')
+def _(i):
+    i.eye(16, 15, 7, RED)
+    for x in (4, 28): i.line((x, 9), (x, 21), RED, 0.8)
+
+@spec('rebellions_end', 'senju')
+def _(i):
+    i.line((16, 0), (16, 22), (255, 245, 200), 2.4)
+    i.figure(16, 18, dict(fa=-160, ba=160, fl=15, bl=-15), scale=0.7)
+    i.burst(16, 27, 9, (255, 200, 90), 10, 0.4)
+
+@spec('heavenly_demon', 'senju')
+def _(i):
+    i.circle(16, 6, 5, outline=(255, 240, 180), w=1.2)
+    i.flames(16, Y, 18, 22, (255, 240, 200), (200, 40, 40), n=6)
+    i.figure(16, Y, BOTH_UP)
+
+@spec('cage_fighter', 'ava')
+def _(i):
+    for x in (3, 9, 15, 21, 27): i.line((x, 2), (x, 30), (150, 150, 160), 0.6)
+    for y in (6, 14, 22): i.line((2, y), (30, y), (150, 150, 160), 0.6)
+    i.figure(16, Y, GUARD)
+
+@twice(('red_slash', 'ava'), ('red_slash_click', 'ava'))
+def _(i):
+    i.speed(10, 14, 4, RED, 8)
+    i.figure(17, Y, DASH, lean=25)
+    i.arc(18, 18, 11, 300, 60, RED, 1.6)
+
+@spec('tough_body', 'ava')
+def _(i):
+    i.dome(16, Y, 13, (255, 150, 120))
+    i.figure(16, Y, CROSS)
+
+@spec('ground_pound', 'ava')
+def _(i):
+    i.figure(16, Y - 2, CROUCH)
+    i.blocks(4, Y, 4, EARTH); i.blocks(22, Y, 4, EARTH)
+    i.burst(16, Y, 7, (255, 200, 120), 7, 0.5)
+
+@spec('haymaker', 'ava')
+def _(i):
+    i.figure(10, Y, PUNCH)
+    i.dummy(24, Y, 0.8)
+    i.burst(20, 14, 5, (255, 230, 120), 7, 0.4)
+
+@spec('ava_unleashed', 'ava')
+def _(i):
+    i.flames(16, Y, 22, 24, RED, (255, 140, 60), n=7)
+    i.figure(16, Y, BOTH_UP)
+    i.poly([(12, 4), (13, 0), (14, 4)], (240, 240, 230)); i.poly([(18, 4), (19, 0), (20, 4)], (240, 240, 230))
+
+@spec('demon_form', 'ava')
+def _(i):
+    i.flames(16, Y, 18, 20, (200, 30, 40), (255, 120, 60), n=6)
+    i.figure(16, Y, HIP)
+    i.poly([(13, 7), (12, 2), (15, 6)], (240, 240, 230)); i.poly([(19, 7), (20, 2), (17, 6)], (240, 240, 230))
+
+@twice(('shadow_voice', 'persephone'), ('shadow_voice_click', 'persephone'))
+def _(i):
+    i.figure(8, Y, CAST)
+    i.arcs(15, 15, 9, (110, 60, 160), 3, -45, 45)
+    i.dummy(26, Y, 0.6, hit=False)
+
+@spec('protect_ava', 'persephone')
+def _(i):
+    i.figure(10, Y, CAST)
+    i.dome(23, Y, 8, (140, 80, 210))
+    i.figure(23, Y, HIP, scale=0.7, col=(224, 64, 42))
+
+@spec('dark_bind', 'persephone')
+def _(i):
+    i.dummy(16, Y, 0.8, hit=False)
+    for k in range(3): i.ring(16, 26 - k * 6, 7, 1.8, (90, 40, 140), 1.4)
+
+@spec('shadow_step', 'persephone')
+def _(i):
+    i.dummy(14, Y, 0.75, hit=False)
+    i.figure(24, Y, POINT, flip=True)
+    for x, y in ((26, 8), (29, 14), (22, 6)): i.circle(x, y, 1.6, fill=SHAD, alpha=170)
+
+@spec('sisters_vengeance', 'persephone')
+def _(i):
+    for k in range(3): i.circle(16, 17, 6 + k * 4, outline=(110, 50, 170), w=1.2)
+    i.figure(16, Y, BOTH_UP, scale=0.85)
 
 # ---------------------------------------------------------------- Mikiko: Xeno Blast (KA slot)
 @spec('xeno_blast_mikiko', 'mikiko')

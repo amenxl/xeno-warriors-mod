@@ -29,7 +29,8 @@ public final class FemaleBody {
     public static final float WAIST_TOP = 6F, WAIST_BOTTOM = 12F;
 
     private static final Set<CharacterType> GIRLS = Set.of(CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY,
-            CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI);
+            CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI,
+            CharacterType.KAITLYN, CharacterType.AVA, CharacterType.PERSEPHONE);
     /** Outfits that are girls' even on a boy (Max and Sam's Royal Capital disguises). */
     private static final Set<String> GIRL_OUTFITS = Set.of("max_royal", "sam_royal");
     /** Detail models (by file name) that get the girls' fit: the girls' own, their outfits, and girl NPCs. */
@@ -37,6 +38,7 @@ public final class FemaleBody {
     static {
         for (CharacterType t : GIRLS) GIRL_MODELS.add(t.getId());
         GIRL_MODELS.addAll(GIRL_OUTFITS);
+        GIRL_MODELS.add("ava_demon"); GIRL_MODELS.add("persephone_demon");   // (their Demon Form looks)
     }
 
     public static boolean is(CharacterType t, String outfitKey) {

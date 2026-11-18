@@ -548,6 +548,8 @@ public final class ModNetwork {
                 .encoder(BusyCharsPacket::encode).decoder(BusyCharsPacket::decode).consumerMainThread(BusyCharsPacket::handle).add();
         CHANNEL.messageBuilder(PhoneTeamPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (the phone's Teammates page)
                 .encoder(PhoneTeamPacket::encode).decoder(PhoneTeamPacket::decode).consumerMainThread(PhoneTeamPacket::handle).add();
+        CHANNEL.messageBuilder(NcStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (the new characters' forms / Hidden Will)
+                .encoder(NcStatePacket::encode).decoder(NcStatePacket::decode).consumerMainThread(NcStatePacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

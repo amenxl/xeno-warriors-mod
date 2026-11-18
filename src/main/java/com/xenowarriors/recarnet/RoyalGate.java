@@ -42,7 +42,7 @@ public final class RoyalGate {
     }
 
     public static boolean skyRebellion(CharacterType t) {
-        return t == CharacterType.LOGAN || t == CharacterType.KILL || t == CharacterType.KEITA;
+        return t == CharacterType.LOGAN || t == CharacterType.KILL || t == CharacterType.KEITA || t == CharacterType.SENJU || t == CharacterType.AVA || t == CharacterType.PERSEPHONE;
     }
 
     public static boolean skylander(CharacterType t) { return t.skylander() || skyPatrol(t); }

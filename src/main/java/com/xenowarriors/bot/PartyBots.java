@@ -1268,7 +1268,7 @@ public final class PartyBots {
     /** Changes a bot's outfit from its menu - and that character's outfit for when you play them too. */
     public static boolean setOutfit(ServerPlayer p, PartyBotEntity b, int o) {
         CharacterType t = b.character();
-        o = Math.max(0, Math.min(t.outfitKeys().length - 1, o));
+        o = Math.max(0, Math.min(t.outfitNames().length - 1, o));
         int season = t.outfitSeason(o);
         if (!com.xenowarriors.character.Seasons.unlocked(p.server, season)) {
             p.displayClientMessage(Component.literal("Season " + season + " outfit - locked until /xeno season unlock " + season).withStyle(ChatFormatting.RED), true);

@@ -189,6 +189,7 @@ public final class LockOn {
         if (me == null) return true;
         if (duelFoe >= 0 && e.getId() == duelFoe) return true;                // (your battle opponent - even from your party)
         if (e.isInvulnerable() || peaceful(e)) return false;
+        if (e != me && com.xenowarriors.client.NcClient.hidden(e.getId())) return false;   // (Chase's Hidden Will, Zack's Vanish)
         if (e.isInvisible() && e.hasCustomName() && e.getCustomName().getString().endsWith("'s Hekublade")) return false;   // (Mikiko's floating blade)
         // Soul Splitter souls: never your own, nor your party's (they're on your side)
         if (e instanceof com.xenowarriors.soul.SoulEntity s && s.ownerId() != null

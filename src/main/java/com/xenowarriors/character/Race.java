@@ -76,6 +76,9 @@ public enum Race {
             case TECHNICA -> ARTIFICIAL_SKYLANDER;
             case LEXY, KILL -> DEMON_SKYLANDER;
             case AIONI -> DEVIL;
+            case KYLE -> MODIFIED_HUMAN;
+            case ZACK, KAITLYN, AVA, PERSEPHONE -> DEMON;
+            case SENJU -> SKYLANDER;
             case RHALIX, KYRIE, MAX, SAM, LOGAN, KEITA -> SKYLANDER;
             default -> HUMAN;                            // Stevie, Garry, Yuri, Zane
         };

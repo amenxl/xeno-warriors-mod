@@ -52,7 +52,7 @@ public final class JourneyRules {
                 case SKYLANDER -> t.race().skylanderKind();
                 case HUMAN -> !t.race().skylanderKind();
                 case SKY_PATROL -> t.skyPatrol();
-                case REBELLION -> t == CharacterType.LOGAN || t == CharacterType.KILL || t == CharacterType.KEITA;
+                case REBELLION -> com.xenowarriors.recarnet.RoyalGate.skyRebellion(t);
             };
         }
     }

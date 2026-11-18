@@ -51,6 +51,11 @@ public final class Toggles {
         DEMONS_REMNANTS("demons_remnants", "Demon's Remnants", Kind.TRANSFORM, 0xC0303A),
         DEVIL_UNLEASHED("devil_unleashed", "Devil Unleashed", Kind.TRANSFORM, 0x8A1A2A),
         PERSEPHONE("persephone", "Persephone", Kind.TRANSFORM, 0xE04A8A),
+        DEMON_FORM("demon_form", "Demon Form", Kind.TRANSFORM, 0xC0202A),
+        HEAVENLY_DEMON("heavenly_demon", "Heavenly Demon", Kind.TRANSFORM, 0xE8D8A0),
+        MODIFICATION_SURGE("modification_surge", "Modification Surge", Kind.BUFF, 0x8A5AE0),
+        // Chase's: nobody can lock on to him, and his Karma can't be sensed or read (starts on)
+        HIDDEN_WILL("hidden_will", "Hidden Will", Kind.PASSIVE, 0xC8282E, true),
         NETSU("netsu", "Netsu", Kind.BUFF, 0xFF6A1A),
         TRUE_EMPATHY("true_empathy", "True Empathy", Kind.PASSIVE, 0xC890FF),
         LIVING_WEAPON("living_weapon", "Living Weapon", Kind.TRANSFORM, 0x1FE07A),
@@ -107,6 +112,13 @@ public final class Toggles {
             case ZANE -> List.of("fire_spell", "thunder_spell", "broom_smack");
             case YURI -> List.of("elevator_hack", "virus_upload");
             case STEVIE, GARRY -> List.of("karma_blast", "disco_kick");
+            case KYLE -> List.of("snap_shot", "will_break_click");
+            case ZACK -> List.of("knife_throw", "shadow_slash_click");
+            case KAITLYN -> List.of("dark_karma_burst_click", "taunt");
+            case CHASE -> List.of("begone_click", "sword_draw");
+            case SENJU -> List.of("fathers_blade_click", "demon_glare");
+            case AVA -> List.of("haymaker", "red_slash_click");
+            case PERSEPHONE -> List.of("shadow_voice_click");
             case YOU -> List.of("you_strike", "karma_blast", "you_bolt");      // (custom characters: Karma Strike, Karma Blast, their element's Bolt - Firebolt for fire)
             default -> List.of();
         };
@@ -149,6 +161,10 @@ public final class Toggles {
             case KAERU -> List.of(Entry.SCENT_TRACK);
             case KILL -> List.of(Entry.DEVIL_UNLEASHED);
             case LEXY -> List.of(Entry.PERSEPHONE);
+            case ZACK, KAITLYN, AVA, PERSEPHONE -> List.of(Entry.DEMON_FORM);
+            case SENJU -> List.of(Entry.HEAVENLY_DEMON);
+            case KYLE -> List.of(Entry.MODIFICATION_SURGE);
+            case CHASE -> List.of(Entry.HIDDEN_WILL);
             default -> List.of();
         };
     }
@@ -234,7 +250,8 @@ public final class Toggles {
         return switch (e) {
             case FOX_KING -> com.xenowarriors.mikiko.FoxKing.active(p);
             case DEMONS_REMNANTS -> com.xenowarriors.rhalix.DemonsRemnants.active(p);
-            case DEVIL_UNLEASHED, PERSEPHONE -> com.xenowarriors.skill.UltForms.activeNow(p);
+            case DEVIL_UNLEASHED, PERSEPHONE, DEMON_FORM, HEAVENLY_DEMON -> com.xenowarriors.skill.UltForms.activeNow(p);
+            case MODIFICATION_SURGE -> com.xenowarriors.skill.nc.NcSkills.surge(p);
             case NETSU -> com.xenowarriors.mikiko.Netsu.active(p);
             case LIVING_WEAPON -> p.getPersistentData().getLong(com.xenowarriors.skill.ultima.LivingWeaponSkill.UNTIL) > p.level().getGameTime();
             case LUNAR_MIND -> enabled(p, e) && com.xenowarriors.skill.sp.MaxSkills.night(p);
@@ -251,6 +268,7 @@ public final class Toggles {
             case DEVIL_UNLEASHED -> FormMastery.get(p, FormMastery.DEVIL);
             case PERSEPHONE -> FormMastery.get(p, FormMastery.PERSEPHONE);
             case LIVING_WEAPON -> FormMastery.get(p, FormMastery.LIVING);
+            case DEMON_FORM, HEAVENLY_DEMON -> FormMastery.get(p, e.id);
             default -> { Skill s = skill(p, e); yield s == null ? 0F : com.xenowarriors.skill.SkillLevels.progress(p, s.getId()) * 100F; }
         };
     }

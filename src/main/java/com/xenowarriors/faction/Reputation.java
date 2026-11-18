@@ -75,7 +75,10 @@ public final class Reputation {
             case RHALIX, KYRIE, SAM -> v[Faction.SKY.ordinal()] = 450;
             case LOGAN, KILL, KEITA -> { v[Faction.SR.ordinal()] = 450; v[Faction.SKY.ordinal()] = -100; }
             case MIKIKO, KAERU, ZANE, STEVIE, GARRY -> v[Faction.GOV.ordinal()] = -100;            // Freedom Fighters
-            case AIONI -> v[Faction.TOWN.ordinal()] = -100;                                          // a demon - people are wary
+            case AIONI -> v[Faction.TOWN.ordinal()] = -100;
+            case SENJU, AVA, PERSEPHONE -> { v[Faction.SR.ordinal()] = 450; v[Faction.SKY.ordinal()] = -100; }
+            case KYLE -> v[Faction.GOV.ordinal()] = 450;
+            case ZACK, KAITLYN -> v[Faction.TOWN.ordinal()] = -100;                                          // a demon - people are wary
             default -> {}
         }
         return v;

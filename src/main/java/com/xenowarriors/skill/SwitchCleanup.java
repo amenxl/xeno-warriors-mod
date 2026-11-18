@@ -26,6 +26,8 @@ public final class SwitchCleanup {
         if (com.xenowarriors.skill.UltCharge.cancel(p)) ended.append("ultimate-charge ");   // (an ultimate still charging never goes off as the new character)
         com.xenowarriors.skill.sp.SpState.clear(id);                         // Kyrie, Max, Sam, Lexy, Technica
         com.xenowarriors.skill.ffr.SrSkills.clear(id);                       // Logan, Kill
+        if (com.xenowarriors.skill.nc.NcSkills.formActive(p)) ended.append("form ");
+        com.xenowarriors.skill.nc.NcSkills.clear(id);                        // Kyle, Zack, Kaitlyn, Chase, Senju, Ava, Persephone
         com.xenowarriors.skill.ffr.ZaneProjection.clear(id);                 // Zane's KA
         com.xenowarriors.skill.kaeru.HekubarrierSkill.clear(id);             // Kaeru
         com.xenowarriors.skill.mikiko.HekubladeScatterSkill.clear(id);       // Mikiko / Kaeru: blades still in the air

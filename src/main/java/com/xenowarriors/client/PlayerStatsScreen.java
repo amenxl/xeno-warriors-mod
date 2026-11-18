@@ -195,7 +195,7 @@ public class PlayerStatsScreen extends Screen {
 
     private int outfitCount() {
         if (minecraft == null || minecraft.player == null) return 1;
-        return Math.min(MAX_OUTFITS, ClientCharacterData.get(minecraft.player).outfitKeys().length);
+        return Math.min(MAX_OUTFITS, ClientCharacterData.get(minecraft.player).outfitNames().length);
     }
 
     private void layoutOutfits() {

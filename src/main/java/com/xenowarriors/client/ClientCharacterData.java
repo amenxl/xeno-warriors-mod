@@ -54,6 +54,7 @@ public final class ClientCharacterData {
     public static int outfit(Player player) {
         CharacterType t = get(player);
         if (t == CharacterType.NONE) return 0;
+        if (t.formOutfit() > 0 && com.xenowarriors.client.NcClient.form(player.getId())) return t.formOutfit();   // (Ava / Persephone in Demon Form)
         int o = OUTFITS.getOrDefault(player.getUUID(), 0);
         return o < t.outfitKeys().length ? o : 0;
     }
