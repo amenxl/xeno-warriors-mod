@@ -45,7 +45,7 @@ final class PackWomTests {
         patch.playAnimationSynchronized((yesman.epicfight.api.asset.AssetAccessor<? extends yesman.epicfight.api.animation.types.StaticAnimation>) c.get(i), 0F);
     }
 
-    private static void one(Minecraft mc, List<Step> l, CharacterType who, String item, String[] expect) {
+    static void one(Minecraft mc, List<Step> l, CharacterType who, String item, String[] expect) {
         String name = item == null ? "fists_" + who.name().toLowerCase(java.util.Locale.ROOT) : item;
         l.add(new Step(null, () -> UiTest.character(who), 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
