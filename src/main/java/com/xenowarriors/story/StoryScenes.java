@@ -268,7 +268,7 @@ public final class StoryScenes {
             int cx = r.nextInt(30) - 15, cz = r.nextInt(30) - 15, rr = 2 + r.nextInt(3);
             for (int x = -rr; x <= rr; x++) for (int z = -rr; z <= rr; z++) if (inside(x, z, rr) && inside(cx + x, cz + z, R - 2)) {
                 set(l, c.offset(cx + x, 0, cz + z), Blocks.BLACKSTONE.defaultBlockState());
-                if (r.nextInt(6) == 0) set(l, c.offset(cx + x, 1, cz + z), Blocks.FIRE.defaultBlockState());
+                if (r.nextInt(6) == 0 && cz + z < 2) set(l, c.offset(cx + x, 1, cz + z), Blocks.FIRE.defaultBlockState());   // (no fire where the party comes in)
             }
         }
         for (int i = 0; i < 6; i++) { int x = r.nextInt(36) - 18, z = r.nextInt(36) - 18; if (inside(x, z, R - 3)) fill(l, c, x, 1, z, x + 1, 1 + r.nextInt(3), z, Blocks.CRACKED_STONE_BRICKS.defaultBlockState()); }
