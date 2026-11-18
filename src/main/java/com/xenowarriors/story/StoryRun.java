@@ -286,6 +286,7 @@ public final class StoryRun {
                 r.phase = SCENE;
                 List<String> who = new ArrayList<>();
                 for (String c : st.npcs()) if (CharacterType.byId(c) != CharacterType.NONE) who.add(c);
+                clearNpcs(s, r);                            // (this scene's people only)
                 spawnNpcs(s, r, who);
                 dialogue(s, r, filter(s, r, st.lines()), "step");
             }
