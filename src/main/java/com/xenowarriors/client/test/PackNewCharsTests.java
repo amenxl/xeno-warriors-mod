@@ -26,6 +26,10 @@ final class PackNewCharsTests {
 
     private static void reset(ServerPlayer p) {
         PackTests.arena(p);
+        PackTests.clear(p);
+        if (com.xenowarriors.soul.SoulSplit.active(p)) com.xenowarriors.soul.SoulSplit.end(p, "");     // (Senju's Self-Split shadow)
+        p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Entity.class, p.getBoundingBox().inflate(30),
+                e -> !(e instanceof net.minecraft.world.entity.player.Player) && !(e instanceof com.xenowarriors.bot.PartyBotEntity)).forEach(net.minecraft.world.entity.Entity::discard);
         p.setHealth(p.getMaxHealth());
         p.removeAllEffects();
         p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
@@ -139,7 +143,9 @@ final class PackNewCharsTests {
             p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2] - 1.5, 0F, 5F);
         }), 50));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = true; }, 10));
-        l.add(new Step("new_lineup", () -> {}, 5));
+        l.add(new Step(null, () -> PackTests.server(p -> { for (int id : ids) if (p.serverLevel().getEntity(id) instanceof com.xenowarriors.bot.PartyBotEntity b) {
+            b.setYRot(180F); b.setYHeadRot(180F); b.yBodyRot = 180F; b.yBodyRotO = 180F; b.yHeadRotO = 180F; b.yRotO = 180F; } }), 3));
+        l.add(new Step("new_lineup", () -> {}, 2));
         l.add(new Step(null, () -> PackTests.server(p -> {
             int n = 0;
             for (int id : ids) if (p.serverLevel().getEntity(id) instanceof com.xenowarriors.bot.PartyBotEntity) n++;
