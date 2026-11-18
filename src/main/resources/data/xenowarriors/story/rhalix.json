@@ -1,0 +1,200 @@
+{
+  "path": "rhalix",
+  "title": "Rhalix: The Sky Patrol",
+  "hub": "sp_hideout",
+  "unlock": "rhalix",
+  "npcs": ["rhalix", "lexy", "sam", "max", "kyrie"],
+  "missions": [
+    {
+      "id": "r1", "title": "Day Two", "karma": 0, "lvl": 1,
+      "desc": "Rhalix brings you to meet his new team.",
+      "steps": [
+        {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "lexy", "sam", "max"], "meet": ["rhalix", "lexy", "sam", "max"], "lines": [
+          {"s": "narrator", "t": "Year 100. Day two in the new world for Rhalix Murasaki... and for {you}."},
+          {"s": "rhalix", "t": "It's your boy Rhalix! Team, say hi - I found someone else to join us.", "group": "It's your boy Rhalix! Team, say hi - I found a few more people to join us."},
+          {"s": "lexy", "t": "(Happy) Captain's back! And... hi.", "sky": "(Happy) Captain's back! Oh - you've got wings too!"},
+          {"s": "sam", "t": "Yo! Another fighter? Can you beat some heads?", "sky": "Yo! Another Skylander! Finally, the numbers are on our side.", "ground": "Yo! A human helping Skylanders? That's cool, for real."},
+          {"s": "max", "t": "Can y'all hop off the captain for five seconds. (cough) Welcome. Don't touch my cigarettes.", "sky": "(cough) Another Skylander. Welcome. Wings in when we're out in town, got it?", "ground": "(cough) Welcome. Not a lot of humans stick their neck out for us. Means something."},
+          {"s": "you", "t": "...Hey.", "group": "...Hey."},
+          {"s": "rhalix", "t": "I've been thinking about a name. How does SP sound?"},
+          {"s": "max", "t": "The Sky Poopers."},
+          {"s": "rhalix", "t": "Close. The Sky Patrol. We patrol our kind and stop the Sky Haters.", "ground": "Close. The Sky Patrol. We keep Skylanders safe from the Sky Haters - and you're part of that now."},
+          {"s": "lexy", "t": "(Worried) Guys! I think there's a Skylander being attacked down there!"},
+          {"s": "sam", "t": "Oh snap, let's get it!"},
+          {"s": "rhalix", "t": "Y'all can handle that one. I've got research to do. {You}, go with them.", "group": "Y'all can handle that one. I've got research to do. Go with them."}
+        ]},
+        {"type": "fight", "place": "aurora_street", "obj": "Save the Skylander from the Sky Haters", "allies": ["sam", "lexy", "max"], "waves": [
+          [{"e": "sky_hater", "n": 4}],
+          [{"e": "sky_hater", "n": 3}, {"e": "sr:kill", "boss": true, "name": "???", "escape": 0.45}]
+        ], "escape_lines": [
+          {"s": "kill", "n": "???", "t": "Skyhater? Hahaha, no. I'm with the Sky Rebellion. We capture Royal Skylanders."},
+          {"s": "kill", "n": "???", "t": "Running up and attacking was your only plan? Here - have a portal!"},
+          {"s": "max", "t": "SAM! LEXY! No - they're gone!"},
+          {"s": "rhalix", "t": "I'm here now. ...Where are Sam and Lexy?!"}
+        ]},
+        {"type": "scene", "place": "aurora_street", "npcs": ["rhalix", "max", "kyrie"], "meet": ["kyrie", "kill"], "lines": [
+          {"s": "kyrie", "t": "Thank you... my wings wouldn't work in that fire."},
+          {"s": "max", "t": "No oxygen, no flying. Breath training fixes that."},
+          {"s": "rhalix", "t": "That guy said he was a fallen Skylander. Like me."},
+          {"s": "rhalix", "t": "He opened the portal for me before he ran. Sam's on the other side. We're getting him back."},
+          {"s": "you", "t": "*nods*"}
+        ]}
+      ],
+      "reward": {"money": 150, "bond": {"rhalix": 10, "sam": 5, "lexy": 5, "max": 5}}
+    },
+    {
+      "id": "r2", "title": "Through the Portal", "karma": 1500, "lvl": 2,
+      "desc": "Follow Rhalix into the Sky Rebellion's hideout.",
+      "steps": [
+        {"type": "fight", "place": "sr_hideout", "obj": "Fight through the SR hideout", "allies": ["rhalix"], "waves": [
+          [{"e": "sr", "n": 4}],
+          [{"e": "sr", "n": 5}]
+        ]},
+        {"type": "scene", "place": "sr_hideout", "npcs": ["rhalix", "sam"], "lines": [
+          {"s": "sam", "t": "Captain! Is that you?!"},
+          {"s": "rhalix", "t": "Where's Lexy?"},
+          {"s": "sam", "t": "They took her as soon as you got here. ...Captain, is it true? You're a fallen Skylander?"},
+          {"s": "rhalix", "t": "...Yeah. Back in my old world I was banished. Sorry I didn't say."},
+          {"s": "sam", "t": "It's cool. We've only been a team a day, but it feels like forever.", "sky": "It's cool. Skylanders stick together - right, {you}?"},
+          {"s": "you", "t": "Right."},
+          {"s": "rhalix", "t": "Let's get back and plan. Tomorrow we save Lexy."}
+        ]}
+      ],
+      "reward": {"money": 150, "bond": {"rhalix": 10, "sam": 10}}
+    },
+    {
+      "id": "r3", "title": "Two Weeks of Training", "karma": 2500, "lvl": 3, "extra": true,
+      "desc": "Max is still tracking Lexy. Rhalix uses the time to train the team.",
+      "steps": [
+        {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "sam", "max"], "lines": [
+          {"s": "sam", "t": "Max, got anything on Lexy yet? It's been two weeks!"},
+          {"s": "rhalix", "t": "Don't rush him. You, Sam and {you} - training. Now.", "group": "Don't rush him. Sam, and all of you - training. Now."},
+          {"s": "rhalix", "t": "Karma isn't just for hitting. Feel it, push it out, control it."}
+        ]},
+        {"type": "fight", "place": "sky_island", "obj": "Training: knock out the sparring targets", "allies": ["sam"], "waves": [
+          [{"e": "dummy", "n": 6}],
+          [{"e": "sky_hater", "n": 5}]
+        ]},
+        {"type": "scene", "place": "sky_island", "npcs": ["rhalix", "sam"], "lines": [
+          {"s": "sam", "t": "Haha! I'm gonna be vice captain first, watch."},
+          {"s": "rhalix", "t": "You're on a good track. Both of you.", "group": "You're on a good track. All of you."},
+          {"s": "max", "t": "(radio) Got her location! ...Some place called Aurora."}
+        ]}
+      ],
+      "reward": {"money": 120, "bond": {"rhalix": 10, "sam": 10}}
+    },
+    {
+      "id": "r4", "title": "Kyrie's Questions", "karma": 3500, "lvl": 3,
+      "desc": "Kyrie wakes up. Then the team splits up.",
+      "steps": [
+        {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "sam", "max", "kyrie"], "lines": [
+          {"s": "kyrie", "t": "Me, a Royal, calling a fallen Skylander 'captain'? Don't make me laugh."},
+          {"s": "sam", "t": "He saved your life!"},
+          {"s": "rhalix", "t": "It's fine. Kyrie - what do you know about the Sky Rebellion?"},
+          {"s": "kyrie", "t": "They took 70% of the Royal Capital. They sold our secrets to the Government for money."},
+          {"s": "max", "t": "The Government offered smartphones to the Royals only. The underclass got nothing. That started a war."},
+          {"s": "rhalix", "t": "Aurora... in my world, people there were turned into demons. They might be making Lexy a demon Skylander."},
+          {"s": "rhalix", "t": "I'm going to Aurora. Sam, Max - protect Kyrie."},
+          {"s": "kyrie", "t": "Protect me? Unless you can dress like Royals and sneak me home, I'm leaving."},
+          {"s": "max", "t": "...A stealth mission doesn't sound bad."},
+          {"s": "you", "choice": [
+            {"text": "Go with Rhalix to Aurora.", "set": "aurora", "reply": [{"s": "rhalix", "t": "Good. Stay close."}]},
+            {"text": "Go with Sam and Max to the Royal Capital.", "set": "capital", "reply": [{"s": "kyrie", "t": "Then you're getting dressed up too.", "group": "Then all of you are getting dressed up."}]}
+          ]}
+        ]},
+        {"type": "fight", "if": "aurora", "place": "aurora_street", "obj": "Find Lexy in Aurora", "allies": ["rhalix"], "waves": [
+          [{"e": "sr", "n": 4}],
+          [{"e": "sr:kill", "boss": true, "name": "Kill", "escape": 0.35}]
+        ], "escape_lines": [
+          {"s": "kill", "t": "Salt on your wings!! ...Huh? Why isn't it working?"},
+          {"s": "rhalix", "t": "Salt? Who told you salt does anything to Skylanders?"},
+          {"s": "kill", "t": "Max said that was your weakness!"},
+          {"s": "rhalix", "t": "Sounds like Max lied to your ass. My team's got me."},
+          {"s": "kill", "t": "Too late anyway. Come in, newcomer!"},
+          {"s": "persephone", "n": "Lexy (Persephone)", "t": "Captain... I'm scared... Lexy? No. She's gone."}
+        ]},
+        {"type": "fight", "if": "capital", "place": "royal_capital", "obj": "Get through the Royal Capital (in disguise)", "allies": ["sam", "max"], "waves": [
+          [{"e": "knight", "n": 4}],
+          [{"e": "knight", "n": 3}, {"e": "sr", "n": 2}]
+        ]},
+        {"type": "scene", "if": "capital", "place": "royal_capital", "npcs": ["sam", "max"], "lines": [
+          {"s": "sam", "n": "Samantha", "t": "(Girl voice) Hi, I'm Samantha! ...Where did Kyrie go?!"},
+          {"s": "max", "n": "Maxine", "t": "She flew off. Captain's about to be so upset. Hang on to your... everything."},
+          {"s": "you", "t": "...This outfit itches."}
+        ]}
+      ],
+      "reward": {"money": 200, "bond": {"rhalix": 5, "sam": 5, "max": 5, "kyrie": 10}}
+    },
+    {
+      "id": "r5", "title": "Kyrie (Ava)", "karma": 4500, "lvl": 4,
+      "desc": "The SR got to Kyrie first. Up on the sky island, something is wrong with her.",
+      "steps": [
+        {"type": "scene", "place": "sky_island", "npcs": ["sam", "max"], "lines": [
+          {"s": "max", "t": "Kyrie! Wake up, we're here to take you back."},
+          {"s": "ava", "n": "Kyrie (Ava)", "t": "The Skylander Kyrie is long gone. And you, Max - traitors to the SR die."},
+          {"s": "max", "t": "I was going to join the Rebellion... then I realized I couldn't betray my team."},
+          {"s": "sam", "t": "Max?! ...Fine. Vice captain, let's save Kyrie!", "group": "Max?! ...Fine. Everybody - let's save Kyrie!"}
+        ]},
+        {"type": "fight", "place": "sky_island", "obj": "Stop Kyrie (Ava) without hurting Kyrie too much", "allies": ["sam", "rhalix"], "waves": [
+          [{"e": "sr", "n": 3}],
+          [{"e": "sr:ava", "boss": true, "name": "Kyrie (Ava)"}]
+        ]},
+        {"type": "scene", "place": "sky_island", "npcs": ["rhalix", "sam", "kyrie"], "meet": ["ava"], "lines": [
+          {"s": "rhalix", "t": "Only Kyrie can break free. Come on, Kyrie!"},
+          {"s": "kyrie", "t": "I'm NOT letting you take my body!!!"},
+          {"s": "ava", "t": "Impossible... she pulled me out! This is all Logan's fault!"},
+          {"s": "kyrie", "t": "Kishi!"},
+          {"s": "narrator", "t": "And so Ava fell. Max, thrown from the island, was caught by Rhalix on his way up."},
+          {"s": "kyrie", "t": "SR took my mom. I'll handle the Capital. Go save Lexy."},
+          {"s": "rhalix", "t": "Oh, and the Capital's SR-free. I knocked out every traitor on my way in."},
+          {"s": "sam", "t": "You wiped out thousands of soldiers AND fought Ava??"},
+          {"s": "rhalix", "t": "...Also, why are you two dressed like girls?", "if": "capital"}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"rhalix": 10, "sam": 10, "kyrie": 15, "max": 10}}
+    },
+    {
+      "id": "r6", "title": "A New Hideout", "karma": 5500, "lvl": 5, "extra": true,
+      "desc": "Kyrie paid the SP 70,000. Time for a new hideout - if the Sky Haters let you.",
+      "steps": [
+        {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "sam", "max"], "lines": [
+          {"s": "max", "t": "Kyrie sent a payment. 70,000, Captain."},
+          {"s": "rhalix", "t": "DAMN. That's a fire hideout."},
+          {"s": "max", "t": "...Sam. Since you asked. My real name might be Sintrie. I forgot it, five years ago.", "sky": "...Sam, {you}. Since you're Skylanders too - my real name might be Sintrie. I forgot it, five years ago."},
+          {"s": "sam", "t": "We'll help you find it. Promise."},
+          {"s": "sam", "t": "Wait - who are THEY?"}
+        ]},
+        {"type": "fight", "place": "sp_hideout", "obj": "Beat the Sky Haters breaking in", "allies": ["sam", "max"], "waves": [
+          [{"e": "sky_hater", "n": 5}],
+          [{"e": "sky_hater", "n": 5, "captain": true}]
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"max": 15, "sam": 10}}
+    },
+    {
+      "id": "r7", "title": "The Xeno Warriors Reunite", "karma": 6500, "lvl": 6,
+      "desc": "A government weapon is heading for the Mountain Village. Rhalix goes to find Mikiko.",
+      "steps": [
+        {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "sam", "max"], "lines": [
+          {"s": "narrator", "t": "T.V. Man: The weapon is making its way to the Mountain Village. Run as soon as you can!"},
+          {"s": "rhalix", "t": "The Mountain Village... that's where Mikiko lives!"},
+          {"s": "max", "t": "We've got the new hideout handled. Go. Take {you}.", "group": "We've got the new hideout handled. Go. Take them with you."}
+        ]},
+        {"type": "fight", "place": "mountain_village", "obj": "Help Mikiko against the Corrupted Souls", "allies": ["rhalix", "mikiko"], "waves": [
+          [{"e": "corrupted_soul", "n": 5}],
+          [{"e": "corrupted_villager", "n": 4}, {"e": "corrupted_soul", "n": 2}],
+          [{"e": "csoul_boss", "boss": true, "name": "Corrupted Guy 3"}]
+        ]},
+        {"type": "scene", "place": "mountain_village", "npcs": ["rhalix", "mikiko"], "meet": ["mikiko"], "lines": [
+          {"s": "rhalix", "t": "Don't worry Mikiko, I got your back!"},
+          {"s": "mikiko", "t": "I was waiting for you to jump in! ...Who's this?"},
+          {"s": "rhalix", "t": "Sky Patrol's newest. They've been holding it down.", "group": "Sky Patrol's newest. All of them. They've been holding it down."},
+          {"s": "mikiko", "t": "Nice. Any friend of Rhalix. Now - Xeno Warrior reunion battle?"},
+          {"s": "rhalix", "t": "Winner's the leader."},
+          {"s": "narrator", "t": "...and then a Government car pulled up. But that's another story."}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"rhalix": 20, "mikiko": 10}}
+    }
+  ]
+}

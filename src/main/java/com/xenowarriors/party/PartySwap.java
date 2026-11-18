@@ -67,6 +67,7 @@ public final class PartySwap {
         for (CharacterType t : CharacterType.PLAYABLE) {
             if (t == CharacterType.NONE || t == CharacterType.YOU || taken.contains(t)) continue;
             if (com.xenowarriors.character.Seasons.highest(o.server) < t.season()) continue;
+            if (!com.xenowarriors.story.Story.botAllowed(o, t)) continue;                   // (story mode: only people they've met)
             if ((t == CharacterType.AIONI && taken.contains(CharacterType.RHALIX)) || (t == CharacterType.RHALIX && taken.contains(CharacterType.AIONI))) continue;
             if (o.getPersistentData().getLong(REJOIN + t.getId()) > now) continue;          // (still recovering)
             if (!PartyBots.canFollowTo(t, o.level())) continue;

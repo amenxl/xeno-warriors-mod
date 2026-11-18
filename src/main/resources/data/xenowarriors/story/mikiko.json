@@ -1,0 +1,161 @@
+{
+  "path": "mikiko",
+  "title": "Mikiko: Kitsune's Farm",
+  "hub": "farm",
+  "unlock": "mikiko",
+  "npcs": ["mikiko", "zane", "garry", "stevie", "fox_girl"],
+  "missions": [
+    {
+      "id": "m1", "title": "The Job Interview", "karma": 0, "lvl": 1,
+      "desc": "Mikiko is handing out flyers for Kitsune's Farm.",
+      "steps": [
+        {"type": "scene", "place": "train_station", "npcs": ["mikiko", "zane"], "meet": ["mikiko", "zane"], "lines": [
+          {"s": "narrator", "t": "Year 100. Mikiko's second day in the new world. He's looking for farm workers."},
+          {"s": "mikiko", "t": "Hey! I'm Mikiko. You looking for a job? Good old farm work - cutting grass, selling fruit.", "group": "Hey! I'm Mikiko. Y'all looking for work? Good old farm work - cutting grass, selling fruit."},
+          {"s": "you", "t": "...Sure."},
+          {"s": "zane", "t": "And me! Zane the Magical Mage! I need money to harness my magical power!"},
+          {"s": "mikiko", "t": "Magic, huh? Where I'm from we call that Karma. Watch - fire!"},
+          {"s": "zane", "t": "INCREDIBLE!! You must teach me!"},
+          {"s": "mikiko", "t": "Interview's tomorrow, 12:00 at the farm. See y'all there."}
+        ]},
+        {"type": "scene", "place": "farm", "npcs": ["mikiko", "zane", "fox_girl"], "lines": [
+          {"s": "fox_girl", "n": "Kitsune", "t": "Welcome. I'm Kitsune. Next - you. State what you can do.", "group": "Welcome. I'm Kitsune. You lot - state what you can do."},
+          {"s": "you", "t": "...I can fight."},
+          {"s": "fox_girl", "n": "Kitsune", "t": "(Hm. Decent Karma.) Good. The land has gangs and wild animals on it.", "sky": "(A Skylander? Strong Karma.) Good. The land has gangs and wild animals on it."},
+          {"s": "zane", "t": "Behold my spell!"},
+          {"s": "fox_girl", "n": "Kitsune", "t": "That's cute. Incomplete, but cute. You're both hired.", "group": "That's cute. Incomplete, but cute. You're all hired."},
+          {"s": "mikiko", "t": "Fox Gi- I mean Kitsune hired another worker? Nice. Welcome to the farm!", "group": "Fox Gi- I mean Kitsune hired more workers? Nice. Welcome to the farm!"},
+          {"s": "fox_girl", "n": "Kitsune", "t": "First job: clear the freeloaders off my land. Call it training."}
+        ]},
+        {"type": "fight", "place": "farm", "obj": "Clear the gangs and wild animals off the farmland", "allies": ["mikiko", "zane"], "waves": [
+          [{"e": "wolf", "n": 4}],
+          [{"e": "gang", "n": 4}],
+          [{"e": "bear", "n": 2}]
+        ]}
+      ],
+      "reward": {"money": 150, "bond": {"mikiko": 10, "zane": 10}}
+    },
+    {
+      "id": "m2", "title": "The Farmland Rap Battle", "karma": 1500, "lvl": 2,
+      "desc": "Two brothers won't get off the farmland - unless someone beats them in a rap battle.",
+      "steps": [
+        {"type": "scene", "place": "farm", "npcs": ["mikiko", "zane", "garry", "stevie"], "meet": ["garry", "stevie"], "lines": [
+          {"s": "mikiko", "t": "2nd week at the farm and... this sucks."},
+          {"s": "zane", "t": "Remember what Kitsune said - it's training! ...Wait, you hear that? A gang!"},
+          {"s": "garry", "t": "Steve, you can't set up here. It's OUR turf."},
+          {"s": "stevie", "t": "I challenge you, Garry! ...To a rap off!"},
+          {"s": "mikiko", "t": "Wait... what?!"},
+          {"s": "zane", "t": "You're on our farmland! I challenge you - if I lose I'll never rap again! I'm Zane the mythical and magical creature, I'm the one who's going to beat ya."},
+          {"s": "garry", "t": "Who let him cook! ...You lost, mage."},
+          {"s": "zane", "t": "My rap career is over. {You}, it's up to you!", "group": "My rap career is over. Somebody - it's up to you!"},
+          {"s": "stevie", "t": "Alright new kid. I'm Purple Stevie and you best believe me, I'll win this rap today - go!"},
+          {"s": "you", "t": "...", "choice": [
+            {"text": "\"Your bars are borrowed, your brother wrote 'em first.\"", "set": "rap_good", "reply": [{"s": "garry", "t": "SHIIIT! He's not wrong, Stevie!"}]},
+            {"text": "\"I'm on the farm, I plant seeds, you're the weeds.\"", "set": "rap_good", "reply": [{"s": "zane", "t": "OH SNAP! Because it's a FARM!"}]},
+            {"text": "\"...Yeah.\"", "set": "rap_bad", "reply": [{"s": "stevie", "t": "That's it? Hahaha!"}]}
+          ]},
+          {"s": "mikiko", "if": "rap_bad", "t": "I got this. I'm Mikiko, the Fox King, the one that brings fire - next time I see you, I'll hand you a job application!"},
+          {"s": "garry", "t": "Nah, that was cold. Y'all won fair and square. We'll leave."},
+          {"s": "stevie", "t": "Fun battle though, yo."}
+        ]}
+      ],
+      "reward": {"money": 150, "bond": {"garry": 15, "stevie": 15, "zane": 5}}
+    },
+    {
+      "id": "m3", "title": "Opening Day", "karma": 2500, "lvl": 3, "extra": true,
+      "desc": "Kitsune's Farm Store opens. Everyone and their mama shows up - and so do the pests.",
+      "steps": [
+        {"type": "scene", "place": "farm", "npcs": ["mikiko", "zane", "fox_girl"], "lines": [
+          {"s": "fox_girl", "n": "Kitsune", "t": "MIKIKO! Restock! {You}, the fields - something's eating my crops!", "group": "MIKIKO! Restock! You all, the fields - something's eating my crops!"},
+          {"s": "you", "t": "On it."}
+        ]},
+        {"type": "fight", "place": "farm", "obj": "Drive the pests out of the fields", "allies": ["zane"], "waves": [
+          [{"e": "wolf", "n": 5}],
+          [{"e": "gang", "n": 5, "captain": true}]
+        ]}
+      ],
+      "reward": {"money": 200, "bond": {"zane": 10, "mikiko": 5}}
+    },
+    {
+      "id": "m4", "title": "Long Time No See", "karma": 3500, "lvl": 3,
+      "desc": "Someone's following Mikiko and Zane on the way back.",
+      "steps": [
+        {"type": "scene", "place": "mountain_village", "npcs": ["mikiko", "zane"], "lines": [
+          {"s": "mikiko", "t": "Zane. Go back to the store. Someone's following us. Tell Fox Girl."},
+          {"s": "c_soul", "n": "C-Soul", "t": "Long time no see... Mikiko. I'm free from your blade now. And I want to kill you."},
+          {"s": "mikiko", "t": "No Hekublade? Fine - I've got these hands. Manifest greatness!!"}
+        ]},
+        {"type": "fight", "place": "mountain_village", "obj": "Beat the C-Soul with Mikiko", "allies": ["mikiko"], "waves": [
+          [{"e": "corrupted_soul", "n": 3}],
+          [{"e": "csoul_boss", "boss": true, "name": "C-Soul"}]
+        ]},
+        {"type": "scene", "place": "mountain_village", "npcs": ["mikiko", "zane", "fox_girl"], "lines": [
+          {"s": "fox_girl", "n": "Kitsune", "t": "Don't worry, I handled the rest. Scared the soul right out of him."},
+          {"s": "mikiko", "t": "I was gone like ten seconds!"},
+          {"s": "fox_girl", "n": "Kitsune", "t": "And you grabbed a book transporter from the Elementalist School? That enrolls you. Have fun at school."},
+          {"s": "mikiko", "t": "NO! I don't wanna go back to school!!"}
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"mikiko": 15}}
+    },
+    {
+      "id": "m5", "title": "The Elementalist School", "karma": 4500, "lvl": 4,
+      "desc": "First day of class. The teachers are... ghosts?",
+      "steps": [
+        {"type": "scene", "place": "school", "npcs": ["mikiko", "zane"], "lines": [
+          {"s": "henery", "n": "Henery", "t": "I came from a sky island. Found this school flying around. I'm a 2nd year!"},
+          {"s": "teacher", "n": "Teacher", "t": "Today: Recarnagans and Memory Chasers. Then Elemental Modifications. To finish D rank early - control an element."},
+          {"s": "mikiko", "t": "Wait... that's it? Watch this."},
+          {"s": "teacher", "n": "Teacher", "t": "Wow, great job Mikiko. And you, new student - show me.", "group": "Wow, great job Mikiko. And you new students - show me."}
+        ]},
+        {"type": "fight", "place": "school", "obj": "Show the teacher your element: break the targets", "waves": [
+          [{"e": "dummy", "n": 6}]
+        ]},
+        {"type": "scene", "place": "school", "npcs": ["mikiko", "zane"], "lines": [
+          {"s": "teacher", "n": "Teacher", "t": "Excellent. You don't have to come back until next year."},
+          {"s": "zane", "t": "...I can't use my element yet. Henery, guess we'll help each other."}
+        ]}
+      ],
+      "reward": {"money": 200, "bond": {"zane": 10, "mikiko": 5}}
+    },
+    {
+      "id": "m6", "title": "The Haunted Halls", "karma": 5500, "lvl": 5, "extra": true,
+      "desc": "Something real is hiding behind the school's fake ghosts.",
+      "steps": [
+        {"type": "scene", "place": "school", "npcs": ["zane"], "lines": [
+          {"s": "zane", "t": "The ghosts are fake, to scare people off... but THAT one isn't. {You}, help!", "group": "The ghosts are fake, to scare people off... but THOSE aren't. Help!"}
+        ]},
+        {"type": "fight", "place": "school", "obj": "Clear the real threats out of the school", "allies": ["zane"], "waves": [
+          [{"e": "elementalist", "n": 3}],
+          [{"e": "dark_possessed", "n": 3}]
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"zane": 15}}
+    },
+    {
+      "id": "m7", "title": "A New Hekublade", "karma": 6500, "lvl": 6,
+      "desc": "A powerful man is coming for the village. Mikiko needs his blade - and Rhalix.",
+      "steps": [
+        {"type": "scene", "place": "farm", "npcs": ["mikiko", "fox_girl"], "lines": [
+          {"s": "fox_girl", "n": "Kitsune", "t": "Someone stronger than you and Rhalix broke out of a Government facility. He's coming here."},
+          {"s": "fox_girl", "n": "Kitsune", "t": "So... I made you a new Hekublade. Better than the last. Making it took my power - I can't help you fight."},
+          {"s": "mikiko", "t": "You could've beaten him THEN made it!"},
+          {"s": "fox_girl", "n": "Kitsune", "t": "...Yeah, I guess. Go find Rhalix. Take our new worker.", "group": "...Yeah, I guess. Go find Rhalix. Take the new workers."},
+          {"s": "you", "t": "*grabs gear*"}
+        ]},
+        {"type": "fight", "place": "mountain_village", "obj": "The C-Souls are after the Hekublade - fight them off", "allies": ["mikiko"], "waves": [
+          [{"e": "corrupted_soul", "n": 5}],
+          [{"e": "corrupted_villager", "n": 4}],
+          [{"e": "csoul_boss", "boss": true, "name": "Corrupted Guy 3"}]
+        ]},
+        {"type": "scene", "place": "mountain_village", "npcs": ["mikiko", "rhalix"], "meet": ["rhalix"], "lines": [
+          {"s": "rhalix", "t": "Don't worry Mikiko, I got your back!"},
+          {"s": "mikiko", "t": "Rhalix! I was waiting for you to jump in! This one works the farm with me.", "group": "Rhalix! I was waiting for you to jump in! These guys work the farm with me."},
+          {"s": "rhalix", "t": "Farm work? Haha. Xeno Warrior reunion battle - winner's leader!"},
+          {"s": "narrator", "t": "...and then a Government car pulled up. But that's another story."}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"mikiko": 20, "rhalix": 10}}
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "path": "sr",
+  "title": "The Sky Rebellion",
+  "hub": "sr_hideout",
+  "unlock": "senju",
+  "npcs": ["senju", "logan", "keita", "kill", "persephone"],
+  "missions": [
+    {
+      "id": "s1", "title": "Recruit", "karma": 7000, "lvl": 6,
+      "desc": "Weeks before the Sky Patrol ever heard of them, the Sky Rebellion takes in a new member.",
+      "steps": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "logan", "keita", "kill", "ava", "persephone"], "meet": ["senju", "logan", "keita", "kill", "ava", "persephone"], "lines": [
+          {"s": "narrator", "t": "The Sky Rebellion's hideout. Fallen Skylanders, banished by the Royals - and one newcomer."},
+          {"s": "senju", "n": "SR Leader", "t": "This one joins us. Don't question it.", "group": "These ones join us. Don't question it."},
+          {"s": "logan", "t": "A new fallen one? Good. More hands for the Capital.", "ground": "...Not even a Skylander. Why is the leader letting them in?"},
+          {"s": "keita", "t": "Hm? New guy? ...zzz.", "ground": "Father's letting a human join? ...Weird. Whatever. ...zzz."},
+          {"s": "kill", "n": "???", "t": "Don't get comfortable. You're the weakest one here now. Not me.", "ground": "A human? Father must see something in you. I don't."},
+          {"s": "ava", "t": "(Happy) Ooh, are they bringing us a vessel? Persephone and I have been waiting forever!"},
+          {"s": "persephone", "t": "Me first, Ava. ...Hi, new person. Be nice to us demons, okay?"},
+          {"s": "you", "t": "...Okay."},
+          {"s": "senju", "n": "SR Leader", "t": "Logan. Keita. Take the newcomer to the Capital. We finish taking it today.", "group": "Logan. Keita. Take the newcomers to the Capital. We finish taking it today."}
+        ]}
+      ],
+      "reward": {"money": 150, "bond": {"logan": 5, "keita": 5, "kill": 5, "ava": 5, "persephone": 5}}
+    },
+    {
+      "id": "s2", "title": "The Capital Falls", "karma": 7500, "lvl": 7,
+      "desc": "Help Logan and Keita take full control of the Royal Capital.",
+      "steps": [
+        {"type": "fight", "place": "royal_capital", "obj": "Take the Royal Capital: beat the knights loyal to the Royals", "allies": ["logan", "keita"], "waves": [
+          [{"e": "knight", "n": 5}],
+          [{"e": "knight", "n": 5}],
+          [{"e": "knight", "n": 4, "captain": true}]
+        ]},
+        {"type": "scene", "place": "royal_capital", "npcs": ["logan", "keita"], "lines": [
+          {"s": "logan", "t": "(Confident) Full control of the Royal Capital. Keita, you can thank me."},
+          {"s": "keita", "t": "I helped from the other side of the Capital."},
+          {"s": "logan", "t": "You were SLEEPING the whole time! {You} did more than you.", "group": "You were SLEEPING the whole time! The new ones did more than you."},
+          {"s": "you", "t": "...He snores."},
+          {"s": "keita", "t": "Hehe. I like this one."}
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"logan": 10, "keita": 10}}
+    },
+    {
+      "id": "s3", "title": "Portal Practice", "karma": 8500, "lvl": 7, "extra": true,
+      "desc": "Kill shows you Aurora's room and portal tech - by throwing you into it.",
+      "steps": [
+        {"type": "scene", "place": "aurora_street", "npcs": ["kill"], "lines": [
+          {"s": "kill", "t": "Aurora's rooms. A whole fight here and nobody in the city sees a thing. Watch."},
+          {"s": "kill", "t": "First test - survive what I send through."}
+        ]},
+        {"type": "fight", "place": "aurora_street", "obj": "Survive Kill's portal test", "allies": ["kill"], "waves": [
+          [{"e": "gov", "n": 4}],
+          [{"e": "sky_hater", "n": 5}]
+        ]},
+        {"type": "scene", "place": "aurora_street", "npcs": ["kill"], "lines": [
+          {"s": "kill", "t": "...Not bad. Just call me Kill for now. The leader's the only one who knows my real name."}
+        ]}
+      ],
+      "reward": {"money": 200, "bond": {"kill": 15}}
+    },
+    {
+      "id": "s4", "title": "A New Captain", "karma": 9500, "lvl": 8,
+      "desc": "Ava is gone. The hideout is burned. Lexy - Persephone - walks in.",
+      "steps": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "kill", "persephone"], "lines": [
+          {"s": "kill", "t": "Leader... they killed Ava. And the SP knows a hideout. We have to burn it."},
+          {"s": "senju", "n": "SR Leader", "t": "Ava was weak. You never should have let her take a Royal."},
+          {"s": "persephone", "n": "Persephone", "t": "...Was what I heard about Ava true?"},
+          {"s": "senju", "n": "SR Leader", "t": "You fused with your demon. Like me. You're captain now, Persephone."},
+          {"s": "kill", "t": "Captain?! But I thought I was-"},
+          {"s": "senju", "n": "SR Leader", "t": "Shut it. Now - the Sky Patrol is coming. Hold them off while we burn this place."}
+        ]},
+        {"type": "fight", "place": "sr_hideout", "obj": "Hold off the Sky Patrol's raid while the hideout burns", "allies": ["persephone", "kill"], "waves": [
+          [{"e": "skylander", "n": 5}],
+          [{"e": "skylander", "n": 4}, {"e": "sky_hater", "n": 3}]
+        ]},
+        {"type": "scene", "place": "sr_hideout", "npcs": ["persephone"], "lines": [
+          {"s": "persephone", "t": "Thanks for watching my back. Ava would've liked you.", "sky": "Thanks for watching my back. A real Skylander, too. Ava would've liked you."}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"persephone": 15, "kill": 5, "senju": 10}}
+    },
+    {
+      "id": "s5", "title": "Betrayal", "karma": 11000, "lvl": 9,
+      "desc": "\"Betraying the Government is our next step to greatness.\"",
+      "steps": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "logan", "keita", "kill", "persephone"], "lines": [
+          {"s": "senju", "n": "Senju", "t": "We partnered with the Government long enough. They sold us out the day they armed Aurora."},
+          {"s": "senju", "n": "Senju", "t": "The newcomer leads the first strike. Prove me right.", "group": "The newcomers lead the first strike. Prove me right."},
+          {"s": "keita", "t": "Father never says that. ...Don't mess it up.", "ground": "Father trusts a human with this? ...Okay. Don't mess it up."}
+        ]},
+        {"type": "fight", "place": "gov_facility", "obj": "Strike the Government facility", "allies": ["logan", "keita", "persephone"], "waves": [
+          [{"e": "gov", "n": 5}],
+          [{"e": "gov_elite", "n": 4}],
+          [{"e": "ultima_proto", "boss": true, "name": "Government Prototype"}]
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["senju", "logan"], "lines": [
+          {"s": "senju", "n": "Senju", "t": "Good. The Government will remember the Sky Rebellion. And you."},
+          {"s": "senju", "n": "Senju", "t": "Rhalix still owes me a battle. Not yet. ...You've earned your place here."}
+        ]}
+      ],
+      "reward": {"money": 600, "bond": {"senju": 20, "logan": 10, "keita": 10}}
+    }
+  ]
+}

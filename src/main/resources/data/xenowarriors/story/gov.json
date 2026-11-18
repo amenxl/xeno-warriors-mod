@@ -1,0 +1,98 @@
+{
+  "path": "gov",
+  "title": "The Government",
+  "hub": "gov_facility",
+  "unlock": "kyle",
+  "npcs": ["kyle", "max", "technica", "yuri"],
+  "missions": [
+    {
+      "id": "g1", "title": "C3, Year 95", "karma": 7000, "lvl": 6,
+      "desc": "Five years ago. A Government facility in the city of Aurora. Your first day in C3.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["max", "technica", "kyle"], "meet": ["max", "technica", "kyle"], "skyBond": {"kyle": 20}, "lines": [
+          {"s": "narrator", "t": "Year 95. Five years ago, at a Government facility in the city of Aurora."},
+          {"s": "technica", "t": "Sintrie! Get up! The new hire's here and you're asleep again.", "group": "Sintrie! Get up! The new hires are here and you're asleep again."},
+          {"s": "max", "n": "Sintrie", "t": "Uh? ...Morning, Tech. Welcome to C3. Don't let her steal your stuff.", "sky": "Uh? ...Another Skylander? Huh. Nice not being the only one in this place for once."},
+          {"s": "technica", "t": "I'm Technica - Tech. I turn people into demons for a living... and I hate it. We help who we can."},
+          {"s": "you", "t": "...Got it."},
+          {"s": "kyle", "t": "Oh no, my camouflage body wore off. Hello, new C3.", "sky": "Oh no, my camouflage body wore off. ...Well, well. A Skylander in C3. Fascinating. We should talk - in my lab."},
+          {"s": "max", "n": "Sintrie", "t": "Kyle. No military equipment inside the facility.", "sky": "Kyle. No. Leave them alone."},
+          {"s": "kyle", "t": "I'm C2 now - human modifications. Run along, you two lovebirds.", "sky": "I'm C2 now. Human modifications. But Skylanders... Skylanders are my favorite. Come by any time."}
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["kyle", "technica", "yuri"], "meet": ["yuri"], "lines": [
+          {"s": "max", "n": "Sintrie", "t": "Who's the new girl in green?"},
+          {"s": "kyle", "t": "Yuri Tenjo. Fourteen. Highest score ever - straight to C1. Her family ran from the demon draft."},
+          {"s": "kyle", "t": "Rumor is her big brother's being tested on for Project Ultima. Weak people are better used as weapons."},
+          {"s": "technica", "t": "NO! Everyone has a purpose, Kyle!"},
+          {"s": "you", "t": "...", "choice": [
+            {"text": "Side with Technica.", "set": "tech_side", "reply": [{"s": "technica", "t": "See? Even the new one gets it.", "group": "See? Even the new ones get it."}]},
+            {"text": "Say nothing.", "set": "quiet", "reply": [{"s": "kyle", "t": "Smart. Stay quiet, stay useful."}]}
+          ]}
+        ]}
+      ],
+      "reward": {"money": 150, "bond": {"technica": 10, "max": 10}}
+    },
+    {
+      "id": "g2", "title": "Escape Keys", "karma": 7500, "lvl": 7,
+      "desc": "Technica secretly gives the gas patients a way out. Help her hand out the keys.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["technica", "max"], "lines": [
+          {"s": "technica", "t": "Fifty patients for the demon gas. I made each one a key to the escape rooms. Help me get them out before the guards notice."},
+          {"s": "max", "n": "Sintrie", "t": "I'll watch the cameras. Go."}
+        ]},
+        {"type": "fight", "place": "gov_facility", "obj": "Keep the guards off Technica while the patients escape", "allies": ["technica"], "waves": [
+          [{"e": "gov", "n": 4}],
+          [{"e": "gov", "n": 5}]
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["technica", "max"], "meet": ["zack", "kaitlyn"], "lines": [
+          {"s": "technica", "t": "Five stayed. Ava, Barry, Kaitlyn, Persephone, Zack. Why would anyone stay?"},
+          {"s": "max", "n": "Sintrie", "t": "Maybe they've got nothing left out there. You can't help everyone, Tech."},
+          {"s": "you", "t": "...You helped forty-five."},
+          {"s": "technica", "t": "(smiles) ...Yeah. I did. Thanks.", "group": "(smiles) ...Yeah. We did. Thanks, all of you."}
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"technica": 15, "max": 10}}
+    },
+    {
+      "id": "g3", "title": "Kyle's Errand", "karma": 8500, "lvl": 7, "extra": true,
+      "desc": "Kyle needs test data from C2's modified soldiers. He asked for you specifically.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["kyle"], "lines": [
+          {"s": "kyle", "t": "My modified soldiers need a real opponent. Don't worry, they're expendable. So are you, mostly.", "sky": "My modified soldiers need a real opponent - and a Skylander's combat data is priceless. Do try not to die. I'd hate to waste you."}
+        ]},
+        {"type": "fight", "place": "gov_facility", "obj": "Beat Kyle's modified soldiers", "waves": [
+          [{"e": "gov_elite", "n": 4}],
+          [{"e": "gov_elite", "n": 4, "captain": true}]
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["kyle"], "lines": [
+          {"s": "kyle", "t": "Excellent data. Will Break works better on them now. Thank you.", "sky": "Excellent. EXCELLENT. You're even better than I hoped. We'll do this again."}
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"kyle": 15}}
+    },
+    {
+      "id": "g4", "title": "Project Ultima", "karma": 9500, "lvl": 8,
+      "desc": "Security alert x10. Project Ultima has broken out.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["technica", "max"], "lines": [
+          {"s": "narrator", "t": "Intercom: Security alert x10. Project Ultima has broken out."},
+          {"s": "max", "n": "Sintrie", "t": "Tech, we have to go!"},
+          {"s": "technica", "t": "Not without my patients! I'm putting a shield on them. Hold him off - just for a minute!"}
+        ]},
+        {"type": "survive", "place": "gov_facility", "seconds": 60, "obj": "Hold off Project Ultima while Technica shields the patients", "allies": ["max"], "waves": [
+          [{"e": "ultima_proto", "boss": true, "name": "Project Ultima"}, {"e": "gov", "n": 3}]
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["max", "kyle"], "lines": [
+          {"s": "narrator", "t": "The facility blew up."},
+          {"s": "technica", "t": "(In pain) Sintrie... protect my patients..."},
+          {"s": "max", "n": "Sintrie", "t": "Tech? TECH! ...She's gone."},
+          {"s": "kyle", "t": "Not a mark on me. Invisible AND invincible. Sintrie - a deal. I take Tech's patients, you give me your blood. Deal?"},
+          {"s": "max", "n": "Sintrie", "t": "...Deal. Just save them..."},
+          {"s": "kyle", "t": "And you. You saw everything. ...I'll remember you.", "sky": "And you - another Skylander, still standing. I'll remember you. Oh, I will."},
+          {"s": "narrator", "t": "Sintrie woke up five years later with no name. He called himself Max."}
+        ]}
+      ],
+      "reward": {"money": 600, "bond": {"kyle": 15, "max": 20, "technica": 10}}
+    }
+  ]
+}

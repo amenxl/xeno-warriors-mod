@@ -43,6 +43,11 @@ public record SelectCharacterPacket(CharacterType type) {
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("Season " + msg.type.season() + " content is locked").withStyle(net.minecraft.ChatFormatting.RED), true);
             return;
         }
+        String story = com.xenowarriors.story.Story.lockReason(player, msg.type);
+        if (story != null) {                  // story mode: your own character, or someone you've bonded with enough
+            player.displayClientMessage(net.minecraft.network.chat.Component.literal(story).withStyle(net.minecraft.ChatFormatting.RED), true);
+            return;
+        }
         for (var b : com.xenowarriors.bot.PartyBots.bots(player)) if (b.character() == msg.type) {
             player.displayClientMessage(net.minecraft.network.chat.Component.literal(msg.type.getDisplayName().getString() + " is your bot teammate right now - dismiss them first").withStyle(net.minecraft.ChatFormatting.RED), true);
             ModNetwork.sendToPlayer(new OpenSelectScreenPacket(), player);

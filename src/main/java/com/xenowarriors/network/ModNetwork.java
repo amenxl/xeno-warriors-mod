@@ -550,6 +550,12 @@ public final class ModNetwork {
                 .encoder(PhoneTeamPacket::encode).decoder(PhoneTeamPacket::decode).consumerMainThread(PhoneTeamPacket::handle).add();
         CHANNEL.messageBuilder(NcStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (the new characters' forms / Hidden Will)
                 .encoder(NcStatePacket::encode).decoder(NcStatePacket::decode).consumerMainThread(NcStatePacket::handle).add();
+        CHANNEL.messageBuilder(StoryStatePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)   // (story mode)
+                .encoder(StoryStatePacket::encode).decoder(StoryStatePacket::decode).consumerMainThread(StoryStatePacket::handle).add();
+        CHANNEL.messageBuilder(StoryDialoguePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(StoryDialoguePacket::encode).decoder(StoryDialoguePacket::decode).consumerMainThread(StoryDialoguePacket::handle).add();
+        CHANNEL.messageBuilder(StoryActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(StoryActionPacket::encode).decoder(StoryActionPacket::decode).consumerMainThread(StoryActionPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

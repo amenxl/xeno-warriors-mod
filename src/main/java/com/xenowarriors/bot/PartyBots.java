@@ -315,6 +315,7 @@ public final class PartyBots {
             if ((t == CharacterType.AIONI && taken.contains("rhalix")) || (t == CharacterType.RHALIX && taken.contains("aioni"))) {
                 p.sendSystemMessage(Component.literal("Ai-oni and Rhalix can never be in the same party.").withStyle(ChatFormatting.RED)); continue; }
             if (com.xenowarriors.character.Seasons.highest(p.server) < t.season()) { p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is Season " + t.season() + " content.").withStyle(ChatFormatting.RED)); continue; }
+            if (!com.xenowarriors.story.Story.botAllowed(p, t)) { p.sendSystemMessage(Component.literal("Story mode: you haven't met " + t.getDisplayName().getString() + " yet.").withStyle(ChatFormatting.RED)); continue; }
             if (p.getPersistentData().getLong(REJOIN + id) > p.level().getGameTime()) {
                 p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is still recovering - try again later.").withStyle(ChatFormatting.RED)); continue;
             }

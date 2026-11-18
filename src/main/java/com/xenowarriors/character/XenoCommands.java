@@ -260,6 +260,31 @@ public final class XenoCommands {
                     say(ctx, gray("Lunar Form locked again - pass the Lunar trial to get it back."));
                     return 1;
                 })));
+        // story mode (Season 1): your own character, met people as bots, bonds to play them
+        root.then(Commands.literal("story")
+                .executes(ctx -> { com.xenowarriors.story.StoryRun.openMenu(ctx.getSource().getPlayerOrException()); return 1; })
+                .then(Commands.literal("start").executes(ctx -> { com.xenowarriors.story.Story.start(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("stop").executes(ctx -> { com.xenowarriors.story.Story.stop(ctx.getSource().getPlayerOrException()); return 1; }))
+                .then(Commands.literal("status").executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    var m = com.xenowarriors.story.Story.mission(p);
+                    say(ctx, gray("Story " + (com.xenowarriors.story.Story.active(p) ? "on" : "off") + ". Done: " + com.xenowarriors.story.Story.done(p)
+                            + ". Now: " + (m == null ? "-" : m.title() + " (Karma Level " + m.karma() + ")") + ". Met: " + com.xenowarriors.story.Story.met(p)));
+                    return 1;
+                }))
+                .then(Commands.literal("skip").requires(src -> src.hasPermission(2)).executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    var m = com.xenowarriors.story.Story.mission(p);
+                    if (m == null) { say(ctx, gray("No mission to skip.")); return 0; }
+                    com.xenowarriors.story.Story.skip(p);
+                    say(ctx, gray("Skipped \"" + m.title() + "\"."));
+                    return 1;
+                }))
+                .then(Commands.literal("reset").requires(src -> src.hasPermission(2)).executes(ctx -> {
+                    com.xenowarriors.story.Story.reset(ctx.getSource().getPlayerOrException());
+                    say(ctx, gray("Story progress wiped."));
+                    return 1;
+                })));
         root.then(Commands.literal("season")
                 .executes(ctx -> { say(ctx, gray("Story content unlocked up to Season " + Seasons.highest(ctx.getSource().getServer()) + ".")); return 1; })
                 .then(Commands.literal("unlock").requires(src -> src.hasPermission(2))

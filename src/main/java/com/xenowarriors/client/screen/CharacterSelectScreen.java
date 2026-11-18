@@ -84,7 +84,9 @@ public class CharacterSelectScreen extends Screen {
     private static boolean taken(CharacterType t) {
         return t != null && t != ClientCharacterData.getLocal() && !com.xenowarriors.network.TakenCharsPacket.who(t).isEmpty() && com.xenowarriors.network.TakenCharsPacket.CLIENT_ANY_FREE;
     }
-    private static boolean pickable(CharacterType t) { return t != null && !locked(t) && !taken(t); }
+    private static boolean pickable(CharacterType t) { return t != null && !locked(t) && !taken(t) && !com.xenowarriors.client.story.StoryClient.locked(t); }
+    /** Story mode: not met yet (shown as a silhouette, like a locked season). */
+    private static boolean unmet(CharacterType t) { return com.xenowarriors.client.story.StoryClient.locked(t) && !com.xenowarriors.client.story.StoryClient.ch(t).getBoolean("met"); }
 
     private int tabH() { return height < 300 ? 18 : 26; }
 
@@ -182,7 +184,7 @@ public class CharacterSelectScreen extends Screen {
         // the big model on the left
         if (focus != null) {
             int cx = width * 22 / 100, feet = height - 50, size = Math.min((height - 70) * 10 / 28, width / 7);
-            if (locked(focus)) {
+            if (locked(focus) || unmet(focus)) {
                 g.drawCenteredString(font, "?", cx, height / 2 - 10, 0x555555);
             } else {
                 ClientCharacterData.beginPreview(focus);
@@ -199,6 +201,7 @@ public class CharacterSelectScreen extends Screen {
             g.drawString(font, locked(focus) ? Component.literal("???") : focus.getFullName(), 0, 0, 0xFFFFFF);
             g.pose().popPose();
             Component sub = locked(focus) ? Component.literal("Season " + focus.season() + " - /xeno season unlock " + focus.season())
+                    : com.xenowarriors.client.story.StoryClient.locked(focus) ? Component.literal(com.xenowarriors.client.story.StoryClient.lockText(focus)).withStyle(net.minecraft.ChatFormatting.RED)
                     : level(focus) > 0 ? Component.literal("").append(focus.getTitle()).append(Component.literal("   Lv." + level(focus)).withStyle(net.minecraft.ChatFormatting.GOLD)) : focus.getTitle();
             g.drawString(font, sub, 12, height - 26, locked(focus) ? 0xAA5555 : 0xCCCCCC);
             var busy = com.xenowarriors.network.BusyCharsPacket.of(focus);
@@ -243,14 +246,14 @@ public class CharacterSelectScreen extends Screen {
             g.fill(c.x - e, c.y - e, c.x + c.w + e, c.y + c.h + e, edge);
             g.fill(c.x, c.y, c.x + c.w, c.y + c.h, 0xFF17161C);
             g.fill(c.x, c.y, c.x + c.w, c.y + c.h / 2, 0x22000000 | tc);
-            if (c.type == null || locked(c.type)) {                   // locked: a dark silhouette
+            if (c.type == null || locked(c.type) || unmet(c.type)) {                   // locked: a dark silhouette
                 int cx = c.x + c.w / 2, cy = c.y + c.h / 2 - 6;
                 g.fill(cx - 8, cy - 14, cx + 8, cy + 2, 0xFF2A2A34);
                 g.fill(cx - 14, cy + 4, cx + 14, c.y + c.h - 12, 0xFF2A2A34);
                 g.drawCenteredString(font, "?", cx, cy - 9, 0xFF55555F);
                 g.fill(c.x, c.y + c.h - 11, c.x + c.w, c.y + c.h, 0xE0000000);
                 drawFit(g, c.type == null ? c.upcoming : "???", c.x + c.w / 2, c.y + c.h - 10, c.w - 4, 0x888888);
-                if (hov) g.renderTooltip(font, Component.literal(c.type == null ? c.upcoming + " - coming in a later update" : "Season " + c.type.season() + " content"), mouseX, mouseY);
+                if (hov) g.renderTooltip(font, Component.literal(c.type == null ? c.upcoming + " - coming in a later update" : unmet(c.type) && !locked(c.type) ? "Story mode: not met yet" : "Season " + c.type.season() + " content"), mouseX, mouseY);
                 continue;
             }
             // portrait: head and shoulders, zoomed in

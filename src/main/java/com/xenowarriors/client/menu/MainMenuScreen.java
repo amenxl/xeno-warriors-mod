@@ -63,6 +63,8 @@ public class MainMenuScreen extends Screen {
                 if (!com.xenowarriors.client.compat.DmzMenu.open() && minecraft.player != null)
                     minecraft.player.displayClientMessage(Component.literal("Couldn't open the DragonMineZ menu."), true);
             }));
+        l.add(new Entry("Story", "Season 1 Story Mode: play your own character through Rhalix's, Mikiko's, the Sky Rebellion's and the Government's stories.",
+                com.xenowarriors.client.story.StoryClient::open));   // (after the others, so they keep their places)
         l.add(new Entry("Guide", "How to play: combat, team attacks, party and bots, characters, modes, the world and progression.", () -> GuideScreen.open(this)));   // (last, so the others keep their places)
         entries = List.copyOf(l);
     }
