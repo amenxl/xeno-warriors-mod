@@ -33,11 +33,16 @@ final class PackBotBagTests {
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { mc.setScreen(null); UiTest.character(CharacterType.MIKIKO); PackTests.server(p -> {
             p.getPersistentData().remove("xw_bot_rejoin_rhalix");
+            PackTests.arena(p); PackTests.clear(p);   // (a fresh Rhalix, nothing left over from earlier parts to fight)
             if (bot(p) == null) PartyBots.spawn(p, CharacterType.RHALIX, null);
         }); }, 40));
         l.add(new Step(null, () -> PackTests.server(p -> {
             PartyBotEntity r = bot(p);
             if (r == null) { PackTests.check("botbag spawn", false, "no bot"); return; }
+            // (right by you: a bot chasing something walks out of reach and its bag closes)
+            PackTests.arena(p);
+            r.setTarget(null);
+            r.moveTo(p.getX() + 1.5, p.getY(), p.getZ(), 0F, 0F);
             r.inventory.clearContent();
             for (int i = 0; i < 6; i++) r.inventory.setItem(i * 7, new ItemStack(Items.COBBLESTONE, 10));
             r.inventory.setItem(BotInventory.tabStart(1) + 2, new ItemStack(Items.DIAMOND));   // (not a sword: the bot would take a weapon into its hand)
