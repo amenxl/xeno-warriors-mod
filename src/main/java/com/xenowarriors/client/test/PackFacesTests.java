@@ -44,6 +44,22 @@ final class PackFacesTests {
                         + " ef faces " + com.xenowarriors.client.compat.epicfight.NpcDetailPatchedLayer.FACES + " no face " + com.xenowarriors.client.compat.epicfight.NpcDetailPatchedLayer.NO_FACE);
             }, 2));
         }
-        l.add(new Step(null, () -> { mc.options.hideGui = false; PackTests.server(PackTests::clear); }, 3));
+        // (focus "packfacesdbg": the face drawn other ways on Epic Fight's NPCs, to see where it goes)
+        if (System.getenv().getOrDefault("XW_UITEST_FOCUS", "").contains("dbg")) for (String id : new String[]{"sr_member", "human"}) for (int mode = 1; mode <= 4; mode++) {
+            int md = mode;
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                PackTests.arena(p); PackTests.clear(p);
+                var e = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(com.xenowarriors.XenoWarriors.id(id)).create(p.serverLevel());
+                if (!(e instanceof Mob m)) return;
+                m.moveTo(p.getX(), p.getY(), p.getZ() + 2.6, 180F, 0F);
+                m.setYRot(180F); m.setYHeadRot(180F); m.yBodyRot = 180F; m.yBodyRotO = 180F; m.yRotO = 180F;
+                m.setNoAi(true); m.addTag("xw_pack"); m.setPersistenceRequired();
+                p.serverLevel().addFreshEntity(m);
+                p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0F, 4F);
+                com.xenowarriors.client.compat.epicfight.NpcDetailPatchedLayer.DEBUG_FACE = md;
+            }), 25));
+            l.add(new Step("facedbg_" + id + "_" + md, () -> {}, 2));
+        }
+        l.add(new Step(null, () -> { com.xenowarriors.client.compat.epicfight.NpcDetailPatchedLayer.DEBUG_FACE = 0; mc.options.hideGui = false; PackTests.server(PackTests::clear); }, 3));
     }
 }

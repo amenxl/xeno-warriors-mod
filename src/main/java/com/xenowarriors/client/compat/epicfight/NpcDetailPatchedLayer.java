@@ -32,6 +32,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
     private static final Map<String, SkinnedMesh[]> BAKED = new HashMap<>();
     private static final Map<String, SkinnedMesh> OUT = new HashMap<>();
     /** (tests) faces drawn on Epic Fight's body, by look; looks drawn with no face mesh. */
+    public static int DEBUG_FACE = 0;
     public static final Map<String, Integer> FACES = new java.util.concurrent.ConcurrentHashMap<>(), NO_FACE = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static String look(LivingEntity e) {
@@ -64,7 +65,13 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
         if (mesh[1] == null) NO_FACE.merge(key, 1, Integer::sum);
         if (mesh[1] != null) {
             ResourceLocation face = NpcRenderer.tex(key + (darkened ? "_face_dark" : "_face"));
-            mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+            switch (DEBUG_FACE) {                                                             // (tests: finding why faces don't show on Epic Fight's NPCs)
+                case 1 -> mesh[1].draw(pose, buffers, RenderType.entitySolid(face), light, 1F, 0.2F, 0.2F, 1F, overlay, patch.getArmature(), poses);
+                case 2 -> { pose.pushPose(); pose.translate(0, 0, -0.06); mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses); pose.popPose(); }
+                case 3 -> { pose.pushPose(); pose.translate(0, 0, 0.06); mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses); pose.popPose(); }
+                case 4 -> mesh[0].draw(pose, buffers, RenderType.entitySolid(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+                default -> mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+            }
             FACES.merge(key, 1, Integer::sum);
             if (possessed || foe) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);   // (glowing eyes)
         }
