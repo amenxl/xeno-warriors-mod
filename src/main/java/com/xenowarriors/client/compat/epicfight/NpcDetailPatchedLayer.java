@@ -33,6 +33,8 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
     private static final Map<String, SkinnedMesh> OUT = new HashMap<>();
     /** (tests) faces drawn on Epic Fight's body, by look; looks drawn with no face mesh. */
     public static int DEBUG_FACE = 0;
+    /** How far (blocks) the face is brought forward on Epic Fight's mob body. */
+    public static final float FACE_OUT = 0.06F;
     public static final Map<String, Integer> FACES = new java.util.concurrent.ConcurrentHashMap<>(), NO_FACE = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static String look(LivingEntity e) {
@@ -70,10 +72,17 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
                 case 2 -> { pose.pushPose(); pose.translate(0, 0, -0.06); mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses); pose.popPose(); }
                 case 3 -> { pose.pushPose(); pose.translate(0, 0, 0.06); mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses); pose.popPose(); }
                 case 4 -> mesh[0].draw(pose, buffers, RenderType.entitySolid(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
-                default -> mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+                default -> {
+                    // Epic Fight's mob head sits a touch further out than the player's: the face (a flat sheet just in
+                    // front of a player's head) ended up inside it, hidden. Brought forward a little, it shows.
+                    pose.pushPose();
+                    pose.translate(0, 0, -FACE_OUT);
+                    mesh[1].draw(pose, buffers, RenderType.entityCutoutNoCull(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+                    if (possessed || foe) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);   // (glowing eyes)
+                    pose.popPose();
+                }
             }
             FACES.merge(key, 1, Integer::sum);
-            if (possessed || foe) mesh[1].draw(pose, buffers, RenderType.eyes(face), light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);   // (glowing eyes)
         }
         if (com.xenowarriors.client.cel.Cel.outline() && OUTLINE_ON_EF) {                              // cel-shading: the ink outline, as without Epic Fight
             float ink = com.xenowarriors.client.cel.CelOutline.INK;
