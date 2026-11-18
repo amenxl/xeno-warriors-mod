@@ -950,7 +950,7 @@ public final class NcSkills {
         @Override public int getCooldownTicks() { return 4 * 20; }
         @Override public int getKarmaCost() { return 5; }
         @Override public boolean use(ServerPlayer p) {
-            LivingEntity t = front(p, 4);
+            LivingEntity t = front(p, 5);
             if (t == null) return false;
             p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
             hit(p, t, 8F, false);

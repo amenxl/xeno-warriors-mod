@@ -45,7 +45,7 @@ public record SkillAnimPacket(int entityId, int anim, boolean airborne) {
                       "freestyle_bars", "tenjo_medical", "open_sky_ground", "past_mages", "thunder_judgement", "devil_unleashed", "fox_heal",
                       "output_surge", "living_weapon",
                       "override", "modification_surge", "weapon_of_will", "vanish", "dark_karma_overload", "taunt", "ava_unleashed", "sisters_vengeance",
-                      "rebellions_end", "demon_form", "heavenly_demon", "cage_fighter", "protect_ava"},
+                      "rebellions_end", "demon_form", "heavenly_demon", "cage_fighter", "protect_ava", "devil_self_split"},
             {"GROUND", "table_breaker", "gravity_boots", "body_slam", "ice_spell", "devil_flame", "kneel", "ground_pound"},
             {"TYPE", "camera_hack", "firewall", "elevator_hack", "virus_upload", "visor_scan"},
             {"SWING", "batter_up", "batter_shoot", "broom_smack", "mass_cut"},
