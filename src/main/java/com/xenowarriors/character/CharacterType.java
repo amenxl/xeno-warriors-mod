@@ -85,8 +85,8 @@ public enum CharacterType {
             case YURI -> new String[]{"Default", "C1 PJs"};
             case KYRIE -> new String[]{"Default", "Season 2"};
             case MAX, SAM -> new String[]{"Default", "Royal Capital", "Season 3"};
-            case AVA, PERSEPHONE -> new String[]{"Sky Rebellion"};
-            case CHASE -> new String[]{"Keeper"};
+            case AVA, PERSEPHONE -> new String[]{"Sky Rebellion", "Casual"};
+            case CHASE -> new String[]{"Keeper", "Navy Cap"};
             default -> new String[]{"Default"};
         };
     }
@@ -108,7 +108,8 @@ public enum CharacterType {
             case YURI -> new String[]{"", "c1pjs"};
             case KYRIE -> new String[]{"", "s2"};
             case MAX, SAM -> new String[]{"", "royal", "s3"};
-            case AVA, PERSEPHONE -> new String[]{"", "demon"};                    // ("demon": Demon Form's look - not picked as an outfit, see formOutfit)
+            case AVA, PERSEPHONE -> new String[]{"", "casual", "demon"};
+            case CHASE -> new String[]{"", "cap"};                    // ("demon": Demon Form's look - not picked as an outfit, see formOutfit)
             default -> new String[]{""};
         };
     }

@@ -110,7 +110,7 @@ def kaitlyn(f):
     shoes(f, '#141216', '#f2f2f2', 1.8, lace='#f2f2f2')
 
 # ------------------------------------------------------------------ Chase
-def chase(f):
+def chase(f, cap=False):
     """The old Fox King's Keeper: messy black hair, two red-and-black swords crossed on his back, a black jacket with
     red trim and red stripes on the sleeves over a white tee with a black emblem, black coat tails, black shorts, grey sneakers."""
     H1, H2, BR = '#0c0a0e', '#18161c', '#2e1c12'
@@ -126,6 +126,22 @@ def chase(f):
     for x in (-2.8, -0.9, 1.0, 2.9):
         lock(f, [x, 31.6, 4.6], [x * 0.05, -1, 0.3], 7.2, 1.8, (H2, H1, H1), taper=(0.6, 0.3))           # the back
     J, RD = '#141217', '#c41e24'
+    if cap:                                                                         # his other look: a navy cap and blue headphones,
+        NV, NV2, BL = '#141a3a', '#0e1228', '#2a4ae0'                                #  a navy tee with a blue stripe, black fingerless gloves,
+        f.add('head', [-4.8, 30.2, -4.8], [4.8, 34.0, 4.8], NV, {'top': lambda x, y: NV2 if abs(x - .5) < .05 else NV})   #  navy cargo trousers
+        f.add('head', [-4.6, 30.2, -7.2], [4.6, 31.0, -4.8], NV2)                    # the brim
+        f.add('head', [-1.0, 31.6, -4.95], [1.0, 33.0, -4.8], '#f2f2f2')            # the cap's emblem
+        for s_ in (1, -1):
+            f.add('head', [s_ * 4.6 - 0.8, 25.6, -1.6], [s_ * 4.6 + 0.8, 29.2, 1.6], BL)   # headphones
+            f.add('head', [s_ * 4.8 - 0.4, 29.0, -0.4], [s_ * 4.8 + 0.4, 31.0, 0.4], '#1a1a20')
+        shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.26, NV, {k: (lambda x, y: BL if abs(x - .62) < .05 else NV) for k in ('front', 'back')})
+        f.both('right_arm', [3.62, 19.8, -2.38], [8.38, 24.38, 2.38], NV, {k: (lambda x, y: BL if y > .8 else NV) for k in ('front', 'back', 'right', 'left')})
+        f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 15.2, 2.5], J)                  # fingerless gloves
+        pants(f, NV2, 1.6, baggy=0.4)
+        f.both('right_leg', [-0.8, 6.0, -2.8], [4.8, 7.0, 2.8], BL)                  # blue bands at the knees
+        f.both('right_leg', [3.9, 7.6, -1.2], [5.0, 10.6, 1.2], NV)                  # cargo pockets
+        shoes(f, '#141216', '#e8e8ec', 2.0)
+        return
     shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.24, '#f2f2f2',
           {'front': lambda x, y: '#141217' if abs(x - .5) < .14 and abs(y - .35) < .12 and (abs(x - .5) > .06 or abs(y - .35) > .05) else '#f2f2f2',
            'back': None, 'left': None, 'right': None, 'top': None})   # the emblem (only the tee's front shows)
@@ -164,6 +180,9 @@ SPECS = {
                     paint=clothes('#141217', 12, '#141217', 10, '#141216', 3, extra=lambda part, face, x, y, W, H, o:
                         ('#d8a888' if part == 'body' and face in ('front', 'back', 'right', 'left') and 7 <= y <= 9 else None)),   # her bare midriff eye=['..kkkkkk.', 'kkkkkkkkk', '.kddpddk.', '.kWoppok.', '.kWoopok.', '..kOOOk..', '..kkkkk..'],
                     mouth=['kkkkkk', 'kWkkkk', '.kkkk.'], mouth_x=13, mouth_y=24, face_extra=[kate_face]),
+    'chase_cap': dict(name='Chase (cap)', fit=lambda f: chase(f, True), skin='#7a4a30', eyes='#d07a18', hair=['#0e0c10', '#1a1820'],
+                  paint=bare('#141a3a', '#0e1228', '#141216', 4, 12), brow=['.........', 'kkkkkk...'],
+                  mouth=['.kk.'], mouth_x=14, mouth_y=25),
     'chase': dict(name='Chase', fit=chase, skin='#7a4a30', eyes='#d07a18', hair=['#0e0c10', '#1a1820'],
                   paint=bare('#141217', '#141217', '#5a5a62', 12, 6), brow=['.........', 'kkkkkk...'],
                   mouth=['.kk.'], mouth_x=14, mouth_y=25),

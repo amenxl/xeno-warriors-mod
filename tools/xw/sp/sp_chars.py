@@ -999,10 +999,14 @@ def _new(key):
     sp.setdefault('brow', ['..kkkkk..', 'kk.....k.'])
     return sp
 KYLE, ZACK, KAITLYN, CHASE = _new('kyle'), _new('zack'), _new('kaitlyn'), _new('chase')
+CHASE_CAP = _new('chase_cap')                                                     # his navy cap + headphones look (an outfit)
+AVA_CASUAL = dict(AVA, fit=lambda f: SRN.ava(f, casual=True), paint=SRN.bare(0, '#55555c', '#141216', '#f0607a', 0, 6))
+PERSEPHONE_CASUAL = dict(PERSEPHONE, fit=lambda f: SRN.persephone(f, casual=True), paint=SRN.bare(0, '#7a3ab8', '#2a1236', '#f0c8d8', 4, 12))
 
 CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY,
          'senju': SENJU, 'ava': AVA, 'ava_demon': AVA_DEMON, 'persephone': PERSEPHONE, 'persephone_demon': PERSEPHONE_DEMON,
-         'kyle': KYLE, 'zack': ZACK, 'kaitlyn': KAITLYN, 'chase': CHASE}
+         'kyle': KYLE, 'zack': ZACK, 'kaitlyn': KAITLYN, 'chase': CHASE,
+         'chase_cap': CHASE_CAP, 'ava_casual': AVA_CASUAL, 'persephone_casual': PERSEPHONE_CASUAL}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):

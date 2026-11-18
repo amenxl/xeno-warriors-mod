@@ -169,7 +169,7 @@ def maddie(f):
     f.both('right_leg', [-0.32, 1.4, -2.32], [4.32, 6.4, 2.32], '#141217', {'front': lambda x, y: '#c8ccd4' if abs(x - .25) < .1 and int(y * 4) % 2 == 0 else '#141217'})
     shoes(f, '#d42020', '#f4f4f4', 1.6)
 
-def persephone(f, demon=False):
+def persephone(f, demon=False, casual=False):
     P1, P2 = '#3a1258', '#1a0a26'
     hair(f, P2, P1, back_len=16, side_len=21,
          locks=fringe_locks(6, 31, 7.6, 4.4, 1.7, 0.35) + [([-1.0, 31.6, -4.7], [0.2, -1, -0.2], 5.5, 2.2)]
@@ -188,6 +188,14 @@ def persephone(f, demon=False):
             f.add('head', [s * 5.6 - 0.9, y, 3.4 - 0.4 * k], [s * 5.6 + 0.9, y + 0.6, 5.2 - 0.4 * k], '#f2f2f2' if k % 2 == 0 else '#0c080e')
     if demon:
         for s in (1, -1): horn(f, [s * 1.6, 33.0, -2.2], [s * 0.35, 1, -0.2], 3.6, 1.5, '#b88ad8', '#e0c8f4')
+    if casual:                                                                      # her casual look: a purple tee with lavender
+        PU, PL, PD = '#7a3ab8', '#c8a0e8', '#2a1236'                                 #  sleeves and collar, dark purple trousers, pink shoes
+        shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.26, PU, {'front': lambda x, y: PL if y < .07 and abs(x - .5) < .3 else PU})
+        f.both('right_arm', [3.62, 19.6, -2.38], [8.38, 24.38, 2.38], PL)
+        f.both('right_arm', [3.5, 19.2, -2.5], [8.5, 19.8, 2.5], PU)
+        pants(f, PD, 1.6, baggy=0.3)
+        shoes(f, '#f0c8d8', '#e8e8ec', 1.8)
+        return
     # SR recruit outfit: lavender top under an open dark-purple sleeveless jacket, long purple arm warmers with black bows,
     # purple shorts with a big black bow, lavender thigh-highs with black bows
     LAV, LAV2, PUR, PUR2 = '#c8a8e8', '#b090d8', '#5a2a8a', '#3a1a5e'
@@ -209,7 +217,7 @@ def persephone(f, demon=False):
     f.both('right_leg', [-0.6, 6.6, -2.6], [0.6, 8.2, -1.0], '#141216')                   # bows on them
     shoes(f, '#141216', '#2a1236', 1.8)
 
-def ava(f, demon=False):
+def ava(f, demon=False, casual=False):
     hair(f, '#0c0a0e', '#16121a', back_len=24, side_len=24.5, spikes=crown_spikes(10, 2.4, 1.6, seed=57),
          locks=fringe_locks(6, 31, 7.6, 4.4, 1.6, 0.4) + [([1.4, 31.6, -4.7], [0.3, -1, -0.2], 5.4, 2.0)]
          + [([s * 4.6, 29, z], [s * 0.6, -1, 0.2], 4.0, 1.7) for s in (1, -1) for z in (-2.4, 0.6, 3.4)])
@@ -218,6 +226,15 @@ def ava(f, demon=False):
         f.add('head', [s * 4.55, 30.4, -1.0], [s * 4.55 + s * 0.3, 31.4, 1.6], '#f2f2f2')
     if demon:
         for s in (1, -1): horn(f, [s * 1.4, 33.0, -2.0], [s * 0.25, 1, 0.1], 3.8, 1.5, '#f2f2f2', '#c8c8cc')
+    if casual:                                                                      # her casual look: a grey tank top with a pink frill
+        GR, GR2, PK = '#55555c', '#46464c', '#f0607a'                                #  at the hem, black shorts with pink-and-white hems,
+        shell(f, 'body', [-4, 11.4, -2], [4, 24, 2], 0.24, GR, {'front': lambda x, y: GR2 if y < .1 and abs(x - .5) < .22 else GR})   #  pink socks, red sneakers
+        f.add('body', [-4.5, 11.0, -2.5], [4.5, 12.0, 2.5], PK, {k: (lambda x, y: '#c83a52' if int(x * 12) % 2 == 0 else PK) for k in ('front', 'back', 'right', 'left')})
+        f.both('right_leg', [-0.45, 7.6, -2.45], [4.45, 12.3, 2.45], '#141216')
+        f.both('right_leg', [-0.55, 7.2, -2.55], [4.55, 8.0, 2.55], PK, {'front': lambda x, y: '#f4f4f4' if y > .5 else PK})
+        f.both('right_leg', [-0.3, 1.8, -2.3], [4.3, 4.6, 2.3], PK)
+        shoes(f, '#d42a3a', '#f4f4f4', 1.8, lace='#f4f4f4')
+        return
     # SR recruit outfit: red sleeveless crop jacket with white trim over a red crop top, red armbands with bows,
     # a red jacket tied round her waist over a black pleated skirt, pink socks, white sneakers with red bows
     RD, RD2, PK = '#d42a3a', '#a81e2c', '#f0607a'
