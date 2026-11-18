@@ -317,7 +317,8 @@ public final class RaceLook {
      */
     public static com.xenowarriors.client.boss.SaiyanHairModel formHair(AbstractClientPlayer p, boolean ownHair, ModelPart head) {
         CharacterType t = ClientCharacterData.get(p);
-        if (ownHair || t == CharacterType.KYRIE || t == CharacterType.YURI || t == CharacterType.NONE || t == CharacterType.YOU) return null;
+        // (Ai-oni: her hood is up - no Super Saiyan mane sticking out of it)
+        if (ownHair || t == CharacterType.KYRIE || t == CharacterType.YURI || t == CharacterType.AIONI || t == CharacterType.NONE || t == CharacterType.YOU) return null;
         if (DmzForms.hairColor(p) < 0) return null;
         int style = DmzForms.hairStyle(p);
         if (style != 3 && style != 4) return null;                         // (SSJ / SSJ2: their own hair just takes the colour - FormHair)

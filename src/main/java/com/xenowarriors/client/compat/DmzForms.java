@@ -265,9 +265,7 @@ public final class DmzForms {
     public static boolean dmzDraws(Player p) {
         if (!ours(p) || giantFox(p)) return false;
         if (ClientCharacterData.isPreviewing() && p == net.minecraft.client.Minecraft.getInstance().player) return false;   // previews: the character, not your form
-        // Ai-oni (for now): DragonMineZ draws and animates her (its body, attacks and animations), with her
-        // 3D details still put on by DragonMineZ's layer forwarder
-        if (ClientCharacterData.get((AbstractClientPlayer) p) == CharacterType.AIONI && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return true;
+        // (Ai-oni is drawn like everyone else now: DragonMineZ used to draw her, with its own hair)
         // one of your own characters set to its DragonMineZ look (the You slots screen): DragonMineZ draws it
         var you = ClientCharacterData.you(p);
         if (you != null && you.dmzLook && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return true;
