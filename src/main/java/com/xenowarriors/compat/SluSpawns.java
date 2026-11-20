@@ -34,7 +34,7 @@ public final class SluSpawns {
         if (why != MobSpawnType.NATURAL && why != MobSpawnType.CHUNK_GENERATION) return;
         if (!knight(event.getEntity().getType())) return;
         var e = event.getEntity();
-        boolean recarnet = e.level() instanceof net.minecraft.world.level.Level l && l.dimension() == com.xenowarriors.recarnet.Recarnet.LEVEL;
+        boolean recarnet = e.level().dimension() == com.xenowarriors.recarnet.Recarnet.LEVEL;
         if (e.getRandom().nextFloat() >= (recarnet ? KEEP_RECARNET : KEEP)) { event.setSpawnCancelled(true); return; }
         if (recarnet && event.getLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, e.getBoundingBox().inflate(48), m -> knight(m.getType())).size() >= RECARNET_NEAR)
             event.setSpawnCancelled(true);

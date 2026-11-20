@@ -145,10 +145,10 @@ final class PackNov20cTests {
                 && com.xenowarriors.client.render.CharacterDetailLayer.faceFrame(mc.player, new com.xenowarriors.client.render.CharacterDetailLayer.FaceFrame()).face.getPath().contains("lexy_possessed"), "outfit " + ClientCharacterData.outfit(mc.player)), 5));
         l.add(new Step(null, () -> PackTests.server(p -> { p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0);
             com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
-            var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(p.serverLevel());
-            h.setLook("henry"); h.setCustomName(net.minecraft.network.chat.Component.literal("Henry"));
-            h.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180F, 0F); h.setYHeadRot(180F); h.yBodyRot = 180F; h.setNoAi(true); h.addTag("xw_pack");
-            p.serverLevel().addFreshEntity(h); }), 20));
+            var hy = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(p.serverLevel());
+            hy.setLook("henry"); hy.setCustomName(net.minecraft.network.chat.Component.literal("Henry"));
+            hy.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180F, 0F); hy.setYHeadRot(180F); hy.yBodyRot = 180F; hy.setNoAi(true); hy.addTag("xw_pack");
+            p.serverLevel().addFreshEntity(hy); }), 20));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(15); }, 10));
         l.add(new Step("henry", () -> PackTests.server(p -> { PackTests.check("henry: his own look", !p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("henry")).isEmpty(), ""); PackTests.clear(p); }), 5));
         // bots with Building 10+ lay blocks across water and pick them back up
