@@ -126,17 +126,17 @@ public class StoryDialogueScreen extends Screen {
         g.fillGradient(0, height - bh - 40, width, height, 0x00000000, 0xC0000000);
         g.fill(bx, by, bx + bw, by + bh, 0xE0141420);
         boolean narr = s.equals("narrator");
-        String host = s.contains(":") ? s.substring(0, s.indexOf(':')) : null;            // (someone in another's body: their face, red eyes)
-        if (host != null) s = s.substring(s.indexOf(':') + 1);
-        CharacterType t = s.equals("you") ? ClientCharacterData.getLocal() : CharacterType.byId(host != null ? host : s);
+        String body = s.contains(":") ? s.substring(0, s.indexOf(':')) : null;            // (someone in another's body: their face, red eyes)
+        if (body != null) s = s.substring(s.indexOf(':') + 1);
+        CharacterType t = s.equals("you") ? ClientCharacterData.getLocal() : CharacterType.byId(body != null ? body : s);
         int col = narr ? 0xFFB0B0C0 : t != CharacterType.NONE ? 0xFF000000 | ClientCharacterData.color(minecraft.player) : 0xFFE8B030;
-        if (!s.equals("you") && t != CharacterType.NONE) col = 0xFF000000 | ((host != null ? CharacterType.byId(s) : t).getColor() & 0xFFFFFF);
+        if (!s.equals("you") && t != CharacterType.NONE) col = 0xFF000000 | ((body != null ? CharacterType.byId(s) : t).getColor() & 0xFFFFFF);
         g.fill(bx, by, bx + bw, by + 2, col);
         int tx = bx + 10;
         // the portrait
         if (!narr) {
             int ps = 58, px = bx + 8, py = by + 8;
-            ResourceLocation pr = t != CharacterType.NONE && t != CharacterType.YOU ? com.xenowarriors.XenoWarriors.id("textures/gui/hud/portrait_" + t.getId() + (host != null ? "_possessed" : "") + "_normal.png") : null;
+            ResourceLocation pr = t != CharacterType.NONE && t != CharacterType.YOU ? com.xenowarriors.XenoWarriors.id("textures/gui/hud/portrait_" + t.getId() + (body != null ? "_possessed" : "") + "_normal.png") : null;
             if (pr != null && minecraft.getResourceManager().getResource(pr).isPresent()) g.blit(pr, px, py, 0, 0, ps, ps, ps, ps);
             else if (t != CharacterType.NONE) com.xenowarriors.client.journey.JourneyScreen.face(g, t, px, py, ps);
             else { g.fill(px, py, px + ps, py + ps, 0xFF2A2A38); g.drawCenteredString(font, speakerName(l).substring(0, 1), px + ps / 2, py + ps / 2 - 4, col); }
