@@ -236,6 +236,11 @@ public class CharacterCustomScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
+        if (cur() == T_PASSIVES && passivePages() > 1) {                                 // the wheel turns the passives' pages
+            int np = Mth.clamp(passivePage - (int) Math.signum(delta), 0, passivePages() - 1);
+            if (np != passivePage) { tabDir = np > passivePage ? 1 : -1; passivePage = np; tabAt = net.minecraft.Util.getMillis(); click(); }
+            return true;
+        }
         if (cur() == T_SKILLS) { skillScroll = Mth.clamp(skillScroll - (int) Math.signum(delta) * (CARD_H + 3), 0, maxSkillScroll()); return true; }
         return super.mouseScrolled(mx, my, delta);
     }
@@ -799,6 +804,14 @@ public class CharacterCustomScreen extends Screen {
     private static final int PROW_Y = 56, PROW_H = 30, SW_W = 30, SW_H = 12;
     private int prowY(int i) { return PROW_Y + i * (PROW_H + 4); }
 
+    /** Three rows a page (they'd run into the hint and the tab bar otherwise); arrows, or the mouse wheel, turn them. */
+    private static final int PER_PAGE = 3, PAGE_Y = 159;
+    private int passivePage;
+    private int passivePages() { return Math.max(1, (com.xenowarriors.network.TogglesPacket.CLIENT.rows().size() + PER_PAGE - 1) / PER_PAGE); }
+    /** UI test: the passives' page. */
+    public void testPassivePage(int p) { passivePage = p; }
+    public int testPassivePages() { return passivePages(); }
+
     /** Transformations, buffs and passive skills: on / off for good, their level and mastery. */
     private List<String> passivesTab(GuiGraphics g, CharacterType type, int col, double mx, double my) {
         List<String> tip = null;
@@ -807,9 +820,12 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, "No transformations or passive skills", 8, 62, 0.9F, 0xA0A0B0);
             scaled(g, "for " + type.getDisplayName().getString() + " yet.", 8, 73, 0.9F, 0xA0A0B0);
         }
-        for (int i = 0; i < rows.size(); i++) {
+        int pages = passivePages();
+        if (passivePage >= pages) passivePage = pages - 1;
+        int from = passivePage * PER_PAGE, to = Math.min(rows.size(), from + PER_PAGE);
+        for (int i = from; i < to; i++) {
             var r = rows.get(i);
-            int x = 4 + Math.round((1F - rowIn(i)) * 18F), y = prowY(i), w = VW - 8;
+            int x = 4 + Math.round((1F - rowIn(i - from)) * 18F), y = prowY(i - from), w = VW - 8;
             boolean locked = !r.locked().isEmpty(), over = inBox(mx, my, x, y, w, PROW_H);
             g.fill(x, y, x + w, y + PROW_H, r.active() ? 0xFF000000 | dark2(r.color()) : over ? 0xFF2A2A3A : 0xFF1C1C24);
             g.fill(x, y, x + 2, y + PROW_H, locked ? 0xFF555555 : 0xFF000000 | r.color());
@@ -835,6 +851,17 @@ public class CharacterCustomScreen extends Screen {
             g.fill(knob + 1, sy + 1, knob + SW_H - 1, sy + SW_H - 1, locked ? 0xFF505058 : 0xFFE8E8F0);
             scaled(g, on ? "ON" : "OFF", on ? sx + 3 : sx + SW_H + 2, sy + 3, 0.65F, locked ? 0x777777 : 0xFFFFFF);
             if (over) tip = passiveTip(r);
+        }
+        if (pages > 1) {                                                                  // the page arrows
+            String lbl = "PAGE " + (passivePage + 1) + " / " + pages + "   (" + rows.size() + " in all)";
+            float lw = font.width(lbl) * 0.65F;
+            scaled(g, lbl, VW / 2F - lw / 2F, PAGE_Y + 3, 0.65F, 0xC8D0DC);
+            for (int side = 0; side < 2; side++) {
+                int ax = side == 0 ? VW / 2 - (int) (lw / 2) - 22 : VW / 2 + (int) (lw / 2) + 6;
+                boolean can = side == 0 ? passivePage > 0 : passivePage < pages - 1, aOver = can && inBox(mx, my, ax, PAGE_Y, 16, 11);
+                g.fill(ax, PAGE_Y, ax + 16, PAGE_Y + 11, aOver ? 0xFF000000 | col : can ? 0xFF2A2A3A : 0xFF18181E);
+                scaled(g, side == 0 ? "<" : ">", ax + 6, PAGE_Y + 2, 0.8F, can ? 0xFFFFFF : 0x55555F);
+            }
         }
         scaled(g, "Hold the transform key in game for the quick wheel", 6, VH - 10, 0.65F, 0x8A8A9A);
         return tip;
@@ -863,9 +890,17 @@ public class CharacterCustomScreen extends Screen {
 
     private boolean passivesClick(double vx, double vy) {
         var rows = com.xenowarriors.network.TogglesPacket.CLIENT.rows();
-        for (int i = 0; i < rows.size(); i++) {
+        int pages = passivePages();
+        if (pages > 1) {                                                                  // the page arrows
+            String lbl = "PAGE " + (passivePage + 1) + " / " + pages + "   (" + rows.size() + " in all)";
+            int lw = (int) (font.width(lbl) * 0.65F);
+            if (passivePage > 0 && inBox(vx, vy, VW / 2 - lw / 2 - 22, PAGE_Y, 16, 11)) { passivePage--; tabDir = -1; tabAt = net.minecraft.Util.getMillis(); click(); return true; }
+            if (passivePage < pages - 1 && inBox(vx, vy, VW / 2 + lw / 2 + 6, PAGE_Y, 16, 11)) { passivePage++; tabDir = 1; tabAt = net.minecraft.Util.getMillis(); click(); return true; }
+        }
+        int from = Math.min(passivePage, pages - 1) * PER_PAGE;
+        for (int i = from; i < Math.min(rows.size(), from + PER_PAGE); i++) {
             var r = rows.get(i);
-            int x = 4, y = prowY(i), w = VW - 8, sx = x + w - SW_W - 5, sy = y + (PROW_H - SW_H) / 2;
+            int x = 4, y = prowY(i - from), w = VW - 8, sx = x + w - SW_W - 5, sy = y + (PROW_H - SW_H) / 2;
             if (!inBox(vx, vy, sx - 2, sy - 2, SW_W + 4, SW_H + 4) && !inBox(vx, vy, x, y, w, PROW_H)) continue;
             if (!r.locked().isEmpty()) return true;
             ModNetwork.sendToServer(new com.xenowarriors.network.ToggleActionPacket(r.enabled() ? com.xenowarriors.network.ToggleActionPacket.DISABLE : com.xenowarriors.network.ToggleActionPacket.ENABLE, r.id()));

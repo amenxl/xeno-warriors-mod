@@ -84,6 +84,16 @@ final class PackNov20bTests {
                     "bag left " + left + " loose " + loose + " used " + (com.xenowarriors.statboost.BoostBag.autoUsed - before[0]));
             p.getInventory().clearContent();
         }), 5));
+        // the Passives tab in pages
+        l.add(new Step(null, () -> { mc.options.hideGui = false; UiTest.character(CharacterType.MIKIKO); }, 30));
+        l.add(new Step(null, () -> { com.xenowarriors.client.menu.CharacterCustomScreen.open(null); if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.testTab(4); }, 40));
+        l.add(new Step("passives_p1", () -> {
+            int n = com.xenowarriors.network.TogglesPacket.CLIENT.rows().size();
+            int pages = mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c ? c.testPassivePages() : -1;
+            PackTests.check("passives: three a page", n > 0 && pages == (n + 2) / 3, "rows " + n + " pages " + pages);
+        }, 5));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.menu.CharacterCustomScreen c) c.testPassivePage(1); }, 15));
+        l.add(new Step("passives_p2", () -> mc.setScreen(null), 5));
         // the Story menu
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.character(CharacterType.MIKIKO); }, 30));
         l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.story.Story.reset(p); com.xenowarriors.story.Story.start(p); }), 30));
