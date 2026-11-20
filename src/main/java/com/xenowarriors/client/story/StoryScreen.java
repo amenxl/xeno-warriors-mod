@@ -171,11 +171,11 @@ public class StoryScreen extends Screen {
             y = bannerAt(g, sel, x, y, p.getString("title"), stt, pathColor(sel)) + 6;
             int cur = st.getInt("mi");
             var ms = p.getList("missions", Tag.TAG_COMPOUND);
-            int done = 0; for (int i = 0; i < ms.size(); i++) if (ms.getCompound(i).getBoolean("done")) done++;
+            int nDone = 0; for (int i = 0; i < ms.size(); i++) if (ms.getCompound(i).getBoolean("done")) nDone++;
             int bw = Math.min(width - x - 12, 340);                                       // progress
             g.fill(x, y, x + bw, y + 5, 0xFF26262E);
-            g.fill(x, y, x + Math.round(bw * (ms.isEmpty() ? 0F : done / (float) ms.size())), y + 5, 0xFF000000 | pathColor(sel));
-            g.drawString(font, done + "/" + ms.size() + " missions", x + bw - font.width(done + "/" + ms.size() + " missions"), y + 7, 0xFF9098A8, false);
+            g.fill(x, y, x + Math.round(bw * (ms.isEmpty() ? 0F : nDone / (float) ms.size())), y + 5, 0xFF000000 | pathColor(sel));
+            g.drawString(font, nDone + "/" + ms.size() + " missions", x + bw - font.width(nDone + "/" + ms.size() + " missions"), y + 7, 0xFF9098A8, false);
             y += 18;
             for (int i = 0; i < ms.size(); i++) {
                 CompoundTag m = ms.getCompound(i);
