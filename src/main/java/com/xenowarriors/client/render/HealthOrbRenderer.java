@@ -28,9 +28,12 @@ public class HealthOrbRenderer extends EntityRenderer<HealthOrbEntity> {
         // (an orb this small 16+ blocks away is a few pixels across: a quarter of the triangles looks the same; many orbs after a big fight cost frames)
         boolean far = entityRenderDispatcher.distanceToSqr(e) > 16 * 16;
         int st = far ? 9 : 18, sl = far ? 18 : 36;
-        for (int i = 0; i < 3; i++) FxDraw.sphere(pose, FxDraw.glow(buffers), r * (0.5F + i * 0.04F), 1F, 0.88F, 0.9F, fade, age + i * 3, 1.5F, st, sl);   // (a bright, solid-looking core)
-        for (int i = 0; i < 2; i++) FxDraw.sphere(pose, FxDraw.glow(buffers), r * (0.85F + i * 0.08F), 1F, 0.2F, 0.3F, 0.9F * fade, age + i * 5, -1.2F, st, sl);
-        FxDraw.sphere(pose, FxDraw.glow(buffers), r * 1.6F, 1F, 0.15F, 0.2F, 0.35F * fade, age * 1.3F, 2F, st, sl);
+        boolean k = e.karma();                                                        // (a Karma orb: blue)
+        float[] core = k ? new float[]{0.88F, 0.95F, 1F} : new float[]{1F, 0.88F, 0.9F}, mid = k ? new float[]{0.2F, 0.55F, 1F} : new float[]{1F, 0.2F, 0.3F},
+                halo = k ? new float[]{0.15F, 0.4F, 1F} : new float[]{1F, 0.15F, 0.2F};
+        for (int i = 0; i < 3; i++) FxDraw.sphere(pose, FxDraw.glow(buffers), r * (0.5F + i * 0.04F), core[0], core[1], core[2], fade, age + i * 3, 1.5F, st, sl);   // (a bright, solid-looking core)
+        for (int i = 0; i < 2; i++) FxDraw.sphere(pose, FxDraw.glow(buffers), r * (0.85F + i * 0.08F), mid[0], mid[1], mid[2], 0.9F * fade, age + i * 5, -1.2F, st, sl);
+        FxDraw.sphere(pose, FxDraw.glow(buffers), r * 1.6F, halo[0], halo[1], halo[2], 0.35F * fade, age * 1.3F, 2F, st, sl);
         pose.popPose();
         super.render(e, yaw, partialTick, pose, buffers, light);
     }

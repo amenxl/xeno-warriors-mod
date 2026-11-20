@@ -81,7 +81,9 @@ public final class Toggles {
         AUTO_EAT("auto_eat", "Auto Eat", Kind.PASSIVE, 0xF0B060, true),
         AUTO_POTION("auto_potion", "Auto Potion", Kind.PASSIVE, 0xE060C0, true),
         AUTO_BOOST("auto_boost", "Auto Boost", Kind.PASSIVE, 0x60D8A0, true),
-        AUTO_KARMA("auto_karma", "Auto Karma Potion", Kind.PASSIVE, 0x50B8FF, true);
+        AUTO_KARMA("auto_karma", "Auto Karma Potion", Kind.PASSIVE, 0x50B8FF, true),
+        ORB_MAGNET("orb_magnet", "Orb Magnet", Kind.PASSIVE, 0xFF7090, true),
+        KARMA_ORBS("karma_orbs", "Karma Orbs", Kind.PASSIVE, 0x60A8FF, true);
 
         /** Shown on the toggle wheel (the automatic ones only in Character Customization). */
         public boolean wheel() { return kind != Kind.AUTO; }

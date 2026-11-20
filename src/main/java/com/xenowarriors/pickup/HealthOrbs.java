@@ -36,9 +36,14 @@ public final class HealthOrbs {
         if (dead.getPersistentData().getBoolean("xw_journey") || dead.getTags().contains("xw_journey")) return;   // (nothing heals you on a Journey: an orb there would only be wasted)
         ServerPlayer credit = com.xenowarriors.collection.Collection.credit(event.getSource().getEntity());
         if (credit == null) return;
-        float chance = testChance >= 0 ? testChance : CHANCE;
+        int luck = com.xenowarriors.apl.Apl.rank(credit, com.xenowarriors.apl.Apl.Ability.ORB_LUCK);
+        float chance = testChance >= 0 ? testChance : com.xenowarriors.apl.Apl.Ability.ORB_CHANCE[Math.min(luck, 3)];   // (Orb Luck: more often)
         if (l.random.nextFloat() >= chance) return;
-        drop(l, dead);
+        HealthOrbEntity orb = drop(l, dead);
+        if (orb == null) return;
+        int magnet = com.xenowarriors.apl.Apl.live(credit, com.xenowarriors.apl.Apl.Ability.ORB_MAGNET);
+        orb.setOwner(credit.getUUID(), com.xenowarriors.apl.Apl.Ability.MAGNET_RANGE[Math.min(magnet, 2)]);   // (Orb Magnet: it comes to you)
+        if (com.xenowarriors.apl.Apl.live(credit, com.xenowarriors.apl.Apl.Ability.KARMA_ORBS) > 0) orb.setKarma(true);   // (Karma Orbs)
     }
 
     public static HealthOrbEntity drop(ServerLevel l, LivingEntity at) {

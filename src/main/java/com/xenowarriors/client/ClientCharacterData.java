@@ -67,7 +67,10 @@ public final class ClientCharacterData {
         if (t == CharacterType.NONE) return 0;
         if (t.formOutfit() > 0 && com.xenowarriors.client.NcClient.form(player.getId())) return t.formOutfit();   // (Ava / Persephone in Demon Form)
         int o = OUTFITS.getOrDefault(player.getUUID(), 0);
-        return o < t.outfitKeys().length ? o : 0;
+        o = o < t.outfitKeys().length ? o : 0;
+        // Ava and Persephone never learned to change back: their Sky Rebellion look is always their demon one
+        if (o == 0 && (t == CharacterType.AVA || t == CharacterType.PERSEPHONE) && t.formOutfit() > 0) return t.formOutfit();
+        return o;
     }
 
     /** Mikiko's outfit number (constants above), 0 for anyone else. */

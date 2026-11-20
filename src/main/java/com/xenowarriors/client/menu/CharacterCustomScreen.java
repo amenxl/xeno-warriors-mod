@@ -241,6 +241,7 @@ public class CharacterCustomScreen extends Screen {
             if (np != passivePage) { tabDir = np > passivePage ? 1 : -1; passivePage = np; tabAt = net.minecraft.Util.getMillis(); click(); }
             return true;
         }
+        if (cur() == T_ABIL && abMaxScroll() > 0) { abScroll = Mth.clamp(abScroll - (int) Math.signum(delta), 0, abMaxScroll()); return true; }
         if (cur() == T_SKILLS) { skillScroll = Mth.clamp(skillScroll - (int) Math.signum(delta) * (CARD_H + 3), 0, maxSkillScroll()); return true; }
         return super.mouseScrolled(mx, my, delta);
     }
@@ -924,19 +925,24 @@ public class CharacterCustomScreen extends Screen {
 
     // ------------------------------------------------------------------ the Abilities tab (APL)
 
-    private static final int AB_Y = 52, AB_H = 13;                    // (eight rows clear of the APL line at the bottom)
+    private static final int AB_Y = 52, AB_H = 13;
+    /** Rows that fit above the APL line; more abilities than that scroll (the mouse wheel). */
+    private static final int AB_ROWS = (VH - 16 - AB_Y) / (AB_H + 1);
+    private int abScroll;
     private int abY(int i) { return AB_Y + i * (AB_H + 1); }
+    private int abMaxScroll() { return Math.max(0, com.xenowarriors.apl.Apl.Ability.values().length - AB_ROWS); }
 
     private List<String> abilTab(GuiGraphics g, int col, double mx, double my) {
         List<String> tip = null;
         var st = com.xenowarriors.network.AplPacket.CLIENT;
         var all = com.xenowarriors.apl.Apl.Ability.values();
         int avail = Math.max(0, st.earned() - st.spent());
-        for (int i = 0; i < all.length; i++) {
+        abScroll = Mth.clamp(abScroll, 0, abMaxScroll());
+        for (int i = abScroll; i < Math.min(all.length, abScroll + AB_ROWS); i++) {
             var a = all[i];
             int rank = i < st.ranks().length ? st.ranks()[i] : 0;
             boolean max = rank >= a.max(), afford = !max && (avail >= a.costs[rank] || creative());
-            int x = 4 + Math.round((1F - rowIn(i)) * 18F), y = abY(i), w = VW - 8;
+            int x = 4 + Math.round((1F - rowIn(i - abScroll)) * 18F), y = abY(i - abScroll), w = VW - 8;
             boolean over = inBox(mx, my, x, y, w, AB_H);
             g.fill(x, y, x + w, y + AB_H, over ? 0xFF2A2A3A : 0xFF1C1C24);
             g.fill(x, y, x + 2, y + AB_H, rank > 0 ? 0xFF000000 | col : 0xFF444450);
@@ -968,6 +974,10 @@ public class CharacterCustomScreen extends Screen {
                 tip = t;
             }
         }
+        if (abMaxScroll() > 0) {                                                  // more below / above: the wheel scrolls
+            String more = (abScroll > 0 ? "▲ " : "") + "scroll for more" + (abScroll < abMaxScroll() ? " ▼" : "");
+            scaled(g, more, VW / 2F - font.width(more) * 0.28F, AB_Y - 7, 0.55F, 0x9AA8B8);
+        }
         // APL and the reset
         int fy = VH - 13;
         scaled(g, "APL: " + avail + " to spend  •  " + st.earned() + " earned", 6, fy + 2, 0.62F, 0xFFD24A);
@@ -984,8 +994,8 @@ public class CharacterCustomScreen extends Screen {
     private boolean abilClick(double vx, double vy) {
         var st = com.xenowarriors.network.AplPacket.CLIENT;
         var all = com.xenowarriors.apl.Apl.Ability.values();
-        for (int i = 0; i < all.length; i++) {
-            int x = 4, y = abY(i), w = VW - 8;
+        for (int i = abScroll; i < Math.min(all.length, abScroll + AB_ROWS); i++) {
+            int x = 4, y = abY(i - abScroll), w = VW - 8;
             int rank = i < st.ranks().length ? st.ranks()[i] : 0;
             if (all[i] == com.xenowarriors.apl.Apl.Ability.AUTO_POTION && rank >= 2 && inBox(vx, vy, x + w - 66, y + 2, 22, 11)) {
                 ModNetwork.sendToServer(com.xenowarriors.network.AplPacket.action(com.xenowarriors.network.AplPacket.POTION, i)); click(); return true;

@@ -53,7 +53,18 @@ public final class Apl {
         AUTO_BOOST("auto_boost", "Auto Boost", new int[]{10}, "auto_boost",
                 "Uses Stat Boosts as soon as you get them - the ones in your Boost Bag too", new String[]{"on"}),
         AUTO_KARMA("auto_karma", "Auto Karma Potion", new int[]{10}, "auto_karma",
-                "Drinks a Karma Potion you carry when your Karma runs low", new String[]{"below 25% Karma"});
+                "Drinks a Karma Potion you carry when your Karma runs low", new String[]{"below 25% Karma"}),
+        ORB_LUCK("orb_luck", "Orb Luck", new int[]{5, 10, 15}, null,
+                "Enemies you beat drop health orbs more often", new String[]{"8% of them (from 5%)", "12% of them", "16% of them"}),
+        ORB_MAGNET("orb_magnet", "Orb Magnet", new int[]{5, 10}, "orb_magnet",
+                "Orbs dropped by enemies you beat fly straight to you", new String[]{"from up to 12 blocks away", "from up to 24 blocks away"}),
+        KARMA_ORBS("karma_orbs", "Karma Orbs", new int[]{15}, "karma_orbs",
+                "Orbs dropped by enemies you beat are Karma orbs: they fill your Karma instead of healing", new String[]{"4% of your max Karma each (a health orb heals 2.5%)"});
+
+        /** Orb Luck: the drop chance at each rank (none: the usual 5%). */
+        public static final float[] ORB_CHANCE = {0.05F, 0.08F, 0.12F, 0.16F};
+        /** Orb Magnet: how far an orb comes to you from, by rank. */
+        public static final double[] MAGNET_RANGE = {0, 12, 24};
 
         public final String id, title, toggle, what;
         public final int[] costs;
@@ -89,6 +100,9 @@ public final class Apl {
         if (create) { root.put(charKey, me); pers.put(ROOT, root); owner.getPersistentData().put(Player.PERSISTED_NBT_TAG, pers); }
         return me;
     }
+
+    /** (Tests) sets a rank of the character this player is playing. */
+    public static void setForTest(Player p, Ability a, int rank) { data(p, key(p), true).putInt(a.id, rank); }
 
     /** A rank of the character this player is playing. */
     public static int rank(Player p, Ability a) {

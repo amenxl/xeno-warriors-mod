@@ -103,7 +103,7 @@ public class SrMemberEntity extends Monster {
 
     public String look() {
         if (isNamed() && !host().isEmpty()) return "sr_" + host() + "_" + key();       // (in someone else's body: theirs, with red eyes)
-        if (isNamed()) return "sr_" + key() + (demon() && (key().equals("persephone") || key().equals("ava")) ? "_demon" : "");
+        if (isNamed()) return "sr_" + key() + (key().equals("persephone") || key().equals("ava") ? "_demon" : "");   // (they never learned to change back: always demons)
         return "sr_" + (entityData.get(VARIANT) % 2 + 1);
     }
     public boolean demon() { return entityData.get(DEMON); }
