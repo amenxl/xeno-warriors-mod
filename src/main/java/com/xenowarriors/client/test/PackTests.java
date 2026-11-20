@@ -126,6 +126,7 @@ public final class PackTests {
         if (focus.startsWith("packspeeds")) { PackSpeedTests.build(mc, l); return; }      // (how fast every combo plays)
         if (focus.startsWith("packraceui")) { PackRaceUiTests.build(mc, l); return; }      // (menus and HUD with each DragonMineZ race)
         if (focus.startsWith("packvr")) { PackVrTests.build(mc, l); return; }      // (Yuri's VR Room)
+        if (focus.startsWith("packnov20b")) { PackNov20bTests.build(mc, l); return; }      // (Fox Girl, the Story menu, Mikiko grounded in story)
         if (focus.startsWith("packnov20")) { PackChaseTests.build(mc, l); PackYouColourTests.build(mc, l); PackYouIdleTests.build(mc, l); return; }   // (Chase's swords, made characters' colour and borrowed idles, in one go)
         if (focus.startsWith("packyouidle")) { PackYouIdleTests.build(mc, l); return; }      // (a made character borrows idles at bond 100)
         if (focus.startsWith("packyoucolour")) { PackYouColourTests.build(mc, l); return; }      // (a made character picks its colour)
