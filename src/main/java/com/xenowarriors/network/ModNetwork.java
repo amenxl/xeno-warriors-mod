@@ -560,6 +560,8 @@ public final class ModNetwork {
                 .encoder(UltShowPacket::encode).decoder(UltShowPacket::decode).consumerMainThread(UltShowPacket::handle).add();
         CHANNEL.messageBuilder(NpcParkourPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(NpcParkourPacket::encode).decoder(NpcParkourPacket::decode).consumerMainThread(NpcParkourPacket::handle).add();
+        CHANNEL.messageBuilder(ReviveAnimPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ReviveAnimPacket::encode).decoder(ReviveAnimPacket::decode).consumerMainThread(ReviveAnimPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

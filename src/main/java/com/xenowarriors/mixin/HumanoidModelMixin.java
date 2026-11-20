@@ -82,6 +82,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.HurtFlinch.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // Mikiko's / Rhalix's own getting-hurt flinch
                 com.xenowarriors.client.PhoneClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.kaeru.KaeruClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
+                com.xenowarriors.client.party.ReviveClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);    // reviving someone: hand held out to them
                 com.xenowarriors.client.party.PartyClient.applyPose((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // (again, last: knocked out beats every stance above)
             }
         }

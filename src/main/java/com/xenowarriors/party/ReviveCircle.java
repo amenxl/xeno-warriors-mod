@@ -67,6 +67,39 @@ public final class ReviveCircle {
             hp.displayClientMessage(Component.literal("You revived ").append(b.label()).append("!").withStyle(ChatFormatting.GREEN), true);
     }
 
+    /** (Tests) revive flows drawn. */
+    public static int flows;
+
+    /**
+     * The reviver holds out a hand (ReviveClient draws it) and their karma flows from it into the one who's down: a
+     * stream of motes in their character's colour, arcing over and pouring in, with sparkles where it lands.
+     */
+    static void flow(LivingEntity helper, LivingEntity downed) {
+        if (!(helper.level() instanceof ServerLevel l)) return;
+        long t = l.getGameTime();
+        if (t % 4 == 0) com.xenowarriors.network.ModNetwork.sendToTrackingEntityAndSelf(new com.xenowarriors.network.ReviveAnimPacket(helper.getId(), downed.getId()), helper);
+        if (helper instanceof PartyBotEntity b) { b.getNavigation().stop(); b.getLookControl().setLookAt(downed, 30F, 30F); }   // (a bot turns to them)
+        if (t % 2 != 0) return;
+        flows++;
+        int rgb = helper instanceof PartyBotEntity b ? b.character().getColor()
+                : helper instanceof ServerPlayer p ? (com.xenowarriors.character.ModCapabilities.getType(p) == com.xenowarriors.character.CharacterType.YOU
+                    ? com.xenowarriors.you.You.color(p) : com.xenowarriors.character.ModCapabilities.getType(p).getColor()) : 0x66FF88;
+        Vector3f col = new Vector3f((rgb >> 16 & 255) / 255F, (rgb >> 8 & 255) / 255F, (rgb & 255) / 255F);
+        DustParticleOptions dust = new DustParticleOptions(col, 0.9F);
+        Vec3 to = new Vec3(downed.getX() - helper.getX(), 0, downed.getZ() - helper.getZ());
+        Vec3 dir = to.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : to.normalize();
+        Vec3 right = new Vec3(-dir.z, 0, dir.x);
+        Vec3 hand = helper.position().add(0, helper.getBbHeight() * 0.72, 0).add(dir.scale(0.7)).add(right.scale(0.3));
+        Vec3 end = downed.position().add(0, 0.35, 0);
+        for (int i = 0; i < 8; i++) {
+            double k = ((i / 8.0) + (t % 16) / 16.0) % 1.0;                      // (moving along the stream)
+            Vec3 at = hand.lerp(end, k).add(0, Math.sin(k * Math.PI) * 0.35, 0);
+            double wob = Math.sin(t * 0.4 + i) * 0.05;
+            l.sendParticles(dust, at.x + right.x * wob, at.y, at.z + right.z * wob, 1, 0, 0, 0, 0);
+        }
+        if (t % 6 == 0) l.sendParticles(ParticleTypes.END_ROD, end.x, end.y + 0.2, end.z, 2, 0.25, 0.15, 0.25, 0.01);
+    }
+
     /** Draws the ring (every few ticks): red dots, green where the revive has got to. */
     public static void draw(ServerLevel l, Vec3 at, int progress) {
         int n = 24, lit = Math.round(n * Math.min(1F, progress / (float) TICKS));
@@ -81,6 +114,7 @@ public final class ReviveCircle {
 
     /** Progress shown to a player helping. */
     public static void show(LivingEntity helper, LivingEntity downed, int progress) {
+        flow(helper, downed);
         if (!(helper instanceof ServerPlayer hp) || progress % 5 != 0) return;
         int bars = Math.round(progress / (float) TICKS * 10);
         hp.displayClientMessage(Component.literal("Reviving " + name(downed) + "  ").withStyle(ChatFormatting.GREEN)

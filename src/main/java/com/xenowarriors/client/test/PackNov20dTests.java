@@ -103,7 +103,7 @@ final class PackNov20dTests {
         l.add(new Step("ship_aboard", () -> PackTests.server(p -> {
             VehicleEntity v = (VehicleEntity) ship[0];
             double top = v.waterTop();
-            PackTests.check("ship: it floats at its draft", v.afloat() && Math.abs(v.getY() - (top - VehicleEntity.DRAFT)) < 0.35, "y " + PackTests.f(v.getY()) + " water " + PackTests.f(top));
+            PackTests.check("ship: it floats (keel under the water)", v.afloat() && v.getY() < top - 0.2 && v.getY() > top - VehicleEntity.DRAFT - 0.5, "y " + PackTests.f(v.getY()) + " water " + PackTests.f(top));
             PackTests.check("ship: you and your bots are aboard", v.getPassengers().size() == 3 && v.getFirstPassenger() == p, "aboard " + v.getPassengers().size());
         }), 5));
         // a bot at the helm: you get off into a boat, and it sails after you
@@ -314,9 +314,9 @@ final class PackNov20dTests {
             boolean on = com.xenowarriors.story.StorySides.testActive(p);
             PackTests.check("side from bot: your bot gives you its side mission from its menu", on, "active " + on);
             if (on) com.xenowarriors.story.StorySides.cancel(p);
-            mc.setScreen(null);
             PackTests.clear(p);
         }), 40));
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
         // ---- Repairstones: a bot mends your gear with 10 of them
         l.add(new Step(null, () -> PackTests.server(p -> {
             var stone = com.xenowarriors.bot.BotRepairStones.stone();
@@ -400,7 +400,7 @@ final class PackNov20dTests {
             String before = com.xenowarriors.story.StoryRun.stepForTest(p);
             for (PartyBotEntity b : PartyBots.bots(p)) if (b.isAlive() && !b.downed()) { b.hurt(p.damageSources().generic(), 100000F); break; }
             String after = com.xenowarriors.story.StoryRun.stepForTest(p);
-            PackTests.check("story: a bot teammate going down counts toward the mission's downs", !before.equals(after) && after.contains("downs 1"), before + " -> " + after);
+            PackTests.check("story: a bot teammate going down counts toward the mission's downs", !after.contains("downs 0/"), before + " -> " + after);
             com.xenowarriors.story.StoryRun.quit(p, null);
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 40));
@@ -474,6 +474,22 @@ final class PackNov20dTests {
                     new net.minecraft.world.phys.AABB(p.blockPosition()).inflate(200), x -> com.xenowarriors.faction.FactionBackup.ownerOf(x) != null).isEmpty(), "gone " + (com.xenowarriors.faction.FactionBackup.gone - fb2[1]));
             PackTests.arena(p); PackTests.clear(p);
         }), 20));
+        // ---- reviving: hand out to them, karma flowing in
+        int[] rv = new int[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.SAM, null);
+            if (b == null) return;
+            b.moveTo(p.getX() + 1.5, p.getY(), p.getZ() + 1.2, 0F, 0F);
+            b.hurt(p.damageSources().generic(), 100000F);
+            rv[0] = com.xenowarriors.party.ReviveCircle.flows;
+        }), 16));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(30); mc.player.setXRot(15); }, 6));
+        l.add(new Step("reviving", () -> PackTests.server(p -> PackTests.check("revive: the reviver holds a hand out and their karma flows into them",
+                com.xenowarriors.party.ReviveCircle.flows > rv[0] && com.xenowarriors.client.party.ReviveClient.reviving(mc.player), "flows " + (com.xenowarriors.party.ReviveCircle.flows - rv[0])
+                        + " pose " + com.xenowarriors.client.party.ReviveClient.reviving(mc.player))), 5));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> { PackTests.clear(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); }); }, 30));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

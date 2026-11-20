@@ -56,7 +56,12 @@ public final class BotKeycards {
         BlockState s = l.getBlockState(p);
         int slot = cardSlot(b);
         if (!(s.getBlock() instanceof GovVaultBlock) || s.getValue(GovVaultBlock.OPEN) || slot < 0 || b.getTarget() != null || b.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(p)) > 24 * 24) { GOING.remove(b.getUUID()); return; }
-        if (b.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(p)) > 2.6 * 2.6) { b.getNavigation().moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, 1.1); return; }
+        if (b.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(p)) > 4.5 * 4.5) {                // (to the front of it - near enough to reach the slot)
+            net.minecraft.core.Direction f = s.getValue(GovVaultBlock.FACING);
+            BlockPos front = p.relative(f);
+            b.getNavigation().moveTo(front.getX() + 0.5, front.getY(), front.getZ() + 0.5, 1.15);
+            return;
+        }
         GOING.remove(b.getUUID());
         b.getNavigation().stop();
         b.getLookControl().setLookAt(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
