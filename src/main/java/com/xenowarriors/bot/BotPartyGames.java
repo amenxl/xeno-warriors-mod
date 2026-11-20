@@ -239,4 +239,7 @@ public final class BotPartyGames {
     public static boolean askingForTest(ServerPlayer o) { Games g = GAMES.get(o.getUUID()); return g != null && g.bot != null && !g.playing; }
     public static int answerForTest(ServerPlayer o, int kind) { return answer(o, kind, true); }
     public static void ageForTest(ServerPlayer o, int ticks) { Games g = GAMES.get(o.getUUID()); if (g != null) g.started -= ticks; }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { GAMES.clear(); }
 }

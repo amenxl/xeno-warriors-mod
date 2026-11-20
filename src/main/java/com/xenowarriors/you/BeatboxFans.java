@@ -69,4 +69,7 @@ public final class BeatboxFans {
 
     /** (Tests) updates sent. */
     public static int sent;
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { LAST.clear(); }
 }

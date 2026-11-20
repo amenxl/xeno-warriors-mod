@@ -583,4 +583,7 @@ public final class Duels {
         bleedOut(p);
         return true;
     }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { ACTIVE.clear(); REQUESTS.clear(); KNOCKED.clear(); DOWNED_AT.clear(); DOWNED_DIM.clear(); DOWNED.clear(); REVIVING.clear(); DOWNED_FOR.clear(); }
 }

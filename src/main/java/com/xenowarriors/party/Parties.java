@@ -321,4 +321,7 @@ public final class Parties {
         if (event.getEntity() instanceof ServerPlayer p) leave(p, false);
         INVITES.remove(event.getEntity().getUUID());
     }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { BY_PLAYER.clear(); INVITES.clear(); }
 }

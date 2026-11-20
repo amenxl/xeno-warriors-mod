@@ -99,6 +99,11 @@ final class PackNov20dTests {
                 if (b != null) { b.moveTo(v.getX() + 2, v.getY() + 2.5, v.getZ() + 1, 0F, 0F); com.xenowarriors.bot.BotRides.boardForTest(b, p); }
             }
         }), 40));
+        l.add(new Step(null, () -> PackTests.server(p -> {                        // (a slow start - the sea's chunks still loading: bots left behind try again)
+            VehicleEntity v = (VehicleEntity) ship[0];
+            if (p.getVehicle() != v) p.startRiding(v, true);
+            for (PartyBotEntity b : PartyBots.bots(p)) if (!b.isPassenger()) { b.moveTo(v.getX() + 2, v.getY() + 2.5, v.getZ() + 1, 0F, 0F); com.xenowarriors.bot.BotRides.boardForTest(b, p); }
+        }), 40));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); mc.player.setXRot(20); }, 30));
         l.add(new Step("ship_aboard", () -> PackTests.server(p -> {
             VehicleEntity v = (VehicleEntity) ship[0];
@@ -329,7 +334,11 @@ final class PackNov20dTests {
         }), 20));
         if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) {
             l.add(new Step(null, () -> { pg[4] = com.xenowarriors.client.PartyHats.efDraws; PackWomTests.battle(true); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 30));
-            l.add(new Step("party_hat_ef", () -> PackTests.check("party: hats stay on in Epic Fight's stance", com.xenowarriors.client.PartyHats.efDraws > pg[4], "drawn " + (com.xenowarriors.client.PartyHats.efDraws - pg[4])), 3));
+            l.add(new Step("party_hat_ef", () -> {
+                Boolean ef = com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrewForTest(mc.player.getId());
+                PackTests.check("party: hats stay on in Epic Fight's stance", com.xenowarriors.client.PartyHats.efDraws > pg[4],
+                        "drawn " + (com.xenowarriors.client.PartyHats.efDraws - pg[4]) + " wearing " + com.xenowarriors.client.PartyHats.wearing(mc.player) + " ef drew " + ef + " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player));
+            }, 3));
             l.add(new Step(null, () -> { PackWomTests.battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
         }
         l.add(new Step(null, () -> PackTests.server(p -> {
@@ -351,6 +360,7 @@ final class PackNov20dTests {
         }), 30));
         l.add(new Step(null, () -> PackTests.server(p -> { if (fl[0] instanceof PartyBotEntity b) { PartyBots.action(p, b.getId(), PartyBots.ACT_FLY, 0); b.setDeltaMovement(0, 0.6, 0); b.setNoGravity(true); b.moveTo(b.getX(), b.getY() + 4, b.getZ()); } }), 30));
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 20));
+        l.add(new Step(null, () -> PackTests.server(p -> { if (fl[0] instanceof PartyBotEntity b) { b.setDeltaMovement(0, 0, 0); b.moveTo(b.getX(), p.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, b.getBlockX(), b.getBlockZ()) + 5, b.getZ()); } }), 3));   // (well up: low down you're held off the ground)
         l.add(new Step("bot_hand_flight", () -> PackTests.server(p -> {
             var b = fl[0] instanceof PartyBotEntity x ? x : null;
             PackTests.check("flying with a bot: you hang from its hand below it", b != null && p.getVehicle() == b && p.getY() < b.getY() - 1.0,

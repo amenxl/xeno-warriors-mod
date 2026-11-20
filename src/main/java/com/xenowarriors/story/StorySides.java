@@ -274,4 +274,7 @@ public final class StorySides {
             XenoWarriors.LOGGER.debug("Story side: bad tag", x);
         }
     }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { SIDES.clear(); MEMBER.clear(); }
 }

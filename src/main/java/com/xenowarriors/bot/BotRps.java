@@ -169,4 +169,7 @@ public final class BotRps {
     /** (Tests) a game now: you or two bots. */
     public static void nowForTest(ServerPlayer o, boolean you) { Game g = GAMES.get(o.getUUID()); if (g != null) { g.next = 0; g.vsYou = null; forcePlayer = you; } }
     public static boolean waitingForTest(ServerPlayer o) { Game g = GAMES.get(o.getUUID()); return g != null && g.vsYou != null; }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { GAMES.clear(); }
 }

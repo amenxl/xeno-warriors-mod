@@ -268,4 +268,7 @@ public final class BotPicnic {
     public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
         if (e.getEntity() instanceof ServerPlayer o && PICNICS.containsKey(o.getUUID())) end(o, PICNICS.get(o.getUUID()), false);
     }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { PICNICS.clear(); }
 }

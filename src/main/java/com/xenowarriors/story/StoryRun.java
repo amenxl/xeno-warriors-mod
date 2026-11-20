@@ -1198,6 +1198,12 @@ public final class StoryRun {
         if (r == null || r.place == null) return new int[]{-1, -1, 0, 0};
         List<BlockPos> seeds = new ArrayList<>();
         for (ServerPlayer m : players(p.server, r)) { seeds.add(m.blockPosition()); for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(m)) if (b.level() == l && StoryScenes.inArea(b)) seeds.add(b.blockPosition()); }
+        if (r.split) {                                                                   // (as when they're made: both rooms of a split fight)
+            List<LivingEntity> ta = new ArrayList<>(), tb = new ArrayList<>();
+            teams(p.server, r, ta, tb);
+            for (LivingEntity e : ta) if (e.level() == l) seeds.add(e.blockPosition());
+            for (LivingEntity e : tb) if (e.level() == l) seeds.add(e.blockPosition());
+        }
         Set<BlockPos> ok = StoryScenes.reachable(l, r.slot, r.place, seeds);
         int in = 0, all = 0;
         for (UUID id : r.foes) if (l.getEntity(id) instanceof Mob m && m.isAlive()) {
@@ -1265,4 +1271,7 @@ public final class StoryRun {
     private static boolean inWorld(Player p, ResourceKey<Level> k) { return p.level().dimension() == k; }
     @SuppressWarnings("unused")
     private static AABB box(BlockPos c) { return new AABB(c).inflate(34 + 6, 30, 34 + 6); }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { RUNS.clear(); MEMBER.clear(); }
 }

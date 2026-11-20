@@ -63,6 +63,7 @@ public final class PartyGameScreens {
             if (countdown > 0 || outcome >= 0) return;
             clicks++;
             bar = Math.max(0F, bar - 0.045F);
+        if (bar <= 0F) { finish(1); return; }                                       // (pinned: you win - the bot's push used to lift it back off 0 before it was checked)
             if (minecraft != null && minecraft.player != null && clicks % 3 == 0)
                 minecraft.player.playSound(net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_WEAK, 0.4F, 0.8F + bar * 0.6F);
         }

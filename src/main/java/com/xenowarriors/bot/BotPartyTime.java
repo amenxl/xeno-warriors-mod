@@ -555,4 +555,7 @@ public final class BotPartyTime {
 
     /** (Tests) ends a party now (as if its time were up). */
     public static void endForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); if (pt != null) end(o, pt, true); }
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { PARTIES.clear(); }
 }

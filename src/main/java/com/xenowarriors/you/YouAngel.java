@@ -213,4 +213,7 @@ public final class YouAngel {
 
     /** (Tests) hits foreseen. */
     public static int foreseen;
+
+    /** The world closed (back to the title screen / another world): nothing of this one carries over. (ServerReset) */
+    public static void serverReset() { TRIALS.clear(); TRIAL_RAIDERS.clear(); }
 }

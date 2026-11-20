@@ -120,6 +120,7 @@ public final class ClientReset {
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         resetAll();
+        com.xenowarriors.client.story.StoryClient.state = new net.minecraft.nbt.CompoundTag();   // (the old world's story and side mission)
         try { com.xenowarriors.compat.epicfight.WomMoves.clearCache(); } catch (Throwable ignored) {}   // (Epic Fight not there)
     }
 
