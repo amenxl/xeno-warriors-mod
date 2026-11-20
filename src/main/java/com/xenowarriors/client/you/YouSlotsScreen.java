@@ -32,8 +32,8 @@ public class YouSlotsScreen extends JourneyScreen {
                 // its colour: click the head to change it (a little swatch in the corner says so)
                 g.fill(x + cw / 2 + 9, y + 34, x + cw / 2 + 15, y + 40, 0xFF000000 | col); box(g, x + cw / 2 + 8, y + 33, x + cw / 2 + 16, y + 41, 0xFFFFFFFF);
                 if (hover(x + cw / 2 - 14, y + 11, x + cw / 2 + 16, y + 41)) box(g, x + cw / 2 - 15, y + 10, x + cw / 2 + 15, y + 40, 0xFFFFFFFF);
-                area(x + cw / 2 - 14, y + 11, x + cw / 2 + 16, y + 41, () -> minecraft.setScreen(new YouColourScreen(s.name, s.colour, s.element.color, this, c -> {
-                    YouSlot d = new YouSlot(); d.name = s.name; d.colour = c;
+                area(x + cw / 2 - 14, y + 11, x + cw / 2 + 16, y + 41, () -> minecraft.setScreen(new YouColourScreen(s.name, s.colour, s.element.color, this, picked -> {
+                    YouSlot d = new YouSlot(); d.name = s.name; d.colour = picked;
                     ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.COLOUR, i, d));
                     minecraft.setScreen(this);
                 })));
