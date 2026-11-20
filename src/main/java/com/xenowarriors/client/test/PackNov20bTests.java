@@ -113,6 +113,21 @@ final class PackNov20bTests {
         }), 5));
         // DragonMineZ: harder foes
         l.add(new Step(null, () -> PackTests.check("story: harder with DragonMineZ", !com.xenowarriors.story.StoryRun.dmzHard() || com.xenowarriors.story.StoryRun.DMZ_HARD_HP > 1, "dmz " + com.xenowarriors.story.StoryRun.dmzHard()), 2));
-        l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.story.Story.reset(p); PackTests.clear(p); com.xenowarriors.character.Seasons.set(p.server, 3); }), 20));
+        l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.story.Story.reset(p); PackTests.clear(p); }), 20));
+        // possessed hosts: Lexy with Persephone inside (a bot), Kyrie with Ava inside (the SR boss)
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(10); PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            var l2 = p.serverLevel();
+            var b = com.xenowarriors.bot.BotEntities.BOT.get().create(l2);
+            if (b != null) { b.setCharacter(CharacterType.LEXY); b.setPossessed(true); b.moveTo(p.getX() - 1.2, p.getY(), p.getZ() + 3, 180F, 0F); b.setYHeadRot(180F); b.yBodyRot = 180F; b.setNoAi(true); l2.addFreshEntity(b); }
+            var m = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(l2);
+            if (m != null) { m.moveTo(p.getX() + 1.2, p.getY(), p.getZ() + 3, 180F, 0F); m.setup(2 + java.util.Arrays.asList(com.xenowarriors.sr.SrMemberEntity.NAMED).indexOf("ava"), p.blockPosition()); m.setHost("kyrie"); m.setYHeadRot(180F); m.yBodyRot = 180F; m.setNoAi(true); l2.addFreshEntity(m); }
+        }); }, 50));
+        l.add(new Step("possessed", () -> PackTests.server(p -> {
+            var bots = p.serverLevel().getEntitiesOfClass(com.xenowarriors.bot.PartyBotEntity.class, p.getBoundingBox().inflate(8), x -> x.possessed());
+            var srs = p.serverLevel().getEntitiesOfClass(com.xenowarriors.sr.SrMemberEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("sr_kyrie_ava"));
+            PackTests.check("story: Persephone in Lexy and Ava in Kyrie", !bots.isEmpty() && !srs.isEmpty(), "bots " + bots.size() + " sr " + srs.size());
+        }), 5));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; PackTests.server(p -> { PackTests.clear(p); com.xenowarriors.character.Seasons.set(p.server, 3); }); }, 20));
     }
 }
