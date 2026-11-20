@@ -64,6 +64,7 @@ public class SrModel extends PlayerModel<SrMemberEntity> {
             yaw = 0; pitch = 0;
         }
         super.setupAnim(e, limb, limbAmt, age, yaw, pitch);
+        NpcParkourClient.limbs(e, this);                                         // (a parkour move: its pose)
         if (!e.isNamed()) { sync(); return; }
         String k = e.key();
         boolean moving = limbAmt > 0.15F;

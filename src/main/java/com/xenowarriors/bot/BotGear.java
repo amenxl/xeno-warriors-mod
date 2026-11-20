@@ -180,6 +180,7 @@ public final class BotGear {
             else if (left.getCount() != hand.getCount()) b.setItemSlot(EquipmentSlot.MAINHAND, left);
         }
         BotCrafting.tick(b);
+        BotGunsmith.tick(b);                                                    // (TaCZ: attachments on its gun, the Gun Smith Table)
         BotBoosts.tick(b);                                                      // (a Stat Boost you gave it: it uses it)
     }
 

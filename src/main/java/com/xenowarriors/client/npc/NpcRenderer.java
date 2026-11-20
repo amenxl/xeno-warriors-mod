@@ -107,6 +107,13 @@ public class NpcRenderer<T extends Mob> extends HumanoidMobRenderer<T, PlayerMod
         finally { com.xenowarriors.client.FemaleBody.npcGirl = false; this.model = wide; }
     }
 
+    /** A parkour move (NpcParkour): the body leans, tips or tumbles with it. */
+    @Override
+    protected void setupRotations(T e, PoseStack pose, float bob, float yaw, float pt) {
+        super.setupRotations(e, pose, bob, yaw, pt);
+        NpcParkourClient.rotate(e, pose, pt);
+    }
+
     @Override
     public ResourceLocation getTextureLocation(T e) {
         return com.xenowarriors.client.cel.Cel.tex(tex(look.apply(e) + (darkened(e) ? "_dark" : "")));

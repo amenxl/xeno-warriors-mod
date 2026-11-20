@@ -287,6 +287,7 @@ public class HumanNpcEntity extends PathfinderMob {
             setItemSlot(EquipmentSlot.MAINHAND, weapon);
         }
         else if (r.nextFloat() < 0.08F) setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_SWORD));
+        if (!fighter && !skyHater() && reason != MobSpawnType.EVENT) HumanPets.roll(this, r);   // (some have a wolf or a cat)
         setDropChance(EquipmentSlot.MAINHAND, 0.1F);
         return super.finalizeSpawn(level, difficulty, reason, data, tag);
     }
@@ -400,6 +401,8 @@ public class HumanNpcEntity extends PathfinderMob {
             return;
         }
         flightTick();
+        com.xenowarriors.bot.NpcParkour.tick(this, !flying() && reaction() == 0);
+        HumanPets.tick(this);   // (vaults, climbs, rolls... with ParCool)
         if (reaction() != 0 && tickCount >= reactUntil) entityData.set(REACTION, 0);
         if (tickCount % 20 == 7) HumanReactions.look(this);
         if (tickCount % 100 == 0 && carriesSoul() && !reported && possessedSince >= 0
@@ -435,7 +438,9 @@ public class HumanNpcEntity extends PathfinderMob {
 
     @Override
     public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
-        return !(dmz() && fighter()) && super.causeFallDamage(distance, multiplier, source);
+        if (dmz() && fighter()) return false;
+        distance = com.xenowarriors.bot.NpcParkour.land(this, distance);                   // (a roll out of the drop)
+        return distance > 0 && super.causeFallDamage(distance, multiplier, source);
     }
 
     /** Three days and nobody helped: the soul has them for good. */
@@ -461,6 +466,7 @@ public class HumanNpcEntity extends PathfinderMob {
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (com.xenowarriors.journey.JourneyGuide.is(this) && player instanceof net.minecraft.server.level.ServerPlayer sp) { com.xenowarriors.journey.JourneyGuide.talk(sp, this); return InteractionResult.SUCCESS; }
         List<HumanNpcEntity> near = level().getEntitiesOfClass(HumanNpcEntity.class, getBoundingBox().inflate(64), h -> h != this && h.carriesSoul() && !h.reported);
+        if (near.isEmpty() && player instanceof net.minecraft.server.level.ServerPlayer sp && HumanPets.talk(this, sp)) { getLookControl().setLookAt(player); return InteractionResult.SUCCESS; }   // (their pet: for sale)
         if (!near.isEmpty()) {
             for (HumanNpcEntity h : near) h.report(this);
             if (fighter()) setTarget(near.get(0));

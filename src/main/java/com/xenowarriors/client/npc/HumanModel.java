@@ -15,6 +15,7 @@ public class HumanModel extends PlayerModel<HumanNpcEntity> {
     @Override
     public void setupAnim(HumanNpcEntity e, float limbSwing, float amount, float age, float yaw, float pitch) {
         super.setupAnim(e, limbSwing, amount, age, yaw, pitch);
+        NpcParkourClient.limbs(e, this);                                         // (a parkour move: its pose)
         switch (e.reaction()) {
             case HumanReactions.COWER -> {          // ducking, arms over the head
                 arms(-2.7F, 0.45F); head.xRot = 0.6F; body.xRot = 0.45F;
@@ -37,7 +38,7 @@ public class HumanModel extends PlayerModel<HumanNpcEntity> {
                 float b = Mth.sin(age * 0.6F);
                 arms(-2.8F + b * 0.3F, 0.45F);
             }
-            default -> { return; }
+            default -> { }
         }
         hat.copyFrom(head); jacket.copyFrom(body);
         rightSleeve.copyFrom(rightArm); leftSleeve.copyFrom(leftArm);

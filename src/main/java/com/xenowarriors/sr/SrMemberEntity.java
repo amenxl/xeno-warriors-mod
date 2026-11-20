@@ -385,6 +385,7 @@ public class SrMemberEntity extends Monster {
     public void aiStep() {
         super.aiStep();
         if (level().isClientSide) return;
+        com.xenowarriors.bot.NpcParkour.tick(this, !wings());                      // (vaults, climbs, rolls... with ParCool)
         if (leapCd > 0) leapCd--;
         var t = getTarget();
         if (isNamed()) {
@@ -408,7 +409,7 @@ public class SrMemberEntity extends Monster {
         if (demon() && tickCount % 4 == 0) ((ServerLevel) level()).sendParticles(DARK, getX(), getY() + 1, getZ(), 2, .3, .6, .3, 0);
     }
 
-    @Override public boolean causeFallDamage(float d, float m, DamageSource s) { return !wings() && super.causeFallDamage(d, m, s); }
+    @Override public boolean causeFallDamage(float d, float m, DamageSource s) { if (wings()) return false; d = com.xenowarriors.bot.NpcParkour.land(this, d); return d > 0 && super.causeFallDamage(d, m, s); }
 
     @Override public boolean removeWhenFarAway(double d) { return post == null && super.removeWhenFarAway(d); }
 
