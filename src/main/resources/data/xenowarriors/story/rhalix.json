@@ -111,7 +111,7 @@
           {"s": "kill", "t": "Max said that was your weakness!"},
           {"s": "rhalix", "t": "Sounds like Max lied to your ass. My team's got me."},
           {"s": "kill", "t": "Too late anyway. Come in, newcomer!"},
-          {"s": "persephone", "n": "Lexy (Persephone)", "t": "Captain... I'm scared... Lexy? No. She's gone."}
+          {"s": "lexy:persephone", "n": "Lexy (Persephone)", "t": "Captain... I'm scared... Lexy? No. She's gone."}
         ]},
         {"type": "fight", "if": "capital", "place": "royal_capital", "obj": "Get through the Royal Capital (in disguise)", "allies": ["sam", "max"], "waves": [
           [{"e": "knight", "n": 4}],
@@ -129,15 +129,15 @@
       "id": "r5", "title": "Kyrie (Ava)", "karma": 4500, "lvl": 4,
       "desc": "The SR got to Kyrie first. Up on the sky island, something is wrong with her.",
       "steps": [
-        {"type": "scene", "place": "sky_island", "npcs": ["sam", "max"], "lines": [
+        {"type": "scene", "place": "sky_island", "npcs": ["sam", "max", "kyrie:ava"], "lines": [
           {"s": "max", "t": "Kyrie! Wake up, we're here to take you back."},
-          {"s": "ava", "n": "Kyrie (Ava)", "t": "The Skylander Kyrie is long gone. And you, Max - traitors to the SR die."},
+          {"s": "kyrie:ava", "n": "Kyrie (Ava)", "t": "The Skylander Kyrie is long gone. And you, Max - traitors to the SR die."},
           {"s": "max", "t": "I was going to join the Rebellion... then I realized I couldn't betray my team."},
           {"s": "sam", "t": "Max?! ...Fine. Vice captain, let's save Kyrie!", "group": "Max?! ...Fine. Everybody - let's save Kyrie!"}
         ]},
         {"type": "fight", "place": "sky_island", "obj": "Stop Kyrie (Ava) without hurting Kyrie too much", "allies": ["sam", "rhalix"], "waves": [
           [{"e": "sr", "n": 3}],
-          [{"e": "sr:ava", "boss": true, "name": "Kyrie (Ava)"}]
+          [{"e": "sr:ava@kyrie", "boss": true, "name": "Kyrie (Ava)"}]
         ]},
         {"type": "scene", "place": "sky_island", "npcs": ["rhalix", "sam", "kyrie"], "meet": ["ava"], "lines": [
           {"s": "rhalix", "t": "Only Kyrie can break free. Come on, Kyrie!"},

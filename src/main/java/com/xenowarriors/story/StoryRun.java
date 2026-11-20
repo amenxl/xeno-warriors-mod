@@ -298,7 +298,7 @@ public final class StoryRun {
             default -> {
                 r.phase = SCENE;
                 List<String> who = new ArrayList<>();
-                for (String c : st.npcs()) if (CharacterType.byId(c) != CharacterType.NONE) who.add(c);
+                for (String c : st.npcs()) if (CharacterType.byId(bodyOf(c)) != CharacterType.NONE) who.add(c);
                 clearNpcs(s, r);                            // (this scene's people only)
                 spawnNpcs(s, r, who);
                 dialogue(s, r, filter(s, r, st.lines()), "step");
@@ -319,6 +319,7 @@ public final class StoryRun {
 
     /** Sends lines up to (and including) the next choice to everyone; the rest waits for the host. */
     private static void dialogue(MinecraftServer s, Run r, List<StoryDefs.Line> lines, String ctx) {
+        quiet(s, r);
         List<StoryDefs.Line> chunk = new ArrayList<>();
         r.asking = null;
         int i = 0;
@@ -403,16 +404,17 @@ public final class StoryRun {
         Set<String> have = present(s, r);                                              // (no doubles: anyone's bot, a played character, an ally)
         int k = 4;
         for (String c : who) {
-            CharacterType t = CharacterType.byId(c);
-            if (t == CharacterType.NONE || have.contains(c)) continue;
+            CharacterType t = CharacterType.byId(bodyOf(c));
+            if (t == CharacterType.NONE || taken(have, c)) continue;
             PartyBotEntity b = com.xenowarriors.bot.PartyBots.spawn(h, t, new CompoundTag());
             if (b == null) continue;
+            possess(b, c);
             b.addTag(BOT_TAG);
             b.getPersistentData().putBoolean("xw_journey_bot", true);
             Vec3 at = StoryScenes.entry(r.slot, r.place, k++);
             b.teleportTo(at.x, at.y, at.z);
             r.allies.add(b.getUUID());
-            have.add(c);
+            have.add(c); have.add(bodyOf(c)); have.add(soulOf(c));
         }
     }
 
@@ -472,8 +474,10 @@ public final class StoryRun {
         try {
             if (e.startsWith("sr:")) {
                 var m = com.xenowarriors.sr.SrEntities.SR_MEMBER.get().create(l);
-                int idx = Arrays.asList(com.xenowarriors.sr.SrMemberEntity.NAMED).indexOf(e.substring(3));
-                if (m != null) { m.moveTo(c.getX(), c.getY() + 1, c.getZ()); m.setup(idx < 0 ? 0 : 2 + idx, c); }
+                String who = e.substring(3), host = "";                                    // "sr:ava@kyrie": Ava, in Kyrie's body
+                if (who.contains("@")) { host = who.substring(who.indexOf('@') + 1); who = who.substring(0, who.indexOf('@')); }
+                int idx = Arrays.asList(com.xenowarriors.sr.SrMemberEntity.NAMED).indexOf(who);
+                if (m != null) { m.moveTo(c.getX(), c.getY() + 1, c.getZ()); m.setup(idx < 0 ? 0 : 2 + idx, c); m.setHost(host); }
                 en = m;
             } else switch (e) {
                 case "sky_hater", "gang" -> {
@@ -570,6 +574,30 @@ public final class StoryRun {
 
     // ------------------------------------------------------------------ people standing around
 
+    /**
+     * Someone in another's body is written "body:soul" in the story files ("lexy:persephone": Persephone, in Lexy's body;
+     * "kyrie:ava": Ava, in Kyrie's). They're drawn as the body with red eyes and named "Body (Soul)".
+     */
+    static String bodyOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(0, i); }
+    static String soulOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(i + 1); }
+    private static boolean taken(Set<String> have, String token) { return have.contains(token) || have.contains(bodyOf(token)) || have.contains(soulOf(token)); }
+
+    /** Draws a story person as a possessed body, if they are one. */
+    private static void possess(PartyBotEntity b, String token) {
+        b.getPersistentData().putString("xw_story_char", token);
+        if (!token.contains(":")) return;
+        b.setPossessed(true);
+        CharacterType body = CharacterType.byId(bodyOf(token)), soul = CharacterType.byId(soulOf(token));
+        b.setCustomName(Component.literal(body.getDisplayName().getString() + " (" + soul.getDisplayName().getString() + ")"));
+    }
+
+    /** Who a story bot stands for: its token ("lexy:persephone"), or its character. */
+    private static void addWho(Set<String> out, PartyBotEntity b) {
+        out.add(b.character().getId());
+        String tk = b.getPersistentData().getString("xw_story_char");
+        if (!tk.isEmpty()) { out.add(tk); out.add(bodyOf(tk)); out.add(soulOf(tk)); }
+    }
+
     private static boolean botted(MinecraftServer s, Run r, String c) {
         for (ServerPlayer p : players(s, r)) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.character().getId().equals(c) && !b.getTags().contains(BOT_TAG)) return true;
         return false;
@@ -588,8 +616,8 @@ public final class StoryRun {
         }
         ServerLevel l = world(s);
         if (l != null) {
-            for (UUID a : r.allies) if (l.getEntity(a) instanceof PartyBotEntity b && b.isAlive()) out.add(b.character().getId());
-            for (UUID a : r.npcs) if (l.getEntity(a) instanceof PartyBotEntity b && b.isAlive()) out.add(b.character().getId());
+            for (UUID a : r.allies) if (l.getEntity(a) instanceof PartyBotEntity b && b.isAlive()) addWho(out, b);
+            for (UUID a : r.npcs) if (l.getEntity(a) instanceof PartyBotEntity b && b.isAlive()) addWho(out, b);
         }
         out.remove(CharacterType.YOU.getId());
         return out;
@@ -599,15 +627,17 @@ public final class StoryRun {
         ServerLevel l = world(s);
         if (l == null) return;
         Set<String> there = new HashSet<>();
-        for (UUID id : r.npcs) if (l.getEntity(id) instanceof PartyBotEntity b) there.add(b.character().getId());
+        int standing = 0;
+        for (UUID id : r.npcs) if (l.getEntity(id) instanceof PartyBotEntity b) { addWho(there, b); standing++; }
         List<String> add = new ArrayList<>();
         Set<String> here = present(s, r);                                              // (no doubles: a played character, a bot, an ally)
-        for (String c : who) if (!there.contains(c) && !here.contains(c) && !botted(s, r, c) && !add.contains(c)) add.add(c);
-        int n = there.size() + add.size(), i = there.size();
+        for (String c : who) if (!taken(there, c) && !taken(here, c) && !botted(s, r, bodyOf(c)) && !botted(s, r, soulOf(c)) && !add.contains(c)) add.add(c);
+        int n = standing + add.size(), i = standing;
         for (String c : add) {
             PartyBotEntity b = com.xenowarriors.bot.BotEntities.BOT.get().create(l);
             if (b == null) continue;
-            b.setCharacter(CharacterType.byId(c));
+            if (CharacterType.byId(bodyOf(c)) == CharacterType.NONE) continue;
+            b.setCharacter(CharacterType.byId(bodyOf(c)));
             Vec3 at = StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1));
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
             b.setYRot(0F); b.setYHeadRot(0F); b.yBodyRot = 0F;
@@ -615,7 +645,7 @@ public final class StoryRun {
             b.setInvulnerable(true);
             b.setPersistenceRequired();
             b.addTag(NPC_TAG);
-            b.getPersistentData().putString("xw_story_char", c);
+            possess(b, c);
             b.getPersistentData().putString("xw_story_run", r.host.toString());
             l.addFreshEntity(b);
             r.npcs.add(b.getUUID());
@@ -729,8 +759,42 @@ public final class StoryRun {
                 continue;
             }
             if ((r.phase == FIGHT || r.phase == SURVIVE) && !r.escaping) tickFight(s, l, r);
+            else if (r.now % 10 == 0) quiet(s, r);                                            // (talking: nobody attacks anybody)
             if (r.now % 20 == 0) for (ServerPlayer p : players(s, r)) if (r.phase == FIGHT || r.phase == SURVIVE) p.displayClientMessage(Component.literal(r.objective()).withStyle(ChatFormatting.YELLOW), true);
         }
+    }
+
+    /**
+     * While people talk, nobody fights: anything hostile left on the island (a straggler, something a boss summoned, a
+     * monster that wandered in) is gone, and the party's bots drop their targets (see PartyBotEntity.storyHold).
+     */
+    static void quiet(MinecraftServer s, Run r) {
+        ServerLevel l = world(s);
+        if (l == null || r.place == null) return;
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        AABB box = new AABB(c).inflate(ISLAND_EDGE + 12, ISLAND_CEILING + 12, ISLAND_EDGE + 12);
+        for (Mob m : l.getEntitiesOfClass(Mob.class, box, x -> x.isAlive() && !(x instanceof PartyBotEntity)
+                && !x.getTags().contains(NPC_TAG) && (x instanceof net.minecraft.world.entity.monster.Enemy || r.foes.contains(x.getUUID())
+                || x.getTarget() instanceof Player || x.getTarget() instanceof PartyBotEntity))) {
+            l.sendParticles(ParticleTypes.POOF, m.getX(), m.getY() + 1, m.getZ(), 6, .3, .5, .3, .02);
+            m.discard();
+        }
+        r.foes.clear(); r.escapes.clear();
+        for (ServerPlayer p : players(s, r)) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) { b.setTarget(null); }
+        for (UUID a : r.allies) if (l.getEntity(a) instanceof PartyBotEntity b) b.setTarget(null);
+    }
+
+    /** True while a story run this bot belongs to (as a party bot or the story's ally) is talking - it holds its attacks. */
+    public static boolean holding(PartyBotEntity b) {
+        if (RUNS.isEmpty()) return false;
+        for (Run r : RUNS.values()) {
+            boolean talking = r.phase == SCENE || r.phase == TALKING || r.phase == HUB || r.phase == DONE || r.escaping;
+            if (!talking) continue;
+            if (r.allies.contains(b.getUUID()) || r.npcs.contains(b.getUUID())) return true;
+            UUID o = b.ownerId();
+            if (o != null && r.members.contains(o)) return true;
+        }
+        return false;
     }
 
     /** How far from the island's middle (sideways) and above its floor anyone may go during a mission. */
@@ -780,6 +844,12 @@ public final class StoryRun {
                 Vec3 at = backOn(r, m); m.teleportTo(at.x, at.y, at.z); m.setDeltaMovement(Vec3.ZERO); m.fallDistance = 0;
             }
             Float esc = r.escapes.get(id);
+            if (esc != null && m.getHealth() < m.getMaxHealth() * esc && r.foes.size() > 1) {   // (the rest of the wave first: no getting away
+                m.setHealth(m.getMaxHealth() * esc + 1F);                                      //  - and no talking - while they still fight)
+                if (r.now % 60 == 0) for (ServerPlayer p : ps)
+                    p.displayClientMessage(Component.literal("Take out the rest of them first!").withStyle(ChatFormatting.GOLD), true);
+                continue;
+            }
             if (esc != null && m.getHealth() < m.getMaxHealth() * esc) {     // the boss gets away through a portal
                 l.sendParticles(ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 60, .5, 1, .5, .4);
                 StoryDefs.Step st = r.cur();
@@ -856,7 +926,7 @@ public final class StoryRun {
         if (e.getLevel().isClientSide || e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND || !(e.getEntity() instanceof ServerPlayer p)) return;
         Run r = runOf(p);
         if (r == null || r.phase != HUB) return;
-        StorySides.talk(p, e.getTarget().getPersistentData().getString("xw_story_char"));
+        StorySides.talk(p, soulOf(e.getTarget().getPersistentData().getString("xw_story_char")));
     }
 
     // ------------------------------------------------------------------ Rhalix drops in

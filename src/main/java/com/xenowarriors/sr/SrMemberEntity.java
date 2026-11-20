@@ -45,6 +45,8 @@ public class SrMemberEntity extends Monster {
     private static final EntityDataAccessor<Integer> SPECIAL = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.INT);
     /** Logan's KA, Redirect, is up. */
     private static final EntityDataAccessor<Boolean> REDIRECT = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Whose body the demon is in (story mode: Ava inside Kyrie), "" for its own. */
+    private static final EntityDataAccessor<String> HOST = SynchedEntityData.defineId(SrMemberEntity.class, EntityDataSerializers.STRING);
     private static final DustParticleOptions DARK = new DustParticleOptions(new Vector3f(0.55F, 0.05F, 0.1F), 1.2F);
     private static final String[] LINES = {"For Father.", "Nice hoodie. Welcome, brother.", "The Royal capital will be ours.", "Father sees everything.", "Stay out of the rebellion's way."};
     private BlockPos post;
@@ -61,7 +63,7 @@ public class SrMemberEntity extends Monster {
                 .add(Attributes.MOVEMENT_SPEED, 0.3).add(Attributes.ARMOR, 4.0).add(Attributes.FOLLOW_RANGE, 28.0);
     }
 
-    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(DEMON, false); entityData.define(WINGS, false); entityData.define(SPECIAL, 0); entityData.define(REDIRECT, false); }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(DEMON, false); entityData.define(WINGS, false); entityData.define(SPECIAL, 0); entityData.define(REDIRECT, false); entityData.define(HOST, ""); }
 
     // client: when the special move / demon started (for the animations)
     private int specialStart = -1000, demonStart = -1000;
@@ -100,10 +102,13 @@ public class SrMemberEntity extends Monster {
     public String key() { return isNamed() ? NAMED[named()] : ""; }
 
     public String look() {
+        if (isNamed() && !host().isEmpty()) return "sr_" + host() + "_" + key();       // (in someone else's body: theirs, with red eyes)
         if (isNamed()) return "sr_" + key() + (demon() && (key().equals("persephone") || key().equals("ava")) ? "_demon" : "");
         return "sr_" + (entityData.get(VARIANT) % 2 + 1);
     }
     public boolean demon() { return entityData.get(DEMON); }
+    public String host() { return entityData.get(HOST); }
+    public void setHost(String h) { entityData.set(HOST, h == null ? "" : h); }
     /** Wings out: they're Skylanders, but only summon their wings when they need to fly. */
     public boolean wings() { return entityData.get(WINGS); }
     private int stuck, landed;
@@ -408,11 +413,11 @@ public class SrMemberEntity extends Monster {
     @Override public boolean removeWhenFarAway(double d) { return post == null && super.removeWhenFarAway(d); }
 
     @Override public void addAdditionalSaveData(CompoundTag t) {
-        super.addAdditionalSaveData(t); t.putInt("Variant", entityData.get(VARIANT)); t.putBoolean("Demon", demon()); t.putBoolean("Wings", wings());
+        super.addAdditionalSaveData(t); t.putInt("Variant", entityData.get(VARIANT)); t.putBoolean("Demon", demon()); t.putBoolean("Wings", wings()); t.putString("Host", host());
         if (post != null) t.putLong("Post", post.asLong());
     }
     @Override public void readAdditionalSaveData(CompoundTag t) {
-        super.readAdditionalSaveData(t); entityData.set(VARIANT, t.getInt("Variant")); if (hasCustomName()) bar.setName(getCustomName()); entityData.set(DEMON, t.getBoolean("Demon")); setWings(t.getBoolean("Wings"));
+        super.readAdditionalSaveData(t); entityData.set(VARIANT, t.getInt("Variant")); if (hasCustomName()) bar.setName(getCustomName()); entityData.set(DEMON, t.getBoolean("Demon")); entityData.set(HOST, t.getString("Host")); setWings(t.getBoolean("Wings"));
         if (t.contains("Post")) { post = BlockPos.of(t.getLong("Post")); restrictTo(post, 10); }
     }
 }

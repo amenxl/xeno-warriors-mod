@@ -64,20 +64,20 @@
       "id": "s4", "title": "A New Captain", "karma": 9500, "lvl": 8,
       "desc": "Ava is gone. The hideout is burned. Lexy - Persephone - walks in.",
       "steps": [
-        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "kill", "persephone"], "lines": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "kill", "lexy:persephone"], "lines": [
           {"s": "kill", "t": "Leader... they killed Ava. And the SP knows a hideout. We have to burn it."},
           {"s": "senju", "n": "SR Leader", "t": "Ava was weak. You never should have let her take a Royal."},
-          {"s": "persephone", "n": "Persephone", "t": "...Was what I heard about Ava true?"},
+          {"s": "lexy:persephone", "n": "Lexy (Persephone)", "t": "...Was what I heard about Ava true?"},
           {"s": "senju", "n": "SR Leader", "t": "You fused with your demon. Like me. You're captain now, Persephone."},
           {"s": "kill", "t": "Captain?! But I thought I was-"},
           {"s": "senju", "n": "SR Leader", "t": "Shut it. Now - the Sky Patrol is coming. Hold them off while we burn this place."}
         ]},
-        {"type": "fight", "place": "sr_hideout", "obj": "Hold off the Sky Patrol's raid while the hideout burns", "allies": ["persephone", "kill"], "waves": [
+        {"type": "fight", "place": "sr_hideout", "obj": "Hold off the Sky Patrol's raid while the hideout burns", "allies": ["lexy:persephone", "kill"], "waves": [
           [{"e": "skylander", "n": 5}],
           [{"e": "skylander", "n": 4}, {"e": "sky_hater", "n": 3}]
         ]},
-        {"type": "scene", "place": "sr_hideout", "npcs": ["persephone"], "lines": [
-          {"s": "persephone", "t": "Thanks for watching my back. Ava would've liked you.", "sky": "Thanks for watching my back. A real Skylander, too. Ava would've liked you."}
+        {"type": "scene", "place": "sr_hideout", "npcs": ["lexy:persephone"], "lines": [
+          {"s": "lexy:persephone", "t": "Thanks for watching my back. Ava would've liked you.", "sky": "Thanks for watching my back. A real Skylander, too. Ava would've liked you."}
         ]}
       ],
       "reward": {"money": 300, "bond": {"persephone": 15, "kill": 5, "senju": 10}}
@@ -86,12 +86,12 @@
       "id": "s5", "title": "Betrayal", "karma": 11000, "lvl": 9,
       "desc": "\"Betraying the Government is our next step to greatness.\"",
       "steps": [
-        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "logan", "keita", "kill", "persephone"], "lines": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "logan", "keita", "kill", "lexy:persephone"], "lines": [
           {"s": "senju", "n": "Senju", "t": "We partnered with the Government long enough. They sold us out the day they armed Aurora."},
           {"s": "senju", "n": "Senju", "t": "The newcomer leads the first strike. Prove me right.", "group": "The newcomers lead the first strike. Prove me right."},
           {"s": "keita", "t": "Father never says that. ...Don't mess it up.", "ground": "Father trusts a human with this? ...Okay. Don't mess it up."}
         ]},
-        {"type": "fight", "place": "gov_facility", "obj": "Strike the Government facility", "allies": ["logan", "keita", "persephone"], "waves": [
+        {"type": "fight", "place": "gov_facility", "obj": "Strike the Government facility", "allies": ["logan", "keita", "lexy:persephone"], "waves": [
           [{"e": "gov", "n": 5}],
           [{"e": "gov_elite", "n": 4}],
           [{"e": "ultima_proto", "boss": true, "name": "Government Prototype"}]

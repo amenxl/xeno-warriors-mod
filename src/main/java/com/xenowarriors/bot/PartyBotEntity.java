@@ -55,6 +55,7 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> YOU_SLOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (one of its owner's own characters: which slot; -1 = a show character)
     private static final EntityDataAccessor<Integer> PARKOUR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (the ParCool-style move it's doing: BotParkour)
     private static final EntityDataAccessor<CompoundTag> YOU_LOOK = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.COMPOUND_TAG);   // (that character, for drawing it: race, element, wings, skin...)
+    private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (story mode: a demon inside this body - red eyes)
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
     /** When to tidy its things next (a few seconds after they changed; 0 = nothing pending - see BotBags). */
@@ -186,6 +187,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(OUTFIT, 0);
         entityData.define(YOU_SLOT, -1);
         entityData.define(YOU_LOOK, new CompoundTag());
+        entityData.define(POSSESSED, false);
         entityData.define(PARKOUR, 0);
     }
 
@@ -298,6 +300,10 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean canFly() { return !entityData.get(GROUNDED) && (naturalFlier() || entityData.get(DMZ_FLY) || entityData.get(NIMBUS)); }
 
     /** Mikiko can't fly at all while his owner plays story mode (Season 1: he couldn't fly yet then). */
+    /** Story mode: a demon inside this body (Persephone in Lexy, Ava in Kyrie) - drawn with red eyes. */
+    public boolean possessed() { return entityData.get(POSSESSED); }
+    public void setPossessed(boolean b) { entityData.set(POSSESSED, b); }
+
     private boolean groundedNow() {
         if (character() != CharacterType.MIKIKO) return false;
         ServerPlayer o = owner();
@@ -790,6 +796,7 @@ public class PartyBotEntity extends PathfinderMob {
     @Override
     public void setTarget(LivingEntity t) {
         if (t != null && !level().isClientSide && PartyBots.friendly(this, t) && !PartyBots.sparFoes(this, t)) t = null;   // (never its own side: the owner, the party, their pets, bots and souls)
+        if (t != null && storyHold) t = null;                                     // (story mode: nobody fights while people talk)
         super.setTarget(untouchable(t) ? null : t);
     }
 
@@ -1037,8 +1044,16 @@ public class PartyBotEntity extends PathfinderMob {
         BotMoves.face(this, yaw, 20F);
     }
 
+    /** Set while its story run is talking (StoryRun.holding): no targets, no hits. */
+    public boolean storyHold;
+
     @Override
     public void aiStep() {
+        if (!level().isClientSide && tickCount % 5 == 0) {                      // story mode: holds its attacks while dialogue plays
+            boolean h = com.xenowarriors.story.StoryRun.holding(this);
+            if (h && !storyHold) { setTarget(null); getNavigation().stop(); }
+            storyHold = h;
+        }
         if (!level().isClientSide && heldBy != null) tickHold();
         if (!level().isClientSide) BotParkour.tick(this);                        // (vaults, climbs, rolls... with ParCool)
         super.aiStep();
@@ -1314,6 +1329,7 @@ public class PartyBotEntity extends PathfinderMob {
     /** A landed hit wears its weapon down (the weapon's damage is already in its attack damage, as a held item). */
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity t) {
+        if (storyHold) return false;
         boolean hit = super.doHurtTarget(t);
         if (hit && !level().isClientSide) { BotGear.wear(this); BotPassives.afterHit(this, t); }
         return hit;

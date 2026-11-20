@@ -245,6 +245,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         else if (!dr && com.xenowarriors.client.compat.DmzForms.faceSet(p) != null)       // Super Saiyan forms: teal eyes, SSJ3 no brows, SSJ4 red-ringed gold eyes...
             f.face = face(type.getId() + "_" + com.xenowarriors.client.compat.DmzForms.faceSet(p), expr);
         else f.face = expr == null ? baseFace(type) : face(fp, expr);
+        if (!dr && p instanceof com.xenowarriors.client.bot.BotAvatar av && av.bot() != null && av.bot().possessed())   // story: a demon inside - red eyes
+            f.face = face(type.getId() + "_possessed", expr);
         if (!dr) f.face = com.xenowarriors.client.race.RaceLook.tint(f.face, p, type);   // another DragonMineZ race: their skin colour
         int damage = damageLevel(p);
         if (damage > 0 && !ClientCharacterData.isPreviewing())

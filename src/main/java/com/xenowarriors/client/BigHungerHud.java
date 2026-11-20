@@ -20,7 +20,9 @@ import net.minecraftforge.fml.common.Mod;
 public final class BigHungerHud {
     private static final ResourceLocation ICONS = new ResourceLocation("textures/gui/icons.png");
     /** Bar colors, bar 1 (vanilla look) to bar 10. */
-    public static final int[] TIER = {0xFFFFFF, 0xFFD24A, 0x7CE05A, 0x4AD0E8, 0x5A7CFF, 0xB25AFF, 0xFF5AC8, 0xFF5A5A, 0xFFA040, 0xFFFFA0};
+    public static final int[] TIER = {0xFFFFFF, 0xFFC400, 0x4CFF2E, 0x1EE6FF, 0x3466FF, 0xB02EFF, 0xFF2EC4, 0xFF2424, 0xFF8A00, 0xFFF46A};
+    /** The extra layers' drumstick: a meat mask to tint (top row) and its outline and bone (bottom row) - vivid, not muddy. */
+    private static final net.minecraft.resources.ResourceLocation LAYER = com.xenowarriors.XenoWarriors.id("textures/gui/hunger_layer.png");
     private static int total = -1, max = 20;
 
     private BigHungerHud() {}
@@ -88,21 +90,34 @@ public final class BigHungerHud {
             g.blit(ICONS, x, y, 16, 27, 9, 9);                         // empty backing
             int pts = i * 2;
             int col;
-            int u;
-            if (pts + 2 <= inTier) { col = TIER[tier % TIER.length]; u = 52; }                       // full in this bar's color
-            else if (pts + 1 == inTier) { col = TIER[tier % TIER.length]; u = 61; }                   // half
-            else if (tier > 0) { col = TIER[(tier - 1) % TIER.length]; u = 52; }                       // under it: the bar below, full
+            int lay;
+            boolean half = false;
+            if (pts + 2 <= inTier) lay = tier;                                                         // full, in this bar's color
+            else if (pts + 1 == inTier) { lay = tier; half = true; }                                   // half
+            else if (tier > 0) lay = tier - 1;                                                         // under it: the bar below, full (dimmer)
             else continue;
-            float r = ((col >> 16) & 255) / 255F, gg = ((col >> 8) & 255) / 255F, b = (col & 255) / 255F;
+            if (lay == 0) {                                                                            // the first layer: the plain vanilla drumstick
+                if (tier > 0) RenderSystem.setShaderColor(0.6F, 0.6F, 0.6F, 1F);
+                g.blit(ICONS, x, y, half ? 61 : 52, 27, 9, 9);
+                RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+                continue;
+            }
+            col = TIER[lay % TIER.length];
+            float k = lay < tier ? 0.55F : 1F;                                                         // (the layer you're eating stands out)
+            float r = ((col >> 16) & 255) / 255F * k, gg = ((col >> 8) & 255) / 255F * k, b = (col & 255) / 255F * k;
             RenderSystem.setShaderColor(r, gg, b, 1F);
-            g.blit(ICONS, x, y, u, 27, 9, 9);
+            g.blit(LAYER, x, y, half ? 9 : 0, 0, 9, 9, 18, 18);
             RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+            g.blit(LAYER, x, y, half ? 9 : 0, 9, 9, 9, 18, 18);
         }
         String label = "x" + (tier + 1) + "/" + layers();             // (the layer being eaten from, out of all of them), small, just above the row's left end
         g.pose().pushPose();
-        g.pose().translate(right - 80, top - 5, 0);
-        g.pose().scale(0.6F, 0.6F, 1F);
-        g.drawString(mc.font, label, 0, 0, 0xFF000000 | TIER[tier % TIER.length], true);
+        g.pose().translate(right - 81, top - 6, 0);
+        g.pose().scale(0.75F, 0.75F, 1F);
+        int lc = 0xFF000000 | TIER[tier % TIER.length];
+        g.fill(-2, -1, mc.font.width(label) + 2, 9, 0xC0000000);                                   // (a dark backing: readable on any background)
+        g.fill(-2, 9, mc.font.width(label) + 2, 10, lc);
+        g.drawString(mc.font, label, 0, 0, lc, true);
         g.pose().popPose();
     }
 }
