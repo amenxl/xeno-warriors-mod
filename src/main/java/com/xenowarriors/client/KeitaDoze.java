@@ -22,7 +22,7 @@ public final class KeitaDoze {
     private static final Map<Integer, int[]> STILL = com.xenowarriors.client.ClientReset.track(new HashMap<>());
     private KeitaDoze() {}
 
-    private static boolean keita(Player p) { return p instanceof AbstractClientPlayer a && ClientCharacterData.get(a) == CharacterType.KEITA; }
+    private static boolean keita(Player p) { return IdleBorrow.idlesAs(p, CharacterType.KEITA); }   // (or a made character borrowing his idle)
 
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent e) {

@@ -55,7 +55,16 @@ public record PlayerStatsRequestPacket() {
                 com.xenowarriors.stats.Crafting.craftLevel(sender), com.xenowarriors.stats.Crafting.craftProgress(sender),
                 com.xenowarriors.stats.Crafting.smeltLevel(sender), com.xenowarriors.stats.Crafting.smeltProgress(sender),
                 com.xenowarriors.stats.Appetite.level(sender), com.xenowarriors.stats.Appetite.progress(sender),
-                com.xenowarriors.stats.Building.level(sender), com.xenowarriors.stats.Building.progress(sender));
+                com.xenowarriors.stats.Building.level(sender), com.xenowarriors.stats.Building.progress(sender), idleBonds(sender, d));
         ModNetwork.sendToPlayer(new PlayerStatsPacket(list, me), sender);
+    }
+
+    /** Your made character's bonds with the characters whose idles it can borrow (zeros for a show character). */
+    private static int[] idleBonds(net.minecraft.server.level.ServerPlayer p, com.xenowarriors.character.PlayerCharacter d) {
+        var owners = com.xenowarriors.you.YouIdles.OWNERS;
+        int[] out = new int[owners.length];
+        if (d == null || d.getType() != com.xenowarriors.character.CharacterType.YOU) return out;
+        for (int i = 0; i < owners.length; i++) out[i] = com.xenowarriors.you.YouIdles.bond(p, d.youSlot, owners[i]);
+        return out;
     }
 }

@@ -35,8 +35,9 @@ public final class YouSlots {
         PlayerCharacter d = p.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
+        if (action == YouActionPacket.IDLE && slot < 0 && d.getType() == CharacterType.YOU) slot = d.youSlot;   // (Character Customization: the one you're playing)
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR || action == YouActionPacket.IDLE ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
             p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
@@ -78,6 +79,20 @@ public final class YouSlots {
                 if (!s.exists() || data == null) return;
                 s.colour = YouSlot.validColour(data.colour);
                 p.displayClientMessage(Component.literal(s.name + (s.colour < 0 ? " has their element's colour again" : " has a new colour")).withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
+            case YouActionPacket.IDLE -> {
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null) return;
+                String id = data.idle == null ? "" : data.idle;
+                if (!YouIdles.allowed(p, slot, id)) {
+                    p.displayClientMessage(Component.literal("Get your bond with them to " + YouIdles.NEED + " to use their idle").withStyle(ChatFormatting.RED), true);
+                    return;
+                }
+                s.idle = id;
+                p.displayClientMessage(Component.literal(id.isEmpty() ? s.name + " has no borrowed idle now"
+                        : s.name + " now idles like " + CharacterType.byId(id).getDisplayName().getString()).withStyle(st -> st.withColor(s.color())), true);
                 CharacterManager.syncToTrackingAndSelf(p);
                 send(p, true);
             }

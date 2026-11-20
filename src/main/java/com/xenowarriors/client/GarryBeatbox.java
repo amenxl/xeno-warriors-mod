@@ -37,8 +37,9 @@ public final class GarryBeatbox {
 
     private GarryBeatbox() {}
 
+    /** Whose part they play (a made character borrowing an idle plays that character's). */
     private static CharacterType type(Player p) {
-        return p instanceof AbstractClientPlayer a ? ClientCharacterData.get(a) : CharacterType.NONE;
+        return IdleBorrow.idleType(p);
     }
 
     private static boolean calm(AbstractClientPlayer p) {

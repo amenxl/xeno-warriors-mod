@@ -307,6 +307,16 @@ public class CharacterCustomScreen extends Screen {
                 click();
                 return true;
             }
+            if (type() == CharacterType.YOU) {                       // a made character's borrowed idle
+                for (int i = 0; i < com.xenowarriors.you.YouIdles.OWNERS.length + 1; i++) {
+                    if (!inBox(vx, vy, skillX(i), idleY(i), CARD_W, IDLE_H)) continue;
+                    if (idleBond(i) < com.xenowarriors.you.YouIdles.NEED || idleId(i).equals(idleNow())) return true;
+                    var d = new com.xenowarriors.you.YouSlot(); d.idle = idleId(i);
+                    ModNetwork.sendToServer(new com.xenowarriors.network.YouActionPacket(com.xenowarriors.network.YouActionPacket.IDLE, -1, d));   // (-1: the one you're playing)
+                    click();
+                    return true;
+                }
+            }
             if (hoodToggle() && inBox(vx, vy, skillX(names.length), outfitY(names.length), CARD_W, OUTFIT_H)) {
                 boolean up = !com.xenowarriors.client.mikiko.HoodClient.kaeruUp(minecraft.player);
                 ModNetwork.sendToServer(new com.xenowarriors.network.HoodTogglePacket(up));
@@ -1038,7 +1048,54 @@ public class CharacterCustomScreen extends Screen {
             scaled(g, up ? "Hood up" : "Hood down", x + 5, y + 4, 0.9F, 0xFFFFFF);
             scaled(g, "Hoodie  •  click to " + (up ? "put it down" : "put it up"), x + 5, y + 15, 0.75F, up ? 0x77DD88 : 0x99AABB);
         }
+        if (type == CharacterType.YOU) { idlesSection(g, col, mx, my); return; }
         if (names.length <= 1) scaled(g, "More outfits come with later seasons.", 5, outfitY(2) + 4, 0.8F, 0x8A8A9A);
+    }
+
+    // ---- a made character's borrowed idle (see YouIdles): a card per character with an idle, unlocked at bond 100
+    private static final int IDLE_H = 22, IDLE_Y = 97;
+    private int idleY(int i) { return IDLE_Y + (i / 2) * (IDLE_H + 2); }
+
+    /** {""} + the idle owners' ids: what each card picks. */
+    private static String idleId(int i) { return i == 0 ? "" : com.xenowarriors.you.YouIdles.OWNERS[i - 1].getId(); }
+
+    private int idleBond(int i) {
+        if (i == 0) return com.xenowarriors.you.YouIdles.NEED;
+        int[] b = me == null ? null : me.idleBonds();
+        return b == null || i - 1 >= b.length ? 0 : b[i - 1];
+    }
+
+    private String idleNow() {
+        var s = minecraft.player == null ? null : ClientCharacterData.you(minecraft.player);
+        return s == null ? "" : s.idle;
+    }
+
+    private void idlesSection(GuiGraphics g, int col, double mx, double my) {
+        scaled(g, "IDLE ANIMATION", 5, IDLE_Y - 9, 0.75F, 0x8A8A9A);
+        scaled(g, "bond " + com.xenowarriors.you.YouIdles.NEED + " to borrow theirs", 5 + font.width("IDLE ANIMATION") * 0.75F + 6, IDLE_Y - 9, 0.65F, 0x6A6A7A);
+        String now = idleNow();
+        int n = com.xenowarriors.you.YouIdles.OWNERS.length + 1;
+        for (int i = 0; i < n; i++) {
+            String id = idleId(i);
+            int x = skillX(i) + Math.round((1F - rowIn(1 + i / 2)) * 18F), y = idleY(i);
+            int bond = idleBond(i);
+            boolean locked = bond < com.xenowarriors.you.YouIdles.NEED, on = id.equals(now), over = inBox(mx, my, x, y, CARD_W, IDLE_H);
+            g.fill(x, y, x + CARD_W, y + IDLE_H, on ? 0xFF000000 | dark2(col) : over && !locked ? 0xFF2A2A3A : 0xFF1C1C24);
+            int own = i == 0 ? col : CharacterType.byId(id).getColor() & 0xFFFFFF;
+            g.fill(x, y, x + 2, y + IDLE_H, locked ? 0xFF555555 : 0xFF000000 | own);
+            if (on) outline(g, x, y, x + CARD_W, y + IDLE_H, 0xFF000000 | light(col));
+            String nm = i == 0 ? "None" : CharacterType.byId(id).getDisplayName().getString();
+            scaled(g, (locked ? "\uD83D\uDD12 " : "") + nm, x + 5, y + 3, 0.8F, locked ? 0x777777 : 0xFFFFFF);
+            if (i > 0 && locked) {                                            // the bond so far
+                scaled(g, "Bond " + bond + "/" + com.xenowarriors.you.YouIdles.NEED, x + 5, y + 13, 0.65F, 0xAA7777);
+                int bw = CARD_W - 52;
+                g.fill(x + 48, y + 14, x + 48 + bw, y + 17, 0xFF2A2A34);
+                g.fill(x + 48, y + 14, x + 48 + Math.round(bw * bond / (float) com.xenowarriors.you.YouIdles.NEED), y + 17, 0xFF000000 | own);
+            } else {
+                String line = on ? (i == 0 ? "Your own standing" : "Using") : i == 0 ? "Click to stop borrowing" : ell(com.xenowarriors.you.YouIdles.what(CharacterType.byId(id)), (int) ((CARD_W - 8) / 0.6F));
+                scaled(g, line, x + 5, y + 13, 0.6F, on ? 0x77DD88 : 0x99AABB);
+            }
+        }
     }
 
     /** The outfits tab has a Hood up / Hood down card (Kaeru in her hoodie). */

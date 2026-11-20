@@ -43,6 +43,8 @@ public final class YouSlot {
     public boolean dmzLook;
     /** Its own colour (menus, HUD, name), picked in the creator or on the slots screen; -1 = its element's colour. */
     public int colour = -1;
+    /** A borrowed idle animation: the id of a character it has bond 100 with ("" = none; see YouIdles). */
+    public String idle = "";
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -94,6 +96,7 @@ public final class YouSlot {
         t.putBoolean("ka_rolled", kaRolled);
         t.putBoolean("dmz_look", dmzLook);
         t.putInt("colour", colour);
+        t.putString("idle", idle);
         return t;
     }
 
@@ -117,6 +120,7 @@ public final class YouSlot {
         s.kaRolled = t.getBoolean("ka_rolled");
         s.dmzLook = t.getBoolean("dmz_look");
         s.colour = t.contains("colour") ? validColour(t.getInt("colour")) : -1;     // (characters made before: their element's)
+        s.idle = YouIdles.owner(t.getString("idle")) ? t.getString("idle") : "";
         return s;
     }
 
@@ -138,6 +142,7 @@ public final class YouSlot {
         buf.writeBoolean(kaRolled);
         buf.writeBoolean(dmzLook);
         buf.writeInt(colour);
+        buf.writeUtf(idle, 32);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -160,6 +165,8 @@ public final class YouSlot {
         s.kaRolled = buf.readBoolean();
         s.dmzLook = buf.readBoolean();
         s.colour = validColour(buf.readInt());
+        String id = buf.readUtf(32);
+        s.idle = YouIdles.owner(id) ? id : "";
         return s;
     }
 

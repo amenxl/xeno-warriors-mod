@@ -18,7 +18,9 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
                      int sealed, boolean inRealm, boolean prisoner, int pets, int flightMinutes, int mining, float miningXp,
                      int bladeLevel, float bladeXp, int realmLeft, int realmMax, int cooldownLeft,
                      int craft, float craftXp, int smelt, float smeltXp, int appetite, float appetiteXp,
-                     int building, float buildingXp) {}
+                     int building, float buildingXp,
+                     /** A made character's bonds with the characters whose idles it can borrow (YouIdles.OWNERS order). */
+                     int[] idleBonds) {}
 
     public static void encode(PlayerStatsPacket m, FriendlyByteBuf buf) {
         buf.writeCollection(m.players, (b, e) -> {
@@ -62,6 +64,7 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
         buf.writeFloat(me.appetiteXp());
         buf.writeVarInt(me.building());
         buf.writeFloat(me.buildingXp());
+        buf.writeVarIntArray(me.idleBonds());
     }
 
     public static PlayerStatsPacket decode(FriendlyByteBuf buf) {
@@ -71,7 +74,7 @@ public record PlayerStatsPacket(List<Entry> players, Me me) {
                 buf.readVarInt(), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readFloat(),
                 buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
                 buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat(), buf.readVarInt(), buf.readFloat(),
-                buf.readVarInt(), buf.readFloat());
+                buf.readVarInt(), buf.readFloat(), buf.readVarIntArray(64));
         return new PlayerStatsPacket(list, me);
     }
 

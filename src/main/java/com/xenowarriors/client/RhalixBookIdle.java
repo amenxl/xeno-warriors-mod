@@ -42,6 +42,7 @@ public final class RhalixBookIdle {
     private RhalixBookIdle() {}
 
     public static boolean hasBook(Player p) {
+        if (IdleBorrow.borrows(p, com.xenowarriors.character.CharacterType.RHALIX)) return true;   // (a made character borrowing his idle)
         int o = ClientCharacterData.rhalixOutfit(p);
         return o == ClientCharacterData.RHALIX_ORIGINS_1 || o == ClientCharacterData.RHALIX_ORIGINS_2;
     }

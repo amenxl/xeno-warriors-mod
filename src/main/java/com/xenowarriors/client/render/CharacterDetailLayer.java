@@ -568,7 +568,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (shiyokenOutfit(player, type) && shiyokenModel() != null) { model = shiyokenModel(); outfit = 1; }   // Shiyoken: his fire outfit (over any outfit)
         var fusionModel = com.xenowarriors.client.FusionLook.of(player);
         if (fusionModel != null && fusionModel.model() != null) { model = fusionModel.model(); outfit = 0; king = false; }   // a fusion: its own model
-        if (model == null) return;
+        if (model == null) { borrowedProps(player, poseStack, buffers, packedLight, partialTick); return; }   // (a made character: the props of an idle it borrowed)
 
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
         model.head.copyFrom(parent.head);
@@ -783,6 +783,13 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             if (ff.mouth != null)
                 renderFace(model, parent, player, poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(ff.mouth)), packedLight, overlay);
         }
+    }
+
+    /** A made character using a borrowed idle (see IdleBorrow): Rhalix's book, Yuri's laptop, Garry's mic. */
+    private void borrowedProps(AbstractClientPlayer player, PoseStack poseStack, MultiBufferSource buffers, int light, float partialTick) {
+        if (com.xenowarriors.client.IdleBorrow.borrows(player, CharacterType.RHALIX)) com.xenowarriors.client.RhalixBookIdle.render(player, poseStack, buffers, light, partialTick);
+        if (com.xenowarriors.client.IdleBorrow.borrows(player, CharacterType.YURI)) com.xenowarriors.client.YuriLaptopIdle.render(player, poseStack, buffers, light, partialTick);
+        if (com.xenowarriors.client.IdleBorrow.borrows(player, CharacterType.GARRY)) com.xenowarriors.client.GarryBeatbox.render(player, getParentModel(), poseStack, buffers, light, partialTick);
     }
 
     /** UI test: the face each model last drew (entity id -> "face|damage|mouth"), recorded only while this is on. */

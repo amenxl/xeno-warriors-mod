@@ -81,6 +81,12 @@ public final class Bonds {
         return Math.max(floor(me(p), partnerChar), Math.max(0, Math.min(MAX, root(p).getCompound(me(p)).getCompound(partnerChar).getInt("lv"))));
     }
 
+    /** A given character's (by its save key, e.g. "you3") bond with this teammate character (0-100). */
+    public static int levelAs(Player p, String meKey, String partnerChar) {
+        if (partnerChar == null || partnerChar.equals("none") || meKey == null) return 0;
+        return Math.max(floor(meKey, partnerChar), Math.max(0, Math.min(MAX, root(p).getCompound(meKey).getCompound(partnerChar).getInt("lv"))));
+    }
+
     /** Bonds that start high: Stevie and Garry (Komatsu Norio's students, in the gang together) begin at 75 with each other. */
     public static final int GANG_BOND = 75;
 

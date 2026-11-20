@@ -7,9 +7,9 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** Client -> server: the You slots screen - OPEN the list, PLAY a slot, CREATE a character in a slot, DELETE a slot, SKIN: give a slot its own skin (data.skin), DMZ_LOOK: drawn as its DragonMineZ character or not (data.dmzLook), COLOUR: its own colour (data.colour, -1 = its element's). */
+/** Client -> server: the You slots screen - OPEN the list, PLAY a slot, CREATE a character in a slot, DELETE a slot, SKIN: give a slot its own skin (data.skin), DMZ_LOOK: drawn as its DragonMineZ character or not (data.dmzLook), COLOUR: its own colour (data.colour, -1 = its element's), IDLE: a borrowed idle (data.idle, see YouIdles). */
 public record YouActionPacket(int action, int slot, YouSlot data) {
-    public static final int OPEN = 0, PLAY = 1, CREATE = 2, DELETE = 3, SKIN = 4, DMZ_LOOK = 5, COLOUR = 6;
+    public static final int OPEN = 0, PLAY = 1, CREATE = 2, DELETE = 3, SKIN = 4, DMZ_LOOK = 5, COLOUR = 6, IDLE = 7;
 
     public static void encode(YouActionPacket m, FriendlyByteBuf buf) {
         buf.writeVarInt(m.action); buf.writeVarInt(m.slot);

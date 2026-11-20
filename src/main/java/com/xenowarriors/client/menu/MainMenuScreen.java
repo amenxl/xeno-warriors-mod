@@ -49,6 +49,8 @@ public class MainMenuScreen extends Screen {
     public MainMenuScreen() {
         super(Component.literal("Main Menu"));
         List<Entry> l = new java.util.ArrayList<>(List.of(
+                new Entry("Story", "Season 1 Story Mode: play your own character through Rhalix's, Mikiko's, the Sky Rebellion's and the Government's stories.",
+                        com.xenowarriors.client.story.StoryClient::open),      // (at the very top - the user's pick)
                 new Entry("Character Select", "Pick which warrior you play as.", () -> minecraft.setScreen(new com.xenowarriors.client.screen.CharacterSelectScreen())),
                 new Entry("Character Customization", "Your stats, skill loadout, outfits and KA / last resort.", () -> com.xenowarriors.client.menu.CharacterCustomScreen.open(this)),
                 new Entry("Party", "Your party and bot teammates.", () -> minecraft.setScreen(new com.xenowarriors.client.party.PartySetupScreen(this))),
@@ -63,8 +65,6 @@ public class MainMenuScreen extends Screen {
                 if (!com.xenowarriors.client.compat.DmzMenu.open() && minecraft.player != null)
                     minecraft.player.displayClientMessage(Component.literal("Couldn't open the DragonMineZ menu."), true);
             }));
-        l.add(new Entry("Story", "Season 1 Story Mode: play your own character through Rhalix's, Mikiko's, the Sky Rebellion's and the Government's stories.",
-                com.xenowarriors.client.story.StoryClient::open));   // (after the others, so they keep their places)
         l.add(new Entry("Guide", "How to play: combat, team attacks, party and bots, characters, modes, the world and progression.", () -> GuideScreen.open(this)));   // (last, so the others keep their places)
         entries = List.copyOf(l);
     }

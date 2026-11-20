@@ -39,7 +39,7 @@ public final class YuriLaptopIdle {
     private YuriLaptopIdle() {}
 
     private static boolean isYuri(Player p) {
-        return p instanceof AbstractClientPlayer a && ClientCharacterData.get(a) == CharacterType.YURI;
+        return IdleBorrow.idlesAs(p, CharacterType.YURI);   // (or a made character borrowing her idle)
     }
 
     private static boolean calm(AbstractClientPlayer p) {

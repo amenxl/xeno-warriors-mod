@@ -126,6 +126,7 @@ public final class PackTests {
         if (focus.startsWith("packspeeds")) { PackSpeedTests.build(mc, l); return; }      // (how fast every combo plays)
         if (focus.startsWith("packraceui")) { PackRaceUiTests.build(mc, l); return; }      // (menus and HUD with each DragonMineZ race)
         if (focus.startsWith("packvr")) { PackVrTests.build(mc, l); return; }      // (Yuri's VR Room)
+        if (focus.startsWith("packyouidle")) { PackYouIdleTests.build(mc, l); return; }      // (a made character borrows idles at bond 100)
         if (focus.startsWith("packyoucolour")) { PackYouColourTests.build(mc, l); return; }      // (a made character picks its colour)
         if (focus.startsWith("packchase")) { PackChaseTests.build(mc, l); return; }      // (Chase's two swords on the summon key)
         if (focus.startsWith("packbotbag")) { PackBotBagTests.build(mc, l); return; }      // (a bot's extra tabs and Sort)

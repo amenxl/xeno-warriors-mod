@@ -165,6 +165,14 @@ public final class MikikoAnimations {
         return p instanceof AbstractClientPlayer cp && ClientCharacterData.get(cp) == CharacterType.MIKIKO;
     }
 
+    /** A made character borrowing his idles (bond 100, see IdleBorrow): only his idles - his stretches, sitting with the
+     *  fire in his palm, petting a fox, the song dances - none of his fighting, flying, jumps, landings, strolls or blade tricks. */
+    private static boolean borrower(Player p) {
+        return com.xenowarriors.client.IdleBorrow.borrows(p, CharacterType.MIKIKO);
+    }
+
+    private static boolean animated(Player p) { return isMikiko(p) || borrower(p); }
+
     // ------------------------------------------------------------------ ticking
 
     @SubscribeEvent
@@ -178,7 +186,7 @@ public final class MikikoAnimations {
         }
         if (mc.isPaused()) return;
         for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
-            if (!isMikiko(p)) {
+            if (!animated(p)) {
                 STATES.remove(p.getId());
                 continue;
             }
@@ -196,6 +204,7 @@ public final class MikikoAnimations {
 
     private static void tick(ClientLevel level, AbstractClientPlayer p, State s) {
         int now = p.tickCount;
+        boolean own = isMikiko(p);          // (false: a made character borrowing only his idles)
 
         // double jump (your own player) and flight
         // big falls end in a hero landing
@@ -203,7 +212,7 @@ public final class MikikoAnimations {
         if (!p.onGround() && !p.isInWater() && !flyingNow) {
             s.peakY = Double.isNaN(s.peakY) ? p.getY() : Math.max(s.peakY, p.getY());
         } else if (p.onGround() && !Double.isNaN(s.peakY)) {
-            if (s.peakY - p.getY() >= HERO_LANDING_FALL && !p.isInWater()) {
+            if (own && s.peakY - p.getY() >= HERO_LANDING_FALL && !p.isInWater()) {
                 s.landStart = now;
                 MikikoEffects.heroLanding(level, p);
             }
@@ -213,14 +222,14 @@ public final class MikikoAnimations {
         }
         s.airTicks = p.onGround() ? 0 : s.airTicks + 1;
         // a long fall: he tips over into a dive, arms spread wide
-        boolean diving = !p.onGround() && !flyingNow && !p.isInWater() && !p.onClimbable() && !Double.isNaN(s.peakY)
+        boolean diving = own && !p.onGround() && !flyingNow && !p.isInWater() && !p.onClimbable() && !Double.isNaN(s.peakY)
                 && s.peakY - p.getY() > DIVE_AFTER && p.getY() - p.yo < -0.45;
         s.diveO = s.dive;
         s.dive = approach(s.dive, diving ? 1F : 0F, diving ? 0.06F : 0.25F);
         if (p.onGround() || p.isInWater() || p.onClimbable()) { s.doubleJumped = false; s.rideJumped = false; }
-        if (p == Minecraft.getInstance().player) tryDoubleJump(level, (net.minecraft.client.player.LocalPlayer) p, s, now);
+        if (own && p == Minecraft.getInstance().player) tryDoubleJump(level, (net.minecraft.client.player.LocalPlayer) p, s, now);
         // other players' flight is guessed from air time, so wait a bit longer to not mistake a big jump for flying
-        boolean flying = FlightTracker.isFlying(p) && !p.isFallFlying() && !p.onGround()
+        boolean flying = own && FlightTracker.isFlying(p) && !p.isFallFlying() && !p.onGround()
                 && (p == Minecraft.getInstance().player || s.airTicks > 28);
         double speed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
         s.flyO = s.fly;
@@ -241,11 +250,11 @@ public final class MikikoAnimations {
 
         // walking / running
         double groundSpeed = Math.sqrt(Math.pow(p.getX() - p.xo, 2) + Math.pow(p.getZ() - p.zo, 2));
-        boolean walking = p.onGround() && groundSpeed > 0.02 && !p.isSprinting() && !p.isCrouching()
+        boolean walking = own && p.onGround() && groundSpeed > 0.02 && !p.isSprinting() && !p.isCrouching()
                 && !p.isPassenger() && !p.isSwimming() && !p.isUsingItem();
         if (walking) { s.walkTicks++; s.stopTicks = 0; }
         else if (++s.stopTicks > 10 || p.isSprinting() || !p.onGround()) s.walkTicks = 0;   // short pauses are fine
-        boolean running = p.isSprinting() && p.onGround() && !p.isSwimming() && !p.isPassenger();
+        boolean running = own && p.isSprinting() && p.onGround() && !p.isSwimming() && !p.isPassenger();
         s.strollO = s.stroll;
         s.runO = s.run;
         s.stroll = approach(s.stroll, walking && s.walkTicks >= STROLL_AFTER && s.move == null ? 1F : 0F, 0.06F);
@@ -264,11 +273,11 @@ public final class MikikoAnimations {
                 && (!s.lastSwinging || p.swingTime < s.lastSwingTime);
         s.lastSwinging = p.swinging;
         s.lastSwingTime = p.swingTime;
-        if (swingStart && !mining(p) && charged(p, s, now)) {
+        if (own && swingStart && !mining(p) && charged(p, s, now)) {
             startAttack(p, s, now);
             s.moveScale = 1F;
         }
-        else if (com.xenowarriors.client.AttackHooks.externalAttack.test(p)) {        // Epic Fight battle mode
+        else if (own && com.xenowarriors.client.AttackHooks.externalAttack.test(p)) {        // Epic Fight battle mode
             startAttack(p, s, now);
             // timed so his strike lands with Epic Fight's hit (his strikes land about a third of the way in)
             if (s.move != null) s.moveScale = com.xenowarriors.client.AttackHooks.timeScale(p, s.move.duration, 0.36F);
@@ -293,14 +302,14 @@ public final class MikikoAnimations {
             if (pNow > 1F) s.move = null;
         }
 
-        boolean off = offhandBlade(p);
+        boolean off = own && offhandBlade(p);
         if (off != s.offhandShown) {
             MikikoEffects.blade(level, p, off);
             s.offhandShown = off;
         }
 
         // summoned blade flashes in and out
-        boolean show = bladeVisible(p, s, now);
+        boolean show = own && bladeVisible(p, s, now);
         if (show != s.bladeShown) {
             MikikoEffects.blade(level, p, show);
             s.bladeShown = show;
@@ -318,7 +327,7 @@ public final class MikikoAnimations {
         else if (p.isSprinting() && p.onGround() && s.run > 0.35F) s.backSlung = true;
         else if (p.onClimbable() && !p.onGround()) s.backSlung = true;   // climbing: both hands on the ladder, blade on his back
         else if (s.still >= 4) s.backSlung = false;                 // stood still: back into his hand
-        boolean poisoned = POISONED.contains(p.getId()) || (p == Minecraft.getInstance().player
+        boolean poisoned = own && POISONED.contains(p.getId()) || own && (p == Minecraft.getInstance().player
                 && p.hasEffect(net.minecraft.world.effect.MobEffects.POISON));
         s.sitO = s.sit;
         s.lookO = s.look;
@@ -380,7 +389,7 @@ public final class MikikoAnimations {
         s.vibe = approach(s.vibe, vibing ? 1F : 0F, 0.08F);
         boolean holdingBlade = Hekublade.isBlade(p.getMainHandItem());
         // badly hurt: hands on his knees catching his breath, or a sword slung over his shoulder
-        boolean low = lowHealth(p);
+        boolean low = own && lowHealth(p);
         boolean anySword = p.getMainHandItem().getItem() instanceof SwordItem;
         s.tiredO = s.tired;
         s.tired = approach(s.tired, low && !anySword && s.still >= 10 && !poisoned && !p.isUsingItem() ? 1F : 0F, 0.08F);
@@ -823,12 +832,13 @@ public final class MikikoAnimations {
 
     /** Called from the player model after the normal pose is set. */
     public static void apply(HumanoidModel<?> model, Player player, float ageInTicks) {
-        if (ageInTicks == 0F || !isMikiko(player)) return;     // 0 = first-person arm render
+        if (ageInTicks == 0F || !animated(player)) return;     // 0 = first-person arm render
+        boolean own = isMikiko(player);
         State s = STATES.get(player.getId());
         if (s == null) return;
         float partial = Mth.clamp(ageInTicks - player.tickCount, 0F, 1F);
         if (player.isSleeping()) {
-            sleepPose(model, ageInTicks);
+            if (own) sleepPose(model, ageInTicks);
             return;
         }
 
@@ -841,7 +851,7 @@ public final class MikikoAnimations {
         // just stopped, empty-handed: a loose fighting stance (fists up by his chest, knees soft, bouncing a little)
         // until the idle animations take over
         float rw = 0F;
-        if (s.still >= 2 && player.getMainHandItem().isEmpty() && poison <= 0F && s.move == null && s.vibe <= 0F
+        if (own && s.still >= 2 && player.getMainHandItem().isEmpty() && poison <= 0F && s.move == null && s.vibe <= 0F
                 && robot <= 0F && s.groove <= 0F && s.tired <= 0F && sit <= 0F && !player.isCrouching()) {
             rw = smooth((s.still - 2 + partial) / 6F) * (1F - smooth((s.still - (LOOK_AROUND_AFTER - 14) + partial) / 14F));
             if (rw > 0F) readyStance(model, player, ageInTicks, rw);
@@ -914,14 +924,14 @@ public final class MikikoAnimations {
         if (hypeW > 0F) GeoAnims.apply(model, "hype", ageInTicks - s.hypeStart, true, hypeW);
         float alertW = Mth.lerp(partial, s.alertO, s.alert);
         if (alertW > 0F && s.move == null) GeoAnims.apply(model, "alert", ageInTicks - s.alertStart, true, alertW);
-        float x = crossX(player, partial);
+        float x = own ? crossX(player, partial) : 0F;
         if (x > 0F && s.move == null) {
             // both arms forward, wrists crossed, so the two blades make an X
             float breathe = Mth.sin(ageInTicks * 0.1F) * 0.03F;
             set(model.rightArm, -1.5F + breathe, 0.55F, 0.1F, x);
             set(model.leftArm, -1.5F - breathe, -0.55F, -0.1F, x);
         }
-        float[] bi = bladeIdle(player, partial);
+        float[] bi = own ? bladeIdle(player, partial) : null;
         if (bi != null && s.move == null) bladeIdlePose(model, (int) bi[0], bi[1]);
         if (s.move != null) {
             // in fast flight his whole body is tipped forward; the attack poses are made for standing, so turn the arms
@@ -950,10 +960,10 @@ public final class MikikoAnimations {
         if (swordTired > 0F && s.move == null) swordTiredPose(model, swordTired, ageInTicks, s.still > 0);
         // sealing a defeated mob into the Hekublade: the blade raised up
         float absorbT = ageInTicks - s.absorbStart, absorbLen = GeoAnims.length("absorb");
-        if (s.move == null && absorbT >= 0F && absorbT <= absorbLen) {
+        if (own && s.move == null && absorbT >= 0F && absorbT <= absorbLen) {
             GeoAnims.apply(model, "absorb", absorbT, false, GeoAnims.envelope(absorbT, absorbLen, 3F));
         }
-        if (player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
+        if (own && player.isUsingItem() && player.getUseItem().getUseAnimation() == net.minecraft.world.item.UseAnim.EAT) {
             eatPose(model, player.getTicksUsingItem() + partial, ageInTicks);
         }
     }
@@ -1604,12 +1614,13 @@ public final class MikikoAnimations {
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onRenderPre(RenderPlayerEvent.Pre event) {
-        if (!(event.getEntity() instanceof AbstractClientPlayer p) || !isMikiko(p)) return;
+        if (!(event.getEntity() instanceof AbstractClientPlayer p) || !animated(p)) return;
         // your own body seen from inside it (first-person body view): the camera doesn't move with these whole-body
         // moves, so they'd pull the body away from the view
         if (com.xenowarriors.client.FirstPersonHead.noWholeBody(p)) return;
         if (com.xenowarriors.client.ClientCharacterData.standStill) return;    // a menu head-shot: standing, not sat on the floor
         if (p.isSleeping()) {
+            if (!isMikiko(p)) return;
             // roll from lying on his back onto his side (the pillow side), around the length of his body
             net.minecraft.core.Direction bed = p.getBedOrientation();
             if (bed == null) return;

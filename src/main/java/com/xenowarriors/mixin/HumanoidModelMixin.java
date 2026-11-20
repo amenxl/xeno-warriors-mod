@@ -58,7 +58,8 @@ public abstract class HumanoidModelMixin {
                         == com.xenowarriors.character.CharacterType.RHALIX) {
                     com.xenowarriors.client.RhalixHungerClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                     com.xenowarriors.client.RhalixBookIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
-                }
+                } else if (com.xenowarriors.client.IdleBorrow.borrows((Player) entity, com.xenowarriors.character.CharacterType.RHALIX))
+                    com.xenowarriors.client.RhalixBookIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // (a made character borrowing his idle)
                 com.xenowarriors.client.YuriLaptopIdle.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.GarryBeatbox.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
                 com.xenowarriors.client.KeitaDoze.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);
