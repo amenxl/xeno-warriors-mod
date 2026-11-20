@@ -251,6 +251,8 @@ final class PackNov20cTests {
             }
             l.add(new Step(null, () -> {
                 int ef = com.xenowarriors.client.compat.DmzHairBridge.efDrawn - eh[0], van = com.xenowarriors.client.compat.DmzHairBridge.vanillaDrawn - eh[1];
+                int ours = com.xenowarriors.client.compat.epicfight.EpicFightCompat.ourLayersForTest();
+                PackTests.check("epic fight: our layer is on the player's renderer once (not doubled)", ours == 1, "layers " + ours + " set up " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.modified);
                 PackTests.check("dmzhair: in battle mode the hair is drawn on Epic Fight's head (follows its moves)", ef > 0 && van == 0,
                         "ef " + ef + " vanilla " + van + " heads " + String.join(" | ", heads) + " ef drew " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrewForTest(mc.player.getId())
                         + " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player));

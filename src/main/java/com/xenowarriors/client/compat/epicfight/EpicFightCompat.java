@@ -366,6 +366,9 @@ public final class EpicFightCompat {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static void onModifyRenderers(PatchedRenderersEvent.Modify event) {
         if (event.get(EntityType.PLAYER) instanceof PatchedLivingEntityRenderer renderer) {
+            modified++;
+            int dropped = dropOurLayers(renderer);                               // (Epic Fight can hand back the same renderer again - joining another world: one of ours, not two)
+            if (modified > 1 || dropped > 0) com.xenowarriors.XenoWarriors.LOGGER.info("XW: Epic Fight's player renderer set up again (time {}), {} old layer(s) of ours taken off", modified, dropped);
             renderer.addCustomLayer(new DetailPatchedLayer());
             // our fitted armor on Epic Fight's skeleton, and Epic Fight's blocky vanilla armor kept off our characters
             renderer.addPatchedLayer(com.xenowarriors.client.render.CharacterArmorLayer.class, new ArmorPatchedLayer());
@@ -379,6 +382,44 @@ public final class EpicFightCompat {
                 com.xenowarriors.XenoWarriors.LOGGER.warn("XW: couldn't keep Epic Fight's armor off our characters", t);
             }
         }
+    }
+
+    /** (Tests) times the player renderer was set up; our custom layers on it now. */
+    public static int modified;
+
+    /** Takes our custom layers (DetailPatchedLayer) off an Epic Fight renderer; how many there were. */
+    @SuppressWarnings("rawtypes")
+    static int dropOurLayers(PatchedLivingEntityRenderer renderer) {
+        int n = 0;
+        for (Class<?> c = renderer.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers()) || !java.util.Collection.class.isAssignableFrom(f.getType())) continue;
+                try {
+                    f.setAccessible(true);
+                    if (!(f.get(renderer) instanceof java.util.Collection<?> col)) continue;
+                    int before = col.size();
+                    col.removeIf(x -> x instanceof DetailPatchedLayer);
+                    n += before - col.size();
+                } catch (Throwable ignored) {}
+            }
+        }
+        return n;
+    }
+
+    /** (Tests) how many of our layers the player's Epic Fight renderer has. */
+    @SuppressWarnings("rawtypes")
+    public static int ourLayersForTest() {
+        try {
+            var r = yesman.epicfight.client.ClientEngine.getInstance().renderEngine.getEntityRenderer(net.minecraft.client.Minecraft.getInstance().player);
+            int n = 0;
+            for (Class<?> c = r.getClass(); c != null && c != Object.class; c = c.getSuperclass())
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (java.lang.reflect.Modifier.isStatic(f.getModifiers()) || !java.util.Collection.class.isAssignableFrom(f.getType())) continue;
+                    f.setAccessible(true);
+                    if (f.get(r) instanceof java.util.Collection<?> col) for (Object x : col) if (x instanceof DetailPatchedLayer) n++;
+                }
+            return n;
+        } catch (Throwable t) { return -1; }
     }
 
     /**
