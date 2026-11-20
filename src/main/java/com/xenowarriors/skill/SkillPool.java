@@ -218,9 +218,16 @@ public final class SkillPool {
 
     public static int[] defaultLoadout() { return new int[]{0, 1, 2, 3}; }
 
-    /** A right+left click skill: not in the skill menu or the slots any more (Character Customization > R+L Click). */
+    /**
+     * A middle-click skill: not in the skill menu or the slots (Character Customization > Middle Click), so nobody has
+     * the same skill twice - that counts a slot skill whose click copy ("..._click") is a middle-click choice, and made
+     * characters' starters (Karma Strike, Karma Blast, Bolt) too. Their slots stay empty until they learn more (the user's pick).
+     */
     public static boolean rlOnly(CharacterType t, Entry e) {
-        return e != null && t != CharacterType.YOU && com.xenowarriors.toggle.Toggles.rlChoices(t).contains(e.skill().getId());   // (a custom character's are its starter kit too: they stay in its skills as well)
+        if (e == null) return false;
+        var ok = com.xenowarriors.toggle.Toggles.rlChoices(t);
+        String id = e.skill().getId();
+        return ok.contains(id) || ok.contains(id + "_click");
     }
 
     /** Pool indices the skill menu shows for this character (everything but the right+left click skills). */
