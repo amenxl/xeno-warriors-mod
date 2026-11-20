@@ -139,10 +139,10 @@ public class PhoneScreen extends Screen {
             var e = list.get(i);
             var t = com.xenowarriors.character.CharacterType.byId(e.id());
             int yy = y + (i - start) * 36;
-            Button b = addRenderableWidget(Button.builder(Component.literal(e.called() ? "✔ Called" : e.ordered() ? "On your job" : "📞 Call"), btn ->
+            Button b = addRenderableWidget(Button.builder(Component.literal(e.minutes() == -2 ? "No number" : e.called() ? "✔ Called" : e.ordered() ? "On your job" : "📞 Call"), btn ->
                     ModNetwork.sendToServer(new PhoneActionPacket(4, new UUID(0, t.ordinal()))))
                     .bounds(x + bw - 52, yy + 9, 52, 14).build());
-            b.active = !e.called() && !e.ordered();
+            b.active = !e.called() && !e.ordered() && e.minutes() != -2;   // (-2: you don't have their number yet)
         }
         if (list.isEmpty()) addRenderableOnly((g, mx, my, pt) -> g.drawCenteredString(font, "Nobody's busy right now", left() + W / 2, top() + 60, 0x9090A0));
         if (page > 0) addRenderableWidget(Button.builder(Component.literal("<"), b -> { page--; init(); }).bounds(x, top() + 180, 20, 16).build());
@@ -163,7 +163,7 @@ public class PhoneScreen extends Screen {
             com.xenowarriors.client.journey.JourneyScreen.face(g, t, x, yy, 30,
                     com.xenowarriors.client.bot.OffDutyIcons.face(e.act(), t == com.xenowarriors.character.CharacterType.ULTIMA, ms + t.ordinal() * 1300L));
             g.drawString(font, t.getDisplayName().getString(), x + 33, yy, 0xFF000000 | (t.getColor() & 0xFFFFFF));
-            String when = e.ordered() ? "until you call them back" : "done in ~" + e.minutes() + " min (" + e.clock() + ")";
+            String when = e.minutes() == -2 ? "Get closer to them for their number" : e.ordered() ? "until you call them back" : "done in ~" + e.minutes() + " min (" + e.clock() + ")";
             small(g, e.label(), x + 33, yy + 12, com.xenowarriors.client.bot.OffDutyIcons.color(e.act()), W - 52 - 33 - 22);
             small(g, when, x + 33, yy + 25, e.called() ? 0xFFC080FF : 0xFF9AA0B8, W - 20 - 33);
         }

@@ -1029,6 +1029,7 @@ public final class Batch4Tests {
         l.add(null, () -> {
             boolean open = mc.screen instanceof com.xenowarriors.client.PhoneScreen;
             log("phonecall: Teammates page open " + open + " -> " + (open ? "PASS" : "FAIL"));
+            server(p -> { com.xenowarriors.party.Bonds.set(p, "kyrie", com.xenowarriors.bot.BotCalls.NUMBER_BOND + 5, 0); com.xenowarriors.party.Bonds.set(p, "sam", com.xenowarriors.bot.BotCalls.NUMBER_BOND + 5, 0); });   // (you have their numbers)
             com.xenowarriors.network.ModNetwork.sendToServer(new com.xenowarriors.network.PhoneActionPacket(4, new java.util.UUID(0, CharacterType.KYRIE.ordinal())));
         }, 15);
         l.add("batch4_phone_called", () -> {}, 5);

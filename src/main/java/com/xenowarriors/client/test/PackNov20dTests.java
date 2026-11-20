@@ -241,6 +241,18 @@ final class PackNov20dTests {
             if (active) com.xenowarriors.story.StorySides.cancel(p);
             PackTests.clear(p);
         }), 5));
+        // ---- phoning a busy teammate needs their number: a high enough bond
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            int before = com.xenowarriors.bot.BotCalls.noNumber;
+            com.xenowarriors.party.Bonds.set(p, "zane", 0, 0);
+            boolean had = com.xenowarriors.bot.BotCalls.hasNumber(p, CharacterType.ZANE);
+            com.xenowarriors.party.Bonds.set(p, "zane", com.xenowarriors.bot.BotCalls.NUMBER_BOND, 0);
+            boolean has = com.xenowarriors.bot.BotCalls.hasNumber(p, CharacterType.ZANE);
+            com.xenowarriors.party.Bonds.set(p, "zane", 0, 0);
+            if (com.xenowarriors.bot.OffDuty.offDuty(p, CharacterType.ZANE)) com.xenowarriors.bot.BotCalls.call(p, CharacterType.ZANE);
+            PackTests.check("phone: no number below bond " + com.xenowarriors.bot.BotCalls.NUMBER_BOND + " (can't call them), their number at it", !had && has
+                    && (!com.xenowarriors.bot.OffDuty.offDuty(p, CharacterType.ZANE) || com.xenowarriors.bot.BotCalls.noNumber > before), "had " + had + " has " + has + " turned away " + (com.xenowarriors.bot.BotCalls.noNumber - before));
+        }), 5));
         // ---- Quiet Strength (Lexy): its Sky Haters stay to be beaten (raid clean-up used to send them off in a couple of seconds)
         int[] qs = new int[2];
         l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p);

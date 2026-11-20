@@ -21,6 +21,15 @@ import java.util.List;
 public final class BotCalls {
     private BotCalls() {}
 
+    /** The bond you need with someone to have their phone number (and so to call them). */
+    public static final int NUMBER_BOND = 30;
+
+    /** Do you have this character's number (bond {@value #NUMBER_BOND})? */
+    public static boolean hasNumber(ServerPlayer p, CharacterType t) { return com.xenowarriors.party.Bonds.level(p, t.getId()) >= NUMBER_BOND; }
+
+    /** (Tests) calls turned away for want of a number. */
+    public static int noNumber;
+
     /** Asked to join when done (in the off-duty record). */
     static final String CALLED = "call";
 
@@ -34,6 +43,10 @@ public final class BotCalls {
             if (a == OffDuty.Act.NONE) continue;
             CompoundTag c = OffDuty.rec(p, t);
             boolean ordered = !OffDuty.task(p, t).isEmpty();
+            if (!hasNumber(p, t)) {                                              // (no number yet: listed, but you can't ring them)
+                out.add(new PhoneTeamPacket.Entry(t.getId(), a.ordinal(), "No number yet - bond " + com.xenowarriors.party.Bonds.level(p, t.getId()) + "/" + NUMBER_BOND, -2, "", false, false));   // (-2: no number)
+                continue;
+            }
             long left = ordered ? -1 : Math.max(0, c.getLong("u") - now);
             out.add(new PhoneTeamPacket.Entry(t.getId(), a.ordinal(), OffDuty.status(p, t), ordered ? -1 : minutes(left),
                     ordered ? "" : clock(p, left), c.getBoolean(CALLED), ordered));
@@ -48,6 +61,11 @@ public final class BotCalls {
     public static void call(ServerPlayer p, CharacterType t) {
         String name = t.getDisplayName().getString();
         if (t == CharacterType.NONE || !OffDuty.offDuty(p, t)) { say(p, name + " is already with you.", ChatFormatting.GRAY); return; }
+        if (!hasNumber(p, t)) {                                                 // (you need to be close enough to have their number)
+            noNumber++;
+            say(p, "You don't have " + name + "'s number yet. Get closer to them first (bond " + com.xenowarriors.party.Bonds.level(p, t.getId()) + "/" + NUMBER_BOND + ").", ChatFormatting.GRAY);
+            return;
+        }
         OffDuty.Act a = OffDuty.act(p, t);
         if (a == OffDuty.Act.NONE) { say(p, name + ": \"I'm free right now - add me from the party menu!\"", ChatFormatting.AQUA); return; }
         if (!OffDuty.task(p, t).isEmpty()) {
