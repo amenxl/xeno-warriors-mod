@@ -193,6 +193,7 @@ public final class Duels {
         if (by instanceof ServerPlayer bp) bp.displayClientMessage(msg("You revived " + p.getName().getString() + "!"), true);
         com.xenowarriors.bot.ReviveAftermath.revived(p);                       // (10 s invincible, and a shockwave that stuns the enemies about)
         Bonds.revived(p, by);                                                    // (a revive brings you closer)
+        com.xenowarriors.compat.DmzZenkai.revived(p);                            // (a Saiyan may come back stronger)
     }
 
     /** Second Wind: up by themselves. */

@@ -490,6 +490,14 @@ final class PackNov20dTests {
                 com.xenowarriors.party.ReviveCircle.flows > rv[0] && com.xenowarriors.client.party.ReviveClient.reviving(mc.player), "flows " + (com.xenowarriors.party.ReviveCircle.flows - rv[0])
                         + " pose " + com.xenowarriors.client.party.ReviveClient.reviving(mc.player))), 5));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> { PackTests.clear(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE); }); }, 30));
+        // ---- Zenkai boost (a DragonMineZ Saiyan revived)
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (!com.xenowarriors.compat.DmzZenkai.saiyan(p)) { PackTests.log("zenkai: the tester isn't a DragonMineZ Saiyan - skipped"); return; }
+            int b0 = com.xenowarriors.compat.DmzZenkai.boosts;
+            com.xenowarriors.compat.DmzZenkai.forceForTest = true;
+            com.xenowarriors.compat.DmzZenkai.revived(p);
+            PackTests.check("zenkai: a Saiyan revived gets a Zenkai boost", com.xenowarriors.compat.DmzZenkai.boosts > b0, "boosts " + (com.xenowarriors.compat.DmzZenkai.boosts - b0));
+        }), 10));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);
