@@ -47,6 +47,8 @@ public final class StoryRun {
     public static final String NPC_TAG = "xw_story_npc", BOT_TAG = "xw_story_bot", FOE_TAG = "xw_story_foe", BACK = "xw_story_back";
     static final int SCENE = 0, FIGHT = 1, SURVIVE = 2, TALKING = 3, DONE = 4, HUB = 5;
     private static final UUID HP = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e01"), DMG = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e02");
+    private static final UUID DIFF_HP = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e05"), DIFF_DMG = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e06"),
+            DIFF_SPD = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e07");
     private static final UUID HARD_HP = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e03"), HARD_DMG = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e04");
     /** With DragonMineZ installed the story is a lot harder (the user's call): every foe has this much more health and damage,
      *  one more of each kind turns up, and they keep up with your DragonMineZ power fully. */
@@ -65,6 +67,8 @@ public final class StoryRun {
         final List<UUID> members = new ArrayList<>();
         public final boolean hub;
         int step = -1, phase = SCENE, wave, deaths, endAt = -1;
+        /** The story's difficulty (Story.DIFFS), from the host when it began. */
+        int diff;
         long surviveUntil;
         String place;
         boolean sky;
@@ -172,6 +176,7 @@ public final class StoryRun {
         }
         Run r = new Run(host.getUUID(), Story.current(host), m, freeSlot(), false);
         r.sky = com.xenowarriors.character.Race.of(host).skylanderKind();
+        r.diff = Story.difficulty(host);
         enter(host, r);
         for (ServerPlayer p : party(host)) {
             if (p == host) continue;
@@ -190,6 +195,7 @@ public final class StoryRun {
         if (inRun(host)) quit(host, null);
         StoryDefs.Mission m = pd.missions().get(pd.indexOf(missionId));
         Run r = new Run(host.getUUID(), path, m, freeSlot(), false);
+        r.diff = Story.difficulty(host);
         enter(host, r);
         RUNS.put(r.host, r);
         r.step = stepIndex - 1;
@@ -471,7 +477,8 @@ public final class StoryRun {
         float shareB = teamA.isEmpty() || teamB.isEmpty() ? 0F : Math.max(0.3F, Math.min(0.6F, teamB.size() / (float) (teamA.size() + teamB.size())));
         int made = 0;
         for (StoryDefs.Spawn sp : w) {
-            int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + r.bots / 2 + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0);
+            int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + r.bots / 2 + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0)
+                    + ("dummy".equals(sp.e()) ? 0 : Story.DIFF_EXTRA[r.diff]);
             for (int i = 0; i < n; i++) {
                 Mob m = create(l, sp, StoryScenes.center(r.slot, r.place), i == 0);
                 if (m == null) continue;
@@ -585,6 +592,12 @@ public final class StoryRun {
         var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
         if (md != null && !"dummy".equals(sp.e())) md.addPermanentModifier(new AttributeModifier(DMG, "Story", 0.1 * lvl + PARTY_DMG * (r.size() - 1) + BOT_DMG * r.bots, AttributeModifier.Operation.MULTIPLY_TOTAL));
         if ("gov_elite".equals(sp.e()) && mh != null) mh.setBaseValue(mh.getBaseValue() * 1.6);
+        if (r.diff > 0 && !"dummy".equals(sp.e())) {                              // (Normal, Hard, Very Hard, Xeno)
+            if (mh != null) mh.addPermanentModifier(new AttributeModifier(DIFF_HP, "Story difficulty", Story.DIFF_HP[r.diff] - 1, AttributeModifier.Operation.MULTIPLY_TOTAL));
+            if (md != null) md.addPermanentModifier(new AttributeModifier(DIFF_DMG, "Story difficulty", Story.DIFF_DMG[r.diff] - 1, AttributeModifier.Operation.MULTIPLY_TOTAL));
+            var sp2 = m.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (sp2 != null && r.diff == Story.DIFFS.length - 1) sp2.addPermanentModifier(new AttributeModifier(DIFF_SPD, "Story difficulty (Xeno)", 0.2, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        }
         hard(m, sp.e());
         m.setHealth(m.getMaxHealth());
         if (dmz > 1F && !"dummy".equals(sp.e())) com.xenowarriors.journey.JourneyWorld.scale(m, dmz);
@@ -744,7 +757,7 @@ public final class StoryRun {
         StoryDefs.Mission m = r.mission;
         for (ServerPlayer p : players(s, r)) {
             title(p, "MISSION COMPLETE", m.title());
-            if (m.money() > 0) com.xenowarriors.economy.Money.add(p, m.money(), true);
+            if (m.money() > 0) com.xenowarriors.economy.Money.add(p, Math.round(m.money() * Story.DIFF_PAY[r.diff]), true);
             for (var e : m.bond().entrySet()) {
                 int lv = com.xenowarriors.party.Bonds.level(p, e.getKey());
                 com.xenowarriors.party.Bonds.set(p, e.getKey(), lv + e.getValue(), 0);

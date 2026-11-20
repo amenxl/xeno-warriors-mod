@@ -498,6 +498,34 @@ final class PackNov20dTests {
             com.xenowarriors.compat.DmzZenkai.revived(p);
             PackTests.check("zenkai: a Saiyan revived gets a Zenkai boost", com.xenowarriors.compat.DmzZenkai.boosts > b0, "boosts " + (com.xenowarriors.compat.DmzZenkai.boosts - b0));
         }), 10));
+        // ---- story difficulty: Xeno mode's enemies are much tougher than Story mode's
+        float[] hp = new float[2];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.story.Story.unlockForTest(p, 0);
+            com.xenowarriors.story.Story.setDifficulty(p, 0);
+            com.xenowarriors.story.StoryRun.testStep(p, "rhalix", "r2", 1);
+        }), 60));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var f = com.xenowarriors.story.StoryRun.testFoes(p);
+            hp[0] = f.isEmpty() ? 0 : f.get(0).getMaxHealth();
+            com.xenowarriors.story.StoryRun.quit(p, null);
+            boolean locked = !com.xenowarriors.story.Story.setDifficulty(p, 4);
+            com.xenowarriors.story.Story.unlockForTest(p, 4);
+            boolean ok = com.xenowarriors.story.Story.setDifficulty(p, 4);
+            PackTests.check("difficulty: Xeno mode is locked until unlocked, then it can be picked", locked && ok && com.xenowarriors.story.Story.difficulty(p) == 4 && com.xenowarriors.story.Story.done(p).isEmpty(), "locked " + locked + " ok " + ok);
+            com.xenowarriors.story.StoryRun.testStep(p, "rhalix", "r2", 1);
+        }), 60));
+        l.add(new Step("story_xeno", () -> PackTests.server(p -> {
+            var f = com.xenowarriors.story.StoryRun.testFoes(p);
+            hp[1] = f.isEmpty() ? 0 : f.get(0).getMaxHealth();
+            PackTests.check("difficulty: Xeno mode's enemies are far tougher", hp[0] > 0 && hp[1] > hp[0] * 5, "story " + PackTests.f(hp[0]) + " xeno " + PackTests.f(hp[1]) + " foes " + f.size());
+            com.xenowarriors.story.StoryRun.quit(p, null);
+            com.xenowarriors.story.Story.unlockForTest(p, 0);
+            com.xenowarriors.story.Story.setDifficulty(p, 0);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 5));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

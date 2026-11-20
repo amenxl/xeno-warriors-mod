@@ -36,6 +36,9 @@ public class StoryScreen extends Screen {
 
     private CompoundTag path(String id) { for (CompoundTag p : paths()) if (p.getString("id").equals(id)) return p; return null; }
 
+    /** The mode picked on the Mode button (-1: not looked at yet). */
+    private int diffSel = -1;
+
     @Override
     protected void init() {
         clearWidgets();
@@ -48,6 +51,18 @@ public class StoryScreen extends Screen {
             return;
         }
         boolean inRun = st.contains("obj");
+        int dMax = st.getInt("diffMax"), dNow = st.getInt("diff");
+        if (dMax > 0 && !inRun) {                                                   // the Season 1 story beaten: harder modes
+            if (diffSel < 0 || diffSel > dMax) diffSel = dNow;
+            String[] names = com.xenowarriors.story.Story.DIFFS;
+            addRenderableWidget(Button.builder(Component.literal("Mode: " + names[diffSel] + (diffSel == dNow ? " ✔" : "")), b -> { diffSel = (diffSel + 1) % (dMax + 1); init(); })
+                    .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Beat the Season 1 story on a mode to unlock the next: Normal, Hard, Very Hard, then Xeno (a big jump)")))
+                    .bounds(width - 132, 6, 120, 18).build());
+            if (diffSel != dNow)
+                addRenderableWidget(Button.builder(Component.literal("Restart on " + names[diffSel]), b -> { StoryClient.act(StoryActionPacket.DIFF, "", diffSel); })
+                        .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("The storylines start over on this mode - who you've met, your bonds and characters stay")))
+                        .bounds(width - 258, 6, 122, 18).build());
+        }
         if (inRun) {
             addRenderableWidget(Button.builder(Component.literal(st.getBoolean("inHub") ? "Leave" : "Leave mission"), b -> StoryClient.act(StoryActionPacket.QUIT, "", 0)).bounds(bx, by, 120, 20).build());
             if (st.getBoolean("host") && !st.getBoolean("inHub"))

@@ -68,6 +68,36 @@ public final class Story {
 
     public static boolean active(Player p) { return root(p).getBoolean("active"); }
     public static boolean finished(Player p) { return root(p).getBoolean("all"); }
+
+    // ------------------------------------------------------------------ difficulty (Season 1 beaten: Normal, then Hard, Very Hard, Xeno)
+
+    public static final String[] DIFFS = {"Story", "Normal", "Hard", "Very Hard", "Xeno"};
+    /** Enemy health and damage (times) and extra enemies of each kind, by difficulty. Xeno is a big jump. */
+    public static final double[] DIFF_HP = {1.0, 1.6, 2.4, 3.5, 7.0}, DIFF_DMG = {1.0, 1.3, 1.7, 2.2, 4.0};
+    public static final int[] DIFF_EXTRA = {0, 0, 1, 1, 3};
+    /** Money from missions (times), by difficulty. */
+    public static final double[] DIFF_PAY = {1.0, 1.5, 2.0, 3.0, 5.0};
+
+    /** The difficulty this player's story runs on now (0 = Story). */
+    public static int difficulty(Player p) { return Math.max(0, Math.min(DIFFS.length - 1, root(p).getInt("diff"))); }
+    /** The highest difficulty they've unlocked (beating the Season 1 story on one unlocks the next). */
+    public static int unlockedDifficulty(Player p) { return Math.max(0, Math.min(DIFFS.length - 1, root(p).getInt("diffMax"))); }
+
+    /** (Tests) as if they'd beaten the story up to this difficulty. */
+    public static void unlockForTest(ServerPlayer p, int d) { root(p).putInt("diffMax", d); sync(p); }
+
+    /** Plays the story again on this difficulty (unlocked ones only): the storylines start over; who you've met, bonds and unlocked characters stay. */
+    public static boolean setDifficulty(ServerPlayer p, int d) {
+        if (d < 0 || d >= DIFFS.length || d > unlockedDifficulty(p)) return false;
+        if (StoryRun.inRun(p)) StoryRun.quit(p, "Changing the story's difficulty");
+        CompoundTag r = root(p);
+        r.putInt("diff", d);
+        r.remove("done"); r.remove("cur"); r.remove("mi");
+        p.sendSystemMessage(Component.literal("Story mode: " + DIFFS[d] + " - the storylines start over (who you've met, your bonds and your characters stay).")
+                .withStyle(d == DIFFS.length - 1 ? ChatFormatting.DARK_PURPLE : ChatFormatting.GOLD, ChatFormatting.BOLD));
+        sync(p);
+        return true;
+    }
     public static Set<String> done(Player p) { return set(p, "done"); }
     public static boolean pathDone(Player p, String path) { return done(p).contains(path); }
     public static Set<String> met(Player p) { return set(p, "met"); }
@@ -165,8 +195,16 @@ public final class Story {
             add(p, "done", path);
             root(p).remove("cur");
             if ("all".equals(pd.unlock())) {
+                boolean first = !finished(p);
                 root(p).putBoolean("all", true);
-                p.sendSystemMessage(Component.literal("SEASON 1 STORY COMPLETE - every character is yours to play!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                int d = difficulty(p);
+                if (first) p.sendSystemMessage(Component.literal("SEASON 1 STORY COMPLETE - every character is yours to play!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                else p.sendSystemMessage(Component.literal("SEASON 1 BEATEN ON " + DIFFS[d].toUpperCase(java.util.Locale.ROOT) + "!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                if (d >= unlockedDifficulty(p) && d < DIFFS.length - 1) {          // the next difficulty
+                    root(p).putInt("diffMax", d + 1);
+                    p.sendSystemMessage(Component.literal(DIFFS[d + 1].toUpperCase(java.util.Locale.ROOT) + " MODE UNLOCKED - pick it in the Story menu to play the story again, harder"
+                            + (d + 1 == DIFFS.length - 1 ? " (much harder)." : ".")).withStyle(d + 1 == DIFFS.length - 1 ? ChatFormatting.DARK_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD));
+                } else if (d == DIFFS.length - 1) p.sendSystemMessage(Component.literal("You beat Xeno mode. There's nothing harder.").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD));
             } else if (pd.unlock() != null) {
                 add(p, "unlocked", pd.unlock());
                 p.sendSystemMessage(Component.literal(pd.title() + " complete - " + CharacterType.byId(pd.unlock()).getDisplayName().getString() + " is now playable!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
@@ -226,6 +264,8 @@ public final class Story {
         CompoundTag t = new CompoundTag();
         t.putBoolean("active", active(p));
         t.putBoolean("all", finished(p));
+        t.putInt("diff", difficulty(p));
+        t.putInt("diffMax", unlockedDifficulty(p));
         String cur = current(p);
         t.putString("cur", cur == null ? "" : cur);
         t.putInt("mi", missionIndex(p));

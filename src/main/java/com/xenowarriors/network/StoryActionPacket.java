@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 /** Client -> server: a Story menu button or the end of a dialogue. */
 public record StoryActionPacket(int action, String arg, int choice) {
-    public static final int OPEN = 0, PICK = 1, BEGIN = 2, QUIT = 3, HUB = 4, DONE = 5, START = 6;
+    public static final int OPEN = 0, PICK = 1, BEGIN = 2, QUIT = 3, HUB = 4, DONE = 5, START = 6, DIFF = 7;
 
     public static void encode(StoryActionPacket m, FriendlyByteBuf b) { b.writeVarInt(m.action); b.writeUtf(m.arg, 64); b.writeVarInt(m.choice); }
     public static StoryActionPacket decode(FriendlyByteBuf b) { return new StoryActionPacket(b.readVarInt(), b.readUtf(64), b.readVarInt()); }
@@ -24,6 +24,7 @@ public record StoryActionPacket(int action, String arg, int choice) {
                 case QUIT -> com.xenowarriors.story.StoryRun.quit(p, "You left the story mission");
                 case HUB -> com.xenowarriors.story.StoryRun.visitHub(p, m.arg);
                 case DONE -> com.xenowarriors.story.StoryRun.dialogueDone(p, m.arg, m.choice);
+                case DIFF -> com.xenowarriors.story.Story.setDifficulty(p, m.choice());
                 case START -> { if (!com.xenowarriors.story.Story.active(p)) com.xenowarriors.story.Story.start(p); }
                 default -> {}
             }
