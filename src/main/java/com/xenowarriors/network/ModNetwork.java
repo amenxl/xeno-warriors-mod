@@ -562,6 +562,10 @@ public final class ModNetwork {
                 .encoder(NpcParkourPacket::encode).decoder(NpcParkourPacket::decode).consumerMainThread(NpcParkourPacket::handle).add();
         CHANNEL.messageBuilder(ReviveAnimPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ReviveAnimPacket::encode).decoder(ReviveAnimPacket::decode).consumerMainThread(ReviveAnimPacket::handle).add();
+        CHANNEL.messageBuilder(DodgeAnimPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(DodgeAnimPacket::encode).decoder(DodgeAnimPacket::decode).consumerMainThread(DodgeAnimPacket::handle).add();
+        CHANNEL.messageBuilder(GuardStatePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(GuardStatePacket::encode).decoder(GuardStatePacket::decode).consumerMainThread(GuardStatePacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

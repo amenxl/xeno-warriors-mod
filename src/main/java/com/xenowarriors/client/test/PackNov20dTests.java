@@ -231,7 +231,7 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> PackTests.server(p -> {
             boolean active = com.xenowarriors.story.StorySides.testActive(p);
             PackTests.check("side mission: vanished foes come back", !active || com.xenowarriors.story.StorySides.respawned > rs[0] && !com.xenowarriors.story.StorySides.testFoes(p).isEmpty(),
-                    "active " + active + " respawned " + (com.xenowarriors.story.StorySides.respawned - rs[0]) + " out " + com.xenowarriors.story.StorySides.testFoes(p).size());
+                    "active " + active + " respawned " + (com.xenowarriors.story.StorySides.respawned - rs[0]) + " out " + com.xenowarriors.story.StorySides.testFoes(p).size() + " " + com.xenowarriors.story.StorySides.debugForTest(p));
             if (active) com.xenowarriors.story.StorySides.cancel(p);
             PackTests.clear(p);
         }), 5));
@@ -634,6 +634,96 @@ final class PackNov20dTests {
             l.add(new Step("you_fists_2", () -> {}, 4));
             l.add(new Step(null, () -> { PackWomTests.battle(false); mc.options.setCameraType(CameraType.FIRST_PERSON); com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
         }
+        // ---- blocking gunfire: a higher gun level weaves out of the way (and at 300+ knocks some back); rapid fire still gets some through
+        if (com.xenowarriors.compat.TaczGuns.available()) {
+            int[] gd = new int[8];   // shooter id, camera id, dodged, reflected, through at start; bot id
+            l.add(new Step(null, () -> com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO), 30));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                PackTests.arena(p); PackTests.clear(p);
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                p.getInventory().selected = 0; p.getInventory().setItem(0, ItemStack.EMPTY);
+                com.xenowarriors.compat.GunLevel.setLevel(p, 400);
+                p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 20 * 60, 3, false, false));
+                p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
+                com.xenowarriors.combat.BulletDodge.FORCE_GUARD.add(p.getUUID());
+                var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
+                if (h != null) {
+                    h.moveTo(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2] + 9, 180F, 0F);
+                    h.setYHeadRot(180F); h.setNoAi(true); h.setInvulnerable(true); h.addTag("xw_pack");
+                    h.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, com.xenowarriors.compat.TaczGuns.gun("tacz:m4a1", 30));
+                    p.serverLevel().addFreshEntity(h);
+                    com.xenowarriors.compat.TaczGuns.draw(h);
+                    gd[0] = h.getId();
+                }
+                var st = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(p.serverLevel());
+                if (st != null) {
+                    st.moveTo(PackTests.HOME[0] + 3.6, PackTests.HOME[1] - 0.3, PackTests.HOME[2] + 1.2, 90F, 6F);
+                    st.setYHeadRot(90F); st.setInvisible(true); st.setNoGravity(true); st.setInvulnerable(true); st.addTag("xw_pack");
+                    p.serverLevel().addFreshEntity(st);
+                    gd[1] = st.getId();
+                }
+            }), 30));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
+                var cam = mc.level.getEntity(gd[1]); if (cam != null) mc.setCameraEntity(cam);
+                gd[2] = com.xenowarriors.combat.BulletDodge.dodged; gd[3] = com.xenowarriors.combat.BulletDodge.reflected; gd[4] = com.xenowarriors.combat.BulletDodge.through; gd[6] = com.xenowarriors.client.DodgeClient.seen; }, 10));
+            // single shots, rolls set so the GIF shows weaves both ways, a knock-back and a hit
+            float[] rolls = {0.5F, 0.5F, 0.05F, 0.97F, 0.5F, 0.05F};
+            int f = 0;
+            for (int k = 0; k < rolls.length; k++) {
+                float r = rolls[k];
+                l.add(new Step(String.format("dodgegif_%03d", f++), () -> PackTests.server(p -> {
+                    com.xenowarriors.combat.BulletDodge.forceRoll = r;
+                    p.setHealth(p.getMaxHealth());
+                    if (p.serverLevel().getEntity(gd[0]) instanceof net.minecraft.world.entity.LivingEntity h) shootAt(h, p);
+                }), 1));
+                for (int t = 0; t < 11; t++) l.add(new Step(String.format("dodgegif_%03d", f++), () -> {}, 1));
+            }
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                com.xenowarriors.combat.BulletDodge.forceRoll = null;
+                int dd = com.xenowarriors.combat.BulletDodge.dodged - gd[2], rf = com.xenowarriors.combat.BulletDodge.reflected - gd[3], th = com.xenowarriors.combat.BulletDodge.through - gd[4];
+                PackTests.check("bullets: blocking with the higher gun level, you weave out of the way", dd >= 2, "dodged " + dd + " reflected " + rf + " through " + th);
+                PackTests.check("bullets: at gun level 300+ some get knocked back at the shooter", rf >= 1, "reflected " + rf);
+                PackTests.check("bullets: the weave plays (seen on your client)", com.xenowarriors.client.DodgeClient.seen > gd[6], "seen " + (com.xenowarriors.client.DodgeClient.seen - gd[6]));
+                gd[2] = com.xenowarriors.combat.BulletDodge.dodged; gd[3] = com.xenowarriors.combat.BulletDodge.reflected; gd[4] = com.xenowarriors.combat.BulletDodge.through;
+            }), 5));
+            // rapid fire: some dodged or knocked back, some get through
+            for (int k = 0; k < 24; k++) l.add(new Step(null, () -> PackTests.server(p -> {
+                p.setHealth(p.getMaxHealth());
+                if (p.serverLevel().getEntity(gd[0]) instanceof net.minecraft.world.entity.LivingEntity h) shootAt(h, p);
+            }), 2));
+            l.add(new Step(null, () -> {}, 10));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                int dd = com.xenowarriors.combat.BulletDodge.dodged - gd[2], rf = com.xenowarriors.combat.BulletDodge.reflected - gd[3], th = com.xenowarriors.combat.BulletDodge.through - gd[4];
+                PackTests.check("bullets: rapid fire - some dodged or knocked back, some still hit", dd + rf >= 3 && th >= 2, "dodged " + dd + " reflected " + rf + " through " + th);
+                com.xenowarriors.combat.BulletDodge.FORCE_GUARD.remove(p.getUUID());
+                com.xenowarriors.compat.GunLevel.setLevel(p, 1);
+                // a bot under fire: guard up, then it weaves too
+                PartyBotEntity b = PartyBots.spawn(p, CharacterType.SAM, null);
+                if (b != null) {
+                    com.xenowarriors.compat.GunLevel.setLevelForTest(b, 400);
+                    b.moveTo(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2] + 2, 0F, 0F);
+                    b.setYHeadRot(0F); b.setYBodyRot(0F); b.setNoAi(true);
+                    gd[5] = b.getId();
+                }
+                p.connection.teleport(PackTests.HOME[0] - 3, PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
+                gd[2] = com.xenowarriors.combat.BulletDodge.dodged; gd[3] = com.xenowarriors.combat.BulletDodge.reflected; gd[4] = com.xenowarriors.combat.BulletDodge.through;
+            }), 20));
+            for (int k = 0; k < 16; k++) l.add(new Step(k == 6 ? "dodge_bot" : null, () -> PackTests.server(p -> {
+                var be = p.serverLevel().getEntity(gd[5]);
+                if (be instanceof PartyBotEntity b) { b.setHealth(b.getMaxHealth()); b.setYRot(0F); b.setYHeadRot(0F); b.setYBodyRot(0F); }
+                if (p.serverLevel().getEntity(gd[0]) instanceof net.minecraft.world.entity.LivingEntity h && be instanceof net.minecraft.world.entity.LivingEntity t) shootAt(h, t);
+            }), 4));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                int dd = com.xenowarriors.combat.BulletDodge.dodged - gd[2], rf = com.xenowarriors.combat.BulletDodge.reflected - gd[3], th = com.xenowarriors.combat.BulletDodge.through - gd[4];
+                var be = p.serverLevel().getEntity(gd[5]);
+                PackTests.check("bullets: a bot with the higher gun level puts its guard up and weaves out of the way too", be instanceof PartyBotEntity b && dd + rf >= 2,
+                        "dodged " + dd + " reflected " + rf + " through " + th + " guard " + (be instanceof PartyBotEntity b && com.xenowarriors.combat.BulletDodge.botGuardForTest(b)));
+            }), 5));
+            l.add(new Step(null, () -> { mc.setCameraEntity(mc.player); mc.options.hideGui = false;
+                PackTests.server(p -> { PackTests.clear(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+                    var h = p.serverLevel().getEntity(gd[0]); if (h != null) h.discard();
+                    var st = p.serverLevel().getEntity(gd[1]); if (st != null) st.discard(); }); }, 10));
+        }
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);
@@ -649,5 +739,14 @@ final class PackNov20dTests {
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 40));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+    }
+
+    /** (Tests) fires {@code h}'s TaCZ gun at the middle of {@code t}. */
+    static void shootAt(net.minecraft.world.entity.LivingEntity h, net.minecraft.world.entity.LivingEntity t) {
+        double dx = t.getX() - h.getX(), dz = t.getZ() - h.getZ(), dy = (t.getY() + t.getBbHeight() * 0.6) - h.getEyeY();
+        float yaw = (float) (Math.atan2(dz, dx) * 180 / Math.PI) - 90F;
+        float pitch = (float) -(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * 180 / Math.PI);
+        h.setYRot(yaw); h.setYHeadRot(yaw); h.setXRot(pitch);
+        com.xenowarriors.compat.TaczGuns.shoot(h, pitch, yaw);
     }
 }

@@ -96,6 +96,12 @@ public final class GunLevel {
         return keep(o).contains(lk) ? keep(o).getInt(lk) : start(b.character());
     }
 
+    /** (Tests) sets a bot's gun level. */
+    public static void setLevelForTest(com.xenowarriors.bot.PartyBotEntity b, int lv) {
+        ServerPlayer o = b.owner();
+        if (o != null) keep(o).putInt(LV + b.charKey(), lv);
+    }
+
     public static float multiplier(com.xenowarriors.bot.PartyBotEntity b) {
         float m = 1F + Math.min(MAX_BONUS, level(b) * PER_LEVEL);
         if (b.character() == CharacterType.TECHNICA) m += TECHNICA_BONUS;

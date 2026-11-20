@@ -148,6 +148,17 @@ public final class StorySides {
 
     public static boolean testActive(ServerPlayer p) { return sideOf(p) != null; }
 
+    /** (Tests) the side mission's counts, and where its foes are. */
+    public static String debugForTest(ServerPlayer p) {
+        Side s = sideOf(p);
+        if (s == null) return "none";
+        StringBuilder b = new StringBuilder("alive " + s.alive.size() + " spawned " + s.spawned + " killed " + s.killed + "/" + s.total + " made " + made + " at");
+        for (UUID id : s.alive) { Entity en = p.serverLevel().getEntity(id); b.append(' ').append(en == null ? "gone" : en.blockPosition().toShortString() + (en.isAlive() ? "" : "(dead)")); }
+        return b.toString();
+    }
+    /** (Tests) foes made for side missions. */
+    public static int made;
+
     public static void cancel(ServerPlayer p) {
         Side s = sideOf(p);
         if (s == null) return;
@@ -236,7 +247,8 @@ public final class StorySides {
             StoryRun.hard(m, s.def.e());                                              // (DragonMineZ: harder)
             if (dmz > 1F) com.xenowarriors.journey.JourneyWorld.scale(m, StoryRun.dmzHard() ? dmz : 1F + (dmz - 1F) * 0.8F);
         }
-        l.addFreshEntity(m);
+        if (!l.addFreshEntity(m)) return null;
+        made++;
         l.sendParticles(ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 20, .4, .6, .4, .3);
         if (!"dummy".equals(s.def.e())) m.setTarget(p);
         return m;

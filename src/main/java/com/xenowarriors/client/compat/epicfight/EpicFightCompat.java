@@ -422,7 +422,7 @@ public final class EpicFightCompat {
             event.setShouldRender(false);
             return;
         }
-        if (com.xenowarriors.client.party.PartyClient.knockedOut(p) || com.xenowarriors.client.party.ReviveClient.reviving(p)) {        // knocked out: our limp (or kneeling on a blade) pose - never Epic Fight's ready-to-fight stance
+        if (com.xenowarriors.client.party.PartyClient.knockedOut(p) || com.xenowarriors.client.party.ReviveClient.reviving(p) || com.xenowarriors.client.DodgeClient.weaving(p)) {        // knocked out: our limp (or kneeling on a blade) pose - never Epic Fight's ready-to-fight stance
             event.setShouldRender(false);
             return;
         }
