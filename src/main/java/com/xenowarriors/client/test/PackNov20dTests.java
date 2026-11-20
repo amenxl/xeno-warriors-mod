@@ -560,6 +560,26 @@ final class PackNov20dTests {
                     "crushed " + (com.xenowarriors.entity.KishiDomeEntity.crushed - kc[0]) + " dirt " + dirt + " stone " + stone + " deepslate " + deep + " bedrock left " + bedrock);
             p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
         }), 30));
+        // ---- a fire teammate you're close with cooks your food
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            com.xenowarriors.character.CharacterManager.setCharacter(p, CharacterType.SAM);
+            PartyBotEntity m = PartyBots.spawn(p, CharacterType.MIKIKO, null);
+            if (m != null) m.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0F, 0F);
+        }), 40));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            p.getInventory().add(new ItemStack(Items.BEEF, 3));
+            PartyBotEntity m = null;
+            for (PartyBotEntity b : PartyBots.bots(p)) if (b.character() == CharacterType.MIKIKO) m = b;
+            com.xenowarriors.party.Bonds.set(p, m == null ? "mikiko" : m.charKey(), 20, 0);
+            boolean low = com.xenowarriors.mikiko.AutoCook.cookFor(p) == null;
+            com.xenowarriors.party.Bonds.set(p, m == null ? "mikiko" : m.charKey(), 60, 0);
+            var cook = com.xenowarriors.mikiko.AutoCook.cookFor(p);
+            boolean cooked = cook != null && com.xenowarriors.mikiko.AutoCook.cookOne(p, cook) && p.getInventory().countItem(Items.COOKED_BEEF) > 0;
+            PackTests.check("cooking: a fire teammate cooks your food once your bond's high enough", low && cooked, "not at bond 20 " + low + ", cooked at 60 " + cooked);
+            p.getInventory().clearContent();
+            PackTests.clear(p);
+        }), 10));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);
