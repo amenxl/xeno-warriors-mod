@@ -207,7 +207,7 @@ public class SkylanderEntity extends PathfinderMob {
 
     private void takeOff() {
         setFlying(true);
-        flyTarget = position().add(random.nextGaussian() * 6, 14 + random.nextInt(10), random.nextGaussian() * 6);
+        flyTarget = position().add(random.nextGaussian() * 6, 6 + random.nextInt(5), random.nextGaussian() * 6);   // (up off the ground - not straight up out of reach)
         groundTime = 0;
         landAt = null;
     }
@@ -261,6 +261,9 @@ public class SkylanderEntity extends PathfinderMob {
     /** Free flight: drifting between points in the sky; now and then gliding down to land by people. */
     private void flyTick() {
         Vec3 pos = position();
+        var foe = getTarget();
+        if (foe != null && foe.isAlive() && landAt == null && foe.level() == level() && foe.distanceToSqr(this) < 48 * 48)
+            landAt = foe.blockPosition();                                             // (a fight: down to it, not circling high up out of reach)
         if (islandHome != null) { islandFlight(pos); return; }
         if (landAt == null && random.nextInt(600) == 0) {
             var people = level().getEntitiesOfClass(Mob.class, getBoundingBox().inflate(48, 80, 48), m -> m instanceof HumanNpcEntity || m instanceof Villager);
@@ -279,7 +282,7 @@ public class SkylanderEntity extends PathfinderMob {
         } else {
             if (flyTarget == null || pos.distanceTo(flyTarget) < 2 || random.nextInt(300) == 0) {
                 int surface = level().getHeight(Heightmap.Types.MOTION_BLOCKING, Mth.floor(getX()), Mth.floor(getZ()));
-                double y = Math.max(surface + 18 + random.nextInt(24), 100 + random.nextInt(60));
+                double y = surface + 5 + random.nextInt(8);                              // (low over the land - the high sky is for flying home to the islands)
                 flyTarget = new Vec3(getX() + random.nextGaussian() * 20, Math.min(y, 230), getZ() + random.nextGaussian() * 20);
             }
             dest = flyTarget;

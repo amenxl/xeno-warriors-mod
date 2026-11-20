@@ -1308,7 +1308,7 @@ public final class PartyBots {
             case ACT_FLY -> {
                 if (!b.canFly()) { p.displayClientMessage(Component.literal("").append(b.label()).append(" can't fly").withStyle(ChatFormatting.GRAY), true); return; }
                 p.startRiding(b, true);
-                p.displayClientMessage(Component.literal("Flying with ").append(b.label()).append(" - look to steer, sneak to let go").withStyle(ChatFormatting.AQUA), true);
+                p.displayClientMessage(Component.literal("Holding ").append(b.label()).append("'s hand - look to steer, sneak to let go").withStyle(ChatFormatting.AQUA), true);
             }
             case ACT_SPAR -> {
                 b.setSparring(true);

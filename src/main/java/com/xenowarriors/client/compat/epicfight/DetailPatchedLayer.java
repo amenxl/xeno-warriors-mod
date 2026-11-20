@@ -46,7 +46,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                                MultiBufferSource buffers, int light, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partial) {
         if (player.isInvisible() || SKIN_ONLY) return;
         tail(patch, player, pose, buffers, light, poses, partial);
-        if (com.xenowarriors.client.compat.DmzHairBridge.wants(player)) Rig.dmzHair(player, patch.getArmature(), pose, buffers, light, poses);   // (one of your own: its DragonMineZ hair, switched on)
+        hat(patch, player, pose, buffers, light, poses);                       // (a party hat stays on in every Epic Fight move)
+        if (com.xenowarriors.client.compat.DmzHairBridge.wants(player) && !com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player)) Rig.dmzHair(player, patch.getArmature(), pose, buffers, light, poses);   // (one of your own: its DragonMineZ hair, switched on)
         DetailModel live = CharacterDetailLayer.detailModel(player);
         if (live == null || FAILED.contains(live)) return;
         // baked from its own fresh copy of the model, so Epic Fight's baker never touches (and can't disturb) the
@@ -77,11 +78,16 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             boolean giLegs = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
             Rig.hideTorso = giTop; Rig.hideArms = giTop; Rig.hideLegs = giLegs;
             rig.m.backSwords(player);       // (Chase's swords off his back while drawn)
+            boolean helmet = com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player);   // (another mod's helmet: the hair tucked away under it)
+            if (rig.m.hair != null) rig.m.hair.visible = !helmet;
+            if (rig.m.bangs != null) rig.m.bangs.visible = !helmet;
+            rig.m.strandsVisible(!helmet);
+            for (net.minecraft.client.model.geom.ModelPart strand : rig.m.hoodPokers) strand.visible = !helmet;
             try {
                 if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
             } finally { Rig.hideTorso = Rig.hideArms = Rig.hideLegs = false; }
             Rig.race(player, patch.getArmature(), pose, buffers, light, overlay, poses, rig.head);   // Namekian antennae, Saiyan tail...
-            if (rig.head) Rig.formHair(player, rig.m.hair != null, patch.getArmature(), pose, buffers, light, overlay, poses);   // Super Saiyan hair
+            if (rig.head && !com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player)) Rig.formHair(player, rig.m.hair != null, patch.getArmature(), pose, buffers, light, overlay, poses);   // Super Saiyan hair
         }
         if (mesh[1] != null) {
             // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
@@ -441,6 +447,19 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         pose.pushPose();
         yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
         if (com.xenowarriors.client.compat.FoxTailLayer.renderOnBody(pose, buffers, light, player, partial)) tailDraws++;
+        pose.popPose();
+    }
+
+    /** A party hat (PartyHats) on Epic Fight's head bone. */
+    private static void hat(AbstractClientPlayerPatch<AbstractClientPlayer> patch, AbstractClientPlayer player, PoseStack pose,
+                            MultiBufferSource buffers, int light, OpenMatrix4f[] poses) {
+        if (!com.xenowarriors.client.PartyHats.wearing(player) || !(patch.getArmature() instanceof yesman.epicfight.model.armature.HumanoidArmature h)) return;
+        int head = h.head.getId();
+        if (head < 0 || head >= poses.length) return;
+        OpenMatrix4f m = new OpenMatrix4f().load(poses[head]).mulBack(h.head.getToOrigin()).mulBack(V2E);
+        pose.pushPose();
+        yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
+        com.xenowarriors.client.PartyHats.renderOnHead(pose, buffers, light, player);
         pose.popPose();
     }
 

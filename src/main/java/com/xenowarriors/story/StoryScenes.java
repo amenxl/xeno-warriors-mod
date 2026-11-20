@@ -70,6 +70,75 @@ public final class StoryScenes {
         return new Vec3(c.getX() + 0.5 + Math.cos(a) * d, Y + 1, c.getZ() + 0.5 + Math.sin(a) * d * 0.8);
     }
 
+    // ------------------------------------------------------------------ where people can get to
+
+    /** Feet here: something to stand on, and room for a body (a door counts as open - it can be). */
+    static boolean standable(ServerLevel l, BlockPos feet) {
+        BlockState below = l.getBlockState(feet.below());
+        if (below.getCollisionShape(l, feet.below()).isEmpty() && !(below.getBlock() instanceof net.minecraft.world.level.block.DoorBlock)) return false;
+        return passable(l, feet) && passable(l, feet.above());
+    }
+
+    private static boolean passable(ServerLevel l, BlockPos p) {
+        BlockState s = l.getBlockState(p);
+        return s.getCollisionShape(l, p).isEmpty() || s.getBlock() instanceof net.minecraft.world.level.block.DoorBlock
+                || s.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock || s.getBlock() instanceof net.minecraft.world.level.block.TrapDoorBlock;
+    }
+
+    /**
+     * Every spot in a place you can walk to from {@code seeds} (where the players stand, the middle): up and down a
+     * block at a time, through doors - never inside a closed-up building or a wall. (Story enemies and the people at the
+     * hubs are put only where you can get to them.)
+     */
+    public static Set<BlockPos> reachable(ServerLevel l, int slot, String place, Collection<BlockPos> seeds) {
+        BlockPos c = center(slot, place);
+        int rad = radius(place) + 1;
+        Set<BlockPos> seen = new HashSet<>();
+        ArrayDeque<BlockPos> q = new ArrayDeque<>();
+        List<BlockPos> starts = new ArrayList<>(seeds);
+        starts.add(c.atY(Y + 1));
+        for (BlockPos s0 : starts) {
+            BlockPos s1 = settle(l, s0);
+            if (s1 != null && seen.add(s1)) q.add(s1);
+        }
+        int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        while (!q.isEmpty() && seen.size() < 40000) {
+            BlockPos p = q.poll();
+            for (int[] d : dirs) for (int dy = -1; dy <= 1; dy++) {
+                BlockPos n = p.offset(d[0], dy, d[1]);
+                if (seen.contains(n)) continue;
+                int dx = n.getX() - c.getX(), dz = n.getZ() - c.getZ();
+                if (dx * dx + dz * dz > rad * rad || n.getY() < Y - 4 || n.getY() > Y + 24) continue;
+                if (dy == 1 && !passable(l, p.above(2))) continue;                    // (head room to step up)
+                if (!standable(l, n)) continue;
+                seen.add(n); q.add(n);
+            }
+        }
+        return seen;
+    }
+
+    /** A standing spot at or just above/below {@code p} (null: none near). */
+    private static BlockPos settle(ServerLevel l, BlockPos p) {
+        for (int dy : new int[]{0, 1, -1, 2, -2}) { BlockPos q = p.offset(0, dy, 0); if (standable(l, q)) return q.immutable(); }
+        return null;
+    }
+
+    /** {@code want}, or the nearest spot to it you can get to (it was inside a building, a wall, out of reach). */
+    public static Vec3 fit(Vec3 want, Set<BlockPos> ok) {
+        if (ok == null || ok.isEmpty()) return want;
+        BlockPos w = BlockPos.containing(want);
+        if (ok.contains(w)) return want;
+        BlockPos best = null; double bd = Double.MAX_VALUE;
+        for (BlockPos p : ok) {
+            double d = p.distSqr(w);
+            if (d < bd) { bd = d; best = p; }
+        }
+        fitted++;
+        return best == null ? want : Vec3.atBottomCenterOf(best);
+    }
+    /** (Tests) spots moved to where you can get to. */
+    public static int fitted;
+
     public static boolean inArea(net.minecraft.world.entity.Entity e) {
         return e.level().dimension() == com.xenowarriors.tower.Tower.LEVEL && e.getZ() > Z0 - 200;
     }

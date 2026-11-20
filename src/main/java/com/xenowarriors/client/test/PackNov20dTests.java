@@ -308,9 +308,67 @@ final class PackNov20dTests {
             PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
             if (b != null) com.xenowarriors.party.Bonds.revived(b, p);
             PackTests.check("revive: getting a bot back up gives a little extra bond each time", com.xenowarriors.party.Bonds.revivedBoosts > pg[3], "boosts " + (com.xenowarriors.party.Bonds.revivedBoosts - pg[3]));
-            com.xenowarriors.bot.BotPartyTime.endForTest(p);
+        }), 20));
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) {
+            l.add(new Step(null, () -> { pg[4] = com.xenowarriors.client.PartyHats.efDraws; PackWomTests.battle(true); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 30));
+            l.add(new Step("party_hat_ef", () -> PackTests.check("party: hats stay on in Epic Fight's stance", com.xenowarriors.client.PartyHats.efDraws > pg[4], "drawn " + (com.xenowarriors.client.PartyHats.efDraws - pg[4])), 3));
+            l.add(new Step(null, () -> { PackWomTests.battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+        }
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            pg[5] = com.xenowarriors.bot.BotPartyTime.earlyBond;
+            com.xenowarriors.bot.BotPartyTime.endEarlyForTest(p);
+            PackTests.check("party: one that breaks up early still gives some bond", com.xenowarriors.bot.BotPartyTime.earlyBond > pg[5], "early bond " + (com.xenowarriors.bot.BotPartyTime.earlyBond - pg[5]));
             PackTests.clear(p);
-        }), 80));
+        }), 20));
+        // ---- flying with a bot: you hang from its hand
+        Object[] fl = new Object[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            pg[6] = com.xenowarriors.client.HangClient.hangs;
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.LEXY, null);
+            if (b == null) return;
+            b.moveTo(p.getX() + 1, p.getY(), p.getZ() + 1, 0F, 0F);
+            fl[0] = b;
+        }), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> { if (fl[0] instanceof PartyBotEntity b) { PartyBots.action(p, b.getId(), PartyBots.ACT_FLY, 0); b.setDeltaMovement(0, 0.6, 0); b.setNoGravity(true); b.moveTo(b.getX(), b.getY() + 4, b.getZ()); } }), 30));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 20));
+        l.add(new Step("bot_hand_flight", () -> PackTests.server(p -> {
+            var b = fl[0] instanceof PartyBotEntity x ? x : null;
+            PackTests.check("flying with a bot: you hang from its hand below it", b != null && p.getVehicle() == b && p.getY() < b.getY() - 1.0,
+                    "riding " + (p.getVehicle() == b) + " you y " + String.format("%.1f", p.getY()) + " it " + (b == null ? "-" : String.format("%.1f", b.getY())));
+            PackTests.check("flying with a bot: the hanging pose plays", com.xenowarriors.client.HangClient.hangs > pg[6], "hangs " + (com.xenowarriors.client.HangClient.hangs - pg[6]));
+            p.stopRiding();
+            PackTests.clear(p);
+        }), 5));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+        // ---- a made character of the wind learns to fly; Soulslike Universe helmets tuck the hair away
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            d.youSlots[9] = new com.xenowarriors.you.YouSlot();
+            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Gale"; ys.race = com.xenowarriors.character.Race.HUMAN; ys.element = com.xenowarriors.ka.Element.WIND;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 9, ys);
+            boolean before = com.xenowarriors.mikiko.WindFlight.canFly(p);
+            for (int k = 0; k < 3; k++) d.statLevel[k] = Math.max(d.statLevel[k], 60);
+            PackTests.check("wind: a made character of the wind learns to fly at a high level", !before && com.xenowarriors.mikiko.WindFlight.canFly(p),
+                    "before " + before + " after " + com.xenowarriors.mikiko.WindFlight.canFly(p) + " level " + com.xenowarriors.stats.Stats.characterLevel(p));
+            for (int k = 0; k < 3; k++) d.statLevel[k] = 1;
+        }), 20));
+        l.add(new Step(null, () -> { com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var it = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("slu", "ashen_knight_helmet"));
+            if (it != null && it != Items.AIR) p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(it));
+            pg[7] = com.xenowarriors.client.render.CharacterDetailLayer.helmetTucks;
+            p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 180F, 0F);
+        }), 10));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 20));
+        l.add(new Step("slu_helmet_hair", () -> {
+            boolean slu = net.minecraftforge.fml.ModList.get().isLoaded("slu");
+            PackTests.check("helmets: Soulslike Universe's helmets tuck the hair away", !slu || com.xenowarriors.client.render.CharacterDetailLayer.helmetTucks > pg[7],
+                    "slu " + slu + " tucks " + (com.xenowarriors.client.render.CharacterDetailLayer.helmetTucks - pg[7]));
+            PackTests.server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, ItemStack.EMPTY));
+        }, 3));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
         // ---- a bot makes its own furnace to smelt ore, and packs up when you leave
         int[] fu = new int[3];
         Object[] fb = new Object[1];
@@ -439,6 +497,9 @@ final class PackNov20dTests {
             PackTests.check("story split: the SR tunnels fight splits you from Rhalix behind bars", com.xenowarriors.story.StoryRun.splitForTest(p) && com.xenowarriors.story.StoryRun.barsShutForTest(p)
                     && !com.xenowarriors.story.StoryRun.roomBForTest(p).isEmpty(), "split " + com.xenowarriors.story.StoryRun.splitForTest(p) + " other room " + com.xenowarriors.story.StoryRun.roomBForTest(p).size()
                     + " " + com.xenowarriors.story.StoryRun.stepForTest(p));
+            int[] rf = com.xenowarriors.story.StoryRun.reachForTest(p);
+            PackTests.check("story: enemies only appear where you can get to them", rf[1] > 0 && rf[0] == rf[1], "reachable " + rf[0] + " of " + rf[1]);
+            PackTests.check("story: buildings can be broken, the ground can't", rf[2] == 1 && rf[3] == 0, "building " + rf[2] + " ground " + rf[3]);
             com.xenowarriors.story.StoryRun.killRoomForTest(p, 0);
         }), 60));
         l.add(new Step("story_split_open", () -> PackTests.server(p -> {

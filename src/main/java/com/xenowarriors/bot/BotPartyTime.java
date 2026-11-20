@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -54,7 +55,9 @@ public final class BotPartyTime {
     public static final int LENGTH = 20 * 60 * 3, GAP = 20 * 60 * 40, ASK_TICKS = 20 * 20;
     /** A party breaks up after this long of real trouble in a row, or of you being too far away. */
     public static final int TROUBLE_TICKS = 20 * 3, AWAY_TICKS = 20 * 10;
-    public static final float BOND_TICK = 5F, BOND_END = 30F;
+    public static final float BOND_TICK = 5F, BOND_END = 60F;
+    /** A party that breaks up early: this share of the end bond, by how far it got. */
+    public static final float EARLY_SHARE = 0.5F;
     private static final String LAST = "xw_party_time_at";
     /** pentatonic steps for the tune (a random, cheerful little melody - nothing in particular) */
     private static final float[] NOTES = {0.5F, 0.561F, 0.63F, 0.749F, 0.841F, 1.0F, 1.122F, 1.26F, 1.498F, 1.682F, 2.0F};
@@ -491,6 +494,9 @@ public final class BotPartyTime {
         }
     }
 
+    /** (Tests) parties that broke up early but still gave some bond. */
+    public static int earlyBond;
+
     private static void end(ServerPlayer o, Party pt, boolean full) {
         PARTIES.remove(o.getUUID());
         BotRps.partyEnded(o);
@@ -509,7 +515,12 @@ public final class BotPartyTime {
             partyBond(o, pt, gs, BOND_END * (rappers(gs) ? RAPPERS_BONUS : 1F));
             firework(l, pt, 4);
             o.displayClientMessage(Component.literal("What a party! Everyone there feels a lot closer.").withStyle(ChatFormatting.LIGHT_PURPLE), false);
-        } else o.displayClientMessage(Component.literal("The party's broken up.").withStyle(ChatFormatting.GRAY), false);
+        } else {
+            float got = Mth.clamp(1F - (pt.end - l.getGameTime()) / (float) LENGTH, 0F, 1F);   // (how far it got)
+            float xp = BOND_END * EARLY_SHARE * got * (rappers(guests(o, pt)) ? RAPPERS_BONUS : 1F);
+            if (xp >= 1F) { partyBond(o, pt, guests(o, pt), xp); earlyBond++; }
+            o.displayClientMessage(Component.literal("The party's broken up" + (xp >= 1F ? " - still, everyone had some fun." : ".")).withStyle(ChatFormatting.GRAY), false);
+        }
     }
 
     @SubscribeEvent
@@ -526,6 +537,9 @@ public final class BotPartyTime {
         if (!BotSpar.quiet(p)) { p.displayClientMessage(Component.literal("Not now - there's trouble about.").withStyle(ChatFormatting.RED), true); return 0; }
         return start(p) ? 1 : 0;
     }
+
+    /** (Tests) breaks a party up halfway through. */
+    public static void endEarlyForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); if (pt != null) { pt.end = o.level().getGameTime() + LENGTH / 2; end(o, pt, false); } }
 
     /** (Tests) ends a party now (as if its time were up). */
     public static void endForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); if (pt != null) end(o, pt, true); }

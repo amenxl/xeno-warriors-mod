@@ -95,6 +95,8 @@ public final class StoryRun {
         final Set<UUID> roomB = new HashSet<>();
         final Map<UUID, Integer> foeRoom = new HashMap<>();
         final List<BlockPos> wallAt = new ArrayList<>();
+        /** Blocks of the places' buildings broken in this run (put back when it's over). */
+        final Map<BlockPos, net.minecraft.world.level.block.state.BlockState> broken = new LinkedHashMap<>();
         final List<net.minecraft.world.level.block.state.BlockState> wallWas = new ArrayList<>();
 
         public String objective() {
@@ -476,6 +478,12 @@ public final class StoryRun {
         if (r.split) teams(s, r, teamA, teamB);
         float shareB = teamA.isEmpty() || teamB.isEmpty() ? 0F : Math.max(0.3F, Math.min(0.6F, teamB.size() / (float) (teamA.size() + teamB.size())));
         int made = 0;
+        List<BlockPos> seeds = new ArrayList<>();                                        // (only where you can get to them: not inside a shut building or a wall)
+        for (ServerPlayer p : ps) if (p.level() == l) seeds.add(p.blockPosition());
+        for (LivingEntity e : teamA) if (e.level() == l) seeds.add(e.blockPosition());          // (a split fight: both rooms)
+        for (LivingEntity e : teamB) if (e.level() == l) seeds.add(e.blockPosition());
+        for (ServerPlayer p : ps) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.level() == l && StoryScenes.inArea(b)) seeds.add(b.blockPosition());
+        Set<BlockPos> reach = StoryScenes.reachable(l, r.slot, r.place, seeds);
         for (StoryDefs.Spawn sp : w) {
             int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + r.bots / 2 + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0)
                     + ("dummy".equals(sp.e()) ? 0 : Story.DIFF_EXTRA[r.diff]);
@@ -486,7 +494,7 @@ public final class StoryRun {
                 int room = shareB > 0 && !sp.boss() && (made++ * shareB) % 1F + shareB >= 1F ? 1 : 0;
                 Vec3 at = null;
                 for (int t = 0; t < 10; t++) {                                     // (somewhere it can stand, not inside a wall or a pillar)
-                    at = r.split && shareB > 0 ? roomSpot(r, room, l.getRandom()) : StoryScenes.spawnSpot(r.slot, r.place, l.getRandom());
+                    at = StoryScenes.fit(r.split && shareB > 0 ? roomSpot(r, room, l.getRandom()) : StoryScenes.spawnSpot(r.slot, r.place, l.getRandom()), reach);
                     m.moveTo(at.x, at.y, at.z, l.getRandom().nextFloat() * 360F, 0F);
                     if (l.noCollision(m)) break;
                 }
@@ -706,6 +714,9 @@ public final class StoryRun {
         Set<String> here = present(s, r);                                              // (no doubles: a played character, a bot, an ally)
         for (String c : who) if (!taken(there, c) && !taken(here, c) && !botted(s, r, bodyOf(c)) && !botted(s, r, soulOf(c)) && !add.contains(c)) add.add(c);
         int n = standing + add.size(), i = standing;
+        List<BlockPos> hubSeeds = new ArrayList<>();
+        for (ServerPlayer p : players(s, r)) if (p.level() == l) hubSeeds.add(p.blockPosition());
+        Set<BlockPos> reach = add.isEmpty() ? null : StoryScenes.reachable(l, r.slot, r.place, hubSeeds);   // (people you can walk up to - not in a wall)
         for (String c : add) {
             if (c.startsWith("npc:")) {                                            // someone who isn't a character: a person with their own look (Henery)
                 var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(l);
@@ -713,7 +724,7 @@ public final class StoryRun {
                 String key = c.substring(4);
                 h.setLook(key);
                 h.setCustomName(Component.literal(STORY_PEOPLE.getOrDefault(key, key)));
-                Vec3 at = StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1));
+                Vec3 at = StoryScenes.fit(StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1)), reach);
                 h.moveTo(at.x, at.y, at.z, 0F, 0F);
                 h.setYRot(0F); h.setYHeadRot(0F); h.yBodyRot = 0F;
                 h.setNoAi(true); h.setInvulnerable(true); h.setPersistenceRequired();
@@ -728,7 +739,7 @@ public final class StoryRun {
             if (b == null) continue;
             if (CharacterType.byId(bodyOf(c)) == CharacterType.NONE) continue;
             b.setCharacter(CharacterType.byId(bodyOf(c)));
-            Vec3 at = StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1));
+            Vec3 at = StoryScenes.fit(StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1)), reach);
             b.moveTo(at.x, at.y, at.z, 0F, 0F);
             b.setYRot(0F); b.setYHeadRot(0F); b.yBodyRot = 0F;
             b.setNoAi(true);
@@ -778,6 +789,9 @@ public final class StoryRun {
 
     static void close(MinecraftServer s, Run r, String why) {
         unsplit(s, r);
+        ServerLevel bl = world(s);
+        if (bl != null) for (var en : r.broken.entrySet()) bl.setBlock(en.getKey(), en.getValue(), 2);   // (the buildings put back as they were)
+        r.broken.clear();
         clearFoes(s, r);
         clearNpcs(s, r);
         ServerLevel l = world(s);
@@ -1146,6 +1160,62 @@ public final class StoryRun {
     public static boolean splitForTest(ServerPlayer p) { Run r = runOf(p); return r != null && r.split; }
     public static boolean barsShutForTest(ServerPlayer p) { Run r = runOf(p); return r != null && r.split && !r.barsOpen; }
     public static java.util.Set<UUID> roomBForTest(ServerPlayer p) { Run r = runOf(p); return r == null ? java.util.Set.of() : r.roomB; }
+
+    /**
+     * In a story mission, buildings can be broken (walls, roofs, furniture - anything above the ground) but never the
+     * ground, the bars between split rooms or the place's edge. True if this block may go; broken ones are put back
+     * when the run is over (BlockBreak in ModeRules calls {@link #breakBuilding}).
+     */
+    public static boolean breakable(Player p, BlockPos pos) {
+        Run r = runOf(p);
+        if (r == null || r.place == null || !StoryScenes.inArea(p) || !(p.level() instanceof ServerLevel l)) return false;
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        int rad = StoryScenes.radius(r.place);
+        int dx = pos.getX() - c.getX(), dz = pos.getZ() - c.getZ();
+        if (pos.getY() <= StoryScenes.Y || dx * dx + dz * dz > (rad - 1) * (rad - 1)) return false;   // (the ground, the edge)
+        if (r.wallAt.contains(pos)) return false;                                                       // (a split fight's bars)
+        var st = l.getBlockState(pos);
+        return !st.isAir() && st.getDestroySpeed(l, pos) >= 0 && !st.is(net.minecraft.world.level.block.Blocks.BARRIER) && !st.is(net.minecraft.world.level.block.Blocks.BEDROCK);
+    }
+
+    /** Breaks a building block in a mission (no drops - it's put back afterwards). */
+    public static void breakBuilding(ServerPlayer p, BlockPos pos) {
+        Run r = runOf(p);
+        if (r == null) return;
+        ServerLevel l = p.serverLevel();
+        var st = l.getBlockState(pos);
+        r.broken.putIfAbsent(pos.immutable(), st);
+        l.destroyBlock(pos, false, p);
+        buildingBlocksBroken++;
+    }
+    /** (Tests) */
+    public static int buildingBlocksBroken;
+
+    /** (Tests) how many of this run's foes stand where you can get to them, of how many; and whether a building block / the ground may be broken. */
+    public static int[] reachForTest(ServerPlayer p) {
+        Run r = runOf(p);
+        ServerLevel l = p.serverLevel();
+        if (r == null || r.place == null) return new int[]{-1, -1, 0, 0};
+        List<BlockPos> seeds = new ArrayList<>();
+        for (ServerPlayer m : players(p.server, r)) { seeds.add(m.blockPosition()); for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(m)) if (b.level() == l && StoryScenes.inArea(b)) seeds.add(b.blockPosition()); }
+        Set<BlockPos> ok = StoryScenes.reachable(l, r.slot, r.place, seeds);
+        int in = 0, all = 0;
+        for (UUID id : r.foes) if (l.getEntity(id) instanceof Mob m && m.isAlive()) {
+            all++;
+            BlockPos f = m.blockPosition();
+            if (ok.contains(f) || ok.contains(f.below()) || ok.contains(f.above())) in++;
+        }
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        int bld = 0;
+        int rad = StoryScenes.radius(r.place) - 2;
+        outer:
+        for (int x = -rad; x <= rad; x++) for (int z = -rad; z <= rad; z++) for (int y = StoryScenes.Y + 1; y < StoryScenes.Y + 8; y++) {
+            BlockPos b = c.atY(y).offset(x, 0, z);
+            if (!l.getBlockState(b).isAir() && breakable(p, b)) { bld = 1; break outer; }
+        }
+        int ground = breakable(p, c.atY(StoryScenes.Y)) ? 1 : 0;
+        return new int[]{in, all, bld, ground};
+    }
 
     /** Talking to someone at a hub (or in a scene). */
     @SubscribeEvent(priority = EventPriority.HIGH)

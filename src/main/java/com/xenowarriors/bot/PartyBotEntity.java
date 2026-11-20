@@ -25,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.Mth;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -334,7 +335,7 @@ public class PartyBotEntity extends PathfinderMob {
     /** Its character flies by itself (Skylanders, Ultima, Mikiko). */
     public boolean naturalFlier() {
         CharacterType t = character();
-        if (t == CharacterType.YOU) { var s = you(); return s != null && s.wingsNow(); }    // (one of your own: its wings)
+        if (t == CharacterType.YOU) { var s = you(); return s != null && (s.wingsNow() || com.xenowarriors.mikiko.WindFlight.windYou(s) && botLevel() >= com.xenowarriors.mikiko.WindFlight.YOU_LEVEL); }    // (one of your own: its wings, or the wind once it's mastered it)
         if (t == CharacterType.MIKIKO) return botLevel() >= com.xenowarriors.mikiko.WindFlight.LEVEL;   // (Mikiko: only once he's mastered his wind, like a player of him)
         return t.skylander() || t == CharacterType.ULTIMA;
     }
@@ -449,14 +450,15 @@ public class PartyBotEntity extends PathfinderMob {
             if (canFly()) {
                 if (!selfFlying && position().distanceToSqr(lastPos) < 0.0025 && d2 > 6 * 6) stuck++; else if (!selfFlying) stuck = 0;   // (not getting anywhere on foot)
                 lastPos = position();
-                boolean above = o.getY() - getY() > 2.5 && o.onGround();
+                boolean above = o.getY() - getY() > 4.0 && o.onGround();       // (a ledge it can't climb - not every hill: walking about, it walks)
                 if (selfFlying || stuck > 30 || (above && getNavigation().isDone()) || (tickCount % 10 == 0 && above && !getNavigation().moveTo(o, 1.0))) {
                     if (d2 < 3.5 * 3.5 && Math.abs(o.getY() - getY()) < 1.5) { BotMoves.land(PartyBotEntity.this); stuck = 0; }
                     else { BotMoves.flyTo(PartyBotEntity.this, o.position().add(0, 1.2, 0).add(position().subtract(o.position()).multiply(1, 0, 1).normalize().scale(1.2)), d2 > 12 * 12 ? 0.8 : 0.5); getLookControl().setLookAt(o); return; }
                 }
             }
             // a flier a long way off (it was ranging about, or the owner's in trouble): back through the air, fast
-            if (canFly() && d2 > 16 * 16 && d2 < 56 * 56) {
+            double flyBack = ownerInDanger(o) ? 16 : 26;                         // (just walking about: it walks to catch up, unless it's well behind)
+            if (canFly() && d2 > flyBack * flyBack && d2 < 56 * 56) {
                 BotMoves.flyTo(PartyBotEntity.this, o.position().add(0, 1.5, 0), ownerInDanger(o) ? 1.0 : 0.8);
                 getLookControl().setLookAt(o);
                 return;
@@ -717,8 +719,10 @@ public class PartyBotEntity extends PathfinderMob {
         }
         @Override public boolean canUse() {
             if (tickCount < nextFlourish || !calm()) return false;
+            ServerPlayer w = owner();
+            if (w.getDeltaMovement().horizontalDistanceSqr() > 0.002 || w.walkDist - w.walkDistO > 0.01) { nextFlourish = tickCount + 200; return false; }   // (you're walking about: it walks with you)
             if (distanceToSqr(owner()) > 10 * 10 || !openSky()) { nextFlourish = tickCount + 200; return false; }   // (indoors, underground: not now)
-            nextFlourish = tickCount + 900 + getRandom().nextInt(1500);           // (every 45 s - 2 min or so)
+            nextFlourish = tickCount + 3000 + getRandom().nextInt(3600);          // (every 2.5 - 5.5 min or so, and only while you're standing about)
             return true;
         }
         @Override public boolean canContinueToUse() {
@@ -1414,6 +1418,25 @@ public class PartyBotEntity extends PathfinderMob {
 
     @Override
     public double getPassengersRidingOffset() { return getBbHeight() * 0.55; }
+
+    /**
+     * You, flying along: hanging from its hand (its left), beside and below it - not sat on it. Held out of the ground
+     * when it flies low. (The poses: client HangClient.)
+     */
+    @Override
+    protected void positionRider(net.minecraft.world.entity.Entity e, net.minecraft.world.entity.Entity.MoveFunction move) {
+        if (!(e instanceof Player)) { super.positionRider(e, move); return; }
+        float yaw = yBodyRot * Mth.DEG_TO_RAD;
+        double side = 0.55;                                                     // (its left: x is +cos, z is +sin of the body's yaw)
+        double x = getX() + Mth.cos(yaw) * side, z = getZ() + Mth.sin(yaw) * side;
+        double y = getY() + HANG_DROP;
+        int floor = level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+        if (floor <= getY() + 0.5 && y < floor) y = Math.min(getY(), floor);     // (low over the ground: feet on it, not in it)
+        move.accept(e, x, y, z);
+    }
+
+    /** How far below it you hang (your raised hand at its hand). */
+    public static final double HANG_DROP = -1.45;
 
     // ---------------------------------------------------------------- saving
 

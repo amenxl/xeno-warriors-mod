@@ -24,6 +24,9 @@ import java.util.Map;
  * like in the show, and are always shown on the selection screen.
  */
 public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+    /** (Tests) frames hair was tucked under another mod's helmet. */
+    public static int helmetTucks;
+
     private final Map<CharacterType, DetailModel> models = new EnumMap<>(CharacterType.class);
     private static final net.minecraft.resources.ResourceLocation FOX_KING_TEX =
             com.xenowarriors.XenoWarriors.id("textures/entity/character/mikiko_foxking_details.png");
@@ -607,14 +610,19 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         model.backSwords(player);
         if (model.goggles != null) { boolean dn = com.xenowarriors.client.TechGoggles.down(player); model.goggles.y = dn ? 2.9F : 0F; model.goggles.z = dn ? -0.15F : 0F; }
         if (model.hoodDown != null) model.hoodDown.visible = !hood;
+        boolean helmet = CharacterArmorLayer.coveringHelmet(player);
+        if (model.bangs != null) model.bangs.visible = !helmet;
+        model.strandsVisible(!helmet);
+        if (helmet) helmetTucks++;
         if (model.hair != null) {
             // the outfit's own hood: his hair still shows under it (the strands that would poke through it are tucked in)
             model.hair.visible = !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).getItem()
                     instanceof com.xenowarriors.item.SrHoodieItem)
-                    && !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.item.FoxPjsItem);   // (under the Fox PJs hood)
-            for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood;
+                    && !(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).getItem() instanceof com.xenowarriors.item.FoxPjsItem)   // (under the Fox PJs hood)
+                    && !helmet;                                                          // (under another mod's helmet: tucked away)
+            for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood && !helmet;
         } else {
-            for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood;   // (Kaeru: her bob's outer locks)
+            for (net.minecraft.client.model.geom.ModelPart strand : model.hoodPokers) strand.visible = !hood && !armorHood && !helmet;   // (Kaeru: her bob's outer locks)
         }
 
         // Rhalix's cigarette while he's on his smoke break
@@ -720,6 +728,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         // DragonMineZ forms (Super Saiyan gold...): the hair drawn again on top in the form's color
         int formHair = com.xenowarriors.client.compat.DmzForms.hairColor(player);
         if (fusionLook != null) formHair = -1;                                              // (a fusion keeps its own hair colours)
+        if (CharacterArmorLayer.coveringHelmet(player)) formHair = -1;                     // (under a helmet: no hair to show)
         if (formHair >= 0 && type == CharacterType.YURI && !noHead) {      // Yuri: her own bob took the form's colour (FormHair); it rises into her Super Saiyan spikes
             DetailModel sh = yuriSsjHair();
             if (sh != null && sh.hair != null) {

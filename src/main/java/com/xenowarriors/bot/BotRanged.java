@@ -99,6 +99,10 @@ public final class BotRanged extends Goal {
         double d = b.distanceTo(t);
         if (d > 40) return false;
         if (inVehicle(b)) return d > 1.5;                                        // riding along: it shoots from its seat (it can't get out to swing)
+        if (b.isVehicle()) {                                                      // flying you along by the hand: one hand free - a gun, not a bow
+            int k = kindOf(at(slot));
+            return (k == GUN || k == BLASTER) && d > 1.5;
+        }
         if (t instanceof net.minecraft.world.entity.monster.Creeper) return true;   // (a creeper: always from range, never up close)
         if (b.targetUnreachable() || d > 8 - slack) return true;
         return d > 3 && score(at(slot)) > meleeScore(b);

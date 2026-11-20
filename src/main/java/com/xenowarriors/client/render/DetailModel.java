@@ -156,6 +156,12 @@ public class DetailModel {
     }
 
     private final java.util.List<Strand> strands = new java.util.ArrayList<>();
+
+    /** Shows or hides every hair strand (a helmet over the head: CharacterDetailLayer). Only for models whose hair is the head's own strands (Kyrie). */
+    public void strandsVisible(boolean on) {
+        if (hair != null) return;
+        for (Strand st : strands) for (ModelPart p : st.parts) p.visible = on;
+    }
     private boolean hairMoved;
     private float lastStream = -1F, lastFlutter = -1F, lastAge = -1F;
     // scratch objects, reused every frame (no garbage)

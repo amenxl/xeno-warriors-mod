@@ -52,7 +52,12 @@ public final class ModeRules {
     public static void onBreak(BlockEvent.BreakEvent e) {
         Player p = e.getPlayer();
         if (p == null || builder(p)) return;
-        if (!canGrief(e.getLevel()) || inMode(p)) { e.setCanceled(true); tell(p, "Nothing can be broken here"); }
+        if (p instanceof ServerPlayer sp && com.xenowarriors.story.StoryRun.breakable(sp, e.getPos())) {   // (a story mission: buildings come down, the ground doesn't)
+            e.setCanceled(true);
+            com.xenowarriors.story.StoryRun.breakBuilding(sp, e.getPos());
+            return;
+        }
+        if (!canGrief(e.getLevel()) || inMode(p)) { e.setCanceled(true); tell(p, com.xenowarriors.story.StoryRun.runOf(p) != null ? "The ground can't be broken" : "Nothing can be broken here"); }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -70,6 +75,8 @@ public final class ModeRules {
     public static void onLeftClick(PlayerInteractEvent.LeftClickBlock e) {
         Player p = e.getEntity();
         if (builder(p)) return;
+        if (com.xenowarriors.story.StoryScenes.inArea(p) && e.getPos().getY() > com.xenowarriors.story.StoryScenes.Y
+                && (p.level().isClientSide || com.xenowarriors.story.StoryRun.runOf(p) != null)) return;   // (story: buildings can be broken - checked again when it breaks)
         if (!canGrief(p.level()) || inMode(p)) {
             e.setUseBlock(net.minecraftforge.eventbus.api.Event.Result.DENY);
             e.setUseItem(net.minecraftforge.eventbus.api.Event.Result.DENY);

@@ -26,8 +26,18 @@ public final class WindFlight {
 
     private WindFlight() {}
 
+    /** Your own characters with the wind (their element or a second one): they learn to ride it too, at this level. */
+    public static final int YOU_LEVEL = 100;
+
     public static boolean canFly(ServerPlayer p) {
-        return ModCapabilities.getType(p) == CharacterType.MIKIKO && Stats.characterLevel(p) >= LEVEL;
+        CharacterType t = ModCapabilities.getType(p);
+        if (t == CharacterType.YOU) return windYou(com.xenowarriors.you.You.slot(p)) && Stats.characterLevel(p) >= YOU_LEVEL;
+        return t == CharacterType.MIKIKO && Stats.characterLevel(p) >= LEVEL;
+    }
+
+    /** A made character of the wind. */
+    public static boolean windYou(com.xenowarriors.you.YouSlot s) {
+        return s != null && (s.element == com.xenowarriors.ka.Element.WIND || s.element2 == com.xenowarriors.ka.Element.WIND);
     }
 
     /**
@@ -96,7 +106,9 @@ public final class WindFlight {
                 if (!keep.getBoolean("xw_flight_announced")) {
                     keep.putBoolean("xw_flight_announced", true);
                     p.getPersistentData().put(net.minecraft.world.entity.player.Player.PERSISTED_NBT_TAG, keep);
-                    p.sendSystemMessage(Component.literal("After a lot of thought and consideration, why not use my wing to fly?")
+                    if (ModCapabilities.getType(p) == CharacterType.YOU)
+                        p.sendSystemMessage(Component.literal("The wind answers you now - you can ride it and fly!").withStyle(ChatFormatting.AQUA));
+                    else p.sendSystemMessage(Component.literal("After a lot of thought and consideration, why not use my wing to fly?")
                             .withStyle(ChatFormatting.AQUA));
                     p.sendSystemMessage(Component.literal("(Double-tap jump to take off.)").withStyle(ChatFormatting.GRAY));
                     p.level().playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_FLAP, SoundSource.PLAYERS, 1F, 1.4F);

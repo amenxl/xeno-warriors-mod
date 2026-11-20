@@ -48,7 +48,9 @@ public final class BotPicnic {
     private BotPicnic() {}
 
     public static final int LENGTH = 20 * 60 * 3, GAP = 20 * 60 * 35, ASK_TICKS = 20 * 20;
-    public static final float BOND_END = 25F;
+    public static final float BOND_END = 25F, EARLY_SHARE = 0.5F;
+    /** (Tests) picnics packed up early that still gave some bond. */
+    public static int earlyBond;
     private static final String LAST = "xw_picnic_at";
 
     private static final class Picnic {
@@ -222,19 +224,22 @@ public final class BotPicnic {
         Collections.reverse(order);                                             // (the tablecloth before the table under it)
         for (BlockPos p : order) if (l.getBlockState(p).is(pc.placed.get(p).getBlock())) l.removeBlock(p, false);
         finished += full ? 1 : 0;
-        if (full) {
+        float got = full ? 1F : net.minecraft.util.Mth.clamp(1F - (pc.end - l.getGameTime()) / (float) LENGTH, 0F, 1F) * EARLY_SHARE;   // (packed up early: some bond, by how far it got)
+        float bond = BOND_END * got;
+        if (full || bond >= 1F) {
+            if (!full) earlyBond++;
             List<LivingEntity> gs = guests(o, pc);
             List<PartyBotEntity> bots = new ArrayList<>();
             for (LivingEntity g : gs) if (g instanceof PartyBotEntity b) bots.add(b);
             for (PartyBotEntity b : bots) {
-                com.xenowarriors.party.Bonds.addXp(o, b.charKey(), BOND_END);
-                for (PartyBotEntity b2 : bots) if (b2 != b) com.xenowarriors.party.Bonds.addXp(b, b2.charKey(), BOND_END);
+                com.xenowarriors.party.Bonds.addXp(o, b.charKey(), bond);
+                for (PartyBotEntity b2 : bots) if (b2 != b) com.xenowarriors.party.Bonds.addXp(b, b2.charKey(), bond);
             }
             for (LivingEntity g : gs) if (g instanceof ServerPlayer m && m != o) {
-                com.xenowarriors.party.Bonds.addXp(m, com.xenowarriors.party.Bonds.charOf(o), BOND_END);
-                com.xenowarriors.party.Bonds.addXp(o, com.xenowarriors.party.Bonds.charOf(m), BOND_END);
+                com.xenowarriors.party.Bonds.addXp(m, com.xenowarriors.party.Bonds.charOf(o), bond);
+                com.xenowarriors.party.Bonds.addXp(o, com.xenowarriors.party.Bonds.charOf(m), bond);
             }
-            o.displayClientMessage(Component.literal("That was a lovely picnic - everyone there feels closer.").withStyle(ChatFormatting.GREEN), false);
+            o.displayClientMessage(Component.literal(full ? "That was a lovely picnic - everyone there feels closer." : "The picnic's packed up early - still, it was nice while it lasted.").withStyle(full ? ChatFormatting.GREEN : ChatFormatting.GRAY), false);
         } else o.displayClientMessage(Component.literal("The picnic's packed up early.").withStyle(ChatFormatting.GRAY), false);
     }
 

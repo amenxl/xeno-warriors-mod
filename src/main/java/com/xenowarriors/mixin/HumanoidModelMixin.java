@@ -85,6 +85,7 @@ public abstract class HumanoidModelMixin {
                 com.xenowarriors.client.party.ReviveClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);    // reviving someone: hand held out to them
                 com.xenowarriors.client.DodgeClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);    // weaving out of a bullet's way
                 com.xenowarriors.client.party.PartyClient.applyPose((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // (again, last: knocked out beats every stance above)
+                com.xenowarriors.client.HangClient.apply((HumanoidModel<?>) self, (Player) entity, ageInTicks);   // hanging from a flying bot's hand / holding you
             }
         }
         // poses anyone can strike (clashing, KAs, elements, working...), players and NPCs alike

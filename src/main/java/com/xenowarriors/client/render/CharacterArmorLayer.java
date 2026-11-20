@@ -138,6 +138,19 @@ public class CharacterArmorLayer extends RenderLayer<AbstractClientPlayer, Playe
         return s.getItem() instanceof ArmorItem a && a.getEquipmentSlot() == slot && (foreign(s) || s.getItem() instanceof com.xenowarriors.item.SkinLayoutArmor);
     }
 
+    /**
+     * A helmet from another mod that covers the head (Soulslike Universe's and the like): the characters' own 3D hair
+     * is tucked away under it - it stuck out through the helmet (the user's report). Hats and caps aren't helmets.
+     */
+    public static boolean coveringHelmet(net.minecraft.world.entity.LivingEntity p) {
+        ItemStack s = p.getItemBySlot(EquipmentSlot.HEAD);
+        if (!(s.getItem() instanceof ArmorItem a) || a.getEquipmentSlot() != EquipmentSlot.HEAD || !foreign(s)) return false;
+        var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
+        String path = key == null ? "" : key.getPath();
+        if (path.contains("hat") || path.contains("cap") || path.contains("crown") || path.contains("hood") || path.contains("band") || path.contains("mask") || path.contains("glasses")) return false;
+        return "slu".equals(key.getNamespace()) || path.contains("helmet") || path.contains("helm");
+    }
+
     /** Armor from another mod (not vanilla's materials, not ours). */
     private static boolean foreign(ItemStack stack) {
         var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
