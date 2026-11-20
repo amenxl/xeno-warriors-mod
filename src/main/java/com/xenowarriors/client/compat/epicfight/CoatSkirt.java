@@ -35,6 +35,7 @@ final class CoatSkirt {
 
     static Split split(List<ModelPart.Cube> body) {
         if (body.stream().noneMatch(CoatSkirt::longCoat)) return null;
+        if (!reflect()) return null;                                                     // (can't cut: the coat stays as it was)
         List<ModelPart.Cube> chest = new ArrayList<>(), r = new ArrayList<>(), l = new ArrayList<>();
         for (ModelPart.Cube c : body) {
             if (c.maxY <= HIPS + 1F) { chest.add(c); continue; }                        // (above the hips, or only just over)
@@ -74,24 +75,23 @@ final class CoatSkirt {
         if (b - a < 0.01F) return null;
         min[axis] = a; max[axis] = b;
         try {
-            ModelPart.Polygon[] src = polygons(c);
+            if (!reflect()) return null;
+            Object[] src = (Object[]) polygonsField.get(c);
             ModelPart.Cube out = new ModelPart.Cube(0, 0, min[0] + dx, min[1] + dy, min[2] + dz, max[0] - min[0], max[1] - min[1], max[2] - min[2],
                     0F, 0F, 0F, false, 64F, 64F, EnumSet.allOf(Direction.class));
-            ModelPart.Polygon[] dst = polygons(out);
+            Object[] dst = (Object[]) polygonsField.get(out);
             int n = 0;
-            for (ModelPart.Polygon p : src) {
-                ModelPart.Vertex[] v = clipPolygon(p.vertices, axis, a, b);
+            for (Object p : src) {
+                V[] v = clipPolygon(read((Object[]) verticesField.get(p)), axis, a, b);
                 if (v == null || n >= dst.length) continue;
-                for (int i = 0; i < 4; i++) {
-                    Vector3f q = v[i].pos;
-                    dst[n].vertices[i] = new ModelPart.Vertex(q.x() + dx, q.y() + dy, q.z() + dz, v[i].u, v[i].v);
-                }
-                dst[n].normal.set(p.normal);
+                Object[] dv = (Object[]) verticesField.get(dst[n]);
+                for (int i = 0; i < 4 && i < dv.length; i++) dv[i] = vertexCtor.newInstance(v[i].p.x() + dx, v[i].p.y() + dy, v[i].p.z() + dz, v[i].u, v[i].v);
+                ((Vector3f) normalField.get(dst[n])).set((Vector3f) normalField.get(p));
                 n++;
             }
             for (; n < dst.length; n++) {                                                  // (faces cut away: nothing to draw)
-                ModelPart.Vertex z = dst[n].vertices[0];
-                for (int i = 0; i < 4; i++) dst[n].vertices[i] = z;
+                Object[] dv = (Object[]) verticesField.get(dst[n]);
+                for (int i = 1; i < dv.length; i++) dv[i] = dv[0];
             }
             return out;
         } catch (Throwable t) {
@@ -100,29 +100,34 @@ final class CoatSkirt {
         }
     }
 
+    /** A corner: where, and its texture spot. */
+    private record V(Vector3f p, float u, float v) {}
+
+    private static V[] read(Object[] vs) throws IllegalAccessException {
+        V[] out = new V[vs.length];
+        for (int i = 0; i < vs.length; i++) out[i] = new V((Vector3f) posField.get(vs[i]), uField.getFloat(vs[i]), vField.getFloat(vs[i]));
+        return out;
+    }
+
     /** A face's corners inside [a, b] on the axis (a rectangle stays a rectangle; null if none of it is). */
-    private static ModelPart.Vertex[] clipPolygon(ModelPart.Vertex[] vs, int axis, float a, float b) {
+    private static V[] clipPolygon(V[] vs, int axis, float a, float b) {
         if (vs.length != 4) return null;
         float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
-        for (ModelPart.Vertex v : vs) { float c = coord(v.pos, axis); lo = Math.min(lo, c); hi = Math.max(hi, c); }
-        if (hi < a + 0.001F || lo > b - 0.001F) {
-            if (hi - lo < 0.001F) return null;                                             // (a face across the axis, outside)
-            return null;
-        }
+        for (V v : vs) { float c = coord(v.p, axis); lo = Math.min(lo, c); hi = Math.max(hi, c); }
+        if (hi < a + 0.001F || lo > b - 0.001F) return null;                               // (outside)
         if (hi - lo < 0.001F) return vs;                                                   // (a face across the axis, inside)
-        ModelPart.Vertex[] out = new ModelPart.Vertex[4];
+        V[] out = new V[4];
         for (int i = 0; i < 4; i++) {
-            ModelPart.Vertex v = vs[i];
-            float c = coord(v.pos, axis);
+            V v = vs[i];
+            float c = coord(v.p, axis);
             float t = Math.max(a, Math.min(b, c));
             if (t == c) { out[i] = v; continue; }
             // slide it along its edge to the partner corner at the other end of the axis
-            ModelPart.Vertex o = null;
-            for (ModelPart.Vertex w : vs) if (w != v && same(w.pos, v.pos, axis) && Math.abs(coord(w.pos, axis) - c) > 0.001F) { o = w; break; }
+            V o = null;
+            for (V w : vs) if (w != v && same(w.p, v.p, axis) && Math.abs(coord(w.p, axis) - c) > 0.001F) { o = w; break; }
             if (o == null) { out[i] = v; continue; }
-            float k = (t - c) / (coord(o.pos, axis) - c);
-            Vector3f p = new Vector3f(v.pos).lerp(o.pos, k);
-            out[i] = new ModelPart.Vertex(p.x(), p.y(), p.z(), v.u + (o.u - v.u) * k, v.v + (o.v - v.v) * k);
+            float k = (t - c) / (coord(o.p, axis) - c);
+            out[i] = new V(new Vector3f(v.p).lerp(o.p, k), v.u + (o.u - v.u) * k, v.v + (o.v - v.v) * k);
         }
         return out;
     }
@@ -135,12 +140,40 @@ final class CoatSkirt {
 
     private static float coord(Vector3f p, int axis) { return axis == 0 ? p.x() : axis == 1 ? p.y() : p.z(); }
 
-    private static ModelPart.Polygon[] polygons(ModelPart.Cube c) throws IllegalAccessException {
-        if (polygonsField == null) {
+    // ModelPart's Polygon and Vertex are private: reached by what they hold
+    private static java.lang.reflect.Field verticesField, normalField, posField, uField, vField;
+    private static java.lang.reflect.Constructor<?> vertexCtor;
+    private static boolean reflected, reflectOk;
+
+    private static boolean reflect() {
+        if (reflected) return reflectOk;
+        reflected = true;
+        try {
             for (java.lang.reflect.Field f : ModelPart.Cube.class.getDeclaredFields())
-                if (f.getType() == ModelPart.Polygon[].class) { f.setAccessible(true); polygonsField = f; break; }
-            if (polygonsField == null) throw new IllegalStateException("no polygons");
+                if (f.getType().isArray() && f.getType().getComponentType().getEnclosingClass() == ModelPart.class) { f.setAccessible(true); polygonsField = f; }
+            Class<?> poly = polygonsField.getType().getComponentType();
+            for (java.lang.reflect.Field f : poly.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                f.setAccessible(true);
+                if (f.getType().isArray()) verticesField = f;
+                else if (f.getType() == Vector3f.class) normalField = f;
+            }
+            Class<?> vert = verticesField.getType().getComponentType();
+            List<java.lang.reflect.Field> floats = new ArrayList<>();
+            for (java.lang.reflect.Field f : vert.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                f.setAccessible(true);
+                if (f.getType() == Vector3f.class) posField = f;
+                else if (f.getType() == float.class) floats.add(f);
+            }
+            uField = floats.get(0); vField = floats.get(1);
+            vertexCtor = vert.getDeclaredConstructor(float.class, float.class, float.class, float.class, float.class);
+            vertexCtor.setAccessible(true);
+            reflectOk = posField != null && normalField != null;
+        } catch (Throwable t) {
+            com.xenowarriors.XenoWarriors.LOGGER.warn("XW: coats for Epic Fight - ModelPart's insides not as expected", t);
+            reflectOk = false;
         }
-        return (ModelPart.Polygon[]) polygonsField.get(c);
+        return reflectOk;
     }
 }
