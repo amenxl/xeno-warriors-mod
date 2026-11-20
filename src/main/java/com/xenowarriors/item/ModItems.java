@@ -38,6 +38,15 @@ public final class ModItems {
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
     public static final RegistryObject<Item> SKY_BOOTS = ITEMS.register("sky_boots",
             () -> new com.xenowarriors.sky.SkyArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
+    /** A character's armor for your own characters (bond gifts - you.CharacterGear). */
+    public static final RegistryObject<Item> CHAR_HELMET = ITEMS.register("character_helmet",
+            () -> new com.xenowarriors.you.CharacterGear.CharacterArmorItem(net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties()));
+    public static final RegistryObject<Item> CHAR_CHESTPLATE = ITEMS.register("character_chestplate",
+            () -> new com.xenowarriors.you.CharacterGear.CharacterArmorItem(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties()));
+    public static final RegistryObject<Item> CHAR_LEGGINGS = ITEMS.register("character_leggings",
+            () -> new com.xenowarriors.you.CharacterGear.CharacterArmorItem(net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties()));
+    public static final RegistryObject<Item> CHAR_BOOTS = ITEMS.register("character_boots",
+            () -> new com.xenowarriors.you.CharacterGear.CharacterArmorItem(net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties()));
     public static final RegistryObject<Item> KARMA_ALTAR = ITEMS.register("karma_altar",
             () -> new net.minecraft.world.item.BlockItem(com.xenowarriors.altar.ModAltar.ALTAR.get(), new Item.Properties()));
     public static final RegistryObject<Item> CORRUPTED_SOIL = ITEMS.register("corrupted_soil",

@@ -64,7 +64,9 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         int overlay = OverlayTexture.NO_OVERLAY;
         RenderType detailType = RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player)));
         Rig rig = RIGID && !legacy ? RIGS.computeIfAbsent(live, m -> Rig.of(player)) : null;
-        if (mesh[0] != null) mesh[0].draw(pose, buffers, detailType, light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
+        var costume = com.xenowarriors.client.you.YouCostume.of(player);           // one of your own in a show character's clothes: only the parts it covers
+        boolean headOff = costume != null && !costume.head() || com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player);   // (under another mod's helmet: no hair)
+        if (mesh[0] != null && (!RIGID || legacy || !headOff)) mesh[0].draw(pose, buffers, detailType, light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         if (com.xenowarriors.client.compat.DmzForms.ssj4Own(player)) {
             // Super Saiyan 4's red fur on Epic Fight's body too: laid on its skin (the same mesh again, as a decal)
             var body = (slim(player) ? yesman.epicfight.api.client.model.Meshes.ALEX : yesman.epicfight.api.client.model.Meshes.BIPED).get();
@@ -76,7 +78,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             boolean giTop = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.CHEST)
                     || com.xenowarriors.client.compat.DmzForms.topOff(player);
             boolean giLegs = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
-            Rig.hideTorso = giTop; Rig.hideArms = giTop; Rig.hideLegs = giLegs;
+            Rig.hideTorso = giTop || costume != null && !costume.body(); Rig.hideArms = giTop || costume != null && !costume.arms(); Rig.hideLegs = giLegs || costume != null && !costume.legs();
             rig.m.backSwords(player);       // (Chase's swords off his back while drawn)
             boolean helmet = com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player);   // (another mod's helmet: the hair tucked away under it)
             if (rig.m.hair != null) rig.m.hair.visible = !helmet;
@@ -89,7 +91,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             Rig.race(player, patch.getArmature(), pose, buffers, light, overlay, poses, rig.head);   // Namekian antennae, Saiyan tail...
             if (rig.head && !com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player)) Rig.formHair(player, rig.m.hair != null, patch.getArmature(), pose, buffers, light, overlay, poses);   // Super Saiyan hair
         }
-        if (mesh[1] != null) {
+        if (mesh[1] != null && costume == null) {                                  // (in a costume: your own face)
             // the same face as without Epic Fight (and as the HUD portrait): the face, its battle damage, the talking mouth
             CharacterDetailLayer.FaceFrame ff = CharacterDetailLayer.faceFrame(player, FACE);
             if (CharacterDetailLayer.recordFaces) CharacterDetailLayer.RENDERED.put(player.getId(), ff.face + "|" + ff.damage + "|" + ff.mouth);

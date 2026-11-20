@@ -42,6 +42,11 @@ public class YouSlotsScreen extends JourneyScreen {
                     button(g, x + 2, y + 18, x + cw / 2 - 16, y + 30, s.foxTail() ? "TAIL" : "WING", fresh ? 0xFFD24A : 0x9AB8D8, true,
                             () -> minecraft.setScreen(new YouFeatureScreen(i, s, this)));
                 }
+                if (YouClient.looks.length > 0 || (s.look != null && !s.look.isEmpty())) {   // outfits from bonded characters
+                    boolean worn = s.look != null && !s.look.isEmpty();
+                    button(g, x + cw / 2 + 18, y + 18, x + cw - 2, y + 30, "OUTFIT", worn ? 0xFFD24A : 0x9AB8D8, true,
+                            () -> minecraft.setScreen(new YouLookScreen(i, s, this)));
+                }
                 float k = Math.min(0.8F, (cw - 6) / (float) Math.max(1, font.width(s.name)) * 0.8F);
                 sc(g, s.name, x + cw / 2F - font.width(s.name) * k / 2F, y + 41, k, 0xFFFFFF);
                 String sub = s.race.title + " • " + s.element.title();

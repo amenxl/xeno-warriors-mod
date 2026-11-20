@@ -120,6 +120,10 @@ public final class ClientModEvents {
         event.register((stack, layer) -> layer == 0 && stack.getItem() instanceof com.xenowarriors.gov.KarmaScanner.Item k ? k.getColor(stack) | 0xFF000000 : -1,
                 com.xenowarriors.gov.GovItems.KARMA_SCANNER.get(), com.xenowarriors.gov.GovItems.ADVANCED_KARMA_SCANNER.get(),
                 com.xenowarriors.gov.GovItems.ELITE_KARMA_SCANNER.get(), com.xenowarriors.gov.GovItems.OMNI_KARMA_SCANNER.get());
+        // characters' armor (bond gifts): in the character's colour
+        event.register((stack, layer) -> layer == 0 ? com.xenowarriors.you.CharacterGear.CharacterArmorItem.colour(stack) | 0xFF000000 : -1,
+                com.xenowarriors.item.ModItems.CHAR_HELMET.get(), com.xenowarriors.item.ModItems.CHAR_CHESTPLATE.get(),
+                com.xenowarriors.item.ModItems.CHAR_LEGGINGS.get(), com.xenowarriors.item.ModItems.CHAR_BOOTS.get());
         // Element Crystals: in their element's colour
         event.register((stack, layer) -> { var el = com.xenowarriors.you.YouItems.element(stack); return layer == 0 && el != null ? el.color | 0xFF000000 : -1; },
                 com.xenowarriors.you.YouItems.ELEMENT_CRYSTAL.get());

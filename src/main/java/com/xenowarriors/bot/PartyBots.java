@@ -1258,7 +1258,9 @@ public final class PartyBots {
             /** arg 1: its menu's open (it holds still), 0: closed (to the server); -1: you're kicked out of its menu (to you) */
             ACT_HOLD = 12,
             /** ask it for its next side mission (StorySides) */
-            ACT_SIDE = 13;
+            ACT_SIDE = 13,
+            /** ask it for its character's armor and outfits (you.CharacterGear) */
+            ACT_GEAR = 14;
 
     /** Carries a Dragon Radar (DragonMineZ): its menu can send it off to find the Dragon Balls. */
     public static boolean hasRadar(PartyBotEntity b) {
@@ -1334,6 +1336,7 @@ public final class PartyBots {
             }
             case ACT_FUSE -> com.xenowarriors.compat.DmzFusion.fuse(p, b);      // (with DragonMineZ: Potara earrings in its bag, or it knows the Fusion Dance)
             case ACT_SIDE -> com.xenowarriors.story.StorySides.askBot(p, b);
+            case ACT_GEAR -> com.xenowarriors.you.CharacterGear.ask(p, b);
             default -> {}
         }
     }

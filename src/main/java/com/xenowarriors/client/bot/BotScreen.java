@@ -51,7 +51,11 @@ public class BotScreen extends Screen {
             return;
         }
         addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Inventory"), b -> send(PartyBots.ACT_INVENTORY, 0)).bounds(x, y, bw, 20).build());
-        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Pets (" + m.petNames().length + ")"), b -> { showPets = true; rebuildWidgets(); }).bounds(x, y + 22, bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Pets (" + m.petNames().length + ")"), b -> { showPets = true; rebuildWidgets(); }).bounds(x, y + 22, bw / 2 - 1, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Ask for gear"), b -> { send(PartyBots.ACT_GEAR, 0); onClose(); })   // (their armor and outfits - your own characters, bond 50+)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Playing a character you made: ask for their armor and outfits (bond " + com.xenowarriors.you.CharacterGear.ARMOR
+                        + "; enchanted at " + com.xenowarriors.you.CharacterGear.ENCHANTED + ", every enchantment at " + com.xenowarriors.you.CharacterGear.MAX + ")")))
+                .bounds(x + bw / 2 + 1, y + 22, bw - bw / 2 - 1, 20).build());
         Button fly = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Fly me"), b -> { send(PartyBots.ACT_FLY, 0); onClose(); }).bounds(x, y + 44, bw, 20).build());
         fly.active = m.canFly();
         Button carry = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Carry them (fly)"), b -> { send(PartyBots.ACT_CARRY, 0); onClose(); }).bounds(x, y + 66, bw, 20).build());

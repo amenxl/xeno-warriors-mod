@@ -1265,5 +1265,9 @@
   "item.xenowarriors.ship": "Ship",
   "item.xenowarriors.corrupt_ship": "Corrupted Ghost Ship",
   "entity.xenowarriors.ship": "Ship",
-  "entity.xenowarriors.corrupt_ship": "Corrupted Ghost Ship"
+  "entity.xenowarriors.corrupt_ship": "Corrupted Ghost Ship",
+  "item.xenowarriors.character_helmet": "Character Helmet",
+  "item.xenowarriors.character_chestplate": "Character Chestplate",
+  "item.xenowarriors.character_leggings": "Character Leggings",
+  "item.xenowarriors.character_boots": "Character Boots"
 }

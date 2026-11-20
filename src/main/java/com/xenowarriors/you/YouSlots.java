@@ -28,7 +28,19 @@ public final class YouSlots {
             int sum = 0; for (int v : s) sum += v;
             lv[i] = com.xenowarriors.stats.Stats.fromStats(sum);
         }
-        ModNetwork.sendToPlayer(new YouSlotsPacket(d.youSlots, lv, d.getType() == CharacterType.YOU ? d.youSlot : -1, open), p);
+        ModNetwork.sendToPlayer(new YouSlotsPacket(d.youSlots, lv, d.getType() == CharacterType.YOU ? d.youSlot : -1, open, CharacterGear.looks(p).toArray(new String[0])), p);
+    }
+
+    /** "Mikiko (Origins 1)" for a look id. */
+    public static String lookName(String look) {
+        CharacterType t = CharacterGear.ownerOf(look);
+        if (t == null) return look;
+        String[] keys = t.outfitKeys(), names = t.outfitNames();
+        for (int i = 0; i < keys.length; i++) {
+            String id = keys[i].isEmpty() ? t.getId() : t.getId() + "_" + keys[i];
+            if (id.equals(look)) return t.getDisplayName().getString() + (i < names.length ? " (" + names[i] + ")" : "");
+        }
+        return t.getDisplayName().getString();
     }
 
     /** (Tests) tails / wings set. */
@@ -40,7 +52,7 @@ public final class YouSlots {
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
         if ((action == YouActionPacket.IDLE || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.DMZ_HAIR) && slot < 0 && d.getType() == CharacterType.YOU) slot = d.youSlot;   // (Character Customization: the one you're playing)
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR || action == YouActionPacket.IDLE || action == YouActionPacket.FEATURES ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR || action == YouActionPacket.IDLE || action == YouActionPacket.FEATURES || action == YouActionPacket.LOOK ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
             p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
@@ -82,6 +94,16 @@ public final class YouSlots {
                 if (!s.exists() || data == null) return;
                 s.colour = YouSlot.validColour(data.colour);
                 p.displayClientMessage(Component.literal(s.name + (s.colour < 0 ? " has their element's colour again" : " has a new colour")).withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
+            case YouActionPacket.LOOK -> {                                         // a character's outfit you were given, as a look ("" off)
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null) return;
+                String look = data.look == null ? "" : data.look;
+                if (!look.isEmpty() && !CharacterGear.looks(p).contains(look)) { p.displayClientMessage(Component.literal("You haven't been given that outfit").withStyle(ChatFormatting.RED), true); return; }
+                s.look = look;
+                p.displayClientMessage(Component.literal(look.isEmpty() ? s.name + " wears their own look again" : s.name + " now looks like " + lookName(look)).withStyle(st -> st.withColor(s.color())), true);
                 CharacterManager.syncToTrackingAndSelf(p);
                 send(p, true);
             }

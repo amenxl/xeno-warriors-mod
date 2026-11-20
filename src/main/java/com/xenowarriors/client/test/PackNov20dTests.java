@@ -850,6 +850,50 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> { var s = com.xenowarriors.client.you.YouClient.slots.length > 8 ? com.xenowarriors.client.you.YouClient.slots[8] : null;
             if (s != null) mc.setScreen(new com.xenowarriors.client.you.YouFeatureScreen(8, s, null)); }, 20));
         l.add(new Step("you_wings_screen", () -> {}, 3));
+        // ---- a show character's gear for your own character: armor + outfit at bond 50, enchanted at 75, everything at 100
+        int[] cg = new int[4];
+        l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> {
+            PackTests.clear(p);
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.PLAY, 7, null);   // Kitsu again
+            com.xenowarriors.you.CharacterGear.setGivenForTest(p, CharacterType.MIKIKO, 0);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.MIKIKO, null);
+            if (b == null) { PackTests.check("gear: a Mikiko bot", false, "no bot"); return; }
+            b.moveTo(p.getX() + 2, p.getY(), p.getZ(), 0F, 0F);
+            cg[0] = b.getId();
+            com.xenowarriors.party.Bonds.set(p, b.charKey(), 30, 0);
+            p.getInventory().clearContent();
+            com.xenowarriors.you.CharacterGear.ask(p, b);
+            int none = count(p);
+            com.xenowarriors.party.Bonds.set(p, b.charKey(), 55, 0);
+            com.xenowarriors.you.CharacterGear.ask(p, b);
+            int plain = count(p);
+            boolean outfit = com.xenowarriors.you.CharacterGear.looks(p).contains("mikiko");
+            PackTests.check("gear: nothing below bond 50, then Mikiko's armor (4 pieces) and outfit at 55", none == 0 && plain == 4 && outfit, "below " + none + " at 55 " + plain + " outfit " + outfit + " looks " + com.xenowarriors.you.CharacterGear.looks(p));
+            ItemStack chest = p.getInventory().items.stream().filter(s -> s.getItem() == com.xenowarriors.item.ModItems.CHAR_CHESTPLATE.get()).findFirst().orElse(ItemStack.EMPTY);
+            PackTests.check("gear: the plain set isn't enchanted", !chest.isEmpty() && !chest.isEnchanted(), "chest " + chest);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chest.copy()); chest.setCount(0);
+            p.getInventory().clearContent();
+            com.xenowarriors.party.Bonds.set(p, b.charKey(), 100, 0);
+            com.xenowarriors.you.CharacterGear.ask(p, b);
+            ItemStack top = p.getInventory().items.stream().filter(s -> s.getItem() == com.xenowarriors.item.ModItems.CHAR_CHESTPLATE.get()).findFirst().orElse(ItemStack.EMPTY);
+            int ench = top.getAllEnchantments().size();
+            PackTests.check("gear: at bond 100 the set comes with every enchantment", ench >= 3, "enchantments " + ench + " " + top.getAllEnchantments());
+            var d = new com.xenowarriors.you.YouSlot(); d.name = "Kitsu"; d.look = "mikiko";
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.LOOK, 7, d);
+            var s = com.xenowarriors.you.You.slot(p);
+            PackTests.check("gear: Mikiko's outfit worn as a look", s != null && "mikiko".equals(s.look), "look " + (s == null ? "-" : s.look));
+            p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 180F, 0F);
+        }); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 40));
+        l.add(new Step(null, () -> { mc.setScreen(null); cg[1] = com.xenowarriors.client.you.YouCostume.drawn; }, 10));
+        l.add(new Step("you_outfit_mikiko", () -> PackTests.check("gear: the outfit is drawn on your character", com.xenowarriors.client.you.YouCostume.drawn > cg[1], "drawn " + (com.xenowarriors.client.you.YouCostume.drawn - cg[1])), 3));
+        l.add(new Step(null, () -> { var s = com.xenowarriors.client.you.YouClient.slots.length > 7 ? com.xenowarriors.client.you.YouClient.slots[7] : null;
+            if (s != null) mc.setScreen(new com.xenowarriors.client.you.YouLookScreen(7, s, null)); }, 20));
+        l.add(new Step("you_outfit_screen", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> {
+            var d = new com.xenowarriors.you.YouSlot(); d.name = "Kitsu"; d.look = "";
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.LOOK, 7, d);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+            var b = p.serverLevel().getEntity(cg[0]); if (b != null) b.discard(); }); }, 10));
         l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
         // ---- blocking gunfire: a higher gun level weaves out of the way (and at 300+ knocks some back); rapid fire still gets some through
         if (com.xenowarriors.compat.TaczGuns.available()) {
@@ -960,6 +1004,13 @@ final class PackNov20dTests {
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 40));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+    }
+
+    /** (Tests) a character's armor pieces in the inventory. */
+    static int count(ServerPlayer p) {
+        int n = 0;
+        for (ItemStack s : p.getInventory().items) if (s.getItem() instanceof com.xenowarriors.you.CharacterGear.CharacterArmorItem) n += s.getCount();
+        return n;
     }
 
     /** (Tests) fires {@code h}'s TaCZ gun at the middle of {@code t}. */

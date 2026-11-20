@@ -89,6 +89,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     /** The detail model this player shows right now (Fox King Mikiko has his own), or null. */
     public static DetailModel detailModel(AbstractClientPlayer p) {
         if (instance == null) return null;
+        var costume = com.xenowarriors.client.you.YouCostume.of(p);                  // (one of your own in a show character's clothes)
+        if (costume != null && costume.model() != null) return costume.model();
         CharacterType type = ClientCharacterData.get(p);
         if (isFoxKing(p, type)) return instance.foxKing;
         if (shiyokenOutfit(p, type) && shiyokenModel() != null) return shiyokenModel();
@@ -103,6 +105,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
     /** Resource path of the detail model this player shows (for Epic Fight's own copy). */
     public static String detailModelPath(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
+        var costume = com.xenowarriors.client.you.YouCostume.of(p);
+        if (costume != null) return costume.modelPath();
         var fl = com.xenowarriors.client.FusionLook.of(p);
         if (fl != null) return fl.modelPath();
         String name = isFoxKing(p, type) ? "mikiko_foxking" : shiyokenOutfit(p, type) ? "mikiko_shiyoken" : lunar(p, type) ? "rhalix_lunar" : outfitName(p, type);
@@ -144,6 +148,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
 
     public static net.minecraft.resources.ResourceLocation detailTexture(AbstractClientPlayer p) {
         CharacterType type = ClientCharacterData.get(p);
+        var costume = com.xenowarriors.client.you.YouCostume.of(p);
+        if (costume != null) return com.xenowarriors.client.cel.Cel.tex(costume.details());
         var fl = com.xenowarriors.client.FusionLook.of(p);
         if (fl != null) return fl.details();
         if (isFoxKing(p, type)) return FOX_KING_TEX;
@@ -577,6 +583,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (shiyokenOutfit(player, type) && shiyokenModel() != null) { model = shiyokenModel(); outfit = 1; }   // Shiyoken: his fire outfit (over any outfit)
         var fusionModel = com.xenowarriors.client.FusionLook.of(player);
         if (fusionModel != null && fusionModel.model() != null) { model = fusionModel.model(); outfit = 0; king = false; }   // a fusion: its own model
+        var costume = com.xenowarriors.client.you.YouCostume.of(player);              // one of your own in a show character's clothes (their outfit, or armor pieces)
+        if (costume != null && costume.model() != null) { model = costume.model(); outfit = 0; king = false; com.xenowarriors.client.you.YouCostume.mask(model, costume); }
+        else costume = null;
         if (model == null) { borrowedProps(player, poseStack, buffers, packedLight, partialTick); return; }   // (a made character: the props of an idle it borrowed)
 
         PlayerModel<AbstractClientPlayer> parent = getParentModel();
@@ -680,6 +689,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         if (outfit > 0) detailTex = detailTexture(player);      // its own atlas (the torn/damaged detail sheets are for the normal look)
         var fusionLook = com.xenowarriors.client.FusionLook.of(player);
         if (fusionLook != null) detailTex = com.xenowarriors.client.cel.Cel.tex(fusionLook.details());
+        if (costume != null) detailTex = costume.details();
         detailTex = com.xenowarriors.client.cel.Cel.tex(detailTex);
         detailTex = com.xenowarriors.client.race.FormHair.tint(detailTex, player);     // transformed: their own hair turns the form's colour (cel-shaded sheets too)
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(detailTex));
@@ -784,7 +794,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                     clothColor(type));
         }
 
-        if (model.faceRoot != null && !noHead) {
+        if (model.faceRoot != null && !noHead && costume == null) {                   // (in a costume: your own face, not theirs)
             model.faceHead.copyFrom(parent.head);
             FaceFrame ff = faceFrame(player, FRAME);       // (the same face the HUD portrait shows)
             if (recordFaces) RENDERED.put(player.getId(), ff.face + "|" + ff.damage + "|" + ff.mouth);

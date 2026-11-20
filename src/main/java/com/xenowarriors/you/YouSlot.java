@@ -56,6 +56,8 @@ public final class YouSlot {
     /** The tail / wings have been picked once; wishes for changing them again, not used yet. */
     public boolean featuresSet;
     public int restyles;
+    /** A character's outfit worn as a look ("" none; "mikiko", "ava_casual"... - see CharacterGear), over any armor. */
+    public String look = "";
 
     public static final String[] TAILS = {"Classic", "Fluffy", "Long", "Twin Tails", "Nine Tails"};
     /** The wing models a Skylander can wear (NpcRenderer "wing_" + id), and what they're called. */
@@ -122,6 +124,7 @@ public final class YouSlot {
         t.putInt("tail", tail); t.putInt("tail_colour", tailColour); t.putInt("tip_colour", tipColour);
         t.putInt("wings", wings); t.putInt("wing_l", wingL); t.putInt("wing_r", wingR);
         t.putBoolean("features_set", featuresSet); t.putInt("restyles", restyles);
+        t.putString("look", look);
         return t;
     }
 
@@ -155,6 +158,7 @@ public final class YouSlot {
         s.wingR = t.contains("wing_r") ? validColour(t.getInt("wing_r")) : -1;
         s.featuresSet = t.getBoolean("features_set");
         s.restyles = Math.max(0, t.getInt("restyles"));
+        s.look = t.getString("look");
         return s;
     }
 
@@ -181,6 +185,7 @@ public final class YouSlot {
         buf.writeVarInt(tail); buf.writeInt(tailColour); buf.writeInt(tipColour);
         buf.writeInt(wings); buf.writeInt(wingL); buf.writeInt(wingR);
         buf.writeBoolean(featuresSet); buf.writeVarInt(restyles);
+        buf.writeUtf(look, 64);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -209,6 +214,7 @@ public final class YouSlot {
         s.tail = Math.floorMod(buf.readVarInt(), TAILS.length); s.tailColour = validColour(buf.readInt()); s.tipColour = validColour(buf.readInt());
         s.wings = validWings(buf.readInt()); s.wingL = validColour(buf.readInt()); s.wingR = validColour(buf.readInt());
         s.featuresSet = buf.readBoolean(); s.restyles = Math.max(0, buf.readVarInt());
+        s.look = buf.readUtf(64);
         return s;
     }
 
