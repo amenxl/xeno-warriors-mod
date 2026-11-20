@@ -64,7 +64,7 @@ public class FoxRestGoal extends Goal {
 
     /** Mikiko has sat down on the floor, and this is the fox closest to him. */
     private boolean wantsPets(Player p) {
-        if (com.xenowarriors.character.ModCapabilities.getType(p) != com.xenowarriors.character.CharacterType.MIKIKO) return false;
+        if (!FoxPets.foxFriend(p)) return false;
         if (FoxPets.stillTicks(p) < 600 || FoxPets.isPlaying(p) || p.isSleeping()) return false;
         Fox closest = null;
         double best = Double.MAX_VALUE;

@@ -147,6 +147,17 @@ public final class FoxPets {
         return s.is(Items.RABBIT) || s.is(Items.COOKED_RABBIT);
     }
 
+    /** Foxes are drawn to them: Mikiko, Kaeru, and any Fox Kin (one of your own characters who's Fox Kin, or Fox Girl). */
+    public static boolean foxFriend(Player p) {
+        CharacterType t = ModCapabilities.getType(p);
+        return t == CharacterType.MIKIKO || t == CharacterType.KAERU || com.xenowarriors.character.Race.of(p) == com.xenowarriors.character.Race.FOX_KIN;
+    }
+
+    /** Can tame foxes (with rabbit): Mikiko and any Fox Kin. */
+    public static boolean tamer(Player p) {
+        return ModCapabilities.getType(p) == CharacterType.MIKIKO || com.xenowarriors.character.Race.of(p) == com.xenowarriors.character.Race.FOX_KIN;
+    }
+
     // ---------------------------------------------------------------- right-clicking foxes
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -157,13 +168,13 @@ public final class FoxPets {
         if (owner == null) {
             if (event.getHand() == InteractionHand.MAIN_HAND && !isRabbit(stack)) {
                 // tell them what it takes
-                if (ModCapabilities.getType(p) == CharacterType.MIKIKO) {
+                if (tamer(p)) {
                     say(p, "To tame a fox, feed it rabbit (raw or cooked).");
                 } else if (ModCapabilities.getType(p) != CharacterType.NONE) {
-                    say(p, "Only Mikiko can tame foxes (with rabbit, raw or cooked).");
+                    say(p, "Only Mikiko and the Fox Kin can tame foxes (with rabbit, raw or cooked).");
                 }
             }
-            if (!isRabbit(stack) || ModCapabilities.getType(p) != CharacterType.MIKIKO) return;
+            if (!isRabbit(stack) || !tamer(p)) return;
             consume(event);
             tryTame(p, fox, stack);
         } else if (owner.equals(p.getUUID())) {

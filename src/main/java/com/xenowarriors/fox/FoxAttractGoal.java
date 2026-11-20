@@ -23,7 +23,7 @@ public class FoxAttractGoal extends Goal {
     }
 
     private static boolean wants(Player p) {
-        return p.isAlive() && !p.isSpectator() && ModCapabilities.getType(p) == CharacterType.MIKIKO
+        return p.isAlive() && !p.isSpectator() && FoxPets.foxFriend(p)                     // (Mikiko, Kaeru, the Fox Kin)
                 && FoxPets.count(p) < FoxPets.MAX_FOXES;
     }
 
