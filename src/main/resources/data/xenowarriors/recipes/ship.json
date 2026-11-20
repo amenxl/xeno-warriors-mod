@@ -1,0 +1,29 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "WWW",
+  "BCB",
+  "LIL"
+ ],
+ "key": {
+  "W": {
+   "tag": "minecraft:wool"
+  },
+  "B": {
+   "tag": "minecraft:boats"
+  },
+  "C": {
+   "item": "minecraft:chest"
+  },
+  "L": {
+   "tag": "minecraft:logs"
+  },
+  "I": {
+   "item": "minecraft:iron_block"
+  }
+ },
+ "result": {
+  "item": "xenowarriors:ship"
+ }
+}

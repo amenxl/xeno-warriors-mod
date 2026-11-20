@@ -82,7 +82,7 @@ public final class StoryScenes {
         for (int x = -R - 3; x <= R + 3; x++) for (int z = -R - 3; z <= R + 3; z++) for (int y = -6; y <= 26; y++) set(l, c.offset(x, y, z), Blocks.AIR.defaultBlockState());
         BlockState floor, floor2, edge;
         switch (place) {
-            case "sp_hideout" -> { floor = Blocks.SPRUCE_PLANKS.defaultBlockState(); floor2 = Blocks.DARK_OAK_PLANKS.defaultBlockState(); edge = Blocks.STONE_BRICKS.defaultBlockState(); }
+            case "sp_hideout" -> { floor = Blocks.GRAY_CONCRETE.defaultBlockState(); floor2 = Blocks.GRAY_CONCRETE.defaultBlockState(); edge = Blocks.STONE_BRICKS.defaultBlockState(); }
             case "aurora_street", "gov_facility" -> { floor = Blocks.GRAY_CONCRETE.defaultBlockState(); floor2 = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(); edge = Blocks.SMOOTH_STONE.defaultBlockState(); }
             case "sr_hideout" -> { floor = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); floor2 = Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); edge = Blocks.BLACKSTONE.defaultBlockState(); }
             case "royal_capital" -> { floor = Blocks.QUARTZ_BLOCK.defaultBlockState(); floor2 = Blocks.SMOOTH_QUARTZ.defaultBlockState(); edge = Blocks.GOLD_BLOCK.defaultBlockState(); }
@@ -148,18 +148,63 @@ public final class StoryScenes {
             if (Math.abs(dx) + Math.abs(dz) + Math.max(0, dy - h) < 4 && !(dx == 0 && dz == 0 && dy < h + 1)) set(l, c.offset(x + dx, dy, z + dz), Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true));
     }
 
+    /**
+     * The Sky Patrol hideout: a plain warehouse workroom - pale walls with wall vents, a grey plank floor, two dark
+     * steel pillars, steel shelving full of cardboard boxes in the back corners, and the workbench against the back
+     * wall with its pegboard of tools (knife, scissors, hammer, screwdriver) and a vise, under ceiling spotlights.
+     */
     private static void hideout(ServerLevel l, BlockPos c, RandomSource r) {
-        box(l, c, -14, -14, 14, 2, 6, Blocks.SPRUCE_PLANKS.defaultBlockState(), Blocks.DARK_OAK_SLAB.defaultBlockState(), Blocks.GLASS_PANE.defaultBlockState());
+        BlockState wall = Blocks.CALCITE.defaultBlockState(), steel = Blocks.GRAY_CONCRETE.defaultBlockState(), dark = Blocks.POLISHED_DEEPSLATE.defaultBlockState();
+        BlockState box = Blocks.SMOOTH_SANDSTONE.defaultBlockState(), box2 = Blocks.CUT_SANDSTONE.defaultBlockState();
+        box(l, c, -14, -14, 14, 2, 7, wall, Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), null);
         fill(l, c, -2, 1, 2, 2, 3, 2, Blocks.AIR.defaultBlockState());                            // the door way
-        fill(l, c, -10, 1, -12, -6, 1, -12, Blocks.PURPLE_WOOL.defaultBlockState());              // couch
-        fill(l, c, -10, 2, -13, -6, 2, -13, Blocks.PURPLE_WOOL.defaultBlockState());
-        fill(l, c, 6, 1, -12, 10, 1, -10, Blocks.SPRUCE_SLAB.defaultBlockState());               // table
-        fill(l, c, 8, 2, -13, 10, 3, -13, Blocks.BLACK_CONCRETE.defaultBlockState());            // Max's monitors
-        set(l, c.offset(9, 2, -12), Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState());
-        fill(l, c, -13, 1, -4, -13, 3, -1, Blocks.BOOKSHELF.defaultBlockState());
-        set(l, c.offset(0, 1, -13), Blocks.CRAFTING_TABLE.defaultBlockState());
-        for (int x : new int[]{-12, 0, 12}) set(l, c.offset(x, 5, -6), Blocks.LANTERN.defaultBlockState());
-        set(l, c.offset(-4, 1, -13), Blocks.PURPLE_BANNER.defaultBlockState());
+        // the floor: grey planks (dark seams every third row)
+        for (int x = -13; x <= 13; x++) for (int z = -13; z <= 1; z++) set(l, c.offset(x, 0, z), z % 3 == 0 ? Blocks.POLISHED_ANDESITE.defaultBlockState() : steel);
+        // wall vents (iron grilles) either side of the bench
+        BlockState vent = Blocks.IRON_TRAPDOOR.defaultBlockState().setValue(net.minecraft.world.level.block.TrapDoorBlock.OPEN, true)
+                .setValue(net.minecraft.world.level.block.TrapDoorBlock.FACING, net.minecraft.core.Direction.SOUTH);
+        for (int x : new int[]{-12, -11, -10, -9, -8, 8, 9, 10, 11, 12}) for (int y = 3; y <= 4; y++) set(l, c.offset(x, y, -13), vent);
+        // steel shelving with cardboard boxes, in both back corners
+        for (int side : new int[]{-1, 1}) {
+            int x0 = side < 0 ? -13 : 9, x1 = side < 0 ? -9 : 13;
+            for (int x : new int[]{x0, x1}) fill(l, c, x, 1, -12, x, 6, -12, steel);             // the uprights (in front of the vents)
+            for (int y : new int[]{2, 4, 6}) fill(l, c, x0, y, -12, x1, y, -12, Blocks.SMOOTH_STONE_SLAB.defaultBlockState());   // shelves
+            for (int x = x0 + 1; x < x1; x++) {
+                if (r.nextInt(3) != 0) set(l, c.offset(x, 1, -12), r.nextBoolean() ? box : box2);
+                if (r.nextInt(3) != 0) set(l, c.offset(x, 3, -12), r.nextBoolean() ? box : box2);
+                if (r.nextInt(2) == 0) set(l, c.offset(x, 5, -12), box);
+            }
+        }
+        // two dark steel pillars, floor to ceiling
+        for (int x : new int[]{-7, 7}) fill(l, c, x, 1, -6, x, 7, -6, dark);
+        // the workbench: a counter with cabinet ends, the pegboard over it in a steel frame
+        fill(l, c, -5, 1, -13, 5, 1, -13, Blocks.PACKED_MUD.defaultBlockState());
+        for (int x : new int[]{-5, 5}) set(l, c.offset(x, 1, -13), Blocks.MUD_BRICKS.defaultBlockState());
+        fill(l, c, -4, 2, -14, 4, 4, -14, Blocks.BIRCH_PLANKS.defaultBlockState());               // the pegboard (set into the wall)
+        for (int x : new int[]{-5, 5}) fill(l, c, x, 2, -14, x, 5, -14, steel);
+        fill(l, c, -5, 5, -14, 5, 5, -14, steel);
+        set(l, c.offset(-1, 2, -13), Blocks.ANVIL.defaultBlockState().setValue(net.minecraft.world.level.block.AnvilBlock.FACING, net.minecraft.core.Direction.EAST));   // the vise
+        set(l, c.offset(1, 2, -13), Blocks.GRINDSTONE.defaultBlockState().setValue(net.minecraft.world.level.block.GrindstoneBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.FLOOR));
+        // tools on the pegboard
+        var room = new net.minecraft.world.phys.AABB(c.offset(-14, 0, -14)).expandTowards(28, 8, 16);
+        for (var f : l.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, room)) f.discard();   // (built again: no doubles)
+        net.minecraft.world.item.Item[] tools = {net.minecraft.world.item.Items.IRON_SWORD, net.minecraft.world.item.Items.SHEARS, net.minecraft.world.item.Items.IRON_AXE,
+                net.minecraft.world.item.Items.FLINT_AND_STEEL};
+        int[] at = {-4, -3, 3, 4};
+        for (int i = 0; i < tools.length; i++) {
+            var frame = new net.minecraft.world.entity.decoration.ItemFrame(l, c.offset(at[i], 3, -13), net.minecraft.core.Direction.SOUTH);
+            frame.setItem(new net.minecraft.world.item.ItemStack(tools[i]), false);
+            net.minecraft.nbt.CompoundTag t = frame.saveWithoutId(new net.minecraft.nbt.CompoundTag());
+            t.putBoolean("Fixed", true); t.putBoolean("Invisible", true); t.putBoolean("Invulnerable", true);
+            frame.load(t);
+            l.addFreshEntity(frame);
+        }
+        // ceiling spotlights: over the bench and the shelves, and a row down the room
+        for (int[] p : new int[][]{{0, -11}, {-11, -10}, {11, -10}, {0, -4}, {-7, -2}, {7, -2}}) set(l, c.offset(p[0], 8, p[1]), Blocks.SEA_LANTERN.defaultBlockState());
+        // a few boxes on the floor by the right-hand shelves (one tipped over)
+        set(l, c.offset(12, 1, -10), box);
+        set(l, c.offset(11, 1, -10), Blocks.SMOOTH_SANDSTONE_SLAB.defaultBlockState());
+        set(l, c.offset(-12, 1, -10), box2);
     }
 
     private static void city(ServerLevel l, BlockPos c, RandomSource r, boolean ruined) {

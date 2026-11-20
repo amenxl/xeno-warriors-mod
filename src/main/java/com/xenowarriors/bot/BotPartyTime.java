@@ -36,7 +36,12 @@ import java.util.*;
  * <ul>
  *   <li>everyone there - you, party members nearby and your bots - wears a party hat;</li>
  *   <li>confetti rains down and fireworks go up now and then;</li>
- *   <li>a cake is set out (taken away again at the end if nobody finished it), everyone gets a snack and Regeneration;</li>
+ *   <li>cakes are set out - one, and another for every two more guests (up to 6) - taken away again at the end if
+ *       nobody finished them; everyone gets a snack and Regeneration;</li>
+ *   <li>the closer you are with the bots there (your average bond), the more barrels of party supplies - extra food,
+ *       drinks, fireworks, and better things the higher it is (1 barrel from bond 20, 2 from 45, 3 from 70);</li>
+ *   <li>sometimes party crashers turn up (or whatever starts trouble is called that): beat them all within a minute
+ *       and every bit of bond from the party counts double; fail and the party breaks up;</li>
  *   <li>a little party tune plays and the bots dance about - hops, spins and arm-waves;</li>
  *   <li>bonds grow: you with each bot and the bots with each other, a bit every 20 seconds and a good chunk at the end.</li>
  * </ul>
@@ -55,7 +60,10 @@ public final class BotPartyTime {
     private static final float[] NOTES = {0.5F, 0.561F, 0.63F, 0.749F, 0.841F, 1.0F, 1.122F, 1.26F, 1.498F, 1.682F, 2.0F};
 
     private static final class Party {
-        long end; BlockPos center, cake; int note; final Set<UUID> guests = new HashSet<>();
+        long end; BlockPos center; int note; final Set<UUID> guests = new HashSet<>();
+        final List<BlockPos> cakes = new ArrayList<>(), barrels = new ArrayList<>();
+        /** party crashers: who they are, the time limit to beat them, when (if) they'll turn up; bond given so far; doubled */
+        final Set<UUID> crashers = new HashSet<>(); long crashEnd, crashAt; float given; boolean doubled, crashedOnce;
         /** ticks of real trouble in a row (a party only breaks up after a few seconds of it), and of you being away */
         int trouble, away;
         /** the bot playing its jukebox (null: none), the beatboxers (Garry / Stevie bots, when there's no music) */
@@ -133,15 +141,21 @@ public final class BotPartyTime {
         pt.end = o.level().getGameTime() + LENGTH;
         pt.center = o.blockPosition();
         ServerLevel l = o.serverLevel();
-        if (com.xenowarriors.modes.ModeRules.canGrief(l)) {                   // the cake
-            for (int dx = -2; dx <= 2 && pt.cake == null; dx++) for (int dz = -2; dz <= 2 && pt.cake == null; dz++) {
-                BlockPos p = pt.center.offset(dx, 0, dz);
-                if ((dx != 0 || dz != 0) && l.getBlockState(p).isAir() && l.getBlockState(p.below()).isFaceSturdy(l, p.below(), net.minecraft.core.Direction.UP)) {
-                    l.setBlockAndUpdate(p, Blocks.CAKE.defaultBlockState());
-                    pt.cake = p;
+        List<LivingEntity> first0 = guests(o, pt);
+        if (com.xenowarriors.modes.ModeRules.canGrief(l)) {                   // the cakes (more for a bigger party), the barrels (closer bonds)
+            int nCakes = cakesFor(first0.size() + 1), nBarrels = barrelsFor(avgBond(o, first0));
+            for (int ring = 1; ring <= 3 && (pt.cakes.size() < nCakes || pt.barrels.size() < nBarrels); ring++)
+                for (int dx = -ring; dx <= ring; dx++) for (int dz = -ring; dz <= ring; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) continue;
+                    BlockPos p = pt.center.offset(dx, 0, dz);
+                    if (!l.getBlockState(p).isAir() || !l.getBlockState(p.below()).isFaceSturdy(l, p.below(), net.minecraft.core.Direction.UP)) continue;
+                    if (pt.cakes.size() < nCakes && (ring == 1 || (dx + dz) % 2 == 0)) { l.setBlockAndUpdate(p, Blocks.CAKE.defaultBlockState()); pt.cakes.add(p); }
+                    else if (pt.barrels.size() < nBarrels && ring >= 2) { l.setBlockAndUpdate(p, Blocks.BARREL.defaultBlockState()); fillBarrel(l, p, avgBond(o, first0), pt.barrels.size()); pt.barrels.add(p); }
                 }
-            }
+            cakesSet += pt.cakes.size(); barrelsSet += pt.barrels.size();
+            if (!pt.barrels.isEmpty()) o.sendSystemMessage(Component.literal("Your bots brought " + (pt.barrels.size() == 1 ? "a barrel" : pt.barrels.size() + " barrels") + " of party supplies!").withStyle(ChatFormatting.LIGHT_PURPLE));
         }
+        if (l.random.nextFloat() < CRASH_CHANCE) pt.crashAt = l.getGameTime() + 20 * (40 + l.random.nextInt(80));   // (party crashers on the way)
         PARTIES.put(o.getUUID(), pt);
         BotRps.partyStarted(o, o.level().getGameTime());                        // (rock, paper, scissors: at least one game every party)
         thrown++;
@@ -182,7 +196,10 @@ public final class BotPartyTime {
     private static void partyTick(ServerPlayer o, Party pt) {
         ServerLevel l = o.serverLevel();
         long now = l.getGameTime();
+        if (crashTick(o, pt, l, now)) return;                                     // (party crashers: beat them in time)
         pt.trouble = BotSpar.trouble(o) ? pt.trouble + 1 : 0;                  // (a monster idling nearby, a pet, a bot's own scuffle: not a reason)
+        if (pt.trouble == 1 && !pt.crashedOnce && crashers(o, pt, l, now)) pt.trouble = 0;   // (whoever's starting trouble: party crashers)
+        if (!pt.crashers.isEmpty()) pt.trouble = 0;                             // (fighting the party crashers doesn't break the party up)
         boolean far = o.position().distanceTo(Vec3.atCenterOf(pt.center)) > 48;
         pt.away = far ? pt.away + 1 : 0;                                        // (a few seconds' slack: a knockback, a quick hop off)
         boolean fight = pt.trouble >= TROUBLE_TICKS;
@@ -206,7 +223,7 @@ public final class BotPartyTime {
         if (l.random.nextInt(170) == 0) firework(l, pt, 1 + l.random.nextInt(2));
         for (LivingEntity g : gs) if (g instanceof PartyBotEntity b && o.tickCount % 10 == b.getId() % 10
                 && !(pt.battle != null && (b.charKey().equals(pt.battle[0]) || b.charKey().equals(pt.battle[1])))) dance(b, pt);   // (the rappers stay put)
-        if (o.tickCount % 400 == 0) bondTick(o, gs, BOND_TICK * (rappers(gs) ? RAPPERS_BONUS : 1F));
+        if (o.tickCount % 400 == 0) partyBond(o, pt, gs, BOND_TICK * (rappers(gs) ? RAPPERS_BONUS : 1F));
         if (o.tickCount % 10 == 3) BotRps.tick(o, gs, now);
     }
 
@@ -256,7 +273,7 @@ public final class BotPartyTime {
         LivingEntity win = l.random.nextBoolean() ? a : b;                      // the crowd decides
         say(l, o, "The crowd goes wild - " + name(win) + " wins the rap battle!", ChatFormatting.GOLD);
         l.sendParticles(net.minecraft.core.particles.ParticleTypes.TOTEM_OF_UNDYING, win.getX(), win.getY() + 1, win.getZ(), 30, 0.5, 0.8, 0.5, 0.3);
-        bondTick(o, gs, BOND_TICK * 2);                                           // (everyone enjoyed that)
+        partyBond(o, pt, gs, BOND_TICK * 2);                                      // (everyone enjoyed that)
         String ca = pt.battle[0], cb2 = pt.battle[1];
         if (a instanceof PartyBotEntity ba) com.xenowarriors.party.Bonds.addXp(ba, cb2, BOND_TICK * 2);
         if (b instanceof PartyBotEntity bb) com.xenowarriors.party.Bonds.addXp(bb, ca, BOND_TICK * 2);
@@ -320,6 +337,145 @@ public final class BotPartyTime {
         }
     }
 
+    // ------------------------------------------------------------------ cakes, barrels, party crashers
+
+    public static final float CRASH_CHANCE = 0.3F;
+    /** How long you have to beat the party crashers. */
+    public static final int CRASH_TIME = 20 * 60;
+    /** (Tests) cakes and barrels set out; crashes, crashes beaten. */
+    public static int cakesSet, barrelsSet, crashes, crashesBeaten;
+
+    /** One cake, and another for every two more guests (up to 6). */
+    public static int cakesFor(int guests) { return Math.max(1, Math.min(6, 1 + (guests - 1) / 2)); }
+
+    /** Barrels of supplies by the average bond: 1 from 20, 2 from 45, 3 from 70. */
+    public static int barrelsFor(int bond) { return bond >= 70 ? 3 : bond >= 45 ? 2 : bond >= 20 ? 1 : 0; }
+
+    /** Your average bond with the bots (and party members) at the party. */
+    private static int avgBond(ServerPlayer o, List<LivingEntity> gs) {
+        int n = 0, sum = 0;
+        for (LivingEntity g : gs) if (g != o) { String c = g instanceof PartyBotEntity b ? b.charKey() : com.xenowarriors.party.Bonds.charOf(g); if (c == null) continue; sum += com.xenowarriors.party.Bonds.level(o, c); n++; }
+        return n == 0 ? 0 : sum / n;
+    }
+
+    /** A barrel of party supplies: food and drink, fireworks - better things the closer everyone is. */
+    private static void fillBarrel(ServerLevel l, BlockPos p, int bond, int which) {
+        if (!(l.getBlockEntity(p) instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity b)) return;
+        var r = l.random;
+        List<ItemStack> in = new ArrayList<>();
+        in.add(new ItemStack(Items.BREAD, 4 + r.nextInt(5)));
+        in.add(new ItemStack(Items.COOKIE, 8 + r.nextInt(9)));
+        in.add(new ItemStack(Items.PUMPKIN_PIE, 2 + r.nextInt(3)));
+        in.add(new ItemStack(r.nextBoolean() ? Items.COOKED_BEEF : Items.COOKED_CHICKEN, 4 + r.nextInt(4)));
+        in.add(new ItemStack(Items.SWEET_BERRIES, 6 + r.nextInt(8)));
+        in.add(new ItemStack(Items.HONEY_BOTTLE, 2 + r.nextInt(3)));
+        in.add(new ItemStack(Items.MELON_SLICE, 6 + r.nextInt(6)));
+        ItemStack rockets = new ItemStack(Items.FIREWORK_ROCKET, 6 + r.nextInt(6));
+        in.add(rockets);
+        if (bond >= 45) { in.add(new ItemStack(Items.GOLDEN_CARROT, 3 + r.nextInt(4))); in.add(new ItemStack(Items.CAKE)); in.add(new ItemStack(Items.GLOW_BERRIES, 6)); }
+        if (bond >= 70) { in.add(new ItemStack(Items.GOLDEN_APPLE, 1 + r.nextInt(2))); in.add(new ItemStack(Items.EMERALD, 2 + r.nextInt(5))); in.add(new ItemStack(Items.EXPERIENCE_BOTTLE, 3 + r.nextInt(4))); }
+        if (bond >= 90 && which == 0) in.add(new ItemStack(Items.ENCHANTED_GOLDEN_APPLE));
+        int slot = 0;
+        for (ItemStack it : in) { if (slot >= b.getContainerSize()) break; b.setItem(slot, it); slot += 1 + (r.nextInt(3) == 0 ? 1 : 0); }
+        b.setCustomName(Component.literal("Party Supplies"));
+        b.setChanged();
+    }
+
+    /** Whoever's starting trouble now is a party crasher (the clock starts). True if there were any. */
+    private static boolean crashers(ServerPlayer o, Party pt, ServerLevel l, long now) {
+        List<net.minecraft.world.entity.Mob> foes = l.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(24), m -> m.isAlive() && !BotSpar.ours(o, m)
+                && m instanceof net.minecraft.world.entity.monster.Enemy && m.getTarget() != null && (m.getTarget() == o || BotSpar.ours(o, m.getTarget())));
+        if (foes.isEmpty()) return false;
+        startCrash(o, pt, l, now, foes);
+        return true;
+    }
+
+    private static void startCrash(ServerPlayer o, Party pt, ServerLevel l, long now, List<net.minecraft.world.entity.Mob> foes) {
+        pt.crashedOnce = true; pt.crashAt = 0;
+        for (var m : foes) {
+            m.setCustomName(Component.literal("Party Crasher").withStyle(ChatFormatting.RED));
+            m.setCustomNameVisible(true);
+            m.addTag(CRASHER);
+            pt.crashers.add(m.getUUID());
+        }
+        pt.crashEnd = now + CRASH_TIME;
+        crashes++;
+        say(l, o, "PARTY CRASHERS! Beat them all within a minute and the party's bond counts double!", ChatFormatting.RED);
+        l.playSound(null, pt.center, SoundEvents.RAID_HORN.value(), SoundSource.HOSTILE, 0.6F, 1.4F);
+    }
+
+    static final String CRASHER = "xw_party_crasher";
+
+    /** Party crashers barge in: a gang of zombies, husks and skeletons from a little way off, coming for the host. */
+    public static void crashNow(ServerPlayer o) {
+        Party pt = PARTIES.get(o.getUUID());
+        if (pt == null) return;
+        ServerLevel l = o.serverLevel();
+        List<net.minecraft.world.entity.Mob> foes = new ArrayList<>();
+        int n = 3 + Math.min(5, pt.guests.size() / 2);
+        for (int i = 0; i < n; i++) {
+            net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.Mob> type = switch (l.random.nextInt(3)) {
+                case 0 -> net.minecraft.world.entity.EntityType.ZOMBIE; case 1 -> net.minecraft.world.entity.EntityType.HUSK; default -> net.minecraft.world.entity.EntityType.SKELETON; };
+            net.minecraft.world.entity.Mob m = type.create(l);
+            if (m == null) continue;
+            double a = l.random.nextDouble() * Math.PI * 2, d = 12 + l.random.nextDouble() * 4;
+            int x = (int) Math.floor(pt.center.getX() + Math.cos(a) * d), z = (int) Math.floor(pt.center.getZ() + Math.sin(a) * d);
+            int y = l.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            if (Math.abs(y - pt.center.getY()) > 6) y = pt.center.getY();
+            m.moveTo(x + 0.5, y, z + 0.5, l.random.nextFloat() * 360F, 0F);
+            m.finalizeSpawn(l, l.getCurrentDifficultyAt(m.blockPosition()), net.minecraft.world.entity.MobSpawnType.EVENT, null, null);
+            if (m instanceof net.minecraft.world.entity.monster.Zombie z2) z2.setBaby(false);
+            m.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.CARVED_PUMPKIN));   // (no burning by day, and a bit of a costume)
+            m.setDropChance(net.minecraft.world.entity.EquipmentSlot.HEAD, 0F);
+            l.addFreshEntity(m);
+            m.setTarget(o);
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.POOF, m.getX(), m.getY() + 1, m.getZ(), 10, 0.3, 0.5, 0.3, 0.02);
+            foes.add(m);
+        }
+        if (!foes.isEmpty()) startCrash(o, pt, l, l.getGameTime(), foes);
+    }
+
+    /** Party crashers about: done when they're all beaten (in time: double bond) or the time runs out (the party's ruined). True while it's on. */
+    private static boolean crashTick(ServerPlayer o, Party pt, ServerLevel l, long now) {
+        if (pt.crashers.isEmpty()) {
+            if (pt.crashAt > 0 && now >= pt.crashAt && !pt.crashedOnce && pt.end - now > 20 * 50) crashNow(o);
+            return false;
+        }
+        pt.crashers.removeIf(id -> !(l.getEntity(id) instanceof LivingEntity m) || !m.isAlive() || m.distanceToSqr(o) > 64 * 64);
+        if (pt.crashers.isEmpty()) {
+            crashesBeaten++;
+            pt.doubled = true;
+            bondTick(o, guests(o, pt), pt.given);                                  // (everything so far, again - double from here on)
+            say(l, o, "The party crashers are gone! Everyone pulled together - the party's bond counts double!", ChatFormatting.GOLD);
+            firework(l, pt, 3);
+            return false;
+        }
+        if (now >= pt.crashEnd) {
+            say(l, o, "The party crashers ruined the party...", ChatFormatting.GRAY);
+            pt.crashers.clear();
+            end(o, pt, false);
+            return true;
+        }
+        if (o.tickCount % 20 == 0) {
+            int left = (int) ((pt.crashEnd - now) / 20);
+            o.displayClientMessage(Component.literal("Party crashers: " + pt.crashers.size() + " left - " + left + " s").withStyle(ChatFormatting.RED), true);
+        }
+        return false;
+    }
+
+    /** (Tests) */
+    public static int cakesForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt == null ? -1 : pt.cakes.size(); }
+    public static int barrelsForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt == null ? -1 : pt.barrels.size(); }
+    public static boolean doubledForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt != null && pt.doubled; }
+    public static int crashersForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt == null ? -1 : pt.crashers.size(); }
+
+    /** Bond for everyone at a party (doubled once the party crashers are seen off), and kept count of. */
+    private static void partyBond(ServerPlayer o, Party pt, List<LivingEntity> gs, float xp) {
+        float x = pt.doubled ? xp * 2 : xp;
+        pt.given += xp;
+        bondTick(o, gs, x);
+    }
+
     private static void bondTick(ServerPlayer o, List<LivingEntity> gs, float xp) {
         List<PartyBotEntity> bots = new ArrayList<>();
         for (LivingEntity g : gs) if (g instanceof PartyBotEntity b) bots.add(b);
@@ -337,13 +493,17 @@ public final class BotPartyTime {
         PARTIES.remove(o.getUUID());
         BotRps.partyEnded(o);
         ServerLevel l = o.serverLevel();
-        if (pt.cake != null && l.getBlockState(pt.cake).is(Blocks.CAKE)) l.removeBlock(pt.cake, false);
+        for (BlockPos c : pt.cakes) if (l.getBlockState(c).is(Blocks.CAKE)) l.removeBlock(c, false);
+        for (BlockPos b : pt.barrels) if (l.getBlockState(b).is(Blocks.BARREL)) {           // (what's left in the barrels is yours: it pops out)
+            if (l.getBlockEntity(b) instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity be) { be.setCustomName(null); net.minecraft.world.Containers.dropContents(l, b, be); }
+            l.removeBlock(b, false);
+        }
         BotJukebox.packUp(o);                                                  // (the jukebox packed up)
         for (ServerPlayer p : l.players()) if (p.distanceToSqr(o) < 64 * 64) ModNetwork.sendToPlayer(new PartyHatsPacket(new int[0], 0, pt.center), p);
         finished++;
         if (full) {
             List<LivingEntity> gs = guests(o, pt);
-            bondTick(o, gs, BOND_END * (rappers(gs) ? RAPPERS_BONUS : 1F));
+            partyBond(o, pt, gs, BOND_END * (rappers(gs) ? RAPPERS_BONUS : 1F));
             firework(l, pt, 4);
             o.displayClientMessage(Component.literal("What a party! Everyone there feels a lot closer.").withStyle(ChatFormatting.LIGHT_PURPLE), false);
         } else o.displayClientMessage(Component.literal("The party's broken up.").withStyle(ChatFormatting.GRAY), false);

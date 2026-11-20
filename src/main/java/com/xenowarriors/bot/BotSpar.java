@@ -54,7 +54,7 @@ public final class BotSpar {
     }
 
     /** On your side: a bot, your (or a party member's) pet - a captured monster too. */
-    private static boolean ours(ServerPlayer o, net.minecraft.world.entity.LivingEntity m) {
+    static boolean ours(ServerPlayer o, net.minecraft.world.entity.LivingEntity m) {
         if (m instanceof PartyBotEntity) return true;
         UUID pet = com.xenowarriors.party.Parties.petOwner(m);
         return pet != null && (pet.equals(o.getUUID()) || com.xenowarriors.party.Parties.sameParty(pet, o.getUUID()));

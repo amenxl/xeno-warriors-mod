@@ -15,21 +15,26 @@ import java.util.List;
 /** The vehicle dealer: each vehicle with its price in emeralds; pick a colour, then buy. Standard and Mk II models on two pages. */
 public class DealerScreen extends Screen {
     private final int emeralds;
+    private final long money;
     private final int[] colour = new int[VehicleKind.values().length];
     private static final int ROW = 46;
     /** Showing the Mk II models (remembered while the game's open). */
     private static boolean mk2;
 
-    public DealerScreen(int emeralds) { super(Component.literal("Vehicle Dealer")); this.emeralds = emeralds; }
+    public DealerScreen(int emeralds, long money) { super(Component.literal("Vehicle Dealer")); this.emeralds = emeralds; this.money = money; }
 
-    public static void open(int emeralds) { Minecraft.getInstance().setScreen(new DealerScreen(emeralds)); }
+    public static void open(int emeralds) { open(emeralds, 0); }
+
+    public static void open(int emeralds, long money) { Minecraft.getInstance().setScreen(new DealerScreen(emeralds, money)); }
+
+    private boolean affords(VehicleKind k) { return k.moneyPrice() > 0 ? money >= k.moneyPrice() : emeralds >= k.price; }
 
     /** (UI test) */
     public static void page(boolean upgraded) { mk2 = upgraded; }
 
     private static List<VehicleKind> shown() {
         List<VehicleKind> l = new ArrayList<>();
-        for (VehicleKind k : VehicleKind.values()) if (k.upgraded() == mk2 && !k.technica()) l.add(k);
+        for (VehicleKind k : VehicleKind.values()) if (k.upgraded() == mk2 && !k.technica() && !k.corrupt()) l.add(k);
         return l;
     }
 
@@ -50,7 +55,7 @@ public class DealerScreen extends Screen {
             Button buy = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Buy"), b -> ModNetwork.sendToServer(new DealerBuyPacket(idx, colour[idx])))
                     .bounds(x + 232, ry + 12, 64, 20).build());
             boolean creative = minecraft != null && minecraft.player != null && minecraft.player.isCreative();
-            buy.active = creative || emeralds >= k.price;
+            buy.active = creative || affords(k);
         }
     }
 
@@ -59,7 +64,7 @@ public class DealerScreen extends Screen {
         com.xenowarriors.client.menu.Flat.background(this, g);
         int x = width / 2 - 150, y = top();
         g.drawString(font, "Aurora Motors", x, y - 34, 0xFFFFFF, false);
-        g.drawString(font, "You have " + emeralds + " emeralds", x, y - 22, 0x55FF55, false);
+        g.drawString(font, "You have " + emeralds + " emeralds" + (mk2 ? "" : ", " + com.xenowarriors.economy.Money.fmt(money) + " Money"), x, y - 22, 0x55FF55, false);
         if (mk2) g.drawString(font, "Faster and tougher - the car, bike and truck fly too", x, y - 11, 0x7FE8FF, false);
         List<VehicleKind> list = shown();
         for (int i = 0; i < list.size(); i++) {
@@ -70,8 +75,9 @@ public class DealerScreen extends Screen {
             g.drawString(font, k.title, x + 10, ry + 8, k.upgraded() ? 0x9FF0FF : 0xFFFFFF, false);
             String v = k.variant(colour[k.ordinal()]);
             int in = k.insideSeats(), extra = k.seats - in;
-            String seatText = in + " seats" + (extra > 0 ? " +" + extra + (k.heli() ? " hanging on" : " on top") : "");
+            String seatText = k.ship() ? k.seats + " aboard, sails on water" : in + " seats" + (extra > 0 ? " +" + extra + (k.heli() ? " hanging on" : " on top") : "");
             g.drawString(font, seatText + (k.variants.length > 1 ? " - " + Character.toUpperCase(v.charAt(0)) + v.substring(1) : ""), x + 10, ry + 20, 0xAAAAAA, false);
+            if (k.moneyPrice() > 0) { g.drawString(font, com.xenowarriors.economy.Money.fmt(k.moneyPrice()) + " Money", x + 10, ry + 31, affords(k) ? 0x55FF55 : 0xFF5555, false); continue; }
             g.drawString(font, k.price + " emeralds" + (k.upgraded() ? "   " + Math.round(k.maxSpeed * 72) + " km/h" + (k.hovers() ? ", flies" : "") : ""), x + 10, ry + 31,
                     emeralds >= k.price ? 0x55FF55 : 0xFF5555, false);
         }

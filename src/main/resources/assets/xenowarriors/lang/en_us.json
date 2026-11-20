@@ -1261,5 +1261,9 @@
   "skill.xenowarriors.dream_kick.desc": "A flying kick: they're left drowsy (slow and weak, 3 s).",
   "skill.xenowarriors.sueno_real": "Sueño Real",
   "skill.xenowarriors.sueno_real.short": "SR",
-  "skill.xenowarriors.sueno_real.desc": "Ultimate: a royal lullaby - everyone near falls asleep (5 s, can't move) while she smacks them awake."
+  "skill.xenowarriors.sueno_real.desc": "Ultimate: a royal lullaby - everyone near falls asleep (5 s, can't move) while she smacks them awake.",
+  "item.xenowarriors.ship": "Ship",
+  "item.xenowarriors.corrupt_ship": "Corrupted Ghost Ship",
+  "entity.xenowarriors.ship": "Ship",
+  "entity.xenowarriors.corrupt_ship": "Corrupted Ghost Ship"
 }

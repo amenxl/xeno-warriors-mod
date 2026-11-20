@@ -262,7 +262,14 @@ public final class BotErrands extends Goal {
                 if (pref > bestPref || pref == bestPref && d < bd) { best = f; bestSlot = i; bestPref = pref; bd = d; }
             }
         }
-        if (best == null) return null;
+        if (best == null) {                                                      // no furnace free: now and then it makes one of its own and sets it down
+            BlockPos made = BotFurnaces.makeOne(b, o);
+            if (made == null) return null;
+            for (int i = 0; i < b.inventory.getContainerSize(); i++)
+                if (worthSmelting(b, b.inventory.getItem(i)) && !food(b.inventory.getItem(i)) && hasFuel(RecipeType.SMELTING, i))
+                    return job("furnace", made, null, i, b.inventory.getItem(i).getCount(), b.inventory.getItem(i), 20);
+            return null;
+        }
         return job("furnace", best.getBlockPos(), null, bestSlot, b.inventory.getItem(bestSlot).getCount(), b.inventory.getItem(bestSlot), 20);
     }
 
@@ -338,6 +345,9 @@ public final class BotErrands extends Goal {
         f.setChanged();
         if (f.getItem(0).isEmpty() && f.getItem(2).isEmpty()) CLAIMS.remove(e.pos.asLong());
         if (!left.isEmpty()) PartyBots.notifyFull(b);
+        com.xenowarriors.stats.Crafting.addSmeltXp(o, (n - left.getCount()) * BotFurnaces.XP_EACH);   // (smelting is shared: it levels up)
+        BotFurnaces.smelted += n - left.getCount();
+        BotFurnaces.doneWith(b, e.pos);
         b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         tell(o, "took " + (n - left.getCount()) + " " + cl.result().getHoverName().getString() + " out of the " + f.getBlockState().getBlock().getName().getString().toLowerCase(Locale.ROOT));
     }

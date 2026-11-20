@@ -50,7 +50,7 @@ public final class BotRides {
         }
         // 3: one of your vehicles (or an unowned one - not the Government's, nor a raid's) parked nearby, empty
         for (VehicleEntity v : l.getEntitiesOfClass(VehicleEntity.class, b.getBoundingBox().inflate(16), x -> x.isAlive() && x.getPassengers().isEmpty() && x != o.getVehicle()
-                && (o.getUUID().equals(x.owner()) || x.owner() == null && x.kind.base() != VehicleKind.GOV_TRUCK && !com.xenowarriors.raid.FactionRaids.isRaider(x)))) {
+                && !x.kind.corrupt() && (o.getUUID().equals(x.owner()) || x.owner() == null && x.kind.base() != VehicleKind.GOV_TRUCK && !com.xenowarriors.raid.FactionRaids.isRaider(x)))) {
             if (b.distanceToSqr(v) > 5 * 5) { b.getNavigation().moveTo(v, 1.3); return true; }
             if (drive(b, v, o)) { drives++; return true; }
         }

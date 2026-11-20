@@ -86,7 +86,7 @@ public final class Crafting {
         if (up) com.xenowarriors.statboost.StatBoosts.leveledUp(p, com.xenowarriors.statboost.BoostStat.CRAFTING);
     }
 
-    private static void addSmeltXp(ServerPlayer p, float xp) {
+    public static void addSmeltXp(ServerPlayer p, float xp) {
         PlayerCharacter d = cap(p);
         if (d == null || d.smeltLevel >= MAX_LEVEL) return;
         d.smeltXp += xp;

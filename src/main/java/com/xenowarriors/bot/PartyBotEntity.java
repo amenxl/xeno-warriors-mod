@@ -213,7 +213,7 @@ public class PartyBotEntity extends PathfinderMob {
     /** Going away: its blocks across water are picked up first (the water put back). */
     @Override
     public void remove(RemovalReason why) {
-        if (!level().isClientSide) try { BotWaterBridge.forget(this); } catch (Throwable ignored) {}
+        if (!level().isClientSide) try { BotWaterBridge.forget(this); BotBoats.forget(this); } catch (Throwable ignored) {}
         super.remove(why);
     }
 
@@ -1068,7 +1068,7 @@ public class PartyBotEntity extends PathfinderMob {
         }
         if (!level().isClientSide && heldBy != null) tickHold();
         if (!level().isClientSide) BotParkour.tick(this);                        // (vaults, climbs, rolls... with ParCool)
-        if (!level().isClientSide) BotWaterBridge.tick(this);
+        if (!level().isClientSide) { BotWaterBridge.tick(this); BotBoats.tick(this); BotFurnaces.tick(this); }
         if (!level().isClientSide) com.xenowarriors.compat.HealingStone.botTick(this);   // (Healingstones in its bag: on you, when you're hurt - fights too)                    // (Building 10+: a path of blocks across water, picked back up behind it)
         super.aiStep();
         if (level().isClientSide) return;

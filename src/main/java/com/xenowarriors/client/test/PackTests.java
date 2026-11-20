@@ -127,6 +127,7 @@ public final class PackTests {
         if (focus.startsWith("packraceui")) { PackRaceUiTests.build(mc, l); return; }      // (menus and HUD with each DragonMineZ race)
         if (focus.startsWith("packvr")) { PackVrTests.build(mc, l); return; }      // (Yuri's VR Room)
         if (focus.startsWith("packnov20b")) { PackNov20bTests.build(mc, l); return; }
+        if (focus.startsWith("packnov20d")) { PackNov20dTests.build(mc, l); return; }      // (middle click as your own character, the ship, ghost ships, bot boats and torches, side-mission respawns, the SP hideout)
         if (focus.startsWith("packnov20c")) { PackNov20cTests.build(mc, l); return; }      // (bot gun smithing with TaCZ, buying pets, NPC parkour)      // (Fox Girl, the Story menu, Mikiko grounded in story)
         if (focus.startsWith("packnov20")) { PackChaseTests.build(mc, l); PackYouColourTests.build(mc, l); PackYouIdleTests.build(mc, l); return; }   // (Chase's swords, made characters' colour and borrowed idles, in one go)
         if (focus.startsWith("packyouidle")) { PackYouIdleTests.build(mc, l); return; }      // (a made character borrows idles at bond 100)

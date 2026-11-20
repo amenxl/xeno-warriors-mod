@@ -15,6 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 /**
+ * (Once your Crafting is level 20 a bot takes a boat across instead - BotBoats - and lays blocks only when it can't.)
  * Bots with Building level {@value #LEVEL} or more don't swim across water: they lay a path of blocks from their bag
  * (cobblestone, dirt, stone, planks...) one step ahead of them on the water's surface and walk it - and pick each
  * block back up once they're past it (the water's put back as it was), so nothing's left behind and the blocks go
@@ -43,7 +44,9 @@ public final class BotWaterBridge {
         Deque<Placed> path = PATH.get(b.getUUID());
         if (path != null) pickUp(b, l, path, false);
         if (b.tickCount % 2 != 0 || b.downed() || b.isPassenger() || b.isNoAi() || b.selfFlying || b.isNoGravity() || b.held()) return;
-        if (com.xenowarriors.stats.Building.level(b) < LEVEL) return;
+        boolean boats = BotBoats.unlocked(b);                                    // (Crafting 20: a boat instead)
+        if (!boats && com.xenowarriors.stats.Building.level(b) < LEVEL) return;
+        boolean blocks = com.xenowarriors.stats.Building.level(b) >= LEVEL;
         if (b.getTarget() != null && b.isInWater()) return;                      // (in a fight in the water: it fights)
         Vec3 goal = goal(b);
         if (goal == null) return;
@@ -53,12 +56,14 @@ public final class BotWaterBridge {
         // the water surface: under its feet (swimming), or a step ahead (standing on the bridge / the shore)
         BlockPos feet = b.blockPosition();
         BlockPos under = surface(l, feet);
-        if (under != null && b.isInWater() && lay(b, l, under)) { b.teleportTo(b.getX(), under.getY() + 1.0, b.getZ()); b.setDeltaMovement(Vec3.ZERO); return; }
+        if (under != null && b.isInWater() && boats && BotBoats.cross(b, l)) return;
+        if (under != null && b.isInWater() && blocks && lay(b, l, under)) { b.teleportTo(b.getX(), under.getY() + 1.0, b.getZ()); b.setDeltaMovement(Vec3.ZERO); return; }
         if (!b.onGround()) return;
         BlockPos ahead = BlockPos.containing(b.getX() + dir.x * 1.1, b.getY() - 0.5, b.getZ() + dir.z * 1.1);
         BlockPos s = surface(l, ahead.above());
         boolean onPath = onOwn(b);
-        if (s != null && s.getY() == feet.getY() - 1 && lay(b, l, s)) onPath = true;
+        if (s != null && s.getY() == feet.getY() - 1 && !onPath && boats && BotBoats.cross(b, l)) return;
+        if (s != null && s.getY() == feet.getY() - 1 && blocks && lay(b, l, s)) onPath = true;
         if (onPath) {                                                            // (walk it: the pathfinder won't plan across water)
             b.getNavigation().stop();
             b.getMoveControl().setWantedPosition(b.getX() + dir.x * 1.2, b.getY(), b.getZ() + dir.z * 1.2, 1.0);

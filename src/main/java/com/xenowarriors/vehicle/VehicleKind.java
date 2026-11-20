@@ -15,7 +15,14 @@ public enum VehicleKind {
     HELICOPTER_MK2("helicopter_mk2", "helicopter", "Helicopter Mk II", 1.0, 0.028, 130, 160, new String[]{"skyblue", "white", "black"}, 2.2F, 2.0F, 1.45F),
     GOV_TRUCK_MK2("gov_truck_mk2", "gov_truck", "Armored Truck Mk II", 0.7, 0.02, 240, 128, new String[]{"gov"}, 2.3F, 2.3F, 1.35F),
     /** Technica's own pink motorcycle (not sold: she summons it with its key) - guns, and attachments she adds (TechnicaBike). */
-    TECHNICA_BIKE("technica_bike", "motorbike", "Technica's Motorcycle", 0.92, 0.036, 60, 0, new String[]{"pink"}, 1.0F, 1.3F, 1.3F);
+    TECHNICA_BIKE("technica_bike", "motorbike", "Technica's Motorcycle", 0.92, 0.036, 60, 0, new String[]{"pink"}, 1.0F, 1.3F, 1.3F),
+    /** The big sailing ship: 15 aboard (the captain at the wheel, the rest on deck). Water only. Crafted, or bought for Money. */
+    SHIP("ship", "ship", "Ship", 0.42, 0.006, 300, 0, new String[]{"oak", "dark"}, 2.6F, 1.4F, 2.0F),
+    /** The Corrupted Souls' ghost ship (CorruptShips): it hunts you on the open ocean and fires its cannons. Not for sale. */
+    CORRUPT_SHIP("corrupt_ship", "ship", "Corrupted Ghost Ship", 0.36, 0.006, 220, 0, new String[]{"corrupted"}, 2.6F, 1.4F, 2.0F);
+
+    /** What the Ship costs at the dealer, in Money (the others are emeralds). */
+    public static final long SHIP_MONEY = 4000;
 
     /** How a rider rides a spot: sitting inside, standing on top (when the seats are full), or hanging on a rail (helicopter). */
     public enum SeatType { SIT, STAND, HANG }
@@ -52,7 +59,16 @@ public enum VehicleKind {
     public VehicleKind base() { return byId(model); }
 
     /** A Mk II. */
-    public boolean upgraded() { return !model.equals(id) && !technica(); }
+    public boolean upgraded() { return !model.equals(id) && !technica() && !ship(); }
+
+    /** A ship (the player's or the ghost ship): sails on water, everyone stands on deck. */
+    public boolean ship() { return model.equals("ship"); }
+
+    /** The Corrupted Souls' ghost ship. */
+    public boolean corrupt() { return id.equals("corrupt_ship"); }
+
+    /** Its price in Money at the dealer (0: it's sold for emeralds, or not sold). */
+    public long moneyPrice() { return this == SHIP ? SHIP_MONEY : 0; }
 
     /** Technica's motorcycle: its own model, guns and attachments; not at the dealer. */
     public boolean technica() { return id.equals("technica_bike"); }
@@ -93,6 +109,11 @@ public enum VehicleKind {
             case "helicopter" -> new double[][]{{-0.39, 0.36, 0.54, 0}, {0.39, 0.36, 0.54, 0}, {-0.39, 0.36, -0.18, 0}, {0.39, 0.36, -0.18, 0},
                     {-0.39, 0.36, -0.81, 0}, {0.39, 0.36, -0.81, 0},
                     {-0.98, HANG_Y, 0.45, 2}, {0.98, HANG_Y, 0.45, 2}, {-0.98, HANG_Y, -0.45, 2}, {0.98, HANG_Y, -0.45, 2}};
+            // the captain at the wheel on the quarterdeck, then 12 along the rails and 2 amidships, all standing on deck
+            case "ship" -> new double[][]{{0, 1.75, -2.06, 1},
+                    {-0.8, 1.25, 2.25, 1}, {0.8, 1.25, 2.25, 1}, {-0.8, 1.25, 1.5, 1}, {0.8, 1.25, 1.5, 1}, {-0.8, 1.25, 0.875, 1}, {0.8, 1.25, 0.875, 1},
+                    {-0.8, 1.25, -0.375, 1}, {0.8, 1.25, -0.375, 1}, {-0.8, 1.25, -0.875, 1}, {0.8, 1.25, -0.875, 1}, {-0.8, 1.25, -1.25, 1}, {0.8, 1.25, -1.25, 1},
+                    {0, 1.25, 1.06, 1}, {0, 1.25, -0.75, 1}};
             // 4 in the cab, then 4 standing on the cargo box
             default -> new double[][]{{-0.47, 0.385, 1.375, 0}, {0.47, 0.385, 1.375, 0}, {-0.5, 0.385, 0.0, 0}, {0.5, 0.385, 0.0, 0},
                     {-0.45, 2.25, -0.5, 1}, {0.45, 2.25, -0.5, 1}, {-0.45, 2.25, -1.6, 1}, {0.45, 2.25, -1.6, 1}};

@@ -24,16 +24,21 @@ public final class Dealer {
 
     public static void open(ServerPlayer p) {
         AT.put(p.getUUID(), net.minecraft.core.GlobalPos.of(p.level().dimension(), p.blockPosition()));
-        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenDealerPacket(emeralds(p)), p);
+        ModNetwork.sendToPlayer(new com.xenowarriors.network.OpenDealerPacket(emeralds(p), com.xenowarriors.economy.Money.get(p)), p);
     }
 
     public static void buy(ServerPlayer p, int kindIdx, int variant) {
         if (kindIdx < 0 || kindIdx >= VehicleKind.values().length) return;
         VehicleKind k = VehicleKind.values()[kindIdx];
-        if (k.technica()) return;                                            // (Technica's own: not for sale)
+        if (k.technica() || k.corrupt()) return;                             // (Technica's own, the ghost ship: not for sale)
         var at = AT.get(p.getUUID());
         if (at == null || at.dimension() != p.level().dimension() || !at.pos().closerThan(p.blockPosition(), 10)) return;   // (only at the dealer)
-        if (!p.isCreative()) {
+        if (!p.isCreative() && k.moneyPrice() > 0) {                         // (the Ship: Money)
+            if (!com.xenowarriors.economy.Money.take(p, k.moneyPrice())) {
+                p.displayClientMessage(Component.literal("You need " + com.xenowarriors.economy.Money.fmt(k.moneyPrice()) + " Money for a " + k.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
+                return;
+            }
+        } else if (!p.isCreative()) {
             if (emeralds(p) < k.price) {
                 p.displayClientMessage(Component.literal("You need " + k.price + " emeralds for a " + k.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
                 return;
@@ -48,7 +53,7 @@ public final class Dealer {
         ItemStack it = VehicleItem.make(k, variant);
         if (!p.addItem(it)) p.drop(it, false);
         p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.4F);
-        p.sendSystemMessage(Component.literal("You bought a " + it.getHoverName().getString() + "! Use it on the ground to park it.").withStyle(ChatFormatting.GREEN));
+        p.sendSystemMessage(Component.literal("You bought a " + it.getHoverName().getString() + (k.ship() ? "! Use it on open water to launch it." : "! Use it on the ground to park it.")).withStyle(ChatFormatting.GREEN));
         open(p);
     }
 }

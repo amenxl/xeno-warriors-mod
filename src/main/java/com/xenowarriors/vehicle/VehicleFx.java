@@ -13,6 +13,17 @@ public final class VehicleFx {
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         boolean lodestone = net.minecraftforge.fml.ModList.get().isLoaded("lodestone");
         double moving = v.getDeltaMovement().horizontalDistance() + Math.abs(v.getX() - v.xo) + Math.abs(v.getZ() - v.zo);
+        if (v.kind.ship()) {                                                  // a ship: a wake off the bow and a splash along its sides, no exhaust
+            double sp = Math.abs(v.speed());
+            if (sp > 0.05 && v.afloat()) for (int i = 0; i < 3; i++) {
+                double along = (v.getRandom().nextDouble() - 0.3) * 6.0, s = v.getRandom().nextBoolean() ? 1 : -1;
+                double x = v.getX() + fx * along - fz * s * 2.3, z = v.getZ() + fz * along + fx * s * 2.3;
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SPLASH, x, v.getY() + VehicleEntity.DRAFT + 0.1, z, -fz * s * 0.1, 0.05, fx * s * 0.1);
+            }
+            if (v.kind.corrupt() && v.tickCount % 4 == 0)
+                level.addParticle(ParticleTypes.SOUL, v.getX() + (v.getRandom().nextDouble() - 0.5) * 4, v.getY() + 3 + v.getRandom().nextDouble() * 6, v.getZ() + (v.getRandom().nextDouble() - 0.5) * 8, 0, 0.03, 0);
+            return;
+        }
         if (!v.kind.heli() && v.getControllingPassenger() != null && v.tickCount % 3 == 0) {
             double back = (v.kind.base() == VehicleKind.GOV_TRUCK ? 2.6 : v.kind.base() == VehicleKind.CAR ? 1.85 : 0.9) * v.kind.scale;
             double x = v.getX() - fx * back, z = v.getZ() - fz * back, y = v.getY() + 0.35;

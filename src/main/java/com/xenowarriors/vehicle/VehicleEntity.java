@@ -57,13 +57,13 @@ public class VehicleEntity extends Mob implements GeoEntity {
     public VehicleEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
         this.kind = Vehicles.kindOf(type);
-        setMaxUpStep(kind.base() == VehicleKind.MOTORBIKE ? 1.0F : 1.1F);
+        setMaxUpStep(kind.ship() ? 0.6F : kind.base() == VehicleKind.MOTORBIKE ? 1.0F : 1.1F);
         setPersistenceRequired();
     }
 
     public static AttributeSupplier.Builder attributes(VehicleKind k) {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, k.health).add(Attributes.MOVEMENT_SPEED, 0.2)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, k.base() == VehicleKind.GOV_TRUCK ? 14 : 6);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, k.base() == VehicleKind.GOV_TRUCK ? 14 : k.ship() ? 10 : 6);
     }
 
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(ATTACH, 0); }
@@ -224,6 +224,11 @@ public class VehicleEntity extends Mob implements GeoEntity {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (kind.technica() && TechnicaBike.install(this, p, p.getMainHandItem())) return InteractionResult.CONSUME;   // (an attachment for Technica's bike)
+        if (kind.corrupt()) {                                              // the Corrupted Souls' ship: nobody boards it, nobody packs it up
+            p.displayClientMessage(Component.literal("The ghost ship's timbers are cold with corruption - sink it!").withStyle(ChatFormatting.DARK_PURPLE), true);
+            return InteractionResult.CONSUME;
+        }
+        if (kind.ship() && p.getVehicle() == this) { Ships.helm(this, p); return InteractionResult.CONSUME; }   // (aboard: hand the helm to a bot, or take it back)
         if (p.isSecondaryUseActive()) {                                   // pack it up
             if (!p.isCreative() && ((owner != null && !owner.equals(p.getUUID())) || (owner == null && (kind.base() == VehicleKind.GOV_TRUCK || com.xenowarriors.raid.FactionRaids.isRaider(this))))) {   // (nor a raid's vehicles)   // (a seized Gov truck can be wrecked for iron, not packed up)
                 p.displayClientMessage(Component.literal("That's not your " + kind.title.toLowerCase() + ".").withStyle(ChatFormatting.RED), true);
@@ -244,10 +249,14 @@ public class VehicleEntity extends Mob implements GeoEntity {
         }
         if (canAddPassenger(p)) {
             p.startRiding(this);
-            if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind.heli()
+            if (getFirstPassenger() == p && kind.ship()) p.displayClientMessage(Component.literal(
+                    "You're at the helm - it turns where you look (or A/D), W/S sail and slow. Right-click the ship to hand the helm to a bot. Sneak to get off").withStyle(ChatFormatting.GRAY), true);
+            else if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind.heli()
                     ? "It turns where you look - W/S speed, A/D slide sideways, Jump to climb, Sprint key to descend, Sneak to get out"
                     : canHover() ? "It turns where you look (or A/D) - W/S speed, Jump to fly up, Sprint key to come down, Sneak to get out"
                     : "It turns where you look (or A/D) - W/S speed and brake, Sneak to get out").withStyle(ChatFormatting.GRAY), true);
+            else if (p.getVehicle() == this && kind.ship())
+                p.displayClientMessage(Component.literal("All aboard! (Sneak to get off)").withStyle(ChatFormatting.GRAY), true);
             else if (p.getVehicle() == this && seatOf(p).type() != VehicleKind.SeatType.SIT)
                 p.displayClientMessage(Component.literal(seatOf(p).type() == VehicleKind.SeatType.HANG
                         ? "No seats left - you're hanging on to the rail (Sneak to let go)" : "No seats left - you're riding on top (Sneak to get off)")
@@ -288,6 +297,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     /** The most it turns in a tick toward where its driver looks (degrees): a short turn, so it never snaps round. */
     public float turnRate() {
+        if (kind.ship()) return Math.abs(speed) < 0.05 ? 1.2F : 2.4F;      // (a ship comes round slowly)
         if (kind.heli() || hovering) return 7F;
         float r = switch (kind.base()) { case MOTORBIKE -> 9F; case GOV_TRUCK -> 4.5F; default -> 6.5F; };
         return Math.abs(speed) < 0.05 ? r * 0.6F : r;                  // (parked: it turns on the spot, a bit slower)
@@ -381,6 +391,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
             // up a step or a slope: nose up (rear up when reversing up it)
             pitch = Math.abs(hs) > 0.04 && Math.abs(dy) < 1.2 ? Mth.clamp((float) -Math.toDegrees(Math.atan(dy / hs)), -20F, 20F) : 0;
             roll = kind.base() == VehicleKind.MOTORBIKE ? Mth.clamp(turn * 2.5F, -14F, 14F) : Mth.clamp(turn * 0.5F, -3F, 3F);   // the bike leans, cars sway a little
+            if (kind.ship()) { pitch = Mth.sin(tickCount * 0.045F + getId()) * 1.2F; roll = Mth.clamp(turn * 3F, -6F, 6F) + Mth.sin(tickCount * 0.06F + getId()) * 2.2F; }   // (rolling on the swell)
         }
         pitchTilt += (pitch - pitchTilt) * 0.2F;
         rollTilt += (roll - rollTilt) * 0.2F;
@@ -391,8 +402,52 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     private boolean driven() { return getControllingPassenger() != null; }
 
+    /** How deep a ship sits: its keel this far under the surface (blocks). */
+    public static final double DRAFT = 1.1;
+
+    /** The water's surface under/around a ship (the top of the water column it's in), or NaN out of the water. */
+    public double waterTop() {
+        net.minecraft.core.BlockPos b = net.minecraft.core.BlockPos.containing(getX(), getY() + 2.5, getZ());
+        for (int k = 0; k < 7; k++) {
+            net.minecraft.core.BlockPos q = b.below(k);
+            var f = level().getFluidState(q);
+            if (f.is(net.minecraft.tags.FluidTags.WATER)) return q.getY() + f.getHeight(level(), q);
+        }
+        return Double.NaN;
+    }
+
+    /** Afloat (water under it). */
+    public boolean afloat() { return !Double.isNaN(waterTop()); }
+
+    /** A ship: it floats at its draft, bobs a little, and sails along its facing; aground it barely moves. */
+    private void shipTravel() {
+        float yaw = getYRot() * Mth.DEG_TO_RAD;
+        double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
+        Vec3 v = getDeltaMovement();
+        double top = waterTop(), y;
+        if (!Double.isNaN(top)) {
+            setNoGravity(true);
+            double want = top - DRAFT + Math.sin(tickCount * 0.06 + getId()) * 0.06;
+            y = Mth.clamp((want - getY()) * 0.3, -0.1, 0.1);
+        } else {                                                           // aground: it settles, and can only edge off again
+            setNoGravity(false);
+            y = onGround() ? -0.08 : Math.max(v.y - 0.08, -1.5) * 0.98;
+            speed = Mth.clamp(speed, -0.03, 0.03);
+        }
+        if (!driven()) speed *= 0.97;                                      // (nobody at the helm: it drifts to a stop)
+        Vec3 move = new Vec3(fx * speed, y, fz * speed);
+        move(MoverType.SELF, move);
+        if (horizontalCollision) {
+            if (Math.abs(speed) > 0.3 && !level().isClientSide) level().playSound(null, blockPosition(), SoundEvents.WOOD_BREAK, SoundSource.NEUTRAL, 1F, 0.6F);
+            speed *= 0.4;
+        }
+        setDeltaMovement(move.x, y, move.z);
+        calculateEntityAnimation(false);
+    }
+
     @Override
     public void travel(Vec3 in) {
+        if (kind.ship()) { shipTravel(); return; }
         if (!driven()) hovering = false;
         if (!driven() && !kind.heli()) { setNoGravity(false); speed *= 0.9; super.travel(Vec3.ZERO); return; }
         float yaw = getYRot() * Mth.DEG_TO_RAD;
@@ -447,7 +502,10 @@ public class VehicleEntity extends Mob implements GeoEntity {
             rotorRot += rotorSpin;
             VehicleFx.tick(this);
         } else {
-            if (driven() && tickCount % (kind.heli() ? 5 : 9) == 0) {
+            if (kind.corrupt()) CorruptShips.tick(this);
+            else if (kind.ship()) Ships.tick(this);
+            if (kind.ship()) { /* (no engine noise) */ }
+            else if (driven() && tickCount % (kind.heli() ? 5 : 9) == 0) {
                 if (kind.heli())
                     level().playSound(null, blockPosition(), SoundEvents.PHANTOM_FLAP, SoundSource.NEUTRAL, 0.7F, 0.45F);
                 else
@@ -493,16 +551,18 @@ public class VehicleEntity extends Mob implements GeoEntity {
     public boolean hurt(DamageSource src, float amount) {
         if (level().isClientSide || isRemoved() || isInvulnerableTo(src)) return false;   // (already wrecked this tick: a second hit drops no second item)
         if (src.getEntity() != null && hasPassenger(src.getEntity())) return false;          // (no shooting your own ride)
+        if (kind.corrupt() && (src.getEntity() instanceof com.xenowarriors.corrupted.CorruptedSoulEntity || CorruptShips.ownShot(this, src))) return false;   // (nor its crew its own ship)
         if (com.xenowarriors.raid.FactionRaids.sameRaid(this, src.getEntity())) return false;   // (nor your own raid's)
         lastHurtBy = src.getMsgId() + " by " + (src.getEntity() == null ? "-" : src.getEntity().getType().toShortString()) + " direct " + (src.getDirectEntity() == null ? "-" : src.getDirectEntity().getType().toShortString());
-        float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : 0.6F) * (has(TechnicaBike.PLATING) ? 0.7F : 1F);
+        float hp = getHealth() - amount * (src.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION) ? 1.5F : kind.corrupt() ? 1.0F : 0.6F) * (has(TechnicaBike.PLATING) ? 0.7F : 1F);
         if (hp > 0) { setHealth(hp); level().playSound(null, blockPosition(), SoundEvents.IRON_GOLEM_HURT, SoundSource.NEUTRAL, 0.5F, 1.4F); return true; }
         // wrecked: it bursts into smoke and drops back into its item (bought vehicles aren't lost for good)
         ejectPassengers();
         ((ServerLevel) level()).sendParticles(ParticleTypes.LARGE_SMOKE, getX(), getY() + 1, getZ(), 30, 0.8, 0.6, 0.8, 0.02);
         ((ServerLevel) level()).sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + 1, getZ(), 3, 0.5, 0.3, 0.5, 0);
         level().playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.NEUTRAL, 0.8F, 1.2F);
-        if (kind.technica()) { /* (Technica's bike: nothing drops - her key calls it back) */ }
+        if (kind.corrupt()) CorruptShips.sunk(this, src);                // (the ghost ship: its loot, no item)
+        else if (kind.technica()) { /* (Technica's bike: nothing drops - her key calls it back) */ }
         else if (owner != null || (kind.base() != VehicleKind.GOV_TRUCK && !com.xenowarriors.raid.FactionRaids.isRaider(this))) spawnAtLocation(VehicleItem.make(kind, variant()));
         else spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 6));
         discard();

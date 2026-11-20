@@ -529,15 +529,18 @@ public final class PartyBots {
         Entity v = o.getVehicle();
         if (v == null || b.isPassenger() || b.distanceToSqr(v) > 24 * 24) return false;
         if (b.downed() || b.reviving != null || com.xenowarriors.gov.HealingPods.inPod(b)) return false;   // (down, in someone's revive circle or resting in a pod: it stays put)
-        boolean full = v instanceof com.xenowarriors.vehicle.VehicleEntity ve && ve.getPassengers().size() >= ve.kind.seats;
-        if (full) return BotRides.overflow(b, o);                                // (no room: another ride, following you)
-        if (b.distanceToSqr(v) > 5 * 5) return false;
+        boolean full = v instanceof com.xenowarriors.vehicle.VehicleEntity ve && ve.getPassengers().size() >= ve.kind.seats
+                || v instanceof net.minecraft.world.entity.vehicle.Boat bt && bt.getPassengers().size() >= BotBoats.seats(bt);
+        if (full) return BotRides.overflow(b, o) || BotBoats.overflow(b, o);    // (no room: another ride, following you - another boat on the water)
+        double reach = 5 + (v instanceof com.xenowarriors.vehicle.VehicleEntity ve2 ? ve2.kind.width / 2 : 0);   // (a ship's a big thing to climb aboard)
+        if (b.distanceToSqr(v) > reach * reach) return false;
         if (v instanceof com.xenowarriors.vehicle.VehicleEntity || v instanceof net.minecraft.world.entity.vehicle.Boat) return b.startRiding(v, false);
         return false;
     }
 
     /** Bots get out when their owner does. */
     static void unboard(PartyBotEntity b, ServerPlayer o) {
+        if (BotBoats.ownBoat(b)) return;                                         // (crossing water in its own boat: it gets out at the far side)
         if (b.isPassenger() && b.getVehicle() != o && o.getVehicle() == null) b.stopRiding();
     }
 

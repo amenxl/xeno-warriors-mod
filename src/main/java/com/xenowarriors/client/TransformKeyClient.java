@@ -77,6 +77,36 @@ public final class TransformKeyClient {
         rlSent++;
     }
 
+    /**
+     * Pointing at nothing (the sky, an enemy out of reach - most of a fight) Minecraft doesn't even get as far as the
+     * pick-block event, so the click would be lost: here, before Minecraft reads its keys, such clicks fire the skill.
+     */
+    @SubscribeEvent
+    public static void onTickStart(net.minecraftforge.event.TickEvent.ClientTickEvent e) {
+        if (e.phase != net.minecraftforge.event.TickEvent.Phase.START) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.screen != null || mc.gameMode == null) return;
+        if (mc.hitResult != null && mc.hitResult.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return;   // (pointing at something: the event does it)
+        if (!hasRl() || UltimateCutscene.active() || holdingGun(mc)) return;
+        boolean any = false;
+        while (mc.options.keyPickItem.consumeClick()) any = true;
+        if (!any) return;
+        if (mc.player.isUsingItem()) mc.gameMode.releaseUsingItem(mc.player);
+        ModNetwork.sendToServer(new ToggleActionPacket(ToggleActionPacket.FIRE_RL, ""));
+        rlSent++;
+    }
+
+    /** (Tests) why the middle click would do nothing now ("" = it would fire). */
+    public static String rlWhy() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return "no player";
+        if (com.xenowarriors.toggle.Toggles.rlChoices(ClientCharacterData.getLocal()).isEmpty()) return "no choices for " + ClientCharacterData.getLocal();
+        var rl = com.xenowarriors.network.TogglesPacket.CLIENT;
+        if (!hasRl()) return "nothing picked (rl " + rl.rl().size() + ", picked '" + rl.rlSelected() + "')";
+        if (holdingGun(mc)) return "gun";
+        return "";
+    }
+
     /** What the button is called on screens ("Middle Click" unless it's been rebound). */
     public static String buttonName() {
         try {

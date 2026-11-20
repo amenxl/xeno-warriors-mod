@@ -65,7 +65,12 @@ public final class BotSupport {
         BlockPos feet = b.blockPosition();
         if (light(l, feet) >= DARK) return;
         int slot = torchSlot(b);
-        if (slot == -2) return;
+        if (slot == -2) {                                                        // none left: it makes some (coal and sticks, or fire in its hands)
+            NEXT_TORCH.put(b.getUUID(), now + 60);
+            if (!makeTorches(b, l)) return;
+            slot = torchSlot(b);
+            if (slot == -2) return;
+        }
         BlockPos at = place(l, feet);
         if (at == null) return;
         com.xenowarriors.stats.Building.botPlaced(b, at, l.getBlockState(at));     // (its character's Building level)
@@ -77,6 +82,67 @@ public final class BotSupport {
         NEXT_TORCH.put(b.getUUID(), now + 30);
         torches++;
         PartyBots.testLog(b, "placed a torch at " + at.toShortString() + " (light was " + light(l, feet) + ", " + (s.getCount()) + " left in that stack)");
+    }
+
+    /** (tests) torches made: crafted, lit with fire. */
+    public static int crafted, lit;
+
+    /** Has the element of fire (Mikiko, or one of your own characters with fire as an element). */
+    public static boolean fire(PartyBotEntity b) {
+        if (b.character() == CharacterType.MIKIKO) return true;
+        var y = b.you();
+        return y != null && (y.element == com.xenowarriors.ka.Element.FIRE || y.element2 == com.xenowarriors.ka.Element.FIRE);
+    }
+
+    private static int count(PartyBotEntity b, net.minecraft.world.item.Item it) {
+        int n = 0;
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) if (b.inventory.getItem(i).is(it)) n += b.inventory.getItem(i).getCount();
+        return n;
+    }
+
+    /**
+     * Out of torches in the dark: it makes some from its bag. With fire in its hands it lights sticks (one stick, one
+     * torch - up to 8); otherwise it crafts them from coal or charcoal and sticks. Sticks come from its planks (and
+     * planks from its logs) if it has none. True if it made any.
+     */
+    static boolean makeTorches(PartyBotEntity b, ServerLevel l) {
+        net.minecraft.resources.ResourceLocation stick = new net.minecraft.resources.ResourceLocation("minecraft", "stick");
+        if (count(b, Items.STICK) == 0 && BotCrafting.craftRecipe(b, stick) == null) {
+            for (String w : new String[]{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry"})
+                if (BotCrafting.craftRecipe(b, new net.minecraft.resources.ResourceLocation("minecraft", w + "_planks")) != null) break;
+            BotCrafting.craftRecipe(b, stick);
+        }
+        ServerPlayer o = b.owner();
+        if (fire(b)) {
+            int n = Math.min(8, count(b, Items.STICK));
+            if (n <= 0) return false;
+            int left = n;
+            for (int i = 0; i < b.inventory.getContainerSize() && left > 0; i++) {
+                ItemStack st = b.inventory.getItem(i);
+                if (!st.is(Items.STICK)) continue;
+                int t = Math.min(left, st.getCount()); st.shrink(t); left -= t;
+            }
+            ItemStack torches = new ItemStack(Items.TORCH, n);
+            ItemStack rest = b.inventory.addItem(torches);
+            if (!rest.isEmpty()) b.spawnAtLocation(rest);
+            b.inventory.setChanged();
+            l.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME, b.getX(), b.getY() + 1.2, b.getZ(), 10, 0.2, 0.2, 0.2, 0.02);
+            l.playSound(null, b.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.NEUTRAL, 0.5F, 1.4F);
+            lit += n;
+            if (o != null) o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(b.label()).append(" lit " + n + " torches with fire.").withStyle(net.minecraft.ChatFormatting.GOLD), true);
+            return true;
+        }
+        net.minecraft.resources.ResourceLocation torch = new net.minecraft.resources.ResourceLocation("minecraft", "torch");
+        int made = 0;
+        for (int k = 0; k < 2; k++) {
+            ItemStack m = BotCrafting.craftRecipe(b, torch);
+            if (m == null) { if (k == 0 && BotCrafting.craftRecipe(b, stick) != null && (m = BotCrafting.craftRecipe(b, torch)) != null) made += m.getCount(); break; }
+            made += m.getCount();
+        }
+        if (made == 0) return false;
+        crafted += made;
+        if (o != null) o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(b.label()).append(" made " + made + " torches.").withStyle(net.minecraft.ChatFormatting.GRAY), true);
+        return true;
     }
 
     /** Where its torches are: -1 the off hand, a bag slot, or -2 for none. */

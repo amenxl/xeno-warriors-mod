@@ -174,7 +174,15 @@ public final class StorySides {
             for (UUID id : s.members) { ServerPlayer m = server.getPlayerList().getPlayer(id); if (m != null && m.isAlive()) ps.add(m); }
             ServerPlayer host = server.getPlayerList().getPlayer(s.host);
             if (ps.isEmpty() || host == null || host.level().getGameTime() > s.until) { end(server, s, false); continue; }
-            s.alive.removeIf(id -> { Entity en = ((ServerLevel) host.level()).getEntity(id); return en == null || !en.isAlive(); });
+            // foes that are gone without being beaten (despawned, burned away by day, wandered off out of the loaded
+            // world) or that strayed far from everyone come back near you - so there's always enough left to finish it
+            s.alive.removeIf(id -> {
+                Entity en = ((ServerLevel) host.level()).getEntity(id);
+                boolean far = en != null && en.isAlive() && ps.stream().noneMatch(m -> m.level() == en.level() && m.distanceToSqr(en) < 48 * 48);
+                if (far) en.discard();
+                if (en == null || !en.isAlive() || far) { s.spawned = Math.max(0, s.spawned - 1); respawned++; return true; }
+                return false;
+            });
             if (s.killed >= s.total) { end(server, s, true); continue; }
             while (s.alive.size() < 4 && s.spawned < s.total) {
                 ServerPlayer m = ps.get(host.getRandom().nextInt(ps.size()));
@@ -185,6 +193,16 @@ public final class StorySides {
             }
             for (ServerPlayer m : ps) m.displayClientMessage(Component.literal(objective(m)).withStyle(ChatFormatting.YELLOW), true);
         }
+    }
+
+    /** (Tests) foes brought back because they were gone without being beaten. */
+    public static int respawned;
+
+    /** (Tests) the side mission's foes vanish without being beaten (as if they'd despawned). */
+    public static void vanishForTest(ServerPlayer p) {
+        Side s = sideOf(p);
+        if (s == null) return;
+        for (UUID id : s.alive) { Entity en = p.serverLevel().getEntity(id); if (en != null) en.discard(); }
     }
 
     private static Mob spawnNear(ServerPlayer p, Side s) {
