@@ -570,6 +570,8 @@ public final class ModNetwork {
                 .encoder(PartyGamePacket::encode).decoder(PartyGamePacket::decode).consumerMainThread(PartyGamePacket::handle).add();
         CHANNEL.messageBuilder(PartyGameResultPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(PartyGameResultPacket::encode).decoder(PartyGameResultPacket::decode).consumerMainThread(PartyGameResultPacket::handle).add();
+        CHANNEL.messageBuilder(BeatboxFansPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(BeatboxFansPacket::encode).decoder(BeatboxFansPacket::decode).consumerMainThread(BeatboxFansPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

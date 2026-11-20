@@ -37,6 +37,25 @@ public final class GarryBeatbox {
 
     private GarryBeatbox() {}
 
+    /** Your own characters (players / bots) close to Garry and Stevie - they dance too (you.BeatboxFans); and the ones at a party's beatbox now. */
+    private static final java.util.Set<Integer> FANS = com.xenowarriors.client.ClientReset.perLifeSet(new java.util.HashSet<>()),
+            GROOVING = com.xenowarriors.client.ClientReset.perLifeSet(new java.util.HashSet<>());
+    /** (Tests) frames a fan was drawn dancing. */
+    public static int fanDances;
+
+    public static void fans(int[] fans, int[] grooving) {
+        FANS.clear(); for (int i : fans) FANS.add(i);
+        GROOVING.clear(); for (int i : grooving) GROOVING.add(i);
+    }
+
+    /** One of your own characters who dances when Garry or Stevie beatboxes. */
+    private static boolean fan(Player p) { return FANS.contains(p.getId()) && type(p) == CharacterType.YOU; }
+
+    /** A dancer at Garry's beatbox: Stevie, Mikiko, Kaeru - and fans. */
+    private static boolean dancer(Player p, CharacterType ct) {
+        return ct == CharacterType.STEVIE || ct == CharacterType.MIKIKO || ct == CharacterType.KAERU || fan(p);
+    }
+
     /** Whose part they play (a made character borrowing an idle plays that character's). */
     private static CharacterType type(Player p) {
         return IdleBorrow.idleType(p);
@@ -91,7 +110,7 @@ public final class GarryBeatbox {
         STILL.keySet().removeIf(id -> mc.level.getEntity(id) == null);
         for (AbstractClientPlayer p : com.xenowarriors.client.bot.BotAvatars.players(mc.level)) {
             CharacterType t = type(p);
-            if (t != CharacterType.GARRY && t != CharacterType.STEVIE && t != CharacterType.MIKIKO && t != CharacterType.KAERU) { STILL.remove(p.getId()); continue; }
+            if (t != CharacterType.GARRY && !dancer(p, t)) { STILL.remove(p.getId()); continue; }
             int[] s = STILL.computeIfAbsent(p.getId(), k -> new int[2]);
             if (calm(p)) s[0]++;
             else { if (s[0] > 0) s[1] = (int) ((mc.level.getGameTime() / 20) & 0xFFFF); s[0] = 0; }
@@ -238,10 +257,17 @@ public final class GarryBeatbox {
             m.hat.copyFrom(m.head);
             return;
         }
-        if (ct != CharacterType.STEVIE && ct != CharacterType.MIKIKO && ct != CharacterType.KAERU) return;
+        if (!dancer(p, ct)) return;
         if (!(p instanceof AbstractClientPlayer ap) || !calmish(ap)) return;
         AbstractClientPlayer g = garryNear(p);
-        if (g == null) return;
+        if (g == null) {
+            if (fan(p) && GROOVING.contains(p.getId())) {                    // a party's beatbox (Garry / Stevie bots): on its beat
+                float t = p.tickCount + pt;
+                dance(m, p, t, sm(STILL.get(p.getId())[0] / 10F));
+                fanDances++;
+            }
+            return;
+        }
         float t = time(g, pt);
         float w = sm((t - MIC) / 10F);
         if (ct == CharacterType.STEVIE && copier(g) == p) {
@@ -255,6 +281,7 @@ public final class GarryBeatbox {
         }
         if (!beating(g, t)) return;
         dance(m, p, t, w);
+        if (fan(p)) fanDances++;
     }
 
     /** Is someone of this character within r blocks? */
@@ -277,10 +304,10 @@ public final class GarryBeatbox {
             if (s != null && t >= CALM && t < RESUME) return "annoyed";
             return (int) t / 24 % 3 == 0 ? "grin" : "determined";
         }
-        if (ct != CharacterType.STEVIE && ct != CharacterType.MIKIKO && ct != CharacterType.KAERU) return null;
+        if (!dancer(p, ct)) return null;
         if (!(p instanceof AbstractClientPlayer ap) || !calmish(ap)) return null;
         AbstractClientPlayer g = garryNear(p);
-        if (g == null) return null;
+        if (g == null) return fan(p) && GROOVING.contains(p.getId()) ? ((p.tickCount / 30) % 2 == 0 ? "laugh" : "excited") : null;
         float t = time(g, pt);
         if (ct == CharacterType.STEVIE && copier(g) == p) {
             if (t >= COPY && t < CAUGHT) return "smirk";

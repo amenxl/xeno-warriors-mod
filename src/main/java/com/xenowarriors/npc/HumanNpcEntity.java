@@ -390,7 +390,8 @@ public class HumanNpcEntity extends PathfinderMob {
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!level().isClientSide && raider() && tickCount % 100 == 50 && !SkyHaterRaids.listed(getUUID())) { discard(); return; }   // (its raid is over)
+        if (!level().isClientSide && raider() && tickCount % 100 == 50 && !SkyHaterRaids.listed(getUUID())
+                && (!com.xenowarriors.corrupted.CorruptedSoulEntity.mission(this) || com.xenowarriors.story.StorySides.stray(this))) { discard(); return; }   // (its raid is over - a mission's Sky Haters stay: their mission sees to them)
         if (!level().isClientSide && defender() && tickCount % 100 == 70) {            // (the Distortion's gone: home they go after a while)
             boolean any = !level().getEntitiesOfClass(com.xenowarriors.s3.DistortionEntity.class, getBoundingBox().inflate(64)).isEmpty();
             noDistortion = any ? 0 : noDistortion + 1;

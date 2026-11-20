@@ -301,6 +301,18 @@ public final class BotPartyTime {
 
     /** (Tests) */
     public static boolean djForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt != null && pt.dj != null; }
+    /** Where parties are beatboxing right now (Garry / Stevie, or the beat under a rap battle - no song on), in this level. */
+    public static List<BlockPos> beatboxing(net.minecraft.server.level.ServerLevel l) {
+        List<BlockPos> out = new ArrayList<>();
+        for (var en : PARTIES.entrySet()) {
+            ServerPlayer o = l.getServer().getPlayerList().getPlayer(en.getKey());
+            Party pt = en.getValue();
+            if (o == null || o.level() != l || pt.center == null || BotJukebox.songOn(o)) continue;
+            if (!pt.beatbox.isEmpty() || pt.battle != null) out.add(pt.center);
+        }
+        return out;
+    }
+
     public static int beatboxersForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt == null ? -1 : pt.beatbox.size(); }
     public static void battleNowForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); if (pt != null) pt.nextLine = 0; }
     public static boolean battlingForTest(ServerPlayer o) { Party pt = PARTIES.get(o.getUUID()); return pt != null && pt.battle != null; }

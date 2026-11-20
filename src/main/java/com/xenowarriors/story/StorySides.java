@@ -147,6 +147,8 @@ public final class StorySides {
     }
 
     public static boolean testActive(ServerPlayer p) { return sideOf(p) != null; }
+    /** (Tests) this character's side mission can be taken again now. */
+    public static void readyNowForTest(ServerPlayer p, String ch) { CompoundTag cd = Story.root(p).getCompound("sideCd"); cd.remove(ch); Story.root(p).put("sideCd", cd); }
 
     /** (Tests) the side mission's counts, and where its foes are. */
     public static String debugForTest(ServerPlayer p) {
@@ -156,6 +158,13 @@ public final class StorySides {
         for (UUID id : s.alive) { Entity en = p.serverLevel().getEntity(id); b.append(' ').append(en == null ? "gone" : en.blockPosition().toShortString() + (en.isAlive() ? "" : "(dead)")); }
         return b.toString();
     }
+    /** A side mission's foe whose mission is over (a restart): it can go. */
+    public static boolean stray(Entity e) {
+        if (!e.getTags().contains(TAG)) return false;
+        try { return !SIDES.containsKey(UUID.fromString(e.getPersistentData().getString("xw_story_side"))); }
+        catch (IllegalArgumentException x) { return true; }
+    }
+
     /** (Tests) foes made for side missions. */
     public static int made;
 

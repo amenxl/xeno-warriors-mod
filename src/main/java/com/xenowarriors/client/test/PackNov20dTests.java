@@ -235,6 +235,25 @@ final class PackNov20dTests {
             if (active) com.xenowarriors.story.StorySides.cancel(p);
             PackTests.clear(p);
         }), 5));
+        // ---- Quiet Strength (Lexy): its Sky Haters stay to be beaten (raid clean-up used to send them off in a couple of seconds)
+        int[] qs = new int[2];
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p);
+            com.xenowarriors.story.StorySides.readyNowForTest(p, "lexy");
+            com.xenowarriors.story.StorySides.talkForTest(p, "lexy"); }), 20));
+        for (int k = 0; k < 6; k++) l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.story.StoryDialogueScreen d) d.testNext(0); }, 8));
+        l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> qs[0] = com.xenowarriors.story.StorySides.respawned); }, 200));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            boolean active = com.xenowarriors.story.StorySides.testActive(p);
+            int out = com.xenowarriors.story.StorySides.testFoes(p).size(), back = com.xenowarriors.story.StorySides.respawned - qs[0];
+            PackTests.check("side mission: Quiet Strength's Sky Haters stay put (none vanished in 10 s)", active && out > 0 && back == 0, "active " + active + " out " + out + " vanished " + back + " " + com.xenowarriors.story.StorySides.debugForTest(p));
+            for (var m : com.xenowarriors.story.StorySides.testFoes(p)) m.hurt(p.damageSources().playerAttack(p), 1000F);
+            qs[1] = out;
+        }), 50));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("side mission: beating them counts", com.xenowarriors.story.StorySides.objective(p) == null || !com.xenowarriors.story.StorySides.objective(p).endsWith(": 0/6"), String.valueOf(com.xenowarriors.story.StorySides.objective(p)));
+            if (com.xenowarriors.story.StorySides.testActive(p)) com.xenowarriors.story.StorySides.cancel(p);
+            PackTests.clear(p);
+        }), 5));
         // ---- parties: more cakes for more guests, barrels of supplies for close bonds, party crashers (beaten in time: double bond)
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p);
@@ -889,6 +908,22 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> { var s = com.xenowarriors.client.you.YouClient.slots.length > 7 ? com.xenowarriors.client.you.YouClient.slots[7] : null;
             if (s != null) mc.setScreen(new com.xenowarriors.client.you.YouLookScreen(7, s, null)); }, 20));
         l.add(new Step("you_outfit_screen", () -> {}, 3));
+        // ---- close to Garry and Stevie (bond 70+): your own character dances when Garry beatboxes
+        int[] bx = new int[3];
+        l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> {
+            com.xenowarriors.party.Bonds.set(p, "garry", 75, 0); com.xenowarriors.party.Bonds.set(p, "stevie", 75, 0);
+            p.getInventory().selected = 0; p.getInventory().setItem(0, ItemStack.EMPTY);
+            PartyBotEntity g = PartyBots.spawn(p, CharacterType.GARRY, null);
+            if (g == null) return;
+            g.moveTo(p.getX() + 2.5, p.getY(), p.getZ() + 1, 90F, 0F); g.setNoAi(true); g.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            bx[0] = g.getId();
+            PackTests.check("beatbox: your character counts as a fan of Garry and Stevie at bond 75", com.xenowarriors.you.BeatboxFans.fan(p), "garry " + com.xenowarriors.party.Bonds.level(p, "garry") + " stevie " + com.xenowarriors.party.Bonds.level(p, "stevie"));
+        }); bx[1] = com.xenowarriors.client.GarryBeatbox.fanDances; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 240));
+        l.add(new Step("you_fan_dance", () -> PackTests.check("beatbox: your character dances to Garry's beatbox", com.xenowarriors.client.GarryBeatbox.fanDances > bx[1],
+                "dances " + (com.xenowarriors.client.GarryBeatbox.fanDances - bx[1]) + " sent " + com.xenowarriors.you.BeatboxFans.sent), 3));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var g = p.serverLevel().getEntity(bx[0]); if (g != null) g.discard();
+            com.xenowarriors.party.Bonds.set(p, "garry", 0, 0); com.xenowarriors.party.Bonds.set(p, "stevie", 0, 0); }), 5));
         l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> {
             var d = new com.xenowarriors.you.YouSlot(); d.name = "Kitsu"; d.look = "";
             com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.LOOK, 7, d);
