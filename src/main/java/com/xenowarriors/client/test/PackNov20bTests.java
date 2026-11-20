@@ -129,5 +129,22 @@ final class PackNov20bTests {
             PackTests.check("story: Persephone in Lexy and Ava in Kyrie", !bots.isEmpty() && !srs.isEmpty(), "bots " + bots.size() + " sr " + srs.size());
         }), 5));
         l.add(new Step(null, () -> { mc.options.hideGui = false; PackTests.server(p -> { PackTests.clear(p); com.xenowarriors.character.Seasons.set(p.server, 3); }); }, 20));
+        // the other ultimates' show: a short cutscene and effects (one of each kind of shot, mid-release)
+        l.add(new Step(null, () -> { UiTest.character(CharacterType.KYRIE); mc.player.setYRot(0); }, 30));
+        int[][] styles = {{com.xenowarriors.skill.UltShow.BURST, 0xB070FF}, {com.xenowarriors.skill.UltShow.SLASH, 0xE03030}, {com.xenowarriors.skill.UltShow.BEAM, 0x30C0FF}, {com.xenowarriors.skill.UltShow.POWER, 0xFFB020}};
+        String[] names = {"burst", "slash", "beam", "power"};
+        for (int i = 0; i < styles.length; i++) {
+            int[] st = styles[i]; String nm = names[i];
+            l.add(new Step(null, () -> com.xenowarriors.client.UltShowClient.testStart(st[0], st[1], "Test " + nm), 6));
+            l.add(new Step("ultshow_" + nm + "_close", () -> {}, 14));
+            l.add(new Step("ultshow_" + nm + "_release", () -> PackTests.check("ultshow: " + nm + " cutscene plays", com.xenowarriors.client.UltShowClient.active() && com.xenowarriors.client.UltimateCutscene.camera(0F) != null, ""), 30));
+            l.add(new Step(null, () -> PackTests.check("ultshow: " + nm + " ends and gives the camera back", !com.xenowarriors.client.UltShowClient.active(), ""), 2));
+        }
+        // a real ultimate fires one
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.husk(p, 0, 4); com.xenowarriors.karma.Karma.add(p, 1000); }), 10));
+        int[] before2 = new int[1];
+        l.add(new Step(null, () -> { before2[0] = com.xenowarriors.client.UltShowClient.started; PackTests.server(p -> com.xenowarriors.skill.SkillManager.useSkill(p, com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT)); }, 12));
+        l.add(new Step("ultshow_kyrie", () -> PackTests.check("ultshow: Kyrie's ultimate plays its show", com.xenowarriors.client.UltShowClient.started > before2[0], "started " + (com.xenowarriors.client.UltShowClient.started - before2[0])), 60));
+        l.add(new Step(null, () -> PackTests.server(p -> PackTests.clear(p)), 10));
     }
 }

@@ -229,6 +229,7 @@ public final class SkillManager {
                 com.xenowarriors.XwFx.send(player.serverLevel(), slot == ULTIMATE_SLOT ? com.xenowarriors.network.FxPacket.ULTIMATE : com.xenowarriors.network.FxPacket.SKILL,
                         player.getX(), player.getY(), player.getZ(), type.getColor(), slot == ULTIMATE_SLOT ? 6F : 1F);
                 if (!player.isCreative()) Karma.add(player, -cost);
+                if (slot == ULTIMATE_SLOT && !clash) UltShow.play(player, skill, type);       // (a short cutscene and big effects)
                 if (slot == ULTIMATE_SLOT) com.xenowarriors.network.PopupPacket.toParty(player, com.xenowarriors.network.PopupPacket.REQUEST, "Ultimate!", player.getName().getString() + " unleashed " + skill.getName().getString() + "!", "rage");
                 com.xenowarriors.compat.DmzKiTraining.skillUsed(player);       // (DragonMineZ: trains Ki Power)
                 com.xenowarriors.npc.HumanReactions.skillUsed(player);         // (people nearby are amazed)

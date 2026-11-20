@@ -999,6 +999,7 @@ public final class PartyBots {
             b.karma -= cost;
             b.skillReady[slot] = now + Math.max(40, com.xenowarriors.skill.SkillLevels.cooldownFor(b, skill.getId(), skill.getCooldownTicks()));
             com.xenowarriors.skill.SkillLevels.used(b, skill);                    // (its uses level the skill up, like a player's: its character's ability levels)
+            if (slot == com.xenowarriors.skill.SkillManager.ULTIMATE_SLOT) com.xenowarriors.skill.UltShow.bot(b, skill, b.character());   // (its ultimate's effects)
             b.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             Integer gen = com.xenowarriors.network.SkillAnimPacket.GENERIC.get(skill.getId());   // the same body animation a player gets for it
             if (gen != null) ModNetwork.sendToTrackingAndSelf(new com.xenowarriors.network.SkillAnimPacket(f.getId(), gen, !b.onGround()), f);

@@ -556,6 +556,8 @@ public final class ModNetwork {
                 .encoder(StoryDialoguePacket::encode).decoder(StoryDialoguePacket::decode).consumerMainThread(StoryDialoguePacket::handle).add();
         CHANNEL.messageBuilder(StoryActionPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(StoryActionPacket::encode).decoder(StoryActionPacket::decode).consumerMainThread(StoryActionPacket::handle).add();
+        CHANNEL.messageBuilder(UltShowPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(UltShowPacket::encode).decoder(UltShowPacket::decode).consumerMainThread(UltShowPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {
