@@ -74,7 +74,7 @@ public class SkillLoadoutScreen extends Screen {
             int x = slotsLeft() + s * (BOX + 8), y = 40;
             boolean ult = s == SkillManager.ULTIMATE_SLOT;
             Skill sk = SkillPool.inSlot(minecraft.player, ClientSkillState.fullLoadout(), s);
-            int border = ult ? 0xFFFFD24A : s == selected ? 0xFFFFFFFF : type.getColor();
+            int border = ult ? 0xFFFFD24A : s == selected ? 0xFFFFFFFF : com.xenowarriors.client.ClientCharacterData.screenColor(type);
             g.fill(x - 2, y - 2, x + BOX + 2, y + BOX + 2, border);
             g.fill(x, y, x + BOX, y + BOX, 0xEE101018);
             if (sk != null && !SkillIcons.draw(g, sk.getId(), x + 3, y + 1, BOX - 12)) g.drawCenteredString(font, shortName(sk), x + BOX / 2, y + 9, 0xFFFFFF);
@@ -107,7 +107,7 @@ public class SkillLoadoutScreen extends Screen {
             int at = indexOf(loadout, i);
             boolean over = mx >= x && mx < x + CARD_W && my >= y && my < y + CARD_H;
             g.fill(x, y, x + CARD_W, y + CARD_H, at >= 0 ? 0xCC23402A : over && open ? 0xCC30304A : 0xCC1A1A24);
-            g.fill(x, y, x + 3, y + CARD_H, open ? type.getColor() : 0xFF555555);
+            g.fill(x, y, x + 3, y + CARD_H, open ? com.xenowarriors.client.ClientCharacterData.screenColor(type) : 0xFF555555);
             boolean pic = seasonOk && SkillIcons.get(e.skill().getId()) != null;
             if (pic) { SkillIcons.draw(g, e.skill().getId(), x + 5, y + 4, 32); if (!open) g.fill(x + 5, y + 4, x + 37, y + 36, 0xA0101018); }
             int tx = pic ? x + 41 : x + 8;

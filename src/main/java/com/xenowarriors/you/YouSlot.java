@@ -41,6 +41,8 @@ public final class YouSlot {
     /** With DragonMineZ: drawn as its DragonMineZ character (race, hair, body and colours from DragonMineZ's own
      *  customization) instead of our look. Each character keeps its own DragonMineZ character (DmzPerCharacter). */
     public boolean dmzLook;
+    /** Its own colour (menus, HUD, name), picked in the creator or on the slots screen; -1 = its element's colour. */
+    public int colour = -1;
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -91,6 +93,7 @@ public final class YouSlot {
         t.putString("ka", ka);
         t.putBoolean("ka_rolled", kaRolled);
         t.putBoolean("dmz_look", dmzLook);
+        t.putInt("colour", colour);
         return t;
     }
 
@@ -113,6 +116,7 @@ public final class YouSlot {
         s.ka = t.getString("ka");
         s.kaRolled = t.getBoolean("ka_rolled");
         s.dmzLook = t.getBoolean("dmz_look");
+        s.colour = t.contains("colour") ? validColour(t.getInt("colour")) : -1;     // (characters made before: their element's)
         return s;
     }
 
@@ -133,6 +137,7 @@ public final class YouSlot {
         buf.writeUtf(ka, 16);
         buf.writeBoolean(kaRolled);
         buf.writeBoolean(dmzLook);
+        buf.writeInt(colour);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -154,13 +159,17 @@ public final class YouSlot {
         s.ka = buf.readUtf(16);
         s.kaRolled = buf.readBoolean();
         s.dmzLook = buf.readBoolean();
+        s.colour = validColour(buf.readInt());
         return s;
     }
 
     public YouSlot copy() { return load(save()); }
 
-    /** The character's colour on screens and the HUD: their element's. */
-    public int color() { return element.color; }
+    /** The character's colour on screens and the HUD: the one picked for it, otherwise their element's. */
+    public int color() { return colour >= 0 ? colour : element.color; }
+
+    /** -1 (the element's) or an RGB colour. */
+    public static int validColour(int c) { return c < 0 ? -1 : c & 0xFFFFFF; }
 
     /** Names: letters, digits, spaces and a few marks, 2-16 characters. */
     public static boolean validName(String n) {

@@ -118,17 +118,17 @@ public class PartyScreen extends Screen {
             }
             PartySyncPacket.Member m = rows.get(i);
             CharacterType t = CharacterType.values()[Math.max(0, Math.min(CharacterType.values().length - 1, m.type()))];
-            g.fill(sx + 4, sy, sx + CW - 4, sy + rowH - 3, 0x40FFFFFF & (t.getColor() | 0xFF000000));
+            g.fill(sx + 4, sy, sx + CW - 4, sy + rowH - 3, 0x40FFFFFF & (com.xenowarriors.client.ClientCharacterData.screenColor(t, m.id()) | 0xFF000000));
             String sub = (m.bot() ? "BOT • " : "") + t.getDisplayName().getString() + (m.knockedOut() ? " • DOWN" : "");
             if (compact) {                                                           // one line: name, then what they are
                 String name = m.name() + (m.leader() ? " ★" : "");
                 int room = CW - 130 - 6;
                 if (font.width(name) > room) name = font.plainSubstrByWidth(name, room - font.width("…")) + "…";
-                g.drawString(font, name, sx + 10, sy + 4, t.getColor());
+                g.drawString(font, name, sx + 10, sy + 4, com.xenowarriors.client.ClientCharacterData.screenColor(t, m.id()));
                 String small = font.plainSubstrByWidth(sub, Math.max(0, room - font.width(name) - 6));
                 if (!small.isEmpty()) g.drawString(font, small, sx + 16 + font.width(name), sy + 4, m.knockedOut() ? 0xFF6060 : 0x888888, false);
             } else {
-                g.drawString(font, m.name() + (m.leader() ? " ★" : ""), sx + 10, sy + 3, t.getColor());
+                g.drawString(font, m.name() + (m.leader() ? " ★" : ""), sx + 10, sy + 3, com.xenowarriors.client.ClientCharacterData.screenColor(t, m.id()));
                 g.drawString(font, sub, sx + 10, sy + 13, m.knockedOut() ? 0xFF6060 : 0xAAAAAA, false);
             }
         }

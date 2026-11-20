@@ -36,7 +36,7 @@ public final class YouSlots {
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
             p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
@@ -56,6 +56,7 @@ public final class YouSlots {
                 s.form = data.race == Race.SKYLANDER ? (data.form == YouSlot.FORM_SOLAR ? YouSlot.FORM_SOLAR : YouSlot.FORM_LUNAR) : YouSlot.FORM_NONE;
                 s.humanForm = false;
                 s.skin = YouSkins.usable(p.server, data.skin) ? data.skin : "";
+                s.colour = YouSlot.validColour(data.colour);
                 d.charStats.remove(PlayerCharacter.key(CharacterType.YOU, slot));
                 d.loadouts.remove(PlayerCharacter.key(CharacterType.YOU, slot));
                 forgetSaves(p, PlayerCharacter.key(CharacterType.YOU, slot));
@@ -69,6 +70,14 @@ public final class YouSlots {
                 if (!YouSkins.usable(p.server, data.skin)) { p.displayClientMessage(Component.literal("That skin couldn't be used").withStyle(ChatFormatting.RED), true); return; }
                 s.skin = data.skin;
                 p.displayClientMessage(Component.literal(s.name + " now wears " + YouSkins.describe(s.skin) + ".").withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
+            case YouActionPacket.COLOUR -> {
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null) return;
+                s.colour = YouSlot.validColour(data.colour);
+                p.displayClientMessage(Component.literal(s.name + (s.colour < 0 ? " has their element's colour again" : " has a new colour")).withStyle(st -> st.withColor(s.color())), true);
                 CharacterManager.syncToTrackingAndSelf(p);
                 send(p, true);
             }

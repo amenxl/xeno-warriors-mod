@@ -40,7 +40,7 @@ public class LevelHud implements IGuiOverlay {
         CharacterType type = ClientCharacterData.getLocal();
         if (mc.options.hideGui || mc.player == null || type == CharacterType.NONE || mc.player.isSpectator()) return;
         Font font = mc.font;
-        int color = type.getColor() | 0xFF000000;
+        int color = com.xenowarriors.client.ClientCharacterData.screenColor(type) | 0xFF000000;
         String lv = String.valueOf(Math.max(1, level));
         int w = Math.max(30, font.width("Lv " + lv) + 8);
         boolean offhand = !mc.player.getOffhandItem().isEmpty() && mc.options.mainHand().get() == net.minecraft.world.entity.HumanoidArm.RIGHT;

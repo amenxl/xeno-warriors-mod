@@ -11,7 +11,7 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 
 import java.util.List;
 
-/** The character creator: your Minecraft skin, a name, a race (with what it means), an element, and Lunar/Solar for Skylanders. */
+/** The character creator: your Minecraft skin, a name, a race (with what it means), an element, Lunar/Solar for Skylanders, and its colour (its menus, HUD and name). */
 public class YouCreatorScreen extends JourneyScreen {
     private final int slot;
     private String name = "";
@@ -20,6 +20,7 @@ public class YouCreatorScreen extends JourneyScreen {
     private int form = YouSlot.FORM_LUNAR;
     private String error = "";
     private String skin = "";
+    private int colour = -1;          // -1 = its element's
 
     public YouCreatorScreen(int slot) { super("Create your warrior"); this.slot = slot; }
 
@@ -29,7 +30,7 @@ public class YouCreatorScreen extends JourneyScreen {
     protected void draw(GuiGraphics g) {
         sc(g, "CREATE YOUR WARRIOR", 14, 8, 1.3F, 0xFFFFFF);
         sc(g, "Slot " + (slot + 1), VW - 14 - font.width("Slot " + (slot + 1)) * 0.7F, 12, 0.7F, 0x7A8898);
-        int col = element.color;
+        int col = colour < 0 ? element.color : colour;
         // the preview: you, in your own skin
         g.fill(14, 26, 104, 170, 0xE0101820); box(g, 14, 26, 104, 170, 0xFF000000 | col);
         var p = minecraft.player;
@@ -43,6 +44,14 @@ public class YouCreatorScreen extends JourneyScreen {
             catch (Throwable ignored) {}
             finally { YouLooks.previewSkin = null; com.xenowarriors.client.ClientCharacterData.endPreview(); g.disableScissor(); }
         }
+        // its colour (a bar over the preview): menus, HUD and name in it
+        boolean ch = hover(17, 29, 101, 41);
+        g.fill(17, 29, 101, 41, 0xFF000000 | col); box(g, 17, 29, 101, 41, ch ? 0xFFFFFFFF : 0xFF000000);
+        String cl = colour < 0 ? "COLOUR: ELEMENT'S" : "COLOUR";
+        int lum = ((col >> 16) & 255) * 3 + ((col >> 8) & 255) * 6 + (col & 255);
+        sc(g, cl, 59 - font.width(cl) * 0.55F / 2F, 33, 0.55F, lum > 1400 ? 0x101418 : 0xFFFFFF);
+        area(17, 29, 101, 41, () -> minecraft.setScreen(new YouColourScreen(name.isBlank() ? "your warrior" : name.trim(), colour, element.color, this,
+                c -> { colour = c; minecraft.setScreen(this); })));
         // its skin
         String sk = com.xenowarriors.you.YouSkins.describe(skin);
         button(g, 14, 172, 104, 184, "SKIN: " + (sk.length() > 14 ? sk.substring(0, 13) + "." : sk), ACCENT, true,
@@ -115,7 +124,7 @@ public class YouCreatorScreen extends JourneyScreen {
         if (!error.isEmpty()) sc(g, error, 14, VH - 16, 0.6F, 0xFF6060);
         boolean can = YouSlot.validName(name.trim());
         button(g, VW - 150, VH - 22, VW - 80, VH - 6, "CREATE", 0x60D080, can, () -> {
-            YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE; s.skin = skin;
+            YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE; s.skin = skin; s.colour = colour;
             ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.CREATE, slot, s));
         });
         button(g, VW - 70, VH - 22, VW - 10, VH - 6, "BACK", 0x9AA8B8, true, () -> minecraft.setScreen(new YouSlotsScreen()));
@@ -132,7 +141,7 @@ public class YouCreatorScreen extends JourneyScreen {
         if (key == 259 && !name.isEmpty()) { name = name.substring(0, name.length() - 1); return true; }   // backspace
         if (key == 257 || key == 335) {                                                                      // enter
             if (YouSlot.validName(name.trim())) {
-                YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE; s.skin = skin;
+                YouSlot s = new YouSlot(); s.name = name.trim(); s.race = race; s.element = element; s.form = race == Race.SKYLANDER ? form : YouSlot.FORM_NONE; s.skin = skin; s.colour = colour;
                 ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.CREATE, slot, s));
             } else error = "Names are 2-16 letters, numbers, spaces, ' - or _";
             return true;

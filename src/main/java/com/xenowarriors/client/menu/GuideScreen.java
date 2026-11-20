@@ -202,7 +202,7 @@ public class GuideScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         CharacterType type = minecraft.player == null ? CharacterType.NONE : ClientCharacterData.getLocal();
-        int col = type == CharacterType.NONE ? 0x9A7AE0 : type.getColor() & 0xFFFFFF;
+        int col = type == CharacterType.NONE ? 0x9A7AE0 : com.xenowarriors.client.ClientCharacterData.screenColor(type) & 0xFFFFFF;
         g.fillGradient(0, 0, width, height, 0xF0101016, 0xF0060608);
         float s = scale(); float[] o = origin();
         double vx = (mx - o[0]) / s, vy = (my - o[1]) / s;

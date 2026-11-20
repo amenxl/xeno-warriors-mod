@@ -178,7 +178,7 @@ public class MainMenuScreen extends Screen {
     private void renderMenu(GuiGraphics g, int mouseX, int mouseY, float pt) {
         Minecraft mc = Minecraft.getInstance();
         CharacterType type = ClientCharacterData.getLocal();
-        int col = type == CharacterType.NONE ? 0x8090A0 : type.getColor() & 0xFFFFFF;
+        int col = type == CharacterType.NONE ? 0x8090A0 : com.xenowarriors.client.ClientCharacterData.screenColor(type) & 0xFFFFFF;
         float r = ((col >> 16) & 255) / 255F, gr = ((col >> 8) & 255) / 255F, b = (col & 255) / 255F;
         float lr = mix(r, 1F, 0.45F), lg = mix(gr, 1F, 0.45F), lb = mix(b, 1F, 0.45F);   // light tint
         float t = (Util.getMillis() - opened) / 1000F, in = ease(Mth.clamp(t / 0.35F, 0F, 1F));

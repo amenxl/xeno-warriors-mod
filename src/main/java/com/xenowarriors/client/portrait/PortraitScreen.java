@@ -44,7 +44,7 @@ public class PortraitScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float pt) {
         Minecraft mc = Minecraft.getInstance();
-        int w = width, h = height, c = type.getColor() & 0xFFFFFF;
+        int w = width, h = height, c = com.xenowarriors.client.ClientCharacterData.screenColor(type) & 0xFFFFFF;
         float r = ((c >> 16) & 255) / 255F, gr = ((c >> 8) & 255) / 255F, b = (c & 255) / 255F;
         float cx = w * 0.62F, feet = h * 0.88F, scale = h * 0.36F;
         float lx = w * 0.18F, ly = -h * 0.15F;                     // where the key light comes from (top left)

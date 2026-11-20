@@ -38,10 +38,21 @@ public final class ClientCharacterData {
         return s != null ? s.name : get(player).getDisplayName().getString();
     }
 
-    /** The character's colour (a You character's element colour). */
+    /** The character's colour (a You character's own: the one picked for it, or its element's). */
     public static int color(Player player) {
         var s = you(player);
         return s != null ? 0xFF000000 | s.color() : get(player).getColor();
+    }
+
+    /** A character's colour on screens: for the You character, yours (the colour picked for it). */
+    public static int screenColor(CharacterType t) { return screenColor(t, null); }
+
+    /** The same for someone in particular (a party member: their You character's colour if they're in view). */
+    public static int screenColor(CharacterType t, UUID who) {
+        if (t != CharacterType.YOU) return t.getColor();
+        Minecraft mc = Minecraft.getInstance();
+        Player p = mc.level == null ? null : who == null ? mc.player : mc.level.getPlayerByUUID(who);
+        return p != null ? color(p) : t.getColor();
     }
     public static final int RECARNET_1 = 0, ORIGINS_1 = 1, ORIGINS_2 = 2, SEASON_3 = 3, SEASON_3_TIED = 4;
 

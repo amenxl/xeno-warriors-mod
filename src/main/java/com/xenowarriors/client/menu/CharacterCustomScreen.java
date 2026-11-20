@@ -354,7 +354,7 @@ public class CharacterCustomScreen extends Screen {
     private void renderMenu(GuiGraphics g, int mx, int my, float pt) {
         Minecraft mc = Minecraft.getInstance();
         CharacterType type = type();
-        int col = type == CharacterType.NONE ? 0x8090A0 : type.getColor() & 0xFFFFFF;
+        int col = type == CharacterType.NONE ? 0x8090A0 : com.xenowarriors.client.ClientCharacterData.screenColor(type) & 0xFFFFFF;
         float r = ((col >> 16) & 255) / 255F, gr = ((col >> 8) & 255) / 255F, b = (col & 255) / 255F;
         int w = width, h = height;
         float us = Math.max(1F, h / 240F);

@@ -97,7 +97,7 @@ public abstract class JourneyScreen extends Screen {
     public static void face(GuiGraphics g, CharacterType t, int x, int y, int size) {
         if (t == CharacterType.NONE) { g.fill(x, y, x + size, y + size, 0xFF303038); return; }
         var mc = net.minecraft.client.Minecraft.getInstance();
-        int col = t.getColor() & 0xFFFFFF;
+        int col = com.xenowarriors.client.ClientCharacterData.screenColor(t) & 0xFFFFFF;
         g.fillGradient(x, y, x + size, y + size, 0xFF000000 | mix(col, 0.55F), 0xFF000000 | mix(col, 0.2F));
         var e = mc.player;
         if (e == null) return;

@@ -59,7 +59,7 @@ public class PartyHud implements IGuiOverlay {
             if (n > 0 && n % perCol == 0) { x += 108; y = y0; }                 // (the next column)
             n++;
             CharacterType type = CharacterType.values()[Mth.clamp(m.type(), 0, CharacterType.values().length - 1)];
-            int color = type == CharacterType.NONE ? 0xFFFFFFFF : type.getColor() | 0xFF000000;
+            int color = type == CharacterType.NONE ? 0xFFFFFFFF : com.xenowarriors.client.ClientCharacterData.screenColor(type, m.id()) | 0xFF000000;
             int w = 100, bw = w - 3 - 36;                                   // (the bars, their numbers to the right)
             g.fill(x - 2, y - 2, x + w + 2, y + frameB, 0x80101018);
             g.fill(x - 2, y - 2, x, y + frameB, color);

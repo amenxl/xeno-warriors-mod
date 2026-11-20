@@ -61,7 +61,7 @@ public final class ChargePose {
     private static void aura(Minecraft mc, AbstractClientPlayer p, int t) {
         boolean mikiko = ClientCharacterData.get(p) == CharacterType.MIKIKO;
         var r = p.getRandom();
-        int rgb = ClientCharacterData.get(p).getColor();                  // everyone's aura in their own Karma color
+        int rgb = ClientCharacterData.color(p);                  // everyone's aura in their own Karma color
         Vector3f k = new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F);
         Vector3f c1 = mikiko ? new Vector3f(1F, 0.35F, 0.1F) : k;
         Vector3f c2 = mikiko ? new Vector3f(1F, 0.75F, 0.2F) : new Vector3f(Math.min(1F, k.x + 0.3F), Math.min(1F, k.y + 0.3F), Math.min(1F, k.z + 0.3F));

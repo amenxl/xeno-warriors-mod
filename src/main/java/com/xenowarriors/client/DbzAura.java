@@ -74,12 +74,12 @@ public final class DbzAura {
             float charge = ChargePose.weight(p), focus = KarmaFocusClient.weight(p);
             got = true;
             if (charge > 0.01F) {
-                rgb = color(t);
+                rgb = t == CharacterType.YOU ? ClientCharacterData.color(p) & 0xFFFFFF : color(t);   // (a You character: its own colour)
                 strength = charge;
                 size = 0.85F + 0.15F * charge + 0.03F * Mth.sin(age * 0.9F);
                 speed = 0.75F;
             } else if (focus > 0.01F) {
-                rgb = color(t);
+                rgb = t == CharacterType.YOU ? ClientCharacterData.color(p) & 0xFFFFFF : color(t);   // (a You character: its own colour)
                 strength = 0.6F * focus;
                 size = 0.8F;
                 speed = 0.35F;

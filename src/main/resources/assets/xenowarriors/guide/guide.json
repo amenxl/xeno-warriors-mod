@@ -303,6 +303,10 @@
           "text": "Each character you make can have its own skin (Character Select > Your own > SKIN, or the SKIN button in the creator):\n- Your own skin (as before).\n- A player's skin: type a Minecraft name. Each game looks it up online.\n- A skin file: put a 64x64 skin PNG in the xenowarriors/skins folder of your game folder (OPEN FOLDER opens it), REFRESH, and click it. The server keeps a copy, so friends on a server see it too.\nYou wear that skin playing the character, and so does its bot."
         },
         {
+          "title": "Your own characters' colours",
+          "text": "Each character you make has its own colour: the menus, the HUD (level, skill slots), your name, your party list and your power-up aura are drawn in it.\n- Pick it in the creator: click the COLOUR bar over the preview.\n- Change it later: Character Select > Your own, then click the character's head.\n- Pick a swatch, or any colour from the hue and shade bars. ELEMENT'S COLOUR goes back to its element's (what characters made before had)."
+        },
+        {
           "title": "Your own characters with DragonMineZ's look",
           "text": "With DragonMineZ installed, each character you make can look like its DragonMineZ character instead (Character Select > Your own > LOOK: XW / LOOK: DMZ).\n- Every character has its own DragonMineZ character (race, stats, forms...), so each one is styled on its own.\n- On the character you're playing, STYLE IN DMZ opens DragonMineZ's customization (hair, body, colours). If it has no DragonMineZ character yet, its race picker comes first.\n- LOOK: XW switches back to its Xeno Warriors look (its own skin, race and element)."
         },

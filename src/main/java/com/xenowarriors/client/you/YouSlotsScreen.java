@@ -15,7 +15,7 @@ public class YouSlotsScreen extends JourneyScreen {
     @Override
     protected void draw(GuiGraphics g) {
         sc(g, "YOUR OWN WARRIORS", 14, 10, 1.4F, 0xFFFFFF);
-        sc(g, "Warriors made with your own skin. Pick a name, race and element - each keeps its own level and skills.", 14, 26, 0.65F, 0x9AA8B8);
+        sc(g, "Warriors with your own skin - each keeps its own level and skills. Click a head to change its colour.", 14, 26, 0.65F, 0x9AA8B8);
         int cw = 72, ch = 84, gx = 14, gy = 40;
         for (int slot = 0; slot < YouSlot.SLOTS; slot++) {
             final int i = slot;
@@ -29,6 +29,14 @@ public class YouSlotsScreen extends JourneyScreen {
             sc(g, "SLOT " + (i + 1), x + 4, y + 3, 0.55F, 0x7A8898);
             if (has) {
                 face(g, x + cw / 2 - 14, y + 11, 28, col, s.skin);
+                // its colour: click the head to change it (a little swatch in the corner says so)
+                g.fill(x + cw / 2 + 9, y + 34, x + cw / 2 + 15, y + 40, 0xFF000000 | col); box(g, x + cw / 2 + 8, y + 33, x + cw / 2 + 16, y + 41, 0xFFFFFFFF);
+                if (hover(x + cw / 2 - 14, y + 11, x + cw / 2 + 16, y + 41)) box(g, x + cw / 2 - 15, y + 10, x + cw / 2 + 15, y + 40, 0xFFFFFFFF);
+                area(x + cw / 2 - 14, y + 11, x + cw / 2 + 16, y + 41, () -> minecraft.setScreen(new YouColourScreen(s.name, s.colour, s.element.color, this, c -> {
+                    YouSlot d = new YouSlot(); d.name = s.name; d.colour = c;
+                    ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.COLOUR, i, d));
+                    minecraft.setScreen(this);
+                })));
                 float k = Math.min(0.8F, (cw - 6) / (float) Math.max(1, font.width(s.name)) * 0.8F);
                 sc(g, s.name, x + cw / 2F - font.width(s.name) * k / 2F, y + 41, k, 0xFFFFFF);
                 String sub = s.race.title + " • " + s.element.title();

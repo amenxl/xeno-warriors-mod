@@ -179,7 +179,7 @@ public class PetsScreen extends Screen {
 
     private void renderMenu(GuiGraphics g, int mx, int my, float pt) {
         CharacterType type = ClientCharacterData.getLocal();
-        int col = type == CharacterType.NONE ? 0x8090A0 : type.getColor() & 0xFFFFFF;
+        int col = type == CharacterType.NONE ? 0x8090A0 : com.xenowarriors.client.ClientCharacterData.screenColor(type) & 0xFFFFFF;
         g.fillGradient(0, 0, width, height, 0xF0101016, 0xF0060608);
         float s = scale();
         float[] o = origin();

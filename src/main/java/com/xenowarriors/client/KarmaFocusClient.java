@@ -77,7 +77,7 @@ public final class KarmaFocusClient {
     private static void aura(Minecraft mc, AbstractClientPlayer p, float t) {
         // (a steady glow: two motes every tick)
         boolean mikiko = ClientCharacterData.get(p) == CharacterType.MIKIKO;
-        int rgb = ClientCharacterData.get(p).getColor();
+        int rgb = ClientCharacterData.color(p);
         Vector3f c = mikiko ? new Vector3f(1F, 0.4F, 0.15F) : new Vector3f(((rgb >> 16) & 255) / 255F, ((rgb >> 8) & 255) / 255F, (rgb & 255) / 255F);
         // (no dust motes any more: the Dragon Ball aura shell - DbzAura - shows the focus)
     }
