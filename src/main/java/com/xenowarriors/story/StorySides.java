@@ -194,6 +194,7 @@ public final class StorySides {
         int y = l.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         if (Math.abs(y - p.getY()) > 12) y = (int) p.getY();
         StoryDefs.Spawn sp = new StoryDefs.Spawn(s.def.e(), 1, false, null, 0F, false);
+        if (StoryRun.corrupted(s.def.e())) StoryRun.nightFor(p.server);                    // (C-souls: it's night first)
         Mob m = StoryRun.makeFoe(l, sp, new BlockPos(x, y, z));
         if (m == null) return null;
         m.moveTo(x + 0.5, y, z + 0.5, p.getRandom().nextFloat() * 360F, 0F);

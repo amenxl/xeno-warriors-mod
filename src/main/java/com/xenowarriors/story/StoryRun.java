@@ -410,6 +410,7 @@ public final class StoryRun {
         ServerLevel l = world(s);
         if (st == null || l == null || st.waves().isEmpty()) return;
         List<StoryDefs.Spawn> w = st.waves().get(Math.min(r.wave, st.waves().size() - 1));
+        for (StoryDefs.Spawn sp : w) if (corrupted(sp.e())) { nightFor(s); break; }       // (C-souls: it's night first)
         List<ServerPlayer> ps = players(s, r);
         float dmz = com.xenowarriors.compat.DmzScaling.partyScale(ps);
         dmz = 1F + (dmz - 1F) * 0.8F;
@@ -428,6 +429,24 @@ public final class StoryRun {
                 if (sp.boss() && sp.escape() > 0) r.escapes.put(m.getUUID(), sp.escape());
             }
         }
+    }
+
+    /** A C-soul or other corrupted foe (they fade, sink or are cleansed in daylight). */
+    public static boolean corrupted(String e) {
+        return e != null && (e.contains("soul") || e.contains("corrupted"));
+    }
+
+    /**
+     * Before a mission's C-souls show up it turns night (the world's clock - the story's places and the overworld
+     * share it), so they don't fade in the sun. Missions' C-souls also stand daylight now (MISSION, see CorruptedSoulEntity).
+     */
+    public static void nightFor(MinecraftServer s) {
+        ServerLevel ow = s.overworld();
+        long t = ow.getDayTime(), day = Math.floorMod(t, 24000L);
+        if (day >= 13000L && day < 23000L) return;                                     // (night already)
+        ow.setDayTime(t - day + (day >= 23000L ? 24000L : 0L) + 13500L);               // (tonight - or the next one, past dawn)
+        for (ServerPlayer p : s.getPlayerList().getPlayers()) if (Story.active(p))
+            p.displayClientMessage(Component.literal("Night falls...").withStyle(ChatFormatting.DARK_PURPLE), true);
     }
 
     /** One of the story's enemies (a side mission's too), by its code (see the story JSON files). */
@@ -471,6 +490,7 @@ public final class StoryRun {
             XenoWarriors.LOGGER.warn("Story: couldn't make {}", e, x);
         }
         if (!(en instanceof Mob m)) { if (en != null) en.discard(); return null; }
+        m.getPersistentData().putBoolean(com.xenowarriors.corrupted.CorruptedSoulEntity.MISSION, true);   // (a mission's: daylight doesn't send it away)
         return m;
     }
 

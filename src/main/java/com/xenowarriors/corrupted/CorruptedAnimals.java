@@ -202,7 +202,7 @@ public final class CorruptedAnimals {
         if (!(event.getEntity() instanceof net.minecraft.world.entity.Mob a) || a.level().isClientSide || a.tickCount % 20 != 0
                 || !isCorrupted(a)) return;
         if (!(a instanceof net.minecraft.world.entity.PathfinderMob)) return;
-        if (a.level().isDay() && a.level().canSeeSky(a.blockPosition())) {
+        if (a.level().isDay() && a.level().canSeeSky(a.blockPosition()) && !CorruptedSoulEntity.mission(a)) {   // (a mission's stays)
             if (a instanceof Animal an) cleanse(an);
             else cleanseMonster(a);
             return;

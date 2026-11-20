@@ -37,6 +37,12 @@ import java.util.List;
  * Daylight burns it away.
  */
 public class CorruptedSoulEntity extends Monster {
+    /** Persistent-data flag: summoned by a mission (story / side missions) - stays out in daylight. */
+    public static final String MISSION = "xw_mission_summon";
+
+    /** A mission's corrupted foe: daylight doesn't send it away. */
+    public static boolean mission(net.minecraft.world.entity.Entity e) { return e.getPersistentData().getBoolean(MISSION); }
+
     public CorruptedSoulEntity(EntityType<? extends Monster> type, Level level) {
         super(type, level);
         this.moveControl = new FlyingMoveControl(this, 20, true);
@@ -87,7 +93,7 @@ public class CorruptedSoulEntity extends Monster {
         if (sinking == 0) SoulAltitude.tick(this);
         if (sinking > 0) {
             sinkTick();
-        } else if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition()) && !getPersistentData().getBoolean(com.xenowarriors.s3.DistortionEntity.TAG) && !com.xenowarriors.vr.Vr.inVr(this)) {   // Distortion souls don't fear the sun
+        } else if (tickCount % 10 == 0 && level().isDay() && level().canSeeSky(blockPosition()) && !getPersistentData().getBoolean(com.xenowarriors.s3.DistortionEntity.TAG) && !com.xenowarriors.vr.Vr.inVr(this) && !mission(this)) {   // (nor a mission's)   // Distortion souls don't fear the sun
             sinking = 1;          // daylight: it flees down into the ground before it fades away
             playSound(SoundEvents.SOUL_ESCAPE, 1F, 0.6F);
         }

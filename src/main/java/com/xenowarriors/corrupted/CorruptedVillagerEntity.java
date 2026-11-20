@@ -125,7 +125,7 @@ public class CorruptedVillagerEntity extends Zombie {
         if (target != null && onGround() && distanceToSqr(target) < 12 && random.nextInt(30) == 0) jumpFromGround();
         if (tickCount % 100 == 0 || (target instanceof ServerPlayer && scaledFor == -1)) rescale();
 
-        if (wasVillager && tickCount % 20 == 0 && level().isDay() && level().canSeeSky(blockPosition())) {
+        if (wasVillager && tickCount % 20 == 0 && level().isDay() && level().canSeeSky(blockPosition()) && !CorruptedSoulEntity.mission(this)) {   // (a mission's stays)
             Villager freed = convertTo(EntityType.VILLAGER, false);
             if (freed != null && level() instanceof ServerLevel server) {
                 server.sendParticles(CorruptedFx.BLACK, freed.getX(), freed.getY() + 1.2, freed.getZ(), 20, 0.3, 0.5, 0.3, 0.05);
