@@ -612,7 +612,7 @@ public final class PartyBots {
     public static LivingEntity revivingForTest(PartyBotEntity b) { return b.reviving; }
 
     /** How many of this bot's team are after this one now (not counting it). */
-    static int onIt(PartyBotEntity b, LivingEntity t) {
+    public static int onIt(PartyBotEntity b, LivingEntity t) {
         int n = 0;
         for (PartyBotEntity x : teamBots(b, 64)) if (x != b && x.getTarget() == t) n++;
         return n;

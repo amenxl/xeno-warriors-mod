@@ -421,12 +421,14 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public boolean canUse() {
             ServerPlayer o = owner();
             if (o == null || downed() || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || busyElsewhere()) return false;
+            if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return false;   // (a story split fight: it holds its side of the bars)
             double l = leash();
             return distanceToSqr(o) > l * l;
         }
         @Override public boolean canContinueToUse() {
             ServerPlayer o = owner();
             if (o == null || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || busyElsewhere()) return false;
+            if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return false;
             double l = leash() > 8 ? 12 : 4;
             return distanceToSqr(o) > l * l || o.level() != level();
         }
@@ -484,6 +486,7 @@ public class PartyBotEntity extends PathfinderMob {
             ServerPlayer o = owner();
             if (o == null || downed() || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || o.getVehicle() != null) return false;
             if (PartyBots.airborne(o) || o.getAbilities().flying) return false;
+            if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return false;
             if (--wanderWait > 0) return false;
             wanderWait = 60 + getRandom().nextInt(140);
             double l = leash();
@@ -826,6 +829,10 @@ public class PartyBotEntity extends PathfinderMob {
             ServerPlayer o = owner();
             if (o == null) return false;
             if (sparring()) { pick = BotSpar.pick(PartyBotEntity.this); return pick != null; }
+            if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) {    // a story split fight: the foes on its side of the bars
+                pick = com.xenowarriors.story.StoryRun.roomFoe(PartyBotEntity.this);
+                return pick != null && pick != getTarget();
+            }
             if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget) && !untouchable(relayTarget)) { pick = relayTarget; return true; }
             if (BotAuto.hunting(PartyBotEntity.this)) {                          // Auto, and you're hunting: the nearest animal (nobody's pet)
                 pick = null;
@@ -856,6 +863,7 @@ public class PartyBotEntity extends PathfinderMob {
             LivingEntity t = getTarget();
             if (t == null || !t.isAlive() || downed() || untouchable(t)) return false;
             if (sparring()) return PartyBots.sparFoes(PartyBotEntity.this, t);
+            if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return true;   // (its side's foe, however far you are)
             ServerPlayer o = owner();
             double r = PartyBots.chaseRange(PartyBotEntity.this);                // (out on the surface it chases a long way - 200 blocks)
             return o != null && t.distanceToSqr(o) < r * r && !PartyBots.friendly(PartyBotEntity.this, t);

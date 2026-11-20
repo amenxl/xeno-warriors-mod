@@ -1152,6 +1152,40 @@ public final class StoryRun {
         r.split = false; r.barsOpen = false; r.roomB.clear(); r.foeRoom.clear();
     }
 
+    /**
+     * A bot holding the other room of a split fight while the bars are shut, away from its owner: it doesn't try to
+     * follow them (it can't get through) - it fights the foes on its own side.
+     */
+    public static boolean holdsRoom(PartyBotEntity b) {
+        if (RUNS.isEmpty()) return false;
+        for (Run r : RUNS.values()) {
+            if (!r.split || r.barsOpen || !r.roomB.contains(b.getUUID())) continue;
+            ServerPlayer o = b.owner();
+            return o == null || !r.roomB.contains(o.getUUID());
+        }
+        return false;
+    }
+
+    /** The nearest foe on that bot's side of the bars (null: none left there). */
+    public static Mob roomFoe(PartyBotEntity b) {
+        if (!(b.level() instanceof ServerLevel l)) return null;
+        for (Run r : RUNS.values()) {
+            if (!r.split || r.barsOpen || !r.roomB.contains(b.getUUID())) continue;
+            Mob best = null; double bd = Double.MAX_VALUE;
+            for (UUID id : r.foes) {
+                Integer rm = r.foeRoom.get(id);
+                if (rm == null || rm != 1 || !(l.getEntity(id) instanceof Mob m) || !m.isAlive()) continue;
+                double d = m.distanceToSqr(b) + com.xenowarriors.bot.PartyBots.onIt(b, m) * 100;   // (spread out over them)
+                if (d < bd) { bd = d; best = m; }
+            }
+            if (best != null) roomTargets++;
+            return best;
+        }
+        return null;
+    }
+    /** (Tests) foes picked by bots holding their room. */
+    public static int roomTargets;
+
     /** A story foe in a split fight with the bars still shut (it stays on its own room's people). */
     public static boolean inSplit(Mob m) { Run r = runByFoe(m); return r != null && r.split && !r.barsOpen; }
 

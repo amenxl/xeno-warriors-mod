@@ -579,10 +579,12 @@ final class PackNov20dTests {
         }), 5));
         // ---- story: a split fight in the SR tunnels (Rhalix in the other room), the bars open when your room's clear; a bot going down counts
         int[] sp = new int[1];
+        int[] rtBefore = new int[1];
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             sp[0] = com.xenowarriors.story.StoryRun.splitBarsOpened;
+            rtBefore[0] = com.xenowarriors.story.StoryRun.roomTargets;
             com.xenowarriors.story.StoryRun.testStep(p, "rhalix", "r2", 3);
         }), 80));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(5); }, 10));
@@ -593,6 +595,10 @@ final class PackNov20dTests {
             int[] rf = com.xenowarriors.story.StoryRun.reachForTest(p);
             PackTests.check("story: enemies only appear where you can get to them", rf[1] > 0 && rf[0] == rf[1], "reachable " + rf[0] + " of " + rf[1]);
             PackTests.check("story: buildings can be broken, the ground can't", rf[2] == 1 && rf[3] == 0, "building " + rf[2] + " ground " + rf[3]);
+            int held = 0, following = 0;
+            for (PartyBotEntity b : PartyBots.bots(p)) if (com.xenowarriors.story.StoryRun.holdsRoom(b)) { held++; if (b.getTarget() == null && b.distanceToSqr(p) < 4 * 4) following++; }
+            PackTests.check("story split: your bots behind the bars fight the foes on their side (not trying to follow you)", held == 0 || com.xenowarriors.story.StoryRun.roomTargets > rtBefore[0] && following == 0,
+                    "holding " + held + " picked " + (com.xenowarriors.story.StoryRun.roomTargets - rtBefore[0]) + " by you " + following);
             com.xenowarriors.story.StoryRun.killRoomForTest(p, 0);
         }), 60));
         l.add(new Step("story_split_open", () -> PackTests.server(p -> {
