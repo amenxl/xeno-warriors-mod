@@ -54,6 +54,7 @@ public class BotAvatar extends RemotePlayer {
         ClientCharacterData.set(getUUID(), shownAs);
         ClientCharacterData.setOutfit(getUUID(), b.outfit());                  // (the outfit you had on them)
         if (shownAs == CharacterType.YOU) ClientCharacterData.setYou(getUUID(), b.you());   // (one of your own: its race, wings, element and skin)
+        com.xenowarriors.client.compat.DmzCompat.setCharging(this, b.kiCharging());   // (DragonMineZ: charging ki, drawn as a player charging)
         setPos(b.getX(), b.getY(), b.getZ());
         xo = b.xo; yo = b.yo; zo = b.zo;
         xOld = b.xOld; yOld = b.yOld; zOld = b.zOld;

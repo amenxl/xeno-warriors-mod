@@ -55,7 +55,8 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Integer> YOU_SLOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (one of its owner's own characters: which slot; -1 = a show character)
     private static final EntityDataAccessor<Integer> PARKOUR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (the ParCool-style move it's doing: BotParkour)
     private static final EntityDataAccessor<CompoundTag> YOU_LOOK = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.COMPOUND_TAG);   // (that character, for drawing it: race, element, wings, skin...)
-    private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (story mode: a demon inside this body - red eyes)
+    private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> KI_CHARGE = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (DragonMineZ: charging ki - drawn like a player charging)   // (story mode: a demon inside this body - red eyes)
     /** Its bag (slots 0-35: the character's own inventory, like a player's main inventory) and its three extra tabs (36-116, only while it's a bot - see BotInventory). */
     public final BotInventory inventory = new BotInventory();
     /** When to tidy its things next (a few seconds after they changed; 0 = nothing pending - see BotBags). */
@@ -188,6 +189,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(YOU_SLOT, -1);
         entityData.define(YOU_LOOK, new CompoundTag());
         entityData.define(POSSESSED, false);
+        entityData.define(KI_CHARGE, false);
         entityData.define(PARKOUR, 0);
     }
 
@@ -303,6 +305,9 @@ public class PartyBotEntity extends PathfinderMob {
     /** Story mode: a demon inside this body (Persephone in Lexy, Ava in Kyrie) - drawn with red eyes. */
     public boolean possessed() { return entityData.get(POSSESSED); }
     public void setPossessed(boolean b) { entityData.set(POSSESSED, b); }
+    /** DragonMineZ: charging its ki (DmzBotPower) - its body takes the same charging animation a player gets. */
+    public boolean kiCharging() { return entityData.get(KI_CHARGE); }
+    public void setKiCharging(boolean b) { if (entityData.get(KI_CHARGE) != b) entityData.set(KI_CHARGE, b); }
 
     private boolean groundedNow() {
         if (character() != CharacterType.MIKIKO) return false;

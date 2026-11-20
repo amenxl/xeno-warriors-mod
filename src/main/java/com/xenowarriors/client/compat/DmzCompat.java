@@ -14,6 +14,7 @@ public final class DmzCompat {
     private static Boolean loaded;
     private static boolean broken;
     private static Capability<?> cap;
+    private static Method setChargingKi;
     private static Method getStatus, isChargingKi, isActionCharging, isAuraActive, isTailVisible, isBlocking, getCharacter, getRaceName;
 
     private DmzCompat() {}
@@ -30,6 +31,7 @@ public final class DmzCompat {
                 Class<?> status = getStatus.getReturnType();
                 isChargingKi = status.getMethod("isChargingKi");
                 isActionCharging = status.getMethod("isActionCharging");
+                try { setChargingKi = status.getMethod("setChargingKi", boolean.class); } catch (NoSuchMethodException ignored) {}
                 isAuraActive = status.getMethod("isAuraActive");
                 try { isTailVisible = status.getMethod("isTailVisible"); } catch (NoSuchMethodException ignored) {}
                 try { isBlocking = status.getMethod("isBlocking"); } catch (NoSuchMethodException ignored) {}
@@ -55,6 +57,14 @@ public final class DmzCompat {
         }
     }
 
+    /** A bot's body (BotAvatar): marks it charging ki on this client, so DragonMineZ (and our charge pose) draw it charging as for a player. */
+    public static void setCharging(Player p, boolean on) {
+        if (setChargingKi == null && !ready()) return;
+        Object s = status(p);
+        if (s == null || setChargingKi == null) return;
+        try { if ((Boolean) isChargingKi.invoke(s) != on) setChargingKi.invoke(s, on); } catch (Throwable ignored) {}
+    }
+
     private static boolean flag(Player p, Method m) {
         Object s = status(p);
         if (s == null) return false;
@@ -67,6 +77,7 @@ public final class DmzCompat {
 
     /** Powering up: charging Ki (or charging a DragonMineZ attack). */
     public static boolean charging(Player p) {
+        if (p instanceof com.xenowarriors.client.bot.BotAvatar a && a.bot() != null && a.bot().kiCharging()) return true;   // (a bot charging ki)
         return ready() && (flag(p, isChargingKi) || flag(p, isActionCharging));
     }
 
@@ -111,7 +122,7 @@ public final class DmzCompat {
     }
 
     /** Powering up (charging Ki) - not a Ki attack. */
-    public static boolean chargingKi(Player p) { return ready() && flag(p, isChargingKi); }
+    public static boolean chargingKi(Player p) { return p instanceof com.xenowarriors.client.bot.BotAvatar a && a.bot() != null && a.bot().kiCharging() || ready() && flag(p, isChargingKi); }
 
     /** Charging a DragonMineZ Ki attack. */
     public static boolean chargingAttack(Player p) { return ready() && flag(p, isActionCharging); }

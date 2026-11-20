@@ -238,7 +238,7 @@ public final class DmzBotPower {
     public static void onTick(TickEvent.PlayerTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !(e.player instanceof ServerPlayer o) || o instanceof FakePlayer || o.tickCount % 10 != 5 || !ready()) return;
         for (PartyBotEntity b : PartyBots.bots(o)) {
-            if (b.downed()) { Power p = POWER.get(b.getUUID()); if (p != null) p.charging = false; continue; }
+            if (b.downed()) { Power p = POWER.get(b.getUUID()); if (p != null) p.charging = false; b.setKiCharging(false); continue; }
             tick(b, o);
         }
     }
@@ -303,7 +303,6 @@ public final class DmzBotPower {
                 if (!safe) p.charging = false;
                 else {
                     b.getNavigation().stop();
-                    com.xenowarriors.anim.Poses.play(b, com.xenowarriors.anim.Poses.EL_CHARGE, 14);
                     aura(level, b, st, 6);
                     if (b.tickCount % 20 < 10) level.playSound(null, b.blockPosition(), SoundEvents.BEACON_AMBIENT, SoundSource.NEUTRAL, 0.5F, 1.8F);
                     p.energy = Math.min(1F, p.energy + Math.max(0.02F, num(regen, st, true) / 2F / max));
@@ -314,6 +313,7 @@ public final class DmzBotPower {
                 }
             } else if (!inFight && p.energy < 1F && !(b.dmzFly() && !b.naturalFlier() && DmzBotSkills.flying(b)))   // (no resting regen while it flies on its ki)
                 p.energy = Math.min(1F, p.energy + Math.max(0.002F, num(regen, st, false) / 2F / max));
+            b.setKiCharging(p.charging);                                       // (the clients draw it charging, as a player)
             write(p, st);
         } catch (Throwable t) { fail(t); }
     }
