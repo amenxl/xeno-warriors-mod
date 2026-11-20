@@ -293,6 +293,17 @@ public final class Apl {
 
     private static void drinkPotion(ServerPlayer p) {
         var inv = p.getInventory();
+        boolean any = false;
+        for (int i = 0; i < inv.getContainerSize() && !any; i++) any = healing(inv.getItem(i));
+        if (!any) {                                                            // no healing potion: a Senzu Bean, then a Healingstone
+            String what = com.xenowarriors.compat.HealingStone.senzu(p) ? "ate a Senzu Bean" : com.xenowarriors.compat.HealingStone.autoUse(p) ? "used a Healingstone" : null;
+            if (what != null) {
+                p.getPersistentData().putLong("xw_auto_potion_cd", p.level().getGameTime() + 100);
+                p.displayClientMessage(Component.literal("Auto Potion: " + what).withStyle(ChatFormatting.LIGHT_PURPLE), true);
+                potions++;
+            }
+            return;
+        }
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack s = inv.getItem(i);
             if (!healing(s)) continue;

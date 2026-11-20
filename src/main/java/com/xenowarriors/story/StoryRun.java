@@ -957,12 +957,19 @@ public final class StoryRun {
 
     // ------------------------------------------------------------------ Rhalix drops in
 
-    /** During his storyline Rhalix sometimes turns up beside you in a fight (out in the world) for a few minutes. */
+    /** During his storyline Rhalix sometimes turns up beside you in a fight (out in the world) for a few minutes - and
+     *  doesn't leave while he or you are still fighting. */
     static void rhalixDropIn(ServerPlayer p) {
         long now = p.level().getGameTime();
         for (PartyBotEntity b : new ArrayList<>(com.xenowarriors.bot.PartyBots.bots(p))) {
             long until = b.getPersistentData().getLong("xw_story_dropin");
             if (until > 0 && now > until) {
+                // (not in the middle of a fight - his or yours: he stays until it's over, then goes)
+                boolean fighting = b.getTarget() != null && b.getTarget().isAlive()
+                        || !p.level().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(16), m -> m.isAlive() && (m.getTarget() == p || m.getTarget() == b)).isEmpty()
+                        || p.getLastHurtByMob() != null && p.tickCount - p.getLastHurtByMobTimestamp() < 100
+                        || b.getLastHurtByMob() != null && b.tickCount - b.getLastHurtByMobTimestamp() < 100;
+                if (fighting) continue;
                 p.displayClientMessage(Component.literal("Rhalix: Gotta go - SP business. Later!").withStyle(ChatFormatting.LIGHT_PURPLE), false);
                 b.discard();
             }

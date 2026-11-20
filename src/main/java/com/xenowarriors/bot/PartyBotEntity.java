@@ -1068,7 +1068,8 @@ public class PartyBotEntity extends PathfinderMob {
         }
         if (!level().isClientSide && heldBy != null) tickHold();
         if (!level().isClientSide) BotParkour.tick(this);                        // (vaults, climbs, rolls... with ParCool)
-        if (!level().isClientSide) BotWaterBridge.tick(this);                    // (Building 10+: a path of blocks across water, picked back up behind it)
+        if (!level().isClientSide) BotWaterBridge.tick(this);
+        if (!level().isClientSide) com.xenowarriors.compat.HealingStone.botTick(this);   // (Healingstones in its bag: on you, when you're hurt - fights too)                    // (Building 10+: a path of blocks across water, picked back up behind it)
         super.aiStep();
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);
