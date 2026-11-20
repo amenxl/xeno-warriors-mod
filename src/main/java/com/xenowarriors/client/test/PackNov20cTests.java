@@ -121,7 +121,7 @@ final class PackNov20cTests {
         // the princesses (Season 2): playable, both looks, every skill; Lexy's Season 2 outfit; Henery's look
         l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); PackTests.arena(p); PackTests.clear(p); }), 10));
         for (CharacterType t : new CharacterType[]{CharacterType.ATHREA, CharacterType.RANREA}) {
-            l.add(new Step(null, () -> { mc.options.hideGui = true; UiTest.character(t); }, 40));
+            l.add(new Step(null, () -> { mc.options.hideGui = true; PackTests.server(p -> PackTests.clear(p)); UiTest.character(t); }, 40));
             l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(0); }, 20));
             l.add(new Step("princess_" + t.getId(), () -> PackTests.check("princess: " + t.getId() + " plays, model loads", ClientCharacterData.getLocal() == t
                     && com.xenowarriors.client.render.CharacterDetailLayer.detailModel(mc.player) != null && t.season() == 2 && t.skylander(), "local " + ClientCharacterData.getLocal()), 5));
@@ -147,9 +147,9 @@ final class PackNov20cTests {
             com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
             var hy = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(p.serverLevel());
             hy.setLook("henery"); hy.setCustomName(net.minecraft.network.chat.Component.literal("Henery"));
-            hy.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180F, 0F); hy.setYHeadRot(180F); hy.yBodyRot = 180F; hy.setNoAi(true); hy.addTag("xw_pack");
+            hy.moveTo(p.getX() + 1.6, p.getY(), p.getZ(), 0F, 0F); hy.setYHeadRot(180F); hy.yBodyRot = 180F; hy.setNoAi(true); hy.addTag("xw_pack");
             p.serverLevel().addFreshEntity(hy); }), 20));
-        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(15); }, 10));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(0); }, 10));
         l.add(new Step("henery", () -> PackTests.server(p -> { PackTests.check("henery: his own look", !p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("henery")).isEmpty(), ""); PackTests.clear(p); }), 5));
         // bots with Building 10+ lay blocks across water and pick them back up
         int[] wb = new int[2];
