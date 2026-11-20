@@ -81,7 +81,9 @@ public final class BlazingHud {
             row(g, font, "hg", ex + 2, y, bw, 4, sun, 0, sun > 0.15F ? 0xFFFFD040 : 0xFF806020, 0xFFA08A10, "SUN");
         } else if (type != CharacterType.ULTIMA) {                     // (Ultima doesn't get hungry)
             if (BigHungerHud.layered())                                // layers of hunger bars: the one being eaten from, in its colour
-                row(g, font, "hg", ex + 2, y, bw, 4, BigHungerHud.layerFill(), BigHungerHud.layer() > 0 ? 1F : 0F, BigHungerHud.layerColor(0xFFE8D020), 0xFFA08A10, BigHungerHud.layerLabel());
+            { under = BigHungerHud.underColor(0xFFE8D020);                   // (the layer below shows in the empty part, not grey)
+                try { row(g, font, "hg", ex + 2, y, bw, 4, BigHungerHud.layerFill(), 0F, BigHungerHud.layerColor(0xFFE8D020), 0xFFA08A10, BigHungerHud.layerLabel()); }
+                finally { under = 0; } }
             else row(g, font, "hg", ex + 2, y, bw, 4, p.getFoodData().getFoodLevel() / 20F, 0, 0xFFE8D020, 0xFFA08A10, "");
         }
         // LV plate under the emblem, and the EXP bar
@@ -116,11 +118,14 @@ public final class BlazingHud {
     }
 
     /** A rounded bar with a coloured border; fills from the right (the bubble side). */
+    /** (Hunger layers) the colour behind the fill: the layer below (0: the usual grey). */
+    private static int under;
+
     private static void bar(GuiGraphics g, int x, int y, int w, int h, float frac, float chip, int fill, int border) {
         g.fill(x + 1, y - 1, x + w - 1, y + h + 1, border);
         g.fill(x, y, x + w, y + h, border);
-        g.fill(x + 1, y, x + w - 1, y + h, 0xFF4A4A50);
-        g.fill(x + 1, y, x + w - 1, y + Math.max(1, h / 3), 0xFF6A6A72);
+        g.fill(x + 1, y, x + w - 1, y + h, under != 0 ? under : 0xFF4A4A50);
+        g.fill(x + 1, y, x + w - 1, y + Math.max(1, h / 3), under != 0 ? KhHud.brighten(under) : 0xFF6A6A72);
         int inner = w - 2;
         if (chip > frac) g.fill(x + 1 + Math.round(inner * (1 - Mth.clamp(chip, 0, 1))), y, x + w - 1, y + h, 0xFFFFE27A);
         int fx = x + 1 + Math.round(inner * (1 - Mth.clamp(frac, 0, 1)));

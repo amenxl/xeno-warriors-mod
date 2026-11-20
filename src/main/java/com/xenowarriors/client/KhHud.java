@@ -57,6 +57,9 @@ public final class KhHud implements IGuiOverlay {
     // ---------------------------------------------------------------- drawing helpers
 
     /** A slanted Kingdom Hearts bar that fills from the right (the portrait side). */
+    /** (Hunger layers) the colour behind the fill: the layer below (0: the usual dark). */
+    static int under;
+
     public static void bar(GuiGraphics g, int x, int y, int w, int h, float frac, int color, float chipFrac) {
         int slant = Math.max(2, h / 2 + 1);
         for (int r = -1; r <= h; r++) {
@@ -65,7 +68,7 @@ public final class KhHud implements IGuiOverlay {
         }
         for (int r = 0; r < h; r++) {
             int off = (h - r) * slant / Math.max(1, h);
-            g.fill(x + off, y + r, x + w + off, y + r + 1, 0xFF1C1C28);
+            g.fill(x + off, y + r, x + w + off, y + r + 1, under != 0 ? (r < (h + 1) / 3 ? brighten(under) : under) : 0xFF1C1C28);
             if (chipFrac > frac) g.fill(x + off + Math.round(w * (1 - chipFrac)), y + r, x + w + off, y + r + 1, 0xFFFFE27A);
             int c = r < (h + 1) / 3 ? brighten(color) : color;
             g.fill(x + off + Math.round(w * (1 - Mth.clamp(frac, 0, 1))), y + r, x + w + off, y + r + 1, c);
@@ -183,13 +186,17 @@ public final class KhHud implements IGuiOverlay {
             small(g, font, fl, px + size / 2F - font.width(fl) * 0.275F, py - 7, 0xFFD25A, 0.55F);
             if (type != CharacterType.ULTIMA) {                        // (food too - it was missing with DragonMineZ)
                 y += 6;
+                under = BigHungerHud.underColor(0xFFF0AA50);
                 bar(g, bx + 16, y, bw - 16, 3, BigHungerHud.layered() ? BigHungerHud.layerFill() : p.getFoodData().getFoodLevel() / 20F,
                         BigHungerHud.layered() ? BigHungerHud.layerColor(0xFFF0AA50) : 0xFFF0AA50, 0);
+                under = 0;
                 small(g, font, "FOOD", bx - 6, y - 1, 0xF5D2A0, 0.45F);
             }
         } else if (type != CharacterType.ULTIMA) {                     // Ultima has no hunger
             if (BigHungerHud.layered()) {                              // layers of hunger bars: the one being eaten from, in its colour
+                under = BigHungerHud.underColor(0xFFF0AA50);
                 bar(g, bx + 16, y, bw - 16, 3, BigHungerHud.layerFill(), BigHungerHud.layerColor(0xFFF0AA50), 0);
+                under = 0;
                 String ll = BigHungerHud.layerLabel();
                 small(g, font, ll, bx + bw - font.width(ll) * 0.45F, y - 5, 0xF5D2A0, 0.45F);
             } else bar(g, bx + 16, y, bw - 16, 3, p.getFoodData().getFoodLevel() / 20F, 0xFFF0AA50, 0);

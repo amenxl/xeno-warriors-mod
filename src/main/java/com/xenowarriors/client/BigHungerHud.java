@@ -39,6 +39,14 @@ public final class BigHungerHud {
     public static float layerFill() { return total <= 0 ? 0F : (total - layer() * 20) / 20F; }
     /** That layer's colour (ARGB), or {@code fallback} for the first one. */
     public static int layerColor(int fallback) { return layer() == 0 ? fallback : 0xFF000000 | TIER[layer() % TIER.length]; }
+    /** The layer under the one being eaten from (ARGB, a little darker) - shown in the empty part of the bar instead of black; 0 on the first layer. */
+    public static int underColor(int fallback) {
+        if (!layered() || layer() == 0) return 0;
+        int c = layer() - 1 == 0 ? fallback : 0xFF000000 | TIER[(layer() - 1) % TIER.length];
+        int r = (int) (((c >> 16) & 255) * 0.62F), g = (int) (((c >> 8) & 255) * 0.62F), b = (int) ((c & 255) * 0.62F);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
     /** "x2/3": the layer and how many there are. */
     public static String layerLabel() { return "x" + (layer() + 1) + "/" + layers(); }
     /** Layers of hunger bars (20 points each). */
