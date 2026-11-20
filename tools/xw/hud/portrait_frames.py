@@ -61,7 +61,7 @@ def crop_box():
     side = int(8 * S * 1.32); cx, cy = W // 2, oy + 4 * S - int(0.35 * S)
     return (cx - side // 2, cy - side // 2, cx + side // 2, cy + side // 2)
 
-def is_key(c): return c[3] and c[1] < 40 and c[0] > 100 and c[2] > 100
+def is_key(c): return c[3] and c[1] < 40 and c[0] > 100 and c[2] > 100 and abs(c[0] - c[2]) < 24   # (the magenta key only: hot pink hair isn't a hole - Fox Girl's fringe)
 
 def render(mj, skin, det):
     """The head close-up (cropped like portraits_all) and the face-hole mask (255 = face shows)."""

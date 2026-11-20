@@ -38,7 +38,7 @@ def heads(ch):
         for y in range(im.height):
             for x in range(im.width):
                 r, g, b, a = p[x, y]
-                if a and g < 40 and r > 100 and b > 100 and 0 <= x - ox < 8 * S and 0 <= y - oy < 8 * S:
+                if a and g < 40 and r > 100 and b > 100 and abs(r - b) < 24 and 0 <= x - ox < 8 * S and 0 <= y - oy < 8 * S:
                     c = fp[x - ox, y - oy]
                     p[x, y] = c if c[3] else (0, 0, 0, 0)
         # a close-up: the face fills the circle (hair and hood run off the edges) - no floating heads
