@@ -1,0 +1,11 @@
+{
+  "type": "xenowarriors:add_item",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/spawn_bonus_chest"
+    }
+  ],
+  "item": "xenowarriors:boost_bag",
+  "chance": 0.3
+}
