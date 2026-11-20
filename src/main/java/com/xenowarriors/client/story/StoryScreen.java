@@ -111,8 +111,15 @@ public class StoryScreen extends Screen {
             if (on) outline(g, LIST_X, y, LIST_X + CARD_W, y + CARD_H, 0xFF000000 | col);
             g.blit(portrait(face(id)), LIST_X + 6, y + 3, 24, 24, 0, 0, 128, 128, 128, 128);
             if (status == 0) g.fill(LIST_X + 6, y + 3, LIST_X + 30, y + 27, 0xA0101014);
-            String t = font.plainSubstrByWidth(p.getString("title"), CARD_W - 40);
-            g.drawString(font, t, LIST_X + 34, y + 5, status == 0 ? 0xFF8A8A94 : 0xFFFFFFFF, false);
+            String t = p.getString("title");
+            int tw = font.width(t), room = CARD_W - 40, tc = status == 0 ? 0xFF8A8A94 : 0xFFFFFFFF;
+            if (tw <= room) g.drawString(font, t, LIST_X + 34, y + 5, tc, false);
+            else {                                                                        // a long name: smaller, so it fits whole
+                float sc = Math.max(0.7F, room / (float) tw);
+                if (tw * sc > room) t = font.plainSubstrByWidth(t, (int) (room / sc));
+                g.pose().pushPose(); g.pose().translate(LIST_X + 34, y + 6, 0); g.pose().scale(sc, sc, 1F);
+                g.drawString(font, t, 0, 0, tc, false); g.pose().popPose();
+            }
             var ms = p.getList("missions", Tag.TAG_COMPOUND);
             int done = 0; for (int i = 0; i < ms.size(); i++) if (ms.getCompound(i).getBoolean("done")) done++;
             String sub = status == 3 ? "Complete" : status == 2 ? "Playing - " + done + "/" + ms.size() : status == 1 ? "Available" : "Locked";
@@ -131,9 +138,15 @@ public class StoryScreen extends Screen {
 
     /** The banner of a storyline, as wide as the right column allows (2:1); returns its bottom. */
     private int bannerAt(GuiGraphics g, String path, int x, int y, String title, String sub, int col) {
-        int w = Math.min(width - x - 12, 340), h = w / 2;
+        return bannerAt(g, path, x, y, title, sub, col, Integer.MAX_VALUE);
+    }
+
+    /** As above, but no taller than {@code maxH} (it's cropped top and bottom, not squashed). */
+    private int bannerAt(GuiGraphics g, String path, int x, int y, String title, String sub, int col, int maxH) {
+        int w = Math.min(width - x - 12, 340), h = Math.max(48, Math.min(w / 2, maxH));
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF000000 | col);
-        g.blit(banner(path), x, y, w, h, 0, 0, 512, 256, 512, 256);
+        int vh = Math.min(256, Math.round(512F * h / w)), v0 = (256 - vh) / 2;
+        g.blit(banner(path), x, y, w, h, 0, v0, 512, vh, 512, 256);
         g.fillGradient(x, y + h - 30, x + w, y + h, 0x00000000, 0xC0000000);
         g.drawString(font, title, x + 8, y + h - 22, 0xFFFFFFFF, true);
         if (sub != null) g.drawString(font, sub, x + 8, y + h - 11, 0xFFD8D8E0, false);
@@ -168,16 +181,27 @@ public class StoryScreen extends Screen {
         if (p != null) {
             int status = p.getInt("status");
             String stt = status == 3 ? "Complete" : status == 2 ? "Playing" : status == 1 ? "Available - begin it below" : "Locked - finish the earlier storylines";
-            y = bannerAt(g, sel, x, y, p.getString("title"), stt, pathColor(sel)) + 6;
             int cur = st.getInt("mi");
             var ms = p.getList("missions", Tag.TAG_COMPOUND);
+            // everything has to stay above the buttons (and the objective lines over them)
+            int limit = height - 36 - (st.contains("obj") ? 14 : 0) - (st.contains("sideObj") ? 12 : 0);
+            int descN = status == 2 && cur < ms.size() ? font.split(Component.literal(ms.getCompound(cur).getString("desc")), width - x - 16).size() : 0;
+            int need = 24 + ms.size() * 11 + (status == 2 ? descN * 10 + 12 : 0);
+            y = bannerAt(g, sel, x, y, p.getString("title"), stt, pathColor(sel), limit - y - need) + 6;
             int nDone = 0; for (int i = 0; i < ms.size(); i++) if (ms.getCompound(i).getBoolean("done")) nDone++;
             int bw = Math.min(width - x - 12, 340);                                       // progress
             g.fill(x, y, x + bw, y + 5, 0xFF26262E);
             g.fill(x, y, x + Math.round(bw * (ms.isEmpty() ? 0F : nDone / (float) ms.size())), y + 5, 0xFF000000 | pathColor(sel));
             g.drawString(font, nDone + "/" + ms.size() + " missions", x + bw - font.width(nDone + "/" + ms.size() + " missions"), y + 7, 0xFF9098A8, false);
             y += 18;
-            for (int i = 0; i < ms.size(); i++) {
+            // still too many to show? start a little before the current one, and say how many are hidden
+            int rows = Math.max(1, (limit - y - (status == 2 ? descN * 10 + 12 : 0)) / 11);
+            int first = ms.size() <= rows ? 0 : Math.max(0, Math.min(status == 2 ? cur - 1 : 0, ms.size() - rows + 1));
+            if (first > 0) { g.drawString(font, "  ... " + first + " earlier", x, y, 0xFF6A7080, false); y += 11; rows--; }
+            for (int i = first; i < ms.size(); i++) {
+                if (i - first >= rows - 1 && i < ms.size() - 1 && y + 22 > limit) {
+                    g.drawString(font, "  ... " + (ms.size() - i) + " more", x, y, 0xFF6A7080, false); break;
+                }
                 CompoundTag m = ms.getCompound(i);
                 boolean done = m.getBoolean("done"), now = status == 2 && i == cur;
                 int c = done ? 0xFF70B070 : now ? 0xFFFFE080 : 0xFF9098A8;
