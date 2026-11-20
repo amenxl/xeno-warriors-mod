@@ -7,7 +7,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -34,13 +33,7 @@ public class KarmaPotionItem extends Item {
             level.playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.AMETHYST_BLOCK_CHIME, player.getSoundSource(), 1.0F, 1.3F);
         }
-        if (entity instanceof Player player && !player.getAbilities().instabuild) {
-            stack.shrink(1);
-            if (stack.isEmpty()) return new ItemStack(Items.GLASS_BOTTLE);
-            if (!player.getInventory().add(new ItemStack(Items.GLASS_BOTTLE))) {
-                player.drop(new ItemStack(Items.GLASS_BOTTLE), false);
-            }
-        }
+        if (entity instanceof Player player && !player.getAbilities().instabuild) stack.shrink(1);   // (no empty bottle left over)
         return stack;
     }
 

@@ -47,8 +47,10 @@ public final class BotPotions {
         }
         if (--b.drinkTicks >= 0) return;
         drink(b, pot);
+        boolean karma = pot.getItem() instanceof com.xenowarriors.item.KarmaPotionItem;   // (a Karma Potion leaves no bottle)
         pot.shrink(1);
-        if (pot.isEmpty()) b.inventory.setItem(b.drinkSlot, new ItemStack(Items.GLASS_BOTTLE));
+        if (karma) { /* nothing left over */ }
+        else if (pot.isEmpty()) b.inventory.setItem(b.drinkSlot, new ItemStack(Items.GLASS_BOTTLE));
         else { ItemStack left = b.inventory.addItem(new ItemStack(Items.GLASS_BOTTLE)); if (!left.isEmpty()) b.spawnAtLocation(left); }
         b.drinkSlot = -1;
         b.drinkReady = b.tickCount + 40;

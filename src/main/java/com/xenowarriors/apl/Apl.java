@@ -51,7 +51,9 @@ public final class Apl {
         AUTO_POTION("auto_potion", "Auto Potion", new int[]{15, 10}, "auto_potion",
                 "Drinks a healing potion you carry when your health is low", new String[]{"below 35% health", "below the health you pick"}),
         AUTO_BOOST("auto_boost", "Auto Boost", new int[]{10}, "auto_boost",
-                "Uses Stat Boosts as soon as you get them - the ones in your Boost Bag too", new String[]{"on"});
+                "Uses Stat Boosts as soon as you get them - the ones in your Boost Bag too", new String[]{"on"}),
+        AUTO_KARMA("auto_karma", "Auto Karma Potion", new int[]{10}, "auto_karma",
+                "Drinks a Karma Potion you carry when your Karma runs low", new String[]{"below 25% Karma"});
 
         public final String id, title, toggle, what;
         public final int[] costs;
@@ -258,6 +260,28 @@ public final class Apl {
         }
         if (live(p, Ability.AUTO_EAT) > 0 && p.getFoodData().getFoodLevel() <= 14 && !p.isUsingItem()) eatBest(p);
         if (live(p, Ability.AUTO_BOOST) > 0) com.xenowarriors.statboost.BoostBag.autoUse(p);
+        if (live(p, Ability.AUTO_KARMA) > 0 && !p.isCreative() && p.level().getGameTime() >= p.getPersistentData().getLong("xw_auto_karma_cd")) {
+            float max = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.karmaMax).orElse(com.xenowarriors.karma.Karma.MAX);
+            if (com.xenowarriors.karma.Karma.get(p) < max * 0.25F) drinkKarma(p);
+        }
+    }
+
+    /** (Tests) Karma Potions drunk by Auto Karma Potion. */
+    public static int karmaPotions;
+
+    private static void drinkKarma(ServerPlayer p) {
+        var inv = p.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack s = inv.getItem(i);
+            if (!(s.getItem() instanceof com.xenowarriors.item.KarmaPotionItem)) continue;
+            com.xenowarriors.karma.Karma.add(p, com.xenowarriors.item.KarmaPotionItem.RESTORE);
+            s.shrink(1);                                                        // (no bottle left over)
+            p.getPersistentData().putLong("xw_auto_karma_cd", p.level().getGameTime() + 60);
+            p.level().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.9F, 1.3F);
+            p.displayClientMessage(Component.literal("Auto Karma Potion: drank a Karma Potion (+" + Math.round(com.xenowarriors.item.KarmaPotionItem.RESTORE) + " Karma)").withStyle(ChatFormatting.AQUA), true);
+            karmaPotions++;
+            return;
+        }
     }
 
     private static boolean healing(ItemStack s) {
