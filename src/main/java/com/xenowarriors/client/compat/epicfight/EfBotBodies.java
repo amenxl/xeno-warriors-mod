@@ -45,6 +45,7 @@ public final class EfBotBodies {
                 if (!patch.isEpicFightMode()) patch.toEpicFightMode(false);
                 walkMotion(patch, a);                                            // (Epic Fight never works out a remote player's walking itself: it's told)
                 patch.tick(new net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent(a));
+                walkMotion(patch, a);                                            // (and again after: its tick put a remote player back to idle)
                 PartyBotEntity b = a.bot();
                 boolean swinging = b.swinging;
                 // a new swing: it started swinging, or its swing started over (a bot attacking non-stop never stops "swinging")
@@ -79,7 +80,7 @@ public final class EfBotBodies {
         if (!ours) return;
         PartyBotEntity b = a.bot();
         double dx = b.getX() - b.xo, dz = b.getZ() - b.zo;
-        boolean moving = a.onGround() && !b.isPassenger() && dx * dx + dz * dz > 0.015 * 0.015;
+        boolean moving = (b.onGround() || a.onGround()) && !b.isPassenger() && dx * dx + dz * dz > 0.015 * 0.015;
         var want = !moving ? yesman.epicfight.api.animation.LivingMotions.IDLE : a.isSprinting() ? yesman.epicfight.api.animation.LivingMotions.RUN : yesman.epicfight.api.animation.LivingMotions.WALK;
         patch.currentLivingMotion = want;
         if (patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.IDLE || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.WALK

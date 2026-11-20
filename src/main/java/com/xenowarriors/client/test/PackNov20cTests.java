@@ -177,7 +177,7 @@ final class PackNov20cTests {
                         info = "walkSpeed " + String.format("%.2f", av.walkAnimation.speed()) + " pos " + String.format("%.1f", av.walkAnimation.position()) + " held " + av.getMainHandItem();
                         try {
                             var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(av, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
-                            if (patch != null) info += " ef " + patch.currentLivingMotion + " / " + patch.currentCompositeMotion + " mode " + patch.isEpicFightMode() + " zza " + av.zza;
+                            if (patch != null) info += " ef " + patch.currentLivingMotion + " / " + patch.currentCompositeMotion + " mode " + patch.isEpicFightMode() + " zza " + av.zza + " set " + com.xenowarriors.client.compat.epicfight.EfBotBodies.walkSet + " moved " + String.format("%.3f", Math.hypot(av.bot().getX() - av.bot().xo, av.bot().getZ() - av.bot().zo)) + " ground " + av.onGround();
                         } catch (Throwable x) { info += " ef? " + x; }
                     }
                     PackTests.log("samwalk " + (bat ? "bat" : "fists") + " " + kk + ": " + info);
