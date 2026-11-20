@@ -74,6 +74,7 @@ public final class GovScanning {
         if (k == null) return;
         LivingEntity who = subject(g, k.tier.range);
         if (who == null) return;
+        if (com.xenowarriors.faction.FactionBackup.ownerOf(g) != null && com.xenowarriors.combat.Allies.isAlly(g, who)) return;   // (backup you called: they don't scan you and run off)
         var t = g.getPersistentData();
         // the same person: every 3 seconds in a fight, every 30 s otherwise (a new face right away)
         if (t.getInt(LAST_WHO) == who.getId() && g.tickCount - t.getInt("xw_scan_at") < (who == g.getTarget() ? 60 : 600)) return;

@@ -15,6 +15,8 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_KI_VISUALS;
     /** DragonMineZ's structures in the Recarnet dimension too (off: overworld only). */
     public static final ForgeConfigSpec.BooleanValue DMZ_STRUCTURES_IN_RECARNET;
+    /** How long a new world waits at startup for DragonMineZ's structure plan (it finishes in the background anyway). */
+    public static final ForgeConfigSpec.DoubleValue DMZ_STRUCTURE_WAIT;
     /** DragonMineZ movie missions: "be at Kami's Lookout" counts as met anywhere. */
     public static final ForgeConfigSpec.BooleanValue DMZ_MOVIES_ANYWHERE;
     /** DragonMineZ missions: no biome needed to start them or to finish them (anyone's, bots' too). */
@@ -41,6 +43,9 @@ public final class XwConfig {
         DMZ_STRUCTURES_IN_RECARNET = b.comment("DragonMineZ's own structures (Kame House, Goku's house...) also generate in the Recarnet dimension.",
                         "Off: they stay in the overworld - Recarnet uses the overworld's biomes, so DragonMineZ would otherwise plan and force-place them there too.")
                 .define("structuresInRecarnet", false);
+        DMZ_STRUCTURE_WAIT = b.comment("Seconds a world's start waits for DragonMineZ to finish planning where its structures go (DragonMineZ waits 30).",
+                        "It keeps planning in the background after that, so a shorter wait only means a faster load - the structures still come.")
+                .defineInRange("structurePlanWaitSeconds", 5.0, 0.0, 30.0);
         DMZ_MOVIES_ANYWHERE = b.comment("DragonMineZ's movie missions (the Movies saga and the movie side missions) don't need you at Kami's Lookout:",
                         "its 'be at Kami's Lookout' start requirement and objective count as met anywhere. Everything else (level, order) stays.")
                 .define("moviesWithoutLookout", true);

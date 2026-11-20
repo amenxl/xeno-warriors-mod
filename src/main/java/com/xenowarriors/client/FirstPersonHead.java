@@ -22,6 +22,9 @@ public final class FirstPersonHead {
 
     private FirstPersonHead() {}
 
+    /** A new world / back from a crash: nothing half-way through a draw (a crash mid-menu-draw left inGui on for good). */
+    public static void reset() { inGui = false; hidden = false; }
+
     /** The head is hidden for this draw (the detail layer skips hair and face too). */
     public static boolean hidden() {
         return hidden;

@@ -98,10 +98,24 @@ public final class ClientReset {
         PacketScreens.collectionUnlocked = false;    // (the next server says whether you've read the Collection Book there)
         PacketScreens.towerFloor = 0;
         ClientMoney.set(0);
+        renderState();
         for (Runnable r : HOOKS) {
             try { r.run(); } catch (RuntimeException e) { XenoWarriors.LOGGER.warn("ClientReset: a reset hook failed", e); }
         }
     }
+
+    /** Draw-time switches that only ever last one draw: off again (a crash or a world change mid-draw left them on). */
+    public static void renderState() {
+        FirstPersonHead.reset();
+        if (ClientCharacterData.isPreviewing()) ClientCharacterData.endPreview();
+        ClientCharacterData.standStill = false;
+        com.xenowarriors.client.you.YouLooks.previewSkin = null;
+        com.xenowarriors.client.you.YouFeatures.preview = null;
+    }
+
+    /** Joining a world (a new one, or back after a crash): start from clean draw switches. */
+    @SubscribeEvent
+    public static void onLogin(ClientPlayerNetworkEvent.LoggingIn event) { renderState(); }
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {

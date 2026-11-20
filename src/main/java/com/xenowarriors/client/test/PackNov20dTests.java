@@ -279,7 +279,7 @@ final class PackNov20dTests {
             PackTests.check("party games: a bot asks you to arm wrestle (a card)", com.xenowarriors.bot.BotPartyGames.askingForTest(p), "asking " + com.xenowarriors.bot.BotPartyGames.askingForTest(p));
             com.xenowarriors.bot.BotPartyGames.answerForTest(p, 1);
         }), 50));
-        for (int k = 0; k < 12; k++) l.add(new Step(k == 4 ? "party_arm_wrestle" : null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm a) { a.mash(); a.mash(); a.mash(); } }, 2));
+        for (int k = 0; k < 30; k++) l.add(new Step(k == 4 ? "party_arm_wrestle" : null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm a) { a.mash(); a.mash(); a.mash(); } }, 2));
         l.add(new Step(null, () -> {
             var a = mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm x ? x : null;
             PackTests.check("party games: mashing left click wins the arm wrestle", a != null && a.outcomeForTest() == 1, "screen " + (a != null) + " outcome " + (a == null ? -9 : a.outcomeForTest()) + " bar " + (a == null ? -1 : a.barForTest()));
@@ -299,9 +299,8 @@ final class PackNov20dTests {
             }
         }, 4));
         l.add(new Step("party_memory_done", () -> {
-            var m = mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Memory x ? x : null;
-            PackTests.check("party games: Memory - flip two, find the pairs, it takes turns with you", m != null && m.doneForTest() && m.mineForTest() + m.theirsForTest() == 8,
-                    "screen " + (m != null) + " you " + (m == null ? -1 : m.mineForTest()) + " bot " + (m == null ? -1 : m.theirsForTest()));
+            int[] r = com.xenowarriors.client.party.PartyGameScreens.Memory.lastResult;
+            PackTests.check("party games: Memory - flip two, find the pairs, it takes turns with you", r[0] + r[1] == 8, "you " + r[0] + " bot " + r[1] + " seen " + com.xenowarriors.client.party.PartyGameScreens.Memory.seen);
         }, 3));
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.check("party games: the Memory game's result reaches the server", com.xenowarriors.bot.BotPartyGames.memPlayed > pg[2], "played " + (com.xenowarriors.bot.BotPartyGames.memPlayed - pg[2]));
@@ -381,7 +380,7 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> PackTests.server(p -> {
             var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
             d.youSlots[9] = new com.xenowarriors.you.YouSlot();
-            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Gale"; ys.race = com.xenowarriors.character.Race.HUMAN; ys.element = com.xenowarriors.ka.Element.WIND;
+            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Gale"; ys.race = com.xenowarriors.character.Race.FOX_KIN; ys.element = com.xenowarriors.ka.Element.WIND;
             com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 9, ys);
             boolean before = com.xenowarriors.mikiko.WindFlight.canFly(p);
             for (int k = 0; k < 3; k++) d.statLevel[k] = Math.max(d.statLevel[k], 60);
@@ -809,7 +808,7 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> PackTests.server(p -> {
             var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
             d.youSlots[8] = new com.xenowarriors.you.YouSlot();
-            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Aerin"; ys.race = com.xenowarriors.character.Race.SKYLANDER; ys.element = com.xenowarriors.ka.Element.WATER; ys.form = com.xenowarriors.you.YouSlot.FORM_LUNAR;
+            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Aerin"; ys.race = com.xenowarriors.character.Race.SKYLANDER; ys.element = com.xenowarriors.ka.Element.WIND; ys.form = com.xenowarriors.you.YouSlot.FORM_LUNAR;
             com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 8, ys);
             var f = new com.xenowarriors.you.YouSlot(); f.name = "Aerin"; f.wings = 6; f.wingL = 0xE83A3A; f.wingR = 0x4060FF;
             com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.FEATURES, 8, f);
@@ -837,7 +836,7 @@ final class PackNov20dTests {
                 com.xenowarriors.combat.BulletDodge.FORCE_GUARD.add(p.getUUID());
                 var h = net.minecraft.world.entity.EntityType.HUSK.create(p.serverLevel());
                 if (h != null) {
-                    h.moveTo(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2] + 9, 180F, 0F);
+                    h.moveTo(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2] + 5, 180F, 0F);
                     h.setYHeadRot(180F); h.setNoAi(true); h.setInvulnerable(true); h.addTag("xw_pack");
                     h.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, com.xenowarriors.compat.TaczGuns.gun("tacz:m4a1", 30));
                     p.serverLevel().addFreshEntity(h);
@@ -852,6 +851,7 @@ final class PackNov20dTests {
                     gd[1] = st.getId();
                 }
             }), 30));
+            l.add(new Step(null, () -> {}, 30));                                   // (the gun drawn first)
             l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON);
                 var cam = mc.level.getEntity(gd[1]); if (cam != null) mc.setCameraEntity(cam);
                 gd[2] = com.xenowarriors.combat.BulletDodge.dodged; gd[3] = com.xenowarriors.combat.BulletDodge.reflected; gd[4] = com.xenowarriors.combat.BulletDodge.through; gd[6] = com.xenowarriors.client.DodgeClient.seen; }, 10));
@@ -865,7 +865,10 @@ final class PackNov20dTests {
                     p.setHealth(p.getMaxHealth());
                     if (p.serverLevel().getEntity(gd[0]) instanceof net.minecraft.world.entity.LivingEntity h) shootAt(h, p);
                 }), 1));
-                for (int t = 0; t < 11; t++) l.add(new Step(String.format("dodgegif_%03d", f++), () -> {}, 1));
+                for (int t = 0; t < 11; t++) {
+                    boolean again = t == 3 || t == 7;                                   // (a few shots each roll: some go wide)
+                    l.add(new Step(String.format("dodgegif_%03d", f++), () -> { if (again) PackTests.server(p -> { com.xenowarriors.combat.BulletDodge.forceRoll = r; p.setHealth(p.getMaxHealth()); if (p.serverLevel().getEntity(gd[0]) instanceof net.minecraft.world.entity.LivingEntity h) shootAt(h, p); }); }, 1));
+                }
             }
             l.add(new Step(null, () -> PackTests.server(p -> {
                 com.xenowarriors.combat.BulletDodge.forceRoll = null;

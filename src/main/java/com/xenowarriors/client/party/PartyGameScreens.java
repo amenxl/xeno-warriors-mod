@@ -153,6 +153,8 @@ public final class PartyGameScreens {
         int first = -1, second = -1, wait, mine, theirs, closeIn = -1;
         boolean botTurn, done;
         public static int seen;
+        /** (Tests) the last game's pairs: yours, the bot's. */
+        public static final int[] lastResult = {-1, -1};
 
         Memory(PartyGamePacket m) {
             super(Component.literal("Memory"));
@@ -213,7 +215,7 @@ public final class PartyGameScreens {
                     if (minecraft != null && minecraft.player != null) minecraft.player.playSound(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, 0.6F, 1.3F);
                 } else { up[first] = up[second] = false; botTurn = !botTurn; }
                 first = second = -1;
-                if (mine + theirs >= faces.length / 2) { done = true; closeIn = 70; ModNetwork.sendToServer(new PartyGameResultPacket(botId, mine, theirs)); return; }
+                if (mine + theirs >= faces.length / 2) { done = true; closeIn = 70; lastResult[0] = mine; lastResult[1] = theirs; ModNetwork.sendToServer(new PartyGameResultPacket(botId, mine, theirs)); return; }
                 if (botTurn) wait = -12;                                         // (the bot thinks a moment)
                 return;
             }
