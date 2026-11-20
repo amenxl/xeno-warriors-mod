@@ -580,6 +580,31 @@ final class PackNov20dTests {
             p.getInventory().clearContent();
             PackTests.clear(p);
         }), 10));
+        // ---- Auto mode: the bot does what it sees you doing
+        Object[] au = new Object[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.SAM, null);
+            if (b == null) return;
+            b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0F, 0F);
+            b.setMode(PartyBotEntity.AUTO);
+            au[0] = b;
+            for (int i = 0; i < 4; i++) com.xenowarriors.bot.BotAuto.saw(p, com.xenowarriors.bot.BotAuto.Doing.HUNTING);
+            var cow = net.minecraft.world.entity.EntityType.COW.create(p.serverLevel());
+            cow.moveTo(p.getX() + 6, p.getY(), p.getZ() + 6, 0F, 0F);
+            cow.addTag("xw_pack");
+            p.serverLevel().addFreshEntity(cow);
+        }), 60));
+        l.add(new Step("auto_hunt", () -> PackTests.server(p -> {
+            var b = (PartyBotEntity) au[0];
+            boolean hunts = b != null && (b.getTarget() instanceof net.minecraft.world.entity.animal.Cow || p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.animal.Cow.class, p.getBoundingBox().inflate(20)).isEmpty());
+            PackTests.check("auto mode: it sees you hunting and hunts too", com.xenowarriors.bot.BotAuto.doing(p) == com.xenowarriors.bot.BotAuto.Doing.HUNTING && hunts, "doing " + com.xenowarriors.bot.BotAuto.doing(p) + " target " + (b == null ? "-" : b.getTarget()));
+            for (int i = 0; i < 4; i++) com.xenowarriors.bot.BotAuto.saw(p, com.xenowarriors.bot.BotAuto.Doing.MINING);
+            PackTests.check("auto mode: you start mining - it switches to mining", b != null && b.actMode() == PartyBotEntity.MINING, "act " + (b == null ? -1 : b.actMode()));
+            com.xenowarriors.bot.BotAuto.saw(p, com.xenowarriors.bot.BotAuto.Doing.FIGHTING);
+            PackTests.check("auto mode: one swing at something else doesn't switch it", b != null && b.actMode() == PartyBotEntity.MINING, "act " + (b == null ? -1 : b.actMode()));
+            PackTests.clear(p);
+        }), 5));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -38,8 +38,8 @@ import java.util.UUID;
  * instead of dying - revive it (sneak + right-click) or it leaves the party for a while.
  */
 public class PartyBotEntity extends PathfinderMob {
-    public static final int NEUTRAL = 0, AGGRESSIVE = 1, MINING = 2;
-    public static final String[] MODES = {"Neutral", "Aggressive", "Mining"};
+    public static final int NEUTRAL = 0, AGGRESSIVE = 1, MINING = 2, AUTO = 3;
+    public static final String[] MODES = {"Neutral", "Aggressive", "Mining", "Auto"};
     private static final EntityDataAccessor<String> CHAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Integer> MODE = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);
@@ -288,7 +288,9 @@ public class PartyBotEntity extends PathfinderMob {
     /** The owner, wherever they are on the server (null when offline). */
     public ServerPlayer owner() { return level() instanceof ServerLevel s && ownerId() != null ? s.getServer().getPlayerList().getPlayer(ownerId()) : null; }
     public int mode() { return entityData.get(MODE); }
-    public void setMode(int m) { entityData.set(MODE, Math.floorMod(m, 3)); mineTarget = null; setTarget(null); }
+    public void setMode(int m) { entityData.set(MODE, Math.floorMod(m, MODES.length)); mineTarget = null; setTarget(null); }
+    /** The mode in effect: its own, or in Auto what it saw you doing (BotAuto). */
+    public int actMode() { return BotAuto.actMode(this); }
     public int botLevel() { return entityData.get(LEVEL); }
     public boolean downed() { return entityData.get(DOWNED); }
     /** The bot it's sparring (BotSpar), null when it spars you or doesn't spar. */
@@ -821,7 +823,18 @@ public class PartyBotEntity extends PathfinderMob {
             if (o == null) return false;
             if (sparring()) { pick = BotSpar.pick(PartyBotEntity.this); return pick != null; }
             if (relayTarget != null && relayTarget.isAlive() && level().getGameTime() < relayUntil && !PartyBots.friendly(PartyBotEntity.this, relayTarget) && !untouchable(relayTarget)) { pick = relayTarget; return true; }
-            if (mode() == AGGRESSIVE) {                                           // the nearest enemy - one fewer of the team is on first (they spread out)
+            if (BotAuto.hunting(PartyBotEntity.this)) {                          // Auto, and you're hunting: the nearest animal (nobody's pet)
+                pick = null;
+                double best = 20 * 20;
+                for (net.minecraft.world.entity.animal.Animal a : level().getEntitiesOfClass(net.minecraft.world.entity.animal.Animal.class, o.getBoundingBox().inflate(20),
+                        a -> a.isAlive() && !a.isBaby() && !(a instanceof net.minecraft.world.entity.TamableAnimal t && t.isTame()) && !(a instanceof net.minecraft.world.entity.animal.horse.AbstractHorse h && h.isTamed())
+                                && com.xenowarriors.party.Parties.petOwner(a) == null && !PartyBots.friendly(PartyBotEntity.this, a) && !untouchable(a))) {
+                    double score = distanceToSqr(a) + PartyBots.onIt(PartyBotEntity.this, a) * 100;
+                    if (score < best) { best = score; pick = a; }
+                }
+                return pick != null;
+            }
+            if (actMode() == AGGRESSIVE) {                                        // the nearest enemy - one fewer of the team is on first (they spread out)
                 pick = null;
                 double best = Double.MAX_VALUE;
                 for (net.minecraft.world.entity.Mob m : level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, o.getBoundingBox().inflate(16),
@@ -950,7 +963,7 @@ public class PartyBotEntity extends PathfinderMob {
             lastLook = tickCount;
             ServerPlayer o = owner();
             if (o == null || o.level() != level() || !com.xenowarriors.modes.ModeRules.canGrief(level())) return false;
-            if (mode() != MINING) {                                             // not mining: only ore it's short of for an upgrade it has in mind, close by
+            if (actMode() != MINING) {                                          // not mining: only ore it's short of for an upgrade it has in mind, close by
                 if (tickCount - lastGatherLook < 100 || errand != null || journey()) return false;
                 lastGatherLook = tickCount;
                 mineTarget = BotCrafting.gatherTarget(PartyBotEntity.this, o);
@@ -968,7 +981,7 @@ public class PartyBotEntity extends PathfinderMob {
         private boolean breakable(BlockState s) { return PartyBots.isOre(s) || BotGear.isLog(s); }
         @Override public boolean canContinueToUse() {
             if (mineTarget == null || downed() || getTarget() != null || !breakable(level().getBlockState(mineTarget))) return false;
-            if (mode() == MINING) return true;
+            if (actMode() == MINING) return true;
             ServerPlayer o = owner();                                           // (getting ore for a craft: never in a fight or far from its owner)
             return gathering && o != null && o.level() == level() && o.distanceToSqr(PartyBotEntity.this) < 20 * 20 && (tickCount % 10 != 0 || BotErrands.danger(PartyBotEntity.this) == null);
         }

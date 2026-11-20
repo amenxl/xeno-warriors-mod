@@ -88,7 +88,7 @@ public class BotFishing extends Goal {
     @Override public boolean canUse() {
         if (b.tickCount < nextLook && !forceForTest) return false;
         nextLook = b.tickCount + LOOK_EVERY;
-        if (!quiet() || (!forceForTest && b.getRandom().nextFloat() >= CHANCE)) return false;
+        if (!quiet() || (!forceForTest && !BotAuto.fishing(b) && b.getRandom().nextFloat() >= CHANCE)) return false;   // (Auto, and you're fishing: it fishes too)
         if (!findWater()) return false;
         if (rodSlot() < 0 && !rod(b.getMainHandItem())) {                    // no rod: make one (3 sticks and 2 string)
             ItemStack made = BotCrafting.craftRecipe(b, new ResourceLocation("minecraft", "fishing_rod"));

@@ -76,7 +76,7 @@ public class PartyScreen extends Screen {
                 if (b == null) continue;
                 int id = b.getId();
                 addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal(PartyBotEntity.MODES[b.mode()]), btn -> {
-                    int next = (b.mode() + 1) % 3;
+                    int next = (b.mode() + 1) % PartyBotEntity.MODES.length;
                     ModNetwork.sendToServer(new BotActionPacket(id, PartyBots.ACT_MODE, next));
                     btn.setMessage(Component.literal(PartyBotEntity.MODES[next]));
                 }).bounds(x + CW - 118, y + by, 64, bh).build());

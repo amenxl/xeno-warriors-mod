@@ -163,7 +163,7 @@ public final class BotGear {
      */
     public static void tickIdle(PartyBotEntity b) {
         if (b.level().isClientSide) return;
-        boolean busy = b.getTarget() != null || b.mode() == PartyBotEntity.MINING || b.downed() || b.sparring() || b.isPassenger()
+        boolean busy = b.getTarget() != null || b.actMode() == PartyBotEntity.MINING || b.downed() || b.sparring() || b.isPassenger()
                 || b.hurtTime > 0 || handLocked(b);
         if (busy || !LAST_BUSY.containsKey(b)) LAST_BUSY.put(b, b.tickCount);
         ItemStack hand = b.getMainHandItem();

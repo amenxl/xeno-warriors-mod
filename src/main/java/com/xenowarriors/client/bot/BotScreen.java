@@ -60,7 +60,7 @@ public class BotScreen extends Screen {
         addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Side mission"), b -> { send(PartyBots.ACT_SIDE, 0); onClose(); })   // (ask them for their next side mission)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Ask them for their next side mission (story characters)")))
                 .bounds(x + bw / 2 + 1, y + 88, bw - bw / 2 - 1, 20).build());
-        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(modeLabel(), b -> { mode = (mode + 1) % PartyBotEntity.MODES.length; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
         if (DMZ) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Dragon Ball"), b -> send(PartyBots.ACT_DMZ, 0)).bounds(x, y + 132, bw - 44, 20).build());   // (its DragonMineZ character: points, missions)
         if (DMZ) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Fuse"), b -> { send(PartyBots.ACT_FUSE, 0); onClose(); })    // (Potara earrings in its bag, or it knows the Fusion Dance)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Fuse with them: they need Potara earrings in their bag, or the Fusion Dance skill")))

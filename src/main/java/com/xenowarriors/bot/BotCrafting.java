@@ -461,7 +461,7 @@ public final class BotCrafting {
      * of it and 16 of its owner, if it has a pickaxe that gets the ore out. Null: nothing to go for.
      */
     public static BlockPos gatherTarget(PartyBotEntity b, ServerPlayer o) {
-        if (b.mode() == PartyBotEntity.MINING || b.journey() || b.isPassenger() || BotErrands.danger(b) != null || !com.xenowarriors.modes.ModeRules.canGrief(b.level())) return null;
+        if (b.actMode() == PartyBotEntity.MINING || b.journey() || b.isPassenger() || BotErrands.danger(b) != null || !com.xenowarriors.modes.ModeRules.canGrief(b.level())) return null;
         Need need = shortfall(b);
         if (need == null) return null;
         BlockPos c = b.blockPosition(), best = null; double bd = 1e9;
