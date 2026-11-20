@@ -342,6 +342,41 @@ final class PackNov20dTests {
             PackTests.clear(p);
         }), 5));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+        // ---- no team attack with a bot you're sparring; Netsu in the rain steams at a high level
+        int[] ns = new int[3];
+        l.add(new Step(null, () -> com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.RHALIX, null);
+            if (b == null) return;
+            b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0F, 0F);
+            boolean before = com.xenowarriors.party.TeamUltimate.partners(p).contains(b);
+            PartyBots.action(p, b.getId(), PartyBots.ACT_SPAR, 0);
+            boolean during = com.xenowarriors.party.TeamUltimate.partners(p).contains(b);
+            PackTests.check("team attacks: none with a bot you're sparring", before && !during, "partner before " + before + " while sparring " + during);
+            b.setSparring(false); b.setTarget(null);
+            PackTests.clear(p);
+        }), 20));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p);
+            p.serverLevel().setWeatherParameters(0, 6000, true, false);
+            com.xenowarriors.skill.SkillLevels.setForTest(p, "netsu", 4, 1);
+            ns[0] = com.xenowarriors.mikiko.Netsu.steamTicks;
+            com.xenowarriors.mikiko.Netsu.start(p);
+            ns[1] = (int) com.xenowarriors.mikiko.Netsu.remaining(p);
+        }), 40));
+        l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 20));
+        l.add(new Step("netsu_steam", () -> PackTests.server(p -> {
+            int lost = ns[1] - (int) com.xenowarriors.mikiko.Netsu.remaining(p);
+            boolean rain = com.xenowarriors.mikiko.Netsu.rainedOn(p);
+            PackTests.check("netsu: high level in the rain - steam rolls off, it still burns down faster (2x, not 3x)", !rain || com.xenowarriors.mikiko.Netsu.steamTicks > ns[0] && lost > 70 && lost < 150,
+                    "rain " + rain + " steam " + (com.xenowarriors.mikiko.Netsu.steamTicks - ns[0]) + " lost " + lost + " in ~60 ticks");
+            com.xenowarriors.mikiko.Netsu.stop(p);
+            p.serverLevel().setWeatherParameters(6000, 0, false, false);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 3));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
         // ---- a made character of the wind learns to fly; Soulslike Universe helmets tuck the hair away
         l.add(new Step(null, () -> PackTests.server(p -> {
             var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);

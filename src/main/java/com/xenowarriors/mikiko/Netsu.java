@@ -71,6 +71,15 @@ public final class Netsu {
     private static final java.util.Set<UUID> RAIN_WARNED = new java.util.HashSet<>();
     /** Extra ticks of Netsu the rain burns off each tick (3x as fast in total). */
     public static final int RAIN_EXTRA = 2;
+    /**
+     * A well-trained Netsu (ability level {@value #STEAM_LEVEL}+): the rain still shortens it, but only twice as fast
+     * (not three times) - the drops turn to steam on him, a cloud of it rolling off his body.
+     */
+    public static final int STEAM_LEVEL = 30, STEAM_RAIN_EXTRA = 1;
+    /** (Tests) ticks of steam. */
+    public static int steamTicks;
+
+    public static boolean steams(ServerPlayer p) { return com.xenowarriors.skill.SkillLevels.abilityLevel(p, "netsu") >= STEAM_LEVEL; }
 
     /** Rain falling on him (not under cover, not under the Heku-umbrella). */
     public static boolean rainedOn(Player p) {
@@ -130,12 +139,26 @@ public final class Netsu {
         long now = p.level().getGameTime();
         // rain puts it out three times as fast - unless he's under the Heku-umbrella
         if (rainedOn(p)) {
-            END.put(p.getUUID(), END.get(p.getUUID()) - RAIN_EXTRA);
-            if (now % 4 == 0) ((net.minecraft.server.level.ServerLevel) p.level()).sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+            boolean steam = steams(p);
+            END.put(p.getUUID(), END.get(p.getUUID()) - (steam ? STEAM_RAIN_EXTRA : RAIN_EXTRA));
+            var sl = (net.minecraft.server.level.ServerLevel) p.level();
+            if (steam) {                                                         // the rain boils off him: steam all round
+                steamTicks++;
+                if (now % 2 == 0) {
+                    sl.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD, p.getX(), p.getY() + 1.0, p.getZ(), 4, 0.45, 0.7, 0.45, 0.02);
+                    sl.sendParticles(net.minecraft.core.particles.ParticleTypes.WHITE_ASH, p.getX(), p.getY() + 1.9, p.getZ(), 6, 0.4, 0.2, 0.4, 0.02);
+                    sl.sendParticles(net.minecraft.core.particles.ParticleTypes.POOF, p.getX(), p.getY() + 2.1, p.getZ(), 1, 0.3, 0.1, 0.3, 0.01);
+                }
+                if (now % 30 == 0) p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.35F, 1.6F);
+            } else if (now % 4 == 0) sl.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
                     p.getX(), p.getY() + 1.6, p.getZ(), 2, 0.3, 0.3, 0.3, 0.01);
             if (now % 20 == 0) {
                 p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.PLAYERS, 0.3F, 1.8F);
                 ModNetwork.sendToTrackingAndSelf(new NetsuPacket(p.getId(), (int) Math.max(1, remaining(p))), p);
+                if (!RAIN_WARNED.contains(p.getUUID()) && steam) {
+                    RAIN_WARNED.add(p.getUUID());
+                    p.displayClientMessage(Component.literal("Your Netsu boils the rain away - steam rolls off you (it still burns down faster)").withStyle(net.minecraft.ChatFormatting.AQUA), true);
+                }
                 if (!RAIN_WARNED.contains(p.getUUID())) {
                     RAIN_WARNED.add(p.getUUID());
                     p.displayClientMessage(Component.literal("The rain is putting out your Netsu! Get under cover"

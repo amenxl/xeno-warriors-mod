@@ -114,11 +114,23 @@ public final class TeamUltimate {
         if (w.isEmpty() || anchor == null) return List.of();
         List<LivingEntity> out = new ArrayList<>();
         for (ServerPlayer m : Parties.members(anchor)) {
-            if (w.contains(type(m)) && near(e, m) && !m.isSpectator()) out.add(m);
-            for (PartyBotEntity b : PartyBots.bots(m)) if (w.contains(b.character()) && near(e, b) && !b.sparring()) out.add(b);
+            if (w.contains(type(m)) && near(e, m) && !m.isSpectator() && !fighting(e, m)) out.add(m);
+            for (PartyBotEntity b : PartyBots.bots(m)) if (w.contains(b.character()) && near(e, b) && !fighting(e, b)) out.add(b);
         }
         out.sort(Comparator.comparingDouble(o -> o.distanceToSqr(e)));
         return out;
+    }
+
+    /**
+     * These two are fighting each other - a spar (1-on-1 or across a 2v2), a duel, or one going after the other / just
+     * hit by it: no team attack together (a 2v2 spar partner on your own side still can).
+     */
+    public static boolean fighting(LivingEntity a, LivingEntity b) {
+        if (com.xenowarriors.combat.Allies.opponents(a, b)) return true;
+        if (a instanceof net.minecraft.world.entity.Mob ma && ma.getTarget() == b || b instanceof net.minecraft.world.entity.Mob mb && mb.getTarget() == a) return true;
+        if (a.getLastHurtByMob() == b && a.tickCount - a.getLastHurtByMobTimestamp() < 100) return true;
+        if (b.getLastHurtByMob() == a && b.tickCount - b.getLastHurtByMobTimestamp() < 100) return true;
+        return false;
     }
 
     /** In a team ultimate (or another ultimate cutscene) right now. */
