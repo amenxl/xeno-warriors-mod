@@ -43,6 +43,7 @@ public final class EfBotBodies {
                     started++;
                 }
                 if (!patch.isEpicFightMode()) patch.toEpicFightMode(false);
+                walkMotion(patch, a);                                            // (Epic Fight never works out a remote player's walking itself: it's told)
                 patch.tick(new net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent(a));
                 PartyBotEntity b = a.bot();
                 boolean swinging = b.swinging;
@@ -60,6 +61,30 @@ public final class EfBotBodies {
                 } else if (errors == 1) com.xenowarriors.XenoWarriors.LOGGER.warn("[Xeno Warriors] a bot's Epic Fight body failed this tick", t);
             }
         }
+    }
+
+    /** (Tests) walk / run motions set on bots' bodies. */
+    public static int walkSet;
+
+    /**
+     * Idle, walking or running, from how the bot moves. Epic Fight takes a player's motion from that player's own game
+     * (sent over the network) - a bot's body has nobody's game behind it, so it stayed "idle" and its legs never moved
+     * whenever an Epic Fight pose covered them (Sam walking with his bat). Only those three are set; anything else
+     * Epic Fight has on (falling, flying, a hit...) is left alone.
+     */
+    private static void walkMotion(PlayerPatch<?> patch, BotAvatar a) {
+        var cur = patch.currentLivingMotion;
+        boolean ours = cur == yesman.epicfight.api.animation.LivingMotions.IDLE || cur == yesman.epicfight.api.animation.LivingMotions.WALK
+                || cur == yesman.epicfight.api.animation.LivingMotions.RUN;
+        if (!ours) return;
+        PartyBotEntity b = a.bot();
+        double dx = b.getX() - b.xo, dz = b.getZ() - b.zo;
+        boolean moving = a.onGround() && !b.isPassenger() && dx * dx + dz * dz > 0.015 * 0.015;
+        var want = !moving ? yesman.epicfight.api.animation.LivingMotions.IDLE : a.isSprinting() ? yesman.epicfight.api.animation.LivingMotions.RUN : yesman.epicfight.api.animation.LivingMotions.WALK;
+        patch.currentLivingMotion = want;
+        if (patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.IDLE || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.WALK
+                || patch.currentCompositeMotion == yesman.epicfight.api.animation.LivingMotions.RUN) patch.currentCompositeMotion = want;
+        if (want != yesman.epicfight.api.animation.LivingMotions.IDLE) walkSet++;
     }
 
     /**
