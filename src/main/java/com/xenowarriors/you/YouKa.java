@@ -38,6 +38,11 @@ public final class YouKa {
     /** Of those that do, this share get a rare one. */
     public static final float RARE_SHARE = 0.3F;
     public static final String WISH_NAME = "Awaken a new KA";
+    public static final String RESTYLE_WISH = "Restyle my tail or wings";
+    /** Our wishes on DragonMineZ's dragons: name, description, command. */
+    static final String[][] WISHES = {
+            {WISH_NAME, "Xeno Warriors: a new KA (or a first one) for the character you made yourself that you're playing.", "xenokawish %player%"},
+            {RESTYLE_WISH, "Xeno Warriors: change the tail (Fox Kin) or wings (Skylander) of the character you made yourself that you're playing - pick again in Your Own Warriors.", "xenorestylewish %player%"}};
 
     /** (Tests) a fixed roll: true = awaken, false = not (null = random). */
     public static Boolean testAwaken;
@@ -123,8 +128,29 @@ public final class YouKa {
         return 1;
     }
 
+    /** The dragon's wish: one more change of the tail / wings of the character you're playing (picked in Your Own Warriors). */
+    public static int restyleWish(ServerPlayer p) {
+        YouSlot s = You.slot(p);
+        if (s == null || !s.styleable()) {
+            p.sendSystemMessage(Component.literal("The dragon's eyes glow... but only a Fox Kin or Skylander you made yourself has a tail or wings to restyle. (Switch to one and wish again.)").withStyle(ChatFormatting.GOLD));
+            return 0;
+        }
+        s.restyles++;
+        restyleWishes++;
+        p.sendSystemMessage(Component.literal("Your wish is granted! " + s.name + " can restyle their " + (s.foxTail() ? "tail" : "wings") + " - pick it in Your Own Warriors (the " + (s.foxTail() ? "TAIL" : "WINGS") + " button on their card).").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+        com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
+        return 1;
+    }
+    /** (Tests) restyle wishes granted. */
+    public static int restyleWishes;
+
     @SubscribeEvent
     public static void onCommands(RegisterCommandsEvent e) {
+        e.getDispatcher().register(Commands.literal("xenorestylewish").requires(s -> s.hasPermission(2))
+                .then(Commands.argument("player", StringArgumentType.word()).executes(c -> {
+                    ServerPlayer p = c.getSource().getServer().getPlayerList().getPlayerByName(StringArgumentType.getString(c, "player"));
+                    return p == null ? 0 : restyleWish(p);
+                })));
         e.getDispatcher().register(Commands.literal("xenokawish").requires(s -> s.hasPermission(2))
                 .then(Commands.argument("player", StringArgumentType.word()).executes(c -> {
                     ServerPlayer p = c.getSource().getServer().getPlayerList().getPlayerByName(StringArgumentType.getString(c, "player"));
@@ -153,12 +179,13 @@ public final class YouKa {
             boolean changed = false;
             for (var en : cur.entrySet()) {
                 List<Object> l = new ArrayList<>(en.getValue() == null ? List.of() : en.getValue());
-                boolean has = false;
-                for (Object w : l) if (WISH_NAME.equals(name.invoke(w))) has = true;
-                if (!has) {
-                    l.add(cmdC.getConstructor(String.class, String.class, String[].class).newInstance(WISH_NAME,
-                            "Xeno Warriors: a new KA (or a first one) for the character you made yourself that you're playing.", new String[]{"xenokawish %player%"}));
-                    changed = true;
+                for (String[] w : WISHES) {
+                    boolean has = false;
+                    for (Object o : l) if (w[0].equals(name.invoke(o))) has = true;
+                    if (!has) {
+                        l.add(cmdC.getConstructor(String.class, String.class, String[].class).newInstance(w[0], w[1], new String[]{w[2]}));
+                        changed = true;
+                    }
                 }
                 out.put(en.getKey(), l);
             }

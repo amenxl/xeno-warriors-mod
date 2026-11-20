@@ -22,14 +22,19 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
  * towards the character's element.
  */
 public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+    /** (Tests) wings drawn. */
+    public static int wingsDrawn;
+
     public YouWingsLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) { super(parent); }
 
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer p, float limb, float limbAmt, float pt, float age, float yaw, float pitch) {
-        if (p.isInvisible() || !ClientCharacterData.winged(p)) return;
-        YouSlot s = ClientCharacterData.you(p);
-        if (s == null) return;
-        String style = s.angel() ? "seraph" : s.demon() ? "demon" : s.path == YouSlot.PATH_SKYLANDER ? "tech"      // (made Skylanders: Technica's kind of wings)
+        if (p.isInvisible()) return;
+        boolean pv = com.xenowarriors.client.you.YouFeatures.previewing(p);
+        if (!pv && !ClientCharacterData.winged(p)) return;
+        YouSlot s = com.xenowarriors.client.you.YouFeatures.of(p);
+        if (s == null || pv && !s.wingsNow()) return;
+        String style = s.skyWings() && s.wings >= 0 ? YouSlot.WINGS[s.wings] : s.angel() ? "seraph" : s.demon() ? "demon" : s.path == YouSlot.PATH_SKYLANDER ? "tech"      // (made Skylanders: Technica's kind of wings)
                 : s.element == com.xenowarriors.ka.Element.CRYSTAL ? "crystal" : "angel";
         DetailModel m = NpcRenderer.model("wing_" + style);
         if (m == null || m.rightWing == null || m.leftWing == null) return;
@@ -57,8 +62,13 @@ public class YouWingsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel
         float sc = s.devil ? 1.3F : 1F;                                    // (a Devil's are bigger)
         m.rightWing.xScale = m.rightWing.yScale = m.rightWing.zScale = sc;
         m.leftWing.xScale = m.leftWing.yScale = m.leftWing.zScale = sc;
-        m.rightWing.render(pose, vc, light, overlay, r, g, b, 1F);
-        m.leftWing.render(pose, vc, light, overlay, r, g, b, 1F);
+        boolean own = s.skyWings();                                       // (a Skylander's own colour for each wing)
+        int cr = own ? s.wingR : -1, cl = own ? s.wingL : -1;
+        if (cr >= 0) m.rightWing.render(pose, vc, light, overlay, (cr >> 16 & 255) / 255F, (cr >> 8 & 255) / 255F, (cr & 255) / 255F, 1F);
+        else m.rightWing.render(pose, vc, light, overlay, r, g, b, 1F);
+        if (cl >= 0) m.leftWing.render(pose, vc, light, overlay, (cl >> 16 & 255) / 255F, (cl >> 8 & 255) / 255F, (cl & 255) / 255F, 1F);
+        else m.leftWing.render(pose, vc, light, overlay, r, g, b, 1F);
+        wingsDrawn++;
         m.rightWing.xScale = m.rightWing.yScale = m.rightWing.zScale = 1F;
         m.leftWing.xScale = m.leftWing.yScale = m.leftWing.zScale = 1F;
         pose.popPose();

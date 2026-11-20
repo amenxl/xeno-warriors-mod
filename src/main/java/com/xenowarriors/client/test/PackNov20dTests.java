@@ -634,6 +634,53 @@ final class PackNov20dTests {
             l.add(new Step("you_fists_2", () -> {}, 4));
             l.add(new Step(null, () -> { PackWomTests.battle(false); mc.options.setCameraType(CameraType.FIRST_PERSON); com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
         }
+        // ---- a made Fox Kin's tail and a made Skylander's wings: picked once free, then a Dragon Ball wish each change
+        int[] ft = new int[4];
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p);
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            d.youSlots[7] = new com.xenowarriors.you.YouSlot();
+            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Kitsu"; ys.race = com.xenowarriors.character.Race.FOX_KIN; ys.element = com.xenowarriors.ka.Element.FIRE;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 7, ys);
+            p.getInventory().selected = 0; p.getInventory().setItem(0, ItemStack.EMPTY);
+            ft[0] = com.xenowarriors.you.YouSlots.featuresSet;
+        }), 40));
+        l.add(new Step(null, () -> { var s = com.xenowarriors.client.you.YouClient.slots.length > 7 ? com.xenowarriors.client.you.YouClient.slots[7] : null;
+            if (s != null) { var sc = new com.xenowarriors.client.you.YouFeatureScreen(7, s, null); sc.testPick(4, 0x3A2A5A, 0x80E0FF, -1, -1, -1); mc.setScreen(sc); } }, 20));
+        l.add(new Step("you_tail_screen", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> {
+            var d = new com.xenowarriors.you.YouSlot(); d.name = "Kitsu"; d.tail = 4; d.tailColour = 0x3A2A5A; d.tipColour = 0x80E0FF;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.FEATURES, 7, d);
+            var d2 = new com.xenowarriors.you.YouSlot(); d2.name = "Kitsu"; d2.tail = 1;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.FEATURES, 7, d2);   // (refused: it's set)
+            var s = com.xenowarriors.you.You.slot(p);
+            PackTests.check("you tail: the first pick is free, then it's set", s != null && s.featuresSet && s.tail == 4 && s.tailColour == 0x3A2A5A, "tail " + (s == null ? -1 : s.tail) + " set " + (s != null && s.featuresSet));
+            com.xenowarriors.you.YouKa.restyleWish(p);
+            var d3 = new com.xenowarriors.you.YouSlot(); d3.name = "Kitsu"; d3.tail = 4; d3.tailColour = 0xF0F0F0; d3.tipColour = 0x202020;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.FEATURES, 7, d3);
+            s = com.xenowarriors.you.You.slot(p);
+            PackTests.check("you tail: a Dragon Ball wish lets you change it once more", s != null && s.tailColour == 0xF0F0F0 && s.restyles == 0 && com.xenowarriors.you.YouSlots.featuresSet - ft[0] == 2,
+                    "colour " + (s == null ? "-" : Integer.toHexString(s.tailColour)) + " wishes " + (s == null ? -1 : s.restyles) + " set " + (com.xenowarriors.you.YouSlots.featuresSet - ft[0]));
+            p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 180F, 0F);
+        }); ft[1] = com.xenowarriors.client.compat.YouTails.DRAWN[4]; mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_BACK); }, 30));
+        l.add(new Step("you_nine_tails", () -> PackTests.check("you tail: the nine tails are drawn", com.xenowarriors.client.compat.YouTails.DRAWN[4] > ft[1], "drawn " + (com.xenowarriors.client.compat.YouTails.DRAWN[4] - ft[1])), 3));
+        // a Skylander: butterfly wings, each its own colour
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            d.youSlots[8] = new com.xenowarriors.you.YouSlot();
+            var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Aerin"; ys.race = com.xenowarriors.character.Race.SKYLANDER; ys.element = com.xenowarriors.ka.Element.WATER; ys.form = com.xenowarriors.you.YouSlot.FORM_LUNAR;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 8, ys);
+            var f = new com.xenowarriors.you.YouSlot(); f.name = "Aerin"; f.wings = 6; f.wingL = 0xE83A3A; f.wingR = 0x4060FF;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.FEATURES, 8, f);
+            var s = com.xenowarriors.you.You.slot(p);
+            PackTests.check("you wings: a Skylander picks butterfly wings, each wing its own colour", s != null && s.wings == 6 && s.wingL == 0xE83A3A && s.wingR == 0x4060FF, "wings " + (s == null ? -1 : s.wings));
+            p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 180F, 0F);
+        }), 40));
+        l.add(new Step(null, () -> ft[2] = com.xenowarriors.client.you.YouWingsLayer.wingsDrawn, 10));
+        l.add(new Step("you_butterfly_wings", () -> PackTests.check("you wings: drawn", com.xenowarriors.client.you.YouWingsLayer.wingsDrawn > ft[2], "drawn " + (com.xenowarriors.client.you.YouWingsLayer.wingsDrawn - ft[2])), 3));
+        l.add(new Step(null, () -> { var s = com.xenowarriors.client.you.YouClient.slots.length > 8 ? com.xenowarriors.client.you.YouClient.slots[8] : null;
+            if (s != null) mc.setScreen(new com.xenowarriors.client.you.YouFeatureScreen(8, s, null)); }, 20));
+        l.add(new Step("you_wings_screen", () -> {}, 3));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
         // ---- blocking gunfire: a higher gun level weaves out of the way (and at 300+ knocks some back); rapid fire still gets some through
         if (com.xenowarriors.compat.TaczGuns.available()) {
             int[] gd = new int[8];   // shooter id, camera id, dodged, reflected, through at start; bot id

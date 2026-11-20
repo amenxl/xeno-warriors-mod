@@ -57,6 +57,14 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
     @Override
     public void render(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer p, float limbSwing, float limbSwingAmount,
                        float partialTick, float age, float yaw, float pitch) {
+        var ys = com.xenowarriors.client.you.YouFeatures.of(p);
+        if (ys != null && ys.foxTail()) {                                              // a made Fox Kin: their own tail
+            pose.pushPose();
+            getParentModel().body.translateAndRotate(pose);
+            YouTails.render(pose, buffers, light, p, ys, parts -> posed(parts[0], parts[1], parts[2], p, limbSwing, limbSwingAmount, partialTick, age));
+            pose.popPose();
+            return;
+        }
         ResourceLocation tex = posed(tail, mid, tip, p, limbSwing, limbSwingAmount, partialTick, age);
         if (tex == null) return;
         pose.pushPose();
@@ -79,6 +87,11 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
         }
         ModelPart mid = efTail.getChild("mid");
         float age = p.tickCount + partialTick;
+        var ys = com.xenowarriors.client.you.YouFeatures.of(p);
+        if (ys != null && ys.foxTail()) {
+            float ls = p.walkAnimation.position(partialTick), la = Math.min(1F, p.walkAnimation.speed(partialTick));
+            return YouTails.render(pose, buffers, light, p, ys, parts -> posed(parts[0], parts[1], parts[2], p, ls, la, partialTick, age));
+        }
         ResourceLocation tex = posed(efTail, mid, mid.getChild("tip"), p, p.walkAnimation.position(partialTick),
                 Math.min(1F, p.walkAnimation.speed(partialTick)), partialTick, age);
         if (tex == null) return false;
@@ -90,7 +103,7 @@ public class FoxTailLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<
     private static ResourceLocation posed(ModelPart tail, ModelPart mid, ModelPart tip, AbstractClientPlayer p, float limbSwing, float limbSwingAmount,
                                           float partialTick, float age) {
         if (p.isInvisible()) return null;
-        var ys = ClientCharacterData.you(p);
+        var ys = com.xenowarriors.client.you.YouFeatures.of(p);
         boolean foxKin = ys != null && ys.race == com.xenowarriors.character.Race.FOX_KIN;
         if (!foxKin && ClientCharacterData.get(p) != CharacterType.MIKIKO) return null;
         boolean outfit = foxKin || outfitTail(p);

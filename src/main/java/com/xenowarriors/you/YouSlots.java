@@ -31,13 +31,16 @@ public final class YouSlots {
         ModNetwork.sendToPlayer(new YouSlotsPacket(d.youSlots, lv, d.getType() == CharacterType.YOU ? d.youSlot : -1, open), p);
     }
 
+    /** (Tests) tails / wings set. */
+    public static int featuresSet;
+
     public static void act(ServerPlayer p, int action, int slot, YouSlot data) {
         PlayerCharacter d = p.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
         if ((action == YouActionPacket.IDLE || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.DMZ_HAIR) && slot < 0 && d.getType() == CharacterType.YOU) slot = d.youSlot;   // (Character Customization: the one you're playing)
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
-        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR || action == YouActionPacket.IDLE ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
+        String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR || action == YouActionPacket.IDLE || action == YouActionPacket.FEATURES ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
             p.displayClientMessage(Component.literal(blocked).withStyle(ChatFormatting.RED), true);
             return;
@@ -79,6 +82,23 @@ public final class YouSlots {
                 if (!s.exists() || data == null) return;
                 s.colour = YouSlot.validColour(data.colour);
                 p.displayClientMessage(Component.literal(s.name + (s.colour < 0 ? " has their element's colour again" : " has a new colour")).withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
+            case YouActionPacket.FEATURES -> {
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null || !s.styleable()) return;
+                if (s.featuresSet && s.restyles <= 0) {
+                    p.displayClientMessage(Component.literal(s.name + "'s " + (s.foxTail() ? "tail" : "wings") + " are set - wish on the Dragon Balls to change them again").withStyle(ChatFormatting.RED), false);
+                    send(p, true);
+                    return;
+                }
+                if (s.foxTail()) { s.tail = Math.floorMod(data.tail, YouSlot.TAILS.length); s.tailColour = YouSlot.validColour(data.tailColour); s.tipColour = YouSlot.validColour(data.tipColour); }
+                if (s.skyWings()) { s.wings = YouSlot.validWings(data.wings); s.wingL = YouSlot.validColour(data.wingL); s.wingR = YouSlot.validColour(data.wingR); }
+                if (s.featuresSet) s.restyles--;
+                s.featuresSet = true;
+                featuresSet++;
+                p.displayClientMessage(Component.literal(s.name + "'s " + (s.foxTail() ? "tail" : "wings") + " are set" + (s.restyles > 0 ? " (" + s.restyles + " wish" + (s.restyles == 1 ? "" : "es") + " left to change them)" : "")).withStyle(st -> st.withColor(s.color())), false);
                 CharacterManager.syncToTrackingAndSelf(p);
                 send(p, true);
             }

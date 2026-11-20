@@ -47,6 +47,25 @@ public final class YouSlot {
     public String idle = "";
     /** With DragonMineZ and our look: its DragonMineZ hair drawn on its head too (styled in DragonMineZ's customization). */
     public boolean dmzHair;
+    /**
+     * Fox Kin: its tail (one of {@link #TAILS}) and colours (-1: the usual orange with a white tip). Skylanders: their
+     * wings (one of {@link #WINGS}, -1: the usual ones for them) and each wing's colour (-1: the usual tint). Picked
+     * once for free (see YouSlots, FEATURES) - after that, changing them takes a wish on the Dragon Balls ({@link #restyles}).
+     */
+    public int tail, tailColour = -1, tipColour = -1, wings = -1, wingL = -1, wingR = -1;
+    /** The tail / wings have been picked once; wishes for changing them again, not used yet. */
+    public boolean featuresSet;
+    public int restyles;
+
+    public static final String[] TAILS = {"Classic", "Fluffy", "Long", "Twin Tails", "Nine Tails"};
+    /** The wing models a Skylander can wear (NpcRenderer "wing_" + id), and what they're called. */
+    public static final String[] WINGS = {"angel", "angel_small", "falcon", "falcon_small", "hawk", "hawk_small", "butterfly", "crystal", "tech", "tattered"};
+    public static final String[] WING_NAMES = {"Angel", "Small Angel", "Falcon", "Small Falcon", "Hawk", "Small Hawk", "Butterfly", "Crystal", "Tech", "Tattered"};
+
+    /** Has a tail or wings to style: Fox Kin, or a Skylander (born or made, not an Angel or Devil). */
+    public boolean foxTail() { return race == Race.FOX_KIN; }
+    public boolean skyWings() { return skylander() && !angel() && !devil && !(path == PATH_DEMON); }
+    public boolean styleable() { return foxTail() || skyWings(); }
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -100,6 +119,9 @@ public final class YouSlot {
         t.putInt("colour", colour);
         t.putString("idle", idle);
         t.putBoolean("dmz_hair", dmzHair);
+        t.putInt("tail", tail); t.putInt("tail_colour", tailColour); t.putInt("tip_colour", tipColour);
+        t.putInt("wings", wings); t.putInt("wing_l", wingL); t.putInt("wing_r", wingR);
+        t.putBoolean("features_set", featuresSet); t.putInt("restyles", restyles);
         return t;
     }
 
@@ -125,6 +147,14 @@ public final class YouSlot {
         s.colour = t.contains("colour") ? validColour(t.getInt("colour")) : -1;     // (characters made before: their element's)
         s.idle = YouIdles.owner(t.getString("idle")) ? t.getString("idle") : "";
         s.dmzHair = t.getBoolean("dmz_hair");
+        s.tail = Math.floorMod(t.getInt("tail"), TAILS.length);
+        s.tailColour = t.contains("tail_colour") ? validColour(t.getInt("tail_colour")) : -1;
+        s.tipColour = t.contains("tip_colour") ? validColour(t.getInt("tip_colour")) : -1;
+        s.wings = t.contains("wings") ? validWings(t.getInt("wings")) : -1;
+        s.wingL = t.contains("wing_l") ? validColour(t.getInt("wing_l")) : -1;
+        s.wingR = t.contains("wing_r") ? validColour(t.getInt("wing_r")) : -1;
+        s.featuresSet = t.getBoolean("features_set");
+        s.restyles = Math.max(0, t.getInt("restyles"));
         return s;
     }
 
@@ -148,6 +178,9 @@ public final class YouSlot {
         buf.writeInt(colour);
         buf.writeUtf(idle, 32);
         buf.writeBoolean(dmzHair);
+        buf.writeVarInt(tail); buf.writeInt(tailColour); buf.writeInt(tipColour);
+        buf.writeInt(wings); buf.writeInt(wingL); buf.writeInt(wingR);
+        buf.writeBoolean(featuresSet); buf.writeVarInt(restyles);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -173,6 +206,9 @@ public final class YouSlot {
         String id = buf.readUtf(32);
         s.idle = YouIdles.owner(id) ? id : "";
         s.dmzHair = buf.readBoolean();
+        s.tail = Math.floorMod(buf.readVarInt(), TAILS.length); s.tailColour = validColour(buf.readInt()); s.tipColour = validColour(buf.readInt());
+        s.wings = validWings(buf.readInt()); s.wingL = validColour(buf.readInt()); s.wingR = validColour(buf.readInt());
+        s.featuresSet = buf.readBoolean(); s.restyles = Math.max(0, buf.readVarInt());
         return s;
     }
 
@@ -183,6 +219,9 @@ public final class YouSlot {
 
     /** -1 (the element's) or an RGB colour. */
     public static int validColour(int c) { return c < 0 ? -1 : c & 0xFFFFFF; }
+
+    /** -1 (the usual) or one of {@link #WINGS}. */
+    public static int validWings(int w) { return w < 0 || w >= WINGS.length ? -1 : w; }
 
     /** Names: letters, digits, spaces and a few marks, 2-16 characters. */
     public static boolean validName(String n) {

@@ -24,6 +24,11 @@ public class YouColourScreen extends JourneyScreen {
     private final IntConsumer done;
     private int colour;          // -1 = the element's
     private float hue, shade = 0.5F;
+    /** What "the usual colour" is called here (its element's, for a character's colour), and what it's for. */
+    private String usual = "ELEMENT'S COLOUR", usualNow = "its element's colour", forWhat = "Menus, HUD and name";
+
+    /** For another use (a tail, a wing): what its usual colour is called and what the colour is for. */
+    public YouColourScreen usual(String label, String now, String forWhat) { this.usual = label; this.usualNow = now; this.forWhat = forWhat; return this; }
 
     /** {@code current}: -1 for the element's colour; {@code element}: that colour. */
     public YouColourScreen(String who, int current, int element, Screen back, IntConsumer done) {
@@ -59,7 +64,7 @@ public class YouColourScreen extends JourneyScreen {
     protected void draw(GuiGraphics g) {
         int col = shown();
         sc(g, "COLOUR FOR " + who.toUpperCase(), 14, 8, 1.2F, 0xFFFFFF);
-        sc(g, colour < 0 ? "Now: its element's colour" : String.format("Now: #%06X", colour), 14, 21, 0.6F, 0x9AA8B8);
+        sc(g, colour < 0 ? "Now: " + usualNow : String.format("Now: #%06X", colour), 14, 21, 0.6F, 0x9AA8B8);
         // the preview: a menu in this colour (the main menu's bar, a button, the name)
         g.fill(14, 30, 124, 150, 0xE0101820); box(g, 14, 30, 124, 150, 0xFF000000 | col);
         g.fill(15, 31, 123, 46, 0xFF000000 | YouSlotsScreen.mix(col, 0.45F));
@@ -72,7 +77,7 @@ public class YouColourScreen extends JourneyScreen {
         sc(g, "MENU BUTTON", 69 - font.width("MENU BUTTON") * 0.6F / 2F, 104, 0.6F, 0xE0E8F0);
         g.fill(20, 120, 118, 134, 0xFF000000 | col);
         sc(g, "SELECTED", 69 - font.width("SELECTED") * 0.6F / 2F, 124, 0.6F, 0xFFFFFF);
-        sc(g, "Menus, HUD and name", 20, 139, 0.5F, 0x7A8898);
+        sc(g, forWhat, 20, 139, 0.5F, 0x7A8898);
 
         int x = 134;
         // swatches
@@ -109,7 +114,7 @@ public class YouColourScreen extends JourneyScreen {
         int sm = x + Math.round(shade * (bw - bw / sseg)) + bw / sseg / 2;
         g.fill(sm - 1, sy - 2, sm + 1, sy + 14, 0xFFFFFFFF);
         // its element's
-        button(g, x, sy + 20, x + 116, sy + 34, "ELEMENT'S COLOUR", element, colour >= 0, () -> colour = -1);
+        button(g, x, sy + 20, x + 116, sy + 34, usual, element, colour >= 0, () -> colour = -1);
         g.fill(x + 120, sy + 21, x + 133, sy + 33, 0xFF000000 | element);
 
         button(g, VW - 150, VH - 22, VW - 80, VH - 6, "DONE", 0x60D080, true, () -> done.accept(colour));
