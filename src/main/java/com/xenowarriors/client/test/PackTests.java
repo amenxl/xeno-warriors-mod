@@ -154,6 +154,7 @@ public final class PackTests {
         if (focus.startsWith("packrhalixtrace")) { PackFistTraceTests.rhalix(mc, l); return; }      // (Rhalix's bare hands: the Ender Blaster)
         if (focus.startsWith("packfisttrace")) { PackFistTraceTests.build(mc, l); return; }      // (why Kyrie's Iron Fist misses)
         if (focus.startsWith("packfoes")) { PackFoeTests.build(mc, l); return; }      // (Season 3 foes with Epic Fight, the bow, Simply Swords gear)
+        if (focus.startsWith("packefcoats")) { PackEfClothesTests.coats(mc, l); return; }      // (lab coats' skirts in battle mode)
         if (focus.startsWith("packefclothes")) { PackEfClothesTests.build(mc, l); return; }      // (clothes, wings, tails and weapons in battle mode)
         characters(mc, l);
         menus(mc, l);

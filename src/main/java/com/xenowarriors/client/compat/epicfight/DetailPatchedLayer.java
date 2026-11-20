@@ -65,6 +65,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         RenderType detailType = RenderType.entityCutoutNoCull(com.xenowarriors.client.cel.Cel.tex(CharacterDetailLayer.detailTexture(player)));
         Rig rig = RIGID && !legacy ? RIGS.computeIfAbsent(live, m -> Rig.of(player)) : null;
         var costume = com.xenowarriors.client.you.YouCostume.of(player);           // one of your own in a show character's clothes: only the parts it covers
+        if (costume != null) com.xenowarriors.client.you.YouCostume.drawn++;
         boolean headOff = costume != null && !costume.head() || com.xenowarriors.client.render.CharacterArmorLayer.coveringHelmet(player);   // (under another mod's helmet: no hair)
         if (mesh[0] != null && (!RIGID || legacy || !headOff)) mesh[0].draw(pose, buffers, detailType, light, 1F, 1F, 1F, 1F, overlay, patch.getArmature(), poses);
         if (com.xenowarriors.client.compat.DmzForms.ssj4Own(player)) {
@@ -129,11 +130,15 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
     public static boolean RIGID = true;
     /** (tests) rig draws. */
     public static int rigDraws;
+    /** (tests) long coats' skirts drawn as flaps. */
+    public static int skirtDraws;
     private static final Map<DetailModel, Rig> RIGS = new IdentityHashMap<>();
 
     static final class Rig {
         final DetailModel m;
         final ModelPart bodyUpper, bodyLower;
+        /** A long coat's skirt, as two flaps swinging with the thighs (CoatSkirt); null: no long coat. */
+        final CoatSkirt.Split skirt;
         final boolean head, noLeftArm;
         String info = "";
         /** (the character's own outfit only) parts covered by another mod's outfit, left off. */
@@ -149,7 +154,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (m.leftWing != null) m.leftWing.visible = false;
             // the body in two: the upper part rides the chest bone, below the waist the torso (hip) bone
             List<ModelPart.Cube> up = new java.util.ArrayList<>(), low = new java.util.ArrayList<>();
-            for (ModelPart.Cube c : cubes(m.body)) ((c.minY + c.maxY) / 2F < WAIST ? up : low).add(c);
+            skirt = CoatSkirt.split(cubes(m.body));                              // (a lab coat down past the hips: its skirt in two flaps)
+            for (ModelPart.Cube c : skirt == null ? cubes(m.body) : skirt.chest()) ((c.minY + c.maxY) / 2F < WAIST ? up : low).add(c);
             // the coat tails hang from the waist (they swing with the legs, see draw), everything else rides the chest
             Map<String, ModelPart> kids = new HashMap<>(), lowKids = new HashMap<>();
             // (and whatever hangs from the hips - Kaeru's tail, belt charms - rides the hips too: on the chest it came
@@ -163,6 +169,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             info = "body cubes " + cubes(m.body).size() + " -> upper " + up.size() + " lower " + low.size() + " kids " + kids.keySet() + " low kids " + lowKids.keySet()
                     + " lower y " + low.stream().map(c -> String.format(java.util.Locale.ROOT, "%.1f-%.1f", c.minY, c.maxY)).limit(6).toList()
                     + " arms " + cubes(m.rightArm).size() + (m.rightArm.hasChild(com.xenowarriors.client.LimbBend.LOWER) ? "+" + cubes(m.rightArm.getChild(com.xenowarriors.client.LimbBend.LOWER)).size() : "")
+                    + (skirt == null ? "" : " skirt " + cubes(skirt.right()).size() + "+" + cubes(skirt.left()).size())
                     + " legs " + cubes(m.rightLeg).size() + (m.rightLeg.hasChild(com.xenowarriors.client.LimbBend.LOWER) ? "+" + cubes(m.rightLeg.getChild(com.xenowarriors.client.LimbBend.LOWER)).size() : "");
             lastRig = info;
             bodyUpper.loadPose(m.body.getInitialPose()); bodyUpper.setInitialPose(m.body.getInitialPose());
@@ -214,6 +221,12 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             if (!hideTorso) {
                 piece(h.chest, bodyUpper, null, pose, vc, light, overlay, poses);
                 piece(h.torso, bodyLower, null, pose, vc, light, overlay, poses);
+                if (skirt != null) {
+                    CoatSkirt.swing(skirt, legAngles(h.torso, h.thighR, poses), legAngles(h.torso, h.thighL, poses));
+                    piece(h.torso, skirt.right(), null, pose, vc, light, overlay, poses);
+                    piece(h.torso, skirt.left(), null, pose, vc, light, overlay, poses);
+                    skirtDraws++;
+                }
             }
             if (!hideArms) {
                 limb(h.armR, h.handR, m.rightArm, pose, vc, light, overlay, poses);

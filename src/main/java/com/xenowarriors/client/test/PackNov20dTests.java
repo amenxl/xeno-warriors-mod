@@ -232,7 +232,8 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); com.xenowarriors.story.StorySides.talkForTest(p, "sam"); }), 20));
         for (int k = 0; k < 6; k++) l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.story.StoryDialogueScreen d) d.testNext(0); }, 8));
         int[] rs = new int[1];
-        l.add(new Step(null, () -> { mc.setScreen(null); PackTests.server(p -> { rs[0] = com.xenowarriors.story.StorySides.respawned; com.xenowarriors.story.StorySides.vanishForTest(p); }); }, 100));
+        l.add(new Step(null, () -> mc.setScreen(null), 90));                      // (its foes turn up first)
+        l.add(new Step(null, () -> PackTests.server(p -> { rs[0] = com.xenowarriors.story.StorySides.respawned; com.xenowarriors.story.StorySides.vanishForTest(p); }), 100));
         l.add(new Step(null, () -> PackTests.server(p -> {
             boolean active = com.xenowarriors.story.StorySides.testActive(p);
             PackTests.check("side mission: vanished foes come back", !active || com.xenowarriors.story.StorySides.respawned > rs[0] && !com.xenowarriors.story.StorySides.testFoes(p).isEmpty(),
@@ -708,7 +709,7 @@ final class PackNov20dTests {
         }), 60));
         l.add(new Step(null, () -> PackTests.server(p -> {
             var f = com.xenowarriors.story.StoryRun.testFoes(p);
-            hp[0] = f.isEmpty() ? 0 : f.get(0).getMaxHealth();
+            hp[0] = (float) f.stream().mapToDouble(m -> m.getMaxHealth()).min().orElse(0);   // (the weakest of each: a captain's not a grunt)
             com.xenowarriors.story.StoryRun.quit(p, null);
             boolean locked = !com.xenowarriors.story.Story.setDifficulty(p, 4);
             com.xenowarriors.story.Story.unlockForTest(p, 4);
@@ -718,7 +719,7 @@ final class PackNov20dTests {
         }), 60));
         l.add(new Step("story_xeno", () -> PackTests.server(p -> {
             var f = com.xenowarriors.story.StoryRun.testFoes(p);
-            hp[1] = f.isEmpty() ? 0 : f.get(0).getMaxHealth();
+            hp[1] = (float) f.stream().mapToDouble(m -> m.getMaxHealth()).min().orElse(0);
             PackTests.check("difficulty: Xeno mode's enemies are far tougher", hp[0] > 0 && hp[1] > hp[0] * 5, "story " + PackTests.f(hp[0]) + " xeno " + PackTests.f(hp[1]) + " foes " + f.size());
             com.xenowarriors.story.StoryRun.quit(p, null);
             com.xenowarriors.story.Story.unlockForTest(p, 0);

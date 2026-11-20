@@ -56,6 +56,27 @@ final class PackEfClothesTests {
             PackTests.server(p -> { p.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY); PackTests.clear(p); }); }, 10));
     }
 
+    /** (focus "packefcoats") Technica's and Yuri's lab coats through Epic Fight's attacks: the skirt in two flaps swinging with the legs. */
+    static void coats(Minecraft mc, List<Step> l) {
+        int[] sk = new int[1];
+        l.add(new Step(null, () -> sk[0] = com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.skirtDraws, 1));
+        for (Case c : new Case[]{new Case("technica", CharacterType.TECHNICA, 0, "minecraft:iron_sword", false, false),
+                new Case("technica_fists", CharacterType.TECHNICA, 0, null, false, false),
+                new Case("yuri", CharacterType.YURI, 0, "minecraft:iron_sword", false, false),
+                new Case("yuri_fists", CharacterType.YURI, 0, null, false, false)}) {
+            one(mc, l, c);
+            for (int k = 0; k < 3; k++) {                                       // (more of the swing: a frame every few ticks)
+                l.add(new Step(null, () -> PackTests.server(PackEfClothesTests::swing), 5));
+                l.add(new Step("pack_efcoat_" + c.name + "_" + k, () -> {}, 3));
+            }
+        }
+        l.add(new Step(null, () -> PackTests.check("efcoats: a long lab coat's skirt swings in two flaps with the legs",
+                com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.skirtDraws > sk[0],
+                "skirt draws " + (com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.skirtDraws - sk[0]) + " rig " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastRig), 2));
+        l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
+            PackTests.server(p -> PackTests.clear(p)); }, 10));
+    }
+
     static void build(Minecraft mc, List<Step> l) {
         Case[] cases = {
                 new Case("yuri", CharacterType.YURI, 0, "minecraft:iron_sword", false, false),
