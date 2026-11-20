@@ -47,7 +47,7 @@ public final class DmzBots {
     private static final String[] STAT_SETTERS = {"setStrength", "setStrikePower", "setResistance", "setVitality", "setKiPower", "setEnergy"};
     private static final Set<CharacterType> GIRLS = EnumSet.of(CharacterType.MIKIKO, CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY,
             CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI,
-            CharacterType.KAITLYN, CharacterType.AVA, CharacterType.PERSEPHONE, CharacterType.FOX_GIRL);
+            CharacterType.KAITLYN, CharacterType.AVA, CharacterType.PERSEPHONE, CharacterType.FOX_GIRL, CharacterType.ATHREA, CharacterType.RANREA);
 
     /** (For the tests) what happened, newest last. */
     public static final List<String> LOG = Collections.synchronizedList(new ArrayList<>());

@@ -146,7 +146,7 @@ def has(model, part):
 OUTFITS = {'mikiko': ['origins1', 'origins2', 's3', 's3b'], 'rhalix': ['origins1', 'origins2', 's3'], 'yuri': ['c1pjs'],
            'max': ['royal', 's3'], 'sam': ['royal', 's3'], 'ava': ['casual', 'demon'], 'persephone': ['casual', 'demon'], 'chase': ['cap'], 'fox_girl': ['sakura']}
 TYPES = ['mikiko', 'rhalix', 'ultima', 'kaeru', 'keita', 'kill', 'kyrie', 'lexy', 'logan', 'max', 'sam', 'stevie', 'technica',
-         'yuri', 'zane', 'aioni', 'garry', 'kyle', 'zack', 'kaitlyn', 'chase', 'senju', 'ava', 'persephone', 'fox_girl']
+         'yuri', 'zane', 'aioni', 'garry', 'kyle', 'zack', 'kaitlyn', 'chase', 'senju', 'ava', 'persephone', 'fox_girl', 'athrea', 'ranrea']
 
 def toggles(ch, look, skin, det, model, hairmask=None):
     opt = [p for p in ('hood_up', 'glasses') if has(model, p)]

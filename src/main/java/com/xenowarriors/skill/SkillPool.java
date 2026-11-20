@@ -130,6 +130,12 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.KitsuneAttack(), 0, 5), new Entry(new com.xenowarriors.skill.nc.NcSkills.KitsuneThrow(), 0, 5), new Entry(new com.xenowarriors.skill.nc.NcSkills.BossOrders(), 0, 5), new Entry(new com.xenowarriors.skill.nc.NcSkills.FoxStep(), 0, 5),
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.FoxPalm(), 0, 5)));
         ULTIMATE.put(CharacterType.FOX_GIRL, new com.xenowarriors.skill.nc.NcSkills.KitsuneTier3());
+        POOL.put(CharacterType.ATHREA, List.of(                                  // (Fashion Police is her middle click: not in her slots)
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.RunwayStrut(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.ShoppingSpree(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.RoyalDecree(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.FashionPolice(), 0, 2)));
+        ULTIMATE.put(CharacterType.ATHREA, new com.xenowarriors.skill.nc.NcSkills.GrandOpening());
+        POOL.put(CharacterType.RANREA, List.of(                                  // (¡Ada! is her middle click: not in her slots)
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.Siesta(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.ComerDormir(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.DreamKick(), 0, 2), new Entry(new com.xenowarriors.skill.nc.NcSkills.Ada(), 0, 2)));
+        ULTIMATE.put(CharacterType.RANREA, new com.xenowarriors.skill.nc.NcSkills.SuenoReal());
         POOL.put(CharacterType.SENJU, List.of(
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.FathersBlade(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.WingGust(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonGrant(), 0, 3), new Entry(new com.xenowarriors.you.YouDevil.SelfSplit(), 0, 3),
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.FathersBlade()), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonGlare(), 0, 3)));

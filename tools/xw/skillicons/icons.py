@@ -14,7 +14,7 @@ CH = {  # owner colours (CharacterType)
     'technica': (236, 90, 160), 'stevie': (74, 42, 154), 'garry': (42, 168, 42), 'yuri': (58, 208, 74),
     'zane': (150, 70, 200), 'logan': (230, 190, 40), 'kill': (130, 40, 160), 'keita': (60, 70, 200), 'dojo': (110, 70, 200),
     'kyle': (138, 90, 224), 'zack': (122, 30, 46), 'kaitlyn': (216, 176, 64), 'chase': (200, 40, 46), 'senju': (184, 154, 80),
-    'ava': (224, 64, 42), 'persephone': (138, 58, 200), 'fox_girl': (216, 36, 126),
+    'ava': (224, 64, 42), 'persephone': (138, 58, 200), 'fox_girl': (216, 36, 126), 'athrea': (138, 26, 20), 'ranrea': (42, 74, 208),
 }
 FIRE, FIRE2 = (255, 140, 30), (255, 220, 80)
 GRAV, GRAV2 = (170, 70, 240), (230, 170, 255)
@@ -1245,6 +1245,76 @@ def _(i):
     i.poly([(15, 14.5), (32, 6.5), (32, 23.5)], (255, 130, 30))      # orange body
     i.poly([(15, 15), (32, 10), (32, 20)], (255, 240, 160))          # white-yellow core
 
+
+# ------------------------------------------------------------------ the princesses (Season 2)
+ROSEC, BLUEC, PINKC = (190, 30, 30), (60, 100, 240), (240, 110, 110)
+
+@spec('runway_strut', 'athrea')
+def _(i):
+    i.figure(8, Y, DASH, ghost=True)
+    i.speed(18, 14, 3, ROSEC, 8)
+    i.figure(25, Y, DASH)
+    for x in (6, 12, 18): i.circle(x, 29, 0.9, fill=(255, 255, 255))
+
+@spec('fashion_police', 'athrea')
+def _(i):
+    i.figure(8, Y, POINT)
+    i.arc(17, 16, 8, 200, 340, ROSEC, 1.4)
+    i.dummy(26, Y, 0.6)
+    i.line((14, 15), (24, 17), ROSEC, 1.2)
+
+@spec('shopping_spree', 'athrea')
+def _(i):
+    i.figure(16, Y, RAISE)
+    for k, (x, y) in enumerate(((6, 10), (26, 10), (8, 22), (25, 22))):
+        i.circle(x, y, 2.4, fill=ROSEC if k % 2 else PINKC)
+        i.arc(x, y - 2.2, 1.2, 180, 360, (255, 255, 255), 0.8)
+
+@spec('royal_decree', 'athrea')
+def _(i):
+    i.figure(16, Y, POINT)
+    i.arcs(16, 9, 10, (255, 210, 90), 3, -70, 70)
+    for x in (5, 27): i.circle(x, 27, 1.8, fill=ROSEC)
+
+@spec('grand_opening', 'athrea')
+def _(i):
+    i.figure(16, Y, RAISE)
+    for k in range(7):
+        a = math.radians(-160 + k * 23)
+        i.line((16 + math.cos(a) * 5, 10 + math.sin(a) * 5), (16 + math.cos(a) * 14, 10 + math.sin(a) * 14), (255, 230, 140) if k % 2 else ROSEC, 1.0)
+    i.circle(16, 9, 2.6, fill=(255, 240, 200))
+
+@spec('ada', 'ranrea')
+def _(i):
+    i.figure(9, Y, PUNCH)
+    i.arcs(18, 16, 10, BLUEC, 3, -35, 35)
+    i.speed(27, 16, 3, (255, 255, 255), 4)
+
+@spec('siesta', 'ranrea')
+def _(i):
+    i.figure(16, Y, RAISE, lean=-60)
+    for k, (x, y) in enumerate(((20, 12), (24, 8), (28, 4))): i.line((x - 1.5 - k * .3, y - 1.5 - k * .3), (x + 1.5 + k * .3, y - 1.5 - k * .3), BLUEC, 1.0); i.line((x + 1.5 + k * .3, y - 1.5 - k * .3), (x - 1.5 - k * .3, y + 1.5 + k * .3), BLUEC, 1.0); i.line((x - 1.5 - k * .3, y + 1.5 + k * .3), (x + 1.5 + k * .3, y + 1.5 + k * .3), BLUEC, 1.0)
+
+@spec('comer_dormir', 'ranrea')
+def _(i):
+    i.figure(16, Y, RAISE)
+    for x, y in ((6, 10), (26, 10), (16, 5)): i.circle(x, y, 2.2, fill=HEAL)
+    i.arc(16, 16, 12, 200, 340, BLUEC, 1.0)
+
+@spec('dream_kick', 'ranrea')
+def _(i):
+    i.figure(10, 24, KICK)
+    i.speed(4, 18, 3, BLUEC, 6)
+    i.dummy(26, Y, 0.6)
+    i.circle(26, 9, 1.4, fill=(220, 220, 255))
+
+@spec('sueno_real', 'ranrea')
+def _(i):
+    i.figure(16, Y, RAISE)
+    for k in range(5):
+        a = math.radians(k * 72 - 90)
+        i.circle(16 + math.cos(a) * 11, 15 + math.sin(a) * 11, 1.8, fill=BLUEC if k % 2 else PINKC)
+    i.arc(16, 15, 6, 0, 360, (200, 210, 255), 0.8)
 
 if __name__ == '__main__':
     for sid, owner, f in SPECS:

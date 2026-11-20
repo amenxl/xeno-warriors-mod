@@ -121,7 +121,9 @@ public final class Toggles {
             case SENJU -> List.of("fathers_blade_click", "demon_glare");
             case AVA -> List.of("haymaker", "red_slash_click");
             case PERSEPHONE -> List.of("shadow_voice_click");
-            case FOX_GIRL -> List.of("fox_palm");                      // (its own move: Kitsune Attack stays in her slots)
+            case FOX_GIRL -> List.of("fox_palm");
+            case ATHREA -> List.of("fashion_police");
+            case RANREA -> List.of("ada");                      // (its own move: Kitsune Attack stays in her slots)
             case YOU -> List.of("you_strike", "karma_blast", "you_bolt");      // (custom characters: Karma Strike, Karma Blast, their element's Bolt - Firebolt for fire)
             default -> List.of();
         };

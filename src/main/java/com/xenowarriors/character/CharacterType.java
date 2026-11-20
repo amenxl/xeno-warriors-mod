@@ -49,14 +49,18 @@ public enum CharacterType {
     YOU("you", 0xFFC8A0FF),
     /** Kitsune, the Fox Girl: Kitsune's Farm's owner and Mikiko's old trainer (a Fox Kin). Season 5 (/xeno season unlock 5);
      *  starts with very high stats (see PlayerCharacter.switchStats). Last, so nobody's ordinals move. */
-    FOX_GIRL("fox_girl", 0xFFD8247E);
+    FOX_GIRL("fox_girl", 0xFFD8247E),
+    /** The Royal Capital's princesses (Season 2): Athrea (fashion, Athrea Mall, wants to be Queen) and Ranrea (sleepy,
+     *  speaks Spanish, in Queen training). Skylanders. After Fox Girl so nobody's ordinals move. */
+    ATHREA("athrea", 0xFF8A1A14),
+    RANREA("ranrea", 0xFF2A4AD0);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA, AVA, PERSEPHONE, SENJU, KYLE, ZACK, KAITLYN, CHASE, FOX_GIRL};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA, AVA, PERSEPHONE, SENJU, KYLE, ZACK, KAITLYN, CHASE, FOX_GIRL, ATHREA, RANREA};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
-    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI || this == LOGAN || this == KILL || this == KEITA || this == SENJU; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
+    public boolean skylander() { return this == RHALIX || this == KYRIE || this == LEXY || this == MAX || this == SAM || this == AIONI || this == LOGAN || this == KILL || this == KEITA || this == SENJU || this == ATHREA || this == RANREA; }   // (Technica gets her artificial wings later in the show)   // (Ai-oni flies on her demon wings)
 
     /** The Sky Patrol members (for team synergy). */
     public boolean skyPatrol() { return this == LEXY || this == MAX || this == SAM || this == TECHNICA; }
@@ -64,7 +68,7 @@ public enum CharacterType {
     /** Their race (see Race). */
     public Race race() { return Race.of(this); }
 
-    public int season() { return this == FOX_GIRL ? 5 : this == AIONI || this == ZANE || this == CHASE || this == SENJU ? 3 : this == ULTIMA || this == KAERU || this == YURI || this == KYLE || this == ZACK || this == KAITLYN ? 2 : 1; }
+    public int season() { return this == FOX_GIRL ? 5 : this == AIONI || this == ZANE || this == CHASE || this == SENJU ? 3 : this == ULTIMA || this == KAERU || this == YURI || this == KYLE || this == ZACK || this == KAITLYN || this == ATHREA || this == RANREA ? 2 : 1; }
 
     private final String id;
     private final int color;

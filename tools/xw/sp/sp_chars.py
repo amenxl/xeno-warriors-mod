@@ -1066,6 +1066,7 @@ def _new(key):
     return sp
 KYLE, ZACK, KAITLYN, CHASE = _new('kyle'), _new('zack'), _new('kaitlyn'), _new('chase')
 CHASE_CAP = _new('chase_cap')
+ATHREA, RANREA = _new('athrea'), _new('ranrea')                                   # the princesses (Season 2)
 FOX_GIRL, FOX_GIRL_SAKURA = _new('fox_girl'), _new('fox_girl_sakura')            # Kitsune (Season 5): the Gacha look + Sakura                                                     # his navy cap + headphones look (an outfit)
 AVA_CASUAL = dict(AVA, fit=lambda f: SRN.ava(f, casual=True), paint=SRN.bare(0, '#55555c', '#141216', '#f0607a', 0, 6))
 PERSEPHONE_CASUAL = dict(PERSEPHONE, fit=lambda f: SRN.persephone(f, casual=True), paint=SRN.bare(0, '#7a3ab8', '#2a1236', '#f0c8d8', 4, 12))
@@ -1073,7 +1074,7 @@ PERSEPHONE_CASUAL = dict(PERSEPHONE, fit=lambda f: SRN.persephone(f, casual=True
 CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'lexy_s2': LEXY_S2, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY,
          'senju': SENJU, 'ava': AVA, 'ava_demon': AVA_DEMON, 'persephone': PERSEPHONE, 'persephone_demon': PERSEPHONE_DEMON,
          'kyle': KYLE, 'zack': ZACK, 'kaitlyn': KAITLYN, 'chase': CHASE,
-         'chase_cap': CHASE_CAP, 'fox_girl': FOX_GIRL, 'fox_girl_sakura': FOX_GIRL_SAKURA, 'ava_casual': AVA_CASUAL, 'persephone_casual': PERSEPHONE_CASUAL}
+         'chase_cap': CHASE_CAP, 'fox_girl': FOX_GIRL, 'fox_girl_sakura': FOX_GIRL_SAKURA, 'athrea': ATHREA, 'ranrea': RANREA, 'ava_casual': AVA_CASUAL, 'persephone_casual': PERSEPHONE_CASUAL}
 
 # ---------------------------------------------------------------------- building
 def face(spec, **kw):
@@ -1094,13 +1095,28 @@ def wings(style, colour, atlas):
     """Merge a wing style's cubes in (UVs at the atlas top), recoloured from its light greys to `colour`."""
     wj = json.load(open(RES + f'models/detail/npc/wing_{style}.json'))
     wt = Image.open(RES + f'textures/entity/npc/wing_{style}_details.png').convert('RGBA')
-    tgt = C(colour); src = wt.load(); dst = atlas.load()
+    two = isinstance(colour, (tuple, list))                     # (base, tips): the lightest feathers take the second colour
+    tgt = C(colour[0] if two else colour); tip = C(colour[1]) if two else None; src = wt.load(); dst = atlas.load()
     for y in range(wt.height):
         for x in range(wt.width):
             p = src[x, y]
             if p[3] == 0: continue
             l = (p[0] + p[1] + p[2]) / 3 / 235.0
             dst[x, y] = tuple(max(0, min(255, int(c * (0.45 + 0.75 * l)))) for c in tgt) + (255,)
+    if two:                                                     # the long flight feathers (thin and long) in the second colour
+        def walk(n, out=False):
+            for c in n.get('cubes', []):
+                W_, H_, D_ = c['size']
+                if D_ < 0.7 and W_ >= 6.0 and out:                  # (the outer ones: their feathers fan out from far along the arm)
+                    u, v = c['uv']
+                    for yy in range(v, v + math.ceil(D_ + H_) + 1):
+                        for xx in range(u, u + 2 * math.ceil(D_ + W_) + 1):
+                            if 0 <= xx < wt.width and 0 <= yy < wt.height:
+                                p = src[xx, yy]
+                                if p[3]: l = (p[0] + p[1] + p[2]) / 3 / 235.0; dst[xx, yy] = tuple(max(0, min(255, int(c_ * (0.45 + 0.75 * l)))) for c_ in tip) + (255,)
+            for ch in n.get('children', []): walk(ch, abs(ch.get('pivot', [0, 0, 0])[0]) > 5.5)
+        for c in wj['bones']['body']['children']:
+            if c.get('name') in ('right_wing', 'left_wing'): walk(c)
     return [c for c in wj['bones']['body']['children'] if c.get('name') in ('right_wing', 'left_wing')]
 
 def wing_rows(style):

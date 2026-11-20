@@ -11,10 +11,10 @@ from PIL import Image
 CH = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/textures/entity/character/'
 OUTFITS = {'mikiko': ['', 'origins1', 'origins2', 's3', 's3b'], 'rhalix': ['', 'origins1', 'origins2', 's3'], 'yuri': ['', 'c1pjs'],
            'kyrie': ['', 's2'], 'lexy': ['', 's2'], 'max': ['', 'royal', 's3'], 'sam': ['', 'royal', 's3']}
-GIRLS = {'kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri', 'kaitlyn', 'ava', 'ava_demon', 'persephone', 'persephone_demon', 'fox_girl', 'fox_girl_sakura'}
+GIRLS = {'kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri', 'kaitlyn', 'ava', 'ava_demon', 'persephone', 'persephone_demon', 'fox_girl', 'fox_girl_sakura', 'athrea', 'ranrea'}
 COLOR = {'mikiko': (196, 30, 40), 'rhalix': (130, 50, 200), 'kyrie': (120, 60, 190), 'lexy': (200, 60, 150), 'technica': (230, 90, 170),
          'aioni': (170, 20, 40), 'yuri': (40, 160, 90), 'kaeru': (40, 40, 48),
-         'kaitlyn': (30, 28, 34), 'ava': (200, 40, 56), 'ava_demon': (200, 40, 56), 'persephone': (110, 60, 170), 'persephone_demon': (110, 60, 170), 'fox_girl': (216, 36, 126), 'fox_girl_sakura': (228, 98, 142)}
+         'kaitlyn': (30, 28, 34), 'ava': (200, 40, 56), 'ava_demon': (200, 40, 56), 'persephone': (110, 60, 170), 'persephone_demon': (110, 60, 170), 'fox_girl': (216, 36, 126), 'athrea': (138, 26, 20), 'ranrea': (42, 74, 208), 'fox_girl_sakura': (228, 98, 142)}
 
 def skin_of(who):
     f = Image.open(CH + who + '_face.png').convert('RGBA'); px = f.load()

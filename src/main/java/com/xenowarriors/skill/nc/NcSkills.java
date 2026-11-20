@@ -1307,4 +1307,211 @@ public final class NcSkills {
             return true;
         }
     }
+
+    // ================================================================== the princesses (Season 2)
+    static final DustParticleOptions ROSE = dust(0.62F, 0.08F, 0.08F, 1.2F), ROYAL_BLUE = dust(0.2F, 0.35F, 0.95F, 1.2F), PINKISH = dust(0.95F, 0.45F, 0.45F, 1.1F);
+
+    /** Athrea - Runway Strut: a strut-dash; anyone she passes is left stunned (slowed right down, 2 s). */
+    public static class RunwayStrut implements Skill {
+        @Override public String getId() { return "runway_strut"; }
+        @Override public int getCooldownTicks() { return 6 * 20; }
+        @Override public int getKarmaCost() { return 10; }
+        @Override public boolean use(ServerPlayer p) {
+            dash(p, 1.15, 9, ROSE, 4F, e -> { effect(e, MobEffects.MOVEMENT_SLOWDOWN, 40, 4); effect(e, MobEffects.WEAKNESS, 40, 0); });
+            p.serverLevel().sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 0.1, p.getZ(), 8, 0.4, 0.05, 0.4, 0.01);
+            return true;
+        }
+    }
+
+    /** Athrea - Fashion Police (middle click): her scarf whips out, drags a foe in front of her and holds them (2 s). */
+    public static class FashionPolice implements Skill {
+        @Override public String getId() { return "fashion_police"; }
+        @Override public int getCooldownTicks() { return 4 * 20; }
+        @Override public int getKarmaCost() { return 6; }
+        @Override public boolean use(ServerPlayer p) {
+            LivingEntity t = aim(p, 10);
+            if (t == null) return false;
+            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+            Vec3 a = p.getEyePosition(), b = t.position().add(0, t.getBbHeight() * 0.6, 0);
+            for (int k = 0; k <= 16; k++) { Vec3 q = a.lerp(b, k / 16.0); p.serverLevel().sendParticles(ROSE, q.x, q.y, q.z, 1, 0.02, 0.02, 0.02, 0); }
+            Vec3 f = p.getLookAngle().multiply(1, 0, 1).normalize();
+            tp(t, p.getX() + f.x * 1.6, p.getY(), p.getZ() + f.z * 1.6);
+            hit(p, t, 5F, false);
+            root(t, 40, ROSE, p);
+            say(p, "That outfit? Arrested.", ChatFormatting.RED);
+            sound(p, SoundEvents.FISHING_BOBBER_RETRIEVE, 1F, 0.8F);
+            return true;
+        }
+    }
+
+    /** Athrea - Shopping Spree: faster and stronger for 15 s, shopping bags whirling round her. */
+    public static class ShoppingSpree implements Skill {
+        @Override public String getId() { return "shopping_spree"; }
+        @Override public int getCooldownTicks() { return 30 * 20; }
+        @Override public int getKarmaCost() { return 22; }
+        @Override public boolean use(ServerPlayer p) {
+            effect(p, MobEffects.MOVEMENT_SPEED, 20 * 15, 1);
+            effect(p, MobEffects.DAMAGE_BOOST, 20 * 15, 1);
+            for (int k = 0; k < 75; k++) {
+                final int n = k;
+                ServerScheduler.later(n * 4, () -> {
+                    if (!p.isAlive()) return;
+                    for (int j = 0; j < 3; j++) {
+                        double ang = n * 0.5 + j * Math.PI * 2 / 3;
+                        p.serverLevel().sendParticles(j == 0 ? PINKISH : ROSE, p.getX() + Math.cos(ang) * 1.1, p.getY() + 0.9, p.getZ() + Math.sin(ang) * 1.1, 2, 0.05, 0.1, 0.05, 0);
+                    }
+                });
+            }
+            say(p, "Retail therapy!", ChatFormatting.RED);
+            sound(p, SoundEvents.EXPERIENCE_ORB_PICKUP, 1F, 1.4F);
+            return true;
+        }
+    }
+
+    /** Athrea - Royal Decree: "Kneel!" - everyone near is pressed down: slowed and weakened (4 s). */
+    public static class RoyalDecree implements Skill {
+        @Override public String getId() { return "royal_decree"; }
+        @Override public int getCooldownTicks() { return 18 * 20; }
+        @Override public int getKarmaCost() { return 20; }
+        @Override public boolean use(ServerPlayer p) {
+            List<LivingEntity> l = around(p, p.position(), 7);
+            for (LivingEntity e : l) {
+                effect(e, MobEffects.MOVEMENT_SLOWDOWN, 80, 3); effect(e, MobEffects.WEAKNESS, 80, 1);
+                e.setDeltaMovement(e.getDeltaMovement().x * 0.2, -0.4, e.getDeltaMovement().z * 0.2); e.hurtMarked = true;
+                p.serverLevel().sendParticles(ParticleTypes.ENCHANTED_HIT, e.getX(), e.getY() + 1.6, e.getZ(), 10, 0.3, 0.1, 0.3, 0);
+            }
+            p.serverLevel().sendParticles(ROSE, p.getX(), p.getY() + 0.2, p.getZ(), 60, 3, 0.1, 3, 0);
+            say(p, "Kneel before your future Queen!", ChatFormatting.RED);
+            sound(p, SoundEvents.BELL_BLOCK, 1F, 0.8F);
+            return true;
+        }
+    }
+
+    /** Ultimate - Grand Opening: Athrea Mall opens where she points: spotlights, mannequins falling, a rain of shopping bags - then the big finish. */
+    public static class GrandOpening implements Skill {
+        @Override public String getId() { return "grand_opening"; }
+        @Override public int getCooldownTicks() { return 80 * 20; }
+        @Override public int getKarmaCost() { return 60; }
+        @Override public boolean use(ServerPlayer p) {
+            Vec3 c = lookSpot(p, 16);
+            say(p, "Athrea Mall - GRAND OPENING!", ChatFormatting.RED);
+            ServerLevel l = p.serverLevel();
+            for (int k = 0; k < 12; k++) {
+                final int n = k;
+                ServerScheduler.later(10 + n * 4, () -> {
+                    if (!p.isAlive()) return;
+                    Vec3 at = c.add((l.random.nextDouble() - .5) * 10, 0, (l.random.nextDouble() - .5) * 10);
+                    for (int y = 0; y < 10; y++) l.sendParticles(n % 2 == 0 ? ROSE : PINKISH, at.x, at.y + y * 0.8, at.z, 2, 0.15, 0.1, 0.15, 0);
+                    l.sendParticles(ParticleTypes.FIREWORK, at.x, at.y + 0.4, at.z, 10, 0.4, 0.2, 0.4, 0.05);
+                    for (LivingEntity e : SpUtil.around(p, at, 2.6)) hit(p, e, 6F, false);
+                    l.playSound(null, BlockPosOf(at), SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.PLAYERS, 0.9F, 1F);
+                });
+            }
+            ServerScheduler.later(64, () -> {
+                if (!p.isAlive()) return;
+                l.sendParticles(ParticleTypes.EXPLOSION_EMITTER, c.x, c.y + 1, c.z, 1, 0, 0, 0, 0);
+                l.sendParticles(ParticleTypes.END_ROD, c.x, c.y + 1, c.z, 80, 3, 2, 3, 0.1);
+                for (LivingEntity e : SpUtil.around(p, c, 6)) { hit(p, e, 16F, false); push(e, c, 2.0, 0.6); }
+                l.playSound(null, BlockPosOf(c), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1F, 1.1F);
+            });
+            return true;
+        }
+    }
+
+    static net.minecraft.core.BlockPos BlockPosOf(Vec3 v) { return net.minecraft.core.BlockPos.containing(v); }
+
+    /** Ranrea - ¡Ada! (middle click): she shouts - a cone that blows them back. */
+    public static class Ada implements Skill {
+        @Override public String getId() { return "ada"; }
+        @Override public int getCooldownTicks() { return 4 * 20; }
+        @Override public int getKarmaCost() { return 6; }
+        @Override public boolean use(ServerPlayer p) {
+            List<LivingEntity> l = cone(p, 6);
+            for (LivingEntity e : l) { hit(p, e, 4F, false); push(e, p.position(), 2.2, 0.4); }
+            Vec3 f = p.getLookAngle();
+            for (int k = 1; k <= 6; k++) p.serverLevel().sendParticles(ParticleTypes.SONIC_BOOM, p.getX() + f.x * k, p.getEyeY() + f.y * k, p.getZ() + f.z * k, 1, 0, 0, 0, 0);
+            say(p, "¡Ada!", ChatFormatting.BLUE);
+            sound(p, SoundEvents.GOAT_SCREAMING_AMBIENT, 1F, 1.3F);
+            return true;
+        }
+    }
+
+    /** Ranrea - Siesta: a 3-second nap (she can't move): a big heal - then she wakes up fast (8 s). */
+    public static class Siesta implements Skill {
+        @Override public String getId() { return "siesta"; }
+        @Override public int getCooldownTicks() { return 25 * 20; }
+        @Override public int getKarmaCost() { return 18; }
+        @Override public boolean use(ServerPlayer p) {
+            effect(p, MobEffects.REGENERATION, 60, 3);
+            effect(p, MobEffects.DAMAGE_RESISTANCE, 60, 2);
+            effect(p, MobEffects.MOVEMENT_SLOWDOWN, 60, 6);
+            for (int k = 0; k < 6; k++) ServerScheduler.later(k * 10, () -> { if (p.isAlive()) p.serverLevel().sendParticles(ParticleTypes.NOTE, p.getX(), p.getY() + 2.2, p.getZ(), 1, 0.2, 0.1, 0.2, 0.5); });
+            ServerScheduler.later(60, () -> { if (!p.isAlive()) return; effect(p, MobEffects.MOVEMENT_SPEED, 160, 2); say(p, "...¡Estoy despierta!", ChatFormatting.BLUE); });
+            say(p, "Zzz... siesta...", ChatFormatting.BLUE);
+            sound(p, SoundEvents.FOX_SLEEP, 1F, 1.2F);
+            return true;
+        }
+    }
+
+    /** Ranrea - Comer, Dormir y Repetir: eat, sleep, repeat - she and everyone with her regenerate and are fed (10 s). */
+    public static class ComerDormir implements Skill {
+        @Override public String getId() { return "comer_dormir"; }
+        @Override public int getCooldownTicks() { return 30 * 20; }
+        @Override public int getKarmaCost() { return 22; }
+        @Override public boolean use(ServerPlayer p) {
+            List<LivingEntity> team = new ArrayList<>(allies(p, 10));
+            if (!team.contains(p)) team.add(p);
+            for (LivingEntity e : team) {
+                effect(e, MobEffects.REGENERATION, 200, 1);
+                effect(e, MobEffects.SATURATION, 10, 1);
+                p.serverLevel().sendParticles(ParticleTypes.HEART, e.getX(), e.getY() + 1.8, e.getZ(), 4, 0.3, 0.2, 0.3, 0);
+            }
+            say(p, "Comer, dormir y repetir.", ChatFormatting.BLUE);
+            sound(p, SoundEvents.GENERIC_EAT, 1F, 1F);
+            return true;
+        }
+    }
+
+    /** Ranrea - Dream Kick: a flying kick at whoever she looks at; they're left drowsy (slow, weak, 3 s). */
+    public static class DreamKick implements Skill {
+        @Override public String getId() { return "dream_kick"; }
+        @Override public int getCooldownTicks() { return 7 * 20; }
+        @Override public int getKarmaCost() { return 12; }
+        @Override public boolean use(ServerPlayer p) {
+            dash(p, 1.3, 7, ROYAL_BLUE, 8F, e -> { effect(e, MobEffects.MOVEMENT_SLOWDOWN, 60, 2); effect(e, MobEffects.WEAKNESS, 60, 1); push(e, p.position(), 1.4, 0.3); });
+            p.setDeltaMovement(p.getDeltaMovement().add(0, 0.25, 0)); p.hurtMarked = true;
+            return true;
+        }
+    }
+
+    /** Ultimate - Sueño Real: a royal lullaby - everyone near falls asleep (5 s, can't move) while she smacks them awake. */
+    public static class SuenoReal implements Skill {
+        @Override public String getId() { return "sueno_real"; }
+        @Override public int getCooldownTicks() { return 80 * 20; }
+        @Override public int getKarmaCost() { return 60; }
+        @Override public boolean use(ServerPlayer p) {
+            List<LivingEntity> l = around(p, p.position(), 9);
+            if (l.isEmpty()) { p.displayClientMessage(Component.translatable("message.xenowarriors.no_target"), true); return false; }
+            say(p, "Sueño Real... buenas noches.", ChatFormatting.BLUE);
+            for (LivingEntity e : l) {
+                root(e, 100, ROYAL_BLUE, p);
+                effect(e, MobEffects.BLINDNESS, 100, 0);
+                if (e instanceof Mob m) m.setTarget(null);
+            }
+            for (int k = 0; k < 5; k++) {
+                final int n = k;
+                ServerScheduler.later(20 + n * 16, () -> {
+                    if (!p.isAlive()) return;
+                    p.swing(n % 2 == 0 ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND, true);
+                    for (LivingEntity e : l) {
+                        if (!e.isAlive()) continue;
+                        hit(p, e, n == 4 ? 16F : 6F, false);
+                        p.serverLevel().sendParticles(ParticleTypes.NOTE, e.getX(), e.getY() + 2, e.getZ(), 2, 0.3, 0.1, 0.3, 0.6);
+                    }
+                    sound(p, SoundEvents.PLAYER_ATTACK_STRONG, 1F, 1.3F);
+                });
+            }
+            return true;
+        }
+    }
 }

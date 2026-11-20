@@ -214,6 +214,72 @@ def fox_girl(f, sakura=False):
     f.both('right_leg', [-0.35, 1.6, -2.35], [4.35, 7.4, 2.35], '#3a1020', {k: (lambda x, y: '#5a1a34' if y > .82 else '#3a1020') for k in ('front', 'back', 'right', 'left')})   # dark knee socks
     shoes(f, '#c8287a', '#2a0a16', 2.0, lace='#f0509a')
 
+def athrea(f):
+    """Princess Athrea (Season 2, the user's Gacha ref): very long messy hair, black at the crown fading to dark red,
+    falling to her waist, side-swept bangs; a black-and-grey striped tee with red stripes under an open white vest with
+    a black inside; red scrunchies on both wrists; black capris with red cuffs; red-and-black striped socks; black
+    lace-up boots with red laces. Small dark-maroon wings."""
+    HB, HR, HR2, HR3 = '#141012', '#5a1410', '#7a1c14', '#3a0c0c'
+    hair(f, HB, HR3, back_len=24.0, side_len=24.0, fringe=True)
+    for x, ln, tilt in ((-3.6, 5.6, -0.35), (-2.0, 6.4, -0.28), (-0.4, 5.8, -0.18), (1.2, 4.6, -0.05), (2.8, 5.0, 0.12), (3.8, 4.2, 0.3)):
+        lock(f, [x, 32.4, -4.7], [tilt, -1, -0.35], ln, 1.7, (HB, HR3, HR), taper=(0.62, 0.3))          # side-swept bangs, red at the ends
+    for s_ in (1, -1):
+        for z, ln in ((-2.6, 13.0), (-0.4, 15.0), (1.8, 14.0)):
+            lock(f, [s_ * 4.6, 31.2, z], [s_ * 0.3, -1, 0.05], ln, 2.0, (HR3, HR, HR2), taper=(0.66, 0.3))   # long, messy, down past her shoulders
+        lock(f, [s_ * 4.4, 30.6, 3.6], [s_ * 0.7, -0.8, 0.4], 3.4, 1.8, (HR3, HR2, HR), taper=(0.6, 0.25))   # flicking out
+    for x in (-3.0, -1.0, 1.0, 3.0):
+        lock(f, [x, 31.4, 4.7], [x * 0.06, -1, 0.3], 17.0, 2.2, (HR3, HR, HR2), taper=(0.7, 0.3))            # the back, to her waist
+    GREY, RED, WHT, BLK = '#3c3c42', '#8a1a14', '#f0eeee', '#141216'
+    shell(f, 'body', [-4, 11.6, -2], [4, 24, 2], 0.22, GREY,
+          {k: (lambda x, y: RED if int(y * 9) % 3 == 0 else GREY) for k in ('front', 'back', 'right', 'left')})   # striped tee
+    for s_ in (1, -1):
+        x0, x1 = (1.4, 4.5) if s_ > 0 else (-4.5, -1.4)
+        f.add('body', [x0, 15.0, -2.55], [x1, 24.3, -2.3], WHT, {'front': (lambda q: lambda x, y: '#cfcdd2' if (x < .18 if q > 0 else x > .82) else WHT)(s_)})   # the open white vest
+        f.add('body', [s_ * 1.0 - 0.9, 21.8, -2.75], [s_ * 1.0 + 0.9, 24.4, -2.5], WHT, rot=[0, 0, s_ * 25], origin=[s_ * 1.0, 23, -2.6])   # its collar
+        f.add('body', [s_ * 4.3 - 0.25, 15.0, -2.5], [s_ * 4.3 + 0.25, 24.3, 2.5], WHT)                  # its sides
+    f.add('body', [-4.5, 15.0, 2.3], [4.5, 24.3, 2.55], WHT)                                           # and back
+    f.both('right_arm', [3.6, 20.6, -2.4], [8.4, 24.4, 2.4], GREY, {k: (lambda x, y: RED if int(y * 5) % 2 == 0 else GREY) for k in ('front', 'back', 'right', 'left')})
+    f.both('right_arm', [3.3, 12.6, -2.7], [8.7, 14.2, 2.7], RED, {k: (lambda x, y: '#5a0c0c' if int(x * 6) % 2 == 0 else RED) for k in ('front', 'back', 'right', 'left')})   # red scrunchies
+    pants(f, BLK, 6.6, RED, baggy=0.35)                                                                     # black capris, red cuffs
+    f.both('right_leg', [-0.32, 2.6, -2.32], [4.32, 6.4, 2.32], BLK, {k: (lambda x, y: RED if int(y * 8) % 2 == 0 else BLK) for k in ('front', 'back', 'right', 'left')})   # striped socks
+    shoes(f, BLK, '#0a0a0c', 3.0, lace='#a01c18')                                                           # lace-up boots
+
+def ranrea(f):
+    """Princess Ranrea (Season 2, the user's Gacha ref): hair black at the top fading to bright blue, spiky tufts on top,
+    long side locks and short twin tails on both sides, white zigzag clips; a salmon-pink dress with a fine
+    stripe under a cropped blue jacket, a black belt with square studs, a white choker; black fingerless gloves; red knee
+    socks with blue stripes, pink shoes with blue soles. Wings blue with red-pink feather tips."""
+    HB, HU, HU2, HU3 = '#141218', '#2a4ad0', '#3a64e8', '#1e2a8a'
+    hair(f, HB, HU3, back_len=24.5, side_len=25.0, fringe=True)
+    for x, ln, tilt in ((-3.4, 4.6, -0.3), (-1.6, 5.4, -0.16), (0.2, 4.2, 0.0), (1.8, 5.2, 0.14), (3.4, 4.4, 0.3)):
+        lock(f, [x, 32.4, -4.7], [tilt, -1, -0.35], ln, 1.7, (HB, HU3, HU), taper=(0.62, 0.3))
+    for s_ in (1, -1):
+        for z, ln in ((-2.8, 8.4), (-0.4, 9.0)):
+            lock(f, [s_ * 4.6, 31.2, z], [s_ * 0.2, -1, 0.0], ln, 1.8, (HU3, HU, HU2), taper=(0.62, 0.3))     # long side locks
+    for x, d in ((-1.8, [-0.6, 1, 0.1]), (1.4, [0.5, 1, 0.1])):
+        lock(f, [x, 33.0, -0.4], d, 2.6, 1.6, (HB, HB, '#24222c'), taper=(0.7, 0.3))                         # two little black tufts on top
+    for s_ in (1, -1):                                                                                      # short twin tails, one each side
+        f.add('head', [s_ * 4.3 - 0.6, 29.6, 1.6], [s_ * 4.3 + 0.6, 30.6, 2.6], '#141218')                      #   (a tie)
+        lock(f, [s_ * 4.8, 30.2, 2.2], [s_ * 0.8, -0.5, 0.35], 5.5, 2.4, (HU3, HU, HU2), thick=1.8, taper=(0.7, 0.35))
+    for x, y in ((-2.2, 31.4), (2.6, 31.8)):                                                                # white zigzag clips
+        f.add('head', [x - 1.0, y, -5.0], [x + 1.0, y + 0.35, -4.75], '#f4f6ff', rot=[0, 0, 20], origin=[x, y, -4.9])
+        f.add('head', [x - 0.2, y - 0.4, -5.0], [x + 1.2, y - 0.05, -4.75], '#f4f6ff', rot=[0, 0, -25], origin=[x, y, -4.9])
+    PK, PK2, BLU, BLK = '#e08a80', '#c86e66', '#2a4cc0', '#141216'
+    shell(f, 'body', [-4, 9.0, -2], [4, 24, 2], 0.22, PK, {k: (lambda x, y: PK2 if int(x * 9) % 3 == 0 else PK) for k in ('front', 'back')})   # the striped dress
+    for s_ in (1, -1):
+        x0, x1 = (1.0, 4.5) if s_ > 0 else (-4.5, -1.0)
+        f.add('body', [x0, 16.4, -2.55], [x1, 24.3, -2.3], BLU)                                             # cropped blue jacket
+    shell(f, 'body', [-4, 16.4, -2], [4, 24.2, 2], 0.4, BLU, {'front': lambda x, y: None})
+    f.add('body', [-0.7, 19.6, -2.45], [0.7, 21.2, -2.3], '#f4f6ff', rot=[0, 0, 45], origin=[0, 20.4, -2.4])   # a little sparkle pin
+    f.add('body', [-4.5, 13.4, -2.5], [4.5, 14.2, 2.5], BLK, {'front': lambda x, y: '#9a9aa4' if int(x * 8) % 2 == 0 else BLK})   # belt with studs
+    f.add('body', [-2.0, 23.6, -2.45], [2.0, 24.2, -2.2], '#f4f4f8')                                         # white choker
+    f.add('body', [-4.6, 8.4, -2.7], [4.6, 11.0, 2.7], PK, {k: (lambda x, y: PK2 if int(x * 9) % 3 == 0 else PK) for k in ('front', 'back', 'right', 'left')})   # the skirt flaring
+    f.both('right_arm', [3.45, 15.2, -2.45], [8.55, 24.4, 2.45], BLU)
+    f.both('right_arm', [3.35, 15.0, -2.6], [8.65, 15.8, 2.6], '#1a2a7a')
+    f.both('right_arm', [3.5, 12.0, -2.5], [8.5, 13.6, 2.5], BLK)                                             # fingerless gloves
+    f.both('right_leg', [-0.32, 2.0, -2.32], [4.32, 7.6, 2.32], '#d84a4a', {k: (lambda x, y: BLU if abs(y - .78) < .08 or abs(y - .58) < .06 else '#d84a4a') for k in ('front', 'back', 'right', 'left')})   # red socks, blue stripes
+    shoes(f, '#f0a8a8', '#2a4cc0', 2.0)
+
 def kate_face(px, cm, dark):                                  # black liner down from her eyes, a little fang, a red open grin
     for cx in (5, 26):
         for j in range(3): px[cx, 21 + j] = (16, 12, 14, 255)
@@ -224,6 +290,15 @@ def bare(shirt, pantsc, shoesc, sleeve=12, pl=12):
     return clothes(shirt, sleeve, pantsc, pl, shoesc, 3)
 
 SPECS = {
+    'athrea': dict(name='Athrea', fit=athrea, skin='#f2e0dc', eyes='#6a3a18', hair=['#5a1410', '#141012'], wing=('hawk_small', '#4a120c'),
+                   paint=clothes('#3c3c42', 4, '#141216', 6, '#141216', 2, extra=lambda part, face, x, y, W, H, o:
+                       ('#8a1a14' if part == 'body' and y < 10 and y % 3 == 0 else None)),
+                   eye=['..kkkkkk.', 'kkkkkkkkk', '.wddpddw.', '.wWoppow.', '.wWoopow.', '..wOOOw..', '..kkkkk..'],
+                   brow=['.........', '.kkkkkk..'], mouth=['k.kk.k', '.k..k.'], mouth_x=13, mouth_y=24),
+    'ranrea': dict(name='Ranrea', fit=ranrea, skin='#c48a78', eyes='#7a7a84', hair=['#2a4ad0', '#141218'], wing=('angel_small', ('#2a3ac0', '#e05a5a')),
+                   paint=clothes('#e08a80', 10, '#e08a80', 4, '#f0a8a8', 2),
+                   eye=['..kkkkkk.', 'kkkkkkkkk', '.wddWddw.', '.wWoppow.', '.wWoopow.', '..wOOOw..', '..kkkkk..'],
+                   brow=['.........', '.kkkkk...'], mouth=['.kkkk.', 'krrrrk', '.kkkk.'], mouth_x=13, mouth_y=24),
     'kyle': dict(name='Kyle', fit=kyle, skin='#f2e2e2', eyes='#8a3ad8', hair=['#121114', '#1e1c22'],
                  paint=bare('#eceef0', '#16151a', '#16151a'), eye=['.........', 'kkkkkkkkk', '.wddpddw.', '.wWoppow.', '..wOOOw..', '..kkkkk..'],
                  brow=['.........', '.kkkkkk..'], mouth=['k....k', '.kkkk.'], mouth_x=13, mouth_y=24),
