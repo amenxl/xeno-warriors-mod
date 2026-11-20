@@ -86,7 +86,7 @@ public class YouColourScreen extends JourneyScreen {
             area(sx, sy, sx + 27, sy + 13, () -> { colour = c; hue = hueOf(c); });
         }
         // any hue
-        int hy = 107;
+        int hy = 116;                                                                 // (under the four rows of swatches)
         sc(g, "ANY COLOUR: hue, then shade", x, hy - 9, 0.6F, 0x9AA8B8);
         int bw = 236, seg = 59;
         for (int i = 0; i < seg; i++) {

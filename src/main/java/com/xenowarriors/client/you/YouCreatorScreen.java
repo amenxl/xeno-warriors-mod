@@ -112,7 +112,7 @@ public class YouCreatorScreen extends JourneyScreen {
             sc(g, form == YouSlot.FORM_LUNAR ? "Stronger at night" : "Stronger by day", 220, fy + 11, 0.55F, 0x9AA8B8);
         }
         // starter skills
-        int sy = VH - 44;
+        int sy = VH - 38;                                                             // (under the SKIN button)
         sc(g, "YOU START WITH", 14, sy, 0.6F, 0x9AA8B8);
         YouSlot tmp = new YouSlot(); tmp.name = "x"; tmp.race = race; tmp.element = element; tmp.form = form;
         var pool = com.xenowarriors.you.YouSkills.pool(tmp);
