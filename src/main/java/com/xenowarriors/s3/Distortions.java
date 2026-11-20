@@ -68,6 +68,35 @@ public final class Distortions {
         s.playSound(null, at, SoundEvents.END_PORTAL_SPAWN, SoundSource.HOSTILE, 1.2F, 0.6F);
         for (ServerPlayer o : s.getEntitiesOfClass(ServerPlayer.class, d.getBoundingBox().inflate(96)))
             o.displayClientMessage(Component.literal("The air tears open nearby - a Distortion!").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD), false);
+        if (!villagers.isEmpty()) callDefenders(s, d, villagers.get(0).blockPosition());
         return d;
+    }
+
+    /** Defenders that come per Distortion by a village: 3, plus one per size (up to 6). */
+    public static int defenders(int size) { return Math.min(6, 3 + size); }
+
+    /**
+     * A Distortion by a village: people come running out of it to fight - armed townsfolk (Village Defenders) going for its
+     * C-souls and then the Distortion itself. They go home once it's closed (HumanNpcEntity.makeDefender).
+     */
+    public static void callDefenders(ServerLevel s, DistortionEntity d, BlockPos village) {
+        var r = s.getRandom();
+        int n = defenders(d.size());
+        for (int i = 0; i < n; i++) {
+            double a = r.nextDouble() * Math.PI * 2, dist = 6 + r.nextDouble() * 6;
+            BlockPos at = village.offset((int) (Math.cos(a) * dist), 0, (int) (Math.sin(a) * dist));
+            if (!s.isLoaded(at)) at = village;
+            at = s.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at);
+            var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(s);
+            if (h == null) continue;
+            h.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, r.nextFloat() * 360F, 0F);
+            try { h.finalizeSpawn(s, s.getCurrentDifficultyAt(at), net.minecraft.world.entity.MobSpawnType.EVENT, null, null); } catch (Throwable ignored) {}
+            h.makeDefender();
+            h.setTarget(d);
+            s.addFreshEntity(h);
+            s.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, h.getX(), h.getY() + 1, h.getZ(), 6, 0.3, 0.5, 0.3, 0);
+        }
+        for (ServerPlayer o : s.getEntitiesOfClass(ServerPlayer.class, d.getBoundingBox().inflate(96)))
+            o.displayClientMessage(Component.literal("The villagers rush out to fight the Distortion!").withStyle(ChatFormatting.GREEN), false);
     }
 }

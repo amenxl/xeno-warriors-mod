@@ -89,6 +89,22 @@ public class HumanNpcEntity extends PathfinderMob {
     public int variant() { return entityData.get(VARIANT); }
     public boolean possessed() { return entityData.get(POSSESSED); }
     public boolean fighter() { return entityData.get(FIGHTER); }
+
+    /** Came running from the village to fight a Distortion (see Distortions.callDefenders): goes home once it's gone. */
+    public static final String DEFENDER = "xw_distortion_defender";
+    public boolean defender() { return getTags().contains(DEFENDER); }
+    private int noDistortion;
+
+    /** Makes them a village defender: armed, a fighter, after the Distortion and its C-souls. */
+    public void makeDefender() {
+        addTag(DEFENDER);
+        entityData.set(FIGHTER, true);
+        entityData.set(SKY_HATER, false);
+        if (getMainHandItem().isEmpty()) setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(random.nextBoolean() ? Items.IRON_SWORD : Items.IRON_AXE));
+        setDropChance(EquipmentSlot.MAINHAND, 0F);
+        setCustomName(Component.literal("Village Defender").withStyle(ChatFormatting.GREEN));
+        setPersistenceRequired();
+    }
     public boolean flying() { return entityData.get(FLYING); }
 
     static boolean dmz() {
@@ -240,6 +256,7 @@ public class HumanNpcEntity extends PathfinderMob {
         if (possessed()) return e instanceof Player p && !p.isCreative() && !p.isSpectator() || (e instanceof HumanNpcEntity h && !h.possessed())
                 || e instanceof Villager;
         if (!fighter() || HiddenSouls.hidden(this)) return false;
+        if (defender() && e instanceof com.xenowarriors.s3.DistortionEntity) return true;                   // (the Distortion itself)
         if (e instanceof Player p && com.xenowarriors.faction.Reputation.hostile(p, com.xenowarriors.faction.Faction.TOWN)) return true;     // townsfolk who hate you fight you
         return e instanceof CorruptedSoulEntity || e instanceof CorruptedVillagerEntity || e instanceof DarkPossessedEntity
                 || (e instanceof HumanNpcEntity h && h.possessed()) || CorruptedAnimals.isCorrupted(e)
@@ -367,6 +384,15 @@ public class HumanNpcEntity extends PathfinderMob {
     public void aiStep() {
         super.aiStep();
         if (!level().isClientSide && raider() && tickCount % 100 == 50 && !SkyHaterRaids.listed(getUUID())) { discard(); return; }   // (its raid is over)
+        if (!level().isClientSide && defender() && tickCount % 100 == 70) {            // (the Distortion's gone: home they go after a while)
+            boolean any = !level().getEntitiesOfClass(com.xenowarriors.s3.DistortionEntity.class, getBoundingBox().inflate(64)).isEmpty();
+            noDistortion = any ? 0 : noDistortion + 1;
+            if (noDistortion >= 6) {
+                ((net.minecraft.server.level.ServerLevel) level()).sendParticles(net.minecraft.core.particles.ParticleTypes.POOF, getX(), getY() + 1, getZ(), 12, 0.3, 0.5, 0.3, 0.02);
+                discard();
+                return;
+            }
+        }
         if (level().isClientSide) {
             if (possessed() && random.nextInt(3) == 0) {
                 level().addParticle(CorruptedFx.BLACK, getRandomX(0.5), getRandomY(), getRandomZ(0.5), 0, 0.02, 0);
