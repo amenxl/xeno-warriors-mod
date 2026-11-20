@@ -51,6 +51,9 @@ public final class StoryRun {
     /** With DragonMineZ installed the story is a lot harder (the user's call): every foe has this much more health and damage,
      *  one more of each kind turns up, and they keep up with your DragonMineZ power fully. */
     public static final double DMZ_HARD_HP = 2.5, DMZ_HARD_DMG = 1.75;
+    /** Each extra player in the party (and each of the party's bots, half as much): more health and damage on every foe -
+     *  plus one more of each kind per extra player and per two bots (spawnWave). */
+    public static final double PARTY_HP = 0.6, PARTY_DMG = 0.12, BOT_HP = 0.3, BOT_DMG = 0.06;
 
     public static boolean dmzHard() { return net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez"); }
 
@@ -79,6 +82,8 @@ public final class StoryRun {
 
         StoryDefs.Step cur() { return mission == null || step < 0 || step >= mission.steps().size() ? null : mission.steps().get(step); }
         int size() { return Math.max(1, members.size()); }
+        /** The party's own bots fighting along (not the story's allies), counted at each wave: they make it harder too. */
+        int bots;
 
         public String objective() {
             if (hub) return "Visiting " + StoryScenes.title(place) + " - talk to people (right-click), or leave from the Story menu";
@@ -418,8 +423,10 @@ public final class StoryRun {
         List<ServerPlayer> ps = players(s, r);
         float dmz = com.xenowarriors.compat.DmzScaling.partyScale(ps);
         if (!dmzHard()) dmz = 1F + (dmz - 1F) * 0.8F;                                  // (with DragonMineZ: all of it)
+        r.bots = 0;                                                                      // (a bigger party: a harder fight)
+        for (ServerPlayer p : ps) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.isAlive() && !b.getTags().contains(BOT_TAG)) r.bots++;
         for (StoryDefs.Spawn sp : w) {
-            int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0);
+            int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + r.bots / 2 + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0);
             for (int i = 0; i < n; i++) {
                 Mob m = create(l, sp, StoryScenes.center(r.slot, r.place), i == 0);
                 if (m == null) continue;
@@ -516,10 +523,10 @@ public final class StoryRun {
         var mh = m.getAttribute(Attributes.MAX_HEALTH);
         if (mh != null && !"dummy".equals(sp.e())) {
             if (sp.boss()) mh.setBaseValue(Math.min(mh.getBaseValue(), 60 + 25 * lvl) * ("ultima".equals(sp.e()) ? 2.0 : 1.0));
-            mh.addPermanentModifier(new AttributeModifier(HP, "Story", (0.15 * lvl) + 0.45 * (r.size() - 1), AttributeModifier.Operation.MULTIPLY_TOTAL));
+            mh.addPermanentModifier(new AttributeModifier(HP, "Story", (0.15 * lvl) + PARTY_HP * (r.size() - 1) + BOT_HP * r.bots, AttributeModifier.Operation.MULTIPLY_TOTAL));
         }
         var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (md != null && !"dummy".equals(sp.e())) md.addPermanentModifier(new AttributeModifier(DMG, "Story", 0.1 * lvl, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        if (md != null && !"dummy".equals(sp.e())) md.addPermanentModifier(new AttributeModifier(DMG, "Story", 0.1 * lvl + PARTY_DMG * (r.size() - 1) + BOT_DMG * r.bots, AttributeModifier.Operation.MULTIPLY_TOTAL));
         if ("gov_elite".equals(sp.e()) && mh != null) mh.setBaseValue(mh.getBaseValue() * 1.6);
         hard(m, sp.e());
         m.setHealth(m.getMaxHealth());
