@@ -47,6 +47,12 @@ public final class StoryRun {
     public static final String NPC_TAG = "xw_story_npc", BOT_TAG = "xw_story_bot", FOE_TAG = "xw_story_foe", BACK = "xw_story_back";
     static final int SCENE = 0, FIGHT = 1, SURVIVE = 2, TALKING = 3, DONE = 4, HUB = 5;
     private static final UUID HP = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e01"), DMG = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e02");
+    private static final UUID HARD_HP = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e03"), HARD_DMG = UUID.fromString("3a7f2c11-5b6e-4c1d-9e0f-1a2b3c4d5e04");
+    /** With DragonMineZ installed the story is a lot harder (the user's call): every foe has this much more health and damage,
+     *  one more of each kind turns up, and they keep up with your DragonMineZ power fully. */
+    public static final double DMZ_HARD_HP = 2.5, DMZ_HARD_DMG = 1.75;
+
+    public static boolean dmzHard() { return net.minecraftforge.fml.ModList.get() != null && net.minecraftforge.fml.ModList.get().isLoaded("dragonminez"); }
 
     public static final class Run {
         public final UUID host;
@@ -387,9 +393,7 @@ public final class StoryRun {
         ServerPlayer h = s.getPlayerList().getPlayer(r.host);
         ServerLevel l = world(s);
         if (h == null || l == null) return;
-        Set<String> have = new HashSet<>();
-        for (UUID a : r.allies) { Entity e = l.getEntity(a); if (e instanceof PartyBotEntity b && b.isAlive()) have.add(b.character().getId()); }
-        for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(h)) have.add(b.character().getId());
+        Set<String> have = present(s, r);                                              // (no doubles: anyone's bot, a played character, an ally)
         int k = 4;
         for (String c : who) {
             CharacterType t = CharacterType.byId(c);
@@ -413,9 +417,9 @@ public final class StoryRun {
         for (StoryDefs.Spawn sp : w) if (corrupted(sp.e())) { nightFor(s); break; }       // (C-souls: it's night first)
         List<ServerPlayer> ps = players(s, r);
         float dmz = com.xenowarriors.compat.DmzScaling.partyScale(ps);
-        dmz = 1F + (dmz - 1F) * 0.8F;
+        if (!dmzHard()) dmz = 1F + (dmz - 1F) * 0.8F;                                  // (with DragonMineZ: all of it)
         for (StoryDefs.Spawn sp : w) {
-            int n = sp.boss() ? 1 : sp.n() + (r.size() - 1);
+            int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0);
             for (int i = 0; i < n; i++) {
                 Mob m = create(l, sp, StoryScenes.center(r.slot, r.place), i == 0);
                 if (m == null) continue;
@@ -517,6 +521,7 @@ public final class StoryRun {
         var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
         if (md != null && !"dummy".equals(sp.e())) md.addPermanentModifier(new AttributeModifier(DMG, "Story", 0.1 * lvl, AttributeModifier.Operation.MULTIPLY_TOTAL));
         if ("gov_elite".equals(sp.e()) && mh != null) mh.setBaseValue(mh.getBaseValue() * 1.6);
+        hard(m, sp.e());
         m.setHealth(m.getMaxHealth());
         if (dmz > 1F && !"dummy".equals(sp.e())) com.xenowarriors.journey.JourneyWorld.scale(m, dmz);
         if (sp.name() != null) { m.setCustomName(Component.literal(sp.name()).withStyle(sp.boss() ? ChatFormatting.DARK_RED : ChatFormatting.WHITE)); m.setCustomNameVisible(true); }
@@ -524,6 +529,16 @@ public final class StoryRun {
         if (m instanceof net.minecraft.world.entity.animal.PolarBear b) b.setRemainingPersistentAngerTime(20 * 120);
         if (m instanceof PathfinderMob pm && (m instanceof com.xenowarriors.npc.SkylanderEntity))
             pm.goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(pm, 1.25, true));
+    }
+
+    /** DragonMineZ installed: the story's harder (more health and damage; see DMZ_HARD_HP). Side missions' foes too. */
+    public static void hard(Mob m, String e) {
+        if (!dmzHard() || "dummy".equals(e)) return;
+        var mh = m.getAttribute(Attributes.MAX_HEALTH);
+        if (mh != null && mh.getModifier(HARD_HP) == null) mh.addPermanentModifier(new AttributeModifier(HARD_HP, "Story (DragonMineZ)", DMZ_HARD_HP - 1, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        var md = m.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (md != null && md.getModifier(HARD_DMG) == null) md.addPermanentModifier(new AttributeModifier(HARD_DMG, "Story (DragonMineZ)", DMZ_HARD_DMG - 1, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        m.setHealth(m.getMaxHealth());
     }
 
     private static void clearFoes(MinecraftServer s, Run r) {
@@ -550,13 +565,34 @@ public final class StoryRun {
         return false;
     }
 
+    /**
+     * Everyone already there as someone (no doubles): the characters the run's players are playing, their own bots, the
+     * story's allies still standing (they stay from a fight into the next scene) and its people standing around.
+     */
+    private static Set<String> present(MinecraftServer s, Run r) {
+        Set<String> out = new HashSet<>();
+        for (ServerPlayer p : players(s, r)) {
+            CharacterType t = com.xenowarriors.character.ModCapabilities.getType(p);
+            if (t != CharacterType.NONE && t != CharacterType.YOU) out.add(t.getId());
+            for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.isAlive()) out.add(b.character().getId());
+        }
+        ServerLevel l = world(s);
+        if (l != null) {
+            for (UUID a : r.allies) if (l.getEntity(a) instanceof PartyBotEntity b && b.isAlive()) out.add(b.character().getId());
+            for (UUID a : r.npcs) if (l.getEntity(a) instanceof PartyBotEntity b && b.isAlive()) out.add(b.character().getId());
+        }
+        out.remove(CharacterType.YOU.getId());
+        return out;
+    }
+
     private static void spawnNpcs(MinecraftServer s, Run r, List<String> who) {
         ServerLevel l = world(s);
         if (l == null) return;
         Set<String> there = new HashSet<>();
         for (UUID id : r.npcs) if (l.getEntity(id) instanceof PartyBotEntity b) there.add(b.character().getId());
         List<String> add = new ArrayList<>();
-        for (String c : who) if (!there.contains(c) && !botted(s, r, c)) add.add(c);
+        Set<String> here = present(s, r);                                              // (no doubles: a played character, a bot, an ally)
+        for (String c : who) if (!there.contains(c) && !here.contains(c) && !botted(s, r, c) && !add.contains(c)) add.add(c);
         int n = there.size() + add.size(), i = there.size();
         for (String c : add) {
             PartyBotEntity b = com.xenowarriors.bot.BotEntities.BOT.get().create(l);

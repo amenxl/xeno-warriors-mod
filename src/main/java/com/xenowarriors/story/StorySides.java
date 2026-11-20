@@ -204,7 +204,8 @@ public final class StorySides {
         if ("dummy".equals(s.def.e())) m.setNoAi(true);
         else {
             float dmz = com.xenowarriors.compat.DmzScaling.partyScale(List.of(p));
-            if (dmz > 1F) com.xenowarriors.journey.JourneyWorld.scale(m, 1F + (dmz - 1F) * 0.8F);
+            StoryRun.hard(m, s.def.e());                                              // (DragonMineZ: harder)
+            if (dmz > 1F) com.xenowarriors.journey.JourneyWorld.scale(m, StoryRun.dmzHard() ? dmz : 1F + (dmz - 1F) * 0.8F);
         }
         l.addFreshEntity(m);
         l.sendParticles(ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 20, .4, .6, .4, .3);

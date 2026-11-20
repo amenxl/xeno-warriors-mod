@@ -48,6 +48,8 @@ public class PartyBotEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> SPAR = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SPAR_BOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (its spar is with another bot, not you)
     private static final EntityDataAccessor<Boolean> DMZ_FLY = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Kept on the ground (Mikiko during story mode: he couldn't fly yet in Season 1 - set by the server, see groundedNow). */
+    private static final EntityDataAccessor<Boolean> GROUNDED = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> OUTFIT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (what it wears: its owner's outfit for that character)
     private static final EntityDataAccessor<Boolean> NIMBUS = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.BOOLEAN);   // (rides a Flying Nimbus: DmzBotNimbus)
     private static final EntityDataAccessor<Integer> YOU_SLOT = SynchedEntityData.defineId(PartyBotEntity.class, EntityDataSerializers.INT);   // (one of its owner's own characters: which slot; -1 = a show character)
@@ -179,6 +181,7 @@ public class PartyBotEntity extends PathfinderMob {
         entityData.define(SPAR, false);
         entityData.define(SPAR_BOT, false);
         entityData.define(DMZ_FLY, false);
+        entityData.define(GROUNDED, false);
         entityData.define(NIMBUS, false);
         entityData.define(OUTFIT, 0);
         entityData.define(YOU_SLOT, -1);
@@ -292,7 +295,14 @@ public class PartyBotEntity extends PathfinderMob {
         return PartyBots.friendly(this, e) && !PartyBots.sparFoes(this, e);
     }
 
-    public boolean canFly() { return naturalFlier() || entityData.get(DMZ_FLY) || entityData.get(NIMBUS); }
+    public boolean canFly() { return !entityData.get(GROUNDED) && (naturalFlier() || entityData.get(DMZ_FLY) || entityData.get(NIMBUS)); }
+
+    /** Mikiko can't fly at all while his owner plays story mode (Season 1: he couldn't fly yet then). */
+    private boolean groundedNow() {
+        if (character() != CharacterType.MIKIKO) return false;
+        ServerPlayer o = owner();
+        return o != null && com.xenowarriors.story.Story.active(o) && !com.xenowarriors.story.Story.finished(o);
+    }
 
     /** With DragonMineZ: it can't fly by itself but has a Flying Nimbus - it flies riding the cloud. */
     public boolean nimbus() { return entityData.get(NIMBUS); }
@@ -305,7 +315,8 @@ public class PartyBotEntity extends PathfinderMob {
     public boolean naturalFlier() {
         CharacterType t = character();
         if (t == CharacterType.YOU) { var s = you(); return s != null && s.wingsNow(); }    // (one of your own: its wings)
-        return t.skylander() || t == CharacterType.ULTIMA || t == CharacterType.MIKIKO;
+        if (t == CharacterType.MIKIKO) return botLevel() >= com.xenowarriors.mikiko.WindFlight.LEVEL;   // (Mikiko: only once he's mastered his wind, like a player of him)
+        return t.skylander() || t == CharacterType.ULTIMA;
     }
 
     /** With DragonMineZ: it has learned Fly (and has the ki for it) - it flies like the fliers do (DmzBotSkills keeps this up to date). */
@@ -1036,6 +1047,11 @@ public class PartyBotEntity extends PathfinderMob {
         if (tickCount % 40 == 7) PartyBots.dress(this, owner());               // (its outfit: yours for that character)
         if (ownCharacter() && tickCount % 20 == 11) { refreshYou(); com.xenowarriors.you.YouBots.tick(this); }   // (one of your own: its look, its race's ways)
         if (tickCount % 20 == 3) PartyBots.keepChaseLoaded(this);
+        if (tickCount % 20 == 9) {                                              // (Mikiko in story mode: kept on the ground)
+            boolean g = groundedNow();
+            if (entityData.get(GROUNDED) != g) entityData.set(GROUNDED, g);
+            if (g && (isNoGravity() || getDeltaMovement().y > 0.3)) { setNoGravity(false); BotMoves.land(this); }
+        }
         if (pendingHp >= 0 && tickCount > 200) pendingHp = -1;                  // (what didn't come back by now stays as it is)
         if (downed()) {
             if (++downedTicks > PartyBots.BLEED_OUT) { PartyBots.bleedOut(this); return; }
