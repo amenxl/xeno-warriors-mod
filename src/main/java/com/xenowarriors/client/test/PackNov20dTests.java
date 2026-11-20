@@ -262,9 +262,55 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.check("party: beating the crashers in time doubles the party's bond", com.xenowarriors.bot.BotPartyTime.doubledForTest(p) && com.xenowarriors.bot.BotPartyTime.active(p),
                     "doubled " + com.xenowarriors.bot.BotPartyTime.doubledForTest(p) + " active " + com.xenowarriors.bot.BotPartyTime.active(p));
+            p.setHealth(p.getMaxHealth());
+        }), 5));
+        // ---- party games: bots arm wrestle each other; a bot challenges you to arm wrestle (mash left click) and to Memory
+        int[] pg = new int[8];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            pg[0] = com.xenowarriors.bot.BotPartyGames.botArms; pg[1] = com.xenowarriors.bot.BotPartyGames.armWins; pg[2] = com.xenowarriors.bot.BotPartyGames.memPlayed;
+            pg[3] = com.xenowarriors.party.Bonds.revivedBoosts;
+            com.xenowarriors.bot.BotPartyGames.nowForTest(p, 0);
+        }), 120));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("party games: two bots arm wrestle", com.xenowarriors.bot.BotPartyGames.botArms > pg[0], "bot games " + (com.xenowarriors.bot.BotPartyGames.botArms - pg[0]));
+            com.xenowarriors.bot.BotPartyGames.nowForTest(p, 1);
+        }), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("party games: a bot asks you to arm wrestle (a card)", com.xenowarriors.bot.BotPartyGames.askingForTest(p), "asking " + com.xenowarriors.bot.BotPartyGames.askingForTest(p));
+            com.xenowarriors.bot.BotPartyGames.answerForTest(p, 1);
+        }), 50));
+        for (int k = 0; k < 12; k++) l.add(new Step(k == 4 ? "party_arm_wrestle" : null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm a) { a.mash(); a.mash(); a.mash(); } }, 2));
+        l.add(new Step(null, () -> {
+            var a = mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm x ? x : null;
+            PackTests.check("party games: mashing left click wins the arm wrestle", a != null && a.outcomeForTest() == 1, "screen " + (a != null) + " outcome " + (a == null ? -9 : a.outcomeForTest()) + " bar " + (a == null ? -1 : a.barForTest()));
+        }, 60));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("party games: winning gives XP (and TP with DragonMineZ)", com.xenowarriors.bot.BotPartyGames.armWins > pg[1], "wins " + (com.xenowarriors.bot.BotPartyGames.armWins - pg[1]));
+            com.xenowarriors.bot.BotPartyGames.nowForTest(p, 2);
+        }), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> com.xenowarriors.bot.BotPartyGames.answerForTest(p, 2)), 30));
+        l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Memory m) m.flip(0); }, 3));
+        l.add(new Step("party_memory", () -> {}, 3));
+        for (int k = 0; k < 90; k++) l.add(new Step(null, () -> {
+            if (!(mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Memory m) || m.botTurnForTest() || m.busyForTest() || m.doneForTest()) return;
+            for (int i = 0; i < 16; i++) if (!m.takenForTest(i)) {
+                int j = m.pairOfForTest(i);
+                m.flip(i); m.flip(j); break;
+            }
+        }, 4));
+        l.add(new Step("party_memory_done", () -> {
+            var m = mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Memory x ? x : null;
+            PackTests.check("party games: Memory - flip two, find the pairs, it takes turns with you", m != null && m.doneForTest() && m.mineForTest() + m.theirsForTest() == 8,
+                    "screen " + (m != null) + " you " + (m == null ? -1 : m.mineForTest()) + " bot " + (m == null ? -1 : m.theirsForTest()));
+        }, 3));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("party games: the Memory game's result reaches the server", com.xenowarriors.bot.BotPartyGames.memPlayed > pg[2], "played " + (com.xenowarriors.bot.BotPartyGames.memPlayed - pg[2]));
+            PartyBotEntity b = PartyBots.bots(p).isEmpty() ? null : PartyBots.bots(p).get(0);
+            if (b != null) com.xenowarriors.party.Bonds.revived(b, p);
+            PackTests.check("revive: getting a bot back up gives a little extra bond each time", com.xenowarriors.party.Bonds.revivedBoosts > pg[3], "boosts " + (com.xenowarriors.party.Bonds.revivedBoosts - pg[3]));
             com.xenowarriors.bot.BotPartyTime.endForTest(p);
             PackTests.clear(p);
-        }), 5));
+        }), 80));
         // ---- a bot makes its own furnace to smelt ore, and packs up when you leave
         int[] fu = new int[3];
         Object[] fb = new Object[1];

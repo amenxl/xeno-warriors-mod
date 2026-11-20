@@ -566,6 +566,10 @@ public final class ModNetwork {
                 .encoder(DodgeAnimPacket::encode).decoder(DodgeAnimPacket::decode).consumerMainThread(DodgeAnimPacket::handle).add();
         CHANNEL.messageBuilder(GuardStatePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(GuardStatePacket::encode).decoder(GuardStatePacket::decode).consumerMainThread(GuardStatePacket::handle).add();
+        CHANNEL.messageBuilder(PartyGamePacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(PartyGamePacket::encode).decoder(PartyGamePacket::decode).consumerMainThread(PartyGamePacket::handle).add();
+        CHANNEL.messageBuilder(PartyGameResultPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(PartyGameResultPacket::encode).decoder(PartyGameResultPacket::decode).consumerMainThread(PartyGameResultPacket::handle).add();
     }
 
     public static void sendToServer(Object msg) {

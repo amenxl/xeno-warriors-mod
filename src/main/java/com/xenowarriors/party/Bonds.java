@@ -357,5 +357,16 @@ public final class Bonds {
         if (downed instanceof PartyBotEntity b && b.owner() != null && b.owner() != helper) addXp(b.owner(), charOf(b), REVIVE_XP / 2);
         if (downed instanceof PartyBotEntity b) addXp(b, charOf(helper), REVIVE_XP);           // (bots keep their own side too)
         if (helper instanceof PartyBotEntity b) addXp(b, charOf(downed), REVIVE_XP);
+        if (downed instanceof PartyBotEntity b && helper instanceof ServerPlayer h && !(h instanceof net.minecraftforge.common.util.FakePlayer)) {
+            addXp(h, charOf(b), REVIVE_BOOST);                                           // (a bot you got back up: a little extra, every time)
+            revivedBoosts++;
+            h.displayClientMessage(net.minecraft.network.chat.Component.empty().append(b.label()).append(" feels a little closer to you for getting them back up.")
+                    .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
+        }
     }
+
+    /** Extra bond each time you revive one of the bots. */
+    public static final float REVIVE_BOOST = 10F;
+    /** (Tests) */
+    public static int revivedBoosts;
 }
