@@ -105,6 +105,15 @@ public final class YouSlots {
                 CharacterManager.syncToTrackingAndSelf(p);
                 send(p, true);
             }
+            case YouActionPacket.DMZ_HAIR -> {
+                YouSlot s = d.youSlots[slot];
+                if (!s.exists() || data == null) return;
+                if (!net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) { p.displayClientMessage(Component.literal("That needs DragonMineZ").withStyle(ChatFormatting.RED), true); return; }
+                s.dmzHair = data.dmzHair;
+                p.displayClientMessage(Component.literal(s.name + (s.dmzHair ? " shows their DragonMineZ hair - style it in DragonMineZ's customization" : "'s DragonMineZ hair is hidden")).withStyle(st -> st.withColor(s.color())), true);
+                CharacterManager.syncToTrackingAndSelf(p);
+                send(p, true);
+            }
             case YouActionPacket.DELETE -> {
                 if (!d.youSlots[slot].exists()) return;
                 if (d.getType() == CharacterType.YOU && d.youSlot == slot) {

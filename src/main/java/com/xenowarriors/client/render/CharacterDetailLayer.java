@@ -559,6 +559,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                        float netHeadYaw, float headPitch) {
         renders++;
         if (player.isInvisible()) return;
+        if (com.xenowarriors.client.compat.DmzHairBridge.wants(player))                  // (one of your own: its DragonMineZ hair, switched on)
+            com.xenowarriors.client.compat.DmzHairBridge.drawVanilla(player, poseStack, getParentModel().head, getParentModel().body, buffers, partialTick, packedLight);
         CharacterType type = ClientCharacterData.get(player);
         DetailModel model = models.get(type);
         boolean king = isFoxKing(player, type);

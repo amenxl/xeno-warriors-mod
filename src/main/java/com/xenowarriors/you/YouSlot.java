@@ -45,6 +45,8 @@ public final class YouSlot {
     public int colour = -1;
     /** A borrowed idle animation: the id of a character it has bond 100 with ("" = none; see YouIdles). */
     public String idle = "";
+    /** With DragonMineZ and our look: its DragonMineZ hair drawn on its head too (styled in DragonMineZ's customization). */
+    public boolean dmzHair;
 
     public static final int PATH_NONE = 0, PATH_MODIFIED = 1, PATH_DEMON = 2, PATH_SKYLANDER = 3;
 
@@ -97,6 +99,7 @@ public final class YouSlot {
         t.putBoolean("dmz_look", dmzLook);
         t.putInt("colour", colour);
         t.putString("idle", idle);
+        t.putBoolean("dmz_hair", dmzHair);
         return t;
     }
 
@@ -121,6 +124,7 @@ public final class YouSlot {
         s.dmzLook = t.getBoolean("dmz_look");
         s.colour = t.contains("colour") ? validColour(t.getInt("colour")) : -1;     // (characters made before: their element's)
         s.idle = YouIdles.owner(t.getString("idle")) ? t.getString("idle") : "";
+        s.dmzHair = t.getBoolean("dmz_hair");
         return s;
     }
 
@@ -143,6 +147,7 @@ public final class YouSlot {
         buf.writeBoolean(dmzLook);
         buf.writeInt(colour);
         buf.writeUtf(idle, 32);
+        buf.writeBoolean(dmzHair);
     }
 
     public static YouSlot read(FriendlyByteBuf buf) {
@@ -167,6 +172,7 @@ public final class YouSlot {
         s.colour = validColour(buf.readInt());
         String id = buf.readUtf(32);
         s.idle = YouIdles.owner(id) ? id : "";
+        s.dmzHair = buf.readBoolean();
         return s;
     }
 

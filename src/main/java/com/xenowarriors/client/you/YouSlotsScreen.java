@@ -54,13 +54,19 @@ public class YouSlotsScreen extends JourneyScreen {
                 if (!dmz) button(g, x + 3, y + ch - 26, x + cw - 3, y + ch - 16, "SKIN: " + shortSkin(s.skin), 0x9AB8D8, true, skin);
                 else {
                     // with DragonMineZ: our look (its own skin) or its DragonMineZ character's look
-                    button(g, x + 3, y + ch - 26, x + cw / 2 - 1, y + ch - 16, "SKIN", 0x9AB8D8, !s.dmzLook, skin);
-                    button(g, x + cw / 2 + 1, y + ch - 26, x + cw - 3, y + ch - 16, s.dmzLook ? "LOOK: DMZ" : "LOOK: XW", s.dmzLook ? 0xFFB040 : 0x9AB8D8, true, () -> {
+                    // (our look: SKIN | HAIR - its DragonMineZ hair on or off | LOOK)
+                    int third = (cw - 6) / 3;
+                    button(g, x + 3, y + ch - 26, x + 3 + third - 1, y + ch - 16, "SKIN", 0x9AB8D8, !s.dmzLook, skin);
+                    button(g, x + 3 + third + 1, y + ch - 26, x + 3 + 2 * third - 1, y + ch - 16, s.dmzHair && !s.dmzLook ? "HAIR: ON" : "HAIR: OFF", s.dmzHair ? 0xFFB040 : 0x9AB8D8, !s.dmzLook, () -> {
+                        YouSlot d = new YouSlot(); d.name = s.name; d.dmzHair = !s.dmzHair;
+                        ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.DMZ_HAIR, i, d));
+                    });
+                    button(g, x + 3 + 2 * third + 1, y + ch - 26, x + cw - 3, y + ch - 16, s.dmzLook ? "LOOK: DMZ" : "LOOK: XW", s.dmzLook ? 0xFFB040 : 0x9AB8D8, true, () -> {
                         YouSlot d = new YouSlot(); d.name = s.name; d.dmzLook = !s.dmzLook;
                         ModNetwork.sendToServer(new YouActionPacket(YouActionPacket.DMZ_LOOK, i, d));
                     });
                 }
-                if (cur && dmz && s.dmzLook) button(g, x + 3, y + ch - 13, x + cw - 3, y + ch - 2, "STYLE IN DMZ", 0xFFB040, true,
+                if (cur && dmz && (s.dmzLook || s.dmzHair)) button(g, x + 3, y + ch - 13, x + cw - 3, y + ch - 2, "STYLE IN DMZ", 0xFFB040, true,
                         () -> com.xenowarriors.client.compat.DmzMenu.openCustomization(this));
                 else if (cur) sc(g, "PLAYING", x + cw - 4 - font.width("PLAYING") * 0.55F, y + ch - 14, 0.55F, ACCENT);
                 else {

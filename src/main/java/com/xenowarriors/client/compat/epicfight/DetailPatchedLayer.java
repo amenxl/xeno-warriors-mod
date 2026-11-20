@@ -46,6 +46,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                                MultiBufferSource buffers, int light, OpenMatrix4f[] poses, float bob, float yRot, float xRot, float partial) {
         if (player.isInvisible() || SKIN_ONLY) return;
         tail(patch, player, pose, buffers, light, poses, partial);
+        if (com.xenowarriors.client.compat.DmzHairBridge.wants(player)) Rig.dmzHair(player, patch.getArmature(), pose, buffers, light, poses);   // (one of your own: its DragonMineZ hair, switched on)
         DetailModel live = CharacterDetailLayer.detailModel(player);
         if (live == null || FAILED.contains(live)) return;
         // baked from its own fresh copy of the model, so Epic Fight's baker never touches (and can't disturb) the
@@ -244,6 +245,18 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                     com.xenowarriors.client.race.RaceLook.partsDrawn++;
                 }
             } finally { tint[0] = was[0]; tint[1] = was[1]; tint[2] = was[2]; }
+        }
+
+        /** One of your own characters' DragonMineZ hair (DmzHairBridge) on Epic Fight's head and chest bones. */
+        static void dmzHair(AbstractClientPlayer p, yesman.epicfight.api.model.Armature armature, PoseStack pose,
+                            net.minecraft.client.renderer.MultiBufferSource buffers, int light, OpenMatrix4f[] poses) {
+            if (!(armature instanceof yesman.epicfight.model.armature.HumanoidArmature h)) return;
+            int hi = h.head.getId(), ci = h.chest.getId();
+            if (hi < 0 || hi >= poses.length || ci < 0 || ci >= poses.length) return;
+            org.joml.Matrix4f base = new org.joml.Matrix4f(pose.last().pose());
+            org.joml.Matrix4f head = new org.joml.Matrix4f(base).mul(OpenMatrix4f.exportToMojangMatrix(new OpenMatrix4f().load(poses[hi]).mulBack(h.head.getToOrigin())));
+            org.joml.Matrix4f body = new org.joml.Matrix4f(base).mul(OpenMatrix4f.exportToMojangMatrix(new OpenMatrix4f().load(poses[ci]).mulBack(h.chest.getToOrigin())));
+            com.xenowarriors.client.compat.DmzHairBridge.draw(p, base, head, body, buffers, net.minecraft.client.Minecraft.getInstance().getFrameTime(), light);
         }
 
         static void formHair(AbstractClientPlayer p, boolean ownHair, yesman.epicfight.api.model.Armature armature, PoseStack pose,

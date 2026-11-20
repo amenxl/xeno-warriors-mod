@@ -115,7 +115,25 @@ final class PackNov20cTests {
             PackTests.check("npc parkour: a person vaults or climbs to get at their target", v + c > 0, "vaults " + v + " climbs " + c);
             com.xenowarriors.bot.BotParkour.force = false;
             PackTests.clear(p);
-            mc.options.hideGui = false;
         }), 5));
+        // DragonMineZ hair on one of your own characters with our look
+        int[] hair = new int[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p);
+            var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            d.youSlots[7] = new com.xenowarriors.you.YouSlot();
+            var s = new com.xenowarriors.you.YouSlot(); s.name = "Corvin"; s.race = com.xenowarriors.character.Race.HUMAN; s.element = com.xenowarriors.ka.Element.FIRE;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 7, s);
+            var on = new com.xenowarriors.you.YouSlot(); on.name = "Corvin"; on.dmzHair = true;
+            com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.DMZ_HAIR, 7, on);
+        }), 40));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(0); hair[0] = com.xenowarriors.client.compat.DmzHairBridge.drawn; }, 20));
+        l.add(new Step("you_dmz_hair", () -> {
+            var you = com.xenowarriors.client.ClientCharacterData.you(mc.player);
+            PackTests.check("dmzhair: your character's DragonMineZ hair is drawn on our look", you != null && you.dmzHair && com.xenowarriors.client.compat.DmzHairBridge.drawn > hair[0],
+                    "dmz " + com.xenowarriors.client.compat.DmzHairBridge.works() + " drawn " + (com.xenowarriors.client.compat.DmzHairBridge.drawn - hair[0]) + " why " + com.xenowarriors.client.compat.DmzHairBridge.lastWhy);
+        }, 5));
+        l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.you.YouSlotsScreen()), 20));
+        l.add(new Step("you_dmz_hair_button", () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
     }
 }
