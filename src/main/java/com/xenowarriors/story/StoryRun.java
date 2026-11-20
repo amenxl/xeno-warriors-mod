@@ -84,6 +84,8 @@ public final class StoryRun {
         int size() { return Math.max(1, members.size()); }
         /** The party's own bots fighting along (not the story's allies), counted at each wave: they make it harder too. */
         int bots;
+        /** The last time anyone fought (a hit by or on a foe or one of the party): a minute without and the next wave comes. */
+        long lastCombat;
 
         public String objective() {
             if (hub) return "Visiting " + StoryScenes.title(place) + " - talk to people (right-click), or leave from the Story menu";
@@ -423,6 +425,7 @@ public final class StoryRun {
         List<ServerPlayer> ps = players(s, r);
         float dmz = com.xenowarriors.compat.DmzScaling.partyScale(ps);
         if (!dmzHard()) dmz = 1F + (dmz - 1F) * 0.8F;                                  // (with DragonMineZ: all of it)
+        r.lastCombat = l.getGameTime();
         r.bots = 0;                                                                      // (a bigger party: a harder fight)
         for (ServerPlayer p : ps) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.isAlive() && !b.getTags().contains(BOT_TAG)) r.bots++;
         for (StoryDefs.Spawn sp : w) {
@@ -710,6 +713,12 @@ public final class StoryRun {
                     continue;
                 }
                 if (p.getY() < StoryScenes.Y - 12) { Vec3 at = StoryScenes.entry(r.slot, r.place, 0); p.teleportTo(at.x, at.y, at.z); p.fallDistance = 0; }
+                else if (r.place != null && offIsland(r, p)) {                                 // (no flying off the mission's island)
+                    Vec3 at = backOn(r, p);
+                    p.connection.teleport(at.x, at.y, at.z, p.getYRot(), p.getXRot());
+                    p.setDeltaMovement(Vec3.ZERO); p.fallDistance = 0;
+                    if (r.now % 40 == 0) p.displayClientMessage(Component.literal("Stay on the island - the mission's here.").withStyle(ChatFormatting.GOLD), true);
+                }
             }
             if (!r.members.contains(r.host)) { close(s, r, "The host left - the mission ended"); continue; }
             if (r.phase == DONE) { if (--r.endAt <= 0) close(s, r, null); continue; }
@@ -724,14 +733,52 @@ public final class StoryRun {
         }
     }
 
+    /** How far from the island's middle (sideways) and above its floor anyone may go during a mission. */
+    static final int ISLAND_EDGE = StoryScenes.R + 3, ISLAND_CEILING = 22;
+    /** A minute without a hit either way and the next wave comes (nobody gets stuck on a foe they can't reach). */
+    static final int NO_COMBAT_TICKS = 60 * 20;
+
+    static boolean offIsland(Run r, Entity e) {
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        double dx = e.getX() - (c.getX() + 0.5), dz = e.getZ() - (c.getZ() + 0.5);
+        return dx * dx + dz * dz > ISLAND_EDGE * ISLAND_EDGE || e.getY() > StoryScenes.Y + ISLAND_CEILING;
+    }
+
+    /** The nearest spot back on the island (just inside the edge, no higher than the ceiling). */
+    static Vec3 backOn(Run r, Entity e) {
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        double cx = c.getX() + 0.5, cz = c.getZ() + 0.5, dx = e.getX() - cx, dz = e.getZ() - cz, d = Math.sqrt(dx * dx + dz * dz);
+        double k = d > StoryScenes.R - 2 ? (StoryScenes.R - 2) / d : 1;
+        return new Vec3(cx + dx * k, Math.max(StoryScenes.Y + 1, Math.min(e.getY(), StoryScenes.Y + ISLAND_CEILING - 4)), cz + dz * k);
+    }
+
+    /** The run's player (or one of the party's bots) nearest to this foe - who it goes for. */
+    private static LivingEntity nearestOf(MinecraftServer s, Run r, Mob m) {
+        LivingEntity best = null; double bd = Double.MAX_VALUE;
+        for (ServerPlayer p : players(s, r)) {
+            if (p.isSpectator() || p.isCreative() || !p.isAlive()) continue;
+            double d = p.distanceToSqr(m); if (d < bd) { bd = d; best = p; }
+        }
+        return best;
+    }
+
     private static void tickFight(MinecraftServer s, ServerLevel l, Run r) {
         List<ServerPlayer> ps = players(s, r);
         int alive = 0;
+        if (r.lastCombat > 0 && r.now - r.lastCombat > NO_COMBAT_TICKS && !r.foes.isEmpty()) {        // (no soft-locks)
+            for (ServerPlayer p : ps) p.displayClientMessage(Component.literal("No fighting for a minute - on to the next wave.").withStyle(ChatFormatting.GOLD), false);
+            if (r.phase == SURVIVE && r.now + NO_COMBAT_TICKS >= r.surviveUntil) { next(s, r); return; }
+            advanceWave(s, r);
+            return;
+        }
         for (UUID id : new ArrayList<>(r.foes)) {
             Entity e = l.getEntity(id);
             if (!(e instanceof Mob m) || !m.isAlive()) { r.foes.remove(id); continue; }
             alive++;
             if (m.getY() < StoryScenes.Y - 12) { m.discard(); r.foes.remove(id); continue; }
+            if (r.place != null && offIsland(r, m)) {                                         // (enemies don't fly off the island either)
+                Vec3 at = backOn(r, m); m.teleportTo(at.x, at.y, at.z); m.setDeltaMovement(Vec3.ZERO); m.fallDistance = 0;
+            }
             Float esc = r.escapes.get(id);
             if (esc != null && m.getHealth() < m.getMaxHealth() * esc) {     // the boss gets away through a portal
                 l.sendParticles(ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 60, .5, 1, .5, .4);
@@ -742,7 +789,12 @@ public final class StoryRun {
                 else { r.escaping = false; advanceWave(s, r); }
                 return;
             }
-            if (r.now % 20 == 0 && m.getTarget() == null && !ps.isEmpty() && !m.isNoAi()) m.setTarget(ps.get(l.getRandom().nextInt(ps.size())));
+            if (r.now % 20 == 0 && !m.isNoAi()) {                                              // (they lock on to you and come for you)
+                LivingEntity t = m.getTarget();
+                boolean ours = t instanceof ServerPlayer tp && r.members.contains(tp.getUUID()) && tp.isAlive()
+                        || t instanceof PartyBotEntity tb && tb.isAlive() && !tb.downed();
+                if (!ours) { LivingEntity n = nearestOf(s, r, m); if (n != null) m.setTarget(n); }
+            }
         }
         if (r.phase == SURVIVE) {
             if (r.now >= r.surviveUntil) { next(s, r); return; }
@@ -750,6 +802,27 @@ public final class StoryRun {
             return;
         }
         if (alive == 0) advanceWave(s, r);
+    }
+
+    /** Any hit by or on a story foe (or on one of a run's players) counts as fighting (see NO_COMBAT_TICKS). */
+    @SubscribeEvent
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent e) {
+        LivingEntity v = e.getEntity();
+        if (v.level().isClientSide) return;
+        Run r = null;
+        if (v.getTags().contains(FOE_TAG)) r = runByFoe(v);
+        else if (v instanceof ServerPlayer p) r = runOf(p);
+        if (r == null && e.getSource().getEntity() instanceof Entity a) {
+            if (a.getTags().contains(FOE_TAG) && a instanceof LivingEntity la) r = runByFoe(la);
+            else if (a instanceof ServerPlayer ap) r = runOf(ap);
+        }
+        if (r != null) r.lastCombat = v.level().getGameTime();
+    }
+
+    private static Run runByFoe(LivingEntity m) {
+        String h = m.getPersistentData().getString("xw_story_run");
+        if (h.isEmpty()) return null;
+        try { return RUNS.get(UUID.fromString(h)); } catch (IllegalArgumentException x) { return null; }
     }
 
     /** Falling in a story fight isn't death: you're back at the start of the place. Too many falls and the mission fails. */

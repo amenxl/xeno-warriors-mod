@@ -198,9 +198,12 @@ public class SkylanderEntity extends PathfinderMob {
             for (SkylanderEntity g : level().getEntitiesOfClass(SkylanderEntity.class, getBoundingBox().inflate(24), SkylanderEntity::guardian))
                 if (g != this && g.getTarget() == null) g.defendAgainst(attacker);
         }
-        if (r && !level().isClientSide && !guardian() && !flying() && !wingless() && random.nextFloat() < 0.15F && getHealth() > getMaxHealth() * 0.4F) takeOff();
+        if (r && !level().isClientSide && !guardian() && !flying() && !wingless() && !missionFoe() && random.nextFloat() < 0.04F && getHealth() > getMaxHealth() * 0.4F) takeOff();   // (they get away into the air less often: was 15%)
         return r;
     }
+
+    /** A story mission's enemy: it stays down and fights - no flying off (see StoryRun). */
+    public boolean missionFoe() { return getTags().contains(com.xenowarriors.story.StoryRun.FOE_TAG); }
 
     private void takeOff() {
         setFlying(true);
@@ -216,6 +219,7 @@ public class SkylanderEntity extends PathfinderMob {
             if (wingless() && random.nextInt(40) == 0) level().addParticle(ParticleTypes.FALLING_WATER, getX(), getEyeY(), getZ(), 0, 0, 0);
             return;
         }
+        if (flying() && missionFoe()) setFlying(false);                                // (a mission's enemy: down here, fighting)
         if (flying()) flyTick();
         else if (!wingless()) {
             if (guardian()) {
@@ -223,7 +227,7 @@ public class SkylanderEntity extends PathfinderMob {
                 if (getTarget() == null && tickCount % 40 == 0 && distanceToSqr(Vec3.atCenterOf(guardHome)) > 14 * 14)
                     getNavigation().moveTo(guardHome.getX() + 0.5, guardHome.getY(), guardHome.getZ() + 0.5, 1.0);
             } else if (working) groundTime = 0;
-            else if (onGround() && ++groundTime > (islandHome != null ? 900 : 2400) && tickCount - threatenedAt > 200) takeOff();     // done hanging out
+            else if (!missionFoe() && getTarget() == null && onGround() && ++groundTime > (islandHome != null ? 2400 : 6000) && tickCount - threatenedAt > 200) takeOff();     // done hanging out (they stay a good while longer now)
             if (islandHome != null && hasHouse && tickCount % 20 == 0 && getTarget() == null) guardHouse();
         }
         // saved: once nobody's after them any more, they thank whoever helped
