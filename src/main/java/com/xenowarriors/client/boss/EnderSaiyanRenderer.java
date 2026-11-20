@@ -39,6 +39,9 @@ public class EnderSaiyanRenderer extends MobRenderer<EnderSaiyanEntity, Enderman
         super(ctx, new EndermanModel<>(ctx.bakeLayer(ModelLayers.ENDERMAN)), 0.5F);
         addLayer(new Eyes(this));
         addLayer(new Crest(this, ctx.bakeLayer(CREST_LAYER)));
+        addLayer(new net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer<>(this,      // (Vegeta's Saiyan armor, with DragonMineZ)
+                new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
+                new net.minecraft.client.model.HumanoidModel<>(ctx.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)), ctx.getModelManager()));
     }
 
     @Override public ResourceLocation getTextureLocation(EnderSaiyanEntity e) { return TEX; }

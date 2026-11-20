@@ -177,6 +177,7 @@ public class EnderSaiyanEntity extends Monster {
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
+        if (!getPersistentData().getBoolean("xw_vegeta_armor")) vegetaArmor();
         ServerLevel level = (ServerLevel) level();
         if (!scaled && tickCount >= 2) scaleToPlayers();
         updateBar();
@@ -485,8 +486,32 @@ public class EnderSaiyanEntity extends Monster {
         return super.hurt(src, amount);
     }
 
+    /** With DragonMineZ he wears Vegeta's Saiyan armor (chestplate, leggings, boots) - and may drop it (each piece, 12% + 3% a level of Looting). */
+    public static final float VEGETA_DROP = 0.12F;
+    /** (Tests) pieces of Vegeta's armor dropped. */
+    public static int vegetaDropped;
+
+    private void vegetaArmor() {
+        getPersistentData().putBoolean("xw_vegeta_armor", true);
+        if (!net.minecraftforge.fml.ModList.get().isLoaded("dragonminez")) return;
+        String[] ids = {"vegeta_saiyan_armor_chestplate", "vegeta_saiyan_armor_leggings", "vegeta_saiyan_armor_boots"};
+        net.minecraft.world.entity.EquipmentSlot[] slots = {net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET};
+        for (int i = 0; i < ids.length; i++) {
+            var it = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", ids[i]));
+            if (it == null || it == net.minecraft.world.item.Items.AIR || !getItemBySlot(slots[i]).isEmpty()) continue;
+            setItemSlot(slots[i], new net.minecraft.world.item.ItemStack(it));
+            setDropChance(slots[i], 0F);                                         // (dropped by hand below: its own chance, as an undamaged piece)
+        }
+    }
+
     @Override
     protected void dropCustomDeathLoot(DamageSource src, int looting, boolean hit) {
+        for (var sl : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) {
+            net.minecraft.world.item.ItemStack worn = getItemBySlot(sl);
+            var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(worn.getItem());
+            if (!worn.isEmpty() && key != null && key.getPath().startsWith("vegeta_saiyan_armor") && random.nextFloat() < VEGETA_DROP + looting * 0.03F) { spawnAtLocation(worn.copy()); vegetaDropped++; }
+        }
+
         super.dropCustomDeathLoot(src, looting, hit);
         if (form() == VOID) EnderSaiyans.dropLoot(this);
         else EnderSaiyans.note("died as " + formName(form()) + " (" + src.getMsgId() + ") - no loot");

@@ -404,6 +404,24 @@ final class PackNov20dTests {
             com.xenowarriors.story.StoryRun.quit(p, null);
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 40));
+        // ---- the Ender Saiyan in Vegeta's armor (DragonMineZ)
+        Object[] es = new Object[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            var e = com.xenowarriors.boss.EnderSaiyans.ENDER_SAIYAN.get().create(p.serverLevel());
+            e.moveTo(p.getX(), p.getY(), p.getZ() + 5, 180F, 0F);
+            e.addTag("xw_pack");
+            p.serverLevel().addFreshEntity(e);
+            es[0] = e;
+        }), 40));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(-12); }, 10));
+        l.add(new Step("ender_saiyan_vegeta", () -> PackTests.server(p -> {
+            var e = (net.minecraft.world.entity.LivingEntity) es[0];
+            var chest = e == null ? ItemStack.EMPTY : e.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST);
+            var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(chest.getItem());
+            PackTests.check("ender saiyan: wears Vegeta's Saiyan armor (DragonMineZ)", key != null && key.getPath().startsWith("vegeta_saiyan_armor"), "chest " + key);
+            if (e != null) e.discard();
+        }), 5));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);
