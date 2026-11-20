@@ -573,7 +573,14 @@ public final class ModNetwork {
     }
 
     public static void sendToServer(Object msg) {
+        // (no connection - leaving a world, the integrated server gone after a crash: nothing to send to; it used to crash the game)
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient() && !ClientConn.connected()) return;
         CHANNEL.sendToServer(msg);
+    }
+
+    /** Whether the client has a connection to a server right now (kept apart so a dedicated server never loads Minecraft's client class). */
+    private static final class ClientConn {
+        static boolean connected() { return net.minecraft.client.Minecraft.getInstance().getConnection() != null; }
     }
 
     public static void sendToPlayer(Object msg, ServerPlayer player) {

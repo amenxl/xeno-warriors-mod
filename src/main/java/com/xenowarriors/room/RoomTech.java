@@ -200,6 +200,10 @@ public final class RoomTech {
     private static void copy(ServerLevel src, ServerLevel room, Room r) {
         BlockPos.MutableBlockPos a = new BlockPos.MutableBlockPos(), b = new BlockPos.MutableBlockPos();
         BlockState shell = Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState();
+        // every chunk the copy (and what a placed block looks around at) touches, loaded first: a carved pumpkin checks
+        // its neighbours for a golem and crashed the game when one of them was in a chunk not loaded yet
+        for (int cx = (r.center.getX() - R - 6) >> 4; cx <= (r.center.getX() + R + 6) >> 4; cx++)
+            for (int cz = (r.center.getZ() - R - 6) >> 4; cz <= (r.center.getZ() + R + 6) >> 4; cz++) room.getChunk(cx, cz);
         for (int dx = -R - 1; dx <= R + 1; dx++)
             for (int dz = -R - 1; dz <= R + 1; dz++)
                 for (int dy = -DOWN - 1; dy <= UP + 1; dy++) {

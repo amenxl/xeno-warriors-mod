@@ -73,6 +73,7 @@ public class BotTaming extends Goal {
 
     @Override public void tick() {
         t++;
+        if (target == null || !target.isAlive()) { target = null; return; }   // (fed or gone last tick: the game crashed looking at nobody)
         b.getLookControl().setLookAt(target, 30F, 30F);
         if (b.distanceToSqr(target) > 2.5 * 2.5) { if (b.getNavigation().isDone() || t % 10 == 0) b.getNavigation().moveTo(target, 1.1); return; }
         if (t % 15 != 0) return;                                               // (a feed every so often, like a player would)
