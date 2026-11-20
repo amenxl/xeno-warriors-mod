@@ -14,7 +14,7 @@ CH = {  # owner colours (CharacterType)
     'technica': (236, 90, 160), 'stevie': (74, 42, 154), 'garry': (42, 168, 42), 'yuri': (58, 208, 74),
     'zane': (150, 70, 200), 'logan': (230, 190, 40), 'kill': (130, 40, 160), 'keita': (60, 70, 200), 'dojo': (110, 70, 200),
     'kyle': (138, 90, 224), 'zack': (122, 30, 46), 'kaitlyn': (216, 176, 64), 'chase': (200, 40, 46), 'senju': (184, 154, 80),
-    'ava': (224, 64, 42), 'persephone': (138, 58, 200),
+    'ava': (224, 64, 42), 'persephone': (138, 58, 200), 'fox_girl': (216, 36, 126),
 }
 FIRE, FIRE2 = (255, 140, 30), (255, 220, 80)
 GRAV, GRAV2 = (170, 70, 240), (230, 170, 255)
@@ -1091,6 +1091,47 @@ def _(i):
     i.line((5, 5), (27, 27), (230, 60, 60), 2); i.line((27, 5), (5, 27), (230, 60, 60), 2)
     i.line((5, 5), (27, 27), (255, 255, 255), 0.7); i.line((27, 5), (5, 27), (255, 255, 255), 0.7)
     i.circle(16, 16, 5, outline=(255, 220, 120), w=1)
+
+FOXP = (255, 110, 170)
+
+@spec('kitsune_attack', 'fox_girl')
+def _(i):
+    i.figure(9, Y, PUNCH)
+    i.dummy(25, Y, 0.65)
+    for k in range(3): i.circle(20 - k * 2.5, 13 + k * 3, 1.4, fill=FOXP)
+
+@spec('kitsune_throw', 'fox_girl')
+def _(i):
+    i.figure(8, Y, RAISE)
+    i.dummy(24, 9, 0.5)
+    i.arc(16, 16, 11, 200, 330, FOXP, 1.2)
+    i.speed(28, 6, 3, (255, 255, 255), 4)
+
+@spec('boss_orders', 'fox_girl')
+def _(i):
+    i.figure(16, Y, POINT)
+    for k, x in enumerate((6, 26)): i.circle(x, 8, 2.2, fill=FOXP)
+    i.arcs(16, 10, 9, (255, 220, 120), 2, -60, 60)
+
+@spec('fox_step', 'fox_girl')
+def _(i):
+    i.figure(8, Y, DASH, ghost=True)
+    i.speed(19, 14, 3, FOXP, 8)
+    i.figure(24, Y, DASH)
+
+@spec('fox_palm', 'fox_girl')
+def _(i):
+    i.figure(10, Y, PUNCH)
+    i.circle(21, 15, 3.2, outline=FOXP, w=1)
+    i.speed(29, 15, 3, (255, 255, 255), 3)
+
+@spec('kitsune_tier3', 'fox_girl')
+def _(i):
+    i.figure(16, Y, KICK)
+    for k in range(6):
+        a = math.radians(k * 60)
+        i.line((16 + math.cos(a) * 6, 16 + math.sin(a) * 6), (16 + math.cos(a) * 13, 16 + math.sin(a) * 13), FOXP, 1.1)
+    i.circle(16, 16, 4, outline=(255, 220, 120), w=1)
 
 @twice(('fathers_blade', 'senju'), ('fathers_blade_click', 'senju'))
 def _(i):

@@ -16,7 +16,7 @@ ROOT = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/'
 CH = ROOT + 'textures/entity/character/'
 MD = ROOT + 'models/detail/'
 LOOKS = ['kaeru', 'keita', 'sam', 'sam_royal', 'sam_s3', 'max', 'max_royal', 'max_s3', 'lexy', 'technica', 'logan', 'garry', 'zane',
-         'kill', 'stevie', 'ultima', 'kyrie', 'kyrie_s2', 'yuri', 'yuri_c1pjs', 'kyle', 'zack', 'kaitlyn', 'chase', 'senju', 'ava', 'ava_demon', 'persephone', 'persephone_demon']   # (Ai-oni: what's on her head is a hood, not hair)
+         'kill', 'stevie', 'ultima', 'kyrie', 'kyrie_s2', 'yuri', 'yuri_c1pjs', 'kyle', 'zack', 'kaitlyn', 'chase', 'senju', 'ava', 'ava_demon', 'persephone', 'persephone_demon', 'fox_girl', 'fox_girl_sakura']   # (Ai-oni: what's on her head is a hood, not hair)
 SKIN_ONLY = {'yuri', 'yuri_c1pjs'}   # (Yuri's 3D hair has its own mask, tools/xw/dmzhair/yuri_ssj_hair.py: only her skin's head here)
 TOL = {'kyrie': 0.34, 'kyrie_s2': 0.34}   # (Kyrie's hair has a lighter purple on the 3D strands than on her head)
 tol = 0.22
@@ -63,7 +63,7 @@ def uv_boxes(c):
 n = 0
 import sys
 for look in (sys.argv[1:] or LOOKS):
-    who = look.split('_')[0]; tol = TOL.get(look, 0.22); wide = look not in NARROW
+    who = 'fox_girl' if look.startswith('fox_girl') else look.split('_')[0]; tol = TOL.get(look, 0.22); wide = look not in NARROW
     sk = CH + look + '.png'
     if not os.path.exists(sk): continue
     im = Image.open(sk).convert('RGBA'); px = im.load()

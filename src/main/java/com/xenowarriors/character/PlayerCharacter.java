@@ -82,6 +82,9 @@ public class PlayerCharacter {
     /** Saves the current stats under this character, then loads that character's (fresh = level 1) . */
     public void switchStats(CharacterType from, CharacterType to) { switchStats(key(from), key(to)); }
 
+    /** Fox Girl's Speed, Attack and Defense the first time she's played (the user's pick: far above everyone's start). */
+    public static final int FOX_GIRL_START = 5000;
+
     /** The same, by save key (You slots have one key each). */
     public void switchStats(String from, String to) {
         if (!from.equals(CharacterType.NONE.getId())) {
@@ -93,6 +96,7 @@ public class PlayerCharacter {
         if (to.equals(CharacterType.NONE.getId()) || to.equals(from)) return;
         CompoundTag t = charStats.getCompound(to);
         int[] lv = t.getIntArray("lv");
+        if (lv.length == 0 && to.equals(CharacterType.FOX_GIRL.getId())) lv = new int[]{FOX_GIRL_START, FOX_GIRL_START, FOX_GIRL_START};   // (her first time: very high stats)
         for (int i = 0; i < 3; i++) { statLevel[i] = i < lv.length ? lv[i] : 0; statXp[i] = t.getFloat("x" + i); }
     }
     /** A KA given for testing (/xeno ka self); their real KAs aren't revealed yet. */

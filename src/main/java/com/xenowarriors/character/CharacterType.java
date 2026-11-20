@@ -46,10 +46,13 @@ public enum CharacterType {
     AVA("ava", 0xFFE0402A),
     PERSEPHONE("persephone", 0xFF8A3AC8),
     /** A player-made warrior (see you/YouSlot): the player's own skin, a chosen name, race and element. */
-    YOU("you", 0xFFC8A0FF);
+    YOU("you", 0xFFC8A0FF),
+    /** Kitsune, the Fox Girl: Kitsune's Farm's owner and Mikiko's old trainer (a Fox Kin). Season 5 (/xeno season unlock 5);
+     *  starts with very high stats (see PlayerCharacter.switchStats). Last, so nobody's ordinals move. */
+    FOX_GIRL("fox_girl", 0xFFD8247E);
 
     /** The characters shown on the selection screen, in order. */
-    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA, AVA, PERSEPHONE, SENJU, KYLE, ZACK, KAITLYN, CHASE};
+    public static final CharacterType[] PLAYABLE = {MIKIKO, RHALIX, ULTIMA, KAERU, KYRIE, LEXY, MAX, SAM, TECHNICA, STEVIE, GARRY, AIONI, YURI, ZANE, LOGAN, KILL, KEITA, AVA, PERSEPHONE, SENJU, KYLE, ZACK, KAITLYN, CHASE, FOX_GIRL};
 
     /** The story season a character comes from (2/3 stay locked until unlocked). */
     /** Skylanders: they have wings and can fly (H puts the wings away). */
@@ -61,7 +64,7 @@ public enum CharacterType {
     /** Their race (see Race). */
     public Race race() { return Race.of(this); }
 
-    public int season() { return this == AIONI || this == ZANE || this == CHASE || this == SENJU ? 3 : this == ULTIMA || this == KAERU || this == YURI || this == KYLE || this == ZACK || this == KAITLYN ? 2 : 1; }
+    public int season() { return this == FOX_GIRL ? 5 : this == AIONI || this == ZANE || this == CHASE || this == SENJU ? 3 : this == ULTIMA || this == KAERU || this == YURI || this == KYLE || this == ZACK || this == KAITLYN ? 2 : 1; }
 
     private final String id;
     private final int color;
@@ -87,6 +90,7 @@ public enum CharacterType {
             case MAX, SAM -> new String[]{"Default", "Royal Capital", "Season 3"};
             case AVA, PERSEPHONE -> new String[]{"Sky Rebellion", "Casual"};
             case CHASE -> new String[]{"Keeper", "Navy Cap"};
+            case FOX_GIRL -> new String[]{"Kitsune", "Sakura"};
             default -> new String[]{"Default"};
         };
     }
@@ -109,7 +113,8 @@ public enum CharacterType {
             case KYRIE -> new String[]{"", "s2"};
             case MAX, SAM -> new String[]{"", "royal", "s3"};
             case AVA, PERSEPHONE -> new String[]{"", "casual", "demon"};
-            case CHASE -> new String[]{"", "cap"};                    // ("demon": Demon Form's look - not picked as an outfit, see formOutfit)
+            case CHASE -> new String[]{"", "cap"};
+            case FOX_GIRL -> new String[]{"", "sakura"};                    // ("demon": Demon Form's look - not picked as an outfit, see formOutfit)
             default -> new String[]{""};
         };
     }

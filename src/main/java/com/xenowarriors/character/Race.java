@@ -79,6 +79,7 @@ public enum Race {
             case KYLE -> MODIFIED_HUMAN;
             case ZACK, KAITLYN, AVA, PERSEPHONE -> DEMON;
             case SENJU -> SKYLANDER;
+            case FOX_GIRL -> FOX_KIN;
             case RHALIX, KYRIE, MAX, SAM, LOGAN, KEITA -> SKYLANDER;
             default -> HUMAN;                            // Stevie, Garry, Yuri, Zane
         };

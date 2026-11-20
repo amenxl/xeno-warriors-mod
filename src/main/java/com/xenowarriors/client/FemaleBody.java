@@ -30,7 +30,7 @@ public final class FemaleBody {
 
     private static final Set<CharacterType> GIRLS = Set.of(CharacterType.KAERU, CharacterType.KYRIE, CharacterType.LEXY,
             CharacterType.TECHNICA, CharacterType.AIONI, CharacterType.YURI,
-            CharacterType.KAITLYN, CharacterType.AVA, CharacterType.PERSEPHONE);
+            CharacterType.KAITLYN, CharacterType.AVA, CharacterType.PERSEPHONE, CharacterType.FOX_GIRL);
     /** Outfits that are girls' even on a boy (Max and Sam's Royal Capital disguises). */
     private static final Set<String> GIRL_OUTFITS = Set.of("max_royal", "sam_royal");
     /** Detail models (by file name) that get the girls' fit: the girls' own, their outfits, and girl NPCs. */

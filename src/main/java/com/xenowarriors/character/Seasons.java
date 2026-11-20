@@ -61,7 +61,7 @@ public final class Seasons extends SavedData {
 
     public static void set(MinecraftServer server, int season) {
         Seasons s = get(server);
-        s.unlocked = Math.max(1, Math.min(3, season));
+        s.unlocked = Math.max(1, Math.min(5, season));            // (5: Fox Girl)
         cached = s.unlocked;
         s.setDirty();
         // tell everyone online right away (season-locked skills, outfits, guide pages and the creative tab), not on their next relog

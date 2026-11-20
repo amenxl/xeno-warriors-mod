@@ -126,6 +126,10 @@ public final class SkillPool {
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.TwinBlade(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.SoulSnatch(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.Begone(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.KeepersStep(), 0, 3),
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.Begone()), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.SwordDraw(), 0, 3)));
         ULTIMATE.put(CharacterType.CHASE, new com.xenowarriors.skill.nc.NcSkills.KeepersJudgement());
+        POOL.put(CharacterType.FOX_GIRL, List.of(
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.KitsuneAttack(), 0, 5), new Entry(new com.xenowarriors.skill.nc.NcSkills.KitsuneThrow(), 0, 5), new Entry(new com.xenowarriors.skill.nc.NcSkills.BossOrders(), 0, 5), new Entry(new com.xenowarriors.skill.nc.NcSkills.FoxStep(), 0, 5),
+                new Entry(new com.xenowarriors.skill.nc.NcSkills.FoxPalm(), 0, 5)));
+        ULTIMATE.put(CharacterType.FOX_GIRL, new com.xenowarriors.skill.nc.NcSkills.KitsuneTier3());
         POOL.put(CharacterType.SENJU, List.of(
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.FathersBlade(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.WingGust(), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonGrant(), 0, 3), new Entry(new com.xenowarriors.you.YouDevil.SelfSplit(), 0, 3),
                 new Entry(new com.xenowarriors.skill.nc.NcSkills.Click(new com.xenowarriors.skill.nc.NcSkills.FathersBlade()), 0, 3), new Entry(new com.xenowarriors.skill.nc.NcSkills.DemonGlare(), 0, 3)));

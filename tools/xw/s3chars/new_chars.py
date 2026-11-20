@@ -160,6 +160,60 @@ def chase(f, cap=False):
     pants(f, J, 6.4, J, baggy=0.35)                                                                  # black shorts
     shoes(f, '#5a5a62', '#e8e8ec', 2.2, lace='#e8e8ec')
 
+# ------------------------------------------------------------------ Fox Girl (Kitsune)
+def fox_girl(f, sakura=False):
+    """Kitsune, the Fox Girl - Kitsune's Farm's owner, Mikiko's old trainer (the user's Gacha ref): a choppy bob, hot pink
+    over black (black underneath and at the back, the pink fringe and sides over it), a pink jacket with wide dark maroon
+    cuffs open over a long white top with a boxed black-and-white hem, a little pink gem on a cord, black shorts, dark
+    maroon knee socks, pink shoes. Sakura (the user's illustration): a pink caped jacket with braided dark-red trim, a
+    pink cameo brooch at the collar, a long white dress."""
+    BK, BK2, PK, PK2, PK3 = '#141216', '#22202a', '#d8247e', '#b0186a', '#f0509a'
+    hair(f, PK, BK, back_len=25.0, side_len=25.6, fringe=True)
+    for x, ln, tilt in ((-3.6, 4.0, -0.25), (-2.2, 4.8, -0.12), (-0.8, 5.4, -0.04), (0.6, 4.6, 0.05), (2.0, 5.2, 0.14), (3.4, 4.0, 0.26)):
+        lock(f, [x, 32.4, -4.7], [tilt, -1, -0.35], ln, 1.6, (PK, PK, PK3), taper=(0.62, 0.3))         # the long pink fringe, choppy
+    for s_ in (1, -1):
+        for z, ln in ((-2.8, 6.4), (-0.6, 7.0), (1.6, 6.6)):
+            lock(f, [s_ * 4.6, 31.4, z], [s_ * 0.22, -1, 0.0], ln, 1.7, (PK, PK2, PK3), taper=(0.62, 0.3))  # pink down the sides to her jaw
+        lock(f, [s_ * 4.5, 31.8, 3.4], [s_ * 0.9, -0.4, 0.5], 3.2, 1.6, (BK, BK, BK2))                    # black flicking out behind
+    for x in (-2.8, -0.9, 1.0, 2.9):
+        lock(f, [x, 31.6, 4.6], [x * 0.08, -1, 0.35], 6.0, 1.8, (BK, BK, BK2), taper=(0.6, 0.3))           # the back, black
+    for x, d in ((-1.6, [-0.4, 1, 0.5]), (0.4, [0.2, 1, 0.6]), (2.2, [0.6, 0.8, 0.5])):
+        lock(f, [x, 33.0, 2.2], d, 2.6, 1.4, (BK, BK2, BK2), taper=(0.7, 0.35))                            # messy black on top, behind the pink
+    f.add('head', [-4.9, 28.6, -2.4], [-4.5, 30.0, -1.4], '#f0509a')                                     # a little pink clip at her ear
+    if sakura:
+        P1, P2, TR, DR = '#e4628e', '#c84a76', '#7a2238', '#ece6ea'
+        shell(f, 'body', [-4, 9.0, -2], [4, 24, 2], 0.22, DR)                                           # the long white dress
+        trim = lambda x, y: TR if y > .93 or y < .05 else P1
+        for s in (1, -1):
+            x0, x1 = (0.6, 4.5) if s > 0 else (-4.5, -0.6)
+            f.add('body', [x0, 8.6, -2.55], [x1, 24.3, -2.3], P1, {'front': (lambda q: lambda x, y: TR if (x < .14 if q > 0 else x > .86) or y < .05 else P1)(s)})   # the jacket fronts, braided edges
+        shell(f, 'body', [-4, 8.6, -2], [4, 24.2, 2], 0.4, P1, {'front': lambda x, y: None, 'back': lambda x, y: TR if y < .04 else P1})
+        f.add('body', [-4.9, 18.8, -2.9], [4.9, 24.6, 2.9], P1, {k: (lambda x, y: TR if y < .1 else P1) for k in ('front', 'back', 'left', 'right')})   # the capelet over her shoulders
+        f.add('body', [-1.0, 22.2, -3.05], [1.0, 24.0, -2.9], '#d8a838')                                 # the cameo brooch: gold rim
+        f.add('body', [-0.7, 22.5, -3.15], [0.7, 23.7, -3.0], '#f088b0')                                 #   and its pink cameo
+        f.both('right_arm', [3.45, 12.2, -2.45], [8.55, 24.4, 2.45], P1, {k: (lambda x, y: TR if y < .06 else P1) for k in ('front', 'back', 'right', 'left')})
+        f.both('right_arm', [3.4, 12.0, -2.5], [8.6, 12.8, 2.5], TR)                                       # braided cuffs
+        f.both('right_arm', [3.3, 18.6, -2.9], [8.7, 24.6, 2.9], P1, {k: (lambda x, y: TR if y < .12 else P2) for k in ('front', 'back', 'right', 'left')})   # the capelet over her arms
+        pants(f, DR, 3.0, baggy=0.55)                                                                     # the dress down to her shins
+        f.add('body', [-4.7, 3.4, -2.75], [4.7, 12.0, 2.75], DR)                                          # (its skirt, between her legs)
+        shoes(f, '#e4628e', '#7a2238', 1.6)
+        return
+    JK, CF = PK, '#3a0c1e'
+    shell(f, 'body', [-4, 9.4, -2], [4, 24, 2], 0.22, '#f2f2f2',
+          {'front': lambda x, y: ('#141216' if y < .12 and int(x * 9) % 2 == 0 else '#f2f2f2'), 'back': lambda x, y: ('#141216' if y < .12 and int(x * 9) % 2 == 0 else '#f2f2f2')})   # long white top, boxed hem
+    for s in (1, -1):
+        x0, x1 = (1.6, 4.5) if s > 0 else (-4.5, -1.6)
+        f.add('body', [x0, 14.6, -2.55], [x1, 24.3, -2.3], JK, {'front': (lambda q: lambda x, y: '#a01860' if (x < .14 if q > 0 else x > .86) else JK)(s)})   # the open jacket
+    shell(f, 'body', [-4, 14.6, -2], [4, 24.2, 2], 0.4, JK, {'front': lambda x, y: None})
+    f.add('body', [-3.2, 22.2, 2.4], [3.2, 24.4, 3.3], JK)                                                 # its hood, down at the back
+    f.add('body', [-0.5, 19.6, -2.45], [0.5, 20.8, -2.3], '#e05aa0')                                      # the pink gem
+    f.add('body', [-1.6, 20.8, -2.38], [1.6, 21.2, -2.3], '#2a0a16')                                      #   on its cord
+    f.both('right_arm', [3.45, 15.0, -2.45], [8.55, 24.4, 2.45], JK)
+    f.both('right_arm', [3.3, 12.0, -2.7], [8.7, 15.2, 2.7], CF)                                          # wide dark cuffs
+    pants(f, '#141216', 9.6, baggy=0.3)                                                                    # black shorts
+    f.both('right_leg', [-0.35, 1.6, -2.35], [4.35, 7.4, 2.35], '#3a1020', {k: (lambda x, y: '#5a1a34' if y > .82 else '#3a1020') for k in ('front', 'back', 'right', 'left')})   # dark knee socks
+    shoes(f, '#c8287a', '#2a0a16', 2.0, lace='#f0509a')
+
 def kate_face(px, cm, dark):                                  # black liner down from her eyes, a little fang, a red open grin
     for cx in (5, 26):
         for j in range(3): px[cx, 21 + j] = (16, 12, 14, 255)
@@ -183,6 +237,17 @@ SPECS = {
     'chase_cap': dict(name='Chase (cap)', fit=lambda f: chase(f, True), skin='#7a4a30', eyes='#d07a18', hair=['#0e0c10', '#1a1820'],
                   paint=bare('#141a3a', '#0e1228', '#141216', 4, 12), brow=['.........', 'kkkkkk...'],
                   mouth=['.kk.'], mouth_x=14, mouth_y=25),
+    'fox_girl': dict(name='Fox Girl', fit=fox_girl, skin='#a8684a', eyes='#7a3a8a', hair=['#d8247e', '#141216'],
+                     paint=clothes('#d8247e', 12, '#141216', 4, '#c8287a', 2, extra=lambda part, face, x, y, W, H, o:
+                         ('#3a1020' if part in ('rleg', 'lleg') and face in ('front', 'back', 'right', 'left') and 6 <= y < 10
+                          else '#f2f2f2' if part == 'body' and face == 'front' and 2 <= x <= 5 else None)),   # (pink under the jacket, white down the front)
+                     eye=['..kkkkkk.', 'kkkkkkkkk', '.kddpddk.', '.kWoppok.', '.kWoopok.', '..kOOOk..', '..kkkkk..'],
+                     brow=['.........', '.kkkkk...'], mouth=['k.kk.k', '.k..k.'], mouth_x=13, mouth_y=24),
+    'fox_girl_sakura': dict(name='Fox Girl (Sakura)', fit=lambda f: fox_girl(f, True), skin='#a8684a', eyes='#7a3a8a', hair=['#d8247e', '#141216'],
+                     paint=clothes('#e4628e', 12, '#ece6ea', 9, '#e4628e', 2, extra=lambda part, face, x, y, W, H, o:
+                         ('#ece6ea' if part == 'body' and face == 'front' and 2 <= x <= 5 else None)),
+                     eye=['..kkkkkk.', 'kkkkkkkkk', '.kddpddk.', '.kWoppok.', '.kWoopok.', '..kOOOk..', '..kkkkk..'],
+                     brow=['.........', '.kkkkk...'], mouth=['k......k', '.kkkkkk.'], mouth_x=12, mouth_y=24),
     'chase': dict(name='Chase', fit=chase, skin='#7a4a30', eyes='#d07a18', hair=['#0e0c10', '#1a1820'],
                   paint=bare('#141217', '#141217', '#5a5a62', 12, 6), brow=['.........', 'kkkkkk...'],
                   mouth=['.kk.'], mouth_x=14, mouth_y=25),

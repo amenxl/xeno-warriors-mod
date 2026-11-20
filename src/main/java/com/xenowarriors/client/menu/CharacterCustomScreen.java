@@ -541,6 +541,7 @@ public class CharacterCustomScreen extends Screen {
             case SENJU, AVA, PERSEPHONE -> new String[][]{SR};
             case KYLE -> new String[][]{GOV};
             case CHASE -> new String[][]{WAN};
+            case FOX_GIRL -> new String[][]{FF};
             default -> new String[0][];
         };
     }

@@ -85,6 +85,7 @@ public final class WomMoves {
         // the November 2026 seven: Ava the cage fighter brawls street style; Kaitlyn and Zack fight like the demons they
         // are; Kyle, Chase, Senju and Persephone with quick, clean strikes
         FISTS.put(CharacterType.AVA, STREET);
+        FISTS.put(CharacterType.FOX_GIRL, SWIFT);                      // (fox martial arts: quick, clean strikes)
         for (CharacterType t : new CharacterType[]{CharacterType.KAITLYN, CharacterType.ZACK}) FISTS.put(t, BEAST);
         for (CharacterType t : new CharacterType[]{CharacterType.KYLE, CharacterType.CHASE, CharacterType.SENJU, CharacterType.PERSEPHONE}) FISTS.put(t, SWIFT);
         FISTS.put(CharacterType.MIKIKO, GLOVES);

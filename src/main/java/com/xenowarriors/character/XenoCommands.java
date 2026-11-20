@@ -288,7 +288,7 @@ public final class XenoCommands {
         root.then(Commands.literal("season")
                 .executes(ctx -> { say(ctx, gray("Story content unlocked up to Season " + Seasons.highest(ctx.getSource().getServer()) + ".")); return 1; })
                 .then(Commands.literal("unlock").requires(src -> src.hasPermission(2))
-                        .then(Commands.argument("season", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3)).executes(ctx -> {
+                        .then(Commands.argument("season", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 5)).executes(ctx -> {     // (Season 5: Fox Girl)
                             int n = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "season");
                             Seasons.set(ctx.getSource().getServer(), n);
                             ctx.getSource().getServer().getPlayerList().broadcastSystemMessage(Component.literal("Season " + n + " content unlocked!").withStyle(ChatFormatting.GOLD), false);

@@ -1181,4 +1181,130 @@ public final class NcSkills {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) { SENT.remove(e.getEntity().getUUID()); }
+
+    // ================================================================== FOX GIRL (Kitsune: fox martial arts; Season 5)
+
+    private static final ParticleOptions FOX = new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.95F, 0.3F, 0.6F), 1.1F);
+
+    /** Kitsune Attack: a string of fox martial arts strikes - three hits, the last one sends them flying. */
+    public static class KitsuneAttack implements Skill {
+        @Override public String getId() { return "kitsune_attack"; }
+        @Override public int getCooldownTicks() { return 5 * 20; }
+        @Override public int getKarmaCost() { return 12; }
+        @Override public boolean use(ServerPlayer p) {
+            LivingEntity t = front(p, 4.5);
+            if (t == null) return false;
+            for (int k = 0; k < 3; k++) {
+                final int n = k;
+                ServerScheduler.later(n * 5, () -> {
+                    if (!p.isAlive() || !t.isAlive()) return;
+                    p.swing(n % 2 == 0 ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND, true);
+                    hit(p, t, n == 2 ? 9F : 5F, false);
+                    if (n == 2) push(t, p.position(), 1.6, 0.4);
+                    p.serverLevel().sendParticles(FOX, t.getX(), t.getY() + 1, t.getZ(), 10, 0.3, 0.4, 0.3, 0);
+                    sound(p, SoundEvents.PLAYER_ATTACK_STRONG, 1F, 1.1F + n * 0.1F);
+                });
+            }
+            return true;
+        }
+    }
+
+    /** Kitsune Throw: she grabs them and hurls them far away (the way she threw Mikiko all the way to the disco). */
+    public static class KitsuneThrow implements Skill {
+        @Override public String getId() { return "kitsune_throw"; }
+        @Override public int getCooldownTicks() { return 12 * 20; }
+        @Override public int getKarmaCost() { return 20; }
+        @Override public boolean use(ServerPlayer p) {
+            LivingEntity t = front(p, 4);
+            if (t == null) return false;
+            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+            hit(p, t, 6F, false);
+            Vec3 f = p.getLookAngle().multiply(1, 0, 1).normalize();
+            t.setDeltaMovement(f.x * 3.2, 1.1, f.z * 3.2);
+            t.hurtMarked = true;
+            p.serverLevel().sendParticles(ParticleTypes.CLOUD, t.getX(), t.getY() + 0.5, t.getZ(), 12, 0.3, 0.2, 0.3, 0.05);
+            say(p, "Out you go.", ChatFormatting.LIGHT_PURPLE);
+            sound(p, SoundEvents.PLAYER_ATTACK_KNOCKBACK, 1.2F, 0.7F);
+            return true;
+        }
+    }
+
+    /** Boss's Orders: the boss of Kitsune's Farm gives an order - she and everyone with her (players and bots close by) hit harder for a while. */
+    public static class BossOrders implements Skill {
+        @Override public String getId() { return "boss_orders"; }
+        @Override public int getCooldownTicks() { return 30 * 20; }
+        @Override public int getKarmaCost() { return 25; }
+        @Override public boolean use(ServerPlayer p) {
+            java.util.List<LivingEntity> team = new java.util.ArrayList<>();
+            team.add(p);
+            for (ServerPlayer o : p.serverLevel().players()) if (o != p && o.distanceToSqr(p) < 16 * 16) team.add(o);
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.distanceToSqr(p) < 16 * 16) team.add(b);
+            for (LivingEntity e : team) {
+                effect(e, MobEffects.DAMAGE_BOOST, 20 * 15, 1);
+                effect(e, MobEffects.MOVEMENT_SPEED, 20 * 15, 0);
+                p.serverLevel().sendParticles(FOX, e.getX(), e.getY() + 1.2, e.getZ(), 14, 0.3, 0.5, 0.3, 0);
+            }
+            say(p, "Get to work - all of you!", ChatFormatting.LIGHT_PURPLE);
+            sound(p, SoundEvents.BELL_BLOCK, 1F, 1.4F);
+            return true;
+        }
+    }
+
+    /** Fox Step: a fast dash (8 blocks) that leaves an afterimage behind. */
+    public static class FoxStep implements Skill {
+        @Override public String getId() { return "fox_step"; }
+        @Override public int getCooldownTicks() { return 5 * 20; }
+        @Override public int getKarmaCost() { return 8; }
+        @Override public boolean use(ServerPlayer p) {
+            p.serverLevel().sendParticles(FOX, p.getX(), p.getY() + 1, p.getZ(), 30, 0.25, 0.6, 0.25, 0);   // (the afterimage where she stood)
+            p.serverLevel().sendParticles(ParticleTypes.POOF, p.getX(), p.getY() + 1, p.getZ(), 6, 0.2, 0.4, 0.2, 0.01);
+            blink(p, lookSpot(p, 8), FOX);
+            return true;
+        }
+    }
+
+    /** Fox Palm (middle click): a quick palm strike that knocks them back. */
+    public static class FoxPalm implements Skill {
+        @Override public String getId() { return "fox_palm"; }
+        @Override public int getCooldownTicks() { return 3 * 20; }
+        @Override public int getKarmaCost() { return 5; }
+        @Override public boolean use(ServerPlayer p) {
+            LivingEntity t = front(p, 4);
+            if (t == null) return false;
+            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
+            hit(p, t, 6F, false);
+            push(t, p.position(), 1.2, 0.3);
+            p.serverLevel().sendParticles(FOX, t.getX(), t.getY() + 1, t.getZ(), 8, 0.25, 0.3, 0.25, 0);
+            sound(p, SoundEvents.PLAYER_ATTACK_SWEEP, 1F, 1.5F);
+            return true;
+        }
+    }
+
+    /** Ultimate - Kitsune Attack Tier 3: the highest tier of fox martial arts - a flurry on everyone around her, then a finishing blow. */
+    public static class KitsuneTier3 implements Skill {
+        @Override public String getId() { return "kitsune_tier3"; }
+        @Override public int getCooldownTicks() { return 75 * 20; }
+        @Override public int getKarmaCost() { return 60; }
+        @Override public boolean use(ServerPlayer p) {
+            List<LivingEntity> l = around(p, p.position(), 8);
+            if (l.isEmpty()) { p.displayClientMessage(Component.translatable("message.xenowarriors.no_target"), true); return false; }
+            say(p, "Kitsune Attack - Tier 3.", ChatFormatting.LIGHT_PURPLE);
+            effect(p, MobEffects.DAMAGE_RESISTANCE, 50, 2);
+            for (int k = 0; k < 6; k++) {
+                final int n = k;
+                ServerScheduler.later(n * 6, () -> {
+                    if (!p.isAlive()) return;
+                    p.swing(n % 2 == 0 ? net.minecraft.world.InteractionHand.MAIN_HAND : net.minecraft.world.InteractionHand.OFF_HAND, true);
+                    for (LivingEntity e : l) {
+                        if (!e.isAlive()) continue;
+                        hit(p, e, n == 5 ? 18F : 5F, false);
+                        if (n == 5) push(e, p.position(), 2.4, 0.6);
+                        p.serverLevel().sendParticles(FOX, e.getX(), e.getY() + 1, e.getZ(), n == 5 ? 30 : 8, 0.4, 0.6, 0.4, 0);
+                    }
+                    sound(p, n == 5 ? SoundEvents.GENERIC_EXPLODE : SoundEvents.PLAYER_ATTACK_STRONG, n == 5 ? 0.8F : 1F, 1.2F);
+                });
+            }
+            return true;
+        }
+    }
 }
