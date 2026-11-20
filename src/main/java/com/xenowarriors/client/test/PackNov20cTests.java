@@ -151,6 +151,40 @@ final class PackNov20cTests {
             p.serverLevel().addFreshEntity(hy); }), 20));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(0); }, 10));
         l.add(new Step("henery", () -> PackTests.server(p -> { PackTests.check("henery: his own look", !p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("henery")).isEmpty(), ""); PackTests.clear(p); }), 5));
+        // Sam's bot walking with his bat (the user saw his legs not moving): what Epic Fight plays on its body, bat vs no bat
+        Object[] sam = new Object[1];
+        for (int run = 0; run < 2; run++) {
+            final boolean bat = run == 0;
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                PackTests.arena(p); PackTests.clear(p);
+                var b = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.SAM, null);
+                if (b == null) return;
+                b.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, bat ? new ItemStack(com.xenowarriors.item.ModItems.SAM_BAT.get()) : ItemStack.EMPTY);
+                b.moveTo(p.getX() + 3, p.getY(), p.getZ() + 2, 0F, 0F);
+                sam[0] = b;
+                p.connection.teleport(p.getX(), p.getY(), p.getZ(), 0F, 10F);
+            }), 20));
+            l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> {
+                var b = (com.xenowarriors.bot.PartyBotEntity) sam[0];
+                if (b != null) b.getNavigation().moveTo(p.getX() + 3, p.getY(), p.getZ() + 14, 1.0);
+            }); }, 6));
+            for (int k = 0; k < 3; k++) {
+                final int kk = k;
+                l.add(new Step("sam_walk_" + (bat ? "bat" : "fists") + "_" + kk, () -> {
+                    var av = mc.level == null ? null : com.xenowarriors.client.bot.BotAvatars.players(mc.level).stream().filter(x -> x instanceof com.xenowarriors.client.bot.BotAvatar a && a.bot() != null && a.bot().character() == CharacterType.SAM).findFirst().orElse(null);
+                    String info = "no avatar";
+                    if (av != null) {
+                        info = "walkSpeed " + String.format("%.2f", av.walkAnimation.speed()) + " pos " + String.format("%.1f", av.walkAnimation.position()) + " held " + av.getMainHandItem();
+                        try {
+                            var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(av, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
+                            if (patch != null) info += " ef " + patch.currentLivingMotion + " / " + patch.currentCompositeMotion + " mode " + patch.isEpicFightMode();
+                        } catch (Throwable x) { info += " ef? " + x; }
+                    }
+                    PackTests.log("samwalk " + (bat ? "bat" : "fists") + " " + kk + ": " + info);
+                }, 8));
+            }
+        }
+        l.add(new Step(null, () -> PackTests.server(p -> PackTests.clear(p)), 5));
         // bots with Building 10+ lay blocks across water and pick them back up
         int[] wb = new int[2];
         Object[] wbot = new Object[1];
