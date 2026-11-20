@@ -165,9 +165,10 @@ public final class BotGunsmith {
         BlockPos t = nearTable(b);
         if (t == null) t = placeTable(b, s);                                    // (none near: makes and sets down its own, if it can)
         if (t.equals(BlockPos.ZERO)) return;
-        Object[] pick = can.get(0);
-        for (Object[] c : can) if (isAttachment((ItemStack) c[0]) && !isAttachment((ItemStack) pick[0])) pick = c;   // (attachments before another gun)
-        if (!take(b.inventory, (List<?>) pick[1], true)) return;
+        can.sort((x, y) -> Boolean.compare(isAttachment((ItemStack) y[0]), isAttachment((ItemStack) x[0])));   // (attachments before another gun)
+        Object[] pick = null;
+        for (Object[] c : can) if (take(b.inventory, (List<?>) c[1], true)) { pick = c; break; }   // (the first it can still afford - making the table used some up)
+        if (pick == null) return;
         ItemStack res = ((ItemStack) pick[0]).copy();
         if (!b.inventory.canAddItem(res)) { b.spawnAtLocation(res); } else b.inventory.addItem(res);
         made++;

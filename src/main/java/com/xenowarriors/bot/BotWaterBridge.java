@@ -57,7 +57,22 @@ public final class BotWaterBridge {
         if (!b.onGround()) return;
         BlockPos ahead = BlockPos.containing(b.getX() + dir.x * 1.1, b.getY() - 0.5, b.getZ() + dir.z * 1.1);
         BlockPos s = surface(l, ahead.above());
-        if (s != null && s.getY() == feet.getY() - 1) lay(b, l, s);
+        boolean onPath = onOwn(b);
+        if (s != null && s.getY() == feet.getY() - 1 && lay(b, l, s)) onPath = true;
+        if (onPath) {                                                            // (walk it: the pathfinder won't plan across water)
+            b.getNavigation().stop();
+            b.getMoveControl().setWantedPosition(b.getX() + dir.x * 1.2, b.getY(), b.getZ() + dir.z * 1.2, 1.0);
+            BotMoves.face(b, (float) Math.toDegrees(Math.atan2(-dir.x, dir.z)), 30F);
+        }
+    }
+
+    /** Standing on (or just stepping off) one of its own blocks. */
+    private static boolean onOwn(PartyBotEntity b) {
+        Deque<Placed> path = PATH.get(b.getUUID());
+        if (path == null) return false;
+        BlockPos below = b.blockPosition().below();
+        for (Placed p : path) if (p.at.equals(below) || p.at.distSqr(below) <= 2) return true;
+        return false;
     }
 
     /** The top water block of the column at this spot (open air above it), or null. */
