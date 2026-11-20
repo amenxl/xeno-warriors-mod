@@ -79,7 +79,8 @@ public final class Toggles {
         SECOND_WIND("second_wind", "Second Wind", Kind.PASSIVE, 0x8AF0A0, true),
         STEADY_FEET("steady_feet", "Steady Feet", Kind.PASSIVE, 0xC8A070, true),
         AUTO_EAT("auto_eat", "Auto Eat", Kind.PASSIVE, 0xF0B060, true),
-        AUTO_POTION("auto_potion", "Auto Potion", Kind.PASSIVE, 0xE060C0, true);
+        AUTO_POTION("auto_potion", "Auto Potion", Kind.PASSIVE, 0xE060C0, true),
+        AUTO_BOOST("auto_boost", "Auto Boost", Kind.PASSIVE, 0x60D8A0, true);
 
         /** Shown on the toggle wheel (the automatic ones only in Character Customization). */
         public boolean wheel() { return kind != Kind.AUTO; }

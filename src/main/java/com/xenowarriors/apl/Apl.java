@@ -49,7 +49,9 @@ public final class Apl {
         AUTO_EAT("auto_eat", "Auto Eat", new int[]{10}, "auto_eat",
                 "Eats the best food you carry when you get hungry", new String[]{"on"}),
         AUTO_POTION("auto_potion", "Auto Potion", new int[]{15, 10}, "auto_potion",
-                "Drinks a healing potion you carry when your health is low", new String[]{"below 35% health", "below the health you pick"});
+                "Drinks a healing potion you carry when your health is low", new String[]{"below 35% health", "below the health you pick"}),
+        AUTO_BOOST("auto_boost", "Auto Boost", new int[]{10}, "auto_boost",
+                "Uses Stat Boosts as soon as you get them - the ones in your Boost Bag too", new String[]{"on"});
 
         public final String id, title, toggle, what;
         public final int[] costs;
@@ -245,7 +247,7 @@ public final class Apl {
         return p.getMaxHealth() * new float[]{0.25F, 0.4F, 0.6F}[r - 1];
     }
 
-    /** Auto Eat and Auto Potion, once a second. */
+    /** Auto Eat, Auto Potion and Auto Boost, once a second. */
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent ev) {
         if (ev.phase != TickEvent.Phase.END || !(ev.player instanceof ServerPlayer p) || p.tickCount % 20 != 7 || !p.isAlive() || p.isSpectator()
@@ -255,6 +257,7 @@ public final class Apl {
             if (p.getHealth() < p.getMaxHealth() * at / 100F && p.level().getGameTime() >= p.getPersistentData().getLong("xw_auto_potion_cd")) drinkPotion(p);
         }
         if (live(p, Ability.AUTO_EAT) > 0 && p.getFoodData().getFoodLevel() <= 14 && !p.isUsingItem()) eatBest(p);
+        if (live(p, Ability.AUTO_BOOST) > 0) com.xenowarriors.statboost.BoostBag.autoUse(p);
     }
 
     private static boolean healing(ItemStack s) {

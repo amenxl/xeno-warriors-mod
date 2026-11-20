@@ -102,6 +102,57 @@ public final class BoostBag {
         p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BUNDLE_INSERT, SoundSource.PLAYERS, 0.8F, 1.1F);
     }
 
+    /**
+     * Auto Boost (an APL ability): every Stat Boost you carry - loose in your inventory or in your Boost Bag - used right
+     * away (the ones for a stat you can't raise, or one already at its max, are left). One message for the lot. Levels gained.
+     */
+    public static int autoUse(ServerPlayer p) {
+        java.util.Map<BoostStat, Integer> gained = new java.util.EnumMap<>(BoostStat.class);
+        int used = 0;
+        var inv = p.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack st = inv.getItem(i);
+            if (!(st.getItem() instanceof StatBoostItem b) || !b.stat.usable(p)) continue;
+            while (!st.isEmpty()) {
+                int g = StatBoosts.apply(p, b.stat, b.tier.levels);
+                if (g <= 0) break;
+                gained.merge(b.stat, g, Integer::sum); used++;
+                st.shrink(1);
+            }
+            if (st.isEmpty()) inv.setItem(i, ItemStack.EMPTY);
+        }
+        ItemStack bag = find(p);
+        if (!bag.isEmpty() && total(bag) > 0) {
+            for (BoostStat s : BoostStat.values()) {
+                if (!s.usable(p)) continue;
+                for (BoostTier t : BoostTier.values()) {
+                    int have = count(bag, s, t), n = 0;
+                    for (int k = 0; k < have; k++) {
+                        int g = StatBoosts.apply(p, s, t.levels);
+                        if (g <= 0) break;
+                        gained.merge(s, g, Integer::sum); n++;
+                    }
+                    if (n > 0) { add(bag, s, t, -n); used += n; }
+                }
+            }
+        }
+        if (used == 0) return 0;
+        net.minecraft.network.chat.MutableComponent msg = Component.literal("Auto Boost: ").withStyle(ChatFormatting.GREEN);
+        int total = 0, k = 0;
+        for (var e : gained.entrySet()) {
+            msg.append(Component.literal((k++ > 0 ? ", " : "") + "+" + e.getValue() + " " + e.getKey().label).withStyle(ChatFormatting.WHITE));
+            total += e.getValue();
+        }
+        msg.append(Component.literal("  (" + used + " boost" + (used > 1 ? "s" : "") + ")").withStyle(ChatFormatting.GRAY));
+        p.sendSystemMessage(msg);
+        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.7F, 1.3F);
+        autoUsed += used;
+        return total;
+    }
+
+    /** (Tests) boosts Auto Boost used. */
+    public static int autoUsed;
+
     /** Puts every boost in your inventory into the bag. How many went in. */
     public static int depositAll(ServerPlayer p, ItemStack bag) {
         int n = 0;

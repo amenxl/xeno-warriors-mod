@@ -8,6 +8,7 @@ import com.xenowarriors.skill.Skill;
 import com.xenowarriors.skill.SkillPool;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,30 @@ final class PackNov20bTests {
         l.add(new Step(null, () -> PackTests.check("foxgirl: Fox Palm is her middle click, Kitsune Attack stays in her slots",
                 com.xenowarriors.toggle.Toggles.rlChoices(CharacterType.FOX_GIRL).contains("fox_palm")
                         && SkillPool.menuIndices(CharacterType.FOX_GIRL, SkillPool.of(CharacterType.FOX_GIRL)).size() == 4, ""), 2));
+        // Auto Boost: boosts in the inventory and in the bag get used by themselves
+        int[] before = new int[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var gm = p.gameMode.getGameModeForPlayer();
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            com.xenowarriors.apl.Apl.buy(p, com.xenowarriors.apl.Apl.Ability.AUTO_BOOST);   // (creative: free)
+            p.setGameMode(gm);
+            ItemStack bag = new ItemStack(com.xenowarriors.statboost.BoostBag.ITEM.get());
+            com.xenowarriors.statboost.BoostBag.add(bag, com.xenowarriors.statboost.BoostStat.SPEED, com.xenowarriors.statboost.BoostTier.ONE, 3);
+            p.getInventory().add(bag);
+            ItemStack loose = com.xenowarriors.statboost.StatBoosts.stack(com.xenowarriors.statboost.BoostStat.ATTACK, com.xenowarriors.statboost.BoostTier.ONE);
+            loose.setCount(2);
+            p.getInventory().add(loose);
+            before[0] = com.xenowarriors.statboost.BoostBag.autoUsed;
+        }), 50));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            ItemStack bag = com.xenowarriors.statboost.BoostBag.find(p);
+            int left = bag.isEmpty() ? -1 : com.xenowarriors.statboost.BoostBag.total(bag);
+            boolean loose = false;
+            for (ItemStack st : p.getInventory().items) if (st.getItem() instanceof com.xenowarriors.statboost.StatBoostItem) loose = true;
+            PackTests.check("autoboost: uses the boosts in the bag and the inventory", left == 0 && !loose && com.xenowarriors.statboost.BoostBag.autoUsed - before[0] >= 5,
+                    "bag left " + left + " loose " + loose + " used " + (com.xenowarriors.statboost.BoostBag.autoUsed - before[0]));
+            p.getInventory().clearContent();
+        }), 5));
         // the Story menu
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); UiTest.character(CharacterType.MIKIKO); }, 30));
         l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.story.Story.reset(p); com.xenowarriors.story.Story.start(p); }), 30));

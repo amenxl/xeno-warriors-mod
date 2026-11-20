@@ -877,8 +877,8 @@ public class CharacterCustomScreen extends Screen {
 
     // ------------------------------------------------------------------ the Abilities tab (APL)
 
-    private static final int AB_Y = 54, AB_H = 14;
-    private int abY(int i) { return AB_Y + i * (AB_H + 2); }
+    private static final int AB_Y = 52, AB_H = 13;                    // (eight rows clear of the APL line at the bottom)
+    private int abY(int i) { return AB_Y + i * (AB_H + 1); }
 
     private List<String> abilTab(GuiGraphics g, int col, double mx, double my) {
         List<String> tip = null;
@@ -897,12 +897,12 @@ public class CharacterCustomScreen extends Screen {
             for (int k = 0; k < a.max(); k++)                                   // rank pips
                 g.fill(x + 70 + k * 6, y + 3, x + 74 + k * 6, y + 7, k < rank ? 0xFF000000 | col : 0xFF3A3A46);
             String now = rank > 0 ? a.ranks[rank - 1] : "not learned";
-            scaled(g, ell(now, 190), x + 5, y + 9, 0.6F, rank > 0 ? 0x99CCAA : 0x8888A0);
+            scaled(g, ell(now, 190), x + 5, y + 8, 0.6F, rank > 0 ? 0x99CCAA : 0x8888A0);
             // Auto Potion rank 2: its health %
             if (a == com.xenowarriors.apl.Apl.Ability.AUTO_POTION && rank >= 2) {
                 int px = x + w - 66;
                 boolean pOver = inBox(mx, my, px, y + 2, 22, 11);
-                g.fill(px, y + 2, px + 22, y + 13, pOver ? 0xFF505064 : 0xFF34343F);
+                g.fill(px, y + 2, px + 22, y + 12, pOver ? 0xFF505064 : 0xFF34343F);
                 scaled(g, st.potionAt() + "%", px + 3, y + 4.5F, 0.65F, 0xFFFFFF);
                 if (pOver) tip = List.of("Auto Potion", "Drinks a healing potion below " + st.potionAt() + "% health.", "Click to change it (25 / 35 / 50 / 65%).");
             }
