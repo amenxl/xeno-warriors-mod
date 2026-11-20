@@ -342,7 +342,7 @@ final class PackNov20dTests {
         }), 5));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
         // ---- health orb abilities: Orb Luck, Orb Magnet, Karma Orbs
-        int[] ob = new int[4];
+        int[] orbT = new int[4];
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.arena(p); PackTests.clear(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
@@ -350,7 +350,7 @@ final class PackNov20dTests {
             com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.ORB_MAGNET, 2);
             com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.KARMA_ORBS, 1);
             p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.setKarma(d.karmaMax * 0.3F));
-            ob[0] = com.xenowarriors.pickup.HealthOrbs.dropped; ob[1] = com.xenowarriors.pickup.HealthOrbEntity.magnetized; ob[2] = com.xenowarriors.pickup.HealthOrbEntity.karmaTaken;
+            orbT[0] = com.xenowarriors.pickup.HealthOrbs.dropped; orbT[1] = com.xenowarriors.pickup.HealthOrbEntity.magnetized; orbT[2] = com.xenowarriors.pickup.HealthOrbEntity.karmaTaken;
             for (int i = 0; i < 60; i++) {                                         // (60 kills: about 10 orbs at 16%)
                 var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
                 if (z == null) continue;
@@ -361,10 +361,10 @@ final class PackNov20dTests {
             }
         }), 120));
         l.add(new Step("karma_orbs", () -> PackTests.server(p -> {
-            int dropped = com.xenowarriors.pickup.HealthOrbs.dropped - ob[0];
+            int dropped = com.xenowarriors.pickup.HealthOrbs.dropped - orbT[0];
             PackTests.check("orbs: Orb Luck - more orbs drop (16% at rank 3)", dropped >= 4, "dropped " + dropped + " of 60");
-            PackTests.check("orbs: Orb Magnet - they come to you from 14 blocks away", com.xenowarriors.pickup.HealthOrbEntity.magnetized > ob[1], "magnetized " + (com.xenowarriors.pickup.HealthOrbEntity.magnetized - ob[1]));
-            PackTests.check("orbs: Karma Orbs - they fill Karma", com.xenowarriors.pickup.HealthOrbEntity.karmaTaken > ob[2], "karma orbs taken " + (com.xenowarriors.pickup.HealthOrbEntity.karmaTaken - ob[2]));
+            PackTests.check("orbs: Orb Magnet - they come to you from 14 blocks away", com.xenowarriors.pickup.HealthOrbEntity.magnetized > orbT[1], "magnetized " + (com.xenowarriors.pickup.HealthOrbEntity.magnetized - orbT[1]));
+            PackTests.check("orbs: Karma Orbs - they fill Karma", com.xenowarriors.pickup.HealthOrbEntity.karmaTaken > orbT[2], "karma orbs taken " + (com.xenowarriors.pickup.HealthOrbEntity.karmaTaken - orbT[2]));
             for (var a : new com.xenowarriors.apl.Apl.Ability[]{com.xenowarriors.apl.Apl.Ability.ORB_LUCK, com.xenowarriors.apl.Apl.Ability.ORB_MAGNET, com.xenowarriors.apl.Apl.Ability.KARMA_ORBS})
                 com.xenowarriors.apl.Apl.setForTest(p, a, 0);
             PackTests.clear(p);

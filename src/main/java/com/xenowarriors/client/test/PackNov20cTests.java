@@ -168,6 +168,7 @@ final class PackNov20cTests {
                 var b = (com.xenowarriors.bot.PartyBotEntity) sam[0];
                 if (b != null) b.getNavigation().moveTo(p.getX() + 3, p.getY(), p.getZ() + 14, 1.0);
             }); }, 6));
+            boolean[] walked = {false};                                           // (any frame while he's moving: he stops when he gets there)
             for (int k = 0; k < 3; k++) {
                 final int kk = k;
                 l.add(new Step("sam_walk_" + (bat ? "bat" : "fists") + "_" + kk, () -> {
@@ -181,10 +182,11 @@ final class PackNov20cTests {
                         } catch (Throwable x) { info += " ef? " + x; }
                     }
                     PackTests.log("samwalk " + (bat ? "bat" : "fists") + " " + kk + ": " + info);
-                    if (kk == 2 && av != null) try {
+                    if (av != null) try {
                         var pt = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(av, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
                         String mo = pt == null ? "none" : String.valueOf(pt.currentLivingMotion);
-                        PackTests.check("sam walk: walking with " + (bat ? "his bat" : "bare hands") + ", his Epic Fight body walks (legs move)", mo.equals("WALK") || mo.equals("RUN"), "motion " + mo);
+                        if (mo.equals("WALK") || mo.equals("RUN")) walked[0] = true;
+                        if (kk == 2) PackTests.check("sam walk: walking with " + (bat ? "his bat" : "bare hands") + ", his Epic Fight body walks (legs move)", walked[0], "motion " + mo);
                     } catch (Throwable x) { PackTests.check("sam walk: epic fight motion", false, String.valueOf(x)); }
                 }, 8));
             }
