@@ -1,7 +1,9 @@
 package com.xenowarriors.client.test;
 
 import com.xenowarriors.character.CharacterType;
+import com.xenowarriors.client.UiTest;
 import com.xenowarriors.client.UiTest.Step;
+import com.xenowarriors.client.ClientCharacterData;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -116,6 +118,39 @@ final class PackNov20cTests {
             com.xenowarriors.bot.BotParkour.force = false;
             PackTests.clear(p);
         }), 5));
+        // the princesses (Season 2): playable, both looks, every skill; Lexy's Season 2 outfit; Henry's look
+        l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); PackTests.arena(p); PackTests.clear(p); }), 10));
+        for (CharacterType t : new CharacterType[]{CharacterType.ATHREA, CharacterType.RANREA}) {
+            l.add(new Step(null, () -> { mc.options.hideGui = true; UiTest.character(t); }, 40));
+            l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(0); }, 20));
+            l.add(new Step("princess_" + t.getId(), () -> PackTests.check("princess: " + t.getId() + " plays, model loads", ClientCharacterData.getLocal() == t
+                    && com.xenowarriors.client.render.CharacterDetailLayer.detailModel(mc.player) != null && t.season() == 2 && t.skylander(), "local " + ClientCharacterData.getLocal()), 5));
+            java.util.List<com.xenowarriors.skill.Skill> sk = new java.util.ArrayList<>();
+            for (var e : com.xenowarriors.skill.SkillPool.of(t)) sk.add(e.skill());
+            sk.add(com.xenowarriors.skill.SkillPool.ultimate(t));
+            java.util.List<String> bad = new java.util.ArrayList<>();
+            for (var sl : sk) {
+                l.add(new Step(null, () -> PackTests.server(p -> { PackTests.clear(p); PackTests.husk(p, 0, 2.5); p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 10F); }), 8));
+                l.add(new Step(sl == sk.get(sk.size() - 1) ? "princess_" + t.getId() + "_ult" : null, () -> PackTests.server(p -> {
+                    try { if (!com.xenowarriors.skill.SkillManager.useFree(p, sl, 1F)) bad.add(sl.getId() + "(refused)"); } catch (Throwable x) { bad.add(sl.getId() + ": " + x); }
+                }), 25));
+            }
+            l.add(new Step(null, () -> PackTests.check("princess: " + t.getId() + "'s skills and ultimate work", bad.isEmpty() && sk.size() == 5, "skills " + sk.size() + " bad " + bad), 2));
+        }
+        l.add(new Step(null, () -> { UiTest.character(CharacterType.LEXY); }, 40));
+        l.add(new Step(null, () -> PackTests.server(p -> { PackTests.clear(p); p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 1);
+            com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p); }), 20));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(0); }, 20));
+        l.add(new Step("lexy_s2", () -> PackTests.check("lexy: Season 2 SR outfit, red eyes", ClientCharacterData.outfit(mc.player) == 1
+                && com.xenowarriors.client.render.CharacterDetailLayer.faceFrame(mc.player, new com.xenowarriors.client.render.CharacterDetailLayer.FaceFrame()).face.getPath().contains("lexy_possessed"), "outfit " + ClientCharacterData.outfit(mc.player)), 5));
+        l.add(new Step(null, () -> PackTests.server(p -> { p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0);
+            com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
+            var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(p.serverLevel());
+            h.setLook("henry"); h.setCustomName(net.minecraft.network.chat.Component.literal("Henry"));
+            h.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180F, 0F); h.setYHeadRot(180F); h.yBodyRot = 180F; h.setNoAi(true); h.addTag("xw_pack");
+            p.serverLevel().addFreshEntity(h); }), 20));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(15); }, 10));
+        l.add(new Step("henry", () -> PackTests.server(p -> { PackTests.check("henry: his own look", !p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("henry")).isEmpty(), ""); PackTests.clear(p); }), 5));
         // bots with Building 10+ lay blocks across water and pick them back up
         int[] wb = new int[2];
         Object[] wbot = new Object[1];
