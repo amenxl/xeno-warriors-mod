@@ -244,7 +244,7 @@ public final class HuntUiTests {
         s.put("botpick_empty", () -> new com.xenowarriors.client.bot.BotPickScreen(new com.xenowarriors.network.OpenBotPickPacket(new String[0], new String[0], 0)));
         s.put("collection_empty", () -> new com.xenowarriors.client.screen.CollectionScreen(new com.xenowarriors.network.CollectionPacket(new String[0], new int[0], 0, true, true, 0, 0)));
         s.put("govshop", () -> new com.xenowarriors.client.screen.GovShopScreen(0, 0));
-        s.put("dealer", () -> new com.xenowarriors.client.vehicle.DealerScreen(0));
+        s.put("dealer", () -> new com.xenowarriors.client.vehicle.DealerScreen(0, 0));
         s.put("playeraction", () -> new com.xenowarriors.client.party.PlayerActionScreen(UUID.randomUUID(), "Somebody"));
         s.put("journeylobby", com.xenowarriors.client.journey.JourneyLobbyScreen::new);
         s.put("journeyteam", com.xenowarriors.client.journey.JourneyTeamScreen::new);
