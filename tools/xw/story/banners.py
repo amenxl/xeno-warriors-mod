@@ -1,7 +1,7 @@
 """Story menu banners (textures/gui/story/<path>.png, 512x256): the storyline's characters on a gradient in its colours.
 Rhalix's and Mikiko's are the user's own art; the finale has both of them; the Sky Rebellion and the Government
 (no art of Senju or Kyle yet) use their HUD portraits with the faction logos.
-usage: python3 banners.py <dir with the user's art: Rhalix_S2.png, Mikiko.png>"""
+usage: python3 banners.py <dir with the user's art: rhalix.png (Illustration 11), mikiko.png (Illustration 08)>"""
 import sys, os
 from PIL import Image, ImageDraw, ImageFilter
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -52,13 +52,13 @@ def portrait_card(bg, who, logo, cx):
 
 def main(art):
     os.makedirs(OUT, exist_ok=True)
-    rh = Image.open(os.path.join(art, 'Rhalix_S2.png')); mk = Image.open(os.path.join(art, 'Mikiko.png'))
-    b = grad((40, 16, 70), (150, 60, 210)); place(b, fit(rh, 248), 330, 256); vignette(b).save(OUT + 'rhalix.png')
-    b = grad((70, 24, 8), (232, 128, 26)); place(b, fit(mk, 240), 340, 250); vignette(b).save(OUT + 'mikiko.png')
+    rh = Image.open(os.path.join(art, 'rhalix.png')); mk = Image.open(os.path.join(art, 'mikiko.png'))
+    b = grad((10, 12, 30), (70, 40, 110)); place(b, fit(rh, 248), 330, 256); vignette(b).save(OUT + 'rhalix.png')
+    b = grad((70, 24, 8), (232, 128, 26)); place(b, fit(mk, 250), 330, 256); vignette(b).save(OUT + 'mikiko.png')
     b = grad((40, 10, 12), (150, 40, 40)); portrait_card(b, 'senju', 'logo_sky_rebellion', 300); vignette(b).save(OUT + 'sr.png')
     b = grad((20, 14, 50), (106, 58, 200)); portrait_card(b, 'kyle', 'logo_government', 300); vignette(b).save(OUT + 'gov.png')
     b = grad((60, 10, 40), (31, 140, 90))                                     # the finale: the two of them, Ultima's green behind
-    place(b, fit(rh, 236), 360, 256); place(b, fit(mk, 228), 220, 252); vignette(b).save(OUT + 'finale.png')
+    place(b, fit(rh, 236), 410, 256); place(b, fit(mk, 222), 175, 252); vignette(b).save(OUT + 'finale.png')
     print('banners ->', OUT)
 
 if __name__ == '__main__':
