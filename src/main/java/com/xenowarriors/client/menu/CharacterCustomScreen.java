@@ -304,7 +304,7 @@ public class CharacterCustomScreen extends Screen {
         }
         if (cur() == T_OUTFITS) {
             String[] names = type().outfitNames();
-            for (int i = 0; i < names.length; i++) {
+            for (int i = 0; i < names.length && !dmzStyle(); i++) {
                 if (!inBox(vx, vy, skillX(i), outfitY(i), CARD_W, OUTFIT_H)) continue;
                 if (outfitLocked(i) || minecraft.player == null) return true;
                 ModNetwork.sendToServer(new com.xenowarriors.network.SetOutfitPacket(i));
@@ -318,6 +318,17 @@ public class CharacterCustomScreen extends Screen {
                     if (idleBond(i) < com.xenowarriors.you.YouIdles.NEED || idleId(i).equals(idleNow())) return true;
                     var d = new com.xenowarriors.you.YouSlot(); d.idle = idleId(i);
                     ModNetwork.sendToServer(new com.xenowarriors.network.YouActionPacket(com.xenowarriors.network.YouActionPacket.IDLE, -1, d));   // (-1: the one you're playing)
+                    click();
+                    return true;
+                }
+            }
+            if (dmzStyle() && minecraft.player != null) {                // a made character: our look or its Dragon Ball style (DragonMineZ)
+                for (int i = 0; i < 2; i++) {
+                    if (!inBox(vx, vy, skillX(i), outfitY(i), CARD_W, OUTFIT_H)) continue;
+                    var you = ClientCharacterData.you(minecraft.player);
+                    if (you == null || you.dmzLook == (i == 1)) return true;
+                    var d = new com.xenowarriors.you.YouSlot(); d.name = you.name; d.dmzLook = i == 1;
+                    ModNetwork.sendToServer(new com.xenowarriors.network.YouActionPacket(com.xenowarriors.network.YouActionPacket.DMZ_LOOK, -1, d));
                     click();
                     return true;
                 }
@@ -1061,9 +1072,15 @@ public class CharacterCustomScreen extends Screen {
     private int outfitY(int i) { return 56 + (i / 2) * (OUTFIT_H + 4); }
     private boolean outfitLocked(int i) { return type().outfitSeason(i) > ClientSkillState.season(); }
 
+    /** One of your own characters, with DragonMineZ installed: "Dragon Ball style" is an outfit card (its DMZ look). */
+    private boolean dmzStyle() {
+        return type() == CharacterType.YOU && minecraft.player != null && ClientCharacterData.you(minecraft.player) != null && com.xenowarriors.client.compat.DmzMenu.available();
+    }
+
     private void outfitsTab(GuiGraphics g, CharacterType type, int col, double mx, double my) {
         String[] names = type.outfitNames();
         int worn = minecraft.player == null ? 0 : ClientCharacterData.outfit(minecraft.player);
+        if (dmzStyle() && ClientCharacterData.you(minecraft.player).dmzLook) worn = -1;          // (wearing its Dragon Ball style instead)
         for (int i = 0; i < names.length; i++) {
             int x = skillX(i) + Math.round((1F - rowIn(i / 2)) * 18F), y = outfitY(i);
             boolean locked = outfitLocked(i), on = i == worn, over = inBox(mx, my, x, y, CARD_W, OUTFIT_H);
@@ -1084,6 +1101,17 @@ public class CharacterCustomScreen extends Screen {
             if (up) outline(g, x, y, x + CARD_W, y + OUTFIT_H, 0xFF000000 | light(col));
             scaled(g, up ? "Hood up" : "Hood down", x + 5, y + 4, 0.9F, 0xFFFFFF);
             scaled(g, "Hoodie  •  click to " + (up ? "put it down" : "put it up"), x + 5, y + 15, 0.75F, up ? 0x77DD88 : 0x99AABB);
+        }
+        if (dmzStyle()) {                     // a made character, with DragonMineZ: its Dragon Ball style, as an outfit
+            var you = ClientCharacterData.you(minecraft.player);
+            boolean dmzOn = you != null && you.dmzLook;
+            int x = skillX(1) + Math.round((1F - rowIn(0)) * 18F), y = outfitY(1);
+            boolean over = inBox(mx, my, x, y, CARD_W, OUTFIT_H);
+            g.fill(x, y, x + CARD_W, y + OUTFIT_H, dmzOn ? 0xFF000000 | dark2(col) : over ? 0xFF2A2A3A : 0xFF1C1C24);
+            g.fill(x, y, x + 2, y + OUTFIT_H, 0xFF000000 | 0xFFB040);
+            if (dmzOn) outline(g, x, y, x + CARD_W, y + OUTFIT_H, 0xFF000000 | light(col));
+            scaled(g, "Dragon Ball style", x + 5, y + 4, 0.9F, 0xFFFFFF);
+            scaled(g, dmzOn ? "Wearing  •  style it in DragonMineZ" : "DragonMineZ's look  •  click to wear", x + 5, y + 15, 0.75F, dmzOn ? 0x77DD88 : 0x99AABB);
         }
         if (type == CharacterType.YOU) { idlesSection(g, col, mx, my); return; }
         if (names.length <= 1) scaled(g, "More outfits come with later seasons.", 5, outfitY(2) + 4, 0.8F, 0x8A8A9A);

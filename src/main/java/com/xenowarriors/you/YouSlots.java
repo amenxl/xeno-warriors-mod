@@ -35,7 +35,7 @@ public final class YouSlots {
         PlayerCharacter d = p.getCapability(ModCapabilities.PLAYER_CHARACTER).orElse(null);
         if (d == null) return;
         if (action == YouActionPacket.OPEN) { send(p, true); return; }
-        if (action == YouActionPacket.IDLE && slot < 0 && d.getType() == CharacterType.YOU) slot = d.youSlot;   // (Character Customization: the one you're playing)
+        if ((action == YouActionPacket.IDLE || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.DMZ_HAIR) && slot < 0 && d.getType() == CharacterType.YOU) slot = d.youSlot;   // (Character Customization: the one you're playing)
         if (slot < 0 || slot >= YouSlot.SLOTS) return;
         String blocked = action == YouActionPacket.SKIN || action == YouActionPacket.DMZ_LOOK || action == YouActionPacket.COLOUR || action == YouActionPacket.IDLE ? null : (action == YouActionPacket.PLAY || action == YouActionPacket.CREATE) && d.getType() != CharacterType.NONE ? CharacterManager.switchBlocked(p) : com.xenowarriors.journey.Journey.inRun(p) ? "You can't switch characters on a Journey" : null;
         if (blocked != null) {
