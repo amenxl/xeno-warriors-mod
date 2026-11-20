@@ -29,7 +29,7 @@ public final class FireTorch {
         if (t == CharacterType.MIKIKO) return true;
         if (t == CharacterType.NONE) return false;
         var slot = t == CharacterType.YOU ? com.xenowarriors.you.You.slot(p) : null;
-        if (slot != null && slot.element == Element.FIRE) return true;
+        if (slot != null && (slot.element == Element.FIRE || slot.element2 == Element.FIRE)) return true;
         return com.xenowarriors.ka.Elements.of(p) == Element.FIRE;
     }
 

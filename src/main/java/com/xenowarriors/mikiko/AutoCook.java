@@ -16,8 +16,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Mikiko's fire element cooks the raw food he carries: every few seconds one raw item in his
- * inventory turns into its cooked version (anything a furnace would cook into food).
+ * Fire cooks the raw food you carry - Mikiko, and anyone with the element of fire (a fire character of your own, anyone
+ * given fire): every few seconds one raw item in the inventory turns into its cooked version (what a furnace would make).
  */
 @Mod.EventBusSubscriber(modid = XenoWarriors.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class AutoCook {
@@ -44,7 +44,7 @@ public final class AutoCook {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.tickCount % INTERVAL != 0) return;
-        if (ModCapabilities.getType(p) != CharacterType.MIKIKO || p.isSpectator()) return;
+        if (p.isSpectator() || !com.xenowarriors.character.FireTorch.fire(p)) return;   // (Mikiko, and anyone with the element of fire)
         Inventory inv = p.getInventory();
         for (int i = 0; i < inv.items.size(); i++) {
             ItemStack raw = inv.items.get(i);
