@@ -157,6 +157,7 @@ public final class PartyClient {
         PoseStack pose = event.getPoseStack();
         com.xenowarriors.client.PoseGuard.push(pose);
         LAID.add(p.getId());
+        if (leaning(p)) { pose.translate(0, -0.42, 0); return; }               // (a sword in hand: down on one knee, leaning on it)
         float yaw = Mth.rotLerp(event.getPartialTick(), p.yBodyRotO, p.yBodyRot) * Mth.DEG_TO_RAD;
         // fall back onto his back: rotate about his right-hand axis
         pose.translate(0, 0.15, 0);
@@ -169,8 +170,28 @@ public final class PartyClient {
     }
 
     /** Limp, arms flung out. */
+    /** A blade in hand while knocked out: down on one knee, leaning on it - not lying flat, and never a fighting stance. */
+    public static boolean leaning(Player p) {
+        var it = p.getMainHandItem();
+        if (it.isEmpty()) return false;
+        if (it.getItem() instanceof net.minecraft.world.item.SwordItem || it.getItem() instanceof net.minecraft.world.item.AxeItem || it.getItem() instanceof net.minecraft.world.item.TridentItem) return true;
+        var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(it.getItem());
+        String id = key == null ? "" : key.getPath();
+        return id.contains("sword") || id.contains("blade") || id.contains("katana") || id.contains("saber") || id.contains("scythe") || id.contains("spear");
+    }
+
     public static void applyPose(HumanoidModel<?> m, Player p, float age) {
         if (age == 0F || !knockedOut(p)) return;
+        if (leaning(p)) {                                                       // on one knee, the blade planted ahead, head hanging
+            m.body.xRot = 0.32F;
+            m.rightLeg.xRot = -1.05F; m.rightLeg.yRot = 0F; m.rightLeg.zRot = 0.05F;      // (front leg: foot planted ahead)
+            m.leftLeg.xRot = 1.2F; m.leftLeg.yRot = 0F; m.leftLeg.zRot = -0.05F;         // (back leg: knee on the ground)
+            m.rightArm.xRot = -0.95F; m.rightArm.yRot = 0.1F; m.rightArm.zRot = 0F;       // (both hands on the hilt, the blade down in front)
+            m.leftArm.xRot = -0.85F; m.leftArm.yRot = -0.45F; m.leftArm.zRot = 0F;
+            m.head.xRot = 0.55F + Mth.sin(age * 0.06F) * 0.06F;                            // (too dazed to look up)
+            m.head.yRot = 0F; m.head.zRot = 0F;
+            return;
+        }
         m.rightArm.xRot = 0.1F;
         m.rightArm.yRot = 0F;
         m.rightArm.zRot = 1.25F;

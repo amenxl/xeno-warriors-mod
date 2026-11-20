@@ -422,6 +422,24 @@ final class PackNov20dTests {
             PackTests.check("ender saiyan: wears Vegeta's Saiyan armor (DragonMineZ)", key != null && key.getPath().startsWith("vegeta_saiyan_armor"), "chest " + key);
             if (e != null) e.discard();
         }), 5));
+        // ---- knocked out: no Epic Fight stance; with a sword, down on one knee leaning on it
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+        }), 20));
+        l.add(new Step(null, () -> { com.xenowarriors.client.party.PartyClient.setKnockedOut(mc.player.getUUID(), 400); mc.options.hideGui = true; }, 30));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.player.setYRot(0); mc.player.setXRot(10); }, 15));
+        l.add(new Step("ko_sword", () -> {
+            Boolean ef = com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrewForTest(mc.player.getId());
+            PackTests.check("knocked out with a sword: leaning on it, not Epic Fight's battle stance", com.xenowarriors.client.party.PartyClient.leaning(mc.player) && !Boolean.TRUE.equals(ef), "ef drew " + ef);
+        }, 5));
+        l.add(new Step(null, () -> PackTests.server(p -> p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY)), 15));
+        l.add(new Step("ko_fists", () -> {
+            com.xenowarriors.client.party.PartyClient.setKnockedOut(mc.player.getUUID(), 0);
+            mc.options.setCameraType(CameraType.FIRST_PERSON);
+            PackTests.server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE));
+        }, 5));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -393,6 +393,8 @@ public final class EpicFightCompat {
      * everything to Epic Fight.
      */
     /** Player id -> whether Epic Fight drew them last frame (see drawsMob). */
+    /** (Tests) whether Epic Fight drew this entity last frame. */
+    public static Boolean efDrewForTest(int id) { return EF_DREW.get(id); }
     private static final java.util.Map<Integer, Boolean> EF_DREW = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());
 
     private static void onRenderPlayer(RenderEpicFightPlayerEvent event) {
@@ -417,6 +419,10 @@ public final class EpicFightCompat {
         }
         if (ModList.get().isLoaded("dragonminez")
                 && (com.xenowarriors.client.compat.DmzForms.dmzDraws(p) || com.xenowarriors.client.compat.DmzForms.giantFox(p))) {
+            event.setShouldRender(false);
+            return;
+        }
+        if (com.xenowarriors.client.party.PartyClient.knockedOut(p)) {        // knocked out: our limp (or kneeling on a blade) pose - never Epic Fight's ready-to-fight stance
             event.setShouldRender(false);
             return;
         }
