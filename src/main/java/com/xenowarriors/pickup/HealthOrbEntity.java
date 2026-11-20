@@ -82,8 +82,8 @@ public class HealthOrbEntity extends Entity {
         }
         if (tickCount > LIFE) { discard(); return; }
         // Orb Magnet: straight to whoever beat the enemy, from further away
-        LivingEntity mine = owner != null && magnet > 0 && level().getPlayerByUUID(owner) instanceof net.minecraft.world.entity.player.Player o && o.level() == level()
-                && o.distanceToSqr(this) < magnet * magnet && takes(o) ? o : null;
+        net.minecraft.world.entity.player.Player o = owner != null && magnet > 0 ? level().getPlayerByUUID(owner) : null;
+        LivingEntity mine = o != null && o.level() == level() && o.distanceToSqr(this) < magnet * magnet && takes(o) ? o : null;
         double range = mine != null ? magnet : PULL_RANGE;
         if (mine != null) { if (follow != mine) magnetized++; follow = mine; seek = 10; }
         else if (--seek <= 0 || follow == null || !takes(follow) || follow.distanceToSqr(this) > PULL_RANGE * PULL_RANGE * 1.5) {
