@@ -117,7 +117,7 @@ final class PackNov20dTests {
         }), 10));
         l.add(new Step(null, () -> PackTests.server(p -> {
             VehicleEntity v = (VehicleEntity) ship[0];
-            PackTests.check("ship: a bot takes the helm", v.getFirstPassenger() instanceof PartyBotEntity, "first " + v.getFirstPassenger());
+            PackTests.check("ship: a bot takes the helm", v.driver() instanceof PartyBotEntity, "driver " + v.driver());
             p.stopRiding();
             p.startRiding((net.minecraft.world.entity.Entity) ship[1], true);
         }), 120));

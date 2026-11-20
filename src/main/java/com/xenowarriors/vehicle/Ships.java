@@ -8,7 +8,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +25,7 @@ public final class Ships {
     public static void helm(VehicleEntity v, Player p) {
         List<Entity> ps = v.getPassengers();
         if (ps.isEmpty()) return;
-        Entity first = ps.get(0);
+        Entity first = v.driver();
         if (first == p) {
             PartyBotEntity bot = null;
             for (Entity e : ps) if (e instanceof PartyBotEntity b && p.getUUID().equals(b.ownerId()) && !b.downed()) { bot = b; break; }
@@ -36,7 +35,7 @@ public final class Ships {
                     .withStyle(ChatFormatting.AQUA), true);
         } else if (first instanceof PartyBotEntity b && p.getUUID().equals(b.ownerId())) {
             b.removeTag(VehicleEntity.NPC_DRIVER_TAG);
-            reorder(v, p);
+            v.setHelm(p);
             v.npcDriveTo(null, 0);
             p.displayClientMessage(Component.literal("You take the helm.").withStyle(ChatFormatting.AQUA), true);
         } else p.displayClientMessage(Component.literal("Someone else is at the helm.").withStyle(ChatFormatting.GRAY), true);
@@ -45,23 +44,14 @@ public final class Ships {
     /** This bot (aboard) takes the helm. */
     public static void giveHelm(VehicleEntity v, PartyBotEntity bot) {
         bot.addTag(VehicleEntity.NPC_DRIVER_TAG);
-        reorder(v, bot);
+        v.setHelm(bot);
         handed++;
-    }
-
-    /** Everyone gets off and back on with this one first (the first aboard steers). */
-    private static void reorder(VehicleEntity v, Entity first) {
-        List<Entity> all = new ArrayList<>(v.getPassengers());
-        if (all.isEmpty() || all.get(0) == first) return;
-        for (Entity e : all) e.stopRiding();
-        first.startRiding(v, true);
-        for (Entity e : all) if (e != first) e.startRiding(v, true);
     }
 
     /** Every tick (server), the player's ship: a bot at the helm sails it. */
     static void tick(VehicleEntity v) {
         if (v.tickCount % 2 != 0) return;
-        if (!(v.getFirstPassenger() instanceof PartyBotEntity b) || !b.getTags().contains(VehicleEntity.NPC_DRIVER_TAG)) return;
+        if (!(v.driver() instanceof PartyBotEntity b) || !b.getTags().contains(VehicleEntity.NPC_DRIVER_TAG)) return;
         ServerPlayer o = b.owner();
         if (o == null || o.level() != v.level()) { v.npcDriveTo(v.position(), 0); return; }
         if (o.getVehicle() == v) {

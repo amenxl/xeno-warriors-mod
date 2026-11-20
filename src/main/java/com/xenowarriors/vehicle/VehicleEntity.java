@@ -41,6 +41,7 @@ import java.util.UUID;
  */
 public class VehicleEntity extends Mob implements GeoEntity {
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<java.util.Optional<UUID>> HELM = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.OPTIONAL_UUID);   // (a ship: who has the helm)
     private static final EntityDataAccessor<Integer> ATTACH = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);   // (Technica's bike: its attachments, TechnicaBike bits)
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     public final VehicleKind kind;
@@ -66,7 +67,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, k.base() == VehicleKind.GOV_TRUCK ? 14 : k.ship() ? 10 : 6);
     }
 
-    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(ATTACH, 0); }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(VARIANT, 0); entityData.define(ATTACH, 0); entityData.define(HELM, java.util.Optional.empty()); }
 
     /** Technica's bike: its attachments (TechnicaBike bits). */
     public int attachments() { return entityData.get(ATTACH); }
@@ -102,10 +103,31 @@ public class VehicleEntity extends Mob implements GeoEntity {
         return r == null || r.getVehicle() != this || seatOf(r).type() == VehicleKind.SeatType.SIT;
     }
 
-    /** The spot this passenger has (by boarding order). */
+    /** The spot this passenger has (by boarding order - the one at the helm, if it's been handed over, has the first). */
     public VehicleKind.Seat seatOf(Entity passenger) {
-        return kind.seat(Math.max(0, getPassengers().indexOf(passenger)));
+        java.util.List<Entity> ps = getPassengers();
+        int i = ps.indexOf(passenger);
+        Entity h = helmHolder();
+        if (h == null || i < 0) return kind.seat(Math.max(0, i));
+        if (passenger == h) return kind.seat(0);
+        int k = 1;
+        for (Entity e : ps) { if (e == h) continue; if (e == passenger) break; k++; }
+        return kind.seat(k);
     }
+
+    /** A ship's helm, handed to someone aboard (Ships.helm): they steer, whatever order everyone got on in. */
+    public void setHelm(Entity e) { entityData.set(HELM, e == null ? java.util.Optional.empty() : java.util.Optional.of(e.getUUID())); }
+
+    /** Who has the helm, if it was handed over and they're still aboard; else null. */
+    public Entity helmHolder() {
+        UUID helm = entityData.get(HELM).orElse(null);
+        if (helm == null) return null;
+        for (Entity e : getPassengers()) if (e.getUUID().equals(helm)) return e;
+        return null;
+    }
+
+    /** Who steers: the one at the helm, else the first aboard. */
+    public Entity driver() { Entity h = helmHolder(); return h != null ? h : getFirstPassenger(); }
 
     /** Who got off last and where they were (the dismount spot is asked for after they're off). */
     private Entity lastLeaver;
@@ -143,7 +165,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
 
     @Override
     public LivingEntity getControllingPassenger() {
-        Entity first = getFirstPassenger();
+        Entity first = driver();
         return first instanceof LivingEntity le && canDrive(first) ? le : null;
     }
 
@@ -158,7 +180,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
     }
 
     /** An NPC (not a player) is at the wheel. */
-    public boolean npcDriving() { Entity f = getFirstPassenger(); return f instanceof Mob && canDrive(f); }
+    public boolean npcDriving() { Entity f = driver(); return f instanceof Mob && canDrive(f); }
 
     private Vec3 npcDest;
     private double npcSpeed;
@@ -249,7 +271,7 @@ public class VehicleEntity extends Mob implements GeoEntity {
         }
         if (canAddPassenger(p)) {
             p.startRiding(this);
-            if (getFirstPassenger() == p && kind.ship()) p.displayClientMessage(Component.literal(
+            if (driver() == p && kind.ship()) p.displayClientMessage(Component.literal(
                     "You're at the helm - it turns where you look (or A/D), W/S sail and slow. Right-click the ship to hand the helm to a bot. Sneak to get off").withStyle(ChatFormatting.GRAY), true);
             else if (getFirstPassenger() == p) p.displayClientMessage(Component.literal(kind.heli()
                     ? "It turns where you look - W/S speed, A/D slide sideways, Jump to climb, Sprint key to descend, Sneak to get out"

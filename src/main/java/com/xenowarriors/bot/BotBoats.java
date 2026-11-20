@@ -86,7 +86,7 @@ public final class BotBoats {
         Boat bt = new Boat(l, at.getX() + 0.5, at.getY() + 1.0 - 0.1, at.getZ() + 0.5);
         bt.setVariant(Boat.Type.byName(path.replace("_chest_boat", "").replace("_boat", "").replace("_raft", "")));
         bt.setYRot(b.getYRot());
-        if (!l.noCollision(bt, bt.getBoundingBox().deflate(0.05))) return false;
+        if (!l.noCollision(bt.getBoundingBox().deflate(0.05))) return false;   // (blocks and other boats only - not the bot standing there)
         l.addFreshEntity(bt);
         it.shrink(1);
         b.inventory.setChanged();
