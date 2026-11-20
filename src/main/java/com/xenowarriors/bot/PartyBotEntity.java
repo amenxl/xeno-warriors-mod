@@ -210,6 +210,13 @@ public class PartyBotEntity extends PathfinderMob {
     /** Its chunk dropped out of the world under it (owner teleported, respawned or flew off far): it's on the waiting list instead. */
     boolean stranded;
 
+    /** Going away: its blocks across water are picked up first (the water put back). */
+    @Override
+    public void remove(RemovalReason why) {
+        if (!level().isClientSide) try { BotWaterBridge.forget(this); } catch (Throwable ignored) {}
+        super.remove(why);
+    }
+
     @Override
     public void onRemovedFromWorld() {
         super.onRemovedFromWorld();
@@ -1061,6 +1068,7 @@ public class PartyBotEntity extends PathfinderMob {
         }
         if (!level().isClientSide && heldBy != null) tickHold();
         if (!level().isClientSide) BotParkour.tick(this);                        // (vaults, climbs, rolls... with ParCool)
+        if (!level().isClientSide) BotWaterBridge.tick(this);                    // (Building 10+: a path of blocks across water, picked back up behind it)
         super.aiStep();
         if (level().isClientSide) return;
         karma = Math.min(100F, karma + 0.08F);

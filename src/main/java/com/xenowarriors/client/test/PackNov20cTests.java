@@ -116,6 +116,33 @@ final class PackNov20cTests {
             com.xenowarriors.bot.BotParkour.force = false;
             PackTests.clear(p);
         }), 5));
+        // bots with Building 10+ lay blocks across water and pick them back up
+        int[] wb = new int[2];
+        Object[] wbot = new Object[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            var lv = p.serverLevel();
+            BlockPos base = BlockPos.containing(p.getX(), p.getY(), p.getZ());
+            for (int x = -2; x <= 2; x++) for (int z = 3; z <= 11; z++) { lv.setBlock(base.offset(x, -1, z), Blocks.WATER.defaultBlockState(), 3); lv.setBlock(base.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3); }
+            var b = com.xenowarriors.bot.PartyBots.spawn(p, CharacterType.SAM, null);
+            if (b == null) return;
+            for (int i = 0; i < b.inventory.getContainerSize(); i++) b.inventory.setItem(i, ItemStack.EMPTY);
+            b.inventory.addItem(new ItemStack(Items.COBBLESTONE, 16));
+            com.xenowarriors.stats.Building.addLevels(b, 12);
+            b.moveTo(p.getX(), p.getY(), p.getZ() + 1.5, 0F, 0F);
+            wbot[0] = b;
+            wb[0] = com.xenowarriors.bot.BotWaterBridge.laid; wb[1] = com.xenowarriors.bot.BotWaterBridge.lifted;
+            p.connection.teleport(p.getX(), p.getY(), p.getZ() + 14, 180F, 20F);
+        }), 30));
+        l.add(new Step("bot_water_bridge", () -> {}, 120));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var b = (com.xenowarriors.bot.PartyBotEntity) wbot[0];
+            int laid = com.xenowarriors.bot.BotWaterBridge.laid - wb[0], lifted = com.xenowarriors.bot.BotWaterBridge.lifted - wb[1];
+            PackTests.check("water bridge: a Building 10+ bot lays blocks across water and picks them back up", laid > 2 && lifted > 0 && b != null && b.distanceToSqr(p) < 6 * 6,
+                    "laid " + laid + " lifted " + lifted + " dist " + (b == null ? -1 : Math.round(b.distanceTo(p))) + " level " + (b == null ? -1 : com.xenowarriors.stats.Building.level(b)));
+            PackTests.clear(p);
+        }), 40));
         // DragonMineZ hair on one of your own characters with our look
         int[] hair = new int[1];
         l.add(new Step(null, () -> PackTests.server(p -> {

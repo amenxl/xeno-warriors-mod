@@ -432,7 +432,7 @@
       "pages": [
         {
           "title": "Levels and stats",
-          "text": "No skill tree: you get better at what you do.\n- Speed (sprinting), Attack (dealing damage), Defense (taking hits). Together they make your Character Level, which gives max hearts and unlocks skills.\n- Mining, Crafting, Smelting and Building level up on their own. High Mining turns your bare hands into a pickaxe: see 'Mining and bare hands'.\n- Each character has their own levels."
+          "text": "No skill tree: you get better at what you do.\n- Speed (sprinting), Attack (dealing damage), Defense (taking hits). Together they make your Character Level, which gives max hearts and unlocks skills.\n- Mining, Crafting, Smelting and Building level up on their own. High Mining turns your bare hands into a pickaxe: see 'Mining and bare hands'.\n- Bots with Building level 10 or more don't swim across water: they lay a path of blocks from their bag (cobblestone, dirt, stone, planks...) and pick each one back up behind them, putting the water back.\n- Each character has their own levels."
         },
         {
           "title": "Outgrown gear wears out",
