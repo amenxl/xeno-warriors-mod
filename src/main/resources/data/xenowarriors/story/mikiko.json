@@ -102,8 +102,8 @@
       "id": "m5", "title": "The Elementalist School", "karma": 4500, "lvl": 4,
       "desc": "First day of class. The teachers are... ghosts?",
       "steps": [
-        {"type": "scene", "place": "school", "npcs": ["mikiko", "zane"], "lines": [
-          {"s": "henery", "n": "Henery", "t": "I came from a sky island. Found this school flying around. I'm a 2nd year!"},
+        {"type": "scene", "place": "school", "npcs": ["mikiko", "zane", "npc:henry"], "lines": [
+          {"s": "henry", "n": "Henry", "t": "I came from a sky island. Found this school flying around. I'm a 2nd year!"},
           {"s": "teacher", "n": "Teacher", "t": "Today: Recarnagans and Memory Chasers. Then Elemental Modifications. To finish D rank early - control an element."},
           {"s": "mikiko", "t": "Wait... that's it? Watch this."},
           {"s": "teacher", "n": "Teacher", "t": "Wow, great job Mikiko. And you, new student - show me.", "group": "Wow, great job Mikiko. And you new students - show me."}
@@ -113,7 +113,7 @@
         ]},
         {"type": "scene", "place": "school", "npcs": ["mikiko", "zane"], "lines": [
           {"s": "teacher", "n": "Teacher", "t": "Excellent. You don't have to come back until next year."},
-          {"s": "zane", "t": "...I can't use my element yet. Henery, guess we'll help each other."}
+          {"s": "zane", "t": "...I can't use my element yet. Henry, guess we'll help each other."}
         ]}
       ],
       "reward": {"money": 200, "bond": {"zane": 10, "mikiko": 5}}

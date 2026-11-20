@@ -38,7 +38,7 @@ public class NpcDetailPatchedLayer extends PatchedLayer {
     public static final Map<String, Integer> FACES = new java.util.concurrent.ConcurrentHashMap<>(), NO_FACE = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static String look(LivingEntity e) {
-        if (e instanceof HumanNpcEntity h) return NpcLooks.human(h.variant());
+        if (e instanceof HumanNpcEntity h) return h.look();
         if (e instanceof DarkPossessedEntity d) return NpcLooks.dark(d.variant());
         if (e instanceof com.xenowarriors.sr.SrMemberEntity s) return s.look();
         if (e instanceof com.xenowarriors.foes.VesselEntity v) return v.look();

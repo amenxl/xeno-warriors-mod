@@ -244,6 +244,72 @@ LEXY = dict(skin=L_SKIN, eyes=L_EYE, hair=[LH1, LH2], paint=lexy_paint,
             mouth=['......'], mouth_x=13, mouth_y=26, face_extra=[lexy_mask],
             wing=('angel_small', '#f4f2f8'), fit=lexy)
 
+# ---------------------------------------------------------------------- LEXY, SEASON 2 (with the Sky Rebellion)
+# (the user's picture: a black hood up with a red lining and a pointed tip, her blue-violet ponytail out the back and a
+#  cream ear poking out; red eyes; a thick black scarf-mask with red patterns and a red strap with a buckle wrapped up to
+#  her eyes; a black top with white straps; long black claw gloves with red claws; black shorts to the knee; white socks,
+#  black shoes; small blue wings)
+L2_K, L2_K2, L2_RED, L2_RED2, L2_SOCK = '#121216', '#1e1e24', '#c8242c', '#7a1418', '#ecebf2'
+L2_WING = '#3050d0'
+
+def lexy_s2_paint(part, face, x, y, W, H, outer):
+    if part == 'body':
+        if y >= 10: return L2_K
+        if face == 'front' and x in (1, 6) and y < 8: return L2_SOCK            # white straps
+        if face == 'front' and y == 9: return '#2a2a30'
+        return L2_K
+    if part in ('rarm', 'larm'):
+        if y < 5: return None                                                 # bare arms
+        if y == 5: return L2_SOCK                                             # glove tops
+        return L2_K
+    if part in ('rleg', 'lleg'):
+        if y < 6: return '#3a3a42' if face in ('right', 'left') and x == W // 2 else L2_K
+        if y >= 11: return L2_K
+        return L2_SOCK
+    return None
+
+def lexy_s2(f):
+    # her hair under the hood: bangs and side locks, then the ponytail out the back
+    hair(f, LH1, LH2, back_len=26, side_len=27, locks=fringe_locks(5, 31, 7.0, 3.6, 1.8, 0.3) + [([s * 3.9, 31.0, -4.4], [s * 0.15, -1, -0.1], 6.0, 1.8) for s in (1, -1)])
+    lock(f, [1.4, 33.6, 3.8], [0.35, 0.9, 0.6], 5.0, 3.2, (LH2, LH3, LH2), thick=2.4)            # up out of the hood
+    lock(f, [3.4, 37.4, 6.4], [0.35, -1, 0.45], 22.0, 3.4, (LH3, LH2, '#1e1e50'), thick=2.4, taper=(0.8, 0.4))   # and all the way down
+    # the hood: black, a red lining round the face, a pointed tip at the top
+    f.add('head', [-5.0, 32.2, -4.4], [5.0, 33.8, 5.2], L2_K)                              # top
+    f.add('head', [-5.0, 23.6, 4.4], [5.0, 33.8, 5.4], L2_K)                               # back
+    for s_ in (1, -1):
+        x0, x1 = (4.3, 5.2) if s_ > 0 else (-5.2, -4.3)
+        f.add('head', [x0, 23.6, -4.6], [x1, 33.8, 5.4], L2_K)                             # sides
+        f.add('head', [x0 - (0.2 if s_ > 0 else -0.2), 23.8, -4.9], [x1 - (0.2 if s_ > 0 else -0.2), 32.4, -4.5], L2_RED)   # the red lining
+    f.add('head', [-4.6, 31.8, -4.9], [4.6, 32.6, -4.5], L2_RED)
+    f.add('head', [-4.2, 33.0, -3.2], [-0.6, 35.6, 1.2], L2_K, rot=[0, 0, 28], origin=[-2.4, 33.6, -1])   # the tip
+    f.add('head', [1.8, 33.4, 0.4], [3.4, 36.0, 1.4], '#e0c4a2', rot=[0, 0, -12], origin=[2.6, 33.6, 0.9])  # cream ear
+    f.add('head', [2.2, 33.8, 0.3], [3.0, 35.2, 0.5], '#c8a482', rot=[0, 0, -12], origin=[2.6, 33.6, 0.9])
+    # the scarf-mask: thick black wraps from her neck up to her eyes, red patterns, a red strap and buckle
+    patt = lambda x, y: L2_RED if (int(x * 14) + int(y * 6)) % 5 == 0 or abs(y - 0.5) < 0.06 else L2_K
+    f.add('head', [-4.9, 21.6, -5.2], [4.9, 26.8, 4.9], L2_K, {'front': patt, 'right': patt, 'left': patt, 'back': patt})
+    f.add('head', [-5.3, 21.8, -5.6], [5.3, 24.0, 5.3], L2_K2, {'front': patt})             # the outer wrap
+    f.add('body', [-4.8, 21.4, -3.0], [4.8, 24.6, 3.0], L2_K, {'front': patt})               # round the neck
+    f.add('body', [-4.4, 19.0, -3.3], [-0.8, 22.4, -2.8], L2_K2, {'front': patt}, rot=[0, 0, -8], origin=[-2.6, 22, -3])   # the end hanging down
+    f.add('body', [-5.2, 21.0, -3.5], [1.8, 21.8, -3.2], L2_RED, rot=[0, 0, -32], origin=[-1.7, 21.4, -3.3])   # red strap
+    f.add('body', [-4.6, 18.8, -3.6], [-3.4, 19.8, -3.3], '#c8c8d0')                          # buckle
+    plate(f, 'head', ['k.k', '.k.', 'k.k'], 1.6, 26.2, -5.32, 0.4, L2_RED)                    # little red x's
+    plate(f, 'body', ['k.k', '.k.', 'k.k'], 1.4, 23.6, -3.12, 0.35, L2_RED)
+    # black top, white straps, belt with a white buckle
+    shell(f, 'body', [-4, 12.0, -2], [4, 24, 2], 0.3, L2_K, {'front': lambda x, y: L2_SOCK if abs(x - .2) < .05 or abs(x - .8) < .05 else L2_K})
+    f.add('body', [-4.4, 12.0, -2.4], [4.4, 12.9, 2.4], '#1a1a1e')
+    f.add('body', [-0.6, 12.1, -2.55], [0.6, 12.8, -2.4], '#e8e8ee')
+    # long claw gloves: black, red claws
+    f.both('right_arm', [3.62, 12.4, -2.38], [8.38, 18.2, 2.38], L2_K)
+    f.both('right_arm', [3.55, 17.8, -2.45], [8.45, 18.4, 2.45], L2_SOCK)
+    for k in range(3):
+        f.both('right_arm', [4.3 + k * 1.3, 10.2, -1.9], [4.8 + k * 1.3, 12.4, -1.4], L2_RED2)
+        f.both('right_arm', [4.35 + k * 1.3, 9.4, -1.85], [4.75 + k * 1.3, 10.3, -1.45], L2_RED)
+    # black shorts to the knee, white socks painted, black shoes with light soles
+    npcs.pants(f, L2_K, 6.2, '#1a1a1e', baggy=0.35)
+    npcs.shoes(f, L2_K, "#d8eef0", 1.6)
+
+LEXY_S2 = dict(LEXY, eyes='#c82828', paint=lexy_s2_paint, wing=('angel_small', L2_WING), fit=lexy_s2)
+
 # ====================================================================== MAX (Sintrie)
 M_SKIN, M_EYE = '#e8c0a8', '#8a3a2a'
 MH1, MH2, MH3 = '#94a6a2', '#c2d8d2', '#e2f4ee'
@@ -1004,7 +1070,7 @@ FOX_GIRL, FOX_GIRL_SAKURA = _new('fox_girl'), _new('fox_girl_sakura')           
 AVA_CASUAL = dict(AVA, fit=lambda f: SRN.ava(f, casual=True), paint=SRN.bare(0, '#55555c', '#141216', '#f0607a', 0, 6))
 PERSEPHONE_CASUAL = dict(PERSEPHONE, fit=lambda f: SRN.persephone(f, casual=True), paint=SRN.bare(0, '#7a3ab8', '#2a1236', '#f0c8d8', 4, 12))
 
-CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY,
+CHARS = {'max_s3': MAX_S3, 'sam_s3': SAM_S3, 'logan': LOGAN, 'kill': KILL, 'keita': KEITA, 'max_royal': MAX_ROYAL, 'sam_royal': SAM_ROYAL, 'zane': ZANE, 'yuri': YURI, 'yuri_c1pjs': YURI_PJS, 'kyrie': KYRIE, 'kyrie_s2': KYRIE_S2, 'lexy': LEXY, 'lexy_s2': LEXY_S2, 'max': MAX, 'sam': SAM, 'aioni': AIONI, 'technica': TECHNICA, 'stevie': STEVIE, 'garry': GARRY,
          'senju': SENJU, 'ava': AVA, 'ava_demon': AVA_DEMON, 'persephone': PERSEPHONE, 'persephone_demon': PERSEPHONE_DEMON,
          'kyle': KYLE, 'zack': ZACK, 'kaitlyn': KAITLYN, 'chase': CHASE,
          'chase_cap': CHASE_CAP, 'fox_girl': FOX_GIRL, 'fox_girl_sakura': FOX_GIRL_SAKURA, 'ava_casual': AVA_CASUAL, 'persephone_casual': PERSEPHONE_CASUAL}

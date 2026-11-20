@@ -1263,7 +1263,7 @@ public final class PartyBots {
 
     /** A bot wears the outfit you last had on that character (one outfit per character, played or as a bot). */
     public static void dress(PartyBotEntity b, ServerPlayer owner) {
-        if (owner == null) return;
+        if (owner == null || b.possessed()) return;                            // (story: a possessed body keeps the story's look)
         owner.getCapability(ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> b.setOutfit(d.outfitOf(b.character())));
     }
 

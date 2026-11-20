@@ -247,6 +247,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         else f.face = expr == null ? baseFace(type) : face(fp, expr);
         if (!dr && p instanceof com.xenowarriors.client.bot.BotAvatar av && av.bot() != null && av.bot().possessed())   // story: a demon inside - red eyes
             f.face = face(type.getId() + "_possessed", expr);
+        else if (!dr && type == CharacterType.LEXY && ClientCharacterData.outfit(p) == 1 && fusion == null)   // her Season 2 (SR) outfit: Persephone's red eyes
+            f.face = face("lexy_possessed", expr);
         if (!dr) f.face = com.xenowarriors.client.race.RaceLook.tint(f.face, p, type);   // another DragonMineZ race: their skin colour
         int damage = damageLevel(p);
         if (damage > 0 && !ClientCharacterData.isPreviewing())

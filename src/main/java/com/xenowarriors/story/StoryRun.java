@@ -298,7 +298,7 @@ public final class StoryRun {
             default -> {
                 r.phase = SCENE;
                 List<String> who = new ArrayList<>();
-                for (String c : st.npcs()) if (CharacterType.byId(bodyOf(c)) != CharacterType.NONE) who.add(c);
+                for (String c : st.npcs()) if (c.startsWith("npc:") || CharacterType.byId(bodyOf(c)) != CharacterType.NONE) who.add(c);
                 clearNpcs(s, r);                            // (this scene's people only)
                 spawnNpcs(s, r, who);
                 dialogue(s, r, filter(s, r, st.lines()), "step");
@@ -578,6 +578,9 @@ public final class StoryRun {
      * Someone in another's body is written "body:soul" in the story files ("lexy:persephone": Persephone, in Lexy's body;
      * "kyrie:ava": Ava, in Kyrie's). They're drawn as the body with red eyes and named "Body (Soul)".
      */
+    /** People in the story who aren't characters, drawn with their own look ("npc:henry" in the files): their names. */
+    static final Map<String, String> STORY_PEOPLE = Map.of("henry", "Henry");
+
     static String bodyOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(0, i); }
     static String soulOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(i + 1); }
     private static boolean taken(Set<String> have, String token) { return have.contains(token) || have.contains(bodyOf(token)) || have.contains(soulOf(token)); }
@@ -587,6 +590,8 @@ public final class StoryRun {
         b.getPersistentData().putString("xw_story_char", token);
         if (!token.contains(":")) return;
         b.setPossessed(true);
+        if (bodyOf(token).equals("lexy") && b.getServer() != null && com.xenowarriors.character.Seasons.unlocked(b.getServer(), 2))
+            b.setOutfit(1);                                                    // (Lexy with the Sky Rebellion: her Season 2 SR outfit, once Season 2's unlocked)
         CharacterType body = CharacterType.byId(bodyOf(token)), soul = CharacterType.byId(soulOf(token));
         b.setCustomName(Component.literal(body.getDisplayName().getString() + " (" + soul.getDisplayName().getString() + ")"));
     }
@@ -628,12 +633,33 @@ public final class StoryRun {
         if (l == null) return;
         Set<String> there = new HashSet<>();
         int standing = 0;
-        for (UUID id : r.npcs) if (l.getEntity(id) instanceof PartyBotEntity b) { addWho(there, b); standing++; }
+        for (UUID id : r.npcs) {
+            Entity en = l.getEntity(id);
+            if (en instanceof PartyBotEntity b) { addWho(there, b); standing++; }
+            else if (en != null && en.isAlive()) { there.add(en.getPersistentData().getString("xw_story_char")); standing++; }
+        }
         List<String> add = new ArrayList<>();
         Set<String> here = present(s, r);                                              // (no doubles: a played character, a bot, an ally)
         for (String c : who) if (!taken(there, c) && !taken(here, c) && !botted(s, r, bodyOf(c)) && !botted(s, r, soulOf(c)) && !add.contains(c)) add.add(c);
         int n = standing + add.size(), i = standing;
         for (String c : add) {
+            if (c.startsWith("npc:")) {                                            // someone who isn't a character: a person with their own look (Henry)
+                var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(l);
+                if (h == null) continue;
+                String key = c.substring(4);
+                h.setLook(key);
+                h.setCustomName(Component.literal(STORY_PEOPLE.getOrDefault(key, key)));
+                Vec3 at = StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1));
+                h.moveTo(at.x, at.y, at.z, 0F, 0F);
+                h.setYRot(0F); h.setYHeadRot(0F); h.yBodyRot = 0F;
+                h.setNoAi(true); h.setInvulnerable(true); h.setPersistenceRequired();
+                h.addTag(NPC_TAG);
+                h.getPersistentData().putString("xw_story_char", c);
+                h.getPersistentData().putString("xw_story_run", r.host.toString());
+                l.addFreshEntity(h);
+                r.npcs.add(h.getUUID());
+                continue;
+            }
             PartyBotEntity b = com.xenowarriors.bot.BotEntities.BOT.get().create(l);
             if (b == null) continue;
             if (CharacterType.byId(bodyOf(c)) == CharacterType.NONE) continue;

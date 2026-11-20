@@ -381,6 +381,54 @@ def hood_fit(f):
     shoes(f, '#2a1640', '#140a20')
 CH['dark_hood']['fit'] = hood_fit
 
+# ------------------------------------------------------------------ Henry (Henery): a Skylander 2nd-year at the Elementalist
+# School (the user's picture: big black spiky hair fading to brown, teal eyes, a grin; a dark teal zip hoodie with a white
+# zip, a white band across and a white diamond badge, black sleeves; black shorts with a grey side stripe and white hems;
+# dark teal boots; little dark-brown wings)
+HN_T, HN_T2, HN_K, HN_W, HN_BR = '#1c4a48', '#163a3a', '#121214', '#ece6d8', '#3a2418'
+def henry_paint(part, face, x, y, W, H, o):
+    if part == 'body':
+        if y >= 10: return HN_K
+        if face == 'front' and x in (3, 4): return HN_W                       # the zip
+        if face == 'front' and y == 6: return HN_W                            # the band across
+        return HN_T
+    if part in ('rarm', 'larm'):
+        if y < 3: return HN_T if y < 1 else HN_K                              # black sleeves under the hoodie's short ones
+        if y < 7: return HN_K
+        return None                                                           # hands
+    if part in ('rleg', 'lleg'):
+        if y < 5: return '#5a5a60' if face in ('right', 'left') and x == W // 2 else HN_K
+        if y == 5: return HN_W                                                # white hem
+        if y >= 9: return HN_T2                                               # boots
+        return None                                                           # bare shins
+    return None
+CH['henry'] = dict(skin='#d9968a', eyes='#2ac2c0', hair=['#121214', '#3a2418'], paint=henry_paint,
+    brow=['.kkkkkk..', 'kk.....k.'], mouth=['kwwwwwwk', '.kkkkkk.'], mouth_x=12, mouth_y=24)
+def henry_fit(f):
+    # big spikes up and out, black at the roots fading to brown at the tips; long brown-black bangs over the forehead
+    hair(f, '#121214', '#2a1a14', back_len=24, side_len=26,
+         spikes=[([0, 33, 0], [0.1, 1, 0.1], 7.0, 2.4), ([-2.2, 32.8, 0.5], [-0.6, 1, 0], 6.0, 2.0), ([2.4, 32.8, 0.5], [0.6, 1, 0.1], 6.2, 2.0),
+                 ([-4.4, 31, 0], [-1, 0.5, 0], 5.0, 1.8), ([4.4, 31, 0], [1, 0.45, 0], 5.0, 1.8), ([-4.4, 28.5, 1], [-1, -0.1, 0.2], 4.6, 1.6),
+                 ([4.4, 28.5, 1], [1, -0.1, 0.2], 4.6, 1.6), ([0, 32, 3.5], [0, 0.6, 1], 5.0, 2.0), ([-3, 31, 3.5], [-0.6, 0.3, 1], 4.4, 1.8), ([3, 31, 3.5], [0.6, 0.3, 1], 4.4, 1.8)],
+         locks=fringe_locks(6, 31.4, 7.5, 3.4, 1.5, 0.3) + [([s * 4.5, 30.5, -2.5], [s * 0.25, -1, 0], 6.5, 1.6) for s in (1, -1)], seed=11)
+    # the hoodie: a hood down at the back, the zip, the band, the diamond badge on the chest
+    shell(f, 'body', [-4, 12.4, -2], [4, 24, 2], 0.3, HN_T, {'front': lambda x, y: HN_W if abs(x - .5) < .07 or abs(y - .55) < .04 else HN_T})
+    f.add('body', [-3.6, 20.4, 2.2], [3.6, 24.6, 3.6], HN_T2)                          # the hood, down
+    f.add('body', [-2.4, 21.4, -2.45], [-0.8, 23.4, -2.32], HN_W, rot=[0, 0, 45], origin=[-1.6, 22.4, -2.4])   # diamond badge
+    f.add('body', [-2.0, 21.8, -2.5], [-1.2, 23.0, -2.36], HN_T, rot=[0, 0, 45], origin=[-1.6, 22.4, -2.45])
+    f.both('right_arm', [3.62, 20.6, -2.38], [8.38, 24.38, 2.38], HN_T)               # short hoodie sleeves over black ones
+    f.both('right_arm', [3.66, 15.0, -2.34], [8.34, 20.8, 2.34], HN_K)
+    # black shorts with white hems, dark teal boots
+    pants(f, HN_K, 6.6, HN_W, baggy=0.35)
+    shoes(f, HN_T2, '#0e2222', 3.4)
+    f.both('right_leg', [-0.5, 2.6, -2.7], [4.5, 3.6, 2.5], '#122e2e')                # boot cuffs
+    # little dark-brown wings, folded at his back
+    for s_ in (1, -1):
+        x0, x1 = (0.6, 7.6) if s_ > 0 else (-7.6, -0.6)
+        f.add('body', [x0, 16.0, 2.4], [x1, 22.6, 2.9], '#2a1810', rot=[0, s_ * 18, s_ * -12], origin=[s_ * 0.6, 21.0, 2.6])
+        f.add('body', [x0 + (0.8 if s_ > 0 else 0), 17.0, 2.95], [x1 - (0 if s_ > 0 else 0.8), 21.8, 3.2], '#3e2618', rot=[0, s_ * 18, s_ * -12], origin=[s_ * 0.6, 21.0, 2.6])
+CH['henry']['fit'] = henry_fit
+
 ORDER = ['capboy', 'redhair', 'messy', 'spiky', 'waver', 'gunner', 'briefcase', 'woman', 'girl', 'phone', 'soldier',
          'dark_slime', 'dark_vest', 'dark_kick', 'dark_hood']
 

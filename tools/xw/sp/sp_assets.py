@@ -25,7 +25,7 @@ MAP = {'blink': 'blink', 'sleep': 'blink', 'sleepy': 'tired', 'snore': 'tired', 
 def faces(key):
     spec = S.CHARS[key]
     eye = spec['eye']; open_eye = eye if key != 'sam' else E_OPEN
-    masked = key == 'lexy'                      # her mask hides the mouth: only the eyes and brows change
+    masked = key.startswith('lexy')                    # her mask hides the mouth: only the eyes and brows change
     mx = spec.get('mouth_x', 12)
     def f(**kw):
         if masked: kw.pop('mouth', None); kw.pop('mouth_x', None); kw.pop('mouth_y', None)
@@ -62,7 +62,7 @@ def build(key):
     sys.path.insert(0, '/home/claude/xeno-warriors-mod/tools/xw/faces'); import expr_more
     if key in expr_more.TEMPLATE:
         names = sorted({os.path.basename(p)[len('rhalix_face_'):-4] for p in glob.glob(CH + 'rhalix_face_*.png')} - {'damage1', 'damage2'})
-        FV = expr_more.template_faces(key, S.CHARS[key], lambda sp, **kw: S.face(sp, **kw), masked=(key == 'lexy'))
+        FV = expr_more.template_faces(key, S.CHARS[key], lambda sp, **kw: S.face(sp, **kw), masked=key.startswith('lexy'))
         for n in names + ['laugh', 'blush', 'love', 'shocked', 'determined', 'pout', 'smirk']: FV.get(n, FV['base']).save(CH + f'{key}_face_{n}.png')
     for suf in ('armor', 'armor_torn', 'armor_worn', 'mouth_1', 'mouth_2', 'mouth_3', 'mouth_4', 'mouth_5'):
         shutil.copy(CH + f'rhalix_{suf}.png', CH + f'{key}_{suf}.png')

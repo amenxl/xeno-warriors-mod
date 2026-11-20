@@ -39,6 +39,8 @@ import java.util.List;
 public class HumanNpcEntity extends PathfinderMob {
     public static final long PERMANENT_AFTER = 3 * 24000L;
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.INT);
+    /** A named person's own look (story mode: Henry), "" for the townsfolk looks. */
+    private static final EntityDataAccessor<String> LOOK = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FIGHTER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SKY_HATER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
@@ -78,6 +80,7 @@ public class HumanNpcEntity extends PathfinderMob {
     protected void defineSynchedData() {
         super.defineSynchedData();
         entityData.define(VARIANT, 0);
+        entityData.define(LOOK, "");
         entityData.define(POSSESSED, false);
         entityData.define(FIGHTER, false);
         entityData.define(SKY_HATER, false);
@@ -87,6 +90,9 @@ public class HumanNpcEntity extends PathfinderMob {
     }
 
     public int variant() { return entityData.get(VARIANT); }
+    /** What it's drawn as: its own look, or a townsfolk one. */
+    public String look() { String l = entityData.get(LOOK); return l.isEmpty() ? NpcLooks.human(variant()) : l; }
+    public void setLook(String l) { entityData.set(LOOK, l == null ? "" : l); }
     public boolean possessed() { return entityData.get(POSSESSED); }
     public boolean fighter() { return entityData.get(FIGHTER); }
 
@@ -491,6 +497,7 @@ public class HumanNpcEntity extends PathfinderMob {
         tag.put("Pack", pack.createTag());
         if (home != null) tag.putLong("Home", home.asLong());
         tag.putInt("Variant", variant());
+        tag.putString("Look", entityData.get(LOOK));
         tag.putBoolean("Possessed", possessed());
         tag.putBoolean("Fighter", fighter());
         tag.putBoolean("SkyHater", skyHater());
@@ -506,6 +513,7 @@ public class HumanNpcEntity extends PathfinderMob {
         pack.fromTag(tag.getList("Pack", 10));
         if (tag.contains("Home")) home = net.minecraft.core.BlockPos.of(tag.getLong("Home"));
         entityData.set(VARIANT, tag.getInt("Variant"));
+        entityData.set(LOOK, tag.getString("Look"));
         entityData.set(POSSESSED, tag.getBoolean("Possessed"));
         entityData.set(FIGHTER, tag.getBoolean("Fighter"));
         entityData.set(SKY_HATER, tag.getBoolean("SkyHater"));

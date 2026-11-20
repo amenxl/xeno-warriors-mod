@@ -87,6 +87,7 @@ public enum CharacterType {
             case RHALIX -> new String[]{"Recarnet 1", "Origins 1", "Origins 2", "Recarnet Season 3"};
             case YURI -> new String[]{"Default", "C1 PJs"};
             case KYRIE -> new String[]{"Default", "Season 2"};
+            case LEXY -> new String[]{"Default", "Season 2 (SR)"};
             case MAX, SAM -> new String[]{"Default", "Royal Capital", "Season 3"};
             case AVA, PERSEPHONE -> new String[]{"Sky Rebellion", "Casual"};
             case CHASE -> new String[]{"Keeper", "Navy Cap"};
@@ -111,6 +112,7 @@ public enum CharacterType {
             case RHALIX -> new String[]{"", "origins1", "origins2", "s3"};
             case YURI -> new String[]{"", "c1pjs"};
             case KYRIE -> new String[]{"", "s2"};
+            case LEXY -> new String[]{"", "s2"};                              // (with the Sky Rebellion: the hood, the scarf-mask, red eyes)
             case MAX, SAM -> new String[]{"", "royal", "s3"};
             case AVA, PERSEPHONE -> new String[]{"", "casual", "demon"};
             case CHASE -> new String[]{"", "cap"};

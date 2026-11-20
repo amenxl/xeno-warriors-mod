@@ -44,7 +44,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.HUMAN.get(),
                 ctx -> new com.xenowarriors.client.npc.NpcRenderer<com.xenowarriors.npc.HumanNpcEntity>(ctx,
                         new com.xenowarriors.client.npc.HumanModel(ctx.bakeLayer(net.minecraft.client.model.geom.ModelLayers.PLAYER)),
-                        e -> com.xenowarriors.npc.NpcLooks.human(e.variant()), com.xenowarriors.npc.HumanNpcEntity::possessed));
+                        com.xenowarriors.npc.HumanNpcEntity::look, com.xenowarriors.npc.HumanNpcEntity::possessed));
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.SKYLANDER.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.npc.ModNpcs.ROYAL_GUARD.get(), com.xenowarriors.client.npc.SkylanderRenderer::new);
         event.registerEntityRenderer(com.xenowarriors.kaiplanet.KaiPlanetEntities.BUILDER.get(), ctx -> com.xenowarriors.client.npc.NpcRenderer.plain(ctx, e -> "kai_builder", e -> false));

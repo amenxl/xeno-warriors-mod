@@ -139,6 +139,8 @@ public class StoryDialogueScreen extends Screen {
             ResourceLocation pr = t != CharacterType.NONE && t != CharacterType.YOU ? com.xenowarriors.XenoWarriors.id("textures/gui/hud/portrait_" + t.getId() + (body != null ? "_possessed" : "") + "_normal.png") : null;
             if (pr != null && minecraft.getResourceManager().getResource(pr).isPresent()) g.blit(pr, px, py, 0, 0, ps, ps, ps, ps);
             else if (t != CharacterType.NONE) com.xenowarriors.client.journey.JourneyScreen.face(g, t, px, py, ps);
+            else if (minecraft.getResourceManager().getResource(com.xenowarriors.XenoWarriors.id("textures/gui/story/portrait_" + s + ".png")).isPresent())   // (someone who isn't a character: Henry)
+                g.blit(com.xenowarriors.XenoWarriors.id("textures/gui/story/portrait_" + s + ".png"), px, py, 0, 0, ps, ps, ps, ps);
             else { g.fill(px, py, px + ps, py + ps, 0xFF2A2A38); g.drawCenteredString(font, speakerName(l).substring(0, 1), px + ps / 2, py + ps / 2 - 4, col); }
             tx = px + ps + 10;
         }

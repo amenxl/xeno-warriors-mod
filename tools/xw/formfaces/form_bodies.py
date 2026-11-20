@@ -10,7 +10,7 @@ from collections import Counter
 from PIL import Image
 CH = '/home/claude/xeno-warriors-mod/src/main/resources/assets/xenowarriors/textures/entity/character/'
 OUTFITS = {'mikiko': ['', 'origins1', 'origins2', 's3', 's3b'], 'rhalix': ['', 'origins1', 'origins2', 's3'], 'yuri': ['', 'c1pjs'],
-           'kyrie': ['', 's2'], 'max': ['', 'royal', 's3'], 'sam': ['', 'royal', 's3']}
+           'kyrie': ['', 's2'], 'lexy': ['', 's2'], 'max': ['', 'royal', 's3'], 'sam': ['', 'royal', 's3']}
 GIRLS = {'kaeru', 'kyrie', 'lexy', 'technica', 'aioni', 'yuri', 'kaitlyn', 'ava', 'ava_demon', 'persephone', 'persephone_demon', 'fox_girl', 'fox_girl_sakura'}
 COLOR = {'mikiko': (196, 30, 40), 'rhalix': (130, 50, 200), 'kyrie': (120, 60, 190), 'lexy': (200, 60, 150), 'technica': (230, 90, 170),
          'aioni': (170, 20, 40), 'yuri': (40, 160, 90), 'kaeru': (40, 40, 48),
