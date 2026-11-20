@@ -47,9 +47,20 @@ public class BotPickScreen extends Screen {
         max = m.free();
         limit = m.limit();
         for (OpenBotPickPacket.Act a : m.acts()) acts.put(a.id(), a);
-        for (CharacterType t : CharacterType.PLAYABLE) if (!taken.contains(t.getId())) choices.add(t);
+        for (CharacterType t : CharacterType.PLAYABLE) if (!taken.contains(t.getId()) && storyMet(t)) choices.add(t);   // (story mode: only people you've met)
         for (OpenBotPickPacket.Own o : m.own()) if (!taken.contains(ownId(o))) own.add(o);
         ModNetwork.sendToServer(new com.xenowarriors.network.CharLevelsPacket(new int[0]));      // each character's level with you
+    }
+
+    /** Story mode: someone you haven't met yet isn't on the list (the server won't send them either). */
+    private static boolean storyMet(CharacterType t) {
+        var st = com.xenowarriors.client.story.StoryClient.state;
+        if (!st.getBoolean("active")) return true;
+        for (net.minecraft.nbt.Tag x : st.getList("chars", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            var c = (net.minecraft.nbt.CompoundTag) x;
+            if (c.getString("id").equals(t.getId())) return c.getBoolean("met") || c.getBoolean("unlocked");
+        }
+        return true;
     }
 
     private boolean locked(CharacterType t) { return com.xenowarriors.client.ClientSkillState.season() < t.season(); }

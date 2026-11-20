@@ -57,12 +57,20 @@ public final class YouRaces {
         if (e.getEntity() instanceof ServerPlayer p) com.xenowarriors.skill.ServerScheduler.later(1, () -> { if (!p.hasDisconnected()) apply(p); });
     }
 
+    /** Seedlings swim much faster than anyone else (x{@value #SEEDLING_SWIM} swim speed). */
+    public static final double SEEDLING_SWIM = 2.5;
+    private static final UUID SWIM_ID = UUID.fromString("3a7d2c19-8e44-4b6a-9f21-c5d0e8a4b712");
+
     public static void apply(ServerPlayer p) {
         AttributeInstance hp = p.getAttribute(Attributes.MAX_HEALTH);
         if (hp == null) return;
         hp.removeModifier(HEALTH_ID);
+        AttributeInstance swim = p.getAttribute(net.minecraftforge.common.ForgeMod.SWIM_SPEED.get());
+        if (swim != null) swim.removeModifier(SWIM_ID);
         YouSlot s = You.slot(p);
         if (s == null) return;
+        if (swim != null && s.race == Race.SEEDLING)
+            swim.addPermanentModifier(new AttributeModifier(SWIM_ID, "Seedling swimming", SEEDLING_SWIM - 1, AttributeModifier.Operation.MULTIPLY_BASE));
         double add = switch (s.shown()) { case ANGEL -> s.ascended ? (p.isCreative() ? 40 : 20) : p.isCreative() ? 40 : 0; case DEVIL -> 16; case DEMON, ARTIFICIAL_DEMON -> 6; case SEEDLING, YOU -> 4; default -> 0; };   // (an ascended Angel: +20 in survival)
         if (add > 0) hp.addPermanentModifier(new AttributeModifier(HEALTH_ID, "You race health", add, AttributeModifier.Operation.ADDITION));
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
