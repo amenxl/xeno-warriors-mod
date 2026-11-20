@@ -91,6 +91,7 @@ public final class WomMoves {
         for (CharacterType t : new CharacterType[]{CharacterType.KYLE, CharacterType.CHASE, CharacterType.SENJU, CharacterType.PERSEPHONE}) FISTS.put(t, SWIFT);
         FISTS.put(CharacterType.MIKIKO, GLOVES);
         FISTS.put(CharacterType.RHALIX, ENDER);
+        FISTS.put(CharacterType.YOU, STREET);                                          // (your own warriors: by race - fistsFor)
         WEAPONS.put("hekublade", BROADBLADE);
         WEAPONS.put("wire_sword", ARBITER);
         WEAPONS.put("logan_blade", new String[]{C + "herrscher_auto_1", C + "herrscher_auto_2", C + "herrscher_auto_3"});             // the knight's sword
@@ -164,12 +165,33 @@ public final class WomMoves {
         String[] keys;
         if (main.isEmpty()) {
             CharacterType t = character(p);
-            keys = t == null ? null : FISTS.get(t);
+            keys = t == null ? null : fistsFor(p, t);
         } else {
             var id = ForgeRegistries.ITEMS.getKey(main.getItem());
             keys = id != null && id.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(id.getPath()) : null;
         }
         return keys != null && modOf(keys) ? keys : null;
+    }
+
+    /**
+     * A character's bare-hand moves. Your own (You) warriors had none - Epic Fight's plain fist swings were hidden and
+     * nothing played in their place (the user: no fighting animations with their hands). Now by race: demons and
+     * devils brawl like beasts, Skylanders, angels and fox kin strike quick and clean, everyone else fights street style.
+     * (Bots keep street style - their combo timing is worked out from the character alone.)
+     */
+    public static String[] fistsFor(Player p, CharacterType t) {
+        if (t != CharacterType.YOU || p == null || p.getClass().getSimpleName().equals("BotAvatar")) return FISTS.get(t);
+        try {
+            com.xenowarriors.you.YouSlot s = com.xenowarriors.you.You.slot(p);
+            if (s == null) return STREET;
+            return switch (s.shown()) {
+                case DEMON, DEVIL, ARTIFICIAL_DEMON, DEMON_SKYLANDER -> BEAST;
+                case SKYLANDER, ARTIFICIAL_SKYLANDER, ANGEL, FOX_KIN -> SWIFT;
+                default -> STREET;
+            };
+        } catch (Throwable e) {
+            return STREET;
+        }
     }
 
     /** The mod these moves come from is installed (Weapons of Miracles, or Epic Fight: Dawn Day). */
@@ -361,7 +383,7 @@ public final class WomMoves {
             if (main.isEmpty()) {
                 CharacterType t = character(p);
                 if (t == null || t == CharacterType.MIKIKO) return null;
-                keys = FISTS.get(t);
+                keys = fistsFor(p, t);
             } else {                                                                   // our weapons' borrowed moves too (the Senju Blade's katana cuts were slow, Max's knife fast)
                 var wid = ForgeRegistries.ITEMS.getKey(main.getItem());
                 keys = wid != null && wid.getNamespace().equals(com.xenowarriors.XenoWarriors.MOD_ID) ? WEAPONS.get(wid.getPath()) : null;

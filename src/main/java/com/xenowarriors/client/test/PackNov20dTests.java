@@ -605,6 +605,35 @@ final class PackNov20dTests {
             PackTests.check("auto mode: one swing at something else doesn't switch it", b != null && b.actMode() == PartyBotEntity.MINING, "act " + (b == null ? -1 : b.actMode()));
             PackTests.clear(p);
         }), 5));
+        // ---- your own (You) warrior's bare hands: a fist combo that Epic Fight draws (a demon: beast style)
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight") && com.xenowarriors.compat.epicfight.WomMoves.loaded()) {
+            l.add(new Step(null, () -> PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p);
+                var d = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+                d.youSlots[6] = new com.xenowarriors.you.YouSlot();
+                var ys = new com.xenowarriors.you.YouSlot(); ys.name = "Brawler"; ys.race = com.xenowarriors.character.Race.DEMON; ys.element = com.xenowarriors.ka.Element.FIRE;
+                com.xenowarriors.you.YouSlots.act(p, com.xenowarriors.network.YouActionPacket.CREATE, 6, ys);
+                p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+                p.getInventory().selected = 0; p.getInventory().setItem(0, ItemStack.EMPTY);
+                p.setYRot(0); p.setYHeadRot(0); p.yBodyRot = 0; p.setXRot(0);
+            }), 40));
+            l.add(new Step(null, () -> { PackWomTests.battle(true); mc.options.hideGui = true; mc.setScreen(null); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 25));
+            l.add(new Step(null, () -> PackTests.server(p -> {
+                p.getInventory().selected = 0; p.getInventory().setItem(0, ItemStack.EMPTY);
+                String[] sv = com.xenowarriors.compat.epicfight.WomMoves.movesFor(p), cl = com.xenowarriors.compat.epicfight.WomMoves.movesFor(mc.player);
+                PackTests.check("you fists: your own warrior has a bare-hands combo (a demon: beast style), both sides",
+                        sv == com.xenowarriors.compat.epicfight.WomMoves.BEAST && cl == com.xenowarriors.compat.epicfight.WomMoves.BEAST,
+                        "type " + com.xenowarriors.character.ModCapabilities.getType(p) + " server " + (sv == null ? "none" : sv[0]) + " client " + (cl == null ? "none" : cl[0]));
+                PackWomTests.swing(p, 0);
+            }), 8));
+            l.add(new Step("you_fists_1", () -> {
+                Boolean drew = com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrewForTest(mc.player.getId());
+                PackTests.check("you fists: the punch plays (Epic Fight draws it)", Boolean.TRUE.equals(drew),
+                        "drew " + drew + " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player));
+            }, 4));
+            l.add(new Step(null, () -> PackTests.server(p -> PackWomTests.swing(p, 1)), 10));
+            l.add(new Step("you_fists_2", () -> {}, 4));
+            l.add(new Step(null, () -> { PackWomTests.battle(false); mc.options.setCameraType(CameraType.FIRST_PERSON); com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
+        }
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

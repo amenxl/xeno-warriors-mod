@@ -21,7 +21,7 @@ import java.util.List;
 final class PackWomTests {
     private PackWomTests() {}
 
-    private static void battle(boolean on) {
+    static void battle(boolean on) {
         try {
             var p = yesman.epicfight.client.ClientEngine.getInstance().getPlayerPatch();
             if (p == null) return;
@@ -38,7 +38,7 @@ final class PackWomTests {
     }
 
     @SuppressWarnings("unchecked")
-    private static void swing(net.minecraft.server.level.ServerPlayer p, int i) {
+    static void swing(net.minecraft.server.level.ServerPlayer p, int i) {
         var c = combo(p);
         var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getServerPlayerPatch(p);
         if (c == null || patch == null || c.size() <= i) return;
