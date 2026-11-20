@@ -115,8 +115,8 @@ public final class BotGear {
         if (!left.isEmpty()) return false;                                   // (no room to put the old one away)
         b.setItemSlot(EquipmentSlot.MAINHAND, sig);
         b.setDropChance(EquipmentSlot.MAINHAND, 0F);
-        if (com.xenowarriors.forms.SignatureWeapons.pair(b.character()) && b.getOffhandItem().isEmpty()) {     // (Lexy's claws: one for each hand)
-            b.setItemSlot(EquipmentSlot.OFFHAND, com.xenowarriors.forms.SignatureWeapons.make(b.character()));
+        if (com.xenowarriors.forms.SignatureWeapons.pair(b.character()) && b.getOffhandItem().isEmpty()) {     // (Lexy's claws, Chase's two swords: one for each hand)
+            b.setItemSlot(EquipmentSlot.OFFHAND, com.xenowarriors.forms.SignatureWeapons.makeOff(b.character()));
             b.setDropChance(EquipmentSlot.OFFHAND, 0F);
         }
         com.xenowarriors.forms.SignatureWeapons.summonFx(b, b.character());

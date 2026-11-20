@@ -114,6 +114,7 @@ public class BotRenderer extends HumanoidMobRenderer<PartyBotEntity, PlayerModel
             m.head.copyFrom(p.head); m.body.copyFrom(p.body);
             m.rightArm.copyFrom(p.rightArm); m.leftArm.copyFrom(p.leftArm);
             m.rightLeg.copyFrom(p.rightLeg); m.leftLeg.copyFrom(p.leftLeg);
+            m.backSwords(e);
             com.xenowarriors.client.LimbBend.copy(p.rightArm, m.rightArm);
             com.xenowarriors.client.LimbBend.copy(p.leftArm, m.leftArm);
             com.xenowarriors.client.LimbBend.copy(p.rightLeg, m.rightLeg);

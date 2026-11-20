@@ -251,6 +251,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
             f.damage = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_face_damage" + damage + ".png");
         int mouth = talkingMouth(p, expr);          // talking in voice chat (or just sent a chat line): the mouth over the face
         if (mouth > 0) f.mouth = com.xenowarriors.XenoWarriors.id("textures/entity/character/" + fp + "_mouth_" + mouth + ".png");
+        if (f.mouth != null && !dr) f.mouth = com.xenowarriors.client.race.RaceLook.tint(f.mouth, p, type);   // (the same skin as the face under it)
         return f;
     }
 
@@ -597,6 +598,7 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         boolean armorHood = com.xenowarriors.client.mikiko.HoodClient.karmaHoodie(player) && com.xenowarriors.client.mikiko.HoodClient.up(player);
         if (model.hoodUp != null) model.hoodUp.visible = hood;
         if (model.glasses != null) model.glasses.visible = com.xenowarriors.client.YuriLaptopIdle.glasses(player);
+        model.backSwords(player);
         if (model.goggles != null) { boolean dn = com.xenowarriors.client.TechGoggles.down(player); model.goggles.y = dn ? 2.9F : 0F; model.goggles.z = dn ? -0.15F : 0F; }
         if (model.hoodDown != null) model.hoodDown.visible = !hood;
         if (model.hair != null) {

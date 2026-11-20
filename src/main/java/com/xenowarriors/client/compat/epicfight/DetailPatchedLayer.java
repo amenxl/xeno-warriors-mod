@@ -75,6 +75,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                     || com.xenowarriors.client.compat.DmzForms.topOff(player);
             boolean giLegs = com.xenowarriors.client.render.CharacterArmorLayer.foreignWorn(player, net.minecraft.world.entity.EquipmentSlot.LEGS);
             Rig.hideTorso = giTop; Rig.hideArms = giTop; Rig.hideLegs = giLegs;
+            rig.m.backSwords(player);       // (Chase's swords off his back while drawn)
             try {
                 if (rig.draw(patch, pose, buffers.getBuffer(detailType), light, overlay, poses, hood)) { rigDraws++; lastRig = rig.info; }
             } finally { Rig.hideTorso = Rig.hideArms = Rig.hideLegs = false; }

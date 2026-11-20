@@ -18,7 +18,8 @@ def build(mod_id, key):
         V[A.MAP.get(expr, 'base')].save(CH + f'{mod_id}_face_{expr}.png')
     for n in ('wince', 'hurt_heavy'):
         if not os.path.exists(CH + f'{mod_id}_face_{n}.png'): V['hurt'].save(CH + f'{mod_id}_face_{n}.png')
-    for i in range(1, 6): shutil.copy(CH + f'rhalix_mouth_{i}.png', CH + f'{mod_id}_mouth_{i}.png')
+    import subprocess    # talking mouths in the fusion's own skin (a copy of Rhalix's left a dark box on lighter fusions)
+    subprocess.run([sys.executable, '/home/claude/xeno-warriors-mod/tools/xw/faces/mouths.py', mod_id], check=True)
     return len(fit.cubes)
 
 if __name__ == '__main__':

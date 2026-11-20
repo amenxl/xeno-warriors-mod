@@ -103,6 +103,11 @@ public final class ModItems {
     /** Senju's Blade: the SR leader's long sword (he drops it sometimes). */
     public static final RegistryObject<Item> SENJU_BLADE = ITEMS.register("senju_blade", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.NETHERITE, 5, -2.6F,
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
+    /** Chase's two swords (he keeps them crossed on his back): Ash to Ash in his right hand, Dust to Dust in his left. */
+    public static final RegistryObject<Item> ASH_TO_ASH = ITEMS.register("ash_to_ash", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.NETHERITE, 4, -2.4F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
+    public static final RegistryObject<Item> DUST_TO_DUST = ITEMS.register("dust_to_dust", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.NETHERITE, 4, -2.4F,
+            new Item.Properties().rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant()));
     /** Logan's long sword and Keita's slim curved one (they drop them sometimes). */
     public static final RegistryObject<Item> LOGAN_BLADE = ITEMS.register("logan_blade", () -> new net.minecraft.world.item.SwordItem(net.minecraft.world.item.Tiers.DIAMOND, 5, -2.7F,
             new Item.Properties().rarity(net.minecraft.world.item.Rarity.RARE)));
@@ -318,6 +323,8 @@ public final class ModItems {
             for (int color : KarmaHoodieItem.PRESETS) event.accept(KarmaHoodieItem.colored(KARMA_HOODIE.get(), color));
             event.accept(SR_HOODIE);
             event.accept(SENJU_BLADE);
+            event.accept(ASH_TO_ASH);
+            event.accept(DUST_TO_DUST);
             event.accept(LOGAN_BLADE);
             event.accept(KEITA_BLADE);
             event.accept(KYRIE_RAPIER);

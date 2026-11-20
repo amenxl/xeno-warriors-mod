@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 
 /**
  * Every character whose show weapon exists as an item can summon it with the summon key (G): Kyrie's rapier, Max's knife, Sam's bat,
- * Logan's and Keita's blades, Zane's broom, Garry's microphone and Lexy's claws (a pair: the second goes in the off hand) (Mikiko's Hekublade and Rhalix's wires have their own
+ * Logan's and Keita's blades, Zane's broom, Garry's microphone, Senju's blade, Lexy's claws (a pair: the second goes in the off hand) and Chase's two swords (Ash to Ash in the right hand, Dust to Dust in the left) (Mikiko's Hekublade and Rhalix's wires have their own
  * systems). A tap summons it into the hand / puts it away. The summoned copy is tagged with its owner's character:
  * it can't be dropped, stored in a container, hung up, or kept after death, a character switch or a Season lock; it
  * never wears out. Bots of these characters summon theirs in fights (see {@code BotGear}).
@@ -64,24 +64,35 @@ public final class SignatureWeapons {
             case ZANE -> ModItems.ZANE_BROOM::get;
             case GARRY -> ModItems.MICROPHONE::get;
             case SENJU -> ModItems.SENJU_BLADE::get;
+            case CHASE -> ModItems.ASH_TO_ASH::get;
             default -> null;
         };
         return s == null ? null : s.get();
     }
 
+    /** What a pair's second weapon is (the off hand): Lexy's other claw, Chase's Dust to Dust. */
+    public static Item offItemOf(CharacterType t) {
+        if (t == CharacterType.CHASE) return ModItems.DUST_TO_DUST.get();
+        return pair(t) ? itemOf(t) : null;
+    }
+
     public static boolean has(CharacterType t) { return t != null && t != CharacterType.NONE && switch (t) {
-        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE, LEXY, SENJU -> true;
+        case MAX, SAM, LOGAN, KEITA, ZANE, GARRY, KYRIE, LEXY, SENJU, CHASE -> true;
         default -> false;
     }; }
 
     /** Weapons that come as a pair (one in each hand). */
-    public static boolean pair(CharacterType t) { return t == CharacterType.LEXY; }
+    public static boolean pair(CharacterType t) { return t == CharacterType.LEXY || t == CharacterType.CHASE; }
 
     public static boolean isSummoned(ItemStack s) { return !s.isEmpty() && s.hasTag() && s.getTag().contains(TAG); }
 
     /** A fresh summoned copy for a character (unbreakable, tagged, with a line of lore). */
-    public static ItemStack make(CharacterType t) {
-        Item i = itemOf(t);
+    public static ItemStack make(CharacterType t) { return make(t, itemOf(t)); }
+
+    /** A fresh summoned copy of a pair's second weapon (for the off hand). */
+    public static ItemStack makeOff(CharacterType t) { return make(t, offItemOf(t)); }
+
+    private static ItemStack make(CharacterType t, Item i) {
         if (i == null) return ItemStack.EMPTY;
         ItemStack st = new ItemStack(i);
         CompoundTag tag = st.getOrCreateTag();
@@ -129,7 +140,7 @@ public final class SignatureWeapons {
         if (!com.xenowarriors.character.Seasons.unlocked(p.server, t.season())) return true;      // (Season 2/3 stay locked)
         ItemStack st = make(t);
         if (st.isEmpty() || !com.xenowarriors.mikiko.Hekublade.place(p, st)) return true;
-        if (pair(t) && p.getOffhandItem().isEmpty()) p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, make(t));
+        if (pair(t) && p.getOffhandItem().isEmpty()) p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, makeOff(t));
         summonFx(p, t);
         return true;
     }

@@ -153,10 +153,10 @@ def chase(f, cap=False):
     f.both('right_arm', [3.45, 12.2, -2.45], [8.55, 24.4, 2.45], J,
            {k: (lambda x, y: RD if 0.28 < y < 0.36 or 0.5 < y < 0.56 else J) for k in ('front', 'back', 'right', 'left')})
     f.both('right_arm', [3.4, 12.0, -2.5], [8.6, 13.0, 2.5], RD)
-    for s, ang in ((1, 32), (-1, -32)):                                                              # the two swords on his back
-        f.add('body', [-0.45, 4.0, 3.0], [0.45, 26.0, 3.6], J, rot=[0, 0, ang], origin=[0, 16, 3.3])
-        f.add('body', [-0.6, 21.0, 2.9], [0.6, 25.6, 3.7], RD, rot=[0, 0, ang], origin=[0, 16, 3.3])
-        f.add('body', [-1.2, 20.4, 2.85], [1.2, 21.0, 3.75], '#2a2830', rot=[0, 0, ang], origin=[0, 16, 3.3])
+    for s, ang in ((1, 32), (-1, -32)):                                                              # the two swords on his back (hidden while he has them drawn)
+        f.add('body', [-0.45, 4.0, 3.0], [0.45, 26.0, 3.6], J, rot=[0, 0, ang], origin=[0, 16, 3.3], group=('back_swords', None))
+        f.add('body', [-0.6, 21.0, 2.9], [0.6, 25.6, 3.7], RD, rot=[0, 0, ang], origin=[0, 16, 3.3], group=('back_swords', None))
+        f.add('body', [-1.2, 20.4, 2.85], [1.2, 21.0, 3.75], '#2a2830', rot=[0, 0, ang], origin=[0, 16, 3.3], group=('back_swords', None))
     pants(f, J, 6.4, J, baggy=0.35)                                                                  # black shorts
     shoes(f, '#5a5a62', '#e8e8ec', 2.2, lace='#e8e8ec')
 

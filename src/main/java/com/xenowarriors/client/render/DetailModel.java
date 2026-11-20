@@ -44,6 +44,8 @@ public class DetailModel {
     public final ModelPart glasses;
     /** Technica's goggles (they come down over her eyes while she senses Karma), or null. */
     public final ModelPart goggles;
+    /** Chase's two swords crossed on his back (off his back while he has them drawn), or null. */
+    public final ModelPart backSwords;
 
     private DetailModel(ModelPart root) {
         this.root = root;
@@ -59,6 +61,7 @@ public class DetailModel {
         this.hoodDown = childOrNull(body, "hood_down");
         this.glasses = childOrNull(head, "glasses");
         this.goggles = childOrNull(head, "goggles");
+        this.backSwords = childOrNull(body, "back_swords");
         this.coatBack = childOrNull(body, "coat_back");
         this.coatFrontR = childOrNull(body, "coat_front_r");
         this.coatFrontL = childOrNull(body, "coat_front_l");
@@ -403,6 +406,18 @@ public class DetailModel {
         } catch (java.util.NoSuchElementException e) {
             return null;
         }
+    }
+
+    /** Chase's swords: on his back, unless he's holding one of them (Ash to Ash / Dust to Dust). */
+    public void backSwords(net.minecraft.world.entity.LivingEntity e) {
+        if (backSwords != null) backSwords.visible = !swordsDrawn(e);
+    }
+
+    public static boolean swordsDrawn(net.minecraft.world.entity.LivingEntity e) {
+        if (e == null) return false;
+        for (net.minecraft.world.item.ItemStack s : new net.minecraft.world.item.ItemStack[]{e.getMainHandItem(), e.getOffhandItem()})
+            if (s.is(com.xenowarriors.item.ModItems.ASH_TO_ASH.get()) || s.is(com.xenowarriors.item.ModItems.DUST_TO_DUST.get())) return true;
+        return false;
     }
 
     public boolean hasWings() {
