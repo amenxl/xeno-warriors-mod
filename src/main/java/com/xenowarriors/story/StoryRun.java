@@ -86,6 +86,12 @@ public final class StoryRun {
         int bots;
         /** The last time anyone fought (a hit by or on a foe or one of the party): a minute without and the next wave comes. */
         long lastCombat;
+        /** A split fight (StoryDefs.Step.split): who's in the other room, which room each foe's in, the bars between and what they replaced. */
+        boolean split, barsOpen;
+        final Set<UUID> roomB = new HashSet<>();
+        final Map<UUID, Integer> foeRoom = new HashMap<>();
+        final List<BlockPos> wallAt = new ArrayList<>();
+        final List<net.minecraft.world.level.block.state.BlockState> wallWas = new ArrayList<>();
 
         public String objective() {
             if (hub) return "Visiting " + StoryScenes.title(place) + " - talk to people (right-click), or leave from the Story menu";
@@ -176,6 +182,31 @@ public final class StoryRun {
         for (ServerPlayer p : players(host.server, r)) title(p, m.title(), StoryDefs.path(r.path) == null ? "" : StoryDefs.path(r.path).title());
         next(host.server, r);
     }
+
+    /** (Tests) starts this storyline's mission at this step (0-based), straight into it. */
+    public static boolean testStep(ServerPlayer host, String path, String missionId, int stepIndex) {
+        StoryDefs.Path pd = StoryDefs.path(path);
+        if (pd == null || pd.indexOf(missionId) < 0) return false;
+        if (inRun(host)) quit(host, null);
+        StoryDefs.Mission m = pd.missions().get(pd.indexOf(missionId));
+        Run r = new Run(host.getUUID(), path, m, freeSlot(), false);
+        enter(host, r);
+        RUNS.put(r.host, r);
+        r.step = stepIndex - 1;
+        next(host.server, r);
+        return true;
+    }
+
+    /** (Tests) beats every foe in one room of a split fight (0: yours, 1: the other). */
+    public static void killRoomForTest(ServerPlayer p, int room) {
+        Run r = runOf(p);
+        ServerLevel l = world(p.server);
+        if (r == null || l == null) return;
+        for (UUID id : new ArrayList<>(r.foes)) if (r.foeRoom.getOrDefault(id, -1) == room && l.getEntity(id) instanceof Mob m) m.hurt(p.damageSources().genericKill(), Float.MAX_VALUE);
+    }
+
+    /** (Tests) the step this player's run is on, and its downs (and the limit). */
+    public static String stepForTest(ServerPlayer p) { Run r = runOf(p); return r == null || r.cur() == null ? "-" : r.cur().type() + "@" + r.cur().place() + " step " + r.step + " wave " + r.wave + " downs " + r.deaths + "/" + downLimit(r); }
 
     /** Visits the current storyline's hub: the people you've met, to talk to. */
     public static void visitHub(ServerPlayer host) { visitHub(host, null); }
@@ -282,6 +313,7 @@ public final class StoryRun {
 
     private static void next(MinecraftServer s, Run r) {
         clearFoes(s, r);
+        unsplit(s, r);
         r.step++;
         StoryDefs.Step st = r.cur();
         while (st != null && !ok(r, s, st.ifFlag())) { r.step++; st = r.cur(); }
@@ -293,6 +325,7 @@ public final class StoryRun {
                 clearNpcs(s, r);
                 spawnAllies(s, r, st.allies());
                 r.phase = st.type().equals("survive") ? SURVIVE : FIGHT;
+                if (st.split()) splitUp(s, r);
                 ServerLevel l = world(s);
                 r.surviveUntil = (l == null ? 0 : l.getGameTime()) + st.seconds() * 20L;
                 spawnWave(s, r);
@@ -433,17 +466,31 @@ public final class StoryRun {
         r.lastCombat = l.getGameTime();
         r.bots = 0;                                                                      // (a bigger party: a harder fight)
         for (ServerPlayer p : ps) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.isAlive() && !b.getTags().contains(BOT_TAG)) r.bots++;
+        List<LivingEntity> teamA = new ArrayList<>(), teamB = new ArrayList<>();
+        if (r.split) teams(s, r, teamA, teamB);
+        float shareB = teamA.isEmpty() || teamB.isEmpty() ? 0F : Math.max(0.3F, Math.min(0.6F, teamB.size() / (float) (teamA.size() + teamB.size())));
+        int made = 0;
         for (StoryDefs.Spawn sp : w) {
             int n = sp.boss() ? 1 : sp.n() + (r.size() - 1) + r.bots / 2 + (dmzHard() && !"dummy".equals(sp.e()) ? 1 : 0);
             for (int i = 0; i < n; i++) {
                 Mob m = create(l, sp, StoryScenes.center(r.slot, r.place), i == 0);
                 if (m == null) continue;
-                Vec3 at = StoryScenes.spawnSpot(r.slot, r.place, l.getRandom());
-                m.moveTo(at.x, at.y, at.z, l.getRandom().nextFloat() * 360F, 0F);
+                // a split fight: some of each wave come into the other room (never the boss)
+                int room = shareB > 0 && !sp.boss() && (made++ * shareB) % 1F + shareB >= 1F ? 1 : 0;
+                Vec3 at = null;
+                for (int t = 0; t < 10; t++) {                                     // (somewhere it can stand, not inside a wall or a pillar)
+                    at = r.split && shareB > 0 ? roomSpot(r, room, l.getRandom()) : StoryScenes.spawnSpot(r.slot, r.place, l.getRandom());
+                    m.moveTo(at.x, at.y, at.z, l.getRandom().nextFloat() * 360F, 0F);
+                    if (l.noCollision(m)) break;
+                }
                 prepare(m, sp, r, dmz);
                 l.addFreshEntity(m);
                 l.sendParticles(ParticleTypes.PORTAL, m.getX(), m.getY() + 1, m.getZ(), 20, .4, .6, .4, .3);
-                if (!ps.isEmpty()) m.setTarget(ps.get(l.getRandom().nextInt(ps.size())));
+                if (shareB > 0) {
+                    r.foeRoom.put(m.getUUID(), room);
+                    List<LivingEntity> team = room == 1 ? teamB : teamA;
+                    m.setTarget(team.get(l.getRandom().nextInt(team.size())));
+                } else if (!ps.isEmpty()) m.setTarget(ps.get(l.getRandom().nextInt(ps.size())));
                 r.foes.add(m.getUUID());
                 if (sp.boss() && sp.escape() > 0) r.escapes.put(m.getUUID(), sp.escape());
             }
@@ -561,7 +608,7 @@ public final class StoryRun {
     private static void clearFoes(MinecraftServer s, Run r) {
         ServerLevel l = world(s);
         if (l != null) for (UUID id : r.foes) { Entity e = l.getEntity(id); if (e != null) e.discard(); }
-        r.foes.clear(); r.escapes.clear();
+        r.foes.clear(); r.escapes.clear(); r.foeRoom.clear();
     }
 
     private static void advanceWave(MinecraftServer s, Run r) {
@@ -571,6 +618,7 @@ public final class StoryRun {
         r.wave++;
         if (r.phase == FIGHT && r.wave >= st.waves().size()) { next(s, r); return; }
         if (r.phase == SURVIVE) r.wave = Math.min(r.wave, st.waves().size() - 1);
+        if (r.split) { closeBars(s, r); placeTeams(s, r); }                        // (a split fight: back to your rooms for the next wave)
         spawnWave(s, r);
         for (ServerPlayer p : players(s, r)) p.displayClientMessage(Component.literal(r.objective()).withStyle(ChatFormatting.YELLOW), true);
     }
@@ -716,6 +764,7 @@ public final class StoryRun {
     }
 
     static void close(MinecraftServer s, Run r, String why) {
+        unsplit(s, r);
         clearFoes(s, r);
         clearNpcs(s, r);
         ServerLevel l = world(s);
@@ -801,7 +850,7 @@ public final class StoryRun {
         ServerLevel l = world(s);
         if (l == null || r.place == null) return;
         BlockPos c = StoryScenes.center(r.slot, r.place);
-        AABB box = new AABB(c).inflate(ISLAND_EDGE + 12, ISLAND_CEILING + 12, ISLAND_EDGE + 12);
+        AABB box = new AABB(c).inflate(edge(r) + 12, ISLAND_CEILING + 12, edge(r) + 12);
         for (Mob m : l.getEntitiesOfClass(Mob.class, box, x -> x.isAlive() && !(x instanceof PartyBotEntity)
                 && !x.getTags().contains(NPC_TAG) && (x instanceof net.minecraft.world.entity.monster.Enemy || r.foes.contains(x.getUUID())
                 || x.getTarget() instanceof Player || x.getTarget() instanceof PartyBotEntity))) {
@@ -828,20 +877,25 @@ public final class StoryRun {
 
     /** How far from the island's middle (sideways) and above its floor anyone may go during a mission. */
     static final int ISLAND_EDGE = StoryScenes.R + 3, ISLAND_CEILING = 22;
+
+    /** How far from the middle this run's place lets anyone go (its own size: StoryScenes.radius). */
+    static int edge(Run r) { return StoryScenes.radius(r.place) + 3; }
     /** A minute without a hit either way and the next wave comes (nobody gets stuck on a foe they can't reach). */
     static final int NO_COMBAT_TICKS = 60 * 20;
 
     static boolean offIsland(Run r, Entity e) {
         BlockPos c = StoryScenes.center(r.slot, r.place);
         double dx = e.getX() - (c.getX() + 0.5), dz = e.getZ() - (c.getZ() + 0.5);
-        return dx * dx + dz * dz > ISLAND_EDGE * ISLAND_EDGE || e.getY() > StoryScenes.Y + ISLAND_CEILING;
+        int ed = edge(r);
+        return dx * dx + dz * dz > ed * ed || e.getY() > StoryScenes.Y + ISLAND_CEILING;
     }
 
     /** The nearest spot back on the island (just inside the edge, no higher than the ceiling). */
     static Vec3 backOn(Run r, Entity e) {
         BlockPos c = StoryScenes.center(r.slot, r.place);
         double cx = c.getX() + 0.5, cz = c.getZ() + 0.5, dx = e.getX() - cx, dz = e.getZ() - cz, d = Math.sqrt(dx * dx + dz * dz);
-        double k = d > StoryScenes.R - 2 ? (StoryScenes.R - 2) / d : 1;
+        int rad = StoryScenes.radius(r.place);
+        double k = d > rad - 2 ? (rad - 2) / d : 1;
         return new Vec3(cx + dx * k, Math.max(StoryScenes.Y + 1, Math.min(e.getY(), StoryScenes.Y + ISLAND_CEILING - 4)), cz + dz * k);
     }
 
@@ -893,6 +947,18 @@ public final class StoryRun {
                 boolean ours = t instanceof ServerPlayer tp && r.members.contains(tp.getUUID()) && tp.isAlive()
                         || t instanceof PartyBotEntity tb && tb.isAlive() && !tb.downed();
                 if (!ours) { LivingEntity n = nearestOf(s, r, m); if (n != null) m.setTarget(n); }
+                else if (r.split && !r.barsOpen && r.foeRoom.containsKey(id)) {     // (a split fight: each room's foes stay on that room's people)
+                    boolean inB = r.foeRoom.get(id) == 1, tB = r.roomB.contains(t.getUUID());
+                    if (inB != tB) { List<LivingEntity> a = new ArrayList<>(), b = new ArrayList<>(); teams(s, r, a, b); List<LivingEntity> team = inB ? b : a; if (!team.isEmpty()) m.setTarget(team.get(0)); }
+                }
+            }
+        }
+        if (r.split && !r.barsOpen && !r.foeRoom.isEmpty()) {                       // your room's cleared: the bars open, go help the others
+            boolean aLeft = false, bLeft = false;
+            for (UUID id : r.foes) { Integer rm = r.foeRoom.get(id); if (rm == null) continue; if (rm == 0) aLeft = true; else bLeft = true; }
+            if (!aLeft && bLeft) {
+                openBars(s, r);
+                for (ServerPlayer p : ps) title(p, "", r.roomB.contains(p.getUUID()) ? "The bars are open - help is coming!" : "The bars are open - go help the others!");
             }
         }
         if (r.phase == SURVIVE) {
@@ -939,12 +1005,134 @@ public final class StoryRun {
         p.teleportTo(at.x, at.y, at.z);
         p.fallDistance = 0;
         r.deaths++;
-        int limit = 3 * r.size();
+        int limit = downLimit(r);
         if (r.deaths >= limit && !r.hub) {
             for (ServerPlayer m : players(p.server, r)) title(m, "MISSION FAILED", "Train up and try again (Main Menu > Story)");
             close(p.server, r, "Mission failed");
         } else for (ServerPlayer m : players(p.server, r)) m.displayClientMessage(Component.literal(p.getGameProfile().getName() + " went down (" + r.deaths + "/" + limit + " before the mission fails)").withStyle(ChatFormatting.RED), false);
     }
+
+    /** How many times the party can go down before the mission fails: 3 a player, and 1 more for every 2 bots fighting along. */
+    static int downLimit(Run r) { return 3 * r.size() + (r.bots + r.allies.size()) / 2; }
+
+    /** One of the party's bots (or a story ally) went down in a story fight: it counts toward the mission's limit too. */
+    public static void botDown(PartyBotEntity b) {
+        if (RUNS.isEmpty() || b.getServer() == null) return;
+        for (Run r : new ArrayList<>(RUNS.values())) {
+            if (r.hub || !(r.phase == FIGHT || r.phase == SURVIVE)) continue;
+            UUID o = b.ownerId();
+            if (!r.allies.contains(b.getUUID()) && (o == null || !r.members.contains(o))) continue;
+            r.deaths++;
+            int limit = downLimit(r);
+            if (r.deaths >= limit) {
+                for (ServerPlayer m : players(b.getServer(), r)) title(m, "MISSION FAILED", "Train up and try again (Main Menu > Story)");
+                close(b.getServer(), r, "Mission failed");
+            } else for (ServerPlayer m : players(b.getServer(), r))
+                m.displayClientMessage(Component.empty().append(b.label()).append(" went down (" + r.deaths + "/" + limit + " before the mission fails)").withStyle(ChatFormatting.RED), false);
+            return;
+        }
+    }
+
+    // ------------------------------------------------------------------ split fights: two rooms with bars between
+
+    /** Who fights in which room: you (the host) and every other player in the first; your bots, the story's allies and every second other player in the second. */
+    private static void teams(MinecraftServer s, Run r, List<LivingEntity> a, List<LivingEntity> b) {
+        ServerLevel l = world(s);
+        for (ServerPlayer p : players(s, r)) if (p.isAlive() && !p.isSpectator()) (r.roomB.contains(p.getUUID()) ? b : a).add(p);
+        if (l == null) return;
+        for (UUID id : r.roomB) if (l.getEntity(id) instanceof PartyBotEntity pb && pb.isAlive() && !pb.downed()) b.add(pb);
+        if (b.isEmpty() && !a.isEmpty()) b.addAll(a);                              // (everyone in the other room's down: its foes come for anyone)
+        if (a.isEmpty() && !b.isEmpty()) a.addAll(b);
+    }
+
+    /** Splits the party up for this fight (no split if there's nobody for the other room). */
+    private static void splitUp(MinecraftServer s, Run r) {
+        ServerLevel l = world(s);
+        r.roomB.clear(); r.foeRoom.clear();
+        if (l == null) return;
+        List<ServerPlayer> ps = players(s, r);
+        int k = 0;
+        for (ServerPlayer p : ps) if (!p.getUUID().equals(r.host) && k++ % 2 == 1) r.roomB.add(p.getUUID());   // (more than two of you: some go the other way)
+        if (ps.size() == 2) for (ServerPlayer p : ps) if (!p.getUUID().equals(r.host)) r.roomB.add(p.getUUID());
+        for (ServerPlayer p : ps) for (PartyBotEntity b : com.xenowarriors.bot.PartyBots.bots(p)) if (b.isAlive() && !b.downed()) r.roomB.add(b.getUUID());
+        for (UUID a : r.allies) r.roomB.add(a);
+        boolean anyA = false;
+        for (ServerPlayer p : ps) if (!r.roomB.contains(p.getUUID())) anyA = true;
+        if (r.roomB.isEmpty() || !anyA) { r.roomB.clear(); return; }
+        r.split = true;
+        closeBars(s, r);
+        placeTeams(s, r);
+        for (ServerPlayer p : ps) p.displayClientMessage(Component.literal(r.roomB.contains(p.getUUID())
+                ? "You and the bots take the other side - hold them off!" : "They're coming from both sides - your bots take the other room. Clear yours and the bars open!").withStyle(ChatFormatting.GOLD), false);
+    }
+
+    /** Everyone to their room's side of the bars. */
+    private static void placeTeams(MinecraftServer s, Run r) {
+        ServerLevel l = world(s);
+        if (l == null) return;
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        int ka = 0, kb = 0;
+        for (ServerPlayer p : players(s, r)) {
+            boolean b = r.roomB.contains(p.getUUID());
+            int k = b ? kb++ : ka++;
+            p.teleportTo(l, c.getX() + 0.5 + (b ? 6 + k * 1.5 : -6 - k * 1.5), StoryScenes.Y + 1, c.getZ() + 8.5, 180F, 0F);
+            p.fallDistance = 0;
+        }
+        for (UUID id : r.roomB) if (l.getEntity(id) instanceof PartyBotEntity pb) {
+            pb.teleportTo(c.getX() + 0.5 + 6 + kb++ * 1.5, StoryScenes.Y + 1, c.getZ() + 8.5);
+            pb.getNavigation().stop();
+        }
+    }
+
+    /** A spot in a room for a foe to come in: the far side of that room. */
+    private static Vec3 roomSpot(Run r, int room, net.minecraft.util.RandomSource rnd) {
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        int rad = StoryScenes.radius(r.place);
+        double x = 3 + rnd.nextDouble() * (rad - 8), z = -(4 + rnd.nextDouble() * (rad - 10));
+        return new Vec3(c.getX() + 0.5 + (room == 1 ? x : -x), StoryScenes.Y + 1, c.getZ() + 0.5 + z);
+    }
+
+    /** The bars between the rooms, right down the middle (barrier above them, so nobody flies over). */
+    private static void closeBars(MinecraftServer s, Run r) {
+        ServerLevel l = world(s);
+        if (l == null || !r.wallAt.isEmpty()) { r.barsOpen = false; return; }
+        BlockPos c = StoryScenes.center(r.slot, r.place);
+        int rad = StoryScenes.radius(r.place) + 2;
+        for (int z = -rad; z <= rad; z++) for (int y = 1; y <= ISLAND_CEILING; y++) {
+            BlockPos p = c.offset(0, y, z);
+            r.wallAt.add(p);
+            r.wallWas.add(l.getBlockState(p));
+            l.setBlock(p, y <= 4 ? net.minecraft.world.level.block.Blocks.IRON_BARS.defaultBlockState() : net.minecraft.world.level.block.Blocks.BARRIER.defaultBlockState(), 2);
+        }
+        r.barsOpen = false;
+        l.playSound(null, c, net.minecraft.sounds.SoundEvents.IRON_DOOR_CLOSE, net.minecraft.sounds.SoundSource.BLOCKS, 1.4F, 0.6F);
+    }
+
+    /** The bars go (what was there comes back). */
+    private static void openBars(MinecraftServer s, Run r) {
+        ServerLevel l = world(s);
+        r.barsOpen = true;
+        if (l == null) { r.wallAt.clear(); r.wallWas.clear(); return; }
+        for (int i = 0; i < r.wallAt.size(); i++) l.setBlock(r.wallAt.get(i), r.wallWas.get(i), 2);
+        if (!r.wallAt.isEmpty()) l.playSound(null, r.wallAt.get(0), net.minecraft.sounds.SoundEvents.IRON_DOOR_OPEN, net.minecraft.sounds.SoundSource.BLOCKS, 1.4F, 0.7F);
+        r.wallAt.clear(); r.wallWas.clear();
+        splitBarsOpened++;
+    }
+
+    /** The fight's over: no more rooms. */
+    private static void unsplit(MinecraftServer s, Run r) {
+        if (!r.wallAt.isEmpty()) openBars(s, r);
+        r.split = false; r.barsOpen = false; r.roomB.clear(); r.foeRoom.clear();
+    }
+
+    /** A story foe in a split fight with the bars still shut (it stays on its own room's people). */
+    public static boolean inSplit(Mob m) { Run r = runByFoe(m); return r != null && r.split && !r.barsOpen; }
+
+    /** (Tests) split fights' bars opened; whether this player's run is split now, and its bars shut. */
+    public static int splitBarsOpened;
+    public static boolean splitForTest(ServerPlayer p) { Run r = runOf(p); return r != null && r.split; }
+    public static boolean barsShutForTest(ServerPlayer p) { Run r = runOf(p); return r != null && r.split && !r.barsOpen; }
+    public static java.util.Set<UUID> roomBForTest(ServerPlayer p) { Run r = runOf(p); return r == null ? java.util.Set.of() : r.roomB; }
 
     /** Talking to someone at a hub (or in a scene). */
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -993,5 +1181,5 @@ public final class StoryRun {
     @SuppressWarnings("unused")
     private static boolean inWorld(Player p, ResourceKey<Level> k) { return p.level().dimension() == k; }
     @SuppressWarnings("unused")
-    private static AABB box(BlockPos c) { return new AABB(c).inflate(StoryScenes.R + 6, 30, StoryScenes.R + 6); }
+    private static AABB box(BlockPos c) { return new AABB(c).inflate(34 + 6, 30, 34 + 6); }
 }

@@ -32,6 +32,10 @@
           [{"e": "knight", "n": 5}],
           [{"e": "knight", "n": 4, "captain": true}]
         ]},
+        {"type": "fight", "place": "royal_capital", "split": true, "obj": "The palace guard pours out of both wings - Logan and Keita take one", "allies": ["logan", "keita"], "waves": [
+          [{"e": "knight", "n": 5}],
+          [{"e": "knight", "n": 6}]
+        ]},
         {"type": "scene", "place": "royal_capital", "npcs": ["logan", "keita"], "lines": [
           {"s": "logan", "t": "(Confident) Full control of the Royal Capital. Keita, you can thank me."},
           {"s": "keita", "t": "I helped from the other side of the Capital."},

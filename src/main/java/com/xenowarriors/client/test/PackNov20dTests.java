@@ -364,6 +364,46 @@ final class PackNov20dTests {
             PackTests.check("keycard: a bot with a Gov Keycard opens the vault", com.xenowarriors.bot.BotKeycards.opened > kv[0], "opened " + (com.xenowarriors.bot.BotKeycards.opened - kv[0]));
             PackTests.clear(p);
         }), 5));
+        // ---- enemies spread out onto your bots
+        int[] ag = new int[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            for (CharacterType t : new CharacterType[]{CharacterType.SAM, CharacterType.KAERU}) { PartyBotEntity b = PartyBots.spawn(p, t, null); if (b != null) b.moveTo(p.getX() + 2, p.getY(), p.getZ() + 2, 0F, 0F); }
+            ag[0] = com.xenowarriors.bot.BotAggro.turned;
+            for (int i = 0; i < 7; i++) { var h = PackTests.husk(p, -6 + i * 2, 12); if (h instanceof net.minecraft.world.entity.Mob m) m.setTarget(p); }
+        }), 100));
+        l.add(new Step("aggro_bots", () -> PackTests.server(p -> {
+            int on = 0;
+            for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(30), x -> x.getTarget() instanceof PartyBotEntity && !(x instanceof PartyBotEntity))) on++;
+            PackTests.check("aggro: in a big fight some enemies go after your bots", com.xenowarriors.bot.BotAggro.turned > ag[0] && on > 0, "turned " + (com.xenowarriors.bot.BotAggro.turned - ag[0]) + " on bots now " + on);
+            PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 5));
+        // ---- story: a split fight in the SR tunnels (Rhalix in the other room), the bars open when your room's clear; a bot going down counts
+        int[] sp = new int[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            sp[0] = com.xenowarriors.story.StoryRun.splitBarsOpened;
+            com.xenowarriors.story.StoryRun.testStep(p, "rhalix", "r2", 3);
+        }), 80));
+        l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setXRot(5); }, 10));
+        l.add(new Step("story_split", () -> PackTests.server(p -> {
+            PackTests.check("story split: the SR tunnels fight splits you from Rhalix behind bars", com.xenowarriors.story.StoryRun.splitForTest(p) && com.xenowarriors.story.StoryRun.barsShutForTest(p)
+                    && !com.xenowarriors.story.StoryRun.roomBForTest(p).isEmpty(), "split " + com.xenowarriors.story.StoryRun.splitForTest(p) + " other room " + com.xenowarriors.story.StoryRun.roomBForTest(p).size()
+                    + " " + com.xenowarriors.story.StoryRun.stepForTest(p));
+            com.xenowarriors.story.StoryRun.killRoomForTest(p, 0);
+        }), 60));
+        l.add(new Step("story_split_open", () -> PackTests.server(p -> {
+            PackTests.check("story split: clearing your room opens the bars", com.xenowarriors.story.StoryRun.splitBarsOpened > sp[0], "opened " + (com.xenowarriors.story.StoryRun.splitBarsOpened - sp[0]) + " " + com.xenowarriors.story.StoryRun.stepForTest(p));
+            String before = com.xenowarriors.story.StoryRun.stepForTest(p);
+            for (PartyBotEntity b : PartyBots.bots(p)) if (b.isAlive() && !b.downed()) { b.hurt(p.damageSources().generic(), 100000F); break; }
+            String after = com.xenowarriors.story.StoryRun.stepForTest(p);
+            PackTests.check("story: a bot teammate going down counts toward the mission's downs", !before.equals(after) && after.contains("downs 1"), before + " -> " + after);
+            com.xenowarriors.story.StoryRun.quit(p, null);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 40));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -19,8 +19,18 @@ public final class StoryScenes {
     private StoryScenes() {}
 
     public static final List<String> PLACES = List.of("sp_hideout", "aurora_street", "sr_hideout", "royal_capital", "sky_island", "farm",
-            "train_station", "school", "mountain_village", "gov_facility", "battlefield");
+            "train_station", "school", "mountain_village", "gov_facility", "battlefield", "sr_tunnels", "sr_barracks", "sr_cells");
     public static final int R = 22, Y = 100, SPACING = 512, Z0 = 60000, PLACE_GAP = 160;
+
+    /** How far a place reaches (its floor's radius): bigger places for the big fights, so a crowd doesn't all end up in one spot. */
+    public static int radius(String place) {
+        if (place == null) return R;
+        return switch (place) {
+            case "sr_hideout", "sr_tunnels", "sr_barracks", "sr_cells", "battlefield" -> 34;
+            case "royal_capital", "aurora_street", "gov_facility", "school", "sp_hideout", "farm", "mountain_village" -> 30;
+            default -> R;
+        };
+    }
     private static final Set<String> BUILT = new HashSet<>();
 
     public static String title(String place) {
@@ -28,7 +38,8 @@ public final class StoryScenes {
             case "sp_hideout" -> "Sky Patrol Hideout"; case "aurora_street" -> "City of Aurora"; case "sr_hideout" -> "Sky Rebellion Hideout";
             case "royal_capital" -> "Royal Capital"; case "sky_island" -> "Sky Island"; case "farm" -> "Kitsune's Farm";
             case "train_station" -> "Mountain Village Station"; case "school" -> "Elementalist School"; case "mountain_village" -> "Mountain Village";
-            case "gov_facility" -> "Government Facility, Aurora"; case "battlefield" -> "The Battlefield"; default -> place;
+            case "gov_facility" -> "Government Facility, Aurora"; case "battlefield" -> "The Battlefield";
+            case "sr_tunnels" -> "SR Hideout - the Tunnels"; case "sr_barracks" -> "SR Hideout - the Barracks"; case "sr_cells" -> "SR Hideout - the Cells"; default -> place;
         };
     }
 
@@ -54,7 +65,8 @@ public final class StoryScenes {
     /** Where enemies come in. */
     public static Vec3 spawnSpot(int slot, String place, RandomSource r) {
         BlockPos c = center(slot, place);
-        double a = Math.PI * (1.0 + r.nextDouble()), d = 8 + r.nextDouble() * (R - 12);
+        int rad = radius(place);
+        double a = Math.PI * (1.0 + r.nextDouble()), d = 8 + r.nextDouble() * (rad - 12);
         return new Vec3(c.getX() + 0.5 + Math.cos(a) * d, Y + 1, c.getZ() + 0.5 + Math.sin(a) * d * 0.8);
     }
 
@@ -77,6 +89,7 @@ public final class StoryScenes {
     private static boolean inside(int x, int z, int r) { return x * x + z * z <= r * r; }
 
     static void build(ServerLevel l, BlockPos c, String place) {
+        final int R = radius(place);                                             // (this place's own size)
         RandomSource rnd = RandomSource.create(place.hashCode());
         // clear the space
         for (int x = -R - 3; x <= R + 3; x++) for (int z = -R - 3; z <= R + 3; z++) for (int y = -6; y <= 26; y++) set(l, c.offset(x, y, z), Blocks.AIR.defaultBlockState());
@@ -84,7 +97,7 @@ public final class StoryScenes {
         switch (place) {
             case "sp_hideout" -> { floor = Blocks.GRAY_CONCRETE.defaultBlockState(); floor2 = Blocks.GRAY_CONCRETE.defaultBlockState(); edge = Blocks.STONE_BRICKS.defaultBlockState(); }
             case "aurora_street", "gov_facility" -> { floor = Blocks.GRAY_CONCRETE.defaultBlockState(); floor2 = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(); edge = Blocks.SMOOTH_STONE.defaultBlockState(); }
-            case "sr_hideout" -> { floor = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); floor2 = Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); edge = Blocks.BLACKSTONE.defaultBlockState(); }
+            case "sr_hideout", "sr_tunnels", "sr_barracks", "sr_cells" -> { floor = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); floor2 = Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); edge = Blocks.BLACKSTONE.defaultBlockState(); }
             case "royal_capital" -> { floor = Blocks.QUARTZ_BLOCK.defaultBlockState(); floor2 = Blocks.SMOOTH_QUARTZ.defaultBlockState(); edge = Blocks.GOLD_BLOCK.defaultBlockState(); }
             case "school" -> { floor = Blocks.STONE_BRICKS.defaultBlockState(); floor2 = Blocks.MOSSY_STONE_BRICKS.defaultBlockState(); edge = Blocks.DEEPSLATE_BRICKS.defaultBlockState(); }
             case "train_station" -> { floor = Blocks.SMOOTH_STONE.defaultBlockState(); floor2 = Blocks.STONE.defaultBlockState(); edge = Blocks.STONE_BRICKS.defaultBlockState(); }
@@ -111,6 +124,9 @@ public final class StoryScenes {
             case "aurora_street" -> city(l, c, rnd, false);
             case "gov_facility" -> facility(l, c, rnd);
             case "sr_hideout" -> srHideout(l, c, rnd);
+            case "sr_tunnels" -> srTunnels(l, c, rnd);
+            case "sr_barracks" -> srBarracks(l, c, rnd);
+            case "sr_cells" -> srCells(l, c, rnd);
             case "royal_capital" -> capital(l, c, rnd);
             case "sky_island" -> island(l, c, rnd);
             case "farm" -> farm(l, c, rnd);
@@ -230,7 +246,69 @@ public final class StoryScenes {
         set(l, c.offset(0, 6, -6), Blocks.REDSTONE_LAMP.defaultBlockState());
     }
 
+    /** Outside the SR hideout's main hall: side halls and guard posts (the hideout's a lot bigger now). */
+    private static void srOuter(ServerLevel l, BlockPos c, RandomSource r) {
+        BlockState wall = Blocks.BLACKSTONE.defaultBlockState(), brick = Blocks.RED_NETHER_BRICKS.defaultBlockState();
+        for (int side : new int[]{-1, 1}) {                                      // two side halls, open toward the middle
+            int x0 = side < 0 ? -31 : 19, x1 = side < 0 ? -19 : 31;
+            box(l, c, x0, -14, x1, 8, 6, wall, Blocks.BLACKSTONE_SLAB.defaultBlockState(), null);
+            fill(l, c, side < 0 ? x1 : x0, 1, -6, side < 0 ? x1 : x0, 4, 0, Blocks.AIR.defaultBlockState());   // (the way in)
+            fill(l, c, x0 + 2, 1, 6, x1 - 2, 3, 8, Blocks.AIR.defaultBlockState());
+            for (int z = -10; z <= 4; z += 7) { set(l, c.offset((x0 + x1) / 2, 1, z), Blocks.BARREL.defaultBlockState()); set(l, c.offset((x0 + x1) / 2, 4, z), Blocks.SOUL_LANTERN.defaultBlockState()); }
+        }
+        for (int x = -12; x <= 12; x += 8) {                                      // guard posts by the front
+            fill(l, c, x, 1, 14, x + 1, 3, 15, brick);
+            set(l, c.offset(x, 4, 14), Blocks.SOUL_LANTERN.defaultBlockState());
+        }
+        for (int i = 0; i < 10; i++) {                                           // crates lying about
+            int x = r.nextInt(50) - 25, z = r.nextInt(14) + 10;
+            if (inside(x, z, 30) && Math.abs(x) > 2) set(l, c.offset(x, 1, z), r.nextBoolean() ? Blocks.BARREL.defaultBlockState() : Blocks.SPRUCE_PLANKS.defaultBlockState());
+        }
+    }
+
+    /** The tunnels under the hideout: thick dark pillars and broken walls in a grid - lanes to fight down, corners to come round. */
+    private static void srTunnels(ServerLevel l, BlockPos c, RandomSource r) {
+        BlockState wall = Blocks.DEEPSLATE_BRICKS.defaultBlockState(), crack = Blocks.CRACKED_DEEPSLATE_BRICKS.defaultBlockState();
+        for (int gx = -24; gx <= 24; gx += 8) for (int gz = -24; gz <= 8; gz += 8) {
+            if (!inside(gx, gz, 28) || (Math.abs(gx) < 3 && gz > -4)) continue;   // (the way in stays open)
+            fill(l, c, gx - 1, 1, gz - 1, gx + 1, 6, gz + 1, r.nextInt(4) == 0 ? crack : wall);
+            if (r.nextInt(3) == 0) fill(l, c, gx + 2, 1, gz, gx + 5, 2 + r.nextInt(3), gz, wall);       // (a broken wall off it)
+            set(l, c.offset(gx, 4, gz + 2), Blocks.SOUL_LANTERN.defaultBlockState());
+        }
+        for (int x = -26; x <= 26; x += 2) for (int z = -26; z <= 10; z += 2) if (inside(x, z, 30)) set(l, c.offset(x, 7, z), Blocks.DEEPSLATE_TILES.defaultBlockState());   // (a ceiling of beams)
+    }
+
+    /** The barracks: rows of bunks, weapon racks and supply crates. */
+    private static void srBarracks(ServerLevel l, BlockPos c, RandomSource r) {
+        box(l, c, -28, -24, 28, 6, 7, Blocks.BLACKSTONE.defaultBlockState(), Blocks.BLACKSTONE_SLAB.defaultBlockState(), null);
+        fill(l, c, -3, 1, 6, 3, 4, 6, Blocks.AIR.defaultBlockState());
+        for (int x = -24; x <= 24; x += 6) for (int z : new int[]{-20, -12, -4}) {
+            if (Math.abs(x) < 3) continue;
+            fill(l, c, x, 1, z, x + 1, 1, z + 2, Blocks.RED_WOOL.defaultBlockState());   // (bunks)
+            fill(l, c, x, 3, z, x + 1, 3, z + 2, Blocks.DARK_OAK_SLAB.defaultBlockState());
+        }
+        for (int z = -22; z <= 2; z += 8) { set(l, c.offset(-27, 2, z), Blocks.SOUL_LANTERN.defaultBlockState()); set(l, c.offset(27, 2, z), Blocks.SOUL_LANTERN.defaultBlockState()); }
+        for (int i = 0; i < 12; i++) { int x = r.nextInt(50) - 25, z = r.nextInt(26) - 22; if (Math.abs(x) > 2) set(l, c.offset(x, 1, z), Blocks.BARREL.defaultBlockState()); }
+        fill(l, c, -2, 1, -23, 2, 3, -23, Blocks.RED_NETHER_BRICKS.defaultBlockState());   // (the armoury wall)
+    }
+
+    /** The cells: a long block of barred cells down both sides, where they keep their prisoners. */
+    private static void srCells(ServerLevel l, BlockPos c, RandomSource r) {
+        box(l, c, -28, -24, 28, 6, 7, Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), Blocks.BLACKSTONE_SLAB.defaultBlockState(), null);
+        fill(l, c, -3, 1, 6, 3, 4, 6, Blocks.AIR.defaultBlockState());
+        for (int x = -26; x <= 22; x += 6) {
+            if (Math.abs(x) < 4 || Math.abs(x + 4) < 4) continue;
+            for (int z0 : new int[]{-23, -6}) {                                  // a cell: three walls of stone, bars in front
+                int zf = z0 == -23 ? z0 + 4 : z0 - 4;
+                fill(l, c, x, 1, Math.min(z0, zf), x, 4, Math.max(z0, zf), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState());
+                fill(l, c, x + 1, 1, zf, x + 4, 4, zf, Blocks.IRON_BARS.defaultBlockState());
+            }
+        }
+        for (int z = -20; z <= 0; z += 5) set(l, c.offset(0, 6, z), Blocks.SOUL_LANTERN.defaultBlockState());
+    }
+
     private static void srHideout(ServerLevel l, BlockPos c, RandomSource r) {
+        srOuter(l, c, r);
         box(l, c, -16, -16, 16, 4, 7, Blocks.BLACKSTONE.defaultBlockState(), Blocks.BLACKSTONE_SLAB.defaultBlockState(), null);
         fill(l, c, -3, 1, 4, 3, 4, 4, Blocks.AIR.defaultBlockState());
         for (int x = -12; x <= 12; x += 6) { fill(l, c, x, 1, -15, x, 5, -15, Blocks.RED_NETHER_BRICKS.defaultBlockState()); set(l, c.offset(x, 4, -14), Blocks.SOUL_LANTERN.defaultBlockState()); }

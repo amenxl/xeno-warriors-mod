@@ -45,7 +45,9 @@ public final class StoryDefs {
     public record Spawn(String e, int n, boolean boss, String name, float escape, boolean captain) {}
 
     public record Step(String type, String place, String obj, List<String> npcs, List<String> meet, List<Line> lines, List<List<Spawn>> waves,
-                       List<String> allies, List<Line> escapeLines, int seconds, String ifFlag, Map<String, Integer> skyBond) {}
+                       List<String> allies, List<Line> escapeLines, int seconds, String ifFlag, Map<String, Integer> skyBond,
+                       /** a fight split in two rooms (bars between): your bots (and some of your party) fight in the other one (StoryRooms) */
+                       boolean split) {}
 
     public record Mission(String id, String title, String desc, int karma, int lvl, boolean extra, List<Step> steps, int money, Map<String, Integer> bond) {}
 
@@ -113,7 +115,8 @@ public final class StoryDefs {
                 }
                 steps.add(new Step(str(s, "type"), str(s, "place"), str(s, "obj"), strs(s, "npcs"), strs(s, "meet"),
                         lines(s.has("lines") ? s.getAsJsonArray("lines") : null), waves, strs(s, "allies"),
-                        lines(s.has("escape_lines") ? s.getAsJsonArray("escape_lines") : null), num(s, "seconds", 60), str(s, "if"), ints(s, "skyBond")));
+                        lines(s.has("escape_lines") ? s.getAsJsonArray("escape_lines") : null), num(s, "seconds", 60), str(s, "if"), ints(s, "skyBond"),
+                        s.has("split") && s.get("split").getAsBoolean()));
             }
             JsonObject r = m.has("reward") ? m.getAsJsonObject("reward") : new JsonObject();
             ms.add(new Mission(str(m, "id"), str(m, "title"), str(m, "desc"), num(m, "karma", 0), num(m, "lvl", 1),

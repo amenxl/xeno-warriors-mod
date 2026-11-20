@@ -42,7 +42,12 @@
         ]},
         {"type": "fight", "place": "gov_facility", "obj": "Keep the guards off Technica while the patients escape", "allies": ["technica"], "waves": [
           [{"e": "gov", "n": 4}],
-          [{"e": "gov", "n": 5}]
+          [{"e": "gov", "n": 5}],
+          [{"e": "gov", "n": 4}, {"e": "gov_elite", "n": 1}]
+        ]},
+        {"type": "fight", "place": "gov_facility", "split": true, "obj": "Guards at both exits - Technica holds one while you clear the other", "allies": ["technica"], "waves": [
+          [{"e": "gov", "n": 5}],
+          [{"e": "gov", "n": 4}, {"e": "gov_elite", "n": 1}]
         ]},
         {"type": "scene", "place": "gov_facility", "npcs": ["technica", "max"], "meet": ["zack", "kaitlyn"], "lines": [
           {"s": "technica", "t": "Five stayed. Ava, Barry, Kaitlyn, Persephone, Zack. Why would anyone stay?"},

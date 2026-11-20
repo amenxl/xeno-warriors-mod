@@ -46,11 +46,38 @@
       "id": "r2", "title": "Through the Portal", "karma": 1500, "lvl": 2,
       "desc": "Follow Rhalix into the Sky Rebellion's hideout.",
       "steps": [
-        {"type": "fight", "place": "sr_hideout", "obj": "Fight through the SR hideout", "allies": ["rhalix"], "waves": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["rhalix"], "lines": [
+          {"s": "rhalix", "t": "This is it. The Sky Rebellion's hideout - it goes a long way down."},
+          {"s": "rhalix", "t": "Stay close. If they split us up, clear your side and catch up."}
+        ]},
+        {"type": "fight", "place": "sr_hideout", "obj": "Fight your way into the SR hideout", "allies": ["rhalix"], "waves": [
           [{"e": "sr", "n": 4}],
+          [{"e": "sr", "n": 5}],
+          [{"e": "sr", "n": 4, "captain": true}]
+        ]},
+        {"type": "scene", "place": "sr_tunnels", "npcs": ["rhalix"], "lines": [
+          {"s": "rhalix", "t": "Tunnels. They'll come at us from both sides down here."},
+          {"s": "rhalix", "t": "I'll take the left passage. Clear yours and the way between opens - then come help."}
+        ]},
+        {"type": "fight", "place": "sr_tunnels", "split": true, "obj": "Clear the tunnels (Rhalix holds the other passage)", "allies": ["rhalix"], "waves": [
+          [{"e": "sr", "n": 4}],
+          [{"e": "sr", "n": 5}],
           [{"e": "sr", "n": 5}]
         ]},
-        {"type": "scene", "place": "sr_hideout", "npcs": ["rhalix", "sam"], "lines": [
+        {"type": "fight", "place": "sr_barracks", "obj": "Break through the SR barracks", "allies": ["rhalix"], "waves": [
+          [{"e": "sr", "n": 5}],
+          [{"e": "sr", "n": 6}],
+          [{"e": "sr", "n": 5, "captain": true}]
+        ]},
+        {"type": "scene", "place": "sr_barracks", "npcs": ["rhalix"], "lines": [
+          {"s": "rhalix", "t": "The cells are past here. If Sam's anywhere, he's there."},
+          {"s": "rhalix", "t": "More of them coming down the far stairs - I've got them. Go!"}
+        ]},
+        {"type": "fight", "place": "sr_cells", "split": true, "obj": "Fight to the cells (Rhalix takes the far stairs)", "allies": ["rhalix"], "waves": [
+          [{"e": "sr", "n": 5}],
+          [{"e": "sr", "n": 6}]
+        ]},
+        {"type": "scene", "place": "sr_cells", "npcs": ["rhalix", "sam"], "lines": [
           {"s": "sam", "t": "Captain! Is that you?!"},
           {"s": "rhalix", "t": "Where's Lexy?"},
           {"s": "sam", "t": "They took her as soon as you got here. ...Captain, is it true? You're a fallen Skylander?"},
@@ -117,6 +144,10 @@
           [{"e": "knight", "n": 4}],
           [{"e": "knight", "n": 3}, {"e": "sr", "n": 2}]
         ]},
+        {"type": "fight", "if": "capital", "place": "royal_capital", "split": true, "obj": "The guards close in from both gates - hold your side", "allies": ["sam", "max"], "waves": [
+          [{"e": "knight", "n": 4}],
+          [{"e": "knight", "n": 4}, {"e": "sr", "n": 2}]
+        ]},
         {"type": "scene", "if": "capital", "place": "royal_capital", "npcs": ["sam", "max"], "lines": [
           {"s": "sam", "n": "Samantha", "t": "(Girl voice) Hi, I'm Samantha! ...Where did Kyrie go?!"},
           {"s": "max", "n": "Maxine", "t": "She flew off. Captain's about to be so upset. Hang on to your... everything."},
@@ -165,6 +196,10 @@
           {"s": "sam", "t": "Wait - who are THEY?"}
         ]},
         {"type": "fight", "place": "sp_hideout", "obj": "Beat the Sky Haters breaking in", "allies": ["sam", "max"], "waves": [
+          [{"e": "sky_hater", "n": 5}],
+          [{"e": "sky_hater", "n": 6}]
+        ]},
+        {"type": "fight", "place": "sp_hideout", "split": true, "obj": "They're in the back too - Sam and Max hold the other side", "allies": ["sam", "max"], "waves": [
           [{"e": "sky_hater", "n": 5}],
           [{"e": "sky_hater", "n": 5, "captain": true}]
         ]}

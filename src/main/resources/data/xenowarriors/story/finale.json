@@ -25,6 +25,14 @@
         ]},
         {"type": "fight", "place": "battlefield", "obj": "Stand with the Xeno Warriors against Ultima", "allies": ["mikiko", "rhalix"], "waves": [
           [{"e": "gov", "n": 4}],
+          [{"e": "gov", "n": 5}, {"e": "gov_elite", "n": 1}],
+          [{"e": "ultima_proto", "n": 2}]
+        ]},
+        {"type": "fight", "place": "battlefield", "split": true, "obj": "Ultima's army splits the line - Mikiko and Rhalix hold the other flank", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "gov", "n": 5}],
+          [{"e": "gov_elite", "n": 2}, {"e": "ultima_proto", "n": 1}]
+        ]},
+        {"type": "fight", "place": "battlefield", "obj": "Ultima himself", "allies": ["mikiko", "rhalix"], "waves": [
           [{"e": "ultima", "boss": true, "name": "Ultima"}]
         ]},
         {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix"], "lines": [

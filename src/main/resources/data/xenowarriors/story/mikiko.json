@@ -127,7 +127,12 @@
         ]},
         {"type": "fight", "place": "school", "obj": "Clear the real threats out of the school", "allies": ["zane"], "waves": [
           [{"e": "elementalist", "n": 3}],
-          [{"e": "dark_possessed", "n": 3}]
+          [{"e": "dark_possessed", "n": 3}],
+          [{"e": "elementalist", "n": 3}, {"e": "dark_possessed", "n": 2}]
+        ]},
+        {"type": "fight", "place": "school", "split": true, "obj": "Possessed in both wings - Zane takes the other one", "allies": ["zane"], "waves": [
+          [{"e": "dark_possessed", "n": 4}],
+          [{"e": "dark_possessed", "n": 4}, {"e": "elementalist", "n": 2}]
         ]}
       ],
       "reward": {"money": 250, "bond": {"zane": 15}}

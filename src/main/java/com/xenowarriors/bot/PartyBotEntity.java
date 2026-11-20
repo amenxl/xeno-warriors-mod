@@ -1269,6 +1269,7 @@ public class PartyBotEntity extends PathfinderMob {
             downedTicks = 0;
             setTarget(null);
             PartyBots.downed(this);
+            com.xenowarriors.story.StoryRun.botDown(this);                     // (a story fight: it counts toward the mission's downs)
             return;
         }
         if (!level().isClientSide && !journey()) { PartyBots.checkIn(this, owner()); com.xenowarriors.party.PartySwap.botLost(owner(), character()); }   // (the void, /kill: their things go home first)
