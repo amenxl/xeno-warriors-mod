@@ -126,6 +126,7 @@ public final class PackTests {
         if (focus.startsWith("packspeeds")) { PackSpeedTests.build(mc, l); return; }      // (how fast every combo plays)
         if (focus.startsWith("packraceui")) { PackRaceUiTests.build(mc, l); return; }      // (menus and HUD with each DragonMineZ race)
         if (focus.startsWith("packvr")) { PackVrTests.build(mc, l); return; }      // (Yuri's VR Room)
+        if (focus.startsWith("packchase")) { PackChaseTests.build(mc, l); return; }      // (Chase's two swords on the summon key)
         if (focus.startsWith("packbotbag")) { PackBotBagTests.build(mc, l); return; }      // (a bot's extra tabs and Sort)
         if (focus.startsWith("packbothold")) { PackMoveTests.hold(mc, l); return; }      // (a bot holds still while you talk to it)
         if (focus.startsWith("packmoves")) { PackMoveTests.build(mc, l); return; }      // (bots and NPCs move right)
