@@ -238,5 +238,24 @@ final class PackNov20cTests {
         }, 5));
         l.add(new Step(null, () -> mc.setScreen(new com.xenowarriors.client.you.YouSlotsScreen()), 20));
         l.add(new Step("you_dmz_hair_button", () -> { mc.setScreen(null); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false; }, 5));
+        // ... and in Epic Fight's battle mode, through its attacks: the hair stays on the head as it moves
+        if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) {
+            int[] eh = new int[2];
+            String[] heads = new String[6];
+            l.add(new Step(null, () -> { eh[0] = com.xenowarriors.client.compat.DmzHairBridge.efDrawn; eh[1] = com.xenowarriors.client.compat.DmzHairBridge.vanillaDrawn;
+                PackWomTests.battle(true); mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); mc.options.hideGui = true; }, 30));
+            for (int k = 0; k < 6; k++) {
+                int kk = k;
+                l.add(new Step(null, () -> PackTests.server(p -> PackWomTests.swing(p, kk % 3)), 4));
+                l.add(new Step(kk < 3 ? "you_dmz_hair_ef_" + kk : null, () -> heads[kk] = com.xenowarriors.client.compat.DmzHairBridge.lastHead, 3));
+            }
+            l.add(new Step(null, () -> {
+                int ef = com.xenowarriors.client.compat.DmzHairBridge.efDrawn - eh[0], van = com.xenowarriors.client.compat.DmzHairBridge.vanillaDrawn - eh[1];
+                PackTests.check("dmzhair: in battle mode the hair is drawn on Epic Fight's head (follows its moves)", ef > 0 && van == 0,
+                        "ef " + ef + " vanilla " + van + " heads " + String.join(" | ", heads) + " ef drew " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrewForTest(mc.player.getId())
+                        + " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player));
+                PackWomTests.battle(false); mc.options.setCameraType(CameraType.FIRST_PERSON); mc.options.hideGui = false;
+            }, 5));
+        }
     }
 }

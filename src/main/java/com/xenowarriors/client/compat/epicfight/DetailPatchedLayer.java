@@ -264,7 +264,8 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             org.joml.Matrix4f base = new org.joml.Matrix4f(pose.last().pose());
             org.joml.Matrix4f head = new org.joml.Matrix4f(base).mul(OpenMatrix4f.exportToMojangMatrix(new OpenMatrix4f().load(poses[hi]).mulBack(h.head.getToOrigin())));
             org.joml.Matrix4f body = new org.joml.Matrix4f(base).mul(OpenMatrix4f.exportToMojangMatrix(new OpenMatrix4f().load(poses[ci]).mulBack(h.chest.getToOrigin())));
-            com.xenowarriors.client.compat.DmzHairBridge.draw(p, base, head, body, buffers, net.minecraft.client.Minecraft.getInstance().getFrameTime(), light);
+            if (com.xenowarriors.client.compat.DmzHairBridge.draw(p, base, head, body, buffers, net.minecraft.client.Minecraft.getInstance().getFrameTime(), light))
+                com.xenowarriors.client.compat.DmzHairBridge.efDrawn++;
         }
 
         static void formHair(AbstractClientPlayer p, boolean ownHair, yesman.epicfight.api.model.Armature armature, PoseStack pose,

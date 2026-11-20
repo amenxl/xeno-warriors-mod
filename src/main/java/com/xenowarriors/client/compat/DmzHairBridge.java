@@ -31,6 +31,9 @@ public final class DmzHairBridge {
     /** (Tests) hair drawn. */
     public static int drawn;
     public static String lastWhy = "";
+    /** (Tests) drawn on Epic Fight's body / on our plain model; where the head was last drawn, from the feet. */
+    public static int efDrawn, vanillaDrawn;
+    public static String lastHead = "";
 
     private static boolean ready() {
         if (tried) return !broken;
@@ -106,6 +109,8 @@ public final class DmzHairBridge {
             if (bb != null) renderForBone.invoke(layer, at(body), p, bb, rt, buffers, vc, partial, light, ov);
             render.invoke(layer, at(base), p, baked, rt, buffers, vc, partial, light, ov);
             drawn++;
+            org.joml.Vector3f rel = new Matrix4f(base).invert().mul(head).getTranslation(new org.joml.Vector3f());
+            lastHead = String.format("%.2f,%.2f,%.2f", rel.x, rel.y, rel.z);
             return true;
         } catch (Throwable t) {
             broken = true;
@@ -131,6 +136,8 @@ public final class DmzHairBridge {
         PoseStack b = new PoseStack(); b.last().pose().set(root);
         bodyPart.translateAndRotate(b);
         Matrix4f body = new Matrix4f(b.last().pose()).mul(G2V);
-        return draw(p, base, head, body, buffers, partial, light);
+        boolean ok = draw(p, base, head, body, buffers, partial, light);
+        if (ok) vanillaDrawn++;
+        return ok;
     }
 }
