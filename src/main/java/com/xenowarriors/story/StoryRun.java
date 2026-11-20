@@ -578,8 +578,8 @@ public final class StoryRun {
      * Someone in another's body is written "body:soul" in the story files ("lexy:persephone": Persephone, in Lexy's body;
      * "kyrie:ava": Ava, in Kyrie's). They're drawn as the body with red eyes and named "Body (Soul)".
      */
-    /** People in the story who aren't characters, drawn with their own look ("npc:henry" in the files): their names. */
-    static final Map<String, String> STORY_PEOPLE = Map.of("henry", "Henry");
+    /** People in the story who aren't characters, drawn with their own look ("npc:henery" in the files): their names. */
+    static final Map<String, String> STORY_PEOPLE = Map.of("henery", "Henery");
 
     static String bodyOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(0, i); }
     static String soulOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(i + 1); }
@@ -643,7 +643,7 @@ public final class StoryRun {
         for (String c : who) if (!taken(there, c) && !taken(here, c) && !botted(s, r, bodyOf(c)) && !botted(s, r, soulOf(c)) && !add.contains(c)) add.add(c);
         int n = standing + add.size(), i = standing;
         for (String c : add) {
-            if (c.startsWith("npc:")) {                                            // someone who isn't a character: a person with their own look (Henry)
+            if (c.startsWith("npc:")) {                                            // someone who isn't a character: a person with their own look (Henery)
                 var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(l);
                 if (h == null) continue;
                 String key = c.substring(4);

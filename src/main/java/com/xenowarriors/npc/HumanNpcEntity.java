@@ -39,7 +39,7 @@ import java.util.List;
 public class HumanNpcEntity extends PathfinderMob {
     public static final long PERMANENT_AFTER = 3 * 24000L;
     private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.INT);
-    /** A named person's own look (story mode: Henry), "" for the townsfolk looks. */
+    /** A named person's own look (story mode: Henery), "" for the townsfolk looks. */
     private static final EntityDataAccessor<String> LOOK = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> POSSESSED = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> FIGHTER = SynchedEntityData.defineId(HumanNpcEntity.class, EntityDataSerializers.BOOLEAN);

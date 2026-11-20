@@ -381,12 +381,12 @@ def hood_fit(f):
     shoes(f, '#2a1640', '#140a20')
 CH['dark_hood']['fit'] = hood_fit
 
-# ------------------------------------------------------------------ Henry (Henery): a Skylander 2nd-year at the Elementalist
+# ------------------------------------------------------------------ Henery: a Skylander 2nd-year at the Elementalist
 # School (the user's picture: big black spiky hair fading to brown, teal eyes, a grin; a dark teal zip hoodie with a white
 # zip, a white band across and a white diamond badge, black sleeves; black shorts with a grey side stripe and white hems;
 # dark teal boots; little dark-brown wings)
 HN_T, HN_T2, HN_K, HN_W, HN_BR = '#1c4a48', '#163a3a', '#121214', '#ece6d8', '#3a2418'
-def henry_paint(part, face, x, y, W, H, o):
+def henery_paint(part, face, x, y, W, H, o):
     if part == 'body':
         if y >= 10: return HN_K
         if face == 'front' and x in (3, 4): return HN_W                       # the zip
@@ -402,9 +402,9 @@ def henry_paint(part, face, x, y, W, H, o):
         if y >= 9: return HN_T2                                               # boots
         return None                                                           # bare shins
     return None
-CH['henry'] = dict(skin='#d9968a', eyes='#2ac2c0', hair=['#121214', '#3a2418'], paint=henry_paint,
+CH['henery'] = dict(skin='#d9968a', eyes='#2ac2c0', hair=['#121214', '#3a2418'], paint=henery_paint,
     brow=['.kkkkkk..', 'kk.....k.'], mouth=['kwwwwwwk', '.kkkkkk.'], mouth_x=12, mouth_y=24)
-def henry_fit(f):
+def henery_fit(f):
     # big spikes up and out, black at the roots fading to brown at the tips; long brown-black bangs over the forehead
     hair(f, '#121214', '#2a1a14', back_len=24, side_len=26,
          spikes=[([0, 33, 0], [0.1, 1, 0.1], 7.0, 2.4), ([-2.2, 32.8, 0.5], [-0.6, 1, 0], 6.0, 2.0), ([2.4, 32.8, 0.5], [0.6, 1, 0.1], 6.2, 2.0),
@@ -427,7 +427,7 @@ def henry_fit(f):
         x0, x1 = (0.6, 7.6) if s_ > 0 else (-7.6, -0.6)
         f.add('body', [x0, 16.0, 2.4], [x1, 22.6, 2.9], '#2a1810', rot=[0, s_ * 18, s_ * -12], origin=[s_ * 0.6, 21.0, 2.6])
         f.add('body', [x0 + (0.8 if s_ > 0 else 0), 17.0, 2.95], [x1 - (0 if s_ > 0 else 0.8), 21.8, 3.2], '#3e2618', rot=[0, s_ * 18, s_ * -12], origin=[s_ * 0.6, 21.0, 2.6])
-CH['henry']['fit'] = henry_fit
+CH['henery']['fit'] = henery_fit
 
 ORDER = ['capboy', 'redhair', 'messy', 'spiky', 'waver', 'gunner', 'briefcase', 'woman', 'girl', 'phone', 'soldier',
          'dark_slime', 'dark_vest', 'dark_kick', 'dark_hood']

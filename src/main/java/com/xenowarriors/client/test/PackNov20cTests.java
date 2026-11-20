@@ -118,7 +118,7 @@ final class PackNov20cTests {
             com.xenowarriors.bot.BotParkour.force = false;
             PackTests.clear(p);
         }), 5));
-        // the princesses (Season 2): playable, both looks, every skill; Lexy's Season 2 outfit; Henry's look
+        // the princesses (Season 2): playable, both looks, every skill; Lexy's Season 2 outfit; Henery's look
         l.add(new Step(null, () -> PackTests.server(p -> { com.xenowarriors.character.Seasons.set(p.server, 3); PackTests.arena(p); PackTests.clear(p); }), 10));
         for (CharacterType t : new CharacterType[]{CharacterType.ATHREA, CharacterType.RANREA}) {
             l.add(new Step(null, () -> { mc.options.hideGui = true; UiTest.character(t); }, 40));
@@ -146,11 +146,11 @@ final class PackNov20cTests {
         l.add(new Step(null, () -> PackTests.server(p -> { p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).ifPresent(d -> d.outfit = 0);
             com.xenowarriors.character.CharacterManager.syncToTrackingAndSelf(p);
             var hy = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(p.serverLevel());
-            hy.setLook("henry"); hy.setCustomName(net.minecraft.network.chat.Component.literal("Henry"));
+            hy.setLook("henery"); hy.setCustomName(net.minecraft.network.chat.Component.literal("Henery"));
             hy.moveTo(p.getX(), p.getY(), p.getZ() + 3, 180F, 0F); hy.setYHeadRot(180F); hy.yBodyRot = 180F; hy.setNoAi(true); hy.addTag("xw_pack");
             p.serverLevel().addFreshEntity(hy); }), 20));
         l.add(new Step(null, () -> { mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(0); mc.player.setXRot(15); }, 10));
-        l.add(new Step("henry", () -> PackTests.server(p -> { PackTests.check("henry: his own look", !p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("henry")).isEmpty(), ""); PackTests.clear(p); }), 5));
+        l.add(new Step("henery", () -> PackTests.server(p -> { PackTests.check("henery: his own look", !p.serverLevel().getEntitiesOfClass(com.xenowarriors.npc.HumanNpcEntity.class, p.getBoundingBox().inflate(8), x -> x.look().equals("henery")).isEmpty(), ""); PackTests.clear(p); }), 5));
         // bots with Building 10+ lay blocks across water and pick them back up
         int[] wb = new int[2];
         Object[] wbot = new Object[1];
