@@ -526,6 +526,40 @@ final class PackNov20dTests {
             com.xenowarriors.story.Story.setDifficulty(p, 0);
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 5));
+        // ---- Kishi at a high ability level crushes the ground inside its dome (never bedrock)
+        int[] kc = new int[1];
+        BlockPos[] kp = new BlockPos[1];
+        l.add(new Step(null, () -> PackTests.server(p -> p.connection.teleport(PackTests.HOME[0] - 200, 125, PackTests.HOME[2], 0F, 30F)), 40));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var lv = p.serverLevel();
+            BlockPos c = BlockPos.containing(PackTests.HOME[0] - 200, 120, PackTests.HOME[2] + 6);
+            kp[0] = c;
+            for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++) {
+                lv.setBlock(c.offset(x, -4, z), Blocks.BEDROCK.defaultBlockState(), 2);
+                lv.setBlock(c.offset(x, -3, z), Blocks.DEEPSLATE.defaultBlockState(), 2);
+                lv.setBlock(c.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 2);
+                lv.setBlock(c.offset(x, -1, z), Blocks.DIRT.defaultBlockState(), 2);
+                for (int y = 0; y < 6; y++) lv.setBlock(c.offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+            }
+            kc[0] = com.xenowarriors.entity.KishiDomeEntity.crushed;
+            var dome = com.xenowarriors.entity.KishiDomeEntity.create(lv, p, net.minecraft.world.phys.Vec3.atBottomCenterOf(c));
+            dome.setPowerForTest(95);
+            lv.addFreshEntity(dome);
+        }), 100));
+        l.add(new Step("kishi_crush", () -> PackTests.server(p -> {
+            var lv = p.serverLevel();
+            BlockPos c = kp[0];
+            int dirt = 0, stone = 0, deep = 0, bedrock = 0;
+            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) {
+                if (lv.getBlockState(c.offset(x, -1, z)).isAir()) dirt++;
+                if (lv.getBlockState(c.offset(x, -2, z)).isAir()) stone++;
+                if (lv.getBlockState(c.offset(x, -3, z)).isAir()) deep++;
+                if (lv.getBlockState(c.offset(x, -4, z)).is(Blocks.BEDROCK)) bedrock++;
+            }
+            PackTests.check("kishi: a very high level dome crushes dirt, stone and deeper inside it - never bedrock", com.xenowarriors.entity.KishiDomeEntity.crushed > kc[0] && dirt > 0 && stone > 0 && deep > 0 && bedrock == 9,
+                    "crushed " + (com.xenowarriors.entity.KishiDomeEntity.crushed - kc[0]) + " dirt " + dirt + " stone " + stone + " deepslate " + deep + " bedrock left " + bedrock);
+            p.connection.teleport(PackTests.HOME[0], PackTests.HOME[1], PackTests.HOME[2], 0F, 0F);
+        }), 30));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -50,6 +50,8 @@ public class KishiDomeEntity extends Entity {
     private static final float[] DAMAGE_BASE = {1.5F, 2.0F, 2.5F};
     private static final float[] DAMAGE_RAMP = {0.25F, 0.5F, 0.75F};
 
+    /** The caster's Kishi ability level (1-100): a bigger dome the higher it is, and from 30 it crushes the ground inside it. */
+    private static final EntityDataAccessor<Integer> POWER = SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> GRAVITY_LEVEL =
             SynchedEntityData.defineId(KishiDomeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> OWNER =
@@ -74,6 +76,8 @@ public class KishiDomeEntity extends Entity {
         dome.setPos(pos);
         dome.entityData.set(OWNER, Optional.of(owner.getUUID()));
         dome.ownerRef = owner;
+        int[] tl = com.xenowarriors.skill.SkillLevels.of(owner, "kishi");
+        dome.entityData.set(POWER, Math.max(1, (tl[0] - 1) * com.xenowarriors.skill.SkillLevels.MAX_LEVEL + tl[1]));
         dome.updateGravity();
         return dome;
     }
@@ -84,6 +88,7 @@ public class KishiDomeEntity extends Entity {
     @Override
     protected void defineSynchedData() {
         entityData.define(GRAVITY_LEVEL, 1);
+        entityData.define(POWER, 1);
         entityData.define(OWNER, Optional.empty());
         entityData.define(GRAVITY_G, 0F);
         entityData.define(AFFECTED, new CompoundTag());
@@ -106,9 +111,55 @@ public class KishiDomeEntity extends Entity {
     /** (tests) set the dome's G directly. */
     public void setGravityForTest(float g) { entityData.set(GRAVITY_G, g); }
 
-    public float radius() { return RADIUS + RADIUS_PER_LEVEL * (getGravityLevel() - 1); }
+    /** The Kishi ability level it was cast at (1-100). */
+    public int power() { return entityData.get(POWER); }
+    public void setPowerForTest(int p) { entityData.set(POWER, p); }
 
-    public float height() { return HEIGHT + HEIGHT_PER_LEVEL * (getGravityLevel() - 1); }
+    public float radius() { return RADIUS + RADIUS_PER_LEVEL * (getGravityLevel() - 1) + (power() - 1) / 20F; }
+
+    public float height() { return HEIGHT + HEIGHT_PER_LEVEL * (getGravityLevel() - 1) + (power() - 1) / 12F; }
+
+    /** How far below its base it reaches (the ground it crushes): 1 block, then deeper from ability level 30. */
+    public float depth() { return power() >= CRUSH_SOFT ? 1F + (power() - 20) / 12F : 1F; }
+
+    // ------------------------------------------------------------------ crushing the ground (high Kishi levels)
+
+    /** Ability levels: dirt, sand and the like from 30; stone from 60; deeper than stone (deepslate, ores, obsidian...) from 90. */
+    public static final int CRUSH_SOFT = 30, CRUSH_STONE = 60, CRUSH_ALL = 90;
+    /** (Tests) blocks crushed. */
+    public static int crushed;
+
+    /** Whether a dome at this power crushes this block (never bedrock and the like, never anything holding things). */
+    public static boolean crushes(net.minecraft.world.level.block.state.BlockState st, net.minecraft.world.level.BlockGetter l, net.minecraft.core.BlockPos p, int power) {
+        if (st.isAir() || !st.getFluidState().isEmpty() && st.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock || st.hasBlockEntity()) return false;
+        float hard = st.getDestroySpeed(l, p);
+        if (hard < 0) return false;
+        if (power >= CRUSH_SOFT && (st.is(net.minecraft.tags.BlockTags.MINEABLE_WITH_SHOVEL) && hard <= 1F || st.is(net.minecraft.tags.BlockTags.LEAVES) || hard == 0F)) return true;
+        if (power >= CRUSH_STONE && (st.is(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE) || st.is(net.minecraft.tags.BlockTags.MINEABLE_WITH_SHOVEL)) && hard <= 2F) return true;
+        return power >= CRUSH_ALL && hard <= 50F;
+    }
+
+    /** Every few ticks: some of the blocks inside the dome (and under it, down to its depth) are crushed to nothing. */
+    private void crush() {
+        if (!(level() instanceof net.minecraft.server.level.ServerLevel l) || power() < CRUSH_SOFT || !com.xenowarriors.modes.ModeRules.canGrief(l)) return;
+        float r = radius(), h = height(), d = depth();
+        net.minecraft.core.BlockPos c = blockPosition();
+        int ri = (int) Math.ceil(r), budget = 10 + power() / 4;
+        for (int tries = 0; tries < budget * 6 && budget > 0; tries++) {
+            int dx = random.nextInt(ri * 2 + 1) - ri, dz = random.nextInt(ri * 2 + 1) - ri;
+            int dy = random.nextInt((int) Math.ceil(h + d) + 1) - (int) Math.ceil(d);
+            double horiz = (dx * dx + dz * dz) / (double) (r * r);
+            if (horiz > 1) continue;
+            if (dy > 0 && horiz + (dy * dy) / (double) (h * h) > 1) continue;     // (the dome's curve above ground)
+            net.minecraft.core.BlockPos p = c.offset(dx, dy, dz);
+            var st = l.getBlockState(p);
+            if (!crushes(st, l, p, power())) continue;
+            l.destroyBlock(p, false);
+            crushed++;
+            budget--;
+        }
+        if (tickCount % 8 == 0) l.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, getX(), getY() + 0.3, getZ(), 6, r * 0.5, 0.2, r * 0.5, 0.01);
+    }
 
     // client: the drawn size grows smoothly to the new level's size
     private float shownRadius = RADIUS, shownRadiusO = RADIUS, shownHeight = HEIGHT, shownHeightO = HEIGHT;
@@ -119,7 +170,8 @@ public class KishiDomeEntity extends Entity {
 
     @Override
     public AABB getBoundingBoxForCulling() {
-        return new AABB(getX() - MAX_RADIUS, getY() - 1, getZ() - MAX_RADIUS, getX() + MAX_RADIUS, getY() + MAX_HEIGHT, getZ() + MAX_RADIUS);
+        float r = Math.max(MAX_RADIUS, radius() + 1), h = Math.max(MAX_HEIGHT, height() + 1);
+        return new AABB(getX() - r, getY() - depth() - 1, getZ() - r, getX() + r, getY() + h, getZ() + r);
     }
 
     public UUID getOwnerId() { return entityData.get(OWNER).orElse(null); }
@@ -137,7 +189,7 @@ public class KishiDomeEntity extends Entity {
         double dx = e.getX() - getX();
         double dz = e.getZ() - getZ();
         float r = radius();
-        return dx * dx + dz * dz <= r * r && e.getY() >= getY() - 1 && e.getY() <= getY() + height();
+        return dx * dx + dz * dz <= r * r && e.getY() >= getY() - depth() && e.getY() <= getY() + height();
     }
 
     /** Whether the dome should affect this entity. Rhalix himself is never affected. */
@@ -173,7 +225,8 @@ public class KishiDomeEntity extends Entity {
 
         int level = getGravityLevel();
         float r = radius();
-        AABB area = new AABB(getX() - r, getY() - 1, getZ() - r, getX() + r, getY() + height(), getZ() + r);
+        AABB area = new AABB(getX() - r, getY() - depth(), getZ() - r, getX() + r, getY() + height(), getZ() + r);
+        if (tickCount % 4 == 2) crush();
 
         float g = gravity();
         java.util.Set<Integer> seen = new java.util.HashSet<>();
