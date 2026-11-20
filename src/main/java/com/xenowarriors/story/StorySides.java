@@ -82,6 +82,17 @@ public final class StorySides {
     /** (Tests) as if they right-clicked this person at the hub. */
     public static void talkForTest(ServerPlayer p, String ch) { talk(p, ch); }
 
+    /** Asked from a bot's menu: your bot gives you its next side mission, like at a hub (story or not, finished or not). */
+    public static void askBot(ServerPlayer p, com.xenowarriors.bot.PartyBotEntity b) {
+        String ch = b.character().getId();
+        if (StoryDefs.SIDES.get(ch) == null) {
+            p.displayClientMessage(Component.empty().append(b.label()).append(" has no side missions to give.").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        if (StoryRun.inRun(p)) { p.displayClientMessage(Component.literal("Finish your story mission first.").withStyle(ChatFormatting.GRAY), true); return; }
+        talk(p, ch);
+    }
+
     /** Right-clicked someone at a hub. */
     static void talk(ServerPlayer p, String ch) {
         StoryDefs.Side d = StoryDefs.SIDES.get(ch);

@@ -295,6 +295,75 @@ final class PackNov20dTests {
             com.xenowarriors.bot.BotFurnaces.forceForTest = false;
             PackTests.clear(p);
         }), 5));
+        // ---- a bot gives you its side mission from its menu
+        Object[] sb = new Object[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            String ch = null;
+            for (String k : com.xenowarriors.story.StoryDefs.SIDES.keySet()) if (!k.equals("sam") && CharacterType.byId(k) != CharacterType.NONE) { ch = k; break; }
+            if (ch == null) { PackTests.check("side from bot: a character with side missions", false, "none"); return; }
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.byId(ch), null);
+            if (b == null) return;
+            b.moveTo(p.getX() + 1.5, p.getY(), p.getZ() + 2, 180F, 0F);
+            sb[0] = b;
+        }), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> { if (sb[0] instanceof PartyBotEntity b) PartyBots.action(p, b.getId(), PartyBots.ACT_SIDE, 0); }), 30));
+        l.add(new Step("side_from_bot", () -> {}, 5));
+        for (int k = 0; k < 6; k++) l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.story.StoryDialogueScreen d) d.testNext(0); }, 8));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            boolean on = com.xenowarriors.story.StorySides.testActive(p);
+            PackTests.check("side from bot: your bot gives you its side mission from its menu", on, "active " + on);
+            if (on) com.xenowarriors.story.StorySides.cancel(p);
+            mc.setScreen(null);
+            PackTests.clear(p);
+        }), 40));
+        // ---- Repairstones: a bot mends your gear with 10 of them
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var stone = com.xenowarriors.bot.BotRepairStones.stone();
+            if (stone == null) { PackTests.log("repairstones: Souls-like Universe isn't here - skipped"); return; }
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.SAM, null);
+            if (b == null) return;
+            for (int i = 0; i < b.inventory.getContainerSize(); i++) b.inventory.setItem(i, ItemStack.EMPTY);
+            b.inventory.addItem(new ItemStack(stone, 15));
+            ItemStack sword = new ItemStack(Items.IRON_SWORD);
+            sword.setDamageValue(sword.getMaxDamage() * 6 / 10);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, sword);
+            com.xenowarriors.bot.BotRepairStones.offer(b, p, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+            boolean ok = com.xenowarriors.bot.BotRepairStones.accept(p, b, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
+            int left = 0; for (int i = 0; i < b.inventory.getContainerSize(); i++) if (b.inventory.getItem(i).is(stone)) left += b.inventory.getItem(i).getCount();
+            PackTests.check("repairstones: a bot mends your sword with 10 Repairstones", ok && p.getMainHandItem().getDamageValue() == 0 && left == 5, "ok " + ok + " damage " + p.getMainHandItem().getDamageValue() + " stones left " + left);
+            p.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+            PackTests.clear(p);
+        }), 20));
+        // ---- a Government soldier's gun drops with its ammo
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (!com.xenowarriors.compat.TaczGuns.available()) { PackTests.log("gov ammo: TaCZ isn't here - skipped"); return; }
+            int before = com.xenowarriors.gov.GovAgentEntity.ammoDropped;
+            var g = com.xenowarriors.gov.GovEntities.GOV_AGENT.get().create(p.serverLevel());
+            g.moveTo(p.getX() + 3, p.getY(), p.getZ() + 3, 0F, 0F);
+            g.addTag("xw_pack");
+            p.serverLevel().addFreshEntity(g);
+            g.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, com.xenowarriors.compat.TaczGuns.gun("tacz:m4a1", 30));
+            g.setDropChance(net.minecraft.world.entity.EquipmentSlot.MAINHAND, 2F);
+            g.hurt(p.damageSources().playerAttack(p), 100000F);
+            PackTests.check("gov ammo: a soldier's dropped gun comes with its ammo", com.xenowarriors.gov.GovAgentEntity.ammoDropped > before, "rounds " + (com.xenowarriors.gov.GovAgentEntity.ammoDropped - before));
+        }), 20));
+        // ---- a bot with a Gov Keycard opens a vault
+        int[] kv = new int[1];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            BlockPos v = BlockPos.containing(p.getX() + 5, p.getY(), p.getZ() + 4);
+            p.serverLevel().setBlock(v, com.xenowarriors.gov.GovItems.VAULT.get().defaultBlockState(), 3);
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.KAERU, null);
+            if (b == null) return;
+            b.moveTo(p.getX() + 1, p.getY(), p.getZ() + 1, 0F, 0F);
+            b.inventory.addItem(new ItemStack(com.xenowarriors.gov.GovItems.KEYCARD.get()));
+            kv[0] = com.xenowarriors.bot.BotKeycards.opened;
+        }), 200));
+        l.add(new Step("bot_vault", () -> PackTests.server(p -> {
+            PackTests.check("keycard: a bot with a Gov Keycard opens the vault", com.xenowarriors.bot.BotKeycards.opened > kv[0], "opened " + (com.xenowarriors.bot.BotKeycards.opened - kv[0]));
+            PackTests.clear(p);
+        }), 5));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -22,7 +22,7 @@ public record StoryActionPacket(int action, String arg, int choice) {
                 case PICK -> com.xenowarriors.story.Story.pick(p, m.arg);
                 case BEGIN -> com.xenowarriors.story.StoryRun.begin(p);
                 case QUIT -> com.xenowarriors.story.StoryRun.quit(p, "You left the story mission");
-                case HUB -> com.xenowarriors.story.StoryRun.visitHub(p);
+                case HUB -> com.xenowarriors.story.StoryRun.visitHub(p, m.arg);
                 case DONE -> com.xenowarriors.story.StoryRun.dialogueDone(p, m.arg, m.choice);
                 case START -> { if (!com.xenowarriors.story.Story.active(p)) com.xenowarriors.story.Story.start(p); }
                 default -> {}

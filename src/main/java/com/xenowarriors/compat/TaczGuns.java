@@ -110,6 +110,24 @@ public final class TaczGuns {
         } catch (Throwable t) { broken = true; return false; }
     }
 
+    /** Ammo for this gun (its own kind of rounds), {@code n} of them - empty if unknown. */
+    public static ItemStack ammoFor(ItemStack g, int n) {
+        if (!isGun(g) || n <= 0) return ItemStack.EMPTY;
+        try {
+            Object id = igun.getMethod("getGunId", ItemStack.class).invoke(g.getItem(), g);
+            Object idx = Class.forName("com.tacz.guns.api.TimelessAPI").getMethod("getCommonGunIndex", ResourceLocation.class).invoke(null, id);
+            if (!(idx instanceof java.util.Optional<?> o) || o.isEmpty()) return ItemStack.EMPTY;
+            Object data = o.get().getClass().getMethod("getGunData").invoke(o.get());
+            ResourceLocation ammo = (ResourceLocation) data.getClass().getMethod("getAmmoId").invoke(data);
+            if (ammo == null) return ItemStack.EMPTY;
+            Class<?> ab = Class.forName("com.tacz.guns.api.item.builder.AmmoItemBuilder");
+            Object b = ab.getMethod("create").invoke(null);
+            b = ab.getMethod("setId", ResourceLocation.class).invoke(b, ammo);
+            b = ab.getMethod("setCount", int.class).invoke(b, n);
+            return (ItemStack) ab.getMethod("build").invoke(b);
+        } catch (Throwable t) { return ItemStack.EMPTY; }
+    }
+
     /** Rounds in the magazine (-1 if not a gun / unknown). */
     public static int ammo(ItemStack g) {
         if (!isGun(g)) return -1;

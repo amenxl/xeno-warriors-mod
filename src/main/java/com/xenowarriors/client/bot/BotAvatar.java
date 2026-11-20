@@ -89,6 +89,10 @@ public class BotAvatar extends RemotePlayer {
         if (cloud) { walkAnimation.setSpeed(0F); to.xenowarriors$setSpeedOld(0F); }
         boolean running = !cloud && (b.isSprinting() || (ground || b.isNoGravity()) && dx * dx + dz * dz > 0.2 * 0.2);   // (bots keep up at a run)
         if (isSprinting() != running) setSprinting(running);
+        // walking input, as a player walking would have it: Epic Fight's player body walks and runs by this (a bot has
+        // none of its own - it stood with its legs still when it held a weapon, like Sam's bat)
+        boolean walking = !cloud && ground && !b.isPassenger() && dx * dx + dz * dz > 0.015 * 0.015;
+        zza = walking ? 1F : 0F; xxa = 0F;
         getAbilities().flying = b.isNoGravity() && !ground && !b.isPassenger() && !cloud;
         // downed: lying on its back, dazed, like a knocked-out player
         boolean down = b.downed();

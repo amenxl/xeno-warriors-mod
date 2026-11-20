@@ -1256,7 +1256,9 @@ public final class PartyBots {
 
     public static final int ACT_INVENTORY = 0, ACT_SUMMON_PET = 1, ACT_FLY = 2, ACT_SPAR = 3, ACT_MODE = 4, ACT_DISMISS = 5, ACT_MENU = 6, ACT_CARRY = 7, ACT_DMZ = 8, ACT_FUSE = 9, ACT_OUTFIT = 10, ACT_RADAR = 11,
             /** arg 1: its menu's open (it holds still), 0: closed (to the server); -1: you're kicked out of its menu (to you) */
-            ACT_HOLD = 12;
+            ACT_HOLD = 12,
+            /** ask it for its next side mission (StorySides) */
+            ACT_SIDE = 13;
 
     /** Carries a Dragon Radar (DragonMineZ): its menu can send it off to find the Dragon Balls. */
     public static boolean hasRadar(PartyBotEntity b) {
@@ -1331,6 +1333,7 @@ public final class PartyBots {
                 else p.displayClientMessage(Component.literal("").append(b.label()).append("'s Dragon Ball character can't be opened right now").withStyle(ChatFormatting.GRAY), true);
             }
             case ACT_FUSE -> com.xenowarriors.compat.DmzFusion.fuse(p, b);      // (with DragonMineZ: Potara earrings in its bag, or it knows the Fusion Dance)
+            case ACT_SIDE -> com.xenowarriors.story.StorySides.askBot(p, b);
             default -> {}
         }
     }

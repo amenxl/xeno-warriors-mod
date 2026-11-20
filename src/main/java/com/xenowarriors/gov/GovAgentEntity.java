@@ -395,10 +395,25 @@ public class GovAgentEntity extends PathfinderMob {
     @Override
     public boolean removeWhenFarAway(double d) { return false; }
 
+    /** (Tests) rounds dropped with soldiers' guns. */
+    public static int ammoDropped;
+
     /** Guards sometimes carry a Gov Keycard (opens a facility vault). */
     @Override
     protected void dropCustomDeathLoot(net.minecraft.world.damagesource.DamageSource src, int looting, boolean hit) {
+        ItemStack gun = com.xenowarriors.compat.TaczGuns.isGun(getMainHandItem()) ? getMainHandItem().copy() : ItemStack.EMPTY;
         super.dropCustomDeathLoot(src, looting, hit);
+        if (!gun.isEmpty() && getMainHandItem().isEmpty()) {                       // (its gun dropped: two magazines' worth of its rounds with it)
+            int mag = com.xenowarriors.compat.TaczGuns.stats(gun)[0];
+            int n = Math.max(24, Math.min(90, mag * 2 + random.nextInt(Math.max(1, mag))));
+            while (n > 0) {
+                ItemStack ammo = com.xenowarriors.compat.TaczGuns.ammoFor(gun, Math.min(n, 64));
+                if (ammo.isEmpty() || ammo.getCount() <= 0) break;
+                n -= ammo.getCount();
+                spawnAtLocation(ammo);
+                ammoDropped += ammo.getCount();
+            }
+        }
         if (hit && guard() && random.nextFloat() < 0.08F + looting * 0.03F) spawnAtLocation(GovItems.KEYCARD.get());
     }
 }

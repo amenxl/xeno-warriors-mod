@@ -54,11 +54,18 @@ public class GovVaultBlock extends HorizontalDirectionalBlock {
             return InteractionResult.CONSUME;
         }
         if (!p.isCreative()) held.shrink(1);
+        open((ServerLevel) level, pos, s, p, sp);
+        return InteractionResult.CONSUME;
+    }
+
+    /** Opens it (the card's been used): the loot pours out, and any staff about raise the alarm on {@code blame}. {@code who} opened it (a player or a bot). */
+    public static void open(ServerLevel level, BlockPos pos, BlockState s, net.minecraft.world.entity.Entity who, ServerPlayer blame) {
         level.setBlock(pos, s.setValue(OPEN, true), 3);
         level.playSound(null, pos, SoundEvents.IRON_DOOR_OPEN, SoundSource.BLOCKS, 1.2F, 0.6F);
         level.playSound(null, pos, SoundEvents.PLAYER_LEVELUP, SoundSource.BLOCKS, 0.6F, 1.2F);
         ServerLevel sl = (ServerLevel) level;
-        LootParams params = new LootParams.Builder(sl).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos)).withParameter(LootContextParams.THIS_ENTITY, p).withLuck(p.getLuck()).create(LootContextParamSets.CHEST);
+        LootParams params = new LootParams.Builder(sl).withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos)).withParameter(LootContextParams.THIS_ENTITY, who)
+                .withLuck(blame == null ? 0F : blame.getLuck()).create(LootContextParamSets.CHEST);
         Direction f = s.getValue(FACING);
         Vec3 out = Vec3.atCenterOf(pos).add(f.getStepX() * 0.8, 0, f.getStepZ() * 0.8);
         for (ItemStack it : sl.getServer().getLootData().getLootTable(LOOT).getRandomItems(params)) {
@@ -66,8 +73,7 @@ public class GovVaultBlock extends HorizontalDirectionalBlock {
             e.setDeltaMovement(f.getStepX() * 0.15 + (sl.random.nextDouble() - 0.5) * 0.1, 0.25, f.getStepZ() * 0.15 + (sl.random.nextDouble() - 0.5) * 0.1);
             sl.addFreshEntity(e);
         }
-        sp.displayClientMessage(Component.literal("Vault opened!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
-        if (GovFacilities.staffNear(sl, pos, 24)) GovFacilities.alarm(sl, pos, sp, "The vault's been opened!");
-        return InteractionResult.CONSUME;
+        if (blame != null) blame.displayClientMessage(Component.literal("Vault opened!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), true);
+        if (blame != null && GovFacilities.staffNear(sl, pos, 24)) GovFacilities.alarm(sl, pos, blame, "The vault's been opened!");
     }
 }

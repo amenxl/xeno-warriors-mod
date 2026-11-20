@@ -178,10 +178,13 @@ public final class StoryRun {
     }
 
     /** Visits the current storyline's hub: the people you've met, to talk to. */
-    public static void visitHub(ServerPlayer host) {
+    public static void visitHub(ServerPlayer host) { visitHub(host, null); }
+
+    /** Visits a storyline's hub: the one asked for if it's yours now or finished (side missions go on after the story), else the current one. */
+    public static void visitHub(ServerPlayer host, String want) {
         String why = blocked(host);
         if (why != null) { host.displayClientMessage(Component.literal(why).withStyle(ChatFormatting.RED), true); return; }
-        String path = Story.current(host);
+        String path = want != null && !want.isEmpty() && (want.equals(Story.current(host)) || Story.pathDone(host, want)) ? want : Story.current(host);
         if (path == null) { List<String> d = new ArrayList<>(Story.done(host)); path = d.isEmpty() ? null : d.get(d.size() - 1); }
         StoryDefs.Path pd = StoryDefs.path(path);
         if (pd == null || pd.hub() == null) { host.displayClientMessage(Component.literal("No place to visit yet - start a storyline").withStyle(ChatFormatting.RED), true); return; }

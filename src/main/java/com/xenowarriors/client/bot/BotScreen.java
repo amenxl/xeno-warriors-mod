@@ -56,7 +56,10 @@ public class BotScreen extends Screen {
         fly.active = m.canFly();
         Button carry = addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Carry them (fly)"), b -> { send(PartyBots.ACT_CARRY, 0); onClose(); }).bounds(x, y + 66, bw, 20).build());
         carry.active = minecraft.player != null && com.xenowarriors.client.ClientCharacterData.winged(minecraft.player);
-        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 88, bw, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Spar (PvP)"), b -> { send(PartyBots.ACT_SPAR, 0); onClose(); }).bounds(x, y + 88, bw / 2 - 1, 20).build());
+        addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Side mission"), b -> { send(PartyBots.ACT_SIDE, 0); onClose(); })   // (ask them for their next side mission)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Ask them for their next side mission (story characters)")))
+                .bounds(x + bw / 2 + 1, y + 88, bw - bw / 2 - 1, 20).build());
         addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(modeLabel(), b -> { mode = (mode + 1) % 3; send(PartyBots.ACT_MODE, mode); b.setMessage(modeLabel()); }).bounds(x, y + 110, bw, 20).build());
         if (DMZ) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Dragon Ball"), b -> send(PartyBots.ACT_DMZ, 0)).bounds(x, y + 132, bw - 44, 20).build());   // (its DragonMineZ character: points, missions)
         if (DMZ) addRenderableWidget(com.xenowarriors.client.menu.Flat.builder(Component.literal("Fuse"), b -> { send(PartyBots.ACT_FUSE, 0); onClose(); })    // (Potara earrings in its bag, or it knows the Fusion Dance)

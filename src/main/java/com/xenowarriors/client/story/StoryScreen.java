@@ -59,8 +59,10 @@ public class StoryScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal("Begin this storyline"), b -> StoryClient.act(StoryActionPacket.PICK, sel, 0)).bounds(bx - 126, by, 246, 20).build());
         if (p != null && p.getInt("status") == 2) {
             addRenderableWidget(Button.builder(Component.literal("Start mission"), b -> { StoryClient.act(StoryActionPacket.BEGIN, "", 0); onClose(); }).bounds(bx, by, 120, 20).build());
-            addRenderableWidget(Button.builder(Component.literal("Visit (talk / sides)"), b -> { StoryClient.act(StoryActionPacket.HUB, "", 0); onClose(); }).bounds(bx - 126, by, 120, 20).build());
+            addRenderableWidget(Button.builder(Component.literal("Visit (talk / sides)"), b -> { StoryClient.act(StoryActionPacket.HUB, sel, 0); onClose(); }).bounds(bx - 126, by, 120, 20).build());
         }
+        if (p != null && p.getInt("status") == 3)                              // (a storyline you've finished: its people still have side missions)
+            addRenderableWidget(Button.builder(Component.literal("Visit (talk / sides)"), b -> { StoryClient.act(StoryActionPacket.HUB, sel, 0); onClose(); }).bounds(bx, by, 120, 20).build());
     }
 
     // ------------------------------------------------------------------ looks

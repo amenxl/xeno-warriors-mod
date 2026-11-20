@@ -177,10 +177,15 @@ final class PackNov20cTests {
                         info = "walkSpeed " + String.format("%.2f", av.walkAnimation.speed()) + " pos " + String.format("%.1f", av.walkAnimation.position()) + " held " + av.getMainHandItem();
                         try {
                             var patch = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(av, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
-                            if (patch != null) info += " ef " + patch.currentLivingMotion + " / " + patch.currentCompositeMotion + " mode " + patch.isEpicFightMode();
+                            if (patch != null) info += " ef " + patch.currentLivingMotion + " / " + patch.currentCompositeMotion + " mode " + patch.isEpicFightMode() + " zza " + av.zza;
                         } catch (Throwable x) { info += " ef? " + x; }
                     }
                     PackTests.log("samwalk " + (bat ? "bat" : "fists") + " " + kk + ": " + info);
+                    if (kk == 2 && av != null) try {
+                        var pt = yesman.epicfight.world.capabilities.EpicFightCapabilities.getEntityPatch(av, yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch.class);
+                        String mo = pt == null ? "none" : String.valueOf(pt.currentLivingMotion);
+                        PackTests.check("sam walk: walking with " + (bat ? "his bat" : "bare hands") + ", his Epic Fight body walks (legs move)", mo.equals("WALK") || mo.equals("RUN"), "motion " + mo);
+                    } catch (Throwable x) { PackTests.check("sam walk: epic fight motion", false, String.valueOf(x)); }
                 }, 8));
             }
         }
