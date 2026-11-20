@@ -440,6 +440,40 @@ final class PackNov20dTests {
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.server(p -> p.setGameMode(net.minecraft.world.level.GameType.CREATIVE));
         }, 5));
+        // ---- faction backup from the phone: ten of them, they fight what you fight, and go home when you leave
+        int[] fb2 = new int[2];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.GOV, 800);
+            com.xenowarriors.faction.Reputation.set(p, com.xenowarriors.faction.Faction.SR, -200);
+        }), 10));
+        l.add(new Step(null, () -> com.xenowarriors.client.PhoneScreen.openFactions(), 30));
+        l.add(new Step("phone_factions", () -> mc.setScreen(null), 5));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            fb2[0] = com.xenowarriors.faction.FactionBackup.sent;
+            p.getPersistentData().remove("xw_backup_cd_GOV");
+            boolean ok = com.xenowarriors.faction.FactionBackup.call(p, com.xenowarriors.faction.Faction.GOV);
+            boolean no = com.xenowarriors.faction.FactionBackup.why(p, com.xenowarriors.faction.Faction.SR) != null;
+            PackTests.check("backup: Friendly with the Government - ten of them come; the Sky Rebellion won't", ok && no && com.xenowarriors.faction.FactionBackup.sent - fb2[0] >= 8, "sent " + (com.xenowarriors.faction.FactionBackup.sent - fb2[0]) + " sr refuses " + no);
+            var h = PackTests.husk(p, 0, 10);
+            if (h instanceof net.minecraft.world.entity.Mob m) { m.addTag("xw_pack"); m.setTarget(p); }
+            p.setLastHurtMob(h);
+        }), 80));
+        l.add(new Step("backup_fight", () -> PackTests.server(p -> {
+            int on = 0;
+            for (var m : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), x -> com.xenowarriors.faction.FactionBackup.ownerOf(x) != null))
+                if (m.getTarget() instanceof net.minecraft.world.entity.monster.Husk) on++;
+            PackTests.check("backup: they go for what you're fighting", on > 0, "on the husk " + on);
+            fb2[1] = com.xenowarriors.faction.FactionBackup.gone;
+            p.connection.teleport(p.getX() + 140, p.getY() + 20, p.getZ(), 0F, 0F);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 80));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("backup: you go far away - they go home", com.xenowarriors.faction.FactionBackup.gone - fb2[1] >= 8 || p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class,
+                    new net.minecraft.world.phys.AABB(p.blockPosition()).inflate(200), x -> com.xenowarriors.faction.FactionBackup.ownerOf(x) != null).isEmpty(), "gone " + (com.xenowarriors.faction.FactionBackup.gone - fb2[1]));
+            PackTests.arena(p); PackTests.clear(p);
+        }), 20));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -21,6 +21,17 @@ public class PhoneScreen extends Screen {
     private int page;
     /** The Teammates page (null = Contacts). */
     private final com.xenowarriors.network.PhoneTeamPacket team;
+    /** The Factions page: call one you're on good terms with for backup. */
+    private boolean factions;
+
+    /** (Tests too) opens the Factions page (asks the server for your standing first). */
+    public static void openFactions() {
+        com.xenowarriors.network.RepPacket.CLIENT = new int[0];
+        ModNetwork.sendToServer(new com.xenowarriors.network.RepPacket(new int[0]));
+        PhoneScreen s = new PhoneScreen();
+        s.factions = true;
+        Minecraft.getInstance().setScreen(s);
+    }
 
     public PhoneScreen() { this(null); }
 
@@ -45,6 +56,7 @@ public class PhoneScreen extends Screen {
     protected void init() {
         clearWidgets();
         if (team != null) { initTeam(); return; }
+        if (factions) { initFactions(); return; }
         Minecraft mc = Minecraft.getInstance();
         List<net.minecraft.client.multiplayer.PlayerInfo> people = new ArrayList<>();
         if (mc.getConnection() != null && mc.player != null)
@@ -68,10 +80,54 @@ public class PhoneScreen extends Screen {
             ModNetwork.sendToServer(new PhoneActionPacket(2, new UUID(0, 0)));
             onClose();
         }).bounds(x + 24, top() + 180, W - 72, 16).build());
-        addRenderableWidget(Button.builder(Component.literal("👥 Teammates"), b -> ModNetwork.sendToServer(new PhoneActionPacket(3, new UUID(0, 0))))
+        addRenderableWidget(Button.builder(Component.literal("👥 Team"), b -> ModNetwork.sendToServer(new PhoneActionPacket(3, new UUID(0, 0))))
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Call a busy teammate and ask them to join you when they're done")))
-                .bounds(x + 24, top() + 199, W - 72, 14).build());
+                .bounds(x, top() + 199, (W - 24) / 2 - 1, 14).build());
+        addRenderableWidget(Button.builder(Component.literal("⚑ Factions"), b -> openFactions())
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Call a faction you're Friendly with for backup")))
+                .bounds(x + (W - 24) / 2 + 1, top() + 199, (W - 24) / 2 - 1, 14).build());
     }
+
+    private void initFactions() {
+        int x = left() + 10, y = top() + 28, bw = W - 20;
+        var all = com.xenowarriors.faction.Faction.values();
+        for (int i = 0; i < all.length; i++) {
+            var f = all[i];
+            int yy = y + i * 36;
+            Button b = addRenderableWidget(Button.builder(Component.literal("📞 Backup"), btn -> {
+                ModNetwork.sendToServer(new PhoneActionPacket(5, new UUID(0, f.ordinal())));
+                onClose();
+            }).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("About 10 of their people come and fight with you (Friendly or better; every 10 minutes)")))
+                    .bounds(x + bw - 56, yy + 16, 56, 14).build());
+            int[] v = com.xenowarriors.network.RepPacket.CLIENT;
+            b.active = v.length > i && com.xenowarriors.faction.Reputation.Tier.of(v[i]).atLeast(com.xenowarriors.faction.Reputation.Tier.FRIENDLY);
+        }
+        addRenderableWidget(Button.builder(Component.literal("Contacts"), b -> minecraft.setScreen(new PhoneScreen())).bounds(x + 24, top() + 180, W - 68, 16).build());
+    }
+
+    private void renderFactions(GuiGraphics g) {
+        int x = left() + 10, y = top() + 28;
+        var all = com.xenowarriors.faction.Faction.values();
+        int[] v = com.xenowarriors.network.RepPacket.CLIENT;
+        for (int i = 0; i < all.length; i++) {
+            var f = all[i];
+            int yy = y + i * 36;
+            g.fill(x - 2, yy - 2, x + W - 18, yy + 32, 0x60000000);
+            g.fill(x - 2, yy - 2, x + 1, yy + 32, 0xFF000000 | f.color);
+            small(g, f.title, x + 4, yy + 2, 0xFF000000 | f.color, W - 30);
+            if (v.length > i) {
+                var t = com.xenowarriors.faction.Reputation.Tier.of(v[i]);
+                small(g, t.title + " (" + v[i] + ")", x + 4, yy + 13, 0xFF000000 | t.color, W - 90);
+            } else small(g, "...", x + 4, yy + 13, 0xFF9AA0B8, 40);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (factions && com.xenowarriors.network.RepPacket.CLIENT.length > 0 && !factionsReady) { factionsReady = true; init(); }   // (your standing came in: buttons on)
+    }
+    private boolean factionsReady;
 
     private static final int TEAM_PER_PAGE = 4;
 
@@ -127,8 +183,9 @@ public class PhoneScreen extends Screen {
         g.fill(x - 4, y - 4, x + W + 4, y + H + 4, 0xFF101014);           // the phone's case
         g.fill(x, y, x + W, y + H, 0xFF1A1E2C);                            // screen
         g.fill(x + W / 2 - 14, y - 2, x + W / 2 + 14, y + 2, 0xFF050507);  // notch
-        g.drawCenteredString(font, team != null ? "Teammates" : "Contacts", x + W / 2, y + 12, 0xFFFFFF);
+        g.drawCenteredString(font, team != null ? "Teammates" : factions ? "Factions" : "Contacts", x + W / 2, y + 12, 0xFFFFFF);
         if (team != null) renderTeam(g);
+        if (factions) renderFactions(g);
         g.fill(x + W / 2 - 18, y + H - 10, x + W / 2 + 18, y + H - 7, 0xFF404660);
         super.render(g, mouseX, mouseY, partialTick);
     }

@@ -295,6 +295,7 @@ public final class FactionRaids {
         data(p).putLong("xw_raid_cd_any", now + COOLDOWN_ANY);
         data(p).putLong("xw_raid_cd_" + k.key(), now + COOLDOWN_LOSS);   // (raised to the win cooldown if they beat it)
         warn(r, p);
+        com.xenowarriors.faction.FactionBackup.raidStarted(p, k.faction);         // (factions you're Friendly with send help)
         XenoWarriors.LOGGER.info("[raids] {} on {} (standing {}, {} waves, bar {})", k.title, p.getName().getString(), rep, r.waves, r.bar.getId());
         return r;
     }

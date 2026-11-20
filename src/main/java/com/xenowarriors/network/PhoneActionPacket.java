@@ -10,7 +10,8 @@ import java.util.function.Supplier;
 
 /**
  * Client -> server from the phone screen: 0 = call this player, 1 = hang up, 2 = pretend call (talk to nobody),
- * 3 = open the Teammates page, 4 = ring a busy teammate (the character is in the UUID's low bits: its ordinal).
+ * 3 = open the Teammates page, 4 = ring a busy teammate (the character is in the UUID's low bits: its ordinal),
+ * 5 = call a faction for backup (its Faction ordinal in the UUID's low bits).
  */
 public record PhoneActionPacket(int action, UUID target) {
     public static void encode(PhoneActionPacket m, FriendlyByteBuf buf) {
@@ -39,6 +40,11 @@ public record PhoneActionPacket(int action, UUID target) {
                 long o = m.target.getLeastSignificantBits();
                 var all = com.xenowarriors.character.CharacterType.values();
                 if (o >= 0 && o < all.length) com.xenowarriors.bot.BotCalls.call(p, all[(int) o]);
+            }
+            case 5 -> {
+                long f = m.target.getLeastSignificantBits();
+                var all = com.xenowarriors.faction.Faction.values();
+                if (f >= 0 && f < all.length) com.xenowarriors.faction.FactionBackup.call(p, all[(int) f]);
             }
             default -> {}
         }

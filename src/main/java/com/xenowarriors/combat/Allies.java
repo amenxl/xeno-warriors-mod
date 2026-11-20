@@ -52,6 +52,8 @@ public final class Allies {
         if (e instanceof Player p) return p.getUUID();
         if (e instanceof PartyBotEntity b) return b.ownerId();
         if (e instanceof SoulEntity s) return s.ownerId();
+        UUID backup = com.xenowarriors.faction.FactionBackup.ownerOf(e);           // (a faction's backup: on the side of who they came for)
+        if (backup != null) return backup;
         return Parties.petOwner(e);
     }
 
