@@ -812,7 +812,8 @@ public final class StoryRun {
         Run r = null;
         if (v.getTags().contains(FOE_TAG)) r = runByFoe(v);
         else if (v instanceof ServerPlayer p) r = runOf(p);
-        if (r == null && e.getSource().getEntity() instanceof Entity a) {
+        Entity a = e.getSource().getEntity();
+        if (r == null && a != null) {
             if (a.getTags().contains(FOE_TAG) && a instanceof LivingEntity la) r = runByFoe(la);
             else if (a instanceof ServerPlayer ap) r = runOf(ap);
         }
