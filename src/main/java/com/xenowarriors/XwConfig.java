@@ -19,6 +19,8 @@ public final class XwConfig {
     public static final ForgeConfigSpec.BooleanValue DMZ_MOVIES_ANYWHERE;
     /** DragonMineZ missions: no biome needed to start them or to finish them (anyone's, bots' too). */
     public static final ForgeConfigSpec.BooleanValue DMZ_MISSIONS_IGNORE_BIOMES;
+    /** DragonMineZ missions (the Classic Saga's and every other): no "be at structure X" requirement to start them. */
+    public static final ForgeConfigSpec.BooleanValue DMZ_MISSIONS_IGNORE_STRUCTURES;
     /** Bot teammates walk up to DragonMineZ NPCs and talk to them for their own missions. */
     public static final ForgeConfigSpec.BooleanValue DMZ_BOTS_TALK;
     /** Beaten Ender Dragons turn into the Xeno Dragon boss. */
@@ -46,6 +48,9 @@ public final class XwConfig {
                         "'go to biome X' objectives count as met anywhere, and enemies a mission wants that only live in other biomes",
                         "(desert bandits, Red Ribbon robots...) come to you when you're somewhere they don't spawn. Bots' missions too.")
                 .define("missionsIgnoreBiomes", true);
+        DMZ_MISSIONS_IGNORE_STRUCTURES = b.comment("DragonMineZ missions (the Classic Saga's too) start anywhere: 'be at structure X' start requirements",
+                        "(Kami's Lookout, Roshi's house, Goku's house...) count as met. 'Go to' objectives still need you there.")
+                .define("missionsIgnoreStructures", true);
         DMZ_BOTS_TALK = b.comment("Bot teammates walk up to DragonMineZ NPCs (Dende, the masters...) and talk to them themselves for their own missions:",
                         "'talk to' objectives, handing missions in, and taking a mission from its giver when you start yours.")
                 .define("botsTalkToNpcs", true);
