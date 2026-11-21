@@ -84,9 +84,18 @@ public final class DmzBotCapsules {
             boolean gave = false;
             StringBuilder what = new StringBuilder();
             for (String stat : stats(s.getItem())) {
-                ItemStack one = s.copyWithCount(1);
-                Object msg = apply.invoke(s.getItem(), one, d.sd, stat.trim());
-                if (one.isEmpty()) { gave = true; if (msg instanceof Component c) what.append(what.length() > 0 ? ", " : "").append(c.getString()); }
+                boolean took;
+                Object msg;
+                if (apply.getParameterCount() == 3 && apply.getParameterTypes()[2] == boolean[].class) {   // (DragonMineZ 2.2: stats, stat, "used" flag)
+                    boolean[] used1 = {false};
+                    msg = apply.invoke(s.getItem(), d.sd, stat.trim(), used1);
+                    took = used1[0];
+                } else {                                                                                    // (2.1: the stack, stats, stat - it shrinks the stack)
+                    ItemStack one = s.copyWithCount(1);
+                    msg = apply.invoke(s.getItem(), one, d.sd, stat.trim());
+                    took = one.isEmpty();
+                }
+                if (took) { gave = true; if (msg instanceof Component c) what.append(what.length() > 0 ? ", " : "").append(c.getString()); }
             }
             if (!gave) continue;                                                  // (maxed in that: it keeps it)
             s.shrink(1);
