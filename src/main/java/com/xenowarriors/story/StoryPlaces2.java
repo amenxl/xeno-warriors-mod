@@ -1029,4 +1029,73 @@ final class StoryPlaces2 {
                 if (Math.abs(dx) + Math.abs(dz) <= 3 - dy) set(l, c.offset(t[0] + dx, h + dy, t[1] + dz), leaves(Blocks.JUNGLE_LEAVES));
         }
     }
+
+    // ------------------------------------------------------------------ the Highway of Broken Dreams
+
+    /**
+     * The Highway of Broken Dreams (the user's picture; where Rhalix and Mikiko fought Ultima at the end of Season 1
+     * and the start of Season 2): red-brown earth under a broken elevated highway on concrete legs - its deck snapped
+     * in the middle, the rebar hanging out - gutted grey tower blocks behind, abandoned tanks, rubble, a road barrier, a
+     * smashed guard booth, a wrecked car, a dry yellow tree, and red rock cliffs on either side.
+     */
+    static void highway(ServerLevel l, BlockPos c, RandomSource r) {
+        int RR = radius("battlefield");
+        for (int x = -RR; x <= RR; x++) for (int z = -RR; z <= RR; z++) {
+            if (!inside(x, z, RR)) continue;
+            int k = r.nextInt(6);
+            set(l, c.offset(x, 0, z), b(k == 0 ? Blocks.COARSE_DIRT : k == 1 ? Blocks.BROWN_TERRACOTTA : Blocks.TERRACOTTA));
+        }
+        // the elevated highway, east-west across the north, broken in the middle
+        for (int x = -RR; x <= RR; x++) {
+            if (Math.abs(x - 3) <= 3) continue;                                          // (the gap)
+            for (int z = -14; z <= -8; z++) {
+                if (!inside(x, z, RR)) continue;
+                set(l, c.offset(x, 8, z), b(z == -11 && Math.floorMod(x, 4) < 2 ? Blocks.YELLOW_CONCRETE : Blocks.GRAY_CONCRETE));
+                set(l, c.offset(x, 7, z), b(Blocks.LIGHT_GRAY_CONCRETE));
+                if (z == -14 || z == -8) set(l, c.offset(x, 9, z), slab(Blocks.SMOOTH_STONE_SLAB, false));
+            }
+            if (Math.floorMod(x, 8) == 0) for (int z : new int[]{-13, -9}) if (inside(x, z, RR)) fill(l, c, x, 1, z, x, 6, z, b(Blocks.LIGHT_GRAY_CONCRETE));   // legs
+        }
+        for (int z = -14; z <= -8; z += 2) { set(l, c.offset(-1, 7, z), b(Blocks.IRON_BARS)); set(l, c.offset(7, 7, z), b(Blocks.IRON_BARS)); set(l, c.offset(-1, 6, z), b(Blocks.CHAIN)); }   // rebar
+        // gutted tower blocks behind
+        for (int[] t : new int[][]{{-20, -26, 16, 7}, {-8, -28, 26, 9}, {12, -26, 12, 6}}) {
+            for (int x = t[0]; x <= t[0] + t[3]; x++) for (int z = t[1]; z <= t[1] + 4; z++) {
+                if (!inside(x, z, RR + 3)) continue;
+                int top = t[2] - Math.abs(Math.floorMod(x * 7, 5) - 2) * 2;               // (a ragged top)
+                for (int y = 1; y <= top; y++) {
+                    boolean win = z == t[1] + 4 && y % 3 == 2 && (x - t[0]) % 3 == 1;
+                    set(l, c.offset(x, y, z), win ? b(r.nextBoolean() ? Blocks.AIR : Blocks.BLACK_CONCRETE) : b(r.nextInt(8) == 0 ? Blocks.CRACKED_STONE_BRICKS : Blocks.GRAY_CONCRETE));
+                }
+            }
+        }
+        // red rock cliffs on both sides
+        for (int s2 : new int[]{-1, 1}) for (int i = 0; i < 40; i++) {
+            int x = s2 * (24 + r.nextInt(9)), z = r.nextInt(50) - 30, h = 3 + r.nextInt(9);
+            if (!inside(x, z, RR - 1)) continue;
+            fill(l, c, x, 1, z, x, h, z, b(r.nextBoolean() ? Blocks.TERRACOTTA : Blocks.BROWN_TERRACOTTA));
+        }
+        // three abandoned tanks
+        for (int[] t : new int[][]{{-18, -4, 1}, {-12, -7, -1}, {-14, 1, 1}}) {
+            fill(l, c, t[0] - 2, 1, t[1] - 1, t[0] + 2, 1, t[1] + 1, b(Blocks.BLACK_CONCRETE));   // tracks
+            fill(l, c, t[0] - 2, 2, t[1] - 1, t[0] + 2, 2, t[1] + 1, b(Blocks.GREEN_TERRACOTTA));
+            fill(l, c, t[0] - 1, 3, t[1], t[0] + 1, 3, t[1], b(Blocks.GREEN_TERRACOTTA));    // the turret
+            fill(l, c, t[0] + 2 * t[2], 3, t[1], t[0] + 4 * t[2], 3, t[1], b(Blocks.POLISHED_BLACKSTONE_WALL));   // the gun
+        }
+        // rubble, the barrier, the guard booth, the car, the tree
+        for (int i = 0; i < 26; i++) {
+            int x = r.nextInt(44) - 22, z = r.nextInt(30) - 18;
+            if (!inside(x, z, RR - 3) || (Math.abs(x) < 4 && z > 0)) continue;
+            set(l, c.offset(x, 1, z), b(r.nextBoolean() ? Blocks.COBBLESTONE : Blocks.GRAY_CONCRETE));
+            if (r.nextInt(3) == 0) set(l, c.offset(x, 2, z), b(Blocks.COBBLESTONE_SLAB));
+        }
+        set(l, c.offset(-5, 1, -3), b(Blocks.RED_CONCRETE)); set(l, c.offset(-4, 1, -3), b(Blocks.WHITE_CONCRETE)); set(l, c.offset(-3, 1, -3), b(Blocks.RED_CONCRETE));
+        box(l, c, 8, -5, 11, -2, 3, b(Blocks.WHITE_CONCRETE), b(Blocks.LIGHT_GRAY_CONCRETE), b(Blocks.GLASS));
+        fill(l, c, 8, 1, -3, 8, 2, -3, b(Blocks.AIR));
+        set(l, c.offset(10, 4, -4), b(Blocks.IRON_BARS)); set(l, c.offset(10, 5, -4), b(Blocks.IRON_BARS)); set(l, c.offset(10, 6, -4), b(Blocks.IRON_BARS));   // the bent mast
+        fill(l, c, 17, 1, 1, 19, 1, 2, b(Blocks.BROWN_TERRACOTTA)); fill(l, c, 17, 2, 1, 18, 2, 2, b(Blocks.BLACK_STAINED_GLASS));   // the car
+        fill(l, c, 21, 1, -1, 21, 4, -1, b(Blocks.STRIPPED_OAK_LOG));
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int dy = 4; dy <= 5; dy++) set(l, c.offset(21 + dx, dy, -1 + dz), b(Blocks.HAY_BLOCK));
+        fill(l, c, -14, 1, 14, -10, 2, 16, b(Blocks.IRON_BLOCK));                         // a wrecked Government truck
+        set(l, c.offset(-12, 3, 15), b(Blocks.CAMPFIRE));
+    }
 }

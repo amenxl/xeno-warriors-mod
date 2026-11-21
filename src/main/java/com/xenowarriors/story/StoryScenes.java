@@ -40,7 +40,7 @@ public final class StoryScenes {
             case "sp_hideout" -> "Sky Patrol Hideout"; case "aurora_street" -> "City of Aurora"; case "sr_hideout" -> "Sky Rebellion Hideout";
             case "royal_capital" -> "Royal Capital"; case "sky_island" -> "Sky Island"; case "farm" -> "Kitsune's Farm";
             case "train_station" -> "Mountain Village Station"; case "school" -> "Elementalist School"; case "mountain_village" -> "Mountain Village";
-            case "gov_facility" -> "Government Facility, Aurora"; case "battlefield" -> "The Battlefield";
+            case "gov_facility" -> "Government Facility, Aurora"; case "battlefield" -> "The Highway of Broken Dreams";
             case "royal_palace" -> "The Royal Palace"; case "f2_ruins" -> "What's Left of F2"; case "palace_balcony" -> "The Palace Balcony";
             case "night_sky" -> "The Night Sky"; case "aurora_mall" -> "Aurora - the Mall"; case "underclass_city" -> "Underclass City";
             case "village_city" -> "Mountain Village - Downtown"; case "capital_arcade" -> "Royal Capital - the Arcade"; case "akuma_hq" -> "Akuma Squad HQ"; case "lab_hallway" -> "The Lab Hallway"; case "keepers_palace" -> "The Keepers' Palace";
@@ -250,7 +250,7 @@ public final class StoryScenes {
             case "train_station" -> station(l, c, rnd);
             case "school" -> StoryPlaces2.school(l, c, rnd);
             case "mountain_village" -> village(l, c, rnd);
-            case "battlefield" -> battlefield(l, c, rnd);
+            case "battlefield" -> StoryPlaces2.highway(l, c, rnd);
             case "royal_palace" -> StoryPlaces2.royalPalace(l, c, rnd);
             case "f2_ruins" -> StoryPlaces2.f2Ruins(l, c, rnd);
             case "palace_balcony" -> StoryPlaces2.balcony(l, c, rnd);
