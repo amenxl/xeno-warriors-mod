@@ -9,7 +9,7 @@
       "id": "f1", "title": "The Ultimate Weapon", "karma": 15000, "lvl": 10,
       "desc": "Year 100. A Government car pulls up beside the Xeno Warriors.",
       "steps": [
-        {"type": "scene", "place": "mountain_village", "npcs": ["mikiko", "rhalix"], "lines": [
+        {"type": "scene", "place": "village_city", "npcs": ["mikiko", "rhalix"], "lines": [
           {"s": "num3602", "n": "3-6-0-2", "t": "You two - and you! The Government needs your help. There's a war on.", "group": "You two - and all of you! The Government needs your help. There's a war on."},
           {"s": "num3602", "n": "3-6-0-2", "t": "C1 made a chip that lets a human use 100% of themselves. We called him Ultima. A virus got in. He's killing everyone."},
           {"s": "mikiko", "t": "Can the virus be removed?"},

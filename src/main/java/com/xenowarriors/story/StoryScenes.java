@@ -19,7 +19,8 @@ public final class StoryScenes {
     private StoryScenes() {}
 
     public static final List<String> PLACES = List.of("sp_hideout", "aurora_street", "sr_hideout", "royal_capital", "sky_island", "farm",
-            "train_station", "school", "mountain_village", "gov_facility", "battlefield", "sr_tunnels", "sr_barracks", "sr_cells");
+            "train_station", "school", "mountain_village", "gov_facility", "battlefield", "sr_tunnels", "sr_barracks", "sr_cells",
+            "royal_palace", "f2_ruins", "palace_balcony", "night_sky", "aurora_mall", "underclass_city", "village_city", "capital_arcade", "akuma_hq", "lab_hallway", "keepers_palace");
     public static final int R = 22, Y = 100, SPACING = 512, Z0 = 60000, PLACE_GAP = 160;
 
     /** How far a place reaches (its floor's radius): bigger places for the big fights, so a crowd doesn't all end up in one spot. */
@@ -27,7 +28,8 @@ public final class StoryScenes {
         if (place == null) return R;
         return switch (place) {
             case "sr_hideout", "sr_tunnels", "sr_barracks", "sr_cells", "battlefield" -> 34;
-            case "royal_capital", "aurora_street", "gov_facility", "school", "sp_hideout", "farm", "mountain_village" -> 30;
+            case "royal_capital", "aurora_street", "gov_facility", "school", "sp_hideout", "farm", "mountain_village",
+                 "royal_palace", "f2_ruins", "night_sky", "aurora_mall", "underclass_city", "village_city", "akuma_hq", "keepers_palace" -> 30;
             default -> R;
         };
     }
@@ -39,6 +41,9 @@ public final class StoryScenes {
             case "royal_capital" -> "Royal Capital"; case "sky_island" -> "Sky Island"; case "farm" -> "Kitsune's Farm";
             case "train_station" -> "Mountain Village Station"; case "school" -> "Elementalist School"; case "mountain_village" -> "Mountain Village";
             case "gov_facility" -> "Government Facility, Aurora"; case "battlefield" -> "The Battlefield";
+            case "royal_palace" -> "The Royal Palace"; case "f2_ruins" -> "What's Left of F2"; case "palace_balcony" -> "The Palace Balcony";
+            case "night_sky" -> "The Night Sky"; case "aurora_mall" -> "Aurora - the Mall"; case "underclass_city" -> "Underclass City";
+            case "village_city" -> "Mountain Village - Downtown"; case "capital_arcade" -> "Royal Capital - the Arcade"; case "akuma_hq" -> "Akuma Squad HQ"; case "lab_hallway" -> "The Lab Hallway"; case "keepers_palace" -> "The Keepers' Palace";
             case "sr_tunnels" -> "SR Hideout - the Tunnels"; case "sr_barracks" -> "SR Hideout - the Barracks"; case "sr_cells" -> "SR Hideout - the Cells"; default -> place;
         };
     }
@@ -178,13 +183,15 @@ public final class StoryScenes {
 
     // ------------------------------------------------------------------ building
 
-    private static void set(ServerLevel l, BlockPos p, BlockState s) { l.setBlock(p, s, 2); }
+    static BlockState b(net.minecraft.world.level.block.Block k) { return k.defaultBlockState(); }
 
-    private static void fill(ServerLevel l, BlockPos c, int x0, int y0, int z0, int x1, int y1, int z1, BlockState s) {
+    static void set(ServerLevel l, BlockPos p, BlockState s) { l.setBlock(p, s, 2); }
+
+    static void fill(ServerLevel l, BlockPos c, int x0, int y0, int z0, int x1, int y1, int z1, BlockState s) {
         for (int x = x0; x <= x1; x++) for (int y = y0; y <= y1; y++) for (int z = z0; z <= z1; z++) set(l, c.offset(x, y, z), s);
     }
 
-    private static boolean inside(int x, int z, int r) { return x * x + z * z <= r * r; }
+    static boolean inside(int x, int z, int r) { return x * x + z * z <= r * r; }
 
     static void build(ServerLevel l, BlockPos c, String place) {
         final int R = radius(place);                                             // (this place's own size)
@@ -197,12 +204,24 @@ public final class StoryScenes {
             case "aurora_street", "gov_facility" -> { floor = Blocks.GRAY_CONCRETE.defaultBlockState(); floor2 = Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(); edge = Blocks.SMOOTH_STONE.defaultBlockState(); }
             case "sr_hideout", "sr_tunnels", "sr_barracks", "sr_cells" -> { floor = Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); floor2 = Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS.defaultBlockState(); edge = Blocks.BLACKSTONE.defaultBlockState(); }
             case "royal_capital" -> { floor = Blocks.QUARTZ_BLOCK.defaultBlockState(); floor2 = Blocks.SMOOTH_QUARTZ.defaultBlockState(); edge = Blocks.GOLD_BLOCK.defaultBlockState(); }
+            case "royal_palace" -> { floor = b(Blocks.PURPLE_TERRACOTTA); floor2 = b(Blocks.POLISHED_BLACKSTONE); edge = b(Blocks.SMOOTH_QUARTZ); }
+            case "f2_ruins" -> { floor = b(Blocks.RED_SAND); floor2 = b(Blocks.ORANGE_TERRACOTTA); edge = b(Blocks.TERRACOTTA); }
+            case "palace_balcony" -> { floor = b(Blocks.PURPUR_BLOCK); floor2 = b(Blocks.PURPUR_PILLAR); edge = b(Blocks.SMOOTH_QUARTZ); }
+            case "night_sky" -> { floor = b(Blocks.PURPLE_STAINED_GLASS); floor2 = b(Blocks.WHITE_STAINED_GLASS); edge = b(Blocks.PURPLE_WOOL); }
+            case "aurora_mall" -> { floor = b(Blocks.BLUE_TERRACOTTA); floor2 = b(Blocks.PURPLE_TERRACOTTA); edge = b(Blocks.STONE); }
+            case "village_city" -> { floor = b(Blocks.GRAY_CONCRETE); floor2 = b(Blocks.LIGHT_GRAY_CONCRETE); edge = b(Blocks.STONE); }
+            case "keepers_palace" -> { floor = b(Blocks.GRASS_BLOCK); floor2 = b(Blocks.GRASS_BLOCK); edge = b(Blocks.DIRT); }
+            case "lab_hallway" -> { floor = b(Blocks.LIGHT_GRAY_CONCRETE); floor2 = b(Blocks.GRAY_CONCRETE); edge = b(Blocks.STONE); }
+            case "akuma_hq" -> { floor = b(Blocks.GRAY_CONCRETE); floor2 = b(Blocks.COBBLESTONE); edge = b(Blocks.STONE); }
+            case "capital_arcade" -> { floor = b(Blocks.GRASS_BLOCK); floor2 = b(Blocks.GRASS_BLOCK); edge = b(Blocks.DIRT); }
+            case "underclass_city" -> { floor = b(Blocks.GRAY_CONCRETE); floor2 = b(Blocks.CYAN_TERRACOTTA); edge = b(Blocks.STONE); }
             case "school" -> { floor = Blocks.STONE_BRICKS.defaultBlockState(); floor2 = Blocks.MOSSY_STONE_BRICKS.defaultBlockState(); edge = Blocks.DEEPSLATE_BRICKS.defaultBlockState(); }
             case "train_station" -> { floor = Blocks.SMOOTH_STONE.defaultBlockState(); floor2 = Blocks.STONE.defaultBlockState(); edge = Blocks.STONE_BRICKS.defaultBlockState(); }
             case "battlefield" -> { floor = Blocks.COARSE_DIRT.defaultBlockState(); floor2 = Blocks.GRAVEL.defaultBlockState(); edge = Blocks.STONE.defaultBlockState(); }
             default -> { floor = Blocks.GRASS_BLOCK.defaultBlockState(); floor2 = Blocks.GRASS_BLOCK.defaultBlockState(); edge = Blocks.DIRT.defaultBlockState(); }
         }
-        boolean floating = place.equals("sky_island") || place.equals("royal_capital");
+        boolean floating = place.equals("sky_island") || place.equals("royal_capital") || place.equals("royal_palace")
+                || place.equals("palace_balcony") || place.equals("night_sky") || place.equals("capital_arcade");
         for (int x = -R; x <= R; x++) for (int z = -R; z <= R; z++) {
             if (!inside(x, z, R)) continue;
             set(l, c.offset(x, 0, z), rnd.nextInt(5) == 0 ? floor2 : floor);
@@ -224,19 +243,30 @@ public final class StoryScenes {
             case "sr_hideout" -> srHideout(l, c, rnd);
             case "sr_tunnels" -> srTunnels(l, c, rnd);
             case "sr_barracks" -> srBarracks(l, c, rnd);
-            case "sr_cells" -> srCells(l, c, rnd);
-            case "royal_capital" -> capital(l, c, rnd);
+            case "sr_cells" -> { srCells(l, c, rnd); StoryPlaces2.clockWindow(l, c, rnd); }
+            case "royal_capital" -> StoryPlaces2.capital(l, c, rnd);
             case "sky_island" -> island(l, c, rnd);
             case "farm" -> farm(l, c, rnd);
             case "train_station" -> station(l, c, rnd);
-            case "school" -> school(l, c, rnd);
+            case "school" -> StoryPlaces2.school(l, c, rnd);
             case "mountain_village" -> village(l, c, rnd);
             case "battlefield" -> battlefield(l, c, rnd);
+            case "royal_palace" -> StoryPlaces2.royalPalace(l, c, rnd);
+            case "f2_ruins" -> StoryPlaces2.f2Ruins(l, c, rnd);
+            case "palace_balcony" -> StoryPlaces2.balcony(l, c, rnd);
+            case "night_sky" -> StoryPlaces2.nightSky(l, c, rnd);
+            case "aurora_mall" -> StoryPlaces2.mall(l, c, rnd);
+            case "underclass_city" -> StoryPlaces2.underclass(l, c, rnd);
+            case "village_city" -> StoryPlaces2.villageCity(l, c, rnd);
+            case "capital_arcade" -> StoryPlaces2.arcade(l, c, rnd);
+            case "akuma_hq" -> StoryPlaces2.akumaHq(l, c, rnd);
+            case "lab_hallway" -> StoryPlaces2.labHallway(l, c, rnd);
+            case "keepers_palace" -> StoryPlaces2.keepersPalace(l, c, rnd);
             default -> {}
         }
     }
 
-    private static void box(ServerLevel l, BlockPos c, int x0, int z0, int x1, int z1, int h, BlockState wall, BlockState roof, BlockState window) {
+    static void box(ServerLevel l, BlockPos c, int x0, int z0, int x1, int z1, int h, BlockState wall, BlockState roof, BlockState window) {
         for (int x = x0; x <= x1; x++) for (int z = z0; z <= z1; z++) for (int y = 1; y <= h; y++) {
             boolean side = x == x0 || x == x1 || z == z0 || z == z1;
             if (!side) continue;
@@ -250,7 +280,7 @@ public final class StoryScenes {
         box(l, c, x, z, x + w, z + w, h, wall, wall, glass);
     }
 
-    private static void lamp(ServerLevel l, BlockPos c, int x, int z) {
+    static void lamp(ServerLevel l, BlockPos c, int x, int z) {
         fill(l, c, x, 1, z, x, 3, z, Blocks.IRON_BARS.defaultBlockState());
         set(l, c.offset(x, 4, z), Blocks.SEA_LANTERN.defaultBlockState());
     }
@@ -342,6 +372,7 @@ public final class StoryScenes {
         fill(l, c, -18, 1, 14, 18, 3, 14, Blocks.IRON_BARS.defaultBlockState());                 // the fence
         fill(l, c, -3, 1, 14, 3, 3, 14, Blocks.AIR.defaultBlockState());
         set(l, c.offset(0, 6, -6), Blocks.REDSTONE_LAMP.defaultBlockState());
+        StoryPlaces2.gasRoom(l, c, r);
     }
 
     /** Outside the SR hideout's main hall: side halls and guard posts (the hideout's a lot bigger now). */
@@ -392,11 +423,12 @@ public final class StoryScenes {
 
     /** The cells: a long block of barred cells down both sides, where they keep their prisoners. */
     private static void srCells(ServerLevel l, BlockPos c, RandomSource r) {
-        box(l, c, -28, -24, 28, 6, 7, Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), Blocks.BLACKSTONE_SLAB.defaultBlockState(), null);
+        box(l, c, -28, -24, 28, 6, 13, Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), Blocks.BLACKSTONE_SLAB.defaultBlockState(), null);   // (tall: the clock window's up the back wall)
         fill(l, c, -3, 1, 6, 3, 4, 6, Blocks.AIR.defaultBlockState());
         for (int x = -26; x <= 22; x += 6) {
             if (Math.abs(x) < 4 || Math.abs(x + 4) < 4) continue;
-            for (int z0 : new int[]{-23, -6}) {                                  // a cell: three walls of stone, bars in front
+            for (int z0 : new int[]{-23, -6}) {
+                if (z0 == -23 && x + 4 >= -10 && x <= 10) continue;               // (the middle of the back wall: the clock window)                                  // a cell: three walls of stone, bars in front
                 int zf = z0 == -23 ? z0 + 4 : z0 - 4;
                 fill(l, c, x, 1, Math.min(z0, zf), x, 4, Math.max(z0, zf), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState());
                 fill(l, c, x + 1, 1, zf, x + 4, 4, zf, Blocks.IRON_BARS.defaultBlockState());
@@ -443,14 +475,11 @@ public final class StoryScenes {
             BlockState crop = (x + z) % 3 == 0 ? Blocks.CARROTS.defaultBlockState() : Blocks.WHEAT.defaultBlockState();
             set(l, c.offset(x, 1, z), crop.getBlock() == Blocks.WHEAT ? crop.setValue(net.minecraft.world.level.block.CropBlock.AGE, 7) : crop.setValue(net.minecraft.world.level.block.CarrotBlock.AGE, 7));
         }
-        box(l, c, 5, -16, 15, -8, 4, Blocks.OAK_PLANKS.defaultBlockState(), Blocks.RED_TERRACOTTA.defaultBlockState(), Blocks.GLASS_PANE.defaultBlockState());   // Kitsune's Farm Store
-        fill(l, c, 9, 1, -8, 10, 2, -8, Blocks.AIR.defaultBlockState());
-        fill(l, c, 6, 1, -15, 9, 1, -15, Blocks.BARREL.defaultBlockState());
-        set(l, c.offset(12, 1, -14), Blocks.COMPOSTER.defaultBlockState());
+        StoryPlaces2.farmStore(l, c, r);                                          // Kitsune's Farm Store (Mikiko's room upstairs)
         for (int x = -18; x <= 18; x++) if (inside(x, 12, R - 1)) set(l, c.offset(x, 1, 12), Blocks.OAK_FENCE.defaultBlockState());
         fill(l, c, -2, 1, 12, 2, 1, 12, Blocks.AIR.defaultBlockState());
         tree(l, c, 16, 4, r); tree(l, c, -16, 6, r);
-        set(l, c.offset(4, 1, -6), Blocks.HAY_BLOCK.defaultBlockState());
+        set(l, c.offset(2, 1, -4), Blocks.HAY_BLOCK.defaultBlockState());
     }
 
     private static void station(ServerLevel l, BlockPos c, RandomSource r) {

@@ -129,7 +129,7 @@
             {"text": "Go with Sam and Max to the Royal Capital.", "set": "capital", "reply": [{"s": "kyrie", "t": "Then you're getting dressed up too.", "group": "Then all of you are getting dressed up."}]}
           ]}
         ]},
-        {"type": "fight", "if": "aurora", "place": "aurora_street", "obj": "Find Lexy in Aurora", "allies": ["rhalix"], "waves": [
+        {"type": "fight", "if": "aurora", "place": "aurora_mall", "obj": "Find Lexy in Aurora", "allies": ["rhalix"], "waves": [
           [{"e": "sr", "n": 4}],
           [{"e": "sr:kill", "boss": true, "name": "Kill", "escape": 0.35}]
         ], "escape_lines": [
@@ -139,6 +139,13 @@
           {"s": "rhalix", "t": "Sounds like Max lied to your ass. My team's got me."},
           {"s": "kill", "t": "Too late anyway. Come in, newcomer!"},
           {"s": "lexy:persephone", "n": "Lexy (Persephone)", "t": "Captain... I'm scared... Lexy? No. She's gone."}
+        ]},
+        {"type": "scene", "if": "capital", "place": "capital_arcade", "npcs": ["sam", "max", "npc:messy"], "lines": [
+          {"s": "max", "n": "Maxine", "t": "Excuse me, sir. Which way to the palace?"},
+          {"s": "messy", "n": "Skylander", "t": "For you two lovely ladies? I'll walk you there myself... after dinner?"},
+          {"s": "sam", "n": "Samantha", "t": "(Girl voice) Hehe... we're in a hurry, mister."},
+          {"s": "messy", "n": "Skylander", "t": "Past the gardens, through the gate. Come find me later!"},
+          {"s": "max", "n": "Maxine", "t": "...Never speak of this, Sam."}
         ]},
         {"type": "fight", "if": "capital", "place": "royal_capital", "obj": "Get through the Royal Capital (in disguise)", "allies": ["sam", "max"], "waves": [
           [{"e": "knight", "n": 4}],
@@ -158,19 +165,25 @@
     },
     {
       "id": "r5", "title": "Kyrie (Ava)", "karma": 4500, "lvl": 4,
-      "desc": "The SR got to Kyrie first. Up on the sky island, something is wrong with her.",
+      "desc": "The SR got to Kyrie first. Up on the palace balcony, something is wrong with her.",
       "steps": [
-        {"type": "scene", "place": "sky_island", "npcs": ["sam", "max", "kyrie:ava"], "lines": [
+        {"type": "scene", "place": "palace_balcony", "npcs": ["sam", "max", "kyrie:ava"], "lines": [
           {"s": "max", "t": "Kyrie! Wake up, we're here to take you back."},
           {"s": "kyrie:ava", "n": "Kyrie (Ava)", "t": "The Skylander Kyrie is long gone. And you, Max - traitors to the SR die."},
           {"s": "max", "t": "I was going to join the Rebellion... then I realized I couldn't betray my team."},
           {"s": "sam", "t": "Max?! ...Fine. Vice captain, let's save Kyrie!", "group": "Max?! ...Fine. Everybody - let's save Kyrie!"}
         ]},
-        {"type": "fight", "place": "sky_island", "obj": "Stop Kyrie (Ava) without hurting Kyrie too much", "allies": ["sam", "rhalix"], "waves": [
+        {"type": "fight", "place": "palace_balcony", "obj": "Stop Kyrie (Ava) without hurting Kyrie too much", "allies": ["sam", "rhalix"], "waves": [
           [{"e": "sr", "n": 3}],
+          [{"e": "sr:ava@kyrie", "boss": true, "name": "Kyrie (Ava)", "escape": 0.6}]
+        ], "escape_lines": [
+          {"s": "kyrie:ava", "n": "Kyrie (Ava)", "t": "This body can fly. Catch me if you can!"},
+          {"s": "sam", "t": "She's taking off! After her!"}
+        ]},
+        {"type": "fight", "place": "night_sky", "obj": "Chase Kyrie (Ava) through the sky", "allies": ["sam", "rhalix"], "waves": [
           [{"e": "sr:ava@kyrie", "boss": true, "name": "Kyrie (Ava)"}]
         ]},
-        {"type": "scene", "place": "sky_island", "npcs": ["rhalix", "sam", "kyrie"], "meet": ["ava"], "lines": [
+        {"type": "scene", "place": "palace_balcony", "npcs": ["rhalix", "sam", "kyrie"], "meet": ["ava"], "lines": [
           {"s": "rhalix", "t": "Only Kyrie can break free. Come on, Kyrie!"},
           {"s": "kyrie", "t": "I'm NOT letting you take my body!!!"},
           {"s": "ava", "t": "Impossible... she pulled me out! This is all Logan's fault!"},
@@ -215,12 +228,12 @@
           {"s": "rhalix", "t": "The Mountain Village... that's where Mikiko lives!"},
           {"s": "max", "t": "We've got the new hideout handled. Go. Take {you}.", "group": "We've got the new hideout handled. Go. Take them with you."}
         ]},
-        {"type": "fight", "place": "mountain_village", "obj": "Help Mikiko against the Corrupted Souls", "allies": ["rhalix", "mikiko"], "waves": [
+        {"type": "fight", "place": "village_city", "obj": "Help Mikiko against the Corrupted Souls", "allies": ["rhalix", "mikiko"], "waves": [
           [{"e": "corrupted_soul", "n": 5}],
           [{"e": "corrupted_villager", "n": 4}, {"e": "corrupted_soul", "n": 2}],
           [{"e": "csoul_boss", "boss": true, "name": "Corrupted Guy 3"}]
         ]},
-        {"type": "scene", "place": "mountain_village", "npcs": ["rhalix", "mikiko"], "meet": ["mikiko"], "lines": [
+        {"type": "scene", "place": "village_city", "npcs": ["rhalix", "mikiko"], "meet": ["mikiko"], "lines": [
           {"s": "rhalix", "t": "Don't worry Mikiko, I got your back!"},
           {"s": "mikiko", "t": "I was waiting for you to jump in! ...Who's this?"},
           {"s": "rhalix", "t": "Sky Patrol's newest. They've been holding it down.", "group": "Sky Patrol's newest. All of them. They've been holding it down."},

@@ -148,12 +148,12 @@
           {"s": "fox_girl", "n": "Kitsune", "t": "...Yeah, I guess. Go find Rhalix. Take our new worker.", "group": "...Yeah, I guess. Go find Rhalix. Take the new workers."},
           {"s": "you", "t": "*grabs gear*"}
         ]},
-        {"type": "fight", "place": "mountain_village", "obj": "The C-Souls are after the Hekublade - fight them off", "allies": ["mikiko"], "waves": [
+        {"type": "fight", "place": "village_city", "obj": "The C-Souls are after the Hekublade - fight them off", "allies": ["mikiko"], "waves": [
           [{"e": "corrupted_soul", "n": 5}],
           [{"e": "corrupted_villager", "n": 4}],
           [{"e": "csoul_boss", "boss": true, "name": "Corrupted Guy 3"}]
         ]},
-        {"type": "scene", "place": "mountain_village", "npcs": ["mikiko", "rhalix"], "meet": ["rhalix"], "lines": [
+        {"type": "scene", "place": "village_city", "npcs": ["mikiko", "rhalix"], "meet": ["rhalix"], "lines": [
           {"s": "rhalix", "t": "Don't worry Mikiko, I got your back!"},
           {"s": "mikiko", "t": "Rhalix! I was waiting for you to jump in! This one works the farm with me.", "group": "Rhalix! I was waiting for you to jump in! These guys work the farm with me."},
           {"s": "rhalix", "t": "Farm work? Haha. Xeno Warrior reunion battle - winner's leader!"},
