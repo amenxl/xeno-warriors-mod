@@ -668,7 +668,7 @@ public class PartyBotEntity extends PathfinderMob {
      * hits, and isn't hopelessly outmatched).
      */
     LivingEntity rescueTarget() {
-        if (retreating || downed() || getHealth() < getMaxHealth() * 0.5F || sparring() || journey()) return null;
+        if (tickCount % 10 != 4 || retreating || downed() || getHealth() < getMaxHealth() * 0.5F || sparring() || journey()) return null;   // (a look twice a second)
         LivingEntity best = null; double bd = 24 * 24; PartyBotEntity saving = null;
         for (LivingEntity e : com.xenowarriors.party.Bonds.team(this)) {
             if (!(e instanceof PartyBotEntity mate) || mate == this || !mate.retreating || mate.level() != level()) continue;
