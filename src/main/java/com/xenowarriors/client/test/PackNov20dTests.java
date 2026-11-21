@@ -98,8 +98,10 @@ final class PackNov20dTests {
             pr[2] = pr[2] + " | hit " + hit + " hp " + p.getHealth() + "/" + p.getMaxHealth() + " dead " + p.isDeadOrDying() + " downed " + com.xenowarriors.party.Duels.isDowned(p)
                     + " why " + com.xenowarriors.gov.HealingPods.recallWhy + " mode " + p.gameMode.getGameModeForPlayer();
             if (!com.xenowarriors.gov.HealingPods.inPod(p) && !com.xenowarriors.party.Duels.isDowned(p) && p.isAlive()) {
-                p.setHealth(1F);
-                pr[2] = pr[2] + " | direct " + com.xenowarriors.gov.HealingPods.recall(p) + " " + com.xenowarriors.gov.HealingPods.recallWhy;
+                p.setHealth(0F);                                                // (the pack's own damage handling may keep the hit off: go down the way dying does)
+                boolean saved = net.minecraftforge.common.ForgeHooks.onLivingDeath(p, p.damageSources().generic());
+                if (p.getHealth() <= 0F) p.setHealth(1F);
+                pr[2] = pr[2] + " | death event cancelled " + saved + " " + com.xenowarriors.gov.HealingPods.recallWhy;
             }
         }), 20));
         l.add(new Step(null, () -> PackTests.server(p -> {
