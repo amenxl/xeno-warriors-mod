@@ -93,7 +93,14 @@ final class PackNov20dTests {
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
             p.setHealth(1F);
             p.invulnerableTime = 0;
-            p.hurt(p.damageSources().generic(), 1_000_000F);
+            com.xenowarriors.gov.HealingPods.recallWhy = "never called";
+            boolean hit = p.hurt(p.damageSources().generic(), 1_000_000F);
+            pr[2] = pr[2] + " | hit " + hit + " hp " + p.getHealth() + "/" + p.getMaxHealth() + " dead " + p.isDeadOrDying() + " downed " + com.xenowarriors.party.Duels.isDowned(p)
+                    + " why " + com.xenowarriors.gov.HealingPods.recallWhy + " mode " + p.gameMode.getGameModeForPlayer();
+            if (!com.xenowarriors.gov.HealingPods.inPod(p) && !com.xenowarriors.party.Duels.isDowned(p) && p.isAlive()) {
+                p.setHealth(1F);
+                pr[2] = pr[2] + " | direct " + com.xenowarriors.gov.HealingPods.recall(p) + " " + com.xenowarriors.gov.HealingPods.recallWhy;
+            }
         }), 20));
         l.add(new Step(null, () -> PackTests.server(p -> {
             BlockPos pod = (BlockPos) pr[0];

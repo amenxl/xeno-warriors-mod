@@ -302,6 +302,8 @@ public final class HealingPods {
 
     /** (Tests) how many times a pod caught someone going down. */
     public static int recalled;
+    /** (Tests) why the last try didn't take anyone. */
+    public static String recallWhy = "";
 
     /**
      * Going down (or about to die) near a free healing pod: sent straight into it to heal instead (16 blocks, more with
@@ -309,20 +311,22 @@ public final class HealingPods {
      * Journey or the Tower (those handle their own knock-outs). Returns true if a pod took them.
      */
     public static boolean recall(ServerPlayer p) {
-        if (p.isCreative() || p.isSpectator() || inPod(p) || !(p.level() instanceof ServerLevel l)) return false;
+        recallWhy = "called";
+        if (p.isCreative() || p.isSpectator() || inPod(p) || !(p.level() instanceof ServerLevel l)) { recallWhy = "creative/spectator/in a pod"; return false; }
         if (com.xenowarriors.story.StoryRun.inRun(p) || ArenaLock.sealed(p) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p)
                 || com.xenowarriors.ka.Clashes.inClash(p) || com.xenowarriors.vr.Vr.inVr(p) || com.xenowarriors.vr.Vr.is(l)
-                || com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(l)) return false;
+                || com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(l)) { recallWhy = "a mode"; return false; }
         int r = com.xenowarriors.apl.Apl.podRecallRange(p);
         BlockPos pod = nearestFree(l, p, r, Math.max(8, r / 2));
-        if (pod == null) return false;
+        if (pod == null) { recallWhy = "no free pod in " + r; return false; }
         p.setHealth(Math.max(1F, p.getHealth()));
         p.clearFire();
         p.removeEffect(MobEffects.WITHER); p.removeEffect(MobEffects.POISON);
         if (p.getAbilities().flying) { p.getAbilities().flying = false; p.onUpdateAbilities(); }
         p.fallDistance = 0;
         l.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, p.getX(), p.getY() + 1, p.getZ(), 20, 0.4, 0.8, 0.4, 0.05);
-        if (start(l, pod, p, 0, null) != null) return false;
+        String no = start(l, pod, p, 0, null);
+        if (no != null) { recallWhy = "start: " + no; return false; }
         recalled++;
         l.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, pod.getX() + 0.5, pod.getY() + 1, pod.getZ() + 0.5, 20, 0.4, 0.8, 0.4, 0.05);
         p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(0, 30, 8));
