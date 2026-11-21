@@ -1095,6 +1095,29 @@ final class PackNov20dTests {
                     "used " + (com.xenowarriors.compat.HealingStone.onTeammates - (Integer) hs[2]) + " hp " + PackTests.f(b.getHealth()) + "/" + PackTests.f(b.getMaxHealth()));
             PackTests.clear(p);
         }), 5));
+        // ---- a bot falling back hurt: a healthy teammate bot goes for whatever's chasing it
+        Object[] rsc = new Object[4];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+            PartyBotEntity a = PartyBots.spawn(p, CharacterType.LEXY, null), b = PartyBots.spawn(p, CharacterType.SAM, null);
+            if (a == null || b == null) return;
+            a.moveTo(p.getX() + 3, p.getY(), p.getZ() + 3, 0F, 0F); b.moveTo(p.getX() - 3, p.getY(), p.getZ() + 3, 0F, 0F);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            if (z == null) return;
+            z.moveTo(p.getX() + 5, p.getY(), p.getZ() + 6, 0F, 0F);
+            p.serverLevel().addFreshEntity(z);
+            z.setTarget(a);
+            a.setHealth(a.getMaxHealth() * 0.2F);
+            rsc[0] = a; rsc[1] = b; rsc[2] = z; rsc[3] = PartyBotEntity.rescues;
+        }), 60));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (!(rsc[1] instanceof PartyBotEntity b) || !(rsc[0] instanceof PartyBotEntity a)) return;
+            var z = (net.minecraft.world.entity.LivingEntity) rsc[2];
+            PackTests.check("bots: a healthy bot goes for what's chasing a teammate falling back hurt", PartyBotEntity.rescues > (Integer) rsc[3] && (b.getTarget() == z || !z.isAlive()),
+                    "fell back " + a.retreating + " rescues " + (PartyBotEntity.rescues - (Integer) rsc[3]) + " helper target " + b.getTarget() + " zombie alive " + z.isAlive());
+            z.discard(); PackTests.clear(p);
+        }), 5));
         // ---- story places: some barrels have healing potions in them
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

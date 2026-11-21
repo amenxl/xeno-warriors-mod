@@ -621,14 +621,16 @@ public class PartyBotEntity extends PathfinderMob {
         @Override public void start() {
             ticks = 0; calm = 0;
             retreats++;
+            retreating = true;
             ServerPlayer o = owner();
             if (o != null) o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(label()).append(canFly() ? " flies off to recover!" : " falls back to recover!")
                     .withStyle(net.minecraft.ChatFormatting.YELLOW), true);
         }
-        @Override public void stop() { if (canFly() && selfFlying) BotMoves.land(PartyBotEntity.this); getNavigation().stop(); setSprinting(false); }
+        @Override public void stop() { retreating = false; retreatThreat = null; if (canFly() && selfFlying) BotMoves.land(PartyBotEntity.this); getNavigation().stop(); setSprinting(false); }
         @Override public void tick() {
             ticks++;
             LivingEntity t = threat();
+            retreatThreat = t;
             if (t == null || distanceToSqr(t) > 16 * 16) { calm++; if (t == null) return; } else calm = 0;
             Vec3 away = position().subtract(t.position()).multiply(1, 0, 1);
             away = away.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : away.normalize();
@@ -653,6 +655,46 @@ public class PartyBotEntity extends PathfinderMob {
     }
     /** (Tests) times it pulled back to recover. */
     public int retreats;
+    /** Falling back to recover right now, and what it's getting away from (others come to cover it). */
+    public boolean retreating;
+    public LivingEntity retreatThreat;
+    /** (Tests) times a bot went in to cover a teammate that was falling back. */
+    public static int rescues;
+    private long rescueSaid;
+
+    /**
+     * A teammate bot falling back badly hurt with something after it: this bot goes for whatever's chasing it - if it's
+     * healthy enough itself (half its health or more) and strong enough to take it on (it can stand a good few of its
+     * hits, and isn't hopelessly outmatched).
+     */
+    LivingEntity rescueTarget() {
+        if (retreating || downed() || getHealth() < getMaxHealth() * 0.5F || sparring() || journey()) return null;
+        LivingEntity best = null; double bd = 24 * 24; PartyBotEntity saving = null;
+        for (LivingEntity e : com.xenowarriors.party.Bonds.team(this)) {
+            if (!(e instanceof PartyBotEntity mate) || mate == this || !mate.retreating || mate.level() != level()) continue;
+            LivingEntity t = mate.retreatThreat;
+            if (t == null || !t.isAlive() || t == this || PartyBots.friendly(this, t) || untouchable(t)) continue;
+            double d = distanceToSqr(t);
+            if (d > bd || !strongEnoughFor(t)) continue;
+            bd = d; best = t; saving = mate;
+        }
+        if (best != null && saving != null) {
+            rescues++;
+            ServerPlayer o = owner();
+            if (o != null && level().getGameTime() - rescueSaid > 200) {
+                rescueSaid = level().getGameTime();
+                o.displayClientMessage(net.minecraft.network.chat.Component.empty().append(label()).append(" jumps in to cover ").append(saving.label()).append("!").withStyle(net.minecraft.ChatFormatting.AQUA), true);
+            }
+        }
+        return best;
+    }
+
+    /** Can it take this one on: survive a good few of its hits, and not hopelessly outmatched? */
+    boolean strongEnoughFor(LivingEntity t) {
+        var atk = t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        double hit = atk == null ? 4 : Math.max(1, atk.getValue());
+        return getHealth() > hit * 4 && t.getHealth() < getHealth() * 6;
+    }
 
     /** In water it doesn't need to be in (or any lava): out onto the nearest dry land, fast. */
     class EscapeLiquid extends Goal {
@@ -829,6 +871,8 @@ public class PartyBotEntity extends PathfinderMob {
             ServerPlayer o = owner();
             if (o == null) return false;
             if (sparring()) { pick = BotSpar.pick(PartyBotEntity.this); return pick != null; }
+            LivingEntity rescue = rescueTarget();                                // a teammate bot falling back hurt: go for whatever's after it
+            if (rescue != null) { pick = rescue; return true; }
             if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) {    // a story split fight: the foes on its side of the bars
                 pick = com.xenowarriors.story.StoryRun.roomFoe(PartyBotEntity.this);
                 return pick != null && pick != getTarget();
