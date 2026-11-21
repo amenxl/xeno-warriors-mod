@@ -558,7 +558,7 @@
         },
         {
           "title": "Movie missions anywhere",
-          "text": "- DragonMineZ's movie missions don't need you at Kami's Lookout. The Movies saga's first step (Kami's Lookout Warning) and the side mission Dende's Lookout Vigil count \"be at Kami's Lookout\" as done wherever you are - start them and play them anywhere, in any world.\n- Dende comes to you for the talk (see Talk-to missions), and your bots talk to him themselves.\n- Everything else stays: the level each one needs, the saga order, and the steps before it.\n- Off with moviesWithoutLookout=false in config/xenowarriors-common.toml."
+          "text": "- DragonMineZ's movie missions don't need you at Kami's Lookout. The Movies saga's first step (Kami's Lookout Warning) and the side mission Dende's Lookout Vigil count \"be at Kami's Lookout\" as done wherever you are - start them and play them anywhere, in any world.\n- Dende comes to you for the talk (see Talk-to missions), and your bots talk to him themselves.\n- Piccolo Takes Gohan: you don't have to find Piccolo's house - that step counts straight away and Piccolo teleports to you for the talk.\n- Everything else stays: the level each one needs, the saga order, and the steps before it.\n- Off with moviesWithoutLookout=false in config/xenowarriors-common.toml."
         },
         {
           "title": "Mission help",

@@ -286,6 +286,30 @@ public final class DmzMovieTests {
             botHere(p, b, true);
             dump();
         }); }, 20);
+        // Piccolo Takes Gohan: no trip to Piccolo's house - the find counts at once and Piccolo comes to you
+        final String[] PK = new String[1];
+        step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            try {
+                var sagas = (Map<?, ?>) Class.forName("com.dragonminez.common.quest.QuestRegistry").getMethod("getAllSagas").invoke(null);
+                for (var en : sagas.entrySet()) for (Object q : (List<?>) call(en.getValue(), "getQuests"))
+                    for (Object o : (List<?>) call(q, "getObjectives"))
+                        if (o.getClass().getSimpleName().equals("StructureObjective") && "dragonminez:piccolo_house".equals(String.valueOf(call(o, "getStructureId"))))
+                            PK[0] = String.valueOf(stat("com.dragonminez.common.quest.PlayerQuestData", "sagaQuestKey", new Class<?>[]{String.class, int.class}, en.getKey(), call(q, "getId")));
+            } catch (Throwable t) { log("piccolo: couldn't read the sagas " + t + " FAIL"); }
+            if (PK[0] == null) { log("piccolo: no mission with Piccolo's house FAIL"); return; }
+            DmzQuests.accept(p, PK[0]);
+            DmzPerCharacter.syncAll(p);
+            log("piccolo: accepted " + PK[0] + " -> " + DmzQuests.progress(p, PK[0], 0));
+        }); }, 80);
+        step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            if (PK[0] == null) return;
+            DmzTalkNpcs.update(p);
+            String pr = DmzQuests.progress(p, PK[0], 0);
+            Entity e = DmzTalkNpcs.tempFor(p, PK[0]);
+            log("piccolo: away from his house " + pr + " | Piccolo came: " + (e == null ? "nobody" : e.getDisplayName().getString()) + " waived " + DmzMovieMissions.waivedAnywhere
+                    + (pr.contains("objective0=1") && e != null ? " OK" : " FAIL"));
+        }); }, 20);
+        step("dmzmovie_piccolo_came", () -> mc.setScreen(null), 5);
         step(null, () -> server(p -> { dump(); log("done"); }), 20);
     }
 }

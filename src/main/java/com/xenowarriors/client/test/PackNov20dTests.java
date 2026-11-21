@@ -74,6 +74,7 @@ final class PackNov20dTests {
             var c = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
             c.statLevel[0] = (int) hx[1];
             p.setSprinting(false);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 5));
         // ---- Pod Recall: going down, sent straight to a free healing pod - 40 blocks off needs rank 2 (48 blocks)
         Object[] pr = new Object[3];
@@ -85,12 +86,14 @@ final class PackNov20dTests {
             lv.setBlock(pod, st, 3);
             lv.setBlock(pod.above(), st.setValue(com.xenowarriors.gov.HealingPodBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), 3);
             pr[0] = pod; pr[1] = p.gameMode.getGameModeForPlayer();
+            com.xenowarriors.gov.HealingPods.wake(p);
             int base = com.xenowarriors.apl.Apl.podRecallRange(p);
             com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.POD_RECALL, 2);
             pr[2] = base + " -> " + com.xenowarriors.apl.Apl.podRecallRange(p);
             p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
-            p.setHealth(4F);
-            p.hurt(p.damageSources().generic(), 50F);
+            p.setHealth(1F);
+            p.invulnerableTime = 0;
+            p.hurt(p.damageSources().generic(), 1_000_000F);
         }), 20));
         l.add(new Step(null, () -> PackTests.server(p -> {
             BlockPos pod = (BlockPos) pr[0];

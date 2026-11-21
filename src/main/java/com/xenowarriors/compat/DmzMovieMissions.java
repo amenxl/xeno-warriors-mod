@@ -162,14 +162,36 @@ public final class DmzMovieMissions {
 
     /** QuestLocationHelper.isLocationConditionMet: a movie mission's "be at Kami's Lookout" objective is met anywhere. */
     public static boolean waiveObjective(Object objective) {
+        if (anywhere(objective)) {
+            if (waivedAnywhere++ < 3 || waivedAnywhere % 500 == 0) note("a 'find this place' objective counted as reached (" + waivedAnywhere + " so far)");
+            return true;
+        }
         if (!on() || !isLookout(objective) || !lookoutObjectives().contains(objective)) return false;
         if (waivedObjectives++ < 3 || waivedObjectives % 500 == 0) note("Lookout objective counted as reached (" + waivedObjectives + " so far)");
         return true;
     }
 
+    /**
+     * Places you never have to go to for a mission, whatever the mission: Piccolo's house (Piccolo Takes Gohan - "find
+     * Piccolo's house and talk to him": the find counts at once and Piccolo comes to you for the talk, see DmzTalkNpcs).
+     */
+    public static final Set<String> ANYWHERE = Set.of("dragonminez:piccolo_house");
+    /** (For the tests) how often one of those was counted as reached. */
+    public static int waivedAnywhere;
+
+    private static boolean anywhere(Object objective) {
+        try {
+            return objective != null && objective.getClass().getSimpleName().equals("StructureObjective") && ANYWHERE.contains(String.valueOf(call(objective, "getStructureId")));
+        } catch (Throwable t) { return false; }
+    }
+
     /** QuestAvailabilityChecker.evaluateCondition: a movie mission's "be at Kami's Lookout" start requirement is met anywhere. */
     public static boolean waiveCondition(Object condition, Object context) {
-        if (!on() || condition == null || context == null) return false;
+        if (condition == null) return false;
+        try {
+            if ("STRUCTURE".equals(String.valueOf(call(condition, "getType"))) && ANYWHERE.contains(String.valueOf(call(condition, "getStructureId")))) return true;
+        } catch (Throwable ignored) {}
+        if (!on() || context == null) return false;
         try {
             if (!"STRUCTURE".equals(String.valueOf(call(condition, "getType"))) || !LOOKOUT.equals(call(condition, "getStructureId"))) return false;
             String key = (String) call(context, "questKey");
