@@ -41,7 +41,8 @@
     "ServerGamePacketListenerAccessor",
     "BlockItemSaveMixin",
     "PlayerSaveSnapshotMixin",
-    "ItemStackWearMixin"
+    "ItemStackWearMixin",
+    "BigModPacketMixin"
   ],
   "client": [
     "compat.GeckoBufferGuardMixin",
