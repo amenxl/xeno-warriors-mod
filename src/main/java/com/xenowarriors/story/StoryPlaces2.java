@@ -701,8 +701,8 @@ final class StoryPlaces2 {
             }
         }
         for (int x = -22; x <= 22; x += 11) {                                             // street lamps
-            fill(l, c, x, 1, -5, x, 6, -5, b(Blocks.POLISHED_ANDESITE_WALL));
-            set(l, c.offset(x, 7, -5), b(Blocks.POLISHED_ANDESITE_WALL));
+            fill(l, c, x, 1, -5, x, 6, -5, b(Blocks.ANDESITE_WALL));
+            set(l, c.offset(x, 7, -5), b(Blocks.ANDESITE_WALL));
             set(l, c.offset(x, 7, -4), b(Blocks.OCHRE_FROGLIGHT));
         }
         for (int x : new int[]{-26, -16, 16}) { set(l, c.offset(x, 1, -6), stair(Blocks.SPRUCE_STAIRS, Direction.NORTH, false)); set(l, c.offset(x + 1, 1, -6), stair(Blocks.SPRUCE_STAIRS, Direction.NORTH, false)); }   // benches
@@ -1097,5 +1097,206 @@ final class StoryPlaces2 {
         for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) for (int dy = 4; dy <= 5; dy++) set(l, c.offset(21 + dx, dy, -1 + dz), b(Blocks.HAY_BLOCK));
         fill(l, c, -14, 1, 14, -10, 2, 16, b(Blocks.IRON_BLOCK));                         // a wrecked Government truck
         set(l, c.offset(-12, 3, 15), b(Blocks.CAMPFIRE));
+    }
+
+    // ------------------------------------------------------------------ the Government hall (the last fight with Ultima)
+
+    /**
+     * The last fight with Ultima (the user's pictures): a tall, empty Government hall - mauve walls with deep red trim
+     * at floor and ceiling, big recessed panels between square pillars, arches in the side walls, a pale tiled floor.
+     * {@code stage} 1: Rhalix has blasted a hole high in the far wall to see the moon (a full moon among clouds, and a
+     * pool of moonlight on the floor); 2: a second hole in the right wall, where Kyrie and Zack burst in - the city's
+     * lights beyond it.
+     */
+    static void govHall(ServerLevel l, BlockPos c, RandomSource r, int stage) {
+        int x0 = -22, x1 = 22, zb = -24, zf = 14, h = 14;
+        BlockState wall = b(Blocks.PINK_TERRACOTTA), panel = b(Blocks.LIGHT_GRAY_TERRACOTTA), trim = b(Blocks.RED_TERRACOTTA), pillar = b(Blocks.MAGENTA_TERRACOTTA);
+        for (int x = x0; x <= x1; x++) for (int z = zb; z <= zf; z++) {
+            set(l, c.offset(x, 0, z), b(Math.floorMod(x, 6) == 0 || Math.floorMod(z, 6) == 0 ? Blocks.WHITE_TERRACOTTA : Blocks.SMOOTH_QUARTZ));
+            set(l, c.offset(x, h + 1, z), b(Blocks.PINK_TERRACOTTA));
+            boolean side = x == x0 || x == x1 || z == zb || z == zf;
+            if (!side) continue;
+            for (int y = 1; y <= h; y++) {
+                BlockState st = y == 1 || y == h ? trim : wall;
+                boolean along = z == zb || z == zf;
+                int k = along ? x : z;
+                if (y > 1 && y < h - 1 && Math.floorMod(k, 10) != 0) st = (along && z == zb) ? panel : st;   // the back wall's recessed panels
+                if (Math.floorMod(k, 10) == 0 && y > 1 && y < h) st = pillar;
+                set(l, c.offset(x, y, z), st);
+            }
+        }
+        for (int z = zb + 3; z <= zf - 3; z += 12) for (int s2 : new int[]{x0, x1}) {   // arches in the side walls
+            for (int y = 2; y <= 9; y++) for (int dz = -3; dz <= 3; dz++) {
+                double top = 6 + Math.sqrt(Math.max(0, 9 - dz * dz));
+                if (y <= top) set(l, c.offset(s2, y, z + dz), panel);
+            }
+        }
+        fill(l, c, -2, 1, zf, 2, 4, zf, b(Blocks.AIR));                                  // the way in
+        for (int x = -16; x <= 16; x += 8) set(l, c.offset(x, h, -4), b(Blocks.SEA_LANTERN));
+        if (stage >= 1) {
+            // the hole in the far wall, the moon and clouds beyond, the moonlight on the floor
+            for (int x = -9; x <= 9; x++) for (int y = 5; y <= h + 1; y++) {
+                double dy = (y - 10) / 1.1, rr = 8.5 + ((x * 31 + y * 17) % 3 - 1) * 0.6;
+                if (x * x + dy * dy * 1.6 <= rr * rr) set(l, c.offset(x, y, zb), b(Blocks.AIR));
+            }
+            for (int x = -10; x <= 10; x++) for (int y = 3; y <= 20; y++) for (int z = zb - 8; z < zb; z++) set(l, c.offset(x, y, z), b(Blocks.AIR));
+            for (int x = -4; x <= 4; x++) for (int y = -4; y <= 4; y++) if (x * x + y * y <= 17) set(l, c.offset(x, 12 + y, zb - 8), b(x * x + y * y <= 8 ? Blocks.SEA_LANTERN : Blocks.WHITE_CONCRETE));
+            for (int[] cl : new int[][]{{-7, 8}, {-5, 7}, {6, 9}, {7, 8}, {4, 6}, {-8, 13}, {8, 13}}) set(l, c.offset(cl[0], cl[1], zb - 6), b(Blocks.BLUE_WOOL));
+            for (int i = 0; i < 12; i++) set(l, c.offset(r.nextInt(18) - 9, 6 + r.nextInt(14), zb - 7), b(Blocks.END_ROD));
+            for (int x = -8; x <= 8; x++) for (int z = zb + 1; z <= zb + 12; z++) {
+                if (x * x / 64.0 + (z - zb - 6) * (z - zb - 6) / 36.0 > 1 + ((x * 7 + z * 3) % 3) * 0.1) continue;
+                set(l, c.offset(x, 0, z), b(Blocks.WHITE_CONCRETE));
+                if (((x + z) & 3) == 0) set(l, c.offset(x, 1, z), b(Blocks.LIGHT).setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 12));
+            }
+        }
+        if (stage >= 2) {
+            // the hole in the right wall, and the city at night through it
+            for (int z = -10; z <= 0; z++) for (int y = 3; y <= 11; y++) {
+                double dz = z + 5, dy = (y - 7) * 1.2;
+                if (dz * dz + dy * dy <= 26 + ((z * 13 + y * 7) % 4)) set(l, c.offset(x1, y, z), b(Blocks.AIR));
+            }
+            for (int[] t : new int[][]{{-9, 10}, {-6, 14}, {-2, 8}, {1, 12}}) {
+                int tz = t[0], th = t[1];
+                for (int dz = 0; dz <= 2; dz++) for (int y = 1; y <= th; y++) set(l, c.offset(x1 + 7, y, tz + dz), b(y % 3 == 0 && dz == 1 ? Blocks.SHROOMLIGHT : Blocks.BLACK_CONCRETE));
+            }
+            for (int z = -10; z <= 0; z++) set(l, c.offset(x1 + 1, 2, z), b(Blocks.PINK_TERRACOTTA));   // (rubble at the edge)
+        }
+    }
+
+    // ------------------------------------------------------------------ the Tenjos' village (Year 90)
+
+    /**
+     * Where the Tenjos hid (the user's picture; Kyle and Technica hunting Yuri's family, Year 90): an old village of
+     * cottages - cream and tan stucco, one of brick, brown shingle roofs and chimneys, ivy on the walls - along a
+     * winding dirt road with grass at its edges, bushes, and tall trees.
+     */
+    static void tenjoVillage(ServerLevel l, BlockPos c, RandomSource r) {
+        int RR = radius("tenjo_village");
+        for (int x = -RR; x <= RR; x++) for (int z = -RR; z <= RR; z++) {
+            if (!inside(x, z, RR)) continue;
+            double mid = Math.sin(z * 0.12) * 4;                                         // the road winds
+            if (Math.abs(x - mid) <= 3.5) set(l, c.offset(x, 0, z), b(r.nextInt(5) == 0 ? Blocks.COARSE_DIRT : Blocks.DIRT_PATH));
+        }
+        // {x, z, w, d, h, wall kind, chimney}: the cottages
+        int[][] hs = {{-24, -6, 9, 8, 5, 0, 1}, {-16, -24, 7, 7, 6, 1, 1}, {-2, -28, 9, 7, 5, 2, 0}, {10, -14, 8, 9, 6, 3, 1}, {12, 2, 12, 9, 7, 1, 1}, {-22, 8, 8, 7, 4, 3, 0}};
+        for (int[] hh : hs) {
+            int hx = hh[0], hz = hh[1], w = hh[2], d = hh[3], h = hh[4];
+            BlockState wall = switch (hh[5]) { case 0 -> b(Blocks.WHITE_TERRACOTTA); case 1 -> b(Blocks.CALCITE); case 2 -> b(Blocks.BRICKS); default -> b(Blocks.SMOOTH_SANDSTONE); };
+            for (int x = hx; x <= hx + w; x++) for (int z = hz; z <= hz + d; z++) {
+                if (!inside(x, z, RR - 1)) continue;
+                boolean side = x == hx || x == hx + w || z == hz || z == hz + d;
+                for (int y = 1; y <= h; y++) if (side) {
+                    BlockState st = wall;
+                    if (y == 3 && (x - hx) % 3 == 1 && (z == hz || z == hz + d)) st = b(Blocks.GLASS_PANE);
+                    if (r.nextInt(14) == 0 && y < h) st = b(Blocks.MOSS_BLOCK);              // (ivy)
+                    set(l, c.offset(x, y, z), st);
+                }
+                // the roof: ridge along x, sloping down to the front and back
+                int fromEdge = Math.min(z - hz, hz + d - z);
+                if (fromEdge <= d / 2) set(l, c.offset(x, h + 1 + fromEdge, z), b(Blocks.DARK_OAK_PLANKS));
+                if ((x == hx || x == hx + w) && fromEdge > 0) for (int y = h + 1; y <= h + fromEdge; y++) set(l, c.offset(x, y, z), wall);   // the gables
+            }
+            int dx = hx + w / 2, front = Math.abs(hz + d) < Math.abs(hz) ? hz + d : hz;     // the door faces the road (the middle)
+            fill(l, c, dx, 1, front, dx, 2, front, b(Blocks.SPRUCE_PLANKS));
+            set(l, c.offset(dx, 2, front), b(Blocks.SPRUCE_TRAPDOOR));
+            if (hh[6] == 1) fill(l, c, hx + 1, h + 1, hz + d / 2, hx + 1, h + d / 2 + 3, hz + d / 2, b(Blocks.BRICKS));   // the chimney
+            bush(l, c, hx + w + 1, front + (front == hz ? -1 : 1), r);
+        }
+        for (int[] t : new int[][]{{-12, -14}, {4, -20}, {-27, 0}, {24, -4}}) {
+            int h = 7 + r.nextInt(3);
+            fill(l, c, t[0], 1, t[1], t[0], h, t[1], b(Blocks.OAK_LOG));
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) for (int dy = -1; dy <= 1; dy++)
+                if (dx * dx + dz * dz + dy * dy * 2 <= 6) set(l, c.offset(t[0] + dx, h + dy, t[1] + dz), leaves(Blocks.OAK_LEAVES));
+        }
+    }
+
+    // ------------------------------------------------------------------ inside the Tenjos' hideaway house
+
+    /**
+     * Inside the house the Tenjos ran to (the user's picture): a dusty hall with warm cracked plaster walls, a
+     * wooden floor with litter, a boarded-up door, windows, a broken mirror, a framed cactus picture, a bench and a
+     * little cabinet, an open doorway glowing yellow, a wooden staircase going up - and cobwebs everywhere.
+     */
+    static void tenjoHouse(ServerLevel l, BlockPos c, RandomSource r) {
+        int x0 = -16, x1 = 16, zb = -16, zf = 12, h = 7;
+        BlockState wall = b(Blocks.WHITE_TERRACOTTA), wood = b(Blocks.SPRUCE_PLANKS);
+        for (int x = x0; x <= x1; x++) for (int z = zb; z <= zf; z++) {
+            set(l, c.offset(x, 0, z), b(((x + z * 3) & 7) == 0 ? Blocks.STRIPPED_ACACIA_WOOD : Blocks.ACACIA_PLANKS));
+            set(l, c.offset(x, h + 1, z), b(Blocks.TERRACOTTA));
+            boolean side = x == x0 || x == x1 || z == zb || z == zf;
+            if (side) for (int y = 1; y <= h; y++) set(l, c.offset(x, y, z), y == 1 || y == h ? wood : r.nextInt(12) == 0 ? b(Blocks.TERRACOTTA) : wall);
+        }
+        fill(l, c, -1, 1, zf, 1, 3, zf, b(Blocks.AIR));                                  // the way in
+        // the boarded-up door (west wall)
+        fill(l, c, x0, 1, -4, x0, 3, -3, b(Blocks.DARK_OAK_PLANKS));
+        for (int y : new int[]{1, 3}) { set(l, c.offset(x0 + 1, y + 0, -4), slab(Blocks.SPRUCE_SLAB, true)); set(l, c.offset(x0 + 1, y, -3), slab(Blocks.SPRUCE_SLAB, true)); }
+        // windows, the mirror, the cactus picture
+        for (int x : new int[]{-11, -10, 10, 11}) fill(l, c, x, 3, zb, x, 4, zb, b(Blocks.GLASS));
+        fill(l, c, x1, 3, -6, x1, 4, -5, b(Blocks.GLASS));
+        set(l, c.offset(-5, 4, zb + 1), b(Blocks.WHITE_STAINED_GLASS));
+        set(l, c.offset(6, 4, zb + 1), b(Blocks.POTTED_CACTUS));
+        // the yellow doorway
+        fill(l, c, -1, 1, zb, 1, 4, zb, b(Blocks.YELLOW_CONCRETE));
+        fill(l, c, -2, 1, zb + 1, -2, 4, zb + 1, wood); fill(l, c, 2, 1, zb + 1, 2, 4, zb + 1, wood); fill(l, c, -2, 5, zb + 1, 2, 5, zb + 1, wood);
+        set(l, c.offset(0, 1, zb + 1), b(Blocks.LIGHT).setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 10));
+        // the cabinet, the bench, the fallen broom, litter
+        fill(l, c, -9, 1, zb + 1, -7, 1, zb + 1, b(Blocks.BARREL));
+        set(l, c.offset(5, 1, -6), stair(Blocks.SPRUCE_STAIRS, Direction.WEST, false)); set(l, c.offset(5, 1, -5), stair(Blocks.SPRUCE_STAIRS, Direction.WEST, false));
+        set(l, c.offset(3, 1, -12), b(Blocks.LIGHTNING_ROD));
+        for (int i = 0; i < 8; i++) set(l, c.offset(r.nextInt(28) - 14, 1, r.nextInt(24) - 14), b(Blocks.WHITE_CARPET));
+        // the staircase up the east wall
+        for (int k = 0; k < h - 1; k++) { set(l, c.offset(x1 - 2, 1 + k, 6 - k), stair(Blocks.SPRUCE_STAIRS, Direction.NORTH, false)); set(l, c.offset(x1 - 1, 1 + k, 6 - k), stair(Blocks.SPRUCE_STAIRS, Direction.NORTH, false)); set(l, c.offset(x1 - 3, 2 + k, 6 - k), b(Blocks.SPRUCE_FENCE)); }
+        fill(l, c, x1 - 2, h + 1, -2, x1 - 1, h + 1, 6, b(Blocks.AIR));
+        // the lamp and the cobwebs
+        set(l, c.offset(0, h, -2), hanging(Blocks.LANTERN));
+        for (int i = 0; i < 16; i++) set(l, c.offset(r.nextInt(30) - 15, 4 + r.nextInt(3), r.nextInt(26) - 15), b(Blocks.COBWEB));
+    }
+
+    // ------------------------------------------------------------------ Kyle's office (the new facility)
+
+    /**
+     * Kyle's office in the new facility (the user's picture): pale blue-grey metal panels, ceiling light strips and
+     * vents, a big wall screen with glowing readouts, the long white desk with test tubes and a microscope, a white
+     * chair, a computer stand, a cold store, a wall of sample drawers, the glowing cryo tube, a round scanner pod, and a
+     * robot arm hanging from the ceiling.
+     */
+    static void kyleOffice(ServerLevel l, BlockPos c, RandomSource r) {
+        int x0 = -18, x1 = 18, zb = -16, zf = 12, h = 9;
+        BlockState panel = b(Blocks.LIGHT_GRAY_CONCRETE), white = b(Blocks.WHITE_CONCRETE), glow = b(Blocks.SEA_LANTERN);
+        for (int x = x0; x <= x1; x++) for (int z = zb; z <= zf; z++) {
+            set(l, c.offset(x, 0, z), b(((x ^ z) & 3) == 0 ? Blocks.LIGHT_BLUE_TERRACOTTA : Blocks.LIGHT_GRAY_CONCRETE));
+            set(l, c.offset(x, h + 1, z), Math.floorMod(z, 5) == 0 && Math.abs(x) < 12 ? glow : b(Blocks.SMOOTH_STONE));
+            boolean side = x == x0 || x == x1 || z == zb || z == zf;
+            if (side) for (int y = 1; y <= h; y++) set(l, c.offset(x, y, z), Math.floorMod(x + z, 6) == 0 ? b(Blocks.LIGHT_BLUE_TERRACOTTA) : panel);
+        }
+        fill(l, c, -1, 1, zf, 1, 3, zf, b(Blocks.AIR));
+        // the big screen
+        fill(l, c, -12, 4, zb + 1, -2, 7, zb + 1, b(Blocks.BLACK_STAINED_GLASS));
+        for (int[] p : new int[][]{{-10, 6}, {-9, 5}, {-6, 6}, {-5, 6}, {-4, 5}, {-7, 4}, {-6, 4}, {-5, 4}}) set(l, c.offset(p[0], p[1], zb), b(Blocks.CYAN_CONCRETE));
+        fill(l, c, -12, 3, zb + 1, -2, 3, zb + 1, b(Blocks.IRON_BLOCK));
+        // the desk, test tubes, the microscope, the chair, the computer stand
+        fill(l, c, -12, 1, -8, -3, 1, -7, white);
+        fill(l, c, -12, 2, -8, -3, 2, -8, slab(Blocks.SMOOTH_QUARTZ_SLAB, false));
+        set(l, c.offset(-8, 2, -7), b(Blocks.BREWING_STAND)); set(l, c.offset(-5, 2, -7), b(Blocks.END_ROD));
+        set(l, c.offset(-6, 1, -5), stair(Blocks.QUARTZ_STAIRS, Direction.SOUTH, false));
+        fill(l, c, -16, 1, zb + 2, -15, 2, zb + 2, white); set(l, c.offset(-16, 3, zb + 2), b(Blocks.CYAN_STAINED_GLASS));
+        // the cold store and the sample drawers
+        fill(l, c, 0, 1, zb + 1, 1, 5, zb + 1, white);
+        for (int x = 2; x <= 5; x++) for (int y = 1; y <= 5; y++) set(l, c.offset(x, y, zb + 1), b(y % 2 == 0 ? Blocks.CHISELED_QUARTZ_BLOCK : Blocks.QUARTZ_BRICKS));
+        // the cryo tube and the scanner pod
+        for (int y = 1; y <= 6; y++) for (int x = 8; x <= 10; x++) for (int z = zb + 1; z <= zb + 3; z++) {
+            boolean edge = x == 8 || x == 10 || z == zb + 1 || z == zb + 3;
+            set(l, c.offset(x, y, z), y == 1 || y == 6 ? white : edge ? b(Blocks.LIGHT_BLUE_STAINED_GLASS) : glow);
+        }
+        for (int y = 1; y <= 4; y++) for (int z = -10; z <= -6; z++) {
+            double d = Math.sqrt((y - 2.5) * (y - 2.5) + (z + 8) * (z + 8));
+            if (d <= 2.3) set(l, c.offset(15, y, z), d > 1.4 ? white : b(Blocks.CYAN_STAINED_GLASS));
+        }
+        // the robot arm
+        fill(l, c, 14, h, -12, 14, h - 2, -12, b(Blocks.IRON_BLOCK)); fill(l, c, 14, h - 3, -12, 14, h - 3, -10, b(Blocks.IRON_BLOCK));
+        set(l, c.offset(14, h - 4, -10), b(Blocks.LIGHTNING_ROD).setValue(net.minecraft.world.level.block.LightningRodBlock.FACING, Direction.DOWN));
+        // a side table and a shelf
+        fill(l, c, 16, 1, -2, 17, 2, -2, b(Blocks.LIGHT_GRAY_CONCRETE));
+        for (int z = 2; z <= 8; z += 3) set(l, c.offset(x0 + 1, 2, z), b(Blocks.IRON_TRAPDOOR));
     }
 }
