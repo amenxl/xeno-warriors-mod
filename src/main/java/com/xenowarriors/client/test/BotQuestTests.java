@@ -164,6 +164,8 @@ public final class BotQuestTests {
         synchronized (DmzBots.LOG) { for (int i = dumped3; i < DmzBots.LOG.size(); i++) log("botlog " + DmzBots.LOG.get(i)); dumped3 = DmzBots.LOG.size(); }
     }
 
+    private static final int[] sz = new int[1];
+
     public static void build(Minecraft mc, Consumer<UiTest.Step> l, String focus) {
         L = l;
         step(null, () -> { mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE); mc.getToasts().clear(); mc.setScreen(null);
@@ -401,5 +403,22 @@ public final class BotQuestTests {
             DmzTalkNpcs.update(p);
             log("dropped mission " + o[0] + ": came=" + (e2 != null) + " gone after dropping=" + (e2 != null && e2.isRemoved()));
         }); }, 20);
+        // Auto Potion with a Senzu Bean: eaten as it would be - right back to full health (and DragonMineZ's own restore runs)
+        step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            var bean = ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("dragonminez", "senzu_bean"));
+            if (bean == null) { log("senzu: no senzu bean item FAIL"); return; }
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.AUTO_POTION, 1);
+            p.getInventory().add(new net.minecraft.world.item.ItemStack(bean, 2));
+            p.getCooldowns().removeCooldown(bean);
+            p.setHealth(p.getMaxHealth() * 0.2F);
+            sz[0] = com.xenowarriors.compat.HealingStone.senzuEaten;
+        }); }, 50);
+        step(null, () -> server(p -> {
+            boolean ate = com.xenowarriors.compat.HealingStone.senzuEaten > sz[0];
+            log("senzu: Auto Potion ate a Senzu Bean " + ate + ", health " + p.getHealth() + "/" + p.getMaxHealth() + (ate && p.getHealth() >= p.getMaxHealth() - 0.01F ? " OK" : " FAIL"));
+            com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.AUTO_POTION, 0);
+            p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 5);
     }
 }
