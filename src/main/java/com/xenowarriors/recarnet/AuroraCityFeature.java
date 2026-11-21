@@ -41,8 +41,18 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     /** What stands on a city block. */
+    /** The Government's five facilities, on the city blocks the user's map puts them: F1 north, F2 south-west, F3 west, F4 north-east, F5 south-east. */
+    static final int[][] FACILITIES = {{-1, -3}, {-3, 2}, {-3, 0}, {2, -2}, {2, 1}};
+
+    /** Which facility (1-5) stands on this block, or 0. */
+    public static int facility(int cx, int cz) {
+        for (int i = 0; i < FACILITIES.length; i++) if (FACILITIES[i][0] == cx && FACILITIES[i][1] == cz) return i + 1;
+        return 0;
+    }
+
     public static int type(long seed, int cx, int cz, boolean s3) {
         if (cx == 0 && cz == 0) return PLAZA;
+        if (facility(cx, cz) > 0) return GOV;
         if (cx == -2 && cz == 1) return DOME;
         if (cx == AuroraLandmarks.HOTEL_CX && cz == AuroraLandmarks.HOTEL_CZ) return HOTEL;
         double d = Math.sqrt(Math.pow(cx * CELL + 27, 2) + Math.pow(cz * CELL + 27, 2));
@@ -52,7 +62,7 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
         if (k < 53) return MIDRISE;
         if (k < 63) return PARK;
         if (k < 75) return APART;
-        if (k < 87) return GOV;
+        if (k < 87) return APART;                                        // (the Government's facilities are the five on the map)
         if (k < 93) return s3 ? ORDER : MIDRISE;
         return TOWER;
     }
@@ -84,7 +94,7 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
             Clip.set(x0, z0, x0 + 15, z0 + 15);
             try {
                 RandomSource r = RandomSource.create(hash(seed, cx, cz, 7));
-                if (t == GOV) com.xenowarriors.gov.GovFacilityFeature.build(l, r, c);
+                if (t == GOV) { com.xenowarriors.gov.GovFacilityFeature.build(l, r, c); facilitySign(l, cx, cz); }
                 else com.xenowarriors.s3.OrderHideoutFeature.build(l, r, c);
             } finally { Clip.clear(); }
         }
@@ -92,10 +102,54 @@ public class AuroraCityFeature extends Feature<NoneFeatureConfiguration> {
         return true;
     }
 
-    /** One column of the city (or of the blend ring outside the wall). */
+    /** The facility's name on a sign by the street at its block's north-west corner. */
+    private static void facilitySign(WorldGenLevel l, int cx, int cz) {
+        int n = facility(cx, cz);
+        if (n == 0) return;
+        BlockPos at = new BlockPos(cx * CELL + ROAD + 1, B + 1, cz * CELL + ROAD - 1);
+        if (!Clip.ok(at)) return;
+        l.setBlock(at, Blocks.SPRUCE_SIGN.defaultBlockState(), 2);
+        if (l.getBlockEntity(at) instanceof net.minecraft.world.level.block.entity.SignBlockEntity sb) {
+            var t = new net.minecraft.world.level.block.entity.SignText();
+            String[] lines = {"Government", "Facility", "F" + n, n == 1 ? "Headquarters" : ""};
+            for (int i = 0; i < 4; i++) t = t.setMessage(i, net.minecraft.network.chat.Component.literal(lines[i]));
+            net.minecraft.world.level.block.entity.SignText.DIRECT_CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, t).result().ifPresent(tag -> {
+                net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag(); nbt.put("front_text", tag); sb.load(nbt);
+            });
+        }
+    }
+
+    /** One column of the city (or of the blend ring outside the wall, the Underclass City, the road west). */
     private boolean column(WorldGenLevel l, BlockPos.MutableBlockPos p, long seed, boolean s3, int x, int z) {
         double d = Math.sqrt((double) x * x + (double) z * z);
-        if (d > R + Recarnet.BLEND) return false;
+        if (d > R + Recarnet.BLEND) {
+            if (Recarnet.underclassArea(x, z)) return Underclass.column(l, p, seed, x, z);
+            if (Recarnet.westRoad(x, z)) return westRoad(l, p, x, z);
+            return false;
+        }
+        boolean r = columnCity(l, p, seed, s3, x, z, d);
+        if (d > R && Math.abs(z) <= Recarnet.WEST_ROAD_W && x < 0) westRoad(l, p, x, z);   // (the road on through the blend ring to the gate)
+        if (d > R && Math.abs(x) <= 3 && z > 0) Underclass.road(l, p, x, z);               // (and south, down to the Underclass City)
+        return r;
+    }
+
+    /** The gravel road west to Pine Cone City, on the ground as it lies. */
+    private static boolean westRoad(WorldGenLevel l, BlockPos.MutableBlockPos p, int x, int z) {
+        if (Math.abs(z) > Recarnet.WEST_ROAD_W) return true;
+        int top = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
+        BlockState at = l.getBlockState(p.set(x, top, z));
+        for (int y = top; y > top - 8 && !(at.isSolid() && at.getFluidState().isEmpty()); y--) { top = y - 1; at = l.getBlockState(p.set(x, top, z)); }
+        for (int y = top + 1; y <= top + 4; y++) { BlockState s = l.getBlockState(p.set(x, y, z)); if (!s.isAir() && !s.is(net.minecraft.tags.BlockTags.LOGS)) set(l, p, x, y, z, Blocks.AIR.defaultBlockState()); }
+        set(l, p, x, top, z, Math.abs(z) == Recarnet.WEST_ROAD_W ? Blocks.COARSE_DIRT.defaultBlockState() : ((x * 7 + z) % 5 == 0 ? Blocks.COBBLESTONE : Blocks.GRAVEL).defaultBlockState());
+        set(l, p, x, top - 1, z, Blocks.DIRT.defaultBlockState());
+        if (z == Recarnet.WEST_ROAD_W && Math.floorMod(x, 24) == 0) {             // lamp posts along it
+            for (int y = 1; y <= 3; y++) set(l, p, x, top + y, z + 1, Blocks.SPRUCE_FENCE.defaultBlockState());
+            set(l, p, x, top + 4, z + 1, Blocks.LANTERN.defaultBlockState());
+        }
+        return true;
+    }
+
+    private boolean columnCity(WorldGenLevel l, BlockPos.MutableBlockPos p, long seed, boolean s3, int x, int z, double d) {
         int top = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
         int ground = d <= R ? B : (int) Math.round(Mth.lerp((d - R) / Recarnet.BLEND, B, Math.max(top, 63)));
         int clearTo = Math.max(top, ground) + 3;

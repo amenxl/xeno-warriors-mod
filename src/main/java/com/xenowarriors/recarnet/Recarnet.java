@@ -22,12 +22,28 @@ public final class Recarnet {
 
     /** Aurora City: wall radius and street level. */
     public static final int CITY_R = 208, BASE_Y = 72, BLEND = 40;
-    /** Pine Cone City (with the Mountain Village, Kitsune's Farm, the Disco Dojo, the element school), up in the hills north. */
-    public static final int VILLAGE_X = 0, VILLAGE_Z = -760, VILLAGE_R = 150, VILLAGE_BLEND = 60, VILLAGE_Y = 92;
+    /**
+     * Pine Cone City (with the Mountain Village, Kitsune's Farm, the Disco Dojo, the element school), up in the hills
+     * west of Aurora, a road from its east side to Aurora's west gate (the user's map of Section 1).
+     */
+    public static final int VILLAGE_X = -640, VILLAGE_Z = -60, VILLAGE_R = 150, VILLAGE_BLEND = 60, VILLAGE_Y = 92;
+    /** The road from Pine Cone City to Aurora's west gate runs along z = 0 between these x. */
+    public static final int WEST_ROAD_FROM = VILLAGE_X + 130, WEST_ROAD_W = 2;
+    /** The Underclass City, just south of Aurora's wall (the Sky Patrol's hideout at its north edge), and its blend. */
+    public static final int UNDER_X = 0, UNDER_Z = 362, UNDER_R = 112, UNDER_BLEND = 30;
     /** The desert canyon (badlands) east of Aurora. */
     public static final int CANYON_X = 900, CANYON_Z = 0, CANYON_R = 320;
     /** The Distortion Field: a purple, crystal-strewn stretch of Recarnet where the world keeps tearing open (Season 3). */
-    public static final int DISTORTION_X = -850, DISTORTION_Z = 650, DISTORTION_R = 240;
+    public static final int DISTORTION_X = -640, DISTORTION_Z = 560, DISTORTION_R = 210;   // (the map's "Unknown", south-west)
+
+    /** In the Underclass City (or its blend ring), or on the road down to it from the south gate? */
+    public static boolean underclassArea(long x, long z) {
+        long dx = x - UNDER_X, dz = z - UNDER_Z, r = UNDER_R + UNDER_BLEND;
+        return dx * dx + dz * dz < r * r || (Math.abs(x - UNDER_X) <= 4 && z > CITY_R - 8 && z < UNDER_Z);
+    }
+
+    /** On the road between Pine Cone City and Aurora's west gate? */
+    public static boolean westRoad(long x, long z) { return Math.abs(z) <= WEST_ROAD_W + 2 && x >= WEST_ROAD_FROM && x <= -CITY_R + 4; }
     public static final ResourceKey<net.minecraft.world.level.biome.Biome> DISTORTION_FIELD = ResourceKey.create(Registries.BIOME, XenoWarriors.id("distortion_field"));
 
     public static boolean inDistortionField(Level l, BlockPos p) { return is(l) && l.getBiome(p).is(DISTORTION_FIELD); }

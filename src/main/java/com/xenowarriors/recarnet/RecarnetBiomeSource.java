@@ -33,7 +33,7 @@ public class RecarnetBiomeSource extends BiomeSource {
     @Override
     public Holder<Biome> getNoiseBiome(int qx, int qy, int qz, Climate.Sampler sampler) {
         long x = (long) qx << 2, z = (long) qz << 2;
-        if (x * x + z * z < (long) radius * radius) return aurora;
+        if (x * x + z * z < (long) radius * radius || Recarnet.underclassArea(x, z) || Recarnet.westRoad(x, z)) return aurora;   // (Aurora's feature draws the Underclass City and the west road too)
         long vx = x - Recarnet.VILLAGE_X, vz = z - Recarnet.VILLAGE_Z;
         if (vx * vx + vz * vz < (long) (Recarnet.VILLAGE_R + Recarnet.VILLAGE_BLEND + 4) * (Recarnet.VILLAGE_R + Recarnet.VILLAGE_BLEND + 4)) return village;
         long cx = x - Recarnet.CANYON_X, cz = z - Recarnet.CANYON_Z;
