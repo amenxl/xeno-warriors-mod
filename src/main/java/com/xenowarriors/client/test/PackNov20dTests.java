@@ -53,6 +53,40 @@ final class PackNov20dTests {
 
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); }); }, 30));
+        // ---- Pod Recall: going down, sent straight to a free healing pod - 40 blocks off needs rank 2 (48 blocks)
+        Object[] pr = new Object[3];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var lv = p.serverLevel();
+            BlockPos pod = p.blockPosition().offset(40, 0, 0);
+            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) { lv.setBlock(pod.offset(x, -1, z), Blocks.STONE.defaultBlockState(), 3); for (int y = 0; y <= 2; y++) lv.setBlock(pod.offset(x, y, z), Blocks.AIR.defaultBlockState(), 3); }
+            var st = com.xenowarriors.sky.ModBlocks.HEALING_POD.get().defaultBlockState().setValue(com.xenowarriors.gov.HealingPodBlock.FACING, net.minecraft.core.Direction.NORTH);
+            lv.setBlock(pod, st, 3);
+            lv.setBlock(pod.above(), st.setValue(com.xenowarriors.gov.HealingPodBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER), 3);
+            pr[0] = pod; pr[1] = p.gameMode.getGameModeForPlayer();
+            int base = com.xenowarriors.apl.Apl.podRecallRange(p);
+            com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.POD_RECALL, 2);
+            pr[2] = base + " -> " + com.xenowarriors.apl.Apl.podRecallRange(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.setHealth(4F);
+            p.hurt(p.damageSources().generic(), 50F);
+        }), 20));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            BlockPos pod = (BlockPos) pr[0];
+            boolean in = com.xenowarriors.gov.HealingPods.inPod(p);
+            double d = Math.sqrt(p.blockPosition().distSqr(pod));
+            PackTests.check("pod recall: going down 40 blocks from a free pod with Pod Recall rank 2, you're sent into it", in && p.isAlive() && d < 2 && com.xenowarriors.gov.HealingPods.recalled > 0,
+                    "range " + pr[2] + " in pod " + in + " alive " + p.isAlive() + " dist " + PackTests.f((float) d) + " recalled " + com.xenowarriors.gov.HealingPods.recalled);
+            com.xenowarriors.gov.HealingPods.wake(p);
+            com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.POD_RECALL, 0);
+        }), 60));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            BlockPos pod = (BlockPos) pr[0];
+            p.serverLevel().setBlock(pod.above(), Blocks.AIR.defaultBlockState(), 3);
+            p.serverLevel().setBlock(pod, Blocks.AIR.defaultBlockState(), 3);
+            if (pr[1] instanceof net.minecraft.world.level.GameType g) p.setGameMode(g);
+            p.setHealth(p.getMaxHealth());
+            PackTests.arena(p); PackTests.clear(p);
+        }), 40));
         // ---- a bot putting the Dragon Balls down: the other bots step out of its ring
         Object[] dbr = new Object[3];
         l.add(new Step(null, () -> PackTests.server(p -> {

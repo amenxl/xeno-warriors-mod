@@ -385,10 +385,11 @@ public final class Duels {
             return;
         }
         // in a party (or with bot teammates): go down instead of dying, so someone can revive you
-        if (hasTeam(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()
+        // (a free healing pod close enough - Pod Recall - takes you straight away instead, party or not)
+        if (!isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()
                 && !com.xenowarriors.compat.InventoryTotem.saves(p, event.getSource())) {   // (a totem anywhere, with Inventory Totem: used at death, like one in hand)
-            event.setCanceled(true);
-            down(p);
+            if (com.xenowarriors.gov.HealingPods.recall(p)) { event.setCanceled(true); return; }
+            if (hasTeam(p)) { event.setCanceled(true); down(p); }
         }
     }
 
@@ -401,6 +402,10 @@ public final class Duels {
         if (ACTIVE.get(p.getUUID()) != null && ACTIVE.get(p.getUUID()).fighting()) {
             event.setCanceled(true);
             knockOut(p);
+        } else if (!isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p) && !p.isCreative()
+                && !(event.getSource().getEntity() instanceof ServerPlayer k && k != p && com.xenowarriors.character.ModCapabilities.getType(k) == com.xenowarriors.character.CharacterType.MIKIKO)
+                && com.xenowarriors.gov.HealingPods.recall(p)) {
+            event.setCanceled(true);
         } else if (hasTeam(p) && !isKnockedOut(p) && !unstoppable(event.getSource()) && !hasTotem(p)) {
             event.setCanceled(true);
             down(p);

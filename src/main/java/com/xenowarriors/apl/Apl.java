@@ -58,6 +58,8 @@ public final class Apl {
                 "Enemies you beat drop health orbs more often", new String[]{"8% of them (from 5%)", "12% of them", "16% of them"}),
         ORB_MAGNET("orb_magnet", "Orb Magnet", new int[]{5, 10}, "orb_magnet",
                 "Orbs dropped by enemies you beat fly straight to you", new String[]{"from up to 12 blocks away", "from up to 24 blocks away"}),
+        POD_RECALL("pod_recall", "Pod Recall", new int[]{3, 6, 10, 15, 20}, null,
+                "Going down, you're sent straight to the nearest free healing pod from further away (16 blocks without it)", new String[]{"32 blocks", "48 blocks", "64 blocks", "96 blocks", "128 blocks"}),
         KARMA_ORBS("karma_orbs", "Karma Orbs", new int[]{15}, "karma_orbs",
                 "Orbs dropped by enemies you beat are Karma orbs: they fill your Karma instead of healing", new String[]{"4% of your max Karma each (a health orb heals 2.5%)"});
 
@@ -199,6 +201,10 @@ public final class Apl {
         int r = rankOf(helper, Ability.REVIVE_RANGE);
         return com.xenowarriors.party.ReviveCircle.RADIUS + (r <= 0 ? 0 : new double[]{0.5, 0.9, 1.4, 1.8, 2.3}[r - 1]);
     }
+
+    /** Pod Recall: going down, a free healing pod this close catches you (blocks, by rank). */
+    public static final int[] POD_RECALL_RANGE = {16, 32, 48, 64, 96, 128};
+    public static int podRecallRange(Player p) { return POD_RECALL_RANGE[Math.min(POD_RECALL_RANGE.length - 1, rank(p, Ability.POD_RECALL))]; }
 
     /** The furthest any reviver can reach (for the search box). */
     public static final double MAX_REACH = 4.5;

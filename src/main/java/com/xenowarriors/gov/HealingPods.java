@@ -271,10 +271,13 @@ public final class HealingPods {
     // ------------------------------------------------------------------------------------------------ finding a pod
 
     /** The nearest pod (its lower half) this entity could use within the radius, or null. Skips chunk sections with no pod in them. */
-    public static BlockPos nearestFree(ServerLevel l, Entity by, int radius) {
+    public static BlockPos nearestFree(ServerLevel l, Entity by, int radius) { return nearestFree(l, by, radius, 8); }
+
+    /** The same, up to dy blocks above or below. */
+    public static BlockPos nearestFree(ServerLevel l, Entity by, int radius, int dy) {
         BlockPos o = by.blockPosition();
         BlockPos best = null; double bd = Double.MAX_VALUE;
-        int minY = Math.max(l.getMinBuildHeight(), o.getY() - 8), maxY = Math.min(l.getMaxBuildHeight() - 1, o.getY() + 8);
+        int minY = Math.max(l.getMinBuildHeight(), o.getY() - dy), maxY = Math.min(l.getMaxBuildHeight() - 1, o.getY() + dy);
         for (int cx = (o.getX() - radius) >> 4; cx <= (o.getX() + radius) >> 4; cx++)
             for (int cz = (o.getZ() - radius) >> 4; cz <= (o.getZ() + radius) >> 4; cz++) {
                 LevelChunk ch = l.getChunkSource().getChunkNow(cx, cz);
@@ -293,6 +296,39 @@ public final class HealingPods {
                 }
             }
         return best;
+    }
+
+    // ------------------------------------------------------------------------------------------------ going down
+
+    /** (Tests) how many times a pod caught someone going down. */
+    public static int recalled;
+
+    /**
+     * Going down (or about to die) near a free healing pod: sent straight into it to heal instead (16 blocks, more with
+     * the Pod Recall ability). Not in a duel, a story mission, a sealed arena, the Hekublade's realm, a clash, VR, a
+     * Journey or the Tower (those handle their own knock-outs). Returns true if a pod took them.
+     */
+    public static boolean recall(ServerPlayer p) {
+        if (p.isCreative() || p.isSpectator() || inPod(p) || !(p.level() instanceof ServerLevel l)) return false;
+        if (com.xenowarriors.story.StoryRun.inRun(p) || ArenaLock.sealed(p) || com.xenowarriors.mikiko.HekubladeRealm.inRealm(p)
+                || com.xenowarriors.ka.Clashes.inClash(p) || com.xenowarriors.vr.Vr.inVr(p) || com.xenowarriors.vr.Vr.is(l)
+                || com.xenowarriors.journey.Journey.inRun(p) || com.xenowarriors.tower.Tower.is(l)) return false;
+        int r = com.xenowarriors.apl.Apl.podRecallRange(p);
+        BlockPos pod = nearestFree(l, p, r, Math.max(8, r / 2));
+        if (pod == null) return false;
+        p.setHealth(Math.max(1F, p.getHealth()));
+        p.clearFire();
+        p.removeEffect(MobEffects.WITHER); p.removeEffect(MobEffects.POISON);
+        if (p.getAbilities().flying) { p.getAbilities().flying = false; p.onUpdateAbilities(); }
+        p.fallDistance = 0;
+        l.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, p.getX(), p.getY() + 1, p.getZ(), 20, 0.4, 0.8, 0.4, 0.05);
+        if (start(l, pod, p, 0, null) != null) return false;
+        recalled++;
+        l.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, pod.getX() + 0.5, pod.getY() + 1, pod.getZ() + 0.5, 20, 0.4, 0.8, 0.4, 0.05);
+        p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(0, 30, 8));
+        p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(net.minecraft.network.chat.Component.literal("POD RECALL").withStyle(net.minecraft.ChatFormatting.GREEN, net.minecraft.ChatFormatting.BOLD)));
+        p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(net.minecraft.network.chat.Component.literal("Sent to a healing pod " + (int) Math.sqrt(pod.distSqr(p.blockPosition())) + " blocks away")));
+        return true;
     }
 
     // ------------------------------------------------------------------------------------------------ bots and NPCs
