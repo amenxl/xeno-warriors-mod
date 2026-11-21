@@ -118,6 +118,12 @@ public final class BigHunger {
         if (!(event.getEntity() instanceof ServerPlayer p) || max(p) <= 20) return;
         FoodProperties fp = event.getItem().getFoodProperties(p);
         if (fp == null) return;
+        ate(p, fp);
+    }
+
+    /** A meal just eaten (the bar's already had it): into the big stomach too. */
+    public static void ate(ServerPlayer p, FoodProperties fp) {
+        if (max(p) <= 20 || fp == null) return;
         var d = p.getPersistentData();
         int last = d.contains(LAST) ? d.getInt(LAST) : p.getFoodData().getFoodLevel();
         int gainedOnBar = p.getFoodData().getFoodLevel() - last;

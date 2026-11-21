@@ -47,7 +47,7 @@ public final class Apl {
         STEADY_FEET("steady_feet", "Steady Feet", new int[]{5, 10, 15}, "steady_feet",
                 "Less knockback from hits", new String[]{"20% less", "40% less", "60% less"}),
         AUTO_EAT("auto_eat", "Auto Eat", new int[]{10}, "auto_eat",
-                "Eats the best food you carry when you get hungry", new String[]{"on"}),
+                "When you get hungry, eats the food you carry till your hunger bar is completely full", new String[]{"on"}),
         AUTO_POTION("auto_potion", "Auto Potion", new int[]{15, 10}, "auto_potion",
                 "Drinks a healing potion you carry when your health is low", new String[]{"below 35% health", "below the health you pick"}),
         AUTO_BOOST("auto_boost", "Auto Boost", new int[]{10}, "auto_boost",
@@ -272,7 +272,9 @@ public final class Apl {
             int at = rank(p, Ability.AUTO_POTION) >= 2 ? potionAt(p) : 35;
             if (p.getHealth() < p.getMaxHealth() * at / 100F && p.level().getGameTime() >= p.getPersistentData().getLong("xw_auto_potion_cd")) drinkPotion(p);
         }
-        if (live(p, Ability.AUTO_EAT) > 0 && p.getFoodData().getFoodLevel() <= 14 && !p.isUsingItem()) eatBest(p);
+        if (live(p, Ability.AUTO_EAT) > 0 && !p.isUsingItem() && !com.xenowarriors.character.BigHunger.noHunger(p) && hungerLeft(p) >= 6) {
+            for (int k = 0; k < 64 && hungerLeft(p) > 0; k++) if (!eatBest(p)) break;   // (eats till the whole bar is full - every layer of it)
+        }
         if (live(p, Ability.AUTO_BOOST) > 0) com.xenowarriors.statboost.BoostBag.autoUse(p);
         if (live(p, Ability.AUTO_KARMA) > 0 && !p.isCreative() && p.level().getGameTime() >= p.getPersistentData().getLong("xw_auto_karma_cd")) {
             float max = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).map(d -> d.karmaMax).orElse(com.xenowarriors.karma.Karma.MAX);
@@ -341,24 +343,39 @@ public final class Apl {
                 || s.is(Items.SUSPICIOUS_STEW) || s.is(Items.GOLDEN_APPLE) || s.is(Items.ENCHANTED_GOLDEN_APPLE) || s.is(Items.CHORUS_FRUIT);
     }
 
-    private static void eatBest(ServerPlayer p) {
+    /** Food points to go till the whole hunger bar is full (every layer of a big stomach). */
+    static int hungerLeft(ServerPlayer p) {
+        int max = com.xenowarriors.character.BigHunger.max(p);
+        return max > 20 ? max - com.xenowarriors.character.BigHunger.total(p) : 20 - p.getFoodData().getFoodLevel();
+    }
+
+    /** Eats one: the biggest meal that fits what's left to fill (a little over is fine), else the smallest there is. */
+    private static boolean eatBest(ServerPlayer p) {
         var inv = p.getInventory();
-        int best = -1, bestFood = 0;
+        int need = hungerLeft(p);
+        int best = -1, bestFood = 0, small = -1, smallFood = Integer.MAX_VALUE;
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack s = inv.getItem(i);
             var food = s.getItem().getFoodProperties(s, p);
-            if (food == null || badFood(s) || food.getNutrition() <= bestFood) continue;
-            if (p.getFoodData().getFoodLevel() + food.getNutrition() > 20 + 2 && food.getNutrition() > 4) continue;   // (don't waste a big meal on a small hunger)
+            if (food == null || badFood(s) || food.getNutrition() <= 0) continue;
+            if (food.getNutrition() < smallFood) { small = i; smallFood = food.getNutrition(); }
+            if (food.getNutrition() <= bestFood || food.getNutrition() > need + 2) continue;   // (no big meal on a small hunger...)
             best = i; bestFood = food.getNutrition();
         }
-        if (best < 0) return;
+        if (best < 0) best = small;                                               // (...unless that's all there is: full is full)
+        if (best < 0) return false;
         ItemStack s = inv.getItem(best);
+        var fp = s.getItem().getFoodProperties(s, p);
         ItemStack one = s.split(1);
         ItemStack left = one.finishUsingItem(p.level(), p);       // (eats it: food, effects, a bowl back for stews)
+        com.xenowarriors.character.BigHunger.ate(p, fp);          // (a big stomach: into its total right away)
         if (!left.isEmpty() && left != one && !inv.add(left)) p.drop(left, false);
         p.level().playSound(null, p.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.PLAYERS, 0.7F, 1F);
         eaten++;
+        return true;
     }
+
+    public static int eatenForTest() { return eaten; }
 
     /** (Tests) */
     public static int bought, bubbles, blocked, steadied, winds, potions, eaten;

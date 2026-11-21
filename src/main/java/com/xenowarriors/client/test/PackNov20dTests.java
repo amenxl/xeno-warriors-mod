@@ -385,6 +385,27 @@ final class PackNov20dTests {
             PackTests.clear(p);
         }), 5));
         l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
+        // ---- Auto Eat fills the hunger bar right up (every layer of a big stomach too)
+        int[] ae = new int[2];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.arena(p); PackTests.clear(p);
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.AUTO_EAT, 1);
+            p.getInventory().clearContent();
+            p.getInventory().add(new ItemStack(Items.COOKED_BEEF, 32));
+            p.getInventory().add(new ItemStack(Items.BREAD, 16));
+            p.getFoodData().setFoodLevel(4);
+            p.getPersistentData().remove("xw_food_total");
+            ae[0] = com.xenowarriors.apl.Apl.eatenForTest();
+        }), 60));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            int max = com.xenowarriors.character.BigHunger.max(p);
+            int have = max > 20 ? com.xenowarriors.character.BigHunger.total(p) : p.getFoodData().getFoodLevel();
+            PackTests.check("auto eat: eats till the hunger bar is completely full", have >= max && com.xenowarriors.apl.Apl.eatenForTest() - ae[0] >= 2,
+                    "food " + have + "/" + max + " ate " + (com.xenowarriors.apl.Apl.eatenForTest() - ae[0]));
+            com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.AUTO_EAT, 0);
+            PackTests.clear(p); p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+        }), 5));
         // ---- health orb abilities: Orb Luck, Orb Magnet, Karma Orbs
         int[] orbT = new int[4];
         l.add(new Step(null, () -> PackTests.server(p -> {
