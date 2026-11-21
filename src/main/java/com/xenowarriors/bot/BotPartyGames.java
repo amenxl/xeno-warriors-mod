@@ -48,6 +48,9 @@ public final class BotPartyGames {
     public static int botArms, armAsks, armPlayed, armWins, memAsks, memPlayed, memWins;
     public static Integer forceKind;    // 0 arm (bots), 1 arm (you), 2 memory (you)
 
+    /** A challenge waiting for you or a game on with you (rock, paper, scissors waits till it's over). */
+    static boolean busyWithYou(ServerPlayer o) { Games g = GAMES.get(o.getUUID()); return g != null && g.bot != null; }
+
     static void partyStarted(ServerPlayer o, long now) {
         Games g = new Games();
         g.next = now + FIRST;

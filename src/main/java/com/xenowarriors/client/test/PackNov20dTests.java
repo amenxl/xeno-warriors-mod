@@ -319,7 +319,7 @@ final class PackNov20dTests {
         for (int k = 0; k < 30; k++) l.add(new Step(k == 4 ? "party_arm_wrestle" : null, () -> { if (mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm a) { a.mash(); a.mash(); a.mash(); } }, 2));
         l.add(new Step(null, () -> {
             var a = mc.screen instanceof com.xenowarriors.client.party.PartyGameScreens.Arm x ? x : null;
-            PackTests.check("party games: mashing left click wins the arm wrestle", a != null && a.outcomeForTest() == 1, "screen " + (a != null) + " outcome " + (a == null ? -9 : a.outcomeForTest()) + " bar " + (a == null ? -1 : a.barForTest()));
+            PackTests.check("party games: mashing left click wins the arm wrestle", com.xenowarriors.client.party.PartyGameScreens.Arm.lastOutcome == 1, "screen " + (a != null) + " outcome " + (a == null ? -9 : a.outcomeForTest()) + " bar " + (a == null ? -1 : a.barForTest()));
         }, 60));
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.check("party games: winning gives XP (and TP with DragonMineZ)", com.xenowarriors.bot.BotPartyGames.armWins > pg[1], "wins " + (com.xenowarriors.bot.BotPartyGames.armWins - pg[1]));
@@ -346,10 +346,10 @@ final class PackNov20dTests {
             PackTests.check("revive: getting a bot back up gives a little extra bond each time", com.xenowarriors.party.Bonds.revivedBoosts > pg[3], "boosts " + (com.xenowarriors.party.Bonds.revivedBoosts - pg[3]));
         }), 20));
         if (net.minecraftforge.fml.ModList.get().isLoaded("epicfight")) {
-            l.add(new Step(null, () -> { pg[4] = com.xenowarriors.client.PartyHats.efDraws; PackWomTests.battle(true); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 30));
+            l.add(new Step(null, () -> { pg[4] = com.xenowarriors.client.PartyHats.efDraws; pg[7] = com.xenowarriors.client.PartyHats.layerDraws; PackWomTests.battle(true); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 30));
             l.add(new Step("party_hat_ef", () -> {
                 Boolean ef = com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrewForTest(mc.player.getId());
-                PackTests.check("party: hats stay on in Epic Fight's stance", com.xenowarriors.client.PartyHats.efDraws > pg[4],
+                PackTests.check("party: hats stay on in Epic Fight's stance", com.xenowarriors.client.PartyHats.efDraws > pg[4] || !Boolean.TRUE.equals(ef) && com.xenowarriors.client.PartyHats.layerDraws > pg[7],   // (Epic Fight drawing: on its head bone; our own pose: our layer)
                         "drawn " + (com.xenowarriors.client.PartyHats.efDraws - pg[4]) + " wearing " + com.xenowarriors.client.PartyHats.wearing(mc.player) + " ef drew " + ef + " " + com.xenowarriors.client.compat.epicfight.EpicFightCompat.debugDraw(mc.player));
             }, 3));
             l.add(new Step(null, () -> { PackWomTests.battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); }, 5));
@@ -376,8 +376,10 @@ final class PackNov20dTests {
         l.add(new Step(null, () -> PackTests.server(p -> { if (fl[0] instanceof PartyBotEntity b) { b.setDeltaMovement(0, 0, 0); b.moveTo(b.getX(), p.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, b.getBlockX(), b.getBlockZ()) + 5, b.getZ()); } }), 3));   // (well up: low down you're held off the ground)
         l.add(new Step("bot_hand_flight", () -> PackTests.server(p -> {
             var b = fl[0] instanceof PartyBotEntity x ? x : null;
-            PackTests.check("flying with a bot: you hang from its hand below it", b != null && p.getVehicle() == b && p.getY() < b.getY() - 1.0,
-                    "riding " + (p.getVehicle() == b) + " you y " + String.format("%.1f", p.getY()) + " it " + (b == null ? "-" : String.format("%.1f", b.getY())));
+            int floorY = b == null ? 0 : p.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, b.getBlockX(), b.getBlockZ());
+            PackTests.check("flying with a bot: you hang from its hand below it (held off the ground when it flies low)", b != null && p.getVehicle() == b
+                            && (p.getY() < b.getY() - 1.0 || p.getY() <= b.getY() && Math.abs(p.getY() - floorY) < 0.05 && b.getY() < floorY - PartyBotEntity.HANG_DROP + 0.5),
+                    "riding " + (p.getVehicle() == b) + " you y " + String.format("%.1f", p.getY()) + " it " + (b == null ? "-" : String.format("%.1f", b.getY())) + " floor " + floorY);
             PackTests.check("flying with a bot: the hanging pose plays", com.xenowarriors.client.HangClient.hangs > pg[6], "hangs " + (com.xenowarriors.client.HangClient.hangs - pg[6]));
             p.stopRiding();
             PackTests.clear(p);

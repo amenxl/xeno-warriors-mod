@@ -80,8 +80,11 @@ public final class PartyGameScreens {
             if (bar <= 0F || bar >= 1F || played >= TIME * 20) finish(bar < 0.5F ? 1 : 0);
         }
 
+        /** (Tests) the last arm wrestle's outcome: 1 you won, 0 they did. */
+        public static int lastOutcome = -1;
+
         void finish(int youWon) {
-            outcome = youWon;
+            outcome = youWon; lastOutcome = youWon;
             closeIn = 50;
             ModNetwork.sendToServer(new PartyGameResultPacket(botId, youWon, 1 - youWon));
         }

@@ -1067,7 +1067,11 @@ public final class StoryRun {
         ServerLevel l = world(s);
         for (ServerPlayer p : players(s, r)) if (p.isAlive() && !p.isSpectator()) (r.roomB.contains(p.getUUID()) ? b : a).add(p);
         if (l == null) return;
-        for (UUID id : r.roomB) if (l.getEntity(id) instanceof PartyBotEntity pb && pb.isAlive() && !pb.downed()) b.add(pb);
+        for (UUID id : r.roomB) {
+            Entity e = l.getEntity(id);
+            if (e instanceof PartyBotEntity pb) { if (pb.isAlive() && !pb.downed()) b.add(pb); }
+            else if (e instanceof LivingEntity le && !(e instanceof ServerPlayer) && le.isAlive()) b.add(le);   // (the story's allies hold that room too - Rhalix behind the bars)
+        }
         if (b.isEmpty() && !a.isEmpty()) b.addAll(a);                              // (everyone in the other room's down: its foes come for anyone)
         if (a.isEmpty() && !b.isEmpty()) a.addAll(b);
     }

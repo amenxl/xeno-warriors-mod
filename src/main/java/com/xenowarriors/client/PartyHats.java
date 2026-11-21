@@ -69,7 +69,7 @@ public final class PartyHats {
 
     private static ModelPart efHat;
     /** (Tests) hats drawn on Epic Fight's body. */
-    public static int efDraws;
+    public static int efDraws, layerDraws;
 
     /** On Epic Fight's body (DetailPatchedLayer): the pose stack already on its head bone, in the vanilla head's space. */
     public static boolean renderOnHead(PoseStack pose, MultiBufferSource buf, int light, LivingEntity e) {
@@ -89,6 +89,7 @@ public final class PartyHats {
         public void render(PoseStack pose, MultiBufferSource buf, int light, T e, float limb, float amount, float pt, float age, float yaw, float pitch) {
             if (!wearing(e) || e.isInvisible()) return;
             if (hat == null) hat = Minecraft.getInstance().getEntityModels().bakeLayer(LAYER);
+            layerDraws++;
             int c = COLORS[Math.floorMod(e.getId(), COLORS.length)];
             pose.pushPose();
             getParentModel().head.translateAndRotate(pose);

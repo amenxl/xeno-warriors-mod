@@ -66,6 +66,10 @@ public final class BotRps {
         if (bots.isEmpty()) { g.next = now + 20 * 10; return; }
         Collections.shuffle(bots, new Random(o.getRandom().nextLong()));
         boolean you = forcePlayer != null ? forcePlayer : bots.size() < 2 || o.getRandom().nextFloat() < PLAYER_CHANCE;
+        if (you && BotPartyGames.busyWithYou(o)) {                               // (you're mid arm wrestle / Memory: it used to close that game's screen)
+            if (bots.size() < 2) { g.next = now + 20 * 10; return; }
+            you = false;
+        }
         forcePlayer = null;
         g.next = now + 20 * (40 + o.getRandom().nextInt(30));
         if (you) challenge(o, g, bots.get(0), now);
