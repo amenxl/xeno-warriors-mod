@@ -169,7 +169,7 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
             info = "body cubes " + cubes(m.body).size() + " -> upper " + up.size() + " lower " + low.size() + " kids " + kids.keySet() + " low kids " + lowKids.keySet()
                     + " lower y " + low.stream().map(c -> String.format(java.util.Locale.ROOT, "%.1f-%.1f", c.minY, c.maxY)).limit(6).toList()
                     + " arms " + cubes(m.rightArm).size() + (m.rightArm.hasChild(com.xenowarriors.client.LimbBend.LOWER) ? "+" + cubes(m.rightArm.getChild(com.xenowarriors.client.LimbBend.LOWER)).size() : "")
-                    + (skirt == null ? "" : " skirt " + cubes(skirt.right()).size() + "+" + cubes(skirt.left()).size())
+                    + (skirt == null ? "" : " skirt " + skirt.top().quads.size() + "/" + skirt.right().quads.size() + "+" + skirt.left().quads.size())
                     + " legs " + cubes(m.rightLeg).size() + (m.rightLeg.hasChild(com.xenowarriors.client.LimbBend.LOWER) ? "+" + cubes(m.rightLeg.getChild(com.xenowarriors.client.LimbBend.LOWER)).size() : "");
             lastRig = info;
             bodyUpper.loadPose(m.body.getInitialPose()); bodyUpper.setInitialPose(m.body.getInitialPose());
@@ -223,8 +223,9 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
                 piece(h.torso, bodyLower, null, pose, vc, light, overlay, poses);
                 if (skirt != null) {
                     CoatSkirt.swing(skirt, legAngles(h.torso, h.thighR, poses), legAngles(h.torso, h.thighL, poses));
-                    piece(h.torso, skirt.right(), null, pose, vc, light, overlay, poses);
-                    piece(h.torso, skirt.left(), null, pose, vc, light, overlay, poses);
+                    flap(h.chest, skirt.top(), pose, vc, light, overlay, poses);
+                    flap(h.torso, skirt.right(), pose, vc, light, overlay, poses);
+                    flap(h.torso, skirt.left(), pose, vc, light, overlay, poses);
                     skirtDraws++;
                 }
             }
@@ -318,6 +319,18 @@ public class DetailPatchedLayer extends PatchedLayer<AbstractClientPlayer, Abstr
         }
 
         /** One rigid piece: vanilla model space at rest -> Epic Fight's bind space -> its bone's pose. */
+        /** A long coat's cut faces (CoatSkirt) on a bone, as piece() puts a model part on it. */
+        private static void flap(yesman.epicfight.api.animation.Joint joint, CoatSkirt.Flap f, PoseStack pose,
+                                 com.mojang.blaze3d.vertex.VertexConsumer vc, int light, int overlay, OpenMatrix4f[] poses) {
+            int id = joint.getId();
+            if (id < 0 || id >= poses.length || f.quads.isEmpty()) return;
+            OpenMatrix4f m = new OpenMatrix4f().load(poses[id]).mulBack(joint.getToOrigin()).mulBack(V2E);
+            pose.pushPose();
+            yesman.epicfight.api.utils.math.MathUtils.mulStack(pose, m);
+            f.render(pose, vc, light, overlay, tint[0], tint[1], tint[2]);
+            pose.popPose();
+        }
+
         private static void piece(yesman.epicfight.api.animation.Joint joint, ModelPart part, ModelPart parent, PoseStack pose,
                                   com.mojang.blaze3d.vertex.VertexConsumer vc, int light, int overlay, OpenMatrix4f[] poses) {
             int id = joint.getId();

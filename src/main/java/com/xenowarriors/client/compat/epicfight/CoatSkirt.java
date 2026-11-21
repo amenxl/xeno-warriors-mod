@@ -1,13 +1,15 @@
 package com.xenowarriors.client.compat.epicfight;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.core.Direction;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -16,8 +18,11 @@ import java.util.List;
  * through it (the user's video). Here a long coat is cut at the hips: the top stays on the chest, and the skirt below
  * is cut down the middle into two flaps that hang from the hips and swing with each thigh (part of the way), the way
  * a coat's tails move.
+ * <p>
+ * The cut pieces are drawn as their own faces (not as cubes: Embeddium draws a cube from its own copy of it, so a cube
+ * with its faces cut came out invisible - the first try).
  */
-final class CoatSkirt {
+public final class CoatSkirt {
     private CoatSkirt() {}
 
     /** Model y (px below the neck) of the hips, where the skirt starts. */
@@ -25,33 +30,67 @@ final class CoatSkirt {
     /** How far the flaps follow the thighs, and the most they swing (radians). */
     static final float FOLLOW = 0.8F, MAX = 1.2F;
 
-    private static java.lang.reflect.Field polygonsField;
+    /** (Tests) what the cuts made. */
+    public static final StringBuilder DEBUG = new StringBuilder();
 
     /** A long coat cube: from the chest down past the hips. */
     static boolean longCoat(ModelPart.Cube c) { return c.minY < 2F && c.maxY > 14.5F; }
 
-    /** The pieces of a body with a long coat: the cubes for the chest, and the two flaps (null: no long coat here). */
-    record Split(List<ModelPart.Cube> chest, ModelPart right, ModelPart left) {}
+    /** A face: its four corners (x, y, z in model px; u, v) and its normal. */
+    record Quad(float[][] v, Vector3f n) {}
+
+    /** Faces hanging from a pivot (model px), with its swing. */
+    static final class Flap {
+        final List<Quad> quads = new ArrayList<>();
+        final float px, py, pz;
+        float xRot, zRot;
+        Flap(float px, float py, float pz) { this.px = px; this.py = py; this.pz = pz; }
+
+        void render(PoseStack pose, VertexConsumer vc, int light, int overlay, float r, float g, float b) {
+            pose.pushPose();
+            pose.translate(px / 16F, py / 16F, pz / 16F);
+            if (xRot != 0F || zRot != 0F) pose.mulPose(new Quaternionf().rotationZYX(zRot, 0F, xRot));
+            Matrix4f m = pose.last().pose(); Matrix3f nm = pose.last().normal();
+            for (Quad q : quads) {
+                Vector3f n = nm.transform(new Vector3f(q.n()));
+                for (float[] c : q.v()) {
+                    Vector4f p = m.transform(new Vector4f(c[0] / 16F, c[1] / 16F, c[2] / 16F, 1F));
+                    vc.vertex(p.x(), p.y(), p.z(), r, g, b, 1F, c[3], c[4], overlay, light, n.x(), n.y(), n.z());
+                }
+            }
+            pose.popPose();
+        }
+    }
+
+    /** The pieces of a body with a long coat: the cubes left as they are, the coat's top (on the chest) and the two flaps (null: no long coat here). */
+    record Split(List<ModelPart.Cube> chest, Flap top, Flap right, Flap left) {}
 
     static Split split(List<ModelPart.Cube> body) {
         if (body.stream().noneMatch(CoatSkirt::longCoat)) return null;
         if (!reflect()) return null;                                                     // (can't cut: the coat stays as it was)
-        List<ModelPart.Cube> chest = new ArrayList<>(), r = new ArrayList<>(), l = new ArrayList<>();
+        List<ModelPart.Cube> chest = new ArrayList<>();
+        Flap top = new Flap(0F, 0F, 0F), r = new Flap(-1.9F, HIPS, 0F), l = new Flap(1.9F, HIPS, 0F);
+        int cut = 0;
         for (ModelPart.Cube c : body) {
             if (c.maxY <= HIPS + 1F) { chest.add(c); continue; }                        // (above the hips, or only just over)
-            ModelPart.Cube top = clip(c, 1, -999F, HIPS, 0F, 0F, 0F);
-            if (top != null) chest.add(top);
-            // below the hips: the right half (vanilla x < 0) hangs from the right hip, the left from the left
-            ModelPart.Cube rr = clip(c, 1, HIPS, 999F, 0F, 0F, 0F);
-            if (rr == null) continue;
-            ModelPart.Cube right = clip(rr, 0, -999F, 0F, 1.9F, -HIPS, 0F), left = clip(rr, 0, 0F, 999F, -1.9F, -HIPS, 0F);
-            if (right != null) r.add(right);
-            if (left != null) l.add(left);
+            List<Quad> faces;
+            try { faces = faces(c); } catch (Throwable t) { chest.add(c); continue; }   // (can't read it: as it was)
+            cut++;
+            for (Quad q : faces) {
+                Quad t = clip(q, 1, -999F, HIPS);
+                if (t != null) top.quads.add(t);
+                Quad below = clip(q, 1, HIPS, 999F);
+                if (below == null) continue;
+                // below the hips: the right half (vanilla x < 0) hangs from the right hip, the left from the left
+                Quad rq = clip(below, 0, -999F, 0F), lq = clip(below, 0, 0F, 999F);
+                if (rq != null) r.quads.add(shift(rq, 1.9F, -HIPS, 0F));
+                if (lq != null) l.quads.add(shift(lq, -1.9F, -HIPS, 0F));
+            }
         }
-        ModelPart pr = new ModelPart(r, new HashMap<>()), pl = new ModelPart(l, new HashMap<>());
-        pr.setInitialPose(PartPose.offset(-1.9F, HIPS, 0F)); pr.resetPose();
-        pl.setInitialPose(PartPose.offset(1.9F, HIPS, 0F)); pl.resetPose();
-        return new Split(chest, pr, pl);
+        if (cut == 0) return null;
+        if (DEBUG.length() < 600) DEBUG.append("cut ").append(cut).append(" coat cubes: top ").append(top.quads.size()).append(" faces, flaps ")
+                .append(r.quads.size()).append('+').append(l.quads.size()).append("; ");
+        return new Split(chest, top, r, l);
     }
 
     /** Swings the flaps with the thighs ({xRot, zRot} as vanilla leg angles, see legAngles). */
@@ -65,85 +104,59 @@ final class CoatSkirt {
 
     private static float clamp(float a) { return Math.max(-MAX, Math.min(MAX, a)); }
 
-    /**
-     * The part of a cube between lo and hi on an axis (0 x, 1 y, 2 z), its corners moved by (dx, dy, dz) - the faces cut
-     * the way a box is cut, their texture following (null: nothing left).
-     */
-    static ModelPart.Cube clip(ModelPart.Cube c, int axis, float lo, float hi, float dx, float dy, float dz) {
-        float[] min = {c.minX, c.minY, c.minZ}, max = {c.maxX, c.maxY, c.maxZ};
-        float a = Math.max(min[axis], lo), b = Math.min(max[axis], hi);
-        if (b - a < 0.01F) return null;
-        min[axis] = a; max[axis] = b;
-        try {
-            if (!reflect()) return null;
-            Object[] src = (Object[]) polygonsField.get(c);
-            ModelPart.Cube out = new ModelPart.Cube(0, 0, min[0] + dx, min[1] + dy, min[2] + dz, max[0] - min[0], max[1] - min[1], max[2] - min[2],
-                    0F, 0F, 0F, false, 64F, 64F, EnumSet.allOf(Direction.class));
-            Object[] dst = (Object[]) polygonsField.get(out);
-            int n = 0;
-            for (Object p : src) {
-                V[] v = clipPolygon(read((Object[]) verticesField.get(p)), axis, a, b);
-                if (v == null || n >= dst.length) continue;
-                Object[] dv = (Object[]) verticesField.get(dst[n]);
-                for (int i = 0; i < 4 && i < dv.length; i++) dv[i] = vertexCtor.newInstance(v[i].p.x() + dx, v[i].p.y() + dy, v[i].p.z() + dz, v[i].u, v[i].v);
-                ((Vector3f) normalField.get(dst[n])).set((Vector3f) normalField.get(p));
-                n++;
-            }
-            for (; n < dst.length; n++) {                                                  // (faces cut away: nothing to draw)
-                Object[] dv = (Object[]) verticesField.get(dst[n]);
-                for (int i = 1; i < dv.length; i++) dv[i] = dv[0];
-            }
-            return out;
-        } catch (Throwable t) {
-            com.xenowarriors.XenoWarriors.LOGGER.warn("XW: couldn't cut a coat for Epic Fight", t);
-            return null;
-        }
+    private static Quad shift(Quad q, float dx, float dy, float dz) {
+        float[][] v = new float[4][];
+        for (int i = 0; i < 4; i++) v[i] = new float[]{q.v()[i][0] + dx, q.v()[i][1] + dy, q.v()[i][2] + dz, q.v()[i][3], q.v()[i][4]};
+        return new Quad(v, q.n());
     }
 
-    /** A corner: where, and its texture spot. */
-    private record V(Vector3f p, float u, float v) {}
-
-    private static V[] read(Object[] vs) throws IllegalAccessException {
-        V[] out = new V[vs.length];
-        for (int i = 0; i < vs.length; i++) out[i] = new V((Vector3f) posField.get(vs[i]), uField.getFloat(vs[i]), vField.getFloat(vs[i]));
-        return out;
-    }
-
-    /** A face's corners inside [a, b] on the axis (a rectangle stays a rectangle; null if none of it is). */
-    private static V[] clipPolygon(V[] vs, int axis, float a, float b) {
-        if (vs.length != 4) return null;
+    /** A face's part between a and b on an axis (0 x, 1 y, 2 z): a rectangle stays a rectangle, its texture following (null if none of it is). */
+    static Quad clip(Quad q, int axis, float a, float b) {
+        float[][] vs = q.v();
         float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
-        for (V v : vs) { float c = coord(v.p, axis); lo = Math.min(lo, c); hi = Math.max(hi, c); }
-        if (hi < a + 0.001F || lo > b - 0.001F) return null;                               // (outside)
-        if (hi - lo < 0.001F) return vs;                                                   // (a face across the axis, inside)
-        V[] out = new V[4];
+        for (float[] v : vs) { lo = Math.min(lo, v[axis]); hi = Math.max(hi, v[axis]); }
+        if (hi - lo < 0.001F) return lo >= a - 0.001F && lo <= b + 0.001F ? q : null;     // (a face across the axis: in or out)
+        if (hi <= a + 0.001F || lo >= b - 0.001F) return null;
+        float[][] out = new float[4][];
         for (int i = 0; i < 4; i++) {
-            V v = vs[i];
-            float c = coord(v.p, axis);
-            float t = Math.max(a, Math.min(b, c));
+            float[] v = vs[i];
+            float c = v[axis], t = Math.max(a, Math.min(b, c));
             if (t == c) { out[i] = v; continue; }
-            // slide it along its edge to the partner corner at the other end of the axis
-            V o = null;
-            for (V w : vs) if (w != v && same(w.p, v.p, axis) && Math.abs(coord(w.p, axis) - c) > 0.001F) { o = w; break; }
+            float[] o = null;                                                            // its partner at the other end of the axis
+            for (float[] w : vs) if (w != v && same(w, v, axis) && Math.abs(w[axis] - c) > 0.001F) { o = w; break; }
             if (o == null) { out[i] = v; continue; }
-            float k = (t - c) / (coord(o.p, axis) - c);
-            out[i] = new V(new Vector3f(v.p).lerp(o.p, k), v.u + (o.u - v.u) * k, v.v + (o.v - v.v) * k);
+            float k = (t - c) / (o[axis] - c);
+            float[] p = new float[5];
+            for (int j = 0; j < 5; j++) p[j] = v[j] + (o[j] - v[j]) * k;
+            out[i] = p;
         }
-        return out;
+        return new Quad(out, q.n());
     }
 
-    /** Same corner apart from the axis? */
-    private static boolean same(Vector3f p, Vector3f q, int axis) {
-        for (int i = 0; i < 3; i++) if (i != axis && Math.abs(coord(p, i) - coord(q, i)) > 0.001F) return false;
+    private static boolean same(float[] p, float[] q, int axis) {
+        for (int i = 0; i < 3; i++) if (i != axis && Math.abs(p[i] - q[i]) > 0.001F) return false;
         return true;
     }
 
-    private static float coord(Vector3f p, int axis) { return axis == 0 ? p.x() : axis == 1 ? p.y() : p.z(); }
-
-    // ModelPart's Polygon and Vertex are private: reached by what they hold
-    private static java.lang.reflect.Field verticesField, normalField, posField, uField, vField;
-    private static java.lang.reflect.Constructor<?> vertexCtor;
+    // ModelPart's Polygon and Vertex are private: their insides reached by what they hold (read only)
+    private static java.lang.reflect.Field polygonsField, verticesField, normalField, posField, uField, vField;
     private static boolean reflected, reflectOk;
+
+    /** A cube's faces as it was built (corners, texture spots, normals). */
+    private static List<Quad> faces(ModelPart.Cube c) throws IllegalAccessException {
+        List<Quad> out = new ArrayList<>();
+        for (Object p : (Object[]) polygonsField.get(c)) {
+            Object[] vs = (Object[]) verticesField.get(p);
+            if (vs.length != 4) continue;
+            float[][] v = new float[4][];
+            for (int i = 0; i < 4; i++) {
+                Vector3f pos = (Vector3f) posField.get(vs[i]);
+                v[i] = new float[]{pos.x(), pos.y(), pos.z(), uField.getFloat(vs[i]), vField.getFloat(vs[i])};
+            }
+            out.add(new Quad(v, new Vector3f((Vector3f) normalField.get(p))));
+        }
+        return out;
+    }
 
     private static boolean reflect() {
         if (reflected) return reflectOk;
@@ -167,8 +180,6 @@ final class CoatSkirt {
                 else if (f.getType() == float.class) floats.add(f);
             }
             uField = floats.get(0); vField = floats.get(1);
-            vertexCtor = vert.getDeclaredConstructor(float.class, float.class, float.class, float.class, float.class);
-            vertexCtor.setAccessible(true);
             reflectOk = posField != null && normalField != null;
         } catch (Throwable t) {
             com.xenowarriors.XenoWarriors.LOGGER.warn("XW: coats for Epic Fight - ModelPart's insides not as expected", t);

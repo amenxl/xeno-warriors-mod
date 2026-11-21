@@ -72,7 +72,8 @@ final class PackEfClothesTests {
         }
         l.add(new Step(null, () -> PackTests.check("efcoats: a long lab coat's skirt swings in two flaps with the legs",
                 com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.skirtDraws > sk[0],
-                "skirt draws " + (com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.skirtDraws - sk[0]) + " rig " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastRig), 2));
+                "skirt draws " + (com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.skirtDraws - sk[0]) + " rig " + com.xenowarriors.client.compat.epicfight.DetailPatchedLayer.lastRig
+                + " cuts " + com.xenowarriors.client.compat.epicfight.CoatSkirt.DEBUG), 2));
         l.add(new Step(null, () -> { battle(false); mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON);
             PackTests.server(p -> PackTests.clear(p)); }, 10));
     }
