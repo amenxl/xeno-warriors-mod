@@ -94,6 +94,8 @@ xwLibs.each { lib ->
 def xwExtra = []
 def xwExtraEnv = System.getenv('XW_UITEST_EXTRA') ?: ''
 if (xwExtraEnv.contains('dmz')) xwExtra += [[q: 'dragonminez', match: '2.2.1'], [q: 'terrablender', match: ''], [q: 'curios', match: '']]
+// (DragonMineZ 2.2 refuses to start next to Epic Fight; the user's pack has the bridge mod that lets them load together)
+if (xwExtraEnv.contains('dmz')) xwExtra += [[q: 'dmzefbridge', match: '', slugs: ['dmzefbridge', 'dragonminez-epic-fight-bridge', 'dmz-ef-bridge', 'dragonminez-x-epic-fight-bridge'], optional: true]]
 if (xwExtraEnv.contains('tacz')) xwExtra += [[q: 'tacz', match: '']]
 xwExtra.each { m ->
     File f = file("libs/xwextra-${m.q}-1.jar")
@@ -101,10 +103,21 @@ xwExtra.each { m ->
     if (f.exists() && f.length() > 0) return
     def ua = { String u -> def c = new URL(u).openConnection(); c.setRequestProperty('User-Agent', 'amenxl/xeno-warriors-mod test'); c }
     def facets = java.net.URLEncoder.encode('[["categories:forge"],["versions:1.20.1"]]', 'UTF-8')
-    def hits = new groovy.json.JsonSlurper().parse(ua("https://api.modrinth.com/v2/search?query=${m.q}&facets=${facets}").inputStream).hits
-    if (!hits) throw new GradleException("Modrinth: nothing found for ${m.q}")
-    def slug = (hits.find { it.slug == m.q } ?: hits[0]).slug
-    def versions = new groovy.json.JsonSlurper().parse(ua("https://api.modrinth.com/v2/project/${slug}/version?loaders=%5B%22forge%22%5D&game_versions=%5B%221.20.1%22%5D").inputStream)
+    def slug = null, versions = null
+    if (m.slugs) {                                                             // (only these exact projects - never a near match)
+        for (String sl : m.slugs) {
+            try {
+                def vs = new groovy.json.JsonSlurper().parse(ua("https://api.modrinth.com/v2/project/${sl}/version?loaders=%5B%22forge%22%5D&game_versions=%5B%221.20.1%22%5D").inputStream)
+                if (vs) { slug = sl; versions = vs; break }
+            } catch (Exception ignored) {}
+        }
+        if (slug == null) { println "UI test extra: ${m.q} not on Modrinth - skipped"; m.coord = null; return }
+    } else {
+        def hits = new groovy.json.JsonSlurper().parse(ua("https://api.modrinth.com/v2/search?query=${m.q}&facets=${facets}").inputStream).hits
+        if (!hits) throw new GradleException("Modrinth: nothing found for ${m.q}")
+        slug = (hits.find { it.slug == m.q } ?: hits[0]).slug
+        versions = new groovy.json.JsonSlurper().parse(ua("https://api.modrinth.com/v2/project/${slug}/version?loaders=%5B%22forge%22%5D&game_versions=%5B%221.20.1%22%5D").inputStream)
+    }
     def v = versions.find { !m.match || it.version_number.contains(m.match) } ?: versions[0]
     def jar = v.files.find { it.primary } ?: v.files[0]
     println "UI test extra: ${slug} ${v.version_number} (${jar.filename})"
@@ -128,7 +141,7 @@ dependencies {
     compileOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")
     runtimeOnly fg.deobf("blank:epicfight-forge-1.20.1:20.14.17")
     compileOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")      // optional: fancier effects when Lodestone is installed
-    xwExtra.each { m -> runtimeOnly fg.deobf(m.coord) }
+    xwExtra.each { m -> if (m.coord) runtimeOnly fg.deobf(m.coord) }
     if (System.getenv('XW_UITEST_LODESTONE') == '1') runtimeOnly fg.deobf("blank:lodestone-1.20.1:1.6.4.1.257")   // (aura screenshots in CI)
 }
 
