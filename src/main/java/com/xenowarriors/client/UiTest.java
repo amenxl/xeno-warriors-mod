@@ -147,6 +147,7 @@ public final class UiTest {
         if ("s3fits".equals(System.getenv("XW_UITEST_FOCUS"))) { s3Outfits(mc, l); return l; }
         if ("ores".equals(System.getenv("XW_UITEST_FOCUS"))) { oresAndPjs(mc, l); return l; }
         if ("village".equals(System.getenv("XW_UITEST_FOCUS"))) { village(mc, l); return l; }
+        if ("section1".equals(System.getenv("XW_UITEST_FOCUS"))) { section1(mc, l); return l; }
         if ("capital".equals(System.getenv("XW_UITEST_FOCUS"))) { capital(mc, l); return l; }
         if ("partyui".equals(System.getenv("XW_UITEST_FOCUS"))) { partyUi(mc, l); return l; }
         if ("allanim2".equals(System.getenv("XW_UITEST_FOCUS"))) { allAnims(mc, l); return l; }
@@ -670,6 +671,37 @@ public final class UiTest {
     }
 
     /** A tour of the Mountain Village (Pine Cone City) in the Recarnet dimension: from the air, the square, the farm, the school, the dojo, the outskirts. */
+    /** Recarnet's Section 1 laid out like the user's map: Aurora, the Underclass City south, Pine Cone City west, the road. */
+    private static void section1(Minecraft mc, List<Step> l) {
+        int vx = com.xenowarriors.recarnet.Recarnet.VILLAGE_X, vz = com.xenowarriors.recarnet.Recarnet.VILLAGE_Z, uz = com.xenowarriors.recarnet.Recarnet.UNDER_Z;
+        Object[][] shots = {
+            {"aurora_from_south", 0, 210, 470, 180F, 30F},
+            {"underclass_aerial", 0, 150, uz + 150, 180F, 35F},
+            {"underclass_street", 6, 76, uz + 10, 180F, 4F},
+            {"sp_hideout", -36, 78, 300, 180F, 6F},
+            {"south_gate_road", 0, 78, 240, 180F, 4F},
+            {"west_road", -380, 120, 40, 270F, 30F},
+            {"pine_cone_from_east", vx + 260, 170, vz, 90F, 25F},
+            {"f1_sign", -38, 75, -152, 200F, 10F},
+            {"map_overview", -260, 420, 300, 225F, 50F},
+        };
+        l.add(new Step(null, () -> server(p -> {
+            p.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+            var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+            if (lvl != null) { lvl.setDayTime(5000); p.teleportTo(lvl, 0.5, 210, 470.5, 180F, 30F); }
+        }), 240));
+        for (Object[] sh : shots) {
+            double x = ((Integer) sh[1]) + 0.5, y = (Integer) sh[2], z = ((Integer) sh[3]) + 0.5;
+            float yaw = (Float) sh[4], pitch = (Float) sh[5];
+            l.add(new Step(null, () -> server(p -> {
+                var lvl = p.server.getLevel(com.xenowarriors.recarnet.Recarnet.LEVEL);
+                if (lvl != null) p.teleportTo(lvl, x, y, z, yaw, pitch);
+            }), 200));
+            l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); mc.player.setYRot(yaw); mc.player.setXRot(pitch); }, 20));
+            l.add(new Step("section1_" + sh[0], () -> {}, 5));
+        }
+    }
+
     private static void village(Minecraft mc, List<Step> l) {
         int vx = com.xenowarriors.recarnet.Recarnet.VILLAGE_X, vz = com.xenowarriors.recarnet.Recarnet.VILLAGE_Z, by = com.xenowarriors.recarnet.Recarnet.VILLAGE_Y;
         // name, x, y, z, yaw, pitch
