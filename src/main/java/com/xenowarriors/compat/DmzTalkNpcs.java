@@ -66,22 +66,22 @@ public final class DmzTalkNpcs {
         try {
             if (DmzPerCharacter.viewing(p) == null) {
                 Object sd = DmzPerCharacter.live(p);
-                if (sd != null) needsOf(DmzBotQuests.m(sd, "getPlayerQuestData"), null, out);
+                if (sd != null) needsOf(DmzBotQuests.m(sd, "getPlayerQuestData"), null, p, out);
             }
             for (PartyBotEntity b : PartyBots.bots(p)) {
                 if (b.journey()) continue;
                 Object pqd = DmzBotQuests.peek(b);                                   // (its mission data only, cached: not its whole DMZ character)
-                if (pqd != null) needsOf(pqd, DmzPerCharacter.botKey(b), out);
+                if (pqd != null) needsOf(pqd, DmzPerCharacter.botKey(b), null, out);
             }
         } catch (Throwable t) { XenoWarriors.LOGGER.warn("Couldn't read DragonMineZ missions for their talk objectives", t); }
         return out;
     }
 
-    private static void needsOf(Object pqd, String bot, List<Need> out) throws Exception {
+    private static void needsOf(Object pqd, String bot, ServerPlayer holder, List<Need> out) throws Exception {
         for (String key : DmzBotQuests.accepted(pqd)) {
             Object q = DmzBotQuests.quest(key);
             if (q == null || (Boolean) DmzBotQuests.m(pqd, "isQuestCompleted", key) || !DmzBotQuests.typeEnabled(q)) continue;
-            String npc = DmzBotQuests.waitingOn(pqd, key, q, bot == null);         // (yours: once the talk is all that's left; a bot's: when it's next - it may walk over itself)
+            String npc = DmzBotQuests.waitingOn(pqd, key, q, bot == null, holder);         // (yours: once the talk is all that's left; a bot's: when it's next - it may walk over itself)
             if (npc != null && !npc.isBlank()) out.add(new Need((bot == null ? "" : bot + "|") + key, key, npc, bot));
         }
     }

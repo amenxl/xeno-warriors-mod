@@ -656,17 +656,34 @@ public final class DmzBotQuests {
      * Who this mission waits on the bot (or you) to talk to right now, or null: the person it's handed in to once it's
      * ready, or the person of its current "talk to" objective. onlyLeft: only when that talk is all that's left.
      */
-    static String waitingOn(Object pqd, String key, Object q, boolean onlyLeft) throws Exception {
+    static String waitingOn(Object pqd, String key, Object q, boolean onlyLeft) throws Exception { return waitingOn(pqd, key, q, onlyLeft, null); }
+
+    private static Class<?> deliverObj;
+    private static boolean deliverTried;
+
+    /**
+     * Who this mission is waiting to be talked to (or handed in to) right now, or null. onlyLeft (yours): only when nothing
+     * else open has to come first - a talk that's the current step of a mission with more steps after it counts (those
+     * later steps don't open until you've talked). holder (yours): a "deliver X to them" step counts too once you carry enough.
+     */
+    static String waitingOn(Object pqd, String key, Object q, boolean onlyLeft, net.minecraft.world.entity.player.Player holder) throws Exception {
         if ((Boolean) needsTurnIn.invoke(null, q))
             return (Boolean) turnInReady.invoke(null, pqd, key, q) ? (String) m(q, "getTurnIn") : null;
+        if (!deliverTried) { deliverTried = true; try { deliverObj = Class.forName("com.dragonminez.common.quest.objectives.DeliverObjective"); } catch (Throwable t) { deliverObj = null; } }
         List<?> objs = (List<?>) m(q, "getObjectives");
         boolean parallel = (Boolean) m(q, "isParallelObjectives");
         String npc = null;
         boolean otherOpen = false;
         for (int i = 0; i < objs.size(); i++) {
-            if (progress(pqd, key, i) >= required(q, pqd, key, i)) continue;
+            int need = required(q, pqd, key, i) - progress(pqd, key, i);
+            if (need <= 0) continue;
             boolean current = parallel || firstOpen(pqd, key, q, i);
-            if (talkObj.isInstance(objs.get(i)) && current) { if (npc == null) npc = (String) m(objs.get(i), "getNpcId"); }
+            if (!current) continue;                                                 // (a later step: it waits on this one anyway)
+            Object o = objs.get(i);
+            if (talkObj.isInstance(o)) { if (npc == null) npc = (String) m(o, "getNpcId"); }
+            else if (holder != null && deliverObj != null && deliverObj.isInstance(o) && holder.getInventory().countItem((net.minecraft.world.item.Item) m(o, "getItem")) >= need) {
+                if (npc == null) npc = (String) m(o, "getNpcId");
+            }
             else otherOpen = true;
         }
         return onlyLeft && otherOpen ? null : npc;

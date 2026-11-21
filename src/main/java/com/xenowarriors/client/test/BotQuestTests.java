@@ -375,6 +375,28 @@ public final class BotQuestTests {
             log("talk: copy gone=" + e.isRemoved() + " copies=" + DmzTalkNpcs.count(p) + (e.isRemoved() && String.valueOf(own(p, t[0])).contains("completed=true") ? " OK" : " FAIL"));
         }); }, 20);
         step("dmzbotq_npc_gone", () -> mc.setScreen(null), 10);
+        // a talk that's the current step with more steps after it (sequential): the person comes now, not only at the end
+        step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
+            String key = null, npc = null;
+            for (var en : allQuests().entrySet()) {
+                Object q = en.getValue();
+                String t = (String) call(q, "getTurnIn");
+                if ((t != null && !t.isBlank()) || Boolean.TRUE.equals(call(q, "isParallelObjectives"))) continue;
+                if (tq[0] != null && en.getKey().equals(tq[0][0]) || tq[1] != null && en.getKey().equals(tq[1][0])) continue;
+                List<?> objs = (List<?>) call(q, "getObjectives");
+                if (objs == null || objs.size() < 2 || !objs.get(0).getClass().getSimpleName().equals("TalkToObjective")) continue;
+                key = en.getKey(); npc = String.valueOf(call(objs.get(0), "getNpcId")); break;
+            }
+            if (key == null) { log("talk first: no mission starts with a talk and has more after it - skipped OK"); return; }
+            DmzQuests.accept(p, key);
+            DmzPerCharacter.syncAll(p);
+            DmzTalkNpcs.update(p);
+            Entity e = DmzTalkNpcs.tempFor(p, key);
+            log("talk first: " + key + " (talk to " + npc + " first, more steps after) -> came: " + (e == null ? "nobody FAIL" : e.getDisplayName().getString() + " OK"));
+            call(pqd(p), "resetQuest", key);
+            DmzPerCharacter.syncAll(p);
+            DmzTalkNpcs.update(p);
+        }); }, 20);
         // the same for the bot's own mission: the person comes to the owner; talking to them hands it in for the bot
         step(null, () -> { Dmz6Tests.noDmzScreen(mc); server(p -> {
             PartyBotEntity b = bot(p);
