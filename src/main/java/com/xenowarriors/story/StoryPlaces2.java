@@ -1299,4 +1299,79 @@ final class StoryPlaces2 {
         fill(l, c, 16, 1, -2, 17, 2, -2, b(Blocks.LIGHT_GRAY_CONCRETE));
         for (int z = 2; z <= 8; z += 3) set(l, c.offset(x0 + 1, 2, z), b(Blocks.IRON_TRAPDOOR));
     }
+
+    // ------------------------------------------------------------------ Yuri's VR room (empty)
+
+    /**
+     * Yuri's VR room with nothing projected (the user's picture): a long dark-blue chamber, walls and ceiling of
+     * jutting blocky panels, slanted struts down both sides with white light strips, small blue lights scattered in
+     * the panels, a smooth dark floor with a seam down the middle, and darkness at the far end.
+     */
+    static void vrRoom(ServerLevel l, BlockPos c, RandomSource r) {
+        int RR = radius("vr_room"), w = 10, h = 11;
+        BlockState[] blocks = {b(Blocks.BLUE_TERRACOTTA), b(Blocks.CYAN_TERRACOTTA), b(Blocks.POLISHED_DEEPSLATE), b(Blocks.DEEPSLATE_TILES)};
+        for (int z = -RR; z <= RR; z++) {
+            if (!inside(0, z, RR)) continue;
+            for (int x = -w; x <= w; x++) {
+                set(l, c.offset(x, 0, z), b(x == 0 ? Blocks.POLISHED_BLACKSTONE : Blocks.BLUE_CONCRETE));
+                set(l, c.offset(x, h, z), blocks[r.nextInt(blocks.length)]);
+                if (r.nextInt(4) == 0 && Math.abs(x) < w) set(l, c.offset(x, h - 1, z), blocks[r.nextInt(blocks.length)]);   // (the blocky ceiling)
+            }
+            for (int s2 : new int[]{-w, w}) for (int y = 1; y < h; y++) {
+                set(l, c.offset(s2, y, z), r.nextInt(25) == 0 ? b(Blocks.LIGHT_BLUE_STAINED_GLASS) : blocks[r.nextInt(blocks.length)]);
+                if (r.nextInt(5) == 0) set(l, c.offset(s2 - Integer.signum(s2), y, z), blocks[r.nextInt(blocks.length)]);   // (panels jutting out)
+            }
+            if (Math.floorMod(z, 6) == 0) for (int s2 : new int[]{-1, 1}) {           // the slanted struts with their light strips
+                for (int k = 0; k < 4; k++) set(l, c.offset(s2 * (w - 1 - k), 1 + k / 2, z), b(Blocks.POLISHED_DEEPSLATE));
+                for (int y = 3; y < h - 1; y++) set(l, c.offset(s2 * (w - 1), y, z), b(Blocks.END_ROD));
+                set(l, c.offset(s2 * (w - 4), 1, z), b(Blocks.SEA_LANTERN));
+            }
+        }
+        for (int x = -w; x <= w; x++) for (int y = 1; y < h; y++) set(l, c.offset(x, y, -RR + 1), b(Blocks.BLACK_CONCRETE));   // the dark far end
+    }
+
+    // ------------------------------------------------------------------ Kyrie's room
+
+    /**
+     * Kyrie's room at night (the user's picture): magenta and deep-purple walls, tall dark window columns with violet
+     * light running up them, a great pointed-arch window onto the stars with the balcony railing beyond, sheer pink
+     * curtains hanging in it, and dark urns of glowing pink flowers either side.
+     */
+    static void kyrieRoom(ServerLevel l, BlockPos c, RandomSource r) {
+        int x0 = -14, x1 = 14, zb = -14, zf = 12, h = 14;
+        for (int x = x0; x <= x1; x++) for (int z = zb; z <= zf; z++) {
+            set(l, c.offset(x, 0, z), b(((x + z) & 1) == 0 ? Blocks.MAGENTA_STAINED_GLASS : Blocks.PURPLE_STAINED_GLASS));
+            set(l, c.offset(x, -1, z), b(Blocks.PURPLE_CONCRETE));
+            set(l, c.offset(x, h + 1, z), b(Blocks.PURPLE_TERRACOTTA));
+            boolean side = x == x0 || x == x1 || z == zb || z == zf;
+            if (side) for (int y = 1; y <= h; y++) set(l, c.offset(x, y, z), b(y < 3 ? Blocks.MAGENTA_CONCRETE : Blocks.MAGENTA_TERRACOTTA));
+        }
+        fill(l, c, -1, 1, zf, 1, 3, zf, b(Blocks.AIR));
+        for (int x : new int[]{-9, -8, 8, 9}) {                                          // the window columns, lit up their sides
+            fill(l, c, x, 1, zb + 1, x, h, zb + 1, b(Blocks.BLACK_CONCRETE));
+        }
+        for (int x : new int[]{-10, -7, 7, 10}) fill(l, c, x, 1, zb + 1, x, h, zb + 1, b(Blocks.PURPLE_STAINED_GLASS));
+        for (int x : new int[]{-11, 11}) fill(l, c, x, 2, zb + 1, x, h - 1, zb + 1, b(Blocks.END_ROD));
+        // the great arched window onto the stars, and the balcony beyond
+        for (int x = -5; x <= 5; x++) for (int y = 1; y <= h; y++) {
+            double top = 8 + Math.sqrt(Math.max(0, 36 - x * x)) * 0.9;
+            if (y <= top) set(l, c.offset(x, y, zb), b(Blocks.AIR));
+            else if (y <= top + 1) set(l, c.offset(x, y, zb), b(Blocks.GOLD_BLOCK));
+        }
+        for (int x = -6; x <= 6; x++) for (int z = zb - 4; z < zb; z++) set(l, c.offset(x, 0, z), b(Blocks.PURPLE_CONCRETE));
+        for (int x = -6; x <= 6; x++) { set(l, c.offset(x, 1, zb - 4), b(x % 3 == 0 ? Blocks.AMETHYST_BLOCK : Blocks.PURPLE_STAINED_GLASS)); set(l, c.offset(x, 2, zb - 4), b(Blocks.PURPLE_STAINED_GLASS)); }
+        for (int x = -6; x <= 6; x++) for (int y = 0; y <= 20; y++) for (int z = zb - 12; z < zb - 4; z++) set(l, c.offset(x, y, z), b(Blocks.AIR));
+        for (int i = 0; i < 25; i++) set(l, c.offset(r.nextInt(16) - 8, 4 + r.nextInt(16), zb - 10 - r.nextInt(3)), b(Blocks.END_ROD));
+        // the sheer curtains
+        for (int s2 : new int[]{-1, 1}) for (int x = 3; x <= 5; x++) for (int y = 3; y <= h - 1; y++) if (y > 6 || x == 5) set(l, c.offset(s2 * x, y, zb + 1), b(Blocks.PINK_STAINED_GLASS));
+        // urns of glowing pink flowers
+        for (int s2 : new int[]{-1, 1}) {
+            int ux = s2 * 9, uz = zb + 4;
+            set(l, c.offset(ux, 1, uz), b(Blocks.BLACKSTONE)); set(l, c.offset(ux, 2, uz), b(Blocks.POLISHED_BLACKSTONE)); set(l, c.offset(ux, 3, uz), b(Blocks.BLACKSTONE_WALL));
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) set(l, c.offset(ux + dx, 4, uz + dz), leaves(Blocks.FLOWERING_AZALEA_LEAVES));
+            set(l, c.offset(ux, 5, uz), b(Blocks.PEARLESCENT_FROGLIGHT));
+            set(l, c.offset(ux + s2, 1, uz + 1), b(Blocks.PINK_PETALS));
+        }
+        for (int x = -10; x <= 10; x += 5) set(l, c.offset(x, h, 0), hanging(Blocks.SOUL_LANTERN));
+    }
 }

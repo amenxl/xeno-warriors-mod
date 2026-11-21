@@ -21,7 +21,7 @@ public final class StoryScenes {
     public static final List<String> PLACES = List.of("sp_hideout", "aurora_street", "sr_hideout", "royal_capital", "sky_island", "farm",
             "train_station", "school", "mountain_village", "gov_facility", "battlefield", "sr_tunnels", "sr_barracks", "sr_cells",
             "royal_palace", "f2_ruins", "palace_balcony", "night_sky", "aurora_mall", "underclass_city", "village_city", "capital_arcade", "akuma_hq", "lab_hallway", "keepers_palace",
-            "gov_hall", "gov_hall_moon", "gov_hall_breach", "tenjo_village", "tenjo_house", "kyle_office");
+            "gov_hall", "gov_hall_moon", "gov_hall_breach", "tenjo_village", "tenjo_house", "kyle_office", "vr_room", "kyrie_room");
     public static final int R = 22, Y = 100, SPACING = 512, Z0 = 60000, PLACE_GAP = 160;
 
     /** How far a place reaches (its floor's radius): bigger places for the big fights, so a crowd doesn't all end up in one spot. */
@@ -30,7 +30,7 @@ public final class StoryScenes {
         return switch (place) {
             case "sr_hideout", "sr_tunnels", "sr_barracks", "sr_cells", "battlefield" -> 34;
             case "royal_capital", "aurora_street", "gov_facility", "school", "sp_hideout", "farm", "mountain_village",
-                 "royal_palace", "f2_ruins", "night_sky", "aurora_mall", "underclass_city", "village_city", "akuma_hq", "keepers_palace", "gov_hall", "gov_hall_moon", "gov_hall_breach", "tenjo_village" -> 30;
+                 "royal_palace", "f2_ruins", "night_sky", "aurora_mall", "underclass_city", "village_city", "akuma_hq", "keepers_palace", "gov_hall", "gov_hall_moon", "gov_hall_breach", "tenjo_village", "vr_room" -> 30;
             default -> R;
         };
     }
@@ -47,6 +47,7 @@ public final class StoryScenes {
             case "village_city" -> "Mountain Village - Downtown"; case "capital_arcade" -> "Royal Capital - the Arcade"; case "akuma_hq" -> "Akuma Squad HQ"; case "lab_hallway" -> "The Lab Hallway"; case "keepers_palace" -> "The Keepers' Palace";
             case "gov_hall", "gov_hall_moon", "gov_hall_breach" -> "Government Facility F3 - the Hall"; case "tenjo_village" -> "The Tenjos' Village (Year 90)";
             case "tenjo_house" -> "The Tenjos' Hideaway"; case "kyle_office" -> "Kyle's Office";
+            case "vr_room" -> "Yuri's HQ - the VR Room"; case "kyrie_room" -> "Kyrie's Room";
             case "sr_tunnels" -> "SR Hideout - the Tunnels"; case "sr_barracks" -> "SR Hideout - the Barracks"; case "sr_cells" -> "SR Hideout - the Cells"; default -> place;
         };
     }
@@ -213,7 +214,7 @@ public final class StoryScenes {
             case "night_sky" -> { floor = b(Blocks.PURPLE_STAINED_GLASS); floor2 = b(Blocks.WHITE_STAINED_GLASS); edge = b(Blocks.PURPLE_WOOL); }
             case "aurora_mall" -> { floor = b(Blocks.BLUE_TERRACOTTA); floor2 = b(Blocks.PURPLE_TERRACOTTA); edge = b(Blocks.STONE); }
             case "village_city" -> { floor = b(Blocks.GRAY_CONCRETE); floor2 = b(Blocks.LIGHT_GRAY_CONCRETE); edge = b(Blocks.STONE); }
-            case "tenjo_house", "kyle_office" -> { floor = b(Blocks.STONE); floor2 = b(Blocks.STONE); edge = b(Blocks.STONE); }
+            case "tenjo_house", "kyle_office", "vr_room", "kyrie_room" -> { floor = b(Blocks.STONE); floor2 = b(Blocks.STONE); edge = b(Blocks.STONE); }
             case "tenjo_village" -> { floor = b(Blocks.GRASS_BLOCK); floor2 = b(Blocks.GRASS_BLOCK); edge = b(Blocks.DIRT); }
             case "keepers_palace" -> { floor = b(Blocks.GRASS_BLOCK); floor2 = b(Blocks.GRASS_BLOCK); edge = b(Blocks.DIRT); }
             case "lab_hallway" -> { floor = b(Blocks.LIGHT_GRAY_CONCRETE); floor2 = b(Blocks.GRAY_CONCRETE); edge = b(Blocks.STONE); }
@@ -273,6 +274,8 @@ public final class StoryScenes {
             case "tenjo_village" -> StoryPlaces2.tenjoVillage(l, c, rnd);
             case "tenjo_house" -> StoryPlaces2.tenjoHouse(l, c, rnd);
             case "kyle_office" -> StoryPlaces2.kyleOffice(l, c, rnd);
+            case "vr_room" -> StoryPlaces2.vrRoom(l, c, rnd);
+            case "kyrie_room" -> StoryPlaces2.kyrieRoom(l, c, rnd);
             default -> {}
         }
     }
