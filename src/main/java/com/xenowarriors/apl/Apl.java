@@ -367,9 +367,9 @@ public final class Apl {
         ItemStack s = inv.getItem(best);
         var fp = s.getItem().getFoodProperties(s, p);
         ItemStack one = s.split(1);
-        ItemStack eaten = one.copy();
+        ItemStack meal = one.copy();
         ItemStack left = one.finishUsingItem(p.level(), p);       // (eats it: food, effects, a bowl back for stews)
-        left = net.minecraftforge.event.ForgeEventFactory.onItemUseFinish(p, eaten, 0, left);   // (as eating finishes: a big stomach takes it, DragonMineZ's foods do their thing - a senzu restores everything)
+        left = net.minecraftforge.event.ForgeEventFactory.onItemUseFinish(p, meal, 0, left);   // (as eating finishes: a big stomach takes it, DragonMineZ's foods do their thing - a senzu restores everything)
         if (!left.isEmpty() && left != one && !inv.add(left)) p.drop(left, false);
         p.level().playSound(null, p.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.PLAYERS, 0.7F, 1F);
         eaten++;
