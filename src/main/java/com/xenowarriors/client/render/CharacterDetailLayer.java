@@ -561,6 +561,9 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
         return mouth;
     }
 
+    private static Boolean efLoaded;
+    private static boolean efLoaded() { if (efLoaded == null) efLoaded = net.minecraftforge.fml.ModList.get().isLoaded("epicfight"); return efLoaded; }
+
     /** (tests) times this layer ran. */
     public static int renders;
 
@@ -570,7 +573,8 @@ public class CharacterDetailLayer extends RenderLayer<AbstractClientPlayer, Play
                        float netHeadYaw, float headPitch) {
         renders++;
         if (player.isInvisible()) return;
-        if (com.xenowarriors.client.compat.DmzHairBridge.wants(player))                  // (one of your own: its DragonMineZ hair, switched on)
+        if (com.xenowarriors.client.compat.DmzHairBridge.wants(player) && !(efLoaded() && !com.xenowarriors.client.FirstPersonHead.inGui
+                && com.xenowarriors.client.compat.epicfight.EpicFightCompat.efDrawing(player.getId())))   // (one of your own: its DragonMineZ hair, switched on - not again here while Epic Fight draws it on its body: two draws a frame fought over the hair's physics and it stuck where the plain model's head was)
             com.xenowarriors.client.compat.DmzHairBridge.drawVanilla(player, poseStack, getParentModel().head, getParentModel().body, buffers, partialTick, packedLight);
         CharacterType type = ClientCharacterData.get(player);
         DetailModel model = models.get(type);

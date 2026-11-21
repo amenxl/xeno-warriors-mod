@@ -298,6 +298,7 @@ public final class StoryRun {
         if (l == null) return;
         clearNpcs(s, r);
         StoryScenes.ensure(l, r.slot, place);
+        StoryScenes.stockBarrels(l, r.slot, place);                                     // (healing potions in some of its barrels)
         r.place = place;
         int k = 0;
         for (ServerPlayer p : players(s, r)) {

@@ -1076,6 +1076,34 @@ final class PackNov20dTests {
                     var h = p.serverLevel().getEntity(gd[0]); if (h != null) h.discard();
                     var st = p.serverLevel().getEntity(gd[1]); if (st != null) st.discard(); }); }, 10));
         }
+        // ---- Healingstones: a bot carrying some uses one on a badly hurt teammate (a bot here), not only on you
+        Object[] hs = new Object[3];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var it = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation("slu", "healingstone"));
+            if (it == null || it == Items.AIR) return;
+            PackTests.arena(p); PackTests.clear(p);
+            PartyBotEntity a = PartyBots.spawn(p, CharacterType.KAERU, null), b = PartyBots.spawn(p, CharacterType.SAM, null);
+            if (a == null || b == null) return;
+            a.moveTo(p.getX() + 1.5, p.getY(), p.getZ(), 0F, 0F); b.moveTo(p.getX() - 1.5, p.getY(), p.getZ(), 0F, 0F);
+            a.inventory.setItem(0, new ItemStack(it, 4));
+            b.setHealth(b.getMaxHealth() * 0.2F);
+            hs[0] = a; hs[1] = b; hs[2] = com.xenowarriors.compat.HealingStone.onTeammates;
+        }), 60));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (!(hs[1] instanceof PartyBotEntity b)) { PackTests.log("healingstone: no Soulslike Universe here - skipped"); return; }
+            PackTests.check("healingstone: a bot uses one on a badly hurt teammate bot", com.xenowarriors.compat.HealingStone.onTeammates > (Integer) hs[2],
+                    "used " + (com.xenowarriors.compat.HealingStone.onTeammates - (Integer) hs[2]) + " hp " + PackTests.f(b.getHealth()) + "/" + PackTests.f(b.getMaxHealth()));
+            PackTests.clear(p);
+        }), 5));
+        // ---- story places: some barrels have healing potions in them
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);
+            if (tower == null) return;
+            com.xenowarriors.story.StoryScenes.ensure(tower, 7, "farm");
+            int n = 0;
+            for (int k = 0; k < 6 && n == 0; k++) n += com.xenowarriors.story.StoryScenes.stockBarrels(tower, 7, "farm");
+            PackTests.check("story: healing potions in some of a place's barrels", n > 0, "potions " + n + " (all " + com.xenowarriors.story.StoryScenes.potionsStocked + ")");
+        }), 40));
         // ---- the Sky Patrol hideout, from the door
         l.add(new Step(null, () -> PackTests.server(p -> {
             var tower = p.server.getLevel(com.xenowarriors.tower.Tower.LEVEL);

@@ -434,6 +434,9 @@ public final class EpicFightCompat {
      * everything to Epic Fight.
      */
     /** Player id -> whether Epic Fight drew them last frame (see drawsMob). */
+    /** Is Epic Fight drawing this player in the world right now (its last frame)? */
+    public static boolean efDrawing(int id) { return Boolean.TRUE.equals(EF_DREW.get(id)); }
+
     /** (Tests) whether Epic Fight drew this entity last frame. */
     public static Boolean efDrewForTest(int id) { return EF_DREW.get(id); }
     private static final java.util.Map<Integer, Boolean> EF_DREW = com.xenowarriors.client.ClientReset.track(new java.util.HashMap<>());

@@ -63,24 +63,41 @@ public final class HealingStone {
         heal(b, e.getItemStack(), p);
     }
 
-    /** A bot with Healingstones in its bag: you below 40% health and close by - it uses one on you (every 5 s at most). */
+    /**
+     * A bot with Healingstones in its bag: whoever on its team is worst off below 40% health and close by - you, a
+     * party member, another bot or itself - gets one (every 5 s at most).
+     */
     public static void botTick(PartyBotEntity b) {
         if (b.tickCount % 20 != 13 || b.downed()) return;
         ServerPlayer o = b.owner();
-        if (o == null || !o.isAlive() || o.level() != b.level() || o.distanceToSqr(b) > 6 * 6 || o.getHealth() >= o.getMaxHealth() * 0.4F) return;
+        if (o == null) return;
         long now = b.level().getGameTime();
         if (now < b.getPersistentData().getLong("xw_stone_cd")) return;
-        for (int i = 0; i < b.inventory.getContainerSize(); i++) {
-            ItemStack s = b.inventory.getItem(i);
-            if (!is(s)) continue;
-            com.xenowarriors.bot.BotMoves.face(b, (float) Math.toDegrees(Math.atan2(-(o.getX() - b.getX()), o.getZ() - b.getZ())), 40F);
-            heal(o, s, b);
-            b.inventory.setChanged();
-            b.getPersistentData().putLong("xw_stone_cd", now + 100);
-            o.displayClientMessage(net.minecraft.network.chat.Component.literal(b.getName().getString() + " used a Healingstone on you"), true);
-            return;
+        int slot = -1;
+        for (int i = 0; i < b.inventory.getContainerSize() && slot < 0; i++) if (is(b.inventory.getItem(i))) slot = i;
+        if (slot < 0) return;
+        LivingEntity who = null;
+        float worst = 0.4F;
+        java.util.List<LivingEntity> team = new java.util.ArrayList<>(com.xenowarriors.party.Bonds.team(b));
+        team.add(b);
+        for (LivingEntity t : team) {
+            if (t == null || !t.isAlive() || t.level() != b.level() || t.distanceToSqr(b) > 6 * 6) continue;
+            if (t instanceof PartyBotEntity tb && tb.downed() || t instanceof net.minecraft.world.entity.player.Player tp && com.xenowarriors.party.Duels.isDowned(tp)) continue;   // (down: that's a revive, not a stone)
+            float f = t.getHealth() / Math.max(1F, t.getMaxHealth());
+            if (f < worst || f == worst && t == o) { worst = f; who = t; }
         }
+        if (who == null) return;
+        ItemStack s = b.inventory.getItem(slot);
+        if (who != b) com.xenowarriors.bot.BotMoves.face(b, (float) Math.toDegrees(Math.atan2(-(who.getX() - b.getX()), who.getZ() - b.getZ())), 40F);
+        heal(who, s, b);
+        b.inventory.setChanged();
+        b.getPersistentData().putLong("xw_stone_cd", now + 100);
+        if (who instanceof ServerPlayer sp) sp.displayClientMessage(net.minecraft.network.chat.Component.literal(b.getName().getString() + " used a Healingstone on you"), true);
+        else if (who != b) { o.displayClientMessage(net.minecraft.network.chat.Component.literal(b.getName().getString() + " used a Healingstone on " + who.getName().getString()), true); onTeammates++; }
     }
+
+    /** (Tests) Healingstones bots used on another bot. */
+    public static int onTeammates;
 
     /** Auto Potion: one from your inventory. True if it used one. */
     public static boolean autoUse(ServerPlayer p) {
@@ -92,16 +109,29 @@ public final class HealingStone {
         return false;
     }
 
-    /** Auto Potion: a Senzu Bean (DragonMineZ: the plain one or the red Health one), eaten as it would be - if it isn't cooling down. */
+    /** (Tests) senzu beans eaten for you. */
+    public static int senzuEaten;
+
+    /** Auto Potion: a Senzu Bean (DragonMineZ: the plain one - it restores everything - first, else the red Health one), eaten as it would be - if it isn't cooling down. */
     public static boolean senzu(ServerPlayer p) {
+        return senzu(p, "senzu_bean") || senzu(p, "senzu_bean_red");
+    }
+
+    private static boolean senzu(ServerPlayer p, String which) {
         var inv = p.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack s = inv.getItem(i);
             if (s.isEmpty()) continue;
             var id = ForgeRegistries.ITEMS.getKey(s.getItem());
-            if (id == null || !id.getNamespace().equals("dragonminez") || !(id.getPath().equals("senzu_bean") || id.getPath().equals("senzu_bean_red"))) continue;
+            if (id == null || !id.getNamespace().equals("dragonminez") || !id.getPath().equals(which)) continue;
             if (p.getCooldowns().isOnCooldown(s.getItem())) return false;
+            // eaten the way eating finishes: DragonMineZ restores health, Ki and stamina when it hears a senzu's been
+            // eaten (Forge's finish event) - calling the item alone only gave its bit of food
+            ItemStack eaten = s.copy();
             ItemStack left = s.getItem().finishUsingItem(s, p.level(), p);
+            left = net.minecraftforge.event.ForgeEventFactory.onItemUseFinish(p, eaten, 0, left);
+            if (p.getHealth() < p.getMaxHealth()) p.setHealth(p.getMaxHealth());   // (a senzu: right back to full, whatever else is in the way)
+            senzuEaten++;
             if (left != s) inv.setItem(i, left);
             return true;
         }

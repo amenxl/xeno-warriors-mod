@@ -147,6 +147,35 @@ public final class StoryScenes {
         if (BUILT.add(slot + "|" + place)) build(l, center(slot, place), place);
     }
 
+    /** (Tests) healing potions put in barrels. */
+    public static int potionsStocked;
+
+    /**
+     * Some of a place's barrels have healing potions in them (about one in three, one or two each - now and then a
+     * strong one or a splash one). Stocked every time you arrive, so a place you come back to has them again.
+     */
+    public static int stockBarrels(ServerLevel l, int slot, String place) {
+        BlockPos c = center(slot, place);
+        int rad = radius(place), n = 0;
+        var rnd = l.getRandom();
+        for (int x = -rad; x <= rad; x++) for (int z = -rad; z <= rad; z++) for (int y = Y; y <= Y + 8; y++) {
+            BlockPos p = c.atY(y).offset(x, 0, z);
+            if (!(l.getBlockEntity(p) instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity b)) continue;
+            if (!b.isEmpty() || rnd.nextFloat() > 0.35F) continue;
+            int count = 1 + (rnd.nextFloat() < 0.35F ? 1 : 0);
+            for (int i = 0; i < count; i++) {
+                var potion = rnd.nextFloat() < 0.2F ? net.minecraft.world.item.alchemy.Potions.STRONG_HEALING : net.minecraft.world.item.alchemy.Potions.HEALING;
+                var item = rnd.nextFloat() < 0.25F ? net.minecraft.world.item.Items.SPLASH_POTION : net.minecraft.world.item.Items.POTION;
+                int at = rnd.nextInt(b.getContainerSize());
+                while (!b.getItem(at).isEmpty()) at = (at + 1) % b.getContainerSize();
+                b.setItem(at, net.minecraft.world.item.alchemy.PotionUtils.setPotion(new net.minecraft.world.item.ItemStack(item), potion));
+                n++;
+            }
+        }
+        potionsStocked += n;
+        return n;
+    }
+
     // ------------------------------------------------------------------ building
 
     private static void set(ServerLevel l, BlockPos p, BlockState s) { l.setBlock(p, s, 2); }
