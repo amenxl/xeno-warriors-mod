@@ -100,8 +100,32 @@ public final class BigHunger {
         int every = regenInterval(bars);
         if (p.tickCount % every != 0) return;
         p.heal(1F);
-        p.getFoodData().addExhaustion(4F);
+        p.getFoodData().addExhaustion(4F * every / 40F);              // (faster healing with more bars, but the same food a second: the bar drains steadily, not faster the fuller it is)
     }
+
+    private static final String EX_LAST = "xw_exh_last";
+
+    /**
+     * Food used by running and flying doesn't go up with your Speed level: at +100% speed you cover twice the ground,
+     * so each block costs half - the bar goes down at the same steady rate whatever your level.
+     */
+    @SubscribeEvent
+    public static void onExhaust(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer p) || p.isCreative() || p.isSpectator() || noHunger(p)) return;
+        var food = p.getFoodData();
+        var d = p.getPersistentData();
+        float now = food.getExhaustionLevel();
+        float last = d.contains(EX_LAST) ? d.getFloat(EX_LAST) : now;
+        if (now > last && (p.isSprinting() || p.getAbilities().flying || p.isFallFlying() || p.isSwimming())) {
+            float speed = p.getCapability(ModCapabilities.PLAYER_CHARACTER)
+                    .map(c -> com.xenowarriors.stats.Stat.SPEED.bonus(c.statLevel[0])).orElse(0F);
+            if (speed > 0) { now = last + (now - last) / (1F + speed); food.setExhaustion(now); slowed++; }
+        }
+        d.putFloat(EX_LAST, now);
+    }
+
+    /** (Tests) how many ticks the Speed level's drain was evened out. */
+    public static int slowed;
 
     /** How many whole hunger bars (20 points each) are full right now. */
     public static int fullBars(Player p) {

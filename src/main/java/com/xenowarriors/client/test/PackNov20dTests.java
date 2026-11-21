@@ -53,6 +53,28 @@ final class PackNov20dTests {
 
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); }); }, 30));
+        // ---- the hunger bar drains steadily: fuller stomach heals faster for the same food a second; Speed levels don't make running cost more
+        float[] hx = new float[3];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            float lo = 99, hi = 0;
+            for (int bars = 1; bars <= 11; bars++) { int ev = com.xenowarriors.character.BigHunger.regenInterval(bars); float perSec = 4F * ev / 40F * 20F / ev; lo = Math.min(lo, perSec); hi = Math.max(hi, perSec); }
+            hx[2] = hi - lo;
+            var c = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            hx[1] = c.statLevel[0]; c.statLevel[0] = 50;
+            p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+            p.getFoodData().setExhaustion(0F);
+            p.setSprinting(true);
+            hx[0] = com.xenowarriors.character.BigHunger.slowed;
+            p.causeFoodExhaustion(1F);
+        }), 3));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            float ex = p.getFoodData().getExhaustionLevel();
+            PackTests.check("hunger: the same food a second however full you are, and running at Speed 50 (+75%) costs 1/1.75 a block",
+                    hx[2] < 0.001F && Math.abs(ex - 1F / 1.75F) < 0.05F && com.xenowarriors.character.BigHunger.slowed > hx[0], "spread " + hx[2] + " exhaustion " + PackTests.f(ex));
+            var c = p.getCapability(com.xenowarriors.character.ModCapabilities.PLAYER_CHARACTER).orElse(null);
+            c.statLevel[0] = (int) hx[1];
+            p.setSprinting(false);
+        }), 5));
         // ---- Pod Recall: going down, sent straight to a free healing pod - 40 blocks off needs rank 2 (48 blocks)
         Object[] pr = new Object[3];
         l.add(new Step(null, () -> PackTests.server(p -> {
