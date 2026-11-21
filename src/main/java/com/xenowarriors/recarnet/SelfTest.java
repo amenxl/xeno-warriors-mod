@@ -51,6 +51,13 @@ public final class SelfTest {
             try { XenoWarriors.LOGGER.info("XW-SELFTEST xeno dragon: {}", com.xenowarriors.boss.XenoDragons.selfTest(server)); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST xeno dragon check failed", t); }
             try { XenoWarriors.LOGGER.info("XW-SELFTEST kishi gravity: {}", com.xenowarriors.compat.DmzKishiGravity.selfTest()); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST kishi gravity check failed", t); }
             try { XenoWarriors.LOGGER.info("XW-SELFTEST faction raids: {}", com.xenowarriors.raid.FactionRaids.selfTest(server)); } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST faction raids check failed", t); }
+            try {                                                         // a player's 40 KB mod packet (vanilla refuses over 32767 bytes)
+                var buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+                buf.writeResourceLocation(new net.minecraft.resources.ResourceLocation("xwtest", "big"));
+                buf.writeBytes(new byte[40000]);
+                var pk = new net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket(buf);
+                XenoWarriors.LOGGER.info("XW-SELFTEST big mod packet: {} bytes read -> PASS", pk.getData().readableBytes());
+            } catch (Throwable t) { XenoWarriors.LOGGER.warn("XW-SELFTEST big mod packet: " + t + " -> FAIL"); }
             server.saveAllChunks(false, true, true);
             XenoWarriors.LOGGER.info("XW-SELFTEST OK");
         } catch (Throwable t) {
