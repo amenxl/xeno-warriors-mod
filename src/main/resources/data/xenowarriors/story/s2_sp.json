@@ -1,0 +1,99 @@
+{
+  "path": "s2_sp",
+  "title": "Sintrie",
+  "hub": "sp_hideout",
+  "npcs": ["sam", "max", "kyle"],
+  "missions": [
+    {
+      "id": "p1", "title": "Back in the Gov", "karma": 13000, "lvl": 8,
+      "desc": "Sam and Max follow 3523 into the Government's hideout - and to Kyle.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["sam", "max", "npc:hannah"], "lines": [
+          {"s": "sam", "t": "Whoa, this place is WAY bigger than our hideout!"},
+          {"s": "max", "t": "When I worked here we didn't get anything. Who's funding you?"},
+          {"s": "hannah", "n": "Gov Girl", "t": "The Sky Rebellion. Without them we couldn't do any of this."},
+          {"s": "max", "t": "Shameful."}
+        ]},
+        {"type": "scene", "place": "kyle_office", "npcs": ["kyle", "max", "sam", "npc:hannah"], "lines": [
+          {"s": "kyle", "t": "Sintrie. And you brought a Skylander. (He has karma now...)"},
+          {"s": "sam", "t": "At least WE aren't turning people into demons!"},
+          {"s": "max", "t": "(...Sam.) He means it like a title."},
+          {"s": "you", "choice": [{"text": "Stay with Max.", "set": "stay_max", "reply": [{"s": "kyle", "t": "How's my Kyle Phone working? Everyone who tells you their real name... is mine."}]}, {"text": "Go with Sam and 3523.", "set": "go_sam", "reply": [{"s": "hannah", "n": "Gov Girl", "t": "Your 'captain' got his butt handed to him."}, {"s": "sam", "t": "Say that again!"}]}]},
+          {"s": "max", "t": "Sintrie... that was my name. I won't forget it again."}
+        ]}
+      ],
+      "reward": {"money": 400, "bond": {"max": 10, "sam": 5}}
+    },
+    {
+      "id": "p2", "title": "Training at F3", "karma": 14000, "lvl": 9,
+      "desc": "A week of training in the Gov hideout. 3523 is starting to warm up.",
+      "steps": [
+        {"type": "fight", "place": "gov_facility", "obj": "Spar with the Gov's training squad", "allies": ["sam", "max"], "waves": [
+          [{"e": "gov", "n": 4}],
+          [{"e": "gov_elite", "n": 2}]
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["sam", "max", "npc:hannah"], "lines": [
+          {"s": "max", "t": "Soldier 3523... what's your actual name?"},
+          {"s": "hannah", "n": "Hannah", "t": "Nobody's ever asked me that. ...It's Hannah."},
+          {"s": "max", "t": "Hannah. Do you actually trust Kyle?"},
+          {"s": "narrator", "t": "ALARM: Ultima spotted near hideout!"},
+          {"s": "hannah", "n": "Hannah", "t": "(I promised Rhalix I'd protect them.) Both of you - follow me!"}
+        ]}
+      ],
+      "reward": {"money": 350, "bond": {"sam": 5, "max": 5}}
+    },
+    {
+      "id": "p3", "title": "Psychotic Time Bomb", "karma": 15000, "lvl": 10,
+      "desc": "Ultima walks the halls of F3. Sam and Sintrie are in his way.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["sam", "max", "ultima"], "lines": [
+          {"s": "ultima", "t": "Two Skylanders. Let me through and I won't kill you."},
+          {"s": "max", "t": "Years ago you blew up a facility. Know any of the names?"},
+          {"s": "ultima", "t": "Only my sister's. Everyone else was a waste of space."},
+          {"s": "sam", "t": "You don't care about ANY lives! Let's beat some heads!"}
+        ]},
+        {"type": "fight", "place": "gov_facility", "obj": "Fight Ultima with Sam and Sintrie", "allies": ["sam", "max"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima", "escape": 0.75}]
+        ], "escape_lines": [
+          {"s": "sam", "t": "Psychotic Time Bomb!"},
+          {"s": "max", "t": "Vampire Cut. That wound won't close while I keep it open."},
+          {"s": "ultima", "t": "Every part of my body is a weapon - and a shield. Your bombs went off inside me already."}
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["kyle", "ultima", "max", "sam"], "lines": [
+          {"s": "kyle", "t": "Hang on, Ultima. I can't have you killing my Sintrie just yet."},
+          {"s": "ultima", "t": "Kyle. I've been looking for you."},
+          {"s": "kyle", "t": "You want the data from the old facility. Fine - as partners."},
+          {"s": "max", "t": "(whisper) What are you doing, Kyle..."}
+        ]}
+      ],
+      "reward": {"money": 450, "bond": {"sam": 10, "max": 10}}
+    },
+    {
+      "id": "p4", "title": "The Corpse in the Pod", "karma": 16500, "lvl": 11,
+      "desc": "Kyle's project is finished. Sintrie knows the face.",
+      "steps": [
+        {"type": "scene", "place": "kyle_office", "npcs": ["kyle", "max", "sam", "technica"], "lines": [
+          {"s": "kyle", "t": "Look behind me, Sintrie. A blast from the past."},
+          {"s": "max", "t": "...Tech?"},
+          {"s": "kyle", "t": "She wanted to grow old with you. Now she's an undead corpse - she never has to worry about dying."},
+          {"s": "max", "t": "Captain, go stop Ultima. I'll handle Tech."},
+          {"s": "sam", "t": "I'm staying with the vice captain!"}
+        ]},
+        {"type": "fight", "place": "kyle_office", "obj": "Survive Undead Technica (Sintrie won't fight back)", "allies": ["max", "sam"], "waves": [
+          [{"e": "knight", "boss": true, "name": "Technica (Undead)", "escape": 0.4}]
+        ], "escape_lines": [
+          {"s": "max", "t": "Your wings look like mine... You gave her MY DNA."},
+          {"s": "narrator", "t": "Sintrie tears Technica's wings off."},
+          {"s": "technica", "n": "Technica (Undead)", "t": "Die... die... Sintrie... make me die."}
+        ]},
+        {"type": "scene", "place": "kyle_office", "npcs": ["max", "sam", "technica"], "lines": [
+          {"s": "max", "t": "Sam. Go check on the captain."},
+          {"s": "you", "choice": [{"text": "Stay with Sintrie.", "set": "stay", "reply": [{"s": "max", "t": "...Then don't look."}]}, {"text": "Go with Sam.", "set": "go", "reply": [{"s": "sam", "t": "...Yes sir."}]}]},
+          {"s": "max", "t": "Vampire Cut. Your blood drains, you can't move. You won't hurt anyone else, Tech."},
+          {"s": "narrator", "t": "The ground starts to shake. Somewhere above, Mikiko is changing."}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"max": 15, "technica": 10}}
+    }
+  ]
+}

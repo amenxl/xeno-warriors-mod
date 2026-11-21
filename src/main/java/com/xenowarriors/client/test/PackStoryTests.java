@@ -133,6 +133,30 @@ final class PackStoryTests {
             PackTests.check("story: the finale against Ultima completes - Season 1 done", Story.finished(p) && Story.pathDone(p, "finale"), "done " + Story.done(p) + " hits " + HITS[0]);
             PackTests.check("story: everyone playable at the end", Story.playable(p, CharacterType.AIONI) && Story.playable(p, CharacterType.LOGAN), "");
         }), 80));
+        // ---- Season 2 (unlocked above): its storylines, and Season 1's flashbacks, open up once Season 1 is beaten
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            List<String> av = Story.available(p);
+            PackTests.check("story s2: Season 2's first two storylines and Season 1's flashbacks open after Season 1", av.contains("past") && av.contains("s2_xeno") && av.contains("s2_sp") && !av.contains("s2_fall"), "" + av);
+            PackTests.check("story s2: every Season 2 storyline loaded", com.xenowarriors.story.StoryDefs.PATHS.keySet().containsAll(List.of("past", "s2_xeno", "s2_sp", "s2_fall", "s2_royals", "s2_blade", "s2_demons", "s2_finale")), "" + com.xenowarriors.story.StoryDefs.PATHS.keySet());
+            Story.pick(p, "s2_xeno");
+            HITS[0] = 0;
+        }), 10));
+        l.add(new Step(null, () -> PackTests.server(StoryRun::begin), 40));
+        l.add(new Step("story_s2_scene", () -> {}, 30));
+        drive(mc, l, "s2", 160, "story_s2_fight");
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("story s2: the first Season 2 mission (Xeno Warriors vs Ultima) plays through", "s2_xeno".equals(Story.current(p)) && Story.missionIndex(p) >= 1, "cur " + Story.current(p) + " mi " + Story.missionIndex(p) + " hits " + HITS[0]);
+            StoryRun.quit(p, null);
+            // the rest, skipped through a group at a time
+            String[][] order = {{"s2_xeno", "s2_sp", "past"}, {"s2_fall", "s2_royals"}, {"s2_blade", "s2_demons"}, {"s2_finale"}};
+            StringBuilder why = new StringBuilder();
+            for (String[] g : order) for (String path : g) {
+                if (!path.equals(Story.current(p)) && !Story.available(p).contains(path)) { why.append(path).append(" not open (").append(Story.available(p)).append(") "); continue; }
+                if (!path.equals(Story.current(p))) Story.pick(p, path);
+                for (int i = 0; i < 20 && Story.mission(p) != null; i++) Story.skip(p);
+            }
+            PackTests.check("story s2: every storyline opens in turn and Season 2's finale completes", Story.pathDone(p, "s2_finale") && Story.pathDone(p, "past"), why + "done " + Story.done(p));
+        }), 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
             Story.stop(p);
             com.xenowarriors.story.StoryRun.openMenu(p);

@@ -1,0 +1,94 @@
+{
+  "path": "s2_finale",
+  "title": "The Ultimate Battle",
+  "hub": "royal_capital",
+  "npcs": ["mikiko", "rhalix", "yuri", "ultima"],
+  "missions": [
+    {
+      "id": "e1", "title": "THE HANDS", "karma": 20000, "lvl": 14,
+      "desc": "No retries on the game over screen. Mikiko and Rhalix against Ultima, for the last time.",
+      "steps": [
+        {"type": "scene", "place": "gov_hall_breach", "npcs": ["mikiko", "rhalix", "ultima"], "lines": [
+          {"s": "rhalix", "t": "(whisper) He can track Soul Splitter. Don't waste it."},
+          {"s": "mikiko", "t": "It's all or nothing. No retry on the game over screen."},
+          {"s": "yuri", "t": "(radio) YOU GUYS GOT THIS!!"},
+          {"s": "mikiko", "t": "You better get ready for... THE HANDS!!!"}
+        ]},
+        {"type": "fight", "place": "gov_hall_breach", "obj": "THE HANDS: Mikiko and Rhalix vs Ultima", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima", "escape": 0.35}]
+        ], "escape_lines": [
+          {"s": "mikiko", "t": "NETSU BURST!"},
+          {"s": "rhalix", "t": "Kishi! ...MOON FALL!!!"},
+          {"s": "mikiko", "t": "MANIFEST GREATNESS!"},
+          {"s": "yuri", "t": "(radio) Lock your feet and don't look into his eyes!"}
+        ]},
+        {"type": "scene", "place": "gov_hall_breach", "npcs": ["mikiko", "rhalix", "ultima"], "lines": [
+          {"s": "narrator", "t": "Mikiko burns Netsu into Rhalix. Rhalix pins Ultima down."},
+          {"s": "you", "choice": [{"text": "Help Rhalix hold him.", "set": "hold", "reply": [{"s": "rhalix", "t": "Just give up!!"}]}, {"text": "Cover Mikiko and the bracelet.", "set": "cover", "reply": [{"s": "mikiko", "t": "Here's a gift from your sister, Ultima!"}]}]}
+        ]},
+        {"type": "survive", "place": "gov_hall_breach", "obj": "Hold Ultima for 15 seconds - the antivirus is uploading!", "seconds": 15, "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima"}]
+        ]},
+        {"type": "scene", "place": "gov_hall_breach", "npcs": ["mikiko", "rhalix", "ultima"], "lines": [
+          {"s": "yuri", "t": "(radio) YOU GUYS DID IT!"},
+          {"s": "mikiko", "t": "My wristband... it broke. My arm hurts a lot for some reason."},
+          {"s": "yuri", "t": "(radio) Uh. Probably the power output. Get to HQ and I'll heal you up."}
+        ]}
+      ],
+      "reward": {"money": 800, "bond": {"mikiko": 15, "rhalix": 15, "ultima": 15}}
+    },
+    {
+      "id": "e2", "title": "Angels, Demons and Gods", "karma": 20000, "lvl": 14,
+      "desc": "Everyone regroups around Sintrie and Technica. Kyrie wants Sintrie. Mikiko is... not okay.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["rhalix", "sam", "max", "technica", "kyrie", "mikiko"], "lines": [
+          {"s": "sam", "t": "Captain! Three super strong demons were fighting like twenty Kyles! One was named Ai Oni!"},
+          {"s": "kyrie", "t": "So it's true. Your name is Sintrie. I have to turn you in for killing Royals."},
+          {"s": "narrator", "t": "Mikiko, deep in True Empathy withdrawal, eats the wings Sintrie tore off. His karma jumps."},
+          {"s": "yuri", "t": "(radio) The gas that makes demons is made from Skylander wings. C-souls are like demons..."},
+          {"s": "rhalix", "t": "...The Skyhaters. They've been selling wings to the Gov this whole time."},
+          {"s": "rhalix", "t": "Kyrie - he's my vice captain. He'll help bring your mom back."},
+          {"s": "kyrie", "t": "Fine. Two years. Bring my mom back - or I tell everyone about you, Sintrie."},
+          {"s": "you", "choice": [{"text": "Promise Kyrie you'll help.", "set": "promise", "reply": [{"s": "kyrie", "t": "...You'd better."}]}, {"text": "Stay out of it.", "set": "out", "reply": [{"s": "sam", "t": "We're not letting her do it alone anyway!"}]}]}
+        ]}
+      ],
+      "reward": {"money": 600, "bond": {"kyrie": 10, "max": 10, "technica": 10}}
+    },
+    {
+      "id": "e3", "title": "Queen of Section 1", "karma": 20000, "lvl": 14,
+      "desc": "The Royal Council meets. Queen Lovery hasn't come back.",
+      "steps": [
+        {"type": "scene", "place": "royal_palace", "npcs": ["kyrie", "npc:council", "npc:koixea", "npc:sainea"], "lines": [
+          {"s": "council", "n": "Royal Council", "t": "Your mother has not returned to her post. Kyrie - you are now Queen of Section 1."},
+          {"s": "sainea", "n": "Queen Sainea", "t": "Sorry, Kyrie, the adults are talking."},
+          {"s": "kyrie", "t": "(I'm twenty.) ...Can I wear my mom's crown instead?"},
+          {"s": "koixea", "n": "Queen Koixea", "t": "It looks good on you, Kyrie."}
+        ]}
+      ],
+      "reward": {"money": 400, "bond": {"kyrie": 15}}
+    },
+    {
+      "id": "e4", "title": "A New Hideout", "karma": 20000, "lvl": 14,
+      "desc": "Five days later. The Sky Patrol moves into the Royal Capital - and Fox Girl has a cure for Mikiko.",
+      "steps": [
+        {"type": "scene", "place": "royal_capital", "npcs": ["sam", "max", "rhalix"], "lines": [
+          {"s": "sam", "t": "Check it out! Our new hideout - and it's part of the Royal Capital!"},
+          {"s": "max", "t": "Good job buying it, Samantha."},
+          {"s": "sam", "t": "No problem, Maxine."},
+          {"s": "max", "t": "...Guys. There's something I need to talk to you about."}
+        ]},
+        {"type": "scene", "place": "farm", "npcs": ["mikiko", "fox_girl"], "lines": [
+          {"s": "mikiko", "t": "FOX GIRL I'M HOME! WHO IS THIS KAERU GIRL IN MY SWORD?!"},
+          {"s": "fox_girl", "t": "True Empathy withdrawal again? Last time it took weeks... I know just the cure."},
+          {"s": "narrator", "t": "Fox Girl knocks Mikiko out cold."}
+        ]},
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "ultima"], "lines": [
+          {"s": "ultima", "t": "I can only put out 5% now. You'll have to upgrade me again, little Yuri."},
+          {"s": "yuri", "t": "I'm thinking of joining Mikiko's Freedom Fighters."},
+          {"s": "yuri", "t": "...Wait. ZANE?! Where's Zane?! The cameras - he just disappeared!"}
+        ]}
+      ],
+      "reward": {"money": 700, "bond": {"yuri": 10, "ultima": 10, "mikiko": 10}}
+    }
+  ]
+}

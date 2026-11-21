@@ -1,0 +1,194 @@
+{
+  "path": "s2_xeno",
+  "title": "Season 2: The Ultimate Weapon",
+  "hub": "lab_hallway",
+  "npcs": ["mikiko", "rhalix", "yuri"],
+  "missions": [
+    {
+      "id": "x1", "title": "Xeno Warriors vs Ultima", "karma": 12000, "lvl": 8,
+      "desc": "The Highway of Broken Dreams. Ultima reads every move before you make it.",
+      "steps": [
+        {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix", "ultima"], "lines": [
+          {"s": "mikiko", "t": "Rhalix, I'll go first!"},
+          {"s": "rhalix", "t": "Right behind you!"},
+          {"s": "ultima", "t": "Come on then!"}
+        ]},
+        {"type": "survive", "place": "battlefield", "obj": "Hold out against Ultima - he reads every move", "seconds": 40, "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima"}]
+        ]},
+        {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix", "ultima"], "lines": [
+          {"s": "rhalix", "t": "He knows what we're going to do before we do it!"},
+          {"s": "ultima", "t": "My body can run for weeks without a break. I could fight you forever."},
+          {"s": "mikiko", "t": "Then we end it fast. XENO BLAST!"},
+          {"s": "narrator", "t": "The Xeno Blast lands... and Ultima pushes it back."},
+          {"s": "ultima", "t": "Strong. But nothing compared to my full power."},
+          {"s": "rhalix", "t": "Mikiko, hold him off. I need time to come up with a plan."},
+          {"s": "you", "choice": [{"text": "Hold Ultima off with Mikiko.", "set": "with_mikiko", "reply": [{"s": "mikiko", "t": "Orenji Clan... True Empathy! Let's see you read THIS!"}]}, {"text": "Help Rhalix think.", "set": "with_rhalix", "reply": [{"s": "rhalix", "t": "Netsu Burst... on me. Skylanders can take it. Probably."}]}]}
+        ]},
+        {"type": "fight", "place": "battlefield", "obj": "Land a hit on Ultima, then get out", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima", "escape": 0.7}]
+        ], "escape_lines": [
+          {"s": "mikiko", "t": "Hekubarrier! He can't break a blade Fox Girl made!"},
+          {"s": "rhalix", "t": "Mikiko - Netsu Burst. On me. NOW!"},
+          {"s": "mikiko", "t": "NETSU BURST!!!"}
+        ]},
+        {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix", "npc:hannah"], "lines": [
+          {"s": "narrator", "t": "A Government helicopter cuts across Ultima's path."},
+          {"s": "hannah", "n": "Gov Girl", "t": "Land over here, Xeno Warriors!!"},
+          {"s": "mikiko", "t": "We're gonna crash!"}
+        ]}
+      ],
+      "reward": {"money": 400, "bond": {"mikiko": 10, "rhalix": 10}}
+    },
+    {
+      "id": "x2", "title": "The Gov Hideout", "karma": 13000, "lvl": 8,
+      "desc": "Rhalix is in a healing pod. The Government wants Ultima's sister - and a lieutenant named Kyle wants Rhalix.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["mikiko", "npc:hannah", "kyle"], "lines": [
+          {"s": "hannah", "n": "Gov Girl", "t": "Third-degree burns. The pod will fix him - he's a Skylander."},
+          {"s": "hannah", "n": "Gov Girl", "t": "Our best bet against Ultima is his sister, Yuri. She worked on him in C1. She might be alive."},
+          {"s": "kyle", "t": "Well, well. The Xeno Warrior. Your Skylander friend - mind if I do some research on him?"},
+          {"s": "mikiko", "t": "Heck no!"},
+          {"s": "kyle", "t": "No matter. I already have another Skylander in the works. My old pal Sintrie will love it."},
+          {"s": "mikiko", "t": "(I don't trust this guy.)"}
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["mikiko", "rhalix", "npc:hannah"], "lines": [
+          {"s": "rhalix", "t": "Nothing a little Netsu can't fix. Let's go find Yuri."},
+          {"s": "hannah", "n": "Gov Girl", "t": "You can't just walk out of a Government hideout! You need to see the boss!"},
+          {"s": "mikiko", "t": "Really? Who's gonna stop us?"},
+          {"s": "you", "choice": [{"text": "Walk out the front.", "set": "front", "reply": [{"s": "hannah", "n": "Gov Girl", "t": "Guards! ...Ugh. I'll tell them you're bringing Yuri back."}]}, {"text": "Slip out through the labs.", "set": "labs", "reply": [{"s": "kyle", "t": "(alone, at a pod) I can't wait to have you finished. You'll be very useful on the battlefield."}]}]}
+        ]},
+        {"type": "fight", "if": "front", "place": "gov_facility", "obj": "Get out of the Gov hideout", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "gov", "n": 4}],
+          [{"e": "gov_elite", "n": 2}, {"e": "gov", "n": 2}]
+        ]},
+        {"type": "fight", "if": "labs", "place": "kyle_office", "obj": "Slip out through Kyle's lab", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "gov", "n": 3}]
+        ]},
+        {"type": "scene", "place": "sp_hideout", "npcs": ["sam", "max", "rhalix", "mikiko"], "lines": [
+          {"s": "sam", "t": "Another Skyhater?! TIME TO BEAT SOME HEADS!"},
+          {"s": "mikiko", "t": "...What was that about? My legs are falling asleep."},
+          {"s": "rhalix", "t": "Guys, relax. He's the captain of the Xeno Warriors."},
+          {"s": "max", "t": "Captain, you're burned up. Here - healing potions. I made them while you were gone."},
+          {"s": "rhalix", "t": "Ultima kicked our butts. We need his sister, Yuri. Let's go."}
+        ]}
+      ],
+      "reward": {"money": 400, "bond": {"sam": 5, "max": 5}}
+    },
+    {
+      "id": "x3", "title": "Finding Yuri", "karma": 13500, "lvl": 9,
+      "desc": "Aurora is crawling with Government patrols. Somewhere in it is the girl who built Ultima.",
+      "steps": [
+        {"type": "fight", "place": "aurora_street", "obj": "Search Aurora for Yuri (past the Gov patrols)", "allies": ["rhalix", "sam", "max"], "waves": [
+          [{"e": "gov", "n": 4}],
+          [{"e": "gov", "n": 3}, {"e": "gov_elite", "n": 1}]
+        ]},
+        {"type": "scene", "place": "aurora_street", "npcs": ["max", "sam", "rhalix", "npc:hannah"], "lines": [
+          {"s": "max", "t": "Yuri Tenjo. C1. Last I saw her, she went off to work on Project Ultima."},
+          {"s": "hannah", "n": "Gov Girl", "t": "THERE you are! Computer, scan the white hair... You're Sintrie! We thought you were dead!"},
+          {"s": "sam", "t": "Max? Who's Sintrie?"},
+          {"s": "max", "t": "...I need to see Kyle. I need to ask him about Tech."},
+          {"s": "rhalix", "t": "Then Sam goes with you. (Rhalix takes 3523 aside for a quiet word.)"},
+          {"s": "hannah", "n": "Gov Girl", "t": "O-okay! Sam can come! Just... don't hurt my family."}
+        ]},
+        {"type": "scene", "place": "aurora_mall", "npcs": ["mikiko", "rhalix", "yuri"], "meet": ["yuri"], "lines": [
+          {"s": "yuri", "t": "I'm lost! Where did I put my keys?!"},
+          {"s": "mikiko", "t": "Hey - are you Yuri? You smell just like Ultima."},
+          {"s": "yuri", "t": "Wait. You know my brother?"},
+          {"s": "rhalix", "t": "He kinda kicked our asses, not gonna lie."},
+          {"s": "yuri", "t": "Quick! Inside!"}
+        ]}
+      ],
+      "reward": {"money": 450, "bond": {"yuri": 10}}
+    },
+    {
+      "id": "x4", "title": "VR Training", "karma": 14000, "lvl": 9,
+      "desc": "Yuri's HQ: an antivirus a month away, and a VR room with an exact copy of her brother.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "yuri", "t": "Welcome to HQ! I'm making an antivirus for big bro. About a month."},
+          {"s": "yuri", "t": "You'll need to hold him still for 15 seconds. Communicators on - now get in the VR room!"},
+          {"s": "rhalix", "t": "Why do I have a really bad feeling about this..."},
+          {"s": "yuri", "t": "You should. But you can't die in there! ...Okay, NOW you can't die."}
+        ]},
+        {"type": "fight", "place": "vr_room", "obj": "VR: Ultima at 10%", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "vr_ultima", "boss": true, "name": "VR Ultima (10%)"}]
+        ]},
+        {"type": "scene", "place": "vr_room", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "yuri", "t": "You both kinda suck. Watch me: lock your feet, don't look at his eyes - the chip reads them - then ATTACK!"},
+          {"s": "you", "choice": [{"text": "Do it Yuri's way.", "set": "yuri_way", "reply": [{"s": "yuri", "t": "See? Good form. Now you're getting it!"}]}, {"text": "Do it your own way.", "set": "own_way", "reply": [{"s": "yuri", "t": "Okay, show-off. Don't come crying to me."}]}]}
+        ]},
+        {"type": "fight", "place": "vr_room", "obj": "VR: Ultima at 50%", "allies": ["mikiko", "rhalix", "yuri"], "waves": [
+          [{"e": "vr_ultima", "boss": true, "name": "VR Ultima (50%)"}]
+        ]},
+        {"type": "scene", "place": "vr_room", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "rhalix", "t": "Hahah, we did it! 50%!"},
+          {"s": "yuri", "t": "Mikiko - one of your elements is wind. Why don't you fly with it?"},
+          {"s": "mikiko", "t": "...Huh."}
+        ]}
+      ],
+      "reward": {"money": 450, "bond": {"yuri": 10, "mikiko": 5, "rhalix": 5}}
+    },
+    {
+      "id": "x5", "title": "Learning to Fly", "karma": 14500, "lvl": 9, "extra": true,
+      "desc": "Rhalix teaches Mikiko to fight in the air. Yuri's cameras show the Gov hideout - and an alarm.",
+      "steps": [
+        {"type": "scene", "place": "vr_room", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "rhalix", "t": "In the sky you can dodge in every direction. You lose your footing, though - no ground to punch from."},
+          {"s": "mikiko", "t": "This is kind of scary..."},
+          {"s": "rhalix", "t": "You'll get used to it. Now try to hit me."}
+        ]},
+        {"type": "fight", "place": "vr_room", "obj": "VR: fight in the air (Ultima at 0%)", "allies": ["mikiko", "rhalix"], "waves": [
+          [{"e": "vr_ultima", "n": 2, "name": "VR Ultima (0%)"}]
+        ]},
+        {"type": "scene", "place": "vr_room", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "mikiko", "t": "XENO..."},
+          {"s": "rhalix", "t": "Bruh I said ATTACK, not a—"},
+          {"s": "mikiko", "t": "BLAST!!! ...Hahah, I was joking."},
+          {"s": "yuri", "t": "My laptop says that hit 50% of Ultima's output. Both of you together could overpower him."},
+          {"s": "yuri", "t": "Want to see how Sam and Max are doing? I have every Gov camera."},
+          {"s": "narrator", "t": "On the feed: an alarm. 'Ultima spotted near hideout!' Yuri cuts it."},
+          {"s": "rhalix", "t": "...We train. That's the best thing we can do for them right now."}
+        ]}
+      ],
+      "reward": {"money": 350, "bond": {"rhalix": 10}}
+    },
+    {
+      "id": "x6", "title": "A Visitor in the Rain", "karma": 15000, "lvl": 10, "extra": true,
+      "desc": "Mikiko goes out for some air. Someone on the rooftops is using his old voice.",
+      "steps": [
+        {"type": "scene", "place": "aurora_mall", "npcs": ["mikiko", "npc:mimicry"], "lines": [
+          {"s": "mikiko", "t": "Heku scatter! Now... umbrellaku! Haha, nice."},
+          {"s": "mimicry", "t": "(in a kid Mikiko voice) You mean back when you were more like me?"},
+          {"s": "mikiko", "t": "Mimicry!"},
+          {"s": "you", "choice": [{"text": "Swing first: Umbrellaku Scatter!", "set": "swing", "reply": [{"s": "mimicry", "t": "Oh come on, is that any way to treat an old friend?"}]}, {"text": "Hear him out.", "set": "listen", "reply": [{"s": "mimicry", "t": "See, this is what I like about you. Slow, but polite."}]}]},
+          {"s": "mimicry", "t": "The black hole got me too. The whole Keepers party is here."},
+          {"s": "mimicry", "t": "Each second in the black hole is a year in Recarnet. I took 17. You took 100."},
+          {"s": "mimicry", "t": "Your memories are out there - in the Distortions. Better hope nobody takes them first."},
+          {"s": "mimicry", "t": "Two years, Mikiko. Live like a demigod and face the black hole... or Project XL is back on the table."},
+          {"s": "mikiko", "t": "...I better tell Rhalix about this."}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"mikiko": 10}}
+    },
+    {
+      "id": "x7", "title": "Soul Splitter", "karma": 15500, "lvl": 10,
+      "desc": "The Gov hideout went dark. Rhalix meditates every night. One week left on the antivirus.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "yuri", "t": "They're back online. Big bro couldn't find the main entrance... but a lot of guards died."},
+          {"s": "rhalix", "t": "I'm ready to fight him. One week - let's make a plan."},
+          {"s": "mikiko", "t": "Soul Splitter. Master Yo's technique. Ultima can't see souls - so we hit him with one."},
+          {"s": "yuri", "t": "Could I learn to feel karma?"},
+          {"s": "rhalix", "t": "Sure. I'll just activate it. ...You might die."},
+          {"s": "yuri", "t": "DIE?!"},
+          {"s": "you", "choice": [{"text": "Back Yuri up: train her karma slowly.", "set": "slow", "reply": [{"s": "mikiko", "t": "Fine - a week of karma control while you finish the antivirus."}]}, {"text": "Let Rhalix and Mikiko activate it together.", "set": "activate", "reply": [{"s": "rhalix", "t": "Both of us at once evens it out. Hold still, Yuri!"}, {"s": "yuri", "t": "You're both MONSTERS!"}]}]}
+        ]},
+        {"type": "fight", "place": "vr_room", "obj": "Practice Soul Splitter on VR Ultima", "allies": ["mikiko", "rhalix", "yuri"], "waves": [
+          [{"e": "vr_ultima", "boss": true, "name": "VR Ultima (80%)"}]
+        ]}
+      ],
+      "reward": {"money": 400, "bond": {"yuri": 10, "rhalix": 5, "mikiko": 5}}
+    }
+  ]
+}

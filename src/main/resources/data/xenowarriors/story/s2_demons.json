@@ -1,0 +1,77 @@
+{
+  "path": "s2_demons",
+  "title": "Technica's Gas Patients",
+  "hub": "akuma_hq",
+  "npcs": ["zack", "kaitlyn", "aioni"],
+  "missions": [
+    {
+      "id": "d1", "title": "Year 95: New Homes", "karma": 17000, "lvl": 11,
+      "desc": "Five years ago. The gas patients wake up as demons, and Kyle shows them to their new homes.",
+      "steps": [
+        {"type": "scene", "place": "underclass_city", "npcs": ["kyle", "zack", "kaitlyn", "ava", "persephone", "npc:barry"], "meet": ["zack", "kaitlyn", "ava", "persephone"], "lines": [
+          {"s": "kyle", "t": "Oh - all of you lived. I'll take you to your new homes."},
+          {"s": "kyle", "t": "Pair up. Five demons in one place is a bad idea if one of you gets found."},
+          {"s": "kaitlyn", "t": "Where's the girl who treated us?"},
+          {"s": "kyle", "t": "Technica? She died putting you all in shields. Hahaha."},
+          {"s": "ava", "t": "I feel so alive! Being a demon is great!"},
+          {"s": "barry", "n": "Barry", "t": "I work alone."}
+        ]},
+        {"type": "scene", "place": "underclass_city", "npcs": ["kyle", "senju"], "lines": [
+          {"s": "senju", "t": "You work for the Government. I need some demons. Where are they?"},
+          {"s": "kyle", "t": "(I can't move...)"},
+          {"s": "senju", "t": "That's called karma. Also - tell Sintrie we're looking for him."}
+        ]},
+        {"type": "scene", "place": "underclass_city", "npcs": ["zack", "kaitlyn"], "lines": [
+          {"s": "zack", "t": "He said if we ever needed anything, just call. ...He's not answering."},
+          {"s": "kaitlyn", "t": "Then call every day."},
+          {"s": "narrator", "t": "Kyle never picked up. Then the Sky Rebellion came."}
+        ]},
+        {"type": "fight", "place": "underclass_city", "obj": "The Sky Rebellion comes for the demons", "allies": ["zack", "kaitlyn"], "waves": [
+          [{"e": "sr", "n": 4}],
+          [{"e": "sr", "n": 2}, {"e": "sr:maddie", "boss": true, "name": "Maddie", "escape": 0.5}]
+        ]}
+      ],
+      "reward": {"money": 450, "bond": {"zack": 10, "kaitlyn": 10}}
+    },
+    {
+      "id": "d2", "title": "Demon's Eye", "karma": 18500, "lvl": 12,
+      "desc": "Today. Two floors under the fight with Ultima, Zack finally finds Kyle.",
+      "steps": [
+        {"type": "scene", "place": "kyle_office", "npcs": ["zack", "kyle"], "lines": [
+          {"s": "zack", "t": "You left us, Kyle! Me, Barry, Ava, Persephone, Kaitlyn!"},
+          {"s": "kyle", "t": "Not my problem anymore. Bye!"},
+          {"s": "zack", "t": "Your ass isn't going anywhere. DEMON'S EYE!"},
+          {"s": "kyle", "t": "Clone Clone! My KA steals other people's KAs. I hold over ten thousand - even Ultima's."},
+          {"s": "you", "choice": [{"text": "Go for the real Kyle.", "set": "kyle", "reply": [{"s": "kyle", "t": "Ah ah - touch me and your KA is mine too!"}]}, {"text": "Cut down the clones.", "set": "clones", "reply": [{"s": "zack", "t": "Out of my way! ...They split?!"}]}]}
+        ]},
+        {"type": "fight", "place": "kyle_office", "obj": "Cut through Kyle's clones - they keep splitting", "allies": ["zack"], "waves": [
+          [{"e": "gov", "n": 4, "name": "Kyle Clone"}],
+          [{"e": "gov", "n": 6, "name": "Kyle Clone"}]
+        ]},
+        {"type": "scene", "place": "kyle_office", "npcs": ["aioni", "zack", "kaitlyn", "sam"], "meet": ["aioni"], "lines": [
+          {"s": "kaitlyn", "t": "Oh come ON, Zack. You're making Master Ai Oni look bad."},
+          {"s": "aioni", "t": "I'll handle this. Both of you - through the portal. Now."},
+          {"s": "narrator", "t": "The clones are gone. The portal closes."},
+          {"s": "sam", "t": "WHAT WAS THAT?!"}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"zack": 10, "aioni": 10}}
+    },
+    {
+      "id": "d3", "title": "The Akuma Squad", "karma": 19000, "lvl": 12, "extra": true,
+      "desc": "Back at the hideout, Ai Oni needs to hear about a KA that steals KAs.",
+      "steps": [
+        {"type": "scene", "place": "akuma_hq", "npcs": ["aioni", "zack", "kaitlyn"], "lines": [
+          {"s": "zack", "t": "Master - Kyle steals KAs just by touching people. He's taken thousands."},
+          {"s": "aioni", "t": "Then nobody here lets him touch them. Train."},
+          {"s": "kaitlyn", "t": "She means you, Zack."}
+        ]},
+        {"type": "fight", "place": "akuma_hq", "obj": "Spar with the Akuma Squad", "allies": ["zack", "kaitlyn"], "waves": [
+          [{"e": "dark_possessed", "n": 4}],
+          [{"e": "dark_possessed", "n": 3}]
+        ]}
+      ],
+      "reward": {"money": 350, "bond": {"aioni": 5, "kaitlyn": 5, "zack": 5}}
+    }
+  ]
+}

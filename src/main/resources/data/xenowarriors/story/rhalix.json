@@ -140,11 +140,11 @@
           {"s": "kill", "t": "Too late anyway. Come in, newcomer!"},
           {"s": "lexy:persephone", "n": "Lexy (Persephone)", "t": "Captain... I'm scared... Lexy? No. She's gone."}
         ]},
-        {"type": "scene", "if": "capital", "place": "capital_arcade", "npcs": ["sam", "max", "npc:messy"], "lines": [
+        {"type": "scene", "if": "capital", "place": "capital_arcade", "npcs": ["sam", "max", "npc:skylander_guy"], "lines": [
           {"s": "max", "n": "Maxine", "t": "Excuse me, sir. Which way to the palace?"},
-          {"s": "messy", "n": "Skylander", "t": "For you two lovely ladies? I'll walk you there myself... after dinner?"},
+          {"s": "skylander_guy", "n": "Skylander", "t": "For you two lovely ladies? I'll walk you there myself... after dinner?"},
           {"s": "sam", "n": "Samantha", "t": "(Girl voice) Hehe... we're in a hurry, mister."},
-          {"s": "messy", "n": "Skylander", "t": "Past the gardens, through the gate. Come find me later!"},
+          {"s": "skylander_guy", "n": "Skylander", "t": "Past the gardens, through the gate. Come find me later!"},
           {"s": "max", "n": "Maxine", "t": "...Never speak of this, Sam."}
         ]},
         {"type": "fight", "if": "capital", "place": "royal_capital", "obj": "Get through the Royal Capital (in disguise)", "allies": ["sam", "max"], "waves": [

@@ -1,0 +1,139 @@
+{
+  "path": "past",
+  "title": "Before It All",
+  "hub": "tenjo_village",
+  "npcs": ["yuri", "technica", "kyle"],
+  "missions": [
+    {
+      "id": "h1", "title": "Ava and Persephone", "karma": 9000, "lvl": 7,
+      "desc": "Year 90. Ava has the Aurora virus. Persephone is her only friend. A Government man has an offer.",
+      "steps": [
+        {"type": "scene", "place": "underclass_city", "npcs": ["ava", "persephone", "kyle"], "meet": ["ava", "persephone"], "lines": [
+          {"s": "ava", "t": "*cough* The medicine isn't working anymore..."},
+          {"s": "kyle", "t": "Demonization cures all sickness. Here's an invitation - volunteers only."},
+          {"s": "persephone", "t": "Then make me a demon too. Someone has to protect Ava."},
+          {"s": "you", "choice": [{"text": "Warn them about Kyle.", "set": "warn", "reply": [{"s": "ava", "t": "...I'm going anyway. I don't want to die."}]}, {"text": "Say nothing.", "set": "quiet", "reply": [{"s": "kyle", "t": "Wonderful. Follow me, girls."}]}]}
+        ]},
+        {"type": "fight", "place": "underclass_city", "obj": "Get Ava and Persephone through the Underclass City", "allies": ["persephone"], "waves": [
+          [{"e": "gang", "n": 4}],
+          [{"e": "gang", "n": 3}]
+        ]}
+      ],
+      "reward": {"money": 250, "bond": {"ava": 10, "persephone": 10}}
+    },
+    {
+      "id": "h2", "title": "The Tenjo Family", "karma": 9500, "lvl": 7,
+      "desc": "Year 90. Minta, Aniri and little Yuri Tenjo hide in a run-down house. Kyle and Technica are scanning for heat.",
+      "steps": [
+        {"type": "scene", "place": "tenjo_house", "npcs": ["npc:minta", "ultima", "yuri"], "meet": ["yuri"], "lines": [
+          {"s": "minta", "n": "Minta Tenjo", "t": "God, let our souls find the way to the light... Amen. Soldiers are here."},
+          {"s": "yuri", "t": "They have a heat scanner! If someone buys me time, I can crank the air system into a heat wave."},
+          {"s": "minta", "n": "Minta Tenjo", "t": "I'm the oldest. It has to be me. Remember, you two - God loves us."},
+          {"s": "ultima", "n": "Aniri Tenjo", "t": "God loves us."},
+          {"s": "you", "choice": [{"text": "Go out with Minta.", "set": "minta", "reply": [{"s": "minta", "n": "Minta Tenjo", "t": "Then stay close. Over here, you two!"}]}, {"text": "Stay and help Yuri.", "set": "heater", "reply": [{"s": "yuri", "t": "Okay - hold the door while I get it working!"}]}]}
+        ]},
+        {"type": "fight", "if": "minta", "place": "tenjo_village", "obj": "Fight beside Minta", "allies": ["ultima"], "waves": [
+          [{"e": "gov", "n": 3}],
+          [{"e": "gov_elite", "boss": true, "name": "Technica (Chipped)", "escape": 0.5}]
+        ], "escape_lines": [
+          {"s": "minta", "n": "Minta Tenjo", "t": "Technica - PASSIVE MODE!"},
+          {"s": "technica", "t": "Uh... what happened? KYLE! You put a chip on me?!"}
+        ]},
+        {"type": "survive", "if": "heater", "place": "tenjo_house", "obj": "Hold the door while Yuri works", "seconds": 30, "allies": ["ultima"], "waves": [
+          [{"e": "gov", "n": 3}]
+        ]},
+        {"type": "scene", "place": "tenjo_house", "npcs": ["yuri", "ultima", "kyle", "technica"], "lines": [
+          {"s": "yuri", "t": "Take that, you jerks! My YURI BOMB!"},
+          {"s": "kyle", "t": "Attack mode. ...Die."},
+          {"s": "narrator", "t": "Kyle cuts Minta down."},
+          {"s": "ultima", "n": "Aniri Tenjo", "t": "Yuri! The heater - we have to RUN!"},
+          {"s": "technica", "t": "Let them go, Kyle - or I tell the Gov about your illegal modifications."},
+          {"s": "kyle", "t": "Caring for others is what's going to get you killed one day, Technica."}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"yuri": 10, "technica": 5}}
+    },
+    {
+      "id": "h3", "title": "The Draft Test", "karma": 10000, "lvl": 8,
+      "desc": "Year 95. Yuri Tenjo, caught trespassing at F1, takes the Government's drafting exam.",
+      "steps": [
+        {"type": "scene", "place": "gov_facility", "npcs": ["npc:examiner", "yuri"], "lines": [
+          {"s": "examiner", "n": "Examiner 3062", "t": "A 100 on the drafting exam. C1. You'll be going to F2."},
+          {"s": "yuri", "t": "F2?! I got a 100! Why not F1?!"},
+          {"s": "examiner", "n": "Examiner 3062", "t": "F1 is invitation only."}
+        ]},
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "npc:gracie", "npc:euphoria"], "lines": [
+          {"s": "euphoria", "n": "Euphoria", "t": "So you're the new girl? You look so cute!"},
+          {"s": "gracie", "n": "Gracie", "t": "You're not the first Tenjo here. Project Ultima is Aniri Tenjo."},
+          {"s": "yuri", "t": "God loves us! That's my big brother!"},
+          {"s": "narrator", "t": "On the C3 camera: Technica, handing the gas patients keys to escape."},
+          {"s": "narrator", "t": "Later, outside C2: Gracie tells Kyle that Yuri Tenjo is here."},
+          {"s": "yuri", "t": "I was starting to think I could make friends here. Family is all I can rely on."}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"yuri": 10}}
+    },
+    {
+      "id": "h4", "title": "Gracie and Euphoria", "karma": 10500, "lvl": 8,
+      "desc": "Yuri has locked herself in C1 with her brother for a month. Two girls are camping outside her door.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["npc:gracie", "npc:euphoria", "technica", "max"], "lines": [
+          {"s": "gracie", "n": "Gracie", "t": "We talked to her for ONE day and we're camping outside her room. I never had a sister."},
+          {"s": "euphoria", "n": "Euphoria", "t": "Me neither. I wouldn't mind if it was Yuri."},
+          {"s": "technica", "t": "Why are you two sitting outside C1? ...Come on, Sintrie. Gas patients."},
+          {"s": "gracie", "n": "Gracie", "t": "Let's make her a cross necklace. For 'God loves us.'"}
+        ]},
+        {"type": "scene", "place": "lab_hallway", "npcs": ["kyle", "npc:gracie", "npc:euphoria"], "lines": [
+          {"s": "kyle", "t": "You both have keys to C1, don't you? Mind if I borrow one?"},
+          {"s": "euphoria", "n": "Euphoria", "t": "We gave ours to Yuri. Ask again later."},
+          {"s": "you", "choice": [{"text": "Tell Gracie that Kyle is up to something.", "set": "tell", "reply": [{"s": "gracie", "n": "Gracie", "t": "You're just being paranoid!"}]}, {"text": "Follow Kyle.", "set": "follow", "reply": [{"s": "narrator", "t": "He's gone. Invisible - and fast."}]}]}
+        ]},
+        {"type": "fight", "place": "lab_hallway", "obj": "Search the F2 halls - something's wrong", "allies": ["technica"], "waves": [
+          [{"e": "gov", "n": 3}],
+          [{"e": "gov", "n": 2}, {"e": "gov_elite", "n": 1}]
+        ]},
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "kyle"], "lines": [
+          {"s": "narrator", "t": "In Gracie's room: the half-made cross. Kyle is standing over them both."},
+          {"s": "kyle", "t": "You really shouldn't say things you don't understand."},
+          {"s": "yuri", "t": "(On the cameras - I saw it.) He's at the door. Invisible. God loves us. I'll be fine... right, big bro?"}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"yuri": 10}}
+    },
+    {
+      "id": "h5", "title": "The Day F2 Fell", "karma": 11000, "lvl": 9,
+      "desc": "Year 95. Yuri finishes her brother's upgrades. Kyle has other plans for him.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "ultima"], "lines": [
+          {"s": "yuri", "t": "Upgrades done, big bro. You just need a five-year rest..."},
+          {"s": "narrator", "t": "Unseen, Kyle slips a virus into Ultima. The pod glass breaks."},
+          {"s": "yuri", "t": "Big bro?! Put me down! ...I can't control him. I have to get out!"}
+        ]},
+        {"type": "survive", "place": "gov_facility", "obj": "F2 is falling - get Yuri out", "seconds": 45, "allies": ["yuri"], "waves": [
+          [{"e": "gov", "n": 4}]
+        ]},
+        {"type": "scene", "place": "f2_ruins", "npcs": ["yuri"], "lines": [
+          {"s": "narrator", "t": "F2 is gone. The Government workers blew it up themselves."},
+          {"s": "yuri", "t": "There was a basement under F2. Nobody else was in it... Don't worry, big bro. We'll get him."}
+        ]}
+      ],
+      "reward": {"money": 350, "bond": {"yuri": 15}}
+    },
+    {
+      "id": "h6", "title": "God Loves Us", "karma": 11500, "lvl": 9, "extra": true,
+      "desc": "A quiet night at Yuri's HQ, before the last fight with Ultima.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "mikiko"], "lines": [
+          {"s": "yuri", "t": "Do you believe in God, Mikiko? ...Why my family?"},
+          {"s": "mikiko", "t": "It wasn't God, Yuri. It was the Government. They say God gives his hardest challenges to his strongest warriors."},
+          {"s": "mikiko", "t": "If we weren't demigods, we'd be called the Freedom Fighters."},
+          {"s": "yuri", "t": "What's that cool thing you do with your arms?"},
+          {"s": "mikiko", "t": "Cross them like handcuffs. Break out of them. 'Manifest Greatness!'"},
+          {"s": "yuri", "t": "Manifest Greatness! ...I feel free. Thank you, Mikiko."},
+          {"s": "yuri", "t": "God loves us."}
+        ]}
+      ],
+      "reward": {"money": 200, "bond": {"yuri": 15, "mikiko": 10}}
+    }
+  ]
+}

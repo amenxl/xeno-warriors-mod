@@ -652,7 +652,16 @@ public final class StoryRun {
      * "kyrie:ava": Ava, in Kyrie's). They're drawn as the body with red eyes and named "Body (Soul)".
      */
     /** People in the story who aren't characters, drawn with their own look ("npc:henery" in the files): their names. */
-    static final Map<String, String> STORY_PEOPLE = Map.of("henery", "Henery");
+    static final Map<String, String> STORY_PEOPLE = Map.ofEntries(Map.entry("henery", "Henery"), Map.entry("hannah", "Hannah (3523)"),
+            Map.entry("mimicry", "Mimicry"), Map.entry("minta", "Minta Tenjo"), Map.entry("gracie", "Gracie"), Map.entry("euphoria", "Euphoria"),
+            Map.entry("examiner", "Examiner 3062"), Map.entry("council", "Royal Council"), Map.entry("koixea", "Queen Koixea"), Map.entry("sainea", "Queen Sainea"),
+            Map.entry("barry", "Barry"), Map.entry("seedling", "Seedling King"), Map.entry("tree_demon", "Tree Demon"), Map.entry("old_fox_king", "The Old Fox King"),
+            Map.entry("maddie", "Maddie"), Map.entry("skylander_guy", "Skylander"));
+    /** Their looks (one of NpcLooks's, or their own - Henery's). */
+    static final Map<String, String> PEOPLE_LOOK = Map.ofEntries(Map.entry("hannah", "soldier"), Map.entry("mimicry", "waver"), Map.entry("minta", "woman"),
+            Map.entry("gracie", "redhair"), Map.entry("euphoria", "girl"), Map.entry("examiner", "briefcase"), Map.entry("council", "briefcase"),
+            Map.entry("koixea", "woman"), Map.entry("sainea", "woman"), Map.entry("barry", "spiky"), Map.entry("seedling", "gunner"), Map.entry("tree_demon", "spiky"),
+            Map.entry("old_fox_king", "capboy"), Map.entry("maddie", "girl"), Map.entry("skylander_guy", "messy"));
 
     static String bodyOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(0, i); }
     static String soulOf(String token) { int i = token.indexOf(':'); return i < 0 ? token : token.substring(i + 1); }
@@ -723,7 +732,7 @@ public final class StoryRun {
                 var h = com.xenowarriors.npc.ModNpcs.HUMAN.get().create(l);
                 if (h == null) continue;
                 String key = c.substring(4);
-                h.setLook(key);
+                h.setLook(PEOPLE_LOOK.getOrDefault(key, key));
                 h.setCustomName(Component.literal(STORY_PEOPLE.getOrDefault(key, key)));
                 Vec3 at = StoryScenes.fit(StoryScenes.npcSpot(r.slot, r.place, i++, Math.max(n, 1)), reach);
                 h.moveTo(at.x, at.y, at.z, 0F, 0F);

@@ -28,9 +28,15 @@ public class StoryScreen extends Screen {
 
     public void refresh() { init(); }
 
+    /** The season whose storylines are shown (Season 2's tab only once it's unlocked). */
+    private int season = 1;
+
     private List<CompoundTag> paths() {
         List<CompoundTag> l = new ArrayList<>();
-        for (Tag t : StoryClient.state.getList("paths", Tag.TAG_COMPOUND)) l.add((CompoundTag) t);
+        for (Tag t : StoryClient.state.getList("paths", Tag.TAG_COMPOUND)) {
+            CompoundTag c = (CompoundTag) t;
+            if (Math.max(1, c.getInt("season")) == season) l.add(c);
+        }
         return l;
     }
 
@@ -44,7 +50,15 @@ public class StoryScreen extends Screen {
         clearWidgets();
         CompoundTag st = StoryClient.state;
         String cur = st.getString("cur");
-        if (sel == null || path(sel) == null) sel = !cur.isEmpty() ? cur : paths().isEmpty() ? null : paths().get(0).getString("id");
+        if (!st.getBoolean("s2")) season = 1;
+        if (sel == null || path(sel) == null) sel = !cur.isEmpty() && path(cur) != null ? cur : paths().isEmpty() ? null : paths().get(0).getString("id");
+        if (st.getBoolean("s2") && st.getBoolean("active")) {                       // the season tabs
+            for (int sn = 1; sn <= 2; sn++) {
+                final int k = sn;
+                addRenderableWidget(Button.builder(Component.literal((season == k ? "▶ " : "") + "Season " + k), b -> { season = k; sel = null; init(); })
+                        .bounds(width / 2 - 64 + (k - 1) * 66, 5, 62, 18).build());
+            }
+        }
         int bx = width - 132, by = height - 30;
         if (!st.getBoolean("active")) {
             addRenderableWidget(Button.builder(Component.literal("Start Story Mode"), b -> StoryClient.act(StoryActionPacket.START, "", 0)).bounds(bx - 120, by, 240, 20).build());
@@ -82,20 +96,29 @@ public class StoryScreen extends Screen {
 
     // ------------------------------------------------------------------ looks
 
-    private static final int CARD_W = 160, CARD_H = 30, LIST_X = 12, LIST_Y = 34;
+    private static final int CARD_W = 160, LIST_X = 12, LIST_Y = 34;
+    /** A card's height: a little shorter when the season has a lot of storylines. */
+    private int cardH() { return paths().size() > 6 ? 27 : 30; }
 
     /** Who each storyline is about (the face on its card). */
     private static String face(String path) {
-        return switch (path) { case "rhalix" -> "rhalix"; case "mikiko" -> "mikiko"; case "sr" -> "senju"; case "gov" -> "kyle"; case "finale" -> "ultima"; default -> "mikiko"; };
+        return switch (path) { case "rhalix" -> "rhalix"; case "mikiko" -> "mikiko"; case "sr" -> "senju"; case "gov" -> "kyle"; case "finale" -> "ultima";
+            case "past" -> "yuri"; case "s2_xeno" -> "mikiko"; case "s2_sp" -> "max"; case "s2_fall" -> "ultima"; case "s2_royals" -> "kyrie";
+            case "s2_blade" -> "kaeru"; case "s2_demons" -> "zack"; case "s2_finale" -> "rhalix"; default -> "mikiko"; };
     }
 
     private static int pathColor(String path) {
-        return switch (path) { case "rhalix" -> 0xA02CD2; case "mikiko" -> 0xE8801A; case "sr" -> 0xC03030; case "gov" -> 0x6A3AC8; case "finale" -> 0x1FE07A; default -> 0xE8B030; };
+        return switch (path) { case "rhalix" -> 0xA02CD2; case "mikiko" -> 0xE8801A; case "sr" -> 0xC03030; case "gov" -> 0x6A3AC8; case "finale" -> 0x1FE07A;
+            case "past" -> 0x40B060; case "s2_xeno" -> 0xE8801A; case "s2_sp" -> 0x5AA0E0; case "s2_fall" -> 0x30C070; case "s2_royals" -> 0xD040A0;
+            case "s2_blade" -> 0xF0A040; case "s2_demons" -> 0x8040C0; case "s2_finale" -> 0xA02CD2; default -> 0xE8B030; };
     }
 
     /** The storyline's banner (textures/gui/story/<path>.png: the user's art of Rhalix / Mikiko, both for the finale). */
     private static net.minecraft.resources.ResourceLocation banner(String path) {
-        return com.xenowarriors.XenoWarriors.id("textures/gui/story/" + (path == null ? "finale" : path) + ".png");
+        String k = path == null ? "finale" : switch (path) {                           // (Season 2's storylines borrow Season 1's art for now)
+            case "past", "s2_demons" -> "gov"; case "s2_xeno", "s2_blade" -> "mikiko"; case "s2_sp", "s2_royals" -> "sr"; case "s2_fall" -> "rhalix"; case "s2_finale" -> "finale";
+            default -> path; };
+        return com.xenowarriors.XenoWarriors.id("textures/gui/story/" + k + ".png");
     }
 
     private static net.minecraft.resources.ResourceLocation portrait(String who) {
@@ -106,13 +129,13 @@ public class StoryScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int button) {
         int y = LIST_Y;
         for (CompoundTag p : paths()) {
-            if (mx >= LIST_X && mx < LIST_X + CARD_W && my >= y && my < y + CARD_H) {
+            if (mx >= LIST_X && mx < LIST_X + CARD_W && my >= y && my < y + cardH()) {
                 sel = p.getString("id");
                 minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1F));
                 init();
                 return true;
             }
-            y += CARD_H + 4;
+            y += cardH() + 4;
         }
         return super.mouseClicked(mx, my, button);
     }
@@ -122,10 +145,10 @@ public class StoryScreen extends Screen {
         for (CompoundTag p : paths()) {
             String id = p.getString("id");
             int status = p.getInt("status"), col = pathColor(id);
-            boolean on = id.equals(sel), over = mx >= LIST_X && mx < LIST_X + CARD_W && my >= y && my < y + CARD_H;
-            g.fill(LIST_X, y, LIST_X + CARD_W, y + CARD_H, on ? 0xE0000000 | dim(col, 0.45F) : over ? 0xD0282834 : 0xC0181820);
-            g.fill(LIST_X, y, LIST_X + 3, y + CARD_H, status == 0 ? 0xFF555560 : 0xFF000000 | col);
-            if (on) outline(g, LIST_X, y, LIST_X + CARD_W, y + CARD_H, 0xFF000000 | col);
+            boolean on = id.equals(sel), over = mx >= LIST_X && mx < LIST_X + CARD_W && my >= y && my < y + cardH();
+            g.fill(LIST_X, y, LIST_X + CARD_W, y + cardH(), on ? 0xE0000000 | dim(col, 0.45F) : over ? 0xD0282834 : 0xC0181820);
+            g.fill(LIST_X, y, LIST_X + 3, y + cardH(), status == 0 ? 0xFF555560 : 0xFF000000 | col);
+            if (on) outline(g, LIST_X, y, LIST_X + CARD_W, y + cardH(), 0xFF000000 | col);
             g.blit(portrait(face(id)), LIST_X + 6, y + 3, 24, 24, 0, 0, 128, 128, 128, 128);
             if (status == 0) g.fill(LIST_X + 6, y + 3, LIST_X + 30, y + 27, 0xA0101014);
             String t = p.getString("title");
@@ -141,7 +164,7 @@ public class StoryScreen extends Screen {
             int done = 0; for (int i = 0; i < ms.size(); i++) if (ms.getCompound(i).getBoolean("done")) done++;
             String sub = status == 3 ? "Complete" : status == 2 ? "Playing - " + done + "/" + ms.size() : status == 1 ? "Available" : "Locked";
             g.drawString(font, sub, LIST_X + 34, y + 17, status == 3 ? 0xFF88CC88 : status == 2 ? 0xFFFFE080 : status == 1 ? 0xFF9ACCFF : 0xFFAA6666, false);
-            y += CARD_H + 4;
+            y += cardH() + 4;
         }
     }
 
@@ -175,7 +198,7 @@ public class StoryScreen extends Screen {
         renderBackground(g);
         g.fillGradient(0, 0, width, 28, 0xE0101018, 0x80101018);
         CompoundTag st = StoryClient.state;
-        g.drawString(font, "STORY MODE - SEASON 1", 12, 12, 0xFFE8B030, true);
+        g.drawString(font, "STORY MODE - SEASON " + season, 12, 12, 0xFFE8B030, true);
         String kl = "Your Karma Level: " + com.xenowarriors.karma.KarmaLevel.fmt(st.getLong("karma"));
         g.drawString(font, kl, width - font.width(kl) - 12, 12, 0xFFB0C8FF, true);
         cards(g, mx, my);
@@ -236,7 +259,7 @@ public class StoryScreen extends Screen {
         if (st.contains("obj")) g.drawString(font, "Now: " + st.getString("obj"), x, height - 52, 0xFFFFE080, true);
         if (st.contains("sideObj")) g.drawString(font, st.getString("sideObj"), x, height - 64, 0xFF80D0FF, true);
         // who you've met
-        int gy = LIST_Y + paths().size() * (CARD_H + 4) + 8, gx = LIST_X, n = 0;
+        int gy = LIST_Y + paths().size() * (cardH() + 4) + 8, gx = LIST_X, n = 0;
         g.drawString(font, "People you've met", gx, gy, 0xFFE8B030, false);
         gy += 12;
         for (Tag tt : st.getList("chars", Tag.TAG_COMPOUND)) {

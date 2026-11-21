@@ -1,0 +1,83 @@
+{
+  "path": "s2_royals",
+  "title": "The Royal Sisters",
+  "hub": "royal_palace",
+  "npcs": ["kyrie", "athrea", "ranrea"],
+  "missions": [
+    {
+      "id": "q1", "title": "The Royal Sisters", "karma": 16000, "lvl": 11,
+      "desc": "Kyrie, Atherea and Ranrea go after the Sky Rebellion - to bring Kyrie's mother home.",
+      "steps": [
+        {"type": "scene", "place": "kyrie_room", "npcs": ["kyrie", "athrea", "ranrea"], "lines": [
+          {"s": "athrea", "t": "Kyrie, what's with the outfit?"},
+          {"s": "kyrie", "t": "My mom's old battle uniform. The attack on SR happens today."},
+          {"s": "ranrea", "t": "A plan? Whyyy... that sounds like a lot of trabajar. ...Ada."},
+          {"s": "kyrie", "t": "They took my mom. It's a death plan - if you don't want to come, leave now."},
+          {"s": "athrea", "t": "Same as always, sis. We're with you."},
+          {"s": "you", "choice": [{"text": "Go with the sisters.", "set": "go", "reply": [{"s": "kyrie", "t": "Then keep up."}]}, {"text": "Warn Kyrie it's a trap.", "set": "warn", "reply": [{"s": "kyrie", "t": "Maybe. I'm going anyway."}]}]}
+        ]},
+        {"type": "fight", "place": "aurora_street", "obj": "Follow Ranrea's nose to the SR hideout", "allies": ["kyrie", "athrea", "ranrea"], "waves": [
+          [{"e": "sr", "n": 3}],
+          [{"e": "sr", "n": 3}]
+        ]}
+      ],
+      "reward": {"money": 400, "bond": {"kyrie": 10, "athrea": 10, "ranrea": 10}}
+    },
+    {
+      "id": "q2", "title": "The Bait Hideout", "karma": 17000, "lvl": 11,
+      "desc": "SR sends Persephone - in Lexy's body - to say hi. Then Logan.",
+      "steps": [
+        {"type": "scene", "place": "sr_hideout", "npcs": ["lexy:persephone", "kyrie", "athrea", "ranrea"], "lines": [
+          {"s": "lexy:persephone", "n": "Lexy", "t": "Kyrie, leave now. Three Royals is exactly what SR wants."},
+          {"s": "kyrie", "t": "Lexy, we're friends. Come back to SP."},
+          {"s": "lexy:persephone", "n": "Lexy (Persephone)", "t": "She killed my only friend, Ava. LET ME KILL HER! ...Kyrie! It's night-night time!"},
+          {"s": "kyrie", "t": "Girls! Royal Formation 1!"}
+        ]},
+        {"type": "fight", "place": "sr_hideout", "obj": "Royal Formation 1: stop Persephone", "allies": ["kyrie", "athrea", "ranrea"], "waves": [
+          [{"e": "sr:persephone@lexy", "boss": true, "name": "Lexy (Persephone)", "escape": 0.5}]
+        ], "escape_lines": [
+          {"s": "logan", "n": "Logan", "t": "Now now, three on one isn't very fair, is it?"},
+          {"s": "kyrie", "t": "LOGAN! Where is my mom?!"}
+        ]},
+        {"type": "fight", "place": "sr_hideout", "obj": "Logan and Persephone, hoodies off", "allies": ["kyrie", "athrea"], "waves": [
+          [{"e": "sr:logan", "boss": true, "name": "Logan", "escape": 0.6}, {"e": "sr:persephone@lexy", "name": "Lexy (Persephone)"}]
+        ], "escape_lines": [
+          {"s": "athrea", "t": "Ranrea's down... That's it. ZACK, GET OVER HERE!!!"}
+        ]},
+        {"type": "scene", "place": "sr_hideout", "npcs": ["zack", "athrea", "kyrie"], "meet": ["zack"], "lines": [
+          {"s": "narrator", "t": "A light purple flash. One kick for Persephone, one punch for Logan."},
+          {"s": "zack", "t": "You tried attacking my girl."},
+          {"s": "kyrie", "t": "Who are you really, Zack?"},
+          {"s": "zack", "t": "I'm... a demon. A lady named Technica tried to save us from the gas - her and a Skylander named Sintrie."},
+          {"s": "kyrie", "t": "Sintrie?! ...Max from SP. He killed countless Royals."},
+          {"s": "narrator", "t": "Logan and Persephone vanish through a portal. It was a bait hideout all along."},
+          {"s": "narrator", "t": "Then the earth moves - and a huge moon rises over a Government facility."},
+          {"s": "zack", "t": "That's F3. Kyle's there. Kyrie - I'm coming with you."}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"kyrie": 10, "zack": 10}}
+    },
+    {
+      "id": "q3", "title": "Meanwhile, at the Keepers' Palace", "karma": 17500, "lvl": 11, "extra": true,
+      "desc": "Duo's Keepers - Chase, Mimicry, the Seedling King, the Tree Demon and the old Fox King. And a visitor with a sleeping giant.",
+      "steps": [
+        {"type": "scene", "place": "keepers_palace", "npcs": ["chase", "npc:mimicry", "npc:seedling", "npc:old_fox_king"], "lines": [
+          {"s": "chase", "t": "Duo needs a month to break out of that church. He'll need our help."},
+          {"s": "seedling", "n": "Seedling King", "t": "Duo knows I can take the Xeno Warriors myself. Haha!"},
+          {"s": "old_fox_king", "n": "The Old Fox King", "t": "Is that so? I don't need my crown to take you down."},
+          {"s": "mimicry", "n": "Mimicry", "t": "Not at the Palace! Someone'll sense your karma!"},
+          {"s": "narrator", "t": "Mid-fight, Chase cuts the Seedling King down. A seed drops into his hand."},
+          {"s": "chase", "t": "If I ever see you fighting another Keeper again... you're dead."}
+        ]},
+        {"type": "scene", "place": "keepers_palace", "npcs": ["senju", "chase", "npc:maddie", "npc:mimicry"], "lines": [
+          {"s": "senju", "t": "Xylan the Warlord has been captured. He works for me now."},
+          {"s": "chase", "t": "...A human the devil himself feared."},
+          {"s": "maddie", "n": "Maddie", "t": "Xylan, reveal your presence! ...Uh. Father? He won't listen to me."},
+          {"s": "mimicry", "n": "Mimicry", "t": "HAHAHA! You can't make him move, can you?!"},
+          {"s": "chase", "t": "Senju. Come with me. I'll tell you Duo's new plans."}
+        ]}
+      ],
+      "reward": {"money": 300, "bond": {"chase": 5, "senju": 5}}
+    }
+  ]
+}

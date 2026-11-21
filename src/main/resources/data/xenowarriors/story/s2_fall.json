@@ -1,0 +1,90 @@
+{
+  "path": "s2_fall",
+  "title": "Ultima's Breach",
+  "hub": "lab_hallway",
+  "npcs": ["yuri", "mikiko", "rhalix", "zane"],
+  "missions": [
+    {
+      "id": "f1", "title": "The Antivirus", "karma": 16000, "lvl": 11,
+      "desc": "The antivirus is done - in Mikiko's red bracelet. Ultima is sitting on top of the Gov hideout, waiting.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
+          {"s": "yuri", "t": "It's done! It's in your red bracelet thingy. He's at the Gov hideout - hurry."},
+          {"s": "rhalix", "t": "My meditation wasn't for nothing. I've got something up my sleeve."},
+          {"s": "yuri", "t": "Good luck, you two... bring my brother back."}
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["ultima", "mikiko", "rhalix", "npc:henery"], "lines": [
+          {"s": "ultima", "t": "Just in time for my retribution. You'll be my key into the hideout."},
+          {"s": "henery", "n": "Henery", "t": "Mikiko! He has Zane too!"},
+          {"s": "mikiko", "t": "ULTIMA!"},
+          {"s": "narrator", "t": "Ultima slips inside and walls them off. Everything in a Gov facility is under his control."},
+          {"s": "yuri", "t": "(radio) Don't waste a Xeno Blast on it! Cores around the facility power that wall - break them!"}
+        ]},
+        {"type": "fight", "place": "gov_facility", "obj": "Split up and break the wall's cores", "allies": ["mikiko", "rhalix"], "split": true, "waves": [
+          [{"e": "gov", "n": 3}],
+          [{"e": "gov_elite", "n": 2}, {"e": "gov", "n": 1}]
+        ]},
+        {"type": "scene", "place": "gov_facility", "npcs": ["mikiko", "rhalix"], "lines": [
+          {"s": "mikiko", "t": "One core left and I can't find it!"},
+          {"s": "rhalix", "t": "Check the wall. Sometimes the best hiding place is in plain sight."},
+          {"s": "mikiko", "t": "...Found it! Let's go!"}
+        ]}
+      ],
+      "reward": {"money": 450, "bond": {"mikiko": 5, "rhalix": 5, "yuri": 5}}
+    },
+    {
+      "id": "f2", "title": "Kyle's Present", "karma": 17000, "lvl": 11,
+      "desc": "The whole team storms Kyle's lab. Ultima has left Mikiko a present ahead.",
+      "steps": [
+        {"type": "scene", "place": "kyle_office", "npcs": ["kyle", "mikiko", "rhalix", "sam", "max"], "lines": [
+          {"s": "mikiko", "t": "Alright team, y'all ready?"},
+          {"s": "rhalix", "t": "This is MY team."},
+          {"s": "kyle", "t": "Ultima? He's my business partner now. Oh - and he left a little present ahead for you, Mikiko."},
+          {"s": "rhalix", "t": "Don't listen to him. Let's go!"}
+        ]},
+        {"type": "scene", "place": "gov_hall", "npcs": ["ultima", "zane", "mikiko", "rhalix"], "lines": [
+          {"s": "ultima", "t": "Your old coworker, Zane. Pull his chip and he dies."},
+          {"s": "zane", "n": "Zane (Chipped)", "t": "Die... die..."},
+          {"s": "mikiko", "t": "Every person in this place is a manipulator, a murderer or a psychopath..."},
+          {"s": "mikiko", "t": "Rhalix, you take Zane. Ultima's MINE."},
+          {"s": "you", "choice": [{"text": "Fight Zane with Rhalix.", "set": "zane", "reply": [{"s": "rhalix", "t": "Sorry about this, Zane. Don't go dying on me."}]}, {"text": "Stay by Mikiko.", "set": "mikiko", "reply": [{"s": "yuri", "t": "(radio) Mikiko, don't fight my brother alone!"}]}]}
+        ]},
+        {"type": "fight", "if": "zane", "place": "gov_hall", "obj": "Stop Chipped Zane without killing him", "allies": ["rhalix"], "waves": [
+          [{"e": "elementalist", "boss": true, "name": "Zane (Chipped)", "escape": 0.4}]
+        ], "escape_lines": [
+          {"s": "rhalix", "t": "Karma Activation! ...Wait, you already HAVE karma?"},
+          {"s": "zane", "n": "Zane (Chipped)", "t": "Behold - my elemental change!"},
+          {"s": "narrator", "t": "His water turns to quicksand under Rhalix's feet."}
+        ]},
+        {"type": "fight", "if": "mikiko", "place": "gov_hall", "obj": "Ultima at 25% - and Mikiko is going dark", "allies": ["mikiko"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima (25%)", "escape": 0.5}]
+        ], "escape_lines": [
+          {"s": "mikiko", "t": "You fed the beast corruption. Now the beast feeds on you."},
+          {"s": "narrator", "t": "Darkness pours off Mikiko."}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"rhalix": 10, "zane": 5}}
+    },
+    {
+      "id": "f3", "title": "The Unbreakable Corruption", "karma": 18000, "lvl": 12,
+      "desc": "Corrupted Mikiko overpowers Ultima, sees through Kyle's invisibility - and won't stop.",
+      "steps": [
+        {"type": "scene", "place": "gov_hall", "npcs": ["mikiko:corrupted", "ultima", "rhalix"], "lines": [
+          {"s": "mikiko:corrupted", "n": "Mikiko (Corrupted)", "t": "Why don't you go 100%, Ultima? Don't you wanna play?"},
+          {"s": "ultima", "t": "My chip says you're about to have a heart attack."},
+          {"s": "yuri", "t": "(radio) Mikiko! Your body can't handle this! Rhalix - help him!"},
+          {"s": "rhalix", "t": "What would Fox Girl say if she saw you like this?! Remember when Ai Oni took me over? My turn."}
+        ]},
+        {"type": "fight", "place": "gov_hall", "obj": "Stop Corrupted Mikiko", "allies": ["rhalix"], "waves": [
+          [{"e": "csoul_boss", "boss": true, "name": "Mikiko (Corrupted)"}]
+        ]},
+        {"type": "scene", "place": "gov_hall", "npcs": ["rhalix", "ultima", "mikiko"], "lines": [
+          {"s": "yuri", "t": "(radio) Mikiko's heart readings... they're blank."},
+          {"s": "ultima", "t": "He's dead."},
+          {"s": "rhalix", "t": "Mikiko... who's gonna lead the Xeno Warriors if you die like this?!"}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"rhalix": 10, "mikiko": 10}}
+    }
+  ]
+}

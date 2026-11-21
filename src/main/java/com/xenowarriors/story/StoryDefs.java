@@ -26,7 +26,8 @@ public final class StoryDefs {
     private StoryDefs() {}
 
     /** The storylines in the order they unlock: the first two either way round, then SR and Government either way, then the finale. */
-    public static final List<String> ORDER = List.of("rhalix", "mikiko", "sr", "gov", "finale");
+    public static final List<String> ORDER = List.of("rhalix", "mikiko", "sr", "gov", "finale", "past",
+            "s2_xeno", "s2_sp", "s2_fall", "s2_royals", "s2_blade", "s2_demons", "s2_finale");
 
     public record Choice(String text, String set, List<Line> reply) {}
 

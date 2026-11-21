@@ -1,0 +1,94 @@
+{
+  "path": "s2_blade",
+  "title": "The Hekublade's Guardian",
+  "hub": "farm",
+  "npcs": ["kaeru", "mikiko", "fox_girl"],
+  "missions": [
+    {
+      "id": "b1", "title": "Inside the Hekublade", "karma": 18500, "lvl": 12,
+      "desc": "Mikiko's heart has stopped. His soul lands somewhere quiet - and someone there is very annoyed about it.",
+      "steps": [
+        {"type": "scene", "place": "night_sky", "npcs": ["mikiko", "kaeru"], "meet": ["kaeru"], "lines": [
+          {"s": "kaeru", "t": "Hey! You're not supposed to be here! Master's going to be so upset!"},
+          {"s": "kaeru", "t": "Your heart STOPPED, you idiot. Hold still. ...Fox Heal."},
+          {"s": "mikiko", "t": "Ow... who ARE you?"},
+          {"s": "kaeru", "t": "Kaeru! You usually call me Heku. Master Kitsune put my soul in the blade - I'm its guardian."},
+          {"s": "kaeru", "t": "And WHERE IS YOUR TAIL?! No wonder you're losing! Now get back in your body!"}
+        ]},
+        {"type": "scene", "place": "gov_hall", "npcs": ["mikiko", "kaeru", "rhalix", "ultima"], "lines": [
+          {"s": "mikiko", "t": "Kaeru! ...Uh."},
+          {"s": "kaeru", "t": "You DUMMY! You're supposed to say Heku!"},
+          {"s": "ultima", "t": "70%. Playtime is over, Xeno Warriors."},
+          {"s": "kaeru", "t": "(That guy gives me the creeps.) TRUE EMPATHY!"}
+        ]},
+        {"type": "fight", "place": "gov_hall", "obj": "Kaeru's True Empathy vs Ultima at 70%", "allies": ["kaeru", "mikiko", "rhalix"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima (70%)", "escape": 0.6}]
+        ], "escape_lines": [
+          {"s": "kyle", "t": "Human speed modifications - gotta love them. Have a fun fight!"},
+          {"s": "kaeru", "t": "NOOOO! He took the blade! Mikiko, I TOLD you!"}
+        ]}
+      ],
+      "reward": {"money": 500, "bond": {"kaeru": 15, "mikiko": 5}}
+    },
+    {
+      "id": "b2", "title": "Catch Kyle", "karma": 19000, "lvl": 12,
+      "desc": "Without Kaeru inside, the Hekublade is an empty shell - and Kyle has it. Follow her nose.",
+      "steps": [
+        {"type": "scene", "place": "lab_hallway", "npcs": ["kaeru", "mikiko"], "lines": [
+          {"s": "kaeru", "t": "I'll sniff him out. ...Why are you wasting Fox King mode on SMELLING?"},
+          {"s": "mikiko", "t": "I'm not half fox anymore, okay?!"},
+          {"s": "you", "choice": [{"text": "Chase on foot with Kaeru.", "set": "foot", "reply": [{"s": "kaeru", "t": "This way! Keep up, senpai!"}]}, {"text": "Have Mikiko fly ahead on the wind.", "set": "fly", "reply": [{"s": "mikiko", "t": "Wind flight - Rhalix, your lessons better work!"}]}]}
+        ]},
+        {"type": "fight", "place": "lab_hallway", "obj": "Catch Kyle (he's invisible - and fast)", "allies": ["kaeru", "mikiko"], "waves": [
+          [{"e": "gov", "n": 4}],
+          [{"e": "gov_elite", "n": 1}, {"e": "gov_elite", "boss": true, "name": "Kyle (Invisible)", "escape": 0.5}]
+        ], "escape_lines": [
+          {"s": "mikiko", "t": "Got it! The blade's back!"}
+        ]},
+        {"type": "scene", "place": "lab_hallway", "npcs": ["kaeru", "mikiko"], "lines": [
+          {"s": "kaeru", "t": "Master gave me the last of her fox power. That's why she has no tail anymore."},
+          {"s": "kaeru", "t": "Fox kin can only give their blood twice. I wasn't the first one in this world."},
+          {"s": "mikiko", "t": "...Who was?"},
+          {"s": "kaeru", "t": "She won't tell me. Now put me back, senpai. Go help Rhalix."}
+        ]}
+      ],
+      "reward": {"money": 450, "bond": {"kaeru": 10}}
+    },
+    {
+      "id": "b3", "title": "Lunar", "karma": 19500, "lvl": 13,
+      "desc": "Rhalix's nights of meditating were trials: butterflies, ice, and the memories he lost. Under the moon, he's someone calmer.",
+      "steps": [
+        {"type": "scene", "place": "night_sky", "npcs": ["rhalix"], "lines": [
+          {"s": "rhalix", "t": "Meditating at night, I fell into a mental space. The first Skylander with the moon element was waiting."},
+          {"s": "rhalix", "t": "Three trials. Butterflies - don't judge, it's a normal fear. Ice, underwater, with no way out but the light."},
+          {"s": "rhalix", "t": "And the last: my lost memories. Even if they're gone, I'm still the one who did those things. I'm Rhalix Murasaki."}
+        ]},
+        {"type": "survive", "place": "night_sky", "obj": "Lunar trial: stay calm in the dark", "seconds": 30, "allies": ["rhalix"], "waves": [
+          [{"e": "corrupted_soul", "n": 3}]
+        ]},
+        {"type": "scene", "place": "gov_hall_moon", "npcs": ["rhalix", "ultima"], "lines": [
+          {"s": "rhalix", "t": "Does that chip have a clock? 'Cause it's about time I kick your ass."},
+          {"s": "narrator", "t": "Rhalix blasts a hole in the roof. The moon pours in. Silver karma - and crescent moons in his eyes."},
+          {"s": "rhalix", "t": "So. Ready for the real battle to start?"},
+          {"s": "ultima", "t": "What the F—"}
+        ]},
+        {"type": "scene", "place": "gov_hall_breach", "npcs": ["kyrie", "zack", "rhalix", "ultima"], "lines": [
+          {"s": "kyrie", "t": "Rhalix, is that you? Where's Max? He killed Royals."},
+          {"s": "zack", "t": "You're not Kyle, are you?"},
+          {"s": "ultima", "t": "Kyle's two floors down. Go have fun."},
+          {"s": "rhalix", "t": "Max saved your life, Kyrie. Don't you owe him the same?"},
+          {"s": "you", "choice": [{"text": "Back Rhalix up.", "set": "back", "reply": [{"s": "kyrie", "t": "...Fine. But he's gonna kick your butt, Ultima. Later, Rhalix!"}]}, {"text": "Go with Kyrie.", "set": "kyrie", "reply": [{"s": "kyrie", "t": "Four floors down, he said. Come on."}]}]}
+        ]},
+        {"type": "fight", "place": "gov_hall_breach", "obj": "Lunar Rhalix vs Ultima at 100%", "allies": ["rhalix"], "waves": [
+          [{"e": "ultima", "boss": true, "name": "Ultima (100%)", "escape": 0.5}]
+        ], "escape_lines": [
+          {"s": "rhalix", "t": "Moon Reflect! Right back at you."},
+          {"s": "rhalix", "t": "Soul Splitter!"},
+          {"s": "ultima", "t": "Sky tech in my body - a sixth sense. There you are."},
+          {"s": "mikiko", "t": "Cool new form, Rhalix! Let's see who lands more hits! FOX KING MODE!"}
+        ]}
+      ],
+      "reward": {"money": 550, "bond": {"rhalix": 15, "kyrie": 5}}
+    }
+  ]
+}

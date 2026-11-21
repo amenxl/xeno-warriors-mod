@@ -159,8 +159,26 @@ public final class Story {
         if (!d.contains("rhalix") || !d.contains("mikiko")) { for (String s : new String[]{"rhalix", "mikiko"}) if (!d.contains(s)) l.add(s); }
         else if (!d.contains("sr") || !d.contains("gov")) { for (String s : new String[]{"sr", "gov"}) if (!d.contains(s)) l.add(s); }
         else if (!d.contains("finale")) l.add("finale");
+        // Season 2 (and Season 1's flashback missions, from the Season 2 script): once Season 1's story is beaten and Season 2 is unlocked
+        if (season2(p) && (finished(p) || d.contains("finale"))) {
+            if (!d.contains("past")) l.add("past");
+            for (String[] g : S2_GROUPS) {
+                boolean all = true;
+                for (String s : g) if (!d.contains(s)) { all = false; if (StoryDefs.path(s) != null) l.add(s); }
+                if (!all) break;                                                   // (the next group waits for this one)
+            }
+        }
         return l;
     }
+
+    /** Season 2's storylines, a group at a time (either order inside a group), then its finale. */
+    public static final String[][] S2_GROUPS = {{"s2_xeno", "s2_sp"}, {"s2_fall", "s2_royals"}, {"s2_blade", "s2_demons"}, {"s2_finale"}};
+
+    /** A Season 2 storyline (or the Season 1 flashbacks, which come from the Season 2 script)? */
+    public static boolean s2Path(String id) { return id != null && (id.startsWith("s2_") || id.equals("past")); }
+
+    /** Season 2 unlocked on this server ({@code /xeno season unlock}). */
+    public static boolean season2(Player p) { return p.getServer() != null && com.xenowarriors.character.Seasons.unlocked(p.getServer(), 2); }
 
     public static boolean pick(ServerPlayer p, String path) {
         if (!active(p) || !available(p).contains(path) || StoryDefs.path(path) == null) return false;
@@ -205,6 +223,8 @@ public final class Story {
                     p.sendSystemMessage(Component.literal(DIFFS[d + 1].toUpperCase(java.util.Locale.ROOT) + " MODE UNLOCKED - pick it in the Story menu to play the story again, harder"
                             + (d + 1 == DIFFS.length - 1 ? " (much harder)." : ".")).withStyle(d + 1 == DIFFS.length - 1 ? ChatFormatting.DARK_PURPLE : ChatFormatting.AQUA, ChatFormatting.BOLD));
                 } else if (d == DIFFS.length - 1) p.sendSystemMessage(Component.literal("You beat Xeno mode. There's nothing harder.").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD));
+            } else if ("s2_finale".equals(path)) {
+                p.sendSystemMessage(Component.literal("SEASON 2 STORY COMPLETE - Ultima's free, Kyrie's a Queen, and the Sky Patrol has two years.").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
             } else if (pd.unlock() != null) {
                 add(p, "unlocked", pd.unlock());
                 p.sendSystemMessage(Component.literal(pd.title() + " complete - " + CharacterType.byId(pd.unlock()).getDisplayName().getString() + " is now playable!").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
@@ -272,9 +292,13 @@ public final class Story {
         t.putLong("karma", com.xenowarriors.karma.KarmaLevel.of(p));
         ListTag paths = new ListTag();
         List<String> av = available(p);
+        boolean s2 = season2(p);
+        t.putBoolean("s2", s2);
         for (StoryDefs.Path pd : StoryDefs.PATHS.values()) {
+            if (s2Path(pd.id()) && !s2) continue;                                  // (Season 2 locked: not even listed)
             CompoundTag c = new CompoundTag();
             c.putString("id", pd.id()); c.putString("title", pd.title());
+            c.putInt("season", pd.id().startsWith("s2_") ? 2 : 1);
             int status = pathDone(p, pd.id()) ? 3 : pd.id().equals(cur) ? 2 : av.contains(pd.id()) ? 1 : 0;
             c.putInt("status", status);
             ListTag ms = new ListTag();
