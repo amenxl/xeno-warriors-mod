@@ -32,5 +32,14 @@ public final class ModEffects {
                 @Override public java.util.List<net.minecraft.world.item.ItemStack> getCurativeItems() { return java.util.List.of(); }   // (milk doesn't wash it out)
             });
 
+    /** A Karma Regeneration Potion: Karma comes back every second while it lasts. */
+    public static final RegistryObject<MobEffect> KARMA_REGEN = EFFECTS.register("karma_regen",
+            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x60C8FF) {
+                @Override public boolean isDurationEffectTick(int duration, int amp) { return duration % 20 == 0; }
+                @Override public void applyEffectTick(net.minecraft.world.entity.LivingEntity e, int amp) {
+                    if (!e.level().isClientSide) com.xenowarriors.item.KarmaRegenPotionItem.regen(e, amp);
+                }
+            });
+
     private ModEffects() {}
 }

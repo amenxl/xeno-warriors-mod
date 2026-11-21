@@ -53,6 +53,30 @@ final class PackNov20dTests {
 
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); }); }, 30));
+        // ---- Karma potions from enemies, and the Karma Regeneration Potion
+        int[] kr = new int[2];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(p.serverLevel());
+            z.moveTo(p.getX() + 3, p.getY(), p.getZ(), 0F, 0F);
+            p.serverLevel().addFreshEntity(z);
+            com.xenowarriors.item.KarmaPotionDrops.forced = true;
+            kr[0] = com.xenowarriors.item.KarmaPotionDrops.dropped;
+            z.hurt(p.damageSources().playerAttack(p), 1000F);
+        }), 10));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            com.xenowarriors.item.KarmaPotionDrops.forced = false;
+            int regen = 0;
+            for (var it : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(8)))
+                if (it.getItem().is(com.xenowarriors.item.ModItems.KARMA_REGEN_POTION.get()) || it.getItem().is(com.xenowarriors.item.ModItems.KARMA_POTION.get())) { regen++; it.discard(); }
+            PackTests.check("karma potions: an enemy you beat can drop a Karma Potion and a Karma Regeneration Potion", com.xenowarriors.item.KarmaPotionDrops.dropped - kr[0] == 2 && regen == 2, "dropped " + (com.xenowarriors.item.KarmaPotionDrops.dropped - kr[0]) + " on the ground " + regen);
+            kr[1] = com.xenowarriors.item.KarmaRegenPotionItem.regenTicks;
+            new ItemStack(com.xenowarriors.item.ModItems.KARMA_REGEN_POTION.get()).finishUsingItem(p.serverLevel(), p);
+        }), 70));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PackTests.check("karma potions: the Karma Regeneration Potion gives Karma back every second", p.hasEffect(com.xenowarriors.ModEffects.KARMA_REGEN.get()) && com.xenowarriors.item.KarmaRegenPotionItem.regenTicks - kr[1] >= 2,
+                    "ticks " + (com.xenowarriors.item.KarmaRegenPotionItem.regenTicks - kr[1]));
+            p.removeAllEffects();
+        }), 5));
         // ---- the middle click as one of your own characters (looking up at the sky: nothing to pick)
         int[] rl = new int[1];
         l.add(new Step(null, () -> PackTests.server(p -> {

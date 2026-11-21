@@ -37,6 +37,8 @@
   "hud.xenowarriors.karma": "Karma %s / %s",
   "message.xenowarriors.no_karma": "Not enough Karma (needs %s, you have %s) — crouch and stand still to focus",
   "item.xenowarriors.karma_potion": "Karma Potion",
+  "item.xenowarriors.karma_regen_potion": "Karma Regeneration Potion",
+  "effect.xenowarriors.karma_regen": "Karma Regeneration",
   "skill.xenowarriors.earth_wave": "Earth Wave",
   "entity.xenowarriors.earth_wave": "Earth Wave",
   "message.xenowarriors.earth_wave.cast": "Earth Wave!",

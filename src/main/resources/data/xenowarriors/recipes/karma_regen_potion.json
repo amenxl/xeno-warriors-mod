@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "xenowarriors:karma_potion" },
+    { "item": "minecraft:amethyst_shard" },
+    { "item": "minecraft:glow_berries" }
+  ],
+  "result": { "item": "xenowarriors:karma_regen_potion", "count": 1 }
+}
