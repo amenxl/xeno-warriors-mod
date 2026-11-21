@@ -339,18 +339,102 @@ public class RoyalCapitalFeature extends Feature<NoneFeatureConfiguration> {
             if (r <= 4.6) { set(x, y, z, Blocks.WATER); if (r > 3.6) set(x, y + 1, z, Blocks.QUARTZ_BRICKS); }
         }
         box(ox, y + 1, fz, ox, y + 3, fz, Blocks.QUARTZ_PILLAR); set(ox, y + 4, fz, Blocks.GOLD_BLOCK); set(ox, y + 5, fz, Blocks.WATER);
-        for (int[] t : new int[][]{{-14, 18}, {14, 18}, {-14, 32}, {14, 32}, {-30, -6}, {30, -6}, {-30, -22}, {30, -22}, {-24, 12}, {24, 12}}) cherry(ox + t[0], y, oz + t[1]);
-        for (int s : new int[]{-1, 1}) {
-            box(ox + s * 8, y + 1, oz + 12, ox + s * 8, y + 1, oz + 38, leaves(Blocks.AZALEA_LEAVES));     // hedges along the walk
-            for (int z = oz + 13; z <= oz + 37; z += 2) set(ox + s * 9, y + 1, z, (z & 2) == 0 ? Blocks.POPPY : Blocks.CORNFLOWER);
+        // the courtyard inside the palace gate: a lawn
+        for (int x = ox - 44; x <= ox + 44; x++) for (int z = oz + 7; z <= oz + 29; z++) {
+            double dx = x - i.x, dz = z - i.z, d = Math.sqrt(dx * dx + dz * dz);
+            if (d > edge(i, Math.atan2(dz, dx)) - 2 || Math.abs(x - ox) <= 2) continue;
+            if (Math.sqrt((x - ox) * (x - ox) + (z - fz) * (z - fz)) <= 4.6) continue;
+            set(x, y, z, Blocks.GRASS_BLOCK);
+            if (hash(x, 3, z) % 9 == 0) set(x, y + 1, z, Blocks.GRASS);
         }
+        for (int[] t : new int[][]{{-16, 16}, {16, 16}, {-17, 26}, {17, 26}, {-30, -6}, {30, -6}, {-30, -22}, {30, -22}, {-26, 12}, {26, 12}}) cherry(ox + t[0], y, oz + t[1]);
         box(ox - 2, y, oz + 7, ox + 2, y, oz + 46, Blocks.QUARTZ_BRICKS);                             // the grand walk
-        box(ox - 1, y, oz + 7, ox + 1, y, oz + 46, Blocks.RED_WOOL);
-        // ---- the landing platform (where the Recarnet Pass drops you) with the sign
+        box(ox - 1, y, oz + 7, ox + 1, y, oz + 18, Blocks.RED_WOOL);
+        // the fountain gets its upper tier
+        box(ox - 1, y + 3, fz - 1, ox + 1, y + 3, fz + 1, Blocks.QUARTZ_BRICKS);
+        set(ox, y + 4, fz, Blocks.QUARTZ_PILLAR); set(ox, y + 5, fz, Blocks.WATER);
+        cityGate(i, ox, oz, y);
+        // ---- the landing (where the Recarnet Pass drops you): the road in front of the city gate, with the sign
         int lz = LANDING.getZ();
-        for (int x = ox - 4; x <= ox + 4; x++) for (int z = lz - 3; z <= lz + 3; z++) set(x, y, z, ((x + z) & 1) == 0 ? Blocks.GOLD_BLOCK : Blocks.SMOOTH_QUARTZ);
+        for (int x = ox - 4; x <= ox + 4; x++) for (int z = oz + 41; z <= lz + 3; z++) set(x, y, z, hash(x, 9, z) % 7 == 0 ? Blocks.BROWN_TERRACOTTA : Blocks.TERRACOTTA);
         for (int s : new int[]{-1, 1}) lamp(ox + s * 5, y, lz);
         sign(ox + 3, y + 1, lz - 3, "Royal Capital", "~ Section 1 ~", "King Rhalix", "welcomes you");
+    }
+
+    /**
+     * The way in from the landing (the user's pictures): the old city wall across the island's south end - rough grey
+     * stone outside, dark brick inside - with its pointed archway, the portcullis drawn up, grass at its foot and the
+     * reddish road; inside, a colonnade along the wall and a mauve plaza with the Royal crest set in it; then the
+     * palace gate (where Kyrie and the queens live): a white balustrade under a tall white spiked fence wound with red
+     * ribbon, two white pillars with winged birds on top, and the black iron gates standing open onto the purple carpet.
+     */
+    private void cityGate(Island i, int ox, int oz, int y) {
+        int w0 = oz + 38, w1 = oz + 40;
+        for (int x = ox - 60; x <= ox + 60; x++) {
+            for (int z = oz + 30; z <= oz + 42; z++) {
+                double dx = x - i.x, dz = z - i.z, d = Math.sqrt(dx * dx + dz * dz);
+                if (d > edge(i, Math.atan2(dz, dx)) - 1) continue;
+                int ax = Math.abs(x - ox);
+                if (z >= w0 && z <= w1) {                                                 // the city wall
+                    for (int k = 1; k <= 12; k++) {
+                        int gx = x - ox;
+                        boolean open = k <= 6 ? ax <= 3 : k == 7 ? ax <= 2 : k == 8 ? ax <= 1 : k == 9 && ax == 0;
+                        if (open) { set(x, y + k, z, z == w1 && k >= 6 && (k > 6 || (gx & 1) != 0) ? Blocks.DARK_OAK_FENCE.defaultBlockState() : Blocks.AIR.defaultBlockState()); continue; }
+                        boolean band = ax <= 5 && k <= 11 && (ax == 4 && k <= 7 || k == 7 && ax == 3 || k == 8 && ax == 2 || k == 9 && ax == 1 || k == 10 && ax == 0);
+                        int h = hash(x, k, z) % 10;
+                        BlockState st = band ? Blocks.POLISHED_ANDESITE.defaultBlockState()
+                                : z == w1 ? (h < 5 ? Blocks.STONE_BRICKS : h < 7 ? Blocks.CRACKED_STONE_BRICKS : h < 8 && k < 4 ? Blocks.MOSSY_STONE_BRICKS : Blocks.COBBLESTONE).defaultBlockState()
+                                : (h < 2 ? Blocks.CRACKED_DEEPSLATE_BRICKS : Blocks.DEEPSLATE_BRICKS).defaultBlockState();
+                        set(x, y + k, z, st);
+                    }
+                    if (z == w1 && (x & 1) == 0) set(x, y + 13, z, Blocks.STONE_BRICKS);   // battlements
+                    set(x, y, z, Blocks.TERRACOTTA);
+                } else if (z == w1 + 1 && ax > 5) {                                       // grass at the wall's foot, the curb
+                    set(x, y, z, Blocks.GRASS_BLOCK); if ((x & 1) == 0) set(x, y + 1, z, Blocks.GRASS);
+                } else if (z == w1 + 2 && ax > 5) {
+                    set(x, y + 1, z, slab(Blocks.SMOOTH_STONE_SLAB, false));
+                } else if (z > oz + 30 && z < w0) {                                       // the plaza inside: mauve paving, the colonnade along the wall
+                    set(x, y, z, (hash(x, 5, z) % 6 == 0 ? Blocks.PINK_TERRACOTTA : Blocks.LIGHT_GRAY_TERRACOTTA).defaultBlockState());
+                    if (z >= w0 - 3 && ax >= 7) {
+                        set(x, y, z, (((x + z) & 1) == 0 ? Blocks.SMOOTH_STONE : Blocks.STONE).defaultBlockState());
+                        set(x, y + 6, z, Blocks.SMOOTH_STONE);
+                        if (z == w0 - 3 && (ax - 7) % 4 == 0) { set(x, y + 1, z, Blocks.CHISELED_QUARTZ_BLOCK); box(x, y + 2, z, x, y + 5, z, Blocks.QUARTZ_PILLAR); }
+                        if (z == w0 - 1 && (ax - 9) % 8 == 0) set(x, y + 5, z, Blocks.LANTERN.defaultBlockState().setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true));
+                    }
+                } else if (z == oz + 30 && ax >= 6) {                                     // the palace fence
+                    set(x, y + 1, z, Blocks.SMOOTH_QUARTZ); set(x, y + 2, z, Blocks.DIORITE_WALL); set(x, y + 3, z, slab(Blocks.SMOOTH_QUARTZ_SLAB, false));
+                    box(x, y + 4, z, x, y + 6, z, Blocks.BIRCH_FENCE);
+                    if ((x & 1) == 0) set(x, y + 7, z, Blocks.END_ROD);
+                    if (ax % 5 == 0) set(x, y + 5, z, Blocks.RED_WOOL);
+                }
+            }
+        }
+        // the Royal crest in the plaza (on the carpet's sides)
+        int cz = oz + 34;
+        for (int x = ox - 4; x <= ox + 4; x++) for (int z = cz - 3; z <= cz + 3; z++) {
+            if (Math.abs(x - ox) <= 2) continue;
+            double d = Math.sqrt((x - ox) * (x - ox) + (z - cz) * (z - cz));
+            if (Math.abs(x - ox) + Math.abs(z - cz) <= 1) set(x, y, z, Blocks.WHITE_CONCRETE);
+            else if (d <= 2.2) set(x, y, z, Blocks.LIGHT_BLUE_CONCRETE);
+            else if (d <= 3.2) set(x, y, z, Blocks.BLUE_TERRACOTTA);
+        }
+        // the palace gate's pillars with their birds, the iron gates open
+        for (int sx : new int[]{-1, 1}) {
+            for (int k = 4; k <= 5; k++) for (int z = oz + 29; z <= oz + 30; z++) {
+                int px = ox + sx * k;
+                set(px, y + 1, z, Blocks.POLISHED_BLACKSTONE); set(px, y + 2, z, Blocks.CHISELED_QUARTZ_BLOCK);
+                box(px, y + 3, z, px, y + 7, z, Blocks.QUARTZ_PILLAR); set(px, y + 8, z, Blocks.CHISELED_QUARTZ_BLOCK);
+            }
+            int bx = ox + sx * 5;
+            set(bx, y + 9, oz + 30, Blocks.CALCITE); set(bx, y + 9, oz + 29, Blocks.CALCITE); set(ox + sx * 4, y + 10, oz + 30, Blocks.CALCITE);
+            set(bx, y + 10, oz + 31, stair(Blocks.QUARTZ_STAIRS, Direction.SOUTH).setValue(StairBlock.HALF, net.minecraft.world.level.block.state.properties.Half.TOP));
+            set(bx, y + 10, oz + 28, stair(Blocks.QUARTZ_STAIRS, Direction.NORTH).setValue(StairBlock.HALF, net.minecraft.world.level.block.state.properties.Half.TOP));
+            set(ox + sx * 4, y + 1, oz + 31, Blocks.SEA_LANTERN);
+            box(ox + sx * 3, y + 1, oz + 28, ox + sx * 3, y + 5, oz + 29, Blocks.IRON_BARS);
+        }
+        // the purple carpet from the city gate, across the plaza, through the palace gate
+        box(ox - 2, y, oz + 29, ox + 2, y, oz + 37, Blocks.PURPLE_CONCRETE);
+        box(ox - 1, y, oz + 29, ox + 1, y, oz + 37, Blocks.PURPLE_WOOL);
     }
 
     private void tower(int cx, int y, int cz, int r, int h) {
