@@ -661,6 +661,8 @@ public class PartyBotEntity extends PathfinderMob {
     /** (Tests) times a bot went in to cover a teammate that was falling back. */
     public static int rescues;
     private long rescueSaid;
+    /** When it last looked for a teammate to cover (the target goal isn't asked every tick, so not "every 10th tick"). */
+    private int rescueLook = -100;
 
     /**
      * A teammate bot falling back badly hurt with something after it: this bot goes for whatever's chasing it - if it's
@@ -668,7 +670,8 @@ public class PartyBotEntity extends PathfinderMob {
      * hits, and isn't hopelessly outmatched).
      */
     LivingEntity rescueTarget() {
-        if (tickCount % 10 != 4 || retreating || downed() || getHealth() < getMaxHealth() * 0.5F || sparring() || journey()) return null;   // (a look twice a second)
+        if (tickCount - rescueLook < 10 || retreating || downed() || getHealth() < getMaxHealth() * 0.5F || sparring() || journey()) return null;   // (a look twice a second)
+        rescueLook = tickCount;
         LivingEntity best = null; double bd = 24 * 24; PartyBotEntity saving = null;
         for (LivingEntity e : com.xenowarriors.party.Bonds.team(this)) {
             if (!(e instanceof PartyBotEntity mate) || mate == this || !mate.retreating || mate.level() != level()) continue;
