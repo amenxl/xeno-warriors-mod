@@ -186,7 +186,34 @@ public final class DmzDragonBalls {
             com.xenowarriors.skill.ServerScheduler.later(20 + k * 14, () -> place(b, o, set, level, at[star - 1], star));
         }
         com.xenowarriors.skill.ServerScheduler.later(20 + 7 * 14 + 20, () -> summon(b, o, set, level, at[6]));
+        for (int t = 0; t <= 20 + 7 * 14 + 40; t += 10) com.xenowarriors.skill.ServerScheduler.later(t, () -> { if (BUSY.containsKey(b.getUUID())) makeRoom(b, level, c); });
         return true;
+    }
+
+    /** How far round the ring's middle the other bots keep clear while the balls go down (and the dragon comes). */
+    static final double ROOM = 4.5;
+    /** (Tests) times a bot was moved out of the way. */
+    public static int madeRoom;
+
+    /**
+     * The other bots step out of the way of the one putting the balls down: any that are inside the ring (or close
+     * round it) walk out past its edge - pushed, if they're right in the middle of it.
+     */
+    public static void makeRoom(PartyBotEntity b, ServerLevel level, BlockPos c) {
+        Vec3 mid = Vec3.atBottomCenterOf(c);
+        for (PartyBotEntity other : level.getEntitiesOfClass(PartyBotEntity.class, new net.minecraft.world.phys.AABB(c).inflate(ROOM + 1, 3, ROOM + 1))) {
+            if (other == b || !other.isAlive() || other.isPassenger()) continue;
+            double dx = other.getX() - mid.x, dz = other.getZ() - mid.z, d = Math.sqrt(dx * dx + dz * dz);
+            other.keepOut = c; other.keepOutUntil = level.getGameTime() + 40;      // (doesn't follow you back in for a bit)
+            if (d >= ROOM) continue;
+            Vec3 dir;
+            if (d < 0.1) { double a = level.getRandom().nextDouble() * Math.PI * 2; dir = new Vec3(Math.cos(a), 0, Math.sin(a)); }
+            else dir = new Vec3(dx / d, 0, dz / d);
+            Vec3 to = mid.add(dir.scale(ROOM + 2));
+            other.getNavigation().moveTo(to.x, other.getY(), to.z, 1.25);
+            if (d < 3) { other.setDeltaMovement(dir.x * 0.4, other.getDeltaMovement().y, dir.z * 0.4); other.hurtMarked = true; }
+            madeRoom++;
+        }
     }
 
     /** (Tests) is this bot in the middle of putting the balls down (so it won't start again)? */

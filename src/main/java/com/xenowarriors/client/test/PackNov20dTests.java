@@ -53,6 +53,24 @@ final class PackNov20dTests {
 
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> { mc.options.hideGui = true; mc.options.setCameraType(CameraType.FIRST_PERSON); PackTests.server(p -> { PackTests.arena(p); PackTests.clear(p); }); }, 30));
+        // ---- a bot putting the Dragon Balls down: the other bots step out of its ring
+        Object[] dbr = new Object[3];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PartyBotEntity a = PartyBots.spawn(p, CharacterType.MIKIKO, null), b = PartyBots.spawn(p, CharacterType.SAM, null);
+            if (a == null || b == null) return;
+            BlockPos c = p.blockPosition().offset(4, 0, 0);
+            a.moveTo(c.getX() + 0.5, p.getY(), c.getZ() + 0.5, 0F, 0F);
+            b.moveTo(c.getX() + 1.5, p.getY(), c.getZ() + 0.5, 0F, 0F);
+            dbr[0] = a; dbr[1] = b; dbr[2] = c;
+            for (int t = 0; t <= 60; t += 10) com.xenowarriors.skill.ServerScheduler.later(t, () -> com.xenowarriors.compat.DmzDragonBalls.makeRoom(a, p.serverLevel(), c));
+        }), 80));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (!(dbr[1] instanceof PartyBotEntity b)) return;
+            BlockPos c = (BlockPos) dbr[2];
+            double d = Math.sqrt(Math.pow(b.getX() - c.getX() - 0.5, 2) + Math.pow(b.getZ() - c.getZ() - 0.5, 2));
+            PackTests.check("dragon balls: the other bots move out of the way of the one putting them down", d >= 4 && com.xenowarriors.compat.DmzDragonBalls.madeRoom > 0, "dist " + PackTests.f((float) d) + " moves " + com.xenowarriors.compat.DmzDragonBalls.madeRoom);
+            PackTests.clear(p);
+        }), 5));
         // ---- Karma potions from enemies, and the Karma Regeneration Potion
         int[] kr = new int[2];
         l.add(new Step(null, () -> PackTests.server(p -> {

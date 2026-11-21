@@ -416,12 +416,18 @@ public class PartyBotEntity extends PathfinderMob {
     }
     public static final double FLIER_LEASH = 16;   // (was 32: winged bots stood 15-28 blocks off and looked like they weren't following)
 
+    /** A spot to keep clear of for a while (a teammate putting the Dragon Balls down there), and till when. */
+    public BlockPos keepOut;
+    public long keepOutUntil;
+    boolean keepingOut() { return keepOut != null && level().getGameTime() < keepOutUntil; }
+
     class FollowOwner extends Goal {
         FollowOwner() { setFlags(EnumSet.of(Flag.MOVE)); }
         @Override public boolean canUse() {
             ServerPlayer o = owner();
             if (o == null || downed() || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || busyElsewhere()) return false;
             if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return false;   // (a story split fight: it holds its side of the bars)
+            if (keepingOut()) return false;                                       // (a teammate's putting the Dragon Balls down: stays out of its ring)
             double l = leash();
             return distanceToSqr(o) > l * l;
         }
@@ -429,6 +435,7 @@ public class PartyBotEntity extends PathfinderMob {
             ServerPlayer o = owner();
             if (o == null || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || busyElsewhere()) return false;
             if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return false;
+            if (keepingOut()) return false;
             double l = leash() > 8 ? 12 : 4;
             return distanceToSqr(o) > l * l || o.level() != level();
         }
@@ -487,6 +494,7 @@ public class PartyBotEntity extends PathfinderMob {
             if (o == null || downed() || getTarget() != null || mineTarget != null || reviving != null || isPassenger() || o.getVehicle() != null) return false;
             if (PartyBots.airborne(o) || o.getAbilities().flying) return false;
             if (com.xenowarriors.story.StoryRun.holdsRoom(PartyBotEntity.this)) return false;
+            if (keepingOut()) return false;
             if (--wanderWait > 0) return false;
             wanderWait = 60 + getRandom().nextInt(140);
             double l = leash();
