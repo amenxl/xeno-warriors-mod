@@ -11,7 +11,8 @@
         {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix", "ultima"], "lines": [
           {"s": "mikiko", "t": "Rhalix, I'll go first!"},
           {"s": "rhalix", "t": "Right behind you!"},
-          {"s": "ultima", "t": "Come on then!"}
+          {"s": "ultima", "t": "Come on then!"},
+          {"s": "ultima", "t": "", "duo": "Oh? {names} brought friends. Two more to break.", "trio": "{names}... three of you? Cute.", "full": "{names}. Four extra targets. Fine by me."}
         ]},
         {"type": "survive", "place": "battlefield", "obj": "Hold out against Ultima - he reads every move", "seconds": 40, "allies": ["mikiko", "rhalix"], "waves": [
           [{"e": "ultima", "boss": true, "name": "Ultima"}]

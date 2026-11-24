@@ -315,7 +315,9 @@ public final class PartyBots {
             if ((t == CharacterType.AIONI && taken.contains("rhalix")) || (t == CharacterType.RHALIX && taken.contains("aioni"))) {
                 p.sendSystemMessage(Component.literal("Ai-oni and Rhalix can never be in the same party.").withStyle(ChatFormatting.RED)); continue; }
             if (com.xenowarriors.character.Seasons.highest(p.server) < t.season()) { p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is Season " + t.season() + " content.").withStyle(ChatFormatting.RED)); continue; }
-            if (!com.xenowarriors.story.Story.botAllowed(p, t)) { p.sendSystemMessage(Component.literal("Story mode: you haven't met " + t.getDisplayName().getString() + " yet.").withStyle(ChatFormatting.RED)); continue; }
+            if (!com.xenowarriors.story.Story.botAllowed(p, t)) {
+                String nm = com.xenowarriors.story.StoryRun.notInMission(p, t);
+                p.sendSystemMessage(Component.literal(nm != null ? "Story mode: " + nm + " - they can't join this mission." : "Story mode: you haven't met " + t.getDisplayName().getString() + " yet.").withStyle(ChatFormatting.RED)); continue; }
             if (p.getPersistentData().getLong(REJOIN + id) > p.level().getGameTime()) {
                 p.sendSystemMessage(Component.literal(t.getDisplayName().getString() + " is still recovering - try again later.").withStyle(ChatFormatting.RED)); continue;
             }
@@ -693,6 +695,28 @@ public final class PartyBots {
         list.add(record);
         persisted.put(STASH, list);
         p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+    }
+
+    /** One bot put away under this key (with its things), to come back with unstash(p, key). */
+    public static void stashOne(ServerPlayer p, PartyBotEntity b, String key) {
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        ListTag list = persisted.getList(key, 10);
+        if (!b.downed()) list.add(b.record());
+        else checkIn(b, p);
+        forgetFake(b.getUUID()); b.discard();
+        persisted.put(key, list);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+    }
+
+    /** Brings back the bots put away under this key. */
+    public static void unstash(ServerPlayer p, String key, String msg) {
+        CompoundTag persisted = p.getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
+        ListTag list = persisted.getList(key, 10);
+        if (list.isEmpty()) return;
+        persisted.remove(key);
+        p.getPersistentData().put(Player.PERSISTED_NBT_TAG, persisted);
+        for (int i = 0; i < list.size(); i++) spawn(p, com.xenowarriors.character.PlayerCharacter.typeOfKey(list.getCompound(i).getString("char")), list.getCompound(i));
+        if (msg != null) p.displayClientMessage(Component.literal(msg).withStyle(ChatFormatting.AQUA), true);
     }
 
     public static void unstash(ServerPlayer p) {

@@ -82,6 +82,9 @@ public final class StoryRun {
         /** The lines last shown (to show the host again if they closed them). */
         CompoundTag last;
 
+        /** The party's been named at a scene already (once a mission). */
+        boolean greeted;
+
         Run(UUID host, String path, StoryDefs.Mission m, int slot, boolean hub) { this.host = host; this.path = path; this.mission = m; this.slot = slot; this.hub = hub; }
 
         StoryDefs.Step cur() { return mission == null || step < 0 || step >= mission.steps().size() ? null : mission.steps().get(step); }
@@ -135,6 +138,84 @@ public final class StoryRun {
         return i;
     }
 
+    // ------------------------------------------------------------------ who belongs in a mission
+
+    private static final Map<StoryDefs.Mission, Set<String>> CASTS = new java.util.IdentityHashMap<>();
+    /** Bots put away for a mission they don't belong in (back when it's over). */
+    static final String STASH = "xw_story_stash";
+
+    /** The characters in this mission: its people, allies and speakers (bodies and souls). */
+    static Set<String> cast(StoryDefs.Mission m) {
+        return CASTS.computeIfAbsent(m, mm -> {
+            Set<String> out = new HashSet<>();
+            java.util.function.Consumer<String> add = tok -> {
+                if (tok == null) return;
+                String t = tok.startsWith("npc:") ? null : tok;
+                if (t == null) return;
+                for (String id : new String[]{bodyOf(t), soulOf(t)}) if (CharacterType.byId(id) != CharacterType.NONE) out.add(id);
+            };
+            for (StoryDefs.Step st : mm.steps()) {
+                st.npcs().forEach(add); st.allies().forEach(add); st.meet().forEach(add);
+                for (StoryDefs.Line l : st.lines()) { add.accept(l.s()); for (StoryDefs.Choice c : l.choice()) for (StoryDefs.Line r : c.reply()) add.accept(r.s()); }
+                for (StoryDefs.Line l : st.escapeLines()) add.accept(l.s());
+            }
+            out.remove(CharacterType.YOU.getId());
+            return out;
+        });
+    }
+
+    /** Can this character be on your side in this run's mission? Your own characters always; the story's people only if they're in it. */
+    static boolean allowed(Run r, CharacterType t) {
+        if (r == null || r.hub || r.mission == null || t == null || t == CharacterType.YOU || t == CharacterType.NONE) return true;
+        return cast(r.mission).contains(t.getId());
+    }
+
+    /** (Story.lockReason, bots) why this character can't join the mission you're on now, or null. */
+    public static String notInMission(Player p, CharacterType t) {
+        Run r = runOf(p);
+        if (r == null || allowed(r, t)) return null;
+        return t.getDisplayName().getString() + " isn't in \"" + r.mission.title() + "\"";
+    }
+
+    /** The party's bots that don't belong in this mission wait at home till it's over. */
+    private static void sendAwayBots(Run r, ServerPlayer p) {
+        for (PartyBotEntity b : new ArrayList<>(com.xenowarriors.bot.PartyBots.bots(p))) {
+            if (b.getTags().contains(BOT_TAG) || allowed(r, b.character())) continue;
+            String name = b.character().getDisplayName().getString();
+            com.xenowarriors.bot.PartyBots.stashOne(p, b, STASH);
+            p.sendSystemMessage(Component.literal(name + " waits at home - they aren't in \"" + r.mission.title() + "\". They're back when it's over.").withStyle(ChatFormatting.GRAY));
+            sentAway++;
+        }
+    }
+
+    /** (Tests) the cast of a storyline's mission. */
+    public static Set<String> castForTest(String path, int mission) { StoryDefs.Path pd = StoryDefs.path(path); return pd == null ? Set.of() : cast(pd.missions().get(mission)); }
+
+    /** (Tests) a line as a party of this size sees it, with these names. */
+    public static String textForTest(String path, int mission, String speaker, String startsWith, int size, String names) {
+        StoryDefs.Path pd = StoryDefs.path(path);
+        if (pd == null) return null;
+        for (StoryDefs.Step st : pd.missions().get(mission).steps()) for (StoryDefs.Line l : st.lines())
+            if (speaker.equals(l.s()) && l.t() != null && l.t().startsWith(startsWith)) return lineTag(l, size, false, names, names).getString("t");
+        return null;
+    }
+
+    /** (Tests) bots sent home for a mission they're not in. */
+    public static int sentAway;
+
+    private static final String[][] PARTY_LINES = {
+        {"{names} head in together - the two of them, side by side.", "Two of them this time: {names}.", "{names} - a duo. Whatever's waiting, it has to face both of them."},
+        {"Three of them: {names}.", "{names} - a team of three, heading in.", "Three sets of footsteps: {names}."},
+        {"All four of them - {names}.", "A full squad: {names}.", "{names}. Four strong, and ready."}};
+
+    /** The narrator naming the party at the start of a mission (different for two, three and four). */
+    static StoryDefs.Line partyLine(Run r) {
+        int k = r.mission == null ? 0 : Math.floorMod(r.mission.id().hashCode(), 3);
+        Map<String, String> v = new HashMap<>();
+        v.put("duo", PARTY_LINES[0][k]); v.put("trio", PARTY_LINES[1][k]); v.put("full", PARTY_LINES[2][k]);
+        return new StoryDefs.Line("narrator", null, "", v, null, null, List.of());
+    }
+
     /** Who comes along: the host and their party members who are online and free. */
     private static List<ServerPlayer> party(ServerPlayer host) {
         List<ServerPlayer> l = new ArrayList<>();
@@ -177,11 +258,23 @@ public final class StoryRun {
             return;
         }
         Run r = new Run(host.getUUID(), Story.current(host), m, freeSlot(), false);
+        CharacterType ht = com.xenowarriors.character.ModCapabilities.getType(host);
+        if (!allowed(r, ht)) {
+            host.displayClientMessage(Component.literal(ht.getDisplayName().getString() + " isn't in \"" + m.title() + "\" - play your own character (or someone who's in it) to start it").withStyle(ChatFormatting.RED), false);
+            return;
+        }
         r.sky = com.xenowarriors.character.Race.of(host).skylanderKind();
         r.diff = Story.difficulty(host);
         enter(host, r);
         for (ServerPlayer p : party(host)) {
             if (p == host) continue;
+            CharacterType pt = com.xenowarriors.character.ModCapabilities.getType(p);
+            if (!allowed(r, pt)) {                                                 // (playing someone who isn't in this mission: not brought along)
+                p.sendSystemMessage(Component.literal(host.getGameProfile().getName() + " started \"" + m.title() + "\" - but " + pt.getDisplayName().getString()
+                        + " isn't in it. Switch to your own character and ask them to start it again to come along.").withStyle(ChatFormatting.GOLD));
+                host.sendSystemMessage(Component.literal(p.getGameProfile().getName() + " is playing " + pt.getDisplayName().getString() + ", who isn't in this mission - they stay behind.").withStyle(ChatFormatting.GOLD));
+                continue;
+            }
             enter(p, r);
             p.sendSystemMessage(Component.literal(host.getGameProfile().getName() + " started \"" + m.title() + "\" - you're in their story.").withStyle(ChatFormatting.AQUA));
         }
@@ -271,6 +364,7 @@ public final class StoryRun {
     }
 
     private static void enter(ServerPlayer p, Run r) {
+        if (!r.hub && r.mission != null) sendAwayBots(r, p);
         r.members.add(p.getUUID());
         MEMBER.put(p.getUUID(), r.host);
         CompoundTag b = new CompoundTag();
@@ -346,7 +440,10 @@ public final class StoryRun {
                 for (String c : st.npcs()) if (c.startsWith("npc:") || CharacterType.byId(bodyOf(c)) != CharacterType.NONE) who.add(c);
                 clearNpcs(s, r);                            // (this scene's people only)
                 spawnNpcs(s, r, who);
-                dialogue(s, r, filter(s, r, st.lines()), "step");
+                List<StoryDefs.Line> lines = new ArrayList<>();
+                if (!r.greeted && r.size() > 1) { r.greeted = true; lines.add(partyLine(r)); }   // (a party: who's here, by name, at the mission's first scene)
+                lines.addAll(st.lines());
+                dialogue(s, r, filter(s, r, lines), "step");
             }
         }
         for (ServerPlayer p : players(s, r)) Story.sync(p);
@@ -355,6 +452,7 @@ public final class StoryRun {
     private static List<StoryDefs.Line> filter(MinecraftServer s, Run r, List<StoryDefs.Line> in) {
         List<StoryDefs.Line> out = new ArrayList<>();
         for (StoryDefs.Line l : in) {
+            if (l.choice().isEmpty() && l.text(r.size(), r.sky).isEmpty()) continue;     // (a line only for parties - or only for playing alone)
             if (l.ifFlag() != null && !ok(r, s, l.ifFlag())) continue;
             if (l.unlessFlag() != null && ok(r, s, l.unlessFlag())) continue;
             out.add(l);
@@ -389,18 +487,44 @@ public final class StoryRun {
     static CompoundTag lineTag(MinecraftServer s, Run r, List<StoryDefs.Line> chunk) {
         CompoundTag t = new CompoundTag();
         ListTag ls = new ListTag();
-        ServerPlayer h = s.getPlayerList().getPlayer(r.host);
-        String you = r.size() > 1 ? "you all" : h == null ? "you" : com.xenowarriors.you.You.name(h);
-        for (StoryDefs.Line l : chunk) ls.add(lineTag(l, r.size(), r.sky, you));
+        String names = names(s, r);
+        String you = r.size() > 1 ? names : names.isEmpty() ? "you" : names;
+        for (StoryDefs.Line l : chunk) ls.add(lineTag(l, r.size(), r.sky, you, names));
         t.put("lines", ls);
         return t;
     }
 
-    static CompoundTag lineTag(StoryDefs.Line l, int size, boolean sky, String you) {
+    /** What the story calls one of its players: their own character's name (a You), else their player name. */
+    static String nameOf(ServerPlayer p) {
+        return com.xenowarriors.character.ModCapabilities.getType(p) == CharacterType.YOU ? com.xenowarriors.you.You.name(p) : p.getGameProfile().getName();
+    }
+
+    /** Everyone on the mission by name, the host first: "Ana", "Ana and Ben", "Ana, Ben and Cal". */
+    static String names(MinecraftServer s, Run r) {
+        List<String> n = new ArrayList<>();
+        ServerPlayer h = s.getPlayerList().getPlayer(r.host);
+        if (h != null) n.add(nameOf(h));
+        for (ServerPlayer p : players(s, r)) if (!p.getUUID().equals(r.host)) n.add(nameOf(p));
+        return join(n);
+    }
+
+    static String join(List<String> n) {
+        if (n.isEmpty()) return "";
+        if (n.size() == 1) return n.get(0);
+        return String.join(", ", n.subList(0, n.size() - 1)) + " and " + n.get(n.size() - 1);
+    }
+
+    private static final String[] COUNT = {"", "one", "two", "three", "four"};
+
+    static CompoundTag lineTag(StoryDefs.Line l, int size, boolean sky, String you) { return lineTag(l, size, sky, you, you); }
+
+    /** A line as the clients show it: {you} / {You} (your name - everyone's in a party), {names} (everyone's), {count} ("two", "three"...). */
+    static CompoundTag lineTag(StoryDefs.Line l, int size, boolean sky, String you, String names) {
         CompoundTag c = new CompoundTag();
         c.putString("s", l.s() == null ? "narrator" : l.s());
         if (l.n() != null) c.putString("n", l.n());
-        String text = l.text(size, sky).replace("{you}", you).replace("{You}", you.isEmpty() ? you : Character.toUpperCase(you.charAt(0)) + you.substring(1));
+        String text = l.text(size, sky).replace("{you}", you).replace("{You}", you.isEmpty() ? you : Character.toUpperCase(you.charAt(0)) + you.substring(1))
+                .replace("{names}", names).replace("{count}", COUNT[Math.max(0, Math.min(4, size))]);
         c.putString("t", text);
         if (!l.choice().isEmpty()) {
             ListTag ch = new ListTag();
@@ -821,6 +945,7 @@ public final class StoryRun {
     private static CompoundTag closeTag() { CompoundTag t = new CompoundTag(); t.putBoolean("close", true); return t; }
 
     static void sendHome(ServerPlayer p) {
+        com.xenowarriors.skill.ServerScheduler.later(10, () -> { if (!p.hasDisconnected() && !inRun(p)) com.xenowarriors.bot.PartyBots.unstash(p, STASH, "Your bot teammates are back."); });
         CompoundTag b = p.getPersistentData().getCompound(BACK);
         p.getPersistentData().remove(BACK);
         ServerLevel dest = null;
@@ -834,6 +959,7 @@ public final class StoryRun {
     }
 
     public static void onLogin(ServerPlayer p) {
+        if (!inRun(p)) com.xenowarriors.skill.ServerScheduler.later(20, () -> { if (!p.hasDisconnected() && !inRun(p)) com.xenowarriors.bot.PartyBots.unstash(p, STASH, "Your bot teammates are back."); });
         if (!inRun(p) && p.getPersistentData().contains(BACK)) {
             com.xenowarriors.skill.ServerScheduler.later(5, () -> { if (!p.hasDisconnected() && !inRun(p)) sendHome(p); });
         }
@@ -853,7 +979,8 @@ public final class StoryRun {
             for (UUID id : new ArrayList<>(r.members)) {
                 ServerPlayer p = s.getPlayerList().getPlayer(id);
                 if (p == null || !StoryScenes.inArea(p)) {
-                    if (p != null && r.place != null && r.now % 20 == 0) { r.members.remove(id); MEMBER.remove(id); p.getPersistentData().remove(BACK); Story.sync(p); }
+                    if (p != null && r.place != null && r.now % 20 == 0) { r.members.remove(id); MEMBER.remove(id); p.getPersistentData().remove(BACK); Story.sync(p);
+                        com.xenowarriors.bot.PartyBots.unstash(p, STASH, "Your bot teammates are back."); }
                     else if (p == null) { r.members.remove(id); MEMBER.remove(id); }
                     continue;
                 }

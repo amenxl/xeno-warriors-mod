@@ -11,14 +11,14 @@
       "steps": [
         {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "logan", "keita", "kill", "ava", "persephone"], "meet": ["senju", "logan", "keita", "kill", "ava", "persephone"], "lines": [
           {"s": "narrator", "t": "The Sky Rebellion's hideout. Fallen Skylanders, banished by the Royals - and one newcomer."},
-          {"s": "senju", "n": "SR Leader", "t": "This one joins us. Don't question it.", "group": "These ones join us. Don't question it."},
+          {"s": "senju", "n": "SR Leader", "t": "This one joins us. Don't question it.", "group": "These ones join us. Don't question it.", "duo": "These two join us - {names}. Don't question it.", "trio": "These three join us - {names}. Don't question it.", "full": "These four join us. {names}. Don't question it."},
           {"s": "logan", "t": "A new fallen one? Good. More hands for the Capital.", "ground": "...Not even a Skylander. Why is the leader letting them in?"},
           {"s": "keita", "t": "Hm? New guy? ...zzz.", "ground": "Father's letting a human join? ...Weird. Whatever. ...zzz."},
           {"s": "kill", "n": "???", "t": "Don't get comfortable. You're the weakest one here now. Not me.", "ground": "A human? Father must see something in you. I don't."},
           {"s": "ava", "t": "(Happy) Ooh, are they bringing us a vessel? Persephone and I have been waiting forever!"},
           {"s": "persephone", "t": "Me first, Ava. ...Hi, new person. Be nice to us demons, okay?"},
           {"s": "you", "t": "...Okay."},
-          {"s": "senju", "n": "SR Leader", "t": "Logan. Keita. Take the newcomer to the Capital. We finish taking it today.", "group": "Logan. Keita. Take the newcomers to the Capital. We finish taking it today."}
+          {"s": "senju", "n": "SR Leader", "t": "Logan. Keita. Take the newcomer to the Capital. We finish taking it today.", "group": "Logan. Keita. Take the newcomers to the Capital. We finish taking it today.", "duo": "Logan. Keita. Take {names} to the Capital. We finish taking it today.", "trio": "Logan. Keita. Take {names} to the Capital. We finish it today.", "full": "Logan. Keita. Take all four - {names} - to the Capital."}
         ]}
       ],
       "reward": {"money": 150, "bond": {"logan": 5, "keita": 5, "kill": 5, "ava": 5, "persephone": 5}}
@@ -39,7 +39,7 @@
         {"type": "scene", "place": "royal_capital", "npcs": ["logan", "keita"], "lines": [
           {"s": "logan", "t": "(Confident) Full control of the Royal Capital. Keita, you can thank me."},
           {"s": "keita", "t": "I helped from the other side of the Capital."},
-          {"s": "logan", "t": "You were SLEEPING the whole time! {You} did more than you.", "group": "You were SLEEPING the whole time! The new ones did more than you."},
+          {"s": "logan", "t": "You were SLEEPING the whole time! {You} did more than you.", "group": "You were SLEEPING the whole time! The new ones did more than you.", "duo": "You were SLEEPING the whole time! {names} did more than you.", "trio": "You were SLEEPING the whole time! {names} did more than you!", "full": "You were SLEEPING! {names} - all four of them did more than you."},
           {"s": "you", "t": "...He snores."},
           {"s": "keita", "t": "Hehe. I like this one."}
         ]}
@@ -92,7 +92,7 @@
       "steps": [
         {"type": "scene", "place": "sr_hideout", "npcs": ["senju", "logan", "keita", "kill", "lexy:persephone"], "lines": [
           {"s": "senju", "n": "Senju", "t": "We partnered with the Government long enough. They sold us out the day they armed Aurora."},
-          {"s": "senju", "n": "Senju", "t": "The newcomer leads the first strike. Prove me right.", "group": "The newcomers lead the first strike. Prove me right."},
+          {"s": "senju", "n": "Senju", "t": "The newcomer leads the first strike. Prove me right.", "group": "The newcomers lead the first strike. Prove me right.", "duo": "{names} lead the first strike. Prove me right.", "trio": "{names} lead the first strike. Prove me right, all three of you.", "full": "{names}. The four of you lead the first strike. Prove me right."},
           {"s": "keita", "t": "Father never says that. ...Don't mess it up.", "ground": "Father trusts a human with this? ...Okay. Don't mess it up."}
         ]},
         {"type": "fight", "place": "gov_facility", "obj": "Strike the Government facility", "allies": ["logan", "keita", "lexy:persephone"], "waves": [

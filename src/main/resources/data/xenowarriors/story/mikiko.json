@@ -11,7 +11,7 @@
       "steps": [
         {"type": "scene", "place": "train_station", "npcs": ["mikiko", "zane"], "meet": ["mikiko", "zane"], "lines": [
           {"s": "narrator", "t": "Year 100. Mikiko's second day in the new world. He's looking for farm workers."},
-          {"s": "mikiko", "t": "Hey! I'm Mikiko. You looking for a job? Good old farm work - cutting grass, selling fruit.", "group": "Hey! I'm Mikiko. Y'all looking for work? Good old farm work - cutting grass, selling fruit."},
+          {"s": "mikiko", "t": "Hey! I'm Mikiko. You looking for a job? Good old farm work - cutting grass, selling fruit.", "group": "Hey! I'm Mikiko. Y'all looking for work? Good old farm work - cutting grass, selling fruit.", "duo": "Hey! I'm Mikiko. {names}, right? You two looking for work? Farm work - cutting grass, selling fruit.", "trio": "Hey! I'm Mikiko. Three of you? {names}... Looking for farm work?", "full": "Hey! I'm Mikiko. Whoa, four of you - {names}. Looking for farm work?"},
           {"s": "you", "t": "...Sure."},
           {"s": "zane", "t": "And me! Zane the Magical Mage! I need money to harness my magical power!"},
           {"s": "mikiko", "t": "Magic, huh? Where I'm from we call that Karma. Watch - fire!"},
@@ -19,12 +19,12 @@
           {"s": "mikiko", "t": "Interview's tomorrow, 12:00 at the farm. See y'all there."}
         ]},
         {"type": "scene", "place": "farm", "npcs": ["mikiko", "zane", "fox_girl"], "lines": [
-          {"s": "fox_girl", "n": "Kitsune", "t": "Welcome. I'm Kitsune. Next - you. State what you can do.", "group": "Welcome. I'm Kitsune. You lot - state what you can do."},
+          {"s": "fox_girl", "n": "Kitsune", "t": "Welcome. I'm Kitsune. Next - you. State what you can do.", "group": "Welcome. I'm Kitsune. You lot - state what you can do.", "duo": "Welcome. I'm Kitsune. {names} - state what you can do.", "trio": "Welcome. I'm Kitsune. {names}. One at a time - state what you can do.", "full": "Welcome. I'm Kitsune. {names}... four of you. State what you can do."},
           {"s": "you", "t": "...I can fight."},
           {"s": "fox_girl", "n": "Kitsune", "t": "(Hm. Decent Karma.) Good. The land has gangs and wild animals on it.", "sky": "(A Skylander? Strong Karma.) Good. The land has gangs and wild animals on it."},
           {"s": "zane", "t": "Behold my spell!"},
-          {"s": "fox_girl", "n": "Kitsune", "t": "That's cute. Incomplete, but cute. You're both hired.", "group": "That's cute. Incomplete, but cute. You're all hired."},
-          {"s": "mikiko", "t": "Fox Gi- I mean Kitsune hired another worker? Nice. Welcome to the farm!", "group": "Fox Gi- I mean Kitsune hired more workers? Nice. Welcome to the farm!"},
+          {"s": "fox_girl", "n": "Kitsune", "t": "That's cute. Incomplete, but cute. You're both hired.", "group": "That's cute. Incomplete, but cute. You're all hired.", "duo": "That's cute. Incomplete, but cute. {names} - you're both hired.", "trio": "That's cute. Incomplete, but cute. {names}, you're all three hired.", "full": "That's cute. Incomplete, but cute. {names} - all four, hired."},
+          {"s": "mikiko", "t": "Fox Gi- I mean Kitsune hired another worker? Nice. Welcome to the farm!", "group": "Fox Gi- I mean Kitsune hired more workers? Nice. Welcome to the farm!", "duo": "Fox Gi- I mean Kitsune hired two more? {names}! Welcome to the farm!", "trio": "Fox Gi- I mean Kitsune hired three? {names}! Welcome to the farm!", "full": "Fox Gi- I mean Kitsune hired FOUR? {names}! Welcome to the farm!"},
           {"s": "fox_girl", "n": "Kitsune", "t": "First job: clear the freeloaders off my land. Call it training."}
         ]},
         {"type": "fight", "place": "farm", "obj": "Clear the gangs and wild animals off the farmland", "allies": ["mikiko", "zane"], "waves": [
@@ -47,7 +47,7 @@
           {"s": "mikiko", "t": "Wait... what?!"},
           {"s": "zane", "t": "You're on our farmland! I challenge you - if I lose I'll never rap again! I'm Zane the mythical and magical creature, I'm the one who's going to beat ya."},
           {"s": "garry", "t": "Who let him cook! ...You lost, mage."},
-          {"s": "zane", "t": "My rap career is over. {You}, it's up to you!", "group": "My rap career is over. Somebody - it's up to you!"},
+          {"s": "zane", "t": "My rap career is over. {You}, it's up to you!", "group": "My rap career is over. Somebody - it's up to you!", "duo": "My rap career is over. {names} - it's up to you two!", "trio": "My rap career is over. {names} - it's up to you three!", "full": "My rap career is over. {names} - it's on all four of you!"},
           {"s": "stevie", "t": "Alright new kid. I'm Purple Stevie and you best believe me, I'll win this rap today - go!"},
           {"s": "you", "t": "...", "choice": [
             {"text": "\"Your bars are borrowed, your brother wrote 'em first.\"", "set": "rap_good", "reply": [{"s": "garry", "t": "SHIIIT! He's not wrong, Stevie!"}]},
@@ -66,7 +66,7 @@
       "desc": "Kitsune's Farm Store opens. Everyone and their mama shows up - and so do the pests.",
       "steps": [
         {"type": "scene", "place": "farm", "npcs": ["mikiko", "zane", "fox_girl"], "lines": [
-          {"s": "fox_girl", "n": "Kitsune", "t": "MIKIKO! Restock! {You}, the fields - something's eating my crops!", "group": "MIKIKO! Restock! You all, the fields - something's eating my crops!"},
+          {"s": "fox_girl", "n": "Kitsune", "t": "MIKIKO! Restock! {You}, the fields - something's eating my crops!", "group": "MIKIKO! Restock! You all, the fields - something's eating my crops!", "duo": "MIKIKO! Restock! {names}, the fields - something's eating my crops!", "trio": "MIKIKO! Restock! {names} - fields, now! Something's eating my crops!", "full": "MIKIKO! Restock! {names} - all four of you, the fields!"},
           {"s": "you", "t": "On it."}
         ]},
         {"type": "fight", "place": "farm", "obj": "Drive the pests out of the fields", "allies": ["zane"], "waves": [
@@ -106,7 +106,7 @@
           {"s": "henery", "n": "Henery", "t": "I came from a sky island. Found this school flying around. I'm a 2nd year!"},
           {"s": "teacher", "n": "Teacher", "t": "Today: Recarnagans and Memory Chasers. Then Elemental Modifications. To finish D rank early - control an element."},
           {"s": "mikiko", "t": "Wait... that's it? Watch this."},
-          {"s": "teacher", "n": "Teacher", "t": "Wow, great job Mikiko. And you, new student - show me.", "group": "Wow, great job Mikiko. And you new students - show me."}
+          {"s": "teacher", "n": "Teacher", "t": "Wow, great job Mikiko. And you, new student - show me.", "group": "Wow, great job Mikiko. And you new students - show me.", "duo": "Wow, great job Mikiko. {names}, you two next - show me.", "trio": "Wow, great job Mikiko. {names} - show me, one by one.", "full": "Wow, great job Mikiko. Four new students - {names}. Show me."}
         ]},
         {"type": "fight", "place": "school", "obj": "Show the teacher your element: break the targets", "waves": [
           [{"e": "dummy", "n": 6}]
@@ -123,7 +123,7 @@
       "desc": "Something real is hiding behind the school's fake ghosts.",
       "steps": [
         {"type": "scene", "place": "school", "npcs": ["zane"], "lines": [
-          {"s": "zane", "t": "The ghosts are fake, to scare people off... but THAT one isn't. {You}, help!", "group": "The ghosts are fake, to scare people off... but THOSE aren't. Help!"}
+          {"s": "zane", "t": "The ghosts are fake, to scare people off... but THAT one isn't. {You}, help!", "group": "The ghosts are fake, to scare people off... but THOSE aren't. Help!", "duo": "The ghosts are fake... but THOSE aren't. {names}, help!", "trio": "The ghosts are fake... but THOSE aren't. {names} - help!", "full": "The ghosts are fake... but THOSE aren't. {names}, all of you - help!"}
         ]},
         {"type": "fight", "place": "school", "obj": "Clear the real threats out of the school", "allies": ["zane"], "waves": [
           [{"e": "elementalist", "n": 3}],
@@ -145,7 +145,7 @@
           {"s": "fox_girl", "n": "Kitsune", "t": "Someone stronger than you and Rhalix broke out of a Government facility. He's coming here."},
           {"s": "fox_girl", "n": "Kitsune", "t": "So... I made you a new Hekublade. Better than the last. Making it took my power - I can't help you fight."},
           {"s": "mikiko", "t": "You could've beaten him THEN made it!"},
-          {"s": "fox_girl", "n": "Kitsune", "t": "...Yeah, I guess. Go find Rhalix. Take our new worker.", "group": "...Yeah, I guess. Go find Rhalix. Take the new workers."},
+          {"s": "fox_girl", "n": "Kitsune", "t": "...Yeah, I guess. Go find Rhalix. Take our new worker.", "group": "...Yeah, I guess. Go find Rhalix. Take the new workers.", "duo": "...Yeah, I guess. Go find Rhalix. Take {names}.", "trio": "...Yeah, I guess. Go find Rhalix. Take {names} with you.", "full": "...Yeah, I guess. Go find Rhalix. Take all four - {names}."},
           {"s": "you", "t": "*grabs gear*"}
         ]},
         {"type": "fight", "place": "village_city", "obj": "The C-Souls are after the Hekublade - fight them off", "allies": ["mikiko"], "waves": [
@@ -155,7 +155,7 @@
         ]},
         {"type": "scene", "place": "village_city", "npcs": ["mikiko", "rhalix"], "meet": ["rhalix"], "lines": [
           {"s": "rhalix", "t": "Don't worry Mikiko, I got your back!"},
-          {"s": "mikiko", "t": "Rhalix! I was waiting for you to jump in! This one works the farm with me.", "group": "Rhalix! I was waiting for you to jump in! These guys work the farm with me."},
+          {"s": "mikiko", "t": "Rhalix! I was waiting for you to jump in! This one works the farm with me.", "group": "Rhalix! I was waiting for you to jump in! These guys work the farm with me.", "duo": "Rhalix! I was waiting for you to jump in! {names} work the farm with me.", "trio": "Rhalix! I was waiting for you to jump in! {names} - they work the farm with me.", "full": "Rhalix! I was waiting for you to jump in! {names} - all four work the farm with me."},
           {"s": "rhalix", "t": "Farm work? Haha. Xeno Warrior reunion battle - winner's leader!"},
           {"s": "narrator", "t": "...and then a Government car pulled up. But that's another story."}
         ]}

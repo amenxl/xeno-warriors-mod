@@ -12,6 +12,7 @@
           {"s": "rhalix", "t": "(whisper) He can track Soul Splitter. Don't waste it."},
           {"s": "mikiko", "t": "It's all or nothing. No retry on the game over screen."},
           {"s": "yuri", "t": "(radio) YOU GUYS GOT THIS!!"},
+          {"s": "yuri", "t": "", "duo": "(radio) {names} - you two got this too!", "trio": "(radio) {names} - all three of you got this!", "full": "(radio) {names}! ALL FOUR OF YOU GOT THIS!!"},
           {"s": "mikiko", "t": "You better get ready for... THE HANDS!!!"}
         ]},
         {"type": "fight", "place": "gov_hall_breach", "obj": "THE HANDS: Mikiko and Rhalix vs Ultima", "allies": ["mikiko", "rhalix"], "waves": [

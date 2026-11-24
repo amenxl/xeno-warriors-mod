@@ -263,6 +263,8 @@ public final class Story {
 
     /** Why this character can't be picked (null: they can). */
     public static String lockReason(Player p, CharacterType t) {
+        String mission = StoryRun.notInMission(p, t);
+        if (mission != null) return "Story mode: " + mission + " - pick your own character or someone who is";
         if (playable(p, t)) return null;
         if (!met(p, t.getId())) return "Story mode: you haven't met " + t.getDisplayName().getString() + " yet";
         return "Story mode: bond " + bond(p, t) + "/" + need(t) + " with " + t.getDisplayName().getString() + " to play them" + (BIG.contains(t) ? " (or finish their storyline)" : "");
@@ -270,6 +272,7 @@ public final class Story {
 
     /** Can they come along as a bot? (story: only once you've met them) */
     public static boolean botAllowed(Player p, CharacterType t) {
+        if (StoryRun.notInMission(p, t) != null) return false;
         if (!active(p) || finished(p) || t == CharacterType.YOU) return true;
         return met(p, t.getId()) || unlocked(p).contains(t.getId());
     }

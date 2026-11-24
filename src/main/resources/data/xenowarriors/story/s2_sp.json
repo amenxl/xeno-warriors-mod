@@ -10,6 +10,7 @@
       "steps": [
         {"type": "scene", "place": "gov_facility", "npcs": ["sam", "max", "npc:hannah"], "lines": [
           {"s": "sam", "t": "Whoa, this place is WAY bigger than our hideout!"},
+          {"s": "sam", "t": "", "duo": "{names}, you seeing this?!", "trio": "{names} - y'all seeing this?!", "full": "{names}! All four of you, look at this place!"},
           {"s": "max", "t": "When I worked here we didn't get anything. Who's funding you?"},
           {"s": "hannah", "n": "Gov Girl", "t": "The Sky Rebellion. Without them we couldn't do any of this."},
           {"s": "max", "t": "Shameful."}

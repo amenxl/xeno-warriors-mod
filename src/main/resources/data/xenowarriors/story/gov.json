@@ -11,7 +11,7 @@
       "steps": [
         {"type": "scene", "place": "gov_facility", "npcs": ["max", "technica", "kyle"], "meet": ["max", "technica", "kyle"], "skyBond": {"kyle": 20}, "lines": [
           {"s": "narrator", "t": "Year 95. Five years ago, at a Government facility in the city of Aurora."},
-          {"s": "technica", "t": "Sintrie! Get up! The new hire's here and you're asleep again.", "group": "Sintrie! Get up! The new hires are here and you're asleep again."},
+          {"s": "technica", "t": "Sintrie! Get up! The new hire's here and you're asleep again.", "group": "Sintrie! Get up! The new hires are here and you're asleep again.", "duo": "Sintrie! Get up! {names} are here - two new hires - and you're asleep again.", "trio": "Sintrie! Get up! Three new hires - {names} - and you're asleep again.", "full": "Sintrie! FOUR new hires - {names} - and you're asleep again!"},
           {"s": "max", "n": "Sintrie", "t": "Uh? ...Morning, Tech. Welcome to C3. Don't let her steal your stuff.", "sky": "Uh? ...Another Skylander? Huh. Nice not being the only one in this place for once."},
           {"s": "technica", "t": "I'm Technica - Tech. I turn people into demons for a living... and I hate it. We help who we can."},
           {"s": "you", "t": "...Got it."},
@@ -53,7 +53,7 @@
           {"s": "technica", "t": "Five stayed. Ava, Barry, Kaitlyn, Persephone, Zack. Why would anyone stay?"},
           {"s": "max", "n": "Sintrie", "t": "Maybe they've got nothing left out there. You can't help everyone, Tech."},
           {"s": "you", "t": "...You helped forty-five."},
-          {"s": "technica", "t": "(smiles) ...Yeah. I did. Thanks.", "group": "(smiles) ...Yeah. We did. Thanks, all of you."}
+          {"s": "technica", "t": "(smiles) ...Yeah. I did. Thanks.", "group": "(smiles) ...Yeah. We did. Thanks, all of you.", "duo": "(smiles) ...Yeah. We did. Thanks, {names}.", "trio": "(smiles) ...Yeah. We did. Thanks, {names}. All three of you.", "full": "(smiles) ...Yeah. We did. {names} - thanks. All of you."}
         ]}
       ],
       "reward": {"money": 250, "bond": {"technica": 15, "max": 10}}

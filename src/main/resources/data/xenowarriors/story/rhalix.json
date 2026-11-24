@@ -11,7 +11,7 @@
       "steps": [
         {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "lexy", "sam", "max"], "meet": ["rhalix", "lexy", "sam", "max"], "lines": [
           {"s": "narrator", "t": "Year 100. Day two in the new world for Rhalix Murasaki... and for {you}."},
-          {"s": "rhalix", "t": "It's your boy Rhalix! Team, say hi - I found someone else to join us.", "group": "It's your boy Rhalix! Team, say hi - I found a few more people to join us."},
+          {"s": "rhalix", "t": "It's your boy Rhalix! Team, say hi - I found someone else to join us.", "group": "It's your boy Rhalix! Team, say hi - I found a few more people to join us.", "duo": "It's your boy Rhalix! Team, say hi - this is {names}. They're joining us.", "trio": "It's your boy Rhalix! Team, say hi - {names}. Three new faces!", "full": "It's your boy Rhalix! Team, say hi - {names}. Four new members!"},
           {"s": "lexy", "t": "(Happy) Captain's back! And... hi.", "sky": "(Happy) Captain's back! Oh - you've got wings too!"},
           {"s": "sam", "t": "Yo! Another fighter? Can you beat some heads?", "sky": "Yo! Another Skylander! Finally, the numbers are on our side.", "ground": "Yo! A human helping Skylanders? That's cool, for real."},
           {"s": "max", "t": "Can y'all hop off the captain for five seconds. (cough) Welcome. Don't touch my cigarettes.", "sky": "(cough) Another Skylander. Welcome. Wings in when we're out in town, got it?", "ground": "(cough) Welcome. Not a lot of humans stick their neck out for us. Means something."},
@@ -21,7 +21,7 @@
           {"s": "rhalix", "t": "Close. The Sky Patrol. We patrol our kind and stop the Sky Haters.", "ground": "Close. The Sky Patrol. We keep Skylanders safe from the Sky Haters - and you're part of that now."},
           {"s": "lexy", "t": "(Worried) Guys! I think there's a Skylander being attacked down there!"},
           {"s": "sam", "t": "Oh snap, let's get it!"},
-          {"s": "rhalix", "t": "Y'all can handle that one. I've got research to do. {You}, go with them.", "group": "Y'all can handle that one. I've got research to do. Go with them."}
+          {"s": "rhalix", "t": "Y'all can handle that one. I've got research to do. {You}, go with them.", "group": "Y'all can handle that one. I've got research to do. Go with them.", "duo": "Y'all can handle that one. I've got research to do. {names}, go with them.", "trio": "Y'all can handle that one. I've got research to do. {names} - go with them.", "full": "Y'all can handle that one. Research. {names} - all four of you, go with them."}
         ]},
         {"type": "fight", "place": "aurora_street", "obj": "Save the Skylander from the Sky Haters", "allies": ["sam", "lexy", "max"], "waves": [
           [{"e": "sky_hater", "n": 4}],
@@ -95,7 +95,7 @@
       "steps": [
         {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "sam", "max"], "lines": [
           {"s": "sam", "t": "Max, got anything on Lexy yet? It's been two weeks!"},
-          {"s": "rhalix", "t": "Don't rush him. You, Sam and {you} - training. Now.", "group": "Don't rush him. Sam, and all of you - training. Now."},
+          {"s": "rhalix", "t": "Don't rush him. You, Sam and {you} - training. Now.", "group": "Don't rush him. Sam, and all of you - training. Now.", "duo": "Don't rush him. Sam, {names} - training. Now.", "trio": "Don't rush him. Sam, {names} - training. Now.", "full": "Don't rush him. Sam, {names} - all of you, training. Now."},
           {"s": "rhalix", "t": "Karma isn't just for hitting. Feel it, push it out, control it."}
         ]},
         {"type": "fight", "place": "sky_island", "obj": "Training: knock out the sparring targets", "allies": ["sam"], "waves": [
@@ -104,7 +104,7 @@
         ]},
         {"type": "scene", "place": "sky_island", "npcs": ["rhalix", "sam"], "lines": [
           {"s": "sam", "t": "Haha! I'm gonna be vice captain first, watch."},
-          {"s": "rhalix", "t": "You're on a good track. Both of you.", "group": "You're on a good track. All of you."},
+          {"s": "rhalix", "t": "You're on a good track. Both of you.", "group": "You're on a good track. All of you.", "duo": "You're on a good track. Both of you, {names}.", "trio": "You're on a good track. {names} - all three.", "full": "You're on a good track. {names}. All four."},
           {"s": "max", "t": "(radio) Got her location! ...Some place called Aurora."}
         ]}
       ],
@@ -171,7 +171,7 @@
           {"s": "max", "t": "Kyrie! Wake up, we're here to take you back."},
           {"s": "kyrie:ava", "n": "Kyrie (Ava)", "t": "The Skylander Kyrie is long gone. And you, Max - traitors to the SR die."},
           {"s": "max", "t": "I was going to join the Rebellion... then I realized I couldn't betray my team."},
-          {"s": "sam", "t": "Max?! ...Fine. Vice captain, let's save Kyrie!", "group": "Max?! ...Fine. Everybody - let's save Kyrie!"}
+          {"s": "sam", "t": "Max?! ...Fine. Vice captain, let's save Kyrie!", "group": "Max?! ...Fine. Everybody - let's save Kyrie!", "duo": "Max?! ...Fine. {names} - let's save Kyrie!", "trio": "Max?! ...Fine. {names}, let's save Kyrie!", "full": "Max?! ...Fine. {names} - everybody, let's save Kyrie!"}
         ]},
         {"type": "fight", "place": "palace_balcony", "obj": "Stop Kyrie (Ava) without hurting Kyrie too much", "allies": ["sam", "rhalix"], "waves": [
           [{"e": "sr", "n": 3}],
@@ -226,7 +226,7 @@
         {"type": "scene", "place": "sp_hideout", "npcs": ["rhalix", "sam", "max"], "lines": [
           {"s": "narrator", "t": "T.V. Man: The weapon is making its way to the Mountain Village. Run as soon as you can!"},
           {"s": "rhalix", "t": "The Mountain Village... that's where Mikiko lives!"},
-          {"s": "max", "t": "We've got the new hideout handled. Go. Take {you}.", "group": "We've got the new hideout handled. Go. Take them with you."}
+          {"s": "max", "t": "We've got the new hideout handled. Go. Take {you}.", "group": "We've got the new hideout handled. Go. Take them with you.", "duo": "We've got the new hideout handled. Go. Take {names}.", "trio": "We've got the new hideout handled. Go. Take {names} with you.", "full": "We've got the new hideout handled. Go - take all four. {names}."}
         ]},
         {"type": "fight", "place": "village_city", "obj": "Help Mikiko against the Corrupted Souls", "allies": ["rhalix", "mikiko"], "waves": [
           [{"e": "corrupted_soul", "n": 5}],
@@ -236,7 +236,7 @@
         {"type": "scene", "place": "village_city", "npcs": ["rhalix", "mikiko"], "meet": ["mikiko"], "lines": [
           {"s": "rhalix", "t": "Don't worry Mikiko, I got your back!"},
           {"s": "mikiko", "t": "I was waiting for you to jump in! ...Who's this?"},
-          {"s": "rhalix", "t": "Sky Patrol's newest. They've been holding it down.", "group": "Sky Patrol's newest. All of them. They've been holding it down."},
+          {"s": "rhalix", "t": "Sky Patrol's newest. They've been holding it down.", "group": "Sky Patrol's newest. All of them. They've been holding it down.", "duo": "Sky Patrol's newest - {names}. They've been holding it down.", "trio": "Sky Patrol's newest - {names}. All three have been holding it down.", "full": "Sky Patrol's newest - {names}. Four of them, holding it down."},
           {"s": "mikiko", "t": "Nice. Any friend of Rhalix. Now - Xeno Warrior reunion battle?"},
           {"s": "rhalix", "t": "Winner's the leader."},
           {"s": "narrator", "t": "...and then a Government car pulled up. But that's another story."}

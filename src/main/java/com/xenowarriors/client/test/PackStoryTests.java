@@ -145,6 +145,21 @@ final class PackStoryTests {
             Story.pick(p, "s2_xeno");
             HITS[0] = 0;
         }), 10));
+        // story parties: lines naming everyone, and teammates who aren't in the mission wait at home
+        Object[] tb = new Object[3];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            String duo = StoryRun.textForTest("rhalix", 0, "rhalix", "It's your boy", 2, "Ana and Ben");
+            String full = StoryRun.textForTest("rhalix", 0, "rhalix", "It's your boy", 4, "Ana, Ben, Cal and Dee");
+            String solo = StoryRun.textForTest("rhalix", 0, "rhalix", "It's your boy", 1, "Ana");
+            PackTests.check("story party: lines name everyone, different for two and four", duo != null && duo.contains("Ana and Ben") && full != null && full.contains("Ana, Ben, Cal and Dee") && !duo.equals(full) && solo != null && !solo.contains("Ana and"),
+                    duo + " | " + full + " | " + solo);
+            java.util.Set<String> c1 = StoryRun.castForTest("rhalix", 0), cx = StoryRun.castForTest("s2_xeno", 0);
+            PackTests.check("story party: Mikiko isn't in Rhalix's first mission, Rhalix and Mikiko are in The Ultimate Weapon", !c1.contains("mikiko") && c1.contains("sam") && cx.contains("mikiko") && cx.contains("rhalix"), c1 + " / " + cx);
+            CharacterType in = CharacterType.MIKIKO, out = CharacterType.GARRY;
+            if (cx.contains(out.getId())) out = CharacterType.ZANE;
+            tb[0] = com.xenowarriors.bot.PartyBots.spawn(p, in, null); tb[1] = com.xenowarriors.bot.PartyBots.spawn(p, out, null); tb[2] = StoryRun.sentAway;
+            PackTests.check("story party: a character who isn't in this mission can't be picked", Story.lockReason(p, out) == null, "(not on a mission yet: " + Story.lockReason(p, out) + ")");
+        }), 20));
         // the Season 2 tab and its banners
         l.add(new Step(null, () -> PackTests.server(com.xenowarriors.story.StoryRun::openMenu), 20));
         for (String[] sh : new String[][]{{"2", "s2_xeno"}, {"2", "s2_sp"}, {"1", "past"}}) {
@@ -154,6 +169,13 @@ final class PackStoryTests {
         l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step(null, () -> PackTests.server(StoryRun::begin), 40));
         l.add(new Step("story_s2_scene", () -> {}, 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            boolean inHere = false, outHere = false;
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) { if (b == tb[0]) inHere = true; if (tb[1] instanceof com.xenowarriors.bot.PartyBotEntity o && b.character() == o.character()) outHere = true; }
+            String why = tb[1] instanceof com.xenowarriors.bot.PartyBotEntity o ? Story.lockReason(p, o.character()) : null;
+            PackTests.check("story party: on The Ultimate Weapon the Mikiko bot comes along, the one who isn't in it waits at home (and can't be picked)", inHere && !outHere && StoryRun.sentAway > (Integer) tb[2] && why != null,
+                    "mikiko " + inHere + " other " + outHere + " sent away " + (StoryRun.sentAway - (Integer) tb[2]) + " lock " + why);
+        }), 5));
         drive(mc, l, "s2", 160, "story_s2_fight");
         l.add(new Step(null, () -> PackTests.server(p -> {
             PackTests.check("story s2: the first Season 2 mission (Xeno Warriors vs Ultima) plays through", "s2_xeno".equals(Story.current(p)) && Story.missionIndex(p) >= 1, "cur " + Story.current(p) + " mi " + Story.missionIndex(p) + " hits " + HITS[0]);
@@ -168,6 +190,12 @@ final class PackStoryTests {
             }
             PackTests.check("story s2: every storyline opens in turn and Season 2's finale completes", Story.pathDone(p, "s2_finale") && Story.pathDone(p, "past"), why + "done " + Story.done(p));
         }), 30));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            boolean back = false;
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) if (tb[1] instanceof com.xenowarriors.bot.PartyBotEntity o && b.character() == o.character()) back = true;
+            PackTests.check("story party: after the mission the one who waited at home is back", back, "bots " + com.xenowarriors.bot.PartyBots.bots(p).stream().map(b -> b.character().getId()).toList());
+            PackTests.clear(p);
+        }), 40));
         l.add(new Step(null, () -> PackTests.server(p -> {
             Story.stop(p);
             com.xenowarriors.story.StoryRun.openMenu(p);

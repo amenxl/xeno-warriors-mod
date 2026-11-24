@@ -10,6 +10,7 @@
       "steps": [
         {"type": "scene", "place": "night_sky", "npcs": ["mikiko", "kaeru"], "meet": ["kaeru"], "lines": [
           {"s": "kaeru", "t": "Hey! You're not supposed to be here! Master's going to be so upset!"},
+          {"s": "kaeru", "t": "", "duo": "And who are THESE two - {names}?!", "trio": "And three more?! {names}?!", "full": "And FOUR of you?! {names}?! Master's going to explode!"},
           {"s": "kaeru", "t": "Your heart STOPPED, you idiot. Hold still. ...Fox Heal."},
           {"s": "mikiko", "t": "Ow... who ARE you?"},
           {"s": "kaeru", "t": "Kaeru! You usually call me Heku. Master Kitsune put my soul in the blade - I'm its guardian."},

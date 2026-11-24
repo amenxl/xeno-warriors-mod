@@ -13,6 +13,7 @@
           {"s": "kyrie", "t": "My mom's old battle uniform. The attack on SR happens today."},
           {"s": "ranrea", "t": "A plan? Whyyy... that sounds like a lot of trabajar. ...Ada."},
           {"s": "kyrie", "t": "They took my mom. It's a death plan - if you don't want to come, leave now."},
+          {"s": "kyrie", "t": "", "duo": "{names}... you're staying? Thank you.", "trio": "{names} - all three of you? ...Thank you.", "full": "{names}. Four of you. ...Okay. Let's go get her."},
           {"s": "athrea", "t": "Same as always, sis. We're with you."},
           {"s": "you", "choice": [{"text": "Go with the sisters.", "set": "go", "reply": [{"s": "kyrie", "t": "Then keep up."}]}, {"text": "Warn Kyrie it's a trap.", "set": "warn", "reply": [{"s": "kyrie", "t": "Maybe. I'm going anyway."}]}]}
         ]},

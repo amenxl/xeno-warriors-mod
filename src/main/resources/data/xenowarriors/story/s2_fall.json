@@ -11,7 +11,8 @@
         {"type": "scene", "place": "lab_hallway", "npcs": ["yuri", "mikiko", "rhalix"], "lines": [
           {"s": "yuri", "t": "It's done! It's in your red bracelet thingy. He's at the Gov hideout - hurry."},
           {"s": "rhalix", "t": "My meditation wasn't for nothing. I've got something up my sleeve."},
-          {"s": "yuri", "t": "Good luck, you two... bring my brother back."}
+          {"s": "yuri", "t": "Good luck, you two... bring my brother back."},
+          {"s": "yuri", "t": "", "duo": "And {names} - you too. Watch their backs.", "trio": "{names}, all three of you - watch their backs.", "full": "{names} - all four of you. Watch their backs."}
         ]},
         {"type": "scene", "place": "gov_facility", "npcs": ["ultima", "mikiko", "rhalix", "npc:henery"], "lines": [
           {"s": "ultima", "t": "Just in time for my retribution. You'll be my key into the hideout."},

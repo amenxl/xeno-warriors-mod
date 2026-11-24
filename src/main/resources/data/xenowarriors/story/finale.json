@@ -10,7 +10,7 @@
       "desc": "Year 100. A Government car pulls up beside the Xeno Warriors.",
       "steps": [
         {"type": "scene", "place": "village_city", "npcs": ["mikiko", "rhalix"], "lines": [
-          {"s": "num3602", "n": "3-6-0-2", "t": "You two - and you! The Government needs your help. There's a war on.", "group": "You two - and all of you! The Government needs your help. There's a war on."},
+          {"s": "num3602", "n": "3-6-0-2", "t": "You two - and you! The Government needs your help. There's a war on.", "group": "You two - and all of you! The Government needs your help. There's a war on.", "duo": "You two - and {names}! The Government needs your help. There's a war on.", "trio": "You two - and {names}, all three of you! The Government needs your help.", "full": "You two - and {names}! All four of you. The Government needs your help."},
           {"s": "num3602", "n": "3-6-0-2", "t": "C1 made a chip that lets a human use 100% of themselves. We called him Ultima. A virus got in. He's killing everyone."},
           {"s": "mikiko", "t": "Can the virus be removed?"},
           {"s": "num3602", "n": "3-6-0-2", "t": "Only his sister, Yuri. And we believe she was killed."},
@@ -19,9 +19,9 @@
         ]},
         {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix"], "lines": [
           {"s": "ultima", "t": "MY golden time has finally come! Government property? Once I kill you all, there IS no Government."},
-          {"s": "ultima", "t": "Mikiko, Rhalix... and you. I've read every file. Every video. I know what you'll do before you do it.", "group": "Mikiko, Rhalix... and all of you. I've read every file. I know what you'll do before you do it."},
+          {"s": "ultima", "t": "Mikiko, Rhalix... and you. I've read every file. Every video. I know what you'll do before you do it.", "group": "Mikiko, Rhalix... and all of you. I've read every file. I know what you'll do before you do it.", "duo": "Mikiko, Rhalix... {names}. I've read every file. I know what you two will do before you do it.", "trio": "Mikiko, Rhalix... {names}. Three more files. I know what you'll do before you do it.", "full": "Mikiko, Rhalix... {names}. Four more files. I've read every one."},
           {"s": "mikiko", "t": "Then you should know this too - we are the Xeno Warriors!"},
-          {"s": "rhalix", "t": "And they're with us.", "group": "And they're all with us."}
+          {"s": "rhalix", "t": "And they're with us.", "group": "And they're all with us.", "duo": "And {names} are with us. Both of them.", "trio": "And {names} - all three - are with us.", "full": "And {names}. All four. They're with us."}
         ]},
         {"type": "fight", "place": "battlefield", "obj": "Stand with the Xeno Warriors against Ultima", "allies": ["mikiko", "rhalix"], "waves": [
           [{"e": "gov", "n": 4}],
@@ -38,7 +38,7 @@
         {"type": "scene", "place": "battlefield", "npcs": ["mikiko", "rhalix"], "lines": [
           {"s": "ultima", "t": "Hahaha... this isn't over. This is only my retribution's beginning."},
           {"s": "mikiko", "t": "He's gone... for now."},
-          {"s": "rhalix", "t": "Sky Patrol, the farm, the Rebellion, the Government... you've been everywhere. You're one of us now.", "group": "Sky Patrol, the farm, the Rebellion, the Government... you've all been everywhere. You're Xeno Warriors now."},
+          {"s": "rhalix", "t": "Sky Patrol, the farm, the Rebellion, the Government... you've been everywhere. You're one of us now.", "group": "Sky Patrol, the farm, the Rebellion, the Government... you've all been everywhere. You're Xeno Warriors now.", "duo": "{names} - Sky Patrol, the farm, the Rebellion, the Government. The two of you are Xeno Warriors now.", "trio": "{names} - you three have been everywhere. You're Xeno Warriors now.", "full": "{names} - all four of you. Everywhere and back. You're Xeno Warriors now."},
           {"s": "narrator", "t": "Season 1 complete! Every character is now yours to play."}
         ]}
       ],

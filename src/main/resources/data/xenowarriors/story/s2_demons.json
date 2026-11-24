@@ -10,6 +10,7 @@
       "steps": [
         {"type": "scene", "place": "underclass_city", "npcs": ["kyle", "zack", "kaitlyn", "ava", "persephone", "npc:barry"], "meet": ["zack", "kaitlyn", "ava", "persephone"], "lines": [
           {"s": "kyle", "t": "Oh - all of you lived. I'll take you to your new homes."},
+          {"s": "kyle", "t": "", "duo": "And {names}. Two extra. How generous.", "trio": "And {names}. Three more mouths. Wonderful.", "full": "And {names}... four more. I'll need more rooms."},
           {"s": "kyle", "t": "Pair up. Five demons in one place is a bad idea if one of you gets found."},
           {"s": "kaitlyn", "t": "Where's the girl who treated us?"},
           {"s": "kyle", "t": "Technica? She died putting you all in shields. Hahaha."},
