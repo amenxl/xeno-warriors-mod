@@ -186,7 +186,7 @@ public class StoryScreen extends Screen {
     private int bannerAt(GuiGraphics g, String path, int x, int y, String title, String sub, int col, int maxH) {
         int w = Math.min(width - x - 12, 340), h = Math.max(48, Math.min(w / 2, maxH));
         g.fill(x - 1, y - 1, x + w + 1, y + h + 1, 0xFF000000 | col);
-        int vh = Math.min(256, Math.round(512F * h / w)), v0 = (256 - vh) / 2;
+        int vh = Math.min(256, Math.round(512F * h / w)), v0 = Math.round((256 - vh) * 0.3F);   // (cropped a little above the middle: that's where the faces are)
         g.blit(banner(path), x, y, w, h, 0, v0, 512, vh, 512, 256);
         g.fillGradient(x, y + h - 30, x + w, y + h, 0x00000000, 0xC0000000);
         g.drawString(font, title, x + 8, y + h - 22, 0xFFFFFFFF, true);
