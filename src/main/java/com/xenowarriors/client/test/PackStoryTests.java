@@ -171,7 +171,7 @@ final class PackStoryTests {
         l.add(new Step("story_s2_scene", () -> {}, 30));
         l.add(new Step(null, () -> PackTests.server(p -> {
             boolean inHere = false, outHere = false;
-            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) { if (b == tb[0]) inHere = true; if (tb[1] instanceof com.xenowarriors.bot.PartyBotEntity o && b.character() == o.character()) outHere = true; }
+            for (var b : com.xenowarriors.bot.PartyBots.bots(p)) { if (b.character() == CharacterType.MIKIKO) inHere = true;                       // (a fresh copy in the story's world) if (tb[1] instanceof com.xenowarriors.bot.PartyBotEntity o && b.character() == o.character()) outHere = true; }
             String why = tb[1] instanceof com.xenowarriors.bot.PartyBotEntity o ? Story.lockReason(p, o.character()) : null;
             PackTests.check("story party: on The Ultimate Weapon the Mikiko bot comes along, the one who isn't in it waits at home (and can't be picked)", inHere && !outHere && StoryRun.sentAway > (Integer) tb[2] && why != null,
                     "mikiko " + inHere + " other " + outHere + " sent away " + (StoryRun.sentAway - (Integer) tb[2]) + " lock " + why);
