@@ -438,7 +438,11 @@ public final class BotQuestTests {
             p.removeEffect(MobEffects.REGENERATION);                               // (the test's own Regeneration would heal it back before Auto Potion looks)
             p.setHealth(p.getMaxHealth() * 0.2F);
             sz[0] = com.xenowarriors.compat.HealingStone.senzuEaten;
-        }); }, 50);
+            log("senzu: health set to " + p.getHealth() + "/" + p.getMaxHealth());
+        }); }, 1);
+        // (DragonMineZ's own regeneration can heal a lot in a second: keep it low - like a fight would - till Auto Potion has looked)
+        for (int k = 0; k < 25; k++) step(null, () -> server(p -> { if (com.xenowarriors.compat.HealingStone.senzuEaten == sz[0]) p.setHealth(Math.min(p.getHealth(), p.getMaxHealth() * 0.2F)); }), 1);
+        step(null, () -> {}, 20);
         step(null, () -> server(p -> {
             boolean ate = com.xenowarriors.compat.HealingStone.senzuEaten > sz[0];
             log("senzu: Auto Potion ate a Senzu Bean " + ate + ", health " + p.getHealth() + "/" + p.getMaxHealth() + (ate && p.getHealth() >= p.getMaxHealth() - 0.01F ? " OK" : " FAIL"));
