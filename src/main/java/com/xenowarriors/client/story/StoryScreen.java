@@ -31,6 +31,9 @@ public class StoryScreen extends Screen {
     /** The season whose storylines are shown (Season 2's tab only once it's unlocked). */
     private int season = 1;
 
+    /** (Tests) shows this season's tab with this storyline picked. */
+    public void showForTest(int season, String path) { this.season = season; this.sel = path; init(); }
+
     private List<CompoundTag> paths() {
         List<CompoundTag> l = new ArrayList<>();
         for (Tag t : StoryClient.state.getList("paths", Tag.TAG_COMPOUND)) {
@@ -113,11 +116,9 @@ public class StoryScreen extends Screen {
             case "s2_blade" -> 0xF0A040; case "s2_demons" -> 0x8040C0; case "s2_finale" -> 0xA02CD2; default -> 0xE8B030; };
     }
 
-    /** The storyline's banner (textures/gui/story/<path>.png: the user's art of Rhalix / Mikiko, both for the finale). */
+    /** The storyline's banner (textures/gui/story/<path>.png: the user's art of Rhalix / Mikiko, the characters' portraits and their groups' logos). */
     private static net.minecraft.resources.ResourceLocation banner(String path) {
-        String k = path == null ? "finale" : switch (path) {                           // (Season 2's storylines borrow Season 1's art for now)
-            case "past", "s2_demons" -> "gov"; case "s2_xeno", "s2_blade" -> "mikiko"; case "s2_sp", "s2_royals" -> "sr"; case "s2_fall" -> "rhalix"; case "s2_finale" -> "finale";
-            default -> path; };
+        String k = path == null ? "finale" : path;                                       // (every storyline has its own, Season 2's and the flashbacks too)
         return com.xenowarriors.XenoWarriors.id("textures/gui/story/" + k + ".png");
     }
 

@@ -145,6 +145,13 @@ final class PackStoryTests {
             Story.pick(p, "s2_xeno");
             HITS[0] = 0;
         }), 10));
+        // the Season 2 tab and its banners
+        l.add(new Step(null, () -> PackTests.server(com.xenowarriors.story.StoryRun::openMenu), 20));
+        for (String[] sh : new String[][]{{"2", "s2_xeno"}, {"2", "s2_sp"}, {"1", "past"}}) {
+            l.add(new Step(null, () -> { if (mc.screen instanceof com.xenowarriors.client.story.StoryScreen ss) ss.showForTest(Integer.parseInt(sh[0]), sh[1]); }, 10));
+            l.add(new Step("story_banner_" + sh[1], () -> {}, 5));
+        }
+        l.add(new Step(null, () -> mc.setScreen(null), 5));
         l.add(new Step(null, () -> PackTests.server(StoryRun::begin), 40));
         l.add(new Step("story_s2_scene", () -> {}, 30));
         drive(mc, l, "s2", 160, "story_s2_fight");
