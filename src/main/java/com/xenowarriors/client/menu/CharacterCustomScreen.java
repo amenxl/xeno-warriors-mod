@@ -1128,7 +1128,7 @@ public class CharacterCustomScreen extends Screen {
     }
 
     // ---- a made character's borrowed idle (see YouIdles): a card per character with an idle, unlocked at bond 100
-    private static final int IDLE_H = 22, IDLE_Y = 97;
+    private static final int IDLE_H = 19, IDLE_Y = 97;            // (4 rows of cards fit: 7 with Kaeru's)
     private int idleY(int i) { return IDLE_Y + (i / 2) * (IDLE_H + 2); }
 
     /** {""} + the idle owners' ids: what each card picks. */

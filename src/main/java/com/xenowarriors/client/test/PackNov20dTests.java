@@ -76,6 +76,19 @@ final class PackNov20dTests {
             p.setSprinting(false);
             p.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
         }), 5));
+        // ---- Kaeru's idle: standing still she stretches (arms up, side to side, arms across)
+        l.add(new Step(null, () -> { PackWomTests.battle(false); com.xenowarriors.client.UiTest.character(CharacterType.KAERU); }, 40));
+        l.add(new Step(null, () -> { mc.setScreen(null); mc.options.hideGui = true; mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT); }, 135));
+        l.add(new Step("kaeru_stretch_up", () -> {}, 3));
+        l.add(new Step(null, () -> {}, 55));
+        l.add(new Step("kaeru_stretch_lean", () -> {}, 3));
+        l.add(new Step(null, () -> {}, 130));
+        l.add(new Step("kaeru_stretch_across", () -> {
+            var p = mc.player;
+            PackTests.check("idle: Kaeru stretches when she stands still", p != null && com.xenowarriors.client.KaeruStretch.time(p) > 150 && "kaeru_stretch".equals(com.xenowarriors.client.Idles.holder(p)),
+                    "time " + (p == null ? -1 : com.xenowarriors.client.KaeruStretch.time(p)) + " holder " + (p == null ? "-" : com.xenowarriors.client.Idles.holder(p)));
+        }, 3));
+        l.add(new Step(null, () -> { mc.options.hideGui = false; mc.options.setCameraType(CameraType.FIRST_PERSON); com.xenowarriors.client.UiTest.character(CharacterType.MIKIKO); }, 30));
         // ---- Pod Recall: going down, sent straight to a free healing pod - 40 blocks off needs rank 2 (48 blocks)
         Object[] pr = new Object[3];
         l.add(new Step(null, () -> PackTests.server(p -> {

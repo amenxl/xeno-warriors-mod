@@ -12,7 +12,7 @@ import net.minecraft.world.entity.player.Player;
 public final class YouIdles {
     public static final int NEED = 100;
     /** Whose idles can be borrowed (only characters that have one). */
-    public static final CharacterType[] OWNERS = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.GARRY, CharacterType.KEITA, CharacterType.YURI};
+    public static final CharacterType[] OWNERS = {CharacterType.MIKIKO, CharacterType.RHALIX, CharacterType.GARRY, CharacterType.KEITA, CharacterType.YURI, CharacterType.KAERU};
 
     private YouIdles() {}
 
@@ -24,6 +24,7 @@ public final class YouIdles {
             case GARRY -> "Beatboxes into a mic";
             case KEITA -> "Nods off on their feet";
             case YURI -> "Opens a holo laptop and types";
+            case KAERU -> "Stretches: arms over her head, side to side, arms across";
             default -> "";
         };
     }
