@@ -181,7 +181,7 @@ public final class VillageFounders {
     @SubscribeEvent
     public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent e) {
         if (!(e.getEntity() instanceof HumanNpcEntity h) || h.level().isClientSide || !is(h)) return;
-        if (h.tickCount % 20 == 0 && h.isAlive() && h.getHealth() < h.getMaxHealth()) h.heal(REGEN);
+        if (h.tickCount % 20 == 0 && h.isAlive() && h.getHealth() < h.getMaxHealth()) h.heal((float) REGEN);
         if (h.tickCount % 200 == 0) {
             strong(h);                                                                       // (kept after a reload)
             BlockPos home = home(h);
