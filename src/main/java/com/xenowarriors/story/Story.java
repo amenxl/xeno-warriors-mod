@@ -159,9 +159,10 @@ public final class Story {
         if (!d.contains("rhalix") || !d.contains("mikiko")) { for (String s : new String[]{"rhalix", "mikiko"}) if (!d.contains(s)) l.add(s); }
         else if (!d.contains("sr") || !d.contains("gov")) { for (String s : new String[]{"sr", "gov"}) if (!d.contains(s)) l.add(s); }
         else if (!d.contains("finale")) l.add("finale");
-        // Season 2 (and Season 1's flashback missions, from the Season 2 script): once Season 1's story is beaten and Season 2 is unlocked
+        // Season 1's flashback missions (from the Season 2 script): as soon as Season 2 is unlocked
+        if (season2(p) && !d.contains("past")) l.add("past");
+        // Season 2: once Season 1's story is beaten and Season 2 is unlocked
         if (season2(p) && (finished(p) || d.contains("finale"))) {
-            if (!d.contains("past")) l.add("past");
             for (String[] g : S2_GROUPS) {
                 boolean all = true;
                 for (String s : g) if (!d.contains(s)) { all = false; if (StoryDefs.path(s) != null) l.add(s); }

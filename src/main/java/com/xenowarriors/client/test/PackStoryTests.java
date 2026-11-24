@@ -42,6 +42,9 @@ final class PackStoryTests {
         }
     }
 
+    /** The Season 1 storylines open now (Season 2's and the flashbacks left out). */
+    private static List<String> s1(net.minecraft.server.level.ServerPlayer p) { return Story.available(p).stream().filter(x -> !Story.s2Path(x)).toList(); }
+
     static void build(Minecraft mc, List<Step> l) {
         l.add(new Step(null, () -> PackTests.server(p -> {
             com.xenowarriors.character.Seasons.set(p.server, 3);
@@ -61,7 +64,8 @@ final class PackStoryTests {
             com.xenowarriors.network.SelectCharacterPacket.select(p, CharacterType.RHALIX);
             PackTests.check("story: Rhalix can't be picked before you meet him", com.xenowarriors.character.ModCapabilities.getType(p) == CharacterType.YOU, "playing " + com.xenowarriors.character.ModCapabilities.getType(p));
             PackTests.check("story: the select screen data marks him locked", !Story.playable(p, CharacterType.RHALIX) && Story.lockReason(p, CharacterType.RHALIX) != null, "" + Story.lockReason(p, CharacterType.RHALIX));
-            PackTests.check("story: only Rhalix's and Mikiko's storylines to start with", Story.available(p).equals(List.of("rhalix", "mikiko")), "" + Story.available(p));
+            PackTests.check("story: Season 1's flashbacks open as soon as Season 2 is unlocked (before Season 1 is beaten)", Story.available(p).contains("past") && !Story.available(p).contains("s2_xeno"), "" + Story.available(p));
+            PackTests.check("story: only Rhalix's and Mikiko's storylines to start with", s1(p).equals(List.of("rhalix", "mikiko")), "" + Story.available(p));
             Story.pick(p, "rhalix");
             com.xenowarriors.story.StoryRun.openMenu(p);
         }), 20));
@@ -114,15 +118,15 @@ final class PackStoryTests {
         l.add(new Step(null, () -> PackTests.server(p -> {
             for (int k = 0; k < 20 && "rhalix".equals(Story.current(p)); k++) Story.skip(p);
             PackTests.check("story: finishing Rhalix's storyline unlocks him", Story.playable(p, CharacterType.RHALIX) && Story.pathDone(p, "rhalix"), "done " + Story.done(p));
-            PackTests.check("story: then only Mikiko's", Story.available(p).equals(List.of("mikiko")), "" + Story.available(p));
+            PackTests.check("story: then only Mikiko's", s1(p).equals(List.of("mikiko")), "" + Story.available(p));
             Story.pick(p, "mikiko");
             for (int k = 0; k < 20 && "mikiko".equals(Story.current(p)); k++) Story.skip(p);
-            PackTests.check("story: then the Sky Rebellion and the Government", Story.available(p).equals(List.of("sr", "gov")), "" + Story.available(p));
+            PackTests.check("story: then the Sky Rebellion and the Government", s1(p).equals(List.of("sr", "gov")), "" + Story.available(p));
             Story.pick(p, "gov");
             for (int k = 0; k < 20 && "gov".equals(Story.current(p)); k++) Story.skip(p);
             Story.pick(p, "sr");
             for (int k = 0; k < 20 && "sr".equals(Story.current(p)); k++) Story.skip(p);
-            PackTests.check("story: then the finale", Story.available(p).equals(List.of("finale")) && Story.playable(p, CharacterType.KYLE) && Story.playable(p, CharacterType.SENJU), "" + Story.available(p) + " done " + Story.done(p));
+            PackTests.check("story: then the finale", s1(p).equals(List.of("finale")) && Story.playable(p, CharacterType.KYLE) && Story.playable(p, CharacterType.SENJU), "" + Story.available(p) + " done " + Story.done(p));
             Story.pick(p, "finale");
             HITS[0] = 0;
         }), 10));
