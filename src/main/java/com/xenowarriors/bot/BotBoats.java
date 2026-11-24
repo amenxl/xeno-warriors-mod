@@ -31,6 +31,8 @@ public final class BotBoats {
     private static final String[] WOODS = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry"};
     /** (Tests) boats made, put in the water, boarded (someone else's), packed back up; ticks paddled. */
     public static int crafted, launched, boarded, packed, paddled;
+    /** (Tests) why it last got out. */
+    public static String why = "";
 
     static int seats(Boat b) { return b instanceof ChestBoat ? 1 : 2; }
 
@@ -147,15 +149,16 @@ public final class BotBoats {
     static void tick(PartyBotEntity b) {
         if (!(b.getVehicle() instanceof Boat bt) || driverOf(bt) != b || !(b.level() instanceof ServerLevel l)) return;
         ServerPlayer o = b.owner();
-        if (o == null || o.level() != l || b.downed()) { leave(b, bt); return; }
+        if (o == null || o.level() != l || b.downed()) { why = "no owner here / down"; leave(b, bt); return; }
         Entity ov = o.getVehicle();
         if (ov == bt) return;                                                    // (you got in: you paddle)
         Entity to = ov != null ? ov : o;
         Vec3 d = new Vec3(to.getX() - bt.getX(), 0, to.getZ() - bt.getZ());
         double dist = d.length();
         boolean ashore = ov == null && !o.isInWater() && o.onGround();
-        if (ashore && (dist < 7 || bt.horizontalCollision && dist < 20 || !bt.isInWater() && bt.onGround())) { leave(b, bt); return; }
-        if (dist > 96) { leave(b, bt); return; }                                  // (left far behind: its catching-up does the rest)
+        if (ashore && (dist < 7 || bt.horizontalCollision && dist < 20 || !bt.isInWater() && bt.onGround())) {
+            why = "ashore: dist " + Math.round(dist) + " bumped " + bt.horizontalCollision + " inWater " + bt.isInWater() + " onGround " + bt.onGround(); leave(b, bt); return; }
+        if (dist > 96) { why = "far behind " + Math.round(dist); leave(b, bt); return; }                                  // (left far behind: its catching-up does the rest)
         float want = (float) (Mth.atan2(d.z, d.x) * Mth.RAD_TO_DEG) - 90F;
         float off = Mth.wrapDegrees(want - bt.getYRot());
         float yaw = bt.getYRot() + Mth.clamp(off, -6F, 6F);
@@ -187,6 +190,6 @@ public final class BotBoats {
 
     /** It's going away (dismissed, unloaded): its own boat goes with it. */
     static void forget(PartyBotEntity b) {
-        if (b.getVehicle() instanceof Boat bt && driverOf(bt) == b) leave(b, bt);
+        if (b.getVehicle() instanceof Boat bt && driverOf(bt) == b) { why = "going away"; leave(b, bt); }
     }
 }

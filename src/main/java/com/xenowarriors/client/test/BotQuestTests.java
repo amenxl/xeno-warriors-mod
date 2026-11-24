@@ -136,6 +136,8 @@ public final class BotQuestTests {
 
     private static void kill(LivingEntity le, net.minecraft.world.damagesource.DamageSource src) {
         for (int n = 0; n < 20 && le.isAlive(); n++) { le.invulnerableTime = 0; le.setHealth(1F); le.hurt(src, 1.0E6F); }
+        // (with DragonMineZ a player's hit does the player's own DragonMineZ damage, not this test's huge number: finish it the way a death goes)
+        if (le.isAlive()) { le.setHealth(0F); le.die(src); }
     }
 
     /** Defeats targets of the bot's mission (by the bot, or by the player) until it's done (or 30 kills). */
@@ -433,6 +435,7 @@ public final class BotQuestTests {
             com.xenowarriors.apl.Apl.setForTest(p, com.xenowarriors.apl.Apl.Ability.AUTO_POTION, 1);
             p.getInventory().add(new net.minecraft.world.item.ItemStack(bean, 2));
             p.getCooldowns().removeCooldown(bean);
+            p.removeEffect(MobEffects.REGENERATION);                               // (the test's own Regeneration would heal it back before Auto Potion looks)
             p.setHealth(p.getMaxHealth() * 0.2F);
             sz[0] = com.xenowarriors.compat.HealingStone.senzuEaten;
         }); }, 50);

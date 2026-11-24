@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * Bots drink potions from their own bag when it makes sense: healing or regeneration when they're hurt, Karma
- * potions when they're low on Karma for skills, fire resistance when they're burning, water breathing when they're
+ * potions when they're low on Karma for skills (a Karma Regeneration Potion a little earlier, so it refills over time), fire resistance when they're burning, water breathing when they're
  * running out of air, strength against something tough. A potion takes a moment to drink and leaves a glass bottle.
  */
 public final class BotPotions {
@@ -47,7 +47,7 @@ public final class BotPotions {
         }
         if (--b.drinkTicks >= 0) return;
         drink(b, pot);
-        boolean karma = pot.getItem() instanceof com.xenowarriors.item.KarmaPotionItem;   // (a Karma Potion leaves no bottle)
+        boolean karma = pot.getItem() instanceof com.xenowarriors.item.KarmaPotionItem || pot.getItem() instanceof com.xenowarriors.item.KarmaRegenPotionItem;   // (Karma potions leave no bottle)
         pot.shrink(1);
         if (karma) { /* nothing left over */ }
         else if (pot.isEmpty()) b.inventory.setItem(b.drinkSlot, new ItemStack(Items.GLASS_BOTTLE));
@@ -66,6 +66,14 @@ public final class BotPotions {
             b.lastDrink = "karma_potion";
             return;
         }
+        if (pot.getItem() instanceof com.xenowarriors.item.KarmaRegenPotionItem) {
+            b.addEffect(new MobEffectInstance(com.xenowarriors.ModEffects.KARMA_REGEN.get(), com.xenowarriors.item.KarmaRegenPotionItem.TICKS, 0));
+            b.level().playSound(null, b.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.NEUTRAL, 1F, 1.2F);
+            ((ServerLevel) b.level()).sendParticles(ParticleTypes.ENCHANT, b.getX(), b.getY() + 1, b.getZ(), 20, 0.4, 0.6, 0.4, 0.4);
+            b.lastDrink = "karma_regen_potion";
+            regenDrinks++;
+            return;
+        }
         StringBuilder what = new StringBuilder();
         for (MobEffectInstance e : PotionUtils.getMobEffects(pot)) {
             if (e.getEffect().isInstantenous()) e.getEffect().applyInstantenousEffect(b, b, b, e.getAmplifier(), 1.0);
@@ -77,8 +85,11 @@ public final class BotPotions {
 
     /** A potion it can drink (not splash or lingering), or a Karma potion. */
     static boolean drinkable(ItemStack s) {
-        return s.is(Items.POTION) || s.getItem() instanceof com.xenowarriors.item.KarmaPotionItem;
+        return s.is(Items.POTION) || s.getItem() instanceof com.xenowarriors.item.KarmaPotionItem || s.getItem() instanceof com.xenowarriors.item.KarmaRegenPotionItem;
     }
+
+    /** (Tests) Karma Regeneration Potions drunk by bots. */
+    public static int regenDrinks;
 
     /** Only good effects (no poison, harming, weakness...). */
     private static boolean wholesome(ItemStack s) {
@@ -106,6 +117,11 @@ public final class BotPotions {
         return -1;
     }
 
+    private static int findKarmaRegen(PartyBotEntity b) {
+        for (int i = 0; i < b.inventory.getContainerSize(); i++) if (b.inventory.getItem(i).getItem() instanceof com.xenowarriors.item.KarmaRegenPotionItem) return i;
+        return -1;
+    }
+
     /** The bag slot of the potion it needs most right now, or -1. */
     static int choose(PartyBotEntity b) {
         if (b.downed()) return -1;
@@ -118,6 +134,8 @@ public final class BotPotions {
         if (hp < 0.5F && (s = find(b, MobEffects.HEAL)) >= 0) return s;
         boolean fighting = b.getTarget() != null && b.getTarget().isAlive();
         if ((b.karma < 15F || (fighting && b.karma < 30F)) && (s = findKarma(b)) >= 0) return s;
+        // Karma Regeneration: a while of Karma back, so before it runs dry (not while one's still working)
+        if ((b.karma < 40F || (fighting && b.karma < 55F)) && !b.hasEffect(com.xenowarriors.ModEffects.KARMA_REGEN.get()) && (s = findKarmaRegen(b)) >= 0) return s;
         if (fighting && !b.sparring() && PartyBots.strong(b, b.getTarget()) && !b.hasEffect(MobEffects.DAMAGE_BOOST) && (s = find(b, MobEffects.DAMAGE_BOOST)) >= 0) return s;
         return -1;
     }

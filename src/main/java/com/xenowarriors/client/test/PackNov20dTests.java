@@ -163,6 +163,23 @@ final class PackNov20dTests {
                     "ticks " + (com.xenowarriors.item.KarmaRegenPotionItem.regenTicks - kr[1]));
             p.removeAllEffects();
         }), 5));
+        // ---- a bot low on Karma drinks a Karma Regeneration Potion from its bag
+        Object[] kb = new Object[2];
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            PartyBotEntity b = PartyBots.spawn(p, CharacterType.MIKIKO, null);
+            if (b == null) return;
+            for (int i = 0; i < b.inventory.getContainerSize(); i++) b.inventory.setItem(i, ItemStack.EMPTY);
+            b.inventory.addItem(new ItemStack(com.xenowarriors.item.ModItems.KARMA_REGEN_POTION.get()));
+            b.karma = 25F;
+            kb[0] = b; kb[1] = com.xenowarriors.bot.BotPotions.regenDrinks;
+        }), 80));
+        l.add(new Step(null, () -> PackTests.server(p -> {
+            if (!(kb[0] instanceof PartyBotEntity b)) { PackTests.check("bots: a bot low on Karma drinks a Karma Regeneration Potion", false, "no bot"); return; }
+            boolean drank = com.xenowarriors.bot.BotPotions.regenDrinks > (Integer) kb[1];
+            PackTests.check("bots: a bot low on Karma drinks a Karma Regeneration Potion and gets Karma back", drank && b.hasEffect(com.xenowarriors.ModEffects.KARMA_REGEN.get()) && b.karma > 25F,
+                    "drank " + drank + " effect " + b.hasEffect(com.xenowarriors.ModEffects.KARMA_REGEN.get()) + " karma " + PackTests.f(b.karma) + " last " + com.xenowarriors.bot.BotPotions.last(b));
+            PackTests.clear(p);
+        }), 5));
         // ---- the middle click as one of your own characters (looking up at the sky: nothing to pick)
         int[] rl = new int[1];
         l.add(new Step(null, () -> PackTests.server(p -> {
@@ -283,7 +300,8 @@ final class PackNov20dTests {
             var b = (PartyBotEntity) ship[0];
             PackTests.check("boats: a Crafting 20 bot makes a boat and paddles it across", com.xenowarriors.bot.BotBoats.crafted > bb[0] && com.xenowarriors.bot.BotBoats.launched > bb[1]
                     && com.xenowarriors.bot.BotBoats.paddled > bb[2], "made " + (com.xenowarriors.bot.BotBoats.crafted - bb[0]) + " launched " + (com.xenowarriors.bot.BotBoats.launched - bb[1])
-                    + " paddled " + (com.xenowarriors.bot.BotBoats.paddled - bb[2]) + " packed " + (com.xenowarriors.bot.BotBoats.packed - bb[3]) + " dist " + (b == null ? -1 : Math.round(b.distanceTo(p))));
+                    + " paddled " + (com.xenowarriors.bot.BotBoats.paddled - bb[2]) + " packed " + (com.xenowarriors.bot.BotBoats.packed - bb[3]) + " dist " + (b == null ? -1 : Math.round(b.distanceTo(p)))
+                    + " last out: " + com.xenowarriors.bot.BotBoats.why);
         }), 200));
         l.add(new Step(null, () -> PackTests.server(p -> {
             var b = (PartyBotEntity) ship[0];
